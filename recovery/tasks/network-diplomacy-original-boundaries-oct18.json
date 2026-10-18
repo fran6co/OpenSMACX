@@ -1,0 +1,46 @@
+{
+  "author": "coordinator",
+  "base_revision": "37368691c42bf5eb0bddfbb142bdf6e363ca9dec",
+  "editable_files": [
+    "src/net_class.cpp",
+    "src/faction.cpp",
+    "recovery/tests/test_original_owner_boundaries_oct18.py"
+  ],
+  "evidence": [
+    "Pinned PE rooted CFG and independent IDA9/Ghidra censuses agree: Net::close62E010..62E24A covers570bytes/184instructions with one RET and no escaping branch; enemies_team_up55D2A0..55D425 covers389bytes/128instructions with four local RETs and no escaping branch. Coordinator separately reran original CFG proof with complete byte coverage. Calls are not followed as local edges.",
+    "Explicitly authorize native source writer correction of these two erroneous extents only. The Net overhang consists of6NOPs, independently mapped poll_services62E250..62E299,7NOPs, then47bytes of independently mapped join_service62E2A0..62E41C. Faction overhang is11NOPs then20bytes of independently mapped enemies_trade_tech55D430..55D753. Preserve all neighboring identities, spans, claims, symbols, modes and useful historical lessons; Git retains former erroneous intervals.",
+    "No C++ tokens, headers, types, class layout, compiler flags or build configuration may change. Native binding rationale records original provenance, not run logs. Correct stale Net size736 comment to the independently bounded570bytes; faction389 size is already consistent. No claim grants, demotions, exclusions or bug fixes.",
+    "Require pinned original control-flow/neighbor/fill tests, native source/claim/reference checks, fresh build/link, zero-omission physical equality of all186objects, original census and strict-result continuity, actual coordinator source review, then fresh destination verification. Any newly qualified match is an existing implementation, not new coverage or automatic/game acceptance. Preserve unknowns."
+  ],
+  "intent": "Correct two independently proved original bounds without changing source behavior or dropping adjacent identities.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6479888,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6480464,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6480544,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5624480,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5624880,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "network-diplomacy-original-boundaries-oct18"
+}
