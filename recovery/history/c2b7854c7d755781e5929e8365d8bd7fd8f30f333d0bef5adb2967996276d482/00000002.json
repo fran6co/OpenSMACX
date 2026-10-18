@@ -1,0 +1,24 @@
+{
+  "event_id": "81c6566d8ae822b33fd66fdae5b156ae48e48864d13c0f6fc4b8e77761751980",
+  "payload": {
+    "affects": [
+      "entity-61d8c25eb8e0dea223307565b1bcefe17e429b11127f5f883d4001efe30e4015",
+      "entity-9aa114f523c62c5087aa52e9fc8d3d1662ec8ba3162a30001f87d169bd6ae7fc",
+      "entity-ab382be6f25fd49d17ab8d6dd03e40a6922ffdd6df77ca39a1407413cf59dfac"
+    ],
+    "author": "coordinator",
+    "discovery_id": "combined-owner-context-checkpoint",
+    "evidence": [
+      "PrefWin old invalid-previous/clear-flag path adds an unoriginal zero store. New natural nested branch preserves the original write set, selected publication and virtual callback; independent pinned/source review supports it. The historical byte obligation remains; current natural branch order still differs from original.",
+      "Two standalone vehicle source owners lost veh.cpp frame policy during Git7bffd07e7/656c524ba. Both pinned entry prologues and fresh settled controls support restoring /Oy- only on those current owners. Original TU names remain unknown.",
+      "Fresh application build0b1roki2 compiles172 sources and links. Native residual184pass/2fail: the two vehicle objects each change15 header-helper code copies and remove15 associated FPO records. No other object residual is changed outside authorized PrefWin bodies. Native failure is retained, not promoted by the source scope."
+    ],
+    "hypothesis": "Restore original PrefWin conditional writes and lost frame context of two split vehicle owners; compiler-induced copied-header changes need explicit selected-provider review.",
+    "kind": "discovery"
+  },
+  "previous_event": "ae8cda9dbfe94d673e358ff6ded2811253eccdc1c26927506c2135dc09cae8d4",
+  "request_id": "combined-owner-context-checkpoint",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:preference-navigation-fidelity-oct19"
+}

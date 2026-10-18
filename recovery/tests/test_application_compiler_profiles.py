@@ -170,6 +170,19 @@ HEADER_RNG_PROFILE_INSERTION = (
     '    PROPERTIES COMPILE_OPTIONS "/Oy-")\n'
 )
 HEADER_RNG_PROFILE_BLOCK = (("src/crt_random.cpp", "src/header_io.cpp"), ("/Oy-",))
+VEHICLE_PROFILE_COMMENT = (
+    "# Preserve the mapped frame-based vehicle owners after their source split.\n"
+    "# Their original translation-unit names are unknown; other veh.cpp code stays\n"
+    "# on its existing owner profile.\n"
+)
+VEHICLE_PROFILE_BLOCK_TEXT = (
+    "set_source_files_properties(\n"
+    "    src/vehicle_cost.cpp\n"
+    "    src/vehicle_orders.cpp\n"
+    '    PROPERTIES COMPILE_OPTIONS "/Oy-")'
+)
+VEHICLE_PROFILE_INSERTION = VEHICLE_PROFILE_COMMENT + VEHICLE_PROFILE_BLOCK_TEXT + "\n"
+VEHICLE_PROFILE_BLOCK = (("src/vehicle_cost.cpp", "src/vehicle_orders.cpp"), ("/Oy-",))
 TUTWIN_SOURCE_BEFORE = "    src/tutwin.cpp\n    src/popmenu.cpp\n"
 TUTWIN_SOURCE_AFTER = "    src/tutwin.cpp\n    src/tutwin_callouts.cpp\n    src/popmenu.cpp\n"
 TUTWIN_PROFILE_BEFORE = (
@@ -202,6 +215,7 @@ EXPECTED_CMAKE_PROFILES = {
     ("src/video_sound.cpp",): ("/Oy-",),
     ("src/scenario_undo.cpp",): ("/Oy-",),
     ("src/crt_random.cpp", "src/header_io.cpp"): ("/Oy-",),
+    ("src/vehicle_cost.cpp", "src/vehicle_orders.cpp"): ("/Oy-",),
     tuple(sorted(("src/interface_palette.cpp", "src/interface_fonts.cpp"))): ("/Oy-",),
     ("src/sound.cpp",): ("/Oy-",),
     ("src/caviar_cpu.cpp",): ("--frontend=intrinsics-i386-no-debug",),
@@ -275,9 +289,12 @@ def non_profile_text_matches(baseline: str, candidate: str) -> bool:
         return False
     if baseline.count(HEADER_RNG_SOURCE_BEFORE) or candidate.count(HEADER_RNG_SOURCE_AFTER) != 1:
         return False
+    if baseline.count(VEHICLE_PROFILE_INSERTION) or candidate.count(VEHICLE_PROFILE_INSERTION) != 1:
+        return False
 
     projected = candidate.replace(TUTWIN_SOURCE_AFTER, TUTWIN_SOURCE_BEFORE, 1)
     projected = projected.replace(TUTWIN_PROFILE_AFTER, TUTWIN_PROFILE_BEFORE, 1)
+    projected = projected.replace(VEHICLE_PROFILE_INSERTION, "", 1)
     projected = projected.replace(HEADER_RNG_PROFILE_INSERTION, "", 1)
     projected = projected.replace(HEADER_RNG_SOURCE_AFTER, HEADER_RNG_SOURCE_BEFORE, 1)
     projected = projected.replace(insertion, "", 1)
@@ -305,6 +322,7 @@ def cmake_profile_delta_is_exact(baseline: str, candidate: str) -> bool:
     expected[VIDEO_SOUND_PROFILE_BLOCK] += 1
     expected[UNDO_PROFILE_BLOCK] += 1
     expected[HEADER_RNG_PROFILE_BLOCK] += 1
+    expected[VEHICLE_PROFILE_BLOCK] += 1
     return (
         collections.Counter(source_property_blocks(candidate)) == expected
         and non_profile_text_matches(baseline, candidate)
@@ -399,6 +417,7 @@ def test_profile_guard_rejects_policy_mutations():
     candidate += UNDO_PROFILE_INSERTION
     candidate = candidate.replace(HEADER_RNG_SOURCE_BEFORE, HEADER_RNG_SOURCE_AFTER, 1)
     candidate += HEADER_RNG_PROFILE_INSERTION
+    candidate += VEHICLE_PROFILE_INSERTION
     candidate = candidate.replace(TUTWIN_SOURCE_BEFORE, TUTWIN_SOURCE_AFTER, 1)
     candidate = candidate.replace(TUTWIN_PROFILE_BEFORE, TUTWIN_PROFILE_AFTER, 1)
     assert cmake_profile_delta_is_exact(baseline, candidate)
@@ -420,6 +439,12 @@ def test_profile_guard_rejects_policy_mutations():
                           HEADER_RNG_PROFILE_INSERTION.replace("/Oy-", "/Oy- /Ob0"), 1),
         candidate.replace(HEADER_RNG_PROFILE_INSERTION,
                           HEADER_RNG_PROFILE_INSERTION.replace("src/header_io.cpp", "src/general.cpp"), 1),
+        candidate.replace(VEHICLE_PROFILE_INSERTION, "", 1),
+        candidate + VEHICLE_PROFILE_INSERTION,
+        candidate.replace(VEHICLE_PROFILE_BLOCK_TEXT,
+                          VEHICLE_PROFILE_BLOCK_TEXT.replace("src/vehicle_cost.cpp", "src/veh.cpp"), 1),
+        candidate.replace(VEHICLE_PROFILE_BLOCK_TEXT,
+                          VEHICLE_PROFILE_BLOCK_TEXT.replace("/Oy-", "/Oy- /Ob0"), 1),
     ):
         assert not cmake_profile_delta_is_exact(baseline, damaged)
 
@@ -592,6 +617,8 @@ def test_application_profiles_match_immutable_baseline_plus_core_cohort():
     assert "src/scenario_undo.cpp" in application_sources
     assert "src/header_io.cpp" in application_sources
     assert "src/crt_random.cpp" in application_sources
+    assert "src/vehicle_cost.cpp" in application_sources
+    assert "src/vehicle_orders.cpp" in application_sources
     assert "src/tutwin_callouts.cpp" in application_sources
     inline_owners = ("src/pulldown.cpp", "src/dipedit.cpp")
     assert all(owner in application_sources for owner in inline_owners)
@@ -608,6 +635,8 @@ def test_application_profiles_match_immutable_baseline_plus_core_cohort():
     assert actual_profiles["src/scenario_undo.cpp"] == ("/Oy-",)
     assert actual_profiles["src/crt_random.cpp"] == ("/Oy-",)
     assert actual_profiles["src/header_io.cpp"] == ("/Oy-",)
+    assert actual_profiles["src/vehicle_cost.cpp"] == ("/Oy-",)
+    assert actual_profiles["src/vehicle_orders.cpp"] == ("/Oy-",)
     assert "src/video.cpp" not in profiled_sources
     assert "src/alphamovie.cpp" not in profiled_sources
     assert "src/general.cpp" not in profiled_sources
@@ -650,6 +679,7 @@ def test_application_profiles_match_immutable_baseline_plus_core_cohort():
         "src/win.cpp", "src/alpha.cpp", "src/video_sound.cpp",
         "src/scenario_undo.cpp",
         "src/header_io.cpp", "src/crt_random.cpp",
+        "src/vehicle_cost.cpp", "src/vehicle_orders.cpp",
     ):
         assert owner not in unit_profiles, (owner, unit_profiles.get(owner))
     base_profile = ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Ob1"]

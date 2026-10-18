@@ -1,0 +1,34 @@
+{
+  "event_id": "ae8cda9dbfe94d673e358ff6ded2811253eccdc1c26927506c2135dc09cae8d4",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "CMakeLists.txt",
+      "recovery/tests/test_application_compiler_profiles.py"
+    ],
+    "evidence": [
+      "Batch the disjoint vehicle owner-context restoration with the frozen PrefWin callback recovery under this existing immutable9f3923e64 baseline. No C++ vehicle body/header edits. Scope expands by two mapped bodies and exactly two editable build/control files; it does not reset history, weaken policy or grant claims.",
+      "Git7bffd07e7 and656c524ba split base_cost and sleep into vehicle_cost.cpp and vehicle_orders.cpp without propagating the prior veh.cpp /Oy- source context. Both pinned bodies access arguments through EBP and require no EH/dynamic stack frame. Original TU filenames remain unknown; the reconstructed source owners do not assert those filenames.",
+      "Fresh native existing settled-profile controls under owner-frontier-oct19/vehicle-measure.json produce BYTE_EXACT23/23 for5A5D00 and11/11 for5C01A0 with /Oy-. Authorize only these two CMake source properties plus precise guard extension. All global compiler/linker settings, measurement policy and other source profiles stay unchanged.",
+      "Coordinator will inspect actual original/code/config diffs, full fresh application build/link, all186 object residuals including header COMDAT effects, claim/mapping/reference continuity, and full mapped census at one combined checkpoint. Dependent body impacts require explicit review/scope expansion; no arbitrary header-copy waiver. Manual integration is not native automatic/full game acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5922048,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6029728,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "vehicle-split-context-batch-oct19",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:preference-navigation-fidelity-oct19"
+}

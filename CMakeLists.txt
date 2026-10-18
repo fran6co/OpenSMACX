@@ -400,6 +400,13 @@ set_source_files_properties(
     src/faction.cpp
     src/veh.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")
+# Preserve the mapped frame-based vehicle owners after their source split.
+# Their original translation-unit names are unknown; other veh.cpp code stays
+# on its existing owner profile.
+set_source_files_properties(
+    src/vehicle_cost.cpp
+    src/vehicle_orders.cpp
+    PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Preserve original frame-based accesses in the remaining application owners.
 # Keep all other source recipes on their independently measured defaults.
 set_source_files_properties(
