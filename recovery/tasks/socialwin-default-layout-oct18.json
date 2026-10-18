@@ -1,0 +1,25 @@
+{
+  "author": "coordinator",
+  "base_revision": "c835529ca5c9214e463385c47557850942372606",
+  "editable_files": [
+    "src/socialwin.cpp",
+    "recovery/tests/test_socialwin_default_layout_oct18.py"
+  ],
+  "evidence": [
+    "Pinned callback4B1E00..4B1E49 and actual current SocialWin COFF preserve all25 operations, switch storage and calls. The sole instruction-shape difference is the unsigned range-check default edge: original reaches the epilogue before case27 reset; candidate reaches the epilogue after it. Independent read-only review is recorded in the ignored next-owner-cohort-oct18/widgets.md and proposal.json. No semantic defect or new class interpretation is asserted.",
+    "Authorize only a no-op explicit default label before case27, and at most two ordinary equivalent label placements, in the existing on_button_clicked switch. Preserve TutorialWindow.reset, all case values, reset/exit call order, original signed button input/range semantics, all mappings, spans, associated storage, types, virtual callback interface and historical claims. No flags, helpers, volatile, casts, layout, compiler/link policy or framework changes.",
+    "Score using installed measure_local_variants in an isolated prepared worker with unchanged-source replica and a demonstrably wrong compiled case-value damage control. Product source remains unchanged while scoring. An unsuccessful trial is evidence only, not a reason to land speculative code.",
+    "If improved, require independent C++ and pinned-branch review, source-based behavior tests, fresh complete application build/link, scoped strict references, mapped-identity/claim continuity and physical outside-body comparison. Preserve any unexplained collateral pending rather than weaken checks. Only installed record grants claims. Manual coordinator integration and host tests are not full linked preservation or game acceptance."
+  ],
+  "intent": "Measure ordinary equivalent switch default placement against the original SocialWin callback, adopting only a verified improvement.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4922880,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "socialwin-default-layout-oct18"
+}
