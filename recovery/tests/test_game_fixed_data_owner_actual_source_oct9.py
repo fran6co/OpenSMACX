@@ -145,7 +145,7 @@ static_assert(sizeof(VehPrototype) == 0x34, "prototype stride");
 static_assert(offsetof(VehPrototype, flags) == 0x30, "prototype flags offset");
 static_assert(offsetof(VehPrototype, preq_tech) == 0x32, "adjacent tech offset");
 static_assert(offsetof(VehPrototype, preq_tech) == offsetof(VehPrototype, flags) + 2,
-              "DWORD access spans flags and prerequisite tech");
+              "prerequisite tech follows the shared flags word");
 constexpr int MaxVehProtoNum = 512;
 VehPrototype VehPrototypes[MaxVehProtoNum];
 struct GameStateFields { int vehicle_current_count_, base_current_count_; };
@@ -235,10 +235,10 @@ def test_actual_mapped_identities_and_token_address_evidence() -> None:
     assert "no shared original allocation/pooling is established" in source
 
     reset_body = actual_body("sub_52a980")
-    assert "reinterpret_cast" not in reset_body
+    assert "reinterpret_cast<unsigned char *>(&prototype.flags)" in reset_body
     assert "memcpy" not in reset_body
     ordered_prototype_writes = [
-        reset_body.index("prototype.flags &= ~uint16_t(1)"),
+        reset_body.index("flags_bytes[0] &= 0xFE"),
         reset_body.index("prototype.icon_offset = -1"),
         reset_body.index("vehicle_current_count_ = 0"),
         reset_body.index("base_current_count_ = 0"),

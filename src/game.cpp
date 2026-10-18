@@ -3519,12 +3519,13 @@ void __cdecl climactic_changes() {
 // fixed-address encoding; it is not the current typed-object implementation.
 int __cdecl sub_52a980() {
     // Original 52A988 clears only bit 0 of the low flags byte; neither the
-    // high flags byte nor preq_tech changes. Other users (57F680: word OR
-    // 0x104) establish the shared 16-bit flags member. Keep that owner/type;
-    // reproducing this particular byte-width operation remains an obligation.
+    // high flags byte nor preq_tech is accessed. Other users (57F680: word OR
+    // 0x104) establish the shared 16-bit flags member. The character view
+    // selects its low representation byte under the original x86 ABI.
     for (int prototype_id = 0; prototype_id < MaxVehProtoNum; ++prototype_id) {
         VehPrototype &prototype = VehPrototypes[prototype_id];
-        prototype.flags &= ~uint16_t(1);
+        unsigned char *flags_bytes = reinterpret_cast<unsigned char *>(&prototype.flags);
+        flags_bytes[0] &= 0xFE;
         prototype.icon_offset = -1;
     }
     GameDataStateStorage.fields_.vehicle_current_count_ = 0;

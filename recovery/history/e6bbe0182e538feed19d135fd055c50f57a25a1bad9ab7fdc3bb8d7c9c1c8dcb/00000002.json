@@ -1,0 +1,18 @@
+{
+  "event_id": "f20489db6c93d6f34bdda971308d2bba2c8ec922e1bf67747a4be34b57b8e2e8",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "correct-prototype-reset-access-width-oct18",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/game.cpp:sub_52a980 now accesses only the low character-representation byte of the existing uint16_t flags member. Complete original52A980..52A9A5 contains AND byte[eax],FE, not a DWORD read/write. src/veh.h keeps the word flags and separate prerequisite unchanged, with original word-user witness57F680 retained.",
+      "The contrary earlier DWORD rationale is superseded by the direct pinned instruction and implemented byte access, while the original task document, immutable e4ff03c5 baseline, other recovered behavior and all historical obligations remain intact. Full fused-instruction/byte restoration remains pending in prototype-flags-byte-access-oct18, not claimed complete."
+    ]
+  },
+  "previous_event": "bb69e6fd252934a5b892cb32e8a1d955a12162cfff552b266ec45dc0167a7694",
+  "request_id": "incorporate-pinned-byte-width-correction-oct18",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:game-fixed-data-owner-closure-oct9"
+}

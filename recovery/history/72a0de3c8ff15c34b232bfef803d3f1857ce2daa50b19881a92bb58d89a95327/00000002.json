@@ -1,0 +1,23 @@
+{
+  "event_id": "2f219b5740f77df9e01d9aa5b09b4c230ee6f619b31af259f05e603bc8d32b7f",
+  "payload": {
+    "affects": [
+      "entity-62c49ff749d5a20bd1003619e85ca6f9ad2495d10c8e38f91e6b09d53c4868ed",
+      "entity-e1cd0f5da2803675bbfe807c804574a664394e77461a65a1561002fd75049aab"
+    ],
+    "author": "coordinator",
+    "discovery_id": "real-prototype-flag-byte-accesses-oct18",
+    "evidence": [
+      "Complete pinned52A980 and4F0460 spans independently establish low-byte and high-byte AND FE. Combined-word consumers independently establish the logical16-bit flags member; the adjacent signed prerequisite is separate. Source offset-only arithmetic, invented bitfield/union classes, volatile and new original addresses are neither required nor authorized.",
+      "The member-anchored unsigned-char view preserves character aliasing, existing owner/type/layout, all other flag bits, prerequisite/icon values and the original reset/upgrade ordering. Actual fresh VC6 objects use byte load/AND/store, not the previous wider word read/write. The original fused memory-AND and schedule remain unmatched.",
+      "Preserve this faithful access narrowing rather than reverting to a wider access for a better similarity score. Neither selected function had a historical byte/shape claim; all other historical identities and current exact/reference verdicts are preserved. Unsuccessful bounded equivalent-mask/source-form trials are retained only as ignored evidence, not adopted or made new source run logs."
+    ],
+    "hypothesis": "The two original operations update only one representation byte of the genuine shared flags word; retain that word and its typed consumers while narrowing these individual accesses.",
+    "kind": "discovery"
+  },
+  "previous_event": "aa4a457c2cb79817bc48cb4fa036ee83b65cd59ab19cc70cc4bef609f89c426c",
+  "request_id": "real-prototype-flag-byte-accesses-oct18",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:prototype-flags-byte-access-oct18"
+}

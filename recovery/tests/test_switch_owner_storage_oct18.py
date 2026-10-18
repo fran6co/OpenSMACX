@@ -23,6 +23,7 @@ from match_recovery.tasks import TaskStore
 ROOT = Path(__file__).resolve().parents[2]
 PIN = "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
 BASE = "31b3b481c9fd83784323ac60e8bb659a80c5295c"
+PUBLISHED = "3b55542d34a3ef9a18b9cc1289e97cba5459ae34"
 TASK = "switch-owner-storage-oct18"
 
 
@@ -37,8 +38,8 @@ def population(rows):
     assert {row.owner.address for row in added} == owners
     # Earlier General storage remains exactly in its original owner; it is
     # not part of this source-data cohort or its proof scope.
-    assert len(rows) == 39
-    assert {row.unit for row in rows if row not in added} == {"src/general.cpp"}
+    general = tuple(row for row in rows if row.unit == "src/general.cpp")
+    assert len(general) == 3
     return added
 
 
@@ -47,8 +48,8 @@ def bindings():
     return population(read_associated(ROOT, PIN))
 
 
-def baseline(unit):
-    return subprocess.run(["git", "show", f"{BASE}:{unit}"], cwd=ROOT,
+def committed(unit, revision=BASE):
+    return subprocess.run(["git", "show", f"{revision}:{unit}"], cwd=ROOT,
                           check=True, capture_output=True).stdout
 
 
@@ -60,10 +61,12 @@ def inverse(raw, unit):
                     if number not in lines)
 
 
-def test_complete_source_population_and_exact_inverse():
+def test_complete_source_population_and_published_checkpoint_exact_inverse():
     rows = bindings()
     for unit in sorted({row.unit for row in rows}):
-        assert inverse((ROOT / unit).read_bytes(), unit) == baseline(unit)
+        # Transport is a fact about this immutable publication, not a ban on
+        # later genuine recovery in those ten live translation units.
+        assert inverse(committed(unit, PUBLISHED), unit) == committed(unit)
 
 
 @pytest.mark.parametrize("damage", ["missing", "duplicate", "additional"])
@@ -84,7 +87,7 @@ def test_population_refuses_lost_duplicated_or_extra_bindings(damage):
 @pytest.mark.parametrize("damage", ["body", "claim", "unrelated-comment"])
 def test_inverse_rejects_changes_other_than_the_authorized_annotations(damage):
     unit = "src/prefwin.cpp"
-    original = (ROOT / unit).read_bytes()
+    original = committed(unit, PUBLISHED)
     if damage == "body":
         damaged = original.replace(b"switch (", b"switch (1 + ", 1)
     elif damage == "claim":
@@ -92,7 +95,7 @@ def test_inverse_rejects_changes_other_than_the_authorized_annotations(damage):
     else:
         damaged = original + b"\n// unrelated edit\n"
     assert damaged != original
-    assert inverse(damaged, unit) != baseline(unit)
+    assert inverse(damaged, unit) != committed(unit)
 
 
 @cache

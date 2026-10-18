@@ -1,0 +1,23 @@
+{
+  "event_id": "4cd93498377c6430d730ad6a7365a218890d8ffe49e3955afbf8dd0a8895ceac",
+  "payload": {
+    "affects": [
+      "entity-62c49ff749d5a20bd1003619e85ca6f9ad2495d10c8e38f91e6b09d53c4868ed",
+      "entity-e1cd0f5da2803675bbfe807c804574a664394e77461a65a1561002fd75049aab"
+    ],
+    "author": "coordinator",
+    "discovery_id": "restore-original-flag-memory-operations-oct18",
+    "evidence": [
+      "Do not bank new exactness or pretend SHAPE_EXACT-to-MISMATCH regressions are gains. Both functions remain mismatches in fresh actual application output. The positive and negative unsigned-character masks and direct-member form were bounded trials with no matching gain; do not blindly repeat them or reintroduce the wider word accesses.",
+      "The native original two-function residual remains181PASS/1FAIL. The only collateral is the separately admitted and fully bounded end_of_game private-stack reload commutation; actual scoped residual passes only with that explicit third emission in scope, and no helpers/data/initializers omitted. Manual review and its diagnostic counterfactual do not replace actual byte equality or automatic preservation.",
+      "Six neighboring legacy colony harness failures reproduce on the unchanged baseline with identical source regions and test code; preserve them as existing failures, not skipped/xfail/passing cases. Full linked selection, async/fault/corrupt-stack effects, runtime/game acceptance and original complete coverage remain unproved. Coordinator authorizes bounded manual integration after source/evidence review and requires fresh zero-omission destination rechecks."
+    ],
+    "hypothesis": "The source now uses the supported original byte widths, but original fused memory-AND instructions and full byte schedules remain restoration obligations.",
+    "kind": "discovery"
+  },
+  "previous_event": "5d09359881135561153b9960054ee592b8261b4b2dfee1fca9aa67f41c1cdafb",
+  "request_id": "restore-original-flag-memory-operations-oct18",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:prototype-flags-byte-access-oct18"
+}

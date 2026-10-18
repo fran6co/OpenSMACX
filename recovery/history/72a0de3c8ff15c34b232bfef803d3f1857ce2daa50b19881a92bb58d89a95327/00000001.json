@@ -1,0 +1,26 @@
+{
+  "event_id": "aa4a457c2cb79817bc48cb4fa036ee83b65cd59ab19cc70cc4bef609f89c426c",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Coordinator reviewed the actual unchanged end_of_game source and fresh physical Game object. Original two-body native residual is181PASS/1FAIL; the sole outside change is the end_of_game root3984B, where only offsets400/401/403/404 differ. Baseline root+18F has MOV EDX,[EBP-C];MOV ESI,[EBP-8], current reverses these adjacent independent loads. All other root bytes, normalized366 relocation sites/kinds/targets/addends and outside metadata match. This is not a new source edit or permission to modify end_of_game.",
+      "Independent ordinary-execution instruction review establishes allocated private frame slots, separate destination registers, no flag/memory/call effects and no direct or resolved table target into the window interior. All three indirect tables were checked through their actual COFF relocation fields. Offsets are unlinked section offsets, not original/linked VAs. The complete root source region and its existing behavior/mutant fixture are unchanged and the fixture passes.",
+      "Authorize only coordinator-reviewed manual admission of this observed commutation while preserving the two-body residualFAIL as an actual limitation. A fresh scoped residual may project this third explicitly reviewed emission only after mechanically checking complete3984B equality except the exact6B permutation and normalized full-root metadata/reference equality under a clearly labeled diagnostic counterfactual. That control is not actual compiled byte equality. No other function/helper/data/initializer may be omitted.",
+      "Do not change the library comparator, weaken a gate, reset a baseline, label the original two-body residual passing or claim automatic acceptance. The instruction argument does not establish asynchronous debugger/signal/fault/corrupt-stack behavior, original function matching, complete linked retention or runtime/game acceptance. Preserve the new two-body byte-access restoration obligations and all existing exact identities; recheck the actual integrated destination with zero omitted bodies."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5392496,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "admit-reviewed-endgame-reload-collateral-oct18",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:prototype-flags-byte-access-oct18"
+}

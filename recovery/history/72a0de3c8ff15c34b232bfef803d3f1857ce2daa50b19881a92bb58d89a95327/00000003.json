@@ -1,0 +1,19 @@
+{
+  "event_id": "5d09359881135561153b9960054ee592b8261b4b2dfee1fca9aa67f41c1cdafb",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "real-prototype-flag-byte-accesses-oct18",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/game.cpp:sub_52a980 updates byte0 of &prototype.flags before icon=-1 for all512records, then retains the two count resets. src/base.cpp:upgrade_prototypes updates byte1 of the real word before the unchanged scan and four-argument upgrade call. No declaration, layout, other body, function marker/span/symbol, claim, compiler profile or linker change.",
+      "recovery/tests/test_prototype_flags_byte_access_oct18.py extracts the actual declarations and bodies, preserves all record neighbors and scan/callback effects, and rejects wrong-bit/wrong-byte/full-word-zero/prerequisite mutants; independent pinned controls establish original byte widths. Existing fixed-data512-row tests retain their behavior and ordering controls.",
+      "The earlier switch-storage transport proof is retained against its immutable published3b checkpoint, not incorrectly applied to every future live CPP body. All36 live dispatch bindings and guard/cell/map/mutation controls remain. The earlier Game DWORD rationale and Base fifth-argument note are retained as explicitly superseded history, not silently erased."
+    ]
+  },
+  "previous_event": "2f219b5740f77df9e01d9aa5b09b4c230ee6f619b31af259f05e603bc8d32b7f",
+  "request_id": "incorporate-real-flag-byte-accesses-oct18",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:prototype-flags-byte-access-oct18"
+}

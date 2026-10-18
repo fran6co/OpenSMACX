@@ -10467,7 +10467,10 @@ void __cdecl upgrade_any_prototypes(int faction_id) {
 //          prototype slots for a same-plan, same-chassis successor that is no
 //          worse in weapon, armour, speed or triad, and upgrade every unit of
 //          the old design to it.
-// BUG IN THE ORIGINAL: the image calls the five-parameter
+// The current declaration and recovered callee have four native arguments;
+// five H tokens in ?upgrade_prototype@@YAHHHHH@Z include the int return type.
+// The earlier interpretation below is superseded, not a live ABI workaround:
+// BUG IN THE ORIGINAL (historical interpretation): the image calls the five-parameter
 //          ?upgrade_prototype@@YAHHHHH@Z here with four pushes (add esp, 0x10
 //          at 0x004F0620), so the callee's fifth parameter is read off the
 //          caller's stack. Reproduced as a four-parameter call; see
@@ -10475,7 +10478,10 @@ void __cdecl upgrade_any_prototypes(int faction_id) {
 
 void __cdecl upgrade_prototypes(int faction_id, int proto_id) {
     int self_offset = proto_id * 0x34;
-    VehPrototypes[proto_id].flags &= ~0x100;
+    // Original 4F047B updates only the high representation byte of the
+    // shared flags word; retain its low byte and the adjacent preq_tech.
+    unsigned char *flags_bytes = reinterpret_cast<unsigned char *>(&VehPrototypes[proto_id].flags);
+    flags_bytes[1] &= 0xFE;
     for (int i = 0; i < 0x80; i++) {
         int other = i;
         if (other >= 0x40) {
