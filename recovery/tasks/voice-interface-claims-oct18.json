@@ -1,0 +1,49 @@
+{
+  "author": "coordinator",
+  "base_revision": "7cc660bd906ac188d0d638050e5c1328e4fc79d1",
+  "editable_files": [
+    "src/voice.cpp"
+  ],
+  "evidence": [
+    "Fresh verified7cc application artifacts show all six complete original spans exact and strict boundary/byte/referencePASS. Independent complete-span decode and unmasked COFF comparison observe no relocations; source has no byte or semantic claim for these six.",
+    "Use only installed recover record with pinned original image, current recipes and established flags. Preserve original identities/catalogue spellings, current virtual symbols, spans and history; no handwritten claim tokens, algorithm/type/layout/provider/flag changes or unclaimed functions outside scope.",
+    "Source already uses genuine Sound-derived VoiceRx/VoiceTx and typed external device views. Preserve pointer-valued get_next_buffer, distinct absent returns and all live delegated results/arguments. Compiler output equality does not establish external DLL runtime or complete game acceptance.",
+    "This step grants measured historical claims only: current3199masked/1930strict-pass census must not be advertised as rising bysix. Require exact source/claim continuity, current native evidence, coordinator review, compile/link continuity and fresh destination recheck."
+  ],
+  "intent": "Bank six already-exact, strict-pass Voice device-interface bodies through the native recorder without altering C++ or inflating current-match coverage.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5016656,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5016688,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5016736,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5017616,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5017648,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5017680,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "voice-interface-claims-oct18"
+}
