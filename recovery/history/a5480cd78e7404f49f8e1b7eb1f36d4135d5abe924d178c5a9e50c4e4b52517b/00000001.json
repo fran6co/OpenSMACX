@@ -1,0 +1,33 @@
+{
+  "event_id": "787a9c763337bb0f426a0a58d00b4545c6da69c46c53eba2fd3c34651cae18dc",
+  "payload": {
+    "affects": [
+      "entity-0934b5b19a64254cb7c7012e526e36638ec40210a3ea68197a4e089c02057558",
+      "entity-0ab8b03836fdc050e815877ae1e64d1547dbe5e17f5b9ac351dac235b5f98f50",
+      "entity-157fcceed03e99ad9e5dcafe051c2c011d42224e3d692f2fa520da29655dd77f",
+      "entity-2732f28c4b36e3e79a0bf8c178deb2fff9a8bcd03117b76d394e70a7e8f9b284",
+      "entity-4d254dccbe65baa4ca3c01c7ced58662761f821a44d13543cf419b906fb02a33",
+      "entity-7afef8eefe6d9dfa483f64fa45550ca65b1d6ee569203aa9f6d7e9a38f272eb0",
+      "entity-8d598c53a0fb3e36bfa9f72344562f0fff6bf6249d6bbcef3c10dadc56e9c089",
+      "entity-958ba2848f3bea18226c3b56b2257716d22ab99e276cd64feb72b7fb69643f47",
+      "entity-be2811dab080e0a85aa9523862c660dfa8f860350e254b2112830c10ae211999",
+      "entity-bfc0566319616e2e2b3feb049d8a9f1bb53faf2fa2d614139ee166a42ce699a8",
+      "entity-f4919c86e38cf403a95aa972c6f1d737ff057052c651284a3f18f9a2a08eb5c9",
+      "entity-f63305f8ef22934d3304f91263b38e0e0f17b5eb85786db2666f07de0faae78b"
+    ],
+    "author": "coordinator",
+    "discovery_id": "nontrivial-class-result-bookkeeping",
+    "evidence": [
+      "Complete original8arithmetic-span review identifies leading zero in add634720,multiply634980,scaled634AD0 alongside identity scratch and nine-dword value publication; current aggregate source lacks that leading local. Standalone6346C0/634B70 write same9identitycells but adjacency/return residue do not prove lifecycle roles.",
+      "Native aggregate/default-constructor controls produce identical bodies under both settled profiles. Separate ordinary nine-float constructor+identity-reset-destructor controls introduce the leading class-result zero and extra4-byte frame without padding or unused locals. Synthetic compiler characterization is not an original constructor/destructor identity or cleanup proof.",
+      "First three-form8body native deck completed12compilerattempts with valid unchanged/damagecontrols; no new exact functions and no candidate source applied. Hostbaseline44pass2skip, existing native alias/NaN controls3pass; original class/extent/callers/ABI/x87 obligations remain."
+    ],
+    "hypothesis": "Three original value-result methods have a leading zero outside the nine copied cells. Ordinary identity construction alone does not reproduce it; a nine-float nontrivial-destructor compiler control does. This supports investigating missing C++ lifetime semantics, not fake padding or more arbitrary loop spellings. Which original entry is a constructor/destructor and its cleanup effects remain unproved.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "nontrivial-class-result-bookkeeping",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:matrix3-loop-cohort-oct18"
+}

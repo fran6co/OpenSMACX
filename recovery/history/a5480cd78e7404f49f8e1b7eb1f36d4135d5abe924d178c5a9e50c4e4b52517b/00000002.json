@@ -1,0 +1,25 @@
+{
+  "event_id": "ad1f913d1a95550976bfbd20e829855548bd66a198c98a90d7c8e3976ebed4d1",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_general_matrix_vc6_runtime_control.py",
+      "recovery/tests/test_matrix3_consolidated_actual_source.py",
+      "recovery/tests/test_matrix3_pointer_returns.py",
+      "recovery/tests/test_matrix3_value_results_oct12b.py",
+      "src/matrix3.h"
+    ],
+    "evidence": [
+      "Coordinator authorizes a bounded header/body lifetime-hypothesis deck and any strictly necessary actual-source fixture adaptations, retaining same immutable baseline,12subjects and original source facts/claims/scaffold roles. This expands the original no-header restriction solely to characterize ordinary identity construction and nontrivial destruction.",
+      "Do not add original constructor/destructor mappings by guess, promote original owner/extent/lifetime proof from synthetic controls, bank claims, force volatile/dummy stores, or change flags. Compare empty versus identity-reset destruction as distinct unproved hypotheses; no candidate applies automatically.",
+      "Publication still requires actual original/effect review and fresh full C++ build/link/physical/source continuity. If compiler equivalence cannot discriminate original cleanup, retain discovery unresolved and do not assert a faithful complete lifetime recovery. Preserve existing test witnesses rather than weakening to accept an arbitrary body."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "787a9c763337bb0f426a0a58d00b4545c6da69c46c53eba2fd3c34651cae18dc",
+  "request_id": "investigate-matrix-result-lifetime-source-closure",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:matrix3-loop-cohort-oct18"
+}

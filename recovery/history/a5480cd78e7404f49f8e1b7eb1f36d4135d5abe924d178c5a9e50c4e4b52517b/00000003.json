@@ -1,0 +1,34 @@
+{
+  "event_id": "ecb867a1d61309d50dcd5f9a18bb27a4c3b8f01986b4d82ad0bcc1e117a91a1b",
+  "payload": {
+    "affects": [
+      "entity-0934b5b19a64254cb7c7012e526e36638ec40210a3ea68197a4e089c02057558",
+      "entity-0ab8b03836fdc050e815877ae1e64d1547dbe5e17f5b9ac351dac235b5f98f50",
+      "entity-157fcceed03e99ad9e5dcafe051c2c011d42224e3d692f2fa520da29655dd77f",
+      "entity-2732f28c4b36e3e79a0bf8c178deb2fff9a8bcd03117b76d394e70a7e8f9b284",
+      "entity-4d254dccbe65baa4ca3c01c7ced58662761f821a44d13543cf419b906fb02a33",
+      "entity-7afef8eefe6d9dfa483f64fa45550ca65b1d6ee569203aa9f6d7e9a38f272eb0",
+      "entity-8d598c53a0fb3e36bfa9f72344562f0fff6bf6249d6bbcef3c10dadc56e9c089",
+      "entity-958ba2848f3bea18226c3b56b2257716d22ab99e276cd64feb72b7fb69643f47",
+      "entity-be2811dab080e0a85aa9523862c660dfa8f860350e254b2112830c10ae211999",
+      "entity-bfc0566319616e2e2b3feb049d8a9f1bb53faf2fa2d614139ee166a42ce699a8",
+      "entity-f4919c86e38cf403a95aa972c6f1d737ff057052c651284a3f18f9a2a08eb5c9",
+      "entity-f63305f8ef22934d3304f91263b38e0e0f17b5eb85786db2666f07de0faae78b"
+    ],
+    "author": "coordinator",
+    "discovery_id": "lifetime-hypotheses-remain-indistinguishable",
+    "evidence": [
+      "Corrected native paired header/body overlay deck completed14compilerattempts with independent unchanged-replica and body/header damage controls in both settled profiles. Both destructor hypotheses make add634720 strictly boundary/byte/reference exact in the frameless trial; both leave multiply/scaled mismatched. Constructor-only negative control remains mismatched. No source or claim publication occurred.",
+      "Original6346C0 and634B70 both initialize the nine observed float cells; no independent caller/cleanup evidence discriminates their lifecycle roles. The apparent6346B0 entry is inside a preceding ret8 encoding, not a separate destructor. Do not relabel by adjacency or install arbitrary cleanup to gain a match.",
+      "Actual-source host controls cover valid partial input/output overlap within the nine-float array, all three asymmetric transform cancellation groupings and receiver/operand/result aliasing. Compiled reassociation, early-store and missing-row mutants are rejected under GCC and Clang. These controls do not establish original owner/extent/callers/lifetime or x87 exception timing.",
+      "Coordinator stops this bounded loop/lifetime spelling axis without installing a C++ candidate. Preserve the12SCAFFOLD mappings and all historical restoration obligations; unresolved source/model findings are not acceptance."
+    ],
+    "hypothesis": "Nontrivial destruction explains one value-return code pattern, but the paired empty and identity-resetting destructor hypotheses are indistinguishable at the three original arithmetic anchors. Neither cleanup behavior nor original lifecycle ownership is established. No product hypothesis is applied; the lifetime discovery remains pending.",
+    "kind": "discovery"
+  },
+  "previous_event": "ad1f913d1a95550976bfbd20e829855548bd66a198c98a90d7c8e3976ebed4d1",
+  "request_id": "lifetime-hypotheses-remain-indistinguishable",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:matrix3-loop-cohort-oct18"
+}
