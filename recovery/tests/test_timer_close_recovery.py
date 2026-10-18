@@ -29,7 +29,7 @@ def timer_objects():
     compiler = Compiler(ROOT, profile=settings.compiler_profile)
     return compiler, settings, {unit: [Coff(compiler(ROOT / unit, (), flags + settings.layout_flags))
                                       for flags in settings.flag_sets]
-        for unit in ("src/time.cpp", "src/time_lifecycle.cpp", "src/win.cpp",
+        for unit in ("src/time.cpp", "src/timer_messages.cpp", "src/time_lifecycle.cpp", "src/win.cpp",
                      "src/editbox.cpp", "src/flatbutton.cpp", "src/netmsg.cpp", "src/console.cpp")}
 
 
@@ -107,7 +107,7 @@ def test_lifecycle_and_all_emitted_stop_timers_copies_match_targets(timer_object
         units = {unit: trials[trial] for unit, trials in objects.items()}
         targets, _ = object_targets(read_objects(ROOT, image_pin(ROOT)), units)
         imports, _ = import_targets(read_imports(ROOT), units, image)
-        targets[symbol_at("src/time.cpp", 0x5FD370)] = 0x5FD370
+        targets[symbol_at("src/timer_messages.cpp", 0x5FD370)] = 0x5FD370
         targets["?close@Time@@QAEXXZ"] = 0x616780
         targets["?stop@Time@@QAEXXZ"] = 0x616730
         for unit, address in (("src/time.cpp", 0x616730),

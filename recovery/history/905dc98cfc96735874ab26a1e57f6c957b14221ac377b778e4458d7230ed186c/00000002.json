@@ -1,0 +1,21 @@
+{
+  "event_id": "f0dd0d19907e8c3f4fb2a7369d6668badc21e50591d213e204792174888656e2",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/win.h",
+      "src/win_message_state.h"
+    ],
+    "evidence": [
+      "Move only the existing MsgStatus extern uint32_t declaration and complete adjacent load-bearing rationale into a new minimal GPL header with stdint.h and pragma once; include it at the same declaration location in win.h. The new queue TU includes it instead of the Win class header.",
+      "Do not change Win storage, any class/member/function/inline definition, exported annotation, calling convention, compiler flags or original mappings. Source/context continuity and whole physical existing-object equality outside the seven task bodies remain mandatory. This file expansion is not acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "a2acaa7070ed75122b7b6464bb7b54025279ba32278e7cf5f5a202c495ed0ec7",
+  "request_id": "authorize-minimal-message-state-interface",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:timer-message-boundary-oct18"
+}

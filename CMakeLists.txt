@@ -266,6 +266,7 @@ set(OPENSMACX_SOURCES
     src/textindex.cpp
     src/time.cpp
     src/time_lifecycle.cpp
+    src/timer_messages.cpp
     src/enemy.cpp
     src/veh.cpp
     src/vehicle_orders.cpp

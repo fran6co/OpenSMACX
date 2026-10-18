@@ -1,0 +1,22 @@
+{
+  "event_id": "a2acaa7070ed75122b7b6464bb7b54025279ba32278e7cf5f5a202c495ed0ec7",
+  "payload": {
+    "affects": [
+      "entity-10a9b8608b29494352650e8d05b83c4cf335faf157dbb8e370a0d848fc7aeaf8"
+    ],
+    "author": "coordinator",
+    "discovery_id": "timer-drain-broad-state-header",
+    "evidence": [
+      "Initial fresh167TU/181object application builds/links. All180existing-object residuals pass and the complete relocated flush COFF function equals its prior definition. New-unit presence correctly fails on seven unrelated inline bodies plus associated directives from win.h: Spot clear/shutdown, Buffer get_data/get_hdc/release_hdc, do_draw/do_keyboard.",
+      "The full source drain uses only MSG/USER32 declarations from stdafx.h and uint32_t MsgStatus, currently declared under the Win message-pump state rationale in win.h. Its ordinary declaration can be shared separately; retain the source-owned definition, type, provenance and all Win/class/inline bodies.",
+      "Preserve this failed new-unit counterexample and initial checks; do not omit unrelated inline code or waive the presence check. Require a fresh final build and empty residual for the new TU after its sole transported function is accounted for."
+    ],
+    "hypothesis": "The new timer-message TU requires only the existing MsgStatus declaration, but including win.h forces seven unrelated MEASURED inline bodies into it; separate the shared state interface without changing any existing function or storage.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "timer-drain-broad-state-header",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:timer-message-boundary-oct18"
+}

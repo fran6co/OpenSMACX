@@ -1,0 +1,20 @@
+{
+  "event_id": "d884053a6a03ca38afec0bc5b5aefe626cafd4aabba82d26b18e309bb3120dad",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "timer-drain-broad-state-header",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/timer_messages.cpp now includes only stdafx.h, time.h and the minimal win_message_state.h declaration of the existing Win-owned MsgStatus object. It no longer imports the seven unrelated MEASURED inline bodies. No additional storage or independent function is emitted in that new object.",
+      "The attempted shared-header rollout through win.h changed15 outside-scope bodies in7objects; the failed evidence is retained. Narrow the authorized interface arrangement: win.h remains byte-for-byte baseline, with its existing compatible extern declaration and rationale; only the new queue owner uses the minimal header. All180 old physical object residuals now pass outside the seven timer subjects and transported drain; the complete moved drain including associated FPO is unchanged.",
+      "Resolve only the unwanted-runtime-copy dependency finding. The earlier empty-residual requirement is NOT fully met: raw new-unit presence still FAILS on .drectve and compiler metadata. Its two default-library directives match36 existing copies, but this does not waive that failure or establish linked retained selection/allocation. These proof obligations remain open; this resolution is not task, native automatic or game acceptance.",
+      "Fresh candidate167TU/181object build/link, whole source/claim/mapping/reference continuity,71host tests,10properly leased native tests, independent final source review and full mapped-artifact census pass their bounded checks. Seven selected masked bodies improve; all prior masked and strict cohort verdicts remain unchanged. Three new strict passes and four import-binding unknowns remain distinct. No claims, compiler flags, Time bodies, lifecycle topology or original quirks changed."
+    ]
+  },
+  "previous_event": "f0dd0d19907e8c3f4fb2a7369d6668badc21e50591d213e204792174888656e2",
+  "request_id": "incorporate-narrow-state-dependency",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:timer-message-boundary-oct18"
+}
