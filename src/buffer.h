@@ -310,54 +310,14 @@ void draw_dest_unk1(Buffer *, int, int, int, int, unsigned char *);
   static int init_class();
   void close_class();
   int sync_to_palette(Palette *palette);
-  // IN-CLASS, because the image INLINES BOTH into every drawing primitive
-  // that touches the pixels - `hline`, `vline`, `fill`, `copy` - and VC6
-  // inlines only what it can see here. Each still emits its own COMDAT, so
-  // each keeps the claim beside its marker in buffer.cpp.
+  // The definition is in buffer.cpp, before its inline-consuming drawing
+  // primitives but after copy/draw_pie. Other translation units see only
+  // this declaration and make the direct calls observed in the image.
   // Pointer-valued source contract: original 5E3380/5E3396/5E33DE returns
   // dib_bits_, locked_bits_, or DirectDraw lpSurface. The stripped image
   // does not establish the original declared return type; void* preserves
   // that observed storage identity without asserting an original prototype.
-  MEASURED void *get_data() {   // 005E3373
-      // ONE `return 0` FOR EVERY FAILURE, at the end: the image's `je` at
-      // 0x005E3388 jumps the whole length of the body to 0x005E33E5, where the
-      // Lock failure lands too. Written as an early `return 0` inside the first
-      // arm, VC6 emits a second epilogue there and the tail moves.
-      if (surface_ == nullptr) {
-          // Without a surface the buffer publishes its own storage, and the
-          // store happens whether or not that storage exists. IT RETURNS THAT
-          // STORAGE EITHER WAY - the null path is not a `return 0`, which is
-          // why the epilogue it jumps to at 0x005E33E5 has no `xor eax, eax`:
-          // eax already holds `dib_bits_`, and that IS the zero.
-          locked_bits_ = dib_bits_;
-          if (dib_bits_ != nullptr) {
-              ++surface_lock_count_;
-          }
-          return dib_bits_;
-      }
-      if (locked_bits_ != nullptr) {
-          ++surface_lock_count_;
-          return locked_bits_;
-      }
-      {
-          // THE DESCRIPTOR IS UNINITIALISED APART FROM ITS SIZE, which is what
-          // the image does and what DirectDraw asks for: `Lock` fills the rest.
-          DDSURFACEDESC description;
-          description.dwSize = sizeof(description);
-          // THIS failure returns zero where it stands - the image's
-          // `xor eax, eax` at 0x005E33C6 is inline - while the `dib_bits_`
-          // case above jumps the length of the body to the other zero at the
-          // end. Two of them, and which is which is not interchangeable.
-          if (surface_->Lock(nullptr, &description, DDLOCK_WAIT, nullptr) != 0) {
-              return 0;
-          }
-          ++surface_lock_count_;
-          stride_ = description.lPitch;
-          locked_bits_ = description.lpSurface;
-          return description.lpSurface;
-      }
-      return 0;
-  }
+  MEASURED void *get_data();
 
   // 0x005E34A3, OUT OF LINE in buffer.cpp. The image CALLS this at 43 sites
   // rather than folding it, so an in-class definition - which VC6 inlines

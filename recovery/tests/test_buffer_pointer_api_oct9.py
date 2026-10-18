@@ -12,7 +12,7 @@ from match_recovery.includes import COMMENTS_OR_STRINGS
 
 
 ROOT = Path(__file__).resolve().parents[2]
-HEADER = ROOT / "src/buffer.h"
+CPP = ROOT / "src/buffer.cpp"
 
 HARNESS = r'''#include <cassert>
 #include <cstdint>
@@ -49,8 +49,10 @@ class Buffer {
   void *dib_bits_;
   int surface_lock_count_;
   unsigned int stride_;
-  ACTUAL_GET_DATA
+  void *get_data();
 };
+
+ACTUAL_GET_DATA
 
 static unsigned char dib_storage[32];
 static unsigned char surface_storage[64];
@@ -96,12 +98,12 @@ int main() {
 
 
 def _actual_method() -> str:
-    source = HEADER.read_text(encoding="utf-8")
+    source = CPP.read_text(encoding="utf-8")
     masked = COMMENTS_OR_STRINGS.sub(
         lambda match: "".join("\n" if char == "\n" else " "
                                for char in match[0]), source
     )
-    signature = "void *get_data()"
+    signature = "void *Buffer::get_data()"
     start = masked.index(signature)
     opening = masked.index("{", start + len(signature))
     depth = 0

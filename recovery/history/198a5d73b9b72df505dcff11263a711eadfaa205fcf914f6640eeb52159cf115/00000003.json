@@ -1,0 +1,21 @@
+{
+  "event_id": "73a7101bd79f9d724c0aefd065f8d285e4749b5ace7706f6417f84a69fe1c7ce",
+  "payload": {
+    "affects": [
+      "entity-f0405a8b59f8c4b23e82446dd796c94c986c8ae73b6799af7677d9ed9cd0d158"
+    ],
+    "author": "coordinator",
+    "discovery_id": "public-getter-definition-and-internal-inlining",
+    "evidence": [
+      "Independent pinned/source review confirms identical acquisition behavior and identical moved copy/pie bodies. Fresh actual artifacts prove one Buffer definition and original external call relationships, while other Buffer methods gain real calls instead of compiler-inlined bodies. The original does not establish whether those repeated acquisitions were method inlining or hand-written operations.",
+      "Do not add forced-inline attributes, invent helpers or duplicate protocols to hide this result. Retain original claims and the internal-call restoration obligation. The larger original blitter branch structure remains independently unfinished."
+    ],
+    "hypothesis": "The real out-of-line getter and ordinary external callers remove artificial header/PMF ownership, but same-TU definition visibility alone does not restore original Buffer acquisition inlining.",
+    "kind": "discovery"
+  },
+  "previous_event": "feb0a7231142a22673811e53e0bda433b63761b76e888779e9fddfb49c7f1823",
+  "request_id": "public-getter-definition-and-internal-inlining",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:buffer-get-data-visibility-oct19"
+}

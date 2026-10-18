@@ -68,6 +68,376 @@
 #include "jackal/graphics_language.h"  // shared localized graphics setting
 
 #include <new>
+#include <math.h>
+
+/*
+Purpose: THE BLITTER. Copy a rectangle out of this buffer into `buffer`,
+         clipping the read against this buffer's own extent and the write
+         against the destination's clip rectangle, and handling the case
+         where source and destination are the same object.
+// HAND-WRITTEN ASSEMBLY IN THE ORIGINAL, so byte-exactness is NOT reachable
+// from C++ and the honest ceiling is semantic equivalence. The shipped bytes
+// save and restore the FLAGS around a block - `pushf` ... `popf` - things a compiler has no reason to emit, because it owns the flags
+// between setting and reading them.
+//
+// Found by `tools/handwritten_asm.py`. Do NOT grind spellings here, and do NOT
+// answer it with `__asm`: a semantic C++ body is worth more than a byte-exact
+// assembly one.
+//
+// ORIGINAL: 0x005DFF00 ?copy@Buffer@@QAEHPAVBuffer@@HHHHHH@Z 0x005DFF00-0x005E079B
+// TRIED: byte-exactness, twice over, and it was RULED OUT IN PROSE ONLY
+//   until now - which is why `frontier.py --untouched` kept offering this
+//   body. Both reasons are mechanical facts, not judgements.
+//   (1) The original disassembly contains `pushf` and
+//   `popf`. The shipped bytes save and restore FLAGS around a block, which
+//   no compiler emits because it owns the flags between setting and reading
+//   them, so no C++ spelling can produce these bytes.
+//   (2) Measured 2026-08-22: 196 instructions against the image's 761,
+//   similarity 0.255, first divergence at instruction 7. The image writes
+//   the same-buffer case FOUR times - one arm per combination of "the
+//   horizontal shift needs a backwards copy" and "the vertical shift needs
+//   rows in reverse" - each repeating the whole clip / `get_data` /
+//   pointer-compute / `free_data` sequence inline; the three largest gaps
+//   are runs of 188, 199 and 89 instructions. This body collapses those
+//   four arms into a row direction plus `memmove`, deliberately.
+//   The honest ceiling is SEMANTIC, and `osmx semantic` refuses at this
+//   instruction count. Closing it means writing the four arms back out,
+//   which is a different body rather than an adjustment to this one - and
+//   it still could not be byte-exact, because of (1). Do not answer it with
+//   `__asm`: a semantic C++ body is worth more than a byte-exact assembly
+//   one.
+// symbol    ?copy@Buffer@@QAEHPAV1@HHHHHH@Z
+// size      2203 bytes
+// prototype int (__thiscall ?copy@Buffer@@QAEHPAVBuffer@@HHHHHH@Z)(Buffer* this, Buffer*, int, int, int, int, int, int)
+// callers   51   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005E3373 0x005E34A3
+// indirect  0x005DFFDD 0x005E0705
+Return Value: 0 for a completed or fully clipped copy, 3 for a bad argument
+              or a surface that would not lock, 7 for no pixel storage
+Status: WIP
+
+PROMOTED FROM src/recovered/units/005dff00.cpp, which is deleted. That unit
+reached the image through raw offsets - `*(int *)(bb + 0x4a8)` for the
+destination stride, `*(int *)(self + 0x84)` for the negated height - and
+through two macros and four `goto` labels, because when it was written none
+of those offsets had names. They all do now, and the two macros are one
+call: `REL_BUF_R3` and the `LRelSurfR3` label together are `free_data`, the
+no-surface arm and the surface arm, inlined by hand.
+
+NOT BYTE-EXACT, AND FAR FROM IT: 237 instructions against the image's 761,
+similarity 0.255. The gap is one deliberate decision, and it is worth
+knowing before anyone tries to close it.
+
+The image writes the same-buffer case FOUR TIMES - once per combination of
+"the horizontal shift needs a backwards copy" and "the vertical shift needs
+rows in reverse" - and each of the four repeats the whole clip,
+`get_data`, pointer-compute and `free_data` sequence inline. That is close
+to five hundred instructions of duplication, and it accounts for nearly all
+of the difference: the three largest gaps against the image are runs of
+188, 199 and 89 instructions.
+
+Here the four arms collapse into a row direction and `memmove`, because
+`memmove` is the C spelling of both halves of what the direction flag does.
+That is one readable arm instead of four unreadable ones, and it is the
+same computation. The preserved unit chose the other way - it kept all four
+arms specifically so "the clip/get_data()/pointer-compute code is repeated
+with the same multiplicity as the original" - and even then could not
+express the reversed intra-row copy through `memcpy`, so it did not match
+either.
+
+To close this properly the four arms have to come back, with `get_data` and
+`free_data` inlined at each of them, which is a different body from this
+one rather than an adjustment to it.
+*/
+// HISTORICAL HYPOTHESIS (2026-09-17): The body was moved in-class based on a
+// proposed PAU/PAV Flic COMDAT explanation for observed mangled names. No
+// original COFF/PDB evidence established that duplicate-COMDAT theory.
+
+int Buffer::copy(Buffer *buffer, int xCoord, int yCoord, int wx, int wy,
+                 int width, int height) {
+    if (dib_bits_ == nullptr && surface_ == nullptr) {
+        return 7;
+    }
+    if (buffer == nullptr) {
+        return 3;
+    }
+
+    // A negative read position shrinks the extent and shifts the write
+    // position by the overhang, then clamps: the standard blit clip.
+    if (xCoord < 0) {
+        width += xCoord;
+        wx -= xCoord;
+        xCoord = 0;
+    }
+    if (yCoord < 0) {
+        height += yCoord;
+        wy -= yCoord;
+        yCoord = 0;
+    }
+
+    // `biHeight` is stored negative, so `-biHeight` is the row count.
+    if (xCoord > dib_.bmiHeader.biWidth
+        || yCoord > -dib_.bmiHeader.biHeight) {
+        return 0;
+    }
+    if (xCoord + width > dib_.bmiHeader.biWidth) {
+        width = dib_.bmiHeader.biWidth - xCoord;
+    }
+    if (yCoord + height > -dib_.bmiHeader.biHeight) {
+        height = -(yCoord + dib_.bmiHeader.biHeight);
+    }
+
+    // The write rectangle, clipped against the destination's own clip rect.
+    RECT clipped;
+    clipped.left = wx;
+    clipped.top = wy;
+    clipped.right = wx + width;
+    clipped.bottom = wy + height;
+    if (!IntersectRect(&clipped, &clipped, &buffer->rect1_)) {
+        return 0;
+    }
+
+    // Whatever the intersection moved the write rect by, the read position
+    // moves with it; the extent comes from the intersected rect.
+    xCoord += clipped.left - wx;
+    yCoord += clipped.top - wy;
+    width = clipped.right - clipped.left;
+    height = clipped.bottom - clipped.top;
+
+    if (clipped.left >= buffer->dib_.bmiHeader.biWidth
+        || clipped.top >= -buffer->dib_.bmiHeader.biHeight
+        || buffer->get_data() == 0) {
+        return 3;
+    }
+    uint8_t *const write = static_cast<uint8_t *>(buffer->locked_bits_)
+        + buffer->stride_ * clipped.top + clipped.left;
+    if (write == nullptr) {
+        return 3;
+    }
+
+    if (xCoord >= dib_.bmiHeader.biWidth
+        || yCoord >= -dib_.bmiHeader.biHeight
+        || get_data() == 0) {
+        buffer->free_data(1);
+        return 3;
+    }
+    uint8_t *const read = static_cast<uint8_t *>(locked_bits_)
+        + stride_ * yCoord + xCoord;
+    if (read == nullptr) {
+        buffer->free_data(1);
+        return 3;
+    }
+
+    if (buffer != this) {
+        // Different objects cannot overlap, so rows go in either order.
+        uint8_t *destination = write;
+        const uint8_t *source = read;
+        for (int row = 0; row < height; ++row) {
+            memcpy(destination, source, static_cast<size_t>(width));
+            source += stride_;
+            destination += buffer->stride_;
+        }
+    } else {
+        // SAME BUFFER, so the two rectangles can overlap. Rows are walked
+        // from whichever end keeps the read ahead of the write, and each row
+        // is moved rather than copied because the horizontal shift can
+        // overlap too.
+        const int step = (wy < yCoord) ? 1 : -1;
+        const int first = (wy < yCoord) ? 0 : height - 1;
+        uint8_t *destination = write + first * static_cast<int>(buffer->stride_);
+        uint8_t *source = read + first * static_cast<int>(stride_);
+        for (int row = 0; row < height; ++row) {
+            memmove(destination, source, static_cast<size_t>(width));
+            destination += step * static_cast<int>(buffer->stride_);
+            source += step * static_cast<int>(stride_);
+        }
+    }
+
+    free_data(1);
+    buffer->free_data(1);
+    return 0;
+}
+
+
+// ORIGINAL: 0x005DEFE0 sub_5defe0 0x005DEFE0-0x005DF56B FILE
+// symbol    ?draw_pie@Buffer@@QAEHPAUtagRECT@@HHHHHH@Z
+// TRIED: MISMATCH #4 (push vs mov, prologue). `this` is a Buffer* (this->get_hdc()/release_hdc-equivalent at fields 0x58/0x60/ 0x64/0x68 via slot17/26, matching every other Buffer HDC-lock site this batch touched); the *second*, separate pixel-lock at fields 0x50/0x58/0x6c via slot32 (offset 0x80) matches the 0x005E07A0-shaped Lock/Unlock pattern, not the HDC one - transcribed as its own inline block rather than reusing release_hdc, since it unlocks through a different slot and counter field. a4/a5 are read via `fild`/`fidiv` (integer loads), not native floats - Ghidra's own `float param_4` typing is wrong; the raw asm is authoritative there. Ghidra's local_XX names also do not track 1:1 with this function's real ebp offsets (verified by hand for the dx/dy/cx/cy/angle block: local_1c looked like "cx" per the disassembly, not "dx" as Ghidra's own text order implied), so the geometry section is transcribed from the raw asm, not the decompiled text.
+// All seven explicit arguments are native integers. Color indices require
+//0..255, total must be nonzero, and geometry/arithmetic must fit native signed
+//32-bit operations. CRT/x87 intermediate-status preservation remains unknown.
+int Buffer::draw_pie(RECT *area, int first_color, int second_color,
+                     int amount, int total, int thickness, int unused) {
+    if (area == 0) return 16;
+    int width = area->right - area->left;
+    int height = area->bottom - area->top;
+    int center_y = height / 2 + area->top;
+    int center_x = width / 2 + area->left;
+    if (amount == 0) first_color = second_color;
+    else if (amount == total) second_color = first_color;
+
+    float width_float = static_cast<float>(width);
+    float half_width = width_float * 0.5f;
+    float half_height = static_cast<float>(height) * 0.5f;
+    // Native66D8BC is6.28f, NOT an exact two-pi value.
+    double angle = static_cast<double>(amount) * 6.28f / total;
+    float sine_width = static_cast<float>(sin(angle) * width_float);
+    double cosine_width = cos(angle) * width_float;
+    int wedge_x = static_cast<int>(center_x + sine_width);
+    int wedge_y = static_cast<int>(center_y - cosine_width);
+    float ratio = static_cast<float>(cosine_width / sine_width);
+
+    RECT remap;
+    remap.left = 0;
+    remap.right = 0;
+    // Original does NOT initialize top/bottom outside the middle-half arm.
+    // Keep that original error path visible pending coordinator decision;
+    // do not mistake the old seed's four zero stores for native behavior.
+    if (amount * 4 >= total && amount * 4 <= total * 3) {
+        remap = *area;
+        if (amount * 2 == total) {
+            remap.right = center_x;
+        } else {
+            double height_squared = static_cast<double>(half_height) * half_height;
+            double numerator = height_squared * half_width * half_width;
+            double denominator = static_cast<double>(ratio) * ratio
+                * half_width * half_width + height_squared;
+            double radius = sqrt(numerator / denominator) + 0.5;
+            if (amount * 2 > total) radius = -radius;
+            remap.right = static_cast<int>(radius) + center_x;
+        }
+    }
+    remap.top += thickness;
+    remap.bottom += thickness;
+    // get_hdc itself performs the one native locked-pixels query. The seed
+    // prequery followed by get_hdc would incorrectly call the virtual twice.
+    HDC dc = get_hdc();
+    SetArcDirection(dc, AD_CLOCKWISE);
+    const PALETTEENTRY &first = PaletteActive->entries()[first_color];
+    HBRUSH first_brush = CreateSolidBrush(RGB(first.peRed, first.peGreen, first.peBlue));
+    const PALETTEENTRY &second = PaletteActive->entries()[second_color];
+    HBRUSH second_brush = CreateSolidBrush(RGB(second.peRed, second.peGreen, second.peBlue));
+    HGDIOBJ old_brush = SelectObject(dc, first_brush);
+    HGDIOBJ null_pen = GetStockObject(NULL_PEN);
+    HGDIOBJ old_pen = SelectObject(dc, null_pen);
+    area->bottom += thickness;
+    area->top += thickness;
+    SelectObject(dc, amount * 4 < total ? second_brush : first_brush);
+    Pie(dc, area->left, area->top, area->right, area->bottom,
+        area->right, area->top, area->right, area->top);
+    area->bottom -= thickness;
+    area->top -= thickness;
+    RECT strip;
+    SetRect(&strip, area->left, center_y, width + area->left, center_y + thickness);
+    fill(&strip, amount * 4 < total ? second_color : first_color);
+
+    if (dib_bits_ != 0 || surface_ != 0) {
+        // The original intersects against Buffer's clip RECT20, NOT the
+        // caller's ellipse bounds as the retained seed guessed.
+        if (IntersectRect(&remap, &rect1_, &remap)
+            && remap.left < dib_.bmiHeader.biWidth
+            && remap.top < -dib_.bmiHeader.biHeight) {
+            if (get_data() != 0) {
+                unsigned char *pixel = static_cast<unsigned char *>(locked_bits_)
+                    + static_cast<int>(stride_) * remap.top + remap.left;
+                if (pixel != 0) {
+                    int columns = remap.right - remap.left;
+                    int rows = remap.bottom - remap.top;
+                    int remainder = static_cast<int>(stride_) - columns;
+                    do {
+                        int count = columns;
+                        do {
+                            if (*pixel == static_cast<unsigned char>(first_color))
+                                *pixel = static_cast<unsigned char>(second_color);
+                            ++pixel;
+                        } while (--count != 0);
+                        pixel += remainder;
+                    } while (--rows != 0);
+                    free_data(1);
+                }
+            }
+        }
+    }
+    SelectObject(dc, GetStockObject(BLACK_PEN));
+    if (amount == total || amount == 0) {
+        Ellipse(dc, area->left, area->top, area->right, area->bottom);
+    } else {
+        SelectObject(dc, second_brush);
+        Pie(dc, area->left, area->top, area->right, area->bottom,
+            center_x, area->top, wedge_x, wedge_y);
+        SelectObject(dc, first_brush);
+        Pie(dc, area->left, area->top, area->right, area->bottom,
+            wedge_x, wedge_y, center_x, area->top);
+    }
+    SelectObject(dc, old_brush);
+    SelectObject(dc, old_pen);
+    DeleteObject(first_brush);
+    DeleteObject(second_brush);
+    release_hdc(1);
+    return 0;
+}
+
+/*
+Purpose: Acquire the buffer's pixel data, locking the DirectDraw surface on the
+         first reference and counting every acquisition.
+// ORIGINAL: 0x005E3373 ?get_data@Buffer@@QAEHXZ 0x005E3373-0x005E33EA BYTE_EXACT
+// body      src/buffer.cpp
+// symbol    ?get_data@Buffer@@QAEPAXXZ
+// size      119 bytes
+// prototype int (__thiscall ?get_data@Buffer@@QAEHXZ)(Buffer* this)
+// callers   48   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x005E33BF
+// notes     Runtime redirect installed by DllMain after byte-signature validation
+Status: Complete
+*/
+
+// The original copy/draw_pie paths call this member; later drawing methods
+// can see its definition here. Other translation units see only the header
+// declaration, rather than needing member-pointer calls to hide an inline body.
+void *Buffer::get_data() {   // 005E3373
+      // ONE `return 0` FOR EVERY FAILURE, at the end: the image's `je` at
+      // 0x005E3388 jumps the whole length of the body to 0x005E33E5, where the
+      // Lock failure lands too. Written as an early `return 0` inside the first
+      // arm, VC6 emits a second epilogue there and the tail moves.
+      if (surface_ == nullptr) {
+          // Without a surface the buffer publishes its own storage, and the
+          // store happens whether or not that storage exists. IT RETURNS THAT
+          // STORAGE EITHER WAY - the null path is not a `return 0`, which is
+          // why the epilogue it jumps to at 0x005E33E5 has no `xor eax, eax`:
+          // eax already holds `dib_bits_`, and that IS the zero.
+          locked_bits_ = dib_bits_;
+          if (dib_bits_ != nullptr) {
+              ++surface_lock_count_;
+          }
+          return dib_bits_;
+      }
+      if (locked_bits_ != nullptr) {
+          ++surface_lock_count_;
+          return locked_bits_;
+      }
+      {
+          // THE DESCRIPTOR IS UNINITIALISED APART FROM ITS SIZE, which is what
+          // the image does and what DirectDraw asks for: `Lock` fills the rest.
+          DDSURFACEDESC description;
+          description.dwSize = sizeof(description);
+          // THIS failure returns zero where it stands - the image's
+          // `xor eax, eax` at 0x005E33C6 is inline - while the `dib_bits_`
+          // case above jumps the length of the body to the other zero at the
+          // end. Two of them, and which is which is not interchangeable.
+          if (surface_->Lock(nullptr, &description, DDLOCK_WAIT, nullptr) != 0) {
+              return 0;
+          }
+          ++surface_lock_count_;
+          stride_ = description.lPitch;
+          locked_bits_ = description.lpSurface;
+          return description.lpSurface;
+      }
+      return 0;
+  }
 
 // Patterned line rendering is still unfinished. This owning-TU body keeps
 // the non-cover route-preview branch linkable without an executable-address
@@ -237,7 +607,7 @@ Purpose: Return the address of the pixel at (x, y) in the buffer, locking the
 // calls     (none)
 Status: Promoted 2026-08-29 from src/unrecovered/005e33f3.cpp, which proved the
 claim against the opaque scaffold. The body is the two-coordinate sibling of
-the in-class `get_data()` in buffer.h and reads the same members the same way:
+the no-argument `get_data()` above and reads the same members the same way:
 `dib_.bmiHeader.biWidth` is the x bound, the NEGATIVE top-down `biHeight` is
 the negated y bound, and the lock path stores `stride_` before
 `locked_bits_`. `Sprite::extract` calls it by name five times.
@@ -541,24 +911,6 @@ static const size_t SurfaceDescriptorPitch = 0x10;
 static const size_t SurfaceDescriptorData = 0x24;
 
 }  // namespace
-
-/*
-Purpose: Acquire the buffer's pixel data, locking the DirectDraw surface on the
-         first reference and counting every acquisition.
-// ORIGINAL: 0x005E3373 ?get_data@Buffer@@QAEHXZ 0x005E3373-0x005E33EA BYTE_EXACT
-// body      src/buffer.h
-// symbol    ?get_data@Buffer@@QAEPAXXZ
-// size      119 bytes
-// prototype int (__thiscall ?get_data@Buffer@@QAEHXZ)(Buffer* this)
-// callers   48   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-// indirect  0x005E33BF
-// notes     Runtime redirect installed by DllMain after byte-signature validation
-Status: Complete
-*/
-// body src/buffer.h
 
 /*
 Purpose: Release acquired references to the buffer's pixel data, unlocking the
@@ -1295,7 +1647,7 @@ int Buffer::fill(int color) {
         return fill(&rect1_, color);
     }
 
-    // `get_data` BY NAME, now that it is in-class and VC6 can fold it in.
+    // `get_data` BY NAME, with its definition visible earlier in this TU.
     // The protocol was written out here, which is the same instructions in a
     // different order and its own DDSURFACEDESC in a different slot.
     void *const pixels = get_data();
@@ -1690,195 +2042,6 @@ int Buffer::get_pcx_dimensions(const char *filename, int *width, int *height) {
     return 3;
 }
 
-/*
-Purpose: THE BLITTER. Copy a rectangle out of this buffer into `buffer`,
-         clipping the read against this buffer's own extent and the write
-         against the destination's clip rectangle, and handling the case
-         where source and destination are the same object.
-// HAND-WRITTEN ASSEMBLY IN THE ORIGINAL, so byte-exactness is NOT reachable
-// from C++ and the honest ceiling is semantic equivalence. The shipped bytes
-// save and restore the FLAGS around a block - `pushf` ... `popf` - things a compiler has no reason to emit, because it owns the flags
-// between setting and reading them.
-//
-// Found by `tools/handwritten_asm.py`. Do NOT grind spellings here, and do NOT
-// answer it with `__asm`: a semantic C++ body is worth more than a byte-exact
-// assembly one.
-//
-// ORIGINAL: 0x005DFF00 ?copy@Buffer@@QAEHPAVBuffer@@HHHHHH@Z 0x005DFF00-0x005E079B
-// TRIED: byte-exactness, twice over, and it was RULED OUT IN PROSE ONLY
-//   until now - which is why `frontier.py --untouched` kept offering this
-//   body. Both reasons are mechanical facts, not judgements.
-//   (1) The original disassembly contains `pushf` and
-//   `popf`. The shipped bytes save and restore FLAGS around a block, which
-//   no compiler emits because it owns the flags between setting and reading
-//   them, so no C++ spelling can produce these bytes.
-//   (2) Measured 2026-08-22: 196 instructions against the image's 761,
-//   similarity 0.255, first divergence at instruction 7. The image writes
-//   the same-buffer case FOUR times - one arm per combination of "the
-//   horizontal shift needs a backwards copy" and "the vertical shift needs
-//   rows in reverse" - each repeating the whole clip / `get_data` /
-//   pointer-compute / `free_data` sequence inline; the three largest gaps
-//   are runs of 188, 199 and 89 instructions. This body collapses those
-//   four arms into a row direction plus `memmove`, deliberately.
-//   The honest ceiling is SEMANTIC, and `osmx semantic` refuses at this
-//   instruction count. Closing it means writing the four arms back out,
-//   which is a different body rather than an adjustment to this one - and
-//   it still could not be byte-exact, because of (1). Do not answer it with
-//   `__asm`: a semantic C++ body is worth more than a byte-exact assembly
-//   one.
-// symbol    ?copy@Buffer@@QAEHPAV1@HHHHHH@Z
-// size      2203 bytes
-// prototype int (__thiscall ?copy@Buffer@@QAEHPAVBuffer@@HHHHHH@Z)(Buffer* this, Buffer*, int, int, int, int, int, int)
-// callers   51   call targets   2
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x005E3373 0x005E34A3
-// indirect  0x005DFFDD 0x005E0705
-Return Value: 0 for a completed or fully clipped copy, 3 for a bad argument
-              or a surface that would not lock, 7 for no pixel storage
-Status: WIP
-
-PROMOTED FROM src/recovered/units/005dff00.cpp, which is deleted. That unit
-reached the image through raw offsets - `*(int *)(bb + 0x4a8)` for the
-destination stride, `*(int *)(self + 0x84)` for the negated height - and
-through two macros and four `goto` labels, because when it was written none
-of those offsets had names. They all do now, and the two macros are one
-call: `REL_BUF_R3` and the `LRelSurfR3` label together are `free_data`, the
-no-surface arm and the surface arm, inlined by hand.
-
-NOT BYTE-EXACT, AND FAR FROM IT: 237 instructions against the image's 761,
-similarity 0.255. The gap is one deliberate decision, and it is worth
-knowing before anyone tries to close it.
-
-The image writes the same-buffer case FOUR TIMES - once per combination of
-"the horizontal shift needs a backwards copy" and "the vertical shift needs
-rows in reverse" - and each of the four repeats the whole clip,
-`get_data`, pointer-compute and `free_data` sequence inline. That is close
-to five hundred instructions of duplication, and it accounts for nearly all
-of the difference: the three largest gaps against the image are runs of
-188, 199 and 89 instructions.
-
-Here the four arms collapse into a row direction and `memmove`, because
-`memmove` is the C spelling of both halves of what the direction flag does.
-That is one readable arm instead of four unreadable ones, and it is the
-same computation. The preserved unit chose the other way - it kept all four
-arms specifically so "the clip/get_data()/pointer-compute code is repeated
-with the same multiplicity as the original" - and even then could not
-express the reversed intra-row copy through `memcpy`, so it did not match
-either.
-
-To close this properly the four arms have to come back, with `get_data` and
-`free_data` inlined at each of them, which is a different body from this
-one rather than an adjustment to it.
-*/
-// HISTORICAL HYPOTHESIS (2026-09-17): The body was moved in-class based on a
-// proposed PAU/PAV Flic COMDAT explanation for observed mangled names. No
-// original COFF/PDB evidence established that duplicate-COMDAT theory.
-
-int Buffer::copy(Buffer *buffer, int xCoord, int yCoord, int wx, int wy,
-                 int width, int height) {
-    if (dib_bits_ == nullptr && surface_ == nullptr) {
-        return 7;
-    }
-    if (buffer == nullptr) {
-        return 3;
-    }
-
-    // A negative read position shrinks the extent and shifts the write
-    // position by the overhang, then clamps: the standard blit clip.
-    if (xCoord < 0) {
-        width += xCoord;
-        wx -= xCoord;
-        xCoord = 0;
-    }
-    if (yCoord < 0) {
-        height += yCoord;
-        wy -= yCoord;
-        yCoord = 0;
-    }
-
-    // `biHeight` is stored negative, so `-biHeight` is the row count.
-    if (xCoord > dib_.bmiHeader.biWidth
-        || yCoord > -dib_.bmiHeader.biHeight) {
-        return 0;
-    }
-    if (xCoord + width > dib_.bmiHeader.biWidth) {
-        width = dib_.bmiHeader.biWidth - xCoord;
-    }
-    if (yCoord + height > -dib_.bmiHeader.biHeight) {
-        height = -(yCoord + dib_.bmiHeader.biHeight);
-    }
-
-    // The write rectangle, clipped against the destination's own clip rect.
-    RECT clipped;
-    clipped.left = wx;
-    clipped.top = wy;
-    clipped.right = wx + width;
-    clipped.bottom = wy + height;
-    if (!IntersectRect(&clipped, &clipped, &buffer->rect1_)) {
-        return 0;
-    }
-
-    // Whatever the intersection moved the write rect by, the read position
-    // moves with it; the extent comes from the intersected rect.
-    xCoord += clipped.left - wx;
-    yCoord += clipped.top - wy;
-    width = clipped.right - clipped.left;
-    height = clipped.bottom - clipped.top;
-
-    if (clipped.left >= buffer->dib_.bmiHeader.biWidth
-        || clipped.top >= -buffer->dib_.bmiHeader.biHeight
-        || buffer->get_data() == 0) {
-        return 3;
-    }
-    uint8_t *const write = static_cast<uint8_t *>(buffer->locked_bits_)
-        + buffer->stride_ * clipped.top + clipped.left;
-    if (write == nullptr) {
-        return 3;
-    }
-
-    if (xCoord >= dib_.bmiHeader.biWidth
-        || yCoord >= -dib_.bmiHeader.biHeight
-        || get_data() == 0) {
-        buffer->free_data(1);
-        return 3;
-    }
-    uint8_t *const read = static_cast<uint8_t *>(locked_bits_)
-        + stride_ * yCoord + xCoord;
-    if (read == nullptr) {
-        buffer->free_data(1);
-        return 3;
-    }
-
-    if (buffer != this) {
-        // Different objects cannot overlap, so rows go in either order.
-        uint8_t *destination = write;
-        const uint8_t *source = read;
-        for (int row = 0; row < height; ++row) {
-            memcpy(destination, source, static_cast<size_t>(width));
-            source += stride_;
-            destination += buffer->stride_;
-        }
-    } else {
-        // SAME BUFFER, so the two rectangles can overlap. Rows are walked
-        // from whichever end keeps the read ahead of the write, and each row
-        // is moved rather than copied because the horizontal shift can
-        // overlap too.
-        const int step = (wy < yCoord) ? 1 : -1;
-        const int first = (wy < yCoord) ? 0 : height - 1;
-        uint8_t *destination = write + first * static_cast<int>(buffer->stride_);
-        uint8_t *source = read + first * static_cast<int>(stride_);
-        for (int row = 0; row < height; ++row) {
-            memmove(destination, source, static_cast<size_t>(width));
-            destination += step * static_cast<int>(buffer->stride_);
-            source += step * static_cast<int>(stride_);
-        }
-    }
-
-    free_data(1);
-    buffer->free_data(1);
-    return 0;
-}
 
 /*
 Purpose: Release every resource the buffer owns and reset it to its
@@ -9890,127 +10053,6 @@ int Buffer::write_strings(StringList *strings, int left, int top, int width,
 }
 
 
-#include "stdafx.h"
-#include "buffer.h"
-#include "palette.h"
-#include <math.h>
-
-// ORIGINAL: 0x005DEFE0 sub_5defe0 0x005DEFE0-0x005DF56B FILE
-// symbol    ?draw_pie@Buffer@@QAEHPAUtagRECT@@HHHHHH@Z
-// TRIED: MISMATCH #4 (push vs mov, prologue). `this` is a Buffer* (this->get_hdc()/release_hdc-equivalent at fields 0x58/0x60/ 0x64/0x68 via slot17/26, matching every other Buffer HDC-lock site this batch touched); the *second*, separate pixel-lock at fields 0x50/0x58/0x6c via slot32 (offset 0x80) matches the 0x005E07A0-shaped Lock/Unlock pattern, not the HDC one - transcribed as its own inline block rather than reusing release_hdc, since it unlocks through a different slot and counter field. a4/a5 are read via `fild`/`fidiv` (integer loads), not native floats - Ghidra's own `float param_4` typing is wrong; the raw asm is authoritative there. Ghidra's local_XX names also do not track 1:1 with this function's real ebp offsets (verified by hand for the dx/dy/cx/cy/angle block: local_1c looked like "cx" per the disassembly, not "dx" as Ghidra's own text order implied), so the geometry section is transcribed from the raw asm, not the decompiled text.
-// All seven explicit arguments are native integers. Color indices require
-//0..255, total must be nonzero, and geometry/arithmetic must fit native signed
-//32-bit operations. CRT/x87 intermediate-status preservation remains unknown.
-int Buffer::draw_pie(RECT *area, int first_color, int second_color,
-                     int amount, int total, int thickness, int unused) {
-    if (area == 0) return 16;
-    int width = area->right - area->left;
-    int height = area->bottom - area->top;
-    int center_y = height / 2 + area->top;
-    int center_x = width / 2 + area->left;
-    if (amount == 0) first_color = second_color;
-    else if (amount == total) second_color = first_color;
-
-    float width_float = static_cast<float>(width);
-    float half_width = width_float * 0.5f;
-    float half_height = static_cast<float>(height) * 0.5f;
-    // Native66D8BC is6.28f, NOT an exact two-pi value.
-    double angle = static_cast<double>(amount) * 6.28f / total;
-    float sine_width = static_cast<float>(sin(angle) * width_float);
-    double cosine_width = cos(angle) * width_float;
-    int wedge_x = static_cast<int>(center_x + sine_width);
-    int wedge_y = static_cast<int>(center_y - cosine_width);
-    float ratio = static_cast<float>(cosine_width / sine_width);
-
-    RECT remap;
-    remap.left = 0;
-    remap.right = 0;
-    // Original does NOT initialize top/bottom outside the middle-half arm.
-    // Keep that original error path visible pending coordinator decision;
-    // do not mistake the old seed's four zero stores for native behavior.
-    if (amount * 4 >= total && amount * 4 <= total * 3) {
-        remap = *area;
-        if (amount * 2 == total) {
-            remap.right = center_x;
-        } else {
-            double height_squared = static_cast<double>(half_height) * half_height;
-            double numerator = height_squared * half_width * half_width;
-            double denominator = static_cast<double>(ratio) * ratio
-                * half_width * half_width + height_squared;
-            double radius = sqrt(numerator / denominator) + 0.5;
-            if (amount * 2 > total) radius = -radius;
-            remap.right = static_cast<int>(radius) + center_x;
-        }
-    }
-    remap.top += thickness;
-    remap.bottom += thickness;
-    // get_hdc itself performs the one native locked-pixels query. The seed
-    // prequery followed by get_hdc would incorrectly call the virtual twice.
-    HDC dc = get_hdc();
-    SetArcDirection(dc, AD_CLOCKWISE);
-    const PALETTEENTRY &first = PaletteActive->entries()[first_color];
-    HBRUSH first_brush = CreateSolidBrush(RGB(first.peRed, first.peGreen, first.peBlue));
-    const PALETTEENTRY &second = PaletteActive->entries()[second_color];
-    HBRUSH second_brush = CreateSolidBrush(RGB(second.peRed, second.peGreen, second.peBlue));
-    HGDIOBJ old_brush = SelectObject(dc, first_brush);
-    HGDIOBJ null_pen = GetStockObject(NULL_PEN);
-    HGDIOBJ old_pen = SelectObject(dc, null_pen);
-    area->bottom += thickness;
-    area->top += thickness;
-    SelectObject(dc, amount * 4 < total ? second_brush : first_brush);
-    Pie(dc, area->left, area->top, area->right, area->bottom,
-        area->right, area->top, area->right, area->top);
-    area->bottom -= thickness;
-    area->top -= thickness;
-    RECT strip;
-    SetRect(&strip, area->left, center_y, width + area->left, center_y + thickness);
-    fill(&strip, amount * 4 < total ? second_color : first_color);
-
-    if (dib_bits_ != 0 || surface_ != 0) {
-        // The original intersects against Buffer's clip RECT20, NOT the
-        // caller's ellipse bounds as the retained seed guessed.
-        if (IntersectRect(&remap, &rect1_, &remap)
-            && remap.left < dib_.bmiHeader.biWidth
-            && remap.top < -dib_.bmiHeader.biHeight) {
-            if (get_data() != 0) {
-                unsigned char *pixel = static_cast<unsigned char *>(locked_bits_)
-                    + static_cast<int>(stride_) * remap.top + remap.left;
-                if (pixel != 0) {
-                    int columns = remap.right - remap.left;
-                    int rows = remap.bottom - remap.top;
-                    int remainder = static_cast<int>(stride_) - columns;
-                    do {
-                        int count = columns;
-                        do {
-                            if (*pixel == static_cast<unsigned char>(first_color))
-                                *pixel = static_cast<unsigned char>(second_color);
-                            ++pixel;
-                        } while (--count != 0);
-                        pixel += remainder;
-                    } while (--rows != 0);
-                    free_data(1);
-                }
-            }
-        }
-    }
-    SelectObject(dc, GetStockObject(BLACK_PEN));
-    if (amount == total || amount == 0) {
-        Ellipse(dc, area->left, area->top, area->right, area->bottom);
-    } else {
-        SelectObject(dc, second_brush);
-        Pie(dc, area->left, area->top, area->right, area->bottom,
-            center_x, area->top, wedge_x, wedge_y);
-        SelectObject(dc, first_brush);
-        Pie(dc, area->left, area->top, area->right, area->bottom,
-            wedge_x, wedge_y, center_x, area->top);
-    }
-    SelectObject(dc, old_brush);
-    SelectObject(dc, old_pen);
-    DeleteObject(first_brush);
-    DeleteObject(second_brush);
-    release_hdc(1);
-    return 0;
-}
 
 
 #include "stdafx.h"

@@ -1,6 +1,7 @@
 """Actual-source controls for the out-of-line Buffer copy boundary."""
 
 from pathlib import Path
+import re
 import shutil
 import subprocess
 
@@ -12,6 +13,7 @@ ROOT = next(parent for parent in Path(__file__).resolve().parents
 BUFFER_CPP = (ROOT / "src/buffer.cpp").read_text(encoding="utf-8")
 BUFFER_H = (ROOT / "src/buffer.h").read_text(encoding="utf-8")
 FLIC_CPP = (ROOT / "src/flic.cpp").read_text(encoding="utf-8")
+FLIC_CODE = re.sub(r"/\*.*?\*/|//[^\n]*", " ", FLIC_CPP, flags=re.S)
 
 
 def body(source: str, signature: str) -> str:
@@ -103,7 +105,7 @@ def test_definition_is_out_of_line_and_header_retains_only_api():
     assert BUFFER_CPP.count("int Buffer::copy(Buffer *buffer, int xCoord, int yCoord, int wx, int wy,") == 1
 
 
-def test_only_the_seven_copy_pmf_sites_are_restored_to_direct_calls():
+def test_seven_copy_calls_and_flic_getter_calls_keep_direct_boundaries():
     assert "return copy(buffer, xCoord, yCoord, xCoord, yCoord, width, height);" in BUFFER_CPP
     assert "return copy(buffer, left, top, left, top," in BUFFER_CPP
     assert "source->copy(this, 0, 0, colX, rowY, tileWidth," in BUFFER_CPP
@@ -113,9 +115,10 @@ def test_only_the_seven_copy_pmf_sites_are_restored_to_direct_calls():
     assert "buffer2_->copy(&buffer_, origin_x_, origin_y_, 0, 0, decoded_width_," in FLIC_CPP
     assert "int (Buffer::*copy)" not in BUFFER_CPP
     assert "int (Buffer::*copy)" not in FLIC_CPP
-    # Unrelated measured PMFs remain in place.
-    assert "void *(Buffer::*get_data)() = &Buffer::get_data;" in FLIC_CPP
-    assert "(this->*&Flic::close)()" in FLIC_CPP
+    assert FLIC_CODE.count("buffer2_->get_data()") == 3
+    assert FLIC_CODE.count("buffer_.get_data()") == 3
+    assert "Buffer::*get_data" not in FLIC_CODE
+    assert "(this->*&Flic::close)()" not in FLIC_CODE
 
 
 @pytest.mark.parametrize("compiler_name", ["g++", "clang++"])

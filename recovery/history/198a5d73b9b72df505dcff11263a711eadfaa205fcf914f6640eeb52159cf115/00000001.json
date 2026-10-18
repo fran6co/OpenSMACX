@@ -1,0 +1,19 @@
+{
+  "event_id": "af7cf5d8a6bbf1f21b49c083e431196e1a229bfe4f62f6befdced59eaec17d2f",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_buffer_copy_boundary_oct15.py"
+    ],
+    "evidence": [
+      "Existing structural boundary test requires the obsolete getter PMF and the already-retired Flic close PMF. Retarget only those assertions to actual ordinary call and declaration-only getter ownership; preserve all seven copy-call and behavioral assertions."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "retarget-copy-boundary-controls",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:buffer-get-data-visibility-oct19"
+}

@@ -39,21 +39,25 @@
 #include "general.h"  // mem_get, env_open
 #include <cstring>
 
-// Every decoder whose image CALLS the no-argument `Buffer::get_data`
-// (0x005E3373 in each call list: decode_frame, UNK1, UNK3 and the three
-// _trans decoders reading the embedded buffer_) spells the call through a
-// pointer-to-member. buffer.h defines get_data() in-class - implicitly
-// inline - and a plain `buffer_.get_data()` folds the whole DDSURFACEDESC/
-// Lock sequence into the caller (+96 bytes in decode_frame alone, no
-// relocation where the image makes a call). The pointer spelling makes VC6
-// devirtualize to exactly the image's bare thiscall (`mov ecx,[esi+5A8h]` /
-// `lea ecx,[esi+4]` then `call 0x005E3373`). A `#pragma auto_inline(off)`
-// same-file forwarder (probe.cpp's vector_dist_call form) was measured
-// first and refused: its own cdecl push/add-esp frame sits between the
-// caller and the target, its emitted symbol binds to nothing, and every
-// function through it grew past its recorded extent (UNK1 240 bytes
-// against 226). The pragma is gone; the pointer spelling serves all six
-// sites, measured identical in shape to decode_frame's existing one.
+// Buffer::get_data is now implemented out of line in its owner; the consumer
+// header retains only its declaration, so ordinary calls here reach the
+// original direct-call boundary.
+// HISTORICAL (2026-09): Every decoder whose image CALLS the no-argument
+// `Buffer::get_data` (0x005E3373 in each call list: decode_frame, UNK1, UNK3
+// and the three _trans decoders reading the embedded buffer_) spelled the
+// call through a pointer-to-member. buffer.h then defined get_data() in-class
+// - implicitly inline - and a plain `buffer_.get_data()` folded the whole
+// DDSURFACEDESC/Lock sequence into the caller (+96 bytes in decode_frame
+// alone, no relocation where the image makes a call). The pointer spelling
+// made VC6 devirtualize to exactly the image's bare thiscall
+// (`mov ecx,[esi+5A8h]` / `lea ecx,[esi+4]` then `call 0x005E3373`). A
+// `#pragma auto_inline(off)` same-file forwarder (probe.cpp's
+// vector_dist_call form) was measured first and refused: its own cdecl
+// push/add-esp frame sat between the caller and the target, its emitted symbol
+// bound to nothing, and every function through it grew past its recorded
+// extent (UNK1 240 bytes against 226). The pragma was removed; the historical
+// pointer spelling served all six sites, measured identical in shape to
+// decode_frame's earlier one.
 //
 // memset and memcpy stay real CRT calls in this file: the image's
 // decode_byte_run and decode_byte_run_trans call 0x006465F0/0x00645930
@@ -383,8 +387,7 @@ int Flic::decode_frame(int x, int y) {
     if (!(decoder_flags_ & 1)) {
         return 7;
     }
-    void *(Buffer::*get_data)() = &Buffer::get_data;
-    if ((buffer2_->*get_data)() == 0) {
+    if (buffer2_->get_data() == 0) {
         return 0x10;
     }
     origin_x_ = x;
@@ -418,7 +421,8 @@ int Flic::UNK1(int x, int y) {
     // Plain member read-modify-writes match the image's entry exactly
     // (0x0062A120): the cached `or edx,2` stays a dword op, the bit-1 test
     // goes through a copy (`mov eax,edx; test al,1`), and the
-    // pointer-to-member get_data call invalidates the cache so both later
+    // historical pointer-to-member get_data call invalidated the cache; the
+    // ordinary out-of-line call below retains that call boundary so both later
     // clears reload the member (`mov ecx,[esi+0x5b4]`) the way the image
     // does. A `flags` local round trip instead keeps the whole
     // computation in the byte domain (`or al,2` / `and al,0xfd`) from the
@@ -437,8 +441,7 @@ int Flic::UNK1(int x, int y) {
         decoder_flags_ &= ~2;
         return 7;
     }
-    void *(Buffer::*get_data)() = &Buffer::get_data;
-    if ((buffer2_->*get_data)() == 0) {
+    if (buffer2_->get_data() == 0) {
         decoder_flags_ &= ~2;
         return 0x10;
     }
@@ -549,7 +552,6 @@ Return Value: 0
 Status: Complete
 */
 int Flic::UNK3(int target_frame) {
-    void *(Buffer::*get_data)() = &Buffer::get_data;
     int target = target_frame % header_.frames_;
 
     if (target < static_cast<int>(frame_) && (decoder_flags_ & 1)) {
@@ -615,7 +617,7 @@ int Flic::UNK3(int target_frame) {
             int y = origin_y_;
             int x = origin_x_;
             if (decoder_flags_ & 1) {
-                if ((buffer2_->*get_data)() != 0) {
+                if (buffer2_->get_data() != 0) {
                     origin_x_ = x;
                     origin_y_ = y;
                     if (frame_ == header_.frames_) {
@@ -1278,9 +1280,8 @@ void Flic::decode_byte_run_trans() {
     rect->right = x + width;
     rect->bottom = y + height;
 
-    void *(Buffer::*get_data)() = &Buffer::get_data;
     uint8_t *row_dst = buffer2_->get_data(origin_x_, origin_y_);
-    uint8_t *row_src = static_cast<uint8_t *>((buffer_.*get_data)());
+    uint8_t *row_src = static_cast<uint8_t *>(buffer_.get_data());
 
     uint8_t value;
     int row = 0;
@@ -1380,8 +1381,7 @@ void Flic::decode_delta_flc_trans() {
     uint8_t run;
     uint16_t opcode;
     uint8_t *dst = buffer2_->get_data(origin_x_, origin_y_);
-    void *(Buffer::*get_data)() = &Buffer::get_data;
-    uint8_t *src = static_cast<uint8_t *>((buffer_.*get_data)());
+    uint8_t *src = static_cast<uint8_t *>(buffer_.get_data());
     int row;
     uint16_t word;
     int packet;
@@ -1573,9 +1573,8 @@ void Flic::decode_fli_copy_trans() {
     rect->right = x + width;
     rect->bottom = y + height;
 
-    void *(Buffer::*get_data)() = &Buffer::get_data;
     uint8_t *dst = buffer2_->get_data(origin_x_, origin_y_);
-    uint8_t *src = static_cast<uint8_t *>((buffer_.*get_data)());
+    uint8_t *src = static_cast<uint8_t *>(buffer_.get_data());
 
     for (int row = 0; row < static_cast<int>(decoded_height_); row++) {
         for (int i = 0; i < static_cast<int>(decoded_width_); i++) {

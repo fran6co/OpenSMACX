@@ -1,0 +1,20 @@
+{
+  "event_id": "ef140141eba4c72f9af676e14fbbf249abf427a804c072538faf4e8288fc3a18",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "public-getter-definition-and-internal-inlining",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Coordinator authorizes manual integration of the genuine source ownership and ordinary call migration. Native writer retained original getter identity/full span/symbol/claim with its body in Buffer.cpp. All affected original identities, claims and useful seed histories are retained. No original error behavior was fixed or normalized.",
+      "Fresh full application build/link, actual-source branch/mutation/order tests, whole mapped masked/strict comparison, paired historical-miss control, and source claim/mapping/reference checks support this bounded change. This grants no new byte claim and does not declare Buffer internal-call topology restored.",
+      "Raw native residual remains failed: redundant getter export directives and explicitly admitted compiler codegen/helper changes are reviewed manually, not promoted by scope. Independent outside-body review identifies register allocation/scheduling and unchanged external symbol/addend targets; load_interface larger scheduling/value flow is not exhaustively proved. Its source remains identical, and its matching/restoration obligations remain. Native automatic/linked outside-scope preservation, concurrent access observability, runtime and full-game acceptance are unproven. Preserve that limitation rather than changing flags, task baseline, claims or checker behavior.",
+      "Existing source-only Texture helpers remain declared/defined even where this compiler emits no standalone copy after inlining. Their absence is not function removal or new implementation coverage. Retain reports under ignored buffer-get-data-visibility-oct19 and historical implementation in Git."
+    ]
+  },
+  "previous_event": "73a7101bd79f9d724c0aefd065f8d285e4749b5ace7706f6417f84a69fe1c7ce",
+  "request_id": "retain-real-owner-reviewed-checkpoint",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:buffer-get-data-visibility-oct19"
+}
