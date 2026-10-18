@@ -8665,7 +8665,7 @@ Purpose: Calculate the current base's energy loss/inefficiency for an amount of 
 //   shape under a different name and the byte match gets WORSE across every
 //   flag set: best similarity 0.772 (/Oi- /Gy /GR- /Oy- /GX) -> 0.608 (best
 //   moves to /O1 /Gy /GR- /Oy- /GX). Reverted to has_fac_built().
-// symbol    ?black_market@@YAIH@Z
+// symbol    ?black_market@@YAHH@Z
 // size      677 bytes
 // prototype
 // callers   1   call targets   2
@@ -8675,7 +8675,7 @@ Purpose: Calculate the current base's energy loss/inefficiency for an amount of 
 Return Value: Amount of energy inefficiency
 Status: Complete
 */
-uint32_t __cdecl black_market(int energy) {
+int __cdecl black_market(int energy) {
     if (energy <= 0) {
         return 0;
     }

@@ -132,7 +132,7 @@ int __cdecl filefind_cd_drive_letter();
 void __cdecl filefind_set_alternative(LPCSTR path);
 LPSTR __cdecl filefind_get(LPCSTR file_name);
 int __cdecl bit_count(int bitfield);
-uint32_t __cdecl bit_count_signed(int bitfield);
+int __cdecl bit_count_signed(int bitfield);
 int __cdecl fixed_div(int numerator, int denominator);
 const char *__cdecl memrchr(LPCSTR start, LPCSTR end, char value);
 int __cdecl quick_root(int input);

@@ -964,7 +964,7 @@ Purpose: Check whether the specified faction is nearing the diplomatic victory r
 //   reduction" the earlier note blamed was the inlined walk, not registers.
 //   Measured 20/94 at the default flags and 49/94 under /Ob0 BEFORE the
 //   switch, which is what identified the inline as the defect.
-// symbol    ?aah_ooga@@YAIHH@Z
+// symbol    ?aah_ooga@@YAHHH@Z
 // size      254 bytes
 // prototype
 // callers   7   call targets   2
@@ -974,7 +974,7 @@ Purpose: Check whether the specified faction is nearing the diplomatic victory r
 Return Value: Faction id if nearing diplomatic victory or zero
 Status: Complete
 */
-uint32_t __cdecl aah_ooga(int faction_id, int pact_faction_id) {
+int __cdecl aah_ooga(int faction_id, int pact_faction_id) {
     if (!(GameDataStateStorage.fields_.game_rules_ & RULES_VICTORY_DIPLOMATIC)) {
         return 0; // Diplomatic Victory not allowed
     }
@@ -982,7 +982,7 @@ uint32_t __cdecl aah_ooga(int faction_id, int pact_faction_id) {
     for (int i = 1; i < MaxPlayerNum; i++) {
         votes_total += council_votes(i);
     }
-    uint32_t faction_id_ret = 0;
+    int faction_id_ret = 0;
     for (int player = 1; player < MaxPlayerNum; player++) {
         int votes = council_votes(player);
         if (player != pact_faction_id
@@ -1196,7 +1196,7 @@ void __cdecl cause_friction(int faction_id, int faction_id_with, int friction) {
 /*
 Purpose: Normalize the diplomatic friction value into a mood offset.
 // ORIGINAL: 0x0053A090 ?get_mood@@YAHH@Z 0x0053A090-0x0053A0F5 BYTE_EXACT
-// symbol    ?get_mood@@YAIH@Z
+// symbol    ?get_mood@@YAHH@Z
 // size      101 bytes
 // prototype int (__cdecl ?get_mood@@YAHH@Z)(int friction)
 // callers   3   call targets   0
@@ -1206,7 +1206,7 @@ Purpose: Normalize the diplomatic friction value into a mood offset.
 Return Value: Mood (0-8)
 Status: Complete
 */
-uint32_t __cdecl get_mood(int friction) {
+int __cdecl get_mood(int friction) {
     if (friction <= 0) {
         return MOOD_MAGNANIMOUS;
     }

@@ -1,0 +1,31 @@
+{
+  "event_id": "acd9f1cc886b3dea6169e8238294f76b1f86c0964c6dc0ee55a17985ba51627a",
+  "payload": {
+    "affects": [
+      "entity-0079fd3f96e30215c5d25c92eaf83b81dc32ced2efcb3cce93127a18c22fcfda",
+      "entity-107d11af2113ace6532ce49e46e53e9eddf2cea043a5393587b5d3c191d8195b",
+      "entity-1e98d4d4ac157c14e92d1a1bbbf010c72941f40485ce0ef1426443dcb5cb6695",
+      "entity-59dc164fbdeb77d63e9b7873a011d290564ad1945c6a1a77c20a86d9a29fabe2",
+      "entity-73781ab0a26d53cacc4e28e87863bb61b8341a04b4720b6bd864fa9bbaa11b41",
+      "entity-764d49e5d8b80c7bd4e544d1dbbd49f9a897b718abd49e15104e2b185a93d44d",
+      "entity-7f9cc5da4db059d64c086f3534982d4c085e2e87d83e9caa9bf1cc7cc056c152",
+      "entity-871d9e954f48492d25ca095a14fe6f483923124b7c5809741c7d5bbc2f3d59eb",
+      "entity-886f1b37a80963fb306198076eab249e961859c640529a4923053c5434583fac"
+    ],
+    "author": "coordinator",
+    "discovery_id": "public-signed-api-caller-closure",
+    "evidence": [
+      "Pinned original consumers use signed JGE/JLE after morale_alien, JL after best_reactor, and JG after proto_cost. quick_zoc uses signed coordinate operations/branches. black_market feeds signed Base energy arithmetic. aah_ooga/get_mood/bit_count_signed consumers do not independently discriminate signedness; bounded return domains and historical names corroborate the selected source contracts, not exact original type spelling.",
+      "Fresh final application builds/links168TUs182objects. Seventeen focused actual-source/header tests pass, including VC6 both settled flag profiles and old-has_agenda-header damage rejection. Existing caller suite122pass11fail1image-skip; skipped image test freshly reruns PASS against explicit pinned image. All eleven failures reproduce on unchanged master in the same four modules; no test assertions were weakened.",
+      "All5581 actual masked verdicts and strict original-entity verdicts remain unchanged:3199masked exact; strict1930pass1267unknown2fail. All5646 source records retain every fact except eight explicit emitted-symbol changes; original identities/spans/claims/history and object bindings remain unchanged.",
+      "Raw zero-omission object comparison remains169PASS13FAIL. Independent review finds identical emitted bytes/relocation counts in all eight renamed bodies; caller changes are references to old/new API names and two debug signature records. No storage, initializer or lifetime delta observed. These are bounded observations, not a normalized alias pass, linked-selection proof or executable-wide call proof."
+    ],
+    "hypothesis": "The public has_agenda declaration names a nonexistent unsigned overload. Eight further emitted API signatures disagree with supported signed source contracts. Correct declarations, definitions and native emitted-symbol bindings together, reviewing every physical caller consequence rather than treating catalogue types as proof.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "public-signed-api-caller-closure",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:signed-api-closure-oct18"
+}

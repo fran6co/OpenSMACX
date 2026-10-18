@@ -720,7 +720,7 @@ int __cdecl base_build(int base_id, int *out_secondary, int *out_tertiary, int *
 void __cdecl base_change(int base_id, int production_id); // 0x004E5A60
 void __cdecl base_reset(int base_id, int force);  // 0x004E5FE0
 void __cdecl base_doctors();                     // 0x004F5F30
-uint32_t __cdecl black_market(int energy);
+int __cdecl black_market(int energy);
 void __cdecl base_psych();
 int __cdecl base_rank(int faction_id, int rank_position);
 int __cdecl pop_goal_fac(int base_id);

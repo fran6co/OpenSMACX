@@ -489,7 +489,7 @@ BOOL __cdecl map_init();
 void __cdecl map_wipe();
 BOOL __cdecl map_write(FILE *map_file);
 BOOL __cdecl map_read(FILE *map_file);
-void __cdecl quick_zoc(uint32_t x_src, uint32_t y_src, uint32_t faction_id, int x_dst,
+void __cdecl quick_zoc(int x_src, int y_src, int faction_id, int x_dst,
                                  int y_dst, int *x_zoc, int *y_zoc);
  int __cdecl radius_move(int x_src, int y_src, int x_dst, int y_dst, int range);
 int __cdecl compass_move(int x_src, int y_src, int x_dst, int y_dst);

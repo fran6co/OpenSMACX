@@ -872,7 +872,7 @@ void __cdecl psych_check(int faction_id, int *drones, int *talents);
 BOOL __cdecl auto_contact();
 BOOL __cdecl great_beelzebub(int faction_id, BOOL is_aggressive);
 BOOL __cdecl great_satan(int faction_id, BOOL is_aggressive);
-uint32_t __cdecl aah_ooga(int faction_id, int pact_faction_id);
+int __cdecl aah_ooga(int faction_id, int pact_faction_id);
 BOOL __cdecl climactic_battle();
 BOOL __cdecl at_climax(int faction_id);
 // Non-inline forwarder to base.h's `MEASURED inline` ascending, defined in
@@ -880,7 +880,7 @@ BOOL __cdecl at_climax(int faction_id);
 // 0x005AC680 and needs the `call`, where base.h folds it for facility_avail.
 BOOL __cdecl ascending_call(int faction_id);
 void __cdecl cause_friction(int faction_id, int faction_id_with, int friction);
-uint32_t __cdecl get_mood(int friction);
+int __cdecl get_mood(int friction);
 int __cdecl reputation(int faction_id, int faction_id_with);
 int __cdecl get_patience(int faction_id_with, int faction_id);
 int __cdecl energy_value(int loan_principal);
@@ -911,8 +911,7 @@ int __cdecl act_of_aggression(int faction_id, int target_faction_id);
 void __cdecl treaty_off(int faction_id, int faction_id_with, int treaty);
 void __cdecl agenda_on(int faction_id, int faction_id_with, int agenda);
 void __cdecl agenda_off(int faction_id, int faction_id_with, int agenda);
-uint32_t __cdecl has_agenda(uint32_t faction_id, uint32_t faction_id_with, 
-                                      uint32_t agenda);
+int __cdecl has_agenda(int faction_id, int faction_id_with, int agenda);
 // `int`, NOT `uint32_t`. The image's symbol is `?wants_to_attack@@YAHHHH@Z` -
 // three H, three ints - and `faction.cpp` defines it that way. This declared a
 // `uint32_t` overload nothing defined, which stayed latent only because

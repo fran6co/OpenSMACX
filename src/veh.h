@@ -695,7 +695,7 @@ int __cdecl drop_range(int faction_id);
 // `?defense_value@@YAHHHHHH@Z` - all `H`, no `I`.
 int __cdecl defense_value(int faction_id, int x, int y, int veh_id_def,
                                     int veh_id_atk);
-uint32_t __cdecl morale_alien(int veh_id, int faction_id_vs_native);
+int __cdecl morale_alien(int veh_id, int faction_id_vs_native);
 void __cdecl do_fungal_towers();
 // ?psi_factor@@YAHHHHH@Z - the faction id is `int`, as the definition has it.
 int __cdecl psi_factor(int combat_ratio, int faction_id, BOOL is_attack,
@@ -729,7 +729,7 @@ void __cdecl say_stats_3(LPSTR stat, int proto_id);
 void __cdecl say_stats_3(int proto_id);
 void __cdecl say_stats_2(LPSTR stat, int proto_id);
 void __cdecl say_stats(LPSTR stat, int proto_id, LPSTR custom_spacer);
-uint32_t __cdecl best_reactor(int faction_id);
+int __cdecl best_reactor(int faction_id);
 int __cdecl pick_chassis(int faction_id, int triad_chk, int speed_chk);
 int __cdecl weapon_budget(int faction_id, int condition, BOOL check_mode);
 int __cdecl armor_budget(int faction_id, int max_cost);
@@ -740,7 +740,7 @@ int __cdecl veh_health(int veh_id);
 // `int` throughout, matching the definition in src/veh.cpp. The earlier
 // unsigned-parameter spelling named an undefined overload; it was corrected
 // when inline base_cost made this declaration visible to additional callers.
-uint32_t __cdecl proto_cost(int chassis_id, int weapon_id, int armor_id,
+int __cdecl proto_cost(int chassis_id, int weapon_id, int armor_id,
                             int ability, int reactor_id);
 // `int` throughout: the definition in src/veh.cpp already is, and the
 // catalogue exports ?make_proto@@YAXHHHHHH@Z - all H, no I.

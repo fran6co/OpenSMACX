@@ -2509,7 +2509,7 @@ Purpose: Quickly check for unit related zone of control conflicts. If a ZOC conf
 //            is_ocean's own known plateau (`xor ecx,ecx` before the
 //            map_tiles() pointer load in the image, this tree loads the
 //            pointer first) - same root cause as is_ocean's standalone note.
-// symbol    ?quick_zoc@@YAXIIIHHPAH0@Z
+// symbol    ?quick_zoc@@YAXHHHHHPAH0@Z
 // size      460 bytes
 // prototype void (__cdecl ?quick_zoc@@YAXHHHHHPAH0@Z)(int xCoordSrc, int yCoordSrc, int factionID, int xCoordDst, int yCoordDst, int* xCoordZoc, int* yCoordZoc)
 // callers   1   call targets   1
@@ -2519,7 +2519,7 @@ Purpose: Quickly check for unit related zone of control conflicts. If a ZOC conf
 Return Value: n/a
 Status: Complete
 */
-void __cdecl quick_zoc(uint32_t x_src, uint32_t y_src, uint32_t faction_id, int x_dst, int y_dst, 
+void __cdecl quick_zoc(int x_src, int y_src, int faction_id, int x_dst, int y_dst,
                        int *x_zoc, int *y_zoc) {
     BOOL is_src_ocean = is_ocean(x_src, y_src);
     int search_zoc = -1;
@@ -2528,7 +2528,7 @@ void __cdecl quick_zoc(uint32_t x_src, uint32_t y_src, uint32_t faction_id, int 
         int y_radius = y_src + VehMoveDeltaY[i];
         if (on_map(x_radius, y_radius)) {
             int owner = veh_who(x_radius, y_radius);
-            if (owner >= 0 && (uint32_t)owner != faction_id 
+            if (owner >= 0 && owner != faction_id
                 && is_ocean(x_radius, y_radius) == is_src_ocean
                 && !has_treaty(faction_id, owner, DTREATY_PACT)) {
                 // image inlines BOTH vector_dist(x,y,x,y) and vector_dist(x,y) at this

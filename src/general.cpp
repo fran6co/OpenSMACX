@@ -1343,7 +1343,7 @@ int __cdecl bit_count(int bitfield) {
 /*
 Purpose: Count the number of signed bits set. Added a fix to prevent an infinite loop.
 // ORIGINAL: 0x00628AB0 ?bit_count_signed@@YAHH@Z 0x00628AB0-0x00628AC2 BYTE_EXACT
-// symbol    ?bit_count_signed@@YAIH@Z
+// symbol    ?bit_count_signed@@YAHH@Z
 // size      18 bytes
 // prototype 
 // callers   1   call targets   0
@@ -1353,7 +1353,7 @@ Purpose: Count the number of signed bits set. Added a fix to prevent an infinite
 Return Value: Bit count
 Status: Complete
 */
-uint32_t __cdecl bit_count_signed(int input) {
+int __cdecl bit_count_signed(int input) {
     uint32_t count = 0;
     if (input) {
         do {

@@ -4162,7 +4162,7 @@ Purpose: Calculate the lifecycle (morale) of the specified native life unit.
 // ORIGINAL: 0x00501350 ?morale_alien@@YAHHH@Z 0x00501350-0x005014F1
 // TRIED: still MISMATCH (~0.72 similar, up from ~0.46) - most of the remaining divergence is register allocation the compiler picked differently around the atrocities/veh-flags block and the two `range()` call sites, which every flag set tried left in place.
 // TRIED: source had the Fungal Tower special case as the OUTER `if`, guarded by `veh_id >= 0`, with the turn-ladder as its `else` - the image runs the turn-ladder/atrocities/veh-flags computation FIRST, UNCONDITIONALLY, then reads `Vehs[veh_id].x/.y/.proto_id` with NO veh_id guard (an out-of-bounds `Vehs[-1]` read - reproduced deliberately, see the BUG comment at the site) and only THEN branches on proto_id, overwriting `morale` if it is the Fungal Tower. Each branch ends in its OWN `return range(morale, 0, 6);` (not a shared tail after the `if`) - `int x`/`int y` locals (not `int16_t`) match the image's `movsx` at the point of assignment.
-// symbol    ?morale_alien@@YAIHH@Z
+// symbol    ?morale_alien@@YAHHH@Z
 // size      417 bytes
 // prototype int (__cdecl ?morale_alien@@YAHHH@Z)(int vehID, int factionIDvsNative)
 // callers   9   call targets   0
@@ -4172,7 +4172,7 @@ Purpose: Calculate the lifecycle (morale) of the specified native life unit.
 Return Value: Lifecycle (morale) value
 Status: Complete
 */
-uint32_t __cdecl morale_alien(int veh_id, int faction_id_vs_native) {
+int __cdecl morale_alien(int veh_id, int faction_id_vs_native) {
     int morale;
     if (GameDataStateStorage.fields_.turn_current_num_ < 45) {
         morale = 0;
@@ -5953,7 +5953,7 @@ Purpose: Check against faction's available tech for best available reactor.
 //        non-inline forwarder; open-coded it cost the body its register
 //        allocation (ebx for the argument) and 25 extra instructions (5/31 at
 //        /O2 /Oy- before the switch).
-// symbol    ?best_reactor@@YAIH@Z
+// symbol    ?best_reactor@@YAHH@Z
 // size      66 bytes
 // prototype int (__cdecl ?best_reactor@@YAHH@Z)(int factionID)
 // callers   3   call targets   1
@@ -5963,7 +5963,7 @@ Purpose: Check against faction's available tech for best available reactor.
 Return Value: Best reactor available (1-4)
 Status: Complete
 */
-uint32_t __cdecl best_reactor(int faction_id) {
+int __cdecl best_reactor(int faction_id) {
     for (int i = MaxReactorNum - 1; i >= 0; i--) {
         if (has_tech(Reactor[i].preq_tech, faction_id)) {
             return i + 1;
@@ -6293,7 +6293,7 @@ int __cdecl veh_health(int veh_id) {
 Purpose: Calculates cost of the prototype based on various factors. Optimized logic flow from
          the original without any differences to the final calculation.
 // ORIGINAL: 0x005A5A60 ?proto_cost@@YAHHHHHH@Z 0x005A5A60-0x005A5CE1
-// symbol    ?proto_cost@@YAIHHHHH@Z
+// symbol    ?proto_cost@@YAHHHHHH@Z
 // size      641 bytes
 // prototype int (__cdecl ?proto_cost@@YAHHHHHH@Z)(int chassisType, int weapType, int armorType, int ability, int reactorType)
 // callers   4   call targets   0
@@ -6316,7 +6316,7 @@ Purpose: Calculates cost of the prototype based on various factors. Optimized lo
 Return Value: Cost of prototype
 Status: Complete
 */
-uint32_t __cdecl proto_cost(int chassis_id, int weapon_id, int armor_id,
+int __cdecl proto_cost(int chassis_id, int weapon_id, int armor_id,
                             int ability, int reactor_id) {
     uint8_t weap_cost = Weapon[weapon_id].cost;
     uint8_t armor_cost = Armor[armor_id].cost;
