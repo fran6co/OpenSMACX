@@ -125,6 +125,118 @@ def local_pair():
     return old, new
 
 
+def function_source_label_pair(old_name="$label_4fc68f$63336",
+                               new_name="$label_4fc68f$63335", *, owner_storage=2):
+    old, new = local_pair()
+    # Put the label in the function-owned root COMDAT rather than an
+    # associative child, so this exercises the stricter source-label rule.
+    old.symbols[5] = replace(old.symbols[5], name=old_name, section=1, value=0)
+    new.symbols[5] = replace(new.symbols[5], name=new_name, section=1, value=0)
+    old.symbols[2] = replace(old.symbols[2], storage=owner_storage)
+    new.symbols[2] = replace(new.symbols[2], storage=owner_storage)
+    return old, new
+
+
+@pytest.mark.parametrize("old_name,new_name", [
+    ("$label_4fc68f$63336", "$label_4fc68f$63335"),
+    ("$native_editor_command_dispatch$67828", "$native_editor_command_dispatch$67827"),
+    ("$communicate_final_cleanup$66235", "$communicate_final_cleanup$66234"),
+])
+def test_function_source_label_suffix_churn_preserves_prefix_and_location(old_name, new_name):
+    old, new = function_source_label_pair(old_name, new_name)
+    assert [section.data for section in old.sections] == [section.data for section in new.sections]
+    assert object_signature(old) == object_signature(new)
+    assert compare_outside_functions(old, new, {}, {})["result"] == "pass"
+    assert function_signature(old, "_owner") == function_signature(new, "_owner")
+
+
+@pytest.mark.parametrize("damage", ["prefix", "move", "owner", "associated", "external",
+                                     "undefined", "type", "storage", "auxiliary"])
+def test_function_source_label_normalization_keeps_owner_and_source_identity_strict(damage):
+    old, new = function_source_label_pair()
+    if damage == "prefix":
+        new.symbols[5] = replace(new.symbols[5], name="$label_4fc690$63335")
+    elif damage == "move":
+        new.symbols[5] = replace(new.symbols[5], value=1)
+    elif damage == "owner":
+        new.symbols[2] = replace(new.symbols[2], name="_different_owner")
+    elif damage == "associated":
+        new.symbols[5] = replace(new.symbols[5], section=2)
+    elif damage == "external":
+        new.symbols[5] = replace(new.symbols[5], storage=2)
+    elif damage == "undefined":
+        new.symbols[5] = replace(new.symbols[5], section=0, storage=2)
+    elif damage == "type":
+        new.symbols[5] = replace(new.symbols[5], type=1)
+    elif damage == "storage":
+        new.symbols[5] = replace(new.symbols[5], storage=3)
+    else:
+        new.auxiliary[5] = bytes(18)
+    assert object_signature(old) != object_signature(new)
+    assert compare_outside_functions(old, new, {}, {})["result"] == "fail"
+
+
+@pytest.mark.parametrize("owner_storage", [2, 3])
+def test_function_source_label_suffix_churn_does_not_merge_colocated_aliases(owner_storage):
+    old, new = function_source_label_pair(owner_storage=owner_storage)
+    for obj, suffix in ((old, "63330"), (new, "63331")):
+        obj.symbols[101] = replace(obj.symbols[5], index=101,
+                                   name="$label_4fc68f$" + suffix)
+    assert compare_outside_functions(old, new, {}, {})["result"] == "fail"
+
+
+@pytest.mark.parametrize("owner_storage", [2, 3])
+def test_duplicate_function_source_label_identity_remains_ambiguous(owner_storage):
+    obj, _ = function_source_label_pair(owner_storage=owner_storage)
+    obj.symbols[101] = replace(obj.symbols[5], index=101)
+    with pytest.raises(ValueError, match="ambiguous compiler-local"):
+        object_signature(obj)
+
+
+@pytest.mark.parametrize("owner_storage", [2, 3])
+def test_function_source_label_suffix_churn_does_not_waive_retargeted_local_edges(owner_storage):
+    old, new = function_source_label_pair(owner_storage=owner_storage)
+    for obj in (old, new):
+        obj.symbols[101] = Symbol(101, "$label_4fcb4e$64116", 1, 1, 0, 6)
+    new.sections = (new.sections[0],
+                    replace(new.sections[1], relocations=((0, 101, 6),)),
+                    *new.sections[2:])
+    assert [section.data for section in old.sections] == [section.data for section in new.sections]
+    assert compare_outside_functions(old, new, {}, {})["result"] == "fail"
+
+
+def test_function_source_label_reserved_identity_cannot_be_impersonated():
+    obj, _ = function_source_label_pair()
+    obj.symbols[101] = replace(obj.symbols[5], index=101,
+                               name="<coff-function-local>:$label_4fc68f$")
+    with pytest.raises(ValueError, match="reserved compiler-local"):
+        object_signature(obj)
+
+
+@pytest.mark.parametrize("old_name,new_name", [
+    ("$L63336", "$L63335"),
+    ("$label_4fc68f$63336", "$label_4fc68f$63335"),
+])
+def test_private_function_comdat_owner_proves_local_label_suffix_identity(old_name, new_name):
+    old, new = function_source_label_pair(old_name, new_name, owner_storage=3)
+    assert object_signature(old) == object_signature(new)
+    assert compare_outside_functions(old, new, {}, {})["result"] == "pass"
+
+
+@pytest.mark.parametrize("damage", ["missing_owner", "ambiguous_owner", "non_comdat"])
+def test_private_function_label_requires_exclusive_code_comdat_owner(damage):
+    old, new = function_source_label_pair(owner_storage=3)
+    if damage == "missing_owner":
+        del new.symbols[2]
+    elif damage == "ambiguous_owner":
+        new.symbols[101] = replace(new.symbols[2], index=101, name="_second_private_owner")
+    else:
+        section = new.sections[0]
+        new.sections = (replace(section, flags=section.flags & ~0x1000), *new.sections[1:])
+    assert object_signature(old) != object_signature(new)
+    assert compare_outside_functions(old, new, {}, {})["result"] == "fail"
+
+
 def test_preservation_uses_associative_owner_and_offset_for_numeric_local_labels():
     old, new = local_pair()
     report = compare_outside_functions(old, new, {}, {})

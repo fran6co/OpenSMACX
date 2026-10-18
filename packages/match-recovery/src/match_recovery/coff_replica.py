@@ -14,25 +14,40 @@ from .pe_coff import weak_external
 
 _ASSOCIATIVE_LOCAL = "<coff-associative-local>"
 _FUNCTION_LOCAL = "<coff-function-local>"
+_FUNCTION_SOURCE_LABEL = re.compile(r"(\$[A-Za-z_][A-Za-z0-9_]*\$)[0-9]+")
+
+
+def _function_local_identity(name):
+    """Return a conservative identity for an observed function-local label."""
+    if re.fullmatch(r"\$L[0-9]+", name):
+        return _FUNCTION_LOCAL
+    match = _FUNCTION_SOURCE_LABEL.fullmatch(name)
+    if match is not None:
+        # In observed builds the source-identifier prefix stays stable while
+        # the compiler-local decimal suffix changes. Keep the prefix so
+        # distinct source labels never alias.
+        return _FUNCTION_LOCAL + ":" + match.group(1)
+    return None
 
 
 def _owned_local_names(obj):
-    """Identify narrow numeric local labels by their compiler-owned location.
+    """Identify observed compiler-local suffix churn by proven ownership.
 
     Applicable to both replicas and baseline preservation, never original-image
     target resolution. The complete key still includes function/associative owner, section,
     offset, type and storage; neither bytes nor relocation edges are omitted.
     """
-    if any(symbol.name in (_ASSOCIATIVE_LOCAL, _FUNCTION_LOCAL) for symbol in obj.symbols.values()):
+    if any(symbol.name in (_ASSOCIATIVE_LOCAL, _FUNCTION_LOCAL)
+           or symbol.name.startswith(_FUNCTION_LOCAL + ":") for symbol in obj.symbols.values()):
         # Otherwise a real symbol in one object could impersonate a normalized
         # local in the other, even with no within-object collision.
         raise ValueError("reserved compiler-local identity appears in COFF symbols")
     names = {}
-    # A numeric code label in the root COMDAT needs a real named function owner,
+    # A compiler-local code label in the root COMDAT needs a real named function owner,
     # not merely a .text section or adjacency to another symbol. Validate only
     # roots containing eligible labels; ordinary objects need no owner searches.
     roots = {s.section for s in obj.symbols.values() if s.section > 0 and s.section not in obj.associations
-             and s.storage == 6 and s.type == 0 and re.fullmatch(r"\$L[0-9]+", s.name)
+             and s.storage == 6 and s.type == 0 and _function_local_identity(s.name) is not None
              and not obj.auxiliary.get(s.index)}
     owners = {}
     for symbol in obj.symbols.values():
@@ -40,7 +55,7 @@ def _owned_local_names(obj):
             owners.setdefault(symbol.section, []).append(symbol)
     owned_roots = set()
     for section, functions in owners.items():
-        if len(functions) != 1 or functions[0].storage != 2 or functions[0].type != 0x20:
+        if len(functions) != 1 or functions[0].storage not in (2, 3) or functions[0].type != 0x20:
             continue
         try:
             obj.function(functions[0].name)
@@ -54,8 +69,9 @@ def _owned_local_names(obj):
                 and not obj.auxiliary.get(symbol.index)):
             names[symbol.index] = _ASSOCIATIVE_LOCAL
         elif (symbol.section in owned_roots and symbol.storage == 6 and symbol.type == 0
-              and re.fullmatch(r"\$L[0-9]+", symbol.name) and not obj.auxiliary.get(symbol.index)):
-            names[symbol.index] = _FUNCTION_LOCAL
+              and _function_local_identity(symbol.name) is not None
+              and not obj.auxiliary.get(symbol.index)):
+            names[symbol.index] = _function_local_identity(symbol.name)
     groups = {}
     for index, normalized in names.items():
         symbol = obj.symbols[index]

@@ -36,6 +36,18 @@ def test_root_numeric_names_use_exact_owned_locations_in_all_incoming_edges():
     assert report["changed_sections"] == report["symbol_changes"] == []
 
 
+@pytest.mark.parametrize("owner_storage", [2, 3])
+def test_private_root_function_comdat_owner_proves_numeric_label_identity(owner_storage):
+    old, new = pair()
+    for obj in (old, new):
+        obj.symbols[2] = replace(obj.symbols[2], storage=owner_storage)
+    assert object_signature(old) == object_signature(new)
+    assert function_signature(old, "_f") == function_signature(new, "_f")
+    report = compare_outside_functions(old, new, {}, {})
+    assert report["result"] == "pass"
+    assert report["changed_sections"] == report["symbol_changes"] == []
+
+
 @pytest.mark.parametrize("damage", ["offset", "owner", "target", "site", "kind", "addend",
                                      "bytes", "other_symbol", "extent", "flags", "association", "comdat_policy"])
 def test_normalized_root_labels_never_hide_other_evidence(damage):
@@ -88,7 +100,7 @@ def test_duplicate_owner_name_in_another_comdat_does_not_establish_root_identity
 
 
 @pytest.mark.parametrize("case", ["static_label", "external_label", "typed_label", "auxiliary",
-                                   "non_numeric", "static_owner", "missing_owner", "multiple_owners",
+                                   "non_numeric", "missing_owner", "multiple_owners",
                                    "nonzero_owner", "not_comdat", "not_code", "independent_data"])
 def test_unproven_root_label_ownership_keeps_numeric_spellings_strict(case):
     old, new = pair()
@@ -106,8 +118,6 @@ def test_unproven_root_label_ownership_keeps_numeric_spellings_strict(case):
                 obj.symbols[100] = replace(obj.symbols[100], name=obj.symbols[100].name + "_meaningful")
             else:
                 obj.symbols[100] = replace(obj.symbols[100], section=3)
-        elif case == "static_owner":
-            obj.symbols[2] = replace(obj.symbols[2], storage=3)
         elif case == "missing_owner":
             del obj.symbols[2]
         elif case == "multiple_owners":
@@ -117,6 +127,26 @@ def test_unproven_root_label_ownership_keeps_numeric_spellings_strict(case):
         else:
             flag = 0x1000 if case == "not_comdat" else 0x20
             obj.sections = (replace(obj.sections[0], flags=obj.sections[0].flags & ~flag), *obj.sections[1:])
+    assert compare_outside_functions(old, new, {}, {})["result"] == "fail"
+    assert object_signature(old) != object_signature(new)
+
+
+@pytest.mark.parametrize("owner_storage", [2, 3])
+@pytest.mark.parametrize("damage", ["missing", "multiple", "nonzero", "not_comdat", "not_code"])
+def test_unproven_public_or_private_root_owner_keeps_numeric_labels_strict(owner_storage, damage):
+    old, new = pair()
+    for obj in (old, new):
+        obj.symbols[2] = replace(obj.symbols[2], storage=owner_storage)
+    if damage == "missing":
+        del new.symbols[2]
+    elif damage == "multiple":
+        new.symbols[102] = replace(new.symbols[2], index=102, name="_second_owner")
+    elif damage == "nonzero":
+        new.symbols[2] = replace(new.symbols[2], value=1)
+    elif damage in ("not_comdat", "not_code"):
+        flag = 0x1000 if damage == "not_comdat" else 0x20
+        new.sections = (replace(new.sections[0], flags=new.sections[0].flags & ~flag),
+                        *new.sections[1:])
     assert compare_outside_functions(old, new, {}, {})["result"] == "fail"
     assert object_signature(old) != object_signature(new)
 
