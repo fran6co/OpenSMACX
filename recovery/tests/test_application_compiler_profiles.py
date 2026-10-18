@@ -170,6 +170,16 @@ HEADER_RNG_PROFILE_INSERTION = (
     '    PROPERTIES COMPILE_OPTIONS "/Oy-")\n'
 )
 HEADER_RNG_PROFILE_BLOCK = (("src/crt_random.cpp", "src/header_io.cpp"), ("/Oy-",))
+TUTWIN_SOURCE_BEFORE = "    src/tutwin.cpp\n    src/popmenu.cpp\n"
+TUTWIN_SOURCE_AFTER = "    src/tutwin.cpp\n    src/tutwin_callouts.cpp\n    src/popmenu.cpp\n"
+TUTWIN_PROFILE_BEFORE = (
+    "set_source_files_properties(\n"
+    "    src/designwin.cpp\n    src/tutwin.cpp\n    src/xpops.cpp\n"
+    '    PROPERTIES COMPILE_OPTIONS "/Oy-")\n'
+)
+TUTWIN_PROFILE_AFTER = TUTWIN_PROFILE_BEFORE.replace(
+    "    src/tutwin.cpp\n", "    src/tutwin.cpp\n    src/tutwin_callouts.cpp\n", 1
+)
 
 FRAME_PROFILE = ["/c", "/O2", "/Gy", "/GR-", "/Oy-", "/GX", "/Ob2"]
 EXPECTED_FLAG_SETS = [
@@ -182,7 +192,7 @@ EXPECTED_CMAKE_PROFILES = {
     tuple(sorted(("src/midi.cpp", "src/sounddevice.cpp", "src/sound_loader.cpp"))): ("/Oy-",),
     tuple(sorted(("src/datalink.cpp", "src/maininterface.cpp", "src/console.cpp"))): ("/Oy-",),
     tuple(sorted(("src/mapwin.cpp", "src/basewin.cpp"))): ("/Oy-",),
-    tuple(sorted(("src/designwin.cpp", "src/tutwin.cpp", "src/xpops.cpp"))): ("/Oy-",),
+    tuple(sorted(("src/designwin.cpp", "src/tutwin.cpp", "src/tutwin_callouts.cpp", "src/xpops.cpp"))): ("/Oy-",),
     tuple(sorted(("src/netdaemon.cpp", "src/diplowin.cpp", "src/diplopop.cpp", "src/worldwin.cpp"))): ("/Oy-",),
     tuple(sorted(("src/map.cpp", "src/faction.cpp", "src/veh.cpp"))): ("/Oy-",),
     **{tuple(sorted(group)): ("/Oy-",) for group in PRIOR_PROFILE_GROUPS},
@@ -228,6 +238,10 @@ def source_property_blocks(cmake: str):
 
 
 def non_profile_text_matches(baseline: str, candidate: str) -> bool:
+    for before, after in ((TUTWIN_SOURCE_BEFORE, TUTWIN_SOURCE_AFTER),
+                          (TUTWIN_PROFILE_BEFORE, TUTWIN_PROFILE_AFTER)):
+        if baseline.count(before) != 1 or baseline.count(after) or candidate.count(after) != 1:
+            return False
     insertion = NEW_PROFILE_COMMENT + NEW_PROFILE_BLOCK_TEXT + "\n"
     if baseline.count(insertion) or candidate.count(insertion) != 1:
         return False
@@ -258,7 +272,9 @@ def non_profile_text_matches(baseline: str, candidate: str) -> bool:
     if baseline.count(HEADER_RNG_SOURCE_BEFORE) or candidate.count(HEADER_RNG_SOURCE_AFTER) != 1:
         return False
 
-    projected = candidate.replace(HEADER_RNG_PROFILE_INSERTION, "", 1)
+    projected = candidate.replace(TUTWIN_SOURCE_AFTER, TUTWIN_SOURCE_BEFORE, 1)
+    projected = projected.replace(TUTWIN_PROFILE_AFTER, TUTWIN_PROFILE_BEFORE, 1)
+    projected = projected.replace(HEADER_RNG_PROFILE_INSERTION, "", 1)
     projected = projected.replace(HEADER_RNG_SOURCE_AFTER, HEADER_RNG_SOURCE_BEFORE, 1)
     projected = projected.replace(insertion, "", 1)
     projected = projected.replace(REMAINING_PROFILE_INSERTION, "", 1)
@@ -273,6 +289,12 @@ def non_profile_text_matches(baseline: str, candidate: str) -> bool:
 
 def cmake_profile_delta_is_exact(baseline: str, candidate: str) -> bool:
     expected = collections.Counter(source_property_blocks(baseline))
+    old_group, = source_property_blocks(TUTWIN_PROFILE_BEFORE)
+    new_group, = source_property_blocks(TUTWIN_PROFILE_AFTER)
+    if expected[old_group] != 1:
+        return False
+    del expected[old_group]
+    expected[new_group] += 1
     expected[NEW_PROFILE_BLOCK] += 1
     expected[REMAINING_PROFILE_BLOCK] += 1
     expected[ALPHA_PROFILE_BLOCK] += 1
@@ -293,7 +315,9 @@ def test_profile_guard_rejects_policy_mutations():
     baseline = (
         'set_source_files_properties(src/previous.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")\n'
         + OLD_ALPHA_DEFAULT_COMMENT
-        + 'set(OPENSMACX_SOURCES\n    src/video.cpp\n    src/general.cpp\n)\n'
+        + 'set(OPENSMACX_SOURCES\n    src/video.cpp\n    src/general.cpp\n'
+        + TUTWIN_SOURCE_BEFORE + ')\n'
+        + TUTWIN_PROFILE_BEFORE
         + 'add_compile_options("/DDEFAULT=1")\n'
         'target_link_options(Game PRIVATE "/FIXED:NO")\n'
     )
@@ -307,9 +331,16 @@ def test_profile_guard_rejects_policy_mutations():
     candidate += UNDO_PROFILE_INSERTION
     candidate = candidate.replace(HEADER_RNG_SOURCE_BEFORE, HEADER_RNG_SOURCE_AFTER, 1)
     candidate += HEADER_RNG_PROFILE_INSERTION
+    candidate = candidate.replace(TUTWIN_SOURCE_BEFORE, TUTWIN_SOURCE_AFTER, 1)
+    candidate = candidate.replace(TUTWIN_PROFILE_BEFORE, TUTWIN_PROFILE_AFTER, 1)
     assert cmake_profile_delta_is_exact(baseline, candidate)
 
     for damaged in (
+        candidate.replace(TUTWIN_SOURCE_AFTER, TUTWIN_SOURCE_BEFORE, 1),
+        candidate.replace(TUTWIN_SOURCE_AFTER, TUTWIN_SOURCE_AFTER + "    src/tutwin_callouts.cpp\n", 1),
+        candidate.replace(TUTWIN_PROFILE_AFTER, TUTWIN_PROFILE_BEFORE, 1),
+        candidate.replace(TUTWIN_PROFILE_AFTER, TUTWIN_PROFILE_AFTER.replace("/Oy-", "/Oy- /Ob0"), 1),
+        candidate.replace(TUTWIN_PROFILE_AFTER, TUTWIN_PROFILE_AFTER.replace("src/tutwin_callouts.cpp", "src/basewin.cpp"), 1),
         candidate.replace(HEADER_RNG_PROFILE_INSERTION, "", 1),
         candidate + HEADER_RNG_PROFILE_INSERTION,
         candidate.replace(HEADER_RNG_SOURCE_AFTER, HEADER_RNG_SOURCE_BEFORE, 1),
@@ -487,6 +518,7 @@ def test_application_profiles_match_immutable_baseline_plus_core_cohort():
     assert "src/scenario_undo.cpp" in application_sources
     assert "src/header_io.cpp" in application_sources
     assert "src/crt_random.cpp" in application_sources
+    assert "src/tutwin_callouts.cpp" in application_sources
 
     actual_profiles = dict(source_property_blocks(current_cmake))
     assert actual_profiles == EXPECTED_CMAKE_PROFILES

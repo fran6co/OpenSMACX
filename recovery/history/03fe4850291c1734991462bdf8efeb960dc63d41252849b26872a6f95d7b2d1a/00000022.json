@@ -1,0 +1,19 @@
+{
+  "event_id": "4f3f0d68ef5d130222e2d1361fbefa4f70aec6d62e6c131f00e921fd9e6dffd2",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "tutwin-helper-call-boundaries-oct18",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/tutwin_callouts.cpp now owns all eight unchanged original member definitions with their complete mappings, claims and seed lessons. CMake adds the ordinary implementation TU with the existing TutWin profile, not forced noinline/export or a historical-TU assertion. Fresh physical comparison preserves all35 transported emitted function closures.",
+      "src/tutwin.cpp tour1 now follows the complete pinned original callout flow: per-call primary-map reload, actual member rectangles, ENERGY/ALLOC2/common ECON, original parse/draw/cancellation order and final PREV/NEXT/RENAME/OK gates. tour5/tour7 pass real members and the original typed array pointer progression. Host controls exercise both allocation branches, every cancellation, owner replacement/null, shared POP coordinates and initial zoom outcomes.",
+      "Coordinator-reviewed source incorporation only: fresh168-compilation application build/link,81 focused/adjacent tests, native source/claim/mapping/reference checks and unchanged exact/strict identities support integration. Physical candidate residual remains173pass/8fail: six header-induced consumers reproduced by complete header-only controls, one scoped DesignWin producer and one restored literal; new helper duplicate selection/linked retention and full-game runtime remain unqualified. No claim demotion, baseline reset or full acceptance."
+    ]
+  },
+  "previous_event": "90964e8f0a453e8bf69c86956f6f94d328166eb9bc360be8be929884fbce8a29",
+  "request_id": "tutwin-helper-call-boundaries-oct18-incorporated",
+  "schema_version": 1,
+  "sequence": 22,
+  "stream": "task:tutwin-owner-coverage-wave"
+}

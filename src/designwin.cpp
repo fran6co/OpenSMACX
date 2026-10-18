@@ -3365,10 +3365,10 @@ void DesignWin::draw_vehicle(int redraw) {
     strcat(StringTemp, " ");
     strcat(StringTemp, ability_names);
     screen->write_cent_l(StringTemp, &dest, static_cast<int>(strlen(StringTemp)));
-    field_B3C_ = dest.left;
-    field_B40_ = dest.top;
-    field_B44_ = dest.right;
-    field_B48_ = dest.bottom;
+    stats_rect_.left = dest.left;
+    stats_rect_.top = dest.top;
+    stats_rect_.right = dest.right;
+    stats_rect_.bottom = dest.bottom;
 
     if (Weapon[weapon_id].mode == 7) {
         adv = ((cur_font->unk_1_ < 0 ? cur_font->line_height()

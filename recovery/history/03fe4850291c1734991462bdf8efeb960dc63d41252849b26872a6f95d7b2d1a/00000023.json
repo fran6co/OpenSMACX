@@ -1,0 +1,18 @@
+{
+  "event_id": "747700bcbe0b5d98c7e745392837d36309202d22f97c07fef715c2670b887326",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "designwin-stats-rectangle-oct18",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/designwin.h declares the real16-byte RECT stats_rect_ at+B3C; draw_vehicle stores its four edges in original order and tour7 passes its address for DESTOURSTATS. Both configured native compiler-layout trials observe tagRECT at+B3C. Original producer/caller operands and next member+B4C support the extent-neutral interpretation; descriptive name is not a recovered debug spelling.",
+      "All six external consumer object deltas are independently reproduced from unchanged master source using only the current DesignWin header overlay; unchanged replicas reproduce master. The reviewed draw_vehicle delta only exchanges the two operands of the same commutative addition. These observations explain differences but do not turn failed physical comparisons or unknown linked preservation into passes."
+    ]
+  },
+  "previous_event": "4f3f0d68ef5d130222e2d1361fbefa4f70aec6d62e6c131f00e921fd9e6dffd2",
+  "request_id": "designwin-stats-rectangle-oct18-incorporated",
+  "schema_version": 1,
+  "sequence": 23,
+  "stream": "task:tutwin-owner-coverage-wave"
+}

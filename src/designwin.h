@@ -276,10 +276,11 @@ class DesignWin : public GraphicWin, public SubInterface {
   // Passed as RECT* to des_rect at 0x4BB0E1 (original address 0x71FDDC).
   // RECOVERY_MEMBER: v2 DesignWin field_B2C_rect_ tagRECT 0xB2C 0x004BAF20
   RECT field_B2C_rect_;  // 0xB2C
-  uint32_t field_B3C_;  // 0xB3C
-  uint32_t field_B40_;  // 0xB40
-  uint32_t field_B44_;  // 0xB44
-  uint32_t field_B48_;  // 0xB48
+  // draw_vehicle stores the rendered stats bounds here (4366DD..4366EF);
+  // tour7 passes this member directly to des_rect for DESTOURSTATS.
+  // Descriptive name, not an original debug-name claim.
+  // RECOVERY_MEMBER: v2 DesignWin stats_rect_ tagRECT 0xB3C 0x004BAF20
+  RECT stats_rect_;  // 0xB3C..0xB4B
   // Passed as RECT* to do_des at 0x4BB343 (original address 0x71FDFC).
   // RECOVERY_MEMBER: v2 DesignWin field_B4C_rect_ tagRECT 0xB4C 0x004BAF20
   RECT field_B4C_rect_;  // 0xB4C

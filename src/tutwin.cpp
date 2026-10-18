@@ -1097,63 +1097,46 @@ void TutWin::tour7() {
         TutWinDesWindow.exec(ConsoleGlobal.faction_id_, -2);
     }
 
-    RECT temporary;
 
-    temporary = (TutWinDesWindow.component_panel_rects_[
-        DesignWin::component_panel_chassis]);
-    des_rect(&temporary, &x, &y);
+    des_rect(&TutWinDesWindow.component_panel_rects_[
+        DesignWin::component_panel_chassis], &x, &y);
     if (tut_win(MapWinTable[0],
     "DESTOURCHAS", x, y, 0, 2, -1, -1) == 0) goto tour7_cleanup;
-    temporary = (TutWinDesWindow.component_panel_rects_[
-        DesignWin::component_panel_weapon]);
-    des_rect(&temporary, &x, &y);
+    des_rect(&TutWinDesWindow.component_panel_rects_[
+        DesignWin::component_panel_weapon], &x, &y);
     if (tut_win(MapWinTable[0],
     "DESTOURWEAP", x, y, 0, 2, -1, -1) == 0) goto tour7_cleanup;
-    temporary = (TutWinDesWindow.component_panel_rects_[
-        DesignWin::component_panel_armor]);
-    des_rect(&temporary, &x, &y);
+    des_rect(&TutWinDesWindow.component_panel_rects_[
+        DesignWin::component_panel_armor], &x, &y);
     if (tut_win(MapWinTable[0],
     "DESTOURARM", x, y, 0, 2, -1, -1) == 0) goto tour7_cleanup;
-    temporary = (TutWinDesWindow.component_panel_rects_[
-        DesignWin::component_panel_reactor]);
-    des_rect(&temporary, &x, &y);
+    des_rect(&TutWinDesWindow.component_panel_rects_[
+        DesignWin::component_panel_reactor], &x, &y);
     if (tut_win(MapWinTable[0],
     "DESTOURREACTOR", x, y, 0, 2, -1, -1) == 0) goto tour7_cleanup;
-    temporary = (TutWinDesWindow.component_panel_rects_[
-        DesignWin::component_panel_special_one]);
-    des_rect(&temporary, &x, &y);
+    des_rect(&TutWinDesWindow.component_panel_rects_[
+        DesignWin::component_panel_special_one], &x, &y);
     if (tut_win(MapWinTable[0],
     "DESTOURABILITY", x, y, 0, 2, -1, -1) == 0) goto tour7_cleanup;
-    temporary = (TutWinDesWindow.field_B2C_rect_);
-    des_rect(&temporary, &x, &y);
+    des_rect(&TutWinDesWindow.field_B2C_rect_, &x, &y);
     if (tut_win(MapWinTable[0],
     "DESTOURCOST", x, y, 0, 2, -1, -1) == 0) goto tour7_cleanup;
-    temporary.left = TutWinDesWindow.field_B3C_;
-    temporary.top = TutWinDesWindow.field_B40_;
-    temporary.right = TutWinDesWindow.field_B44_;
-    temporary.bottom = TutWinDesWindow.field_B48_;
-    temporary = (temporary);
-    des_rect(&temporary, &x, &y);
+    des_rect(&TutWinDesWindow.stats_rect_, &x, &y);
     if (tut_win(MapWinTable[0],
     "DESTOURSTATS", x, y, 0, 2, -1, -1) == 0) goto tour7_cleanup;
-    temporary = (TutWinDesWindow.field_B0C_rect_);
-    iface_rect(&temporary, &x, &y);
+    iface_rect(&TutWinDesWindow.field_B0C_rect_, &x, &y);
     if (tut_win(MapWinTable[0],
     "DESTOURBAR", x, y, 0, 2, -1, -1) == 0) goto tour7_cleanup;
-    temporary = (TutWinDesWindow.field_CBC_rect_);
-    iface_rect(&temporary, &x, &y);
+    iface_rect(&TutWinDesWindow.field_CBC_rect_, &x, &y);
     if (tut_win(MapWinTable[0],
     "DESTOURARROWS", x, y, 0, 2, -1, -1) == 0) goto tour7_cleanup;
-    temporary = (TutWinDesWindow.caption_rect_);
-    iface_rect(&temporary, &x, &y);
+    iface_rect(&TutWinDesWindow.caption_rect_, &x, &y);
     if (tut_win(MapWinTable[0],
     "DESTOURPRESETS", x, y, 0, 2, -1, -1) == 0) goto tour7_cleanup;
-    temporary = (TutWinDesWindow.lower_panel_rows_[DesignWin::lower_panel_done]);
-    des_rect(&temporary, &x, &y);
+    des_rect(&TutWinDesWindow.lower_panel_rows_[DesignWin::lower_panel_done], &x, &y);
     if (tut_win(MapWinTable[0],
     "DESTOURDONE", x, y, 0, 2, -1, -1) == 0) goto tour7_cleanup;
-    temporary = (TutWinDesWindow.field_B5C_rect_);
-    des_rect(&temporary, &x, &y);
+    des_rect(&TutWinDesWindow.field_B5C_rect_, &x, &y);
     if (tut_win(MapWinTable[0],
     "DESTOURAPPLY", x, y, 0, 2, -1, -1) == 0) goto tour7_cleanup;
     if (!do_des(&TutWinDesWindow.lower_panel_rows_[DesignWin::lower_panel_rename],
@@ -1184,7 +1167,7 @@ void TutWin::tour5() {
     int x;
     int y;
     int i;
-    RECT temporary;
+    RECT *rect;
 
     if (!was_visible) {
         TutWinSocWindow.init(-ConsoleGlobal.faction_id_);
@@ -1192,58 +1175,48 @@ void TutWin::tour5() {
     }
 
 
-    temporary = (TutWinSocWindow.categoryHeaders_[1]);
-    soc_rect(&temporary, &x, &y);
+    soc_rect(&TutWinSocWindow.categoryHeaders_[1], &x, &y);
     if (tut_win(MapWinTable[0],
     "SOCTOURMAIN", x, y, 0, 2, -1, -1) == 0) goto tour5_cleanup;
-    temporary = (TutWinSocWindow.tooltipFactionPower_);
-    soc_rect(&temporary, &x, &y);
+    soc_rect(&TutWinSocWindow.tooltipFactionPower_, &x, &y);
     if (tut_win(MapWinTable[0],
     "SOCTOURFACTION", x, y, 0, 2, -1, -1) == 0) goto tour5_cleanup;
-    temporary = (TutWinSocWindow.tooltipEffects_);
-    iface_rect(&temporary, &x, &y);
+    iface_rect(&TutWinSocWindow.tooltipEffects_, &x, &y);
     if (tut_win(MapWinTable[0],
     "SOCTOUROVERVIEW", x, y, 0, 2, -1, -1) == 0) goto tour5_cleanup;
-    temporary = (TutWinSocWindow.tutRect1_);
-    soc_rect(&temporary, &x, &y);
+    soc_rect(&TutWinSocWindow.tutRect1_, &x, &y);
     if (tut_win(MapWinTable[0],
     "SOCTOUREFFECTS", x, y, 0, 2, -1, -1) == 0) goto tour5_cleanup;
+    rect = TutWinSocWindow.tutRects2_;
     for (i = 0; i < 10; ++i) {
         StringTemp[0] = 0;
         strcat(StringTemp, "SOCTOUR");
         say_num(i);
-        temporary = TutWinSocWindow.tutRects2_[i];
-        soc_rect(&temporary, &x, &y);
+        soc_rect(rect, &x, &y);
         if (tut_win(MapWinTable[0],
                     StringTemp, x, y, 0, 2, -1, -1) == 0) goto tour5_cleanup;
+        ++rect;
     }
 
-    temporary = (TutWinSocWindow.tooltipEconomy_);
-    iface_rect(&temporary, &x, &y);
+    iface_rect(&TutWinSocWindow.tooltipEconomy_, &x, &y);
     if (tut_win(MapWinTable[0],
     "SOCTOURECON", x, y, 0, 2, -1, -1) == 0) goto tour5_cleanup;
-    temporary = (TutWinSocWindow.tooltipPsych_);
-    iface_rect(&temporary, &x, &y);
+    iface_rect(&TutWinSocWindow.tooltipPsych_, &x, &y);
     if (tut_win(MapWinTable[0],
     "SOCTOURPSYCH", x, y, 0, 2, -1, -1) == 0) goto tour5_cleanup;
-    temporary = (TutWinSocWindow.tooltipLabs_);
-    iface_rect(&temporary, &x, &y);
+    iface_rect(&TutWinSocWindow.tooltipLabs_, &x, &y);
     if (tut_win(MapWinTable[0],
     "SOCTOURLABS", x, y, 0, 2, -1, -1) == 0) goto tour5_cleanup;
-    temporary = (TutWinSocWindow.tutRect14_);
-    iface_rect(&temporary, &x, &y);
+    iface_rect(&TutWinSocWindow.tutRect14_, &x, &y);
     if (tut_win(MapWinTable[0],
     "SOCTOURINFO", x, y, 0, 2, -1, -1) == 0) goto tour5_cleanup;
-    temporary = (TutWinSocWindow.tutRect11_);
-    soc_rect(&temporary, &x, &y);
+    soc_rect(&TutWinSocWindow.tutRect11_, &x, &y);
     if (tut_win(MapWinTable[0],
     "SOCTOURCANCEL", x, y, 0, 2, -1, -1) == 0) goto tour5_cleanup;
-    temporary = (TutWinSocWindow.tutRect12_);
-    soc_rect(&temporary, &x, &y);
+    soc_rect(&TutWinSocWindow.tutRect12_, &x, &y);
     if (tut_win(MapWinTable[0],
     "SOCTOURRESET", x, y, 0, 2, -1, -1) == 0) goto tour5_cleanup;
-    temporary = TutWinSocWindow.tutRect13_;
-    do_soc(&temporary, "SOCTOUROK", 2);
+    do_soc(&TutWinSocWindow.tutRect13_, "SOCTOUROK", 2);
 
 tour5_cleanup:
     if (!was_visible) {
@@ -1309,6 +1282,9 @@ void TutWin::tour6() {
 // ORIGINAL: 0x004BB7A0 ?tour1@TutWin@@QAEXXZ 0x004BB7A0-0x004BC591 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["seed:src/unrecovered/004bb7a0.cpp", "image:0x004bb7a0; original call/rectangle/lifetime review"], "reason": "Restore the original ownership-group implementation through real tutorial/editor windows, declared members and normal C++ lifecycle; retained seed extents include the associated exception cleanup where present."}
 // TRIED: inline-casting the 0x6a7628/0x6c0df4/0x7ae820 receivers at every call site (no cached local pointer) matches from #0; remaining divergence is that /O2 and /O1 both hoist the ebx/edi push for the zoom-search loop into the true prologue, while the original defers it to just inside the `!is_visible()` branch and pops it back out before the giant guard-clause chain. Tried plain casts, reordering locals (count/target/rec/idx) to match register assignment order - none moved the push. Flat guard-clause control flow (if(!x) return;) reproduces the CFG; all ~30 repeated tut_win/iface_rect/base_rect/client_to_screen blocks and the ALLOC/ALLOC2 branch and do_iface/do_base tail are transcribed directly from the disassembly.
+// Callouts reload the primary map owner after each coordinate conversion;
+// preceding tutorial callbacks can replace that window. Rectangle-helper
+// operands are the actual BaseWin members, not snapshots of their storage.
 void TutWin::tour1() {
     if (!TutWinBaseWindow.is_visible()) {
         for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
@@ -1327,446 +1303,145 @@ void TutWin::tour1() {
     int x;
     int y;
     RECT rect;
-    MapWin *const map = MapWinTable[0];
-    GraphicWin *const owner = map != 0 ? static_cast<GraphicWin *>(map) : 0;
 
-    rect = (TutWinBaseWindow.rect8_);
+    rect = TutWinBaseWindow.rect8_;
     x = rect.left + (rect.right - rect.left) / 2;
     y = rect.top + (rect.bottom - rect.top) / 2;
     TutWinBaseWindow.client_to_screen(&x, &y);
-    if (tut_win(owner, "TOUR1GOVERNOR", x, y, 0, 2, -1, -1) == 0) return;
-    rect = (TutWinBaseWindow.rect14_);
+    if (tut_win(MapWinTable[0], "TOUR1GOVERNOR", x, y, 0, 2, -1, -1) == 0) return;
+    rect = TutWinBaseWindow.rect14_;
     x = rect.left + (rect.right - rect.left) / 2;
     y = rect.top + (rect.bottom - rect.top) / 2;
     TutWinBaseWindow.client_to_screen(&x, &y);
-    if (tut_win(owner, "TOUR1EXPLORE", x, y, 0, 2, -1, -1) == 0) return;
-    rect = (TutWinBaseWindow.rect15_);
+    if (tut_win(MapWinTable[0], "TOUR1EXPLORE", x, y, 0, 2, -1, -1) == 0) return;
+    rect = TutWinBaseWindow.rect15_;
     x = rect.left + (rect.right - rect.left) / 2;
     y = rect.top + (rect.bottom - rect.top) / 2;
     TutWinBaseWindow.client_to_screen(&x, &y);
-    if (tut_win(owner, "TOUR1DISCOVER", x, y, 0, 2, -1, -1) == 0) return;
-    rect = (TutWinBaseWindow.rect18_);
+    if (tut_win(MapWinTable[0], "TOUR1DISCOVER", x, y, 0, 2, -1, -1) == 0) return;
+    rect = TutWinBaseWindow.rect18_;
     x = rect.left + (rect.right - rect.left) / 2;
     y = rect.top + (rect.bottom - rect.top) / 2;
     TutWinBaseWindow.client_to_screen(&x, &y);
-    if (tut_win(owner, "TOUR1BUILD", x, y, 0, 2, -1, -1) == 0) return;
-    rect = (TutWinBaseWindow.rect19_);
+    if (tut_win(MapWinTable[0], "TOUR1BUILD", x, y, 0, 2, -1, -1) == 0) return;
+    rect = TutWinBaseWindow.rect19_;
     x = rect.left + (rect.right - rect.left) / 2;
     y = rect.top + (rect.bottom - rect.top) / 2;
     TutWinBaseWindow.client_to_screen(&x, &y);
-    if (tut_win(owner, "TOUR1CONQUER", x, y, 0, 2, -1, -1) == 0) return;
-    rect = (TutWinBaseWindow.rect8_);
+    if (tut_win(MapWinTable[0], "TOUR1CONQUER", x, y, 0, 2, -1, -1) == 0) return;
+    rect = TutWinBaseWindow.rect8_;
     x = rect.left + (rect.right - rect.left) / 2;
     y = rect.top + (rect.bottom - rect.top) / 2;
     TutWinBaseWindow.client_to_screen(&x, &y);
-    if (tut_win(owner, "TOUR1GOVERNOR2", x, y, 0, 2, -1, -1) == 0) return;
-    rect = (TutWinBaseWindow.rect16_);
+    if (tut_win(MapWinTable[0], "TOUR1GOVERNOR2", x, y, 0, 2, -1, -1) == 0) return;
+    rect = TutWinBaseWindow.rect16_;
     x = rect.left + (rect.right - rect.left) / 2;
     y = rect.top + (rect.bottom - rect.top) / 2;
     TutWinBaseWindow.client_to_screen(&x, &y);
-    if (tut_win(owner, "TOUR1ADVANCED", x, y, 0, 2, -1, -1) == 0) return;
-    rect = (TutWinBaseWindow.info_title_rect_);
-    iface_rect(&rect, &x, &y);
-    if (tut_win(owner, "TOUR1CAPTION", x, y, 0, 2, -1, -1) == 0) return;
-    rect = (TutWinBaseWindow.rect5_);
-    base_rect(&rect, &x, &y);
-    if (tut_win(owner, "TOUR1ECO", x, y, 0, 2, -1, -1) == 0) return;
+    if (tut_win(MapWinTable[0], "TOUR1ADVANCED", x, y, 0, 2, -1, -1) == 0) return;
+
+    iface_rect(&TutWinBaseWindow.info_title_rect_, &x, &y);
+    if (tut_win(MapWinTable[0], "TOUR1CAPTION", x, y, 0, 2, -1, -1) == 0) return;
+    base_rect(&TutWinBaseWindow.rect5_, &x, &y);
+    if (tut_win(MapWinTable[0], "TOUR1ECO", x, y, 0, 2, -1, -1) == 0) return;
 
     rect = TutWinBaseWindow.population_rect_;
     x = rect.left + (rect.right - rect.left) / 2;
     y = rect.top + (rect.bottom - rect.top) / 2;
-    MainInterfaceGlobal.client_to_screen(&x, &y);
-    if (tut_win(owner, "TOUR1POP", x, y, 0, 2, -1, -1) == 0) return;
-    if (tut_win(owner, "TOUR1POP2", x, y, 0, 2, -1, -1) == 0) return;
+    TutWinBaseWindow.client_to_screen(&x, &y);
+    if (tut_win(MapWinTable[0], "TOUR1POP", x, y, 0, 2, -1, -1) == 0) return;
+    if (tut_win(MapWinTable[0], "TOUR1POP2", x, y, 0, 2, -1, -1) == 0) return;
 
-    rect = (TutWinBaseWindow.flash_rect_a_);
-    iface_rect(&rect, &x, &y);
-    if (tut_win(owner, "TOUR1STAPLE", x, y, 0, 2, -1, -1) == 0) return;
-    rect = (TutWinBaseWindow.queue_help_rect_);
-    iface_rect(&rect, &x, &y);
-    if (tut_win(owner, "TOUR1PRODUCTION", x, y, 0, 2, -1, -1) == 0) return;
-    rect = (TutWinBaseWindow.queue_content_rect_);
-    iface_rect(&rect, &x, &y);
-    if (tut_win(owner, "TOUR1QUEUE", x, y, 0, 2, -1, -1) == 0) return;
-    rect = (TutWinBaseWindow.flash_rect_b_);
-    iface_rect(&rect, &x, &y);
-    if (tut_win(owner, "TOUR1CHANGE", x, y, 0, 2, -1, -1) == 0) return;
-    rect = (TutWinBaseWindow.garrison_rect_);
-    iface_rect(&rect, &x, &y);
-    if (tut_win(owner, "TOUR1HURRY", x, y, 0, 2, -1, -1) == 0) return;
-    rect = (TutWinBaseWindow.rect1_);
-    iface_rect(&rect, &x, &y);
-    if (tut_win(owner, "TOUR1GARRISON", x, y, 0, 2, -1, -1) == 0) return;
-    rect = (TutWinBaseWindow.rect2_);
-    base_rect(&rect, &x, &y);
-    if (tut_win(owner, "TOUR1SUPPORTED", x, y, 0, 2, -1, -1) == 0) return;
-    rect = (TutWinBaseWindow.commerce_report_rect_);
-    base_rect(&rect, &x, &y);
-    if (tut_win(owner, "TOUR1FACILITIES", x, y, 0, 2, -1, -1) == 0) return;
-    rect = (TutWinBaseWindow.nutrient_content_rect_);
-    base_rect(&rect, &x, &y);
-    if (tut_win(owner, "TOUR1COMMERCE", x, y, 0, 2, -1, -1) == 0) return;
-    rect = (TutWinBaseWindow.rect1_);
-    base_rect(&rect, &x, &y);
-    if (tut_win(owner, "TOUR1NUTRIENTS", x, y, 0, 2, -1, -1) == 0) return;
+    iface_rect(&TutWinBaseWindow.rect12_, &x, &y);
+    if (tut_win(MapWinTable[0], "TOUR1STAPLE", x, y, 0, 2, -1, -1) == 0) return;
+    iface_rect(&TutWinBaseWindow.queue_help_rect_, &x, &y);
+    if (tut_win(MapWinTable[0], "TOUR1PRODUCTION", x, y, 0, 2, -1, -1) == 0) return;
+    iface_rect(&TutWinBaseWindow.queue_content_rect_, &x, &y);
+    if (tut_win(MapWinTable[0], "TOUR1QUEUE", x, y, 0, 2, -1, -1) == 0) return;
+    iface_rect(&TutWinBaseWindow.flash_rect_a_, &x, &y);
+    if (tut_win(MapWinTable[0], "TOUR1CHANGE", x, y, 0, 2, -1, -1) == 0) return;
+    iface_rect(&TutWinBaseWindow.flash_rect_b_, &x, &y);
+    if (tut_win(MapWinTable[0], "TOUR1HURRY", x, y, 0, 2, -1, -1) == 0) return;
+    iface_rect(&TutWinBaseWindow.garrison_rect_, &x, &y);
+    if (tut_win(MapWinTable[0], "TOUR1GARRISON", x, y, 0, 2, -1, -1) == 0) return;
+    iface_rect(&TutWinBaseWindow.supported_content_rect_, &x, &y);
+    if (tut_win(MapWinTable[0], "TOUR1SUPPORTED", x, y, 0, 2, -1, -1) == 0) return;
+    base_rect(&TutWinBaseWindow.rect2_, &x, &y);
+    if (tut_win(MapWinTable[0], "TOUR1FACILITIES", x, y, 0, 2, -1, -1) == 0) return;
+    base_rect(&TutWinBaseWindow.commerce_report_rect_, &x, &y);
+    if (tut_win(MapWinTable[0], "TOUR1COMMERCE", x, y, 0, 2, -1, -1) == 0) return;
+    base_rect(&TutWinBaseWindow.nutrient_content_rect_, &x, &y);
+    if (tut_win(MapWinTable[0], "TOUR1NUTRIENTS", x, y, 0, 2, -1, -1) == 0) return;
 
+    base_rect(&TutWinBaseWindow.rect1_, &x, &y);
+    if (tut_win(MapWinTable[0], "TOUR1AREA", x, y, 0, 2, -1, -1) == 0) return;
     TutWinBaseWindow.draw_expenses(2);
-    rect = (TutWinBaseWindow.expenses_help_rects_[1]);
-    x = rect.left + (rect.right - rect.left) / 2;
-    y = rect.top + (rect.bottom - rect.top) / 2;
-    TutWinBaseWindow.client_to_screen(&x, &y);
-    if (tut_win(owner, "TOUR1AREA", x, y, 0, 2, -1, -1) == 0) return;
     parse_num(0, static_cast<int>(Rules.nutrient_req_citizen));
-    rect = (TutWinBaseWindow.expenses_help_rects_[2]);
+    rect = TutWinBaseWindow.expenses_help_rects_[1];
     x = rect.left + (rect.right - rect.left) / 2;
     y = rect.top + (rect.bottom - rect.top) / 2;
     TutWinBaseWindow.client_to_screen(&x, &y);
-    if (tut_win(owner, "TOUR1NUT", x, y, 0, 2, -1, -1) == 0) return;
-    rect = (TutWinBaseWindow.expenses_help_rects_[0]);
+    if (tut_win(MapWinTable[0], "TOUR1NUT", x, y, 0, 2, -1, -1) == 0) return;
+    rect = TutWinBaseWindow.expenses_help_rects_[2];
     x = rect.left + (rect.right - rect.left) / 2;
     y = rect.top + (rect.bottom - rect.top) / 2;
     TutWinBaseWindow.client_to_screen(&x, &y);
-    if (tut_win(owner, "TOUR1MIN", x, y, 0, 2, -1, -1) == 0) return;
+    if (tut_win(MapWinTable[0], "TOUR1MIN", x, y, 0, 2, -1, -1) == 0) return;
+
+    rect = TutWinBaseWindow.expenses_help_rects_[0];
+    x = rect.left + (rect.right - rect.left) / 2;
+    y = rect.top + (rect.bottom - rect.top) / 2;
+    TutWinBaseWindow.client_to_screen(&x, &y);
+    if (tut_win(MapWinTable[0], "TOUR1ENERGY", x, y, 0, 2, -1, -1) == 0) return;
     TutWinBaseWindow.draw_energy_alloc(2);
 
     if (TutWinBaseWindow.flatButtons_[17].is_visible()) {
-        rect = (TutWinBaseWindow.rect13_);
-        base_rect(&rect, &x, &y);
-        if (tut_win(owner, "TOUR1ENERGY", x, y, 0, 2, -1, -1) == 0) return;
+        base_rect(&TutWinBaseWindow.rect13_, &x, &y);
+        if (tut_win(MapWinTable[0], "TOUR1ALLOC2", x, y, 0, 2, -1, -1) == 0) return;
     } else {
-        rect = (TutWinBaseWindow.expenses_help_rects_[5]);
+        rect = TutWinBaseWindow.expenses_help_rects_[5];
         x = rect.left + (rect.right - rect.left) / 2;
         y = rect.top + (rect.bottom - rect.top) / 2;
         TutWinBaseWindow.client_to_screen(&x, &y);
-        if (tut_win(owner, "TOUR1ALLOC", x, y, 0, 2, -1, -1) == 0) return;
+        if (tut_win(MapWinTable[0], "TOUR1ALLOC", x, y, 0, 2, -1, -1) == 0) return;
     }
-    rect = (TutWinBaseWindow.expenses_help_rects_[5]);
+    rect = TutWinBaseWindow.expenses_help_rects_[5];
     x = rect.left + (rect.right - rect.left) / 2;
     y = rect.top + (rect.bottom - rect.top) / 2;
     TutWinBaseWindow.client_to_screen(&x, &y);
-    if (tut_win(owner, "TOUR1ALLOC2", x, y, 0, 2, -1, -1) == 0) return;
-    rect = (TutWinBaseWindow.expenses_help_rects_[3]);
+    if (tut_win(MapWinTable[0], "TOUR1ECON", x, y, 0, 2, -1, -1) == 0) return;
+    rect = TutWinBaseWindow.expenses_help_rects_[3];
     x = rect.left + (rect.right - rect.left) / 2;
     y = rect.top + (rect.bottom - rect.top) / 2;
     TutWinBaseWindow.client_to_screen(&x, &y);
-    if (tut_win(owner, "TOUR1ECON", x, y, 0, 2, -1, -1) == 0) return;
-    rect = (TutWinBaseWindow.expenses_help_rects_[4]);
+    if (tut_win(MapWinTable[0], "TOUR1PSYCH", x, y, 0, 2, -1, -1) == 0) return;
+    rect = TutWinBaseWindow.expenses_help_rects_[4];
     x = rect.left + (rect.right - rect.left) / 2;
     y = rect.top + (rect.bottom - rect.top) / 2;
     TutWinBaseWindow.client_to_screen(&x, &y);
-    if (tut_win(owner, "TOUR1PSYCH", x, y, 0, 2, -1, -1) == 0) return;
+    if (tut_win(MapWinTable[0], "TOUR1LABS", x, y, 0, 2, -1, -1) == 0) return;
     TutWinBaseWindow.draw_expenses(1);
     TutWinBaseWindow.draw_farm(3);
-    rect = (TutWinBaseWindow.rect9_);
-    base_rect(&rect, &x, &y);
-    if (tut_win(owner, "TOUR1LABS", x, y, 0, 2, -1, -1) == 0) return;
+    base_rect(&TutWinBaseWindow.rect9_, &x, &y);
+    if (tut_win(MapWinTable[0], "TOUR1SUPPORTBUTTON", x, y, 0, 2, -1, -1) == 0) return;
     TutWinBaseWindow.draw_farm(2);
-    rect = (TutWinBaseWindow.rect11_);
-    base_rect(&rect, &x, &y);
-    if (tut_win(owner, "TOUR1SUPPORTBUTTON", x, y, 0, 2, -1, -1) == 0) return;
+    base_rect(&TutWinBaseWindow.rect11_, &x, &y);
+    if (tut_win(MapWinTable[0], "TOUR1PSYCHBUTTON", x, y, 0, 2, -1, -1) == 0) return;
     TutWinBaseWindow.draw_farm(4);
-    rect = (TutWinBaseWindow.rect10_);
-    base_rect(&rect, &x, &y);
-    if (tut_win(owner, "TOUR1PSYCHBUTTON", x, y, 0, 2, -1, -1) == 0) return;
+    base_rect(&TutWinBaseWindow.rect10_, &x, &y);
+    if (tut_win(MapWinTable[0], "TOUR1RESOURCEBUTTON", x, y, 0, 2, -1, -1) == 0) return;
 
-    rect.left = TutWinBaseWindow.previous_button_rect_.left;
-    rect.top = TutWinBaseWindow.previous_button_rect_.top;
-    rect.right = TutWinBaseWindow.previous_button_rect_.right;
-    rect.bottom = TutWinBaseWindow.previous_button_rect_.bottom;
-    rect = (rect);
-    iface_rect(&rect, &x, &y);
-    if (tut_win(owner, "TOUR1RESOURCEBUTTON", x, y, 0, 2, -1, -1) == 0) return;
-    rect.left = TutWinBaseWindow.next_button_rect_.left;
-    rect.top = TutWinBaseWindow.next_button_rect_.top;
-    rect.right = TutWinBaseWindow.next_button_rect_.right;
-    rect.bottom = TutWinBaseWindow.next_button_rect_.bottom;
-    rect = (rect);
-    iface_rect(&rect, &x, &y);
-    if (tut_win(owner, "TOUR1PREV", x, y, 0, 2, -1, -1) == 0) return;
-    rect = (TutWinBaseWindow.rect7_);
-    base_rect(&rect, &x, &y);
-    if (tut_win(owner, "TOUR1NEXT", x, y, 0, 2, -1, -1) == 0) return;
-    rect = (TutWinBaseWindow.rect6_);
-    base_rect(&rect, &x, &y);
-    if (tut_win(owner, "TOUR1RENAME", x, y, 0, 2, -1, -1) == 0) return;
+    if (do_iface(&TutWinBaseWindow.previous_button_rect_, "TOUR1PREV", 2) == 0) return;
+    if (do_iface(&TutWinBaseWindow.next_button_rect_, "TOUR1NEXT", 2) == 0) return;
+    if (do_base(&TutWinBaseWindow.rect7_, "TOUR1RENAME", 2) == 0) return;
+    // tutor.txt names this final OK-button card independently of the emitted
+    // literal. Its pinned NUL-terminated storage is 68790C..687913; the final
+    // original do_base gate must succeed before the farm view is restored.
+    // RECOVERY_LITERAL: v1 0x0068790C 0x00687914 ??_C@_07PKHB@TOUR1OK?$AA@ 0x004BB7A0
+    if (do_base(&TutWinBaseWindow.rect6_, "TOUR1OK", 2) == 0) return;
     TutWinBaseWindow.draw_farm(1);
-
 }
 
-
-
-/*
- * Four 67-byte clones differing only in which fixed window they finish on.
- * Each centres the rectangle on both axes and hands the pair to that window's
- * client_to_screen. The centring is inlined four times rather than shared,
- * matching the original, which carries four copies.
- *
- * The halving is the compiler's signed divide-by-two - `sub eax,esi; cdq;
- * sub eax,edx; sar eax,1` - so it truncates toward zero rather than flooring,
- * and the subtraction wraps. Modelled here the way win.cpp's own midpoint()
- * models the identical idiom: unsigned arithmetic throughout, with the sign
- * bit carried back over the shift.
- */
-
-
-/*
-Purpose: Centre the rectangle on both axes and convert the result to screen
-         coordinates through the iface window.
-// ORIGINAL: 0x004BC5A0 ?iface_rect@TutWin@@QAEXPAURECT@@PAH1@Z 0x004BC5A0-0x004BC5E3 BYTE_EXACT
-// LEVER: plain `left + (right - left) / 2` signed division - the image
-//        already emits the `cdq; sub; sar` fixup itself, so the hand-rolled
-//        unsigned-with-sign-carried-over-the-shift trick this body used to
-//        model the SAME idiom compiled to different instructions. Matches
-//        the sibling `base_rect`/`soc_rect`/`des_rect`, already byte-exact
-//        on this same lever.
-// symbol    ?iface_rect@TutWin@@QAEXPAUtagRECT@@PAH1@Z
-// size      67 bytes
-// prototype void (__thiscall ?iface_rect@TutWin@@QAEXPAURECT@@PAH1@Z)(TutWin* this, RECT*, int*, int*)
-// callers   3   call targets   1
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x005ED240
-Return Value: n/a
-Status: Complete
-Verification note: client_to_screen is entered on the FIXED window at 0x007AE820,
-         never on `this` - the original loads it as an immediate into ECX. The
-         TutWin receiver is not read by this body at all.
-*/
-void TutWin::iface_rect(RECT *rect, int *x, int *y) {
-    *x = rect->left + (rect->right - rect->left) / 2;
-    *y = rect->top + (rect->bottom - rect->top) / 2;
-    MainInterfaceGlobal.client_to_screen(x, y);
-}
-
-
-
-/*
-Purpose: Centre the rectangle on both axes and convert the result to screen
-         coordinates through the base window.
-// ORIGINAL: 0x004BC5F0 ?base_rect@TutWin@@QAEXPAURECT@@PAH1@Z 0x004BC5F0-0x004BC633 BYTE_EXACT
-// symbol    ?base_rect@TutWin@@QAEXPAUtagRECT@@PAH1@Z
-// size      67 bytes
-// prototype void (__thiscall ?base_rect@TutWin@@QAEXPAURECT@@PAH1@Z)(TutWin* this, RECT*, int*, int*)
-// callers   2   call targets   1
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x005ED240
-Return Value: n/a
-Status: Complete
-Verification note: client_to_screen is entered on the FIXED window at 0x006A7628,
-         never on `this` - the original loads it as an immediate into ECX. The
-         TutWin receiver is not read by this body at all.
-*/
-void TutWin::base_rect(RECT *rect, int *x, int *y) {
-    // Plain signed division: the image emits `cdq; sub eax,edx; sar eax,1`
-    // (round-toward-zero) for each half, not a rounding bit-trick.
-    *x = rect->left + (rect->right - rect->left) / 2;
-    *y = rect->top + (rect->bottom - rect->top) / 2;
-    TutWinBaseWindow.client_to_screen(x, y);
-}
-
-
-
-/*
-Purpose: Centre the rectangle on both axes and convert the result to screen
-         coordinates through the soc window.
-// ORIGINAL: 0x004BC640 ?soc_rect@TutWin@@QAEXPAURECT@@PAH1@Z 0x004BC640-0x004BC683 BYTE_EXACT
-// symbol    ?soc_rect@TutWin@@QAEXPAUtagRECT@@PAH1@Z
-// size      67 bytes
-// prototype void (__thiscall ?soc_rect@TutWin@@QAEXPAURECT@@PAH1@Z)(TutWin* this, RECT*, int*, int*)
-// callers   2   call targets   1
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x005ED240
-Return Value: n/a
-Status: Complete
-Verification note: client_to_screen is entered on the FIXED window at 0x008A6270,
-         never on `this` - the original loads it as an immediate into ECX. The
-         TutWin receiver is not read by this body at all.
-*/
-void TutWin::soc_rect(RECT *rect, int *x, int *y) {
-    // Plain signed division: the image emits `cdq; sub eax,edx; sar eax,1`
-    // (round-toward-zero) for each half, not a rounding bit-trick.
-    *x = rect->left + (rect->right - rect->left) / 2;
-    *y = rect->top + (rect->bottom - rect->top) / 2;
-    TutWinSocWindow.client_to_screen(x, y);
-}
-
-
-
-/*
-Purpose: Centre the rectangle on both axes and convert the result to screen
-         coordinates through the des window.
-// ORIGINAL: 0x004BC690 ?des_rect@TutWin@@QAEXPAURECT@@PAH1@Z 0x004BC690-0x004BC6D3 BYTE_EXACT
-// symbol    ?des_rect@TutWin@@QAEXPAUtagRECT@@PAH1@Z
-// size      67 bytes
-// prototype void (__thiscall ?des_rect@TutWin@@QAEXPAURECT@@PAH1@Z)(TutWin* this, RECT*, int*, int*)
-// callers   2   call targets   1
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     0x005ED240
-Return Value: n/a
-Status: Complete
-Verification note: client_to_screen is entered on the FIXED window at 0x0071F2B0,
-         never on `this` - the original loads it as an immediate into ECX. The
-         TutWin receiver is not read by this body at all.
-*/
-void TutWin::des_rect(RECT *rect, int *x, int *y) {
-    // Plain signed division: the image emits `cdq; sub eax,edx; sar eax,1`
-    // (round-toward-zero) for each half, not a rounding bit-trick.
-    *x = rect->left + (rect->right - rect->left) / 2;
-    *y = rect->top + (rect->bottom - rect->top) / 2;
-    TutWinDesWindow.client_to_screen(x, y);
-}
-
-
-
-/*
- * The four do_* helpers: 123-byte clones whose ONLY real difference is which
- * fixed window they centre through. The other differing bytes are the two
- * call displacements, which move because the calls are relative and the four
- * bodies sit 0x80 apart - not because either target differs. Both targets are
- * the same for all four.
- */
-
-/*
-Purpose: Centre the rectangle, convert it through the base window, and
-         show the tutorial text there against the primary map window.
-// ORIGINAL: 0x004BA870 ?do_base@TutWin@@QAEXPAURECT@@PBDH@Z 0x004BA870-0x004BA8EB SEMANTIC
-// LEVER: two levers stacked, 4/56 -> 45/56 MNEMONIC_ONLY. (1) plain `left + (right - left) / 2` signed division instead of the unsigned-with-sign-carried trick, same as `iface_rect`. (2) `primary` read BEFORE `window` is given any value, and its null-check written `if (primary == nullptr) { window = nullptr; } else { ...compute... }` (primary-first declaration order, and the null case as the FIRST arm) - the image reads the global first and only zeroes the result register on the branch that skips the vtable dereference, both of which a `window = nullptr;`-then-test body reorders.
-// TRIED: 45/56 plateau - the remainder is a consistent eax/ecx role swap through the vbtable-dereference block and the final argument push order, tried: `uint8_t *` instead of `void *` for `window`, and folding the `vbtable` local into the expression directly - neither changes it. VC6 register allocation, not a source-form lever found here.
-// symbol    ?do_base@TutWin@@QAEHPAUtagRECT@@PBDH@Z
-// size      123 bytes
-// prototype void (__thiscall ?do_base@TutWin@@QAEXPAURECT@@PBDH@Z)(TutWin* this, RECT*, int8*, int)
-// callers   2   call targets   2
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x004BDFE0 0x005ED240
-Return Value: the callout result, consumed by the tutorial's continuation gates
-Verification note: the GraphicWin handed to the show is MapWinTable[0]
-         VIRTUAL-BASE ADJUSTED - `mov edx,[ecx]` / `mov eax,[edx+4]` /
-         `add eax,ecx` - and a null slot passes a null through rather than
-         faulting, which is the only branch in the body.
-Verification note: the original writes the y centre over its own first
-         argument slot before taking its address, so the RECT pointer is dead
-         from that point. A local is equivalent and is what is used here.
-*/
-int TutWin::do_base(RECT *rect, const char *text, int flag) {
-    // Plain signed division: the image emits `cdq; sub eax,edx; sar eax,1`
-    // (round-toward-zero) for each half, not a rounding bit-trick.
-    int x = rect->left + (rect->right - rect->left) / 2;
-    int y = rect->top + (rect->bottom - rect->top) / 2;
-    TutWinBaseWindow.client_to_screen(&x, &y);
-
-    MapWin *const primary = MapWinTable[0];
-    GraphicWin *const window = primary;
-    return this->tut_win(window, text, x, y, nullptr, flag, -1, -1);
-}
-
-
-/*
-Purpose: Centre the rectangle, convert it through the iface window, and
-         show the tutorial text there against the primary map window.
-// ORIGINAL: 0x004BA8F0 ?do_iface@TutWin@@QAEXPAURECT@@PBDH@Z 0x004BA8F0-0x004BA96B SEMANTIC
-// LEVER: same two levers as `do_base` (see that marker) - plain signed division, and `primary` read/null-checked before `window` is given any value. 4/56 -> 45/56 MNEMONIC_ONLY.
-// TRIED: same 45/56 plateau as `do_base` - a consistent eax/ecx register swap through the vbtable block; see that marker for what was tried.
-// symbol    ?do_iface@TutWin@@QAEHPAUtagRECT@@PBDH@Z
-// size      123 bytes
-// prototype void (__thiscall ?do_iface@TutWin@@QAEXPAURECT@@PBDH@Z)(TutWin* this, RECT*, int8*, int)
-// callers   1   call targets   2
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x004BDFE0 0x005ED240
-Return Value: the callout result, consumed by the tutorial's continuation gates
-Verification note: the GraphicWin handed to the show is MapWinTable[0]
-         VIRTUAL-BASE ADJUSTED - `mov edx,[ecx]` / `mov eax,[edx+4]` /
-         `add eax,ecx` - and a null slot passes a null through rather than
-         faulting, which is the only branch in the body.
-Verification note: the original writes the y centre over its own first
-         argument slot before taking its address, so the RECT pointer is dead
-         from that point. A local is equivalent and is what is used here.
-*/
-int TutWin::do_iface(RECT *rect, const char *text, int flag) {
-    // Plain signed division: the image emits `cdq; sub eax,edx; sar eax,1`
-    // (round-toward-zero) for each half, not a rounding bit-trick.
-    int x = rect->left + (rect->right - rect->left) / 2;
-    int y = rect->top + (rect->bottom - rect->top) / 2;
-    MainInterfaceGlobal.client_to_screen(&x, &y);
-
-    MapWin *const primary = MapWinTable[0];
-    GraphicWin *const window = primary;
-    return this->tut_win(window, text, x, y, nullptr, flag, -1, -1);
-}
-
-
-/*
-Purpose: Centre the rectangle, convert it through the soc window, and
-         show the tutorial text there against the primary map window.
-// ORIGINAL: 0x004BA970 ?do_soc@TutWin@@QAEXPAURECT@@PBDH@Z 0x004BA970-0x004BA9EB SEMANTIC
-// LEVER: same two levers as `do_base` (see that marker) - plain signed division, and `primary` read/null-checked before `window` is given any value. 4/56 -> 45/56 MNEMONIC_ONLY.
-// TRIED: same 45/56 plateau as `do_base` - a consistent eax/ecx register swap through the vbtable block; see that marker for what was tried.
-// symbol    ?do_soc@TutWin@@QAEHPAUtagRECT@@PBDH@Z
-// size      123 bytes
-// prototype void (__thiscall ?do_soc@TutWin@@QAEXPAURECT@@PBDH@Z)(TutWin* this, RECT*, int8*, int)
-// callers   1   call targets   2
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x004BDFE0 0x005ED240
-Return Value: the callout result, consumed by the tutorial's continuation gates
-Verification note: the GraphicWin handed to the show is MapWinTable[0]
-         VIRTUAL-BASE ADJUSTED - `mov edx,[ecx]` / `mov eax,[edx+4]` /
-         `add eax,ecx` - and a null slot passes a null through rather than
-         faulting, which is the only branch in the body.
-Verification note: the original writes the y centre over its own first
-         argument slot before taking its address, so the RECT pointer is dead
-         from that point. A local is equivalent and is what is used here.
-*/
-int TutWin::do_soc(RECT *rect, const char *text, int flag) {
-    // Plain signed division: the image emits `cdq; sub eax,edx; sar eax,1`
-    // (round-toward-zero) for each half, not a rounding bit-trick.
-    int x = rect->left + (rect->right - rect->left) / 2;
-    int y = rect->top + (rect->bottom - rect->top) / 2;
-    TutWinSocWindow.client_to_screen(&x, &y);
-
-    MapWin *const primary = MapWinTable[0];
-    GraphicWin *const window = primary;
-    return this->tut_win(window, text, x, y, nullptr, flag, -1, -1);
-}
-
-
-/*
-Purpose: Centre the rectangle, convert it through the des window, and
-         show the tutorial text there against the primary map window.
-// ORIGINAL: 0x004BA9F0 ?do_des@TutWin@@QAEXPAURECT@@PBDH@Z 0x004BA9F0-0x004BAA6B SEMANTIC
-// LEVER: same two levers as `do_base` (see that marker) - plain signed division, and `primary` read/null-checked before `window` is given any value. 4/56 -> 45/56 MNEMONIC_ONLY.
-// TRIED: same 45/56 plateau as `do_base` - a consistent eax/ecx register swap through the vbtable block; see that marker for what was tried.
-// symbol    ?do_des@TutWin@@QAEHPAUtagRECT@@PBDH@Z
-// size      123 bytes
-// prototype void (__thiscall ?do_des@TutWin@@QAEXPAURECT@@PBDH@Z)(TutWin* this, RECT*, int8*, int)
-// callers   1   call targets   2
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x004BDFE0 0x005ED240
-Return Value: the callout result, consumed by the tutorial's continuation gates
-Verification note: the GraphicWin handed to the show is MapWinTable[0]
-         VIRTUAL-BASE ADJUSTED - `mov edx,[ecx]` / `mov eax,[edx+4]` /
-         `add eax,ecx` - and a null slot passes a null through rather than
-         faulting, which is the only branch in the body.
-Verification note: the original writes the y centre over its own first
-         argument slot before taking its address, so the RECT pointer is dead
-         from that point. A local is equivalent and is what is used here.
-*/
-int TutWin::do_des(RECT *rect, const char *text, int flag) {
-    // Plain signed division: the image emits `cdq; sub eax,edx; sar eax,1`
-    // (round-toward-zero) for each half, not a rounding bit-trick.
-    int x = rect->left + (rect->right - rect->left) / 2;
-    int y = rect->top + (rect->bottom - rect->top) / 2;
-    TutWinDesWindow.client_to_screen(&x, &y);
-
-    MapWin *const primary = MapWinTable[0];
-    GraphicWin *const window = primary;
-    return this->tut_win(window, text, x, y, nullptr, flag, -1, -1);
-}
 
 
 /*

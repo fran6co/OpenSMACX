@@ -110,7 +110,7 @@ struct DesignWin {
  RECT component_panel_rects_[6],field_B2C_rect_{0xB2C},
  field_B0C_rect_{0xB0C},field_CBC_rect_{0xCBC},caption_rect_{0xA6C},
  lower_panel_rows_[5],field_B5C_rect_{0xB5C},field_B4C_rect_{0xB4C};
- int field_B3C_=0xB3C,field_B40_=0,field_B44_=0,field_B48_=0;
+ RECT stats_rect_{0xB3C,0,0,0};
  DesignWin() : visible(true),opens(0),closes(0) {
   component_panel_rects_[0].left=0xAAC; component_panel_rects_[1].left=0xABC;
   component_panel_rects_[2].left=0xACC; component_panel_rects_[3].left=0xADC;

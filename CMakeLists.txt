@@ -208,6 +208,7 @@ set(OPENSMACX_SOURCES
     src/setupwin.cpp
     src/multidebug.cpp
     src/tutwin.cpp
+    src/tutwin_callouts.cpp
     src/popmenu.cpp
     src/popup.cpp
     src/netmsg.cpp
@@ -377,6 +378,7 @@ set_source_files_properties(
 set_source_files_properties(
     src/designwin.cpp
     src/tutwin.cpp
+    src/tutwin_callouts.cpp
     src/xpops.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Original interface palette initialization and font lookup retain a frame

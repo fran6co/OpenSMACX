@@ -105,7 +105,7 @@ struct DesignWin : Buffer {
     char preset_storage_[15][32]{};
     char *preset_names_[15]{};
     RECT field_B2C_rect_{};
-    int field_B3C_=0, field_B40_=0, field_B44_=0, field_B48_=0;
+    RECT stats_rect_{};
     Font font2_{}, font3_{};
     Buffer buffer_{};
     Caviar caviar_{};

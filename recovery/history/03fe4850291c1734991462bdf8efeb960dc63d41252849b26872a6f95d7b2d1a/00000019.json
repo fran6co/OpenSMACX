@@ -1,0 +1,23 @@
+{
+  "event_id": "d9ec7329715f70ca93b53c6955ed9566c6d18150389ff212d91cef36c507b92e",
+  "payload": {
+    "affects": [
+      "entity-ab45ccf96668cd41811a2ee60c77c81246e10a3c4a25104bc87e378371496c61",
+      "entity-c1fd290099da8f4ebe8e6ea250ac1fda4ab3242d86df1c8419870628245555d8"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "designwin-stats-rectangle-oct18",
+    "evidence": [
+      "Pinned tour7 DESTOURSTATS passes71FDEC=TutWinDesWindow+B3C directly to des_rect, whose independent body reads offsets0,4,8,C as a RECT. Current source instead copies four separate unsigned members into a local RECT.",
+      "Actual producer is draw_vehicle436090, not init43C270. After write_cent_l4366CC, pinned stores4366DD/E6/EC/EF write local RECT left/top/right/bottom to this+B3C/B40/B44/B48. Source3368-3371 agrees. The interpreted member occupies exactly16bytes; original class name/debug member spelling is not asserted.",
+      "Remaining tour5/tour7 helper operands independently point directly at already typed SocialWin/DesignWin member rectangles. Preserve original labels, per-call owner reloads, output coordinates, flags, failure gates and cleanup; no safety changes."
+    ],
+    "hypothesis": "Model DesignWin stats rectangle at+B3C as one real RECT and pass the actual member address to TutWin helpers; preserve original producer writes and callout sequencing.",
+    "kind": "discovery"
+  },
+  "previous_event": "35dfede5615d7779f8b8b9f83ea71e24e1aef3d9c0307862949937e2d101f945",
+  "request_id": "designwin-stats-rectangle-oct18",
+  "schema_version": 1,
+  "sequence": 19,
+  "stream": "task:tutwin-owner-coverage-wave"
+}

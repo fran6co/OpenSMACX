@@ -199,13 +199,12 @@ struct DesignWin : Buffer {
     float scene_rotation_;
     char prototype_name_[32];
     RECT field_B2C_rect_;
-    uint32_t field_B3C_, field_B40_, field_B44_, field_B48_;
+    RECT stats_rect_;
     DesignWin() : factionID_(0), protoID_(0), protoChassisType_(0),
         protoWeaponType_(0), protoArmorType_(0), protoAbilityFlags_(0),
         protoReactorType_(0), protoAbilityID1_(0xffffffffu),
         protoAbilityID2_(0xffffffffu), field_CE8_(0), scene_rotation_(0.0f),
-        field_B3C_(0), field_B40_(0), field_B44_(0),
-        field_B48_(0) { prototype_name_[0] = '\0'; }
+        stats_rect_() { prototype_name_[0] = '\0'; }
     void draw_weapon(int); void draw_armor(int); void draw_reactor(int); void draw_vehicle(int);
 };
 

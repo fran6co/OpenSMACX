@@ -1,0 +1,30 @@
+{
+  "event_id": "7958165cda9605247ea6256c98a2ba7337f675abf45323749cc260d12f8ebc33",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/design_panels_control.cpp",
+      "recovery/tests/fixtures/designwin_scratch_storage_host.hpp",
+      "src/designwin.cpp",
+      "src/designwin.h"
+    ],
+    "evidence": [
+      "Authorize only four-word-to-RECT interpretation at offsetB3C, named descriptively stats_rect_, and the corresponding four ordered draw_vehicle stores. Keep all member offsets/class size/lifecycle/call interfaces unchanged. Update exact affected fixtures, not unrelated EditBox/SocialWin fields with similar offset names.",
+      "Authorize tour5/tour7 to pass original member addresses directly instead of stack copies, preserving helper choice and all sequencing. Social loop may use the typed RECT pointer progression proved by pinned EDI+10 only after nonzero callout; numeric label loop remains0..9. Existing scope covers those bodies and tutorial tests.",
+      "Measure full header consumer closure, native layout witnesses, every changed producer/helper/caller and physical objects. Preserve all original identities, historical claims, discoveries and immutable baseline. Any unexplained collateral remains pending; no linked-preservation or acceptance waiver."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4415632,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "d9ec7329715f70ca93b53c6955ed9566c6d18150389ff212d91cef36c507b92e",
+  "request_id": "designwin-stats-rectangle-scope-oct18",
+  "schema_version": 1,
+  "sequence": 20,
+  "stream": "task:tutwin-owner-coverage-wave"
+}

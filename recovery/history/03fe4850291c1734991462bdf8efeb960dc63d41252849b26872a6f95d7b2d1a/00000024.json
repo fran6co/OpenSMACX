@@ -1,0 +1,18 @@
+{
+  "event_id": "381755b4c7dd997cc4b8e0633d8379a3f111c818a5d9ea20f21bc44b3d308781",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "tutwin-final-card-storage-oct18",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/tutwin.cpp carries RECOVERY_LITERAL for independently bounded original68790C..687914 and same-TU emitted ??_C@_07PKHB@TOUR1OK?$AA@, anchored to original tour1. The original tutor.txt key names the final OK card independently of the compiler literal; pinned control flow retains the failure return and success-only farm restoration.",
+      "Fresh actual application object emits independent8-byte storage matching the pinned range. Native check_literals rejects damaged contents and shortened extent and refuses missing storage. This incorporates the source interpretation, not linked retention or tour1 byte equality; the original added-data residual remains recorded."
+    ]
+  },
+  "previous_event": "747700bcbe0b5d98c7e745392837d36309202d22f97c07fef715c2670b887326",
+  "request_id": "tutwin-final-card-storage-oct18-incorporated",
+  "schema_version": 1,
+  "sequence": 24,
+  "stream": "task:tutwin-owner-coverage-wave"
+}

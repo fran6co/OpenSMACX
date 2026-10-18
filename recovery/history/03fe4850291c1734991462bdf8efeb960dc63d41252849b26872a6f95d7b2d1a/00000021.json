@@ -1,0 +1,22 @@
+{
+  "event_id": "90964e8f0a453e8bf69c86956f6f94d328166eb9bc360be8be929884fbce8a29",
+  "payload": {
+    "affects": [
+      "entity-2a76fb2d9795bdacdacca3dd57457bb0c9290e211d4a08201554536d5faf1af9"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "tutwin-final-card-storage-oct18",
+    "evidence": [
+      "The original game tutor.txt independently names TOUR1OK as the final base-window OK card, immediately after TOUR1RENAME. Pinned literal storage is 68790C..687914 exclusive, including the NUL; its extent is not chosen from a candidate instruction or first differing operand.",
+      "The restored source uses this card only in the final original do_base gate, then draw_farm(1) on success; pinned gate4BC569 and the complete tour1 control-flow review establish the operation. Fresh actual candidate emits independent eight-byte COMDAT ??_C@_07PKHB@TOUR1OK?$AA@.",
+      "Coordinator authorizes the supported RECOVERY_LITERAL interpretation beside the ordinary literal use inside the already authorized tour1 source file. It is not a historical byte claim, global-address replacement, retained-link proof or physical-residual waiver. Check source parser/overlap, original storage bytes, fresh emitted storage and negative extent/content controls before incorporation."
+    ],
+    "hypothesis": "Restore the final TOUR1OK card with its source-owned independently bounded TU-private literal; retain the separate added-data and linked-selection obligations.",
+    "kind": "discovery"
+  },
+  "previous_event": "7958165cda9605247ea6256c98a2ba7337f675abf45323749cc260d12f8ebc33",
+  "request_id": "tutwin-final-card-storage-oct18",
+  "schema_version": 1,
+  "sequence": 21,
+  "stream": "task:tutwin-owner-coverage-wave"
+}
