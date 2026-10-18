@@ -1,0 +1,18 @@
+{
+  "event_id": "836819e17733a310acc7715714b9914e3e01a8fe63c8e5318f2b9d2ebdb58f62",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "coupled-tutorial-script-consumer-discovery-oct18",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/tutwin.cpp now uses the existing console-owned TutorialPopupCaption pointer in both mapped tut_win Popup::start text_file operands and the tour text_open DIRECTIONS operand. Its later TextBufferGetPtr text output consumer remains unchanged. src/console.h exposes the existing pointer without new storage; all original mappings/spans/claims remain.",
+      "Pinned instruction/argument tests, distinct mutable pointer call-expression controls and independent review confirm these bounded corrections. Native per-flag unchanged-replica and wrong-provider physical controls pass; complete EH matching remains refused, not accepted. Fresh compile/link, physical preservation and destination checks still required."
+    ]
+  },
+  "previous_event": "b51a546e55e8964f55127ec7d1f6993148e5251414507162998eb082642ea7e3",
+  "request_id": "incorporated-coupled-tutorial-providers-oct18",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:tutorial-script-provider-oct18"
+}

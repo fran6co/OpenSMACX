@@ -1,0 +1,31 @@
+{
+  "event_id": "a2300769182cee49be57acd83412eea8b960b98c387c9527641084f24762821d",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/tutwin.cpp"
+    ],
+    "evidence": [
+      "Authorize only both TutorialPopupCaption firstarguments in the two existing tut_win Popup::start calls and the TutorialPopupCaption firstargument in the existing tour text_open DIRECTIONS call. Preserve all original spans/claims, labels, popup mode/flags, per-call reloads, drawing/coordinate effects, loop/cleanup behavior and lifetimes. Existing console.h include supplies the shared extern declaration; do not move or duplicate storage or create literal aliases.",
+      "Extend the already-authorized new test to pin original argument loads and compile the actual provider call expressions with independently distinct/mutated provider values; preserve original function identities/claims and exact outside-change source transport as checkpoint evidence, not a perpetual whole-TU freeze. Complete native application build and touched-claim restoration plus outside-scope COFF comparison remain required. tech_achieved TREETIME omission is a separate pending discovery under investigation; no blind insertion or out-of-scope code edit authorized."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4972512,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4966112,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "2e0f9a614e67f562edc1d999005d3eb95f11b8e684483bd5cea75bebd5495a62",
+  "request_id": "admit-coupled-tutorial-owner-provider-fixes-oct18",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:tutorial-script-provider-oct18"
+}

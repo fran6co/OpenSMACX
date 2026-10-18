@@ -1,0 +1,27 @@
+{
+  "event_id": "b51a546e55e8964f55127ec7d1f6993148e5251414507162998eb082642ea7e3",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_tech_achieved_behavior.py",
+      "src/technology.cpp"
+    ],
+    "evidence": [
+      "Authorize one independent TREETIME condition immediately after the existing secrets-of-tech block and before prototype selection in tech_achieved. Use the three proven gates, parse_say(0,Technology[tech_id].name,-1,-1), then X_pop(TutorialPopupCaption,\"TREETIME\",nullptr). Keep live pointer/rule reads and ignored return; no early return, safety fix, new global, moved storage, changed signature or other behavior. Add the direct terraforming.h include for its actual type/enum/array interface; preserve all original mappings and claims.",
+      "Authorize strengthening the existing actual-whole-tech_achieved host fixture with the real gate matrix, distinct mutable tutorial provider, parser/caption ordering, ignored popup return and subsequent path/lifetime effects, plus compile-successful branch/provider/rule damage controls. Pinned branch argument/gate evidence may also be added to the already-authorized tutorial provider test. Require fresh complete native build, all actual-object outside-function residuals, scoped masked and strict reference/claim continuity; no byte/fullgame/autonomous acceptance inferred from host mocks."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6008832,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "3415d5018536e5dd64914e31efa3dd605f47e1613e13a6481f042087457cdf9b",
+  "request_id": "admit-forest-tutorial-branch-oct18",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:tutorial-script-provider-oct18"
+}

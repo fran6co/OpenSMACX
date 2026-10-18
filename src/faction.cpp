@@ -46,6 +46,7 @@
 #include "netdaemon.h"  // NetDaemonNet, message_data - the net_* writers
 #include "log.h"  // log_say, which the net_* writers announce each move with
 #include "console.h"  // ConsoleGlobal, which net_energy refreshes
+#include "tutorial_script.h"
 #include "socialwin.h"
 #include "mapwin.h"
 #include "multiwin.h"
@@ -12668,7 +12669,7 @@ void __cdecl mention_prototypes(int faction_id, int faction_id_with) {
     BestProtoToMention = -1;
 }
 
-// ORIGINAL: 0x0053CAF0 ?pact_of_brotherhood@@YAXHH@Z 0x0053CAF0-0x0053CE05
+// ORIGINAL: 0x0053CAF0 ?pact_of_brotherhood@@YAXHH@Z 0x0053CAF0-0x0053CE05 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"reason":"The complete original diplomacy producer uses the existing faction, prototype, parser and network owners; the global cdecl interface and bounded span retain the seed identity.","evidence":["original:0x53caf0","git:46625ff3:src/recovered/units/0053caf0.cpp"]}
 // kind      game
 void __cdecl pact_of_brotherhood(int faction_id, int faction_id_with) {
@@ -12731,7 +12732,7 @@ void __cdecl pact_of_brotherhood(int faction_id, int faction_id_with) {
         PluralityDefault = 0;
         parse_says(2, Players[faction_id_with].name_leader, -1, -1);
         parse_says(3, Players[faction_id_with].adj_name_faction, -1, -1);
-        X_pop(PopupStartCaption, "PACT", nullptr);
+        X_pop(TutorialPopupCaption, "PACT", nullptr);
     }
 }
 
@@ -12793,7 +12794,7 @@ void __cdecl make_treaty(int faction_id, int faction_id_with) {
             GenderDefault = Players[faction_id_with].noun_gender;
             PluralityDefault = Players[faction_id_with].is_noun_plural;
             parse_says(0, Players[faction_id_with].noun_faction, -1, -1);
-            X_pop(PopupStartCaption, "COMMERCE", nullptr);
+            X_pop(TutorialPopupCaption, "COMMERCE", nullptr);
         }
     }
 

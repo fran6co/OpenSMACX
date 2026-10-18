@@ -1,0 +1,25 @@
+{
+  "event_id": "4daec92c24ec520f4d236fe2c22e38ed60e98e3fcaa4409dbd075542e253d270",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Admit the measured dependent compiler footprint of setup_player5B0E00 without editing its source body or changing any original mapping/claim. Fresh narrow-header application build restores all other previously changed owner objects. The only remaining outside-code root difference swaps mov ebx,[ebp-8] and mov esi,[ebp-C] at offsets1E3D..1E43 inside the existing0x104byte frame; both registers, slots and subsequent bytes are unchanged. Independent complete-section review confirms9632byte root, four changed bytes, identical484relocations, no interior entry/symbol/relocation and five cross-objectsetup_playerreferences withzeroaddends. The stores/flags/EBP/ESP are unaffected under ordinary valid/private-frame execution.",
+      "This bounded manual review does not waive native physical equality or automatic/linked-preservation requirements. Native raw comparison remains177PASS/3FAIL: the reviewed frame-load pair, independently verified nine-byteTREETIME literal addition, and removal of the incorrectEDITOR literal whose only two local incomingreferences were the correctedtut_win calls. All5581 known mapped identities/verdicts remain except pact improvesMISMATCHtoBYTE_EXACT; source5646identities/spans/bindings retained and native recorder alone adds its claim. Fullgame/linkselection/runtime acceptance remains unproven.",
+      "Coordinator-reviewed integration is authorized after fresh compile/link, actualsource host/mutation and pinned checks, original claim/identity continuity and independent source/collateral review. Publish a bounded source checkpoint, then require fresh destination build, zero-omissioncandidate/destination physical equality, source/claims/references/mappings and relevant tests. No reset, claimdemotion, broad projection or revised historical baseline."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5967360,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "20ce6c343a8a90410234a6536e1aef534b238b179430931f4bb52460e980803e",
+  "request_id": "reviewed-setup-frame-load-collateral-oct18",
+  "schema_version": 1,
+  "sequence": 9,
+  "stream": "task:tutorial-script-provider-oct18"
+}

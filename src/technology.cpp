@@ -40,6 +40,7 @@
 #include "interlude.h"
 #include "spritebox.h"
 #include "log.h"
+#include "terraforming.h"
 
 extern Sprite g_TECH_ICON_SPRITES[MaxTechnologyNum];
 void __cdecl design_new_veh(int faction_id, int proto_id);
@@ -1059,6 +1060,14 @@ void __cdecl tech_achieved(int faction_id, int tech_id, int faction_id_with,
 
     if ((Technology[tech_id].flags & TFLAG_SECRETS) != 0) {
         mon_secrets_of_tech(faction_id);
+    }
+
+    if (faction_id == ConsoleGlobal.faction_id_ &&
+        tech_id == Terraforming[TERRA_FOREST].preq_tech && IsMultiplayerNet == 0) {
+        parse_say(0, Technology[tech_id].name, -1, -1);
+        // Original TREETIME argument at 0x005BBC5E; independent literal storage.
+        // RECOVERY_LITERAL: v1 0x0069178C 0x00691795 ??_C@_08BPDN@TREETIME?$AA@ 0x005BB000
+        X_pop(TutorialPopupCaption, "TREETIME", nullptr);
     }
 
     if (faction_id == ConsoleGlobal.faction_id_ &&

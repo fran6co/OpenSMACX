@@ -1,0 +1,21 @@
+{
+  "event_id": "3415d5018536e5dd64914e31efa3dd605f47e1613e13a6481f042087457cdf9b",
+  "payload": {
+    "affects": [
+      "entity-36d0cb2cbd52d912455a184a4f6bb8b671bd9eb400d69020794d91f7a2abe9fc"
+    ],
+    "author": "coordinator",
+    "discovery_id": "omitted-forest-tutorial-branch-oct18",
+    "evidence": [
+      "Pinned5BBC1C..5BBC69 requires faction_id==ConsoleGlobal.faction_id_, tech_id==dword691900, IsMultiplayerNet==0. It calls parse_say625E50(0,Technology[tech_id].name,-1,-1), then X_pop5BF330(loaded691B14,TREETIME@69178C,nullptr), ignores the return and falls through5BBC6C to the existing prototype path. Preceded by TFLAG_SECRETS/mon_secrets_of_tech; failed forest/multiplayer gates still enter that following path.",
+      "Existing Terraforming array original691878, RulesTerraforming stride20 and preq_tech offset8 identify691900 as Terraforming[TERRA_FOREST=4].preq_tech. This live loaded rule is not a fixed technology ID. Independent instruction review and coordinator direct disassembly confirm the gate/calls/fallthrough; no extra flags, difficulty or freebie guard belongs in this branch."
+    ],
+    "hypothesis": "The original tech_achieved contains a forest-prerequisite TREETIME tutorial path absent from the compiling source.",
+    "kind": "discovery"
+  },
+  "previous_event": "a2300769182cee49be57acd83412eea8b960b98c387c9527641084f24762821d",
+  "request_id": "omitted-forest-tutorial-branch-oct18",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:tutorial-script-provider-oct18"
+}

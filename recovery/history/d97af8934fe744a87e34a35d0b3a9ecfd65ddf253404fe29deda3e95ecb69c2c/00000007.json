@@ -1,0 +1,18 @@
+{
+  "event_id": "82f592b7466ecbde42743e90ecc8592143120e43af9bd48d445522c0f725ee4e",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "omitted-forest-tutorial-branch-oct18",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/technology.cpp tech_achieved now contains the complete bounded TREETIME branch after secrets-of-tech and before prototype selection. It uses faction==local, tech_id==Terraforming[TERRA_FOREST].preq_tech, !IsMultiplayerNet, then parse_say0Technology.name and X_pop(TutorialPopupCaption,TREETIME,nullptr), ignoring popup return and preserving fallthrough. Existing mapped main/cold spans and claims remain unchanged.",
+      "Pinned5BBBFE..5BBC04 stores tech_id*2c into the reused third-argument slot before5BBC42 reads it; the parsed source is Technology[tech_id].name, not the incoming faction_id_with. Independent review corrected that temporary stack-slot misinterpretation. Actual-whole-function host controls and compiled wrong-provider/rule/network mutations pass. Native per-flag unchanged-source and omitted-branch physical controls pass; unsupported EH full matching, original literal/link selection and game runtime remain separate obligations, not acceptance."
+    ]
+  },
+  "previous_event": "836819e17733a310acc7715714b9914e3e01a8fe63c8e5318f2b9d2ebdb58f62",
+  "request_id": "incorporated-forest-tutorial-branch-oct18",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:tutorial-script-provider-oct18"
+}

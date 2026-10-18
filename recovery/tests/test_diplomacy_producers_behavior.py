@@ -13,6 +13,7 @@ HARNESS = r'''
 #define __cdecl
 #include <cassert>
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <stdint.h>
 #include <string>
@@ -61,6 +62,8 @@ static std::vector<int> achieved;
 static std::vector<int> message_opcodes, message_payloads;
 static std::vector<int> await_codes;
 static std::vector<int> caption_null_callbacks;
+static std::vector<const char *> popup_caption_pointers;
+static std::vector<std::string> popup_caption_values;
 static std::vector<int> noun_phrase_factions, noun_phrase_ids;
 static int wants_speak_calls, speak_result, speak_replacement = -1;
 static int popup_result = 1, multiplayer, tutorial_result, difficulty;
@@ -69,8 +72,13 @@ static int pact_calls, map_calls, treaty_code, await_code, caption_calls;
 static int popup_calls, net_pop_calls, scan_calls;
 static int scan_best_proto = -1;
 static int last_message_opcode, last_message_payload;
+static int caption_mutation_call = -1;
+static char *caption_mutation_target = 0;
 static bool has_proto[512];
 static char string_temp[256];
+static char popup_start_caption[256];
+static char TutorialPopupCaptionText[6] = "TUTOR";
+static char alternate_tutorial_caption[16] = "TUTOR_ALT";
 
 Player Players[MaxPlayerNum];
 PlayerData PlayersData[MaxPlayerNum];
@@ -81,7 +89,8 @@ Sprite *FactionDiplomacyPortraits[MaxPlayerNum];
 int PopupDialogFactionID, BestProtoForTrade, BestProtoToMention;
 int DiploScratchFA70, IsMultiplayerNet;
 int PluralityDefault, GenderDefault;
-const char *PopupStartCaption = "CAPTION";
+char *PopupStartCaption = popup_start_caption;
+char *TutorialPopupCaption = TutorialPopupCaptionText;
 const char *DiploLabelSendingTECH = "SENDINGTECH";
 const char *DiploLabelSendingTREATYON = "SENDINGTREATYON";
 const char *DiploLabelSendingTRADEMAPS = "SENDINGMAPS";
@@ -107,7 +116,8 @@ void __cdecl reset_fixture() {
     wanted_ids.clear(); wanted_factions.clear(); achieved.clear();
     message_opcodes.clear(); message_payloads.clear();
     await_codes.clear();
-    caption_null_callbacks.clear(); noun_phrase_factions.clear(); noun_phrase_ids.clear();
+    caption_null_callbacks.clear(); popup_caption_pointers.clear();
+    popup_caption_values.clear(); noun_phrase_factions.clear(); noun_phrase_ids.clear();
     std::memset(Players, 0, sizeof(Players));
     std::memset(PlayersData, 0, sizeof(PlayersData));
     std::memset(VehPrototypes, 0, sizeof(VehPrototypes));
@@ -125,12 +135,16 @@ void __cdecl reset_fixture() {
     pact_calls = map_calls = treaty_code = await_code = caption_calls = 0;
     popup_calls = net_pop_calls = scan_calls = 0;
     scan_best_proto = -1;
+    caption_mutation_call = -1; caption_mutation_target = 0;
     last_message_opcode = last_message_payload = 0;
     PopupDialogFactionID = BestProtoForTrade = BestProtoToMention = -1;
     DiploScratchFA70 = IsMultiplayerNet = GameDataStateStorage.fields_.diff_level_current_ = 0;
     GameDataStateStorage.fields_.turn_current_num_ = turn_number;
     PluralityDefault = GenderDefault = 0;
     std::memset(string_temp, 0, sizeof(string_temp));
+    std::memset(popup_start_caption, 0, sizeof(popup_start_caption));
+    std::strcpy(popup_start_caption, "POPUP");
+    TutorialPopupCaption = TutorialPopupCaptionText;
 }
 
 int __cdecl pop_wait() { events.push_back("wait"); return 1; }
@@ -168,11 +182,15 @@ int __cdecl treaty_on(int a, int b, int treaty) {
 void __cdecl diplomacy_check(int, int, int) { events.push_back("check"); }
 void __cdecl diplomacy_caption(int, int) { ++caption_calls; events.push_back("caption"); }
 void __cdecl parse_says(int slot, const char *text, int, int) {
+    const int call_index = static_cast<int>(parse_records.size());
     parsed_slots.push_back(slot); events.push_back("parse");
     ParseRecord record;
     record.slot = slot; record.gender = GenderDefault; record.plural = PluralityDefault;
     record.text = text ? text : "";
     parse_records.push_back(record);
+    if (call_index == caption_mutation_call) {
+        TutorialPopupCaption = caption_mutation_target;
+    }
 }
 void __cdecl say_stats_2(char *out, int proto) {
     std::sprintf(out, "stats%d", proto); events.push_back("stats");
@@ -181,10 +199,18 @@ int __cdecl X_pops(const char *s, int, Sprite *, int (__cdecl *cb)()) {
     ++popup_calls; popup_labels.push_back(s);
     events.push_back(std::string("popup:") + s); return popup_result;
 }
-int __cdecl X_pop(const char *, const char *s, int (__cdecl *cb)()) {
+int __cdecl X_pop(const char *caption, const char *s, int (__cdecl *cb)()) {
     ++popup_calls; popup_labels.push_back(s);
+    popup_caption_pointers.push_back(caption);
+    popup_caption_values.push_back(caption ? caption : "");
     caption_null_callbacks.push_back(cb == 0);
     events.push_back(std::string("caption_popup:") + s); return 0;
+}
+void require_caption_pointer(const char *witness, const char *expected) {
+    if (popup_caption_pointers.empty() || popup_caption_pointers.back() != expected) {
+        std::fprintf(stderr, "caption-pointer:%s\n", witness);
+        std::abort();
+    }
 }
 void __cdecl scan_prototypes(int, int) {
     ++scan_calls; events.push_back("scan");
@@ -324,6 +350,28 @@ int main() {
     pledge_truce(1, 2, 1);
     assert(treaty_code == 0x204 && PopupDialogFactionID == 2 && caption_calls == 1);
     assert(parsed_slots.size() == 6 && parsed_slots[0] == 0 && parsed_slots[5] == 5);
+
+    // The parser callback changes the pointer cell immediately before the
+    // final popup. Each consumer must reload the mutable provider at its call.
+    reset_fixture();
+    caption_mutation_call = 10;
+    caption_mutation_target = alternate_tutorial_caption;
+    pact_of_brotherhood(1, 2);
+    assert(popup_labels.back() == "PACT");
+    assert(caption_null_callbacks.back() == 1);
+    require_caption_pointer("PACT", alternate_tutorial_caption);
+    assert(popup_caption_pointers.back() != PopupStartCaption);
+    assert(popup_caption_values.back() == "TUTOR_ALT");
+
+    reset_fixture();
+    caption_mutation_call = 8;
+    caption_mutation_target = alternate_tutorial_caption;
+    make_treaty(1, 2);
+    assert(popup_labels.back() == "COMMERCE");
+    assert(caption_null_callbacks.back() == 1);
+    require_caption_pointer("COMMERCE", alternate_tutorial_caption);
+    assert(popup_caption_pointers.back() != PopupStartCaption);
+    assert(popup_caption_values.back() == "TUTOR_ALT");
     return 0;
 }
 
@@ -392,7 +440,8 @@ def _actual_bodies() -> str:
     return "\n\n".join(bodies)
 
 
-def _check_bodies(compiler: str, tmp_path: Path, bodies: str, *, reject: bool = False) -> None:
+def _check_bodies(compiler: str, tmp_path: Path, bodies: str, *, reject: bool = False,
+                  failure_witness: str | None = None) -> None:
     executable = shutil.which(compiler)
     if executable is None:
         pytest.skip(compiler + " is unavailable")
@@ -416,6 +465,8 @@ def _check_bodies(compiler: str, tmp_path: Path, bodies: str, *, reject: bool = 
     )
     if reject:
         assert run_result.returncode != 0, "behavior damage escaped the controls"
+        if failure_witness is not None:
+            assert failure_witness in run_result.stderr, run_result.stderr
     else:
         assert run_result.returncode == 0, run_result.stderr
 
@@ -460,3 +511,45 @@ def test_controls_reject_behavior_damage(compiler: str, damage: str, tmp_path: P
     assert body.count(old) == count, "control anchor changed: " + damage
     changed = bodies[:start] + body.replace(old, new, 1) + bodies[end:]
     _check_bodies(compiler, tmp_path, changed, reject=True)
+
+
+def _caption_damage(bodies: str, function: str, damage: str) -> str:
+    signature = "void __cdecl " + function
+    start = bodies.index(signature)
+    end = bodies.find("\n\nvoid __cdecl", start + len(signature))
+    if end < 0:
+        end = len(bodies)
+    body = bodies[start:end]
+    call = "X_pop(TutorialPopupCaption,"
+    assert body.count(call) == 1, "caption call anchor changed: " + function
+    if damage == "wrong_provider":
+        changed = body.replace(call, "X_pop(PopupStartCaption,", 1)
+    elif damage == "direct_pointee":
+        changed = body.replace(call, "X_pop(TutorialPopupCaptionText,", 1)
+    elif damage == "literal":
+        changed = body.replace(call, 'X_pop("TUTOR",', 1)
+    elif damage == "cached_provider":
+        opening = body.index("{", body.index(signature))
+        changed = (body[:opening + 1]
+                   + "\n    char *cached_tutorial_caption = TutorialPopupCaption;"
+                   + body[opening + 1:])
+        changed = changed.replace(call, "X_pop(cached_tutorial_caption,", 1)
+    else:
+        raise AssertionError(damage)
+    return bodies[:start] + changed + bodies[end:]
+
+
+@pytest.mark.parametrize("compiler", ["g++", "clang++"])
+@pytest.mark.parametrize("function,witness", [
+    ("pact_of_brotherhood", "PACT"),
+    ("make_treaty", "COMMERCE"),
+])
+@pytest.mark.parametrize("damage", [
+    "wrong_provider", "direct_pointee", "literal", "cached_provider",
+])
+def test_tutorial_caption_provider_damage_compiles_then_hits_named_witness(
+        compiler: str, function: str, witness: str, damage: str,
+        tmp_path: Path) -> None:
+    changed = _caption_damage(_actual_bodies(), function, damage)
+    _check_bodies(compiler, tmp_path, changed, reject=True,
+                  failure_witness="caption-pointer:" + witness)

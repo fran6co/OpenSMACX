@@ -39,6 +39,7 @@ TutWin TutorialWindow;
 #include "game.h"     // IsMultiplayerNet, GamePreferences - tut_check's gates
 #include "faction.h"  // Players/LocalFaction/RFLAG_ALIEN - the expansion gate
 #include "console.h"  // ConsoleGlobal.faction_id_ supplies the active faction
+#include "tutorial_script.h"
 #include "veh.h"      // the recovered vehicle painter
 #include "strings.h"  // StringTemp and the tutorial's decimal label suffixes
 #include "map.h"
@@ -368,7 +369,7 @@ int TutWin::tut_win(GraphicWin *owner, const char *text, int x, int y,
         normalized_mode = mode;
     }
 
-    start(const_cast<char *>("EDITOR"), text, -1, 0, popup_flags, 0);
+    start(TutorialPopupCaption, text, -1, 0, popup_flags, 0);
     if (mode < 2) {
         set_ok_text(StringTable.get(
             tutorial_button_label(0x36C)));
@@ -452,7 +453,7 @@ int TutWin::tut_win(GraphicWin *owner, const char *text, int x, int y,
                                       field_5398_, PopupThemeWindowColor, 2, 2);
     }
 
-    start(const_cast<char *>("EDITOR"), text, -1, 0, popup_flags, 0);
+    start(TutorialPopupCaption, text, -1, 0, popup_flags, 0);
     if (normalized_mode == 0) {
         set_ok_text(StringTable.get(
             tutorial_button_label(0x36C)));
@@ -686,7 +687,7 @@ void TutWin::tour() {
 
         index = best_direction;
         parse_num(0, MapDirectionPermutation[index]);
-        if (text_open(TextBufferGetPtr, "DIRECTIONS") == 0) {
+        if (text_open(TutorialPopupCaption, "DIRECTIONS") == 0) {
             for (int text_index = 0; text_index <= index; ++text_index) {
                 text_get();
             }

@@ -1,0 +1,22 @@
+{
+  "event_id": "2e0f9a614e67f562edc1d999005d3eb95f11b8e684483bd5cea75bebd5495a62",
+  "payload": {
+    "affects": [
+      "entity-0f1ee6468626c0c80978e7a4042616220b73a83e8928392c6cf9302eb1379675",
+      "entity-641d754fd910391863b52da5d4734fc4b59058ad942043db206f642b762e0e62"
+    ],
+    "author": "coordinator",
+    "discovery_id": "coupled-tutorial-script-consumer-discovery-oct18",
+    "evidence": [
+      "Pinned TutWin::tut_win4BDFE0 loads pointercell691B14 at4BE128 and4BE43F and passes each separately reloaded value to Popup::start406380 as text_file. Current source has two const_cast<char*>(EDITOR) expressions instead; filename/provider differs, not a visual-caption policy.",
+      "Pinned TutWin::tour4BC6E0 loads pointercell691B14 at4BCA6D and passes it to text_open5FD550 for DIRECTIONS. Current source passes unrelated text-output buffer TextBufferGetPtr. Other mapped readers correctly use the same source-owned pointer. Full mapped-span scan observes11 reads in8functions, not an exhaustive dynamic xref census."
+    ],
+    "hypothesis": "The same original tutorial-script pointer provider is mistranslated in two real tutorial owner functions, so restore those coupled consumers rather than stop at diplomacy.",
+    "kind": "discovery"
+  },
+  "previous_event": "69fdb33fa55ef7415e5b9c3fb143cff9859175063e66734dd1f661ddb0cbff02",
+  "request_id": "coupled-tutorial-script-consumer-discovery-oct18",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:tutorial-script-provider-oct18"
+}

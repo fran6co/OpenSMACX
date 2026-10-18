@@ -91,6 +91,14 @@ def run_host(tmp_path, body, *, compiler="g++", control=None):
         const char *popp_caption = nullptr, *popp_label = nullptr,
                    *popp_picture = nullptr;
         const char *xpop_label = nullptr;
+        const char *treetime_expected_name = nullptr;
+        int treetime_name_parse_calls = 0, treetime_name_parse_id = -1,
+            treetime_name_parse_order = 0;
+        const char *treetime_name_parse_input = nullptr;
+        int treetime_popup_calls = 0, treetime_popup_result = 2,
+            treetime_callback_nonnull = 0, treetime_parse_calls_at_popup = -1;
+        char *treetime_caption = nullptr;
+        const char *treetime_label = nullptr;
         int parse_say_ids[32] = {}, parse_say_calls = 0;
         const char *parse_say_inputs[32] = {};
         struct GraphicWin;
@@ -198,6 +206,14 @@ def run_host(tmp_path, body, *, compiler="g++", control=None):
           int faction_bonus_val2[8] = {};
         };
         struct RulesFacility { const char *name = nullptr; int preq_tech = -1; };
+        struct RulesTerraforming {
+          const char *name = nullptr;
+          const char *name_sea = nullptr;
+          int preq_tech = -1;
+          int preq_tech_sea = -1;
+        };
+        constexpr int TERRA_FOREST = 4;
+        RulesTerraforming Terraforming[20];
         struct RulesTechnology {
           uint32_t flags = 0;
           const char *name = nullptr;
@@ -339,6 +355,12 @@ def run_host(tmp_path, body, *, compiler="g++", control=None):
         int parse_say(int id, const char *input, int, int) {
           parsed_say_id = id;
           parsed_say_input = input;
+          if (input == treetime_expected_name) {
+            ++treetime_name_parse_calls;
+            treetime_name_parse_id = id;
+            treetime_name_parse_input = input;
+            treetime_name_parse_order = ++event_order;
+          }
           if (parse_say_calls < 32) {
             parse_say_ids[parse_say_calls] = id;
             parse_say_inputs[parse_say_calls] = input;
@@ -384,7 +406,15 @@ def run_host(tmp_path, body, *, compiler="g++", control=None):
           return xpop_result;
         }
         int X_pop(char *caption, const char *label,
-                                int (__cdecl *)()) {
+                                int (__cdecl *callback)()) {
+          if (std::strcmp(label, "TREETIME") == 0) {
+            ++treetime_popup_calls;
+            treetime_caption = caption;
+            treetime_label = label;
+            treetime_callback_nonnull = callback != nullptr;
+            treetime_parse_calls_at_popup = treetime_name_parse_calls;
+            return treetime_popup_result;
+          }
           ++social_popup_calls; social_popup_caption = caption;
           social_popup_label = label;
           const int result = social_popup_result;
@@ -939,6 +969,61 @@ def run_host(tmp_path, body, *, compiler="g++", control=None):
           VehPrototypes[130].reactor_id = 4;
           tech_achieved(2, 4, 0, 0);
           if (proposed_faction != -1) return 55;
+
+          // TREETIME is keyed by the live forest prerequisite, local faction,
+          // and offline mode. The pointer cell is deliberately changed after
+          // its initial definition so the call must use the current value.
+          const char treetime_name[] = "TREE TECHNOLOGY";
+          char alternate_tutorial_caption[] = "MUTABLE TUTOR CAPTION";
+          treetime_expected_name = treetime_name;
+          Technology[37].name = treetime_name;
+          Terraforming[TERRA_FOREST].preq_tech = 37;
+          Terraforming[TERRA_FOREST].preq_tech_sea = 38;
+          TutorialPopupCaption = alternate_tutorial_caption;
+          ConsoleGlobal.faction_id_ = 2;
+          PlayersData[2].diff_level = 0;
+          FirstProposedPrototype = -1;
+          GamePreferences = 0;
+          IsMultiplayerNet = 0;
+          treetime_popup_result = 2; // Must be ignored; acquisition continues.
+          const int treetime_calls_before = treetime_popup_calls;
+          const int treetime_parses_before = treetime_name_parse_calls;
+          const int treetime_desktop_before = desktop_updates;
+          const int treetime_effects_before = tech_effects_calls;
+          const int treetime_dtor_before = popup_destructions;
+          tech_achieved(2, 37, 0, 0);
+          if (treetime_popup_calls != treetime_calls_before + 1 ||
+              treetime_name_parse_calls != treetime_parses_before + 1 ||
+              treetime_name_parse_id != 0 ||
+              treetime_name_parse_input != treetime_name ||
+              treetime_parse_calls_at_popup != treetime_parses_before + 1 ||
+              treetime_caption != alternate_tutorial_caption ||
+              std::strcmp(treetime_label, "TREETIME") != 0 ||
+              treetime_callback_nonnull != 0 ||
+              desktop_updates != treetime_desktop_before + 1 ||
+              tech_effects_calls != treetime_effects_before + 1 ||
+              popup_destructions != treetime_dtor_before + 1) return 56;
+
+          // A changed live prerequisite suppresses the old tech and enables
+          // the new one. The sea prerequisite is intentionally different.
+          Terraforming[TERRA_FOREST].preq_tech = 38;
+          const int changed_rule_before = treetime_popup_calls;
+          tech_achieved(2, 37, 0, 0);
+          if (treetime_popup_calls != changed_rule_before) return 57;
+          treetime_expected_name = "TREE TECHNOLOGY 38";
+          Technology[38].name = treetime_expected_name;
+          tech_achieved(2, 38, 0, 0);
+          if (treetime_popup_calls != changed_rule_before + 1 ||
+              treetime_name_parse_input != treetime_expected_name) return 58;
+
+          Terraforming[TERRA_FOREST].preq_tech = 37;
+          IsMultiplayerNet = 1;
+          const int network_gate_before = treetime_popup_calls;
+          tech_achieved(2, 37, 0, 0);
+          IsMultiplayerNet = 0;
+          ConsoleGlobal.faction_id_ = 1;
+          tech_achieved(2, 37, 0, 0);
+          if (treetime_popup_calls != network_gate_before) return 59;
         }
     '''.replace("BODY", body).replace(
         "/* EXTRACTED_GAME_DATA_LOCK_MASK_TYPES */", _mask_declarations())
@@ -985,6 +1070,14 @@ def test_actual_body_early_return_transfer_treaty_prototype_and_discovery_paths(
     ('log_say("Gaining a TECH", leader_name, faction_id, tech_id,',
      'log_say("Gaining a TECH", leader_name, tech_id, faction_id,'),
     ("++player.tech_ranking;", "player.tech_ranking += 0;"),
+    ('X_pop(TutorialPopupCaption, "TREETIME", nullptr);',
+     'X_pop(TutorialPopupCaptionText, "TREETIME", nullptr);'),
+    ('X_pop(TutorialPopupCaption, "TREETIME", nullptr);',
+     'X_pop(const_cast<char *>("TUTOR"), "TREETIME", nullptr);'),
+    ('tech_id == Terraforming[TERRA_FOREST].preq_tech && IsMultiplayerNet == 0',
+     'tech_id == Terraforming[TERRA_FOREST].preq_tech_sea && IsMultiplayerNet == 0'),
+    ('tech_id == Terraforming[TERRA_FOREST].preq_tech && IsMultiplayerNet == 0',
+     'tech_id == Terraforming[TERRA_FOREST].preq_tech && IsMultiplayerNet != 0'),
 ])
 def test_native_branch_controls_reject_reconstruction_regressions(tmp_path, before, after):
     body = actual_body("static bool technology_shareable(") + "\n" + actual_body()

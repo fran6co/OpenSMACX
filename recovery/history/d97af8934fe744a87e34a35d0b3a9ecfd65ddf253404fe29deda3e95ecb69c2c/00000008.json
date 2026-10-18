@@ -1,0 +1,21 @@
+{
+  "event_id": "20ce6c343a8a90410234a6536e1aef534b238b179430931f4bb52460e980803e",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/tutorial_script.h"
+    ],
+    "evidence": [
+      "Fresh complete native application build exposes genuine compiler scheduling changes in seven unrelated owner objects after placing the new extern in widely included console.h. Header-end placement under actual-build calibration, unchanged replica and body-damage controls does not remove the collateral. Do not waive broad game/load_interface/order_veh body differences or reset the original task baseline.",
+      "Authorize a narrow ordinary tutorial_script.h interface with the existing mutable char* declaration, included only by the two newly corrected consumers faction.cpp and tutwin.cpp. Restore console.h exactly to its baseline source. Keep existing console.cpp storage and technology.cpp existing declaration unchanged; no copied literal, new storage, conditional compiler shim or block-scope address alias. Update the provider test to inspect this shared interface. Rebuild and compare the complete application afresh; preserve the native pact claim even if restoration is needed.",
+      "The new TREETIME literal has now been physically observed as independent nine-byte COMDAT ??_C@_08BPDN@TREETIME?$AA@ with one incoming reference from tech_achieved. Native literal_storage/check_literals confirms exact original69178C..691795 storage/content. Authorize source-owned RECOVERY_LITERAL evidence beside its actual call, anchored to5BB000. This is data correspondence, not a function claim or retained-selection waiver; the original EDITOR literal removal remains separately verified against its two corrected owner references."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "82f592b7466ecbde42743e90ecc8592143120e43af9bd48d445522c0f725ee4e",
+  "request_id": "narrow-script-provider-interface-oct18",
+  "schema_version": 1,
+  "sequence": 8,
+  "stream": "task:tutorial-script-provider-oct18"
+}
