@@ -1,0 +1,22 @@
+{
+  "author": "coordinator",
+  "base_revision": "e7a8a7172b4cbfab4009972832eebcb3aaf324db",
+  "editable_files": [
+    "src/console.cpp"
+  ],
+  "evidence": [
+    "Pinned4E1318 OR ESI,4;4E131B XOR EAX,EAX;4E131D storeGameState differs from current store-before-zero scheduling. Try only moving natural local count=0 before stateupdate; not a semantic discovery and no guarantee compiler follows source scheduling.",
+    "Existing actual-source editor-clear and signed MapArea tests remain mandatory for any winner. No header/layout/global/refactor changes, casts, safetyfix, asm or new claims. Single deck then stop this spelling axis if unsuccessful; preserve outcome in native task decision, never run logs in C++."
+  ],
+  "intent": "Bounded single-deck natural counter-declaration matching probe in genuine Console editor reset.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5116672,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "console-clear-order-oct18"
+}

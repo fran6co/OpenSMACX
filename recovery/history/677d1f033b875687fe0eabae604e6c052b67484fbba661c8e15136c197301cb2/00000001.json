@@ -1,0 +1,20 @@
+{
+  "event_id": "d43916b9a8ce3312b67f671ecc2988cff9cbedf3ae6ccf5fa66bef8b9fa395fd",
+  "payload": {
+    "affects": [
+      "entity-9ce6e19ec58f8a07e651d0fbfc9723eaf701916c5de33f78527d9e8eac6bc7a7"
+    ],
+    "author": "coordinator",
+    "discovery_id": "counter-declaration-scheduling",
+    "evidence": [
+      "Pinned4E131Bzeroeax precedes4E131Dgamestat e store; source currently schedules storebeforezero. Singledeck in isolated worker with native twoFLAG_SETS and compiling count+=2 damage; no source edits."
+    ],
+    "hypothesis": "Moving the natural zero counter declaration before the game-state update may reproduce original XOR-before-store scheduling.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "counter-declaration-scheduling",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:console-clear-order-oct18"
+}

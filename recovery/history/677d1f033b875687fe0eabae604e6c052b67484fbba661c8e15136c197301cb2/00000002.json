@@ -1,0 +1,18 @@
+{
+  "event_id": "f033fd2cea9a028812e410a12b6dd3c7fadc24ad5d950a3c78e5062295d9a24b",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "counter-declaration-scheduling",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Bothflagset native unchangedreplica anddamage controls pass. Baseline37/39 instructions, candidate23/39 with additional savedregister and changedallocation; bothMISMATCH. No exactgain or semanticfix. Current production body retained unchanged; do not repeat this declaration-order axis or carry a worse spelling merely for activity.",
+      "No newclaim/demotion, buildpolicy/layout/behaviorchange, acceptance or fullgameproof. Recomputable diagnostic stays ignored; this native decision preserves why the bounded candidate was not integrated."
+    ]
+  },
+  "previous_event": "d43916b9a8ce3312b67f671ecc2988cff9cbedf3ae6ccf5fa66bef8b9fa395fd",
+  "request_id": "reject-counter-before-state",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:console-clear-order-oct18"
+}
