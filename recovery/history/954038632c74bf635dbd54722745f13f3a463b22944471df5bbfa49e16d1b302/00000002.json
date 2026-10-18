@@ -1,0 +1,19 @@
+{
+  "event_id": "822697d18999cac05ba662e2f4ee1f04b4bc0f6b92cd787f9c936ddc2f411e97",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "original-diplomacy-owner-phase-boundaries",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Source:src/faction.cpp enemy_diplomacy now contains agenda, peer prefix, console notification, cleanup/action dispatch, territory, relationship score and terminal orbital phases directly. Local exits rejoin their original phase/peer loop; vendetta and territory base outputs remain live through the two walks. Genuine external/mapped calls and original partial/error behavior remain unchanged.",
+      "Source:recovery/tests/test_enemy_diplomacy_behavior.py retargets direct-helper controls through the real owner without dropping prior observable assertions/mutations. Facility predicates remain before bitmask and facility reads; ordered mask/attack controls protect this. Explicit lexical scope accommodates VC6 loop-variable lifetime without a flag change.",
+      "Manual owner-closure residual supplement explicitly projects only the original owner and five reviewed private helpers; all outside runtime references, data and symbols are compared using native normalization. Ordinary original-only residual remains visible, not promoted to a pass. No claims banked, no byte exactness, linked selection/allocation, runtime or automatic acceptance asserted."
+    ]
+  },
+  "previous_event": "428c5a047921fcdc1057fbfc2fae4c090e1acc7141ec0bc52f7e93a264c7e053",
+  "request_id": "original-diplomacy-owner-phase-boundaries-incorporated",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:enemy-diplomacy-body-boundary-oct18"
+}

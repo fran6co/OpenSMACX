@@ -1,0 +1,21 @@
+{
+  "event_id": "428c5a047921fcdc1057fbfc2fae4c090e1acc7141ec0bc52f7e93a264c7e053",
+  "payload": {
+    "affects": [
+      "entity-04db7ed5ce8eb02ed7aa3e148631e3cdf61f5e2adb97d42883843002450aca8d"
+    ],
+    "author": "coordinator",
+    "discovery_id": "original-diplomacy-owner-phase-boundaries",
+    "evidence": [
+      "Pinned55F930..560ACD is one complete original routine. Actual baseline owner emits five calls to separately emitted private phase helpers; these source-only routines have no original identities and each has only one runtime reference from the public owner. Other phase helpers inline already. No missing semantic branch was inferred solely from instruction counts.",
+      "The authorized source-owner migration preserves original identities/spans/claims, genuine callees and existing defects. Native original-only preservation does not automatically qualify removal of unannotated helpers; no synthetic original identities may be fabricated to hide that limitation."
+    ],
+    "hypothesis": "Remove reconstruction-only outlined diplomacy phase boundaries absent from the pinned original owner, while retaining complete behavior in one genuine C++ function.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "original-diplomacy-owner-phase-boundaries",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:enemy-diplomacy-body-boundary-oct18"
+}

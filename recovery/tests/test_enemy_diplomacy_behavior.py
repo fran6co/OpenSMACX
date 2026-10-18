@@ -1,8 +1,8 @@
 """Actual-owner behavior controls for the AI diplomacy turn.
 
-The test extracts the actual faction.cpp arithmetic helpers and every helper
-in the recovered enemy_diplomacy call chain. Its inline C++ harness supplies
-only typed dependency mocks; it does not import or include private fragments.
+The test extracts the arithmetic helpers and the complete public
+enemy_diplomacy body. Its inline C++ harness supplies only typed dependency
+mocks; it does not import or include private fragments.
 """
 import pathlib
 import re
@@ -38,16 +38,6 @@ FUNCTION_MARKERS = (
     "static int diplo_add(int a, int b)",
     "static int diplo_sub(int a, int b)",
     "static int diplo_mul(int a, int b)",
-    "static void enemy_diplomacy_sync_agenda_pairs(",
-    "static void enemy_diplomacy_pair_prefix(",
-    "static void enemy_diplomacy_console_pair(",
-    "static int enemy_diplomacy_territory_pair(",
-    "static int enemy_diplomacy_relationship_score(",
-    "static bool enemy_diplomacy_pair_relationship_finish(",
-    "static void enemy_diplomacy_pair_dispatch(",
-    "static int enemy_diplomacy_tail_threshold(",
-    "static bool enemy_diplomacy_base_has_facility_41(",
-    "static void enemy_diplomacy_satellite_attacks(",
     "void __cdecl enemy_diplomacy(",
 )
 
@@ -101,6 +91,7 @@ static int DiploFriction,DiploScratchFA60,DiploScratchFAA0;
 static int territory_calls,territory_result,territory_base,territory_count;
 static int friction_calls,friction_score,communication_calls,treaty_calls;
 static int encounter_calls,trade_calls,attack_calls,attack_base[8],attack_type[8],attack_target[8];
+static int bitmask_calls,call_trace_count,call_trace_kind[16],call_trace_value[16];
 static int deterministic_random,reputation_result,diplomacy_check_calls;
 static int diplo_add(int,int); static int diplo_sub(int,int); static int diplo_mul(int,int);
 static bool is_alive(int faction) { return (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1u << (8+faction))) != 0; }
@@ -120,8 +111,15 @@ static int great_satan(int,int) { return 0; }
 static int aah_ooga(int,int) { return 0; }
 static void enemies_trade_tech(int,int) { ++trade_calls; }
 static void encounter(int,int,int,int,int,int) { ++encounter_calls; }
-static void bitmask(int id,int *byte,int *mask) { *byte=id/8; *mask=1<<(id&7); }
+static void record_call(int kind,int value) {
+ const int n=call_trace_count++;
+ assert(n<16); call_trace_kind[n]=kind; call_trace_value[n]=value;
+}
+static void bitmask(int id,int *byte,int *mask) {
+ ++bitmask_calls; record_call(1,id); *byte=id/8; *mask=1<<(id&7);
+}
 static void action_sat_attack(int actor,int target,int type,int base_id) {
+ record_call(2,type);
  const int n=attack_calls++; attack_target[n]=target; attack_type[n]=type; attack_base[n]=base_id;
  if (type==4) PlayersData[actor].diplo_treaties[target]=0;
  else PlayersData[actor].sat_odp_deployed=PlayersData[actor].satellites_[3];
@@ -153,6 +151,7 @@ static void reset_state() {
  GameDataStateStorage.fields_.base_current_count_=territory_calls=friction_calls=communication_calls=treaty_calls=0;
  territory_result=territory_base=territory_count=friction_score=0;
  encounter_calls=trade_calls=attack_calls=0; deterministic_random=0; reputation_result=5;
+ bitmask_calls=call_trace_count=0;
  diplomacy_check_calls=0;
 }
 int main() {
@@ -177,21 +176,21 @@ int main() {
 
  // Native console-only domain rejects nonconsole-human and invalid console
  // relation-mask notification, but both still reach diplomacy_check.
- reset_state(); GameDataStateStorage.fields_.lock_masks_.enable_mask_=1u<<4; PlayersData[3].diplo_treaties[4]=8;
+ reset_state(); GameDataStateStorage.fields_.lock_masks_.enable_mask_=(1u<<4)|(1u<<(8+4)); PlayersData[3].diplo_treaties[4]=8;
  PlayersData[4].diplo_spoke[3]=0; GameDataStateStorage.fields_.turn_current_num_=40;
- enemy_diplomacy_console_pair(3,4);
+ enemy_diplomacy(3);
  assert(communication_calls==0 && diplomacy_check_calls==1);
- reset_state(); GameDataStateStorage.fields_.lock_masks_.enable_mask_=1u<<2; PlayersData[3].diplo_treaties[2]=0x10;
+ reset_state(); GameDataStateStorage.fields_.lock_masks_.enable_mask_=(1u<<2)|(1u<<(8+2)); PlayersData[3].diplo_treaties[2]=0x10;
  PlayersData[2].diplo_spoke[3]=0; GameDataStateStorage.fields_.turn_current_num_=40;
- enemy_diplomacy_console_pair(3,2);
+ enemy_diplomacy(3);
  assert(communication_calls==0 && diplomacy_check_calls==1);
 
  // The territory phase writes pending diplomacy state as [peer][actor],
  // unlike comm_check's opposite direction. Keep this directed-row behavior.
- reset_state(); ConsoleGlobal.faction_id_=2; GameDataStateStorage.fields_.lock_masks_.enable_mask_=1u<<2; PlayersData[3].diplo_treaties[2]=8;
+ reset_state(); ConsoleGlobal.faction_id_=2; GameDataStateStorage.fields_.lock_masks_.enable_mask_=(1u<<2)|(1u<<(8+2)); PlayersData[3].diplo_treaties[2]=8;
  PlayersData[3].diplo_agenda[2]=0x800; PlayersData[2].diplo_spoke[3]=0;
  GameDataStateStorage.fields_.turn_current_num_=10; territory_result=3; territory_count=2;
- { int base=0; enemy_diplomacy_territory_pair(3,2,base); }
+ enemy_diplomacy(3);
  assert((PendingDiplomacyFlags[2][3]&0x18u)==0x18u);
  assert(PendingDiplomacyFlags[3][2]==0);
 
@@ -200,17 +199,30 @@ int main() {
  PlayersData[1].diplo_treaties[2]=PlayersData[1].diplo_treaties[3]=0x810;
  PlayersData[3].satellites_[3]=1; GameDataStateStorage.fields_.base_current_count_=3; Bases[1].faction_id_current=2;
  { int byte=0,mask=0; bitmask(0x29,&byte,&mask); Bases[1].facilities_built[byte]=static_cast<uint8_t>(mask); }
- enemy_diplomacy_satellite_attacks(1,19);
+ // Ignore setup's facility-mask lookup; capture only the owner's scan and
+ // attack callback order. Only the faction-2 base is eligible for type 4.
+ bitmask_calls=call_trace_count=0;
+ GameDataStateStorage.fields_.lock_masks_.enable_mask_=(1u<<2)|(1u<<3)|(1u<<(8+2))|(1u<<(8+3));
+ enemy_diplomacy(1);
  assert(attack_calls==2 && attack_type[0]==4 && attack_base[0]==1);
  assert(attack_type[1]==3 && attack_base[1]==1);
+ assert(bitmask_calls==2 && call_trace_count==4);
+ assert(call_trace_kind[0]==1 && call_trace_value[0]==0x29);
+ assert(call_trace_kind[1]==1 && call_trace_value[1]==0x29);
+ assert(call_trace_kind[2]==2 && call_trace_value[2]==4);
+ assert(call_trace_kind[3]==2 && call_trace_value[3]==3);
 
  // Fourth-turn treaty bit subtracts one from the common score for either
  // relation kind; nonpact military ratio reads the existing mil_strength_1.
- reset_state(); GameDataStateStorage.fields_.turn_current_num_=4; PlayersData[2].diplo_treaties[3]=2;
- assert(enemy_diplomacy_relationship_score(2,3,0,7)==1);
- reset_state(); PlayersData[2].mil_strength_1=10; PlayersData[3].mil_strength_1=30;
+ reset_state(); GameDataStateStorage.fields_.lock_masks_.enable_mask_=(1u<<3)|(1u<<(8+3));
+ GameDataStateStorage.fields_.turn_current_num_=4; PlayersData[2].diplo_treaties[3]=0xAu;
+ territory_result=7; territory_count=2; enemy_diplomacy(2);
+ assert(friction_calls==1 && friction_score==1);
+ reset_state(); GameDataStateStorage.fields_.lock_masks_.enable_mask_=(1u<<3)|(1u<<(8+3));
+ GameDataStateStorage.fields_.turn_current_num_=4; PlayersData[2].diplo_treaties[3]=8; PlayersData[2].mil_strength_1=10; PlayersData[3].mil_strength_1=30;
  PlayersData[2].planet_busters=100;
- assert(enemy_diplomacy_relationship_score(2,3,0,7)==0);
+ territory_result=7; territory_count=2; enemy_diplomacy(2);
+ assert(friction_calls==1 && friction_score==0);
  return 0;
 }
 '''
