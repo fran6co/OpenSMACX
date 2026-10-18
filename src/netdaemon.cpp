@@ -1878,36 +1878,7 @@ void __cdecl message_base(int opcode, int payload_10, char *text, int target) {
     NetBusyCount--;
 }
 
-// The two bytes after opcode are observed unwritten in the native stack record;
-// keep them unresolved and do not value-initialize the local object.
-struct MessageDataRecord {
-    int16_t opcode_;
-    unsigned char unresolved_2_[2];
-    int faction_;
-    uint32_t timestamp_;
-    int sequence_;
-    int payload_10_;
-    int payload_14_;
-    int payload_18_;
-    int payload_1C_;
-};
-
-static_assert(sizeof(MessageDataRecord) == 0x20,
-              "message_data stack record width from native stores");
-static_assert(offsetof(MessageDataRecord, faction_) == 0x04,
-              "message_data faction field offset");
-static_assert(offsetof(MessageDataRecord, timestamp_) == 0x08,
-              "message_data timestamp field offset");
-static_assert(offsetof(MessageDataRecord, sequence_) == 0x0C,
-              "message_data sequence field offset");
-static_assert(offsetof(MessageDataRecord, payload_10_) == 0x10,
-              "message_data first payload field offset");
-static_assert(offsetof(MessageDataRecord, payload_14_) == 0x14,
-              "message_data second payload field offset");
-static_assert(offsetof(MessageDataRecord, payload_18_) == 0x18,
-              "message_data third payload field offset");
-static_assert(offsetof(MessageDataRecord, payload_1C_) == 0x1C,
-              "message_data fourth payload field offset");
+#include "netdaemon_message_record.h"
 
 // Borrowed wire view over the layout already owned by message_data's sender.
 // Read one field at a time: MOVE packets have only two payload words, while
@@ -2121,27 +2092,6 @@ private:
     const unsigned char *bytes_;
 };
 
-// ORIGINAL: 0x00592EE0 ?message_data@@YAXHHHHHH@Z 0x00592EE0-0x00592F4C
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned592EE0..592F4C: six int inputs, target is argument2; 32-byte local packet has unwritten bytes2..3. Call532940 then dec93F664 and epilogue preserve EAX.", "Pinned53111B caller and source NetDaemon::unlock_veh consume all32 result bits; other current callers discard them.", "Superseded source dead ends: nonvoid body without return failed VC6 C4716; returning NetBusyCount added a wrong load. Returning the actual lower Net::send result resolves both without register tricks.", "Fresh root private VC6 COFF probe observes current symbol ?message_data@@YAHHHHHHH@Z", "recovery/tasks/message-data-owner-oct5.json", "recovery/tests/test_message_data_actual_source.py"], "reason": "Replace the original-address forwarding wrapper with the complete typed automatic packet builder. Expose the send result already observed by unlock_veh without changing native routing, busy-count ordering or the two unwritten packet bytes. Current netdaemon.cpp home is family ownership, not asserted original TU ownership."}
-// symbol    ?message_data@@YAHHHHHHH@Z
-int __cdecl message_data(int opcode, int target, int payload_10,
-                         int payload_14, int payload_18, int payload_1C) {
-    MessageDataRecord message;
-    message.opcode_ = static_cast<int16_t>(opcode);
-    message.faction_ = ConsoleGlobal.faction_id_;
-    message.timestamp_ = timeGetTime();
-    message.payload_14_ = payload_14;
-    message.sequence_ = NetDaemonNet.deletion_list_.sequence_bits();
-
-    ++NetBusyCount;
-    message.payload_18_ = payload_18;
-    message.payload_10_ = payload_10;
-    message.payload_1C_ = payload_1C;
-    const int result = NetDaemonNet.send_message(
-        reinterpret_cast<char *>(&message), 0x20, target);
-    --NetBusyCount;
-    return result;
-}
 
 // Native automatic wire records. Bytes 2..3 remain unwritten in all three
 // builders; the raw bulk sender also leaves data_[8..31] unwritten. These

@@ -1,0 +1,25 @@
+{
+  "event_id": "b6d823701617dc46d7f3c419da11f36a1bb145e4886038c8e856590264c4ca33",
+  "payload": {
+    "affects": [
+      "entity-59bbf2c307e27f6a77647be1662d051dabcb6fdb555cea82a17211f1c20cdb1d",
+      "entity-b825275a563a538a20817bae6dae36b4faf002ee34891fdc02c8dcbead97b0c5",
+      "entity-d4acf660cee2f15f9b9ff27350b6a73d6df51bbb6cf8a5fd19cccca4ee7d8bde"
+    ],
+    "author": "coordinator",
+    "discovery_id": "packet-boundary-outlined-closure",
+    "evidence": [
+      "Fresh168TU/182object candidate:180existing objects pass native outside-subject comparison; netdaemon.cpp remains FAIL with changed.text sections for compare_and_notify and nine receiver helpers already using message_data. No other retained section kind or association changes. Every receiver function C++ token is unchanged by the strict inverse source-home control against immutablebffedcf01; all original mappings/history survive the sole592EE0home move.",
+      "Actual added TU emits46 real header function families, not merely the five examples identified before compilation. Every same-named family compares equal to the prior receiver definition in complete code/recursive associated data and native normalized COFF section/symbol/auxiliary/reference evidence. No independent unassigned nonempty code/storage is present. Added-unit presence nevertheless FAILS and is not waived.",
+      "Raw sender-family transport FAILS only because five NetDaemonNet/NetBusyCount references change from co-located global-definition section offsets to undefined externals0; all encoded code and FPO bytes, target names/types, reference positions/kinds remain equal. Existing source-owned storage stays in netdaemon.cpp. This bounded explanation is not complete linked target/selection/allocation proof.",
+      "Native tests observe the real out-of-line sender edges in fourteen direct mapped consumers and process_message under both settled flags. Synch continues through its existing source support helper. Three actual masked gains and all previous masked/strict verdicts retained; process_message remains REFUSED. No new implementation or source exactness token granted."
+    ],
+    "hypothesis": "The sender boundary also changes ten unmapped receiver/synchronization support helpers and introduces duplicate include-emitted COMDAT families. They belong to the existing process/synch source closure, not invented independent original functions; native residual and presence evidence remains incomplete.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "packet-boundary-outlined-closure",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:netdaemon-packet-boundary-oct18"
+}

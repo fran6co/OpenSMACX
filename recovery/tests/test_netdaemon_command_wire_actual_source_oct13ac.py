@@ -7,6 +7,7 @@ from dataclasses import fields
 import hashlib
 import os
 from pathlib import Path
+from netdaemon_packet_source import historical_source
 import re
 import shutil
 import subprocess
@@ -409,7 +410,7 @@ def test_current_netdaemon_identities_claims_and_history_match_immutable_task_ba
         ["git", "show", f"{BASE}:src/netdaemon.cpp"], cwd=ROOT,
         text=True, timeout=30)
     old = {row.address: row for row in read_text(old_text, SOURCE)}
-    current = {row.address: row for row in read_text(SOURCE.read_text(), SOURCE)}
+    current = {row.address: row for row in read_text(historical_source(ROOT), SOURCE)}
     assert set(current) == set(old)
     for address, before in old.items():
         after = current[address]
@@ -423,7 +424,7 @@ def test_scoped_wire_migration_reverses_to_immutable_full_cpp_tokens():
     baseline = subprocess.check_output(
         ["git", "show", f"{BASE}:src/netdaemon.cpp"], cwd=ROOT,
         text=True, timeout=30)
-    reconstructed = _restore_authorized_cpp_candidate(SOURCE.read_text(), baseline)
+    reconstructed = _restore_authorized_cpp_candidate(historical_source(ROOT), baseline)
     assert _cpp_tokens(reconstructed) == _cpp_tokens(baseline)
 
 
@@ -435,7 +436,7 @@ def test_source_recipe_rejects_unconstrained_declarations_and_variant_bindings(d
     baseline = subprocess.check_output(
         ["git", "show", f"{BASE}:src/netdaemon.cpp"], cwd=ROOT,
         text=True, timeout=30)
-    candidate = SOURCE.read_text()
+    candidate = historical_source(ROOT)
     if damage == "extra-record-field":
         candidate = _replace_once(candidate,
             "    int32_t field_14_;\n};\n\nstatic_assert(sizeof(MessageVehicleRecord)",
@@ -461,7 +462,7 @@ def test_source_recipe_rejects_unconstrained_declarations_and_variant_bindings(d
 
 
 def test_new_view_methods_are_single_field_memcpy_accessors():
-    source = SOURCE.read_text()
+    source = historical_source(ROOT)
     record_schema = {
         "MessageVehicleRecord": ("0x18", ("faction_", "time_", "sequence_", "field_10_", "field_14_")),
         "MessageBaseTextRecord": ("0x2C", ("faction_", "time_", "sequence_", "payload_10_", "text_[24]")),
@@ -680,7 +681,7 @@ def actual_types(source):
 def test_actual_borrowed_wire_views_unaligned_and_field_specific(tmp_path, compiler):
     if not shutil.which(compiler):
         pytest.skip(f"{compiler} unavailable")
-    source = SOURCE.read_text()
+    source = historical_source(ROOT)
     for token in ("class MessageLockView", "class MessageEventPrefixView",
                   "netdaemon_read_unserialized_table_g_y"):
         assert token in source, token
@@ -706,7 +707,7 @@ def test_named_compile_success_wire_damage_controls_98(tmp_path, damage, expecte
     compiler = shutil.which("g++") or shutil.which("clang++")
     if not compiler:
         pytest.skip("host C++ compiler unavailable")
-    code = actual_types(SOURCE.read_text())
+    code = actual_types(historical_source(ROOT))
     edits = {
         "wrong-command-offset": (
             "offsetof(MessageDataRecord, payload_10_)",
@@ -737,7 +738,7 @@ def test_named_compile_success_wire_damage_controls_98(tmp_path, damage, expecte
 
 
 def test_task_source_covers_proven_command_variants_and_unserialized_tail():
-    source = SOURCE.read_text()
+    source = historical_source(ROOT)
     for name in ("MessageVehicleRecord", "MessageBaseTextRecord", "MessageLockRecord",
                  "MessageAcknowledgementPrefix", "MessageEventPrefix",
                  "MessageBigDataRecord", "MessageCommandView",

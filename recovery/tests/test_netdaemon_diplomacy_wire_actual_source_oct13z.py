@@ -3,6 +3,7 @@ from dataclasses import fields
 import hashlib
 import os
 from pathlib import Path
+from netdaemon_packet_source import historical_source
 import shutil
 import subprocess
 
@@ -35,7 +36,7 @@ def test_current_netdaemon_identities_claims_and_history_match_immutable_task_ba
         ["git", "show", f"{task.base_revision}:src/netdaemon.cpp"],
         cwd=ROOT, text=True, timeout=30)
     baseline = {row.address: row for row in read_text(baseline_text, path)}
-    current = {row.address: row for row in read_text(path.read_text(), path)}
+    current = {row.address: row for row in read_text(historical_source(ROOT), path)}
     assert set(current) == set(baseline)
     for address, old in baseline.items():
         new = current[address]
@@ -46,7 +47,7 @@ def test_current_netdaemon_identities_claims_and_history_match_immutable_task_ba
 
 
 def test_actual_record_view_contract_and_pinned_sender_receiver_anchors():
-    source = (ROOT / "src/netdaemon.cpp").read_text()
+    source = historical_source(ROOT)
     record = extract(source, "struct MessageDataRecord {")
     view = extract(source, "class MessageCommandView {")
     assert "int16_t opcode_;" in record and "unsigned char unresolved_2_[2];" in record
@@ -165,7 +166,7 @@ int main() {
 
 
 def actual_wire_types(damage):
-    source = (ROOT / "src/netdaemon.cpp").read_text()
+    source = historical_source(ROOT)
     record = extract(source, "struct MessageDataRecord {") + ";"
     view = extract(source, "class MessageCommandView {") + ";"
     method = extract(view, "int payload_1C() const")

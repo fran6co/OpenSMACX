@@ -216,6 +216,7 @@ set(OPENSMACX_SOURCES
     src/planwin.cpp
     src/playerlock.cpp
     src/netdaemon.cpp
+    src/netdaemon_message_data.cpp
     src/prefwin.cpp
     src/prefwin_geometry.cpp
     src/quaylewin.cpp
@@ -368,6 +369,7 @@ set_source_files_properties(
 # frame-preserving source profiles; application defaults and link settings stay fixed.
 set_source_files_properties(
     src/netdaemon.cpp
+    src/netdaemon_message_data.cpp
     src/diplowin.cpp
     src/diplopop.cpp
     src/worldwin.cpp

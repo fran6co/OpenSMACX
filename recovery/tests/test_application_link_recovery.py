@@ -586,7 +586,7 @@ def test_base_lock_references_shared_state_and_real_base_fields(compiled):
     expected = {"?ConsoleControlTurnActive@@3HA", "?IsMultiplayerNet@@3HA",
                 "?BaseIDCurrentSelected@@3HA", "?UnkGlobal0093A934@@3HA",
                 "?Bases@@3PAUBase@@A", "?lock@NetDaemon@@QAEHHHHHHH@Z",
-                "?message_data@@YAIHHHHHH@Z"}
+                "?message_data@@YAHHHHHHH@Z"}
     for obj in compiled["src/netdaemon.cpp"]:
         targets = references(obj, function)
         assert expected <= set(targets), targets

@@ -1,6 +1,7 @@
 """Actual-source host control for the NetDaemon 0x4D00 route."""
 
 from pathlib import Path
+from netdaemon_packet_source import historical_source
 import re
 import shutil
 import subprocess
@@ -258,7 +259,7 @@ def extract_function(source, name):
 
 
 def source_parts():
-    text = SOURCE.read_text()
+    text = historical_source(ROOT)
     helper = extract_function(text, HELPER_NAME)
     process = extract_function(text, "process_message")
     return text, helper, process
@@ -268,7 +269,7 @@ def compile_and_run(helper, compiler, directory, label):
     source_path = directory / f"{label}.cpp"
     binary = directory / label
     from test_netdaemon_transfer_modal import extract
-    actual = SOURCE.read_text()
+    actual = historical_source(ROOT)
     wire = extract(actual, "struct MessageDataRecord {") + ";\n"
     wire += extract(actual, "class MessageCommandView {") + ";\n"
     faction=(ROOT / "src/faction.h").read_text()

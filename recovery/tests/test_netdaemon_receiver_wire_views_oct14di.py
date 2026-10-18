@@ -1,5 +1,6 @@
 """Actual-source host controls for callback-sensitive NetDaemon packet views."""
 from pathlib import Path
+from netdaemon_packet_source import historical_source
 import shutil
 import subprocess
 
@@ -52,7 +53,7 @@ def extract(source, declaration):
 
 
 def actual_parts():
-    text = SOURCE.read_text(encoding="utf-8")
+    text = historical_source(ROOT)
     lock_record = extract(text, "struct MessageLockRecord {")
     lock_view = extract(text, "class MessageLockView {")
     data_record = extract(text, "struct MessageDataRecord {")
@@ -364,13 +365,13 @@ def run_case(tmp_path, compiler, parts, mode, mutations=()):
 
 
 def test_process_message_mapping_identity_and_spans_are_retained():
-    text = SOURCE.read_text(encoding="utf-8")
+    text = historical_source(ROOT)
     old = subprocess.run(
         ["git", "show", BASELINE + ":src/netdaemon.cpp"], cwd=ROOT,
         check=True, text=True, capture_output=True, timeout=30,
     ).stdout
     before = read_text(old, SOURCE)
-    after = read_file(SOURCE)
+    after = read_text(historical_source(ROOT), SOURCE)
     prior = next(row for row in before if row.address == 0x00534400)
     current = next(row for row in after if row.address == 0x00534400)
     assert (_continuity_fields(prior), prior.symbol, prior.function_fragment) == (

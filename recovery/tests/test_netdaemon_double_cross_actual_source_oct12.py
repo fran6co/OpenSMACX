@@ -5,6 +5,7 @@ pinned instructions establish original capture/store ordering. They do not
 establish the real Windows class ABI, linked preservation, or game acceptance.
 """
 from pathlib import Path
+from netdaemon_packet_source import historical_source
 import os
 import re
 import shutil
@@ -32,7 +33,7 @@ def class_declaration(text,name):
 
 
 def material():
-    source=(ROOT/"src/netdaemon.cpp").read_text();header=(ROOT/"src/netdaemon.h").read_text()
+    source=historical_source(ROOT);header=(ROOT/"src/netdaemon.h").read_text()
     owner=class_declaration((ROOT/"src/deletionlist.h").read_text(),"DeletionList")
     record=declaration((ROOT/"src/deletionlist.h").read_text(),"DeletionRecord")
     declarations="\n".join((record,owner,declaration(header,"PrimaryLockStateTail"),

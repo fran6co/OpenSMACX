@@ -4,6 +4,7 @@ The host fixture deliberately passes misaligned storage and mutates packets
 from callbacks. It covers C++ field evaluation only, not the VC6 ABI or game.
 """
 from pathlib import Path
+from netdaemon_packet_source import historical_source
 import re
 import shutil
 import subprocess
@@ -184,7 +185,7 @@ int main() {
 
 
 def source_product() -> tuple[str, str, str]:
-    text = SOURCE.read_text()
+    text = historical_source(ROOT)
     record = extract(text, "struct MessageDataRecord {") + ";"
     view = extract(text, "class MessageCommandView {") + ";"
     bodies = "\n".join(extract(text, signature) for signature in HANDLERS)
@@ -260,7 +261,7 @@ def test_callback_reload_controls_reject_field_snapshots(tmp_path, compiler_name
 
 
 def test_view_uses_actual_record_and_field_sized_memcpy_without_length_policy():
-    text=SOURCE.read_text()
+    text=historical_source(ROOT)
     record=extract(text,"struct MessageDataRecord {")
     _,view,_=source_product()
     assert "unresolved_2_[2]" in record

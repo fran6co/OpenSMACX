@@ -5,6 +5,7 @@ from __future__ import annotations
 import shutil
 import subprocess
 from pathlib import Path
+from netdaemon_packet_source import historical_source
 
 from test_caviar_draw_callbacks_actual_source import extract
 
@@ -32,7 +33,7 @@ def test_wait_mask_owner_and_callback_sensitive_server_paths(tmp_path: Path) -> 
     compiler = shutil.which("g++")
     if not compiler:
         pytest.skip("host C++ compiler unavailable")
-    cpp = (ROOT / "src/netdaemon.cpp").read_text()
+    cpp = historical_source(ROOT)
     wire = (extract(cpp, "struct MessageDataRecord {") + ";\n" +
             extract(cpp, "class MessageCommandView {") + ";\n")
     withdraw = _body(cpp, "static void netdaemon_handle_withdraw_end_turn")

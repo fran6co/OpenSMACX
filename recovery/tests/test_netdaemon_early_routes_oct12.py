@@ -7,6 +7,7 @@ evidence. Neither host shims nor these bounded anchors prove full recovery,
 Windows ABI, linked preservation, or game runtime behavior.
 """
 from pathlib import Path
+from netdaemon_packet_source import historical_source
 import os
 import re
 import shutil
@@ -46,7 +47,7 @@ def declaration(text, name):
 
 
 def source_material():
-    source = SOURCE.read_text()
+    source = historical_source(ROOT)
     wire_parts = [_actual_prefix_source()]
     for marker in (
         "struct MessageVehicleRecord {", "struct MessageBaseTextRecord {",
@@ -541,7 +542,7 @@ def test_done_upkeep_conditional_cpp_evaluation(tmp_path, eager_damage):
     if not compiler:
         pytest.skip("host compiler unavailable")
     declarations, functions, state_fields, setter = source_material()
-    body = _definition(SOURCE.read_text(), r"static\s+void\s+netdaemon_handle_client_done_upkeep", "done_upkeep")
+    body = _definition(historical_source(ROOT), r"static\s+void\s+netdaemon_handle_client_done_upkeep", "done_upkeep")
     instrumented = body
     read = "        const int turn = packet.payload_14();"
     assert instrumented.count(read)==1
@@ -703,7 +704,7 @@ def test_pinned_branch_storage_and_callback_evidence():
 
 
 def test_dispatcher_preserves_identity_and_owner_calls():
-    body = _definition(SOURCE.read_text(), r"void\s+NetDaemon::process_message", "process_message")
+    body = _definition(historical_source(ROOT), r"void\s+NetDaemon::process_message", "process_message")
     assert "*this, type, msg, popup, MultiWindowContactStatusMask" in body
     assert "netdaemon_handle_table_f(this, type, msg, sender_id,\n                                    entry_sender_identity)" in body
     assert body.count("pid_2_who(") == 1

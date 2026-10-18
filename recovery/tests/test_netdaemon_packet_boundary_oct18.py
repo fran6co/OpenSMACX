@@ -1,0 +1,138 @@
+"""Actual packet-owner transport and bounded original/native call evidence.
+
+These controls do not qualify the dispatcher, linked allocation or game runtime.
+Native compilation is opt-in and must run under a coordinator compiler lease.
+"""
+from dataclasses import fields
+import os
+from pathlib import Path
+import subprocess
+
+import pytest
+from capstone import Cs,CS_ARCH_X86,CS_MODE_32
+from match_recovery.binary import RelocationKind
+from match_recovery.model import Span
+from match_recovery.pe_coff import Coff,PeImage
+from match_recovery.source import read_file,read_text
+from netdaemon_packet_source import BASE,historical_source
+from test_netdaemon_command_wire_actual_source_oct13ac import _cpp_tokens
+
+ROOT=Path(__file__).resolve().parents[2]
+PIN='01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf'
+CALLERS=(0x530D50,0x52E370,0x5310F0,0x530D00,0x530600,0x52E050,
+    0x5328C0,0x5304A0,0x530AA0,0x530E50,0x531300,0x532140,
+    0x532570,0x531780,0x532E00)
+
+
+def test_inverse_rehome_retains_complete_receiver_tokens_and_all_native_facts():
+    before=subprocess.check_output(['git','show',BASE+':src/netdaemon.cpp'],cwd=ROOT,text=True)
+    reconstructed=historical_source(ROOT)
+    assert _cpp_tokens(reconstructed)==_cpp_tokens(before)
+    old={r.address:r for r in read_text(before,ROOT/'src/netdaemon.cpp')}
+    rows=[*read_file(ROOT/'src/netdaemon.cpp'),*read_file(ROOT/'src/netdaemon_message_data.cpp')]
+    current={r.address:r for r in rows}
+    assert len(rows)==len(current)==len(old) and current.keys()==old.keys()
+    for address,record in old.items():
+        for field in fields(record):
+            if field.name=='path' and address==0x592EE0:
+                assert record.path==ROOT/'src/netdaemon.cpp'
+                assert current[address].path==ROOT/'src/netdaemon_message_data.cpp'
+                continue
+            if field.name not in {'line','region','origin'}:
+                assert getattr(current[address],field.name)==getattr(record,field.name),(address,field.name)
+        def lessons(row):
+            return [(x.kind,x.key,x.prose,tuple(line for _,line in x.lines)) for x in row.origin]
+        assert lessons(current[address])==lessons(record)
+    cmake=(ROOT/'CMakeLists.txt').read_text()
+    assert cmake.count('    src/netdaemon_message_data.cpp\n')==2
+    for section in cmake.split('set_source_files_properties(')[1:]:
+        section=section.split(')',1)[0]
+        if 'src/netdaemon_message_data.cpp' in section:
+            assert 'src/netdaemon.cpp' in section and 'COMPILE_OPTIONS "/Oy-"' in section
+
+
+@pytest.mark.parametrize('damage',['sender-return','sender-callback-order','sender-extra-code',
+    'sender-extra-identity','sender-orphan-symbol','record-field','record-extra-code',
+    'record-orphan-context','receiver-duplicate-sender'])
+def test_inverse_projection_rejects_changed_or_hidden_new_owner_inputs(damage):
+    sender=(ROOT/'src/netdaemon_message_data.cpp').read_text()
+    header=(ROOT/'src/netdaemon_message_record.h').read_text()
+    receiver=(ROOT/'src/netdaemon.cpp').read_text()
+    if damage=='sender-return': sender=sender.replace('return result;','return 0;',1)
+    elif damage=='sender-callback-order':
+        sender=sender.replace('message.timestamp_ = timeGetTime();','message.timestamp_ = 0;',1)
+    elif damage=='sender-extra-code': sender+='\nint unexpected_packet_storage;\n'
+    elif damage=='sender-extra-identity':
+        marker=next(s for s in sender.splitlines() if s.startswith('// ORIGINAL:'))
+        sender=marker+'\n'+sender
+    elif damage=='sender-orphan-symbol': sender='// symbol    _unexpected\n'+sender
+    elif damage=='record-field': header=header.replace('int payload_1C_;','int payload_1C_; int extra_;',1)
+    elif damage=='record-extra-code': header='int unexpected_packet_storage;\n'+header
+    elif damage=='record-orphan-context': header='// compile_context src/netdaemon.cpp\n'+header
+    elif damage=='receiver-duplicate-sender': receiver+='\nint __cdecl message_data() {}\n'
+    with pytest.raises(AssertionError):
+        historical_source(ROOT,receiver_text=receiver,sender_text=sender,header_text=header)
+
+
+def test_pinned_complete_caller_spans_retain_original_packet_builder_calls():
+    paths=[Path(os.environ['OPENSMACX_IMAGE'])] if os.environ.get('OPENSMACX_IMAGE') else [p/'.opensmacx/game/terranx_original.exe' for p in (ROOT,*ROOT.parents)]
+    path=next((p for p in paths if p.is_file()),None)
+    if path is None: pytest.skip('pinned proprietary image unavailable')
+    image=PeImage(path.read_bytes(),PIN)
+    rows={r.address:r for r in read_file(ROOT/'src/netdaemon.cpp')}
+    rows.update({r.address:r for r in read_file(ROOT/'src/netdaemon_message_data.cpp')})
+    for address in (*CALLERS,0x592EE0):
+        row=rows[address]
+        assert len(row.image_spans)==1
+        start,end=row.image_spans[0]
+        instructions=list(Cs(CS_ARCH_X86,CS_MODE_32).disasm(image.read(Span(start,end)),start))
+        cursor=start
+        for instruction in instructions:
+            assert instruction.address==cursor
+            cursor+=instruction.size
+        assert cursor==end and instructions[-1].mnemonic=='ret'
+        if address!=0x592EE0:
+            assert any(i.mnemonic=='call' and i.op_str=='0x592ee0' for i in instructions)
+        else:
+            assert len(instructions)==33
+            assert any(i.address==0x592F3D and i.mnemonic=='call' and i.op_str=='0x532940' for i in instructions)
+
+
+@pytest.fixture(scope='module')
+def native_packet_objects():
+    if os.environ.get('OPENSMACX_NATIVE_PACKET_BOUNDARY')!='1':
+        pytest.skip('requires explicitly leased native compiler epoch')
+    from match_recovery.compiler import Compiler
+    from match_recovery.measurement import Measurement
+    settings=Measurement.read(ROOT)
+    compiler=Compiler(ROOT,profile=settings.compiler_profile)
+    return {unit:[Coff(compiler(ROOT/unit,(),flags+settings.layout_flags))
+                  for flags in settings.flag_sets]
+            for unit in ('src/netdaemon.cpp','src/netdaemon_message_data.cpp')}
+
+
+def edges(obj,symbol,target):
+    code,relocations,_=obj.subject(obj.function(symbol))
+    found=[]
+    for relocation in relocations:
+        if obj.symbols[int(relocation.target)].name!=target: continue
+        assert relocation.kind==RelocationKind.RELATIVE32
+        assert relocation.offset>=1 and code[relocation.offset-1] in (0xE8,0xE9)
+        assert code[relocation.offset:relocation.offset+4]==b'\0\0\0\0'
+        found.append(relocation.offset)
+    return found
+
+
+def test_native_direct_packet_boundaries_and_real_sender_target(native_packet_objects):
+    receiver={r.address:r for r in read_file(ROOT/'src/netdaemon.cpp')}
+    sender,=read_file(ROOT/'src/netdaemon_message_data.cpp')
+    target=sender.symbol or sender.name
+    send=receiver[0x532940].symbol or receiver[0x532940].name
+    for obj in native_packet_objects['src/netdaemon.cpp']:
+        # synch's independently outlined source helper remains a separate
+        # physical boundary; it is not an invented second original identity.
+        for address in (*[a for a in CALLERS if a!=0x532E00],0x534400):
+            row=receiver[address]
+            assert edges(obj,row.symbol or row.name,target),hex(address)
+    for obj in native_packet_objects['src/netdaemon_message_data.cpp']:
+        assert len(edges(obj,target,send))==1

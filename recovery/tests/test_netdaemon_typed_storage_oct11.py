@@ -1,5 +1,6 @@
 """Native word geometry, typed transfer storage and shared dispatch tail."""
 from pathlib import Path
+from netdaemon_packet_source import historical_source
 import shutil
 import subprocess
 import os
@@ -56,7 +57,7 @@ def apply_typed_storage_migration(source,relative="src/netdaemon.cpp",reverse=Fa
 @pytest.mark.parametrize("relative",["src/netdaemon.cpp","src/netdaemon.h"])
 def test_only_reviewed_storage_changes_and_all_original_identities_survive(relative):
     before=subprocess.check_output(["git","show",BASE+":"+relative],cwd=ROOT,text=True)
-    current=(ROOT/relative).read_text()
+    current=historical_source(ROOT) if relative == "src/netdaemon.cpp" else (ROOT/relative).read_text()
     migrated=apply_typed_storage_migration(before,relative)
     if relative == "src/netdaemon.h":
         assert current == migrated
@@ -167,7 +168,7 @@ int main() {
 def test_actual_dispatch_uses_real_channel_members_and_full_pending_width(tmp_path,damage):
     compiler=shutil.which("g++") or shutil.which("clang++")
     if compiler is None: pytest.skip("host C++ compiler unavailable")
-    source=(ROOT/"src/netdaemon.cpp").read_text()
+    source=historical_source(ROOT)
     body="\n".join(extract(source,s) for s in (
         "static void netdaemon_process_message_marker_tail(",
         "static int netdaemon_read_unserialized_table_g_y(",
@@ -194,7 +195,7 @@ def test_actual_dispatch_uses_real_channel_members_and_full_pending_width(tmp_pa
 
 def test_no_remaining_literal_channel_prefix_overruns():
     import re
-    source=(ROOT/"src/netdaemon.cpp").read_text()
+    source=historical_source(ROOT)
     assert not re.search(r"channels_\[[^]]+\]\.leading_words_\[(?:[4-9]|\d\d+|6 \+ identity)\]",source)
 
 
@@ -348,7 +349,7 @@ int main() {
 
 @pytest.mark.parametrize("compiler", [c for c in ("g++", "clang++") if shutil.which(c)])
 def test_actual_table_g_native_routes_and_callback_captures(tmp_path, compiler):
-    source=(ROOT/"src/netdaemon.cpp").read_text()
+    source=historical_source(ROOT)
     body="\n".join(extract(source,s) for s in (
         "static void netdaemon_process_message_marker_tail(",
         "static int netdaemon_read_unserialized_table_g_y(",
@@ -652,7 +653,7 @@ int main() {
 
 @pytest.mark.parametrize("compiler", [c for c in ("g++", "clang++") if shutil.which(c)])
 def test_actual_table_h_routes_live_fields_grammar_and_in_owner_aliases(tmp_path,compiler):
-    source=(ROOT/"src/netdaemon.cpp").read_text();header=(ROOT/"src/faction.h").read_text()
+    source=historical_source(ROOT);header=(ROOT/"src/faction.h").read_text()
     record=extract(source,"struct MessageDataRecord {")+";"
     view=extract(source,"class MessageCommandView {")+";"
     declarations="\n".join(extract(header,"struct "+name+" {")+";" for name in ("SocialCategory","SocialEffect","Goal","Player","PlayerData"))
@@ -937,7 +938,7 @@ int main() {
 
 @pytest.mark.parametrize("compiler", [c for c in ("g++","clang++") if shutil.which(c)])
 def test_actual_high_routes_guards_callbacks_owners_and_common_tail(tmp_path,compiler):
-    source=(ROOT/"src/netdaemon.cpp").read_text()
+    source=historical_source(ROOT)
     faction=(ROOT/"src/faction.h").read_text();net=(ROOT/"src/netdaemon.h").read_text()
     declarations="\n".join(extract(faction,"struct "+name+" {")+";" for name in ("SocialCategory","SocialEffect","Goal","Player"))
     declarations+="\n"+extract(net,"struct PrimaryLockStateTail {")+";\n"+extract(net,"struct LockStateEntry {").replace("int *vehicle_selection_follow;","uint32_t vehicle_selection_follow;")+";\n"

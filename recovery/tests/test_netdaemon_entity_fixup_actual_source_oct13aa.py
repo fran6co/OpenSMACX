@@ -7,6 +7,7 @@ from dataclasses import fields
 import hashlib
 import os
 from pathlib import Path
+from netdaemon_packet_source import historical_source
 import shutil
 import subprocess
 
@@ -38,7 +39,7 @@ def test_current_netdaemon_annotations_are_continuous_with_immutable_fde3_base()
         ["git", "show", f"{task.base_revision}:src/netdaemon.cpp"],
         cwd=ROOT, text=True, timeout=30)
     before = {row.address: row for row in read_text(before_text, path)}
-    current = {row.address: row for row in read_text(path.read_text(), path)}
+    current = {row.address: row for row in read_text(historical_source(ROOT), path)}
     assert set(current) == set(before)
     for address, old in before.items():
         new = current[address]
@@ -49,7 +50,7 @@ def test_current_netdaemon_annotations_are_continuous_with_immutable_fde3_base()
 
 
 def test_actual_fixup_views_and_pinned_original_producers():
-    source = (ROOT / "src/netdaemon.cpp").read_text()
+    source = historical_source(ROOT)
     body = extract(source, "int NetDaemon::fixup_message(char * message)")
     for token in ("EntityCommandPrefixReader", "SyncHeaderPrefixReader",
                   "SyncVehiclePayloadView", "convert(", "store_entity_id",
@@ -326,7 +327,7 @@ int main() {
 
 
 def _actual_declarations():
-    net = (ROOT / "src/netdaemon.cpp").read_text()
+    net = historical_source(ROOT)
     veh_text = (ROOT / "src/veh.h").read_text()
     fragments = [
         extract(net, "struct EntityCommandPrefix {") + ";",
@@ -342,7 +343,7 @@ def _actual_declarations():
 
 
 def _fixture_source(damage="none"):
-    net = (ROOT / "src/netdaemon.cpp").read_text()
+    net = historical_source(ROOT)
     entity, veh = _actual_declarations()
     body = extract(net, "int NetDaemon::fixup_message(char * message)")
     if damage == "wrong-entity-offset":

@@ -1,5 +1,6 @@
 """Actual dispatch controls for pinned sequence ownership and five routes."""
 from pathlib import Path
+from netdaemon_packet_source import historical_source
 import os
 import shutil
 import subprocess
@@ -180,7 +181,7 @@ def apply_wire_migration(source):
 
 
 def product():
-    text = SOURCE.read_text()
+    text = historical_source(ROOT)
     record = extract(text, "struct MessageDataRecord {") + ";\n"
     view = extract(text, "class MessageCommandView {") + ";\n"
     return record + view + extract(text, "static void netdaemon_process_local_player_completion(") + "\n" + extract(
@@ -263,10 +264,10 @@ int main() {
 
 def test_identity_and_entry_header_ownership():
     old = subprocess.check_output(["git","show",BASE+":src/netdaemon.cpp"],cwd=ROOT,text=True)
-    before, after = read_text(old,SOURCE), read_file(SOURCE)
+    before, after = read_text(old,SOURCE), read_text(historical_source(ROOT),SOURCE)
     assert [(_continuity_fields(r),r.symbol,r.function_fragment) for r in before] == [
         (_continuity_fields(r),r.symbol,r.function_fragment) for r in after]
-    text = SOURCE.read_text()
+    text = historical_source(ROOT)
     body = extract(text,"void NetDaemon::process_message(")
     assert "const MessageCommandView entry_packet(msg);" in body
     assert "uint32_t entry_sequence = entry_packet.sequence();" in body

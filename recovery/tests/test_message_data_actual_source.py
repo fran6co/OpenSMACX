@@ -5,6 +5,7 @@ import subprocess
 import pytest
 from match_recovery.source import read_file
 from match_recovery.source.reader import _extract_forward_text
+from netdaemon_packet_source import sender_record_block, sender_block
 
 ROOT = Path(__file__).resolve().parents[2]
 FIXTURE = Path(__file__).with_name('message_data_owner_host.cpp')
@@ -13,12 +14,13 @@ FIXTURE = Path(__file__).with_name('message_data_owner_host.cpp')
 def product_bodies():
     path = ROOT/'src/netdaemon.cpp'
     rows = {r.address:r for r in read_file(path)}
+    sender = ROOT/'src/netdaemon_message_data.cpp'
+    sender_block(ROOT)  # Validate the entire new TU, not only its selected body.
+    rows.update({r.address:r for r in read_file(sender)})
     text = path.read_text()
-    start = text.index('struct MessageDataRecord {')
     # Only the sender-owned record/layout assertions belong in this fixture.
     # Receiver wire views are independently extracted by their own controls.
-    end = text.index('// Borrowed wire view',start)
-    record = text[start:end]
+    record = sender_record_block(ROOT)
     assert record.count('static_assert(') == 8
     lines = text.splitlines()
     send_line = next(n for n,line in enumerate(lines,1)
@@ -64,6 +66,8 @@ def test_actual_message_packet_routing_and_return(tmp_path,compiler_name,mutatio
 
 def test_original_identities_claim_and_forwarder_retirement():
     rows = {r.address:r for r in read_file(ROOT/'src/netdaemon.cpp')}
+    sender_block(ROOT)
+    rows.update({r.address:r for r in read_file(ROOT/'src/netdaemon_message_data.cpp')})
     message,send = rows[0x592EE0],rows[0x532940]
     assert message.name=='?message_data@@YAXHHHHHH@Z'
     assert message.image_spans==((0x592EE0,0x592F4C),)

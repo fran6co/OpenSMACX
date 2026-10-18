@@ -1,5 +1,6 @@
 """Bounded host controls for process_message's captured entry header."""
 from pathlib import Path
+from netdaemon_packet_source import historical_source
 import shutil
 import subprocess
 
@@ -121,7 +122,7 @@ def test_entry_header_metadata_and_source_order():
         text=True, timeout=30,
     )
     before = read_text(old, SOURCE)
-    after = read_file(SOURCE)
+    after = read_text(historical_source(ROOT), SOURCE)
     old_subject = next(row for row in before if row.address == 0x534400)
     current_subject = next(row for row in after if row.address == 0x534400)
     assert (_continuity_fields(old_subject), old_subject.symbol,
@@ -130,7 +131,7 @@ def test_entry_header_metadata_and_source_order():
         current_subject.function_fragment,
     )
 
-    source = SOURCE.read_text(encoding="utf-8")
+    source = historical_source(ROOT)
     body = extract(source, "void NetDaemon::process_message(")
     identity = body.index("this->AlphaNet::pid_2_who(")
     reads = body.index("const MessageCommandView entry_packet(msg);")
@@ -155,7 +156,7 @@ def test_actual_entry_prefix_and_callback_mutation(tmp_path, damage, diagnostic)
     compiler = shutil.which("g++") or shutil.which("clang++")
     if not compiler:
         pytest.skip("host C++ compiler unavailable")
-    source_text = SOURCE.read_text(encoding="utf-8")
+    source_text = historical_source(ROOT)
     types = actual_wire_types(source_text)
     prefix = entry_prefix(source_text)
     identity = identity_read(source_text)

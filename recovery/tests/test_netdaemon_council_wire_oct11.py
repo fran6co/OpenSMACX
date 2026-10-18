@@ -1,5 +1,6 @@
 """Pinned council-route logging and callback-visible packet reads."""
 from pathlib import Path
+from netdaemon_packet_source import historical_source
 import shutil
 import subprocess
 
@@ -21,7 +22,7 @@ def apply_council_wire_migration(source):
 
 
 def product():
-    text = SOURCE.read_text()
+    text = historical_source(ROOT)
     start = text.index("struct MessageDataRecord {")
     view_start = text.index("// Borrowed wire view over the layout already owned by message_data's sender.", start)
     layout = text[start:view_start]

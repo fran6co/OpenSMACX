@@ -1,5 +1,6 @@
 """Actual table-E receiver preserves packet reads across logger/lookup calls."""
 from pathlib import Path
+from netdaemon_packet_source import historical_source
 import shutil
 import subprocess
 
@@ -139,7 +140,7 @@ def test_actual_table_e_callback_read_order(tmp_path, damage):
     compiler = shutil.which("g++") or shutil.which("clang++")
     if not compiler:
         pytest.skip("host C++ compiler unavailable")
-    body = extract(SOURCE.read_text(), "static bool netdaemon_process_table_e(")
+    body = extract(historical_source(ROOT), "static bool netdaemon_process_table_e(")
     sequence = "        const int sequence = packet.sequence();"
     lookup = "        (void)daemon.AlphaNet::who_2_idx(player_index);"
     index = "        const int player_index = packet.player_index();"
@@ -164,7 +165,7 @@ def test_actual_table_e_callback_read_order(tmp_path, damage):
         body = body.replace(before, after, 1)
     source = tmp_path / "table.cpp"
     binary = tmp_path / "table"
-    source.write_text(PREAMBLE + current_wire_types(SOURCE.read_text()) + body + MAIN)
+    source.write_text(PREAMBLE + current_wire_types(historical_source(ROOT)) + body + MAIN)
     subprocess.run([compiler,"-std=c++11",str(source),"-o",str(binary)],
                    check=True,capture_output=True,timeout=60)
     result = subprocess.run([str(binary)],capture_output=True,timeout=10)
@@ -178,7 +179,7 @@ def test_historical_fixed_read_recipe_is_preserved_separately_from_current_sourc
     assert "who_2_idx(player_index)" in migrated_body
     assert "const int player_index = *reinterpret_cast<int *>(message + 0x10);" in migrated_body
     assert "daemon.locks_.add_lock(sender_identity," in migrated_body
-    current_body = extract(SOURCE.read_text(), "static bool netdaemon_process_table_e(")
+    current_body = extract(historical_source(ROOT), "static bool netdaemon_process_table_e(")
     assert "packet.player_index()" in current_body and "packet.sequence()" in current_body
     assert "packet.payload_18(), packet.payload_10()," in current_body
     with pytest.raises(AssertionError):

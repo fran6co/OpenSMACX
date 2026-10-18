@@ -6,6 +6,7 @@ fill_player path; they do not establish native ABI or full game-runtime proof.
 from dataclasses import fields
 import os
 from pathlib import Path
+from netdaemon_packet_source import historical_source
 import re
 import shutil
 import subprocess
@@ -430,7 +431,7 @@ def test_current_task_identities_history_and_source_recipe_are_bounded():
     assert task.base_revision == BASE
     for path in SOURCES:
         before_text = _git_source(path)
-        after_text = (ROOT / path).read_text(encoding="utf-8")
+        after_text = historical_source(ROOT) if path == "src/netdaemon.cpp" else (ROOT / path).read_text(encoding="utf-8")
         before = _source_rows(path, before_text)
         after = _source_rows(path, after_text)
         assert set(after) == set(before), path
@@ -448,7 +449,7 @@ def test_current_task_identities_history_and_source_recipe_are_bounded():
 
     header = (ROOT / "src/netwin.h").read_text(encoding="utf-8")
     source_cpp = (ROOT / "src/netwin.cpp").read_text(encoding="utf-8")
-    daemon = (ROOT / "src/netdaemon.cpp").read_text(encoding="utf-8")
+    daemon = historical_source(ROOT)
     lobby_handler = extract_definition(daemon, "static void netdaemon_handle_session_lobby(")
     selector_read = "const uint32_t sender = packet.selector();"
     opcode_read = "const unsigned short wire_type = packet.opcode();"

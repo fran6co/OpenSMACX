@@ -1,0 +1,19 @@
+{
+  "event_id": "a01b8729b4e482c404c6c66c4e393a8ac3aa7c3daebb7eb68bb8f183d6d82610",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "packet-boundary-outlined-closure",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/netdaemon_message_data.cpp owns the unchanged full sender operation and original592EE0mapping. src/netdaemon_message_record.h owns the exact sender record/rationale/eight assertions; src/netdaemon.cpp consumes it and retains every receiver helper, class/global/lifetime definition and original quirk. The owner arrangement acts on the genuine shared independent call boundary without fake classes, offsets, wrappers, pragmas, new flags or claim demotion.",
+      "The task already includes process_message and synch plus their complete source owner. Do not invent original addresses for outlined support helpers or silently omit them. The ten native changed helper roots and46 duplicate header families are explicitly reviewed source consequences, not automatically accepted/projection-waived code. Raw receiver residual, added-unit presence and transported-family FAILS remain in the verification record; this incorporates the source discovery, not those unmet proof obligations.",
+      "Coordinator-reviewed manual integration may proceed only with the fresh compile/link, bounded native/host tests, exact source/identity continuity and outside-object review, retaining all historical matching obligations and nine independently reproduced preexisting host failures. It is not a green full gate, native automatic acceptance, complete linked preservation, runtime or game acceptance. Fresh destination verification remains mandatory."
+    ]
+  },
+  "previous_event": "b6d823701617dc46d7f3c419da11f36a1bb145e4886038c8e856590264c4ca33",
+  "request_id": "incorporate-source-owned-packet-boundary",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:netdaemon-packet-boundary-oct18"
+}
