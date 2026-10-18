@@ -5072,14 +5072,6 @@ void Win::nonscreen_to_client(RECT * rect) {
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005ED240
 
-// ORIGINAL: 0x005ED3F0 ?nonclient_to_screen@Win@@QAEXPAH0@Z 0x005ED3F0-0x005ED48D FILE BYTE_EXACT
-// working copy - scaffold materialised by --work
-// size      157 bytes
-// prototype void (__thiscall ?nonclient_to_screen@Win@@QAEXPAH0@Z)(Win* this, int*, int*)
-// callers   1   call targets   1
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x005ED240
 void Win::nonclient_to_screen(RECT * rect) {
     if (rect == 0) {
         return;
@@ -9493,16 +9485,16 @@ void Win::client_to_nonclient(int * points, int * count) {
 
 // ===== homed from src/unrecovered/005ed3f0.cpp =====
 
+// ORIGINAL: 0x005ED3F0 ?nonclient_to_screen@Win@@QAEXPAH0@Z 0x005ED3F0-0x005ED48D FILE BYTE_EXACT
+// working copy - scaffold materialised by --work
+// size      157 bytes
+// prototype void (__thiscall ?nonclient_to_screen@Win@@QAEXPAH0@Z)(Win* this, int*, int*)
+// callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005ED240
 void Win::nonclient_to_screen(int * x, int * y) {
-    *x = *x + outer_rect_.left + client_rect_.left;
-    *y = *y + outer_rect_.top + client_rect_.top;
-    if ((iFlags_ & WinFlagClipToParent) != 0 && win_parent_ != 0) {
-        win_parent_->client_to_screen(x, y);
-        if ((iFlags_ & 0x8000) != 0) {
-            *x = *x - win_parent_->outer_rect_.left;
-            *y = *y - win_parent_->outer_rect_.top;
-        }
-    }
+    client_to_screen(x, y);
     *x = *x - outer_rect_.left;
     *y = *y - outer_rect_.top;
 }

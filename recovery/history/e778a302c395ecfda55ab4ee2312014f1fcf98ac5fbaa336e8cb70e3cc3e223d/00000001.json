@@ -1,0 +1,22 @@
+{
+  "event_id": "b188caee88199fb8546006ed8a59252317d23b618c7f15021fb1cd2d9c7fc4e8",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_application_link_recovery.py",
+      "recovery/tests/test_buffer_dotted_box_contract_oct15.py"
+    ],
+    "evidence": [
+      "Actual old Buffer contract suite has2 failures because it counts duplicated line calls in the RECT body; its complete actual-source runtime and mutation controls already compile both overloads together. Adapt only provider-shape assertion to the typed delegation, retaining all return/drawing/line-order/geometry and mutation checks.",
+      "Existing application link-closure control requires all3 Win operations directly in GraphicWin RECT update under both settled profiles. Preserve all3 required operations, accepting either direct inlining or one explicit typed coordinate-update edge whose real compiled definition supplies all3; no arbitrary graph search, missing edge, address forwarder or runtime waiver. Add edge-loss controls and run this actual native test against current compiler output.",
+      "This test-only expansion retains the original task baseline, source subjects, claims and acceptance criteria; no new C++ edits or weakened preservation gate."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "authorize-existing-overload-contract-controls",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:rectangle-overload-cohort-oct18"
+}

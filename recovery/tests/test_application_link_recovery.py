@@ -495,14 +495,77 @@ def test_menu_candidates_use_typed_source_definitions(compiled):
         assert layout["member_type_kinds"]["event_window_"] == "pointer"
 
 
+RECTANGLE_UPDATE_OPERATIONS = (
+    "?update_window@Win@@QAEHPAUtagRECT@@@Z",
+    "?client_to_screen@Win@@QAEXPAUtagRECT@@@Z",
+    "?flip@Win@@SAXPAUtagRECT@@@Z",
+)
+
+
+def _assert_rectangle_update_operation_closure(obj, update, coordinate):
+    # Accept the original expanded operations, or one actual call to the
+    # specifically mapped coordinate overload5D55D0 whose compiled body has
+    # all three calls. Mere helper presence and arbitrary graph walks cannot
+    # establish this bounded closure.
+    targets = call_targets(obj, update)
+    expected = set(RECTANGLE_UPDATE_OPERATIONS)
+    if expected <= set(targets):
+        return
+    assert coordinate in targets, ("rectangle update lost its direct operations and coordinate edge", targets)
+    coordinate_targets = call_targets(obj, coordinate)
+    assert expected <= set(coordinate_targets), ("coordinate update lost required operation", coordinate_targets)
+
+
 def test_rectangle_update_keeps_all_three_operations(compiled):
     update = symbol_at("src/graphicwin.cpp", 0x5D5630)
-    expected = ("?update_window@Win@@QAEHPAUtagRECT@@@Z",
-                "?client_to_screen@Win@@QAEXPAUtagRECT@@@Z",
-                "?flip@Win@@SAXPAUtagRECT@@@Z")
+    coordinate = symbol_at("src/graphicwin.cpp", 0x5D55D0)
     for obj in compiled["src/graphicwin.cpp"]:
-        targets = references(obj, update)
-        assert all(target in targets for target in expected), targets
+        _assert_rectangle_update_operation_closure(obj, update, coordinate)
+
+
+@pytest.mark.parametrize("delegated", [False, True])
+def test_rectangle_update_closure_allows_only_direct_or_named_one_step_path(monkeypatch, delegated):
+    rectangle, coordinate = "rectangle5D5630", "coordinate5D55D0"
+    calls = {rectangle: [coordinate] if delegated else list(RECTANGLE_UPDATE_OPERATIONS),
+             coordinate: list(RECTANGLE_UPDATE_OPERATIONS)}
+    observed = []
+    def current_calls(obj, symbol):
+        observed.append(symbol)
+        return calls[symbol]
+    monkeypatch.setattr(sys.modules[__name__], "call_targets", current_calls)
+    _assert_rectangle_update_operation_closure(object(), rectangle, coordinate)
+    assert observed == ([rectangle, coordinate] if delegated else [rectangle])
+
+
+@pytest.mark.parametrize("missing", RECTANGLE_UPDATE_OPERATIONS)
+@pytest.mark.parametrize("path", ["direct", "coordinate"])
+def test_rectangle_update_closure_rejects_each_operation_edge_loss(monkeypatch, missing, path):
+    rectangle, coordinate = "rectangle5D5630", "coordinate5D55D0"
+    complete = list(RECTANGLE_UPDATE_OPERATIONS)
+    damaged = [operation for operation in complete if operation != missing]
+    calls = {rectangle: damaged if path == "direct" else [coordinate],
+             coordinate: complete if path == "direct" else damaged}
+    monkeypatch.setattr(sys.modules[__name__], "call_targets", lambda obj, symbol: calls[symbol])
+    # In the direct case a complete helper still exists but has no caller
+    # edge. In the delegated case the caller edge exists but its body is bad.
+    with pytest.raises(AssertionError):
+        _assert_rectangle_update_operation_closure(object(), rectangle, coordinate)
+
+
+@pytest.mark.parametrize("unrelated_helper", [False, True])
+def test_rectangle_update_closure_rejects_missing_known_coordinate_edge(monkeypatch, unrelated_helper):
+    rectangle, coordinate, other = "rectangle5D5630", "coordinate5D55D0", "unrelated-helper"
+    calls = {rectangle: [other] if unrelated_helper else [],
+             coordinate: list(RECTANGLE_UPDATE_OPERATIONS),
+             other: list(RECTANGLE_UPDATE_OPERATIONS)}
+    observed = []
+    def current_calls(obj, symbol):
+        observed.append(symbol)
+        return calls[symbol]
+    monkeypatch.setattr(sys.modules[__name__], "call_targets", current_calls)
+    with pytest.raises(AssertionError):
+        _assert_rectangle_update_operation_closure(object(), rectangle, coordinate)
+    assert observed == [rectangle]
 
 
 def test_survey_loads_the_real_tutorial_receiver_directly(compiled):

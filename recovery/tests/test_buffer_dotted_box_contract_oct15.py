@@ -68,7 +68,10 @@ def actual_source():
 
     rect = function_body(source, RECT_SIGNATURE)
     assert "return 0x10;" in rect and "return 0;" in rect
-    assert rect.count("dotted_hline(") == 2 and rect.count("dotted_vline(") == 2
+    assert tuple(line.strip() for line in rect.splitlines()
+                 if line.strip().startswith("dotted_box(")) == (
+                     "dotted_box(left, top, right, bottom, a2);",)
+    assert "dotted_hline(" not in rect and "dotted_vline(" not in rect
     return coord, rect
 
 

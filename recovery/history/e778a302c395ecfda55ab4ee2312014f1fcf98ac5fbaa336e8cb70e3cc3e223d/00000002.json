@@ -1,0 +1,22 @@
+{
+  "event_id": "a5c8a5f63bdbe6c27cbebd3e0289d9be525e8b9a6a4f9fbd156eaf6c6c188085",
+  "payload": {
+    "affects": [
+      "entity-73a6b5bde5e247f9a7b80531491b959eb59f11709d920d33344a9b4ed114c80a"
+    ],
+    "author": "coordinator",
+    "discovery_id": "tracking-inlines-point-conversion",
+    "evidence": [
+      "Fresh whole-application physical residual is179pass/1fail: only Win object differs beyond3selected subjects. do_tracking text/FPO changes; window_proc and OnMouseMove preserve call names and relocation offsets but refer to that changed section identity.",
+      "src/win.cpp Win::do_tracking5F7580..5F7E47 calls nonclient_to_screen(&origX,&origY) in its nonclient before-rectangle branch; the original point body has now been replaced by the already-reviewed real point client helper plus late own-origin subtraction.",
+      "No caller source edit or match loss is proposed. Require fresh exact recipe direct/unchanged-replica controls and an old-point-body-only overlay that restores the entire previous Win object residual with zero function omissions before permitting this bounded compiled footprint."
+    ],
+    "hypothesis": "The existing Win::do_tracking caller inlines the selected point conversion, so its compiled body changes with the genuine helper boundary even though its source is untouched.",
+    "kind": "discovery"
+  },
+  "previous_event": "b188caee88199fb8546006ed8a59252317d23b618c7f15021fb1cd2d9c7fc4e8",
+  "request_id": "tracking-inlines-point-conversion",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:rectangle-overload-cohort-oct18"
+}

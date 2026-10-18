@@ -4927,10 +4927,7 @@ int Buffer::dotted_box(RECT * a1, int a2) {
     int left = a1->left;
     --bottom;
     --right;
-    dotted_hline(left + 1, right, top, a2);
-    dotted_hline(left, right - 1, bottom, a2);
-    dotted_vline(left, top, bottom - 1, a2);
-    dotted_vline(right, top + 1, bottom, a2);
+    dotted_box(left, top, right, bottom, a2);
     return 0;
 }
 

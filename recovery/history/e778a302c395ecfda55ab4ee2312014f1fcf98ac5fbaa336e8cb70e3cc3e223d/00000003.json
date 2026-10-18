@@ -1,0 +1,24 @@
+{
+  "event_id": "8a5477f411eb6613c9c1d77a665da91e4490d50b420e22836a7134dd89bc1c5a",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Authorize only existing mapped Win::do_tracking5F7580 as the observed compiled inline footprint. Preserve its source, original spans/history, all other Win bodies/callers/data, task baseline and checks.",
+      "This is scope authorization, not a residual waiver or acceptance. Keep the original179/1counterexample; only a successful controlled full-object counterfactual and explicit residual comparison may support manual review."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6256000,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "a5c8a5f63bdbe6c27cbebd3e0289d9be525e8b9a6a4f9fbd156eaf6c6c188085",
+  "request_id": "authorize-tracking-inline-footprint",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:rectangle-overload-cohort-oct18"
+}

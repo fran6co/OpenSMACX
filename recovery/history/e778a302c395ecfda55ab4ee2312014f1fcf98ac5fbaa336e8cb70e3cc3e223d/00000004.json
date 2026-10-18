@@ -1,0 +1,19 @@
+{
+  "event_id": "fbc65d5501ea5510d0b52e24be761f052f684e205c5a229463ffa19fe07d54ed",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "tracking-inlines-point-conversion",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/win.cpp point5ED3F0 now invokes real client_to_screen on the original pointers, followed by fresh own-origin subtraction. The unchanged do_tracking5F7580 call uses initialized distinct local origX/origY and applies that origin to its before rectangle. Independent source review found no caller semantic blocker for defined representable arithmetic.",
+      "The coordinator explicitly owns the one compiled inline caller footprint. Fresh direct actual-Release equivalence and unchanged-replica controls pass with zero omissions; restoring only the prior point body restores the entire prior Win object with zero omissions, and both selected point and caller signatures change as witnesses. All180actual objects agree outside the3editedbodies+thiscontrolledcaller.",
+      "All5646source mappings and3422historicalclaims retain identities/spans/history. The fresh known5581function census gains only point5ED3F0 masked and strict-reference agreement; do_tracking remains mismatched and its original fidelity is not declared recovered. The explicit footprint is not whole linked preservation, full runtime or automatic acceptance."
+    ]
+  },
+  "previous_event": "8a5477f411eb6613c9c1d77a665da91e4490d50b420e22836a7134dd89bc1c5a",
+  "request_id": "reviewed-tracking-inline-attribution",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:rectangle-overload-cohort-oct18"
+}
