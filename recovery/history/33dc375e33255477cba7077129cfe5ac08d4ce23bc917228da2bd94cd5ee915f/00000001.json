@@ -1,0 +1,20 @@
+{
+  "event_id": "d473c5a1f698f4c67be833a6130ba3df431ba93d31f8ffaec949a553b864e884",
+  "payload": {
+    "affects": [
+      "entity-0f1ee6468626c0c80978e7a4042616220b73a83e8928392c6cf9302eb1379675"
+    ],
+    "author": "coordinator",
+    "discovery_id": "precise-tutorial-sign-subtraction-oct18",
+    "evidence": [
+      "Pinned4BE2B8 CDQ,4BE2B9 SUB EAX,EDX and4BE2D6 SAR ECX,1; pinned4BE355 CDQ,4BE356 SUB EAX,EDX and4BE358 SAR EAX,1. CDQ produces negativeone for a negative width. Independent fullmethod review confirms both sign corrections and all four branch directions."
+    ],
+    "hypothesis": "Clarify the initial evidence shorthand bias7 to1: the actual original expression is width - (width < 0 ? -1 : 0), not width minus positive1. This applies to horizontal screen half-width and left layout half-width.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "precise-tutorial-sign-subtraction-oct18",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:tutorial-window-branches-oct18"
+}

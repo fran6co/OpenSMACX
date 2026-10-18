@@ -1,0 +1,26 @@
+{
+  "author": "coordinator",
+  "base_revision": "cb2fec9092e969a2cacbfe073da7d37f20a92fe2",
+  "editable_files": [
+    "src/tutwin.cpp",
+    "recovery/tests/test_tutorial_window_branches_oct18.py"
+  ],
+  "evidence": [
+    "Pinned original4BDFE0..4BE643 uses cmp field53AC,-1 then jge to skip base_draw in both picture passes (4BE21E..25D and4BE54C..587). Source >=-1 is reversed: change both to <-1, retaining preceding >=0 vehicle arm and subsequent terrain arm. This preserves no-picture -1 sentinel instead of installing base callback.",
+    "Original4BE309..33B compares inputy to vertical threshold: jg selects y/8 arm, fallthrough selects screenHeight-layoutHeight-8. Original4BE341..38C compares inputx to horizontal threshold: jg selects right side, fallthrough selects left x5. Reverse both incorrect source condition directions including equality. Original signed halving subtracts signword -1 at4BE2B5..2D6 and4BE34E..35A: correct source horizontal width negative bias7 to1 and left layoutwidth add-sign to subtract-sign. No clamp, bounds check, initialization or safety behavior changes.",
+    "Fresh paired original/cb2fec909 debugger observation run51u8f6vn reaches same LANDFALL path, selfowner, sameCE string colors and sizing490x211; original second exec usesloc5,549 while current uses529,39. Inputs differ (original528,306/current576,314) but both lie on same sides of original thresholds640,480. Candidate installs base_draw for -1; original callback null. Random maps are not synchronized and screenshots alone do not isolate rendering.",
+    "Authorize only these confirmed branch/sign expression corrections and bounded actual-source regression/pinned instruction tests in the listed paths. Preserve every original mapping/span/historical claim, actual Sprite lifetime, all parser/providers/defaults and unknown structure. Independent fullmethod review can return discoveries for explicit scope expansion; do not silently fix unrelated formulas or helpers.",
+    "Require actualsource host positive and compile-successful negative controls, native target measurement preserving EH refusal, fresh application compile/link, actual outsidebody COFF/associateddata preservation, identity/claim/reference continuity, independent review and integrated recheck. Keep reviewed manual integration distinct from native automatic/full linkedselection/game acceptance. Runtime original/candidate probes are bounded observations and do not prove playability."
+  ],
+  "intent": "Restore the original tutorial picture-sentinel and placement branch directions in the real TutWin owner, preserving two-pass setup and original quirks.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4972512,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "tutorial-window-branches-oct18"
+}

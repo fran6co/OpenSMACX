@@ -387,7 +387,7 @@ int TutWin::tut_win(GraphicWin *owner, const char *text, int x, int y,
         set_caller_picture(picture_enabled() ? 0 : &g_VEH_SPRITES[0]);
         dialogs().SpriteBox::sprite(&g_VEH_SPRITES[0], 0, 0);
         set_redraw_callback(tut_veh_draw);
-    } else if (field_53AC_ >= -1) {
+    } else if (field_53AC_ < -1) {
         set_caller_picture(picture_enabled() ? 0 : &g_VEH_SPRITES[0]);
         dialogs().SpriteBox::sprite(&g_VEH_SPRITES[0], 0, 0);
         set_redraw_callback(TutWin::base_draw);
@@ -402,7 +402,7 @@ int TutWin::tut_win(GraphicWin *owner, const char *text, int x, int y,
     vertical_anchor = (screen_height * 5 +
                        (screen_height * 5 < 0 ? 7 : 0)) >> 3;
     horizontal_anchor = (screen_width -
-                         (screen_width < 0 ? 7 : 0)) >> 1;
+                         (screen_width < 0 ? -1 : 0)) >> 1;
     height_eighth = (screen_height + (screen_height < 0 ? 7 : 0)) >> 3;
     width_eighth = (screen_width + (screen_width < 0 ? 7 : 0)) >> 3;
     if (mode < 2 || mode == 2 || mode == 5) {
@@ -415,7 +415,7 @@ int TutWin::tut_win(GraphicWin *owner, const char *text, int x, int y,
         vertical_anchor -= height_eighth;
     }
 
-    if (y > vertical_anchor) {
+    if (y <= vertical_anchor) {
         placement_y = screen_height - static_cast<int>(layout_height()) - 8;
         y = placement_y;
         field_5390_ = placement_y;
@@ -426,8 +426,8 @@ int TutWin::tut_win(GraphicWin *owner, const char *text, int x, int y,
         field_5390_ = placement_y + layout_height();
     }
 
-    if (x > horizontal_anchor) {
-        placement_x = (static_cast<int>(layout_width()) +
+    if (x <= horizontal_anchor) {
+        placement_x = (static_cast<int>(layout_width()) -
                        (static_cast<int>(layout_width()) < 0 ? -1 : 0)) >> 1;
         field_538C_ = placement_x + 5;
         x = 5;
@@ -475,7 +475,7 @@ int TutWin::tut_win(GraphicWin *owner, const char *text, int x, int y,
         dialogs().SpriteBox::sprite(&local_sprite, 0,
                                    static_cast<int>(field_53AC_));
         set_redraw_callback(tut_veh_draw);
-    } else if (field_53AC_ >= -1) {
+    } else if (field_53AC_ < -1) {
         set_caller_picture(picture_enabled() ? 0 : &local_sprite);
         dialogs().SpriteBox::sprite(&local_sprite, 0,
                                    static_cast<int>(field_53AC_));

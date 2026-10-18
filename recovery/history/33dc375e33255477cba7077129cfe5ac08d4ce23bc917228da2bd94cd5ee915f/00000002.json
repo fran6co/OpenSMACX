@@ -1,0 +1,18 @@
+{
+  "event_id": "95c1dacbcd72635f6312f5003b42b3a8ba4eb91f780af9ecf2fd6e2ae8574a43",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "precise-tutorial-sign-subtraction-oct18",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/tutwin.cpp uses screen_width - (screen_width < 0 ? -1 : 0) and layout_width - (layout_width < 0 ? -1 : 0). The original comparisons select bottom for y<=threshold and left for x<=threshold; both picture ladders select base_draw only below negativeone.",
+      "Actualsource C++98 controls include negative odd widths and independent compile-successful old-expression mutants under g++ and clang++; pinned instruction tests distinguish sign from7 or positive1. Source identities/spans/historical claims remain intact. This is incorporation of original behavior, not new byte exactness or automatic/runtime acceptance."
+    ]
+  },
+  "previous_event": "d473c5a1f698f4c67be833a6130ba3df431ba93d31f8ffaec949a553b864e884",
+  "request_id": "incorporated-precise-tutorial-sign-subtraction-oct18",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:tutorial-window-branches-oct18"
+}
