@@ -73,10 +73,11 @@ Video::~Video() {
   // thunk is not this outer object's deletion path.
 }
 
-// Historical FILE coverage spans multiple entries through 0x637310; it is
-// retained as whole-owner provenance, not the extent of this close body.
-// The native close return ends at 0x636732. No original span is narrowed here.
-// ORIGINAL: 0x006365B0 Video_unk1 0x006365B0-0x00637310 FILE
+// The former FILE interval through 0x637310 was owner-run provenance.
+// Entry-rooted control flow bounds close at 0x636732; later entries, switch
+// data and padding are accounted separately without changing their identities.
+// ORIGINAL: 0x006365B0 Video_unk1 0x006365B0-0x00636732 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned entry-rooted PE flow has103 reachable instructions ending at RET636731, exclusive636732; IDA and Ghidra agree independently. The next reset begins636740 after14NOPs.", "Historical2f1f617d:src/video.cpp assigned6365B0..637310 as an owner run. Later reset/register/load/process/play/stop/seek/rewind identities remain separate, and UNBOUND637190 retains its original identity/span/claim without implementation.", "The removed region also contains independently recognized padding and load636960 switch-target data636F9C..636FB4 referenced at6369D0; preserve that explicit source association, not close code. No C++ bodies, layout, flags or claims change."], "reason": "Bind Video::close to its complete reachable original cleanup body rather than the former multi-entry owner interval."}
 // symbol    ?close@Video@@QAEXXZ
 void Video::close() {
   int registry_index = 0;
@@ -743,6 +744,7 @@ void Video::reset() {
   output_buffer_.close();
 }
 
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00636960 0x00636F9C 0x00636FB4 0x006369D0
 // ORIGINAL: 0x00636960 Video_unk5 0x00636960-0x00636F99 FILE
 // symbol    ?load@Video@@QAEHPADH@Z
 // TRIED: __stdcall(int,int) free function - ecx is read as `this` and passed straight into Video::advance_frame(), so recast as a __thiscall Video member; the 6-entry `jmp [eax*4+0x636f9c]` table is data (not disassembled), so its case targets are unknown and every in-range reason falls through to the shared setup path instead of the (unrecoverable-without-the-bytes) per-case returns; field offsets and DirectDraw/AVI enumeration call order transcribed directly from the disasm.

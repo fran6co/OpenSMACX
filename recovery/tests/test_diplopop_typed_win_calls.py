@@ -1,6 +1,7 @@
 """Installed-source typed-owner controls; host models do not prove native ABI."""
 from __future__ import annotations
 
+import os
 from pathlib import Path
 import shutil
 import subprocess
@@ -17,7 +18,7 @@ from match_recovery.source.asm import Listing
 ROOT = next(parent for parent in Path(__file__).resolve().parents
             if (parent / "src/IMAGE_PIN").is_file())
 SOURCE = ROOT / "src/diplopop.cpp"
-IMAGE = ROOT / ".opensmacx/game/terranx_original.exe"
+IMAGE = Path(os.environ.get("OPENSMACX_IMAGE", ROOT / ".opensmacx/game/terranx_original.exe"))
 
 
 
@@ -42,10 +43,11 @@ def test_pinned_calls_and_actual_source_candidate() -> None:
     assert records[0x0043F170].byte_exact
     assert records[0x004406D0].image_spans == ((0x004406D0, 0x004406EC),)
     assert records[0x004406D0].byte_exact
-    # This historical FILE span includes padding and the next prologue; do not
-    # silently turn its current FILE state into a byte-exact claim.
-    assert records[0x004406F0].image_spans == ((0x004406F0, 0x00440707),)
+    # release_modal is a five-byte tail jump.  The following NOP fill and
+    # DiploPop::init prologue are separate bytes/entry, not part of this body.
+    assert records[0x004406F0].image_spans == ((0x004406F0, 0x004406F5),)
     assert not records[0x004406F0].byte_exact
+    assert records[0x00440700].image_spans[0] == (0x00440700, 0x00440D4B)
 
     owner = (ROOT / "src/diplopop.h").read_text()
     graphic = (ROOT / "src/graphicwin.h").read_text()
@@ -64,7 +66,7 @@ def test_pinned_calls_and_actual_source_candidate() -> None:
     pinned = {
         0x0043F170: Listing(pe.read(Span(0x0043F170, 0x0043F185)), 0x0043F170),
         0x004406D0: Listing(pe.read(Span(0x004406D0, 0x004406EC)), 0x004406D0),
-        0x004406F0: Listing(pe.read(Span(0x004406F0, 0x00440707)), 0x004406F0),
+        0x004406F0: Listing(pe.read(Span(0x004406F0, 0x004406F5)), 0x004406F0),
     }
     by_address = {address: {instruction.address: instruction
                             for instruction in listing.instructions}
@@ -82,11 +84,17 @@ def test_pinned_calls_and_actual_source_candidate() -> None:
     assert modal[0x004406E9].mnemonic == "ret" and bytes(modal[0x004406E9].bytes) == b"\xc2\x0c\x00"
     release = by_address[0x004406F0]
     assert release[0x004406F0].mnemonic == "jmp" and release[0x004406F0].op_str == "0x5ee280"
+    # Keep the historical overhang useful as a diagnostic without decoding it
+    # as release_modal: 11 NOP fill bytes lead to the independently mapped init.
+    assert pe.read(Span(0x004406F5, 0x00440700)) == b"\x90" * 11
+    init = Listing(pe.read(Span(0x00440700, 0x00440707)), 0x00440700)
+    assert [(op.mnemonic, op.op_str) for op in init.instructions[:2]] == [
+        ("push", "ebp"), ("mov", "ebp, esp")]
 
     candidate = source
     assert "0x0043F170 ?hide@DiploPop@@QAEXXZ 0x0043F170-0x0043F185 BYTE_EXACT" in candidate
     assert "0x004406D0 ?set_modal@DiploPop@@QAEHHP6AHXZPAUWin@@@Z 0x004406D0-0x004406EC FILE BYTE_EXACT" in candidate
-    assert "0x004406F0 ?release_modal@DiploPop@@QAEXXZ 0x004406F0-0x00440707 FILE" in candidate
+    assert "0x004406F0 ?release_modal@DiploPop@@QAEXXZ 0x004406F0-0x004406F5 FILE" in candidate
     hide_body = extract_definition(candidate, "void DiploPop::hide()")
     modal_body = extract_definition(candidate, "int DiploPop::set_modal(")
     release_body = extract_definition(candidate, "void DiploPop::release_modal()")

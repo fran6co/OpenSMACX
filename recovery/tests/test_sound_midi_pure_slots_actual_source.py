@@ -138,7 +138,7 @@ def test_pinned_sound_midi_ambience_and_wave_slot_targets_without_native_tools()
 
 
 def test_pinned_play_type_null_path_returns_before_the_adjacent_initializer():
-    """Decode from the real entry, not from its overlapping historical end.
+    """Bound Midi's epilogue before padding and the next mapped entry.
 
     This proves the original control-flow/register observation only. A missing
     C++ return does not prove that VC6 preserves the incoming EAX value.
@@ -153,7 +153,7 @@ def test_pinned_play_type_null_path_returns_before_the_adjacent_initializer():
     image = PeImage(raw, PIN)
     decoder = Cs(CS_ARCH_X86, CS_MODE_32)
     decoder.detail = True
-    ops = list(decoder.disasm(image.read(Span(0x4C8050, 0x4C8072)),
+    ops = list(decoder.disasm(image.read(Span(0x4C8050, 0x4C806A)),
                              0x4C8050))
     by_address = {op.address: op for op in ops}
     assert [(by_address[address].mnemonic, by_address[address].op_str)
@@ -169,18 +169,28 @@ def test_pinned_play_type_null_path_returns_before_the_adjacent_initializer():
         _, written = by_address[address].regs_access()
         assert "eax" not in [decoder.reg_name(reg) for reg in written]
     assert by_address[0x4C8067].address + by_address[0x4C8067].size == 0x4C806A
-    assert all(by_address[address].mnemonic == "nop"
-               for address in range(0x4C806A, 0x4C8070))
-    assert (by_address[0x4C8070].mnemonic,
-            by_address[0x4C8070].op_str) == ("mov", "eax, ecx")
     assert by_address[0x4C8060].mnemonic == "call"
     assert by_address[0x4C8060].op_str == "dword ptr [eax + 0x11c]"
+    # Decode the gap and neighbor independently.  The six NOPs are padding;
+    # initialize begins at its own mapped entry and retains its full extent.
+    neighbor_ops = list(decoder.disasm(image.read(Span(0x4C806A, 0x4C8089)),
+                                       0x4C806A))
+    neighbor = {op.address: op for op in neighbor_ops}
+    assert all(neighbor[address].mnemonic == "nop"
+               for address in range(0x4C806A, 0x4C8070))
+    assert (neighbor[0x4C8070].mnemonic,
+            neighbor[0x4C8070].op_str) == ("mov", "eax, ecx")
+    assert neighbor[0x4C8088].mnemonic == "ret"
+    assert neighbor[0x4C8088].address + neighbor[0x4C8088].size == 0x4C8089
     midi = next(row for row in read_file(ROOT / "src/midi.cpp")
                 if row.address == 0x4C8050)
     adjacent = next(row for row in read_file(ROOT / "src/word_state.cpp")
                     if row.address == 0x4C8070)
-    assert midi.image_spans == ((0x4C8050, 0x4C8072),)
+    assert midi.image_spans == ((0x4C8050, 0x4C806A),)
     assert adjacent.image_spans == ((0x4C8070, 0x4C8089),)
+    assert adjacent.byte_exact
+    assert adjacent.symbol == "?initialize@PrefixFlagState@@QAEPAU1@XZ"
+    assert midi.image_spans[0][1] <= adjacent.image_spans[0][0]
 
 
 def test_product_contract_is_pure_on_sound_and_concrete_on_midi():

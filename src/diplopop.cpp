@@ -843,8 +843,10 @@ int DiploPop::set_modal(int flag, int (__cdecl *poll)(), Win *owner) {
 }
 
 /*
-// ORIGINAL: 0x004406F0 ?release_modal@DiploPop@@QAEXXZ 0x004406F0-0x00440707 FILE
+// ORIGINAL: 0x004406F0 ?release_modal@DiploPop@@QAEXXZ 0x004406F0-0x004406F5 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned4406F0 jumps unconditionally to the mapped Win::release_modal5EE280; eleven NOPs follow at4406F5..440700, then independently mapped DiploPop::init starts440700.", "Independent IDA extent and entry-rooted PE decoding agree on4406F0..4406F5. Historical2f1f617d:src/diplopop.cpp covered through440707 and swallowed seven initializer bytes; that erroneous extent remains Git provenance, not this function code. No claim or C++ body changed."], "reason": "Bind the release_modal tail entry to its complete original five-byte jump, excluding alignment and the separate initializer."}
 // symbol    ?release_modal@DiploPop@@UAEXXZ
+// Historical seed trials below predate the reviewed extent correction.
 // TRIED: every spelling of a non-virtual override. The image's release_modal
 //        is `QAEXX`, this tree emits `UAEXX` because win.h declares
 //        `Win::release_modal` virtual at slot 58. Same wall as BaseWin::hide.

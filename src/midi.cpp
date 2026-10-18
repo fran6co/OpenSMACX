@@ -1085,7 +1085,8 @@ bool Midi::is_trackset_playing(unsigned int trackset) {
     return false;
 }
 
-// ORIGINAL: 0x004C8050 ?set_play_type@Midi@@QAEHI@Z 0x004C8050-0x004C8072
+// ORIGINAL: 0x004C8050 ?set_play_type@Midi@@QAEHI@Z 0x004C8050-0x004C806A
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned4C8058 null guard reaches POP EBP/RET4 at4C8066/67; the nonnull virtual call rejoins that epilogue. Eleven reachable instructions end4C806A, then six NOPs and independently mapped initialize4C8070.", "IDA/Ghidra and entry-rooted PE flow agree. Historical2f1f617d:src/midi.cpp extended through4C8072, incorrectly including the next MOV EAX,ECX. The null path does not write EAX; missing-return/compiler-effect fidelity remains unresolved. No return value, body or claim is changed."], "reason": "Bind the Midi delegate forwarder to both local-return paths, excluding padding and a different initializer."}
 // symbol    ?set_play_type@Midi@@UAEHI@Z
 // Historical TRIED interpretation below is disproven by entry-based decoding:
 // the null-delegate branch reaches pop ebp / ret 4 at 0x004C8066/0x004C8067.
@@ -1094,8 +1095,8 @@ bool Midi::is_trackset_playing(unsigned int trackset) {
 // On that path this method does not write EAX: its result depends on incoming
 // register state, not this or a defined zero. The missing C++ return remains an
 // unresolved compiler-effects obligation, not proof of faithful reproduction.
-// Keep the historical span/claim obligations; this correction does not change
-// the original marker or pretend to resolve its overlap with the next entry.
+// The corrected code extent excludes the next entry; historical provenance
+// and claims remain, but this does not resolve the missing-return obligation.
 // TRIED: the guarded forwarder is byte-identical for 11 instructions and then
 //   the image has six `nop`s and `mov eax, ecx` - on the null delegate path the
 //   original returns `this` in eax, not an unset eax, so the artifact's "no
