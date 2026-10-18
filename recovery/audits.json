@@ -15,13 +15,13 @@
       "ceilings": {
         "vtable": 0,
         "construct": 1,
-        "free-function destructor": 1,
+        "free-function destructor": 0,
         "explicit base construct/destroy": 1,
         "placement new on a subobject": 1,
         "hand-walked vbtable": 0,
-        "VCall shim": 1,
+        "VCall shim": 0,
         "ORIGINAL() vtable-slot dispatch": 0,
-        "ORIGINAL() named-pointer seam": 39,
+        "ORIGINAL() named-pointer seam": 0,
         "vtable-as-member": 0,
         "vtable-initialiser store": 0,
         "vtable address constant": 0,
@@ -32,7 +32,7 @@
         "span_math.cpp markers": 1,
         "table_storage.cpp markers": 1,
         "nullsub_thunks.cpp markers": 46,
-        "stringstruct.cpp markers": 31
+        "stringstruct.cpp markers": 28
       },
       "counters": [
         {
