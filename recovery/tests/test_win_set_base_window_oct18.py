@@ -295,16 +295,23 @@ def test_source_transport_inverse_is_exact_except_recorded_claim() -> None:
         "    poWinBase_ = window;\n\n    int i = 0;\n    WinZOrderCount = 0;", 1,
     )
     assert restored_body != body
-    current = current.replace(body, restored_body, 1)
     baseline = subprocess.run(
         ["git", "show", f"{BASE}:src/win.cpp"], cwd=ROOT,
         check=True, capture_output=True, text=True,
     ).stdout
-    original_claim = "// ORIGINAL: 0x005F4D90 sub_5f4d90 0x005F4D90-0x005F4EB1"
-    recorded_claim = original_claim + " BYTE_EXACT"
-    assert current.count(recorded_claim) == 1
-    current = current.replace(recorded_claim, original_claim, 1)
-    assert current == baseline
+    # This permanent regression is scoped to the recovered function. Whole-TU
+    # and outside-owner transport belong to fresh checkpoint verification, not
+    # a frozen copy of all unrelated Win implementations in this test.
+    assert restored_body == definition(baseline)
+    from match_recovery.source import read_text
+    old, = [row for row in read_text(baseline, SOURCE) if row.address == START]
+    new, = [row for row in read_text(current, SOURCE) if row.address == START]
+    assert new.image_spans == ((START, END),)
+    assert new.symbol == "?set_base_window@Win@@QAEHPAVGraphicWin@@@Z"
+    assert not old.byte_exact and new.byte_exact  # Historical recorder claim.
+    for field in old.__dataclass_fields__:
+        if field not in {"path", "line", "region", "byte_exact"}:
+            assert getattr(old, field) == getattr(new, field), field
 
 
 def test_pinned_original_full_span_and_order_anchors() -> None:
