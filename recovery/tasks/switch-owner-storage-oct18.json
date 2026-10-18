@@ -1,0 +1,117 @@
+{
+  "author": "coordinator",
+  "base_revision": "31b3b481c9fd83784323ac60e8bb659a80c5295c",
+  "editable_files": [
+    "recovery/tests/test_general_switch_data_oct18.py",
+    "recovery/tests/test_switch_owner_storage_oct18.py",
+    "src/base.cpp",
+    "src/ddinit.cpp",
+    "src/dialogs.cpp",
+    "src/infowin.cpp",
+    "src/map.cpp",
+    "src/prefwin.cpp",
+    "src/prodpicker.cpp",
+    "src/reportif.cpp",
+    "src/reportwin.cpp",
+    "src/sound.cpp"
+  ],
+  "evidence": [
+    "Authorize a coordinator-reviewed source/data cohort across the named real owners, not another generated source file, private C++ ABI, handwritten target table or historical-TU assertion. All17 original function subjects already exist in current product source. Bind only independently supported adjacent dispatch targets/selectors; missing evidence remains pending, not an invented extent.",
+    "Read-only fresh-master build-dz4zvjls and independent pinned-image guard/case/cell/map reviews support14 owner interpretations. The six-owner native hypothesis comparison gives3PASS(PrefWin,ProdPicker,Sound) and3UNKNOWN(InfoWin,ReportIf,ReportWin); it is not published/current matching evidence. Eight Dialogs source interpretations have guarded1..16 selector domains and matching physical table/map targets, but native full-root proofs refuse debug/FPO associated children; two also have unsupported three-byte LEA gaps. Keep those source facts and explicit unknowns rather than dropping owners to report a passing subset.",
+    "Inspect resource_yield4E7DC0, synch_display532C30 and DDInit::report_error635870 within this scope; source bindings require the same independent guard-derived original domain, PE relocation/decoded-target evidence and physical candidate correspondence before publication. Do not use candidate size or an operand being checked to choose identity/bounds.",
+    "Only native associated_writer guarded source annotations and bounded regression tests are authorized. The original function marker lines, body tokens, fields/layouts/lifetimes, symbols, compiler recipes/flags, link settings, package/comparator code, acceptance policy and all prior task baselines remain unchanged. No library/framework repair, span extension, new match claim, data masking, claimed debug-child omission, or generic alignment exemption is authorized.",
+    "Keep load-bearing owner/data/evidence bindings in their actual source files. Journal non-derivable scope/discovery decisions, not a new derived catalogue. Use exact inverse controls against31b3b481c and native parser/writer/guard/cell/map/extent damage checks. Scope the old General-only population test to its own unchanged owner, preserving its exact three bindings and existing mutants; the new test must require every added interpretation and reject missing/duplicate/mutated/additional bindings.",
+    "Require fresh168-compilation182-object application build/link, full mapped5581 masked/strict identity continuity, native source/claim/mapping/reference checks and independent actual-source/evidence review before manual integration. Whole physical182-object comparison must have no omitted function bodies. Report every unsupported or unresolved reference as unknown, not a pass; retained-selection/lifetime/runtime/full-game acceptance remains unproven. Reverify destination and remove the consumed worker only after source/tasks/tests are safely preserved."
+  ],
+  "intent": "Recover source-owned switch storage with its actual C++ owners; preserve every original body, span, historical claim and unsupported proof obligation.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4558272,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4789120,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4799344,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4819440,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4865984,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5005792,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5144000,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5450800,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6368128,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6368288,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6368448,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6368608,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6368768,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6369248,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6369504,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6369952,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6510704,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "switch-owner-storage-oct18"
+}
