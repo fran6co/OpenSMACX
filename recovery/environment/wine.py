@@ -415,7 +415,7 @@ def main(argv: list) -> int:
     probe_only = False
     if any(word.startswith("--repro-root=") for word in arguments):
         sys.path.insert(0, str(Path(__file__).resolve().parent))
-        from wine_repro import ReproducibleCompile, preprocessing_probe
+        from wine_repro import ReproducibleCompile, preprocessing_probe, preprocessing_stderr_is_expected
         try:
             probe = preprocessing_probe(tool, arguments)
             if probe is not None:
@@ -427,10 +427,12 @@ def main(argv: list) -> int:
             def preprocess(words, directory):
                 result = run_tool(["wine32", str(executable), *map(translate, words)],
                                   cwd=directory, binary=True, explicit_compiler=True)
-                # /E puts this one driver echo on stderr, not in C++ text.
-                echo = os.fsencode(reproducible.source.name)
-                if (result.returncode or result.stderr not in (b"", echo + b"\r\n", echo + b"\n") or
-                        re.search(rb"(?m)^.*(?:fatal error|warning|error) [CD][0-9]{4}:", result.stdout)):
+                # /E emits a filename echo and may diagnose an explicitly
+                # overridden inline option. Only the observed option-bound
+                # driver diagnostic is admissible; C++ diagnostics still fail.
+                if (result.returncode or not preprocessing_stderr_is_expected(
+                        result.stderr, reproducible.source.name, words) or
+                        re.search(rb"(?m)^.*(?:fatal error|warning|error) [CD][0-9]{4}\s*:", result.stdout)):
                     raise ValueError("reproducibility preprocessing failed: " +
                                      preprocessing_diagnostics(result.stdout, result.stderr))
                 return result.stdout

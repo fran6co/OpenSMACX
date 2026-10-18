@@ -1,0 +1,24 @@
+{
+  "event_id": "a9b596ce63a3c831057a0e588b1f5d307336829216c9c89a964681db001b1dec",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/environment/wine.py",
+      "recovery/environment/wine_repro.py",
+      "recovery/tests/test_wine_repro.py"
+    ],
+    "evidence": [
+      "Fresh isolated112-owner candidate build stops before link. Read-only native AlphaMovie compile reproduces exit3: VC6 emits exact stderr Command line warning D4025 : overriding /Ob2 with /Ob1 plus source echo; strict preprocessing callback rejects every non-echo stderr byte. Both inline options are explicit in the authorized CMake command; this is compiler diagnostic transport, not a source/preprocessing difference or Wine failure.",
+      "Authorize only accepting that physically observed exact D4025 stderr line when parsed explicit option operands establish the same ordered Ob2->Ob1 pair. Keep all other stderr, extra/repeated warnings, mismatched option contexts, stdout diagnostics, nonzero exits, macro/preprocessed-byte differences, changed headers and input snapshots refused. Retain exact actual compiler argv; do not drop flags, suppress warnings, whitelist arbitrary diagnostics or change compiler/CMake/global flags.",
+      "Use local wine_repro helper plus the existing wine.py callback and its vc6-cl symlink, not a framework adapter or public command. Strengthen stdout compiler-diagnostic spacing detection so D4025-space-colon cannot slip through as C++ text. Add mock phase/operand/damage controls and real leased VC6 positive/body/header-damage controls with the actual option pair. Prefix leases/Git/integration remain coordinator-owned; host-only mocks may run in the delegated test worker.",
+      "All product C++/headers and112 original identities remain unchanged. Fresh full build/link, normalized170-actual-command audit and native outside-object/reference/lifetime review still required. The full source-policy audit must identify these exact compiler interaction changes separately, not assert an empty environment diff. No native acceptance, compiler identity switch or weakened source evidence follows."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "explicit-inline-override-preprocessing-diagnostic-oct18",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:inline-boundary-cohort-oct18"
+}

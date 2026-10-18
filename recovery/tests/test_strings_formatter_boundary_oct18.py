@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from collections import Counter
 from pathlib import Path
+import re
 import subprocess
 
 import pytest
@@ -73,14 +74,6 @@ RECORD_FIELDS = (
     "source_role_reason", "function_fragment",
 )
 
-PROFILE_BLOCK = (
-    b"# Application formatters retain calls into the separately compiled string table.\n"
-    b"# The Strings implementation keeps its independently measured default recipe.\n"
-    b'set_source_files_properties(src/string_formatting.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")\n'
-)
-PROFILE_ANCHOR = (
-    b"# Preserve measured frame-based accesses across the application owner batch.\n"
-)
 SOURCE_ROW = b"    src/strings.cpp\n"
 FORMATTER_ROW = b"    src/string_formatting.cpp\n"
 
@@ -192,9 +185,70 @@ def _formatter_prologue(base_strings: bytes) -> bytes:
 
 def _expected_cmake(base_cmake: bytes) -> bytes:
     assert base_cmake.count(SOURCE_ROW) == 1
-    assert base_cmake.count(PROFILE_ANCHOR) == 1
-    with_source = base_cmake.replace(SOURCE_ROW, SOURCE_ROW + FORMATTER_ROW, 1)
-    return with_source.replace(PROFILE_ANCHOR, PROFILE_BLOCK + PROFILE_ANCHOR, 1)
+    return base_cmake.replace(SOURCE_ROW, SOURCE_ROW + FORMATTER_ROW, 1)
+
+
+def _without_source_profiles(cmake: bytes) -> bytes:
+    # Normalize source-local commands and their attached prose, regardless of
+    # how many unrelated owner profiles later batches add. Target/directory
+    # properties and all global compiler/link policy remain literal. Ignore
+    # standalone prose/spacing globally so EOF documentation is not coupled to
+    # whether a later source-local command follows it.
+    cmake = re.sub(rb"(?m)^[ \t]*(?:#[^\n]*)?(?:\n|$)", b"", cmake)
+    pattern = re.compile(
+        rb"(?ms)^[ \t]*(set_source_files_properties|set_property)\((.*?)\)[ \t]*(?:\n|$)"
+    )
+    ranges = []
+    for match in pattern.finditer(cmake):
+        command, body = match.group(1), match.group(2)
+        if command == b"set_property" and not re.match(rb"\s*SOURCE(?:\s|$)", body):
+            continue
+        ranges.append((match.start(), match.end()))
+    normalized = cmake
+    for start, end in reversed(ranges):
+        normalized = normalized[:start] + normalized[end:]
+    return normalized
+
+
+def _source_compile_options(cmake: bytes, source_path: bytes) -> list[bytes]:
+    matches: list[bytes] = []
+    pattern = re.compile(
+        rb"(?ms)^[ \t]*(set_source_files_properties|set_property)\((.*?)\)[ \t]*(?:\n|$)"
+    )
+    for match in pattern.finditer(cmake):
+        command, body = match.group(1), match.group(2)
+        if command == b"set_source_files_properties":
+            if source_path not in body:
+                continue
+            properties = body.split(b"PROPERTIES", 1)
+            assert len(properties) == 2, (source_path, body)
+            option_text = re.search(rb"COMPILE_OPTIONS\s+([^\s]+)", properties[1])
+            assert option_text is not None, (source_path, body)
+            matches = [part for part in option_text.group(1).strip(b'"').split(b";") if part]
+            continue
+        if not re.match(rb"\s*SOURCE(?:\s|$)", body):
+            continue
+        property_at = re.search(rb"\bPROPERTY\s+", body)
+        if property_at is None:
+            continue
+        prefix, settings = body[:property_at.start()], body[property_at.end():]
+        if source_path not in prefix:
+            continue
+        option_text = re.search(rb"COMPILE_OPTIONS\s+([^\s]+)", settings)
+        if option_text is None:
+            continue
+        value = [part for part in option_text.group(1).strip(b'"').split(b";") if part]
+        if re.search(rb"\bAPPEND(?:_STRING)?\b", prefix):
+            matches.extend(value)
+        else:
+            matches = value
+    return matches
+
+
+def _source_rows(cmake: bytes) -> list[bytes]:
+    match = re.search(rb"(?ms)^set\(OPENSMACX_SOURCES\n(.*?)^\)", cmake)
+    assert match is not None
+    return re.findall(rb"^\s+(src/[^\s]+)\s*$", match.group(1), re.M)
 
 
 def _inverse(strings_cpp: bytes, strings_h: bytes, formatters_cpp: bytes, cmake: bytes) -> None:
@@ -210,7 +264,15 @@ def _inverse(strings_cpp: bytes, strings_h: bytes, formatters_cpp: bytes, cmake:
         + b"\n\n".join(expected_blocks)
         + b"\n"
     ), "formatter module differs from exact transferred blocks/prologue/boundaries"
-    assert cmake == _expected_cmake(base_cmake), "unadmitted CMake source/profile/link change"
+    expected_nonprofile = _without_source_profiles(_expected_cmake(base_cmake))
+    assert _without_source_profiles(cmake) == expected_nonprofile, (
+        "unadmitted CMake source/global compiler/link policy change"
+    )
+    rows = _source_rows(cmake)
+    assert rows.count(b"src/strings.cpp") == rows.count(FORMATTER_ROW.strip()) == 1
+    strings_index = rows.index(b"src/strings.cpp")
+    assert rows[strings_index + 1] == b"src/string_formatting.cpp"
+    assert _source_compile_options(cmake, b"src/string_formatting.cpp") == [b"/Oy-"]
 
     before = read_text(base_strings.decode("utf-8"), STRINGS_CPP)
     after = read_text(strings_cpp.decode("utf-8"), STRINGS_CPP)
@@ -255,6 +317,7 @@ def test_formatter_owner_is_an_exact_scoped_transfer_from_immutable_base() -> No
         (2, lambda data: data.replace(b"// Keep these application formatters", b"// RECOVERY_OBJECT: v1 0x009B86A0 ?StringTemp@@3PADA\n// Keep these application formatters", 1)),
         (3, lambda data: data.replace(b"src/string_formatting.cpp\n", b"", 1)),
         (3, lambda data: data.replace(b"set_source_files_properties(src/string_formatting.cpp", b"set_source_files_properties(src/strings.cpp", 1)),
+        (3, lambda data: data + b'\nset_property(SOURCE src/string_formatting.cpp APPEND PROPERTY COMPILE_OPTIONS "/Ob1")\n'),
         (3, lambda data: data.replace(b"add_executable(OpenSMACX", b"add_compile_options(\"/Oy-\")\nadd_executable(OpenSMACX", 1)),
     ],
 )
@@ -284,6 +347,16 @@ def test_formatter_inverse_rejects_moving_shared_storage_into_formatter_tu() -> 
     sources[2] = sources[2].replace(b"// Keep these application formatters", storage + b"// Keep these application formatters", 1)
     with pytest.raises(AssertionError):
         _inverse(*sources)
+
+
+def test_formatter_configuration_allows_unrelated_source_local_properties() -> None:
+    sources = list(_actual_sources())
+    sources[3] += (
+        b'\n# Independent later owner profile.\n'
+        b'set_property(SOURCE src/unrelated_owner.cpp APPEND PROPERTY COMPILE_OPTIONS "/Ob1")\n'
+        b'set_source_files_properties(src/another_owner.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")\n'
+    )
+    _inverse(*sources)
 
     sources = list(_actual_sources())
     sources[1] += b"\n// unadmitted header change\n"

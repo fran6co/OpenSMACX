@@ -476,8 +476,16 @@ set_source_files_properties(
     src/technology_queries.cpp
     src/uv2player.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")
+# Preserve original out-of-line member/helper calls in these application owners.
+# Append so DipEdit keeps its independently measured frame-based context.
+set_property(SOURCE
+    src/video.cpp
+    src/pulldown.cpp
+    src/alphamovie.cpp
+    src/dipedit.cpp
+    APPEND PROPERTY COMPILE_OPTIONS "/Ob1")
 # Preserve the measured frame-based context of the Sound-derived video owner.
-# Video and queue methods retain their independently measured default recipe.
+# This remains separate from Video's automatic-inlining policy above.
 set_source_files_properties(src/video_sound.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")
 
 # Preserve the measured frame-based context of the scenario-editor undo owner.

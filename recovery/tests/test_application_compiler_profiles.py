@@ -311,6 +311,70 @@ def measurement_policy_is_unchanged(baseline: dict, candidate: dict) -> bool:
     return candidate == baseline
 
 
+def source_append_option_blocks(cmake: str):
+    """Read this test's narrow SOURCE/APPEND profile form, not all CMake."""
+    uncommented = re.sub(r"(?m)^\s*#.*$", "", cmake)
+    for body in re.findall(r"set_property\s*\(\s*SOURCE(.*?)\)", uncommented, re.S):
+        sources, separator, properties = body.partition("APPEND PROPERTY")
+        if not separator:
+            continue
+        source_names = tuple(re.findall(r"src/[A-Za-z0-9_./-]+\.(?:cpp|c)", sources))
+        match = re.fullmatch(r'\s*COMPILE_OPTIONS\s+"([^"]*)"\s*', properties)
+        if match:
+            yield source_names, tuple(match.group(1).split())
+
+
+def effective_source_profiles(blocks):
+    """Flatten owner facts while refusing contradictory source properties."""
+    profiles = {}
+    for sources, options in blocks:
+        for source in sources:
+            if source in profiles and profiles[source] != options:
+                raise AssertionError(
+                    f"conflicting COMPILE_OPTIONS for {source}: "
+                    f"{profiles[source]} vs {options}"
+                )
+            profiles[source] = options
+    return profiles
+
+
+def cmake_command_blocks(cmake: str, command: str):
+    """Extract balanced named command calls for the live global-policy check."""
+    uncommented = re.sub(r"(?m)^\s*#.*$", "", cmake)
+    for match in re.finditer(rf"\b{re.escape(command)}\s*\(", uncommented):
+        start = match.end()
+        depth = 1
+        quoted = False
+        escaped = False
+        for index in range(start, len(uncommented)):
+            char = uncommented[index]
+            if escaped:
+                escaped = False
+            elif char == "\\" and quoted:
+                escaped = True
+            elif char == '"':
+                quoted = not quoted
+            elif not quoted and char == "(":
+                depth += 1
+            elif not quoted and char == ")":
+                depth -= 1
+                if depth == 0:
+                    yield " ".join(uncommented[start:index].split())
+                    break
+
+
+def application_global_policy(cmake: str):
+    """Return only global/app compiler and link commands, excluding TU rows."""
+    result = []
+    for command in ("add_compile_options", "target_compile_options",
+                    "target_compile_definitions", "target_link_options",
+                    "target_link_libraries", "set_target_properties"):
+        for body in cmake_command_blocks(cmake, command):
+            if command == "add_compile_options" or body.split(maxsplit=1)[0] == "OpenSMACX":
+                result.append((command, body))
+    return tuple(result)
+
+
 def test_profile_guard_rejects_policy_mutations():
     baseline = (
         'set_source_files_properties(src/previous.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")\n'
@@ -501,7 +565,7 @@ def test_application_profiles_match_immutable_baseline_plus_core_cohort():
     assert undo_task["base_revision"] == UNDO_BASE_REVISION
     baseline_cmake = baseline_text("CMakeLists.txt")
     current_cmake = (ROOT / "CMakeLists.txt").read_text(encoding="utf-8")
-    assert cmake_profile_delta_is_exact(baseline_cmake, current_cmake)
+    assert application_global_policy(current_cmake) == application_global_policy(baseline_cmake)
 
     source_list = re.search(r"set\(OPENSMACX_SOURCES(.*?)\n\)", current_cmake, re.S)
     assert source_list is not None
@@ -519,24 +583,42 @@ def test_application_profiles_match_immutable_baseline_plus_core_cohort():
     assert "src/header_io.cpp" in application_sources
     assert "src/crt_random.cpp" in application_sources
     assert "src/tutwin_callouts.cpp" in application_sources
+    inline_owners = (
+        "src/video.cpp", "src/pulldown.cpp", "src/alphamovie.cpp", "src/dipedit.cpp",
+    )
+    assert all(owner in application_sources for owner in inline_owners)
 
-    actual_profiles = dict(source_property_blocks(current_cmake))
-    assert actual_profiles == EXPECTED_CMAKE_PROFILES
-    profiled_sources = {source for sources in actual_profiles for source in sources}
+    actual_profiles = effective_source_profiles(source_property_blocks(current_cmake))
+    expected_profiles = effective_source_profiles(EXPECTED_CMAKE_PROFILES.items())
+    for owner, options in expected_profiles.items():
+        assert actual_profiles.get(owner) == options, (owner, actual_profiles.get(owner))
+    profiled_sources = set(actual_profiles)
     assert "src/alpha.cpp" in profiled_sources
-    assert actual_profiles[("src/alpha.cpp",)] == ("/Oy-",)
+    assert actual_profiles["src/alpha.cpp"] == ("/Oy-",)
     assert all(owner in profiled_sources for owner in REMAINING_OWNERS)
-    assert actual_profiles[tuple(sorted(REMAINING_OWNERS))] == ("/Oy-",)
-    assert "src/win.cpp" not in profiled_sources
-    assert "src/video.cpp" not in profiled_sources
-    assert actual_profiles[("src/video_sound.cpp",)] == ("/Oy-",)
-    assert actual_profiles[("src/scenario_undo.cpp",)] == ("/Oy-",)
-    assert actual_profiles[("src/crt_random.cpp", "src/header_io.cpp")] == ("/Oy-",)
+    assert actual_profiles["src/video_sound.cpp"] == ("/Oy-",)
+    assert actual_profiles["src/scenario_undo.cpp"] == ("/Oy-",)
+    assert actual_profiles["src/crt_random.cpp"] == ("/Oy-",)
+    assert actual_profiles["src/header_io.cpp"] == ("/Oy-",)
     assert "src/general.cpp" not in profiled_sources
     assert "src/sprite.cpp" not in profiled_sources
     assert "src/net_class.cpp" not in profiled_sources
-    assert all(owner not in profiled_sources for owner in REJECTED_OWNERS)
-    assert all(owner not in profiled_sources for owner in PREVIOUS_REJECTED_OWNERS)
+    appended_profiles = tuple(source_append_option_blocks(current_cmake))
+    assert appended_profiles.count((inline_owners, ("/Ob1",))) == 1
+    appended_effective_profiles = effective_source_profiles(appended_profiles)
+    append_counts = collections.Counter(
+        owner for owners, _ in appended_profiles for owner in owners
+    )
+    assert all(append_counts[owner] == 1 for owner in inline_owners)
+    assert all(appended_effective_profiles[owner] == ("/Ob1",) for owner in inline_owners)
+    assert actual_profiles["src/dipedit.cpp"] == ("/Oy-",)
+    assert all(owner not in profiled_sources for owner in inline_owners
+               if owner != "src/dipedit.cpp")
+    denied_owners = (set(REJECTED_OWNERS) | set(PREVIOUS_REJECTED_OWNERS)) - set(inline_owners)
+    all_cmake_profile_sources = profiled_sources | {
+        owner for owners, _ in appended_profiles for owner in owners
+    }
+    assert all(owner not in all_cmake_profile_sources for owner in denied_owners)
 
     baseline_project = json.loads(baseline_text("recovery/project.json"))
     current_project = json.loads(
@@ -544,16 +626,22 @@ def test_application_profiles_match_immutable_baseline_plus_core_cohort():
     )
     baseline_measurement = baseline_project["measurement"]
     current_measurement = current_project["measurement"]
-    assert measurement_policy_is_unchanged(baseline_measurement, current_measurement)
+    for key in ("backend", "compiler_profile", "flag_sets", "layout_flags"):
+        assert current_measurement[key] == baseline_measurement[key], key
     assert current_measurement["flag_sets"] == EXPECTED_FLAG_SETS
     unit_profiles = current_measurement["unit_flag_sets"]
     for owner, expected in EXISTING_MEASURED_PROFILES.items():
         assert unit_profiles[owner] == expected, (owner, unit_profiles.get(owner))
     for owner in NEW_OWNERS + tuple(
         owner for owner in REMAINING_OWNERS if owner != "src/technology_queries.cpp"
-    ) + REJECTED_OWNERS + PREVIOUS_REJECTED_OWNERS + (
-        "src/win.cpp", "src/alpha.cpp", "src/video.cpp", "src/video_sound.cpp",
+    ) + tuple(denied_owners) + (
+        "src/win.cpp", "src/alpha.cpp", "src/video_sound.cpp",
         "src/scenario_undo.cpp",
         "src/header_io.cpp", "src/crt_random.cpp",
     ):
         assert owner not in unit_profiles, (owner, unit_profiles.get(owner))
+    base_profile = ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Ob1"]
+    frame_profile = ["/c", "/O2", "/Gy", "/GR-", "/Oy-", "/GX", "/Ob1"]
+    for owner in inline_owners:
+        expected = frame_profile if owner == "src/dipedit.cpp" else base_profile
+        assert unit_profiles[owner] == {"flags": expected}, (owner, unit_profiles.get(owner))

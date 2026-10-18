@@ -1,7 +1,9 @@
 """Exact scoped inverse and damage controls for PrefWin CRT-entry bindings."""
 from __future__ import annotations
 
+import json
 from pathlib import Path
+import re
 import subprocess
 
 import pytest
@@ -39,13 +41,7 @@ NEW_RATIONALE = (
     b"// load order despite masked-byte equality. These bindings do not establish\n"
     b"// whole-program startup order, linked retention or historical TU boundaries.\n"
 )
-FLAG_BLOCK = (
-    b'      "src/prefwin_geometry.cpp": {\n'
-    b'        "flags": ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Ob2"]\n'
-    b"      },\n"
-)
-PROJECT_ANCHOR = b'      "src/technology_queries.cpp": {\n'
-UNCHANGED_PATHS = ("src/prefwin_geometry.h", "CMakeLists.txt")
+SELECTED_FLAGS = ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Ob2"]
 PRESERVED_FIELDS = (
     "mode", "state", "name", "image_spans", "body", "context", "kind",
     "exclusion", "byte_exact", "semantic", "recipe", "levers", "ruled_out",
@@ -72,19 +68,78 @@ def _project_geometry(base: bytes) -> bytes:
     return projected
 
 
-def _project_configuration(base: bytes) -> bytes:
-    assert base.count(PROJECT_ANCHOR) == 1
-    assert base.count(FLAG_BLOCK) == 0
-    return base.replace(PROJECT_ANCHOR, FLAG_BLOCK + PROJECT_ANCHOR, 1)
+def _project_without_unit_profiles(project: bytes) -> dict:
+    value = json.loads(project)
+    value["measurement"].pop("unit_flag_sets")
+    return value
+
+
+def _without_source_profiles(cmake: bytes) -> bytes:
+    # Owner-local source recipes are checked below. Keep the rest of CMake
+    # literal so global compiler, target, and linker policy remains protected.
+    # Standalone comments/spacing are not policy, and may describe later owner
+    # profiles without making this inverse depend on their placement or count.
+    cmake = re.sub(rb"(?m)^[ \t]*(?:#[^\n]*)?(?:\n|$)", b"", cmake)
+    pattern = re.compile(
+        rb"(?ms)^[ \t]*(set_source_files_properties|set_property)\((.*?)\)[ \t]*(?:\n|$)"
+    )
+    ranges = []
+    for match in pattern.finditer(cmake):
+        if match.group(1) == b"set_property" and not re.match(
+            rb"\s*SOURCE(?:\s|$)", match.group(2)
+        ):
+            continue
+        ranges.append((match.start(), match.end()))
+    normalized = cmake
+    for start, end in reversed(ranges):
+        normalized = normalized[:start] + normalized[end:]
+    return normalized
+
+
+def _has_source_profile(cmake: bytes, source_path: bytes) -> bool:
+    pattern = re.compile(
+        rb"(?ms)^[ \t]*(set_source_files_properties|set_property)\((.*?)\)[ \t]*(?:\n|$)"
+    )
+    for match in pattern.finditer(cmake):
+        command, body = match.group(1), match.group(2)
+        if command == b"set_source_files_properties" and source_path in body:
+            return True
+        if command == b"set_property" and re.match(rb"\s*SOURCE(?:\s|$)", body):
+            property_at = re.search(rb"\bPROPERTY\s+", body)
+            if property_at is not None and source_path in body[:property_at.start()]:
+                return True
+    return False
+
+
+def _source_rows(cmake: bytes) -> list[bytes]:
+    match = re.search(rb"(?ms)^set\(OPENSMACX_SOURCES\n(.*?)^\)", cmake)
+    assert match is not None
+    return re.findall(rb"^\s+(src/[^\s]+)\s*$", match.group(1), re.M)
 
 
 def _assert_inverse(geometry: bytes, project: bytes, header: bytes, cmake: bytes) -> None:
     base_geometry = _base("src/prefwin_geometry.cpp")
     base_project = _base("recovery/project.json")
+    base_cmake = _base("CMakeLists.txt")
     assert geometry == _project_geometry(base_geometry), "unadmitted geometry source delta"
-    assert project == _project_configuration(base_project), "unadmitted compiler-profile delta"
+    assert _project_without_unit_profiles(project) == _project_without_unit_profiles(base_project), (
+        "global compiler/measurement policy changed"
+    )
+    project_value = json.loads(project)
+    assert project_value["measurement"]["unit_flag_sets"].get(
+        "src/prefwin_geometry.cpp", {}
+    ).get("flags") == SELECTED_FLAGS, "PrefWin selected recipe changed"
     assert header == _base("src/prefwin_geometry.h"), "geometry header changed"
-    assert cmake == _base("CMakeLists.txt"), "application CMake changed"
+    assert _without_source_profiles(cmake) == _without_source_profiles(base_cmake), (
+        "global application compiler/link/source policy changed"
+    )
+    source_rows = _source_rows(cmake)
+    prefwin_index = source_rows.index(b"src/prefwin_geometry.cpp")
+    assert source_rows[prefwin_index - 1] == b"src/prefwin.cpp"
+    assert source_rows[prefwin_index + 1] == b"src/quaylewin.cpp"
+    assert not _has_source_profile(cmake, b"src/prefwin_geometry.cpp"), (
+        "PrefWin must retain its measured default application profile"
+    )
 
     before = {row.address: row for row in read_text(
         base_geometry.decode("utf-8"), Path("src/prefwin_geometry.cpp"))
@@ -121,6 +176,8 @@ def test_prefwin_binding_update_is_exact_against_immutable_task_base() -> None:
         (1, lambda data: data.replace(b'"/Ob2"]', b'"/Ob1"]', 1)),
         (2, lambda data: data + b"\n// changed geometry interface\n"),
         (3, lambda data: data.replace(b"src/prefwin_geometry.cpp", b"src/prefwin_other.cpp", 1)),
+        (3, lambda data: data + b'\nset_property(SOURCE src/prefwin_geometry.cpp APPEND PROPERTY COMPILE_OPTIONS "/Ob1")\n'),
+        (3, lambda data: data.replace(b"add_executable(OpenSMACX", b'target_compile_options(OpenSMACX PRIVATE "/Ob1")\nadd_executable(OpenSMACX', 1)),
     ],
 )
 def test_prefwin_binding_inverse_rejects_unapproved_damages(path_index, mutate) -> None:
@@ -130,3 +187,13 @@ def test_prefwin_binding_inverse_rejects_unapproved_damages(path_index, mutate) 
     assert sources[path_index] != original
     with pytest.raises(AssertionError):
         _assert_inverse(*sources)
+
+
+def test_prefwin_configuration_allows_unrelated_source_local_properties() -> None:
+    sources = list(_actual())
+    sources[3] += (
+        b'\n# Independent later owner profile.\n'
+        b'set_property(SOURCE src/unrelated_owner.cpp APPEND PROPERTY COMPILE_OPTIONS "/Ob1")\n'
+        b'set_source_files_properties(src/another_owner.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")\n'
+    )
+    _assert_inverse(*sources)

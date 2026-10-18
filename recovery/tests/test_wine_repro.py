@@ -5,7 +5,10 @@ import sys
 
 import pytest
 
-from recovery.environment.wine_repro import ReproducibleCompile, _preprocessed, preprocessing_probe
+from recovery.environment.wine_repro import (
+    ReproducibleCompile, _preprocessed, preprocessing_probe,
+    preprocessing_stderr_is_expected,
+)
 from recovery.environment import wine
 
 
@@ -24,6 +27,107 @@ def invocation(tmp_path, monkeypatch):
 
 def preprocessed(path, body=b"int value() { return 7; }\n"):
     return b'#line 1 "' + str(path).encode().replace(b"\\", b"\\\\") + b'"\n' + body
+
+
+_D4025 = b"Command line warning D4025 : overriding '/Ob2' with '/Ob1'\r\n"
+
+
+@pytest.mark.parametrize("stderr", [b"", b"unit.cpp\r\n", b"unit.cpp\n"])
+def test_expected_preprocessing_stderr_retains_empty_and_filename_echo(stderr):
+    assert preprocessing_stderr_is_expected(stderr, "unit.cpp", [])
+
+
+@pytest.mark.parametrize("argv", [
+    ["/Ob2", "/Ob1"], ["-Ob2", "/Ob1"],
+    ["/I", "/tmp/headers", "/D", "VALUE=1", "/Ob2", "/Ob1"],
+])
+@pytest.mark.parametrize("suffix", [b"", b"unit.cpp\r\n"])
+def test_expected_d4025_requires_exact_unconsumed_ordered_override(argv, suffix):
+    assert preprocessing_stderr_is_expected(_D4025 + suffix, "unit.cpp", argv)
+
+
+@pytest.mark.parametrize("argv", [
+    [], ["/Ob1", "/Ob2"], ["/Ob2"], ["/Ob1"], ["/Ob2", "/Ob1", "/Ob0"],
+    ["/Ob2", "/Ob2", "/Ob1"], ["/I", "/Ob2", "/Ob1"],
+    ["/D", "/Ob2", "/Ob1"], ["/Ob2", "/I", "/Ob1"],
+])
+def test_d4025_is_rejected_without_exact_unconsumed_override(argv):
+    assert not preprocessing_stderr_is_expected(_D4025, "unit.cpp", argv)
+
+
+@pytest.mark.parametrize("stderr", [
+    b"Command line warning D4025 : overriding '/Ob2' with '/Ob1'\n",
+    b"Command line warning D4025: overriding '/Ob2' with '/Ob1'\r\n",
+    _D4025 + _D4025,
+    _D4025 + b"another warning\r\n",
+    _D4025 + b"other.cpp\r\n",
+    b"Command line warning D9002 : ignored option\r\n",
+])
+def test_expected_preprocessing_stderr_rejects_near_miss_and_extra_text(stderr):
+    assert not preprocessing_stderr_is_expected(stderr, "unit.cpp", ["/Ob2", "/Ob1"])
+
+
+def test_wrapper_accepts_exact_override_for_all_three_reproducibility_phases(
+        invocation, monkeypatch, capsysbinary):
+    root, source, args = invocation
+    (root / "BIN").mkdir()
+    (root / "BIN/CL.EXE").touch()
+    monkeypatch.setattr(wine, "VC6_ROOT", root)
+    monkeypatch.chdir(root / "build")
+    args = [*args, "/Ob2", "/Ob1"]
+    calls = []
+
+    def run(command, **options):
+        calls.append((command, options))
+        if "/E" in command:
+            cwd = options["cwd"]
+            output_path = source if cwd == root / "build" else Path("src/unit.cpp")
+            return subprocess.CompletedProcess(command, 0, preprocessed(output_path),
+                                               _D4025 + b"unit.cpp\r\n")
+        return subprocess.CompletedProcess(command, 0, b"", b"")
+
+    monkeypatch.setattr(wine, "run_tool", run)
+    assert wine.main(["vc6-cl", *args]) == 0
+    assert sum("/E" in command for command, _ in calls) == 3
+    assert len(calls) == 4
+    assert calls[-1][1] == {"cwd": root, "explicit_compiler": True}
+    captured = capsysbinary.readouterr()
+    assert captured.out == captured.err == b""
+
+
+@pytest.mark.parametrize("phase,returncode,stdout,stderr", [
+    (1, 1, b"int value;\n" * 1000, _D4025),
+    (2, 0, b"Command line warning D4025 : compiler text\r\n" + b"int value;\n" * 1000, _D4025),
+    (3, 0, b"int value;\n" * 1000, _D4025 + b"extra diagnostic\r\n"),
+])
+def test_wrapper_fails_closed_on_each_preprocessing_phase(
+        invocation, monkeypatch, capsys, phase, returncode, stdout, stderr):
+    root, source, args = invocation
+    (root / "BIN").mkdir()
+    (root / "BIN/CL.EXE").touch()
+    monkeypatch.setattr(wine, "VC6_ROOT", root)
+    monkeypatch.chdir(root / "build")
+    args = [*args, "/Ob2", "/Ob1"]
+    calls = []
+
+    def run(command, **options):
+        calls.append(command)
+        if "/E" not in command:
+            pytest.fail("compile ran after failed preprocessing")
+        index = len(calls)
+        cwd = options["cwd"]
+        output_path = source if cwd == root / "build" else Path("src/unit.cpp")
+        return subprocess.CompletedProcess(
+            command, returncode if index == phase else 0,
+            stdout if index == phase else preprocessed(output_path),
+            stderr if index == phase else _D4025)
+
+    monkeypatch.setattr(wine, "run_tool", run)
+    assert wine.main(["vc6-cl", *args]) == 3
+    assert len(calls) == phase
+    captured = capsys.readouterr()
+    assert "reproducibility preprocessing failed" in captured.err
+    assert captured.out == ""
 
 
 def test_explicit_identity_preserves_output_and_include_destinations(invocation):
@@ -231,6 +335,40 @@ def test_real_vc6_header_damage_survives_long_preprocessed_output(invocation, op
     assert 'RECOVERY_LONG_HEADER_DAMAGE' in result.stderr[:1800]
     assert 'expanded_value_' not in result.stderr and len(result.stderr) <= 4100
     assert not output.exists()
+
+
+@pytest.mark.parametrize("damage", ["none", "header", "source"])
+def test_real_vc6_explicit_inline_override_positive_and_damage_controls(tmp_path, damage):
+    if not (wine.VC6_ROOT / "BIN/CL.EXE").is_file():
+        pytest.skip("VC6 is not installed")
+    root = tmp_path.resolve()
+    source_dir, build_dir = root / "src", root / "build"
+    source_dir.mkdir()
+    build_dir.mkdir()
+    source = source_dir / "unit.cpp"
+    expected = None
+    if damage == "header":
+        (source_dir / "damage.h").write_text("#error RECOVERY_OVERRIDE_HEADER_DAMAGE\n")
+        source.write_text('#include "damage.h"\nint value() { return 7; }\n')
+        expected = "RECOVERY_OVERRIDE_HEADER_DAMAGE"
+    elif damage == "source":
+        source.write_text("#error RECOVERY_OVERRIDE_SOURCE_DAMAGE\n")
+        expected = "RECOVERY_OVERRIDE_SOURCE_DAMAGE"
+    else:
+        source.write_text("int value() { return 7; }\n")
+    output = build_dir / "unit.obj"
+    wrapper = [sys.executable, str(Path(wine.__file__)), "--tool=cl"]
+    result = subprocess.run(
+        [*wrapper, "--repro-root=" + str(root), "/nologo", "/c", "/O2",
+         "/Ob2", "/Ob1", "/Fo" + str(output), str(source)],
+        cwd=build_dir, capture_output=True, text=True, timeout=60)
+    if damage == "none":
+        assert result.returncode == 0, result.stdout + result.stderr
+        assert output.is_file()
+    else:
+        assert result.returncode == 3, result.stdout + result.stderr
+        assert expected in result.stderr[:1800]
+        assert not output.exists()
 
 
 @pytest.mark.parametrize("flag", ["/Brepro", "/B1custom", "/B2custom", "/d1Brepro",
