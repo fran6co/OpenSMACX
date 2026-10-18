@@ -1,0 +1,21 @@
+{
+  "event_id": "4b64423682aba06772bdfc4d05fcad335d9ae4ac1193f09c4d9a781edac652c9",
+  "payload": {
+    "affects": [
+      "entity-22d860cadc88df90a959a8ca4dc27fb0be69bc791422105141d17f7c804f16f3"
+    ],
+    "author": "coordinator",
+    "discovery_id": "original-stencil-scaled-kernels",
+    "evidence": [
+      "Complete pinned5E81BC..5E8FA5 decoded1272 contiguous instructions. Remainderdispatch86F4..875E selects entrylanes0,3,2,1; saveddispatch9B3AC4 restarts eachrow at8837. Firstzero predicate8773JE differs from878A/87A1/87B8JNE. Allshrink samplesindexsource. Expansion8996samplesYlowbyte,89A9/89B1/89B9 branchonly1/2/3,otherselectorsfourrows. Fourrow samplers89F3/8A46/8A99/8AECreaddestination and89FBmapsbeforestores;1/2/3readsource.",
+      "Independent review redecoded exact pinned bytes and reviewed source/testdiff. Source changes onlysavedentrylane,zero predicate,defaultfourrow remap index andcontradictoryprose; no inferredruntimeattribution."
+    ],
+    "hypothesis": "Scaled stencil loops mistranslate Duff-lane zero guards and the default four-row remap operand.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "original-stencil-scaled-kernels",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:sprite-scaled-remap-oct18"
+}

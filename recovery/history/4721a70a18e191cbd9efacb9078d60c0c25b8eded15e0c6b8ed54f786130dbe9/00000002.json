@@ -1,0 +1,20 @@
+{
+  "event_id": "24525b3d9506f22ffbdb506654c48a7a5ccb920bbd32232ee3a89b9473bfc026",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "original-stencil-scaled-kernels",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/sprite.cpp genuine draw_dest_unk2 now snapshots Duff entryphasebeforeallrows, retainskeyguard and original differing lanezeropredicates. Defaultfourrow expansion samples firstdestination once per sourcepixel before replication;selectors1/2/3keep sourceindex. Unit/clipping/helper/cleanup/traversal untouched. Source has no assembly/fixedaddressstorage/newclaim.",
+      "52actualrenderer hosttests includingfullnewmethod,5compilingpriorbehavior/phase/default/samplemutants andcompletepinnedanchors pass. Adjacentblitter/scaling/scratchsuite94pass/1optinskip. TestsuseC++17hostservice doubles, notnativeABI/x87/DirectDraw/sharedscratchreentrancy/arbitraryintegertablealiasproof.",
+      "Fresh166CPP/180COFF fullapplication build/linkPASS,180outsideauthorizedfunctionphysicalresidualsPASS,5646canonicalannotationidentity/span/symbol/binding/claim/findingcontinuityPASS; source/claim/mapping/referencechecksPASS. BothnativeFLAG_SETS replica/priorbody controlsPASS across10compiles. FunctionremainsMISMATCH; no exactgain,claimgrant/demotion orfullgame/nativeautomaticacceptance. Destinationfreshbuild/linkandzeroomissionphysicalrecheck required.",
+      "OriginalunrolledFLAGS/sharedscratch andotherwhole-spanmatching/aliasobligations remain. Missingunitpreview finalcopyisBuffer::draw fromCaviar,notthisscaledSpriteworker; do notclaimvisualcausalitywithoutpairedobservation."
+    ]
+  },
+  "previous_event": "4b64423682aba06772bdfc4d05fcad335d9ae4ac1193f09c4d9a781edac652c9",
+  "request_id": "incorporate-original-stencil-scaled-kernels",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:sprite-scaled-remap-oct18"
+}

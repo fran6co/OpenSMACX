@@ -3143,16 +3143,16 @@ int Sprite::draw_multi_table_dest(Buffer *destination, int transparent, int x,
 
 // ORIGINAL: 0x005E81BC ?draw_dest_unk2@Sprite@@QAEHPAUBuffer@@HHHPAE@Z 0x005E81BC-0x005E8FA5 FILE
 // symbol    ?draw_dest_unk2@Sprite@@QAEHPAVBuffer@@HHHPAE@Z
-// draw_dest's stencil sibling: the transparency key passes untouched, a zero
-// source byte passes untouched, and everything else is remapped - the uniform
-// and shrink walks remap through the DESTINATION pixel (table[dst]) while the
-// expanded runs replicate table[source] over the run. The original's inner
-// loops are a hand-unrolled Duff's device (pushf/popf protected); this body
-// keeps the guards, the scale gate and the clipping and performs the same
-// per-pixel operations with plain nested loops, on the family's verified walk.
-// HAND-WRITTEN ASSEMBLY IN THE ORIGINAL: the shipped bytes save and restore
-// the FLAGS around the unrolled block - byte-exactness is not reachable from
-// C++ here; the honest ceiling is semantic equivalence.
+// Stencil remap: at unit scale, non-key/nonzero source pixels select table[dst].
+// The shrink Duff walk instead selects table[src], with the original asymmetric
+// zero test: lane zero maps nonzero, while the other three lanes map zero.
+// A partial group enters at lane 4-(width%4); each row restarts that same lane.
+// Expansion skips key/zero source pixels. Its one/two/three-row kernels map
+// table[src], but the default four-row kernel samples table[first destination]
+// once per source pixel and replicates that mapped value across its output run.
+// The original saves/restores FLAGS around its unrolled assembly. Recovering
+// that code generation and complete shared-scratch alias behavior remains
+// matching debt; this C++ loop is not a claim of whole-span equivalence.
 // TRIED (seed): two indirect back-edges (jmp edx @0x5E8420, jmp [0x9B3AC4]
 //         @0x5E8766) are Duff's-device dispatch; rewritten as a
 //         switch(remainder) on the loop-invariant state. The row-repeat count
@@ -3285,12 +3285,14 @@ int Sprite::draw_dest_unk2(Buffer *destination, int transparent, int x, int y,
         const unsigned char *source_row = scaled_source + (source_x + source_pitch * source_y);
         unsigned char *destination_row = destination_bits + (base_offset +
             destination_x + destination_pitch * destination_y);
+        const int first_lane = (4 - (destination_columns & 3)) & 3;
         do {
             int *const columns = SpriteRasterXTable;
             const unsigned char *source = source_row;
             uint32_t source_advance = 0;
             for (int column = 0; column < destination_columns; ++column) {
-                if (*source != key && *source != 0)
+                const int lane = (column + first_lane) & 3;
+                if (*source != key && (lane == 0 ? *source != 0 : *source == 0))
                     destination_row[column] = table[*source];
                 const int source_step = columns[column];
                 source_advance += static_cast<uint32_t>(source_step);
@@ -3344,7 +3346,8 @@ int Sprite::draw_dest_unk2(Buffer *destination, int transparent, int x, int y,
                 const unsigned char pixel_value = source_row[column];
                 if (pixel_value != key && pixel_value != 0) {
                     const unsigned char mapped =
-                        SpriteRasterRemapTable.single[pixel_value];
+                        SpriteRasterRemapTable.single[repeats == 4
+                            ? destination_row[output_column] : pixel_value];
                     for (int repeat = 0; repeat < repeats; ++repeat)
                         for (int pixel = 0; pixel < columns[column]; ++pixel) {
                             destination_row[

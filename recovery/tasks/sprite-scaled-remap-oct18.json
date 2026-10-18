@@ -1,0 +1,24 @@
+{
+  "author": "coordinator",
+  "base_revision": "e7a8a7172b4cbfab4009972832eebcb3aaf324db",
+  "editable_files": [
+    "src/sprite.cpp",
+    "recovery/tests/test_sprite_source_remap.py"
+  ],
+  "evidence": [
+    "Pinned complete original 5E81BC..5E8FA5: shrink lane zero 5E8770/8773 maps nonzero; lanes one/two/three 5E8787/878A,879E/87A1,87B5/87B8 map zero, after the transparency test. Remainder dispatch 5E86F4 and saved 9B3AC4 restart 5E8837/8766 give entry lanes {0,3,2,1}. Snapshot entry lane before all rows, retain source-indexed mapping and existing X/Y consumption.",
+    "Expansion selectors low byte 1/2/3 choose those row counts; every other selector chooses four. Four-row branch 5E89F3/89F5/89FB reads the first destination sample to index the remap; remaining samplers 5E8A46/8A99/8AEC agree. Other branches 5E8BC4/8D4F/8EA2 index source. Retain source key/zero guard and sample mapped value once per source pixel before replication.",
+    "Faithful original quirks, not safety fixes. Preserve all mappings/claims, clipping, shared scratch, helper calls, return and acquisition behavior. Correct contradictory nearby prose without claiming assembly equivalence impossible. Require actual full-body host oracles and compiling prior-behavior damage controls, pinned evidence, independent source review, fresh full build/link and actual 180-object outside-body preservation, claims/mappings/references/source and destination recheck. Existing alias/flags/x87/matching/linked-selection/runtime obligations remain; no full-game acceptance."
+  ],
+  "intent": "Recover the original asymmetric scaled stencil remap in Sprite::draw_dest_unk2.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6193596,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "sprite-scaled-remap-oct18"
+}

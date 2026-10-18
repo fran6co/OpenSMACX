@@ -1,4 +1,4 @@
-"""Actual five-argument Sprite::draw, original 5E9D44..5EAAFF.
+"""Actual five-argument Sprite::draw and bounded related-renderer controls.
 
 Independent pixel oracles deliberately differ from draw_dest: unit/shrink map
 non-key zero; expansion skips zero, and its default four-row kernel maps the
@@ -15,6 +15,14 @@ and high-byte X advances likewise test the worker boundary; their consumed-X
 sums preserve the helpers' count contract, not full real-helper integration.
 LSan is disabled
 for ptrace; address and undefined-behavior sanitizers remain enabled.
+
+The complete draw_dest_unk2 body5E81BC..5E8FA5 is also exercised: a separate
+branch-target oracle models shrink's differing Duff-lane zero predicates;
+the expansion oracle checks first-destination sampling in default/four-row
+mode. Source/destination/LUT aliases stay live; output overlap with integer
+step tables or raster scratch globals is outside this bounded test. These
+C++17 host sanitizer controls do not establish VC6 code generation, x87
+effects, native ABI, whole-game behavior or byte-exact recovery.
 """
 from pathlib import Path
 import os
@@ -56,6 +64,7 @@ def actual(with_real_clippers=False):
     for key, pattern in (
         ("UNK1BODY", r"int Sprite::draw_dest_unk1\(Buffer \*destination, int x, int y,\s*unsigned char \*table\)\s*\{"),
         ("SOURCEBODY", r"int Sprite::draw_dest_source\(Buffer \*destination, int transparent, int x, int y,\s*unsigned char \*table\)\s*\{"),
+        ("UNK2BODY", r"int Sprite::draw_dest_unk2\(Buffer \*destination, int transparent, int x, int y,\s*unsigned char \*table\)\s*\{"),
     ):
         method_signature = one(pattern, source)
         method_start = source.index(method_signature)
@@ -72,6 +81,7 @@ def actual(with_real_clippers=False):
     methods = one(r"  int draw\(Buffer \*destination, int transparent, int x, int y,\s*unsigned char \*table\);", header)
     methods += "\n" + one(r"  int draw_dest_unk1\(Buffer \*destination, int x, int y,\s*unsigned char \*table\);", header)
     methods += "\n" + one(r"  int draw_dest_source\(Buffer \*buffer, int transparent, int x, int y,\s*unsigned char \*table\);", header)
+    methods += "\n" + one(r"  int draw_dest_unk2\(Buffer \*buffer, int a, int b, int c, unsigned char \*bits\);", header)
     for name in ("fill_scaling_table", "get_clipped_x_table_shrink", "get_clipped_y_table_shrink",
                  "get_clipped_x_table_expand", "get_clipped_y_table_expand"):
         methods += "\n" + one(r"  (?:void|int \*)\s*" + name + r"\([^;]*\);", header)
@@ -158,6 +168,7 @@ BODY
 MULTIBODY
 UNK1BODY
 SOURCEBODY
+UNK2BODY
 void reset(){
  for(int i=0;i<131072;++i)memory[i]=expected[i]=static_cast<unsigned char>((i*17+23)%251);
  for(int i=0;i<256;++i)memory[TABLE+i]=expected[TABLE+i]=static_cast<unsigned char>((i*37+7)%256);
@@ -301,6 +312,7 @@ int shrink_cursor_runtime(int which){
  return 0;
 }
 int main(){
+ if(std::getenv("SPRITE_STENCIL_RUNTIME")) return stencil_runtime();
  if(std::getenv("SPRITE_SHRINK_CURSOR_RUNTIME"))
   return shrink_cursor_runtime(std::atoi(std::getenv("SPRITE_SHRINK_CURSOR_RUNTIME")));
  if(std::getenv("SPRITE_MULTI_RUNTIME")) return actual_multi_table_runtime();
@@ -443,11 +455,114 @@ AXIS(get_clipped_y_table_expand,1,true)
 '''
 
 
+STENCIL_CONTROLS = r'''
+// Original5E81BC uses physical Duff lanes. The independent entry table below
+// follows branch targets, not the implementation's arithmetic phase formula.
+void stencil_shrink(int source,int destination,int table,int key){
+ const int entry[]={0,3,2,1};int sy=0;
+ for(int row=0;row<axes[1].destination_count;++row){
+  int sx=0,lane=entry[axes[0].destination_count%4];
+  for(int col=0;col<axes[0].destination_count;++col){
+   unsigned char value=expected[source+sy*sprite.iSpriteWidth2_+sx];
+   if(value!=static_cast<unsigned char>(key) &&
+      (lane==0 ? value!=0 : value==0))
+    expected[destination+row*buffer.stride_+col]=expected[table+value];
+   lane=(lane+1)%4;sx+=axes[0].steps[col];
+  }
+  sy+=static_cast<unsigned char>(axes[1].steps[row]);
+ }
+}
+int stencil_paint(int key,int table,int x=2,int y=3){
+ expected_clipped={std::max(expected_original.left,buffer.rect1_.left),std::max(expected_original.top,buffer.rect1_.top),
+  std::min(expected_original.right,buffer.rect1_.right),std::min(expected_original.bottom,buffer.rect1_.bottom)};
+ return sprite.draw_dest_unk2(&buffer,key,x,y,memory+table);
+}
+void stencil_done(int result,const char*trace,const char*witness,int code=0){
+ if(result!=code||events!=trace){fprintf(stderr,"stencil witness %s return/trace\n",witness);require(false);}
+ require(unlocks==(strchr(trace,'U')?1:0));
+ for(int i=0;i<131072;++i)if(memory[i]!=expected[i]){
+  fprintf(stderr,"stencil witness %s pixel%d actual%d expected%d\n",witness,i,memory[i],expected[i]);require(false);
+ }
+}
+void stencil_shrink_setup(int width,int pattern){
+ reset();SpriteScaleNumerator=1;SpriteScaleDenominator=2;
+ sprite.iSpriteWidth_=width*3;sprite.iSpriteHeight_=8;sprite.iSpriteWidth2_=64;
+ expected_original={2,3,2+width*3/2,7};buffer.rect1_=expected_original;
+ axes[0]={1,1,0,width,{}};
+ for(int i=0;i<width;++i){axes[0].steps[i]=i%2+1;axes[0].source_count+=axes[0].steps[i];}
+ axes[1]={1,1,3,2,{258,1}};
+ for(int row=0;row<4;++row){int sx=0;for(int col=0;col<width;++col){
+  int value=pattern==0?7:pattern==1?0:(col+row)%3==0?0:(col+row)%3==1?7:255;
+  put((row+1)*64+1+sx,value);sx+=axes[0].steps[col];}}
+}
+int stencil_runtime(){
+ // Widths1..9 exercise all partial entries and repeated groups, with saved
+ // entry restarted on each row. A width1 group begins at physical lane4.
+ for(int width=1;width<=9;++width)for(int pattern=0;pattern<3;++pattern)
+  for(int key : {0,255,0x1ff,0x108}){
+   stencil_shrink_setup(width,pattern);
+   stencil_shrink(65,OUTPUT+4*64+3,TABLE,key);
+   stencil_done(stencil_paint(key,TABLE),"LFIJXYU","shrink lane and row restart");
+   require(SpriteRasterDestinationRowCount==0&&SpriteRasterYTable==axes[1].steps+2);
+   check_tails(64-axes[0].source_count,64-width);check_pitches(64,64);
+  }
+ // Aliased source, destination and LUT remain live between pixel stores.
+ // Excludes overlap with integer X/Y tables and raster scratch storage.
+ for(int alias=0;alias<3;++alias){
+  stencil_shrink_setup(5,2);int dst=OUTPUT+4*64+3,table=TABLE,source=65;
+  if(alias==0){source=dst-1;sprite.pcBits_=memory+source-65;put(source,7);put(source+1,0);}
+  if(alias==1){table=dst;put(dst,3);put(dst+1,71);put(dst+7,27);}
+  if(alias==2){table=SOURCE;put(table,91);put(table+7,83);}
+  stencil_shrink(source,dst,table,255);
+  stencil_done(stencil_paint(255,table),"LFIJXYU","shrink live alias");
+ }
+ // Existing expansion oracle already specifies this identity's exact mode
+ // split. Nonordinary selectors are explicit worker-boundary stress inputs.
+ for(int selector : {0,1,2,3,4,5,255,256,257,258,259,260,-1})
+  for(int count=1;count<=7;++count)for(int key : {0,255,0x1ff,0x108}){
+   reset();setup_expand(count,selector);
+   for(int i=0;i<count;++i){put(i,i%3==0?0:i%3==1?255:7);put(12+i,7);}
+   expand(0,OUTPUT+3*64+2,12,64,TABLE,key);
+   stencil_done(stencil_paint(key,TABLE),"LFIJXYU","expansion default first destination");
+   require(SpriteRasterSourceRowCount==0&&SpriteRasterYTable==axes[1].steps+2);
+  }
+ for(int selector : {1,2,3,4,0,5,255})for(int alias=0;alias<3;++alias){
+  reset();setup_expand(3,selector);int dst=OUTPUT+3*64+2,table=TABLE,source=SOURCE;
+  put(0,1);put(1,2);put(2,3);
+  if(alias==0){source=dst-1;sprite.pcBits_=memory+source;put(source,7);}
+  if(alias==1){table=dst;put(dst,2);put(dst+1,71);put(dst+2,99);}
+  if(alias==2){table=SOURCE;put(0,2);put(1,27);put(2,91);}
+  expand(source,dst,12,64,table,255);
+  stencil_done(stencil_paint(255,table),"LFIJXYU","expansion live alias sample once");
+ }
+ // Unit path is destination remapping; source zero/key remain transparent.
+ reset();sprite.iSpriteWidth_=5;sprite.iSpriteHeight_=2;expected_original={2,3,7,5};
+ for(int row=0;row<2;++row)for(int col=0;col<5;++col){
+  int value=col%3==0?0:col%3==1?255:7;put(row*12+col,value);
+  int at=OUTPUT+(3+row)*64+2+col;
+  if(value!=0&&value!=255)expected[at]=expected[TABLE+expected[at]];
+ }
+ stencil_done(stencil_paint(255,TABLE),"LIU","unit unchanged destination map");
+ reset();sprite.pcBits_=nullptr;stencil_done(stencil_paint(255,TABLE),"","null pixels",3);
+ reset();require(sprite.draw_dest_unk2(nullptr,255,2,3,memory+TABLE)==3&&events.empty());
+ reset();locks=0;stencil_done(stencil_paint(255,TABLE),"L","failed acquisition",3);
+ reset();SpriteScaleNumerator=5;stencil_done(stencil_paint(255,TABLE),"LU","ratio cap");
+ for(int failure=1;failure<=2;++failure)for(int enlarge=0;enlarge<2;++enlarge){
+  reset();SpriteScaleNumerator=2;SpriteScaleDenominator=enlarge?1:3;
+  expected_original=enlarge?RECT{2,3,12,9}:RECT{2,3,5,5};buffer.rect1_=expected_original;fail_axis=failure;
+  stencil_done(stencil_paint(255,TABLE),failure==1?"LFIJXU":"LFIJXYU","null helper cleanup");
+ }
+ puts("stencil actual5E81BC controls passed");return 0;
+}
+'''
+
+
 def run(tmp_path, parts, env_extra=None):
     compiler = shutil.which("clang++") or shutil.which("g++")
     if not compiler:
         pytest.skip("host C++ compiler required")
     text = HARNESS.replace("// CLIPPING_IMPLEMENTATIONS", parts["CLIPPERS"])
+    text = text.replace("int main(){", STENCIL_CONTROLS + "\nint main(){")
     for key in sorted((key for key in parts if key != "CLIPPERS"), key=len, reverse=True):
         text = text.replace(key, parts[key])
     source, exe = tmp_path / "remap.cpp", tmp_path / "remap"
@@ -463,6 +578,108 @@ def run(tmp_path, parts, env_extra=None):
 def test_actual_source_remap(tmp_path):
     result = run(tmp_path, actual())
     assert result.returncode == 0, result.stdout + result.stderr
+
+
+def test_actual_stencil_scaled_quirks(tmp_path):
+    result = run(tmp_path, actual(), {"SPRITE_STENCIL_RUNTIME": "1"})
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "stencil actual5E81BC controls passed" in result.stdout
+
+
+@pytest.mark.parametrize("damage", ["uniform_guard", "wrong_phase", "carried_phase",
+                                   "default_source", "per_output_resample"])
+def test_stencil_rejects_compiling_damage(tmp_path, damage):
+    parts = actual()
+    source = parts["UNK2BODY"]
+    if damage == "uniform_guard":
+        good = "(lane == 0 ? *source != 0 : *source == 0)"
+        bad = "*source != 0"
+    elif damage == "wrong_phase":
+        good = "(column + first_lane) & 3"
+        bad = "column & 3"
+    elif damage == "carried_phase":
+        good = "const int first_lane ="
+        assert source.count(good) == 1
+        source = source.replace(good,"int first_lane =")
+        good = "const unsigned char row_selector ="
+        bad = "first_lane = (first_lane + destination_columns) & 3;\n            const unsigned char row_selector ="
+    elif damage == "default_source":
+        good = "? destination_row[output_column] : pixel_value"
+        bad = "? pixel_value : pixel_value"
+    else:
+        good = "pixel] = mapped;"
+        bad = "pixel] = SpriteRasterRemapTable.single[repeats == 4 ? destination_row[output_column] : pixel_value];"
+    assert source.count(good) == 1, damage
+    parts["UNK2BODY"] = source.replace(good,bad)
+    result = run(tmp_path,parts,{"SPRITE_STENCIL_RUNTIME": "1"})
+    witness = "shrink lane and row restart" if damage in (
+        "uniform_guard","wrong_phase","carried_phase") else "expansion default first destination"
+    assert result.returncode == 99 and f"stencil witness {witness}" in result.stderr, result.stdout + result.stderr
+
+
+def test_stencil_complete_pinned_duff_and_expansion_anchors():
+    from capstone import Cs, CS_ARCH_X86, CS_MODE_32
+    from match_recovery.model import Span
+    from match_recovery.pe_coff import PeImage
+
+    configured = os.environ.get("OPENSMACX_IMAGE")
+    candidates = ([Path(configured)] if configured else []) + [
+        parent / ".opensmacx/game/terranx_original.exe" for parent in (ROOT,*ROOT.parents)]
+    path = next((path for path in candidates if path.is_file()),None)
+    if path is None:
+        pytest.skip("pinned proprietary image unavailable")
+    pin = "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    image = PeImage(path.read_bytes(),pin)
+    start,end = 0x5E81BC,0x5E8FA5
+    decoded = list(Cs(CS_ARCH_X86,CS_MODE_32).disasm(image.read(Span(start,end)),start))
+    cursor = start
+    for instruction in decoded:
+        assert instruction.address == cursor
+        cursor += instruction.size
+    assert cursor == end
+    instructions = {i.address:(i.mnemonic,i.op_str) for i in decoded}
+    anchors = {
+        0x5E86EB:("mov","ah, byte ptr [ebp + 0xc]"),
+        0x5E86F4:("mov","ebx, dword ptr [0x9b3ad4]"),
+        0x5E86FA:("and","ebx, 3"),
+        0x5E8708:("lea","ebx, [0x5e87cd]"),
+        0x5E871B:("lea","ebx, [0x5e87eb]"),
+        0x5E8735:("lea","ebx, [0x5e87e1]"),
+        0x5E874F:("lea","ebx, [0x5e87d7]"),
+        0x5E8766:("jmp","dword ptr [0x9b3ac4]"),
+        0x5E8773:("je","0x5e877d"),
+        0x5E878A:("jne","0x5e8794"),
+        0x5E87A1:("jne","0x5e87ab"),
+        0x5E87B8:("jne","0x5e87c2"),
+        0x5E8775:("mov","bl, byte ptr [esi]"),
+        0x5E8777:("mov","bl, byte ptr [ebp + ebx]"),
+        0x5E877B:("mov","byte ptr [edi], bl"),
+        0x5E882B:("mov","ecx, dword ptr [0x9b6078]"),
+        0x5E8837:("jne","0x5e8766"),
+        0x5E8996:("mov","al, byte ptr [ecx]"),
+        0x5E8998:("add","ecx, 4"),
+        0x5E89A7:("cmp","al, 1"),
+        0x5E89A9:("je","0x5e8e6e"),
+        0x5E89AF:("cmp","al, 2"),
+        0x5E89B1:("je","0x5e8d1b"),
+        0x5E89B7:("cmp","al, 3"),
+        0x5E89B9:("je","0x5e8b90"),
+        0x5E89BF:("mov","ebx, dword ptr [0x9b475c]"),
+        0x5E89F3:("mov","bl, byte ptr [edi]"),
+        0x5E8A46:("mov","bl, byte ptr [edi]"),
+        0x5E8A99:("mov","bl, byte ptr [edi]"),
+        0x5E8AEC:("mov","bl, byte ptr [edi]"),
+        0x5E89FB:("mov","al, byte ptr [ebx]"),
+        0x5E89FD:("mov","byte ptr [edi], al"),
+        0x5E8BC4:("mov","bl, byte ptr [esi]"),
+        0x5E8D4F:("mov","bl, byte ptr [esi]"),
+        0x5E8EA2:("mov","bl, byte ptr [esi]"),
+        0x5E8B3A:("lea","edi, [edi + ebp*2]"),
+        0x5E8B3D:("lea","edi, [edi + ebp]"),
+        0x5E8FA2:("ret","0x14"),
+    }
+    for address,expected in anchors.items():
+        assert instructions[address] == expected,hex(address)
 
 
 def test_actual_renderer_fill_and_all_clipping_methods(tmp_path):
