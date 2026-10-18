@@ -39,7 +39,12 @@ int Log::init(LPCSTR input) {
     if (!input) {
         return 16;
     }
-    this->~Log();
+    // Reinitialization releases the filename, not the receiver's lifetime.
+    // The original frees and clears this slot before reading input's length.
+    if (log_file_) {
+        free(log_file_);
+        log_file_ = nullptr;
+    }
     size_t len = strlen(input) + 1;
     log_file_ = (LPSTR)mem_get(len);
     if (!log_file_) {
@@ -155,21 +160,14 @@ Purpose: Build one log line for the say-buffer: decimal the number,
 Return Value: n/a
 Status: Coverage transcription - claim pending re-measurement
 */
-typedef char *(*StrcatFn)(char *, const char *);
-
 extern "C" void __cdecl sub_51e6f0(const char *text, int value) {
     char line[0x100];
     char digits[0x50];
     line[0] = 0;
     _itoa(value, digits, 10);
-    // `strcat` is an MSVC intrinsic by name and /O2 inlines it, which the
-    // image does not do - it calls 0x00645470 out-of-line. Calling through
-    // the function pointer taken from the CRT's own declaration is opaque
-    // to the name-based intrinsic recognition.
-    reinterpret_cast<StrcatFn>(&strcat)(line, digits);
-    reinterpret_cast<StrcatFn>(&strcat)(
-        line, BufferJoinSpace);
-    reinterpret_cast<StrcatFn>(&strcat)(line, text);
+    strcat(line, digits);
+    strcat(line, BufferJoinSpace);
+    strcat(line, text);
     log_say_hex(line, value, 0, 0);
 }
 

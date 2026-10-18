@@ -140,10 +140,7 @@ int main() {
 @pytest.mark.parametrize("compiler", COMPILERS)
 def test_sub51e6f0_keeps_decimal_space_text_call_order_and_logger_tails(tmp_path, compiler):
     path = owner_path("log.cpp")
-    text = path.read_text()
     body = source_body(path, "sub_51e6f0")
-    typedef = "typedef char *(*StrcatFn)(char *, const char *);"
-    assert text.count(typedef) == 1
     harness = r'''
 #include <cstdio>
 #include <cstdlib>
@@ -158,11 +155,11 @@ int main() { sub_51e6f0("tail", -27); if (calls!=1) return 1;
  if (std::strcmp(got,"-27 tail") || got_value!=-27 || got_a || got_b) return 2; return 0; }
 '''
     with tempfile.TemporaryDirectory(dir=tmp_path) as td:
-        compile_run(Path(td), compiler, harness + typedef + "\n" + body + checks)
+        compile_run(Path(td), compiler, harness + body + checks)
     mutant = body.replace("BufferJoinSpace", '""', 1)
     assert mutant != body
     with tempfile.TemporaryDirectory(dir=tmp_path) as td:
-        assert compile_status(Path(td), compiler, harness + typedef + "\n" + mutant + checks) != 0
+        assert compile_status(Path(td), compiler, harness + mutant + checks) != 0
 
 
 @pytest.mark.parametrize("compiler", COMPILERS)

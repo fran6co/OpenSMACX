@@ -1,0 +1,45 @@
+{
+  "event_id": "e52540ed91f42875ff0023568e39cdf2e61bbca81b5ff1ced2ff3004d98e38dc",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Admit only the five observed current function emission changes caused alongside the Log header migration: Console::menu_proc, setup_player, communicate, tech_achieved and order_veh. Their source bodies stay byte-for-byte unchanged; no outside C++ editing permission, baseline reset, claim demotion, omission of unrelated data/helpers or acceptance waiver is granted.",
+      "Qualified baseline/candidate full applications each link; all5581 masked classifications and strict-reference counts remain unchanged, but counts are not individual preservation proof. Native zero-projection physical comparison currently reports173pass/8fail, not green. Four objects have identical raw sections and function signatures but numbered local-label suffix churn; the remaining five observed function code differences need declared scope and review.",
+      "Independent bounded Console/Faction/Technology review identifies the changed operand/register windows and unchanged relocation targets. The large order_veh has identical ordered external relocation identities but whole behavior equivalence is unproven; retain that unknown and all prior matching/restoration obligations. This decision admits an investigation footprint, not per-change acceptance, automatic publication or full-game preservation."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5356656,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5967360,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5570512,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6008832,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5851072,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "baceb910bb6c9468472b73be19aa33400e0b4ec9be547bc57058ad9396843b2a",
+  "request_id": "log-header-observed-emission-footprint-oct18",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:log-filename-lifetime-oct18"
+}

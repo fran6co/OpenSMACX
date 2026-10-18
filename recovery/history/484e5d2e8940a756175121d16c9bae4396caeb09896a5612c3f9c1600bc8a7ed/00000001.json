@@ -1,0 +1,19 @@
+{
+  "event_id": "baceb910bb6c9468472b73be19aa33400e0b4ec9be547bc57058ad9396843b2a",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_game_log_technology_owner_actual_source.py"
+    ],
+    "evidence": [
+      "The existing sub_51e6f0 host control freezes the removed StrcatFn typedef rather than behavior. Authorize only removing that obsolete typedef requirement/injection from test_sub51e6f0_keeps_decimal_space_text_call_order_and_logger_tails. Preserve its extracted actual function, decimal-space-text/zero-tail checks and compiling separator-damage control; do not change unrelated Game/Technology fixtures, production scope, task baseline or claims."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "log-declared-strcat-fixture-oct18",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:log-filename-lifetime-oct18"
+}

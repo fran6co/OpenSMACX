@@ -47,7 +47,7 @@ class Log {
   MEASURED ~Log() {
       if (log_file_) {
           free(log_file_);
-          *reinterpret_cast<LPSTR volatile *>(&log_file_) = nullptr;
+          log_file_ = nullptr;
       }
   } // 00626020
 
