@@ -335,8 +335,7 @@ void *__fastcall sub_63bb20(void *this_ptr);
 // Source-owned original helper; identity and behavior evidence are in its TU.
 void __cdecl read_and_parse_text_line();
 
-int __cdecl set_scale_adjustment(int value);
-int __cdecl apply_scale_adjustment(int value);
+#include "scale_adjustment.h"
 
 // Fixed-point companion to sin(angle, scale), recovered at 0x0063BAC0.
 int __cdecl cos(int angle, int scale);

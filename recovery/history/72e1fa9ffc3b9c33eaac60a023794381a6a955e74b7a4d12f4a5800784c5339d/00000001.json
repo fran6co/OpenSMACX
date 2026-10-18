@@ -1,0 +1,22 @@
+{
+  "event_id": "5e68a844d0af3bb1639a0ecb7a087de74c26ba708d1685e020f39b5c18dca9ac",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_general_owner_split_oct17.py",
+      "src/general.h"
+    ],
+    "evidence": [
+      "Native unchanged-source physical observations show collateral compiler output differences in ten clients after the two general.h declarations were removed. Fresh actual census gains five masked and strict matches with no old masked match loss, but classification equality alone does not establish outside-body preservation. Do not waive the compiler deltas.",
+      "Coordinator authorizes one bounded owner-header dependency at the exact former prototype seam: include scale_adjustment.h instead of duplicating prototypes or restoring definitions to General. The new header contains the identical two declarations in the same order, with no other dependencies or current earlier include in clients. This preserves a single declaration owner and existing API exposure; it is not proof of original TU identity. Other General header bytes, types, source bodies, flags and historical obligations remain protected.",
+      "Adapt only the exact header inverse expected bytes to this include; retain immutable3ca/b24 baselines, actual moved payload checks and all damage controls. Require fresh native application build, complete physical recheck and current measurements before manual integration. If collateral remains, investigate rather than labeling it accepted."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "preserve-client-api-order-through-owner-header",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:scalar-owner-profiles-oct18"
+}

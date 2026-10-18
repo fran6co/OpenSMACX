@@ -13,8 +13,8 @@ BASE = '9f7d39cdb1f16680ac232f60bab112bfbe678a3d'
 SPECS = (
     (0x515430, 'src/statuswin.cpp', 'src/recovered/00515430.cpp', 'int __cdecl reset_status_and_initialize_desktop(', '?reset_status_and_initialize_desktop@@YAHXZ'),
     (0x58FB70, 'src/stringstruct.cpp', 'src/recovered/units/0058fb70.cpp', 'char *__cdecl uppercase_text(', '?uppercase_text@@YAPADPADH@Z'),
-    (0x592D70, 'src/general.cpp', 'src/recovered/00592d70.cpp', 'int __cdecl set_scale_adjustment(', '?set_scale_adjustment@@YAHH@Z'),
-    (0x592D90, 'src/general.cpp', 'src/recovered/00592d90.cpp', 'int __cdecl apply_scale_adjustment(', '?apply_scale_adjustment@@YAHH@Z'),
+    (0x592D70, 'src/scale_adjustment.cpp', 'src/recovered/00592d70.cpp', 'int __cdecl set_scale_adjustment(', '?set_scale_adjustment@@YAHH@Z'),
+    (0x592D90, 'src/scale_adjustment.cpp', 'src/recovered/00592d90.cpp', 'int __cdecl apply_scale_adjustment(', '?apply_scale_adjustment@@YAHH@Z'),
     (0x4396B0, 'src/maininterface.cpp', 'src/recovered/units/004396b0.cpp', 'void __stdcall main_interface_bubble_callback_4396b0(', '?main_interface_bubble_callback_4396b0@@YGXPADHH@Z'),
 )
 _spec = importlib.util.spec_from_file_location('owned_helper_definition', ROOT / 'recovery/tests/test_game_logic_seed_batch_behavior.py')
