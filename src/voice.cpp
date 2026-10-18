@@ -135,7 +135,7 @@ int VoiceRx::stop() {
 /*
 Purpose: ?unload@VoiceRx@@QAEHXZ - forward 0 argument(s) to slot 0x14 of the
          object at +0x3c, answering 0x13 when that object is absent.
-// ORIGINAL: 0x004C8C50 ?unload@VoiceRx@@QAEHXZ 0x004C8C50-0x004C8C62
+// ORIGINAL: 0x004C8C50 ?unload@VoiceRx@@QAEHXZ 0x004C8C50-0x004C8C62 BYTE_EXACT
 // symbol    ?unload@VoiceRx@@UAEHXZ
 // size      18 bytes
 // prototype int (__thiscall ?unload@VoiceRx@@QAEHXZ)(VoiceRx* this)
@@ -156,7 +156,7 @@ int VoiceRx::unload() {
 /*
 Purpose: ?add_buffer@VoiceRx@@QAEHPAU_MMIOINFO@@@Z - forward 1 argument(s) to slot 0x8c of the
          object at +0x3c, answering 0x13 when that object is absent.
-// ORIGINAL: 0x004C8C70 ?add_buffer@VoiceRx@@QAEHPAU_MMIOINFO@@@Z 0x004C8C70-0x004C8C93
+// ORIGINAL: 0x004C8C70 ?add_buffer@VoiceRx@@QAEHPAU_MMIOINFO@@@Z 0x004C8C70-0x004C8C93 BYTE_EXACT
 // symbol    ?add_buffer@VoiceRx@@UAEHPAU_MMIOINFO@@@Z
 // size      35 bytes
 // prototype int (__thiscall ?add_buffer@VoiceRx@@QAEHPAU_MMIOINFO@@@Z)(VoiceRx* this, _MMIOINFO*)
@@ -178,7 +178,7 @@ int VoiceRx::add_buffer(_MMIOINFO *buffer) {
 /*
 Purpose: ?get_buffer_size@VoiceRx@@QAEHXZ - forward 0 argument(s) to slot 0x90 of the
          object at +0x3c, answering 0x0 when that object is absent.
-// ORIGINAL: 0x004C8CA0 ?get_buffer_size@VoiceRx@@QAEHXZ 0x004C8CA0-0x004C8CB2
+// ORIGINAL: 0x004C8CA0 ?get_buffer_size@VoiceRx@@QAEHXZ 0x004C8CA0-0x004C8CB2 BYTE_EXACT
 // symbol    ?get_buffer_size@VoiceRx@@UAEHXZ
 // size      18 bytes
 // prototype int (__thiscall ?get_buffer_size@VoiceRx@@QAEHXZ)(VoiceRx* this)
@@ -408,7 +408,7 @@ int VoiceTx::init(unsigned long size, void *context, unsigned long flags) {
 /*
 Purpose: ?get_nbuffers@VoiceTx@@QAEHXZ - forward 0 argument(s) to slot 0x94 of the
          object at +0x3c, answering 0x0 when that object is absent.
-// ORIGINAL: 0x004C9010 ?get_nbuffers@VoiceTx@@QAEHXZ 0x004C9010-0x004C9022
+// ORIGINAL: 0x004C9010 ?get_nbuffers@VoiceTx@@QAEHXZ 0x004C9010-0x004C9022 BYTE_EXACT
 // symbol    ?get_nbuffers@VoiceTx@@UAEHXZ
 // size      18 bytes
 // prototype int (__thiscall ?get_nbuffers@VoiceTx@@QAEHXZ)(VoiceTx* this)
@@ -429,7 +429,7 @@ int VoiceTx::get_nbuffers() {
 /*
 Purpose: ?get_next_buffer@VoiceTx@@QAEHXZ - forward 0 argument(s) to slot 0x88 of the
          object at +0x3c, answering 0x0 when that object is absent.
-// ORIGINAL: 0x004C9030 ?get_next_buffer@VoiceTx@@QAEHXZ 0x004C9030-0x004C9042
+// ORIGINAL: 0x004C9030 ?get_next_buffer@VoiceTx@@QAEHXZ 0x004C9030-0x004C9042 BYTE_EXACT
 // symbol    ?get_next_buffer@VoiceTx@@UAEPAU_MMIOINFO@@XZ
 // size      18 bytes
 // prototype int (__thiscall ?get_next_buffer@VoiceTx@@QAEHXZ)(VoiceTx* this)
@@ -450,7 +450,7 @@ _MMIOINFO *VoiceTx::get_next_buffer() {
 /*
 Purpose: ?return_buffer@VoiceTx@@QAEHPAU_MMIOINFO@@@Z - forward 1 argument(s) to slot 0x8c of the
          object at +0x3c, answering 0x13 when that object is absent.
-// ORIGINAL: 0x004C9050 ?return_buffer@VoiceTx@@QAEHPAU_MMIOINFO@@@Z 0x004C9050-0x004C9073
+// ORIGINAL: 0x004C9050 ?return_buffer@VoiceTx@@QAEHPAU_MMIOINFO@@@Z 0x004C9050-0x004C9073 BYTE_EXACT
 // symbol    ?return_buffer@VoiceTx@@UAEHPAU_MMIOINFO@@@Z
 // size      35 bytes
 // prototype int (__thiscall ?return_buffer@VoiceTx@@QAEHPAU_MMIOINFO@@@Z)(VoiceTx* this, _MMIOINFO*)
