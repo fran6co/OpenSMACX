@@ -26,8 +26,9 @@ SIGNATURES = (
 
 
 def installed_strings() -> str:
-    text = (ROOT / "src/strings.cpp").read_text()
-    rows = {row.address: row for row in read_text(text, ROOT / "src/strings.cpp")}
+    path = ROOT / "src/string_formatting.cpp"
+    text = path.read_text()
+    rows = {row.address: row for row in read_text(text, path)}
     assert set(ADDRESSES).issubset(rows)
     assert all(rows[address].source_role.value != "scaffold" for address in ADDRESSES)
     return text

@@ -262,6 +262,7 @@ set(OPENSMACX_SOURCES
     src/stringstruct.cpp
     src/name_table.cpp
     src/strings.cpp
+    src/string_formatting.cpp
     src/technology.cpp
     src/terraforming.cpp
     src/text.cpp
@@ -419,6 +420,9 @@ set_source_files_properties(
     src/councwin.cpp
     src/planwin.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")
+# Application formatters retain calls into the separately compiled string table.
+# The Strings implementation keeps its independently measured default recipe.
+set_source_files_properties(src/string_formatting.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Preserve measured frame-based accesses across the application owner batch.
 # Mixed AlphaNet and Strings recipes retain their measured default profiles.
 set_source_files_properties(
