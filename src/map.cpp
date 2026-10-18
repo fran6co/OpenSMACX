@@ -6848,7 +6848,7 @@ void __cdecl clear_dirty() {
 
 /*
 Purpose: Rank the prototypes a faction can build, best first, into ProtoSortIds.
-// ORIGINAL: 0x005A6270 ?proto_sort@@YAXH@Z 0x005A6270-0x005A63C9 FILE
+// ORIGINAL: 0x005A6270 ?proto_sort@@YAXH@Z 0x005A6270-0x005A63C9 FILE BYTE_EXACT
 // size      345 bytes
 // prototype void (__cdecl ?proto_sort@@YAXH@Z)(int factionID)
 // callers   2   call targets   4
@@ -6888,11 +6888,11 @@ void __cdecl proto_sort(int faction_id) {
         if (!(VehPrototypes[proto_id].flags & PROTO_ACTIVE)
             || (proto_id < MaxVehProtoFactionNum
                 && !has_tech(VehPrototypes[proto_id].preq_tech, faction_id))) {
-            if (proto_id < MaxVehProtoFactionNum) {
-                key = 999999999;
-            } else {
+            if (proto_id >= MaxVehProtoFactionNum) {
                 key = 0x34FB5E38;
                 ProtoSortCount++;
+            } else {
+                key = 999999999;
             }
         } else {
             key = (Chassis[VehPrototypes[proto_id].chassis_id].triad
