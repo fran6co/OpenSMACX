@@ -54,8 +54,8 @@ def producer_block(product: str) -> tuple[str, str]:
     finish = draw.index("vox_setup_copy_.shadow_buffer_ =", start)
     finish = draw.index(";", finish) + 1
     copies = draw[start:finish]
-    callback_start = draw.index("if (VoxRenderRecord::SetupCallback callback = record->setup_callback_)", finish)
-    callback_end = draw.index("}", callback_start) + 1
+    callback_start = draw.index("record->setup_callback_();", finish)
+    callback_end = callback_start + len("record->setup_callback_();")
     callback = draw[callback_start:callback_end]
     fields = (
         "colour_row_step_", "depth_row_step_", "shadow_row_step_",

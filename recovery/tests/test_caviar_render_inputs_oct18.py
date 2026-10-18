@@ -62,10 +62,11 @@ struct Caviar {
 std::string events;
 Caviar *active;
 Buffer target;
-VoxRenderRecord record;
+VoxRenderRecord record,record_b,record_c,record_d;
 VOX_Matrix initial_rotation;
-unsigned char colour[0x1800],shadow[256];
+unsigned char colour[0x1800],shadow[256],shadow_b[256],shadow_c[256],shadow_d[256];
 int flags_seen,cx,cy,transform_calls,hide_shadow_after_union;
+int replacement_mask;
 RECT screen_clip,expected_draw;
 void require(bool b,const char*w){if(!b){fprintf(stderr,"WITNESS: %s\n",w);exit(23);}}
 bool equal_rect(const RECT&a,const RECT&b){return a.left==b.left&&a.top==b.top&&a.right==b.right&&a.bottom==b.bottom;}
@@ -78,9 +79,20 @@ int IntersectRect(RECT*out,const RECT*a,const RECT*b){
 int UnionRect(RECT*out,const RECT*a,const RECT*b){
  require(CaviarScene.renderer_==0,"renderer cleared before output unions");
  RECT r={std::min(a->left,b->left),std::min(a->top,b->top),std::max(a->right,b->right),std::max(a->bottom,b->bottom)};
- if(out==&CaviarViewportState){events+='P';RECT covered={3,5,8,12};require(equal_rect(*a,covered),"primary inclusive output clip");}
- else {events+='S';require(out==&CaviarScene.scene_rect_,"secondary union owner");RECT covered={13,17,20,24};require(equal_rect(*a,covered),"secondary inclusive output clip");}
+ if(out==&CaviarViewportState){
+  events+='P';Clip&clip=CaviarScene.created_->primary_clip_;
+  RECT covered={clip.left_,clip.top_,clip.right_+1,clip.bottom_+1};
+  require(equal_rect(*a,covered),replacement_mask?"post-draw primary record reload":"primary inclusive output clip");
+ }
+ else {
+  events+='S';require(out==&CaviarScene.scene_rect_,"secondary union owner");
+  Clip&clip=CaviarScene.created_->secondary_clip_;
+  RECT covered={clip.left_,clip.top_,clip.right_+1,clip.bottom_+1};
+  require(equal_rect(*a,covered),replacement_mask?"post-primary-union secondary record reload":"secondary inclusive output clip");
+ }
  *out=r;
+ if(out==&CaviarViewportState&&(replacement_mask&2))CaviarScene.created_=&record_c;
+ if(out==&CaviarScene.scene_rect_&&(replacement_mask&4))CaviarScene.created_=&record_d;
  if(out==&CaviarScene.scene_rect_&&hide_shadow_after_union)active->scene_context_.shadow_enabled_=0;
  return 1;
 }
@@ -106,6 +118,7 @@ void vox_draw_scene(VoxRenderRecord*r,CaviarSceneContext*context,VoxCameraBlock*
  for(int i=0;i<3;++i)require(context->state_.scene_offset_.values[i]==offset[i]-((flags_seen&4)?midpoint[i]:0),"centering midpoint subtraction");
  record.primary_clip_.left_=3;record.primary_clip_.top_=5;record.primary_clip_.right_=7;record.primary_clip_.bottom_=11;
  record.secondary_clip_.left_=13;record.secondary_clip_.top_=17;record.secondary_clip_.right_=19;record.secondary_clip_.bottom_=23;
+ if(replacement_mask&1)CaviarScene.created_=&record_b;
 }
 void check_blit(Buffer*source,Buffer*dest,int key,int x,int y,int numerator,int denominator,bool is_shadow){
  require(source==(is_shadow?&CaviarSceneBufferB.value:&CaviarSceneBufferA.value)&&dest==&target,"blit source and destination owners");
@@ -115,14 +128,15 @@ void check_blit(Buffer*source,Buffer*dest,int key,int x,int y,int numerator,int 
 }
 int Buffer::draw_dest_source(Buffer*dest,int key,int x,int y,int numerator,int denominator,unsigned char*table){
  events+='H';check_blit(this,dest,key,x,y,numerator,denominator,true);
- require(table==shadow&&table!=colour,"shadow table provider is record54");return 17;
+ require(table==CaviarScene.created_->shadow_table_&&table!=colour,
+         replacement_mask?"post-secondary-union shadow record reload":"shadow table provider is record54");return 17;
 }
 int Buffer::draw(Buffer*dest,int key,int x,int y,int numerator,int denominator){events+='C';check_blit(this,dest,key,x,y,numerator,denominator,false);return 18;}
 void Buffer::free_data(int count){require(this==&target&&count==1,"original target release receiver and count");events+='F';}
 void Caviar::clear_buffers(int flag){require(this==active&&flag==(flags_seen&1),"clear flags low bit");events+='K';}
 @BODY@
 void reset(Caviar&c,int flags,int renderer_flags,bool empty){
- memset(&c,0,sizeof(c));memset(&record,0,sizeof(record));events.clear();transform_calls=hide_shadow_after_union=0;
+ memset(&c,0,sizeof(c));memset(&record,0,sizeof(record));events.clear();transform_calls=hide_shadow_after_union=replacement_mask=0;
  active=&c;flags_seen=flags;cx=178;cy=188;c.field_4_=renderer_flags;c.field_13CC_=2;c.camera_view_.camera_.scaling=1.25f;
  for(int r=0;r<3;++r)for(int col=0;col<3;++col)initial_rotation.values[r][col]=(float)(2+r*3+col);
  c.scene_context_.state_.scene_rotation_=initial_rotation;
@@ -132,6 +146,13 @@ void reset(Caviar&c,int flags,int renderer_flags,bool empty){
  expected_draw.left=empty?128-cx:20;expected_draw.top=empty?128-cy:20;
  expected_draw.right=empty?128-cx:200;expected_draw.bottom=empty?128-cy:180;
  CaviarScene.created_=&record;CaviarScene.renderer_=0;record.colour_table_=colour;record.shadow_table_=shadow;
+ record_b=record;record_c=record;record_d=record;
+ record_b.primary_clip_.left_=31;record_b.primary_clip_.top_=35;record_b.primary_clip_.right_=37;record_b.primary_clip_.bottom_=41;
+ record_b.secondary_clip_.left_=43;record_b.secondary_clip_.top_=47;record_b.secondary_clip_.right_=49;record_b.secondary_clip_.bottom_=53;
+ record_c.primary_clip_.left_=61;record_c.primary_clip_.top_=65;record_c.primary_clip_.right_=67;record_c.primary_clip_.bottom_=71;
+ record_c.secondary_clip_.left_=73;record_c.secondary_clip_.top_=77;record_c.secondary_clip_.right_=79;record_c.secondary_clip_.bottom_=83;
+ record_d.primary_clip_=record_c.primary_clip_;record_d.secondary_clip_=record_c.secondary_clip_;
+ record_b.shadow_table_=shadow_b;record_c.shadow_table_=shadow_c;record_d.shadow_table_=shadow_d;
  CaviarViewportState.left=1;CaviarViewportState.top=2;CaviarViewportState.right=4;CaviarViewportState.bottom=6;
  CaviarScene.scene_rect_.left=8;CaviarScene.scene_rect_.top=9;CaviarScene.scene_rect_.right=12;CaviarScene.scene_rect_.bottom=15;
 }
@@ -152,6 +173,16 @@ int main(){
  reset(c,1,0x21,false);c.field_13CC_=0;require(c.render(&target,cx,cy,1)==0&&events.empty()&&c.camera_view_.camera_.scaling==1.25f,"zero count precedes scaling");
  reset(c,1,1,false);c.field_13CC_=-1;require(c.render(&target,cx,cy,1)==0&&events=="IVPSHFCFK","negative nonzero count not normalized");
  reset(c,1,1,false);hide_shadow_after_union=1;require(c.render(&target,cx,cy,1)==0&&events=="IVPSFCFK","shadow byte rechecked after secondary union");
+ // All records remain alive: these service callbacks change only the shared
+ // selected record, making each original post-call reload independently visible.
+ for(int mask=1;mask<=7;++mask)for(int half=0;half<2;++half){
+  reset(c,1,1|(half?0x20:0),false);replacement_mask=mask;
+  require(c.render(&target,cx,cy,1)==0&&events=="IVPSHFCFK","live record callback order");
+ }
+ reset(c,3,1,false);replacement_mask=7;
+ require(c.render(&target,cx,cy,3)==0&&events=="IVPFCFK","flags2 skips later record groups");
+ reset(c,1,1,false);replacement_mask=7;hide_shadow_after_union=1;
+ require(c.render(&target,cx,cy,1)==0&&events=="IVPSFCFK","live shadow byte suppresses replaced table");
  puts("Caviar actual render input controls passed");
 }
 '''
@@ -186,7 +217,7 @@ def test_complete_actual_caviar_render_inputs(tmp_path):
 def test_compiling_render_input_damage_is_rejected(tmp_path,damage,witness):
     body=actual()
     if damage=="colour_for_shadow":
-        good,bad="record->shadow_table_","record->colour_table_"
+        good,bad="CaviarScene.created_->shadow_table_","CaviarScene.created_->colour_table_"
     elif damage=="flags_for_step":
         good="vox_transform_camera(&scene_context_.state_, 0,"
         bad="vox_transform_camera(&scene_context_.state_, (flags & 0x10) ? flags : 0,"
@@ -210,6 +241,24 @@ def test_compiling_render_input_damage_is_rejected(tmp_path,damage,witness):
         assert body.count(good)==1,damage
         body=body.replace(good,bad)
     result=run(tmp_path,body)
+    assert result.returncode==23 and f"WITNESS: {witness}" in result.stderr,result.stdout+result.stderr
+
+
+@pytest.mark.parametrize("damage,witness",[
+    ("stale_after_draw","post-draw primary record reload"),
+    ("stale_after_primary_union","post-primary-union secondary record reload"),
+    ("stale_after_secondary_union","post-secondary-union shadow record reload"),
+])
+def test_compiling_stale_record_damage_is_rejected(tmp_path,damage,witness):
+    body=actual()
+    if damage=="stale_after_draw":
+        good,bad="\n    record = CaviarScene.created_;\n    CaviarScene.renderer_ = 0;","\n    CaviarScene.renderer_ = 0;"
+    elif damage=="stale_after_primary_union":
+        good,bad="\n        record = CaviarScene.created_;\n        RECT scene;","\n        RECT scene;"
+    else:
+        good,bad="CaviarScene.created_->shadow_table_","record->shadow_table_"
+    assert body.count(good)==1,damage
+    result=run(tmp_path,body.replace(good,bad))
     assert result.returncode==23 and f"WITNESS: {witness}" in result.stderr,result.stdout+result.stderr
 
 
@@ -244,6 +293,13 @@ def test_pinned_complete_render_span_and_input_anchors():
         0x617443:("call","0x63a6f0"),
         0x617465:("rep movsd","dword ptr es:[edi], dword ptr [esi]"),
         0x6174CE:("call","0x639e60"),
+        0x6174D3:("mov","eax, dword ptr [0x9bb478]"),
+        0x6174D8:("mov","dword ptr [0x9bb470], 0"),
+        0x617512:("call","dword ptr [0x669328]"),
+        0x617526:("mov","eax, dword ptr [0x9bb478]"),
+        0x617558:("call","dword ptr [0x669328]"),
+        0x61756E:("mov","ecx, dword ptr [0x9bb478]"),
+        0x617594:("mov","edx, dword ptr [0x9bb478]"),
         0x61757E:("mov","edx, dword ptr [ecx + 0x54]"),
         0x61759A:("mov","eax, dword ptr [edx + 0x54]"),
         0x6175AC:("call","0x5d8ee0"),

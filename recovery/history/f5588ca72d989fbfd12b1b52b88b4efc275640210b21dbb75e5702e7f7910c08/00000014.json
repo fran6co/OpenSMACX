@@ -1,0 +1,17 @@
+{
+  "event_id": "88d5bbad087eeb8fc177848deab1eb8198a2647a81d947b4247e6439961a9e30",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "remaining-scene-setup-null-call",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/caviar.cpp calls the typed setup slot unconditionally after publishing scratch and before the instance-count loop, including empty scenes, matching639F25/639F28/639F33. Object/post-part null checks remain. Complete actual-body controls verify scratch and callback order; GCC/Clang isolated null-call children fault after staging with core disabled, whereas a compiled guarded-skip mutant returns. Existing descriptor/raster tests adapt only extraction of the actual call and retain all mutation witnesses. Host fault control is not portable C++ or Windows exception proof; full acceptance remains unproved."
+    ]
+  },
+  "previous_event": "0dceccc0a72444f060ee3b814f947ae8fda43f9143f50738938181ea09936303",
+  "request_id": "incorporate-unconditional-scene-setup-oct18",
+  "schema_version": 1,
+  "sequence": 14,
+  "stream": "task:caviar-render-inputs-oct18"
+}

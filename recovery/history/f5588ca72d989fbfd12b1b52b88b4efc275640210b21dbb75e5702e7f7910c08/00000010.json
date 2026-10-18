@@ -1,0 +1,19 @@
+{
+  "event_id": "05cafb72f8a13345457e4ee1069c10990e362b2eebb1b31c99a04a62ccf79836",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_caviar_draw_setup_pointer_storage_oct9.py"
+    ],
+    "evidence": [
+      "Existing scratch-producer test extracts the old guarded callback syntax. Recover the same descriptor-copy/callback test using the actual unconditional typed call, retaining staging order, actual callback execution and all existing raster/output mutation witnesses. Full actual-body null-call tests independently reject reinstating the guard. No changes to source scope, historical baseline or gate criteria."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "7b0e839166131b0c6cce30c021584bb6108d7e9846298f1a7435dd028dbd764a",
+  "request_id": "authorize-direct-setup-producer-test",
+  "schema_version": 1,
+  "sequence": 10,
+  "stream": "task:caviar-render-inputs-oct18"
+}

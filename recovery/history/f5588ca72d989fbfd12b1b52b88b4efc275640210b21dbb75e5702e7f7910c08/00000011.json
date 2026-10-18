@@ -1,0 +1,21 @@
+{
+  "event_id": "2b972776a2eb62ce0a5e7d1df2a348bd412110a7e56c1805ab69aca6a5c06bab",
+  "payload": {
+    "affects": [
+      "entity-33a7ebdbfcd1103d790e265ea95f37233f738fb786d709affb68902c1733ba8c",
+      "entity-4660d744ce11bf4dee88bd9b5bb6665e0e3059fc225cab0dfbe01c173bb71869"
+    ],
+    "author": "coordinator",
+    "discovery_id": "coordinate-left-shadow-axis-oct18",
+    "evidence": [
+      "One candidate per body through native measure_local_variants with real Compiler, both settled flag trials, physical unchanged-replica/target-damage controls. Retained16 actual COFF outputs and source/flag/object digests in ignored caviar-live-record-oct18/orientation evidence. No tree or source annotation changes by the decks."
+    ],
+    "hypothesis": "Coordinate-left lower-Y>= in both shadow bodies and direct inclusive upper bounds in draw may restore original x87 unordered branches without flags or representation tricks.",
+    "kind": "discovery"
+  },
+  "previous_event": "05cafb72f8a13345457e4ee1069c10990e362b2eebb1b31c99a04a62ccf79836",
+  "request_id": "coordinate-left-shadow-axis-oct18",
+  "schema_version": 1,
+  "sequence": 11,
+  "stream": "task:caviar-render-inputs-oct18"
+}

@@ -1,0 +1,17 @@
+{
+  "event_id": "e375179d628f4d3cb4e7fe95197a80248324292199b25c6c2a88d8f305d4cf12",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "coordinate-left-shadow-axis-oct18",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Both native trials retain the wrong draw upperX/lowerY/upperY comparison operand/mask/skip combinations; lowerY in load remainsAH41/JE as before. Two8-compile decks pass replica/damage controls but do not restore the targeted NaN outcomes. No orientation candidate banked or edited into source. Existing remaining-native-unordered-shadow-lowering stays pending; host NaN tests do not prove VC6 parity. Do not repeat this axis without new compiler/context evidence."
+    ]
+  },
+  "previous_event": "2b972776a2eb62ce0a5e7d1df2a348bd412110a7e56c1805ab69aca6a5c06bab",
+  "request_id": "reject-coordinate-left-shadow-axis-oct18",
+  "schema_version": 1,
+  "sequence": 12,
+  "stream": "task:caviar-render-inputs-oct18"
+}
