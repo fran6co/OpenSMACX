@@ -15,7 +15,7 @@ from .compiler import Compiler
 from .measurement import Measurement
 from .model import digest
 from .records import read_json
-from .source import State
+from .source import Mode, State
 from .source.asm import (AsmComparison, compare_unit, resolve_fragment_pairs,
                          shared_spans)
 from .source.model import Tier
@@ -109,7 +109,9 @@ def measure_source(root: Path, targets, *, image: Path, in_file=None, jobs=1):
         entity = Origin(image_pin(root, settings.source), settings.source.address_space, record.address).entity_id
         owner = component_owners.get((relative, entity))
         key = (record.path.resolve(), record.address, record.line)
-        if key in fragment_refused:
+        if record.mode is Mode.UNBOUND:
+            unavailable.append((record, "UNBOUND mapping has no emitted body or compiler recipe"))
+        elif key in fragment_refused:
             unavailable.append((record, "fragment parent/child ownership is ambiguous or conflicts with a component"))
         elif record.function_fragment is not None and key not in pair_by_record:
             unavailable.append((record, "fragment has no unambiguous same-TU parent support"))
@@ -156,10 +158,11 @@ def measure_source(root: Path, targets, *, image: Path, in_file=None, jobs=1):
     rows = []
     for record, value in results:
         row = {"address": record.address_hex, "path": record.path.relative_to(root).as_posix(),
-               "line": record.line, "name": record.name, "symbol": record.symbol or record.name,
+               "line": record.line, "name": record.name,
+               "symbol": record.symbol if record.mode is Mode.UNBOUND else record.symbol or record.name,
                "compile_context": record.context or None,
                "historical_byte_obligation": record.byte_exact, "historical_shape_obligation": record.semantic,
-               "source_state": record.state.value}
+               "source_state": record.state.value, "source_mode": record.mode.value}
         if isinstance(value, str):
             row.update(result="unknown", verdict="UNRESOLVED", diagnostic=value)
         elif isinstance(value, AsmComparison):

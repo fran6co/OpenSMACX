@@ -22,7 +22,8 @@ import re
 # The one marker. 6-8 hex digits because the image spans 0x00401000 to
 # 0x0066xxxx; `int(..., 16)` normalises. The optional trailing keyword is the
 # mode: absent means the next definition is the body, FILE means the whole
-# file is the unit, EXCLUDED cites the ground in docs/EXCLUSIONS.md.
+# file is the unit, UNBOUND retains an identity without a C++ body or recipe,
+# EXCLUDED cites the ground in docs/EXCLUSIONS.md.
 # The lookbehind matters: `PROVEN-AGAINST-ORIGINAL: 0x...` provenance
 # comments in the oracle files end in this spelling and are NOT map entries.
 MARKER = re.compile(
@@ -37,7 +38,7 @@ MARKER_TAIL = re.compile(
     r"\s*(?P<rest>.*)$", re.S)
 # The keyword, read out of the marker's own tail rather than by a second
 # alternation, so `FILE` and `BYTE_EXACT` may appear in either order.
-MARKER_KEYWORD = re.compile(r"^\s*(?P<kw>FILE|EXCLUDED)\b(?P<rest>.*)$", re.S)
+MARKER_KEYWORD = re.compile(r"^\s*(?P<kw>FILE|UNBOUND|EXCLUDED)\b(?P<rest>.*)$", re.S)
 # A RATCHET CLAIM, NOT A STATUS FIELD. `// ORIGINAL: 0x0046FB10 BYTE_EXACT`
 # means "this was proved to recompile to the shipped bytes; fail if it stops",
 # and that is the ONLY tier ever written down. Every other verdict -

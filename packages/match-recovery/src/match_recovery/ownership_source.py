@@ -46,9 +46,10 @@ def class_hint(symbol: str) -> str | None:
 
 def component_entries(snapshot: dict):
     configuration = SourceConfiguration.from_dict(snapshot["source_configuration"])
-    return parse_component_entries({name: base64.b64decode(row["content_base64"]).decode("utf-8")
-                             for name, row in snapshot["files"].items()
-                             if name.endswith(".recovery.h") and not configuration.is_seed(name)})
+    sources = {name: base64.b64decode(row["content_base64"]).decode("utf-8")
+               for name, row in snapshot["files"].items()
+               if name.endswith(".recovery.h") and not configuration.is_seed(name)}
+    return parse_component_entries(sources)
 
 
 def component_manifests(snapshot: dict):
@@ -62,6 +63,7 @@ def project_view(root: Path, image: Path | None = None, *, allow_empty: bool = F
     candidates = []
     for row in snapshot["records"]:
         seed = row["candidate_kind"] == "legacy_seed"
+        unbound = row.get("legacy_mode") == "unbound"
         catalogued = class_hint(row["catalogued_symbol"]) if configuration.symbol_format == "msvc" else None
         emitted = (class_hint(row["emitted_symbol_hint"])
                    if configuration.symbol_format == "msvc" and not seed else None)
@@ -71,12 +73,16 @@ def project_view(root: Path, image: Path | None = None, *, allow_empty: bool = F
         candidates.append(Candidate(Origin(**row["origin"]),
                                     tuple(Span(*span) for span in row["spans"] if span not in row["invalid_spans"]),
                                     row["path"], row["line"], seed,
-                                    row["emitted_symbol_hint"], emitted or catalogued,
-                                    component=(component_owners.get((row["path"], row["entity_id"])) or (None,))[0],
-                                    owner_hint_basis="source_symbol" if emitted else "catalogued_symbol",
+                                    "" if unbound else row["emitted_symbol_hint"],
+                                    None if unbound else emitted or catalogued,
+                                    component=(None if unbound else
+                                               (component_owners.get((row["path"], row["entity_id"])) or (None,))[0]),
+                                    owner_hint_basis=("catalogued_symbol" if unbound or not emitted
+                                                      else "source_symbol"),
                                     catalogued_owner_hint=catalogued,
-                                    function_fragment=row.get("function_fragment"),
-                                    context_path=row.get("context_path", "")))
+                                    function_fragment=None if unbound else row.get("function_fragment"),
+                                    context_path="" if unbound else row.get("context_path", ""),
+                                    unbound=unbound))
     for annotation, manifest in component_entries(snapshot):
         for binding in manifest.bindings:
             if (binding.origin.image_sha256 != snapshot["image_sha256"]
@@ -143,7 +149,11 @@ def ownership_files(snapshot: dict, group: dict) -> list[str]:
     configuration = SourceConfiguration.from_dict(snapshot["source_configuration"])
     roots = set(group["source_homes"])
     headers = {name.rsplit(".", 1)[0] + suffix for name in roots for suffix in configuration.interface_extensions}
-    return sorted(roots | (headers & snapshot["files"].keys()))
+    # UNBOUND annotation hosts are editable evidence locations, but remain
+    # pending mappings rather than source homes or historical TU owners.
+    pending_hosts = {candidate["path"] for entity in group["entities"]
+                     for candidate in entity["candidates"] if candidate.get("unbound")}
+    return sorted(roots | pending_hosts | (headers & snapshot["files"].keys()))
 
 
 def structural_impact(snapshot: dict, group: dict) -> dict:

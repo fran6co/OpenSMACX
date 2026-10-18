@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "author": "coordinator",
+  "base_revision": "438792ca02e047887c48e47102433caa90483fbc",
+  "intent": "Add a generic source-owned pending original mapping so unused artificial adapters can later be retired without erasing identities, spans, claims or discoveries.",
+  "scope": [
+    "packages/match-recovery source annotation model, reader, writer and native consumers",
+    "packages/match-recovery focused format, measurement, mapping, strict task and restoration tests",
+    "docs/DECOMP_MAP.md",
+    "packages/match-recovery/README.md",
+    "recovery/WORKFLOW.md"
+  ],
+  "decisions": [
+    "UNBOUND is an explicit no-body/no-emitted-symbol/no-compile-recipe disposition, not an exclusion, a successful recovery, a legacy seed alternative or an inferred source owner.",
+    "Historical byte and independent shape claims remain source-owned restoration obligations. No automatic grant, demotion, source-history baseline reset or denominator pruning is authorized.",
+    "Use configured non-built ordinary interface files outside legacy seed roots; the existing .recovery.h component-manifest namespace remains strict. The package must not contain project-specific filenames, addresses, compiler inference or a new project dispatcher.",
+    "Measurement, match checking, emitted-symbol checks and strict task selection expose unknown without compiling or borrowing an incidental body. Unclaimed pending originals also prevent whole-source matching from reporting a clean pass. Recording refuses pending identities.",
+    "Product, component, fragment and shared-body interpretations cannot silently consume a pending identity. Body/UNBOUND collisions require explicit resolution, not an implicit preference for a more measurable candidate.",
+    "Retirement and return to a real owner use existing native source and guarded-publication APIs under explicit manual coordinator review. Worker legacy_mode protection is retained; this feature does not claim a new autonomous migration or acceptance permission.",
+    "This step changes no C++ body, mapping, build/link policy, compiler profile or target image. The 52 unused field/null adapters remain until a separate reviewed retirement transfers every identity, claim and useful finding and verifies the application closure.",
+    "Require source-format and consumer damage controls, a historical-claim round trip with real Git fixtures, strict pending refusal and final frozen-package regression checks. Passing fixtures is not OpenSMACX structure/runtime/linked preservation or full acceptance."
+  ],
+  "evidence": [
+    "The current six field_accessors and46 nullsub_thunks adapters have no source consumers outside their own definitions. Their historical original mappings and claims are load-bearing; bounded negative original-reference scans do not prove absence of indirect or unmapped callers.",
+    "The previous BODY/FILE modes require a body or compilable unit. Source-role SCAFFOLD is advisory; EXCLUDED is a scope decision; a comment-only fake FILE would manufacture missing-symbol/compile failures rather than represent pending work honestly.",
+    "The user's cleanup direction removes useless artificial code while retaining essential source-owned recovery information. This generic format closes the demonstrated retirement blocker without adding a database or another derived source ledger."
+  ]
+}

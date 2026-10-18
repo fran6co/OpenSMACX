@@ -10,7 +10,7 @@ from collections import defaultdict
 from dataclasses import dataclass, replace
 from pathlib import Path
 
-from .model import DecompilationState, State, Tier
+from .model import DecompilationState, Mode, State, Tier
 from .reader import read_text
 from .writer import write_bytes
 from .publication import publish
@@ -46,6 +46,8 @@ def record_claims(selected, *, measure, validate, staging_directory: Path) -> Re
     keys = [(item.path, item.line) for item in selected]
     if not selected or len(set(keys)) != len(keys):
         raise ValueError("recording requires a nonempty, unique source selection")
+    if any(item.mode is Mode.UNBOUND or item.state is State.UNBOUND for item in selected):
+        raise ValueError("cannot record an UNBOUND mapping; it has no emitted body to measure")
     expected = {item.path: item.path.read_bytes() for item in selected}
     original, lossless = {}, {}
     for path, raw in expected.items():

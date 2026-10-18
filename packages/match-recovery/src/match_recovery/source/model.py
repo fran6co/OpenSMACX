@@ -18,21 +18,23 @@ from pathlib import Path
 
 
 class Mode(StrEnum):
-    """How an annotation claims its piece of the binary."""
+    """How an annotation represents its source-owned original mapping."""
     BODY = "body"   # the definition after the marker is the decompiled body
     FILE = "file"   # the WHOLE file is the translation unit, compiled as-is
+    UNBOUND = "unbound"  # source-owned identity/span with no C++ body or recipe
 
 
 class Recipe(StrEnum):
     """How a scoreable translation unit is built for this piece.
 
     Derived from where the record lives, not declared: see `reader`. It is a
-    vocabulary rather than a free string because only these three exist and a
-    typo in a fourth would read as a recipe nobody implements.
+    vocabulary rather than a free string because only declared recipes exist
+    and a typo in one would read as a recipe nobody implements.
     """
     CENSUS = "census"        # extract the body and wrap it in scaffolding
     WRITEBACK = "writeback"  # a proved body in the store, declfix recipe
     VERBATIM = "verbatim"    # FILE mode: the file already IS the unit
+    UNBOUND = "unbound"      # identity/claim only: deliberately not compiled
 
 
 class Tier(StrEnum):
@@ -77,13 +79,13 @@ class Tier(StrEnum):
 class State(StrEnum):
     """What condition the claimed piece is in.
 
-    MEASURED, NOT CLAIMED. The only declared state is EXCLUDED, because
-    exclusion is a decision; the others are derived from the region itself -
-    see `reader._state_of`.
+    MEASURED, NOT CLAIMED. Implemented/placeholder states derive from the
+    region; EXCLUDED and UNBOUND are explicit annotation dispositions.
     """
     IMPLEMENTED = "implemented"
     PLACEHOLDER = "placeholder"
     EXCLUDED = "excluded"
+    UNBOUND = "unbound"
 
 
 class SourceRole(StrEnum):
@@ -258,6 +260,7 @@ class DecompilationState:
 
     def __post_init__(self) -> None:
         validate_source_role(self.source_role, self.source_role_reason)
+        validate_unbound_mapping(self)
         # 1-BASED, AND CHECKED HERE. `writer` used to reject `line == 0` at
         # both of its entry points, describing it as a "filename-derived"
         # record - a kind nothing has ever produced. What the check was
@@ -293,6 +296,53 @@ class DecompilationState:
             return 0
         low, high = self.image_spans[0]
         return high - low
+
+
+def validate_unbound_mapping(record: DecompilationState) -> None:
+    """Keep a mapping-only record from acquiring a candidate C++ body.
+
+    This validator is also called by the writer because records are mutable
+    after construction. Historical claims and lessons are deliberately not
+    restricted here: they remain obligations/evidence, not measurements.
+    """
+    # StrEnum members compare equal to their string values. Detect those too,
+    # then require the typed vocabulary below; otherwise a programmatic
+    # `mode="unbound"` record could evade the invariant and be written as an
+    # ordinary BODY marker.
+    is_unbound = (record.mode == Mode.UNBOUND or record.state == State.UNBOUND
+                  or record.recipe == Recipe.UNBOUND)
+    if not is_unbound:
+        return
+    if (record.mode is not Mode.UNBOUND or record.state is not State.UNBOUND
+            or record.recipe is not Recipe.UNBOUND):
+        raise ValueError("UNBOUND mode, state, and recipe must be used together")
+    if (type(record.address) is not int or not 0 <= record.address <= 0xFFFFFFFF
+            or not isinstance(record.name, str) or not record.name
+            or record.name != record.name.strip()
+            or any(char.isspace() or ord(char) < 32 or 0x7F <= ord(char) < 0xA0
+                   for char in record.name)
+            or "*" in record.name  # The physical marker grammar stops at '*'.
+            or any(token in record.name for token in ("//", "/*", "*/"))):
+        raise ValueError("UNBOUND mapping requires a valid original address and name")
+    spans = record.image_spans
+    if not isinstance(spans, tuple) or not spans:
+        raise ValueError("UNBOUND mapping requires at least one original image span")
+    previous_end = None
+    for index, span in enumerate(spans):
+        if (not isinstance(span, tuple) or len(span) != 2
+                or type(span[0]) is not int or type(span[1]) is not int
+                or not 0 <= span[0] < span[1] <= 0x100000000):
+            raise ValueError("UNBOUND mapping contains an invalid original image span")
+        if index == 0 and span[0] != record.address:
+            raise ValueError("UNBOUND primary image span must start at its original address")
+        if previous_end is not None and span[0] < previous_end:
+            raise ValueError("UNBOUND image spans must be ordered and nonoverlapping")
+        previous_end = span[1]
+    if (record.symbol or record.body or record.context or record.exclusion
+            or record.region or record.extract_error or record.function_fragment is not None
+            or record.source_role is not SourceRole.UNCLASSIFIED
+            or record.source_role_reason):
+        raise ValueError("UNBOUND mapping cannot carry a body, emitted symbol, context, fragment, or role")
 
 
 # Declared after `Tier` so the members exist to be indexed.

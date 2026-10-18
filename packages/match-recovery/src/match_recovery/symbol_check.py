@@ -73,15 +73,23 @@ def check_symbols(root: Path, *, files=None, compiler=None) -> dict:
 
     for path, records in sorted(groups.items()):
         observed = [[] for _ in records]
-        if path not in units or Path(path).suffix not in settings.unit_extensions:
-            observed = [[{"result": Result.UNKNOWN, "reason": "mapping host is not a configured build translation unit"}]
-                        for _ in records]
-        else:
+        for index, record in enumerate(records):
+            if record.get("legacy_mode") == "unbound":
+                observed[index].append({"result": Result.UNKNOWN,
+                                        "reason": "UNBOUND mapping intentionally has no C++ body or emitted symbol"})
+        pending = [i for i, record in enumerate(records)
+                   if record.get("legacy_mode") != "unbound"]
+        if pending and (path not in units or Path(path).suffix not in settings.unit_extensions):
+            for i in pending:
+                observed[i].append({"result": Result.UNKNOWN,
+                                    "reason": "mapping host is not a configured build translation unit"})
+        elif pending:
             for flags in settings.flags_for(path):
                 # Emission trials are alternatives. One observed definition
                 # suffices for presence, but never use another TU's definition.
                 pending = [i for i, candidates in enumerate(observed)
-                           if not any(r["result"] == Result.PASS for r in candidates)]
+                           if records[i].get("legacy_mode") != "unbound"
+                           and not any(r["result"] == Result.PASS for r in candidates)]
                 if not pending:
                     break
                 unchanged()
@@ -105,7 +113,9 @@ def check_symbols(root: Path, *, files=None, compiler=None) -> dict:
             results = {row["result"] for row in variants}
             result = Result.PASS if Result.PASS in results else Result.UNKNOWN if Result.UNKNOWN in results else Result.FAIL
             rows.append({"entity_id": record["entity_id"], "address": f"0x{record['origin']['address']:08X}",
-                         "path": path, "line": record["line"], "symbol": record["emitted_symbol_hint"],
+                         "path": path, "line": record["line"],
+                         "symbol": record["emitted_symbol_hint"],
+                         "mapping_disposition": record.get("mapping_disposition", "source_mapping"),
                          "result": result, "variants": variants})
     unchanged()
     assert_snapshot_current(root, snapshot)

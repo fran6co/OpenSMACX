@@ -26,11 +26,14 @@ class Candidate:
     catalogued_owner_hint: str | None = None
     function_fragment: dict | None = None
     context_path: str = ""
+    unbound: bool = False
 
     def __post_init__(self):
         relative_path(self.path)
         if type(self.line) is not int or self.line < 1 or type(self.seed) is not bool:
             raise ValueError("invalid source candidate location")
+        if type(self.unbound) is not bool:
+            raise ValueError("invalid unbound disposition")
         if self.owner_hint is not None:
             require_text(self.owner_hint, "owner hint")
         if self.context_path:
@@ -47,6 +50,10 @@ class Candidate:
             required = {"parent_address", "parent_symbol", "reason", "evidence"}
             if type(self.function_fragment) is not dict or set(self.function_fragment) != required:
                 raise ValueError("invalid function-fragment relation")
+        if self.unbound and (self.seed or self.symbol or self.component or self.context_path
+                             or self.function_fragment is not None
+                             or self.owner_hint_basis == "source_symbol"):
+            raise ValueError("unbound candidate must be a product identity without a symbol, owner, component, context, or fragment")
 
 
 def partition(candidates: Iterable[Candidate]) -> dict:
@@ -65,7 +72,8 @@ def partition(candidates: Iterable[Candidate]) -> dict:
         # visible for review; selecting a work group is not ownership proof.
         owners = sorted(current or hints)
         components = sorted({item.component for item in items if item.component})
-        sources = sorted({item.path for item in items if not item.seed})
+        sources = sorted({item.path for item in items if not item.seed and not item.unbound})
+        unbound_items = [item for item in items if item.unbound]
         extents = {item.spans for item in items if item.spans}
         reasons = []
         if len(components) > 1:
@@ -76,6 +84,10 @@ def partition(candidates: Iterable[Candidate]) -> dict:
             reasons.append("conflicting original extents")
         if len(sources) > 1 and not components:
             reasons.append("multiple current source candidates")
+        if unbound_items and any(not item.seed and not item.unbound for item in items):
+            reasons.append("unbound identity collides with a bound source candidate")
+        if len(unbound_items) > 1:
+            reasons.append("multiple unbound mappings for one identity")
         if reasons:
             group = "conflict"
         elif components:
@@ -86,8 +98,11 @@ def partition(candidates: Iterable[Candidate]) -> dict:
             group = "source:" + sources[0]
         else:
             group = "unassigned"
+        disposition = ("conflict" if reasons else
+                       "unbound_pending" if unbound_items else "source_mapped")
         groups[group].append({"entity_id": entity_id, "origin": asdict(items[0].origin),
                               "candidates": [asdict(item) for item in items], "conflicts": reasons,
+                              "mapping_disposition": disposition,
                               "ownership": {"basis": "source_symbol" if current else "hints",
                                             "owners": owners, "alternative_hints": sorted(hints - set(owners)),
                                             "verified": False}})
@@ -95,9 +110,14 @@ def partition(candidates: Iterable[Candidate]) -> dict:
     for key, entities in sorted(groups.items()):
         entities.sort(key=lambda entity: (entity["origin"]["image_sha256"],
                                           entity["origin"]["address_space"], entity["origin"]["address"]))
-        paths = sorted({item["path"] for entity in entities for item in entity["candidates"] if not item["seed"]})
+        paths = sorted({item["path"] for entity in entities for item in entity["candidates"]
+                        if not item["seed"] and not item["unbound"]})
+        has_pending = any(entity["mapping_disposition"] == "unbound_pending" for entity in entities)
         result.append({"selector": key, "historical_tu": "unproven", "source_homes": paths,
+                       "pending_unbound_count": sum(entity["mapping_disposition"] == "unbound_pending"
+                                                     for entity in entities),
                        "next_action": ("resolve_conflict" if key == "conflict" else
+                                       "resolve_unbound" if has_pending else
                                        "identify_owner" if key == "unassigned" else
                                        "verify_dependency" if key.startswith("component:") else
                                        "review_ownership_and_structure"),

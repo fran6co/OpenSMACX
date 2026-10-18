@@ -164,6 +164,16 @@ def _parse_marker(line: str, in_block: bool) -> tuple | None:
     keyword_hit = MARKER_KEYWORD.match(stripped)
     keyword = keyword_hit.group("kw") if keyword_hit else None
     rest = keyword_hit.group("rest") if keyword_hit else ""
+    tail_tokens = stripped.split()
+    if keyword == "UNBOUND":
+        if rest.strip():
+            raise ValueError("UNBOUND must be the only source mode keyword")
+    elif (any(token.upper() == "UNBOUND" for token in tail_tokens)
+          or (tail_tokens and tail_tokens[0].upper() == "UNBOUN")):
+        # Do not silently turn the common one-letter omission of UNBOUND into
+        # a BODY marker. Keep this exact, position-limited rather than fuzzy:
+        # legacy marker prose is not a keyword namespace.
+        raise ValueError("malformed or misplaced UNBOUND source mode keyword")
     return (int(match.group("addr"), 16), keyword, rest, matched, name, spans,
             semantic)
 
@@ -852,6 +862,28 @@ def _read_text(text: str, path: Path | str,
         catalogued_kind = _token_fact(lines, index, "kind", in_block=in_block)
         defined_in = _token_fact(lines, index, "body", in_block=in_block)
         context = _token_fact(lines, index, "compile_context", in_block=in_block)
+        if keyword == "UNBOUND":
+            if not name or not spans:
+                raise ValueError("UNBOUND requires an original name and image spans")
+            if source_role is not SourceRole.UNCLASSIFIED:
+                raise ValueError("UNBOUND cannot carry a RECOVERY_ROLE directive")
+            fact_keys = set()
+            for _offset, fact_line in _fact_lines(lines, index, in_block=marker_in_block):
+                fact = FACT_LINE.fullmatch(fact_line)
+                if fact:
+                    fact_keys.add(fact.group(1))
+            forbidden = fact_keys & {"symbol", "body", "compile_context"}
+            if forbidden:
+                raise ValueError("UNBOUND cannot carry emitted symbol, body, or compile_context facts")
+            found.append(DecompilationState(
+                address=address, mode=Mode.UNBOUND, state=State.UNBOUND,
+                path=_abs(path), line=index + 1, name=name, image_spans=spans,
+                kind=catalogued_kind, byte_exact=matched, semantic=semantic,
+                recipe=Recipe.UNBOUND, levers=found_levers,
+                ruled_out=found_ruled, unrecoverable=found_dead,
+                deferred=found_later, origin=found_run))
+            last_record_marker_line = index
+            continue
         if keyword == "FILE":
             region = text
             found.append(DecompilationState(

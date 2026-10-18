@@ -16,11 +16,12 @@ from .records import parse_json
 from .compilation_database import entries
 from .source_config import SourceConfiguration
 from .source_inventory import source_snapshot, assert_snapshot_current
-from .component_original_routing import exact_component_record_bindings
+from .component_original_routing import (component_record_identity_candidates,
+                                         exact_component_record_bindings)
 
 
 RULES = ("ambiguous_source", "unbuilt_host", "seed_build_input", "claimed_forwarder", "body_reference",
-         "context_reference")
+         "context_reference", "unbound_source")
 _LITERAL = re.compile(
     r'//[^\n]*|/\*[\s\S]*?\*/|(?:u8|u|U|L)?R"(?P<delimiter>[^\s()\\]{0,16})'
     r'\([\s\S]*?\)(?P=delimiter)"|"(?:\\[\s\S]|[^"\\])*"|\'(?:\\[\s\S]|[^\'\\])*\'')
@@ -80,6 +81,53 @@ def build_units(root: Path, data: bytes) -> tuple[set[str], list[str]]:
     return units, sorted(external)
 
 
+def _is_unbound(record: dict) -> bool:
+    return record.get("legacy_mode") == "unbound" or record.get("legacy_state") == "unbound"
+
+
+def _unbound_problem(record: dict, source: SourceConfiguration, units: set[str]) -> str | None:
+    """Return why an explicit UNBOUND identity is not a permitted interface note.
+
+    UNBOUND preserves an original identity in a configured, non-built interface
+    host. It is never a body candidate, seed substitute, or symbol/body lookup.
+    """
+    path = record.get("path")
+    if not isinstance(path, str) or not path:
+        return "unbound identity has no source path"
+    if record.get("candidate_kind") != "source" or source.is_seed(path):
+        return "unbound identity cannot be supplied by a seed"
+    try:
+        relative = Path(path)
+        if relative.is_absolute() or relative.as_posix() != path or not any(
+                relative.is_relative_to(Path(root)) for root in source.roots):
+            return "unbound identity is outside configured source roots"
+    except (TypeError, ValueError):
+        return "unbound identity has an invalid source path"
+    if relative.suffix not in source.interface_extensions:
+        return "unbound identity must be in a configured interface file"
+    if path in units:
+        return "unbound interface host is an accidental build input"
+    if record.get("legacy_mode") != "unbound" or record.get("legacy_state") != "unbound":
+        return "unbound mode and state are inconsistent"
+    origin = record.get("origin")
+    address = origin.get("address") if isinstance(origin, dict) else None
+    if (not isinstance(record.get("entity_id"), str) or not record["entity_id"]
+            or type(address) is not int or not 0 <= address <= 0xFFFFFFFF):
+        return "unbound identity is missing a valid original identity"
+    spans = record.get("spans")
+    if not isinstance(spans, list) or not spans or record.get("invalid_spans"):
+        return "unbound identity has missing or malformed original spans"
+    if any(not isinstance(span, list) or len(span) != 2
+           or type(span[0]) is not int or type(span[1]) is not int
+           or not 0 <= span[0] < span[1] <= 0x100000000 for span in spans):
+        return "unbound identity has malformed original spans"
+    if (record.get("source_body_region_present") is not False
+            or record.get("body_path") or record.get("context_path")
+            or record.get("emitted_symbol_hint")):
+        return "unbound identity cannot have a body, context, or emitted-symbol fallback"
+    return None
+
+
 def check_mappings(root: Path) -> dict:
     root = root.resolve()
     path = root / "recovery/project.json"
@@ -121,11 +169,21 @@ def check_mappings(root: Path) -> dict:
     unit_extensions = measurement.get("unit_extensions", []) if isinstance(measurement, dict) else []
     records = snapshot["records"]
     component_owners = exact_component_record_bindings(snapshot)
+    component_candidates = component_record_identity_candidates(snapshot)
     by_entity, by_file = defaultdict(list), defaultdict(list)
     for record in records:
-        by_entity[record["entity_id"]].append(record)
-        by_file[record["path"]].append(record)
+        by_entity[record.get("entity_id")].append(record)
+        by_file[record.get("path", "")].append(record)
     findings, alternatives, errors, forwarders = [], [], [], []
+    for record in records:
+        if _is_unbound(record):
+            problem = _unbound_problem(record, source, units)
+            if (record.get("path"), record.get("entity_id")) in component_candidates:
+                problem = "an unbound identity collides with a component manifest interpretation"
+            if problem:
+                findings.append({"rule": "unbound_source", "path": record.get("path", ""),
+                                 "line": record.get("line"),
+                                 "entity_id": record.get("entity_id"), "reason": problem})
 
     # A source-owned body link is an exact project-relative identity, not a
     # request to search ancestors until some same-named file happens to exist.
@@ -180,10 +238,17 @@ def check_mappings(root: Path) -> dict:
                 body_references.append({**row, "identifier": symbol})
 
     def location(record):
-        return {key: record[key] for key in ("path", "line", "candidate_kind", "legacy_byte_exact", "legacy_semantic")}
+        return {key: record.get(key) for key in ("path", "line", "candidate_kind", "legacy_byte_exact", "legacy_semantic")}
 
     for identity, candidates in sorted(by_entity.items()):
-        product = [row for row in candidates if not source.is_seed(row["path"])]
+        product = [row for row in candidates if not source.is_seed(row.get("path", ""))]
+        unbound = [row for row in candidates if _is_unbound(row)]
+        if unbound and len(candidates) > 1:
+            details = {"entity_id": identity, "origin": candidates[0].get("origin"),
+                       "candidates": [location(row) for row in candidates],
+                       "reason": "an unbound identity cannot be adopted as or compete with a body candidate"}
+            findings.append({"rule": "ambiguous_source", **details})
+            continue
         if len(candidates) > 1:
             details = {"entity_id": identity, "origin": candidates[0]["origin"],
                        "candidates": [location(row) for row in candidates]}
@@ -213,14 +278,21 @@ def check_mappings(root: Path) -> dict:
     for name, candidates in sorted(by_file.items()):
         component_owned = bool(candidates) and all(
             (name, row["entity_id"]) in component_owners for row in candidates)
-        if not source.is_seed(name) and name not in units and not component_owned:
+        unbound_only = bool(candidates) and all(_is_unbound(row) for row in candidates)
+        if not source.is_seed(name) and name not in units and not component_owned and not unbound_only:
             findings.append({"rule": "unbuilt_host", "path": name,
                              "entities": sorted({row["entity_id"] for row in candidates})})
     for name in sorted(units):
         if source.is_seed(name):
             findings.append({"rule": "seed_build_input", "path": name})
 
-    by_address = {candidates[0]["origin"]["address"]: candidates for candidates in by_entity.values()}
+    by_address = {
+        candidates[0]["origin"]["address"]: candidates
+        for candidates in by_entity.values()
+        if (not any(_is_unbound(row) for row in candidates)
+            and isinstance(candidates[0].get("origin"), dict)
+            and type(candidates[0]["origin"].get("address")) is int)
+    }
     for name, content in sorted(snapshot["files"].items()):
         if source.is_seed(name):
             continue

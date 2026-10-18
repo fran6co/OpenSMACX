@@ -30,6 +30,11 @@ from .shared_source import read_shared, referenced_shared_units, validate_shared
 from .shared_binary import check_shared
 
 
+def _has_unbound_candidate(entity: dict) -> bool:
+    """Pending originals are evidence, never a callable definition or alias."""
+    return any(item.get("unbound", False) for item in entity["candidates"])
+
+
 def select_bindings(view: dict, selected: frozenset[str], component_targets: dict | None = None) -> tuple[list, list, dict]:
     """Require a single product definition; archived interpretations remain seeds.
 
@@ -41,12 +46,17 @@ def select_bindings(view: dict, selected: frozenset[str], component_targets: dic
     ambiguous = set()
     reserved = defaultdict(set)
     found = set()
+    unbound_addresses = set()
     for group in view["groups"]:
         for entity in group["entities"]:
             key = entity["entity_id"]
             found.add(key)
             candidates = [item for item in entity["candidates"] if not item["seed"]]
-            candidate = candidates[0] if len(candidates) == 1 and not entity["conflicts"] else None
+            unbound = _has_unbound_candidate(entity)
+            if unbound:
+                unbound_addresses.add(entity["origin"]["address"])
+            candidate = (candidates[0] if len(candidates) == 1
+                         and not entity["conflicts"] and not unbound else None)
             if candidate is None:
                 ambiguous.update(item["symbol"] for item in candidates)
             # A dependency annotation identifies work to verify; it is not
@@ -70,7 +80,9 @@ def select_bindings(view: dict, selected: frozenset[str], component_targets: dic
                 # never selected as an independent COFF function symbol.
                 continue
             reason = None
-            if candidate is None:
+            if unbound:
+                reason = "unbound original identity has no current C++ implementation; review and bind a genuine owner"
+            elif candidate is None:
                 reason = "requires one unambiguous product definition; seeds are not production source"
             elif candidate["component"] is not None:
                 reason = "dependency binding: use component verification, not application recovery"
@@ -102,6 +114,12 @@ def select_bindings(view: dict, selected: frozenset[str], component_targets: dic
                  if symbol not in ambiguous}
     if component_targets:
         for symbol, address in component_targets.items():
+            if address in unbound_addresses:
+                # Even independently measured dependency bytes do not silently
+                # resolve a competing pending source interpretation. Retire or
+                # migrate that interpretation explicitly before publishing a
+                # relocation target for the identity.
+                continue
             if symbol in product_ambiguous:
                 continue
             if symbol in externals:
@@ -140,7 +158,8 @@ def select_fragment_bindings(view: dict, selected: frozenset[str], bindings: lis
         current = [row for row in entity["candidates"] if not row["seed"]]
         relations = [row for row in entity["candidates"]
                      if not row["seed"] and row.get("function_fragment") is not None]
-        if relations and (len(current) != 1 or entity["conflicts"]):
+        if relations and (len(current) != 1 or entity["conflicts"]
+                          or _has_unbound_candidate(entity)):
             untrusted_relation_children.add(child_id)
         for candidate in relations:
             if candidate.get("context_path"):
@@ -169,7 +188,8 @@ def select_fragment_bindings(view: dict, selected: frozenset[str], bindings: lis
             if len(current) == 1 and current[0].get("context_path"):
                 context_relation_children.add(child_id)
                 context_parent_ids.add(parent_id)
-            if (not parent["conflicts"] and len(current) == 1
+            if (not parent["conflicts"] and not _has_unbound_candidate(parent)
+                    and len(current) == 1
                     and current[0].get("function_fragment") is None
                     and not current[0].get("context_path")
                     and current[0]["path"] == candidate["path"]
@@ -234,7 +254,8 @@ def select_fragment_bindings(view: dict, selected: frozenset[str], bindings: lis
             if parent_entity["origin"]["address"] != parent_address:
                 continue
             current = [row for row in parent_entity["candidates"] if not row["seed"]]
-            if parent_entity["conflicts"] or len(current) != 1:
+            if (parent_entity["conflicts"] or len(current) != 1
+                    or _has_unbound_candidate(parent_entity)):
                 continue
             candidate = current[0]
             if (candidate.get("function_fragment") is None

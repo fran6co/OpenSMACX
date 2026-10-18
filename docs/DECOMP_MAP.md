@@ -1,9 +1,10 @@
 # The source map: src/ is the single record of the decompilation
 
 The decompilation is tracked in exactly one place: the source tree. Every
-piece of the binary the project maps carries an annotation in a `.cpp` file
-naming the bytes it claims, and one command asks the original compiler what
-state each piece is in.
+piece of the binary the project maps carries a source annotation naming its
+original identity and spans. Compiling bodies normally live in `.cpp` files;
+explicit pending identities may live in configured, non-built interface files.
+Current matching is measured, not inferred from an annotation's presence.
 
 New annotations carry original entry identity, a name interpretation and explicit
 image spans. The older catalogue also carries prototypes, callers, kind/flags and
@@ -51,6 +52,46 @@ The source reader ignores annotation-looking lines inside multiline C++ raw
 string literals. Ordinary quoted strings and prose remain non-directives under
 the existing source grammar. This section adds no CLI or project-specific
 filename rules.
+
+## Unbound original identities
+
+`UNBOUND` preserves an original entry and its complete declared spans without
+pretending that an artificial adapter is a source implementation:
+
+```cpp
+// ORIGINAL: 0x00401234 sub_401234 0x00401234-0x0040123C UNBOUND
+```
+
+The derived mode, state and recipe are `unbound`; there is no definition region,
+emitted-symbol hint or compiler recipe. Place these canonical pending mappings
+in an ordinary configured, non-built interface file, not a legacy seed root.
+The `.recovery.h` suffix remains reserved for dependency-component manifests;
+it is not a generic annotation-file suffix. No project-specific filename is
+required by the package.
+
+Existing historical byte/shape tokens and useful lessons survive a migration
+through the native writer. They remain restoration obligations, not evidence of
+a currently matching implementation. Do not add a claim by writing a new token.
+Identity checks still detect lost historical claims; they do not authenticate
+span changes or prove a C++ body. Empty/invalid spans, emission/body/context
+facts, source roles and fragment relations cannot be attached to UNBOUND.
+
+Inventory, ownership context and quality reports expose these records as pending,
+without assigning a source TU or class from their storage path. Their annotation
+hosts remain editable evidence locations. Measurement/matching returns unknown
+without compiling a substitute; recording refuses. An unclaimed UNBOUND identity
+also remains unknown in whole-source matching. Strict task checks cannot satisfy
+it with an incidental same-named function, dependency alias, shared-body alias or
+another competing product candidate.
+
+Retirement and return to a real body are explicit coordinator-reviewed source
+migrations using the native reader/writer/remover and guarded publisher. Transfer
+the same identity, spans, historical claims and useful findings into its genuine
+owner before removing the pending mapping, then run fresh compilation/matching
+and the required continuity/reference checks. Worker mode-change protection is
+unchanged: this format does not authorize an autonomous worker to rewrite a
+binding, expand scope or accept a regression. It grants no coverage, exclusion,
+matching, structural, linked-selection or runtime waiver.
 
 ## Original-function binding rationale
 

@@ -86,6 +86,7 @@ def _parse_file(raw: bytes, path: Path, root: Path, pin: str, configuration: Sou
     binding_evidence = parse_binding_evidence(raw.decode("utf-8", errors="replace"), parsed_records)
     for record in parsed_records:
         origin = Origin(pin, configuration.address_space, record.address)
+        unbound = record.mode.value == "unbound"
         invalid_spans = []
         for low, high in record.image_spans:
             try:
@@ -98,7 +99,10 @@ def _parse_file(raw: bytes, path: Path, root: Path, pin: str, configuration: Sou
             "path": relative, "line": record.line, "file_sha256": file_digest,
             "candidate_kind": "legacy_seed" if seed else "source",
             "catalogued_symbol": record.name,
-            "emitted_symbol_hint": record.symbol or record.name,
+            # UNBOUND preserves only the original catalogue identity. Never
+            # turn that name into an emitted-symbol candidate by fallback.
+            "emitted_symbol_hint": "" if unbound else record.symbol or record.name,
+            "mapping_disposition": "unbound_pending" if unbound else "source_mapping",
             "spans": [list(span) for span in record.image_spans],
             "invalid_spans": invalid_spans,
             "body_path": record.body, "context_path": record.context,
@@ -417,6 +421,10 @@ def inventory(snapshot: dict[str, Any]) -> dict[str, Any]:
         "image_verified": snapshot["image_verified"],
         "source_files": len(snapshot["files"]), "annotations": len(records),
         "entities": len(by_entity),
+        "unbound_pending": sum(row.get("mapping_disposition") == "unbound_pending"
+                                for row in records),
+        "mapping_dispositions": dict(sorted(Counter(
+            row.get("mapping_disposition", "source_mapping") for row in records).items())),
         "candidates": dict(sorted(Counter(row["candidate_kind"] for row in records).items())),
         "source_body_states": {
             kind: dict(sorted(Counter(row["legacy_state"] for row in records if row["candidate_kind"] == kind).items()))

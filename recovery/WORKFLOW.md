@@ -45,7 +45,17 @@ erase a sole mapping or replace recovered behavior with an empty body.
 A genuine original no-op, accessor, initializer or compiler-generated thunk
 can qualify in its real owner with supporting evidence. Merely compiling an
 adapter, lacking source callers, or retaining a historical exactness token
-does not qualify it. The obsolete hypothesis-layout umbrella is retired: its
+does not qualify it. For an unused artificial adapter with no established real
+owner, an explicitly reviewed migration may remove the fabricated C++ while
+retaining its same original identity, spans, historical claims and useful
+findings as `UNBOUND` comments in a configured non-built interface file.
+Missing callers are not proof that the original function is dead. These records
+remain pending, unmeasurable and outside genuine implementation coverage; do
+not erase them or wait to rediscover their existence. Ordinary workers still
+cannot change a binding's mode without coordinator review. Rebinding to a real
+owner requires the inverse reviewed migration and fresh verification; this is
+not a new autonomous acceptance route. See `docs/DECOMP_MAP.md` for the format.
+The obsolete hypothesis-layout umbrella is retired: its
 only live class, Effect, is owned with Wave; unused speculative declarations
 remain in Git history. Removing those declarations does not prove the remaining
 provisional layouts in genuine owner headers or increase function coverage.

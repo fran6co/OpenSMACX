@@ -29,12 +29,14 @@ def bind(root: Path, *, image: Path, address: int, name: str, spans, source: str
         mode = Mode(mode)
     except (TypeError, ValueError) as error:
         raise ValueError("binding mode must be body or file") from error
+    if mode not in (Mode.BODY, Mode.FILE):
+        raise ValueError("binding mode must be body or file; unbound originals require reviewed source migration")
     root = root.resolve()
     require_digest(source_sha256)
     if type(address) is not int or not 0 <= address <= 0xFFFFFFFF:
         raise ValueError("binding requires a PE32 original entry address")
     if (not isinstance(name, str) or not re.fullmatch(r"[A-Za-z0-9_?@$:.\-]+", name)
-            or name in {"BYTE_EXACT", "SEMANTIC", "FILE", "EXCLUDED"}):
+            or name in {"BYTE_EXACT", "SEMANTIC", "FILE", "EXCLUDED", "UNBOUND"}):
         raise ValueError("binding name must be one source symbol token")
     if not isinstance(spans, (tuple, list)) or not spans or not all(isinstance(span, Span) for span in spans):
         raise ValueError("binding requires explicit original spans")

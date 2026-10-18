@@ -25,7 +25,7 @@ from capstone import CS_ARCH_X86, CS_MODE_32, CS_GRP_CALL, CS_GRP_JUMP, Cs, x86
 
 from ..pe_coff import Coff, PeImage
 from .eh_regions import bind_eh_regions
-from .model import DecompilationState, Tier
+from .model import DecompilationState, Mode, Tier
 
 @dataclass(frozen=True)
 class Listing:
@@ -747,6 +747,8 @@ def compiled_asm(record: DecompilationState, command: list[str],
     not define it is a `ValueError` naming the symbol it looked for, which
     is the honest answer: the file compiled and did not contain the piece.
     """
+    if record.mode is Mode.UNBOUND:
+        raise ValueError("UNBOUND mapping has no emitted body to compile")
     if not record.name:
         raise ValueError(
             f"{record.address_hex}: no name fact under its marker")
@@ -1697,6 +1699,9 @@ def compare_source(record: DecompilationState, exe: Path | str,
     `retry_compile(diagnostic)` says they cannot help. No compiler error codes
     or process-management policy live in this comparer.
     """
+    if record.mode is Mode.UNBOUND:
+        return AsmComparison(verdict=Tier.REFUSED,
+                             diagnostic="UNBOUND mapping has no emitted body or compiler recipe")
     if record.function_fragment is not None:
         raise ValueError("non-callable function fragment requires compare_unit parent support")
     attempts = (flags,) if isinstance(flags, str) else tuple(flags)

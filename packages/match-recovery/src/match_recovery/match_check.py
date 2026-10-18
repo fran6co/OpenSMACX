@@ -24,6 +24,7 @@ from .source.model import Tier
 from .source_history import git
 from .source_inventory import image_pin
 from .source_inventory import source_snapshot
+from .source.model import Mode
 from .component_original_routing import (component_claim_result, component_function_observations,
                                          component_record_identity_candidates,
                                          exact_component_record_bindings)
@@ -46,12 +47,23 @@ def _key(record):
 
 def _observation(root, record, observed, *, built, source):
     row = {"address": record.address_hex, "path": record.path.relative_to(root).as_posix(),
-           "line": record.line, "name": record.name, "symbol": record.symbol or record.name,
+           "line": record.line, "name": record.name,
+           "symbol": record.symbol if record.mode is Mode.UNBOUND else record.symbol or record.name,
+           "source_mode": record.mode.value, "source_state": record.state.value,
            "byte_obligation": record.byte_exact, "shape_obligation": record.semantic}
     row["seed"] = source.is_seed(row["path"])
     unit_path = record.context or row["path"]
     row["compile_context"] = record.context or None
     row["built"] = unit_path in built
+    if record.mode is Mode.UNBOUND:
+        row.update(verdict="UNBOUND", result="unknown",
+                   diagnostic="UNBOUND mapping has no emitted body or compiler recipe",
+                   matching_instructions=0, original_instructions=0,
+                   compiled_instructions=0, mnemonic_similarity=0.0,
+                   allocation_only=False)
+        row["built"] = False
+        row["compile_context"] = None
+        return row
     if record.function_fragment is not None and isinstance(observed, str):
         detail = observed
         row.update(verdict="UNMEASURED_FRAGMENT",
@@ -134,6 +146,11 @@ def check_matches(root: Path, image: Path, *, jobs: int = 1) -> dict:
     shared = shared_spans(records)
     eligible = []
     for record in records:
+        if record.mode is Mode.UNBOUND:
+            # This is a visible pending source identity even without a legacy
+            # claim; never let omission make the remaining claims look complete.
+            eligible.append(record)
+            continue
         claimed = record.byte_exact or record.semantic
         name = record.path.relative_to(root).as_posix()
         context = compilation_context(root, record, settings)
@@ -159,6 +176,10 @@ def check_matches(root: Path, image: Path, *, jobs: int = 1) -> dict:
     groups, unsupported, component_selected, pairs_by_path = defaultdict(list), [], {}, defaultdict(list)
     for record in eligible:
         name = record.path.relative_to(root).as_posix()
+        if record.mode is Mode.UNBOUND:
+            unsupported.append(_observation(root, record, "UNBOUND mapping has no emitted body or compiler recipe",
+                                            built=built, source=settings.source))
+            continue
         entity = Origin(image_pin(root, settings.source), settings.source.address_space, record.address).entity_id
         owner = component_owners.get((name, entity))
         record_key = (record.path.resolve(), record.address, record.line)
@@ -249,6 +270,12 @@ def check_matches(root: Path, image: Path, *, jobs: int = 1) -> dict:
     rows.sort(key=lambda row: (row["path"], row["line"], row["address"]))
     claims = [row for row in rows if row["byte_obligation"] or row["shape_obligation"]]
     counts = Counter(row["result"] for row in claims)
+    unbound = [row for row in rows if row.get("source_mode") == Mode.UNBOUND.value]
+    unclaimed_unbound_unknowns = sum(row["result"] == "unknown"
+                                     and not (row["byte_obligation"] or row["shape_obligation"])
+                                     for row in unbound)
+    if unclaimed_unbound_unknowns:
+        counts["unknown"] += unclaimed_unbound_unknowns
     result = "fail" if counts["fail"] else "unknown" if counts["unknown"] or not claims else "pass"
     unclaimed = [row for row in rows if not row["byte_obligation"] and not row["shape_obligation"]]
     return {
@@ -261,7 +288,9 @@ def check_matches(root: Path, image: Path, *, jobs: int = 1) -> dict:
         "verified": sum(row["result"] == "pass" and row["verdict"] == "BYTE_EXACT" for row in claims),
         "semantic": sum(row["result"] == "pass" and row["verdict"] != "BYTE_EXACT" for row in claims),
         "regressed": [row for row in claims if row["result"] == "fail"],
-        "unverifiable": [row for row in claims if row["result"] == "unknown"],
+        "unverifiable": [row for row in claims if row["result"] == "unknown"] + [
+            row for row in unbound
+            if not (row["byte_obligation"] or row["shape_obligation"])],
         "free": [row for row in unclaimed if row["verdict"] == "BYTE_EXACT"],
         "near_miss": [row for row in unclaimed if row["verdict"] != "BYTE_EXACT"
                       and 0 < row.get("original_instructions", 0) - row.get("matching_instructions", 0) <= 3],

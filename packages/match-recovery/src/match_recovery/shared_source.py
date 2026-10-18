@@ -157,6 +157,8 @@ def validate_shared(bindings, view, *, reserved=()):
         entity = entities.get(binding.origin.entity_id)
         if entity is None or entity["conflicts"]:
             raise ValueError("shared body requires an unambiguous mapped original identity")
+        if any(item.get("unbound", False) for item in entity["candidates"]):
+            raise ValueError("shared body cannot borrow an unbound original identity; bind its genuine owner first")
         spans = {tuple((s["start"], s["end"]) for s in candidate["spans"]) for candidate in entity["candidates"]}
         if spans != {((binding.span.start, binding.span.end),)}:
             raise ValueError("shared body extent disagrees with the original mapping")

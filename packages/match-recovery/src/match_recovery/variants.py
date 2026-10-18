@@ -22,6 +22,7 @@ from .ownership_source import class_hint, project_view
 from .partition import Candidate, partition
 from .pe_coff import Coff, PeImage
 from .source.reader import read_text
+from .source.model import Mode
 from .tasks import TaskStore
 from .shared_source import read_shared, parse_shared, referenced_shared_units, validate_shared
 
@@ -229,7 +230,8 @@ def _trial_bindings(view, originals, contents, selected, settings, pin, *, contr
             if tuple(getattr(old, field) for field in protected) != tuple(
                     getattr(new, field) for field in protected):
                 raise ValueError("candidate deck cannot change original identities, spans or historical claims")
-            old_symbol, new_symbol = old.symbol or old.name, new.symbol or new.name
+            old_symbol = "" if old.mode is Mode.UNBOUND else old.symbol or old.name
+            new_symbol = "" if new.mode is Mode.UNBOUND else new.symbol or new.name
             origin = Origin(pin, settings.source.address_space, old.address)
             if old_symbol != new_symbol:
                 if control or origin.entity_id not in selected:
@@ -251,7 +253,8 @@ def _trial_bindings(view, originals, contents, selected, settings, pin, *, contr
                                             row["path"], line, row["seed"], symbol, owner,
                                             row["component"], basis, row["catalogued_owner_hint"],
                                             function_fragment=row.get("function_fragment"),
-                                            context_path=row.get("context_path", "")))
+                                            context_path=row.get("context_path", ""),
+                                            unbound=row.get("unbound", False)))
     selected_all = frozenset(entity["entity_id"] for group in view["groups"] for entity in group["entities"])
     bindings, refused, externals = select_bindings(partition(candidates), selected_all)
     return bindings, refused, externals, changes

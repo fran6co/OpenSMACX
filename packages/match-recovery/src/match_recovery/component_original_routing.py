@@ -45,6 +45,7 @@ def exact_component_record_bindings(snapshot: dict) -> dict[tuple[str, str], tup
             expected = [[span.start, span.end] for span in binding.spans]
             matches = [row for row in candidates
                        if not row["invalid_spans"] and row["spans"] == expected
+                       and row.get("legacy_mode") != "unbound"
                        and row.get("function_fragment") is None]
             if len(candidates) == len(matches) == 1 and key not in output:
                 output[key] = (manifest.component.component_id, manifest, binding)

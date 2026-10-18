@@ -1111,6 +1111,37 @@ Claim recording currently refuses both fragments and parents with attached
 fragments. Combined-extent publication is unfinished. No relation waives layout,
 preservation, linked-selection or runtime proof requirements.
 
+## Pending original mappings without artificial C++
+
+The native source reader/writer supports an explicit `UNBOUND` mode:
+
+```cpp
+// ORIGINAL: 0x00401000 _original 0x00401000-0x00401008 UNBOUND
+```
+
+This declares a known original identity and spans, not an emitted function.
+Mode/state/recipe are `unbound`, the body and emitted-symbol hint are empty,
+and no compiler interaction is attempted for this record. Use an ordinary,
+configured non-built interface file outside legacy seed roots; `.recovery.h`
+is the existing dependency-component-manifest namespace. The package does not
+require a particular directory, filename, target project or compiler.
+
+Retain historical claims and lessons when explicitly migrating an unused adapter
+through `match_recovery.source`; the writer does not measure or grant claims.
+UNBOUND rejects body, symbol, compile-context, source-role and fragment facts.
+It remains pending in inventory, quality, ownership context and symbol coverage,
+and contributes unknown to matching even without a historical claim. It cannot
+be banked by `record`, borrowed as an external/fragment/shared definition or
+silently satisfied by another interpretation. Ordinary unbuilt function hosts,
+accidentally built UNBOUND hosts and conflicting original owners still refuse.
+
+Recovering its real owner requires a reviewed source migration, preservation of
+identity/spans/claims/findings and fresh measurements; there is no implicit
+UNBOUND-to-body worker permission or new recovery CLI. Existing worker binding
+protection, immutable history and acceptance prerequisites remain active. Pending
+records do not count as implemented functions, byte matches, verified original
+boundaries, exclusions or completed recovery.
+
 ## Whole-project gate
 
 `recover check --root <project> --image <original> --jobs 1 --summary` runs the
@@ -1154,7 +1185,9 @@ only within that invocation's TU/flag trials. Recipes are supplied by the
 configured compiler, not inferred by the package. A build-mapped claimed subject
 that stops compiling or being emitted fails; unresolved seed evidence remains
 unknown. Header claims are visible but require unsupported host coverage. An
-empty claim set does not pass. Historical identity coverage is a separate stage.
+empty claim set does not pass. Explicit UNBOUND records remain visible and
+unknown without a compile attempt, including unclaimed pending identities.
+Historical identity coverage is a separate stage.
 
 Gate exit 0 means its configured checks passed, 1 means a known failure, and 3
 means incomplete evidence. A known failure takes precedence over unknowns.

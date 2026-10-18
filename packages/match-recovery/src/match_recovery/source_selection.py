@@ -8,11 +8,14 @@ import re
 from .components import relative_path
 from .model import require_text
 from .source import read_text
+from .source.model import Mode
 from .source.mangled import identifier, qualified_name
 
 
 def compilation_context(root, record, settings):
     """Resolve a mapping's configured emitting TU, or reject unsafe context facts."""
+    if record.mode is Mode.UNBOUND:
+        raise ValueError("UNBOUND mapping has no emitted source or compilation context")
     if not record.context:
         return record.path
     name = record.context
@@ -55,6 +58,8 @@ class SnapshotMapping:
     image_spans: tuple[tuple[int, int], ...]
     context: str = ""
     function_fragment: dict | None = None
+    mode: str = "body"
+    state: str = "implemented"
 
     @property
     def address_hex(self):
@@ -80,7 +85,9 @@ def snapshot_mappings(root, snapshot):
         records.append(SnapshotMapping(fact["origin"]["address"], hosts[name], fact["line"],
                                        fact["catalogued_symbol"], fact["emitted_symbol_hint"],
                                        tuple(tuple(pair) for pair in fact["spans"]),
-                                       fact.get("context_path", ""), fact.get("function_fragment")))
+                                       fact.get("context_path", ""), fact.get("function_fragment"),
+                                       fact.get("legacy_mode", "body"),
+                                       fact.get("legacy_state", "implemented")))
     return records
 
 
@@ -104,14 +111,18 @@ def selected_source_records(root, snapshot, selected_mappings):
             text = base64.b64decode(snapshot["files"][name]["content_base64"]).decode("utf-8", errors="replace")
             parsed[mapping.path] = {row.line: row for row in read_text(text, mapping.path)}
         record = parsed[mapping.path].get(mapping.line)
-        if record is None or SnapshotMapping(record.address, record.path, record.line, record.name,
-                                             record.symbol or record.name, record.image_spans,
+        if record is None:
+            raise ValueError("selected source mapping differs from freshly parsed captured source")
+        emitted_hint = (record.symbol if record.mode is Mode.UNBOUND else record.symbol or record.name)
+        if SnapshotMapping(record.address, record.path, record.line, record.name,
+                                             emitted_hint, record.image_spans,
                                              record.context,
                                              ({"parent_address": record.function_fragment.parent_address,
                                                "parent_symbol": record.function_fragment.parent_symbol,
                                                "reason": record.function_fragment.reason,
                                                "evidence": list(record.function_fragment.evidence)}
-                                              if record.function_fragment is not None else None)) != mapping:
+                                              if record.function_fragment is not None else None),
+                                             record.mode.value, record.state.value) != mapping:
             raise ValueError("selected source mapping differs from freshly parsed captured source")
         selected.append(record)
     return selected

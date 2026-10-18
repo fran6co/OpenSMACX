@@ -17,6 +17,7 @@ from .measurement import Measurement
 from .model import digest, require_text
 from .records import parse_json_value, read_json
 from .source import read_file
+from .source.model import Mode
 from .source.asm import compare_unit, shared_spans
 from .source.recording import record_claims
 from .source_history import git
@@ -105,6 +106,8 @@ def record(root: Path, targets, *, image: Path, in_file: str | None = None,
         relative_path(in_file)
         host = settings.source.path(root, in_file)
     selected = select_records(records, targets, host, settings.source.symbol_format)
+    if any(row.mode is Mode.UNBOUND for row in selected):
+        raise ValueError("cannot record an UNBOUND mapping; it has no emitted body to measure")
     if any(row.path.suffix not in settings.unit_extensions for row in selected):
         raise ValueError("selected mapping host is not a configured translation unit")
     arguments = ()

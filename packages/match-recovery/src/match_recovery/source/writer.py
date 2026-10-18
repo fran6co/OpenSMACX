@@ -31,8 +31,9 @@ that gap, so an unedited lesson is put back exactly as its author wrote it,
 and only the marker is re-spelled canonically.
 
 THE SPELLINGS COME FROM `grammar`, nowhere else. A written marker is
-`// ORIGINAL: 0x{address:08X}` with ` FILE`, ` EXCLUDED <citation>` and
-` BYTE_EXACT` appended as the record requires - exactly the forms
+`// ORIGINAL: 0x{address:08X}` with ` FILE`, ` UNBOUND`,
+` EXCLUDED <citation>`, ` BYTE_EXACT` and ` SEMANTIC` appended as the record
+requires - exactly the forms
 `grammar.MARKER` and `grammar.MARKER_KEYWORD` accept - and lessons are
 spelled the way `grammar.LESSON_*` accept them. That is what makes the
 read -> write -> read loop closed by construction. The installed
@@ -40,9 +41,10 @@ read -> write -> read loop closed by construction. The installed
 files. It compares original text as well as parsed records, so two equally
 lossy parses cannot conceal lost prose or unrelated edits.
 
-STATE IS NEVER WRITTEN. It is derived from the region on read, which is
-what makes the loop a test: the rewritten file must re-derive the same
-state from the same code.
+IMPLEMENTED/PLACEHOLDER STATE IS NEVER WRITTEN; it is derived from the region
+on read. EXCLUDED and UNBOUND are explicit marker dispositions, not body states.
+That is what makes the loop a test: the rewritten file must re-derive or
+re-read the same state from the same source annotation.
 
 EXPLICIT SYMBOL, KIND AND BODY FACT UPDATES use separate pure operations.
 Unlike the legacy marker writer, they require a current complete reader
@@ -67,7 +69,7 @@ from .grammar import (FACT_LINE, LESSON_CONTINUED, LESSON_DEFERRED,
                       MARKER, NEXT_MARKER, SOURCE_ROLE_DIRECTIVE,
                       FUNCTION_FRAGMENT_DIRECTIVE)
 from .model import (DecompilationState, Mode, SourceRole, State,
-                    validate_source_role)
+                    validate_source_role, validate_unbound_mapping)
 from .reader import _fact_lines, _lesson_run, read_text
 
 # Consume ordinary literals/comments before looking for a raw-string opener.
@@ -127,6 +129,8 @@ def _marker_line(record: DecompilationState) -> str:
                                for low, high in record.image_spans)
     if record.mode is Mode.FILE:
         line += " FILE"
+    elif record.mode is Mode.UNBOUND:
+        line += " UNBOUND"
     if record.state is State.EXCLUDED:
         line += f" EXCLUDED {record.exclusion or 'unspecified'}"
     if record.byte_exact:
@@ -393,6 +397,7 @@ def write(text: str, records: list[DecompilationState]) -> str:
 
     by_line = {}
     for record in records:
+        validate_unbound_mapping(record)
         if record.mode is Mode.FILE and record.state is State.EXCLUDED:
             raise ValueError(
                 f"{record.address_hex}: FILE and EXCLUDED are mutually "
@@ -407,6 +412,20 @@ def write(text: str, records: list[DecompilationState]) -> str:
                 f"another record")
         by_line[record.line] = record
         _source_role_line(record)  # Validate the durable role/reason pair.
+        index = record.line - 1
+        if record.mode is Mode.UNBOUND and index < len(lines):
+            facts = set()
+            for _offset, fact_line in _fact_lines(lines, index):
+                fact = FACT_LINE.fullmatch(fact_line)
+                if fact:
+                    facts.add(fact.group(1))
+            if facts & {"symbol", "body", "compile_context"}:
+                raise ValueError("UNBOUND cannot retain emitted symbol, body, or compile_context facts")
+            if index > 0 and SOURCE_ROLE_DIRECTIVE.fullmatch(lines[index - 1]):
+                raise ValueError("UNBOUND cannot retain a RECOVERY_ROLE directive")
+            if (index + 1 < len(lines)
+                    and lines[index + 1].lstrip().startswith("// RECOVERY_FRAGMENT:")):
+                raise ValueError("UNBOUND cannot retain a RECOVERY_FRAGMENT directive")
 
     drop: set = set()
     respell: dict = {}
@@ -531,6 +550,9 @@ def write_symbol(raw: bytes, record: DecompilationState, symbol: str) -> bytes:
     bindings, and refuses ambiguous facts. The caller owns compiler evidence,
     authorization and guarded publication; this never grants a byte claim.
     """
+    validate_unbound_mapping(record)
+    if record.mode is Mode.UNBOUND:
+        raise ValueError("cannot assign an emitted symbol to an UNBOUND mapping")
     if not isinstance(raw, bytes):
         raise ValueError("symbol rewriting requires original source bytes")
     if (not isinstance(symbol, str) or not symbol
@@ -786,6 +808,9 @@ def write_body(raw: bytes, record: DecompilationState, body: str) -> bytes:
     token; it never inserts a fact or changes the original identity, spans,
     claim, lessons, or binding rationale.
     """
+    validate_unbound_mapping(record)
+    if record.mode is Mode.UNBOUND:
+        raise ValueError("cannot assign a body to an UNBOUND mapping")
     if not isinstance(raw, bytes):
         raise ValueError("body rewriting requires original source bytes")
     if (not isinstance(body, str) or not body
@@ -874,6 +899,9 @@ def write_body(raw: bytes, record: DecompilationState, body: str) -> bytes:
 
 def write_context(raw: bytes, record: DecompilationState, context: str) -> bytes:
     """Set/insert one emitting-TU fact while preserving every other annotation."""
+    validate_unbound_mapping(record)
+    if record.mode is Mode.UNBOUND:
+        raise ValueError("cannot assign a compile context to an UNBOUND mapping")
     if not isinstance(raw, bytes):
         raise ValueError("context rewriting requires original source bytes")
     if (not isinstance(context, str) or not context

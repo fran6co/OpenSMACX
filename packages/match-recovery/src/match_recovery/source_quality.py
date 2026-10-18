@@ -159,8 +159,14 @@ def quality_report(root: Path) -> dict:
         else:
             path, line = next(iter(locations))
             record = records_by_location.get((entity_id, path, line))
-            body, path, line, placeholder, reason = resolved_body(rows[0], record) if record else (None, path, line, False, "source body record unresolved")
-            findings = _findings(body, path=path, first_line=line) if body else []
+            if rows[0].get("legacy_mode") == "unbound":
+                body, placeholder = None, False
+                reason = "UNBOUND mapping intentionally has no C++ body or emitted symbol"
+                findings = []
+                status = "unbound"
+            else:
+                body, path, line, placeholder, reason = resolved_body(rows[0], record) if record else (None, path, line, False, "source body record unresolved")
+                findings = _findings(body, path=path, first_line=line) if body else []
             if placeholder:
                 marker = "BODY GOES HERE"
                 relative = body.find(marker)
@@ -168,9 +174,10 @@ def quality_report(root: Path) -> dict:
                 findings.append({"category": "reconstruction_debt", "kind": "native placeholder classification",
                                  "path": path, "line": sentinel_line, "column": 1,
                                  "text": "The source reader classifies this mapped body as a placeholder."})
-            status = ("unreviewed" if body is None else
-                      "reconstruction_debt" if placeholder or any(f["category"] == "reconstruction_debt" for f in findings) else
-                      "needs_investigation" if findings else "unreviewed")
+            if rows[0].get("legacy_mode") != "unbound":
+                status = ("unreviewed" if body is None else
+                          "reconstruction_debt" if placeholder or any(f["category"] == "reconstruction_debt" for f in findings) else
+                          "needs_investigation" if findings else "unreviewed")
         if len(locations) != 1:
             findings = []
         scan_observation = ("unresolved" if body is None else
@@ -178,13 +185,15 @@ def quality_report(root: Path) -> dict:
         totals[status] += 1
         output.append({"entity_id": entity_id, "path": path, "line": line,
                        "catalogued_symbols": sorted({r["catalogued_symbol"] for r in rows}),
+                       "mapping_disposition": ("unbound_pending" if any(
+                           r.get("legacy_mode") == "unbound" for r in rows) else "source_mapping"),
                        "status": status, "findings": findings,
                        "body_resolution": reason,
                        "scan_observation": scan_observation,
                        "historical_byte_claim": entity_id in obligations,
                        "current_exactness": "not_measured"})
     claim_cross_tab = {status: {"claimed": 0, "unclaimed": 0}
-                       for status in ("needs_investigation", "reconstruction_debt", "unreviewed")}
+                       for status in ("needs_investigation", "reconstruction_debt", "unreviewed", "unbound")}
     for item in output:
         claim_cross_tab[item["status"]]["claimed" if item["historical_byte_claim"] else "unclaimed"] += 1
     assert_snapshot_current(root, snapshot)
@@ -193,7 +202,8 @@ def quality_report(root: Path) -> dict:
             "image_sha256": snapshot["image_sha256"],
             "source_fingerprint": hashlib.sha256(
                 "".join(f"{path}:{snapshot['files'][path]['sha256']}\n" for path in sorted(snapshot["files"])).encode()).hexdigest(),
-            "counts": {key: totals[key] for key in ("needs_investigation", "reconstruction_debt", "unreviewed")},
+            "counts": {key: totals[key] for key in ("needs_investigation", "reconstruction_debt", "unreviewed", "unbound")},
+            "pending_unbound": totals["unbound"],
             "historical_byte_claims_by_status": claim_cross_tab,
             "limitations": ["Historical byte claims are not fresh exactness measurements.",
                             "No absence of pattern findings establishes structural review or quality.",
