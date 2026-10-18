@@ -1,0 +1,36 @@
+{
+  "author": "coordinator",
+  "base_revision": "3b55542d34a3ef9a18b9cc1289e97cba5459ae34",
+  "editable_files": [
+    "src/game.cpp",
+    "src/base.cpp",
+    "recovery/tests/test_game_fixed_data_owner_actual_source_oct9.py",
+    "recovery/tests/test_prototype_flags_byte_access_oct18.py",
+    "recovery/tests/test_switch_owner_storage_oct18.py"
+  ],
+  "evidence": [
+    "Coordinator independently decoded both complete pinned function spans. At52A988 the original AND is one byte at the low flags address9AB898; at4F047B it is one byte at high flags9AB899 with maskFE. Existing candidate emits word operations. This is a directly evidenced access-width correction, not a bug fix, arbitrary register spelling or missing-global hypothesis.",
+    "Review and supersede only the contrary DWORD-access rationale in game-fixed-data-owner-closure-oct9: the full37-byte original52A980 body has one byte AND, not a DWORD read/write over preq_tech. Its original task baseline and all other source/history obligations remain intact. Record this correction in that native journal; do not edit the old task or erase its evidence.",
+    "VehPrototype remains a0x34-byte record with uint16_t flags at30 and int16_t preq_tech at32;512 records. Independent combined-word consumers, including original57F680 OR0x104, support retaining that public field/type. Use a local unsigned-char view anchored to the real member, selecting byte0/1 under the pinned x86 ABI. Character-type object-representation access is justified; no invented union, split field, raw self offset, new class, helper ABI, volatile or original-executable address is authorized.",
+    "Only the two function bodies and their immediately relevant explanatory comments may change in product source. Preserve original identities/spans/symbols/claims and historical LEVER/TRIED lessons. Keep all512 reset rows, flags-before-icon ordering, icon=-1 and vehicle-count-before-base-count reset; retain the full upgrade selection/call/return/error behavior, including its existing four-argument-call issue. No safety normalization, header/layout/caller/flags/linker change or general cleanup.",
+    "Existing512-row sentinel/neighbor controls must remain. Replace their obsolete source-spelling ban only with the now justified member-anchored byte-view expectation, not a weaker behavioral oracle. Add actual-source high-byte and low-byte preservation/mutation controls and independent original operand-width witnesses. Host tests cannot prove VC6 access width; require actual fresh native candidate output with replica/damage controls, complete body measurements and original references. Do not require or fabricate byte equality as permission to retain the faithful access correction.",
+    "The prior dispatch cohort inverse-transport test currently freezes entire live CPP files forever, which would wrongly forbid this unrelated Base body recovery. Preserve that complete inverse and all its damage controls against the immutable published3b55542d3 source checkpoint, rather than current future bodies. Continue checking all36 live dispatch bindings and original guard/cell/domain damage controls; later independent cohorts may add records without changing those interpretations. This is a test-lifetime correction, not permission to alter source bindings, comparator policy or the prior recovery result.",
+    "Require independent source review, focused regression and pinned/damage controls, fresh complete application compile/link, physical outside-only-two-body preservation, all5581 mapped CPP identity/measurement continuity and source/claim/mapping/reference checks. Record only genuine new exact results through recover record. Keep strict unknowns/old matching obligations; manual coordinator review is not full linked preservation or automatic/runtime/game acceptance. Recheck integrated master before removing the consumed worker."
+  ],
+  "intent": "Recover the two original byte-width flag updates on the real VehPrototype.flags word, preserving its public type, neighboring data and complete surrounding behavior.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5417344,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5178464,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "prototype-flags-byte-access-oct18"
+}
