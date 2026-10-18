@@ -738,17 +738,10 @@ void GraphicWin::soft_update(RECT *area) {
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x005D5720 ?soft_update@GraphicWin@@QAEXHHHH@Z 0x005D5720-0x005D588C
-// RECOVERY_BINDING: v1 {"evidence":["source:src/recovered/units/005d5720.cpp","source:src/graphicwin.cpp:GraphicWin::soft_update"],"reason":"Own the four-coordinate invalidation path required by SetupWin and other window painters; clip against the client rectangle, translate to screen, and invalidate without erasing."}
+// RECOVERY_BINDING: v1 {"evidence":["source:src/recovered/units/005d5720.cpp","source:src/graphicwin.cpp:GraphicWin::soft_update","Pinned5D5739/5D573E form coordinate extents before visibility;5D57FA selects GraphicWin+474 (Buffer::rect2_) for IntersectRect5D581B, then5D583B converts the zero origin and5D587C invalidates HandleMain with eraseFALSE. The duplicated null/full-buffer branch matches the existing rectangle overload's source behavior; delegation is a source reconstruction, not a byte claim."],"reason":"Own the coordinate invalidation path through the existing typed rectangle overload: clip against Buffer working bounds, not the unrelated Win client rectangle, translate to screen, and invalidate without erasing."}
 void GraphicWin::soft_update(int x, int y, int width, int height) {
-    if (!Win::is_visible()) return;
     RECT local = {x, y, x + width, y + height};
-    if (!IntersectRect(&local, &local, &client_rect_)) return;
-
-    int origin_x = 0;
-    int origin_y = 0;
-    Win::client_to_screen(&origin_x, &origin_y);
-    OffsetRect(&local, origin_x, origin_y);
-    InvalidateRect(HandleMain, &local, FALSE);
+    soft_update(&local);
 }
 
 // Frame minima below use real Sprite dimensions. Window creation, client-size
