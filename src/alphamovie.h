@@ -37,11 +37,10 @@ class MCIVideo {
   // window's own device context. No catalogue name - `blit_frame` is the
   // tree's, recorded on the body's `symbol` fact.
   void blit_frame();
-  // ??1MCIVideo@@QAE@XZ at 0x004042C0, a user destructor that calls close();
-  // the palette_ member is destroyed by the compiler after the body. The
-  // homed definition in alphamovie.cpp is what amovie_project's stack
-  // MCIVideo destroys at scope exit.
-  ~MCIVideo();
+  // ??1MCIVideo@@QAE@XZ at 0x004042C0 retains its canonical original mapping
+  // in alphamovie.cpp; the in-class user body calls close(), then the compiler
+  // destroys palette_.
+  ~MCIVideo() { close(); }
 
   // Storage the image proves is here: its own methods reach 0x47C.
   // Extent only - this class carries no size assertion, and the bound is a floor.

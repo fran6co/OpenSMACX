@@ -49,8 +49,9 @@ re-read the same state from the same source annotation.
 EXPLICIT SYMBOL, KIND AND BODY FACT UPDATES use separate pure operations.
 Unlike the legacy marker writer, they require a current complete reader
 snapshot and verify that other annotations and lessons retain their
-interpretations. ``write_body`` only replaces an existing body path; it does
-not invent a missing binding. Their caller supplies evidence, authorization
+interpretations. ``write_body`` defaults to replacing an existing body path;
+adding a missing fact requires explicit ``insert=True``. Neither operation
+infers a definition or emitting compilation witness. Their caller supplies evidence, authorization
 and guarded publication.
 """
 
@@ -800,14 +801,17 @@ def write_kind(raw: bytes, record: DecompilationState, kind: str) -> bytes:
     return result
 
 
-def write_body(raw: bytes, record: DecompilationState, body: str) -> bytes:
-    """Return source with one existing body-location fact path updated.
+def write_body(raw: bytes, record: DecompilationState, body: str, *, insert: bool = False) -> bytes:
+    """Update one body-location path, or explicitly insert a missing fact.
 
     Unlike ``write``, this is an explicit guarded fact edit. It requires the
     caller's complete current reader snapshot and edits only the body path
-    token; it never inserts a fact or changes the original identity, spans,
-    claim, lessons, or binding rationale.
+    token. ``insert=True`` also permits one new fact after the marker/binding;
+    it does not infer that the definition exists or the TU emits it. Neither
+    route changes original identity, spans, claims, lessons or binding rationale.
     """
+    if type(insert) is not bool:
+        raise ValueError("body insertion requires explicit Boolean permission")
     validate_unbound_mapping(record)
     if record.mode is Mode.UNBOUND:
         raise ValueError("cannot assign a body to an UNBOUND mapping")
@@ -861,21 +865,32 @@ def write_body(raw: bytes, record: DecompilationState, body: str) -> bytes:
                     or any(token in value for token in ("/*", "*/", "//", "??/"))):
                 raise ValueError("existing body fact is not one safe relative path")
             facts.append((offset, match, value))
-    if len(facts) != 1:
+    if len(facts) > 1 or not facts and not insert:
         raise ValueError("body update requires exactly one existing body fact")
-    if (facts[0][0] in macro_lines
+    if facts and (facts[0][0] in macro_lines
             or define_prefix.match(lines[facts[0][0]])):
         raise ValueError("body fact is inside a #define directive")
 
-    offset, match, old_value = facts[0]
-    line = source_lines[offset]
-    leading = len(line) - len(line.lstrip(b" \t"))
-    start = leading + match.start(2)
-    old = old_value.encode("utf-8")
-    if line[start:start + len(old)] != old:
-        raise ValueError("body fact cannot be rewritten byte-for-byte")
     output = list(source_lines)
-    output[offset] = line[:start] + encoded + line[start + len(old):]
+    if facts:
+        offset, match, old_value = facts[0]
+        line = source_lines[offset]
+        leading = len(line) - len(line.lstrip(b" \t"))
+        start = leading + match.start(2)
+        old = old_value.encode("utf-8")
+        if line[start:start + len(old)] != old:
+            raise ValueError("body fact cannot be rewritten byte-for-byte")
+        output[offset] = line[:start] + encoded + line[start + len(old):]
+    else:
+        index = record.line - 1
+        line = source_lines[index]
+        newline = b"\r\n" if line.endswith(b"\r\n") else b"\r" if line.endswith(b"\r") else b"\n"
+        if record.line in bindings:
+            index += 1
+            line = source_lines[index]
+        if not line.endswith((b"\n", b"\r")):
+            output[index] += newline
+        output.insert(index + 1, b"// body " + encoded + newline)
     result = b"".join(output)
     reread = read_text(result.decode("utf-8", errors="replace").replace("\r\n", "\n").replace("\r", "\n"), record.path)
     if len(reread) != len(records):

@@ -1,18 +1,16 @@
-"""Actual MCI owner-body witnesses; host tests do not prove native ABI/runtime."""
+"""Actual MCI callback-owner witnesses; host tests do not prove native ABI/runtime."""
 from pathlib import Path
 import shutil
 import pytest
-from match_recovery.source import read_file
 from test_game_logic_seed_batch_behavior import _definition
 from test_popup_animation_owner_behavior import run_control
 
 ROOT = Path(__file__).resolve().parents[2]
 
 def projected(damage=None):
-    rows = read_file(ROOT / 'src/alphamovie.cpp')
-    bodies = '\n\n'.join(_definition(next(r.region for r in rows if r.address == address),
-                                    'LRESULT __cdecl ' + name + '(')
-                         for address, name in ((0x5FFE40, 'sub_5ffe40'), (0x5FFE80, 'sub_5ffe80')))
+    source = (ROOT / 'src/mci_video.cpp').read_text(encoding='utf-8')
+    bodies = '\n\n'.join(_definition(source, 'LRESULT __cdecl ' + name + '(')
+                         for name in ('sub_5ffe40', 'sub_5ffe80'))
     if damage is not None:
         old, new = damage
         assert old in bodies

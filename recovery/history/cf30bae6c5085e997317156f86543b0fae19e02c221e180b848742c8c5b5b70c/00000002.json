@@ -1,0 +1,30 @@
+{
+  "event_id": "ae36230d0322a7489c895242ad2037481df5f39499213b41880d83cddade56e0",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Fresh frozen172-TU build/link and full5581-identity census preserve every verdict and selected strict result, but original native object residual reports two unchanged outside caller bodies with different bytes: Console::new_base and make_gift include the inline MCI destructor header. Preserve that first181PASS/3FAIL report, including intentional AlphaMovie data transfer, rather than claiming count equality is preservation.",
+      "Expand review/measurement ownership only, no Console or Faction source edits, no baseline reset or historical claim change. Console swaps adjacent independent EBX/EDI stack reloads; make_gift swaps two zero register initializations and corresponding four zero stores. Independent complete-body/reference/metadata and source evidence review must establish the bounded compiler-scheduling differences before manual admission. Projection alone is not semantic proof.",
+      "Retain fresh whole-body original mismatches and full-span ctor/dtor refusals. Review ordinary AlphaMovie literal/global data transfer and all added-unit helper closures separately. This coordinator expansion grants neither automatic/native full-link acceptance nor runtime/game equivalence."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5044160,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5536784,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "9e2d33b12709a3d1bc0c9d3d258c74987ad9592c66e8b3457aa938baec980e6b",
+  "request_id": "media-header-caller-output-closure",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:media-owner-visibility-oct18"
+}

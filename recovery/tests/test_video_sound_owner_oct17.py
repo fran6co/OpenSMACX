@@ -1,8 +1,8 @@
-"""Exact source split and durable annotation continuity for VideoSoundState.
+"""VideoSoundState-owned transfer and durable annotation continuity.
 
-This validates the current split against the immutable pre-split source;
-it does not measure
-the native compiler, prove linked selection, or claim game/runtime acceptance.
+This validates the moved VideoSoundState block against its immutable source;
+it does not freeze unrelated Video methods or measure native selection.
+It does not claim game/runtime acceptance.
 """
 from __future__ import annotations
 
@@ -46,13 +46,8 @@ def _git_source(relative: str) -> str:
     )
 
 
-def project_video_sound_split(video_source: str, sound_source: str) -> str:
-    """Reconstruct the old video.cpp, undoing only the authorized TU move.
-
-    All moved code/annotations are taken from the new owner, not silently
-    replaced with baseline text. The only normalization is the single scoped
-    current-owner sentence in the get_time RECOVERY_BINDING.
-    """
+def _base_video_sound_block() -> tuple[str, str, str]:
+    """Return the immutable migrated implementation and its old file framing."""
     old = _git_source("src/video.cpp")
     heading_end = old.index(VIDEO_INCLUDE)
     old_heading = old[:heading_end]
@@ -62,6 +57,20 @@ def project_video_sound_split(video_source: str, sound_source: str) -> str:
     delete_separator_at = old.rfind("\n\n", 0, delete_at)
     assert delete_separator_at == delete_at - 2
     delete_record = old[delete_separator_at:]
+    assert method_start < queue_start < delete_at
+    block = old[method_start:queue_start]
+    return old_heading, block, delete_record
+
+
+def project_video_sound_split(video_source: str, sound_source: str) -> str:
+    """Validate only the VideoSoundState transfer, not the changing Video TU.
+
+    The shared video.cpp now has other legitimate owner moves. Compare the
+    migrated VideoSound block itself against its immutable source bytes and
+    retain the old binding sentence normalization, without inversing all of
+    video.cpp or asserting queue methods still live there.
+    """
+    old_heading, expected_block, delete_record = _base_video_sound_block()
 
     assert video_source.startswith(VIDEO_INCLUDE), "video.cpp header moved or rewritten"
     assert sound_source.startswith(old_heading + VIDEO_INCLUDE), (
@@ -86,28 +95,28 @@ def project_video_sound_split(video_source: str, sound_source: str) -> str:
     assert moved_block.count(GET_TIME_NEW) == 1
     moved_block = moved_block.replace(GET_TIME_NEW, GET_TIME_OLD, 1)
 
-    # Reinsert the actual migrated method/annotation block immediately before
-    # the retained first VideoFrameQueue record. Keep the old 4C9360 tail.
-    assert video_source.count(QUEUE_START) == 1
-    projected = old_heading + video_source
-    queue_at = projected.index(QUEUE_START)
-    projected = projected[:queue_at] + moved_block + projected[queue_at:]
-    assert projected.endswith("\n")
-    projected = projected[:-1] + delete_record
-    return projected
+    assert moved_block == expected_block, "VideoSound implementation/annotation transfer changed"
+    return moved_block
 
 
 def _assert_full_split(video_source: str, sound_source: str) -> str:
-    old = _git_source("src/video.cpp")
     projected = project_video_sound_split(video_source, sound_source)
-    assert projected == old, "split does not reconstruct the immutable pre-split TU"
 
-    # Exercise the package parser on both new owners and the reconstructed
-    # source so malformed/ambiguous annotations cannot hide behind text checks.
+    # Exercise the package parser on the owner and the migrated block so
+    # malformed/ambiguous annotations cannot hide behind text comparisons.
+    old_heading, _, _ = _base_video_sound_block()
+    old = _git_source("src/video.cpp")
     old_rows = read_text(old, ROOT / "src/video.cpp")
-    restored_rows = read_text(projected, ROOT / "src/video.cpp")
+    migrated_rows = read_text(old_heading + VIDEO_INCLUDE + "\n" + projected,
+                              ROOT / "src/video_sound.cpp")
     sound_rows = read_text(sound_source, ROOT / "src/video_sound.cpp")
-    assert len(old_rows) == len(restored_rows) > 0
+    old_sound_rows = [row for row in old_rows if row.address in {
+        record.address for record in migrated_rows
+    }]
+    assert [row.address for row in old_sound_rows] == [row.address for row in migrated_rows]
+    assert [row.address for row in sound_rows if row.address in {
+        record.address for record in migrated_rows
+    }] == [row.address for row in migrated_rows]
     assert len(sound_rows) > 0
 
     assert sound_source.count("// RECOVERY_GENERATED: v1 vtable 0x66e790 0x66e82c ") == 1
@@ -122,8 +131,6 @@ def _assert_full_split(video_source: str, sound_source: str) -> str:
         assert len(re.findall(r"(?m)^" + re.escape(signature), sound_source)) == 1, signature
         assert signature not in video_source, signature
     for retained in (
-        "VideoFrameQueue::VideoFrameQueue()",
-        "VideoFrameQueue::allocate(",
         "Video::advance_frame()",
         "VideoRegistry[10]",
         "VideoViewportCodecParameters VideoViewportCodec;",
@@ -132,7 +139,7 @@ def _assert_full_split(video_source: str, sound_source: str) -> str:
     return projected
 
 
-def test_split_is_complete_unique_and_reconstructs_pre_split_source():
+def test_video_sound_owner_is_complete_unique_and_matches_migrated_block():
     video_source = (ROOT / "src/video.cpp").read_text()
     sound_source = (ROOT / "src/video_sound.cpp").read_text()
     _assert_full_split(video_source, sound_source)
@@ -144,7 +151,7 @@ def test_split_is_complete_unique_and_reconstructs_pre_split_source():
     "erase_old_lesson",
     "duplicate_vtable_record",
     "damage_deleting_mapping",
-    "move_video_queue_record",
+    "damage_video_sound_method",
     "unadmitted_prologue",
 ))
 def test_split_projection_rejects_moved_record_damage(damage):
@@ -170,10 +177,10 @@ def test_split_projection_rejects_moved_record_damage(damage):
         old = "// symbol    ??_GVideoSoundState@@UAEPAXI@Z"
         assert sound_source.count(old) == 1
         sound_source = sound_source.replace(old, "// symbol    ??_GVideo@@UAEPAXI@Z", 1)
-    elif damage == "move_video_queue_record":
-        marker = "// ORIGINAL: 0x0063E520 sub_63e520 0x0063E520-0x0063E534 BYTE_EXACT"
-        assert video_source.count(marker) == 1
-        video_source = video_source.replace(marker, "// damaged queue identity", 1)
+    elif damage == "damage_video_sound_method":
+        marker = "int VideoSoundState::get_time() {"
+        assert sound_source.count(marker) == 1
+        sound_source = sound_source.replace(marker, "int VideoSoundState::changed_time()", 1)
     elif damage == "unadmitted_prologue":
         assert sound_source.count(VIDEO_INCLUDE) == 1
         sound_source = sound_source.replace(

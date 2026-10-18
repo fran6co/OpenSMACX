@@ -1,0 +1,23 @@
+{
+  "event_id": "9e2d33b12709a3d1bc0c9d3d258c74987ad9592c66e8b3457aa938baec980e6b",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "docs/DECOMP_MAP.md",
+      "packages/match-recovery/src/match_recovery/source/writer.py",
+      "packages/match-recovery/tests/source/test_body_writer.py"
+    ],
+    "evidence": [
+      "The real media split needs a new body-location fact for each header-defined destructor while preserving canonical CPP mappings. Native write_body currently refuses every missing fact; no native add-only body writer exists. Do not work around this by hand-writing annotation metadata or moving canonical function identity into an unconfigured header.",
+      "Authorize only explicit keyword insert=True on the existing pure write_body API, default update-only refusal unchanged, with same fresh-record, lexical/macro/raw-string/path, binding adjacency, complete identity/claims/lesson and one-selected-body invariants. Preserve CRLF/LF/unterminated lines and reject duplicate/invalid facts and non-Boolean authority. Add focused positive/damage tests and update source-map documentation. No CLI, compiler, acceptance, parsing-cache or project-specific package behavior.",
+      "Coordinator applies and verifies package edit in isolated worker; use its local native API for source transformations, never copy packages into other checkouts. Source/body bindings remain unmeasured interpretations and full build/reference/identity/manual review prerequisites remain."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "guarded-new-header-body-fact",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:media-owner-visibility-oct18"
+}

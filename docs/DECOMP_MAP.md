@@ -428,6 +428,11 @@ fact blocks untouched.
 
 An adjacent `// body` fact names the source file containing a definition hosted
 elsewhere, for example `// body src/stringstruct.h` for a header-defined method.
+The guarded pure `source.write_body` updates an existing fact; explicit
+`insert=True` also permits a missing fact after the marker and any adjacent
+binding rationale. Both preserve all other identities, claims and lessons and
+require a fresh reader snapshot. Neither infers definition presence, compiler
+emission or recovery acceptance.
 Keep the canonical original marker in its owning TU, not a duplicate per emitted
 copy. The fact is a load-bearing location/ownership interpretation, not a claim
 that the body compiles or matches. Native preservation additionally requires

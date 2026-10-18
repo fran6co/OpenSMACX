@@ -214,6 +214,10 @@ EXISTING_MEASURED_PROFILES = {
     "src/interface_palette.cpp": [1],
     "src/interface_fonts.cpp": [1],
 }
+MEDIA_DIAGNOSTIC_OWNERS = (
+    "src/video.cpp", "src/video_queue.cpp", "src/alphamovie.cpp", "src/mci_video.cpp",
+)
+MEDIA_DIAGNOSTIC_FLAGS = ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Ob2"]
 
 
 def baseline_text(relative_path: str) -> str:
@@ -569,7 +573,8 @@ def test_application_profiles_match_immutable_baseline_plus_core_cohort():
 
     source_list = re.search(r"set\(OPENSMACX_SOURCES(.*?)\n\)", current_cmake, re.S)
     assert source_list is not None
-    application_sources = set(source_list.group(1).split())
+    source_rows = re.findall(r"src/[A-Za-z0-9_./-]+\.(?:cpp|c)", source_list.group(1))
+    application_sources = set(source_rows)
     assert all(owner in application_sources for owner in NEW_OWNERS + REMAINING_OWNERS + PREVIOUS_OWNERS)
     assert all(owner in application_sources for owner in REJECTED_OWNERS)
     assert all(owner in application_sources for owner in PREVIOUS_REJECTED_OWNERS)
@@ -578,14 +583,17 @@ def test_application_profiles_match_immutable_baseline_plus_core_cohort():
     assert "src/alpha.cpp" in application_sources
     assert "src/win.cpp" in application_sources
     assert "src/video.cpp" in application_sources
+    assert "src/video_queue.cpp" in application_sources
+    assert "src/alphamovie.cpp" in application_sources
+    assert "src/mci_video.cpp" in application_sources
+    assert source_rows[source_rows.index("src/video.cpp") + 1] == "src/video_queue.cpp"
+    assert source_rows[source_rows.index("src/alphamovie.cpp") + 1] == "src/mci_video.cpp"
     assert "src/video_sound.cpp" in application_sources
     assert "src/scenario_undo.cpp" in application_sources
     assert "src/header_io.cpp" in application_sources
     assert "src/crt_random.cpp" in application_sources
     assert "src/tutwin_callouts.cpp" in application_sources
-    inline_owners = (
-        "src/video.cpp", "src/pulldown.cpp", "src/alphamovie.cpp", "src/dipedit.cpp",
-    )
+    inline_owners = ("src/pulldown.cpp", "src/dipedit.cpp")
     assert all(owner in application_sources for owner in inline_owners)
 
     actual_profiles = effective_source_profiles(source_property_blocks(current_cmake))
@@ -600,6 +608,8 @@ def test_application_profiles_match_immutable_baseline_plus_core_cohort():
     assert actual_profiles["src/scenario_undo.cpp"] == ("/Oy-",)
     assert actual_profiles["src/crt_random.cpp"] == ("/Oy-",)
     assert actual_profiles["src/header_io.cpp"] == ("/Oy-",)
+    assert "src/video.cpp" not in profiled_sources
+    assert "src/alphamovie.cpp" not in profiled_sources
     assert "src/general.cpp" not in profiled_sources
     assert "src/sprite.cpp" not in profiled_sources
     assert "src/net_class.cpp" not in profiled_sources
@@ -614,10 +624,12 @@ def test_application_profiles_match_immutable_baseline_plus_core_cohort():
     assert actual_profiles["src/dipedit.cpp"] == ("/Oy-",)
     assert all(owner not in profiled_sources for owner in inline_owners
                if owner != "src/dipedit.cpp")
-    denied_owners = (set(REJECTED_OWNERS) | set(PREVIOUS_REJECTED_OWNERS)) - set(inline_owners)
+    denied_owners = ((set(REJECTED_OWNERS) | set(PREVIOUS_REJECTED_OWNERS))
+                     - set(inline_owners) - set(MEDIA_DIAGNOSTIC_OWNERS))
     all_cmake_profile_sources = profiled_sources | {
         owner for owners, _ in appended_profiles for owner in owners
     }
+    assert all(owner not in all_cmake_profile_sources for owner in MEDIA_DIAGNOSTIC_OWNERS)
     assert all(owner not in all_cmake_profile_sources for owner in denied_owners)
 
     baseline_project = json.loads(baseline_text("recovery/project.json"))
@@ -645,3 +657,7 @@ def test_application_profiles_match_immutable_baseline_plus_core_cohort():
     for owner in inline_owners:
         expected = frame_profile if owner == "src/dipedit.cpp" else base_profile
         assert unit_profiles[owner] == {"flags": expected}, (owner, unit_profiles.get(owner))
+    for owner in MEDIA_DIAGNOSTIC_OWNERS:
+        assert unit_profiles[owner] == {"flags": MEDIA_DIAGNOSTIC_FLAGS}, (
+            owner, unit_profiles.get(owner)
+        )

@@ -56,7 +56,8 @@ struct VideoAudioBufferRecord {
 class VideoFrameQueue {
 public:
   VideoFrameQueue();
-  ~VideoFrameQueue();
+  // Ordinary teardown calls clear directly; EH retains the emitted destructor.
+  ~VideoFrameQueue() { clear(); }
   int count() const { return count_; }
   int allocate(unsigned char **, int, int, unsigned int);
   int append(const unsigned char *, int, int, unsigned int);

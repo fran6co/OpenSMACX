@@ -1,0 +1,22 @@
+{
+  "event_id": "8456b892112766d97a3a6ee9e09dc394add6e837cd2c12e22415fe3de192c9b9",
+  "payload": {
+    "affects": [
+      "entity-3d2ed9906a5d731cbf3ad8f2aa6a302a146a224324e08704fe21b89b56c93255",
+      "entity-5593b94b5eb67a238f9d41720f181fb144a174410bc5c7c346e65df78e6bbc72"
+    ],
+    "author": "coordinator",
+    "discovery_id": "correct-relocated-vtable-operand-interpretation",
+    "evidence": [
+      "Independent complete COFF review finds DIR32 relocations at F95/F9A to FlatButton Win and Buffer vtables, not literal zeros. Baseline EBX/ESI address assignment is reversed in candidate, and all four stores preserve exact table identity, target address and order. Full-CFG read-before-kill review finds only those four uses before overwrites; callee-saved ABI and cold cleanup reviewed.",
+      "Console new_base only swaps independent adjacent EBX/EDI stack loads, no intervening effects or branch entry into second instruction, flags unchanged. Every other canonical object section/reference/unwind byte in both objects is preserved. Invalid-stack fault-order equivalence is not claimed; these remain original mismatches."
+    ],
+    "hypothesis": "The provisional raw-object zero-immediate interpretation in expansion rev2 describes the actual values used in make_gift.",
+    "kind": "discovery"
+  },
+  "previous_event": "ae36230d0322a7489c895242ad2037481df5f39499213b41880d83cddade56e0",
+  "request_id": "correct-relocated-vtable-operand-interpretation",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:media-owner-visibility-oct18"
+}

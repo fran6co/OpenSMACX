@@ -1,0 +1,18 @@
+{
+  "event_id": "2ccae1558c68f16cff204e6d1db96e454b82da1010627071f6fbf3421284d9e3",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "correct-relocated-vtable-operand-interpretation",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Reject provisional literal-zero hypothesis; actual physical operands are named vtable relocations. Source Console and Faction bodies are byte-identical to baseline. Bounded code review supports manual admission of preserved vtable stores and independent stack reload scheduling, not original exactness, native linked preservation, runtime or automatic acceptance.",
+      "Actual Video/queue functions and complete associated sections match qualified private split controls; all20 prior header/helper contributions and do_video preserved. Original native residual report181PASS/3FAIL remains retained, with intended ordinary AlphaMovie data transfer and two explicitly reviewed caller compiler-scheduling changes accounted separately."
+    ]
+  },
+  "previous_event": "8456b892112766d97a3a6ee9e09dc394add6e837cd2c12e22415fe3de192c9b9",
+  "request_id": "reject-raw-zero-vtable-interpretation",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:media-owner-visibility-oct18"
+}

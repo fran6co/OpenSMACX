@@ -1,4 +1,4 @@
-"""Actual-source C++98 behavior proposal for two AlphaMovie/MCI seed owners.
+"""Actual-source C++98 behavior proposal for AlphaMovie and MCIVideo owners.
 
 The tests extract method definitions from tracked product owners, compile and
 run them against deliberately small host API fixtures, and damage the extracted
@@ -19,7 +19,7 @@ import pytest
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE_SIGNATURES = {
     "movie_unk1": ("src/alphamovie.cpp", r"^\s*void\s+AlphaMovie::UNK1\s*\(\s*\)"),
-    "mci_status": ("src/alphamovie.cpp", r"^\s*int\s+MCIVideo::status\s*\(\s*\)"),
+    "mci_status": ("src/mci_video.cpp", r"^\s*int\s+MCIVideo::status\s*\(\s*\)"),
 }
 PINNED_IDENTITIES = {
     "movie_unk1": ("0x00404200", "entity-cebc9283d8177ee90234540955d8c1c2e94476190015b96682ae5e14f0955d27"),
@@ -79,10 +79,13 @@ def _extract_definition(source: str, signature: str) -> str:
 
 @pytest.fixture(scope="module")
 def bodies() -> dict[str, str]:
-    source = (ROOT / "src/alphamovie.cpp").read_text(encoding="utf-8")
+    sources = {
+        path: (ROOT / path).read_text(encoding="utf-8")
+        for path, _ in SOURCE_SIGNATURES.values()
+    }
     return {
-        name: _extract_definition(source, signature)
-        for name, (_, signature) in SOURCE_SIGNATURES.items()
+        name: _extract_definition(sources[path], signature)
+        for name, (path, signature) in SOURCE_SIGNATURES.items()
     }
 
 

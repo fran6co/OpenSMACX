@@ -153,13 +153,19 @@
     "compiler_profile": "application",
     "unit_flag_sets": {
       "src/video.cpp": {
-        "flags": ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Ob1"]
+        "flags": ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Ob2"]
+      },
+      "src/video_queue.cpp": {
+        "flags": ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Ob2"]
       },
       "src/pulldown.cpp": {
         "flags": ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Ob1"]
       },
       "src/alphamovie.cpp": {
-        "flags": ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Ob1"]
+        "flags": ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Ob2"]
+      },
+      "src/mci_video.cpp": {
+        "flags": ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Ob2"]
       },
       "src/dipedit.cpp": {
         "flags": ["/c", "/O2", "/Gy", "/GR-", "/Oy-", "/GX", "/Ob1"]

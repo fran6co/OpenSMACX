@@ -75,10 +75,10 @@ def _project_without_unit_profiles(project: bytes) -> dict:
 
 
 def _without_source_profiles(cmake: bytes) -> bytes:
-    # Owner-local source recipes are checked below. Keep the rest of CMake
-    # literal so global compiler, target, and linker policy remains protected.
-    # Standalone comments/spacing are not policy, and may describe later owner
-    # profiles without making this inverse depend on their placement or count.
+    # Owner-local source recipes and PrefWin's local source rows are checked
+    # below. Normalize the broader source inventory so unrelated later owner
+    # additions do not become part of this binding test's scope. Keep global
+    # compiler, target, and linker policy literal.
     cmake = re.sub(rb"(?m)^[ \t]*(?:#[^\n]*)?(?:\n|$)", b"", cmake)
     pattern = re.compile(
         rb"(?ms)^[ \t]*(set_source_files_properties|set_property)\((.*?)\)[ \t]*(?:\n|$)"
@@ -93,6 +93,12 @@ def _without_source_profiles(cmake: bytes) -> bytes:
     normalized = cmake
     for start, end in reversed(ranges):
         normalized = normalized[:start] + normalized[end:]
+    normalized, count = re.subn(
+        rb"(?ms)^set\(OPENSMACX_SOURCES\n.*?^\)",
+        b"set(OPENSMACX_SOURCES\n    <other application source rows>\n)",
+        normalized,
+    )
+    assert count == 1, "expected one application source inventory"
     return normalized
 
 
@@ -134,6 +140,7 @@ def _assert_inverse(geometry: bytes, project: bytes, header: bytes, cmake: bytes
         "global application compiler/link/source policy changed"
     )
     source_rows = _source_rows(cmake)
+    assert source_rows.count(b"src/prefwin_geometry.cpp") == 1
     prefwin_index = source_rows.index(b"src/prefwin_geometry.cpp")
     assert source_rows[prefwin_index - 1] == b"src/prefwin.cpp"
     assert source_rows[prefwin_index + 1] == b"src/quaylewin.cpp"
@@ -172,8 +179,12 @@ def test_prefwin_binding_update_is_exact_against_immutable_task_base() -> None:
         (0, lambda data: data.replace(b"LEVER:", b"TRIED:", 1)),
         (0, lambda data: data.replace(b"0x00686B6C 0x00686B70", b"0x00686B70 0x00686B74", 1)),
         (0, lambda data: data.replace(b"+ 23u", b"+ 24u", 1)),
-        (1, lambda data: data.replace(b'"/GX", "/Ob2"', b'"/Oy-", "/GX", "/Ob2"', 1)),
-        (1, lambda data: data.replace(b'"/Ob2"]', b'"/Ob1"]', 1)),
+        (1, lambda data: data.replace(
+            b'"src/prefwin_geometry.cpp": {\n        "flags": ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Ob2"]',
+            b'"src/prefwin_geometry.cpp": {\n        "flags": ["/c", "/O2", "/Gy", "/GR-", "/Oy-", "/GX", "/Ob2"]', 1)),
+        (1, lambda data: data.replace(
+            b'"src/prefwin_geometry.cpp": {\n        "flags": ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Ob2"]',
+            b'"src/prefwin_geometry.cpp": {\n        "flags": ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Ob1"]', 1)),
         (2, lambda data: data + b"\n// changed geometry interface\n"),
         (3, lambda data: data.replace(b"src/prefwin_geometry.cpp", b"src/prefwin_other.cpp", 1)),
         (3, lambda data: data + b'\nset_property(SOURCE src/prefwin_geometry.cpp APPEND PROPERTY COMPILE_OPTIONS "/Ob1")\n'),

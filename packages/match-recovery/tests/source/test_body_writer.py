@@ -111,3 +111,70 @@ def test_existing_body_edit_preserves_non_utf8_neighbor_bytes():
     row, = records(raw)
     assert write_body(raw, row, "src/new.cpp") == raw.replace(
         b"src/old.h", b"src/new.cpp")
+
+
+@pytest.mark.parametrize("newline", [b"\n", b"\r\n", b"\r"])
+@pytest.mark.parametrize("with_binding", [False, True])
+def test_explicit_insert_preserves_binding_claims_lessons_and_neighbors(newline, with_binding):
+    prefix = MARKER + newline + (BINDING + newline if with_binding else b"")
+    tail = (b"// TRIED: historical evidence" + newline + b"int f() {}" + newline
+            + b"// ORIGINAL: 0x00402000 _next 0x00402000-0x00402001 FILE" + newline
+            + b"// body src/next.h" + newline + b"int next() {}" + newline)
+    raw = prefix + tail
+    first, second = records(raw)
+    changed = write_body(raw, first, "src/header.h", insert=True)
+    assert changed == prefix + b"// body src/header.h" + newline + tail
+    after, neighbor = records(changed)
+    assert after.body == "src/header.h" and after.byte_exact
+    assert after.ruled_out == first.ruled_out
+    assert neighbor.body == second.body == "src/next.h"
+    before_bindings = binding_source.parse(raw.decode(), [first, second])
+    after_bindings = binding_source.parse(changed.decode(), [after, neighbor])
+    assert [before_bindings.get(r.line) for r in (first, second)] == \
+        [after_bindings.get(r.line) for r in (after, neighbor)]
+    assert write_body(changed, after, "src/header.h", insert=True) == changed
+
+
+def test_explicit_insert_handles_unterminated_marker_and_non_utf8_neighbors():
+    row, = records(MARKER)
+    assert write_body(MARKER, row, "src/header.h", insert=True) == \
+        MARKER + b"\n// body src/header.h\n"
+    raw = MARKER + b"\n// neighbor \xff\nint f() {}\n"
+    row, = records(raw)
+    assert write_body(raw, row, "src/header.h", insert=True) == \
+        MARKER + b"\n// body src/header.h\n// neighbor \xff\nint f() {}\n"
+
+
+@pytest.mark.parametrize("permission", [None, 0, 1, "true", [], {}])
+def test_insert_requires_explicit_boolean(permission):
+    raw = MARKER + b"\nint f() {}\n"
+    row, = records(raw)
+    with pytest.raises(ValueError, match="Boolean"):
+        write_body(raw, row, "src/header.h", insert=permission)
+
+
+@pytest.mark.parametrize("facts", [b"// body\n", b"// body src/../outside.h\n",
+    b"// body src/a.h\n// body src/b.h\n"])
+def test_insert_does_not_replace_malformed_or_duplicate_facts(facts):
+    raw = MARKER + b"\n" + facts + b"int f() {}\n"
+    row, = records(raw)
+    with pytest.raises(ValueError):
+        write_body(raw, row, "src/header.h", insert=True)
+
+
+def test_insert_keeps_macro_raw_string_snapshot_and_unbound_refusals():
+    samples = (
+        b"#define FN \\\n" + MARKER + b"\nint f() {}\n",
+        b'const char *s = R"tag(opaque)tag";\n' + MARKER + b"\nint f() {}\n",
+        b"// ORIGINAL: 0x00401000 _f 0x00401000-0x00401006 UNBOUND\n",
+    )
+    for raw in samples:
+        row, = records(raw)
+        with pytest.raises(ValueError):
+            write_body(raw, row, "src/header.h", insert=True)
+    raw = MARKER + b"\n// TRIED: old\nint f() {}\n"
+    row, = records(raw)
+    with pytest.raises(ValueError, match="current record snapshot"):
+        write_body(raw.replace(b"old", b"changed"), row, "src/header.h", insert=True)
+    with pytest.raises(ValueError, match="relative path"):
+        write_body(raw, row, "../escape.h", insert=True)

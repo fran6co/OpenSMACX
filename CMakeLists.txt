@@ -173,6 +173,7 @@ set(OPENSMACX_SOURCES
     src/mapwin.cpp
     src/basewin.cpp
     src/video.cpp
+    src/video_queue.cpp
     src/video_sound.cpp
     src/datalink.cpp
     src/netwin.cpp
@@ -181,6 +182,7 @@ set(OPENSMACX_SOURCES
     src/worldwin.cpp
     src/diplowin.cpp
     src/alphamovie.cpp
+    src/mci_video.cpp
     src/movie_media.cpp
     src/movie_media_decoder.cpp
     src/movie_decoder_frame.cpp
@@ -476,12 +478,11 @@ set_source_files_properties(
     src/technology_queries.cpp
     src/uv2player.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")
-# Preserve original out-of-line member/helper calls in these application owners.
+# Preserve original out-of-line close/bit-helper calls in these owners.
 # Append so DipEdit keeps its independently measured frame-based context.
+# Video and MCI use separate implementation units under default app inlining.
 set_property(SOURCE
-    src/video.cpp
     src/pulldown.cpp
-    src/alphamovie.cpp
     src/dipedit.cpp
     APPEND PROPERTY COMPILE_OPTIONS "/Ob1")
 # Preserve the measured frame-based context of the Sound-derived video owner.

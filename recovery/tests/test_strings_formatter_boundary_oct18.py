@@ -189,11 +189,10 @@ def _expected_cmake(base_cmake: bytes) -> bytes:
 
 
 def _without_source_profiles(cmake: bytes) -> bytes:
-    # Normalize source-local commands and their attached prose, regardless of
-    # how many unrelated owner profiles later batches add. Target/directory
-    # properties and all global compiler/link policy remain literal. Ignore
-    # standalone prose/spacing globally so EOF documentation is not coupled to
-    # whether a later source-local command follows it.
+    # Normalize source-local commands and the source inventory, regardless of
+    # unrelated owner splits in later batches. The formatter's own source rows
+    # and adjacency are checked below; all target/directory and global
+    # compiler/link policy remains literal.
     cmake = re.sub(rb"(?m)^[ \t]*(?:#[^\n]*)?(?:\n|$)", b"", cmake)
     pattern = re.compile(
         rb"(?ms)^[ \t]*(set_source_files_properties|set_property)\((.*?)\)[ \t]*(?:\n|$)"
@@ -207,6 +206,12 @@ def _without_source_profiles(cmake: bytes) -> bytes:
     normalized = cmake
     for start, end in reversed(ranges):
         normalized = normalized[:start] + normalized[end:]
+    normalized, count = re.subn(
+        rb"(?ms)^set\(OPENSMACX_SOURCES\n.*?^\)",
+        b"set(OPENSMACX_SOURCES\n    <other application source rows>\n)",
+        normalized,
+    )
+    assert count == 1, "expected one application source inventory"
     return normalized
 
 

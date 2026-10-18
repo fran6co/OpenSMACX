@@ -1,6 +1,7 @@
 """Actual-source host controls for MCIVideo's observed word-sized MCI id.
 
-Each owner body is extracted from alphamovie.cpp. The fixture supplies only
+MCIVideo method bodies are extracted from mci_video.cpp, and its user
+destructor body is extracted from alphamovie.h. The fixture supplies only
 the small SDK/application surface those bodies call; it does not replace them
 with a Python behavioral model or infer the unobserved extent after byte +5.
 """
@@ -75,7 +76,7 @@ def _extract_body(source: str, signature: str) -> str:
 
 
 def _actual_sources():
-    cpp = (ROOT / "src/alphamovie.cpp").read_text(encoding="utf-8")
+    cpp = (ROOT / "src/mci_video.cpp").read_text(encoding="utf-8")
     header = (ROOT / "src/alphamovie.h").read_text(encoding="utf-8")
     field = re.search(r"^\s*(uint16_t\s+mciId_\s*;)\s*//\s*0x0*4\s*$",
                       header, re.MULTILINE)
@@ -83,8 +84,10 @@ def _actual_sources():
                         header, re.MULTILINE)
     assert field, "MCIVideo must declare the recovered 16-bit id at +4"
     assert unknown, "the two unknown adjacent bytes must remain explicit and untouched"
-    return (field.group(1), unknown.group(1)), {name: _extract_body(cpp, pattern)
-                                                for name, pattern in METHODS.items()}
+    destructor = _extract_body(header, r"~MCIVideo\s*\(\s*\)")
+    return ((field.group(1), unknown.group(1)),
+            {name: _extract_body(cpp, pattern) for name, pattern in METHODS.items()},
+            destructor)
 
 
 HOST = r'''#include <assert.h>
@@ -131,10 +134,12 @@ enum {
 };
 
 int palette_ctor_calls=0;
+std::vector<int> lifecycle_events;
 struct Palette {
   PALETTEENTRY entries_[256];
   int init_calls, reseed_calls, set_calls;
   Palette() : init_calls(0), reseed_calls(0), set_calls(0) { ++palette_ctor_calls; }
+  ~Palette() { lifecycle_events.push_back(2); }
   void init() { ++init_calls; }
   void reseed() { ++reseed_calls; }
   void set() { ++set_calls; }
@@ -175,13 +180,15 @@ struct MCIVideo {
   Win *target_window_;
   int blit_x_, blit_y_, blit_width_, blit_height_;
   MCIVideo();
+  // INSERT_ACTUAL_DESTRUCTOR
   int load(char *, Win *, int, int);
   void play(); void stop(); void close(); int status();
 };
 '''
 
 
-def _harness(members: tuple[str, str], bodies: dict[str, str], damage=None) -> str:
+def _harness(members: tuple[str, str], bodies: dict[str, str], destructor: str,
+             damage=None) -> str:
     field, unknown = members
     bodies = dict(bodies)
     if damage == "initialize_unknown_bytes":
@@ -196,9 +203,11 @@ def _harness(members: tuple[str, str], bodies: dict[str, str], damage=None) -> s
             before, "static_cast<unsigned char>(openParams.wDeviceID)", 1)
     source = HOST.replace("// INSERT_ACTUAL_FIELD", field)
     source = source.replace("// INSERT_ACTUAL_UNKNOWN", unknown)
+    source = source.replace("// INSERT_ACTUAL_DESTRUCTOR", destructor)
     source += r'''
 MCIERROR mciSendCommandA(MCIDEVICEID device, DWORD command, DWORD flags, DWORD_PTR param) {
   Call call = {device, command, flags}; calls.push_back(call);
+  if (command == MCI_CLOSE) lifecycle_events.push_back(1);
   if (command == MCI_OPEN && fail_command != MCI_OPEN) {
     MCI_DGV_OPEN_PARMS *p = reinterpret_cast<MCI_DGV_OPEN_PARMS *>(param);
     p->wDeviceID = opened_id;
@@ -265,6 +274,21 @@ static void test_constructor_preserves_unknown_adjacent_word() {
   check(video->window_handle_ == 0 && video->palette_handle_ == 0 &&
         video->target_window_ == 0, "constructor clears observed pointer fields");
   video->~MCIVideo();
+}
+
+static void test_user_destructor_closes_before_palette_member_destruction() {
+  reset_globals();
+  lifecycle_events.clear();
+  {
+    MCIVideo video;
+    video.mciId_=0x1234;
+  }
+  check(lifecycle_events.size() >= 2 && lifecycle_events[0] == 1 &&
+        lifecycle_events.back() == 2,
+        "actual user destructor closes MCI before compiler destroys Palette");
+  check(calls.size() == 3 && calls[0].command == MCI_WINDOW &&
+        calls[1].command == MCI_STOP && calls[2].command == MCI_CLOSE,
+        "destructor reaches the actual close body and preserves its command sequence");
 }
 
 static void test_invalid_and_failed_open_paths() {
@@ -417,6 +441,7 @@ int main() {
   static_assert(offsetof(MCIVideo, mciId_)==4, "device word stays at +4");
   static_assert(offsetof(MCIVideo, unknown_6_)==6, "unknown adjacent word starts +6");
   test_constructor_preserves_unknown_adjacent_word();
+  test_user_destructor_closes_before_palette_member_destruction();
   test_invalid_and_failed_open_paths();
   test_load_truncation_repeated_reads_and_error_continuation();
   test_status_returns_sdk_value_and_uses_word_device();
@@ -439,8 +464,8 @@ def test_actual_mci_owner_methods_preserve_word_storage_and_api_paths(
     compiler = shutil.which(compiler_name)
     if compiler is None:
         pytest.skip(compiler_name + " is unavailable")
-    members, bodies = extracted_owner_source
-    source = _harness(members, bodies)
+    members, bodies, destructor = extracted_owner_source
+    source = _harness(members, bodies, destructor)
     cpp = tmp_path / ("mci_actual_" + compiler_name + ".cpp")
     executable = tmp_path / ("mci_actual_" + compiler_name)
     cpp.write_text(source, encoding="utf-8")
@@ -460,8 +485,8 @@ def test_actual_mci_controls_reject_adjacent_write_and_wrong_truncation(
     compiler = shutil.which(compiler_name)
     if compiler is None:
         pytest.skip(compiler_name + " is unavailable")
-    members, bodies = extracted_owner_source
-    source = _harness(members, bodies, damage=damage)
+    members, bodies, destructor = extracted_owner_source
+    source = _harness(members, bodies, destructor, damage=damage)
     cpp = tmp_path / ("mci_damage_" + damage + ".cpp")
     executable = tmp_path / ("mci_damage_" + damage)
     cpp.write_text(source, encoding="utf-8")

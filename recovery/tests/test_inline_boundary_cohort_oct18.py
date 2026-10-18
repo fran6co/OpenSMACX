@@ -1,4 +1,4 @@
-"""Live, narrow guards for the four-owner inline-boundary profile batch."""
+"""Live guards for the remaining owner-specific inline-boundary profiles."""
 from __future__ import annotations
 
 import copy
@@ -13,19 +13,15 @@ import pytest
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 BASE_REVISION = "28ce5634da32d7f3223dca623ca1fe76940749d8"
-OWNERS = (
-    "src/video.cpp",
+PROFILE_OWNERS = (
     "src/pulldown.cpp",
-    "src/alphamovie.cpp",
     "src/dipedit.cpp",
 )
 OWNER_FLAGS = {
-    "src/video.cpp": ("/Ob1",),
     "src/pulldown.cpp": ("/Ob1",),
-    "src/alphamovie.cpp": ("/Ob1",),
     "src/dipedit.cpp": ("/Ob1",),
 }
-MEASURED_INLINE_PROFILE = ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Ob1"]
+MEASURED_PULLDOWN_PROFILE = ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Ob1"]
 MEASURED_DIPEDIT_PROFILE = ["/c", "/O2", "/Gy", "/GR-", "/Oy-", "/GX", "/Ob1"]
 
 
@@ -126,7 +122,7 @@ def _cohort_append_match(cmake: str):
     )
     for match in pattern.finditer(cmake):
         files = set(re.findall(r"src/[A-Za-z0-9_./-]+\.cpp", match.group(1)))
-        if files & set(OWNERS):
+        if files & set(PROFILE_OWNERS):
             return match
     return None
 
@@ -137,12 +133,6 @@ def _effective_source_profiles(cmake: str):
         for owner in files:
             result.setdefault(owner, []).extend(options)
     return {owner: tuple(options) for owner, options in result.items()}
-
-
-def _application_sources(cmake: str):
-    match = re.search(r"set\(OPENSMACX_SOURCES\s+(.*?)\n\)", cmake, re.DOTALL)
-    assert match is not None, "missing OpenSMACX source list"
-    return tuple(re.findall(r"src/[A-Za-z0-9_./-]+\.cpp", match.group(1)))
 
 
 _GLOBAL_CMAKE_COMMANDS = {
@@ -211,14 +201,10 @@ def _measurement_contract(candidate_project: dict, baseline_project: dict) -> bo
     if not isinstance(candidate_units, dict) or not isinstance(baseline_units, dict):
         return False
 
-    # Earlier explicit unit recipes stay pinned. Additional profiles from
-    # later owner batches are allowed; only this four-owner cohort is exact.
-    for owner, flags in baseline_units.items():
-        if owner not in OWNERS and candidate_units.get(owner) != flags:
-            return False
-    for owner in OWNERS[:3]:
-        if candidate_units.get(owner) != {"flags": MEASURED_INLINE_PROFILE}:
-            return False
+    # Other owners' recipes belong to their own live guards. This test only
+    # pins the two owners whose explicit inline profile remains necessary.
+    if candidate_units.get("src/pulldown.cpp") != {"flags": MEASURED_PULLDOWN_PROFILE}:
+        return False
     if candidate_units.get("src/dipedit.cpp") != {"flags": MEASURED_DIPEDIT_PROFILE}:
         return False
     return True
@@ -234,19 +220,18 @@ def _profile_contract(cmake: str, baseline_cmake: str) -> bool:
     additions = [
         (files, options)
         for files, options, append in _source_profiles(cmake)
-        if append and set(files) & set(OWNERS)
+        if append and set(files) & set(PROFILE_OWNERS)
     ]
     return (
         len(additions) == 1
-        and set(additions[0][0]) == set(OWNERS)
+        and set(additions[0][0]) == set(PROFILE_OWNERS)
         and additions[0][1] == ("/Ob1",)
     )
 
 
 def _policy_contract(cmake: str, baseline_cmake: str) -> bool:
     return (
-        _application_sources(cmake) == _application_sources(baseline_cmake)
-        and _global_compiler_link_policy(cmake) == _global_compiler_link_policy(baseline_cmake)
+        _global_compiler_link_policy(cmake) == _global_compiler_link_policy(baseline_cmake)
         and _profile_contract(cmake, baseline_cmake)
     )
 
@@ -268,37 +253,22 @@ def _baseline_configuration():
 
 
 def _configuration_contract(cmake: str, project: dict, build: dict, baseline):
-    baseline_cmake, baseline_project, baseline_build = baseline
+    baseline_cmake, baseline_project, _baseline_build = baseline
     if not _policy_contract(cmake, baseline_cmake):
         return False
-    if build != baseline_build:
-        return False
-    # Apart from per-unit measured recipes, the project configuration itself
-    # remains unchanged. New unit profiles from other owner batches are allowed.
-    candidate_project = copy.deepcopy(project)
-    base_project = copy.deepcopy(baseline_project)
-    candidate_measurement = candidate_project.pop("measurement", {})
-    base_measurement = base_project.pop("measurement", {})
-    if candidate_project != base_project:
-        return False
-    candidate_global = {key: value for key, value in candidate_measurement.items()
-                        if key != "unit_flag_sets"}
-    base_global = {key: value for key, value in base_measurement.items()
-                    if key != "unit_flag_sets"}
-    if candidate_global != base_global:
-        return False
+    # Only global measurement policy and these two owners' flag recipes are
+    # durable here; newly owned sources and profiles are guarded separately.
     return _measurement_contract(project, baseline_project)
 
 
-def test_four_owner_profiles_keep_global_compiler_and_link_policy_live():
+def test_remaining_owner_profiles_keep_global_compiler_and_link_policy_live():
     cmake, project, build = _current_configuration()
     baseline = _baseline_configuration()
     assert _configuration_contract(cmake, project, build, baseline)
-    sources = _application_sources(cmake)
-    assert all(sources.count(owner) == 1 for owner in OWNERS)
+    assert all(owner in cmake for owner in PROFILE_OWNERS)
 
 
-def test_four_owner_profile_policy_rejects_bounded_damage():
+def test_remaining_owner_profile_policy_rejects_bounded_damage():
     cmake, project, build = _current_configuration()
     baseline = _baseline_configuration()
     assert _configuration_contract(cmake, project, build, baseline)
@@ -306,15 +276,15 @@ def test_four_owner_profile_policy_rejects_bounded_damage():
     append_blocks = [
         (files, options)
         for files, options, append in _source_profiles(cmake)
-        if append and set(files) & set(OWNERS)
+        if append and set(files) & set(PROFILE_OWNERS)
     ]
     assert len(append_blocks) == 1
-    assert set(append_blocks[0][0]) == set(OWNERS) and append_blocks[0][1] == ("/Ob1",)
+    assert set(append_blocks[0][0]) == set(PROFILE_OWNERS) and append_blocks[0][1] == ("/Ob1",)
     profile_match = _cohort_append_match(cmake)
     assert profile_match is not None
     profile_text = profile_match.group(0)
 
-    wrong_owner_text = re.sub(r"src/video\.cpp", "src/video_sound.cpp", profile_text, count=1)
+    wrong_owner_text = re.sub(r"src/pulldown\.cpp", "src/video_sound.cpp", profile_text, count=1)
     wrong_owner = cmake.replace(profile_text, wrong_owner_text, 1)
     default_recipe = cmake.replace(profile_text, profile_text.replace("/Ob1", "/Ob2"), 1)
     frame_recipe = cmake.replace(
@@ -335,12 +305,12 @@ def test_four_owner_profile_policy_rejects_bounded_damage():
 
     wrong_measure_owner = copy.deepcopy(project)
     unit_flags = wrong_measure_owner["measurement"]["unit_flag_sets"]
-    del unit_flags["src/video.cpp"]
-    unit_flags["src/video_sound.cpp"] = {"flags": MEASURED_INLINE_PROFILE}
+    del unit_flags["src/pulldown.cpp"]
+    unit_flags["src/video_sound.cpp"] = {"flags": MEASURED_PULLDOWN_PROFILE}
     assert not _measurement_contract(wrong_measure_owner, baseline[1])
 
     wrong_default = copy.deepcopy(project)
-    wrong_default["measurement"]["unit_flag_sets"]["src/video.cpp"]["flags"][-1] = "/Ob2"
+    wrong_default["measurement"]["unit_flag_sets"]["src/pulldown.cpp"]["flags"][-1] = "/Ob2"
     assert not _measurement_contract(wrong_default, baseline[1])
     wrong_frame = copy.deepcopy(project)
     wrong_frame["measurement"]["unit_flag_sets"]["src/pulldown.cpp"]["flags"].insert(4, "/Oy-")
@@ -376,7 +346,6 @@ def _definition_prefix(source: str, signature: str) -> str:
 
 QUEUE_SIGNATURES = (
     "VideoFrameQueue::VideoFrameQueue()",
-    "VideoFrameQueue::~VideoFrameQueue()",
     "void VideoFrameQueue::set_limit(int limit)",
     "int VideoFrameQueue::allocate(",
     "int VideoFrameQueue::append(",
@@ -386,9 +355,10 @@ QUEUE_SIGNATURES = (
 )
 
 
-def _queue_harness(video_source: str, mutation: str | None = None) -> str:
-    bodies = {signature: _body(video_source, signature) for signature in QUEUE_SIGNATURES}
-    constructor_prefix = _definition_prefix(video_source, "VideoFrameQueue::VideoFrameQueue()")
+def _queue_harness(queue_source: str, video_header: str, mutation: str | None = None) -> str:
+    bodies = {signature: _body(queue_source, signature) for signature in QUEUE_SIGNATURES}
+    constructor_prefix = _definition_prefix(queue_source, "VideoFrameQueue::VideoFrameQueue()")
+    destructor_body = _body(video_header, "~VideoFrameQueue()")
     if mutation == "equality_gate":
         old = "if (count_ == limit_) return 0x14;"
         assert old in bodies["int VideoFrameQueue::allocate("]
@@ -402,7 +372,7 @@ def _queue_harness(video_source: str, mutation: str | None = None) -> str:
                 old, "*next_frame_id = head_->frame_id;", 1)
     elif mutation == "limit_without_clear":
         old = "void VideoFrameQueue::set_limit(int limit) { clear(); limit_ = limit; }"
-        assert old in video_source
+        assert old in queue_source
         bodies["void VideoFrameQueue::set_limit(int limit)"] = " limit_ = limit; "
     elif mutation == "zero_byte_initialization":
         body = bodies["int VideoFrameQueue::allocate("]
@@ -422,6 +392,8 @@ def _queue_harness(video_source: str, mutation: str | None = None) -> str:
         old = "head_(0)"
         assert old in constructor_prefix
         constructor_prefix = constructor_prefix.replace(old, "head_(&node_pool[31])", 1)
+    elif mutation == "empty_destructor":
+        destructor_body = ""
     elif mutation is not None:
         raise AssertionError(f"unknown queue mutation: {mutation}")
 
@@ -448,7 +420,7 @@ def _queue_harness(video_source: str, mutation: str | None = None) -> str:
             declaration = signature
         definitions.append(f"{declaration} {{{bodies[signature]}}}\n")
 
-    return r'''#include <cassert>
+    harness = r'''#include <cassert>
 #include <cstddef>
 #include <cstring>
 
@@ -464,7 +436,7 @@ struct VideoFrameNode {
 // method bodies, not target pointer size, ABI, or native compiled selection.
 class VideoFrameQueue {
 public:
-  VideoFrameQueue(); ~VideoFrameQueue();
+  VideoFrameQueue(); ~VideoFrameQueue() { /*ACTUAL_QUEUE_DESTRUCTOR*/ }
   int count() const { return count_; }
   int allocate(unsigned char **, int, int, unsigned int);
   int append(const unsigned char *, int, int, unsigned int);
@@ -505,7 +477,7 @@ static void *mem_get(int size) {
 }
 static void queue_free(void *pointer) { if (pointer != 0) ++free_calls; }
 #define free queue_free
-''' + ''.join(definitions) + r'''
+/*ACTUAL_QUEUE_METHODS*/
 #undef free
 
 int main() {
@@ -548,6 +520,15 @@ int main() {
     assert(queue.count() == 0);
   }
 
+  reset_allocator();
+  {
+    VideoFrameQueue destructor_queue;
+    const unsigned char bytes[] = {5, 6};
+    assert(destructor_queue.append(bytes, 2, 50, 0x44U) == 0);
+    assert(destructor_queue.count() == 1);
+  }
+  assert(free_calls == 2);
+
   reset_allocator(2);
   {
     VideoFrameQueue failed_payload;
@@ -575,6 +556,8 @@ int main() {
   return 0;
 }
 '''
+    return (harness.replace("/*ACTUAL_QUEUE_DESTRUCTOR*/", destructor_body)
+            .replace("/*ACTUAL_QUEUE_METHODS*/", ''.join(definitions)))
 
 
 def _compile_and_run(tmp_path: pathlib.Path, compiler: str, source: str, name: str):
@@ -594,10 +577,10 @@ def test_actual_video_queue_bodies_keep_fifo_and_legacy_error_behavior(tmp_path)
     compiler = shutil.which("g++") or shutil.which("clang++")
     if compiler is None:
         pytest.skip("host C++ compiler unavailable")
-    source = (ROOT / "src/video.cpp").read_text(encoding="utf-8")
+    source = (ROOT / "src/video_queue.cpp").read_text(encoding="utf-8")
     header = (ROOT / "src/video.h").read_text(encoding="utf-8")
     assert "VideoFrameNode *head_;\n  VideoFrameNode *tail_;\n  int count_;\n  int limit_;" in header
-    completed = _compile_and_run(tmp_path, compiler, _queue_harness(source), "video_queue")
+    completed = _compile_and_run(tmp_path, compiler, _queue_harness(source, header), "video_queue")
     assert completed.returncode == 0, completed.stderr
 
 
@@ -608,12 +591,14 @@ def test_actual_video_queue_bodies_keep_fifo_and_legacy_error_behavior(tmp_path)
     "zero_byte_initialization",
     "append_allocation_count",
     "constructor_initialization",
+    "empty_destructor",
 ))
 def test_actual_video_queue_harness_rejects_behavior_damage(tmp_path, mutation):
     compiler = shutil.which("g++") or shutil.which("clang++")
     if compiler is None:
         pytest.skip("host C++ compiler unavailable")
-    source = (ROOT / "src/video.cpp").read_text(encoding="utf-8")
-    damaged = _queue_harness(source, mutation)
+    source = (ROOT / "src/video_queue.cpp").read_text(encoding="utf-8")
+    header = (ROOT / "src/video.h").read_text(encoding="utf-8")
+    damaged = _queue_harness(source, header, mutation)
     completed = _compile_and_run(tmp_path, compiler, damaged, f"video_queue_{mutation}")
     assert completed.returncode != 0, mutation
