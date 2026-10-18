@@ -15,10 +15,14 @@ from match_recovery.source import read_text
 
 ROOT = Path(__file__).resolve().parents[2]
 BASE_REVISION = "b24ef250e686245f6075d2593b1a0d159eda1827"
+SCALE_OWNER_BASE_REVISION = "3ca9f8b067603d1e009932bc071c1ffa52185c3a"
 LIVE_PATHS = {
     "general": ROOT / "src/general.cpp",
+    "general_h": ROOT / "src/general.h",
     "council": ROOT / "src/council.cpp",
     "undo": ROOT / "src/scenario_undo.cpp",
+    "scale_adjustment_cpp": ROOT / "src/scale_adjustment.cpp",
+    "scale_adjustment_h": ROOT / "src/scale_adjustment.h",
 }
 
 STATE = b"uint32_t ScenEditorUndoPosition = 1; // 0x00690D7C\n"
@@ -123,6 +127,59 @@ def _unique_section(data: bytes, start: bytes, end: bytes) -> bytes:
 def _unique_insert(data: bytes, anchor: bytes, value: bytes) -> bytes:
     assert data.count(anchor) == 1, f"expected one inverse anchor {anchor!r}"
     return data.replace(anchor, value + anchor, 1)
+
+
+SCALE_START = b"// Native592D70/592D90 prove four-byte accesses only."
+SCALE_END = b"\n/*\n// ORIGINAL: 0x0063BAC0 "
+SCALE_INSERT_ANCHOR = b"/*\n// ORIGINAL: 0x0063BAC0 "
+SCALE_CPP_PROLOGUE = (
+    b'#include "stdafx.h"\n'
+    b'#include "general.h"\n\n'
+    b"#include <cstring>\n\n"
+)
+SCALE_DECLARATIONS = (
+    b"int __cdecl set_scale_adjustment(int value);\n"
+    b"int __cdecl apply_scale_adjustment(int value);\n"
+)
+
+
+def _scale_frozen_sources() -> tuple[bytes, bytes, bytes]:
+    general = _git_source_at(SCALE_OWNER_BASE_REVISION, "src/general.cpp")
+    header = _git_source_at(SCALE_OWNER_BASE_REVISION, "src/general.h")
+    assert header.count(SCALE_DECLARATIONS) == 1
+    assert general.count(SCALE_START) == 1
+    payload = _unique_section(general, SCALE_START, SCALE_END)
+    assert payload.endswith(b"}\n")
+    return general, header, payload
+
+
+def project_scale_adjustment_general(
+    general_bytes: bytes,
+    scale_cpp: bytes | None,
+    scale_h: bytes | None,
+    general_h: bytes,
+) -> bytes:
+    """Restore only the checked scale-owner block, using actual moved bytes."""
+    frozen_general, frozen_header, expected_payload = _scale_frozen_sources()
+    assert frozen_general.count(SCALE_INSERT_ANCHOR) == 1
+    if scale_cpp is None and scale_h is None:
+        # A checkout that has not performed the move is valid only while the
+        # complete accepted block and its original declarations remain in General.
+        assert general_bytes.count(SCALE_START) == 1
+        assert _unique_section(general_bytes, SCALE_START, SCALE_END) == expected_payload
+        assert general_h == frozen_header
+        return general_bytes
+
+    assert scale_cpp is not None and scale_h is None, "partial scale-owner move or duplicate API header"
+    assert scale_cpp == SCALE_CPP_PROLOGUE + expected_payload, "changed scale owner payload or boundary"
+    assert general_h == frozen_header, "unadmitted General header/API change"
+    assert general_bytes.count(SCALE_START) == 0, "scale payload remains in General"
+    assert general_bytes.count(b"// RECOVERY_OBJECT: v1 0x00945AEC ?StoredScaleAdjustment@@3HA") == 0
+    assert general_bytes.count(b"0x00592D70") == 0
+    assert general_bytes.count(b"0x00592D90") == 0
+    actual_payload = scale_cpp[len(SCALE_CPP_PROLOGUE):]
+    assert actual_payload == expected_payload
+    return _unique_insert(general_bytes, SCALE_INSERT_ANCHOR, actual_payload + b"\n")
 
 
 HEADER_RNG_OLD_STATUS = (
@@ -333,8 +390,12 @@ def project_header_rng_general(general_bytes: bytes) -> bytes:
 
 
 def _git_source(relative_path: str) -> bytes:
+    return _git_source_at(BASE_REVISION, relative_path)
+
+
+def _git_source_at(revision: str, relative_path: str) -> bytes:
     return subprocess.run(
-        ["git", "show", f"{BASE_REVISION}:{relative_path}"],
+        ["git", "show", f"{revision}:{relative_path}"],
         cwd=ROOT,
         check=True,
         stdout=subprocess.PIPE,
@@ -349,13 +410,25 @@ def _baseline_sources() -> dict[str, bytes]:
 
 
 def _actual_split(paths: dict[str, Path]) -> dict[str, bytes]:
-    return {key: path.read_bytes() for key, path in paths.items()}
+    optional = {"scale_adjustment_cpp", "scale_adjustment_h"}
+    return {
+        key: path.read_bytes() if path.is_file() else None
+        for key, path in paths.items()
+        if path.is_file() or key in optional
+    }
 
 
 def inverse_split(parts: dict[str, bytes]) -> dict[str, bytes]:
     """Rebuild original general/council bytes from actual split contents."""
-    assert set(parts) == {"general", "council", "undo"}
-    general = project_header_rng_general(parts["general"])
+    assert set(parts) == {
+        "general", "general_h", "council", "undo",
+        "scale_adjustment_cpp", "scale_adjustment_h",
+    }
+    general = project_scale_adjustment_general(
+        parts["general"], parts["scale_adjustment_cpp"],
+        parts["scale_adjustment_h"], parts["general_h"],
+    )
+    general = project_header_rng_general(general)
     council = parts["council"]
     undo_owner = parts["undo"]
     baseline = _baseline_sources()
@@ -447,8 +520,12 @@ def assert_parser_continuity(parts: dict[str, bytes], paths: dict[str, Path]) ->
         {"general": baseline["general"], "council": baseline["council"]},
         {"general": ROOT / "src/general.cpp", "council": ROOT / "src/council.cpp"},
     )
-    parser_parts = dict(parts)
-    parser_parts["general"] = project_header_rng_general(parts["general"])
+    parser_parts = {key: parts[key] for key in ("general", "council", "undo")}
+    parser_parts["general"] = project_scale_adjustment_general(
+        parts["general"], parts["scale_adjustment_cpp"],
+        parts["scale_adjustment_h"], parts["general_h"],
+    )
+    parser_parts["general"] = project_header_rng_general(parser_parts["general"])
     parser_parts["council"] = _restore_admitted_council_context(parts["council"])
     after = _records(parser_parts, paths)
     assert after.keys() == before.keys()
@@ -475,6 +552,48 @@ def test_native_parser_owner_set_round_trips_without_unmapped_source_changes():
     paths = LIVE_PATHS
     projected = _parts_from(paths)
     assert projected == _baseline_sources()
+
+
+def test_scale_owner_projection_is_exact_and_accepts_pre_move_source():
+    frozen_general, frozen_header, payload = _scale_frozen_sources()
+    moved_general = frozen_general.replace(payload + b"\n", b"", 1)
+    assert project_scale_adjustment_general(
+        moved_general, SCALE_CPP_PROLOGUE + payload, None, frozen_header
+    ) == frozen_general
+    assert project_scale_adjustment_general(
+        frozen_general, None, None, frozen_header
+    ) == frozen_general
+
+
+@pytest.mark.parametrize(
+    "target,mutate",
+    [
+        ("scale_adjustment_cpp", lambda b: b.replace(b"StoredScaleAdjustment = value;", b"StoredScaleAdjustment = 1;", 1)),
+        ("scale_adjustment_cpp", lambda b: b.replace(b"int StoredScaleAdjustment = 0;", b"int StoredScaleAdjustment = 1;", 1)),
+        ("scale_adjustment_cpp", lambda b: b.replace(b'#include "general.h"', b'#include "scale_adjustment.h"', 1)),
+        ("scale_adjustment_cpp", lambda b: b"// extra prefix\n" + b),
+        ("scale_adjustment_cpp", lambda b: b + b"\n// extra suffix\n"),
+        ("general_h", lambda b: b + b"\n// unadmitted General header change\n"),
+        ("general_h", lambda b: b.replace(b"int __cdecl set_scale_adjustment(int value);", b"void __cdecl set_scale_adjustment(int value);", 1)),
+        ("scale_adjustment_h", lambda b: b"#pragma once\n"),
+    ],
+)
+def test_scale_owner_projection_rejects_payload_object_and_boundary_damage(target, mutate):
+    frozen_general, frozen_header, payload = _scale_frozen_sources()
+    moved_general = frozen_general.replace(payload + b"\n", b"", 1)
+    sources = {
+        "scale_adjustment_cpp": SCALE_CPP_PROLOGUE + payload,
+        "scale_adjustment_h": None,
+        "general_h": frozen_header,
+    }
+    before = sources[target]
+    sources[target] = mutate(before)
+    assert sources[target] != before
+    with pytest.raises(AssertionError):
+        project_scale_adjustment_general(
+            moved_general, sources["scale_adjustment_cpp"],
+            sources["scale_adjustment_h"], sources["general_h"],
+        )
 
 
 @pytest.mark.parametrize(

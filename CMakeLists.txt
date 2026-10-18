@@ -129,6 +129,7 @@ set(OPENSMACX_SOURCES
     src/word_state.cpp
     src/table_storage.cpp
     src/span_math.cpp
+    src/scale_adjustment.cpp
     src/technology_queries.cpp
     src/byte_utilities.cpp
     src/selectpartwin.cpp
@@ -478,6 +479,13 @@ set_source_files_properties(src/video_sound.cpp PROPERTIES COMPILE_OPTIONS "/Oy-
 # Preserve the measured frame-based context of the scenario-editor undo owner.
 # General's unrelated helpers retain their independently measured default recipe.
 set_source_files_properties(src/scenario_undo.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")
+# Keep these measured frame-based helper owners on their explicit source profile.
+set_source_files_properties(
+    src/byte_utilities.cpp
+    src/shared_word.cpp
+    src/span_math.cpp
+    src/scale_adjustment.cpp
+    PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Preserve the measured frame-based contexts of the shared stream wrappers.
 # General's unrelated helpers retain their independently measured default recipe.
 set_source_files_properties(src/header_io.cpp src/crt_random.cpp
