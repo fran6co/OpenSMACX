@@ -1,0 +1,76 @@
+{
+  "author": "coordinator",
+  "base_revision": "706d590ed4dfe1ce791d93afe335e142d4a3215c",
+  "editable_files": [
+    "src/faction.h",
+    "src/faction.cpp",
+    "src/veh.h",
+    "src/veh.cpp",
+    "src/general.h",
+    "src/general.cpp",
+    "src/base.h",
+    "src/base.cpp",
+    "src/map.h",
+    "src/map.cpp",
+    "recovery/tests/test_signed_api_closure_oct18.py"
+  ],
+  "evidence": [
+    "Current faction.h advertises unsigned has_agenda overload while faction.cpp defines signed int(int,int,int) matching existing5591E0 mapping; all current calls occur after that definition. Correct the stale header, not the already-correct implementation.",
+    "Seven further uint32-return definitions differ from source-owned original signed-return identities. Source catalogue alone is not independent original type proof: inspect actual value domains, return paths and consuming signed comparisons before choosing any change; retain contradictory findings instead of blanket conversion.",
+    "quick_zoc593830 has original signed coordinate arithmetic/bounds and current IIIHH signature; actual two veh.cpp callers pass int coordinates/faction. Review the whole arithmetic/caller path, preserve original 32-bit effects and no-output paths; no added bounds checks or normalization.",
+    "Prior read-only proposal: .opensmacx/recovery/voice-interface-claims-oct18/next-signatures.md. Exclude checksum_password/social_upheaval separate pointer-contract questions and retain has_fac_announced explicitly unsigned parameter control.",
+    "No compiler/flag/layout/data changes or handwritten original markers/claims. Use native writer only for emitted-symbol updates after actual declarations change; preserve all original identities, spans, history and historical obligations.",
+    "Only coordinator owns Git/compiler operations and scope expansion. Worker edits authorized definitions/declarations/tests; investigate affected callers outside these files and return discoveries before changing them. Require actual-source tests, fresh build/link, complete physical collateral review and relevant original/reference checks before manual integration; do not claim automatic/game acceptance or new matching from a symbol spelling alone."
+  ],
+  "intent": "Repair evidenced public C++ signed contracts as one caller-aware batch; investigate rather than blanket-convert uncertain original catalogue types.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5479744,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5480592,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5247824,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5762976,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5921376,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6458032,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5153264,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5607904,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5847088,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "signed-api-closure-oct18"
+}
