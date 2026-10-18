@@ -1,0 +1,76 @@
+{
+  "author": "coordinator",
+  "base_revision": "1e1e00e31875c99313a3ca40af4e641bc0b5582d",
+  "editable_files": [
+    "src/buttongroup.cpp",
+    "recovery/tests/test_buttongroup_notification_contract_oct19.py"
+  ],
+  "evidence": [
+    "Pinned button_click62B8A0..62BA77 first notifies Win slot47(+BC) with prior and clicked IDs, then checks the current count, recomputes IDs, and notifies slot46(+B8). At62B9EA..62BA29, original pushes clicked, prior, group-context (stored by init at+8C), then reloads buttons[0] and its parent. Current source incorrectly calls the three-argument overload as prior,clicked,context and reuses a receiver cached before callback one.",
+    "Read-only original review independently established the two defects; actual PickWin init(0) and button IDs104/105 corroborate group context in parameter one and clicked in parameter three. PrefWin init5D and page IDs0..5, ReportWin group tests4/6, MainInterface forwarding and FameWin ignoring corroborate the same protocol. These are corrections to the translation, not intentional fixes to original game behavior.",
+    "Authorize exactly the ButtonGroup::button_click three-argument callback order (field_8C_,active_again,clicked_again) and a fresh typed buttons_[0]->parent_window() lookup after callback one inside the existing post-callback count guard. Preserve two-argument dispatch, ID-read order, state writes, existing null/error behavior and all other method bodies. Header/layout/vtable/ABI/field renames are not authorized. No extra null guards or semantic normalization.",
+    "Add actual-source host controls that exercise the two real overloaded virtual notifications, context/prior/clicked argument contract, first callback replacing first button/parent or changing IDs/count, post-callback zero count suppression, and ordinary button set/redraw effects. Damage controls must reject the old argument order and old cached receiver independently. Bind a pinned instruction control if bounded; never duplicate the recovered implementation as the test oracle.",
+    "Preserve all original mappings/spans/symbols/historical claims and useful notes. One bounded compiling semantic implementation, no prolonged byte-spelling search or claim edits. Host-only isolated worker; coordinator owns native compilers/leases, Git, task scopes, integration and full build/link/source/reference checks. Discoveries needing outside product edits request scope first. Manual integration is not automatic/full game acceptance."
+  ],
+  "intent": "Recover original ButtonGroup callback parameter order and post-callback parent reloading across the real Win virtual notification contract.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4499008,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4573504,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4758304,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4783968,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4819440,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6469568,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6469616,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6469648,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6469712,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6469744,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6469792,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "buttongroup-notification-contract-oct19"
+}
