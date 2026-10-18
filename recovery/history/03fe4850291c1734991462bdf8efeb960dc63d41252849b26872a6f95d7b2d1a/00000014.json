@@ -1,0 +1,19 @@
+{
+  "event_id": "e034d064d9a0c738ec82b72ec387bab8cf9026cd76acd80df87fc411c36d5e86",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_tutorial_base_conversion_oct18.py"
+    ],
+    "evidence": [
+      "Authorize actual-source host controls for the four existing TutWin do_* subjects while replacing a redundant null/cast expression with the standard public virtual-base conversion. No new original subjects, baseline reset, behavior fix, claim change or acceptance waiver."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "19f8d6d519cc939c952c7afe22cdd48ba51e8a9dcb8bef9c2022ea86c4c5c613",
+  "request_id": "tutwin-implicit-base-conversion-tests-oct18",
+  "schema_version": 1,
+  "sequence": 14,
+  "stream": "task:tutwin-owner-coverage-wave"
+}
