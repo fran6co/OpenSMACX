@@ -1,0 +1,26 @@
+{
+  "author": "coordinator",
+  "base_revision": "d701e3b6cb97e37d19cbb8d36d77095ecaf60cca",
+  "editable_files": [
+    "src/veh.cpp",
+    "recovery/tests/test_vehicle_draw.py"
+  ],
+  "evidence": [
+    "The first milestone is original bug-for-bug recovery, superseding prior prospective safety approvals. Commit ab21c58fd7992141e7aa620e429574292d9b955f deliberately suppressed the label overrun. Current source still copies only word[0]; recover the original full copy, not a new bounds check, wider product buffer, fallback or initialized-scratch substitute.",
+    "Pinned veh_draw5594F0..55A14E:559F40 forms destination[ebp-4], pushes source and destination, calls645460 strcpy;559FEC/559FF0 clear [ebp-2]/[ebp-3],55A075 reads[ebp-4],55A082 may duplicate a bracket into[ebp-3]. Retain the real typed StringTable.get(Order[triadIdx].letter) source, all existing state-dependent copies and final byte clears. No header, layout, global, caller, compiler profile or linker change.",
+    "test_vehicle_draw currently fails before compilation because its extractor requires a retired pointer-to-int cast absent from the real owner. Repair that exact typed call boundary and current named GameDataStateStorage fixture, retaining all existing renderer/callback scenarios and mutation controls. Separate ordinary short-label actual-source tests using real host strcpy from malformed-label dependency-spy controls. The latter record complete requested strings including NUL and bound writes into the actual four-byte host scratch; they do not claim original native adjacent-stack effects.",
+    "Add pinned original stack-source/destination/call and later byte-use controls. Compiling original first-character-only, shifted-source and truncating-copy mutants must be detected. Never execute uncontrolled malformed-label overflow in the host test or count a bounded spy as native overflow-layout proof. Keep unresolved native effects explicit.",
+    "Only veh_draw code and its source binding rationale may change in src/veh.cpp. Preserve all source identities, spans, historical claims, seed findings and other function records. Require independent review, actual-source/pinned controls, canonical measurement, fresh full application compile/link, all5581 mapped masked/strict observations without old exact losses, physical outside-target comparison and source/claim/reference continuity before coordinator-reviewed manual integration; recheck destination before cleanup. No claim of whole function matching, original complete universe, linked retention, runtime/game or native automatic acceptance follows."
+  ],
+  "intent": "Restore veh_draw original full order-label copy into its four-byte scratch, retaining later overrides and truncation; remove the deliberate safety difference without inventing malformed-stack results.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5608688,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "veh-draw-label-copy-oct18"
+}
