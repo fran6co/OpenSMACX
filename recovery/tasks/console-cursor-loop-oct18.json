@@ -1,0 +1,31 @@
+{
+  "author": "coordinator",
+  "base_revision": "2167ca8d80e9850662f254fefcf6b55d2e09a4c7",
+  "editable_files": [
+    "src/console.cpp",
+    "recovery/tests/test_console_cursor_actual_source_oct18.py"
+  ],
+  "evidence": [
+    "Fresh172-TU actual object for510490 has43/46matching instructions; the three non-reference operand differences are one induction-pointer home at EBP+0C instead of original EBP+08 and its two reloads. Original/candidate field stores, typed window/sprite/hotspot bindings and calls otherwise agree; global/call operands shown as zero are relocations, not constants.",
+    "Authorize at most three full-TU immutable body-only variants in510490: genuine typed MapWin** array traversal, do/while traversal with identical gating, or delegate to the existing one-argument cursor_on after preserving both field stores. The510400 overload remains unchanged and protected. These are new bounded source-form hypotheses, not semantic repairs or a structural claim. No casts, volatile, synthetic parameter reinterpretation, asm, fake vtables, address literals, flags or header/signature/annotation changes.",
+    "Preserve vehicle then cursor-mode store order, exact eight-slot live MapWinTable walk, slot0 exception, active-view test, callback-sensitive window caching after set_cursor, sprite/hotspot argument order, original unchecked shape indexing, and one do_non_input call. No bug fixes or claim demotion.",
+    "Coordinator owns Git/compiler leases. First try native local variants; preserve any lexer refusal and use documented immutable Compiler.overlay with physical replica and observable damage controls only when supported. One bounded deck across the two settled flag sets; record rejected hypotheses if no winner rather than extending the spelling search.",
+    "A winner needs isolated application, actual-source/pinned behavioral controls, fresh full build/link, original/strict measurements, complete outside-scoped physical residual and source/claim/reference continuity, coordinator source review and destination recheck before manual integration. Deck scores neither bank claims nor establish runtime/game/native acceptance."
+  ],
+  "intent": "Screen a bounded typed cursor traversal/delegation closure from fresh three-instruction evidence.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5309440,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5309584,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "console-cursor-loop-oct18"
+}
