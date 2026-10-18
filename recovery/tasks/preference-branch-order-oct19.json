@@ -1,0 +1,139 @@
+{
+  "author": "coordinator",
+  "base_revision": "528d06db818ed7ea9fffb9e32429911f7ac4e0f4",
+  "editable_files": [
+    "src/prefwin.cpp"
+  ],
+  "evidence": [
+    "Immutable baseline528d06db8; current fresh destination build-g10fwbtd and5581-mapping masked/strict census under ignored prefwin-vehicle-batch-oct19. Preserve all original identities/spans/symbols/historical claims and useful seed history. No claims banked, global compiler/measurement/linker policy changes, invented owners, manual vtables, asm, copied code, forced-inline/noninline or bug fixes.",
+    "Disjoint manual workers use new native isolated raw worktrees and host tests only. Coordinator owns Git, source fact publication, leased compilers, original/source review, composition, full fresh build/link, measured matching/reference/restoration deltas, physical collateral review and manual integration/destination recheck. Discoveries affecting outside owners request scope expansion; do not discard work or silently fix original unsafe paths. No automatic/full-game acceptance follows.",
+    "Earlier preference-navigation-fidelity-oct19 recovered the original write set and retained its historical obligation. Pinned48FF60 tests A1C then branches nonzero to an out-of-line clear block; clear-flag fallthrough checks previous<=5 then previous>=0 before the A18 store. Current natural if(nonzero)clear/else-if-range emits the opposite outer layout but preserves behavior. No other method may change.",
+    "Authorize one native local deck of at most two equivalent candidates based on the actual original nesting: if(!pending){if(upper&&lower)savePrevious;}else clear, with upper/lower order alternatives only. All forms must pass existing actual-source write-count/callback/reentry controls before banking a source winner. No test/header/claim/ABI/compiler policy edits. Worker prepares exact schema2 digest-bound deck with a target-damage witness under ignored .opensmacx; coordinator owns compiler lease and scoring. Apply no candidate until coordinator reviews the measured result. Stop this screen if neither wins; retain discoveries without repeating allocation plateaus."
+  ],
+  "intent": "Restore original PrefWin callback branch layout through one bounded original-derived natural-source deck, preserving the already recovered conditional writes.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4793360,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4793312,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4773104,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4773136,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4773152,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4773184,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4792800,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4791792,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4773952,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4782592,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4783568,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4783312,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4783968,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4784048,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4784448,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4784976,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4786944,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4789120,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4789248,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4790288,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4790368,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4790464,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4790768,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4791296,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "preference-branch-order-oct19"
+}
