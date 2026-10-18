@@ -588,7 +588,7 @@ Font *VehDrawFont;
 int FastUnitAnim;
 
 // ORIGINAL: 0x005594F0 ?veh_draw@@YAHPAUBuffer@@HHHHHH@Z 0x005594F0-0x0055A14E
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned5594F0..55A14E retains raw screen coordinates for vehicle bodies, applies metric offsets only to overlays, and re-reads shared caption scale after callbacks. Health foreground reuses the rectangle passed to black fill. Order labels are truncated to one character then brackets duplicated; copy only that character to avoid original malformed-label overflow. Independent original review corrects seed receiver offsets and preserves cached faction versus fresh Console reads.", "Preserve existing seed identity and complete original spans. Source binding is not a measured matching or runtime claim."], "reason": "Recover vehicle bodies and overlays using actual sprites, chassis metrics, faction palettes and font storage."}
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned5594F0..55A14E retains raw screen coordinates for vehicle bodies, applies metric offsets only to overlays, and re-reads shared caption scale after callbacks. Health foreground reuses the rectangle passed to black fill. Independent original review corrects seed receiver offsets and preserves cached faction versus fresh Console reads.", "Original559F40 forms the four-byte label scratch at[ebp-4] and calls strcpy645460 with the complete StringTable label. Original559FEC/559FF0 subsequently clear bytes2/1;55A075 reads byte0 and55A082 may duplicate a bracket into byte1. Preserve the unchecked full copy, including malformed-label overflow; the native effects on adjacent stack storage remain unverified. Prior deliberate first-character-only safety interpretation is retained in git:ab21c58fd7992141e7aa620e429574292d9b955f, not the faithful milestone implementation.", "Preserve existing seed identity and complete original spans. Source binding is not a measured matching or runtime claim."], "reason": "Recover vehicle bodies and overlays using actual sprites, chassis metrics, faction palettes and font storage."}
 // symbol    ?veh_draw@@YAHPAVBuffer@@HHHHHH@Z
 int __cdecl veh_draw(Buffer * buffer, int veh_id, int screen_x, int screen_y, int zoom, int flags, int frame) {
     int x = screen_x, y = screen_y;
@@ -855,10 +855,11 @@ int __cdecl veh_draw(Buffer * buffer, int veh_id, int screen_x, int screen_y, in
         r2.left = rr30; r2.top = rr2c; r2.right = rr28; r2.bottom = rr24;
 
         char *word = StringTable.get(Order[triadIdx].letter);
-        // The original copies an unbounded label then discards all but its
-        // first character. Copy only the displayed character: malformed long
-        // rule labels must not overflow the original four-byte scratch.
-        char lineBuf[4] = {word[0], 0, 0, 0};
+        // Original 559F40 copies the complete label before the later byte
+        // clears. Preserve its unchecked four-byte scratch, not a safe prefix
+        // copy; malformed-label effects on adjacent native storage are unproved.
+        char lineBuf[4];
+        strcpy(lineBuf, word);
 
         if ((Vehs[veh_id].state & 0x4000) != 0) {
             strcpy(lineBuf, "/");
