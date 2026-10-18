@@ -996,18 +996,14 @@ int BasePop::exec(int flags, int (__cdecl *callback)()) {
         dialogs_.show(0);
     }
 
-    // THE ROW ORIGIN. Slot 0x178 hands all three back through pointers, which
-    // is why the three exist before it runs. `origin` is the value it wrote;
-    // `row` is the working copy the rows below consume and advance.
-    int origin = -static_cast<int>(field_30F4_);
-    int row = static_cast<int>(field_30C0_) - static_cast<int>(field_30EC_) -
-              static_cast<int>(field_30E0_) - static_cast<int>(field_30D0_);
+    // THE ROW ORIGIN. The provider adjusts X, Y and style. Buttons advance
+    // horizontally from its original X; its Y remains the shared baseline.
+    int button_x = -static_cast<int>(field_30F4_);
+    int button_y = static_cast<int>(field_30C0_) - static_cast<int>(field_30EC_) -
+                   static_cast<int>(field_30E0_) - static_cast<int>(field_30D0_);
     int row_style = 0;
-    on_adjust_button_placement(&origin, &row, &row_style);
-
-    // THE ROW PITCH, in the three shapes the image spells it.
-    const int pitch = static_cast<int>(field_30E4_) +
-                      static_cast<int>(field_30CC_);
+    on_adjust_button_placement(&button_x, &button_y, &row_style);
+    const int origin_x = button_x;
 
     // A plain text box (or a popup drawing into another window) runs neither
     // the item rows nor the second caption: straight to the pump.
@@ -1017,18 +1013,22 @@ int BasePop::exec(int flags, int (__cdecl *callback)()) {
     if ((field_30A8_ & 0x10000) != 0) {
         // The item list is the only body: no OK row, the item rows start one
         // pitch back when the origin is negative.
-        if (origin < 0) {
-            row = origin - pitch * (static_cast<int>(field_30B0_) - 1);
+        if (origin_x < 0) {
+            button_x = origin_x -
+                (static_cast<int>(field_30E4_) + static_cast<int>(field_30CC_)) *
+                (static_cast<int>(field_30B0_) - 1);
         } else {
-            row = origin;
+            button_x = origin_x;
         }
         goto rows;
     }
     if ((field_30A8_ & 0x40) != 0) {
-        if (origin < 0) {
-            row = origin - pitch;
+        const int pitch = static_cast<int>(field_30E4_) +
+                          static_cast<int>(field_30CC_);
+        if (origin_x < 0) {
+            button_x = origin_x - pitch;
         } else {
-            row = origin + pitch * static_cast<int>(field_20F4_);
+            button_x = origin_x + pitch * static_cast<int>(field_20F4_);
         }
     }
 
@@ -1050,7 +1050,7 @@ int BasePop::exec(int flags, int (__cdecl *callback)()) {
     }
 
     // THE FIRST ROW, the window's own OK row.
-    flat_button1_.init(ok_text_, -1, origin, row, static_cast<int>(field_30CC_),
+    flat_button1_.init(ok_text_, -1, button_x, button_y, static_cast<int>(field_30CC_),
                        static_cast<int>(field_30D0_), this, row_style);
     apply_button_config(&flat_button1_);
     flat_button1_.set_font(button_font1_, button_font2_, button_font3_, 0);
@@ -1065,12 +1065,13 @@ int BasePop::exec(int flags, int (__cdecl *callback)()) {
     flat_button1_.show(0);
 
     // THE ITEM ROWS ALWAYS RESTART FROM THE ORIGIN, never from where the OK
-    // row was left: the image keeps the slot-0x178 value live in a register
-    // across the whole run and reloads it here.
-    if (origin < 0) {
-        row = origin - pitch * (static_cast<int>(field_30B0_) - 1);
+    // row was left. Reload the pitch after the OK button's callbacks.
+    if (origin_x < 0) {
+        button_x = origin_x -
+            (static_cast<int>(field_30E4_) + static_cast<int>(field_30CC_)) *
+            (static_cast<int>(field_30B0_) - 1);
     } else {
-        row = origin;
+        button_x = origin_x;
     }
 
 rows:
@@ -1086,7 +1087,7 @@ rows:
 
             StringStructPayload *payload = item_ids_.next_entry();
             char *text = payload != 0 ? payload->text : 0;
-            button->init(text, index + 1, origin, row,
+            button->init(text, index + 1, button_x, button_y,
                          static_cast<int>(field_30CC_),
                          static_cast<int>(field_30D0_), this, row_style);
             apply_button_config(button);
@@ -1101,17 +1102,20 @@ rows:
             apply_button_bevel(button);
             button->show(0);
 
-            row += pitch;
+            button_x += static_cast<int>(field_30E4_) +
+                        static_cast<int>(field_30CC_);
         }
     }
 
     if ((field_30A8_ & 0x40) == 0) {
         goto pump;
     }
-    if (origin >= 0) {
-        row = origin + pitch * (static_cast<int>(field_30B0_) - 1);
+    if (origin_x >= 0) {
+        button_x = origin_x +
+            (static_cast<int>(field_30E4_) + static_cast<int>(field_30CC_)) *
+            (static_cast<int>(field_30B0_) - 1);
     } else {
-        row = origin;
+        button_x = origin_x;
     }
 
     // THE CANCEL CAPTION, or the default. The two fallback strings are the
@@ -1133,11 +1137,11 @@ rows:
     }
 
     // THE LAST ROW, the window's own Cancel row.
-    flat_button2_.init(cancel_text_, -2, origin, row,
+    flat_button2_.init(cancel_text_, -2, button_x, button_y,
                        static_cast<int>(field_30CC_),
                        static_cast<int>(field_30D0_), this, row_style);
     apply_button_config(&flat_button2_);
-    row -= pitch;
+    button_x -= static_cast<int>(field_30E4_) + static_cast<int>(field_30CC_);
     flat_button2_.set_font(button_font1_, button_font2_, button_font3_, 0);
     flat_button2_.redraw();
     flat_button2_.set_text_color(button_color_a_, button_color_b_,

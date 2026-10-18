@@ -1,0 +1,18 @@
+{
+  "event_id": "48aa53cb46a02328b830e4af89c6614bf4aa1442dbb597a94489441515705112",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "popup-pitch-reloads-after-callbacks",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/basepop.cpp removesfunctionwidecachedpitch and reads existing30E4+30CCfields atoriginalplacementpoints:OKcancelshift,itemnegativeoriginreset,eachitempost-showstep,cancelpositiveoriginandpost-cancelconfiguration. SavedoriginXandproviderYlifetimesremain. Actualsourcecallbackmutationtests andcompilingcachedpitchdamage distinguishfreshreads; exactpinnedreloadanchors retained.",
+      "Fresh166CPP/180COFFfullapplicationbuild/link,180outsidebothfunctionphysicalresiduals,78focusedactualsourcehost/pinneddamagecontrols,5646annotationintegrity/identity-span-symbol-binding-claim-findingcontinuity,3422claims/3431requirements/zeromissing,andmapping/referencechecks pass. Bothflagsetnativeunchangedreplica/priorbehaviorcontrols pass. BufferremainsMISMATCH;BasePopwholeEHcomparisonremainsREFUSED. No newclaim,demotion,automatic/game/full linkedselectionacceptance; destinationbuild/recheck remainsrequired."
+    ]
+  },
+  "previous_event": "97da674f60824c7b589dc244638133eab27eff17c9f1037972b3af2972e037e5",
+  "request_id": "incorporate-original-pitch-reloads",
+  "schema_version": 1,
+  "sequence": 8,
+  "stream": "task:buffer-mask-rows-oct18"
+}

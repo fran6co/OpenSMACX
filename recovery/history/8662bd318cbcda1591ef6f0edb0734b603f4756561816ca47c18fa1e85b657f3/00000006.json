@@ -1,0 +1,19 @@
+{
+  "event_id": "e0f0dbf9fd0bfc471a7128c75f3d3257d5a8e504395aa8dd2c9f166e4a3f003b",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "masked-blit-row-origins",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/buffer.cpp copy_mask keeps indexedpixelaccesses andnowadvances roworiginsbycomplete source/destinationpitches. Pinnedoriginalperpixelincrementsplusrowgaps,actualfullfunctioncoordinatecontrols withunequalpitches/clipping/aliasing/failures and compilinggap/reversal/maskmutants establishthisboundedrowcorrection. Existingclipping,acquisitionleakquirks,releaseorderandlowbytemask unchanged.",
+      "Fresh166CPP/180COFFfullapplicationbuild/link,180outsidebothfunctionphysicalresiduals,78focusedactualsourcehost/pinneddamagecontrols,5646annotationintegrity/identity-span-symbol-binding-claim-findingcontinuity,3422claims/3431requirements/zeromissing,andmapping/referencechecks pass. Bothflagsetnativeunchangedreplica/priorbehaviorcontrols pass. BufferremainsMISMATCH;BasePopwholeEHcomparisonremainsREFUSED. No newclaim,demotion,automatic/game/full linkedselectionacceptance; destinationbuild/recheck remainsrequired.",
+      "The originalunrolleddispatch/sharedscratchimplementationstilldiffersfromtheordinaryC++loop; preservedseedcommentsrecordthatmatchingdebt. StaticGraphicWinframecallersexist; completeobservedframecausality/runtime notyetproved."
+    ]
+  },
+  "previous_event": "f58f4661222d45012bc376d068a0d5b3cbb5c2a4fcb191d59a64b91745b93b78",
+  "request_id": "incorporate-full-pitch-row-origins",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:buffer-mask-rows-oct18"
+}

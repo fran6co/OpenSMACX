@@ -1,0 +1,19 @@
+{
+  "event_id": "0e7fad49e0333b5cdaa8d2617d1433aa49410199481e94971597b6bf6a8c4ecf",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_basepop_dialog_attach_oct17.py"
+    ],
+    "evidence": [
+      "Existingactualsourceattachmenttest bounds its slice with theexacton_adjust_button_placement(&origin,&row,&row_style) spelling. Correctcoordinateownershiprenames thoseworkinglocals tobutton_x/button_y; authorizeonlythatendpointliteralrename, retainingalltestassertions, fixtures, negativecontrolsandpinnedanchors. This is extractionmaintenance, notaweakenedbehaviorcheck."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "e3c300569ebacf6880b24652bec36574012f29aeebceed7e9d43a0f664e85db6",
+  "request_id": "authorize-coordinate-extraction-anchor",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:buffer-mask-rows-oct18"
+}

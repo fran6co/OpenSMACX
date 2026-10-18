@@ -1,0 +1,21 @@
+{
+  "event_id": "f58f4661222d45012bc376d068a0d5b3cbb5c2a4fcb191d59a64b91745b93b78",
+  "payload": {
+    "affects": [
+      "entity-c043d38573c83162a964031aad8ede121e10ab8fa95b65f241fe742cb1328c86"
+    ],
+    "author": "coordinator",
+    "discovery_id": "popup-pitch-reloads-after-callbacks",
+    "evidence": [
+      "Independentfullpinneddecode:602CA4/AAor602CB6/BCload30E4+30CCbeforeOKcancelshift;602FA5/ABreloadafterOKcallbacksforitemreset;603334/33Areloadaftereachitemshow;603378/37Ereloadafteritemloopforcancelorigin;603578/57Ereloadaftercancelconfiguration. Existingconstpitchhoist losescallbackmutationbehavior,alreadyinsideauthorized602600owner.",
+      "Restoretypedfieldreads at eachoriginalpoint, notvolatileorartificialcalls. Provider-adjustedY andsavedoriginalX retainproperlifetimes. ActualsourcehosttestswillmutatepitchthroughOK/item/cancelcallbacks; noextraheader/layout/storagechange ornewbyteclaim. Correctingcoordinateswithoutthisdiscoverywouldstillpreservethewrongprogram."
+    ],
+    "hypothesis": "Original button pitch is freshly reloaded at placement boundaries, not cached across button callbacks.",
+    "kind": "discovery"
+  },
+  "previous_event": "0e7fad49e0333b5cdaa8d2617d1433aa49410199481e94971597b6bf6a8c4ecf",
+  "request_id": "popup-pitch-reloads-after-callbacks",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:buffer-mask-rows-oct18"
+}

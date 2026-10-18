@@ -1,0 +1,21 @@
+{
+  "event_id": "2d576cb486e47f1fd861704bcde462923bcd541c15edd6ff7d9e825ccf009b72",
+  "payload": {
+    "affects": [
+      "entity-9c7293e08c3f64b51ea2591ffb605e1d0bd1bdda3e9801369ef9b4e172cac059"
+    ],
+    "author": "coordinator",
+    "discovery_id": "masked-blit-row-origins",
+    "evidence": [
+      "Pinned5E2CE1..F3 computepitch-minus-columns;5E2D55..99 advancebothpointers foreachbyte;5E2DA3/A9 addgaps. Sourceindexedloop neveradvancesrowbasesperpixelbutaddsonlygaps. Independentcoordinatecontrolwithpitch8,width4,height3demonstratesoutsideclipwritesandmissedfinalrow. Onlyfullpitchrowincrement restoresoriginalwalk.",
+      "Original5D6E9CGraphicWin nonclientpaint call and genuineowned_buffer_->copy_mask correlatewithcandidateframe stripes; boundedstaticreachabilitydoesnotyetprovetheobservedruntimecall. Preserve alloriginalclipping/acquisition/failure/release/aliasquirks."
+    ],
+    "hypothesis": "The masked blit must advance indexed row origins by complete pitches, not per-pixel-loop gaps.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "masked-blit-row-origins",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:buffer-mask-rows-oct18"
+}

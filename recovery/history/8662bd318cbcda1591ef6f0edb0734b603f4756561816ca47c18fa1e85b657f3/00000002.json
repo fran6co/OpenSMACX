@@ -1,0 +1,27 @@
+{
+  "event_id": "f12810388f89569f7f5390d86e710a14fa0f8d5cf23aede1791d4ba22e452460",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_popup_button_coordinates_oct18.py",
+      "src/basepop.cpp"
+    ],
+    "evidence": [
+      "IndependentTOUR investigation pluscoordinatorcompletepinned602600..6037F5 decode confirmseparatewrongcoordinatebehavior in genuineBasePop::exec. Virtualslot178 returnsXatstack10,Yat14;originalsavesXat602C6A..7F,adjustsXforOKat602C9C..CCD,resetsXforitems602F9D..FC1,passesfixedYandmutableX6030B9..DC,advancesX603334..353,andresetscancelX60336E..392. Current sourcemodifiesY(row)instead andkeepsX(origin)fixed.",
+      "AuthorizecoordinatedUI recoverybatch across genuineBuffer andBasePopowners. Use typedmutablebutton_x,providerbutton_y,savedorigin_x;adjustonlythe originalX-dependentexpressions/calls andcorrectnearbyexplanatorycomments. Preserveproviderwrites, callbacks, countreloads, flags, allocation/lifetime, defaultsandallotherquirks. Noheader/layoutchange,newidentity, inventedbuttonorintentionalfix. Requireactualsourcecoordinatebranchtests andpinnedfullspanevidence, freshfullbuild/link and180outsidebothfunctionphysicalresiduals. Historicalclaims remainunchanged."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6301184,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "2d576cb486e47f1fd861704bcde462923bcd541c15edd6ff7d9e825ccf009b72",
+  "request_id": "authorize-popup-button-coordinate-owner",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:buffer-mask-rows-oct18"
+}

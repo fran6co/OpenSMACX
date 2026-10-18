@@ -1,0 +1,19 @@
+{
+  "event_id": "97da674f60824c7b589dc244638133eab27eff17c9f1037972b3af2972e037e5",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "popup-button-x-not-y",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/basepop.cpp nowuses mutablebutton_x,providerbutton_y andsavedorigin_x. AlloriginalOK/item/cancelshifts,resetandloopincrements changeX, whiletheproviderYisretained; no inventedTOURbuttonorparserchange. Completeactualsourceblockhostcontrols covernegative/zero/positiveorigins,providerchanges,flags/owner,itemonly/cancel,loop/default/errorquirks and rejectcompilingpriorYmutation. Pinnedwhole602600spanandstackargumentanchorscorroboratecoordinates.",
+      "Theexistingattachmenttestendpointliteralwasrenamedunderexplicitcoordinator scopewithallassertionsanddamagecontrolsretained. Originalfunctionidentities/spans/claims and genuinebuttonlifetimes remainunchanged.",
+      "Fresh166CPP/180COFFfullapplicationbuild/link,180outsidebothfunctionphysicalresiduals,78focusedactualsourcehost/pinneddamagecontrols,5646annotationintegrity/identity-span-symbol-binding-claim-findingcontinuity,3422claims/3431requirements/zeromissing,andmapping/referencechecks pass. Bothflagsetnativeunchangedreplica/priorbehaviorcontrols pass. BufferremainsMISMATCH;BasePopwholeEHcomparisonremainsREFUSED. No newclaim,demotion,automatic/game/full linkedselectionacceptance; destinationbuild/recheck remainsrequired."
+    ]
+  },
+  "previous_event": "e0f0dbf9fd0bfc471a7128c75f3d3257d5a8e504395aa8dd2c9f166e4a3f003b",
+  "request_id": "incorporate-original-horizontal-button-placement",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:buffer-mask-rows-oct18"
+}

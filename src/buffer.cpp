@@ -4393,8 +4393,10 @@ int Buffer::copy_mask(Buffer *dest, int src_x, int src_y, int x, int y, int w,
                 write_ptr[column] = read_ptr[column];
             }
         }
-        read_ptr += read_stride - columns;
-        write_ptr += write_stride - columns;
+        // Indexed pixel access leaves these pointers at the row origins.
+        // The original advances per pixel, then adds pitch minus columns.
+        read_ptr += read_stride;
+        write_ptr += write_stride;
     }
 
     free_data(1);

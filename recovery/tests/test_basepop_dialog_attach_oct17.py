@@ -67,7 +67,7 @@ def live_slice():
     source = SOURCE.read_text(encoding="utf-8")
     body = _function_body(source, "int BasePop::exec(int flags,")
     start = body.index("    on_redraw();")
-    end_call = "    on_adjust_button_placement(&origin, &row, &row_style);"
+    end_call = "    on_adjust_button_placement(&button_x, &button_y, &row_style);"
     end = body.index(end_call, start) + len(end_call)
     return body[start:end]
 

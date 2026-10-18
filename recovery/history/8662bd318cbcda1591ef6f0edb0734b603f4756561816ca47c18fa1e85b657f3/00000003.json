@@ -1,0 +1,21 @@
+{
+  "event_id": "e3c300569ebacf6880b24652bec36574012f29aeebceed7e9d43a0f664e85db6",
+  "payload": {
+    "affects": [
+      "entity-c043d38573c83162a964031aad8ede121e10ab8fa95b65f241fe742cb1328c86"
+    ],
+    "author": "coordinator",
+    "discovery_id": "popup-button-x-not-y",
+    "evidence": [
+      "Pinned602C53writesinitialX;602C49writesY;602C64providerreceivespointersX,Y,style. Itemreset602F9F/FC1 andloopincrement603353writeonlyoriginalstack10(X). Initeminit6030CC afterthreepushesreadsoriginalstack14(Y),6030D1 afterfourpushesreadsoriginalstack10(X). Current row=origin androw+=pitch changeY, makingLANDFALLTOUR ynegativewhileOKAYretainsinitialY.",
+      "Ignoredtutor.txtLANDFALL#buttonTOURisnormalparseditem;original/currentBasePop::start agreeonStringListinsertat+2150/count+2160andbuttoncount+20F4. Do not inventspecialtourcallbackbuttonorchangeparser. Correctthe proven sharedcoordinatepath forallbuttonfamilies; countsurvivalandfullrenderingstillneedruntimeobservations."
+    ],
+    "hypothesis": "Popup item and cancel placement must adjust X while preserving the provider Y; the current translated row variable wrongly changes Y.",
+    "kind": "discovery"
+  },
+  "previous_event": "f12810388f89569f7f5390d86e710a14fa0f8d5cf23aede1791d4ba22e452460",
+  "request_id": "popup-button-x-not-y",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:buffer-mask-rows-oct18"
+}

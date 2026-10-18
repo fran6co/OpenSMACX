@@ -1,0 +1,24 @@
+{
+  "author": "coordinator",
+  "base_revision": "c61db24d5f8909fc55176cbbdc903a6aac642cab",
+  "editable_files": [
+    "src/buffer.cpp",
+    "recovery/tests/test_buffer_mask_rows_oct18.py"
+  ],
+  "evidence": [
+    "Pinnedcopy_mask5E2B00..5E2DD3:5E2CE1..5E2CF3 compute pitch-minus-columns gaps,5E2D55..5E2D99 advance ESI/EDI for eachbyte,and5E2DA3/5E2DA9 addthegaps atrowend. Totalrowadvanceisfullpitch. Sourceindexedwrite_ptr[column]/read_ptr[column] leavesrowbasesunadvanced,thenincorrectlyadds onlypitch-minus-columns. Changeonlyrowbaseupdates tofullsource/destinationstrides.",
+    "The originalGraphicWin nonclientpaint path5D6E6C loadsowned_buffer and5D6E9Ccallscopy_maskwithmask108,correspondingto genuineowned_buffer_->copy_mask(this,...) in graphicwin.cpp. Candidateframerenderingstripesareobservedbutnotyetattributedsolelytothisbody. ExistingBuffermembersandreceiverorientationmustremain;strideisBufferrelative4A8,notpopuprelative4A8.",
+    "Preserveoriginal clippingorder, source/destget_dataorder, lowbytemaskconversion, forwardoverlap scan, failure/leakedacquisitionquirks, releaseorderandreturnvalues. No bounds/safetyfix, guessedlayouts, newdata/flags/globals, assemblyorbyteclaim. Requireactualfullfunctionhostcontrolswithmultipleunequalpitchrows/clipping/aliasing/failure pluscompilingpriorgapdamage andpinnedcompleteinstructionevidence, independentreview, freshfullbuild/link,180outsidebodyphysicalpreservation, source/claims/references/mappings anddestinationrecheck. Nativecomparisonunknownsremainunknown; manualintegrationnotfullgameacceptance."
+  ],
+  "intent": "Restore original full-pitch row advancement in the genuine Buffer masked rectangle blit.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6171392,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "buffer-mask-rows-oct18"
+}
