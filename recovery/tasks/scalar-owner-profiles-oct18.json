@@ -1,0 +1,57 @@
+{
+  "author": "coordinator",
+  "base_revision": "3ca9f8b067603d1e009932bc071c1ffa52185c3a",
+  "editable_files": [
+    "CMakeLists.txt",
+    "src/general.cpp",
+    "src/general.h",
+    "src/scale_adjustment.cpp",
+    "src/scale_adjustment.h",
+    "recovery/tests/test_owned_helper_batch.py",
+    "recovery/tests/test_general_owner_split_oct17.py",
+    "recovery/tests/test_scalar_owner_profiles_oct18.py"
+  ],
+  "evidence": [
+    "Six complete originals are independently bounded by their existing source spans. The five argument-taking originals retain EBP frames; the paired shared-word toggle has no arguments and is an unchanged control. Native read-only measure of the current source compiles4TUs in both existing settled profiles: all six match their historical obligations, the five frame-based bodies choosing /Oy-. Actual application currently mismatches those five. This does not establish complete ownership or original translation units.",
+    "Authorize only /Oy- source properties for the existing byte_utilities, shared_word and span_math owners and a new scale_adjustment owner. Do not change application-wide flags, measurement alternatives, link policy, annotations, claims, types, signatures, behavior, numerical staging or source roles. Span-math remains explicitly SCAFFOLD with unknown original containing type/callers/extent.",
+    "Move the complete unchanged592D70/592D90 source blocks and their same StoredScaleAdjustment object from General into scale_adjustment.cpp, declare the same APIs in its own header and remove only the old two declarations from General. The coupling follows original stores/loads of945AEC, not adjacency. Keep allocation/lifetime/caller/TU uncertainty; no invented domain name or larger layout. General other bodies and all source facts remain protected.",
+    "Adapt the existing immutable-baseline General inverse test for this exact move using actual new-owner bytes and tightly checked header/prologue, never arbitrary baseline substitution. Keep all prior inverses, damage controls and baseline revisions. Add moved-body/data/extra-content damage witnesses. Existing helper tests retain the same original/behavior checks under the new owner path.",
+    "Coordinator alone owns resources, Git, scope, integration and cleanup. Require actual-source behavioral/identity tests, independent review, fresh full application build/link, native scoped strict checks and source/claim/reference continuity, all-known-domain masked/reference observations and complete outside-function physical correspondence. Profile changes remain explicit; no automatic acceptance or original linked/runtime/lifecycle claim. Recheck destination after integration."
+  ],
+  "intent": "Restore independently observed frame-based scalar-owner compilation; home the coupled scale-adjustment state and operations together without changing their effects or claiming original TU identity.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5758688,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4507744,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4507760,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4228208,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5844336,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5844368,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "scalar-owner-profiles-oct18"
+}
