@@ -1,0 +1,22 @@
+{
+  "event_id": "c41f2ab6442b604e43d525d55a174892fd96244186b9f29bb2c01a056f60288d",
+  "payload": {
+    "affects": [
+      "entity-33a7ebdbfcd1103d790e265ea95f37233f738fb786d709affb68902c1733ba8c",
+      "entity-4660d744ce11bf4dee88bd9b5bb6665e0e3059fc225cab0dfbe01c173bb71869"
+    ],
+    "author": "coordinator",
+    "discovery_id": "remaining-native-unordered-shadow-lowering",
+    "evidence": [
+      "Qualified build-h6l7b586 Caviar COFF draw: upperX fnstsw+3D3,testAH1/JNE after comparing upperbound toX rejects unordered; lowerY+3E8,testAH41/JE accepts unordered; original63A17D usesAH41 and original63A1A0 usesAH1. UpperY+3FC AH1 also rejects unordered instead oforiginalAH41. Loadscene lowerY+35F,testAH41/JE likewise differs fromoriginal63A52F AH1/JNE.",
+      "Finite original comparisons and new constants are preserved, but host tests are not native floating-point/status proof. Do not label the renderer faithful for NaNs, change compiler flags or introduce copied machine-code/bitcast scaffolding. Restore this at source/compiler-context matching pass with real native controls; current historical claims/three MISMATCH verdicts unchanged."
+    ],
+    "hypothesis": "The source predicates express original IEEE unordered outcomes, but actual VC6 release lowering reverses comparison operands and still differs on some NaN shadow cases.",
+    "kind": "discovery"
+  },
+  "previous_event": "bfffaaa19cbdb3e328c8c3209d844fdafb401fbc87cd79447c4a35bfe7221d56",
+  "request_id": "remaining-native-unordered-shadow-lowering",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:caviar-render-inputs-oct18"
+}

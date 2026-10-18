@@ -123,7 +123,7 @@ static const float CaviarProjectionPolarScale = -14.64225482940673828125f;
 static const float CaviarProjectionAzimuthScale = -14.1647891998291015625f;
 typedef uint8_t CaviarProjectionAngleRowCandidate[0x860];
 static const CaviarProjectionAngleRowCandidate *CaviarProjectionAngleRows[24];
-static const float vox_radius_scale_ = 1.0f;
+/* ACTUAL_RADIUS_CONSTANT */
 static int32_t vox_part_behind_result = 0;
 static int sub_6401b0_call_count = 0;
 static int16_t sub_6401b0_centres[8];

@@ -1,5 +1,6 @@
 """Host controls for Caviar's source-owned object callback and record slots."""
 from pathlib import Path
+import re
 import shutil
 import subprocess
 import tempfile
@@ -95,8 +96,8 @@ def test_actual_source_callback_identity_and_post_part_edge():
     shadow_pass = draw.index("// The shadow pass", post_call)
     assert first_call < part_draw < post_guard < post_call < shadow_pass
     assert "if (VoxRenderRecord::ObjectStartCallback callback =" in draw
-    assert ("callback(record, index, &position, &part,\n"
-            "                     view->bounds_.values_, &context->light_vector_);") in draw
+    assert re.search(r"callback\(record, index, &position, &part,\s+"
+                     r"view->bounds_\.values_, &context->light_vector_\);", draw)
     assert "state_bytes" not in draw
     assert "context->shadow_enabled_" in draw
     assert "&context->light_vector_" in draw
@@ -198,9 +199,9 @@ int main() {
 def test_actual_draw_edge_passes_the_six_int_window_and_rereads_post_callback():
     source = SOURCE.read_text()
     draw = extract(source, "void __cdecl vox_draw_scene(")
-    start = draw.index("        if (VoxRenderRecord::ObjectStartCallback callback =")
-    end = draw.index("        // The shadow pass", start)
-    actual_edge = draw[start:end]
+    main_pass = extract(draw, "if (vox_part_behind(&position, extent, view) == 0)")
+    start = main_pass.index("if (VoxRenderRecord::ObjectStartCallback callback =")
+    actual_edge = main_pass[start:main_pass.rfind("}")]
     preamble = r'''#include <assert.h>
 #include <stdint.h>
 #ifndef __cdecl

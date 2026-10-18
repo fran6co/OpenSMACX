@@ -9,7 +9,7 @@ import pytest
 
 from match_recovery.source import read_text
 from test_caviar_shape_chain_oct11 import assert_caviar_owner_continuity
-from test_caviar_scene_product_source import FUNCTIONS, FIXTURE, extract_definition
+from test_caviar_scene_product_source import extract_definition, product_fixture
 
 ROOT = Path(__file__).resolve().parents[2]
 BASE = "3e9c57dbfe23c1163ef50a4f6c610609b52603bb"
@@ -59,8 +59,7 @@ def test_flag_provenance_and_polarity_damage_is_rejected(damage):
         new = "(record->setup_id_ & 1) != 0" if damage == "polarity" else "record->setup_id_ == 0"
         damaged = actual.replace(old, new)
     source = source.replace(actual, damaged, 1)
-    extracted = "\n\n".join(extract_definition(source, name) for name in FUNCTIONS)
-    program = FIXTURE.read_text().replace("/* PRODUCT_EXTRACTS */", extracted)
+    program = product_fixture(source)
     compilers = [shutil.which(name) for name in ("g++", "clang++")]
     assert any(compilers), "an actual-source host compiler is required"
     with tempfile.TemporaryDirectory(prefix="caviar-stage-flag-") as directory:

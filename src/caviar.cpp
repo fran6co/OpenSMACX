@@ -782,14 +782,13 @@ const int32_t *vox_active_ramp_b_ = 0; // 0x009C082C
 uint8_t vox_active_size_code_ = 0;  // 0x009C0A1C
 
 
-// 0x00671010. The visibility cut the part's scaled extent is compared against
-// to decide whether it is drawn at all.
-const float vox_visibility_cut_ = 0.0f;  // 0x00671010
+// 0x00671010: original float bits 0x3F000000. The visibility cut the part's
+// scaled extent is compared against to select the per-part rendering flag.
+const float vox_visibility_cut_ = 0.5f;  // 0x00671010
 
-// 0x00671014. Scales the walked node's extent into world units for the clip
-// test, and the result is stored and re-read - a real variable, not a
-// folded constant.
-const float vox_radius_scale_ = 0.0f;  // 0x00671014
+// 0x00671014: original float bits 0x43000000. Scales the walked node's extent
+// for the shadow clip tests in both the bounds and drawing passes.
+const float vox_radius_scale_ = 128.0f;  // 0x00671014
 
 // The scene render record this function fills and hands to vox_create_record;
 // the created handle lands at the tail (+0x40, 0x009BB478).
@@ -3604,12 +3603,14 @@ shadow_pass:
             vector_add(shadow.values, CaviarSceneProjectionScratch.shadow_centre_.values,
                        shadow.values);
             const float shadow_scale = extent * vox_radius_scale_;
-            if (-shadow_scale * CaviarSceneProjectionScratch.shadow_radius_x_ <= shadow.values[0] &&
-                shadow.values[0] <= camera->bounds_.values_[4] +
-                                      shadow_scale * CaviarSceneProjectionScratch.shadow_radius_x_ &&
+            // The x87 branches reject ordered X overflow, but admit unordered
+            // X comparisons. The lower Y test alone rejects unordered values.
+            if (!(-shadow_scale * CaviarSceneProjectionScratch.shadow_radius_x_ > shadow.values[0]) &&
+                !(shadow.values[0] > camera->bounds_.values_[4] +
+                                      shadow_scale * CaviarSceneProjectionScratch.shadow_radius_x_) &&
                 -shadow_scale * CaviarSceneProjectionScratch.shadow_radius_y_ <= shadow.values[1] &&
-                shadow.values[1] <= camera->bounds_.values_[5] +
-                                      shadow_scale * CaviarSceneProjectionScratch.shadow_radius_y_) {
+                !(shadow.values[1] > camera->bounds_.values_[5] +
+                                      shadow_scale * CaviarSceneProjectionScratch.shadow_radius_y_)) {
                 VOX_Matrix shadow_part;
                 vox_matrix_matrix_mul(caviar_scene_shadow_matrix_view(CaviarSceneProjectionScratch).values,
                                       instance.instance_matrix_[step].values,
@@ -4716,9 +4717,6 @@ void __cdecl vox_draw_scene(VoxRenderRecord *record, CaviarSceneContext *context
         callback();
     }
 
-    // The "keep the scene rectangle too" byte is the context's shadow_enabled_.
-    const int want_shadow = context->shadow_enabled_;
-
     for (int index = 0; index < state->instance_count_; ++index) {
         VoxInstance &instance = state->instances_[index];
         if ((instance.instance_colour_[step] & 0x80) != 0) {
@@ -4745,44 +4743,44 @@ void __cdecl vox_draw_scene(VoxRenderRecord *record, CaviarSceneContext *context
             visible = 0;
         }
 
-        if (vox_part_behind(&position, extent, view) != 0) {
-            continue;
-        }
-
-        // The part's rotation is the view's rotation times its own, scaled
-        // by the walked node's extent.
-        VOX_Matrix part;
-        vox_matrix_matrix_mul(CaviarSceneProjectionScratch.view_scene_matrix_.values,
-                              instance.instance_matrix_[step].values,
-                              part.values);
-        for (int row = 0; row < 3; ++row) {
-            for (int column = 0; column < 3; ++column) {
-                part.values[row][column] *= extent;
+        // A clipped body can still cast a shadow. The original branch at
+        // 0x639FEA skips only the main pass, reaching the live shadow gate.
+        if (vox_part_behind(&position, extent, view) == 0) {
+            // The part's rotation is the view's rotation times its own, scaled
+            // by the walked node's extent.
+            VOX_Matrix part;
+            vox_matrix_matrix_mul(CaviarSceneProjectionScratch.view_scene_matrix_.values,
+                                  instance.instance_matrix_[step].values,
+                                  part.values);
+            for (int row = 0; row < 3; ++row) {
+                for (int column = 0; column < 3; ++column) {
+                    part.values[row][column] *= extent;
+                }
             }
-        }
 
-        // The slot's second argument is this instance-table index, not the
-        // animation step used above to select the instance's vectors/matrix.
-        // The bounds pointer is the six-int window at view + 0x48; direction
-        // is the context's light vector at +0x48.
-        if (VoxRenderRecord::ObjectStartCallback callback =
-                record->object_start_callback_) {
-            callback(record, index, &position, &part,
-                     view->bounds_.values_, &context->light_vector_);
-        }
-        vox_draw_part(record, node, &position, &part, &view->camera_.rotation,
-                      &context->light_vector_, extent, visible);
+            // The slot's second argument is this instance-table index, not the
+            // animation step used above to select the instance's vectors/matrix.
+            // The bounds pointer is the six-int window at view + 0x48; direction
+            // is the context's light vector at +0x48.
+            if (VoxRenderRecord::ObjectStartCallback callback =
+                    record->object_start_callback_) {
+                callback(record, index, &position, &part,
+                         view->bounds_.values_, &context->light_vector_);
+            }
+            vox_draw_part(record, node, &position, &part, &view->camera_.rotation,
+                          &context->light_vector_, extent, visible);
 
-        // Read +0x5C after drawing: vox_draw_part may change this slot, and
-        // the original edge tests the post-draw value before calling it.
-        if (VoxRenderRecord::PostPartCallback callback =
-                record->post_part_callback_) {
-            callback(record, index);
+            // Read +0x5C after drawing: vox_draw_part may change this slot, and
+            // the original edge tests the post-draw value before calling it.
+            if (VoxRenderRecord::PostPartCallback callback =
+                    record->post_part_callback_) {
+                callback(record, index);
+            }
         }
 
         // The shadow pass, when the state asks for it and the record's
         // descriptor block names a shadow.
-        if (want_shadow != 0 &&
+        if (context->shadow_enabled_ != 0 &&
             record->setup_block_->shadow_buffer_ != 0) {
             VOX_Vect shadow;
             vox_matrix_vector_mul(caviar_scene_shadow_matrix_view(CaviarSceneProjectionScratch).values,
@@ -4793,12 +4791,14 @@ void __cdecl vox_draw_scene(VoxRenderRecord *record, CaviarSceneContext *context
             const float radius = extent * vox_radius_scale_;
             const float span_x = radius * CaviarSceneProjectionScratch.shadow_radius_x_;
             const float span_y = radius * CaviarSceneProjectionScratch.shadow_radius_y_;
-            if (-span_x <= shadow.values[0] &&
-                shadow.values[0] <=
-                    static_cast<float>(view->bounds_.values_[4]) + span_x &&
+            // Preserve the original unordered-X acceptance and ordered lower-Y
+            // test rather than normalizing all four comparisons to <=.
+            if (!(-span_x > shadow.values[0]) &&
+                !(shadow.values[0] >
+                    static_cast<float>(view->bounds_.values_[4]) + span_x) &&
                 -span_y <= shadow.values[1] &&
-                shadow.values[1] <=
-                    static_cast<float>(view->bounds_.values_[5]) + span_y) {
+                !(shadow.values[1] >
+                    static_cast<float>(view->bounds_.values_[5]) + span_y)) {
                 VOX_Matrix shadow_part;
                 vox_matrix_matrix_mul(caviar_scene_shadow_matrix_view(CaviarSceneProjectionScratch).values,
                                       instance.instance_matrix_[step].values,
@@ -5239,9 +5239,22 @@ int Caviar::render(Buffer *buffer, int centre_x, int centre_y, int flags) {
 
     if (flags & 4) {
         VOX_Matrix saved = scene_context_.state_.scene_rotation_;
+        // Unrotated centering is temporary: the transform always samples step
+        // zero, then the saved scene rotation is restored before scene drawing.
+        if (flags & 0x10) {
+            scene_context_.state_.scene_rotation_.values[0][0] = 1.0f;
+            scene_context_.state_.scene_rotation_.values[0][1] = 0.0f;
+            scene_context_.state_.scene_rotation_.values[0][2] = 0.0f;
+            scene_context_.state_.scene_rotation_.values[1][0] = 0.0f;
+            scene_context_.state_.scene_rotation_.values[1][1] = 1.0f;
+            scene_context_.state_.scene_rotation_.values[1][2] = 0.0f;
+            scene_context_.state_.scene_rotation_.values[2][0] = 0.0f;
+            scene_context_.state_.scene_rotation_.values[2][1] = 0.0f;
+            scene_context_.state_.scene_rotation_.values[2][2] = 1.0f;
+        }
         VOX_Vect position;
         VOX_Vect extent;
-        vox_transform_camera(&scene_context_.state_, (flags & 0x10) != 0 ? flags : 0,
+        vox_transform_camera(&scene_context_.state_, 0,
                              &position, &extent);
         position.values[0] = (extent.values[0] + position.values[0]) * 0.5f;
         scene_context_.state_.scene_rotation_ = saved;
@@ -5272,7 +5285,7 @@ int Caviar::render(Buffer *buffer, int centre_x, int centre_y, int flags) {
         UnionRect(&CaviarScene.scene_rect_, &scene,
                   &CaviarScene.scene_rect_);
         if (scene_context_.shadow_enabled_ != 0) {
-            unsigned char *colour = static_cast<unsigned char *>(record->colour_table_);
+            unsigned char *shadow_table = static_cast<unsigned char *>(record->shadow_table_);
             int mode;
             int origin_x;
             int origin_y;
@@ -5286,7 +5299,7 @@ int Caviar::render(Buffer *buffer, int centre_x, int centre_y, int flags) {
                 origin_y = top;
             }
             CaviarSceneBufferB.buffer().draw_dest_source(buffer, 0, origin_x, origin_y,
-                                                1, mode, colour);
+                                                1, mode, shadow_table);
         }
     }
 

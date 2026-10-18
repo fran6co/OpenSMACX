@@ -1,0 +1,32 @@
+{
+  "event_id": "f7bfc35ab4f2a641b060f10ce9071491855ba4347bf493198f876d7b0ee4861e",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/fixtures/caviar_product_extraction.cpp",
+      "recovery/tests/test_caviar_scene_inputs_oct18.py",
+      "recovery/tests/test_caviar_scene_product_source.py"
+    ],
+    "evidence": [
+      "Authorize coupled renderer/scene-view/scene-draw closure and complete-body regression controls for original constant values and independent, live-enabled shadow branch; no changes to callbacks, ABI, source claims or gates. Require review of every emitted affected function and fresh object preservation outside these three bodies."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6528608,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6529664,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "3d3b15b104f74cdcc3f59760a5ed7b74585b3ce3c201c3f2ea4e8d7e1c44853d",
+  "request_id": "authorize-scene-closure",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:caviar-render-inputs-oct18"
+}

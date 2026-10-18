@@ -89,13 +89,18 @@ def extract_definition(source: str, name: str) -> str:
     raise AssertionError("no function definition found for " + name)
 
 
-def test_extracted_product_bodies_gcc_and_clang():
-    source_path = Path(os.environ.get("OPENSMACX_CAVIAR_SOURCE", DEFAULT_SOURCE))
-    source = source_path.read_text()
+def product_fixture(source):
     extracted = "\n\n".join(extract_definition(source, name) for name in FUNCTIONS)
     template = FIXTURE.read_text()
+    radius, = re.findall(r"(?m)^const float vox_radius_scale_ = [^;]+;", source)
+    template = template.replace("/* ACTUAL_RADIUS_CONSTANT */", radius)
     assert template.count("/* PRODUCT_EXTRACTS */") == 1
-    translation_unit = template.replace("/* PRODUCT_EXTRACTS */", extracted)
+    return template.replace("/* PRODUCT_EXTRACTS */", extracted)
+
+
+def test_extracted_product_bodies_gcc_and_clang():
+    source_path = Path(os.environ.get("OPENSMACX_CAVIAR_SOURCE", DEFAULT_SOURCE))
+    translation_unit = product_fixture(source_path.read_text())
 
     compilers = [shutil.which(name) for name in ("g++", "clang++")]
     available = [compiler for compiler in compilers if compiler]

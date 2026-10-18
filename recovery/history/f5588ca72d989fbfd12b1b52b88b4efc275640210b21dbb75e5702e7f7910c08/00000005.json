@@ -1,0 +1,17 @@
+{
+  "event_id": "821e4eabfefa72b9067884840177550e2cdb5ac6c7cb703e086faa0cf8f09066",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "scene-visibility-and-shadow-path",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/caviar.cpp restores original0.5/128 constants, independent shadow continuation for behind main bodies and post-callback live shadow byte. Whole actual scene bodies and compiling damage tests cover finite threshold/radius bounds and callback order. Fresh native full application builds/links. Manual physical review accounts exactly for two original .rdata words while retaining native function-onlyFAIL; all other object residuals match. This resolution does not assert full scene/runtime/native floating-point or matching acceptance."
+    ]
+  },
+  "previous_event": "097468a534fb565a4a8f4d798d54371733e74d2c262c174a431297eb4da6468b",
+  "request_id": "incorporate-scene-closure",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:caviar-render-inputs-oct18"
+}

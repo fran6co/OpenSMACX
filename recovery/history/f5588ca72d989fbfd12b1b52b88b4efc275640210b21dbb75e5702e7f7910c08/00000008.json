@@ -1,0 +1,20 @@
+{
+  "event_id": "3a03b0b92f9d805b6f2c241767102745c0aa4e05f035405fa02877155562fc4a",
+  "payload": {
+    "affects": [
+      "entity-4f6b913de3d63d930038798b474e51a1b4ee6339162cb0e87b3b12b7924e30e2"
+    ],
+    "author": "coordinator",
+    "discovery_id": "remaining-created-record-reloads",
+    "evidence": [
+      "Pinned6174D3 reloads9BB478 aftervox_draw_scene,617526reloads beforesecondaryclip,61756E/617594reloadbefore shadowtable. Current source savesrecord beforevox_draw_scene. Callback replacement/provider invariance has not been established; no broad aliasing or full-render parity claim follows from the bounded shadow/centering correction. Preserve for coupled provider/lifetime investigation."
+    ],
+    "hypothesis": "Caviar::render caches the created record across voxel drawing and unions, while the original reloads shared created storage before later clip/table groups.",
+    "kind": "discovery"
+  },
+  "previous_event": "c41f2ab6442b604e43d525d55a174892fd96244186b9f29bb2c01a056f60288d",
+  "request_id": "remaining-created-record-reloads",
+  "schema_version": 1,
+  "sequence": 8,
+  "stream": "task:caviar-render-inputs-oct18"
+}

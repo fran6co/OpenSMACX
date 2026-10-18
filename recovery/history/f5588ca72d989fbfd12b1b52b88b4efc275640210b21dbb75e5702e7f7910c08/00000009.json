@@ -1,0 +1,20 @@
+{
+  "event_id": "7b0e839166131b0c6cce30c021584bb6108d7e9846298f1a7435dd028dbd764a",
+  "payload": {
+    "affects": [
+      "entity-4660d744ce11bf4dee88bd9b5bb6665e0e3059fc225cab0dfbe01c173bb71869"
+    ],
+    "author": "coordinator",
+    "discovery_id": "remaining-scene-setup-null-call",
+    "evidence": [
+      "Pinned639F25 callsdwordptr[record+7C] unconditionally. Current vox_draw_scene skips nullsetupcallback. Ordinary initialized records install a callback, but null-error-path equivalence is not proved; first faithful milestone requires preserving original quirks rather than calling this null guard an improvement. No source or test removal authorized implicitly by this finding."
+    ],
+    "hypothesis": "The scene setup callback remains null-guarded in source although the original calls its installed slot unconditionally.",
+    "kind": "discovery"
+  },
+  "previous_event": "3a03b0b92f9d805b6f2c241767102745c0aa4e05f035405fa02877155562fc4a",
+  "request_id": "remaining-scene-setup-null-call",
+  "schema_version": 1,
+  "sequence": 9,
+  "stream": "task:caviar-render-inputs-oct18"
+}

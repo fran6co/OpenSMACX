@@ -1,0 +1,17 @@
+{
+  "event_id": "bfffaaa19cbdb3e328c8c3209d844fdafb401fbc87cd79447c4a35bfe7221d56",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "original-unordered-shadow-comparisons",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Both src/caviar.cpp shadow predicates now express original unordered-X/upper-Y and ordered lower-Y distinction explicitly as source operators. Whole actual-body GCC/Clang controls discriminate NaNX andNaNY and reject normalization mutants. Actual VC6 operand reversal still changes some unordered branches; preserve separate native-lowering discovery rather than claiming the host control proves native NaN parity. No flag changes or matching claim."
+    ]
+  },
+  "previous_event": "821e4eabfefa72b9067884840177550e2cdb5ac6c7cb703e086faa0cf8f09066",
+  "request_id": "incorporate-source-shadow-predicates",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:caviar-render-inputs-oct18"
+}

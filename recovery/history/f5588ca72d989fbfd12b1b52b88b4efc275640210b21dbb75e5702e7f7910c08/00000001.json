@@ -1,0 +1,22 @@
+{
+  "event_id": "3d3b15b104f74cdcc3f59760a5ed7b74585b3ce3c201c3f2ea4e8d7e1c44853d",
+  "payload": {
+    "affects": [
+      "entity-33a7ebdbfcd1103d790e265ea95f37233f738fb786d709affb68902c1733ba8c",
+      "entity-4660d744ce11bf4dee88bd9b5bb6665e0e3059fc225cab0dfbe01c173bb71869"
+    ],
+    "author": "coordinator",
+    "discovery_id": "scene-visibility-and-shadow-path",
+    "evidence": [
+      "Pinned671010 bytes0000003F=0.5f,671014 bytes00000043=128.0f; source substitutes0.0f. Radius consumed in63A280 and639E60. Recover original values, not alternative tuning.",
+      "Pinned639FEA branches to63A0F3 after vox_part_behind, where context+8C is freshly read for the independent shadow pass, not to loop increment63A247. Current continue skips shadow and cachedwant_shadow ignores live callback changes."
+    ],
+    "hypothesis": "Two original nonzero float constants were zeroed in the translation, and the behind-part path/cached shadow enable incorrectly suppress independent shadow work.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "scene-visibility-and-shadow-path",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:caviar-render-inputs-oct18"
+}

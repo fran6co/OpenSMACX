@@ -1,0 +1,22 @@
+{
+  "event_id": "313ce79b34f572bfff3ebf35f63e3369e767c720c4f9f024bb44a406b440140e",
+  "payload": {
+    "affects": [
+      "entity-33a7ebdbfcd1103d790e265ea95f37233f738fb786d709affb68902c1733ba8c",
+      "entity-4660d744ce11bf4dee88bd9b5bb6665e0e3059fc225cab0dfbe01c173bb71869",
+      "entity-4f6b913de3d63d930038798b474e51a1b4ee6339162cb0e87b3b12b7924e30e2"
+    ],
+    "author": "coordinator",
+    "discovery_id": "original-unordered-shadow-comparisons",
+    "evidence": [
+      "Pinned scene63A161/17D/1BC and view63A4ED/50C/547 test x87AH41, rejecting only ordered greater. LowerY63A1A0/63A52F testsAH1, rejecting less and unordered. Recover !(>) for X/upperY and <= lowerY without safety normalization; whole-body NaN-axis controls and native lowering remain required."
+    ],
+    "hypothesis": "Both original shadow passes admit unordered X and upper-Y comparisons while rejecting unordered lower-Y; uniformly spelling <= changes original NaN paths.",
+    "kind": "discovery"
+  },
+  "previous_event": "f7bfc35ab4f2a641b060f10ce9071491855ba4347bf493198f876d7b0ee4861e",
+  "request_id": "original-unordered-shadow-comparisons",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:caviar-render-inputs-oct18"
+}
