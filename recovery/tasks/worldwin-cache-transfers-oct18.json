@@ -1,0 +1,24 @@
+{
+  "author": "coordinator",
+  "base_revision": "885ee7d22f8c098b465f35631d31e2bbfd0f8c4b",
+  "editable_files": [
+    "src/worldwin.cpp",
+    "recovery/tests/test_worldwin_cache_transfers_oct18.py"
+  ],
+  "evidence": [
+    "Pinned WorldWin::on_redraw4C3EC0..4C4227: post-draw_map4C406E transfer4C4098 sets ECX to embedded MapWin GraphicWin Buffer and destination argument tothis+FA4(buffer2). Current source reverses this transfer. Post-gen_bases_only4C40EF transfer4C4119 similarly copies map Buffer into this+A1C(buffer1), also reversed in source.",
+    "The pre-draw cache restores4C405C/4C40DE correctly use buffer2 as receiver and map Buffer as destination. Preserve those, original dirty/resize gates, callbacks, clip/storage roles, scaled-copy overload4C4205, ignored return values and cleanup. Buffer::copy5DFF00 receiver is source; no guessed API rename, new buffer storage, palette or safe-path normalization.",
+    "Require complete actual-body cache-content and callback-order host controls, compiling damage mutations and pinned span anchors, native unchanged-replica/target-damage controls, full build/link, physical outside-body preservation, source/claim/mapping/reference continuity, independent review and fresh destination recheck. Known original-map scope not full game, minimap rendering, linked or automatic acceptance. Preserve all source mappings/claims and useful findings."
+  ],
+  "intent": "Restore original WorldWin post-render transfers from the embedded map surface into the terrain and base-overlay caches.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4996800,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "worldwin-cache-transfers-oct18"
+}
