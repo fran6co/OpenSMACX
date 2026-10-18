@@ -1,0 +1,24 @@
+{
+  "author": "coordinator",
+  "base_revision": "8f25ccf9b74b703e8b478ff1484e1b531fd9afcf",
+  "editable_files": [
+    "src/caviar.cpp",
+    "recovery/tests/test_caviar_render_inputs_oct18.py"
+  ],
+  "evidence": [
+    "Pinned Caviar::render617230..617620 loads record+54 shadow_table_ at61757E and61759A for Buffer::draw_dest_source5D8EE0. Current source instead selects record+50 colour_table_. Preserve original branches, callbacks and complete identity/span; no safety change.",
+    "Pinned6173FB..617465 saves nine rotation floats, sets identity only for flags10 within flags4, always passes step0 to vox_transform_camera63A6F0 at61743E, then restores the original matrix before adjusting scene offset. Current source omits identity and passes flags as step. Recover ordinary typed matrix operations; no fixed image addresses in implementation.",
+    "Require complete actual-body host controls, compiling mutations and pinned instruction anchors, native unchanged-replica/damage variant controls, fresh application build/link, physical outside-body preservation, source/claims/references/mapping continuity and independent review before manual integration. Preserve all quirks and matching obligations. Matching, unit-preview causality, game acceptance and native automatic linked preservation remain separate evidence boundaries."
+  ],
+  "intent": "Recover original shadow-table selection and temporary centering rotation/step in the complete Caviar renderer.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6386224,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "caviar-render-inputs-oct18"
+}
