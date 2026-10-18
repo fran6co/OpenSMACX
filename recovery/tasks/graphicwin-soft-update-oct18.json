@@ -1,0 +1,24 @@
+{
+  "author": "coordinator",
+  "base_revision": "91ecad0cc22abba39698268eb3b27836e30a0fb9",
+  "editable_files": [
+    "src/graphicwin.cpp",
+    "recovery/tests/test_graphicwin_soft_update_oct18.py"
+  ],
+  "evidence": [
+    "Pinned5D5720..5D588C constructs x/y/x+width/y+height, checks visibility, and intersects against GraphicWin+474 at5D57FA/5D581B, not Win::client_rect_. The existing typed rect2_ member is the Buffer working rectangle at474; current coordinate source incorrectly uses client_rect_.",
+    "Existing GraphicWin::soft_update(RECT*) at5D5930 independently implements Buffer bounds, screen-origin conversion, live HandleMain reread and InvalidateRect eraseFALSE. Pinned coordinate body retains an inlined pointer-null/full-buffer branch; ordinary C++ overload delegation is an evidence-backed source hypothesis, not a promise of byte equality.",
+    "Preserve all mappings/spans/historical obligations, other overloads, visibility and API ordering. Require actual-body host geometry/visibility/callback controls and compiling old-client-rect damage witness, pinned anchors, native controlled measurement, fresh build/link, physical outside-body preservation, source/claim/mapping/reference checks, independent review and destination recheck. No game, linked or automatic acceptance claim."
+  ],
+  "intent": "Recover the coordinate soft-update overload through the real Buffer rectangle invalidation path rather than the unrelated Win client rectangle.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6117152,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "graphicwin-soft-update-oct18"
+}
