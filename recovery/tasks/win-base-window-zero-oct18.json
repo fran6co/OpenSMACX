@@ -1,0 +1,26 @@
+{
+  "author": "coordinator",
+  "base_revision": "195e7c7babae8b2f1f28d33dcc21fbc436c7b623",
+  "editable_files": [
+    "src/win.cpp",
+    "recovery/tests/test_win_set_base_window_oct18.py"
+  ],
+  "evidence": [
+    "Pinned5F4D90..5F4EB1 and actual master195e7c7ba output differ at one instruction: zero publication to WinZOrderCount uses EBP in the original and EDX in current source. Both zero registers and the rest of all96 instructions already agree. Reordering the global zero store ahead of the local loop-index initialization preserves all observable state and calls.",
+    "Bounded three-form native Compiler.overlay screen under immutable source/toolchain inputs found publish-zero-first and shared-zero-initialization exact in actual Release and settled frameless measurement profiles; publish-loop-origin retains95/96. All candidates preserve all other masked passes and physical outside-target COFF output. Framed comparison still mismatches as before. An unchanged physical replica and changed target-body witness pass separately in every trial. Native local variants refused existing unrelated multiline macros before compilation; the documented generic compiler-overlay API was used instead, without relaxing any checker.",
+    "Authorize only moving WinZOrderCount=0 before int i=0 in set_base_window. No header, interface, signature, global definition, loop/callback order, compiler profile, annotation span or other body change. Bank any new historical claim only through recover record after fresh native measurement. Preserve every historical mapping, claim and unresolved structural/reference obligation.",
+    "Add actual-source host controls for null/same-base exits, both rectangle selection paths, resize callback and base publication order, root/z-order reset and flagged recursion, root count/window rereads after callbacks, final update and return. Use GCC and Clang where available, bounded real-object service doubles, named compiling damage controls and pinned full-span instruction witnesses. Source continuity must permit only the intended two-line reorder and native recorder metadata, not unrelated edits.",
+    "Prepare an isolated native worktree. Require independent source review, focused tests, source/claim/reference checks, fresh full application build/link, complete5581 masked and strict observations, physical outside-target preservation and destination recheck before coordinator-reviewed manual integration. No strict reference, retained-link, class/lifetime, runtime, playable-game or automatic acceptance claim follows from local masked equality. Retain the old current build until replacement verification; preserve all unfinished work and discoveries."
+  ],
+  "intent": "Restore the original Win::set_base_window zero-publication source ordering using genuine existing Win state, without changing behavior or compiler policy.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6245776,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "win-base-window-zero-oct18"
+}
