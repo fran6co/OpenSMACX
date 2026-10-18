@@ -1,0 +1,36 @@
+{
+  "author": "coordinator",
+  "base_revision": "6ee75f5cffa8de3d7cf69296d1dd6fb737ed87f1",
+  "editable_files": [
+    "packages/match-recovery/src/match_recovery/source/eh_regions.py",
+    "packages/match-recovery/tests/source/test_eh_regions.py",
+    "packages/match-recovery/README.md"
+  ],
+  "evidence": [
+    "The EH frontier audit in ignored .opensmacx/recovery/eh-refusal-frontier-oct18c/review.md identifies 241 pre-comparison refusals. Pinned Buffer constructor has a complete 24-byte one-action cold region; AlphaMovie and AlphaMenu destructors have complete 43/46-byte three-action cold regions. Existing product COFF agrees on complete cleanup structure; this is not proof of byte equality.",
+    "Authorize general bounded linear unwind chains only, with complete original and COFF root-registration, handler, FuncInfo, map, code/data permissions, relocations, symbol ownership, unique child association and full bounds validation. Preserve independent original/current action inventories. No topology weakening: predecessor states must remain the supported exact linear chain. Unsupported try maps, null actions, ambiguous targets/children, gaps, hidden bytes and non-linear graphs still refuse. No generated-code trimming, matching waivers, binary copies, source claim/mapping changes or compiler policy changes.",
+    "Add synthetic positive and damage controls for wider one-action and three/many-action chains, later-state/target/relocation corruption, duplicates, gaps, truncation, excessive state counts and all existing refusal paths. Update the package documentation in the same change. Binding only supplies fully owned bytes; it must never grant a match.",
+    "Worker may edit only the listed library/tests/docs files and run host tests. Coordinator owns Git, native compiler and original/product artifact verification. Use the freshly verified current application as unchanged evidence; preserve all prior qualified results. New supported regions must reach real comparison, not automatically pass. This generic parser work does not establish linked preservation, runtime acceptance or game completion."
+  ],
+  "intent": "Recover complete VC6 linear destructor-unwind ownership evidence beyond the fixed one/two-action length whitelist; compare actual owned code rather than refusing demonstrated complete cleanup chains.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6124048,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4211472,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5364752,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "vc6-linear-eh-oct18"
+}

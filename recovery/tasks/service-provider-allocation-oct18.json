@@ -1,0 +1,25 @@
+{
+  "author": "coordinator",
+  "base_revision": "6ee75f5cffa8de3d7cf69296d1dd6fb737ed87f1",
+  "editable_files": [
+    "src/net_class.cpp",
+    "recovery/tests/test_service_provider_add_actual_source.py"
+  ],
+  "evidence": [
+    "The shared-container audit in ignored .opensmacx/recovery/shared-container-structure-oct18c/findings.md proves complete original 401760..401B73 bounds. Existing class-owned new(Heap*) and new(ServiceProviderList*) overloads already implement the required fallback and failure policy. Current allocate_owned_node is used only in this add method and is reconstruction-only type-dispatch factoring.",
+    "Authorize replacing its four helper calls with genuine typed conditional new expressions, snapshotting explicit entry allocator at function entry and reloading explicit allocator immediately before each payload allocation. Remove only the now-unused allocate_owned_node template. Preserve actual null/fatal policy, partial ring mutations, virtual fallback owner read timing, construction handoff, ignored insertion-hook result, count/cursor mutation order and all original quirks. No new forced-inline attributes, layout, header, ABI, allocator helper/operator movement, flags, original bindings/spans/claims or other owner edits. Report broader factoring discoveries for separate scope.",
+    "Add actual-product-source host controls for both list branches, explicit/fallback owners, node/payload null failures, partial state, heap fatal exit policy, owner reload, construction handoff and hook ordering. Narrow doubles are permitted but must execute the product add and existing allocation operators/helper rather than a synthetic replacement algorithm. Preserve historical claims and restoration obligations even if matching regresses; no bug fixes or silent initialization changes.",
+    "Worker uses isolated coordinator checkout and host tests only. Coordinator owns Git/compiler leases/native measurements and build/link, independent source/original review, complete outside-owner physical residual including any removed helper COMDATs, claims/mappings/references and destination recheck. This is manual coordinator-reviewed recovery, not native automatic/full-game acceptance."
+  ],
+  "intent": "Restore direct typed allocation ownership and original allocator-read timing in ServiceProviderList::add without inventing classes or retaining generic dummy-pointer allocation dispatch.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4200288,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "service-provider-allocation-oct18"
+}
