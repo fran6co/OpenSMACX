@@ -1,0 +1,25 @@
+{
+  "event_id": "755ee345b0f256d6bd07f1c1add904c9c2bb20e490782cfe3b62aec23673c1a0",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_general_owner_split_oct17.py",
+      "recovery/tests/test_scalar_owner_profiles_oct18.py",
+      "src/general.h",
+      "src/scale_adjustment.cpp",
+      "src/scale_adjustment.h"
+    ],
+    "evidence": [
+      "The source-only owner-header seam experiment is fully preserved in Git e612b43ba, not discarded. It gained five masked/strict matches but still changed eight unrelated application objects, including unproved control/dataflow in order_veh. Do not waive that unresolved compiled collateral or force interface migration to obtain the two local matches.",
+      "Coordinator authorizes separating the coupled implementation and storage while retaining the existing sole public declaration owner General.h byte-for-byte at immutable3ca9f8b. New scale_adjustment.cpp includes general.h; remove the experimental scale_adjustment.h. This is one implementation owner with an existing shared utility API, not duplicated declarations, a compatibility function, an original TU claim or a runtime shim. No other C++ statements or profiles change.",
+      "Update the exact source-move inverse to require original General.h unchanged, new CPP prologue including general.h and no experimental header. Retain actual-source payload and negative controls, all immutable historical baselines and the existing unrelated b24 failure. Require fresh full build/link, full compiled-object/transport review and all-known-domain matching before manual integration; preserve earlier experimental evidence in Git/cache."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "5e68a844d0af3bb1639a0ecb7a087de74c26ba708d1685e020f39b5c18dca9ac",
+  "request_id": "retain-existing-general-api-for-implementation-split",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:scalar-owner-profiles-oct18"
+}

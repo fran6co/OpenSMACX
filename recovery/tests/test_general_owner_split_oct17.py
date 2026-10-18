@@ -134,18 +134,12 @@ SCALE_END = b"\n/*\n// ORIGINAL: 0x0063BAC0 "
 SCALE_INSERT_ANCHOR = b"/*\n// ORIGINAL: 0x0063BAC0 "
 SCALE_CPP_PROLOGUE = (
     b'#include "stdafx.h"\n'
-    b'#include "scale_adjustment.h"\n\n'
+    b'#include "general.h"\n\n'
     b"#include <cstring>\n\n"
 )
 SCALE_DECLARATIONS = (
     b"int __cdecl set_scale_adjustment(int value);\n"
     b"int __cdecl apply_scale_adjustment(int value);\n"
-)
-SCALE_HEADER = (
-    b"#ifndef OPENSMACX_SCALE_ADJUSTMENT_H\n"
-    b"#define OPENSMACX_SCALE_ADJUSTMENT_H\n\n"
-    + SCALE_DECLARATIONS
-    + b"\n#endif\n"
 )
 
 
@@ -176,13 +170,9 @@ def project_scale_adjustment_general(
         assert general_h == frozen_header
         return general_bytes
 
-    assert scale_cpp is not None and scale_h is not None, "partial scale-owner move"
+    assert scale_cpp is not None and scale_h is None, "partial scale-owner move or duplicate API header"
     assert scale_cpp == SCALE_CPP_PROLOGUE + expected_payload, "changed scale owner payload or boundary"
-    assert scale_h == SCALE_HEADER, "changed scale owner API/header"
-    expected_general_header = frozen_header.replace(
-        SCALE_DECLARATIONS, b'#include "scale_adjustment.h"\n', 1
-    )
-    assert general_h == expected_general_header, "unadmitted General header change"
+    assert general_h == frozen_header, "unadmitted General header/API change"
     assert general_bytes.count(SCALE_START) == 0, "scale payload remains in General"
     assert general_bytes.count(b"// RECOVERY_OBJECT: v1 0x00945AEC ?StoredScaleAdjustment@@3HA") == 0
     assert general_bytes.count(b"0x00592D70") == 0
@@ -567,11 +557,8 @@ def test_native_parser_owner_set_round_trips_without_unmapped_source_changes():
 def test_scale_owner_projection_is_exact_and_accepts_pre_move_source():
     frozen_general, frozen_header, payload = _scale_frozen_sources()
     moved_general = frozen_general.replace(payload + b"\n", b"", 1)
-    moved_header = frozen_header.replace(
-        SCALE_DECLARATIONS, b'#include "scale_adjustment.h"\n', 1
-    )
     assert project_scale_adjustment_general(
-        moved_general, SCALE_CPP_PROLOGUE + payload, SCALE_HEADER, moved_header
+        moved_general, SCALE_CPP_PROLOGUE + payload, None, frozen_header
     ) == frozen_general
     assert project_scale_adjustment_general(
         frozen_general, None, None, frozen_header
@@ -583,25 +570,21 @@ def test_scale_owner_projection_is_exact_and_accepts_pre_move_source():
     [
         ("scale_adjustment_cpp", lambda b: b.replace(b"StoredScaleAdjustment = value;", b"StoredScaleAdjustment = 1;", 1)),
         ("scale_adjustment_cpp", lambda b: b.replace(b"int StoredScaleAdjustment = 0;", b"int StoredScaleAdjustment = 1;", 1)),
+        ("scale_adjustment_cpp", lambda b: b.replace(b'#include "general.h"', b'#include "scale_adjustment.h"', 1)),
         ("scale_adjustment_cpp", lambda b: b"// extra prefix\n" + b),
         ("scale_adjustment_cpp", lambda b: b + b"\n// extra suffix\n"),
-        ("scale_adjustment_h", lambda b: b.replace(b"apply_scale_adjustment", b"alter_scale_adjustment", 1)),
-        ("scale_adjustment_h", lambda b: b + b"\n// extra header bytes\n"),
         ("general_h", lambda b: b + b"\n// unadmitted General header change\n"),
-        ("general_h", lambda b: b.replace(b'#include "scale_adjustment.h"', b'#include "changed_scale_header.h"', 1)),
-        ("general_h", lambda b: b.replace(b'#include "scale_adjustment.h"\n', b"", 1)),
+        ("general_h", lambda b: b.replace(b"int __cdecl set_scale_adjustment(int value);", b"void __cdecl set_scale_adjustment(int value);", 1)),
+        ("scale_adjustment_h", lambda b: b"#pragma once\n"),
     ],
 )
 def test_scale_owner_projection_rejects_payload_object_and_boundary_damage(target, mutate):
     frozen_general, frozen_header, payload = _scale_frozen_sources()
     moved_general = frozen_general.replace(payload + b"\n", b"", 1)
-    moved_header = frozen_header.replace(
-        SCALE_DECLARATIONS, b'#include "scale_adjustment.h"\n', 1
-    )
     sources = {
         "scale_adjustment_cpp": SCALE_CPP_PROLOGUE + payload,
-        "scale_adjustment_h": SCALE_HEADER,
-        "general_h": moved_header,
+        "scale_adjustment_h": None,
+        "general_h": frozen_header,
     }
     before = sources[target]
     sources[target] = mutate(before)

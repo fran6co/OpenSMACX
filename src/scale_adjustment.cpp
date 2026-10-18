@@ -1,5 +1,5 @@
 #include "stdafx.h"
-#include "scale_adjustment.h"
+#include "general.h"
 
 #include <cstring>
 
