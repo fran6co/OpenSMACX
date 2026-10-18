@@ -10,10 +10,13 @@ maps the filesystem at `Z:`, so the whole translation is: absolute POSIX path
 The same wrapper serves LINK.EXE and LIB.EXE, chosen by argv[0] or --tool,
 because they need the identical treatment and the identical environment.
 
-Why a wrapper rather than a native build: this project is a matching
-decompilation, so the ONE compiler whose output is meaningful is the one that
-built the original image - cl 12.00.8168. Every other toolchain can only tell
-you whether the code is valid, never whether it is right.
+Matching needs the configured historical compiler and ABI, not the host's
+default compiler. The CL driver banner alone is insufficient: VC6 release and
+SP3 can share that driver while using different C1/C1XX/C2 DLLs. The pinned
+image contains mixed compiler-build records; see recovery/COMPILER_EVIDENCE.md.
+The native toolchain fingerprint includes the actual compiler DLLs and SDK.
+This wrapper does not infer a historical compiler assignment or select one
+from a function's matching score.
 """
 
 from __future__ import annotations

@@ -84,6 +84,42 @@ not a per-function search for a permissive checker.
   a source-integrity match, a byte match and a successful link prove different
   properties. None independently proves a functioning reconstructed application.
 
+## Compiler identity before more spelling searches
+
+The `CL.EXE` banner is not the complete VC6 compiler identity. The release and
+SP3 toolchains can share the 12.00.8168 driver while their C1/C1XX/C2 DLLs differ.
+The inspected SP3 frontends report 12.0.8472.0 and its backend 12.0.8447.0;
+the installed release DLLs report 12.0.8168.0. Verify the actual files, not a
+banner or an assumed service-pack name. The independent
+[HoMM3 reconstruction's toolchain pins](https://github.com/sushi-shi/homm3-decomp/blob/decomp-complete-4.0/scripts/homm3/vc6/_toolchain.py)
+and [original-media extraction recipe](https://github.com/sushi-shi/homm3-decomp/blob/decomp-complete-4.0/scripts/create-toolchain-release.py)
+provide useful provenance leads; qualify downloaded files locally and preserve
+their licenses. Do not run an installer over the selected compiler.
+
+The pinned game's Rich records include both 8168 and 8447 compiler-build tags.
+Those aggregate records do not assign a class, function, current source file,
+historical TU or Jackal/application partition to either compiler. They also do
+not prove SP3 exclusivity. A compiler configuration change requires evidence
+for its affected ownership/build domain, not a per-function search for a more
+permissive result.
+
+For an isolated comparison, retain the source, SDK, linker, flags and baselines;
+stage immutable private compiler files and use the existing compiler interaction
+and resource lease. A fresh `Compiler` fingerprints the selected DLLs and SDK.
+Use physical unchanged-replica and target-damage controls in each flag trial,
+and inspect the emitted COFF `@comp.id` to distinguish the tested backend tags.
+Do not change DLLs during a live measurement epoch. Source overlays currently
+refuse nonempty `VC6_INCLUDE`; a private root can instead resolve its default
+INCLUDE/LIB directories to the unchanged installed SDK.
+
+The bounded SocialWin/TutWin/Palette comparison changed the emitted compiler tag
+but not the measured function output. Do not repeat the same compiler/source
+cohort as another spelling attempt without new evidence. This does not establish
+equivalence for other TUs, justify switching the production compiler, or waive
+strict references, original dependency identity, linked retention or runtime proof.
+Keep executable-derived reports and compiler artifacts ignored; the selected
+production toolchain remains unchanged.
+
 ## Operational lessons retained
 
 Global initialization/atexit dependencies matter alongside entry-point reachability.
