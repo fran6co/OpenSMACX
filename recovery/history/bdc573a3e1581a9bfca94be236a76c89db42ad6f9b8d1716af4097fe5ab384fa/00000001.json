@@ -1,0 +1,19 @@
+{
+  "event_id": "d1aa4daf877ffc68e30b9a9f864dcf7da645414204ea49b19160c10361c64277",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/midi.cpp"
+    ],
+    "evidence": [
+      "Deleting the unused adapters exposes one bounded live-reference lint finding at src/midi.cpp:1123. Its existing history evidence refers to the transferred historical field_accessors source; permit only clarifying that this source path is retired. Preserve the complete original Midi identity, spans, claims, binding evidence and all C++ behavior. This adds no original subject or proof waiver."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "retire-midi-history-comment-oct18",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:retire-unused-adapters-oct18"
+}

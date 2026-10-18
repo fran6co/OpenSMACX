@@ -239,9 +239,8 @@ def test_typed_members_restore_the_original_body_without_raw_offset_redirects(fa
     assert any(row["boundary"] == row["bytes"] == row["references"] == "pass" for row in rows), rows
     assert not (ROOT / "src/leaf_recoveries.cpp").exists()
     assert not (ROOT / "src/leaf_recoveries.h").exists()
-    for unit in ("field_accessors",):
-        assert all(r.address != address for r in read_file(ROOT / f"src/{unit}.cpp"))
-        assert f"{address:08x}_redirect" not in (ROOT / f"src/{unit}.h").read_text()
+    assert all(r.address != address for r in read_file(ROOT / "src/unbound_functions.h"))
+    assert f"{address:08x}_redirect" not in (ROOT / "src/unbound_functions.h").read_text()
 
 
 def test_other_original_family_tables_share_these_local_member_contracts(family):

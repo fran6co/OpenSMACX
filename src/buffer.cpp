@@ -216,9 +216,10 @@ bounded by the array now. Widening the fallback ramp wrote a 257th entry at
 adjacent stores inside that ramp still target distinct bytes with independent
 values, so their order is genuinely not observable.
 */
-// Plain Buffer's null query shares the folded leaf mapped in nullsub_thunks.cpp
-// at 0x00406B30. GraphicWin overrides this slot with its typed self-query;
-// the compiler supplies the Buffer-secondary-base adjustor at 0x00404420.
+// Plain Buffer's null query has no independently established original binding;
+// the Win-owned folded leaf at 0x00406B30 does not prove this receiver's identity.
+// GraphicWin's typed self-query and its Buffer-secondary-base adjustor at
+// 0x00404420 are independently mapped in graphicwin.cpp.
 GraphicWin *Buffer::get_graphic_win() { return nullptr; }
 
 /*

@@ -124,8 +124,6 @@ set(OPENSMACX_SOURCES
     src/main.cpp
     src/multiwin.cpp
     src/midi.cpp
-    src/nullsub_thunks.cpp
-    src/field_accessors.cpp
     src/matrix3.cpp
     src/filebox.cpp
     src/word_state.cpp

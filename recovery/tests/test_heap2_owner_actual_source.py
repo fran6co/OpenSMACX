@@ -27,8 +27,7 @@ EXPECTED_STORE_ORDER = ["err_flags_", "current_", "base_", "free_size_", "base_s
 def _root() -> Path:
     for parent in Path(__file__).resolve().parents:
         if ((parent / "CMakeLists.txt").is_file()
-                and (parent / "src/heap.cpp").is_file()
-                and (parent / "src/field_accessors.cpp").is_file()):
+                and (parent / "src/heap.cpp").is_file()):
             return parent
     raise AssertionError("could not locate OpenSMACX source root")
 
@@ -115,16 +114,13 @@ def test_heap2_mapping_moves_with_history_and_binding_to_real_owner():
     root = _root()
     heap_cpp_path = root / "src/heap.cpp"
     heap_header_path = root / "src/heap.h"
-    old_cpp_path = root / "src/field_accessors.cpp"
-    old_header_path = root / "src/field_accessors.h"
+    unbound_path = root / "src/unbound_functions.h"
     heap_cpp = heap_cpp_path.read_text()
     heap_header = heap_header_path.read_text()
-    old_cpp = old_cpp_path.read_text()
-    old_header = old_header_path.read_text()
 
-    old_records = [row for row in read(old_cpp_path) if row.address == ADDRESS]
+    unbound_records = [row for row in read(unbound_path) if row.address == ADDRESS]
     records = [row for row in read(heap_cpp_path) if row.address == ADDRESS]
-    assert old_records == []
+    assert unbound_records == []
     assert len(records) == 1
     record = records[0]
     assert record.name == "Heap::Heap2"
@@ -134,8 +130,8 @@ def test_heap2_mapping_moves_with_history_and_binding_to_real_owner():
     assert record.mode.value == "body" and record.state.value == "implemented"
     assert record.source_role.value == "unclassified"
     assert OLD_REDIRECT_SYMBOL not in record.symbol
-    assert "field_accessor_005d4540_redirect" not in old_header
-    assert "field_accessor_005d4540_redirect" not in old_cpp
+    assert not (root / "src/field_accessors.cpp").exists()
+    assert not (root / "src/field_accessors.h").exists()
 
     binding = parse_bindings(heap_cpp, read(heap_cpp_path))[record.line]
     assert "member ownership only" in binding["reason"]

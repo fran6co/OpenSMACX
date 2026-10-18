@@ -93,12 +93,11 @@ def archived_history(text: str, address: int) -> str:
 
 def actual_methods() -> tuple[str, str, str]:
     time_path = ROOT / "src/time.cpp"
-    field_path = ROOT / "src/field_accessors.cpp"
+    unbound_path = ROOT / "src/unbound_functions.h"
     time = time_path.read_text()
-    field = field_path.read_text()
     records = {r.address: r for r in read_file(time_path) if r.address in ADDRESSES}
     assert set(records) == set(ADDRESSES)
-    assert not any(r.address in ADDRESSES[:2] for r in read_file(field_path))
+    assert not any(r.address in ADDRESSES[:2] for r in read_file(unbound_path))
     for address, span in ((ADDRESSES[0], (0x004C80C0, 0x004C80D7)),
                           (ADDRESSES[1], (0x004C80E0, 0x004C80F7)),
                           (ADDRESSES[2], (0x004C8350, 0x004C8396))):

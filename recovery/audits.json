@@ -27,20 +27,12 @@
         "vtable address constant": 0,
         "short-named fixed-address binding": 0,
         "anonymous fixed-address global": 0,
-        "field_accessors.cpp markers": 6,
         "word_state.cpp markers": 3,
         "span_math.cpp markers": 1,
         "table_storage.cpp markers": 1,
-        "nullsub_thunks.cpp markers": 46,
         "stringstruct.cpp markers": 28
       },
       "counters": [
-        {
-          "name": "field_accessors.cpp markers",
-          "kind": "text",
-          "path": "src/field_accessors.cpp",
-          "pattern": "ORIGINAL: 0x"
-        },
         {
           "name": "word_state.cpp markers",
           "kind": "text",
@@ -57,12 +49,6 @@
           "name": "table_storage.cpp markers",
           "kind": "text",
           "path": "src/table_storage.cpp",
-          "pattern": "ORIGINAL: 0x"
-        },
-        {
-          "name": "nullsub_thunks.cpp markers",
-          "kind": "text",
-          "path": "src/nullsub_thunks.cpp",
           "pattern": "ORIGINAL: 0x"
         },
         {

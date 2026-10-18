@@ -8,6 +8,7 @@ it compiles and executes the extracted methods, not a transcription of them.
 from __future__ import annotations
 
 from pathlib import Path
+import json
 import re
 import subprocess
 import tempfile
@@ -17,6 +18,7 @@ from match_recovery import source
 
 ROOT = next(p for p in Path(__file__).resolve().parents if (p / 'src/IMAGE_PIN').is_file())
 BASELINE = "2c29aa969"
+TASK_BASELINE = "a6233980e9b1b61491bea3749203d6804abb3cc0"
 
 
 def record_in(text: str, path: str, address: int):
@@ -336,33 +338,60 @@ def test_moved_annotations_preserve_full_baseline_metadata_and_file_mode():
 
 
 def test_unresolved_mappings_keep_identity_claims_and_lessons():
+    from dataclasses import replace
+    from match_recovery.source import Mode, Recipe, SourceRole, State
+
     for path, baseline_path, addresses in (
         ("src/texture.cpp", "src/leaf_recoveries.cpp", (0x006252C0,)),
         ("src/table_storage.cpp", "src/leaf_recoveries.cpp", (0x00616B40,)),
         ("src/vendor/zlib.recovery.h", "src/leaf_recoveries.cpp",
          (0x00640A80, 0x00644930)),
-        ("src/field_accessors.cpp", "src/field_accessors.cpp", (0x005DA6A0, 0x005DA6B0,
-                                      0x005E2460, 0x005E2470,
-                                      0x00616D80)),
+        ("src/unbound_functions.h", "src/field_accessors.cpp",
+         (0x005DA6A0, 0x005DA6B0, 0x005E2460, 0x005E2470, 0x00616D80)),
     ):
-        candidate = (ROOT / path).read_text()
         for address in addresses:
-            assert metadata(record_in(candidate, path, address)) == metadata(
-                baseline_record(baseline_path, address))
+            current = actual_record(path, address)
+            before = baseline_record(baseline_path, address)
+            if path == "src/unbound_functions.h":
+                assert current.mode is Mode.UNBOUND
+                assert not current.symbol and not current.region
+                before = replace(before, mode=Mode.UNBOUND,
+                                 state=State.UNBOUND, recipe=Recipe.UNBOUND,
+                                 symbol="", body="", context="", region="",
+                                 source_role=SourceRole.UNCLASSIFIED,
+                                 source_role_reason="", function_fragment=None)
+            assert metadata(current) == metadata(before)
 
 
 def test_texture_terminal_fragment_keeps_identity_without_callable_stub():
     from dataclasses import replace
-    from match_recovery.source import Mode, SourceRole
+    from match_recovery.source import Mode
 
     before = baseline_record("src/field_accessors.cpp", 0x0061F785)
     after = actual_record("src/texture.cpp", 0x0061F785)
     assert metadata(after) == metadata(replace(before, mode=Mode.FILE))
-    assert after.source_role is SourceRole.SCAFFOLD
-    assert not after.symbol
-    assert "fragment measurement remains unresolved" in after.source_role_reason
+    assert after.mode is Mode.FILE
+    assert after.state.value == "implemented"
+    assert not after.symbol and not after.body
+    historical_text = subprocess.run(
+        ["git", "show", f"{TASK_BASELINE}:src/texture.cpp"], cwd=ROOT,
+        check=True, text=True, capture_output=True).stdout
+    historical_marker = next(
+        line for line in historical_text.splitlines()
+        if line.startswith("// RECOVERY_FRAGMENT: v1 "))
+    historical_fragment = json.loads(
+        historical_marker.split("// RECOVERY_FRAGMENT: v1 ", 1)[1])
+    relation = after.function_fragment
+    parent = actual_record("src/texture.cpp", 0x0061F0D0)
+    assert relation is not None
+    assert relation.parent_address == parent.address == 0x0061F0D0
+    assert relation.parent_symbol == (parent.symbol or parent.name)
+    assert relation.reason.strip() and relation.evidence
+    assert historical_fragment == {
+        "evidence": list(relation.evidence),
+        "parent_address": f"0x{relation.parent_address:08X}",
+        "parent_symbol": relation.parent_symbol,
+        "reason": relation.reason,
+    }
     assert not any(r.address == 0x0061F785
-                   for r in source.read_file(ROOT / "src/field_accessors.cpp"))
-    for path in ("src/field_accessors.cpp", "src/field_accessors.h"):
-        assert "field_accessor_0061f785_redirect" not in code_only(
-            (ROOT / path).read_text())
+                   for r in source.read_file(ROOT / "src/unbound_functions.h"))

@@ -97,7 +97,7 @@ def slack(edits):
     config = json.loads(edits.read(name))
     audit = config["audits"]["compiler-work"]
     counter = next(row["name"] for row in audit["counters"]
-                   if row["name"] == "field_accessors.cpp markers")
+                   if row["name"] == "stringstruct.cpp markers")
     audit["ceilings"][counter] += 5
     edits.write(name, json.dumps(config, indent=2) + "\n")
 

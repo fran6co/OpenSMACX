@@ -7,6 +7,7 @@ import tempfile
 
 import pytest
 from match_recovery.includes import COMMENTS_OR_STRINGS
+from match_recovery.source import read as read_source
 
 ROOT = next(parent for parent in Path(__file__).resolve().parents
             if (parent / "src/IMAGE_PIN").is_file())
@@ -157,8 +158,8 @@ def test_actual_component_methods_preserve_behavior_offsets_and_order():
     assert "leaf_004c8070_redirect" not in SOURCE.read_text(encoding="utf-8")
     assert "field_accessor_004c8090_redirect" not in source
     assert "field_accessor_004c8100_redirect" not in source
-    assert "field_accessor_004c8090_redirect" not in (ROOT / "src/field_accessors.h").read_text()
-    assert "field_accessor_004c8100_redirect" not in (ROOT / "src/field_accessors.h").read_text()
+    unbound = read_source(ROOT / "src/unbound_functions.h")
+    assert not any(row.address in (0x004C8090, 0x004C8100) for row in unbound)
     assert "src/word_state.cpp" in (ROOT / "CMakeLists.txt").read_text()
     for name in ("PrefixFlagState", "NineWordSentinelState", "PairWordState"):
         assert "struct " + name in header

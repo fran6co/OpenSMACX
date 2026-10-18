@@ -27,8 +27,12 @@ Coverage reports must distinguish source placement and body-text presence from
 genuine owner implementation. The `adjustor_thunks.*` scaffold collection has been retired after its
 source identities were transferred to genuine class owners; compiler-generated
 entries are annotated in those owners, not in a shared adapter unit. The
-remaining `field_accessors.*` and `nullsub_thunks.*` collections are
-scaffolding, not finished implementation coverage. The former `global_arith.*` collection is retired:
+`field_accessors.*` and `nullsub_thunks.*` collections are retired. Their52
+unused artificial adapters were removed; the same original identities, full
+declared spans, historical claims and bounded effect observations remain as
+explicitly pending `UNBOUND` records in `src/unbound_functions.h`. These are
+not implementations, matches, resolved ownership or proof of dead original
+code. Other genuine owner no-ops are unaffected. The former `global_arith.*` collection is retired:
 PrefWin geometry storage/initializers are owned in `prefwin_geometry.*`, and
 the real `SharedWordValue` object with its paired setter/toggle is owned in
 `shared_word.*`. That is genuine source ownership, not evidence for the
