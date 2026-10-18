@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "author": "coordinator",
+  "base_revision": "1335d00de9b66c2cd934877699ed83b788c3512a",
+  "intent": "Repair two demonstrated stale test damage anchors after the existing guarded RadioButton Sprite lifetime recovery; do not modify product source or verification semantics.",
+  "editable_files": ["recovery/tests/test_gate_controls.py"],
+  "decisions": [
+    "The live pointer definitions remain in src/jackal/radiobutton.cpp, now initialized from the placed Sprite storage through a multi-line expression. Earlier claims that this file was retired or contained only historical comments were incorrect; authoritative current source governs.",
+    "Retarget only the two existing bounded_pointer_initial_value/target damage anchors to the current complete initializer. Preserve the source-owned original pointer bindings, the failure criteria, byte-for-byte private fixture restoration, unique-anchor refusal, and all other gate controls.",
+    "Require the complete host gate-control suite and a direct check that each mutation alters the intended initializer and restores it. If compiler-backed verification is run, use an isolated lease and pinned image; a host anchor test is not native full-gate proof.",
+    "No C++ source, compiler or link policy, source-history baseline, recovery claim, framework implementation or acceptance waiver is authorized. This is a test repair, not new recovered function coverage or game acceptance."
+  ]
+}

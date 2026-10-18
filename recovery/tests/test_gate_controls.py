@@ -129,6 +129,15 @@ def symbol(edits, name):
     edits.replace("src/jackal/palette.cpp", marker + "\n", marker + "\n// symbol    " + name + "\n")
 
 
+RADIO_BUTTON_DEFAULT1 = (
+    "Sprite *RadioButtonDefault1 =\n"
+    "    reinterpret_cast<Sprite *>(g_RADIOBUTTON_SPRITE_1.storage_.bytes);")
+RADIO_BUTTON_DEFAULT1_ZERO = "Sprite *RadioButtonDefault1 = 0;"
+RADIO_BUTTON_DEFAULT1_OTHER = (
+    "Sprite *RadioButtonDefault1 =\n"
+    "    reinterpret_cast<Sprite *>(g_RADIOBUTTON_SPRITE_2.storage_.bytes);")
+
+
 @dataclass(frozen=True)
 class Case:
     name: str
@@ -146,11 +155,11 @@ CASES = (
     Case("compiler_work_ignores_block_comments", "audit:compiler-work", "pass",
          lambda e: e.append("src/jackal/palette.h", "\n/*\n g_00dead02 = (int *)0x00DEAD02;\n*/\n")),
     Case("bounded_pointer_initial_value", "initial-data", "fail",
-         lambda e: e.replace("src/jackal/radiobutton.cpp", "Sprite *RadioButtonDefault1 = &g_RADIOBUTTON_SPRITE_1;",
-                             "Sprite *RadioButtonDefault1 = 0;")),
+         lambda e: e.replace("src/jackal/radiobutton.cpp", RADIO_BUTTON_DEFAULT1,
+                             RADIO_BUTTON_DEFAULT1_ZERO)),
     Case("bounded_pointer_target", "initial-data", "fail",
-         lambda e: e.replace("src/jackal/radiobutton.cpp", "Sprite *RadioButtonDefault1 = &g_RADIOBUTTON_SPRITE_1;",
-                             "Sprite *RadioButtonDefault1 = &g_RADIOBUTTON_SPRITE_2;")),
+         lambda e: e.replace("src/jackal/radiobutton.cpp", RADIO_BUTTON_DEFAULT1,
+                             RADIO_BUTTON_DEFAULT1_OTHER)),
     Case("dropped_initial_value", "project:trailing-address-initial-values", "fail",
          lambda e: e.replace("src/sprite.cpp", "SpriteScaleNumerator = 1;", "SpriteScaleNumerator;")),
     Case("image_pin", None, "unknown", wrong_image_pin),
@@ -415,6 +424,12 @@ def test_damage_anchor_still_applies_and_restores_private_source(case, tmp_path)
     with damage(tmp_path) as edits:
         case.mutate(edits)
         assert edits.original and any((tmp_path / name).read_bytes() != original[name] for name in edits.original)
+        if case.name in {"bounded_pointer_initial_value", "bounded_pointer_target"}:
+            replacement = (RADIO_BUTTON_DEFAULT1_ZERO if case.name == "bounded_pointer_initial_value"
+                           else RADIO_BUTTON_DEFAULT1_OTHER)
+            expected = original["src/jackal/radiobutton.cpp"].decode("utf-8").replace(
+                RADIO_BUTTON_DEFAULT1, replacement, 1)
+            assert (tmp_path / "src/jackal/radiobutton.cpp").read_text(encoding="utf-8") == expected
     assert all((tmp_path / name).read_bytes() == data for name, data in original.items())
 
 
