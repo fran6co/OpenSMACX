@@ -1,0 +1,58 @@
+{
+  "author": "coordinator",
+  "base_revision": "221db8f9d1eedbf782b26b647bc1c4d69f0b7310",
+  "editable_files": [
+    "src/netdaemon.cpp",
+    "recovery/tests/test_netdaemon_packet_boundary_oct18.py",
+    "recovery/tests/netdaemon_packet_source.py",
+    "recovery/tests/test_message_builder_order_oct18.py"
+  ],
+  "evidence": [
+    "Pinned593110 loads deletion-list sequence at59312D immediately after timeGetTime, before timestamp/payload stores. Current typed builder captures it after two payload assignments. Fresh actual body has41instructions but register/read scheduling differs. The sequence source is NetDaemonNet+1B2C at93E8BC, not a literal zero: source/COFF relocation reviewed.",
+    "Authorize one bounded local body-only three-candidate deck: capture clock and sequence in ordinary typed locals, sequence-only capture, or direct field-order assignment. Preserve timestamp call, faction read, every payload value, unchecked strcpy, original unwritten padding/null-text area, counter/send order and all seven message-builder identities/claims. No deliberate bug fixes, casts, volatile, global/header/layout/flag changes or extra matching trial policy.",
+    "All seven typed message builders are review/measurement scope; only593110 body may change initially. The data sender stays in its separate source owner. New cross-owner/class/storage findings require explicit expansion; a speculative spelling is not a structural migration or permission to regress claims.",
+    "Coordinator owns all compiler leases/Git. Private overlay controls must establish physical unchanged replica and observable target damage per configured flag trial; no source publication from deck. If a winner is evidenced, use isolated worktree, host actual-source behavioral controls, native full build/link, complete source/claim/reference continuity, fresh original/strict checks and outside-body residual, independent review and destination recheck. Native automatic/full-game acceptance remains unproved.",
+    "Only if the body changes, adapt the packet-rehome test inverse so it proves its own moved sender/record and caller bindings without freezing unrelated current receiver bodies. Preserve its exact moved-owner inverse and every existing damage refusal; no blanket skips or weakened claim gates."
+  ],
+  "intent": "Recover original packet-builder read and store ordering with typed source storage and unchanged wire effects.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5844496,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5844592,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5844976,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5845136,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5845264,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5845392,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5844704,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "message-builder-order-oct18"
+}
