@@ -88,8 +88,8 @@ namespace {
 // owner. Heap exhaustion is fatal; CRT allocation failure returns a null node.
 // Construction captures the handoff in the real virtual base and emits the
 // node's tables/destructor naturally. This helper has no original identity.
-template<class T> inline T *allocate_list_node(StringStruct *list, T *) {
-    Heap *owner = list->allocator_;
+template<class T> inline T *allocate_list_node(Heap *explicit_owner, StringStruct *list) {
+    Heap *owner = explicit_owner;
     if (owner == 0) {
         owner = list->allocation_owner_;
     }
@@ -120,22 +120,24 @@ template<class T> inline T *allocate_list_node(StringStruct *list, T *) {
 // ORIGINAL: 0x00401100 ?add@StringStruct@@QAEHH@Z 0x00401100-0x00401513
 // RECOVERY_BINDING: v1 {"evidence": ["Original 401100 selects explicit allocator then inherited allocation owner then mem_get, constructs entry size1C and payload size18 with distinct virtual-base tables. Native construction replaces seed vptr writes; source class names remain interpretations.", "Original 4013B1 publishes the entry allocation into the old tail next link before the null test; 4012D2/4014DC publish null payloads before returning4. Insertion hook result is ignored; count and position update only after it returns. Same-span legacy seed retained."], "reason": "Recover circular-list insertion with real node construction and the original partial updates on allocation failure."}
 int StringStruct::add(int id) {
+    Heap *const entry_allocator = allocator_;
     if (entry_count_ == 0) {
-        head_ = allocate_list_node(this, static_cast<StringStructEntry *>(0));
+        head_ = allocate_list_node<StringStructEntry>(entry_allocator, this);
         if (head_ == 0) {
             return 4;
         }
         head_->id = id;
         head_->next = head_;
         head_->previous = head_;
-        head_->payload = allocate_list_node(this, static_cast<StringStructPayload *>(0));
+        Heap *const payload_allocator = allocator_;
+        head_->payload = allocate_list_node<StringStructPayload>(payload_allocator, this);
         if (head_->payload == 0) {
             return 4;
         }
         on_insert(head_->string_payload());
         current_ = head_;
     } else {
-        head_->previous->next = allocate_list_node(this, static_cast<StringStructEntry *>(0));
+        head_->previous->next = allocate_list_node<StringStructEntry>(entry_allocator, this);
         if (head_->previous->next == 0) {
             return 4;
         }
@@ -144,7 +146,8 @@ int StringStruct::add(int id) {
         head_->previous = head_->previous->next;
         current_ = head_->previous;
         current_->id = id;
-        current_->payload = allocate_list_node(this, static_cast<StringStructPayload *>(0));
+        Heap *const payload_allocator = allocator_;
+        current_->payload = allocate_list_node<StringStructPayload>(payload_allocator, this);
         if (current_->payload == 0) {
             return 4;
         }

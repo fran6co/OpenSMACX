@@ -1,0 +1,18 @@
+{
+  "event_id": "245cd909a801b55c19d318db312bfc667ba0b13561fdfa5110a5ddfbb254cbe4",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "original-movie-retry-destinations",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/alphamovie.cpp retains proper owners, restores shared-string append and separate empty retry, height then width snapshots and post-callback HWND reload. Native binding_source.render updates only the stale interpretation rationale and appends direct original evidence, preserving prior evidence and every original identity/span/symbol/claim.",
+      "recovery/tests/test_alphamovie_exec_actual_source.py executes the product method and checks valid-buffer success/retry/error effects and callback reads. It does not execute overflow or claim general native runtime acceptance. Prior improved fallback remains preserved in Git history."
+    ]
+  },
+  "previous_event": "56101b2233d69735495cada5b9397163f9de7ee664404209fad0b1315e461af6",
+  "request_id": "original-movie-retry-destinations-incorporated",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:cpp-fidelity-batch-oct18"
+}

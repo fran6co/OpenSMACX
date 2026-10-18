@@ -1076,7 +1076,11 @@ Status: Complete
 // after caller/layout review. C++ owns all vptr/vbtable staging.
 namespace {
 template<class Node>
-Node *allocate_sprite_node(Heap *owner) {
+Node *allocate_sprite_node(Heap *explicit_owner, SpriteList *list) {
+    Heap *owner = explicit_owner;
+    if (owner == 0) {
+        owner = list->allocation_owner_;
+    }
     void *memory;
     if (owner != 0) {
         memory = owner->get(sizeof(Node));
@@ -1172,26 +1176,28 @@ void SpriteList::on_remove(void *raw_payload) {
 // Historical seed finding: old fixed-image seam/class attribution was provisional; retain as history, not current hierarchy proof
 // TRIED: fallback __stdcall(int) signature - disasm has `mov esi,ecx` in the prologue (this-in-ecx), matched as __thiscall SpriteStruct::add per the ServiceStruct::add sibling shape; diverges at insn #7, same prologue-order divergence as 0x00401760
 int SpriteList::add(int id) {
-    Heap *owner = allocator_ != 0 ? allocator_ : allocation_owner_;
+    Heap *const entry_allocator = allocator_;
     if (entry_count_ == 0) {
-        head_ = allocate_sprite_node<StringStructEntry>(owner);
+        head_ = allocate_sprite_node<StringStructEntry>(entry_allocator, this);
         if (head_ == 0) return 4;
         head_->id = id;
         head_->next = head_;
         head_->previous = head_;
-        head_->payload = allocate_sprite_node<SpriteStruct>(owner);
+        Heap *const payload_allocator = allocator_;
+        head_->payload = allocate_sprite_node<SpriteStruct>(payload_allocator, this);
         if (head_->payload == 0) return 4;
         on_insert(head_->sprite_payload());
         current_ = head_;
     } else {
-        head_->previous->next = allocate_sprite_node<StringStructEntry>(owner);
+        head_->previous->next = allocate_sprite_node<StringStructEntry>(entry_allocator, this);
         if (head_->previous->next == 0) return 4;
         head_->previous->next->previous = head_->previous;
         head_->previous->next->next = head_;
         head_->previous = head_->previous->next;
         current_ = head_->previous;
         current_->id = id;
-        current_->payload = allocate_sprite_node<SpriteStruct>(owner);
+        Heap *const payload_allocator = allocator_;
+        current_->payload = allocate_sprite_node<SpriteStruct>(payload_allocator, this);
         if (current_->payload == 0) return 4;
         on_insert(current_->sprite_payload());
     }

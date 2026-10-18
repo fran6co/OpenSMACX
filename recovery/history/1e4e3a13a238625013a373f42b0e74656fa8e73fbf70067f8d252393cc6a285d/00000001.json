@@ -1,0 +1,21 @@
+{
+  "event_id": "56101b2233d69735495cada5b9397163f9de7ee664404209fad0b1315e461af6",
+  "payload": {
+    "affects": [
+      "entity-c566ed9dec3da908ddd6adafbc66b04c70355c2ec25b936e4c7607e9efa27b90"
+    ],
+    "author": "coordinator",
+    "discovery_id": "original-movie-retry-destinations",
+    "evidence": [
+      "Pinned4040EF..404126 appends to existing StringTemp9B86A0 but passes a separately cleared stack buffer to MCIVideo::load; no path-length guard or shared-buffer reset exists.",
+      "Initial authorization said260-byte buffer imprecisely from SUBESP104. Observed frame also has a live width word EBP-4. The0x100 local source array is consistent with that layout, not proof of original declared capacity; only retry[0] is touched. No capacity/exact data-layout claim is granted."
+    ],
+    "hypothesis": "Restore the original distinct retry destinations and live HWND read; the earlier local fallback repair does not belong in the faithful milestone.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "original-movie-retry-destinations",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:cpp-fidelity-batch-oct18"
+}

@@ -62,6 +62,9 @@
 // translation unit (textindex.cpp and buffer.cpp do the same locally).
 #pragma function(memset, memcpy)
 
+// Define the destructor before close() so its ordinary call sees only the
+// declaration. The member-pointer recipe recorded below is historical.
+
 /*
 Purpose: Construct the embedded Buffer and Palette (the class's only two
          non-POD members, in declaration order - no explicit statement
@@ -88,36 +91,6 @@ Flic::Flic() {
     field_5A4_ = 0;
     decoded_width_ = 0;
     decoded_height_ = 0;
-}
-
-/*
-Purpose: Release the open file (if any) and zero the same fields close()
-         zeroes.
-// ORIGINAL: 0x00629DF0 ?close@Flic@@QAEXXZ 0x00629DF0-0x00629E44 BYTE_EXACT
-// size      84 bytes
-// prototype void (__thiscall ?close@Flic@@QAEXXZ)(Flic* this)
-// callers   11   call targets   1
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x00645598
-Return Value: n/a
-Status: Complete
-*/
-void Flic::close() {
-    FILE *file = file_;
-    origin_x_ = 0;
-    origin_y_ = 0;
-    decoder_flags_ = 0;
-    frame_ = 0;
-    buffer2_ = nullptr;
-    field_0_ = 0;
-    field_5A4_ = 0;
-    decoded_width_ = 0;
-    decoded_height_ = 0;
-    if (file) {
-        fclose(file);
-        file_ = nullptr;
-    }
 }
 
 /*
@@ -201,15 +174,37 @@ Return Value: n/a
 Status: Complete
 */
 Flic::~Flic() {
-    // Through a pointer-to-member for a reason the file's other
-    // pointer-to-member sites do not share: not inlining (VC6 does not
-    // inline close() into this body either way) but EH bookkeeping. See
-    // ROOT CAUSE 2026-09-18 above - a plain `close();` here lets VC6 read
-    // close()'s already-parsed body, prove the call no-throw, and drop
-    // palette_'s unwind state; the pointer spelling keeps the call opaque
-    // and emits the image's full unwind map.
-    void (Flic::*close_method)() = &Flic::close;
-    (this->*close_method)();
+    close();
+}
+
+/*
+Purpose: Release the open file (if any) and zero the same fields close()
+         zeroes.
+// ORIGINAL: 0x00629DF0 ?close@Flic@@QAEXXZ 0x00629DF0-0x00629E44 BYTE_EXACT
+// size      84 bytes
+// prototype void (__thiscall ?close@Flic@@QAEXXZ)(Flic* this)
+// callers   11   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00645598
+Return Value: n/a
+Status: Complete
+*/
+void Flic::close() {
+    FILE *file = file_;
+    origin_x_ = 0;
+    origin_y_ = 0;
+    decoder_flags_ = 0;
+    frame_ = 0;
+    buffer2_ = nullptr;
+    field_0_ = 0;
+    field_5A4_ = 0;
+    decoded_width_ = 0;
+    decoded_height_ = 0;
+    if (file) {
+        fclose(file);
+        file_ = nullptr;
+    }
 }
 
 /*

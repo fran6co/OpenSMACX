@@ -111,25 +111,27 @@ AlphaMovie::AlphaMovie() {
 
 /*
 Purpose: Initialize the movie window, try the supplied path and then the
-         game's fallback path, play the loaded clip, and restore the active
-         palette and window state.
+         game's retry path, play the loaded clip, and restore the active
+         palette and window state. The retry appends its prefix and movie name
+         to the existing global StringTemp, but passes a separate local buffer
+         whose first byte alone was cleared to the second load.
 
-The embedded MCIVideo owns the MCI load/play/stop state and its Palette. The
-old transcription assembled the fallback in StringTemp but passed an empty
-stack buffer to MCI. Use the evidenced k:\\game\\ prefix in the retry path.
+The embedded MCIVideo owns the MCI load/play/stop state and its Palette. Keep
+the native ordering and separate destinations, including the original empty
+retry argument and live window-handle reload after callbacks.
 
 The existing amovie_project caller now dispatches this member on a real
 AlphaMovie local, so member and base lifetime follow the declared structure.
 */
 // ORIGINAL: 0x00404070 ?exec@AlphaMovie@@QAEHPAD@Z 0x00404070-0x004041BF
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00404070.cpp", "source:src/alphamovie.h:AlphaMovie"], "reason": "Home AlphaMovie playback on a real GraphicWin-derived receiver with its embedded MCIVideo member; repair the seed's empty fallback load argument using its evidenced path prefix"}
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00404070.cpp", "source:src/alphamovie.h:AlphaMovie", "Pinned 4040EF..404126 clears only the first stack retry byte, appends prefix6827AC and name into StringTemp9B86A0 without clearing it, then passes the separate empty stack buffer to MCIVideo::load.", "Pinned404199 reloads the live window handle after stop and global palette callbacks. The 0x100 local buffer is consistent with the observed 0x104 frame and live width word at EBP-4; this is not an independent original array-capacity claim."], "reason": "Own AlphaMovie playback on its real GraphicWin receiver and embedded MCIVideo, preserving the original separate shared-string append and empty stack retry rather than repairing the original behavior."}
 int AlphaMovie::exec(char *movie_name) {
     if (movie_name == 0) {
         return 0x10;
     }
 
-    const int screen_width = WinScreenWidth;
     const int screen_height = WinScreenHeight;
+    const int screen_width = WinScreenWidth;
     init(0, 0, screen_width, screen_height, 0, 0x00404000,
          &MainInterfaceGlobal, 0, 0);
     fill(0);
@@ -138,14 +140,11 @@ int AlphaMovie::exec(char *movie_name) {
 
     int result = mciVideo_.load(movie_name, this, 0, 0);
     if (result != 0) {
-        char fallback_path[260];
-        const char prefix[] = "k:\\game\\";
-        if (strlen(movie_name) > sizeof(fallback_path) - sizeof(prefix)) {
-            return result;
-        }
-        strcpy(fallback_path, prefix);
-        strcat(fallback_path, movie_name);
-        result = mciVideo_.load(fallback_path, this, 0, 0);
+        char retry_name[0x100];
+        retry_name[0] = 0;
+        strcat(StringTemp, "k:\\game\\");
+        strcat(StringTemp, movie_name);
+        result = mciVideo_.load(retry_name, this, 0, 0);
         if (result != 0) {
             return result;
         }
@@ -155,8 +154,7 @@ int AlphaMovie::exec(char *movie_name) {
     const int video_width = static_cast<int>(mciVideo_.blit_width_);
     const int y = (screen_height - video_height) / 2;
     const int x = (screen_width - video_width) / 2;
-    HWND const window = mciVideo_.window_handle_;
-    MoveWindow(window, x, y, video_width, video_height, FALSE);
+    MoveWindow(mciVideo_.window_handle_, x, y, video_width, video_height, FALSE);
 
     mciVideo_.palette_.set();
     mciVideo_.play();
@@ -164,7 +162,7 @@ int AlphaMovie::exec(char *movie_name) {
     set_modal(0, 0, 0);
     mciVideo_.stop();
     g_PALETTE1.set();
-    ShowWindow(window, SW_HIDE);
+    ShowWindow(mciVideo_.window_handle_, SW_HIDE);
     hide();
     do_all_non_input();
     return 0;

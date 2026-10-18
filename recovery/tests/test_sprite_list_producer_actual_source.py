@@ -85,7 +85,9 @@ def owner_bodies():
     assert "class SpriteList : public SpriteListBase" in sprite_header
     assert "class SpriteListBase : public StringStruct" not in sprite_header
     return "\n\n".join((
-        extract_definition(sprite_source, "template<class Node>"),
+        extract_definition(
+            sprite_source,
+            "template<class Node>\nNode *allocate_sprite_node(Heap *explicit_owner, SpriteList *list)"),
         extract_definition(string_source, "int StringStruct::on_insert(void *)"),
         extract_definition(string_source, "void StringStruct::on_remove(void *)"),
         extract_definition(sprite_source, "int SpriteList::on_insert(void *raw_payload)"),
