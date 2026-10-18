@@ -1,0 +1,24 @@
+{
+  "event_id": "b5a506e5d824ebf25421f38e471d57f757ff0b6fffc50f9074b9d6b8bd34e57c",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Explicitly supersede the original no-span-edit restriction ONLY for constructor612830 primaryregion: native source writer changes end612AE0 to independently proved61295F. Preserve start, original catalogued identity/name, currentemittedsymbol, coldspan663060..6630D3, all historical claims/findings and C++bodytokens. Preserve old inaccurateextent as historical prose and update the current size/boundary explanation. This is correcting ownership, not trimming comparison bytes for an equality score; unsupported EH verification remains unknown.",
+      "Regression tests must allow exactly this reviewed mapping correction in their inverse baseline check while retaining every other original record and all prior data interpretations. Add independent contiguousdecode/terminalRET/branchclosure/separateentry checks. Fresh fullbuild, zero-body-omission physicalcorrespondence, currentmatching and sourcehistorycontinuity plus independentreview still required. No automatic/full-linked/runtime/gameacceptance authority."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6367280,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "c6af57f347cca22c0da76f888e75c0468d381dd40462c3c046292feaf232f5b0",
+  "request_id": "dialogs-constructor-exact-primary-region-scope-oct18",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:remaining-switch-storage-oct18"
+}

@@ -7284,6 +7284,7 @@ void __cdecl Win::update() {
 
 // ===== homed from src/recovered/units/005f4c30.cpp =====
 
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x005F4C30 0x005F4C84 0x005F4C94 0x005F4C48
 // ORIGINAL: 0x005F4C30 ?redraw_nc_buffer@Win@@QAEHH@Z 0x005F4C30-0x005F4C82 FILE
 // symbol    ?redraw_nc_buffer@Win@@QAEPAVBuffer@@H@Z
 // kind game

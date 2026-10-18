@@ -34,20 +34,23 @@ Status: Complete
 /*
 Purpose: Construct the dialog manager: the five vbtable pointers, the two
          virtual-base constructions, and the five base constructors.
-// ORIGINAL: 0x00612830 ??0Dialogs@@QAE@H@Z 0x00612830-0x00612AE0;0x00663060-0x006630D3
+// ORIGINAL: 0x00612830 ??0Dialogs@@QAE@H@Z 0x00612830-0x0061295F;0x00663060-0x006630D3
 // RECOVERY_BINDING: v1 {"evidence": ["pinned:prolog 0x612832 registers handler 0x6630C9; FuncInfo 0x67FD68 and unwind map 0x67FD88 contain six HIGHLOW-backed actions in the completely decoded cold region 0x663060..0x6630D3."], "reason": "The constructor owns its partial-construction unwind actions and handler through the original exception metadata; retain their complete generated-lifetime matching obligation."}
 // symbol    ??0Dialogs@@QAE@XZ
-// size      688 bytes
+// size      303 bytes (primary constructor); cold EH region 115 bytes
 // prototype void (__thiscall ??0Dialogs@@QAE@H@Z)(Dialogs* this, int)
 // callers   1   call targets   7
 // kind      game
 // flags     frame;sp_ready;purged_ok
 Return Value: n/a
 
-The image's span 0x00612830..0x00612AE0 covers this ctor (through its
-`ret 4` at 0x0061295C) PLUS the jump-dispatch function at 0x00612970 and its
-case stubs, which our binary lays out elsewhere; this ctor's own body
-converges through its full length.
+Historical catalog span 0x00612830..0x00612AE0 (688 bytes) incorrectly
+included independent close, attach and item entries and attach's switch data.
+The constructor's contiguous primary body ends after `ret 4` at 0x0061295C,
+exclusive 0x0061295F; its sole conditional edge rejoins at 0x006128BA.
+The following NOP, close at 0x00612960 and attach at 0x00612970 are not
+constructor instructions. The separately mapped cold EH region is unchanged;
+its complete compiler correspondence remains unqualified.
 */
 Dialogs::Dialogs() { }
 
@@ -260,6 +263,8 @@ int Dialogs::item(char *text, int index) {
     }
 }
 
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00613740 0x00613774 0x00613780 0x00613754
+// RECOVERY_ASSOCIATED: v1 switch_selector 0x00613740 0x00613780 0x00613790 0x0061374E
 /*
 Purpose: Count the items this kind of dialog holds.
 // ORIGINAL: 0x00613740 ?get_num_items@Dialogs@@QAEHXZ 0x00613740-0x00613772 BYTE_EXACT
@@ -967,6 +972,8 @@ void Dialogs::on_left_double_click(int x, int y) {
     }
 }
 
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00612AE0 0x00612B58 0x00612B70 0x00612AF1
+// RECOVERY_ASSOCIATED: v1 switch_selector 0x00612AE0 0x00612B70 0x00612B80 0x00612AEB
 // ORIGINAL: 0x00612AE0 ?on_mouse_leave@Dialogs@@QAEXHH@Z 0x00612AE0-0x00612B58 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Retained 0x00612AE0 seed; shared virtual Dialog and GraphicWin bases; Dialogs kind_ and named widget base APIs"], "reason": "Home on_mouse_leave as a typed Dialogs kind dispatcher"}
 // symbol    ?on_mouse_leave@Dialogs@@UAEXHH@Z
@@ -1059,6 +1066,8 @@ int Dialogs::attach(GraphicWin *parent, int x, int y, int flags) {
     }
 }
 
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00612970 0x00612A48 0x00612A60 0x0061298F
+// RECOVERY_ASSOCIATED: v1 switch_selector 0x00612970 0x00612A60 0x00612A70 0x00612989
 // ORIGINAL: 0x00612970 ?attach@Dialogs@@QAEHHPAUGraphicWin@@HHH@Z 0x00612970-0x00612A48 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence":["Pinned image 0x00612970 masks its first argument with 0x1f, stores the result in Dialogs::kind_, then directly dispatches cases 16, 2, 1, 8 and 4 to RadioButton, ListBox, CheckBox, SpriteBox and EditGroup::attach respectively; the default returns 3.","The source declares those five direct widget bases and their attach(GraphicWin*,int,int,int) methods. Qualified base calls let C++ select the existing subobjects and apply their compiler-known adjustments."],"reason":"Home the kind-selecting attach entry through Dialogs::kind_ and its real widget base subobjects."}
 // symbol    ?attach@Dialogs@@QAEHHPAVGraphicWin@@HHH@Z

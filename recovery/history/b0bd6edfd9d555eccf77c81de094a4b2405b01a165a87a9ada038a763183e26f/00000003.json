@@ -1,0 +1,18 @@
+{
+  "event_id": "ca21510cfa648c069c75f154b98ddc5a827d889f15476b9f859e7f026d4fcb35",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "dialogs-constructor-overbroad-catalog-span-oct18",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/dialogs.cpp now maps the independently decoded constructor primary region612830..61295F through its terminalRET4; separate close612960,attach612970,item612A70 and attach table/selector are no longer falsely constructor-owned. The source records the inaccurate prior catalog range as history, not live ownership.",
+      "The original constructor identity, current compiler symbol, coldEHspan663060..6630D3, C++body and historical findings remain. Native source writer made the bounded correction under explicit coordinator expansion; companion switch bindings now pass global source-domain overlap checks. This resolves the ownership finding only, not coldEH matching, linked retained selection or runtime acceptance."
+    ]
+  },
+  "previous_event": "b5a506e5d824ebf25421f38e471d57f757ff0b6fffc50f9074b9d6b8bd34e57c",
+  "request_id": "incorporate-proven-constructor-primary-boundary-oct18",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:remaining-switch-storage-oct18"
+}

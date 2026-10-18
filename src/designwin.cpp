@@ -2498,6 +2498,7 @@ int DesignWin::UNK2(int proto_id) {
     return protoAbilityFlags_ == proto.ability_flags;
 }
 
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00439960 0x004399FC 0x00439A14 0x0043999B
 // ORIGINAL: 0x00439960 ?on_left_click@DesignWin@@QAEXHH@Z 0x00439960-0x004399FA FILE BYTE_EXACT
 // symbol    ?on_left_click@DesignWin@@UAEXHH@Z
 // size      154 bytes

@@ -1,0 +1,22 @@
+{
+  "event_id": "c6af57f347cca22c0da76f888e75c0468d381dd40462c3c046292feaf232f5b0",
+  "payload": {
+    "affects": [
+      "entity-5a0b2b3caccff13f9fef85b88de53420790f817c77ce217f9bd49de9007647b7",
+      "entity-b62b367bc239cf1ce4dd054e734c3d63c4ba867fd72be168a94b4f4aca57edf9"
+    ],
+    "author": "coordinator",
+    "discovery_id": "dialogs-constructor-overbroad-catalog-span-oct18",
+    "evidence": [
+      "Full pinned linear decode612830..61295F is contiguous and ends with RET4 at61295C (C20400). Its only conditional internal edge61285D targets6128BA; the two virtual-base paths rejoin there before five widget-base constructor calls. The epilogue restores ESI and FS0 then releases14bytes. Byte61295F is NOP; independently mapped close612960 is RET; attach starts612970 and item612A70. Existing source prose already records the return at61295C and admits the broadcatalogspan includes dispatch code.",
+      "Current source constructor primary span612830..612AE0 and unchangedcoldspan663060..6630D3 have no byte/shapeclaim. Complete source scan identifies only its overbroadprimaryspan as the overlap with independently proven attach target/selector data612A48..612A70. Do not weaken associated_source global overlap checking or touch other mapped functions to admit conflicting data."
+    ],
+    "hypothesis": "The constructor catalog span incorrectly owns subsequent independent close, attach, item and dispatch data; correct the independently bounded primary constructor region rather than waive the native source overlap refusal.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "dialogs-constructor-overbroad-catalog-span-oct18",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:remaining-switch-storage-oct18"
+}
