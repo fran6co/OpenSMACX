@@ -1,9 +1,9 @@
 """Actual-source controls for compiler-owned PrefWin geometry initialization.
 
 Host tests execute the natural scalar definitions from src/prefwin_geometry.cpp.
-The opt-in physical control checks the configured /Gy arithmetic subjects and
-startup wrapper edges with the installed compiler/binary APIs. It does not prove
-the non-/Gy linked application's initializer correspondence or historical TUs.
+The opt-in physical control checks the selected /Gy CRT entries, complete
+initializer spans, and object/reference bindings with the installed native APIs.
+It does not prove cross-TU linked startup order or historical TU boundaries.
 """
 from __future__ import annotations
 
@@ -172,18 +172,26 @@ def test_installed_natural_initializer_source_is_ordered_and_maps_all_originals(
 def assert_arithmetic_bindings(source: str) -> None:
     rows = list(read_text(source, Path("src/prefwin_geometry.cpp")))
     assert [row.address for row in rows] == ADDRESSES
-    assert [row.symbol for row in rows] == [f"_$E{14 + 3 * i}" for i in range(26)]
+    assert [row.symbol for row in rows] == [f"_$E{2 + 3 * i}" for i in range(26)]
 
 
-def test_geometry_mappings_select_arithmetic_helpers_not_startup_wrappers():
+def test_geometry_mappings_name_the_direct_crt_selected_entries():
     source = GEOMETRY.read_text()
     assert_arithmetic_bindings(source)
-    for helper in range(14, 90, 3):
-        mutant = source.replace(f"// symbol    _$E{helper}\n",
-                                f"// symbol    _$E{helper + 1}\n", 1)
+    for index in range(26):
+        selected = 2 + 3 * index
+        mutant = source.replace(f"// symbol    _$E{selected}\n",
+                                f"// symbol    _$E{selected + 1}\n", 1)
         assert mutant != source
         with pytest.raises(AssertionError):
             assert_arithmetic_bindings(mutant)
+
+
+def assert_startup_entries(entries: list[tuple[int, str, int]]) -> None:
+    expected = [f"_$E{2 + 3 * index}" for index in range(26)]
+    assert len(entries) == 26
+    assert entries == [(4 * index, symbol, 6)
+                       for index, symbol in enumerate(expected)]
 
 
 @pytest.mark.skipif(os.environ.get("OPENSMACX_PREFWIN_INITIALIZER_CONTROL") != "1",
@@ -195,6 +203,7 @@ def test_native_geometry_arithmetic_references_and_startup_edges(tmp_path):
     from match_recovery.compiler import Compiler
     from match_recovery.measurement import Measurement
     from match_recovery.model import Result, Span
+    from match_recovery.object_data import check_initial_data
     from match_recovery.pe_coff import Coff, PeImage
 
     configuration = SourceConfiguration.read(SOURCE_ROOT)
@@ -206,6 +215,8 @@ def test_native_geometry_arithmetic_references_and_startup_edges(tmp_path):
     rows = list(read_text(source, GEOMETRY))
     bindings = parse_objects(source, "src/prefwin_geometry.cpp", pin,
                              address_space=configuration.address_space)
+    assert len(bindings) == 36
+    assert len({binding.emitted_symbol for binding in bindings}) == 36
     by_name = {item.emitted_symbol: item for item in bindings}
     startup = Span(0x0068257C, 0x0068257C + 26 * 4)
     startup_bytes = image.read(startup)
@@ -213,36 +224,88 @@ def test_native_geometry_arithmetic_references_and_startup_edges(tmp_path):
             for i in range(0, len(startup_bytes), 4)] == ADDRESSES
     assert image.absolute_sites(startup) == frozenset(range(0, 26 * 4, 4))
     settings = Measurement.read(SOURCE_ROOT)
-    # These three equivalent expressions still have different operand-load
-    # ordering. Do not mistake the masked comparator for strict-reference proof
-    # or enshrine a mismatch as an expected result: future restoration may pass.
-    outstanding_order = {0x48D610, 0x48D790, 0x48D7F0}
-    for index, flags in enumerate(settings.flags_for("src/prefwin_geometry.cpp")):
-        data = Compiler(SOURCE_ROOT, profile=settings.compiler_profile)(GEOMETRY, (), flags)
-        (tmp_path / f"geometry-trial-{index}.obj").write_bytes(data)
-        obj = Coff(data)
-        targets = {str(i): BoundedTarget(by_name[s.name].span)
-                   for i, s in obj.symbols.items() if s.name in by_name}
-        wrappers = [f"_$E{15 + 3 * i}" for i in range(26)]
-        crt = [section for section in obj.sections if section.name == ".CRT$XCU"]
-        assert len(crt) == 1
-        assert [(offset, obj.symbols[target].name, kind)
-                for offset, target, kind in crt[0].relocations][:26] == [
-                    (i * 4, name, 6) for i, name in enumerate(wrappers)]
-        assert crt[0].data[:26 * 4] == bytes(26 * 4)
-        for row, wrapper_name in zip(rows, wrappers, strict=True):
-            helper = obj.function(row.symbol)
-            code, relocations, alignment = obj.subject(helper)
-            span = Span(*row.image_spans[0])
-            original = image.read(span)
-            absolute_sites = image.absolute_sites(span)
-            result = compare_bound_code(span, original, code, relocations, targets,
-                                        original_absolute_sites=absolute_sites,
-                                        alignment=alignment)
-            if row.address not in outstanding_order:
-                assert result["result"] is Result.PASS, (hex(row.address), result)
-                # A wrong source-owned object binding must fail, even though
-                # masking the relocation operand could still produce equality.
+    exact_flags = ("/c", "/O2", "/Gy", "/GR-", "/GX", "/Ob2")
+    flag_sets = settings.flags_for("src/prefwin_geometry.cpp")
+    assert flag_sets == (exact_flags,)
+    data = Compiler(SOURCE_ROOT, profile=settings.compiler_profile)(
+        GEOMETRY, (), exact_flags + settings.layout_flags)
+    (tmp_path / "geometry-selected-entries.obj").write_bytes(data)
+    obj = Coff(data)
+    targets = {str(index): BoundedTarget(by_name[symbol.name].span)
+               for index, symbol in obj.symbols.items() if symbol.name in by_name}
+    crt = [section for section in obj.sections if section.name == ".CRT$XCU"]
+    assert len(crt) == 1
+    table, = crt
+    assert table.alignment == 4
+    assert len(table.data) == 26 * 4 and table.data == bytes(26 * 4)
+    entries = [(offset, obj.symbols[target].name, kind)
+               for offset, target, kind in table.relocations]
+    assert_startup_entries(entries)
+    for mutant in (entries[:-1], entries[1:] + entries[:1], entries[:-1] + [entries[0]]):
+        with pytest.raises(AssertionError):
+            assert_startup_entries(mutant)
+
+    # Qualify initial bytes for every original input/output scalar, not only
+    # objects referenced by a function relocation.
+    data_bindings = check_initial_data(
+        bindings, {"src/prefwin_geometry.cpp": obj}, image,
+        {binding.emitted_symbol: binding.origin.address for binding in bindings},
+    )
+    assert len(data_bindings) == 36
+    assert all(row["definition"] is Result.PASS and row["content"] is Result.PASS
+               for row in data_bindings), data_bindings
+
+    outstanding_order = {
+        0x48D610: ("?PrefWinGeometryConstant_686B74@@3HA",
+                   "?PrefWinGeometryValue_857888@@3HA", "?PrefWinButtonWidth@@3HA",
+                   "?PrefWinGeometryValue_85789C@@3HA"),
+        0x48D790: ("?PrefWinGeometryValue_8578B0@@3HA",
+                   "?PrefWinGeometryValue_8577DC@@3HA", "?PrefWinGeometryConstant_686B78@@3HA",
+                   "?PrefWinGeometryValue_8577E0@@3HA"),
+        0x48D7F0: ("?PrefWinGeometryConstant_686B74@@3HA",
+                   "?PrefWinGeometryValue_8578B4@@3HA", "?PrefWinToggleWidth@@3HA",
+                   "?PrefWinGeometryValue_8578CC@@3HA"),
+    }
+    strict_statuses = {}
+    for row in rows:
+        selected = obj.function(row.symbol)
+        code, relocations, alignment = obj.subject(selected)
+        span = Span(*row.image_spans[0])
+        original = image.read(span)
+        absolute_sites = image.absolute_sites(span)
+        result = compare_bound_code(span, original, code, relocations, targets,
+                                   original_absolute_sites=absolute_sites,
+                                   alignment=alignment)
+        assert result["boundary"] is Result.PASS, (hex(row.address), result)
+        if row.address in outstanding_order:
+            referenced = tuple(obj.symbols[int(relocation.target)].name
+                               for relocation in relocations)
+            assert result["result"] in (Result.PASS, Result.FAIL), (hex(row.address), result)
+            if result["result"] is Result.FAIL:
+                # The strict comparator projects actual targets into operands;
+                # a changed read order therefore differs in both bytes and
+                # references. Permit only those exact resolved operand fields,
+                # never an opcode, extent or unresolved-reference difference.
+                assert result["bytes"] is Result.FAIL, (hex(row.address), result)
+                assert result["references"] is Result.FAIL, (hex(row.address), result)
+                assert result["missing_absolute_relocations"] == []
+                assert result["extra_absolute_relocations"] == []
+                assert result["unresolved_absolute_relocations"] == []
+                assert all(item["result"] is not Result.UNKNOWN
+                           for item in result["relocations"])
+                assert referenced == outstanding_order[row.address]
+                changed_operands = {
+                    byte for item in result["relocations"]
+                    if item["result"] is Result.FAIL
+                    for byte in range(item["offset"], item["offset"] + 4)
+                }
+                assert result["differing_offsets"]
+                assert set(result["differing_offsets"]) <= changed_operands
+        else:
+            assert result["result"] is Result.PASS, (hex(row.address), result)
+            assert result["references"] is Result.PASS
+            if relocations:
+                # A wrong source-owned binding must fail, not mask to equality.
                 damaged = dict(targets)
                 target = relocations[0].target
                 binding = damaged[target].span
@@ -251,17 +314,24 @@ def test_native_geometry_arithmetic_references_and_startup_edges(tmp_path):
                     span, original, code, relocations, damaged,
                     original_absolute_sites=absolute_sites, alignment=alignment
                 )["result"] is Result.FAIL
-            wrapper = obj.function(wrapper_name)
-            wrapper_code, edges, wrapper_alignment = obj.subject(wrapper)
-            assert wrapper_code[0] == 0xE9 and wrapper_code[1:5] == bytes(4)
-            assert all(byte in (0x90, 0xCC) for byte in wrapper_code[5:])
-            assert len(edges) == 1 and edges[0].offset == 1
-            assert edges[0].kind.value == "relative32"
-            assert obj.symbols[int(edges[0].target)].name == row.symbol
+        strict_statuses[f"0x{row.address:08X}"] = {
+            "result": result["result"].value,
+            "bytes": result["bytes"].value,
+            "references": result["references"].value,
+        }
+        if row.address == ADDRESSES[0]:
+            short = Span(span.start, span.end - 1)
             assert compare_bound_code(
-                span, original, wrapper_code, edges, {},
-                original_absolute_sites=absolute_sites, alignment=wrapper_alignment
-            )["result"] is not Result.PASS
+                short, image.read(short), code, relocations, targets,
+                original_absolute_sites=image.absolute_sites(short), alignment=alignment
+            )["boundary"] is Result.FAIL
+            damaged_code = bytearray(code)
+            damaged_code[0] ^= 1
+            assert compare_bound_code(
+                span, original, bytes(damaged_code), relocations, targets,
+                original_absolute_sites=absolute_sites, alignment=alignment
+            )["result"] is Result.FAIL
+    print(f"PrefWin selected-entry strict results: {strict_statuses}")
 
 
 def test_real_window_and_timer_owners_retain_original_identity_and_order():
