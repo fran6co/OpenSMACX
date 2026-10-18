@@ -1659,8 +1659,7 @@ int TutWin::do_base(RECT *rect, const char *text, int flag) {
     TutWinBaseWindow.client_to_screen(&x, &y);
 
     MapWin *const primary = MapWinTable[0];
-    GraphicWin *const window = primary != 0
-        ? static_cast<GraphicWin *>(primary) : 0;
+    GraphicWin *const window = primary;
     return this->tut_win(window, text, x, y, nullptr, flag, -1, -1);
 }
 
@@ -1695,8 +1694,7 @@ int TutWin::do_iface(RECT *rect, const char *text, int flag) {
     MainInterfaceGlobal.client_to_screen(&x, &y);
 
     MapWin *const primary = MapWinTable[0];
-    GraphicWin *const window = primary != 0
-        ? static_cast<GraphicWin *>(primary) : 0;
+    GraphicWin *const window = primary;
     return this->tut_win(window, text, x, y, nullptr, flag, -1, -1);
 }
 
@@ -1731,8 +1729,7 @@ int TutWin::do_soc(RECT *rect, const char *text, int flag) {
     TutWinSocWindow.client_to_screen(&x, &y);
 
     MapWin *const primary = MapWinTable[0];
-    GraphicWin *const window = primary != 0
-        ? static_cast<GraphicWin *>(primary) : 0;
+    GraphicWin *const window = primary;
     return this->tut_win(window, text, x, y, nullptr, flag, -1, -1);
 }
 
@@ -1767,8 +1764,7 @@ int TutWin::do_des(RECT *rect, const char *text, int flag) {
     TutWinDesWindow.client_to_screen(&x, &y);
 
     MapWin *const primary = MapWinTable[0];
-    GraphicWin *const window = primary != 0
-        ? static_cast<GraphicWin *>(primary) : 0;
+    GraphicWin *const window = primary;
     return this->tut_win(window, text, x, y, nullptr, flag, -1, -1);
 }
 

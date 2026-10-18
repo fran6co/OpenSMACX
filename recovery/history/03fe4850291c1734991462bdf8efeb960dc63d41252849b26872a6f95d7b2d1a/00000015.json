@@ -1,0 +1,22 @@
+{
+  "event_id": "f7e8911903ed940e4963d55b1f82c2eda4387c7f311b52b513bd173db7af2fed",
+  "payload": {
+    "affects": [
+      "entity-924f2a39c3f53d08afaf5c63d3d60ffc186b1bd033760d043f6f503cbf30b74c",
+      "entity-ab45ccf96668cd41811a2ee60c77c81246e10a3c4a25104bc87e378371496c61"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "tutwin-inlined-conversion-footprint-oct18",
+    "evidence": [
+      "Fresh retained application build compiles/links with source changed only by the four ternary-to-implicit conversion replacements. Native residual outside those four bodies reports180pass/1fail: tour5 and tour7 bytes changed, with no reference or association changes in those sections. This is not preservation success.",
+      "All5581 original identities retain their mapping and all3237 current masked-exact identities and strict classifications are unchanged. Those classifications are not behavior proof. Independent physical instruction/relocation review is required for the two tour bodies; no helper/data/initializer omission, baseline reset, claim demotion or full acceptance is authorized."
+    ],
+    "hypothesis": "The four normal virtual-base conversions also change their compiler-inlined copies in the already owned tour5 and tour7 bodies; inspect and explicitly review that bounded emission footprint before integration.",
+    "kind": "discovery"
+  },
+  "previous_event": "e034d064d9a0c738ec82b72ec387bab8cf9026cd76acd80df87fc411c36d5e86",
+  "request_id": "tutwin-inlined-conversion-footprint-oct18",
+  "schema_version": 1,
+  "sequence": 15,
+  "stream": "task:tutwin-owner-coverage-wave"
+}

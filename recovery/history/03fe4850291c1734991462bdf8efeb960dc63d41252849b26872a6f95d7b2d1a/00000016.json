@@ -1,0 +1,20 @@
+{
+  "event_id": "5911b50ee8d731219db817a1d66ba1871db2c94aea3daaa52afeb3b8e276152a",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "tutwin-inlined-conversion-footprint-oct18",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Coordinator admits only the already task-owned tour5/tour7 emitted bodies as the reviewed inline footprint of the four wrapper conversions; source in those two tours is unchanged. The original task baseline and historical claims remain. No helper/data/initializer omission or automatic acceptance waiver is granted.",
+      "Physical tour7 COMDAT is2176bytes in both builds,160relocations identical; exactly five13-byte windows at0x651/0x6CA/0x743/0x7BC/0x831 implement equivalent null/nonnull virtual-base adjustment layouts at the five inlined do_des calls (DESTOURRENAME/OBS/UPGRADE/RETIRE/CANCEL). All bytes outside those windows match. Independent source/physical review agrees.",
+      "Coordinator independently verifies tour5 is1680bytes in both builds with all126relocations identical. Its sole13-byte delta at0x633..0x63f changes je-null/adjust/join to jne-adjust/zero/join, preserving EAX/ECX/EDX and null/nonnull flags at join0x640. Relocations select TutWinSocWindow.client_to_screen, MapWinTable, SOCTOUROK and tut_win in the unchanged order: precisely the sole inlined do_soc call. All other tour5 bytes match.",
+      "All four actual wrapper bodies pass host GCC/Clang null/nonnull pointer, sequencing, coordinate, flag, text and return tests; four compiled mutants fail. Native full application builds/links; all3237 current masked exact identities and their strict reference classifications are unchanged. Six-body residual and destination checks must still pass. This incorporates a bounded recovery discovery, not full task/game/linked-retention acceptance."
+    ]
+  },
+  "previous_event": "f7e8911903ed940e4963d55b1f82c2eda4387c7f311b52b513bd173db7af2fed",
+  "request_id": "tutwin-inlined-conversion-reviewed-oct18",
+  "schema_version": 1,
+  "sequence": 16,
+  "stream": "task:tutwin-owner-coverage-wave"
+}
