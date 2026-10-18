@@ -1,0 +1,21 @@
+{
+  "event_id": "db9f68247742c12cbb7375a61fe80159577598c6b6de045cd10285afd3737235",
+  "payload": {
+    "affects": [
+      "entity-3c127901ed9b5c56ff61ec70b72b852d82cd6a9e0e09d708eaf123802c1bf993",
+      "entity-d35da1b0011f646ceb25ef11127e86471e53401e79c5169744447efaf8512895"
+    ],
+    "author": "coordinator",
+    "discovery_id": "bounded-body-screen-hypothesis",
+    "evidence": [
+      "Controlled10-attempt native two-context screen: postincrement pair regresses current50/56 to46 matches with MISMATCH; explicit advance pair regresses to11. Framed context remains mismatching. All replica/damage controls and outside-scoped-body residuals pass. These are optional equivalent spellings, not a required structural discovery; retain existing typed implementation and all alias behavior/claims, no product edits or acceptance."
+    ],
+    "hypothesis": "Paired typed input/output cursor spelling restores original shrinking clipping functions.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "bounded-body-screen-hypothesis",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:sprite-clipping-cursors-oct18"
+}

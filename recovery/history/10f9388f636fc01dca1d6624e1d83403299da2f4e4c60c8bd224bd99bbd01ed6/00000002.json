@@ -1,0 +1,18 @@
+{
+  "event_id": "c6757a99bbb99aeb6f32d38c5124f0906cf4966527198244e2d6aa37ad9512ba",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "bounded-body-screen-hypothesis",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Controlled12-attempt native two-context screen: first two candidates compile identically to baseline; field-order candidate improves31 to35 matching instructions under framed context but remains SHAPE_EXACT, not original exact. Physical unchanged-replica and target damage pass, outside scoped bodies PASS. No source body or claim changed; do not repeat this hypothesis without new evidence.",
+      "Current C++ source and annotations stay unchanged; task baseline and original obligations retained. Reports/temporary candidate derivatives remain ignored; no new run-log source comments."
+    ]
+  },
+  "previous_event": "ea1279b6ea151207e000020e7f8a74121b1184391b7cc081223bba65928ee315",
+  "request_id": "reject-exact-restoration-hypothesis",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:message-builder-order-oct18"
+}

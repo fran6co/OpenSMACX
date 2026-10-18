@@ -1,0 +1,20 @@
+{
+  "event_id": "ea1279b6ea151207e000020e7f8a74121b1184391b7cc081223bba65928ee315",
+  "payload": {
+    "affects": [
+      "entity-2dc35df73ff3a7c354472eb99a2a2f8c125a8f25e8e2194fc78953a3e201ff24"
+    ],
+    "author": "coordinator",
+    "discovery_id": "bounded-body-screen-hypothesis",
+    "evidence": [
+      "Controlled12-attempt native two-context screen: first two candidates compile identically to baseline; field-order candidate improves31 to35 matching instructions under framed context but remains SHAPE_EXACT, not original exact. Physical unchanged-replica and target damage pass, outside scoped bodies PASS. No source body or claim changed; do not repeat this hypothesis without new evidence."
+    ],
+    "hypothesis": "Capturing the packet clock/sequence, or assigning sequence before payload, restores original complete function output.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "bounded-body-screen-hypothesis",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:message-builder-order-oct18"
+}

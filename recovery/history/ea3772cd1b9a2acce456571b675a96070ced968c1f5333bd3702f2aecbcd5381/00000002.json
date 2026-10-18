@@ -1,0 +1,18 @@
+{
+  "event_id": "2ce7f99d9491ea1645eb85b64f4a721eda6721202faaf663bef6a34501a9f49a",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "bounded-body-screen-hypothesis",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Controlled10-attempt native two-context screen: postincrement pair regresses current50/56 to46 matches with MISMATCH; explicit advance pair regresses to11. Framed context remains mismatching. All replica/damage controls and outside-scoped-body residuals pass. These are optional equivalent spellings, not a required structural discovery; retain existing typed implementation and all alias behavior/claims, no product edits or acceptance.",
+      "Current C++ source and annotations stay unchanged; task baseline and original obligations retained. Reports/temporary candidate derivatives remain ignored; no new run-log source comments."
+    ]
+  },
+  "previous_event": "db9f68247742c12cbb7375a61fe80159577598c6b6de045cd10285afd3737235",
+  "request_id": "reject-exact-restoration-hypothesis",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:sprite-clipping-cursors-oct18"
+}
