@@ -1,0 +1,69 @@
+{
+  "author": "coordinator",
+  "base_revision": "f2f65f8f27a405b435b1c0d92159353a137177f3",
+  "editable_files": [
+    "CMakeLists.txt",
+    "src/strings.cpp",
+    "src/string_formatting.cpp",
+    "recovery/tests/test_say_owner_actual_source_oct6.py",
+    "recovery/tests/test_strings_formatter_boundary_oct18.py"
+  ],
+  "evidence": [
+    "Independent complete-original and actual application COFF review finds nineteen direct original calls to6169A0 across the eight say_* functions, but no get@Strings relocation in their current same-TU bodies. Defining Strings::get before the formatters permits /Ob2 inlining. The nine moved originals all have frame-based parameter accesses; the neighboring class/table operations retain their distinct exact frameless context. This supports a separate compilation boundary, not complete historical TU reconstruction.",
+    "Authorize moving only says and the eight say_* definitions with their complete original annotations, bodies and useful comments into src/string_formatting.cpp. New owner uses the existing strings.h declarations and the same needed domain headers. Keep StringTemp, StringTable, its constructor/exit mappings, every Strings method, clear and space in their original source owner and keep strings.h byte-identical. No wrappers, noinline/inline attributes, API/type/member/layout/lifetime changes, original-address dispatch or bug fixes.",
+    "Authorize one CMake source entry and only /Oy- on the new formatter TU. Retain old strings.cpp profile and every other build/link/compiler policy, include order in the old TU and all comparison alternatives. The read-only whole-owner screen improves mixed bodies but yields only two formatter exacts in the existing TU; that is not evidence for a whole-strings.cpp frame-profile change. Do not adopt that rejected mixed policy.",
+    "Adapt only the existing actual-source say-owner test host path; all behavioral assertions, mutation controls and fixture operations remain. Add a tightly bounded actual-source/annotation transfer and CMake inverse against this immutable task base, including payload, marker, duplicate, source-boundary, storage/initializer and profile damages. Do not reset historical baselines or edit annotation claims. Existing application-profile test already fails at immutable pre-scalar3ca too; keep that failure visible, not automatically green.",
+    "Coordinator alone owns Git, compiler resources, scope and integration. Workers may edit only assigned disjoint paths and must freeze before compilation. Measure the complete nineteen-original Strings family and all nine exact controls, inspect newly emitted call-target multiplicities and global initializer ownership, require fresh full build/link, source/claim/reference continuity and independent physical/call-boundary review. Bank no new claims in this step, preserve all restoration obligations, and recheck the destination before cleanup. Manual integration is not original TU, linked retained-selection, game/runtime or automatic acceptance."
+  ],
+  "intent": "Restore separately compiled application string formatters and their original calls into the shared Strings implementation, without changing bodies or lifetime ownership.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5243184,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5834000,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5834176,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5834480,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5834752,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5835568,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5835024,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5835424,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5835280,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "strings-frame-boundary-oct18"
+}
