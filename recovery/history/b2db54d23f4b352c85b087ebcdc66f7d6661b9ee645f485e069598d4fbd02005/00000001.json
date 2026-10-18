@@ -1,0 +1,20 @@
+{
+  "event_id": "86a26a9e12405498b774ecd97b3015069f61d8e486d6a4901fa82b0b4b9b8c45",
+  "payload": {
+    "affects": [
+      "entity-baf7186d2d579790de654df0870044bb6dc2ae43906bceccccc99d90d33a1366"
+    ],
+    "author": "coordinator",
+    "discovery_id": "alpha-menu-reuse-parameter-oct18",
+    "evidence": [
+      "Original403589 passes the EBP+0C slot; actual framed baseline has63 instructions versus62 original with one redundant local initialization. The authorized single-candidate full-TU screen has passing physical replica and target damage controls under both settled compiler trials."
+    ],
+    "hypothesis": "Reusing y as the Spot position output might reproduce the original address-taken stack slot without the redundant initialized local.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "alpha-menu-reuse-parameter-oct18",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:alpha-menu-hit-output-oct18"
+}

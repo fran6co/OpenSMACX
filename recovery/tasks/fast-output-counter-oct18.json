@@ -1,0 +1,31 @@
+{
+  "author": "coordinator",
+  "base_revision": "36dd88bdeff7a0a74074b7aa02bb8fe0588ba767",
+  "editable_files": [
+    "src/alphamenu.cpp",
+    "src/console.cpp",
+    "recovery/tests/test_alphamenu_mouse_hit_output_oct18.py"
+  ],
+  "evidence": [
+    "AlphaMenu403550: authorized &y reuse screen was rejected under both controlled trials, changing original register roles. Current initialized position has a redundant store; native original stack-home reuse also admits an output-only local because both input values are passed by value and Spot5FAB00 always writes position before returning a hit. Authorize exactly one distinct candidate: int position without initialization, keep &position and hit-only consumption. No candidate claims UB or reads an unwritten output.",
+    "Console4E1300 actual COFF differs from original in placement of XOR EAX relative to the game-state store. Authorize exactly one candidate moving the side-effect-free int count=0 declaration before the game-state mutation, after original MapArea/MapTiles snapshots. Preserve all externally visible stores, signed/live loop bounds, seven visibility copies, untouched bit2, undo/territory/redraw callbacks and original errors.",
+    "Each TU gets one immutable native local deck, settled flag trials, physical unchanged replica and observable target-damage controls. No casts, volatile, flags, header/symbol/span edits, invented aliases, safety fixes or extending these decks after a miss. An unhelpful candidate is rejected with its decision, not a whole-project rebuild.",
+    "Only a useful candidate receives isolated worktree application and actual-source tests, fresh build/link, scoped strict references/bytes and physical outside-task preservation, source/claim/reference checks and destination recheck. Share batch checks where possible. Only native record banks exact claims; full executable/game/runtime/automatic acceptance remains unproved."
+  ],
+  "intent": "Screen two bounded output-lifetime/counter-order hypotheses from current original and actual-COFF evidence, sharing a checkpoint only if useful.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4207952,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5116672,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "fast-output-counter-oct18"
+}

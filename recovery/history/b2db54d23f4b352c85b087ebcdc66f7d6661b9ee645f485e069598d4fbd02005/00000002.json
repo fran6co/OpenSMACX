@@ -1,0 +1,18 @@
+{
+  "event_id": "2bed41fe5cd11cd96feec983d24e105375194afa9dc58a971582f3e7abb7da06",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "alpha-menu-reuse-parameter-oct18",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Reject this parameter-reuse spelling: VC6 no longer retains the separate x/y register roles and emits60 framed instructions rather than62 original,17matching versus25baseline. The frameless form also remains a mismatch. No product source or claim changed; no full build/census needed to reject it.",
+      "The original stack slot alone does not prove a mutated source parameter: a dead incoming parameter home can be reused for an uninitialized, hit-only local output. Any such distinct source hypothesis needs separate coordinator authorization. Do not repeat the rejected &y deck without new evidence. This is a negative source-form decision, not a semantic exclusion or acceptance."
+    ]
+  },
+  "previous_event": "86a26a9e12405498b774ecd97b3015069f61d8e486d6a4901fa82b0b4b9b8c45",
+  "request_id": "alpha-menu-reuse-parameter-oct18-rejected",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:alpha-menu-hit-output-oct18"
+}
