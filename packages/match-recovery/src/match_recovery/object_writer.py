@@ -14,6 +14,7 @@ from typing import Mapping, Sequence
 
 from match_recovery.model import Span
 from match_recovery.object_source import (ObjectBinding, parse_objects,
+                                          array_slice_bounds,
                                           valid_member_path,
                                           validate_object_symbol_ownership)
 from match_recovery.source.reader import _block_state_after
@@ -67,7 +68,12 @@ def _unique(records: Sequence[ObjectBinding]) -> None:
 
 
 def _marker(binding: ObjectBinding) -> bytes:
-    if binding.parent_symbol is not None and binding.span is None:
+    if array_slice_bounds(binding.member_path) is not None:
+        assert binding.span is not None and binding.evidence is not None
+        text = (f"// RECOVERY_OBJECT: v5 0x{binding.origin.address:08X} "
+                f"0x{binding.span.end:08X} {binding.symbol} 0x{binding.evidence.address:08X} "
+                f"member {binding.parent_symbol} {binding.member_path[0]}")
+    elif binding.parent_symbol is not None and binding.span is None:
         text = (f"// RECOVERY_OBJECT: v3 0x{binding.origin.address:08X} {binding.symbol} "
                 f"member {binding.parent_symbol} {'.'.join(binding.member_path)}")
     elif binding.parent_symbol is not None:

@@ -1,0 +1,23 @@
+{
+  "event_id": "04291d7becf943231bc3b80cc0cf9f565f0a117455e7ef4ebe35f00d0fdf819a",
+  "payload": {
+    "affects": [
+      "entity-156a6ba609268491740f3429629529142f28b21c3540301074ec29680f3c01ca",
+      "entity-d1e5ede6855dc03eac4d212cfdba96d96cbce15fedcb9c3c3e4f88db874aa428",
+      "entity-df16d547f8b8157975f47a7c9eee7b6ab18fa56b3d7dce637292321261cd2db8"
+    ],
+    "author": "coordinator",
+    "discovery_id": "information-colours-share-swatch-storage",
+    "evidence": [
+      "Pinned original textcolor_init initializes indices 12..29 of TextColourTable at 8C6B5C. InfoWin reads eight words 8C6BB4..8C6BD0, exactly indices 22..29; editor pane reads indices 22/23. The removed independent array had no writers. Complete source/pinned review and actual initializer/consumer host controls establish one shared owner, without copying initialization or changing original unsafe paths.",
+      "Native v3[22] resolves one 4-byte element and v4 whole-parent resolves780 bytes, neither the preserved32-byte interpretation. Generic bounded v5 sole-root half-open slices now derive offset/extent from fresh CodeView LF_ARRAY metadata. Native writer preserves historical symbol, origin, exactspan, evidence and initializer interpretation while moving the record to its real parent TU. No pointer global, casts, fake overlay or original-address storage."
+    ],
+    "hypothesis": "The independent InfoTextColors array disconnects original InfoWin/editor reads from the real initialized swatch table.",
+    "kind": "discovery"
+  },
+  "previous_event": "a18ed2764c75b0738c8b473f82865bf71ee83211fabf9e71e7b7936bfa128806",
+  "request_id": "information-colours-share-swatch-storage",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:info-palette-view-oct18"
+}

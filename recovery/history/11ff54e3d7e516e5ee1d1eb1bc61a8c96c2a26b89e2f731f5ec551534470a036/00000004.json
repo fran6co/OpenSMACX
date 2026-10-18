@@ -1,0 +1,26 @@
+{
+  "event_id": "a18ed2764c75b0738c8b473f82865bf71ee83211fabf9e71e7b7936bfa128806",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/infowin_setup_text_harness.cpp",
+      "recovery/tests/test_infowin_setup_text.py"
+    ],
+    "evidence": [
+      "Authorize only case-zero first heading literal/lookup ordering and focused full-body/pinned/damage controls. Preserve all states, labels outside this row, callbacks, arithmetic, unsafe quirks, row aggregation and source mappings/claims. Package sources remain frozen while its full unit tests run. Existing native epoch and candidate runtime have completed; prior candidate artifacts are phase-one evidence, not fresh evidence after this edit. Require new full build/link and actual-object residual/continuity verification for the combined owner batch before merge."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4547328,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "965ea09b1f94a96e270bdc74e1b9792b2edbd32f664cbaa7cf3189c7b0a9a4ce",
+  "request_id": "authorize-information-heading-owner",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:info-palette-view-oct18"
+}

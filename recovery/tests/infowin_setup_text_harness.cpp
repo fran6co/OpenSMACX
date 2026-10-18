@@ -2,6 +2,7 @@
 #include <cctype>
 #include <climits>
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <stdint.h>
 #include <string>
@@ -19,6 +20,13 @@ static int change_console_faction_once;
 static int *pane_state_cell;
 static int pane_state_new_value;
 static int change_pane_state_once;
+static std::vector<int> heading_events;
+static void heading_require(bool value) {
+    if (!value) {
+        fprintf(stderr, "WITNESS: state-zero heading text and callback order\n");
+        std::exit(29);
+    }
+}
 
 struct Font {
     int unk_1_;
@@ -151,6 +159,7 @@ static Strings StringTable;
 static char labels[2048][24];
 static char *label_get(int index) {
     assert(index >= 0 && index < 2048);
+    heading_events.push_back(index);
     sprintf(labels[index], "L%d", index);
     return labels[index];
 }
@@ -171,8 +180,16 @@ static int last_special_gender = -1;
 static int last_special_plurality = -1;
 static int last_council_faction = -1;
 static int mood_value;
-static void energy_compute(int faction, int) { last_energy_faction = faction; }
-static void say_year(char *s) { strcat(s, "Y"); }
+static void energy_compute(int faction, int) {
+    heading_events.push_back(-2);
+    last_energy_faction = faction;
+}
+static void say_year(char *s) {
+    heading_require(strcmp(s, "L0: {") == 0);
+    heading_require(!heading_events.empty() && heading_events.back() == 0);
+    heading_events.push_back(-1);
+    strcat(s, "Y");
+}
 static void say_special(char *s, char *mood, int faction) {
     (void)mood;
     last_special_faction = faction;
@@ -200,6 +217,7 @@ struct InfoWin {
 /*ACTUAL_SOURCE*/
 
 static void reset_fixture(InfoWin &win, int kind) {
+    heading_events.clear();
     memset(&win, 0, sizeof(win));
     memset(Players, 0, sizeof(Players));
     memset(PlayersData, 0, sizeof(PlayersData));
@@ -299,8 +317,8 @@ static int native_unsigned_kind_reference(int value) {
 }
 
 static void test_signed_kind_normalization_edges() {
-    const int values[] = {INT_MIN, -8, -7, -6, -5, -4, -3, -2, -1,
-                          0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 15, 16};
+    const int values[] = {INT_MIN, -32, -24, -16, -8, -7, -6, -5, -4, -3, -2, -1,
+                          0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 15, 16, 24, 32, INT_MAX-7};
     InfoWin win;
     for (unsigned i = 0; i < sizeof(values) / sizeof(values[0]); ++i) {
         const int value = values[i];
@@ -309,6 +327,11 @@ static void test_signed_kind_normalization_edges() {
         reset_fixture(win, value);
         win.setup_text();
         if (expected_kind == 0) {
+            heading_require(strcmp(win.row_text_[1][0], "L0: {Y}") == 0);
+            heading_require(heading_events.size() >= 3 && heading_events[0] == 0 &&
+                            heading_events[1] == -1 && heading_events[2] == -2);
+            for (unsigned event = 0; event < heading_events.size(); ++event)
+                heading_require(heading_events[event] != 0x63);
             assert(win.row_count_[1] == 5);
             assert(last_energy_faction == 2);
         } else if (expected_kind < 0) {

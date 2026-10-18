@@ -23,6 +23,7 @@
 // symbol    _$E6
 #include "stdafx.h"
 #include "interface_fonts.h"
+#include "interface_palette.h"
 #include "original_seam.h"
 #include "infowin.h"
 #include "basewin.h"
@@ -176,9 +177,9 @@ void InfoWin::setup_text() {
             content_line_height = 0;
             infowin_append_label(text, 0);
             strcat(text, ": ");
-            strcat(text, label_get(0x63));
-            say_year(text);
             strcat(text, "{");
+            say_year(text);
+            strcat(text, "}");
             strcpy(row_text_[pane][0], text);
 
             energy_compute(faction, 0);
@@ -776,10 +777,6 @@ void InfoWin::timer_change(int) {
     draw_text(active_pane_);
 }
 
-// Primary normal/revealed and secondary normal/revealed foreground/shadow
-// pairs read by draw_text. Their initialization policy is still unrecovered.
-// RECOVERY_OBJECT: v2 0x008C6BB4 0x008C6BD4 ?InfoTextColors@@3PAY01HA 0x00458420
-int InfoTextColors[4][2];
 // Rank rows use one palette entry per faction, including native life.
 // RECOVERY_OBJECT: v2 0x0068F9F0 0x0068FA10 ?InfoFactionTextColors@@3PAHA 0x00458420
 int InfoFactionTextColors[8] = {249, 111, 252, 255, 251, 65, 102, 187};
@@ -817,10 +814,10 @@ void InfoWin::draw_text(int pane) {
                                           InfoFactionShadowColors[faction], 1, 1);
                 } else if (!color) {
                     int primary = field_94_ ? 1 : 0;
-                    buffer.set_text_color(InfoTextColors[primary][0],
-                                          InfoTextColors[primary][1], 1, 1);
-                    buffer.set_text_color2(InfoTextColors[primary + 2][0],
-                                           InfoTextColors[primary + 2][1], 1, 1);
+                    buffer.set_text_color(TextColourTable[22 + primary * 2],
+                                          TextColourTable[23 + primary * 2], 1, 1);
+                    buffer.set_text_color2(TextColourTable[26 + primary * 2],
+                                           TextColourTable[27 + primary * 2], 1, 1);
                 } else {
                     buffer.set_text_color(field_94_ ? row_reveal_color_[column][row]
                                                     : color, -1, 1, 1);
@@ -849,8 +846,8 @@ void InfoWin::draw_text(int pane) {
                     prefix[remaining] = 0;
                     if (!ranked) {
                         if (!color) {
-                            buffer.set_text_color(InfoTextColors[1][0], InfoTextColors[0][1], 1, 1);
-                            buffer.set_text_color2(InfoTextColors[3][0], InfoTextColors[3][1], 1, 1);
+                            buffer.set_text_color(TextColourTable[24], TextColourTable[23], 1, 1);
+                            buffer.set_text_color2(TextColourTable[28], TextColourTable[29], 1, 1);
                         } else {
                             buffer.set_text_color(row_reveal_color_[column][row], -1, 1, 1);
                         }

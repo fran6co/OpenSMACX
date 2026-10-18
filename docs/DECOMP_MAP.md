@@ -255,6 +255,28 @@ Bounded records still require fresh ordinary COFF definition and exact CodeView
 extent, initializer and reference evidence. Rebinding does not prove allocation,
 lifetime, final-link selection or runtime ownership.
 
+Version 5 retains a bounded old object identity as a half-open slice of a
+current root-array definition:
+
+```cpp
+// RECOVERY_OBJECT: v5 <start> <end> <old-symbol> <evidence-address> member <parent-symbol> [begin:end]
+```
+
+The slice must be the entire path: no preceding/following members, indices or
+pointer traversal. Both indices use canonical unsigned decimal spelling; require
+`0 <= begin < end <= element_count`. There is no unbounded v5 form. Version 3
+continues to reject slice syntax. Fresh standalone CodeView `LF_ARRAY_ST`
+metadata supplies the element size and count, with the same integral-subscript,
+complete-element and byte-extent checks as fixed-index paths. The selected offset
+is `begin * element_size`, and its extent is `(end - begin) * element_size`;
+it must fit the parent and equal the retained original bound for initial-data
+acceptance. A root pointer is not an array; an array of pointers selects only
+their storage and never follows them. Reports identify the array type, element
+type and range explicitly; they do not invent a scalar or array type for the
+slice (`type_index` is null). Existing parent-base consistency, exact initializer,
+contained-relocation, namespace and ownership checks remain required. This view
+does not establish original allocation bounds, lifetime or final-link acceptance.
+
 `match_recovery.object_writer.write_object_bytes` is the pure, add-only writer
 for these object bindings. Supply the complete current `parse_objects` snapshot
 and reviewed `ObjectBinding` additions; their one-based lines anchor insertion
@@ -266,7 +288,7 @@ bounds, initializers, acceptance or recovery permission. Compiler evidence and
 coordinator-authorized publication remain separate requirements.
 
 `match_recovery.object_writer.replace_object_records` is the pure rehome
-transformation for a reviewed v3 member migration or v4 direct-target change. Supply the complete object-annotation
+transformation for a reviewed v3 member/v5 slice migration or v4 direct-target change. Supply the complete object-annotation
 snapshot and bytes for every affected source unit; one-for-one replacements retain
 old symbols, original addresses, spans and evidence anchors while changing only
 the parent/path and insertion unit/line. It reparses the result and refuses

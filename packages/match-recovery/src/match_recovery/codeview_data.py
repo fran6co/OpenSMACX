@@ -7,7 +7,7 @@ This observes compiler storage extent, not original extent or C++ lifetime.
 """
 
 from .codeview import Cursor, _fields, _type_records, _unqualified_type
-from .object_source import _MEMBER_SEGMENT, _ROOT_ARRAY_SEGMENT
+from .object_source import _MEMBER_SEGMENT, _ROOT_ARRAY_SEGMENT, array_slice_bounds
 
 
 def _class_record(leaf, record):
@@ -288,6 +288,27 @@ def member_data_layout(obj, parent_symbol, member_path):
     come only from its directly bound standalone CodeView records. Inherited
     lookup refuses unresolved base graphs rather than guessing offsets.
     """
+    bounds = array_slice_bounds(member_path)
+    if bounds is not None:
+        parent = data_layout(obj, parent_symbol)
+        records = _type_records(obj)
+        element_type, array_size, element_size, element_count = _array_element_layout(
+            parent["type_index"], records)
+        begin, end = bounds
+        if end > element_count:
+            raise ValueError("array slice lies outside CodeView array extent")
+        relative, size = begin * element_size, (end - begin) * element_size
+        if relative + size > parent["size"]:
+            raise ValueError("array slice lies outside parent storage")
+        selection = {"begin": begin, "end": end, "offset": relative, "size": size,
+                     "array_size": array_size, "element_size": element_size,
+                     "element_count": element_count, "element_type_index": element_type,
+                     "array_type_index": parent["type_index"]}
+        return {"symbol": parent_symbol, "source_name": parent["source_name"],
+                "section": parent["section"], "symbol_offset": parent["offset"],
+                "size": size, "type_index": None, "selection_kind": "array_slice",
+                "offset": parent["offset"] + relative, "member_offset": relative,
+                "parent_size": parent["size"], "member_path": [selection]}
     if (not isinstance(member_path, tuple) or not member_path
             or any(not isinstance(part, str) or not (
                 _MEMBER_SEGMENT.fullmatch(part)

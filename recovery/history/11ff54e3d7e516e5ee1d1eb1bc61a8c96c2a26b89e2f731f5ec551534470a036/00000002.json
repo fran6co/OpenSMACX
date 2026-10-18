@@ -1,0 +1,25 @@
+{
+  "event_id": "1a3f25f118dd20c60edd2a652c5bc527e105b1dff37b0e1160e1ea1984ddc09d",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/maininterface.cpp"
+    ],
+    "evidence": [
+      "Authorize genuine caller header/include and palette indices22/23 only, preserving all other editor drawing/text/font/switch/callback behavior and original identity/claims. Existing maininterface_map_metadata_control fixture remains scoped and its assertions must be preserved; no unrelated MainInterface changes."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4568400,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "242b8b966698198e1b33dc1d8917c1bfce2552c01960d37bbf7105fe1800bf67",
+  "request_id": "authorize-editor-pane-palette-caller",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:info-palette-view-oct18"
+}

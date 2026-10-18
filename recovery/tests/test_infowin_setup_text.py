@@ -161,6 +161,66 @@ def test_active_pane_reload_native_control() -> None:
     assert run.returncode == 0, f"{run.stdout}\n{run.stderr}"
 
 
+@pytest.mark.parametrize("damage", ["old_lookup", "wrong_brace", "late_brace", "missing_close"])
+def test_state_zero_heading_rejects_compiling_damage(damage: str) -> None:
+    source, _ = _actual_source()
+    start = source.index("case 0: {")
+    end = source.index("case 1: {",start)
+    branch = source[start:end]
+    if damage == "old_lookup":
+        good,bad = 'strcat(text, ": ");','strcat(text, label_get(0x63));'
+    elif damage == "wrong_brace":
+        good,bad = 'strcat(text, "{");','strcat(text, "}");'
+    elif damage == "late_brace":
+        good = 'strcat(text, "{");\n            say_year(text);'
+        bad = 'say_year(text);\n            strcat(text, "{");'
+    else:
+        good,bad = 'strcat(text, "}");','(void)0;'
+    assert good in branch,damage
+    damaged = source[:start]+branch.replace(good,bad,1)+source[end:]
+    result = _run_host_control(damaged,"INFOWIN_HEADING_CONTROL")
+    assert result.returncode == 29 and "WITNESS: state-zero heading text and callback order" in result.stderr, result.stdout+result.stderr
+
+
+def test_pinned_state_zero_heading_literal_and_call_order() -> None:
+    from capstone import Cs, CS_ARCH_X86, CS_MODE_32
+    from match_recovery.model import Span
+    from match_recovery.pe_coff import PeImage
+
+    configured = os.environ.get("OPENSMACX_IMAGE")
+    candidates = ([Path(configured)] if configured else []) + [
+        parent / ".opensmacx/game/terranx_original.exe" for parent in (ROOT,*ROOT.parents)]
+    path = next((p for p in candidates if p.is_file()),None)
+    if path is None:
+        pytest.skip("pinned proprietary image unavailable")
+    image = PeImage(path.read_bytes(),"01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf")
+    start,end = 0x456300,0x45838D
+    instructions = {}
+    cursor = start
+    for instruction in Cs(CS_ARCH_X86,CS_MODE_32).disasm(image.read(Span(start,end)),start):
+        assert instruction.address == cursor
+        cursor += instruction.size
+        instructions[instruction.address] = (instruction.mnemonic,instruction.op_str)
+    assert cursor == end
+    anchors = {
+        0x4564F6:("mov","edx, dword ptr [0x9b90f8]"),
+        0x45650C:("mov","eax, dword ptr [edx]"), # zero-offset label table slot
+        0x45650F:("call","0x6169a0"),
+        0x456519:("call","0x645470"),
+        0x456521:("push","0x682e94"),
+        0x456527:("call","0x645470"),
+        0x45652F:("push","0x68518c"),
+        0x456535:("call","0x645470"),
+        0x45653E:("call","0x5c89b0"),
+        0x456546:("push","0x685190"),
+        0x45654C:("call","0x645470"),
+    }
+    for address,expected in anchors.items():
+        assert instructions[address] == expected,hex(address)
+    for address,literal in ((0x682E94,b": \0"),(0x68518C,b"{\0"),(0x685190,b"}\0")):
+        assert image.read(Span(address,address+len(literal))) == literal
+
+
 @pytest.mark.parametrize(
     "needle,replacement,case",
     [

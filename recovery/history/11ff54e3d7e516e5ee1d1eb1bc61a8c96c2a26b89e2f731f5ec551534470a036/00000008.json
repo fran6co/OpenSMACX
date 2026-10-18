@@ -1,0 +1,21 @@
+{
+  "event_id": "a9aeb6e52a39fadafe74f9de509bdca2e44ba01841c7827b2af3f467df6f53be",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "editor-pane-shared-palette-caller",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/maininterface.cpp removes its independent-array extern and reads real TextColourTable22/23. Original45B59A/45B5A3 and complete45B550 span corroborate the pair. Existing editor metadata assertions remain and now check changed colours on each call.",
+      "Final combined source:32 actual-source host tests pass, including initializer/consumer/editor sharing, callback reloads, original24/23 final-character asymmetry, signed state-zero heading and eight compiling damages.213 focused package tests pass. Full package run:11195 pass,1skip,4 environment failures; both cache failures reproduce on unchanged master and all54 tests in the three affected modules pass with shared-cache override unset and local forkserver socket permission. No code/test weakening for those environment conditions.",
+      "Final candidate full166-C++/180-COFF build/link passes. Native source/claim/mapping/reference checks pass:5646 canonical function records unchanged,3422 claims,3431 historical requirements, zero missing. Every object identity/extent/evidence/initializer interpretation remains; only the InfoTextColors storage-view owner/path changes. Fresh configured CodeView trials derive offset88,size32,parent780 from one effective /Oy-/Z7 compilation, and original initial bytes pass.",
+      "All5581 mapped identities, symbols and masked verdicts remain unchanged:3187 exact. Two release-object strict results (48A840 PickWin back draw and50E820 mandate_color) become UNKNOWN because their new parent/member group lacks array CodeView in release COFF. Separate fresh data checks do not promote those unknowns. No claim grant/demotion or full linked/structure/runtime/game/native automatic acceptance. Destination fresh build/link and zero-omission recheck remain mandatory.",
+      "Three changed function families are projected only in the current-master8615e497e manual residual.179 objects pass the strict native residual; the InfoWin FAIL remains and its exact32-byte BSS deletion/repacking is independently enumerated. Task baseline is unchanged; the phase-one native binary report covered the original three subjects before the heading expansion and is not replayed as final-scope acceptance. Current whole-application object census and bounded heading replica/damage controls are fresh; whole-span misses and unsupported EH remain obligations."
+    ]
+  },
+  "previous_event": "5c5f2f46f609199099f90c9929bf4f08a9079856b0827efda175674c6af5648e",
+  "request_id": "incorporate-editor-palette-owner",
+  "schema_version": 1,
+  "sequence": 8,
+  "stream": "task:info-palette-view-oct18"
+}

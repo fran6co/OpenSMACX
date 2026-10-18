@@ -1,0 +1,38 @@
+{
+  "author": "coordinator",
+  "base_revision": "0b1d3d14913214fca60112228f1d5c36dfb8e21d",
+  "editable_files": [
+    "src/infowin.cpp",
+    "src/interface_palette.cpp",
+    "recovery/tests/test_infowin_palette_view_oct18.py",
+    "recovery/tests/infowin_draw_text_x_harness.cpp",
+    "recovery/tests/maininterface_map_metadata_control.cpp",
+    "packages/match-recovery/src/match_recovery/object_source.py",
+    "packages/match-recovery/src/match_recovery/object_writer.py",
+    "packages/match-recovery/src/match_recovery/codeview_data.py",
+    "packages/match-recovery/tests/test_object_array_slice.py",
+    "docs/DECOMP_MAP.md",
+    "packages/match-recovery/README.md"
+  ],
+  "evidence": [
+    "Pinned draw_text458420..4588A9 reads8C6BB4..8C6BD0. Real TextColourTable begins8C6B5C; these are exactlyindices22..29. Pinnedtextcolor_init4BA27A..4BA2B7initializesindices12..29. Independent32byte InfoTextColors array has no writes and is a disconnected fabricated owner, not original zero initialization. Recover sharedstorage with ordinary tableindexing and original callback/load ordering, including asymmetric finalcharacter pair.",
+    "Preserve old InfoTextColors symbol,start8C6BB4,end8C6BD4,evidence458420 and historical interpretation, without separatedata/referencepointerstorage/casts/guessedlayout/copyinit. Nativev3[22]resolves4bytes andv4wholeparent780bytes; neither honestlydescribes32bytearrayview. Authorize narrowly reusable boundedv5 rootarray halfopenslice [22:30], solepathsegment, freshCodeView arraysize/elementextent, no pointerfollow or nested/member slice. Oldv3grammarunchanged; writer preserves old identity/span/evidence/interpretation. No CLI, weakenedchecks or projectconstants inlibrary.",
+    "Require syntheticparser/writer/CodeView/data-targetdamagesandexistingtests,actualInfoWinbodyhostpaletteinitialization/sharedreload/asymmetriccolorcontrols andpinnedanchors,freshnativeboundobjectextent/referencechecks,fullbuild/link,scopedmatching,preservation/claims/mappings/references/source and independentreview/destinationrecheck. Preserve allquirks andmatchingobligations; darkHUDcausality/runtimecomparison remainsunprovenuntilpairedobservation. Manualintegration not fullgame or nativeautomaticacceptance."
+  ],
+  "intent": "Restore genuine shared palette storage for InfoWin text, retaining its historical bounded object identity.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4555808,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4956704,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "info-palette-view-oct18"
+}

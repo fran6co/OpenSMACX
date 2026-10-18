@@ -41,7 +41,11 @@ Palette g_PALETTE2;  // 0x009523A0, the preferences gamma working palette
 // and 0x008C6E30. These are initialized here, not independent Buffer globals.
 // The mandate row begins at [162] (original 0x008C6DE4), shared by map and
 // PickTech consumers.
+// InfoWin's normal/revealed primary and secondary colour pairs are [22..29],
+// initialized by the same swatch walk as every other interface colour. The
+// historical InfoTextColors identity names this slice, not another allocation.
 // RECOVERY_OBJECT: v1 0x008C6B5C ?TextColourTable@@3PAHA
+// RECOVERY_OBJECT: v5 0x008C6BB4 0x008C6BD4 ?InfoTextColors@@3PAY01HA 0x00458420 member ?TextColourTable@@3PAHA [22:30]
 int TextColourTable[195];
 
 /*

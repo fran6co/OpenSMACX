@@ -1,0 +1,43 @@
+{
+  "event_id": "5c5f2f46f609199099f90c9929bf4f08a9079856b0827efda175674c6af5648e",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Expand ownership review to the genuine InfoWin startup/exit, init, timer callback and bounds configurator affected by same-symbol BSS offsets. Their source/code bodies are not authorized for unrelated edits or function projection; preserve all existing claims. Only draw_text, setup_text and editor drawing bodies are projected in the manual current-master comparison. Original task baseline remains0b1d3d149; independently reviewed Sprite commit8615e497e is already integrated before this manual comparison, not silently waived or reset in native preservation."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4547264,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4547296,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4559520,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4559456,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4558176,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "4005070c73ff9c1eb7d071a41f4d4b3f180d00337ba2fc08904f351d37abae71",
+  "request_id": "review-infowin-repacked-storage-readers",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:info-palette-view-oct18"
+}

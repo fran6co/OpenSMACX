@@ -21,14 +21,29 @@ MEMBER_UNBOUNDED = re.compile(r"// RECOVERY_OBJECT: v3 (0x[0-9A-Fa-f]+) (\S+) me
 MEMBER_BOUNDED = re.compile(r"// RECOVERY_OBJECT: v3 (0x[0-9A-Fa-f]+) (0x[0-9A-Fa-f]+) (\S+) (0x[0-9A-Fa-f]+) member (\S+) (\S+)\s*")
 TARGET_UNBOUNDED = re.compile(r"// RECOVERY_OBJECT: v4 (0x[0-9A-Fa-f]+) (\S+) target (\S+)\s*")
 TARGET_BOUNDED = re.compile(r"// RECOVERY_OBJECT: v4 (0x[0-9A-Fa-f]+) (0x[0-9A-Fa-f]+) (\S+) (0x[0-9A-Fa-f]+) target (\S+)\s*")
+SLICE_BOUNDED = re.compile(r"// RECOVERY_OBJECT: v5 (0x[0-9A-Fa-f]+) (0x[0-9A-Fa-f]+) (\S+) (0x[0-9A-Fa-f]+) member (\S+) (\S+)\s*")
 _MEMBER_SEGMENT = re.compile(r"([A-Za-z_][A-Za-z_0-9]*)(?:\[(0|[1-9][0-9]*)\])?\Z")
 _ROOT_ARRAY_SEGMENT = re.compile(r"\[(0|[1-9][0-9]*)\]\Z")
+_ROOT_ARRAY_SLICE = re.compile(r"\[(0|[1-9][0-9]*):(0|[1-9][0-9]*)\]\Z")
+
+
+def array_slice_bounds(member_path):
+    """Recognize only a nonempty canonical half-open root-array slice."""
+    if not isinstance(member_path, tuple) or len(member_path) != 1 or not isinstance(member_path[0], str):
+        return None
+    match = _ROOT_ARRAY_SLICE.fullmatch(member_path[0])
+    if match is None:
+        return None
+    begin, end = map(int, match.groups())
+    return (begin, end) if begin < end else None
 
 
 def valid_member_path(member_path) -> bool:
-    """Accept named members, with an optional canonical root-array index."""
+    """Accept legacy member paths or one bounded root-array slice."""
     if not isinstance(member_path, tuple) or not member_path:
         return False
+    if array_slice_bounds(member_path) is not None:
+        return True
     return all(isinstance(part, str) and (
         _MEMBER_SEGMENT.fullmatch(part) is not None
         or (index == 0 and _ROOT_ARRAY_SEGMENT.fullmatch(part) is not None)
@@ -60,6 +75,8 @@ class ObjectBinding:
             require_text(self.parent_symbol, "parent object symbol")
             if not valid_member_path(self.member_path):
                 raise ValueError("object member path must contain names and canonical fixed indices")
+            if array_slice_bounds(self.member_path) is not None and self.span is None:
+                raise ValueError("array slice object requires original bounds and evidence")
         if self.target_symbol is not None:
             require_text(self.target_symbol, "target object symbol")
             if self.parent_symbol is not None:
@@ -119,6 +136,8 @@ def parse_objects(text: str, path: str, pin: str, *, address_space: str) -> tupl
         match = MEMBER_BOUNDED.fullmatch(source_line.strip())
         if match:
             start, end, symbol, evidence, parent, member_path = match.groups()
+            if array_slice_bounds((member_path,)) is not None:
+                raise ValueError("array slice object requires version 5")
             bindings.append(ObjectBinding(Origin(pin, address_space, int(start, 16)), symbol, path, line,
                                           Span(int(start, 16), int(end, 16)), Origin(pin, address_space, int(evidence, 16)),
                                           parent, tuple(member_path.split("."))))
@@ -126,8 +145,20 @@ def parse_objects(text: str, path: str, pin: str, *, address_space: str) -> tupl
         match = MEMBER_UNBOUNDED.fullmatch(source_line.strip())
         if match:
             start, symbol, parent, member_path = match.groups()
+            if array_slice_bounds((member_path,)) is not None:
+                raise ValueError("array slice object requires version 5")
             bindings.append(ObjectBinding(Origin(pin, address_space, int(start, 16)), symbol, path, line,
                                           parent_symbol=parent, member_path=tuple(member_path.split("."))))
+            continue
+        match = SLICE_BOUNDED.fullmatch(source_line.strip())
+        if match:
+            start, end, symbol, evidence, parent, member_path = match.groups()
+            if array_slice_bounds((member_path,)) is None:
+                raise ValueError("version 5 requires one canonical nonempty root-array slice")
+            bindings.append(ObjectBinding(Origin(pin, address_space, int(start, 16)), symbol, path, line,
+                                          Span(int(start, 16), int(end, 16)),
+                                          Origin(pin, address_space, int(evidence, 16)),
+                                          parent, (member_path,)))
             continue
         match = PATTERN.fullmatch(source_line.strip())
         if match is None:

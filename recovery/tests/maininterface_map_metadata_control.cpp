@@ -17,8 +17,9 @@ struct BoxStyle {};
 static std::vector<std::string> lines;
 static std::vector<int> labels;
 static int updates;
+static int primary_colour, shadow_colour;
 struct Buffer {
-    void set_text_color(int,int,int,int) {}
+    void set_text_color(int a,int b,int,int) { primary_colour=a; shadow_colour=b; }
     void set_font(Font*,Font*,Font*,int) {}
     void box_sprite(RECT*,BoxStyle*) {}
     void write_l(const char* s,int,int,size_t n) { lines.push_back(std::string(s,n)); }
@@ -32,7 +33,7 @@ struct MainInterface : Buffer {
 };
 static MainInterface MainInterfaceGlobal;
 static int WinScreenWidth = 1024;
-static int InfoTextColors[4][2];
+static int TextColourTable[195];
 static BoxStyle InterfaceBoxStyles[1];
 static int MapEditorPaintId, MapEditorBrushId = 1;
 static Font font;
@@ -56,8 +57,10 @@ int main() {
     strcpy(MapFilePath,"world.map");
     for (int cloud=0;cloud!=3;++cloud) {
         MapCloudCover=cloud; MapSizePlanet=(cloud+1)%3;
+        TextColourTable[22]=100+cloud; TextColourTable[23]=200+cloud;
         lines.clear(); labels.clear();
         MainInterfaceGlobal.draw_edit_pane();
+        assert(primary_colour==100+cloud && shadow_colour==200+cloud);
         assert(lines.size()==6);
         const char* expected=cloud==0?"label: {dry}":cloud==1?"label: {medium}":"label: {wet}";
         assert(lines[4]==expected);

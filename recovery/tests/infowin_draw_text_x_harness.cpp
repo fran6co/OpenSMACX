@@ -34,7 +34,7 @@ static char *infowin_host_strcpy(char *to, const char *from) {
 
 static int InfoFactionTextColors[8];
 static int InfoFactionShadowColors[8];
-static int InfoTextColors[4][2];
+static int TextColourTable[195];
 struct GameDataFields { int faction_rankings_[9]; };
 struct GameDataState { GameDataFields fields_; };
 static GameDataState GameDataStateStorage;

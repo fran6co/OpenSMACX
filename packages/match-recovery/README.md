@@ -2673,6 +2673,25 @@ combined. Bounded v4 continues to require fresh layout and exact original
 initializer/reference checks; the alias alone is not evidence of storage extent
 or target ownership.
 
+Version 5 binds a bounded historical identity to a half-open root-array slice:
+
+```cpp
+// RECOVERY_OBJECT: v5 <start> <end> <old-symbol> <evidence-address> member <parent-symbol> [begin:end]
+```
+
+`[begin:end]` must be the sole path segment, with canonical decimal bounds
+`0 <= begin < end <= element_count`. No unbounded form, named-member slice,
+nested path or pointer traversal is supported; legacy v3 syntax is unchanged.
+Fresh standalone CodeView array metadata determines element size/count and thus
+the slice's byte offset and extent. Invalid extents, unsupported element/subscript
+metadata and a pointer in place of an array refuse. Arrays of pointers select
+pointer storage only. Reports retain array/element type indices and explicit
+range metadata, with no invented slice type (`type_index` is null). Initial data
+must match the complete retained original bound, and existing parent-base,
+ownership, relocation and namespace requirements still apply. The guarded
+rehome writer preserves the original symbol, span, evidence and interpretation
+when replacing a direct binding with v5; it does not grant acceptance.
+
 The candidate extent comes from one standalone CodeView 5 data definition for
 the parent and each named direct embedded member. Pointer traversal, inherited
 members, missing or unresolved forward definitions, ambiguous layouts and unsupported type records remain

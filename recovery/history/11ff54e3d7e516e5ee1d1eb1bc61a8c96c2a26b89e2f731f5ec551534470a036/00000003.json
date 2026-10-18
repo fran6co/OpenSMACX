@@ -1,0 +1,21 @@
+{
+  "event_id": "965ea09b1f94a96e270bdc74e1b9792b2edbd32f664cbaa7cf3189c7b0a9a4ce",
+  "payload": {
+    "affects": [
+      "entity-f3ccd3b4e8a744eb684318b53494e7eb7060417a41fc7fd3e5fbabec35e90544"
+    ],
+    "author": "coordinator",
+    "discovery_id": "information-heading-literal-order",
+    "evidence": [
+      "Palette runtime makes the centre text visible: candidate reads Mission Year: Weapon Type2101. That is a hint, not proof. Pinned instructions 45650C/50F/519 append label0;456521..527 append literal682E94 colon-space;45652F..535 append68518C opening brace;45653E calls say_year;456546..54C append685190 closing brace. Independently read all three literal bytes from pinned image. Current source instead calls label_get(0x63), say_year, then appends opening brace.",
+      "The existing setup_text full-body harness checks case-zero row count and energy callbacks but not the heading. Correct this proven same-owner translation now rather than leave the newly visible error for function-local matching."
+    ],
+    "hypothesis": "The case-zero InfoWin heading substitutes label 0x63 for an opening brace and omits the original closing brace.",
+    "kind": "discovery"
+  },
+  "previous_event": "1a3f25f118dd20c60edd2a652c5bc527e105b1dff37b0e1160e1ea1984ddc09d",
+  "request_id": "information-heading-literal-order",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:info-palette-view-oct18"
+}

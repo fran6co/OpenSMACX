@@ -1,0 +1,21 @@
+{
+  "event_id": "242b8b966698198e1b33dc1d8917c1bfce2552c01960d37bbf7105fe1800bf67",
+  "payload": {
+    "affects": [
+      "entity-156a6ba609268491740f3429629529142f28b21c3540301074ec29680f3c01ca"
+    ],
+    "author": "coordinator",
+    "discovery_id": "editor-pane-shared-palette-caller",
+    "evidence": [
+      "Live src/maininterface.cpp has extern InfoTextColors and draw_edit_pane reads pair[0][0/1]. Complete pinned45B550..45BBF7 decode retains exact same palette addresses; reads=[('0x45b59a', 'mov', 'ecx, dword ptr [0x8c6bb4]'), ('0x45b5a3', 'mov', 'eax, dword ptr [0x8c6bb8]')]",
+      "Removing fabricated InfoWin storage without updating this genuine caller would fail link. Coordinate caller now; do not add another alias/storage or postpone structural closure."
+    ],
+    "hypothesis": "MainInterface::draw_edit_pane reads the same shared palette slice and must migrate with InfoWin, not retain a disconnected array.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "editor-pane-shared-palette-caller",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:info-palette-view-oct18"
+}

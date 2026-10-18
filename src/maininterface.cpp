@@ -41,6 +41,7 @@ Status: Complete
 // kind      game
 #include "stdafx.h"
 #include "interface_fonts.h"
+#include "interface_palette.h"
 #include "maininterface.h"
 #include "messagewin.h"
 #include "worldwin.h"
@@ -64,7 +65,6 @@ Status: Complete
 #include "wave.h"
 #include "strings.h"
 
-extern int InfoTextColors[4][2];
 // Original dword writes/reads in45D170,45C3A0,45CA40 respectively.
 // Independently read initial bytes:7D3934/7D3938/7D3944 all zero;
 // 68526C is initialized to one. Names retain bounded observed roles.
@@ -97,7 +97,7 @@ void MainInterface::draw_edit_pane() {
     if (WinScreenWidth < 1024 || MainInterfaceGlobal.button_group_[0].field_84_ != 1002) return;
     Buffer &canvas = *static_cast<Buffer *>(&MainInterfaceGlobal);
     RECT rect = editor_text_rect_;
-    canvas.set_text_color(InfoTextColors[0][0], InfoTextColors[0][1], 1, 1);
+    canvas.set_text_color(TextColourTable[22], TextColourTable[23], 1, 1);
     Font *style_one = find_font(10, 1);
     Font *style_two = find_font(10, 2);
     Font *normal = find_font(10, 0);
