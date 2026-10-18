@@ -460,9 +460,10 @@ Return Value: n/a
 Purpose: Close the network: stop the voice transmitter, reset the timers
          and slot state, and - when a DirectPlay session object exists -
          release it through its interface and drain the player slots.
-// ORIGINAL: 0x0062E010 ?close@Net@@QAEXXZ 0x0062E010-0x0062E2CF
+// ORIGINAL: 0x0062E010 ?close@Net@@QAEXXZ 0x0062E010-0x0062E24A
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned PE and independent IDA9/Ghidra extents agree on62E010..62E24A; all570bytes are covered by184entry-reachable instructions ending RET62E249, with no escaping branch.", "The former interval through62E2CF contains6NOPs, independently mapped poll_services62E250..62E299,7NOPs and47bytes of independently mapped join_service62E2A0..62E41C. Neighbor identities/spans and all historical claims remain; former erroneous bounds survive in Git37368691c. No C++ behavior changes."], "reason": "Bound Net::close by its own reachable return; the previous interval consumed two separately mapped methods."}
 // symbol    ?close@Net@@QAEXXZ
-// size      736 bytes
+// size      570 bytes
 // kind      game
 // The typed body covers both native halves: DirectPlay/worker rendezvous and
 // lock teardown, then handle/string/buffer release, slot and receiver reset,
