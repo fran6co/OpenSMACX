@@ -1,0 +1,25 @@
+{
+  "event_id": "35dfede5615d7779f8b8b9f83ea71e24e1aef3d9c0307862949937e2d101f945",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "CMakeLists.txt",
+      "recovery/tests/test_application_compiler_profiles.py",
+      "recovery/tests/test_tutorial_helper_boundaries_oct18.py",
+      "src/tutwin_callouts.cpp"
+    ],
+    "evidence": [
+      "Authorize a bounded source-ownership experiment: move the eight complete unchanged mapped member definitions and useful evidence to tutwin_callouts.cpp, preserving genuine members/declarations and all identities/spans/claims. Keep global objects/lifetimes in their existing TU. Existing TutWin cpp and actual-source tutorial test permissions remain in force.",
+      "CMake may add only that ordinary source input and apply the same existing TutWin frame-preserving /Oy- source property. No global or per-function optimization changes, artificial noinline/export pragmas, fake wrappers, copied code, class layout changes or historical TU assertions. Update affected host-test paths/profile expectations and add actual-body helper/caller controls.",
+      "Audit/correct tour1 only where full pinned call/operand/evaluation evidence supports real helper calls; no guessed semantic normalization. BaseWin/DesignWin/SocialWin are observation-only callers, not permission to change their bodies. Unanticipated outside-owner discoveries require further scope review.",
+      "Use frozen full-TU overlays with unchanged replica and deliberate mapped-body damage controls before adopting source organization. Measure all affected helpers/callers, compile/link full candidate, verify physical changed-object closure and all historical exact/reference classes, and independently review before coordinator integration. Build-graph and linked-retention unknowns remain unknown; no baseline resets or automatic acceptance claim."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "486bc8ce25fa88226cef6858b13104865b42ffeb3ceb64178d39095eba71b8c5",
+  "request_id": "tutwin-helper-call-boundaries-scope-oct18",
+  "schema_version": 1,
+  "sequence": 18,
+  "stream": "task:tutwin-owner-coverage-wave"
+}

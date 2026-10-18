@@ -1,0 +1,33 @@
+{
+  "event_id": "486bc8ce25fa88226cef6858b13104865b42ffeb3ceb64178d39095eba71b8c5",
+  "payload": {
+    "affects": [
+      "entity-03332c70790015edd735436bc14d900727165a24d517a8b47082ce1c02d1859f",
+      "entity-2a76fb2d9795bdacdacca3dd57457bb0c9290e211d4a08201554536d5faf1af9",
+      "entity-3fbbfc40ac0d81581adcbaa3d045aec735d623ce94e1fb48bf091e8704280f6f",
+      "entity-4055ba0c2008db804f0236e4873f4c16ee7e84ae6cc051cf337399b713cc2cb1",
+      "entity-43810c875dedd18fa5aae72d04adf72cae9b3080d63781057e162ba42685e37b",
+      "entity-856d26e52fc83d5b5a875a5a548b1f2e164452b989d29c1aa8f5b2bbe80f282a",
+      "entity-924f2a39c3f53d08afaf5c63d3d60ffc186b1bd033760d043f6f503cbf30b74c",
+      "entity-a49f68acb79580d107de29fb55ee45d9ecb17e3afb83edb81a90321c0526885f",
+      "entity-a642432aed871f0aae2af06ab95386057381f19ef52504b8b60b94f0fd1e43ff",
+      "entity-ab45ccf96668cd41811a2ee60c77c81246e10a3c4a25104bc87e378371496c61",
+      "entity-d2f5113d0c452ff8d04375557b47dc1ca14b71fbd27615ef3f54772e0b640a1c"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "tutwin-helper-call-boundaries-oct18",
+    "evidence": [
+      "Pinned tour7 calls des_rect9,iface_rect3,do_des5; tour5 calls soc_rect6,iface_rect5,do_soc1. Fresh actual master build-7e35tpn3 retains their expanded source forms. Preceding physical investigation of build-hvyg13db finds no helper relocations and17/12 client_to_screen+tut_win chains. Source/type conversion cleanup does not repair this call topology.",
+      "Pinned tour1 calls base_rect9,iface_rect8,do_base2,do_iface2; current source instead duplicates several operations directly. Keep tour6 direct callout chains unchanged: pinned/current each have8 client_to_screen+tut_win chains.",
+      "Eight ordinary TutWin member helper definitions already follow the tour callers in tutwin.cpp. Existing Time and technology/terrain recovery evidence rules out repeating a definition-order shuffle as a presumed anti-inlining solution. A separate current implementation TU is an investigation, not proof of historical TU provenance.",
+      "Cross-TU callers remain BaseWin do_base5,DesignWin des_rect1,SocialWin soc_rect1; inspect their original/compiled targets and entire affected output. Preserve original arithmetic, callback-sensitive evaluation, cancellation, lifecycle, all mappings/claims and immutable task baseline."
+    ],
+    "hypothesis": "Recover original TutWin rectangle/callout helper boundaries and missing tour1 helper calls through ordinary member implementation ownership, not artificial noinline flags or original-address wrappers.",
+    "kind": "discovery"
+  },
+  "previous_event": "5911b50ee8d731219db817a1d66ba1871db2c94aea3daaa52afeb3b8e276152a",
+  "request_id": "tutwin-helper-call-boundaries-oct18",
+  "schema_version": 1,
+  "sequence": 17,
+  "stream": "task:tutwin-owner-coverage-wave"
+}
