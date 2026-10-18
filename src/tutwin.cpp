@@ -1102,31 +1102,31 @@ void TutWin::tour7() {
     temporary = (TutWinDesWindow.component_panel_rects_[
         DesignWin::component_panel_chassis]);
     des_rect(&temporary, &x, &y);
-    if (tut_win(MapWinTable[0] ? static_cast<GraphicWin *>(MapWinTable[0]) : 0,
+    if (tut_win(MapWinTable[0],
     "DESTOURCHAS", x, y, 0, 2, -1, -1) == 0) goto tour7_cleanup;
     temporary = (TutWinDesWindow.component_panel_rects_[
         DesignWin::component_panel_weapon]);
     des_rect(&temporary, &x, &y);
-    if (tut_win(MapWinTable[0] ? static_cast<GraphicWin *>(MapWinTable[0]) : 0,
+    if (tut_win(MapWinTable[0],
     "DESTOURWEAP", x, y, 0, 2, -1, -1) == 0) goto tour7_cleanup;
     temporary = (TutWinDesWindow.component_panel_rects_[
         DesignWin::component_panel_armor]);
     des_rect(&temporary, &x, &y);
-    if (tut_win(MapWinTable[0] ? static_cast<GraphicWin *>(MapWinTable[0]) : 0,
+    if (tut_win(MapWinTable[0],
     "DESTOURARM", x, y, 0, 2, -1, -1) == 0) goto tour7_cleanup;
     temporary = (TutWinDesWindow.component_panel_rects_[
         DesignWin::component_panel_reactor]);
     des_rect(&temporary, &x, &y);
-    if (tut_win(MapWinTable[0] ? static_cast<GraphicWin *>(MapWinTable[0]) : 0,
+    if (tut_win(MapWinTable[0],
     "DESTOURREACTOR", x, y, 0, 2, -1, -1) == 0) goto tour7_cleanup;
     temporary = (TutWinDesWindow.component_panel_rects_[
         DesignWin::component_panel_special_one]);
     des_rect(&temporary, &x, &y);
-    if (tut_win(MapWinTable[0] ? static_cast<GraphicWin *>(MapWinTable[0]) : 0,
+    if (tut_win(MapWinTable[0],
     "DESTOURABILITY", x, y, 0, 2, -1, -1) == 0) goto tour7_cleanup;
     temporary = (TutWinDesWindow.field_B2C_rect_);
     des_rect(&temporary, &x, &y);
-    if (tut_win(MapWinTable[0] ? static_cast<GraphicWin *>(MapWinTable[0]) : 0,
+    if (tut_win(MapWinTable[0],
     "DESTOURCOST", x, y, 0, 2, -1, -1) == 0) goto tour7_cleanup;
     temporary.left = TutWinDesWindow.field_B3C_;
     temporary.top = TutWinDesWindow.field_B40_;
@@ -1134,27 +1134,27 @@ void TutWin::tour7() {
     temporary.bottom = TutWinDesWindow.field_B48_;
     temporary = (temporary);
     des_rect(&temporary, &x, &y);
-    if (tut_win(MapWinTable[0] ? static_cast<GraphicWin *>(MapWinTable[0]) : 0,
+    if (tut_win(MapWinTable[0],
     "DESTOURSTATS", x, y, 0, 2, -1, -1) == 0) goto tour7_cleanup;
     temporary = (TutWinDesWindow.field_B0C_rect_);
     iface_rect(&temporary, &x, &y);
-    if (tut_win(MapWinTable[0] ? static_cast<GraphicWin *>(MapWinTable[0]) : 0,
+    if (tut_win(MapWinTable[0],
     "DESTOURBAR", x, y, 0, 2, -1, -1) == 0) goto tour7_cleanup;
     temporary = (TutWinDesWindow.field_CBC_rect_);
     iface_rect(&temporary, &x, &y);
-    if (tut_win(MapWinTable[0] ? static_cast<GraphicWin *>(MapWinTable[0]) : 0,
+    if (tut_win(MapWinTable[0],
     "DESTOURARROWS", x, y, 0, 2, -1, -1) == 0) goto tour7_cleanup;
     temporary = (TutWinDesWindow.caption_rect_);
     iface_rect(&temporary, &x, &y);
-    if (tut_win(MapWinTable[0] ? static_cast<GraphicWin *>(MapWinTable[0]) : 0,
+    if (tut_win(MapWinTable[0],
     "DESTOURPRESETS", x, y, 0, 2, -1, -1) == 0) goto tour7_cleanup;
     temporary = (TutWinDesWindow.lower_panel_rows_[DesignWin::lower_panel_done]);
     des_rect(&temporary, &x, &y);
-    if (tut_win(MapWinTable[0] ? static_cast<GraphicWin *>(MapWinTable[0]) : 0,
+    if (tut_win(MapWinTable[0],
     "DESTOURDONE", x, y, 0, 2, -1, -1) == 0) goto tour7_cleanup;
     temporary = (TutWinDesWindow.field_B5C_rect_);
     des_rect(&temporary, &x, &y);
-    if (tut_win(MapWinTable[0] ? static_cast<GraphicWin *>(MapWinTable[0]) : 0,
+    if (tut_win(MapWinTable[0],
     "DESTOURAPPLY", x, y, 0, 2, -1, -1) == 0) goto tour7_cleanup;
     if (!do_des(&TutWinDesWindow.lower_panel_rows_[DesignWin::lower_panel_rename],
                 "DESTOURRENAME", 2))
@@ -1194,19 +1194,19 @@ void TutWin::tour5() {
 
     temporary = (TutWinSocWindow.categoryHeaders_[1]);
     soc_rect(&temporary, &x, &y);
-    if (tut_win(MapWinTable[0] ? static_cast<GraphicWin *>(MapWinTable[0]) : 0,
+    if (tut_win(MapWinTable[0],
     "SOCTOURMAIN", x, y, 0, 2, -1, -1) == 0) goto tour5_cleanup;
     temporary = (TutWinSocWindow.tooltipFactionPower_);
     soc_rect(&temporary, &x, &y);
-    if (tut_win(MapWinTable[0] ? static_cast<GraphicWin *>(MapWinTable[0]) : 0,
+    if (tut_win(MapWinTable[0],
     "SOCTOURFACTION", x, y, 0, 2, -1, -1) == 0) goto tour5_cleanup;
     temporary = (TutWinSocWindow.tooltipEffects_);
     iface_rect(&temporary, &x, &y);
-    if (tut_win(MapWinTable[0] ? static_cast<GraphicWin *>(MapWinTable[0]) : 0,
+    if (tut_win(MapWinTable[0],
     "SOCTOUROVERVIEW", x, y, 0, 2, -1, -1) == 0) goto tour5_cleanup;
     temporary = (TutWinSocWindow.tutRect1_);
     soc_rect(&temporary, &x, &y);
-    if (tut_win(MapWinTable[0] ? static_cast<GraphicWin *>(MapWinTable[0]) : 0,
+    if (tut_win(MapWinTable[0],
     "SOCTOUREFFECTS", x, y, 0, 2, -1, -1) == 0) goto tour5_cleanup;
     for (i = 0; i < 10; ++i) {
         StringTemp[0] = 0;
@@ -1214,33 +1214,33 @@ void TutWin::tour5() {
         say_num(i);
         temporary = TutWinSocWindow.tutRects2_[i];
         soc_rect(&temporary, &x, &y);
-        if (tut_win(MapWinTable[0] ? static_cast<GraphicWin *>(MapWinTable[0]) : 0,
+        if (tut_win(MapWinTable[0],
                     StringTemp, x, y, 0, 2, -1, -1) == 0) goto tour5_cleanup;
     }
 
     temporary = (TutWinSocWindow.tooltipEconomy_);
     iface_rect(&temporary, &x, &y);
-    if (tut_win(MapWinTable[0] ? static_cast<GraphicWin *>(MapWinTable[0]) : 0,
+    if (tut_win(MapWinTable[0],
     "SOCTOURECON", x, y, 0, 2, -1, -1) == 0) goto tour5_cleanup;
     temporary = (TutWinSocWindow.tooltipPsych_);
     iface_rect(&temporary, &x, &y);
-    if (tut_win(MapWinTable[0] ? static_cast<GraphicWin *>(MapWinTable[0]) : 0,
+    if (tut_win(MapWinTable[0],
     "SOCTOURPSYCH", x, y, 0, 2, -1, -1) == 0) goto tour5_cleanup;
     temporary = (TutWinSocWindow.tooltipLabs_);
     iface_rect(&temporary, &x, &y);
-    if (tut_win(MapWinTable[0] ? static_cast<GraphicWin *>(MapWinTable[0]) : 0,
+    if (tut_win(MapWinTable[0],
     "SOCTOURLABS", x, y, 0, 2, -1, -1) == 0) goto tour5_cleanup;
     temporary = (TutWinSocWindow.tutRect14_);
     iface_rect(&temporary, &x, &y);
-    if (tut_win(MapWinTable[0] ? static_cast<GraphicWin *>(MapWinTable[0]) : 0,
+    if (tut_win(MapWinTable[0],
     "SOCTOURINFO", x, y, 0, 2, -1, -1) == 0) goto tour5_cleanup;
     temporary = (TutWinSocWindow.tutRect11_);
     soc_rect(&temporary, &x, &y);
-    if (tut_win(MapWinTable[0] ? static_cast<GraphicWin *>(MapWinTable[0]) : 0,
+    if (tut_win(MapWinTable[0],
     "SOCTOURCANCEL", x, y, 0, 2, -1, -1) == 0) goto tour5_cleanup;
     temporary = (TutWinSocWindow.tutRect12_);
     soc_rect(&temporary, &x, &y);
-    if (tut_win(MapWinTable[0] ? static_cast<GraphicWin *>(MapWinTable[0]) : 0,
+    if (tut_win(MapWinTable[0],
     "SOCTOURRESET", x, y, 0, 2, -1, -1) == 0) goto tour5_cleanup;
     temporary = TutWinSocWindow.tutRect13_;
     do_soc(&temporary, "SOCTOUROK", 2);
@@ -1275,7 +1275,7 @@ void TutWin::tour6() {
     x = temporary.left + 5;
     y = temporary.top + (temporary.bottom - temporary.top) / 2;
     MainInterfaceGlobal.client_to_screen(&x, &y);
-    if (!tut_win(MapWinTable[0] ? static_cast<GraphicWin *>(MapWinTable[0]) : 0,
+    if (!tut_win(MapWinTable[0],
                  "DRONETOUR1", x, y, 0, 2, -1, -1)) return;
     temporary = TutWinBaseWindow.garrison_rect_;
     if (!tut_callout(*this, MainInterfaceGlobal, temporary, "DRONETOUR2")) return;
@@ -1287,7 +1287,7 @@ void TutWin::tour6() {
     x = temporary.left + 5;
     y = temporary.top + (temporary.bottom - temporary.top) / 2;
     MainInterfaceGlobal.client_to_screen(&x, &y);
-    if (!tut_win(MapWinTable[0] ? static_cast<GraphicWin *>(MapWinTable[0]) : 0,
+    if (!tut_win(MapWinTable[0],
                  "DRONETOUR5", x, y, 0, 2, -1, -1)) return;
 
     TutWinBaseWindow.draw_energy_alloc(2);
