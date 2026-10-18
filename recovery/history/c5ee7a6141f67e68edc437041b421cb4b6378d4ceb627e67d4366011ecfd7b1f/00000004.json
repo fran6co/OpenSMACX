@@ -1,0 +1,18 @@
+{
+  "event_id": "653c907e03bdc8f2799ec6f9763d58389b0efa0b7b64ff717ab29e16bca15b0a",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "initialize-counter-before-state-store",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Reject this declaration-order proposal: the counter-before-state-store candidate does not recover the original scheduling under either settled trial. Preserve current Console source and all identities/claims; no further spelling expansion for this hypothesis without new structural/compiler evidence.",
+      "No bug fix, exclusion or recovery completion follows from this negative decision. The original signed map loop, partial bits and callback semantics remain unchanged."
+    ]
+  },
+  "previous_event": "6fe5a6370c36a3819191d4e5970eea2a9446edfb40ccfeb73d4c9fa1f07921ad",
+  "request_id": "initialize-counter-before-state-store-rejected",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:fast-output-counter-oct18"
+}

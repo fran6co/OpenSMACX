@@ -1,0 +1,18 @@
+{
+  "event_id": "c1e685700016bc3f89c06d7914ca80de72384dad2a99676d7151714545ae2952",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "hit-only-output-local",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Source:src/alphamenu.cpp AlphaMenu::on_mouse_move retains separate input y and output position lifetimes. Spot::check writes a nonnull position on every successful return, and the miss path does not consume it. The redundant initialization is removed; all capture/base/redraw/update callback order remains.",
+      "Source:recovery/tests/test_alphamenu_mouse_hit_output_oct18.py executes actual AlphaMenu and Spot bodies for signed hits/misses, direct output writes/nonwrites, delegation and capture ordering, with damage controls. Native record alone granted the original historical byte obligation; manual scoped verification is not full runtime/game/automatic acceptance."
+    ]
+  },
+  "previous_event": "678b9ac8806bcc49d33b4bd574b2fceff351164e4be71c3d16d9beabda305228",
+  "request_id": "hit-only-output-local-incorporated",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:fast-output-counter-oct18"
+}

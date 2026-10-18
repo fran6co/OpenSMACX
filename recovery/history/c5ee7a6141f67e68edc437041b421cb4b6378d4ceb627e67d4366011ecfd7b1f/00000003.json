@@ -1,0 +1,20 @@
+{
+  "event_id": "6fe5a6370c36a3819191d4e5970eea2a9446edfb40ccfeb73d4c9fa1f07921ad",
+  "payload": {
+    "affects": [
+      "entity-9ce6e19ec58f8a07e651d0fbfc9723eaf701916c5de33f78527d9e8eac6bc7a7"
+    ],
+    "author": "coordinator",
+    "discovery_id": "initialize-counter-before-state-store",
+    "evidence": [
+      "The bounded task authorization fixes original/source evidence and one immutable full-TU candidate. Native local screen controls pass under both settled trials; no flag, header, layout, symbol or original-extent change."
+    ],
+    "hypothesis": "Initialize the side-effect-free editor counter before the game-state store to restore original instruction scheduling.",
+    "kind": "discovery"
+  },
+  "previous_event": "c1e685700016bc3f89c06d7914ca80de72384dad2a99676d7151714545ae2952",
+  "request_id": "initialize-counter-before-state-store",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:fast-output-counter-oct18"
+}

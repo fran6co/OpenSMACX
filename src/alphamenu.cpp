@@ -801,7 +801,7 @@ void AlphaMenu::hide() {
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // Historical seed observations (not fresh measurements or acceptance):
 // TRIED: if/else polarity flipped to match layout (jne first, matches); remaining MISMATCH is the compiler omitting the EBP frame that the original allocates (esp-relative &a2 suffices here), not reproduced by reordering statements
-// ORIGINAL: 0x00403550 ?on_mouse_move@AlphaMenu@@QAEXHH@Z 0x00403550-0x0040360F
+// ORIGINAL: 0x00403550 ?on_mouse_move@AlphaMenu@@QAEXHH@Z 0x00403550-0x0040360F BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00403550.cpp"], "reason": "The original menu mouse body updates Menu spot selection and Win pointer capture through the inherited slot-17 callback, whose product spelling is on_mouse_move."}
 // symbol    ?on_mouse_move@AlphaMenu@@UAEXHH@Z
 void AlphaMenu::on_mouse_move(int x, int y) {
@@ -812,7 +812,8 @@ void AlphaMenu::on_mouse_move(int x, int y) {
         WinPointerOwner4 = 0;
     }
 
-    int position = y;
+    // Spot writes the position on every hit; the miss path never reads it.
+    int position;
     const int hit = spot_.check(x, y, &position, 0);
     if (hit == -1) {
         MenuSelection = -1;

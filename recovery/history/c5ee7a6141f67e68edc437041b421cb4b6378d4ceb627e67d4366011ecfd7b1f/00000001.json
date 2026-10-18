@@ -1,0 +1,20 @@
+{
+  "event_id": "678b9ac8806bcc49d33b4bd574b2fceff351164e4be71c3d16d9beabda305228",
+  "payload": {
+    "affects": [
+      "entity-baf7186d2d579790de654df0870044bb6dc2ae43906bceccccc99d90d33a1366"
+    ],
+    "author": "coordinator",
+    "discovery_id": "hit-only-output-local",
+    "evidence": [
+      "The bounded task authorization fixes original/source evidence and one immutable full-TU candidate. Native local screen controls pass under both settled trials; no flag, header, layout, symbol or original-extent change."
+    ],
+    "hypothesis": "Use a true hit-only Spot position output local, not an initialized copy of the input y.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "hit-only-output-local",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:fast-output-counter-oct18"
+}
