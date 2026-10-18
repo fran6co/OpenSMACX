@@ -3804,30 +3804,31 @@ The historical whole-function comparator supports one original image span, or
 a narrowly verified i386 C++-EH primary/cold pair. The latter requires one
 independent code COMDAT with exactly one associated cleanup/handler child,
 complete frame registration, and independently valid ownership chains through
-`0x19930520` exception metadata on both the PE and COFF sides. Supported forms
-are the 18-byte or 21-byte single-action child (disp8 or disp32 `lea`, with a
-40-byte single-state metadata bundle), and a bounded 32-byte two-action child
-(`mov ecx,[ebp+disp8]; jmp`, then `mov ecx,[ebp+disp8]; add ecx,imm32; jmp`,
-then the handler, with an exact 48-byte two-state bundle). Two contiguous
-`lea ecx,[ebp+disp]; jmp` actions are also supported in 26-, 29- or 32-byte
-children with that two-state bundle. Original map entries partition the actions;
-compiled action boundaries are decoded independently and checked against their
-own map relocations. This remains a bounded extension within annotated cold
-extents, not discovery of arbitrary cleanup graphs. The two-action map
-must independently identify both cleanup starts and its state transitions;
-all pointer/branch relocations and addends are checked. Its first cleanup
-targets an undefined external destructor. The second may target an undefined
-external destructor or a separately bounded, independent local `??_D` helper;
-defined ordinary destructors and other cleanup forms remain unsupported.
-Original and compiled action inventories are recorded independently.
-The two sides may use different supported instruction lengths or action counts;
-binding proves ownership only, so ordinary byte comparison still reports a
-length/encoding mismatch. Section order, adjacency and generated label spelling do
-not bind a region. Every declared byte is compared independently; gaps are never
-read through. Only exact, relocation-free NOP/INT3 fill outside the declared
-extent, within the physical COFF alignment envelope after a terminated code
-boundary, can be omitted. Unsupported, ambiguous, shared or writable-executable
-regions refuse the complete subject; no primary-only fallback grants a claim.
+`0x19930520` exception metadata on both the PE and COFF sides. A cold child is
+bounded to at most 16 complete actions and one 10-byte handler stub (234 bytes
+total). Each action is exactly a frame-relative `lea ecx,[ebp+disp]; jmp`,
+`mov ecx,[ebp+disp8]; jmp`, or that `mov` followed by `add ecx,imm8/imm32`
+and a long `jmp`. The original and COFF maps are each parsed in full; their
+predecessor states must be exactly `-1, 0, 1, ...`, and every relocation,
+addend, action boundary and associated data/code extent is checked. COFF root
+ownership permits only its unique relocated handler registration edge. Original
+root screening checks the registration chain, rejects extra PE HIGHLOW operands
+into the cold span, and rejects decoded direct CALL/JMP targets there; it does
+not prove indirect reachability or dataflow.
+The action counts and boundaries are independently derived on the two sides,
+so differing supported encodings or counts are ownership evidence only and
+ordinary byte comparison can still report a mismatch. The first cleanup must
+target an undefined external destructor. Later cleanups may target undefined
+external destructors or separately bounded, independent local `??_D` helpers;
+defined ordinary destructors, arbitrary action forms and non-linear unwind
+graphs remain unsupported. This is a bounded extension within annotated cold
+extents, not discovery of arbitrary cleanup graphs. Section order, adjacency
+and generated label spelling do not bind a region. Every declared byte is
+compared independently; gaps are never read through. Only exact, relocation-free
+NOP/INT3 fill outside the declared extent, within the physical COFF alignment
+envelope after a terminated code boundary, can be omitted. Unsupported,
+ambiguous, shared or writable-executable regions refuse the complete subject;
+no primary-only fallback grants a claim.
 These remain historical relocation-masked claims, not proof of destructor or
 runtime target identity, EH runtime behavior, structure or linked acceptance.
 `original_asm` may still inspect only the primary span, but that diagnostic

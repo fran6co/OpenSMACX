@@ -1,9 +1,9 @@
 """Narrow owner proof for VC6's disjoint x86 C++-EH code regions.
 
-This binds narrowly observed VC6 one- and two-action cleanup layouts without
-assigning generated symbols by section order. It proves a root -> handler ->
-FuncInfo -> unwind cleanup chain in the pinned image and one COFF object. It
-returns bounded bytes for a caller to compare; it grants no match verdict.
+This binds bounded linear VC6 destructor-cleanup chains without assigning
+generated symbols by section order. It proves a root -> handler -> FuncInfo ->
+unwind cleanup chain in the pinned image and one COFF object. It returns
+bounded bytes for a caller to compare; it grants no match verdict.
 """
 
 from __future__ import annotations
@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from enum import StrEnum
 import struct
 
-from capstone import CS_ARCH_X86, CS_MODE_32, Cs, x86
+from capstone import CS_ARCH_X86, CS_GRP_CALL, CS_GRP_JUMP, CS_MODE_32, Cs, x86
 
 from ..binary import Relocation, RelocationKind
 from ..model import Span
@@ -26,8 +26,11 @@ _READ = 0x40000000
 _WRITE = 0x80000000
 _COMDAT = 0x00001000
 _FUNCINFO_MAGIC = 0x19930520
-_EH_BUNDLE_SIZE = 40
-_COLD_SIZES = {18: 8, 21: 11, 26: 16, 29: 19, 32: 22}
+_FUNCINFO_HEADER_SIZE = 32
+_MAX_CLEANUP_ACTIONS = 16
+_MAX_ACTION_SIZE = 14
+_HANDLER_STUB_SIZE = 10
+_MAX_COLD_SIZE = _MAX_CLEANUP_ACTIONS * _MAX_ACTION_SIZE + _HANDLER_STUB_SIZE
 _EH_RUNTIME = "___CxxFrameHandler"
 
 _ENGINE = Cs(CS_ARCH_X86, CS_MODE_32)
@@ -104,8 +107,9 @@ def _checked_spans(spans: tuple[tuple[int, int], ...]) -> tuple[Span, Span]:
     primary, cold = result
     if primary.start >= cold.start or primary.end > cold.start:
         raise ValueError("EH spans are reordered or overlap")
-    if cold.end - cold.start not in _COLD_SIZES:
-        raise ValueError("cold EH region must use a bounded supported VC6 extent")
+    cold_size = cold.end - cold.start
+    if not _HANDLER_STUB_SIZE < cold_size <= _MAX_COLD_SIZE:
+        raise ValueError("cold EH region exceeds the bounded linear VC6 extent")
     return primary, cold
 
 
@@ -154,16 +158,28 @@ def _registration_push(instructions, target: int) -> int | None:
     return matches[0]
 
 
-def _image_registration_edge(image: PeImage, primary: Span, code: bytes,
-                             target: int) -> None:
+def _image_registration_edge(image: PeImage, primary: Span, cold: Span,
+                             code: bytes, target: int) -> None:
     instructions = _decoded(code, primary.start)
     site = _registration_push(instructions, target)
     if site is None:
         raise ValueError("original root lacks one complete relocated EH registration chain")
+    for instruction in instructions:
+        if not (instruction.group(CS_GRP_CALL) or instruction.group(CS_GRP_JUMP)):
+            continue
+        if any(operand.type == x86.X86_OP_IMM
+               and cold.start <= (operand.imm & 0xFFFFFFFF) < cold.end
+               for operand in instruction.operands):
+            raise ValueError("original root has a direct relative edge into its EH child")
     offset = site - primary.start
     sites = image.absolute_sites(primary)
     if offset not in sites:
         raise ValueError("original handler PUSH lacks a PE HIGHLOW relocation")
+    for other in sites - {offset}:
+        value, = struct.unpack("<I", image.read(Span(primary.start + other,
+                                                      primary.start + other + 4)))
+        if cold.start <= value < cold.end:
+            raise ValueError("original root has an extra absolute edge into its EH child")
 
 
 def _exec_target(image: PeImage, target: int, *, outside: tuple[Span, ...]) -> None:
@@ -198,117 +214,171 @@ def _frame_cleanup_jump(instructions) -> bool:
             and instructions[1].encoding.imm_size == 4)
 
 
+def _frame_load(instruction) -> bool:
+    return (instruction.mnemonic == "mov" and len(instruction.operands) == 2
+            and instruction.operands[0].type == x86.X86_OP_REG
+            and instruction.operands[0].reg == x86.X86_REG_ECX
+            and instruction.operands[0].size == 4
+            and instruction.operands[1].type == x86.X86_OP_MEM
+            and instruction.operands[1].size == 4
+            and instruction.operands[1].mem.base == x86.X86_REG_EBP
+            and instruction.operands[1].mem.index == 0
+            and instruction.operands[1].mem.segment == 0
+            and instruction.size == 3
+            and instruction.bytes[:2] == b"\x8b\x4d"
+            and instruction.encoding.disp_size == 1)
+
+
+def _frame_add(instruction) -> bool:
+    return (instruction.mnemonic == "add" and len(instruction.operands) == 2
+            and instruction.operands[0].type == x86.X86_OP_REG
+            and instruction.operands[0].reg == x86.X86_REG_ECX
+            and instruction.operands[1].type == x86.X86_OP_IMM
+            and ((instruction.size == 3 and instruction.bytes[:2] == b"\x83\xc1"
+                  and instruction.encoding.imm_size == 1)
+                 or (instruction.size == 6 and instruction.bytes[:2] == b"\x81\xc1"
+                     and instruction.encoding.imm_size == 4)))
+
+
+def _cleanup_action(instructions) -> int:
+    """Return a cleanup JMP operand offset for one complete VC6 action."""
+    if _frame_cleanup_jump(instructions):
+        return instructions[1].address + instructions[1].encoding.imm_offset
+    if (len(instructions) == 2 and _frame_load(instructions[0])
+            and instructions[1].mnemonic == "jmp"
+            and instructions[1].size == 5 and instructions[1].bytes[0] == 0xE9
+            and len(instructions[1].operands) == 1
+            and instructions[1].operands[0].type == x86.X86_OP_IMM
+            and instructions[1].encoding.imm_offset == 1
+            and instructions[1].encoding.imm_size == 4):
+        return instructions[1].address + instructions[1].encoding.imm_offset
+    if (len(instructions) == 3 and _frame_load(instructions[0])
+            and _frame_add(instructions[1])
+            and instructions[2].mnemonic == "jmp"
+            and instructions[2].size == 5 and instructions[2].bytes[0] == 0xE9
+            and len(instructions[2].operands) == 1
+            and instructions[2].operands[0].type == x86.X86_OP_IMM
+            and instructions[2].encoding.imm_offset == 1
+            and instructions[2].encoding.imm_size == 4):
+        return instructions[2].address + instructions[2].encoding.imm_offset
+    raise ValueError("unwind map does not bound a supported complete frame cleanup action")
+
+
+def _handler_stub(code: bytes, base: int) -> tuple[int, int, int]:
+    """Return handler offset, FuncInfo immediate offset, and runtime target."""
+    if len(code) <= _HANDLER_STUB_SIZE:
+        raise ValueError("EH child is shorter than a cleanup plus handler stub")
+    handler_offset = len(code) - _HANDLER_STUB_SIZE
+    handler = code[handler_offset:]
+    instructions = _decoded(handler, base + handler_offset)
+    if (len(instructions) != 2 or instructions[0].mnemonic != "mov"
+            or len(instructions[0].operands) != 2
+            or instructions[0].operands[0].type != x86.X86_OP_REG
+            or instructions[0].operands[0].reg != x86.X86_REG_EAX
+            or instructions[0].size != 5 or instructions[0].bytes[0] != 0xB8
+            or instructions[0].encoding.imm_offset != 1
+            or instructions[0].encoding.imm_size != 4
+            or instructions[0].operands[1].type != x86.X86_OP_IMM
+            or instructions[1].mnemonic != "jmp" or instructions[1].size != 5
+            or instructions[1].bytes[0] != 0xE9
+            or instructions[1].encoding.imm_offset != 1
+            or instructions[1].encoding.imm_size != 4
+            or len(instructions[1].operands) != 1
+            or instructions[1].operands[0].type != x86.X86_OP_IMM):
+        raise ValueError("EH child does not end in the bounded FuncInfo runtime stub")
+    return (handler_offset,
+            handler_offset + instructions[0].encoding.imm_offset,
+            instructions[1].operands[0].imm & 0xFFFFFFFF)
+
+
+def _linear_map(data: bytes, count: int, *, base: int,
+                first_action: int) -> tuple[int, ...]:
+    """Validate a bounded linear unwind map and return its action targets."""
+    if not 1 <= count <= _MAX_CLEANUP_ACTIONS:
+        raise ValueError("EH cleanup action count exceeds the bounded resource cap")
+    if len(data) != count * 8:
+        raise ValueError("EH unwind map has an incomplete action table")
+    entries = struct.unpack("<" + "I" * (count * 2), data)
+    actions = []
+    for index in range(count):
+        predecessor, action = entries[index * 2:index * 2 + 2]
+        expected_state = 0xFFFFFFFF if index == 0 else index - 1
+        if predecessor != expected_state:
+            raise ValueError("EH unwind states are not the exact linear predecessor chain")
+        if (action < base or (index == 0 and action != first_action)
+                or (actions and action <= actions[-1])):
+            raise ValueError("EH unwind actions are not strictly ordered from the first cleanup")
+        actions.append(action)
+    return tuple(actions)
+
+
+def _action_targets(code: bytes, base: int, starts: tuple[int, ...],
+                    handler_offset: int) -> tuple[tuple[int, ...], tuple[int, ...]]:
+    if not starts or len(starts) > _MAX_CLEANUP_ACTIONS or starts[0] != 0:
+        raise ValueError("EH cleanup action starts exceed bounds or omit the first action")
+    if any(start < 0 or start >= handler_offset for start in starts):
+        raise ValueError("EH cleanup action start lies outside the cold action region")
+    if any(left >= right for left, right in zip(starts, starts[1:])):
+        raise ValueError("EH cleanup action starts are duplicate or unordered")
+    boundaries = (*starts, handler_offset)
+    targets, operand_offsets = [], []
+    for start, end in zip(boundaries, boundaries[1:]):
+        instructions = _decoded(code[start:end], base + start)
+        operand = _cleanup_action(instructions)
+        jump = instructions[-1]
+        target = jump.operands[0].imm & 0xFFFFFFFF
+        targets.append(target)
+        operand_offsets.append(operand)
+    return tuple(targets), tuple(operand_offsets)
+
+
 def _original_eh(image: PeImage, primary: Span, cold: Span):
     main = image.read(primary)
     cold_code = image.read(cold)
-    handler_offset = cold.end - cold.start - 10
-    if _COLD_SIZES.get(cold.end - cold.start) != handler_offset:
-        raise ValueError("original cold EH region has an unsupported extent")
+    handler_offset, info_offset, runtime_target = _handler_stub(cold_code, cold.start)
     handler = cold.start + handler_offset
     _image_section(image, primary, code=True)
     _image_section(image, cold, code=True)
-    _image_registration_edge(image, primary, main, handler)
-
-    handler_code = cold_code[handler_offset:]
-    handler_ins = _decoded(handler_code, handler)
-    if (len(handler_ins) != 2 or handler_ins[0].mnemonic != "mov"
-            or handler_ins[0].size != 5
-            or handler_ins[0].bytes[0] != 0xB8
-            or handler_ins[0].encoding.imm_offset != 1
-            or handler_ins[0].encoding.imm_size != 4
-            or len(handler_ins[0].operands) != 2
-            or handler_ins[0].operands[0].type != x86.X86_OP_REG
-            or handler_ins[0].operands[0].reg != x86.X86_REG_EAX
-            or handler_ins[0].operands[1].type != x86.X86_OP_IMM
-            or handler_ins[1].mnemonic != "jmp"
-            or handler_ins[1].size != 5
-            or handler_ins[1].bytes[0] != 0xE9
-            or handler_ins[1].encoding.imm_offset != 1
-            or handler_ins[1].encoding.imm_size != 4
-            or len(handler_ins[1].operands) != 1
-            or handler_ins[1].operands[0].type != x86.X86_OP_IMM):
-        raise ValueError("original cold handler is not a FuncInfo runtime stub")
+    _image_registration_edge(image, primary, cold, main, handler)
+    handler_ins = _decoded(cold_code[handler_offset:], handler)
     func_info = handler_ins[0].operands[1].imm & 0xFFFFFFFF
-    runtime_target = handler_ins[1].operands[0].imm & 0xFFFFFFFF
     _exec_target(image, runtime_target, outside=(primary, cold))
 
-    header = image.read(Span(func_info, func_info + _EH_BUNDLE_SIZE))
-    header_fields = struct.unpack("<10I", header)
-    max_state = header_fields[1]
-    if max_state not in (1, 2):
-        raise ValueError("original FuncInfo has an unsupported cleanup state count")
-    two_actions = max_state == 2
-    fi_span = Span(func_info, func_info + (_EH_BUNDLE_SIZE + 8 if two_actions else _EH_BUNDLE_SIZE))
+    header = image.read(Span(func_info, func_info + _FUNCINFO_HEADER_SIZE))
+    (magic, max_state, unwind_map, try_count, try_map,
+     ip_count, ip_map, es_types) = struct.unpack("<8I", header)
+    if not 1 <= max_state <= _MAX_CLEANUP_ACTIONS:
+        raise ValueError("original FuncInfo exceeds the bounded cleanup action cap")
+    fi_span = Span(func_info, func_info + _FUNCINFO_HEADER_SIZE + 8 * max_state)
     _image_section(image, fi_span, code=False)
     fi_data = image.read(fi_span)
-    fields = struct.unpack("<10I", fi_data[:40])
-    (magic, max_state, unwind_map, try_count, try_map,
-     ip_count, ip_map, es_types, to_state, action) = fields
-    if (magic != _FUNCINFO_MAGIC or max_state != (2 if two_actions else 1)
-            or unwind_map != func_info + 32
-            or any((try_count, try_map, ip_count, ip_map, es_types))
-            or to_state != 0xFFFFFFFF or action != cold.start):
+    if (magic != _FUNCINFO_MAGIC or unwind_map != func_info + _FUNCINFO_HEADER_SIZE
+            or any((try_count, try_map, ip_count, ip_map, es_types))):
         raise ValueError("original FuncInfo is not a supported bounded cleanup layout")
-    map_span = Span(unwind_map, unwind_map + (16 if two_actions else 8))
+    map_span = Span(unwind_map, unwind_map + 8 * max_state)
     map_data = image.read(map_span)
-    action_map = struct.unpack("<4I" if two_actions else "<2I", map_data)
-    if (action_map[0] != 0xFFFFFFFF or action_map[1] != cold.start
-            or (two_actions and action_map[2] != 0)):
-        raise ValueError("original unwind map has unsupported states or first action")
-    original_action_starts = ((cold.start, action_map[3]) if two_actions
-                              else (cold.start,))
-    if (two_actions and (action_map[3] <= cold.start
-                         or action_map[3] >= handler
-                         or action_map[3] - cold.start not in (8, 11))):
-        raise ValueError("original two-action map does not bound a supported contiguous action chain")
-    cleanup_targets = []
-    boundaries = (*original_action_starts, handler)
-    for start, end in zip(boundaries, boundaries[1:]):
-        action = _decoded(image.read(Span(start, end)), start)
-        if _frame_cleanup_jump(action):
-            target = action[1].operands[0].imm & 0xFFFFFFFF
-        elif (two_actions and len(action) == 2 and action[0].mnemonic == "mov"
-              and action[0].size == 3 and action[0].operands[0].type == x86.X86_OP_REG
-              and action[0].operands[0].reg == x86.X86_REG_ECX
-              and action[0].operands[1].type == x86.X86_OP_MEM
-              and action[0].operands[1].mem.base == x86.X86_REG_EBP
-              and action[0].operands[1].mem.index == 0
-              and action[0].operands[1].mem.segment == 0
-              and action[0].operands[1].size == 4 and action[0].encoding.disp_size == 1
-              and action[1].mnemonic == "jmp" and action[1].size == 5
-              and len(action[1].operands) == 1
-              and action[1].operands[0].type == x86.X86_OP_IMM):
-            target = action[1].operands[0].imm & 0xFFFFFFFF
-        elif (two_actions and len(action) == 3 and action[0].mnemonic == "mov"
-              and action[0].size == 3 and action[0].operands[0].type == x86.X86_OP_REG
-              and action[0].operands[0].reg == x86.X86_REG_ECX
-              and action[0].operands[1].type == x86.X86_OP_MEM
-              and action[0].operands[1].mem.base == x86.X86_REG_EBP
-              and action[0].operands[1].mem.index == 0
-              and action[0].operands[1].mem.segment == 0
-              and action[0].operands[1].size == 4 and action[0].encoding.disp_size == 1
-              and action[1].mnemonic == "add" and action[1].size == 6
-              and action[1].operands[0].type == x86.X86_OP_REG
-              and action[1].operands[0].reg == x86.X86_REG_ECX
-              and action[1].operands[1].type == x86.X86_OP_IMM
-              and action[1].encoding.imm_size == 4
-              and action[2].mnemonic == "jmp" and action[2].size == 5
-              and len(action[2].operands) == 1
-              and action[2].operands[0].type == x86.X86_OP_IMM):
-            target = action[2].operands[0].imm & 0xFFFFFFFF
-        else:
-            raise ValueError("original unwind map does not bound supported frame cleanup actions")
-        cleanup_targets.append(target)
+    original_cleanups = _linear_map(
+        map_data, max_state, base=cold.start, first_action=cold.start)
+    if any(action >= handler for action in original_cleanups):
+        raise ValueError("original unwind action starts at or beyond its handler")
+    original_action_starts = original_cleanups
+    cleanup_targets, _cleanup_operands = _action_targets(
+        cold_code, cold.start,
+        tuple(action - cold.start for action in original_action_starts),
+        handler_offset)
+    for target in cleanup_targets:
         _exec_target(image, target, outside=(primary, cold))
     if image.absolute_sites(Span(func_info, func_info + 12)) != frozenset({8}):
         raise ValueError("original FuncInfo unwind-map pointer lacks its exact HIGHLOW site")
-    if image.absolute_sites(map_span) != frozenset({4, 12} if two_actions else {4}):
+    expected_map_sites = frozenset(4 + 8 * index for index in range(max_state))
+    if image.absolute_sites(map_span) != expected_map_sites:
         raise ValueError("original unwind cleanup pointer lacks its exact HIGHLOW site")
-    if image.absolute_sites(Span(handler, cold.end)) != frozenset({1}):
+    if image.absolute_sites(Span(handler, cold.end)) != frozenset({info_offset - handler_offset}):
         raise ValueError("original handler FuncInfo pointer lacks its exact HIGHLOW site")
-    if image.absolute_sites(fi_span) != frozenset({8, 36, 44} if two_actions else {8, 36}):
+    expected_fi_sites = frozenset({8} | {36 + 8 * index for index in range(max_state)})
+    if image.absolute_sites(fi_span) != expected_fi_sites:
         raise ValueError("original FuncInfo has unexpected HIGHLOW sites in its bounded bundle")
-    if image.absolute_sites(cold) != frozenset({handler_offset + 1}):
+    if image.absolute_sites(cold) != frozenset({handler_offset + info_offset - handler_offset}):
         raise ValueError("original cold region has unexpected HIGHLOW sites outside the handler pointer")
     return (handler_offset, handler, func_info, cold.start, tuple(cleanup_targets),
             runtime_target, original_action_starts)
@@ -390,104 +460,29 @@ def _validate_local_destructor(obj: Coff, symbol: Symbol, root: int, child: int)
 
 
 def _cold_layout(code: bytes) -> tuple[int, tuple[int, ...], int, int, tuple[int, ...]]:
-    """Validate supported bounded cold encodings and return key byte offsets."""
-    instructions = _decoded(code, 0)
-    if len(code) in (26, 29, 32) and len(instructions) == 6:
-        first = instructions[:2]
-        second = instructions[2:4]
-        if (_frame_cleanup_jump(first) and _frame_cleanup_jump(second)
-                and instructions[4].mnemonic == "mov"
-                and len(instructions[4].operands) == 2
-                and instructions[4].operands[0].type == x86.X86_OP_REG
-                and instructions[4].operands[0].reg == x86.X86_REG_EAX
-                and instructions[4].operands[1].type == x86.X86_OP_IMM
-                and instructions[4].size == 5
-                and instructions[4].bytes[0] == 0xB8
-                and instructions[4].encoding.imm_offset == 1
-                and instructions[4].encoding.imm_size == 4
-                and instructions[5].mnemonic == "jmp"
-                and instructions[5].size == 5
-                and instructions[5].bytes[0] == 0xE9
-                and instructions[5].encoding.imm_offset == 1
-                and instructions[5].encoding.imm_size == 4
-                and len(instructions[5].operands) == 1
-                and instructions[5].operands[0].type == x86.X86_OP_IMM):
-            handler_offset = instructions[4].address
-            starts = (0, instructions[2].address)
-            if handler_offset != len(code) - 10 or starts[1] not in (8, 11):
-                raise ValueError("EH child has gaps or unsupported two-action boundaries")
-            return (handler_offset,
-                    (instructions[1].address + instructions[1].encoding.imm_offset,
-                     instructions[3].address + instructions[3].encoding.imm_offset),
-                    handler_offset + 1, handler_offset + 6, starts)
-    if len(code) == 32:
-        if (len(instructions) != 7
-                or instructions[0].mnemonic != "mov"
-                or instructions[0].operands[0].type != x86.X86_OP_REG
-                or instructions[0].operands[0].reg != x86.X86_REG_ECX
-                or instructions[0].operands[1].type != x86.X86_OP_MEM
-                or instructions[0].operands[1].mem.base != x86.X86_REG_EBP
-                or instructions[0].operands[1].mem.index != 0
-                or instructions[0].operands[1].mem.segment != 0
-                or instructions[0].operands[1].size != 4
-                or instructions[0].encoding.disp_size != 1
-                or instructions[0].size != 3
-                or instructions[1].mnemonic != "jmp" or instructions[1].size != 5
-                or len(instructions[1].operands) != 1
-                or instructions[1].operands[0].type != x86.X86_OP_IMM
-                or instructions[2].mnemonic != "mov"
-                or instructions[2].operands[0].type != x86.X86_OP_REG
-                or instructions[2].operands[0].reg != x86.X86_REG_ECX
-                or instructions[2].operands[1].type != x86.X86_OP_MEM
-                or instructions[2].operands[1].mem.base != x86.X86_REG_EBP
-                or instructions[2].operands[1].mem.index != 0
-                or instructions[2].operands[1].mem.segment != 0
-                or instructions[2].operands[1].size != 4
-                or instructions[2].encoding.disp_size != 1
-                or instructions[2].size != 3
-                or instructions[3].mnemonic != "add"
-                or instructions[3].operands[0].type != x86.X86_OP_REG
-                or instructions[3].operands[0].reg != x86.X86_REG_ECX
-                or instructions[3].operands[1].type != x86.X86_OP_IMM
-                or instructions[3].encoding.imm_size != 4
-                or instructions[3].size != 6
-                or instructions[4].mnemonic != "jmp" or instructions[4].size != 5
-                or len(instructions[4].operands) != 1
-                or instructions[4].operands[0].type != x86.X86_OP_IMM
-                or instructions[5].mnemonic != "mov" or instructions[5].size != 5
-                or instructions[6].mnemonic != "jmp" or instructions[6].size != 5
-                or instructions[5].operands[0].type != x86.X86_OP_REG
-                or instructions[5].operands[0].reg != x86.X86_REG_EAX
-                or instructions[5].operands[1].type != x86.X86_OP_IMM
-                or instructions[6].operands[0].type != x86.X86_OP_IMM):
-            raise ValueError("EH child does not contain two supported cleanup actions then handler")
-        return 22, (4, 18), 23, 28, (0, 8)
-    if (len(instructions) != 4 or instructions[0].mnemonic != "lea"
-            or len(instructions[0].operands) != 2
-            or instructions[0].operands[0].type != x86.X86_OP_REG
-            or instructions[0].operands[0].reg != x86.X86_REG_ECX
-            or instructions[0].operands[1].type != x86.X86_OP_MEM
-            or instructions[0].operands[1].mem.base != x86.X86_REG_EBP
-            or instructions[0].operands[1].mem.index != 0
-            or instructions[0].size not in (3, 6)
-            or instructions[0].encoding.disp_size != instructions[0].size - 2
-            or instructions[1].mnemonic != "jmp"
-            or instructions[1].size != 5
-            or len(instructions[1].operands) != 1
-            or instructions[1].operands[0].type != x86.X86_OP_IMM
-            or instructions[2].mnemonic != "mov"
-            or instructions[2].size != 5
-            or len(instructions[2].operands) != 2
-            or instructions[2].operands[0].type != x86.X86_OP_REG
-            or instructions[2].operands[0].reg != x86.X86_REG_EAX
-            or instructions[2].operands[1].type != x86.X86_OP_IMM
-            or instructions[3].mnemonic != "jmp"
-            or instructions[3].size != 5
-            or len(instructions[3].operands) != 1
-            or instructions[3].operands[0].type != x86.X86_OP_IMM):
-        raise ValueError("EH child does not contain one supported cleanup then handler stub")
-    handler_offset = instructions[2].address
-    return handler_offset, (instructions[1].address + 1,), handler_offset + 1, handler_offset + 6, (0,)
+    """Parse complete adjacent cleanup actions followed by one handler stub."""
+    if not _HANDLER_STUB_SIZE < len(code) <= _MAX_COLD_SIZE:
+        raise ValueError("COFF EH child exceeds the bounded linear cold extent")
+    handler_offset, info_offset, runtime_target = _handler_stub(code, 0)
+    instructions = _decoded(code[:handler_offset], 0)
+    starts, destructor_offsets = [], []
+    cursor = 0
+    action = []
+    for instruction in instructions:
+        if instruction.address != cursor:
+            raise ValueError("COFF EH child has a gap before its handler")
+        action.append(instruction)
+        cursor += instruction.size
+        if instruction.mnemonic == "jmp" and instruction.size == 5 and instruction.bytes[0] == 0xE9:
+            if len(starts) >= _MAX_CLEANUP_ACTIONS:
+                raise ValueError("COFF EH child exceeds the bounded cleanup action cap")
+            starts.append(action[0].address)
+            destructor_offsets.append(_cleanup_action(action))
+            action = []
+    if cursor != handler_offset or action or not starts:
+        raise ValueError("COFF EH child has incomplete cleanup bytes before its handler")
+    return (handler_offset, tuple(destructor_offsets), info_offset,
+            handler_offset + 6, tuple(starts))
 
 
 def _object_push_edge(obj: Coff, root: Symbol, child: int, handler_offset: int) -> None:
@@ -498,10 +493,10 @@ def _object_push_edge(obj: Coff, root: Symbol, child: int, handler_offset: int) 
         raise ValueError("COFF root lacks one complete EH registration chain")
     edges = []
     for item in relocations:
-        if item.kind is not RelocationKind.ABSOLUTE32:
-            continue
         target = obj.symbols[int(item.target)]
-        if target.section == child and target.value == handler_offset:
+        if target.section == child:
+            if item.kind is not RelocationKind.ABSOLUTE32 or target.value != handler_offset:
+                raise ValueError("COFF root has an extra or malformed relocation to its EH child")
             addend, = struct.unpack_from("<I", code, item.offset)
             edges.append((item.offset, addend))
     if edges != [(expected, 0)]:
@@ -511,7 +506,8 @@ def _object_push_edge(obj: Coff, root: Symbol, child: int, handler_offset: int) 
 def _object_child_and_info(obj: Coff, root: Symbol, child: int):
     child_section, child_code, child_relocs, child_alignment = _relocations(obj, child)
     handler_offset, destructor_offsets, info_offset, runtime_offset, action_starts = _cold_layout(child_code)
-    if len(child_code) != handler_offset + 10:
+    if (len(child_code) != handler_offset + _HANDLER_STUB_SIZE
+            or len(child_code) > _MAX_COLD_SIZE):
         raise ValueError("COFF EH child has an unsupported bounded extent")
     expected_relocations = {*destructor_offsets, info_offset, runtime_offset}
     if {item.offset for item in child_relocs} != expected_relocations:
@@ -524,10 +520,10 @@ def _object_child_and_info(obj: Coff, root: Symbol, child: int):
         if index == 0 and (destructor.section != 0 or destructor.value != 0
                            or not destructor.name.startswith("??1")):
             raise ValueError("COFF first cleanup does not transfer to its external destructor")
-        if index == 1:
+        if index > 0:
             if destructor.section == 0:
                 if (destructor.value != 0 or not destructor.name.startswith("??1")):
-                    raise ValueError("COFF second cleanup does not transfer to an undefined external destructor")
+                    raise ValueError("COFF cleanup does not transfer to an undefined external destructor")
             else:
                 _validate_local_destructor(obj, destructor, root.section, child)
     func_info_symbol = _reloc_at(obj, child, info_offset, RelocationKind.ABSOLUTE32)
@@ -550,8 +546,8 @@ def _object_child_and_info(obj: Coff, root: Symbol, child: int):
         raise ValueError("COFF FuncInfo is not an associated root-owned data section")
     data_section = obj.sections[data_section_number - 1]
     data_flags = data_section.flags
-    two_actions = len(destructor_offsets) == 2
-    if (len(data_section.data) != (_EH_BUNDLE_SIZE + 8 if two_actions else _EH_BUNDLE_SIZE)
+    action_count = len(destructor_offsets)
+    if (len(data_section.data) != _FUNCINFO_HEADER_SIZE + 8 * action_count
             or data_section.flags & (_CODE | _EXECUTE | _WRITE)
             or not data_flags & _INITIALIZED_DATA or not data_flags & _READ
             or not data_flags & _COMDAT
@@ -580,29 +576,34 @@ def _object_child_and_info(obj: Coff, root: Symbol, child: int):
     if data_children != [data_section_number] or unsupported_children:
         raise ValueError("COFF root has missing, extra, or ambiguous associated EH data")
 
-    fields = struct.unpack("<10I", data_section.data[:40])
-    magic, max_state, raw_unwind, try_count, try_map, ip_count, ip_map, es_types, to_state, raw_action = fields
-    if (magic != _FUNCINFO_MAGIC or max_state != (2 if two_actions else 1) or raw_unwind != 0
-            or any((try_count, try_map, ip_count, ip_map, es_types))
-            or to_state != 0xFFFFFFFF or raw_action != 0):
+    fields = struct.unpack("<8I", data_section.data[:_FUNCINFO_HEADER_SIZE])
+    magic, max_state, raw_unwind, try_count, try_map, ip_count, ip_map, es_types = fields
+    if (magic != _FUNCINFO_MAGIC or max_state != action_count or raw_unwind != 0
+            or any((try_count, try_map, ip_count, ip_map, es_types))):
         raise ValueError("COFF FuncInfo does not have a supported bounded cleanup layout")
-    if two_actions and struct.unpack_from("<4I", data_section.data, 32) != (
-            0xFFFFFFFF, 0, 0, 0):
-        raise ValueError("COFF two-action unwind map does not bound both cleanup entries")
     unwind_symbol = _reloc_at(obj, data_section_number, 8, RelocationKind.ABSOLUTE32)
-    cleanup_symbol = _reloc_at(obj, data_section_number, 36, RelocationKind.ABSOLUTE32)
-    cleanup_symbols = [cleanup_symbol]
-    if two_actions:
-        cleanup_symbols.append(_reloc_at(obj, data_section_number, 44,
-                                         RelocationKind.ABSOLUTE32))
+    map_entries = struct.unpack_from("<" + "I" * (2 * action_count),
+                                     data_section.data, _FUNCINFO_HEADER_SIZE)
+    for index in range(action_count):
+        predecessor, action_addend = map_entries[index * 2:index * 2 + 2]
+        if predecessor != (0xFFFFFFFF if index == 0 else index - 1) or action_addend != 0:
+            raise ValueError("COFF unwind map is not the exact linear predecessor chain")
+    cleanup_symbols = [
+        _reloc_at(obj, data_section_number, _FUNCINFO_HEADER_SIZE + 4 + 8 * index,
+                  RelocationKind.ABSOLUTE32)
+        for index in range(action_count)
+    ]
     all_data_relocs = data_section.relocations
-    expected_data_relocs = {(8, 6), (36, 6)} | ({(44, 6)} if two_actions else set())
+    expected_data_relocs = {(8, 6)} | {
+        (_FUNCINFO_HEADER_SIZE + 4 + 8 * index, 6)
+        for index in range(action_count)
+    }
     if {(offset, kind) for offset, _index, kind in all_data_relocs} != expected_data_relocs:
         raise ValueError("COFF FuncInfo contains missing or unsupported relocations")
-    if (unwind_symbol.section != data_section_number or unwind_symbol.value != 32
-            or cleanup_symbols[0].section != child or cleanup_symbols[0].value != 0
-            or (two_actions and (cleanup_symbols[1].section != child
-                                 or cleanup_symbols[1].value != action_starts[1]))):
+    if (unwind_symbol.section != data_section_number
+            or unwind_symbol.value != _FUNCINFO_HEADER_SIZE
+            or any(symbol.section != child or symbol.value != action_starts[index]
+                   for index, symbol in enumerate(cleanup_symbols))):
         raise ValueError("COFF unwind map does not own exactly the child cleanup entry")
     return (child_section, child_code, child_relocs, child_alignment,
             data_section_number, runtime.name, handler_offset, destructor_offsets,

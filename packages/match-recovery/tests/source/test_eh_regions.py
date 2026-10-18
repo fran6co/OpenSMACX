@@ -512,6 +512,221 @@ def _bind(*, object_damage=None, image_damage=None, spans=SPANS,
     return bind_eh_regions(_coff(damage=object_damage, cold_size=object_cold_size, mode=mode), ROOT, image, spans)
 
 
+def _linear_fixture(original_widths, object_widths=None, *, original_damage=None,
+                    object_damage=None, truncate_original=False):
+    """Build complete independent PE/COFF linear maps with supported action grammar."""
+    if object_widths is None:
+        object_widths = original_widths
+
+    def action_bytes(width, target=None, pc=0):
+        result = bytearray(b"\x8b\x4d\xf0")
+        if width == 11:
+            result.extend(b"\x83\xc1\x04")
+        elif width == 14:
+            result.extend(b"\x81\xc1\x4c\x14\x00\x00")
+        elif width != 8:
+            raise ValueError("fixture action width must be 8, 11, or 14")
+        jump = len(result)
+        result.extend(b"\xe9\0\0\0\0")
+        if target is not None:
+            struct.pack_into("<i", result, jump + 1, target - (pc + len(result)))
+        return bytes(result), jump + 1
+
+    def layout(widths):
+        code, starts, branches = bytearray(), [], []
+        for index, width in enumerate(widths):
+            starts.append(len(code))
+            action, branch = action_bytes(width, BASE + 0x1300 + 0x10 * index,
+                                          BASE + 0x1100 + len(code))
+            branches.append(len(code) + branch)
+            code.extend(action)
+        handler = len(code)
+        info = BASE + 0x2000
+        runtime = BASE + 0x13F0
+        code.extend(b"\xb8" + struct.pack("<I", info) + b"\xe9")
+        code.extend(struct.pack("<i", runtime - (BASE + 0x1100 + len(code) + 4)))
+        return bytes(code), tuple(starts), tuple(branches), handler
+
+    original_code, orig_starts, orig_branches, orig_handler = layout(original_widths)
+    object_code, obj_starts, obj_branches, obj_handler = layout(object_widths)
+    orig_cold = BASE + 0x1100
+    info_address = BASE + 0x2000
+    text = bytearray(0x400)
+    text[:22] = bytes.fromhex("6a ff 68 00 00 00 00 64 a1 00 00 00 00 50 64 89 25 00 00 00 00 c3")
+    struct.pack_into("<I", text, 3, orig_cold + orig_handler)
+    if original_damage == "extra_root_cold_edge":
+        text[22:28] = b"\xa1" + struct.pack("<I", orig_cold) + b"\xc3"
+    elif original_damage == "direct_root_cold_edge":
+        text[22] = 0xE9
+        struct.pack_into("<i", text, 23, orig_cold - (BASE + 0x1000 + 27))
+    text[0x100:0x100 + len(original_code)] = original_code
+    info = bytearray(32 + 8 * len(original_widths))
+    struct.pack_into("<8I", info, 0, 0x19930520, len(original_widths), info_address + 32,
+                     0, 0, 0, 0, 0)
+    for index, start in enumerate(orig_starts):
+        struct.pack_into("<II", info, 32 + 8 * index,
+                         0xFFFFFFFF if index == 0 else index - 1,
+                         orig_cold + start)
+    if original_damage == "state":
+        struct.pack_into("<I", info, 32 + 8 * (len(orig_starts) - 1), 9)
+    elif original_damage == "action":
+        struct.pack_into("<I", info, 36 + 8 * (len(orig_starts) - 1),
+                         orig_cold + orig_starts[-1] + 1)
+
+    root_relocs = [0x3003, 0x3100 + orig_handler + 1]
+    if original_damage == "extra_root_cold_edge":
+        root_relocs.append(0x3017)
+    reloc_pages = {0x1000: root_relocs,
+                   0x2000: [0x3008, *(0x3024 + 8 * i for i in range(len(original_widths)))]}
+    if original_damage == "missing_reloc":
+        reloc_pages[0x2000].pop()
+    reloc = bytearray()
+    for page, entries in reloc_pages.items():
+        padded = entries if len(entries) % 2 == 0 else [*entries, 0]
+        reloc.extend(struct.pack("<II", page, 8 + 2 * len(padded)))
+        reloc.extend(struct.pack("<" + "H" * len(padded), *padded))
+    headers = bytearray(0x400)
+    headers[:2] = b"MZ"
+    struct.pack_into("<I", headers, 0x3C, 0x80)
+    headers[0x80:0x84] = b"PE\0\0"
+    struct.pack_into("<HHIIIHH", headers, 0x84, 0x14C, 3, 0, 0, 0, 224, 0x0102)
+    optional = 0x98
+    struct.pack_into("<H", headers, optional, 0x10B)
+    struct.pack_into("<I", headers, optional + 16, 0x1000)
+    struct.pack_into("<I", headers, optional + 28, BASE)
+    struct.pack_into("<II", headers, optional + 32, 0x1000, 0x200)
+    struct.pack_into("<I", headers, optional + 56, 0x4000)
+    struct.pack_into("<I", headers, optional + 60, 0x400)
+    struct.pack_into("<H", headers, optional + 68, 3)
+    struct.pack_into("<I", headers, optional + 92, 16)
+    struct.pack_into("<II", headers, optional + 96 + 5 * 8, 0x3000, len(reloc))
+    sec_table = optional + 224
+    rdata_size = len(info) - 1 if original_damage == "metadata_truncated" else len(info)
+    sections = [(b".text", 0x1000, 0x400, bytes(text), 0x60000020),
+                (b".rdata", 0x2000, 0x800, bytes(info[:rdata_size]), 0x40000040),
+                (b".reloc", 0x3000, 0xC00, bytes(reloc), 0x40000040)]
+    for i, (name, rva, raw, content, flags) in enumerate(sections):
+        virtual_size = max(len(content), 0x200)
+        raw_size = max(len(content), 0x200)
+        if name == b".rdata" and original_damage == "metadata_truncated":
+            virtual_size = raw_size = len(info) - 1
+        struct.pack_into("<8sIIIIIIHHI", headers, sec_table + 40 * i,
+                         name.ljust(8, b"\0"), virtual_size, rva,
+                         raw_size, raw, 0, 0, 0, 0, flags)
+    pe = headers + bytes(0xE00 - len(headers))
+    for _name, _rva, raw, content, _flags in sections:
+        pe[raw:raw + len(content)] = content
+    image_bytes = bytes(pe)
+    image = PeImage(image_bytes, hashlib.sha256(image_bytes).hexdigest())
+    end = orig_cold + len(original_code) - (1 if truncate_original else 0)
+    root_extra = (6 if original_damage == "extra_root_cold_edge" else
+                  5 if original_damage == "direct_root_cold_edge" else 0)
+    spans = ((BASE + 0x1000, BASE + 0x1016 + root_extra), (orig_cold, end))
+
+    # Assemble an associated root, cold child, and complete FuncInfo COMDAT.
+    data = bytearray(32 + 8 * len(object_widths))
+    struct.pack_into("<8I", data, 0, 0x19930520, len(object_widths), 0, 0, 0, 0, 0, 0)
+    for index in range(len(object_widths)):
+        struct.pack_into("<II", data, 32 + 8 * index,
+                         0xFFFFFFFF if index == 0 else index - 1, 0)
+    if object_damage == "state":
+        struct.pack_into("<I", data, 32 + 8 * (len(obj_starts) - 1), 9)
+    if object_damage == "extra_reloc":
+        pass
+    object_code = bytearray(object_code)
+    for offset in (*obj_branches, obj_handler + 1, obj_handler + 6):
+        struct.pack_into("<I", object_code, offset, 0)
+    object_code = bytes(object_code)
+    root_code = bytes.fromhex("6a ff 68 00 00 00 00 64 a1 00 00 00 00 50 64 89 25 00 00 00 00 c3")
+    sections = [
+        {"name": ".text", "data": root_code, "flags": 0x60501020,
+         "selection": 2, "parent": 0, "relocs": [(3, "handler", 6)]},
+        {"name": ".text$x", "data": object_code, "flags": 0x60501020,
+         "selection": 5, "parent": 1, "relocs": []},
+        {"name": ".xdata$x", "data": bytes(data), "flags": 0x40401040,
+         "selection": 5, "parent": 1, "relocs": []},
+    ]
+    symbols, indices, strings = [], {}, bytearray(b"\0\0\0\0")
+
+    def symbol_name(name):
+        encoded = name.encode("ascii")
+        if len(encoded) <= 8:
+            return encoded.ljust(8, b"\0")
+        offset = len(strings)
+        strings.extend(encoded + b"\0")
+        return b"\0\0\0\0" + struct.pack("<I", offset)
+
+    def add(key, name, value, section, kind, storage, aux=None):
+        indices[key] = len(symbols)
+        symbols.append(symbol_name(name) + struct.pack("<IhHBB", value, section, kind,
+                                                       storage, int(aux is not None)))
+        if aux is not None:
+            symbols.append(aux)
+
+    for number, section in enumerate(sections, 1):
+        aux = struct.pack("<IHHIHB3x", len(section["data"]), len(section["relocs"]),
+                          0, 0, section["parent"], section["selection"])
+        add(("section", number), section["name"], 0, number, 0, 3, aux)
+    add("root", ROOT, 0, 1, 0x20, 2)
+    add("handler", "$Lhandler", obj_handler, 2, 0, 6)
+    if object_damage == "extra_root_child_edge":
+        add("other_child", "$Lotherchild", 0, 2, 0, 6)
+    for i, start in enumerate(obj_starts):
+        add(("cleanup", i), f"$Lcleanup{i}",
+            start + (1 if object_damage == "map_target" and i == len(obj_starts) - 1 else 0),
+            2, 0, 6)
+    add("info", "$Tinfo", 0, 3, 0, 3)
+    add("unwind", "$Tunwind", 32, 3, 0, 6)
+    for i in range(len(obj_starts)):
+        destructor = ("?NotDestructor@@YAXXZ" if object_damage == "late_destructor"
+                      and i == len(obj_starts) - 1 else f"??1Thing{i}@@QAE@XZ")
+        add(("dtor", i), destructor, 0, 0, 0x20, 2)
+    add("runtime", "___CxxFrameHandler", 0, 0, 0, 2)
+    child_relocs = [(offset, ("dtor", i), 20) for i, offset in enumerate(obj_branches)]
+    child_relocs.extend([(obj_handler + 1, "info", 6), (obj_handler + 6, "runtime", 20)])
+    info_relocs = [(8, "unwind", 6)] + [
+        (36 + 8 * i, ("cleanup", i), 6) for i in range(len(obj_starts))]
+    if object_damage == "extra_reloc":
+        child_relocs.append((1, ("dtor", 0), 20))
+    if object_damage == "extra_root_child_edge":
+        sections[0]["relocs"].append((7, "other_child", 6))
+    sections[1]["relocs"], sections[2]["relocs"] = child_relocs, info_relocs
+    # Refresh section auxiliaries after final relocation inventories are known.
+    for number, section in enumerate(sections, 1):
+        symbols[indices[("section", number)] + 1] = struct.pack(
+            "<IHHIHB3x", len(section["data"]), len(section["relocs"]), 0, 0,
+            section["parent"], section["selection"])
+    headers_size = 20 + 40 * len(sections)
+    raw_cursor = headers_size
+    raw_offsets = []
+    for section in sections:
+        raw_offsets.append(raw_cursor)
+        raw_cursor += len(section["data"])
+    rel_cursor = raw_cursor
+    rel_offsets = []
+    for section in sections:
+        rel_offsets.append(rel_cursor if section["relocs"] else 0)
+        rel_cursor += 10 * len(section["relocs"])
+    headers_coff = b"".join(struct.pack(
+        "<8sIIIIIIHHI", section["name"].encode().ljust(8, b"\0"), 0, 0,
+        len(section["data"]), raw_offsets[i], rel_offsets[i], 0,
+        len(section["relocs"]), 0, section["flags"])
+        for i, section in enumerate(sections))
+    raw_coff = bytearray(struct.pack("<HHIIIHH", 0x14C, len(sections), 0,
+                                     rel_cursor + 0, len(symbols), 0, 0) + headers_coff)
+    for section in sections:
+        raw_coff.extend(section["data"])
+    for section in sections:
+        for offset, target, kind in section["relocs"]:
+            raw_coff.extend(struct.pack("<IIH", offset, indices[target], kind))
+    symbol_start = len(raw_coff)
+    struct.pack_into("<I", strings, 0, len(strings))
+    raw_coff.extend(b"".join(symbols))
+    struct.pack_into("<I", raw_coff, 8, symbol_start)
+    raw_coff.extend(strings)
+    return bind_eh_regions(bytes(raw_coff), ROOT, image, spans)
+
+
 def test_binds_only_the_root_and_its_proven_cleanup_handler_bundle():
     pairs = _bind()
     assert len(pairs) == 2
@@ -538,6 +753,83 @@ def test_binds_two_action_funcinfo_map_and_exposes_both_actions(metadata):
     assert cold.ownership.handler_offset == 22
     assert cold.code[:22] == bytes.fromhex(
         "8b 4d f0 e9 00 00 00 00 8b 4d f0 81 c1 4c 14 00 00 e9 00 00 00 00")
+
+
+@pytest.mark.parametrize("widths,expected_extent", [
+    ((14,), 24),
+    ((8, 14, 11), 43),
+    ((8, 14, 14), 46),
+    ((8, 11, 8, 14), 51),
+])
+def test_binds_complete_linear_cleanup_chains_from_bounded_vc6_shapes(widths, expected_extent):
+    root, cold = _linear_fixture(widths)
+    assert len(cold.code) == expected_extent
+    assert root.ownership.cleanup_offsets == tuple(
+        sum(widths[:index]) for index in range(len(widths)))
+    assert root.ownership.original_cleanups == tuple(
+        BASE + 0x1100 + sum(widths[:index]) for index in range(len(widths)))
+    assert len(root.ownership.cleanup_offsets) == len(widths)
+
+
+def test_original_and_compiled_linear_action_inventories_are_independent():
+    original = (8, 14, 8)
+    compiled = (14,)
+    root, cold = _linear_fixture(original, compiled)
+    assert root.ownership.original_cleanups == (BASE + 0x1100, BASE + 0x1108,
+                                                BASE + 0x1116)
+    assert root.ownership.cleanup_offsets == (0,)
+    assert len(root.ownership.original_cleanups) == 3
+    assert len(cold.code) == 24
+
+
+@pytest.mark.parametrize("damage", ["state", "action", "missing_reloc"])
+def test_rejects_corrupt_original_later_linear_actions(damage):
+    with pytest.raises(ValueError):
+        _linear_fixture((8, 14, 11), original_damage=damage)
+
+
+@pytest.mark.parametrize("damage", ["state", "map_target", "extra_reloc",
+                                    "extra_root_child_edge", "late_destructor"])
+def test_rejects_corrupt_compiled_later_linear_actions(damage):
+    with pytest.raises(ValueError):
+        _linear_fixture((8, 14, 11), object_damage=damage)
+
+
+def test_rejects_truncated_original_cold_extent_and_incomplete_action_table():
+    with pytest.raises(ValueError):
+        _linear_fixture((8, 14, 11), truncate_original=True)
+
+
+def test_rejects_truncated_original_funcinfo_metadata():
+    with pytest.raises(ValueError):
+        _linear_fixture((8, 14, 11), original_damage="metadata_truncated")
+
+
+def test_rejects_extra_original_root_absolute_edge_into_cold_child():
+    with pytest.raises(ValueError, match="extra absolute edge"):
+        _linear_fixture((8, 14, 11), original_damage="extra_root_cold_edge")
+
+
+def test_rejects_original_direct_relative_edge_into_cold_child():
+    with pytest.raises(ValueError, match="direct relative edge"):
+        _linear_fixture((8, 14, 11), original_damage="direct_root_cold_edge")
+
+
+def test_rejects_original_cleanup_count_above_explicit_resource_cap():
+    with pytest.raises(ValueError, match="action cap"):
+        _linear_fixture((8,) * 17)
+
+
+def test_rejects_compiled_cleanup_count_above_explicit_resource_cap():
+    with pytest.raises(ValueError, match="action cap"):
+        _linear_fixture((8,), object_widths=(8,) * 17)
+
+
+def test_accepts_maximum_supported_linear_action_count():
+    root, cold = _linear_fixture((8,) * 16)
+    assert len(root.ownership.original_cleanups) == 16
+    assert len(cold.ownership.cleanup_offsets) == 16
+    assert len(cold.code) == 16 * 8 + 10
 
 
 def test_binds_second_action_to_undefined_external_destructor():
