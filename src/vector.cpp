@@ -254,6 +254,11 @@ void __cdecl vec3_scale(const float *source, float scale,
 // symbol    ?vec3_length@@YAMPBM@Z
 // kind      game
 // LEVER: NAMED LOCALS FOR y AND z, rather than `vector[1]`/`vector[2]` read twice each: the image loads both as raw ints into ecx/edx and writes them to a two-slot scratch on the stack (reusing the argument's own slot, since __cdecl leaves it dead once the pointer is in eax) before reloading each from memory for its square - a local-variable spill, not a re-read through the pointer. `vector[1]`/`vector[2]` written out scored 0/21; these two locals reach 7/21 (0.818), the ceiling found - the two scratch SLOTS still land swapped ([esp]/[esp+8]) no matter which of y/z is declared or summed first (measured, six spellings).
+#if defined(_MSC_VER) && _MSC_VER <= 1200
+// The pinned free operation uses inline fsqrt; Vector::normalize keeps the
+// translation unit's CRT sqrt policy before and after this one definition.
+#pragma intrinsic(sqrt)
+#endif
 float __cdecl vec3_length(const float *vector) {
     const float y = vector[1];
     const float z = vector[2];
@@ -262,6 +267,10 @@ float __cdecl vec3_length(const float *vector) {
                           + static_cast<long double>(vector[0]) * vector[0];
     return static_cast<float>(std::sqrt(sum));
 }
+#if defined(_MSC_VER) && _MSC_VER <= 1200
+// Restore the prior TU policy immediately for following Vector methods.
+#pragma function(sqrt)
+#endif
 
 // ORIGINAL: 0x00634650 sub_634650 0x00634650-0x0063466B BYTE_EXACT
 // symbol    ?dot@Vector@@QBEMABV1@@Z

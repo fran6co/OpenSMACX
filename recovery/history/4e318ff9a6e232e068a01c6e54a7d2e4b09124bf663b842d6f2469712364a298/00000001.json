@@ -1,0 +1,23 @@
+{
+  "event_id": "051a46575f920bc13edc38734e1315d1d7a7b4dc1c2324ec865ad87d6f3f423a",
+  "payload": {
+    "affects": [
+      "entity-60bb056a607b73c7acf959b29d1726735dceb892ea73a65c74fda614c0cd856f",
+      "entity-8da6224ce16476a83c375bac33aff13b763487a434ed1ccd415b2f05794d96f4",
+      "entity-90db847da6e82c33d55a9ec76e70f556778e13c6be096bab54c865f6c5097856"
+    ],
+    "author": "coordinator",
+    "discovery_id": "normalizer-precision-propagates-to-inline-callers",
+    "evidence": [
+      "Pinned originals63FE00..63FFDD and63FFE0..6401A8 call normalizer628220 at63FE5F and64002A; Caviar::init616DE0..617013 calls it at616F78. Both old and new actual COFF inline the normalizer there. The current source edits remain limited to the two authorized free operations and pragma scope.",
+      "Actual old projection inlines stored a rounded reciprocal but still used the retained extended reciprocal for x; new code uses rounded value for all three products. Old init used extended reciprocal for all products; new uses the independently observed m32 boundary. Full native physical observations isolate the three collateral bodies and their FPO records in Caviar, with every other physical object protected."
+    ],
+    "hypothesis": "The corrected reciprocal conversion propagates into three actual application callers through pre-existing compiler inlining. These consumers belong in the numerical ownership/check closure, not an outside-code waiver.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "normalizer-precision-propagates-to-inline-callers",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:vector-array-precision-oct18"
+}

@@ -5661,8 +5661,13 @@ void __cdecl vox_normalise_vector(const float *source, float *out) {
     float x = source[0];
     float y = source[1];
     float z = source[2];
-    float length = (float)sqrt(x * x + y * y + z * z);
-    float scale = 1.0f / length;
+    double length = sqrt(static_cast<double>(y) * y
+                       + static_cast<double>(z) * z
+                       + static_cast<double>(x) * x);
+    // The original stores this reciprocal to an m32 stack slot before using it.
+    // Volatile preserves that observed float32 conversion without narrowing the
+    // preceding square root or changing the sequential source rereads below.
+    volatile float scale = 1.0f / length;
     out[0] = source[0] * scale;
     out[1] = source[1] * scale;
     out[2] = source[2] * scale;

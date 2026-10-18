@@ -36,10 +36,23 @@ DELETED_SEED = (
     "// Deleted seed provenance: git:b18d3ac864e30cf0876946b9d54717a3d999c691:"
     "src/unrecovered/00634520.cpp"
 )
-# SHA-256 of src/vector.cpp at immutable task base cfe9967126d59604c39bb76475662989e77f4d1b,
-# after replacing only the complete normalize() definition with this sentinel.
+# Immutable-base src/vector.cpp SHA-256 after replacing only normalize(); the
+# current projection first removes only the two exact new sqrt-policy blocks.
 OUTSIDE_NORMALIZE_SHA256 = (
     "6ccc2e26210c6c025fc3d95b9d514a397a30cdb1ad855d1c98d49f5bf4cf29d0"
+)
+LENGTH_INTRINSIC_SCOPE = (
+    "#if defined(_MSC_VER) && _MSC_VER <= 1200\n"
+    "// The pinned free operation uses inline fsqrt; Vector::normalize keeps the\n"
+    "// translation unit's CRT sqrt policy before and after this one definition.\n"
+    "#pragma intrinsic(sqrt)\n"
+    "#endif\n"
+)
+LENGTH_FUNCTION_RESTORE = (
+    "#if defined(_MSC_VER) && _MSC_VER <= 1200\n"
+    "// Restore the prior TU policy immediately for following Vector methods.\n"
+    "#pragma function(sqrt)\n"
+    "#endif\n"
 )
 COMPILERS = [
     (name, shutil.which(name)) for name in ("g++", "clang++")
@@ -53,6 +66,9 @@ def product():
     assert source.count(ORIGINAL) == 1
     assert source.count(NORMALIZE_BINDING) == 1
     assert source.count(DELETED_SEED) == 1
+    assert_length_sqrt_scope(source)
+    assert source.count(LENGTH_INTRINSIC_SCOPE) == 1
+    assert source.count(LENGTH_FUNCTION_RESTORE) == 1
     assert outside_normalize_sha256(source) == OUTSIDE_NORMALIZE_SHA256
     assert "Vector Vector::normalize()" in source
     assert "float length = static_cast<float>(sqrt(" not in source
@@ -60,6 +76,13 @@ def product():
 
 
 def outside_normalize_sha256(source):
+    # Remove only the two exact, newly admitted pragma/comment blocks. Any
+    # altered policy or neighboring source remains in the immutable checksum.
+    assert_length_sqrt_scope(source)
+    assert source.count(LENGTH_INTRINSIC_SCOPE) == 1
+    assert source.count(LENGTH_FUNCTION_RESTORE) == 1
+    source = source.replace(LENGTH_INTRINSIC_SCOPE, "", 1)
+    source = source.replace(LENGTH_FUNCTION_RESTORE, "", 1)
     signature = "Vector Vector::normalize() {"
     assert source.count(signature) == 1
     start = source.index(signature)
@@ -74,6 +97,49 @@ def outside_normalize_sha256(source):
                 projection = source[:start] + "/* NORMALIZE BODY */" + source[end + 1:]
                 return hashlib.sha256(projection.encode()).hexdigest()
     raise AssertionError("normalize() definition has no matching closing brace")
+
+
+def assert_length_sqrt_scope(source):
+    assert source.count(LENGTH_INTRINSIC_SCOPE) == 1
+    assert source.count(LENGTH_FUNCTION_RESTORE) == 1
+    signature = "float __cdecl vec3_length(const float *vector)"
+    assert source.count(signature) == 1
+    start = source.index(signature)
+    intrinsic = source.index(LENGTH_INTRINSIC_SCOPE)
+    assert intrinsic + len(LENGTH_INTRINSIC_SCOPE) == start
+    opening = source.index("{", start)
+    depth = 0
+    for end in range(opening, len(source)):
+        if source[end] == "{":
+            depth += 1
+        elif source[end] == "}":
+            depth -= 1
+            if depth == 0:
+                assert source[end + 1:].startswith("\n" + LENGTH_FUNCTION_RESTORE)
+                return
+    raise AssertionError("vec3_length definition has no matching closing brace")
+
+
+def test_normalize_checksum_adapter_rejects_pragma_and_neighbor_damage():
+    source = (ROOT / "src/vector.cpp").read_text()
+    assert outside_normalize_sha256(source) == OUTSIDE_NORMALIZE_SHA256
+    wrong_restore = source.replace(
+        LENGTH_FUNCTION_RESTORE,
+        LENGTH_FUNCTION_RESTORE.replace("#pragma function(sqrt)",
+                                        "#pragma intrinsic(sqrt)"),
+        1,
+    )
+    with pytest.raises(AssertionError):
+        outside_normalize_sha256(wrong_restore)
+    wrong_global_policy = source.replace("#pragma function(sqrt)",
+                                         "#pragma intrinsic(sqrt)", 1)
+    assert outside_normalize_sha256(wrong_global_policy) != OUTSIDE_NORMALIZE_SHA256
+    changed_neighbor = source.replace(
+        "return (rz * z_ + ry * y_) + rx * x_;",
+        "return (rz * z_ + ry * y_) - rx * x_;",
+        1,
+    )
+    assert outside_normalize_sha256(changed_neighbor) != OUTSIDE_NORMALIZE_SHA256
 
 
 HARNESS = r"""
