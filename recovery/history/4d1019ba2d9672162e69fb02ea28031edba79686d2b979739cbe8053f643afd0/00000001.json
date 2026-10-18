@@ -1,0 +1,20 @@
+{
+  "event_id": "5dcabdb9ff9e26c79cd49ef0c65c7e4bc11a25f37de6cdcfdba73f90006f3365",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/win.cpp"
+    ],
+    "evidence": [
+      "Original635870 DDInit::report_error is already owned by src/win.cpp, as both native source records and fresh actual application receipts establish. Authorize associated-data comments there only. The initial prospective src/ddinit.cpp path does not exist and must not be created, used as a new TU or treated as source provenance.",
+      "Task baseline31b3b481c, all17 original subjects and the comment-only/native-checker-preserving policy remain unchanged. No new DDInit implementation, homing, compiler/CMake change or rewrite of the original authorization."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "actual-ddinit-win-owner-oct18",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:switch-owner-storage-oct18"
+}
