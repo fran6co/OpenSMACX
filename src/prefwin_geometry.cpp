@@ -4,11 +4,13 @@
 // PrefWin geometry constants observed in the pinned image. Roles are named
 // only where the PrefWin/GraphicWin initialization call arguments establish
 // them; the remaining four retain address-bearing provisional names.
-// The /Gy measurement recipes emit an arithmetic helper followed by a
-// tail-jump wrapper registered in .CRT$XCU. Bind the original arithmetic body
-// to the helper, not the wrapper. The ordinary non-/Gy application recipe
-// numbers its direct initializer differently; these bindings alone do not
-// establish linked startup correspondence or historical TU boundaries.
+// The original CRT slots 0x0068257C..0x006825E0 select these 26 arithmetic
+// initializers directly, in declaration order. Bind the production /Ob2
+// CRT-selected entries, not the separate helper names removed by inlining.
+// The explicit measurement context retains that selection with /Gy as well.
+// The entries at 0x0048D610, 0x0048D790 and 0x0048D7F0 still differ in input
+// load order despite masked-byte equality. These bindings do not establish
+// whole-program startup order, linked retention or historical TU boundaries.
 
 // RECOVERY_OBJECT: v2 0x00686B6C 0x00686B70 ?PrefWinGeometryConstant_686B6C@@3HA 0x0048D550
 int32_t PrefWinGeometryConstant_686B6C = 4;
@@ -36,7 +38,7 @@ int32_t PrefWinToggleHeight = 20;
 Purpose: sub_48d550 - arithmetic over 2 fixed global(s), one
          statement per original instruction.
 // ORIGINAL: 0x0048D550 sub_48d550 0x0048D550-0x0048D55E FILE BYTE_EXACT
-// symbol    _$E1
+// symbol    _$E2
 // former symbol ?global_arith_0048d550_redirect@@YIXPAX0@Z
 // size      14 bytes
 // prototype 
@@ -54,7 +56,7 @@ int32_t PrefWinGeometryValue_8577EC = static_cast<int32_t>(static_cast<uint32_t>
 Purpose: sub_48d560 - arithmetic over 2 fixed global(s), one
          statement per original instruction.
 // ORIGINAL: 0x0048D560 sub_48d560 0x0048D560-0x0048D56B FILE BYTE_EXACT
-// symbol    _$E4
+// symbol    _$E5
 // former symbol ?global_arith_0048d560_redirect@@YIXPAX0@Z
 // size      11 bytes
 // prototype 
@@ -72,7 +74,7 @@ int32_t PrefWinGeometryValue_8577E8 = PrefWinGeometryConstant_686B70;
 Purpose: sub_48d570 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
 // ORIGINAL: 0x0048D570 sub_48d570 0x0048D570-0x0048D587 FILE BYTE_EXACT
-// symbol    _$E7
+// symbol    _$E8
 // LEVER: the first global's register must stay live across the doubling. Committed as `void`, VC6 folds `2*a` into a's own register (`shl eax, 1`) and gives the second load ecx; the image has `lea ecx, [eax + eax]` with the second load in edx, which VC6 emits ONLY when a is still live - four spellings of the statement, `register` storage and every /O flag set produce the identical shl form. Returning the first global is the one shape that keeps it live, and it costs no instruction: the value is already in eax at the ret. No caller in the image, so nothing observes the choice either way. PROOF OF THE MECHANISM: keeping the first global's value alive with a conditional second store compiles the image's exact `mov edx / lea ecx,[eax+eax] / sub edx,ecx` plus that store - liveness is the only thing the `void` spelling was missing.
 // former symbol ?global_arith_0048d570_redirect@@YIHPAX0@Z
 // size      23 bytes
@@ -91,7 +93,7 @@ int32_t PrefWinGeometryValue_8578AC = static_cast<int32_t>(static_cast<uint32_t>
 Purpose: sub_48d590 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
 // ORIGINAL: 0x0048D590 sub_48d590 0x0048D590-0x0048D5A7 FILE BYTE_EXACT
-// symbol    _$E10
+// symbol    _$E11
 // LEVER: the first global's register must stay live across the doubling. VC6 folds `2*a` into a's own register (`shl eax, 1`) and gives the second load ecx; the image has `lea ecx, [eax + eax]` with the second load in edx, which VC6 emits ONLY when the first global is still live - four statement spellings, `register` storage and every /O flag produce the identical shl form. Returning the first global is the one shape that keeps it live, and it costs no instruction: the value is already in eax at the ret. No caller in the image, so nothing observes the choice.
 // former symbol ?global_arith_0048d590_redirect@@YIHPAX0@Z
 // size      23 bytes
@@ -110,7 +112,7 @@ int32_t PrefWinGeometryValue_8578B0 = static_cast<int32_t>(static_cast<uint32_t>
 Purpose: sub_48d5b0 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
 // ORIGINAL: 0x0048D5B0 sub_48d5b0 0x0048D5B0-0x0048D5C4 FILE BYTE_EXACT
-// symbol    _$E13
+// symbol    _$E14
 // LEVER: the first global's register must stay live across the add. As `void`, VC6 computes the sum into the FIRST global's register (`add eax, ecx`, so the image's `add ecx, eax` reads as a different program). Six statement spellings scored identically - the destination is chosen by liveness, not by which operand is written first. Returning the first global keeps its register live, VC6 has to add into the second one's register, and the bytes match with no extra instruction: the value is already in eax at the ret. No caller in the image observes the choice.
 // former symbol ?global_arith_0048d5b0_redirect@@YIHPAX0@Z
 // size      20 bytes
@@ -129,7 +131,7 @@ int32_t PrefWinGeometryValue_857888 = static_cast<int32_t>(static_cast<uint32_t>
 Purpose: sub_48d5d0 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
 // ORIGINAL: 0x0048D5D0 sub_48d5d0 0x0048D5D0-0x0048D5E4 FILE BYTE_EXACT
-// symbol    _$E16
+// symbol    _$E17
 // LEVER: the first global's register must stay live across the add. As `void`, VC6 computes the sum into the FIRST global's register (`add eax, ecx`, so the image's `add ecx, eax` reads as a different program). Six statement spellings scored identically - the destination is chosen by liveness, not by which operand is written first. Returning the first global keeps its register live, VC6 has to add into the second one's register, and the bytes match with no extra instruction: the value is already in eax at the ret. No caller in the image observes the choice.
 // former symbol ?global_arith_0048d5d0_redirect@@YIHPAX0@Z
 // size      20 bytes
@@ -148,7 +150,7 @@ int32_t PrefWinGeometryValue_857884 = static_cast<int32_t>(static_cast<uint32_t>
 Purpose: sub_48d5f0 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
 // ORIGINAL: 0x0048D5F0 sub_48d5f0 0x0048D5F0-0x0048D607 FILE BYTE_EXACT
-// symbol    _$E19
+// symbol    _$E20
 // LEVER: the first global's register must stay live across the doubling. VC6 folds `2*a` into a's own register (`shl eax, 1`) and gives the second load ecx; the image has `lea ecx, [eax + eax]` with the second load in edx, which VC6 emits ONLY when the first global is still live - four statement spellings, `register` storage and every /O flag produce the identical shl form. Returning the first global is the one shape that keeps it live, and it costs no instruction: the value is already in eax at the ret. No caller in the image, so nothing observes the choice.
 // former symbol ?global_arith_0048d5f0_redirect@@YIHPAX0@Z
 // size      23 bytes
@@ -167,7 +169,7 @@ int32_t PrefWinGeometryValue_8578C0 = static_cast<int32_t>(static_cast<uint32_t>
 Purpose: sub_48d610 - arithmetic over 4 fixed global(s), one
          statement per original instruction.
 // ORIGINAL: 0x0048D610 sub_48d610 0x0048D610-0x0048D62B FILE SEMANTIC
-// symbol    _$E22
+// symbol    _$E23
 // TRIED 2026-09-03: six shapes for the four-global chain, including the
 //   register-liveness lever that landed the other sixteen bodies in this
 //   file. Closest is declaring the accumulator before the first global,
@@ -194,7 +196,7 @@ int32_t PrefWinGeometryValue_85789C = static_cast<int32_t>(static_cast<uint32_t>
 Purpose: sub_48d630 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
 // ORIGINAL: 0x0048D630 sub_48d630 0x0048D630-0x0048D644 FILE BYTE_EXACT
-// symbol    _$E25
+// symbol    _$E26
 // LEVER: the first global's register must stay live across the add. As `void`, VC6 computes the sum into the FIRST global's register (`add eax, ecx`, so the image's `add ecx, eax` reads as a different program). Six statement spellings scored identically - the destination is chosen by liveness, not by which operand is written first. Returning the first global keeps its register live, VC6 has to add into the second one's register, and the bytes match with no extra instruction: the value is already in eax at the ret. No caller in the image observes the choice.
 // former symbol ?global_arith_0048d630_redirect@@YIHPAX0@Z
 // size      20 bytes
@@ -214,7 +216,7 @@ int32_t PrefWinGeometryValue_857898 = static_cast<int32_t>(static_cast<uint32_t>
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0048D650 sub_48d650 0x0048D650-0x0048D66E FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original CRT table entry selects 0048D650, whose typed arithmetic and output store were independently decoded from the pinned executable.", "recovery/tasks/prefwin-geometry-initializers.json", "src/prefwin_geometry.h", "pinned .CRT$XCU slot 0x0068257C + 4*9 points to original 0x0048D650; full original span writes output object 0x8578A8", "prefwin_geometry.cpp namespace-scope initializer for PrefWinGeometryValue_8578A8; this is the candidate source owner, not a generated-symbol qualification", "recovery/tasks/prefwin-geometry-initializers.json"], "reason": "Bind original initializer identity 0x0048D650 to the natural C++ dynamic initializer of PrefWinGeometryValue_8578A8. The source-owned variable declaration is the owner; generated symbol and exact table occurrence remain subject to fresh native COFF/link qualification."}
-// symbol    _$E28
+// symbol    _$E29
 // former symbol _sub_48d650
 // RECOVERY_OBJECT: v2 0x008578A8 0x008578AC ?PrefWinGeometryValue_8578A8@@3HA 0x0048D650
 int32_t PrefWinGeometryValue_8578A8 = static_cast<int32_t>(static_cast<uint32_t>(PrefWinGeometryValue_8578AC) - 3u * static_cast<uint32_t>(PrefWinGeometryConstant_686B74) - static_cast<uint32_t>(PrefWinButtonWidth));
@@ -223,7 +225,7 @@ int32_t PrefWinGeometryValue_8578A8 = static_cast<int32_t>(static_cast<uint32_t>
 Purpose: sub_48d670 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
 // ORIGINAL: 0x0048D670 sub_48d670 0x0048D670-0x0048D687 FILE BYTE_EXACT
-// symbol    _$E31
+// symbol    _$E32
 // LEVER: the first global's register must stay live across the doubling. VC6 folds `2*a` into a's own register (`shl eax, 1`) and gives the second load ecx; the image has `lea ecx, [eax + eax]` with the second load in edx, which VC6 emits ONLY when the first global is still live - four statement spellings, `register` storage and every /O flag produce the identical shl form. Returning the first global is the one shape that keeps it live, and it costs no instruction: the value is already in eax at the ret. No caller in the image, so nothing observes the choice.
 // former symbol ?global_arith_0048d670_redirect@@YIHPAX0@Z
 // size      23 bytes
@@ -242,7 +244,7 @@ int32_t PrefWinGeometryValue_8578A4 = static_cast<int32_t>(static_cast<uint32_t>
 Purpose: sub_48d690 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
 // ORIGINAL: 0x0048D690 sub_48d690 0x0048D690-0x0048D6A4 FILE BYTE_EXACT
-// symbol    _$E34
+// symbol    _$E35
 // LEVER: the first global's register must stay live across the add. As `void`, VC6 computes the sum into the FIRST global's register (`add eax, ecx`, so the image's `add ecx, eax` reads as a different program). Six statement spellings scored identically - the destination is chosen by liveness, not by which operand is written first. Returning the first global keeps its register live, VC6 has to add into the second one's register, and the bytes match with no extra instruction: the value is already in eax at the ret. No caller in the image observes the choice.
 // former symbol ?global_arith_0048d690_redirect@@YIHPAX0@Z
 // size      20 bytes
@@ -261,7 +263,7 @@ int32_t PrefWinGeometryValue_8578C8 = static_cast<int32_t>(static_cast<uint32_t>
 Purpose: sub_48d6b0 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
 // ORIGINAL: 0x0048D6B0 sub_48d6b0 0x0048D6B0-0x0048D6C4 FILE BYTE_EXACT
-// symbol    _$E37
+// symbol    _$E38
 // LEVER: the first global's register must stay live across the add. As `void`, VC6 computes the sum into the FIRST global's register (`add eax, ecx`, so the image's `add ecx, eax` reads as a different program). Six statement spellings scored identically - the destination is chosen by liveness, not by which operand is written first. Returning the first global keeps its register live, VC6 has to add into the second one's register, and the bytes match with no extra instruction: the value is already in eax at the ret. No caller in the image observes the choice.
 // former symbol ?global_arith_0048d6b0_redirect@@YIHPAX0@Z
 // size      20 bytes
@@ -280,7 +282,7 @@ int32_t PrefWinGeometryValue_8578C4 = static_cast<int32_t>(static_cast<uint32_t>
 Purpose: sub_48d6d0 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
 // ORIGINAL: 0x0048D6D0 sub_48d6d0 0x0048D6D0-0x0048D6E7 FILE BYTE_EXACT
-// symbol    _$E40
+// symbol    _$E41
 // LEVER: the first global's register must stay live across the doubling. VC6 folds `2*a` into a's own register (`shl eax, 1`) and gives the second load ecx; the image has `lea ecx, [eax + eax]` with the second load in edx, which VC6 emits ONLY when the first global is still live - four statement spellings, `register` storage and every /O flag produce the identical shl form. Returning the first global is the one shape that keeps it live, and it costs no instruction: the value is already in eax at the ret. No caller in the image, so nothing observes the choice.
 // former symbol ?global_arith_0048d6d0_redirect@@YIHPAX0@Z
 // size      23 bytes
@@ -299,7 +301,7 @@ int32_t PrefWinGeometryValue_8578A0 = static_cast<int32_t>(static_cast<uint32_t>
 Purpose: sub_48d6f0 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
 // ORIGINAL: 0x0048D6F0 sub_48d6f0 0x0048D6F0-0x0048D704 FILE BYTE_EXACT
-// symbol    _$E43
+// symbol    _$E44
 // LEVER: the first global's register must stay live across the add. As `void`, VC6 computes the sum into the FIRST global's register (`add eax, ecx`, so the image's `add ecx, eax` reads as a different program). Six statement spellings scored identically - the destination is chosen by liveness, not by which operand is written first. Returning the first global keeps its register live, VC6 has to add into the second one's register, and the bytes match with no extra instruction: the value is already in eax at the ret. No caller in the image observes the choice.
 // former symbol ?global_arith_0048d6f0_redirect@@YIHPAX0@Z
 // size      20 bytes
@@ -318,7 +320,7 @@ int32_t PrefWinGeometryValue_85788C = static_cast<int32_t>(static_cast<uint32_t>
 Purpose: sub_48d710 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
 // ORIGINAL: 0x0048D710 sub_48d710 0x0048D710-0x0048D724 FILE BYTE_EXACT
-// symbol    _$E46
+// symbol    _$E47
 // LEVER: the first global's register must stay live across the add. As `void`, VC6 computes the sum into the FIRST global's register (`add eax, ecx`, so the image's `add ecx, eax` reads as a different program). Six statement spellings scored identically - the destination is chosen by liveness, not by which operand is written first. Returning the first global keeps its register live, VC6 has to add into the second one's register, and the bytes match with no extra instruction: the value is already in eax at the ret. No caller in the image observes the choice.
 // former symbol ?global_arith_0048d710_redirect@@YIHPAX0@Z
 // size      20 bytes
@@ -337,7 +339,7 @@ int32_t PrefWinGeometryValue_857890 = static_cast<int32_t>(static_cast<uint32_t>
 Purpose: sub_48d730 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
 // ORIGINAL: 0x0048D730 sub_48d730 0x0048D730-0x0048D747 FILE BYTE_EXACT
-// symbol    _$E49
+// symbol    _$E50
 // LEVER: the first global's register must stay live across the doubling. VC6 folds `2*a` into a's own register (`shl eax, 1`) and gives the second load ecx; the image has `lea ecx, [eax + eax]` with the second load in edx, which VC6 emits ONLY when the first global is still live - four statement spellings, `register` storage and every /O flag produce the identical shl form. Returning the first global is the one shape that keeps it live, and it costs no instruction: the value is already in eax at the ret. No caller in the image, so nothing observes the choice.
 // former symbol ?global_arith_0048d730_redirect@@YIHPAX0@Z
 // size      23 bytes
@@ -356,7 +358,7 @@ int32_t PrefWinGeometryValue_857894 = static_cast<int32_t>(static_cast<uint32_t>
 Purpose: sub_48d750 - arithmetic over 2 fixed global(s), one
          statement per original instruction.
 // ORIGINAL: 0x0048D750 sub_48d750 0x0048D750-0x0048D75B FILE BYTE_EXACT
-// symbol    _$E52
+// symbol    _$E53
 // former symbol ?global_arith_0048d750_redirect@@YIXPAX0@Z
 // size      11 bytes
 // prototype 
@@ -374,7 +376,7 @@ int32_t PrefWinGeometryValue_8577D8 = PrefWinGeometryValue_8578C8;
 Purpose: sub_48d760 - arithmetic over 2 fixed global(s), one
          statement per original instruction.
 // ORIGINAL: 0x0048D760 sub_48d760 0x0048D760-0x0048D770 FILE BYTE_EXACT
-// symbol    _$E55
+// symbol    _$E56
 // former symbol ?global_arith_0048d760_redirect@@YIXPAX0@Z
 // size      16 bytes
 // prototype 
@@ -392,7 +394,7 @@ int32_t PrefWinGeometryValue_8577DC = static_cast<int32_t>(static_cast<uint32_t>
 Purpose: sub_48d770 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
 // ORIGINAL: 0x0048D770 sub_48d770 0x0048D770-0x0048D787 FILE BYTE_EXACT
-// symbol    _$E58
+// symbol    _$E59
 // LEVER: the first global's register must stay live across the doubling. VC6 folds `2*a` into a's own register (`shl eax, 1`) and gives the second load ecx; the image has `lea ecx, [eax + eax]` with the second load in edx, which VC6 emits ONLY when the first global is still live - four statement spellings, `register` storage and every /O flag produce the identical shl form. Returning the first global is the one shape that keeps it live, and it costs no instruction: the value is already in eax at the ret. No caller in the image, so nothing observes the choice.
 // former symbol ?global_arith_0048d770_redirect@@YIHPAX0@Z
 // size      23 bytes
@@ -411,7 +413,7 @@ int32_t PrefWinGeometryValue_8577E4 = static_cast<int32_t>(static_cast<uint32_t>
 Purpose: sub_48d790 - arithmetic over 4 fixed global(s), one
          statement per original instruction.
 // ORIGINAL: 0x0048D790 sub_48d790 0x0048D790-0x0048D7AB FILE BYTE_EXACT
-// symbol    _$E61
+// symbol    _$E62
 // former symbol ?global_arith_0048d790_redirect@@YIXPAX0@Z
 // size      27 bytes
 // prototype 
@@ -429,7 +431,7 @@ int32_t PrefWinGeometryValue_8577E0 = static_cast<int32_t>(static_cast<uint32_t>
 Purpose: sub_48d7b0 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
 // ORIGINAL: 0x0048D7B0 sub_48d7b0 0x0048D7B0-0x0048D7C4 FILE BYTE_EXACT
-// symbol    _$E64
+// symbol    _$E65
 // LEVER: the first global's register must stay live across the add. As `void`, VC6 computes the sum into the FIRST global's register (`add eax, ecx`, so the image's `add ecx, eax` reads as a different program). Six statement spellings scored identically - the destination is chosen by liveness, not by which operand is written first. Returning the first global keeps its register live, VC6 has to add into the second one's register, and the bytes match with no extra instruction: the value is already in eax at the ret. No caller in the image observes the choice.
 // former symbol ?global_arith_0048d7b0_redirect@@YIHPAX0@Z
 // size      20 bytes
@@ -448,7 +450,7 @@ int32_t PrefWinGeometryValue_8578B4 = static_cast<int32_t>(static_cast<uint32_t>
 Purpose: sub_48d7d0 - arithmetic over 3 fixed global(s), one
          statement per original instruction.
 // ORIGINAL: 0x0048D7D0 sub_48d7d0 0x0048D7D0-0x0048D7E4 FILE BYTE_EXACT
-// symbol    _$E67
+// symbol    _$E68
 // LEVER: the first global's register must stay live across the add. As `void`, VC6 computes the sum into the FIRST global's register (`add eax, ecx`, so the image's `add ecx, eax` reads as a different program). Six statement spellings scored identically - the destination is chosen by liveness, not by which operand is written first. Returning the first global keeps its register live, VC6 has to add into the second one's register, and the bytes match with no extra instruction: the value is already in eax at the ret. No caller in the image observes the choice.
 // former symbol ?global_arith_0048d7d0_redirect@@YIHPAX0@Z
 // size      20 bytes
@@ -467,7 +469,7 @@ int32_t PrefWinGeometryValue_8578BC = static_cast<int32_t>(static_cast<uint32_t>
 Purpose: sub_48d7f0 - arithmetic over 4 fixed global(s), one
          statement per original instruction.
 // ORIGINAL: 0x0048D7F0 sub_48d7f0 0x0048D7F0-0x0048D80B FILE SEMANTIC
-// symbol    _$E70
+// symbol    _$E71
 // TRIED 2026-09-03: same six shapes as 0x0048D610, same wall - see that
 //   marker. The image's `add ecx,eax` needs the first global live past the
 //   first add, and its register is the one the third global's reload wants.
@@ -488,7 +490,7 @@ int32_t PrefWinGeometryValue_8578CC = static_cast<int32_t>(static_cast<uint32_t>
 Purpose: sub_48d810 - arithmetic over 2 fixed global(s), one
          statement per original instruction.
 // ORIGINAL: 0x0048D810 sub_48d810 0x0048D810-0x0048D81E FILE
-// symbol    _$E73
+// symbol    _$E74
 // TRIED: the last of four instructions. The image has `add eax, -2` (83 C0 FE); VC6 emits `sub eax, 2` (83 E8 02) and will not be talked out of it. Six spellings measured with `tools/try_spellings.py` - `eax + -2`, `eax += -2`, unsigned `+ 0xFFFFFFFEu`, an int cast around the unsigned add, and both one-liner forms - all score 3 of 4, identically. All ten flag sets score 3 of 4 or worse. The two are semantically the same instruction; the encoding is not reachable from C++ with this compiler.
 // TRIED: the one divergence is an ENCODING choice VC6 will not make - the image has `add eax, -2` (83 C0 FE), this tree emits `sub eax, 2` (83 E8 02), same semantics and same length. `eax = eax + -2` is already the source form and VC6 canonicalises it to a subtract; so does the unsigned spelling `eax + 0xFFFFFFFEu`, measured. A literal negative addend cannot reach that encoding, so whatever the original wrote, the -2 did not arrive as a constant here.
 // former symbol ?global_arith_0048d810_redirect@@YIXPAX0@Z
@@ -517,7 +519,7 @@ int32_t PrefWinGeometryValue_8578D0 = static_cast<int32_t>(static_cast<uint32_t>
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0048D820 sub_48d820 0x0048D820-0x0048D83E FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original CRT table entry selects 0048D820, whose typed arithmetic and output store were independently decoded from the pinned executable.", "recovery/tasks/prefwin-geometry-initializers.json", "src/prefwin_geometry.h", "pinned .CRT$XCU slot 0x0068257C + 4*25 points to original 0x0048D820; full original span writes output object 0x8578B8", "prefwin_geometry.cpp namespace-scope initializer for PrefWinGeometryValue_8578B8; this is the candidate source owner, not a generated-symbol qualification", "recovery/tasks/prefwin-geometry-initializers.json"], "reason": "Bind original initializer identity 0x0048D820 to the natural C++ dynamic initializer of PrefWinGeometryValue_8578B8. The source-owned variable declaration is the owner; generated symbol and exact table occurrence remain subject to fresh native COFF/link qualification."}
-// symbol    _$E76
+// symbol    _$E77
 // former symbol _sub_48d820
 // RECOVERY_OBJECT: v2 0x008578B8 0x008578BC ?PrefWinGeometryValue_8578B8@@3HA 0x0048D820
 int32_t PrefWinGeometryValue_8578B8 = static_cast<int32_t>(static_cast<uint32_t>(PrefWinGeometryValue_8577E4) - 3u * static_cast<uint32_t>(PrefWinGeometryConstant_686B74) - static_cast<uint32_t>(PrefWinToggleWidth));
