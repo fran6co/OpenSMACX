@@ -749,7 +749,7 @@ class BasePop : public GraphicWin {
     button->config[26] = default_block_[26];
   }
   void apply_button_bevel(FlatButton *button) {
-    button->color_ = 0;
+    button->color_ = field_31A0_;
     button->bevel_upper_ = field_31A4_;
     button->bevel_lower_ = field_31A8_;
     button->bevel_thickness_ = field_31AC_;

@@ -1,0 +1,21 @@
+{
+  "event_id": "9b0eee248f529ed544677de3cc57bc4a71f544f98fce06d5a343bae9d11a4997",
+  "payload": {
+    "affects": [
+      "entity-c043d38573c83162a964031aad8ede121e10ab8fa95b65f241fe742cb1328c86"
+    ],
+    "author": "coordinator",
+    "discovery_id": "instance-bevel-color-provider",
+    "evidence": [
+      "Pinned602F50,6032D9,60362B loadALfrom[ESI+31A0] afterxorEAX; stores at602F56,6032E1,603631 publishzeroextendedwordtoBaseButton+A84. Sourceexistingapply_button_bevel inlinehelperinsteadwriteszero atall3sites. Perinstancebyte canmutate through theme/defaultconfiguration; constantzero/247 is notoriginalbehavior.",
+      "Independent source/layout/constructor/theme audit corroborates BasePopfield31A0 uint8 and FlatButton inheritedBaseButtoncolor+A84. No new storage, typecast, fixedaddress or inventedlayout is needed. Headeredit scope was explicitlyexpanded in precedingnativeevent."
+    ],
+    "hypothesis": "All three BasePop button bevel copies need the popup instance color byte, not a hardcoded zero.",
+    "kind": "discovery"
+  },
+  "previous_event": "0ed5cf55fb852ea47df7b4718e38f1d27febd4d86b652edad9d127e755c6445d",
+  "request_id": "instance-bevel-color-provider",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:popup-display-modal-oct18"
+}

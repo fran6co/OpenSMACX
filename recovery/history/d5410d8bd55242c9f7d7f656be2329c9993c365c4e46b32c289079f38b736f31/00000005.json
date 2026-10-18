@@ -1,0 +1,18 @@
+{
+  "event_id": "d19317468a2db447c8cb72b7f8771de2af47d8e08a799e15b650940f1515c371",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "instance-bevel-color-provider",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/basepop.h apply_button_bevel nowcopies existinguint8_tfield31A0 into BaseButtoncolorword instead ofzero; fiveadjacentstores andallthreegenuineBasePopexecreceiversunchanged. Pinnedallthreeload/storesequences, actualhelper/callshapehostcontrols for0/9/127/128/247/255 and compilingzero/default247/signextensionmutants agree. ActualconfiguredVC6execnowemits exactly3instancebyte loads at31A0.",
+      "Headereditrequiredexplicitcoordinator scopeexpansion. Actual180outsidebodyobjectresiduals pass, includingall otherTUs/data/references with noheaderwaiver. No newlayout, hardcodedaddress, originalidentity orstandalonehelpermappingintroduced. These observations areboundedsource/provider recovery, notcompletecolorsystem/runtimeorwholefunctionmatching acceptance."
+    ]
+  },
+  "previous_event": "3c1b2b491461a0eb8f3e9576c60212f3c27aeaf87e70435031bdb9383274c485",
+  "request_id": "incorporate-instance-bevel-color",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:popup-display-modal-oct18"
+}

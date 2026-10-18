@@ -1155,7 +1155,9 @@ pump:
     if ((field_30A8_ & 0x400000) == 0 && field_3094_ != 0) {
         field_3094_(&text_block_a_, 1);
     }
-    hide();
+    // Publish even a nonmodal popup: the original calls the virtual show
+    // slot with mode 3 before deciding whether to enter the modal pump.
+    show(3);
 
     if ((field_30A8_ & 0x4100) == 0 && owner_window_ == this) {
         // THE MODAL PUMP, with the popup holding modal focus. The fallout
@@ -1179,15 +1181,17 @@ pump:
         WinModalFocus = saved_focus;
         BasePopModalLeft = client_rect_.left;
         BasePopModalTop = client_rect_.top;
+    }
 
-        if ((field_30A8_ & 0x4100) == 0 && owner_window_ == this) {
-            if (--BasePopFalloutGate == 0) {
-                BasePopFalloutFlag = 0;
-            }
-            hide();
-            if ((field_30A8_ & 0x400000) == 0 && field_3094_ != 0) {
-                field_3094_(&text_block_b_, 0);
-            }
+    // This is a separate post-pump test. The original reloads state and
+    // additionally tests bit 0x200; callbacks may have changed either gate.
+    if ((field_30A8_ & 0x4300) == 0 && owner_window_ == this) {
+        if (--BasePopFalloutGate == 0) {
+            BasePopFalloutFlag = 0;
+        }
+        hide();
+        if ((field_30A8_ & 0x400000) == 0 && field_3094_ != 0) {
+            field_3094_(&text_block_b_, 0);
         }
     }
 

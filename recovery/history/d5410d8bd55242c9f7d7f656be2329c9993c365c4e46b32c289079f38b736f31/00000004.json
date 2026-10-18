@@ -1,0 +1,18 @@
+{
+  "event_id": "3c1b2b491461a0eb8f3e9576c60212f3c27aeaf87e70435031bdb9383274c485",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "original-show-and-cleanup-gates",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/basepop.cpp now performs original virtualshow3 afterconfigopen andbefore initial4100/ownergate; postmodalcleanup separatelyreloads4300/ownergate beforecounterdecrement, hide andfreshconfigclose. Independent original/source review,67focusedhosttests includingcompilingshow/mask/providerdamagecontrols, and actualconfiguredVC6show3slot4/mask41/mask43 emission agree withthepinnedsequence.",
+      "Fresh fullapplication166CPP/180COFFbuildlink and180outsidefunctionphysicalresiduals pass. Sourceannotationintegrity5646records/363files, all5646canonicalidentity/span/symbol/binding/claim/findingrecordsunchanged,3422claims/3431historicalrequirements/zero missing, mappingandreferencechecks pass. Native bothflagsetreplica/damagecontrols pass; fulloriginalEHcomparison remainsREFUSED becausea complete relocatedregistrationchainis unestablished. Noexactclaim, demotion orautomatic/game/fulllinkedselection acceptance follows. Destinationbuild/recheckstillrequired."
+    ]
+  },
+  "previous_event": "9b0eee248f529ed544677de3cc57bc4a71f544f98fce06d5a343bae9d11a4997",
+  "request_id": "incorporate-original-show-and-cleanup",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:popup-display-modal-oct18"
+}

@@ -1,0 +1,25 @@
+{
+  "author": "coordinator",
+  "base_revision": "37f50ba029e49450f16a6c5f90909f18b209651e",
+  "editable_files": [
+    "src/basepop.cpp",
+    "recovery/tests/test_popup_display_modal_oct18.py"
+  ],
+  "evidence": [
+    "Pinned whole BasePop::exec602600..6037F5:6036A1..A7 pushes3 and invokes primary virtualslot+4(show), then6036AA..B3 tests flags4100 before the modal path. Source instead calls hide(slot+8) with noargument. Paired unchanged6ba9c2d18 original/current LANDFALL trace confirms both redraws run but only original reaches Popup::show(requestedmode3); candidate remains hidden in this nonmodal flags4000 path.",
+    "Pinned60373B..603744 independently reloads flags and testsAH43(mask4300);603746..4C retests owner==this before decrementfallout, hide and second configurationcallback. Current source nests this inside initial4100gate and reuses4100, losing the200bit distinction and callback-driven state reevaluation. Restore separate original4300 cleanup gate without inventing balanced-counter safetychecks.",
+    "Limit edits to these controlflow corrections and concise explanatory comments in BasePop::exec plus focused actualsource tests. Preserve original function/span/claims, all other geometry, classes, members, callbacks, counters, globals and return/error quirks. Do not introduce intentional safetyfixes or exact claims. Original branch asymmetry is evidence, not an invitation to normalize counter/lifetime behavior.",
+    "Require actualsource bounded display/modalblock hostcontrols with call-order/state mutation, skippedmodal bit4000, initial4100 vs post4300 masks and compiling historical/wrongmask damage controls, plus pinned complete instruction anchors. Independently review actualsource and native emission. Fresh application build/link, actual180object outsidefunction preservation, source/claims/maps/references and destination rechecks precede coordinator-reviewed integration. Native fullfunctionEH may remainunknown; no automatic, full linkedselection, runtime/game or byteexact acceptance is claimed."
+  ],
+  "intent": "Restore the original virtual popup show and independently reevaluated modal cleanup gates in BasePop::exec.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6301184,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "popup-display-modal-oct18"
+}

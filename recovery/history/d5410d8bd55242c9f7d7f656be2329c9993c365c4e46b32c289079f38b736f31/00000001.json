@@ -1,0 +1,22 @@
+{
+  "event_id": "bda5825a9e1e66d6760ee0164477ad6399d63b8bd01f33e28e7f20a49d319766",
+  "payload": {
+    "affects": [
+      "entity-c043d38573c83162a964031aad8ede121e10ab8fa95b65f241fe742cb1328c86"
+    ],
+    "author": "coordinator",
+    "discovery_id": "original-show-and-cleanup-gates",
+    "evidence": [
+      "Pinned6036A1..A7 loads primarytable, pushes3, selectsECX=this and calls[vtable+4]; currentsourcehide emits[vtable+8]withoutargument. Paired6ba9c2d18 LANDFALL firstredraw returns onboth, fieldsflags4000/selfowner/490x211at5,549 agree; originalreachesPopup::show(mode3)andcandidate doesnot within51.49seconds. Boundedfirst256DIBbytes agree09afterredraw. Randomgameinput andcompletepixelcorrectnessunproven.",
+      "Pinned6036AA..B3 tests4100beforemodal;60373B..4C separatelyreloadsflagsandtests4300/owner beforefalloutdecrement,virtualhide andfreshclosecallbacktest. Sourceincorrectlynests4100cleanup underinitialmodalpath. Preservecallbackmutation andoriginalasymmetry; nointentionalbugfix.",
+      "Independentread-onlyoriginal/source review confirmed both discrepancies and proposed virtualshow3 followedby separate initial4100 and post4300 gates. Existingtaskalreadyowns602600andbasepop.cpp; noout-of-scope edit ornewclaim is authorized."
+    ],
+    "hypothesis": "The missing original virtual show3 hides nonmodal tutorials, and modal cleanup must independently reload the broader original4300 gate.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "original-show-and-cleanup-gates",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:popup-display-modal-oct18"
+}

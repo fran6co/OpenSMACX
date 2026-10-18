@@ -1,0 +1,21 @@
+{
+  "event_id": "0ed5cf55fb852ea47df7b4718e38f1d27febd4d86b652edad9d127e755c6445d",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_basepop_bevel_provider_oct18.py",
+      "src/basepop.h"
+    ],
+    "evidence": [
+      "Independent pinned wholebodyaudit confirms allthree602600bevelsites602F4E..56,6032D7..E1,603627..31 zeroextend instancebyte[this+31A0] into actualBaseButton color+A84. Current inlinehelpercolor_=0 loses this provider. Existinguint8_tfield31A0 is populated by defaults and PopupThemeSurfaceColor; do notreplace itwithconstant247.",
+      "The inline apply_button_bevel helper has onlythree productuses, allwithin alreadyownedBasePop::exec602600. Expand header and focusedtest edit scope, not ABI or functionuniverse. Correct only color_ assignment tofield31A0; preserve fiveadjacentbevelstores, argumentreceivers and originalorder. Fresh actual180object residual must reveal any unexpected outsidebody impact rather than waive it."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "bda5825a9e1e66d6760ee0164477ad6399d63b8bd01f33e28e7f20a49d319766",
+  "request_id": "authorize-actual-bevel-color-provider",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:popup-display-modal-oct18"
+}
