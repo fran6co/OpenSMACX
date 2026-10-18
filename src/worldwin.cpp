@@ -610,14 +610,14 @@ void WorldWin::on_redraw() {
         }
         mapWin_.field_1DD70_ = 0x80000000;
         mapWin_.draw_map(0);
-        buffer2_.copy(map_surface, 0, 0, 0, 0, field_A14_, field_A18_);
+        map_surface->copy(&buffer2_, 0, 0, 0, 0, field_A14_, field_A18_);
         clear_dirty();
     }
     if (field_239BC_ & 6) {
         buffer2_.copy(map_surface, 0, 0, 0, 0, field_A14_, field_A18_);
         mapWin_.field_1DD70_ = 0x80000080;
         mapWin_.gen_bases_only();
-        buffer1_.copy(map_surface, 0, 0, 0, 0, field_A14_, field_A18_);
+        map_surface->copy(&buffer1_, 0, 0, 0, 0, field_A14_, field_A18_);
     }
     const int client_width = Buffer::dib_.bmiHeader.biWidth;
     const int client_height = -Buffer::dib_.bmiHeader.biHeight;
