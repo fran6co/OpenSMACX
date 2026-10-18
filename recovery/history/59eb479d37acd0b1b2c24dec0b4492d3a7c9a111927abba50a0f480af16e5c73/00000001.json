@@ -1,0 +1,21 @@
+{
+  "event_id": "f6c763711f8ebc86b699915f9b7cada50ddab6900ad8ae74d3a15f8ac3603a6a",
+  "payload": {
+    "affects": [
+      "entity-c043d38573c83162a964031aad8ede121e10ab8fa95b65f241fe742cb1328c86"
+    ],
+    "author": "coordinator",
+    "discovery_id": "six-popup-centering-shifts-oct18",
+    "evidence": [
+      "Pinned602998 SAR EDX,1;6029F4 SAR ECX,1;602A45 SAR EAX,1;602A84 SAR EDX,1;602AD4 SAR ECX,1;602B21 SAR ECX,1. Completepositiondecode60295A..602B50 shows no intervening signbias before any shift. Source has six /2 expressions in matching selfspecial/selfnormal/external x/y sentinel arms.",
+      "Independent review confirms all six instruction sequences. Validity/reachability of negativeodd results under current popup geometry is unproved; the ordinary PLANETFALL case instead motivates the separately authorized negativecoordinate extra-half removal. Do not claim the six rounding corrections explain the screenshot or fix unsafe behavior."
+    ],
+    "hypothesis": "All six sentinel-centering branches use direct signed arithmetic SAR1, not signed division with truncation toward zero. Source /2 differs for negative odd representable intermediates; preserve original arithmetic even though live negative-odd reachability has not been established.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "six-popup-centering-shifts-oct18",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:popup-negative-position-oct18"
+}

@@ -1,0 +1,25 @@
+{
+  "author": "coordinator",
+  "base_revision": "78942642f2419b69408f271210c0f0f97f98922e",
+  "editable_files": [
+    "src/basepop.cpp",
+    "recovery/tests/test_popup_negative_position_oct18.py"
+  ],
+  "evidence": [
+    "Pinned BasePop::exec602600..6037F5 owner comparison60295A and conditionalrectangleflag602968 identify the selfowner normalDIB position arm. Sentinel602A38..47 halves screenwidth-DIBwidth. Negativecoordinate602A49..5D instead computes loc_a-DIBwidth+screenwidth without division, guarded signednegative. Current source incorrectly divides this negativecoordinate expression by2. Preserve original operand widths/order, signed guard and all other branches.",
+    "Authorize removing only that extra division and correcting the adjacent explanatory comment: negative coordinates offset from the far edge rather than from the centre. Keep actual GraphicWin/Buffer DIB width, no guessed dimension or hardcoded positioning. Preserve all original identities/spans/claims and behavior/lifetime/default providers. No clamp, boundscheck, safetyfix or new byteclaim.",
+    "Paired PLANETFALL screenshots on a1024screen show originalleftnear397 vs current198 for approximately622wide popup and script#x-5. This corroborates the decoded formula; screenshots alone do not prove exact live width, owner or complete visual equivalence. Current missing/dark tutorial painting is separate unresolved work, not explained away by this correction.",
+    "Require bounded actualsource positionblock hostcontrols for all self/external, special/normal, sentinel/negative/nonnegative branches, compile-successful extra-half/wrong-branch damage controls and pinned complete instruction evidence. Fresh fullapplication compile/link, native scoped comparison with unknowns retained, outsidebody actual180object preservation, originalidentity/claim/reference checks and independent review precede manual integration; recheck destination. No automatic, full linkedselection, runtime/game or playability acceptance is granted."
+  ],
+  "intent": "Restore the original normal self-owner popup negative-x formula without changing centering, y placement, owner selection or runtime quirks.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6301184,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "popup-negative-position-oct18"
+}

@@ -1,0 +1,19 @@
+{
+  "event_id": "f88ebb2cfcfc92d2027fce2d103500f4406d59a929096e9391ee1ea3a567bcfe",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "six-popup-centering-shifts-oct18",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/basepop.cpp preserves the original signed negativecoordinate branch and now directly stores loc_a-DIBwidth+screenwidth, without halving. All six sentinel centering branches use signed >>1 with the original expression grouping and guards, including external-y negate-sum-before-shift. The adjacent source comment records the arithmetic meaning rather than run history.",
+      "Independent source/instruction review approves the seven bounded formula corrections. Actual configured VC6 application object positionblock has exactly six SAR1 and no SHR/CDQ/division-bias sequence, matching the pinned arithmetic. Sourcelevel tests cover six representable oddnegative intermediates, original negative/nonnegative/sentinel/owner branches and compiled damage controls. These are bounded arithmetic observations, not fullfunction exactness or runtime reachability claims.",
+      "Fresh application build/link and all180 actual outsidefunction object residuals pass with only this functionfamily projected. Native unchanged-replica/damage controls pass under bothflags; complete original EH-region comparison remains REFUSED because no complete relocated registration chain is established. All5646 original source identities/spans/bindings and historicalclaims are preserved. Full linkedselection, structural/runtime/game acceptance and negativeodd live geometry remain unproved."
+    ]
+  },
+  "previous_event": "8db3512ba3a2c1561ced7b7e24232086ece4952ca53485220c33c2d0c5b8f085",
+  "request_id": "incorporated-six-popup-centering-shifts-oct18",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:popup-negative-position-oct18"
+}

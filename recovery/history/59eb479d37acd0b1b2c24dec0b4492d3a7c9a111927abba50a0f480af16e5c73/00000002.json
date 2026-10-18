@@ -1,0 +1,21 @@
+{
+  "event_id": "8db3512ba3a2c1561ced7b7e24232086ece4952ca53485220c33c2d0c5b8f085",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_popup_negative_position_oct18.py",
+      "src/basepop.cpp"
+    ],
+    "evidence": [
+      "Coordinator explicitly broadens the initial behavioral restriction within the existing602600 ownership/source permissions: also replace each of the six centering divisions by an arithmetic right shift1, leaving expression grouping and all original guards/operands/order intact. Source int expressions and VC6 x86 SAR must agree for representable nonoverflowing intermediates. No general clamp, safe normalization, helper, layout, new global, directaddress or other function change is authorized.",
+      "Use C++98 source signed >>1 for the configured VC6/x86 environment and verify actual generated instructions; implementationdefined negative shift behavior is qualified for this compiler, not a portable-language guarantee. Test all six negativeodd cases against the pinned arithmetic plus independent /2 damage controls; preserve ordinarypositive behavior and unproved runtime reachability as explicit limits."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "f6c763711f8ebc86b699915f9b7cada50ddab6900ad8ae74d3a15f8ac3603a6a",
+  "request_id": "authorize-popup-centering-arithmetic-oct18",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:popup-negative-position-oct18"
+}

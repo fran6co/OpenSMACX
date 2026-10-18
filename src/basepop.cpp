@@ -901,14 +901,14 @@ int BasePop::exec(int flags, int (__cdecl *callback)()) {
 
     // THE POPUP'S POSITION, one arm per owner. owner_window_ == this means
     // the popup is its own surface; otherwise it centres on the window that
-    // opened it. 0x1000 is set_width's "centre on the screen" sentinel and a
-    // negative value is an offset from that centre.
+    // opened it. 0x1000 requests centering; negative coordinates instead
+    // select the far-edge offset branches, without another division by two.
+    // Arithmetic shifts preserve the original rounding of odd negative margins.
     if (owner_window_ == this) {
         if ((iSomeFlag_ & 2) != 0) {
             if (loc_a_ == 0x1000) {
                 field_30B4_ = (client_rect_.left - client_rect_.right +
-                               WinScreenWidth) /
-                              2;
+                               WinScreenWidth) >> 1;
             } else if (static_cast<int>(loc_a_) < 0) {
                 field_30B4_ = client_rect_.left - client_rect_.right +
                               static_cast<int>(loc_a_) + WinScreenWidth;
@@ -917,8 +917,7 @@ int BasePop::exec(int flags, int (__cdecl *callback)()) {
             }
             if (loc_b_ == 0x1000) {
                 field_30B8_ = (client_rect_.top - client_rect_.bottom +
-                               WinScreenHeight) /
-                              2;
+                               WinScreenHeight) >> 1;
             } else if (static_cast<int>(loc_b_) < 0) {
                 field_30B8_ = client_rect_.top - client_rect_.bottom +
                               static_cast<int>(loc_b_) + WinScreenHeight;
@@ -928,20 +927,17 @@ int BasePop::exec(int flags, int (__cdecl *callback)()) {
         } else {
             if (loc_a_ == 0x1000) {
                 field_30B4_ = (WinScreenWidth -
-                               static_cast<int>(dib_.bmiHeader.biWidth)) /
-                              2;
+                               static_cast<int>(dib_.bmiHeader.biWidth)) >> 1;
             } else if (static_cast<int>(loc_a_) < 0) {
-                field_30B4_ = (static_cast<int>(loc_a_) -
+                field_30B4_ = static_cast<int>(loc_a_) -
                                static_cast<int>(dib_.bmiHeader.biWidth) +
-                               WinScreenWidth) /
-                              2;
+                               WinScreenWidth;
             } else {
                 field_30B4_ = loc_a_;
             }
             if (loc_b_ == 0x1000) {
                 field_30B8_ = (static_cast<int>(dib_.bmiHeader.biHeight) +
-                               WinScreenHeight) /
-                              2;
+                               WinScreenHeight) >> 1;
             } else if (static_cast<int>(loc_b_) < 0) {
                 field_30B8_ = static_cast<int>(loc_b_) +
                               static_cast<int>(dib_.bmiHeader.biHeight) +
@@ -954,8 +950,7 @@ int BasePop::exec(int flags, int (__cdecl *callback)()) {
         if (loc_a_ == 0x1000) {
             field_30B4_ = (static_cast<int>(
                                owner_window_->dib_.bmiHeader.biWidth) -
-                           static_cast<int>(field_30BC_)) /
-                          2;
+                           static_cast<int>(field_30BC_)) >> 1;
         } else if (static_cast<int>(loc_a_) < 0) {
             field_30B4_ =
                 static_cast<int>(owner_window_->dib_.bmiHeader.biWidth) -
@@ -966,8 +961,7 @@ int BasePop::exec(int flags, int (__cdecl *callback)()) {
         if (loc_b_ == 0x1000) {
             field_30B8_ = -(static_cast<int>(field_30C0_) +
                             static_cast<int>(
-                                owner_window_->dib_.bmiHeader.biHeight)) /
-                          2;
+                                owner_window_->dib_.bmiHeader.biHeight)) >> 1;
         } else if (static_cast<int>(loc_b_) < 0) {
             field_30B8_ = static_cast<int>(loc_b_) -
                           static_cast<int>(field_30C0_) -
