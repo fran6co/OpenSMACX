@@ -1,0 +1,26 @@
+{
+  "event_id": "84f92cf3fe3b90117a4ddebc0455a74663c8fb3b8cb63729477682f41f3e6241",
+  "payload": {
+    "affects": [
+      "entity-1a5321419eb1d9c04ed3f6e091955d9f195e5b0a0194341ef071369ac22ec021",
+      "entity-6d387a2b0d4ba347d5123c0aeb035f6b3ed5ea27da762d99ff9a85f023468362",
+      "entity-ab382be6f25fd49d17ab8d6dd03e40a6922ffdd6df77ca39a1407413cf59dfac",
+      "entity-b133632c052ec9941688dfa191ec75c087a14c28858b2e55eba9b1001e269090",
+      "entity-bd4f619893af0daa6a7b4067824b3865022012ae3e7cf95b1c8584255d66f7b6",
+      "entity-cb89a4d3ab733ac1b73a5c2b877543130b322eb93f49e24e82cd6bc7d4085ed0"
+    ],
+    "author": "coordinator",
+    "discovery_id": "original-owner-notification-contract",
+    "evidence": [
+      "Pinned62B9CE..62BA2F independently reviewed: first virtual Win slot+BC receives prior/clicked, current count is rechecked, IDs recomputed, then original reloads the first button and parent and invokes slot+B8 with context/prior/clicked. init62B832 stores context at+8C. Actual PickWin,PrefWin,ReportWin,MainInterface,FameWin contracts corroborate parameter meanings.",
+      "Old source used cached parent for both calls and passed context last. Source correction changes only this second call/reload, preserving initial notification, all state writes, error behavior, original mapping facts and class ABI/layout."
+    ],
+    "hypothesis": "ButtonGroup must send group context, prior ID and clicked ID through the three-argument callback and reacquire the first button parent after the preceding two-argument callback.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "original-owner-notification-contract",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:buttongroup-notification-contract-oct19"
+}

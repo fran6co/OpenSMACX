@@ -215,8 +215,9 @@ int ButtonGroup::button_click(int clicked_id) {
                     ? static_cast<int>(buttons_[active_index]->field_A78_) : -1;
                 const int clicked_again = found_clicked
                     ? static_cast<int>(buttons_[clicked_index]->field_A78_) : -1;
-                owner->on_group_clicked(active_again, clicked_again,
-                                static_cast<int>(field_8C_));
+                Win *owner_again = buttons_[0]->parent_window();
+                owner_again->on_group_clicked(static_cast<int>(field_8C_),
+                                               active_again, clicked_again);
             }
         }
     }

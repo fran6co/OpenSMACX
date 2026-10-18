@@ -1,0 +1,21 @@
+{
+  "event_id": "1747d9a02349071c50691a0f39629f01940a93438500e08cac397f41a4b5ba21",
+  "payload": {
+    "affects": [
+      "entity-bd4f619893af0daa6a7b4067824b3865022012ae3e7cf95b1c8584255d66f7b6"
+    ],
+    "author": "coordinator",
+    "discovery_id": "remaining-callback-body-matching",
+    "evidence": [
+      "Actual current application object remains MISMATCH against143originalinstructions;145compiledinstructions and6alignedmatches versus old144/17. No prolonged spelling screen attempted. Semantic and target-slot controls reject reverting either proven correction.",
+      "Keep original identity62B8A0..62BA77 and all historical facts/claims. A later matching pass must preserve the original notification contract and use the actual provider/compiler domain; source correctness is not inferred from aligned instruction counts."
+    ],
+    "hypothesis": "Restore full original button_click code shape while preserving the now-correct callback arguments, reentrant receiver lookup and original effects.",
+    "kind": "discovery"
+  },
+  "previous_event": "be8924ebfd2befa67d62a47aff36628fe112026e3bc05abb38bc4a7a40722f6b",
+  "request_id": "remaining-callback-body-matching",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:buttongroup-notification-contract-oct19"
+}
