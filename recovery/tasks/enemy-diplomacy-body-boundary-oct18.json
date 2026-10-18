@@ -1,0 +1,26 @@
+{
+  "author": "coordinator",
+  "base_revision": "25506cc17de600daf2496d757bb272a3a60b881f",
+  "editable_files": [
+    "src/faction.cpp",
+    "recovery/tests/test_enemy_diplomacy_behavior.py"
+  ],
+  "evidence": [
+    "Pinned55F930..560ACD is one complete1330-instruction routine,24 direct calls and none targeting its own range. Current actual build-_0m9203c maps only276 instructions to the public owner and has five reconstruction-only outlined COMDATs: console_pair, pair_relationship_finish, territory_pair, relationship_score and satellite_attacks. Each has one public-body relocation at+204,+213,+30C,+318,+32E respectively. Other five private phase helpers inline in this build. Low counts alone do not prove missing behavior or a semantic defect.",
+    "Authorize replacing the artificial ten-helper chain with direct genuine C++ in the existing enemy_diplomacy body and removing now-unused source-only definitions. Keep genuine mapped/external calls and shared diplo arithmetic helpers; no copied binary code, forced-inline attributes, fake vtables, casts for scheduling, flag/header/layout/symbol/span changes or duplicated source implementations. Original standalone functions and historical claims/lessons must remain untouched.",
+    "Preserve zero-faction and lock-mask exits, agenda sync before lock-mask exit, both peer loops and their signed bounds, vendetta count, live field/reference reads, callback order, asymmetric pending flag rows, contact skips, relationship score arithmetic/wrap behavior, and last_territory_base_id carry into orbital actions. Helper-local console returns must rejoin the first peer loop, not return from the owner. Territory early exits still proceed into relationship scoring. Relationship-finish false still bypasses dispatch. Tail returns may remain owner returns because the tail is last. No bug fixes, safe fallbacks or initialization changes.",
+    "Retarget existing host controls from deleted helper entry points to the real public function with equivalent constructed state; retain every current behavior assertion and mutation control, expand owner-level callback/order scenarios as needed. Worker must report any untranslatable existing test or uncertainty rather than delete controls. Source-only helper removal is not a new count of implemented originals.",
+    "Worker uses isolated coordinator checkout and may run host tests only. Coordinator owns Git, compiler leases, original/actual-COFF source review, native compilation, fresh build/link, scoped bytes/references and complete outside-owner physical residual (including reviewed removal of the five artificial helper bodies), claims/references continuity and destination recheck. A justified boundary correction may retain mismatch obligations without demotion; no automatic or game/runtime acceptance is claimed."
+  ],
+  "intent": "Restore the original AI diplomacy function ownership boundary by removing reconstruction-only outlined phase helpers, preserving original behavior and all restoration obligations.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5634352,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "enemy-diplomacy-body-boundary-oct18"
+}
