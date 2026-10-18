@@ -1,0 +1,23 @@
+{
+  "author": "coordinator",
+  "base_revision": "c61db24d5f8909fc55176cbbdc903a6aac642cab",
+  "editable_files": [
+    "src/datalink.cpp",
+    "recovery/tests/test_datalink_social_cursor_oct18.py"
+  ],
+  "evidence": [
+    "Pinned42B639 establishes the SocialCategories.name cursor beforetype/string/list calls;42B654 reads type atcursor-14,42B67A reads name slots throughcursor,42B6E6 advances by4,42B6F6 advances rowbyD4. ExistingtypedRulesSocialCategory has LPSTRname[4]. Candidateonlyadds constLPSTR*name=row->name beforetypelookup and uses*name++ forfour choices; no rawoffset, alteredloopbound, flag/type/layout/global orbehavior change.",
+    "Authorizeone native localvariant deck underbothconfiguredflagsets with unchangedreplica and droppinglastcategory damagecontrol. Screenmustnotedit source orclaims. If notexact, preserveboundedresultandstopthisspellingaxis; do notgrindpartialinstructiongains. Ifexact, independentlyreview/testactualsource,build/link,preserveoutsidebodyandclaims,recheckdestination,andbankonlythroughnativerecorder. Noautomatic/fullacceptance isgranted."
+  ],
+  "intent": "Screen one ordinary typed name-array cursor spelling against the original Datalink social-category loop.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4372016,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "datalink-social-cursor-oct18"
+}

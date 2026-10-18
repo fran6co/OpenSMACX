@@ -1,0 +1,18 @@
+{
+  "event_id": "d276d06c8bf009930585472d6df6eca08d7e110f146682b95d96273db4aa57c6",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "typed-name-cursor-not-exact",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "The authorizedone-deckprobe didnotreach exactness. Rejectit as aninexpensiveexact-recoverystep andleave src/datalink.cpp byte-for-byteunchanged ratherthan payingfurtheriterations forpartialspellinggains.",
+      "Onlythisspellingaxis isretired. Preserveoriginalfunctionidentity/span, types/providers andhistoricalobligations; no demotion,newclaim or behavioralchange. Existingignoredmemo/deckresults remainrecomputablehints. Future evidence-backedstructuraldiscoveriesremaininscopefornewcoordination."
+    ]
+  },
+  "previous_event": "677e25b29342952ad8c2cac181325102896d7f726f57e170a7a5dcd5e399faa4",
+  "request_id": "stop-nonexact-name-cursor-axis",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:datalink-social-cursor-oct18"
+}

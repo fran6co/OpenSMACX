@@ -1,0 +1,21 @@
+{
+  "event_id": "677e25b29342952ad8c2cac181325102896d7f726f57e170a7a5dcd5e399faa4",
+  "payload": {
+    "affects": [
+      "entity-3537ada5bfae9a21b740edcf4c6ddad32295cf8dd0606fbe0fe2c206395999a6"
+    ],
+    "author": "coordinator",
+    "discovery_id": "typed-name-cursor-not-exact",
+    "evidence": [
+      "Pinned42B639 establishesnamecursorbeforecalls;typedsourcecandidateusesconstLPSTR*name=row->nameand*name++ forfourchoices. Ten nativecompilesagainstc61db24d5 passedreplicaanddroplastcategorycontrols underbothconfiguredflagsets.",
+      "PlainO2 baseline1/137alignedinstructions→candidate6/137;Oy- baseline21/137→candidate78/137. BothremainMISMATCH; plaincandidate130instructions,Oy-candidate137againstoriginal137. These diagnostics arederivedobservations, notacceptance or proofofsemanticdifference. Originalscope/claims unchanged."
+    ],
+    "hypothesis": "An explicit typed name-array cursor might recover the original loop allocation without changing behavior.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "typed-name-cursor-not-exact",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:datalink-social-cursor-oct18"
+}
