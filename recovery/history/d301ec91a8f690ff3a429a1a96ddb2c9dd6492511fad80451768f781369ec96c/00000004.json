@@ -1,0 +1,36 @@
+{
+  "event_id": "63de9a319cb6ede79602364b5ac8bbee13bdad398aa491a5f0378fdc69e4ddc7",
+  "payload": {
+    "affects": [
+      "entity-01a00afdd51fac3ddf4cc9aa9449ccfaae62ebd32a9ed3ef85076c53f45654e4",
+      "entity-1ed38400e559c191ce3ab3a96dd2be482a0c41794f6970ac23e56db90fb7ab73",
+      "entity-202ecf4ac4d17aba5b34b8b87b970b6978cbdd543e9b8e851fab6c9c29f568b3",
+      "entity-20927a1c1e44e6f46cf568a1ce1a10b7cc12f061fa51b0d319a47dbebe955a2b",
+      "entity-21a0ac47b9730b4dfb23af579f0ddc1c680ac96d8e9cbb75518f654a9673b062",
+      "entity-36d0cb2cbd52d912455a184a4f6bb8b671bd9eb400d69020794d91f7a2abe9fc",
+      "entity-448ef01136d5d18b9241a9cc71f50e9cdabaed5b705adc0dcb52a74aaabba67d",
+      "entity-7d8176751703cb7d8caa38917ee097499bb12c1624819b3dd971ad2d9ac57af6",
+      "entity-885ef029d30da01dd8de61eb7bae58d474b136b72403dc235c4d88c8495d6edb",
+      "entity-c1fd290099da8f4ebe8e6ea250ac1fda4ab3242d86df1c8419870628245555d8",
+      "entity-c46d88454f5459c23f8836f548a51a19e7f6832387f028ccf247914fd91373f7",
+      "entity-dbb0fd698c3dd436b3ae53f8bfb41e6ee9c8bbb3091daa314d73a9e553fde236",
+      "entity-e2a3e61424aadb162163db797edd0287ebbc9268b43d6ab2f8d80543a5ec4ccf",
+      "entity-f2a45ff703697b88649f83ff5b99f0f5b226c869353d3a810aa61d252a776a8c",
+      "entity-fdc1b3259f87890f79d50a0ae8431b08eb2dbdb262f2c614fb93d43461bd8035"
+    ],
+    "author": "coordinator",
+    "discovery_id": "header-lifetime-matching-restoration",
+    "evidence": [
+      "All186 physical application objects inventoried. Seven Flic destructor definitions exist; six framed contexts measure full root+funclet33/33, selected newgame.cpp copy is36instructions vs33original with8matching and exact cold region. Validated current MAP selects NewGame, not the exact Datalink measurement witness. Do not count witness as selected linked recovery.",
+      "DiploPop constructor43EFF0 changes from conventional exact to REFUSED because its COFF local cleanup target is no longer an independent ??_D function. Keep historical claim and restoration obligation. This refusal is not a successful current comparison. Source body and class layout remain unchanged.",
+      "Native178pass/8fail object residuals, unknown strict context support, complete linked selection/allocation, full structure/runtime and game acceptance remain unproven. This discovery intentionally stays pending after the bounded source integration."
+    ],
+    "hypothesis": "Ordinary header-defined Flic destruction restores complete original lifetime code in six physical copies, but selected NewGame provider and DiploPop cleanup measurement still require restoration.",
+    "kind": "discovery"
+  },
+  "previous_event": "e7ac7aff7ad7230c1873a8395be96da12830a46adc2b241e973f43699531a2f1",
+  "request_id": "header-lifetime-matching-restoration",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:flic-destructor-visibility-oct19"
+}

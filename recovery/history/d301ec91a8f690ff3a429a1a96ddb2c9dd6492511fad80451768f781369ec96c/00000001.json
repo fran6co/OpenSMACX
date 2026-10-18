@@ -1,0 +1,26 @@
+{
+  "event_id": "8b137f9514ab90587cfcb0e3700369fc0f8a8b41cc1e721a37df260ef50ab3cb",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/flic.cpp"
+    ],
+    "evidence": [
+      "Native configured Datalink probe flic-inline-witness.json actually emits the in-class destructor. Existing framed profile measures all33 root+funclet instructions exact. Authorize native write_context selecting src/datalink.cpp as a CURRENT measurement witness alongside body=flic.h; this is neither original TU ownership nor selected-provider proof, which fresh application MAPs must establish separately.",
+      "Strict context mapping/preservation support remains refused by the native framework; do not promote legacy/context measurements to strict acceptance. Original identity/spans/history remain unchanged; inspect all physical copies and lifetime callers. No new flags or emitted provider tricks."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4401056,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "flic-current-emission-witness",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:flic-destructor-visibility-oct19"
+}

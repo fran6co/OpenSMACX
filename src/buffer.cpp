@@ -206,52 +206,216 @@ int Buffer::copy(Buffer *buffer, int xCoord, int yCoord, int wx, int wy,
     width = clipped.right - clipped.left;
     height = clipped.bottom - clipped.top;
 
-    if (clipped.left >= buffer->dib_.bmiHeader.biWidth
-        || clipped.top >= -buffer->dib_.bmiHeader.biHeight
-        || buffer->get_data() == 0) {
-        return 3;
-    }
-    uint8_t *const write = static_cast<uint8_t *>(buffer->locked_bits_)
-        + buffer->stride_ * clipped.top + clipped.left;
-    if (write == nullptr) {
-        return 3;
-    }
-
-    if (xCoord >= dib_.bmiHeader.biWidth
-        || yCoord >= -dib_.bmiHeader.biHeight
-        || get_data() == 0) {
-        buffer->free_data(1);
-        return 3;
-    }
-    uint8_t *const read = static_cast<uint8_t *>(locked_bits_)
-        + stride_ * yCoord + xCoord;
-    if (read == nullptr) {
-        buffer->free_data(1);
-        return 3;
-    }
-
     if (buffer != this) {
-        // Different objects cannot overlap, so rows go in either order.
-        uint8_t *destination = write;
-        const uint8_t *source = read;
+        // The original branches on object identity, not backing-store aliasing.
+        if (clipped.left >= buffer->dib_.bmiHeader.biWidth
+            || clipped.top >= -buffer->dib_.bmiHeader.biHeight
+            || buffer->get_data() == 0) {
+            return 3;
+        }
+        uint8_t *destination = static_cast<uint8_t *>(buffer->locked_bits_)
+            + buffer->stride_ * clipped.top + clipped.left;
+        if (destination == nullptr) {
+            return 3;
+        }
+
+        if (xCoord >= dib_.bmiHeader.biWidth
+            || yCoord >= -dib_.bmiHeader.biHeight
+            || get_data() == 0) {
+            buffer->free_data(1);
+            return 3;
+        }
+        const uint8_t *source = static_cast<const uint8_t *>(locked_bits_)
+            + stride_ * yCoord + xCoord;
+        if (source == nullptr) {
+            buffer->free_data(1);
+            return 3;
+        }
+
+        // Distinct Buffer objects use the original forward-only row walk.
+        // They may still share storage, so do not substitute overlap-safe
+        // movement for the original traversal order.
         for (int row = 0; row < height; ++row) {
-            memcpy(destination, source, static_cast<size_t>(width));
+            int column = 0;
+            for (; column + 4 <= width; column += 4) {
+                uint8_t word[4];
+                int byte;
+                for (byte = 0; byte < 4; ++byte) {
+                    word[byte] = source[column + byte];
+                }
+                for (byte = 0; byte < 4; ++byte) {
+                    destination[column + byte] = word[byte];
+                }
+            }
+            for (; column < width; ++column) {
+                destination[column] = source[column];
+            }
             source += stride_;
             destination += buffer->stride_;
         }
-    } else {
-        // SAME BUFFER, so the two rectangles can overlap. Rows are walked
-        // from whichever end keeps the read ahead of the write, and each row
-        // is moved rather than copied because the horizontal shift can
-        // overlap too.
-        const int step = (wy < yCoord) ? 1 : -1;
-        const int first = (wy < yCoord) ? 0 : height - 1;
-        uint8_t *destination = write + first * static_cast<int>(buffer->stride_);
-        uint8_t *source = read + first * static_cast<int>(stride_);
+    } else if (wx < xCoord) {
+        if (wy < yCoord) {
+            if (clipped.left >= buffer->dib_.bmiHeader.biWidth
+                || clipped.top >= -buffer->dib_.bmiHeader.biHeight
+                || buffer->get_data() == 0) {
+                return 3;
+            }
+            uint8_t *destination = static_cast<uint8_t *>(buffer->locked_bits_)
+                + buffer->stride_ * clipped.top + clipped.left;
+            if (destination == nullptr) {
+                return 3;
+            }
+            if (xCoord >= dib_.bmiHeader.biWidth
+                || yCoord >= -dib_.bmiHeader.biHeight
+                || get_data() == 0) {
+                buffer->free_data(1);
+                return 3;
+            }
+            const uint8_t *source = static_cast<const uint8_t *>(locked_bits_)
+                + stride_ * yCoord + xCoord;
+            if (source == nullptr) {
+                buffer->free_data(1);
+                return 3;
+            }
+            for (int row = 0; row < height; ++row) {
+                for (int column = 0; column < width; ++column) {
+                    destination[column] = source[column];
+                }
+                destination += buffer->stride_;
+                source += stride_;
+            }
+        } else {
+            const int destination_y = clipped.bottom - 1;
+            const int source_y = yCoord + height - 1;
+            if (clipped.left >= buffer->dib_.bmiHeader.biWidth
+                || destination_y >= -buffer->dib_.bmiHeader.biHeight
+                || buffer->get_data() == 0) {
+                return 3;
+            }
+            uint8_t *destination = static_cast<uint8_t *>(buffer->locked_bits_)
+                + buffer->stride_ * destination_y + clipped.left;
+            if (destination == nullptr) {
+                return 3;
+            }
+            if (xCoord >= dib_.bmiHeader.biWidth
+                || source_y >= -dib_.bmiHeader.biHeight
+                || get_data() == 0) {
+                buffer->free_data(1);
+                return 3;
+            }
+            const uint8_t *source = static_cast<const uint8_t *>(locked_bits_)
+                + stride_ * source_y + xCoord;
+            if (source == nullptr) {
+                buffer->free_data(1);
+                return 3;
+            }
+            for (int row = 0; row < height; ++row) {
+                for (int column = 0; column < width; ++column) {
+                    destination[column] = source[column];
+                }
+                destination -= buffer->stride_;
+                source -= stride_;
+            }
+        }
+    } else if (wy < yCoord) {
+        const int x_offset = width < 4 ? width - 1 : width - 4;
+        if (clipped.left + x_offset >= buffer->dib_.bmiHeader.biWidth
+            || clipped.top >= -buffer->dib_.bmiHeader.biHeight
+            || buffer->get_data() == 0) {
+            return 3;
+        }
+        uint8_t *destination = static_cast<uint8_t *>(buffer->locked_bits_)
+            + buffer->stride_ * clipped.top + clipped.left + x_offset;
+        if (destination == nullptr) {
+            return 3;
+        }
+        if (xCoord + x_offset >= dib_.bmiHeader.biWidth
+            || yCoord >= -dib_.bmiHeader.biHeight
+            || get_data() == 0) {
+            buffer->free_data(1);
+            return 3;
+        }
+        const uint8_t *source = static_cast<const uint8_t *>(locked_bits_)
+            + stride_ * yCoord + xCoord + x_offset;
+        if (source == nullptr) {
+            buffer->free_data(1);
+            return 3;
+        }
+        const int groups = width >> 2;
+        const int remainder = width & 3;
         for (int row = 0; row < height; ++row) {
-            memmove(destination, source, static_cast<size_t>(width));
-            destination += step * static_cast<int>(buffer->stride_);
-            source += step * static_cast<int>(stride_);
+            uint8_t *destination_word = destination + remainder;
+            const uint8_t *source_word = source + remainder;
+            for (int group = 0; group < groups; ++group) {
+                uint8_t word[4];
+                int byte;
+                for (byte = 0; byte < 4; ++byte) {
+                    word[byte] = source_word[byte];
+                }
+                for (byte = 0; byte < 4; ++byte) {
+                    destination_word[byte] = word[byte];
+                }
+                destination_word -= 4;
+                source_word -= 4;
+            }
+            for (int byte = 0; byte < remainder; ++byte) {
+                *destination_word = *source_word;
+                --destination_word;
+                --source_word;
+            }
+            destination += buffer->stride_;
+            source += stride_;
+        }
+    } else {
+        const int destination_y = clipped.bottom - 1;
+        const int source_y = yCoord + height - 1;
+        const int x_offset = width < 4 ? width - 1 : width - 4;
+        if (clipped.left + x_offset >= buffer->dib_.bmiHeader.biWidth
+            || destination_y >= -buffer->dib_.bmiHeader.biHeight
+            || buffer->get_data() == 0) {
+            return 3;
+        }
+        uint8_t *destination = static_cast<uint8_t *>(buffer->locked_bits_)
+            + buffer->stride_ * destination_y + clipped.left + x_offset;
+        if (destination == nullptr) {
+            return 3;
+        }
+        if (xCoord + x_offset >= dib_.bmiHeader.biWidth
+            || source_y >= -dib_.bmiHeader.biHeight
+            || get_data() == 0) {
+            buffer->free_data(1);
+            return 3;
+        }
+        const uint8_t *source = static_cast<const uint8_t *>(locked_bits_)
+            + stride_ * source_y + xCoord + x_offset;
+        if (source == nullptr) {
+            buffer->free_data(1);
+            return 3;
+        }
+        const int groups = width >> 2;
+        const int remainder = width & 3;
+        for (int row = 0; row < height; ++row) {
+            uint8_t *destination_word = destination + remainder;
+            const uint8_t *source_word = source + remainder;
+            for (int group = 0; group < groups; ++group) {
+                uint8_t word[4];
+                int byte;
+                for (byte = 0; byte < 4; ++byte) {
+                    word[byte] = source_word[byte];
+                }
+                for (byte = 0; byte < 4; ++byte) {
+                    destination_word[byte] = word[byte];
+                }
+                destination_word -= 4;
+                source_word -= 4;
+            }
+            for (int byte = 0; byte < remainder; ++byte) {
+                *destination_word = *source_word;
+                --destination_word;
+                --source_word;
+            }
+            destination -= buffer->stride_;
+            source -= stride_;
         }
     }
 

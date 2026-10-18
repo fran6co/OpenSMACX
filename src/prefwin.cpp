@@ -557,8 +557,11 @@ int PrefWin::on_key_click(int repeat, int key) {
 // kind      game
 void PrefWin::on_group_clicked(int group, int previous, int selected) {
   (void)group;
-  if (field_A1C_) field_A1C_ = 0;
-  else if (previous >= 0 && previous <= 5) field_A18_ = previous;
+  if (!field_A1C_) {
+    if (previous <= 5 && previous >= 0) field_A18_ = previous;
+  } else {
+    field_A1C_ = 0;
+  }
   field_A14_ = selected;
   on_button_clicked(selected);
 }

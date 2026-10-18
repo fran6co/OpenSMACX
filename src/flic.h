@@ -82,7 +82,9 @@ static_assert(sizeof(FlicFrameChunk) == 0x10,
 class Flic {
  public:
   Flic();
-  ~Flic();
+  ~Flic() {
+    close();
+  }
   void close();
   void UNK4();
   void UNK5();

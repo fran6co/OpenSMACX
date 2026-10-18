@@ -66,8 +66,9 @@
 // translation unit (textindex.cpp and buffer.cpp do the same locally).
 #pragma function(memset, memcpy)
 
-// Define the destructor before close() so its ordinary call sees only the
-// declaration. The member-pointer recipe recorded below is historical.
+// The header defines the close-only destructor before any close implementation
+// is visible, preserving its opaque call and ordinary member teardown. The
+// historical probes below do not establish the original translation unit.
 
 /*
 Purpose: Construct the embedded Buffer and Palette (the class's only two
@@ -101,7 +102,9 @@ Flic::Flic() {
 Purpose: Close the file, then tear down the embedded Palette and Buffer in
          reverse declaration order - both automatic, no explicit statement
          but the `close()` call.
-// ORIGINAL: 0x004327A0 ??1Flic@@QAE@XZ 0x004327A0-0x004327F8;0x00653420-0x00653443
+// ORIGINAL: 0x004327A0 ??1Flic@@QAE@XZ 0x004327A0-0x004327F8;0x00653420-0x00653443 FILE
+// compile_context src/datalink.cpp
+// body src/flic.h
 // size      88 bytes
 // prototype void (__thiscall ??1Flic@@QAE@XZ)(Flic* this)
 // callers   0   call targets   3
@@ -138,7 +141,8 @@ Purpose: Close the file, then tear down the embedded Palette and Buffer in
 //        APPLIED 2026-09-16: ~Palette moved out of line into palette.cpp
 //        after the task's scope grew to the Palette files; see the LEVER on
 //        the ??1Palette marker there.
-//        ROOT CAUSE 2026-09-18 (round 3): the missing second state store
+//        Historical visibility hypothesis (2026-09-18, round 3; original TU
+//        provider unresolved): the missing second state store
 //        and the one-arm funclet reduce to one compiler fact, measured in
 //        build/recovery/probes/eh-palette-dllexport (ehprobe2/ehprobe3,
 //        /O2 /Gy /GR- /GX /Z7). VC6 does not need to inline close() to use
@@ -150,9 +154,12 @@ Purpose: Close the file, then tear down the embedded Palette and Buffer in
 //        transition before `call ??1Palette`, 21-byte one-arm funclet).
 //        The image enters at state 1 and steps 1 -> 0 -> -1, funclet
 //        carrying both member arms (0x00653420, 35 bytes) - the shape the
-//        original compile only produces when close()'s body is NOT yet
-//        parsed at the destructor's call site (probe W_below), i.e. the
-//        original flic.cpp spelled the call before the definition. The
+//        diagnostic only produced when close()'s body was NOT yet parsed at
+//        the destructor's call site (probe W_below). At the time this was
+//        interpreted as the original flic.cpp spelling the call before its
+//        definition; that TU-specific conclusion is not established. Both an
+//        in-class header definition and an earlier same-TU definition preserve
+//        the opaque call. The
 //        declaration spelling of ~Palette is exonerated: a dllexport'd
 //        out-of-line member destructor tracks identically to a plain one
 //        (probe W_plain/W_dl).
@@ -177,10 +184,6 @@ Purpose: Close the file, then tear down the embedded Palette and Buffer in
 Return Value: n/a
 Status: Complete
 */
-Flic::~Flic() {
-    close();
-}
-
 /*
 Purpose: Release the open file (if any) and zero the same fields close()
          zeroes.

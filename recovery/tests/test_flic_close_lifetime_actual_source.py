@@ -11,6 +11,7 @@ import pytest
 ROOT = next(parent for parent in Path(__file__).resolve().parents
             if (parent / "src/flic.cpp").is_file())
 FLIC_CPP = ROOT / "src/flic.cpp"
+FLIC_H = ROOT / "src/flic.h"
 
 
 def _definition(source, signature):
@@ -27,20 +28,50 @@ def _definition(source, signature):
     raise AssertionError(f"unterminated definition {signature}")
 
 
-def test_close_definition_follows_destructor_for_natural_visibility():
+def _class_definition(source, class_name, signature):
+    class_start = source.index(f"class {class_name}")
+    class_open = source.index("{", class_start)
+    depth = 0
+    class_end = None
+    for index in range(class_open, len(source)):
+        if source[index] == "{":
+            depth += 1
+        elif source[index] == "}":
+            depth -= 1
+            if depth == 0:
+                class_end = index
+                break
+    assert class_end is not None, f"unterminated class {class_name}"
+    member_start = source.index(signature, class_open, class_end)
+    opening = source.index("{", member_start, class_end)
+    depth = 0
+    for index in range(opening, class_end + 1):
+        if source[index] == "{":
+            depth += 1
+        elif source[index] == "}":
+            depth -= 1
+            if depth == 0:
+                return source[member_start:index + 1]
+    raise AssertionError(f"unterminated in-class definition {signature}")
+
+
+def test_in_class_destructor_keeps_close_opaque_and_original_mapping_in_tu():
     source = FLIC_CPP.read_text()
-    destructor = source.index("Flic::~Flic() {")
+    header = FLIC_H.read_text()
+    destructor = _class_definition(header, "Flic", "~Flic() {")
     marker = source.index("// ORIGINAL: 0x00629DF0 ?close@Flic@@QAEXXZ")
     close = source.index("void Flic::close() {")
-    assert destructor < marker < close
+    assert marker < close
+    assert destructor == "~Flic() {\n    close();\n  }"
+    assert "~Flic() {" not in source
+    assert "// ORIGINAL: 0x004327A0 ??1Flic@@QAE@XZ 0x004327A0-0x004327F8;0x00653420-0x00653443" in source
+    assert "historical" in source[source.index("Historical visibility hypothesis"):source.index("Return Value: n/a", source.index("Historical visibility hypothesis"))].lower()
     assert source.count("// ORIGINAL: 0x00629DF0 ?close@Flic@@QAEXXZ") == 1
     assert "void (Flic::*close_method)()" not in source
-    destructor_body = _definition(source, "Flic::~Flic() {")
-    assert destructor_body == "Flic::~Flic() {\n    close();\n}"
 
 
 def _host_source(close_definition, destructor_definition):
-    return textwrap.dedent(r"""
+    host_class = textwrap.dedent(r"""
         #include <cstdio>
         #include <cstddef>
         #include <string>
@@ -108,9 +139,12 @@ def _host_source(close_definition, destructor_definition):
                      field_5A4_("field_5A4_"), decoded_width_("decoded_width_"),
                      decoded_height_("decoded_height_") {}
             void close();
-            ~Flic();
+            @@FLIC_DTOR@@
         };
-    """) + "\n" + destructor_definition + "\n" + close_definition + textwrap.dedent(r"""
+    """)
+    embedded_destructor = destructor_definition.replace("\n", "\n    ")
+    host_class = host_class.replace("@@FLIC_DTOR@@", embedded_destructor)
+    return host_class + "\n" + close_definition + textwrap.dedent(r"""
 
         static bool equals(const std::vector<std::string> &actual,
                            const std::vector<std::string> &expected) {
@@ -172,10 +206,12 @@ def test_actual_close_and_destructor_preserve_close_then_reverse_member_order(tm
         pytest.skip("g++ unavailable")
     source = FLIC_CPP.read_text()
     close_definition = _definition(source, "void Flic::close() {")
-    destructor_definition = _definition(source, "Flic::~Flic() {")
+    destructor_definition = _class_definition(
+        FLIC_H.read_text(), "Flic", "~Flic() {")
+    host_source = _host_source(close_definition, destructor_definition)
     cpp = tmp_path / "flic_lifetime.cpp"
     binary = tmp_path / "flic_lifetime"
-    cpp.write_text(_host_source(close_definition, destructor_definition))
+    cpp.write_text(host_source)
     result = subprocess.run([compiler, "-std=c++11", "-Wall", "-Wextra", "-Werror",
                              str(cpp), "-o", str(binary)], capture_output=True, timeout=30)
     assert result.returncode == 0, result.stderr.decode(errors="replace")
