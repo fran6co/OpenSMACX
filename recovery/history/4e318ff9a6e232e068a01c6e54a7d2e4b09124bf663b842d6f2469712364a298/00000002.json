@@ -1,0 +1,34 @@
+{
+  "event_id": "4abe7162491e07570d20a68dcd340bce6b8422dd785f21283e6fdac04cf21125",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Coordinator expands subjects by the three independently pinned direct callers solely to account for intended precision propagation in existing compiler inlining. Keep the same immutable baseline, source identities, historical claims, current ownership and all outside preservation requirements; no caller source-body changes or flag changes are authorized.",
+      "Require full original/actual numerical review, all-known-domain verdict continuity, and native residual recheck with exactly these5source-owned bodies in scope. Full linked selection/runtime/FPexception/NaNpayload proof remains unfinished; no matching claims are banked."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6553088,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6553568,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6385120,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "051a46575f920bc13edc38734e1315d1d7a7b4dc1c2324ec865ad87d6f3f423a",
+  "request_id": "admit-three-original-normalizer-consumers",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:vector-array-precision-oct18"
+}
