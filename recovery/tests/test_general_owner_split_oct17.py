@@ -249,6 +249,31 @@ FIXED_COS_CURRENT = (
     b"}\n"
 )
 
+# These three source-owned associated-data records are an authorized addition
+# to the pilot's live General source. Inverse projection removes only these
+# exact comments at their exact source seams; all original function records,
+# bodies and historical baselines remain checked by the existing projection.
+ASSOCIATED_PREFIX = b"// RECOVERY_ASSOCIATED:"
+STOI_PURPOSE = b"/*\nPurpose: Converts a binary, hex or decimal string to an integer.\n"
+STOI_TARGET_ASSOCIATION = b"// RECOVERY_ASSOCIATED: v1 switch_targets 0x00628950 0x00628A00 0x00628A10 0x00628976\n"
+STOI_SELECTOR_ASSOCIATION = b"// RECOVERY_ASSOCIATED: v1 switch_selector 0x00628950 0x00628A10 0x00628A47 0x00628970\n"
+STOI_ASSOCIATIONS = STOI_TARGET_ASSOCIATION + STOI_SELECTOR_ASSOCIATION
+HSV_ORIGINAL = b"// ORIGINAL: 0x00628B70 ?HSV_to_RGB@@YAXPAUHSV@@PAUPALETTEENTRY@@@Z"
+HSV_ASSOCIATION = b"// RECOVERY_ASSOCIATED: v1 switch_targets 0x00628B70 0x00628D94 0x00628DAC 0x00628C65\n"
+
+
+def _strip_switch_associations(general_bytes: bytes) -> bytes:
+    """Invert only the three approved records at their unique live seams."""
+    assert general_bytes.count(ASSOCIATED_PREFIX) == 3
+    assert general_bytes.count(STOI_ASSOCIATIONS) == 1
+    assert general_bytes.count(HSV_ASSOCIATION) == 1
+    assert general_bytes.count(STOI_ASSOCIATIONS + STOI_PURPOSE) == 1
+    assert general_bytes.count(HSV_ASSOCIATION + HSV_ORIGINAL) == 1
+    projected = general_bytes.replace(STOI_ASSOCIATIONS, b"", 1)
+    projected = projected.replace(HSV_ASSOCIATION, b"", 1)
+    assert ASSOCIATED_PREFIX not in projected
+    return projected
+
 
 def _restore_admitted_fixed_cos(general_bytes: bytes) -> bytes:
     """Undo only the reviewed whole body; never replace an arbitrary function."""
@@ -266,6 +291,7 @@ def _project_header_rng_general(
     crt_random_cpp: bytes,
     crt_random_h: bytes,
 ) -> bytes:
+    general_bytes = _strip_switch_associations(general_bytes)
     general_bytes = _restore_admitted_fixed_cos(general_bytes)
     records = _validate_header_rng_sources(
         header_io_cpp, header_io_h, crt_random_cpp, crt_random_h
@@ -508,5 +534,64 @@ def test_inverse_rejects_unadmitted_fixed_cos_changes(damage):
         "duplicate-body": FIXED_COS_CURRENT + FIXED_COS_CURRENT,
     }[damage]
     parts["general"] = parts["general"].replace(FIXED_COS_CURRENT, changed, 1)
+    with pytest.raises(AssertionError):
+        inverse_split(parts)
+
+
+@pytest.mark.parametrize("mutate", [
+    lambda data: data.replace(STOI_ASSOCIATIONS, b"", 1)
+                    .replace(HSV_ASSOCIATION, b"", 1),
+    lambda data: data.replace(
+        b"// RECOVERY_ASSOCIATED: v1 switch_targets 0x00628950 0x00628A00 0x00628A10 0x00628976\n",
+        b"", 1),
+    lambda data: data.replace(
+        b"// RECOVERY_ASSOCIATED: v1 switch_selector 0x00628950 0x00628A10 0x00628A47 0x00628970\n",
+        b"", 1),
+    lambda data: data.replace(HSV_ASSOCIATION, b"", 1),
+    lambda data: data.replace(STOI_ASSOCIATIONS,
+                               STOI_ASSOCIATIONS + STOI_ASSOCIATIONS, 1),
+    lambda data: data.replace(HSV_ASSOCIATION,
+                               HSV_ASSOCIATION + HSV_ASSOCIATION, 1),
+    lambda data: data.replace(
+        STOI_TARGET_ASSOCIATION,
+        STOI_TARGET_ASSOCIATION.replace(b"0x00628A00", b"0x00628A04", 1), 1),
+    lambda data: data.replace(
+        STOI_TARGET_ASSOCIATION,
+        STOI_TARGET_ASSOCIATION.replace(b"0x00628950", b"0x00628951", 1), 1),
+    lambda data: data.replace(
+        STOI_SELECTOR_ASSOCIATION,
+        STOI_SELECTOR_ASSOCIATION.replace(b"switch_selector", b"switch_targets", 1), 1),
+    lambda data: data.replace(
+        STOI_TARGET_ASSOCIATION,
+        STOI_TARGET_ASSOCIATION.replace(b"0x00628976", b"0x00628975", 1), 1),
+    lambda data: data.replace(
+        HSV_ASSOCIATION,
+        HSV_ASSOCIATION.replace(b"0x00628D94", b"0x00628D98", 1), 1),
+    lambda data: data.replace(
+        HSV_ASSOCIATION,
+        HSV_ASSOCIATION.replace(b"0x00628B70", b"0x00628B71", 1), 1),
+    lambda data: data.replace(
+        HSV_ASSOCIATION,
+        HSV_ASSOCIATION.replace(b"0x00628C65", b"0x00628C64", 1), 1),
+])
+def test_inverse_rejects_associated_record_population_and_interpretation_damage(mutate):
+    parts = _actual_split(LIVE_PATHS)
+    changed = mutate(parts["general"])
+    assert changed != parts["general"]
+    parts["general"] = changed
+    with pytest.raises(AssertionError):
+        inverse_split(parts)
+
+
+@pytest.mark.parametrize("which", ["stoi", "hsv"])
+def test_inverse_rejects_associated_record_at_wrong_source_seam(which):
+    parts = _actual_split(LIVE_PATHS)
+    marker = STOI_ASSOCIATIONS if which == "stoi" else HSV_ASSOCIATION
+    anchor = STOI_PURPOSE if which == "stoi" else HSV_ORIGINAL
+    general = parts["general"]
+    assert general.count(marker + anchor) == 1
+    moved = general.replace(marker + anchor, anchor, 1)
+    moved = _unique_insert(moved, b'#include "stdafx.h"\n', marker)
+    parts["general"] = moved
     with pytest.raises(AssertionError):
         inverse_split(parts)

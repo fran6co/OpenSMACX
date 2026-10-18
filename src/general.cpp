@@ -618,6 +618,8 @@ Status: Complete
 // makes no call to it - the image writes it out inside the jump
 // table's arms - while 0x00628910 is a real body of its own.
 
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00628950 0x00628A00 0x00628A10 0x00628976
+// RECOVERY_ASSOCIATED: v1 switch_selector 0x00628950 0x00628A10 0x00628A47 0x00628970
 /*
 Purpose: Converts a binary, hex or decimal string to an integer.
 // ORIGINAL: 0x00628950 ?stoi@@YAHPAD@Z 0x00628950-0x006289FE BYTE_EXACT
@@ -3685,6 +3687,7 @@ int __cdecl sub_5d2901(int *param_1, int *param_2, int *param_3, int param_4) {
     return 0;
 }
 
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00628B70 0x00628D94 0x00628DAC 0x00628C65
 // ORIGINAL: 0x00628B70 ?HSV_to_RGB@@YAXPAUHSV@@PAUPALETTEENTRY@@@Z 0x00628B70-0x00628D92 FILE BYTE_EXACT
 // symbol    ?HSV_to_RGB@@YAXPAUHSV@@PAUtagPALETTEENTRY@@@Z
 // size      546 bytes
