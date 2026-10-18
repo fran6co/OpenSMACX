@@ -1,0 +1,25 @@
+{
+  "author": "coordinator",
+  "base_revision": "7cded5c41867f4afa6c8b70de52d9cb3b58513f3",
+  "editable_files": [
+    "src/map.cpp",
+    "recovery/tests/test_proto_sort_branch_layout_oct18.py"
+  ],
+  "evidence": [
+    "Pinned original5A6270..5A63C9 and retained actual map.cpp COFF show the current first divergent branch: original CMP proto_id,64; JL low/default arm, followed by high-arm key34FB5E38 and ProtoSortCount increment. Current source puts low arm first, yielding JGE. Existing medium-owner triage records the exact original and candidate sites; this is an unmeasured source-form hypothesis, not a discovered semantic bug.",
+    "Scope permits only the existing inner proto_id<MaxVehProtoFactionNum branch inside proto_sort to be reordered with its inverse condition. Preserve both complete arms, signed comparison, constants, count effects, surrounding prototype selection, calls, final128-element sort, actual owner globals and types. Do not modify proto_sort_2, headers, layouts, flags, linker/build policy or add helper/noinline/volatile tricks. Preserve source mappings, associated records and historical lessons/claims unchanged.",
+    "Use native measure_local_variants on an isolated prepared worker with unchanged-source replica and a wrong-key compiled damage control. Do not bank or edit the product tree merely to score. Adopt only a measured improvement after independent actual-source review; if the bounded proposal does not improve, retain the negative result in ignored evidence rather than land speculative C++.",
+    "If adopted require fresh complete application compile/link, original-reference checks, complete outside-body physical preservation and mapped-function/claim continuity, actual-source semantic/mutation tests and integration rechecks. Temporary unrelated emissions require explicit reviewed expansion, not an implicit waiver. Manual coordinator integration is not automatic, linked, runtime or game acceptance. Only the installed recorder can grant a new historical byte claim."
+  ],
+  "intent": "Restore the original proto_sort unavailable-prototype branch layout through ordinary equivalent C++ arm ordering, only if fresh measurement improves its matching.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5923440,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "proto-sort-branch-layout-oct18"
+}
