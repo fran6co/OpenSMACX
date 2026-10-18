@@ -1,0 +1,20 @@
+{
+  "event_id": "69fdb33fa55ef7415e5b9c3fb143cff9859175063e66734dd1f661ddb0cbff02",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_diplomacy_producers_behavior.py"
+    ],
+    "evidence": [
+      "Reuse and strengthen the existing actual-source C++98 producer harness rather than duplicate it. Its X_pop mock currently ignores the first script-provider argument and cannot detect this bug. Add an actual distinct mutable TutorialPopupCaption pointer and backing storage to the fixture; validate both pointer identity and fresh loads after parser callbacks, preserve null callback assertions and existing diplomacy/network/gate controls.",
+      "Authorize independent wrong-provider, literal-pointee and stale-pointer-cache compiled mutation controls for each affected function; mutations remain private tests, never product bodies. Existing consumers in the fixture must continue compiling with the new proper provider declaration. Native object/ABI/reference and full application checks remain separate; host doubles do not prove target layout or acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "reuse-existing-diplomacy-producer-host-controls-oct18",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:tutorial-script-provider-oct18"
+}

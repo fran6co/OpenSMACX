@@ -1,0 +1,31 @@
+{
+  "author": "coordinator",
+  "base_revision": "0e9b8378eedfcb84e950b2f9b01ad5612ca6bad1",
+  "editable_files": [
+    "src/faction.cpp",
+    "src/console.h",
+    "recovery/tests/test_tutorial_script_provider_oct18.py"
+  ],
+  "evidence": [
+    "Pinned pact_of_brotherhood53CAF0 reads pointercell691B14 at53CDE8 and passes that loaded value with PACT to X_pop5BF330. make_treaty53CE10 reads the same cell at53D0D1 and passes its value with COMMERCE to the same overload. Current source instead passes PopupStartCaption, a distinct mutable256byteBSSarray at9B8AA8. Existing source console.cpp owns bounded pointercell TutorialPopupCaption691B14 and pointee TutorialPopupCaptionText691B8C initialized to TUTOR; this is identity/provider evidence, not a literal-value guess.",
+    "Authorize replacing only those two wrong first arguments with a fresh read of existing TutorialPopupCaption. Preserve actual pointer indirection and callback-visible mutability; do not inline TUTOR, cache the pointer across calls, alias or move storage, change popup overloads, labels, conditions, parser fields, diplomatic/network effects, lifetimes or safety/error behavior. Expose the existing provider with one extern char* declaration beside related Console-owned global declarations in console.h, already included by faction.cpp. No new global or claimed original TU/class identity.",
+    "Independent source/pinned/COFF reviews establish the provider mismatch; native variant controls should include unchanged-source replica and wrong-provider argument mutation. A broader original pointer-read audit may propose additional consumers but must return discovery and receive explicit subject/file expansion before edits. pledge_truce has no corresponding pointer read/call and remains unchanged.",
+    "Preserve every source original marker, span and historical claim. Only installed record may bank any readily achieved exact match. Require actual-source host/mutation controls of pointer identity, call-site reloads and unchanged tutorial gates; fresh full application compile/link, all touched restoration/strict reference checks, outside-body physical preservation and original identity/claim continuity. Header/compiler collateral must be investigated/admitted, never silently projected. Coordinator independent review/manual integration with destination recheck is authorized; no automatic, full linked-selection, runtime or game-acceptance claim."
+  ],
+  "intent": "Restore proven tutorial-script pointer providers in genuine diplomacy consumers without changing their original conditions or UI/parser effects.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5491440,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5492240,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "tutorial-script-provider-oct18"
+}
