@@ -1,0 +1,64 @@
+{
+  "author": "coordinator",
+  "base_revision": "003fd6a45708a351c78f19cb660c486b2d6bdb03",
+  "editable_files": [
+    "src/time.cpp",
+    "src/timer_messages.cpp",
+    "CMakeLists.txt",
+    "recovery/tests/test_timer_close_recovery.py",
+    "recovery/tests/test_timer_message_boundary_oct18.py"
+  ],
+  "evidence": [
+    "Current pinned-image and actual-application COFF review finds six direct calls to5FD370 in Time callback init/start/pulse and one conditional stop tail jump; current actual Release inlines the entire MsgStatus/PeekMessage/TranslateMessage/DispatchMessage loop into all seven. This is a callee-visibility finding, not a demonstrated timer arithmetic defect or proof of the original filename/TU.",
+    "Keep all Time function bodies, time.h inline cancellation core and time_lifecycle.cpp untouched. Move only the complete existing free flush_timer implementation, original identity/spans, claims and useful comments to independently compiled src/timer_messages.cpp, with normal time.h declaration and original Win-owned MsgStatus storage. Register its TU in CMake under unchanged flags. No trampoline, noinline, optimization pragma or function pointer workaround.",
+    "Existing time-stop-call-boundaries-oct15 history establishes public stop is out-of-line but cancellation core is inline. Preserve stop_pending_events, old captured flush bit, 49/50ms timer selection, id clearing after kill, callback/context/store ladders, return quirks and periodic/oneshot original defects. Do not put the queue body in the already-correct lifecycle TU.",
+    "Use native source writer/remover for transport; all original identities/history survive. Update only the existing test mapping lookup and native fixture coverage needed for the moved free operation, preserving strict lifecycle/caller and mutation assertions. Add actual queue behavior/reentrancy/mutation controls and pinned call-boundary checks.",
+    "Require controlled native current/replica/damage observations, all timer/lifecycle measurements, exact transport of the flush body, fresh full application compile/link, physical outside-owned-body/object residuals including added-unit contributions, historical claim/mapping/reference continuity, independent review and fresh master recheck. A CMake input-family change and scoped verification are not complete linked-selection or automatic/game acceptance."
+  ],
+  "intent": "Recover the shared timer-message drain call boundary for seven timer methods without changing timer bodies, lifecycle topology or compiler policy.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6382176,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6382288,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6382416,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6382608,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6382800,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6382992,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6383408,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6280048,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "timer-message-boundary-oct18"
+}
