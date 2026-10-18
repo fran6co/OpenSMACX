@@ -1,0 +1,33 @@
+{
+  "author": "coordinator",
+  "base_revision": "d5ec21509809b878ff1f5bf45ea6670e14d96c92",
+  "editable_files": [
+    "src/caviar.cpp",
+    "src/vector.cpp",
+    "recovery/tests/test_vector_normalize_precision_oct14fq.py",
+    "recovery/tests/test_vector_array_precision_oct18.py"
+  ],
+  "evidence": [
+    "Complete pinned628220..62828B uses inline fsqrt on (y*y+z*z)+x*x, divides1 by the unrounded root, then fstp m32 reciprocal before component multiplication. Current actual application COFF keeps reciprocal extended through all outputs. This is a numerical boundary discrepancy, not missing alias sequencing. The finite simulated witness is a lead pending native verification, not original-executable execution.",
+    "Pinned6281E0..628217 returns inline fsqrt of the extended sum; current actual COFF spills binary64 and calls CRT sqrt due the TU-wide function pragma originally required only by Vector::normalize. Scope intrinsic sqrt policy strictly to vec3_length and restore the function policy immediately afterward. Do not change class normalize, its runtime call, arithmetic order, or signatures.",
+    "Normalizer may use an explicitly rounded float local to represent the independently observed m32 reciprocal storage boundary. Volatile local storage is permitted solely for that real numerical conversion, not scheduling, invented shared state, dummy stores or byte forcing. Verify no unintended rounding of root/sum. Keep source y/z rereads and sequential output stores, zero/NaN/infinity behavior, no safety normalization or guards.",
+    "No annotation, claim, symbol, layout, compiler/flag/link configuration, other numerical body or public framework changes. Any native unknown or matching regression remains visible; no arbitrary cleanup hypothesis, copied code bytes, assembly, intrinsics replacing original runtime calls, or original-address dispatch.",
+    "Add host and managed VC6 controls over actual source and emitted numerical paths, with independent precision witnesses and compiled damages. Preserve class-normalization immutable checksum through a tightly bounded inverse of only the two admitted pragma insertions, never reset the checksum or replace arbitrary source. Source/claim/reference continuity, independent review, full build/link and scoped outside-body physical checks precede manual integration; repeat at destination. This is not whole-game or automatic acceptance."
+  ],
+  "intent": "Restore original x87 precision boundaries for the free float-array length and normalization operations, retaining their distinct paths from Vector class normalization.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6455840,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6455776,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "vector-array-precision-oct18"
+}
