@@ -669,16 +669,12 @@ def lab_child_collector():
     return source[start:source.index("\n}", start) + 2]
 
 
-def test_reportwin_lab_child_slots_follow_native_prerequisite_scan(tmp_path):
-    compiler = shutil.which("g++")
-    if compiler is None:
-        pytest.skip("host C++ compiler unavailable")
-    source = tmp_path / "lab_children.cpp"
-    source.write_text(r'''
+def lab_child_harness(collector):
+    return r'''
 struct RulesTechnology { int preq_tech_1, preq_tech_2; };
 const int MaxTechnologyNum = 89;
 RulesTechnology Technology[MaxTechnologyNum];
-''' + lab_child_collector() + r'''
+''' + collector + r'''
 int main() {
     for (int i=0; i<MaxTechnologyNum; ++i)
         Technology[i].preq_tech_1 = Technology[i].preq_tech_2 = -1;
@@ -686,7 +682,7 @@ int main() {
     Technology[4].preq_tech_2 = 12;
     Technology[5].preq_tech_1 = Technology[5].preq_tech_2 = 12;
     Technology[6].preq_tech_1 = 13;
-    int child_storage[5] = {-1,-1,-1,-1,5};
+    int child_storage[6] = {-1,-1,-1,-1,5,99};
     int *children=child_storage;
     int count = reportwin_collect_lab_children(12, children);
     if (count != 4) return 1;
@@ -696,17 +692,46 @@ int main() {
         Technology[i].preq_tech_1 = Technology[i].preq_tech_2 = 12;
     count = reportwin_collect_lab_children(12, children);
     if (count != 5 || children[0] != 0 || children[1] != 0
-        || children[2] != 1 || children[3] != 1) return 3;
-    if (child_storage[4] != 5) return 5;
+        || children[2] != 1 || children[3] != 1 || children[4] != 2) return 3;
+    if (child_storage[5] != 99) return 5;
     return reportwin_collect_lab_children(-2, children) == 0 ? 0 : 4;
 }
-''')
+'''
+
+
+def run_lab_child_harness(tmp_path, compiler, collector, name):
+    source = tmp_path / (name + ".cpp")
+    source.write_text(lab_child_harness(collector))
     executable = tmp_path / "lab_children"
     compiled = subprocess.run([compiler, "-std=c++98", str(source), "-o", str(executable)],
                               capture_output=True, text=True)
     assert compiled.returncode == 0, compiled.stderr
     result = subprocess.run([str(executable)], capture_output=True, text=True)
-    assert result.returncode == 0, "unlock harness returned " + str(result.returncode) + ": " + result.stderr
+    return result.returncode
+
+
+def test_reportwin_lab_child_slots_follow_native_prerequisite_scan(tmp_path):
+    compiler = shutil.which("g++")
+    if compiler is None:
+        pytest.skip("host C++ compiler unavailable")
+    assert run_lab_child_harness(tmp_path, compiler, lab_child_collector(), "faithful") == 0
+
+
+@pytest.mark.parametrize("before,after", [
+    ("children[count] = candidate;",
+     "if (count < 4) children[count] = candidate;"),
+    ("count <= 4", "count < 4"),
+    ("count <= 4", "count <= 5"),
+])
+def test_reportwin_lab_child_fixture_rejects_fifth_slot_mutants(
+        tmp_path, before, after):
+    compiler = shutil.which("g++")
+    if compiler is None:
+        pytest.skip("host C++ compiler unavailable")
+    collector = lab_child_collector()
+    mutant = collector.replace(before, after)
+    assert mutant != collector
+    assert run_lab_child_harness(tmp_path, compiler, mutant, "mutant") != 0
 
 
 def lab_unlock_sections():

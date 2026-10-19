@@ -100,14 +100,30 @@ void ReportWin::on_redraw() {
     Buffer &canvas = *this;
     canvas.set_clip(&energy_panel_rect_);
     switch (ReportIfGlobal.field_8_) {
-    case 0: draw_intel(); break;
-    case 2: draw_labs(); break;
-    case 3: draw_energy(); break;
-    case 4: draw_ops(); break;
-    case 5: draw_projects(); break;
-    case 6: draw_sat(); break;
-    case 7: draw_security(); break;
-    case 8: draw_score(); break;
+    case 0:
+        draw_intel();
+        break;
+    case 2:
+        draw_labs();
+        break;
+    case 3:
+        draw_energy();
+        break;
+    case 4:
+        draw_ops();
+        break;
+    case 5:
+        draw_projects();
+        break;
+    case 6:
+        draw_sat();
+        break;
+    case 7:
+        draw_security();
+        break;
+    case 8:
+        draw_score();
+        break;
     }
     canvas.set_clip(buffer_working_rect());
 }
@@ -142,22 +158,21 @@ static int reportwin_signed_coordinate(uint32_t bits) {
     return -1 - static_cast<int>(~bits);
 }
 
-// The tree's four upper-tier buttons are fed by at most four matching
-// prerequisite slots. The image's loop notices a fifth match and stops
-// (0x4996CA..0x49970B), then clamps the displayed count to four
-// (0x499AE2..0x499AF3). Keep that native stop condition without writing the
-// fifth result past the four-button local destination.
+// The image's loop tests for more than four matches before each slot, but
+// stores every match unconditionally. It therefore writes five slots; only
+// the first four are consumed after the displayed count is clamped at
+// 0x499AE2..0x499AF3.
 static int reportwin_collect_lab_children(int technology, int *children) {
     int count = 0;
-    // 0x4996CA exits when the number of matches is greater than four. The
-    // fifth match is a stop signal only; only four child IDs have storage.
+    // 0x4996CA checks count > 4 before processing a slot, while 0x4996E7
+    // stores unconditionally and increments the count afterward.
     for (int slot = 0; slot < MaxTechnologyNum * 2 && count <= 4; ++slot) {
         const int candidate = slot / 2;
         const int prerequisite = (slot & 1)
             ? Technology[candidate].preq_tech_2
             : Technology[candidate].preq_tech_1;
         if (prerequisite == technology) {
-            if (count < 4) children[count] = candidate;
+            children[count] = candidate;
             ++count;
         }
     }
@@ -753,7 +768,11 @@ void ReportWin::draw_labs() {
                 parent, faction);
         }
 
-        int children[4] = {-1, -1, -1, -1};
+        // Native scratch begins at EBP-0x7c and spans five slots to EBP-0x6c.
+        // That final slot's prior local use ends at 0x499169; it is not
+        // initialized for this scan and is written only on a fifth match.
+        int children[5];
+        children[0] = children[1] = children[2] = children[3] = -1;
         int child_count = reportwin_collect_lab_children(field_FAB8_, children);
         status_child_count = child_count;
         if (child_count > 4) child_count = 4;
