@@ -1,0 +1,37 @@
+{
+  "author": "coordinator",
+  "base_revision": "6c3663aac033a0c78e929c9315085ed4d275c441",
+  "editable_files": [
+    "src/credits.cpp",
+    "src/credits.h",
+    "recovery/tests/test_credits_timer_contract_oct19.py"
+  ],
+  "evidence": [
+    "Independently decoded pinned428DD0..428DE7: pushEBP;movEBP,ESP;movECX,[EBP+8];testECX,ECX;je428DE5;inc[ECX+A14];call428C00;popEBP;ret. One explicit cdecl stack payload, original null guard, direct member frame increment followed by draw. Historical Q spelling is reconstructed catalogue evidence, not proof of an implicit this plus extra integer.",
+    "Pinned428B44..428B50 pushes5,30,ESI,428DD0 and calls Time::start616350 on embedded Time at receiver+2D44. Current source registers synthetic credits_timer_tick(int), then calls nonstatic __cdecl timer_callback_daemon(int) through reinterpret_cast<Credits*>(owner), including a null instance call. Current Time callback1 contract remains void(__cdecl*)(int)/int as reviewed elsewhere; no broad Time interface/layout or lifetime change is authorized.",
+    "Make the integer overload static, use a single borrowed Credits* conversion at that established callback ABI boundary, test it before any access, increment frame_count_ then draw_credits. Register it directly with existing Time::start and remove only now-unused synthetic wrapper. Leave no-argument member implementation and all other original bodies unchanged. Preserve every original identity/span/historical claim and useful discovery. Observe the actual emitted static symbol through native COFF before package writer updates its symbol fact; never edit ORIGINAL markers by hand.",
+    "Require actual-source host controls for null/non-null callback, increment-before-draw, repeated dispatch and wrong-guard/increment/order controls; independently pin complete original callback and registration. Preserve all Credits source obligations, measure callback plus registration and owner siblings in both configured flag sets with replica/damage controls, build/link full application, check source identity/reference continuity and review before manual integration. Temporary justified matching changes retain restoration obligations and raw residuals. No bug fixes, compiler/flag changes, baseline reset, invented original debug types, runtime/full-game or autonomous acceptance claim.",
+    "Only coordinator mutates Git/native preparation/compiler leases/recording/publication. Worker edits isolated authorized files and may run host tests; no delegation or outside source edits. Existing other-owner WIP stays untouched."
+  ],
+  "intent": "Recover the original directly registered one-payload Credits timer callback as a static cdecl entry, eliminating the synthetic adapter and null instance-member call.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4361680,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4361664,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4360688,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "credits-timer-contract-oct19"
+}
