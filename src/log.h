@@ -69,8 +69,8 @@ class Log {
       }
       FILE *file = env_open(log_file_, "at");
       if (file) {
-          str2 ? fprintf_s(file, "%s %s %d %d %d\n", str1, str2, num1, num2, num3)
-              : fprintf_s(file, "%s %d %d %d\n", str1, num1, num2, num3);
+          str2 ? fprintf(file, "%s %s %d %d %d\n", str1, str2, num1, num2, num3)
+              : fprintf(file, "%s %d %d %d\n", str1, num1, num2, num3);
           fclose(file);
       }
   }
@@ -80,8 +80,8 @@ class Log {
       }
       FILE *file = env_open(log_file_, "at");
       if (file) {
-          str2 ? fprintf_s(file, "%s %s %04x %04x %04x\n", str1, str2, num1, num2, num3)
-              : fprintf_s(file, "%s %04x %04x %04x\n", str1, num1, num2, num3);
+          str2 ? fprintf(file, "%s %s %04x %04x %04x\n", str1, str2, num1, num2, num3)
+              : fprintf(file, "%s %04x %04x %04x\n", str1, num1, num2, num3);
           fclose(file);
       }
   }

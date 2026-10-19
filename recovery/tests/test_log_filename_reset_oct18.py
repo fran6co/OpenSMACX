@@ -153,7 +153,7 @@ static void *spy_mem_get(size_t size);
 static char *spy_strcat(char *destination, const char *source);
 static FILE *spy_env_open(const char *path, const char *mode);
 static int spy_fclose(FILE *file);
-static int spy_fprintf_s(FILE *, const char *, ...);
+static int spy_fprintf(FILE *, const char *, ...);
 
 struct InitScope {
     InitScope() { assert(!init_active); init_active = true; }
@@ -179,7 +179,7 @@ def dependency_rewritten(source: str) -> str:
         (r"(?<![A-Za-z0-9_])strcat\(", "spy_strcat("),
         (r"(?<![A-Za-z0-9_])env_open\(", "spy_env_open("),
         (r"(?<![A-Za-z0-9_])fclose\(", "spy_fclose("),
-        (r"(?<![A-Za-z0-9_])fprintf_s\(", "spy_fprintf_s("),
+        (r"(?<![A-Za-z0-9_])fprintf\(", "spy_fprintf("),
     ):
         source = re.sub(old, new, source)
     return source
@@ -244,7 +244,7 @@ static FILE *spy_env_open(const char *path, const char *mode) {
 static int spy_fclose(FILE *file) {
     assert(file == &fake_file); ++closes; events.push_back("close"); return 0;
 }
-static int spy_fprintf_s(FILE *, const char *, ...) { events.push_back("fprintf"); return 0; }
+static int spy_fprintf(FILE *, const char *, ...) { events.push_back("fprintf"); return 0; }
 
 @@INIT@@
 

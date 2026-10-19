@@ -194,14 +194,6 @@ inline int fopen_s(FILE **stream, const char *name, const char *mode) {
   *stream = fopen(name, mode);
   return *stream ? 0 : -1;
 }
-inline int fprintf_s(FILE *stream, const char *format, ...) {
-  va_list arguments;
-  va_start(arguments, format);
-  int written = vfprintf(stream, format, arguments);
-  va_end(arguments);
-  return written;
-}
-
 /*
  * `_snprintf_s(buffer, size, _TRUNCATE, ...)` IS THE ONE WHERE THE RETURN
  * VALUE IS LOAD-BEARING. runtime_oracle.cpp:179 relies on a truncated write

@@ -57,6 +57,7 @@ def compile_and_run(tmp_path, source):
 
 
 def log_host_source(body):
+    body = re.sub(r"(?<![A-Za-z0-9_:])fprintf\(", "host_fprintf(", body)
     return textwrap.dedent(r"""
         #include <cstddef>
         #include <cstdio>
@@ -101,7 +102,7 @@ def log_host_source(body):
             ++free_count;
             std::free(pointer);
         }
-        int fprintf_s(FILE *, const char *, ...) { return 0; }
+        int host_fprintf(FILE *, const char *, ...) { return 0; }
         #define fclose host_fclose
         #define free host_free
         #define private public

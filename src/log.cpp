@@ -64,11 +64,21 @@ int Log::init(LPCSTR input) {
 // AN OBJECT, NOT A POINTER TO A FIXED ADDRESS: the pointer form costs a
 // load at every use where the image addresses the storage directly, and
 // the address is terranx.exe's data, unmapped in a standalone build.
+// RECOVERY_OBJECT: v1 0x009BC004 ?IsLoggingDisabled@@3HA
 BOOL IsLoggingDisabled;  // 0x009BC004
 
 // This global owns the filename constructor and destructor lifetime. Its
 // initial zero storage is followed by Log("logfile.txt") initialization.
+// RECOVERY_OBJECT: v1 0x009BBFF8 ?Logging@@3VLog@@A
 Log Logging("logfile.txt");  // 0x009BBFF8
+
+// TU-private format literals used by the original Log::say/say_hex bodies.
+// The two original "at" mode strings are distinct but the compiler pools the
+// current spelling; neither mode is assigned a single-original identity here.
+// RECOVERY_LITERAL: v1 0x0069738C 0x0069739C ??_C@_0BA@OCHC@?$CFs?5?$CFs?5?$CFd?5?$CFd?5?$CFd?6?$AA@ 0x006260F0
+// RECOVERY_LITERAL: v1 0x0069739C 0x006973A9 ??_C@_0N@KIHH@?$CFs?5?$CFd?5?$CFd?5?$CFd?6?$AA@ 0x006260F0
+// RECOVERY_LITERAL: v1 0x006973B0 0x006973C6 ??_C@_0BG@DBHC@?$CFs?5?$CFs?5?$CF04x?5?$CF04x?5?$CF04x?6?$AA@ 0x00626190
+// RECOVERY_LITERAL: v1 0x006973C8 0x006973DB ??_C@_0BD@FBFL@?$CFs?5?$CF04x?5?$CF04x?5?$CF04x?6?$AA@ 0x00626190
 
 // ORIGINAL: 0x00625F20 ??__ELogging@@YAXXZ 0x00625F20-0x00625F8B FILE BYTE_EXACT
 // symbol    _$E6
