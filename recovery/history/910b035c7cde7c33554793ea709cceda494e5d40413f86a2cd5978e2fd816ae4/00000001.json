@@ -1,0 +1,22 @@
+{
+  "event_id": "b15788f7e5350c713863a237d1ade736479de34f3c57ff2dc6ec247b81be703f",
+  "payload": {
+    "affects": [
+      "entity-8e4b222fb13c97f4946bbf3120525ed76affc8fe9f16776ce92887e48320141e",
+      "entity-d4a8232c1c79e7ca0bf229a865ccc7c522fa54ea842ebc873cc1df5301f659a2",
+      "entity-ea47e188dac55f3f7a0cef1b59a5091ed3b638f5cd363219599429854a3b8c34"
+    ],
+    "author": "coordinator",
+    "discovery_id": "original-one-payload-credits-callback",
+    "evidence": [
+      "Independent complete pinned428DD0..428DE7 reads only first stackpayload intoECX, nullguards, incrementsA14 then calls428C00 and returnsplainRET. Pinned428B44..428B55 directly registers that original entry andESI payload throughTime::start616350. Current nonstaticmember plus syntheticwrapper expresses the wrong callback contract and null instance-member call."
+    ],
+    "hypothesis": "The Credits timer entry is an ordinary one-payload cdecl callback, not a nonstatic cdecl member with an ignored explicit parameter behind an extra adapter.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "original-one-payload-credits-callback",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:credits-timer-contract-oct19"
+}

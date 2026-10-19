@@ -50,10 +50,6 @@ Credits::~Credits() {
   close();
 }
 
-static void __cdecl credits_timer_tick(int owner) {
-  reinterpret_cast<Credits *>(owner)->timer_callback_daemon(0);
-}
-
 // Credits' list is populated with owned C-heap strings by load(); unload()
 // releases every slot and clears both count fields before releasing audio.
 // ORIGINAL: 0x00428830 ?unload@Credits@@QAEXXZ 0x00428830-0x0042887D BYTE_EXACT
@@ -132,7 +128,7 @@ void Credits::exec() {
   static_cast<Buffer *>(this)->set_font(&font_, 0, 0, 0);
 
   time_.set_modal();
-  time_.start(credits_timer_tick, reinterpret_cast<int>(this), 30, 5);
+  time_.start(Credits::timer_callback_daemon, reinterpret_cast<int>(this), 30, 5);
   if ((GameDataStateStorage.fields_.game_preferences_ & 0x800) != 0) {
     g_CREDITS_WAVE.play();
   }
@@ -152,10 +148,12 @@ void Credits::timer_callback_daemon() {
 }
 
 // ORIGINAL: 0x00428DD0 ?timer_callback_daemon@Credits@@QAAXH@Z 0x00428DD0-0x00428DE7 BYTE_EXACT
-void __cdecl Credits::timer_callback_daemon(int) {
-  if (this) {
-    ++frame_count_;
-    draw_credits();
+// symbol    ?timer_callback_daemon@Credits@@SAXH@Z
+void __cdecl Credits::timer_callback_daemon(int a1) {
+  Credits *credits = reinterpret_cast<Credits *>(a1);
+  if (credits != 0) {
+    ++credits->frame_count_;
+    credits->draw_credits();
   }
 }
 

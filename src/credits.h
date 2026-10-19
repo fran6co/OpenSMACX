@@ -51,7 +51,7 @@ class Credits : public GraphicWin {
   void close();
   void draw_credits();
   void timer_callback_daemon();
-  void __cdecl timer_callback_daemon(int a1);
+  static void __cdecl timer_callback_daemon(int a1);
 
   // Storage the image proves is here: its own methods reach 0xA18.
   // Extent only - this class carries no size assertion, and the bound is a floor.
