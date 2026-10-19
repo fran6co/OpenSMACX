@@ -107,10 +107,11 @@ extern int ParseStrGender[10];
 extern char256 ParseStrBuffer[10];
 static uint32_t Language;
 static char findnum_digits[] = "09";
-static void strcat_s(char *dst, size_t, const char *src) { std::strcat(dst, src); }
-static void _itoa_s(int value, char *dst, size_t, int radix) {
-    // The project's VC6 shim calls unbounded _itoa; size is not enforced.
-    if (radix == 10) std::sprintf(dst, "%d", value);
+using std::strcat;
+static char *_itoa(int value, char *dst, int radix) {
+    assert(radix == 10);
+    std::sprintf(dst, "%d", value);
+    return dst;
 }
 """
 

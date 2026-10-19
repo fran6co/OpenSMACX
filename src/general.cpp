@@ -786,8 +786,8 @@ int __cdecl parse_string(LPSTR input, LPSTR output) {
                 *output = 0;
                 input = var + 5;
                 char output_num[80];
-                _itoa_s(ParseNumTable[number], output_num, sizeof(output_num), 10);
-                strcat_s(output, 1024, output_num);
+                _itoa(ParseNumTable[number], output_num, 10);
+                strcat(output, output_num);
                 output += strlen(output);
             } else {
                 LPSTR num = findnum(var);
@@ -803,7 +803,7 @@ int __cdecl parse_string(LPSTR input, LPSTR output) {
                 output += len;
                 *output = 0;
                 input = num + 1;
-                strcat_s(output, 1024, ParseStrBuffer[number].str);
+                strcat(output, ParseStrBuffer[number].str);
                 output += strlen(output);
             }
             break;
@@ -820,8 +820,8 @@ int __cdecl parse_string(LPSTR input, LPSTR output) {
                 *output = 0;
                 input = var + 8;
                 char output_num[80];
-                _itoa_s(ParseNumTable[number], output_num, sizeof(output_num), 10);
-                strcat_s(output, 1024, output_num);
+                _itoa(ParseNumTable[number], output_num, 10);
+                strcat(output, output_num);
                 output += strlen(output);
             } else if (!strncmp(var, "$NUM", 4)) {
                 int number = var[4] - '0';
@@ -834,8 +834,8 @@ int __cdecl parse_string(LPSTR input, LPSTR output) {
                 *output = 0;
                 input = var + 5;
                 char output_num[80];
-                _itoa_s(ParseNumTable[number], output_num, sizeof(output_num), 10);
-                strcat_s(output, 1024, output_num);
+                _itoa(ParseNumTable[number], output_num, 10);
+                strcat(output, output_num);
                 output += strlen(output);
             } else {
                 LPSTR num = findnum(var);
@@ -851,7 +851,7 @@ int __cdecl parse_string(LPSTR input, LPSTR output) {
                 output += len;
                 *output = 0;
                 input = num + 1;
-                strcat_s(output, 1024, ParseStrBuffer[number].str);
+                strcat(output, ParseStrBuffer[number].str);
                 output += strlen(output);
             }
             break;
@@ -961,7 +961,7 @@ int __cdecl parse_string(LPSTR input, LPSTR output) {
                 output += len;
                 *output = 0;
                 input = num + 1;
-                strcat_s(output, 1024, ParseStrBuffer[number].str);
+                strcat(output, ParseStrBuffer[number].str);
                 output += strlen(output);
             } else {
                 int len = (var - input) + 1;
@@ -988,7 +988,7 @@ int __cdecl parse_string(LPSTR input, LPSTR output) {
             output += len;
             *output = 0;
             input = num + 1;
-            strcat_s(output, 1024, ParseStrBuffer[number].str);
+            strcat(output, ParseStrBuffer[number].str);
             output += strlen(output);
             break;
           }
@@ -998,7 +998,10 @@ int __cdecl parse_string(LPSTR input, LPSTR output) {
     strcat(output, input);
 
     if (Language == 1) { // French : handling for poor translations
-        static const char *const part_speech[6] = {
+        // Six inline 20-byte French prefix rows; the observed table window
+        // does not establish any broader original allocation or source name.
+        // RECOVERY_OBJECT: v2 0x006972D4 0x0069734C _?part_speech@?HL@??parse_string@@YAHPAD0@Z@4QAY0BE@$$CBDA 0x00625880
+        static const char part_speech[6][20] = {
             " de ", " le ", " la ", "De ", "Le ", "La "
         };
         LPSTR search_from = output_base;

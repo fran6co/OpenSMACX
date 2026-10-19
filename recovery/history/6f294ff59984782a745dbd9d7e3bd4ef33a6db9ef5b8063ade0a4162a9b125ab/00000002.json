@@ -1,0 +1,22 @@
+{
+  "event_id": "b97c8fd32ce7e1c06b904d99365e4eb932564da4a0c042dcc64c46292fbc97e7",
+  "payload": {
+    "affects": [
+      "entity-21711617219430cb4971e2c69f65716d0e6cf281b336d37ee336790282b472f7",
+      "entity-27255b73245e74bd57f24cf0a643b7c14b4391b6bc39ad60cfe437fe3c2524e5"
+    ],
+    "author": "coordinator",
+    "discovery_id": "parser-number-scan-visibility",
+    "evidence": [
+      "Pinned parse_string has five calls to628B30 and eight to memcpy645930. The baseline Release object has no findnum/memcpy call relocations in parse_string, but ten findnum_digits references corresponding to five inlined scans. A standalone findnum COMDAT exists, without a retained MAP placement. This is stronger evidence than spelling similarity, but does not establish original translation-unit boundaries.",
+      "findnum is used only by parse_string in current source. stoi instead serves Text decimal conversion and has two associated switch-data records; btoi/htoi are real inline header definitions additionally called through Text function-pointer paths. Any coherent number-parsing owner split must preserve those bodies, claims, associations and caller contracts. A move is not authorized by this discovery alone; compiler flags/noinline/pragmas and blind buffer hoisting are not substitutes for ownership evidence. Missing memcpy calls remain a separate obligation."
+    ],
+    "hypothesis": "The current catch-all General translation unit inlines findnum into all five parser sites; original out-of-line scan calls suggest different visibility or compiler context.",
+    "kind": "discovery"
+  },
+  "previous_event": "b63eb8a55d3a83449ecbb7eecd205349eb7c1cd91a54df929f81051707b5731b",
+  "request_id": "parser-number-scan-visibility",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:general-parser-storage-oct19"
+}

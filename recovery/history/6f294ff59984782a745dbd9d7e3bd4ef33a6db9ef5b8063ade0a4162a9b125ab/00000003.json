@@ -1,0 +1,20 @@
+{
+  "event_id": "dd3fcda1facbdb52224319475c172513251be12aacff99c69afaa5feb9228a03",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "inline-french-row-storage-and-direct-crt",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Coordinator reviewed the actual diff and independent pinned/data/host evidence. Accept only the ordinary CRT expressions, six20-byte local static rows and bounded source-owned original table binding. All83General function identities/history and every existing data binding remain intact. No flags, headers, ABI, unrelated body, unsafe/error-path policy or historical claim changed. This is source/data fidelity, not a new function implementation, exact claim or bug fix.",
+      "Fresh application build/link and57focused host/pinned/damage cases pass. All5581known conventional verdicts and all strict result statuses remain unchanged, with no exact losses. Every186other physical objects has a passing unprojected native residual; the fresh General object fully agrees with its separate unchanged Release control. Derived reports stay ignored under .opensmacx/recovery/general-parser-storage-oct19/.",
+      "The native General outside-function data/reference residual remains FAIL. Independently reviewed artifact audit verifies the six removed literals were exclusively referenced by the old pointer table; the120new row bytes exactly match the pinned window and are parser-private. All10Movie pointer aliases retain exact bytes, relocation target and addend while their section offsets move+96. The225function sweep, including associated code sections, finds only parse_string bytes changed and precisely classifies48Movie alias refs,303section-index shifts and19anchored private target renames, with no unexplained edges. This bounded manual review does not turn the native residual into a pass, waive a gate, or establish full linked preservation.",
+      "Preserve parse_string matching and linked-layout obligations, the corrected current frame evidence and unresolved number-scan visibility discovery. No array hoist, noinline, compiler-policy change or original-TU assertion is accepted. Full linked selection/allocation/ICF, structure/runtime, executable-universe completeness and automatic/game acceptance remain unproven. Integration still requires a fresh destination build and no-omission candidate-to-destination checks."
+    ]
+  },
+  "previous_event": "b97c8fd32ce7e1c06b904d99365e4eb932564da4a0c042dcc64c46292fbc97e7",
+  "request_id": "reviewed-parser-inline-rows",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:general-parser-storage-oct19"
+}

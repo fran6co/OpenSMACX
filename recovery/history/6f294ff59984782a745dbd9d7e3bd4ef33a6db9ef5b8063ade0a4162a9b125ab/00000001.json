@@ -1,0 +1,23 @@
+{
+  "event_id": "b63eb8a55d3a83449ecbb7eecd205349eb7c1cd91a54df929f81051707b5731b",
+  "payload": {
+    "affects": [
+      "entity-27255b73245e74bd57f24cf0a643b7c14b4391b6bc39ad60cfe437fe3c2524e5",
+      "entity-e17eba413a4a186ca5ef6223f89c8b43d8c27b67918e9fa76b5e8a87e5fd824d"
+    ],
+    "author": "coordinator",
+    "discovery_id": "inline-french-row-storage-and-direct-crt",
+    "evidence": [
+      "Pinned625880..625DDD walks6972D4..69734C with20-byte row steps. The120-byte relocation-free window is the six already-present source strings, fully zero padded. The former pointer array represented different physical data. Recover the inline char rows without claiming original spelling, broader allocation, lexical scope or new behavior.",
+      "Original _itoa calls use radix10 even for HEX, with three distinct scratch destinations. Ordinary strcat is called after joined parser branches. Compatibility wrappers already discarded bounds; replacing those call forms is not a safety improvement. Keep all grammar, initialization, invalid-input and error quirks.",
+      "The unchanged actual Release control and fresh full application build establish the candidate object. Current frame evidence corrects old seed commentary: baseline reserves0x100,candidate0x104,original0xFC. Do not infer a missing huge scratch frame from historical comments or hoist arrays blindly. Native General data/reference residual remains FAIL; manual source/data review and destination checks are separate from automatic acceptance."
+    ],
+    "hypothesis": "parse_string owns six inline20-byte French prefix rows, not six pointers; its numeric/append operations use ordinary original CRT call forms.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "inline-french-row-storage-and-direct-crt",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:general-parser-storage-oct19"
+}
