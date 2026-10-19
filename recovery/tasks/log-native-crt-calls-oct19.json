@@ -1,0 +1,112 @@
+{
+  "author": "coordinator",
+  "base_revision": "14d8fd0f641249601116c8c3c43c234dabf14fc7",
+  "editable_files": [
+    "src/log.h",
+    "src/log.cpp",
+    "src/vc6_compat.h",
+    "recovery/tests/test_log_filename_reset_oct18.py",
+    "recovery/tests/test_logging_random_natural_lifetimes_oct12.py",
+    "recovery/tests/test_log_native_formatting_oct19.py"
+  ],
+  "evidence": [
+    "Actual qualified application objects contain the C++ variadic fprintf_s forwarder in Log::say6260F0 and say_hex626190 and their inline consumers. Original direct calls626147/626176 and corresponding hexadecimal paths target647815. The existing source-owned VC6 dependency manifest identifies the complete60-byte _fprintf entry647815..647851 and exact physical LIBCMT fprintf.obj; __output/deep dependency selection remains unproved, not permission to retain the wrong application wrapper.",
+    "Authorize replacing only four active fprintf_s invocations in Log::say and say_hex with ordinary fprintf, with all formats, arguments/read timing, gates, stream-open/close ordering, source types and return handling unchanged. Do not rename/restructure other methods, add checks, alter null/failed-open/error behavior, change flags, banks/claims or CRT component bindings. This is faithful dependency/callgraph recovery, not a safety improvement or a claim of complete dependency/runtime verification.",
+    "Once full lexical search proves no remaining active production fprintf_s users, remove only that obsolete inline compatibility wrapper from vc6_compat.h; retain other wrappers and includes needed elsewhere. Do not perform speculative mass secure-CRT rewrites. Update the two existing class/lifetime host tests to follow the actual fprintf API, without weakening assertions.",
+    "Add bounded actual-source Log formatting controls for say/say_hex, with/without second text, all disabled/global-gate and failed-open branches, exact formatting arguments/output and write-before-close order. A compiling damage control reverting the wrong wrapper must be rejected by native/current source-target evidence, not just a string ban. Use native PE/COFF facilities and original operand/target facts, no proprietary instruction-byte fixtures or new ad hoc project CLI.",
+    "src/log.cpp storage/literal bindings are reserved for coordinator publication only after independently reviewed pinned/current correspondence. The worker must return findings rather than invent extents or hand-edit mappings. No function-marker/claim edits. Preserve original identities/spans/symbols/history and opaque/library uncertainty. Current Log lifecycle/state/source parameter quirks stay unchanged.",
+    "Mapped physical formatting-call closure is included by actual current COFF root references, not guessed from imports. Unmapped/generated physical consumers remain inventoried, not silently waived. Header emission copies and all caller/data/metadata changes require explicit coordinator review. Full fresh build/link, native scoped residuals, source/reference/claim checks and destination recheck precede manual integration; no automatic/full-game acceptance is implied.",
+    "Native actual physical consumers: [('src/base.cpp', '?say@Log@@QAEXPBD0HHH@Z'), ('src/base.cpp', '?say_hex@Log@@QAEXPBD0HHH@Z'), ('src/basewin.cpp', '?say@Log@@QAEXPBD0HHH@Z'), ('src/basewin.cpp', '?say_hex@Log@@QAEXPBD0HHH@Z'), ('src/console.cpp', '?say@Log@@QAEXPBD0HHH@Z'), ('src/console.cpp', '?say_hex@Log@@QAEXPBD0HHH@Z'), ('src/console.cpp', '?on_key_click@Console@@UAEHHH@Z'), ('src/crt_random.cpp', '?say@Log@@QAEXPBD0HHH@Z'), ('src/crt_random.cpp', '?say_hex@Log@@QAEXPBD0HHH@Z'), ('src/enemy.cpp', '?say@Log@@QAEXPBD0HHH@Z'), ('src/enemy.cpp', '?say_hex@Log@@QAEXPBD0HHH@Z'), ('src/faction.cpp', '?say@Log@@QAEXPBD0HHH@Z'), ('src/faction.cpp', '?say_hex@Log@@QAEXPBD0HHH@Z'), ('src/game.cpp', '?say@Log@@QAEXPBD0HHH@Z'), ('src/game.cpp', '?say_hex@Log@@QAEXPBD0HHH@Z'), ('src/general.cpp', '?say@Log@@QAEXPBD0HHH@Z'), ('src/general.cpp', '?say_hex@Log@@QAEXPBD0HHH@Z'), ('src/log.cpp', '?say@Log@@QAEXPBD0HHH@Z'), ('src/log.cpp', '?say_hex@Log@@QAEXPBD0HHH@Z'), ('src/log.cpp', '?log_say@@YAXPBD0HHH@Z'), ('src/log.cpp', '?log_say@@YAXPBDHHH@Z'), ('src/log.cpp', '_sub_51e6f0'), ('src/log.cpp', '?log_say_hex@@YAXPBD0HHH@Z'), ('src/log.cpp', '?log_say_hex@@YAXPBDHHH@Z'), ('src/map.cpp', '?say@Log@@QAEXPBD0HHH@Z'), ('src/map.cpp', '?say_hex@Log@@QAEXPBD0HHH@Z'), ('src/netdaemon.cpp', '?say@Log@@QAEXPBD0HHH@Z'), ('src/netdaemon.cpp', '?say_hex@Log@@QAEXPBD0HHH@Z'), ('src/newgame.cpp', '?say@Log@@QAEXPBD0HHH@Z'), ('src/newgame.cpp', '?say_hex@Log@@QAEXPBD0HHH@Z'), ('src/replaywin.cpp', '?say@Log@@QAEXPBD0HHH@Z'), ('src/replaywin.cpp', '?say_hex@Log@@QAEXPBD0HHH@Z'), ('src/reportif.cpp', '?say@Log@@QAEXPBD0HHH@Z'), ('src/reportif.cpp', '?say_hex@Log@@QAEXPBD0HHH@Z'), ('src/reportwin.cpp', '?say@Log@@QAEXPBD0HHH@Z'), ('src/reportwin.cpp', '?say_hex@Log@@QAEXPBD0HHH@Z'), ('src/stringstruct.cpp', '?say@Log@@QAEXPBD0HHH@Z'), ('src/stringstruct.cpp', '?say_hex@Log@@QAEXPBD0HHH@Z'), ('src/technology.cpp', '?say@Log@@QAEXPBD0HHH@Z'), ('src/technology.cpp', '?say_hex@Log@@QAEXPBD0HHH@Z'), ('src/technology_queries.cpp', '?say@Log@@QAEXPBD0HHH@Z'), ('src/technology_queries.cpp', '?say_hex@Log@@QAEXPBD0HHH@Z'), ('src/text.cpp', '?say@Log@@QAEXPBD0HHH@Z'), ('src/text.cpp', '?say_hex@Log@@QAEXPBD0HHH@Z'), ('src/veh.cpp', '?say@Log@@QAEXPBD0HHH@Z'), ('src/veh.cpp', '?say_hex@Log@@QAEXPBD0HHH@Z'), ('src/video.cpp', '?say@Log@@QAEXPBD0HHH@Z'), ('src/video.cpp', '?say_hex@Log@@QAEXPBD0HHH@Z'), ('src/video_queue.cpp', '?say@Log@@QAEXPBD0HHH@Z'), ('src/video_queue.cpp', '?say_hex@Log@@QAEXPBD0HHH@Z'), ('src/video_sound.cpp', '?say@Log@@QAEXPBD0HHH@Z'), ('src/video_sound.cpp', '?say_hex@Log@@QAEXPBD0HHH@Z')]"
+  ],
+  "intent": "Recover original Log stream formatting references through the real CRT fprintf entry rather than the modern compatibility forwarder, preserving every logging path and actual owner/caller closure.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5339328,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5367536,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6446880,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6446992,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6447024,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6447040,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6447136,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6447168,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6447312,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6447344,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6447504,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6447664,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6447696,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6447856,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6447952,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6448112,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6448208,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "log-native-crt-calls-oct19"
+}
