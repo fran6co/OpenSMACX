@@ -1,0 +1,162 @@
+{
+  "author": "coordinator",
+  "base_revision": "b0480269f75248cb268742c61f240eed926ccfce",
+  "editable_files": [
+    "src/alpha.cpp",
+    "recovery/tests/test_alpha_social_original_calls_oct19.py",
+    "recovery/tests/test_alpha_faithful_loops.py"
+  ],
+  "evidence": [
+    "Pinned read_rules5873C0..58829C calls strcpy645460 at587E7D and587EA1 with text_item results into SocialEffects row base946580 and set2+18 at946598; RulesSocialEffect has24byte set1/set2 then56bytes padding, stride68. The third original copy at5874AE into order_buf already uses plain strcpy. Current two SocialEffects source operations use strcpy_s(...,24,...).",
+    "vc6_compat strcpy_s ignoresbounds and calls unchecked strcpy; these statement callers ignore its return. This is source/direct-call/codegen fidelity, NOT demonstrated safety or semantic overflow difference. No new function coverage claim. Preserve text_get/text_item ordering,11effect rows, loop bounds, all fields, error paths and unsafe original behavior.",
+    "Authorize only the two source copy expressions in read_rules, without rewriting other loader functions, types/layout/ABI/header/global/flag/lifecycle/annotation facts. All28Alpha mappings scoped to observe collateral codegen and existing obligations. No extended byte spellings; preserve nonexact useful source work and return unexpected cross-owner findings.",
+    "Add an actual-source SOCIAL copy-loop fixture with safe host inputs, row/stride/order/field preservation and pinned call operands/counts; distinguish original plain source operations from wrapper substitutions without claiming undefined outcomes. The existing alpha_faithful_loops fixture has8baseline host compile failures after production StringTable fields became LPSTR: authorize only an evidence-backed test-double type/interface refresh preserving actual-source extraction, original wrong-index/rule storage behavior and every damage test. No production changes to those unrelated bodies.",
+    "Isolated worker and host tests only; coordinator owns all Git/native compiles/resources/central integration. Unchanged actual Release owner control precedes fresh whole application build/link, source/claims/references and review. Both independent owner tasks may be consolidated centrally after workers freeze, with explicit scope expansion and original baseline/history preserved. Missing linked selection/allocation/ICF/structure/runtime/automatic acceptance remains unfinished."
+  ],
+  "intent": "Restore the pinned ordinary SocialEffects row copy call forms in read_rules, retaining the loader structure, types and original quirks.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5786976,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5787200,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5787456,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5787696,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5787984,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5788016,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5791280,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5791712,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5791824,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5791888,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5795632,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5796304,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5796416,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5796800,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5888384,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5290144,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5888544,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5888672,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5888800,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5888816,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5888832,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5888976,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5889264,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5891344,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5891376,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5891536,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5892432,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5920896,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "alpha-social-original-calls-oct19"
+}
