@@ -168,8 +168,8 @@ struct Dialog {
   Dialog() { note("dialog_ctor"); }
   virtual ~Dialog() { note("dialog_dtor"); }
   uint32_t field_20_ = 4;
-  uint32_t field_24_ = 13;
-  uint32_t field_28_ = 14;
+  int window_x_ = 13;
+  int window_y_ = 14;
   uint32_t field_40_ = 0, field_44_ = 0, field_48_ = 0, field_B4_ = 0;
   int init(RECT *, int) { note("dialog_init"); return 0; }
   int attach(GraphicWin *, int, int, int);

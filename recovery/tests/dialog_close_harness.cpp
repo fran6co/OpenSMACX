@@ -80,13 +80,14 @@ void check_defaults(Dialog &dialog) {
     assert(dialog.field_B4_ == DialogFieldB4Default);
     assert(dialog.field_B8_ == DialogFieldB8Default);
     uint32_t Dialog::*zero_uint32_fields[] = {
-        &Dialog::field_24_, &Dialog::field_28_, &Dialog::field_38_,
-        &Dialog::field_3C_, &Dialog::field_5C_, &Dialog::field_60_};
-    for (int u = 0; u < 6; ++u) assert(dialog.*zero_uint32_fields[u] == 0);
+        &Dialog::field_38_, &Dialog::field_3C_,
+        &Dialog::field_5C_, &Dialog::field_60_};
+    for (int u = 0; u < 4; ++u) assert(dialog.*zero_uint32_fields[u] == 0);
     int Dialog::*zero_int_fields[] = {
+        &Dialog::window_x_, &Dialog::window_y_,
         &Dialog::column_count_, &Dialog::row_count_,
         &Dialog::field_64_, &Dialog::field_68_};
-    for (int i = 0; i < 4; ++i) assert(dialog.*zero_int_fields[i] == 0);
+    for (int i = 0; i < 6; ++i) assert(dialog.*zero_int_fields[i] == 0);
     uint32_t Dialog::*colors[] = {
         &Dialog::text_color_a_, &Dialog::text_color_2a_, &Dialog::text_color_3a_,
         &Dialog::text_color_b_, &Dialog::text_color_2b_, &Dialog::text_color_3b_,

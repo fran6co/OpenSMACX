@@ -1906,7 +1906,7 @@ void ReportIf::draw_labs() {
     }
     list.reset_report_selection();
     dialog.field_B4_ = 0;
-    list.attach(&MainInterfaceGlobal, dialog.field_24_, dialog.field_28_, 0x80020);
+    list.attach(&MainInterfaceGlobal, dialog.window_x_, dialog.window_y_, 0x80020);
     if (field_1E1D8_ == 0) list.set_selected_pos(-1, 1);
     else list.set_selected_id(ReportWinGlobal.shared_research_focus());
     static_cast<GraphicWin &>(list).show(0);
@@ -2080,7 +2080,7 @@ void ReportIf::draw_energy() {
     }
     list.reset_report_selection();
     dialog.field_B4_ = 0;
-    list.attach(&MainInterfaceGlobal, dialog.field_24_, dialog.field_28_, 0x80020);
+    list.attach(&MainInterfaceGlobal, dialog.window_x_, dialog.window_y_, 0x80020);
     if (ReportWinGlobal.field_59B0_) {
         if (ReportWinGlobal.shared_report_selection() >= 0x400)
             list.set_selected_id(ReportWinGlobal.shared_report_selection());
@@ -2165,7 +2165,7 @@ void ReportIf::draw_energy() {
     }
     listBox2_.reset_report_selection();
     fac_dialog.field_B4_ = 0;
-    listBox2_.attach(&MainInterfaceGlobal, fac_dialog.field_24_, fac_dialog.field_28_, 0x80020);
+    listBox2_.attach(&MainInterfaceGlobal, fac_dialog.window_x_, fac_dialog.window_y_, 0x80020);
     if (ReportWinGlobal.field_59B0_) listBox2_.set_selected_pos(-1, 1);
     else listBox2_.set_selected_id(ReportWinGlobal.shared_report_selection());
     static_cast<GraphicWin &>(listBox2_).show(0);
@@ -2273,7 +2273,7 @@ void ReportIf::draw_ops() {
         }
         listBox1_.reset_report_selection();
         dialog.field_B4_ = 0;
-        listBox1_.attach(&MainInterfaceGlobal, dialog.field_24_, dialog.field_28_, 0x80020);
+        listBox1_.attach(&MainInterfaceGlobal, dialog.window_x_, dialog.window_y_, 0x80020);
         listBox1_.set_selected_id(ReportWinGlobal.shared_report_selection());
         static_cast<GraphicWin &>(listBox1_).show(0);
         scroll_normal();
@@ -2834,7 +2834,7 @@ void ReportIf::draw_intel() {
     }
     listBox1_.reset_report_selection();
     tech_dialog.field_B4_ = 0;
-    listBox1_.attach(&MainInterfaceGlobal, tech_dialog.field_24_, tech_dialog.field_28_, 0x80020);
+    listBox1_.attach(&MainInterfaceGlobal, tech_dialog.window_x_, tech_dialog.window_y_, 0x80020);
     static_cast<GraphicWin &>(listBox1_).show(0);
     scroll_normal();
     canvas.set_clip(MainInterfaceGlobal.buffer_working_rect());
@@ -2903,7 +2903,7 @@ void ReportIf::draw_intel() {
     }
     listBox2_.reset_report_selection();
     base_dialog.field_B4_ = 0;
-    listBox2_.attach(&MainInterfaceGlobal, base_dialog.field_24_, base_dialog.field_28_, 0x80020);
+    listBox2_.attach(&MainInterfaceGlobal, base_dialog.window_x_, base_dialog.window_y_, 0x80020);
     static_cast<GraphicWin &>(listBox2_).show(0);
     scroll_normal();
     canvas.set_clip(MainInterfaceGlobal.buffer_working_rect());
