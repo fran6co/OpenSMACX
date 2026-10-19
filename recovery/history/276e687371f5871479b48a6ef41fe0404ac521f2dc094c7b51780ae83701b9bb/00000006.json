@@ -1,0 +1,18 @@
+{
+  "event_id": "125af4c522a6f327bb1a5d4e7431c1e8f32e45a59adc17d01e7bba6b5eb5ccd4",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "stale-preexisting-lifetime-test-counter",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Refreshed the test-only expected startup/shutdown symbols E21/E19→E8/E6 to source facts already integrated by20e1fdbeb; production bindings and graph unchanged. Both baseline and fresh candidate object lifetime graphs independently identify the same Txt allocation/atexit/shutdown closure. All six previously failing physical/history test cases now pass, retaining four missing-edge damage refusals.",
+      "Exact host comparison baseline31pass14fail→candidate41pass8fail: six stale lifetime cases fixed plus four new passing Text cases, no lost cases/new regressions. The same eight Alpha fixture compilation failures remain failures and are not part of this source edit."
+    ]
+  },
+  "previous_event": "8c507ed0684cae9984bb01862b76052a035dab388f0debb51ba8e089e43b2f36",
+  "request_id": "reviewed-text-checkpoint-1",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:text-open-original-copies-oct19"
+}

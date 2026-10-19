@@ -16,7 +16,7 @@ from match_recovery.model import Span
 ROOT = Path(__file__).resolve().parents[2]
 BASE = '0a4561ea47200ae85a3d3319d6c09db7a45a2297'
 PIN = '01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf'
-BINDINGS = {0x5FD400: '_$E21', 0x5FD460: '_$E19'}
+BINDINGS = {0x5FD400: '_$E8', 0x5FD460: '_$E6'}
 OLD_HEADER = '''// WHAT IT COSTS, stated where the decision is: neither can ever be measured.
 // VC6 names generated initialisers `_$E<n>` and registers them through
 // `.CRT$XCU`; the `??__E`/`??__F` spellings are IDA's reconstruction of what
@@ -46,6 +46,18 @@ def test_only_writer_symbol_facts_and_corrected_current_documentation():
     original = b"// ORIGINAL: 0x00585120 ?text_get_number@@YAHHH@Z 0x00585120-0x00585150 BYTE_EXACT\n"
     assert expected.count(original) == 1
     expected = expected.replace(original, original + b"// body      src/text.h\n", 1)
+    # The later original-operation recovery changes Text::open, not Txt's
+    # compiler-generated lifetime or writer-authored binding facts. Admit only
+    # its six reviewed substitutions, retaining the complete source guard.
+    for old_call, original_call, count in (
+        (b'strcpy_s(file_name_, 80, src_file_id);', b'strcpy(file_name_, src_file_id);', 1),
+        (b'strcat_s(file_name_, 80, ".txt");', b'strcat(file_name_, ".txt");', 1),
+        (b'strcpy_s(file_path_, 256, FilefindPath.last_path);', b'strcpy(file_path_, FilefindPath.last_path);', 2),
+        (b'strcpy_s(sect_header, "#");', b'strcpy(sect_header, "#");', 1),
+        (b'strcat_s(sect_header, section_id);', b'strcat(sect_header, section_id);', 1),
+    ):
+        assert expected.count(old_call) == count
+        expected = expected.replace(old_call, original_call)
     assert expected == path.read_bytes()
     before, after = read_text(old.decode(), path), read_text(expected.decode(), path)
     assert len(before) == len(after)

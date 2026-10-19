@@ -1,0 +1,18 @@
+{
+  "event_id": "8c507ed0684cae9984bb01862b76052a035dab388f0debb51ba8e089e43b2f36",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "historical-whole-file-lifetime-fixture",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Adapted the historical expected-source reconstruction by exactly six original-operation substitutions, with occurrence counts. Complete file equality, native writer facts, every original identity/symbol/span/claim/lesson, header and physical lifetime/damage assertions remain intact. No broad source escape or task baseline change.",
+      "Independent final source/test review reports no blocker. Actual Textopen extracted under both hostcompilers covers new/existing/fallback/null/failedopen, filename dot/suffix, section construction and EOF/one-rewind/position behavior. Pinned targets/operands/conditional edges agree. No undefined overflow execution or new bugfix."
+    ]
+  },
+  "previous_event": "23c444d370ecd903fd3501411eff209108668abd9f4d36e2c56dcb57ca1030c3",
+  "request_id": "reviewed-text-checkpoint-0",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:text-open-original-copies-oct19"
+}

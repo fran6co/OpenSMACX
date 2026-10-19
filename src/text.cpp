@@ -123,16 +123,16 @@ Status: Complete
 BOOL Text::open(LPCSTR src_file_id, LPCSTR section_id) {
     BOOL is_file_open = false; // open, possibly tracker for reading through whole file?
     if (src_file_id) {
-        strcpy_s(file_name_, 80, src_file_id);
+        strcpy(file_name_, src_file_id);
         if (!strchr(file_name_, '.')) {
-            strcat_s(file_name_, 80, ".txt");
+            strcat(file_name_, ".txt");
         }
         close();
         text_file_ = env_open(file_name_, "rt");
         if (!text_file_) {
             return true;
         }
-        strcpy_s(file_path_, 256, FilefindPath.last_path);
+        strcpy(file_path_, FilefindPath.last_path);
     } else if (text_file_) {
         is_file_open = true;
     } else {
@@ -140,7 +140,7 @@ BOOL Text::open(LPCSTR src_file_id, LPCSTR section_id) {
         if (!text_file_) {
             return true;
         }
-        strcpy_s(file_path_, 256, FilefindPath.last_path);
+        strcpy(file_path_, FilefindPath.last_path);
     }
     if (!section_id) {
         return false;
@@ -155,8 +155,8 @@ BOOL Text::open(LPCSTR src_file_id, LPCSTR section_id) {
     // std::string's constructor/destructor pull in an SEH frame (`mov eax,
     // fs:[0]` in the prologue) the image's `sub esp, 0x54` does not have.
     char sect_header[80];
-    strcpy_s(sect_header, "#");
-    strcat_s(sect_header, section_id);
+    strcpy(sect_header, "#");
+    strcat(sect_header, section_id);
     do {
         if (feof(text_file_)) {
             if (is_file_open) {

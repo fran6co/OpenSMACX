@@ -1,0 +1,23 @@
+{
+  "event_id": "276407fef1cdd4fd47f57a173b66ca6ef309f9d1f2d52b526fbb81f1f5b07a84",
+  "payload": {
+    "affects": [
+      "entity-44343d65df0602229fa2c70983205c1a6d63b600899748a1f11e28e1447a4889",
+      "entity-7a08dbf663cc4fcc0befb29ddaac69daa64a91101185c531e6a8cb9fe8266164"
+    ],
+    "author": "coordinator",
+    "discovery_id": "stale-preexisting-lifetime-test-counter",
+    "evidence": [
+      "Master src/text.cpp symbols at323/331 are _$E8/_$E6 before this task; commit20e1fdbeb removed unused C++ runtime startup and banked47lifetime matches. The test was not updated alongside that historical source change and has six existing failures when its real physical-object option is enabled.",
+      "Fresh baseline and candidate Text physical artifacts have the identical complete lifetime/data/metadata/reference residual outside ONLY Text::open; both independent graph walks resolve exactlyone paired Txt constructor, atexit and shutdown graph. No source facts or historical claims change here.",
+      "Coordinator authorizes refreshing the already-editable test BINDINGS constants to existing source E8/E6, retaining predecessor-based native writer reconstruction, every identity/history/header assertion, actual physical graph lookup and all four missing-edge damage refusals. This repairs stale test evidence, not a new C++ recovery or runtime/linked selection claim. Alpha loader fixture compile failures remain separate existing debt; do not fix them in this Text scope."
+    ],
+    "hypothesis": "The older lifetime fixture still expects E21/E19, while prior integrated source already binds the same generated Txt startup/shutdown graph to E8/E6.",
+    "kind": "discovery"
+  },
+  "previous_event": "89f7332c6154cc966bc66d3c359fe6bac8ccd2a5a61f0c43b692f76299f83ff6",
+  "request_id": "stale-preexisting-lifetime-test-counter",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:text-open-original-copies-oct19"
+}

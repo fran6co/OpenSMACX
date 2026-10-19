@@ -1,0 +1,19 @@
+{
+  "event_id": "89f7332c6154cc966bc66d3c359fe6bac8ccd2a5a61f0c43b692f76299f83ff6",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_text_generated_lifetime_oct11.py"
+    ],
+    "evidence": [
+      "Authorize test-only adaptation of the historical expected text by exactly the six approved Text::open plain copy/append restorations, each checked for occurrence count. Retain all existing assertions and physical lifetime controls; do not permit arbitrary source edits, change task baseline, compiler settings or metadata, suppress failures, or modify another production function. New Text actual-body/host/pinned call-operand and branch controls independently cover the changed body."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "c12918cd8e9bb09331d51afd760a5d305c6459d1d00a8fb30ff4780d707c526e",
+  "request_id": "allow-authorized-text-body-in-history-test",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:text-open-original-copies-oct19"
+}

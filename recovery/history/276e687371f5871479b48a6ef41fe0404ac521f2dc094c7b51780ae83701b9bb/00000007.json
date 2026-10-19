@@ -1,0 +1,20 @@
+{
+  "event_id": "06b76c86cd31da24a4063cf888bdf757781ca603fd9ef8f8e7cf9c064a95dd1a",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "compatibility-wrappers-already-unchecked",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "The initial task-proposal bounded-versus-unbounded inference is corrected: vc6_compat ignores the _s bounds and these callers ignore return values. This six-expression replacement is ordinary original call/source/codegen recovery, not newly implemented semantic function coverage or safety/overflow behavior change.",
+      "One unchanged actual Release owner compile measures Textopen matching_instructions1→132/170, compiled224→170; first divergence75, so132 is NOT a contiguous prefix. No prolonged spelling/flag search or new byte claim. All5581known conventional verdicts and strict statuses unchanged:3261exact,1955strictpass,1304strictunknown,2strictfail.",
+      "Fresh173TU application compile/link passes; qualified187physical residuals pass projecting only Textopen, all other code/data/reference/lifetime/metadata residuals unchanged. The single control equals the fresh application Text object wholly. Claims/mappings/references pass. All29Text mappings/history preserved; no other production file/header/flags modified.",
+      "Coordinator-reviewed manual source checkpoint under standing user authorization only. Complete linked retention/allocation/ICF and structure/runtime/game/full automatic acceptance remain unproved; do not promote residuals or unchanged strictunknown/fails. Destination still requires fresh build and whole-object/source rechecks."
+    ]
+  },
+  "previous_event": "125af4c522a6f327bb1a5d4e7431c1e8f32e45a59adc17d01e7bba6b5eb5ccd4",
+  "request_id": "reviewed-text-checkpoint-2",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:text-open-original-copies-oct19"
+}
