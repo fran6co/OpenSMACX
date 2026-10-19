@@ -79,3 +79,11 @@ def test_add_owns_both_typed_allocation_paths_and_original_order():
     assert "head_->previous->next = 0;" not in body
     assert "head_->payload = 0;" not in body
     assert "current_->payload = 0;" not in body
+
+
+def test_compiler_generated_attach_binding_has_no_fake_source_body():
+    from match_recovery.source import Mode, read_file
+    root = Path(__file__).resolve().parents[2]
+    record, = (r for r in read_file(root / 'src/spritebox.cpp') if r.address == 0x611920)
+    assert record.mode is Mode.FILE
+    assert not record.extract_error

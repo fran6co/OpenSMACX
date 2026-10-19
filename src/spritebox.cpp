@@ -1063,7 +1063,7 @@ Purpose: Adjust the receiver from the thunk1 subobject back to SpriteBox and
          names VC6's own vtordisp adjustor thunk, emitted because
          SpriteBox::attach overrides a virtual reached through a virtual
          base. There is no C++ here to get right, only a name to record.
-// ORIGINAL: 0x00611920 ?attach@thunk1_SpriteBox@@QAEHPAUGraphicWin@@HHH@Z 0x00611920-0x00611928 BYTE_EXACT
+// ORIGINAL: 0x00611920 ?attach@thunk1_SpriteBox@@QAEHPAUGraphicWin@@HHH@Z 0x00611920-0x00611928 FILE BYTE_EXACT
 // symbol    ?attach@SpriteBox@@$4PPPPPPPM@A@AEHPAVGraphicWin@@HHH@Z
 // size      8 bytes
 // kind      game

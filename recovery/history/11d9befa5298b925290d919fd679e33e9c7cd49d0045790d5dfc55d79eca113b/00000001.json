@@ -1,0 +1,21 @@
+{
+  "event_id": "46cc200657c3a162108971a972d3ba90f8f362646b0f6d320dd999e79a961173",
+  "payload": {
+    "affects": [
+      "entity-5c2b3971fc16351ec9a4420aafdd8274765235d12960c3027f7fdd5b144825d0"
+    ],
+    "author": "coordinator",
+    "discovery_id": "generated-spritebox-attach-binding",
+    "evidence": [
+      "Marker prose already explicitly says compiler writes the vtordisp adjustor body and current emitted symbol is the real SpriteBox override thunk. No C++ implementation follows this marker. Removing the synthetic helper exposes the legacy body-extraction error; retaining that helper would preserve a false source association.",
+      "Authorize native source writer mode-only correction preserving original address/name/symbol/all spans/claims/history. No C++ tokens/line count/function ABI change. Rebuild and remeasure under the corrected binding; no new claim is granted."
+    ],
+    "hypothesis": "Compiler-generated SpriteBox attach thunk has no source body; BODY mode accidentally selected the now-deleted unrelated allocation helper and must be FILE mode.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "generated-spritebox-attach-binding",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:spritelist-owned-allocation-oct19"
+}
