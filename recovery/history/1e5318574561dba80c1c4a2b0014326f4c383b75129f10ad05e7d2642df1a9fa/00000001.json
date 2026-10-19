@@ -1,0 +1,22 @@
+{
+  "event_id": "137ddb46d8ffdd66f1d3a9b44b8773b1544d0a08e36fa6017d28cf48739794bf",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_reportwin_redraw.py"
+    ],
+    "evidence": [
+      "Independent pinned review confirms loop stores five matches into original frame scratch beginning EBP-7C, with fifth at EBP-6C inside218-byte frame; only four UI buttons consume clamped results. Correct source scratch capacity rather than introducing C++ out-of-bounds or suppressing the fifth store.",
+      "Update actual-source collector control to prove fifth candidate stored, no sixth write, original count5 and clamped four-button consumption. Include executable mutants; no safety/bug fix. Preserve original quirks and all identity/claim obligations.",
+      "Remove only the prior proven no-gain duplicate clip restoration spelling from the candidate after preserving its patch; it is not a recovery gain. Verify scratch initialization against original rather than inventing fifth initialization.",
+      "Source/test workers apply patches and return hashes. Coordinator owns Git/compiler resources/build/measurement/record/integration. Original task baseline remains unchanged."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "reportwin-five-child-scratch-controls-oct20",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:reportwin-source-batch-oct19d"
+}

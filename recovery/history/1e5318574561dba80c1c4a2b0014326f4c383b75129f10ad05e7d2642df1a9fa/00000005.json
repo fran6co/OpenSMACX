@@ -1,0 +1,20 @@
+{
+  "event_id": "c5b6346ba9fe1ed7a4a2360f9936161af1c2a1a2c6771c7d4bd179b9db58214e",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_window_dispatch.py"
+    ],
+    "evidence": [
+      "Update only the actual-source callback fixture input path to its new genuine owner TU. The existing inheritance/declaration/body/capture/reentrancy execution and damage controls remain unchanged. No source/behavior normalization or synthetic header-inline callback substitute.",
+      "Coordinator applies one tuple source path change after guarded native source transfer; fresh actual-source tests and176TU full application build are required. Existing claims and original task baseline retained."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "bfe99fa30262c8e99f6295269a1bb55d7b85e90b85ceabc86456d2f977a0f693",
+  "request_id": "graphicwin-callback-owner-host-projection-oct20",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:reportwin-source-batch-oct19d"
+}

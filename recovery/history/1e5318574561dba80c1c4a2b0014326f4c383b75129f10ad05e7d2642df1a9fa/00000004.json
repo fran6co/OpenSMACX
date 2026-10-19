@@ -1,0 +1,23 @@
+{
+  "event_id": "bfe99fa30262c8e99f6295269a1bb55d7b85e90b85ceabc86456d2f977a0f693",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "CMakeLists.txt",
+      "src/graphicwin_events.cpp"
+    ],
+    "evidence": [
+      "Paired probe/application evidence: original callback restored by source ordering under settled advisory profiles, but actual application explicitly uses Ob2 and still expands the later callee. Do not bank or claim an application gain from the advisory result. Preserve that diagnostic; no compiler-policy change or baseline reset.",
+      "Move only the genuine out-of-line GraphicWin::on_update method with complete original mapping/claims/history to owner-specific graphicwin_events.cpp; keep header declaration and existing update implementation unchanged. Ordinary CMake TU registration supplies a real compilation boundary, not flags, pragmas, copied code or dispatch stand-ins.",
+      "Original constructor5D4D2B and vtable66FC50 slot63 establish this GraphicWin callback receiver; pinned404290 calls5D56B0. No original filename or historical unique TU assertion. Existing header-inline/callee-split proposal remains preserved until superseded integration verified.",
+      "Fresh preparation and176TU application build, all inline/non-owned new-object code/reference/directives, all existing physical objects outside3scoped bodies, claim continuity and strict current-original target evidence required. New object/domain cannot acquire an anonymous duplicate waiver; manual checkpoint is not full-game/automatic acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "d7fd43bdcaf0997312258db506073953f475afea1438cf252c508282860b38d2",
+  "request_id": "graphicwin-callback-native-build-boundary-oct20",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:reportwin-source-batch-oct19d"
+}

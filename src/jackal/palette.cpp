@@ -1525,7 +1525,7 @@ int Palette::init_cycle(int key, int first, int count, unsigned long interval) {
             operator delete(t);
             entry->time = 0;
         }
-        void *p = entry->colours;
+        PALETTEENTRY *p = entry->colours;
         if (p != 0) {
             free(p);
             entry->colours = 0;
@@ -1538,7 +1538,7 @@ int Palette::init_cycle(int key, int first, int count, unsigned long interval) {
 
     // The original LEA wraps the signed count in a 32-bit byte count.
     const unsigned int colour_bytes = static_cast<unsigned int>(count) * 4u;
-    void *mem = mem_get(colour_bytes);
+    PALETTEENTRY *mem = static_cast<PALETTEENTRY *>(mem_get(colour_bytes));
     entry->colours = mem;
     if (mem == 0) {
         return 4;
