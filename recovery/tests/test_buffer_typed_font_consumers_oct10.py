@@ -20,7 +20,10 @@ FUNCTIONS = {
         "0x005DD250", "int Buffer::write_cent_l(char * a1, int a2, int a3, int a4)",
     ),
     "write_right_l": (
-        "0x005DD450", "int Buffer::write_right_l(char * a1, RECT * a2, int a3)",
+        "0x005DD450", "int Buffer::write_right_l(char *text, RECT *area, int len)",
+    ),
+    "write_right_l_scalar": (
+        "0x005DD3B0", "int Buffer::write_right_l(char *text, int x_coord, int y_coord, int len)",
     ),
     "wrap_flying": (
         "0x005DDFB0", "int Buffer::wrap_flying(char * a1)",
@@ -107,6 +110,15 @@ char BufferFlyingText[256];
 const char BufferJoinSpace[] = " ";
 const char BufferWriteSpace[] = " ";
 int BufferLastWrapWriteResult;
+static int test_strlen_calls;
+static int test_callback_event;
+
+static size_t counted_strlen(const char *text) {
+    ++test_strlen_calls;
+    return ::strlen(text);
+}
+
+#define strlen(text) counted_strlen(text)
 
 struct Buffer {
     Font *font1_;
@@ -114,24 +126,31 @@ struct Buffer {
     int split_after_, break_calls_;
     int measure_width_, write_result_;
     int measure_calls_, write_calls_;
+    int measure_strlen_calls_, write_strlen_calls_;
+    int measure_event_, write_event_;
     int clear_font_on_measure_, clear_font_on_write_;
     int last_x_, last_y_, last_length_;
     char last_text_[64];
 
     Buffer() : font1_(0), field_10_(0), field_14_(0), field_18_(0),
         split_after_(0), break_calls_(0), measure_width_(0), write_result_(73),
-        measure_calls_(0), write_calls_(0), clear_font_on_measure_(0),
+        measure_calls_(0), write_calls_(0), measure_strlen_calls_(0),
+        write_strlen_calls_(0), measure_event_(0), write_event_(0),
+        clear_font_on_measure_(0),
         clear_font_on_write_(0), last_x_(0), last_y_(0), last_length_(0),
         last_text_() {}
 
     int text_line_height();
     int write_cent_l(char *, int, int, int);
     int write_right_l(char *, RECT *, int);
+    int write_right_l(char *, int, int, int);
     int wrap_flying(char *);
     int wrap(char *, RECT *);
 
     int text_width(char *, unsigned int) {
         ++measure_calls_;
+        measure_strlen_calls_ = test_strlen_calls;
+        measure_event_ = ++test_callback_event;
         if (clear_font_on_measure_) font1_ = 0;
         return measure_width_;
     }
@@ -143,6 +162,8 @@ struct Buffer {
     }
     int write_multi_font_raw_l(char *text, int x, int y, unsigned int length) {
         ++write_calls_;
+        write_strlen_calls_ = test_strlen_calls;
+        write_event_ = ++test_callback_event;
         last_x_ = x;
         last_y_ = y;
         last_length_ = static_cast<int>(length);
@@ -287,9 +308,90 @@ int main() {
     RECT safe_empty = {0, 14, 0, 0};
     Buffer null_text;
     assert(null_text.wrap(0, &safe_empty) == 14);
+
+    // Actual-source scalar and RECT right writers retain guard/return order,
+    // macro-driven strlen reevaluation, coordinates, and callback order.
+    primary.font_obj_ = &handle_primary;
+    char aligned_text[] = "abcd";
+    test_strlen_calls = 0;
+    Buffer scalar_null;
+    assert(scalar_null.write_right_l(0, 31, 12, 2) == 31);
+    assert(test_strlen_calls == 0 && scalar_null.measure_calls_ == 0);
+
+    Buffer scalar_no_font;
+    assert(scalar_no_font.write_right_l(aligned_text, 31, 12, 2) == 3);
+    assert(test_strlen_calls == 0 && scalar_no_font.measure_calls_ == 0);
+
+    Buffer scalar_negative;
+    scalar_negative.font1_ = &primary;
+    test_strlen_calls = 0;
+    assert(scalar_negative.write_right_l(aligned_text, 31, 12, -1) == 31);
+    assert(test_strlen_calls == 1 && scalar_negative.measure_calls_ == 0);
+
+    Buffer scalar_empty;
+    scalar_empty.font1_ = &primary;
+    char empty_aligned_text[] = "";
+    test_strlen_calls = 0;
+    assert(scalar_empty.write_right_l(empty_aligned_text, 31, 12, 5) == 31);
+    assert(test_strlen_calls == 4 && scalar_empty.measure_calls_ == 0);
+
+    Buffer scalar_short_limit;
+    scalar_short_limit.font1_ = &primary;
+    scalar_short_limit.measure_width_ = 6;
+    scalar_short_limit.write_result_ = 83;
+    test_strlen_calls = 0;
+    assert(scalar_short_limit.write_right_l(aligned_text, 31, 12, 2) == 83);
+    assert(test_strlen_calls == 2 && scalar_short_limit.measure_calls_ == 1 &&
+           scalar_short_limit.write_calls_ == 1);
+    assert(scalar_short_limit.last_x_ == 25 && scalar_short_limit.last_y_ == 12 &&
+           scalar_short_limit.last_length_ == 2);
+    assert(scalar_short_limit.measure_strlen_calls_ == 2 &&
+           scalar_short_limit.write_strlen_calls_ == 2 &&
+           scalar_short_limit.measure_event_ < scalar_short_limit.write_event_);
+
+    RECT aligned_area = {5, 10, 80, 60};
+    Buffer rect_long_limit;
+    rect_long_limit.font1_ = &primary;
+    rect_long_limit.measure_width_ = 6;
+    rect_long_limit.write_result_ = 89;
+    test_strlen_calls = 0;
+    assert(rect_long_limit.write_right_l(aligned_text, &aligned_area, 8) == 89);
+    assert(test_strlen_calls == 4 && rect_long_limit.measure_calls_ == 1 &&
+           rect_long_limit.write_calls_ == 1);
+    assert(rect_long_limit.last_x_ == 74 && rect_long_limit.last_y_ == 20 &&
+           rect_long_limit.last_length_ == 4);
+    assert(rect_long_limit.measure_strlen_calls_ == 4 &&
+           rect_long_limit.write_strlen_calls_ == 4 &&
+           rect_long_limit.measure_event_ < rect_long_limit.write_event_);
+
+    Buffer rect_negative;
+    rect_negative.font1_ = &primary;
+    test_strlen_calls = 0;
+    assert(rect_negative.write_right_l(aligned_text, &aligned_area, -1) == 0);
+    assert(test_strlen_calls == 1 && rect_negative.measure_calls_ == 0);
+    Buffer rect_no_font;
+    rect_no_font.font1_ = &primary;
+    primary.font_obj_ = 0;
+    test_strlen_calls = 0;
+    assert(rect_no_font.write_right_l(aligned_text, &aligned_area, 2) == 3);
+    assert(test_strlen_calls == 0 && rect_no_font.measure_calls_ == 0);
+    primary.font_obj_ = &handle_primary;
+    Buffer rect_null_text;
+    assert(rect_null_text.write_right_l(0, &aligned_area, 2) == 0);
+    RECT *null_area = 0;
+    test_strlen_calls = 0;
+    assert(rect_long_limit.write_right_l(aligned_text, null_area, 2) == 0);
+    assert(test_strlen_calls == 0);
     return 0;
 }
 '''
+
+
+def extract_buffer_min_macro(source: str) -> str:
+    matches = [line for line in source.splitlines()
+               if line.startswith("#define BUFFER_MIN(")]
+    assert len(matches) == 1, "expected the product BUFFER_MIN definition"
+    return matches[0]
 
 
 def source_program(root: Path, mutation: str | None = None) -> str:
@@ -323,9 +425,31 @@ def source_program(root: Path, mutation: str | None = None) -> str:
         assert old in definitions["wrap"]
         definitions["wrap"] = definitions["wrap"].replace(
             old, "lineHeight = fontData->line_height_ + fontData->unk_1_;", 1)
+    elif mutation == "cached_right_strlen":
+        expression = "BUFFER_MIN(static_cast<int>(strlen(text)), len)"
+        for name in ("write_right_l", "write_right_l_scalar"):
+            body = definitions[name]
+            assert body.count(expression) == 2
+            body = body.replace(expression, "BUFFER_MIN(cached_text_length, len)")
+            opening = body.find("{")
+            body = body[:opening + 1] + (
+                "\n    int cached_text_length = static_cast<int>(strlen(text));"
+            ) + body[opening + 1:]
+            definitions[name] = body
+    elif mutation == "scalar_x_direction":
+        old = "x_coord -= text_width(text, len);"
+        assert old in definitions["write_right_l_scalar"]
+        definitions["write_right_l_scalar"] = definitions["write_right_l_scalar"].replace(
+            old, "x_coord += text_width(text, len);", 1)
+    elif mutation == "rect_wrong_y":
+        old = "(area->bottom - font1_->height_ - area->top) / 2 + area->top"
+        assert old in definitions["write_right_l"]
+        definitions["write_right_l"] = definitions["write_right_l"].replace(
+            old, "(area->bottom - font1_->height_ - area->top) / 2 + area->top + 1", 1)
     elif mutation is not None:
         raise AssertionError(f"unknown mutation: {mutation}")
-    return FIXTURE + "\n".join(definitions.values()) + MAIN
+    product_macro = extract_buffer_min_macro(source)
+    return FIXTURE + product_macro + "\n" + "\n".join(definitions.values()) + MAIN
 
 
 def test_mapped_consumers_name_font_fields_and_keep_strlen_reloads() -> None:
@@ -347,8 +471,9 @@ def test_mapped_consumers_name_font_fields_and_keep_strlen_reloads() -> None:
     assert "reinterpret_cast<int *>(reinterpret_cast<int>(font1_)" not in bodies["wrap_flying"]
     assert "reinterpret_cast<Font *>(FontDefault)" not in bodies["write_right_l"]
     assert "reinterpret_cast<Font *>(FontDefault)" not in bodies["wrap"]
-    assert bodies["write_cent_l"].count("strlen(a1)") == 4
-    assert bodies["write_right_l"].count("strlen(a1)") == 4
+    assert "BUFFER_MIN(static_cast<int>(strlen(text)), len)" in bodies["write_right_l"]
+    assert "BUFFER_MIN(static_cast<int>(strlen(text)), len)" in bodies["write_right_l_scalar"]
+    assert extract_buffer_min_macro(source) == "#define BUFFER_MIN(a, b) ((a) < (b) ? (a) : (b))"
 
 
 def compile_and_run(compiler: str, program: str, tmp_path: Path,
@@ -381,7 +506,8 @@ def test_actual_font_consumers_preserve_metrics_and_live_fallbacks(
 @pytest.mark.parametrize("compiler_name", ["g++", "clang++"])
 @pytest.mark.parametrize("mutation", [
     "text_height_field", "center_handle_polarity", "right_default_reload",
-    "flying_handle_polarity", "rect_wrap_metric",
+    "flying_handle_polarity", "rect_wrap_metric", "cached_right_strlen",
+    "scalar_x_direction", "rect_wrong_y",
 ])
 def test_actual_font_consumers_reject_member_and_branch_mutants(
         compiler_name: str, mutation: str, tmp_path: Path) -> None:

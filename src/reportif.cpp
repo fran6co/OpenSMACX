@@ -934,8 +934,9 @@ void ReportIf::close_projects() {
     const int state = field_8_;
     if (state != 4 && state != 5) {
         WorldClimateWorldWin.hide_all();
-        MainInterfaceGlobal.flat_button_[6].hide();
-        MainInterfaceGlobal.flat_button_[7].hide();
+        for (int index = 6; index <= 7; ++index) {
+            MainInterfaceGlobal.flat_button_[index].hide();
+        }
     }
 }
 
@@ -1558,11 +1559,11 @@ void __cdecl report_intel(int selection) {
     int active_iface = ActiveIfaceIdStorage;
     ReportIfGlobal.field_8_ = 0;
     ReportIfGlobal.set_report_selection(selection);
-    if (IfaceIdToSlotStorage[active_iface] != 5) {
-        ReportWinGlobal.set_modal(0, pop_wait, &MainInterfaceGlobal);
-    } else {
+    if (IfaceIdToSlotStorage[active_iface] == 5) {
         ReportIfGlobal.report(0, ReportIfGlobal.report_faction_id(), selection);
+        return;
     }
+    ReportWinGlobal.set_modal(0, pop_wait, &MainInterfaceGlobal);
 }
 
 /*
@@ -1603,7 +1604,7 @@ void ReportIf::on_iface_left_click(int x_coord, int y_coord) {
     // back through the two argument slots - the push order is &y_coord then
     // &x_coord, so the position lands in the y argument, the type in the x.
     if (spot_.check(x_coord, y_coord,
-                                               &y_coord, &x_coord) == -1) {
+                    &y_coord, &x_coord) == -1) {
         return;
     }
     field_1E244_ = y_coord;
@@ -1654,8 +1655,8 @@ void ReportIf::close_sat() {
     // steps flatButtonsC_ (esi = 1, 0xB4C strides, `cmp esi, 8` at the
     // bottom), keeping the local player's own faction button; the second
     // counts flatButtonsD_ down from 5.
-    FlatButton *button = flatButtonsC_;
     int faction = 1;
+    FlatButton *button = flatButtonsC_;
     do {
         if (faction != ConsoleGlobal.faction_id_) {
             button->close();

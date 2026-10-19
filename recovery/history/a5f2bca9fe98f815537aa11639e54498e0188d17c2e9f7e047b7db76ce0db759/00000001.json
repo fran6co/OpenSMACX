@@ -1,0 +1,46 @@
+{
+  "event_id": "9f8943540c2e9380b507fc3214ffd5ee8eb1a89d6c4a385abeacf59fe5e1df89",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_buffer_typed_font_consumers_oct10.py",
+      "recovery/tests/test_reportif_project_button_loop_oct19.py",
+      "recovery/tests/test_right_aligned_text_calls_oct19.py",
+      "src/buffer.cpp"
+    ],
+    "evidence": [
+      "Six concurrent cheap source workers have stopped editing; combine disjoint ReportIf and Buffer families for one fresh application build/link and independently reviewed manual checkpoint.",
+      "Native replica/damage-controlled screens measure ReportIf close_projects17/17 in bothconfiguredprofiles and Buffer scalarwrite_right_l69/69 indefaultprofile. Actual Release recipes still require fresh application verification.",
+      "Original ReportIf54subjects and24cd306f6ff78af03fdd11405f16ba297fa6da27 baseline remain. Four Bufferoriginals areadded, all historical claims preserved; no changed headers/ABI/compilerflags or automatic/game acceptance waiver.",
+      "Tests may adapt renamed-parameter extraction and preserve/strengthen live font-reload and strlen call-count mutation controls; do not drop assertions to admit the source."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6149200,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6142064,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6142160,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6149040,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "combine-two-measured-source-families-oct19b",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:reportif-source-batch-oct19b"
+}

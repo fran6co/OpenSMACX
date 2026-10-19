@@ -5281,30 +5281,26 @@ int Buffer::dotted_box(RECT * a1, int a2) {
 // calls     0x005DC7C0 0x005DCAE0 0x006453E0
 
 
-int Buffer::write_right_l(char * a1, RECT * a2, int a3) {
-    if (a1 != 0 && a2 != 0) {
+int Buffer::write_right_l(char *text, RECT *area, int len) {
+    if (text != 0 && area != 0) {
         if (font1_ == 0 || font1_->font_obj_ == 0) {
             return 3;
         }
-        int sVar2 = strlen(a1);
-        int sVar3 = a3;
-        if (sVar2 < a3) {
-            sVar3 = strlen(a1);
+        if (BUFFER_MIN(static_cast<int>(strlen(text)), len) < 0) {
+            goto no_text;
         }
-        if (sVar3 >= 0) {
-            sVar3 = strlen(a1);
-            if (sVar3 < a3) {
-                a3 = strlen(a1);
-            }
-            if (a3 != 0) {
-                int width = text_width(a1, a3);
-                if (font1_ == 0) {
-                    font1_ = FontDefault;
-                }
-                return write_multi_font_raw_l(a1, a2->right - width,
-                    (a2->bottom - font1_->height_ - a2->top) / 2 + a2->top, a3);
-            }
+        len = BUFFER_MIN(static_cast<int>(strlen(text)), len);
+        if (len == 0) {
+        no_text:
+            return 0;
         }
+
+        int width = text_width(text, len);
+        if (font1_ == 0) {
+            font1_ = FontDefault;
+        }
+        return write_multi_font_raw_l(text, area->right - width,
+            (area->bottom - font1_->height_ - area->top) / 2 + area->top, len);
     }
     return 0;
 }
@@ -5345,16 +5341,17 @@ int Buffer::write_cent_l(Font * a1, char * a2, int a3, int a4, int a5, int a6) {
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005DD300
 
-int Buffer::write_right_l(Font * a1, char * a2, int a3, int a4, int a5, int a6) {
+int Buffer::write_right_l(Font *font, char *text, int x_coord, int y_coord,
+                          int field_width, int len) {
     Font * saved_font1 = font1_;
     Font * saved_font2 = font2_;
     Font * saved_font3 = font3_;
-    if (a1 != 0 && a1->font_obj_ != 0) {
-        font1_ = a1;
+    if (font != 0 && font->font_obj_ != 0) {
+        font1_ = font;
         font2_ = 0;
         font3_ = 0;
     }
-    int result = write_right_l(a2, a3, a4, a5, a6);
+    int result = write_right_l(text, x_coord, y_coord, field_width, len);
     font1_ = saved_font1;
     font2_ = saved_font2;
     font3_ = saved_font3;
@@ -6156,16 +6153,17 @@ int Buffer::write_cent_l(Font * a1, char * a2, int a3, int a4, int a5) {
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005DD3B0
 
-int Buffer::write_right_l(Font * a1, char * a2, int a3, int a4, int a5) {
+int Buffer::write_right_l(Font *font, char *text, int x_coord, int y_coord,
+                          int len) {
     Font *savedFont1 = font1_;
     Font *savedFont2 = font2_;
     Font *savedFont3 = font3_;
-    if (a1 != 0 && a1->font_obj_ != 0) {
-        font1_ = a1;
+    if (font != 0 && font->font_obj_ != 0) {
+        font1_ = font;
         font2_ = 0;
         font3_ = 0;
     }
-    int result = write_right_l(a2, a3, a4, a5);
+    int result = write_right_l(text, x_coord, y_coord, len);
     font1_ = savedFont1;
     font2_ = savedFont2;
     font3_ = savedFont3;
@@ -6212,27 +6210,22 @@ int Buffer::write_cent_l(Font * a1, char * a2, int a3, int a4, int a5, int a6, i
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005DC7C0 0x005DCAE0 0x006453E0
 
-int Buffer::write_right_l(char * a1, int a2, int a3, int a4) {
-    if (a1 == 0) {
-        return a2;
+int Buffer::write_right_l(char *text, int x_coord, int y_coord, int len) {
+    if (text == 0) {
+        return x_coord;
     }
     if ((font1_ != 0) && (font1_->font_obj_ != 0)) {
-        int len1 = strlen(a1);
-        int w = a4;
-        if (len1 < a4) {
-            w = strlen(a1);
+        if (BUFFER_MIN(static_cast<int>(strlen(text)), len) < 0) {
+            goto no_text;
         }
-        if (w >= 0) {
-            int len2 = strlen(a1);
-            if (len2 < a4) {
-                a4 = strlen(a1);
-            }
-            if (a4 != 0) {
-                int tw = text_width(a1, a4);
-                return write_multi_font_raw_l(a1, a2 - tw, a3, a4);
-            }
+        len = BUFFER_MIN(static_cast<int>(strlen(text)), len);
+        if (len == 0) {
+        no_text:
+            return x_coord;
         }
-        return a2;
+
+        x_coord -= text_width(text, len);
+        return write_multi_font_raw_l(text, x_coord, y_coord, len);
     }
     return 3;
 }
