@@ -1,0 +1,23 @@
+{
+  "event_id": "892c7d06872a1199219eef82ac7ad29fa30da78220dad99c701b6d42deaef152",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Expand verification ownership only to existing mapped world_build5C86E0..5C899D for its observed inline reset copy, retaining original task baselineb22b7c357. No further source edits or data/TU/header/initializer waiver. Require native physical residual equality after exactly these two original body projections, preserving initial187/1 failure and exact changed-addend evidence."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6063840,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "2527f01c2334a184892588b56447b54e12e56e663c95f35150559453969e51d4",
+  "request_id": "authorize-observed-inline-world-build",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:map-wipe-reset-order-oct19"
+}

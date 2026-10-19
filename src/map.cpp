@@ -2297,9 +2297,9 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl map_wipe() {
-    MapSeaLevel = 0;
     MapSeaLevelCouncil = 0;
     MapLandmarkCount = 0;
+    MapSeaLevel = 0;
     MapRandSeed = random(0, 0x7FFF) + 1;
     Map *tile = map_tiles();
     for (int i = 0; i < MapArea; ++i, ++tile) {

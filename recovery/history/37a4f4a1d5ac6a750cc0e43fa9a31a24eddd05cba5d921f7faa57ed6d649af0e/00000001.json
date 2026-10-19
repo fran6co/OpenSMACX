@@ -1,0 +1,21 @@
+{
+  "event_id": "2527f01c2334a184892588b56447b54e12e56e663c95f35150559453969e51d4",
+  "payload": {
+    "affects": [
+      "entity-d284a0615fff4dbfe6f540cf5e2c6ae4ee7217a26d73752d547838eaac919e3d"
+    ],
+    "author": "coordinator",
+    "discovery_id": "observed-map-wipe-inline-world-build",
+    "evidence": [
+      "Native initial physical comparison reports187PASS/1FAIL; the sole residual is map.cpp world_build code bytes, with all references/associations/symbols unchanged. Actual map_wipe112B operand offsets12/18/24 and world_build816B offsets92/98/104 change only addend low bytes0C/10/20→10/20/0C; all relocation records and function lengths unchanged.",
+      "Source world_build in src/map.cpp calls map_wipe inside its existing attempt loop. No source edit to that caller, other helper, global, header, initializer or compiler policy. Entire5581 canonical masked classifications and strict results unchanged; separate diagnostic map_wipe reference FAIL restored to PASS."
+    ],
+    "hypothesis": "Actual Release Ob2 inlines map_wipe into world_build, so restoring the reset operand order changes this mapped caller as well.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "observed-map-wipe-inline-world-build",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:map-wipe-reset-order-oct19"
+}

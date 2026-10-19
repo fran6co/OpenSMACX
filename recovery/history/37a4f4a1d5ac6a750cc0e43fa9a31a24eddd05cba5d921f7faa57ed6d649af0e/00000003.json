@@ -1,0 +1,17 @@
+{
+  "event_id": "9c092b968e15db2d67e3b859b9e2bf6de9941e8c4727261e67bb315e15257450",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "observed-map-wipe-inline-world-build",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "The existing source-owned world_build call now incorporates the faithful council,count,sea reset through map_wipe. Exact physical inspection bounds the emitted change to the same three target addends; no new caller/body/source workaround or behavior fix is introduced. The expanded verification scope preserves the full mapped caller and its restoration obligations; this resolution does not grant a whole original match, linked preservation or acceptance."
+    ]
+  },
+  "previous_event": "892c7d06872a1199219eef82ac7ad29fa30da78220dad99c701b6d42deaef152",
+  "request_id": "incorporate-observed-inline-world-build",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:map-wipe-reset-order-oct19"
+}
