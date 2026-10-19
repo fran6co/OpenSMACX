@@ -1,0 +1,21 @@
+{
+  "event_id": "f0d6ce669906e1a670ba8209b913380016d0a897baac4244a782028d17e388b1",
+  "payload": {
+    "affects": [
+      "entity-34fa964914af99f89c9f40e089858bcdbf27866bc148a76fc75bc69fe05eec13",
+      "entity-6f11c65ed65be7d5360aeee4ae816f8a81f643d6af947ab5ec28f07f402fdcdc"
+    ],
+    "author": "coordinator",
+    "discovery_id": "tile-yield-global-start",
+    "evidence": [
+      "Original4E7DB0..4E7DBD and4E7DC0..4E7E34 decode completely;4E7DB0/4E7E26 each write dword[90E998]=0. Current singleintTileYieldRestricted definition and canonicalexternalreadyexist. Freshd3f8c3332actualreferencecensus shows bothrowsUNKNOWN, notFAIL, on?TileYieldRestricted@@3HA. Allocationextent/lifetime are not independently proved."
+    ],
+    "hypothesis": "Two exact compiled resource-family bodies refer to the existing source-owned global whose independently observed original start lacks a data identity binding.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "tile-yield-global-start",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:tile-yield-original-data-start-oct19"
+}

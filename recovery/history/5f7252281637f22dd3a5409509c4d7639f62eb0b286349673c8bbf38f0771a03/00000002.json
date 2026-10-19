@@ -1,0 +1,20 @@
+{
+  "event_id": "5473c4fe0e5902bcbde0da0f343b059266823de8209b11686c0de77c6e292ed9",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "tile-yield-global-start",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "One v1start-only originaldata binding adjacent to existingbase.cppdefinition; conciseoriginaldword evidence retained inprose. AllCPPtokens/types/linkage/initializers/bodies/callers andexistingoriginalidentities/spans/claims unchanged. Comment/blanklines reused to avoid changing thisepochsLINE-dependent assertion names; no permanentline-numbertest.",
+      "Independent frozen source/pin review supports originalstart90E998. Fiveactualsource/nativeparser/configureduniqueness andpinnedtestsPASS, including correct/missing/wrong/duplicatebinding, completeindependentcleardecodes/dwordoperands, fourinitialzero-fillbytes, missing/corruptpin refusal andmaincheckout-first/worktreefallbackpathcontrol. These initialbytes are notCRT/postconstruction/runtimeproof or anoriginalallocationend.",
+      "Freshactual174TU applicationcompile/linkPASS. All188compiler-receiptedphysicalobjects compare identical topreviousmaster withzerofunctionomissions, including data/helpers/initializers/metadata. Everystructuredoriginalrecord retained (excluding only redundantrawFILEregiontext necessarilychanged bynewannotation). Claims/mappings/referencesPASS. Physicalordinaryexternaldata start/prefix qualified; invalidCOFFstorageclass2to3 andmissingowner bothrefuse.",
+      "Fresh5581knownmappedmaskedverdicts unchanged at3263BYTE_EXACT. Strict2669PASS/590UNKNOWN/4FAIL: precisely resource_yield4E7DC0 andsub_4e7db0 gainUNKNOWNtoPASS; no priorpassloss/newFAIL. Nonewfunctionimplementation, maskedmatchcount orhistoricalclaim. Coordinator-reviewedmanualintegration only, withfreshdestinationverification required; originaluniverse/structure/lifetime/linkedretention/ICF/runtime/gameacceptance remain unfinished."
+    ]
+  },
+  "previous_event": "f0d6ce669906e1a670ba8209b913380016d0a897baac4244a782028d17e388b1",
+  "request_id": "incorporate-tile-yield-start",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:tile-yield-original-data-start-oct19"
+}

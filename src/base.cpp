@@ -5403,10 +5403,10 @@ uint32_t BaseCurrentForcesMaintCount;  // 0x0090EA08
  * to mine_yield's roadless-mine mineral limit. Callers zero it, ask for a
  * yield, then read it back - BaseWin::draw_farm (0x0040F0F0) does exactly that
  * for each of the three resources, and resource_yield zeroes it for RSC_PSI.
- * Purpose is observed from those call sites; the executable does not name it.
+ * The executable's two clear paths identify this start; purpose comes from callers.
  */
+// RECOVERY_OBJECT: v1 0x0090E998 ?TileYieldRestricted@@3HA
 int TileYieldRestricted;  // 0x0090E998
-
 // farm_compute publishes 25 status words, including four excluded outer
 // positions. The separate mask covers only the first 21 workable positions.
 // Both objects are initially zero in the image; their producer, not that
