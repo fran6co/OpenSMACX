@@ -1,0 +1,20 @@
+{
+  "event_id": "409f1afdb93d1329c6c7d71c6a22b6d2c15893adc686bf963bd03f2dac77da97",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "shared-road-rate-signed-storage",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/alpha.h RulesBasic::move_rate_roads now uses same-width int, preserving declaration order/name/storage. src/veh.cpp best_defender uses int proto_power result; speed uses signed arithmetic, repeated live road-rate reads and original late fungal result after morale/damage work. Pinned signed divides/negative branches and complete-body host mutation controls support this source correction. No safety guard, original marker/claim edit, compiler flag or framework change.",
+      "This incorporates ONLY the source signed-storage discovery, not complete consumer recovery, exactness or linked preservation. The scope expansion payload added27 unique subjects to2 original subjects =29, not28 newly added or28 proven direct consumers. Refined source review identified26 marker-contained road-consumer original regions plus air_power helper ownership; study_artifact remains conservative observation only. Joint cohort has35 function observation subjects plus949738 data, not35 recovered functions.",
+      "Fresh candidate builds/links174 application TUs plus14 dependency objects. Claims/mappings/references pass. All5581 known-domain classifications unchanged,3263 masked BYTE_EXACT, no historical claim granted or removed; strict reference-aware selected domain remains1955pass/1306unknown/2fail. Focused83pass/3unchanged failures, related78pass/85unchanged failures; all242 prior executed outcomes unchanged and7 new controls pass; separate native workshop probe deselected. Full suite/game acceptance not established.",
+      "Native scoped physical comparison remains186pass/2fail, explicitly NOT waived: design_workshop has one six-byte scheduling swap of independent mov instructions (same3728-byte function, referents/flags/data unchanged); veh has five unbound air_power helper code sections with signed divide/comparison changes, same COMDAT sizes and exact ordered relocation kind/target/addend sequences. Independent source/artifact review found no unexpected referent regression. Full unprojected comparison183identical/5changed objects. Standing coordinator manual integration only; no automatic admission, original-fragment, retained-selection/allocation/ICF/runtime proof."
+    ]
+  },
+  "previous_event": "9705dadf2e7627da76c3016cca188d1d32d08af24c0cb267d93b507d8a0a20e0",
+  "request_id": "incorporate-signed-road-rate-source",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:veh-signed-arithmetic-oct19"
+}

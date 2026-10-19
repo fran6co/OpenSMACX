@@ -1,0 +1,22 @@
+{
+  "event_id": "bff1d056883493b43930a4fbd15833b3f73a90d58a02e435480a12baac0ee526",
+  "payload": {
+    "affects": [
+      "entity-006afac35880b73bd0059b56b71c2e795aeea459e6a13e6bbde28f92cf9253ea",
+      "entity-5a5eb4d15142b8b83d19f2d63bffab2f955e9e0b0cc01df4aa4a337b8538b965"
+    ],
+    "author": "coordinator",
+    "discovery_id": "retain-air-power-fragments-and-matching",
+    "evidence": [
+      "Five current air_power helpers (tectonic_goal_route, fungal_goal_route, missile_enemy_candidate_score, ordinary_candidate_scan, missile_stack_fallback) lack independent original bindings/RECOVERY_FRAGMENT extents. Keep native physical Veh FAIL unwaived; do not derive extents from current COMDAT sizes or invent helper ORIGINAL markers. Their unchanged source, signed road-rate expressions, unchanged ordered referents and pinned signed operations justify bounded manual source integration, not full byte/original ownership proof.",
+      "Candidate DesignWin/vehicle historical recorder granted no new claims: measured misses and a bounded cold-EH-region refusal remain. Preserve all original spans and historical restoration obligations. Whole game gate, complete retained linked selection/allocation/ICF, structure/runtime proof and original-universe coverage remain unfinished. Destination must be freshly built/linked and compared with zero body omissions before consuming source worktrees."
+    ],
+    "hypothesis": "Signed storage source correction is incorporated, but affected helper original fragments, full byte restoration and linked preservation remain recovery obligations.",
+    "kind": "discovery"
+  },
+  "previous_event": "409f1afdb93d1329c6c7d71c6a22b6d2c15893adc686bf963bd03f2dac77da97",
+  "request_id": "retain-air-power-fragments-and-matching",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:veh-signed-arithmetic-oct19"
+}
