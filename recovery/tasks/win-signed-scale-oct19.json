@@ -1,0 +1,35 @@
+{
+  "author": "coordinator",
+  "base_revision": "197140a78bd4c37fa75ad1422f49b0bc5f33378d",
+  "editable_files": [
+    "src/win.h",
+    "recovery/tests/test_win_signed_scale_oct19.py"
+  ],
+  "evidence": [
+    "Pinned on_window_pos_changing5F53A0..5F5480 multiplies the +B0 scale numerator by the converted client width and performs cdq/idiv using the +AC denominator. Current uint32_t declarations select xor-edx/div instead. Authorize correcting both member declarations to signed int only after all source uses and pinned loads confirm the operand interpretation. Constructor5EB3D0 and close5EB640 write zero to these same fields; no other source reads or assignments were found. This is faithful recovery, not a safety fix or proof that negative inputs are reachable.",
+    "Keep all Win.cpp bytes, method signatures, mapping/claim/history comments, member order, names, offsets and widths unchanged. No local casts, flags, noinline, fake data, branch rewrites, denominator guard, overflow treatment or uninitialized-state normalization. Authorize one structural candidate, not an extended byte spelling search. Observe every mapped Win body plus every compiled application object because win.h is shared. Preserve all historical claims and matching obligations.",
+    "Add actual-source host controls using the unchanged complete handler and actual field declarations, pinned signed arithmetic witnesses and destructive unsigned-operand controls. Cover resize guards, minimum extents, client/nonclient call ordering, negative numerator/denominator/client width and Windows dispatch side effects on safe representable arithmetic. Do not turn original overflow, divide-by-zero or invalid object execution into deterministic host behavior.",
+    "Isolated worker checkout; coordinator alone owns Git, native resource leases, unchanged Release control, fresh full application build/link, source continuity/reference checks, independent review and destination rechecks before manual integration. Full linked selection/allocation/ICF, game/runtime and automatic acceptance remain unproven. No framework code, test-baseline reset, body omission outside the handler, or weakened gates."
+  ],
+  "intent": "Recover signed Win aspect-ratio operands and original signed division without changing layout, guards or error paths.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6247328,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6206416,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6207040,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "win-signed-scale-oct19"
+}
