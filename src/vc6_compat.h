@@ -235,14 +235,15 @@ inline int _snprintf_s(char *destination, size_t size, size_t, const char *forma
 #endif
 
 /*
- * `typedef char x[cond ? 1 : -1]` - a negative array bound is an error, so a
- * false condition fails the compile. __LINE__ keeps two assertions in one
- * scope from colliding.
+ * The fixed typedef identity is independent of source line. VC6 accepts
+ * repeated typedefs of the same `char[1]` type; a false condition still gives
+ * the negative bound and fails with C2118. Keeping the identity stable means
+ * moving a comment cannot rename assertion types in the surrounding code.
  */
 #define OPENSMACX_ASSERT_JOIN(a, b) OPENSMACX_ASSERT_JOIN2(a, b)
 #define OPENSMACX_ASSERT_JOIN2(a, b) a##b
 #define static_assert(condition, message) \
-  typedef char OPENSMACX_ASSERT_JOIN(vc6_static_assert_, __LINE__)[(condition) ? 1 : -1]
+  typedef char vc6_static_assert_check_[(condition) ? 1 : -1]
 
 /*
  * `constexpr` IS GONE, NOT DEFINED. Every one of the 104 declarations that

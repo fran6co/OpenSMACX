@@ -1,0 +1,22 @@
+{
+  "event_id": "b5037d989015324f23880989ab22ace93c82028fa60ac7e9931cba438dc3ce9f",
+  "payload": {
+    "affects": [
+      "entity-546c2a42d275b8a5e1f0a466a9395421124e340fe373c4b74a6dd49114355002",
+      "entity-6f11c65ed65be7d5360aeee4ae816f8a81f643d6af947ab5ec28f07f402fdcdc",
+      "entity-c46d88454f5459c23f8836f548a51a19e7f6832387f028ccf247914fd91373f7"
+    ],
+    "author": "coordinator",
+    "discovery_id": "unqualified-assertion-codegen-residuals",
+    "evidence": [
+      "Raw177PASS/11FAIL complete-object comparison retained with zero omissions. Changed objects:basewin,datalink,faction,game,mapwin,net_class,picktech,reportwin,socialwin,technology,veh. MapWin and goody_box root C++ symbols/section sizes/relocation counts persist but contents and many relocation sites differ. No raw failure is waived by unchanged matching categories or the source-equivalent assertion macro."
+    ],
+    "hypothesis": "Fixed assertion identity changes code and relocation scheduling in eleven physical objects; retained-selection and runtime equivalence remain unqualified.",
+    "kind": "discovery"
+  },
+  "previous_event": "6ddeb5fd4c4b6dad025b467730a2461f9becf3465c74e1cd7380ac00f9ebd048",
+  "request_id": "unqualified-assertion-codegen-residuals",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:vc6-line-stable-assertions-oct19"
+}

@@ -1,0 +1,19 @@
+{
+  "event_id": "6ddeb5fd4c4b6dad025b467730a2461f9becf3465c74e1cd7380ac00f9ebd048",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "line-derived-assertion-identity",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Only VC6-guarded static_assert typedef identity changes to vc6_static_assert_check_, retaining the same condition and bound, guard and join macros. No product bodies, layouts, symbols, ORIGINAL annotations, claims, flags or build graph change. Collision check and seven actual compiler controls pass; original added-Z7 failure remains preserved and is precisely source-line .bf/.ef auxiliaries, with sections/associations equal. No comparator normalization.",
+      "Independent source review supports bounded manual adoption. Fresh174TU compile/link and claims/mappings/references pass. All5581 known-domain masked outcomes and all3263 current exact strict outcomes unchanged:3263 masked exact;2669 strict pass/590 unknown/4 fail. No new implementations/exact gains/claim grants and no matching regression admission inferred.",
+      "Whole-object zero-omission comparison is177PASS/11FAIL. Physical review finds actual code/reference changes in named existing functions, not new helpers, and no changed data/layout/initializer sections. Those raw failures remain unwaived. Coordinator adopts the narrowly equivalent compile-time assertion source contract, not a binary/runtime or native acceptance claim. Complete linked-selection/ICF/structure/runtime/game proof remains missing; fresh destination verification required."
+    ]
+  },
+  "previous_event": "59feeba84cb56a68ee75f8224fc52b5a44e71b3fbaad7fae73249a3594f49e2b",
+  "request_id": "adopt-fixed-assertion-identity",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:vc6-line-stable-assertions-oct19"
+}

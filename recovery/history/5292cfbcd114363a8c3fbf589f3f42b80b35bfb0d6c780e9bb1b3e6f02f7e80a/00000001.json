@@ -1,0 +1,22 @@
+{
+  "event_id": "59feeba84cb56a68ee75f8224fc52b5a44e71b3fbaad7fae73249a3594f49e2b",
+  "payload": {
+    "affects": [
+      "entity-546c2a42d275b8a5e1f0a466a9395421124e340fe373c4b74a6dd49114355002",
+      "entity-6f11c65ed65be7d5360aeee4ae816f8a81f643d6af947ab5ec28f07f402fdcdc",
+      "entity-c46d88454f5459c23f8836f548a51a19e7f6832387f028ccf247914fd91373f7"
+    ],
+    "author": "coordinator",
+    "discovery_id": "line-derived-assertion-identity",
+    "evidence": [
+      "Reciprocal actual-production Game controls isolate the assertion typedef identifier as a cause of comment-only generated-code changes. VC6 has no __COUNTER__. Repeated identical char[1] typedefs enforce true assertions at file/namespace/class/function scope; false assertions fail C2118."
+    ],
+    "hypothesis": "Private assertion typedef names depend on source line and perturb VC6 code generation during otherwise comment-only edits.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "line-derived-assertion-identity",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:vc6-line-stable-assertions-oct19"
+}
