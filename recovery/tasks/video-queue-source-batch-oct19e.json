@@ -1,0 +1,57 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "c17889c967f1721cc4e116650b907123e5dea9f7",
+  "editable_files": [
+    "src/video_queue.cpp"
+  ],
+  "evidence": [
+    "Standing explicit user authorization: eight cheaper parallel recovery workers; coordinator-reviewed manual integration after actual C++ review, build/link and relevant checks. No framework detour.",
+    "Verified starting checkpoint3275masked,2722strictPASS/549UNKNOWN/4existingFAIL in5581known original product mappings. All historical claims are restoration obligations, not current semantic or full-game acceptance.",
+    "Use fresh actual compiled objects from root build-cz4acotg as well as complete pinned paths. Imported decorated labels are hints, not original debug info. Read previousTRIED/failed decks; do not repeat exhausted forms.",
+    "Only the named CPP editable. Request coordinator scope expansion immediately for supported header/member/global/class/lifetime/caller discoveries. Native task baseline remains c17889c967f1721cc4e116650b907123e5dea9f7.",
+    "Batch all inexpensive supported corrections in the owner, at most two natural candidates per function. No prolonged spelling plateaus; no flags/attributes/volatile/assembly/machine bytes/fixed-address calls/hand-staged vtables to force matching.",
+    "Preserve bug-for-bug behavior, complete bindings/spans/claims, useful discoveries and genuine source ownership. Do not hand-edit ORIGINAL markers or type claim tokens. Diagnostics stay ignored; source owns essential evidence.",
+    "Source workers do not run Git mutations, compiler/prepare/measurement/record. Coordinator owns compiler leases, integration and cleanup. Read-only native inspect/COFF analysis allowed. Freeze hashes and STOP edits when handed back; do not mutate while native epoch active."
+  ],
+  "intent": "Parallel whole-owner faithful C++ recovery; batch supported inexpensive matching and structural corrections, preserving original quirks and prior discoveries.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6546720,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6546752,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6547168,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6546912,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6547440,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6547488,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6546832,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "video-queue-source-batch-oct19e"
+}
