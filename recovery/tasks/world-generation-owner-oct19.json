@@ -1,0 +1,270 @@
+{
+  "author": "coordinator",
+  "base_revision": "61ba1b3c96f2f12a7c025e74e599fa9f1130546a",
+  "editable_files": [
+    "src/map.cpp",
+    "src/world.cpp",
+    "src/fractal.h",
+    "CMakeLists.txt",
+    "recovery/tests/test_map_metadata_owner.py",
+    "recovery/tests/test_world_erosion_owner_behavior.py",
+    "recovery/tests/test_world_altitude.py",
+    "recovery/tests/test_world_climate_loop_oct15.py",
+    "recovery/tests/test_world_rainfall_behavior.py",
+    "recovery/tests/test_world_rainfall_pass2_actual_source.py",
+    "recovery/tests/test_world_rainfall_live_cloud.py",
+    "recovery/tests/test_world_linearize_contours.py",
+    "recovery/tests/test_world_landmarks_sequence.py",
+    "recovery/tests/test_world_landmark_producers.py",
+    "recovery/tests/test_world_ruin_native_contract_oct12j.py",
+    "recovery/tests/test_world_fossil_native_contract_oct12i.py",
+    "recovery/tests/test_landmark_ridge_phase_contract_oct12i.py",
+    "recovery/tests/test_landmark_canyon_phase_contract_oct12i.py",
+    "recovery/tests/test_landmark_mask_contract_oct12i.py",
+    "recovery/tests/test_terrain_helper_boundaries.py",
+    "recovery/tests/test_continent_count_types.py",
+    "recovery/tests/test_landmark_storage_window_oct13i.py",
+    "recovery/tests/test_terrain_static_tables_oct12k.py",
+    "recovery/tests/test_application_compiler_profiles.py",
+    "recovery/tests/test_technology_query_boundaries.py"
+  ],
+  "evidence": [
+    "Authorize a genuine current world-generation semantic owner in src/world.cpp for the45 existing mappings Fractal init5C1E20 through world_build5C86E0, excluding zoc_any and all other map operations. Current algorithmic call graph and original coherent cluster support this source organization, not proof of historical TU membership. Actual Release Ob2 inlines map_wipe into world_build whereas pinned original world_build calls591040; test the proposed boundary without predicting matching gains.",
+    "Transport complete existing physical C++/annotation/comment blocks verbatim, preserving original names, spans, symbols, historical claims, lessons, quirks and all recovery obligations. Use native source read/write validation. FILE regions are whole TUs, never definition extents. Keep near_landmark inline body and body src/map.h unchanged; transport only its mapping with world algorithms. Update world_alt_put_detail explicit body location using native write_body from src/map.cpp to src/world.cpp. No new claim, hand-written markers, class/type/name or behavior change.",
+    "Move the two private rainfall helper definitions and private climate log buffers plus their literal bindings with their algorithms. Shared MapStorage, MapLongitude, terrain/radius/corner tables, WorldClimate flags and WorldClimateWorldWin storage/startup/exit mappings remain in map.cpp; no data-layout or lifetime redistribution. Existing map.h public interfaces remain unchanged. Change only the fractal.h current-home comment, not Fractal layout or interfaces.",
+    "Add world.cpp to root application CMake and carry the same existing map.cpp source Oy- profile to it. No optimization, inline, exports or toolchain policy change; no noinline/volatile/casts/synthetic dispatch to force output. Keep configure dependencies on map-owned terrain data. Scope includes exact affected tests and compiler-profile/technology scan rosters; update actual source/mapping paths while preserving all assertions, pinned historical source paths, original-image checks and mutation controls.",
+    "Coordinator alone owns Git, compiler leases, preparation, build/link and integration. Workers may edit only delegated disjoint files in an isolated checkout, then freeze all edits during measurement. Run host controls first, fresh complete application build/link, native identity/claim/reference continuity and all known mapped-function observations. Inspect actual residuals, all moved and source-resident code, shared data/lifetime and outside-owner callers; discoveries require explicit verification-scope expansion, not a whole-TU waiver.",
+    "Preserve justified semantic ownership through temporary matching regressions as restoration obligations, do not demote claims, reset baseline, weaken guards or count unknowns as passes. This task authorizes the structural trial, not automatic or game acceptance; manual integration still requires actual source review, compiling/linking closure, relevant checks, independent review and fresh destination verification. Retain failures and findings if unfinished."
+  ],
+  "intent": "Separate the coherent world-generation pipeline from map storage without altering behavior or effective compiler policy; measure original call boundaries and collateral matching.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6037536,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6038400,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6038496,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6038592,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6039536,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6039792,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6040384,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6043264,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6045936,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6046064,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6049744,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6051264,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6037024,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6037280,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6037440,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6042688,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6045552,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6052400,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6052032,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6052064,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6052576,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6052816,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6052976,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6053616,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6054400,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6055072,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6055744,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6056416,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6057024,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6057392,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6058016,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6059328,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6059856,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6060672,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6061232,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6061888,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6062416,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6063024,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6063664,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6042272,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6046736,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6043824,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6040752,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6063840,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6046832,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "world-generation-owner-oct19"
+}
