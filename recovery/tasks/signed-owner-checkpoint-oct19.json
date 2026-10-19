@@ -1,0 +1,208 @@
+{
+  "author": "coordinator",
+  "base_revision": "baba1eef8b453bcbe446383d958d6f709852a27a",
+  "editable_files": [
+    "recovery/tests/designwin_button_harness.cpp",
+    "recovery/tests/test_designwin_button_owner.py",
+    "recovery/tests/test_designwin_signed_index_oct19.py",
+    "recovery/tests/test_veh_signed_arithmetic_oct19.py",
+    "src/alpha.h",
+    "src/designwin.cpp",
+    "src/designwin.h",
+    "src/veh.cpp"
+  ],
+  "evidence": [
+    "This is a coordinator verification/integration cohort joining existing designwin-signed-index-oct19 and veh-signed-arithmetic-oct19 candidates, not a new original C++ owner, historical translation unit inference or task-baseline replacement. Both original tasks retain baba1eef8 source baselines, full scopes and all discoveries. Collect only frozen reviewed source/test patches and native history commits; preserve both worker checkouts until destination verification completes.",
+    "Authorize the union of existing exact edits: signed prototype_stack_start_ at DesignWin+CE4 and its six existing consumers/fixtures; best_defender int power local; speed signed locals and late fungal result with live rule reads; same-width signed RulesBasic.move_rate_roads in alpha.h and new actual-declaration tests. No additional C++ body, member, signature, layout, configuration, framework or compiler-flag edit. Installed native recorder alone may add measured claims; preserve all existing identities/spans/claims/symbols/seed history and original bugs/error paths.",
+    "Thirty-five function subjects are conservative observation authorizations, NOT35newly recovered functions or35proven direct road-rate consumers. The first road survey proposed28 direct consumers; refined source reader review finds26 marker-contained original regions plus air_power helper ownership and five explicitly unbound helper clusters. study_artifact57CFA0 is retained conservatively from the original authorization but its nearby air_power helpers do not establish it as a direct consumer. The36th subject is original949738 data, NOT another function. Nearest ORIGINAL marker is not source/helper ownership proof.",
+    "Source helper clusters enemy_move_sea_scoring/tactical_tail, air_power_* helpers, order_veh_* helpers and battle_fight_precombat_commit_v2/final_block_v5 are explicit affected compiler observations; no RECOVERY_FRAGMENT bindings currently prove their original extents. Enumerate fresh physical emitted objects and changed functions/data/references. Do not turn those helper ownership gaps into silently waived bodies, infer original functions by helper names, or relabel native preservation FAIL/UNKNOWN as PASS. Review any contribution change against the actual one-field source edit and pinned signed operations, and preserve missing original/linked proof as an obligation.",
+    "One combined fresh actual174TU Release application build after native per-owner recording replaces redundant independent full builds; isolated preparation/recipes/compiler prefix remain coordinator-owned. Reuse only content-keyed pure parse caches, never reports as admission or recording evidence. Measure every known original and all affected emitted functions, compare all188physicalobjects, check claims/mappings/references, retain true host baseline failures and all matching regressions, and obtain independent actual C++/artifact review before manually integrating. Fresh destination build/link/physical/source checks are still required.",
+    "Standing coordinator-reviewed manual integration does not waive automatic publication refusal, full linked retained selection/allocation/ICF, complete layout/structure/runtime/game proof, missing original function bindings or restoration obligations. Explicitly record limits/unknowns and original negative/unsafe routes. This scope decision is not candidate or game acceptance, a baseline reset, or permission to remove unverified work."
+  ],
+  "intent": "Joint compiler/build/reference/preservation verification and reviewed integration of two isolated signed-arithmetic ownership groups and shared Rules storage.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4248144,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4415632,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4424800,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4430368,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4440688,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4445328,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4445456,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4450720,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4617264,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4648960,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4934896,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5028512,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5035680,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5071264,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5210528,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5250464,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5260496,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5270256,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5662736,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5667008,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5679264,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5682608,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5744224,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5754784,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5756880,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5757152,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5757600,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5788016,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5846288,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5851072,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5874992,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5880848,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6034352,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6034752,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6036848,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 9738040,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "signed-owner-checkpoint-oct19"
+}
