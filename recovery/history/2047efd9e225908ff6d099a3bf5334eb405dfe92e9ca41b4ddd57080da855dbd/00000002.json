@@ -1,0 +1,23 @@
+{
+  "event_id": "8b66415a95b75c03680c41f52518f9da3ac8d42fe3f8a75a188376e1b8d62366",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Fresh primary strict comparison resolves one Wave initializer584D00 reference to same-TU local cleanup _$E41 after guarded qualification. Observation only: no Wave C++ edits or new historical claim."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5786880,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "a432279057110e37ddd5dccbdb335c9b07218105f7a64c30615e34ae3383e77a",
+  "request_id": "observe-wave-dependent-reference",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:tu-local-function-qualification-oct19"
+}

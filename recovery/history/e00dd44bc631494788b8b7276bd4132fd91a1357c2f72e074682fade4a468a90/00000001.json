@@ -1,0 +1,21 @@
+{
+  "event_id": "bf8d8c370a804e4d4bab24e9dba6404098ab6b0ec3d021a625e0a468289b84c9",
+  "payload": {
+    "affects": [
+      "entity-37517b04097c404b761729be527fc70a1739921500eb0f5af273e308b5b57bac",
+      "entity-59bbf2c307e27f6a77647be1662d051dabcb6fdb555cea82a17211f1c20cdb1d"
+    ],
+    "author": "coordinator",
+    "discovery_id": "preserve-event-eax-results",
+    "evidence": [
+      "Pinned5328C0..532934 complete116byte span loads Console faction after sequence update and returns it on mismatch; matching zero channel clears1BB0/returnszero; nonzero logs, clears1BC0, calls592EE0 and returns its EAX. Existing source int API retained; original return declaration and consuming caller unproved."
+    ],
+    "hypothesis": "End-of-event must preserve the observed branch-specific original EAX result instead of forcing zero.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "preserve-event-eax-results",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:netdaemon-event-result-oct19"
+}

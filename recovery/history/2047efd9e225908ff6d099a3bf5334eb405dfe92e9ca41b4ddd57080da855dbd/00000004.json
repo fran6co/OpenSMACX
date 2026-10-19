@@ -1,0 +1,20 @@
+{
+  "event_id": "e965c150c376a768b88443a053204ef791f3e3755230a896b2727b96ccbb374a",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "fresh-physical-tu-local-qualification",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Coordinator source review plus independent verifier and variant-guard reviews support bounded manual integration. The native checker still requires fresh COFF static function storage3 before placing local bodies/references, and forbids their external-target leakage. Variant decks must preserve their existing qualified binding domain; experiments changing that domain require checkpoint decisions.",
+      "Fresh primary masked-exact3263cohort strict results2651PASS/608UNKNOWN/4FAIL:584new passes,2newly observable failures, zero previous pass losses. New local primary rows583PASS/43UNKNOWN/2FAIL; one dependent Wave initializer also gains a pass. This is verification of existing bodies, not584new recovered implementations. All4failures and608unknowns remain obligations.",
+      "Generic pre-existing unique-name fragment support-parent versus verified component-target reservation remains unsupported: child-only support synthesis lacks the component reserved set and can reintroduce an external target. Duplicate-local qualifier does not admit that case, but this checkpoint does not repair or certify all namespace/fragment routes. Keep it a separate unresolved library obligation, not an original-source discovery or granted acceptance.",
+      "Actual174TU application compiles/links; all188physical objects preserve outside the one authorized NetDaemon body projection. Native claims/mappings/references pass and known5581identities/claims remain. No source/flags/compiler/environment policy relaxation or claim grant. Full linked retained selection/allocation/ICF, original-universe, structure/runtime and game acceptance remain unproven. Fresh destination build, zero-omission physical comparison and native observations still required before worker cleanup."
+    ]
+  },
+  "previous_event": "b30452408d97e6fc8ef1b975d98c6d0d08191645b78e99ab8a77a42ec18155f3",
+  "request_id": "incorporate-tu-local-qualification",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:tu-local-function-qualification-oct19"
+}

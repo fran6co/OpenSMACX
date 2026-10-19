@@ -1,0 +1,19 @@
+{
+  "event_id": "b08878d75748d3690db15eedd6d4915db069399653805f61576ac29407cbdfa4",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "preserve-event-eax-results",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Bounded actual-source/pinned independent review and two C++98 actual-body host controls support the source correction; forced-zero/wrong-clear-order mutants are rejected. Fixture proxies/stubs are not native ABI, network, concurrency or game proof. Global caller inspection was incomplete and cannot prove absence of callers.",
+      "Fresh native recorder tried both configured flag alternatives, exit1/MNEMONIC_ONLY35of37, changed_files empty. No historical claim granted or demoted. Fresh application masked result improves MISMATCH to MNEMONIC_ONLY; all other known5581-domain verdicts unchanged. Complete original matching remains an obligation; no extended spelling search was performed.",
+      "Coordinator-reviewed source incorporation only. Actual174TU compile/link and native source checks pass;188physical objects compare clean outside5328C0body, not linked/ICF/runtime acceptance. Preserve source identities/spans, existing structure/order and original unsafe paths. Fresh destination verification required before cleanup."
+    ]
+  },
+  "previous_event": "bf8d8c370a804e4d4bab24e9dba6404098ab6b0ec3d021a625e0a468289b84c9",
+  "request_id": "incorporate-event-eax-results",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:netdaemon-event-result-oct19"
+}
