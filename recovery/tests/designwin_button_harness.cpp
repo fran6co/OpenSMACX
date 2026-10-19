@@ -7,6 +7,8 @@
 #include <string>
 #include <vector>
 
+static_assert(sizeof(int) == 4, "the original index member occupies one 32-bit word");
+
 #ifndef __cdecl
 #define __cdecl
 #endif
@@ -100,7 +102,7 @@ struct Popup {
 class DesignWin {
 public:
     uint32_t field_CDC_;
-    uint32_t field_CE4_;
+    int prototype_stack_start_;
     uint32_t factionID_;
     uint32_t protoID_;
     uint32_t protoChassisType_;
@@ -110,7 +112,7 @@ public:
     uint32_t protoReactorType_;
     uint32_t protoAbilityID1_;
     uint32_t protoAbilityID2_;
-    DesignWin() : field_CDC_(0), field_CE4_(0), factionID_(0), protoID_(0),
+    DesignWin() : field_CDC_(0), prototype_stack_start_(0), factionID_(0), protoID_(0),
         protoChassisType_(0), protoWeaponType_(0), protoArmorType_(0),
         protoAbilityFlags_(0), protoReactorType_(0), protoAbilityID1_(0),
         protoAbilityID2_(0) {}
@@ -123,6 +125,8 @@ public:
     void on_redraw() { event("on-redraw"); }
     void on_update() { event("on-update"); }
     void on_button_clicked(int button_id);
+    int on_key_click(int a1, int a2);
+    void center_stack(int proto_id, int redraw);
 };
 
 static int __cdecl pop_wait() { event("pop-wait"); return 0; }
@@ -150,6 +154,8 @@ static void consider_designs(int) { event("consider"); }
 int __cdecl diplo_lock(int patience);
 void __cdecl diplo_unlock();
 /* EXTRACTED_DESIGNWIN_BUTTON */
+/* EXTRACTED_DESIGNWIN_KEY_CLICK */
+/* EXTRACTED_DESIGNWIN_CENTER_STACK */
 
 int __cdecl diplo_lock(int) { event("diplo-lock"); return 0; }
 void __cdecl diplo_unlock() { event("diplo-unlock"); }
@@ -209,12 +215,12 @@ static int test_retire_prompt() {
     PlayersData[2].proto_id_active[3] = 0;
     popup_answer = 1;
     ProtoSortCount = 8; ProtoSortIds[0] = 8; ProtoSortIds[6] = 3;
-    window.field_CE4_ = 0;
+    window.prototype_stack_start_ = 0;
     window.on_button_clicked(0);
     assert(last_popup_label == "RETIRETYPE2");
     assert(last_popup_picture == "unit_sm.pcx");
     assert(event_index("retire") >= 0 && event_index("setup-veh") >= 0);
-    assert(window.field_CE4_ == 1);
+    assert(window.prototype_stack_start_ == 1);
     return 0;
 }
 
@@ -323,6 +329,52 @@ static int test_upgrade_alien_variant() {
     return 0;
 }
 
+static int test_signed_index_navigation() {
+    reset_state();
+    DesignWin window;
+    ProtoSortCount = 8;
+    window.prototype_stack_start_ = 0;
+    window.on_button_clicked(0x17);
+    assert(window.prototype_stack_start_ == ProtoSortCount);
+
+    reset_state();
+    ProtoSortCount = 8;
+    window.prototype_stack_start_ = 0;
+    assert(window.on_key_click(0, 0x21) == 1);
+    assert(window.prototype_stack_start_ == 0);
+
+    reset_state();
+    ProtoSortCount = 8;
+    window.prototype_stack_start_ = 0;
+    assert(window.on_key_click(0, 0x22) == 1);
+    assert(window.prototype_stack_start_ == 1);
+
+    reset_state();
+    ProtoSortCount = 8;
+    window.prototype_stack_start_ = 0;
+    assert(window.on_key_click(0, 0x23) == 1);
+    assert(window.prototype_stack_start_ == 0);
+
+    reset_state();
+    ProtoSortCount = 8;
+    ProtoSortIds[0] = 17;
+    window.prototype_stack_start_ = 0;
+    window.center_stack(17, 1);
+    assert(window.prototype_stack_start_ == 3);
+    assert(event_index("draw-stack") >= 0);
+    return 0;
+}
+
+static int test_signed_key_page_up() {
+    reset_state();
+    DesignWin window;
+    ProtoSortCount = 8;
+    window.prototype_stack_start_ = 0;
+    assert(window.on_key_click(0, 0x21) == 1);
+    assert(window.prototype_stack_start_ == 0);
+    return 0;
+}
+
 int main(int argc, char **argv) {
     if (argc != 2) return 2;
     if (std::strcmp(argv[1], "ordering") == 0) return test_ordering();
@@ -330,5 +382,7 @@ int main(int argc, char **argv) {
     if (std::strcmp(argv[1], "retire-all") == 0) return test_retire_all_variant();
     if (std::strcmp(argv[1], "upgrade-filter") == 0) return test_upgrade_filter_and_variant();
     if (std::strcmp(argv[1], "upgrade-alien") == 0) return test_upgrade_alien_variant();
+    if (std::strcmp(argv[1], "signed-index") == 0) return test_signed_index_navigation();
+    if (std::strcmp(argv[1], "signed-key-page-up") == 0) return test_signed_key_page_up();
     return 2;
 }

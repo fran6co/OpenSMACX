@@ -157,7 +157,7 @@ void DesignWin::init() {
     Buffer stack_buffer;
     (void)stack_buffer;
     close();
-    field_CE4_ = 0;
+    prototype_stack_start_ = 0;
     field_4_ = 1;
     register_iface_mode(1, static_cast<SubInterface *>(this));
     font1_.init(DefaultFontFace, 10, 0);
@@ -874,14 +874,14 @@ void DesignWin::on_button_clicked(int button_id) {
     if (button_id == 0x17 || button_id == 0x18) {
         if (ProtoSortCount > 0) {
             if (button_id == 0x17) {
-                --field_CE4_;
-                if (field_CE4_ < 0) {
-                    field_CE4_ = ProtoSortCount;
+                --prototype_stack_start_;
+                if (prototype_stack_start_ < 0) {
+                    prototype_stack_start_ = ProtoSortCount;
                 }
             } else {
-                ++field_CE4_;
-                if (field_CE4_ == ProtoSortCount) {
-                    field_CE4_ = 0;
+                ++prototype_stack_start_;
+                if (prototype_stack_start_ == ProtoSortCount) {
+                    prototype_stack_start_ = 0;
                 }
             }
         }
@@ -896,10 +896,10 @@ void DesignWin::on_button_clicked(int button_id) {
         const int visible_count = ProtoSortCount;
         if (visible_count > 0) {
             for (int walk = 0; walk < visible_count; ++walk) {
-                const int slot = (static_cast<int>(field_CE4_) + walk)
+                const int slot = (prototype_stack_start_ + walk)
                     % visible_count;
                 if (ProtoSortIds[slot] == static_cast<int>(protoID_)) {
-                    field_CE4_ = (slot + visible_count - 5) % visible_count;
+                    prototype_stack_start_ = (slot + visible_count - 5) % visible_count;
                     break;
                 }
             }
@@ -952,9 +952,9 @@ void DesignWin::on_button_clicked(int button_id) {
         const int count = ProtoSortCount;
         if (count > 0) {
             for (int walk = 0; walk < count; ++walk) {
-                const int slot = (static_cast<int>(field_CE4_) + walk) % count;
+                const int slot = (prototype_stack_start_ + walk) % count;
                 if (ProtoSortIds[slot] == prototype_id) {
-                    field_CE4_ = (slot + count - 5) % count;
+                    prototype_stack_start_ = (slot + count - 5) % count;
                     break;
                 }
             }
@@ -972,10 +972,10 @@ void DesignWin::on_button_clicked(int button_id) {
         proto_sort_2(static_cast<int>(factionID_));
         if (ProtoSortCount > 0) {
             for (int walk = 0; walk < ProtoSortCount; ++walk) {
-                const int slot = (static_cast<int>(field_CE4_) + walk)
+                const int slot = (prototype_stack_start_ + walk)
                     % ProtoSortCount;
                 if (ProtoSortIds[slot] == static_cast<int>(protoID_)) {
-                    field_CE4_ = (slot + ProtoSortCount - 5) % ProtoSortCount;
+                    prototype_stack_start_ = (slot + ProtoSortCount - 5) % ProtoSortCount;
                     break;
                 }
             }
@@ -1018,10 +1018,10 @@ void DesignWin::on_button_clicked(int button_id) {
         proto_sort_2(static_cast<int>(factionID_));
         if (ProtoSortCount > 0) {
             for (int walk = 0; walk < ProtoSortCount; ++walk) {
-                const int slot = (static_cast<int>(field_CE4_) + walk)
+                const int slot = (prototype_stack_start_ + walk)
                     % ProtoSortCount;
                 if (ProtoSortIds[slot] != 0) {
-                    field_CE4_ = (slot + ProtoSortCount - 5) % ProtoSortCount;
+                    prototype_stack_start_ = (slot + ProtoSortCount - 5) % ProtoSortCount;
                     break;
                 }
             }
@@ -1055,7 +1055,7 @@ void DesignWin::on_button_clicked(int button_id) {
         const int count = ProtoSortCount;
         if (count > 0) {
             for (int walk = 0; walk < count; ++walk) {
-                const int slot = (static_cast<int>(field_CE4_) + walk) % count;
+                const int slot = (prototype_stack_start_ + walk) % count;
                 if (ProtoSortIds[slot] == prototype_id) {
                     const int next = (slot + 1) % count;
                     protoID_ = static_cast<uint32_t>(ProtoSortIds[next]);
@@ -1068,12 +1068,12 @@ void DesignWin::on_button_clicked(int button_id) {
         const int sorted_count = ProtoSortCount;
         if (sorted_count > 0) {
             for (int walk = 0; walk < sorted_count; ++walk) {
-                const int slot = (static_cast<int>(field_CE4_) + walk)
+                const int slot = (prototype_stack_start_ + walk)
                     % sorted_count;
                 if (ProtoSortIds[slot] == static_cast<int>(protoID_)) {
                     const int new_top = (slot + sorted_count - 5) % sorted_count;
-                    if (new_top != static_cast<int>(field_CE4_)) {
-                        field_CE4_ = new_top;
+                    if (new_top != prototype_stack_start_) {
+                        prototype_stack_start_ = new_top;
                         draw_stack();
                     }
                     break;
@@ -1196,13 +1196,13 @@ void DesignWin::on_button_clicked(int button_id) {
             const int sorted_count = ProtoSortCount;
             if (sorted_count > 0) {
                 for (int walk = 0; walk < sorted_count; ++walk) {
-                    const int slot = (static_cast<int>(field_CE4_) + walk)
+                    const int slot = (prototype_stack_start_ + walk)
                         % sorted_count;
                     if (ProtoSortIds[slot] == selected_prototype) {
                         const int new_top = (slot + sorted_count - 5)
                             % sorted_count;
-                        if (new_top != static_cast<int>(field_CE4_)) {
-                            field_CE4_ = new_top;
+                        if (new_top != prototype_stack_start_) {
+                            prototype_stack_start_ = new_top;
                             draw_stack();
                         }
                         break;
@@ -2275,14 +2275,14 @@ int DesignWin::exec(int faction_id, int prototype_id) {
     proto_sort_2(static_cast<int>(factionID_));
 
     const int sort_count = ProtoSortCount;
-    int sorted_index = static_cast<int>(field_CE4_);
+    int sorted_index = prototype_stack_start_;
     const int sort_limit = sorted_index + sort_count;
     if (sorted_index < sort_limit) {
         do {
             const int relative_index = sorted_index % sort_count;
             if (prototype_id == ProtoSortIds[relative_index]) {
-                field_CE4_ = static_cast<uint32_t>(
-                    (relative_index + sort_count - 5) % sort_count);
+                prototype_stack_start_ =
+                    (relative_index + sort_count - 5) % sort_count;
                 break;
             }
             ++sorted_index;
@@ -2562,28 +2562,28 @@ int DesignWin::on_key_click(int a1, int a2) {
         break;
     case 0x21:
     case 0x69: {
-        int moved = (field_CE4_ + ProtoSortCount - 9) % ProtoSortCount;
-        field_CE4_ = (moved < 0) ? 0 : moved;
+        int moved = (prototype_stack_start_ + ProtoSortCount - 9) % ProtoSortCount;
+        prototype_stack_start_ = (moved < 0) ? 0 : moved;
         draw_stack();
         break;
     }
     case 0x22:
     case 0x63: {
-        int moved = (field_CE4_ + ProtoSortCount + 9) % ProtoSortCount;
-        field_CE4_ = (moved < 0) ? 0 : moved;
+        int moved = (prototype_stack_start_ + ProtoSortCount + 9) % ProtoSortCount;
+        prototype_stack_start_ = (moved < 0) ? 0 : moved;
         draw_stack();
         break;
     }
     case 0x23:
     case 0x61: {
         int bottom = ProtoSortCount - 10;
-        field_CE4_ = (bottom < 0) ? 0 : bottom;
+        prototype_stack_start_ = (bottom < 0) ? 0 : bottom;
         draw_stack();
         break;
     }
     case 0x24:
     case 0x67:
-        field_CE4_ = 0;
+        prototype_stack_start_ = 0;
         draw_stack();
         break;
     case 0x25:
@@ -2619,13 +2619,13 @@ int DesignWin::on_key_click(int a1, int a2) {
 // calls     0x0043D510 0x005A63D0
 // Homed from src/unrecovered/0043d490.cpp: re-rank the faction's prototypes,
 // find proto_id in the ranked list and move the stack window's anchor
-// (field_CE4_) so that entry sits five rows from the top.
+// (prototype_stack_start_) so that entry sits five rows from the top.
 void DesignWin::center_stack(int proto_id, int redraw) {
     // Re-rank through the source-owned map helper and its shared sort state.
     proto_sort_2(factionID_);
 
     int count = ProtoSortCount;
-    int start = field_CE4_;
+    int start = prototype_stack_start_;
     bool found = false;
     int rem = 0;
     if (start < start + count) {
@@ -2637,12 +2637,12 @@ void DesignWin::center_stack(int proto_id, int redraw) {
                 break;
             }
             ++scan;
-        } while (scan < field_CE4_ + count);
+        } while (scan < prototype_stack_start_ + count);
     }
     if (found) {
-        int old = field_CE4_;
+        int old = prototype_stack_start_;
         int centred = (rem + count - 5) % count;
-        field_CE4_ = centred;
+        prototype_stack_start_ = centred;
         if (redraw != 0 && centred != old) {
             draw_stack();
         }
@@ -4089,7 +4089,7 @@ void DesignWin::draw_stack() {
     proto_sort_2(factionID_);
 
     int divisor = ProtoSortCount;
-    int entry = static_cast<int>(field_CE4_);
+    int entry = prototype_stack_start_;
     int loop_end = entry + divisor;
     int drawn = 0;
     while (drawn < 10 && entry < loop_end) {

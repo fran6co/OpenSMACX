@@ -361,7 +361,7 @@ class DesignWin : public GraphicWin, public SubInterface {
   uint32_t field_CD8_;  // 0xCD8
   uint32_t field_CDC_;  // 0xCDC
   uint32_t field_CE0_;  // 0xCE0
-  uint32_t field_CE4_;  // 0xCE4
+  int prototype_stack_start_;  // 0xCE4
   uint32_t field_CE8_;  // 0xCE8
   FlatButton flatButtons_[25];  // 0xCEC
   Spot spot1_;  // 0x12758

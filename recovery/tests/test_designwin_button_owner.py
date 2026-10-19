@@ -53,7 +53,7 @@ def test_native_workshop_uses_real_members_and_owner_dependencies():
         assert prototype['members']['obsolete_factions'] == 0x2C
         design = class_layout(obj, 'DesignWin')
         assert design['members']['field_CDC_'] == 0xCDC
-        assert design['members']['field_CE4_'] == 0xCE4
+        assert design['members']['prototype_stack_start_'] == 0xCE4
         assert '?consider_designs@@YAXH@Z' in targets
         assert not any('0x00438460' in line for line in _body().splitlines())
 
@@ -71,12 +71,28 @@ def _body():
     return body
 
 
+def _actual_definition(signature):
+    body = _helper._definition(OWNER.read_text(), signature)
+    assert 'BODY GOES HERE.' not in body
+    return body
+
+
 def _run(directory, body, compiler, scenario):
     directory.mkdir(parents=True, exist_ok=True)
     source, executable = directory / 'workshop.cpp', directory / 'workshop'
     fixture = HARNESS.read_text()
     assert fixture.count('/* EXTRACTED_DESIGNWIN_BUTTON */') == 1
-    source.write_text(fixture.replace('/* EXTRACTED_DESIGNWIN_BUTTON */', body))
+    replacements = (
+        ('/* EXTRACTED_DESIGNWIN_BUTTON */', body),
+        ('/* EXTRACTED_DESIGNWIN_KEY_CLICK */',
+         _actual_definition('int DesignWin::on_key_click(')),
+        ('/* EXTRACTED_DESIGNWIN_CENTER_STACK */',
+         _actual_definition('void DesignWin::center_stack(')),
+    )
+    for marker, actual in replacements:
+        assert fixture.count(marker) == 1
+        fixture = fixture.replace(marker, actual)
+    source.write_text(fixture)
     built = subprocess.run([compiler, '-std=c++11', '-fsanitize=address,undefined',
                             '-fno-sanitize-recover=all', str(source), '-o', str(executable)],
                            text=True, capture_output=True)
