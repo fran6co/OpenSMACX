@@ -1,0 +1,19 @@
+{
+  "event_id": "d1ff5ce3baebb11efd4327b8fc66f8d666a7cc43846dd8dfe3552eb41ff87f48",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "source-named-sdk-import-identities",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "The47 RECOVERY_IMPORT source annotations in13current source users incorporate only the named dependency identities. No application body, declaration, original identity/span/claim/history, flag/link policy or framework code changed. Independent source and actual native artifact review found no bounded blocker. Existing source imports are not duplicate application function recoveries or new implementation coverage.",
+      "Native claim/mapping/reference checks pass. Focused134pass/2same preexisting import source-fixture failures; all42previous outcomes retained and94new source/pinned resolver controls pass. Synthetic fixture tests stay bounded resolver evidence, not real COFF/link/provider proof. Preserve all1238unknown and2fail strict results and earlier full-gate/structure/runtime/linked selection obligations. No new historical claim is granted.",
+      "Standing coordinator-reviewed manual integration only, followed by fresh destination build/link, complete188object comparison, source/claim checks and fresh strict3263selected comparisons. This incorporation is not automatic admission, DLL/version/ABI/provider equivalence, complete retained allocation/ICF, full-game behavior, original-universe coverage or milestone completion. Source/test/task work remains retained until destination verification finishes."
+    ]
+  },
+  "previous_event": "2b2ab953b4e13ccadc6785bf6afcb117e2e2fac34a8391338e75c80bdb22cd70",
+  "request_id": "incorporate-source-sdk-identities",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:sdk-import-identities-oct19"
+}
