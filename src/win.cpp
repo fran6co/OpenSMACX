@@ -43,6 +43,13 @@
 // RECOVERY_IMPORT: v1 __imp__EndPaint@8 USER32.dll name:EndPaint
 // RECOVERY_IMPORT: v1 __imp__EnumThreadWindows@12 USER32.dll name:EnumThreadWindows
 // RECOVERY_IMPORT: v1 __imp__GetCurrentThreadId@0 KERNEL32.dll name:GetCurrentThreadId
+// Original window/palette/drawing calls use named SDK exports; PE imports supply unique IAT slots.
+// RECOVERY_IMPORT: v1 __imp__DestroyWindow@4 USER32.dll name:DestroyWindow
+// RECOVERY_IMPORT: v1 __imp__LineTo@12 GDI32.dll name:LineTo
+// RECOVERY_IMPORT: v1 __imp__MoveToEx@16 GDI32.dll name:MoveToEx
+// RECOVERY_IMPORT: v1 __imp__RealizePalette@4 GDI32.dll name:RealizePalette
+// RECOVERY_IMPORT: v1 __imp__SelectPalette@12 GDI32.dll name:SelectPalette
+// RECOVERY_IMPORT: v1 __imp__UnregisterClassA@8 USER32.dll name:UnregisterClassA
 
 // Win constructor-installed Win branch: capture4, resize13, mouse17, update63.
 // Table start is observed in the original constructor; full extent remains unknown.
@@ -770,7 +777,11 @@ Win *WinModalStack[4];     // 0x009B6EF8
 HINSTANCE WinInstance;     // 0x009B7B14
 // RECOVERY_OBJECT: v2 0x009B7B1C 0x009B7B20 ?WinScreenWidth@@3HA 0x004E0EA0
 int WinScreenWidth;        // 0x009B7B1C
+// Original 0x005EFD14 stores SM_CYSCREEN's result, read at 0x005D559B/0x0050E925; start only.
+// RECOVERY_OBJECT: v1 0x009B7B20 ?WinScreenHeight@@3HA
 int WinScreenHeight;       // 0x009B7B20
+// Original 0x005F2502 publishes a receiver; 0x005F2290 loads it and 0x005F257A clears the cell.
+// RECOVERY_OBJECT: v1 0x009B7AAC ?WinTrackingWindow@@3PAVWin@@A
 Win *WinTrackingWindow;    // 0x009B7AAC
 Win *WinHoverWindow;      // 0x009B7A7C
 // flush_input clears these Win pointer cells at 5FD15D/5FD163 and again
@@ -785,6 +796,8 @@ Win *WinPointerOwner2;
 Win *WinPointerOwner3;
 // RECOVERY_OBJECT: v2 0x009B7AC0 0x009B7AC4 ?WinPointerOwner4@@3PAVWin@@A 0x00615E60
 Win *WinPointerOwner4;
+// Original 0x005EE314 restores the pointer compared with receivers at 0x0063C390/0x0063C4E8; cell only.
+// RECOVERY_OBJECT: v1 0x009B7AE0 ?WinFocusWindow@@3PAVWin@@A
 Win *WinFocusWindow;       // 0x009B7AE0
 Win *WinModalWindow;       // 0x009B7ADC
 // init stores Win pointers at 5EC067/5EC08C; add_parent repeats those
@@ -797,6 +810,8 @@ Win *WinRootWindows[40];
 // 5F611E/5F6168. It is the count value, not an address-backed alias.
 // RECOVERY_OBJECT: v1 0x009B7B34 ?WinRootCount@@3HA
 int WinRootCount;
+// Original 0x005F2309/0x005F251E pass this shared scalar through mouse dispatch; start only.
+// RECOVERY_OBJECT: v1 0x009B7AA4 ?WinMouseDirect@@3HA
 int WinMouseDirect;        // 0x009B7AA4
 int WinMouseScreenX;       // 0x009B6628
 int WinMouseScreenY;       // 0x009B662C
@@ -815,7 +830,11 @@ Sprite *WinMaximizeIcon;     // 0x009B7B04
 Sprite *WinRestoreIcon;      // 0x009B7B08
 // RECOVERY_OBJECT: v2 0x009B7B0C 0x009B7B10 ?WinMinimizeIcon@@3PAVSprite@@A 0x0058F2F0
 Sprite *WinMinimizeIcon;     // 0x009B7B0C
+// Original 0x00607832/0x0060867A test the drag-mode scalar shared with Win handlers; start only.
+// RECOVERY_OBJECT: v1 0x009B7AD4 ?WinSizingFlag@@3HA
 int WinSizingFlag;           // 0x009B7AD4
+// Original 0x005EE280/0x005EE290 updates modal depth; auto_play at 0x0050E8A0 tests the value; start only.
+// RECOVERY_OBJECT: v1 0x009B7AE4 ?WinModalDepth@@3HA
 int WinModalDepth;           // 0x009B7AE4
 int WinKeyModifiers;         // 0x009B7B18
 int WinViewOriginX;          // 0x009B7A70
@@ -915,8 +934,12 @@ int WinZOrderCount;
 // selected root is encountered; its wider flag meaning remains provisional.
 // RECOVERY_OBJECT: v1 0x009B7A78 ?WinZOrderFlag@@3HA
 int WinZOrderFlag;
+// Original 0x005EE79A/0x005F2543 load and invoke this callback cell; its target remains unbound.
+// RECOVERY_OBJECT: v1 0x009B7A90 ?WinLeftDownHook@@3P6AXHH@ZA
 void(__cdecl *WinLeftDownHook)(int x, int y);  // 0x009B7A90
 int WinCursorMoved;        // 0x009B7B3C
+// Original 0x00445BC1 installs the callback; 0x005F255B reloads this cell, not a callback target binding.
+// RECOVERY_OBJECT: v1 0x009B7A88 ?WinMessageHook@@3P6AXXZA
 void(__cdecl *WinMessageHook)();                            // 0x009B7A88
 // BaseButton::on_left_click (607A20) loads these independent nullary
 // callbacks for button IDs -1/-2. Effect::init (445BB0) installs the OK

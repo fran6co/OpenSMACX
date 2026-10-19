@@ -18,6 +18,9 @@
 #include "stdafx.h"
 #include <ddraw.h>  // IDirectDrawPalette::SetEntries in set()
 #include "palette.h"
+// Original Palette::init at 0x005FE330 and set at 0x005FE460 use these named GDI exports.
+// RECOVERY_IMPORT: v1 __imp__AnimatePalette@16 GDI32.dll name:AnimatePalette
+// RECOVERY_IMPORT: v1 __imp__GetSystemPaletteEntries@16 GDI32.dll name:GetSystemPaletteEntries
 #include "general.h"  // mem_get
 #include "buffer.h"   // Buffer::sync_to_palette in set()
 #include "win.h"      // screen Buffer's shared-guard lifetime owner

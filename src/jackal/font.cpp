@@ -27,6 +27,11 @@
 // RECOVERY_IMPORT: v1 __imp__RemoveFontResourceA@4 GDI32.dll name:RemoveFontResourceA
 // RECOVERY_IMPORT: v1 __imp__SelectObject@8 GDI32.dll name:SelectObject
 // RECOVERY_IMPORT: v1 __imp__DeleteDC@4 GDI32.dll name:DeleteDC
+// Original Font::init at 0x006190D0 and init_font_class at 0x006195B0 use these named SDK exports.
+// RECOVERY_IMPORT: v1 __imp__AddFontResourceA@4 GDI32.dll name:AddFontResourceA
+// RECOVERY_IMPORT: v1 __imp__CreateCompatibleDC@4 GDI32.dll name:CreateCompatibleDC
+// RECOVERY_IMPORT: v1 __imp__CreateScalableFontResourceA@16 GDI32.dll name:CreateScalableFontResourceA
+// RECOVERY_IMPORT: v1 __imp__GetCurrentDirectoryA@8 KERNEL32.dll name:GetCurrentDirectoryA
 
 // These three process-wide Font objects have independent, loader-zeroed identities.
 // Font::init_font_class publishes FontDefault/HDC and adjusts the shared count;

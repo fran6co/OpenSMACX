@@ -244,6 +244,8 @@ uint32_t ListBoxDefault2C = 2;
 uint32_t ListBoxDefault10 = -1;
 // RECOVERY_OBJECT: v2 0x006970EC 0x006970F0 ?ListBoxDefault14@@3IA 0x00609F20
 uint32_t ListBoxDefault14 = -1;
+// Original 0x0060AA20/0x0060AA45 and 0x0060C6D0/0x0060C6F5 bracket callbacks with 1/0; start only.
+// RECOVERY_OBJECT: v1 0x009B8EEC ?ListBoxClickGuard@@3HA
 int ListBoxClickGuard;                // 0x009B8EEC
 
 // The three subobject vtables the teardown re-staged (0x0067041C/0x00670414/

@@ -19,6 +19,8 @@
 // Console orders and scenario-editor operations; this semantic source home
 // does not claim a recovered original translation-unit filename/boundary.
 #include "stdafx.h"
+// Original Console::edit_lock at 0x004E1F40 queries this USER32 export through its import pointer.
+// RECOVERY_IMPORT: v1 __imp__GetKeyState@4 USER32.dll name:GetKeyState
 #include "prefwin.h"
 #include "interlude.h"
 #include "text.h"

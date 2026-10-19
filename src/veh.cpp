@@ -533,6 +533,8 @@ RulesChassis Chassis[ChassisStorageCount];  // 0x0094A330
 RulesWeapon Weapon[MaxWeaponNum];  // 0x0094AE60
 // RECOVERY_OBJECT: v1 0x0094F278 ?Armor@@3PAURulesArmor@@A
 RulesArmor Armor[MaxArmorNum];  // 0x0094F278
+// Original 0x0042A910 selects the record base; best_reactor walks prerequisite fields; no extent claim.
+// RECOVERY_OBJECT: v1 0x009527F8 ?Reactor@@3PAURulesReactor@@A
 RulesReactor Reactor[MaxReactorNum];  // 0x009527F8
 // Ability-model assembly reads the signed prerequisite at record +0x18;
 // the original indexes these existing rules with a 0x1C-byte stride.
@@ -546,6 +548,8 @@ LPSTR PlansShortName[MaxPlanNum];  // 0x00945FE0
 LPSTR PlansFullName[MaxPlanNum];  // 0x00952360
 LPSTR Triad[MaxTriadNum];  // 0x0094F1A8
 uint32_t VehBasicBattleMorale[2];  // 0x00912420
+// Original battle_init at 0x00501D32 clears the start; add_bat at 0x00501D5D/0x00501D70 indexes counters; no bounds claim.
+// RECOVERY_OBJECT: v1 0x00915614 ?VehBattleModCount@@3PAIA
 uint32_t VehBattleModCount[2];  // 0x00915614
 BOOL VehBattleUnkTgl[2];  // 0x0091561C
 int VehBattleModifier[8];  // 0x009155F0

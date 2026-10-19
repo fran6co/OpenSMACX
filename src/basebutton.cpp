@@ -28,7 +28,11 @@
 
 // The zero-init .bss slots BaseButton's setup reads its field defaults from
 // (0x009B8E2C/0x009B8E30), rebindable like CheckBoxDefault1/2.
+// Original 0x00606FC9/0x006070FE copy this default cell into the matching field; start only.
+// RECOVERY_OBJECT: v1 0x009B8E2C ?BaseButtonA94Default@@3IA
 uint32_t BaseButtonA94Default;  // 0x009B8E2C
+// Original 0x00607003/0x00607138 copy this separate default cell; no pointee or extent claim.
+// RECOVERY_OBJECT: v1 0x009B8E30 ?BaseButtonA98Default@@3IA
 uint32_t BaseButtonA98Default;  // 0x009B8E30
 
 #include <new>

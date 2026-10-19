@@ -95,6 +95,50 @@ def inputs():
     return manifest, image, archive
 
 
+TLS_IMPORT_BLOCK = (
+    "// Pinned thread.obj section 3 references this import pointer at offset 0x32; no CRT function is bound.\n"
+    "// RECOVERY_IMPORT: v1 __imp__TlsSetValue@8 KERNEL32.dll name:TlsSetValue\n"
+)
+
+
+def _require_complete_historical_tail(current, historical):
+    # Only this separately validated later addition is outside the old cohort.
+    # Its absence is valid here; the bulk actual-source test requires the fact.
+    assert current.count(TLS_IMPORT_BLOCK) <= 1
+    assert current.replace(TLS_IMPORT_BLOCK, "", 1) == historical
+
+
+@pytest.mark.parametrize("damage", ["duplicate_block", "malformed_import", "mutated_import",
+                                    "mutated_evidence", "missing_evidence", "missing_import",
+                                    "deleted_prior_line", "mutated_prior_line"])
+def test_historical_tail_projection_refuses_any_other_change(damage):
+    historical = subprocess.check_output(
+        ["git", "show", f"{BASE}:{SOURCE}"], cwd=ROOT, text=True).split(
+            "// RECOVERY_COMPONENT_END", 1)[1]
+    current = TLS_IMPORT_BLOCK + historical
+    _require_complete_historical_tail(historical, historical)
+    _require_complete_historical_tail(current, historical)
+    evidence, import_line = TLS_IMPORT_BLOCK.splitlines(keepends=True)
+    if damage == "duplicate_block":
+        current = TLS_IMPORT_BLOCK + current
+    elif damage == "malformed_import":
+        current = current.replace(import_line, import_line.replace("v1", "v2"), 1)
+    elif damage == "mutated_import":
+        current = current.replace(import_line, import_line.replace("name:TlsSetValue", "name:TlsGetValue"), 1)
+    elif damage == "mutated_evidence":
+        current = current.replace(evidence, evidence.replace("0x32", "0x36"), 1)
+    elif damage == "missing_evidence":
+        current = current.replace(evidence, "", 1)
+    elif damage == "missing_import":
+        current = current.replace(import_line, "", 1)
+    else:
+        prior_line = next(line for line in historical.splitlines(keepends=True) if line.strip())
+        replacement = "" if damage == "deleted_prior_line" else prior_line.rstrip("\n") + " changed\n"
+        current = current.replace(prior_line, replacement, 1)
+    with pytest.raises(AssertionError):
+        _require_complete_historical_tail(current, historical)
+
+
 def test_seventeen_full_contributions_preserve_the_complete_prior_manifest(inputs):
     manifest, _, _ = inputs
     historical_text = subprocess.check_output(
@@ -107,7 +151,7 @@ def test_seventeen_full_contributions_preserve_the_complete_prior_manifest(input
     current_text = (ROOT / SOURCE).read_text()
     begin, end = "// RECOVERY_COMPONENT_BEGIN v1", "// RECOVERY_COMPONENT_END"
     assert current_text.split(begin, 1)[0] == historical_text.split(begin, 1)[0]
-    assert current_text.split(end, 1)[1] == historical_text.split(end, 1)[1]
+    _require_complete_historical_tail(current_text.split(end, 1)[1], historical_text.split(end, 1)[1])
 
     expected_units = tuple(row[2] for row in EXPECTED)
     expected_unit_set = set(expected_units)

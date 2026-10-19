@@ -681,6 +681,8 @@ int DiploFocusY = -1;
 // points publish their counterpart faction here before opening a popup, which
 // is why suggest_plan writes it unconditionally rather than only on the paths
 // that go on to show one.
+// Original 0x0053CB09/0x0053E4CD publish the faction id consumed at 0x005BFA11/0x005BFC89; start only.
+// RECOVERY_OBJECT: v1 0x0093F7CC ?PopupDialogFactionID@@3HA
 int PopupDialogFactionID;  // 0x0093F7CC
 // The diplomacy flag word at 0x0074DA9C.
 // RECOVERY_OBJECT: v2 0x0074DA9C 0x0074DAA0 ?DiploRedrawFlag@@3HA 0x0055B870
@@ -4406,6 +4408,8 @@ int __cdecl pop_expire() {
     return 1;
 }
 
+// Original 0x005398F5/0x00539904 and 0x00539942/0x00539951 bracket wait_loop with 1/0; start only.
+// RECOVERY_OBJECT: v1 0x0093FAC4 ?PopupWaitActive@@3HA
 int PopupWaitActive;  // 0x0093FAC4
 
 /*

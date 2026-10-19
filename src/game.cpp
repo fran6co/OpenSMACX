@@ -22,6 +22,12 @@
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot0x682550 selects original initializer0x477e10..0x477e26, registering fini0x477e30..0x477e3a; complete independent decode establishes exclusive boundaries.", "Source-owned object?MultiWindow@@3VMultiWin@@A identifies original storage0x7fd648. Startup arguments/calls: call 0x47a590; push 0x477e30. Cleanup receiver/calls: mov ecx, 0x7fd648; jmp 0x47a430. Constructor/destructor targets retain their existing class-owned source mappings.", "Fresh physical src/game.cpp COFF selects _$E26 through .CRT$XCU and registers _$E24, both referencing the genuine source global. Original NetMsg argument triples and implicit PlanWin/Console most-derived flags are preserved by the existing declarations; complete virtual-base teardown is compiler-owned, not authored offsets.", "Current local helper symbols interpret present emission, not original debug names or historical TU boundaries. Object starts do not prove allocation extents. This binding establishes neither cross-TU global order, masked-reference correctness, strict linked preservation, dependency-provider equivalence nor runtime/game acceptance; excluded guarded sprite cleanup remains separate."], "reason": "Bind original exit identity to the genuine compiler-generated lifetime of ?MultiWindow@@3VMultiWin@@A in its actual source owner; no manual lifecycle callback is authored."}
 // symbol    _$E11
 #include "stdafx.h"
+// Original read_tamper/set_tamper at 0x0051E000/0x0051E090 use these registry exports through the SDK.
+// RECOVERY_IMPORT: v1 __imp__RegCloseKey@4 ADVAPI32.dll name:RegCloseKey
+// RECOVERY_IMPORT: v1 __imp__RegCreateKeyExA@36 ADVAPI32.dll name:RegCreateKeyExA
+// RECOVERY_IMPORT: v1 __imp__RegOpenKeyExA@20 ADVAPI32.dll name:RegOpenKeyExA
+// RECOVERY_IMPORT: v1 __imp__RegQueryValueExA@24 ADVAPI32.dll name:RegQueryValueExA
+// RECOVERY_IMPORT: v1 __imp__RegSetValueExA@24 ADVAPI32.dll name:RegSetValueExA
 // Shared game-state change bits, written by base/vehicle/faction/technology
 // operations. Preserve the existing spelling and zero initialization: the
 // full original meaning, extent and persistence contract remain unresolved.
@@ -1549,6 +1555,8 @@ void __cdecl load_interface(int mode) {
 // Original4838E3 reads this DWORD network-game flag; initial image storage is0.
 // RECOVERY_OBJECT: v2 0x0093F660 0x0093F664 ?IsMultiplayerNet@@3HA 0x004838E0
 BOOL IsMultiplayerNet;  // DirectPlay - Serial, Modem, Internet (TCP/IP)
+// Original 0x00442721/0x004713B3 test the shared PBEM mode value, not a pointer; start only.
+// RECOVERY_OBJECT: v1 0x0093A95C ?IsMultiplayerPBEM@@3HA
 BOOL IsMultiplayerPBEM;  // 0x0093A95C // HotSeat / PBEM
 // 0x009A681C
 // 0x009A6820

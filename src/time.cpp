@@ -35,6 +35,8 @@
 
 // The timer callbacks' shared state; declarations in time.h beside the
 // callbacks themselves. All four are zero-initialised .data in the image.
+// Original 0x0050EE4C/0x0050EE89/0x0050EF19 gate the timer callbacks on this shared value; start only.
+// RECOVERY_OBJECT: v1 0x00915620 ?TimerHoldFlag@@3HA
 int TimerHoldFlag;      // 0x00915620
 int Blink2Counter;      // 0x009392B4
 int PlanLineCounter;    // 0x00939FD4
@@ -205,7 +207,11 @@ void __cdecl blink_timer(int a1) {
 // desktop_close - the same fixed address, one object.
 
 
+// Original 0x00616860 stores this; 0x00616870 clears it; callbacks load the Time* cell, not its pointee.
+// RECOVERY_OBJECT: v1 0x009B90D0 ?TimeModal@Time@@2PAV1@A
 Time *Time::TimeModal;
+// Original 0x00616880/0x00616886 increments this class user count; 0x00616890 decrements; start only.
+// RECOVERY_OBJECT: v1 0x009B90CC ?TimeInitCount@Time@@2HA
 int Time::TimeInitCount;
 
 /*

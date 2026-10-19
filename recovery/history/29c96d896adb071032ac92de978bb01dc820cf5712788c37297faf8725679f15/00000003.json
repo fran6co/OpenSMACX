@@ -1,0 +1,18 @@
+{
+  "event_id": "1c8ae4ebc1144b2d05ca0cc5d77b1db89892733cc4289660ef6f9b8b0b3780a4",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "historical-tail-freeze-blocks-native-import",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "The authorized runtime contribution test now projects only the exact separately validated TLS evidence/import block and retains the complete previous tail, prefix and parsed manifest. Negative controls reject altered/partial/duplicate blocks and changes to historical text; the new actual-source test independently requires the TLS import.",
+      "Independent final review verified the current v1-only start guards and import evidence. Candidate fresh174TU build/link,188 whole-object zero-omission comparison, actual pinned data/import controls, whole known-domain masked/strict delta and native claims/mappings/references passed. Host focused210PASS; two pre-existing frontier failures remain unwaived. This incorporates the historical-test discovery only, not original allocation, linked/runtime/full-game acceptance."
+    ]
+  },
+  "previous_event": "9b607fc87083f1747a48f7339de5a4cb7a5563a9b0c2f39233bf82042e48b0df",
+  "request_id": "incorporate-precise-tls-tail-projection",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:reference-bindings-bulk-oct19"
+}

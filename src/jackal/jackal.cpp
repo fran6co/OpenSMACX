@@ -79,6 +79,8 @@ BOOL __cdecl jackal_version_check(LPCSTR version) {
 // it via find_font; the two readers are the Win constructor and Win::close,
 // both of which move it into field_F8_.
 
+// Original 0x0062D4DB loads flags; 0x0062D4E1 sets bit 0; 0x0062D4E4 stores them; start only.
+// RECOVERY_OBJECT: v1 0x009BC4B0 ?JackalInitFlags@@3HA
 int JackalInitFlags;      // 0x009BC4B0
 
 /*

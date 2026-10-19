@@ -33,6 +33,8 @@
 // the address is terranx.exe's data, unmapped in a standalone build.
 // RECOVERY_OBJECT: v1 0x009B8DD4 ?ScrollDefaultThickness@@3HA
 int ScrollDefaultThickness;  // 0x009B8DD4
+// Original 0x00605914/0x00605964 set this shared mode before common Scroll setup; start only.
+// RECOVERY_OBJECT: v1 0x009B8E24 ?ScrollNonClientInit@@3HA
 int ScrollNonClientInit;  // 0x009B8E24
 // The constructor/close bodies observe eleven words from 0x697020 through
 // 0x69704B. This bounded record does not claim an original aggregate type or

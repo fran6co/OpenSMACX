@@ -40,6 +40,8 @@
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned CRT slot 0x682624 selects startup 0x50e980..0x50e996 and registers cleanup 0x50e9a0..0x50e9aa. Complete root decode proves the exclusive RET/JMP endpoints.", "The source-owned object ?ConsoleTimer@@3VTime@@A is selected by physical COFF constructor/destructor relocations; current emitted finalizer is identified by the adjacent symbol fact. Original receiver 0x939e88 belongs to this real global; preserve its class lifetime and registration.", "Buffer relative declaration order is PCX, interface array, middle, vehicle, special-text owner, Sprite, shared Buffer. Generated helpers are compiler output, not hand-authored address callbacks. Selected same-owner order does not establish full CRT order, dependency provider, linked preservation or runtime/game acceptance. Guarded cleanup is a separate unfinished obligation."], "reason": "Bind original fini operation to the genuine C++ lifetime of ?ConsoleTimer@@3VTime@@A; retain original behavior and remaining matching obligations."}
 // symbol    _$E11
 #include "stdafx.h"
+// Original auto_play_callback at 0x0050E890 uses this named USER32 export; PE imports supply its slot.
+// RECOVERY_IMPORT: v1 __imp__SetCursorPos@8 USER32.dll name:SetCursorPos
 #include "prefwin.h"  // Console owns preference-window calls.
 #include "interlude.h"  // interlude is declared by its owner.
 #include "text.h" // TextBufferGetPtr is reloaded after parser callbacks.
@@ -1340,6 +1342,10 @@ Time ConsoleTimer; // 0x00939E88
 // RECOVERY_OBJECT: v2 0x00915658 0x00915680 ?LineTimer@@3VTime@@A 0x0050F440
 // RECOVERY_OBJECT: v2 0x00915688 0x009156B0 ?BlinkTimer@@3VTime@@A 0x0050F440
 // RECOVERY_OBJECT: v2 0x00939EB0 0x00939ED8 ?Blink2Timer@@3VTime@@A 0x0050F440
+// Original grouped ctor at 0x0050E9CE and cleanup at 0x0050E9FA use the distinct Go timer receiver; start only.
+// RECOVERY_OBJECT: v1 0x00939E60 ?GoTimer@@3VTime@@A
+// Original 0x0050E9D8/0x0050E9F0 and start_timers at 0x0050F426 use this timer receiver; no extent/lifetime claim.
+// RECOVERY_OBJECT: v1 0x00915628 ?TurnTimer@@3VTime@@A
 Time BlinkTimer,   // 0x00915688
      Blink2Timer,  // 0x00939EB0
      LineTimer,    // 0x00915658

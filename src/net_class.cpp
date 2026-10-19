@@ -213,6 +213,8 @@ Net *ActiveNet;
 // 0x009BE5F0, the dword just below it: poll_services parks the ServiceStruct
 // the enumeration callback fills there for the length of the call, and the
 // callback reads it back out - a hand-off, not a second list.
+// Original 0x0062E279/0x0062E285 publish/clear the list pointer loaded by callback at 0x00630C09; cell only.
+// RECOVERY_OBJECT: v1 0x009BE5F0 ?ServiceEnumTarget@@3PAUServiceList@@A
 ServiceList *ServiceEnumTarget;  // 0x009BE5F0
 
 // The service-provider GUID the enumeration keeps: DirectPlayEnumerateA hands

@@ -1178,6 +1178,8 @@ IDirectDraw2 *BufferDirectDraw;  // 0x009BC494
 // is known - but the original loads it, `mov eax, [0x696bf0]`, and a `const`
 // the compiler can see folds to `mov eax, 1`. A mutable global keeps the
 // load, and the relocation is masked.
+// Original 0x005D72B7/0x005D75C9 load this initial-1 default for construction/reset; start only.
+// RECOVERY_OBJECT: v1 0x00696BF0 ?BufferField520Default@@3IA
 uint32_t BufferField520Default = 1;
 
 // Shared fill scratch: stride minus painted width. Original 5DFE63 writes

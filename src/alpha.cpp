@@ -98,6 +98,8 @@ DefaultPref DefaultPrefs;                           // 0x0094B350
 
 // THE FACTION/MAP RULES STORAGE (faction.h / map.h) - real zero-initialised
 // objects; the image's copies are uninitialised .data the rules walkers fill.
+// Original say_society at 0x00590A21 reads the category-row start at stride 0xD4; no full layout/extent claim.
+// RECOVERY_OBJECT: v1 0x0094B000 ?SocialCategories@@3PAURulesSocialCategory@@A
 RulesSocialCategory SocialCategories[MaxSocialCatNum];      // 0x0094B000
 RulesSocialEffect SocialEffects[MaxSocialEffectNum];        // 0x00946580
 LPSTR Mood[MaxMoodNum];                                     // 0x0094C9E4

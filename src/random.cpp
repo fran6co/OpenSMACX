@@ -78,6 +78,8 @@ Status: Complete
 // a page this process does not have - and it cost every caller the ratchet
 // besides, because through a pointer VC6 emits `mov ecx, [Rand]` where the
 // image passes the object's address outright. Same defect `stringTemp` had.
+// Original 0x00625705/0x00625720 zero the state updated by the reseed/generator pair; no historical class claim.
+// RECOVERY_OBJECT: v1 0x009BB568 ?Rand@@3VRandom@@A
 Random Rand;   // 0x009BB568
 
 // ORIGINAL: 0x00625700 ??__ERand@@YAXXZ 0x00625700-0x00625716 FILE BYTE_EXACT

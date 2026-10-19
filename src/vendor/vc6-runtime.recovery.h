@@ -665,6 +665,8 @@
 //   ]
 // }
 // RECOVERY_COMPONENT_END
+// Pinned thread.obj section 3 references this import pointer at offset 0x32; no CRT function is bound.
+// RECOVERY_IMPORT: v1 __imp__TlsSetValue@8 KERNEL32.dll name:TlsSetValue
 // ORIGINAL: 0x0064D725 sub_64d725 0x0064D725-0x0064D73B
 // ORIGINAL: 0x0064D73B sub_64d73b 0x0064D73B-0x0064D751 FILE
 // ORIGINAL: 0x0064D751 sub_64d751 0x0064D751-0x0064D77E

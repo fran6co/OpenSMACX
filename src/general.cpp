@@ -16,6 +16,8 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+// Original mem_get at 0x005D4510 reports failure through this USER32 export; no function alias.
+// RECOVERY_IMPORT: v1 __imp__MessageBoxA@16 USER32.dll name:MessageBoxA
 #include "council.h"
 #include <math.h> // sin(double), lowered to the CRT's _sin
 #include <cstring>
@@ -2260,6 +2262,8 @@ int __cdecl sin(int angle, int scale) {
            * scale;
 }
 
+// Original trig_init at 0x0063B950 selects the output cursor; sin at 0x0063B9E0 indexes this base; no extent claim.
+// RECOVERY_OBJECT: v1 0x009BE6DC ?SinTable@@3PAHA
 int SinTable[256]; // 0x009BE6DC
 
 /*

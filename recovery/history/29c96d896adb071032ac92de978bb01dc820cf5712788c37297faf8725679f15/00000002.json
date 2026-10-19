@@ -1,0 +1,20 @@
+{
+  "event_id": "9b607fc87083f1747a48f7339de5a4cb7a5563a9b0c2f39233bf82042e48b0df",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_runtime_code_contributions_oct12d.py"
+    ],
+    "evidence": [
+      "Authorize only the historical tail preservation assertion and a focused negative projection control in this one test file. Project out exactly the separately validated two-line new TLS import/evidence block, optionally absent for this older historical-cohort test, before byte-for-byte comparison with the complete old suffix. Reject duplicate block, malformed/changed import or deletion/mutation of any prior suffix line. Preserve every prior prefix/manifest/function/span/claim/reference assertion, and all other tests. Do not permit arbitrary text, imports, bodies or source normalization. The new bulk actual-source test independently requires the unique correct TLS fact; retain raw initial failure evidence.",
+      "This is test-scope expansion, not source/claim/baseline/gate relaxation. All55 source bindings and CPP tokens remain frozen. Rerun full focused controls and untouched frontier tests, then FREEZE again before coordinator measurements. No Git/compiler/Wine operations delegated."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "e6f11ee350684b1bd7478d4d6b480dbe0a1f95b3d2825ff6a7ddf7ca3c01af1d",
+  "request_id": "permit-precise-runtime-tail-import-projection",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:reference-bindings-bulk-oct19"
+}

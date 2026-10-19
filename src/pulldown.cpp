@@ -824,7 +824,11 @@ int PullDown::get_selected() {
 
 
 
+// Original 0x005F8878/0x005F89AF copy this callback-default cell; no callable-target claim.
+// RECOVERY_OBJECT: v1 0x009B7B58 ?PullDownFieldF38Default@@3P6AHPAVGraphicWin@@HPAUtagRECT@@@ZA
 PullDownFillCallback PullDownFieldF38Default;  // 0x009B7B58
+// Original 0x005F8883/0x005F89BA copy the separate callback-default cell; no extent claim.
+// RECOVERY_OBJECT: v1 0x009B7B5C ?PullDownFieldF3CDefault@@3P6AHPAVGraphicWin@@@ZA
 PullDownBackfillCallback PullDownFieldF3CDefault;  // 0x009B7B5C
 Font *PullDownDefaultFont;         // 0x009B7B68
 

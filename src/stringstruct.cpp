@@ -403,6 +403,8 @@ Status: Genuine destructor; original inlining and strict matching remain unprove
 
 // THE ALLOCATOR HAND-OFF SLOT: the Heap published by the allocation wrapper
 // and captured by the next StringAllocationBase construction.
+// Original 0x00401020/0x00401029 captures/clears the Heap* handoff; 0x00402319 publishes it; cell only.
+// RECOVERY_OBJECT: v1 0x009B3374 ?StringAllocationHeap@@3PAVHeap@@A
 Heap *StringAllocationHeap;  // 0x009B3374
 
 
