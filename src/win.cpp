@@ -758,7 +758,9 @@ int Win::is_dialog_focus() {
 }
 
 
+// RECOVERY_OBJECT: v1 0x009B3AB0 ?WinHdcRefCount@@3HA
 int WinHdcRefCount;        // 0x009B3AB0
+// RECOVERY_OBJECT: v1 0x009B7B2C ?WinSharedHdc@@3PAUHDC__@@A
 HDC WinSharedHdc;          // 0x009B7B2C
 // RECOVERY_OBJECT: v2 0x009BC498 0x009BC49C ?DirectDrawSurface@@3PAUIDirectDrawSurface2@@A 0x0062CD50
 IDirectDrawSurface2 *DirectDrawSurface;  // 0x009BC498

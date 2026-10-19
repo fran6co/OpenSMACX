@@ -1352,6 +1352,7 @@ func_popup_alloc *PopupAllocHook = &BasePop::basepop_alloc;
 // variable it is a load and a push instead.
 // EXTENT IS A FLOOR: nothing recovered bounds the writes into it, so
 // 256 is this tree's usual caption size rather than a measured one.
+// RECOVERY_OBJECT: v1 0x009B8AA8 ?PopupStartCaption@@3PADA
 char PopupStartCaption[256];  // 0x009B8AA8
 
 // RECOVERY_OBJECT: v1 0x009B8D80 ?BasePopDefaultOkText@@3PADA
