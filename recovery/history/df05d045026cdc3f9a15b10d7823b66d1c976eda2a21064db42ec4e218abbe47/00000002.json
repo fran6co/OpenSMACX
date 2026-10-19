@@ -1,0 +1,21 @@
+{
+  "event_id": "931ce3f4498d057118728968568318c97c40772fd81a2976e455c99f756b7295",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "stale-ocean-uv-oracle",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Coordinator and independent source review preserve every existing renderer case and mutant purpose, replacing only stale standalone table extraction with actual TerrainLandmarkStorageWindow/helper source plus fresh eight-input generation. The separate pinned49-pair landmark oracle remains. Layout/signed-byte assertions remain in actual extracted source; no product source/header/recipe/flag/gate changes.",
+      "Independent pinned OceanCornerUVs685CA8..685D28 is128 ordinary relocation-free bytes with equal mapped/initial contents. New separate oracle decodes its16 signed coordinate pairs rather than reading candidate initializer; remove unused synthetic OceanCornerUVs declaration/writes. Check actual ocean and underlay receivers/order/all UV coordinates. Synthetic land controls remain unchanged.",
+      "Full repaired module passes113tests in607.20s, including baseline and all existing successfully compiling damage cases. After only clean-build-directory creation and added fast baseline-refusal unit control, focused baseline+guarddamage+legacyMountreceiver control pass3tests. Earlier focused baseline+all12landmark pair controls pass13tests. No full-module rerun claimed after final two robustness additions.",
+      "Every renderer mutant now first requires a passing unmutated actual-source fixture, cached by exact source text; a monkeypatch negative control proves unrelated baseline exit91 refuses, rather than falsely proving mutant effectiveness. Regenerated proprietary inputs stay in ignored build scratch and pytesttmp; temporary generator directories are context-cleaned.",
+      "Existing fresh174TU/188object application compile-link receipt inputs and output hashes reverified unchanged against current master; only project tests/task decisions change. Tests are bounded host mocks with independent pinned tables, not native ABI/blitter/runtime/provider or full-game proof. Renderer EH-region matching refusal, game comment-codegen discovery and all other historical claims/restoration/full-linked obligations remain unchanged. Manual test-repair incorporation only; fresh destination scoped controls required."
+    ]
+  },
+  "previous_event": "ba300b5dd63472fd6abf76ae221470bae9ce23e6b1f50190b8a87294f0e6ef2c",
+  "request_id": "incorporate-current-owner-terrain-controls",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:terrain-current-owner-harness-oct19"
+}

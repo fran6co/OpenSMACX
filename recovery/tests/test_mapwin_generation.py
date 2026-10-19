@@ -19,6 +19,7 @@ import os
 import re
 import shutil
 import subprocess
+import tempfile
 from functools import lru_cache
 
 import pytest
@@ -644,11 +645,11 @@ const unsigned char (*const LandMoistureTable)[2] = LandMoistureTable_storage;
 int MapFocusX = -99, MapFocusY = -99;
 // ACTUAL LANDMARK OWNERS
 // ORIGINAL LANDMARK ORACLE
+// ORIGINAL OCEAN UV ORACLE
 int OceanDetailShade[80];
 int UnworkedCornerLight = 0x37;
 Vert LandCornerUVs[12];
 Vert EdgeMidUVs[16];
-Vert OceanCornerUVs[16];
 unsigned char CoastMaskTable_storage[53][8];
 const unsigned char (*const CoastMaskTable)[8] = CoastMaskTable_storage;
 // ACTUAL COAST OWNER
@@ -915,8 +916,6 @@ void treset() {
     for (int i = 0; i < 16; ++i) {
         EdgeMidUVs[i].x = 70 + i * 2;
         EdgeMidUVs[i].y = 71 + i * 2;
-        OceanCornerUVs[i].x = 110 + i * 2;
-        OceanCornerUVs[i].y = 111 + i * 2;
     }
     for (int i = 0; i < 80; ++i) OceanDetailShade[i] = 0x20 + i;
     for (int row = 0; row < 53; ++row)
@@ -1303,13 +1302,20 @@ int main() {
         for (int corner = 0; corner < 4; ++corner) {
             const Draw &d = draws[corner * 2];
             const Draw &under = draws[corner * 2 + 1];
+            check(d.receiver == &g_OCEAN_TEXTURES[1]);
+            check(d.kind == (worked ? "draw5" : "draw6"));
+            check(under.receiver == &g_OCEAN_TEXTURES[0]);
+            check(under.kind == "draw2");
             check(d.vertices.size() == 4 && under.vertices.size() == 4);
             for (int sub = 0; sub < 4; ++sub) {
                 const int dir = (corner - 2 + sub) & 3;
+                const int uv_index = corner * 4 + sub;
                 check(d.vertices[sub].x == 164 + (dir - 2) * 32);
                 check(d.vertices[sub].y == 132 + (corner - 2) * 16);
-                check(d.uv[sub].x == 110 + (corner * 4 + sub) * 2);
-                check(d.uv[sub].y == 111 + (corner * 4 + sub) * 2);
+                check(d.uv[sub].x == ocean_corner_uv_expected[uv_index][0]);
+                check(d.uv[sub].y == ocean_corner_uv_expected[uv_index][1]);
+                check(under.uv[sub].x == ocean_corner_uv_expected[uv_index][0]);
+                check(under.uv[sub].y == ocean_corner_uv_expected[uv_index][1]);
                 check(d.light[sub] == 0x10 + ((corner * 3 + sub) & 7));
                 check(under.light[sub] == d.light[sub] + 0x10);
             }
@@ -1673,6 +1679,7 @@ int main() {
 }
 '''.replace('// ACTUAL LANDMARK OWNERS', landmark_owners()).replace(
     '// ORIGINAL LANDMARK ORACLE', landmark_oracle()).replace(
+    '// ORIGINAL OCEAN UV ORACLE', ocean_corner_uv_oracle()).replace(
     '// ACTUAL COAST DECLARATION', coast_palette_declaration()).replace(
     '// ACTUAL COAST OWNER', coast_palette_owner()).replace(
     '// ACTUAL TERRAIN CACHE RECORD', body((ROOT / 'src/mapwin.h').read_text(),
@@ -1700,6 +1707,29 @@ LANDMARKS = (
 )
 
 
+def landmark_byte_access(member, index, rotation=False):
+    offset = ('offsetof(TerrainLandmarkStorageWindow, ' + member + ') + '
+              'static_cast<size_t>(' + index + ') * sizeof(LandmarkTextureChoice)')
+    if rotation:
+        offset += ' + 1'
+    return f'terrain_window_signed_byte({offset})'
+
+
+def landmark_byte_pattern(member, index, rotation=False):
+    offset = (r'offsetof\(TerrainLandmarkStorageWindow,\s*' + re.escape(member) +
+              r'\)\s*\+\s*static_cast<size_t>\(' + re.escape(index) +
+              r'\)\s*\*\s*sizeof\(LandmarkTextureChoice\)')
+    if rotation:
+        offset += r'\s*\+\s*1'
+    return r'terrain_window_signed_byte\(\s*' + offset + r'\s*\)'
+
+
+def landmark_source_byte_access(member, index):
+    return ('terrain_window_signed_byte(\n'
+            f'                    offsetof(TerrainLandmarkStorageWindow, {member}) +\n'
+            f'                    static_cast<size_t>({index}) * sizeof(LandmarkTextureChoice))')
+
+
 @lru_cache(maxsize=1)
 def landmark_original():
     """Keep extracted proprietary pairs only in memory and pytest's /tmp.
@@ -1714,15 +1744,7 @@ def landmark_original():
     from match_recovery.source_inventory import image_pin
     from match_recovery.model import Span
 
-    configured = os.environ.get('OPENSMACX_IMAGE')
-    candidates = ([Path(configured)] if configured else
-                  [parent / '.opensmacx/game/terranx_original.exe'
-                   for parent in (ROOT, *ROOT.parents)])
-    original = next((path for path in candidates if path.is_file()), None)
-    if original is None:
-        if configured:
-            pytest.fail('configured OPENSMACX_IMAGE is unavailable')
-        pytest.skip('pinned original required for actual landmark-table controls')
+    original = landmark_original_path()
     pin = image_pin(ROOT)
     image = PeImage(original.read_bytes(), pin)
     bindings = read_objects(ROOT, pin)
@@ -1740,22 +1762,24 @@ def landmark_original():
     return result
 
 
+def landmark_original_path():
+    configured = os.environ.get('OPENSMACX_IMAGE')
+    candidates = ([Path(configured)] if configured else
+                  [parent / '.opensmacx/game/terranx_original.exe'
+                   for parent in (ROOT, *ROOT.parents)])
+    original = next((path for path in candidates if path.is_file()), None)
+    if original is None:
+        if configured:
+            pytest.fail('configured OPENSMACX_IMAGE is unavailable')
+        pytest.skip('pinned original required for actual landmark-table controls')
+    return original
+
+
 def landmark_owners():
     cpp = (ROOT / 'src/mapwin.cpp').read_text()
-    parts = [body(cpp, 'struct LandmarkTextureChoice {') + ';', '''
-#include <type_traits>
-static_assert(sizeof(LandmarkTextureChoice) == 2, "actual pair stride");
-static_assert(offsetof(LandmarkTextureChoice, texture) == 0, "texture byte");
-static_assert(offsetof(LandmarkTextureChoice, rotation) == 1, "rotation byte");
-static_assert(std::is_same<decltype(LandmarkTextureChoice::texture), signed char>::value, "signed sentinel");
-static_assert(std::is_same<decltype(LandmarkTextureChoice::rotation), signed char>::value, "signed rotation");
-''']
-    for name, include, _ in LANDMARKS:
-        owner, = re.findall(
-            rf'static const LandmarkTextureChoice {name}\[49\]\s*=\s*\{{\s*'
-            rf'#include "{include}"\s*\}};', cpp)
-        parts.append(owner)
-    return '\n'.join(parts)
+    start = cpp.index('struct LandmarkTextureChoice {')
+    end = cpp.index('// OceanDetailShade', start)
+    return cpp[start:end]
 
 
 def landmark_oracle():
@@ -1767,6 +1791,35 @@ def landmark_oracle():
     return 'const int landmark_expected[3][49][2] = {' + ','.join(tables) + '};'
 
 
+@lru_cache(maxsize=1)
+def ocean_corner_uv_original():
+    """Decode the separate original 128-byte mapping, never the candidate owner."""
+    from match_recovery.object_source import read_objects
+    from match_recovery.pe_coff import PeImage
+    from match_recovery.source_inventory import image_pin
+    from match_recovery.model import Span
+
+    pin = image_pin(ROOT)
+    original = landmark_original_path()
+    bindings = read_objects(ROOT, pin)
+    binding, = [entry for entry in bindings
+                if entry.unit == 'src/mapwin.cpp' and entry.symbol == '_OceanCornerUVs']
+    assert binding.span == Span(0x685CA8, 0x685D28)
+    image = PeImage(original.read_bytes(), pin)
+    raw = image.read(binding.span)
+    assert len(raw) == 128
+    assert image.read_initial(binding.span) == raw
+    assert not image.absolute_sites(binding.span)
+    return tuple((int.from_bytes(raw[offset:offset + 4], 'little', signed=True),
+                  int.from_bytes(raw[offset + 4:offset + 8], 'little', signed=True))
+                 for offset in range(0, len(raw), 8))
+
+
+def ocean_corner_uv_oracle():
+    rows = ','.join('{%d,%d}' % pair for pair in ocean_corner_uv_original())
+    return 'const int ocean_corner_uv_expected[16][2] = {' + rows + '};'
+
+
 def terrain_run(tmp_path, text):
     compiler = shutil.which('clang++') or shutil.which('g++')
     if not compiler:
@@ -1774,9 +1827,29 @@ def terrain_run(tmp_path, text):
     cpp = tmp_path / 'terrain_poly.cpp'
     exe = tmp_path / 'terrain_poly'
     if 'struct LandmarkTextureChoice' in text:
-        for _, include, _ in LANDMARKS:
-            pairs = landmark_original()[include]
-            (tmp_path / include).write_text('\n'.join('{%d,%d},' % pair for pair in pairs) + '\n')
+        from recovery.terrain_data import point_light_initializer, terrain_initializers
+
+        original = landmark_original_path()
+        generated_names = (
+            'terrain_mount_planet.inc',
+            'terrain_landmark_gap_mount_mesa.inc',
+            'terrain_sunny_mesa.inc',
+            'terrain_landmark_gap_mesa_point_light.inc',
+            'terrain_point_light_bit2.inc',
+            'terrain_landmark_gap_point_light_crater.inc',
+            'terrain_garland_crater.inc',
+            'terrain_landmark_gap_crater_ocean.inc',
+        )
+        build_directory = ROOT / 'build'
+        build_directory.mkdir(exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=build_directory,
+                                         prefix='terrain-harness-inputs-') as temp:
+            generated = Path(temp)
+            terrain_initializers(ROOT, original, generated)
+            point_light_initializer(
+                ROOT, original, generated / 'terrain_point_light_bit2.inc')
+            for name in generated_names:
+                shutil.copyfile(generated / name, tmp_path / name)
     cpp.write_text(text)
     built = subprocess.run([compiler, '-std=c++11', '-O0', '-g',
                             '-fsanitize=address,undefined',
@@ -1789,6 +1862,29 @@ def terrain_run(tmp_path, text):
     # address and undefined-behaviour instrumentation remain fully enabled.
     env = dict(os.environ, ASAN_OPTIONS='detect_leaks=0')
     return subprocess.run([str(exe)], capture_output=True, text=True, env=env)
+
+
+@lru_cache(maxsize=1)
+def _terrain_baseline_result(source_text):
+    with tempfile.TemporaryDirectory(prefix='terrain-baseline-') as temp:
+        result = terrain_run(Path(temp), terrain_harness(source_text))
+        return result.returncode, result.stderr
+
+
+def assert_terrain_baseline(source_text):
+    returncode, stderr = _terrain_baseline_result(source_text)
+    assert returncode == 0, (
+        'unmutated actual-source harness must pass before mutation control; '
+        + stderr)
+
+
+def test_baseline_guard_rejects_a_failing_unmutated_harness(monkeypatch):
+    """The guard itself refuses an unrelated baseline failure without compiling."""
+    monkeypatch.setitem(globals(), '_terrain_baseline_result',
+                        lambda _source: (91, 'assertion at baseline'))
+    with pytest.raises(AssertionError,
+                       match='unmutated actual-source harness must pass'):
+        assert_terrain_baseline('unmutated fixture sentinel')
 
 
 def test_actual_terrain_poly_receivers(tmp_path):
@@ -1809,6 +1905,7 @@ def test_actual_terrain_poly_receivers(tmp_path):
 ])
 def test_renderer_cache_member_damage_is_observed(tmp_path, old, new):
     actual = terrain_source()
+    assert_terrain_baseline(actual)
     assert actual.count(old) == 1
     result = terrain_run(tmp_path, terrain_harness(actual.replace(old, new)))
     assert result.returncode == 91 and 'assertion at' in result.stderr, result.stderr
@@ -1818,24 +1915,40 @@ def test_renderer_cache_member_damage_is_observed(tmp_path, old, new):
 @pytest.mark.parametrize('damage', ['receiver', 'rotation', 'sentinel', 'rotation_sentinel'])
 def test_landmark_pair_reads_are_observed(tmp_path, family, damage):
     source_text = terrain_source()
-    index = 'local_94' if family == 'MountPlanetTable' else 'iVar5'
-    field = f'{family}[{index}]'
+    assert_terrain_baseline(source_text)
+    member, index, texture_array = {
+        'MountPlanetTable': ('mount_planet', 'local_94', 'MOUNT_PLANET'),
+        'SunnyMesaTable': ('sunny_mesa', 'iVar5', 'SUNNY_MESA'),
+        'GarlandCraterTable': ('garland_crater', 'iVar5', 'GARLAND_CRATER'),
+    }[family]
+    receiver_byte = landmark_byte_access(member, index)
+    rotation_byte = landmark_byte_access(member, index, rotation=True)
+    receiver_pattern = landmark_byte_pattern(member, index)
+    rotation_pattern = landmark_byte_pattern(member, index, rotation=True)
     if damage == 'receiver':
         # Preserve the sentinel guard so the wrong receiver is a defined,
         # in-bounds draw rejected by the oracle rather than an ASan crash.
-        old, new = f'[{field}.texture]', '[0]'
+        old = re.compile(rf'g_{texture_array}_TEXTURES\[\s*{receiver_pattern}\s*\]')
+        source_text, count = old.subn(
+            lambda _: f'g_{texture_array}_TEXTURES[0]', source_text)
+        assert count == (2 if family == 'MountPlanetTable' else 1)
     elif damage == 'rotation':
-        old, new = f'(uint32_t){field}.rotation', '(uint32_t)0'
+        old = re.compile(rf'static_cast<uint32_t>\(\s*{rotation_pattern}\s*\)')
+        source_text, count = old.subn('static_cast<uint32_t>(0)', source_text)
+        assert count == 1
     elif damage == 'sentinel':
-        old, new = f'{field}.texture != -1', f'{field}.texture > 0'
+        old = re.compile(rf'{receiver_pattern}\s*!=\s*-1')
+        source_text, count = old.subn(f'{receiver_byte} > 0', source_text)
+        assert count == 1
     else:
-        old = f'{field}.texture != -1'
         # A paired-sentinel assumption is observable for Crater31 only;
         # for the other families test a false exclusion of valid rotation0.
         comparison = '>= 0' if family == 'GarlandCraterTable' else '!= 0'
-        new = f'({old} && {field}.rotation {comparison})'
-    assert old in source_text
-    result = terrain_run(tmp_path, terrain_harness(source_text.replace(old, new)))
+        old = re.compile(rf'{receiver_pattern}\s*!=\s*-1')
+        source_text, count = old.subn(
+            f'({receiver_byte} != -1 && {rotation_byte} {comparison})', source_text)
+        assert count == 1
+    result = terrain_run(tmp_path, terrain_harness(source_text))
     assert result.returncode == 91 and 'assertion at' in result.stderr, result.stderr
 
 
@@ -1853,6 +1966,7 @@ def test_landmark_pair_reads_are_observed(tmp_path, family, damage):
 ])
 def test_landmark_control_and_geometry_damage_is_observed(tmp_path, old, new):
     source_text = terrain_source()
+    assert_terrain_baseline(source_text)
     assert old in source_text
     result = terrain_run(tmp_path, terrain_harness(source_text.replace(old, new)))
     assert result.returncode == 91 and 'assertion at' in result.stderr, result.stderr
@@ -1866,6 +1980,7 @@ def test_coast_palette_callback_reload_is_observed(tmp_path, access):
     Texture rasterizer, native linkage and original process aren't executed.
     """
     actual = terrain_source()
+    assert_terrain_baseline(actual)
     anchor = 'if (-8 < a3 && local_18 == 0) {'
     assert actual.count(anchor) == 1
     actual = actual.replace(anchor, anchor + '''
@@ -1892,6 +2007,7 @@ def test_terrain_clamp_publication_damage_is_observed(tmp_path, damage):
     and a good common exit cannot mask one of the three early flat exits.
     """
     source = terrain_source()
+    assert_terrain_baseline(source)
     if '_exit_' in damage:
         word, index = damage.split('_exit_')
         good = ('TextureLightFloor = 0xffffff00;' if word == 'floor'
@@ -1941,8 +2057,8 @@ def test_actual_land_fan_tables():
      'g_FARM_TEXTURES[local_84 + 3 * (local_c4 + 1)]'),
     ('g_ROCKY_TEXTURES[local_c4 + 2 * local_38 - 2]',
      'g_ROCKY_TEXTURES[local_c4 + 2 * local_38]'),
-    ('g_MOUNT_PLANET_TEXTURES[MountPlanetTable[local_94].texture]',
-     'g_SUNNY_MESA_TEXTURES[MountPlanetTable[local_94].texture]'),
+    ('g_MOUNT_PLANET_TEXTURES[' + landmark_source_byte_access('mount_planet', 'local_94') + ']',
+     'g_SUNNY_MESA_TEXTURES[' + landmark_source_byte_access('mount_planet', 'local_94') + ']'),
     ('g_ROAD_TEXTURES[1 + ((k + 2) & 7)]',
      'g_ROAD_TEXTURES[1 + ((k + 3) & 7)]'),
     ('g_TER1WRECK_UNITY_WRECKAGE_SPRITES[10]',
@@ -2001,6 +2117,7 @@ def test_actual_land_fan_tables():
 ])
 def test_terrain_receiver_damage_is_observed(tmp_path, old, new):
     actual = terrain_source()
+    assert_terrain_baseline(actual)
     assert actual.count(old) >= 1, old
     result = terrain_run(tmp_path, terrain_harness(actual.replace(old, new)))
     assert result.returncode == 91, result.stderr

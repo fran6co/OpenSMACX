@@ -1,0 +1,22 @@
+{
+  "event_id": "ba300b5dd63472fd6abf76ae221470bae9ce23e6b1f50190b8a87294f0e6ef2c",
+  "payload": {
+    "affects": [
+      "entity-546c2a42d275b8a5e1f0a466a9395421124e340fe373c4b74a6dd49114355002"
+    ],
+    "author": "coordinator",
+    "discovery_id": "stale-ocean-uv-oracle",
+    "evidence": [
+      "Coordinator inspected current fixture: separate OceanCornerUVs[16] at652 is assigned synthetic110/111+2*i at919/920, but extracted current body reads TerrainLandmarkStorageWindowData.ocean_corner_uvs. Old ocean expectations1312/1313 therefore compare against an unused testdouble, not original source data. Pinned mapped128byte window685CA8..685D28 is backed, relocationfree and does not contain those synthetic values.",
+      "Authorize test-only correction in existing editablefile: derive a separate ocean-UV oracle independently from pinned source object binding/start/span, compare every x/y draw coordinate/order against it, remove unused synthetic ocean fixture writes/declaration after confirming no otheruse. Preserve synthetic LandCornerUV controls and independent49rowlandmark oracle. No C++/initializer/bounds change.",
+      "Restore effective mutant preconditions: unmodified actual renderer must run successfully with same inputs before mutated results count as damage evidence, including when a mutant test is selected alone. Add controlled earlier-unrelatedfailure case proving it cannot masquerade as targeted mutant success, ideally region-specific failure IDs for landmark damage. Do not remove cases or accept any earlier exit91 as sufficient. If further baseline disagreements surface, stop/report evidence before altering expectations."
+    ],
+    "hypothesis": "The terrain fixture expects synthetic OceanCornerUVs that no longer feed the extracted current renderer, while actual source uses the pinned aggregate member.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "stale-ocean-uv-oracle",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:terrain-current-owner-harness-oct19"
+}
