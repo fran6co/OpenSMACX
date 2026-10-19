@@ -1,0 +1,46 @@
+{
+  "author": "coordinator",
+  "base_revision": "bc78bc9457e5517872349208e96353f48a8200a1",
+  "editable_files": [
+    "src/vendor/vc6-runtime.recovery.h",
+    "recovery/tests/test_crt_memcpy_section_oct19.py",
+    "recovery/tests/test_crt_threadstart_contribution_oct19.py"
+  ],
+  "evidence": [
+    "Independent original IDA9.4 row5103 names _memcpy at645930..645C65; pinned Ghidra12.1.2 row3691 independently starts there with21 discontiguous ranges totaling664 bytes through645C65. The configured pinned LIBCMT has one defined external _memcpy in build/intel/mt_obj/memcpy.obj section1 +0, member SHA256 3a93e620dba7b163ced3dc5565b74eb1665791309e804d612322bff7af29497c. Its complete ordinary executable .text is821 bytes. Preserve disagreement: no821-byte function extent is asserted.",
+    "Authorize one additive ToolchainCodeSectionBinding via existing source component protocol: section1 .text span645930..645C65 and CodeEntryAnchor _memcpy offset0, explicit independent evidence. There are46 DIR32 relocations to same-section static symbols, not45. Passing whole-section bytes/references/inventory can qualify only a scoped reference target; keep function_extent and linked/provider/runtime claims unknown. No package feature, aliases, callable821-byte function, application implementation, hand-authored CRT, compiler flags, bodies or historical claims changes.",
+    "Preserve every prior manifest field/binding/entry/import and all ORIGINAL markers/spans/claims. Existing thread-start historical test may be updated only so separately validated additive code contributions do not invalidate its old cohort: retain exact previous physical rows, entries, flags, archive pin, identity and thread-start controls. No weakening of binary protocol, erased historical field or unknown-to-pass shortcut. New focused test must validate actual source addition and pinned member/IDA/Ghidra evidence, exact46 local relocations, parser roundtrip, and wrong pin/member/boundary/bytes/entry/relocation refusal. Do not freeze future total additions or source line numbers.",
+    "Worker isolated metadata/tests and host-only native verification. Coordinator owns Git/preparation/compiler lease, fresh174TU build/link,188-object zero-omission identity, full known-domain masked/strict delta and native claims/mappings/references; independently review actual source and recheck destination. Preserve old failures/unknowns; do not promise a pass-count gain or provider/link/runtime acceptance. Task baseline is unchanged by later integration."
+  ],
+  "intent": "Attribute the complete pinned LIBCMT memcpy code contribution with one size-free entry anchor, retaining all original function/link/runtime uncertainty.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4337440,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4698144,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6390832,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6393248,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6576432,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "memcpy-section-oct19"
+}
