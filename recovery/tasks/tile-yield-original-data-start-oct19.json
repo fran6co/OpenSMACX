@@ -1,0 +1,30 @@
+{
+  "author": "coordinator",
+  "base_revision": "d3f8c3332fcfb39048920c770ab372bfee68a279",
+  "editable_files": [
+    "src/base.cpp",
+    "recovery/tests/test_tile_yield_data_identity_oct19.py"
+  ],
+  "evidence": [
+    "Fresh original-reference census atd3f8c3332 independently exposes bothresource_yield4E7DC0 andsub_4e7db0 currentlyUNKNOWN on existingordinaryexternal?TileYieldRestricted@@3HA. It is not a current strictFAIL or a missing C++ body. Existing switch association stays unchanged.",
+    "Complete pinned4E7DB0..4E7DBD and resource_yield4E7DC0..4E7E34 show dword immediate-zero stores to90E998 at4E7DB0/4E7E26. Initialfourbytes zero; adjacentFarmStatus90E99C does not prove containingallocation or originalcompleteextent. Source already defines intTileYieldRestricted inbase.cpp and canonicalextern inbase.h; preserve them and everyconsumer.",
+    "Authorize one v1start-only sourcebinding adjacent to existingdefinition and concise rationale using existing blank/commentlines to preserve tokenstream/LINE-dependent names inthisepoch. No body/type/linkage/initializer/header/caller/flag/layout/gate/package/claim/originalmarker edits. Focused tests must check nativeparse/configuredsourceuniqueness, correct/missing/wrong/duplicate binding and missing/corruptpin refusal plus completepinneddecode/actualdwordoperands; no permanentline-numberassertion.",
+    "Coordinator owns sourcepreparation/resources, fresh completebuild/link, zero-omission188physicalobjectcomparison, freshstrictdelta/data/ref/claim/mappingchecks and integration. Independentreview and freshdestinationverification required. No new implementation/exactness/claim inferred. Strict whole-game, originaluniverse, allocation/lifetime, linkedselection/ICF and runtime remain unfinished."
+  ],
+  "intent": "Bind the independently addressed original tile-yield restriction dword to its existing real source definition; preserve behavior, original identity and historical obligations.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5143984,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5144000,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "tile-yield-original-data-start-oct19"
+}
