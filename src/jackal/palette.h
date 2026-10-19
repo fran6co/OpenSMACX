@@ -43,7 +43,9 @@ class Palette {
   // Cache validation and tint construction read the original contiguous
   // 256-entry palette without granting callers permission to change it.
   const PALETTEENTRY *entries() const { return entries_; }
-  // Borrow the live saved colours; Palette retains allocation/lifetime ownership.
+  // Borrow the live saved colours as an opaque token; Palette retains
+  // allocation/lifetime ownership. The zero-reactor Strings consumer needs
+  // the stored pointer value, not a character-data interpretation.
   // name_proto's zero-reactor path reads g_PALETTE2's final slot: native
   // 0x57E4C1 addresses 0x9527F0, which is this member at object offset 0x450.
   // It is not an independent reactor-string global or a constant null value.
@@ -203,7 +205,7 @@ class Palette {
       uint8_t count;        // how many entries, memcpy'd count * 4 bytes
       uint8_t field_A;      // nothing recovered touches these two - not the
       uint8_t field_B;      // constructor, not `close`, not UNK3
-      void *colours;        // malloc'd PALETTEENTRY run; `close` frees it
+      PALETTEENTRY *colours; // malloc'd PALETTEENTRY run; `close` frees it
   } internal_[5];
 };
 

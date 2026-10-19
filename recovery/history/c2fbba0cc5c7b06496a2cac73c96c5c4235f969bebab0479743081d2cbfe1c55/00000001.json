@@ -1,0 +1,22 @@
+{
+  "event_id": "442d59f1925979d3ba486d07b7da16c83d5a3b67fb3fc21549f1494d99d8ce95",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_palette_animation_view.py",
+      "src/jackal/palette.h"
+    ],
+    "evidence": [
+      "Pinned init_cycle and remove_animation allocate/copy/restore PALETTEENTRY runs, and close frees the same owned storage. Replace generic internal colours member with PALETTEENTRY* and necessary explicit allocation conversion, keeping count*4 modulo arithmetic, lifetime and all behavior unchanged.",
+      "Minimal structural scope: existing Palette whole-owner CPP plus header and actual-source animation-view test. Keep public opaque borrowed const void* animation_colours view: its reactor-zero consumer intentionally treats bits as a Strings range-check argument, not text. No veh.cpp/caller change or invented string ownership is required.",
+      "Existing no-gain fill counter trial is not a recovery gain. Preserve all mappings/claims and findings. Source/test workers use apply_patch only, no Git/compilers/tests/record/preparation. Freeze changes for coordinator-native verification; header collateral remains an obligation, not assumed neutral."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "typed-palette-colour-storage-oct20",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:palette-source-batch-oct19c"
+}
