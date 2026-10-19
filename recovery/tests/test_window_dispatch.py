@@ -37,7 +37,8 @@ def actual_source():
         parts[cls.upper()+"_BASES"]=declaration
     parts["WIN_DEFAULTS"]="\n".join(braced(headers["win"],"virtual void "+method+"()")
                                            for method in ("on_lose_mouse_capture","on_update"))
-    parts["GRAPHIC_DECL"],=re.findall(r"  virtual void on_update\(\);",headers["graphicwin"])
+    parts["GRAPHIC_DECL"],=re.findall(
+        r"  virtual void on_update\(\) \{ update\(0\); \}", headers["graphicwin"])
     parts["MAP_DECL"],=re.findall(r"  virtual void on_lose_mouse_capture\(\);",headers["mapwin"])
     parts["WIN_UPDATE_DECL"],=re.findall(r"  void __cdecl update\(\);",headers["win"])
     fields=[]
@@ -50,7 +51,6 @@ def actual_source():
         declaration,=re.findall(pattern,headers["win"],re.M);globals.append(declaration.replace("extern ",""))
     parts["ZORDER_GLOBALS"]="\n".join(globals)
     for key,unit,signature in (("CAPTURE_BODY","mapwin","void MapWin::on_lose_mouse_capture()"),
-                                ("SURFACE_BODY","graphicwin","void GraphicWin::on_update()"),
                                 ("RESET_BODY","time","void __cdecl go_reset()"),
                                 ("ZORDER_BODY","win","void __cdecl Win::update()")):
         parts[key]=braced((ROOT/"src"/(unit+".cpp")).read_text(),signature)
@@ -81,7 +81,7 @@ public:
 };
 GRAPHICWIN_BASES
 public:
-    GRAPHIC_DECL
+GRAPHIC_DECL
     virtual GraphicWin *get_graphic_win(){return this;}
     void update(GraphicWin *);
     int graphic_padding[5];
@@ -122,7 +122,6 @@ int Win::set_cursor(int value){require(value==0x7f00);note('R',id);return 17;}
 void GraphicWin::update(GraphicWin *target){require(target==nullptr);note('U',id);}
 void Win::on_nc_paint(RECT *area,int flags){require(!area && flags==-1);note('N',id);}
 CAPTURE_BODY
-SURFACE_BODY
 RESET_BODY
 ZORDER_BODY
 struct Track:GraphicWin {
@@ -227,8 +226,7 @@ def test_actual_window_dispatch(tmp_path):
 MUTANTS=[
     ("missing-map-override",[("MAP_DECL","on_lose_mouse_capture","unused_capture"),
                              ("CAPTURE_BODY","on_lose_mouse_capture","unused_capture")]),
-    ("missing-graphic-override",[("GRAPHIC_DECL","on_update","unused_update"),
-                                 ("SURFACE_BODY","on_update","unused_update")]),
+    ("missing-graphic-override",[("GRAPHIC_DECL","on_update","unused_update")]),
     ("plan-inherits-capture",[("PLANWIN_BASES","public MapWin","public GraphicWin")]),
     ("console-inherits-capture",[("CONSOLE_BASES","public MapWin","public GraphicWin")]),
     ("capture-default-not-virtual",[("WIN_DEFAULTS","virtual void on_lose_mouse_capture","void on_lose_mouse_capture")]),
@@ -238,8 +236,8 @@ MUTANTS=[
                                    "void __cdecl go_reset() { static bool resetting = false; if (resetting) return; resetting = true;"),
                                    ("RESET_BODY","        MapWinSelectedSlot = -1;\n    }\n}",
                                     "        MapWinSelectedSlot = -1;\n    }\n    resetting = false;\n}")]),
-    ("surface-delegation-target",[("SURFACE_BODY","update(0);","update(this);")]),
-    ("surface-direct-empty-base",[("SURFACE_BODY","update(0);","Win::on_update();")]),
+    ("surface-delegation-target",[("GRAPHIC_DECL","update(0);","update(this);")]),
+    ("surface-direct-empty-base",[("GRAPHIC_DECL","update(0);","Win::on_update();")]),
     ("capture-direct-empty-base",[("RESET_BODY","base->on_lose_mouse_capture();","base->Win::on_lose_mouse_capture();")]),
     ("live-update-after-recursion",[("RESET_BODY","(*slot)->on_update();","window->on_update();")]),
     ("cached-owner4-after-recursion",[("RESET_BODY","WinPointerOwner4 == base","WinPointerOwner4 == static_cast<GraphicWin *>(*slot)")]),

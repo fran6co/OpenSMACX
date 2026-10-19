@@ -1400,6 +1400,7 @@ void GraphicWin::on_paint(RECT *area) {
 // The catalogue named AlphaMovie, but this body uses the GraphicWin receiver.
 /*
 // ORIGINAL: 0x00404290 ?update@AlphaMovie@@QAEXXZ 0x00404290-0x00404298 BYTE_EXACT
+// body src/graphicwin.h
 // symbol    ?on_update@GraphicWin@@UAEXXZ
 // size      8 bytes
 // prototype void (__thiscall ?update@AlphaMovie@@QAEXXZ)(AlphaMovie* this)
@@ -1409,10 +1410,6 @@ void GraphicWin::on_paint(RECT *area) {
 // calls     0x005D56B0
 Status: Complete
 */
-void GraphicWin::on_update() {
-    update(0);
-}
-
 // Superseded seed deleted; binding references retain historical provenance.
 // ORIGINAL: 0x005D68C0 sub_5d68c0 0x005D68C0-0x005D6A42
 // RECOVERY_BINDING: v1 {"evidence": ["task:graphicwin-frame-sprite-owner original identity/spans and all seed lessons retained from src/unrecovered/005d68c0.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:5D68C0..5D6A42 complete native stores, guards and signed jg/equality joins.", "source:src/graphicwin.h existing NCSprites and frame fields; Sprite width18/height1C and Win minima134/138; compute_min_size5D7030 corroborates selection and wrap semantics."], "reason": "Recover complete instance frame-sprite publication in genuine GraphicWin with existing NCSprites, Sprite accessors and Win minimum members. apply_frame_sprites is a provisional semantic name; preserve source input order, caption-bit selection, null guards and low32-bit sums before signed comparison."}
