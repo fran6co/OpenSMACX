@@ -1,0 +1,20 @@
+{
+  "event_id": "926c46013ba7ccc6a37576c6dfdfff65b6db47f4a0844a311de8f7aa6b53a380",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_sound_flag_sign_extension_oct19.py"
+    ],
+    "evidence": [
+      "Pinned0x448380 is dword load followed by SHL31/SAR31/RET. Native screened source now4/4exact with unchanged replica/damage controls and full-TU outside-body preservation. Verify sign-extension for all individual bits, boundary words and non-mutating state; do not infer a bitfield layout.",
+      "Authorize one actual-source extracted C++98 host fixture with executed negative controls, not copied implementations. Native controls optional only under a coordinator lease; no worker compiler/Git/preparation. This expands test scope only, keeps original baselinec17889c967f1721cc4e116650b907123e5dea9f7 and all subjects, and grants no acceptance waiver."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "sound-actual-source-controls-oct19e",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:sound-source-batch-oct19e"
+}

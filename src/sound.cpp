@@ -1361,7 +1361,7 @@ uint32_t Sound::get_type() {
 // The original Sound table selects 0x00448380 at slot 24. This
 // inherited integer contract sign-extends flags_40_ bit zero.
 int Sound::unk_slot24() {
-    return (flags_40_ & 1) ? -1 : 0;
+    return static_cast<int>(flags_40_ << 31) >> 31;
 }
 
 // ORIGINAL: 0x004C83F0 sub_4c83f0 0x004C83F0-0x004C840F BYTE_EXACT
