@@ -342,6 +342,12 @@ def measure_variants(root: Path, task_name: str, image_path: Path, deck: dict, *
         proposed, _, targets, _ = resolved
         if {item.origin.entity_id for item in proposed} != {item.origin.entity_id for item in bindings}:
             raise ValueError("candidate symbol changes create or resolve ambiguous bindings; checkpoint decisions first")
+        baseline_domain = {item.origin.entity_id: (item.unit, item.local_only)
+                           for item in bindings}
+        proposed_domain = {item.origin.entity_id: (item.unit, item.local_only)
+                           for item in proposed}
+        if proposed_domain != baseline_domain:
+            raise ValueError("candidate symbol changes create or resolve ambiguous bindings by altering the qualified function binding domain; checkpoint decisions first")
         reserved = {*object_symbols, *[item.symbol for item in (*generated, *imports, *shared)]}
         if set(targets) & reserved:
             raise ValueError("conflicting function/object/generated/import symbol bindings")

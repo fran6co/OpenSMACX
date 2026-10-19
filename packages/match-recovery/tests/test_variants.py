@@ -424,6 +424,40 @@ def test_proposed_symbol_collision_is_refused_before_compilation(project):
         measure(project, renamed_deck(project), compiler=object())
 
 
+def test_proposed_symbol_cannot_resolve_an_existing_tu_local_collision(project):
+    root, _ = project
+    (root / "code/other.cc").write_text(
+        "// ORIGINAL: 0x00401010 _f 0x00401010-0x00401011\nstatic void f() {}\n")
+    value = renamed_deck(project, symbol="_g")
+    with pytest.raises(ValueError, match="ambiguous bindings"):
+        measure(project, value, compiler=object())
+
+
+def test_body_variant_preserves_existing_tu_local_domain_with_static_coff(project):
+    root, _ = project
+    source = root / "code/unit.cc"
+    source.write_text(source.read_text().replace("void f()", "static void f()"))
+    (root / "code/other.cc").write_text(
+        "// ORIGINAL: 0x00401010 _f 0x00401010-0x00401011\nstatic void f() {}\n")
+    value = deck(project)
+    value["files"]["code/unit.cc"]["source_sha256"] = hashlib.sha256(source.read_bytes()).hexdigest()
+    value["files"]["code/unit.cc"]["before"] = "/* baseline */"
+    value["files"]["code/unit.cc"]["control"] = "for (;;) {}"
+    value["candidates"] = {"body": {"code/unit.cc": "/* local body variant */"}}
+
+    class StaticCompiler(Compiler):
+        def __call__(self, *_):
+            return coff_fixture(storage=3)
+
+        def variant(self, source, contents, *args):
+            return coff_fixture(b"\xeb\xfe" if b"for (;;)" in contents else b"\xc3", storage=3)
+
+    report = measure(project, value, compiler=StaticCompiler())
+    assert report["controls"][0]["result"] == "pass"
+    assert report["candidates"][0]["target"]["result"] == "pass"
+    assert report["candidates"][0]["target"]["symbol"] == "_f"
+
+
 @pytest.mark.parametrize("annotation", [
     "// RECOVERY_OBJECT: v1 0x00401100 _object",
     "// RECOVERY_GENERATED: v1 vtable 0x00401100 ? _table 0x00401000",
