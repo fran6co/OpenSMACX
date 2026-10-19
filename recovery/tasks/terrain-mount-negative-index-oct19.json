@@ -1,0 +1,25 @@
+{
+  "author": "coordinator",
+  "base_revision": "8e75694f733a4f5f3aa157aa20fe46c20ba98c31",
+  "editable_files": [
+    "src/mapwin.cpp",
+    "recovery/tests/test_mapwin_landmark_original_oct9.py",
+    "recovery/tests/test_landmark_storage_window_oct13i.py"
+  ],
+  "evidence": [
+    "Bounded read-only audit milestone-deviations-frontier.md: pinned464787 loads signed selected index;464795 cmp edi,0 and464797 jl4648FB precede first Mount table read46479D. Current fresh application reads table without that lower predicate. Mesa and Crater already preserve their original negative-only skips. No upper bound is authorized.",
+    "Existing test starts disassembly at46479D, after the omitted branch, and incorrectly asserts Mount has no negative check. Correct the original evidence window and actual-source controls, add safe negative-index short-circuit witnesses with no table reads, and reject missing-lower/new-upper mutant predicates. Do not execute invalid array accesses to prove them. Preserve signed high-byte producer semantics, tables, storage model, original spans and historical claims.",
+    "Only the stated Mount predicate and its bounded host/pinned controls are editable. No adjacent structure/global/data/flags change, no deliberate safety fix, no raw code or original-address runtime call. Preserve all wider renderer/layout/runtime obligations; coordinator owns native leases, Git, actual source review and fresh build/link verification."
+  ],
+  "intent": "Restore the original signed-negative Mount landmark skip before the table read, preserving all unchecked positive indices and the complete renderer.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4600528,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "terrain-mount-negative-index-oct19"
+}
