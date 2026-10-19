@@ -1,0 +1,24 @@
+{
+  "author": "coordinator",
+  "base_revision": "098116e1d33b49189770b432a98a1178a8c65d88",
+  "editable_files": [
+    "recovery/tests/test_mapwin_generation.py"
+  ],
+  "evidence": [
+    "Fresh baseline/candidate comparison at source098116e1d retains89existing failures because landmark_owners still regex-extracts removed standalone arrays. The current actual renderer uses TerrainLandmarkStorageWindowData and terrain_window_signed_byte. Tests fail before executing the body and therefore provide no broad behavioral protection.",
+    "Extract actual source aggregate/helper, preserve independent pinned49-pair table oracle, retarget obsolete receiver/rotation/sentinel mutation anchors to current expressions, and keep every existing case/geometry/protocol/mutant purpose. No duplicate data model, copied production body, tests removed/skipped for convenience, weakened expectations or artificial compatibility aliases.",
+    "Use existing configure-time data generators with pinned image and current source declarations to materialize all needed initializer includes into pytest tmp_path, never assume old build/preparation caches are fresh. Refuse explicit wrong/missing image and malformed/relocated data. Proprietary bytes stay ignored/tmp and out of tracked tests. Existing generated-file path in prior read-only plan is a hint, not trusted current evidence.",
+    "Only this project test file is editable. Product source, compiler/flags, annotations, package code and gate policy stay unchanged. If executing repaired harness exposes an actual C++ or test-oracle disagreement, preserve failing case and request scope with pinned evidence; do not silently normalize the source or invent a passing oracle. Worker may run host/pinned pytest but no native VC6/Wine/Git. Coordinator owns integration and artifact verification."
+  ],
+  "intent": "Restore existing terrain-body regression and damage controls against the current actual landmark aggregate/helper without changing product C++ or weakening the pinned oracle.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4600528,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "terrain-current-owner-harness-oct19"
+}
