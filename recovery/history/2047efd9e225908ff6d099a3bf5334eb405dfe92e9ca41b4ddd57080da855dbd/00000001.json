@@ -1,0 +1,20 @@
+{
+  "event_id": "a432279057110e37ddd5dccbdb335c9b07218105f7a64c30615e34ae3383e77a",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "packages/match-recovery/src/match_recovery/variants.py",
+      "packages/match-recovery/tests/test_variants.py"
+    ],
+    "evidence": [
+      "Full candidate suite11249pass/3fail/1skip exposes proposed cross-TU rename collision newly tentatively classified local rather than refused before compilation. Preserve prior candidate-deck binding-domain guard: candidate experiments must not create or resolve ambiguity or switch ordinary/global and tentative-local identity domains without checkpoint decisions. Add focused controls for permitted existing-local body variants and newly introduced or removed local collisions. No weaker test, automatic admission, C++ or compiler/flags change."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "preserve-variant-binding-domain",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:tu-local-function-qualification-oct19"
+}
