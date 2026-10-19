@@ -5,6 +5,7 @@ this is not original-TU, native compiler, linked retention or runtime proof.
 """
 from __future__ import annotations
 
+from functools import cache
 from pathlib import Path
 import subprocess
 
@@ -23,6 +24,7 @@ LIVE_PATHS = {
     "undo": ROOT / "src/scenario_undo.cpp",
     "scale_adjustment_cpp": ROOT / "src/scale_adjustment.cpp",
     "scale_adjustment_h": ROOT / "src/scale_adjustment.h",
+    "number_parsing_cpp": ROOT / "src/number_parsing.cpp",
 }
 
 STATE = b"uint32_t ScenEditorUndoPosition = 1; // 0x00690D7C\n"
@@ -341,15 +343,82 @@ def _restore_admitted_fixed_cos(general_bytes: bytes) -> bytes:
     return general_bytes.replace(FIXED_COS_CURRENT, FIXED_COS_PRIOR, 1)
 
 
+PARSER_FIDELITY_PRIOR = "d62a5691064294364d349a1a794701bb589ab236"
+PARSER_FIDELITY_PUBLISHED = "70417d18d021fdd3e5d17192c2ede943d034b7ea"
+NUMBER_START = b"/*\nPurpose: Convert the binary string to an integer.\n"
+PARSER_START = b"/*\nPurpose: This handles parsing the input string and storing it in the output.\n"
+PARSER_END = b"/*\nPurpose: Get the drive letter of the CD path.\n"
+_LIVE_NUMBER_OWNER = object()
+
+
+@cache
+def _parser_fidelity_blocks() -> tuple[bytes, bytes]:
+    return tuple(
+        _unique_section(_git_source_at(revision, "src/general.cpp"), PARSER_START, PARSER_END)
+        for revision in (PARSER_FIDELITY_PRIOR, PARSER_FIDELITY_PUBLISHED)
+    )
+
+
+def _restore_admitted_parser_fidelity(general_bytes: bytes) -> bytes:
+    """Invert only the separately reviewed complete parser block, not arbitrary code."""
+    prior, published = _parser_fidelity_blocks()
+    actual = _unique_section(general_bytes, PARSER_START, PARSER_END)
+    assert actual in (prior, published), "unadmitted parser-fidelity change"
+    return general_bytes.replace(actual, prior, 1)
+
+
+def _restore_admitted_signed_bit_count(general_bytes: bytes) -> bytes:
+    """Invert only the two API spellings reviewed in63e961419, not its body."""
+    spellings = (
+        (b"// symbol    ?bit_count_signed@@YAIH@Z\n",
+         b"// symbol    ?bit_count_signed@@YAHH@Z\n"),
+        (b"uint32_t __cdecl bit_count_signed(int input) {\n",
+         b"int __cdecl bit_count_signed(int input) {\n"),
+    )
+    state = tuple((general_bytes.count(prior), general_bytes.count(published))
+                  for prior, published in spellings)
+    assert state in (((1, 0), (1, 0)), ((0, 1), (0, 1))), "mixed signed API publication"
+    for prior, published in spellings:
+        general_bytes = general_bytes.replace(published, prior, 1)
+    return general_bytes
+
+
+@cache
+def _number_parsing_owner_payload() -> tuple[bytes, bytes]:
+    frozen = _git_source_at(PARSER_FIDELITY_PUBLISHED, "src/general.cpp")
+    heading = frozen[:frozen.index(b'#include "stdafx.h"')]
+    prefix = heading + b'#include "stdafx.h"\n#include "general.h"\n\n'
+    return prefix, _unique_section(frozen, NUMBER_START, PARSER_START)
+
+
+def project_number_parsing_general(general_bytes: bytes, number_cpp: bytes | None) -> bytes:
+    """Restore exact actual numeric-owner bytes at their unique former seam."""
+    prefix, payload = _number_parsing_owner_payload()
+    if number_cpp is None:
+        assert _unique_section(general_bytes, NUMBER_START, PARSER_START) == payload
+        return general_bytes
+    assert number_cpp == prefix + payload, "changed numeric owner/body/history boundary"
+    assert NUMBER_START not in general_bytes, "duplicate numeric owner in General"
+    assert general_bytes.count(PARSER_START) == 1
+    return _unique_insert(general_bytes, PARSER_START, number_cpp[len(prefix):])
+
+
 def _project_header_rng_general(
     general_bytes: bytes,
     header_io_cpp: bytes,
     header_io_h: bytes,
     crt_random_cpp: bytes,
     crt_random_h: bytes,
+    *, number_parsing_cpp: bytes | None | object = _LIVE_NUMBER_OWNER,
 ) -> bytes:
+    if number_parsing_cpp is _LIVE_NUMBER_OWNER:
+        path = LIVE_PATHS["number_parsing_cpp"]
+        number_parsing_cpp = path.read_bytes() if path.is_file() else None
+    general_bytes = project_number_parsing_general(general_bytes, number_parsing_cpp)
     general_bytes = _strip_switch_associations(general_bytes)
     general_bytes = _restore_admitted_fixed_cos(general_bytes)
+    general_bytes = _restore_admitted_parser_fidelity(general_bytes)
+    general_bytes = _restore_admitted_signed_bit_count(general_bytes)
     records = _validate_header_rng_sources(
         header_io_cpp, header_io_h, crt_random_cpp, crt_random_h
     )
@@ -410,7 +479,7 @@ def _baseline_sources() -> dict[str, bytes]:
 
 
 def _actual_split(paths: dict[str, Path]) -> dict[str, bytes]:
-    optional = {"scale_adjustment_cpp", "scale_adjustment_h"}
+    optional = {"scale_adjustment_cpp", "scale_adjustment_h", "number_parsing_cpp"}
     return {
         key: path.read_bytes() if path.is_file() else None
         for key, path in paths.items()
@@ -422,13 +491,20 @@ def inverse_split(parts: dict[str, bytes]) -> dict[str, bytes]:
     """Rebuild original general/council bytes from actual split contents."""
     assert set(parts) == {
         "general", "general_h", "council", "undo",
-        "scale_adjustment_cpp", "scale_adjustment_h",
+        "scale_adjustment_cpp", "scale_adjustment_h", "number_parsing_cpp",
     }
     general = project_scale_adjustment_general(
         parts["general"], parts["scale_adjustment_cpp"],
         parts["scale_adjustment_h"], parts["general_h"],
     )
-    general = project_header_rng_general(general)
+    general = _project_header_rng_general(
+        general,
+        *(path.read_bytes() for path in (
+            ROOT / "src/header_io.cpp", ROOT / "src/header_io.h",
+            ROOT / "src/crt_random.cpp", ROOT / "src/crt_random.h",
+        )),
+        number_parsing_cpp=parts["number_parsing_cpp"],
+    )
     council = parts["council"]
     undo_owner = parts["undo"]
     baseline = _baseline_sources()
@@ -525,7 +601,14 @@ def assert_parser_continuity(parts: dict[str, bytes], paths: dict[str, Path]) ->
         parts["general"], parts["scale_adjustment_cpp"],
         parts["scale_adjustment_h"], parts["general_h"],
     )
-    parser_parts["general"] = project_header_rng_general(parser_parts["general"])
+    parser_parts["general"] = _project_header_rng_general(
+        parser_parts["general"],
+        *(path.read_bytes() for path in (
+            ROOT / "src/header_io.cpp", ROOT / "src/header_io.h",
+            ROOT / "src/crt_random.cpp", ROOT / "src/crt_random.h",
+        )),
+        number_parsing_cpp=parts["number_parsing_cpp"],
+    )
     parser_parts["council"] = _restore_admitted_council_context(parts["council"])
     after = _records(parser_parts, paths)
     assert after.keys() == before.keys()
@@ -695,9 +778,15 @@ def test_inverse_rejects_unadmitted_fixed_cos_changes(damage):
 ])
 def test_inverse_rejects_associated_record_population_and_interpretation_damage(mutate):
     parts = _actual_split(LIVE_PATHS)
-    changed = mutate(parts["general"])
-    assert changed != parts["general"]
-    parts["general"] = changed
+    changed_owners = 0
+    for key in ("general", "number_parsing_cpp"):
+        if parts[key] is None:
+            continue
+        changed = mutate(parts[key])
+        if changed != parts[key]:
+            parts[key] = changed
+            changed_owners += 1
+    assert changed_owners, "damage must affect a real source owner"
     with pytest.raises(AssertionError):
         inverse_split(parts)
 
@@ -707,10 +796,25 @@ def test_inverse_rejects_associated_record_at_wrong_source_seam(which):
     parts = _actual_split(LIVE_PATHS)
     marker = STOI_ASSOCIATIONS if which == "stoi" else HSV_ASSOCIATION
     anchor = STOI_PURPOSE if which == "stoi" else HSV_ORIGINAL
-    general = parts["general"]
-    assert general.count(marker + anchor) == 1
-    moved = general.replace(marker + anchor, anchor, 1)
+    owner = "number_parsing_cpp" if which == "stoi" else "general"
+    source = parts[owner]
+    assert source.count(marker + anchor) == 1
+    moved = source.replace(marker + anchor, anchor, 1)
     moved = _unique_insert(moved, b'#include "stdafx.h"\n', marker)
-    parts["general"] = moved
+    parts[owner] = moved
     with pytest.raises(AssertionError):
+        inverse_split(parts)
+
+
+@pytest.mark.parametrize("published,prior", [
+    (b"// symbol    ?bit_count_signed@@YAHH@Z\n",
+     b"// symbol    ?bit_count_signed@@YAIH@Z\n"),
+    (b"int __cdecl bit_count_signed(int input) {\n",
+     b"uint32_t __cdecl bit_count_signed(int input) {\n"),
+])
+def test_inverse_rejects_mixed_signed_api_publication(published, prior):
+    parts = _actual_split(LIVE_PATHS)
+    assert parts["general"].count(published) == 1
+    parts["general"] = parts["general"].replace(published, prior, 1)
+    with pytest.raises(AssertionError, match="mixed signed API publication"):
         inverse_split(parts)

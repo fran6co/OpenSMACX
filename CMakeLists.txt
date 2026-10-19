@@ -161,6 +161,7 @@ set(OPENSMACX_SOURCES
     src/game.cpp
     src/newgame.cpp
     src/general.cpp
+    src/number_parsing.cpp
     src/scenario_undo.cpp
     src/header_io.cpp
     src/crt_random.cpp

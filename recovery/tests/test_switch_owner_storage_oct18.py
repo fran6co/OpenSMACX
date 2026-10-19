@@ -36,10 +36,22 @@ def population(rows):
     added = tuple(row for row in rows if row.owner.address in owners)
     assert len(added) == 36
     assert {row.owner.address for row in added} == owners
-    # Earlier General storage remains exactly in its original owner; it is
-    # not part of this source-data cohort or its proof scope.
-    general = tuple(row for row in rows if row.unit == "src/general.cpp")
-    assert len(general) == 3
+    # Earlier utility storage remains with its real source owner. The numeric
+    # owner move preserves both stoi records; HSV stays in General. These
+    # mappings are not part of this annotation-publication cohort.
+    utilities = {
+        (row.owner.address, row.span, row.kind, row.evidence.address, row.unit)
+        for row in rows
+        if row.unit in {"src/general.cpp", "src/number_parsing.cpp"}
+    }
+    assert utilities == {
+        (0x628950, Span(0x628A00, 0x628A10), "switch_targets", 0x628976,
+         "src/number_parsing.cpp"),
+        (0x628950, Span(0x628A10, 0x628A47), "switch_selector", 0x628970,
+         "src/number_parsing.cpp"),
+        (0x628B70, Span(0x628D94, 0x628DAC), "switch_targets", 0x628C65,
+         "src/general.cpp"),
+    }
     return added
 
 

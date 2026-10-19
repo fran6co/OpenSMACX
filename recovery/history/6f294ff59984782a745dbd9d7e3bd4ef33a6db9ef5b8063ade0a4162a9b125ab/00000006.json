@@ -1,0 +1,21 @@
+{
+  "event_id": "61674df53b9c732023c5ee6e8766d0cacaf0c90ae1115a7320939c7dcbf46086",
+  "payload": {
+    "affects": [
+      "entity-27255b73245e74bd57f24cf0a643b7c14b4391b6bc39ad60cfe437fe3c2524e5"
+    ],
+    "author": "coordinator",
+    "discovery_id": "parser-original-block-copy-call-context",
+    "evidence": [
+      "Pinned parse_string has eight calls to memcpy645930; both unchanged Release numeric-split controls and fresh application object have none. Current source already names memcpy with computed lengths, but O2 expands it intrinsically. Distinct scratch ranges/frame and original French comparison ordering remain matching obligations too.",
+      "Do not repeat closed whole-General frame/flag trials, add a noinline/forwarder or apply a global pragma: stdafx.h records mixed intrinsic/call behavior and unrelated exact bodies rely on it. Investigate source-family/visibility/compiler context with positive evidence under a new explicit scope decision; no original TU boundary is proven by the current organization."
+    ],
+    "hypothesis": "The parser now restores its out-of-line number scans, but its block-copy lowering still differs from the original compiler context.",
+    "kind": "discovery"
+  },
+  "previous_event": "91b2e8f8bedf4957e5b2ae6368a6f18a2f0888d0ac090dd4efd56ae722e27047",
+  "request_id": "parser-original-block-copy-call-context",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:general-parser-storage-oct19"
+}

@@ -1,0 +1,21 @@
+{
+  "event_id": "91b2e8f8bedf4957e5b2ae6368a6f18a2f0888d0ac090dd4efd56ae722e27047",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "parser-number-scan-visibility",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Coordinator and independent review accept one coherent current numeric utility owner, not an asserted original TU. Complete btoi/htoi mapping/history blocks and unchanged stoi/findnum implementations/digit storage move verbatim into number_parsing.cpp; real inline definitions remain in unchanged general.h. Both stoi associated switch records move with their owner. parse_string and its French object binding are byte-for-byte unchanged; no flags, pragmas, ABI, body rewrite, safety fix or claim transition.",
+      "Fresh unchanged Release controls and the174-TU application build now emit exactly five ordinary calls from parse_string to the mapped findnum helper, as in the original; the fresh link MAP selects that function from number_parsing.cpp.obj. All83 original identities/history and all source associations are preserved. Known5581conventional verdicts and strict statuses remain unchanged, including3262exact. No function-coverage or exact-claim gain is asserted. Parser aligned score15to8 while instructioncount719to662 is diagnostic, not acceptance or reason to undo supported source organization.",
+      "Build/link,169focused host/pinned/transport/damage cases and claim/mapping/reference checks pass; the one opt-in native signedAPI probe stays skipped. Historical inverse controls retain their immutable baselines and all damage cases while admitting exact previously reviewed parser70417d18, signedAPI63e961419 and scale-owner changes. Mixed signed publication damage refuses. Host inputs now keep findnum decrement inside real arrays without changing production behavior.",
+      "All186unrelated physical objects pass unprojected residuals, and both fresh affected objects wholly agree with their controls. All8new numeric code/associated families have complete old physical witnesses; only the separately verified3digit bytes and export directives remain outside function families. The native General data/reference residual remains FAIL: digit storage and five alignment bytes leave its combined.data; all remaining data bytes/globals are exact with offsets-8, and the33corresponding references in three outside bodies are explicitly checked with unchanged code/kinds/addends. This bounded manual proof does not waive the residual or establish full linked selection/allocation/ICF.",
+      "Only coordinator-reviewed manual integration is authorized by this review. Full original compiler/TU identity, linked allocation/retention, structure/runtime and game/automatic acceptance remain unproven. Preserve all original baselines/claims and the remaining parser matching obligations; fresh destination verification is still required."
+    ]
+  },
+  "previous_event": "10c149efad000b1140123eb213c6d61ce5859cbd5ab0954d104e68dca0a32d1c",
+  "request_id": "reviewed-coherent-numeric-owner",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:general-parser-storage-oct19"
+}

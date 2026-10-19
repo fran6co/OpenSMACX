@@ -16,6 +16,7 @@ def repository_root():
 
 ROOT = repository_root()
 SOURCE = ROOT / "src/general.cpp"
+NUMBER_SOURCE = ROOT / "src/number_parsing.cpp"
 
 
 def extract_function(source, signature):
@@ -106,7 +107,6 @@ extern int ParseStrPlurality[10];
 extern int ParseStrGender[10];
 extern char256 ParseStrBuffer[10];
 static uint32_t Language;
-static char findnum_digits[] = "09";
 using std::strcat;
 static char *_itoa(int value, char *dst, int radix) {
     assert(radix == 10);
@@ -119,7 +119,13 @@ static char *_itoa(int value, char *dst, int radix) {
 MAIN = r"""
 static int run(const char *input, char *output) {
     std::memset(output, 0, 4096);
-    return parse_string(const_cast<char *>(input), output);
+    // findnum keeps the original decrement-before-scan idiom. Give every
+    // parser-derived input pointer a preceding character in the same array.
+    char source[4098];
+    assert(std::strlen(input) < sizeof(source) - 1);
+    source[0] = 0;
+    std::strcpy(source + 1, input);
+    return parse_string(source + 1, output);
 }
 
 int main() {
@@ -199,17 +205,19 @@ int main() {
 
 def compile_and_run(compiler, parser_override=None, expect_success=True):
     source_text = SOURCE.read_text()
+    number_text = NUMBER_SOURCE.read_text()
     parser = extract_function(source_text, r"int\s+__cdecl\s+parse_string\s*\(")
     if parser_override is not None:
         parser = parser_override
-    finder = extract_function(source_text, r"char\s*\*\s*__cdecl\s+findnum\s*\(")
+    finder = extract_function(number_text, r"char\s*\*\s*__cdecl\s+findnum\s*\(")
+    digits, = re.findall(r"^char\s+findnum_digits\[\]\s*=\s*\"09\";[^\n]*$", number_text, re.M)
     purger = extract_function(source_text, r"MEASURED\s+inline\s+LPSTR\s+__cdecl\s+purge_leading\s*\(")
     definitions = []
     for name in ("ParseNumTable", "ParseStrPlurality", "ParseStrGender", "ParseStrBuffer"):
         ctype = "char256" if name == "ParseStrBuffer" else "int"
         line, = re.findall(r"^" + ctype + " " + name + r"\[10\];[^\n]*$", source_text, re.M)
         definitions.append(line)
-    source = PREAMBLE + "\n" + "\n".join(definitions) + "\n" + purger + "\n" + finder + "\n" + parser + "\n" + MAIN
+    source = PREAMBLE + "\n" + "\n".join(definitions) + "\n" + purger + "\n" + digits + "\n" + finder + "\n" + parser + "\n" + MAIN
     with tempfile.TemporaryDirectory(prefix="osmx-parse-string-") as temp:
         source_path = Path(temp) / "parse_string.cpp"
         binary_path = Path(temp) / "parse_string"

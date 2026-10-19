@@ -22,9 +22,9 @@ ROOT = Path(__file__).resolve().parents[2]
 PIN_SHA256 = "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
 EXPECTED_BINDINGS = {
     (0x00628950, Span(0x00628A00, 0x00628A10), "switch_targets", 0x00628976,
-     "src/general.cpp"),
+     "src/number_parsing.cpp"),
     (0x00628950, Span(0x00628A10, 0x00628A47), "switch_selector", 0x00628970,
-     "src/general.cpp"),
+     "src/number_parsing.cpp"),
     (0x00628B70, Span(0x00628D94, 0x00628DAC), "switch_targets", 0x00628C65,
      "src/general.cpp"),
 }
@@ -54,7 +54,7 @@ def _original():
 
 def test_live_associated_source_population_is_exact_and_mapped():
     rows = tuple(row for row in read_associated(ROOT, PIN_SHA256)
-                 if row.unit == "src/general.cpp")
+                 if row.unit in {"src/general.cpp", "src/number_parsing.cpp"})
     actual = {
         (row.owner.address, row.span, row.kind, row.evidence.address, row.unit)
         for row in rows

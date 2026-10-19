@@ -22,6 +22,8 @@ PATHS = {
     "header_io_h": ROOT / "src/header_io.h",
     "crt_random_cpp": ROOT / "src/crt_random.cpp",
     "crt_random_h": ROOT / "src/crt_random.h",
+    "number_parsing_cpp": ROOT / "src/number_parsing.cpp",
+    "scale_adjustment_cpp": ROOT / "src/scale_adjustment.cpp",
 }
 
 REMOVED_INCLUDES = (
@@ -54,6 +56,13 @@ def _project_general_header(general_h: bytes, sources: dict[str, bytes]) -> byte
     assert general_h.count(REMOVED_INCLUDES[1]) == 1
     result = general_h.replace(REMOVED_INCLUDES[0], b"", 1)
     result = result.replace(REMOVED_INCLUDES[1], b"", 1)
+    # The signed API correction63e961419 is independently controlled by its
+    # actual-source contract tests. Only its exact declaration is inverted
+    # here to compare this older immutable owner publication.
+    signed = b"int __cdecl bit_count_signed(int bitfield);\n"
+    old_signed = b"uint32_t __cdecl bit_count_signed(int bitfield);\n"
+    assert result.count(signed) == 1 and result.count(old_signed) == 0
+    result = result.replace(signed, old_signed, 1)
 
     # Restore the old API declarations only after validating the new public
     # declarations and their closed headers above. The declaration spellings
@@ -81,12 +90,16 @@ def _project_general_header(general_h: bytes, sources: dict[str, bytes]) -> byte
 
 
 def _project_general(general_cpp: bytes, sources: dict[str, bytes]) -> bytes:
+    general_cpp = OLD_HELPER["project_scale_adjustment_general"](
+        general_cpp, sources["scale_adjustment_cpp"], None, sources["general_h"]
+    )
     return OLD_HELPER["_project_header_rng_general"](
         general_cpp,
         sources["header_io_cpp"],
         sources["header_io_h"],
         sources["crt_random_cpp"],
         sources["crt_random_h"],
+        number_parsing_cpp=sources["number_parsing_cpp"],
     )
 
 
@@ -121,7 +134,11 @@ def _assert_identity_closure(sources: dict[str, bytes]) -> None:
         {"general_cpp": _baseline("general.cpp"), "general_h": _baseline("general.h")},
         {"general_cpp": ROOT / "src/general.cpp", "general_h": ROOT / "src/general.h"},
     )
-    current = _records(sources, PATHS)
+    projected_sources = dict(sources)
+    projected_sources["general_cpp"] = OLD_HELPER["_restore_admitted_signed_bit_count"](
+        sources["general_cpp"]
+    )
+    current = _records(projected_sources, PATHS)
     assert len(old) == 89, f"expected the pinned 89-record General source closure, got {len(old)}"
     assert current.keys() == old.keys()
     for address, prior in old.items():
@@ -170,7 +187,10 @@ def test_inverse_rejects_moved_body_claim_api_and_boundary_damage(filename, muta
 
 def test_chained_projection_runs_before_prior_council_undo_inverse():
     sources = _contents()
-    restored_general = OLD_HELPER["project_header_rng_general"](sources["general_cpp"])
+    scale_restored = OLD_HELPER["project_scale_adjustment_general"](
+        sources["general_cpp"], sources["scale_adjustment_cpp"], None, sources["general_h"]
+    )
+    restored_general = OLD_HELPER["project_header_rng_general"](scale_restored)
     assert restored_general == _baseline("general.cpp")
     previous = OLD_HELPER["_actual_split"](OLD_HELPER["LIVE_PATHS"])
     previous["general"] = sources["general_cpp"]
