@@ -133,12 +133,15 @@ def test_manifest_addition_preserves_all_prior_component_state_and_import_prefix
     section = code_section(current)
     assert current_text.split("// RECOVERY_COMPONENT_BEGIN v1", 1)[0] == \
         prior_text.split("// RECOVERY_COMPONENT_BEGIN v1", 1)[0]
+    # Preserve every original physical row and entry field, while independently
+    # tested later contributions may extend the manifest.
+    prior_keys = {(item.unit, item.section) for item in prior.code_sections}
     assert replace(current, code_sections=tuple(
-        item for item in current.code_sections if item != section)) == prior
+        item for item in current.code_sections
+        if (item.unit, item.section) in prior_keys)) == prior
     assert current.bindings == prior.bindings
     assert current.absolute_symbols == prior.absolute_symbols
     assert current.data_sections == prior.data_sections
-    assert len(current.code_sections) == len(prior.code_sections) + 1
 
     assert section.origin.image_sha256 == IMAGE_SHA256
     assert section.origin.address_space == "pe:va"

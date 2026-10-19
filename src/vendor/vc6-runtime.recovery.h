@@ -358,6 +358,28 @@
 //         "start": 6582228
 //       },
 //       "unit": "build/intel/mt_obj/thread.obj"
+//     },
+//     {
+//       "entries": [
+//         {
+//           "evidence": "The unique defined external function symbol _memcpy in the pinned archive is at offset 0 in this member. This is a size-free contribution entry, not an independent function extent.",
+//           "name": "_memcpy",
+//           "offset": 0
+//         }
+//       ],
+//       "evidence": "Pinned LIBCMT memcpy.obj section 1 is a complete 821-byte ordinary executable contribution corresponding to original 0x00645930-0x00645C65, including local tables and discontiguous code. All non-relocation bytes and 46 local DIR32 references agree with original HIGHLOW sites. IDA 9.4 records this complete interval; Ghidra 12.1.2 instead records 21 body ranges totaling 664 bytes with the same entry and final end. This disagreement does not establish an 821-byte function extent. The entry is a scoped dependency reference target only; original archive provider selection, final-link retention/allocation and runtime equivalence remain unproved.",
+//       "origin": {
+//         "address": 6576432,
+//         "address_space": "pe:va",
+//         "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+//       },
+//       "section": 1,
+//       "section_name": ".text",
+//       "span": {
+//         "end": 6577253,
+//         "start": 6576432
+//       },
+//       "unit": "build/intel/mt_obj/memcpy.obj"
 //     }
 //   ],
 //   "component": {
