@@ -1,0 +1,19 @@
+{
+  "event_id": "41b1651759585a319ba016927abf52a78237fef3c574e4ab8a4a79b8d8745bbf",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "native-mount-sentinel-only-predicate",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Coordinator and independent C++/pinned review approve the one-predicate recovery: remove Mount negative guard absent from original; retain native Mesa/Crater guards, all signed loads/rotations/producer/storage facts, mappings and claims. Current bug-for-bug milestone supersedes prospective safety approval.",
+      "Fresh composed application build/link and focused source/native branch controls pass. Bounded source claims/mappings/references and historical annotation continuity pass. The Mount outside-function residual passes; invalid Mount preceding-storage effects remain explicitly pending and never execute in host tests.",
+      "Manual checkpoint only, under user-authorized coordinator review. Existing broader stale renderer/storage-test failures remain failures, not acceptance. No runtime/game, complete invalid-index behavior, automatic publication or full linked preservation claim. Destination must freshly build/link and recheck."
+    ]
+  },
+  "previous_event": "f8ce61c38086262b180a3cca072f84ef9424842c7c79a11d066d409ebaac42f9",
+  "request_id": "reviewed-original-mount-source-checkpoint",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:mount-planet-native-negative-branch-oct19"
+}

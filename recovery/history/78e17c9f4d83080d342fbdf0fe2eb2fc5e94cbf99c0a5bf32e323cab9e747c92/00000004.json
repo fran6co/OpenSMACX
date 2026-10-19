@@ -1,0 +1,20 @@
+{
+  "event_id": "fc5ef68971dae3849236ff454ef25b374334cf134663b3ecd2713c7763ea3925",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "original-newgame-frame-and-flic-context",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Coordinator adopts only the existing Oy- CMake choice for Newgame after independent final review of actual source, compiler control, fresh application build and final selected regions. Test guards retain immutable historical baselines, all original mappings/claims, old synthetic rejection checks and the existing measurement flag-set policy.",
+      "Full conventional and strict known-domain result sets are unchanged: canonical Flic was already exact through Datalink, so selected Newgame recovery is not another conventional function gain. Six Newgame EH comparisons and the original strict compile-context comparison remain unknown/refused.",
+      "Raw physical Newgame residual remains FAILED and UNWAIVED, including unselected changed header copies and frame metadata. Other physical outside-function objects pass their bounded check. Native complete linked outside-scope/retained-allocation/ICF, full structure/runtime and game acceptance remain unproven. Preserve the pending foreign-header finding; no claim is banked/demoted, source baseline reset or automatic acceptance asserted.",
+      "User-authorized manual integration only. Destination must freshly build/link, rerun relevant source/tests, and establish zero-omission physical transport before candidate worktrees are consumed."
+    ]
+  },
+  "previous_event": "d3860a47a8dc986cacbcc5f9530e7be9d8b8868c451023b56eeb139dcbf5ca78",
+  "request_id": "reviewed-framed-newgame-source-checkpoint",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:newgame-flic-frame-context-oct19"
+}

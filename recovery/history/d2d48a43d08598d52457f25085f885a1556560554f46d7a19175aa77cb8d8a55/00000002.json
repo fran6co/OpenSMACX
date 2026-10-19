@@ -1,0 +1,21 @@
+{
+  "event_id": "f8ce61c38086262b180a3cca072f84ef9424842c7c79a11d066d409ebaac42f9",
+  "payload": {
+    "affects": [
+      "entity-546c2a42d275b8a5e1f0a466a9395421124e340fe373c4b74a6dd49114355002"
+    ],
+    "author": "coordinator",
+    "discovery_id": "negative-mount-adjacent-storage-unknown",
+    "evidence": [
+      "The task explicitly forbids inventing/enlarging a prefix/data allocation or claiming complete runtime layout. Mount tests do not execute invalid indices;Mesa/Crater negative skips and safe positive aliased accesses retain controls. Hostsize_t width differs from native32bit wrap, and removing a nonnative guard does not prove those effects.",
+      "Preserve this pending obligation through the compiling manual checkpoint. No historical claim demotion/grant, original TU claim, full behavior/runtime/automatic/game acceptance or baseline reset follows."
+    ],
+    "hypothesis": "Original invalid Mount indices can reach preceding storage, whose allocation relationship and deterministic native effects are still unverified.",
+    "kind": "discovery"
+  },
+  "previous_event": "6c90289678a6e1c41d44fed44c3ef6e26861ae757aabb5025cef43500538ce1f",
+  "request_id": "negative-mount-adjacent-storage-unknown",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:mount-planet-native-negative-branch-oct19"
+}

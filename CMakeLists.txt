@@ -409,8 +409,11 @@ set_source_files_properties(
     PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Preserve original frame-based accesses in the remaining application owners.
 # Keep all other source recipes on their independently measured defaults.
+# Newgame's original entries and the measured in-class Flic cleanup retain this
+# source profile; this does not assert the original translation-unit boundary.
 set_source_files_properties(
     src/game.cpp
+    src/newgame.cpp
     src/reportwin.cpp
     src/netwin.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")

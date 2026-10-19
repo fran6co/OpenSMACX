@@ -1,0 +1,21 @@
+{
+  "event_id": "3ac03fbfe94cb55bed37ca85517e4c684c87499dd5eee07b296901369417c588",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_application_compiler_profiles.py"
+    ],
+    "evidence": [
+      "Coordinator authorizes a CMake-only whole-application framed Newgame DIAGNOSTIC, not adoption, following the reviewed single-TU effective-option-only control. Current ordinary thumb/multiplayer EBP accesses and complete33/33 Flic destructor+funclet are positive context evidence, not final retained-provider proof.",
+      "Adapt only the existing live profile assertion to recognize the current conditional Newgame trial; retain prior immutable task baselines, historical rejected-owner evidence, other profile mutations and settled measurement flags. No third flag set, source/body/mapping/claim edit or global/link/compiler-policy change.",
+      "Raw residual154section changes remain unwaived:71text,4text$x,79debug$F. Seven foreign/header physical copies regress from exact:do_keyboard,btoi,htoi,swap,Logfilenamector,say,say_hex. Full candidate build must determine selected providers and scoped known-domain/reference deltas before adoption; no score waives these obligations."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "diagnostic-framed-build-guard-scope",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:newgame-flic-frame-context-oct19"
+}

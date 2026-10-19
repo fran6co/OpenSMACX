@@ -627,6 +627,7 @@ def test_application_profiles_match_immutable_baseline_plus_core_cohort():
     expected_profiles = effective_source_profiles(EXPECTED_CMAKE_PROFILES.items())
     for owner, options in expected_profiles.items():
         assert actual_profiles.get(owner) == options, (owner, actual_profiles.get(owner))
+    assert actual_profiles.get("src/newgame.cpp") == ("/Oy-",)
     profiled_sources = set(actual_profiles)
     assert "src/alpha.cpp" in profiled_sources
     assert actual_profiles["src/alpha.cpp"] == ("/Oy-",)
@@ -654,7 +655,8 @@ def test_application_profiles_match_immutable_baseline_plus_core_cohort():
     assert all(owner not in profiled_sources for owner in inline_owners
                if owner != "src/dipedit.cpp")
     denied_owners = ((set(REJECTED_OWNERS) | set(PREVIOUS_REJECTED_OWNERS))
-                     - set(inline_owners) - set(MEDIA_DIAGNOSTIC_OWNERS))
+                     - set(inline_owners) - set(MEDIA_DIAGNOSTIC_OWNERS)
+                     - {"src/newgame.cpp"})
     all_cmake_profile_sources = profiled_sources | {
         owner for owners, _ in appended_profiles for owner in owners
     }
@@ -671,6 +673,7 @@ def test_application_profiles_match_immutable_baseline_plus_core_cohort():
         assert current_measurement[key] == baseline_measurement[key], key
     assert current_measurement["flag_sets"] == EXPECTED_FLAG_SETS
     unit_profiles = current_measurement["unit_flag_sets"]
+    assert "src/newgame.cpp" not in unit_profiles
     for owner, expected in EXISTING_MEASURED_PROFILES.items():
         assert unit_profiles[owner] == expected, (owner, unit_profiles.get(owner))
     for owner in NEW_OWNERS + tuple(

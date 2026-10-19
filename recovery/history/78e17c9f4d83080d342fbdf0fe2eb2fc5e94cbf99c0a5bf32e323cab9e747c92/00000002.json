@@ -1,0 +1,32 @@
+{
+  "event_id": "9b764513f7c51501a2c8909f66b19fcc5e16b8e2d081839e64d718db730d9c73",
+  "payload": {
+    "affects": [
+      "entity-1ed38400e559c191ce3ab3a96dd2be482a0c41794f6970ac23e56db90fb7ab73",
+      "entity-20175249a8aa7b52a836edd0e5431b052707802747e3c7b2988fde6ea3ce6fb4",
+      "entity-28209e184e462962fb3bb3c4e9866a19030951a1aa705ae1e6f9d5ccd73a05b9",
+      "entity-448ef01136d5d18b9241a9cc71f50e9cdabaed5b705adc0dcb52a74aaabba67d",
+      "entity-69da501f596552b15b86824e105c5ad04c020cb4e73929420edb8f06a1699ba6",
+      "entity-88e01db030b3eef48db935679b2e8de4e901850c71e890e0d5193482ff70e0da",
+      "entity-8cf72fd519346dbca99d08fe761c9bbb7c0417cbf9dd918a465d08a8952114f9",
+      "entity-a83fce6bd54f0ea16502ed972415d2bc2f54da4f0b436bbebc21f76c0613c58b",
+      "entity-c17cc7a3e712cf8c6f3b972ab510a7002a883b36524579113f90719b35febf99",
+      "entity-c724483396195e499cb072d0ca6713a06bac5314c28c9a8a047ff650061ed0bd",
+      "entity-fdc1b3259f87890f79d50a0ae8431b08eb2dbdb262f2c614fb93d43461bd8035"
+    ],
+    "author": "coordinator",
+    "discovery_id": "foreign-header-physical-regressions",
+    "evidence": [
+      "Independently reviewed executed one-TU control preserved complete actual Release effective recipe, except existing /Oy- choice. Wrapper injects /Brepro; no C++ inputs changed. No previously exact Newgame entry loses equality,6EHrefusals remain unknown; both generated initializers stayexact.",
+      "The71outside-scope changed text bodies include exact-to-mismatch physical copies for Win do_keyboard,General btoi/htoi/swap and Log filenameconstructor/say/say_hex.12other mappedphysicalcopies gain equality; no ordinary data dimensions changed. Unselected copy scores do not prove final providers. Raw154section residual fails and remains unwaived.",
+      "Do not declare linked preservation, automatic/full-project/runtime/game acceptance, original TU identity or full EH equality from this control. The reviewed task baseline remains6c7e74b76. A diagnostic build may be rejected without losing the captured structural/compiler evidence."
+    ],
+    "hypothesis": "Framed Newgame restores its Flic destructor copy but changes foreign/header code and frame metadata; final selected-provider and original fidelity obligations must be qualified before adopting the trial.",
+    "kind": "discovery"
+  },
+  "previous_event": "3ac03fbfe94cb55bed37ca85517e4c684c87499dd5eee07b296901369417c588",
+  "request_id": "foreign-header-physical-regressions",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:newgame-flic-frame-context-oct19"
+}

@@ -144,7 +144,10 @@ def validate_source_contract(sources):
                          f"                static_cast<size_t>({variable}) * sizeof(LandmarkTextureChoice) + 1)")
         texture_at = body.index(texture_read)
         rotation_at = body.index(rotation_read, texture_at + len(texture_read))
-        assert body.index(f"-1 < {variable}") < texture_at
+        if name == "mount_planet":
+            assert f"-1 < {variable}" not in body
+        else:
+            assert body.index(f"-1 < {variable}") < texture_at
         assert body.index("!= -1", texture_at, rotation_at) >= texture_at
     signed_byte = balanced_body(cpp, "static inline int terrain_window_signed_byte(size_t offset) {")
     assert "reinterpret_cast<const unsigned char *>(" in signed_byte
@@ -183,6 +186,8 @@ def test_actual_storage_layout_bindings_renderer_and_producer_contract():
      "offsetof(TerrainLandmarkStorageWindow, garland_crater)"),
     ("upper_guard", "static_cast<size_t>(local_94) * sizeof(LandmarkTextureChoice)",
      "static_cast<size_t>(local_94) * sizeof(LandmarkTextureChoice); if (local_94 < 49)"),
+    ("mount_negative_guard", "(local_34 & 2) != 0 &&\n            terrain_window_signed_byte(",
+     "(local_34 & 2) != 0 && -1 < local_94 &&\n            terrain_window_signed_byte("),
     ("subobject_view", "&TerrainLandmarkStorageWindowData);\n    const unsigned char value = bytes[offset];",
      "&TerrainLandmarkStorageWindowData.mount_planet);\n    const unsigned char value = bytes[offset];"),
 ])
@@ -411,7 +416,8 @@ int main() {{
     for (int family = 0; family < 3; ++family) {{
         for (int index = -1; index <= 127; ++index) {{
             if (index < 0) {{
-                check(!gates[family](index, masks[family], 0), "negative index short-circuit");
+                if (family != 0)
+                    check(!gates[family](index, masks[family], 0), "mesa/crater negative index short-circuit");
                 continue;
             }}
             const size_t offset = bases[family] + static_cast<size_t>(index) * 2;
@@ -497,7 +503,9 @@ def test_actual_cpp_control_rejects_compilable_or_layout_mutants(
             if depth == 0:
                 condition = renderer[opening + 1:end]
                 break
-        damaged = condition.replace("-1 < local_94", "-1 < local_94 && local_94 < 49", 1)
+        damaged = condition.replace(
+            "(local_34 & 2) != 0",
+            "(local_34 & 2) != 0 && local_94 < 49", 1)
         assert damaged != condition
         options["condition_damage"] = ("mount_planet", damaged)
     fixture = _extract_parent_cpp(cpp, tmp_path, **options)

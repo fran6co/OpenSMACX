@@ -1101,9 +1101,11 @@ int main() {
         check(VehAtCalls == 0);
     }
 
-    // Signed landmark sequence -1 skips tables rather than indexing 255.
+    // Signed sequence -1 is deliberately not enabled for Mount: its original
+    // branch has no negative guard and preceding storage is unmodeled. Mesa
+    // and Crater retain their native negative-index skips.
     treset();
-    tile->bit2 = 0xff000002u;
+    tile->bit2 = 0xff000000u;
     gen_terrain_poly(&buffer, &window, 5, 1, 0, 1, 0, 0, 100, 100);
     check(draws.size() == 4);
 
@@ -1435,14 +1437,14 @@ int main() {
         gen_terrain_poly(&buffer, &window, 5, 1, 0, 1, 0, 0, 100, 100);
         check(draws.size() == 4); // fog suppresses all three families
     }
-    // Negative signed-byte codes are within the native negative-index skip
-    // path. Exercise these safely; unlike positive codes >=49, they do not
-    // reach any of the bounded source arrays.
+    // Mesa and Crater have native negative-index skips. Mount has no such
+    // branch, so these controls intentionally never enable its feature bit:
+    // the preceding storage reached by a negative index is unmodeled.
     for (unsigned sequence = 128; sequence < 256; ++sequence) {
-        for (int enabled = 0; enabled < 8; ++enabled) {
+        const unsigned safe_gates[] = {0, 0x100, 1, 0x101};
+        for (int enabled = 0; enabled < 4; ++enabled) {
             treset(); tile->bit2 = sequence << 24; tile->bit = 0x400000;
-            for (int family = 0; family < 3; ++family)
-                if (enabled & (1 << family)) tile->bit2 |= gates[family];
+            tile->bit2 |= safe_gates[enabled];
             check(gen_terrain_poly(&buffer, &window, 5, 1, 0, 0x21, 0, 0, 100, 100) == 1);
             check(draws.size() == 4);
             for (const Draw &d : draws) check(d.vertices.size() == 3);

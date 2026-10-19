@@ -1,0 +1,22 @@
+{
+  "event_id": "6c90289678a6e1c41d44fed44c3ef6e26861ae757aabb5025cef43500538ce1f",
+  "payload": {
+    "affects": [
+      "entity-546c2a42d275b8a5e1f0a466a9395421124e340fe373c4b74a6dd49114355002"
+    ],
+    "author": "coordinator",
+    "discovery_id": "native-mount-sentinel-only-predicate",
+    "evidence": [
+      "Pinned46479Dmovsx[e di*2+685A98],4647A5cmp-1,4647A8je have no lower-bound branch. Mesa464912 and Crater464A4F contain native jl and keep their existing guards. Removing only the synthetic Mount guard restores original branch intent, not a game bug fix.",
+      "Actual source changes one predicate only; all original identities/spans/symbols/claims, table declarations/extents and loader producer/rotation/texture/fan sequencing remain unchanged. Independent review found no blocker;40focused defined-domain/pinned controls pass.",
+      "Broad three-module baseline91failed53passed; candidate90failed55passed with no new failing identities. Pre-existing stale renderer/storage contract failures are not green. Do not count vacuous reject-mutant controls with failing baseline contracts as new behavioral proof."
+    ],
+    "hypothesis": "Mount Planet must use the original sentinel-only predicate, unlike Mesa and Crater which retain their native negative-index guards.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "native-mount-sentinel-only-predicate",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:mount-planet-native-negative-branch-oct19"
+}
