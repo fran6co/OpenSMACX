@@ -77,22 +77,26 @@ def product_bodies():
     strings = (root / "src/stringstruct.cpp").read_text()
     sprites = (root / "src/spritebox.cpp").read_text()
     string_signatures = (
-        "template<class T> inline T *allocate_list_node(Heap *explicit_owner, StringStruct *list)",
         "StringStruct::StringStruct()",
         "int StringStruct::on_insert(void *)",
         "void StringStruct::on_remove(void *)",
         "int StringStruct::add(int id)",
     )
+    sprite_helper_signature = (
+        "template<class Node>\nNode *allocate_sprite_node(Heap *explicit_owner, SpriteList *list)"
+    )
     sprite_signatures = (
-        "template<class Node>\nNode *allocate_sprite_node(Heap *explicit_owner, SpriteList *list)",
         "SpriteList::SpriteList()",
         "int SpriteList::on_insert(void *raw_payload)",
         "void SpriteList::on_remove(void *raw_payload)",
         "int SpriteList::add(int id)",
     )
+    sprite_bodies = [extract_definition(sprites, sig) for sig in sprite_signatures]
+    if sprite_helper_signature in sprites:
+        sprite_bodies.insert(0, extract_definition(sprites, sprite_helper_signature))
     return "\n\n".join(
         [extract_definition(strings, sig) for sig in string_signatures]
-        + [extract_definition(sprites, sig) for sig in sprite_signatures]
+        + sprite_bodies
     )
 
 
@@ -109,6 +113,7 @@ class SpriteList;
 static Heap *StringAllocationHeap;
 static int mem_calls;
 static int fail_mem_call;
+static size_t mem_sizes[16];
 static StringStruct *watch_string;
 static SpriteList *watch_sprite;
 static Heap *mutate_allocator_to;
@@ -207,10 +212,14 @@ public:
 
 void *mem_get(size_t size) {
     ++mem_calls;
+    mem_sizes[mem_calls - 1] = size;
     if (fail_mem_call == mem_calls) return 0;
     return malloc(size);
 }
-void MessageBoxA(void *, const char *, const char *, int) {
+void MessageBoxA(void *window, const char *text, const char *caption, int flags) {
+    assert(window == 0 && flags == MB_OK);
+    assert(strcmp(text, "out of heap space in new function") == 0);
+    assert(strcmp(caption, "Aborting") == 0);
     printf("fatal kind=%d\n", fatal_kind);
 }
 void *Heap::get(size_t size) {
@@ -316,6 +325,20 @@ static void test_string_fallback_owner_is_read_per_allocation() {
     assert(first.calls == 1 && second.calls == 1);
     assert(list.head_->StringAllocationBase::allocation_owner_ == &first);
     assert(list.head_->payload->StringAllocationBase::allocation_owner_ == &second);
+    assert(first.sizes[0] == sizeof(StringStructEntry));
+    assert(second.sizes[0] == sizeof(StringStructPayload));
+}
+
+static void test_string_crt_allocations_use_typed_sizes_and_clear_handoff() {
+    reset_state();
+    ProbeString list;
+    assert(list.add(35) == 0);
+    assert(mem_calls == 2);
+    assert(mem_sizes[0] == sizeof(StringStructEntry));
+    assert(mem_sizes[1] == sizeof(StringStructPayload));
+    assert(list.head_->StringAllocationBase::allocation_owner_ == 0);
+    assert(list.head_->payload->StringAllocationBase::allocation_owner_ == 0);
+    assert(StringAllocationHeap == 0);
 }
 
 static void test_string_nonempty_append_and_hook_order() {
@@ -331,6 +354,8 @@ static void test_string_nonempty_append_and_hook_order() {
     assert(list.add(34) == 0);
     StringStructEntry *added = list.head_->previous;
     assert(first.calls == 3 && second.calls == 1);
+    assert(first.sizes[2] == sizeof(StringStructEntry));
+    assert(second.sizes[0] == sizeof(StringStructPayload));
     assert(added != old && added->id == 34 && added->payload);
     assert(old->next == added && added->next == list.head_ && added->previous == old);
     assert(added->StringAllocationBase::allocation_owner_ == &first);
@@ -481,11 +506,23 @@ static void test_sprite_null_failures_preserve_partial_effects() {
 static int fatal_child(const char *which) {
     reset_state();
     Heap heap;
-    if (strcmp(which, "fatal-string") == 0) {
+    if (strncmp(which, "fatal-string", 12) == 0) {
         ProbeString list;
         list.allocator_ = &heap;
-        heap.fail_call = 1;
         fatal_kind = 1;
+        if (strcmp(which, "fatal-string-entry") == 0) {
+            heap.fail_call = 1;
+        } else if (strcmp(which, "fatal-string-payload") == 0) {
+            heap.fail_call = 2;
+        } else if (strcmp(which, "fatal-string-append-entry") == 0) {
+            assert(list.add(70) == 0);
+            heap.fail_call = heap.calls + 1;
+        } else if (strcmp(which, "fatal-string-append-payload") == 0) {
+            assert(list.add(70) == 0);
+            heap.fail_call = heap.calls + 2;
+        } else {
+            assert(false);
+        }
         (void)list.add(71);
     } else {
         ProbeSprite list;
@@ -501,6 +538,7 @@ int main(int argc, char **argv) {
     if (argc > 1) return fatal_child(argv[1]);
     test_string_explicit_snapshot_and_reload();
     test_string_fallback_owner_is_read_per_allocation();
+    test_string_crt_allocations_use_typed_sizes_and_clear_handoff();
     test_string_nonempty_append_and_hook_order();
     test_sprite_explicit_snapshot_and_reload();
     test_sprite_fallback_owner_is_read_per_allocation();
@@ -514,14 +552,17 @@ int main(int argc, char **argv) {
 
 def compile_fixture(tmp_path):
     source = product_bodies()
+    string_source = (repo_root() / "src/stringstruct.cpp").read_text()
+    string_add = extract_definition(string_source, "int StringStruct::add(int id)")
     assert "static_cast<StringStructEntry *>(0)" not in source
     assert "static_cast<StringStructPayload *>(0)" not in source
-    assert "Heap *const entry_allocator = allocator_;" in source
-    assert source.count("Heap *const payload_allocator = allocator_;") == 4
-    assert source.count("allocate_list_node<StringStructEntry>(entry_allocator, this)") == 2
-    assert source.count("allocate_list_node<StringStructPayload>(payload_allocator, this)") == 2
-    assert source.count("allocate_sprite_node<StringStructEntry>(entry_allocator, this)") == 2
-    assert source.count("allocate_sprite_node<SpriteStruct>(payload_allocator, this)") == 2
+    assert "allocate_list_node" not in string_source
+    assert string_add.count("Heap *const entry_allocator = allocator_;") == 1
+    assert string_add.count("Heap *const payload_allocator = allocator_;") == 2
+    assert string_add.count("::new(entry_memory) StringStructEntry") == 1
+    assert string_add.count("::new(payload_memory) StringStructPayload") == 1
+    assert string_add.count("::new(append_entry_memory) StringStructEntry") == 1
+    assert string_add.count("::new(append_payload_memory) StringStructPayload") == 1
     anchor = "/* PRODUCT ALLOCATION AND ADD BODIES */"
     assert FIXTURE.count(anchor) == 1
     cpp = tmp_path / "string-sprite-add.cpp"
@@ -542,7 +583,13 @@ def test_product_string_and_sprite_add_owner_timing_and_partial_failure(tmp_path
 
 def test_product_string_and_sprite_add_keep_heap_fatal_policy(tmp_path):
     exe = compile_fixture(tmp_path)
-    for argument, kind in (("fatal-string", 1), ("fatal-sprite", 2)):
+    for argument, kind in (
+        ("fatal-string-entry", 1),
+        ("fatal-string-payload", 1),
+        ("fatal-string-append-entry", 1),
+        ("fatal-string-append-payload", 1),
+        ("fatal-sprite", 2),
+    ):
         run = subprocess.run([str(exe), argument], capture_output=True, text=True)
         assert run.returncode == 3
         assert f"fatal kind={kind}" in run.stdout

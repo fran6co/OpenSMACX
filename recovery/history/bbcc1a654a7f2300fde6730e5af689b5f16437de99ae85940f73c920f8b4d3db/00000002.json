@@ -1,0 +1,19 @@
+{
+  "event_id": "8b1eed57eeedcd18b0935d0dbf360517000177db184dfd5120547b91588c1b66",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_stringlist_recovery.py"
+    ],
+    "evidence": [
+      "Existing StringList host harness has stale LIVE_NODE_ALLOCATION declaration extraction tied to the deleted synthetic helper. Remove only that obsolete declaration injection; preserve all host/native behavior/layout assertions. Native fixture tests are coordinator/compiler-lease only; worker must select host-only tests."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "fbcb005074a0ee9a777c430fc31cec8255da225288eadb99bde5af341f4ab996",
+  "request_id": "existing-stringlist-host-extractor-oct19",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:stringstruct-owned-allocation-oct19"
+}

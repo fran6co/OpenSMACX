@@ -1,0 +1,19 @@
+{
+  "event_id": "fbcb005074a0ee9a777c430fc31cec8255da225288eadb99bde5af341f4ab996",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_string_sprite_add_actual_source.py"
+    ],
+    "evidence": [
+      "Existing combined actual-source fixture already exercises original allocation timing, fatal/null failure and partial mutations; removing synthetic helpers requires adapting extraction, not preserving obsolete helper calls. Only this StringStruct worker owns edits to this shared test. Support both still-present helper and direct owner bodies so SpriteList can integrate independently. Preserve every behavioral assertion; no need to create a duplicate giant harness."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "existing-actual-source-list-harness-oct19",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:stringstruct-owned-allocation-oct19"
+}

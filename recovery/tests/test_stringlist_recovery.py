@@ -179,6 +179,4 @@ def test_actual_construction_preserves_allocator_and_partial_failure_contracts(t
          "// The original primary table uses these shared defaults."),
         ("// LIVE_PAYLOAD", "src/stringstruct.h", "class StringStructPayload :", "static_assert(sizeof(StringStructPayload)"),
         ("// LIVE_ENTRY", "src/stringstruct.h", "struct StringStructEntry :", "static_assert(sizeof(StringStructEntry)"),
-        ("// LIVE_LIST_BASE", "src/stringstruct.h", "class StringStruct :", "static_assert(sizeof(StringStruct)"),
-        ("// LIVE_NODE_ALLOCATION", "src/stringstruct.cpp", "namespace {\n// 0x00401100 selects",
-         "// Append before the circular head.")])
+        ("// LIVE_LIST_BASE", "src/stringstruct.h", "class StringStruct :", "static_assert(sizeof(StringStruct)")])
