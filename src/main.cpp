@@ -119,7 +119,6 @@ Font g_JACKAL_FONT;
 
 char CommandLineText[0x108];  // 0x007D3970
 int PopupModalActive;  // 0x009469FC
-int DialogDefaultStyle = 3;  // 0x006970DC
 
 /*
 Purpose: Bring up the process - preferences, display, sound, fonts - run the
@@ -220,7 +219,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     if (&Popup::alloc) {
         PopupAllocHook = &Popup::alloc;
     }
-    DialogDefaultStyle |= 4;
+    dialog_default_style() |= 4u;
 
     int video_mode = prefs_get("Video Mode", 0, false);
     int tgl_direct_draw = prefs_get("DirectDraw", 1, false);

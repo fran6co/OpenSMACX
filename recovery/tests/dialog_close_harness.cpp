@@ -51,6 +51,7 @@ struct StringList {
 };
 // LIVE_DIALOG_DECLARATION
 #undef private
+// LIVE_DIALOG_DEFAULTS_HEADER
 uint32_t DialogDefaults[37];
 Font *DialogDefaultFonts[3];
 uint32_t DialogField30Default = 301, DialogField34Default = 341;
@@ -65,7 +66,7 @@ void check_defaults(Dialog &dialog) {
     assert(!dialog.heap_ptr_ && !dialog.selected_position_);
     assert(dialog.field_1C_ == ~0u && dialog.field_F0_ == ~0u);
     assert(dialog.field_48_ == ~0u);
-    assert(dialog.field_20_ == DialogDefaults[36]);
+    assert(dialog.field_20_ == dialog_default_style());
     assert(dialog.field_2C_ == DialogDefaults[19]);
     assert(dialog.field_44_ == DialogDefaults[20]);
     assert(dialog.field_4C_ == DialogDefaults[21]);
@@ -107,6 +108,7 @@ int main() {
         // empty-head resets, with changed defaults on every pass.
         for (int pass = 0; pass < 4; ++pass) {
             for (int i = 0; i < 37; ++i) DialogDefaults[i] = 1000 * pass + i;
+            assert(&dialog_default_style() == &DialogDefaults[36]);
             stage = 0;
             expect_heap_release = 1;
             allocated = malloc(16);

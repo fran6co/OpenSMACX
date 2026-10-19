@@ -486,9 +486,9 @@ int __cdecl top_menu(int mode) {
         g_TOP_MENU_WAVE.play();
     }
     if ((AlphaIniPrefs.preferences & 0x20000000u) == 0)
-        DialogDefaultStyle |= 4;
+        dialog_default_style() |= 4u;
     else
-        DialogDefaultStyle &= ~4;
+        dialog_default_style() &= ~4u;
 
     if (ExpansionEnabled != 0) {
         top_menu_present_opening(WinScreenWidth == 0x320

@@ -31,6 +31,8 @@ def extract_body(text):
 
 def compile_and_run(compiler, body, tmp_path, name, success, run_mode=None):
     fixture = FIXTURE.read_text()
+    actual_header = (ROOT / "src/dialog_defaults.h").read_text().replace("#pragma once\n", "", 1)
+    fixture = actual_header + fixture
     assert INCLUDE in fixture
     source = tmp_path / ("load-game-" + name + ".cpp")
     source.write_text(fixture.replace(INCLUDE, body))

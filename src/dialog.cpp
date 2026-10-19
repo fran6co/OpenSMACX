@@ -638,13 +638,14 @@ int Dialog::set_def_dialog_font(Font *font1, Font *font2, Font *font3) {
 // bevel_thickness_), the dimmed "..." text color pair (0x90/0x94), the
 // twelve text-color slots (0x9C..0xD8 region - CheckBox/RadioButton/
 // SpriteBox/Dialog read these for their text_color_ members), and the
-// geometry/flag defaults (0x98 and 0xA0..0xDC; main.cpp's DialogDefaultStyle
-// names the last slot). Index = (address - 0x0069704C) / 4.
+// geometry/flag defaults (0x98 and 0xA0..0xDC). Index = (address -
+// 0x0069704C) / 4; slot 36 also supplies the default Dialog style word.
 //
 // WRITABLE, and the const it used to carry was a modelling lie: the image's
 // set_def_dialog_text_color (0x00609D50, homed just below) STORES the twelve
 // text-color slots 24..35 at runtime. Reads elsewhere are unchanged by the
 // missing const; the ctor's BYTE_EXACT claim re-measured clean on it.
+// RECOVERY_OBJECT: v1 0x0069704C ?DialogDefaults@@3PAIA
 uint32_t DialogDefaults[37] = {
     247, 7, 248, 2, 125, 0,
     0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
@@ -739,7 +740,7 @@ Dialog::Dialog() {
     // selected_position_/field_F0_ after field_30_, field_34_ between
     // field_44_ and field_48_, and field_1C_ near the end. The three -1
     // stores are the image's one `or eax,-1` reused.
-    field_20_ = DialogDefaults[36];
+    field_20_ = dialog_default_style();
     field_24_ = 0;
     field_28_ = 0;
     field_2C_ = DialogDefaults[19];
@@ -798,7 +799,7 @@ void Dialog::close() {
     item_list_.current_position_ = 0;
     heap_.reset();
     heap_ptr_ = 0;
-    field_20_ = DialogDefaults[36];
+    field_20_ = dialog_default_style();
     field_24_ = 0;
     field_28_ = 0;
     field_2C_ = DialogDefaults[19];

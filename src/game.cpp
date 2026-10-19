@@ -12841,9 +12841,9 @@ int __cdecl load_game(int mode, int load_argument) {
     }
 
     if ((GameDataStateStorage.fields_.game_preferences_ & 0x20000000u) == 0)
-        DialogDefaults[36] |= 4u;
+        dialog_default_style() |= 4u;
     else
-        DialogDefaults[36] &= ~4u;
+        dialog_default_style() &= ~4u;
 
     if (remove_auto_saves != 0) {
         for (int suffix = 9; suffix >= 1; --suffix) {

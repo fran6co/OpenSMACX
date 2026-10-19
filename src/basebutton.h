@@ -18,6 +18,7 @@
 #pragma once
 #include "graphicwin.h"
 #include "time.h"
+#include "dialog_defaults.h"
 
 class ButtonGroup; // forward declaration
 class Scroll; // forward declaration
@@ -179,8 +180,8 @@ class BaseButton : public GraphicWin {
 static_assert(sizeof(BaseButton) == 0xAB8,
               "BaseButton layout must match the legacy ABI");
 
-// Shared observed defaults storage; BaseButton uses words 0..16.
-extern uint32_t DialogDefaults[37];
+// Shared defaults storage is declared once in dialog_defaults.h;
+// BaseButton uses words 0..16.
 // 0x009B8E2C's two slots are named below (BaseButtonA94Default /
 // BaseButtonA98Default); the old `uint32_t *const BaseButtonDynamicDefaults`
 // pointer binding that stood here had zero users and is gone.

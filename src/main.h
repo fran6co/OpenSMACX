@@ -17,13 +17,15 @@
  */
 #pragma once
 
+#include "dialog_defaults.h"
+
 class Font;
 // Original storage 0x007D3948; constructed before WinMain and destroyed at
 // exit. Its definition belongs with the entrypoint that initializes it.
 extern Font g_JACKAL_FONT;
 
 /*
- * The three startup controls WinMain sets before entering the game.
+ * The two startup controls WinMain sets before entering the game.
  *
  * They are declared here rather than in the header of whichever subsystem
  * later reads them because the startup order is the fact worth keeping: every
@@ -38,17 +40,18 @@ extern Font g_JACKAL_FONT;
  * the first 0x26000 bytes of it, so:
  *
  *     below 0x006A8000   the image holds the bytes. Read them and write the
- *                        value into the source - `DefaultFontFace` in interface_fonts.h
- *                        is 0x00691B2C holding 0x00691BD4, which is "Arial",
- *                        and `DialogDefaultStyle` below is a stored 3.
+ *                        value into the source - `DefaultFontFace` in
+ *                        interface_fonts.h is 0x00691B2C holding 0x00691BD4,
+ *                        which is "Arial"; the final observed DialogDefaults
+ *                        word is stored as 3.
  *     at or above        zero-fill. No bytes exist in the file, so C++
  *                        zero-initialisation at namespace scope IS the
  *                        recovered value, exactly, and there is nothing to
  *                        look up.
  *
- * Two of the three controls below are above the line. The Font declared
- * separately above also has zero-initialized storage, followed by CRT
- * construction before WinMain.
+ * Both controls below are above the line. The Font declared separately above
+ * also has zero-initialized storage, followed by CRT construction before
+ * WinMain.
  */
 
 // 0x007D3970, and ABOVE the line - a zero-filled buffer, so this declaration
@@ -67,12 +70,3 @@ extern char CommandLineText[0x108];
 // `Popup::calculate_dimensions` (0x00404B10) and `thumb_routine` (0x005898A0)
 // are the other two functions in the corpus that touch it. WinMain clears it.
 extern int PopupModalActive;
-
-// 0x006970DC, the last word of the four-int run at 0x006970D0 that `Dialog`'s
-// constructor copies into itself as `field_20_`. WinMain sets bit 2 of it
-// before any dialog exists, so it is a default rather than live state;
-// `PrefWin::display`, `top_menu` and `load_game` are its other users.
-//
-// BELOW the line, so its initial value is in the image and recovered here
-// rather than assumed: the run reads [1, 1, 1, 3] and this is the 3.
-extern int DialogDefaultStyle;

@@ -18,6 +18,7 @@
 #pragma once
 
 #include "original_seam.h"
+#include "dialog_defaults.h"
 #include "font.h"
 #include "heap.h"
 #include "stringstruct.h"
@@ -280,14 +281,15 @@ static_assert(sizeof(Dialog) == 0xF4, "Dialog layout must match the original exe
 // directly by `set_def_dialog_font`.
 extern Font *DialogDefaultFonts[3];
 
-// THE DIALOG DEFAULTS TABLE, the image's .data run 0x0069704C..0x006970DC
-// (37 dwords, shipped values; index = (address - 0x0069704C) / 4):
+// THE DIALOG DEFAULTS TABLE, with an observed initialized run from
+// 0x0069704C through 0x006970DF (37 dwords; this does not prove the original
+// allocation extent; index = (address - 0x0069704C) / 4):
 // BaseButton's bevel set at [0..4], the dimmed "..." pair at [17]/[18], the
 // twelve text-color slots at [24]..[35], and the geometry/flag defaults at
-// [19]/[20]/[21]/[22]/[23]/[36] (the last is main.cpp's DialogDefaultStyle).
+// [19]/[20]/[21]/[22]/[23]/[36]. Slot [36] is also the shared style word;
+// the original color setter's accepted slot 3 writes it through [33 + slot].
 // NOT CONST: the image's set_def_dialog_text_color (0x00609D50, homed in
 // dialog.cpp) writes the twelve text-color slots at runtime.
-extern uint32_t DialogDefaults[37];
 
 // 0x00609D50, homed in dialog.cpp. The catalogued name spells a __thiscall
 // member; the body is a __cdecl free function over the defaults table, so

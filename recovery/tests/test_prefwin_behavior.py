@@ -16,6 +16,7 @@ from current_game_storage_fixture import current_game_storage_fixture
 
 ROOT = Path(__file__).resolve().parents[2]
 UNIT = ROOT / "src/prefwin.cpp"
+DEFAULTS_HEADER = ROOT / "src/dialog_defaults.h"
 
 
 def extract_function(source: str, signature: str) -> str:
@@ -54,7 +55,8 @@ def compile_and_run(tmp_path, text: str, stem: str) -> subprocess.CompletedProce
     executable = tmp_path / stem
     source.write_text(text)
     subprocess.run(
-        [compiler, "-std=c++17", "-Wall", "-Wextra", "-Werror", str(source), "-o", str(executable)],
+        [compiler, "-std=c++17", "-Wall", "-Wextra", "-Werror",
+         str(source), "-o", str(executable)],
         check=True,
         capture_output=True,
         text=True,
@@ -443,6 +445,7 @@ DISPLAY_FIXTURE = r'''
 #include <cassert>
 #include <string>
 #include <vector>
+#include "dialog_defaults.h"
 
 struct RECT { int left, top, right, bottom; };
 struct Style { int index; };
@@ -479,7 +482,7 @@ Style InterfaceBoxStyles[19] = {
 };
 
 /* ACTUAL_GAME_STORAGE */
-int DialogDefaultStyle = 0;
+uint32_t DialogDefaults[37] = {};
 int GamePreferencesAfterModal = -1;
 const int PrefWinDisplayWidth = 700, PrefWinDisplayHeight = 390;
 const int PrefWinButtonWidth = 220, PrefWinNarrowDisplayVerticalOffset = 50;
@@ -548,7 +551,7 @@ void run_case(int page, int preferences, int post_modal_preferences,
     events.clear(); drawn_rects.clear(); drawn_styles.clear();
     GameDataStateStorage.fields_.game_preferences_ = preferences;
     GamePreferencesAfterModal = post_modal_preferences;
-    DialogDefaultStyle = initial_style;
+    dialog_default_style() = static_cast<uint32_t>(initial_style);
     ConsolePrefWin.field_A14_ = 4;
     ConsolePrefWin.volumeVoiceToggle_.set_selected_state(1);
     ConsolePrefWin.volumeSFXToggle_.set_selected_state(0);
@@ -588,7 +591,7 @@ void run_case(int page, int preferences, int post_modal_preferences,
     const unsigned int modal_index = page >= 0 ? 16 : 15;
     assert(events[focus_index].p == static_cast<const Win *>(&ConsolePrefWin));
     assert(events[modal_index].a == 0 && events[modal_index].b == 1 && events[modal_index].p == nullptr);
-    assert(DialogDefaultStyle == expected_style);
+    assert(dialog_default_style() == static_cast<uint32_t>(expected_style));
 }
 
 int main() {
@@ -608,7 +611,9 @@ def display_source(*, mutations=()):
     for old, new in mutations.items():
         assert old in display, f"mutant anchor not found: {old}"
         display = display.replace(old, new, 1)
-    return (DISPLAY_FIXTURE.replace(
+    actual_defaults_header = DEFAULTS_HEADER.read_text().replace("#pragma once\n", "", 1)
+    return (DISPLAY_FIXTURE.replace('#include "dialog_defaults.h"', actual_defaults_header)
+            .replace(
             "/* ACTUAL_GAME_STORAGE */", current_game_storage_fixture())
             .replace("PREFERENCE_WINDOW_HELPER", extract_function(source, "Win *preference_window()"))
             .replace("REDRAW_OPTION", extract_function(source, "void PrefWin::redraw_option()"))

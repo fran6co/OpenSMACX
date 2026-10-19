@@ -484,9 +484,9 @@ void PrefWin::display(int page) {
   Win::set_def_focus(preference_window());
   set_modal(0, pop_wait, nullptr);
   if (!(GameDataStateStorage.fields_.game_preferences_ & 0x20000000))
-    DialogDefaultStyle |= 4;
+    dialog_default_style() |= 4u;
   else
-    DialogDefaultStyle &= ~4;
+    dialog_default_style() &= ~4u;
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.

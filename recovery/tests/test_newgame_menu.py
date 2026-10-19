@@ -11,6 +11,7 @@ from recovery.tests.test_pact_ascent import definition as extract_definition
 ROOT = Path(__file__).resolve().parents[2]
 CONTROL = Path(__file__).with_name("newgame_menu_control.cpp")
 SOURCE = ROOT / "src/newgame.cpp"
+DEFAULTS_HEADER = ROOT / "src/dialog_defaults.h"
 
 
 def definition(text, signature):
@@ -77,6 +78,7 @@ def projected(name, damage=None):
         assert old in body, (name, old)
         body = body.replace(old, new, 1)
     fixture = case_template(name)
+    fixture = DEFAULTS_HEADER.read_text().replace("#pragma once\n", "", 1) + fixture
     fixture = fixture.replace("// @@BODY_" + name + "@@", body)
     if name == "map_menu":
         fixture = fixture.replace("// @@HELPERS_map_menu@@", constant_block(

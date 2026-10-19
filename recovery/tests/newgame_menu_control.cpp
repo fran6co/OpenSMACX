@@ -693,7 +693,7 @@ static Win *BasePopDefaultField322C = 0;
 static int WinScreenWidth = 1024;
 static int WinScreenHeight = 768;
 static int ExpansionEnabled = 0;
-static int DialogDefaultStyle = 3;
+uint32_t DialogDefaults[37] = {};
 static int TurnUpkeepPhase = 0;
 static int GameDataLoadRequest = 0;
 static int GameSessionActive = 0;
@@ -916,7 +916,8 @@ static void reset_fixture() {
     objective_faction = objective_mask = -1;
     OpeningWindow = 0;
     BasePopDefaultField322C = 0;
-    ExpansionEnabled = DialogDefaultStyle = TurnUpkeepPhase = 0;
+    ExpansionEnabled = TurnUpkeepPhase = 0;
+    dialog_default_style() = 0;
     GameDataLoadRequest = GameSessionActive = 0;
     WorldClimateSkipTerrainClear = 1; VehCurrentCount = 1;
     IsMultiplayerPBEM = IsMultiplayerNet = ExitTurnLoop = 0;
@@ -1050,12 +1051,12 @@ int main() {
     wave_playing = 1;
     AlphaIniPrefs.preferences = 0;
     AlphaIniPrefs.rules = 0x20000000u;
-    DialogDefaultStyle = 0xA1;
+    dialog_default_style() = 0xA1;
     menu_values[0] = 0; menu_count = 1; mapped_result = 0;
     check(top_menu(1) == 0, "map success result");
     check(startup_wave_loads == 0 && wave_fades == 1 && wave_unloads == 1,
           "mode-one audio cleanup uses live playing state");
-    check(DialogDefaultStyle == 0xA5,
+    check(dialog_default_style() == 0xA5,
           "preferences flag clear sets style bit while preserving other bits");
     check(all_map_count == 1 && all_map[0] == 0,
           "choice zero maps to ordinary map_menu mode");
@@ -1087,10 +1088,10 @@ int main() {
     reset_fixture();
     AlphaIniPrefs.preferences = 0x20000000u;
     AlphaIniPrefs.rules = 0;
-    DialogDefaultStyle = 0xA5;
+    dialog_default_style() = 0xA5;
     menu_values[0] = 0; menu_count = 1; mapped_result = 0;
     check(top_menu(1) == 0, "preference-set map path completes");
-    check(DialogDefaultStyle == 0xA1,
+    check(dialog_default_style() == 0xA1,
           "preferences flag set clears style bit and preserves other bits");
 
     {
