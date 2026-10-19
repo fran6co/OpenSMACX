@@ -160,7 +160,7 @@ class Coff(CoffRecords):
                 raise ValueError("inconsistent COFF section definition")
             if selection not in range(7) or bool(selection) != bool(section.flags & 0x1000):
                 raise ValueError("unsupported COFF COMDAT selection")
-            definitions[symbol.section] = selection
+            definitions[symbol.section] = (selection, parent)
             if selection == 5:
                 if not 1 <= parent <= count or not sections[parent - 1].flags & 0x1000:
                     raise ValueError("invalid associative COMDAT parent")
@@ -174,6 +174,7 @@ class Coff(CoffRecords):
                 current = associations[current]
             if current not in definitions:
                 raise ValueError("associative COMDAT root lacks a section definition")
+        self.section_definitions = definitions
         self.associations = associations
 
     def code_sections(self, symbol: Symbol) -> tuple[int, ...]:

@@ -1,0 +1,23 @@
+{
+  "event_id": "d566a74a30aac3e31d18766ab3137bbff26b265ebb08cbd8ce70dd23b4e50ac3",
+  "payload": {
+    "affects": [
+      "entity-1c720782ff9c95efea6f48e2e7f07a0f0ca7bdc3f26c5a0c96a3af379427cbaf",
+      "entity-26d591116b56c253d343ea662ce447ce486b5bfbbae77200efde4e3948e25d9b",
+      "entity-34e1623fd258f9690850ea077fddc21b41618c1141f7e0a32532c7d942c1d75e"
+    ],
+    "author": "coordinator",
+    "discovery_id": "threadstart-private-root-comdat",
+    "evidence": [
+      "Native pinned archive/member inspection: thread.obj section3 flags60101020, sectiondefinition aux length147/12relocs/parent0/selection1; associations2to1,4to3,6to5. Solefunction __threadstart@4 value0,type20,storage3, not external2. Initial candidate tests failed truthfully; preserve their logs/hashes. Four nonrelocated EH blocks/primary facts remain pinned, but source evidence must correct ordinary/public wording.",
+      "Independent protocol design review supports explicit root-NODUP-only opt-in with no entries/callable/global targets. Existing ordinary path correctly rejects this physical form and must remain unchanged. No existing function-span route represents primary116 plus completephysical147 without inventing an extent; this is an actual native evidence blocker, not a new acceptance workflow."
+    ],
+    "hypothesis": "The retained initial plan misclassified the actual pinned callback: its147byte physical code section is NODUPLICATES root COMDAT and its only function is member-private, outside the existing ordinary/public-entry protocol.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "threadstart-private-root-comdat",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:crt-threadstart-contribution-oct19"
+}

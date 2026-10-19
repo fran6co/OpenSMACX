@@ -85,10 +85,20 @@ def _ordinary_code_section(obj, item):
     if section.name != item.section_name:
         raise ValueError("COFF code section name differs from the source binding")
     if (not section.flags & 0x20 or not section.flags & 0x20000000
-            or section.flags & (0x40 | 0x80 | 0x200 | 0x800 | 0x1000 | 0x02000000)):
+            or section.flags & (0x40 | 0x80 | 0x200 | 0x800 | 0x02000000)
+            or item.comdat_selection is None and section.flags & 0x1000):
         raise ValueError("COFF section is not an ordinary executable code contribution")
     if item.section in obj.associations:
         raise ValueError("associative COMDAT code sections are not whole ordinary contributions")
+    if item.comdat_selection is not None:
+        if not section.flags & 0x1000 or obj.section_definitions.get(item.section) != (1, 0):
+            raise ValueError("code contribution requires a defined root NODUP COMDAT with parent zero")
+        for child in obj.associations:
+            root = child
+            while root in obj.associations:
+                root = obj.associations[root]
+            if root == item.section and obj.sections[child - 1].flags & 0x20:
+                raise ValueError("root NODUP contribution has associated code children")
     if not section.data:
         raise ValueError("COFF code contribution is empty")
     if len(section.data) != item.span.end - item.span.start:
@@ -160,6 +170,8 @@ def _code_section_preflight(manifest, objects, image, errors):
                                        original_absolute_sites=sites, alignment=alignment)
             row.update({key: proof[key] for key in ("boundary", "bytes", "references", "result")})
             row["relocations"] = proof.get("relocations", [])
+            for relocation in row["relocations"]:
+                relocation["symbol"] = obj.symbols[int(relocation["target"])].name
             row["differing_offsets"] = proof.get("differing_offsets", [])
             row["nonrelocation_bytes"] = (Result.FAIL if proof.get("differing_offsets")
                                            else Result.PASS if proof["boundary"] == Result.PASS

@@ -476,6 +476,8 @@ class ToolchainManifest:
             data.pop("code_sections")
         else:
             for row, item in zip(data["code_sections"], self.code_sections, strict=True):
+                if item.comdat_selection is None:
+                    row.pop("comdat_selection")
                 if not item.entries:
                     row.pop("entries")
         return {"schema_version": 1, "kind": "toolchain_component", **data}
@@ -527,9 +529,10 @@ class ToolchainManifest:
                                item["section_name"], origin, span, symbols, item["evidence"]))
         code_sections = []
         for item in _list(value.get("code_sections", []), "code_sections"):
-            fields = {"unit", "section", "section_name", "origin", "span", "evidence", "entries"}
+            fields = {"unit", "section", "section_name", "origin", "span", "evidence", "entries",
+                      "comdat_selection"}
             if (not isinstance(item, dict) or set(item) - fields
-                    or not fields - {"entries"} <= set(item)):
+                    or not fields - {"entries", "comdat_selection"} <= set(item)):
                 raise ValueError("invalid code-section binding fields")
             origin = Origin(**_fields(item["origin"], {"image_sha256", "address_space", "address"}, "origin"))
             span = Span(**_fields(item["span"], {"start", "end"}, "code-section span"))
@@ -537,7 +540,8 @@ class ToolchainManifest:
                                                        "code-entry anchor"))
                             for anchor in _list(item.get("entries", []), "code-section entries"))
             code_sections.append(ToolchainCodeSectionBinding(item["unit"], item["section"],
-                                item["section_name"], origin, span, item["evidence"], entries))
+                                item["section_name"], origin, span, item["evidence"], entries,
+                                item.get("comdat_selection")))
         return cls(owner, value["archive_sha256"], value["license_evidence"], tuple(bindings),
                    tuple(absolutes), tuple(data_sections), tuple(code_sections))
 
@@ -623,7 +627,7 @@ class CodeEntryAnchor:
 
 @dataclass(frozen=True)
 class ToolchainCodeSectionBinding:
-    """One whole ordinary executable COFF contribution, not a function entry."""
+    """Whole executable contribution; optional root NODUP mode has no entries."""
     unit: str
     section: int
     section_name: str
@@ -631,9 +635,15 @@ class ToolchainCodeSectionBinding:
     span: Span
     evidence: str
     entries: tuple[CodeEntryAnchor, ...] = ()
+    comdat_selection: int | None = None
 
     def __post_init__(self):
         archive_member_identity(self.unit)
+        if self.comdat_selection is not None:
+            if type(self.comdat_selection) is not int or self.comdat_selection != 1:
+                raise ValueError("code-section COMDAT selection must be exact integer 1 or None")
+            if self.entries:
+                raise ValueError("root NODUP code contributions cannot declare entries")
         if type(self.section) is not int or self.section < 1:
             raise ValueError("code section ordinal must be positive")
         require_text(self.section_name, "COFF code section name")

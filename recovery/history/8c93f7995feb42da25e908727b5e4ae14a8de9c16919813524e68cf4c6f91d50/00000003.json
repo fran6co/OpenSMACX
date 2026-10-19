@@ -1,0 +1,20 @@
+{
+  "event_id": "867c01654a9612bfc24748799c98c5c3152bda19dce2235553e89c398b4767a0",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "threadstart-private-root-comdat",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Supersedes the initial task seed descriptions ordinary/external: actual pinned thread.obj section3 is a147byte root NODUP COMDAT with flags0x60101020, selection1,parent0, and private static __threadstart@4 atoffset0. Source companion and actual-image tests retain the independent116byte primary and20+11byte scope-referenced EH blocks without inventing a147byte function extent or a public/callable entry.",
+      "Native opt-in selector accepts exactint1 only, entriesempty, validated root definition and no associated code children. Ordinary default/serialization remain unchanged. Existing physical extent, flags, executable PE, nonrelocation, HIGHLOW and reference checks remain mandatory. Preflight now retains native relocation symbol names to avoid a previously exposed diagnostic KeyError; failed opcode evidence is not promoted. Component function/data/absolute results and all published targets remain identical.",
+      "Independent design and frozen implementation reviews found no bounded blocker. Final70 contribution controls PASS. Final project/control suite138PASS retains two independently reproduced pre-existing frontier failures, unwaived. Full package first sweep11298PASS/2forkserver-EPERM failures/1skip; exactly those two nodes independently rerun outside the restricted sandbox bothPASS. Clean master baseline11254PASS/1skip. This is combined coverage, not a fabricated single full-suite exit0.",
+      "Fresh174TU application compile/linkPASS and188 raw physical objects identical with zero omissions. All5581 known mapped masked verdicts and3263 strict-reference outcomes unchanged. Fresh native claims, mappings and references PASS. No application implementation, exact-function gain, historical claim or new function extent. Coordinator manual checkpoint only; fresh destination checks remain required and no automatic/game acceptance is asserted."
+    ]
+  },
+  "previous_event": "0849ff1e56749362cc0e7f1c3dd484c23757b85ef6c9ce50071ebbbb5e21ec03",
+  "request_id": "incorporate-corrected-private-root-contribution",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:crt-threadstart-contribution-oct19"
+}

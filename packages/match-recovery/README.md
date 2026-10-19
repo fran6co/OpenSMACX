@@ -3413,6 +3413,15 @@ Reports keep `code_sections` and `code_section_counts` separate from function
 counts, with `callable` and `link_target` false. A passing contribution is not
 provider-selection, linked-preservation, application-function or runtime proof.
 
+An explicit `comdat_selection: 1` opts a code contribution into root
+NODUPLICATES COMDAT verification. Only exact integer 1 is supported, with no
+`entries`. The validated COFF section definition must have selection 1 and
+parent zero; associative roots and associated code children refuse. Associated
+data remains unverified. Omitting this field retains ordinary non-COMDAT
+verification and its existing serialized form. This mode proves only whole
+physical contribution correspondence, with no function extent, callable/global
+target, selected provider, retention or linked-selection proof.
+
 An optional section `entries` array records explicit public entry anchors by
 `name`, section-relative `offset`, and `evidence`; it never records a function
 size. The verifier requires the exact unique inventory of defined external

@@ -187,7 +187,10 @@ def test_source_adds_only_sparse_size_free_entries_to_existing_contributions():
         replace(section, entries=section_for(value, section.unit).entries)
         if section.unit in target_units else section
         for section in baseline.code_sections))
-    assert restored == value
+    original_sections = {(section.unit, section.section) for section in baseline.code_sections}
+    assert restored == replace(value, code_sections=tuple(
+        section for section in value.code_sections
+        if (section.unit, section.section) in original_sections))
 
     assert section_for(value, MEMBER).span == Span(START, END)
     assert {(item.name, item.offset) for item in section_for(value, MEMBER).entries} == {

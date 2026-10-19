@@ -342,6 +342,22 @@
 //         "start": 6575200
 //       },
 //       "unit": "build/intel/mt_obj/strcat.obj"
+//     },
+//     {
+//       "comdat_selection": 1,
+//       "evidence": "Pinned LIBCMT thread.obj section 3 is a root NODUPLICATES COMDAT (flags 0x60101020, selection 1, parent 0), with private function __threadstart@4 at offset 0, storage class 3. Its complete 147-byte contribution corresponds to original 0x00646FD4-0x00647067 in all 99 non-relocation bytes and 12 relocation fields. Original __beginthread pushes 0x00646FD4 at 0x00646F81 as the start-routine argument to independently identified KERNEL32.dll!CreateThread at 0x00646F95. Ghidra independently bounds the primary span 0x00646FD4-0x00647048 (116 bytes); scope-table-referenced EH blocks 0x00647048-0x0064705C (20 bytes) and 0x0064705C-0x00647067 (11 bytes) have no separate function extents. This binds a physical contribution, without a callable/public entry or 147-byte function binding. Associated section-4 scope data, the __amsg_exit provider, original archive selection/final-link retention and allocation, remaining TLS/import/EH obligations, and runtime equivalence remain unproved.",
+//       "origin": {
+//         "address": 6582228,
+//         "address_space": "pe:va",
+//         "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+//       },
+//       "section": 3,
+//       "section_name": ".text",
+//       "span": {
+//         "end": 6582375,
+//         "start": 6582228
+//       },
+//       "unit": "build/intel/mt_obj/thread.obj"
 //     }
 //   ],
 //   "component": {

@@ -1,0 +1,28 @@
+{
+  "event_id": "0849ff1e56749362cc0e7f1c3dd484c23757b85ef6c9ce50071ebbbb5e21ec03",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "packages/match-recovery/README.md",
+      "packages/match-recovery/src/match_recovery/component_binary.py",
+      "packages/match-recovery/src/match_recovery/components.py",
+      "packages/match-recovery/src/match_recovery/pe_coff.py",
+      "packages/match-recovery/tests/test_toolchain_code_sections.py",
+      "recovery/tests/test_crt_public_entries_oct16.py"
+    ],
+    "evidence": [
+      "Supersedes only this tasks earlier no-package restriction to address observed actual COFF form. Add optional ToolchainCodeSectionBinding.comdat_selection defaultNone, accept explicit exact int1 only with entriesempty. Expose validated COFF section definition selection/parent; require exact selection1/parent0, rootnotassociative, no associatedcodechildren and all existing code flags/wholeextent/executableimage/nonreloc/HIGHLOW/strictreference checks. Defaultordinary behavior and oldserialization unchanged. No linked/provider-selection implication, associateddata verification or public/static-entry export.",
+      "Correct companion to explicit comdat_selection1, no CodeEntryAnchor, private callbackname/offset/storage and originalCreateThread/primary116/EHscope evidence retained in conciseprose. Do not grant functionextent or fabricate externalbinding. Associatedscope.rdata and __amsg_exit provider remainunknown. Strengthen actual pinned tests to correct physical facts, native nonreloc/boundary and knownrefdamage while retaining every failure log, missing/wrongpin control and freshmaster-safe rootresolution.",
+      "Synthetic package controls must prove ordinaryCOMDAT rejection unchanged; valid optin independent wholecontribution without entries; roundtrip; bool/unsupportedselector/anchors refuse; missing/corrupt/duplicate sectiondefs, selection mismatch/nonzeroparent/associativeroot/associatedCODE, flags/extent/opcode/HIGHLOW/knownreference/archive damage refuse; unresolvedassociateddata/provider neverpromoteentry/link/runtimeproof. No newCLI/projectdispatch/targetaliases, comparison weakening or outputnormalization.",
+      "One existing publicentry historicalprojection test assumes no latercontributions. Extend only that projection to retain and compare its entire originalexplicitsection cohort, while newactual-source test proves exactlyone newsection and allothermanifest/import fields identical. The17contribution physicaltest should pass unchanged with supportedroot; do not edit it. Two frontier-test failures reproduce on cleanmaster and remain pre-existing, unwaived; no changes to thatfile authorized.",
+      "Worker only edits/hosttests, no nativecompiles/Git. Freeze before coordinator nativebuild/object/reference epochs. Full packagetests plusfocusedprojecttests, independentreview, actual174TUbuild/link,188zero-omissionphysicalobjectidentity, existingcomponentreport/targetcontinuity and freshdestinationchecks required. Originaltask baseline/claims unchanged. This is bounded protocol support for an independentlymapped physicalcontribution, not autonomous/game acceptance or an applicationrecovery gain."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "d566a74a30aac3e31d18766ab3137bbff26b265ebb08cbd8ce70dd23b4e50ac3",
+  "request_id": "permit-root-nodup-contribution",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:crt-threadstart-contribution-oct19"
+}

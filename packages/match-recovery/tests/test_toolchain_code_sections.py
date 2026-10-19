@@ -9,11 +9,14 @@ import pytest
 
 from match_recovery.component_binary import verify_toolchain
 from match_recovery.component_source import parse_component, render_component
-from match_recovery.components import (AbsoluteSymbolBinding, ToolchainBinding,
+from match_recovery.component_targets import component_targets
+from match_recovery.components import (AbsoluteSymbolBinding, CodeEntryAnchor, ToolchainBinding,
                                        ToolchainCodeSectionBinding, ToolchainManifest)
 from match_recovery.model import Component, Delivery, Origin, Ownership, Span, canonical
+from match_recovery.pe_coff import Coff
 from test_binary import coff_fixture
 from test_toolchain_components import archive, pe_fixture
+from test_component_targets import _project
 
 
 UNIT = "runtime.obj"
@@ -159,7 +162,8 @@ def test_out_of_section_symbol_offsets_do_not_become_targets():
     assert row["references"] == row["result"] == "unknown"
 
 
-def test_unknown_code_contribution_does_not_supply_function_reference_targets():
+@pytest.mark.parametrize("comdat_selection", [None, 1])
+def test_unknown_code_contribution_does_not_supply_function_reference_targets(comdat_selection):
     function_unit, code_unit = "function.obj", "code.obj"
     function_bytes = b"\xe8\x0b\0\0\0\xc3" + b"\xcc" * 10
     code_bytes = b"\xc3"
@@ -167,7 +171,8 @@ def test_unknown_code_contribution_does_not_supply_function_reference_targets():
     struct.pack_into("<I", image, 0x178 + 36, 0x60000020)
     image = bytes(image)
     function_obj = coff_fixture(b"\xe8\0\0\0\0\xc3", relocation=(1, 1, 20))
-    code_obj = coff_code(code_bytes, symbol_name="_g", symbol_storage=3)
+    code_obj = (coff_code if comdat_selection is None else root_coff)(
+        code_bytes, symbol_name="_g", symbol_storage=3)
     raw = archive([(function_unit + "/", function_obj), (code_unit + "/", code_obj)])
     pin = hashlib.sha256(image).hexdigest()
     function = ToolchainBinding(Origin(pin, "pe:va", 0x401000),
@@ -175,7 +180,7 @@ def test_unknown_code_contribution_does_not_supply_function_reference_targets():
                                 "independent function boundary")
     contribution = ToolchainCodeSectionBinding(code_unit, 1, ".text",
         Origin(pin, "pe:va", 0x401010), Span(0x401010, 0x401011),
-        "independent whole-section boundary")
+        "independent whole-section boundary", comdat_selection=comdat_selection)
     manifest = ToolchainManifest(Component("runtime-code", Ownership.RUNTIME, Delivery.TOOLCHAIN,
         ("synthetic test component",), "test"), hashlib.sha256(raw).hexdigest(),
         "synthetic archive", (function,), code_sections=(contribution,))
@@ -222,4 +227,191 @@ def test_code_section_metadata_cannot_alias_a_function_identity():
     function = ToolchainBinding(section.origin, (section.span,), "_f", UNIT, "test")
     with pytest.raises(ValueError, match="one original identity"):
         replace(manifest, bindings=(function,))
+
+
+def root_coff(code, *, selection=1, parent=0, definition="valid", child=None, **kwargs):
+    """Physical section definitions, not mocked verifier metadata."""
+    ordinary = coff_code(code, section_flags=kwargs.pop("section_flags", 0x60501020), **kwargs)
+    symbol_at, = struct.unpack_from("<I", ordinary, 8)
+    reloc_count, = struct.unpack_from("<H", ordinary, 52)
+    flags, = struct.unpack_from("<I", ordinary, 56)
+    relocations = ordinary[60 + len(code):symbol_at]
+    symbols = ordinary[symbol_at:symbol_at + 18]
+
+    def section_definition(name, ordinal, size, relocs, mode, owner):
+        record = name.ljust(8, b"\0") + struct.pack("<IhHBB", 0, ordinal, 0, 3, 1)
+        aux = bytearray(struct.pack("<IHHIHB", size, relocs, 0, 0, owner, mode) + bytes(3))
+        if ordinal == 1 and definition == "corrupt":
+            aux[15] = 1
+        elif ordinal == 1 and definition == "length":
+            struct.pack_into("<I", aux, 0, size + 1)
+        elif ordinal == 1 and definition == "relocations":
+            struct.pack_into("<H", aux, 4, relocs + 1)
+        return record + aux
+
+    if definition != "missing":
+        record = section_definition(b".text", 1, len(code), reloc_count, selection, parent)
+        symbols += record * (2 if definition == "duplicate" else 1)
+    count = 1 + int(child is not None)
+    data_at = 20 + 40 * count
+    child_data = b"\xc3" if child == "code" else b"\0" if child else b""
+    child_name = b".text" if child == "code" else b".rdata"
+    if child:
+        symbols += section_definition(child_name, 2, len(child_data), 0, 5, 1)
+    header = struct.pack("<HHIIIHH", 0x14C, count, 0,
+                         data_at + len(code) + len(relocations) + len(child_data),
+                         len(symbols) // 18, 0, 0)
+    sections = b".text\0\0\0" + struct.pack("<IIIIIIHHI", 0, 0, len(code), data_at,
+        data_at + len(code) if reloc_count else 0, 0, reloc_count, 0, flags)
+    if child:
+        child_flags = 0x60501020 if child == "code" else 0x40501040
+        sections += child_name.ljust(8, b"\0") + struct.pack("<IIIIIIHHI", 0, 0,
+            len(child_data), data_at + len(code) + len(relocations), 0, 0, 0, 0, child_flags)
+    return header + sections + code + relocations + child_data + symbols + struct.pack("<I", 4)
+
+
+def nodup_case(*, selection=1, parent=0, definition="valid", child=None, **kwargs):
+    manifest, image, _ = case(**kwargs)
+    candidate = kwargs.get("candidate", kwargs.get("code", b"\xc3"))
+    object_options = {key: value for key, value in kwargs.items()
+                      if key not in {"code", "candidate", "original_site"}}
+    obj = root_coff(candidate, selection=selection, parent=parent,
+                    definition=definition, child=child, **object_options)
+    raw = archive([(UNIT + "/", obj)])
+    return replace(manifest, archive_sha256=hashlib.sha256(raw).hexdigest(), code_sections=(
+        replace(manifest.code_sections[0], comdat_selection=1),)), image, raw
+
+
+def test_explicit_nodup_roundtrip_and_physical_pass_publish_no_entry_or_function(tmp_path):
+    manifest, image, raw = nodup_case()
+    section = manifest.code_sections[0]
+    assert manifest.to_dict()["code_sections"][0]["comdat_selection"] == 1
+    assert parse_component(render_component(manifest)) == manifest
+    assert ToolchainManifest.from_dict(json.loads(canonical(manifest.to_dict()))) == manifest
+    report = verify_toolchain(manifest, image, raw)
+    row, = report["code_sections"]
+    assert row["result"] == row["boundary"] == row["nonrelocation_bytes"] == "pass"
+    assert row["entries"] == [] and "entry_inventory" not in row
+    assert row["callable"] is row["link_target"] is False
+    assert report["functions"] == [] and report["counts"] == {}
+    assert report["application_recoveries"] == 0
+    assert report["link_verification"] == report["runtime_verification"] == "unknown"
+    assert report["ready_for_collection"] is False
+    library = tmp_path / "runtime.lib"
+    library.write_bytes(raw)
+    snapshot = _project(tmp_path, manifest, library, image)
+    configuration = tmp_path / "recovery/project.json"
+    value = json.loads(configuration.read_text())
+    value["components"]["toolchain_archives"] = {"runtime-code": str(library)}
+    configuration.write_text(json.dumps(value))
+    targets, reports = component_targets(tmp_path, snapshot, image)
+    assert targets == {} and reports[0]["code_sections"][0]["result"] == "pass"
+    ordinary = replace(manifest, code_sections=(replace(section, comdat_selection=None),))
+    assert "comdat_selection" not in ordinary.to_dict()["code_sections"][0]
+    row, = verify_toolchain(ordinary, image, raw)["code_sections"]
+    assert row["result"] == "unknown"
+    assert "ordinary executable code contribution" in row["reason"]
+
+
+@pytest.mark.parametrize("selector", [True, False, 0, 2, 3, 4, 5, 6, "1", 1.0])
+def test_nodup_selector_is_exact_integer_one(selector):
+    manifest, _, _ = case()
+    with pytest.raises(ValueError, match="COMDAT selection"):
+        replace(manifest.code_sections[0], comdat_selection=selector)
+    value = json.loads(canonical(manifest.to_dict()))
+    value["code_sections"][0]["comdat_selection"] = selector
+    with pytest.raises(ValueError, match="COMDAT selection"):
+        ToolchainManifest.from_dict(value)
+
+
+def test_nodup_entries_refuse_in_typed_and_serialized_models():
+    manifest, _, _ = nodup_case()
+    with pytest.raises(ValueError, match="cannot declare entries"):
+        replace(manifest.code_sections[0], entries=(CodeEntryAnchor("_local", 0, "test"),))
+    value = json.loads(canonical(manifest.to_dict()))
+    value["code_sections"][0]["entries"] = [{"name": "_local", "offset": 0, "evidence": "test"}]
+    with pytest.raises(ValueError, match="cannot declare entries"):
+        ToolchainManifest.from_dict(value)
+
+
+@pytest.mark.parametrize("options", [
+    {"selection": 0}, {"selection": 2}, {"selection": 3}, {"selection": 4},
+    {"selection": 5, "parent": 1}, {"selection": 6}, {"parent": 1},
+    {"definition": "missing"}, {"definition": "duplicate"}, {"definition": "corrupt"},
+    {"definition": "length"}, {"definition": "relocations"},
+    {"section_flags": 0x60500020}, {"section_flags": 0x40501020},
+    {"section_flags": 0x60501060}, {"child": "code"},
+    *({"section_flags": 0x60501020 | flag} for flag in
+      (0x80, 0x200, 0x800, 0x02000000)),
+])
+def test_nodup_physical_metadata_damage_refuses(options):
+    manifest, image, raw = nodup_case(**options)
+    row, = verify_toolchain(manifest, image, raw)["code_sections"]
+    assert row["result"] == row["boundary"] == "unknown"
+    assert row["entries"] == [] and row["callable"] is row["link_target"] is False
+
+
+def test_validated_section_definitions_expose_selection_and_parent():
+    obj = Coff(root_coff(b"\xc3", child="data"))
+    assert obj.section_definitions == {1: (1, 0), 2: (5, 1)}
+    assert obj.associations == {2: 1}
+    for damage in ("corrupt", "duplicate"):
+        with pytest.raises(ValueError, match="section definition"):
+            Coff(root_coff(b"\xc3", definition=damage))
+
+
+def test_associative_section_cannot_claim_root_nodup_mode():
+    manifest, image, raw = nodup_case(child="code")
+    manifest = replace(manifest, code_sections=(replace(manifest.code_sections[0], section=2),))
+    row, = verify_toolchain(manifest, image, raw)["code_sections"]
+    assert row["result"] == row["boundary"] == "unknown"
+    assert "associative COMDAT" in row["reason"]
+
+
+def test_associated_data_is_not_implicitly_placed_by_root_contribution():
+    manifest, image, raw = nodup_case(code=b"\xe8\xfb\xff\xff\xff\xc3",
+        candidate=b"\xe8\0\0\0\0\xc3", relocation=(1, 20),
+        symbol_section=2, child="data")
+    report = verify_toolchain(manifest, image, raw)
+    row, = report["code_sections"]
+    assert row["boundary"] == row["nonrelocation_bytes"] == "pass"
+    assert row["references"] == row["result"] == "unknown"
+    assert report["data_sections"] == []
+
+
+@pytest.mark.parametrize("damage", ["extent", "opcode", "known_reference", "archive",
+                                    "missing_highlow", "misplaced_highlow", "nonexecutable_image"])
+@pytest.mark.parametrize("comdat_selection", [None, 1])
+def test_nodup_retains_whole_extent_and_strict_comparison_damage_checks(damage, comdat_selection):
+    site = None if damage == "missing_highlow" else 2 if damage == "misplaced_highlow" else 1
+    code = b"\xa1\x00\x10\x40\x00\xc3"
+    if damage == "known_reference":
+        code = b"\xa1\x01\x10\x40\x00\xc3"
+    manifest, image, raw = nodup_case(code=code, candidate=b"\xa1\0\0\0\0\xc3",
+                                     relocation=(1, 6), original_site=site)
+    section = manifest.code_sections[0]
+    if comdat_selection is None:
+        ordinary = coff_code(b"\xa1\0\0\0\0\xc3", relocation=(1, 6))
+        raw = archive([(UNIT + "/", ordinary)])
+        section = replace(section, comdat_selection=None)
+        manifest = replace(manifest, archive_sha256=hashlib.sha256(raw).hexdigest(),
+                           code_sections=(section,))
+    if damage == "extent":
+        manifest = replace(manifest, code_sections=(replace(section,
+            span=Span(section.span.start, section.span.end - 1)),))
+    elif damage in {"opcode", "nonexecutable_image"}:
+        changed = bytearray(image)
+        if damage == "opcode":
+            changed[512] ^= 1
+        else:
+            struct.pack_into("<I", changed, 0x178 + 36, 0x40000040)
+        image = bytes(changed)
+        manifest = replace(manifest, code_sections=(replace(section,
+            origin=replace(section.origin, image_sha256=hashlib.sha256(image).hexdigest())),))
+    elif damage == "archive":
+        raw += b"damage"
+    row, = verify_toolchain(manifest, image, raw)["code_sections"]
+    assert row["result"] != "pass"
+    if damage in {"known_reference", "missing_highlow", "misplaced_highlow"}:
+        assert row["references"] == row["result"] == "fail"
 

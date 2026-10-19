@@ -1,0 +1,23 @@
+{
+  "event_id": "f9c716e671cd1dbfee7114e48d95e68b8dc3a705819d5e7a425a8ab27c341445",
+  "payload": {
+    "affects": [
+      "entity-1c720782ff9c95efea6f48e2e7f07a0f0ca7bdc3f26c5a0c96a3af379427cbaf",
+      "entity-26d591116b56c253d343ea662ce447ce486b5bfbbae77200efde4e3948e25d9b",
+      "entity-34e1623fd258f9690850ea077fddc21b41618c1141f7e0a32532c7d942c1d75e"
+    ],
+    "author": "coordinator",
+    "discovery_id": "unqualified-threadstart-runtime-closure",
+    "evidence": [
+      "src/vendor/vc6-runtime.recovery.h explicitly retains associated section4 data and unresolved __amsg_exit/provider/TLS/import/EH obligations. Native new code row has boundary and99nonrelocation bytes PASS but references overallUNKNOWN, no entries, callablefalse and link_targetfalse. Unknown target fields remain unknown; no aliases or target publication are introduced.",
+      "The174TU current application build and188object equality prove only unchanged compiled artifacts for this annotation/protocol step. They do not identify original archive selection/retained allocation or establish full executable/game/runtime acceptance. Existing known mapped domain and counts are not an exhaustive original universe."
+    ],
+    "hypothesis": "The bounded code contribution correspondence does not establish its associated scope data, unresolved provider/TLS/import references, original selected archive provider, linked allocation/retention, complete EH or runtime equivalence.",
+    "kind": "discovery"
+  },
+  "previous_event": "867c01654a9612bfc24748799c98c5c3152bda19dce2235553e89c398b4767a0",
+  "request_id": "unqualified-threadstart-runtime-closure",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:crt-threadstart-contribution-oct19"
+}
