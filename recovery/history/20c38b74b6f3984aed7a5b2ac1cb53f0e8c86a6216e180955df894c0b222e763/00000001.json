@@ -1,0 +1,48 @@
+{
+  "event_id": "d8c7b76a71c2a3370c3ead7ca309519335eb0c4dafef39abc85622857109b40f",
+  "payload": {
+    "affects": [
+      "entity-006afac35880b73bd0059b56b71c2e795aeea459e6a13e6bbde28f92cf9253ea",
+      "entity-12642fd88e08c59ecd348f1718f0ccbc4494c756de217fdbae15a799a39d8a13",
+      "entity-311cdffabb6c65240dd345cbb7a7522c0c635c665ebef058b572df9e5534a1d1",
+      "entity-39892d3347a97f181a3051fd4f98162661693f41fa4e76ae3f24d6ee023d3755",
+      "entity-4e79380590f3a1002538ee814d97755ee5f363021825d466fae6767bf61401fa",
+      "entity-4fd43ee7450e97f017cb78fb44e2a3f90b0f740363df7d5b72923545f1d19335",
+      "entity-5f419823a8a5ae030368d51e514281cdd41983a45a82410812574f2b33ae809a",
+      "entity-61fa0c3b18e97b2476486d8f1312ac4dcc18879ff5874b03372e7b96ec8dfd4f",
+      "entity-62cdf675c8127859a1fc459888b7b39948731aa02801ff7f402358031432be95",
+      "entity-65258580dd3ef62363f20eeb1bbca1f94999ccf813f3e96dc9a56a796eafd85a",
+      "entity-7e1927d2edca9bf8b87efb933e9a496195b7aec43c021555e234097bfc6b9b67",
+      "entity-84c054d6a36927f678a13177c6bedd74485393a7b255c97ff7f44a96cf56ceff",
+      "entity-9aa9140bad513d883e3b81622d106ebee9be58e08d50f36ba8c338b0e5878ee2",
+      "entity-a9196cdea6e6ff0d632175394cb741b399192b6eef00224d21422a21e90fcefd",
+      "entity-aa73f927724ba6015d6c485450a2052386fefea3f405d4f4e5ec63a5c6a563da",
+      "entity-ad68dc9f4e23e9f904637b5702611a67df91dc516703f8e6ea05dbc03f33ad6c",
+      "entity-ba691fd60236fc4dfbfc6109b803201837016c21a3b3c31be328b15ab452c89b",
+      "entity-ba74171a42cb145db1b4929492636dad449e0d592574c0e703270d86502237d8",
+      "entity-c00413bfd09dc722e0052975b8781ee90a2d943f55b0964e7532891b8c991075",
+      "entity-c1fd290099da8f4ebe8e6ea250ac1fda4ab3242d86df1c8419870628245555d8",
+      "entity-c46d88454f5459c23f8836f548a51a19e7f6832387f028ccf247914fd91373f7",
+      "entity-cd4a7db628f934c3f55d29457b666e692bdb239af10ce7fa6ef762f89d904b93",
+      "entity-d5cca37507895d2b30e4551049fe72c9c9ff18079bf1bddd7b263765445dbfb3",
+      "entity-dbb0fd698c3dd436b3ae53f8bfb41e6ee9c8bbb3091daa314d73a9e553fde236",
+      "entity-e2a3e61424aadb162163db797edd0287ebbc9268b43d6ab2f8d80543a5ec4ccf",
+      "entity-ea0518c3383e184ea59b2aef0bc48278b1ae6ed0dd487ac8c6101964b3378901",
+      "entity-f0f3708a5bdc58c456cfdb7f94a520fa330aa4ccfc7a4a39e18026b4f8f8da1a",
+      "entity-f5fce7274b7028c39af7c3f53c50e0772b83910dd3a603bb232f39af351465ab"
+    ],
+    "author": "coordinator",
+    "discovery_id": "shared-road-rate-signed-storage",
+    "evidence": [
+      "Independent full mapped-span scan of direct references to original949738 found44branch-following references with signed condition codes or equality and no unsigned comparison proof. speed5C16A2 uses idiv [949738]; StatusWin draw_active4B4CF0 has idiv4B53BB/4B5587/4B55E7; battle_fight507455 loads949738 then test/jl50746B for the negative-rate arm; order_veh uses signed branches595AC5/595CA1/597714; battle_compute uses signed jle502DED/502ECD. Positive parser inputs alone are not this proof.",
+      "Field is first dword of RulesBasic at RulesStorageWindow+8, source-owned original949738 binding, zero-initialized storage and int-valued range(text_item_number(),1,100) parser write. Raw wire memmove preserves bytes without unsigned semantic conversion. Several current callers cast to signed int or use bit-preserving signed helpers; unsigned locals elsewhere do not prove the stored field unsigned. Preserve overflow/invalid/zero cases and unrecovered effects rather than normalizing them."
+    ],
+    "hypothesis": "RulesBasic road-rate storage must support original signed divides and negative-rate branches across consumers; local speed casts are not the full structural correction.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "shared-road-rate-signed-storage",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:veh-signed-arithmetic-oct19"
+}
