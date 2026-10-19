@@ -1,0 +1,72 @@
+{
+  "author": "coordinator",
+  "base_revision": "197843fdd23a518906f1b39313ed93b7018cd30d",
+  "editable_files": [
+    "src/console.cpp",
+    "recovery/tests/test_console_refresh_boundary_oct19.py"
+  ],
+  "evidence": [
+    "Current actual Release console.cpp emits editor_energy4E0120 with inlined InfoWin.change/StatusWin.redraw/MapWin.main_caption instead of the original direct514880 call. update_data itself is exact. The energy field correction is already established and not editable here. No prior Console-specific definition-order control was found; global Ob1 was rejected for hundreds of unrelated losses and is not authorized.",
+    "Six later caller bodies (editor_date,editor_energy,go_home,editor_on,new_base,terraform) contain source update_data calls and pinned direct514880 witnesses. The three earlier controls editor_edit_veh,corner_the_market and set_move are included. set_move has two source-manual refresh triples matching the original branch routes; line311update_data belongs to a following anonymous helper, NOT set_move. Do not manufacture an inline exception by misattributing that call.",
+    "Authorize only moving the existing complete update_data definition and its original annotation/comment envelope verbatim after the final actual same-TU caller definition. Use native source APIs for identity/facts and masked token boundaries; do not treat record.region as a function body. Keep every C++ token, mapping marker token, span, claim, lesson, useful finding and all other function definitions byte-identical apart from positions. No helper, overload, header edit, noinline/export attribute, code clone, new flag/profile, baseline reset or historical claim change.",
+    "This is one bounded visibility experiment, not a long spelling search. Host worker performs the mechanical source permutation and focused actual-source/pinned call-boundary tests, then freezes. Coordinator runs ONE isolated actual Release Console compilation to measure the complete Console object and all current mapped bodies plus outside-task residual. Do not adopt solely from editor_energy; preserve scope discoveries, full historical obligations and any exact regressions for review. No compiler invocation by worker.",
+    "Native original direct-call census is mapped-spans-only, not all dynamic callers. A source-order hypothesis is not an original TU claim. Preserve the three operation order, late global slot load, receiver/global distinctions, conditions, side effects, unsafe paths and generated-lifetime behavior. Unmeasurable EH/layout/reference outcomes remain unknown, not green.",
+    "Coordinator owns Git, compiler leases, setup, integration and cleanup. Worker edits only its two authorized files in the new isolated worktree, uses uv run and apply_patch, performs no Git/Wine/native compile or task-journal edits. Manual integration still requires independent review, fresh whole-application build/link and relevant regression/claim/reference checks; no automatic/runtime/game acceptance follows."
+  ],
+  "intent": "Recover the evidenced out-of-line Console refresh boundary across its later callers without changing behavior or compiler policy.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5326976,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5112336,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5112096,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5078496,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5085552,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5044160,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5059696,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5313824,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5102160,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5120000,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "console-refresh-boundary-oct19"
+}
