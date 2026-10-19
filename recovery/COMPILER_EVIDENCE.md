@@ -120,6 +120,19 @@ strict references, original dependency identity, linked retention or runtime pro
 Keep executable-derived reports and compiler artifacts ignored; the selected
 production toolchain remains unchanged.
 
+A separate control at `d3f8c3332` compared Font, Datalink and Base under their
+unchanged actual application recipes: 213 mapped records, eighteen compiles
+across the installed and retained SP3 frontend/backend sets. Each TU/profile
+passed whole-object unchanged-overlay and target-body damage controls; the
+installed profile also reproduced each retained production object. No mapped
+verdict category changed. The SP3 objects did **not** pass whole-object equality
+against production; the saved summaries retain those failures but not their
+detailed section diagnostics. Unchanged verdicts therefore do not establish
+unchanged function bytes. This cohort supplies no measured exact-count gain or
+authority to switch compilers, and is not an exclusion for other source/recipe
+cohorts. Both experiments retain the installed linker, headers and libraries;
+neither establishes a complete historical SP3 build environment.
+
 ## Operational lessons retained
 
 Global initialization/atexit dependencies matter alongside entry-point reachability.
