@@ -1,0 +1,20 @@
+{
+  "event_id": "1a99481121f3bb82bdffd88b31d48042e97fdb84b9fa7a93aca43640f090c384",
+  "payload": {
+    "affects": [
+      "entity-9dc8f141bafc265af6f93602fa4188b418eaf9c99b7c37cd27ce425a63ce888f"
+    ],
+    "author": "coordinator",
+    "discovery_id": "signed-aspect-ratio-operands",
+    "evidence": [
+      "Original5F540E loads +B0 numerator;5F5416 multiplies;5F541B cdq;5F541C idiv +AC. Current old uint32_t declarations emitted xor-edx/div. Both fields have only base constructor/reset zero stores and this read in known source. Signed int members are an evidence-backed recovery inference, not proof of original spelling or unreachable negative/nonzero/indirect writers."
+    ],
+    "hypothesis": "Win aspect-ratio members must supply the original signed32 quotient rather than unsigned division.",
+    "kind": "discovery"
+  },
+  "previous_event": "9e863196782deed2d35e4d5902cea022278cc2b49a8e36111bab2a859ff86c65",
+  "request_id": "signed-aspect-ratio-operands",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:win-signed-scale-oct19"
+}

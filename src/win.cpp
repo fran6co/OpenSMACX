@@ -10665,7 +10665,7 @@ void __cdecl Win::update_zorder() {
     }
 }
 
-// ORIGINAL: 0x005F53A0 ?on_window_pos_changing@Win@@QAEJPAUWINDOWPOS@@@Z 0x005F53A0-0x005F5480 FILE
+// ORIGINAL: 0x005F53A0 ?on_window_pos_changing@Win@@QAEJPAUWINDOWPOS@@@Z 0x005F53A0-0x005F5480 FILE BYTE_EXACT
 // kind game
 // symbol    ?on_window_pos_changing@Win@@UAEJPAUtagWINDOWPOS@@@Z
 // TRIED: MNEMONIC_ONLY (all 73 mnemonics match, rebuilt is 2 bytes short); own extra slot061-returning-int shim over the scaffold's void-only VCall; hoisting the second field_98 read into a named local (to match the original's `test ah,0x40` register form vs the first occurrence's `test [mem],imm32`) didn't move the byte count.

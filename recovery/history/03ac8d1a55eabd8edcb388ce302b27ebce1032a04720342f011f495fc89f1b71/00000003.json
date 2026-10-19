@@ -1,0 +1,19 @@
+{
+  "event_id": "7740c296fcf0783491740dfc6c633937db8123bda7892c59e82c58379832f976",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "signed-aspect-ratio-operands",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Changed only two same-width Win member declarations plus essential arithmetic-evidence comment; method body, order, guards, layout, constructor/reset stores and all prior source claims/history remain. Fresh actual174TU application Release builds/links; signed handler is73/73BYTE_EXACT, only gain among237Win mappings with no exact loss. Every188physicalobject residual passes with only handler projected. Native recorder exit0 adds only its historical claim using unchanged configured /c /O2 /Gy /GR- /GX in one compile. A second fresh post-publication build and artifact measurements reproduce these results. Claims/mappings/references pass.",
+      "Independent source/pinned/fixture and recorder review found no blocker for bounded coordinator-reviewed integration. New complete actual-body/actual-declaration host controls pass GCC/Clang safe positive/negative cases and reject each unsigned operand mutant; pinned signed divide witness passes. Old74host outcomes unchanged:71pass and3pre-existing failures (two stale PaletteInitialized service-double types, one old source-spelling assertion in audio fixture); final candidate73pass/same3fail. Broader suite is NOT green. No original overflow, divide-by-zero, uninitialized or error path was normalized.",
+      "Incorporated means this signed-division source correction under standing manual review, not whole linked retained selection/allocation/ICF, complete ABI/hierarchy/runtime, playable game, automatic acceptance or completion of wider Win/executable recovery. Fresh destination verification and source/Git cleanup remain required before handoff. Original task baseline197140a78 is unchanged."
+    ]
+  },
+  "previous_event": "1a99481121f3bb82bdffd88b31d48042e97fdb84b9fa7a93aca43640f090c384",
+  "request_id": "signed-aspect-ratio-operands-incorporated",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:win-signed-scale-oct19"
+}

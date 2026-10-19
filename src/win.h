@@ -464,8 +464,9 @@ class Win : public AutoSound {
   // Nothing else in the tree reads it, so the `uint32_t` cost nothing until
   // now; it is the same four bytes either way.
   Win *poWinBase_;
-  uint32_t iVertScaleDenom_;
-  uint32_t iVertScaleNum_;
+  // Signed aspect-ratio operands: 0x005F541B..1C sign-extends before idiv.
+  int iVertScaleDenom_;
+  int iVertScaleNum_;
   Buffer *buffer1_;
   Buffer *buffer2_;
   Buffer *buffer3_;
