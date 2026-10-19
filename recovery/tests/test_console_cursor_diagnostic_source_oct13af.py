@@ -1,8 +1,4 @@
-"""Actual-source controls for the recovered first cursor diagnostic only.
-
-The neighboring 0x939FF0 text view remains an opaque dependency. These host
-checks establish neither its contents/extent nor native ABI/runtime acceptance.
-"""
+"""Actual-source controls for the recovered cursor diagnostic arguments."""
 import hashlib
 import os
 from pathlib import Path
@@ -20,6 +16,7 @@ from test_console_cursor_storage import braced
 
 ROOT = Path(__file__).resolve().parents[2]
 BASE = "44ca59b96f129c158e60e2cde7dee69a0925e49c"
+CHANGE_BASE = "3715c486b709472fdcb4b0e725e185e0405cdfa1"
 TASK = "console-cursor-diagnostic-storage-owner-oct13af"
 IMAGE = "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
 COLLATERAL_CPP_FILES = (
@@ -49,8 +46,13 @@ def _git(path):
                                    cwd=ROOT, text=True, timeout=30)
 
 
-def _git_bytes(path):
-    return subprocess.check_output(["git", "show", f"{BASE}:{path}"],
+def _git_at(revision, path):
+    return subprocess.check_output(["git", "show", f"{revision}:{path}"],
+                                   cwd=ROOT, text=True, timeout=30)
+
+
+def _git_bytes_at(revision, path):
+    return subprocess.check_output(["git", "show", f"{revision}:{path}"],
                                    cwd=ROOT, timeout=30)
 
 
@@ -79,10 +81,18 @@ def _history(row):
                   tuple(line for _, line in item.lines)) for item in row.origin)
 
 
-def _restore_array_tokens(header, cpp):
-    header = header.replace(_array_declaration(header),
-        "LPCSTR const CursorNextDangerMsg1 = (LPCSTR)0x0068A5D0;")
-    cpp = cpp.replace(_array_definition(cpp), "")
+def _restore_authorized_argument_changes(header, cpp):
+    header = header.replace(
+        "LPCSTR const CursorNextDangerMsg2 = (LPCSTR)0x00939FF0;\n", "")
+    cpp = cpp.replace("CursorNextDangerMsg2", '""')
+    cpp = cpp.replace('danger("Killed a baddy!", StringTable.get(0), 0, 0, 0);',
+                      'danger("Killed a baddy!", "", 0, 0, 0);')
+    cpp = cpp.replace('danger("Found a baddy!", StringTable.get(0), 0, 0, 0);',
+                      'danger("Found a baddy!", "", 0, 0, 0);')
+    cpp = cpp.replace('danger("Game fixed!", StringTable.get(0), 0, 0, 0);',
+                      'danger("Game fixed!", "", 0, 0, 0);')
+    cpp = cpp.replace('danger("Made CHECKSUM FILE", StringTable.get(0), 0, 0, 0);',
+                      'danger("Made CHECKSUM FILE", "", 0, 0, 0);')
     return header, cpp
 
 
@@ -93,9 +103,6 @@ HARNESS = r'''#include <cstdint>
 #define __cdecl
 #define LPCSTR const char *
 extern char CursorNextDangerMsg1[16];
-static const char *const opaque_second_argument =
-    reinterpret_cast<const char *>(static_cast<uintptr_t>(0x939FF0));
-const char *const CursorNextDangerMsg2 = opaque_second_argument;
 struct GameDataStateStorage { struct { uint32_t game_state_; } fields_; };
 GameDataStateStorage GameDataStateStorage;
 const uint32_t STATE_DEBUG_MODE = 0x100;
@@ -114,7 +121,7 @@ void danger(const char *first, const char *second, int x, int y, int final_arg) 
     ++danger_calls;
     require(first == CursorNextDangerMsg1, "danger-first-pointer-identity");
     require(std::strcmp(first, "Bad Cursor Move") == 0, "danger-first-text");
-    require(second == opaque_second_argument, "danger-second-opaque-identity");
+    require(second != nullptr && second[0] == '\0', "danger-second-empty-text");
     require(x == expected_x && y == expected_y, "danger-original-coordinates");
     require(final_arg == 0, "danger-final-argument");
 }
@@ -171,28 +178,52 @@ def test_actual_console_cursor_diagnostic_source_and_immutable_base_tokens(tmp_p
     cpp = (ROOT / "src/console.cpp").read_text(encoding="utf-8")
     old_header = _git("src/console.h")
     old_cpp = _git("src/console.cpp")
+    change_base_header = _git_at(CHANGE_BASE, "src/console.h")
+    change_base_cpp = _git_at(CHANGE_BASE, "src/console.cpp")
 
     assert _array_declaration(header) == "extern char CursorNextDangerMsg1[16];"
     assert _array_definition(cpp) == 'char CursorNextDangerMsg1[16] = "Bad Cursor Move";'
-    assert "CursorNextDangerMsg2 = (LPCSTR)0x00939FF0;" in header
+    assert "CursorNextDangerMsg2" not in header
     assert ("// RECOVERY_OBJECT: v2 0x0068A5D0 0x0068A5E0 "
             "?CursorNextDangerMsg1@@3PADA 0x005109B0") in cpp
-    assert _tokens(_cursor_next(cpp)) == _tokens(_cursor_next(old_cpp))
-    restored_header, restored_cpp = _restore_array_tokens(header, cpp)
-    assert _tokens(restored_header) == _tokens(old_header)
-    assert _tokens(restored_cpp) == _tokens(old_cpp)
+    expected_header, expected_cpp = _restore_authorized_argument_changes(
+        change_base_header, change_base_cpp)
+    assert _tokens(header) == _tokens(expected_header)
+    assert _tokens(cpp) == _tokens(expected_cpp)
+    assert _tokens(_cursor_next(cpp)) == _tokens(_cursor_next(expected_cpp))
 
-    for path, before, after in (("src/console.h", old_header, header),
-                                ("src/console.cpp", old_cpp, cpp)):
-        old_rows = _source_rows(path, before)
-        new_rows = _source_rows(path, after)
-        assert set(new_rows) == set(old_rows), (path, "function identity set")
-        for address, old in old_rows.items():
-            new = new_rows[address]
-            for field in old.__dataclass_fields__:
-                if field not in {"line", "region", "origin"}:
-                    assert getattr(new, field) == getattr(old, field), (path, address, field)
-            assert _history(new) == _history(old), (path, address, "history")
+    current_sources = {"src/console.h": header, "src/console.cpp": cpp,
+                       "src/win.cpp": (ROOT / "src/win.cpp").read_text(encoding="utf-8")}
+    baseline_sources = {
+        path: _git_at(CHANGE_BASE, path) for path in current_sources
+    }
+    for path in ("src/console.h", "src/console.cpp"):
+        base_rows = _source_rows(path, baseline_sources[path])
+        current_rows = _source_rows(path, current_sources[path])
+        if path == "src/console.cpp":
+            # One historical Console call target, flush_input, now lives in
+            # its independently recovered Win owner.
+            base_rows.update(_source_rows("src/win.cpp", baseline_sources["src/win.cpp"]))
+            current_rows.update(_source_rows("src/win.cpp", current_sources["src/win.cpp"]))
+        assert set(current_rows) == set(base_rows), (path, "task-base mapping identities")
+        for address, base_row in base_rows.items():
+            current_row = current_rows[address]
+            for field in base_row.__dataclass_fields__:
+                if field not in {"line", "region"}:
+                    assert getattr(current_row, field) == getattr(base_row, field), (
+                        path, address, field, "task-base mapping continuity")
+
+    for path, historical_source in (("src/console.h", old_header),
+                                    ("src/console.cpp", old_cpp)):
+        historical_rows = _source_rows(path, historical_source)
+        current_rows = _source_rows(path, current_sources[path])
+        if path == "src/console.cpp":
+            current_rows.update(_source_rows("src/win.cpp", current_sources["src/win.cpp"]))
+        assert set(historical_rows) <= set(current_rows), (
+            path, "historical function identities retained")
+        for address, historical in historical_rows.items():
+            assert _history(current_rows[address]) == _history(historical), (
+                path, address, "historical origin history")
     assert 0x005109B0 in _source_rows("src/console.cpp", cpp)
 
     definition = _array_definition(cpp)
@@ -203,6 +234,7 @@ def test_actual_console_cursor_diagnostic_source_and_immutable_base_tokens(tmp_p
 @pytest.mark.parametrize(("damage", "expected"), [
     ("wrong-first-text", "danger-first-text"),
     ("swapped-danger-coordinates", "danger-original-coordinates"),
+    ("wrong-second-text", "danger-second-empty-text"),
 ])
 def test_named_compiling_cursor_diagnostic_mutants_exit_98(tmp_path, damage, expected):
     cpp = (ROOT / "src/console.cpp").read_text(encoding="utf-8")
@@ -210,9 +242,14 @@ def test_named_compiling_cursor_diagnostic_mutants_exit_98(tmp_path, damage, exp
     body = _cursor_next(cpp)
     if damage == "wrong-first-text":
         definition = definition.replace("Bad Cursor Move", "Bad Cursor Moxe", 1)
+    elif damage == "swapped-danger-coordinates":
+        before = 'danger(CursorNextDangerMsg1, "", x_coord,\n                  y_coord, 0);'
+        after = 'danger(CursorNextDangerMsg1, "", y_coord,\n                  x_coord, 0);'
+        assert body.count(before) == 1
+        body = body.replace(before, after, 1)
     else:
-        before = "danger(CursorNextDangerMsg1, CursorNextDangerMsg2, x_coord,\n                  y_coord, 0);"
-        after = "danger(CursorNextDangerMsg1, CursorNextDangerMsg2, y_coord,\n                  x_coord, 0);"
+        before = 'danger(CursorNextDangerMsg1, "", x_coord,\n                  y_coord, 0);'
+        after = 'danger(CursorNextDangerMsg1, "not empty", x_coord,\n                  y_coord, 0);'
         assert body.count(before) == 1
         body = body.replace(before, after, 1)
     _compile_run(tmp_path, definition, body, expected=expected)
@@ -229,6 +266,39 @@ def test_pinned_first_diagnostic_bytes_match_the_bounded_source_literal():
     assert image.read(Span(0x0068A5D0, 0x0068A5E0)) == b"Bad Cursor Move\0"
 
 
+def test_pinned_empty_operands_and_four_actual_key_handler_arguments():
+    image_path = Path(os.environ.get(
+        "OPENSMACX_IMAGE", ROOT.parents[2] / ".opensmacx/game/terranx_original.exe"))
+    if not image_path.is_file():
+        pytest.skip("pinned original unavailable; set OPENSMACX_IMAGE")
+    raw = image_path.read_bytes()
+    assert hashlib.sha256(raw).hexdigest() == IMAGE
+    image = PeImage(raw, IMAGE)
+    assert image.read_initial(Span(0x00939FF0, 0x00939FF1)) == b"\0"
+
+    try:
+        from capstone import Cs, CS_ARCH_X86, CS_MODE_32
+    except ImportError:
+        pytest.skip("Capstone unavailable for bounded i386 operand decoding")
+    decoder = Cs(CS_ARCH_X86, CS_MODE_32)
+    for address in (0x005109D5, 0x00518931, 0x005189BD,
+                    0x005189EE, 0x00519F80):
+        instructions = list(decoder.disasm(image.read(Span(address, address + 5)), address))
+        assert len(instructions) == 1 and instructions[0].mnemonic == "push"
+        assert instructions[0].op_str == "0x939ff0", hex(address)
+
+    cpp = (ROOT / "src/console.cpp").read_text(encoding="utf-8")
+    handler = braced(cpp, "int Console::on_key_click(int a1, int a2) {")
+    expected = (
+        'danger("Killed a baddy!", "", 0, 0, 0);',
+        'danger("Found a baddy!", "", 0, 0, 0);',
+        'danger("Game fixed!", "", 0, 0, 0);',
+        'danger("Made CHECKSUM FILE", "", 0, 0, 0);',
+    )
+    assert tuple(handler.count(call) for call in expected) == (1, 1, 1, 1)
+    assert handler.count("StringTable.get(0)") == 0
+
+
 def test_expanded_header_collateral_cpp_units_and_subject_histories_are_preserved():
     store = TaskStore(ROOT)
     task = store.read(TASK)
@@ -243,7 +313,7 @@ def test_expanded_header_collateral_cpp_units_and_subject_histories_are_preserve
                for subject in expansion["subjects"])
 
     for path in COLLATERAL_CPP_FILES:
-        assert (ROOT / path).read_bytes() == _git_bytes(path), (
+        assert (ROOT / path).read_bytes() == _git_bytes_at(CHANGE_BASE, path), (
             path, "header-induced collateral source must remain byte-exact")
 
     expected_subjects = EXPANDED_SUBJECTS | {subject.address for subject in task.subjects}

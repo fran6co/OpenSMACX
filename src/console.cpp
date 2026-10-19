@@ -1509,7 +1509,7 @@ Status: Complete
 void Console::cursor_next(int x_coord, int y_coord) {
     if (((x_coord ^ y_coord) & 1) != 0) {
         if ((GameDataStateStorage.fields_.game_state_ & STATE_DEBUG_MODE) != 0) {
-            danger(CursorNextDangerMsg1, CursorNextDangerMsg2, x_coord,
+            danger(CursorNextDangerMsg1, "", x_coord,
                   y_coord, 0);
         }
         if ((x_coord & 1) != 0) {
@@ -12352,7 +12352,7 @@ if ((GameDataStateStorage.fields_.game_state_ & STATE_DEBUG_MODE) == 0) {
         if (vehicle.x < 0 || vehicle.x >= MapLongitudeBounds ||
             vehicle.y < 0 || vehicle.y >= MapLatitudeBounds) {
             veh_kill(bounds_vehicle_id);
-            danger("Killed a baddy!", StringTable.get(0), 0, 0, 0);
+            danger("Killed a baddy!", "", 0, 0, 0);
             found_invalid_vehicle = true;
         }
     }
@@ -12366,13 +12366,13 @@ if ((GameDataStateStorage.fields_.game_state_ & STATE_DEBUG_MODE) == 0) {
             const int y = vehicle.y;
             const int lifted_vehicle = veh_lift(stack_vehicle_id);
             veh_drop(lifted_vehicle, x, y);
-            danger("Found a baddy!", StringTable.get(0), 0, 0, 0);
+            danger("Found a baddy!", "", 0, 0, 0);
             found_invalid_vehicle = true;
         }
     }
 
     if (!found_invalid_vehicle) {
-        danger("Game fixed!", StringTable.get(0), 0, 0, 0);
+        danger("Game fixed!", "", 0, 0, 0);
     }
     goto native_editor_command_dispatch;
 }
@@ -12872,7 +12872,7 @@ for (int unit_vehicle_id = 0; unit_vehicle_id < GameDataStateStorage.fields_.veh
 // After all report sections, the native method presents this synchronous
 // notification, then converges on command dispatch at 0x519F9C.
 
-danger("Made CHECKSUM FILE", StringTable.get(0), 0, 0, 0);
+danger("Made CHECKSUM FILE", "", 0, 0, 0);
 
         }
         // Close the outer GameState::STATE_SCENARIO_EDITOR guard separately

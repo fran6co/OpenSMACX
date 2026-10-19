@@ -115,7 +115,7 @@ def harness(methods):
         struct GameDataStateStorage { struct { uint32_t game_state_; } fields_; };
         GameDataStateStorage GameDataStateStorage = {};
         const uint32_t STATE_DEBUG_MODE = 0x100;
-        const char *CursorNextDangerMsg1 = "first", *CursorNextDangerMsg2 = "second";
+        const char *CursorNextDangerMsg1 = "first";
         void danger(const char *, const char *, int, int, int) { require(false); }
         void ambience(int) { require(false); }
         void draw_cursor();

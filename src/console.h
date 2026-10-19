@@ -737,10 +737,7 @@ inline MapWin *&console_map_win() {
 extern Console ConsoleGlobal;  // 0x009156B0, the process-wide Console
 
 // Native 0x0068A5D0 is the mutable 16-byte `Bad Cursor Move` text object.
-// The sibling 0x00939FF0 remains an unresolved writable text view: do not
-// infer its contents, capacity, or ownership from its current consumers.
 extern char CursorNextDangerMsg1[16];
-LPCSTR const CursorNextDangerMsg2 = (LPCSTR)0x00939FF0;
 
 // The dword at 0x0093A938 is set while a turn is played out under program
 // control rather than interactively. A linear scan of .text finds exactly four
