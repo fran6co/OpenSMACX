@@ -5412,30 +5412,24 @@ char BufferMarkupLinkToken[] = "$LINK<";
 // calls     0x005DC7C0 0x005DCAE0 0x006453E0
 
 
-int Buffer::write_cent_l(char * a1, int a2, int a3, int a4) {
-        if (a1 == 0) {
-        return a2;
+int Buffer::write_cent_l(char *text, int x_coord, int y_coord, int len) {
+    if (text == 0) {
+        return x_coord;
     }
-    Font *font1 = font1_;
-    if (font1 != 0 && font1->font_obj_ != 0) {
-        int len1 = strlen(a1);
-        int len = a4;
-        if (len1 < a4) {
-            len = strlen(a1);
-        }
-        if (len >= 0) {
-            int len2 = strlen(a1);
-            if (len2 < a4) {
-                len = strlen(a1);
-            }
-            if (len != 0) {
-                int width = text_width(a1, len);
-                return write_multi_font_raw_l(a1, a2 - (width >> 1), a3, len);
-            }
-        }
-        return a2;
+    if (font1_ == 0 || font1_->font_obj_ == 0) {
+        return 3;
     }
-    return 3;
+    if (BUFFER_MIN(static_cast<int>(strlen(text)), len) < 0) {
+        goto no_text;
+    }
+    len = BUFFER_MIN(static_cast<int>(strlen(text)), len);
+    if (len == 0) {
+    no_text:
+        return x_coord;
+    }
+
+    x_coord -= text_width(text, len) >> 1;
+    return write_multi_font_raw_l(text, x_coord, y_coord, len);
 }
 
 // ORIGINAL: 0x005DDA00 ?wrap_cent@Buffer@@QAEHPADHHHH@Z 0x005DDA00-0x005DDAA2 FILE
@@ -5447,35 +5441,38 @@ int Buffer::write_cent_l(char * a1, int a2, int a3, int a4) {
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005DC410 0x005DD020 0x006453E0
 
-int Buffer::wrap_cent(char * a1, int a2, int a3, int a4, int a5) {
-    if (a1 == 0) {
-        return a3;
+int Buffer::wrap_cent(char *text, int x_coord, int y_coord, int width,
+                      int line_advance) {
+    if (text == 0) {
+        return y_coord;
     }
     BufferStrHeight = 0;
     field_18_ = 0;
-    int total = a3;
-    char *cur = a1;
-    char *brk;
+    char *current = text;
+    char *next;
     do {
-        int width = a4;
-        if (cur == 0) {
-            brk = 0;
+        int line_width = width;
+        if (current == 0) {
+            next = 0;
         } else {
             BufferStrHeight = 0;
-            unsigned int len = strlen(cur);
-            brk = (char *)find_line_break_l(cur, &width, (int)len);
-            if (brk == 0) {
-                len = strlen(cur);
+            unsigned int length = strlen(current);
+            next = find_line_break_l(current, &line_width,
+                                     static_cast<int>(length));
+            if (next != 0) {
+                write_cent_l(current, x_coord, y_coord, width,
+                             static_cast<int>(next - current));
             } else {
-                len = (unsigned int)(brk - cur);
+                write_cent_l(current, x_coord, y_coord, width,
+                             static_cast<int>(strlen(current)));
             }
-            write_cent_l(cur, a2, total, a4, (int)len);
         }
-        total = total + a5;
-        field_18_ = field_18_ + 1;
-        cur = brk;
-    } while (brk != 0);
-    return total;
+        int line_count = field_18_ + 1;
+        y_coord += line_advance;
+        field_18_ = line_count;
+        current = next;
+    } while (next != 0);
+    return y_coord;
 }
 
 // ORIGINAL: 0x005DD920 ?wrap_cent@Buffer@@QAEHPADHHH@Z 0x005DD920-0x005DD9F2 FILE BYTE_EXACT
@@ -6626,6 +6623,9 @@ int Buffer::wrap_height_flying(char *a1, int a2) {
 // Earlier source inferred `int` from the imported `PADH` catalogue spelling;
 // that spelling is not authentic type evidence. The pinned body reads the
 // argument's left/top/right dwords as a rectangle, matching the RECT overloads.
+// The line-break width is reset before the null-current branch (0x5DDCDA).
+// The break arm passes `found - cur` at 0x5DDD07..10; the other arm evaluates
+// strlen again and builds its separate writer arguments at 0x5DDD12..25.
 // symbol    ?wrap_right@Buffer@@QAEHPADPAUtagRECT@@@Z
 // size      257 bytes
 // prototype int (__thiscall ?wrap_right@Buffer@@QAEHPADH@Z)(Buffer* this, char*, int)
@@ -6660,20 +6660,20 @@ int Buffer::wrap_right(char *text, RECT *area) {
         char *cur = text;
         char *found;
         do {
+            int localWidth = width;
             if (cur == 0) {
                 found = 0;
             } else {
                 BufferStrHeight = 0;
-                int localWidth = width;
                 unsigned int len = strlen(cur);
                 found = find_line_break_l(cur, &localWidth, (int)len);
-                int segLen;
-                if (found == 0) {
-                    segLen = (int)strlen(cur);
+                if (found != 0) {
+                    write_right_l(cur, start, total,
+                                  (int)(found - cur));
                 } else {
-                    segLen = (int)(found - cur);
+                    write_right_l(cur, start, total,
+                                  (int)strlen(cur));
                 }
-                write_right_l(cur, start, total, segLen);
             }
             field_18_ = field_18_ + 1;
             if (font1_ == 0) {
@@ -6827,32 +6827,32 @@ after_write:
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005DC410 0x005DD3B0 0x006453E0
 
-int Buffer::wrap_right(char * a1, int a2, int a3, int a4) {
-        if (a1 == 0) {
-        return a3;
+int Buffer::wrap_right(char *text, int x_coord, int y_coord, int max_width) {
+    if (text == 0) {
+        return y_coord;
     }
     BufferStrHeight = 0;
     field_18_ = 0;
     field_14_ = field_10_;
-    int y = a3;
-    char *text = a1;
-    int width = a4;
-    char *brk;
+    int current_y = y_coord;
+    int width = max_width;
+    char *next;
     do {
-        a3 = width;
+        int line_width = width;
         if (text == 0) {
-            brk = 0;
+            next = 0;
         } else {
-            int len;
             BufferStrHeight = 0;
-            unsigned int slen = strlen(text);
-            brk = find_line_break_l(text, &a3, slen);
-            if (brk == 0) {
-                len = strlen(text);
+            unsigned int length = strlen(text);
+            next = find_line_break_l(text, &line_width,
+                                     static_cast<int>(length));
+            if (next == 0) {
+                write_right_l(text, x_coord, current_y,
+                              static_cast<int>(strlen(text)));
             } else {
-                len = (int)(brk - text);
+                write_right_l(text, x_coord, current_y,
+                              static_cast<int>(next - text));
             }
-            write_right_l(text, a2, y, len);
         }
         field_18_ = field_18_ + 1;
         if (font1_ == 0) {
@@ -6865,15 +6865,15 @@ int Buffer::wrap_right(char * a1, int a2, int a3, int a4) {
         } else {
             lineH = font->height_ + font->unk_1_;
         }
-        y = y + lineH;
+        current_y = current_y + lineH;
         int f14 = field_14_;
         if (f14 != 0) {
             field_14_ = 0;
             width = width - f14;
         }
-        text = brk;
-    } while (brk != 0);
-    return y;
+        text = next;
+    } while (next != 0);
+    return current_y;
 }
 
 // ORIGINAL: 0x005DD530 ?wrap@Buffer@@QAEHPADPAURECT@@@Z 0x005DD530-0x005DD730 FILE

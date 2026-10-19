@@ -851,8 +851,8 @@ void BaseButton::on_left_click(int, int) {
         if (owner != 0 && owner->is_playing() == 0) {
             owner->play();
         }
-        const int group_id = static_cast<int>(field_A78_);
-        if (group_ == 0 || group_->button_click(group_id) != 0) {
+        if (group_ == 0 ||
+            group_->button_click(static_cast<int>(field_A78_)) != 0) {
             Win *const notification_parent = win_parent_;
             const int notification_id = static_cast<int>(field_A78_);
             notification_parent->on_button_clicked(notification_id);

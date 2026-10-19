@@ -1,0 +1,24 @@
+{
+  "event_id": "fc435f7955fc7dd72f07b7c8bfeb3264eb18437b889725efc5400ed90de1340f",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_buffer_text_wrap_family_oct19.py",
+      "recovery/tests/test_buffer_typed_font_consumers_oct10.py",
+      "recovery/tests/test_buffer_wrap_right_rectangle_oct15.py",
+      "recovery/tests/test_right_aligned_text_calls_oct19.py"
+    ],
+    "evidence": [
+      "Four complete natural-source proposals at5DD250,5DDA00,5DDBB0,5DDC90 are frozen. A fresh replica/damage-controlled full-TU screen passes outside-body residuals in both configured profiles; centered scalar5DD250 measures71/71 in defaultprofile. No full-application or acceptance claim yet.",
+      "Authorize actual-source fixtures to follow renamed centered parameters while preserving original font polarity, repeated strlen calls, width inputs, branch-local writers and callback-sensitive line count/font/width sequencing. Retain existing executed mutants and add fresh controls for the wrap family, not source-spelling-only assertions.",
+      "Original170subjects and24cd306f6ff78af03fdd11405f16ba297fa6da27 baseline retained. Test expansion does not authorize headers, more production edits, claim stamping, compiler flag changes or bug fixes."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "buffer-text-family-executed-regression-controls-oct19b",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:buffer-source-batch-oct19b"
+}
