@@ -14,6 +14,7 @@ from match_recovery.source import read_text
 
 ROOT = Path(__file__).resolve().parents[2]
 BASE = "f35836fc519023ddf0f89da5e8db1b9a2894f686"
+IDENTITY_BASE = "c9a0059ccd5e6a7a31ce6d67430ba9602048416a"
 OWNERS = ("CheckBox", "RadioButton", "CheckButton")
 FILES = ("checkbox", "radiobutton", "checkbutton")
 
@@ -55,7 +56,12 @@ def test_actual_parent_snapshots(tmp_path, compiler, damage):
         assert bodies.count("parent->on_button_clicked(toggle_argument_);") == 1
         bodies = bodies.replace("parent->on_button_clicked(toggle_argument_);", "win_parent_->on_button_clicked(toggle_argument_);")
     if damage == "stale_copy_geometry":
-        old = "this, Dialog::field_24_, Dialog::field_28_, 0, 0,\n            static_cast<int>(dib_.bmiHeader.biWidth),\n            -static_cast<int>(dib_.bmiHeader.biHeight)"
+        x_member, y_member = (("field_24_", "field_28_")
+                              if damage == "baseline" else
+                              ("window_x_", "window_y_"))
+        old = (f"this, Dialog::{x_member}, Dialog::{y_member}, 0, 0,\n"
+               "            static_cast<int>(dib_.bmiHeader.biWidth),\n"
+               "            -static_cast<int>(dib_.bmiHeader.biHeight)")
         assert bodies.count(old) == 2
         bodies = bodies.replace(old, "this, 7, 9, 0, 0, 20, 30")
     if damage == "cached_argument":
@@ -96,10 +102,13 @@ struct GraphicWin : Win {
 };
 struct Dialog {
     struct {int entry_count_=0;} item_list_;
-    int field_24_=7,field_28_=9,selected_position_=0;unsigned field_F0_=0;
+        union { int window_x_; int field_24_; };
+        union { int window_y_; int field_28_; };
+        int selected_position_=0;unsigned field_F0_=0;
     unsigned field_44_=2,field_64_=8,field_68_=8;
     int row_count_=3;
     int pos_to_id(int p){return p;}
+        Dialog() : window_x_(7), window_y_(9) {}
 };
 struct CheckBox : GraphicWin,Dialog {
     uint32_t field_4_=0;int draws=0,redraws=0;void draw_item(int,int,int){++draws;events.push_back(6);}
@@ -124,7 +133,7 @@ template<class Control>void check_redraw(bool radio){
     for(int handled=0;handled<2;++handled){
         events.clear();Control c;GraphicWin a,b;
         c.win_parent_=&a;a.child_parent=&c.win_parent_;a.replacement=&b;a.handled=handled;
-        a.x=&c.field_24_;a.y=&c.field_28_;
+        a.x=&c.window_x_;a.y=&c.window_y_;
         a.width=&c.dib_.bmiHeader.biWidth;a.height=&c.dib_.bmiHeader.biHeight;
         c.on_redraw();
         assert(a.backs==1 && b.backs==0 && a.copies==1-handled && b.copies==0);
@@ -176,7 +185,7 @@ int main(){
 def test_original_identity_span_claim_and_symbol_continuity():
     for filename in FILES:
         path = ROOT / f"src/jackal/{filename}.cpp"
-        prior = subprocess.check_output(["git", "show", BASE + ":" + str(path.relative_to(ROOT))],
+        prior = subprocess.check_output(["git", "show", IDENTITY_BASE + ":" + str(path.relative_to(ROOT))],
                                         cwd=ROOT, text=True)
         before, after = read_text(prior, path), read_text(path.read_text(), path)
         assert [(r.address, _continuity_fields(r), r.symbol) for r in before] == [

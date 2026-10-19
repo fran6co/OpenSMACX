@@ -521,8 +521,8 @@ int EditGroup::calculate_dimensions() {
 int EditGroup::attach(GraphicWin *parent, int x, int y, int flags) {
     if (parent == 0) return 3;
     calculate_dimensions();
-    Dialog::field_24_ = x;
-    Dialog::field_28_ = y;
+    Dialog::window_x_ = x;
+    Dialog::window_y_ = y;
     if ((parent->iFlags_ & 0x1000) == 0) flags |= 0x100000;
     const int result = GraphicWin::init(x, y, Dialog::field_5C_,
                                         Dialog::field_60_, 0, flags, parent, 0, 0);
@@ -607,7 +607,7 @@ void EditGroup::on_redraw() {
     if (parent == 0) return;
     WinCallbackWindow = parent;
     static_cast<GraphicWin *>(parent)->copy(
-        this, Dialog::field_24_, Dialog::field_28_, 0, 0,
+        this, Dialog::window_x_, Dialog::window_y_, 0, 0,
         static_cast<int>(dib_.bmiHeader.biWidth),
         -static_cast<int>(dib_.bmiHeader.biHeight));
 
