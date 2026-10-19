@@ -1,0 +1,26 @@
+{
+  "author": "coordinator",
+  "base_revision": "b22b7c357dc96a0c8aa5bffb1afdcb44520186ec",
+  "editable_files": [
+    "src/map.cpp",
+    "recovery/tests/test_map_reset_matching.py"
+  ],
+  "evidence": [
+    "Pinned original59104A stores zero at949880 (council sea level),591050 at949890 (landmark count),591056 at94987C (sea level), before random625810. Existing MapStorage member anchors imply base949870 and current typed member offsets10/20/0C. Independent diagnostic actualRelease+Z7 object relocation addends at operands12/18/24 are0C/10/20, following current source sea/council/count order. No member/base/type correction is justified; the bounded discrepancy is ordered targets, not evidence of a gameplay bug.",
+    "Change only the first three zero-valued map_wipe assignments to council,count,sea; optionally add one concise load-bearing pinned ordering comment. Preserve all remaining operations, field accesses, random arguments/read timing, original unsafe/negative-area behavior, existing source markers/symbols/spans/claims/LEVER/TRIED. No new casts, volatile, inline directives, layout changes or behavior fixes. Make one evidence-backed attempt, not an extended spelling search.",
+    "Extend existing test_map_reset_matching actual-source host controls without weakening old tile/untouched-field assertions. Add pinned original store-address/value/order checks and a focused guard rejecting the old source ordering, using native source/PE APIs where parsing is needed. Keep source order and original machine order evidence distinct from observable gameplay semantics. Wrong/missing image must refuse; no skipped correctness checks via missing proprietary inputs.",
+    "Production compiler policy remains unchanged. The Release+Z7 probe is diagnostic only:256UNKNOWN→PASS,5PASS→UNKNOWN and map_wipeUNKNOWN→FAIL; native full PE preservation is unknown and physical/archive hashes differ. Do not adopt its flags, transfer its type records into ordinary objects, weaken associative-child refusals or count its gains in production metrics. An isolated fresh post-fix diagnostic may test the original reference discrepancy but cannot establish canonical type/layout proof.",
+    "Coordinator owns Git/preparation/compiler resources/integration. Fresh application build/link, affected map host tests, claim/mapping/reference continuity, all5581 masked observations and strict comparisons, bounded original-body physical residual and fresh destination checks. Only map_wipe body projected; no data/TU/header/initializer waiver. Preserve all native failures/unknowns, unchanged task baseline and source findings. Independent review before manual integration; not automatic acceptance, new implementation coverage, whole original universe, linked allocation/selection or game acceptance."
+  ],
+  "intent": "Restore original map_wipe pre-RNG reset target order, preserving genuine map members, all behavior, mappings and historical obligations.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5836864,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "map-wipe-reset-order-oct19"
+}
