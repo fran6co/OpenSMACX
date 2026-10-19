@@ -20,6 +20,14 @@
 #include "font.h"
 #include "general.h"
 
+// Shared GDI SDK dependencies used by Font and its drawing consumers.
+// RECOVERY_IMPORT: v1 __imp__DeleteObject@4 GDI32.dll name:DeleteObject
+// RECOVERY_IMPORT: v1 __imp__GetStockObject@4 GDI32.dll name:GetStockObject
+// RECOVERY_IMPORT: v1 __imp__GetTextExtentPoint32A@16 GDI32.dll name:GetTextExtentPoint32A
+// RECOVERY_IMPORT: v1 __imp__RemoveFontResourceA@4 GDI32.dll name:RemoveFontResourceA
+// RECOVERY_IMPORT: v1 __imp__SelectObject@8 GDI32.dll name:SelectObject
+// RECOVERY_IMPORT: v1 __imp__DeleteDC@4 GDI32.dll name:DeleteDC
+
 // These three process-wide Font objects have independent, loader-zeroed identities.
 // Font::init_font_class publishes FontDefault/HDC and adjusts the shared count;
 // close_font_class clears the HDC/default pointer while preserving its signed

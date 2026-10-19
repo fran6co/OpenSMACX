@@ -22,6 +22,8 @@
 #include <stdlib.h>
 #include <ctype.h>
 
+// RECOVERY_IMPORT: v1 __imp__PtInRect@12 USER32.dll name:PtInRect
+
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x005F8970 ?UNK1@PullDown@@QAEXXZ 0x005F8970-0x005F89C8 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/005f8970.cpp", "image:terranx_original.exe:0x005F8970", "Native row flags and old/new redraw asymmetry, callback modes and padding reloads; mnemonic metrics use Font internal_leading at+14. UNK1 resets members after clearing items and closing; outside hover forwards screen coordinates to Menu.", "recovery/tasks/interface-contract-report-closure.json four-method owner closure"], "reason": "Recover the bounded original in its genuine PullDown owner using actual members, owned callbacks and Buffer/GraphicWin behavior. Retain seed and historical obligations; this binding grants no current match or runtime claim."}

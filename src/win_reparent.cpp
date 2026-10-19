@@ -1,6 +1,10 @@
 #include "stdafx.h"
 #include "win.h"
 
+// SDK window-parent relationships; no original-address function adapters.
+// RECOVERY_IMPORT: v1 __imp__GetParent@4 USER32.dll name:GetParent
+// RECOVERY_IMPORT: v1 __imp__SetParent@8 USER32.dll name:SetParent
+
 // These are distinct HWND-valued dwords. Their starts are observed;
 // extent, setup and lifetime remain unresolved.
 // RECOVERY_OBJECT: v1 0x009B7B40 ?WinReparentMatchParent@@3PAUHWND__@@A

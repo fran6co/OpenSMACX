@@ -10,6 +10,12 @@
 #include <stdlib.h>
 #include <string.h>
 
+// Media SDK dependencies, distinct from recovered application function bodies.
+// RECOVERY_IMPORT: v1 __imp__InterlockedExchange@8 KERNEL32.dll name:InterlockedExchange
+// RECOVERY_IMPORT: v1 __imp__SetThreadPriority@8 KERNEL32.dll name:SetThreadPriority
+// RECOVERY_IMPORT: v1 __imp__Sleep@4 KERNEL32.dll name:Sleep
+// RECOVERY_IMPORT: v1 __imp__mmioClose@8 WINMM.dll name:mmioClose
+
 // ORIGINAL: 0x005CBAE0 sub_5cbae0 0x005CBAE0-0x005CBBB6 FILE
 // RECOVERY_BINDING: v1 {"reason":"Recover the runtime-owned DirectDraw overlay operation and its actual source/destination interfaces, rectangles and failure-path receiver; update_overlay is a descriptive recovered name, not an original debug-symbol claim.","evidence":["Pinned5CBAE0..5CBBB6 passes runtime in ECX and mode in EDX;5CBB6C calls Surface2 slot33(+84), the installed DDRAW.H UpdateOverlay contract, with DDOVERLAYFX size38 and DDFX at30.","MediaRuntime descriptor+0 and rectangle fields+0C/+10/+14/+18; MediaDescriptor Surface2 pointers+14/+1C and dimensions+60/+64 have existing typed producers in movie_media.cpp and UV2Player::exec.","Pinned5CBB5E..6B passes distinct source and destination RECTs; destination is0,0,width-1,height-1. Flags200/84000 mean hide/show|DDFX, not DDBLT_WAIT or rotation.","Pinned5CBB7F writes runtime queue_record_kind+4C on E_INVALIDARG;5CBB98..A0 reloads runtime->descriptor->surface_1c after UpdateOverlay before Restore, ignoring its return.","Original identity/span and seed provenance retained from git:36d19d9ef:src/stringstruct.cpp and retired seed git:117282ee:src/unrecovered/005cbae0.cpp; prior Blt and descriptor-Restore interpretation is superseded, not original behavior."]}
 // symbol    ?update_overlay@MediaRuntime@@QAIHH@Z

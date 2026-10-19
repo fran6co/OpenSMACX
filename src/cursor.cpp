@@ -22,6 +22,8 @@
 #include <new>
 #include "sprite.h"   // the Sprite ~Cursor owns
 
+// RECOVERY_IMPORT: v1 __imp__DestroyCursor@4 USER32.dll name:DestroyCursor
+
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
 // ORIGINAL: 0x0063B930 ?close_cursor_class@Cursor@@QAAXXZ 0x0063B930-0x0063B931 BYTE_EXACT

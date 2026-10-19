@@ -4,6 +4,8 @@
 #include <stdio.h>
 // RECOVERY_IMPORT: v1 __imp__ICClose@4 MSVFW32.dll name:ICClose
 // RECOVERY_IMPORT: v1 __imp__ICOpen@12 MSVFW32.dll name:ICOpen
+// RECOVERY_IMPORT: v1 __imp__mmioDescend@16 WINMM.dll name:mmioDescend
+// RECOVERY_IMPORT: v1 __imp__mmioSeek@12 WINMM.dll name:mmioSeek
 
 // Real source-owned storage; original allocation extents beyond the observed
 // API spans are unknown. No executable-address aliases or pointer stand-ins.

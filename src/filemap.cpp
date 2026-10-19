@@ -19,6 +19,16 @@
 #include "filemap.h"
 #include "general.h"
 
+// File mapping SDK dependencies. CreateFileMapping selects the ANSI SDK entry.
+// RECOVERY_IMPORT: v1 __imp__CloseHandle@4 KERNEL32.dll name:CloseHandle
+// RECOVERY_IMPORT: v1 __imp__UnmapViewOfFile@4 KERNEL32.dll name:UnmapViewOfFile
+// RECOVERY_IMPORT: v1 __imp__CreateFileA@28 KERNEL32.dll name:CreateFileA
+// RECOVERY_IMPORT: v1 __imp__CreateFileMappingA@24 KERNEL32.dll name:CreateFileMappingA
+// RECOVERY_IMPORT: v1 __imp__GetFileSize@8 KERNEL32.dll name:GetFileSize
+// RECOVERY_IMPORT: v1 __imp__MapViewOfFile@20 KERNEL32.dll name:MapViewOfFile
+// RECOVERY_IMPORT: v1 __imp__SetEndOfFile@4 KERNEL32.dll name:SetEndOfFile
+// RECOVERY_IMPORT: v1 __imp__SetFilePointer@16 KERNEL32.dll name:SetFilePointer
+
 // The image expands cleanup inside Filemap but calls close from external
 // consumers. Keep the implementation visible only to this owning TU.
 inline void Filemap::close_impl() {

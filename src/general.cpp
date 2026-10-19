@@ -1817,6 +1817,10 @@ extern "C" int __cdecl sound_header_version() {
 // RECOVERY_IMPORT: v1 __imp__EqualRect@8 USER32.dll name:EqualRect
 // RECOVERY_IMPORT: v1 __imp__DirectDrawEnumerateA@8 DDRAW.dll name:DirectDrawEnumerateA
 // RECOVERY_IMPORT: v1 __imp__DirectDrawCreate@12 DDRAW.dll name:DirectDrawCreate
+// RECOVERY_IMPORT: v1 __imp__FindClose@4 KERNEL32.dll name:FindClose
+// RECOVERY_IMPORT: v1 __imp__FindFirstFileA@8 KERNEL32.dll name:FindFirstFileA
+// RECOVERY_IMPORT: v1 __imp__GetDC@4 USER32.dll name:GetDC
+// RECOVERY_IMPORT: v1 __imp__ReleaseDC@8 USER32.dll name:ReleaseDC
 // SDK dxguid-owned identities already consumed by UV2Player and MediaRuntime:
 // IID_IDirectDrawSurface2 = 57805885-6eec-11cf-9441-a82303c10e27 (66FC28);
 // IID_IDirectDraw2 = b3a6f3e0-2b43-11cf-a2de-00aa00b93356 (66FC38).

@@ -23,6 +23,9 @@
 #include "wave_device.h"
 #include "sounddevice.h"
 
+// SDK dependency for releasing the dynamically loaded sound module.
+// RECOVERY_IMPORT: v1 __imp__FreeLibrary@4 KERNEL32.dll name:FreeLibrary
+
 // ORIGINAL: 0x004C5E50 ?load_sound_dll@@YAHXZ 0x004C5E50-0x004C5F68 FILE
 // TRIED: do-while ROTATION is the remaining wall. The image keeps the plain
 // bottom-tested loop (back-edge `jl` to the handle reload at 0x4c5e8c, entry

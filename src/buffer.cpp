@@ -70,6 +70,13 @@
 #include <new>
 #include <math.h>
 
+// Drawing SDK dependencies; the pinned PE supplies their original import slots.
+// RECOVERY_IMPORT: v1 __imp__SetRect@20 USER32.dll name:SetRect
+// RECOVERY_IMPORT: v1 __imp__CreateRectRgnIndirect@4 GDI32.dll name:CreateRectRgnIndirect
+// RECOVERY_IMPORT: v1 __imp__SelectClipRgn@8 GDI32.dll name:SelectClipRgn
+// RECOVERY_IMPORT: v1 __imp__SetDIBColorTable@16 GDI32.dll name:SetDIBColorTable
+// RECOVERY_IMPORT: v1 __imp__SetTextColor@8 GDI32.dll name:SetTextColor
+
 /*
 Purpose: THE BLITTER. Copy a rectangle out of this buffer into `buffer`,
          clipping the read against this buffer's own extent and the write

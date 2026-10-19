@@ -29,6 +29,10 @@
 #include "multiwin.h"
 #include "councwin.h"      // CouncilWindow, the turn redraw receiver
 
+// Timer SDK dependencies; original import slots are derived from the pinned PE.
+// RECOVERY_IMPORT: v1 __imp__SetTimer@16 USER32.dll name:SetTimer
+// RECOVERY_IMPORT: v1 __imp__timeSetEvent@20 WINMM.dll name:timeSetEvent
+
 // The timer callbacks' shared state; declarations in time.h beside the
 // callbacks themselves. All four are zero-initialised .data in the image.
 int TimerHoldFlag;      // 0x00915620

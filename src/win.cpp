@@ -33,6 +33,16 @@
 // SDK dependency used by the keyboard/mouse pumps; the pinned PE supplies
 // its IAT slot. This is not an application-function recovery identity.
 // RECOVERY_IMPORT: v1 __imp__PeekMessageA@20 USER32.dll name:PeekMessageA
+// RECOVERY_IMPORT: v1 __imp__GetWindowLongA@8 USER32.dll name:GetWindowLongA
+// RECOVERY_IMPORT: v1 __imp__DefWindowProcA@16 USER32.dll name:DefWindowProcA
+// RECOVERY_IMPORT: v1 __imp__DispatchMessageA@4 USER32.dll name:DispatchMessageA
+// RECOVERY_IMPORT: v1 __imp__TranslateMessage@4 USER32.dll name:TranslateMessage
+// RECOVERY_IMPORT: v1 __imp__GetSystemMetrics@4 USER32.dll name:GetSystemMetrics
+// RECOVERY_IMPORT: v1 __imp__ShowWindow@8 USER32.dll name:ShowWindow
+// RECOVERY_IMPORT: v1 __imp__BeginPaint@8 USER32.dll name:BeginPaint
+// RECOVERY_IMPORT: v1 __imp__EndPaint@8 USER32.dll name:EndPaint
+// RECOVERY_IMPORT: v1 __imp__EnumThreadWindows@12 USER32.dll name:EnumThreadWindows
+// RECOVERY_IMPORT: v1 __imp__GetCurrentThreadId@0 KERNEL32.dll name:GetCurrentThreadId
 
 // Win constructor-installed Win branch: capture4, resize13, mouse17, update63.
 // Table start is observed in the original constructor; full extent remains unknown.

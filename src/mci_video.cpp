@@ -23,6 +23,8 @@
 #include <mmsystem.h>
 #include <digitalv.h>
 
+// RECOVERY_IMPORT: v1 __imp__mciSendCommandA@16 WINMM.dll name:mciSendCommandA
+
 // MCI device state, callback helpers and MCIVideo methods share the current
 // source owner that binds them. This records present C++ ownership, not original
 // translation-unit provenance or unmeasured runtime/log behavior.
