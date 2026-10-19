@@ -1,0 +1,31 @@
+{
+  "author": "coordinator",
+  "base_revision": "0524baa68e68f48d788440b56396c4c43e3bc943",
+  "editable_files": [
+    "src/netdaemon.cpp",
+    "recovery/tests/test_netdaemon_end_of_event_oct19.py"
+  ],
+  "evidence": [
+    "Pinned5328C0..532934 fully decodes116bytes/37instructions: after conditional sequence stamp,5328DC loads Console faction939284; unequal faction branches to53292F without changing EAX. Matching faction loads channel flag1BC0 intoEAX; zero clears1BB0 and returnszero; nonzero logs, clears1BC0, calls592EE0 and returns itsEAX. Existing source clears returnedEAX with two extraxor instructions. Preserve observed results under existing int declaration; no original result-consuming caller or original source return type is independently established.",
+    "Authorization is body-only inside NetDaemon::end_of_event. Capture current faction exactly once AFTER original sequence update, preserve current lock/sequence/log/store/send ordering, return the observed faction/channel-zero/send outcomes. Natural single-result-variable form or guarded returns is appropriate; at most3bounded spelling trials if needed. No new casts, guards, initialization of formerly uninitialized state, type/signature/structure/storage/header/caller/compiler/link/flags change. Keep ORIGINAL span/catalogued/current symbol/FILE/history untouched; recorder alone can bank a fresh exact claim.",
+    "Message producer592EE0 remains read-only observation support: actual source is src/netdaemon_message_data.cpp and retains send result under its current int API. Source fields ConsoleGlobal.faction_id_ +23BD4 from9156B0 agree with original939284; no global/layout change is needed. Mapped caller search finds none but reports two other undecoded mapped spans, so neither complete caller absence nor dead original code is established.",
+    "Add actual-body GCC/Clang C++98 host tests for unequal and matching factions, signed/current values, zero/nonzero lock state, sequence guard, store/log/send order, and nonzero/negative send results. Fail old forced-zero/multiple-faction-read/wrong store-order mutants. Optional pinned PE decoder controls must use the real pin, not source-address literals as proof. Fixture doubles cannot prove networking/runtime/ABI/game acceptance. Worker cannot edit Git/task files, prepare or use native compiler/Wine; coordinator owns isolated resource/recording/build/reference/claim/independent review/integration/destination checks.",
+    "Related lock_base/message_big_data near-misses are already typed/codegen-only; do not reopen them or rewrite other NetDaemon operations. Scope findings go to coordinator, not scope-creep. Preserve originalunsafe/errorquirks. Baseline/identity obligations are immutable; nativeautomatic/full linked/structure/runtime acceptance remains unproven."
+  ],
+  "intent": "Preserve original end_of_event EAX results under its existing source int signature without manufacturing a consuming caller or normalizing any original branch.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5449920,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5844704,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "netdaemon-event-result-oct19"
+}
