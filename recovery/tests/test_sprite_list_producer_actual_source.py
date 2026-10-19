@@ -85,9 +85,6 @@ def owner_bodies():
     assert "class SpriteList : public SpriteListBase" in sprite_header
     assert "class SpriteListBase : public StringStruct" not in sprite_header
     return "\n\n".join((
-        extract_definition(
-            sprite_source,
-            "template<class Node>\nNode *allocate_sprite_node(Heap *explicit_owner, SpriteList *list)"),
         extract_definition(string_source, "int StringStruct::on_insert(void *)"),
         extract_definition(string_source, "void StringStruct::on_remove(void *)"),
         extract_definition(sprite_source, "int SpriteList::on_insert(void *raw_payload)"),
@@ -116,6 +113,10 @@ def compile_and_run(bodies, expected_success=True):
 
 def test_actual_owner_and_producer_bodies_preserve_partial_failure():
     source = owner_bodies()
+    sprite_source = (repo_root() / "src/spritebox.cpp").read_text()
+    assert "allocate_sprite_node" not in sprite_source
+    assert "new_entry = ::new(entry_memory) StringStructEntry" in source
+    assert "new_payload = ::new(payload_memory) SpriteStruct" in source
     assert "if (row_sprite == 0) return 3;" in source
     assert "if (Dialog::item_list_.add(id) != 0) return 4;" in source
     assert "if (list_.add(id) != 0) return 4;" in source

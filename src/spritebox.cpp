@@ -1074,29 +1074,6 @@ Status: Complete
 // separate list clear with no original identity; 0x611730 is associated with
 // the compiler-generated virtual-base destructor entry by the native writer
 // after caller/layout review. C++ owns all vptr/vbtable staging.
-namespace {
-template<class Node>
-Node *allocate_sprite_node(Heap *explicit_owner, SpriteList *list) {
-    Heap *owner = explicit_owner;
-    if (owner == 0) {
-        owner = list->allocation_owner_;
-    }
-    void *memory;
-    if (owner != 0) {
-        memory = owner->get(sizeof(Node));
-        if (memory == 0) {
-            MessageBoxA(0, "out of heap space in new function", "Aborting", MB_OK);
-            exit(3);
-        }
-    } else {
-        memory = mem_get(sizeof(Node));
-        if (memory == 0) return 0;
-    }
-    StringAllocationHeap = owner;
-    return ::new(memory) Node;
-}
-}
-
 // Pinned 0x00402BB0 receiver is the allocation virtual-base view (+0x1C);
 // it adjusts to this list, clears through the shared 0x00402970 ring walker,
 // restores the StringAllocationBase table/owner, then honors deleting bit 0.
@@ -1178,26 +1155,92 @@ void SpriteList::on_remove(void *raw_payload) {
 int SpriteList::add(int id) {
     Heap *const entry_allocator = allocator_;
     if (entry_count_ == 0) {
-        head_ = allocate_sprite_node<StringStructEntry>(entry_allocator, this);
+        Heap *entry_owner = entry_allocator;
+        if (entry_owner == 0) entry_owner = allocation_owner_;
+        void *entry_memory;
+        StringStructEntry *new_entry = 0;
+        if (entry_owner != 0) {
+            entry_memory = entry_owner->get(sizeof(StringStructEntry));
+            if (entry_memory == 0) {
+                MessageBoxA(0, "out of heap space in new function", "Aborting", MB_OK);
+                exit(3);
+            }
+        } else {
+            entry_memory = mem_get(sizeof(StringStructEntry));
+        }
+        if (entry_memory != 0) {
+            StringAllocationHeap = entry_owner;
+            new_entry = ::new(entry_memory) StringStructEntry;
+        }
+        head_ = new_entry;
         if (head_ == 0) return 4;
         head_->id = id;
         head_->next = head_;
         head_->previous = head_;
-        Heap *const payload_allocator = allocator_;
-        head_->payload = allocate_sprite_node<SpriteStruct>(payload_allocator, this);
+        Heap *payload_owner = allocator_;
+        if (payload_owner == 0) payload_owner = allocation_owner_;
+        void *payload_memory;
+        SpriteStruct *new_payload = 0;
+        if (payload_owner != 0) {
+            payload_memory = payload_owner->get(sizeof(SpriteStruct));
+            if (payload_memory == 0) {
+                MessageBoxA(0, "out of heap space in new function", "Aborting", MB_OK);
+                exit(3);
+            }
+        } else {
+            payload_memory = mem_get(sizeof(SpriteStruct));
+        }
+        if (payload_memory != 0) {
+            StringAllocationHeap = payload_owner;
+            new_payload = ::new(payload_memory) SpriteStruct;
+        }
+        head_->payload = new_payload;
         if (head_->payload == 0) return 4;
         on_insert(head_->sprite_payload());
         current_ = head_;
     } else {
-        head_->previous->next = allocate_sprite_node<StringStructEntry>(entry_allocator, this);
+        Heap *entry_owner = entry_allocator;
+        if (entry_owner == 0) entry_owner = allocation_owner_;
+        void *entry_memory;
+        StringStructEntry *new_entry = 0;
+        if (entry_owner != 0) {
+            entry_memory = entry_owner->get(sizeof(StringStructEntry));
+            if (entry_memory == 0) {
+                MessageBoxA(0, "out of heap space in new function", "Aborting", MB_OK);
+                exit(3);
+            }
+        } else {
+            entry_memory = mem_get(sizeof(StringStructEntry));
+        }
+        if (entry_memory != 0) {
+            StringAllocationHeap = entry_owner;
+            new_entry = ::new(entry_memory) StringStructEntry;
+        }
+        head_->previous->next = new_entry;
         if (head_->previous->next == 0) return 4;
         head_->previous->next->previous = head_->previous;
         head_->previous->next->next = head_;
         head_->previous = head_->previous->next;
         current_ = head_->previous;
         current_->id = id;
-        Heap *const payload_allocator = allocator_;
-        current_->payload = allocate_sprite_node<SpriteStruct>(payload_allocator, this);
+        Heap *payload_owner = allocator_;
+        if (payload_owner == 0) payload_owner = allocation_owner_;
+        void *payload_memory;
+        SpriteStruct *new_payload = 0;
+        if (payload_owner != 0) {
+            payload_memory = payload_owner->get(sizeof(SpriteStruct));
+            if (payload_memory == 0) {
+                MessageBoxA(0, "out of heap space in new function", "Aborting", MB_OK);
+                exit(3);
+            }
+        } else {
+            payload_memory = mem_get(sizeof(SpriteStruct));
+        }
+        if (payload_memory != 0) {
+            StringAllocationHeap = payload_owner;
+            new_payload = ::new(payload_memory) SpriteStruct;
+        }
+        current_->payload = new_payload;
         if (current_->payload == 0) return 4;
         on_insert(current_->sprite_payload());
     }
