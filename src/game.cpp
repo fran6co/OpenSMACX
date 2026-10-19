@@ -25,6 +25,8 @@
 // Shared game-state change bits, written by base/vehicle/faction/technology
 // operations. Preserve the existing spelling and zero initialization: the
 // full original meaning, extent and persistence contract remain unresolved.
+// Original dword bit word: climate_set and set_dirty set distinct bits.
+// RECOVERY_OBJECT: v1 0x0090D91C ?UnkBitfield1@@3IA
 uint32_t UnkBitfield1;  // 0x0090D91C
 #include <shellapi.h>
 #include <ctype.h> // yearmotize uses the original unsigned-char CRT classification.
@@ -2377,6 +2379,8 @@ Status: Complete
 // Loop state globals; addresses and roles documented in
 // game.h next to each declaration.
 int GameRestartQueued;  // 0x0093A948
+// Original dword stop-loop flag, set by system-close and read by wait paths.
+// RECOVERY_OBJECT: v1 0x009B2068 ?ExitTurnLoop@@3HA
 int ExitTurnLoop;       // 0x009B2068
 // Earlier recovery interpreted 0x009A6504/0x009A6508 as independent
 // EndgameFactionSelectorA/B scalars. They are FactionRankings[6]/[7],

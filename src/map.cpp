@@ -3863,8 +3863,9 @@ void __cdecl world_analysis() {
     }
 }
 
-// Two fixed-address flags world_climate reads, no established identity
-// beyond what this one function shows.
+// The climate gate's wider contract remains unresolved; timer_daemon reads
+// this original dword before dispatching the climate update.
+// RECOVERY_OBJECT: v1 0x0068F21C ?WorldClimateSkipTerrainClear@@3IA
 uint32_t WorldClimateSkipTerrainClear = 1;  // 0x0068F21C
 uint32_t WorldClimateSkipTerritoryReset;  // 0x009B22EC
 // The map-refresh request the regeneration steps honour. world_build raises

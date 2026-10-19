@@ -99,6 +99,8 @@ extern WinDrawingBufferLifetime WinDrawingBufferOwner;
 int MenuPullDownInputOrigin;
 
 // The Win message-status word shares the owner of its message-pump consumers.
+// Original dword: task setup clears it and flush_timer ORs in message flags.
+// RECOVERY_OBJECT: v1 0x009B7B9C ?MsgStatus@@3IA
 uint32_t MsgStatus;  // 0x009B7B9C
 // The process window handle is produced by Win::open's CreateWindowExA
 // and consumed by the window/message-pump and DirectDraw owners.
