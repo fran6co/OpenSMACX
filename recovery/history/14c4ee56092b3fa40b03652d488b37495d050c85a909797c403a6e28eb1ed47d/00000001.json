@@ -1,0 +1,19 @@
+{
+  "event_id": "fe9851440949e65eccc2ba144511dad53b45e122ad478d691fe5d2126caccaaf",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_landmark_mask_contract_oct12i.py"
+    ],
+    "evidence": [
+      "Focused regression control rejects a newly native-recorded exact claim because it requires equality with a historical false claim. Authorize monotonic claim continuity, retaining the immutable identity/span/all-other-field comparisons and adding explicit rejection of task-baseline claim demotion. No baseline changes or matching waivers."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "claim-continuity-promotion",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:fractal-read-stride-oct19"
+}
