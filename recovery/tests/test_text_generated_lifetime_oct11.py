@@ -58,6 +58,22 @@ def test_only_writer_symbol_facts_and_corrected_current_documentation():
     ):
         assert expected.count(old_call) == count
         expected = expected.replace(old_call, original_call)
+    # Text::open now constructs its existing section-header local before the
+    # index search, matching the pinned operation order. Admit only that block
+    # relocation in this otherwise full-file history comparison.
+    header_block = (
+        b'    // NOT std::string: the image builds this with plain strcpy/strcat, and\n'
+        b"    // std::string's constructor/destructor pull in an SEH frame (`mov eax,\n"
+        b"    // fs:[0]` in the prologue) the image's `sub esp, 0x54` does not have.\n"
+        b'    char sect_header[80];\n'
+        b'    strcpy(sect_header, "#");\n'
+        b'    strcat(sect_header, section_id);\n'
+    )
+    assert expected.count(header_block) == 1
+    expected = expected.replace(header_block, b'', 1)
+    index_call = b'    int seek_addr = text_search_index(file_name_, section_id);\n'
+    assert expected.count(index_call) == 1
+    expected = expected.replace(index_call, header_block + index_call, 1)
     assert expected == path.read_bytes()
     before, after = read_text(old.decode(), path), read_text(expected.decode(), path)
     assert len(before) == len(after)

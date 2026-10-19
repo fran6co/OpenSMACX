@@ -1673,11 +1673,11 @@ for (i = 0; i < MaxCompassNum; i++) {
     }
     text_get();
     for (i = 0; i < MaxSocialEffectNum; i++) {
-        strcpy_s(SocialEffects[i].set1, 24, text_item());
+        strcpy(SocialEffects[i].set1, text_item());
     }
     text_get();
     for (i = 0; i < MaxSocialEffectNum; i++) {
-        strcpy_s(SocialEffects[i].set2, 24, text_item());
+        strcpy(SocialEffects[i].set2, text_item());
     }
     text_get();
     for (i = 0; i < MaxSocialCatNum; i++) {

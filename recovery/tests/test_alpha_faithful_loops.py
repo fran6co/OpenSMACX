@@ -71,15 +71,6 @@ def product_loops():
         "void __cdecl read_faction",
         "for (int i = 0; i < 2; i++)",
     )
-    # The product ABI is 32-bit. Keep its pointer-to-int key narrowing explicit
-    # through the host bridge because this control compiles on a 64-bit host.
-    ideology = ideology.replace(
-        "(int)SocialCategories[j].type",
-        "pointer_key(SocialCategories[j].type)",
-    ).replace(
-        "(int)SocialCategories[soc_cat_num].name[j]",
-        "pointer_key(SocialCategories[soc_cat_num].name[j])",
-    )
     reactor = loop_after(
         alpha,
         'if (text_open(AlphaxFileID, "REACTORS"))',
@@ -149,19 +140,16 @@ RulesFacility Facility[MaxFacilityNum];
 std::string category_text[MaxSocialCatNum];
 std::string model_text[MaxSocialCatNum][MaxSocialModelNum];
 
-int pointer_key(char *p) {
-    return static_cast<int>(reinterpret_cast<intptr_t>(p));
-}
 struct StringTableDouble {
     int calls;
     StringTableDouble() : calls(0) {}
-    char *get(int key) {
+    char *get(char *key) {
         ++calls;
         for (int c = 0; c < MaxSocialCatNum; ++c) {
-            if (key == pointer_key(SocialCategories[c].type))
+            if (key == SocialCategories[c].type)
                 return const_cast<char *>(category_text[c].c_str());
             for (int m = 0; m < MaxSocialModelNum; ++m)
-                if (key == pointer_key(SocialCategories[c].name[m]))
+                if (key == SocialCategories[c].name[m])
                     return const_cast<char *>(model_text[c][m].c_str());
         }
         check(false);

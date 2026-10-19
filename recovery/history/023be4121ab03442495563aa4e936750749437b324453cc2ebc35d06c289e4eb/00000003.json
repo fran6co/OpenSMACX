@@ -1,0 +1,20 @@
+{
+  "event_id": "b3ba48573accacac0280285ecc92be79509970732d7b28024faad688dab243c3",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "text-owner-order-consolidation",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "The expanded 57-identity loader checkpoint contains only the two reviewed SocialEffects ordinary copy expressions and the independently reviewed Text header-before-index block move. No headers, ABI, layout, storage, globals, signatures, compiler flags, dependencies or original annotations/claims were changed.",
+      "Original SocialEffects set1/set2 destinations 946580/946598 and 68-byte row stride agree with current 24+24+56 source layout and pinned strcpy calls 587E7D/587EA1. text_get/text_item order and eleven-row loops remain. Compatibility wrappers already ignored bounds; this is source/call-form fidelity, not a safety or proven semantic coverage gain.",
+      "The existing Alpha host double now accepts the same char* key as production Strings::get(LPSTR), avoiding obsolete pointer narrowing; original wrong-index/storage behavior and all seven destructive mutants remain. Eight preexisting compile failures now pass. Combined focused suite: 41 pass/8 fail to 53 pass/0 fail, including four new safe source/pinned loop controls.",
+      "Fresh build/link, 187 physical residuals, both exact control-to-application object comparisons, all known-domain measurements, claim/mapping/reference checks and independent owner reviews support this bounded manual checkpoint. Alpha remains nonexact: aligned matches 75 to 77 of 1217; all other owner observations unchanged. The same automatic/linked/runtime limitations and historical Text trial miss remain unwaived."
+    ]
+  },
+  "previous_event": "3c9eee85d801093d0ca8d2657379438f22b794688ca41b6d404c515b70def663",
+  "request_id": "reviewed-combined-loader-checkpoint",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:alpha-social-original-calls-oct19"
+}

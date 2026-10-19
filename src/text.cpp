@@ -145,18 +145,18 @@ BOOL Text::open(LPCSTR src_file_id, LPCSTR section_id) {
     if (!section_id) {
         return false;
     }
-    int seek_addr = text_search_index(file_name_, section_id);
-    if (seek_addr >= 0) {
-        log_say("Seeking to", section_id, seek_addr, 0, 0);
-        fseek(text_file_, seek_addr, SEEK_SET);
-        is_file_open = true;
-    }
     // NOT std::string: the image builds this with plain strcpy/strcat, and
     // std::string's constructor/destructor pull in an SEH frame (`mov eax,
     // fs:[0]` in the prologue) the image's `sub esp, 0x54` does not have.
     char sect_header[80];
     strcpy(sect_header, "#");
     strcat(sect_header, section_id);
+    int seek_addr = text_search_index(file_name_, section_id);
+    if (seek_addr >= 0) {
+        log_say("Seeking to", section_id, seek_addr, 0, 0);
+        fseek(text_file_, seek_addr, SEEK_SET);
+        is_file_open = true;
+    }
     do {
         if (feof(text_file_)) {
             if (is_file_open) {

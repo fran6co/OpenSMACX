@@ -1,0 +1,50 @@
+{
+  "event_id": "efa219dfb55ddcdce48dec669171390d5d9497d60544a0b7202472af6d37bfa5",
+  "payload": {
+    "affects": [
+      "entity-09c99e12e872c4cd1fbf96e806304ed7d3c37b839adf5e37fab43b73a548da5d",
+      "entity-0cffcc03994684fb3127db0e7bed49527141b1df5c2b5b1d71595a4180271951",
+      "entity-3208a84809fb6c1aea041b9d83d51b22ec28f1102612997b4d2e707fde9b72e6",
+      "entity-39344957fa96dc18a88e3a25fa318f6114e45a7962ba25e481ce958f5223d712",
+      "entity-44343d65df0602229fa2c70983205c1a6d63b600899748a1f11e28e1447a4889",
+      "entity-552daa16517ad1d310a17ad5e81462a0d1d10e03fb4acd3a27f50a9b8aff3e51",
+      "entity-57f5ec43962aebb14bea1e1d3532e61543f8f209a47c7aa25a39b54992407f39",
+      "entity-5fd8eb03ca1eb1b5746e9d7124b508b53162a47334ef2ecf8be2271c88b3307a",
+      "entity-66b7b76e65281b31a03ef8bcbdefa5fcf9ea7553400cdf2f371df1a131c0250b",
+      "entity-68ee4eca7e4576b8acaa0266d526f4421c4819377c1a0144075ad1fd4f5c6608",
+      "entity-7539cf97f9a134cd25a24e1bc7a3044ab718dc2f6abbb93d8ab295d8f48f9fe7",
+      "entity-7a08dbf663cc4fcc0befb29ddaac69daa64a91101185c531e6a8cb9fe8266164",
+      "entity-7bc1d8bce67f6362c145e7e06f02957d3074af36edda3abe3b5ed193d96ecb07",
+      "entity-82a92461f94c03573f17f71c67abd945eca8bdb42044f91e3e3fcab5f4d32b21",
+      "entity-8c74ef17b07260f6045d5e9af29daff6a49ab15f86c58bd30da72eed5a8fd22b",
+      "entity-944987a22928c3b36c9d67238fdeaae58778fc23bb53c8174753ad0eccedc16b",
+      "entity-98d4e5c13219146c36b4e4a433883e94e787cf2229330cb005253f384dff30c9",
+      "entity-a3144a1cd78744b55477f668b55f2a46d1a699567c19ad68064c8513e4d75774",
+      "entity-aa9423bedb526ac6ccbfd6947c6f3d11d210101b5ad2316b8a5bf28b495e652d",
+      "entity-ba9b434a81a4019103e59de7156609ed53b58a1e5bd3fb1187bd7969fd0f693e",
+      "entity-bc30517af8d744fe7dc9e54adfafe3bb56edc979d295856013b1b27c6ff4eb13",
+      "entity-c70f1c024d8beffc369743d3157d48413fb0cc73fb63cd059942a5a44d139418",
+      "entity-c7de991f2c646d5f7685e04c4264c198b91df5016f03f25721506169b3b365ea",
+      "entity-e1137772568e5f07cade468b5b3743f2c40e3dda00a69faa87b493a6108e0cf5",
+      "entity-e4d0955bcfecab192dfd8b857a8ffac767393bf59d019a9fcd4498f1634f8e28",
+      "entity-eb16938e1a554968efbe158350a31bed05d48d96da9c3adb30dea5aeb4e8ed49",
+      "entity-f507aaff90689c03b06d85f97afd14abbfb555511d508a83608a3ee835f120d9",
+      "entity-fbaa7d24a36428ad29efb2081f4433279c21358c9ed2c74fd69c871443daee58",
+      "entity-ff4c71f1c6dd15cdfe45548459ca96341267f951803a03eb8554676ba77d6ce1"
+    ],
+    "author": "coordinator",
+    "discovery_id": "text-owner-order-consolidation",
+    "evidence": [
+      "Both tasks share original immutable baseline b0480269f. Text worker changed only existing local header block order; independent pinned/source/test review passed. Actual unchanged application Release control measures170/170exact, zero owner exact losses; outside only Textopen residual passes. Its historical recorder separately measured7/170 under older trial flag sets, published nothing and changed no claim; retain that miss, do not change flags or fabricate acceptance.",
+      "Alpha worker changed only its two ordinary SocialEffects copy expressions. Actual unchanged Release control measures75→77/1217 for read_rules with zero owner exact losses; outside only read_rules residual passes. Independent source/pinned/test review found no blocker. Compatibility wrappers already ignore bounds; no semantic safety/coverage gain claimed.",
+      "Both isolated workers are frozen, native controls terminal and leases released. Coordinator consolidates the exact six edited files into this retained Alpha checkout for one fresh173TU build/link and57identity owner checkpoint; Text checkout stays untouched until verified preservation on master. Source/history and each task baseline remain fixed."
+    ],
+    "hypothesis": "The independently frozen Text original-operation order and Alpha SocialEffects call restoration form one loader verification checkpoint without shared header/ABI changes.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "text-owner-order-consolidation",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:alpha-social-original-calls-oct19"
+}

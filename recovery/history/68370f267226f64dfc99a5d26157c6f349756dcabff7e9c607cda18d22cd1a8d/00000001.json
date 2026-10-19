@@ -1,0 +1,21 @@
+{
+  "event_id": "332d0cd58142892231083e55df37b1a276c75fcd32f3f42b74b42b3eec0e2eda",
+  "payload": {
+    "affects": [
+      "entity-7bc1d8bce67f6362c145e7e06f02957d3074af36edda3abe3b5ed193d96ecb07"
+    ],
+    "author": "coordinator",
+    "discovery_id": "original-section-snapshot-before-index",
+    "evidence": [
+      "Pinned Text::open calls strcpy at 5FDAE6 and strcat at 5FDAF1 before inline index setup at 5FDAF9 and search_index at 5FDB0A. The source formerly placed the same local construction after text_search_index and its log/seek block. Preserve this original operation order without asserting the production search mutates its input.",
+      "One unchanged actual Release owner control now matches 170/170 instructions and all declared masked body bytes, with no exact losses among 29 Text identities. Its residual outside ONLY Text::open passes. The existing local buffer, expressions, null-section guard, file/error/read order, identity, claims, fields and lifetime remain unchanged."
+    ],
+    "hypothesis": "The original constructs its section-header snapshot before index lookup, but the former source built it afterward.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "original-section-snapshot-before-index",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:text-open-original-order-oct19"
+}

@@ -56,6 +56,7 @@ def fixture(body: str) -> str:
         static int read_calls = 0;
         static const char *searched_file = 0;
         static const char *searched_section = 0;
+        static char *section_to_mutate = 0;
 
         static FILE *env_open(LPCSTR name, LPCSTR mode) {
             last_opened_name = name;
@@ -71,6 +72,10 @@ def fixture(body: str) -> str:
             ++search_calls;
             searched_file = file;
             searched_section = section;
+            if (section_to_mutate == section) {
+                strcpy(section_to_mutate, "MUTATED");
+                section_to_mutate = 0;
+            }
             return search_result;
         }
         static void log_say(LPCSTR, LPCSTR, int, int, int) { ++log_calls; }
@@ -129,6 +134,7 @@ def fixture(body: str) -> str:
 
         static void reset_controls() {
             last_opened_name = last_opened_mode = searched_file = searched_section = 0;
+            section_to_mutate = 0;
             open_fails = search_calls = log_calls = seek_calls = rewind_calls = read_calls = 0;
             search_result = -1;
             file_contents = "#OPTIONS\nbody\n";
@@ -200,6 +206,19 @@ def fixture(body: str) -> str:
             assert(strcmp(failed_reopen.file_path_, "unchanged") == 0);
             assert(search_calls == 0 && read_calls == 0);
         }
+        static void check_header_precedes_mutating_index_search() {
+            reset_controls();
+            Text aliased;
+            char section[] = "OPTIONS";
+            section_to_mutate = section;
+            search_result = 0;
+            assert(aliased.open("rules", section) == 0);
+            assert(strcmp(section, "MUTATED") == 0);
+            assert(search_calls == 1 && searched_section == section);
+            assert(strcmp(aliased.buffer_get_, "#OPTIONS") == 0);
+            assert(aliased.current_pos_ == aliased.buffer_get_);
+            aliased.close();
+        }
         static void check_existing_stream_and_seek() {
             reset_controls();
             Text existing;
@@ -238,6 +257,7 @@ def fixture(body: str) -> str:
             check_filename_and_section();
             check_null_section_and_open_failure();
             check_fallback_reopen_success_and_failure();
+            check_header_precedes_mutating_index_search();
             check_existing_stream_and_seek();
             check_eof_rewind_then_close();
             return 0;
@@ -257,6 +277,8 @@ def test_text_open_uses_original_copy_append_operations_and_order() -> None:
     assert body.index("strchr(file_name_, '.')") < body.index('strcat(file_name_, ".txt");')
     assert body.index("strcpy(sect_header, \"#\");") < body.index("strcat(sect_header, section_id);")
     assert body.index("strcat(sect_header, section_id);") < body.index("do {")
+    assert body.index("strcat(sect_header, section_id);") < body.index(
+        "int seek_addr = text_search_index(file_name_, section_id);")
 
 
 @pytest.mark.parametrize("compiler_name", ["g++", "clang++"])
@@ -338,3 +360,12 @@ def test_pinned_original_has_the_five_ordinary_call_witnesses() -> None:
     assert (by_address[0x005FDAE5].mnemonic, by_address[0x005FDAE5].op_str) == ("push", "edx")
     assert (by_address[0x005FDAEF].mnemonic, by_address[0x005FDAEF].op_str) == ("push", "ebp")
     assert (by_address[0x005FDAF0].mnemonic, by_address[0x005FDAF0].op_str) == ("push", "eax")
+    assert (by_address[0x005FDAE0].mnemonic, by_address[0x005FDAE0].op_str) == ("push", "0x696e84")
+    assert (by_address[0x005FDAE5].mnemonic, by_address[0x005FDAE5].op_str) == ("push", "edx")
+    assert (by_address[0x005FDAE6].mnemonic, by_address[0x005FDAE6].op_str) == ("call", "0x645460")
+    assert (by_address[0x005FDAEF].mnemonic, by_address[0x005FDAEF].op_str) == ("push", "ebp")
+    assert (by_address[0x005FDAF0].mnemonic, by_address[0x005FDAF0].op_str) == ("push", "eax")
+    assert (by_address[0x005FDAF1].mnemonic, by_address[0x005FDAF1].op_str) == ("call", "0x645470")
+    assert (by_address[0x005FDAF9].mnemonic, by_address[0x005FDAF9].op_str) == ("mov", "ebx, 0x9b7d08")
+    assert (by_address[0x005FDB0A].mnemonic, by_address[0x005FDB0A].op_str) == ("call", "0x5fe120")
+    assert 0x005FDAE6 < 0x005FDAF1 < 0x005FDAF9 < 0x005FDB0A
