@@ -1,0 +1,21 @@
+{
+  "event_id": "7bb1b9c04210cb51ed2e4fe7cdadd7369df2f891d9a405fc7c20f0c6de2d2582",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "original-mount-negative-skip",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "One actual C++ change adds -1<local_94 before Mount table access, with no upper bound/clamp/newfallback. Mesa/Crater, tables, producer, declarations, lifetimes and all original identities/claims remain. Independent pinned/source review supports this faithful original-predicate correction, not a safety improvement.",
+      "34focused terrain host/pinned controls pass with configured original, including safe counted no-read negatives across all families, positive49 fake-reader and missing-lower/new-upper mutants, preserved complete chosen-backing0..127/row119 checks. Full bounded backing is a source model, not original allocation proof. Combined with7scalar controls,41scoped controls pass.",
+      "Fresh actual174TU application compiles/links, and its first Mount COFF read is now preceded by cmpEBX,-1/jle skip. Complete original EH-region measurement stillREFUSED because the pre-existing cleanup transfer interpretation is unsupported; no exactness/claim grant. All5581known masked verdicts unchanged.",
+      "Broader test_mapwin_generation fixture is already stale: it still extracts removed standalone landmark arrays. All176unchanged extra test results agree baseline/candidate:87PASS/89FAIL. The89failures remain unwaived, not regression/behavior/game proof. A read-only repair plan is retained for subsequent task scope, not silently skipped or removed.",
+      "Manual coordinator source incorporation only. Combined candidate residual187PASS/1FAIL includes three unchanged game.cpp bodies from annotation-only companion changes; separate review and unresolved proof obligations remain. Preserve native gate failures, complete matching/restoration, full linked retained-selection/allocation/ICF, positive out-of-table/runtime and game obligations. Fresh destination verification still required."
+    ]
+  },
+  "previous_event": "81e3a2a0f0019f69fbc36b250bb610b3786d4f8a996bf9584cb9a368b2e2bcc1",
+  "request_id": "incorporate-mount-negative-skip",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:terrain-mount-negative-index-oct19"
+}

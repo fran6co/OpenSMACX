@@ -1,0 +1,23 @@
+{
+  "event_id": "101c570803ec02682fe631b54088f480f750ace269149a41ef549a3aecc11ccc",
+  "payload": {
+    "affects": [
+      "entity-5c25bc16f695317409749d1efaa0b2a5f125636c6f028683bbc7375ec67afe93",
+      "entity-7d8176751703cb7d8caa38917ee097499bb12c1624819b3dd971ad2d9ac57af6",
+      "entity-c3ab6505cda74476379be71d572ca1adfe37784f992bf5d8728e321d44f07b68"
+    ],
+    "author": "coordinator",
+    "discovery_id": "unresolved-game-comment-codegen-effects",
+    "evidence": [
+      "game.cpp file-scope static_assert moves136to138; vc6_compat.h expands it to a typedef containing __LINE__. This is a concrete preprocessor identifier change and plausible compiler-input mechanism, not a controlled proof of causation.",
+      "Native physicalFAIL retained. Independent end_of_game load swap18F/192 and colortables loadswap380/383 are bounded; load_interface395vs394instructions and55relocationlocationsshift retain targetmultiset but accessordering equivalence is unproved. Preserve as pending proof/restoration work without reverting valid source identities or inventing original helper mappings."
+    ],
+    "hypothesis": "Annotation line changes alter one macro-generated typedef spelling and coincide with changed code generation in three otherwise unchanged game.cpp bodies.",
+    "kind": "discovery"
+  },
+  "previous_event": "175fb06cd31feacb59c829f30ed205b8c6630a2ebe568eae4247c58fad55d009",
+  "request_id": "unresolved-game-comment-codegen-effects",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:shared-scalar-data-identities-oct19"
+}

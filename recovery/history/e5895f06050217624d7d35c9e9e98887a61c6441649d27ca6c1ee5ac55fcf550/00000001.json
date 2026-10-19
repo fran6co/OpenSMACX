@@ -1,0 +1,20 @@
+{
+  "event_id": "81e3a2a0f0019f69fbc36b250bb610b3786d4f8a996bf9584cb9a368b2e2bcc1",
+  "payload": {
+    "affects": [
+      "entity-546c2a42d275b8a5e1f0a466a9395421124e340fe373c4b74a6dd49114355002"
+    ],
+    "author": "coordinator",
+    "discovery_id": "original-mount-negative-skip",
+    "evidence": [
+      "Pinned complete4632D0..466C92 decode:464723 zerosESI;464727/46472C take direct zero-state branches to46477B, bypassing a returning cleanup block; noESIwrite/call precedes464795 cmpEDI,ESI and464797 signedjl4648FB. FirstMountread46479D follows. The earlier test began after the missing branch and asserted a false lack of negative guard."
+    ],
+    "hypothesis": "The original Mount path rejects negative signed tile codes before the table read; the current reconstructed renderer omitted that predicate.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "original-mount-negative-skip",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:terrain-mount-negative-index-oct19"
+}

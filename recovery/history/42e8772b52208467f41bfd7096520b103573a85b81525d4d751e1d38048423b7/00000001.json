@@ -1,0 +1,33 @@
+{
+  "event_id": "ceb64eda1e4a451b303fb3509194e3b1ec2592331263dc78a442663aee81d2b5",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Observation-only scope for three unchanged game.cpp bodies whose fresh COFF changes alongside four scalar source start annotations. No function edit/waiver/claim change. Raw residual remainsFAIL and requires independent bounded review; source-token/codegen sensitivity is not runtime equivalence proof."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4337664,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4544016,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5392496,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "observe-comment-codegen-residuals",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:shared-scalar-data-identities-oct19"
+}
