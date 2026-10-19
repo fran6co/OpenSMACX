@@ -1,0 +1,27 @@
+{
+  "event_id": "accff992d4b94dd68e86f3637fb58beea6f938ec2af0c426929b36ad01b23457",
+  "payload": {
+    "affects": [
+      "entity-046bfa66d5c1463fd2ce44feba41ee126e91cd951605f8952d802294504b7984",
+      "entity-0979cf3e31101adbca8546df8bb753620267289ff3643a5c2b0049f7c8232ba9",
+      "entity-121ed48b96f862737b2ec17c486b5eceae33ad13c3d04967dc29db86e49566f8",
+      "entity-446ecf31717c44c8b5ebc8cc7b6aef20d6c7de359617f99ce67ecaca2738a86f",
+      "entity-504e8d8d0a1f79fd8efe60a34e6a3b58ae10e443bb56d43927df0918e8ab612c",
+      "entity-c17cc7a3e712cf8c6f3b972ab510a7002a883b36524579113f90719b35febf99",
+      "entity-ed04f9b55a269043250be19d76dbb93ca57f266a09bec1525c45b1353fd8efb5"
+    ],
+    "author": "coordinator",
+    "discovery_id": "one-shared-dialog-style-cell",
+    "evidence": [
+      "The sole37-word DialogDefaults storage and all37initializers remain; dialog_default_style returns actualslot36. All six original style consumers now share it; unchanged colour setter slot3 also writes that cell. Only a v1 start binding was added, with no original allocation-bound claim.",
+      "Native pinned PE roles and fresh174TU application build/link support the bounded recovery. Actual COFF Dialog table148observed bytes match the pin, duplicate style symbol and out-of-line helper definitions are absent; original609D84 slot3 store aliases6970DC. Three UI data definitions are ordinary external BSS. These are not independent original allocation bounds or final lifetime/runtime proof."
+    ],
+    "hypothesis": "Original6970DC is one shared defaults-table word, not separate main-owned style storage.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "one-shared-dialog-style-cell",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:dialog-default-style-storage-oct19"
+}

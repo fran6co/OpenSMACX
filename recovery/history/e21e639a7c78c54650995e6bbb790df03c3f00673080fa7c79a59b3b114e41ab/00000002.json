@@ -1,0 +1,21 @@
+{
+  "event_id": "848bec5eed96a067fff7b41ee97f3446699a4eaaab2be1bfca68c911cfb3ad32",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "one-shared-dialog-style-cell",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "The sole37-word DialogDefaults storage and all37initializers remain; dialog_default_style returns actualslot36. All six original style consumers now share it; unchanged colour setter slot3 also writes that cell. Only a v1 start binding was added, with no original allocation-bound claim.",
+      "Coordinator actual-source review and separate bounded source/artifact reviews support manual integration.58host controls and2realVC6/Wine lifecycle fixture controls pass; the new Dialog host test is source-alias/mutant evidence, not itself a pinned-image decoder. Separate actual PE/COFF148byte and store-instruction checks provide those witnesses. Native claims/mappings/references pass with all historical identities/spans/claims retained; no new claim is granted.",
+      "Fresh5581known-domain census preserves every prior masked verdict:3263BYTE_EXACT,1864MISMATCH,30MNEMONIC_ONLY,286REFUSED,35SHARED_TAIL,32UNRESOLVED,19SHAPE_EXACT,52UNBOUND. Fresh strict2067pass/1194unknown/2fail improves44originals from unknown to pass, with no previous strict pass losses and all44inside the two task observation scopes. This is one shared-storage correction and four source data starts, not44new implementations or full executable coverage.",
+      "Raw candidate outside-six-body physical comparison remains173PASS/15FAIL. Removed main-owned scalar is intentional; header-dependent ordinary/EH code residuals retain native failures and separate bounded manual review. The larger editor_natural/custom_planet emitted changes and remaining load_interface/PrefWin::init/order_veh scheduling/reference effects are not established equivalent merely by source equality, instruction counts or matching external-target multisets; changed original undefined-path effects remain possible and unproved. Their function source bodies and relevant declarations/layouts were not rewritten. No residual is relabeled green, no synthetic helper mapping/waiver or new historical claim is invented. Preserve restoration and complete linked-selection/allocation/ICF/ABI/provider/runtime/full-game obligations. Automatic acceptance remains unproven.",
+      "Standing coordinator-reviewed manual integration only, followed by fresh destination build/link, host/native/source checks, zero-omission188physical-object equality and fresh native pinned census/reference/storage verification. Source incorporation is not native automatic publication or game acceptance. Retain all checkouts until destination verification finishes."
+    ]
+  },
+  "previous_event": "accff992d4b94dd68e86f3637fb58beea6f938ec2af0c426929b36ad01b23457",
+  "request_id": "incorporate-one-shared-dialog-style-cell",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:dialog-default-style-storage-oct19"
+}
