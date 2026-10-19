@@ -1,0 +1,36 @@
+{
+  "author": "coordinator",
+  "base_revision": "e30e2bf17a1fb423ab52abfb131b060b5275e0d4",
+  "editable_files": [
+    "src/vendor/vc6-runtime.recovery.h",
+    "recovery/tests/test_crt_threadstart_contribution_oct19.py"
+  ],
+  "evidence": [
+    "Current relocated operand frontier independently identifies push646FD4 at646F81, the CreateThread start-routine argument; original IAT6691C0 resolves KERNEL32.dll!CreateThread and callsite646F95. Pinned Ghidra row3742 independently records primary callback646FD4..647048 (116bytes), not the147byte physical section.",
+    "Pinned LIBCMT archive1ef9c27b4f76031e40fcbdf7d518adc4969f90d6a00dd1ea88697907268c1b2b uniquely contains build/intel/mt_obj/thread.obj hash5cce4c839d1764f275e326b85b388f98e40622a9f2f2030843082c9023b2e596. Its ordinary executable section3 .text147bytes has sole externalfunction __threadstart@4 atoffset0. Original primary116bytes plus scope-table-referenced handler647048..64705C andcleanup64705C..647067 correspond to this entire contribution: all99nonrelocationbytes and shape12relocationfields independently checked. Keep primaryspan and physicalcontribution distinct.",
+    "Use existing native ToolchainCodeSectionBinding and CodeEntryAnchor: add one section3 span646FD4..647067 with one size-free __threadstart@4 entry offset0. No function binding, fabricated EH function extents, provider alias, application CPP body, compiler/build/package/gate change or newCLI. Preserve every prior manifest field/entry/import prefix, original identities/claims, adjacent beginthread/endthread spans and unqualified runtime/provider obligations.",
+    "Add focused tests of actual current companion, exact prior manifest/importprefix preservation, native format roundtrip, configured pinned archive/PE/member and CreateThread/primary/EHscope evidence. Exercise native wholecontribution/entry/ref results and wrongsection/name, shortenedspan, wronganchor, opcode/knownrelocation damage, corrupt/missingpin and archive damage where supported. Maintain unresolved __amsg_exit and any other unproved EH/TLS/import closure as UNKNOWN; do not add target aliases or weaken checks to gainPASS. Use independent pin provenance, not current-build symbols as original evidence.",
+    "Worker isolated edits/host tests only; coordinator owns Git/preparation/resources/native compilation/integration/cleanup. Scope freezes before measurement. Independentreview, build/link, wholephysicalobject identity, source claims/mapping/reference continuity and fresh destinationverification required. This is recognized dependency attribution, no new applicationfunction implementation or exact-count claim; original selected archiveprovider/final-link retention/ICF/runtime/gameacceptance remain unproved."
+  ],
+  "intent": "Attribute the original thread-start callback and complete ordinary CRT code contribution to the pinned library, without fabricating a function extent or application implementation.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6582109,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6582228,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6582375,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "crt-threadstart-contribution-oct19"
+}
