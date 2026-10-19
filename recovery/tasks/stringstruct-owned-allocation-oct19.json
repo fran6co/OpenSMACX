@@ -1,0 +1,162 @@
+{
+  "author": "coordinator",
+  "base_revision": "1b0eaa1911d8543404c35f0f9ddf97553a8af7c4",
+  "editable_files": [
+    "src/stringstruct.cpp",
+    "recovery/tests/test_stringstruct_owned_allocation_oct19.py"
+  ],
+  "evidence": [
+    "Original/source investigation is retained under ignored shared-container-structure-oct18c/findings.md. Reinspect pinned full328-instruction insertion span, allocation/failure and virtual-base construction paths. Similar algorithm/layout does not prove an original common template/base; preserve the existing independent owner and payload types.",
+    "Authorize only this owner add(int) body and its otherwise-unused allocate_list_node/allocate_sprite_node helper removal. Restore direct Heap::get-or-mem_get allocation paths followed by ordinary typed placement construction in the method. No forced inline, assembly, raw table writes, fabricated hierarchy/operator interface, hardcoded executable addresses, compiler flag change or mass unrelated cleanup. Shared headers and other owners are read-only.",
+    "Snapshot explicit entry allocator at method entry; reload explicit payload allocator at its original point; select inherited owner independently when explicit owner is null. Preserve Heap fatal MessageBox/exit3, mem_get null return4, exact payload/entry sizeof and owner publication only after successful allocation. Preserve original partial link/payload mutations before failure, ring initialization, ignored hook result, current/count/position update order and all unsafe/error quirks. Do not improve original behavior.",
+    "Use one bounded natural C++ implementation, not an extended spelling deck. Existing generic helper delegates substantial original-body behavior out of line; removing this synthetic boundary is a fidelity/source-quality recovery, not a promise of matching. Keep all class/member/vtable/lifetime declarations and historical claims/identity/spans unchanged. Request scope expansion if any header/outside edit proves necessary.",
+    "Add or adapt actual-source host tests for empty/nonempty insertion, explicit/inherited/CRT allocation, exact size and owner handoff, each allocation failure and original partial state, ignored insertion return and allocator reread after entry allocation. Fatal heap paths must be observed without weakening product behavior. Extract actual source/types wherever feasible, not a hand-reimplemented insertion oracle. Keep fixtures bounded; no copied machine-code fixture or ad hoc PE parser.",
+    "Worker is host-only in isolated native-prepared worktree: no Wine/native compiler, Git mutation, source marker/claim editing, framework changes, task journal changes or outside-scope source edits. Coordinator owns compiler leases, scopes, original/source review, full build/link, measured preservation/reference/restoration review, integration and destination checks. No automatic or game acceptance follows."
+  ],
+  "intent": "Recover original direct owned allocation and typed node construction in insertion 0x401100, removing reconstruction-only helper boundaries.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4205600,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4205680,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4205040,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4199712,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4203280,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4198400,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4198656,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4200000,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4203824,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4203776,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4199776,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4204912,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4198496,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4199856,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6174256,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4543680,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5831904,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6021792,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6020640,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5430720,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5430896,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5414512,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5013840,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5013904,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5013952,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5014160,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5014432,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5831536,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "stringstruct-owned-allocation-oct19"
+}
