@@ -1,0 +1,20 @@
+{
+  "event_id": "4ee38ba769b92fa707a30e322d9ddf8878b60bf0f76467dd5174fcbcada864d6",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "original-shared-parser-array-starts",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Add three v1start-only sourcebindings adjacent to existing general.cpp definitions. ExistingParseNumTablebinding, allCPPtokens/types/linkage/initializers/bodies/callers andoriginalidentities/spans/claims unchanged. Existingcomment/blanklines reused to keep this epochs LINE-dependent assertion spellings stable; no line directives or permanent line-number test. Independent source/pin review supports all3starts without declaring original completeallocations, originaltypename orlifetime.",
+      "Sevenfresh focusedsource/pinnedcontrols pass, including completefunctiondecode/dword-vs-bytewidth/indexstride, correct/missing/wrong/duplicate bindings, nativeconfiguredsourceuniqueness and explicitmissing/corruptpin refusals. Pinned negatives remain unchecked; no behaviorfix. Fresh actual174TU applicationbuild/link passes. All188compiler-receipted physicalobjects compare identical to reviewedmaster with zero projectedfunctions, including sourceowneddata/helpers/initializer/metadata. Claims/mappings/references pass.",
+      "Fresh actualordinaryexternalCOFFdefinitions publish exactly3expectedstarts; four initial observedbytes perarray agree withpin. In-memory storageclass2to3 damage andmissingowner both refuse publication. These are boundedstarts/prefixcontrols, not fulloriginalextent/initializer/lifetimeproof. Currentdeclarations unchanged; no aliases or syntheticparent.",
+      "Whole5581knownmaskedcensus unchanged at3263BYTE_EXACT. Strict2667PASS/592UNKNOWN/4FAIL gains6existing exact-body reference passes: parse_say,parse_says andfourpop_ask_number overloads. No prior passloss/newFAIL. BaseWin::rename remainsunknown becauseotherbindings are unresolved. No new function implementations or claims. Coordinator-reviewed manual integration only; freshdestinationbuild/equality/scoped/data/reference checks required. Originaluniverse/linkedretention/allocation/ICF/structure/runtime/game acceptance remain unfinished; no nativeautomaticacceptance claim."
+    ]
+  },
+  "previous_event": "4b6cddfb26ac8f299fffe96552459832731740ccc836d58dc2c80fb1c0a58cf0",
+  "request_id": "incorporate-parser-array-starts",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:parse-array-data-identities-oct19"
+}

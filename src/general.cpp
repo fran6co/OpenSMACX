@@ -39,13 +39,13 @@
 // &FilefindPath.last_path at 0x009B8198 + 0x200, not a pointer variable.
 // RECOVERY_OBJECT: v1 0x009B8198 ?FilefindPath@@3UFilefind@@A
 Filefind FilefindPath;  // 0x009B8198
-
-// Parse-family tables, zero initialized as in the original .data. Preserve
-// the ten-entry extents and existing symbol/type spellings.
-int ParseStrPlurality[10];  // 0x009BB570
+// RECOVERY_OBJECT: v1 0x009BB570 ?ParseStrPlurality@@3PAHA
+int ParseStrPlurality[10];  // 0x009BB570; parse-family table, zero-initialized.
 // RECOVERY_OBJECT: v2 0x009BB598 0x009BB5C0 ?ParseNumTable@@3PAHA 0x00625E30
 int ParseNumTable[10];      // 0x009BB598
+// RECOVERY_OBJECT: v1 0x009BB5C0 ?ParseStrGender@@3PAHA
 int ParseStrGender[10];     // 0x009BB5C0
+// RECOVERY_OBJECT: v1 0x009BB5E8 ?ParseStrBuffer@@3PAUchar256@@A
 char256 ParseStrBuffer[10]; // 0x009BB5E8
 #include "movie_media.h"
 #include "alpha.h"

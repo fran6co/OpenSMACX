@@ -1,0 +1,26 @@
+{
+  "event_id": "4b6cddfb26ac8f299fffe96552459832731740ccc836d58dc2c80fb1c0a58cf0",
+  "payload": {
+    "affects": [
+      "entity-14bf9075358b0155041ac708a898e48d6683c5b34b68eeedb0ba6105843f598f",
+      "entity-21f4be5beffbab47015615333e916981df77abb760ff033fb03a11f9b5d889fc",
+      "entity-7934b3f887556ffd41a6945f99218962da9082a80506bed8983d3d5f5f170449",
+      "entity-a48ac6c08c111799d77078e74cf5c51eba78825231c847850f9452cf5c8ba26f",
+      "entity-c20d709443086b20a13d178c9572563ab215acb8f588b0e229b2596f5f75fa60",
+      "entity-e45529b987e0fa8e1f7565a23028845194d6786e8d800d0bb156e264a1a25dba",
+      "entity-e540c049bffae4c3444e2eab058bf3c397ff863b577f591e64924cc1779d1826"
+    ],
+    "author": "coordinator",
+    "discovery_id": "original-shared-parser-array-starts",
+    "evidence": [
+      "Complete pinned625E50..625EB3 and625EC0..625F1A corroborate gender9BB5C0/plurality9BB570 dwordid*4stores andbuffer9BB5E8 idshift8/byteclear/append. Existing sourceordinarydefinitions andint[10]/char256[10] declarations remain unchanged. Sevenfreshunknown originalfunctionrows expose these unresolvedtargets; originalcompleteallocations are not established."
+    ],
+    "hypothesis": "Three already defined parser arrays have independently observed original starts missing from source-owned data bindings.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "original-shared-parser-array-starts",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:parse-array-data-identities-oct19"
+}
