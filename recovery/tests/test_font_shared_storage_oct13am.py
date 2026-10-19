@@ -93,9 +93,43 @@ def test_native_object_writer_roundtrip_matches_only_three_records_and_note():
     )
     assert written.count(first_marker) == 1
     expected = written.replace(first_marker, NOTE + first_marker, 1)
-    assert SOURCE.read_bytes() == expected, (
-        "font.cpp differs from the exact native-writer records and essential note"
-    )
+    # The writer roundtrip remains measured against its original baseline and
+    # must produce exactly the three records plus the evidence note. Later
+    # reviewed function recovery is not part of that object-writer operation.
+    assert expected.count(NOTE) == 1
+    for marker in (
+        first_marker,
+        b"// RECOVERY_OBJECT: v2 0x009BB48C 0x009BB490 "
+        b"?FontInitCount@Font@@2HA 0x006195B0\n",
+        b"// RECOVERY_OBJECT: v2 0x009BB484 0x009BB488 "
+        b"?FontDefault@@3PAVFont@@A 0x006195B0\n",
+    ):
+        assert expected.count(marker) == 1
+    generated_rows = parse_objects(expected.decode("utf-8"), UNIT, PIN,
+                                   address_space=ADDRESS_SPACE)
+    assert {row.origin.address for row in generated_rows} == set(EXPECTED)
+    reconstructed = expected.replace(NOTE, b"", 1)
+    for marker in (
+        first_marker,
+        b"// RECOVERY_OBJECT: v2 0x009BB48C 0x009BB490 "
+        b"?FontInitCount@Font@@2HA 0x006195B0\n",
+        b"// RECOVERY_OBJECT: v2 0x009BB484 0x009BB488 "
+        b"?FontDefault@@3PAVFont@@A 0x006195B0\n",
+    ):
+        assert reconstructed.count(marker) == 1
+        reconstructed = reconstructed.replace(marker, b"", 1)
+    assert reconstructed == raw, (
+        "the writer output adds only the three object markers and the evidence note")
+    current = SOURCE.read_bytes()
+    assert current.count(NOTE) == 1
+    for marker in (
+        first_marker,
+        b"// RECOVERY_OBJECT: v2 0x009BB48C 0x009BB490 "
+        b"?FontInitCount@Font@@2HA 0x006195B0\n",
+        b"// RECOVERY_OBJECT: v2 0x009BB484 0x009BB488 "
+        b"?FontDefault@@3PAVFont@@A 0x006195B0\n",
+    ):
+        assert current.count(marker) == 1
 
 
 def test_font_loader_producers_remain_independent_storage_operations():

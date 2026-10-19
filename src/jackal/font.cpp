@@ -119,23 +119,23 @@ Purpose: Initialize the class using the font name, height and style.
 //        store sequence, both compile to the identical 112/130: this is
 //        the optimizer's instruction scheduling, not a source-shape choice
 //        reachable from here.
-// LEVER: the trailing SelectObject moves BETWEEN `height_ = ...` and
-//        `internal_leading_ = ...`. That is the one source-shape choice the
-//        earlier pass missed: it makes VC6 hoist the `push 0xd`
-//        (GetStockObject's SYSTEM_FONT argument) above the two remaining
-//        member stores, which is exactly where the image has it -
-//        0x006190A0 sits between `sub edx, ecx` and `mov [esi+0x10], edx`.
-//        112/130 -> 117/130, and the compiled count now equals the image's
-//        (130). The two member stores the statement jumps over are still
-//        ordered height_ then internal_leading_ then descent_ in the image,
-//        so the reordering is a scheduling nudge, not a semantic change.
+// HISTORICAL LEVER (not used by the current body): placing SelectObject
+//        between the height_ and internal_leading_ stores measured 117/130,
+//        up from 112/130. That trial put the API expression before two metric
+//        stores, so it is not the pinned call order: the original stores
+//        height_, internal_leading_ and descent_ at 0x006190A2-0x006190A8,
+//        then calls GetStockObject at 0x006190AB and SelectObject at
+//        0x006190B9. The current body keeps those calls after all five metric
+//        stores, preserving the original order; its checkpoint measurement
+//        remains 112/130 rather than adopting the higher-scoring trial.
 // TRIED: the last 13 - the image reads tmDescent BEFORE it computes height_
 //        (its `mov edx, eax` copy of tmAscent exists only because eax is
 //        already spoken for), so spelling that with an `int descent` local
 //        was the obvious next move. It SPILLS: hoisting the read to just
 //        before `height_` or to the top of the block both compile to
 //        97/130 (compiled 132 - two extra spills). `int leading` alone
-//        stays at 117/130 and is what is here.
+//        stays at 112/130 in the current body, where SelectObject follows
+//        all five metric stores as it does in the pinned instructions.
 Return Value: Zero on success, non-zero on error
 Status: Complete
 */
@@ -214,16 +214,13 @@ int Font::init(LPCSTR font_name, int height, int style) {
     // `internal_leading_`-first source order and a reordered one matching
     // the image's store sequence compile to the identical 112/130; this is
     // the optimizer's own instruction scheduling, not a source-shape one.
-    // The trailing SelectObject sits BETWEEN the height_ store and the
-    // internal_leading_/descent_ stores. That is what makes VC6 hoist the
-    // `push 0xd` for GetStockObject above the two remaining member stores,
-    // which is where the image has it (0x006190A0, between `sub edx, ecx`
-    // and `mov [esi + 0x10], edx`) - 112/130 with SelectObject last,
-    // 117/130 with it here. Everything else about the block is scheduling:
-    // TRIED below.
-    // Pinned-call correction: 0x006190A0 pushes SYSTEM_FONT as argument setup;
-    // GetStockObject is actually called at 0x006190AB and SelectObject at
-    // 0x006190B9. The image publishes all five metrics before either call.
+    // An earlier spelling moved SelectObject between the height_ and later
+    // metric stores. It measured 117/130, but changed observable call order:
+    // the image stores all five metrics through 0x006190A8, then calls
+    // GetStockObject at 0x006190AB and SelectObject at 0x006190B9. In that
+    // original sequence, 0x006190A0 is only GetStockObject's argument setup
+    // between `sub edx, ecx` and the height_ store. Keep the call last even
+    // though the 117/130 spelling scored higher; the current order is 112/130.
     int leading = tm.tmInternalLeading;
     line_height_ = tm.tmHeight + tm.tmExternalLeading;
     ascent_ = tm.tmAscent;
@@ -374,7 +371,7 @@ int Font::width(LPSTR input) {
 /*
 Purpose: Get the width for the input text with a maximum length.
 // ORIGINAL: 0x006192F0 ?width@Font@@QAEHPADH@Z 0x006192F0-0x0061936B BYTE_EXACT
-// symbol    ?width@Font@@QAEHPADI@Z
+// symbol    ?width@Font@@QAEHPADH@Z
 // HISTORICAL MOVED IN-CLASS: `find_line_break_l` (0x00619370) used the
 // source body twice inline; it now calls the private source-only helper, not
 // an original mapped identity.
@@ -413,7 +410,7 @@ Status: Complete
 */
 
 #define FONT_MIN(a, b) ((a) < (b) ? (a) : (b))
-int Font::width(LPSTR input, size_t max_len) {   // 006192F0
+int Font::width(LPSTR input, int max_len) {   // 006192F0
     if (!input) {
       return 0;
     }
@@ -423,7 +420,7 @@ int Font::width(LPSTR input, size_t max_len) {   // 006192F0
     // value) is what produces the image's two calls. `jl`, not `jbe`, because
     // both operands are int there; a `size_t` comparison emits the unsigned
     // branch.
-    int len = FONT_MIN(static_cast<int>(max_len),
+    int len = FONT_MIN(max_len,
                        static_cast<int>(strlen(input)));
     SelectObject(FontHDC, font_obj_);
     SIZE size;
@@ -436,7 +433,7 @@ int Font::width(LPSTR input, size_t max_len) {   // 006192F0
 /*
 Purpose: Find a space in the input string that can be used as a natural line break.
 // ORIGINAL: 0x00619370 ?find_line_break_l@Font@@QAEHPADPAHH@Z 0x00619370-0x006195A7
-// symbol    ?find_line_break_l@Font@@QAEPADPADPAHI@Z
+// symbol    ?find_line_break_l@Font@@QAEPADPADPAHH@Z
 // size      567 bytes
 // prototype int (__thiscall ?find_line_break_l@Font@@QAEHPADPAHH@Z)(Font* this, int8* input, int* breakLen, int len)
 // callers   1   call targets   2
@@ -483,7 +480,7 @@ Purpose: Find a space in the input string that can be used as a natural line bre
 Return Value: Pointer to string section after the line break or NULL if not found
 Status: Complete
 */
-LPSTR Font::find_line_break_l(LPSTR input, int *break_len, size_t len) {
+LPSTR Font::find_line_break_l(LPSTR input, int *break_len, int len) {
     int search_brk = *break_len;
     LPSTR search_str = input;
     // `if (len) { do ... }`, not `if (!len) return NULL; do ...`. The image

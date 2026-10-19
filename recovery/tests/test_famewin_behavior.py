@@ -127,12 +127,20 @@ static void reset() {
 int main() {
   reset();
   FameWin click;
-  click.spot_.result = 4; click.spot_.out_x = 8; click.spot_.out_y = 3;
+  click.selectedRecord_ = 99;
+  click.spot_.result = 0; click.spot_.out_x = 0; click.spot_.out_y = 3;
   click.on_left_click(20, 30);
-  assert(click.spot_.calls == 1 && click.selectedRecord_ == 8 && click.redraws == 1);
+  assert(click.spot_.calls == 1 && click.selectedRecord_ == 0 && click.redraws == 1);
+  click.spot_.result = 63; click.spot_.out_x = 63; click.spot_.out_y = 9;
+  click.on_left_click(20, 30);
+  assert(click.spot_.calls == 2 && click.selectedRecord_ == 63 && click.redraws == 2);
+  click.selectedRecord_ = 41;
+  click.spot_.result = -1; click.spot_.out_x = 17; click.spot_.out_y = 5;
+  click.on_left_click(20, 30);
+  assert(click.spot_.calls == 3 && click.selectedRecord_ == 41 && click.redraws == 3);
   NetDaemonNet.channels_[1].payload_.flags = 1;
   click.on_left_click(20, 30);
-  assert(click.spot_.calls == 1 && click.redraws == 1);
+  assert(click.spot_.calls == 3 && click.redraws == 3);
 
   reset();
   HallOfFameRecords[1].unknown_6A[0] = 0xA5;
@@ -217,6 +225,46 @@ def test_famewin_damage_control_detects_click_gate_change(tmp_path):
     before = "NetDaemonNet.channels_[1].payload_.flags == 0"
     assert before in left_click
     mutant = left_click.replace(before, "NetDaemonNet.channels_[1].payload_.flags != 0")
+    run_host_control(
+        tmp_path,
+        (mutant, source_body(DEMOTE), source_body(ADD_RECORD)),
+        should_pass=False,
+    )
+
+
+def test_famewin_damage_control_detects_wrong_hit_sentinel(tmp_path):
+    left_click = source_body(LEFT_CLICK)
+    before = "spot_.check(x, y, &y, &x) + 1 != 0"
+    assert before in left_click
+    mutant = left_click.replace(before, "spot_.check(x, y, &y, &x) + 1 == 0", 1)
+    run_host_control(
+        tmp_path,
+        (mutant, source_body(DEMOTE), source_body(ADD_RECORD)),
+        should_pass=False,
+    )
+
+
+def test_famewin_damage_control_detects_redraw_skipped_on_miss(tmp_path):
+    left_click = source_body(LEFT_CLICK)
+    before = "if (spot_.check(x, y, &y, &x) + 1 != 0) selectedRecord_ = y;\n    redraw();"
+    assert before in left_click
+    mutant = left_click.replace(
+        before,
+        "if (spot_.check(x, y, &y, &x) + 1 != 0) { selectedRecord_ = y; redraw(); }",
+        1,
+    )
+    run_host_control(
+        tmp_path,
+        (mutant, source_body(DEMOTE), source_body(ADD_RECORD)),
+        should_pass=False,
+    )
+
+
+def test_famewin_damage_control_detects_swapped_hit_out_parameters(tmp_path):
+    left_click = source_body(LEFT_CLICK)
+    before = "spot_.check(x, y, &y, &x)"
+    assert before in left_click
+    mutant = left_click.replace(before, "spot_.check(x, y, &x, &y)", 1)
     run_host_control(
         tmp_path,
         (mutant, source_body(DEMOTE), source_body(ADD_RECORD)),

@@ -43,13 +43,17 @@ def extract(source: str, signature: str) -> str:
 def product_bodies():
     header = HEADER.read_text(encoding="utf-8")
     source = SOURCE.read_text(encoding="utf-8")
+    header_macro = re.search(r"^#define FONT_MIN\(a, b\).*?$", header, re.MULTILINE)
+    source_macro = re.search(r"^#define FONT_MIN\(a, b\).*?$", source, re.MULTILINE)
+    assert header_macro and source_macro and header_macro.group() == source_macro.group()
     return {
         "release": extract(header, "void release_resources()"),
-        "bounded_private": extract(header, "int measure_bounded_width(LPSTR input, size_t max_len)"),
+        "bounded_private": extract(header, "int measure_bounded_width(LPSTR input, int max_len)"),
         "close": extract(source, "void Font::close()"),
-        "bounded_public": extract(source, "int Font::width(LPSTR input, size_t max_len)"),
+        "bounded_public": extract(source, "int Font::width(LPSTR input, int max_len)"),
         "destructor": extract(source, "Font::~Font()"),
-        "line_break": extract(source, "LPSTR Font::find_line_break_l(LPSTR input, int *break_len, size_t len)"),
+        "line_break": extract(source, "LPSTR Font::find_line_break_l(LPSTR input, int *break_len, int len)"),
+        "font_min": header_macro.group(),
     }
 
 
@@ -111,17 +115,15 @@ static HFONT font_probe_GetStockObject(int object);
 #define SelectObject font_probe_SelectObject
 #define GetTextExtentPoint32A font_probe_GetTextExtentPoint32A
 #define GetStockObject font_probe_GetStockObject
-#define FONT_MIN(a, b) ((a) < (b) ? (a) : (b))
-
 class Font {
 public:
     Font();
     ~Font();
     void close();
-    int width(LPSTR input, size_t max_len);
-    LPSTR find_line_break_l(LPSTR input, int *break_len, size_t len);
+    int width(LPSTR input, int max_len);
+    LPSTR find_line_break_l(LPSTR input, int *break_len, int len);
     void test_private_cleanup() { release_resources(); }
-    int test_private_width(LPSTR input, size_t max_len) {
+    int test_private_width(LPSTR input, int max_len) {
         return measure_bounded_width(input, max_len);
     }
     static HDC FontHDC;
@@ -324,7 +326,7 @@ static int cleanup_private_reentrant() {
     return 0;
 }
 
-static int check_width(Font &font, LPSTR text, size_t max_len, int expected_len,
+static int check_width(Font &font, LPSTR text, int max_len, int expected_len,
                        int expected_strlen, int code) {
     reset_events();
     extent_width = 17;
@@ -358,7 +360,8 @@ static int width_behavior() {
     require(check_width(font, text, 2, 2, 1, 42) == 0, 50);
     require(check_width(font, text, 3, 3, 2, 51) == 0, 60);
     require(check_width(font, text, 8, 3, 2, 61) == 0, 70);
-    require(check_width(font, text, static_cast<size_t>(0x80000000U), INT_MIN, 1, 71) == 0, 80);
+    require(check_width(font, text, -1, -1, 1, 71) == 0, 80);
+    require(check_width(font, text, INT_MIN, INT_MIN, 1, 81) == 0, 90);
     return 0;
 }
 
@@ -378,9 +381,14 @@ static int private_width_and_line_break() {
             index_kind(E_STOCK, 0) < index_kind(E_SELECT, 1), 97);
 
     reset_events();
-    font.test_private_width(text, static_cast<size_t>(0x80000000U));
+    font.test_private_width(text, -1);
     require(count_kind(E_STRLEN) == 1 && count_kind(E_EXTENT) == 1 &&
-            nth_kind(E_EXTENT, 0).value == INT_MIN, 100);
+            nth_kind(E_EXTENT, 0).value == -1, 100);
+
+    reset_events();
+    font.test_private_width(text, INT_MIN);
+    require(count_kind(E_STRLEN) == 1 && count_kind(E_EXTENT) == 1 &&
+            nth_kind(E_EXTENT, 0).value == INT_MIN, 101);
 
     reset_events();
     BufferStrHeight = 55;
@@ -431,6 +439,7 @@ def program_source(bodies, damage=None) -> str:
     for marker, definition in inserts.items():
         assert fixture.count(marker) == 1
         fixture = fixture.replace(marker, definition)
+    fixture = product["font_min"] + "\n" + fixture
     return fixture
 
 
@@ -472,8 +481,8 @@ def test_font_behavioral_damage_mutants(compiler_name, tmp_path):
         ("release", "RemoveFontResourceA(fot_file_name_);", "fot_file_name_ = 0; RemoveFontResourceA(fot_file_name_);"),
         ("release", "if (fot_file_name_) {\n        free(fot_file_name_);\n      }", "free(fot_file_name_);"),
         ("bounded_private", "SelectObject(FontHDC, GetStockObject(SYSTEM_FONT));", "GetTextExtentPoint32A(FontHDC, input, len, &size); SelectObject(FontHDC, GetStockObject(SYSTEM_FONT));"),
-        ("bounded_private", "int len = FONT_MIN(static_cast<int>(max_len),\n                       static_cast<int>(strlen(input)));", "int len = static_cast<int>(strlen(input)); if (len > static_cast<int>(max_len)) len = static_cast<int>(max_len);"),
-        ("bounded_private", "int len = FONT_MIN(static_cast<int>(max_len),\n                       static_cast<int>(strlen(input)));", "int len = FONT_MIN(static_cast<size_t>(max_len),\n                       static_cast<size_t>(strlen(input)));"),
+        ("bounded_private", "int len = FONT_MIN(max_len, static_cast<int>(strlen(input)));", "int text_length = static_cast<int>(strlen(input)); int len = FONT_MIN(max_len, text_length);"),
+        ("bounded_private", "int len = FONT_MIN(max_len, static_cast<int>(strlen(input)));", "int len = FONT_MIN(static_cast<unsigned int>(max_len), static_cast<unsigned int>(strlen(input)));"),
     )
     for index, mutant in enumerate(mutants):
         executable = build_program(bodies, tmp_path, compiler, f"font-mutant-{index}", mutant)
@@ -506,19 +515,19 @@ def test_source_identity_claim_and_helper_body_continuity():
     ):
         assert address in source and symbol in source, (address, symbol)
     assert "void Font::close()" in bodies["close"]
-    assert "int Font::width(LPSTR input, size_t max_len)" in bodies["bounded_public"]
+    assert "int Font::width(LPSTR input, int max_len)" in bodies["bounded_public"]
     assert "MEASURED void close()" not in header
-    assert "MEASURED int width(LPSTR input, size_t max_len)" not in header
+    assert "MEASURED int width(LPSTR input, int max_len)" not in header
     assert "ORIGINAL:" not in bodies["release"] and "ORIGINAL:" not in bodies["bounded_private"]
     release_pos = header.index("void release_resources()")
-    bounded_pos = header.index("int measure_bounded_width(LPSTR input, size_t max_len)")
+    bounded_pos = header.index("int measure_bounded_width(LPSTR input, int max_len)")
     assert header.rfind("private:", 0, release_pos) > header.rfind("public:", 0, release_pos)
     assert header.rfind("private:", 0, bounded_pos) > header.rfind("public:", 0, bounded_pos)
     for address in ("0x00619230", "0x006192F0"):
         marker = re.search(rf"^// ORIGINAL: {address} .*BYTE_EXACT$", source, re.MULTILINE)
         assert marker is not None
     width_claim = source.index("// ORIGINAL: 0x006192F0")
-    width_definition = source.index("int Font::width(LPSTR input, size_t max_len)")
+    width_definition = source.index("int Font::width(LPSTR input, int max_len)")
     assert "// LEVER:" in source[width_claim:width_definition]
 
     from match_recovery.source import read_file, read_text
@@ -527,9 +536,17 @@ def test_source_identity_claim_and_helper_body_continuity():
     current_rows = {row.address: row for row in read_file(SOURCE)}
     for address in (0x618EE0, 0x618F40, 0x6190D0, 0x619230, 0x6192F0, 0x619370):
         old, current = old_rows[address], current_rows[address]
-        for field in ("address", "name", "symbol", "image_spans", "byte_exact", "semantic",
-                      "levers", "ruled_out", "deferred", "unrecoverable"):
-            assert getattr(current, field) == getattr(old, field), (hex(address), field)
+        for field in ("address", "mode", "state", "name", "symbol", "image_spans",
+                      "body", "context", "kind", "exclusion", "byte_exact", "semantic",
+                      "recipe", "source_role", "source_role_reason", "function_fragment"):
+            if field == "symbol" and address in (0x6192F0, 0x619370):
+                expected = ("?width@Font@@QAEHPADH@Z" if address == 0x6192F0 else
+                            "?find_line_break_l@Font@@QAEPADPADPAHH@Z")
+                assert current.symbol == expected
+            elif field == "body" and address in (0x619230, 0x6192F0):
+                assert old.body == "src/jackal/font.h" and current.body == ""
+            else:
+                assert getattr(current, field) == getattr(old, field), (hex(address), field)
 
 
 def test_fixture_carries_pinned_32bit_layout_contract():
@@ -587,10 +604,10 @@ def test_vc6_x86_actual_source_behavior_and_damage_controls(tmp_path):
         ("release", "if (fot_file_name_) {\n        free(fot_file_name_);\n      }", "free(fot_file_name_);", "private-reentrant"),
         ("bounded_private", "SelectObject(FontHDC, GetStockObject(SYSTEM_FONT));",
          "GetTextExtentPoint32A(FontHDC, input, len, &size); SelectObject(FontHDC, GetStockObject(SYSTEM_FONT));", "line"),
-        ("bounded_private", "int len = FONT_MIN(static_cast<int>(max_len),\n                       static_cast<int>(strlen(input)));",
-         "int len = static_cast<int>(strlen(input)); if (len > static_cast<int>(max_len)) len = static_cast<int>(max_len);", "line"),
-        ("bounded_private", "int len = FONT_MIN(static_cast<int>(max_len),\n                       static_cast<int>(strlen(input)));",
-         "int len = FONT_MIN(static_cast<size_t>(max_len),\n                       static_cast<size_t>(strlen(input)));", "line"),
+        ("bounded_private", "int len = FONT_MIN(max_len, static_cast<int>(strlen(input)));",
+         "int text_length = static_cast<int>(strlen(input)); int len = FONT_MIN(max_len, text_length);", "line"),
+        ("bounded_private", "int len = FONT_MIN(max_len, static_cast<int>(strlen(input)));",
+         "int len = FONT_MIN(static_cast<unsigned int>(max_len), static_cast<unsigned int>(strlen(input)));", "line"),
     )
     for profile_index, flags in enumerate(settings.flag_sets):
         good = build_native("font-good-" + str(profile_index), flags)

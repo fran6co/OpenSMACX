@@ -1,0 +1,22 @@
+{
+  "event_id": "7e99b26b9896a69aa34031512f2c18064bff6479e6c07eaaa134c09a92ee451d",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/jackal/font.h"
+    ],
+    "evidence": [
+      "Original6192F0 has signed JL length clamp; public width currently accepts size_t then casts to int. Buffer bounded text callers use signed lengths. Correct the public width and private in-class bounded helper to int together, removing only redundant same-type casts.",
+      "Original619370 mutates the length slot with pointer subtraction and receives signed Buffer lengths. Catalog decorated hints are not debug symbols: the catalog return-int label is contradicted by pinned pointer returns and pointer consumption in Buffer; preserve actual char-pointer return. Correct signed length, not return type.",
+      "Header expansion permits declarations and corresponding CPP definitions/emitted-symbol hints only, preserving original markers, spans and historical claims. No new behavior, safety fixes, compile flags or caller edits. Report dependent callers/tests for further scope expansion rather than weakening tests.",
+      "Existing baseline18ef32586792da3a281b03162c7c3c9265b2f8d3 and13mapped subjects retained. Compile/link and fresh caller/reference checks remain coordinator obligations; catalog hint alone is not original ABI proof."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "font-signed-bounded-text-interfaces-oct19c",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:font-source-batch-oct19c"
+}
