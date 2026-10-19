@@ -8,7 +8,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
-SOURCE = ROOT / "src" / "console.cpp"
+SOURCE = ROOT / "src" / "console_commands.cpp"
 
 
 def function_body(text: str) -> str:

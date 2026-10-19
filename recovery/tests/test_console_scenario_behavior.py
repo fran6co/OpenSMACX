@@ -6,6 +6,7 @@ gameplay, UI, or whole-recovery acceptance evidence.
 """
 
 from pathlib import Path
+from console_sources import console_method_source
 import shutil
 import subprocess
 
@@ -172,7 +173,7 @@ def test_editor_veh_artifact_path_uses_typed_tile_and_vehicle_calls(tmp_path):
     compiler = shutil.which("g++")
     if not compiler:
         pytest.skip("host C++ compiler unavailable")
-    source = (ROOT / "src/console.cpp").read_text()
+    source = console_method_source("void Console::editor_veh()")
     body = _body(source, "void Console::editor_veh()")
     harness = r'''
 #include <cassert>
@@ -273,7 +274,7 @@ def test_editor_tech_toggle_and_cancel_lifecycle(tmp_path):
     compiler = shutil.which("g++")
     if not compiler:
         pytest.skip("host C++ compiler unavailable")
-    source = (ROOT / "src/console.cpp").read_text()
+    source = console_method_source("void Console::editor_tech()")
     body = _body(source, "void Console::editor_tech()")
     harness = r'''
 #include <cassert>
@@ -343,7 +344,7 @@ def test_editor_natural_uses_selection_for_feature_and_switch_for_radius(tmp_pat
     compiler = shutil.which("g++")
     if not compiler:
         pytest.skip("host C++ compiler unavailable")
-    source = (ROOT / "src/console.cpp").read_text()
+    source = console_method_source("void Console::editor_natural(int place)")
     body = _body(source, "void Console::editor_natural(int place)")
     harness = r'''
 #include <cassert>

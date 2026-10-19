@@ -5,6 +5,7 @@ import re
 from pathlib import Path
 
 from match_recovery.includes import COMMENTS_OR_STRINGS
+from console_sources import console_method_source
 
 ROOT = next(path for path in Path(__file__).resolve().parents
             if (path / "src/IMAGE_PIN").is_file())
@@ -31,8 +32,8 @@ def body_from(source: str, start: int) -> str:
 def test_both_original_priority_paths_use_named_player_members() -> None:
     source = (ROOT / "src/console.cpp").read_text(encoding="utf-8")
     player_header = (ROOT / "src/faction.h").read_text(encoding="utf-8")
-    setter_start = source.index("void Console::set_ai(int faction_id)")
-    setter = body_from(source, setter_start)
+    setter_source = console_method_source("void Console::set_ai(int faction_id)")
+    setter = body_from(setter_source, setter_source.index("void Console::set_ai(int faction_id)"))
     key_start = source.index("case 'R':", source.index("int Console::on_key_click"))
     key_route = body_from(source, key_start)
 

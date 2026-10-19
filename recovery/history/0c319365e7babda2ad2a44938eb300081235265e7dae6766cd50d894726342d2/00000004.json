@@ -1,0 +1,20 @@
+{
+  "event_id": "d3f245481f2d7d70c1bdf70994e5f4625bdb50c5192a73796eb2ac2d84c3b69b",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "coherent-command-unit-call-boundary",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Independent source/artifact reviewer and coordinator approve this bounded manual source checkpoint:76existing command/editor bodies move verbatim with25generated cleanup mappings and39passive definitions toconsole_commands.cpp. Shared trivial/nontrivial lifetime remains one-owned inUI; private static formatter/callback declaration live inconsole_commands.h. Current binding citations repaired; all207identity/span/mode/symbol/history facts preserved. Address clustering is corroboration, not original TU filename/boundary proof.",
+      "Fresh final173-TU application build/link passes. Wholeknown5581identity observations show editor_energy historical exactness restored (76/76), no exact losses; all6original direct UI refresh callers now call update_data. Strict passes1954→1955, with1304unknown2existingfail unchanged. All185otherphysicalobjects unchanged; commands equal actualboundarycontrol without omissions. Claims/mappings/references pass.",
+      "Exact host-case comparison:147→158passing,11new tests; the SAME16baseline failures remain with no missing cases or new regressions. Native compiler fixture module was not rerun under host checks. The newsourcefixtures locate actual owners and do not synthesize TU/compiler context or weaken behavioral damage controls.",
+      "This is coordinator-reviewed manual recovery under standing user authorization, NOT automatic/task/full-project/game acceptance. Raw original Console/new-unit data/anonymous contribution residual remains FAIL/unwaived. Bounded157selected-public review passes150with7unknown; outside originals3qualified fingerprints unchanged and5unknown weak/adjustor entries. Complete retained selection/allocation/ICF, structure and runtime remain unproved. No claim grant/demotion, baseline reset, exclusion or safety fix."
+    ]
+  },
+  "previous_event": "a4249a6b0136cd1ba4ec1de4e1131acd80f0ca6eb6ef8d28d7269b756fcfd203",
+  "request_id": "manual-reviewed-command-unit-source-checkpoint",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:console-command-units-oct19"
+}

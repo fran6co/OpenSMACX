@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def editor_record(text):
-    rows = [row for row in read_text(text, ROOT / "src/console.cpp")
+    rows = [row for row in read_text(text, ROOT / "src/console_commands.cpp")
             if row.address == 0x004DFAD0]
     assert len(rows) == 1
     return rows[0]
@@ -39,7 +39,7 @@ def assert_complete_editor_region(text):
 
 
 def test_cleanup_identities_belong_to_real_owner_without_truncating_parent():
-    text = (ROOT / "src/console.cpp").read_text()
+    text = (ROOT / "src/console_commands.cpp").read_text()
     parent = assert_complete_editor_region(text)
     rows = list(read(ROOT / "src"))
     for address, end, name in ((0x0065BFBC, 0x0065BFC7, "sub_65bfbc"),
@@ -47,7 +47,7 @@ def test_cleanup_identities_belong_to_real_owner_without_truncating_parent():
         selected = [row for row in rows if row.address == address]
         assert len(selected) == 1
         child = selected[0]
-        assert child.path == ROOT / "src/console.cpp"
+        assert child.path == ROOT / "src/console_commands.cpp"
         assert child.line < parent.line
         assert child.image_spans == ((address, end),)
         assert child.name == name and child.kind == "game"
@@ -58,7 +58,7 @@ def test_cleanup_identities_belong_to_real_owner_without_truncating_parent():
 
 
 def test_nested_mapping_damage_cannot_hide_parent_body_truncation():
-    text = (ROOT / "src/console.cpp").read_text()
+    text = (ROOT / "src/console_commands.cpp").read_text()
     assert_complete_editor_region(text)
     # Move an existing marker into the nested scope. This is disposable damage,
     # not a production writer or a new source identity/claim.
@@ -104,7 +104,7 @@ def test_popup_destructor_is_shared_inline_with_original_file_identity_retained(
 
 
 def test_all_original_unwind_actions_keep_spans_in_parent_lifetime_owner():
-    text = (ROOT / "src/console.cpp").read_text()
+    text = (ROOT / "src/console_commands.cpp").read_text()
     parent = assert_complete_editor_region(text)
     # Independently bounded contiguous actions preceding the parent's handler.
     boundaries = (
@@ -117,7 +117,7 @@ def test_all_original_unwind_actions_keep_spans_in_parent_lifetime_owner():
     records = list(read(ROOT / "src"))
     for start, end in zip(boundaries, boundaries[1:]):
         action, = [row for row in records if row.address == start]
-        assert action.path == ROOT / "src/console.cpp" and action.line < parent.line
+        assert action.path == ROOT / "src/console_commands.cpp" and action.line < parent.line
         assert action.name == f"sub_{start:x}"
         assert action.image_spans == ((start, end),)
         assert action.mode is Mode.FILE and action.kind == "game"

@@ -54,6 +54,181 @@ def _extract_sources():
     return setter, dialog
 
 
+def _actual_console_time_controls():
+    source = (ROOT / "src/console.cpp").read_text()
+    header = (ROOT / "src/console_commands.h").read_text()
+    method = _definition(source, "void Console::time_controls()")
+    formatter = _definition(header, "static void parse_field_number(")
+    clamp = _definition(source, "static int parse_turn_time_clamped(")
+    assert "parse_field_number(6, TimeControl[5].accumulated);" in method
+    assert "0x270F" in clamp
+    return method, formatter, clamp
+
+
+TIME_CONTROLS_HARNESS = r'''#include <cassert>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <string>
+#include <vector>
+using std::string;
+using std::vector;
+
+struct RulesTimeControl {
+    int base, unit, event, turn, extra, refresh, accumulated;
+} TimeControl[6];
+struct char256 { char str[256]; };
+char StringTemp[256];
+char256 ParseStrBuffer[7];
+static char *PopupStartCaption = const_cast<char *>("host caption");
+static char ConsoleStrCustomTime[] = "CUSTOMTIME";
+static char ConsoleStrHostTime[] = "HOSTTIME";
+static int expected_fields[7] = {11, 12, 13, 14, 15, 16, 17};
+static int parsed_fields[7];
+static string parsed_values[7];
+static int parse_calls, start_calls, dialog_calls, exec_calls, close_calls;
+static int exec_results[2], accept_input, failures;
+static int message_calls, message_result, sync_calls;
+
+static char *_itoa(int value, char *buffer, int radix) {
+    assert(radix == 10);
+    std::sprintf(buffer, "%d", value);
+    return buffer;
+}
+int parse_says(int index, char *text, int gender, int plural) {
+    if (gender != -1 || plural != -1 || parse_calls >= 7) failures = 1;
+    if (parse_calls < 7) {
+        parsed_fields[parse_calls] = index;
+        parsed_values[parse_calls] = text;
+    }
+    ++parse_calls;
+    if (index < 0 || index >= 7) failures = 1;
+    else std::strncpy(ParseStrBuffer[index].str, text, sizeof(ParseStrBuffer[index].str) - 1);
+    return 0;
+}
+static int console_turns_assigned() { return 1; }
+static int IsMultiplayerNet = 1;
+struct NetMessage { void pop(char *, int, int, int) {} } NetMsgPrimary;
+struct NetDaemon {
+    void synch(int code, int a, int b, int c, void *data, int d, int e) {
+        if (code != 0x85 || a || b || c || data || d != 1 || e != 0x2101) failures = 1;
+        ++sync_calls;
+    }
+} NetDaemonNet;
+struct TimeControlFields { int time_controls_selection_; };
+struct { TimeControlFields fields_; } GameDataStateStorage;
+static void time_controls_dialog(class Popup *popup);
+static void message_data(int code, int a, int result, int c, int d, int e) {
+    if (code != 0x4C02 || a || c || d || e) failures = 1;
+    ++message_calls;
+    message_result = result;
+}
+
+class Popup {
+public:
+    void close() { ++close_calls; }
+    void set_value(int) {}
+    int exec(int, int) {
+        if (exec_calls >= 2) { failures = 1; return -99; }
+        return exec_results[exec_calls++];
+    }
+    int start(char *caption, const char *label, int value, char *text,
+              int flags, void *sprite) {
+        ++start_calls;
+        if (caption != PopupStartCaption || std::strcmp(label, ConsoleStrCustomTime) ||
+            value != -1 || text || flags != 0x44 || sprite || parse_calls != 7)
+            failures = 1;
+        for (int i = 0; i < 7; ++i) {
+            if (parsed_fields[i] != i || parsed_values[i] != std::to_string(expected_fields[i]))
+                failures = 1;
+        }
+        if (accept_input) {
+            const char *inputs[7] = {"10001", "-2", "33", "0", "5", "6", "10000"};
+            for (int i = 0; i < 7; ++i)
+                std::strncpy(ParseStrBuffer[i].str, inputs[i], sizeof(ParseStrBuffer[i].str) - 1);
+        }
+        return 0;
+    }
+};
+static void time_controls_dialog(Popup *) { ++dialog_calls; }
+
+/*ACTUAL_PARSE_FIELD_NUMBER*/
+/*ACTUAL_PARSE_TURN_TIME_CLAMPED*/
+struct Console { void time_controls(); };
+/*ACTUAL_TIME_CONTROLS*/
+
+static void reset_case(bool accept) {
+    std::memset(TimeControl, 0, sizeof(TimeControl));
+    TimeControl[5].base = 11; TimeControl[5].unit = 12;
+    TimeControl[5].event = 13; TimeControl[5].turn = 14;
+    TimeControl[5].extra = 15; TimeControl[5].refresh = 16;
+    TimeControl[5].accumulated = 17;
+    std::memset(ParseStrBuffer, 0, sizeof(ParseStrBuffer));
+    parse_calls = start_calls = dialog_calls = exec_calls = close_calls = 0;
+    message_calls = sync_calls = failures = 0;
+    message_result = -99;
+    accept_input = accept;
+    exec_results[0] = 5;
+    exec_results[1] = accept ? 0 : -1;
+}
+
+static void verify_custom_fields_before_popup() {
+    reset_case(false);
+    Console console;
+    console.time_controls();
+    assert(failures == 0);
+    assert(parsed_fields[0] == 0 && parsed_fields[1] == 1 && parsed_fields[2] == 2 &&
+           parsed_fields[3] == 3 && parsed_fields[4] == 4 && parsed_fields[5] == 5 &&
+           parsed_fields[6] == 6);
+    assert(parsed_values[0] == "11" && parsed_values[1] == "12" &&
+           parsed_values[2] == "13" && parsed_values[3] == "14" &&
+           parsed_values[4] == "15" && parsed_values[5] == "16" &&
+           parsed_values[6] == "17");
+    assert(start_calls == 1 && dialog_calls == 1 && close_calls == 1);
+    assert(message_calls == 1 && message_result == 5 && sync_calls == 0);
+    assert(TimeControl[5].base == 11 && TimeControl[5].unit == 12 &&
+           TimeControl[5].event == 13 && TimeControl[5].turn == 14 &&
+           TimeControl[5].extra == 15 && TimeControl[5].refresh == 16 &&
+           TimeControl[5].accumulated == 17);
+}
+
+static void acceptance_keeps_clamps_and_synchronizes() {
+    reset_case(true);
+    Console console;
+    console.time_controls();
+    assert(failures == 0);
+    assert(TimeControl[5].base == 9999 && TimeControl[5].unit == 0 &&
+           TimeControl[5].event == 33 && TimeControl[5].turn == 0 &&
+           TimeControl[5].extra == 5 && TimeControl[5].refresh == 6 &&
+           TimeControl[5].accumulated == 9999);
+    assert(sync_calls == 1 && message_calls == 1 && message_result == 5);
+    assert(start_calls == 1 && close_calls == 1);
+}
+
+int main() {
+    verify_custom_fields_before_popup();
+    acceptance_keeps_clamps_and_synchronizes();
+    std::puts("PASS: actual Console time_controls host control");
+}
+'''
+
+
+def _run_actual_time_controls(tmp_path, method, formatter, clamp, compiler):
+    tmp_path.mkdir(parents=True, exist_ok=True)
+    source = TIME_CONTROLS_HARNESS.replace("/*ACTUAL_PARSE_FIELD_NUMBER*/", formatter)
+    source = source.replace("/*ACTUAL_PARSE_TURN_TIME_CLAMPED*/", clamp)
+    source = source.replace("/*ACTUAL_TIME_CONTROLS*/", method)
+    unit = tmp_path / "actual_time_controls.cpp"
+    executable = tmp_path / "actual_time_controls"
+    unit.write_text(source)
+    built = subprocess.run(
+        [compiler, "-std=c++11", "-Wall", "-Wextra", "-Werror", str(unit), "-o", str(executable)],
+        capture_output=True, text=True,
+    )
+    assert built.returncode == 0, built.stdout + built.stderr
+    return subprocess.run([str(executable)], capture_output=True, text=True)
+
+
 def _replace_once(text, old, new):
     assert text.count(old) == 1, f"mutation anchor not unique: {old!r}"
     return text.replace(old, new)
@@ -158,6 +333,25 @@ def test_integrated_time_controls_actual_bodies_and_mutations(tmp_path, compiler
         assert result.returncode != 0, f"mutation survived: {name}"
 
 
+@pytest.mark.parametrize("compiler", ["g++", "clang++"])
+def test_console_time_controls_prefills_all_seven_custom_fields(tmp_path, compiler):
+    compiler_path = shutil.which(compiler)
+    if compiler_path is None:
+        pytest.skip(f"host compiler unavailable: {compiler}")
+
+    method, formatter, clamp = _actual_console_time_controls()
+    actual = _run_actual_time_controls(tmp_path / "actual", method, formatter,
+                                       clamp, compiler_path)
+    assert actual.returncode == 0, actual.stdout + actual.stderr
+    assert "PASS: actual Console time_controls host control" in actual.stdout
+
+    damaged_method = _replace_once(
+        method, "        parse_field_number(6, TimeControl[5].accumulated);\n", "")
+    damaged = _run_actual_time_controls(tmp_path / "missing-seventh", damaged_method,
+                                        formatter, clamp, compiler_path)
+    assert damaged.returncode != 0, "missing accumulated prefill survived"
+
+
 def test_pinned_native_time_control_operands_and_literals():
     """Independent original accesses; host projections do not establish ABI."""
     import os
@@ -213,6 +407,12 @@ def test_pinned_native_time_control_operands_and_literals():
                              (0x682E9C, b"(\0"), (0x682E98, b")\0"),
                              (0x682820, b" \0")):
         assert image.read(Span(address, address + len(literal))) == literal
+
+    custom_seed = {i.address: (i.mnemonic, i.op_str) for i in decoder.disasm(
+        image.read(Span(0x515B86, 0x515BBE)), 0x515B86)}
+    assert custom_seed[0x515B86] == ("mov", "eax, dword ptr [0x94f274]")
+    assert custom_seed[0x515BB7] == ("push", "6")
+    assert custom_seed[0x515BB9] == ("call", "0x625ec0")
 
 
 def test_time_control_seed_cleanup_and_direct_caller_binding():

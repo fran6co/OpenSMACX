@@ -10,6 +10,7 @@ import re
 
 
 ROOT = Path(__file__).resolve().parents[2]
+from console_sources import console_method_source
 
 
 def body(source, signature):
@@ -24,7 +25,7 @@ def body(source, signature):
 
 
 def test_editor_clear_random_captures_initial_map_inputs_before_seed_reset():
-    source = (ROOT / "src/console.cpp").read_text()
+    source = console_method_source("void Console::editor_clear_random()")
     method = body(source, "void Console::editor_clear_random() {")
 
     captures = re.search(

@@ -5,6 +5,7 @@ import shutil
 import subprocess
 
 import pytest
+from console_sources import console_method_source
 
 from test_win_zorder_pointer_flow_oct10 import extract
 
@@ -12,7 +13,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def set_patrol_control():
-    body = extract((ROOT / "src/console.cpp").read_text(), "void Console::set_patrol(int veh_id)")
+    body = extract(console_method_source("void Console::set_patrol(int veh_id)"), "void Console::set_patrol(int veh_id)")
     assert "reinterpret_cast" not in body
     return r'''
 #include <cassert>
@@ -140,7 +141,7 @@ def test_actual_typed_patrol_walk(tmp_path, compiler, damage):
 
 
 def map_control():
-    source = (ROOT / "src/console.cpp").read_text()
+    source = console_method_source("void Console::editor_fast()")
     body = extract(source, "void Console::editor_fast()")
     record = extract((ROOT / "src/map.h").read_text(), "struct Map {") + ";"
     return r'''

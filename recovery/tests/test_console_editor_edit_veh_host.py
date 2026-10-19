@@ -14,7 +14,7 @@ import pytest
 
 
 ROOT = Path(__file__).resolve().parents[2]
-SOURCE = ROOT / "src/console.cpp"
+SOURCE = ROOT / "src/console_commands.cpp"
 
 
 def braced(source, signature):

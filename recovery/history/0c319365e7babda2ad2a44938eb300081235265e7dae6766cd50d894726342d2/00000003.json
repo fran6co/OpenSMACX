@@ -1,0 +1,20 @@
+{
+  "event_id": "a4249a6b0136cd1ba4ec1de4e1131acd80f0ca6eb6ef8d28d7269b756fcfd203",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_time_controls.py"
+    ],
+    "evidence": [
+      "Coordinator authorizes restoring parse_field_number(6,TimeControl[5].accumulated) immediately afterrefresh beforeCUSTOMTIME in the existing Console UI owner, with current explanatory comments and actual-source/pinned damage controls. No newfield/layout, capacity, flags, dependency or bugfix policy; this is faithful original behavior recovery.",
+      "Correct the3remaining explicit current-source binding citations for moved editor_clear_vehicles, editor_diplomacy and ConsoleStrEditorYear through nativebinding parser/render; retain Gitseed references and generic UI relationship evidence. Rebuild finalfrozen source and remeasure known-domain/claims/references beforeadopting. Earlier boundary-only actualartifacts stay retained as diagnostics, never replayed as final input qualification."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "1e32d2d4bf5d5a9339df574b9a7a3f5910e82ba393796b34d3dc127e9f45eb7c",
+  "request_id": "restore-original-customtime-seventh-input",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:console-command-units-oct19"
+}

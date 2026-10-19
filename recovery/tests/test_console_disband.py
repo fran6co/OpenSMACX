@@ -6,10 +6,11 @@ import subprocess
 import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
+from console_sources import console_method_source
 
 
 def disband_body():
-    source = (ROOT / "src/console.cpp").read_text()
+    source = console_method_source("void Console::disband(int veh_id)")
     start = source.index("void Console::disband(int veh_id) {")
     opening = source.index("{", start)
     depth = 0

@@ -226,6 +226,7 @@ set(OPENSMACX_SOURCES
     src/replaywin.cpp
     src/reportif.cpp
     src/console.cpp
+    src/console_commands.cpp
     src/alphamenu.cpp
     src/uv2player.cpp
     src/dipedit.cpp
@@ -363,6 +364,7 @@ set_source_files_properties(
     src/datalink.cpp
     src/maininterface.cpp
     src/console.cpp
+    src/console_commands.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Preserve original frame-based arguments in the map and base interface owners.
 set_source_files_properties(

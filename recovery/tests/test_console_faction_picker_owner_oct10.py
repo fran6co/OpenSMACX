@@ -11,7 +11,7 @@ from match_recovery.includes import COMMENTS_OR_STRINGS
 
 ROOT = next(path for path in Path(__file__).resolve().parents
             if (path / "src/IMAGE_PIN").is_file())
-CONSOLE = ROOT / "src/console.cpp"
+from console_sources import console_method_source
 
 
 def _mask(source: str) -> str:
@@ -36,11 +36,10 @@ def _body(source: str, signature: str) -> str:
 
 
 def _fragments() -> dict[str, str]:
-    source = CONSOLE.read_text(encoding="utf-8")
     return {
-        "reload": _body(source, "void Console::editor_reload()"),
-        "eliminate": _body(source, "void Console::editor_eliminate()"),
-        "picker": _body(source, "void Console::custom_my_faction()"),
+        "reload": _body(console_method_source("void Console::editor_reload()"), "void Console::editor_reload()"),
+        "eliminate": _body(console_method_source("void Console::editor_eliminate()"), "void Console::editor_eliminate()"),
+        "picker": _body(console_method_source("void Console::custom_my_faction()"), "void Console::custom_my_faction()"),
     }
 
 

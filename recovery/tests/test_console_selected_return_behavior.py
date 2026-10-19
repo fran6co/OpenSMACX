@@ -8,10 +8,11 @@ import pytest
 
 
 ROOT = Path(__file__).resolve().parents[2]
+from console_sources import console_method_source
 
 
 def selected_body():
-    source = (ROOT / "src/console.cpp").read_text()
+    source = console_method_source("int Console::selected()")
     start = source.index("int Console::selected()")
     opening = source.index("{", start)
     depth = 0

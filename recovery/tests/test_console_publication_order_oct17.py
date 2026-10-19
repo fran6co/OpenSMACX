@@ -67,13 +67,16 @@ def _body(source: str, signature: str) -> str:
 
 
 def _actual_bodies() -> tuple[str, str]:
-    path = ROOT / "src/console.cpp"
-    source = path.read_text(encoding="utf-8")
-    records = {record.address: record for record in read_file(path)}
+    editor_path = ROOT / "src/console_commands.cpp"
+    ui_path = ROOT / "src/console.cpp"
+    editor_source = editor_path.read_text(encoding="utf-8")
+    ui_source = ui_path.read_text(encoding="utf-8")
+    records = {record.address: record for path in (editor_path, ui_path)
+               for record in read_file(path)}
     assert records[0x4E1290].image_spans == ((0x4E1290, 0x4E12FB),)
     assert records[0x51D760].image_spans == ((0x51D760, 0x51D7B5),)
-    return (_body(source, "void Console::editor_clear()"),
-            _body(source, "void Console::set_screen_geometry()"))
+    return (_body(editor_source, "void Console::editor_clear()"),
+            _body(ui_source, "void Console::set_screen_geometry()"))
 
 
 def _pinned_image() -> PeImage:

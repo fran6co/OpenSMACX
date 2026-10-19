@@ -2,6 +2,7 @@
 
 from dataclasses import fields
 from pathlib import Path
+from console_sources import console_method_source
 import subprocess
 
 import pytest
@@ -15,10 +16,11 @@ BASE = "87414f049"
 
 
 def test_original_identities_spans_claims_and_history_preserved():
-    path = ROOT / "src/console.cpp"
+    path = ROOT / "src/console_commands.cpp"
     old = subprocess.check_output(["git", "show", BASE + ":src/console.cpp"], cwd=ROOT).decode()
     before = {r.address: r for r in read_text(old, path)}
-    after = {r.address: r for r in read_file(path)}
+    after = {r.address: r for owner in (ROOT / "src/console.cpp", path)
+             for r in read_file(owner)}
     assert set(before) == set(after)
     for address, row in before.items():
         for field in fields(row):
@@ -29,11 +31,11 @@ def test_original_identities_spans_claims_and_history_preserved():
                      tuple(text for _, text in lesson.lines)) for lesson in record.origin]
         assert lessons(row) == lessons(after[address])
     for signature in ("void Console::editor_view()", "void Console::editor_veh()"):
-        assert "reinterpret_cast" not in extract(path.read_text(), signature)
+        assert "reinterpret_cast" not in extract(console_method_source(signature), signature)
 
 
 def control():
-    body = extract((ROOT / "src/console.cpp").read_text(), "void Console::editor_view()")
+    body = extract(console_method_source("void Console::editor_view()"), "void Console::editor_view()")
     header = (ROOT / "src/game_data_state_window.h").read_text()
     layout = extract(header, "struct GameDataLockMaskBytes") + ";\n"
     layout += extract(header, "union GameDataLockMaskView") + ";\n"

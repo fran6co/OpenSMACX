@@ -7,6 +7,7 @@ controls do not establish native layout, modal UI behavior or unwind equivalence
 """
 
 from pathlib import Path
+from console_sources import console_method_source
 import shutil
 import subprocess
 
@@ -14,13 +15,14 @@ import pytest
 
 
 ROOT = Path(__file__).resolve().parents[2]
+from console_sources import console_method_source
 
 
 def test_editor_deletion_global_selection_and_lifetime(tmp_path):
     compiler = shutil.which("g++")
     if not compiler:
         pytest.skip("host C++ compiler unavailable")
-    source = (ROOT / "src/console.cpp").read_text()
+    source = console_method_source("void Console::editor_kill_veh(int veh_id)")
     signature = "void Console::editor_kill_veh(int veh_id)"
     start = source.index(signature)
     opening = source.index("{", start)

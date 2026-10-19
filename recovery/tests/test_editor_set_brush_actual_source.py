@@ -8,6 +8,7 @@ import subprocess
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
+from console_sources import console_method_source
 
 
 def _block(text: str, start: int) -> str:
@@ -30,7 +31,7 @@ def _declaration(pattern: str, source: str, description: str) -> str:
 
 
 def _installed() -> tuple[str, str, str, str, str]:
-    console = (ROOT / "src/console.cpp").read_text()
+    console = console_method_source("void Console::editor_set_brush()")
     marker = "void Console::editor_set_brush()"
     body = _block(console, console.index(marker))
     assert "EditorBrushButtonGroup" not in body

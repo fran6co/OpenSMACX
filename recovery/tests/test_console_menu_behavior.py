@@ -2,6 +2,7 @@
 from pathlib import Path
 import subprocess
 import tempfile
+from console_sources import console_method_source
 
 def body(source, signature):
     start = source.index(signature)
@@ -27,18 +28,25 @@ def compile_run(program):
         assert ran.returncode == 0, ran.stdout + ran.stderr
 
 def test_console_menu_dispatch():
-    source = (Path(__file__).resolve().parents[2] / "src/console.cpp").read_text()
-    methods = "\n".join(body(source, signature) for signature in [
+    signatures = [
         "void Console::reset_turn_view()", "void Console::menu_proc(int",
-        "void __cdecl Console::menu_daemon(int", "void Console::editor_kill_vehicles()"])
+        "void __cdecl Console::menu_daemon(int", "void Console::editor_kill_vehicles()"]
+    methods = "\n".join(body(console_method_source(signature), signature)
+                        for signature in signatures)
     storage = []
+    owners = [
+        (Path(__file__).resolve().parents[2] / "src/console.cpp").read_text(),
+        (Path(__file__).resolve().parents[2] / "src/console_commands.cpp").read_text(),
+        (Path(__file__).resolve().parents[2] / "src/console_commands.h").read_text(),
+    ]
     for declaration in (
         "char ConsoleVersionReleaseText[", "char ConsoleVersionBuildDateText[",
         "char *ConsoleVersionRelease =", "char *ConsoleVersionBuildDate =",
         "char ConsoleStrAcLogoSm[", "char ConsoleStrVersionControlX[",
         "typedef int (__cdecl *NullCallback)",
     ):
-        matches = [line for line in source.splitlines() if line.startswith(declaration)]
+        matches = [line for source in owners for line in source.splitlines()
+                   if line.startswith(declaration)]
         assert len(matches) == 1, "missing/ambiguous actual-source fixture input: " + declaration
         storage.append(matches[0])
     prefix = r"""#include <cstddef>

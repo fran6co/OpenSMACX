@@ -11,7 +11,7 @@ import pytest
 
 
 ROOT = Path(__file__).resolve().parents[2]
-SOURCE = ROOT / "src/console.cpp"
+SOURCES = (ROOT / "src/console.cpp", ROOT / "src/console_commands.cpp")
 
 EXPECTED = {
     "ConsoleStrMenuSimple": "MENUSIMPLE",
@@ -96,8 +96,11 @@ def test_console_text_objects_are_writable_distinct_and_exact(tmp_path: Path, co
     if executable is None:
         pytest.skip(f"{compiler} is unavailable")
 
-    source = SOURCE.read_text()
-    found = declarations(source)
+    found = {}
+    for source_path in SOURCES:
+        current = declarations(source_path.read_text())
+        assert not (set(found) & set(current)), "duplicate writable Console object owner"
+        found.update(current)
     assert set(found) == set(EXPECTED)
     assert {name: value[1] for name, value in found.items()} == EXPECTED
     lines = [found[name][0] for name in EXPECTED]

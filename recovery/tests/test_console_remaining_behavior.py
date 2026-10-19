@@ -4,6 +4,7 @@ import shutil
 import subprocess
 
 import pytest
+from console_sources import console_method_source
 
 VEH_KEY_HARNESS = r'''#include <cstdlib>
 #include <cstdint>
@@ -314,7 +315,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def body_for(signature: str) -> str:
-    source = (ROOT / "src/console.cpp").read_text()
+    source = console_method_source(signature)
     start = source.index(signature)
     opening = source.index("{", start)
     depth = 0

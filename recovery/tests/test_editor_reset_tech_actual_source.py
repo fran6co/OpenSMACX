@@ -8,6 +8,7 @@ import subprocess
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
+from console_sources import console_method_source
 
 
 def _block(text: str, start: int) -> str:
@@ -35,7 +36,7 @@ def _owner_declarations() -> tuple[str, str, str]:
 
 
 def _installed() -> tuple[str, str, str, str]:
-    source = (ROOT / "src/console.cpp").read_text()
+    source = console_method_source("void Console::editor_reset_tech()")
     marker = "void Console::editor_reset_tech()"
     body = _block(source, source.index(marker))
     for forbidden in ("reinterpret_cast", "0x96ee08", "0x9a6670", "0x9ab898",

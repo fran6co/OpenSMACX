@@ -1,0 +1,22 @@
+{
+  "event_id": "1e32d2d4bf5d5a9339df574b9a7a3f5910e82ba393796b34d3dc127e9f45eb7c",
+  "payload": {
+    "affects": [
+      "entity-4949d133e607859e218ad5caf7fd0d5e6bdd026fbc6e41640d3f3684bf8a12a0"
+    ],
+    "author": "coordinator",
+    "discovery_id": "customtime-original-seventh-field-omitted",
+    "evidence": [
+      "Independent original decode515900..515EE6 finds7calls each64FC88,645470,625EC0 and645DA7. Current Console::time_controls seeds only6fields then accepts/clamps7. This is missing original behavior, not authorization for a safety improvement.",
+      "RulesTimeControl is32bytes with accumulated at+0x1C; TimeControl94F1B8 plus5rows is94F258. Pinned515B86 loads94F274;515B9B calls64FC88,515BA9calls645470,515BB7pushesindex6 and515BB9calls625EC0 beforeCUSTOMTIME. Preserve existing guards, setter order, clamping, message and synch behavior.",
+      "The ordinary current-owner comment claiming accumulated is accept-only repeats the same transcription omission; correct it with the body. Preserve all original identities/spans/claims/history. This UI method is already within the207identity task closure; moved76command method tokens stay unchanged."
+    ],
+    "hypothesis": "The source custom-time dialog omits the original seventh field formatting operation, so its accumulated edit buffer is not populated before display.",
+    "kind": "discovery"
+  },
+  "previous_event": "7aaa123140329afa245c882a10075d977697b4ffd9585fdd46c9d26ce609642c",
+  "request_id": "customtime-original-seventh-field-omitted",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:console-command-units-oct19"
+}

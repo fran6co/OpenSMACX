@@ -17,6 +17,7 @@ from match_recovery.model import Span
 from match_recovery.pe_coff import PeImage
 from match_recovery.source_inventory import image_pin
 from match_recovery.source import read_file
+from console_sources import console_method_source
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -43,15 +44,18 @@ def method_body(source, name):
 
 
 def source_methods():
-    source = (ROOT / "src/console.cpp").read_text()
-    return source, {name: method_body(source, name) for name in (
+    names = (
         "editor_clear", "editor_reset_tech", "editor_load", "editor_randomize",
         "editor_clear_random", "new_base", "on_key_click", "editor_edit_veh",
-        "sentry", "hold", "editor_veh", "activate", "upgrade")}
+        "sentry", "hold", "editor_veh", "activate", "upgrade")
+    bodies = {name: method_body(console_method_source(
+                  f"{'int' if name in {'on_key_click', 'upgrade'} else 'void'} Console::{name}("), name)
+              for name in names}
+    return bodies
 
 
 def test_selected_console_redraw_sites_are_explicit_globals():
-    _, bodies = source_methods()
+    bodies = source_methods()
     map_counts = {
         "editor_clear": 1, "editor_reset_tech": 1, "editor_load": 1,
         "editor_randomize": 1, "editor_clear_random": 2,
@@ -83,7 +87,7 @@ def test_selected_console_redraw_sites_are_explicit_globals():
     # This unrelated free helper is already a global call and remains outside
     # the Console method edits.
     helper = re.search(r"void update_then_redraw_vehicle_editor_tile\([^)]*\)\s*\{([^}]+)\}",
-                       (ROOT / "src/console.cpp").read_text())
+                       (ROOT / "src/console_commands.cpp").read_text())
     assert helper and "draw_tile(vehicle.x, vehicle.y, 1);" in helper.group(1)
     assert "::draw_tile(vehicle.x, vehicle.y, 1);" not in helper.group(1)
 
@@ -117,7 +121,8 @@ def test_original_annotated_spans_call_the_global_targets():
         "upgrade": (0x004D06C0, 0x0046AF40,
                     (0x004D18D0, 0x004D1A9C)),
     }
-    mapped = {row.address: row for row in read_file(ROOT / "src/console.cpp")}
+    mapped = {row.address: row for owner in (ROOT / "src/console.cpp", ROOT / "src/console_commands.cpp")
+              for row in read_file(owner)}
     for name, (start, target, call_sites) in bodies.items():
         row = mapped[start]
         spans = row.image_spans
@@ -134,7 +139,7 @@ def test_original_annotated_spans_call_the_global_targets():
 
 
 def editor_load_body(source_mutation=None):
-    source = (ROOT / "src/console.cpp").read_text()
+    source = console_method_source("void Console::editor_load()")
     body = method_body(source, "editor_load")
     if source_mutation:
         assert body.count("::draw_map(1);") == 1

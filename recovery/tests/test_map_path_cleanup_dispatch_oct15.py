@@ -1,6 +1,7 @@
 """Actual-source controls for mapped shutdown calls and inline cleanup."""
 
 from pathlib import Path
+from console_sources import console_method_source
 import os
 import shutil
 import subprocess
@@ -80,7 +81,7 @@ def test_map_real_and_inline_cleanup_routes_are_distinct_and_ordered():
     assert "release_map_storage();" in _function(source, "BOOL __cdecl map_read(FILE *map_file)")
     assert "map_shutdown();" not in _function(source, "BOOL __cdecl map_read(FILE *map_file)")
     assert "map_shutdown();" in _function(
-        (ROOT / "src/console.cpp").read_text(), "void Console::editor_clear()")
+        console_method_source("void Console::editor_clear()"), "void Console::editor_clear()")
     assert "map_shutdown();" in _function(
         (ROOT / "src/game.cpp").read_text(), "void __cdecl system_close()")
     sync = _function((ROOT / "src/netdaemon.cpp").read_text(), "void NetDaemon::synch(")
@@ -89,7 +90,7 @@ def test_map_real_and_inline_cleanup_routes_are_distinct_and_ordered():
 
 
 def test_editor_clear_uses_the_original_qualified_direct_redraw():
-    source = (ROOT / "src/console.cpp").read_text()
+    source = console_method_source("void Console::editor_clear()")
     body = _function(source, "void Console::editor_clear()")
     assert "WorldClimateWorldWin.GraphicWin::redraw();" in body
     assert "WorldClimateWorldWin.redraw();" not in body

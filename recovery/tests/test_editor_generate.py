@@ -12,6 +12,7 @@ import shutil
 import subprocess
 
 import pytest
+from console_sources import console_method_source
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -28,7 +29,7 @@ def braced(source, start):
 
 
 def body():
-    source = (ROOT / "src/console.cpp").read_text()
+    source = console_method_source("void Console::editor_generate()")
     return braced(source, source.index("void Console::editor_generate() {"))
 
 
@@ -356,7 +357,7 @@ def random_editor_harness(methods):
 
 
 def random_editor_methods():
-    source = (ROOT / "src/console.cpp").read_text()
+    source = console_method_source("void Console::editor_clear_random()")
     return "\n".join(braced(source, source.index("void Console::" + name + "() {"))
                      for name in ("editor_randomize", "editor_clear_random"))
 

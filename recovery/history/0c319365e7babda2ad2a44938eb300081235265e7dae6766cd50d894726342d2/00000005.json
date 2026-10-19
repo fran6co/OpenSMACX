@@ -1,0 +1,18 @@
+{
+  "event_id": "8238d3f2ff967cd10c43c2c4a23f87380186c51fad6d2b620aeabf5aa1aea030",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "customtime-original-seventh-field-omitted",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "The existing UI owner now seeds parse_field_number(6,TimeControl[5].accumulated) afterrefresh beforeCUSTOMTIME. Independent pinned decode confirms515B86loads94F274,515BB7push6,515BB9calls625EC0; source-owned32byte RulesTimeControl layout places this field atrow5+1C. Its accepted buffer6store and existing clamp/synch/message/cancel behavior remain intact. This restores an omitted original operation, not a prospective bug fix.",
+      "Both hostcompilers run actual Console method, formatter and actual0..9999clamp source; all7prefilledvalues/order,cancellation,accept/synch and missing-seventh-call damage controls pass. Fulltime-controlmodule6cases and9migrationguards pass. Finalfresh nativebuild passes; outside current core original functionfamilies, the boundary-control→seventh-field-restoration COFF residual passes. The whole core object intentionally differs; this does not waive earlier raw source-unit/linked/allocation/runtime obligations."
+    ]
+  },
+  "previous_event": "d3f245481f2d7d70c1bdf70994e5f4625bdb50c5192a73796eb2ac2d84c3b69b",
+  "request_id": "restore-original-customtime-buffer-six",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:console-command-units-oct19"
+}

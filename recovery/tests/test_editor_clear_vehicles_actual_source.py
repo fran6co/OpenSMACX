@@ -12,6 +12,7 @@ import subprocess
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
+from console_sources import console_method_source
 
 
 def _block(text: str, start: int) -> str:
@@ -28,7 +29,7 @@ def _block(text: str, start: int) -> str:
 
 
 def _installed_sources() -> tuple[str, str]:
-    console = (ROOT / "src/console.cpp").read_text()
+    console = console_method_source("void Console::editor_clear_vehicles()")
     marker = "void Console::editor_clear_vehicles()"
     start = console.index(marker)
     body = _block(console, start)

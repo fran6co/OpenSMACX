@@ -11,6 +11,7 @@ import subprocess
 from pathlib import Path
 
 import pytest
+from console_sources import console_method_source
 
 
 def repo_root() -> Path:
@@ -55,9 +56,10 @@ def exact_statement(body: str, expected: str) -> str:
 
 
 def harness(source: str, mutant: str | None = None) -> str:
-    energy = function_body(source, "void Console::editor_energy()")
+    energy = function_body(console_method_source("void Console::editor_energy()"), "void Console::editor_energy()")
     load = function_body(source, "void Console::load_proc(int save_slot, int faction_id)")
-    destroy = function_body(source, "void Console::destroy(int veh_id)")
+    destroy = function_body(console_method_source("void Console::destroy(int veh_id)"),
+                            "void Console::destroy(int veh_id)")
 
     energy_block = block_after(energy, "if (answer == 0)")
     exit_call = exact_statement(load, "TutWinBaseWindow.exit();")
@@ -118,6 +120,7 @@ int main() {
 def test_console_callees_are_typed_source_owned_and_no_raw_seams_remain():
     root = repo_root()
     console = (root / "src" / "console.cpp").read_text()
+    commands = (root / "src" / "console_commands.cpp").read_text()
     veh_h = (root / "src" / "veh.h").read_text()
     veh_cpp = (root / "src" / "veh.cpp").read_text()
     basewin_h = (root / "src" / "basewin.h").read_text()
@@ -131,8 +134,8 @@ def test_console_callees_are_typed_source_owned_and_no_raw_seams_remain():
     assert "extern BaseWin TutWinBaseWindow;" in tutwin_h
     assert "RECOVERY_OBJECT: v1 0x006A7628 ?TutWinBaseWindow@@3VBaseWin@@A" in basewin_cpp
 
-    assert "action_destroy(veh_id, result, -1, -1);" in console
-    assert "TutWinBaseWindow.on_redraw();" in console
+    assert "action_destroy(veh_id, result, -1, -1);" in commands
+    assert "TutWinBaseWindow.on_redraw();" in commands
     assert "TutWinBaseWindow.exit();" in console
     for obsolete in (
         "ActionDestroy",
@@ -143,14 +146,14 @@ def test_console_callees_are_typed_source_owned_and_no_raw_seams_remain():
         "func_base_win_exit",
         "original_method<func_base_win_",
     ):
-        assert obsolete not in console
+        assert obsolete not in console and obsolete not in commands
 
     load = function_body(console, "void Console::load_proc(int save_slot, int faction_id)")
     assert load.index("TutWinBaseWindow.exit();") < load.index("if (IsMultiplayerNet")
     assert load.index("TutWinBaseWindow.exit();") < load.index("load_game(save_slot, faction_id)")
-    energy = function_body(console, "void Console::editor_energy()")
+    energy = function_body(console_method_source("void Console::editor_energy()"), "void Console::editor_energy()")
     assert energy.index("TutWinBaseWindow.on_redraw();") < energy.index("ConsoleGlobal.update_data(0);")
-    destroy = function_body(console, "void Console::destroy(int veh_id)")
+    destroy = function_body(commands, "void Console::destroy(int veh_id)")
     clear = destroy.index("field_23BE4_ = 0;")
     dispatch_guard = destroy.index("if (IsMultiplayerNet != 0)", clear)
     assert clear < dispatch_guard

@@ -40,7 +40,7 @@ def compiled():
         unit: [Coff(compiler(ROOT / unit, (), flags + settings.layout_flags))
                for flags in settings.flag_sets]
         for unit in ("src/infowin.cpp", "src/pulldown.cpp", "src/graphicwin.cpp",
-                     "src/menu.cpp", "src/popmenu.cpp", "src/console.cpp",
+                     "src/menu.cpp", "src/popmenu.cpp", "src/console.cpp", "src/console_commands.cpp",
                      "src/netdaemon.cpp", "src/statuswin.cpp", "src/popup.cpp", "src/scroll.cpp",
                      "src/base.cpp", "src/basewin.cpp", "src/net_class.cpp", "src/general.cpp",
                      "src/win.cpp", "src/alphanet.cpp")
@@ -69,7 +69,7 @@ def call_targets(obj, symbol):
     ("src/base.cpp", 0x4EB560), ("src/base.cpp", 0x4E80B0),
     ("src/base.cpp", 0x4F5F30), ("src/base.cpp", 0x4E5FE0),
     ("src/basewin.cpp", 0x417040), ("src/basewin.cpp", 0x418DF0),
-    ("src/console.cpp", 0x511520), ("src/console.cpp", 0x4DDA50),
+    ("src/console.cpp", 0x511520), ("src/console_commands.cpp", 0x4DDA50),
     ("src/infowin.cpp", 0x458FF0),
 ])
 def test_application_dependencies_have_mapped_product_definitions(compiled, unit, address):
@@ -670,8 +670,8 @@ def test_popup_family_destroys_each_owned_subobject_once(compiled):
         refs = references(obj, menu_destructor)
         assert "??_7PopMenu@@6BWin@@Popup@@@" in refs
         assert "??_7PopMenu@@6BWin@@PullDown@@@" in refs
-    for obj in compiled["src/console.cpp"]:
-        calls = call_targets(obj, symbol_at("src/console.cpp", 0x4DFAD0))
+    for obj in compiled["src/console_commands.cpp"]:
+        calls = call_targets(obj, symbol_at("src/console_commands.cpp", 0x4DFAD0))
         # Both original editor paths retain the Popup::close helper boundary.
         assert calls.count(popup_close) == 2
     for obj in compiled["src/popup.cpp"]:

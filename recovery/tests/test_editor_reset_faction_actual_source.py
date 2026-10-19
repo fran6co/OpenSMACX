@@ -14,6 +14,7 @@ import pytest
 
 
 ROOT = Path(__file__).resolve().parents[2]
+from console_sources import console_method_source
 
 
 def braced(text: str, signature: str) -> str:
@@ -46,7 +47,7 @@ def selected_struct(name: str, fields: tuple[str, ...], header: str) -> str:
 
 
 def actual_parts():
-    source = (ROOT / "src/console.cpp").read_text()
+    source = console_method_source("void Console::editor_reset_faction()")
     faction_h = (ROOT / "src/faction.h").read_text()
     base_h = (ROOT / "src/base.h").read_text()
     veh_h = (ROOT / "src/veh.h").read_text()
