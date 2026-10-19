@@ -1,0 +1,19 @@
+{
+  "event_id": "b47613fc8289b83efec38923f879ea364188609efef937742c10592a00c1a44b",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "source-order-only-release-control",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Coordinator and independent review reject adopting the permutation: it does not restore the intended direct call boundary in this source/Release recipe and changes unrelated emitted menu_proc code. Do not repeat this exhausted single-compile source-order screen or adopt its order-assertion test into unchanged production.",
+      "The complete candidate source patch and its focused tests remain ignored diagnostic caches alongside the captured object, request and reports. Main C++/annotations/claims/compiler policy are unchanged; the prior verified master build remains the same source. There is no meaningful recovered implementation to discard or matching regression to hide.",
+      "This does not establish that definition order never matters in VC6. A genuine semantically coherent command/editor versus UI compilation-unit recovery requires fresh scope, dependency ownership and original call-boundary evidence, not one-function emission tricks or flag changes."
+    ]
+  },
+  "previous_event": "d31f36ff71b8b3ab1accb77e853f80d3898acb7fa234b585dc8c03316d9c025a",
+  "request_id": "reject-ineffective-definition-order",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:console-refresh-boundary-oct19"
+}

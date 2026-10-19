@@ -1,0 +1,31 @@
+{
+  "event_id": "eed503a5addb27f056203c514e6265082f67696326ae48517dcf664996c029bf",
+  "payload": {
+    "affects": [
+      "entity-2376df8e382bc2b2aef961eb01eca3c01f3be013844db925d7fc0503540088aa",
+      "entity-3d2ed9906a5d731cbf3ad8f2aa6a302a146a224324e08704fe21b89b56c93255",
+      "entity-47ff03fd1e9ed66a9542865a9c23cf0f2fd1be13321539df8bd4c1f110b0059b",
+      "entity-5a6d9913c94bb0992e4be5b93409d960b0d0987a4862f147e089b5c595c1269b",
+      "entity-6225d910e37e9c17670f8b7a20aa3ddc65f42a5b0731cee396baf1bc46b0d258",
+      "entity-885ef029d30da01dd8de61eb7bae58d474b136b72403dc235c4d88c8495d6edb",
+      "entity-b532868c05e878962ecafb3260cf38f765a145cf0e3fb385ccf8abe3545a8375",
+      "entity-d1279913de740523db14d2641596634331716f3d0c70dc3fb650ec13d56d1413",
+      "entity-d844a03b38420bcf81e996cff2f039037bfad156441b2e3d1e94947fe642e2f9",
+      "entity-dd7d3ba21591837dbab9f6f7bffd95dd2edd3301fe43d480a0b0b761b7a8f14b"
+    ],
+    "author": "coordinator",
+    "discovery_id": "original-refresh-compilation-boundary-pending",
+    "evidence": [
+      "Pinned six later Console callers directly target514880; the current editor_energy object expands the three window operations despite moving the definition past all same-TU callers. The exact method body alone does not recover its original caller boundary.",
+      "set_move is not a counterexample to direct-call caller recovery: its two source-manual refresh triples match the original branch routes; the nearby update_data call belongs to a separate anonymous helper. Address clusters alone are not original TU proof. Preserve original quirks, globals, private helper ownership and generated-lifetime bindings in any proposed split.",
+      "No new source editing/native compile is authorized by this finding. Current source-order task remains exhausted and rejected; new coherent scope and fresh compiler control are needed before any implementation."
+    ],
+    "hypothesis": "The original direct refresh calls remain unresolved; investigate coherent command/editor ownership and definition visibility across real source units.",
+    "kind": "discovery"
+  },
+  "previous_event": "b47613fc8289b83efec38923f879ea364188609efef937742c10592a00c1a44b",
+  "request_id": "original-refresh-compilation-boundary-pending",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:console-refresh-boundary-oct19"
+}
