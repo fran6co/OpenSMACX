@@ -5402,7 +5402,7 @@ int BufferLastWrapWriteResult;
 // RECOVERY_OBJECT: v2 0x00696C90 0x00696C97 ?BufferMarkupLinkToken@@3PADA 0x005DC410
 char BufferMarkupLinkToken[] = "$LINK<";
 
-// ORIGINAL: 0x005DD250 ?write_cent_l@Buffer@@QAEHPADHHH@Z 0x005DD250-0x005DD2F3 FILE
+// ORIGINAL: 0x005DD250 ?write_cent_l@Buffer@@QAEHPADHHH@Z 0x005DD250-0x005DD2F3 FILE BYTE_EXACT
 // working copy - scaffold materialised by --work
 // size      163 bytes
 // prototype int (__thiscall ?write_cent_l@Buffer@@QAEHPADHHH@Z)(Buffer* this, int8*, int, int, int)
