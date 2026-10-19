@@ -166,7 +166,7 @@ struct RulesBasic { // Alpha(x).txt
     // #RULES: Movement rate along roads
     // Original bounds: 1 to 100
     // Default value: 3
-    uint32_t move_rate_roads;
+    int move_rate_roads;
 
     // #RULES: Nutrient intake requirement for citizens
     // Original bounds: 0 to 100

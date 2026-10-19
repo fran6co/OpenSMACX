@@ -5076,7 +5076,7 @@ int __cdecl best_defender(int veh_id_def, int veh_id_atk, BOOL check_artillery) 
             if (!offense_output) {
                 break;
             }
-            uint32_t proto_pwr_def = proto_power(i);
+            int proto_pwr_def = proto_power(i);
             int def_modifier = (((((range(proto_pwr_def - Vehs[i].dmg_incurred, 0, 9999)
                 * defense_output) / proto_pwr_def) * offense) / offense_output) / 8)
                 - get_proto_offense_rating(proto_id_def);
@@ -8276,10 +8276,7 @@ Status: Complete
 */
 int __cdecl speed(int veh_id, BOOL skip_morale) {
     uint32_t proto_id = Vehs[veh_id].proto_id;
-    if (proto_id == BSC_FUNGAL_TOWER) { // moved this check to top vs bottom, same logic
-        return 0; // cannot move
-    }
-    uint32_t speed_val = speed_proto(proto_id);
+    int speed_val = speed_proto(proto_id);
     uint8_t triad = get_proto_triad(proto_id);
     if (triad == TRIAD_SEA && has_project(SP_MARITIME_CONTROL_CENTER, Vehs[veh_id].faction_id)) {
         speed_val += Rules.move_rate_roads * 2;
@@ -8289,9 +8286,8 @@ int __cdecl speed(int veh_id, BOOL skip_morale) {
         speed_val += Rules.move_rate_roads;
     }
     if (Vehs[veh_id].dmg_incurred && triad != TRIAD_AIR) {
-        // optimized code without changes to logic
-        uint32_t moves = speed_val / Rules.move_rate_roads;
-        uint32_t reactor_fac;
+        int moves = speed_val / Rules.move_rate_roads;
+        int reactor_fac;
         if (VehPrototypes[proto_id].plan == PLAN_ALIEN_ARTIFACT) {
             speed_val = reactor_fac = 1;
         } else {
@@ -8300,8 +8296,10 @@ int __cdecl speed(int veh_id, BOOL skip_morale) {
         }
         speed_val = (moves
             * range(reactor_fac - Vehs[veh_id].dmg_incurred, 0, 9999) + speed_val - 1) / speed_val;
-        speed_val = range(speed_val, (triad == TRIAD_SEA) ? 2 : 1, 999) * Rules.move_rate_roads;
+        speed_val = range(speed_val, (triad == TRIAD_SEA) ? 2 : 1, 999)
+            * Rules.move_rate_roads;
     }
+    if (proto_id == BSC_FUNGAL_TOWER) return 0;
     return speed_val;
 }
 
