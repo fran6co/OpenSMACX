@@ -1,0 +1,21 @@
+{
+  "event_id": "8231f656ce32c85731cb976e472f3af0b99bff7641f54e2b603001f8951816fc",
+  "payload": {
+    "affects": [
+      "entity-5dcd7fece74ccb7123758a9665bc9a382b99e6d42ec0841b42cf8b64ce04691e",
+      "entity-fa9c794b568108252e79ecdd1f80e2a0b79b0aa34fd4e3f12abfb5be7fc2e97a"
+    ],
+    "author": "coordinator",
+    "discovery_id": "observed-inline-capture-base-closure",
+    "evidence": [
+      "Fresh candidate174TU build/link PASS; native188-object physical residual preserves187 whole objects but reports one changed capture_base section outside the originally scoped helper. Retained candidate-physical.json is FAIL, not waived. All source outside the authorized helper/purpose is byte-identical; actual current source calls helper from capture_base, and compiler receipt explicitly selects /Ob2. Original mappings/claims remain intact."
+    ],
+    "hypothesis": "Actual production /Ob2 inlines make_base_unique into capture_base; the faithful helper correction changes that existing caller without a source edit to its body.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "observed-inline-capture-base-closure",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:base-name-counting-oct19"
+}

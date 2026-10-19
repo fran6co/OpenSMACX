@@ -1,0 +1,18 @@
+{
+  "event_id": "26903c95a02a1a7fd027899335c3066a228c82cb578a08a154143c4f57d3ddee",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "observed-inline-capture-base-closure",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Original helper/source call graph and production /Ob2 explain the one physically changed capture_base body. Authorized expansion includes only this observed caller and the helper; fresh native188-object residual passes with exactly these2 candidate bodies projected, no data/initializer/whole-TU waiver. Source outside helper/purpose/recorder token is unchanged, all structured original records/notes preserved.",
+      "The native recorder measured61/61 exact instructions and banked the helper historical claim; fresh final174TU build/link and complete5581-identity census reproduce it. Native source claims/mappings/references pass; all prior strict passes remain, original4strictFAIL remain and new helper reference proof remains UNKNOWN. Host19 source/pin/counterfactual controls pass. Incorporation is bounded source recovery, not linked/runtime/full-game or automatic acceptance."
+    ]
+  },
+  "previous_event": "775e93c757190836e6753bbbae3594eb49a89e93544ede4053374e45561296ba",
+  "request_id": "verify-faithful-inline-capture-closure",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:base-name-counting-oct19"
+}

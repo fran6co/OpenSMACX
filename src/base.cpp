@@ -9308,9 +9308,10 @@ void __cdecl base_maint() {
 }
 
 /*
-Purpose: Check if the initial base name is unique. If not, append a sequential number after it.
-         The function has been rewritten to work as intended.
-// ORIGINAL: 0x004F7FE0 ?make_base_unique@@YAXH@Z 0x004F7FE0-0x004F8087
+Purpose: Count matching base names. If any exist, truncate the target
+         to its original 21-character prefix and append a suffix based on the
+         full collision count.
+// ORIGINAL: 0x004F7FE0 ?make_base_unique@@YAXH@Z 0x004F7FE0-0x004F8087 BYTE_EXACT
 // size      167 bytes
 // prototype void (__cdecl ?make_base_unique@@YAXH@Z)(int baseID)
 // callers   3   call targets   3
@@ -9326,27 +9327,19 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl make_base_unique(int base_id) {
-    purge_spaces(Bases[base_id].name_string); // added to remove extraneous whitespace
-    uint32_t found = 0;
+    int collisions = 0;
     for (int i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++) {
-        if (base_id != (uint32_t)i && !strcmp(Bases[i].name_string, Bases[base_id].name_string)) {
-            // BUG IN THE ORIGINAL: only the FIRST collision truncates
-            // name_string back to its 21-character core; a second collision
-            // against the renamed base appends another "-N" onto the
-            // already-suffixed name instead of restarting from the core, so
-            // repeated collisions compound ("Name-2-3" rather than
-            // "Name-3"). Reproduced deliberately - this is what the shipped
-            // bytes do, even though the file's own Purpose comment says a
-            // later pass "rewrote [this] to work as intended".
-            if (!found) { // only create core part of base name on first collision
-                Bases[base_id].name_string[21] = 0;
-            }
-            strcat(Bases[base_id].name_string, "-");
-            char digits[0x54];
-            _itoa(++found + 1, digits, 10); // start with appending "-2"
-            strcat(Bases[base_id].name_string, digits);
-            i = 0; // reset loop to verify base name is still unique
+        if (base_id != i &&
+            !strcmp(Bases[i].name_string, Bases[base_id].name_string)) {
+            ++collisions;
         }
+    }
+    if (collisions != 0) {
+        Bases[base_id].name_string[21] = 0;
+        strcat(Bases[base_id].name_string, "-");
+        char digits[0x50];
+        _itoa(collisions + 1, digits, 10);
+        strcat(Bases[base_id].name_string, digits);
     }
 }
 

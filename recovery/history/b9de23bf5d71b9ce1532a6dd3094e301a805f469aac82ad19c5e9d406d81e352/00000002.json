@@ -1,0 +1,23 @@
+{
+  "event_id": "775e93c757190836e6753bbbae3594eb49a89e93544ede4053374e45561296ba",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Expand verification/ownership to the one observed dependent original capture_base50C510..50DD8F, with no new source edits authorized. Include its changed inlined helper effects, retain full original mapping and any restoration obligation, and compare all other bodies/data/initializers physically. No whole-TU or arbitrary future-body waiver; full known-domain census must expose any further collateral."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5293328,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "8231f656ce32c85731cb976e472f3af0b99bff7641f54e2b603001f8951816fc",
+  "request_id": "authorize-observed-inline-capture-closure",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:base-name-counting-oct19"
+}
