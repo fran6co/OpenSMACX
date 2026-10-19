@@ -1,0 +1,21 @@
+{
+  "event_id": "e032bd777325298bf72e11986df99908bf3d358d5f1235177f6c1258c3c3aede",
+  "payload": {
+    "affects": [
+      "entity-d2e3ffdc0d4e37708920a53c779811bfad3d911efdd7d990808197294b4e1726"
+    ],
+    "author": "coordinator",
+    "discovery_id": "remaining-original-match-and-collateral",
+    "evidence": [
+      "Pinned full328instructions directly repeat typed entry/payload operations. Actual source publishes local construction results afterward, preserving original allocator timing, ownership handoff, fatal/null and partial link/cursor updates. Native body grows101to277instructions in the initial three-owner control but remains MISMATCH. Independent payload and virtual-base layout remains unchanged.",
+      "The raw153/33 physical residual remains unwaived; a later owner/compile-input investigation must qualify source-identical compiler scheduling/EH/inlining collateral rather than broadening waivers. Current linked selection/allocation and complete structure/runtime proof remain unsupported. No baseline reset, claim erasure or full acceptance follows."
+    ],
+    "hypothesis": "Restore or qualify remaining original matching/reference and compiler collateral while retaining the evidenced genuine C++ source protocol.",
+    "kind": "discovery"
+  },
+  "previous_event": "20b9cba485c67769268edcf5d0c48d80e7815ce96ac778740c8e2ea0f5b2956c",
+  "request_id": "remaining-original-match-and-collateral",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:spritelist-owned-allocation-oct19"
+}

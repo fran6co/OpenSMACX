@@ -1,0 +1,20 @@
+{
+  "event_id": "3b064c49669ae941d1ddfc69ae299a762e4329a7335cf685d10695d1bce57a70",
+  "payload": {
+    "affects": [
+      "entity-940ac0daa3cf8c476bc90bf5c3fd5af8be514ae64c00bb7ca2152a91a2ee1171"
+    ],
+    "author": "coordinator",
+    "discovery_id": "original-owned-source-protocol",
+    "evidence": [
+      "Pinned full328instructions directly repeat entry/payload allocation, owner capture and construction. Actual source now has four direct typed construction sites, unchanged entry snapshot/payload reload/fallback/fatal/null/partial mutation/hook protocols. Native body grows109to263instructions but remains MISMATCH;10aligned versus4before. No template/base/operator invention or source header change."
+    ],
+    "hypothesis": "StringStruct insertion contains its own typed owned allocations and virtual-base construction, not an unrelated synthetic generic helper boundary.",
+    "kind": "discovery"
+  },
+  "previous_event": "8b1eed57eeedcd18b0935d0dbf360517000177db184dfd5120547b91588c1b66",
+  "request_id": "original-owned-source-protocol",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:stringstruct-owned-allocation-oct19"
+}

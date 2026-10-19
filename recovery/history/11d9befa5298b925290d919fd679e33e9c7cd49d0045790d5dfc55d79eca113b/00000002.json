@@ -1,0 +1,18 @@
+{
+  "event_id": "81a4d652a94def6478a54d421676df026fd939aee2e11fa09371cfcf133f6c69",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "generated-spritebox-attach-binding",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Native writer changed exactly one marker mode BODY-to-FILE for611920, preserving address/name/symbol/all spans/claims/history and every C++ token/line count. Its existing prose and current emitted class adjustor identify a compiler-owned body; the old implicit source body was the deleted unrelated helper.",
+      "Fresh172-TU build/link,64focused controls including native-mode regression test, source claim/mapping/reference checks and unchanged5581 conventional verdict domain pass their bounded checks. No claim is banked and raw153/33 physical preservation misses remain unwaived."
+    ]
+  },
+  "previous_event": "46cc200657c3a162108971a972d3ba90f8f362646b0f6d320dd999e79a961173",
+  "request_id": "native-generated-attach-source-binding",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:spritelist-owned-allocation-oct19"
+}

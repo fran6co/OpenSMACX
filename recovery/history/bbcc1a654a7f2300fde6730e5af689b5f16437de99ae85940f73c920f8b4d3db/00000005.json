@@ -1,0 +1,21 @@
+{
+  "event_id": "4ccee8216f9cbc6b06f715502981b418e7cdf007b9ddd1f93d98ad12ff96a70f",
+  "payload": {
+    "affects": [
+      "entity-940ac0daa3cf8c476bc90bf5c3fd5af8be514ae64c00bb7ca2152a91a2ee1171"
+    ],
+    "author": "coordinator",
+    "discovery_id": "remaining-original-match-and-collateral",
+    "evidence": [
+      "Pinned full328instructions directly repeat entry/payload allocation, owner capture and construction. Actual source now has four direct typed construction sites, unchanged entry snapshot/payload reload/fallback/fatal/null/partial mutation/hook protocols. Native body grows109to263instructions but remains MISMATCH;10aligned versus4before. No template/base/operator invention or source header change.",
+      "The raw153/33 physical residual remains unwaived; a later owner/compile-input investigation must qualify source-identical compiler scheduling/EH/inlining collateral rather than broadening waivers. Current linked selection/allocation and complete structure/runtime proof remain unsupported. No baseline reset, claim erasure or full acceptance follows."
+    ],
+    "hypothesis": "Restore or qualify remaining original matching/reference and compiler collateral while retaining the evidenced genuine C++ source protocol.",
+    "kind": "discovery"
+  },
+  "previous_event": "aea17e301cc09699c034528a092739531e2b84dc35ab2bf2b01d4d898301910f",
+  "request_id": "remaining-original-match-and-collateral",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:stringstruct-owned-allocation-oct19"
+}

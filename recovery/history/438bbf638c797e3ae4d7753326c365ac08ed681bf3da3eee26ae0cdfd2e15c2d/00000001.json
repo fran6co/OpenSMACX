@@ -1,0 +1,20 @@
+{
+  "event_id": "d8c74fbf09807b914f692be8b881165fd4d889414954f37916140300a84fff81",
+  "payload": {
+    "affects": [
+      "entity-c329d316dc2dd1fc2d33f7eef9dc0713e607a3957a7b65c2ffedbcebe6734418"
+    ],
+    "author": "coordinator",
+    "discovery_id": "original-owned-source-protocol",
+    "evidence": [
+      "Pinned four direct callsites independently target647815; dependency manifest binds that60-byte fprintf entry, not deep __output/retained selection. Four format extents include their independently checked NUL bytes; two real globals receive identity-only bindings, not invented extents. Distinct original at addresses697388/6973AC remain unbound rather than assigning the current pooled literal a false alias."
+    ],
+    "hypothesis": "Ordinary Log formatting must call original CRT fprintf directly, not the reconstructed C++ fprintf_s-to-vfprintf forwarder.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "original-owned-source-protocol",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:log-native-crt-calls-oct19"
+}

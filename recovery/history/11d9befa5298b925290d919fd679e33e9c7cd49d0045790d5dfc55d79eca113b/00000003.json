@@ -1,0 +1,20 @@
+{
+  "event_id": "f128c6d4f309bb278574ae0560976afd29092eb911c207bff7bd325308b0ea04",
+  "payload": {
+    "affects": [
+      "entity-d2e3ffdc0d4e37708920a53c779811bfad3d911efdd7d990808197294b4e1726"
+    ],
+    "author": "coordinator",
+    "discovery_id": "original-owned-source-protocol",
+    "evidence": [
+      "Pinned full328instructions directly repeat typed entry/payload operations. Actual source publishes local construction results afterward, preserving original allocator timing, ownership handoff, fatal/null and partial link/cursor updates. Native body grows101to277instructions in the initial three-owner control but remains MISMATCH. Independent payload and virtual-base layout remains unchanged."
+    ],
+    "hypothesis": "SpriteList insertion contains its own typed owned allocations and node construction rather than the reconstruction-only generic allocation helper.",
+    "kind": "discovery"
+  },
+  "previous_event": "81a4d652a94def6478a54d421676df026fd939aee2e11fa09371cfcf133f6c69",
+  "request_id": "original-owned-source-protocol",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:spritelist-owned-allocation-oct19"
+}

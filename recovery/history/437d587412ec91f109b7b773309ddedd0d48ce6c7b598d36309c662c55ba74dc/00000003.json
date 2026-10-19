@@ -1,0 +1,21 @@
+{
+  "event_id": "b8a9298e2a8410c51a8732248594fcdae183789685b89e8cdab1185bd8aa8327",
+  "payload": {
+    "affects": [
+      "entity-112c0d0c116ab2e371d98b3b4941dc785e844b3c0814932fde9fbadc6af02947"
+    ],
+    "author": "coordinator",
+    "discovery_id": "remaining-original-match-and-collateral",
+    "evidence": [
+      "Pinned five pushes5109D5/518931/5189BD/5189EE/519F80 target the zero-filled byte939FF0; two zlib error table pointers use the same empty target. This is not Console-owned storage and supplies no array capacity or original readonly proof. Preserve all original debug/parity/coordinates/message ordering and error quirks. Old StringTable.get0 resolves to -Nil-, not the original empty text; replacing those four arguments recovers original behavior. No original game bug is fixed.",
+      "The raw153/33 physical residual remains unwaived; a later owner/compile-input investigation must qualify source-identical compiler scheduling/EH/inlining collateral rather than broadening waivers. Current linked selection/allocation and complete structure/runtime proof remain unsupported. No baseline reset, claim erasure or full acceptance follows."
+    ],
+    "hypothesis": "Restore or qualify remaining original matching/reference and compiler collateral while retaining the evidenced genuine C++ source protocol.",
+    "kind": "discovery"
+  },
+  "previous_event": "44933bf6e72efbe26fa54b1d36d60308592db229952fc81fcf1a3a00c76a1f8f",
+  "request_id": "remaining-original-match-and-collateral",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:console-empty-diagnostic-argument-oct19"
+}

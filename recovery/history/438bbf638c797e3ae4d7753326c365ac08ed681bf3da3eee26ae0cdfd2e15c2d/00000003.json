@@ -1,0 +1,21 @@
+{
+  "event_id": "c69a1c62303b99fc90d0c305093428d5407f0e8b54826ecfe2282a67c35d81dd",
+  "payload": {
+    "affects": [
+      "entity-c329d316dc2dd1fc2d33f7eef9dc0713e607a3957a7b65c2ffedbcebe6734418"
+    ],
+    "author": "coordinator",
+    "discovery_id": "remaining-original-match-and-collateral",
+    "evidence": [
+      "Pinned four direct callsites independently target647815; dependency manifest binds that60-byte fprintf entry, not deep __output/retained selection. Four format extents include their independently checked NUL bytes; two real globals receive identity-only bindings, not invented extents. Distinct original at addresses697388/6973AC remain unbound rather than assigning the current pooled literal a false alias.",
+      "The raw153/33 physical residual remains unwaived; a later owner/compile-input investigation must qualify source-identical compiler scheduling/EH/inlining collateral rather than broadening waivers. Current linked selection/allocation and complete structure/runtime proof remain unsupported. No baseline reset, claim erasure or full acceptance follows."
+    ],
+    "hypothesis": "Restore or qualify remaining original matching/reference and compiler collateral while retaining the evidenced genuine C++ source protocol.",
+    "kind": "discovery"
+  },
+  "previous_event": "2e8aa6a9687526114f7d8bb4943f19ff2a16da7d6477672e0ab834af8bc5ddc3",
+  "request_id": "remaining-original-match-and-collateral",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:log-native-crt-calls-oct19"
+}

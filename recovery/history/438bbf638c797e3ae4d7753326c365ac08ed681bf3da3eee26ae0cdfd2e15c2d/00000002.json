@@ -1,0 +1,20 @@
+{
+  "event_id": "2e8aa6a9687526114f7d8bb4943f19ff2a16da7d6477672e0ab834af8bc5ddc3",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "original-owned-source-protocol",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Coordinator-reviewed manual source checkpoint after actual original/C++ and independent reviews. Combined172-source fresh VC6/Wine build/link passes;64focused host/native controls pass under a leased compiler. Original source facts/claims/history and all5581 known identities are preserved except the explicit native mode-only611920 binding repair, with its own discovery. No new claims banked or demoted; no compiler/ABI/layout/link-policy change.",
+      "Actual candidate counts:{'BYTE_EXACT': 3260, 'MISMATCH': 1867, 'MNEMONIC_ONLY': 30, 'REFUSED': 286, 'SHAPE_EXACT': 19, 'SHARED_TAIL': 35, 'UNBOUND': 52, 'UNRESOLVED': 32}; strict:{'fail': 2, 'pass': 1954, 'unknown': 1304}. Masked gains:0;losses:0. Strict gains:1;losses:0. Log say/sayhex in the initial three-owner control retain55/55 masked bodies with corrected actual dependency edges. These are object observations, not exhaustive executable coverage or selected linked equality.",
+      "Native raw physical residual153pass/33fail remains UNWAIVED, not a preservation pass. Intended helper removal and Log copy reference changes coexist with unchanged-source compiler collateral, including substantial battle_plans/load_interface/PickTech and MapWin EH/local contributions. Source review and unchanged known verdicts do not prove those contributions equal or harmless. Preserve this limitation and pending discovery; do not promote to native automatic/full-project/runtime/game acceptance.",
+      "User authorizes coordinator-reviewed manual recovery integration despite unfinished full acceptance. This records a bounded original-faithful source checkpoint, not accepted game behavior. Destination must freshly build/link, rerun focused controls/source checks and compare transported current objects without body omissions."
+    ]
+  },
+  "previous_event": "d8c74fbf09807b914f692be8b881165fd4d889414954f37916140300a84fff81",
+  "request_id": "reviewed-compiling-source-checkpoint",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:log-native-crt-calls-oct19"
+}
