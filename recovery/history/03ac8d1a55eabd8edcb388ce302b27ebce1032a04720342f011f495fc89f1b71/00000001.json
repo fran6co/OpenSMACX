@@ -1,0 +1,20 @@
+{
+  "event_id": "9e863196782deed2d35e4d5902cea022278cc2b49a8e36111bab2a859ff86c65",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/win.cpp"
+    ],
+    "evidence": [
+      "Fresh unchanged Release application build3sem_lkb produces a new exact73/73instruction Win5F53A0 body, restoring original signed imul/cdq/idiv with both members int. Only this of237Win function observations changes, no exact loss. Native physical residuals pass all188objects with only the handler projected, including constructor/reset and all ordinary data. Independent read-only C++/pinned/test review found no blocker; source claims/mappings/references pass. Host candidate73PASS/3FAIL against unchanged-master71PASS/same3FAIL; broader suite is not green.",
+      "Authorize ONLY installed recover record0x005F53A0 publication to win.cpp if its unmodified configured historical recipe proves exact. No hand-written marker/claim, body/history edit, flag change, recipe replacement or claim demotion. A historical-profile miss must stay a miss, independent of fresh applicationRelease exactness. Keep original197140a78 baseline and remaining full linked/runtime obligations. This decision is scope authorization, not recovery acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "native-signed-handler-claim-publication",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:win-signed-scale-oct19"
+}
