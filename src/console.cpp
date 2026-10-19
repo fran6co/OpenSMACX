@@ -3422,11 +3422,12 @@ void Console::use_time_bonus() {
     const int selection = GameDataStateStorage.fields_.time_controls_selection_;
     if (!selection) return;
     if (!IsMultiplayerNet) return;
-    const int faction = ConsoleGlobal.faction_id_;
-    if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10) && GameDataStateStorage.fields_.net_turn_faction_ != faction) {
+    if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10) &&
+        GameDataStateStorage.fields_.net_turn_faction_ != ConsoleGlobal.faction_id_) {
         NetMsgPrimary.pop("SIMULNO", 5000, 0, nullptr);
         return;
     }
+    const int faction = ConsoleGlobal.faction_id_;
     if (PlayersData[faction].time_bonus_count <= 0) {
         parse_num(0, TimeControl[selection].extra);
         NetMsgPrimary.pop("NOTIMEBONUSES", 5000, 0, nullptr);

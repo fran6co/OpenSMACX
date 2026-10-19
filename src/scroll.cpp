@@ -694,8 +694,10 @@ Status: Complete
 void Scroll::set_button_color(int color) {
     const uint32_t value = static_cast<uint32_t>(color);
     color_ = value;
-    flat_button_left_.color_ = value;
-    flat_button_right_.color_ = value;
+    FlatButton &left_button = flat_button_left_;
+    FlatButton &right_button = flat_button_right_;
+    left_button.color_ = value;
+    right_button.color_ = value;
     flat_button_left_.redraw();
     flat_button_right_.redraw();
 }
@@ -718,8 +720,10 @@ Status: Complete
 void Scroll::set_bevel_thickness(int thickness) {
     const uint32_t value = static_cast<uint32_t>(thickness);
     bevel_thickness_ = value;
-    flat_button_left_.bevel_thickness_ = value;
-    flat_button_right_.bevel_thickness_ = value;
+    FlatButton &left_button = flat_button_left_;
+    FlatButton &right_button = flat_button_right_;
+    left_button.bevel_thickness_ = value;
+    right_button.bevel_thickness_ = value;
     flat_button_left_.redraw();
     flat_button_right_.redraw();
 }
@@ -742,8 +746,10 @@ Status: Complete
 void Scroll::set_bevel_upper(int color) {
     const uint32_t value = static_cast<uint32_t>(color);
     bevel_upper_ = value;
-    flat_button_left_.bevel_upper_ = value;
-    flat_button_right_.bevel_upper_ = value;
+    FlatButton &left_button = flat_button_left_;
+    FlatButton &right_button = flat_button_right_;
+    left_button.bevel_upper_ = value;
+    right_button.bevel_upper_ = value;
     flat_button_left_.redraw();
     flat_button_right_.redraw();
 }
@@ -766,8 +772,10 @@ Status: Complete
 void Scroll::set_bevel_lower(int color) {
     const uint32_t value = static_cast<uint32_t>(color);
     bevel_lower_ = value;
-    flat_button_left_.bevel_lower_ = value;
-    flat_button_right_.bevel_lower_ = value;
+    FlatButton &left_button = flat_button_left_;
+    FlatButton &right_button = flat_button_right_;
+    left_button.bevel_lower_ = value;
+    right_button.bevel_lower_ = value;
     flat_button_left_.redraw();
     flat_button_right_.redraw();
 }

@@ -1,0 +1,26 @@
+{
+  "event_id": "9a0b4c788839026f0ce7f4cc4a97cffff89d443189548c0841deb512d045870e",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/console.cpp"
+    ],
+    "evidence": [
+      "At a measurement-free coordinator checkpoint, combine the four native-screened Scroll setters with Console::use_time_bonus into one five-function manual recovery verification batch. Source workers finished and both were advanced to freshly verified master dd3829175ca7edd7670d18c9e3b530db22f7e057 without changing their original task baselines. No active worker/compiler scope is overlapped. Preserve Console draft until destination verification.",
+      "Native physical replica and per-body damage controls pass; scoped screens show four setters14/14 and Console83/83 exact, with original source-owned members, virtual callbacks and original quirks unchanged. Only these five bodies may differ from the accepted-master physical comparison; no acceptance waiver or task-baseline reset. Existing native automatic limitations remain."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5337184,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "console-scroll-verified-batch",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:scroll-parallel-owner-oct19"
+}
