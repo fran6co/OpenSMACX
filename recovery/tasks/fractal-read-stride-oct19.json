@@ -1,0 +1,33 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "f471181adf3a4381e5d4091d829550f0d80fb7ef",
+  "editable_files": [
+    "recovery/tests/test_world_fractal_read_fidelity_oct19.py",
+    "src/world.cpp"
+  ],
+  "evidence": [
+    "Pinned 0x005C1E87/0x005C1ECA/0x005C1EA7: EDI row offset advances by 19; neighbor address this+381+19*row+20*RadiusOffsetX[index]+column. Current retained actual Release object advances the row address by one. Original out-of-object reads remain obligations, not safety-fix permission.",
+    "Review two bounded immutable candidate bodies and verify an instrumented actual-source read trace against pinned instructions, native compilation, full build/link and outside-scope physical preservation. Manual coordinator integration only; no automatic or game acceptance claim."
+  ],
+  "intent": "Restore the pinned Fractal weighted-pass 19-byte row stride without removing dead reads or changing original unsafe behavior; preserve class layout, historical claims and both neighboring methods.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6037024,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6037280,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6037440,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "fractal-read-stride-oct19"
+}
