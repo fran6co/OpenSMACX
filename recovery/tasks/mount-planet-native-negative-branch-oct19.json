@@ -1,0 +1,28 @@
+{
+  "author": "coordinator",
+  "base_revision": "6c7e74b7616cb9ef1b46c96358613551aeb22578",
+  "editable_files": [
+    "src/mapwin.cpp",
+    "recovery/tests/test_mapwin_landmark_original_oct9.py",
+    "recovery/tests/test_landmark_storage_window_oct13i.py",
+    "recovery/tests/test_mapwin_generation.py"
+  ],
+  "evidence": [
+    "Independent current-source/pinned review found Mount predicate local_70==0 && featurebit2 && -1<local_94 && sentinel!=-1. Original46479D..4647A8 directly reads signed table entry at685A98+index*2 and compares -1 without a signed lower-bound branch. Mesa464912 and Crater464A4F DO contain native negative guards; preserve those. Latest bug-for-bug milestone supersedes earlier prospective safety-fix approvals.",
+    "Authorize removing ONLY -1<local_94 from the Mount condition. Preserve sentinel/read/texture/rotation and laterbranch sequencing, all other gen_terrain_poly code, Mesa/Crater checks, table types/extents, source mappings/claims and all existing storage-window uncertainty. No safer behavior, invented prefix allocation/capacity, data-window enlargement, address aliases, flag change or unrelated cleanup.",
+    "Negative original indices may read before the currently modeled storage window. This remains an explicit unverified allocation/UB obligation; removing the non-native guard does not establish deterministic invalid-index behavior or complete layout/runtime acceptance. Do not execute invalid indices in tests or manufacture neighboring storage. Native32-bit target arithmetic and ordinary safe-index behavior remain distinct from wider-host inference.",
+    "Adapt existing actual-source/pinned predicate checks to distinguish Mount sentinel-only from Mesa/Crater native guards. Preserve legal-index and positive aliased-index controls, upper-bound damage controls, source histories/claims and other storage/branch tests. Retain compiling damage controls where defined; original decoder facts must reject reintroducing the Mount lower guard without executing undefined reads. Avoid another large reimplemented renderer oracle. Legacy stale harnesses need a specific scoped adaptation, not broad test weakening.",
+    "Host-only isolated worker; no Wine/native compiler, Git, markers/claim edits, task journals, compiler policy or framework work. Select tests without native fixtures; coordinator owns leases, review, fresh build/link, measurements and integration. Report scope discoveries. No new byte grant, automatic/full-game/runtime or complete invalid-index equivalence claim follows."
+  ],
+  "intent": "Restore the original Mount Planet landmark predicate without the non-native negative-index guard, retaining native Mesa/Crater guards and unresolved out-of-domain allocation evidence.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4600528,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "mount-planet-native-negative-branch-oct19"
+}

@@ -1,0 +1,76 @@
+{
+  "author": "coordinator",
+  "base_revision": "6c7e74b7616cb9ef1b46c96358613551aeb22578",
+  "editable_files": [
+    "CMakeLists.txt",
+    "recovery/tests/test_newgame_flic_frame_context_oct19.py"
+  ],
+  "evidence": [
+    "Current verified master build-r_6fv4j3 uses the settled unframed O2/Ob2 domain for newgame.cpp. All eight mapped original Newgame entries have EBP prologues; five SEH bodies alone do not prove frame policy, but thumb_routine uses EBP argument slots and multiplayer_init EBP locals. Source ownership and original TU filename are separate, unproved facts.",
+    "Recent in-class Flic destructor migration adds its own physical destructor copy to Newgame. Six framed sibling TUs emit33-instruction exact bodies; Newgame is the sole unframed copy and selected linked provider with36instructions versus original33. Earlier Newgame framed control0gain/0loss predates this changed definition-visibility/emission domain and does not answer the new selected-copy obligation.",
+    "First authorize ONE isolated native compilation of current newgame.cpp under the existing second flag set with Oy- and otherwise identical actual recipe. Compare all eight known Newgame bodies and complete Flic destructor body/associated funclets/three dependency targets, all emitted code/data/metadata and selected references. No CMake/measurement/claim change until coordinator reviews the actual control and outside-owner losses. Do not declare frame policy proved from EBP alone or cherry-pick an unselected witness.",
+    "Only after a positive reviewed control may coordinator add newgame.cpp to the existing CMake framed-owner group, preserving all other flags, compiler/link policy and actual C++ bodies. No new third flag set, function-specific asm/attributes, source/body-context rebinding, exported emission trick, baseline reset or claim grant. Inspect every changed header emission and destructor/lifetime contribution; ordinary body gains do not waive EH/data changes.",
+    "Worker is host-only evidence/control preparation in isolated native-prepared worktree. No Wine/native compiler, Git mutations, source mappings/claims or task-journal edits. Coordinator owns leased native execution, actual whole-application build/link and retained selected-copy checks, collateral review and manual integration. Existing automatic/full-game acceptance limitations remain."
+  ],
+  "intent": "Test and, only if supported, restore the existing framed compiler domain for Newgame and its newly emitted selected Flic destructor copy.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4401056,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5806192,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5806224,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5806240,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5807408,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5816992,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5820112,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5822128,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5823280,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5825376,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5955872,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "newgame-flic-frame-context-oct19"
+}
