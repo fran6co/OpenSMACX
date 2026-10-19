@@ -1,0 +1,67 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "2d3094ef3e11c5de26989464831471fd1ab1ff8b",
+  "editable_files": [
+    "src/string_formatting.cpp",
+    "recovery/tests/test_string_formatting_owner_batch_oct20.py"
+  ],
+  "evidence": [
+    "Standing explicit user authority for cheaper parallel source workers and coordinator-reviewed recovery merges. Disjoint owner queue replenishment while previous candidates undergo verification; not an automatic acceptance claim.",
+    "Independent current5581-domain census/source reviews selected this owner as not exhausted, rather than repeating Map/Console/Report/Palette spelling plateaus. Consult all local TRIED/history before changes and validate actual original control flow, read/call timing and types.",
+    "CPP plus the named actual-source test only. Preserve all original identity/spans/claims, quirks and discoveries. No hand annotation-token edits, flags/attributes/volatile/asm/raw-address or fake dispatch tricks. Request scope expansion for a supported external structural need.",
+    "At most two natural forms per function before stopping a plateau. Prefer coherent multi-function semantic/structural corrections. Do not recreate known unsafe/error fixes; fidelity first. Imported catalogue labels are hints, not original debug symbols.",
+    "Only coordinator owns Git/native compilers/preparation/record/measurement/integration. Worker applies source/test patches, returns finite per-function evidence, frozen hashes, then stops edits. Bounded host source controls must execute actual extracted implementation and fail meaningful mutants. New test file is optional, not permission for another public CLI.",
+    "StringBox add/add_special insertion return contracts are retained obligations, not targets of this batch. Existing historical task records do not imply another live worker; coordinator inspected live tree assignments before provisioning."
+  ],
+  "intent": "Whole-owner faithful source recovery: implement supported semantic and structural corrections in a finite batch; inexpensive natural matching only, preserve bug-for-bug behavior and historical obligations.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5243184,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5834000,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5834176,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5834480,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5834752,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5835568,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5835024,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5835424,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5835280,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "string-formatting-owner-batch-oct20"
+}
