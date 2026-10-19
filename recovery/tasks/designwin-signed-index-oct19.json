@@ -1,0 +1,53 @@
+{
+  "author": "coordinator",
+  "base_revision": "baba1eef8b453bcbe446383d958d6f709852a27a",
+  "editable_files": [
+    "src/designwin.h",
+    "src/designwin.cpp",
+    "recovery/tests/designwin_button_harness.cpp",
+    "recovery/tests/test_designwin_button_owner.py",
+    "recovery/tests/test_designwin_signed_index_oct19.py"
+  ],
+  "evidence": [
+    "Original DesignWin button438460 decrements +CE4 then uses signed JNS4384CC; on negative it assigns ProtoSortCount at4384D3, not count-1. Key439A20 page movement uses signed cdq/idiv439A8A/B and negative-remainder clamp; center_stack43D490, draw_stack43D510 and exec43E9A0 use signed slot modulo; init43C270 zeroes field. Current uint32_t declaration suppresses negative branch and forces unsigned remainder. All source consumers are in DesignWin. Same-offset Diplowin/SocialWin fields are unrelated and outside scope.",
+    "Authorize same-width signed int member recovery and descriptive prototype_stack_start_ name grounded in ranked draw start and center-selected-five-rows-down behavior. Preserve field order/offset/width, vtables, method signatures, original mappings/spans/claims/symbols and all historical TRIED/LEVER prose verbatim. Update actual owner expressions and the two existing DesignWin fixtures to use the real signed member; remove only now-redundant signed/unsigned index casts. No unrelated naming sweep or body rewrite; one structural candidate, not a spelling search.",
+    "Preserve decrement-to-count sentinel, equality-only next reset, original count-zero division/error paths, negative behavior, selection/callback/lifetime order and all unsafe quirks. No bounds fixes, blanket clamps, overflow policy invention or original-address forwarding. New complete actual-body/declaration tests must prove signed member behavior and reject unsigned-member mutants on defined safe inputs; retain existing test cases, and use pinned original witnesses for signed branch and modulo. Any additional source defect or outside-owner type question remains a discovery for coordinator scope, not discarded or silently edited.",
+    "Host-only isolated worker; coordinator owns Git, recipe preparation, native resources, unchanged Release all-owner observation, fresh build/link, preservation/claim/reference checks, recording and independent review/integration/destination cleanup. Preserve historical matching obligations through justified structural improvement. No framework code or gate/baseline reset; full linked/runtime/automatic acceptance remains unproven."
+  ],
+  "intent": "Recover DesignWin signed prototype-stack start index and its original navigation/modulo behavior across its complete owner consumers.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4424800,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4430368,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4440688,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4445328,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4445456,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4450720,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "designwin-signed-index-oct19"
+}

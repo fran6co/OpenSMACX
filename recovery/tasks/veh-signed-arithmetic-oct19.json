@@ -1,0 +1,31 @@
+{
+  "author": "coordinator",
+  "base_revision": "baba1eef8b453bcbe446383d958d6f709852a27a",
+  "editable_files": [
+    "src/veh.cpp",
+    "recovery/tests/test_veh_signed_arithmetic_oct19.py"
+  ],
+  "evidence": [
+    "Pinned best_defender5044D0 uses signed idiv5047F7/idiv504813 and sign-corrected divide-by8 ending SAR50481E after battle_compute; only zero offense_output breaks. Current uint32_t proto_pwr_def receives proto_power(int), whose real inline definition and original5799A0 mapping return int, and forces unsigned divisions/SHR. Authorize correcting that local to signed int, preserving exact original operation/call/branch order and every other body expression.",
+    "Pinned speed5C1540 calls speed_proto5C155A and unconditional morale_veh5C15CB before its late prototype19/fungal-tower result at5C173B..51. Current entry return skips original work and masks original damaged non-air road-rate divide failure. Restore late zero result after ordinary calculation. Original road-rate divide5C16A1/A2 and damaged-ceiling divide5C1705/06 are cdq/idiv. Recover signed speed_val/moves/reactor_fac operands from existing int-returning speed_proto/range evidence; preserve every live Rules.move_rate_roads read and helper/callback order. No cached road-rate hoist, new guard or safety fix.",
+    "RulesBasic.move_rate_roads remains unsigned in shared alpha.h, outside this initial edit scope. Treat that as an explicit structural question: inspect other consumers and report evidence/required owner expansion before editing the global type. Signed interpretation at the known original division points may be expressed locally without changing storage/ABI, but do not pretend casts prove the global declaration. If broader signed member correction is necessary, request central expansion rather than discard or suppress it.",
+    "Keep all mapping/claim/history bytes, signatures, layouts, unrelated bodies and compiler flags unchanged. Add complete actual-body/type host controls for safe bounded signed cases, battle outputs, late fungal return and unconditional morale call, plus pinned opcode/order witnesses and destructive early-return/unsigned mutants. Do not manufacture deterministic outcomes for original overflow, divide-by-zero, invalid indices or uninitialized execution; preserve observed machine-wrap constraints as obligations unless a defined source form is independently established. No extended spelling iterations.",
+    "Isolated host-only worker, coordinator alone owns Git/compiler leases, full owner/native physical observation and fresh build/link, all original claims/references, independent review, recording, integration and destination checks. Preserve useful discoveries and historical obligations; no framework, baseline reset, claim demotion or automatic/full-game acceptance assertion."
+  ],
+  "intent": "Recover best_defender signed power arithmetic and speed original signed damaged-movement calculation and late fungal-tower result.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5260496,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6034752,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "veh-signed-arithmetic-oct19"
+}
