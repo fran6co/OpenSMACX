@@ -3953,6 +3953,7 @@ landmark_chain:;
     iVar5 = local_94;
     if (local_18 == 0 || local_20 == 0) {
         if (local_70 == 0 && (local_34 & 2) != 0 &&
+            -1 < local_94 &&
             terrain_window_signed_byte(
                 offsetof(TerrainLandmarkStorageWindow, mount_planet) +
                 static_cast<size_t>(local_94) * sizeof(LandmarkTextureChoice)) != -1) {

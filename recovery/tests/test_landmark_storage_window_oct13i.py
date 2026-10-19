@@ -144,10 +144,8 @@ def validate_source_contract(sources):
                          f"                static_cast<size_t>({variable}) * sizeof(LandmarkTextureChoice) + 1)")
         texture_at = body.index(texture_read)
         rotation_at = body.index(rotation_read, texture_at + len(texture_read))
-        if name == "mount_planet":
-            assert f"-1 < {variable}" not in body
-        else:
-            assert body.index(f"-1 < {variable}") < texture_at
+        assert f"-1 < {variable}" in body
+        assert body.index(f"-1 < {variable}") < texture_at
         assert body.index("!= -1", texture_at, rotation_at) >= texture_at
     signed_byte = balanced_body(cpp, "static inline int terrain_window_signed_byte(size_t offset) {")
     assert "reinterpret_cast<const unsigned char *>(" in signed_byte
@@ -165,7 +163,7 @@ def validate_source_contract(sources):
     code = balanced_body(map_cpp, "void __cdecl code_set(int x, int y, int code) {")
     monsoon = balanced_body(map_cpp, "void __cdecl world_monsoon(int x, int y) {")
     assert "*field |= bit2;" in bit2 and "*field &= ~bit2;" in bit2
-    assert "(*field & 0xFFFFFF) | (code << 24)" in code
+    assert "(*field & 0xFFFFFF) | (static_cast<uint32_t>(code) << 24)" in code
     assert re.search(r"for \(int i = 0; i < RadiusRange\[5\]; i\+\+\).*?\n\s*new_landmark", monsoon, re.S)
     assert "const int RadiusRange[9] = { 1, 9, 25, 49, 81, 121, 169, 225, 289 };" in map_cpp
     assert "BIT2_JUNGLE, true" in monsoon and "code_set(x_radius, y_radius, i)" in monsoon
@@ -186,8 +184,8 @@ def test_actual_storage_layout_bindings_renderer_and_producer_contract():
      "offsetof(TerrainLandmarkStorageWindow, garland_crater)"),
     ("upper_guard", "static_cast<size_t>(local_94) * sizeof(LandmarkTextureChoice)",
      "static_cast<size_t>(local_94) * sizeof(LandmarkTextureChoice); if (local_94 < 49)"),
-    ("mount_negative_guard", "(local_34 & 2) != 0 &&\n            terrain_window_signed_byte(",
-     "(local_34 & 2) != 0 && -1 < local_94 &&\n            terrain_window_signed_byte("),
+    ("missing_mount_negative_guard", "\n            -1 < local_94 &&\n            terrain_window_signed_byte(",
+     "\n            terrain_window_signed_byte("),
     ("subobject_view", "&TerrainLandmarkStorageWindowData);\n    const unsigned char value = bytes[offset];",
      "&TerrainLandmarkStorageWindowData.mount_planet);\n    const unsigned char value = bytes[offset];"),
 ])
@@ -218,17 +216,17 @@ def test_signed_code_window_and_row119_aliases_are_bounded_by_full_backing():
             signed = tuple(value if value < 0x80 else value - 0x100
                            for value in storage[pair:pair + 2])
             assert all(-128 <= value <= 127 for value in signed)
-    # Native code-byte 0x80..0xFF is negative and skipped before table access;
-    # 0..127 is the entire unsigned-positive lookup domain. Texture -1 alone
-    # is the sentinel; rotations remain signed data, not sentinel tests.
+    # Negative codes are skipped before table access. This chosen complete
+    # 0x290 backing can safely represent positive 0..127 reads; that does not
+    # prove the original allocation or neighboring runtime effects.
     assert all(not (-1 < index) for index in (-128, -1))
     assert all(-1 < index for index in range(128))
     signed_texture_ff = 0xFF if 0xFF < 0x80 else 0xFF - 0x100
     signed_texture_zero = 0 if 0 < 0x80 else 0 - 0x100
     assert signed_texture_ff == -1 and signed_texture_zero == 0
     assert signed_texture_zero != -1  # zero remains drawable; only -1 suppresses.
-    # The pinned aliases are structural addresses, with only the mapped
-    # 49-row windows asserted; bytes are not duplicated into source.
+    # The pinned row-119 aliases are retained as structure/evidence only; the
+    # source fixture models these reads through the complete chosen backing.
     assert (0x685A98 + 2 * 119) == 0x685B86  # Mount -> AltLightBit2 + 38
     assert (0x685AFC + 2 * 119) == 0x685BEA  # Mesa -> Crater + 11
     assert (0x685BD4 + 2 * 119) == 0x685CC2  # Crater -> Ocean UV bytes + 3
@@ -283,6 +281,13 @@ def _extract_parent_cpp(mapwin_text, tmp_path, *, signed_decode_damage=False,
                            "static inline int terrain_window_signed_byte(size_t offset) {")
     helper_start = mapwin_text.index(helper, choice_start)
     snippet = mapwin_text[choice_start:helper_start + len(helper)]
+    snippet = snippet.replace(
+        "static inline int terrain_window_signed_byte(size_t offset) {",
+        "static unsigned int terrain_landmark_read_count = 0;\n"
+        "static inline int terrain_window_signed_byte(size_t offset) {", 1)
+    snippet = snippet.replace(
+        "const unsigned char value = bytes[offset];",
+        "++terrain_landmark_read_count;\n    const unsigned char value = bytes[offset];", 1)
     if layout_damage:
         snippet = snippet.replace("gap_mount_mesa[2]", "gap_mount_mesa[3]", 1)
     if signed_decode_damage:
@@ -403,23 +408,22 @@ int main() {{
     check(crater119 == ocean_uv3_x_byte2,
           "crater row 119 aliases ocean UV byte");
     check(terrain_window_signed_byte(238) == expected_signed(raw[238]),
-          "mount row 119 signed decode");
+          "mount row 119 signed decode in complete backing");
     check(terrain_window_signed_byte(100 + 238) == expected_signed(raw[100 + 238]),
-          "mesa row 119 signed decode");
+          "mesa row 119 signed decode in complete backing");
     check(terrain_window_signed_byte(316 + 238) == expected_signed(raw[316 + 238]),
-          "crater row 119 signed decode");
-
+          "crater row 119 signed decode in complete backing");
     const size_t bases[3] = {{0, 100, 316}};
     const int masks[3] = {{2, 0x100, 1}};
     bool (*gates[3])(int, int, int) = {{mount_planet_gate, sunny_mesa_gate,
                                       garland_crater_gate}};
     for (int family = 0; family < 3; ++family) {{
-        for (int index = -1; index <= 127; ++index) {{
-            if (index < 0) {{
-                if (family != 0)
-                    check(!gates[family](index, masks[family], 0), "mesa/crater negative index short-circuit");
-                continue;
-            }}
+        for (int index = -128; index < 0; ++index) {{
+            terrain_landmark_read_count = 0;
+            check(!gates[family](index, masks[family], 0), "negative index short-circuit");
+            check(terrain_landmark_read_count == 0, "negative index performs zero table reads");
+        }}
+        for (int index = 0; index <= 127; ++index) {{
             const size_t offset = bases[family] + static_cast<size_t>(index) * 2;
             check(offset + 1 < sizeof(TerrainLandmarkStorageWindow), "full-parent index bound");
             const int texture = expected_signed(raw[offset]);
@@ -427,14 +431,18 @@ int main() {{
             check(terrain_window_signed_byte(offset) == texture, "texture signed-byte read");
             check(terrain_window_signed_byte(offset + 1) == rotation, "rotation signed-byte read");
             const bool expected_gate = texture != -1;
+            terrain_landmark_read_count = 0;
             check(gates[family](index, masks[family], 0) == expected_gate,
                   "actual caller gate preserves index and sentinel protocol");
+            check(terrain_landmark_read_count == 1, "valid row reads one texture byte");
+            terrain_landmark_read_count = 0;
             check(!gates[family](index, masks[family], 1), "hidden caller gate");
+            check(terrain_landmark_read_count == 0, "hidden path performs zero table reads");
         }}
     }}
-    check(mount_planet_gate(119, 2, 0), "high index mount gate");
-    check(sunny_mesa_gate(119, 0x100, 0), "high index mesa gate");
-    check(garland_crater_gate(119, 1, 0), "high index crater gate");
+    check(mount_planet_gate(119, 2, 0), "high index mount gate in complete backing");
+    check(sunny_mesa_gate(119, 0x100, 0), "high index mesa gate in complete backing");
+    check(garland_crater_gate(119, 1, 0), "high index crater gate in complete backing");
     check(!mount_planet_gate(7, 0, 0), "missing feature bit");
     check(!sunny_mesa_gate(7, 0, 0), "missing mesa feature bit");
     check(!garland_crater_gate(7, 0, 0), "missing crater feature bit");
@@ -518,7 +526,7 @@ def test_actual_cpp_control_rejects_compilable_or_layout_mutants(
         assert compiled.returncode == 0, (compiler_name, compiled.stderr)
         assert ran is not None and ran.returncode != 0, (compiler_name, damage, ran)
         if damage == "wrong_signed_decode":
-            assert "mount row 119 signed decode" in ran.stderr
+            assert "signed decode" in ran.stderr or "signed-byte read" in ran.stderr
         elif damage == "upper49_guard":
             assert "actual caller gate preserves index and sentinel protocol" in ran.stderr
         else:
