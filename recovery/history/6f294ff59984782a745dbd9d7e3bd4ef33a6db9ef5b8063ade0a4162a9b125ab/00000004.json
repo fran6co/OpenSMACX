@@ -1,0 +1,29 @@
+{
+  "event_id": "10c149efad000b1140123eb213c6d61ce5859cbd5ab0954d104e68dca0a32d1c",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "CMakeLists.txt",
+      "recovery/tests/test_general_owner_split_oct17.py",
+      "recovery/tests/test_general_switch_data_oct18.py",
+      "recovery/tests/test_header_rng_owner_oct18.py",
+      "recovery/tests/test_number_parsing_owner_oct19.py",
+      "recovery/tests/test_switch_owner_storage_oct18.py",
+      "src/number_parsing.cpp"
+    ],
+    "evidence": [
+      "Follow pending parser-number-scan-visibility finding without resetting original task baseline or resolving it in advance. Authorize a coherent current number_parsing.cpp utility owner for the complete contiguous btoi/htoi/stoi/findnum source record block. This semantic grouping is not original filename, historical TU, compiler policy or original owner proof. btoi/htoi remain real inline definitions in unchanged general.h; only their complete existing source mapping/history blocks move with stoi/findnum. Move the exact two stoi RECOVERY_ASSOCIATED facts with their owner; preserve all markers, spans, claims, signatures and comments byte-for-byte.",
+      "Move stoi and findnum definitions plus findnum_digits storage verbatim, with one minimal licensed prologue including stdafx.h/general.h. Register exactly one new CMake source; retain API declarations and all general.h bytes. No compiler flags, noinline, intrinsic pragmas, fake padding, scratch hoists, body rewriting, placeholder, claim grant/demotion or unrelated source change. Original parse_string source stays byte-for-byte unchanged; the intended visibility change is ordinary cross-TU calls instead of five same-TU inlines. Missing memcpy calls and other fidelity obligations remain separate.",
+      "Update parser host fixture to compile helpers from their actual unique owner, not a copied stub or silently selected stale General implementation. Add exact new owner transport/identity/association/digits controls, safe binary/hex/decimal/scan behavior cases and destructive missing/duplicate/body/claim/storage/association tests. Do not invent deterministic behavior for original overflow, invalid digit or uninitialized routes.",
+      "Historical Council/undo/header/RNG inverse tests currently reject the separately reviewed70417d18d parser change. Admit only its exact whole bounded parser block, verified against committed70417d18d and prior d62a56910 bytes. Add the exact new numeric block inverse while preserving every immutable baseline, all existing unrelated-content rejection and existing destructive cases. Switch population controls must keep exactly the same original identities/spans/evidence at their newly measured owner, not drop migrated facts.",
+      "Workers remain isolated/host-only; coordinator owns source/test ownership partitioning, Git/native resources, a bounded unchanged Release two-unit control and at most one structural source candidate before full build/link. Observe every83General original, preserve unaffected physical objects and prove transported function/data families, new ordinary findnum calls and associated switch data. Preserve unsupported linked selection/data/allocation cases as unknown/fail. Integrate only with actual C++ review, fresh build/link, scoped checks and fresh destination verification under standing manual-recovery permission. No new framework or acceptance exceptions."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "dd3fcda1facbdb52224319475c172513251be12aacff99c69afaa5feb9228a03",
+  "request_id": "numeric-utility-owner-split",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:general-parser-storage-oct19"
+}
