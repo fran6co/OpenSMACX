@@ -1,0 +1,85 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "18ef32586792da3a281b03162c7c3c9265b2f8d3",
+  "editable_files": [
+    "src/jackal/font.cpp"
+  ],
+  "evidence": [
+    "Standing explicit user authorization for cheaper parallel C++ recovery agents, bounded source-owner worktrees and coordinator-reviewed manual integration after build/link and relevant checks.",
+    "Current verified master has3272masked matches,2720strictPASS/548UNKNOWN/4existingFAIL in5581known product entries. The census is a starting hint, not semantic coverage or game acceptance.",
+    "Only the named CPP is editable. Preserve all original bindings, claims and discoveries. Read full pinned branch paths and priorTRIED before changes; instruction address order alone does not establish execution order.",
+    "Prefer coherent families and actual classes/members/global/lifetime corrections. Request scope expansion immediately for evidence-backed outside-owner discoveries; no silent bug fixes, flags/attributes/volatile/asm/address-forwarder/vtable stand-ins.",
+    "At most two natural forms per target before a plateau. Send a concrete frozen batch to coordinator; after freeze do not edit until explicit release. Coordinator owns compiler leases, allGit operations, native claims and integration."
+  ],
+  "intent": "Parallel faithful C++ owner recovery using evidence-backed family and structural corrections, with finite natural-source matching trials; no framework detour.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6174288,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6393664,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6394064,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6394416,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6394496,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6394608,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6394736,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6395312,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6395408,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6393504,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6393536,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6393568,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6393648,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "font-source-batch-oct19c"
+}
