@@ -1,0 +1,51 @@
+{
+  "author": "coordinator",
+  "base_revision": "a2d040a786498a016866c2bb446aa96c61ca652a",
+  "editable_files": [
+    "src/veh.h",
+    "src/veh.cpp",
+    "src/map.cpp",
+    "recovery/tests/altitude_owners/alt_set.cpp",
+    "recovery/tests/planet_strike_control.cpp",
+    "recovery/tests/test_vehicle_kill_actual_source_oct12.py",
+    "recovery/tests/test_veh_battle_timer_hold_shared_source_oct19.py"
+  ],
+  "evidence": [
+    "Pinned original battle_init clears91561C at501D3C and915620 at501D41; battle_compute repeats them at501DC0/501DC5. Independent producer/consumer flows separate91561C (planet_busting writes500EE1/50103A; kill5C0C35 and alt_set5914B1/591651 read) from915620 (boom writes5054FD/505D02; timer callbacks50EA55/50EE4C/50EE89/50EF19 and go_timer50F190 read). The current BOOL[2] invents a separate second cell while real callbacks use the independently owned TimerHoldFlag. This is source fidelity, not an original bug fix.",
+    "Authorize scalar BOOL VehBattleUnkTgl in its existing veh owner, retaining its provisional name rather than inventing domain meaning. Add a v1 start-only source binding at91561C for the actual emitted scalar symbol, with concise independent producer/consumer evidence; no extent or original type/name/lifetime claim. Change current[0] uses to the scalar and inline battle_init to clear that scalar followed by the existing TimerHoldFlag. Preserve both counter resets and operation order. Use actual time.h declaration via a reviewed include; do not add duplicate storage, aliases/unions, local extern stand-ins or move battle_init out of line. If its header dependency cannot compile, report before expanding scope.",
+    "Keep TimerHoldFlag definition/declaration/binding and callback/boom bodies in time.cpp/time.h/mapwin.cpp unchanged. Preserve all original markers/spans/symbols/claims, historical LEVER notes, guards, read timing, unsafe/error paths and lifetime behavior. Update only the three existing fixtures needed for the scalar declaration/reference and the new extracted-source cross-owner test. No unrelated types, flags, compiler settings, C++ cleanup or package changes.",
+    "The new host control must extract actual inline battle_init and a real timer callback using native source APIs, use the actual production TimerHoldFlag definition once in the same test translation unit, and prove a held callback resumes after battle_init resets that same gate. Include semantic damage controls removing/redirecting the reset and pinned producer/consumer address/width checks; fixture-local unrelated copies cannot establish sharing. Existing altitude, planet strike, kill and timer/boom controls retain their previous assertions. Host tests are not PE/ABI/link/runtime proof.",
+    "Coordinator owns Git/preparation/compiler resources and full174TU build/link with complete header closure. Measure every current original and strict target class, preserving historical claims and structural discoveries through any temporary matching regression. Review physical residuals honestly: the real array-to-scalar storage correction and external symbol change are expected structural changes, not zero-omission equality or linked-preservation proof. Any additional changed body/global/dependency needs explicit investigation/scope; do not waive a whole TU or silently normalize fingerprints. Independent source review and fresh destination checks required. Full original allocation/link/provider/runtime/game acceptance remains unproven."
+  ],
+  "intent": "Recover the distinct planet-busting toggle and timer hold cell, correcting battle initialization to reset the actual timer gate rather than an artificial second array element.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5245792,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5250352,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5250464,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5837456,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6032128,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "battle-timer-storage-oct19"
+}
