@@ -1,0 +1,21 @@
+{
+  "event_id": "2d0beedd0a9d05dc5238bb217fee4954f2067390b4c6e5650d07e2884fd7d760",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_session_picker_cursor_bounds_oct19.py"
+    ],
+    "evidence": [
+      "Independent source review disproved unconditional cursor initialization: original63C711 JG63C779 skips63C71B and original63C413 JG skips63C41D on high positive rows.",
+      "Authorize an actual-source host regression witness for both selection paths and the existing native seek algorithm, including invalid positive/negative rows and stale cursor position, with a mutation proving that unconditional preseeding is caught.",
+      "Original20subjects and24cd306f6ff78af03fdd11405f16ba297fa6da27 task baseline retained. This extends tests only, not source behavior or acceptance waivers."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "cursor-bounds-pinned-regression-witness-oct19b",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:net-session-picker-source-batch-oct19b"
+}
