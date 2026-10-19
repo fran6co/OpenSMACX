@@ -1,4 +1,4 @@
-"""Host behavior/damage controls for the actual map.cpp rainfall owner."""
+"""Host behavior/damage controls for the actual world.cpp rainfall owner."""
 from pathlib import Path
 import shutil
 import subprocess
@@ -6,7 +6,7 @@ import tempfile
 
 
 ROOT = Path(__file__).resolve().parents[2]
-SOURCE = ROOT / "src/map.cpp"
+SOURCE = ROOT / "src/world.cpp"
 PASS2_SIGNATURE = "static void world_rainfall_pass2(int saved_faction)"
 XRANGE_SIGNATURE = "static int world_rainfall_xrange(int x, int width, int flat)"
 OWNER_SIGNATURE = "void __cdecl world_rainfall()"
@@ -247,7 +247,7 @@ int main() {
 
     if (failures != 0)
         return 1;
-    puts("actual map.cpp world_rainfall owner host: pass");
+    puts("actual world.cpp world_rainfall owner host: pass");
     return 0;
 }
 '''
@@ -306,7 +306,7 @@ def test_admitted_map_source_owner_against_behavior_and_damage_controls():
     for compiler in compilers:
         clean = run(compiler)
         assert clean.returncode == 0, clean.stdout + clean.stderr
-        assert "actual map.cpp world_rainfall owner host: pass" in clean.stdout
+        assert "actual world.cpp world_rainfall owner host: pass" in clean.stdout
         damaged = run(compiler, damage="pass1_nesting")
         assert damaged.returncode != 0
         assert "altitude-three forest" in damaged.stderr

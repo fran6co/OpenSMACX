@@ -12,7 +12,7 @@ NAMES = ('monsoon', 'crater', 'volcano', 'mesa', 'ridge', 'diamond', 'ruin',
 
 
 def body():
-    text = (ROOT / 'src/map.cpp').read_text()
+    text = (ROOT / 'src/world.cpp').read_text()
     start = text.index('void __cdecl world_landmarks()')
     opening = text.index('{', start)
     depth = 0

@@ -1,0 +1,22 @@
+{
+  "event_id": "bd5bd4e51c66e8d81bd52c15dc372d863c1b775b49adf3743f5e146b38f42687",
+  "payload": {
+    "affects": [
+      "entity-280defa160c4f54426bc4b6ff74e326f896b81f4def2e7d44f386c8750ac56a0",
+      "entity-4d0cac9fd06614e416e43b66bf5d111eb66ca94a3b4c46b3394ab9163474d130",
+      "entity-e9eb35d086d3bd19900ff91c3aa8ad293dd6e514b9157a7a45123e11cc8fa82c"
+    ],
+    "author": "coordinator",
+    "discovery_id": "shared-site-helper-owner",
+    "evidence": [
+      "Current world_site uses site_xrange and site_tile; resident good_sensor564EB0 uses site_xrange and alt_get_ocean_detail462190 uses both. Existing helper blocks are unannotated static forceinline functions with original signed-coordinate and flat-bit behavior; neither may be duplicated or moved world-private."
+    ],
+    "hypothesis": "World source separation exposes two map-local inline helpers that belong to the shared Map interface rather than either TU exclusively.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "shared-site-helper-owner",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:world-generation-owner-oct19"
+}

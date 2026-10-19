@@ -1,0 +1,19 @@
+{
+  "event_id": "bd6a5932377b144f4dfc163ed42020ed0f4dae9c11a9a433f32f93fb99894429",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/map.h"
+    ],
+    "evidence": [
+      "Extend the already authorized shared header edit to declare extern uint32_t WorldCanyonOffsetValues[12] and extern uint32_t world_ridge_offset_val[13], matching their existing source definitions exactly. Place with other map terrain/radius interfaces. Do not move or duplicate storage/bindings, change extents/types/names, or edit callers/behavior. Preserve first failed build and diagnostics; require a fresh full application build and source/physical comparisons."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "b010ae4b4b43e5b181e8ca8770bb52dfda7f766d7636cc1c8aaf636ffc92c3dd",
+  "request_id": "authorize-shared-landmark-table-declarations",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:world-generation-owner-oct19"
+}

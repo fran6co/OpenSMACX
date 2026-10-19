@@ -1,0 +1,17 @@
+{
+  "event_id": "af344949a34fbc2beeb084f19de0be20378a5a9b564e858e556ddf30a0464b99",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "narrow-shared-coordinate-interface",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/map_coordinates.h now holds the same two complete site helper/comment blocks and exact existing landmark table extern declarations; only map.cpp and world.cpp include it. map.h matches unchanged61ba baseline bytes exactly, retaining every existing inline body/layout/public declaration. Native source audit reconstructs prior validated physical transport and preserves146combined mappings,45world originals,44data bindings, all claims/lessons/body contents and shared Map lifetime/storage. This resolves interface source organization only; fresh output comparison must determine whether unrelated codegen is restored. Prior178PASS/10FAILphysical and unchanged5581 verdict reports retained, no outside-output waiver or historical-TU/linked/runtime acceptance."
+    ]
+  },
+  "previous_event": "b85a736c7979502f2788018784fc3ddd9de72c35cfbaed5eadf0249d9940a4c4",
+  "request_id": "incorporate-narrow-coordinate-interface",
+  "schema_version": 1,
+  "sequence": 9,
+  "stream": "task:world-generation-owner-oct19"
+}

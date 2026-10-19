@@ -10,7 +10,7 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
 ACTUAL_TEST = ROOT / "recovery/tests/test_world_rainfall_behavior.py"
-SOURCE = ROOT / "src/map.cpp"
+SOURCE = ROOT / "src/world.cpp"
 SPEC = spec_from_file_location("rainfall_controls", ACTUAL_TEST)
 assert SPEC and SPEC.loader
 rainfall_controls = module_from_spec(SPEC)
@@ -137,7 +137,7 @@ int main() {
         failures += fail("saved climate cursor and indexed terrain reads remain distinct");
 
     if (failures != 0) return 1;
-    puts("actual map.cpp pass2 host: pass");
+    puts("actual world.cpp pass2 host: pass");
     return 0;
 }
 '''

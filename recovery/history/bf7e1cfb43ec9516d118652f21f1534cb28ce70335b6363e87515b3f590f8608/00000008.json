@@ -1,0 +1,20 @@
+{
+  "event_id": "b85a736c7979502f2788018784fc3ddd9de72c35cfbaed5eadf0249d9940a4c4",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/map_coordinates.h"
+    ],
+    "evidence": [
+      "Authorize a narrow shared src/map_coordinates.h interface, included ONLY by map.cpp and world.cpp, to own exactly the two existing byte-identical site_xrange/site_tile helper/comment blocks and the two exact extern landmark-coordinate table declarations. Include map.h for prerequisites, use normal header guard/license, no new mapped functions or C++ behavior. Restore map.h byte-for-byte to immutable61ba source; do not duplicate helpers, move shared storage, change inline qualifiers or edit consumers.",
+      "Retarget approved existing helper-source controls to this actual common interface and assert map.h remains exactly pre-task source as an outside-header preservation control. Preserve all previous physical/native/source/host reports. New full build and native observations in a new epoch; unrelated output differences must be rechecked rather than waived. Source transport audit must explicitly include only this new authorized current boundary, preserving every original mapping/claim/lesson/function body and former data owner."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "33f6acb167100e58228f226ff75da626fea8ea3abbe2f9bf1c9c6b30d5a350f9",
+  "request_id": "authorize-coordinate-interface-owner",
+  "schema_version": 1,
+  "sequence": 8,
+  "stream": "task:world-generation-owner-oct19"
+}

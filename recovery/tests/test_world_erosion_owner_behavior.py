@@ -1,4 +1,4 @@
-"""Private actual-source controls for the future map.cpp world_erosion body.
+"""Private actual-source controls for the world.cpp world_erosion body.
 
 The test intentionally has no dependency on ignored candidate or host files.
 It is parked with the frozen packet until the coordinator installs the body;
@@ -12,13 +12,13 @@ import pytest
 
 
 REPO = Path(__file__).resolve().parents[2]
-SOURCE = REPO / "src" / "map.cpp"
+SOURCE = REPO / "src" / "world.cpp"
 SIGNATURE = "void __cdecl world_erosion()"
 
 
 def extract_function(source: str, signature: str) -> str:
     start = source.find(signature)
-    assert start >= 0, "world_erosion owner body missing from src/map.cpp"
+    assert start >= 0, "world_erosion owner body missing from src/world.cpp"
     opening = source.index("{", start)
     depth = 0
     state = "code"

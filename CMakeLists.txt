@@ -170,6 +170,7 @@ set(OPENSMACX_SOURCES
     src/log.cpp
     src/maininterface.cpp
     src/map.cpp
+    src/world.cpp
     src/map_altitude.cpp
     src/mapwin.cpp
     src/basewin.cpp
@@ -398,8 +399,11 @@ set_source_files_properties(src/interface_palette.cpp src/interface_fonts.cpp
 set_source_files_properties(src/sound.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Preserve original frame-based argument and local-slot accesses in these core
 # owners while keeping application-wide compiler defaults unchanged.
+# World generation keeps its existing map.cpp profile after source separation;
+# this does not establish the historical translation-unit boundary.
 set_source_files_properties(
     src/map.cpp
+    src/world.cpp
     src/faction.cpp
     src/veh.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")

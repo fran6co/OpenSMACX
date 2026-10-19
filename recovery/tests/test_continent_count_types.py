@@ -51,7 +51,7 @@ def test_signed_count_types_and_consumers_are_in_actual_sources():
     assert re.search(r"\bint\s+tiles\s*=\s*Continents\[region_current\]\.tile_count\s*;",
                      continents_body)
 
-    world = (ROOT / "src/map.cpp").read_text(encoding="utf-8")
+    world = (ROOT / "src/world.cpp").read_text(encoding="utf-8")
     fresh_body = _function_body(world, "void __cdecl world_fresh(int x, int y)")
     assert re.search(r"\bint\s+tile_search\s*=\s*0\s*;", fresh_body)
     assert re.search(r"\bint\s+tile_count\s*=\s*Continents\[i\]\.tile_count\s*;",
@@ -65,7 +65,7 @@ def test_signed_count_types_and_consumers_are_in_actual_sources():
     strategy = (ROOT / "src/faction_strategy.cpp").read_text(encoding="utf-8")
     assert "Continents[region].tile_count < 0x96u" not in strategy
     assert "Continents[region].tile_count >= 0x28u" not in strategy
-    for relative in ("src/base.cpp", "src/enemy.cpp", "src/faction.cpp", "src/map.cpp"):
+    for relative in ("src/base.cpp", "src/enemy.cpp", "src/faction.cpp", "src/map.cpp", "src/world.cpp"):
         source = (ROOT / relative).read_text(encoding="utf-8")
         assert not re.search(r"(?:static_cast<int>\s*\(\s*Continents\[[^]]+\]\.tile_count\s*\)|"
                              r"\(int\)\s*Continents\[[^]]+\]\.tile_count)", source), relative
@@ -161,10 +161,10 @@ def test_pinned_signed_arithmetic_and_branch_mnemonics_use_complete_mapped_spans
             0x0059C713: "setge",
         }),
         ("src/path.cpp", 0x0059C790, {0x0059C8C8: "jge"}),
-        ("src/map.cpp", 0x005C6C40, {
+        ("src/world.cpp", 0x005C6C40, {
             0x005C6C84: "jl", 0x005C6C89: "jg", 0x005C6C8D: "jl",
         }),
-        ("src/map.cpp", 0x005C2CB0, {0x005C3030: "jl", 0x005C303B: "jle"}),
+        ("src/world.cpp", 0x005C2CB0, {0x005C3030: "jl", 0x005C303B: "jle"}),
         ("src/base.cpp", 0x004ECBF0, {0x004ED1CB: "jle"}),
         ("src/base.cpp", 0x004F81A0, {
             0x004FABC3: None, 0x004FABCA: None, 0x004FABD0: None,
@@ -173,7 +173,7 @@ def test_pinned_signed_arithmetic_and_branch_mnemonics_use_complete_mapped_spans
         ("src/faction_strategy.cpp", 0x00561080, {
             0x005630F1: "jge", 0x005633CA: "jl",
         }),
-        ("src/technology.cpp", 0x005BCBE0, {0x005BDBBB: "jge"}),
+        ("src/technology_queries.cpp", 0x005BCBE0, {0x005BDBBB: "jge"}),
     )
     for relative_path, owner_address, expected in witness_groups:
         records = read_file(ROOT / relative_path)

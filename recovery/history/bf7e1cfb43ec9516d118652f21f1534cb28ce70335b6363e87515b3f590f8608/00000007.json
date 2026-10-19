@@ -1,0 +1,22 @@
+{
+  "event_id": "33f6acb167100e58228f226ff75da626fea8ea3abbe2f9bf1c9c6b30d5a350f9",
+  "payload": {
+    "affects": [
+      "entity-280defa160c4f54426bc4b6ff74e326f896b81f4def2e7d44f386c8750ac56a0",
+      "entity-4d0cac9fd06614e416e43b66bf5d111eb66ca94a3b4c46b3394ab9163474d130",
+      "entity-e9eb35d086d3bd19900ff91c3aa8ad293dd6e514b9157a7a45123e11cc8fa82c"
+    ],
+    "author": "coordinator",
+    "discovery_id": "narrow-shared-coordinate-interface",
+    "evidence": [
+      "Fresh application175TU build/link passes and all5581 canonical masked/strict classifications unchanged; native physical comparison reports178PASS/10FAIL, including nine unrelated source objects with codegen changes after broad-header exposure. The first scope only omits45moved originals; alloutside differences remain visible. Current unchanged helper definitions are needed only in map.cpp/world.cpp; shared table definitions remain map.cpp. No evidence establishes a need to expose these specialized inline definitions to all Map clients."
+    ],
+    "hypothesis": "The specialized shared coordinate helper definitions should be visible only to their two actual current consumers, rather than introduced into every Map client through map.h.",
+    "kind": "discovery"
+  },
+  "previous_event": "1f9dc16d40d02ded1ea5db53ecc06e9d0425d6194803817718fdee217fad7f93",
+  "request_id": "narrow-shared-coordinate-interface",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:world-generation-owner-oct19"
+}

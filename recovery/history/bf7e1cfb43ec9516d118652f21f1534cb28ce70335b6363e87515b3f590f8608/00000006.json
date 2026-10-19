@@ -1,0 +1,17 @@
+{
+  "event_id": "1f9dc16d40d02ded1ea5db53ecc06e9d0425d6194803817718fdee217fad7f93",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "shared-landmark-table-interface",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/map.h now declares exactly the existing uint32_t[12] WorldCanyonOffsetValues and uint32_t[13] world_ridge_offset_val arrays. Their map.cpp definitions, bounded source bindings, contents and every function body remain byte-identical to the authorized transport. Native source/physical-text audit passes after explicitly accounting for only these two interface declarations. Full compiler qualification remains pending; the first failed build and failed-receipt diagnostic retry are retained, not upgraded."
+    ]
+  },
+  "previous_event": "bd6a5932377b144f4dfc163ed42020ed0f4dae9c11a9a433f32f93fb99894429",
+  "request_id": "incorporate-shared-landmark-table-interface",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:world-generation-owner-oct19"
+}

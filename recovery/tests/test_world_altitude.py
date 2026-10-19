@@ -32,9 +32,10 @@ def braced(source, signature):
 
 def actual_source():
     header = (ROOT / "src/map.h").read_text()
+    map_source = (ROOT / "src/map.cpp").read_text()
     declarations = []
     for name in ("RadiusRange", "RadiusOffsetX", "RadiusOffsetY"):
-        declaration, = re.findall(r"const int " + name + r"\[\]\s*=\s*\{[^}]*\};", header)
+        declaration, = re.findall(r"const int " + name + r"\[(?:\d+)?\]\s*=\s*\{[^}]*\};", map_source)
         declarations.append(declaration)
     players, = re.findall(r"static const int MaxPlayerNum = \d+;",
                           (ROOT / "src/faction.h").read_text())
@@ -42,7 +43,7 @@ def actual_source():
     for signature in ("MEASURED inline BOOL __cdecl on_map(",
                       "MEASURED inline int __cdecl xrange("):
         declarations.append(braced(header, signature))
-    body = braced((ROOT / "src/map.cpp").read_text(), "void __cdecl world_alt_set(")
+    body = braced((ROOT / "src/world.cpp").read_text(), "void __cdecl world_alt_set(")
     return "\n".join(declarations), body
 
 

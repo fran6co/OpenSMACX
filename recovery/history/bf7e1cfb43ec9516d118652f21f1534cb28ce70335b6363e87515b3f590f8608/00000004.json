@@ -1,0 +1,21 @@
+{
+  "event_id": "b010ae4b4b43e5b181e8ca8770bb52dfda7f766d7636cc1c8aaf636ffc92c3dd",
+  "payload": {
+    "affects": [
+      "entity-3c58d6e3807dcc1778f5bfa11f90ea030915230ff3601396dcd8919ddbdea8d2",
+      "entity-8c9b0bf47251017de12b2f7d5c673eeaef33de4ae769ac1738b40c7e103571aa"
+    ],
+    "author": "coordinator",
+    "discovery_id": "shared-landmark-table-interface",
+    "evidence": [
+      "First fresh175TU build failed world.cpp with C2065 for WorldCanyonOffsetValues and world_ridge_offset_val. Full unchanged actual compiler recipe into fresh diagnostic targets confirms only these undeclared tables and cascading subscript errors. Current map.cpp defines writable uint32_t WorldCanyonOffsetValues[12] and world_ridge_offset_val[13], with preserved bounded RECOVERY_OBJECT bindings; map.h currently declares neither. No type/storage/behavior change is indicated."
+    ],
+    "hypothesis": "World canyon/ridge implementations require declared shared landmark tables while their source storage remains owned by map.cpp.",
+    "kind": "discovery"
+  },
+  "previous_event": "bf909fd8e22a5a1c0a75fc3a9f5011bbe3ce71cf8cbdbc74f07cdf5e8f8644eb",
+  "request_id": "shared-landmark-table-interface",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:world-generation-owner-oct19"
+}

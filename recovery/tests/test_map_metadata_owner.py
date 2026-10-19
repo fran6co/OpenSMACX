@@ -38,15 +38,15 @@ def actual_bundle():
     start = header.index("struct MapMetadataFields {")
     end = header.index("// The tile-flag mask", start)
     layout = header[start:end]
-    record = next(r for r in read_file(ROOT / "src/map.cpp") if r.address == 0x5C86E0)
+    record = next(r for r in read_file(ROOT / "src/world.cpp") if r.address == 0x5C86E0)
     assert record.image_spans == ((0x5C86E0, 0x5C899D),)
     body = definition(record.region, "void __cdecl world_build() {")
     assert "BODY GOES HERE" not in body
-    paint = next(r for r in read_file(ROOT / "src/map.cpp") if r.address == 0x5C27F0)
+    paint = next(r for r in read_file(ROOT / "src/world.cpp") if r.address == 0x5C27F0)
     paint_body = definition(paint.region, "void __cdecl paint_land(")
-    river = next(r for r in read_file(ROOT / "src/map.cpp") if r.address == 0x5C3680)
+    river = next(r for r in read_file(ROOT / "src/world.cpp") if r.address == 0x5C3680)
     river_body = definition(river.region, "void __cdecl world_riverbeds()")
-    temperature = next(r for r in read_file(ROOT / "src/map.cpp") if r.address == 0x5C4170)
+    temperature = next(r for r in read_file(ROOT / "src/world.cpp") if r.address == 0x5C4170)
     temperature_body = definition(temperature.region, "void __cdecl world_temperature()")
     return landmark + "\nconst int MaxLandmarkNum = 64;\n" + layout + "\n" + body + "\n" + paint_body + "\n" + river_body + "\n" + temperature_body
 
@@ -267,16 +267,16 @@ int main() {
 
 
 SUBTRACTION_READERS = [
-    ("map.cpp", 0x5C28F0, "void __cdecl build_continent(",
+    ("world.cpp", 0x5C28F0, "void __cdecl build_continent(",
      r"uint32_t r_bound_bits = .*?memcpy\(&r_bound, &r_bound_bits, sizeof\(r_bound\)\);",
      "r_bound", "4u - static_cast<uint32_t>(MapLandCoverage)", "4 - MapLandCoverage", 3, "INT_MIN+4"),
-    ("map.cpp", 0x5C2B40, "void __cdecl build_hills(",
+    ("world.cpp", 0x5C2B40, "void __cdecl build_hills(",
      r"int plat_mod = .*?;", "plat_mod", "2u - static_cast<uint32_t>(MapOceanCoverage)", "2 - MapOceanCoverage", 1, "INT_MIN+2"),
-    ("map.cpp", 0x5C3440, "void __cdecl world_fungus()",
+    ("world.cpp", 0x5C3440, "void __cdecl world_fungus()",
      r"int fungus_level = .*?;", "fungus_level", "static_cast<uint32_t>(MapNativeLifeForms) - 1u", "MapNativeLifeForms - 1", 0, "INT_MAX"),
-    ("map.cpp", 0x5C86E0, "void __cdecl world_build()",
+    ("world.cpp", 0x5C86E0, "void __cdecl world_build()",
      r"uint32_t land_base_bits = .*?;", "land_base_bits", "2u - static_cast<uint32_t>(MapOceanCoverage)", "2 - MapOceanCoverage", 1, "INT_MIN+2"),
-    ("map.cpp", 0x5C86E0, "void __cdecl world_build()",
+    ("world.cpp", 0x5C86E0, "void __cdecl world_build()",
      r"uint32_t hills_base_bits = .*?;", "hills_base_bits", "static_cast<uint32_t>(MapErosiveForces) - 1u", "MapErosiveForces - 1", 0, "INT_MAX"),
     *[("newgame.cpp", address, signature,
        r"uint32_t land_bits = .*?memcpy\(&MapLandCoverage, &land_bits, sizeof\(MapLandCoverage\)\);",
@@ -296,7 +296,7 @@ def test_actual_continent_wrapped_bound_branch_and_random_call(tmp_path, damage)
     compiler = shutil.which("c++")
     if not compiler:
         pytest.skip("host compiler unavailable")
-    record = next(r for r in read_file(ROOT / "src/map.cpp") if r.address == 0x5C28F0)
+    record = next(r for r in read_file(ROOT / "src/world.cpp") if r.address == 0x5C28F0)
     body = definition(record.region, "void __cdecl build_continent(")
     branch = re.search(r"uint32_t r_bound_bits = .*?if \(\(bound_test > 0\).*?\{\s*radius /= 2;\s*\}", body, re.S).group()
     if damage:

@@ -48,7 +48,7 @@
  *
  * Names. The catalogue's ?UNK1 and ?UNK2 are renamed to what their callers
  * do with the result, and each carries a `// symbol` fact beside its marker
- * in map.cpp recording the mangled name the image has:
+ * in world.cpp recording the mangled name the image has:
  *   - `sample` is the whole of UNK1: four taps read, blended by the 5-bit
  *     fractions of two 0..255 coordinates, no write. It is a pure function of
  *     the field.

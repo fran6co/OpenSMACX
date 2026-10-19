@@ -69,6 +69,7 @@ def read_sources():
     return {
         "mapwin": (ROOT / "src/mapwin.cpp").read_text(),
         "map": (ROOT / "src/map.cpp").read_text(),
+        "world": (ROOT / "src/world.cpp").read_text(),
         "console": (ROOT / "src/console.cpp").read_text(),
     }
 
@@ -94,6 +95,7 @@ def expected_bindings(text):
 def validate_source_contract(sources):
     cpp = sources["mapwin"]
     map_cpp = sources["map"]
+    world_cpp = sources["world"]
     window = re.search(r"struct TerrainLandmarkStorageWindow\s*\{(?P<body>.*?)\};", cpp, re.S)
     assert window, "actual aggregate declaration missing"
     fields = []
@@ -161,7 +163,7 @@ def validate_source_contract(sources):
     # that every path executes in a full game.
     bit2 = balanced_body(map_cpp, "void __cdecl bit2_set(int x, int y, int bit2, BOOL set) {")
     code = balanced_body(map_cpp, "void __cdecl code_set(int x, int y, int code) {")
-    monsoon = balanced_body(map_cpp, "void __cdecl world_monsoon(int x, int y) {")
+    monsoon = balanced_body(world_cpp, "void __cdecl world_monsoon(int x, int y) {")
     assert "*field |= bit2;" in bit2 and "*field &= ~bit2;" in bit2
     assert "(*field & 0xFFFFFF) | (static_cast<uint32_t>(code) << 24)" in code
     assert re.search(r"for \(int i = 0; i < RadiusRange\[5\]; i\+\+\).*?\n\s*new_landmark", monsoon, re.S)

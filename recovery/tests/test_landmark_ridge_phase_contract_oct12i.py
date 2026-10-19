@@ -16,7 +16,7 @@ import pytest
 
 
 ROOT = Path(__file__).resolve().parents[2]
-SOURCE = ROOT / "src/map.cpp"
+SOURCE = ROOT / "src/world.cpp"
 HEADER = ROOT / "src/map.h"
 BASE = "361f5176199a52ac0bc3f425cb139f0230730824"
 PINNED_OFFSETS = (47, 44, 24, 20, 8, 7, 0, 5, 4, 17, 23, 35, 45)
@@ -113,10 +113,11 @@ def pinned_values():
 
 def actual_body():
     source = SOURCE.read_text(encoding="utf-8")
+    map_source = (ROOT / "src/map.cpp").read_text(encoding="utf-8")
     body = function_body(source, "void __cdecl world_ridge(")
     assert "bit2_set(x_radius, y_radius, BIT2_RIDGE, true)" in body
     assert "Natural[LM_RIDGE].name" in body
-    table = array_definition(source, "world_ridge_offset_val", 13)
+    table = array_definition(map_source, "world_ridge_offset_val", 13)
     offsets = parse_ridge_offsets(table)
     assert offsets == PINNED_OFFSETS, offsets
     loops = re.findall(r"for\s*\(\s*uint32_t\s+([ij])\s*=\s*0\s*;\s*\1\s*<\s*13\s*;", body)

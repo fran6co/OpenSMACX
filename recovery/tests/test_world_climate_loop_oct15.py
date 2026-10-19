@@ -11,7 +11,7 @@ SIGNATURE = "void __cdecl world_climate() {"
 
 
 def source_body() -> str:
-    source = (ROOT / "src/map.cpp").read_text()
+    source = (ROOT / "src/world.cpp").read_text()
     start = source.index(SIGNATURE)
     opening = source.index("{", start)
     depth = 0

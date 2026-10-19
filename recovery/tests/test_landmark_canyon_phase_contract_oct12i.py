@@ -18,7 +18,7 @@ from match_recovery.source import read_file
 
 
 ROOT = Path(__file__).resolve().parents[2]
-SOURCE = ROOT / "src/map.cpp"
+SOURCE = ROOT / "src/world.cpp"
 HEADER = ROOT / "src/map.h"
 BASE = "361f5176199a52ac0bc3f425cb139f0230730824"
 ADDRESS = 0x005C7CB0
@@ -107,6 +107,7 @@ def function_body(source, signature):
 
 def source_facts():
     source = SOURCE.read_text(encoding="utf-8")
+    map_source = (ROOT / "src/map.cpp").read_text(encoding="utf-8")
     header = HEADER.read_text(encoding="utf-8")
     values = {}
     for name, expected in PINNED.items():
@@ -121,7 +122,7 @@ def source_facts():
     body = function_body(source, "void __cdecl world_canyon(")
     assert "Natural[LM_CANYON].name" in body
     assert "bit2_set(x_radius, y_radius, BIT2_CANYON, true)" in body
-    table = array_definition(source, "WorldCanyonOffsetValues", 12)
+    table = array_definition(map_source, "WorldCanyonOffsetValues", 12)
     body = remove_table_declaration(body, "WorldCanyonOffsetValues", 12)
     return body, values, table
 

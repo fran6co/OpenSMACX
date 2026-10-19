@@ -1,0 +1,31 @@
+{
+  "event_id": "8bdf125f45f099f41a99d6d30e9f853b05d1c2d05b96487778c7fa9287074711",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/map.h"
+    ],
+    "evidence": [
+      "Authorize moving the complete unchanged site_xrange and site_tile definitions/comments into existing shared src/map.h, after required MapStorage/MapLongitude/map_tiles declarations. Remove their old definitions, preserving exactly the preexisting static forceinline qualifiers, expressions, guards, shifts and prose; no new keyword or matching workaround. map.cpp and world.cpp retain normal map.h includes. Header movement exposes existing helpers but does not authorize using them in other bodies or changing original behavior.",
+      "Include the two resident mapped consumers in verification scope, no body edits. Add shared-definition single-owner/source-verbatim regression controls to already authorized test_terrain_helper_boundaries.py using native source extraction and pinned baseline61ba1b3c96f2f12a7c025e74e599fa9f1130546a src/map.cpp (historical location remains); preserve all current assertions. Remeasure complete application after source freeze and inspect all outside-owner collateral. The baseline and historical claims remain unchanged; no whole-header or data/initializer waiver."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5656240,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4596112,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "bd5bd4e51c66e8d81bd52c15dc372d863c1b775b49adf3743f5e146b38f42687",
+  "request_id": "authorize-shared-site-helper-interface",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:world-generation-owner-oct19"
+}

@@ -6,6 +6,7 @@ function control flow or live-game/runtime behavior. This file is not run
 until the coordinator adopts it after the active epoch.
 """
 from pathlib import Path
+from dataclasses import replace
 import os
 import re
 import shutil
@@ -18,9 +19,10 @@ from match_recovery.source import read_file, read_text
 
 
 ROOT = Path(__file__).resolve().parents[2]
-SOURCE = ROOT / "src/map.cpp"
+SOURCE = ROOT / "src/world.cpp"
 HEADER = ROOT / "src/map.h"
 BASE = "361f5176199a52ac0bc3f425cb139f0230730824"
+CURRENT_TASK_BASE = "61ba1b3c96f2f12a7c025e74e599fa9f1130546a"
 
 # function: (original address, symbol suffix, BIT2 mask, Natural[] index)
 WRITERS = {
@@ -204,6 +206,7 @@ def enum_values(header):
 
 def extracted_controls():
     source = SOURCE.read_text(encoding="utf-8")
+    map_source = (ROOT / "src/map.cpp").read_text(encoding="utf-8")
     header = HEADER.read_text(encoding="utf-8")
     constants = enum_values(header)
     records = {row.address: row for row in read_file(SOURCE)}
@@ -228,27 +231,77 @@ def extracted_controls():
             assert args[3] == "true", (function, args)
             calls.append((function, mask, args))
     assert len(calls) == 9
-    helper = function_body(source, "void __cdecl bit2_set(")
+    helper = function_body(map_source, "void __cdecl bit2_set(")
     assert "*field |= bit2;" in helper
     return constants, calls, helper
 
 
-def test_source_masks_helper_and_all_baseline_claims_are_preserved():
-    baseline = subprocess.check_output(
-        ["git", "show", BASE + ":src/map.cpp"], cwd=ROOT,
-    ).decode("utf-8")
-    old_rows = {row.address: row for row in read_text(baseline, SOURCE)}
-    current_rows = {row.address: row for row in read_file(SOURCE)}
-    assert old_rows.keys() == current_rows.keys()
+def assert_mapping_continuity(old_rows, task_rows, current_rows):
+    # Keep the immutable first-source catalogue's original identity and source
+    # spans intact even where an accepted current-owner baseline records later
+    # symbol aliases or measured-claim transitions.
+    assert old_rows.keys() <= current_rows.keys()
     for address, old in old_rows.items():
         current = current_rows[address]
-        for field in BASELINE_FIELDS:
+        for field in ("address", "name", "image_spans"):
             assert getattr(current, field) == getattr(old, field), (hex(address), field)
+        if old.byte_exact:
+            assert current.byte_exact, (hex(address), "historical BYTE_EXACT claim lost")
+
+    # The immutable task baseline covers all owners that existed before this
+    # source-home split. Compare every field, including claims and aliases, to
+    # the complete current ownership inventory.
+    assert task_rows.keys() == current_rows.keys()
+    for address, task in task_rows.items():
+        current = current_rows[address]
+        for field in BASELINE_FIELDS:
+            assert getattr(current, field) == getattr(task, field), (hex(address), field)
+
+
+def mapping_inventory():
+    old_source = subprocess.check_output(
+        ["git", "show", BASE + ":src/map.cpp"], cwd=ROOT,
+    ).decode("utf-8")
+    old_rows = {row.address: row for row in read_text(old_source, SOURCE)}
+
+    task_rows = {}
+    for relative in ("src/map.cpp", "src/map_altitude.cpp", "src/worldwin.cpp"):
+        task_source = subprocess.check_output(
+            ["git", "show", CURRENT_TASK_BASE + ":" + relative], cwd=ROOT,
+        ).decode("utf-8")
+        task_rows.update({row.address: row for row in read_text(task_source, ROOT / relative)})
+
+    current_rows = {
+        row.address: row
+        for source_path in (ROOT / "src/world.cpp", ROOT / "src/map.cpp",
+                            ROOT / "src/map_altitude.cpp", ROOT / "src/worldwin.cpp")
+        for row in read_file(source_path)
+    }
+    return old_rows, task_rows, current_rows
+
+
+def test_source_masks_helper_and_all_baseline_claims_are_preserved():
+    old_rows, task_rows, current_rows = mapping_inventory()
+    assert_mapping_continuity(old_rows, task_rows, current_rows)
     constants, calls, helper = extracted_controls()
     assert constants["BIT2_FOSSIL"] == 0x8000
     assert constants["LM_FOSSIL"] == 15
     assert "*field |= bit2;" in helper
     assert len(calls) == 9
+
+
+def test_mapping_continuity_rejects_lost_original_id_or_exact_claim():
+    old_rows, task_rows, current_rows = mapping_inventory()
+    lost_id = dict(current_rows)
+    lost_id.pop(next(iter(old_rows)))
+    with pytest.raises(AssertionError):
+        assert_mapping_continuity(old_rows, task_rows, lost_id)
+
+    exact_address = next(address for address, row in old_rows.items() if row.byte_exact)
+    lost_claim = dict(current_rows)
+    lost_claim[exact_address] = replace(lost_claim[exact_address], byte_exact=False)
+    with pytest.raises(AssertionError, match="BYTE_EXACT claim lost"):
+        assert_mapping_continuity(old_rows, task_rows, lost_claim)
 
 
 PRELUDE = r'''#include <assert.h>

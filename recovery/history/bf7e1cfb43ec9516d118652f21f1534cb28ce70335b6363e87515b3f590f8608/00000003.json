@@ -1,0 +1,17 @@
+{
+  "event_id": "bf909fd8e22a5a1c0a75fc3a9f5011bbe3ce71cf8cbdbc74f07cdf5e8f8644eb",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "shared-site-helper-owner",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Current map.h now owns exactly one unchanged definition/comment block each for site_xrange and site_tile after MapStorage, map_tiles and MapLongitude declarations. All map.cpp/world.cpp consumers use that common included interface; neither current TU contains a duplicate definition. Source native/byte audit compares immutable61ba baseline and proves helper bytes, expressions, qualifiers and every consumer body unchanged. This resolves source dependency placement only; native build, matching/collateral measurements, host controls and integration review remain pending, and historical restoration obligations persist."
+    ]
+  },
+  "previous_event": "8bdf125f45f099f41a99d6d30e9f853b05d1c2d05b96487778c7fa9287074711",
+  "request_id": "incorporate-shared-site-helper-interface",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:world-generation-owner-oct19"
+}

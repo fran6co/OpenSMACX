@@ -81,7 +81,7 @@ def test_query_mappings_and_wrapper_calls_have_the_canonical_owner():
     assert "has_tech_call" not in strip_comments(header)
     sources = [
         "technology.cpp", "base.cpp", "terraforming.cpp", "veh.cpp",
-        "console.cpp", "enemy.cpp", "faction.cpp", "map.cpp", "probe.cpp",
+        "console.cpp", "enemy.cpp", "faction.cpp", "map.cpp", "world.cpp", "probe.cpp",
         "reportif.cpp",
     ]
     for filename in sources:

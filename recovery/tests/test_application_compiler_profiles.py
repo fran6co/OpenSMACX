@@ -207,7 +207,7 @@ EXPECTED_CMAKE_PROFILES = {
     tuple(sorted(("src/mapwin.cpp", "src/basewin.cpp"))): ("/Oy-",),
     tuple(sorted(("src/designwin.cpp", "src/tutwin.cpp", "src/tutwin_callouts.cpp", "src/xpops.cpp"))): ("/Oy-",),
     tuple(sorted(("src/netdaemon.cpp", "src/diplowin.cpp", "src/diplopop.cpp", "src/worldwin.cpp"))): ("/Oy-",),
-    tuple(sorted(("src/map.cpp", "src/faction.cpp", "src/veh.cpp"))): ("/Oy-",),
+    tuple(sorted(("src/map.cpp", "src/world.cpp", "src/faction.cpp", "src/veh.cpp"))): ("/Oy-",),
     **{tuple(sorted(group)): ("/Oy-",) for group in PRIOR_PROFILE_GROUPS},
     tuple(sorted(NEW_OWNERS)): ("/Oy-",),
     tuple(sorted(REMAINING_OWNERS)): ("/Oy-",),
@@ -620,6 +620,8 @@ def test_application_profiles_match_immutable_baseline_plus_core_cohort():
     assert "src/vehicle_cost.cpp" in application_sources
     assert "src/vehicle_orders.cpp" in application_sources
     assert "src/tutwin_callouts.cpp" in application_sources
+    assert "src/world.cpp" in application_sources
+    assert source_rows[source_rows.index("src/map.cpp") + 1] == "src/world.cpp"
     inline_owners = ("src/pulldown.cpp", "src/dipedit.cpp")
     assert all(owner in application_sources for owner in inline_owners)
 
@@ -638,6 +640,7 @@ def test_application_profiles_match_immutable_baseline_plus_core_cohort():
     assert actual_profiles["src/header_io.cpp"] == ("/Oy-",)
     assert actual_profiles["src/vehicle_cost.cpp"] == ("/Oy-",)
     assert actual_profiles["src/vehicle_orders.cpp"] == ("/Oy-",)
+    assert actual_profiles["src/world.cpp"] == actual_profiles["src/map.cpp"] == ("/Oy-",)
     assert "src/video.cpp" not in profiled_sources
     assert "src/alphamovie.cpp" not in profiled_sources
     assert "src/general.cpp" not in profiled_sources

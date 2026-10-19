@@ -16,7 +16,7 @@ from match_recovery.source import read_file
 
 
 ROOT = Path(__file__).resolve().parents[2]
-SOURCE = ROOT / "src/map.cpp"
+SOURCE = ROOT / "src/world.cpp"
 ORIGINAL = "// ORIGINAL: 0x005C7A80 ?world_fossil@@YAXHH@Z 0x005C7A80-0x005C7CA1"
 
 
@@ -57,7 +57,7 @@ def source_controls():
     world_build = source[source.index("void __cdecl world_build()") :]
     world_build = world_build[:world_build.index("\n}", 0)]
     assert "if (ExpansionEnabled != 0) {\n        world_unity(-1, -1);\n        if (ExpansionEnabled != 0) {\n            world_fossil(-1, -1);\n        }\n    }" in world_build
-    console = (ROOT / "src/console.cpp").read_text(encoding="utf-8")
+    console = (ROOT / "src/console_commands.cpp").read_text(encoding="utf-8")
     case = "case 15: world_fossil(x, y); break;"
     assert case in console
     case_at = console.index(case)

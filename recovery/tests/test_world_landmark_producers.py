@@ -35,16 +35,17 @@ def braced(source, signature):
 
 def actual_source():
     header = (ROOT / "src/map.h").read_text()
+    map_source = (ROOT / "src/map.cpp").read_text()
     declarations = []
     for name in ("TerrainAltitude", "TerrainLandmarkBit2", "TerrainLandmarkId"):
         declarations.append(braced(header, "enum " + name + " {") + ";")
     for name in ("RadiusRange", "RadiusOffsetX", "RadiusOffsetY"):
-        declaration, = re.findall(r"const int " + name + r"\[\]\s*=\s*\{[^}]*\};", header)
+        declaration, = re.findall(r"const int " + name + r"\[(?:\d+)?\]\s*=\s*\{[^}]*\};", map_source)
         declarations.append(declaration)
     for signature in ("MEASURED inline BOOL __cdecl on_map(",
                       "MEASURED inline int __cdecl xrange("):
         declarations.append(braced(header, signature))
-    body = braced((ROOT / "src/map.cpp").read_text(), "void __cdecl world_mesa(")
+    body = braced((ROOT / "src/world.cpp").read_text(), "void __cdecl world_mesa(")
     return "\n".join(declarations), body
 
 

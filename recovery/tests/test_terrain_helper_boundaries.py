@@ -5,10 +5,14 @@ import json
 import os
 from pathlib import Path
 import re
+import subprocess
+
+import pytest
 
 from match_recovery.pe_coff import PeImage
 from match_recovery.model import Span
-from match_recovery.source import read_file
+from match_recovery.source import function_line, read_file
+from match_recovery.source.reader import _extract_forward_text
 from match_recovery.source.asm import Listing
 from match_recovery.source.calls import call_sites
 
@@ -18,6 +22,7 @@ PIN = "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
 ALT_PUT_DETAIL = 0x00591260
 ALT_NATURAL = 0x005918A0
 ALT_SET_BOTH = 0x005918F0
+WORLD_OWNER_BASE = "61ba1b3c96f2f12a7c025e74e599fa9f1130546a"
 
 
 def test_altitude_owner_has_its_measured_inline_recipe():
@@ -38,8 +43,68 @@ def extract_body(source: str, signature: str) -> str:
     raise AssertionError(f"unterminated body: {signature}")
 
 
+def helper_definition(source: str, name: str) -> str:
+    line = function_line(source, name)
+    return _extract_forward_text(source.splitlines(), line, name).strip()
+
+
+def test_site_helpers_move_unchanged_to_shared_header_with_one_definition():
+    baseline = subprocess.check_output(
+        ["git", "show", WORLD_OWNER_BASE + ":src/map.cpp"], cwd=ROOT,
+    ).decode("utf-8")
+    current_header = (ROOT / "src/map_coordinates.h").read_text(encoding="utf-8")
+    current_map = (ROOT / "src/map.cpp").read_text(encoding="utf-8")
+    current_world = (ROOT / "src/world.cpp").read_text(encoding="utf-8")
+
+    for name in ("site_xrange", "site_tile"):
+        original = helper_definition(baseline, name)
+        assert helper_definition(current_header, name) == original
+        for implementation in (current_map, current_world):
+            with pytest.raises(ValueError, match=r"0 definitions found"):
+                helper_definition(implementation, name)
+
+    # The helpers are shared by both the resident map consumers and the moved
+    # world_site consumer; references remain valid, but definitions are unique.
+    assert "site_xrange(" in current_map and "site_xrange(" in current_world
+    assert "site_tile(" in current_map and "site_tile(" in current_world
+
+
+@pytest.mark.parametrize(("name", "old", "new"), [
+    ("site_xrange", "!(MapIsFlat & 1)", "!(MapIsFlat != 0)"),
+    ("site_tile", "(x >> 1)", "(x / 2)"),
+])
+def test_site_helper_identity_rejects_semantic_mutants(name, old, new):
+    baseline = subprocess.check_output(
+        ["git", "show", WORLD_OWNER_BASE + ":src/map.cpp"], cwd=ROOT,
+    ).decode("utf-8")
+    current_header = (ROOT / "src/map_coordinates.h").read_text(encoding="utf-8")
+    mutated = current_header.replace(old, new, 1)
+    assert mutated != current_header
+    assert helper_definition(mutated, name) != helper_definition(baseline, name)
+
+
+@pytest.mark.parametrize("name", ["site_xrange", "site_tile"])
+def test_site_helper_identity_rejects_duplicate_nonheader_definition(name):
+    current_header = (ROOT / "src/map_coordinates.h").read_text(encoding="utf-8")
+    duplicate = helper_definition(current_header, name)
+    with pytest.raises(ValueError, match=r"2 definitions found"):
+        helper_definition(duplicate + "\n" + duplicate, name)
+
+
+def test_map_header_is_unchanged_and_near_landmark_body_is_preserved():
+    baseline = subprocess.check_output(
+        ["git", "show", WORLD_OWNER_BASE + ":src/map.h"], cwd=ROOT,
+    )
+    current = (ROOT / "src/map.h").read_bytes()
+    assert current == baseline
+    baseline_text = baseline.decode("utf-8")
+    current_text = current.decode("utf-8")
+    assert helper_definition(current_text, "near_landmark") == helper_definition(
+        baseline_text, "near_landmark")
+
+
 def test_altitude_helpers_have_one_canonical_owner_and_world_callers():
-    source = (ROOT / "src/map.cpp").read_text()
+    source = (ROOT / "src/world.cpp").read_text()
     owner = (ROOT / "src/map_altitude.cpp").read_text()
     header = (ROOT / "src/map.h").read_text()
 
@@ -85,7 +150,7 @@ def test_mappings_parse_at_the_canonical_altitude_owner():
     assert "    src/map_altitude.cpp\n" in (ROOT / "CMakeLists.txt").read_text()
     rows = {
         row.address: row
-        for row in (read_file(ROOT / "src/map.cpp")
+        for row in (read_file(ROOT / "src/world.cpp") + read_file(ROOT / "src/map.cpp")
                     + read_file(ROOT / "src/map_altitude.cpp"))
         if row.address in {0x005C58C0, 0x005C58E0, 0x005C5AE0,
                            0x005C38B0, 0x005C2CB0, ALT_PUT_DETAIL,
@@ -95,7 +160,7 @@ def test_mappings_parse_at_the_canonical_altitude_owner():
                     ALT_PUT_DETAIL, ALT_NATURAL, ALT_SET_BOTH, 0x005C2020):
         assert address in rows
         assert not rows[address].extract_error
-    assert rows[0x005C58C0].body == "src/map.cpp"
+    assert rows[0x005C58C0].body == "src/world.cpp"
     assert rows[0x005C2020].body == ""
     for address in (ALT_PUT_DETAIL, ALT_NATURAL):
         assert rows[address].body == "src/map_altitude.cpp"
@@ -122,7 +187,8 @@ def test_pinned_spans_retain_direct_calls_and_the_setter_inline_exception():
     raw = image_path.read_bytes()
     assert sha256(raw).hexdigest() == PIN
     image = PeImage(raw, PIN)
-    rows = {row.address: row for row in read_file(ROOT / "src/map.cpp")
+    rows = {row.address: row for row in (read_file(ROOT / "src/world.cpp")
+                                         + read_file(ROOT / "src/map.cpp"))
             + read_file(ROOT / "src/map_altitude.cpp")}
 
     def instructions(address: int):

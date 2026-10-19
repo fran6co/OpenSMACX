@@ -18,7 +18,7 @@ from match_recovery.source import read_file
 
 
 ROOT = Path(__file__).resolve().parents[2]
-SOURCE = ROOT / "src/map.cpp"
+SOURCE = ROOT / "src/world.cpp"
 HEADER = ROOT / "src/map.h"
 BASE = "361f5176199a52ac0bc3f425cb139f0230730824"
 ORIGINAL = "// ORIGINAL: 0x005C64A0 ?world_ruin@@YAXHH@Z 0x005C64A0-0x005C6734"
@@ -61,6 +61,7 @@ def parsed_constants():
 
 def source_controls():
     source = SOURCE.read_text(encoding="utf-8")
+    map_source = (ROOT / "src/map.cpp").read_text(encoding="utf-8")
     body = extract_body(source)
     assert ORIGINAL in source
     assert "if (is_ocean(x_radius, y_radius)) {" in body
@@ -76,7 +77,7 @@ def source_controls():
     assert "new_landmark(x, y + 2, StringTable.get(Natural[LM_RUINS].name))" in body
     assert body.index("world_alt_set(x_radius, y_radius, ALT_SHORE_LINE, true)") \
         < body.index("if (is_ocean(x_radius, y_radius)) {")
-    assert "const int RadiusRange[9] = { 1, 9, 25, 49, 81, 121, 169, 225, 289 };" in source
+    assert "const int RadiusRange[9] = { 1, 9, 25, 49, 81, 121, 169, 225, 289 };" in map_source
     row = {item.address: item for item in read_file(SOURCE)}[0x005C64A0]
     assert row.name == "?world_ruin@@YAXHH@Z"
     assert row.image_spans == ((0x005C64A0, 0x005C6734),)
