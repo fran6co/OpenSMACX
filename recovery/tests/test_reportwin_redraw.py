@@ -108,7 +108,9 @@ PlayerDataFixture PlayersData[8];
 struct Base { unsigned char faction_id_current; int queue_production_id[10]; const char *name_string; };
 Base bases_storage[514];
 Base *Bases=bases_storage+2;
-int BaseCurrentCount=3;
+struct ProjectsGameDataFixture {
+    struct Fields { int base_current_count_; } fields_;
+} GameDataStateStorage;
 struct FacilityRecord { int name; } Facility[134];
 int MaxSecretProjectNum=64, FacilitySPStart=70;
 const int SP_Unbuilt=-1, SP_Destroyed=-2;
@@ -205,7 +207,7 @@ void reset_fixture() {
     Bases[0].faction_id_current=0; Bases[0].name_string="Alpha Base";
     Bases[1].faction_id_current=1; Bases[1].name_string="Beta Base";
     Bases[2].faction_id_current=1; Bases[2].name_string="Gamma Base";
-    BaseCurrentCount=3;
+    GameDataStateStorage.fields_.base_current_count_=3;
     ReportIfGlobal.report_faction_id_=0;
 }
 void observe(ReportWin &w) {
@@ -480,14 +482,19 @@ struct BaseFixture {
     int faction_id_current;
     unsigned char facilities_built[12];
 } Bases[80];
-int BaseCurrentCount=2;
-int MaxPlayerNum=8, LockEnableMask=0x600;
-int EnergyEconomyTotal=12, EnergyMaintenanceTotal=4, EnergyCommerceDelta=8, NetIncomeGlobal=16;
-int SecretProjectGrid=0;
 struct SecretProjectFixture { int planetary_energy_grid_;
  int &planetary_energy_grid() { return planetary_energy_grid_; }
  const int &planetary_energy_grid() const { return planetary_energy_grid_; }
-} SecretProject={0};
+};
+struct EnergyGameDataFixture {
+    struct Fields {
+        struct LockMasks { unsigned int enable_mask_; } lock_masks_;
+        int base_current_count_;
+        SecretProjectFixture secret_project_;
+    } fields_;
+} GameDataStateStorage;
+int MaxPlayerNum=8;
+int EnergyEconomyTotal=12, EnergyMaintenanceTotal=4, EnergyCommerceDelta=8, NetIncomeGlobal=16;
 int bitmask_calls;
 void bitmask(int value,int *offset,int *mask) {
     ++bitmask_calls; *offset=value/8; *mask=1<<(value%8);
@@ -547,6 +554,9 @@ struct ReportWin : GraphicWin {
 };
 ''' + body + r'''
 int main() {
+    GameDataStateStorage.fields_.base_current_count_=2;
+    GameDataStateStorage.fields_.lock_masks_.enable_mask_=0x600;
+    GameDataStateStorage.fields_.secret_project_.planetary_energy_grid()=0;
     if(loan_payment_case) PlayersData[1].diplo_treaties[2]=0x10;
     PlayersData[1].energy_reserves=100;
     PlayersData[1].loan_balance[2]=10;
@@ -558,10 +568,11 @@ int main() {
     Bases[1].faction_id_current=1;
     Bases[0].facilities_built[0] |= 1;
     Bases[1].facilities_built[0] |= 4;
-    SecretProject.planetary_energy_grid()=1;
+    GameDataStateStorage.fields_.secret_project_.planetary_energy_grid()=1;
     if(facility_case) {
-        BaseCurrentCount=67;
-        for(int i=0;i<BaseCurrentCount;++i) Bases[i].faction_id_current=-1;
+        GameDataStateStorage.fields_.base_current_count_=67;
+        for(int i=0;i<GameDataStateStorage.fields_.base_current_count_;++i)
+            Bases[i].faction_id_current=-1;
         Bases[1].faction_id_current=1;
         Bases[3].faction_id_current=1;
         Bases[66].faction_id_current=1;
@@ -799,28 +810,26 @@ struct Datalink { void construct_id(char *out,int c,int i) {
 } } DatalinkMain;
 char *registered_names[32]; int registered_name_count;
 void register_name(char *name) { registered_names[registered_name_count++]=name; }
+LPSTR TechnologyHelpEntryName;
+int TechnologyHelpEntryKind;
 struct TestStringTable {
     int lookup_calls, prototype_lookup_calls;
     TestStringTable() : lookup_calls(0), prototype_lookup_calls(0) {}
-    char *get(int id) {
+    LPSTR get(LPSTR address) {
         ++lookup_calls;
-        const uint32_t key=static_cast<uint32_t>(id);
-        if(key==static_cast<uint32_t>(reinterpret_cast<uintptr_t>(VehPrototypes[2].veh_name))
-           || key==static_cast<uint32_t>(reinterpret_cast<uintptr_t>(VehPrototypes[10].veh_name)))
+        if(address==VehPrototypes[2].veh_name || address==VehPrototypes[10].veh_name)
             ++prototype_lookup_calls;
         for(int i=0;i<registered_name_count;++i)
-            if(key==static_cast<uint32_t>(reinterpret_cast<uintptr_t>(registered_names[i])))
+            if(address==registered_names[i])
                 return registered_names[i];
-        return (char*)"?";
+        return (LPSTR)"?";
     }
 } StringTable;
 void help_create_link(char *out,char *name,char *id) {
     std::strcat(out,"$LINK<"); std::strcat(out,name);
     std::strcat(out,"="); std::strcat(out,id); std::strcat(out,">");
 }
-''' + lab_unlock_sections().replace(
-    "reinterpret_cast<int>(name)",
-    "static_cast<int>(reinterpret_cast<intptr_t>(name))") + r'''
+''' + lab_unlock_sections() + r'''
 int main() {
     for(int i=0;i<4;++i) Reactor[i].preq_tech=-1;
     for(int i=0;i<19;++i) Chassis[i].preq_tech=-1;
@@ -867,6 +876,8 @@ int main() {
     Buffer canvas={}; int height=0; uint32_t frame_width=166;
     int y=20;
     reportwin_draw_lab_unlock_sections(canvas,42,true,true,10,y,&frame_width,height);
+    if(TechnologyHelpEntryKind!=0x64
+       || TechnologyHelpEntryName!=Armor[13].name) return 17;
     if(canvas.wrapped!=8 || height!=0) return 1;
     if(canvas.xs[0]!=10 || canvas.ys[0]!=20 || canvas.widths[0]!=160
        || canvas.xs[7]!=10 || canvas.ys[7]!=90 || canvas.widths[7]!=160

@@ -100,30 +100,14 @@ void ReportWin::on_redraw() {
     Buffer &canvas = *this;
     canvas.set_clip(&energy_panel_rect_);
     switch (ReportIfGlobal.field_8_) {
-    case 0:
-        draw_intel();
-        break;
-    case 2:
-        draw_labs();
-        break;
-    case 3:
-        draw_energy();
-        break;
-    case 4:
-        draw_ops();
-        break;
-    case 5:
-        draw_projects();
-        break;
-    case 6:
-        draw_sat();
-        break;
-    case 7:
-        draw_security();
-        break;
-    case 8:
-        draw_score();
-        break;
+    case 0: draw_intel(); break;
+    case 2: draw_labs(); break;
+    case 3: draw_energy(); break;
+    case 4: draw_ops(); break;
+    case 5: draw_projects(); break;
+    case 6: draw_sat(); break;
+    case 7: draw_security(); break;
+    case 8: draw_score(); break;
     }
     canvas.set_clip(buffer_working_rect());
 }
