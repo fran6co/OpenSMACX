@@ -980,7 +980,7 @@ int __cdecl veh_init(int unit_type, int faction_id, int x_coord, int y_coord);
 /*
 Purpose: Fill the fractal's raw 19x19 field with random values, copy it into
          the smooth field the sampler reads, and wrap both fields' edges.
-// ORIGINAL: 0x005C1E20 ?init@Fractal@@QAEXXZ 0x005C1E20-0x005C1F12 FILE
+// ORIGINAL: 0x005C1E20 ?init@Fractal@@QAEXXZ 0x005C1E20-0x005C1F12 FILE BYTE_EXACT
 // symbol    ?init@Fractal@@QAEXXZ
 // size      242 bytes
 // prototype void (__thiscall ?init@Fractal@@QAEXXZ)(Fractal* this)
@@ -1004,19 +1004,15 @@ Purpose: Fill the fractal's raw 19x19 field with random values, copy it into
 // reintroduces the named pointer locals the image does not spill. The image
 // keeps `this` in EBX unspilled, recomputes each loop's pointer from it and
 // reuses ONE stack slot (first the row counter, then the grid_[1] row
-// pointer); this tree still reserves three slots (`sub esp, 0xc` against
-// `push ecx`) and swaps ESI/EDI. Register allocation, not control flow.
+// pointer); at that earlier checkpoint this tree reserved three slots
+// (`sub esp, 0xc` against `push ecx`) and swapped ESI/EDI. That stack-slot
+// diagnosis is historical, not a requirement on the current implementation.
 */
 void Fractal::init() {
     // grid_[1]: 18 rows of 18 columns of rand() % 16, then the two wraps.
     for (int row = 0; row < 18; ++row) {
         for (int col = 0; col < 18; ++col) {
-            int value = rand();
-            value = value & 0x8000000f;
-            if (value < 0) {
-                value = ((value - 1) | 0xfffffff0) + 1;
-            }
-            grid_[1][row][col] = static_cast<char>(value);
+            grid_[1][row][col] = static_cast<char>(rand() % 16);
         }
         grid_[1][row][18] = grid_[1][row][0];
     }
@@ -1025,17 +1021,18 @@ void Fractal::init() {
     }
 
     // grid_[0][row][col] = grid_[1][row][col] for rows 0..16, cols 0..16.
-    // The dead weighted sum is the image's; see the BUG note above.
+    // The dead weighted sum is the image's; see the BUG note above. Its
+    // neighbor load at 0x005C1EA7 includes the 19-byte row offset advanced
+    // at 0x005C1ECA. The original unchecked reads can extend beyond grid_;
+    // do not remove them, clamp them or infer extra object storage from them.
     for (int band_row = 0; band_row <= 16; ++band_row) {
         for (int band_col = 0; band_col <= 16; ++band_col) {
             int total = grid_[1][band_row][band_col] * 4;
-            const int *weight = RadiusOffsetX + 1;
-            do {
-                int step = *weight;
-                weight += 1;
-                total += (&grid_[1][0][0])[20 + band_row + step * 20
+            for (int neighbor = 1; neighbor <= 8; ++neighbor) {
+                int step = RadiusOffsetX[neighbor];
+                total += (&grid_[1][0][0])[20 + band_row * 19 + step * 20
                                           + band_col];
-            } while (weight <= RadiusOffsetX + 8);
+            }
             grid_[0][band_row][band_col] = grid_[1][band_row][band_col];
         }
     }

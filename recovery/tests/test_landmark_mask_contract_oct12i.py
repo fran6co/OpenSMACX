@@ -249,13 +249,16 @@ def assert_mapping_continuity(old_rows, task_rows, current_rows):
             assert current.byte_exact, (hex(address), "historical BYTE_EXACT claim lost")
 
     # The immutable task baseline covers all owners that existed before this
-    # source-home split. Compare every field, including claims and aliases, to
-    # the complete current ownership inventory.
+    # source-home split. Keep aliases and every structural field identical;
+    # measured claim promotions are allowed, but historical claims cannot fall.
     assert task_rows.keys() == current_rows.keys()
     for address, task in task_rows.items():
         current = current_rows[address]
         for field in BASELINE_FIELDS:
-            assert getattr(current, field) == getattr(task, field), (hex(address), field)
+            if field == "byte_exact":
+                assert not task.byte_exact or current.byte_exact, (hex(address), field)
+            else:
+                assert getattr(current, field) == getattr(task, field), (hex(address), field)
 
 
 def mapping_inventory():
@@ -302,6 +305,21 @@ def test_mapping_continuity_rejects_lost_original_id_or_exact_claim():
     lost_claim[exact_address] = replace(lost_claim[exact_address], byte_exact=False)
     with pytest.raises(AssertionError, match="BYTE_EXACT claim lost"):
         assert_mapping_continuity(old_rows, task_rows, lost_claim)
+
+
+def test_mapping_continuity_allows_promotion_but_rejects_task_claim_demotion():
+    old_rows, task_rows, current_rows = mapping_inventory()
+    address = next(address for address, row in task_rows.items() if not row.byte_exact)
+    promoted = dict(current_rows)
+    promoted[address] = replace(promoted[address], byte_exact=True)
+    assert_mapping_continuity(old_rows, task_rows, promoted)
+
+    protected = dict(task_rows)
+    protected[address] = replace(protected[address], byte_exact=True)
+    demoted = dict(promoted)
+    demoted[address] = replace(demoted[address], byte_exact=False)
+    with pytest.raises(AssertionError, match="byte_exact"):
+        assert_mapping_continuity(old_rows, protected, demoted)
 
 
 PRELUDE = r'''#include <assert.h>
