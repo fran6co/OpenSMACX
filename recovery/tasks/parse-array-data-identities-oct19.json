@@ -1,0 +1,55 @@
+{
+  "author": "coordinator",
+  "base_revision": "044d85168a4673bc2ab56bcc5ae5034ea208105c",
+  "editable_files": [
+    "src/general.cpp",
+    "recovery/tests/test_parse_array_data_identities_oct19.py"
+  ],
+  "evidence": [
+    "Fresh174TU compiled-reference census at044d85168 exposes seven distinct currently unknown function rows referencing these existing ordinary array symbols: BaseWin::rename41A2B0, parse_say625E50, parse_says625EC0 and four pop_ask_number6279C0/627A90/627B60/627C30 overloads. This is bounded exposure, not seven promised pass gains/new implementations. Existing ParseNumTable9BB598..9BB5C0 remains unchanged.",
+    "Pinned625E6D writes gender to9BB5C0 indexedid*4,625E82 writes plurality9BB570 indexedid*4,625E8A..625EAF computesid*100+9BB5E8, clears selected string, callsStringTable::get thenstrcat. Current existing definitions are int ParseStrPlurality[10], int ParseStrGender[10], char256 ParseStrBuffer[10]. Verify actual source, original widths/address/data and independent consumers; negativeindices stay unchecked, no new bounds/safety/default behavior.",
+    "Add only v1 start-only bindings adjacent to the three existing definitions, with concise source rationale, and focused pinned/source/missing/wrong/duplicate controls. No original full allocation/initializer/lifetime claim, alias/parent invention, callee/body/name/type/linkage/initializer/flag/layout/gate/package edits or historical marker/claim changes. SourceCPP change must preserve its preprocessed token stream, including existing LINE-dependent assertion identities: reuse nonessential blank/comment lines in this declaration block, retain useful table rationale inline, no line directives or macro workarounds. Native whole-object equality must verify this rather than assume comments are inert.",
+    "Coordinator owns native preparation/resources, complete fresh application build/link, source identity/claim/reference checks, physical188object zero-omission comparison, actual external data definition/prefix controls and fresh strict per-identity delta. Independent review and fresh destination verification precede manual integration. Keep all unknown/failing outcomes and no-new-body/exactness limitations explicit. Worker isolated edits and host/pinned tests only; no Git/native/Wine/delegation/outside files."
+  ],
+  "intent": "Bind three already defined parse-string array starts to their independently evidenced original identities without changing types, initialization, guards or behavior.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4301488,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6446672,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6446784,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6453696,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6453904,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6454112,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6454320,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "parse-array-data-identities-oct19"
+}
