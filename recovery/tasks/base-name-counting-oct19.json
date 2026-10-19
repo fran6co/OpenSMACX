@@ -1,0 +1,25 @@
+{
+  "author": "coordinator",
+  "base_revision": "8077e14f9d5169c1b43e7314ba86193a78e57f39",
+  "editable_files": [
+    "src/base.cpp",
+    "recovery/tests/test_base_name_counting_oct19.py"
+  ],
+  "evidence": [
+    "Coordinator and independent read-only review decode the complete pinned167-byte original4F7FE0..4F8087: scan all non-self equal names before any mutation, then only for a positive collision count truncate byte21, append the original hyphen, decimal _itoa(count+1), and append digits. Original has no purge_spaces call and never resets the scan after mutation. Current body contradicts these effects; this is recovery of original semantics, not a bug fix.",
+    "Authorize only this body and its inaccurate purpose/inline bug explanation, plus focused actual-source host and pinned-evidence tests. Preserve ORIGINAL marker, name/symbol, complete span, existing LEVER history, all other source lines, caller/API/storage/flags/dependencies and all claims. Use ordinary int collision/index values and base_id!=i; choose char digits[0x50] within the observed non-counter stack window EBP-0x54..EBP-4. No claim of original array declaration/type/capacity. No bounds checks, whitespace normalization, new initializations, safe fallbacks or original-bug fixes.",
+    "Tests extract the actual compiled-owner body through native source APIs, use the actual25-byte Base name field declaration with representable24-character input, and distinguish full duplicate counting, scan-before-truncation, self exclusion, whitespace preservation and nonpositive counts. Preserve the old wrong body as a negative control in tests or Git-derived baseline rather than losing behavioral regression coverage; host fixtures are not VC6 ABI/runtime proof. Add explicit call-order/operand evidence against the correctly pinned original; missing or corrupt pins must refuse.",
+    "Worker isolated source/host tests only; coordinator owns Git/preparation/compiler lease and one native production trial, fresh whole build/link and outside-scope physical/reference/source checks. No prolonged spelling search: a faithful compiling correction may integrate as a mismatch. Historical claims/restoration remain intact; unexpected outside-owner changes require investigation and expansion, not rollback of sound work or hidden waivers. Independent review and fresh destination checks required. No function-universe, linked preservation/runtime or game acceptance claim."
+  ],
+  "intent": "Restore original duplicate counting and post-scan name suffixing, removing non-original whitespace trimming and in-scan renaming.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5210080,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "base-name-counting-oct19"
+}
