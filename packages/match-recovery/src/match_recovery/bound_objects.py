@@ -57,10 +57,13 @@ class FunctionBinding:
     symbol: str
     unit: str
     source_spans: tuple[Span, ...] = ()
+    local_only: bool = False
 
     def __post_init__(self):
         require_text(self.symbol, "emitted symbol")
         require_text(self.unit, "function binding unit")
+        if type(self.local_only) is not bool:
+            raise ValueError("local-only function binding must be boolean")
         if not self.spans or self.spans[0].start != self.origin.address:
             raise ValueError("function requires an independently mapped entry span")
         if self.source_spans and (not self.source_spans
@@ -135,6 +138,11 @@ def check_objects(bindings: Sequence[FunctionBinding], objects: Mapping[str, Cof
     externals = dict(external_targets or {})
     imports = dict(import_targets or {})
     literals = dict(literal_targets or {})
+    local_names = {item.symbol for item in bindings if item.local_only}
+    global_names = ({item.symbol for item in bindings if not item.local_only}
+                    | externals.keys() | imports.keys())
+    if local_names & global_names:
+        raise ValueError("TU-local function name also has a global target binding")
     for key, value in literals.items():
         if (not isinstance(key, tuple) or len(key) != 2 or any(not isinstance(x, str) or not x for x in key)
                 or value is not None and type(value) is not BoundedTarget):
@@ -182,6 +190,8 @@ def check_objects(bindings: Sequence[FunctionBinding], objects: Mapping[str, Cof
             continue
         try:
             symbol = obj.function(binding.symbol, comdat=not member_functions)
+            if binding.local_only and symbol.storage != 3:
+                raise ValueError("TU-local function binding requires an actual COFF static function definition")
             if (binding.origin.entity_id in fragment_parent_ids
                     and symbol.section in obj.associations):
                 raise ValueError("fragment parent must own an independent root code COMDAT")
@@ -214,6 +224,8 @@ def check_objects(bindings: Sequence[FunctionBinding], objects: Mapping[str, Cof
     for binding in bindings:
         row = {"entity_id": binding.origin.entity_id, "address": f"0x{binding.origin.address:08X}",
                "symbol": binding.symbol, "unit": binding.unit}
+        if binding.local_only:
+            row["local_only"] = True
         if binding.source_spans and binding.source_spans != binding.spans:
             row["source_spans"] = [{"start": span.start, "end": span.end}
                                    for span in binding.source_spans]

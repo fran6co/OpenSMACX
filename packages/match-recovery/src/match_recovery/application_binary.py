@@ -35,6 +35,40 @@ def _has_unbound_candidate(entity: dict) -> bool:
     return any(item.get("unbound", False) for item in entity["candidates"])
 
 
+def _local_function_symbols(view: dict, component_targets: dict | None) -> set[str]:
+    """Find only cross-TU duplicate names whose every source owner is ordinary.
+
+    This is a tentative scheduling classification. Physical COFF storage is
+    checked later by ``check_objects`` before any local-only binding is used.
+    """
+    by_symbol = defaultdict(list)
+    for group in view["groups"]:
+        for entity in group["entities"]:
+            candidates = [item for item in entity["candidates"] if not item["seed"]]
+            unbound = _has_unbound_candidate(entity)
+            candidate = (candidates[0] if len(candidates) == 1
+                         and not entity["conflicts"] and not unbound else None)
+            ordinary = (candidate is not None and candidate["component"] is None
+                        and not candidate.get("context_path")
+                        and candidate.get("function_fragment") is None)
+            for item in candidates:
+                by_symbol[item["symbol"]].append((entity, item, ordinary and item is candidate))
+
+    local_symbols = set()
+    component_targets = component_targets or {}
+    for symbol, entries in by_symbol.items():
+        units = [candidate["path"] for _entity, candidate, eligible in entries]
+        addresses = [entity["origin"]["address"] for entity, _candidate, _eligible in entries]
+        entity_ids = [entity["entity_id"] for entity, _candidate, _eligible in entries]
+        if (len(entries) > 1 and len(set(units)) == len(entries)
+                and len(set(addresses)) == len(entries)
+                and len(set(entity_ids)) == len(entries)
+                and all(eligible for _entity, _candidate, eligible in entries)
+                and symbol not in component_targets):
+            local_symbols.add(symbol)
+    return local_symbols
+
+
 def select_bindings(view: dict, selected: frozenset[str], component_targets: dict | None = None) -> tuple[list, list, dict]:
     """Require a single product definition; archived interpretations remain seeds.
 
@@ -43,6 +77,7 @@ def select_bindings(view: dict, selected: frozenset[str], component_targets: dic
     product conflict keeps refusing resolution.
     """
     bindings, refused, targets = [], [], defaultdict(set)
+    local_symbols = _local_function_symbols(view, component_targets)
     ambiguous = set()
     reserved = defaultdict(set)
     found = set()
@@ -59,6 +94,10 @@ def select_bindings(view: dict, selected: frozenset[str], component_targets: dic
                          and not entity["conflicts"] and not unbound else None)
             if candidate is None:
                 ambiguous.update(item["symbol"] for item in candidates)
+            elif candidate.get("context_path") or candidate.get("function_fragment") is not None:
+                # These interpretations cannot safely publish a cross-TU
+                # external address for a same-named ordinary candidate.
+                ambiguous.add(candidate["symbol"])
             # A dependency annotation identifies work to verify; it is not
             # evidence that the current build uses the specified library code.
             # Reserve these names against product aliases too. Admission needs
@@ -68,7 +107,8 @@ def select_bindings(view: dict, selected: frozenset[str], component_targets: dic
                     reserved[item["symbol"]].add(entity["origin"]["address"])
             if (candidate is not None and candidate["component"] is None
                     and not candidate.get("context_path")
-                    and candidate.get("function_fragment") is None):
+                    and candidate.get("function_fragment") is None
+                    and candidate["symbol"] not in local_symbols):
                 # Exact source spelling only. Ambiguous external names are
                 # removed below; static definitions never become external COFF
                 # symbols and so cannot borrow this table during resolution.
@@ -92,7 +132,8 @@ def select_bindings(view: dict, selected: frozenset[str], component_targets: dic
                 try:
                     bindings.append(FunctionBinding(Origin(**entity["origin"]),
                                                      tuple(Span(**span) for span in candidate["spans"]),
-                                                     candidate["symbol"], candidate["path"]))
+                                                     candidate["symbol"], candidate["path"],
+                                                     local_only=candidate["symbol"] in local_symbols))
                 except ValueError as error:
                     reason = str(error)
             if reason is not None:
@@ -101,17 +142,19 @@ def select_bindings(view: dict, selected: frozenset[str], component_targets: dic
     refused.extend({"entity_id": key, "result": Result.UNKNOWN, "reason": "source mapping is missing"}
                    for key in sorted(selected - found))
     ambiguous.update(symbol for symbol, addresses in targets.items() if len(addresses) != 1)
-    product_ambiguous = set(ambiguous)
+    product_ambiguous = set(ambiguous) | local_symbols
     ambiguous.update(reserved)
     accepted = []
     for binding in bindings:
-        if binding.symbol in ambiguous:
+        if binding.local_only and binding.symbol in local_symbols and binding.symbol not in reserved:
+            accepted.append(binding)
+        elif binding.symbol in ambiguous or binding.symbol in local_symbols:
             refused.append({"entity_id": binding.origin.entity_id, "result": Result.UNKNOWN,
                             "symbol": binding.symbol, "reason": "ambiguous source symbol binding"})
         else:
             accepted.append(binding)
     externals = {symbol: next(iter(addresses)) for symbol, addresses in targets.items()
-                 if symbol not in ambiguous}
+                 if symbol not in ambiguous and symbol not in local_symbols}
     if component_targets:
         for symbol, address in component_targets.items():
             if address in unbound_addresses:
@@ -324,6 +367,22 @@ def select_fragment_bindings(view: dict, selected: frozenset[str], bindings: lis
             expanded[parent_id] = replace(parent_binding, spans=(combined,),
                                           source_spans=source_spans)
         else:
+            # A child-only fragment selection may need a parent solely as
+            # support. Do not infer TU-local eligibility here: this phase has
+            # no component-target reservations from select_bindings. A
+            # duplicate source spelling (including a same-TU duplicate) must
+            # therefore remain unresolved unless the parent was already
+            # selected and qualified by the ordinary binding path above.
+            duplicate_parent_symbol = sum(
+                1 for entity in entities.values()
+                for row in entity["candidates"]
+                if not row["seed"] and row["symbol"] == parent_symbol) > 1
+            if duplicate_parent_symbol:
+                if is_selected:
+                    refused.append({"entity_id": child_id, "result": Result.UNKNOWN,
+                                    "reason": "ambiguous fragment support parent symbol",
+                                    "fragment": True})
+                continue
             expanded[parent_id] = FunctionBinding(
                 parent_origin, (combined,), parent_symbol, parent_candidate["path"],
                 source_spans=(Span(pstart, pend),))

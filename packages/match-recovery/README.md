@@ -4183,6 +4183,17 @@ initialization, lifetime or linked selection. Weak/local symbols and unreference
 declarations do not select owners. Candidate decks follow new references too, with
 an unchanged-source replica control for each extra TU and the same candidate overlay.
 
+Cross-TU duplicate source function names can be tentatively selected only when
+each original has one conflict-free ordinary product source candidate and every
+`(translation unit, emitted symbol)` pair is unique. Such bindings remain
+TU-local and never enter the global external-target map. The strict compiled
+checker requires the fresh owning COFF object to identify each as a static
+function definition (storage class 3) before using its section placement or
+references; missing objects, external definitions and other storage remain
+unknown. This qualifies current source/COFF identity for measurement only. It
+does not infer historical translation-unit ownership, resolve other TUs'
+external references by name, or prove linked selection or runtime behavior.
+
 One complete flag trial must match each body; partial trials cannot be combined.
 Declared layouts must agree across every selected TU/trial. Joint checks share
 objects only inside that invocation and still report all unknown/failing evidence.
