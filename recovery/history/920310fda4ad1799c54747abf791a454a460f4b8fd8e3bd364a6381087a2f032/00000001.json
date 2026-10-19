@@ -1,0 +1,24 @@
+{
+  "event_id": "dafbc11c7de95556ccd2eeecb8e95e156d2f8de9e5039b554805f894177762a9",
+  "payload": {
+    "affects": [
+      "entity-55b78db90a5394bf2c4c96e83ecae40fa8fc2f1ad8ddd7a8d86705c563e422ff",
+      "entity-5accbb8d7dd08c1365c54f80b6ac1cd50ebab468a2d3ea7ed763c79ae9bcbe5c",
+      "entity-65315c7337fd25c02c3affc99b5d2b7dd891c021661cd7902808385ef0926cef",
+      "entity-73b44579ec1cef7ad2e6f79bf8789f700118c19a74ccee7675cb9e36e9ffbe1e",
+      "entity-dbb0fd698c3dd436b3ae53f8bfb41e6ee9c8bbb3091daa314d73a9e553fde236"
+    ],
+    "author": "coordinator",
+    "discovery_id": "baseline-planet-host-fixture-drift",
+    "evidence": [
+      "Coordinator reran root baseline test_planet_strike.py::test_actual_strike_source_and_damage_controls while root C++ was identical to task baseline: same missing GameDataStateStorage and signed MapLongitude comparison failures as candidate. No product-source defect is inferred from this host fixture drift. Actual source map.h/map.cpp declare MapLongitude as int; shoot reaches only fields_.lock_masks_.enable_mask_."
+    ],
+    "hypothesis": "The existing planet-strike fixture does not model the reached GameDataStateStorage lock mask and uses the wrong MapLongitude signedness, preventing its unchanged behavioral controls from compiling.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "baseline-planet-host-fixture-drift",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:battle-timer-storage-oct19"
+}

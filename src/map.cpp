@@ -8343,7 +8343,7 @@ void __cdecl alt_set(int x, int y, int altitude) {
                         if (base.population_size <= 0) {
                             if (PlayersData[faction_id].current_num_bases <= 1) {
                                 base.population_size = 1;
-                                if (VehBattleUnkTgl[0] == 0) {
+                                if (VehBattleUnkTgl == 0) {
                                     const int local_faction =
                                         ConsoleGlobal.faction_id_;
                                     if (faction_id == local_faction) {
@@ -8367,7 +8367,7 @@ void __cdecl alt_set(int x, int y, int altitude) {
                             } else {
                                 if ((!IsMultiplayerNet ||
                                      ConsoleControlTurnActive != 0) &&
-                                    VehBattleUnkTgl[0] == 0) {
+                                    VehBattleUnkTgl == 0) {
                                     const int local_faction =
                                         ConsoleGlobal.faction_id_;
                                     if (faction_id == local_faction) {

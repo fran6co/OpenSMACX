@@ -1,0 +1,19 @@
+{
+  "event_id": "b1cc6bc16200ddf34d720777d6a477d06f1be968dc298594fdde8f2f9c86f4de",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "baseline-planet-host-fixture-drift",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "recovery/tests/planet_strike_control.cpp now supplies only the reached GameDataStateStorage.fields_.lock_masks_.enable_mask_ host path and the actual signed int MapLongitude, preserving initialized values and all prior behavioral/damage assertions. This is a host fixture repair, not a product or full ABI/layout change.",
+      "Fresh frozen after-memcpy focused run: test_planet_strike, shared battle/timer source controls, altitude, kill, blink_timer and artillery:61 passed. Includes original Planet Strike mutants and actual timer reset remove/redirect mutants. Independent source/test review found no blocker.",
+      "Fresh native174TU build/link and claim/mapping/reference checks pass; all5581 masked classifications retained, one strict battle_init reference gain. The independent array-to-scalar structural change still has an explicit veh.cpp BSS preservation FAIL; this fixture discovery resolution does not waive it or establish linked/runtime/automatic/game acceptance."
+    ]
+  },
+  "previous_event": "4fdfddd8d0a144626e9115f9ca81a43d4319fd1dc8d44f8cd9d3241c329d5e36",
+  "request_id": "incorporate-minimal-planet-host-fixture-repair",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:battle-timer-storage-oct19"
+}

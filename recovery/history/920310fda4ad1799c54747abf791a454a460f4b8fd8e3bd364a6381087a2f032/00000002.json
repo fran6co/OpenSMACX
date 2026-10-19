@@ -1,0 +1,19 @@
+{
+  "event_id": "4fdfddd8d0a144626e9115f9ca81a43d4319fd1dc8d44f8cd9d3241c329d5e36",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/planet_strike_control.cpp"
+    ],
+    "evidence": [
+      "At this safe pre-native checkpoint permit only the existing fixture to add a minimal host-only GameDataStateStorage.fields_.lock_masks_.enable_mask_ reached-path service projection and change fixture MapLongitude unsigned int to actual int, retaining initialized values and all behavioral/mutation assertions. No full layout/type/ABI claim or product change; no warning suppression, test weakening or unrelated fixture edits. Keep original task baseline unchanged. Independently verify all prior mutations compile and fail as intended before resolving this discovery."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "dafbc11c7de95556ccd2eeecb8e95e156d2f8de9e5039b554805f894177762a9",
+  "request_id": "permit-narrow-planet-host-fixture-repair",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:battle-timer-storage-oct19"
+}

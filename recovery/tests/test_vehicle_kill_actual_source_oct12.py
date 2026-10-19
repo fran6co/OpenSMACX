@@ -44,7 +44,7 @@ static VehPrototype VehPrototypes[128];
 static RulesWeapon Weapon[26];
 static Map tiles[32];
 static int MapLatitudeBounds=8, MapLongitudeBounds=8, MapLongitude=4;
-static int VehBattleUnkTgl[2];
+static int VehBattleUnkTgl;
 static struct { int faction_id_; } ConsoleGlobal;
 static std::vector<std::string> events;
 static std::function<void(const std::string&)> callback;
@@ -77,7 +77,7 @@ static struct Tutorial {
 static void reset() {
     callback={}; events.clear(); std::memset(Vehs,0,sizeof Vehs);
     std::memset(VehPrototypes,0,sizeof VehPrototypes); std::memset(Weapon,0,sizeof Weapon);
-    std::memset(tiles,0,sizeof tiles); VehBattleUnkTgl[0]=VehBattleUnkTgl[1]=0;
+    std::memset(tiles,0,sizeof tiles); VehBattleUnkTgl=0;
     MapLatitudeBounds=8; MapLongitudeBounds=8; MapLongitude=4;
     Vehs[2].x=2; Vehs[2].y=2; Vehs[2].proto_id=9; Vehs[2].faction_id=3;
     Vehs[2].home_base_id=5; Vehs[2].morale=255;
@@ -137,7 +137,7 @@ int main() {
     assert(draw_x==2 && draw_y==2);
     // Tail guards use the state after tutorial callback, even when the cargo
     // branch initially had valid coordinates.
-    reset(); callback=[](const std::string&s) { if(s=="tutorial")VehBattleUnkTgl[0]=1; };
+    reset(); callback=[](const std::string&s) { if(s=="tutorial")VehBattleUnkTgl=1; };
     kill(2); expect({"ability","delete","tutorial"});
     reset(); callback=[](const std::string&s) { if(s=="tutorial")MapLongitudeBounds=0; };
     kill(2); expect({"ability","delete","tutorial"});
@@ -192,7 +192,7 @@ def test_complete_kill_damage_controls(tmp_path,damage):
         "capture_late_coords":("    const int x = Vehs[veh_id].x;\n    const int y = Vehs[veh_id].y;", ""),
         "skip_ability_radius":("checked == 0 || worm_abil != 0","checked == 0"),
         "omit_tutorial":("    TutWinBaseWindow.check_base(home_base_id);", "    (void)home_base_id;"),
-        "tail_before_tutorial":("    TutWinBaseWindow.check_base(home_base_id);", "    const bool before_tutorial = VehBattleUnkTgl[0] == 0;\n    TutWinBaseWindow.check_base(home_base_id);"),
+        "tail_before_tutorial":("    TutWinBaseWindow.check_base(home_base_id);", "    const bool before_tutorial = VehBattleUnkTgl == 0;\n    TutWinBaseWindow.check_base(home_base_id);"),
     }
     before,after=changes[damage];assert before in body
     body=body.replace(before,after,1)
@@ -201,7 +201,7 @@ def test_complete_kill_damage_controls(tmp_path,damage):
     elif damage=="capture_late_coords":
         body=body.replace("    const int proto_id = Vehs[veh_id].proto_id;", "    const int x = Vehs[veh_id].x;\n    const int y = Vehs[veh_id].y;\n    const int proto_id = Vehs[veh_id].proto_id;",1)
     elif damage=="tail_before_tutorial":
-        body=body.replace("VehBattleUnkTgl[0] == 0 &&", "before_tutorial &&",1)
+        body=body.replace("VehBattleUnkTgl == 0 &&", "before_tutorial &&",1)
     result=run(tmp_path,compiler,records,map_loc,body)
     assert result.returncode!=0,"failed to detect "+damage
 

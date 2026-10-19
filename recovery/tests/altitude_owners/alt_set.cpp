@@ -83,7 +83,7 @@ Chassis Chassis[16];
 int MapBaseSubmergedCount[8];
 int MapBaseIdClosestSubmergedVeh[8];
 int VehCurrentCount;
-int VehBattleUnkTgl[2];
+int VehBattleUnkTgl;
 int ConsoleControlTurnActive;
 int IsMultiplayerNet;
 char ScriptPopupFileText[] = "SCRIPT";
@@ -139,7 +139,7 @@ void reset_fixture() {
     memset(MapBaseIdClosestSubmergedVeh, 0xFF, sizeof(MapBaseIdClosestSubmergedVeh));
     GameDataStateStorage.fields_.turn_current_num_ = 1;
     WorldClimateSkipTerritoryReset = 0; UnkBitfield1 = 0;
-    VehCurrentCount = 0; VehBattleUnkTgl[0] = 0; ConsoleControlTurnActive = 0;
+    VehCurrentCount = 0; VehBattleUnkTgl = 0; ConsoleControlTurnActive = 0;
     IsMultiplayerNet = 0;
     ConsoleGlobal.faction_id_ = 2; BaseAtResult = 0; ObjectiveResult = 0;
     FacilityBuiltResult = 0; StackHead = -1; RandomValue = 0;

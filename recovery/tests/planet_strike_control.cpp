@@ -17,6 +17,12 @@ struct Player {
 };
 struct PlayerData { unsigned int satellites_[4], sat_odp_deployed;
                     unsigned int diplo_treaties[MaxPlayerNum]; };
+// Host-only reached-path projection for candidate_shoot; this is not the
+// complete production GameDataStateStorage layout or an ABI declaration.
+struct GameDataStateLockMasks { unsigned int enable_mask_; };
+struct GameDataStateFields { GameDataStateLockMasks lock_masks_; };
+struct GameDataStateStorageType { GameDataStateFields fields_; };
+GameDataStateStorageType GameDataStateStorage = {};
 struct Base {
     short x, y;
     unsigned char faction_id_current, facilities_built[12];
@@ -41,9 +47,9 @@ PlayerData PlayersData[MaxPlayerNum] = {};
 Base Bases[2048] = {};
 Console ConsoleGlobal = {};
 FX g_FX = {};
-int VehBattleUnkTgl[2] = {}, BoomAnimationLevel, TerraformDrownedBaseId;
+int VehBattleUnkTgl = 0, BoomAnimationLevel, TerraformDrownedBaseId;
 int MapLongitudeBounds = 32, MapLatitudeBounds = 24, MapIsFlat;
-unsigned int MapLongitude = 16;
+int MapLongitude = 16;
 int GenderDefault, PluralityDefault, IsMultiplayerNet;
 unsigned int LockEnableMask;
 char ScriptPopupFileStorage[] = "script.txt";

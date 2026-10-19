@@ -18,6 +18,7 @@
 #pragma once
 #include <stdio.h>
 #include <stddef.h>
+#include "time.h"  // battle_init resets the timer family's shared hold flag.
 
 // Bounded network access to the genuine prototype-history owner in veh.cpp.
 bool veh_bung_copy_chunk(size_t offset, unsigned char *packet, size_t count,
@@ -678,7 +679,7 @@ extern int VehMoraleModifierCount;
 // Battle related globals
 // Fills to VehBattleUnkTgl: 2 * 4 ends exactly at 0x0091561C.
 extern uint32_t VehBattleModCount[2];  // 0x00915614
-extern BOOL VehBattleUnkTgl[2];  // 0x0091561C
+extern BOOL VehBattleUnkTgl;  // 0x0091561C
 // 2 types x 4 modifier slots (add_bat's `type * 4 + offset`), ends 0x00915610.
 extern int VehBattleModifier[8];  // 0x009155F0
 // Eight inline character rows, not string pointers: add_bat copies into
@@ -819,8 +820,8 @@ MEASURED inline uint32_t __cdecl planet_buster(int veh_id) {
 MEASURED inline void __cdecl battle_init() {
     VehBattleModCount[0] = 0;
     VehBattleModCount[1] = 0;
-    VehBattleUnkTgl[0] = false;
-    VehBattleUnkTgl[1] = false;
+    VehBattleUnkTgl = false;
+    TimerHoldFlag = 0;
 }
 
 MEASURED inline int __cdecl veh_moves(int veh_id) {

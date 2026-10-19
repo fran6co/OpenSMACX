@@ -551,7 +551,9 @@ uint32_t VehBasicBattleMorale[2];  // 0x00912420
 // Original battle_init at 0x00501D32 clears the start; add_bat at 0x00501D5D/0x00501D70 indexes counters; no bounds claim.
 // RECOVERY_OBJECT: v1 0x00915614 ?VehBattleModCount@@3PAIA
 uint32_t VehBattleModCount[2];  // 0x00915614
-BOOL VehBattleUnkTgl[2];  // 0x0091561C
+// Original battle_init/planet_busting write 0x0091561C; kill and alt_set read it.
+// RECOVERY_OBJECT: v1 0x0091561C ?VehBattleUnkTgl@@3HA
+BOOL VehBattleUnkTgl;  // 0x0091561C
 int VehBattleModifier[8];  // 0x009155F0
 char VehBattleDisplay[8][80];  // 0x0090F554
 
@@ -9442,7 +9444,7 @@ void __cdecl kill(int veh_id) {
 
     TutWinBaseWindow.check_base(home_base_id);
 
-    if (VehBattleUnkTgl[0] == 0 && y >= 0 && y < MapLatitudeBounds && x >= 0 &&
+    if (VehBattleUnkTgl == 0 && y >= 0 && y < MapLatitudeBounds && x >= 0 &&
         x < MapLongitudeBounds) {
         if (faction_id == ConsoleGlobal.faction_id_) {
             const int at = veh_at(x, y);
@@ -17151,7 +17153,7 @@ int __cdecl planet_busting(int veh_id, int x, int y) {
     draw_radius(x, y, 0, 2);
     if (intercepted != 0) return intercepted;
 
-    VehBattleUnkTgl[0] = 1;
+    VehBattleUnkTgl = 1;
     int blame_base = -1;
     int blame_vehicle = -1;
     for (int lower = 0; lower < bust_level; ++lower) {
@@ -17188,7 +17190,7 @@ int __cdecl planet_busting(int veh_id, int x, int y) {
         }
     }
 
-    VehBattleUnkTgl[0] = 0;
+    VehBattleUnkTgl = 0;
     if (blame_base < 0) blame_base = blame_vehicle;
     draw_map(0);
     boom(x, y, 0x40);
