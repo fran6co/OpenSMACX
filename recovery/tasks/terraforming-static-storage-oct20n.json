@@ -1,0 +1,28 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "ece7116abf72645d431147557fe1004c03cb4e10",
+  "editable_files": [
+    "src/alpha.cpp",
+    "src/terraforming.h",
+    "recovery/tests/test_terraforming_original_static_storage_oct20n.py"
+  ],
+  "evidence": [
+    "User standing permission for genuine compiling C++ recovery, evidence-backed global/type corrections and coordinator-reviewed manual integration. Preserve immutable task baseline, all original function markers/claims and discoveries. This is RulesTerraforming storage owned beside read_rules, not permission to change read_rules behavior.",
+    "Pinned initial image691878..691AF8 is20records of32bytes, with48nonzero bytes solely in bit/+10 and incompatible/+14 fields. Current Terraforming[20] is an uninitialized BSS array; known TerraformingBits[20][2] source constants exactly match original bits. Existing source comment incorrectly says original array is wholly zero. Restore original static aggregate initialization using existing symbolic BIT expressions and zeros for originally-zero pointer/scalar fields, without introducing a dynamic constructor or copied executable machine code.",
+    "Keep TerraformingBits table and all read_rules parsing/copy behavior unchanged this step; removing duplicate source constants or parser writes needs independent original-flow evidence and separate permission. Do not change signatures, headers beyond correcting the documented original static state, flags, layouts, other globals or any function body. No bug fixes or bounds guards.",
+    "Worker may edit only the initializer, adjacent load-bearing ownership prose, corrected header prose and the selected actual-source regression test via apply_patch. Tests must verify all20row bit pairs and zeros from the pinned full640bytes, include meaningful initialized-bit damage witnesses, and distinguish source/static initialization from runtime rule loading. Host64pointer layout is not i386 proof; document fixture and native evidence separately.",
+    "Do not add object annotation until fresh actual compiler storage and extent qualify it. Coordinator uses native object_writer only; V1 is identity-only, V2 must freshly prove all640initial bytes and original references/layout. No globally false address alias or aggregate/class guess; MapStorage partial window is explicitly out of scope.",
+    "Worker runs host-only uv pytest if useful, no VC6/preparation/recording/Git. Coordinator freezes/compiles/links and independently reviews actual data/code/reference preservation before publication. No automatic acceptance or game proof inferred."
+  ],
+  "intent": "Restore the real RulesTerraforming array original static bit fields and qualify its source-owned storage identity.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5796800,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "terraforming-static-storage-oct20n"
+}
