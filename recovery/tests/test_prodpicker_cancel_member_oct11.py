@@ -1,5 +1,4 @@
 """Original cancel-word read via its actual owner, not an item-array underrun."""
-from dataclasses import fields
 from pathlib import Path
 import json
 import resource
@@ -7,8 +6,8 @@ import shutil
 import subprocess
 
 import pytest
-from match_recovery.source import read_text
 from test_prodpicker_behavior import extract_function
+from test_prodpicker_display_id_oct11 import assert_mapping_continuity
 
 ROOT=Path(__file__).resolve().parents[2]
 BASE='b0b6eb1d890534a3fc8120813164b9544bc42e44'
@@ -35,16 +34,9 @@ def test_bounded_source_and_original_obligations():
     path=ROOT/'src/prodpicker.cpp'
     before=subprocess.check_output(['git','show',BASE+':src/prodpicker.cpp'],cwd=ROOT,text=True)
     expected=migration(before)
-    from test_prodpicker_display_id_oct11 import restore_prodpicker_display_id
-    assert expected==restore_prodpicker_display_id(path.read_text()) and restore_prodpicker_cancel_member(expected)==before
-    old,new=read_text(before,path),read_text(expected,path)
-    assert len(old)==len(new)
-    for a,b in zip(old,new):
-        for field in fields(a):
-            if field.name not in {'line','region','origin'}:
-                assert getattr(a,field.name)==getattr(b,field.name)
-        lesson=lambda r:[(l.kind,l.key,l.prose,tuple(t for _,t in l.lines)) for l in r.origin]
-        assert lesson(a)==lesson(b)
+    assert expected != before
+    assert restore_prodpicker_cancel_member(expected)==before
+    assert_mapping_continuity(before, path.read_text(), path, 0x493EA0)
     from match_recovery.tasks import Task
     task=Task.from_dict(json.loads((ROOT/'recovery/tasks/prodpicker-cancel-member-oct11.json').read_text()))
     assert task.base_revision==BASE and {s.address for s in task.subjects}=={0x493EA0}

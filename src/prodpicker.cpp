@@ -280,9 +280,8 @@ void ProdPicker::on_left_click(int x, int y) {
 // kind      game
 // symbol    ?on_redraw@ProdPicker@@UAEXXZ
 void ProdPicker::on_redraw() {
-    const int first = static_cast<int>(field_A77C_);
-    const int end = first + static_cast<int>(field_A82C_);
-    for (int item = first; item < end; ++item) {
+    int item = static_cast<int>(field_A77C_);
+    for (; item < field_A77C_ + field_A82C_; ++item) {
         draw_item(item, 0);
     }
 }
