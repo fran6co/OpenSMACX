@@ -7,6 +7,7 @@ owner body: missing/incomplete product source is a test failure.
 from __future__ import annotations
 
 import shutil
+import re
 import subprocess
 import tempfile
 from pathlib import Path
@@ -80,22 +81,38 @@ union OwnerStorage {
     char bytes[sizeof(BufferSpecialTextArrayOwner)];
 };
 static void check_partial_ctor_unwind() {
-    OwnerStorage storage;
-    std::memset(storage.bytes, 0, sizeof(storage.bytes));
-    owner_bytes = storage.bytes;
-    active_owner = 0;
-    controls_enabled = true;
-    constructor_attempts = 0;
-    constructor_failure = 5;
-    destructor_count = 0;
-    BufferSpecialTextsCleanupGuard = 0;
-    expected_guard_bit = 0;
-    bool caught = false;
-    try { new (storage.bytes) BufferSpecialTextArrayOwner(); }
-    catch (int value) { caught = value == 5; }
-    assert(caught && constructor_attempts == 6 && destructor_count == 5);
-    for (int index = 0; index < 5; ++index) assert(destructor_order[index] == 4 - index);
-    assert(BufferSpecialTextsCleanupGuard == 0);
+    for (int failure = 0; failure < 10; ++failure) {
+        OwnerStorage storage;
+        std::memset(storage.bytes, 0, sizeof(storage.bytes));
+        for (int index = 0; index < 10; ++index) {
+            const uint32_t sentinel = 0xA5A5A5A5;
+            for (int offset = 0x24; offset <= 0x2C; offset += 4)
+                std::memcpy(storage.bytes + index * 0x30 + offset, &sentinel, 4);
+        }
+        owner_bytes = storage.bytes;
+        active_owner = 0;
+        controls_enabled = true;
+        constructor_attempts = 0;
+        constructor_failure = failure;
+        destructor_count = 0;
+        BufferSpecialTextsCleanupGuard = 0;
+        expected_guard_bit = 0;
+        bool caught = false;
+        try { new (storage.bytes) BufferSpecialTextArrayOwner; }
+        catch (int value) { caught = value == failure; }
+        assert(caught && constructor_attempts == failure + 1 &&
+               destructor_count == failure);
+        for (int index = 0; index < failure; ++index)
+            assert(destructor_order[index] == failure - 1 - index);
+        assert(BufferSpecialTextsCleanupGuard == 0);
+        for (int index = 0; index < 10; ++index) {
+            for (int offset = 0x24; offset <= 0x2C; offset += 4) {
+                uint32_t suffix = 0;
+                std::memcpy(&suffix, storage.bytes + index * 0x30 + offset, 4);
+                assert(suffix == 0xA5A5A5A5);
+            }
+        }
+    }
 }
 static void check_success_reentrant_teardown() {
     OwnerStorage storage;
@@ -114,7 +131,7 @@ static void check_success_reentrant_teardown() {
         std::memcpy(storage.bytes + index * 0x30 + 0x28, &sentinel, 4);
         std::memcpy(storage.bytes + index * 0x30 + 0x2C, &sentinel, 4);
     }
-    BufferSpecialTextArrayOwner *owner = new (storage.bytes) BufferSpecialTextArrayOwner();
+    BufferSpecialTextArrayOwner *owner = new (storage.bytes) BufferSpecialTextArrayOwner;
     active_owner = owner;
     assert(constructor_attempts == 10 && BufferSpecialTextsCleanupGuard == 0);
     for (int index = 0; index < 10; ++index) {
@@ -158,8 +175,12 @@ def installed_sources() -> tuple[str, str, str, str]:
     cpp = cpp_path.read_text(encoding="utf-8")
     required_header = (
         "struct BufferSpecialTextArrayOwner",
-        "BufferSpecialTextStorage elements_[10];",
+        "struct BufferSpecialTextArray {",
+        "BufferSpecialText elements_[10];",
+        "BufferSpecialTextArrayStorage elements_;",
         "BufferSpecialTextsCleanupGuard |= 1;",
+        "new (&elements_.bytes[0]) BufferSpecialTextArray;",
+        "array().~BufferSpecialTextArray();",
         "BufferSpecialText &at(int index)",
     )
     missing = [needle for needle in required_header if needle not in header]
@@ -167,9 +188,11 @@ def installed_sources() -> tuple[str, str, str, str]:
         raise AssertionError(f"installed owner declaration is incomplete: {missing}")
     guard = "uint8_t BufferSpecialTextsCleanupGuard;"
     owner = "BufferSpecialTextArrayOwner BufferSpecialTextsOwner;"
-    if cpp.count(guard) != 1 or cpp.count(owner) != 1:
+    guard_matches = list(re.finditer(r"^" + re.escape(guard) + r"$", cpp, re.MULTILINE))
+    owner_matches = list(re.finditer(r"^" + re.escape(owner) + r"$", cpp, re.MULTILINE))
+    if len(guard_matches) != 1 or len(owner_matches) != 1:
         raise AssertionError("installed guard/owner globals are missing or ambiguous")
-    if cpp.index(guard) > cpp.index(owner):
+    if guard_matches[0].start() > owner_matches[0].start():
         raise AssertionError("installed global construction order changed")
     signatures = ("BufferSpecialText::BufferSpecialText()", "BufferSpecialText::~BufferSpecialText()")
     methods = [extract_definition(cpp, signature) for signature in signatures]
@@ -225,16 +248,23 @@ def test_installed_owner_behaviors(compiler: str) -> None:
 def test_mutations_fail_behaviorally(compiler: str, mutation: str) -> None:
     header, globals_source, ctor, dtor = installed_sources()
     if mutation == "forward teardown":
-        changed = header.replace("for (int index = 10; index != 0; --index)",
-                                 "for (int index = 0; index < 10; ++index)", 1)
+        changed = header.replace(
+            "array().~BufferSpecialTextArray();",
+            "for (int index = 0; index < 10; ++index)\n"
+            "            array().elements_[index].~BufferSpecialText();", 1)
     elif mutation == "late guard":
-        changed = header.replace("        BufferSpecialTextsCleanupGuard |= 1;\n        for (int index = 10; index != 0; --index)",
-                                 "        for (int index = 10; index != 0; --index)", 1)
-        changed = changed.replace("            at(index - 1).~BufferSpecialText();\n        }",
-                                  "            at(index - 1).~BufferSpecialText();\n        }\n        BufferSpecialTextsCleanupGuard |= 1;", 1)
+        changed = header.replace(
+            "        BufferSpecialTextsCleanupGuard |= 1;\n"
+            "        array().~BufferSpecialTextArray();",
+            "        array().~BufferSpecialTextArray();\n"
+            "        BufferSpecialTextsCleanupGuard |= 1;", 1)
     else:
-        changed = header.replace("        } catch (...) {\n            while (constructed != 0) {\n                at(--constructed).~BufferSpecialText();\n            }\n            throw;\n        }",
-                                 "        } catch (...) {\n            throw;\n        }", 1)
+        changed = header.replace(
+            "new (&elements_.bytes[0]) BufferSpecialTextArray;",
+            "for (int index = 0; index < 10; ++index) {\n"
+            "            new (reinterpret_cast<char *>(&elements_) +\n"
+            "                 index * sizeof(BufferSpecialText)) BufferSpecialText();\n"
+            "        }", 1)
     assert changed != header, f"mutation anchor disappeared: {mutation}"
     result = run_fixture(compiler, changed, globals_source, instrumented_methods(ctor, dtor))
     assert result.returncode != 0, f"{compiler} mutation survived behavior control: {mutation}"
