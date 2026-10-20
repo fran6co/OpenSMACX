@@ -4991,7 +4991,7 @@ Buffer g_VEHDRAW_BUFFER;  // 0x008CC298
 // Native CRT slots68266C/682670 establish record-array then Sprite order.
 // Exact native shared once-guard; constructor leaves its static zero intact.
 // ORIGINAL: 0x005D7170 sub_5d7170 0x005D7170-0x005D7194 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"reason":"The original ten-record initializer belongs to the genuine BufferSpecialTextsOwner static lifetime, not a fixed-address callback wrapper.","evidence":["Pinned 5D7170..5D7194 constructs ten records at 9B37E0 with stride30 through 5E35D0/5E35F0 and registers cleanup5D71A0.","BufferSpecialTextArrayOwner placement-constructs actual records and reverse-unwinds a successfully constructed prefix; the compiler-generated initializer selects that owner and registers its cleanup.","The original unbounded record-array identity is retained as the owner's elements_ member; historical exactness is a restoration obligation, not a current matching claim."]}
+// RECOVERY_BINDING: v1 {"reason":"The original ten-record initializer belongs to the genuine BufferSpecialTextsOwner static lifetime, not a fixed-address callback wrapper.","evidence":["Pinned 5D7170..5D7194 constructs ten records at 9B37E0 with stride30 through 5E35D0/5E35F0 and registers cleanup5D71A0.","BufferSpecialTextArrayOwner placement-default-constructs one typed BufferSpecialTextArray in its contiguous 0x1E0-byte storage; the compiler-generated array constructor owns element construction and prefix unwind, and the global initializer registers that owner's cleanup.","The original unbounded record-array identity is retained as the owner's elements_ storage member at offset zero; historical exactness is a restoration obligation, not a current matching claim."]}
 // symbol    _$E28
 // size      36 bytes
 // prototype 
@@ -5005,7 +5005,7 @@ uint8_t BufferSpecialTextsCleanupGuard;
 // The generated initializer and registered cleanup belong to this owner;
 // their selected symbols and historical obligations remain mapped separately.
 // ORIGINAL: 0x005D71A0 sub_5d71a0 0x005D71A0-0x005D71C8 FILE
-// RECOVERY_BINDING: v1 {"reason":"The original registered cleanup belongs to BufferSpecialTextsOwner's guarded reverse teardown of actual BufferSpecialText objects.","evidence":["Pinned 5D71A0..5D71C8 tests and sets bit0 at9B37CC before reverse teardown of ten stride30 records at9B37E0 through5E35F0.","The guard is a separate byte:9B37D0/D4 are existing renderer globals, not padding for this owner.","Trivial aligned storage suppresses implicit duplicate destruction; the owner preserves upper guard bits, guard-before-callback order and reverse record destruction."]}
+// RECOVERY_BINDING: v1 {"reason":"The original registered cleanup belongs to BufferSpecialTextsOwner's guarded reverse teardown of actual BufferSpecialText objects.","evidence":["Pinned 5D71A0..5D71C8 tests and sets bit0 at9B37CC before invoking the reverse-array destructor for ten stride30 records at9B37E0 through5E35F0.","The guard is a separate byte:9B37D0/D4 are existing renderer globals, not padding for this owner.","The trivial 0x1E0-byte storage leaves array lifetime under explicit owner control; after preserving upper guard bits and setting bit0, the owner invokes the compiler-generated BufferSpecialTextArray destructor, which owns reverse destruction."]}
 // symbol    _$E26
 // size      40 bytes
 // prototype 
