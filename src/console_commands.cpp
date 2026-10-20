@@ -1503,6 +1503,8 @@ void Console::editor_clear_vehicles() {
     auto_undo();
     const int initial_area = MapArea;
     Map *tile = MapTiles;
+    // Commit the editor flag before clearing the remaining state, as at
+    // 0x004E131D..0x004E1336; keep the live MapArea reload in the loop tail.
     GameDataStateStorage.fields_.game_state_ |= 4;
     int count = 0;
     GameDataStateStorage.fields_.vehicle_current_count_ = 0;
@@ -1957,6 +1959,10 @@ void Console::editor_rockiness() {
 //        map_tiles() load and then `xor ecx, ecx` before the test, where this
 //        tree zeroes i first. Not reached from source form after four
 //        measured spellings.
+// Restoration note: `initial_area` models only the original guard snapshot;
+// the loop tail below still reloads MapArea as the pinned body does. Hoisting
+// that initial MapArea/map_tiles/counter setup also preserves its execution
+// when the guard is nonpositive, unlike the earlier conditional placement.
 
 // size      187 bytes
 // prototype void (__thiscall ?editor_fungus@Console@@QAEXXZ)(Console* this)
@@ -1983,13 +1989,13 @@ void Console::editor_fungus() {
             }
         }
         if (confirmed != 0) {
-            // MapArea is NOT cached: the image reads [0x949884] for the guard
-            // and again at 0x004E1463 on every outer iteration. Both compares
-            // are signed (`jle` at 0x004E142C, `jl` at the tail); the shared
-            // MapArea member is now represented as int.
-            if (MapArea > 0) {
-                Map *tile = map_tiles();
-                int i = 0;
+            // The initial signed MapArea and MapTiles loads, then the zero
+            // loop counter, all precede the positive-area guard in the image.
+            // The loop back edge separately reloads signed MapArea each pass.
+            const int initial_area = MapArea;
+            Map *tile = map_tiles();
+            int i = 0;
+            if (initial_area > 0) {
                 do {
                     tile->bit &= 0xFFFFFFDFu;
                     faction_id_ = 1;

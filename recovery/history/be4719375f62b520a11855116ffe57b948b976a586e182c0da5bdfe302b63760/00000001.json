@@ -1,0 +1,23 @@
+{
+  "event_id": "4a1c63bcce24417ece9e7186371ad19c7bf59ec05d1961fbda7c24a8b5ad4493",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_console_fungus_setup_oct19.py",
+      "recovery/tests/test_console_menu_behavior.py",
+      "recovery/tests/test_editor_clear_vehicles_actual_source.py"
+    ],
+    "evidence": [
+      "Supersede old coordinator-only compiler restriction for this worker: execute actual-source host controls and bounded native Compiler.overlay/compare_unit using existing prepared recipe and one isolated leased prefix, jobs1. No Git, recording, source claim/marker changes, sharedroot edits or new public tools. No preparation while measurement epoch live.",
+      "Finish preserved editor_fungus initial MapArea/MapTiles/counter setup movement using pinned4E13E0 original. Currentsource not hash-equal oldscreen; do not replay it. Compare exact currentcandidate with source-current baseline under actual currentCMakeprofile (known current master framebased /Oy-), check all owner mappings and raw collateral residual. No flag changes/new spellings. Full-game/native automatic acceptance not asserted.",
+      "Existing test modules authorized only to keep meaningful actual-source behavior and mutation controls working, not weaken assertions or replace originals with source-string checks. If mere source-form movement has no current measured gain, preserve WIP and report no gain; do not cosmetically integrate. Freeze complete source/test hashes and send concise evidence when finished."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "worker-owned-console-candidate-closure",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:console-commands-source-batch-oct19d"
+}
