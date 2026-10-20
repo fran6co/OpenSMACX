@@ -1,0 +1,101 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "279bf4ec33b4710f11b1f65aa22f84a9bc7a1578",
+  "editable_files": [
+    "src/log.cpp"
+  ],
+  "evidence": [
+    "Standing faithful coverage/structural recovery authority and coordinator-reviewed manual integration. Scope is the whole current Log owner including its ordinary global lifetime, wrappers and collateral observers; preserve all identities/spans/claims/lessons and original quirks. No bug fixes, ABI/member/layout/flags/export changes or unrelated edits.",
+    "Current retained actual Release strict-reference census has eleven existing exact Log functions UNKNOWN solely on wt/at/logfile.txt targets:626040,625F20,626230,626250,6262F0,626350,6263F0,625FC0,6260D0,6260F0,626190. This is not eleven new implementations or byte-exact gains.",
+    "Independent pinned PE bytes and original push operands distinguish five RW data payloads: logfile.txt at697374..697380; initializer wt at697380..697383 used by init626098 and ctor/globalinit625F56; reset wt at697384..697387 used by reset6260D3 and wrapper626236; append at at697388..69738B used by say626111 and wrappers626273/62630F; separate hex append at at6973AC..6973AF used by say_hex6261B1 and wrappers626373/62640F. Existing format literals at69738C/69739C/6973B0/6973C8 are separate and unchanged. Original relocations and boundary evidence must be independently rechecked before binding.",
+    "Current compiler pools repeated mode strings, so mapping one pooled symbol to multiple original starts is forbidden. Authorize five ordinary TU-private static char arrays named LogDefaultFilename, LogInitializeMode, LogResetMode, LogAppendMode and LogHexAppendMode with those exact NUL-terminated textual contents. Only replace existing corresponding string arguments in Log::init, filename ctor, Logging initializer, reset, say and say_hex. Preserve every branch/effect/argument/return, wrapper inlining and global initializer order. Primitive char arrays introduce no constructor or destructor. Writable original PE storage does not prove original constness, declaration spelling, complete allocation or lifetime.",
+    "First source pass adds arrays and correct argument references only, with concise durable ownership rationale; no guessed RECOVERY_OBJECT symbols/markers. Coordinator subsequently probes actual emitted symbols, content/extents/references and unchanged-replica/damage controls, then uses native object writer for guarded bounded bindings. Update only the current two-line pooled-at caveat after actual binding, leaving all historical LEVER/TRIED text untouched. No hand-edited ORIGINAL markers or new claim stamps.",
+    "Worker authors only src/log.cpp using apply_patch; no tests/compiler/Wine/Git/task mutations. Coordinator owns isolated resource leases, fresh build/link, all-profile native selected data, strict11+complete scoped/whole matching deltas, original identity/claim/reference continuity, independent review and fresh destination verification. Keep native physical FAIL/data UNKNOWN explicit, no body waivers, baseline reset or complete linked/runtime/game/automatic acceptance claim."
+  ],
+  "intent": "Recover the complete Log-owned filename and distinct mode-string storage identities",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5367536,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6446880,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6446992,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6447024,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6447040,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6447136,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6447168,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6447312,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6447344,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6447504,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6447664,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6447696,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6447856,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6447952,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6448112,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6448208,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "log-mode-storage-identities-oct20an"
+}
