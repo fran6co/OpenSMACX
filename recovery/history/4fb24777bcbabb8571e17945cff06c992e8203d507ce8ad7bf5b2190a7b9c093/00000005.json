@@ -1,0 +1,22 @@
+{
+  "event_id": "b0676bdf1ee937771ab5a18de235811eeb0732fd189a13aa994154af3209d2d1",
+  "payload": {
+    "affects": [
+      "entity-d5148da5b4cac5dc3d78f63a4d63bff4b419e7188cda887e1c30fccff6268f36"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "console-road-original-magtube-prerequisite-oct20n",
+    "evidence": [
+      "New independently qualified Terraforming binding at691878..691AF8 exposes native road_to relocationoffset222 asFAIL. Pinned complete body4D7BE0..4D7CED reads691940 at4D7CBC before has_tech4D7CC4. Verified arraystride20hex and preqoffset8 resolve row6, enumTERRA_MAGTUBE, not Farm0.",
+      "Two independent pinned/source reviews agree. Existing host fixture used one fake Farm row and could not discriminate the wrong table index; strengthen it with actual enum/struct extraction and differing Farm/Magtube rows plus a wrong-row compiled mutant and pinned operand witness.",
+      "Coordinator authorizes exactly the FARM-to-MAGTUBE lookup correction within already approved road_to/function and existing test scope. No other code/conditions/indices/claims/layout/flags change. Preserve historical byte claim and original task baseline; verify actual data-target relocation independently and do not call masked equality full acceptance."
+    ],
+    "hypothesis": "Original road_to cursor-mode1C reads Terraforming[MAGTUBE6].preq_tech; current FARM0 lookup is wrong despite masked byte equality.",
+    "kind": "discovery"
+  },
+  "previous_event": "fd014c45544870a6e3fba747fa2d40e6da9a7b4024c3997baaa0ec95a299d1ee",
+  "request_id": "console-road-original-magtube-prerequisite-oct20n",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:wide-console-source-decks-oct20n"
+}

@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+import re
 import shutil
 import subprocess
 
@@ -29,6 +30,28 @@ def actual_definition() -> str:
     raise AssertionError("unterminated actual Console::road_to definition")
 
 
+def header_declaration(path: Path, start_text: str) -> str:
+    source = path.read_text(encoding="utf-8")
+    start = source.index(start_text)
+    opening = source.index("{", start)
+    depth = 0
+    for end in range(opening, len(source)):
+        depth += (source[end] == "{") - (source[end] == "}")
+        if depth == 0:
+            finish = end + 2 if end + 1 < len(source) and source[end + 1] == ";" else end + 1
+            return source[start:finish]
+    raise AssertionError(f"unterminated declaration {start_text!r}")
+
+
+def terraforming_declarations() -> str:
+    header = ROOT / "src/terraforming.h"
+    enum = header_declaration(header, "enum TerraformingAction")
+    rules = header_declaration(header, "struct RulesTerraforming")
+    max_count = re.search(r"static const int MaxTerrainNum\s*=\s*20\s*;", header.read_text(encoding="utf-8"))
+    assert max_count is not None
+    return enum + "\n" + rules + "\n" + max_count.group(0) + "\n"
+
+
 HARNESS = r'''#include <cassert>
 #include <cstdint>
 #include <string>
@@ -47,14 +70,13 @@ struct Veh { int16_t x, y, proto_id; uint8_t faction_id; };
 struct VehPrototype { uint8_t chassis_id, plan; };
 struct RulesChassis { int triad; };
 struct Map { uint8_t climate; };
-struct Technology { int16_t preq_tech; };
+using LPSTR = char *;
 static Veh Vehs[16];
 static VehPrototype VehPrototypes[16];
 static RulesChassis Chassis[16];
 static Map MapTiles[64];
-static Technology Terraforming[1];
 static int MapLongitude = 8;
-enum { TRIAD_LAND = 0, TRIAD_SEA = 1, TERRA_FARM = 0 };
+enum { TRIAD_LAND = 0, TRIAD_SEA = 1 };
 static Map *map_tiles() { return MapTiles; }
 
 struct Popup { void pop(const char *label, int timeout, int flags, int) {
@@ -78,7 +100,9 @@ class Console { public: void road_to(int veh_id, int cursor_mode); };
 
 
 def harness_source(definition: str) -> str:
-    return HARNESS + definition + r'''
+    return HARNESS + terraforming_declarations() + r'''
+static RulesTerraforming Terraforming[MaxTerrainNum];
+''' + definition + r'''
 static void reset() {
     events.clear();
     has_tech_calls = 0;
@@ -95,7 +119,8 @@ static void reset() {
     VehPrototypes[7] = VehPrototype{5, 8};
     Chassis[2].triad = TRIAD_LAND;
     Chassis[5].triad = TRIAD_SEA;
-    Terraforming[TERRA_FARM].preq_tech = 37;
+    Terraforming[TERRA_FARM].preq_tech = 19;
+    Terraforming[TERRA_MAGTUBE].preq_tech = 37;
 }
 static void expect_one(const char *name, int a, int b, int c) {
     assert(events.size() == 1 && is(events[0], name, a, b, c));
@@ -179,7 +204,7 @@ def test_actual_road_to_preserves_typed_lookup_and_order(tmp_path, compiler_name
 
 
 @pytest.mark.parametrize("compiler_name", ("g++", "clang++"))
-@pytest.mark.parametrize("mutant", ("wrong_prototype", "wrong_chassis", "tech_before_cursor_gate",
+@pytest.mark.parametrize("mutant", ("wrong_prototype", "wrong_chassis", "wrong_terraforming_row", "tech_before_cursor_gate",
                                      "missing_plan_return"))
 def test_road_to_actual_body_controls_reject_wrong_owner_or_order(tmp_path, compiler_name, mutant):
     compiler = shutil.which(compiler_name)
@@ -192,6 +217,9 @@ def test_road_to_actual_body_controls_reject_wrong_owner_or_order(tmp_path, comp
     elif mutant == "wrong_chassis":
         damaged = source.replace("VehPrototypes[prototype_id].chassis_id",
                                  "VehPrototypes[veh_id].chassis_id", 1)
+    elif mutant == "wrong_terraforming_row":
+        damaged = source.replace("Terraforming[TERRA_MAGTUBE].preq_tech",
+                                 "Terraforming[TERRA_FARM].preq_tech", 1)
     elif mutant == "tech_before_cursor_gate":
         damaged = source.replace("cursor_mode != 0x1C ||\n        has_tech(",
                                  "has_tech(", 1).replace(
@@ -207,6 +235,7 @@ def test_pinned_road_to_span_supports_typed_access_and_call_order():
     if not IMAGE.is_file():
         pytest.skip("pinned original image unavailable")
     from match_recovery.model import Span
+    from match_recovery.object_source import parse_objects
     from match_recovery.pe_coff import PeImage
     from match_recovery.source.asm import Listing
 
@@ -222,9 +251,27 @@ def test_pinned_road_to_span_supports_typed_access_and_call_order():
         0x004D7C5D: "0x95282a",  # live Veh y, then x for the map index
         0x004D7C74: "0x94a30c",  # MapTiles load before the climate gate
         0x004D7CAF: "0x1c",      # cursor mode gate precedes technology lookup
+        0x004D7CBC: "0x691940",  # Terraforming[6].preq_tech
         0x004D7CC4: "0x5b9f20", # has_tech call
         0x004D7CE3: "0x510490", # cursor_on call
     }
     for address, operand in expected.items():
         assert address in indexed and operand in indexed[address]
     assert list(expected) == sorted(expected)
+    header = (ROOT / "src/terraforming.h").read_text(encoding="utf-8")
+    alpha = (ROOT / "src/alpha.cpp").read_text(encoding="utf-8")
+    enum = terraforming_declarations()
+    assert "TERRA_MAGTUBE = 6" in enum
+    assert "RulesTerraforming Terraforming[MaxTerrainNum]" in alpha
+    binding, = [row for row in parse_objects(
+        alpha, "src/alpha.cpp", IMAGE_SHA256, address_space="pe:va"
+    ) if row.symbol == "?Terraforming@@3PAURulesTerraforming@@A"]
+    assert binding.span is not None
+    array_base, array_end = binding.span.start, binding.span.end
+    record_stride = (array_end - array_base) // 20
+    assert array_base == 0x691878
+    assert record_stride == 0x20
+    # Original PE32 LPSTR fields are four bytes; the two preceding fields put
+    # preq_tech at +8, as verified against the actual source declaration.
+    assert re.search(r"struct RulesTerraforming\s*\{\s*LPSTR name;\s*LPSTR name_sea;\s*int preq_tech;", header)
+    assert array_base + 6 * record_stride + 8 == 0x691940
