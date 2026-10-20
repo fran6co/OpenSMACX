@@ -358,32 +358,7 @@ void draw_dest_unk1(Buffer *, int, int, int, int, unsigned char *);
       ++hdc_lock_count_;
       return hdc2_;
   }
-  MEASURED void release_hdc(int count) {
-      // THE SURFACE TEST COMES FIRST, and the subtraction is inside each arm.
-      // The image reads `[esi + 0x58]` before either `sub`, and has two of
-      // them - one per arm - where a single subtraction above the branch
-      // would need only one.
-      if (surface_ == nullptr) {
-          hdc_lock_count_ -= count;
-          if (hdc_lock_count_ <= 0) {
-              hdc2_ = nullptr;
-              hdc_lock_count_ = 0;
-          }
-          return;
-      }
-      hdc_lock_count_ -= count;
-      // `hdc2_` is tested before the count, in that order.
-      if (hdc2_ == nullptr) {
-          return;
-      }
-      if (hdc_lock_count_ <= 0) {
-          if (surface_->ReleaseDC(hdc2_) != 0) {
-              get_graphic_win();
-          }
-          hdc_lock_count_ = 0;
-          hdc2_ = nullptr;
-      }
-  }
+  MEASURED void release_hdc(int count);
   int set_clip(RECT *rect);
   // 0x005D8200. The catalogue's prototype names the last two `length` and
   // `width`, but they are added to the first two to make right and bottom,
