@@ -5830,7 +5830,7 @@ int __cdecl sub_61f790(EdgeScan *edge) {
 }
 
 // ORIGINAL: 0x0061F800 sub_61f800 0x0061F800-0x0061FA24 FILE
-// symbol    ?sub_61f800@@YAXPAX0@Z
+// symbol    ?sub_61f800@@YAXPAUEdgeScan@@0@Z
 // TRIED: the catalogued 1158-byte span is really TWO machine-code functions back to back, each with its OWN complete "push ebp; mov ebp,esp; sub esp,0x24; push ebx/esi/edi" prologue and its own "ret" - a single C++ function cannot emit two prologues, so only the FIRST (0x61F800-0x61FA23, plain per-pixel copy, no colour key) is reproduced; the second (0x61FA30 on, adds a *blit_light_threshold colour-key skip and writes *blit_slot_51c) is a distinct unnamed function the catalogue's size measurement folded into this one.
 // SPAN CORRECTED 2026-08-14, from 1158 bytes to 548. The catalogued span was
 //            two machine-code functions back to back and this row now covers
@@ -5862,11 +5862,12 @@ int __cdecl sub_61f790(EdgeScan *edge) {
 // context from the first token rather than behind a file read. This
 // emitter computes declarations; it does not carry lessons.
 
-// These entries read an EdgeScan-shaped record, but incoming producers remain
-// unknown; keep each recovered entry's existing parameter boundary.
-void __cdecl sub_61f800(void *param_1, void *param_2) {
-    EdgeScan *left = static_cast<EdgeScan *>(param_1);
-    EdgeScan *right = static_cast<EdgeScan *>(param_2);
+// The reconstructed C++ interface uses EdgeScan pointers because each pinned
+// entry dereferences both argument addresses at the existing EdgeScan fields
+// (+0x0c, +0x10, +0x1c, and +0x34 in Gouraud paths). Incoming producers and the
+// original nominal parameter type remain unknown; this is not recovered
+// original-prototype evidence.
+void __cdecl sub_61f800(EdgeScan *left, EdgeScan *right) {
 
     int p1_1c = left->accumC;
     int p2_1c = right->accumC;
@@ -6420,7 +6421,7 @@ int __cdecl sub_61fdf0(EdgeScan *edge) {
 // Fixed-slot bindings carried from 006202e0.cpp
 
 // ORIGINAL: 0x006202E0 sub_6202e0 0x006202E0-0x0062063D FILE
-// symbol    ?sub_6202e0@@YAXPAX0@Z
+// symbol    ?sub_6202e0@@YAXPAUEdgeScan@@0@Z
 // TRIED: the brief's parameterless contract - two stack args are read ([ebp+8],[ebp+0xc]), each a pointer to a record with ints at +0xc/+0x10/+0x1c/+0x34. Traced by hand off the raw disasm (not Ghidra's CONCAT44/CARRY4 pseudocode, whose local-variable names do not line up with the real [ebp-N] slots): a 64-bit fixed-point (dy<<16) divide seeds three per-row steps, an optional pre-step folds in rows below *blit_clip_left, then one of two nearly-symmetric Bresenham loops (sign_c<0 subtracts the row stride instead of adding) walks a source bitmap through a 256x4-byte shade table at *blit_remap_table into the destination. Not chased to byte level - the packed hi16:lo16 carry-accumulator tricks (CONCAT22-style) are reproduced by value, not by the original's exact register packing.
 // working copy - scaffold materialised by --work
 // size      861 bytes
@@ -6444,9 +6445,7 @@ int __cdecl sub_61fdf0(EdgeScan *edge) {
 // context from the first token rather than behind a file read. This
 // emitter computes declarations; it does not carry lessons.
 
-void __cdecl sub_6202e0(void *param_1, void *param_2) {
-    EdgeScan *left = static_cast<EdgeScan *>(param_1);
-    EdgeScan *right = static_cast<EdgeScan *>(param_2);
+void __cdecl sub_6202e0(EdgeScan *left, EdgeScan *right) {
     unsigned short *const g_bb52c_w = &(TextureRasterLightPackA.low_word);
 
     int p1_1c = left->accumC;
@@ -6627,7 +6626,7 @@ void __cdecl sub_6202e0(void *param_1, void *param_2) {
 }
 
 // ORIGINAL: 0x0061FE70 sub_61fe70 0x0061FE70-0x006200FE FILE
-// symbol    ?sub_61fe70@@YAXHH@Z
+// symbol    ?sub_61fe70@@YAXPAUEdgeScan@@0@Z
 // TRIED: nullary sub_61fe70() contract; real signature is two int (address-as-int) params, reused in place like the original's ebp+8/ebp+0xc slot reuse (sim 0.43->0.45). Heavy fixed-point DDA/interpolation body (64-bit idiv/imul via __int64, carry- based pointer advance in two near-duplicate adc/sbb loops) transcribed from the disassembly; register scheduling still diverges from #5, not chased further. Not byte-exact.
 // working copy - scaffold materialised by --work
 // size      654 bytes
@@ -6651,21 +6650,19 @@ void __cdecl sub_6202e0(void *param_1, void *param_2) {
 // context from the first token rather than behind a file read. This
 // emitter computes declarations; it does not carry lessons.
 
-void __cdecl sub_61fe70(int p1, int p2) {
-    EdgeScan *left = reinterpret_cast<EdgeScan *>(p1);
+void __cdecl sub_61fe70(EdgeScan *left, EdgeScan *right) {
     int p1_0xc  = left->accumA;
     int p1_0x10 = left->accumB;
-    p1 = left->accumC;
+    int p1_0x1c = left->accumC;
     TextureRasterLightAccumB.dword = left->accumD;
 
-    EdgeScan *right = reinterpret_cast<EdgeScan *>(p2);
     int p2_0xc  = right->accumA;
-    p2 = right->accumB;
+    int p2_0x10 = right->accumB;
     int p2_0x1c = right->accumC;
     TextureRasterLightStepB = right->accumD;
 
-    if (TextureRasterClipLeft < p2_0x1c && p1 < TextureRasterClipRight && (p2_0x1c - p1) > 0) {
-        int denom = (p2_0x1c - p1) << 16;
+    if (TextureRasterClipLeft < p2_0x1c && p1_0x1c < TextureRasterClipRight && (p2_0x1c - p1_0x1c) > 0) {
+        int denom = (p2_0x1c - p1_0x1c) << 16;
 
         TextureRasterLightPackA.low_word = (short)(((TextureRasterLightStepB - TextureRasterLightAccumB.dword) << 8) / denom);
 
@@ -6683,7 +6680,7 @@ void __cdecl sub_61fe70(int p1, int p2) {
         int dxInt = dxAdj >> 16;
         int xAccum = (dxAdj >> 1) + p1_0xc;
 
-        int dyRaw = p2 - p1_0x10;
+        int dyRaw = p2_0x10 - p1_0x10;
         int dyRatio = (int)(((__int64)dyRaw << 16) / denom);
 
         int dyAdj = dyRatio;
@@ -6702,18 +6699,19 @@ void __cdecl sub_61fe70(int p1, int p2) {
             clampedEnd = TextureRasterClipRight;
         }
 
-        if (p1 < TextureRasterClipLeft) {
-            int skipCount = TextureRasterClipLeft - p1;
+        int start_row = p1_0x1c;
+        if (start_row < TextureRasterClipLeft) {
+            int skipCount = TextureRasterClipLeft - start_row;
             __int64 wide = (__int64)dxRatio * ((__int64)skipCount << 16);
             xAccum = xAccum + (int)(wide >> 16);
             wide = (__int64)dyRatio * ((__int64)skipCount << 16);
             yAccum = yAccum + (int)(wide >> 16);
             wide = (__int64)(unsigned short)TextureRasterLightPackA.low_word * ((__int64)skipCount << 16);
             TextureRasterLightAccumB.dword = TextureRasterLightAccumB.dword + (int)(wide >> 16);
-            p1 = TextureRasterClipLeft;
+            start_row = TextureRasterClipLeft;
         }
 
-        int count = clampedEnd - p1;
+        int count = clampedEnd - start_row;
 
         unsigned short yHi = (unsigned short)((unsigned int)yAccum >> 16);
         short prod16 = (short)((short)yHi * (short)(TextureRowPitchScratch & 0xffff));
@@ -6721,7 +6719,7 @@ void __cdecl sub_61fe70(int p1, int p2) {
         int srcAccum = (int)xHi + (unsigned short)prod16;
         srcAccum += texture_pointer_address(TextureRasterScratch544);
 
-        int dst = TextureRasterRowOffset + p1;
+        int dst = TextureRasterRowOffset + start_row;
 
         if (TextureRasterSignedPitch < 0) {
             dyRatio = -dyRatio;
@@ -6796,7 +6794,7 @@ void __cdecl sub_61fe70(int p1, int p2) {
 // Fixed-slot bindings carried from 00620640.cpp
 
 // ORIGINAL: 0x00620640 sub_620640 0x00620640-0x00620A10 FILE
-// symbol    ?sub_620640@@YAXHH@Z
+// symbol    ?sub_620640@@YAXPAUEdgeScan@@0@Z
 // TRIED: MISMATCH #3 (mov vs push, prologue) - full transcription of both loop bodies (dxStep<0 and dxStep>=0), all field reads/ writes, and the two 64-bit divides. Ghidra's CONCAT44/CARRY macros were replaced by their algebraic equivalents rather than copied literally: `(uint)(P>>0x10) | (int)(P>>0x20)<<0x10` for a 64-bit product P is exactly `(uint)(P>>16)`, and the byte-add-with-manual-+0x100-on-carry dither-table index is exactly a plain 32-bit pointer add (verified by hand: the 8-bit carry-out always lands on the same bit the `add ebx,0x100` sets). Not expected byte-exact at 976 bytes of dense fixed-point DDA arithmetic.
 // working copy - scaffold materialised by --work
 // size      976 bytes
@@ -6820,9 +6818,7 @@ void __cdecl sub_61fe70(int p1, int p2) {
 // context from the first token rather than behind a file read. This
 // emitter computes declarations; it does not carry lessons.
 
-void __cdecl sub_620640(int param_1, int param_2) {
-    EdgeScan *left = reinterpret_cast<EdgeScan *>(param_1);
-    EdgeScan *right = reinterpret_cast<EdgeScan *>(param_2);
+void __cdecl sub_620640(EdgeScan *left, EdgeScan *right) {
     int y1 = left->accumC;
     TextureRasterLightAccumB.dword = left->accumD;
     int y2 = right->accumC;
