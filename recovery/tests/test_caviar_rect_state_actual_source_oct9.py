@@ -4,6 +4,7 @@ import shutil
 import subprocess
 import tempfile
 
+from match_recovery.object_source import read_objects
 
 HERE = Path(__file__).resolve().parent
 ROOT = next(parent for parent in HERE.parents if (parent / "src/caviar.cpp").is_file())
@@ -18,8 +19,14 @@ def source_statement(source, statement):
 
 def test_rect_accumulators_use_real_rect_storage_and_aliasing_calls():
     source = PRODUCT.read_text()
-    assert "RECT CaviarViewportState;  // 0x009B9690" in source
-    assert "RECT scene_rect_;        // 0x9BB438" in source
+    assert source_statement(source, "RECT CaviarViewportState") == "RECT CaviarViewportState;"
+    assert source_statement(source, "RECT scene_rect_") == "RECT scene_rect_;"
+    objects = read_objects(ROOT, "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf")
+    bindings = {row.origin.address: row for row in objects
+                if row.unit == "src/caviar.cpp" and row.origin.address in (0x9B9690, 0x9BB438)}
+    assert set(bindings) == {0x9B9690, 0x9BB438}
+    assert bindings[0x9B9690].symbol == "?CaviarViewportState@?%src/caviar.cpp@@3UtagRECT@@A"
+    assert bindings[0x9BB438].symbol == "?CaviarScene@?%src/caviar.cpp@@3UCaviarSceneRecord@1@A"
     assert "CaviarViewportState[" not in source
     assert "CaviarScene.field_00_" not in source
     assert source.count("UnionRect(&CaviarViewportState,") == 2

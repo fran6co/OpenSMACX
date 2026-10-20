@@ -3,10 +3,11 @@ from pathlib import Path
 import os
 import shutil
 import subprocess
+from collections import Counter
 
 import pytest
 
-from match_recovery.source import read_text
+from match_recovery.source import read, read_text
 from test_caviar_draw_callbacks_actual_source import extract
 from test_texture_raster_actual_source import _continuity_fields
 from test_function_span_tails_oct11 import expected_extended_record
@@ -25,18 +26,54 @@ def test_original_identity_claim_and_symbol_continuity():
 
 
 def assert_caviar_owner_continuity(before):
-    """Allow observed CPU ownership and exact typed-API symbol transitions."""
+    """Retain historical Caviar identities across their current source owners."""
     from test_caviar_record_api_typing_oct12 import assert_api_symbol_transition
-    path = ROOT / "src/caviar.cpp"
-    after = read_text(path.read_text(), path)
-    cpu_path = ROOT / "src/caviar_cpu.cpp"
-    after += read_text(cpu_path.read_text(), cpu_path)
-    by_address = {r.address: r for r in after}
-    assert len(by_address) == len(after) == len(before)
+    old_addresses = {record.address for record in before}
+    by_address = {}
+    for record in read(ROOT / "src"):
+        if record.address in old_addresses:
+            by_address.setdefault(record.address, []).append(record)
+    assert set(by_address) == old_addresses
+    assert all(len(records) == 1 for records in by_address.values())
+
+    def lessons(row):
+        return Counter((item.kind, item.key, item.prose,
+                        tuple(text for _, text in item.lines))
+                       for item in (row.origin or ()))
+
+    def retained_history(old, new):
+        for field in ("levers", "ruled_out", "unrecoverable", "deferred"):
+            before_rows = Counter(getattr(old, field))
+            after_rows = Counter(getattr(new, field))
+            if old.address == 0x616DA0 and field == "levers":
+                old_rows = [row for row in before_rows if row[0] == "0"]
+                new_rows = [row for row in after_rows if row[0] == "0"]
+                assert len(old_rows) == len(new_rows) == 1
+                old_correction, new_correction = old_rows[0], new_rows[0]
+                assert "FOLDED into the implicit array construction" in old_correction[1]
+                assert "VoxInstance" in new_correction[1]
+                before_rows[old_correction] -= 1
+                after_rows[new_correction] -= 1
+                before_rows += Counter()
+                after_rows += Counter()
+            assert before_rows <= after_rows
+        before_lessons, after_lessons = lessons(old), lessons(new)
+        if old.address == 0x616DA0:
+            old_rows = [row for row in before_lessons if row[:2] == ("lever", "0")]
+            new_rows = [row for row in after_lessons if row[:2] == ("lever", "0")]
+            assert len(old_rows) == len(new_rows) == 1
+            old_correction, new_correction = old_rows[0], new_rows[0]
+            assert "FOLDED into the implicit array construction" in old_correction[2]
+            assert "VoxInstance" in new_correction[2]
+            before_lessons[old_correction] -= 1
+            after_lessons[new_correction] -= 1
+            before_lessons += Counter()
+            after_lessons += Counter()
+        assert before_lessons <= after_lessons
+
     for record in before:
         record = expected_recorded_tail(expected_extended_record(record))
-        # The independently verified Oct12 extent repair completed these two
-        # exact returns. Retain every other historical field and bound.
+        # Preserve the separately validated complete RET 4 instruction spans.
         prior_extents = {
             0x618560: (((0x618560, 0x61859F),), ((0x618560, 0x6185A0),)),
             0x6183D0: (((0x6183D0, 0x618424),), ((0x6183D0, 0x618426),)),
@@ -46,18 +83,33 @@ def assert_caviar_owner_continuity(before):
             previous, complete = prior_extents[record.address]
             assert record.image_spans in (previous, complete)
             record = replace(record, image_spans=complete)
-        current = by_address[record.address]
+        current = by_address[record.address][0]
         assert record.function_fragment == current.function_fragment
         if record.address == 0x63E860:
             from match_recovery.source.model import Mode
-            old_fields = _continuity_fields(record)
-            new_fields = _continuity_fields(current)
             assert record.mode is Mode.BODY and current.mode is Mode.FILE
-            assert old_fields[:1] + old_fields[2:] == new_fields[:1] + new_fields[2:]
+            assert record.address == current.address
+            assert record.name == current.name
+            assert record.image_spans == current.image_spans
+            assert record.kind == current.kind and record.exclusion == current.exclusion
+            assert record.source_role == current.source_role
+            assert record.source_role_reason == current.source_role_reason
+            assert not record.byte_exact or current.byte_exact
+            assert not record.semantic or current.semantic or current.byte_exact
+            retained_history(record, current)
             assert current.symbol == "?vox_detect_cpu@@YAXXZ"
         else:
-            assert _continuity_fields(record) == _continuity_fields(current)
-            assert_api_symbol_transition(record.address, record.symbol, current.symbol)
+            assert record.address == current.address
+            assert record.mode == current.mode
+            assert record.name == current.name
+            assert record.image_spans == current.image_spans
+            assert record.kind == current.kind and record.exclusion == current.exclusion
+            assert record.source_role == current.source_role
+            assert record.source_role_reason == current.source_role_reason
+            assert not record.byte_exact or current.byte_exact
+            assert not record.semantic or current.semantic or current.byte_exact
+            retained_history(record, current)
+            assert_api_symbol_transition(record.address, record.symbol, current.symbol, current)
 
 
 def test_pinned_original_unordered_gates_and_relative_link():
