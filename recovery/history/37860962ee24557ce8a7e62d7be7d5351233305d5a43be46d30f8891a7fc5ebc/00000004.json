@@ -1,0 +1,19 @@
+{
+  "event_id": "7cbf010302cfa0b73dec3cae27d3d2adf67e9d48a61a140da5c6cdaa473712a9",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "radiobutton-repeated-hover-original-redraw-oct20e",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Original60E463-488retains only selected&&hover==-1earlyreturn, otherwiseunconditionallystoreshover/redrawsevenonrepeatedsameposition. Preserveoriginalgeometry, cursor/unsafe paths and eventorder; oldrepeat-test expectationcorrected fromoriginalpin, extra-guardrestorationmutantfails.",
+      "Combined63542cpp/8000test source frozen, independently reviewed against original and actual-source harness. Fresh177CPP191objectcandidatebuild/linkPASS; qualified-candidate-v2.json rehashes191historicala7a9objects and freshlyqualifiesall177candidatecompilereceipts. Native191outside-objectPASSwithONLYactualdecoratedkey/mousefunctions andverifiedassociateddebugsidecarsprojected. All27metadata/claims/lessontextcontinuous, same19exact1refused7mismatch, noexactgains/losses. Bothselectedbodiesstillmismatch, no claim banked/demoted. Focusedcoordinatorrerun11hosttestsPASS includingcallbacks/order/live-state/hovermatrixanddamagemutants.",
+      "Coordinator authorizes manualintegration understandinguserdirection, retainingoriginalbdd1711taskbaseline and all priorRootAlphaMenu/PrefWin/GameIOdebts unwaived. No headers/layout/ABI/flags/otherbodychanges; no automatic/full-linked/runtime/gameacceptance. Prior key-onlyhandwrittenqualificationhasinconsistentmanualreceiptdigest/source-labelfields and isNOTfinalevidence; combined v2 usesactualfreshreceipts. Anextraunrelatedoldsuite13PASS1FAILstaleConsoleMEASUREDexpectationremainsunmodified, interruptedoldclaimcheckUNKNOWN. Rootfreshbatchbuild/link/source/claim/referencecheckrequiredafterintegration; noprojectionwidening orbaseline reset."
+    ]
+  },
+  "previous_event": "cdbcd194967babfeb1e1c17ae1120ce8bd81c68b720c71008965ad3471fa59fa",
+  "request_id": "radiobutton-repeated-hover-original-redraw-oct20e-reviewed",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:radiobutton-input-structure-oct16"
+}

@@ -594,10 +594,8 @@ void RadioButton::on_mouse_move(int x, int y) {
                          Dialog::item_list_.current_position_;
     if (position == Dialog::selected_position_ && Dialog::field_F0_ ==
         static_cast<uint32_t>(-1)) return;
-    if (Dialog::field_F0_ != static_cast<uint32_t>(position)) {
-        Dialog::field_F0_ = static_cast<uint32_t>(position);
-        redraw();
-    }
+    Dialog::field_F0_ = static_cast<uint32_t>(position);
+    redraw();
 }
 
 
@@ -856,8 +854,8 @@ int RadioButton::on_key_down(int key) {
 
     Dialog::field_F0_ = 0xFFFFFFFFu;
     draw_item(previous, 0);
-    if (double_click_callback_ != 0) {
-        double_click_callback_(static_cast<int>(selected_position_));
+    if (selection_callback_ != 0) {
+        selection_callback_(static_cast<int>(selected_position_));
     }
     draw_item(static_cast<int>(selected_position_), 1);
     soft_update();
