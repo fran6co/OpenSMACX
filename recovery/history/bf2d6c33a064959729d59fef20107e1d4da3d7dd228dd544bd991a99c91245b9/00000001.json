@@ -1,0 +1,22 @@
+{
+  "event_id": "5341cc2686ffc0fcb25d65d4b066b0ddecb5b0ea099587284a4a4c0e45d42247",
+  "payload": {
+    "affects": [
+      "entity-3d7e9d6f096254fa3e190a7c352fd154993956afc092773953c90f6609c6bb77",
+      "entity-9de9d6fd472499644bcd4f7986236bd6b45c6cd469d58ebf2b8c06336e83ad4e"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "retired-adapter-body-extraction-oct20am",
+    "evidence": [
+      "Native read_file preserves 607CE0 BaseButton deleting adjustor and406880 actual inline FlatButton destructor identities/symbols/spans/claims/lessons, but extract_error becomes no closing brace after removal of unrelated adapter bodies. Neither original compiler body is removed from the fresh object; whole actual census remains3329exact and2766strict.",
+      "607CE0 is compiler-emitted deleting adjustment;406880 is genuine in-class destructor defined in flatbutton.h and emitted in flatbutton.cpp. Both mappings need FILE mode rather than pretending the following construct/destroy adapter implements them."
+    ],
+    "hypothesis": "Two existing generated/in-header function mappings extracted the next fabricated adapter instead of their actual compiler-emitted body; retiring that adapter exposes the incorrect BODY mode.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "retired-adapter-body-extraction-oct20am",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:button-unused-lifecycle-adapters-oct20am"
+}

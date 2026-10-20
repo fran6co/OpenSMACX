@@ -69,7 +69,6 @@ class BaseButton : public GraphicWin {
   BaseButton();
   ~BaseButton();
 
-  BaseButton *construct();
   // BaseButton introduces slot 90 after GraphicWin's 88/89. Constructor
   // 606F77 installs table 670290, whose +168 entry selects close6070C0;
   // init607217 dispatches it before testing its arguments. Derived buttons
@@ -82,7 +81,6 @@ class BaseButton : public GraphicWin {
            Win *parent, int style_flag);
   void UNK2();
   void on_mouse_leave(int x, int y);
-  BaseButton *destroy();
   void set_text_color(int color1, int color2, int color3, int color4);
   void set_text_color2(int color1, int color2, int color3, int color4);
   void set_text_color3(int color1, int color2, int color3, int color4);

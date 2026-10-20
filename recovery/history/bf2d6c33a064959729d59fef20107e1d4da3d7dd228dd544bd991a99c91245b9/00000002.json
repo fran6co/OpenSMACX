@@ -1,0 +1,21 @@
+{
+  "event_id": "a547a4bb849e510dfea36d2c2717c3c7143e48c9061f827efad3228521f9d99e",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/basebutton.cpp",
+      "src/flatbutton.cpp"
+    ],
+    "evidence": [
+      "Coordinator authorizes only native source writer Mode.FILE conversion of existing607CE0 and406880 records, preserving original identity, all spans, symbol, kind, state and complete historical claims/lessons. No other annotation/mode/body/flags/retention changes or hand-written markers/claim grants. Re-freeze and verify fresh source, compiler output, matching and continuity afterward. This repairs false source-body association, not new coverage or byte-exact evidence.",
+      "Native physical183PASS10FAIL includes8unrelated owner code differences after header declarations were removed; these remain unexplained and unwaived pending actual attribution and independent review. FILE mode does not waive any body or physical residual."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "5341cc2686ffc0fcb25d65d4b066b0ddecb5b0ea099587284a4a4c0e45d42247",
+  "request_id": "authorize-generated-file-mode-oct20am",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:button-unused-lifecycle-adapters-oct20am"
+}

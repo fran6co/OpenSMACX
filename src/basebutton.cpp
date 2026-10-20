@@ -52,9 +52,7 @@ Purpose: Construct the GraphicWin base and two Time members, then install the
          BaseButton tables and process defaults.
 // ORIGINAL: 0x00606F30 ??0BaseButton@@QAE@XZ 0x00606F30-0x00607033;0x00662E50-0x00662E70 BYTE_EXACT
 // The original initializes GraphicWin and two Time members before these
-// fields. The real constructor owns that lifetime; construct() is only a
-// legacy calling adapter. Bind the original to the compiler constructor,
-// not to the placement-new wrapper's extra checks and duplicated work.
+// fields. The real C++ constructor owns their lifetimes.
 // symbol    ??0BaseButton@@QAE@XZ
 // size      291 bytes
 // prototype void (__thiscall ??0BaseButton@@QAE@XZ)(BaseButton* this)
@@ -88,10 +86,6 @@ BaseButton::BaseButton() {
     field_A98_ = BaseButtonA98Default;
     field_AA4_ = 0;
     field_AA0_ = DialogDefaults[4];
-}
-
-BaseButton *BaseButton::construct() {
-    return new (this) BaseButton();
 }
 
 void __cdecl base_button_timer_callback(int stage, void *context);
@@ -155,8 +149,7 @@ Purpose: Destroy a BaseButton by installing its two virtual tables, closing
 // ORIGINAL: 0x00607040 ??1BaseButton@@QAE@XZ 0x00607040-0x006070B9;0x00662E70-0x00662E9E BYTE_EXACT
 // The real destructor closes this object and lets C++ destroy its Time
 // members and GraphicWin base. Its inherited virtuality emits UAE instead
-// of the catalogue's QAE. The symbol binding must select this destructor,
-// not the separate destroy() adapter, which has no member-unwind frame.
+// of the catalogue's QAE. The symbol binding must select this destructor.
 // symbol    ??1BaseButton@@UAE@XZ
 // size      167 bytes
 // prototype void (__thiscall ??1BaseButton@@QAE@XZ)(BaseButton* this)
@@ -182,7 +175,7 @@ BaseButton::~BaseButton() {
 /*
 Purpose: Step the receiver back to the subobject ??_GBaseButton@@UAEPAXI@Z
          expects, then forward unchanged.
-// ORIGINAL: 0x00607CE0 ??_GBaseButton@@WEEE@AEPAXI@Z 0x00607CE0-0x00607CEB BYTE_EXACT
+// ORIGINAL: 0x00607CE0 ??_GBaseButton@@WEEE@AEPAXI@Z 0x00607CE0-0x00607CEB FILE BYTE_EXACT
 // MOVED HERE from flatbutton.cpp, 2026-09-03. flatbutton.obj emits no
 //        BaseButton symbol at all, so the claim measured UNRESOLVED from
 //        there; ??_EBaseButton is defined by this object alone, because this
@@ -203,12 +196,6 @@ Purpose: Step the receiver back to the subobject ??_GBaseButton@@UAEPAXI@Z
 Return Value: the forwarded call's
 Status: Complete
 */
-
-BaseButton *BaseButton::destroy() {
-    this->BaseButton::~BaseButton();
-    return this;
-}
-
 
 /*
 Purpose: Set the button's bubble text.

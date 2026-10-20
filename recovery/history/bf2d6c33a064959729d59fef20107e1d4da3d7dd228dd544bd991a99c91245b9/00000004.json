@@ -1,0 +1,33 @@
+{
+  "event_id": "f2da008b1100124f0e1c17ae7b024bb8501d53bc946555a579066c830467cad3",
+  "payload": {
+    "affects": [
+      "entity-1c59933cf2aaf6a966010c527222be587159865cda835d79a88c67aeff5f1ee0",
+      "entity-21a0ac47b9730b4dfb23af579f0ddc1c680ac96d8e9cbb75518f654a9673b062",
+      "entity-246f6cb71b6a283b36dc563c7530f89355b470b3762f358fdf850e192e3845a4",
+      "entity-36d0cb2cbd52d912455a184a4f6bb8b671bd9eb400d69020794d91f7a2abe9fc",
+      "entity-3d2ed9906a5d731cbf3ad8f2aa6a302a146a224324e08704fe21b89b56c93255",
+      "entity-5593b94b5eb67a238f9d41720f181fb144a174410bc5c7c346e65df78e6bbc72",
+      "entity-5c25bc16f695317409749d1efaa0b2a5f125636c6f028683bbc7375ec67afe93",
+      "entity-641d754fd910391863b52da5d4734fc4b59058ad942043db206f642b762e0e62",
+      "entity-7d8176751703cb7d8caa38917ee097499bb12c1624819b3dd971ad2d9ac57af6",
+      "entity-c3ab6505cda74476379be71d572ca1adfe37784f992bf5d8728e321d44f07b68",
+      "entity-dbb0fd698c3dd436b3ae53f8bfb41e6ee9c8bbb3091daa314d73a9e553fde236",
+      "entity-e2a3e61424aadb162163db797edd0287ebbc9268b43d6ab2f8d80543a5ec4ccf",
+      "entity-e93b450e5f1722bb2f5ccf623695e0addc2ebf7fbef7b01e1663f89e4fd5e90b"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "header-removal-codegen-collateral-oct20am",
+    "evidence": [
+      "Fresh zero-projection physical comparison against prior verified master is183PASS10FAIL. Outside basebutton/flatbutton,8objects change13functions: base_energy;Console::new_base;communicate;make_gift;enemy_strategy;end_of_game;colortables_init_faction;load_interface;tech_achieved;TutWin::tour;battle_compute;boom;order_veh. Actual unique emitted-name/source-record enumeration corrects the preceding incorporation summary typo of14functions to13. These were already nonexact and remain nonexact; all prior exact/strict entities remain.",
+      "Independent review saw a swapped pair of independent stack loads in base_energy consistent with scheduling, but did not establish every reference-bearing difference harmless. All193objects reproduce exactly in a second fresh final candidate build, so differences are stable observations, not erased compiler noise. Source edits outside button/audit authorized files are absent. Retain remaining native preservation/effect obligations rather than waiving physical failures."
+    ],
+    "hypothesis": "Removing three unused nonvirtual adapter declarations changes VC6 emission in thirteen already-mismatching functions outside the button owners; complete effect attribution remains unproven.",
+    "kind": "discovery"
+  },
+  "previous_event": "ee4c68cd15d70d6d9b04f1c59ac3d8034d9e7cb358550163d80079855108fbe5",
+  "request_id": "header-removal-codegen-collateral-oct20am",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:button-unused-lifecycle-adapters-oct20am"
+}
