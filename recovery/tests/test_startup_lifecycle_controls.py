@@ -229,7 +229,7 @@ def test_transcript_array_ctor_dtor_vector_order_and_mutation_controls(tmp_path:
     assert (rows, cols) == (8, 8), "native helper evidence is for exactly 64 elements"
     _mapped_record("src/diplowin.cpp", 0x00440F30, "sub_440f30", (0x00440F30, 0x00440F54), "_$E13", True)
     _mapped_record("src/diplowin.cpp", 0x00440F60, "sub_440f60", (0x00440F60, 0x00440F74), "_$E11", True)
-    _mapped_record("src/diplowin.cpp", 0x004450B0, "sub_4450b0", (0x004450B0, 0x0044511C), "??0StringList@@QAE@XZ", False)
+    _mapped_record("src/diplowin.cpp", 0x004450B0, "sub_4450b0", (0x004450B0, 0x0044511C), "??0StringList@@QAE@XZ", True)
     objects = [row for row in read_objects(ROOT, image_pin(ROOT)) if row.origin.address == 0x00737CD8]
     assert len(objects) == 1
     assert objects[0].symbol == "?DiplomacyTranscriptLists@@3PAY07VStringList@@A"

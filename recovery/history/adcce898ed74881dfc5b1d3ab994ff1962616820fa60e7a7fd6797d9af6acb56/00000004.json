@@ -1,0 +1,20 @@
+{
+  "event_id": "d8d5ad79683bd3016b3f1e2a73a2f66ed463d8499015b70b8c9fd083cdf507e7",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_startup_lifecycle_controls.py"
+    ],
+    "evidence": [
+      "Native recover record4450B0 exited0 and published the new exact claim after full original-spanned compiler measurement. Post-record startup tests incorrectly require that this source identity remain unclaimed; two host parameterizations fail only on True-is-False annotation state.",
+      "Authorize only the4450B0 mapping expectation False->True in the existing startup test. This strengthens protection of the newly banked historical obligation and preserves exact identity/symbol/span assertions. No original behavior/lifetime/array-order oracle, mutant, history pin, source claim, helper assertion or test selection may be weakened. All41 selected host controls must rerun after this update. No new C++ edit or acceptance grant."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "931d32bec06b6f0cbeb3d4dbd539e504ae095413747d97c0abd690d6bc71993e",
+  "request_id": "stringstruct-require-recorded-startup-claim-oct20ab",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:matching-stringstruct-inline-oct20ab"
+}
