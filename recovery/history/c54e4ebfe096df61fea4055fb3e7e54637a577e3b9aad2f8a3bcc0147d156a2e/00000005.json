@@ -1,0 +1,18 @@
+{
+  "event_id": "9172ff50c7f1011040e1b22bafeb0c691bcc6b6fd5b48bc13a49cc8d5238e68b",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "listbox-typeahead-stale-cursor-discovery-oct20e",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Source2ec73e33 preserves original linked current/ordinal traversal for stale high and too-negative selections, direct text faults, mapped low-byte zero test, post-mapping live selection reload and cursor setup before live zero-count guard. Pinned60B34F..60B49D and independentreview/actual-source mutants support those effects. Priorpartialc891draftnativebuild retained as intermediate, not integrated.",
+      "Fresh applicationbuild/link actualrecipe/inputcorrespondence, all43mapping/claim/lessoncontinuity and sourcechecks pass; all191physicalobjects preserveoutsideonlyon_key_down. Full52hostcasespasswhenrunfromworkerroot; initial47/5reportkept, failurewasrelative read_text provenance resolvingagainstwrongprocessCWD, no testweakening orlibrarychanges. KeyentryremainsMISMATCH; 21exact18mismatch3sharedtail1refusedTUobservations, allclaims/originalbaseline1c8b944fretained. No full linked/game/automatic acceptance."
+    ]
+  },
+  "previous_event": "ae43580fa454a067aea024b7ef19449f293203e6771675e160ef9e31e8f744d6",
+  "request_id": "listbox-typeahead-original-cursor-source-incorporated-oct20e",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:listbox-geometry-owner-oct20"
+}
