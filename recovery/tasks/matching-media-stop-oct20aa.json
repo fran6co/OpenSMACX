@@ -1,0 +1,244 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "cd036e813ede724af4e71595496d37b7073aea9d",
+  "editable_files": [
+    "src/movie_media.cpp",
+    "src/movie_media.h",
+    "recovery/tests/test_media_state_observations_oct20z.py"
+  ],
+  "evidence": [
+    "Standing user permission: cheaper parallel recovery workers, native installed framework, coordinator-reviewed manual integration. Original bug-for-bug milestone, preserve genuine C++ and every historical identity/span/claim. All current owner identities included; ownership does not prove original TU boundaries or executable completeness.",
+    "Current source and fresh actual application COFF at cd036e813ede724af4e71595496d37b7073aea9d were screened against pinned original and recorded failed forms before task creation. Authorize at most two unexhausted natural function-body candidates per selected target. Use native local-variant overlays with unchanged compiler recipes, unchanged controls and explicit damage controls. Exploratory exactness is not acceptance or a banked claim.",
+    "Preserve original signed arithmetic, unsafe/error paths, initialization, read/write/call order and callback-visible reloads. No flags/CMake/policy changes, volatile forcing, inline/noinline/export attributes, assembly/machine bytes, fixed executable calls, guessed types, new adapter, test weakening or baseline reset. Header/type/ownership discoveries require explicit coordinator expansion/review before a structural migration.",
+    "Workers write only ignored evidence/decks in isolated worktrees until a measured winner is selected; no native compiler/provider/Git mutation. Coordinator owns leases/preparation, finite native measurements, actual source selection, symbol publication/recording, independent review, build/link and scoped continuity/reference/residual validation. No automatic/game/runtime/linked-selection acceptance is inferred. Preserve discoveries and failed trials; do not churn known exhausted forms.",
+    "Pinned 5CB660 initializes saved protocol gate to zero, conditionally reads runtime+3D0, then requests state4 via InterlockedExchange. Thus null runtime takes the state5 wait, unlike the current default6 translation. Correct the original null case without adding safety, timeout, initialization or thread-safety improvements.",
+    "Shared protocol-state evidence and SDK constraints were independently established in matching-media-oct20z. Authorize ordinary branch-local polling with a local const volatile LONG reference for demonstrated state observations, preserving one post-exchange initial sample before selecting the saved-gate path, and per-Sleep rereads. Keep LONG member, SDK calls and producer APIs unchanged. This is real shared-state observation, not arbitrary volatile scheduling or an atomicity guarantee.",
+    "Existing focused media test file may gain actual-source stop-helper controls: null runtime, saved gate, state4 request, state5/6 waits, Sleep10 and return0, with compiling mutants and pinned image facts through native format APIs. Preserve the complete readiness helper claim and all prior tests. No fake concurrency/runtime proof. All other owners remain unchanged unless separately authorized."
+  ],
+  "intent": "Restore original compiler output using a finite evidence-backed owner-body screen: media-stop",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6069952,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6070832,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6071056,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6072000,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6072688,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6073008,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6073856,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6073984,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6074448,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6074912,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6075920,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6076000,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6076096,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6077152,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6077376,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6077440,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6078000,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6078800,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6079152,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6079536,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6079568,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6080272,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6080608,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6080832,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6083280,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6083504,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6083936,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6084432,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6084816,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6084992,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6085168,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6085328,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6085520,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6085904,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6086560,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6087344,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6087408,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6087488,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6087760,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6087856,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6088224,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6091040,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6093549,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6095564,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "matching-media-stop-oct20aa"
+}
