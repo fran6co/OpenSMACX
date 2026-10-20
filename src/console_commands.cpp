@@ -1031,16 +1031,16 @@ void Console::editor_diplomacy() {
 // The original order at 0x004D7BE0 checks the rover's plan, chassis and
 // current terrain before placing a road cursor.
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x004D7BE0 ?road_to@Console@@QAEXHH@Z 0x004D7BE0-0x004D7CED
+// ORIGINAL: 0x004D7BE0 ?road_to@Console@@QAEXHH@Z 0x004D7BE0-0x004D7CED BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004d7be0.cpp"], "reason": "Seed 004d7be0 identifies the Console road cursor order and extent; typed vehicle, prototype, terrain and technology owners preserve the sequence."}
 void Console::road_to(int veh_id, int cursor_mode) {
     const Veh &vehicle = Vehs[veh_id];
-    const VehPrototype &prototype = VehPrototypes[vehicle.proto_id];
-    if (prototype.plan != 9) {
+    const int prototype_id = Vehs[veh_id].proto_id;
+    if (VehPrototypes[prototype_id].plan != 9) {
         NetMsgPrimary.pop("NEEDTERRAFORMERS", 5000, 0, 0);
         return;
     }
-    if (Chassis[prototype.chassis_id].triad != TRIAD_LAND) {
+    if (Chassis[VehPrototypes[prototype_id].chassis_id].triad != TRIAD_LAND) {
         NetMsgPrimary.pop("NOTINTRIAD", 5000, 0, 0);
         return;
     }
