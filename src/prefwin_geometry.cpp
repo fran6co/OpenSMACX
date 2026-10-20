@@ -425,7 +425,7 @@ Return Value: n/a
 Status: Complete
 */
 // RECOVERY_OBJECT: v2 0x008577E0 0x008577E4 ?PrefWinGeometryValue_8577E0@@3HA 0x0048D790
-int32_t PrefWinGeometryValue_8577E0 = static_cast<int32_t>(static_cast<uint32_t>(PrefWinGeometryValue_8578B0) - static_cast<uint32_t>(PrefWinGeometryConstant_686B78) - static_cast<uint32_t>(PrefWinGeometryValue_8577DC));
+int32_t PrefWinGeometryValue_8577E0 = static_cast<int32_t>(static_cast<uint32_t>(PrefWinGeometryValue_8578B0) - static_cast<uint32_t>(PrefWinGeometryValue_8577DC) - static_cast<uint32_t>(PrefWinGeometryConstant_686B78));
 
 /*
 Purpose: sub_48d7b0 - arithmetic over 3 fixed global(s), one

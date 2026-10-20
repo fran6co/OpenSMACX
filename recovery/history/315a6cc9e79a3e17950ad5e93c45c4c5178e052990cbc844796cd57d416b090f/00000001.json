@@ -1,0 +1,22 @@
+{
+  "event_id": "8484f866d27442dec4c99edd2bedf62ed79a301514a0423c7ae3ba8f0459cd84",
+  "payload": {
+    "affects": [
+      "entity-48d774d957cbb965c23d1a9fefca9c01c18842cd04f3a65c99ac657bff15c902",
+      "entity-5ff2a8c4c981b017e5bddd1ae59a3f216ef9594722c27e41b2a79160222db97c",
+      "entity-8c43c82c4b414475d04f98c841520127d17642c6ef502b76b57469965d85b452"
+    ],
+    "author": "coordinator",
+    "discovery_id": "finite-natural-form-no-gain",
+    "evidence": [
+      "The finite actual Release25mapping screen gains no exact body, worsens the local three loop scores and changes inlined timer_callback5AD9E0 outside the proposed three-body residual; that residual remains failed, not waived. Actual source controls cover512sites, holes, first duplicate, return semantics and meaningful safe mutants."
+    ],
+    "hypothesis": "Typed pointer loops restore the three ReplayWin base-site methods more faithfully than their existing indexed loops.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "finite-natural-form-no-gain",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:replay-sites-cohort-oct20c"
+}
