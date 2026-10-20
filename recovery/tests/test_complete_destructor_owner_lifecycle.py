@@ -24,13 +24,15 @@ EXPECTED = {
     0x4080B0: {
         "name": "sub_4080b0", "span": ((0x4080B0, 0x4080D3),),
         "emitted": "??_DListBox@@QAEXXZ",
-        "identity_sha256": "7f40e52c1ff3ef507b71d0c25dfd2abaf2fdf382b0a3a1768c0f9b1a6768afa7",
+        "historical_claims": {"byte_exact": False, "semantic": False},
+        "identity_sha256": "2777b907aeeb691b890df7fc7bc62754a19aefb53c3f078595404102d0debdd9",
         "envelope_sha256": "70a83c580e4e9e8fb68dc8242a1600ace29ea9d13c303d3766643ed345f5ad22",
     },
     0x406AF0: {
         "name": "sub_406af0", "span": ((0x406AF0, 0x406B16),),
         "emitted": "??_DDialogs@@QAEXXZ",
-        "identity_sha256": "f82f593c27defa1d3ce24e6a302818296972d065fd8ccf1161b5a82065c219ca",
+        "historical_claims": {"byte_exact": False, "semantic": False},
+        "identity_sha256": "f99313558dfd9cd103ba07379b570cd336ebdbe01eeab0b083fd8367d62f7eb3",
         "envelope_sha256": "5ad2c6040e39375aec52f29e501ddd98b12bdebb4e038d81f02f2de8b6f38047",
     },
 }
@@ -43,7 +45,6 @@ def source(rel: str) -> str:
 def annotation_digest(row) -> str:
     value = {
         "name": row.name, "spans": row.image_spans, "kind": row.kind,
-        "byte_exact": row.byte_exact, "semantic": row.semantic,
         "levers": row.levers, "ruled_out": row.ruled_out,
         "unrecoverable": row.unrecoverable, "deferred": row.deferred,
         "origin": [(item.kind, item.key, item.prose,
@@ -51,6 +52,12 @@ def annotation_digest(row) -> str:
                    for item in row.origin or ()],
     }
     return hashlib.sha256(json.dumps(value, sort_keys=True).encode()).hexdigest()
+
+
+def historical_claims_preserved(historical: dict, current) -> bool:
+    return ((not historical["byte_exact"] or current.byte_exact)
+            and (not historical["semantic"]
+                 or current.semantic or current.byte_exact))
 
 
 def extract_definition(text: str, signature: str) -> str:
@@ -70,12 +77,15 @@ def extract_definition(text: str, signature: str) -> str:
 
 def test_original_complete_destructor_identities_are_rehomed_without_claim_loss():
     found = {}
-    for rel in ("src/datalink.cpp", "src/factionprofilewin.cpp"):
+    for rel in ("src/datalink.cpp", "src/factionprofilewin.cpp", "src/basepop.cpp"):
         for row in read_file(SOURCE / rel):
             if row.address in EXPECTED:
                 assert row.address not in found
                 found[row.address] = row
     assert set(found) == set(EXPECTED)
+    assert found[0x406AF0].path.name == "basepop.cpp"
+    assert not [row for row in read_file(SOURCE / "src/factionprofilewin.cpp")
+                if row.address == 0x406AF0]
     for address, expected in EXPECTED.items():
         row = found[address]
         assert row.name == expected["name"]
@@ -83,14 +93,18 @@ def test_original_complete_destructor_identities_are_rehomed_without_claim_loss(
         assert row.mode.value == "file"
         assert row.symbol == expected["emitted"]
         assert row.kind == "game"
-        assert not row.byte_exact and not row.semantic
+        assert historical_claims_preserved(expected["historical_claims"], row)
+        if address == 0x406AF0:
+            assert row.context == ""
+            assert "Neither the pinned binary nor this source placement identifies the historical original translation unit or current linked-selected copy" in source("src/basepop.cpp")
+        else:
+            assert "historical original translation unit" in row.region.lower()
         assert annotation_digest(row) == expected["identity_sha256"]
-        assert "historical original translation unit" in row.region.lower()
 
     assert not (SOURCE / "src/leaf_recoveries.cpp").exists(), "retired leaf owner source reappeared"
     for address, expected in EXPECTED.items():
         body = source("src/datalink.cpp" if address == 0x4080B0
-                      else "src/factionprofilewin.cpp")
+                      else "src/basepop.cpp")
         envelopes = re.findall(r"// RECOVERY_HISTORY: /\*.*?// RECOVERY_HISTORY: \*/",
                                body, re.DOTALL)
         envelope = next((item for item in envelopes if f"0x{address:08X}" in item), None)
@@ -110,6 +124,9 @@ def test_natural_typed_owners_and_only_superseded_seams_are_removed():
     assert re.search(r"\bListBox\s+listBox_\s*;", datalink_h)
     assert re.search(r"class Dialogs\s*:\s*public ListBox,.*?public EditGroup", dialogs_h, re.S)
     assert re.search(r"\bDialogs\s+dialogs_\s*;", basepop_h)
+    assert any(row.address == 0x406AF0 for row in read_file(SOURCE / "src/basepop.cpp"))
+    assert not any(row.address == 0x406AF0
+                   for row in read_file(SOURCE / "src/factionprofilewin.cpp"))
     assert re.search(r"\bPopup\s+popup_\s*;", profile_h)
     assert re.search(r"virtual\s+~Dialogs\s*\(\s*\)\s*;", dialogs_h)
     assert "Dialogs::~Dialogs()" in source("src/dialogs.cpp")
@@ -180,9 +197,32 @@ int main() {
 
 
 def test_proposal_records_consumer_emission_not_historical_translation_unit():
-    for rel in ("src/datalink.cpp", "src/factionprofilewin.cpp"):
+    for rel in ("src/datalink.cpp", "src/basepop.cpp"):
         text = source(rel)
         matching = [row for row in read_file(SOURCE / rel) if row.address in EXPECTED]
         if matching:
-            assert "not a claim that the historical original translation unit" in text
-            assert "OpenSMACX.map" in text and "current linked copy only" in text
+            if any(row.address == 0x406AF0 for row in matching):
+                assert "current lifetime/emission ownership only" in text
+                assert "Neither the pinned binary nor this source placement identifies" in text
+                assert "factionprofilewin.cpp.obj" in text
+                assert "HISTORICAL PRIOR MAP/COFF evidence" in text
+                assert "preserves former consumer provenance only" in text
+            else:
+                assert "not a claim that the historical original translation unit" in text
+                assert "OpenSMACX.map" in text and "current linked copy only" in text
+
+
+def test_historical_claim_retention_allows_upgrade_and_rejects_loss():
+    class Claims:
+        def __init__(self, byte_exact, semantic):
+            self.byte_exact = byte_exact
+            self.semantic = semantic
+
+    assert historical_claims_preserved(
+        {"byte_exact": False, "semantic": False}, Claims(True, False))
+    assert not historical_claims_preserved(
+        {"byte_exact": True, "semantic": False}, Claims(False, False))
+    assert historical_claims_preserved(
+        {"byte_exact": False, "semantic": True}, Claims(True, False))
+    assert not historical_claims_preserved(
+        {"byte_exact": False, "semantic": True}, Claims(False, False))
