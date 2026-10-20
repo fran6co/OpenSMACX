@@ -900,7 +900,7 @@ void SpriteBox::on_right_click(int x_coord, int y_coord) {
 Purpose: When attached to a parent, repaint a sprite box by blitting its own
          surface at the Dialog's scroll offset, then drawing its sprite rows.
 
-// ORIGINAL: 0x00611380 ?on_redraw@SpriteBox@@QAEXXZ 0x00611380-0x006113F9
+// ORIGINAL: 0x00611380 ?on_redraw@SpriteBox@@QAEXXZ 0x00611380-0x006113F9 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; original identity 0x00611380 retains name and all original spans/claims", "src/spritebox.h declares the actual SpriteBox::on_redraw class member; body uses that existing owner API", "historical source was FILE-mode in git:e9190930285ebdae9121f3ac00645c634df1efea:src/leaf_recoveries.cpp; this transfer places the unchanged C++ member definition in its actual owner TU and changes measurement mode to BODY explicitly; it does not assert historical recipe equality", "the complete source body and existing TRIED/LEVER/DEFERRED history are carried forward unchanged; only annotation mode/location and transitional SCAFFOLD classification change"], "reason": "Transfer the complete SpriteBox::on_redraw definition to its existing source owner without changing its C++ body. Keep the original FILE spans and historical claim state; BODY is the new per-member measurement scope, not a claim that the old whole-TU recipe is equivalent."}
 // symbol    ?on_redraw@SpriteBox@@UAEXXZ
 // size      121 bytes
@@ -925,12 +925,8 @@ void SpriteBox::on_redraw() {
             dib_.bmiHeader.biWidth, -dib_.bmiHeader.biHeight);
         // The original null-parent branch exits past both the blit and rows;
         // keep the row pass within the same gate.
-        if (list_.entry_count_ > 0) {
-            int index = 0;
-            do {
-                draw_item(index);
-                ++index;
-            } while (index < list_.entry_count_);
+        for (int index = 0; index < list_.entry_count_; ++index) {
+            draw_item(index);
         }
     }
 }

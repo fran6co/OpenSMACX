@@ -246,36 +246,51 @@ def test_spritebox_redraw_parent_gate_and_live_rows(tmp_path, compiler_name):
     body = extract_body((ROOT / "src/spritebox.cpp").read_text(encoding="utf-8"))
     compile_run(tmp_path, compiler, body, "spritebox_redraw_source", True)
 
-    row_guard = """        if (list_.entry_count_ > 0) {
+    row_forms = (
+        (
+            """        for (int index = 0; index < list_.entry_count_; ++index) {
+            draw_item(index);
+        }""",
+            """    for (int index = 0; index < list_.entry_count_; ++index) {
+        draw_item(index);
+    }""",
+        ),
+        (
+            """        if (list_.entry_count_ > 0) {
             int index = 0;
             do {
                 draw_item(index);
                 ++index;
             } while (index < list_.entry_count_);
-        }
-    }
-}"""
-    row_outside_parent = """    }
-    if (list_.entry_count_ > 0) {
+        }""",
+            """    if (list_.entry_count_ > 0) {
         int index = 0;
         do {
             draw_item(index);
             ++index;
         } while (index < list_.entry_count_);
-    }
-}"""
-    assert body.count(row_guard) == 1
+    }""",
+        ),
+    )
+    matching_rows = [(inside, outside) for inside, outside in row_forms
+                     if body.count(inside) == 1]
+    assert len(matching_rows) == 1
+    row_guard, row_outside_parent = matching_rows[0]
+    parent_gate = row_guard + "\n    }\n}"
+    row_outside_parent = "    }\n" + row_outside_parent + "\n}"
+    assert body.count(parent_gate) == 1
+    parent_gate_mutant = body.replace(parent_gate, row_outside_parent, 1)
 
+    live_count_mentions = body.count("list_.entry_count_")
+    assert live_count_mentions > 0
     cached_count = body.replace("list_.entry_count_", "cached_count")
-    assert body.count("list_.entry_count_") == 2
-    assert cached_count.count("cached_count") == 2
     cached_count = cached_count.replace(
         "void SpriteBox::on_redraw() {",
         "void SpriteBox::on_redraw() {\n    const int cached_count = list_.entry_count_;",
         1,
     )
     assert cached_count.count("list_.entry_count_") == 1
-    assert cached_count.count("cached_count") == 3
+    assert cached_count.count("cached_count") == live_count_mentions + 1
 
     copy_call = """        static_cast<GraphicWin *>(parent)->copy(
             this, Dialog::window_x_, Dialog::window_y_, 0, 0,
@@ -283,7 +298,7 @@ def test_spritebox_redraw_parent_gate_and_live_rows(tmp_path, compiler_name):
     assert body.count(copy_call) == 1
 
     mutants = (
-        (body.replace(row_guard, row_outside_parent, 1), "row-outside-parent"),
+        (parent_gate_mutant, "row-outside-parent"),
         (cached_count, "cached-entry-count"),
         (body.replace(copy_call, "        // omitted parent copy", 1),
          "missing-parent-copy"),
