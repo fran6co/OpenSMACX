@@ -63,12 +63,11 @@
   * Remaining opaque storage is not a recovered semantic model. The genuine
   * destructor follows the declared member/base lifetime order.
   */
-// The 21 (dx, dy) steps of a base's own radius - the 5x5 square minus its
-// four corners - walked in ring order. Read out of the shipped image at
-// 0x0066A1A0 / 0x0066A1F4; the two tables sit
-// back to back, which is how their 21-entry length is known. BaseWin::UNK1
-// is a reverse lookup: given an index into these, find the matching index
-// in map.h's RadiusOffsetX/RadiusOffsetY.
+// The 21 observed (dx, dy) steps of a base's radius, in ring order, at
+// original starts 0x0066A1A0 / 0x0066A1F4. The declarations retain those
+// observed values, not a proven original capacity: adjacent starts and
+// draw_farm's 0..20 indices do not bound UNK1's unchecked input. UNK1 finds
+// the corresponding index in map.h's RadiusOffsetX/RadiusOffsetY.
 extern const int BaseRadiusOffsetX[21];  // 0x0066A1A0
 extern const int BaseRadiusOffsetY[21];  // 0x0066A1F4
 

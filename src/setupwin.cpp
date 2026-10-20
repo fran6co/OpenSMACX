@@ -525,14 +525,14 @@ int SetupWin::draw_item(int position, int selected) {
     return 0;
 }
 
-// ORIGINAL: 0x004AD880 ??0SetupWin@@QAE@XZ 0x004AD880-0x004AD9C0;0x006595D0-0x0065960C
+// ORIGINAL: 0x004AD880 ??0SetupWin@@QAE@XZ 0x004AD880-0x004AD9C0;0x006595D0-0x0065960C BYTE_EXACT
 // RECOVERY_BINDING: v1 {"reason":"Recover the complete body in its genuine C++ owner, with real embedded members, shared virtual bases, lifecycle and parent operations. Compiler-generated overrides/adjustors replace executable-address or vbtable stand-ins; no current matching claim is granted.","evidence":["git:de91fffe:src/recovered/units/004ad880.cpp","image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","recovery/tasks/ui-eight-owner-coverage.json","Original entry 0x004ad880; physical VC6 COFF emitted symbol ??0SetupWin@@QAE@XZ."]}
 SetupWin::SetupWin() {
     overlay_buffers_[0] = 0;
     overlay_buffers_[1] = 0;
     overlay_buffers_[2] = 0;
-    row_count_ = 0;
     selected_row_ = 0;
+    row_count_ = 0;
     opening_window_snapshot_ = opening_window();
     menu_popup_ = 0;
     field_A14_ = WinScreenWidth;

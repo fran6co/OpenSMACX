@@ -4298,14 +4298,17 @@ void BaseWin::on_left_down(int xCoord, int yCoord) {
 }
 
 
-// 0x0066A1A0 / 0x0066A1F4, read out of the shipped image with
-// tools/image_data.py. Back to back, 21 ints each - the 5x5 base radius
-// minus its four corners, in ring order.
+// Original indexed loads identify distinct starts at 0x0066A1A0 and
+// 0x0066A1F4. These 21 observed (dx, dy) pairs form the base radius in ring
+// order. draw_farm uses indices 0..20, but UNK1 takes an unchecked index;
+// the observed values and adjacent starts do not establish original capacities.
+// RECOVERY_OBJECT: v1 0x0066A1A0 ?BaseRadiusOffsetX@@3QBHB
 const int BaseRadiusOffsetX[21] = {
     -1,  1, -2,  0,  2, -3, -1,  1,  3, -2,
      0,  2, -3, -1,  1,  3, -2,  0,  2, -1,
      1,
 };
+// RECOVERY_OBJECT: v1 0x0066A1F4 ?BaseRadiusOffsetY@@3QBHB
 const int BaseRadiusOffsetY[21] = {
     -3, -3, -2, -2, -2, -1, -1, -1, -1,  0,
      0,  0,  1,  1,  1,  1,  2,  2,  2,  3,

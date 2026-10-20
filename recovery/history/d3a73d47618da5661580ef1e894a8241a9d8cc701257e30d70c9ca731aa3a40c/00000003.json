@@ -1,0 +1,19 @@
+{
+  "event_id": "a74b37b4ad18be6044f841b81d7f986e31b3ee9a6e83469c4f6eb37f74b32892",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/basewin.h"
+    ],
+    "evidence": [
+      "Independent review confirmed src/basewin.h still incorrectly claims table adjacency proves original capacity. Expand only for the matching durable comment correction; keep all C++ declarations, values, layout, mappings, claims and historical lessons unchanged. Original operands establish two starts and observed values, not complete allocation ends. Existing cpp-only continuation and all verification obligations remain in force."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "e30951452472cfac1954df9fea6cbdbbd2d77529d360cf34e9afb96ed621e74b",
+  "request_id": "central-basewin-header-capacity-evidence-oct21b",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:basewin-cohort-match-oct20b"
+}
