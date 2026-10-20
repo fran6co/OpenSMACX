@@ -941,15 +941,17 @@ after_scroll_position:
         }
     }
 
-    // The original resets the StringList cursor to this row after frame
-    // callbacks and before the draw callback; later callbacks may mutate it.
-    items.current_ = items.head_;
-    int steps = index;
-    while (steps > 0) {
-        --steps;
-        items.current_ = items.current_->next;
+    // The original rechecks the live count after frame callbacks. If a
+    // callback removed this row, it leaves the current cursor untouched.
+    if (index <= items.entry_count_ - 1) {
+        items.current_ = items.head_;
+        int steps = index;
+        while (steps > 0) {
+            --steps;
+            items.current_ = items.current_->next;
+        }
+        items.current_position_ = index;
     }
-    items.current_position_ = index;
 
     if (draw_callback_ != 0) {
         CurrentListBoxDraw = this;
@@ -965,6 +967,14 @@ after_scroll_position:
                                             index, &row, callback_text);
         if (written != 0) {
             return;
+        }
+    }
+
+    if (selected != 0 && callback_result == 0
+        && window->is_dialog_focus() != 0) {
+        canvas->set_clip(&row);
+        if (field_14_ != static_cast<uint32_t>(-1)) {
+            canvas->fill(&row, static_cast<int>(field_14_));
         }
     }
 

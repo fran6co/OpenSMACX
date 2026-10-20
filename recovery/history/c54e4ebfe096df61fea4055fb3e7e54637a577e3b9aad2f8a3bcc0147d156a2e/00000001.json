@@ -1,0 +1,22 @@
+{
+  "event_id": "630f91d06cfed4fd32e494a45e488d7934b7d251aa72a015ecc7e886ed5434cb",
+  "payload": {
+    "affects": [
+      "entity-9fd9d54a0ce9e1f29f1adae3fb2d967df511079373dba76422415f2756914c60"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "original-selected-focus-fill-and-live-reseek-oct20e",
+    "evidence": [
+      "Pinned60BF3E..60BF81 after zero write_callback result calls Win::is_dialog_focus, then clips full row even whenfield14==-1, and conditionally calls Buffer::fill(row,field14). Current typedbody skips directly to inset clip. ExistingListBoxfield14/defaultPopupThemeSurfaceColor provide source-owned receiver/color.",
+      "Pinned60BC71..60BCA1 reloads live Dialog itemcount aftercallbacks, compares index<=count-1, and onlythen resets current=head/traverses/storesposition. Sourceunconditionallyreseeks; callback shrink changes observable cursor/text behavior. Preserve original unchecked laterpaths and callbackcount/readorder.",
+      "Coordinator authorizes edits onlyexisting src/listbox.cpp and two existing actual-source rendering test/templatefiles under approvedwholeowner scope. No header/layout/flag/marker changes; no unrelated matching experiments. Root refreshedworkertocurrentmasterwithoutresetting1c8b944taskbaseline. Worker freezeshashes afterhostcontrols; Rootowns preparation/nativebuild andmanualintegration."
+    ],
+    "hypothesis": "Current ListBox draw_item omits original focus-sensitive selected-row background path and live post-callback count guard before cursor reseek. Restore original behavior, not a safety fix.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "original-selected-focus-fill-and-live-reseek-oct20e",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:listbox-geometry-owner-oct20"
+}
