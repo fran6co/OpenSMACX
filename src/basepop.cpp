@@ -1616,6 +1616,39 @@ Purpose: Destroy the popup infrastructure: close the window, then the
 //   SEH-frame note records for the FlatButton constructor.
 */
 
+// ORIGINAL: 0x00406AF0 sub_406af0 0x00406AF0-0x00406B16 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:0x00406AF0 pushes the receiver, passes this+0x188 to Dialogs::~Dialogs, this+0xBA0 to Dialog::~Dialog, then this+0x188 to GraphicWin::~GraphicWin", "source:src/dialogs.h declares Dialogs with the real widget bases; src/basepop.h declares the actual typed Dialogs dialogs_ member of BasePop at +0x21D0", "HISTORICAL PRIOR MAP/COFF evidence (build-gyzprt2j): the linked map selected a naturally emitted ??_DDialogs copy at 0x0040C0D0 in factionprofilewin.cpp.obj, whose FactionProfileWin owns a Popup containing the BasePop/Dialog lifetime; this preserves former consumer provenance only and is not original-TU or current-selection proof", "HISTORICAL PRIOR physical-copy evidence: that former 48-byte COMDAT had calls at +0x0D/+0x18/+0x1F to ??1Dialogs@@UAE@XZ, ??1Dialog@@UAE@XZ, ??1GraphicWin@@UAE@XZ, corresponding to the pinned +0x188/+0xBA0 views, followed by ten padding bytes"], "reason": "Bind this compiler complete-object identity to the current source owner of the real typed Dialogs member lifetime. BasePop owns dialogs_ at +0x21D0; this source placement records current lifetime/emission ownership only. Neither the pinned binary nor this source placement identifies the historical original translation unit or current linked-selected copy."}
+// kind      game
+// symbol    ??_DDialogs@@QAEXXZ
+// LEVER: same fix as leaf_004080b0_redirect above - direct calls to the named
+// TRIED: same tail-call fold on the trailing call as 004080B0 - VC6
+// RECOVERY_HISTORY: /*
+// RECOVERY_HISTORY: Purpose: Destroy the Dialogs at 0x188, the Dialog at 0xba0, and the GraphicWin
+// RECOVERY_HISTORY:          base the Dialogs shares.
+// RECOVERY_HISTORY:
+// RECOVERY_HISTORY:          The same shape as 004080B0 with different offsets and a Dialogs in
+// RECOVERY_HISTORY:          place of the ListBox. 0x188 is DialogsDestructorAdjustment, and is
+// RECOVERY_HISTORY:          likewise computed once and used twice.
+// RECOVERY_HISTORY:
+// RECOVERY_HISTORY: // RECOVERY_ROLE: SCAFFOLD Transitional leaf collection, not completed genuine owner recovery; preserve body evidence during owner migration.
+// RECOVERY_HISTORY: // original marker: 0x00406AF0 sub_406af0 0x00406AF0-0x00406B16
+// RECOVERY_HISTORY: // symbol    ?leaf_00406af0_redirect@@YIXPAX0@Z
+// RECOVERY_HISTORY: // size      38 bytes
+// RECOVERY_HISTORY: // prototype
+// RECOVERY_HISTORY: // callers   9   call targets   3
+// RECOVERY_HISTORY: // kind      game
+// RECOVERY_HISTORY: // flags     sp_ready;purged_ok
+// RECOVERY_HISTORY: // calls     0x00406910 0x005D4DD0 0x00608E10
+// RECOVERY_HISTORY: // LEVER: same fix as leaf_004080b0_redirect above - direct calls to the named
+// RECOVERY_HISTORY: // redirects, not through the `Leaf*Destructor` pointer variables, cast
+// RECOVERY_HISTORY: // through `SingleArgDtor` so nullptr's `xor edx, edx` is not paid either.
+// RECOVERY_HISTORY: // TRIED: same tail-call fold on the trailing call as 004080B0 - VC6
+// RECOVERY_HISTORY: // turns the last fastcall into `jmp` no matter which of the two spellings
+// RECOVERY_HISTORY: // reaches it; SingleArgDtor on all three still scores best (measured).
+// RECOVERY_HISTORY: Return Value: n/a
+// RECOVERY_HISTORY: Status: Complete
+// RECOVERY_HISTORY: */
+
 /*
 Purpose: The BasePop constructor. The base GraphicWin and declared members,
          including Dialogs and Spot, use C++ member construction. Their
