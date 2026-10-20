@@ -1,0 +1,20 @@
+{
+  "event_id": "6de1dcf92aaccd7145ca39a779344131055580e47da28d0e3cd54d48ba205ca0",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_network_clock_import.py"
+    ],
+    "evidence": [
+      "The reviewed direct clock restoration removes the captured-pointer initializer in NetDaemon::wait. Its existing native wrong-API mutant still replaces the old capture initializer across the TU, leaving this target unchanged. Retarget only the wait parameter row to direct-call initializer syntax so both actual wait clock calls become GetTickCount and the same no-source-bound-clock refusal remains exercised. No weakening of assertions, compiler settings or other tests.",
+      "Coordinator applies this test-only anchor migration in the combined isolated checkout after all author sources freeze. Native regression must run under an isolated compiler lease with the pinned image; existing complete import-identity, wrong-address and mixed-sibling damage controls remain intact. This is no new claim or acceptance proof."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "64a14f8ce36fa0016dcf237340493ebf30afa88203951e33801023cc8f38ce1a",
+  "request_id": "central-retarget-native-clock-damage-anchor-oct21a",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:netdaemon-wait-state-owner-oct9"
+}
