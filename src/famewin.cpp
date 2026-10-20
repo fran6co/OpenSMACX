@@ -51,6 +51,10 @@ void __cdecl clear_hall_of_fame() {
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned native44AE50 reads/writes hallfame.jhh with rb/wb and mode759194;35records of8C bytes begin9A3840;44AF70 clears only their present bytes.", "Native44AEE6 owned ButtonGroup receiver753468 is FameWin74DAF8+5970;44AF04 virtual slot57 is Win::set_modal with callbackpop_wait5398E0.", "Root-only Console retirement dependency closure authorized in task history; retain git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/0044ae50.cpp and git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/0044af70.cpp seed interpretations.", "git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/0044ae50.cpp"], "reason": "Recover real FameWin entry and record-presence cleanup through existing typed HallOfFame records and owned button group, standard CRT I/O and inherited virtual modal API. Retain historical exact seed obligations and original spans; current binding grants no match or acceptance claim. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
 // kind      game
 void __cdecl hall_of_fame(int add_current_player) {
+  // The pinned hall_of_fame and hof_load fopen calls both reference the
+  // initial "rb\0" bytes at 0x684620; this writable-data correspondence does
+  // not claim runtime immutability or linker selection.
+  // RECOVERY_LITERAL: v1 0x684620 0x684623 ??_C@_02JKAF@rb?$AA@ 0x44AE50
   FILE *file = fopen("hallfame.jhh", "rb");
   if (file == 0) {
     for (int group = 0; group < HallOfFameRecordCount / 5; ++group) {
@@ -71,6 +75,10 @@ void __cdecl hall_of_fame(int add_current_player) {
   g_FAMEWIN.buttonGroup_.set(ConsoleGlobal.faction_id_, 1);
   g_FAMEWIN.set_modal(0, pop_wait, 0);
 
+  // The pinned hall_of_fame and hof_save fopen calls both reference the
+  // initial "wb\0" bytes at 0x68460C; this writable-data correspondence does
+  // not claim runtime immutability or linker selection.
+  // RECOVERY_LITERAL: v1 0x68460C 0x68460F ??_C@_02NGAF@wb?$AA@ 0x44AE50
   file = fopen("hallfame.jhh", "wb");
   if (file != 0) {
     HallOfFameIOMode = 1;

@@ -316,6 +316,11 @@ int AlphaNet::pick_service(int *allow_pbem) {
 }
 
 int AlphaNet::do_join_or_create() {
+    // The pinned do_join_or_create and setup calls both reference bytes
+    // 4E 45 54 43 4F 4E 4E 45 43 54 5F 4A 4F 49 4E 5F 4F 52 5F 43 52 45 41
+    // 54 45 00 at 0x689240. This writable-data correspondence does not claim
+    // runtime immutability or linker selection.
+    // RECOVERY_LITERAL: v1 0x689240 0x68925A ??_C@_0BK@LCOK@NETCONNECT_JOIN_OR_CREATE?$AA@ 0x4E29E0
     const int selected = x_pop_caption_flags("jackal", "NETCONNECT_JOIN_OR_CREATE", 0x50, 0);
     if (selected < 0) return 1;
     if (selected == 1) {
