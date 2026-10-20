@@ -622,10 +622,12 @@ int AlphaMenu::requested_height() {
 // symbol    ?on_adjust_pulldown_pos@AlphaMenu@@UAEXPAH0@Z
 void AlphaMenu::on_adjust_pulldown_pos(int *x, int *y) {
     if (field_A24_ != -1) {
+        const RECT outer_rect_snapshot = outer_rect_;
+        *x = outer_rect_snapshot.right;
+
         RECT spot_rect;
         spot_.get_rect_at(field_A24_, &spot_rect);
-        *x = outer_rect_.right;
-        *y = spot_rect.top + caption_height_ + outer_rect_.top;
+        *y = spot_rect.top + caption_height_ + outer_rect_snapshot.top;
     }
 }
 
