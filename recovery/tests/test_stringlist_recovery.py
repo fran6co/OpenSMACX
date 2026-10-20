@@ -30,7 +30,8 @@ def objects():
     return {unit: [Coff(compiler(ROOT / unit, (), flags + settings.layout_flags))
                    for flags in settings.flag_sets]
             for unit in ("src/stringstruct.cpp", "src/dialog.cpp",
-                         "src/net_class.cpp", "src/alphanet.cpp")}
+                         "src/net_class.cpp", "src/alphanet.cpp",
+                         "src/alphanet_records.cpp")}
 
 
 def test_erased_hooks_use_payload_fields_and_keep_list_layout(objects):
@@ -99,8 +100,8 @@ def test_complete_destructor_is_generated_and_destroys_virtual_base(objects):
     ("src/net_class.cpp", "NetAllocationNode"),
     ("src/net_class.cpp", "NetUnk72C"),
     ("src/net_class.cpp", "JackalVoiceRx"),
-    ("src/alphanet.cpp", "AlphaNetStringStruct"),
-    ("src/alphanet.cpp", "AlphaNetLedger"),
+    ("src/alphanet_records.cpp", "AlphaNetStringStruct"),
+    ("src/alphanet_records.cpp", "AlphaNetLedger"),
 ])
 def test_scalar_deleting_entries_inherit_owner_aware_deallocation(objects, unit, owner):
     for obj in objects[unit]:
