@@ -211,16 +211,15 @@ static int run_case(int width, int update_mode, int star,
         || find_event("right", "69") < 0 || find_event("right", "55") < 0) return 9;
     if ((find_event("right", "150*") >= 0)
         != (star != 0 || switch_base_after_economy_caption != 0)) return 10;
-    if (find_event("right", "2") < 0) return 11; // saved Buffer rect1.top quirk
     const int labels = find_event("left", " TOTAL =");
     if (labels < 0) return 12;
     int total_value = find_event("right", "200", labels);
     if (total_value < 0) return 13;
     int labs_label = find_event("left", " TOTAL =", total_value);
     if (labs_label < 0) return 14;
-    int saved_top = find_event("right", "2", labs_label);
-    if (saved_top < 0) return 15;
-    int psych_label = find_event("left", " TOTAL =", saved_top);
+    int labs_total = find_event("right", "100", labs_label);
+    if (labs_total < 0) return 15;
+    int psych_label = find_event("left", " TOTAL =", labs_total);
     if (psych_label < 0 || find_event("right", "75", psych_label) < 0) return 16;
     return 0;
 }

@@ -140,8 +140,8 @@ def test_installed_basewin_draw_energy_alloc_actual_source_damage_controls():
         ("label_get(0x4F8 / 4)", "label_get(0x4F0 / 4)"),
         ("soft_update(&production_content_rect_)",
          "update(&production_content_rect_, 0)"),
-        ("_itoa(saved_clip.top, number, 10)",
-         "_itoa(psych_total, number, 10)"),
+        ("_itoa(labs_total, number, 10)",
+         "_itoa(saved_clip.top, number, 10)"),
         ("Base *marker_base = BaseCurrent;",
          "Base *marker_base = totals_base;"),
     )
