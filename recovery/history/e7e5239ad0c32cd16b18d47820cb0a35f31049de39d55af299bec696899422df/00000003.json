@@ -1,0 +1,17 @@
+{
+  "event_id": "a8453159c3fcd4feb9b387d36a7083ebc685ed544a92bb6c9c56dd8a5f203679",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "finite-natural-form-no-gain",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Keep the existing production indexed body: both implement the same established six selected stores; the trial gives no matching or ownership/type improvement. Preserve trial source in Git and integrate the useful actual-source host control. No further loop-form search."
+    ]
+  },
+  "previous_event": "0a14c02d4428ca82ac165f4fbae07f2b053c00f5767ca7a6bf876dec224caf3e",
+  "request_id": "close-unhelpful-natural-form-with-tests-preserved",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:alphanet-row-cursors-oct20c"
+}
