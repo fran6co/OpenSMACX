@@ -1,0 +1,126 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "0ec339dabc3a1bd315644a1cf9a9a5b40d354bbb",
+  "editable_files": [
+    "src/gamma.cpp",
+    "src/pushbutton.cpp",
+    "src/pushbutton.h",
+    "CMakeLists.txt",
+    "recovery/project.json",
+    "recovery/tests/test_basebutton_hide.py",
+    "recovery/tests/test_button_close_dispatch.py",
+    "recovery/tests/test_paint_owner_wave_host.py",
+    "recovery/tests/test_generated_owner_migrations_oct6.py"
+  ],
+  "evidence": [
+    "Standing faithful bug-for-bug recovery and reviewed manual integration authority. Real class/lifetime ownership comes before function-local byte scores. Preserve all original spans, claims and useful lessons; no hand-edited original markers, claim grants/demotion, copied bytes, asm, retention attributes or executable-address forwarding.",
+    "Independent pinned/source review establishes PushButton as a real BaseButton subclass declared in pushbutton.h, with its own virtual Win/Buffer views and four out-of-line methods currently mixed into gamma.cpp. Gamma embeds two objects at3BB0 and46B0; its original constructor computes receivers at5C8E03/5C8E12 and calls the independent62BF20 constructor at5C8E0D/5C8E1C. A dedicated PushButton implementation owner is justified; no original filename/TU or Jackal membership is asserted.",
+    "Authorize moving all four complete unchanged method definitions62BF20 ctor,62C010 dtor,62C030 close,62C110 on_redraw, their full original mapping blocks/history and the single PushButtonDefaults[18] definition/object binding9BC118 into src/pushbutton.cpp. Game producers and other callers stay untouched. Both generated deleting identities62C830 and62C850 move with the actual class lifetime/view owner; no handwritten thunk. The Gamma generated identities456280/4562B0, methods, constants and embedded-member layout remain with Gamma. Header declarations, base hierarchy, virtual slots, class storage and code effects must not change.",
+    "Keep exact historical marker/spans/claims/lesson text while moving annotations; update only current unversioned owner/context prose through native binding_source parse/render where necessary. Historical Git/seed routes remain historical. Source/header comments that incorrectly describe current PushButton definition location or manually installed vtables may be corrected from current real declarations/evidence, without rewriting the original observations or asserting complete hierarchy proof.",
+    "First freeze a split-only candidate with new TU in CMake and unchanged old default recipes. Preserve original include/parse context for controlled comparison; do not invent classes/globals or inline/noinline/volatile/export forcing. New owner should include its own header. Initial old transitive context may be retained until measured, but is not evidence of source/library membership. Coordinator owns six-compile unchanged/changed-body controls and actual production comparison of old Gamma/new Gamma/new PushButton.",
+    "Only after split-only measurements and review may the coordinator adopt the measured whole-Gamma frame profile /Oy- while PushButton retains its default frameless profile; keep /O2 /Ob2 and every other flag fixed. Prior controlled unsplit Gamma screen restored456280 and5C93A0 but lost62C830, so a whole mixed-file change was rejected. This motivates measurement, not source ownership proof or per-function flag selection. Do not enable the profile during author split-only phase.",
+    "The four named existing tests may follow actual PushButton owners/default storage while retaining every assertion, mutant, sanitizer, extraction, image and historical obligation check. No broad baseline reset, obsolete-policy guard relaxation, other test edits or new public CLI. Worker may use only native source parsing and read-only Git; no tests/native compiler/Wine/Git mutation/task/config-policy edits beyond adding the new build TU. Return hashes and discoveries for coordinator review.",
+    "Require fresh full compile/link, original identity/claim/reference continuity, class vtable/generated-output ownership, all moved method and whole-project verdict deltas, scoped strict checks, native physical collateral and independent review before manual integration. New unit/header/initializer/FPO/EH/private-state and incomplete linked selection remain obligations; do not waive native FAIL/UNKNOWN or reset original task baseline. Structural regressions are retained for explicit coordinator review rather than discarded. Complete linked/runtime/game/native automatic acceptance is unproved."
+  ],
+  "intent": "Separate the genuine PushButton class lifetime/method owner from its Gamma consumer",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4546832,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4547200,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4547248,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6065568,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6065760,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6066992,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6067088,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6067104,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6067136,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6067216,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6067232,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6067488,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6067680,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6471456,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6471696,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6471728,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6471952,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6473776,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6473808,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "gamma-pushbutton-owner-oct20aj"
+}
