@@ -2263,7 +2263,7 @@ int __cdecl POP2(const char *a1, const char *a2, int a3) {
             }
         }
     }
-    int result = pop.exec(0, reinterpret_cast<int (__cdecl *)()>(0));
+    int result = pop.exec(0, nullptr);
     return result;
 }
 

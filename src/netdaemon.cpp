@@ -3104,7 +3104,7 @@ int NetDaemon::add_global() {
                 unsigned long now = get_time();
                 if (now - start_time1 > 0x640) {
                     warned1 = true;
-                    NetMsgPrimary.pop(reinterpret_cast<const char *>("AWAITGLOBALLOCK"), 0, 2, 0);
+                    NetMsgPrimary.pop("AWAITGLOBALLOCK", 0, 2, 0);
                 }
             }
             wait_task();
@@ -3133,7 +3133,7 @@ int NetDaemon::add_global() {
                     unsigned long now = get_time();
                     if (now - start_time2 > 800) {
                         warned2 = true;
-                        NetMsgPrimary.pop(reinterpret_cast<const char *>("AWAITGLOBALLOCK"), 0, 2, 0);
+                        NetMsgPrimary.pop("AWAITGLOBALLOCK", 0, 2, 0);
                     }
                 }
                 wait_task();
@@ -3167,9 +3167,9 @@ int NetDaemon::add_global() {
         std::memcpy(&retries, &channels_[1].trailing_words_[4], sizeof retries);
         std::memcpy(&response, &channels_[0].leading_words_[2], sizeof response);
         if (retries > 0 || response > 2) {
-            const char *msg = reinterpret_cast<const char *>("NOLOCK");
+            const char *msg = "NOLOCK";
             if (channels_[0].leading_words_[2] != 2) {
-                msg = reinterpret_cast<const char *>("NOLOCKGLOBAL");
+                msg = "NOLOCKGLOBAL";
             }
             NetMsgPrimary.pop(msg, 5000, 2, 0);
             channels_[1].trailing_words_[4] = 0;
@@ -3224,15 +3224,15 @@ int NetDaemon::add_global() {
 
 void NetDaemon::unlock_base(int base_id) {
 
-    log_say(reinterpret_cast<char *>("UnlockBase"), NetDaemonNet.channels_[1].leading_words_[2], base_id, 0);
+    log_say("UnlockBase", NetDaemonNet.channels_[1].leading_words_[2], base_id, 0);
 
     if (IsMultiplayerNet != 0 && NetDaemonNet.channels_[1].leading_words_[2] != 0) {
-        log_say(reinterpret_cast<char *>("UnlockBase doing synch & unlock"), 0, 0, 0);
+        log_say("UnlockBase doing synch & unlock", 0, 0, 0);
         synch_base(base_id);
 
         if (IsMultiplayerNet != 0) {
             channels_[1].trailing_words_[0] = 1;
-            log_say(reinterpret_cast<char *>("Awaiting acknowledgement of SYNCH"), ConsoleGlobal.faction_id_, 0, 0);
+            log_say("Awaiting acknowledgement of SYNCH", ConsoleGlobal.faction_id_, 0, 0);
             int saved = NetDaemonNet.channels_[0].leading_words_[3];
             ++NetBusyCount;
             unsigned long baseline = timeGetTime();
@@ -3247,7 +3247,7 @@ void NetDaemon::unlock_base(int base_id) {
                         if (timeGetTime() - baseline > 0x7d0) {
                             logged_wait = 1;
                             NetMsgPrimary.pop(
-                                reinterpret_cast<char *>("AWAITEXEC"), 0, 2, 0);
+                                "AWAITEXEC", 0, 2, 0);
                         }
                     }
                     wait_task();
@@ -3267,12 +3267,12 @@ void NetDaemon::unlock_base(int base_id) {
             --NetBusyCount;
             NetDaemonNet.channels_[0].leading_words_[3] = saved;
             if (channels_[1].trailing_words_[0] == 0) {
-                log_say(reinterpret_cast<char *>("Received SYNCH acknowledgement"), ConsoleGlobal.faction_id_, 0, 0);
+                log_say("Received SYNCH acknowledgement", ConsoleGlobal.faction_id_, 0, 0);
             }
             channels_[1].trailing_words_[0] = 0;
 
             if (IsMultiplayerNet != 0) {
-                log_say(reinterpret_cast<char *>("Client releasing lock"), ConsoleGlobal.faction_id_, 0, 0);
+                log_say("Client releasing lock", ConsoleGlobal.faction_id_, 0, 0);
                 message_data(0x2212, 0, 0, 0, 0, 0);
                 channels_[1].leading_words_[3] = 0;
                 channels_[1].leading_words_[2] = 0;
@@ -3333,7 +3333,7 @@ void NetDaemon::await_exec(int opcode) {
         return;
     }
 
-    log_say(reinterpret_cast<char *>("Client waiting for acknowledgement"), ConsoleGlobal.faction_id_, 0, 0);
+    log_say("Client waiting for acknowledgement", ConsoleGlobal.faction_id_, 0, 0);
     int saved = NetDaemonNet.channels_[0].leading_words_[3];
     ++NetBusyCount;
     unsigned long baseline = timeGetTime();
@@ -3348,7 +3348,7 @@ void NetDaemon::await_exec(int opcode) {
                 if (timeGetTime() - baseline > 0x7d0) {
                     logged_wait = 1;
                     NetMsgPrimary.pop(
-                        reinterpret_cast<char *>("AWAITEXEC"), 0, 2, 0);
+                        "AWAITEXEC", 0, 2, 0);
                 }
             }
             wait_task();
@@ -3367,11 +3367,11 @@ void NetDaemon::await_exec(int opcode) {
 
     --NetBusyCount;
     NetDaemonNet.channels_[0].leading_words_[3] = saved;
-    log_say(reinterpret_cast<char *>("Client received acknowledgement"), ConsoleGlobal.faction_id_, 0, 0);
+    log_say("Client received acknowledgement", ConsoleGlobal.faction_id_, 0, 0);
 
     if (opcode != 0) {
         if (IsMultiplayerNet != 0) {
-            log_say(reinterpret_cast<char *>("Client releasing lock"), ConsoleGlobal.faction_id_, 0, 0);
+            log_say("Client releasing lock", ConsoleGlobal.faction_id_, 0, 0);
             message_data(0x2212, 0, 0, 0, 0, 0);
             channels_[1].leading_words_[3] = 0;
             channels_[1].leading_words_[2] = 0;
@@ -3432,7 +3432,7 @@ void NetDaemon::await_synch() {
     if (IsMultiplayerNet != 0) {
         int synching = 1;
         *state = synching;
-        log_say(reinterpret_cast<char *>("Awaiting acknowledgement of SYNCH"), ConsoleGlobal.faction_id_, 0, 0);
+        log_say("Awaiting acknowledgement of SYNCH", ConsoleGlobal.faction_id_, 0, 0);
 
         int saved = NetDaemonNet.channels_[0].leading_words_[3];
         (NetBusyCount)++;
@@ -3450,7 +3450,7 @@ void NetDaemon::await_synch() {
                     if (now - start_time > 0x7d0) {
                         warned = synching;
                         NetMsgPrimary.pop(
-                            reinterpret_cast<const char *>("AWAITEXEC"), 0, 2, 0);
+                            "AWAITEXEC", 0, 2, 0);
                     }
                 }
                 wait_task();
@@ -3471,7 +3471,7 @@ void NetDaemon::await_synch() {
         (NetBusyCount)--;
         NetDaemonNet.channels_[0].leading_words_[3] = saved;
         if (*state == 0) {
-            log_say(reinterpret_cast<char *>("Received SYNCH acknowledgement"), ConsoleGlobal.faction_id_, 0, 0);
+            log_say("Received SYNCH acknowledgement", ConsoleGlobal.faction_id_, 0, 0);
         }
         *state = 0;
     }
@@ -3524,7 +3524,7 @@ void NetDaemon::await_synch() {
 void NetDaemon::await_diplo(int opcode) {
     if (IsMultiplayerNet != 0) {
         channels_[1].leading_words_[1] = opcode;
-        log_say(reinterpret_cast<char *>("Awaiting DIPLO event"), ConsoleGlobal.faction_id_, 0, 0);
+        log_say("Awaiting DIPLO event", ConsoleGlobal.faction_id_, 0, 0);
         (NetBusyCount)++;
         int32_t saved = NetDaemonNet.channels_[0].leading_words_[3];
         unsigned int start_time = timeGetTime();
@@ -3539,7 +3539,7 @@ void NetDaemon::await_diplo(int opcode) {
                     if (now - start_time > 0x7d0) {
                         timed_out = 1;
                         NetMsgPrimary.pop(
-                            reinterpret_cast<const char *>("AWAITDIPLO"), 0, 2, 0);
+                            "AWAITDIPLO", 0, 2, 0);
                     }
                 }
                 wait_task();
@@ -3559,7 +3559,7 @@ void NetDaemon::await_diplo(int opcode) {
         (NetBusyCount)--;
         NetDaemonNet.channels_[0].leading_words_[3] = saved;
         if (channels_[1].leading_words_[1] == 0) {
-            log_say(reinterpret_cast<char *>("Received DIPLO acknowledgement"), ConsoleGlobal.faction_id_, 0, 0);
+            log_say("Received DIPLO acknowledgement", ConsoleGlobal.faction_id_, 0, 0);
         }
         channels_[1].leading_words_[1] = 0;
     }
