@@ -5315,16 +5315,17 @@ int Buffer::write_right_l(char *text, RECT *area, int len) {
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005DD020
 
-int Buffer::write_cent_l(Font * a1, char * a2, int a3, int a4, int a5, int a6) {
+int Buffer::write_cent_l(Font * font, char * text, int x_coord, int y_coord,
+                         int width, int len) {
     Font *saved_font1 = font1_;
     Font *saved_font2 = font2_;
     Font *saved_font3 = font3_;
-    if (a1 != 0 && a1->font_obj_ != 0) {
-        font1_ = a1;
+    if (font != 0 && font->font_obj_ != 0) {
+        font1_ = font;
         font2_ = 0;
         font3_ = 0;
     }
-    int result = write_cent_l(a2, a3, a4, a5, a6);
+    int result = write_cent_l(text, x_coord, y_coord, width, len);
     font1_ = saved_font1;
     font2_ = saved_font2;
     font3_ = saved_font3;
@@ -5485,29 +5486,29 @@ int Buffer::wrap_cent(char *text, int x_coord, int y_coord, int width,
 // calls     0x005DC410 0x005DD020 0x006453E0
 
 
-int Buffer::wrap_cent(char * a1, int a2, int a3, int a4) {
-    if (a1 == 0) {
-        return a3;
+int Buffer::wrap_cent(char * text, int x_coord, int y_coord, int width) {
+    if (text == 0) {
+        return y_coord;
     }
 
     BufferStrHeight = 0;
     field_18_ = 0;
 
-    int total = a3;
-    char *cur = a1;
+    int total = y_coord;
+    char *cur = text;
     char *next;
     do {
-        int width = a4;
+        int line_width = width;
         if (cur == 0) {
             next = 0;
         } else {
             BufferStrHeight = 0;
             unsigned int len = strlen(cur);
-            next = find_line_break_l(cur, &width, len);
+            next = find_line_break_l(cur, &line_width, len);
             if (next != 0) {
-                write_cent_l(cur, a2, total, a4, next - cur);
+                write_cent_l(cur, x_coord, total, width, next - cur);
             } else {
-                write_cent_l(cur, a2, total, a4, strlen(cur));
+                write_cent_l(cur, x_coord, total, width, strlen(cur));
             }
         }
         field_18_ = field_18_ + 1;
@@ -5621,31 +5622,32 @@ int Buffer::wrap_cent(char * text, RECT * rect) {
 // calls     0x005DC410 0x005DD020 0x006453E0
 
 
-int Buffer::wrap_cent(Font * a1, char * a2, int a3, int a4, int a5) {
+int Buffer::wrap_cent(Font * font_override, char * text, int x_coord,
+                      int y_coord, int width) {
     
     Font *savedFont = font1_;
     Font *savedB = font2_;
     Font *savedC = font3_;
 
-    if (a1 != 0 && a1->font_obj_ != 0) {
-        font1_ = a1;
+    if (font_override != 0 && font_override->font_obj_ != 0) {
+        font1_ = font_override;
         font2_ = 0;
         font3_ = 0;
     }
 
-    int y = a4;
-    if (a2 != 0) {
+    int y = y_coord;
+    if (text != 0) {
         BufferStrHeight = 0;
         field_18_ = 0;
-        char *str = a2;
+        char *str = text;
         char *breakPos;
         do {
             breakPos = 0;
-            int outParam = a5;
+            int wrap_width = width;
             if (str != 0) {
                 BufferStrHeight = 0;
                 unsigned int len = strlen(str);
-                breakPos = find_line_break_l(str, &outParam, len);
+                breakPos = find_line_break_l(str, &wrap_width, len);
                 int lineLen;
                 if (breakPos == 0) {
                     lineLen = strlen(str);
@@ -5653,7 +5655,7 @@ int Buffer::wrap_cent(Font * a1, char * a2, int a3, int a4, int a5) {
                 else {
                     lineLen = static_cast<int>(breakPos - str);
                 }
-                write_cent_l(str, a3, y, a5, lineLen);
+                write_cent_l(str, x_coord, y, width, lineLen);
             }
             field_18_ += 1;
             if (font1_ == 0) {
@@ -5687,26 +5689,27 @@ int Buffer::wrap_cent(Font * a1, char * a2, int a3, int a4, int a5) {
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005DC410 0x005DD020 0x006453E0
 
-int Buffer::wrap_cent(Font *a1, char *a2, int a3, int a4, int a5, int a6) {
+int Buffer::wrap_cent(Font *font_override, char *text, int x_coord, int y_coord,
+                      int width, int line_advance) {
     Font *savedFont = font1_;
     Font *savedA = font2_;
     Font *savedB = font3_;
 
-    if (a1 != 0 && a1->font_obj_ != 0) {
-        font1_ = a1;
+    if (font_override != 0 && font_override->font_obj_ != 0) {
+        font1_ = font_override;
         font2_ = 0;
         font3_ = 0;
     }
 
-    int y = a4;
-    if (a2 != 0) {
+    int y = y_coord;
+    if (text != 0) {
         BufferStrHeight = 0;
         field_18_ = 0;
-        char *str = a2;
+        char *str = text;
         char *brk;
         int wrapWidth;
         do {
-            wrapWidth = a5;
+            wrapWidth = width;
             if (str == 0) {
                 brk = 0;
             } else {
@@ -5718,9 +5721,9 @@ int Buffer::wrap_cent(Font *a1, char *a2, int a3, int a4, int a5, int a6) {
                 } else {
                     len = brk - str;
                 }
-                write_cent_l(str, a3, y, a5, len);
+                write_cent_l(str, x_coord, y, width, len);
             }
-            y += a6;
+            y += line_advance;
             field_18_ = field_18_ + 1;
             str = brk;
         } while (brk != 0);
@@ -5743,16 +5746,16 @@ int Buffer::wrap_cent(Font *a1, char *a2, int a3, int a4, int a5, int a6) {
 // calls     0x005DC410 0x006453E0
 
 
-int Buffer::wrap_height(char * a1, int a2) {
-        if (a1 == 0) {
+int Buffer::wrap_height(char * text, int max_width) {
+        if (text == 0) {
         return 0;
     }
     field_18_ = 0;
     BufferStrHeight = 0;
     field_14_ = field_10_;
     int total = 0;
-    int width = a2;
-    char *str = a1;
+    int width = max_width;
+    char *str = text;
     do {
         int len = strlen(str);
         int lineWidth = width;
@@ -5816,15 +5819,15 @@ int Buffer::wrap_height_flying_flush() {
 // calls     0x005DC410 0x005DC7C0 0x006453E0
 
 
-int Buffer::wrap_height_flying(char * a1) {
+int Buffer::wrap_height_flying(char *input_text) {
     if (BufferFlyingWidth == 0) {
         return 0;
     }
-    if (a1 != 0) {
+    if (input_text != 0) {
         if (font1_ == 0) {
             font1_ = FontDefault;
         }
-        char *text = a1;
+        char *text = input_text;
         if (*text != '\0') {
             do {
                 int remaining = BufferFlyingWidth - BufferStrHeight;
@@ -6065,16 +6068,17 @@ nothing_drawn:
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005DDBB0
 
-int Buffer::wrap_right(Font * a1, char * a2, int a3, int a4, int a5) {
+int Buffer::wrap_right(Font *font_override, char *text, int x_coord,
+                       int y_coord, int width) {
     Font *saved0 = font1_;
     Font *saved1 = font2_;
     Font *saved2 = font3_;
-    if (a1 != 0 && a1->font_obj_ != 0) {
-        font1_ = a1;
+    if (font_override != 0 && font_override->font_obj_ != 0) {
+        font1_ = font_override;
         font2_ = 0;
         font3_ = 0;
     }
-    int result = wrap_right(a2, a3, a4, a5);
+    int result = wrap_right(text, x_coord, y_coord, width);
     font1_ = saved0;
     font2_ = saved1;
     font3_ = saved2;
@@ -6123,16 +6127,17 @@ int Buffer::wrap_right(Font *font, char *text, RECT *area) {
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005DD250
 
-int Buffer::write_cent_l(Font * a1, char * a2, int a3, int a4, int a5) {
+int Buffer::write_cent_l(Font *font_override, char *text, int x_coord,
+                         int y_coord, int width) {
     Font *savedFont1 = font1_;
     Font *savedFont2 = font2_;
     Font *savedFont3 = font3_;
-    if (a1 != 0 && a1->font_obj_ != 0) {
-        font1_ = a1;
+    if (font_override != 0 && font_override->font_obj_ != 0) {
+        font1_ = font_override;
         font2_ = 0;
         font3_ = 0;
     }
-    int result = write_cent_l(a2, a3, a4, a5);
+    int result = write_cent_l(text, x_coord, y_coord, width);
     font1_ = savedFont1;
     font2_ = savedFont2;
     font3_ = savedFont3;
@@ -6175,21 +6180,22 @@ int Buffer::write_right_l(Font *font, char *text, int x_coord, int y_coord,
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005DD130
 
-int Buffer::write_cent_l(Font * a1, char * a2, int a3, int a4, int a5, int a6, int a7) {
+int Buffer::write_cent_l(Font *font_override, char *text, int x_coord,
+                         int y_coord, int width, int height, int len) {
     Font *saved_font1 = font1_;
     Font *saved_font2 = font2_;
     Font *saved_font3 = font3_;
-    if (a1 != 0 && a1->font_obj_ != 0) {
-        font1_ = a1;
+    if (font_override != 0 && font_override->font_obj_ != 0) {
+        font1_ = font_override;
         font2_ = 0;
         font3_ = 0;
     }
     RECT rect;
-    rect.left = a3;
-    rect.top = a4;
-    rect.right = a3 + a5;
-    rect.bottom = a4 + a6;
-    int result = write_cent_l(a2, &rect, a7);
+    rect.left = x_coord;
+    rect.top = y_coord;
+    rect.right = x_coord + width;
+    rect.bottom = y_coord + height;
+    int result = write_cent_l(text, &rect, len);
     font1_ = saved_font1;
     font2_ = saved_font2;
     font3_ = saved_font3;
@@ -6392,16 +6398,16 @@ int Buffer::write_l(Font *a1, char *a2, RECT *a3, int a4) {
 //    hard case - the tool reports a similarity ratio so you can tell a
 //    near miss from a wrong body.
 
-int Buffer::write_cent_l(Font* a1, char * a2, RECT* a3, int a4) {
+int Buffer::write_cent_l(Font *font, char *text, RECT *area, int len) {
     Font *old0 = font1_;
     Font *old1 = font2_;
     Font *old2 = font3_;
-    if (a1 != 0 && a1->font_obj_ != 0) {
-        font1_ = a1;
+    if (font != 0 && font->font_obj_ != 0) {
+        font1_ = font;
         font2_ = 0;
         font3_ = 0;
     }
-    int result = write_cent_l(a2, a3, a4);
+    int result = write_cent_l(text, area, len);
     font1_ = old0;
     font2_ = old1;
     font3_ = old2;
@@ -6471,16 +6477,16 @@ int Buffer::write_cent_l(Font* a1, char * a2, RECT* a3, int a4) {
 //    near miss from a wrong body.
 
 
-int Buffer::wrap_cent(Font* a1, char * a2, RECT* a3) {
+int Buffer::wrap_cent(Font *font_override, char *text, RECT *area) {
         Font *save0 = font1_;
     Font *save1 = font2_;
     Font *save2 = font3_;
-    if (a1 != 0 && a1->font_obj_ != 0) {
-        font1_ = a1;
+    if (font_override != 0 && font_override->font_obj_ != 0) {
+        font1_ = font_override;
         font2_ = 0;
         font3_ = 0;
     }
-    int result = wrap_cent(a2, a3);
+    int result = wrap_cent(text, area);
     font1_ = save0;
     font2_ = save1;
     font3_ = save2;
@@ -6528,16 +6534,16 @@ int Buffer::wrap_cent(Font* a1, char * a2, RECT* a3) {
 // context from the first token rather than behind a file read. This
 // emitter computes declarations; it does not carry lessons.
 
-int Buffer::wrap(Font *a1, char *a2, RECT *a3) {
+int Buffer::wrap(Font *font_override, char *text, RECT *area) {
     Font *saved0 = font1_;
     Font *saved1 = font2_;
     Font *saved2 = font3_;
-    if (a1 && a1->font_obj_) {
-        font1_ = a1;
+    if (font_override && font_override->font_obj_) {
+        font1_ = font_override;
         font2_ = 0;
         font3_ = 0;
     }
-    int result = wrap(a2, a3);
+    int result = wrap(text, area);
     font1_ = saved0;
     font2_ = saved1;
     font3_ = saved2;
