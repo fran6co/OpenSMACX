@@ -1,0 +1,21 @@
+{
+  "event_id": "d62d1ab4f52c905739de9bb5c7095d23028b4fc873f456817567eb8116e84033",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_mapwin_empty_helper_boundary_oct20q.py"
+    ],
+    "evidence": [
+      "Fresh controlled complete106-row actual Release /Ob1 diagnostic restores46FA00 only and loses459560/462080/46F880; reject production flag change. Source-policy alternative: original MapWin init and on_resize both call empty do_image_buttons, while current source defines the empty helper between the two callers. A single-pass optimizer visibility boundary can explain that difference without altered ABI/flags or fabricated TU.",
+      "Authorize ONE whole-TU source-order overlay moving the unchanged complete do_image_buttons definition and its full binding/history block immediately after on_resize. No body/token/annotation/claim/flag/header/CMake edits. Measure all106 current mapped bodies with unchanged baseline/replica and candidate/replica, raw objects and real guard-mask damage control; inspect all physical unmapped collateral before any product integration. Source-order result is compiler evidence, not proof of original source order or historical TU filenames.",
+      "If supported, coordinator may authorize actual relocation of that complete block and a narrow meaningful regression test under this task, requiring independent review, fresh compile/link/native continuity and destination checks. Preserve task baseline a9f818ae; original body remains a genuine empty method, not an artificial adapter."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "ca9ea328dc35f6628e7a4a63a6b8656c8da01eeea356520b15d8d00b639a956e",
+  "request_id": "mapwin-empty-helper-definition-order-oct20q",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:mapwin-cohort-match-oct20b"
+}
