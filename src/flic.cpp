@@ -1504,6 +1504,7 @@ void Flic::decode_delta_flc_trans() {
                             for (int i = 0; i < run; i++) {
                                 std::memcpy(out, &word, sizeof(word));
                                 out += 2;
+                                src += 2;
                             }
                         }
                     }
