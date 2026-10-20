@@ -1,0 +1,20 @@
+{
+  "event_id": "062a8fd79506f188efaa7275fecc72e2807fde65b80b7117d44a5cb04ab4b4a2",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_popup_wrapper_batch_behavior.py"
+    ],
+    "evidence": [
+      "Focused host controls found2compilefailures: pre-existing wrapper fixture models GameDataLockMaskView only as an enable_mask scalar, while current unmodified POP3 product source accesses bytes_.human_mask_ and bytes_.alive_mask_. Actual source header game_data_state_window.h defines human byte0,alive byte1,two reserved bytes, overlaid with uint32_t enable_mask_. Authorize only updating this host type double to that actual representation (and required stdint include/static size witness), preserving every tested source body, input, expected outcome, mutant, sanitizer and assertion. No product code/header/type/flags changes.",
+      "Full native candidate build/link already passed before this test-only repair; all compiled C++/CMake/project/compiler inputs must remain identical and be freshly receipt-qualified afterward. Keep original build/frozen evidence unchanged, use a new observation snapshot, never reset task baseline or relabel an old report as automatic acceptance. Named host controls rerun with OPENSMACX_IMAGE set so pinned data check does not skip."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "41e0e8ba4edd1cea03e7c6dcc44cc370e7559c7a0085ada47f2efa4b4676255e",
+  "request_id": "popup-actual-lock-mask-fixture-oct20ag",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:popup-modal-api-owner-oct20ag"
+}

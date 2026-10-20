@@ -1,0 +1,20 @@
+{
+  "event_id": "c1a4c230a99c14fccf848ee754009460aa2180789e43ca05cd70769fd1d75cbe",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_color_owner_source.py",
+      "recovery/tests/test_small_owner_batch_actual_source_oct6.py"
+    ],
+    "evidence": [
+      "Source-author discovery: these existing actual-source extraction controls select moved set_popup_saved_location627110 and pop_ask627830 from popup.cpp. Authorize only following the new true source owner popup_api.cpp, preserving every extraction/behavior/mutant assertion and all unrelated controls. No broader tests or compiler permissions."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "popup-modal-test-owner-closure-oct20ag",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:popup-modal-api-owner-oct20ag"
+}

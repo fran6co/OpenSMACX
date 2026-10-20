@@ -174,7 +174,7 @@ int main() {
 
 def test_pop_ask_actual_projected_region_forwards_without_rewriting_arguments(
         tmp_path: Path) -> None:
-    body = region("src/popup.cpp", 0x00627830)
+    body = region("src/popup_api.cpp", 0x00627830)
     harness = r'''
 #include <cassert>
 #define __cdecl

@@ -173,6 +173,12 @@
       "src/prefwin_geometry.cpp": {
         "flags": ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Ob2"]
       },
+      "src/popup.cpp": {
+        "flags": ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Oy-", "/Ob2"]
+      },
+      "src/popup_api.cpp": {
+        "flags": ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Ob2"]
+      },
       "src/technology_queries.cpp": {
         "flags": ["/c", "/O2", "/Gy", "/GR-", "/Oy-", "/GX", "/Ob2"]
       },
