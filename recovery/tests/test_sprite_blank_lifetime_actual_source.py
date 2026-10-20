@@ -1,8 +1,9 @@
 """Compile/run host controls from installed production source snippets.
 
 These controls use a small mock Sprite only to observe constructor/destructor
-ordering. The owner union and owner/accessor definitions are extracted from installed
-source. The Sprite double observes lifecycle only, not the target ABI or game.
+ordering. The owner union and inline accessors are extracted from the installed
+header; owner construction and teardown are extracted from the installed source.
+The Sprite double observes lifecycle only, not the target ABI or game.
 """
 from __future__ import annotations
 
@@ -51,11 +52,13 @@ typedef char blank_storage_extent_control[
 typedef char blank_owner_extent_control[
     sizeof(BlankSpriteStorageOwner) == sizeof(Sprite) ? 1 : -1];
 '''
-    snippets = [braced_definition(cpp, signature) for signature in (
-        "Sprite &blank_sprite()", "BlankSpriteStorageOwner::BlankSpriteStorageOwner()",
+    assert "Sprite &blank_sprite()" not in cpp
+    assert "Sprite &BlankSpriteStorageOwner::sprite()" not in cpp
+    snippets = [braced_definition(header, "inline Sprite &blank_sprite()")]
+    snippets.extend(braced_definition(cpp, signature) for signature in (
+        "BlankSpriteStorageOwner::BlankSpriteStorageOwner()",
         "BlankSpriteStorageOwner::~BlankSpriteStorageOwner()",
-        "Sprite &BlankSpriteStorageOwner::sprite()",
-    )]
+    ))
     implementations = "\n".join(snippets)
     if mutation == "late_guard":
         before = "    BlankSpriteCleanupGuard |= 1;\n    sprite().~Sprite();"

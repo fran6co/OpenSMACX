@@ -2060,10 +2060,6 @@ uint8_t BlankSpriteCleanupGuard;
 // RECOVERY_OBJECT: v3 0x009BEAE8 ?g_BLANK_SPRITE@@3VSprite@@A member ?g_BLANK_SPRITE_OWNER@@3UBlankSpriteStorageOwner@@A rawstorage_.bytes
 BlankSpriteStorageOwner g_BLANK_SPRITE_OWNER;
 
-Sprite &blank_sprite() {
-    return g_BLANK_SPRITE_OWNER.sprite();
-}
-
 // ORIGINAL: 0x0063CDC0 sub_63cdc0 0x0063CDC0-0x0063CE17 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned image span 0x0063CDC0-0x0063CE17: early argument-2/null and dword-at-+8 checks; argument-1 selects null or +0x444 Buffer; final call targets Sprite::draw at 0x005E4B9A.", "Current GraphicWin multiply-inherits Buffer after Win; sizeof(Win)==0x444. Typed GraphicWin-to-Buffer conversion replaces the observed +0x444 destination adjustment.", "The absolute reads 0x009BEAF0 and 0x009BEB04 are the blank Sprite's cTransparentIndex_ (+8) and iHeight_ (+0x1c) in source-owned storage at 0x009BEAE8; access them through blank_sprite().", "The retired seed recorded the same identity/span and historical BYTE_EXACT claim; the claim remains an obligation, not fresh proof.", "Argument 2 remains opaque: only the original dword-at-+8 nonzero test is recovered; no caller edge or enclosing type is established in the current mapped-source closure."], "reason": "Draw the source-owned shared blank Sprite through blank_sprite() and a typed GraphicWin/Buffer destination while preserving the unknown gate context's original dword test, centering and ignored draw result."}
 // symbol    _sub_63cdc0
@@ -2098,11 +2094,6 @@ BlankSpriteStorageOwner::~BlankSpriteStorageOwner() {
     BlankSpriteCleanupGuard |= 1;
     sprite().~Sprite();
 }
-
-Sprite &BlankSpriteStorageOwner::sprite() {
-    return *reinterpret_cast<Sprite *>(&rawstorage_.bytes[0]);
-}
-
 
 // ORIGINAL: 0x0063CE20 sub_63ce20 0x0063CE20-0x0063CEE7;0x00663998-0x006639AD BYTE_EXACT
 // kind      game
