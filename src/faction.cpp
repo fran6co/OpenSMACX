@@ -18685,19 +18685,19 @@ int __cdecl break_treaty(int faction_id, int target_faction_id,
             return popp(ScriptPopupFile,
                         DiploLabelBREAKINGTREATY, 0,
                         DiploLabelBreakSmPcx_7C0,
-                        reinterpret_cast<int (__cdecl *)()>(0)) == 0;
+                        nullptr) == 0;
         }
         if ((flags & 4) != 0 && (flags & 0x10000) == 0) {
             return popp(ScriptPopupFile,
                         DiploLabelBREAKINGTRUCE, 0,
                         DiploLabelBreakSmPcx_7E0,
-                        reinterpret_cast<int (__cdecl *)()>(0)) == 0;
+                        nullptr) == 0;
         }
         if ((treaty_bits & 0x10000) == 0) {
             return popp(ScriptPopupFile,
                         DiploLabelBEGINVENDETTA, 0,
                         DiploLabelBreakSmPcx_800,
-                        reinterpret_cast<int (__cdecl *)()>(0)) == 0;
+                        nullptr) == 0;
         }
     }
     return 0;
