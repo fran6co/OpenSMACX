@@ -1,0 +1,20 @@
+{
+  "event_id": "b37b1b59d4faa1f49f376e540993aa7fb24872876a9c9af05a9fca1a6393e808",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "reportif-satellite-hide-oct20f",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Both close_sat control loops now call inherited BaseButton::hide through FlatButton primary slot2, not destructive close slot90. Preserve localfaction skip,7faction/5bottom traversal, tailreset/hide/timers and all historical source facts/claims/lessons. Independently reviewed against pinned vtable669754 and original4AB56C/4AB58A.",
+      "One source-unchanged native controlled candidate restores original incfaction-before-pointer order;48/48BYTE_EXACTbothflagsets with unchangedreplica+damagecontrolpass. Applied that single effect-neutral adjacent statement order; native recorderexit0 confirms48/48 without granting/changing metadata. No extended spellings, flags, classlayout or safety change.",
+      "Final fresh application build/link PASS build-3bfo2llq,177units191objects. Qualified191/191outside-target residual PASS, exact decorated close_sat .text+associateddebugonly projected. All54metadata/lesson rowscontinuous; actual-source host10PASS4SKIP; claims/mappings/referencesPASS. Exactgainone,noexactlosses.",
+      "Strict target UNKNOWN (boundaryPASS, bytes/referencesUNKNOWN from unresolved ConsoleGlobal/ReportWinGlobal); do not claim strict linked/physical/game acceptance. Preserve f67c979baseline and previous project debts. Coordinator-reviewed manual recovery; combined destination verification required."
+    ]
+  },
+  "previous_event": "27b4686672ea7117bb3cece109ca9114a424c7ab9ab66be8a7460995e0d40afb",
+  "request_id": "reportif-satellite-hide-oct20f-reviewed-exact-resolution",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:reportif-typed-close-owner-oct9"
+}
