@@ -22,7 +22,7 @@ SPECS = (
     (0x528EA0, "game.cpp"),
     (0x455E50, "game.cpp"),
     (0x609150, "dialog.cpp"),
-    (0x627830, "popup.cpp"),
+    (0x627830, "popup_api.cpp"),
     (0x5BECA0, "text.cpp"),
     (0x405140, "popup.cpp"),
 )

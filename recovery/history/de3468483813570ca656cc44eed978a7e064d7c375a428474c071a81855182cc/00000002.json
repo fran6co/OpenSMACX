@@ -1,0 +1,21 @@
+{
+  "event_id": "41e0e8ba4edd1cea03e7c6dcc44cc370e7559c7a0085ada47f2efa4b4676255e",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_diplomacy_council_owner_history_oct6.py"
+    ],
+    "evidence": [
+      "Independent review found existing original-obligation continuity test627830 still selecting popup.cpp; authorize only following its new actual popup_api.cpp owner, preserving all other expected fields/history and controls.",
+      "Frozen split-only native screen reproduces original Release object and preserves all93verdicts; split with separate Popup /Oy- and API default gives16exactgains/0losses,11existingEHrefusalsretained. Three profile replicas and body-damage controls pass (11compiles). Authorize now the already-scoped CMake/project.json context step: only Popup adds /Oy- with /Ob2 unchanged; API explicitly stays default /Ob2. Not historic TU proof or automatic acceptance.",
+      "Authorize native binding_source.parse/render updates only to unversioned current-owner/declaration path references in moved API bindings; preserve original name/spans/claims/body, seed/Git provenance, reason/effects and all useful historical findings. Fix ordinary saved-location and pending-forwarder header prose to describe the actual source owner. No other code or semantic edits."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "c1a4c230a99c14fccf848ee754009460aa2180789e43ca05cd70769fd1d75cbe",
+  "request_id": "popup-modal-reviewed-context-and-history-oct20ag",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:popup-modal-api-owner-oct20ag"
+}

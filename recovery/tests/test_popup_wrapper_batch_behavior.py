@@ -19,6 +19,7 @@ import pytest
 HARNESS_PREFIX = r'''#include <cassert>
 #include <cstdio>
 #include <cstring>
+#include <stdint.h>
 #define __cdecl
 struct Sprite {};
 struct StringStructPayload { char *text; };
@@ -72,7 +73,17 @@ struct Interface {
 static const int RFLAG_ALIEN=0x80; static const int PlayerMax=8;
 Player Players[PlayerMax] = {}; Console ConsoleGlobal={0};
 int ExpansionEnabled=0, PopupDialogFactionID=0, IsMultiplayerPBEM=0;
-struct GameDataLockMaskView { unsigned int enable_mask_; };
+struct GameDataLockMaskBytes {
+    uint8_t human_mask_;
+    uint8_t alive_mask_;
+    uint8_t unassigned_[2];
+};
+union GameDataLockMaskView {
+    uint32_t enable_mask_;
+    GameDataLockMaskBytes bytes_;
+};
+typedef char GameDataLockMaskView_is_four_bytes[
+    sizeof(GameDataLockMaskView) == 4 ? 1 : -1];
 struct GameDataStateWindowFields { GameDataLockMaskView lock_masks_; };
 struct GameDataStateWindow { GameDataStateWindowFields fields_; };
 GameDataStateWindow GameDataStateStorage = {};
@@ -222,10 +233,16 @@ def source_root() -> Path:
 
 def build_program(root: Path, damage_cursor: bool = False) -> str:
     popups = root / "src/popup.cpp"
+    popup_api = root / "src/popup_api.cpp"
     xpops = root / "src/xpops.cpp"
     definitions = []
     for address in ADDRESS_SIGNATURES:
-        owner = xpops if address in (0x5BFB10, 0x5BFB80, 0x5BF930) else popups
+        if address in (0x5BFB10, 0x5BFB80, 0x5BF930):
+            owner = xpops
+        elif address in (0x00627190, 0x00627440, 0x00627480):
+            owner = popup_api
+        else:
+            owner = popups
         definition = extract_actual_definition(owner, address)
         if damage_cursor and address == 0x004055A0:
             good = "StringStructPayload *const history_payload = history.next_entry();"
@@ -386,7 +403,7 @@ def test_popup_wrappers_keep_allocator_owned_slot_type() -> None:
 
 
 def make_numeric_source(root: Path, damage: str = "") -> str:
-    definition = extract_numeric_body((root / "src/popup.cpp").read_text(encoding="utf-8"))
+    definition = extract_numeric_body((root / "src/popup_api.cpp").read_text(encoding="utf-8"))
     if damage == "nonzero-seed":
         old = "_itoa(0, number_text, 10);"
         assert old in definition

@@ -216,6 +216,7 @@ set(OPENSMACX_SOURCES
     src/tutwin_callouts.cpp
     src/popmenu.cpp
     src/popup.cpp
+    src/popup_api.cpp
     src/netmsg.cpp
     src/editbox.cpp
     src/editgroup.cpp
@@ -441,6 +442,9 @@ set_source_files_properties(
     src/councwin.cpp
     src/planwin.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")
+# Keep the application Popup on its measured frame-based profile while the
+# generic modal API remains on the default frameless profile.
+set_source_files_properties(src/popup.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Application formatters retain calls into the separately compiled string table.
 # The Strings implementation keeps its independently measured default recipe.
 set_source_files_properties(src/string_formatting.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")
