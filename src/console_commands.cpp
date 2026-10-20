@@ -1050,7 +1050,7 @@ void Console::road_to(int veh_id, int cursor_mode) {
         return;
     }
     if (cursor_mode != 0x1C ||
-        has_tech(Terraforming[TERRA_FARM].preq_tech, vehicle.faction_id)) {
+        has_tech(Terraforming[TERRA_MAGTUBE].preq_tech, vehicle.faction_id)) {
         ConsoleGlobal.cursor_on((cursor_mode == 0x1C) + 2, -1);
     }
 }
