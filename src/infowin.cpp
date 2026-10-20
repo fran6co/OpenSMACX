@@ -773,6 +773,12 @@ void InfoWin::timer_change(int) {
     field_A8_ = 0;
     MainInterfaceGlobal.box_sprite(&pane_rects_[active_pane_],
                                    &InterfaceBoxStyles[18]);
+    // The original performs a second unconditional pair of stores after the
+    // box draw (its `this + 0x88` address test cannot be null for a live
+    // InfoWin). Keep this pair after the call so callback-visible state and
+    // the original write order are preserved.
+    visible_characters_[0] = 0;
+    visible_characters_[1] = 0;
     setup_text();
     draw_text(active_pane_);
 }
