@@ -1,0 +1,20 @@
+{
+  "event_id": "931d32bec06b6f0cbeb3d4dbd539e504ae095413747d97c0abd690d6bc71993e",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/diplowin.cpp"
+    ],
+    "evidence": [
+      "Fresh full build-nu5ypxdl and whole5581-identity comparison show four local exact gains and zero losses; source-owned compiler-generated StringList constructor4450B0 in diplowin.cpp is the only new historical claim among these gains.",
+      "Authorize coordinator-only native recover record4450B0 --in src/diplowin.cpp publication. This extra editable file is restricted to its measured claim token; no body, signature, binding, symbol, span, historical note or unrelated source edit. Preserve all existing obligations and original task baseline. Recorder publication is masked-byte evidence, not strict references or acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "676eaf5961d0e623f5b75d2f062829cc8e7c4e34af0ee3e6d09678844141ccec",
+  "request_id": "stringstruct-native-recorder-diplowin-only-oct20ab",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:matching-stringstruct-inline-oct20ab"
+}

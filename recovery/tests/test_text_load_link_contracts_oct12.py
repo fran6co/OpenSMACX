@@ -519,6 +519,9 @@ def actual_source(instrument=True):
     th = (ROOT / "src/text.h").read_text()
     sh = (ROOT / "src/stringstruct.h").read_text().split('#include "name_table.h"')[0]
     sh = re.sub(r'^#include[^\n]*\n|^#pragma once\n', '', sh, flags=re.M)
+    string_ctor = body(sh, "StringStruct::StringStruct()")
+    assert sh.count("inline " + string_ctor) == 1
+    sh = sh.replace("inline " + string_ctor, "", 1)
     sc = (ROOT / "src/stringstruct.cpp").read_text()
     sl = (ROOT / "src/stringlist.cpp").read_text()
     bc = (ROOT / "src/buffer.cpp").read_text()
@@ -527,7 +530,7 @@ def actual_source(instrument=True):
         '{\n    events.push_back("ctor:"+std::to_string(size));', 1)
     parts = {
         "STRINGS": sh,
-        "STRING_CTOR": body(sc, "StringStruct::StringStruct()"),
+        "STRING_CTOR": string_ctor,
         "INSERT": body(sl, "int StringList::on_insert(void *raw_payload)"),
         "TEXT_STORAGE": '\n'.join(one(th, r'^  (' + pattern + r';)') for pattern in (
             r'char file_name_\[80\]', r'char file_path_\[256\]', r'LPSTR current_pos_',

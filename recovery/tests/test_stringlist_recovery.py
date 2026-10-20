@@ -145,8 +145,8 @@ def test_live_hooks_preserve_null_failure_and_heap_ownership(tmp_path, monkeypat
         ("// LIVE_ENTRY", "src/stringstruct.h", "struct StringStructEntry :", "static_assert(sizeof(StringStructEntry)"),
         ("// LIVE_LIST_BASE", "src/stringstruct.h", "class StringStruct :", "static_assert(sizeof(StringStruct)"),
         ("// LIVE_LIST", "src/stringstruct.h", "class StringList :", "static_assert(sizeof(StringList)"),
-        ("// LIVE_CONSTRUCTOR", "src/stringstruct.cpp", "StringStruct::StringStruct() {",
-         "// The original primary table uses these shared defaults.")])
+        ("// LIVE_CONSTRUCTOR", "src/stringstruct.h", "StringStruct::StringStruct() {",
+         "class StringList : public StringStruct")])
 
 
 def test_actual_node_lifetime_uses_complete_allocations_and_heap_ownership(tmp_path, monkeypatch):
@@ -157,8 +157,8 @@ def test_actual_node_lifetime_uses_complete_allocations_and_heap_ownership(tmp_p
         ("// LIVE_PAYLOAD_BASE", "src/stringstruct.h", "class ListPayloadBase :", "struct StringStructEntry :"),
         ("// LIVE_OWNER_PUBLICATION", "src/stringstruct.cpp", "StringAllocationBase::~StringAllocationBase() {",
          "// ORIGINAL: 0x00401000"),
-        ("// LIVE_CONSTRUCTOR", "src/stringstruct.cpp", "StringStruct::StringStruct() {",
-         "// The original primary table uses these shared defaults."),
+        ("// LIVE_CONSTRUCTOR", "src/stringstruct.h", "StringStruct::StringStruct() {",
+         "class StringList : public StringStruct"),
         ("// LIVE_PAYLOAD", "src/stringstruct.h", "class StringStructPayload :", "static_assert(sizeof(StringStructPayload)"),
         ("// LIVE_ENTRY", "src/stringstruct.h", "struct StringStructEntry :", "static_assert(sizeof(StringStructEntry)"),
         ("// LIVE_LIST_BASE", "src/stringstruct.h", "class StringStruct :", "static_assert(sizeof(StringStruct)"),
@@ -176,8 +176,8 @@ def test_actual_construction_preserves_allocator_and_partial_failure_contracts(t
         ("// LIVE_PAYLOAD_BASE", "src/stringstruct.h", "class ListPayloadBase :", "struct StringStructEntry :"),
         ("// LIVE_OWNER_PUBLICATION", "src/stringstruct.cpp", "StringAllocationBase::~StringAllocationBase() {",
          "// ORIGINAL: 0x00401000"),
-        ("// LIVE_CONSTRUCTOR", "src/stringstruct.cpp", "StringStruct::StringStruct() {",
-         "// The original primary table uses these shared defaults."),
+        ("// LIVE_CONSTRUCTOR", "src/stringstruct.h", "StringStruct::StringStruct() {",
+         "class StringList : public StringStruct"),
         ("// LIVE_PAYLOAD", "src/stringstruct.h", "class StringStructPayload :", "static_assert(sizeof(StringStructPayload)"),
         ("// LIVE_ENTRY", "src/stringstruct.h", "struct StringStructEntry :", "static_assert(sizeof(StringStructEntry)"),
         ("// LIVE_LIST_BASE", "src/stringstruct.h", "class StringStruct :", "static_assert(sizeof(StringStruct)")])

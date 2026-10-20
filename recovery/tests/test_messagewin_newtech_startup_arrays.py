@@ -160,9 +160,8 @@ def test_messagewin_pending_list_array_has_real_ctor_and_reverse_cleanup(
         image = PeImage(image_path.read_bytes(), image_pin(ROOT))
         assert image.read_initial(Span(0x0093A7B0, 0x0093A930)) == bytes(0x180)
 
-    base = (ROOT / "src/stringstruct.cpp").read_text(encoding="utf-8")
     shared = (ROOT / "src/stringstruct.h").read_text(encoding="utf-8")
-    ctor_body = _body(base, "StringStruct::StringStruct()")
+    ctor_body = _body(shared, "StringStruct::StringStruct()")
     dtor_body = _body(shared, "~StringList()")
     assert "~StringList() {" in shared
     base_dtor = _body(shared, "~StringStruct()")

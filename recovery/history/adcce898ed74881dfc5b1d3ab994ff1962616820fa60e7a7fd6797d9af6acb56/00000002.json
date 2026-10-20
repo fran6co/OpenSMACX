@@ -1,0 +1,117 @@
+{
+  "event_id": "676eaf5961d0e623f5b75d2f062829cc8e7c4e34af0ee3e6d09678844141ccec",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Frozen native177-TU/191-object build-t0dex7aw compiles and links. Ordinary shared StringStruct constructor produces four new local byte matches, including Dialog608C10 and StringBox629110; no source parameter or retention workaround was added.",
+      "The header definition also changes additional mapped caller code and generated table/copy emission. Admit precisely the newly observed mapped functions for coordinated comparison/review, not a blanket whole-TU waiver. Scope permits their qualification, not arbitrary edits outside original editable files. Added tables and anonymous/generated code remain explicit separate proof obligations.",
+      "Native MAP selects naturally emitted StringStruct constructor from datalink.cpp; independent COFF review confirms its96-byte body and six relocation targets equal the previous standalone definition and pinned original26/26 instructions. Authorize native compile_context=datalink.cpp for401000 as current measurement witness, never original-TU ownership. CPP canonical identity/claim and header definition remain unchanged.",
+      "StringStruct scalar deleting entry4029F0 also ceases emission in the canonical CPP; native MAP selects its genuine alphanet.cpp emission both before and after migration. Authorize native compile_context=alphanet.cpp only after COFF qualification. This does not grant a byte claim or prove linked selection/runtime/game acceptance.",
+      "Original task baseline and all historical identities/spans/claims/restoration obligations remain fixed. Preserve structural source work; require fresh build and independent caller/table attribution, including original-backed matching and outside-scope checks, before manual integration."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4544016,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4600528,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4773952,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4925248,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5030752,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5132880,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5197744,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5250464,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5261984,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5392496,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5499728,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5570512,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5744224,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5816992,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5822128,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5851072,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5938864,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6008832,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6491504,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "bfe539ba020af0004d6ae2f7f07cf6633e059693cab6cd17013de74b467be1ba",
+  "request_id": "stringstruct-observed-caller-admission-oct20ab",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:matching-stringstruct-inline-oct20ab"
+}

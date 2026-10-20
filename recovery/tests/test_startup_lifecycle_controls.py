@@ -217,7 +217,7 @@ def _source_body(source: str, signature: str) -> str:
 
 def test_transcript_array_ctor_dtor_vector_order_and_mutation_controls(tmp_path: Path, host_compiler: str) -> None:
     header = (ROOT / "src/stringstruct.h").read_text(encoding="utf-8")
-    impl = (ROOT / "src/stringstruct.cpp").read_text(encoding="utf-8")
+    impl = (ROOT / "src/stringstruct.h").read_text(encoding="utf-8")
     list_impl = (ROOT / "src/stringlist.cpp").read_text(encoding="utf-8")
     owner = (ROOT / "src/diplowin.cpp").read_text(encoding="utf-8")
     declaration = re.search(
