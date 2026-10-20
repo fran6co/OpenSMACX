@@ -203,6 +203,7 @@ set(OPENSMACX_SOURCES
     src/credits.cpp
     src/diplopop.cpp
     src/gamma.cpp
+    src/pushbutton.cpp
     src/messagewin.cpp
     src/newtechwin.cpp
     src/picktech.cpp
@@ -469,7 +470,7 @@ set_source_files_properties(
     src/council.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Preserve measured frame-based accesses in the remaining owner cohort.
-# Gamma and Credits retain their measured default source recipes.
+# Credits retains its measured default source recipe.
 set_source_files_properties(
     src/prefwin.cpp
     src/fx.cpp
@@ -524,6 +525,9 @@ set_source_files_properties(src/video_sound.cpp PROPERTIES COMPILE_OPTIONS "/Oy-
 # Preserve the original frame-based AlphaMovie owner context without changing
 # its independently measured /Ob2 inlining policy.
 set_source_files_properties(src/alphamovie.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")
+# Gamma's modal window keeps its measured frame context; the independent
+# PushButton implementation retains its default frameless context.
+set_source_files_properties(src/gamma.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")
 
 # Preserve the measured frame-based context of the scenario-editor undo owner.
 # General's unrelated helpers retain their independently measured default recipe.

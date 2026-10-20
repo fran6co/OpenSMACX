@@ -26,7 +26,7 @@
  * table opens with a baseButton prefix sized exactly sizeof(BaseButton),
  * followed by eighteen four-byte fields ending at 0xB00.
  */
-// The two virtual tables the destructor stages before delegating to
+// Compiler-owned virtual-table mappings for the two PushButton views follow.
 
 class PushButton : public BaseButton {
   friend class Gamma;  // Gamma::exec configures its two embedded buttons
@@ -36,7 +36,7 @@ class PushButton : public BaseButton {
   // RECOVERY_GENERATED: v1 vtable 0x00670C60 ? ??_7PushButton@@6BWin@@@ 0x0062C010
   // RECOVERY_GENERATED: v1 vtable 0x00670C58 ? ??_7PushButton@@6BBuffer@@@ 0x0062C010
  public:
-  // OUT OF LINE (defined in gamma.cpp beside the destructor), 2026-09-03,
+  // OUT OF LINE (defined in pushbutton.cpp beside the destructor), 2026-09-03,
   // superseding the in-class `{ ; }`. An in-class constructor is expanded by
   // /Ob2 at every implicit member construction, and because the expansion
   // carries the whole BaseButton chain VC6 wrapped each site in a second EH
@@ -48,7 +48,7 @@ class PushButton : public BaseButton {
   // Out of line so owners invoke one destructor, not an expanded wrapper
   // plus another automatic BaseButton teardown. The compiler owns base
   // destruction and vptr staging. The source's inherited virtuality emits
-  // UAE rather than the catalogue's QAE; gamma.cpp binds that symbol
+  // UAE rather than the catalogue's QAE; pushbutton.cpp binds that symbol
   // explicitly instead of treating the catalogue spelling as class evidence.
   ~PushButton();
   // Constructor62BF28 installs670C60: slot90 selects62C030.
@@ -79,6 +79,6 @@ static_assert(sizeof(PushButton) == 0xB00, "probe");
 
 // The zero-init .bss table PushButton's constructor loads its eighteen field
 // defaults from (0x009BC118..0x009BC15C in the image), rebindable like
-// BaseButtonA94Default and DialogField30Default. Defined in gamma.cpp beside
-// PushButton's other bodies.
+// BaseButtonA94Default and DialogField30Default. Defined in pushbutton.cpp
+// beside PushButton's other bodies.
 extern Sprite *PushButtonDefaults[18];

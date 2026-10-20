@@ -164,6 +164,12 @@
       "src/alphamovie.cpp": {
         "flags": ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Oy-", "/Ob2"]
       },
+      "src/gamma.cpp": {
+        "flags": ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Oy-", "/Ob2"]
+      },
+      "src/pushbutton.cpp": {
+        "flags": ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Ob2"]
+      },
       "src/mci_video.cpp": {
         "flags": ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Ob2"]
       },
