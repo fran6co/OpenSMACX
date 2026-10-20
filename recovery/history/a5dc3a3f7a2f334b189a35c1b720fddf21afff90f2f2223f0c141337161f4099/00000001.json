@@ -1,0 +1,21 @@
+{
+  "event_id": "993b749562897479d96b0b3cae2a96e17546f357b5ff3ba663231eefb62f53e2",
+  "payload": {
+    "affects": [
+      "entity-5dfc4257852707ab99a6615dff2b71b39d4a441d08d9ad8e7dd86522cb9bdebd"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "gameio-common-member-address-native-evidence-oct20e",
+    "evidence": [
+      "Coordinator explicitly extends its initial two-form diagnostic limit by ONE decisive ordinary member-pointer form: original5A68A6 LEA EAX occursbefore5A68AC branch and issharedby4I/Oarms; Nativecandidate2 has4LEAs perfield and extra branch-local record loads, accounting18of31extra staticinstructions. Form a real void* field argument once pertransfer beforeconditions; use established memberaddresses, no casts/offsets/flags/asm/forceinline. No further forms afterthis. PreserveWIP24-bit source/test inGit and bothignoredscreens, oldtaskbaselinec228 unchanged.",
+      "Nativeoutsideotherfunctionsretain3schedulingresiduals (net_upkeep/end_of_game/save_game) undercurrentonebodyprojection; nofunction-inline evidence, do not inferTU boundary orwaivechecks. Independent source/pin semanticreview and 3hostcontrols coverall6failpoints/dynamicmodes; require fresh actual-recipe screen before anyintegration."
+    ],
+    "hypothesis": "Pinned code forms each member pointer once before the API-selection branches; both measured C++ candidates duplicated LEA in four branch arms. This is a separate argument-value lifetime/source-form observation, not flag selection or evidence of original TU separation.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "gameio-common-member-address-native-evidence-oct20e",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:gameio-six-word-transfer-oct20e"
+}
