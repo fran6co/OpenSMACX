@@ -9,7 +9,8 @@ Compact RECOVERY_OBJECT bindings retain their full configured identity syntax.
 from collections import Counter, defaultdict
 import re
 
-from .object_source import parse_objects
+from .object_source import (parse_objects, validate_object_extent_ownership,
+                            validate_object_symbol_ownership)
 from .includes import COMMENTS_OR_STRINGS
 from .source.mangled import qualified_name
 
@@ -76,12 +77,14 @@ def scaled_sums(text):
 
 def storage_findings(files, *, pin, address_space, symbol_format):
     names, sites = defaultdict(set), defaultdict(list)
-    mapped_symbols, mapped_addresses = set(), set()
+    mapped_symbols = set()
+    mapped_objects = []
     counts = Counter({name: 0 for name in STORAGE_RULES})
     per_file, findings = defaultdict(Counter), []
 
-    def binding(address, symbol, path, line, kind):
-        names[address].add(symbol)
+    def binding(address, symbol, path, line, kind, *, counts_as_storage=True):
+        if counts_as_storage:
+            names[address].add(symbol)
         sites[address].append({"path": path, "line": line, "symbol": symbol, "kind": kind})
 
     for path, text in sorted(files.items()):
@@ -94,20 +97,43 @@ def storage_findings(files, *, pin, address_space, symbol_format):
                 if match:
                     binding(int(match[2], 16), match[1], path, line, kind)
         for obj in parse_objects(text, path, pin, address_space=address_space):
-            if obj.symbol in mapped_symbols or obj.origin.address in mapped_addresses:
+            if obj.symbol in mapped_symbols:
                 raise ValueError("duplicate original object symbol or start address")
             mapped_symbols.add(obj.symbol)
-            mapped_addresses.add(obj.origin.address)
-            name = qualified_name(obj.symbol) if symbol_format == "msvc" else obj.symbol
-            if not name:
-                raise ValueError(f"cannot identify mapped object {obj.symbol}")
-            binding(obj.origin.address, name, path, obj.line, "source_object")
+            mapped_objects.append(obj)
         for line, expression, symbol in scaled_sums(text):
             rule = "scaled class-pointer sum"
             counts[rule] += 1
             per_file[path][rule] += 1
             findings.append({"rule": rule, "path": path, "line": line, "symbols": [symbol],
                              "expression": expression, "occurrences": 1, "basis": "source_heuristic"})
+
+    # Validate the complete object set, including relationships that span
+    # annotation-bearing files. This deliberately reuses the same narrow
+    # offset-zero parent/member exception as source object ownership checks.
+    try:
+        validate_object_extent_ownership(mapped_objects)
+    except ValueError as exc:
+        if "multiple objects claim the same original start address" in str(exc):
+            raise ValueError("duplicate original object symbol or start address") from exc
+        raise
+    validate_object_symbol_ownership(mapped_objects)
+
+    by_origin = defaultdict(list)
+    for obj in mapped_objects:
+        by_origin[obj.origin.entity_id].append(obj)
+    for group in by_origin.values():
+        # Extent validation above permits a repeated origin only for one
+        # bounded direct parent and its unbounded offset-zero member. Keep the
+        # member's source identity in related sites, but count storage once.
+        for obj in group:
+            name = qualified_name(obj.symbol) if symbol_format == "msvc" else obj.symbol
+            if not name:
+                raise ValueError(f"cannot identify mapped object {obj.symbol}")
+            is_offset_zero_member = len(group) == 2 and obj.parent_symbol is not None
+            binding(obj.origin.address, name, obj.unit, obj.line, "source_object",
+                    counts_as_storage=not is_offset_zero_member)
+
     for address, group in sorted(names.items()):
         if len(group) < 2:
             continue

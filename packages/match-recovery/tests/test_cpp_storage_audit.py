@@ -190,6 +190,67 @@ def test_local_char_array_object_keeps_full_encoded_identity_and_duplicate_detec
         }, "msvc")
 
 
+def _zero_offset_parent_member(parent="Parent", child="Child"):
+    start, end, evidence = 0x12345678, 0x12345690, 0x23456789
+    return (
+        f"// RECOVERY_OBJECT: v2 0x{start:08X} 0x{end:08X} {parent} 0x{evidence:08X}\n",
+        f"// RECOVERY_OBJECT: v3 0x{start:08X} {child} member {parent} metadata.first\n",
+    )
+
+
+def test_storage_audit_collapses_only_a_valid_offset_zero_parent_member_pair():
+    parent, child = _zero_offset_parent_member()
+    counts, _, rows = findings({"map.cpp": parent + child})
+    assert sum(counts.values()) == 0 and rows == []
+
+
+def test_offset_zero_member_keeps_its_site_and_unrelated_aliases_still_count():
+    parent, child = _zero_offset_parent_member()
+    counts, _, rows = findings({
+        "map.cpp": parent + child,
+        "aliases.hpp": "int AliasA; // 0x12345678\nint AliasB; // 0x12345678\n",
+    })
+    assert counts["duplicate global identities"] == 1
+    assert len(rows) == 4
+    assert all(row["symbols"] == ["AliasA", "AliasB", "Parent"] for row in rows)
+    assert {site["symbol"] for site in rows[0]["related"]} == {
+        "Parent", "Child", "AliasA", "AliasB"}
+
+
+@pytest.mark.parametrize("damage", [
+    "wrong_parent", "cross_unit", "third_row", "unbounded_parent",
+    "bounded_child", "target_alias", "overlap",
+])
+def test_storage_audit_refuses_noncanonical_parent_member_start_groups(damage):
+    start, end, evidence = 0x12345678, 0x12345690, 0x23456789
+    parent = f"// RECOVERY_OBJECT: v2 0x{start:08X} 0x{end:08X} Parent 0x{evidence:08X}\n"
+    child = f"// RECOVERY_OBJECT: v3 0x{start:08X} Child member Parent metadata.first\n"
+    files = {"map.cpp": parent + child}
+    if damage == "wrong_parent":
+        files["map.cpp"] = parent + child.replace("member Parent", "member Other")
+    elif damage == "cross_unit":
+        files = {"map.cpp": parent,
+                 "other.cpp": child}
+    elif damage == "third_row":
+        files["other.cpp"] = f"// RECOVERY_OBJECT: v1 0x{start:08X} Third\n"
+    elif damage == "unbounded_parent":
+        files["map.cpp"] = f"// RECOVERY_OBJECT: v1 0x{start:08X} Parent\n" + child
+    elif damage == "bounded_child":
+        files["map.cpp"] = parent + (
+            f"// RECOVERY_OBJECT: v3 0x{start:08X} 0x{start + 4:08X} Child "
+            f"0x{evidence:08X} member Parent metadata.first\n")
+    elif damage == "target_alias":
+        files["map.cpp"] = (
+            f"// RECOVERY_OBJECT: v4 0x{start:08X} 0x{end:08X} Parent "
+            f"0x{evidence:08X} target Other\n" + child)
+    elif damage == "overlap":
+        files["map.cpp"] = parent + child + (
+            f"// RECOVERY_OBJECT: v2 0x{start + 8:08X} 0x{start + 24:08X} "
+            f"Other 0x{evidence:08X}\n")
+    with pytest.raises(ValueError):
+        findings(files)
+
+
 @pytest.mark.parametrize("duplicate", [
     "// RECOVERY_OBJECT: v1 0x23456789 _?saved@?1??work@@YAHHHH@Z@4PAVBuffer@@A\n",
     "// RECOVERY_OBJECT: v1 0x12345678 _?saved@?2??work@@YAHMH@Z@4VBuffer@@A\n",
