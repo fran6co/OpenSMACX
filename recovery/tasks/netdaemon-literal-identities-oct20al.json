@@ -1,0 +1,36 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "f49c2aa6aa25bd0e7ecb21f85991c96c511e26dd",
+  "editable_files": [
+    "src/netdaemon.cpp"
+  ],
+  "evidence": [
+    "Standing faithful recovery and coordinator-reviewed manual integration authority. Annotation-only source ownership step; no bodies, function markers/spans/claims/lessons, types, storage, callers, flags, tests or framework changes.",
+    "Fresh retained actual Release census establishes unlock530D00 and unlock_veh5310F0 exact bodies, each with only one unknown relocation to ??_C@_0BG@KDKM@Client?5releasing?5lock?$AA@. Pinned original instructions530D17 and531107 independently push the same68C2DC; original NUL-terminated string occupies[68C2DC,68C2F2),22bytes. Other nonexact source users examined also reference that same original storage. Existing source binding rationale around530DB0 independently records68C2DC among original logs.",
+    "Fresh actual Release maybe_lock531700 is exact, boundary passes, and only its ??_C@_0M@PPKM@MOVEPENDING?$AA@ literal relocation remains unknown. Original53173E pushes68C474; independently read original string occupies[68C474,68C480),12bytes. Retained actual current compiler COMDATs have unique complete22/12byte matching contents and no relocations. No one source pooled symbol is being mapped to two different original starts.",
+    "Authorize exactly two RECOVERY_LITERAL v1 records in src/netdaemon.cpp: Client releasing lock span68C2DC..68C2F2 emitted??_C@_0BG@KDKM@Client?5releasing?5lock?$AA@ evidence530D00; MOVEPENDING span68C474..68C480 emitted??_C@_0M@PPKM@MOVEPENDING?$AA@ evidence531700. Preserve string expressions inline and all other source lines. Optional concise durable prose may explain these are original storage identities, not runtime immutability.",
+    "Original PE.data is writable flagsC0000040 with zero relocations in these extents. Do not infer original constness or lifetime/allocation/linked selection from current C++ string types or local comparison. Independent nearby string boundaries and NUL termination bound payload; padding is not literal content.",
+    "Worker authors only comments with apply_patch and validates native literal parser; no tests/native compiler/Wine/Git/task mutations. Coordinator owns fresh candidate native build/link, actual COFF literal contents and complete strict references for all3selected exact functions, native data trials, claim/mapping/reference continuity, independent review and destination recheck. No body waiver, claim stamping/demotion, baseline reset or automatic/full game acceptance."
+  ],
+  "intent": "Recover independently bounded NetDaemon release-log and pending-move literal identities",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5442816,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5443824,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5445376,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "netdaemon-literal-identities-oct20al"
+}
