@@ -15,6 +15,11 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
+// ORIGINAL: 0x004C9330 ??_GAmbience@@UAEPAXI@Z 0x004C9330-0x004C9351 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned Midi constructor 0x004C75B0 publishes table 0x66E538 at 0x004C763F and returns without a later derived-table replacement.", "Pinned derived Ambience constructor 0x004C8460 stages the same Midi table 0x66E538 at 0x004C84EF, then publishes final Ambience table 0x66E664 at 0x004C850F.", "Midi table slot 2 at 0x66E540 selects 0x004C9330; final Ambience slot 2 at 0x66E66C instead selects 0x00448390. Both retain Midi slot 27 at 0x004C93E0.", "0x004C9330 directly calls full destructor 0x004C7670, recovered as Midi::~Midi in src/sound.cpp. The distinct Ambience deleting entry calls 0x004483C0, the five-byte tail to the same base destructor.", "The real Midi : Sound and Ambience : Midi hierarchy emits distinct deleting symbols. No authored deleting wrapper, copied body, class-layout change or claim grant is introduced.", "Earlier shared-Ambience binding at master 25f3ab658 was an emission observation, not original class-stage proof; the intermediate table does not establish final Ambience ownership. Historical labels and exactness obligations remain unchanged."], "reason": "Bind this deleting entry to the genuine Midi lifetime stage, not the later Ambience stage. Preserve the original catalog label and historical claim while correcting current class-symbol ownership."}
+// symbol    ??_GMidi@@UAEPAXI@Z
+// kind      game
+
 #include "stdafx.h"
 #include "sound.h"
 #include "voice.h"
