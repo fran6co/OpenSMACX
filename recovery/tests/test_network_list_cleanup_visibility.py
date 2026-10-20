@@ -283,7 +283,7 @@ def source_methods():
     net_header = (ROOT / "src/net_class.h").read_text()
     alpha_header = (ROOT / "src/alphanet.h").read_text()
     net_source = (ROOT / "src/net_class.cpp").read_text()
-    alpha_source = (ROOT / "src/alphanet.cpp").read_text()
+    alpha_source = (ROOT / "src/alphanet_records.cpp").read_text()
     net_method = class_method(net_header, "NetTextListBase", "void remove_all()")
     alpha_method = class_method(alpha_header, "AlphaNetStringStruct", "void remove_all()")
 

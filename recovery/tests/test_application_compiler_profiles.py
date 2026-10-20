@@ -79,7 +79,7 @@ REJECTED_OWNERS = (
     "src/terraforming.cpp", "src/newgame.cpp",
 )
 PREVIOUS_REJECTED_OWNERS = (
-    "src/alphanet.cpp", "src/strings.cpp", "src/gamma.cpp", "src/credits.cpp",
+    "src/strings.cpp", "src/gamma.cpp", "src/credits.cpp",
 )
 NEW_PROFILE_COMMENT = (
     "# Preserve measured frame-based accesses in the core application cohort.\n"
@@ -131,6 +131,21 @@ OLD_ALPHA_DEFAULT_COMMENT = (
 NEW_ALPHA_DEFAULT_COMMENT = (
     "# Keep all other source recipes on their independently measured defaults.\n"
 )
+ALPHANET_SOURCE_BEFORE = "    src/alphanet.cpp\n    src/ambience.cpp\n"
+ALPHANET_SOURCE_AFTER = (
+    "    src/alphanet.cpp\n    src/alphanet_records.cpp\n    src/ambience.cpp\n"
+)
+ALPHANET_PROFILE_COMMENT = (
+    "# Preserve the measured frame-based AlphaNet controller context.\n"
+    "# Its record and lifecycle owner retains the default application profile.\n"
+)
+ALPHANET_PROFILE_BLOCK_TEXT = (
+    'set_source_files_properties(src/alphanet.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")'
+)
+ALPHANET_PROFILE_INSERTION = (
+    ALPHANET_PROFILE_COMMENT + ALPHANET_PROFILE_BLOCK_TEXT + "\n"
+)
+ALPHANET_PROFILE_BLOCK = (("src/alphanet.cpp",), ("/Oy-",))
 VIDEO_SOUND_BASE_REVISION = "95e6bb71f2bfb0f2d9859c2b06f8cdc9c595e9b4"
 VIDEO_SOUND_SOURCE_BEFORE = "    src/video.cpp\n"
 VIDEO_SOUND_SOURCE_AFTER = "    src/video.cpp\n    src/video_sound.cpp\n"
@@ -291,6 +306,10 @@ def non_profile_text_matches(baseline: str, candidate: str) -> bool:
         return False
     if baseline.count(VEHICLE_PROFILE_INSERTION) or candidate.count(VEHICLE_PROFILE_INSERTION) != 1:
         return False
+    if baseline.count(ALPHANET_SOURCE_BEFORE) != 1 or candidate.count(ALPHANET_SOURCE_AFTER) != 1:
+        return False
+    if baseline.count(ALPHANET_PROFILE_INSERTION) or candidate.count(ALPHANET_PROFILE_INSERTION) != 1:
+        return False
 
     projected = candidate.replace(TUTWIN_SOURCE_AFTER, TUTWIN_SOURCE_BEFORE, 1)
     projected = projected.replace(TUTWIN_PROFILE_AFTER, TUTWIN_PROFILE_BEFORE, 1)
@@ -304,7 +323,9 @@ def non_profile_text_matches(baseline: str, candidate: str) -> bool:
     projected = projected.replace(VIDEO_SOUND_SOURCE_AFTER, VIDEO_SOUND_SOURCE_BEFORE, 1)
     projected = projected.replace(UNDO_PROFILE_INSERTION, "", 1)
     projected = projected.replace(UNDO_SOURCE_AFTER, UNDO_SOURCE_BEFORE, 1)
+    projected = projected.replace(ALPHANET_SOURCE_AFTER, ALPHANET_SOURCE_BEFORE, 1)
     projected = projected.replace(NEW_ALPHA_DEFAULT_COMMENT, OLD_ALPHA_DEFAULT_COMMENT, 1)
+    projected = projected.replace(ALPHANET_PROFILE_INSERTION, "", 1)
     return projected == baseline
 
 
@@ -319,6 +340,7 @@ def cmake_profile_delta_is_exact(baseline: str, candidate: str) -> bool:
     expected[NEW_PROFILE_BLOCK] += 1
     expected[REMAINING_PROFILE_BLOCK] += 1
     expected[ALPHA_PROFILE_BLOCK] += 1
+    expected[ALPHANET_PROFILE_BLOCK] += 1
     expected[VIDEO_SOUND_PROFILE_BLOCK] += 1
     expected[UNDO_PROFILE_BLOCK] += 1
     expected[HEADER_RNG_PROFILE_BLOCK] += 1
@@ -402,6 +424,7 @@ def test_profile_guard_rejects_policy_mutations():
         'set_source_files_properties(src/previous.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")\n'
         + OLD_ALPHA_DEFAULT_COMMENT
         + 'set(OPENSMACX_SOURCES\n    src/video.cpp\n    src/general.cpp\n'
+        + ALPHANET_SOURCE_BEFORE
         + TUTWIN_SOURCE_BEFORE + ')\n'
         + TUTWIN_PROFILE_BEFORE
         + 'add_compile_options("/DDEFAULT=1")\n'
@@ -411,7 +434,9 @@ def test_profile_guard_rejects_policy_mutations():
     candidate += NEW_PROFILE_COMMENT + NEW_PROFILE_BLOCK_TEXT + "\n"
     candidate += REMAINING_PROFILE_INSERTION
     candidate += ALPHA_PROFILE_INSERTION
+    candidate += ALPHANET_PROFILE_INSERTION
     candidate = candidate.replace(VIDEO_SOUND_SOURCE_BEFORE, VIDEO_SOUND_SOURCE_AFTER, 1)
+    candidate = candidate.replace(ALPHANET_SOURCE_BEFORE, ALPHANET_SOURCE_AFTER, 1)
     candidate += VIDEO_SOUND_PROFILE_INSERTION
     candidate = candidate.replace(UNDO_SOURCE_BEFORE, UNDO_SOURCE_AFTER, 1)
     candidate += UNDO_PROFILE_INSERTION
@@ -531,10 +556,8 @@ def test_profile_guard_rejects_policy_mutations():
         '\nset_source_files_properties(src/net_class.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")\n'
     )
     assert not cmake_profile_delta_is_exact(baseline, network_profile)
-    alphanet_profile = candidate + (
-        '\nset_source_files_properties(src/alphanet.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")\n'
-    )
-    assert not cmake_profile_delta_is_exact(baseline, alphanet_profile)
+    duplicate_alphanet_profile = candidate + "\n" + ALPHANET_PROFILE_BLOCK_TEXT + "\n"
+    assert not cmake_profile_delta_is_exact(baseline, duplicate_alphanet_profile)
     strings_profile = candidate + (
         '\nset_source_files_properties(src/strings.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")\n'
     )
@@ -603,6 +626,7 @@ def test_application_profiles_match_immutable_baseline_plus_core_cohort():
     assert all(owner in application_sources for owner in NEW_OWNERS + REMAINING_OWNERS + PREVIOUS_OWNERS)
     assert all(owner in application_sources for owner in REJECTED_OWNERS)
     assert all(owner in application_sources for owner in PREVIOUS_REJECTED_OWNERS)
+    assert source_rows[source_rows.index("src/alphanet.cpp") + 1] == "src/alphanet_records.cpp"
     assert "src/sprite.cpp" in application_sources
     assert "src/net_class.cpp" in application_sources
     assert "src/alpha.cpp" in application_sources
@@ -633,6 +657,8 @@ def test_application_profiles_match_immutable_baseline_plus_core_cohort():
     profiled_sources = set(actual_profiles)
     assert "src/alpha.cpp" in profiled_sources
     assert actual_profiles["src/alpha.cpp"] == ("/Oy-",)
+    assert actual_profiles["src/alphanet.cpp"] == ("/Oy-",)
+    assert "src/alphanet_records.cpp" not in profiled_sources
     assert all(owner in profiled_sources for owner in REMAINING_OWNERS)
     assert actual_profiles["src/video_sound.cpp"] == ("/Oy-",)
     assert actual_profiles["src/scenario_undo.cpp"] == ("/Oy-",)
