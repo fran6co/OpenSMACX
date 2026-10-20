@@ -43,6 +43,7 @@ public:
 
 unsigned char *Buffer::active_data_ = 0;
 static int fpu_resets;
+static int gouraud_test_light;
 static int edge_helper_calls;
 static TextureStore edge_cache_sentinel = {};
 static TextureStore *expected_edge_cache;
@@ -85,7 +86,7 @@ int Texture::setup_edge_gouraud(EdgeScan *edge, int) {
     edge->accumA = edge->f0 < 0 ? 0 : 4 << 16;
     edge->accumB = 0;
     edge->accumC = edge->f0 < 0 ? 0 : 4;
-    edge->accumD = 1 << 16;
+    edge->accumD = gouraud_test_light;
     edge->deltaA = edge->deltaB = edge->deltaC = edge->deltaD = 0;
     edge->fracAccum = edge->fracDelta = edge->fracSub = edge->extraDeltaC = 0;
     return 1;
@@ -232,14 +233,16 @@ int main() {
     buffer.frees_ = 0;
     texture.borrowed_ = 1;
     texture.pixels_ = borrowed_source;
+    gouraud_test_light = 0x00008000;
     texture.sub_61b780(&buffer, points, shade, 0);
     assert(buffer.frees_ == 1);
     for (int y = 0; y < 3; ++y) {
-        assert(surface[y * 4] == 77); // borrowed float path compares the texture key
-        assert(surface[y * 4 + 1] == 5);
-        assert(surface[y * 4 + 2] == 10);
-        assert(surface[y * 4 + 3] == 255);
+        assert(surface[y * 4] == 128); // original draws key-valued texels with light
+        assert(surface[y * 4 + 1] == 133);
+        assert(surface[y * 4 + 2] == 138);
+        assert(surface[y * 4 + 3] == 127); // byte addition wraps
     }
+    gouraud_test_light = 0;
     texture.borrowed_ = 0;
     texture.pixels_ = owned_source;
 

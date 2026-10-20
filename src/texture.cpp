@@ -5623,7 +5623,7 @@ void Texture::sub_61b780(Buffer *buffer, Vert *vertices, int *zvals, int mode) {
         if (x > max_x) max_x = x;
     }
     if (min_y < max_y) {
-        texture_raster_gouraud_rows(this, buffer, min_y, max_y, top, 1,
+        texture_raster_gouraud_rows(this, buffer, min_y, max_y, top, 0,
             borrowed_ != 0, pixels_,
             borrowed_ ? 256 : TextureRowPitchScratch);
     }
