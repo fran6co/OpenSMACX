@@ -3786,7 +3786,6 @@ void __cdecl say_vehicles(char *text, int chassis_id, int with_height) {
         strcat(text, " ");
         strcat(text, "(");
         strcat(StringTemp, label_get(0x314 / 4));
-        strcat(text, StringTemp);
         strcat(text, ")");
     }
 }
