@@ -1,0 +1,21 @@
+{
+  "event_id": "2a2bbbac4bdabc2ee2b5368ef4c874df99918666cdb67342855c35eea8fbc1d7",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_map_label_output_oct20.py"
+    ],
+    "evidence": [
+      "Coordinator resumes existing isolated map owner with all retained work preserved, after current master catch-up; original task baseline stays18ef32586792da3a281b03162c7c3c9265b2f8d3. Source correction is faithful recovery, not a bug fix: pinned590BA0..590C14 makes5strcat calls and never strcat(output,StringTemp); actual callback registration590C99..590CA0 anddispatch590E22..590E3E pass StringTemp as output. Current extra copy self-concatenates on this ordinary path. Preserve separate scratch side effects for nonalias outputs; do not normalize original behavior.",
+      "Worker may independently edit/test/measure only existing map.cpp scope and new focused output-contract test. This supersedes earlier coordinator-only compile-loop wording, not Git/recording/scope/integration authority. Lease one native root shared compiler slot with absolute pool/image paths and fresh Compiler withinlease; no nested allocation, preparation duringmeasurement, runtime compiler mutations, sourcewriteswhileinputsfreeze, or broad recursive support sweeps. Native actual application profile/captured receipt controls first; two legacy flag sets are not substituted for actual Release output.",
+      "Bounded coherent formatting-owner correction: investigate related say_project/say_loc/say_vehicles only within existing map task, preserve all original identities/spans/claims and history, and retain prior vector_dist draft pending measurement. Host tests must exercise both output==StringTemp and distinct output, and a mutant restoring the extra copy. No safety improvements, flags/attributes/volatile/aliases/assembly or new original addresses. Coordinator owns all Git and final fresh build/link/integration."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "resume-map-output-contract-with-independent-measurements",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:map-source-batch-oct19c"
+}
