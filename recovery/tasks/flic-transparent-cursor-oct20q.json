@@ -1,0 +1,25 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "4e334113a16f22ea89cf8dde773cc836644f6ed0",
+  "editable_files": [
+    "src/flic.cpp",
+    "recovery/tests/test_flic_transparent_delta_cursor_oct20q.py"
+  ],
+  "evidence": [
+    "Standing user direction authorizes coordinator-reviewed original-faithful compiling recovery, not deliberate bug fixes. Root independently inspected full pinned repeated-word branch: original62B518..62B544 tests both adjusted bytes opaque and writes WORD at62B52C, then advances destinationESI+2 at62B533 and backgroundEBX+2 at62B536. Current final opaque-word loop advances only out. Following transparent packets consume src, so this is a missing original effect, not a spelling experiment.",
+    "Authorize adding src += 2 beside out += 2 only in the opaque repeated-word branch of Flic::decode_delta_flc_trans. No other packet/skip/row arithmetic, bounds, palette, signedness, last-pixel update-rectangle quirks, signatures, annotations, flags, lifetimes or historical claims may change. Report further evidence-backed discrepancies before editing them.",
+    "Add actual complete production-body host tests using distinct background bytes and opaque repeated packets followed by transparent literal/repeated packets. Exercise all four opaque/mixed/transparent word cases, nonzero palette offset, packet skips, original cross-row cursor advancement and relevant last-pixel/dirty-rectangle quirks without normalizing them. Require meaningful missing-src-increment mutation to fail and preserve original data-access order. Include pinned-image instruction anchors if available; host controls are not native ABI/runtime proof.",
+    "Worker uses apply_patch and uv host tests only in isolated checkout; no Git/native compiler/preparation/recording or claim/annotation edits. Coordinator independently reviews original paths and full actual source diff, requires build/link, native claim/mapping/reference continuity and outside-body physical comparison, then rechecks after integration. Existing restoration/strict/reference/linked/runtime limitations remain explicit; no whole-game or automatic acceptance inferred."
+  ],
+  "intent": "Restore original Flic transparent delta background cursor advancement.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6467984,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "flic-transparent-cursor-oct20q"
+}
