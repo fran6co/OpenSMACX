@@ -249,14 +249,18 @@ struct BlankSpriteStorageOwner {
 
   BlankSpriteStorageOwner();
   ~BlankSpriteStorageOwner();
-  Sprite &sprite();
+  Sprite &sprite() {
+    return *reinterpret_cast<Sprite *>(&rawstorage_.bytes[0]);
+  }
 };
 static_assert(sizeof(BlankSpriteStorageOwner) == sizeof(Sprite),
               "blank Sprite owner must retain the original object extent");
 
 extern uint8_t BlankSpriteCleanupGuard;
 extern BlankSpriteStorageOwner g_BLANK_SPRITE_OWNER;
-Sprite &blank_sprite();
+inline Sprite &blank_sprite() {
+  return g_BLANK_SPRITE_OWNER.sprite();
+}
 
 // Vehicle and project icon tables used by ProdPicker. Definitions and their
 // bounded extents are owned by sprite.cpp.
