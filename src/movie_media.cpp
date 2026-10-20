@@ -2327,11 +2327,23 @@ extern "C" int __cdecl sub_5cb610(MediaDescriptor *d) {
 // symbol    _sub_5cb660
 // kind      game
 extern "C" int __cdecl sub_5cb660(MediaDescriptor *d) {
-  DWORD expected = 6;
   MediaRuntime *runtime = d->runtime;
-  if (runtime != 0 && runtime->protocol_gate == 0) expected = 5;
+  DWORD protocol_gate = 0;
+  if (runtime != 0) protocol_gate = runtime->protocol_gate;
   InterlockedExchange(&d->state, 4);
-  while (d->state != (LONG)expected) Sleep(10);
+  const volatile LONG &observed_state = d->state;
+  LONG state = observed_state;
+  if (protocol_gate != 0) {
+    while (state != 6) {
+      Sleep(10);
+      state = observed_state;
+    }
+  } else {
+    while (state != 5) {
+      Sleep(10);
+      state = observed_state;
+    }
+  }
   return 0;
 }
 
