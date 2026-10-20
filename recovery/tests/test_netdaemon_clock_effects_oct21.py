@@ -223,4 +223,3 @@ def test_actual_clock_reads_follow_the_current_iat_target(tmp_path, mutant):
             assert run.returncode == 0, f"{mode}: {run.stdout}{run.stderr}"
         else:
             assert run.returncode != 0, f"{mutant} damage control missed {mode}"
-
