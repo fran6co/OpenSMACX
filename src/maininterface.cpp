@@ -1073,6 +1073,11 @@ void MainInterface::on_iface_right_down(int a1, int a2) {
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x005FAB00 0x004B4CF0 0x0045C3A0 0x004B6530
 void MainInterface::on_iface_mouse_move(int a1, int a2) {
+    // The first hit-test writes both output values back through the argument
+    // slots. The original then retries the status-bar Spot with the entry
+    // coordinates still held in registers, not those overwritten outputs.
+    const int original_x = a1;
+    const int original_y = a2;
     if (spot_.check(a1, a2, &a2, &a1) != -1 && a2 == 5) {
         if (iface_redraw_pending_ != 0) {
             return;
@@ -1082,7 +1087,7 @@ void MainInterface::on_iface_mouse_move(int a1, int a2) {
         return;
     }
 
-    int check2 = ConsoleStatusWin.spot_.check(a1, a2, &a2, &a1);
+    int check2 = ConsoleStatusWin.spot_.check(original_x, original_y, &a2, &a1);
     if (check2 >= 0 && a1 == 0xb) {
         if (a2 != ConsoleStatusWin.hover_base_id_) {
             ConsoleStatusWin.hover_base_id_ = a2;
