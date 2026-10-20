@@ -1,0 +1,21 @@
+{
+  "event_id": "5f060d4790e3189f54a770da4c44defd27f62ffc2f792d0b07b3319e66a2172d",
+  "payload": {
+    "affects": [
+      "entity-c82caae393fbb6c07c97168fcdc375677b0d6e3fbd289fe046a77d39490083b0"
+    ],
+    "author": "coordinator",
+    "discovery_id": "radiobutton-key-selection-notification-oct20e",
+    "evidence": [
+      "Pinned60E026 forms complete object EDI=ESI-18 where ESI is GraphicWin receiver.60E134 loads [ESI-C]=complete+C,60E13D loads live selected ordinal via Dialog vbtable,60E145 calls callback. Separate60E1E0 handler loads [ESI-8]=complete+10. Existing header declares these distinct selection_callback_ and double_click_callback_ members.",
+      "Standing parallel manual-recovery authority: resume existing RadioButton input owner task in a new isolated checkout without changing its bdd1711 baseline or erasing history. Change keyboard notification to selection_callback_ and add actual-source callback-routing/order/reentrancy damage controls in the already authorized input test. Do not change double-click, class/layout, other bodies or compiler flags. Coordinator owns Git/native compiler; require independent review, fresh build/link, scoped measures and source/claim continuity before manual integration. No automatic/full-game acceptance."
+    ],
+    "hypothesis": "Keyboard navigation invokes the selection callback at complete-object+C, not the double-click callback at+10.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "radiobutton-key-selection-notification-oct20e",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:radiobutton-input-structure-oct16"
+}
