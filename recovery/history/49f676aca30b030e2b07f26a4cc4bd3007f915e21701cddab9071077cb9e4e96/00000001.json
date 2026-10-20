@@ -1,0 +1,20 @@
+{
+  "event_id": "ac97e16890d9ea7a3f383e6d3088f1621c7233f101752a317bd4b7811696a081",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_polygon_wrapped_span_subtraction_oct20.py"
+    ],
+    "evidence": [
+      "Coordinator explicitly authorizes the focused actual-source wrapped-subtraction regression test added by worker outside the initially named test path. Preserve the existing work rather than misrepresent prior permission; no historical task baseline or source identities are changed.",
+      "Both source-owned polygon span writers use original 32-bit SUB/JLE before clipping; host controls execute those bodies, extreme endpoint wraps, ordinary clipping/remap and a widened-subtraction damage mutant. Verification and independent review remain required."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "polygon-span-control-path-oct20h",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:polygon-owner-batch-oct20"
+}
