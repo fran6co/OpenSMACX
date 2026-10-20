@@ -1,6 +1,7 @@
 """Exercise recovered interface callbacks from their actual C++ definitions."""
 from hashlib import sha256
 from pathlib import Path
+import os
 import shutil
 import struct
 import subprocess
@@ -9,7 +10,7 @@ import pytest
 
 
 ROOT = Path(__file__).resolve().parents[2]
-IMAGE = ROOT.parents[2] / ".opensmacx/game/terranx_original.exe"
+IMAGE = Path(os.environ.get("OPENSMACX_IMAGE", ROOT / ".opensmacx/game/terranx_original.exe"))
 IMAGE_SHA256 = "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
 
 
