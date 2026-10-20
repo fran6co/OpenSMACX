@@ -1,0 +1,44 @@
+{
+  "event_id": "bfe539ba020af0004d6ae2f7f07cf6633e059693cab6cd17013de74b467be1ba",
+  "payload": {
+    "affects": [
+      "entity-202ecf4ac4d17aba5b34b8b87b970b6978cbdd543e9b8e851fab6c9c29f568b3",
+      "entity-21a0ac47b9730b4dfb23af579f0ddc1c680ac96d8e9cbb75518f654a9673b062",
+      "entity-246f6cb71b6a283b36dc563c7530f89355b470b3762f358fdf850e192e3845a4",
+      "entity-36d0cb2cbd52d912455a184a4f6bb8b671bd9eb400d69020794d91f7a2abe9fc",
+      "entity-3e8762df19b9c00db821c42065555f03e074886932ea9a8010729f02925cfd88",
+      "entity-40406d7ab7f5577dab4ec45fd1f34eb9abfc87602abf028242f9109f028daaa0",
+      "entity-43af35fa6cb81103144fc0da190eb84151abc6f0d68f7e0800858d356e7aaaa3",
+      "entity-448ef01136d5d18b9241a9cc71f50e9cdabaed5b705adc0dcb52a74aaabba67d",
+      "entity-516fc134460f638348c9cebebcc2b54a49e16cf31a951d29a4c2a25041b21c9e",
+      "entity-546c2a42d275b8a5e1f0a466a9395421124e340fe373c4b74a6dd49114355002",
+      "entity-576724e865d50a7c5ea1eedd9324ae44c55fe6600eae48fd7eb3ecd61408f9a3",
+      "entity-7d8176751703cb7d8caa38917ee097499bb12c1624819b3dd971ad2d9ac57af6",
+      "entity-7f7751396552c8718725490bcab344df2755eb7052b678206f8db433fb555e9a",
+      "entity-96dadf05f6cba9342cacfb7f5c6dcf826d71fd85d8f5dc99c0410ad135f92a17",
+      "entity-c3ab6505cda74476379be71d572ca1adfe37784f992bf5d8728e321d44f07b68",
+      "entity-c46d88454f5459c23f8836f548a51a19e7f6832387f028ccf247914fd91373f7",
+      "entity-dbb0fd698c3dd436b3ae53f8bfb41e6ee9c8bbb3091daa314d73a9e553fde236",
+      "entity-e2a3e61424aadb162163db797edd0287ebbc9268b43d6ab2f8d80543a5ec4ccf",
+      "entity-fafdbc980d6deb05c685ffe33b963fb92329750ba578d03d12cba9ec89912d76",
+      "entity-fdc1b3259f87890f79d50a0ae8431b08eb2dbdb262f2c614fb93d43461bd8035",
+      "entity-ff70bd37f74c391dcf014d243910b47e14fb0252272681003cdd743f61bd5dc4"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "stringstruct-natural-emission-and-caller-closure-oct20ab",
+    "evidence": [
+      "Frozen native177-TU/191-object build-t0dex7aw compiles and links. Ordinary shared StringStruct constructor produces four new local byte matches, including Dialog608C10 and StringBox629110; no source parameter or retention workaround was added.",
+      "The header definition also changes additional mapped caller code and generated table/copy emission. Admit precisely the newly observed mapped functions for coordinated comparison/review, not a blanket whole-TU waiver. Scope permits their qualification, not arbitrary edits outside original editable files. Added tables and anonymous/generated code remain explicit separate proof obligations.",
+      "Native MAP selects naturally emitted StringStruct constructor from datalink.cpp; independent COFF review confirms its96-byte body and six relocation targets equal the previous standalone definition and pinned original26/26 instructions. Authorize native compile_context=datalink.cpp for401000 as current measurement witness, never original-TU ownership. CPP canonical identity/claim and header definition remain unchanged.",
+      "StringStruct scalar deleting entry4029F0 also ceases emission in the canonical CPP; native MAP selects its genuine alphanet.cpp emission both before and after migration. Authorize native compile_context=alphanet.cpp only after COFF qualification. This does not grant a byte claim or prove linked selection/runtime/game acceptance.",
+      "Original task baseline and all historical identities/spans/claims/restoration obligations remain fixed. Preserve structural source work; require fresh build and independent caller/table attribution, including original-backed matching and outside-scope checks, before manual integration."
+    ],
+    "hypothesis": "Shared constructor availability changes natural emitting contexts and dependent compiler caller closure.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "stringstruct-natural-emission-and-caller-closure-oct20ab",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:matching-stringstruct-inline-oct20ab"
+}
