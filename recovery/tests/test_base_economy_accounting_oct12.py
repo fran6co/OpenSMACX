@@ -175,57 +175,57 @@ static void reset() {
     Facility[1].name=(char *)"headquarters"; Facility[1].cost=5;
 }
 static void minerals() {
-    reset(); BaseCurrent->mineral_intake_2=16; BaseCurrentForcesMaintCost=2; BaseCurrentConvoyFrom[1]=1;
-    base_minerals(); assert(BaseCurrent->mineral_intake_2==16 && BaseCurrent->mineral_consumption==3);
+    reset(); BaseCurrent->intake_2[1]=16; BaseCurrentForcesMaintCost=2; BaseCurrentConvoyFrom[1]=1;
+    base_minerals(); assert(BaseCurrent->intake_2[1]==16 && BaseCurrent->mineral_consumption==3);
     assert(BaseCurrent->mineral_surplus==13 && BaseCurrent->mineral_surplus_final==13 && BaseCurrent->eco_damage==0);
     const int order[]={21,19,22,20,20}; assert(facility_call_count==5 && memcmp(facility_calls,order,sizeof order)==0);
     assert(human_reads==3);
     // Ordinary, bounded rounding discriminator: native final 0, merged source 1.
-    reset(); BaseCurrent->mineral_intake_2=16; PlayersData[1].major_atrocities=1;
+    reset(); BaseCurrent->intake_2[1]=16; PlayersData[1].major_atrocities=1;
     TectonicDetonationCount[1]=1; MapSeaLevel=2; base_minerals(); assert(BaseCurrent->eco_damage==0);
-    reset(); BaseCurrent->mineral_intake_2=-1; base_minerals(); assert(BaseCurrent->mineral_intake_2==-1 && BaseCurrent->mineral_surplus==-1);
-    reset(); BaseCurrent->mineral_intake_2=INT_MAX; base_minerals(); assert(BaseCurrent->mineral_intake_2==-1);
-    reset(); BaseCurrent->mineral_intake_2=INT_MAX; BaseCurrentConvoyTo[1]=1;
+    reset(); BaseCurrent->intake_2[1]=-1; base_minerals(); assert(BaseCurrent->intake_2[1]==-1 && BaseCurrent->mineral_surplus==-1);
+    reset(); BaseCurrent->intake_2[1]=INT_MAX; base_minerals(); assert(BaseCurrent->intake_2[1]==-1);
+    reset(); BaseCurrent->intake_2[1]=INT_MAX; BaseCurrentConvoyTo[1]=1;
     BaseCurrentForcesMaintCost=0xFFFFFFFFu; BaseCurrentConvoyFrom[1]=1;
-    base_minerals(); assert(BaseCurrent->mineral_intake_2==0 && BaseCurrent->mineral_consumption==0);
+    base_minerals(); assert(BaseCurrent->intake_2[1]==0 && BaseCurrent->mineral_consumption==0);
     reset(); BaseCurrentForcesMaintCost=INT_MAX; BaseCurrentConvoyFrom[1]=1;
     base_minerals(); assert(BaseCurrent->mineral_consumption==INT_MIN && BaseCurrent->mineral_surplus==INT_MIN);
-    reset(); BaseCurrent->mineral_intake_2=17; BaseCurrent->eco_damage=-1; PlayersData[1].tech_ranking=36;
+    reset(); BaseCurrent->intake_2[1]=17; BaseCurrent->eco_damage=-1; PlayersData[1].tech_ranking=36;
     base_minerals(); assert(BaseCurrent->eco_damage==0);
-    reset(); BaseCurrent->mineral_intake_2=17; BaseCurrent->eco_damage=INT_MIN;
+    reset(); BaseCurrent->intake_2[1]=17; BaseCurrent->eco_damage=INT_MIN;
     base_minerals(); assert(BaseCurrent->eco_damage==0);
     // The pre-scaling clamp is not a post-scaling clamp; negative stays negative.
-    reset(); BaseCurrent->mineral_intake_2=17; PlayersData[1].tech_ranking=1;
+    reset(); BaseCurrent->intake_2[1]=17; PlayersData[1].tech_ranking=1;
     PlayersData[1].soc_effect_pending.values_[SocialEffect::PLANET]=2; MapNativeLifeForms=INT_MAX;
     base_minerals(); assert(BaseCurrent->eco_damage==-3579138);
-    reset(); BaseCurrent->mineral_intake_2=17; PlayersData[1].tech_ranking=INT_MIN;
+    reset(); BaseCurrent->intake_2[1]=17; PlayersData[1].tech_ranking=INT_MIN;
     PlayersData[1].theory_of_everything=INT_MAX;
     PlayersData[1].soc_effect_pending.values_[SocialEffect::PLANET]=2;
     base_minerals(); assert(BaseCurrent->eco_damage==0); // wrapped technology difference is one
     reset(); PlayersData[1].planet_ecology=INT_MAX; PlayersData[1].tech_ranking=0;
     base_minerals(); assert(BaseCurrent->eco_damage==0);
-    reset(); BaseCurrent->mineral_intake_2=17; GameDataStateStorage.fields_.lock_masks_.enable_mask_=0;
+    reset(); BaseCurrent->intake_2[1]=17; GameDataStateStorage.fields_.lock_masks_.enable_mask_=0;
     GameDataStateStorage.fields_.diff_level_current_=INT_MIN;
     PlayersData[1].tech_ranking=200; PlayersData[1].soc_effect_pending.values_[SocialEffect::PLANET]=2;
     base_minerals(); assert(BaseCurrent->eco_damage==0); // wrapped6-difficulty clamps to one
-    reset(); BaseCurrent->mineral_intake_2=10; BaseCurrentForcesMaintCost=2;
+    reset(); BaseCurrent->intake_2[1]=10; BaseCurrentForcesMaintCost=2;
     project(SP_SPACE_ELEVATOR); BaseCurrent->queue_production_id[0]=-FAC_SKY_HYDRO_LAB;
-    base_minerals(); assert(BaseCurrent->mineral_intake_2==20 && BaseCurrent->mineral_surplus==18 && BaseCurrent->mineral_surplus_final==8);
-    reset(); BaseCurrent->mineral_intake_2=10; BaseCurrent->eco_damage=128;
+    base_minerals(); assert(BaseCurrent->intake_2[1]==20 && BaseCurrent->mineral_surplus==18 && BaseCurrent->mineral_surplus_final==8);
+    reset(); BaseCurrent->intake_2[1]=10; BaseCurrent->eco_damage=128;
     built(0,21); built(0,19); built(0,22); built(0,20); built(0,31); built(0,32);
     project(SP_BULK_MATTER_TRANSMITTER); project(SP_PHOLUS_MUTAGEN); project(SP_VOICE_OF_PLANET);
     PlayersData[1].satellites_[1]=2; BaseCurrent->population_size=3;
     GameDataStateStorage.fields_.game_rules_=RULES_VICTORY_TRANSCENDENCE;
     GameDataStateStorage.fields_.game_state_=STATE_PERIHELION_ACTIVE;
-    base_minerals(); assert(BaseCurrent->mineral_intake_2==35 && BaseCurrent->eco_damage==4);
+    base_minerals(); assert(BaseCurrent->intake_2[1]==35 && BaseCurrent->eco_damage==4);
     // Instrumented human boundary makes the two source reevaluations observable.
-    reset(); BaseCurrent->mineral_intake_2=16; PlayersData[1].major_atrocities=1;
+    reset(); BaseCurrent->intake_2[1]=16; PlayersData[1].major_atrocities=1;
     TectonicDetonationCount[1]=100; MapSeaLevel=2; PlayersData[1].tech_ranking=100;
     drop_human_after_first=1; base_minerals(); assert(human_reads==3 && BaseCurrent->eco_damage==2);
     // Callbacks publish another Base; the faction remains the captured actor.
-    reset(); BaseCurrent->mineral_intake_2=7; BaseCurrentConvoyTo[1]=1;
-    Bases[1].mineral_intake_2=10; switch_base_on_facility=1;
-    base_minerals(); assert(BaseCurrent==&Bases[1] && Bases[0].mineral_intake_2==8 && Bases[1].mineral_intake_2==10);
+    reset(); BaseCurrent->intake_2[1]=7; BaseCurrentConvoyTo[1]=1;
+    Bases[1].intake_2[1]=10; switch_base_on_facility=1;
+    base_minerals(); assert(BaseCurrent==&Bases[1] && Bases[0].intake_2[1]==8 && Bases[1].intake_2[1]==10);
 }
 static void facility_maintenance() {
     reset(); PlayersData[1].diff_level=4; reactor_mutates_difficulty=1;
@@ -308,12 +308,12 @@ def test_complete_current_bodies_signed_wrapped_accounting_and_live_owners(tmp_p
 
 
 MUTANTS = {
-    "unsigned_minerals": ("base_yield_mul(\n        BaseCurrent->mineral_intake_2, mineral_bonus + 2) / 2", "static_cast<uint32_t>(base_yield_mul(\n        BaseCurrent->mineral_intake_2, mineral_bonus + 2)) / 2"),
+    "unsigned_minerals": ("base_yield_mul(\n        BaseCurrent->intake_2[RSC_MINERALS], mineral_bonus + 2) / 2", "static_cast<uint32_t>(base_yield_mul(\n        BaseCurrent->intake_2[RSC_MINERALS], mineral_bonus + 2)) / 2"),
     "truncating_eco": ("raw_eco_damage >= 0 ? raw_eco_damage / 8\n        : -1 - (-1 - raw_eco_damage) / 8", "raw_eco_damage / 8"),
     "merged_atrocities": ("base_yield_mul(PlayersData[faction_id].major_atrocities, 5)", "base_yield_mul(base_yield_add(PlayersData[faction_id].major_atrocities, base_yield_signed_bits(TectonicDetonationCount[faction_id])), 5)"),
     "unsigned_scale": ("BaseCurrent->eco_damage = scaled_damage / 6;", "BaseCurrent->eco_damage = static_cast<uint32_t>(scaled_damage) / 6;"),
     "unwrapped_life": ("base_yield_add(MapNativeLifeForms, 1)", "(MapNativeLifeForms + 1)"),
-    "unwrapped_product": ("base_yield_mul(\n        BaseCurrent->mineral_intake_2, mineral_bonus + 2) / 2", "(BaseCurrent->mineral_intake_2 * (mineral_bonus + 2)) / 2"),
+    "unwrapped_product": ("base_yield_mul(\n        BaseCurrent->intake_2[RSC_MINERALS], mineral_bonus + 2) / 2", "(BaseCurrent->intake_2[RSC_MINERALS] * (mineral_bonus + 2)) / 2"),
     "unwrapped_technology": ("base_yield_sub(PlayersData[faction_id].tech_ranking,\n            PlayersData[faction_id].theory_of_everything)", "(PlayersData[faction_id].tech_ranking - PlayersData[faction_id].theory_of_everything)"),
     "unwrapped_planet_ecology": ("base_yield_add(PlayersData[faction_id].planet_ecology, 16)", "(PlayersData[faction_id].planet_ecology + 16)"),
     "unwrapped_nonhuman_difficulty": ("base_yield_sub(6, GameDataStateStorage.fields_.diff_level_current_)", "(6 - GameDataStateStorage.fields_.diff_level_current_)"),
@@ -323,7 +323,7 @@ MUTANTS = {
     "cached_sale_faction": ("cost_factor(BaseCurrent->faction_id_current,", "cost_factor(faction_id,"),
     "unwrapped_difficulty": ("base_yield_add(PlayersData[faction_id].diff_level, 1) / 2", "(PlayersData[faction_id].diff_level + 1) / 2"),
     "cached_bonus_count": ("i < Players[faction_id].faction_bonus_count", "i < 1"),
-    "updated_final_surplus": ("// doesn't update mineral_surplus_final?", "BaseCurrent->mineral_surplus_final = BaseCurrent->mineral_intake_2 - BaseCurrent->mineral_consumption; // incorrect synchronization"),
+    "updated_final_surplus": ("// doesn't update mineral_surplus_final?", "BaseCurrent->mineral_surplus_final = BaseCurrent->intake_2[RSC_MINERALS] - BaseCurrent->mineral_consumption; // incorrect synchronization"),
 }
 
 

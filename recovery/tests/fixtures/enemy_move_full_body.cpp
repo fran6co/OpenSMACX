@@ -71,8 +71,7 @@ struct Base {
     int resource_sqr_radius,specialist_total,specialist_unk_1;
     uint32_t spec[2]; uint8_t facilities_built[12];
     int mineral_surplus_final,minerals_accumulated_2,unk_6,unk_7,unk_8,unk_9;
-    int nutrient_intake_1,mineral_intake_1,energy_intake_1,unused_intake_1;
-    int nutrient_intake_2,mineral_intake_2,energy_intake_2,unused_intake_2;
+    int intake_1[4], intake_2[4];
     int nutrient_surplus,mineral_surplus,energy_surplus,unused_surplus;
 };
 struct BaseSecretProject {

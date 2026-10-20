@@ -14,6 +14,7 @@ GROWTH_HARNESS = r"""
 #include <cstring>
 
 #define __cdecl
+enum { RSC_NUTRIENTS=0, RSC_MINERALS=1, RSC_ENERGY=2, RSC_PSI=3 };
 
 struct GameDataSecretProject {
     int cloning_vats_value_;
@@ -23,7 +24,8 @@ struct GameDataSecretProject {
     int ascetic_virtues() const { return ascetic_virtues_value_; }
     int &ascetic_virtues() { return ascetic_virtues_value_; }
 };
-struct GameDataLockMaskView { uint32_t enable_mask_; };
+struct GameDataLockMaskBytes { uint8_t human_mask_, alive_mask_, unassigned_[2]; };
+union GameDataLockMaskView { uint32_t enable_mask_; GameDataLockMaskBytes bytes_; };
 struct GameDataStateWindowFields {
     uint32_t game_state_, game_rules_, game_warnings_, game_preferences_;
     uint32_t game_interlude_flags_;
@@ -59,8 +61,7 @@ struct Base {
     uint8_t facilities_built[12];
     int mineral_surplus_final, minerals_accumulated_2;
     int unk_6, unk_7, unk_8, unk_9;
-    int nutrient_intake_1, mineral_intake_1, energy_intake_1, unused_intake_1;
-    int nutrient_intake_2, mineral_intake_2, energy_intake_2, unused_intake_2;
+    int intake_1[4], intake_2[4];
     int nutrient_surplus, mineral_surplus, energy_surplus, unused_surplus;
 };
 struct Player { uint32_t rule_flags; int rule_population; };
@@ -94,7 +95,7 @@ struct BaseSecretProject { int ascetic_virtues_, cloning_vats_;
 };
 struct Map { uint8_t climate, contour, val2, region, visibility, val3, unk_1, territory;
     uint32_t bit, bit2, bit_visible[7]; };
-struct Strings { const char *get(int); };
+struct Strings { char *get(char *); };
 struct NetDaemon { int receive() { return 0; } };
 struct Console { int faction_id_; };
 
@@ -117,9 +118,10 @@ int IsMultiplayerNet, UpgradePromptAnswered;
 char StringTemp[1032]; char *ScriptPopupFile = const_cast<char *>("popup.txt");
 Strings StringTable; NetDaemon NetDaemonNet;
 
-int popp_label, popp_picture, popp_result, last_string_id;
+int popp_label, popp_picture, popp_result;
+char *last_string_address;
 const char *last_label, *last_picture;
-const char *Strings::get(int id) { last_string_id = id; return "ABBR"; }
+char *Strings::get(char *address) { last_string_address = address; return address; }
 int popp(const char *, const char *label, int, const char *picture, int) {
     last_label = label; last_picture = picture; ++popp_label; ++popp_picture;
     return popp_result;
@@ -150,7 +152,7 @@ void bitmask(int, int *byte, int *mask) { *byte = 1; *mask = 0x20; }
 void say_stats_2(char *, int) {}
 int parse_num(int, int) { return 0; }
 int parse_says(int, const char *, int, int) { return 0; }
-int parse_say(int, int, int, int) { return 0; }
+int parse_say(int, char *, int, int) { return 0; }
 int do_upgrade_calls;
 void do_upgrade(int, int, int) { ++do_upgrade_calls; }
 int message_data(int, int, int, int, int, int) { return 0; }
@@ -260,6 +262,7 @@ UPGRADE_HARNESS = r"""
 #include <initializer_list>
 
 #define __cdecl
+enum { RSC_NUTRIENTS=0, RSC_MINERALS=1, RSC_ENERGY=2, RSC_PSI=3 };
 
 struct GameDataSecretProject {
     int cloning_vats_value_;
@@ -269,7 +272,8 @@ struct GameDataSecretProject {
     int ascetic_virtues() const { return ascetic_virtues_value_; }
     int &ascetic_virtues() { return ascetic_virtues_value_; }
 };
-struct GameDataLockMaskView { uint32_t enable_mask_; };
+struct GameDataLockMaskBytes { uint8_t human_mask_, alive_mask_, unassigned_[2]; };
+union GameDataLockMaskView { uint32_t enable_mask_; GameDataLockMaskBytes bytes_; };
 struct GameDataStateWindowFields {
     uint32_t game_state_, game_rules_, game_warnings_, game_preferences_;
     uint32_t game_interlude_flags_;
@@ -292,7 +296,7 @@ struct PlayerData { int ranking; int energy_reserves; int ai_power, ai_tech; uin
 struct VehPrototype { char veh_name[32]; uint32_t ability_flags; uint8_t chassis_id, weapon_id, armor_id, reactor_id, carry_capacity, cost, plan; int8_t unk_1; uint8_t obsolete_factions; int8_t combat_factions, icon_offset, padding; uint16_t flags; int16_t preq_tech; };
 struct RulesAbility { char *name, *description, *abbreviation; };
 struct RulesChassis { char *padding[12]; uint8_t speed, triad; };
-struct Strings { const char *get(int); };
+struct Strings { char *get(char *); };
 struct NetDaemon { int receive() { return 0; } };
 struct Console { int faction_id_; };
 
@@ -303,10 +307,11 @@ RulesChassis Chassis[16]; Strings StringTable; NetDaemon NetDaemonNet;
 int IsMultiplayerNet;
 int UpgradePromptAnswered; Console ConsoleGlobal;
 char StringTemp[1032]; char *ScriptPopupFile = const_cast<char *>("popup.txt");
-int popp_result, popp_calls; const char *last_label, *last_picture; int last_string_id;
+int popp_result, popp_calls; const char *last_label, *last_picture;
+char *last_string_address;
 int do_upgrade_calls;
 
-const char *Strings::get(int id) { last_string_id = id; return "ABBR"; }
+char *Strings::get(char *address) { last_string_address = address; return address; }
 int popp(const char *, const char *label, int, const char *picture, int) {
     ++popp_calls; last_label = label; last_picture = picture; return popp_result;
 }
@@ -436,6 +441,7 @@ VEH_INIT_HARNESS = r"""
 #include <string.h>
 
 #define __cdecl
+enum { RSC_NUTRIENTS=0, RSC_MINERALS=1, RSC_ENERGY=2, RSC_PSI=3 };
 
 struct GameDataSecretProject {
     int cloning_vats_value_;
@@ -445,7 +451,8 @@ struct GameDataSecretProject {
     int ascetic_virtues() const { return ascetic_virtues_value_; }
     int &ascetic_virtues() { return ascetic_virtues_value_; }
 };
-struct GameDataLockMaskView { uint32_t enable_mask_; };
+struct GameDataLockMaskBytes { uint8_t human_mask_, alive_mask_, unassigned_[2]; };
+union GameDataLockMaskView { uint32_t enable_mask_; GameDataLockMaskBytes bytes_; };
 struct GameDataStateWindowFields {
     uint32_t game_state_, game_rules_, game_warnings_, game_preferences_;
     uint32_t game_interlude_flags_;
@@ -866,7 +873,8 @@ struct GameDataSecretProject {
     int ascetic_virtues() const { return ascetic_virtues_value_; }
     int &ascetic_virtues() { return ascetic_virtues_value_; }
 };
-struct GameDataLockMaskView { uint32_t enable_mask_; };
+struct GameDataLockMaskBytes { uint8_t human_mask_, alive_mask_, unassigned_[2]; };
+union GameDataLockMaskView { uint32_t enable_mask_; GameDataLockMaskBytes bytes_; };
 struct GameDataStateWindowFields {
     uint32_t game_state_, game_rules_, game_warnings_, game_preferences_;
     uint32_t game_interlude_flags_;
@@ -967,8 +975,7 @@ struct Base {
     uint8_t facilities_built[12];
     int mineral_surplus_final, minerals_accumulated_2;
     int unk_6, unk_7, unk_8, unk_9;
-    int nutrient_intake_1, mineral_intake_1, energy_intake_1, unused_intake_1;
-    int nutrient_intake_2, mineral_intake_2, energy_intake_2, unused_intake_2;
+    int intake_1[4], intake_2[4];
     int nutrient_surplus, mineral_surplus, energy_surplus, unused_surplus;
 };
 struct PlayerData {
@@ -1483,6 +1490,8 @@ ECOLOGY_HARNESS = r"""
 #include <string>
 #include <vector>
 #define __cdecl
+typedef char *LPSTR;
+enum { RSC_NUTRIENTS=0, RSC_MINERALS=1, RSC_ENERGY=2, RSC_PSI=3 };
 
 struct GameDataSecretProject {
     int cloning_vats_value_;
@@ -1492,7 +1501,8 @@ struct GameDataSecretProject {
     int ascetic_virtues() const { return ascetic_virtues_value_; }
     int &ascetic_virtues() { return ascetic_virtues_value_; }
 };
-struct GameDataLockMaskView { uint32_t enable_mask_; };
+struct GameDataLockMaskBytes { uint8_t human_mask_, alive_mask_, unassigned_[2]; };
+union GameDataLockMaskView { uint32_t enable_mask_; GameDataLockMaskBytes bytes_; };
 struct GameDataStateWindowFields {
     uint32_t game_state_, game_rules_, game_warnings_, game_preferences_;
     uint32_t game_interlude_flags_;
@@ -1547,7 +1557,7 @@ struct Base {
 };
 struct Map { uint8_t climate, contour, val2, region, visibility, val3, unk; int8_t territory; uint32_t bit, bit2; uint32_t visible[7]; };
 struct Player { int is_leader_female; char filename[24], search_key[24], name_leader[24], title_leader[24]; char adj_leader[128], adj_insult_leader[128], adj_faction[128], adj_insult_faction[128]; uint8_t pad[128]; char noun_faction[24]; int noun_gender, is_noun_plural; char adj_name_faction[128], formal_name_faction[40]; char insult_leader[24], desc_name_faction[24], assistant_name[24], scientist_name[24], assistant_city[24]; uint8_t pad2[176]; int rule_flags; };
-struct RulesTerraforming { const char *name; const char *name_sea; int preq_tech, preq_tech_sea; uint32_t bit, incompatible; int rate; const char *shortcuts; };
+struct RulesTerraforming { char *name; char *name_sea; int preq_tech, preq_tech_sea; uint32_t bit, incompatible; int rate; char *shortcuts; };
 struct WorldRules { uint32_t sea_level_rises; };
 struct BasicRules { uint32_t freq_global_warming_num, freq_global_warming_denom; };
 struct Console { int faction_id_; int focus(int,int,int); };
@@ -1603,7 +1613,7 @@ void interlude(int event, char *, int, int) {
 }
 int boom(int,int,int) { calls.push_back("boom"); return 0; }
 void clock_wait(int n) { calls.push_back(std::string("wait:")+char('0'+(n==20?2:1))); }
-int parse_say(int,int,int,int) { calls.push_back("parse_say"); return 0; }
+int parse_say(int,char *,int,int) { calls.push_back("parse_say"); return 0; }
 int parse_says(int,char *,int,int) { calls.push_back("parse_says"); return 0; }
 int popp(char *,const char *,int,const char *,int(__cdecl *)()) { calls.push_back("popp"); return 0; }
 int POP2(const char *,const char *,int) {
@@ -1646,6 +1656,7 @@ HELPERS
 BODY
 
 static void reset_case() {
+    static char road_name[] = "ROAD";
     std::memset(Bases,0,sizeof(Bases)); std::memset(Players,0,sizeof(Players));
     std::memset(PlayersData,0,sizeof(PlayersData)); std::memset(Tiles,0,sizeof(Tiles));
     std::memset(radius_x,0,sizeof(radius_x)); std::memset(radius_y,0,sizeof(radius_y));
@@ -1657,7 +1668,7 @@ static void reset_case() {
     MapTileFlagClearMask=4; MapSeaLevel=0; GameDataStateStorage.fields_.ecology_event_accumulator_=0; GameDataStateStorage.fields_.climate_rise_step_=0; GameDataStateStorage.fields_.climate_rise_limit_=0; GameDataStateStorage.fields_.climate_rise_accum_=0; GameDataStateStorage.fields_.climate_sea_level_delta_=0;
     PlayersData[1].ranking=1; PlayersData[1].region_total_bases[0]=1; ConsoleGlobal.faction_id_=1;
     Rules.freq_global_warming_num=1; Rules.freq_global_warming_denom=1; WorldBuilder.sea_level_rises=1; MapSeaLevelCouncil=0;
-    Terraforming[5].bit=4; Terraforming[5].name="ROAD"; MapWinTable[0]=&MainMap;
+    Terraforming[5].bit=4; Terraforming[5].name=road_name; MapWinTable[0]=&MainMap;
     GameDataStateStorage.fields_.vehicle_current_count_=0; random_value=1; calls.clear(); vehicle_kinds.clear(); interlude_ids.clear(); sync_viewers.clear();
     focus_ecology_mutation=-1; focus_viewer_mutation=-1; interlude_8_ecology_mutation=-1;
     report_ecology_mutation=-1; spore_vehicle_ecology_mutation=-1;

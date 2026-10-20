@@ -13,6 +13,7 @@ CPP_PREFIX = r'''#include <stdint.h>
 #include <string.h>
 #define __cdecl
 typedef int BOOL;
+enum { RSC_NUTRIENTS=0, RSC_MINERALS=1, RSC_ENERGY=2, RSC_PSI=3 };
 static const int MaxPlayerNum = 8;
 static const int PROP_REPEAL_GLOBAL_TRADE_PACT = 0;
 static const int PROP_GLOBAL_TRADE_PACT = 1;
@@ -41,7 +42,7 @@ struct PlayerData {
 };
 struct Player { unsigned rule_flags; int rule_research; };
 struct Base {
-  unsigned char faction_id_current; int energy_intake_1, energy_intake_2;
+  unsigned char faction_id_current; int intake_1[4], intake_2[4];
   int energy_consumption, energy_inefficiency, energy_surplus;
   int mineral_surplus;
   int psych_total, economy_total, labs_total, unk_10;
@@ -96,15 +97,15 @@ void reset() {
   GameDataStateStorage.fields_.base_current_count_ = 1;
   TechCommerceCount=1; BaseUpkeepStage=0; ExpansionEnabled=0;
   PlayersData[1].se_alloc_psych=2; PlayersData[1].se_alloc_labs=3;
-  Bases[0].faction_id_current=1; Bases[0].energy_intake_1=30; Bases[0].energy_intake_2=30;
+  Bases[0].faction_id_current=1; Bases[0].intake_1[2]=30; Bases[0].intake_2[2]=30;
 }
 int main() {
   // Upkeep bank uses pre-second-market surplus; project multipliers are later.
   reset(); BaseUpkeepStage=1; base_energy();
   if (PlayersData[1].unk_13 != 30 || Bases[0].energy_surplus != 30) return 1;
-  reset(); BaseUpkeepStage=1; Bases[0].energy_intake_2=150000; base_energy();
+  reset(); BaseUpkeepStage=1; Bases[0].intake_2[2]=150000; base_energy();
   if (PlayersData[1].unk_13 != 99999) return 9;
-  reset(); BaseUpkeepStage=1; Bases[0].energy_intake_2=-20; base_energy();
+  reset(); BaseUpkeepStage=1; Bases[0].intake_2[2]=-20; base_energy();
   if (PlayersData[1].unk_13 != 0) return 10;
 
   // The project multipliers and economics-conditioned vaccine effect compose.
@@ -157,7 +158,7 @@ int main() {
   reset(); PlayersData[1].se_alloc_psych=0;
   PlayersData[1].se_alloc_labs=134217738;
   PlayersData[1].soc_effect_pending.values_[SocialEffect::EFFICIENCY]=-4;
-  Bases[0].energy_intake_2=0;
+  Bases[0].intake_2[2]=0;
   Bases[0].specialist_total=1; Citizen[0].ops_bonus=100;
   base_energy();
   if (Bases[0].labs_total != 0 || Bases[0].economy_total != 20) return 17;
@@ -169,7 +170,7 @@ int main() {
   reset(); PlayersData[1].se_alloc_psych=0;
   PlayersData[1].se_alloc_labs=-134217738;
   PlayersData[1].soc_effect_pending.values_[SocialEffect::EFFICIENCY]=-4;
-  Bases[0].energy_intake_2=0;
+  Bases[0].intake_2[2]=0;
   Bases[0].specialist_total=1; Citizen[0].ops_bonus=100;
   Citizen[0].research_bonus=100;
   base_energy();
@@ -195,7 +196,7 @@ int main() {
   Bases[1].faction_id_current=2; Bases[0].facilities_built[0]=3;
   GameDataStateStorage.fields_.secret_project_[0]=0;
   base_energy();
-  if (Bases[0].energy_intake_2 != 33) return 4;
+  if (Bases[0].intake_2[2] != 33) return 4;
 
   // Network Backbone includes built network nodes from every current base and
   // published nonalien/unsanctioned commerce receipts.

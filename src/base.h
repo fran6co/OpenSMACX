@@ -379,22 +379,12 @@ struct Base {
     int unk_7; // unused?
     int unk_8; // unused?
     int unk_9; // unused?
-    // RECOVERY_MEMBER: v1 Base nutrient_intake_1 0xB0 0x004E80B0
-    int nutrient_intake_1;
-    // RECOVERY_MEMBER: v1 Base mineral_intake_1 0xB4 0x004E80B0
-    int mineral_intake_1;
-    // RECOVERY_MEMBER: v1 Base energy_intake_1 0xB8 0x004E80B0
-    int energy_intake_1;
-    // RECOVERY_MEMBER: v1 Base unused_intake_1 0xBC 0x004E80B0
-    int unused_intake_1;
-    // RECOVERY_MEMBER: v1 Base nutrient_intake_2 0xC0 0x004E80B0
-    int nutrient_intake_2;
-    // RECOVERY_MEMBER: v1 Base mineral_intake_2 0xC4 0x004E80B0
-    int mineral_intake_2;
-    // RECOVERY_MEMBER: v1 Base energy_intake_2 0xC8 0x004E80B0
-    int energy_intake_2;
-    // RECOVERY_MEMBER: v1 Base unused_intake_2 0xCC 0x004E80B0
-    int unused_intake_2;
+    // Original base_yield copies four dwords C0..CC to B0..BC at stride 4.
+    // Its radius siblings index C0+4*pass for pass 0..3.
+    // RECOVERY_MEMBER: v1 Base intake_1 0xB0 0x004E80B0
+    int intake_1[4];
+    // RECOVERY_MEMBER: v1 Base intake_2 0xC0 0x004E80B0
+    int intake_2[4];
     int nutrient_surplus;
     int mineral_surplus;
     int energy_surplus;

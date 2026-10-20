@@ -135,13 +135,15 @@ HOST = r'''#include <cassert>
 #define ORDER_NONE 0
 struct Base {
   short x=0, y=0; unsigned char faction_id_current=0; unsigned char pad=0;
-  uint32_t state=0; int nutrient_intake_2=0, mineral_intake_2=0;
-  int energy_intake_2=0, unused_intake_2=0; int resource_sqr_radius=0;
+  uint32_t state=0; int intake_2[4]={}; int resource_sqr_radius=0;
   const char *name_string="";
 };
 struct Map { uint8_t climate=0, contour=0, val2=0, region=0;
   uint8_t visibility=0,val3=0,unk_1=0,unk_2=0; uint32_t bit=0; };
-struct { struct { struct { uint8_t enable_mask_=0; } lock_masks_;
+struct { struct {
+  union { uint32_t enable_mask_;
+    struct { uint8_t human_mask_, alive_mask_, unassigned_[2]; } bytes_;
+  } lock_masks_;
   int base_current_count_=0; } fields_; } GameDataStateStorage;
 Base bases[8], *Bases=bases, *BaseCurrent=bases;
 Map tiles[128];
@@ -230,15 +232,15 @@ def test_actual_source_owner_behaviors_and_compiling_mutant(tmp_path: Path,
   bases_reset(3,1,1);
   assert(resets==1);
   move_current_in_crop=true;
-  assert(sub_4e7e50(0)==12 && bases[0].nutrient_intake_2==0
-         && bases[1].nutrient_intake_2==3 && bases[1].mineral_intake_2==4
-         && bases[1].energy_intake_2==5 && bases[1].unused_intake_2==0
+  assert(sub_4e7e50(0)==12 && bases[0].intake_2[0]==0
+         && bases[1].intake_2[0]==3 && bases[1].intake_2[1]==4
+         && bases[1].intake_2[2]==5 && bases[1].intake_2[3]==0
          && TileYieldRestricted==0);
   BaseCurrent=bases;
-  bases[0].nutrient_intake_2=10; bases[0].mineral_intake_2=10;
-  bases[0].energy_intake_2=10; bases[0].unused_intake_2=10;
-  assert(sub_4e7f80(0)==12 && bases[0].nutrient_intake_2==7
-         && bases[0].unused_intake_2==10);
+  bases[0].intake_2[0]=10; bases[0].intake_2[1]=10;
+  bases[0].intake_2[2]=10; bases[0].intake_2[3]=10;
+  assert(sub_4e7f80(0)==12 && bases[0].intake_2[0]==7
+         && bases[0].intake_2[3]==10);
   const char *n0="Zulu", *n1="alpha"; bases[0].name_string=n0;
   bases[1].name_string=n1; int ids[2]={0,1};
   sub_4d5ff0(ids); assert(ids[0]==1 && ids[1]==0);

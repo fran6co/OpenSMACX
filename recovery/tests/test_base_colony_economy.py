@@ -27,6 +27,7 @@ SUPPORT = r"""
 #ifndef __cdecl
 #define __cdecl
 #endif
+enum { RSC_NUTRIENTS=0, RSC_MINERALS=1, RSC_ENERGY=2, RSC_PSI=3 };
 
 enum { MaxPlayerNum = 8 };
 enum { ORDER_NONE = 0, ORDER_CONVOY = 3 };
@@ -43,7 +44,7 @@ struct Base {
     int16_t x, y;
     uint8_t faction_id_current;
     uint32_t state, governor;
-    int mineral_intake_2, nutrient_surplus;
+    int intake_2[4], nutrient_surplus;
     int drone_total, talent_total;
     uint8_t facilities_built[12];
     int queue_production_id[10];
@@ -121,7 +122,7 @@ int main() {
     base.faction_id_current = 2;
     base.x = 10;
     base.y = 10;
-    base.mineral_intake_2 = 0;
+    base.intake_2[1] = 0;
     BaseCurrentForcesMaintCost = 1;
     VehCurrentCount = 2;
     Vehs[0] = {};

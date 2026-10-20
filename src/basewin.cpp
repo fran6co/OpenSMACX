@@ -202,17 +202,17 @@ void BaseWin::farm_click(int x, int y, int) {
                 const int tile_y = BaseCurrent->y + RadiusOffsetY[i];
                 if (tile_x < 0 || tile_x >= MapLongitudeBounds || tile_y < 0 || tile_y >= MapLatitudeBounds
                     || !(BaseCurrent->resource_sqr_radius & (1u << i))) continue;
-                const int nutrient_divisor = range(BaseCurrent->nutrient_intake_2
+                const int nutrient_divisor = range(BaseCurrent->intake_2[RSC_NUTRIENTS]
                     - BaseCurrent->population_size * static_cast<int>(Rules.nutrient_req_citizen), 1, 99);
                 int score = resource_yield(0, faction, BaseIDCurrentSelected, tile_x, tile_y)
                     * (growth + 3) * 4 / nutrient_divisor;
-                const int mineral_divisor = range(BaseCurrent->mineral_intake_2
+                const int mineral_divisor = range(BaseCurrent->intake_2[RSC_MINERALS]
                     - static_cast<int>(BaseCurrentForcesMaintCost), 1, 99);
                 score += resource_yield(1, faction, BaseIDCurrentSelected, tile_x, tile_y)
                     * (fight + 4 + power) * BaseCurrent->population_size / mineral_divisor;
                 score += resource_yield(2, faction, BaseIDCurrentSelected, tile_x, tile_y)
                     * BaseCurrent->population_size * (wealth + tech + 2)
-                    / range(BaseCurrent->energy_intake_2, 1, 99);
+                    / range(BaseCurrent->intake_2[RSC_ENERGY], 1, 99);
                 if (score < worst_score) { worst_score = score; worst_position = i; }
             }
             if (worst_position) {
@@ -5246,7 +5246,7 @@ void BaseWin::draw_expenses(int a1) {
   CharUpperA(StringTemp);
   sVar4 = strlen(StringTemp);
   buffer->write_cent_l(StringTemp, &title, sVar4);
-  iVar6 = BaseCurrent->nutrient_intake_2;
+  iVar6 = BaseCurrent->intake_2[RSC_NUTRIENTS];
   line.right = line.right + -3;
   line.top = line.top + 3;
   line.bottom = line.bottom + -3;
@@ -5489,7 +5489,7 @@ LAB_00413015:
   CharUpperA(StringTemp);
   sVar4 = strlen(StringTemp);
   buffer->write_cent_l(StringTemp, &title, sVar4);
-  iVar6 = BaseCurrent->mineral_intake_2;
+  iVar6 = BaseCurrent->intake_2[RSC_MINERALS];
   line.right = line.right + -3;
   line.top = line.top + 3;
   line.bottom = line.bottom + -3;
@@ -5741,7 +5741,7 @@ LAB_00413885:
   CharUpperA(StringTemp);
   sVar4 = strlen(StringTemp);
   buffer->write_cent_l(StringTemp, &title, sVar4);
-  iVar6 = BaseCurrent->energy_intake_2;
+  iVar6 = BaseCurrent->intake_2[RSC_ENERGY];
   line.right = line.right + -3;
   line.top = line.top + 3;
   line.bottom = line.bottom + -3;

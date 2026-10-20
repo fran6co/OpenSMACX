@@ -33,7 +33,7 @@ static_assert(std::is_unsigned<decltype(PlayerData::nutrient_surplus_total)>::va
               "native faction surplus total is an unsigned dword");
 struct Base {
   uint8_t faction_id_current; int8_t population_size; uint32_t state;
-  int nutrients_accumulated, nutrient_intake_2, nutrient_consumption, nutrient_surplus;
+  int nutrients_accumulated, intake_2[4], nutrient_consumption, nutrient_surplus;
   uint8_t facilities_built[12];
 };
 struct RuleData { uint32_t nutrient_req_citizen; };
@@ -78,11 +78,11 @@ int main() {
   bases[2].facilities_built[FAC_CHILDREN_CRECHE >> 3]
       = 1u << (FAC_CHILDREN_CRECHE & 7);
   BaseCurrent->state=BSTATE_GOLDEN_AGE_ACTIVE;
-  BaseCurrent->nutrient_intake_2=30; BaseCurrentConvoyTo[0]=5;
+  BaseCurrent->intake_2[0]=30; BaseCurrentConvoyTo[0]=5;
   BaseCurrentConvoyFrom[0]=2; BaseCurrent->population_size=3;
   Rules.nutrient_req_citizen=2; BaseCurrent->nutrients_accumulated=-3;
   BaseUpkeepStage=1; base_nutrient();
-  if (BaseCurrentGrowthRate!=7 || BaseCurrent->nutrient_intake_2!=35
+  if (BaseCurrentGrowthRate!=7 || BaseCurrent->intake_2[0]!=35
       || BaseCurrent->nutrient_consumption!=8 || BaseCurrent->nutrient_surplus!=27
       || BaseCurrent->nutrients_accumulated!=0
       || PlayersData[1].nutrient_surplus_total!=27) return 1;
@@ -103,10 +103,10 @@ int main() {
   if (BaseCurrentGrowthRate!=INT_MIN+3) return 3;
 
   // Intake ADD wraps, and that signed wrapped value selects the negative path.
-  reset(); BaseCurrent->nutrient_intake_2=INT_MAX;
+  reset(); BaseCurrent->intake_2[0]=INT_MAX;
   BaseCurrentConvoyTo[0]=1; BaseCurrent->nutrients_accumulated=0;
   base_nutrient();
-  if (BaseCurrent->nutrient_intake_2!=INT_MIN
+  if (BaseCurrent->intake_2[0]!=INT_MIN
       || BaseCurrent->nutrient_surplus!=INT_MIN
       || BaseCurrent->nutrients_accumulated!=-1) return 4;
 
@@ -121,7 +121,7 @@ int main() {
 
   // SUB wraps INT_MIN - 1 to INT_MAX. Native signed JGE takes the nonnegative
   // branch and clears a negative accumulated value; no source safety guard.
-  reset(); BaseCurrent->nutrient_intake_2=INT_MIN;
+  reset(); BaseCurrent->intake_2[0]=INT_MIN;
   BaseCurrentConvoyFrom[0]=1; BaseCurrent->nutrients_accumulated=-1;
   BaseUpkeepStage=1; base_nutrient();
   if (BaseCurrent->nutrient_consumption!=1
@@ -130,7 +130,7 @@ int main() {
       || PlayersData[1].nutrient_surplus_total!=99) return 6;
 
   // Native ADD to the uint32 faction total wraps on overflow as well.
-  reset(); BaseCurrent->nutrient_intake_2=1;
+  reset(); BaseCurrent->intake_2[0]=1;
   PlayersData[1].nutrient_surplus_total=UINT32_MAX;
   BaseUpkeepStage=1; base_nutrient();
   if (BaseCurrent->nutrient_surplus!=1
@@ -189,10 +189,10 @@ def test_base_nutrient_fixture_uses_source_facility_and_effect_indices() -> None
 def test_base_nutrient_wrap_control_rejects_saturating_sub_mutant() -> None:
     source = SOURCE.read_text()
     body = _body(source)
-    correct = "base_yield_sub(\n        BaseCurrent->nutrient_intake_2, BaseCurrent->nutrient_consumption)"
+    correct = "base_yield_sub(\n        BaseCurrent->intake_2[RSC_NUTRIENTS], BaseCurrent->nutrient_consumption)"
     assert correct in body
     mutant = body.replace(correct,
-        "saturating_sub(\n        BaseCurrent->nutrient_intake_2, BaseCurrent->nutrient_consumption)", 1)
+        "saturating_sub(\n        BaseCurrent->intake_2[RSC_NUTRIENTS], BaseCurrent->nutrient_consumption)", 1)
     for compiler in ("g++", "clang++"):
         if shutil.which(compiler):
             for optimization in ("-O0", "-O2"):

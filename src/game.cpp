@@ -6746,10 +6746,8 @@ static void game_data_migrate_legacy_base(Base &base,
     // Express their destinations as the current Base members, retaining the
     // native interleaving order rather than treating the wire row as a Base.
     int *const lane_a[] = {&base.unk_6, &base.unk_7, &base.unk_8, &base.unk_9};
-    int *const lane_b[] = {&base.nutrient_intake_1, &base.mineral_intake_1,
-                           &base.energy_intake_1, &base.unused_intake_1};
-    int *const lane_c[] = {&base.nutrient_intake_2, &base.mineral_intake_2,
-                           &base.energy_intake_2, &base.unused_intake_2};
+    int *const lane_b = base.intake_1;
+    int *const lane_c = base.intake_2;
     int *const lane_d[] = {&base.nutrient_surplus, &base.mineral_surplus,
                            &base.energy_surplus, &base.unused_surplus};
     int *const lane_e[] = {&base.nutrient_inefficiency,
@@ -6762,8 +6760,8 @@ static void game_data_migrate_legacy_base(Base &base,
                            &base.unused_consumption};
     for (int field = 0; field < 4; ++field) {
         memcpy(lane_a[field], row + 0x9C + field * 4, 4);
-        memcpy(lane_b[field], row + 0xAC + field * 4, 4);
-        memcpy(lane_c[field], row + 0xBC + field * 4, 4);
+        memcpy(&lane_b[field], row + 0xAC + field * 4, 4);
+        memcpy(&lane_c[field], row + 0xBC + field * 4, 4);
         memcpy(lane_d[field], row + 0xCC + field * 4, 4);
         memcpy(lane_e[field], row + 0xDC + field * 4, 4);
         memcpy(lane_f[field], row + 0xEC + field * 4, 4);

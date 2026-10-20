@@ -35,9 +35,7 @@ struct Base { enum AutoForwardSlot { AutoForwardLand, AutoForwardSea,
     int nutrients_accumulated,minerals_accumulated,production_id_last,eco_damage;
     uint32_t queue_size; int queue_production_id[10]; int specialist_unk1;
     uint32_t spec[2]; uint8_t facilities_built[12]; int mineral_surplus_final,
-    minerals_accumulated_2; int data0a8[11]; int nutrient_intake_1,
-    mineral_intake_1,energy_intake_1,unused_intake_1,nutrient_intake_2,
-    mineral_intake_2,energy_intake_2,unused_intake_2,nutrient_surplus,
+    minerals_accumulated_2; int data0a8[11]; int intake_1[4], intake_2[4], nutrient_surplus,
     mineral_surplus,energy_surplus,unused_surplus,nutrient_inefficiency,
     mineral_inefficiency,energy_inefficiency,unused_inefficiency,
     nutrient_consumption,mineral_consumption,energy_consumption,

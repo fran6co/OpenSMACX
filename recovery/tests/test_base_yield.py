@@ -57,9 +57,10 @@ def actual_source():
     for name in ("BaseCurrentConvoyFrom","BaseCurrentConvoyTo"):
         definition,=re.findall(r"uint32_t "+name+r"\[4\];",base)
         declarations.append(definition)
-    for filename,name in (("base.h","FAC_CHILDREN_CRECHE"),("base.h","BSTATE_GOLDEN_AGE_ACTIVE"),("map.h","RSC_NUTRIENTS")):
+    for filename,name in (("base.h","FAC_CHILDREN_CRECHE"),("base.h","BSTATE_GOLDEN_AGE_ACTIVE")):
         definition,=re.findall(name+r"\s*=\s*(?:0x[0-9a-fA-F]+|\d+)",headers[filename])
         declarations.append("enum {"+definition+"};")
+    declarations.append(braced(headers["map.h"], "enum ResourceType {") + ";")
     for name in ("MaxSpecialistNum","FacilityRepStart"):
         definition,=re.findall(r"static const int "+name+r"\s*=\s*\d+;",headers["base.h"])
         declarations.append(definition)
@@ -80,6 +81,7 @@ HARNESS=r'''
 #include <algorithm>
 #include <cstdint>
 #include <cstddef>
+#include <climits>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -94,6 +96,11 @@ typedef char *LPSTR;
 void check(bool ok,int line){if(!ok){std::fprintf(stderr,"assertion line %d\n",line);std::exit(99);}}
 #define require(x) check((x),__LINE__)
 ACTUAL_DECLARATIONS
+static_assert(offsetof(Base, intake_1) == 0xB0, "first intake lane offset");
+static_assert(offsetof(Base, intake_2) == 0xC0, "second intake lane offset");
+static_assert(sizeof(((Base *)0)->intake_1) == 4 * sizeof(int), "first lane extent");
+static_assert(sizeof(((Base *)0)->intake_2) == 4 * sizeof(int), "second lane extent");
+static_assert(sizeof(Base) == 0x134, "Base stride remains native size");
 Base Bases[4],*BaseCurrent;
 PlayerData PlayersData[8];RulesCitizen Citizen[10];RulesBasic Rules;
 GameDataStateWindow GameDataStateStorage;
@@ -192,8 +199,8 @@ void fast_path(){
     base_yield();
     require(farm_calls==1 && resource_calls==4 && best_calls==0 && tech_calls==0);
     require(yield_calls[0]==1 && yield_calls[1]==1 && yield_calls[2]==1 && TileYieldRestricted==0);
-    require(BaseCurrent->nutrient_intake_1==3 && BaseCurrent->mineral_intake_1==4 && BaseCurrent->energy_intake_1==5 && BaseCurrent->unused_intake_1==0);
-    require(BaseCurrent->nutrient_intake_2==3 && BaseCurrent->mineral_intake_2==4 && BaseCurrent->energy_intake_2==5 && BaseCurrent->unused_intake_2==0);
+    require(BaseCurrent->intake_1[0]==3 && BaseCurrent->intake_1[1]==4 && BaseCurrent->intake_1[2]==5 && BaseCurrent->intake_1[3]==0);
+    require(BaseCurrent->intake_2[0]==3 && BaseCurrent->intake_2[1]==4 && BaseCurrent->intake_2[2]==5 && BaseCurrent->intake_2[3]==0);
     require(BasePopulationUnassigned==1 && BaseNutrientAdequate==73);
     require(BaseCurrent->resource_sqr_radius==1 && BaseCurrent->specialist_total==1 && BaseCurrent->eco_damage==0);
     require(BaseCurrent->spec[0]==0x12345678 && BaseCurrent->spec[1]==0x76543210);
@@ -208,9 +215,9 @@ void satellites(){
         if(full>=2){Bases[1].faction_id_current=full==4?5:3;if(full==3)SecretProject.cloudbase_academy()=1;else SecretProject.space_elevator()=1;}
         base_yield();
         bool doubled=full>=1 && full<=3;
-        require(BaseCurrent->nutrient_intake_2==std::min(population,doubled?3:2));
-        require(BaseCurrent->mineral_intake_2==std::min(population,doubled?4:2));
-        require(BaseCurrent->energy_intake_2==std::min(population,doubled?5:3));
+        require(BaseCurrent->intake_2[0]==std::min(population,doubled?3:2));
+        require(BaseCurrent->intake_2[1]==std::min(population,doubled?4:2));
+        require(BaseCurrent->intake_2[2]==std::min(population,doubled?5:3));
         require(BasePopulationUnassigned==population && BaseNutrientAdequate==73 && resource_calls==4);
     }
 }
@@ -229,8 +236,8 @@ void forced_and_scoring(){
         // Original neutral scores: mineral1=768, energy1=128. No second
         // worker remains; center's nutrient10 is already adequate.
         require(BaseCurrent->resource_sqr_radius==(block==1?5:3));
-        require(BaseCurrent->nutrient_intake_2==10 && BaseCurrent->specialist_total==0);
-        require(BaseCurrent->mineral_intake_2==(block==1?0:1) && BaseCurrent->energy_intake_2==(block==1?1:0));
+        require(BaseCurrent->intake_2[0]==10 && BaseCurrent->specialist_total==0);
+        require(BaseCurrent->intake_2[1]==(block==1?0:1) && BaseCurrent->intake_2[2]==(block==1?1:0));
         require(BasePopulationUnassigned==0 && BaseNutrientAdequate==1 && resource_calls==8);
     }
     reset();BaseCurrent->specialist_total=0;availability=0x1ffff8;
@@ -309,7 +316,7 @@ void replacements(){
         tile_yield[1][0]=food;tile_yield[2][1]=minerals;
         base_yield();
         require(BaseCurrent->resource_sqr_radius==(rollback?5:3));
-        require(BaseCurrent->nutrient_intake_2==(rollback?0:4) && BaseCurrent->mineral_intake_2==(rollback?minerals:0));
+        require(BaseCurrent->intake_2[0]==(rollback?0:4) && BaseCurrent->intake_2[1]==(rollback?minerals:0));
         require(BaseCurrent->specialist_total==0 && BasePopulationUnassigned==0);
         // Initial two tiles, removeold/addnew, optional remove-new/add-old.
         // Exactly one replacement attempt; no second scoring pass.
@@ -322,35 +329,35 @@ void callback_reloads(){
     PlayersData[3].satellites_[1]=4;PlayersData[3].satellites_[2]=5;
     tile_yield[0][0]=2;tile_yield[0][1]=3;tile_yield[0][2]=4;
     Bases[1]=Bases[0];Bases[1].faction_id_current=4;
-    Bases[1].nutrient_intake_2=200;Bases[1].mineral_intake_2=20;Bases[1].energy_intake_2=30;Bases[1].unused_intake_2=40;
+    Bases[1].intake_2[0]=200;Bases[1].intake_2[1]=20;Bases[1].intake_2[2]=30;Bases[1].intake_2[3]=40;
     switch_on_crop=1;base_yield();
     require(BaseCurrent==&Bases[1] && BaseIDCurrentSelected==1 && resource_calls==4);
-    require(Bases[0].nutrient_intake_2==1 && Bases[0].mineral_intake_2==1 && Bases[0].energy_intake_2==1);
-    require(Bases[1].nutrient_intake_2==202 && Bases[1].mineral_intake_2==23 && Bases[1].energy_intake_2==34 && Bases[1].unused_intake_2==40);
-    require(Bases[1].nutrient_intake_1==202 && Bases[1].unused_intake_1==40 && TileYieldRestricted==0);
+    require(Bases[0].intake_2[0]==1 && Bases[0].intake_2[1]==1 && Bases[0].intake_2[2]==1);
+    require(Bases[1].intake_2[0]==202 && Bases[1].intake_2[1]==23 && Bases[1].intake_2[2]==34 && Bases[1].intake_2[3]==40);
+    require(Bases[1].intake_1[0]==202 && Bases[1].intake_1[3]==40 && TileYieldRestricted==0);
     // A second call must reinitialize intake from satellite state rather than
     // accumulating the first call's published totals. Its faction is now4.
     resource_calls=0;base_yield();require(resource_calls==4);
-    require(Bases[1].nutrient_intake_2==2 && Bases[1].mineral_intake_2==3 && Bases[1].energy_intake_2==4 && Bases[1].unused_intake_2==0);
+    require(Bases[1].intake_2[0]==2 && Bases[1].intake_2[1]==3 && Bases[1].intake_2[2]==4 && Bases[1].intake_2[3]==0);
     reset();BaseCurrent->state=0;PlayersData[3].satellites_[0]=3;PlayersData[3].satellites_[1]=4;PlayersData[3].satellites_[2]=5;
-    Bases[1]=Bases[0];Bases[1].faction_id_current=4;Bases[1].population_size=7;Bases[1].nutrient_intake_2=5;
+    Bases[1]=Bases[0];Bases[1].faction_id_current=4;Bases[1].population_size=7;Bases[1].intake_2[0]=5;
     Bases[0].facilities_built[29/8]|=1<<(29%8); // pre-callback selected base has facility
     switch_on_facility=1;base_yield();
-    require(BaseCurrent==&Bases[1] && Bases[0].nutrient_intake_2==3);
-    require(Bases[1].nutrient_intake_2==5); // old selected facility29 prevents halving new intake5
-    require(Bases[1].mineral_intake_2==2 && Bases[1].energy_intake_2==3);
+    require(BaseCurrent==&Bases[1] && Bases[0].intake_2[0]==3);
+    require(Bases[1].intake_2[0]==5); // old selected facility29 prevents halving new intake5
+    require(Bases[1].intake_2[1]==2 && Bases[1].intake_2[2]==3);
 }
 void convoy_consumer(){
     reset();tile_yield[0][0]=3;BaseCurrentConvoyFrom[0]=1;BaseCurrentConvoyTo[0]=2;
-    base_yield();require(BaseCurrent->nutrient_intake_2==3); // yield does not consume convoys
+    base_yield();require(BaseCurrent->intake_2[0]==3); // yield does not consume convoys
     BaseCurrent->nutrients_accumulated=-4;BaseCurrent->state|=BSTATE_GOLDEN_AGE_ACTIVE;
     Bases[0].facilities_built[FAC_CHILDREN_CRECHE/8]|=1<<(FAC_CHILDREN_CRECHE%8);
     PlayersData[3].soc_effect_pending.values_[SocialEffect::GROWTH]=1;BaseUpkeepStage=1;
-    base_nutrient();require(BaseCurrentGrowthRate==5 && BaseCurrent->nutrient_intake_2==5);
+    base_nutrient();require(BaseCurrentGrowthRate==5 && BaseCurrent->intake_2[0]==5);
     require(BaseCurrent->nutrient_consumption==3 && BaseCurrent->nutrient_surplus==2 && BaseCurrent->nutrients_accumulated==0);
     require(PlayersData[3].nutrient_surplus_total==2 && BaseCurrentConvoyFrom[0]==1 && BaseCurrentConvoyTo[0]==2);
     BaseCurrentConvoyFrom[0]=20;base_nutrient();
-    require(BaseCurrent->nutrient_intake_2==7 && BaseCurrent->nutrient_surplus==-15 && BaseCurrent->nutrients_accumulated==-1);
+    require(BaseCurrent->intake_2[0]==7 && BaseCurrent->nutrient_surplus==-15 && BaseCurrent->nutrients_accumulated==-1);
     require(PlayersData[3].nutrient_surplus_total==2);
 }
 void signed_arithmetic(){
@@ -364,17 +371,28 @@ void bounds_and_wrapping(){
     BaseCurrent->specialist_total=0;BaseCurrent->resource_sqr_radius=3;
     tile_yield[0][0]=2;base_yield();
     require(BaseCurrent->resource_sqr_radius==3 && BasePopulationUnassigned==0 && BaseCurrent->specialist_total==0);
-    require(resource_calls==4 && BaseCurrent->nutrient_intake_2==2 && BaseNutrientAdequate==73);
+    require(resource_calls==4 && BaseCurrent->intake_2[0]==2 && BaseNutrientAdequate==73);
     for(bool flat:{false,true}){
         reset();entry_x=BaseCurrent->x=62;MapIsFlat=flat;
         BaseCurrent->specialist_total=0;BaseCurrent->resource_sqr_radius=5;
         tile_yield[0][0]=2;tile_yield[2][0]=5;base_yield();
         require(BaseCurrent->resource_sqr_radius==5 && BasePopulationUnassigned==0);
-        require(resource_calls==(flat?4:8) && BaseCurrent->nutrient_intake_2==(flat?2:7));
+        require(resource_calls==(flat?4:8) && BaseCurrent->intake_2[0]==(flat?2:7));
         require(BaseNutrientAdequate==73);
     }
 }
 int main(){
+    reset();
+    for(int index=0;index<4;++index){
+        BaseCurrent->intake_1[index]=100+index;
+        BaseCurrent->intake_2[index]=200+index;
+        require(&base_yield_intake(*BaseCurrent,index,false)==&BaseCurrent->intake_1[index]);
+        require(&base_yield_intake(*BaseCurrent,index,true)==&BaseCurrent->intake_2[index]);
+    }
+    for(int invalid:{-1,4,INT_MIN,INT_MAX}){
+        require(&base_yield_intake(*BaseCurrent,invalid,false)==&BaseCurrent->intake_1[RSC_PSI]);
+        require(&base_yield_intake(*BaseCurrent,invalid,true)==&BaseCurrent->intake_2[RSC_PSI]);
+    }
     require(sizeof(BaseCurrentConvoyFrom)==16 && sizeof(BaseCurrentConvoyTo)==16);
     for(int i=0;i<4;++i)require(BaseCurrentConvoyFrom[i]==0 && BaseCurrentConvoyTo[i]==0);
     fast_path();satellites();forced_and_scoring();fallback_specialists();ecology();
@@ -422,8 +440,8 @@ def test_actual_base_yield(tmp_path):
     (3,"specialist < 7","specialist < 6"),
     (3,"base_yield_mul(Citizen[specialist].psych_bonus, 3)","Citizen[specialist].psych_bonus"),
     (3,"base->population_size >= static_cast<int>(Rules.min_base_size_specialists)","false"),
-    (3,"if (base->nutrient_intake_2 < base_yield_mul(base->population_size + 1,",
-       "if (base->nutrient_intake_2 < base_yield_mul(base->population_size,"),
+    (3,"if (base->intake_2[RSC_NUTRIENTS] < base_yield_mul(base->population_size + 1,",
+       "if (base->intake_2[RSC_NUTRIENTS] < base_yield_mul(base->population_size,"),
     (3,"worked = (worked & ~new_bit) | old_bit;","/* lost restored allocation */"),
     (3,"base_yield_apply_tile(base, map_width, x, y, true);",
        "base_yield_apply_tile(base, map_width, x, y, false);"),
@@ -440,7 +458,7 @@ def test_actual_base_yield(tmp_path):
     (1,"const int selected = BaseIDCurrentSelected;",
        "const int &selected = BaseIDCurrentSelected;"),
     (1,"base = BaseCurrent;","/* cached stale base pointer */"),
-    (1,"base.nutrient_intake_2","base.mineral_intake_2"),
+    (1,"base.intake_2[index]","base.intake_2[RSC_MINERALS]"),
     (1,"static_cast<uint32_t>(left) + static_cast<uint32_t>(right)","static_cast<uint32_t>(left + right)"),
     (2,"TileYieldRestricted = 0;","/* omitted type3 side effect */"),
     (1,"BaseCurrentConvoyTo[RSC_NUTRIENTS]","BaseCurrentConvoyFrom[RSC_NUTRIENTS]"),

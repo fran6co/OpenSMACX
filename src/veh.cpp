@@ -9149,7 +9149,7 @@ int __cdecl alien_base(int veh_id, int x, int y) {
             smallest = abs_dy;
         }
         int value = (largest - ((((abs_dy + abs_dx) >> 1) - smallest + 1) >> 1)) * 32
-            / (base.mineral_intake_2 + base.energy_intake_2 + 32);
+            / (base.intake_2[RSC_MINERALS] + base.intake_2[RSC_ENERGY] + 32);
         if (stack_check(veh_at(base.x, base.y), 2, PLAN_ALIEN_ARTIFACT, -1, -1)) {
             value /= 2;
         }
@@ -22569,7 +22569,7 @@ static int battle_fight_pre_prompt_residual_v2(
             int bit_mask = 0;
             bitmask(1, &bit_offset, &bit_mask);
             (void)bit_offset;
-            if ((Bases[target_base_id].unused_intake_2 & bit_mask) != 0 &&
+            if ((Bases[target_base_id].intake_2[RSC_PSI] & bit_mask) != 0 &&
                 PlayersData[defender_faction].current_num_bases <= 3)
                 attacker_combat /= 2;
         }

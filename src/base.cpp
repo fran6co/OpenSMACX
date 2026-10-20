@@ -375,22 +375,10 @@ int base_yield_denominator(int value) {
     return value < 1 ? 1 : (value > 99 ? 99 : value);
 }
 
-// These are distinct scalar members, not an array spanning their addresses.
 int &base_yield_intake(Base &base, int resource, bool second) {
-    if (second) {
-        switch (resource) {
-        case 0: return base.nutrient_intake_2;
-        case 1: return base.mineral_intake_2;
-        case 2: return base.energy_intake_2;
-        default: return base.unused_intake_2;
-        }
-    }
-    switch (resource) {
-    case 0: return base.nutrient_intake_1;
-    case 1: return base.mineral_intake_1;
-    case 2: return base.energy_intake_1;
-    default: return base.unused_intake_1;
-    }
+    const int index = resource >= RSC_NUTRIENTS && resource <= RSC_ENERGY
+        ? resource : RSC_PSI;
+    return second ? base.intake_2[index] : base.intake_1[index];
 }
 int base_yield_satellite(int faction, int resource) {
     switch (resource) {
@@ -476,9 +464,9 @@ void __cdecl base_energy() {
     // The independent ordinal is set only when the scan encounters BaseCurrent;
     // retain the native local's unset no-match path.
     int base_energy_selected_ordinal;
-    base.energy_intake_2 += BaseCurrentConvoyTo[2];
+    base.intake_2[RSC_ENERGY] += BaseCurrentConvoyTo[RSC_ENERGY];
     base.energy_consumption = BaseCurrentConvoyFrom[2];
-    int available = base.energy_intake_2 - base.energy_consumption;
+    int available = base.intake_2[RSC_ENERGY] - base.energy_consumption;
     base.energy_inefficiency = black_market(available);
     base.energy_surplus = available - base.energy_inefficiency;
 
@@ -490,8 +478,8 @@ void __cdecl base_energy() {
         const Base &candidate = Bases[base_id];
         if (candidate.faction_id_current == faction) {
             if (&candidate == BaseCurrent) base_energy_selected_ordinal = base_id;
-            if (base.energy_intake_1 * 512 + BaseIDCurrentSelected <
-                candidate.energy_intake_1 * 512 + base_id) ++commerce_rank;
+            if (base.intake_1[RSC_ENERGY] * 512 + BaseIDCurrentSelected <
+                candidate.intake_1[RSC_ENERGY] * 512 + base_id) ++commerce_rank;
         }
     }
     for (int partner = 1; partner < MaxPlayerNum; ++partner) {
@@ -506,8 +494,8 @@ void __cdecl base_energy() {
         }
         const int partner_base = base_rank(partner, commerce_rank);
         if (partner_base < 0) continue;
-        int commerce_base = (Bases[partner_base].energy_intake_1 + 7 +
-                             base.energy_intake_1) / 8;
+        int commerce_base = (Bases[partner_base].intake_1[RSC_ENERGY] + 7 +
+                             base.intake_1[RSC_ENERGY]) / 8;
         if (GameDataStateStorage.fields_.council_resolution_count_[PROP_REPEAL_GLOBAL_TRADE_PACT] <
             GameDataStateStorage.fields_.council_resolution_count_[PROP_GLOBAL_TRADE_PACT]) commerce_base *= 2;
         const int divisor = TechCommerceCount + 1;
@@ -531,7 +519,7 @@ void __cdecl base_energy() {
         BaseCommerceReceipts[slot] = receipt;
         BaseCommercePartnerReceipts[slot] = partner_receipt;
         base_energy_alien_receipt_subtotal = receipt;
-        base.energy_intake_2 += receipt;
+        base.intake_2[RSC_ENERGY] += receipt;
     }
     if (ExpansionEnabled != 0 && (Players[faction].rule_flags & RFLAG_ALIEN) != 0) {
         for (int facility = 0; facility < 0x46; ++facility) {
@@ -544,7 +532,7 @@ void __cdecl base_energy() {
         }
         base_energy_alien_receipt_subtotal /= 2;
         if (PlayersData[faction].sanction_turns != 0) base_energy_alien_receipt_subtotal = 0;
-        base.energy_intake_2 += base_energy_alien_receipt_subtotal;
+        base.intake_2[RSC_ENERGY] += base_energy_alien_receipt_subtotal;
     }
     if (BaseUpkeepStage == 1) {
         int reserve_credit = base.energy_surplus;
@@ -552,7 +540,7 @@ void __cdecl base_energy() {
         else if (reserve_credit > 99999) reserve_credit = 99999;
         PlayersData[faction].unk_13 += reserve_credit;
     }
-    available = base.energy_intake_2 - base.energy_consumption;
+    available = base.intake_2[RSC_ENERGY] - base.energy_consumption;
     base.energy_inefficiency = black_market(available);
     base.energy_surplus = available - base.energy_inefficiency;
     int distributed = base.energy_surplus;
@@ -861,7 +849,7 @@ void __cdecl base_yield() {
                 const int population = base->population_size;
                 const int requirement = static_cast<int>(Rules.nutrient_req_citizen);
                 const int needed = base_yield_mul(population, requirement);
-                const int intake = base->nutrient_intake_2;
+                const int intake = base->intake_2[RSC_NUTRIENTS];
                 int food_bonus = 0;
                 if (base_yield_add(BasePopulationUnassigned / requirement, intake) < needed) {
                     food_bonus = base_yield_add(intake, BasePopulationUnassigned) >= needed ? 2 : 8;
@@ -882,7 +870,7 @@ void __cdecl base_yield() {
                 denominator = base_yield_denominator(base_yield_sub(base_yield_add(denominator, denominator), 2));
                 int score = base_yield_shift(base_yield_mul(base_yield_add(growth, 4), nutrients), 8) / denominator;
                 const int mineral_priority = base->queue_production_id[0] < -70 ? 2 : base_yield_sub(0, tech);
-                denominator = base_yield_denominator(base_yield_add(base_yield_sub(base->mineral_intake_2,
+                denominator = base_yield_denominator(base_yield_add(base_yield_sub(base->intake_2[RSC_MINERALS],
                     base_yield_signed_bits(BaseCurrentForcesMaintCost)), 1) / 2);
                 int weight = base_yield_add(base_yield_add(base_yield_add(fight, mineral_priority), power), wealth);
                 weight = base_yield_add(weight, 6);
@@ -890,7 +878,7 @@ void __cdecl base_yield() {
                 weight = base_yield_add(base_yield_add(wealth, base_yield_mul(tech, 2)), 1);
                 const int energy_population = base_yield_denominator(base_yield_sub(population, power));
                 score = base_yield_add(score, base_yield_shift(base_yield_mul(base_yield_mul(weight, energy_population), energy), 6)
-                    / base_yield_denominator(base->energy_intake_2));
+                    / base_yield_denominator(base->intake_2[RSC_ENERGY]));
                 if ((worked & bit) != 0) {
                     if (score < worst_score) { worst_score = score; worst_position = position; }
                 } else if (score > best_score) {
@@ -901,14 +889,14 @@ void __cdecl base_yield() {
             }
 
             if (automatic && base->population_size >= 5
-                && (base->nutrient_intake_2 > base_yield_mul(base->population_size, static_cast<int>(Rules.nutrient_req_citizen))
+                && (base->intake_2[RSC_NUTRIENTS] > base_yield_mul(base->population_size, static_cast<int>(Rules.nutrient_req_citizen))
                     || max_nutrients == 0) && GameDataStateStorage.fields_.turn_current_num_ > 100) {
                 for (int specialist = 0; specialist < 7; ++specialist) {
                     if (has_tech(Citizen[specialist].preq_tech, faction)
                         && !has_tech(Citizen[specialist].obsol_tech, faction)) {
                         base = BaseCurrent;
                         const int population = base->population_size;
-                        const int denominator = base_yield_denominator(base_yield_add(base->energy_intake_2, base->specialist_unk_1));
+                        const int denominator = base_yield_denominator(base_yield_add(base->intake_2[RSC_ENERGY], base->specialist_unk_1));
                         int score = base_yield_shift(Citizen[specialist].psych_bonus, 6);
                         int weight = base_yield_mul(base_yield_add(wealth, 2), population);
                         score = base_yield_add(score, base_yield_shift(base_yield_mul(weight, Citizen[specialist].ops_bonus), 6) / denominator);
@@ -938,7 +926,7 @@ void __cdecl base_yield() {
                     break;
                 }
                 if (BasePopulationUnassigned > base->specialist_total + base->specialist_unk_1) continue;
-                if (base->nutrient_intake_2 >= base_yield_mul(base->population_size,
+                if (base->intake_2[RSC_NUTRIENTS] >= base_yield_mul(base->population_size,
                         static_cast<int>(Rules.nutrient_req_citizen))) break;
             } else {
                 if (best_position <= 0 || best_score <= worst_score || worst_position <= 0) break;
@@ -951,7 +939,7 @@ void __cdecl base_yield() {
                 x = base_yield_wrap_x(base->x + RadiusOffsetX[best_position], map_width);
                 y = base->y + RadiusOffsetY[best_position];
                 base_yield_apply_tile(base, map_width, x, y, false);
-                if (base->nutrient_intake_2 < base_yield_mul(base->population_size + 1,
+                if (base->intake_2[RSC_NUTRIENTS] < base_yield_mul(base->population_size + 1,
                         static_cast<int>(Rules.nutrient_req_citizen))) {
                     worked = (worked & ~new_bit) | old_bit;
                     x = base_yield_wrap_x(base->x + RadiusOffsetX[best_position], map_width);
@@ -1305,14 +1293,8 @@ extern "C" int __cdecl sub_4e7e50(int radius_index) {
             break;
         }
         // The image selects C0/C4/C8/CC and reloads BaseCurrent each pass.
-        // These are separate declared members, not a C++ array.
         base = BaseCurrent;
-        switch (pass) {
-        case 0: base->nutrient_intake_2 += value; break;
-        case 1: base->mineral_intake_2 += value; break;
-        case 2: base->energy_intake_2 += value; break;
-        default: base->unused_intake_2 += value; break;
-        }
+        base->intake_2[pass] += value;
         sum += value;
     }
     return sum;
@@ -1373,12 +1355,7 @@ extern "C" int __cdecl sub_4e7f80(int radius_index) {
             break;
         }
         base = BaseCurrent;
-        switch (pass) {
-        case 0: base->nutrient_intake_2 -= value; break;
-        case 1: base->mineral_intake_2 -= value; break;
-        case 2: base->energy_intake_2 -= value; break;
-        default: base->unused_intake_2 -= value; break;
-        }
+        base->intake_2[pass] -= value;
         sum += value;
     }
     return sum;
@@ -2164,7 +2141,7 @@ label_4f86ee:
       v143 = v9 + 1;
   }
   v75 = BaseCurrent->mineral_surplus;
-  v8 = BaseCurrent->mineral_intake_2 + v75 * 2;
+  v8 = BaseCurrent->intake_2[RSC_MINERALS] + v75 * 2;
   if (out_score) {
     v128 = !((-0x45 <= BaseCurrent->production_id_last) || (BaseCurrent->minerals_accumulated <= (int)Rules.retool_exemption));
   }
@@ -3794,7 +3771,7 @@ label_4fcd31:
             }
           }
           else {
-            if ((((uint8_t)(VehPrototypes[(v163 / 0x34)].plan) <= 9) && (v8 = BaseCurrent->mineral_intake_2, v8)) && (((uint8_t)(VehPrototypes[(v163 / 0x34)].plan) != 7 || (regional_plan != 7)))) {
+            if ((((uint8_t)(VehPrototypes[(v163 / 0x34)].plan) <= 9) && (v8 = BaseCurrent->intake_2[RSC_MINERALS], v8)) && (((uint8_t)(VehPrototypes[(v163 / 0x34)].plan) != 7 || (regional_plan != 7)))) {
               v75 = (int)(PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::SUPPORT]);
               v11 = BaseCurrent->mineral_consumption;
               if (3 <= v75) {
@@ -4152,7 +4129,7 @@ label_4fd8f6:
         if (((int)(Players[v9].rule_morale) + (int)(PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::MORALE]) <= -1) && (regional_plan == 2))
           v75 /= 2;
         v8 = range(v75,1,0xc);
-        if (((has_fac_built(3)) || (5 <= BaseCurrent->population_size)) && (((int)BaseCurrent->population_size / 2 <= BaseCurrent->energy_inefficiency || (BaseCurrent->energy_intake_2 / 2 <= BaseCurrent->energy_inefficiency))))
+        if (((has_fac_built(3)) || (5 <= BaseCurrent->population_size)) && (((int)BaseCurrent->population_size / 2 <= BaseCurrent->energy_inefficiency || (BaseCurrent->intake_2[RSC_ENERGY] / 2 <= BaseCurrent->energy_inefficiency))))
           v18 = v156 * 2;
         break;
       case 3:
@@ -4330,7 +4307,7 @@ label_4fec33:
         v8 /= 2;
         goto label_4fef47;
       case 7:
-        v8 = range((6 - v134) * 2 - BaseCurrent->energy_intake_2 / 2,1,10);
+        v8 = range((6 - v134) * 2 - BaseCurrent->intake_2[RSC_ENERGY] / 2,1,10);
         if ((has_fac_built(3)) || (5 <= BaseCurrent->population_size))
           v18 = v156 * 2;
         break;
@@ -4338,7 +4315,7 @@ label_4fec33:
         v11 = 10;
         v75 = 1;
         v8 = stack_check(v153,2,0xc,faction_id,-1);
-        v8 = range(((5 - v150) - v8) * 2 - BaseCurrent->energy_intake_2 / 3,v75,v11);
+        v8 = range(((5 - v150) - v8) * 2 - BaseCurrent->intake_2[RSC_ENERGY] / 3,v75,v11);
         if (has_project(6,v10)) {
           if (2 <= (int)v143) {
             v163 = 0;
@@ -4408,18 +4385,18 @@ label_4fec33:
           v139 *= 2;
         v16 = 10;
         v8 = 1;
-        v75 = ((-((BaseCurrent->eco_damage + 1) / 2) - ((int)(v139 + 2 + ((int)(v139 + 2) >> 0x1f & 3U)) >> 2)) - BaseCurrent->energy_intake_2 / 3) + 0xc;
+        v75 = ((-((BaseCurrent->eco_damage + 1) / 2) - ((int)(v139 + 2 + ((int)(v139 + 2) >> 0x1f & 3U)) >> 2)) - BaseCurrent->intake_2[RSC_ENERGY] / 3) + 0xc;
         goto label_4fef3f;
       case 0xe:
         v16 = 10;
         v8 = 1;
-        v75 = ((-((BaseCurrent->eco_damage + 2) / 3) - ((int)(v139 + 2 + ((int)(v139 + 2) >> 0x1f & 3U)) >> 2)) - ((int)(BaseCurrent->energy_intake_2 + (BaseCurrent->energy_intake_2 >> 0x1f & 3U)) >> 2)) + 0xc;
+        v75 = ((-((BaseCurrent->eco_damage + 2) / 3) - ((int)(v139 + 2 + ((int)(v139 + 2) >> 0x1f & 3U)) >> 2)) - ((int)(BaseCurrent->intake_2[RSC_ENERGY] + (BaseCurrent->intake_2[RSC_ENERGY] >> 0x1f & 3U)) >> 2)) + 0xc;
         goto label_4fef3f;
       case 0xf:
-        v8 = (6 - v150) * 2 - BaseCurrent->energy_intake_2 / 3;
+        v8 = (6 - v150) * 2 - BaseCurrent->intake_2[RSC_ENERGY] / 3;
         goto label_4fe4ee;
       case 0x10:
-        v8 = (6 - v150) * 2 - ((int)(BaseCurrent->energy_intake_2 + (BaseCurrent->energy_intake_2 >> 0x1f & 3U)) >> 2);
+        v8 = (6 - v150) * 2 - ((int)(BaseCurrent->intake_2[RSC_ENERGY] + (BaseCurrent->intake_2[RSC_ENERGY] >> 0x1f & 3U)) >> 2);
 label_4fe4ee:
         v8 = range(v8,1,0xc);
         v18 = v156 | v157;
@@ -4433,7 +4410,7 @@ label_4fe4ee:
           v11 = 10;
           v75 = 1;
           v8 = stack_check(v153,2,0xc,faction_id,-1);
-          v8 = range(((5 - v150) - v8) * 2 - ((int)(BaseCurrent->energy_intake_2 + (BaseCurrent->energy_intake_2 >> 0x1f & 3U)) >> 2),v75,v11);
+          v8 = range(((5 - v150) - v8) * 2 - ((int)(BaseCurrent->intake_2[RSC_ENERGY] + (BaseCurrent->intake_2[RSC_ENERGY] >> 0x1f & 3U)) >> 2),v75,v11);
           v18 = v157;
         }
         break;
@@ -4446,23 +4423,23 @@ label_4fe4ee:
           v11 = 10;
           v75 = 1;
           v8 = stack_check(v153,2,0xc,faction_id,-1);
-          v8 = range(((6 - v150) - v8) * 2 - BaseCurrent->energy_intake_2 / 5,v75,v11);
+          v8 = range(((6 - v150) - v8) * 2 - BaseCurrent->intake_2[RSC_ENERGY] / 5,v75,v11);
           v18 = v157;
         }
         break;
       case 0x13:
-        v8 = range(10 - BaseCurrent->mineral_intake_1,1,10);
+        v8 = range(10 - BaseCurrent->intake_1[RSC_MINERALS],1,10);
         if ((!v160) || ((int)regional_plan <= 2)) goto label_4fec33;
         v18 = v156 | 1;
         break;
       case 0x14:
         v16 = 10;
-        v75 = 10 - BaseCurrent->mineral_intake_1 / 2;
+        v75 = 10 - BaseCurrent->intake_1[RSC_MINERALS] / 2;
         v8 = 1;
         goto label_4fef3f;
       case 0x15:
         v16 = 10;
-        v75 = 10 - BaseCurrent->mineral_intake_1 / 2;
+        v75 = 10 - BaseCurrent->intake_1[RSC_MINERALS] / 2;
         v8 = 1;
         goto label_4fef3f;
       case 0x16:
@@ -4470,7 +4447,7 @@ label_4fe4ee:
           v11 = 0x10;
           v75 = 1;
           v8 = has_fac_built(0x23);
-          v8 = range(((((BaseCurrent->drone_total - BaseCurrent->talent_total) - v8) * 2 + 0x10) - BaseCurrent->mineral_intake_1) - (int)(PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::POLICE]),v75,v11);
+          v8 = range(((((BaseCurrent->drone_total - BaseCurrent->talent_total) - v8) * 2 + 0x10) - BaseCurrent->intake_1[RSC_MINERALS]) - (int)(PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::POLICE]),v75,v11);
           if ((!v160) || ((int)regional_plan <= 2)) goto label_4fe410;
           v18 = 1;
         }
@@ -7071,7 +7048,7 @@ void __cdecl base_check_support() {
     const unsigned faction_bit = 1u << BaseCurrent->faction_id_current;
     const unsigned faction = BaseCurrent->faction_id_current;
 
-    while (BaseCurrent->mineral_intake_2 < (int)BaseCurrentForcesMaintCost) {
+    while (BaseCurrent->intake_2[RSC_MINERALS] < (int)BaseCurrentForcesMaintCost) {
         int selected_vehicle = -1;
         int selected_score = -1;
 
@@ -8397,7 +8374,7 @@ void __cdecl base_support() {
                     }
                     int cost = has_abil(proto_id, ABL_CLEAN_REACTOR)
                         ? 0 : ((support <= -4) ? 2 : 1);
-                    int minerals = BaseCurrent->mineral_intake_2;
+                    int minerals = BaseCurrent->intake_2[RSC_MINERALS];
                     int half_minerals = minerals / 2;
                     if (cost >= minerals) {
                         cost += (cost - half_minerals) * 2;
@@ -8476,15 +8453,15 @@ void __cdecl base_nutrient() {
     }
     // Preserve native dword wrapping before the signed surplus branches:
     // MOVSX population_size/IMUL nutrient_req at 004E9C13/17, then SUB at 9C37.
-    BaseCurrent->nutrient_intake_2 = base_yield_add(
-        BaseCurrent->nutrient_intake_2,
+    BaseCurrent->intake_2[RSC_NUTRIENTS] = base_yield_add(
+        BaseCurrent->intake_2[RSC_NUTRIENTS],
         base_yield_signed_bits(BaseCurrentConvoyTo[RSC_NUTRIENTS]));
     BaseCurrent->nutrient_consumption = base_yield_add(
         base_yield_signed_bits(BaseCurrentConvoyFrom[RSC_NUTRIENTS]),
         base_yield_mul(static_cast<int>(BaseCurrent->population_size),
             base_yield_signed_bits(Rules.nutrient_req_citizen)));
     BaseCurrent->nutrient_surplus = base_yield_sub(
-        BaseCurrent->nutrient_intake_2, BaseCurrent->nutrient_consumption);
+        BaseCurrent->intake_2[RSC_NUTRIENTS], BaseCurrent->nutrient_consumption);
     if (BaseCurrent->nutrient_surplus >= 0) {
         if (BaseCurrent->nutrients_accumulated < 0) {
             BaseCurrent->nutrients_accumulated = 0;
@@ -8529,7 +8506,7 @@ Status: Complete
 */
 void __cdecl base_minerals() {
     uint32_t faction_id = BaseCurrent->faction_id_current;
-    BaseCurrent->mineral_intake_2 = base_yield_add(BaseCurrent->mineral_intake_2,
+    BaseCurrent->intake_2[RSC_MINERALS] = base_yield_add(BaseCurrent->intake_2[RSC_MINERALS],
         base_yield_signed_bits(BaseCurrentConvoyTo[RSC_MINERALS]));
     int mineral_bonus = (has_fac(FAC_QUANTUM_CONVERTER, BaseIDCurrentSelected, 0)
         || has_project(SP_SINGULARITY_INDUCTOR, faction_id)) ? 1 : 0;
@@ -8545,12 +8522,12 @@ void __cdecl base_minerals() {
     if (has_project(SP_BULK_MATTER_TRANSMITTER, faction_id)) {
         mineral_bonus++;
     }
-    BaseCurrent->mineral_intake_2 = base_yield_mul(
-        BaseCurrent->mineral_intake_2, mineral_bonus + 2) / 2;
+    BaseCurrent->intake_2[RSC_MINERALS] = base_yield_mul(
+        BaseCurrent->intake_2[RSC_MINERALS], mineral_bonus + 2) / 2;
     BaseCurrent->mineral_consumption = base_yield_add(
         base_yield_signed_bits(BaseCurrentForcesMaintCost),
         base_yield_signed_bits(BaseCurrentConvoyFrom[RSC_MINERALS]));
-    BaseCurrent->mineral_surplus = base_yield_sub(BaseCurrent->mineral_intake_2,
+    BaseCurrent->mineral_surplus = base_yield_sub(BaseCurrent->intake_2[RSC_MINERALS],
         BaseCurrent->mineral_consumption);
     BaseCurrent->mineral_inefficiency = 0; // ?
     BaseCurrent->mineral_surplus = base_yield_sub(BaseCurrent->mineral_surplus,
@@ -8581,7 +8558,7 @@ void __cdecl base_minerals() {
         eco_dmg_reduction++;
     }
     BaseCurrent->eco_damage = base_yield_add(BaseCurrent->eco_damage,
-        base_yield_sub(base_yield_sub(BaseCurrent->mineral_intake_2, planet_eco_factor),
+        base_yield_sub(base_yield_sub(BaseCurrent->intake_2[RSC_MINERALS], planet_eco_factor),
             range(base_yield_signed_bits(PlayersData[faction_id].satellites_[1]),
                 0, BaseCurrent->population_size)) / eco_dmg_reduction);
     if (is_human(faction_id)) {
@@ -8636,9 +8613,9 @@ void __cdecl base_minerals() {
         && (queue_id = BaseCurrent->queue_production_id[0], queue_id == -FAC_SKY_HYDRO_LAB
             || queue_id == -FAC_NESSUS_MINING_STATION || queue_id == -FAC_ORBITAL_POWER_TRANS
             || queue_id == -FAC_ORBITAL_DEFENSE_POD)) {
-        BaseCurrent->mineral_intake_2 = base_yield_shift(BaseCurrent->mineral_intake_2, 1);
+        BaseCurrent->intake_2[RSC_MINERALS] = base_yield_shift(BaseCurrent->intake_2[RSC_MINERALS], 1);
         BaseCurrent->mineral_surplus = // doesn't update mineral_surplus_final?
-            base_yield_sub(BaseCurrent->mineral_intake_2, BaseCurrent->mineral_consumption);
+            base_yield_sub(BaseCurrent->intake_2[RSC_MINERALS], BaseCurrent->mineral_consumption);
     }
 }
 
@@ -9028,7 +9005,7 @@ int __cdecl base_rank(int faction_id, int rank_position) {
     for (int i = 0; i < GameDataStateStorage.fields_.base_current_count_; i++) {
         if (Bases[i].faction_id_current == faction_id) {
             base_id[bases_found] = i;
-            base_energy[bases_found++] = (Bases[i].energy_intake_1 * 512) + i;
+            base_energy[bases_found++] = (Bases[i].intake_1[RSC_ENERGY] * 512) + i;
         }
     }
     if (rank_position >= bases_found) {
@@ -11796,11 +11773,11 @@ void __cdecl base_terraform(int force_improve) {
 
     int energy_need = (((wealth_priority - power_priority + 4 + growth_priority) *
                         static_cast<int>(base.population_size) + 3) / 5) -
-                      base.energy_intake_1 + BaseSquareEnergy;
+                      base.intake_1[RSC_ENERGY] + BaseSquareEnergy;
     if (energy_need < 0) energy_need = 0;
     else if (energy_need > 99) energy_need = 99;
 
-    int mineral_need = (power_priority * 2 - base.mineral_intake_1) + 1 +
+    int mineral_need = (power_priority * 2 - base.intake_1[RSC_MINERALS]) + 1 +
                        static_cast<int>(base.population_size);
     if (mineral_need < 0) mineral_need = 0;
     else if (mineral_need > 99) mineral_need = 99;
@@ -13904,7 +13881,7 @@ void __cdecl base_production() {
     const int owner = BaseCurrent->faction_id_current;
     PlayerData &player_data = PlayersData[owner];
     const int intake_goal = production_wrapped_add(
-        BaseCurrent->mineral_intake_2,
+        BaseCurrent->intake_2[RSC_MINERALS],
         production_wrapped_multiply(2, BaseCurrent->mineral_surplus));
     if (player_data.unk_28 < intake_goal) player_data.unk_28 = intake_goal;
 

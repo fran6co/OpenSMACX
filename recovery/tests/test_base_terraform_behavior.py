@@ -40,6 +40,7 @@ HARNESS = r"""
 #include <cstdlib>
 #define __cdecl
 typedef int BOOL;
+enum { RSC_NUTRIENTS=0, RSC_MINERALS=1, RSC_ENERGY=2, RSC_PSI=3 };
 enum { TRUE=1, FALSE=0, ALT_BIT_SHORE_LINE=0x60,
        ALT_BIT_OCEAN_SHELF=0x40, BSTATE_UNK_1000=0x1000,
        BSTATE_UNK_2000=0x2000, BSTATE_UNK_4000=0x4000,
@@ -68,8 +69,7 @@ struct Base {
   int resource_sqr_radius,specialist_total,specialist_unk_1;
   uint32_t spec[2]; uint8_t facilities_built[12];
   int mineral_surplus_final,minerals_accumulated_2,unk_6,unk_7,unk_8,unk_9;
-  int nutrient_intake_1,mineral_intake_1,energy_intake_1,unused_intake_1;
-  int nutrient_intake_2,mineral_intake_2,energy_intake_2,unused_intake_2;
+  int intake_1[4], intake_2[4];
   int nutrient_surplus,mineral_surplus,energy_surplus,unused_surplus;
   int nutrient_inefficiency,mineral_inefficiency,energy_inefficiency,unused_inefficiency;
 };
@@ -168,8 +168,8 @@ def test_base_priority_flags_and_native_radius_scan(tmp_path):
     checks = r"""
     BaseCurrent=&Bases[0]; BaseCurrentCount=1; BaseIDCurrentSelected=0;
     BaseCurrent->x=20; BaseCurrent->y=20; BaseCurrent->faction_id_current=2;
-    BaseCurrent->population_size=3; BaseCurrent->energy_intake_1=0;
-    BaseCurrent->mineral_intake_1=0; BaseCurrent->nutrient_surplus=-1;
+    BaseCurrent->population_size=3; BaseCurrent->intake_1[2]=0;
+    BaseCurrent->intake_1[1]=0; BaseCurrent->nutrient_surplus=-1;
     BaseCurrent->state=BSTATE_UNK_1000|BSTATE_UNK_2000;
     for (int i=0;i<21;i++) {
       const int x=BaseCurrent->x+RadiusOffsetX[i];

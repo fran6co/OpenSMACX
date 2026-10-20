@@ -205,14 +205,8 @@ struct Base {
     int unk_7;
     int unk_8;
     int unk_9;
-    int nutrient_intake_1;
-    int mineral_intake_1;
-    int energy_intake_1;
-    int unused_intake_1;
-    int nutrient_intake_2;
-    int mineral_intake_2;
-    int energy_intake_2;
-    int unused_intake_2;
+    int intake_1[4];
+    int intake_2[4];
     int nutrient_surplus;
     int mineral_surplus;
     int energy_surplus;

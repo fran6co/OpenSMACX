@@ -1,0 +1,19 @@
+{
+  "event_id": "1a423f6ca9c4c8881dbade95ed6106f773ad1d32d069e6765a584309133a7771",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "indexed-base-intake-runs-oct20ao",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/base.h owns int intake_1[4] atB0 and intake_2[4] atC0. Pinned indexed4word copy and radius loops, independently reviewed five-file source closure and fresh standalone CodeView under both settled profiles establish unchanged16byte runs/Base134 stride. All named old-field callers and twelve fixture projections migrate; invalid-resource fallback/callback reload/positive +/-sum and legacy six-lane wire order remain.",
+      "Actual179TU193object application builds/links with the final fixtures. First whole5581function census and strict entity sets unchanged relative to verifieda679master:3330maskedexact/2769strictPASS/558UNKNOWN/3FAIL. Historical3450claims and mappings/referencesPASS; no claims granted/demoted or original markers/spans/symbols changed. Native residual175PASS18FAIL with zero omissions stays unwaived; no whole-owner projection.",
+      "Complete8module host/damage controls improve baseline73PASS10FAIL to final81PASS2FAIL after narrow fixture-contract repairs, independently source-reviewed. Remaining economy historical-key and preexisting4E7F63-vs64 span guards are identical baseline failures, not changed, skipped or waived. Typed-source behavior/layout evidence does not establish full lifetime/linked retention/runtime/game or native automatic acceptance."
+    ]
+  },
+  "previous_event": "1860443ac287f4fb4f56e50b7af6b0eeadf959258366325ad2f64f3a204eb652",
+  "request_id": "incorporate-canonical-base-intake-runs-oct20ao",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:owner-base-body-recovery-oct20ao"
+}
