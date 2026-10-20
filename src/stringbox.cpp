@@ -88,7 +88,7 @@ int StringBox::add_special(char *text) {
 // Close the real GraphicWin base, clear the owned StringList, and reset its
 // cursor before closing the embedded Scroll. The list's typed removal path
 // dispatches StringList::on_remove and destroys both node types.
-// ORIGINAL: 0x00629210 ?close@StringBox@@QAEXXZ 0x00629210-0x006292C9
+// ORIGINAL: 0x00629210 ?close@StringBox@@QAEXXZ 0x00629210-0x006292C9 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:93d09e9c95484465004f450350b6cffe1e09f40e:src/unrecovered/00629210.cpp", "src/stringbox.h", "src/stringstruct.h", "src/scroll.h"], "reason": "Close the GraphicWin base, release owned StringList entries through their typed virtual removal hook, reset the list cursor, and close the embedded Scroll."}
 void StringBox::close() {
     visible_rows_ = 0xffffffff;
@@ -96,8 +96,9 @@ void StringBox::close() {
     list_override_ = 0;
     per_line_draw_ = 0;
     GraphicWin::close();
-    stringList_.remove_all();
-    stringList_.current_position_ = 0;
+    StringList &list = stringList_;
+    list.remove_all();
+    list.current_position_ = 0;
     scroll_.close();
 }
 
