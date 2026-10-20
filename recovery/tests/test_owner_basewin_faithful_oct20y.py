@@ -5,6 +5,7 @@ mutants. This file independently proves the original's BaseCurrent+0x108
 def-use and the corresponding adjacent Base member/source expression.
 """
 from pathlib import Path
+import os
 import re
 
 from match_recovery.inspection import inspect_source
@@ -12,7 +13,7 @@ from match_recovery.source import Mode, read_file
 
 
 ROOT = Path(__file__).resolve().parents[2]
-IMAGE = Path("/home/fran6co/code/OpenSMACX/.opensmacx/game/terranx_original.exe")
+IMAGE = Path(os.environ.get("OPENSMACX_IMAGE", ROOT / ".opensmacx/game/terranx_original.exe"))
 PIN = "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
 ADDRESS = "0x00411980"
 EXPECTED_SPANS = (
