@@ -5432,7 +5432,7 @@ int Buffer::write_cent_l(char *text, int x_coord, int y_coord, int len) {
     return write_multi_font_raw_l(text, x_coord, y_coord, len);
 }
 
-// ORIGINAL: 0x005DDA00 ?wrap_cent@Buffer@@QAEHPADHHHH@Z 0x005DDA00-0x005DDAA2 FILE
+// ORIGINAL: 0x005DDA00 ?wrap_cent@Buffer@@QAEHPADHHHH@Z 0x005DDA00-0x005DDAA2 FILE BYTE_EXACT
 // working copy - scaffold materialised by --work
 // size      162 bytes
 // prototype int (__thiscall ?wrap_cent@Buffer@@QAEHPADHHHH@Z)(Buffer* this, int8* lpString, int, int, int, int)
@@ -5467,9 +5467,8 @@ int Buffer::wrap_cent(char *text, int x_coord, int y_coord, int width,
                              static_cast<int>(strlen(current)));
             }
         }
-        int line_count = field_18_ + 1;
+        field_18_ = field_18_ + 1;
         y_coord += line_advance;
-        field_18_ = line_count;
         current = next;
     } while (next != 0);
     return y_coord;
