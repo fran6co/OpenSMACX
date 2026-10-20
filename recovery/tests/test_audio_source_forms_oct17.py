@@ -31,19 +31,24 @@ def extract_function(source: str, signature: str = SIGNATURE) -> str:
 HARNESS = r"""
 #include <cassert>
 
-class VoiceRxDeviceInterface {
+class Sound {
+public:
+    virtual ~Sound() {}
+};
+
+class VoiceRxDeviceInterface : public Sound {
 public:
     virtual int init(unsigned long, void *, unsigned long) = 0;
 };
 
 static int WaveDeviceReleaseGuard;
-typedef int (*CreateSoundProc)(void **, void *, int);
+typedef int (*CreateSoundProc)(Sound **, void *, int);
 typedef int (*DeleteSoundProc)(void *);
 static CreateSoundProc create_slot;
 static DeleteSoundProc delete_slot;
 static int factory_calls;
 static int factory_result;
-static void *factory_device;
+static Sound *factory_device;
 static int delete_calls;
 static void *deleted_device;
 static int provider_calls;
@@ -53,7 +58,7 @@ static void *provider_context;
 static unsigned long provider_flags;
 static int attach_calls;
 
-static int fake_create(void **slot, void *name, int kind) {
+static int fake_create(Sound **slot, void *name, int kind) {
     ++factory_calls;
     assert(name == 0);
     assert(kind == 6);
@@ -82,7 +87,7 @@ public:
 
 class VoiceRx {
 public:
-    void *device_;
+    Sound *device_;
     void attach() { ++attach_calls; }
     int init(unsigned long, void *, unsigned long);
 };

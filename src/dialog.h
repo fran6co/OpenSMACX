@@ -194,8 +194,8 @@ class Dialog {
   // there - no Dialog member function could emit that walk. Access is
   // compile-time only; the static_assert below still pins the layout.
   uint32_t field_20_;
-  uint32_t field_24_;
-  uint32_t field_28_;
+  int window_x_;
+  int window_y_;
   // These shared dimensions and spacing/count operands are signed in the
   // recovered control arithmetic. The original SpriteBox and RadioButton
   // sizing bodies use signed IDIV with +0x2c/+0x30/+0x40/+0x4c/+0x64/+0x68.

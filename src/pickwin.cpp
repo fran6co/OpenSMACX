@@ -538,8 +538,8 @@ build_list:
     }
   }
 
-  const int flags = static_cast<Dialog &>(listBox_).field_24_;
-  const int top = static_cast<Dialog &>(listBox_).field_28_;
+  const int flags = static_cast<Dialog &>(listBox_).window_x_;
+  const int top = static_cast<Dialog &>(listBox_).window_y_;
   static_cast<Dialog &>(listBox_).attach(this, flags, top, 0x80020);
   const int selected = (field_5DA0_ & 2) ? ConsoleGlobal.faction_id_
                                          : DefaultPrefs.faction_id;

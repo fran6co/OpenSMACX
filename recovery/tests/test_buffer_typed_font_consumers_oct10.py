@@ -17,7 +17,7 @@ FUNCTIONS = {
         "0x005DCAB0", "int Buffer::text_line_height()",
     ),
     "write_cent_l": (
-        "0x005DD250", "int Buffer::write_cent_l(char * a1, int a2, int a3, int a4)",
+        "0x005DD250", "int Buffer::write_cent_l(char *text, int x_coord, int y_coord, int len)",
     ),
     "write_right_l": (
         "0x005DD450", "int Buffer::write_right_l(char *text, RECT *area, int len)",
@@ -208,19 +208,33 @@ int main() {
     RECT area = {4, 10, 100, 90};
     Buffer centered;
     centered.font1_ = &primary;
+    test_strlen_calls = 0;
     assert(centered.write_cent_l(0, 50, 7, 20) == 50);
+    assert(test_strlen_calls == 0);
     primary.font_obj_ = 0;
+    test_strlen_calls = 0;
     assert(centered.write_cent_l(const_cast<char *>("abc"), 50, 7, 20) == 3);
+    assert(test_strlen_calls == 0);
     primary.font_obj_ = &handle_primary;
+    test_strlen_calls = 0;
     assert(centered.write_cent_l(const_cast<char *>(""), 50, 7, 20) == 50);
-    centered.measure_width_ = 12;
+    assert(test_strlen_calls == 4);
+    centered.measure_width_ = 13;
     centered.write_result_ = 61;
     char centered_text[] = "abcd";
+    test_strlen_calls = 0;
     assert(centered.write_cent_l(centered_text, 50, 7, 20) == 61);
     assert(centered.write_calls_ == 1 && centered.last_x_ == 44 &&
            centered.last_y_ == 7 && centered.last_length_ == 4);
+    assert(test_strlen_calls == 4 && centered.measure_calls_ == 1 &&
+           centered.measure_strlen_calls_ == 4 && centered.write_strlen_calls_ == 4 &&
+           centered.measure_event_ < centered.write_event_);
+    test_strlen_calls = 0;
     assert(centered.write_cent_l(centered_text, 50, 7, 0) == 50);
+    assert(test_strlen_calls == 2);
+    test_strlen_calls = 0;
     assert(centered.write_cent_l(centered_text, 50, 7, -1) == 50);
+    assert(test_strlen_calls == 1);
 
     // Right writer sees a re-entrant nulling of font1_ after width measurement
     // and lazily reloads the distinct default font for its vertical metric.
@@ -406,10 +420,10 @@ def source_program(root: Path, mutation: str | None = None) -> str:
         definitions["text_line_height"] = definitions["text_line_height"].replace(
             old, "static_cast<uint32_t>(font->line_height_)", 1)
     elif mutation == "center_handle_polarity":
-        old = "font1->font_obj_ != 0"
+        old = "font1_ == 0 || font1_->font_obj_ == 0"
         assert old in definitions["write_cent_l"]
         definitions["write_cent_l"] = definitions["write_cent_l"].replace(
-            old, "font1->font_obj_ == 0", 1)
+            old, "font1_ == 0 || font1_->font_obj_ != 0", 1)
     elif mutation == "right_default_reload":
         old = "font1_ = FontDefault;"
         assert old in definitions["write_right_l"]
@@ -461,8 +475,7 @@ def test_mapped_consumers_name_font_fields_and_keep_strlen_reloads() -> None:
     assert "font->unk_1_" in bodies["text_line_height"]
     assert "font->height_" in bodies["text_line_height"]
     assert "font->line_height_" in bodies["text_line_height"]
-    assert "Font *font1 = font1_;" in bodies["write_cent_l"]
-    assert "font1->font_obj_" in bodies["write_cent_l"]
+    assert "font1_ == 0 || font1_->font_obj_ == 0" in bodies["write_cent_l"]
     assert "font1_->font_obj_" in bodies["wrap_flying"]
     assert "fontData->height_" in bodies["wrap"]
     assert "fontData->line_height_" in bodies["wrap"]

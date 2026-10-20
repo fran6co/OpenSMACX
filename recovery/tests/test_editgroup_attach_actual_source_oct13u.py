@@ -83,14 +83,15 @@ struct GraphicWin : Win, Buffer {
   }
 };
 struct Dialog {
-  uint32_t field_20_,field_24_,field_28_,field_34_,field_40_,field_44_;
+  uint32_t field_20_,field_34_,field_40_,field_44_;
+  int window_x_,window_y_;
   int column_count_,row_count_,field_5C_,field_60_,field_64_,field_68_,field_6C_;
   Font *font1_,*font2_,*font3_;
   uint32_t text_color_a_,text_color_b_,text_color_c_,text_color_d_;
   uint32_t text_color_2a_,text_color_2b_,text_color_2c_,text_color_2d_;
   uint32_t text_color_3a_,text_color_3b_,text_color_3c_,text_color_3d_;
   uint32_t field_AC_,field_B0_,field_B4_;
-  Dialog() : field_20_(0),field_24_(0),field_28_(0),field_34_(0),field_40_(0),field_44_(0),
+  Dialog() : field_20_(0),field_34_(0),field_40_(0),field_44_(0),window_x_(0),window_y_(0),
     column_count_(0),row_count_(0),field_5C_(0),field_60_(0),field_64_(0),field_68_(0),field_6C_(0),
     font1_(0),font2_(0),font3_(0),text_color_a_(11),text_color_b_(12),text_color_c_(13),text_color_d_(14),
     text_color_2a_(21),text_color_2b_(22),text_color_2c_(23),text_color_2d_(24),
@@ -149,7 +150,7 @@ static void cases() {
     check(events.size()==2&&events[0]==1&&events[1]==10,"init-failure-order"); }
   { events.clear(); EditGroup g; GraphicWin p; init_group(g); parent_init_result=0;dimension_result=0;p.iFlags_=0x1000;
     check(g.attach(&p,101,202,0x40)==0,"success-result");
-    check(g.Dialog::field_24_==101&&g.Dialog::field_28_==202,"stored-position");
+    check(g.Dialog::window_x_==101&&g.Dialog::window_y_==202,"stored-position");
     check(g.GraphicWin::init_x==101&&g.GraphicWin::init_y==202&&g.GraphicWin::init_width==211&&g.GraphicWin::init_height==127&&g.GraphicWin::init_flags==0x40,"parent-init-xywh-flags");
     check(g.GraphicWin::init_parent==&p,"parent-init-parent");
     check(g.boxes_[0]&&g.boxes_[1]&&g.boxes_[2]&&g.boxes_[3]&&g.boxes_[4]&&g.boxes_[5],"row-column-count");

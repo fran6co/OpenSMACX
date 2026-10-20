@@ -1,0 +1,20 @@
+{
+  "event_id": "afe0c3586a267211b970cd32a024883312deaa034afe1bc6f27c25f8f4a5c379",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_spritebox_redraw_parent_gate_oct19.py"
+    ],
+    "evidence": [
+      "Pinned0x61139B null-parent branch reaches epilogue0x6113F5, enclosing copy and row pass; count first read after copy and live reload each row. Corrected source native-screened, outside-body physical comparison passes; not exact. Verify null gate, copy geometry/receiver, empty and positive rows, callback count changes and executed mutants.",
+      "Authorize one actual-source extracted C++98 host fixture with executed negative controls, not copied implementations. Native controls optional only under a coordinator lease; no worker compiler/Git/preparation. This expands test scope only, keeps original baselinec17889c967f1721cc4e116650b907123e5dea9f7 and all subjects, and grants no acceptance waiver."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "spritebox-actual-source-controls-oct19e",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:spritebox-source-batch-oct19e"
+}

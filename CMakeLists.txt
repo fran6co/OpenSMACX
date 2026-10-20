@@ -166,6 +166,7 @@ set(OPENSMACX_SOURCES
     src/header_io.cpp
     src/crt_random.cpp
     src/graphicwin.cpp
+    src/graphicwin_events.cpp
     src/heap.cpp
     src/log.cpp
     src/maininterface.cpp

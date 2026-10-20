@@ -243,8 +243,8 @@ int pop_caption(char *, char *caption, int) {
 char StringTemp[2048];
 int ExitTurnLoop;
 int get_sound_version() { return sound_version; }
-static SoundDeviceInterface *sound_device(void *p) {
-    return static_cast<SoundDeviceInterface *>(p);
+static Sound *sound_device(Sound *p) {
+    return p;
 }
 StringAllocationBase::~StringAllocationBase() { StringAllocationHeap = allocation_owner_; }
 SoundFadeState::SoundFadeState() {}
@@ -254,7 +254,6 @@ VoiceRx::VoiceRx() {}
 VoiceRx::~VoiceRx() {}
 VoiceTx::VoiceTx() {}
 VoiceTx::~VoiceTx() {}
-SoundDeviceInterface::~SoundDeviceInterface() {}
 NetTextListBase::NetTextListBase() {
     head_ = current_ = 0; entry_count_ = current_position_ = 0; allocator_ = 0;
 }
@@ -300,13 +299,11 @@ def host_source(damage: str | None = None) -> str:
     nh = (ROOT / "src/net_class.h").read_text()
     sh = (ROOT / "src/sound.h").read_text()
     vh = (ROOT / "src/voice.h").read_text()
-    sound_abi = (ROOT / "src/soundx_sound_abi.h").read_text()
     ah = (ROOT / "src/stringstruct.h").read_text()
     declarations = [
         declaration(ah, "class StringAllocationBase {"),
         declaration(sh, "class SoundFadeState {"),
         declaration(sh, "class Sound :"),
-        declaration(sound_abi, "class SoundDeviceInterface {"),
         declaration(vh, "class VoiceRxDeviceInterface :"),
         declaration(vh, "class VoiceRx :"),
         declaration(vh, "class VoiceTx :"),
@@ -338,7 +335,7 @@ def host_source(damage: str | None = None) -> str:
     ):
         stubs.append(default_virtuals(owner, declaration(header, anchor), omitted))
     device = []
-    for header, anchor in ((sound_abi, "class SoundDeviceInterface {"),
+    for header, anchor in ((sh, "class Sound :"),
                            (vh, "class VoiceRxDeviceInterface :")):
         for return_type, name, args in re.findall(
             r"virtual\s+(\w+(?:\s*\*)?)\s*(\w+)\s*\(([^()]*)\)\s*=\s*0;",

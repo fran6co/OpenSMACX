@@ -368,9 +368,8 @@ int Ambience::load(const char *filename) {
         const int error = SoundXOrdinal1CreateSound()(&device_, found, 5);
         if (error) return error;
     }
-    // The mode5 factory produces the same Sound/Midi object chain used by
-    // Midi::set_mode. The low-byte argument is the only part consumed by
-    // every recursive4C7CC0 stage; no speculative engine-overlay fields.
+    // The pinned mode5 factory returns the common Sound object whose shared
+    // constructor and 75-slot table match Midi; the child address is unchanged.
     static_cast<Midi *>(device_)->set_mode(field_54_ & 1);
     return Sound::load(found);
 }
@@ -379,7 +378,7 @@ int Ambience::load(const char *filename) {
 // RECOVERY_BINDING: v1 {"evidence": ["git:f7bbce35:src/recovered/units/004c85f0.cpp", "src/ambience.h", "src/midi.h"], "reason": "Original audio event tables and compiler-call contracts identify this genuine owner operation; compatible historical seeds and matching obligations remain retained, not an acceptance verdict."}
 // symbol    ?unload@Ambience@@UAEHXZ
 int Ambience::unload() {
-    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    Midi *const delegate = static_cast<Midi *>(device_);
     if (delegate) delegate->unload();
     detach();
     device_ = nullptr;

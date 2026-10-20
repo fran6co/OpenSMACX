@@ -826,7 +826,7 @@ void BaseButton::on_left_up(int, int) {
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // Historical seed observations (not fresh measurements or acceptance):
 // TRIED: caching *(self+0xc4) into one local instead of re-reading it at each of the two use sites moved `push edi` out of place. A member-pointer union shim per call site (void/int-return/int-arg) reproduces direct `call [reg+disp]` for the void and arg slots; the int-returning slot (0x5c) still gets an extra `mov eax,[...]` before `call eax` instead of a direct `call [eax+0x5c]`, and the target==-1/-2 short-circuit collapses the original's per-branch duplicated `test/je` into one shared test. 2 edits, 63/65 shared.
-// ORIGINAL: 0x00607A20 ?on_left_click@BaseButton@@QAEXHH@Z 0x00607A20-0x00607AF3 FILE
+// ORIGINAL: 0x00607A20 ?on_left_click@BaseButton@@QAEXHH@Z 0x00607A20-0x00607AF3 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00607a20.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x607a20 complete control/data-access review and src/basebutton.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
 // symbol    ?on_left_click@BaseButton@@UAEXHH@Z
 void BaseButton::on_left_click(int, int) {
@@ -851,8 +851,8 @@ void BaseButton::on_left_click(int, int) {
         if (owner != 0 && owner->is_playing() == 0) {
             owner->play();
         }
-        const int group_id = static_cast<int>(field_A78_);
-        if (group_ == 0 || group_->button_click(group_id) != 0) {
+        if (group_ == 0 ||
+            group_->button_click(static_cast<int>(field_A78_)) != 0) {
             Win *const notification_parent = win_parent_;
             const int notification_id = static_cast<int>(field_A78_);
             notification_parent->on_button_clicked(notification_id);

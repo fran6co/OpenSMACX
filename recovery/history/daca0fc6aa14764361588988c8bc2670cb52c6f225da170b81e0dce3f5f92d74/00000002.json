@@ -1,0 +1,24 @@
+{
+  "event_id": "fadd3532139c8eb7e4a85ab7dfc65f6894a4126bc122fc550c0279af54eb9afe",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_font_internal_sharing_oct12g.py",
+      "recovery/tests/test_font_metric_publication_oct13aj.py",
+      "recovery/tests/test_font_shared_storage_oct13am.py"
+    ],
+    "evidence": [
+      "Signed Font declarations and private helper compiled/linked across175application TUs; actual canonical census unchanged3272. Independent pinned original/Buffer/PullDown review found no semantic blocker; this is not full acceptance.",
+      "Existing host suite exposes seven failures: five extract obsolete size_t helper signature, and two freeze whole historical font.cpp bytes including comments and now-changed public declarations. Authorize updates to follow corrected int declarations while retaining actual-source execution, behavioral mutants, original source bindings/spans/claims, private helper sharing and loader-zeroed object identity evidence.",
+      "Do not reset historical task baselines, remove negative controls, weaken byte/reference gates or replace source extraction with copied implementations. Keep tests proving essential relationships, not a permanent historical whole-file snapshot. Add signed negative-length witness where the existing harness supports it. No production changes are authorized by this test expansion.",
+      "Original13subjects and18ef32586792da3a281b03162c7c3c9265b2f8d3 baseline retained. Native compiler test requires coordinator lease; background test worker runs host controls only with RECOVERY_PARSE_CACHE_DIR unset."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "7e99b26b9896a69aa34031512f2c18064bff6479e6c07eaaa134c09a92ee451d",
+  "request_id": "font-signed-interface-actual-source-controls-oct19c",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:font-source-batch-oct19c"
+}

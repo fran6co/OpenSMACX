@@ -50,7 +50,7 @@ def actual_source():
         declaration,=re.findall(pattern,headers["win"],re.M);globals.append(declaration.replace("extern ",""))
     parts["ZORDER_GLOBALS"]="\n".join(globals)
     for key,unit,signature in (("CAPTURE_BODY","mapwin","void MapWin::on_lose_mouse_capture()"),
-                                ("SURFACE_BODY","graphicwin","void GraphicWin::on_update()"),
+                                ("SURFACE_BODY","graphicwin_events","void GraphicWin::on_update()"),
                                 ("RESET_BODY","time","void __cdecl go_reset()"),
                                 ("ZORDER_BODY","win","void __cdecl Win::update()")):
         parts[key]=braced((ROOT/"src"/(unit+".cpp")).read_text(),signature)

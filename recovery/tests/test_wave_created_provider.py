@@ -20,13 +20,19 @@ HARNESS = r'''
 static std::vector<std::string> events;
 static char *resolved_path = 0;
 static int create_result = 0;
-static void *created_device = 0;
+class Sound;
+static Sound *created_device = 0;
 static char *created_name = 0;
 static int created_mode = -1;
 static bool WaveDeviceReleaseGuard = true;
 static const unsigned long computed_attribs = 0xA55AUL;
 
-struct WavePlaybackDeviceInterface {
+class Sound {
+ public:
+  virtual ~Sound() {}
+};
+
+struct WavePlaybackDeviceInterface : Sound {
   std::vector<unsigned long> attribs;
   void set_attrib(unsigned long value) {
     events.push_back("set");
@@ -34,12 +40,12 @@ struct WavePlaybackDeviceInterface {
   }
 };
 
-static WavePlaybackDeviceInterface *wave_playback_device(void *device) {
+static WavePlaybackDeviceInterface *wave_playback_device(Sound *device) {
   return static_cast<WavePlaybackDeviceInterface *>(device);
 }
 
-typedef int (*CreateSound)(void **, char *, int);
-static int create_sound(void **out, char *name, int mode) {
+typedef int (*CreateSound)(Sound **, char *, int);
+static int create_sound(Sound **out, char *name, int mode) {
   events.push_back("create");
   created_name = name;
   created_mode = mode;
@@ -54,7 +60,7 @@ static char *filefind_get(char *) {
 }
 
 struct Wave {
-  void *device_;
+  Sound *device_;
   uint32_t flags_54_;
   char *fname_;
   int loop_state_;

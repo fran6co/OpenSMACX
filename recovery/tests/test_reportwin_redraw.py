@@ -108,7 +108,9 @@ PlayerDataFixture PlayersData[8];
 struct Base { unsigned char faction_id_current; int queue_production_id[10]; const char *name_string; };
 Base bases_storage[514];
 Base *Bases=bases_storage+2;
-int BaseCurrentCount=3;
+struct ProjectsGameDataFixture {
+    struct Fields { int base_current_count_; } fields_;
+} GameDataStateStorage;
 struct FacilityRecord { int name; } Facility[134];
 int MaxSecretProjectNum=64, FacilitySPStart=70;
 const int SP_Unbuilt=-1, SP_Destroyed=-2;
@@ -205,7 +207,7 @@ void reset_fixture() {
     Bases[0].faction_id_current=0; Bases[0].name_string="Alpha Base";
     Bases[1].faction_id_current=1; Bases[1].name_string="Beta Base";
     Bases[2].faction_id_current=1; Bases[2].name_string="Gamma Base";
-    BaseCurrentCount=3;
+    GameDataStateStorage.fields_.base_current_count_=3;
     ReportIfGlobal.report_faction_id_=0;
 }
 void observe(ReportWin &w) {
@@ -443,7 +445,7 @@ struct Buffer {
     void wrap_flying_flush() {}
 };
 struct Dialog {
-    int field_48_,field_B4_,field_24_,field_28_;
+    int field_48_,field_B4_,window_x_,window_y_;
     int init(RECT *,int) { return 1; }
     int set_dialog_font(void *,void *,void *) { return 1; }
     void set_dialog_text_color(int,int,int,int) {}
@@ -480,14 +482,19 @@ struct BaseFixture {
     int faction_id_current;
     unsigned char facilities_built[12];
 } Bases[80];
-int BaseCurrentCount=2;
-int MaxPlayerNum=8, LockEnableMask=0x600;
-int EnergyEconomyTotal=12, EnergyMaintenanceTotal=4, EnergyCommerceDelta=8, NetIncomeGlobal=16;
-int SecretProjectGrid=0;
 struct SecretProjectFixture { int planetary_energy_grid_;
  int &planetary_energy_grid() { return planetary_energy_grid_; }
  const int &planetary_energy_grid() const { return planetary_energy_grid_; }
-} SecretProject={0};
+};
+struct EnergyGameDataFixture {
+    struct Fields {
+        struct LockMasks { unsigned int enable_mask_; } lock_masks_;
+        int base_current_count_;
+        SecretProjectFixture secret_project_;
+    } fields_;
+} GameDataStateStorage;
+int MaxPlayerNum=8;
+int EnergyEconomyTotal=12, EnergyMaintenanceTotal=4, EnergyCommerceDelta=8, NetIncomeGlobal=16;
 int bitmask_calls;
 void bitmask(int value,int *offset,int *mask) {
     ++bitmask_calls; *offset=value/8; *mask=1<<(value%8);
@@ -547,6 +554,9 @@ struct ReportWin : GraphicWin {
 };
 ''' + body + r'''
 int main() {
+    GameDataStateStorage.fields_.base_current_count_=2;
+    GameDataStateStorage.fields_.lock_masks_.enable_mask_=0x600;
+    GameDataStateStorage.fields_.secret_project_.planetary_energy_grid()=0;
     if(loan_payment_case) PlayersData[1].diplo_treaties[2]=0x10;
     PlayersData[1].energy_reserves=100;
     PlayersData[1].loan_balance[2]=10;
@@ -558,10 +568,11 @@ int main() {
     Bases[1].faction_id_current=1;
     Bases[0].facilities_built[0] |= 1;
     Bases[1].facilities_built[0] |= 4;
-    SecretProject.planetary_energy_grid()=1;
+    GameDataStateStorage.fields_.secret_project_.planetary_energy_grid()=1;
     if(facility_case) {
-        BaseCurrentCount=67;
-        for(int i=0;i<BaseCurrentCount;++i) Bases[i].faction_id_current=-1;
+        GameDataStateStorage.fields_.base_current_count_=67;
+        for(int i=0;i<GameDataStateStorage.fields_.base_current_count_;++i)
+            Bases[i].faction_id_current=-1;
         Bases[1].faction_id_current=1;
         Bases[3].faction_id_current=1;
         Bases[66].faction_id_current=1;
@@ -669,16 +680,12 @@ def lab_child_collector():
     return source[start:source.index("\n}", start) + 2]
 
 
-def test_reportwin_lab_child_slots_follow_native_prerequisite_scan(tmp_path):
-    compiler = shutil.which("g++")
-    if compiler is None:
-        pytest.skip("host C++ compiler unavailable")
-    source = tmp_path / "lab_children.cpp"
-    source.write_text(r'''
+def lab_child_harness(collector):
+    return r'''
 struct RulesTechnology { int preq_tech_1, preq_tech_2; };
 const int MaxTechnologyNum = 89;
 RulesTechnology Technology[MaxTechnologyNum];
-''' + lab_child_collector() + r'''
+''' + collector + r'''
 int main() {
     for (int i=0; i<MaxTechnologyNum; ++i)
         Technology[i].preq_tech_1 = Technology[i].preq_tech_2 = -1;
@@ -686,7 +693,7 @@ int main() {
     Technology[4].preq_tech_2 = 12;
     Technology[5].preq_tech_1 = Technology[5].preq_tech_2 = 12;
     Technology[6].preq_tech_1 = 13;
-    int child_storage[5] = {-1,-1,-1,-1,5};
+    int child_storage[6] = {-1,-1,-1,-1,5,99};
     int *children=child_storage;
     int count = reportwin_collect_lab_children(12, children);
     if (count != 4) return 1;
@@ -696,17 +703,46 @@ int main() {
         Technology[i].preq_tech_1 = Technology[i].preq_tech_2 = 12;
     count = reportwin_collect_lab_children(12, children);
     if (count != 5 || children[0] != 0 || children[1] != 0
-        || children[2] != 1 || children[3] != 1) return 3;
-    if (child_storage[4] != 5) return 5;
+        || children[2] != 1 || children[3] != 1 || children[4] != 2) return 3;
+    if (child_storage[5] != 99) return 5;
     return reportwin_collect_lab_children(-2, children) == 0 ? 0 : 4;
 }
-''')
+'''
+
+
+def run_lab_child_harness(tmp_path, compiler, collector, name):
+    source = tmp_path / (name + ".cpp")
+    source.write_text(lab_child_harness(collector))
     executable = tmp_path / "lab_children"
     compiled = subprocess.run([compiler, "-std=c++98", str(source), "-o", str(executable)],
                               capture_output=True, text=True)
     assert compiled.returncode == 0, compiled.stderr
     result = subprocess.run([str(executable)], capture_output=True, text=True)
-    assert result.returncode == 0, "unlock harness returned " + str(result.returncode) + ": " + result.stderr
+    return result.returncode
+
+
+def test_reportwin_lab_child_slots_follow_native_prerequisite_scan(tmp_path):
+    compiler = shutil.which("g++")
+    if compiler is None:
+        pytest.skip("host C++ compiler unavailable")
+    assert run_lab_child_harness(tmp_path, compiler, lab_child_collector(), "faithful") == 0
+
+
+@pytest.mark.parametrize("before,after", [
+    ("children[count] = candidate;",
+     "if (count < 4) children[count] = candidate;"),
+    ("count <= 4", "count < 4"),
+    ("count <= 4", "count <= 5"),
+])
+def test_reportwin_lab_child_fixture_rejects_fifth_slot_mutants(
+        tmp_path, before, after):
+    compiler = shutil.which("g++")
+    if compiler is None:
+        pytest.skip("host C++ compiler unavailable")
+    collector = lab_child_collector()
+    mutant = collector.replace(before, after)
+    assert mutant != collector
+    assert run_lab_child_harness(tmp_path, compiler, mutant, "mutant") != 0
 
 
 def lab_unlock_sections():
@@ -774,28 +810,26 @@ struct Datalink { void construct_id(char *out,int c,int i) {
 } } DatalinkMain;
 char *registered_names[32]; int registered_name_count;
 void register_name(char *name) { registered_names[registered_name_count++]=name; }
+LPSTR TechnologyHelpEntryName;
+int TechnologyHelpEntryKind;
 struct TestStringTable {
     int lookup_calls, prototype_lookup_calls;
     TestStringTable() : lookup_calls(0), prototype_lookup_calls(0) {}
-    char *get(int id) {
+    LPSTR get(LPSTR address) {
         ++lookup_calls;
-        const uint32_t key=static_cast<uint32_t>(id);
-        if(key==static_cast<uint32_t>(reinterpret_cast<uintptr_t>(VehPrototypes[2].veh_name))
-           || key==static_cast<uint32_t>(reinterpret_cast<uintptr_t>(VehPrototypes[10].veh_name)))
+        if(address==VehPrototypes[2].veh_name || address==VehPrototypes[10].veh_name)
             ++prototype_lookup_calls;
         for(int i=0;i<registered_name_count;++i)
-            if(key==static_cast<uint32_t>(reinterpret_cast<uintptr_t>(registered_names[i])))
+            if(address==registered_names[i])
                 return registered_names[i];
-        return (char*)"?";
+        return (LPSTR)"?";
     }
 } StringTable;
 void help_create_link(char *out,char *name,char *id) {
     std::strcat(out,"$LINK<"); std::strcat(out,name);
     std::strcat(out,"="); std::strcat(out,id); std::strcat(out,">");
 }
-''' + lab_unlock_sections().replace(
-    "reinterpret_cast<int>(name)",
-    "static_cast<int>(reinterpret_cast<intptr_t>(name))") + r'''
+''' + lab_unlock_sections() + r'''
 int main() {
     for(int i=0;i<4;++i) Reactor[i].preq_tech=-1;
     for(int i=0;i<19;++i) Chassis[i].preq_tech=-1;
@@ -842,6 +876,8 @@ int main() {
     Buffer canvas={}; int height=0; uint32_t frame_width=166;
     int y=20;
     reportwin_draw_lab_unlock_sections(canvas,42,true,true,10,y,&frame_width,height);
+    if(TechnologyHelpEntryKind!=0x64
+       || TechnologyHelpEntryName!=Armor[13].name) return 17;
     if(canvas.wrapped!=8 || height!=0) return 1;
     if(canvas.xs[0]!=10 || canvas.ys[0]!=20 || canvas.widths[0]!=160
        || canvas.xs[7]!=10 || canvas.ys[7]!=90 || canvas.widths[7]!=160

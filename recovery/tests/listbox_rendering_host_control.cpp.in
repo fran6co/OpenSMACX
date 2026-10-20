@@ -35,16 +35,22 @@ struct Buffer {
     Buffer *copy_destination;
     int sx, sy, dx, dy, width, height;
     int clips, boxes, wraps, writes;
-    RECT last_clip;
+    RECT first_clip, last_clip;
+    int first_clip_set;
     Buffer() : copies(0), copy_destination(0), sx(0), sy(0), dx(0), dy(0),
-               width(0), height(0), clips(0), boxes(0), wraps(0), writes(0) {}
+               width(0), height(0), clips(0), boxes(0), wraps(0), writes(0),
+               first_clip_set(0) {}
     int pixel_width() const { return 37; }
     int pixel_height() const { return 19; }
     int copy(Buffer *source, int x, int y, int to_x, int to_y, int w, int h) {
         ++copies; copy_destination = source; sx=x; sy=y; dx=to_x; dy=to_y;
         width=w; height=h; return 1; // original ignores this result
     }
-    void set_clip(RECT *r) { ++clips; last_clip = *r; }
+    void set_clip(RECT *r) {
+        if (clips == 0) { first_clip = *r; first_clip_set = 1; }
+        ++clips;
+        last_clip = *r;
+    }
     void set_text_color(int, int, int, int) {}
     void set_text_color2(int, int, int, int) {}
     void set_text_color3(int, int, int, int) {}
@@ -88,9 +94,10 @@ struct GraphicWin : Win, Buffer {
 struct Dialog {
     StringList item_list_;
     int selected_position_;
-    uint32_t field_4C_, field_64_, field_44_, field_68_;
+    int field_4C_, field_64_, field_44_, field_68_;
     int row_count_;
-    uint32_t field_38_, field_40_, field_6C_, field_F0_;
+    int field_38_, field_40_;
+    uint32_t field_6C_, field_F0_;
     uint32_t field_B4_, field_AC_, field_B0_, field_34_;
     uint32_t text_color_a_, text_color_b_, text_color_c_, text_color_d_;
     uint32_t text_color_2a_, text_color_2b_, text_color_2c_, text_color_2d_;
@@ -151,9 +158,16 @@ static int fill_cursor_position;
 static StringStructEntry *fill_cursor;
 static int fill_result;
 static ListBox *fill_target;
-static int fill(GraphicWin *window, int, int, RECT *rect) {
+static int fill_draw_position;
+static int same_rect(const RECT &a, const RECT &b) {
+    return a.left == b.left && a.top == b.top
+        && a.right == b.right && a.bottom == b.bottom;
+}
+static int fill(GraphicWin *window, int, int draw_position, RECT *rect) {
     ++fill_calls; fill_rect=*rect;
+    fill_draw_position=draw_position;
     assert(window == static_cast<GraphicWin *>(fill_target));
+    assert(window->first_clip_set && same_rect(window->first_clip, *rect));
     fill_cursor_position = fill_target->item_list_.current_position_;
     fill_cursor = fill_target->item_list_.current_;
     return fill_result;
@@ -178,22 +192,102 @@ static void link_rows(StringStructEntry *rows, int count, unsigned int *spans) {
 }
 
 int main() {
-    StringStructEntry rows[4];
-    unsigned int spans[4] = {2, 3, 4, 5};
-    link_rows(rows, 4, spans);
+    StringStructEntry rows[8];
+    unsigned int spans[8] = {2, 3, 4, 5, 6, 7, 8, 9};
+    link_rows(rows, 8, spans);
     ListBox box;
-    box.item_list_.entry_count_=4; box.item_list_.head_=&rows[0];
+    box.item_list_.entry_count_=8; box.item_list_.head_=&rows[0];
     box.item_list_.current_=&rows[0]; box.item_list_.current_position_=0;
     box.fill_callback_=&fill;
     box.field_4C_=1; // variable-height rows: exercise circular cursor path
     box.field_4_=0;  // selection comes from Dialog, so callback observes layout cursor
-    box.field_18_=0; box.selected_position_=3;
-    fill_target=&box; box.draw_item(1);
+    box.field_18_=0; box.selected_position_=7;
+    box.field_38_=3; box.field_40_=7; // asymmetric top and left inset
+    box.field_64_=31; box.field_68_=11; box.field_44_=2;
+    fill_target=&box; fill_calls=0; box.draw_item(1);
     assert(fill_calls==1);
     assert(fill_cursor==&rows[1] && fill_cursor_position==1);
-    assert(fill_rect.left==(6+1)*2);
-    assert(fill_rect.bottom==(6+1)*3-1+fill_rect.left);
+    assert(fill_draw_position==0);
+    assert(fill_rect.left==7 && fill_rect.top==29);
+    assert(fill_rect.right==24 && fill_rect.bottom==66);
+    assert(box.first_clip_set && same_rect(box.first_clip, fill_rect));
     assert(box.item_list_.current_==&rows[1]);
+
+    // Grid mode's nonzero quotient and remainder separate the axes: width
+    // advances left/right, while height advances top/bottom.
+    ListBox grid;
+    grid.item_list_.entry_count_=8; grid.item_list_.head_=&rows[0];
+    grid.item_list_.current_=&rows[0]; grid.item_list_.current_position_=0;
+    grid.fill_callback_=&fill; grid.field_4C_=0; grid.field_4_=0;
+    grid.field_18_=0; grid.row_count_=3; grid.selected_position_=7;
+    grid.field_38_=3; grid.field_40_=7;
+    grid.field_64_=31; grid.field_68_=11; grid.field_44_=2;
+    fill_target=&grid; fill_calls=0; grid.draw_item(5); // 5 / 3 = 1, 5 % 3 = 2
+    assert(fill_calls==1 && fill_cursor==&rows[0]);
+    assert(fill_rect.left==40 && fill_rect.top==29);
+    assert(fill_rect.right==57 && fill_rect.bottom==40);
+    assert(grid.first_clip_set && same_rect(grid.first_clip, fill_rect));
+
+    // Negative row indices return before cursor changes, clipping or callbacks.
+    ListBox negative_index;
+    negative_index.item_list_.entry_count_=8;
+    negative_index.item_list_.head_=&rows[0];
+    negative_index.item_list_.current_=&rows[3];
+    negative_index.item_list_.current_position_=3;
+    negative_index.fill_callback_=&fill;
+    fill_target=&negative_index; fill_calls=0;
+    negative_index.draw_item(-1);
+    assert(fill_calls==0 && negative_index.clips==0);
+    assert(negative_index.item_list_.current_==&rows[3]);
+
+    // A zero top cursor starts at row zero after the circular predecessor
+    // setup; the callback sees the pinned top-based span bottom.
+    ListBox zero_cursor;
+    zero_cursor.item_list_.entry_count_=8; zero_cursor.item_list_.head_=&rows[0];
+    zero_cursor.item_list_.current_=&rows[5];
+    zero_cursor.item_list_.current_position_=5;
+    zero_cursor.fill_callback_=&fill; zero_cursor.field_4C_=1;
+    zero_cursor.field_18_=0; zero_cursor.field_4_=0;
+    zero_cursor.field_38_=3; zero_cursor.field_40_=7;
+    zero_cursor.field_64_=31; zero_cursor.field_68_=11; zero_cursor.field_44_=2;
+    fill_target=&zero_cursor; fill_calls=0; zero_cursor.draw_item(0);
+    assert(fill_calls==1 && fill_cursor==&rows[0] && fill_cursor_position==0);
+    assert(fill_rect.left==7 && fill_rect.top==3);
+    assert(fill_rect.right==24 && fill_rect.bottom==27);
+
+    // Negative scroll position uses the pinned abs/wrap walk. With -1 it
+    // counts row seven as occupied, then exposes row zero to the callback.
+    ListBox negative_cursor;
+    negative_cursor.item_list_.entry_count_=8; negative_cursor.item_list_.head_=&rows[0];
+    negative_cursor.item_list_.current_=&rows[2];
+    negative_cursor.item_list_.current_position_=2;
+    negative_cursor.fill_callback_=&fill; negative_cursor.field_4C_=1;
+    negative_cursor.field_18_=static_cast<uint32_t>(-1); negative_cursor.field_4_=0;
+    negative_cursor.field_38_=3; negative_cursor.field_40_=7;
+    negative_cursor.field_64_=31; negative_cursor.field_68_=11; negative_cursor.field_44_=2;
+    ListBoxDrawOffset=5;
+    fill_target=&negative_cursor; fill_calls=0; negative_cursor.draw_item(0);
+    assert(fill_calls==1 && fill_cursor==&rows[0] && fill_cursor_position==0);
+    assert(fill_draw_position==4);
+    assert(fill_rect.left==7 && fill_rect.top==120);
+    assert(fill_rect.right==24 && fill_rect.bottom==144);
+    ListBoxDrawOffset=0;
+
+    // A high positive top beyond the list count leaves the old cursor in
+    // place during initial positioning, then performs the original one-step
+    // advance before the callback. This stale path is intentionally retained.
+    ListBox stale_cursor;
+    stale_cursor.item_list_.entry_count_=8; stale_cursor.item_list_.head_=&rows[0];
+    stale_cursor.item_list_.current_=&rows[4];
+    stale_cursor.item_list_.current_position_=1;
+    stale_cursor.fill_callback_=&fill; stale_cursor.field_4C_=1;
+    stale_cursor.field_18_=10; stale_cursor.field_4_=0;
+    stale_cursor.field_38_=3; stale_cursor.field_40_=7;
+    stale_cursor.field_64_=31; stale_cursor.field_68_=11; stale_cursor.field_44_=2;
+    fill_target=&stale_cursor; fill_calls=0; stale_cursor.draw_item(2);
+    assert(fill_calls==1 && fill_cursor==&rows[5] && fill_cursor_position==2);
+    assert(fill_rect.left==7 && fill_rect.top==3);
+    assert(fill_rect.right==24 && fill_rect.bottom==92);
 
     // Initial parent-null branch skips fallback fill/copy but still draws the
     // descriptor frame border after the callback path.

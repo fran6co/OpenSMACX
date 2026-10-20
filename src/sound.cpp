@@ -464,8 +464,8 @@ namespace {
 // Sound wraps its device at 0x3C and asks it these questions through the
 // device's own vtable; the original tail-jumps, so the device's answer is the
 // caller's, and with no device wrapped the answer is zero.
-__forceinline SoundDeviceInterface *sound_device(void *device) {
-    return static_cast<SoundDeviceInterface *>(device);
+__forceinline Sound *sound_device(Sound *device) {
+    return device;
 }
 }  // namespace
 
@@ -556,7 +556,7 @@ Return Value: the device's answer, or 0x14 when none is wrapped
 Status: Complete
 */
 int Sound::play() {
-    void *device = device_;
+    Sound *device = device_;
     int result = 0x14;
     if (device) {
         result = sound_device(device)->play();
@@ -586,7 +586,7 @@ int Sound::play(unsigned int effect) {
     // forward_sound_device helper read the slot into a register first and
     // compiled 3/12 here; the byte-exact no-argument family goes through
     // `vtable_slot` because its slot needs no argument.
-    void *device = device_;
+    Sound *device = device_;
     int result = 0x14;
     if (device) {
         result = sound_device(device)->play(effect);
@@ -608,7 +608,7 @@ Return Value: the device's answer, or 0x14 when none is wrapped
 Status: Complete
 */
 int Sound::stop() {
-    void *device = device_;
+    Sound *device = device_;
     int result = 0x14;
     if (device) {
         result = sound_device(device)->stop();
@@ -630,7 +630,7 @@ Return Value: the device's answer, or 0x14 when none is wrapped
 Status: Complete
 */
 int Sound::release() {
-    void *device = device_;
+    Sound *device = device_;
     int result = 0x14;
     if (device) {
         result = sound_device(device)->release();
@@ -657,7 +657,7 @@ Status: Complete
 void Sound::set_loop_state(long loop_state) {
     int value = loop_state;
     loop_flag_30_ = value;
-    void *device = device_;
+    Sound *device = device_;
     if (device) {
         sound_device(device)->set_loop_state(value);
     }
@@ -682,7 +682,7 @@ Status: Complete
 void Sound::set_delay(unsigned int delay) {
     int value = static_cast<int>(delay);
     delay_ = value;
-    void *device = device_;
+    Sound *device = device_;
     if (device) {
         sound_device(device)->set_delay(static_cast<unsigned int>(value));
     }
@@ -715,7 +715,7 @@ int Sound::fade() {
     if (fade_38_ == 0) {
         return 0x13;
     }
-    void *device = device_;
+    Sound *device = device_;
     if (!device) {
         return 0x13;
     }
@@ -740,7 +740,7 @@ int Sound::fade_in() {
     if (fade_38_ == 0) {
         return 0x13;
     }
-    void *device = device_;
+    Sound *device = device_;
     if (!device) {
         return 0x13;
     }
@@ -1086,7 +1086,7 @@ int Sound::unload() {
     // own-vtable dispatches in eax then edx, but here a device dispatch and a
     // branch merge sit between them and the allocator restarts at eax.
     int result = 0;
-    void *device = device_;
+    Sound *device = device_;
     if (device) {
         // The no-argument device dispatch goes through the __fastcall slot
         // form, as play()/stop()/release() do - the receiver is already in
@@ -1361,7 +1361,7 @@ uint32_t Sound::get_type() {
 // The original Sound table selects 0x00448380 at slot 24. This
 // inherited integer contract sign-extends flags_40_ bit zero.
 int Sound::unk_slot24() {
-    return (flags_40_ & 1) ? -1 : 0;
+    return static_cast<int>(flags_40_ << 31) >> 31;
 }
 
 // ORIGINAL: 0x004C83F0 sub_4c83f0 0x004C83F0-0x004C840F BYTE_EXACT
