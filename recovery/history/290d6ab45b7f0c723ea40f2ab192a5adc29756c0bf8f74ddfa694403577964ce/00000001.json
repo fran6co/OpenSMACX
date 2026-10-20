@@ -1,0 +1,24 @@
+{
+  "event_id": "7619710fa12b4c42add7332737069e88887d6359550570c675c266f9d9d9052e",
+  "payload": {
+    "affects": [
+      "entity-3d0fbe412a768902cc664e78927659ac51278d64014362959515c34db2411f35",
+      "entity-495987156da564797795652b48ada86c01e696588ca45a5dc486bfb87fd05ddd",
+      "entity-ea5c765736cf60a9e7906d3829b6c3c33bb21234da46509cd15fdb6aa16413ff"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "map-storage-aggregate-oct20ak",
+    "evidence": [
+      "Fresh modal-lock candidate strict unlock58FD90 is UNKNOWN for five MapStorage references; its RadiusX/Y and unlock_map references pass. No function behavior change is proposed.",
+      "Pinned map_write5910B0 and map_read591130 independently transfer949870..94A314; current map.cpp owns MapStorage plus six v3 members. New dedicated map-serialized-storage-oct20ak task authorizes only source aggregate evidence, not a SquareLock-scope map edit.",
+      "Current Release object lacks standalone CodeView size/member evidence. Existing native check-data appends /Z7; fresh supported type/data evidence must be obtained without treating it as actual Release proof. Finding stays pending until its actual remaining evidence is assessed."
+    ],
+    "hypothesis": "SquareLock unlock uses the real MapStorage aggregate, whose independently established serialization window lacks a source aggregate binding; existing Release member/layout evidence is incomplete.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "map-storage-aggregate-oct20ak",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:modal-lock-owner-contexts-oct20aj"
+}

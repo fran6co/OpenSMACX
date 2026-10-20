@@ -1,0 +1,31 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "47b489391bc8b64ccbfd542fafb6a00ad0a248bd",
+  "editable_files": [
+    "src/map.cpp"
+  ],
+  "evidence": [
+    "Standing faithful recovery and coordinator-reviewed manual integration authority. Source owns essential original data identities and structural evidence. Only source object annotations and their bounded evidence prose are editable; no bodies, header types/layout, original function markers, claims, state, build settings or framework changes.",
+    "The pinned map_write at5910B0 passes original base949870 and sizeAA4 to fwrite (push949870 at5910BF); map_read at591130 passes the same base and size to fread (push949870 at59116C). The bounded serialized interval is[949870,94A314), independent of candidate debug layout or adjacency. Both separately transfer tile/abstract buffers; read clears pointer cells+A9C/+AA0 before map_init. Preserve this odd original storage behavior.",
+    "Current src/map.cpp owns the single MapStorageWindow MapStorage definition with six source-owned v3 member bindings. MapStorageWindow in map.h expresses existing metadata prefix+A9C tiles pointer+AA0 abstract pointer. Authorize adding one RECOVERY_OBJECT v2 bounded aggregate mapping for emitted ?MapStorage@@3UMapStorageWindow@@A, extent949870..94A314, evidence5910B0, beside the real definition. Preserve all six v3 child bindings, all other original identities/spans/claims/lessons and all C++ unchanged.",
+    "Original interval is writable PE.data virtual zero-fill; do not describe it as file-backed bytes or immutable. This is an observed serialization/access window, not proof of original type/class name, exclusive/full allocation boundary or lifetime. Native parser permits bounded parent plus contained same-owner v3 children. Native target resolution still requires fresh supported member layout and direct-parent consistency.",
+    "Retained actual Release map.cpp object lacks standalone CodeView types, so native parent/member extent checks on that artifact currently refuse. Native check-data already appends configured layout_flags /Z7 for fresh independent trials; use that existing supported route rather than changing compiler profiles, borrowing type evidence into Release receipts, or weakening object checks. A fresh debug witness cannot turn unknown actual Release strict reference checks into passes.",
+    "Coordinator owns resource leases, fresh native selected-data checks under every configured profile, source/claim/reference continuity, original disassembly/zero-fill review, physical unchanged production controls, independent review and fresh integrated compile/link. No worker tests/compiler/Wine/Git/task changes. Report unsupported or failing evidence explicitly, no data/exactness grants, no whole linked/runtime/game/native acceptance assertion."
+  ],
+  "intent": "Bind the independently bounded serialized MapStorage window beside its real source allocation",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5836976,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5837104,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "map-serialized-storage-oct20ak"
+}
