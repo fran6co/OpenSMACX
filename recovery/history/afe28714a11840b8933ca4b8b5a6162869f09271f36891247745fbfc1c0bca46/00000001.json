@@ -1,0 +1,21 @@
+{
+  "event_id": "681d36d1cc426564990df482c7971b4c642b16a23983c492b29b939d2959a533",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_caviar_lifetime.py",
+      "recovery/tests/test_caviar_light_vectors.py"
+    ],
+    "evidence": [
+      "Broad actual-source controls reproduce23failures on untouched master c663deebf before this migration. Seventeen lifetime/light-vector cases fail compiling the actual Caviar header because jackal/color_table.h is not on the temporary host compiler include path, not from a product behavior discrepancy.",
+      "Authorize only the two named host-test compiler invocations to resolve the real src include root (and any immediately necessary true header dependency), preserving all actual source extraction, behavioral assertions, original conditions and damage mutations. Do not stub ColorTable, remove includes/assertions, weaken mutants or edit product code. Original native task baseline98bb905b remains intact. The remaining stale historical-owner/snapshot checks are separately reported failures, not waived green."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "repair-stale-caviar-host-header-search-oct20s",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:caviar-typed-callback-prefix-oct20r"
+}

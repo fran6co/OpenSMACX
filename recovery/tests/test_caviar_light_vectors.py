@@ -109,7 +109,8 @@ def run_host(tmp_path,source):
     '''.replace("HEADER",source["header"]).replace("NORMALISE",source["normalise"]).replace("ADD_BODY",source["add"]).replace("INIT",source["init"]).replace("SETTER",source["setter"])
     cpp,exe=tmp_path/"vectors.cpp",tmp_path/"vectors"
     cpp.write_text(program)
-    compiled=subprocess.run([compiler,"-std=c++11","-O1","-ffp-contract=off","-fsanitize=undefined,bounds",
+    compiled=subprocess.run([compiler,"-std=c++11","-O1","-iquote",str(ROOT/"src"),
+        "-ffp-contract=off","-fsanitize=undefined,bounds",
         "-fno-sanitize-recover=all",str(cpp),"-o",str(exe)],capture_output=True,text=True,timeout=30)
     assert compiled.returncode==0,compiled.stderr
     return subprocess.run([str(exe)],capture_output=True,text=True,timeout=15)

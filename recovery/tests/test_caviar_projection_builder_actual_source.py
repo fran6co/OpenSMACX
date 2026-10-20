@@ -53,6 +53,21 @@ typedef char kernel_window_is_0x200[sizeof(CaviarKernelProjectionWindowCandidate
 
 
 MAIN = r'''
+static int prefix_calls;
+static int prefix_read_value;
+static void *prefix_alloc(unsigned long size) {
+    prefix_calls += (int)size;
+    return &prefix_calls;
+}
+static void prefix_free(void *) { ++prefix_calls; }
+static int prefix_read(int, char *, long count) {
+    prefix_calls += (int)count;
+    return prefix_read_value;
+}
+static int prefix_write(int, void *, long count) {
+    prefix_calls -= (int)count;
+    return prefix_calls;
+}
 int main() {
     CaviarFixedPointProjection.word_00_ = 2;
     CaviarFixedPointProjection.word_02_ = 3;
@@ -72,6 +87,10 @@ int main() {
     }
     uint32_t seek_sentinel = 0x11223344u;
     uint32_t tell_sentinel = 0xaabbccddu;
+    CaviarOutputMessageWindow.io_allocate_ = &prefix_alloc;
+    CaviarOutputMessageWindow.io_release_ = &prefix_free;
+    CaviarOutputMessageWindow.io_read_ = &prefix_read;
+    CaviarOutputMessageWindow.io_write_ = &prefix_write;
     memcpy(reinterpret_cast<unsigned char *>(&CaviarOutputMessageWindow) +
                offsetof(VoxIoCallbacks, seek), &seek_sentinel, sizeof(seek_sentinel));
     memcpy(reinterpret_cast<unsigned char *>(&CaviarOutputMessageWindow) +
@@ -100,6 +119,14 @@ int main() {
         CaviarOutputMessageWindow.projection_words_[3] != 0xfeedfaceu) return 5;
     if (seek_after != CaviarOutputMessageWindow.projection_words_[0] ||
         tell_after != tell_sentinel || tell_after == seek_sentinel) return 7;
+    prefix_read_value = 71;
+    if (CaviarOutputMessageWindow.io_allocate_(3) != &prefix_calls ||
+        prefix_calls != 3) return 8;
+    CaviarOutputMessageWindow.io_release_(0);
+    if (CaviarOutputMessageWindow.io_read_(1, 0, 4) != 71 ||
+        prefix_calls != 8) return 9;
+    if (CaviarOutputMessageWindow.io_write_(1, 0, 2) != 6 ||
+        prefix_calls != 6) return 10;
     if (CaviarKernelProjectionWindow.current_views_.tail_.scratch_e0_ != 13.0f ||
         CaviarKernelProjectionWindow.current_views_.tail_.scratch_e4_ != 11.0f ||
         CaviarKernelProjectionWindow.current_views_.tail_.scratch_e8_ != 7.0f ||
@@ -123,6 +150,7 @@ def compile_and_run(compiler, body, expected_success):
         descriptor = extract_body(HEADER.read_text(), "struct VoxIoCallbacks {")
         fixture = (FIXTURE + "\n" + descriptor + ";\n" + output_type + ";\n" +
             "typedef char projection_follows_seek[offsetof(CaviarOutputMessageWindowCandidate, projection_words_) == offsetof(VoxIoCallbacks, seek) ? 1 : -1];\n" +
+            "typedef char prefix_fields_match_slots[offsetof(CaviarOutputMessageWindowCandidate, io_allocate_) == offsetof(VoxIoCallbacks, allocate) && offsetof(CaviarOutputMessageWindowCandidate, io_release_) == offsetof(VoxIoCallbacks, release) && offsetof(CaviarOutputMessageWindowCandidate, io_read_) == offsetof(VoxIoCallbacks, read) && offsetof(CaviarOutputMessageWindowCandidate, io_write_) == offsetof(VoxIoCallbacks, write) ? 1 : -1];\n" +
             "typedef char host_storage_extent[sizeof(CaviarOutputMessageWindowCandidate) == offsetof(VoxIoCallbacks, seek) + 0x2D0 ? 1 : -1];\n" +
             "CaviarKernelProjectionWindowCandidate CaviarKernelProjectionWindow = {};\n" +
             "CaviarOutputMessageWindowCandidate CaviarOutputMessageWindow = {};\n" +
