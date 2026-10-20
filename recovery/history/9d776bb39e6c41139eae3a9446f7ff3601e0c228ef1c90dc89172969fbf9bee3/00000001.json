@@ -1,0 +1,21 @@
+{
+  "event_id": "ca9ea328dc35f6628e7a4a63a6b8656c8da01eeea356520b15d8d00b639a956e",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "CMakeLists.txt"
+    ],
+    "evidence": [
+      "Original MapWin::init4710DB and on_resize46FA12 retain direct calls to the genuinely empty46FB80 method. Current application /Ob2 removes the on_resize condition/call. This is evidence for an owner inline-boundary investigation, not proof of original source-file names or need for a new single-method TU.",
+      "Supersede initial no-flag-change restriction ONLY for a bounded MapWin whole-TU /Ob1 diagnostic appended to the unchanged actual application arguments. Preserve current /Ob2 baseline and replica; persist raw objects and all106 mapping results before analysis, add an original-body changed-value witness under /Ob1, inspect losses and unowned collateral. Do not change global flags, link flags or task baseline.",
+      "CMake is reserved for a possible owner-specific policy correction only after coordinator reviews fresh diagnostic and authorizes the exact patch. Do not edit it yet. Whole-project /Ob1 previously lost425 matches, gained74; this explicitly forbids treating that global switch as justified by a local caller. No product profile change or acceptance follows from permission to investigate."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "investigate-owner-inline-policy",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:mapwin-cohort-match-oct20b"
+}
