@@ -1,0 +1,25 @@
+{
+  "event_id": "b31518cfc4e1e0b9084b050c2282483301da9efc0ff227135e940451ab8a9a2c",
+  "payload": {
+    "affects": [
+      "entity-1f34e1a1bb27dd2e71bffba06e901b12a0224d1099f88751642d777f03c4fa5c",
+      "entity-6957bdfaccdfcd98d3f164b77aab797483f9bf06908cf9f326b973cb09244ac1",
+      "entity-cecc2ed56ceef989ae102595912b2a14c3f4b9ed36830158f7feb24078367a77",
+      "entity-dc3ce3b892e4c893aedf59539bbb3d0e735376e91a0fb3cbe5f15ab50e85da97"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "distinct-lock-movepending-storage-oct20al",
+    "evidence": [
+      "Independent pinned full disassembly: lock530630 pushes68C21C at53066A; maybe_lock531700, order_veh531780 and veh_drop532140 push68C474 at53173E,5317ED,5321A4. Both original writable PE.data NUL payloads are12bytes:68C21C..68C228 and68C474..68C480, with no relocations in their storage.",
+      "Fresh current object has one pooled ??_C@_0M@PPKM@MOVEPENDING?$AA@ definition and four relocations, so the proposed literal binding would give lock the wrong original address despite matching contents. Original Client releasing lock users consistently reference68C2DC and are unaffected. The initial scout missed the lock counterexample; independent review caught it before integration.",
+      "NetMsg::pop accepts constchar* and forwards through Popup::start const parameters. No current mutation through this parameter was found. Distinct writable source-owned char[12] storage can express the original separate lock payload without raw addresses, special retention attributes, arbitrary TU splitting or a gameplay fix."
+    ],
+    "hypothesis": "Original lock uses separate writable MOVEPENDING storage from the three other daemon paths; current one-symbol literal pooling loses that address identity, so a single global binding to68C474 is wrong.",
+    "kind": "discovery"
+  },
+  "previous_event": "1ab5ef3520ecf529497cc8693315d025c2ab6dcab3b6befb664998a8a0bb762b",
+  "request_id": "distinct-lock-movepending-storage-oct20al",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:netdaemon-literal-identities-oct20al"
+}

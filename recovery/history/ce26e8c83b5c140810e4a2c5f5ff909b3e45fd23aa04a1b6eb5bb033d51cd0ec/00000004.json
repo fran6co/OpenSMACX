@@ -1,0 +1,20 @@
+{
+  "event_id": "5912d496b289d149cecd7d155d827627ee76e890ae244c1a681ab37be3c21580",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "distinct-lock-movepending-storage-oct20al",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/netdaemon.cpp now owns writable staticchar[12] NetDaemonLockMovePendingText and native-writer v2 original68C21C..68C228 anchor530630. Only lock firstargument uses this sourceobject. Current remaining MOVEPENDING literal identity68C474..68C480 covers exactlymaybe_lock/order_veh/veh_drop; Client literal68C2DC..68C2F2 remains separatelybound.",
+      "Fresh native3compile storage probe uniquely emitted _NetDaemonLockMovePendingText, measured12bytes/nonrelocatedwritable contents, established only1lockref/3remainingliteralrefs, and passed unchanged-replica plus changedlockbody damage controls. Final fresh full179-TU193-object build-avh1vmvy links. All67function identities/lessons and3450historicalclaims remain; seven scoped verdicts unchanged and complete census3329exact has no losses.",
+      "Final native data selection independently passes definition/content for array2trialrows and two literals4trialrows. Full strict set gains only530D00,5310F0,531700, no prior strictPASS losses. Source/data/COFF review supports the bounded model, not original declaration spelling/full allocation/lifetime or complete game fidelity.",
+      "Native physical residual remains192PASS/1FAIL for NetDaemon new12bytes/reference; old NetDaemonTransferResetWord shifts COFFdataoffset0to12 with its two named-symbol references, no other physical or CRTinitializer change observed. Native data aggregate remainsUNKNOWN (22shared rowsUNKNOWN,4PASS; unconfiguredWin/BasePop header owners). Nonexact bodies and557UNKNOWN/3existingstrictFAIL remain. Incorporating this source finding does not waive restoration, linked selection/allocation, runtime/game or automatic-acceptance requirements."
+    ]
+  },
+  "previous_event": "5d201b73146f7ea9ade048916390cc715fffb04e7816196742371aa53c4915ea",
+  "request_id": "incorporate-distinct-lock-label-oct20al",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:netdaemon-literal-identities-oct20al"
+}
