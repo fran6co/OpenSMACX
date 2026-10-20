@@ -89,7 +89,7 @@
         "src/vendor"
       ],
       "ceilings": {
-        "unk-method": 205,
+        "unk-method": 197,
         "evidence-free unk": 31,
         "function-address binding": 0,
         "orphan redirect": 59,

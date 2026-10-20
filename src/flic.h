@@ -93,13 +93,13 @@ class Flic {
   void UNK8();
   int init(Buffer *buffer, char *file_name, int x, int y, int transparent);
   int decode_frame(int x, int y);
-  int UNK1(int x, int y);
-  int UNK2();
-  int UNK3(int frame);
+  int decode_frame_with_transparency(int x, int y);
+  int skip_frame();
+  int advance_to_frame(int frame);
   int rewind();
   // Native4723EF configures the decoder's palette-index shift at +0x5A4;
   // decode_byte_run/decode_delta_flc add it to decoded pixel indices.
-  void set_palette_offset(int offset) { field_5A4_ = offset; }
+  void set_palette_offset(int offset) { palette_offset_ = offset; }
   void decode_byte_run();
   void decode_delta_flc();
   void decode_byte_run_trans();
@@ -109,7 +109,7 @@ class Flic {
   void decode_black_trans();
   void decode_chunk(DataChunk *chunk);
   void fill();
-  void UNK9();
+  void capture_background();
 
   // Diplomacy animation methods decode at these stored coordinates and pass
   // the corresponding destination bounds to their owner window.
@@ -121,13 +121,14 @@ class Flic {
   int decoded_width() const { return static_cast<int>(decoded_width_); }
   int decoded_height() const { return static_cast<int>(decoded_height_); }
   int frame_count() const { return static_cast<int>(header_.frames_); }
-  void set_animation_flags(uint8_t flags) { field_0_ = flags; }
+  void set_transparent_index(uint8_t index) { transparent_index_ = index; }
   uint32_t header_interval() const { return header_.field_10_; }
 
  private:
-  // Only the low byte is ever stored (`mov byte ptr [esi], bl`).
-  uint8_t field_0_;  // 0x0
-  Buffer buffer_;    // 0x4
+  // Pixel key used by the transparent decoders; only the low byte is ever
+  // stored (`mov byte ptr [esi], bl`), not a decoder-mode bitfield.
+  uint8_t transparent_index_;  // 0x0
+  Buffer background_buffer_;    // 0x4
   // RECOVERY_MEMBER: v1 Flic update_rect_ 0x58C 0x0043F190
   RECT update_rect_;  // passed to GraphicWin::soft_update
   // init copies the 16-bit header dimensions here; fill and the decoders
@@ -137,8 +138,10 @@ class Flic {
   uint32_t decoded_width_;
   // RECOVERY_MEMBER: v1 Flic decoded_height_ 0x5A0 0x00629E50
   uint32_t decoded_height_;
-  uint32_t field_5A4_;
-  Buffer *buffer2_;
+  // MonuWin sets this palette-index offset. Decoders retain their original
+  // per-format truncation and signed-byte behavior when applying it.
+  uint32_t palette_offset_;
+  Buffer *destination_buffer_;
   // init and decode_frame store their int x/y arguments here; decoder
   // destinations and update rectangles read them back as the buffer origin.
   // RECOVERY_MEMBER: v1 Flic origin_x_ 0x5AC 0x0043F190

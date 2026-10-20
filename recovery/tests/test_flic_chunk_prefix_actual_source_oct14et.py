@@ -101,7 +101,7 @@ def test_frame_owners_and_decoder_use_actual_named_prefix_members():
     source = SOURCE.read_text()
     assert source.count("decode_chunk(&chunk_.header_);") == 2
     assert "fseek(file_, chunk_.header_.size_, SEEK_CUR);" in source
-    unkn = _braced_declaration(source, "int Flic::UNK3(")
+    unkn = _braced_declaration(source, "int Flic::advance_to_frame(")
     assert "FlicFrameChunk *chunks = &chunk_;" in unkn
     assert "fread(chunks, 0x10, 1, file_);" in unkn
     assert "chunk_.header_.size_ + frame_pos" in unkn

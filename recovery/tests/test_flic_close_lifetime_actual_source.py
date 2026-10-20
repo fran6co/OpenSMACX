@@ -126,17 +126,18 @@ def _host_source(close_definition, destructor_definition):
         };
 
         struct Flic {
-            Buffer buffer_;
+            Buffer background_buffer_;
             TrackedInt origin_x_, origin_y_, decoder_flags_;
             TrackedInt frame_;
-            TrackedPointer buffer2_;
-            TrackedInt field_0_, field_5A4_, decoded_width_, decoded_height_;
+            TrackedPointer destination_buffer_;
+            TrackedInt transparent_index_, palette_offset_, decoded_width_, decoded_height_;
             TrackedFile file_;
             Palette palette_;
             Flic() : origin_x_("origin_x_"), origin_y_("origin_y_"),
                      decoder_flags_("decoder_flags_"), frame_("frame_"),
-                     buffer2_("buffer2_"), field_0_("field_0_"),
-                     field_5A4_("field_5A4_"), decoded_width_("decoded_width_"),
+                     destination_buffer_("destination_buffer_"),
+                     transparent_index_("transparent_index_"),
+                     palette_offset_("palette_offset_"), decoded_width_("decoded_width_"),
                      decoded_height_("decoded_height_") {}
             void close();
             @@FLIC_DTOR@@
@@ -153,7 +154,7 @@ def _host_source(close_definition, destructor_definition):
         int main() {
             const std::vector<std::string> stores = {
                 "origin_x_", "origin_y_", "decoder_flags_", "frame_",
-                "buffer2_", "field_0_", "field_5A4_", "decoded_width_",
+                "destination_buffer_", "transparent_index_", "palette_offset_", "decoded_width_",
                 "decoded_height_"};
             {
                 Flic f;
@@ -165,8 +166,8 @@ def _host_source(close_definition, destructor_definition):
                 expected.push_back("file_=null");
                 if (!equals(events, expected) || tracked_fclose_count != 1 || f.file_.value
                     || f.origin_x_.value || f.origin_y_.value || f.decoder_flags_.value
-                    || f.frame_.value || f.buffer2_.value || f.field_0_.value
-                    || f.field_5A4_.value || f.decoded_width_.value
+                    || f.frame_.value || f.destination_buffer_.value || f.transparent_index_.value
+                    || f.palette_offset_.value || f.decoded_width_.value
                     || f.decoded_height_.value)
                     return 1;
             }
@@ -178,8 +179,8 @@ def _host_source(close_definition, destructor_definition):
                 f.close();
                 if (!equals(events, stores) || tracked_fclose_count != 1 || f.file_.value
                     || f.origin_x_.value || f.origin_y_.value || f.decoder_flags_.value
-                    || f.frame_.value || f.buffer2_.value || f.field_0_.value
-                    || f.field_5A4_.value || f.decoded_width_.value
+                    || f.frame_.value || f.destination_buffer_.value || f.transparent_index_.value
+                    || f.palette_offset_.value || f.decoded_width_.value
                     || f.decoded_height_.value)
                     return 2;
             }
