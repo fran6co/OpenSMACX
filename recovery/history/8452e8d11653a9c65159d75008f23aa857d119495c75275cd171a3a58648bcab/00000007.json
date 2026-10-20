@@ -1,0 +1,40 @@
+{
+  "event_id": "7243c146a3b6e957fe66fb2ecc6d9bf00b1e21c2ce95d144f25331be9512ea85",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/setupwin.h",
+      "src/stringstruct.h"
+    ],
+    "evidence": [
+      "Standing coordinator-reviewed recovery authority. Continue only generated source-owned table starts in src/stringstruct.h and src/setupwin.h, preserving the original ui-eight task baseline de91fffe. No C++ token, declaration, method, hierarchy/layout, table size, original mapping/span/claim or historical-lesson change is authorized.",
+      "Independently re-decoded pinned instruction402313 stages6693AC on StringAllocationBase. Instructions40103B and44510E stage6693A0/6698C0 through the real virtual allocation-base displacement. Instructions4AD957/4AD95D stage66D8E8/66D8E0 on SetupWin complete/Buffer receiver+444. Current real compiler emits exact ??_7StringAllocationBase@@6B@, ??_7StringStruct@@6BStringAllocationBase@@@, ??_7StringList@@6BStringAllocationBase@@@, ??_7SetupWin@@6BWin@@@, ??_7SetupWin@@6BBuffer@@@ as external offset-zero isolated readonly COMDAT definitions.",
+      "Authorize precisely five unbounded native RECOVERY_GENERATED v1 vtable starts corresponding to these exact symbols, using evidence addresses402313,40103B,44510E,4AD957,4AD95D respectively, beside their actual owner declarations. Native GeneratedBinding/parse_generated/read_generated must roundtrip with full snapshot continuity and no duplicates. The installed package has no guarded generated-writer API; insert only parser-validated facts through apply_patch, do not add a project-specific/public serializer or framework extension.",
+      "Use unknown original ends (question mark), not emitted current COMDAT sizes or next table addresses. Content, full original extents/hierarchy/lifetime and original retained selection remain unknown. Keep existing primary StringStruct6693A4 and StringList6698C4 records unchanged. The ??_8StringList@@7B@ vbtable at66B0EC is NOT a vftable and is outside this continuation; do not mislabel it or invent checker support.",
+      "Require fresh native generated-definition checks over physical current objects plus strict reference comparisons. Each resolved table start addresses only that reference identity; do not promote other unknowns, bounds, body or whole-game acceptance. Compare whole known-domain function and strict outcomes without losing historical obligations, independently review all source and original evidence, build/link the combined checkpoint and reproduce on destination. Headers contain essential bindings only, not run logs."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4203280,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4198400,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4477104,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "b066c1673d16537c409f29415ab6fb5880aa91aab6030e7e54b21a84b2fc9927",
+  "request_id": "central-generated-string-setup-starts-oct21b",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:ui-eight-owner-coverage"
+}
