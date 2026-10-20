@@ -168,7 +168,8 @@ def run_host(tmp_path,parts):
     '''.replace("HEADER",header).replace("BODIES","\n".join(value for name,value in parts.items() if name not in ("header","model_dtor","renderer_dtor")))
     cpp,exe=tmp_path/"lifetime.cpp",tmp_path/"lifetime"
     cpp.write_text(program)
-    compiled=subprocess.run([compiler,"-std=c++11","-O1","-fsanitize=undefined,bounds","-fno-sanitize-recover=all",
+    compiled=subprocess.run([compiler,"-std=c++11","-O1","-iquote",str(ROOT/"src"),
+        "-fsanitize=undefined,bounds","-fno-sanitize-recover=all",
         str(cpp),"-o",str(exe)],capture_output=True,text=True,timeout=30)
     assert compiled.returncode==0,compiled.stderr
     return subprocess.run([str(exe)],capture_output=True,text=True,timeout=15)

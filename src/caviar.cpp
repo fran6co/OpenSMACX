@@ -1132,12 +1132,11 @@ long Caviar::vx_tell(int fd) {
 
 namespace {
 
-// The six typed vx_* IO callback slots installed at 0x009C0B80..0x009C0B94,
+// The six vx_* IO callback slots installed at 0x009C0B80..0x009C0B94 are
 // ordered alloc/free/read/write/seek/tell in the original contiguous span.
-// Projection output starts at the seek-slot offset and the first output word
-// overwrites those bytes; the per-row pattern does not touch tell. The
-// callback representations are loaded by memcpy from the shared object's
-// byte representation, while projection words remain ordinary named fields.
+// The first four are disjoint typed fields; projection output begins at the
+// seek-slot offset and overwrites those bytes, while the row pattern leaves
+// tell untouched. Only seek/tell remain byte-representation loads.
 #if defined(_M_IX86) || defined(__i386__)
 static_assert(sizeof(VoxIoCallbacks) == 24,
               "voxel callback table must remain six contiguous Win32 dwords");
@@ -1157,10 +1156,6 @@ static_assert(offsetof(VoxIoCallbacks, allocate) == 0 &&
               offsetof(VoxIoCallbacks, tell) == 5 * sizeof(void *),
               "host callback view follows host pointer width");
 #endif
-typedef void *(__cdecl *VoxAllocateCallback)(unsigned long);
-typedef void (__cdecl *VoxReleaseCallback)(void *);
-typedef int (__cdecl *VoxReadCallback)(int, char *, long);
-typedef int (__cdecl *VoxWriteCallback)(int, void *, long);
 typedef long (__cdecl *VoxSeekCallback)(int, long, int);
 typedef long (__cdecl *VoxTellCallback)(int);
 
@@ -1174,10 +1169,10 @@ static Callback vox_load_callback(size_t offset) {
     return callback;
 }
 
-#define vox_alloc_slot (vox_load_callback<VoxAllocateCallback>(offsetof(VoxIoCallbacks, allocate)))
-#define vox_free_slot (vox_load_callback<VoxReleaseCallback>(offsetof(VoxIoCallbacks, release)))
-#define vox_read_slot (vox_load_callback<VoxReadCallback>(offsetof(VoxIoCallbacks, read)))
-#define vox_write_slot (vox_load_callback<VoxWriteCallback>(offsetof(VoxIoCallbacks, write)))
+#define vox_alloc_slot (CaviarOutputMessageWindow.io_allocate_)
+#define vox_free_slot (CaviarOutputMessageWindow.io_release_)
+#define vox_read_slot (CaviarOutputMessageWindow.io_read_)
+#define vox_write_slot (CaviarOutputMessageWindow.io_write_)
 #define vox_seek_slot (vox_load_callback<VoxSeekCallback>(offsetof(VoxIoCallbacks, seek)))
 #define vox_tell_slot (vox_load_callback<VoxTellCallback>(offsetof(VoxIoCallbacks, tell)))
 
@@ -1292,7 +1287,7 @@ int __cdecl vox_read_shape_patches(int fd, CvrRecord *record, int size);
 // observable write until after vox_stage_error.
 template<class T>
 inline int vox_alloc_typed(int size, T **out) {
-    T *block = reinterpret_cast<T *>(vox_alloc_slot((unsigned long)size));
+    T *block = static_cast<T *>(vox_alloc_slot((unsigned long)size));
     *out = block;
     if (block == 0) {
         vox_stage_error(vox_msg_no_room);

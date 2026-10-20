@@ -166,9 +166,11 @@ def test_actual_ramp_body_preserves_borrowed_descriptor_and_distinct_domains():
     output_end = header.index("};", output_start)
     output_view = header[output_start:output_end]
     assert "union {" not in output_view
-    assert "uint8_t callback_prefix_[offsetof(VoxIoCallbacks, seek)]" in output_view
+    for field in ("io_allocate_", "io_release_", "io_read_", "io_write_"):
+        assert field in output_view
+    assert "uint8_t callback_prefix_" not in output_view
     assert "uint32_t projection_words_[0x6B]" in output_view
-    assert "memcpy(&callback" in source
+    assert "memcpy(&callback" in source  # overlapping seek/tell slots only
     body = extract(source, "extern \"C\" char __cdecl sub_63f9b0(VoxRenderRecord *record) {")
     build_and_run(body)
 

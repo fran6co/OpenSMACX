@@ -99,10 +99,13 @@ union CaviarKernelProjectionWindowCandidate {
 };
 struct CaviarOutputMessageWindowCandidate {
   // Preserve the observed callback/projection byte overlap without accessing
-  // inactive union members: the prefix ends at the callback seek slot, then
-  // the projection's ordinary uint32_t array occupies the same object bytes.
-  // Callback getters copy pointer representations from this object via memcpy.
-  uint8_t callback_prefix_[offsetof(VoxIoCallbacks, seek)];
+  // inactive union members: the first four callback fields are disjoint from
+  // projection output; the array begins at seek and occupies the same bytes.
+  // Seek/tell callback representations are still loaded from object bytes.
+  void *(__cdecl *io_allocate_)(unsigned long);
+  void (__cdecl *io_release_)(void *);
+  int (__cdecl *io_read_)(int, char *, long);
+  int (__cdecl *io_write_)(int, void *, long);
   uint32_t projection_words_[0x6B];
   uint8_t unidentified_gap_[0x24];
   char message_[0x100];
@@ -123,6 +126,11 @@ static_assert(sizeof(CaviarKernelProjectionWindowCandidate) == 0x200,
 #if defined(_M_IX86) || defined(__i386__)
 static_assert(sizeof(CaviarOutputMessageWindowCandidate) == 0x2E0,
               "Win32 shared callback/projection/message storage is 0x2e0 bytes");
+static_assert(offsetof(CaviarOutputMessageWindowCandidate, io_allocate_) == 0 &&
+                  offsetof(CaviarOutputMessageWindowCandidate, io_release_) == 4 &&
+                  offsetof(CaviarOutputMessageWindowCandidate, io_read_) == 8 &&
+                  offsetof(CaviarOutputMessageWindowCandidate, io_write_) == 12,
+              "four typed callbacks occupy the disjoint prefix dwords");
 static_assert(offsetof(CaviarOutputMessageWindowCandidate, projection_words_) == 0x10,
               "Win32 projection output begins over the seek slot");
 static_assert(offsetof(CaviarOutputMessageWindowCandidate, message_) == 0x1E0,
@@ -131,6 +139,11 @@ static_assert(offsetof(CaviarOutputMessageWindowCandidate, message_) == 0x1E0,
 static_assert(sizeof(CaviarOutputMessageWindowCandidate) ==
                   offsetof(VoxIoCallbacks, seek) + 0x2D0,
               "host shared storage follows host callback pointer width");
+static_assert(offsetof(CaviarOutputMessageWindowCandidate, io_allocate_) == 0 &&
+                  offsetof(CaviarOutputMessageWindowCandidate, io_release_) == sizeof(void *) &&
+                  offsetof(CaviarOutputMessageWindowCandidate, io_read_) == 2 * sizeof(void *) &&
+                  offsetof(CaviarOutputMessageWindowCandidate, io_write_) == 3 * sizeof(void *),
+              "host typed callback prefix follows host function-pointer width");
 static_assert(offsetof(CaviarOutputMessageWindowCandidate, projection_words_) ==
                   offsetof(VoxIoCallbacks, seek),
               "host projection view follows host callback pointer width");

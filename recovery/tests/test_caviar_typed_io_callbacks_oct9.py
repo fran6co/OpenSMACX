@@ -148,11 +148,7 @@ def compile_actual_source(mutant=None):
     )
     callback_types = "\n".join(
         line for line in source.splitlines()
-        if line.startswith(("typedef void *(__cdecl *VoxAllocateCallback)",
-                            "typedef void (__cdecl *VoxReleaseCallback)",
-                            "typedef int (__cdecl *VoxReadCallback)",
-                            "typedef int (__cdecl *VoxWriteCallback)",
-                            "typedef long (__cdecl *VoxSeekCallback)",
+        if line.startswith(("typedef long (__cdecl *VoxSeekCallback)",
                             "typedef long (__cdecl *VoxTellCallback)"))
     )
     load_helper = ("template <typename Callback>\n" +
@@ -168,8 +164,8 @@ def compile_actual_source(mutant=None):
                 slot_macros + "\n" + PREAMBLE[type_end:])
     if mutant == "wrong_read_slot":
         slot_macros = slot_macros.replace(
-            "offsetof(VoxIoCallbacks, read)",
-            "offsetof(VoxIoCallbacks, write)")
+            "CaviarOutputMessageWindow.io_read_",
+            "CaviarOutputMessageWindow.io_write_")
         preamble = preamble.replace(
             next(line for line in preamble.splitlines()
                  if line.startswith("#define vox_read_slot ")),
