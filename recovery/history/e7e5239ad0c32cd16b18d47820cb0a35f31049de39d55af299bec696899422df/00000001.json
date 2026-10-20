@@ -1,0 +1,29 @@
+{
+  "event_id": "523a5372da50b067abe0d799d36d4233606d72b53f641c975e68a260e1bef01a",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Coordinator corrects class-only task selection: the intended and source-file-authorized reset_net_session_options4E2400 and reset_net_lobby_rows4E2460 are free functions, so native class grouping did not include their identities. Existing source bindings and pinned intervals prove both belong to this same owning CPP; expand effective subjects explicitly without altering original assignment or baseline.",
+      "Authorize the finite typed eight-row traversal recovery and its source/test verification now within effective task scope. Preserve original six selected stores, untouched bytes, all mapping/spans/claims and source quirks. No scope-check bypass, compiler policy change, automatic acceptance or task-baseline reset."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5121024,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5121120,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "include-source-owned-free-row-reset-functions",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:alphanet-row-cursors-oct20c"
+}
