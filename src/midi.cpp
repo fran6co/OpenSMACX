@@ -40,17 +40,17 @@
 
 /*
  * The 32 forwarding methods of Midi, moved here from
- * delegation_thunks.cpp by the same pass that declared their delegate:
- * each is a real member whose delegate dispatch lets VC6 emit the
+ * delegation_thunks.cpp by the same pass that recovered the child relation:
+ * each is a real member whose virtual child call lets VC6 emit the
  * image's `call dword ptr [eax + slot]` itself. 28 measured BYTE_EXACT
  * on arrival (2bbecdbd); the last four were never register allocation
- * but the delegate's same-name overload-group vtable ordering - fixed
+ * but the provider's overload-group vtable ordering - fixed
  * 2026-09-18 by the two neutral slotNNN names (midi.h's header note
  * carries the measured VC6 behavior and the deck that isolated it).
  *
  * SINCE 2026-09-18 Midi declares its real Sound base (midi.h): the
- * sequencer forwarders read Sound::device_ at 0x3C through a
- * MidiDelegate view - the flat header's `delegate_` member is gone -
+ * sequencer forwarders read Sound::device_ at 0x3C through the common
+ * reconstructed Midi type - the flat header's `delegate_` member is gone -
  * and the five lifecycle bodies below the forwarder run are the same
  * pass's second half. Every marker, claim and TRIED note carries over
  * unchanged.
@@ -71,7 +71,7 @@ Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
 int Midi::play() {
-    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    Midi *const delegate = static_cast<Midi *>(device_);
     if (delegate != nullptr) {
         return delegate->play();
     }
@@ -93,7 +93,7 @@ Return Value: the delegate's, or 0x13 when the member is null
 Status: Complete
 */
 int Midi::set_switch_type(unsigned long a1) {
-    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    Midi *const delegate = static_cast<Midi *>(device_);
     if (delegate != nullptr) {
         return delegate->set_switch_type(a1);
     }
@@ -115,7 +115,7 @@ Return Value: the delegate's, or 0x13 when the member is null
 Status: Complete
 */
 int Midi::add_switch_range(unsigned long a1, unsigned long a2) {
-    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    Midi *const delegate = static_cast<Midi *>(device_);
     if (delegate != nullptr) {
         return delegate->add_switch_range(a1, a2);
     }
@@ -137,7 +137,7 @@ Return Value: the delegate's, or 0x13 when the member is null
 Status: Complete
 */
 int Midi::set_nswitch_threads(unsigned long a1) {
-    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    Midi *const delegate = static_cast<Midi *>(device_);
     if (delegate != nullptr) {
         return delegate->set_nswitch_threads(a1);
     }
@@ -159,9 +159,9 @@ Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
 int Midi::map_patch(char *a1, unsigned long a2, unsigned long a3) {
-    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    Midi *const delegate = static_cast<Midi *>(device_);
     if (delegate != nullptr) {
-        return delegate->slot055(a1, a2, a3);
+        return delegate->map_patch(a1, a2, a3);
     }
     return 0x14;
 }
@@ -181,7 +181,7 @@ Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
 int Midi::map_patch(char *a1, unsigned long a2) {
-    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    Midi *const delegate = static_cast<Midi *>(device_);
     if (delegate != nullptr) {
         return delegate->map_patch(a1, a2);
     }
@@ -203,7 +203,7 @@ Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
 int Midi::clear_patch(unsigned long a1) {
-    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    Midi *const delegate = static_cast<Midi *>(device_);
     if (delegate != nullptr) {
         return delegate->clear_patch(a1);
     }
@@ -224,7 +224,7 @@ Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
 int Midi::reset() {
-    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    Midi *const delegate = static_cast<Midi *>(device_);
     if (delegate != nullptr) {
         return delegate->reset();
     }
@@ -246,7 +246,7 @@ Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
 int Midi::set_track(uint8_t *a1, unsigned long a2) {
-    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    Midi *const delegate = static_cast<Midi *>(device_);
     if (delegate != nullptr) {
         return delegate->set_track(a1, a2);
     }
@@ -268,7 +268,7 @@ Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
 int Midi::mute_track(unsigned long a1) {
-    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    Midi *const delegate = static_cast<Midi *>(device_);
     if (delegate != nullptr) {
         return delegate->mute_track(a1);
     }
@@ -290,7 +290,7 @@ Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
 int Midi::unmute_track(unsigned long a1) {
-    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    Midi *const delegate = static_cast<Midi *>(device_);
     if (delegate != nullptr) {
         return delegate->unmute_track(a1);
     }
@@ -312,9 +312,9 @@ Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
 int Midi::set_active_tracks(unsigned long a1, unsigned long a2) {
-    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    Midi *const delegate = static_cast<Midi *>(device_);
     if (delegate != nullptr) {
-        return delegate->slot037(a1, a2);
+        return delegate->set_active_tracks(a1, a2);
     }
     return 0x14;
 }
@@ -334,7 +334,7 @@ Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
 int Midi::set_active_tracks(unsigned int a1) {
-    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    Midi *const delegate = static_cast<Midi *>(device_);
     if (delegate != nullptr) {
         return delegate->set_active_tracks(a1);
     }
@@ -356,7 +356,7 @@ Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
 int Midi::play_trackset(unsigned int a1) {
-    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    Midi *const delegate = static_cast<Midi *>(device_);
     if (delegate != nullptr) {
         return delegate->play_trackset(a1);
     }
@@ -378,7 +378,7 @@ Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
 int Midi::xpose_trackset(unsigned int a1, int a2) {
-    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    Midi *const delegate = static_cast<Midi *>(device_);
     if (delegate != nullptr) {
         return delegate->xpose_trackset(a1, a2);
     }
@@ -400,7 +400,7 @@ Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
 int Midi::stop_trackset(unsigned int a1) {
-    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    Midi *const delegate = static_cast<Midi *>(device_);
     if (delegate != nullptr) {
         return delegate->stop_trackset(a1);
     }
@@ -422,7 +422,7 @@ Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
 int Midi::add_active_trackset(TrackSet *a1) {
-    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    Midi *const delegate = static_cast<Midi *>(device_);
     if (delegate != nullptr) {
         return delegate->add_active_trackset(a1);
     }
@@ -444,7 +444,7 @@ Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
 int Midi::set_active_range_lo(unsigned int a1, unsigned int a2) {
-    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    Midi *const delegate = static_cast<Midi *>(device_);
     if (delegate != nullptr) {
         return delegate->set_active_range_lo(a1, a2);
     }
@@ -466,7 +466,7 @@ Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
 int Midi::set_active_range_hi(unsigned int a1, unsigned int a2) {
-    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    Midi *const delegate = static_cast<Midi *>(device_);
     if (delegate != nullptr) {
         return delegate->set_active_range_hi(a1, a2);
     }
@@ -488,7 +488,7 @@ Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
 int Midi::remove_active_trackset(unsigned int a1) {
-    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    Midi *const delegate = static_cast<Midi *>(device_);
     if (delegate != nullptr) {
         return delegate->remove_active_trackset(a1);
     }
@@ -510,7 +510,7 @@ Return Value: the delegate's, or 0x0 when the member is null
 Status: Complete
 */
 int Midi::get_trackset(unsigned int a1) {
-    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    Midi *const delegate = static_cast<Midi *>(device_);
     if (delegate != nullptr) {
         return delegate->get_trackset(a1);
     }
@@ -531,7 +531,7 @@ Return Value: the delegate's, or 0x0 when the member is null
 Status: Complete
 */
 int Midi::get_ntracks() {
-    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    Midi *const delegate = static_cast<Midi *>(device_);
     if (delegate != nullptr) {
         return delegate->get_ntracks();
     }
@@ -553,7 +553,7 @@ Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
 int Midi::load_patch(unsigned int a1) {
-    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    Midi *const delegate = static_cast<Midi *>(device_);
     if (delegate != nullptr) {
         return delegate->load_patch(a1);
     }
@@ -575,7 +575,7 @@ Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
 int Midi::unload_patch(unsigned int a1) {
-    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    Midi *const delegate = static_cast<Midi *>(device_);
     if (delegate != nullptr) {
         return delegate->unload_patch(a1);
     }
@@ -597,7 +597,7 @@ Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
 int Midi::set_patch(unsigned int a1, unsigned int a2) {
-    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    Midi *const delegate = static_cast<Midi *>(device_);
     if (delegate != nullptr) {
         return delegate->set_patch(a1, a2);
     }
@@ -619,7 +619,7 @@ Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
 int Midi::set_tempo(unsigned long a1) {
-    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    Midi *const delegate = static_cast<Midi *>(device_);
     if (delegate != nullptr) {
         return delegate->set_tempo(a1);
     }
@@ -641,7 +641,7 @@ Return Value: the delegate's, or 0x0 when the member is null
 Status: Complete
 */
 int Midi::get_time(unsigned long a1) {
-    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    Midi *const delegate = static_cast<Midi *>(device_);
     if (delegate != nullptr) {
         return delegate->get_time(a1);
     }
@@ -662,7 +662,7 @@ Return Value: the delegate's, or 0x0 when the member is null
 Status: Complete
 */
 int Midi::get_control_track() {
-    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    Midi *const delegate = static_cast<Midi *>(device_);
     if (delegate != nullptr) {
         return delegate->get_control_track();
     }
@@ -684,7 +684,7 @@ Return Value: the delegate's, or 0x0 when the member is null
 Status: Complete
 */
 int Midi::get_total_track_ticks(unsigned long a1) {
-    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    Midi *const delegate = static_cast<Midi *>(device_);
     if (delegate != nullptr) {
         return delegate->get_total_track_ticks(a1);
     }
@@ -706,7 +706,7 @@ Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
 int Midi::set_channel_ctrl(ChannelCtrl *a1) {
-    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    Midi *const delegate = static_cast<Midi *>(device_);
     if (delegate != nullptr) {
         return delegate->set_channel_ctrl(a1);
     }
@@ -728,7 +728,7 @@ Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
 int Midi::set_program_ctrl(ProgramCtrl *a1) {
-    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    Midi *const delegate = static_cast<Midi *>(device_);
     if (delegate != nullptr) {
         return delegate->set_program_ctrl(a1);
     }
@@ -750,7 +750,7 @@ Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
 int Midi::set_track_ctrl(TrackCtrl *a1) {
-    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    Midi *const delegate = static_cast<Midi *>(device_);
     if (delegate != nullptr) {
         return delegate->set_track_ctrl(a1);
     }
@@ -758,8 +758,8 @@ int Midi::set_track_ctrl(TrackCtrl *a1) {
 }
 
 // ===== HOMED 2026-09-03 out of the archive. Each is one guarded virtual
-// call through the sequencer at 0x3C - Sound::device_, cast to the
-// MidiDelegate view - which is what the wrapped object is for.
+// call through the sequencer at 0x3C - Sound::device_, reconstructed as a
+// Midi object by the pinned shared constructor and table evidence.
 
 /*
 Purpose: Initialise the MIDI from a filename. The name replaces whatever
@@ -1008,7 +1008,7 @@ Purpose: Release the loaded MIDI. While the sequencer at 0x3C is still
 // LEVER: the real Sound base retires the scaffold's MidiVCall shims - the
 //        is_playing/detach dispatches become the compiler's own virtual
 //        calls through the vtable the base now owns, and the sequencer's
-//        slot-5 unload is MidiDelegate::slot005, promoted void->int here
+//        slot-5 unload is the provider Midi object's virtual unload, int
 //        because its answer is this body's result on the busy path.
 // LEVER: NO named delegate local. The image holds the result in edi from
 //        `xor edi,edi` at entry and re-reads Sound::device_ at each
@@ -1031,12 +1031,12 @@ int Midi::unload() {
     int result = 0;
     if (device_ != nullptr) {
         if (is_playing() == 0) {
-            static_cast<MidiDelegate *>(device_)->unload();
+            static_cast<Midi *>(device_)->unload();
             if (WaveDeviceReleaseGuard) {
                 SoundXOrdinal2DeleteSound()(device_);
             }
         } else {
-            result = static_cast<MidiDelegate *>(device_)->unload();
+            result = static_cast<Midi *>(device_)->unload();
         }
         device_ = nullptr;
     }
@@ -1049,7 +1049,7 @@ int Midi::unload() {
 // ORIGINAL: 0x004C7780 ?set_volume@Midi@@QAEXH@Z 0x004C7780-0x004C77AC BYTE_EXACT
 // symbol    ?set_volume@Midi@@UAEXH@Z
 void Midi::set_volume(int volume) {
-    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    Midi *const delegate = static_cast<Midi *>(device_);
     if (delegate != nullptr) {
         delegate->set_volume(volume);
     }
@@ -1060,7 +1060,7 @@ void Midi::set_volume(int volume) {
 // symbol    ?switch_state@Midi@@UAEH_N@Z
 // NO RETURN on the null path, deliberately: the original leaves eax alone.
 int Midi::switch_state(bool on) {
-    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    Midi *const delegate = static_cast<Midi *>(device_);
     if (delegate != nullptr) {
         return delegate->switch_state(on);
     }
@@ -1069,7 +1069,7 @@ int Midi::switch_state(bool on) {
 // ORIGINAL: 0x004C78C0 ?set_base_path@Midi@@QAEHPBD@Z 0x004C78C0-0x004C78DA BYTE_EXACT
 // symbol    ?set_base_path@Midi@@UAEHPBD@Z
 int Midi::set_base_path(const char *path) {
-    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    Midi *const delegate = static_cast<Midi *>(device_);
     if (delegate != nullptr) {
         return delegate->set_base_path(path);
     }
@@ -1078,7 +1078,7 @@ int Midi::set_base_path(const char *path) {
 // ORIGINAL: 0x004C7AB0 ?is_trackset_playing@Midi@@QAE_NI@Z 0x004C7AB0-0x004C7AD0 BYTE_EXACT
 // symbol    ?is_trackset_playing@Midi@@UAE_NI@Z
 bool Midi::is_trackset_playing(unsigned int trackset) {
-    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    Midi *const delegate = static_cast<Midi *>(device_);
     if (delegate != nullptr) {
         return delegate->is_trackset_playing(trackset);
     }
@@ -1107,7 +1107,7 @@ bool Midi::is_trackset_playing(unsigned int trackset) {
       //   because ecx still holds it, so callers read a pointer as the int result.
 //   Historical reproduction claim is unverified; see the correction above.
 int Midi::set_play_type(unsigned int type) {
-    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    Midi *const delegate = static_cast<Midi *>(device_);
     if (delegate != nullptr) {
         return delegate->set_play_type(type);
     }
@@ -1139,6 +1139,9 @@ int Midi::set_attrib(unsigned long) { return 0x0B; }
 // symbol    ?set_mode@Midi@@QAEHH@Z
 int Midi::set_mode(int mode) {
     field_54_ ^= (field_54_ ^ static_cast<uint8_t>(mode)) & 1;
+    // The native body recurses on the object pointer stored at +0x3C; it does
+    // not dispatch a Midi provider virtual. This cast preserves the same
+    // receiver without asserting that the external provider is a game Midi.
     Midi *const child = static_cast<Midi *>(device_);
     if (child) child->set_mode(mode);
     return 0;
@@ -1148,40 +1151,40 @@ int Midi::set_mode(int mode) {
 // RECOVERY_BINDING: v1 {"evidence": ["git:f7bbce35:src/recovered/004c7f70.cpp", "src/ambience.h", "src/midi.h"], "reason": "Original audio event tables and compiler-call contracts identify this genuine owner operation; compatible historical seeds and matching obligations remain retained, not an acceptance verdict."}
 // symbol    ?sub_4c7f70@Midi@@UAEHHH@Z
 int Midi::sub_4c7f70(int a1, int a2) {
-    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
-    if (delegate) return delegate->slot044(a1, a2);
+    Midi *const delegate = static_cast<Midi *>(device_);
+    if (delegate) return delegate->sub_4c7f70(a1, a2);
     return 0x14;
 }
 // ORIGINAL: 0x004C7FA0 sub_4c7fa0 0x004C7FA0-0x004C7FC0 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:f7bbce35:src/recovered/004c7fa0.cpp", "src/ambience.h", "src/midi.h"], "reason": "Original audio event tables and compiler-call contracts identify this genuine owner operation; compatible historical seeds and matching obligations remain retained, not an acceptance verdict."}
 // symbol    ?sub_4c7fa0@Midi@@UAE_NI@Z
 bool Midi::sub_4c7fa0(unsigned int a1) {
-    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
-    if (delegate) return delegate->slot045(a1);
+    Midi *const delegate = static_cast<Midi *>(device_);
+    if (delegate) return delegate->sub_4c7fa0(a1);
     return false;
 }
 // ORIGINAL: 0x004C7FC0 sub_4c7fc0 0x004C7FC0-0x004C7FE7 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:f7bbce35:src/recovered/004c7fc0.cpp", "src/ambience.h", "src/midi.h"], "reason": "Original audio event tables and compiler-call contracts identify this genuine owner operation; compatible historical seeds and matching obligations remain retained, not an acceptance verdict."}
 // symbol    ?sub_4c7fc0@Midi@@UAEHHH@Z
 int Midi::sub_4c7fc0(int a1, int a2) {
-    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
-    if (delegate) return delegate->slot047(a1, a2);
+    Midi *const delegate = static_cast<Midi *>(device_);
+    if (delegate) return delegate->sub_4c7fc0(a1, a2);
     return 0x14;
 }
 // ORIGINAL: 0x004C7FF0 sub_4c7ff0 0x004C7FF0-0x004C8017 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:f7bbce35:src/recovered/004c7ff0.cpp", "src/ambience.h", "src/midi.h"], "reason": "Original audio event tables and compiler-call contracts identify this genuine owner operation; compatible historical seeds and matching obligations remain retained, not an acceptance verdict."}
 // symbol    ?sub_4c7ff0@Midi@@UAEHHH@Z
 int Midi::sub_4c7ff0(int a1, int a2) {
-    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
-    if (delegate) return delegate->slot046(a1, a2);
+    Midi *const delegate = static_cast<Midi *>(device_);
+    if (delegate) return delegate->sub_4c7ff0(a1, a2);
     return 0x14;
 }
 // ORIGINAL: 0x004C8020 sub_4c8020 0x004C8020-0x004C8043 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:f7bbce35:src/recovered/units/004c8020.cpp", "src/ambience.h", "src/midi.h"], "reason": "Original audio event tables and compiler-call contracts identify this genuine owner operation; compatible historical seeds and matching obligations remain retained, not an acceptance verdict."}
 // symbol    ?sub_4c8020@Midi@@UAEHH@Z
 int Midi::sub_4c8020(int a1) {
-    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
-    if (delegate) return delegate->slot060(a1);
+    Midi *const delegate = static_cast<Midi *>(device_);
+    if (delegate) return delegate->sub_4c8020(a1);
     return 0x14;
 }
 

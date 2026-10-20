@@ -113,8 +113,7 @@ def run_constructor(tmp_path, monkeypatch):
         ("// LIVE_FADE_DECLARATION", "src/sound.h", "class SoundFadeState {", "// RECOVERY_MEMBER: v1 SoundFadeState volume_"),
         ("// LIVE_SOUND_DECLARATION", "src/sound.h", "class Sound : public SoundFadeState {", "// Two independent sources agree on 0x54"),
         ("// LIVE_VOICE_DECLARATION", "src/voice.h", "class VoiceTx : public Sound {", "// The actual 32-bit product"),
-        ("// LIVE_DEVICE_INTERFACE", "src/soundx_sound_abi.h", "class SoundDeviceInterface {", None),
-        ("// LIVE_DEVICE_VIEW", "src/sound.cpp", "__forceinline SoundDeviceInterface *sound_device(", "}  // namespace\n\n/*\nPurpose: Ask the wrapped device whether it is playing"),
+        ("// LIVE_DEVICE_VIEW", "src/sound.cpp", "__forceinline Sound *sound_device(Sound *device)", "}  // namespace\n\n/*\nPurpose: Ask the wrapped device whether it is playing"),
         ("// LIVE_ROOT_FADE", "src/sound.cpp", "int SoundFadeState::set_fade(", "// Purpose: Return the next Sound")])
 
 
@@ -128,7 +127,7 @@ def test_actual_constructor_sets_owned_state_and_leaves_uninitialized_delay_unto
     ("src/sound.cpp", "loop_flag_30_ = 0;", "loop_flag_30_ = 1;"),
     ("src/sound.cpp", "Sound::set_fade(1000);", "Sound::set_fade(999);"),
     ("src/sound.cpp", "Sound::set_fade(1000);", "Sound::set_fade(1000); delay_ = 0;"),
-    ("src/sound.cpp", "device_ = 0;", "device_ = reinterpret_cast<void *>(1);"),
+    ("src/sound.cpp", "device_ = 0;", "device_ = reinterpret_cast<Sound *>(1);"),
     ("src/voice.cpp", "memset(&flags_54_, 0, sizeof(flags_54_));", "/* missing own-state clear */"),
 ])
 def test_actual_constructor_contract_rejects_damaged_initialization(tmp_path, monkeypatch, unit, before, after):

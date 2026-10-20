@@ -120,7 +120,7 @@ class Sound : public SoundFadeState {
  protected:
   // The fade prefix is inherited. Sound owns the wrapped device, loaded/
   // chain flags, linked-list neighbors, filename allocation and sound type.
-  void *device_;         // 0x3C
+  Sound *device_;  // 0x3C, recursively linked common Sound-family object
   uint32_t flags_40_;
   Sound *chain_prev_;     // 0x44, toward the head slot at 0x90DB20
   Sound *chain_next_;     // 0x48, toward the tail slot at 0x90DB1C
@@ -169,9 +169,10 @@ int __cdecl load_sound_dll();
 // slots it fills in ordinal order (GetProcAddress ordinal 1 lands at
 // index 0) and zeroes as a block on failure. The tree reads slots
 // individually by role through the typed value-loading accessors below.
-// The original provider objects behind these exports are DLL-private opaque
-// interfaces, not the game's Wave_Device, Midi_Device, or Wave_In_Device
-// facades. Definitions in sound_loader.cpp.
+// Ordinal 1 returns a common Sound-family object in its output slot. Its
+// factory mode determines the extension contract: mode 1 is Wave playback,
+// mode 2/5 is Midi, and modes 6/7 use distinct voice views. Ordinals 5/7/9
+// remain separately typed provider factories. Definitions in sound_loader.cpp.
 //
 // BYTES: a use is one deref with the address a relocation to our storage -
 // the image's own shape with its own relocation - which is why the natural
@@ -189,9 +190,9 @@ extern HMODULE SoundDllModule;
 // Pinned soundx.dll exports ordinals 1..11 form one fixed callable contract.
 // Keep their physically observed storage as eleven opaque pointer words, but
 // centralize each ABI conversion here. These accessors return the current
-// slot value on every call; they do not cache DLL-private provider objects or
-// turn them into game-side SoundDeviceBase subclasses.
-typedef int (__cdecl *SoundXCreateSoundProc)(void **, const char *, int);
+// slot value on every call; they do not cache provider objects.
+typedef int (__cdecl *SoundXCreateSoundProc)(Sound **,
+                                             const char *, int);
 typedef int (__cdecl *SoundXDeleteSoundProc)(void *);
 typedef int (__cdecl *SoundXInitTimerProc)(unsigned long, unsigned long);
 typedef int (__cdecl *SoundXReleaseSoundProc)();

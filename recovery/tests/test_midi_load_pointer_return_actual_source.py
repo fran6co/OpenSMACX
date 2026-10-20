@@ -30,6 +30,7 @@ def harness(method: str) -> str:
 #include <cstring>
 #include <sys/mman.h>
 #define __cdecl
+class Sound;
 ''' + aliases + r'''
 typedef void *SoundDllProcsTable[11];
 SoundDllProcsTable SoundDllProcs = {};
@@ -37,9 +38,9 @@ SoundDllProcsTable SoundDllProcs = {};
 int WaveDeviceReleaseGuard = 0;
 static int factory_result = 0;
 static bool factory_sets_device = true;
-static void *created_device = reinterpret_cast<void *>(0x1234);
+static Sound *created_device = reinterpret_cast<Sound *>(0x1234);
 static int factory_calls = 0;
-static void **factory_slot = 0;
+static Sound **factory_slot = 0;
 static const char *factory_name = 0;
 static int factory_mode = 0;
 static int base_calls = 0;
@@ -49,14 +50,14 @@ static bool check(const char *label, bool condition) {
     if (!condition) std::fprintf(stderr, "FAIL: %s\n", label);
     return condition;
 }
-static int factory(void **slot, const char *name, int mode) {
+static int factory(Sound **slot, const char *name, int mode) {
     ++factory_calls; factory_slot = slot; factory_name = name; factory_mode = mode;
     if (factory_sets_device) *slot = created_device;
     return factory_result;
 }
 class Sound {
 protected:
-    void *device_;
+    Sound *device_;
 public:
     Sound() : device_(0) {}
     int load(const char *name) { ++base_calls; base_name = name; return base_result; }
@@ -64,13 +65,13 @@ public:
 class Midi : public Sound {
 public:
     int load(const char *name);
-    void set_device(void *value) { device_ = value; }
+    void set_device(void *value) { device_ = reinterpret_cast<Sound *>(value); }
     void *device() const { return device_; }
 };
 ''' + method + r'''
 static void reset() {
     factory_result = 0; factory_sets_device = true;
-    created_device = reinterpret_cast<void *>(0x1234);
+    created_device = reinterpret_cast<Sound *>(0x1234);
     factory_calls = base_calls = 0; factory_slot = 0;
     factory_name = base_name = 0; factory_mode = 0;
     factory_result = 0; base_result = 29;
