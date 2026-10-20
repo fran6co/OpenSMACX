@@ -1,0 +1,25 @@
+{
+  "event_id": "1ab5ef3520ecf529497cc8693315d025c2ab6dcab3b6befb664998a8a0bb762b",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Current source action532570 RECOVERY_BINDING explicitly records original NUL log storage68C2DC among pinned original literals. This is a fourth existing, nonexact user of the same bounded original Client releasing lock payload; preserve it as a coupled owner subject while keeping all bodies unchanged.",
+      "Correction to the task seed prose: the independently cited existing rationale near source line7040 belongs to NetDaemon::action532570, NOT around530DB0 as mistyped in initial authorization. Primary literal anchors530D00/531700 and all selected literal spans/symbols remain unchanged. No new original identity or stronger byte/reference claim is granted.",
+      "Scope remains annotation-only src/netdaemon.cpp. The three original exact subjects are measured for reference resolution; action stays independently mismatched and cannot borrow their passes. No extended matching iteration or behavior change is authorized."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5449072,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "retain-shared-action-literal-user-oct20al",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:netdaemon-literal-identities-oct20al"
+}

@@ -1,0 +1,36 @@
+{
+  "event_id": "5d201b73146f7ea9ade048916390cc715fffb04e7816196742371aa53c4915ea",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Coordinator explicitly expands the earlier annotation-only restriction for this discovered storage identity. Only src/netdaemon.cpp remains editable. Add one file-private static writable char NetDaemonLockMovePendingText[] initialized from MOVEPENDING (12bytes including NUL), and replace only lock530630 first popup label with that namedarray, removing its now-unnecessary C cast. Keep every branch, call order, state and other argument unchanged; all other bodies/types/layout/flags/claims/lessons stay untouched.",
+      "This is a bounded original storage correspondence, not assertion of original identifier/declaration spelling, complete allocation/lifetime or runtime immutability. Preserve original writable storage and the distinct address identity. Existing three inline-literal uses remain; their RECOVERY_LITERAL68C474..68C480 is valid only after fresh emitted ownership/reference verification confirms pooling no longer includes lock.",
+      "After fresh coordinator compiler inspection establishes actual unique emittedarray symbol and char[12] extent, add its source-owned RECOVERY_OBJECT v2 span68C21C..68C228 evidence530630 through native object writer. Do not guess the COFF name or encode old addresses into C++. Worker initially authors only C++ declaration/call change, preserving the two current literal records; coordinator owns probing, symbol/extent/data checks and source-metadata publication.",
+      "Require actual current production body and every emitted-reference check for all four MOVEPENDING users, fresh data/unchanged-replica/body-damage controls and no whole-domain exact/strict-pass losses. Native outside residual/data changes remain explicit, not waived; full selected-image/data/linked preservation remains separate. Unchanged Client cohort may not hide the new lock storage obligation or pending discovery."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5441072,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5445504,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5448000,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "b31518cfc4e1e0b9084b050c2282483301da9efc0ff227135e940451ab8a9a2c",
+  "request_id": "recover-distinct-lock-label-oct20al",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:netdaemon-literal-identities-oct20al"
+}

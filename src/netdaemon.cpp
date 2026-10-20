@@ -70,6 +70,14 @@ int __cdecl netdaemon_deflate_buffer(unsigned char *, unsigned long *,
 #include <cstring>
 #include "replaywin.h"     // ReplayEventBytes: replay recorder's byte length
 
+// lock() uses a distinct same-text popup payload from maybe_lock(),
+// order_veh() and veh_drop(): the pinned pushes at 0x53066A target 0x68C21C,
+// while those three paths target 0x68C474. This writable 12-byte source
+// storage models that bounded original correspondence only; it does not assert
+// the original variable name, complete allocation extent, or lifetime.
+// RECOVERY_OBJECT: v2 0x0068C21C 0x0068C228 _NetDaemonLockMovePendingText 0x00530630
+static char NetDaemonLockMovePendingText[] = "MOVEPENDING";
+
 // do_checksums(4), original 51E760, copies 0x54 bytes from its calculated
 // vector; net_upkeep 5296E6..5296F4 sends the same 21 dwords. The complete
 // original allocation extent is unknown; this is the observed storage window.
@@ -942,6 +950,7 @@ void NetDaemon::unlock() {
     // 0x1BC8 and 0x1BCC are that entry's dword_[2], dword_[3], dword_[9] and
     // dword_[10]. Named through the declared member rather than a raw offset.
     if (IsMultiplayerNet != 0) {
+        // RECOVERY_LITERAL: v1 0x0068C2DC 0x0068C2F2 ??_C@_0BG@KDKM@Client?5releasing?5lock?$AA@ 0x00530D00
         log_say("Client releasing lock", ConsoleGlobal.faction_id_, 0, 0);
         message_data(0x2212, 0, 0, 0, 0, 0);
         channels_[1].leading_words_[3] = 0;
@@ -2899,7 +2908,7 @@ int NetDaemon::lock(int target, int x, int y, int payload_18, int payload_1C, in
         if (channels_[1].trailing_words_[3] != 0) {
             return 1;
         }
-        NetMsgPrimary.pop((const char *)"MOVEPENDING", 0, 2, (const char *)0);
+        NetMsgPrimary.pop(NetDaemonLockMovePendingText, 0, 2, (const char *)0);
         return 1;
     }
 
@@ -6902,6 +6911,7 @@ int NetDaemon::maybe_lock(int *veh_id, int flag, int payload_1C, int payload_20,
       ++channels_[1].trailing_words_[5];
       // The image compares the count SIGNED here (`jle`), not unsigned.
       if (1 < static_cast<int>(channels_[1].trailing_words_[5])) {
+        // RECOVERY_LITERAL: v1 0x0068C474 0x0068C480 ??_C@_0M@PPKM@MOVEPENDING?$AA@ 0x00531700
         NetMsgPrimary.pop("MOVEPENDING", 0, 2, 0);
       }
     }
