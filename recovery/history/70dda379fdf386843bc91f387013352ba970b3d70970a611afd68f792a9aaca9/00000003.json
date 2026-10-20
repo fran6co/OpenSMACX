@@ -1,0 +1,17 @@
+{
+  "event_id": "78cf0909ce401dacfbd45c23f1ba50451ebe57de98609adc3d1e90aeddfbcdba",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "spot-copy-api-has-other-callers",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Preserve the existing out-parameter overload and every existing caller unchanged. Within the already expanded Spot header scope, a new const RECT reference one-argument overload may expose the same indexed record to the single new AlphaMenu placement caller; no field/layout or unrelated caller changes. This corrects the prior sole-caller statement, not the pinned single-coordinate read evidence."
+    ]
+  },
+  "previous_event": "809c9a55fca7611f0aa85be477a293ab8a41b505a4816fe0c06da5aa522221b1",
+  "request_id": "preserve-copy-api-add-borrowed-read-overload",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:alphamenu-rect-snapshot-oct20c"
+}

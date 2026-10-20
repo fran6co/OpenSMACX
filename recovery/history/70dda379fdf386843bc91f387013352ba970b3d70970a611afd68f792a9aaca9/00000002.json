@@ -1,0 +1,20 @@
+{
+  "event_id": "809c9a55fca7611f0aa85be477a293ab8a41b505a4816fe0c06da5aa522221b1",
+  "payload": {
+    "affects": [
+      "entity-27faf5f6654bf50757ecb71cd5236cb99301430ac9155e92c6022eacab405e4f"
+    ],
+    "author": "coordinator",
+    "discovery_id": "spot-copy-api-has-other-callers",
+    "evidence": [
+      "Complete source-reference scan contradicts the sole-caller premise in the first expansion evidence: five Menu callsites and another AlphaMenu callsite also use the existing out-parameter copy API."
+    ],
+    "hypothesis": "The existing out-parameter Spot get_rect_at API can be replaced outright because AlphaMenu placement is its sole caller.",
+    "kind": "discovery"
+  },
+  "previous_event": "29ae1b276aec3a6b3d9e63077f99bc51d18bd3f1299feb975e52002d63aa171b",
+  "request_id": "spot-copy-api-has-other-callers",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:alphamenu-rect-snapshot-oct20c"
+}
