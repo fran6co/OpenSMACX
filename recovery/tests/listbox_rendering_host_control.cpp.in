@@ -35,12 +35,12 @@ struct Buffer {
     Buffer *copy_destination;
     int sx, sy, dx, dy, width, height;
     int clips, boxes, wraps, writes;
-    int rect_fills, rect_fill_color;
-    RECT first_clip, last_clip, clips_seen[16], rect_fill_rect;
+    int buffer_rect_fills, buffer_rect_fill_color;
+    RECT first_clip, last_clip, clips_seen[16], buffer_rect_fill_rect;
     int first_clip_set;
     Buffer() : copies(0), copy_destination(0), sx(0), sy(0), dx(0), dy(0),
                width(0), height(0), clips(0), boxes(0), wraps(0), writes(0),
-               rect_fills(0), rect_fill_color(0), first_clip_set(0) {}
+               buffer_rect_fills(0), buffer_rect_fill_color(0), first_clip_set(0) {}
     int pixel_width() const { return 37; }
     int pixel_height() const { return 19; }
     int copy(Buffer *source, int x, int y, int to_x, int to_y, int w, int h) {
@@ -54,7 +54,8 @@ struct Buffer {
         last_clip = *r;
     }
     void fill(RECT *r, int color) {
-        ++rect_fills; rect_fill_color=color; rect_fill_rect=*r;
+        ++buffer_rect_fills; buffer_rect_fill_color=color;
+        buffer_rect_fill_rect=*r;
     }
     void set_text_color(int, int, int, int) {}
     void set_text_color2(int, int, int, int) {}
@@ -92,10 +93,17 @@ struct Win {
 struct GraphicWin : Win, Buffer {
     RECT work;
     int fills, fill_value, redraws, updates;
+    int graphic_rect_fills, graphic_rect_fill_color;
+    RECT graphic_rect_fill_rect;
     GraphicWin() : fills(0), fill_value(0), redraws(0), updates(0) {
         work.left=1; work.top=2; work.right=40; work.bottom=22;
+        graphic_rect_fills=0; graphic_rect_fill_color=0;
     }
     void fill(int value) { ++fills; fill_value=value; }
+    void fill(RECT *r, int color) {
+        ++graphic_rect_fills; graphic_rect_fill_color=color;
+        graphic_rect_fill_rect=*r;
+    }
     RECT *buffer_working_rect() { return &work; }
     void redraw() { ++redraws; }
     void soft_update() { ++updates; }
@@ -222,9 +230,10 @@ int main() {
     focused_row.field_64_=31; focused_row.field_68_=11;
     focused_row.draw_item(0);
     const RECT full_focus_row={7, 3, 24, 14};
-    assert(focused_row.focus_checks==1 && focused_row.rect_fills==1);
-    assert(focused_row.rect_fill_color==77);
-    assert(same_rect(focused_row.rect_fill_rect, full_focus_row));
+    assert(focused_row.focus_checks==1 && focused_row.graphic_rect_fills==1);
+    assert(focused_row.graphic_rect_fill_color==77);
+    assert(same_rect(focused_row.graphic_rect_fill_rect, full_focus_row));
+    assert(focused_row.buffer_rect_fills==0);
     assert(focused_row.clips_seen[2].left==full_focus_row.left
         && same_rect(focused_row.clips_seen[2], full_focus_row));
 
@@ -236,7 +245,8 @@ int main() {
     unfocused_row.field_64_=31; unfocused_row.field_68_=11;
     unfocused_row.draw_item(0);
     const RECT inset_focus_row={8, 3, 23, 14};
-    assert(unfocused_row.focus_checks==1 && unfocused_row.rect_fills==0);
+    assert(unfocused_row.focus_checks==1 && unfocused_row.graphic_rect_fills==0);
+    assert(unfocused_row.buffer_rect_fills==0);
     assert(same_rect(unfocused_row.clips_seen[2], inset_focus_row));
 
     // The image clips the selected full row even when the selected fill color
@@ -251,7 +261,8 @@ int main() {
     sentinel_focus_row.field_64_=31; sentinel_focus_row.field_68_=11;
     sentinel_focus_row.draw_item(0);
     assert(sentinel_focus_row.focus_checks==1
-        && sentinel_focus_row.rect_fills==0);
+        && sentinel_focus_row.graphic_rect_fills==0);
+    assert(sentinel_focus_row.buffer_rect_fills==0);
     assert(same_rect(sentinel_focus_row.clips_seen[2], full_focus_row));
 
     ListBox box;

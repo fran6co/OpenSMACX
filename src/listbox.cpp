@@ -974,7 +974,7 @@ after_scroll_position:
         && window->is_dialog_focus() != 0) {
         canvas->set_clip(&row);
         if (field_14_ != static_cast<uint32_t>(-1)) {
-            canvas->fill(&row, static_cast<int>(field_14_));
+            window->fill(&row, static_cast<int>(field_14_));
         }
     }
 

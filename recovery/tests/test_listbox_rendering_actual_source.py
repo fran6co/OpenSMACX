@@ -151,6 +151,16 @@ def test_extracted_listbox_scroll_render_and_dialog_bridges(tmp_path, compiler_n
                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     assert result.returncode != 0, "wrong selected-row focus mutant survived"
 
+    wrong_fill_owner = draw_body.replace(
+        "window->fill(&row, static_cast<int>(field_14_));",
+        "canvas->fill(&row, static_cast<int>(field_14_));", 1)
+    assert wrong_fill_owner != draw_body
+    binary = compile_control(tmp_path / "wrong_fill_owner",
+                             replace_draw(wrong_fill_owner))
+    result = subprocess.run([str(binary)], check=False, timeout=30,
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    assert result.returncode != 0, "Buffer fill receiver mutant survived"
+
     missing_live_guard = draw_body.replace(
         "index <= items.entry_count_ - 1",
         "index <= items.entry_count_ - 1 || items.entry_count_ <= index", 1)
