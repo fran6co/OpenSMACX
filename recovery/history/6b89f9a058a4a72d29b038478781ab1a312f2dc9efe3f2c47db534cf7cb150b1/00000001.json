@@ -1,0 +1,21 @@
+{
+  "event_id": "fed1f1a13657ee3d892a0f6ea9415eb3ec4c8933b5c8cad66b853e5414220f8d",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_media_state_observations_oct20z.py"
+    ],
+    "evidence": [
+      "Independent complete original review establishes MediaDescriptor+98 is cross-thread protocol storage: creator5CAE80 starts worker5CAAB0 and exchanges states, sync5CB220 and stop5CB660 also exchange/poll. Helper5CB610 reads state at5CB626 then independently5CB633/5CB63E. Current ordinary LONG source coalesces last two observations; both split-branch variants failed to restore original output.",
+      "Authorize one new bounded body-only screen using a const volatile LONG reference for this helper actual shared-state observations, not arbitrary volatile scheduling. Preserve original short-circuit/read/call order, existing SDK InterlockedExchange calls and LONG member/ABI. SDK LPLONG is unqualified; no field-qualifier or atomic dequalification adapter/change is authorized. This avoids changing producers/layout while recovering demonstrated asynchronous read behavior.",
+      "If physically supported, implement observed-read source and one meaningful actual-source/pinned/native observation control within this task; no copied byte bodies, artificial barriers, safetyfix, guessed interleavings, provider/Git/native compile by workers, claimdemotion or fullruntimeacceptance. Qualifier alone is not atomicity or ordering. Other polling consumers remain evidence obligations; no claim that source abstract-machine races are portably solved."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "media-shared-state-observation-review-oct20z",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:matching-media-oct20z"
+}

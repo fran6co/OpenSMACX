@@ -2311,13 +2311,14 @@ extern "C" MediaDescriptor *__cdecl sub_5cae80(
   return 0;
 }
 
-// ORIGINAL: 0x005CB610 sub_5cb610 0x005CB610-0x005CB652
+// ORIGINAL: 0x005CB610 sub_5cb610 0x005CB610-0x005CB652 BYTE_EXACT
 // symbol    _sub_5cb610
 // kind      game
 extern "C" int __cdecl sub_5cb610(MediaDescriptor *d) {
   if (d->runtime != 0) {
-    if (d->runtime->protocol_gate != 0) return d->state != 6;
-    if (d->state == 2 || d->state == 3) return 1;
+    const volatile LONG &observed_state = d->state;
+    if (d->runtime->protocol_gate != 0) return observed_state != 6;
+    if (observed_state == 2 || observed_state == 3) return 1;
   }
   return 0;
 }
