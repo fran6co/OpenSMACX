@@ -1,0 +1,45 @@
+{
+  "event_id": "5611aab3680c81a5348dabd33c50cf52e9a3ca6b36394bd973c91d8d00b6a83b",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/veh.cpp"
+    ],
+    "evidence": [
+      "The original frozen build/source epoch and raw physical two-body complement remain retained:192 objects PASS,1 FAIL in veh.cpp.obj; zero-omission192PASS1FAIL. Whole known-domain actual matching and strict checks have no prior loss. This is central read-only compiled-collateral admission for four named already-mapped functions, not permission to edit their C++ or waive the whole TU, reset a task baseline, or promote automatic/full linked preservation.",
+      "Independent reviewer and coordinator confirm unchanged battle_compute501DA0 swaps two distinct frame MOV loads in its9024-byte COMDAT at9A3..9A8; all590 name-resolved relocations/addends and other bytes are unchanged. Action_give4CEDE0 similarly swaps independent EAX/EBX own-frame loads at217..21C in1280 bytes, all74 relocations unchanged, and neither block has an interior branch/label entry. MOVs preserve flags and no intervening consumer/call/store exists.",
+      "Unchanged goody_box57A660 has four frame-load commutations and an edge-compensation split: old1C81 loadsEBX thenjumps2EF which loadsEDX andEDI; candidate1C81 preloadsEDI, loadsEBX, thenjumps2F2 which loadsEDX, preserving joined values. Other incoming edges still execute both required loads. Switch-table semantic target order remains unchanged; one target moves+3 to equivalent code and table storage moves+4. External call targets/addends remain the same. Tail padding differs. This is not a redundant reload; retain correct edge-state reasoning and raw exactness obligation.",
+      "Unchanged order_veh5947C0 has eight code bytes differing within2C3F..2C47 in17872 bytes. The same mutable GameDataStateStorage+58 byte and own-frame[-48] byte are loaded into opposite CL/DL registers before commutative TEST and identical JNE. Divergent low-byte assignments are dead or overwritten on every successor before use. Exactly one DIR32 relocation moves+3 with the same symbol and58 addend; all other code/targets remain unchanged. No semantic or type fix is justified.",
+      "Action_airdrop and static order_veh_monolith_goody_corridor raw bytes/call relocations continue to reach the sole offset-zero goody_box COMDAT definition. Their native section-content identity dependency changes are not target changes. The earlier reviewer claim that battle_compute was identical was explicitly retracted; direct object hashes and instruction offsets agree with the raw native report.",
+      "Authorize a SEPARATE fresh native COFF observation projecting only the two actually edited mapped bodies plus these four named reviewed compiled-body families, protecting all other sections, symbols, shared data and callers. Preserve the original narrower red observation and zero-omission report unmodified; do not claim they passed, discharge linked preservation, weaken gates or grant byte claims. Relevant source CPP/header inputs remain exactly those in the frozen fresh compiler receipts; this post-epoch admission changes scope metadata only. Manual coordinator integration remains contingent on full source/claim/reference checks, independent review and destination build/reproduction."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5250464,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5744224,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5041632,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5851072,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "f8f04edb951449ec4686c55fb0d4cafc3295dbb687dcaa2e6c764478a95cb8eb",
+  "request_id": "central-boom-compiled-collateral-review-oct21b",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:veh-cohort-match-oct20b"
+}

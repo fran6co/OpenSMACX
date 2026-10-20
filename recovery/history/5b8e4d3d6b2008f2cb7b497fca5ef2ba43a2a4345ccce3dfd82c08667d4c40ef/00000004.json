@@ -1,0 +1,22 @@
+{
+  "event_id": "a06d6921c37433f2eaca7c11712244f456d347bbe7e0461fdcf16505d8640827",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_bitmask_owner.py",
+      "src/general.cpp"
+    ],
+    "evidence": [
+      "Fresh one-candidate schema2 screen completed with unchanged replica and body-damage controls. Saved-low3-bits-before-output-write form is17/17 BYTE_EXACT under historical Oy- profile with no exact-neighbor loss; non-Oy- profile still misses. Controlled inclusive-rectangle candidate is negative and is not authorized for application.",
+      "Authorize applying only the measured bitmask body: capture const int shift=input&7, then write offset=input/8 followed by mask=1<<shift. Preserve by-value input, signed truncating division, low3bits, aliased output final value, declaration/ABI and existing source identities/spans/claims/history. No flags, hierarchy, type or unrelated caller changes.",
+      "Update only existing bitmask owner test spelling assertions to check shift capture precedes offset and mask writes. Retain all runtime cases for negative/extreme inputs, input/output alias and both outputs sharing storage; do not weaken or remove them. Native record must independently remeasure existing historical claim. Fresh whole production objects, scoped physical complement, full known-domain exact/strict outcomes, build/link, independent review and destination verification decide integration; controlled legacy match is not production matching or acceptance proof."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "94d4fa1b30cf0d4487092563776f72442c042bb9854eeea914bd163683332654",
+  "request_id": "central-bitmask-positive-candidate-application-oct21b",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:bitmask-owner-oct16"
+}

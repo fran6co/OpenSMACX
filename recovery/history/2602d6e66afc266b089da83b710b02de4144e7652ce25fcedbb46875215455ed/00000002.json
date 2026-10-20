@@ -1,0 +1,23 @@
+{
+  "event_id": "f8f04edb951449ec4686c55fb0d4cafc3295dbb687dcaa2e6c764478a95cb8eb",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_boom_live_window_reload_oct21.py",
+      "src/veh.cpp"
+    ],
+    "evidence": [
+      "Main independently decoded complete pinned504AA0 body: snapshot copy5053C8 is followed by fresh MapWinTable load5053F7 before draw_tile5053FE; include this read in the already authorized receiver refresh correction.",
+      "Pinned snapshot copies read stored snapshot Buffer DIB width+80 and negatedbiHeight+84 at50509A/5050AC,505392/5053A4,505434/505446,50548A/505490 and frame505B71/505B77 or505BAE/505BB4, rather than cached requested rectangle extents. Current copies use width,-height fromRECT, reversing the normal positive copied height and disregarding retained storage if init fails. Buffer::pixel_width()/pixel_height() already expose exact observed fields; no layout or header change is needed.",
+      "Authorize replacing only these snapshot copy dimensions with the corresponding actual snapshot pixel_width()/pixel_height(), including selected snapshot in per-frame restore; retain area-based dimensions as init arguments only. Preserve the original ignored init result, unsafe/null/error paths, copy source-destination roles and original quirks. No guards/normalization or animation logic changes.",
+      "Extend actual-source controls with failed/retained-size init probes and deliberate mismatch between requested and stored dimensions, positive copied height assertions, and compile-success mutants restoring cached dimensions/wrong sign or omitting the pre-draw_tile reload. Evidence tests must exercise actual extracted snapshot setup and per-frame restore fragments, not a reimplemented model. Existing four reload mutants remain; coordinator native matching/build/preservation review obligations all remain."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "7cda8bb188bf7aeb6a2b6e0ebd8c8082ccee49199695d7a9fe1c697e3a6c0f09",
+  "request_id": "central-boom-stored-snapshot-extents-oct21b",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:veh-cohort-match-oct20b"
+}

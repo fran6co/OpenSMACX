@@ -87,6 +87,7 @@ class Heap;  // defined in heap.h; the owner slot carries one
 // constructed on that block captures it and clears the slot.
 extern Heap *StringAllocationHeap;
 
+// RECOVERY_GENERATED: v1 vtable 0x006693AC ? ??_7StringAllocationBase@@6B@ 0x00402313
 class StringAllocationBase {
  public:
   // Inline so it inlines into the implicit StringStruct/StringList
@@ -216,6 +217,7 @@ class StringStruct : public virtual StringAllocationBase {
   // primary slot 0. Removal 0x00402992 calls slot 1 before destroying it.
   // The primary table ends where the separate allocation-base table begins
   // at 0x006693AC; that table's destructor is not a third primary slot.
+  // RECOVERY_GENERATED: v1 vtable 0x006693A0 ? ??_7StringStruct@@6BStringAllocationBase@@@ 0x0040103B
   // RECOVERY_GENERATED: v1 vtable 0x006693A4 0x006693AC ??_7StringStruct@@6B0@@ 0x006086F0
   virtual int on_insert(void *payload);
   virtual void on_remove(void *payload);
@@ -320,6 +322,7 @@ class StringList : public StringStruct {
   // constructor (0x00600860) installs this table in both embedded lists;
   // the next table at 0x006698CC belongs to BasePop's Buffer subobject.
   // Its 0x004070B0 deleting-destructor thunk adjusts that receiver by -0x444.
+  // RECOVERY_GENERATED: v1 vtable 0x006698C0 ? ??_7StringList@@6BStringAllocationBase@@@ 0x0044510E
   // RECOVERY_GENERATED: v1 vtable 0x006698C4 0x006698CC ??_7StringList@@6BStringStruct@@@ 0x006086F0
   virtual int on_insert(void *payload);
   virtual void on_remove(void *payload);

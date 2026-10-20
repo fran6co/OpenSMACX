@@ -48,7 +48,9 @@ def test_bitmask_owner_and_two_argument_facility_predicate_are_direct():
     assert "bitmask_call" not in code
     assert owner.count(BITMASK_SIGNATURE + " {") == 1
     bitmask = _definition(owner, BITMASK_SIGNATURE)
-    assert bitmask.index("*offset = input / 8;") < bitmask.index("*mask = 1 << (input & 7);")
+    assert (bitmask.index("const int shift = input & 7;")
+            < bitmask.index("*offset = input / 8;")
+            < bitmask.index("*mask = 1 << shift;"))
     assert "input >> 3" not in bitmask
     assert "if (" not in bitmask
 

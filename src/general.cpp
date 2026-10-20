@@ -1509,8 +1509,9 @@ Status: Complete
 // Original mapped callers use this shared utility; the older header-inline
 // policy was not supported by positive inline evidence.
 void __cdecl bitmask(int input, int *offset, int *mask) {
+    const int shift = input & 7;
     *offset = input / 8;
-    *mask = 1 << (input & 7);
+    *mask = 1 << shift;
 }
 
 

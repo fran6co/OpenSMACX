@@ -1775,8 +1775,13 @@ int __cdecl boom(int x, int y, int flags) {
         }
         if ((flags & 0x40) == 0) {
             original_screen_snapshots[slot].init(width, height, 0, nullptr);
+            window = MapWinTable[slot];
+            window_buffer =
+                static_cast<Buffer *>(static_cast<GraphicWin *>(window));
             window_buffer->copy(&original_screen_snapshots[slot], area.left,
-                                area.top, 0, 0, width, -height);
+                                area.top, 0, 0,
+                                original_screen_snapshots[slot].pixel_width(),
+                                original_screen_snapshots[slot].pixel_height());
         }
         if (((flags & 2) == 0 || (flags & 0x20) != 0) &&
             (flags & 0x40) == 0) {
@@ -1786,6 +1791,7 @@ int __cdecl boom(int x, int y, int flags) {
             (flags & 0x40) == 0) {
             VehDrawSuppressedVehicle = (flags & 8) == 0
                 ? VehDrawSelection689F28 : VehDrawSelection689F2C;
+            window = MapWinTable[slot];
             window->draw_tile(x, y, 0);
             VehDrawSuppressedVehicle = -1;
             window = MapWinTable[slot];
@@ -1793,10 +1799,19 @@ int __cdecl boom(int x, int y, int flags) {
                 static_cast<Buffer *>(static_cast<GraphicWin *>(window));
         }
         redrawn_map_snapshots[slot].init(width, height, 0, nullptr);
+        window = MapWinTable[slot];
+        window_buffer =
+            static_cast<Buffer *>(static_cast<GraphicWin *>(window));
         window_buffer->copy(&redrawn_map_snapshots[slot], area.left, area.top,
-                            0, 0, width, -height);
+                            0, 0, redrawn_map_snapshots[slot].pixel_width(),
+                            redrawn_map_snapshots[slot].pixel_height());
+        window = MapWinTable[slot];
+        window_buffer =
+            static_cast<Buffer *>(static_cast<GraphicWin *>(window));
         original_screen_snapshots[slot].copy(window_buffer, 0, 0,
-                                             area.left, area.top, width, -height);
+                                             area.left, area.top,
+                                             original_screen_snapshots[slot].pixel_width(),
+                                             original_screen_snapshots[slot].pixel_height());
     }
 
     if ((flags & 0x60) != 0 || !any_window) return 0;
@@ -1891,6 +1906,7 @@ int __cdecl boom(int x, int y, int flags) {
                         saved_rectangles[slot].top,
                         ExplosionColorTables[table_row]);
                 }
+                window = MapWinTable[slot];
                 window->update(&saved_rectangles[slot], 0);
                 if (IsMultiplayerNet) break;
             }
@@ -1912,10 +1928,6 @@ int __cdecl boom(int x, int y, int flags) {
                 MapWin *const window = MapWinTable[restore_slot];
                 Buffer *const destination =
                     static_cast<Buffer *>(static_cast<GraphicWin *>(window));
-                const int width = saved_rectangles[restore_slot].right -
-                                  saved_rectangles[restore_slot].left;
-                const int height = saved_rectangles[restore_slot].bottom -
-                                   saved_rectangles[restore_slot].top;
                 const bool use_redrawn_snapshot = flic_mode
                     ? (play_animation == 0)
                     : ((flags & 2) != 0 && frame > 7);
@@ -1924,7 +1936,8 @@ int __cdecl boom(int x, int y, int flags) {
                     : original_screen_snapshots[restore_slot];
                 snapshot.copy(destination, 0, 0,
                               saved_rectangles[restore_slot].left,
-                              saved_rectangles[restore_slot].top, width, -height);
+                              saved_rectangles[restore_slot].top,
+                              snapshot.pixel_width(), snapshot.pixel_height());
                 if (IsMultiplayerNet) break;
             }
         }

@@ -38,6 +38,8 @@ class Popup;
   */
 class SetupWin : public GraphicWin {
  public:
+  // RECOVERY_GENERATED: v1 vtable 0x0066D8E8 ? ??_7SetupWin@@6BWin@@@ 0x004AD957
+  // RECOVERY_GENERATED: v1 vtable 0x0066D8E0 ? ??_7SetupWin@@6BBuffer@@@ 0x004AD95D
   int do_menu(char* a1, int a2, int a3);
   int do_menu(Popup *popup, int menu_kind, int flags);
   // 0x004ADB70  ?do_menu_rightside@SetupWin@@QAEHPADH@Z - public, __thiscall,
