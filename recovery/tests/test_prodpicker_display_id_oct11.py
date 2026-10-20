@@ -1,5 +1,6 @@
 """Actual production-row classification/rendering; not whole-game proof."""
-from dataclasses import fields
+from collections import Counter
+from dataclasses import replace
 from pathlib import Path
 import json
 import resource
@@ -31,20 +32,69 @@ def restore_prodpicker_display_id(text):
     return migration(text,reverse=True) if 'uint32_t displayBits =' in text else text
 
 
-def test_bounded_definition_originals_and_historical_notes():
+def mapping_record(text, path, address):
+    records = [record for record in read_text(text, path)
+               if record.address == address]
+    assert len(records) == 1
+    return records[0]
+
+
+def lesson_signatures(record):
+    return Counter(
+        (item.kind, item.key, item.prose, tuple(text for _, text in item.lines))
+        for item in (record.origin or ()))
+
+
+def assert_record_continuity(before, current):
+    assert current.address == before.address
+    assert current.name == before.name
+    assert current.image_spans == before.image_spans
+    assert not before.byte_exact or current.byte_exact
+    assert not before.semantic or current.semantic
+    assert lesson_signatures(before) <= lesson_signatures(current)
+
+
+def assert_mapping_continuity(before_text, current_text, path, address):
+    before = mapping_record(before_text, path, address)
+    current = mapping_record(current_text, path, address)
+    assert_record_continuity(before, current)
+
+
+def test_original_mapping_claim_and_history_continuity():
     path=ROOT/'src/prodpicker.cpp'
     old=subprocess.check_output(['git','show',BASE+':src/prodpicker.cpp'],cwd=ROOT,text=True)
     expected=migration(old)
-    assert path.read_text()==expected and restore_prodpicker_display_id(expected)==old
-    for a,b in zip(read_text(old,path),read_text(expected,path),strict=True):
-        for field in fields(a):
-            if field.name not in {'line','region','origin'}:
-                assert getattr(a,field.name)==getattr(b,field.name)
-        lesson=lambda r:[(l.kind,l.key,l.prose,tuple(t for _,t in l.lines)) for l in r.origin]
-        assert lesson(a)==lesson(b)
+    assert expected != old
+    assert restore_prodpicker_display_id(expected) == old
+    assert_mapping_continuity(old, path.read_text(), path, 0x4927C0)
     from match_recovery.tasks import Task
     task=Task.from_dict(json.loads((ROOT/'recovery/tasks/prodpicker-display-id-oct11.json').read_text()))
     assert task.base_revision==BASE and {s.address for s in task.subjects}=={0x4927C0}
+
+
+def test_mapping_continuity_controls_reject_lost_facts_and_allow_added_history():
+    path=ROOT/'src/prodpicker.cpp'
+    before_text=subprocess.check_output(['git','show',BASE+':src/prodpicker.cpp'],cwd=ROOT,text=True)
+    current_text=path.read_text()
+    before=mapping_record(before_text,path,0x4927C0)
+    current=mapping_record(current_text,path,0x4927C0)
+    assert before.origin
+
+    with pytest.raises(AssertionError):
+        assert_record_continuity(before,replace(current,address=current.address+1))
+    with pytest.raises(AssertionError):
+        assert_record_continuity(before,replace(current,name=current.name+'_mutant'))
+    span=current.image_spans[0]
+    with pytest.raises(AssertionError):
+        assert_record_continuity(before,replace(current,image_spans=((span[0],span[1]-1),)))
+    with pytest.raises(AssertionError):
+        assert_record_continuity(replace(before,byte_exact=True),replace(current,byte_exact=False))
+    with pytest.raises(AssertionError):
+        assert_record_continuity(replace(before,semantic=True),replace(current,semantic=False))
+    with pytest.raises(AssertionError):
+        assert_record_continuity(before,replace(current,origin=()))
+
+    assert_record_continuity(before,replace(current,origin=current.origin+current.origin[:1]))
 
 
 def test_pinned_flag_negation_precedes_signed_icon_dispatch():

@@ -1,0 +1,22 @@
+{
+  "event_id": "8eed33c16c219c359c934a114a241af9c875bd29141a5d37fd03403be42302e4",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_prodpicker_cancel_member_oct11.py",
+      "recovery/tests/test_prodpicker_display_id_oct11.py"
+    ],
+    "evidence": [
+      "Coordinator ran both whole-file snapshot assertions on clean master f7ada2b95 and on the worker: both already fail before the redraw change due legitimate associated switch annotations and other subsequent source evolution. Other47 tests passed. A whole historical CPP equality assertion is obsolete and cannot be an invariant for future recovery.",
+      "Authorize changing only those two stale whole-file-equality tests to preserve their specific recovered cancel-member/display-id contracts, original identities/spans and historical claim/provenance continuity via native reader. Keep historical migration roundtrip fixtures, meaningful damaged mapping/required behavior controls and all existing behavioral/PE assertions. Do not weaken historical continuity, skip tests, pin new baselines or silently require unrelated whole-function/tree equality. No product source changes beyond authorized live redraw and guarded recorder publication.",
+      "Worker may edit only the newly added tests and run uv host tests. Native source measurements are terminal for this worker. The new exact redraw claim came only from installed record exit0; no manual marker/token changes. Report explicit final test results and independently review actual test diff before integration."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "replace-stale-prodpicker-whole-file-freezes-oct20r",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:prodpicker-live-redraw-oct20r"
+}
