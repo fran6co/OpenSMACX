@@ -235,6 +235,19 @@ def image_for(value, *, absolute=None):
     return image, pin
 
 
+def zero_member_owner(*, member_offset=0, missing_cv=False):
+    """A bounded parent with named DWORD members for offset-zero controls."""
+    fields = _field_list([("member", "first", 0x74, member_offset),
+                          ("member", "second", 0x74, 8)])
+    parent_type = _udt(0x1000, 2, 16, "Parent")
+    from test_object_data import data_fixture
+    obj = Coff(data_fixture(bytes(16), type_index=0x1001, types=fields + parent_type))
+    obj.symbols[0] = replace(obj.symbols[0], name=PARENT)
+    if missing_cv:
+        obj.sections = tuple(section for section in obj.sections if section.name != ".debug$T")
+    return obj
+
+
 def bound_object(start, *, size=4, path=("child",), symbol="old_child", parent=PARENT, pin=PIN):
     origin = Origin(pin, "pe:va", start)
     return ObjectBinding(origin, symbol, UNIT, 1, Span(start, start + size), origin,
@@ -285,6 +298,85 @@ def test_direct_parent_and_member_bindings_resolve_one_atomic_target():
     assert targets[PARENT] == 0x401000
     assert [row["definition"] for row in reports] == ["pass", "pass"]
     assert member_data_layout(obj, PARENT, ("child",))["member_offset"] == 4
+
+
+def test_bounded_parent_and_offset_zero_member_resolve_and_compare_the_same_start():
+    obj = zero_member_owner()
+    start = 0x401000
+    image, pin = image_for(bytes(16))
+    origin = Origin(pin, "pe:va", start)
+    parent = ObjectBinding(origin, PARENT, UNIT, 1, Span(start, start + 16), origin)
+    child = ObjectBinding(origin, "old_first", UNIT, 2,
+                          parent_symbol=PARENT, member_path=("first",))
+    targets, reports = object_targets((parent, child), {UNIT: obj})
+    assert targets[PARENT] == start
+    assert [row["definition"] for row in reports] == ["pass", "pass"]
+    initial = check_initial_data((parent, child), {UNIT: obj}, image, {PARENT: start})
+    assert initial[0]["definition"] == "pass" and initial[0]["content"] == "pass"
+    assert initial[1]["definition"] == "pass" and initial[1]["content"] == "unknown"
+    assert initial[1]["reason"] == "original object extent is not declared; initial data remains unverified"
+
+
+def test_same_start_member_with_nonzero_codeview_offset_refuses_direct_parent():
+    obj = zero_member_owner(member_offset=4)
+    start = 0x401000
+    origin = Origin(PIN, "pe:va", start)
+    parent = ObjectBinding(origin, PARENT, UNIT, 1, Span(start, start + 16), origin)
+    child = ObjectBinding(origin, "old_first", UNIT, 2,
+                          parent_symbol=PARENT, member_path=("first",))
+    targets, reports = object_targets((parent, child), {UNIT: obj})
+    assert PARENT not in targets
+    assert [row["definition"] for row in reports] == ["unknown", "unknown"]
+
+
+def test_offset_zero_target_refuses_when_codeview_is_missing():
+    obj = zero_member_owner(missing_cv=True)
+    start = 0x401000
+    origin = Origin(PIN, "pe:va", start)
+    parent = ObjectBinding(origin, PARENT, UNIT, 1, Span(start, start + 16), origin)
+    child = ObjectBinding(origin, "old_first", UNIT, 2,
+                          parent_symbol=PARENT, member_path=("first",))
+    targets, reports = object_targets((parent, child), {UNIT: obj})
+    assert PARENT not in targets
+    assert [row["definition"] for row in reports] == ["unknown", "unknown"]
+
+
+def test_offset_zero_group_refuses_conflicting_member_implied_parent_bases():
+    obj = zero_member_owner()
+    start = 0x401000
+    origin = Origin(PIN, "pe:va", start)
+    parent = ObjectBinding(origin, PARENT, UNIT, 1, Span(start, start + 16), origin)
+    first = ObjectBinding(origin, "old_first", UNIT, 2,
+                          parent_symbol=PARENT, member_path=("first",))
+    second_origin = Origin(PIN, "pe:va", start + 9)
+    second = ObjectBinding(second_origin, "old_second", UNIT, 3,
+                           parent_symbol=PARENT, member_path=("second",))
+    targets, reports = object_targets((parent, first, second), {UNIT: obj})
+    assert PARENT not in targets
+    assert [row["definition"] for row in reports] == ["unknown", "unknown", "unknown"]
+
+
+def test_source_reader_accepts_only_one_offset_zero_child_for_bounded_parent(tmp_path):
+    (tmp_path / "recovery").mkdir()
+    (tmp_path / "src").mkdir()
+    (tmp_path / "recovery" / "project.json").write_text(
+        '{"schema_version":1,"source":{"image_pin":"recovery/pinned.exe",'
+        '"address_space":"pe:va","roots":["src"]}}'
+    )
+    (tmp_path / "src" / "owner.cc").write_text(
+        "// RECOVERY_OBJECT: v2 0x401000 0x401010 _parent 0x401000\n"
+        "// RECOVERY_OBJECT: v3 0x401000 old_first member _parent first\n"
+    )
+    rows = read_objects(tmp_path, PIN)
+    assert len(rows) == 2 and rows[0].span == Span(0x401000, 0x401010)
+    assert rows[1].origin == rows[0].origin and rows[1].parent_symbol == "_parent"
+
+    (tmp_path / "src" / "owner.cc").write_text(
+        "// RECOVERY_OBJECT: v2 0x401000 0x401010 _parent 0x401000\n"
+        "// RECOVERY_OBJECT: v3 0x401000 old_first member _other first\n"
+    )
+    with pytest.raises(ValueError):
+        read_objects(tmp_path, PIN)
 
 
 def test_rebound_direct_parent_and_member_bindings_still_require_one_verified_base():

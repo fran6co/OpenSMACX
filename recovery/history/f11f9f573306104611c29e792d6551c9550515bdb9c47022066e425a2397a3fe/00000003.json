@@ -1,0 +1,20 @@
+{
+  "event_id": "dbe3a1439e40cab92648138298e096611c6ec56cdb277d5be47219cca1f96ab8",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "same-start-parent-member-oct20ak",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "The package reader/writer narrowly represent one bounded direct parent and exactly one unbounded v3 first member sharing an original start in the same source/image/domain. Duplicate unrelated starts, aliases, multiple children and bounded overlap still refuse; original writer-only strict interior containment remains writer-only. Fresh CodeView offset-zero and consistent-base checks are unchanged, and annotation shape alone cannot establish layout.",
+      "The MapStorage v2 annotation records only the pinned writable zero-fill serialized window 949870..94A314 observed in map_write5910B0 and map_read591130. Four comment lines change; all C++ and six historical member bindings remain. It does not assert original type, complete allocation, or lifetime.",
+      "Fresh 178-TU192-object build-i15ky17a compiles and links. Native full physical comparison passes all192objects with zero function projections; 101 Map function identities/lessons and3450historical claims remain. Focused suite198PASS; clean full package suite11329PASS1SKIP. Prior shared external cache interference reproduced on unchanged master and disappeared with test-local cache, without changing tests or weakening checks.",
+      "Selected parent data definition/content passes both native Z7 trials at2724bytes. Native data aggregate remainsUNKNOWN because14shared win.h callback rows lack configured owner coverage. Release lacks standalone CodeView and receives no borrowed debug witness; six unbounded children retain unknown extents. Original modal-lock MapStorage finding remains pending separately. Independent source/evidence review supports bounded manual integration only, not complete references, layout/lifetime, linked preservation, runtime/game or native automatic acceptance."
+    ]
+  },
+  "previous_event": "3dae7537ff979b50406d0874f7282132e45ed2c4c8d066e98e1838165085fc26",
+  "request_id": "incorporate-first-member-storage-oct20am",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:map-serialized-storage-oct20ak"
+}

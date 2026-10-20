@@ -16,6 +16,7 @@ from match_recovery.model import Span
 from match_recovery.object_source import (ObjectBinding, parse_objects,
                                           array_slice_bounds,
                                           valid_member_path,
+                                          validate_object_extent_ownership,
                                           validate_object_symbol_ownership)
 from match_recovery.source.reader import _block_state_after
 from match_recovery.source.writer import _SYMBOL_SOURCE_TOKENS
@@ -51,13 +52,9 @@ def _unique(records: Sequence[ObjectBinding]) -> None:
     validate_object_symbol_ownership(records)
     if len({row.symbol for row in records}) != len(records):
         raise ValueError("duplicate original object symbol binding")
-    if len({row.origin.entity_id for row in records}) != len(records):
-        raise ValueError("multiple objects claim the same original start address")
-    spans = sorted(row.span for row in records if row.span is not None)
-    if any(left.end > right.start for left, right in zip(spans, spans[1:])):
-        raise ValueError("original object extents overlap")
+    validate_object_extent_ownership(records)
     for row in records:
-        containing = [owner for owner in records if owner.span is not None
+        containing = [owner for owner in records if owner is not row and owner.span is not None
                       and owner.span.start < row.origin.address < owner.span.end]
         if containing and not (
                 row.span is None and row.parent_symbol is not None

@@ -1,0 +1,26 @@
+{
+  "event_id": "3dae7537ff979b50406d0874f7282132e45ed2c4c8d066e98e1838165085fc26",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "docs/DECOMP_MAP.md",
+      "packages/match-recovery/src/match_recovery/object_source.py",
+      "packages/match-recovery/src/match_recovery/object_writer.py",
+      "packages/match-recovery/tests/test_member_object_binding.py",
+      "packages/match-recovery/tests/test_object_writer.py"
+    ],
+    "evidence": [
+      "Coordinator authorizes a minimal generic source-model repair driven by this reproduced recovery blocker, not a new CLI, compiler policy or acceptance waiver. Support only an explicitly related direct bounded parent plus one unbounded v3 first-member identity at the same original start, same TU and image/address domain. Require parent emitted-symbol equality with child.parent_symbol, preserve independent historical symbols/interpretations and all existing source annotations.",
+      "Keep unrelated same-start roots/children, multiple first-member aliases, missing bounded parent, wrong owner/unit/domain, bounded overlap and target-alias roots refused. Share narrow validation between reader/writer rather than drifting policies; do not modify binary comparators, object_targets layout checks or compiler flags to accept unknowns.",
+      "Add positive reader/writer round-trip tests in both insertion orders, negative duplicate/collision/ownership/bounds cases, and native synthetic CodeView target/data controls showing offset-zero can pass while a nonzero actual first-member offset, missing types or conflicting base refuses. Existing full package tests and fresh real debug-enabled native data trials must pass for selected source annotations; missing Release types remain UNKNOWN.",
+      "Only listed library/test/format files plus already authorized src/map.cpp may change. Use apply_patch; Python via uv run. Worker authors source and pure tests but runs no tests/native compiler/Wine/Git/task operations. Coordinator owns fresh test execution, independent implementation review, data/compiler verification and serial manual integration with explicit remaining limitations. No historical claim/state/baseline changes."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "03fbfc0684dba726d4850c2070f97673c983aa278e09560b29aa2225a97dd999",
+  "request_id": "authorize-first-member-storage-oct20ak",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:map-serialized-storage-oct20ak"
+}

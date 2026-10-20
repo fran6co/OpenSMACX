@@ -227,6 +227,13 @@ one consistent parent base. A historical object symbol cannot also name a curren
 member owner; that collision would redirect old relocations. Unsupported, missing
 or ambiguous layout remains unknown.
 
+A bounded direct v2 parent may share its original start with exactly one unbounded
+v3 member only when fresh CodeView proves that member begins at offset zero. The
+parent and child must be in the same source unit and original image/address domain;
+the child must name the direct parent's emitted symbol, with no target alias. This
+narrow case does not relax bounded-span overlap checks or permit a second same-start
+identity. The ordinary member-layout and parent-base checks still apply.
+
 For a bounded v3 record, initial bytes are compared with exactly the resolved
 member slice. A root-array index selects pointer storage only; it never follows
 or dereferences that pointer. A relocation wholly inside that slice is rebased against the parent
