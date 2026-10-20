@@ -136,6 +136,7 @@ int HallOfFameIOMode;  // 0x00759194
 // base+8 over flags/name) with the 0x2C stride declared in technology.h.
 // RECOVERY_OBJECT: v1 0x0094F358 ?Technology@@3PAURulesTechnology@@A
 RulesTechnology Technology[MaxTechnologyNum];       // 0x0094F358
+// RECOVERY_OBJECT: v2 0x0094B4A0 0x0094B4C0 ?Mandate@@3PAURulesMandate@@A 0x005873C0
 RulesMandate Mandate[MaxMandateNum];                // 0x0094B4A0
 // RECOVERY_OBJECT: v2 0x00691878 0x00691AF8 ?Terraforming@@3PAURulesTerraforming@@A 0x005873C0
 RulesTerraforming Terraforming[MaxTerrainNum] = {
@@ -181,6 +182,7 @@ RulesTerraforming Terraforming[MaxTerrainNum] = {
 // there is no separately allocated secret-project table.
 // RECOVERY_OBJECT: v1 0x009A4B68 ?Facility@@3PAURulesFacility@@A
 RulesFacility Facility[MaxFacilityNum];             // 0x009A4B68
+// RECOVERY_OBJECT: v2 0x00946020 0x00946138 ?Citizen@@3PAURulesCitizen@@A 0x005873C0
 RulesCitizen Citizen[MaxCitizenNum];                // 0x00946020
 // The pinned add-base path rejects when BaseCurrentCount reaches 512
 // (0x004E4B80); Base is 0x134 bytes, so the bounded array ends at 0x009A3840.
