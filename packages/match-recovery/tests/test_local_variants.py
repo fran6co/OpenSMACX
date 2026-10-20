@@ -108,6 +108,34 @@ def test_local_screen_reuses_each_full_tu_object_and_never_accepts(project):
         b"// ORIGINAL: 0x00401000 _f 0x00401000-0x00401001\nint _f() { return 0; }\n")
 
 
+@pytest.mark.parametrize("newline", ["\n", "\r\n", "\r"])
+def test_local_screen_allows_unchanged_trailing_spliced_macros(project, newline):
+    root, _task, deck = project
+    source = root / "code/unit.cc"
+    original = source.read_bytes()
+    prefix = "// UTF-8 prefix: café\n".encode("utf-8")
+    trailing = newline.join((
+        "#define NATIVE_COPY(dst, src, size) \\",
+        "  do { \\",
+        "    (dst) = (src); \\",
+        "  } while (0)",
+        "",
+    )).encode("utf-8")
+    contents = prefix + original + trailing
+    source.write_bytes(contents)
+    deck["files"]["code/unit.cc"]["source_sha256"] = hashlib.sha256(contents).hexdigest()
+
+    compiler = SyntheticCompiler(root)
+    report = run(project, compiler, deck)
+    assert report["status"] == "scored"
+    assert report["compile_attempts"] == 10
+    assert [row["controls"]["unchanged_replica"]["result"]
+            for row in report["flag_trials"]] == ["pass", "pass"]
+    assert [row["controls"]["damage"]["result"]
+            for row in report["flag_trials"]] == ["pass", "pass"]
+    assert source.read_bytes() == contents
+
+
 def test_local_screen_explicitly_refuses_an_emitting_context(project):
     root, _task, deck = project
     source = root / "code/unit.cc"
@@ -300,7 +328,7 @@ def test_local_body_screen_refuses_default_lambda_braces_in_signature(tmp_path):
                                                   record, markers)
 
 
-@pytest.mark.parametrize("newline", ["\n", "\r\n"])
+@pytest.mark.parametrize("newline", ["\n", "\r\n", "\r"])
 def test_local_body_screen_refuses_physical_line_splicing_and_sibling_escape(tmp_path, newline):
     source = tmp_path / "unit.cc"
     text = newline.join((
@@ -331,11 +359,17 @@ def test_local_body_screen_refuses_physical_line_splicing_and_sibling_escape(tmp
                                                   source, target, markers)
 
 
-@pytest.mark.parametrize("newline", ["\n", "\r\n"])
-def test_local_screen_rejects_spliced_original_before_compilation(project, newline):
+@pytest.mark.parametrize("newline", ["\n", "\r\n", "\r"])
+@pytest.mark.parametrize("location", ["before", "body"])
+def test_local_screen_rejects_spliced_original_before_compilation(project, newline, location):
     root, _task, deck = project
     path = root / "code/unit.cc"
-    source = path.read_text().replace("\n", newline) + "// continued \\" + newline + "note" + newline
+    source = path.read_text()
+    if location == "before":
+        source = ("#define PRE_TARGET 1 \\" + newline + "\n" + source)
+    else:
+        source = source.replace(
+            "return 0;", "// continued \\" + newline + "return 0;", 1)
     path.write_bytes(source.encode())
     deck["files"]["code/unit.cc"]["source_sha256"] = hashlib.sha256(path.read_bytes()).hexdigest()
     compiler = SyntheticCompiler(root)
@@ -349,7 +383,7 @@ def test_local_screen_conservatively_refuses_spliced_macros():
         local_variants._reject_line_splicing("#define WIDTH \\  \n 42\n")
 
 
-@pytest.mark.parametrize("newline", ["\n", "\r\n"])
+@pytest.mark.parametrize("newline", ["\n", "\r\n", "\r"])
 def test_local_screen_refuses_reproduced_continued_comment_sibling_escape(tmp_path, newline):
     source = tmp_path / "unit.cc"
     text = newline.join((
@@ -376,3 +410,39 @@ def test_local_screen_refuses_reproduced_continued_comment_sibling_escape(tmp_pa
         local_variants._check_body_only(text, widened, "f", [candidate.encode()],
                                         source=source, target_record=target,
                                         expected_markers=identities)
+
+
+def test_local_candidate_cannot_change_trailing_splice_bytes_or_hide_them(tmp_path):
+    source = tmp_path / "unit.cc"
+    original = (
+        "// UTF-8 prefix: café\n"
+        "// ORIGINAL: 0x00401000 _f 0x00401000-0x00401001\n"
+        "int _f() { return 0; }\n"
+        "#define NATIVE_COPY(dst, src) \\\n"
+        "  ((dst) = (src))\n"
+    )
+    markers = read_text(original, source)
+    target, = markers
+    identities = tuple(local_variants._marker_identity(row) for row in markers)
+    body = local_variants._bound_function_body_bytes(
+        original, "_f", source, target, identities)
+    prefix = original.encode("utf-8")[:body[0]]
+    suffix = original.encode("utf-8")[body[1]:]
+    assert suffix.startswith(b"\n#define NATIVE_COPY")
+    candidate = original.replace("return 0;", "return 1;")
+
+    with pytest.raises(ValueError, match="trailing backslash-newline splicing"):
+        local_variants._check_body_only(
+            original, body, "_f", [candidate.replace("\\\n", "\n").encode()],
+            source=source, target_record=target, expected_markers=identities)
+
+    with pytest.raises(ValueError, match="trailing backslash-newline splicing"):
+        changed_suffix = candidate + "// added \\\n\n"
+        local_variants._check_body_only(
+            original, body, "_f", [changed_suffix.encode()],
+            source=source, target_record=target, expected_markers=identities)
+
+
+def test_local_screen_default_splice_rejection_remains_whole_text():
+    with pytest.raises(ValueError, match="backslash-newline splicing"):
+        local_variants._reject_line_splicing("int f() { return 0; }\n// tail \\\ncontinued\n")
