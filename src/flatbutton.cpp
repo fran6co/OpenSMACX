@@ -132,7 +132,7 @@ void FlatButton::close() {
 /*
 Purpose: Destroy a FlatButton by installing its two virtual tables, closing
          the derived stage, then running the complete BaseButton destructor.
-// ORIGINAL: 0x00406880 ??1FlatButton@@QAE@XZ 0x00406880-0x004068D8;0x006509A0-0x006509B2 BYTE_EXACT
+// ORIGINAL: 0x00406880 ??1FlatButton@@QAE@XZ 0x00406880-0x004068D8;0x006509A0-0x006509B2 FILE BYTE_EXACT
 // LEVER: unlike FlatButton::FlatButton() (the CONSTRUCTOR, capped by the SEH-frame ceiling below), the image's DESTRUCTOR genuinely HAS the SEH frame (`push -1 / push handler / mov eax,fs:[0] / push eax / mov fs:[0],esp`). A real `FlatButton::~FlatButton()` (not the `destroy()` plain-method spelling this marker used to point at via a `// symbol` fact) reproduces it: 0/24 -> 13/24. `destroy()` stays as its own separate method - external call sites (reportif.cpp, scroll.cpp) reach FlatButton objects through it by name, outside this pass's file list, so left alone.
 // symbol    ??1FlatButton@@UAE@XZ
 // size      106 bytes
@@ -148,14 +148,6 @@ Status: Complete
 // its five FlatButton teardowns the way the image does; this class's own
 // COMDAT keeps being emitted here and still measures 24/24 against
 // 0x00406880.
-
-FlatButton *FlatButton::destroy() {
-    FlatButton::close();
-    BaseButton::destroy();
-    return this;
-}
-
-
 
 // ---------------------------------------------------------------------------
 // DEFINED IN THE HEADER, CLAIMED HERE.

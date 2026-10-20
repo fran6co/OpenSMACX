@@ -47,7 +47,6 @@ class FlatButton : public BaseButton {
 
   // Constructor607CFB installs669754: slot90 selects607DA0.
   virtual void close();
-  FlatButton *destroy();
   void on_redraw() override;
   void on_mouse_move(int, int);
   void on_mouse_leave(int, int) override;
