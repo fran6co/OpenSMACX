@@ -1922,6 +1922,7 @@ Purpose: Publish the (a1,a2) id pair into the 0x30-byte dialog entry slot
 
 // ORIGINAL: 0x00441040 sub_441040 0x00441040-0x004410F1 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["DiploWin owns stringBox_ at +0xA388; StringBox::stringList_ is at +0x2B70, giving the exact original StringList receiver at DiploWindow+0xCEF8 = 0x00747BD0.", "The pinned words 0x747BD8/BC/E0/E4 therefore map to StringList head_/current_/entry_count_/current_position_; 0x737CD8 is the typed 8x8 destination list table."], "reason": "Move the global callback into the owner of both the observed source StringList member and destination transcript array; preserve cursor caching, pair-index arithmetic, target-field writes and add order."}
+// symbol    _sub_441040
 // TRIED: void __cdecl(int a1, int a2), direct linked-list walk transcription; diverges at #29 mov vs cmp, not chased further
 // size      177 bytes
 // prototype
@@ -1946,14 +1947,19 @@ extern "C" void __cdecl sub_441040(int a1, int a2) {
             StringStructEntry *node;
             if (i <= curCount - 1) {
                 node = head;
+                // The image stores the head and each reached node in
+                // current_. Retain that sequence; effects on a faulting
+                // invalid chain still require observed target code, not
+                // a guarantee from undefined C++ pointer dereferences.
+                source.current_ = node;
                 if (i > 0) {
                     int n = i;
                     do {
                         node = node->next;
+                        source.current_ = node;
                         --n;
                     } while (n != 0);
                 }
-                source.current_ = node;
                 source.current_position_ = i;
             } else {
                 node = source.current_;
