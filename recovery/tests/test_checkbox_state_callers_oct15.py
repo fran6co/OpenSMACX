@@ -42,7 +42,8 @@ struct GraphicWin : Win { int updates=0; void copy(void*,int,int,int,int,int,int
 static int mutate_nth_id_to_pos;
 struct Dialog : GraphicWin {
  StringStruct item_list_; uint32_t selected_position_;
- uint32_t field_24_,field_28_,field_44_,field_48_,field_64_,field_68_,field_4C_,field_58_,field_F0_;
+ uint32_t field_44_,field_48_,field_64_,field_68_,field_4C_,field_58_,field_F0_;
+ int window_x_,window_y_,row_count_;
  int pos_to_id(int p) { if(!item_list_.head_) return -1; item_list_.current_=item_list_.head_; item_list_.current_position_=0;
   while(item_list_.current_ && item_list_.current_position_<p) {item_list_.current_=item_list_.current_->next; ++item_list_.current_position_;}
   return item_list_.current_?item_list_.current_->id:-1; }
@@ -76,7 +77,7 @@ struct CheckBox : Dialog {
  assert(b.draw_count==4 && b.states[0]==0 && b.states[1]==2 && b.focus[3]==1 && !b.focus[1]);
  assert(b.item_list_.current_==e && b.item_list_.current_position_==0);
  b.item_list_={e,e,4,0};b.selected_position_=1u;b.field_4_=0;
- b.field_64_=8;b.field_44_=2;b.field_68_=8;b.field_28_=100;b.field_4C_=1;b.field_58_=4;
+ b.field_64_=8;b.field_44_=2;b.field_68_=8;b.window_y_=100;b.field_4C_=1;b.row_count_=4;
  b.key_notification_callback_=key_callback;b.double_click_callback_=wrong_callback;callback_list=0;
  callback_order=0;b.draw_count=0;b.on_left_down(0,10);
  assert((b.selected_position_&(1u<<1)) && callback_order==1);
@@ -118,7 +119,7 @@ struct CheckBox : Dialog {
     subprocess.run([str(exe)],check=True,capture_output=True,text=True,timeout=10)
     # Product-source mutants must fail the behavior controls above.
     mutants = [
-        methods.replace("Dialog::field_68_ + Dialog::field_44_", "Dialog::field_48_ + Dialog::field_28_",1),
+        methods.replace("Dialog::field_68_ + Dialog::field_44_", "Dialog::field_48_ + Dialog::field_44_",1),
         methods.replace("key_notification_callback_", "double_click_callback_",1),
         methods.replace("Dialog::pos_to_id(previous) != id", "previous != static_cast<int>(Dialog::id_to_pos(id))",1),
         methods.replace("field_4_ == static_cast<uint32_t>(position)", "Dialog::field_F0_ == static_cast<uint32_t>(position)",1),

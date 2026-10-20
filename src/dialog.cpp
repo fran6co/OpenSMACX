@@ -26,7 +26,7 @@
 // RECOVERY_BINDING: v1 {"evidence": ["The retained 0x00609970 seed body passes its first argument unchanged into Dialog virtual slot 1, then supplies Dialog fields at +0x24 and +0x28, then its second argument; it does not read or write those fields itself.", "src/dialog.h declares Dialog slot 1 as attach(GraphicWin*, int, int, int), and the Dialog-part vtable evidence recorded there identifies slot 1 as attach. Existing callers of the corresponding attach slot use GraphicWin* for its first parameter."], "reason": "Bind the seed-only two-argument Dialog helper to the real typed virtual attach operation and Dialog members, preserving its historical mapping and claim."}
 // symbol    ?attach_at_stored_position@Dialog@@QAEXPAVGraphicWin@@H@Z
 void Dialog::attach_at_stored_position(GraphicWin *window, int flags) {
-    attach(window, field_24_, field_28_, flags);
+    attach(window, window_x_, window_y_, flags);
 }
 
 /*
@@ -231,8 +231,8 @@ int Dialog::init(RECT *rect, int heap_size) {
 
     close();
 
-    field_24_ = left;
-    field_28_ = top;
+    window_x_ = left;
+    window_y_ = top;
     field_2C_ = right - left;
     field_30_ = bottom - top;
     field_20_ |= 3U;
@@ -267,8 +267,8 @@ Purpose: Initialize the dialog's absolute geometry and optional embedded
 int Dialog::init(int left, int top, int right, int bottom, int heap_size) {
     close();
 
-    field_24_ = static_cast<uint32_t>(left);
-    field_28_ = static_cast<uint32_t>(top);
+    window_x_ = left;
+    window_y_ = top;
     field_2C_ = right;
     field_30_ = bottom;
     field_20_ |= 3U;
@@ -304,8 +304,8 @@ int Dialog::init(RECT *rect, Heap *heap) {
 
     close();
 
-    field_24_ = static_cast<uint32_t>(left);
-    field_28_ = static_cast<uint32_t>(top);
+    window_x_ = left;
+    window_y_ = top;
     field_2C_ = width;
     field_30_ = height;
     field_20_ |= 3U;
@@ -741,8 +741,8 @@ Dialog::Dialog() {
     // field_44_ and field_48_, and field_1C_ near the end. The three -1
     // stores are the image's one `or eax,-1` reused.
     field_20_ = dialog_default_style();
-    field_24_ = 0;
-    field_28_ = 0;
+    window_x_ = 0;
+    window_y_ = 0;
     field_2C_ = DialogDefaults[19];
     field_30_ = DialogField30Default;
     selected_position_ = 0;
@@ -800,8 +800,8 @@ void Dialog::close() {
     heap_.reset();
     heap_ptr_ = 0;
     field_20_ = dialog_default_style();
-    field_24_ = 0;
-    field_28_ = 0;
+    window_x_ = 0;
+    window_y_ = 0;
     field_2C_ = DialogDefaults[19];
     field_30_ = DialogField30Default;
     selected_position_ = 0;
@@ -1206,8 +1206,8 @@ Status: Coverage transcription - unclaimed body
 */
 int Dialog::init(int left, int top, int right, int bottom, Heap *heap) {
     close();
-    field_28_ = top;
-    field_24_ = left;
+    window_y_ = top;
+    window_x_ = left;
     field_20_ |= 3;
     field_2C_ = right;
     field_30_ = bottom;

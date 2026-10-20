@@ -516,7 +516,10 @@ class BaseWin : public GraphicWin, public SubInterface {
   // This is a four-byte flag, not the window's visibility or lifetime.
   // RECOVERY_MEMBER: v1 BaseWin zoom_wait_pending_ 0x40B28 0x0041A920
   int zoom_wait_pending_;
-  uint32_t field_40B2C_;  // 0x40B2C
+  // add_queue and production compare this slot to queue bounds with signed
+  // JLE/JGE branches. The JA at 0x417868 dispatches on a different field.
+  // RECOVERY_MEMBER: v1 BaseWin selected_queue_slot_ 0x40B2C 0x00416DE0
+  int selected_queue_slot_;  // 0x40B2C
   uint32_t field_40B30_;  // 0x40B30
   // soft_zoom copies the signed production id (negative for facilities and
   // projects) when updating the base without displaying the window.

@@ -118,7 +118,7 @@ struct Sprite {int transparent_index(){return 0;}void draw_mono(Buffer*,int,int,
 Sprite g_TECH_ICON_SPRITES[89];
 int string_get_calls=0, label_get_calls=0;
 std::vector<std::string> lookup_events;
-struct StringStore {const char *get(int){++string_get_calls;lookup_events.push_back("name");return "name";}}StringTable;
+struct StringStore {const char *get(LPSTR){++string_get_calls;lookup_events.push_back("name");return "name";}}StringTable;
 int datalink_calls=0,datalink_opcode=-1,datalink_tech=-1;
 struct Datalink {int exec(int opcode,int tech){++datalink_calls;datalink_opcode=opcode;datalink_tech=tech;return 0;}}DatalinkMain;
 int owned[8][89]={}, available[89]={},category_id[89]={},values[89]={};

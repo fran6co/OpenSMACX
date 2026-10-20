@@ -88,18 +88,17 @@ def mapped_records(path):
 def test_installed_slot24_source_closure_and_mapping_transfer():
     sound_h = source("src/sound.h")
     voice_h = source("src/voice.h")
-    device_abi_h = source("src/soundx_sound_abi.h")
     wave_h = source("src/wave.h")
     effect_h = wave_h
     assert "virtual int unk_slot24();" in sound_h
-    assert "virtual int unk_slot24() = 0;" in device_abi_h
+    assert "Sound *device_;" in sound_h
     assert "virtual int unk_slot24();" in wave_h
     assert "class Effect : public Wave" in effect_h
     assert "void unk_slot24" not in "\n".join(
-        line for line in (sound_h + voice_h + device_abi_h + wave_h).splitlines()
+        line for line in (sound_h + voice_h + wave_h).splitlines()
         if "unk_slot24" in line)
     sound_body = body_after(source("src/sound.cpp"), "int Sound::unk_slot24()")
-    assert "flags_40_" in sound_body and "? -1 : 0" in sound_body
+    assert "static_cast<int>(flags_40_ << 31) >> 31" in sound_body
     assert [row.address for row in mapped_records("src/sound.cpp")].count(0x00448380) == 1
     assert all(row.address != 0x00448380
                for row in mapped_records("src/unbound_functions.h"))
@@ -131,7 +130,7 @@ def test_installed_sound_method_executes_and_mutation_is_detected(tmp_path):
 
     actual = compile_and_run(tmp_path, "sound_slot24_actual", program(implementation))
     assert actual.returncode == 0, actual.stdout + actual.stderr
-    mutated = implementation.replace("? -1 : 0", "? 1 : 0", 1)
+    mutated = implementation.replace("flags_40_ << 31) >> 31", "flags_40_ << 30) >> 31", 1)
     assert mutated != implementation
     rejected = compile_and_run(tmp_path, "sound_slot24_mutation", program(mutated))
     assert rejected.returncode != 0
@@ -148,12 +147,12 @@ def test_installed_wave_method_dispatches_and_mutation_is_detected(tmp_path):
     def program(implementation):
         return textwrap.dedent(f"""\
             #include <cassert>
-            class SoundDeviceInterface {{
-             public: virtual int unk_slot24() = 0;
+            class Sound {{
+             public: virtual int unk_slot24() {{ return 0; }}
             }};
-            struct Wave {{ void *device_; int unk_slot24(); }};
+            struct Wave {{ Sound *device_; int unk_slot24(); }};
             {implementation}
-            class Provider : public SoundDeviceInterface {{
+            class Provider : public Sound {{
              public:
                 int calls, result;
                 Provider(int value) : calls(0), result(value) {{}}
@@ -173,7 +172,7 @@ def test_installed_wave_method_dispatches_and_mutation_is_detected(tmp_path):
     actual = compile_and_run(tmp_path, "wave_slot24_actual", program(method))
     assert actual.returncode == 0, actual.stdout + actual.stderr
     mutated = method.replace(
-        "return static_cast<SoundDeviceInterface *>(device_)->unk_slot24();",
+        "return device_->unk_slot24();",
         "return 0;", 1)
     assert mutated != method
     rejected = compile_and_run(tmp_path, "wave_slot24_mutation", program(mutated))

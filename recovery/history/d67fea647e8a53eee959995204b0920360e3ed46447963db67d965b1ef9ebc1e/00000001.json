@@ -1,0 +1,19 @@
+{
+  "event_id": "9cd5b2d0b04919ed51ce2be9cca369f81db32ba05e46fc55e16b367cfd108994",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_win_callback_contracts_actual_source_oct6.py"
+    ],
+    "evidence": [
+      "Independent retained COFF review confirms direct dialogs_ calls still resolve the shared virtual-base receiver and dispatch through original slotsC0/C4; no direct-call devirtualization occurs. Existing host fixture uses member dialog plus spelling assertions for the obsolete cast, so it must follow actual member dialogs_ without losing its dynamic slot/qualified-base-bypass controls. Authorize test-only fixture adaptation and mutant-anchor update; do not weaken behavior, identity/claim/history or argument controls. Product CPP remains frozen and native screen is not repeated."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "retain-existing-callback-owner-controls",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:popup-cohort-match-oct20b"
+}

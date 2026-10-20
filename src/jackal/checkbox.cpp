@@ -303,8 +303,12 @@ void CheckBox::draw_item(int position, int state, int) {
         callback_state, &area);
     if (callback_result == 0) {
         static_cast<GraphicWin *>(parent)->copy(
-            this, Dialog::field_24_ + original_x,
-            Dialog::field_28_ + original_y, original_x, original_y,
+            this,
+            static_cast<int32_t>(static_cast<uint32_t>(Dialog::window_x_) +
+                                 static_cast<uint32_t>(original_x)),
+            static_cast<int32_t>(static_cast<uint32_t>(Dialog::window_y_) +
+                                 static_cast<uint32_t>(original_y)),
+            original_x, original_y,
             Dialog::field_64_, item_height);
 
         if (checked_sprite_ != 0 && unchecked_sprite_ != 0) {
@@ -494,8 +498,8 @@ int CheckBox::attach(GraphicWin *parent, int x, int y, int flags) {
     if (parent == 0) return 3;
     if (HandleMain == 0) return 7;
     calculate_dimensions();
-    Dialog::field_24_ = x;
-    Dialog::field_28_ = y;
+    Dialog::window_x_ = x;
+    Dialog::window_y_ = y;
     if ((parent->iFlags_ & 0x1000) == 0) flags |= 0x100000;
     const int init_result = GraphicWin::init(
         x, y, Dialog::field_5C_, Dialog::field_60_, 0, flags, parent, 0, 0);
@@ -524,7 +528,7 @@ void CheckBox::on_redraw() {
         static_cast<GraphicWin *>(this));
     if (handled == 0) {
         static_cast<GraphicWin *>(parent)->copy(
-            this, Dialog::field_24_, Dialog::field_28_, 0, 0,
+            this, Dialog::window_x_, Dialog::window_y_, 0, 0,
             static_cast<int>(dib_.bmiHeader.biWidth),
             -static_cast<int>(dib_.bmiHeader.biHeight));
     }

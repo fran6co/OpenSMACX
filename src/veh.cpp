@@ -10053,7 +10053,7 @@ int __cdecl veh_can_leave_stack(int veh_id) {
         return 1;
     }
     const Map *tile = map_loc(Vehs[veh_id].x, Vehs[veh_id].y);
-    if (tile->visibility & 0x20) {
+    if (tile->bit & 0x20u) {
         if ((tile->climate & 0xE0) >= 0x40 && Vehs[veh_id].proto_id != 0x13) {
             return 2;
         }

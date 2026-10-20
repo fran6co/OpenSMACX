@@ -76,6 +76,7 @@ def test_actual_provider_call_bodies_preserve_guards_arguments_and_order(tmp_pat
 #include <cstdint>
 #include <cstring>
 typedef void *HWND;
+struct Sound;
 struct EAX_REVERB_PROPERTIES;
 #include "soundx_wave_device_abi.h"
 

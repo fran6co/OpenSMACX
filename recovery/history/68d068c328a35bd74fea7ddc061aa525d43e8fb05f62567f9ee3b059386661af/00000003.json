@@ -1,0 +1,17 @@
+{
+  "event_id": "7325602f4baf14b2fb581bf8d76d42873be2cc64bf401b9ba384ead03714dfe9",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "finite-natural-form-no-gain",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Keep the current production block scope: this finite hypothesis produces no native instruction change or demonstrated structural correction. Preserve the trial commit and actual-source host controls, and do not repeat without new evidence."
+    ]
+  },
+  "previous_event": "5689fde75aa04971585bcfe1afdb57fb12ff817b3f27e9ed3d2d56c8dfd3859e",
+  "request_id": "close-unhelpful-natural-form-with-tests-preserved",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:string-formatting-owner-batch-oct20"
+}

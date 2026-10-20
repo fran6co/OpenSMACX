@@ -273,6 +273,20 @@ int main() {
         std::memset(Players[1].adj_leader, 'q', sizeof(Players[1].adj_leader));
         Players[1].adj_leader[0x7F] = 0;
         Players[1].is_leader_female = 0x6E;
+        for (int slot = 1; slot < 8; ++slot) {
+            NetWinLobbyRow &row = NetWinLobbyRows[slot];
+            row.prefix_ = static_cast<uint8_t>(0x10 + slot);
+            row.ready_or_occupied_ = static_cast<uint8_t>(0x20 + slot);
+            row.field_2_ = static_cast<uint8_t>(0x30 + slot);
+            row.faction_or_color_ = static_cast<int8_t>(slot);
+            row.field_4_ = static_cast<uint8_t>(0x40 + slot);
+            row.owner_ = 0xA0B00000u + static_cast<uint32_t>(slot);
+            row.leader_name_[0] = static_cast<char>('A' + slot);
+            row.leader_name_[1] = 0;
+            row.tail_[0] = static_cast<uint8_t>(0x50 + slot);
+            row.tail_[1] = static_cast<uint8_t>(0x60 + slot);
+            row.tail_[2] = static_cast<uint8_t>(0x70 + slot);
+        }
         win.pick_map();
         CONTROL_REQUIRE(std::strcmp(scenario_records[1].leader_name_,
                                     "RosterLeader") == 0,
@@ -299,6 +313,38 @@ int main() {
                         "server gender byte still aliases next row at +0x192");
         CONTROL_REQUIRE(faction_sends == 1,
                         "completed server roster is sent once");
+        CONTROL_REQUIRE(NetDaemonNet.sends >= 2 &&
+                        NetDaemonNet.sizes[1] == 0xA74,
+                        "full lobby packet is sent at payload index one");
+        const NetWinLobbyFullPacket &lobby_packet =
+            *reinterpret_cast<const NetWinLobbyFullPacket *>(
+                NetDaemonNet.payloads[1]);
+        for (int packet_row = 0; packet_row < 7; ++packet_row) {
+            const NetWinLobbyRow &sent = lobby_packet.rows_[packet_row];
+            const NetWinLobbyRow &global = NetWinLobbyRows[packet_row + 1];
+            CONTROL_REQUIRE(sent.owner_ == 0,
+                            "packet-local row owner reset");
+            CONTROL_REQUIRE(sent.prefix_ == 0xFF &&
+                            sent.ready_or_occupied_ == 0 &&
+                            sent.field_2_ == 0 &&
+                            sent.faction_or_color_ == -1 &&
+                            sent.field_4_ == 2,
+                            "packet-local lobby field resets");
+            CONTROL_REQUIRE(sent.leader_name_[0] == 'B' + packet_row &&
+                            sent.leader_name_[1] == 0 &&
+                            sent.tail_[0] == 0x51 + packet_row &&
+                            sent.tail_[1] == 0x61 + packet_row &&
+                            sent.tail_[2] == 0x71 + packet_row,
+                            "unwritten payload bytes are copied from source row");
+            CONTROL_REQUIRE(global.owner_ ==
+                                0xA0B00000u + static_cast<uint32_t>(packet_row + 1) &&
+                            global.prefix_ == 0x10 + packet_row + 1 &&
+                            global.ready_or_occupied_ == 0x20 + packet_row + 1 &&
+                            global.field_2_ == 0x30 + packet_row + 1 &&
+                            global.faction_or_color_ == packet_row + 1 &&
+                            global.field_4_ == 0x40 + packet_row + 1,
+                            "local packet normalization does not reset global row");
+        }
     }
     {
         reset_case();

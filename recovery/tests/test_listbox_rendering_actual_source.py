@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import shutil
 import subprocess
+import re
 from pathlib import Path
 
 import pytest
@@ -90,12 +91,53 @@ def test_extracted_listbox_scroll_render_and_dialog_bridges(tmp_path, compiler_n
     if compiler is None:
         pytest.skip(f"host {compiler_name} unavailable")
 
-    (tmp_path / "actual_listbox_rendering.inc").write_text(actual_bodies())
+    bodies = actual_bodies()
     fixture = Path(__file__).with_name("listbox_rendering_host_control.cpp.in")
-    source = tmp_path / "listbox_rendering_actual_host_control.cpp"
-    source.write_text(fixture.read_text(encoding="utf-8"))
-    binary = tmp_path / "listbox_rendering_host_control"
-    subprocess.run([compiler, "-std=c++11", "-Wall", "-Wextra", "-Werror",
-                    "-D__cdecl=", "-I", str(tmp_path), str(source), "-o", str(binary)],
-                   check=True, timeout=30)
-    subprocess.run([str(binary)], check=True, timeout=30)
+    fixture_text = fixture.read_text(encoding="utf-8")
+
+    def compile_control(directory: Path, body: str) -> Path:
+        directory.mkdir()
+        (directory / "actual_listbox_rendering.inc").write_text(body)
+        source = directory / "listbox_rendering_actual_host_control.cpp"
+        source.write_text(fixture_text)
+        binary = directory / "listbox_rendering_host_control"
+        subprocess.run([compiler, "-std=c++11", "-Wall", "-Wextra", "-Werror",
+                        "-D__cdecl=", "-I", str(directory), str(source), "-o", str(binary)],
+                       check=True, timeout=30)
+        return binary
+
+    good = compile_control(tmp_path / "good", bodies)
+    subprocess.run([str(good)], check=True, timeout=30)
+
+    signature = "void ListBox::draw_item(int index)"
+    draw_body = extract_function(bodies, signature)
+
+    def replace_draw(mutated: str) -> str:
+        assert bodies.count(draw_body) == 1
+        return bodies.replace(draw_body, mutated, 1)
+
+    # Each negative control changes only one original-supported geometry rule;
+    # every mutant must compile before its behavioral assertion can fail.
+    transpose = re.sub(
+        r"(row\.left\s*=\s*)([^;]+)(;\s*row\.top\s*=\s*)([^;]+)(;)",
+        lambda match: match.group(1) + match.group(4) + match.group(3)
+        + match.group(2) + match.group(5), draw_body, count=1)
+    assert transpose != draw_body
+    assert "field_38_" in re.search(r"row\.left\s*=\s*([^;]+);", transpose).group(1)
+
+    wrong_grid = draw_body.replace("row.left += along;", "row.top += along;", 1)
+    wrong_grid = wrong_grid.replace("row.top += across;", "row.left += across;", 1)
+    assert wrong_grid != draw_body
+
+    wrong_span, span_count = re.subn(
+        r"(row\.bottom\s*=\s*[^;]*\bspan\b[^;]*\+\s*)row\.top(\s*;)",
+        r"\1row.left\2", draw_body, count=1, flags=re.DOTALL)
+    assert span_count == 1 and wrong_span != draw_body
+
+    for name, mutant in (("initial_transpose", transpose),
+                         ("grid_wrong_edges", wrong_grid),
+                         ("span_wrong_origin", wrong_span)):
+        binary = compile_control(tmp_path / name, replace_draw(mutant))
+        result = subprocess.run([str(binary)], check=False, timeout=30,
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        assert result.returncode != 0, f"{name} mutant survived the asymmetric source control"

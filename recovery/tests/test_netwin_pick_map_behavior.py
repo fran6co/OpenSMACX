@@ -151,6 +151,26 @@ def test_netwin_pick_map_actual_body(compiler_name, tmp_path):
     assert damaged_run.returncode == 98, damaged_run.stdout + damaged_run.stderr
     assert "CONTROL FAILURE: server roster stores adjective in named +0x7A slot" in damaged_run.stderr
 
+    missing_owner_reset = body.replace("        row.owner_ = 0;\n", "", 1)
+    assert missing_owner_reset != body, "packet-local owner reset anchor must be present"
+    missing_owner_path = tmp_path / "netwin_pick_map_missing_local_reset.cpp"
+    missing_owner_path.write_text(generate(missing_owner_reset))
+    missing_owner_executable = tmp_path / f"netwin-pick-map-missing-reset-{compiler_name}"
+    missing_owner_build = subprocess.run(
+        [
+            compiler, "-std=c++11", "-Wall", "-Wextra", "-Werror",
+            str(missing_owner_path), "-o", str(missing_owner_executable),
+        ],
+        capture_output=True, text=True, timeout=60, check=False,
+    )
+    assert missing_owner_build.returncode == 0, missing_owner_build.stdout + missing_owner_build.stderr
+    missing_owner_run = subprocess.run(
+        [str(missing_owner_executable)], capture_output=True, text=True,
+        timeout=30, check=False,
+    )
+    assert missing_owner_run.returncode == 98, missing_owner_run.stdout + missing_owner_run.stderr
+    assert "CONTROL FAILURE: packet-local row owner reset" in missing_owner_run.stderr
+
     alive_as_human = body.replace(
         "bytes_.alive_mask_", "bytes_.human_mask_"
     )

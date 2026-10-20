@@ -1,0 +1,20 @@
+{
+  "event_id": "d8541875cbba1690d312e32fdf36494f5d9d2c0b03dd360a94da2500a8297158",
+  "payload": {
+    "affects": [
+      "entity-457b472c77d0098887b5e3801204060dcbaff281d8df450f6e74b449b84d736e"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "recheck-first-player-base",
+    "evidence": [
+      "Original62F545cmp[ECX] alone does not identify a member without the register base. No source edits are authorized from an unverified offset interpretation."
+    ],
+    "hypothesis": "Scout proposed that flagged group selection incorrectly reads acknowledgement instead of player ID; coordinator independently checks actual register base before allowing any source edit.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "recheck-first-player-base",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:net-group-first-player-owner-oct20"
+}

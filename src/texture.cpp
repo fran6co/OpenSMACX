@@ -570,12 +570,9 @@ Status: Complete
 Texture::~Texture() {
     if (pixels_ && !borrowed_) {
         free(pixels_);
-        // Written through a volatile view for the same reason
-        // TextureStore::~TextureStore does: this is the last store of a
-        // destructor, so nothing in C++ can observe it and an optimising
-        // build is entitled to drop it. The original performs it, and the
-        // caller's memory keeps the cleared pointer afterwards, so it has
-        // to survive.
+        // Preserve the original post-free null write. This volatile view is
+        // a matching workaround, not evidence that pixels_ was volatile;
+        // restoring an ordinary store here remains a separate obligation.
         *static_cast<unsigned char *volatile *>(&pixels_) = nullptr;
     }
 }
@@ -760,13 +757,8 @@ Return Value: n/a
 Status: Complete
 */
 TextureStore::~TextureStore() {
-    // Written through a volatile view for the same reason GraphicWin::close
-    // does: these are the last stores of a destructor, so nothing in C++ can
-    // observe them and an optimising build is entitled to drop them. The
-    // original performs them, and callers read the fields afterwards, so they
-    // have to survive.
-    *reinterpret_cast<volatile unsigned int *>(&flags_) = 3;
-    *reinterpret_cast<volatile int *>(&next_record_) = 0;
+    flags_ = 3;
+    next_record_ = 0;
 }
 
 

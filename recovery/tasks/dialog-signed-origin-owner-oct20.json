@@ -1,0 +1,205 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "c9a0059ccd5e6a7a31ce6d67430ba9602048416a",
+  "editable_files": [
+    "src/dialog.h",
+    "src/dialog.cpp",
+    "src/listbox.cpp",
+    "src/spritebox.cpp",
+    "src/editgroup.cpp",
+    "src/pickwin.cpp",
+    "src/net_session_picker.cpp",
+    "src/reportif.cpp",
+    "src/reportwin.cpp",
+    "src/newgame.cpp",
+    "src/jackal/checkbox.cpp",
+    "src/jackal/radiobutton.cpp",
+    "src/jackal/filewin.cpp",
+    "recovery/tests/test_dialog_close_recovery.py",
+    "recovery/tests/dialog_close_harness.cpp",
+    "recovery/tests/test_control_draw_recovery.py",
+    "recovery/tests/control_draw_harness.cpp",
+    "recovery/tests/test_control_parent_snapshot_oct11.py",
+    "recovery/tests/test_checkbox_state_callers_oct15.py",
+    "recovery/tests/test_control_attach_init_errors_actual_source_oct13v.py",
+    "recovery/tests/test_editgroup_attach_actual_source_oct13u.py",
+    "recovery/tests/test_filewin_populate_directory_behavior.py",
+    "recovery/tests/filewin_populate_directory_host_control.cpp",
+    "recovery/tests/test_listbox_attach_actual_source.py",
+    "recovery/tests/listbox_attach_host_control.cpp",
+    "recovery/tests/test_listbox_update_actual_source.py",
+    "recovery/tests/listbox_update_host_control.cpp",
+    "recovery/tests/test_pickwin_owner_behavior.py",
+    "recovery/tests/pickwin_owner_host_control.cpp",
+    "recovery/tests/test_listbox_remaining_behavior.py",
+    "recovery/tests/test_spritebox_draw_coordinates_oct16.py",
+    "recovery/tests/test_spritebox_redraw_parent_gate_oct19.py",
+    "recovery/tests/test_reportwin_redraw.py",
+    "recovery/tests/test_dialog_signed_origin_oct20.py"
+  ],
+  "evidence": [
+    "Pinned original Dialog init at 0x609300 stores integer x/y arguments at offsets +0x24/+0x28; RECT init at 0x6097F0 copies RECT left/top; the forwarding init at 0x609970 passes them to attach; ListBox attach at 0x60A670 stores x/y into the Dialog origin slots. Original draw consumers add those slots to local item coordinates. Negative concrete runtime values have not yet been established; preserve full signed domain based on parameter/storage role without claiming an observed negative path.",
+    "The CheckBox::draw_item, RadioButton::draw_item, and SpriteBox::draw_item origin-plus-local-coordinate additions must preserve original 32-bit modulo arithmetic; signed int addition must not introduce C++ signed-overflow UB. Use an explicitly unsigned 32-bit operation and retain the original signed-coordinate interpretation at the API boundary.",
+    "Authorize only Dialog +24/+28 window_x_/window_y_ as signed int with real type/name/caller propagation. Exclude same-offset ListBox front-object selection colors, StringList/SpriteList fields, Dialog38/40/64/68. Preserve original layout, lifetime, quirks, all mappings and claims. These are recovered roles, not original debug names; no concrete negative runtime caller is claimed.",
+    "30 directly affected originals and complete listed source/test/harness closure, plus optional named actual-source test. Inspect dependencies and request central expansion for further structural discoveries; no aliases/scaffolding to protect local bytes.",
+    "ListBox geometry integrated on master025; no active source worker. ReportWin/Palette/GraphicWin candidate is now manually integrated into this baseline with all incoming five-child scratch and fixture changes retained. Source workers for that batch are finished/frozen. Destination verification is ongoing in root, never edit root. ReportWin paths in this NEW isolated checkout are released for the coordinate migration only, with no candidate worker allowed further source edits.",
+    "Explicit independent worker authority for bounded actual-source host tests and native compiler/read-only measurement in coordinator-prepared isolated checkout using ONE resource_environment lease from shared root recovery/resources.json per operation, jobs1 per prefix. Children inherit and never allocate recursively. Use absolute shared OPENSMACX_COMPILER_POOL/original image/trusted RECOVERY_PARSE_CACHE_DIR; all Python uv run. No unleased compiles, shared checkout edits, Git mutations, record/claim edits, preparation mid-epoch or framework work.",
+    "Coordinator owns preparation, safe source catch-up, scope decisions, review and batched integration/build. Preserve structural work and historical restoration obligations through reviewed matching regressions; no automatic reversion. Return frozen source/evidence/results with limitations; compilation/scoped bytes are not game or automatic acceptance."
+  ],
+  "intent": "Recover Dialog origin coordinates as signed 32-bit values across their owned initialization and consumers, preserving the original 32-bit wrap behavior at the three draw-coordinate additions.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6330736,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6329456,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6329088,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6330352,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6327312,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6328144,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6330160,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6334064,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6343088,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6341456,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6358336,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6360144,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6361984,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6363888,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6366288,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6352944,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6350848,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6355632,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6346576,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6345200,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6349344,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4758432,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6539200,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4878336,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4883616,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4886608,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4899136,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4832464,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5807408,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6374240,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "dialog-signed-origin-owner-oct20"
+}

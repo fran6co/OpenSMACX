@@ -176,7 +176,7 @@ class GraphicWin : public Win, public Buffer {
   virtual void redraw();
   // Win slot 63: constructor-installed table 0x0066FC50 selects 0x00404290.
   // AlphaMovie, MapWin and Console inherit this same surface-update callback.
-  virtual void on_update() { update(0); }
+  virtual void on_update();
   // 0x005D56B0  ?update@GraphicWin@@QAEXPAUGraphicWin@@@Z - public,
   // __thiscall, void(GraphicWin *). The one-argument overload; the siblings
   // take (int, int, int, int, GraphicWin *) and (RECT *, GraphicWin *).

@@ -1,0 +1,32 @@
+{
+  "event_id": "76b001a5862d02ee0ed636c887d0a5af0689f1c23e0f24bc0e3460e80cc283a9",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_audio_source_forms_oct17.py",
+      "recovery/tests/test_net_session_receive_host.py",
+      "recovery/tests/test_net_transport_queue_closure_oct12.py",
+      "recovery/tests/test_small_seed_owner_actual_source.py",
+      "recovery/tests/test_wave_created_provider.py",
+      "src/midi.h",
+      "src/sound.h",
+      "src/soundx_sound_abi.h",
+      "src/video.h",
+      "src/voice.h",
+      "src/wave.h"
+    ],
+    "evidence": [
+      "Supersedes the initialtask restriction to opaqueexternalprefix-only typing using new positiveconstructor/data/tableevidence. ExistingSound is the sharedreconstructedSDKbase: Sound*device_, Sound**ordinal1output; retainSoundFadeState andall33virtualslots/state/layout/lifetimes. No new intermediateSoundBase invented. Reconstructednominalnamesremaininferred, notoriginaldebugtypeproof.",
+      "Retire redundantSoundDeviceInterfacecommonfacade/header onceallincludes/users aremigrated; moveusefulpinnedABIprovenance intoactualownerheaders. DoNOTkeepcompatibilitytypedef/alias. ProvenMidi75slot/baseState correspondence permitsordinaryMidi* downcasts andretirementofMidiDelegate facade, preservingactualoverloadslotcontracts. Otherproviderextensionviews mayderiveactualSound wherestilldistinctandnecessary; no duplicatedvirtualslots, fakeclassidentity, unproventrailingfields, handvtable ornewgame-sideproviderimplementation.",
+      "Wave chain followsnamedSound childmember usingexistingWavefriendship, notraw+3Cbytearithmetic. PreserveexactMidi lowbit updates andallnull/callback/loadorder/error quirks; no byte54 wideningacrossvoice modes. No flags/attribute/sourceassembly tricks, no manualORIGINAL/claim changes.",
+      "Fiveadditionaltestdrivers explicitlyeditableforfaithfulsharedtype/mockextractioncontractpropagation. Preserveexecutedassertions/mutants, reportskips/inconclusivechecks, requestanyfurtherpathscope BEFOREediting. Currentnativecheckendedunknown; no newclassmodeleditsduringanactiveepoch. Pendingdiscovery remainsunresolveduntilsourceimplementation/evidenceisreviewed; thisisauthority, notacceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "6b14b069e1964f1481f4d2191468e05b470acf8743c5e63023ca56144f650892",
+  "request_id": "authorize-existing-shared-sdk-base-model",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:sound-device-provider-typing-oct20"
+}

@@ -114,8 +114,8 @@ struct GraphicWin {};
 struct Dialog {
   ItemList item_list_;
   int selected_position_;
-  uint32_t field_24_;
-  uint32_t field_28_;
+  int window_x_;
+  int window_y_;
   int attach_result;
   int attach_calls;
   int attached_x;
@@ -123,7 +123,7 @@ struct Dialog {
   int attached_flags;
   GraphicWin *attached_window;
   Dialog()
-      : selected_position_(0), field_24_(17), field_28_(29), attach_result(0),
+      : selected_position_(0), window_x_(17), window_y_(29), attach_result(0),
         attach_calls(0), attached_x(0), attached_y(0), attached_flags(0),
         attached_window(0) {}
   virtual int attach(GraphicWin *window, int x, int y, int flags) {
@@ -135,7 +135,7 @@ struct Dialog {
     return attach_result;
   }
   void attach_at_stored_position(GraphicWin *window, int flags) {
-    attach(window, static_cast<int>(field_24_), static_cast<int>(field_28_), flags);
+    attach(window, window_x_, window_y_, flags);
   }
 };
 

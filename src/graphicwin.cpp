@@ -640,6 +640,43 @@ void GraphicWin::redraw() {
 }
 
 
+
+
+/*
+Purpose: When visible, tell the window to update and flip a rect the size of
+         the RECT at this+0x474 (the same field redraw() reads), positioned
+         at the origin.
+// ORIGINAL: 0x005D56B0 ?update@GraphicWin@@QAEXPAUGraphicWin@@@Z 0x005D56B0-0x005D571D BYTE_EXACT
+// symbol    ?update@GraphicWin@@QAEXPAV1@@Z
+// size      109 bytes
+// prototype void (__thiscall ?update@GraphicWin@@QAEXPAUGraphicWin@@@Z)(GraphicWin* this, GraphicWin*)
+// callers   8   call targets   4
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005ECFE0 0x005EFD20 0x005F74A0 0x005F7E90
+Return Value: n/a
+Status: Complete
+*/
+void GraphicWin::update(GraphicWin *) {
+    // Four separate field reads of the surface RECT, not a copied RECT: the
+    // latter compiles a real `call memcpy` here (unlike redraw()'s own read
+    // of the same field, which VC6 happens to inline), where the image loads
+    // each of the four dwords directly.
+    int height = rect2_.bottom - rect2_.top;
+    int width = rect2_.right - rect2_.left;
+
+    if (static_cast<Win *>(this)->is_visible()) {
+        RECT rect;
+        rect.left = 0;
+        rect.top = 0;
+        rect.right = width;
+        rect.bottom = height;
+        static_cast<Win *>(this)->update_window(&rect);
+        static_cast<Win *>(this)->client_to_screen(&rect);
+        Win::flip(&rect);
+    }
+}
+
 // ORIGINAL: 0x005D5630 ?update@GraphicWin@@QAEXPAURECT@@PAUGraphicWin@@@Z 0x005D5630-0x005D56AA
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x005D5630-0x005D56AA"], "reason": "Rectangle update through real Buffer/Win bases; original returns zero and ignores its second explicit argument."}
 // symbol    ?update@GraphicWin@@QAEHPAUtagRECT@@PAV1@@Z
@@ -1360,21 +1397,7 @@ void GraphicWin::on_paint(RECT *area) {
     }
 }
 
-// Shared surface callback: GraphicWin constructor5D4D2B installs
-// table66FC50 slot63 ->404290; AlphaMovie/MapWin/PlanWin/Console inherit it.
-// The catalogue named AlphaMovie, but this body uses the GraphicWin receiver.
-/*
-// ORIGINAL: 0x00404290 ?update@AlphaMovie@@QAEXXZ 0x00404290-0x00404298 BYTE_EXACT
-// body src/graphicwin.h
-// symbol    ?on_update@GraphicWin@@UAEXXZ
-// size      8 bytes
-// prototype void (__thiscall ?update@AlphaMovie@@QAEXXZ)(AlphaMovie* this)
-// callers   0   call targets   1
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x005D56B0
-Status: Complete
-*/
+
 // Superseded seed deleted; binding references retain historical provenance.
 // ORIGINAL: 0x005D68C0 sub_5d68c0 0x005D68C0-0x005D6A42
 // RECOVERY_BINDING: v1 {"evidence": ["task:graphicwin-frame-sprite-owner original identity/spans and all seed lessons retained from src/unrecovered/005d68c0.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:5D68C0..5D6A42 complete native stores, guards and signed jg/equality joins.", "source:src/graphicwin.h existing NCSprites and frame fields; Sprite width18/height1C and Win minima134/138; compute_min_size5D7030 corroborates selection and wrap semantics."], "reason": "Recover complete instance frame-sprite publication in genuine GraphicWin with existing NCSprites, Sprite accessors and Win minimum members. apply_frame_sprites is a provisional semantic name; preserve source input order, caption-bit selection, null guards and low32-bit sums before signed comparison."}
