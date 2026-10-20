@@ -511,6 +511,10 @@ set_property(SOURCE
 # This remains separate from Video's automatic-inlining policy above.
 set_source_files_properties(src/video_sound.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")
 
+# Preserve the original frame-based AlphaMovie owner context without changing
+# its independently measured /Ob2 inlining policy.
+set_source_files_properties(src/alphamovie.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")
+
 # Preserve the measured frame-based context of the scenario-editor undo owner.
 # General's unrelated helpers retain their independently measured default recipe.
 set_source_files_properties(src/scenario_undo.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")
