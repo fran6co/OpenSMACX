@@ -3021,7 +3021,7 @@ void __cdecl social_upkeep(int faction_id) {
 Purpose: Calculate the cost of the social upheaval for the specified faction.
 // ORIGINAL: 0x005B4550 ?social_upheaval@@YAHHPAH@Z 0x005B4550-0x005B45F8
 // body      src/faction.h
-// symbol    ?social_upheaval@@YAIHPAUSocialCategory@@@Z
+// symbol    ?social_upheaval@@YAHHPAUSocialCategory@@@Z
 // size      168 bytes
 // prototype int (__cdecl ?social_upheaval@@YAHHPAH@Z)(int factionID, social_category* category)
 // callers   2   call targets   0

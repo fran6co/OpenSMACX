@@ -1058,8 +1058,8 @@ inline BOOL __cdecl is_alien_faction(uint32_t faction_id) {
 // keeps its own out-of-line body (0x005B4550, in faction.cpp) for other
 // callers. See faction.cpp for the ORIGINAL marker; this definition is only
 // what lets social_ai's own translation unit fold the two call sites.
-MEASURED inline uint32_t __cdecl social_upheaval(int faction_id, SocialCategory *category_new) {
-    uint32_t change_count = 0;
+MEASURED inline int __cdecl social_upheaval(int faction_id, SocialCategory *category_new) {
+    int change_count = 0;
     for (int i = 0; i < MaxSocialCatNum; i++) {
         if (category_new->models_[i] !=
             PlayersData[faction_id].soc_category_active.models_[i]) {
@@ -1070,8 +1070,8 @@ MEASURED inline uint32_t __cdecl social_upheaval(int faction_id, SocialCategory 
         return 0;
     }
     change_count++;
-    uint32_t diff_lvl = is_human(faction_id) ? PlayersData[faction_id].diff_level : DLVL_LIBRARIAN;
-    uint32_t cost = change_count * change_count * change_count * diff_lvl;
+    int diff_lvl = is_human(faction_id) ? PlayersData[faction_id].diff_level : DLVL_LIBRARIAN;
+    int cost = change_count * change_count * change_count * diff_lvl;
     if (is_alien_faction(faction_id)) {
         cost += cost / 2;
     }
