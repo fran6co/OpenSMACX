@@ -1,0 +1,21 @@
+{
+  "event_id": "11c34eaa1092640d9dac0c90b010ee6d276a20a2480537f77b9dc327d048367c",
+  "payload": {
+    "affects": [
+      "entity-102d4f2403640caf2ad4557beb659493c4bca3b6d3396643acabaccc1b8a24fa",
+      "entity-8b865304e431d90c44664ea593d2ef368ee924915ca6d17ab67bbb14fab03730"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "buffer-draw-original-inline-boundary-oct20ao",
+    "evidence": [
+      "Independent pinned3arg5D83D7..5D8491 and6arg5D855D..5D8616 inline descriptor/lock setup before Sprite::draw, not a setup/helper call. Candidate draw raw bytes unchanged but COMDAT rel32 targets +70/+AB move from inventedhelper to setup; underlying208bytehelper/setup code and relocation targets exactly equal. This semantic equivalence does not waive the real physical residualFAIL or establish linked preservation."
+    ],
+    "hypothesis": "The two Buffer draw overloads still need the original inlined setup call-boundary restored; equivalent helper/setup calls are not original reference fidelity.",
+    "kind": "discovery"
+  },
+  "previous_event": "a285261fa7749b4666e8309a9937484b035935c72bd57e6da28ff5c1e66770da",
+  "request_id": "buffer-draw-original-inline-boundary-oct20ao",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:owner-buffer-body-recovery-oct20ao"
+}

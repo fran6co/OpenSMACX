@@ -1,0 +1,20 @@
+{
+  "event_id": "85b7bdc4ec295939e53bf56b8155e7edd04569310d150a7238dd939ccfeea36c",
+  "payload": {
+    "affects": [
+      "entity-72a9e9e31e9cbd444bee53a60228ad5b8952de1727b8b1e23f43352d868b46c9"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "buffer-setup-source-body-restoration-oct20ao",
+    "evidence": [
+      "Pinned5D8290..5D835C guard/default-byte/read-publish/dimensions/lockcount/release sequence independently reviewed. Standard native schema2 replica and physical damage controls pass in both existing profiles; direct body matches64originalinstructions under actualproduction family. All original identities/spans/claim tokens and helper family remain intact."
+    ],
+    "hypothesis": "Express setup_buff_sprite directly through its existing typed members and real shared Sprite operations rather than the extra helper call, restoring the original local emission.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "buffer-setup-source-body-restoration-oct20ao",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:owner-buffer-body-recovery-oct20ao"
+}

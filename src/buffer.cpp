@@ -4117,7 +4117,41 @@ inline void Buffer::prepare_shared_sprite(int colour) {
 // indirect  0x005D834B
 
 void Buffer::setup_buff_sprite(int colour) {
-    prepare_shared_sprite(colour);
+    if (surface_ != nullptr) {
+        return;
+    }
+    if (colour == -1) {
+        colour = WinFillColour;
+    }
+    LPVOID bits = dib_bits_;
+    locked_bits_ = bits;
+    if (bits != nullptr) {
+        ++surface_lock_count_;
+    }
+    BufferSpriteOwner.sprite().pcBits_ = static_cast<unsigned char *>(bits);
+    BufferSpriteOwner.sprite().iSpriteWidth2_ = stride_;
+    BufferSpriteOwner.sprite().iSpriteWidth_ = dib_.bmiHeader.biWidth;
+    BufferSpriteOwner.sprite().iSpriteHeight_ = -dib_.bmiHeader.biHeight;
+    BufferSpriteOwner.sprite().iWidth_ = dib_.bmiHeader.biWidth;
+    BufferSpriteOwner.sprite().iHeight_ = -dib_.bmiHeader.biHeight;
+    BufferSpriteOwner.sprite().iLeftOffset_ = 0;
+    BufferSpriteOwner.sprite().iTopOffset_ = 0;
+    BufferSpriteOwner.sprite().cTransparentIndex_ = (uint8_t)colour;
+    BufferSpriteOwner.sprite().fObj1Exists_ = 0;
+    if (surface_ == nullptr) {
+        const int count = --surface_lock_count_;
+        if (count <= 0) {
+            locked_bits_ = nullptr;
+            surface_lock_count_ = 0;
+        }
+        return;
+    }
+    const int count = --surface_lock_count_;
+    if (locked_bits_ != nullptr && count <= 0) {
+        surface_->Unlock(locked_bits_);
+        locked_bits_ = nullptr;
+        surface_lock_count_ = 0;
+    }
 }
 
 /*

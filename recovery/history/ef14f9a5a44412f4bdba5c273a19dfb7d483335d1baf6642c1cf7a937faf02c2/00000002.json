@@ -1,0 +1,19 @@
+{
+  "event_id": "a285261fa7749b4666e8309a9937484b035935c72bd57e6da28ff5c1e66770da",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "buffer-setup-source-body-restoration-oct20ao",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/buffer.cpp owns the complete direct typed setup body, independently reviewed against the pinned original. Actual179TU/193object candidate compiles/links; all5581knownmappedentities measured3330exact(+1), no exactlosses; strict2769PASS/558UNKNOWN/3FAIL. This body restores a retained historical claim, grants none and does not prove strict references.",
+      "Three existing fixture files give the identical79PASS/5FAIL on rootbaseline and candidate under real leased native compiler contexts. Stale paint/symbol projection failures remain unwaived.75host-only controlsPASSseparately; no fixture assertions or tests modified. Source claim/reference/mapping checksPASS.",
+      "Physical192PASS/1FAIL even with onlysetup projected. Compiler folds the old identical prepare_shared_sprite body into setup and retargets two draw overload calls. Independent original review confirms those two oldsourcecalls are already non-original: pinned originals inline the setup body. Retarget is operation-equivalent but not a call-graph restoration; preserve the next pending finding, no whole-owner/linked/game/nativeautomatic acceptance."
+    ]
+  },
+  "previous_event": "85b7bdc4ec295939e53bf56b8155e7edd04569310d150a7238dd939ccfeea36c",
+  "request_id": "incorporate-buffer-setup-body-oct20ao",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:owner-buffer-body-recovery-oct20ao"
+}
