@@ -44,6 +44,9 @@ void __cdecl says(const char *text) {
 // TRIED: MISMATCH #4 push/mov, local buffer layout differs
 // TRIED: _itoa needs a real signature -> declared as itoa_impl (own name), since the scaffold's nullary _itoa can't be redeclared (C2733)
 void __cdecl say_reactor(char *text, int reactor_id, int with_detail) {
+    // The original reserves one 0x50-byte stack buffer in its prologue and
+    // passes that same storage to _itoa only on the detail path.
+    char number[80];
     strcat(text, StringTable.get(Reactor[reactor_id].name));
     if (with_detail != 0) {
         strcat(text, " ");
@@ -51,7 +54,6 @@ void __cdecl say_reactor(char *text, int reactor_id, int with_detail) {
         strcat(StringTemp, StringTable.get(
             Labels.strings_ptr[0x13C / 4]));
         strcat(text, ": ");
-        char number[80];
         _itoa(reactor_id + 1, number, 10);
         strcat(text, number);
         strcat(text, ")");
@@ -63,6 +65,7 @@ void __cdecl say_reactor(char *text, int reactor_id, int with_detail) {
 // RECOVERY_BINDING: v1 {"evidence": ["original:0x005905C0-0x005906EC;seed:src/recovered/units/005905c0.cpp;source:src/strings.h:StringTable;source:src/alpha.h:Labels"], "reason": "This free formatter uses the established Weapon records and shared Strings and Labels objects with the original name, call ABI, and bounded body."}
 // symbol    ?say_weapon@@YAXPADHH@Z
 void __cdecl say_weapon(char *text, int weapon_id, int with_detail) {
+    char number[80];
     const RulesWeapon &weapon = Weapon[weapon_id];
     strcat(text, StringTable.get(weapon.name));
     if (with_detail != 0) {
@@ -79,7 +82,6 @@ void __cdecl say_weapon(char *text, int weapon_id, int with_detail) {
                 strcat(text, StringTable.get(
                     Labels.strings_ptr[0x310 / 4]));
             } else {
-                char number[80];
                 _itoa(weapon.offense_rating, number, 10);
                 strcat(text, number);
             }
@@ -96,6 +98,7 @@ void __cdecl say_weapon(char *text, int weapon_id, int with_detail) {
 // RECOVERY_BINDING: v1 {"evidence": ["original:0x005906F0-0x005907F5;seed:src/recovered/units/005906f0.cpp;source:src/strings.h:StringTable;source:src/alpha.h:Labels"], "reason": "This free formatter uses the established Armor records and shared Strings and Labels objects with the original name, call ABI, and bounded body."}
 // symbol    ?say_armor@@YAXPADHH@Z
 void __cdecl say_armor(char *text, int armor_id, int with_detail) {
+    char number[80];
     const RulesArmor &armor = Armor[armor_id];
     strcat(text, StringTable.get(armor.name));
     if (with_detail != 0) {
@@ -108,7 +111,6 @@ void __cdecl say_armor(char *text, int armor_id, int with_detail) {
             strcat(text, StringTable.get(
                 Labels.strings_ptr[0x310 / 4]));
         } else {
-            char number[80];
             _itoa(armor.defense_rating, number, 10);
             strcat(text, number);
         }
@@ -124,6 +126,7 @@ void __cdecl say_armor(char *text, int armor_id, int with_detail) {
 // symbol    ?say_chassis@@YAXPADHH@Z
 // kind      game
 void __cdecl say_chassis(char *text, int chassis_id, int with_detail) {
+    char number[80];
     const RulesChassis &chassis = Chassis[chassis_id];
     strcat(text, StringTable.get(chassis.offsv_1_name));
     if (with_detail != 0) {
@@ -132,7 +135,6 @@ void __cdecl say_chassis(char *text, int chassis_id, int with_detail) {
         strcat(StringTemp, StringTable.get(
             Labels.strings_ptr[0x140 / 4]));
         strcat(text, ": ");
-        char number[80];
         _itoa(chassis.speed, number, 10);
         strcat(text, number);
         if (chassis.triad == 1 || chassis.triad == 2) {
