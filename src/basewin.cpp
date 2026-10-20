@@ -2836,11 +2836,10 @@ void BaseWin::add_queue(int insert, int production_id) {
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x00416FB0-0x0041703C removes one queue entry, shifts later ids, clamps the selected index to at least one, and redraws the queue", "source:src/base.h:Base::queue_size", "source:src/base.h:Base::queue_production_id"], "reason": "Delete a selected production queue entry through the typed Base queue representation; the drawing dependency remains explicitly unfinished."}
 void BaseWin::delete_queue(int index) {
     if (index > static_cast<int>(BaseCurrent->queue_size)) {
-        int selection = static_cast<int>(field_40B2C_) - 1;
-        if (selection <= 1) {
-            selection = 1;
+        field_40B2C_ = field_40B2C_ - 1U;
+        if (static_cast<int32_t>(field_40B2C_) <= 1) {
+            field_40B2C_ = 1;
         }
-        field_40B2C_ = static_cast<uint32_t>(selection);
         return;
     }
     if (index < 9) {
