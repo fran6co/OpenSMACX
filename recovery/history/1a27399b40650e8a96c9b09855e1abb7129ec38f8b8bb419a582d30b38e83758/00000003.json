@@ -1,0 +1,22 @@
+{
+  "event_id": "f38148c5eddb702b10f50ae6f854cf2bb5df76a1926d8e44742443105bd7df59",
+  "payload": {
+    "affects": [
+      "entity-50351ebf7ae57d21395ac181a373c47b836f1f3edde4e47ebc18d32a374e0575"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "buffer-wrap-cent-native-counter-order-oct20e",
+    "evidence": [
+      "Pinned5DDA84-5DDA8E loads current count and line advance, increments the member count then advances y. Replace temporary line_count staging with field_18_=field_18_+1 before y+=line_advance, preserving actual member/parameter and no intervening call semantics. No headers, other bodies, flags or symbols changed.",
+      "Source-unchanged native local screen wrap-cent-deck.json: baseline64/70 to candidate70/70BYTE_EXACT under configured first flag set, zero exact losses among measured Buffer neighbors; second flag set unchanged mismatch. All per-flag unchanged-replica and target-damage controls pass. Whole screen still incomplete due other unmeasurable mappings; no strict-reference/full-build/preservation/game acceptance or claim granted.",
+      "Standing coordinator-reviewed parallel-recovery authority: resume existing Buffer source task in a new isolated worktree from current master without changing immutable24cd306baseline or prior discoveries. Restrict this step to5DDA00 and existing actual-source text-wrap controls; require host behavior/damage checks, independent code review, native recorder for any new claim, fresh candidate/destination builds, scoped strict matching and outside-body preservation review before integration. No extended spellings, automatic admission, demotion or baseline reset."
+    ],
+    "hypothesis": "The original wrap_cent increments the line counter before advancing y; natural direct member addition restores the original emitted order.",
+    "kind": "discovery"
+  },
+  "previous_event": "28419d57f87917ffe679b4e0f0afe0baee5fb857092d6959dc6c5093693e0962",
+  "request_id": "buffer-wrap-cent-native-counter-order-oct20e",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:buffer-source-batch-oct19b"
+}
