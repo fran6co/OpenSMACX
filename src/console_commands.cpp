@@ -1936,7 +1936,7 @@ void Console::editor_rockiness() {
     }
 }
 
-// ORIGINAL: 0x004E13E0 ?editor_fungus@Console@@QAEXXZ 0x004E13E0-0x004E149B FILE
+// ORIGINAL: 0x004E13E0 ?editor_fungus@Console@@QAEXXZ 0x004E13E0-0x004E149B FILE BYTE_EXACT
 // LEVER: the FUNGMOTIZE answer is tested directly, not carried in a boolean.
 //        The archive body spelled `plant = (confirmed != 0)` and `if (plant)`,
 //        which compiles a setne/test pair the image does not have - the image
@@ -2006,12 +2006,12 @@ void Console::editor_fungus() {
                 } while (i < MapArea);
             }
         }
-        uint32_t saved = MapNativeLifeForms;
         if (answer > 0) {
+            uint32_t saved = MapNativeLifeForms;
             MapNativeLifeForms = answer - 1;
             world_fungus();
+            MapNativeLifeForms = saved;
         }
-        MapNativeLifeForms = saved;
         ::draw_map(1);
     }
 }
