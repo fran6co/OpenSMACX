@@ -1,0 +1,25 @@
+{
+  "event_id": "600461476d55528ce539ae62dc3495dd5747711d1cb162a5e4e2d88abdf15b03",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_net_polling_clock_effects_oct21.py",
+      "src/net_class.cpp"
+    ],
+    "evidence": [
+      "Continue the retained Net polling owner without resetting its57729afb89 baseline or any original identities, claims, seed lessons and pending discoveries. Standing user authority permits faithful C++ recovery with independent coordinator-reviewed manual integration; this is not automatic acceptance.",
+      "Independent pinned disassembly6320E0..632290: NetDirectPlay guard6320EE precedes cached timeGetTime IAT load6320F4; first clock result subtracts2000 at632102 and compares unsigned against poll_time_DC_ at632107/632109. Current source subtracts poll_time from now, which differs on wraparound. Preserve the original unusual modulo32 comparison rather than normalize to elapsed-time logic.",
+      "Cached clock calls occur6320FA/632138/6321A1/6321BF/6321F8/63221A. Neither-host arm instead directly rereads IAT632244 and63226E. Current source uses cached now for both. Restore these source call boundaries and pointer-load placement using ordinary SDK declarations, never old executable addresses or invented volatile imports.",
+      "Pinned632242 JE63228A and632254 JB63228A skip the NetReapBusy clear at632280. Preserve this original stuck-busy quirk, row1-ID discriminator, distinct timeout equality comparisons, send/drop order, callback row/member rereads, one successful-cut clock call and row1-before-row0 timestamp stores. Do not add clear paths, initialization, bounds guards or bug fixes.",
+      "Editable scope is src/net_class.cpp plus new recovery/tests/test_net_polling_clock_effects_oct21.py. Add actual-source host controls with uint32 modular boundary cases and callback-replaced clock-pointer witnesses, cached versus fresh-IAT call distinctions, busy-leak and guard controls, plus compiling negative mutants. Pinned instruction assertions independently anchor arithmetic and read timing. Existing exact-snapshot tests may have inherited failures; do not weaken them to permit integration.",
+      "Require source review, baseline/current selected and sibling native measurements under unchanged recipes, a fresh full application build/link, historical claim/mapping/reference continuity, physical collateral observations, independent review and destination recheck. Matching regressions are visible restoration obligations, not a reason to erase correct structural or semantic recovery. No compiler flags, new framework APIs, manual ORIGINAL/claim edits or automatic acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "13b594bb53d418483f52bb8dca7f2c6b7c6fefde7c52006981463e3f29c797c8",
+  "request_id": "central-polling-clock-effects-oct21a",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:net-polling-player-id-oct11"
+}
