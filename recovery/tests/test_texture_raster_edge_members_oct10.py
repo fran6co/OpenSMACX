@@ -104,7 +104,7 @@ static void setup_case(unsigned char *arena, EdgeScan **left_out,
 
     TextureRasterClipLeft = 0;
     TextureRasterClipRight = 2;
-    TextureRasterLightAccumB = 0;
+    TextureRasterLightAccumB.dword = 0;
     TextureRasterLightStepB = 0;
     TextureRasterLightPackA.low_word = 0;
     TextureRasterSignedPitch = 0;
@@ -217,7 +217,7 @@ int main() {
     sub_61fe70(static_cast<int>(reinterpret_cast<uintptr_t>(left)),
                static_cast<int>(reinterpret_cast<uintptr_t>(right)));
     assert_destination(destination, 0x77, 0x77);
-    assert(TextureRasterLightAccumB == left->accumD);
+    assert(TextureRasterLightAccumB.dword == left->accumD);
     assert(TextureRasterLightStepB == right->accumD);
     assert_records_unchanged(*left, *right, left_bytes, right_bytes);
 
@@ -227,7 +227,7 @@ int main() {
     snapshot_records(*left, *right, left_bytes, right_bytes);
     sub_6202e0(left, right);
     assert_destination(destination, 0x77, 0x77);
-    assert(TextureRasterLightAccumB == left->accumD);
+    assert(TextureRasterLightAccumB.dword == left->accumD);
     assert(TextureRasterLightStepB == right->accumD);
     assert_records_unchanged(*left, *right, left_bytes, right_bytes);
 
@@ -238,7 +238,7 @@ int main() {
     sub_620640(static_cast<int>(reinterpret_cast<uintptr_t>(left)),
                static_cast<int>(reinterpret_cast<uintptr_t>(right)));
     assert_destination(destination, 0x77, 0x77);
-    assert(TextureRasterLightAccumB == left->accumD);
+    assert(TextureRasterLightAccumB.dword == left->accumD);
     assert(TextureRasterLightStepB == right->accumD);
     assert_records_unchanged(*left, *right, left_bytes, right_bytes);
 

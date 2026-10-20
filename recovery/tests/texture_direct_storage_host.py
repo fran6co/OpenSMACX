@@ -64,12 +64,13 @@ def _alias_block(source: str) -> tuple[int, int, str, dict[str, str]]:
 
 
 def direct_storage_projection(source: str) -> str:
-    """Project the historical alias source through the exact direct-storage rewrite.
+    """Project the historical alias source through the reviewed storage rewrites.
 
-    The function is intentionally a source projection, not a body normalizer:
-    it applies only the 53 declarations/use-site substitutions authorized by
-    the Texture storage task and the fixed signed-key helper.  Callers should
-    retain their own task-specific body/history checks around this projection.
+    This remains a source projection, not a body normalizer: it applies the 53
+    declarations/use-site substitutions authorized by the Texture storage task,
+    the fixed signed-key helper, and the separately authorized four-byte light
+    accumulator union view. Callers retain their task-specific body/history
+    checks around this projection.
     """
     start, end, block, targets = _alias_block(source)
     projected = source[:start] + source[end:]
@@ -90,7 +91,39 @@ def direct_storage_projection(source: str) -> str:
     insertion = SIGNED_KEY_NOTE + SIGNED_KEY_HELPER + "\n\n"
     projected = projected.replace("static int texture_coast_advance_edge", insertion +
                                   "static int texture_coast_advance_edge", 1)
-    return projected
+    return _project_light_accumulator_union(projected)
+
+
+def _project_light_accumulator_union(source: str) -> str:
+    """Apply only the authorized 9BB518 int-to-existing-union representation."""
+    old_declaration = "static int TextureRasterLightAccumB;"
+    new_declaration = "static TextureRasterDwordHighWordView TextureRasterLightAccumB;"
+    if source.count(new_declaration) == 1:
+        return source
+    assert source.count(old_declaration) == 1
+    update = re.compile(
+        r"\*reinterpret_cast<unsigned short \*>\s*\(&\(TextureRasterLightAccumB\)\)\s*"
+        r"=\s*static_cast<unsigned short>\(\*reinterpret_cast<short \*>\s*"
+        r"\(&\(TextureRasterLightAccumB\)\)\s*\+\s*"
+        r"TextureRasterLightPackA\.low_word\);"
+    )
+    masked = COMMENTS_OR_STRINGS.sub(
+        lambda match: re.sub(r"[^\n]", " ", match[0]), source)
+    assert len(list(update.finditer(masked))) == 2
+    source = _code_replace(source, update, "__LIGHT_ACCUM_LOW_UPDATE__")
+    source = source.replace(old_declaration, "__LIGHT_ACCUM_DECLARATION__", 1)
+    source = _code_replace(
+        source, re.compile(r"\bTextureRasterLightAccumB\b"),
+        "TextureRasterLightAccumB.dword")
+    source = source.replace(
+        "__LIGHT_ACCUM_DECLARATION__", new_declaration, 1)
+    replacement = (
+        "TextureRasterLightAccumB.words.low_word = static_cast<unsigned short>("
+        "TextureRasterLightAccumB.words.low_word + TextureRasterLightPackA.low_word);"
+    )
+    source = source.replace("__LIGHT_ACCUM_LOW_UPDATE__", replacement)
+    assert "__LIGHT_ACCUM_" not in source
+    return source
 
 
 def _cpp_tokens(source: str) -> list[str]:

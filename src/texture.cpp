@@ -937,7 +937,7 @@ static int TextureRasterLightStepB;
 // RECOVERY_OBJECT: v1 0x009BB514 _TextureRasterLightThreshold
 static int TextureRasterLightThreshold;
 // RECOVERY_OBJECT: v1 0x009BB518 _TextureRasterLightAccumB
-static int TextureRasterLightAccumB;
+static TextureRasterDwordHighWordView TextureRasterLightAccumB;
 // RECOVERY_OBJECT: v1 0x009BB51C _TextureRasterPackedStep
 static int TextureRasterPackedStep;
 // RECOVERY_OBJECT: v1 0x009BB528 _TextureRasterScratch528
@@ -6450,7 +6450,7 @@ void __cdecl sub_6202e0(void *param_1, void *param_2) {
     unsigned short *const g_bb52c_w = &(TextureRasterLightPackA.low_word);
 
     int p1_1c = left->accumC;
-    TextureRasterLightAccumB = left->accumD;
+    TextureRasterLightAccumB.dword = left->accumD;
     int p2_1c = right->accumC;
     TextureRasterLightStepB = right->accumD;
 
@@ -6469,7 +6469,7 @@ void __cdecl sub_6202e0(void *param_1, void *param_2) {
     __int64 divisor64 = (__int64)divisor;
 
     __int64 num52c = (((__int64)(unsigned int)p2_1c) << 32) |
-                      (unsigned int)((TextureRasterLightStepB - TextureRasterLightAccumB) << 8);
+                      (unsigned int)((TextureRasterLightStepB - TextureRasterLightAccumB.dword) << 8);
     *g_bb52c_w = static_cast<unsigned short>(num52c / divisor64);
 
     int d_c = right->accumA - left->accumA;
@@ -6509,7 +6509,7 @@ void __cdecl sub_6202e0(void *param_1, void *param_2) {
         int pre = TextureRasterClipLeft - p1_1c;
         acc_y += dc_step_raw * pre;
         acc_x += d10_step_raw * pre;
-        TextureRasterLightAccumB += (unsigned short)(*g_bb52c_w) * pre;
+        TextureRasterLightAccumB.dword += (unsigned short)(*g_bb52c_w) * pre;
         start_row = TextureRasterClipLeft;
     }
 
@@ -6541,7 +6541,7 @@ void __cdecl sub_6202e0(void *param_1, void *param_2) {
         TextureRasterScratch4B8 = -row_stride;
         int stride = TextureRasterScratch4B8;
 
-        TextureRasterScratch4D8 = (unsigned int)(TextureRasterLightAccumB) >> 8;
+        TextureRasterScratch4D8 = (unsigned int)(TextureRasterLightAccumB.dword) >> 8;
         unsigned char texel = *reinterpret_cast<unsigned char *>(TextureRasterShadeCursor);
         unsigned int val = *reinterpret_cast<const unsigned int *>(
             texture_pointer_offset(TextureRasterScratch550, texel * 4));
@@ -6570,8 +6570,8 @@ void __cdecl sub_6202e0(void *param_1, void *param_2) {
                 TextureRasterShadeCursor = TextureRasterShadeCursor + TextureRasterSignedPitch;
             }
 
-            TextureRasterLightAccumB = (TextureRasterLightAccumB & 0xffff0000) | (unsigned short)(TextureRasterLightAccumB + *g_bb52c_w);
-            TextureRasterScratch4D8 = (unsigned int)(TextureRasterLightAccumB) >> 8;
+            TextureRasterLightAccumB.dword = (TextureRasterLightAccumB.dword & 0xffff0000) | (unsigned short)(TextureRasterLightAccumB.dword + *g_bb52c_w);
+            TextureRasterScratch4D8 = (unsigned int)(TextureRasterLightAccumB.dword) >> 8;
             texel = *reinterpret_cast<unsigned char *>(TextureRasterShadeCursor);
             val = *reinterpret_cast<const unsigned int *>(
                 texture_pointer_offset(TextureRasterScratch550, texel * 4));
@@ -6585,7 +6585,7 @@ void __cdecl sub_6202e0(void *param_1, void *param_2) {
         TextureRasterScratch4B8 = row_stride;
         int stride = TextureRasterScratch4B8;
 
-        TextureRasterScratch4D8 = (unsigned int)(TextureRasterLightAccumB) >> 8;
+        TextureRasterScratch4D8 = (unsigned int)(TextureRasterLightAccumB.dword) >> 8;
         unsigned char texel = *reinterpret_cast<unsigned char *>(TextureRasterShadeCursor);
         unsigned int val = *reinterpret_cast<const unsigned int *>(
             texture_pointer_offset(TextureRasterScratch550, texel * 4));
@@ -6614,8 +6614,8 @@ void __cdecl sub_6202e0(void *param_1, void *param_2) {
                 TextureRasterShadeCursor = TextureRasterShadeCursor + TextureRasterSignedPitch;
             }
 
-            TextureRasterLightAccumB = (TextureRasterLightAccumB & 0xffff0000) | (unsigned short)(TextureRasterLightAccumB + *g_bb52c_w);
-            TextureRasterScratch4D8 = (unsigned int)(TextureRasterLightAccumB) >> 8;
+            TextureRasterLightAccumB.dword = (TextureRasterLightAccumB.dword & 0xffff0000) | (unsigned short)(TextureRasterLightAccumB.dword + *g_bb52c_w);
+            TextureRasterScratch4D8 = (unsigned int)(TextureRasterLightAccumB.dword) >> 8;
             texel = *reinterpret_cast<unsigned char *>(TextureRasterShadeCursor);
             val = *reinterpret_cast<const unsigned int *>(
                 texture_pointer_offset(TextureRasterScratch550, texel * 4));
@@ -6656,7 +6656,7 @@ void __cdecl sub_61fe70(int p1, int p2) {
     int p1_0xc  = left->accumA;
     int p1_0x10 = left->accumB;
     p1 = left->accumC;
-    TextureRasterLightAccumB = left->accumD;
+    TextureRasterLightAccumB.dword = left->accumD;
 
     EdgeScan *right = reinterpret_cast<EdgeScan *>(p2);
     int p2_0xc  = right->accumA;
@@ -6667,7 +6667,7 @@ void __cdecl sub_61fe70(int p1, int p2) {
     if (TextureRasterClipLeft < p2_0x1c && p1 < TextureRasterClipRight && (p2_0x1c - p1) > 0) {
         int denom = (p2_0x1c - p1) << 16;
 
-        TextureRasterLightPackA.low_word = (short)(((TextureRasterLightStepB - TextureRasterLightAccumB) << 8) / denom);
+        TextureRasterLightPackA.low_word = (short)(((TextureRasterLightStepB - TextureRasterLightAccumB.dword) << 8) / denom);
 
         int dxRaw = p2_0xc - p1_0xc;
         int dxRatio = (int)(((__int64)dxRaw << 16) / denom);
@@ -6709,7 +6709,7 @@ void __cdecl sub_61fe70(int p1, int p2) {
             wide = (__int64)dyRatio * ((__int64)skipCount << 16);
             yAccum = yAccum + (int)(wide >> 16);
             wide = (__int64)(unsigned short)TextureRasterLightPackA.low_word * ((__int64)skipCount << 16);
-            TextureRasterLightAccumB = TextureRasterLightAccumB + (int)(wide >> 16);
+            TextureRasterLightAccumB.dword = TextureRasterLightAccumB.dword + (int)(wide >> 16);
             p1 = TextureRasterClipLeft;
         }
 
@@ -6736,7 +6736,7 @@ void __cdecl sub_61fe70(int p1, int p2) {
             TextureRasterScratch4B8 = dxInt + colorStep;
             int rowStep = TextureRasterScratch4B8;
 
-            unsigned char al = (unsigned char)((unsigned int)TextureRasterLightAccumB >> 8);
+            unsigned char al = (unsigned char)((unsigned int)TextureRasterLightAccumB.dword >> 8);
             dst -= 1;
             int n = count;
             do {
@@ -6752,9 +6752,9 @@ void __cdecl sub_61fe70(int p1, int p2) {
                     frac &= ~0x8000;
                     srcAccum += TextureRasterSignedPitch;
                 }
-                TextureRasterLightAccumB = (TextureRasterLightAccumB & ~0xffff) |
-                             (unsigned short)((TextureRasterLightAccumB & 0xffff) + (unsigned short)TextureRasterLightPackA.low_word);
-                al = (unsigned char)((unsigned int)TextureRasterLightAccumB >> 8);
+                TextureRasterLightAccumB.dword = (TextureRasterLightAccumB.dword & ~0xffff) |
+                             (unsigned short)((TextureRasterLightAccumB.dword & 0xffff) + (unsigned short)TextureRasterLightPackA.low_word);
+                al = (unsigned char)((unsigned int)TextureRasterLightAccumB.dword >> 8);
                 n -= 1;
             } while (n != 0);
         } else {
@@ -6768,7 +6768,7 @@ void __cdecl sub_61fe70(int p1, int p2) {
             TextureRasterScratch4B8 = -TextureRasterScratch4B8;
             int rowStep = TextureRasterScratch4B8;
 
-            unsigned char al = (unsigned char)((unsigned int)TextureRasterLightAccumB >> 8);
+            unsigned char al = (unsigned char)((unsigned int)TextureRasterLightAccumB.dword >> 8);
             dst -= 1;
             int n = count;
             do {
@@ -6784,9 +6784,9 @@ void __cdecl sub_61fe70(int p1, int p2) {
                     frac &= ~0x8000;
                     srcAccum += TextureRasterSignedPitch;
                 }
-                TextureRasterLightAccumB = (TextureRasterLightAccumB & ~0xffff) |
-                             (unsigned short)((TextureRasterLightAccumB & 0xffff) + (unsigned short)TextureRasterLightPackA.low_word);
-                al = (unsigned char)((unsigned int)TextureRasterLightAccumB >> 8);
+                TextureRasterLightAccumB.dword = (TextureRasterLightAccumB.dword & ~0xffff) |
+                             (unsigned short)((TextureRasterLightAccumB.dword & 0xffff) + (unsigned short)TextureRasterLightPackA.low_word);
+                al = (unsigned char)((unsigned int)TextureRasterLightAccumB.dword >> 8);
                 n -= 1;
             } while (n != 0);
         }
@@ -6824,7 +6824,7 @@ void __cdecl sub_620640(int param_1, int param_2) {
     EdgeScan *left = reinterpret_cast<EdgeScan *>(param_1);
     EdgeScan *right = reinterpret_cast<EdgeScan *>(param_2);
     int y1 = left->accumC;
-    TextureRasterLightAccumB = left->accumD;
+    TextureRasterLightAccumB.dword = left->accumD;
     int y2 = right->accumC;
     TextureRasterLightStepB = right->accumD;
 
@@ -6835,7 +6835,7 @@ void __cdecl sub_620640(int param_1, int param_2) {
     int dy16 = (y2 - y1) * 0x10000;
 
     __int64 num1 = (static_cast<__int64>(y2) << 32) |
-                   static_cast<unsigned int>((TextureRasterLightStepB - TextureRasterLightAccumB) * 0x100);
+                   static_cast<unsigned int>((TextureRasterLightStepB - TextureRasterLightAccumB.dword) * 0x100);
     TextureRasterLightPackA.low_word =
         static_cast<unsigned short>(num1 / static_cast<__int64>(dy16));
 
@@ -6881,9 +6881,9 @@ void __cdecl sub_620640(int param_1, int param_2) {
         int preStepY = (y1 - TextureRasterClipLeft) * -0x10000;
         xAcc = static_cast<unsigned int>((static_cast<__int64>(quot1) * static_cast<__int64>(preStepY)) >> 16) + xAcc;
         zAcc = static_cast<unsigned int>((static_cast<__int64>(quot2) * static_cast<__int64>(preStepY)) >> 16) + zAcc;
-        TextureRasterLightAccumB = static_cast<unsigned int>(
+        TextureRasterLightAccumB.dword = static_cast<unsigned int>(
             (static_cast<__int64>(static_cast<int>(TextureRasterLightPackA.low_word)) *
-             static_cast<__int64>(preStepY)) >> 16) + TextureRasterLightAccumB;
+             static_cast<__int64>(preStepY)) >> 16) + TextureRasterLightAccumB.dword;
         yStart = TextureRasterClipLeft;
     }
     int rowCount = yEnd - yStart;
@@ -6922,7 +6922,7 @@ void __cdecl sub_620640(int param_1, int param_2) {
         unsigned int flag = *reinterpret_cast<unsigned int *>(entry);
         unsigned int color = 0;
         if (flag != 0) {
-            color = TextureRasterLightAccumB >> 8;
+            color = TextureRasterLightAccumB.dword >> 8;
         }
 
         do {
@@ -6947,9 +6947,9 @@ void __cdecl sub_620640(int param_1, int param_2) {
             flag = *reinterpret_cast<unsigned int *>(entry);
             TextureRasterScratch4D8 = 0;
             if (flag != 0) {
-                *reinterpret_cast<unsigned short *>(&(TextureRasterLightAccumB)) =
-                    static_cast<unsigned short>(*reinterpret_cast<short *>(&(TextureRasterLightAccumB)) + TextureRasterLightPackA.low_word);
-                TextureRasterScratch4D8 = TextureRasterLightAccumB >> 8;
+                TextureRasterLightAccumB.words.low_word = static_cast<unsigned short>(
+                    TextureRasterLightAccumB.words.low_word + TextureRasterLightPackA.low_word);
+                TextureRasterScratch4D8 = TextureRasterLightAccumB.dword >> 8;
             }
             color = *reinterpret_cast<const int *>(texture_pointer_offset(
                 TextureRasterScratch550,
@@ -6971,7 +6971,7 @@ void __cdecl sub_620640(int param_1, int param_2) {
         unsigned int flag = *reinterpret_cast<unsigned int *>(entry);
         unsigned int color = 0;
         if (flag != 0) {
-            color = TextureRasterLightAccumB >> 8;
+            color = TextureRasterLightAccumB.dword >> 8;
         }
         int rowColor = *reinterpret_cast<const int *>(texture_pointer_offset(
             TextureRasterScratch550,
@@ -7000,9 +7000,9 @@ void __cdecl sub_620640(int param_1, int param_2) {
             flag = *reinterpret_cast<unsigned int *>(entry);
             TextureRasterScratch4D8 = 0;
             if (flag != 0) {
-                *reinterpret_cast<unsigned short *>(&(TextureRasterLightAccumB)) =
-                    static_cast<unsigned short>(*reinterpret_cast<short *>(&(TextureRasterLightAccumB)) + TextureRasterLightPackA.low_word);
-                TextureRasterScratch4D8 = TextureRasterLightAccumB >> 8;
+                TextureRasterLightAccumB.words.low_word = static_cast<unsigned short>(
+                    TextureRasterLightAccumB.words.low_word + TextureRasterLightPackA.low_word);
+                TextureRasterScratch4D8 = TextureRasterLightAccumB.dword >> 8;
             }
             rowColor = *reinterpret_cast<const int *>(texture_pointer_offset(
                 TextureRasterScratch550,
@@ -7130,7 +7130,7 @@ void Texture::sub_61f0d0(Buffer *param_2, Vert *param_3, int *param_4,
               if ((iVar10 != 0) && ((TextureRasterRowOffset) < (TextureRasterClipBottom))) {
                 do {
                   if ((TextureRasterClipTop) <= (TextureRasterRowOffset)) {
-                    (TextureRasterLightAccumB) = edge1.accumD;
+                    (TextureRasterLightAccumB.dword) = edge1.accumD;
                     (TextureRasterLightStepB) = edge2.accumD;
                     if ((((TextureRasterClipLeft) < edge2.accumC) && (edge1.accumC < (TextureRasterClipRight))) &&
                        (edge2.accumC - edge1.accumC != 0 && edge1.accumC <= edge2.accumC)) {
@@ -7169,7 +7169,7 @@ void Texture::sub_61f0d0(Buffer *param_2, Vert *param_3, int *param_4,
                         param_7 = ((uint)((longlong)local_88 * (longlong)iVar14) >> 0x10 |
                                   (int)((ulonglong)((longlong)local_88 * (longlong)iVar14) >> 0x20)
                                   << 0x10) + param_7;
-                        (TextureRasterLightAccumB) = ((uint)((longlong)(int)(uint)(TextureRasterLightPackA.low_word) * (longlong)iVar14)
+                        (TextureRasterLightAccumB.dword) = ((uint)((longlong)(int)(uint)(TextureRasterLightPackA.low_word) * (longlong)iVar14)
                                         >> 0x10 |
                                        (int)((ulonglong)
                                              ((longlong)(int)(uint)(TextureRasterLightPackA.low_word) * (longlong)iVar14)
@@ -7200,7 +7200,7 @@ void Texture::sub_61f0d0(Buffer *param_2, Vert *param_3, int *param_4,
                         }
                         uVar5 = 0;
                         if (*piVar6 != 0) {
-                          uVar5 = (TextureRasterLightAccumB) >> 8;
+                          uVar5 = (TextureRasterLightAccumB.dword) >> 8;
                         }
                         do {
                           bVar9 = *pbVar12;
@@ -7226,9 +7226,9 @@ void Texture::sub_61f0d0(Buffer *param_2, Vert *param_3, int *param_4,
                           }
                           (TextureRasterScratch4D8) = 0;
                           if (*piVar6 != 0) {
-                            (TextureRasterLightAccumB) = CONCAT22((short)((TextureRasterLightAccumB) >> 0x10),
-                                                    (short)(TextureRasterLightAccumB) + (TextureRasterLightPackA.low_word));
-                            (TextureRasterScratch4D8) = (TextureRasterLightAccumB) >> 8;
+                            (TextureRasterLightAccumB.dword) = CONCAT22((short)((TextureRasterLightAccumB.dword) >> 0x10),
+                                                    (short)(TextureRasterLightAccumB.dword) + (TextureRasterLightPackA.low_word));
+                            (TextureRasterScratch4D8) = (TextureRasterLightAccumB.dword) >> 8;
                           }
                           uVar5 = *reinterpret_cast<const int *>(texture_pointer_offset(
                               TextureRasterScratch550,
@@ -7247,7 +7247,7 @@ void Texture::sub_61f0d0(Buffer *param_2, Vert *param_3, int *param_4,
                         }
                         uVar5 = 0;
                         if (*piVar6 != 0) {
-                          uVar5 = (TextureRasterLightAccumB) >> 8;
+                          uVar5 = (TextureRasterLightAccumB.dword) >> 8;
                         }
                         iVar10 = *reinterpret_cast<const int *>(texture_pointer_offset(
                             TextureRasterScratch550,
@@ -7277,9 +7277,9 @@ void Texture::sub_61f0d0(Buffer *param_2, Vert *param_3, int *param_4,
                           }
                           (TextureRasterScratch4D8) = 0;
                           if (*piVar6 != 0) {
-                            (TextureRasterLightAccumB) = CONCAT22((short)((TextureRasterLightAccumB) >> 0x10),
-                                                    (short)(TextureRasterLightAccumB) + (TextureRasterLightPackA.low_word));
-                            (TextureRasterScratch4D8) = (TextureRasterLightAccumB) >> 8;
+                            (TextureRasterLightAccumB.dword) = CONCAT22((short)((TextureRasterLightAccumB.dword) >> 0x10),
+                                                    (short)(TextureRasterLightAccumB.dword) + (TextureRasterLightPackA.low_word));
+                            (TextureRasterScratch4D8) = (TextureRasterLightAccumB.dword) >> 8;
                           }
                           iVar10 = *reinterpret_cast<const int *>(texture_pointer_offset(
                               TextureRasterScratch550,
