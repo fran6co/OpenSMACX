@@ -210,6 +210,12 @@ def _method_sources(mutant: str | None = None) -> dict[int, str]:
         old = "set_selected_pos(-1, 1);"
         assert text.count(old) == 1
         methods[0x00609FA0] = text.replace(old, "set_selected_pos(0, 1);", 1)
+    elif mutant == "nonpositive-count-walk":
+        text = methods[0x00609FA0]
+        old = "if (count > 0) {\n            int index = 0;"
+        assert text.count(old) == 1
+        methods[0x00609FA0] = text.replace(
+            old, "{\n            int index = 0;", 1)
     elif mutant == "safe-null-payload":
         text = methods[0x0060C7D0]
         old = "name = payload->text;"
@@ -323,6 +329,23 @@ int main(int argc, char **) {
         box.item_list_ = {0, 0, 0, 12};
         box.set_selected_id(1);
         assert(box.selected_position == -1 && box.selected_notify == 1);
+        assert(box.item_list_.current_ == 0 && box.item_list_.current_position_ == 12);
+    }
+    {
+        ListBox box{};
+        StringStructEntry matching{42, 0, 0, 0};
+        box.item_list_ = {&matching, &matching, 0, 9};
+        box.set_selected_id(42);
+        assert(box.selected_position == -1 && box.selected_notify == 1);
+        assert(box.item_list_.current_ == &matching);
+        assert(box.item_list_.current_position_ == 0);
+
+        box.selected_position = -99;
+        box.item_list_ = {&matching, &matching, -3, 7};
+        box.set_selected_id(42);
+        assert(box.selected_position == -1 && box.selected_notify == 1);
+        assert(box.item_list_.current_ == &matching);
+        assert(box.item_list_.current_position_ == 0);
     }
     {
         ListBox box{};
@@ -412,7 +435,10 @@ def test_installed_listbox_methods_preserve_history_and_behavior():
                 assert fault.returncode != 0, "malformed null payload unexpectedly returned"
 
 
-@pytest.mark.parametrize("mutant", ("case-sensitive", "wheel-direction", "miss-selection"))
+@pytest.mark.parametrize("mutant", (
+    "case-sensitive", "wheel-direction", "miss-selection",
+    "nonpositive-count-walk",
+))
 def test_installed_method_mutations_fail_behavior(mutant: str):
     methods = _method_sources(mutant)
     compilers = [shutil.which(name) for name in ("g++", "clang++")]

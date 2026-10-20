@@ -1873,22 +1873,24 @@ Purpose: Land the list selection on the row whose id matches: reset the
 Status: Coverage transcription - unclaimed body
 */
 void ListBox::set_selected_id(int id) {
-    if (Dialog::item_list_.head_ != 0) {
-        const int count = Dialog::item_list_.entry_count_;
-        Dialog::item_list_.current_position_ = 0;
-        Dialog::item_list_.current_ = Dialog::item_list_.head_;
-        int index = 0;
-        do {
-            StringStructEntry *entry = Dialog::item_list_.current_;
-            if (entry->id == id) {
-                set_selected_pos(Dialog::item_list_.current_position_, 1);
-                return;
-            }
-            ++index;
-            Dialog::item_list_.current_position_ =
-                Dialog::item_list_.current_position_ + 1;
-            Dialog::item_list_.current_ = entry->next;
-        } while (index < count);
+    StringList &items = Dialog::item_list_;
+    if (items.head_ != 0) {
+        const int count = items.entry_count_;
+        items.current_position_ = 0;
+        items.current_ = items.head_;
+        if (count > 0) {
+            int index = 0;
+            do {
+                StringStructEntry *entry = items.current_;
+                if (entry->id == id) {
+                    set_selected_pos(items.current_position_, 1);
+                    return;
+                }
+                ++index;
+                items.current_position_ = items.current_position_ + 1;
+                items.current_ = entry->next;
+            } while (index < count);
+        }
     }
     set_selected_pos(-1, 1);
 }
