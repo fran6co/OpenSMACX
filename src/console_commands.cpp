@@ -1281,7 +1281,7 @@ void Console::set_road_to(int veh_id, int x_coord, int y_coord, int order) {
     const int target_index = MapLongitude * y_coord + (x_coord >> 1);
     const int origin_index = MapLongitude * vehicle.y + (vehicle.x >> 1);
     if ((map_tiles()[target_index].climate & ~0x1F) < 0x60) {
-        NetMsgPrimary.pop(ConsoleStrNotHere, 5000, 0, 0);
+        NetMsgPrimary.pop("NOTINOCEAN", 5000, 0, 0);
         return;
     }
     if (map_tiles()[target_index].region != map_tiles()[origin_index].region) {

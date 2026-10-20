@@ -1,0 +1,27 @@
+{
+  "event_id": "2d033dd7e7b0d49d452f841ecd248ce02c2737188e89458bc36fb2008ccbf3ed",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_console_set_road_to_original_caption_oct20n.py"
+    ],
+    "evidence": [
+      "Coordinator authorizes exactly the existing set_road_to popup argument replacement from ConsoleStrNotHere to ordinary literal NOTINOCEAN, plus extracted actual-source and pinned-image regression controls. No other conditions, calls, storage, mappings, signatures, flags or claims may change. Preserve the immutable47aee8a54 task baseline and all earlier road_to work.",
+      "Do not add a globally false RECOVERY_LITERAL alias: current COFF pools repeated NOTINOCEAN occurrences whose original targets differ. Faithful message content is restored; literal identity proof remains unknown. No invented named original object, fake data span, copy of proprietary machine bytes or gate weakening.",
+      "Cover invalid coordinates, near-target return, climate rejection with exact message/arguments/no later mutation, valid-terrain region mismatch, lock failure, successful order/waypoint writes and original post-lock vehicle-id reload/synchronization order. Preserve unsafe/unchecked paths; host stubs prove control flow only, pinned native evidence/layout remain separate. No compiler VC6, preparation, recording or Git by worker."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5082560,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "9284ea1676109164d86a89f629a2835a34638ed303f31fd1ed6a45ebc758eaaf",
+  "request_id": "console-road-target-caption-recovery-oct20n",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:wide-console-source-decks-oct20n"
+}
