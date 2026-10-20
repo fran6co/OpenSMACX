@@ -1,0 +1,23 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "c2281820ab17fc92d88b97715b014f58a5d5642f",
+  "editable_files": [
+    "src/game.cpp",
+    "recovery/tests/test_mapwin_view_roles_oct17.py"
+  ],
+  "evidence": [
+    "Independent full-original/source audit confirmed six ordered member transfers and mode reads, early failure1/success0; current72instructions vs224 original reflects loop vs unrolled original. One prepared ordinary C++ candidate in ignored gameio-unrolled-candidate-oct20e/candidate.md is a seed, not measured.",
+    "Scope onlygame_io and its existing actual-source controls, not all game.cpp functions or MapWin layout. No flags/pragmas/assembly/volatile/forceinline or prolonged spelling iterations; one straight-line form, one evidence-backed followup at most. Preserve original quirks, mapped identities/claims and caller/member types. Generalize controls fromloopspelling to6effects without weakening transfer-order/width/failure/mode-reload checks. Root ownsGit/nativecompiler/preparation/integration; cheaper sourceworkerisolated."
+  ],
+  "intent": "Restore original unrolled six-member MapWin persistence transfer through one bounded natural C++ matching candidate, retaining faithful I/O behavior.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5925008,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "gameio-six-word-transfer-oct20e"
+}
