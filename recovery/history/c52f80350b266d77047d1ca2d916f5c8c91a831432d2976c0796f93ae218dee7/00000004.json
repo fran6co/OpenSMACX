@@ -1,0 +1,20 @@
+{
+  "event_id": "583e64afb0f9708717ce43865323f351de6e5a35c42ed5e3d3df69c1b512583f",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_network_clock_import.py"
+    ],
+    "evidence": [
+      "Net polling now correctly combines a cached import pointer with direct IAT reads. The existing wrong-cached-API mutant leaves direct clock calls intact and must fail the exact unexpected direct SDK import assertion, not the old no clock assertion. Parameterize expected diagnostics per mutant, preserving all rejection assertions and negative cases. Coordinate this single test-module edit serially with the admitted NetDaemon anchor retarget; no C++ scope overlap.",
+      "The combined isolated checkout must execute the entire native clock regression module under one compiler lease after preparation/source freeze. Missing/failing native evidence is not waived. No source claim/marker/policy edits or full acceptance follow from this fixture migration."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "03dff7d3aa92aab280117a608c27cf639ec83a630e67554f66b9fa43b782a49b",
+  "request_id": "central-native-polling-mixed-clock-control-oct21a",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:net-polling-player-id-oct11"
+}
