@@ -1,0 +1,23 @@
+{
+  "event_id": "5e5620280bf4781feb53257e246050198945cc82917008d3f8b3ebc272d87045",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_texture_store_natural_dtor_oct20.py",
+      "src/texture.cpp"
+    ],
+    "evidence": [
+      "Coordinator authorizes one new bounded quality hypothesis on6252B0 TextureStore destructor, not repetition of the exhausted Texture619660/619690 guard deck. Prior keep-volatile-view-unchanged restriction is superseded ONLY for private observation of plain genuine member assignments under the actual current Release recipe. Historical theory about dead-store removal is not a fresh compiler observation.",
+      "No flags, headers, class layout, aliases, scope/baseline changes or altered behavior are allowed. Preserve original two native stores and all current mappings/claims. If ordinary member assignments lose the original stores or collateral code, stop with work/evidence retained rather than force a result with attributes, alternate flags, fabricated volatile fields or type claims. Product source publication needs a verified meaningful winner and coordinator review.",
+      "Coordinated isolated checkout caught up to669414f237f59d649d38d9100c4a1692b0a2815a before preparation/measurement; original native task baseline remains unchanged. Worker owns bounded overlay/test/measurement loop under one shared native resource lease with absolute image/pool paths; coordinator retains all Git, metadata, claims, integration. Capture object bytes and hashes before analysis so failed Python analysis does not trigger recompilation.",
+      "Read prepared ignored build/recovery/actual_release_texture_arguments.json as exact explicit Compiler arguments, not guessed flags or Debug database code generation. Baseline, candidate, unchanged replica and deliberately changed-body witness use Compiler.overlay flags=(); whole-TU measurement diagnostics use a nonempty actual-release label and captured compiler callable. No recursive support sweep or prolonged spelling variations."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "screen-ordinary-texture-store-member-destruction",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:texture-owner-guard-screen-oct20"
+}
