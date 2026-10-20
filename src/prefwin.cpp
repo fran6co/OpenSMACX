@@ -794,14 +794,12 @@ void PrefWin::redraw_option() {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00491860 ?redraw_volume@PrefWin@@QAEXXZ 0x00491860-0x004918BA FILE
+// ORIGINAL: 0x00491860 ?redraw_volume@PrefWin@@QAEXXZ 0x00491860-0x004918BA FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00491860.cpp", "recovery/tasks/prefwin-owner-coverage-wave.json", "Original control parent 8578D8; ctor/destructor member order, 800-pixel branch, checkbox text-context and callback order independently reviewed."], "reason": "Recover the complete PrefWin ownership group through a genuine GraphicWin base and compiler-owned embedded control lifetimes; preserve seed identity, original spans and unresolved discoveries without granting byte claims."}
 void PrefWin::redraw_volume() {
-  RECT rect;
-  rect.left = PrefWinGeometryValue_8577D8;
-  rect.top = PrefWinGeometryValue_8577DC - PrefWinNarrowDisplayVerticalOffset;
-  rect.right = PrefWinGeometryValue_8577E4 + rect.left;
-  rect.bottom = PrefWinGeometryValue_8577E0 + rect.top;
+  const int top = PrefWinGeometryValue_8577DC - PrefWinNarrowDisplayVerticalOffset;
+  const int left = PrefWinGeometryValue_8577D8;
+  RECT rect = {left, top, PrefWinGeometryValue_8577E4 + left, PrefWinGeometryValue_8577E0 + top};
   if (field_A14_ == 4)
     Buffer::box_sprite(&rect, &InterfaceBoxStyles[9]);
 }
