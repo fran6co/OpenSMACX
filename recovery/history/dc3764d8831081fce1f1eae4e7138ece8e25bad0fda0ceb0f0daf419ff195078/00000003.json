@@ -1,0 +1,21 @@
+{
+  "event_id": "d5cdfb374f798529b1ee66b597a3d733dd32a0431d16603eb9a1d0a8121ce4de",
+  "payload": {
+    "affects": [
+      "entity-3f3f9dffaa473cf31692dfa394cf603a4c1f3e85001401f851b65c894eb2a18b",
+      "entity-7bc1d8bce67f6362c145e7e06f02957d3074af36edda3abe3b5ed193d96ecb07"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "text-open-separate-loop-provenance-oct20j",
+    "evidence": [
+      "The original has no direct call from open to standalone5FE230. That observation alone does not distinguish shared inline source from a separate loop; j1 explicit-loop candidate was tested, not assumed accepted."
+    ],
+    "hypothesis": "Pinned calls to search_index from Text::open prove that its scan was separate source rather than an inlined shared text_search_index helper.",
+    "kind": "discovery"
+  },
+  "previous_event": "254f3a7a33283be7516614b22c92ba893c3837112591d96bb46bdb74f2facb9d",
+  "request_id": "text-open-separate-loop-provenance-oct20j",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:text-source-ownership-oct20j"
+}

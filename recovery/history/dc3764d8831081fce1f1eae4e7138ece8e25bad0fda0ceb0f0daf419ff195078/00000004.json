@@ -1,0 +1,19 @@
+{
+  "event_id": "64fb960a08230a58e27d20094219e69c112b40df41160588fed01db3a3cc41b5",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "text-open-separate-loop-provenance-oct20j",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Fresh receipt-backed baseline5FDA00 was already locally byte-exact; old7/170 comment was historical, not current evidence. j1 separate-loop candidate loses only that exact identity (3290 to3289); canonical constructor and startup/lifetime observations support the independent constructor ownership correction.",
+      "The shared inline helper preserves original guards, miss and hit effects; its inline expansion also explains the original direct search_index calls. No independent source-provenance evidence favors duplicated loops. Keep shared inline helper in textindex.h and original Text::open call; retain stronger actual-source four-slot/pinned/lifetime controls and Text(int) owner migration.",
+      "Failed j1 candidate observations remain retained, no historical claims demoted or task baseline reset. This supersedes only initial task-basis helper relocation/separate-loop assumptions; scope remains intact."
+    ]
+  },
+  "previous_event": "d5cdfb374f798529b1ee66b597a3d733dd32a0431d16603eb9a1d0a8121ce4de",
+  "request_id": "reject-text-open-separate-loop-provenance-oct20j",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:text-source-ownership-oct20j"
+}

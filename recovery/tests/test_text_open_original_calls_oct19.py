@@ -31,13 +31,29 @@ def text_open_body(source: str) -> str:
     raise AssertionError("Text::open body is incomplete")
 
 
-def fixture(body: str) -> str:
+def text_search_body(source: str) -> str:
+    signature = "inline int __cdecl text_search_index("
+    start = source.index(signature)
+    opening = source.index("{", start)
+    depth = 0
+    for at in range(opening, len(source)):
+        if source[at] == "{":
+            depth += 1
+        elif source[at] == "}":
+            depth -= 1
+            if depth == 0:
+                return source[start:at + 1]
+    raise AssertionError("text_search_index body is incomplete")
+
+
+def fixture(body: str, helper: str) -> str:
     return textwrap.dedent(r"""
         #include <cassert>
         #include <cctype>
         #include <cstdio>
         #include <cstring>
 
+        #define __cdecl
         typedef int BOOL;
         typedef const char *LPCSTR;
         typedef char *LPSTR;
@@ -48,10 +64,14 @@ def fixture(body: str) -> str:
         static const char *last_opened_name = 0;
         static const char *last_opened_mode = 0;
         static int open_fails = 0;
-        static int search_result = -1;
         static int search_calls = 0;
+        static int count_reads[4] = {0, 0, 0, 0};
+        static int search_slots[4] = {-1, -1, -1, -1};
+        static int index_counts[4] = {0, 0, 0, 0};
+        static int index_results[4] = {-1, -1, -1, -1};
         static int log_calls = 0;
         static int seek_calls = 0;
+        static long seek_offset = -1;
         static int rewind_calls = 0;
         static int read_calls = 0;
         static const char *searched_file = 0;
@@ -68,16 +88,26 @@ def fixture(body: str) -> str:
             rewind(stream);
             return stream;
         }
-        static int text_search_index(LPCSTR file, LPCSTR section) {
-            ++search_calls;
-            searched_file = file;
-            searched_section = section;
-            if (section_to_mutate == section) {
-                strcpy(section_to_mutate, "MUTATED");
-                section_to_mutate = 0;
+        static const int MaxTextIndexNum = 4;
+        struct TextIndex {
+            int slot;
+            unsigned get_count() {
+                ++count_reads[slot];
+                return (unsigned)index_counts[slot];
             }
-            return search_result;
-        }
+            int search_index(LPCSTR file, LPCSTR section) {
+                search_slots[search_calls++] = slot;
+                searched_file = file;
+                searched_section = section;
+                if (section_to_mutate == section) {
+                    strcpy(section_to_mutate, "MUTATED");
+                    section_to_mutate = 0;
+                }
+                return index_results[slot];
+            }
+        };
+        static TextIndex TxtIndex[MaxTextIndexNum];
+        HELPER_BODY
         static void log_say(LPCSTR, LPCSTR, int, int, int) { ++log_calls; }
         static int host_feof(FILE *stream) { return feof(stream); }
         static char *host_fgets(char *buffer, int size, FILE *stream) {
@@ -86,6 +116,7 @@ def fixture(body: str) -> str:
         }
         static int host_fseek(FILE *stream, long offset, int origin) {
             ++seek_calls;
+            seek_offset = offset;
             return fseek(stream, offset, origin);
         }
         static void host_rewind(FILE *stream) { ++rewind_calls; rewind(stream); }
@@ -126,7 +157,7 @@ def fixture(body: str) -> str:
         #define fgets host_fgets
         #define fseek host_fseek
         #define rewind host_rewind
-        """) + body + textwrap.dedent(r"""
+        """).replace("HELPER_BODY", helper) + body + textwrap.dedent(r"""
         #undef feof
         #undef fgets
         #undef fseek
@@ -136,19 +167,28 @@ def fixture(body: str) -> str:
             last_opened_name = last_opened_mode = searched_file = searched_section = 0;
             section_to_mutate = 0;
             open_fails = search_calls = log_calls = seek_calls = rewind_calls = read_calls = 0;
-            search_result = -1;
+            seek_offset = -1;
+            for (int i = 0; i < MaxTextIndexNum; ++i) {
+                TxtIndex[i].slot = i;
+                count_reads[i] = 0;
+                index_counts[i] = 0;
+                index_results[i] = -1;
+                search_slots[i] = -1;
+            }
             file_contents = "#OPTIONS\nbody\n";
             strcpy(FilefindPath.last_path, "C:\\Data\\rules.txt");
         }
         static void check_filename_and_section() {
             reset_controls();
+            index_counts[0] = 1;
             Text text;
             assert(text.open("dir.withdot/rules", "OPTIONS") == 0);
             assert(strcmp(text.file_name_, "dir.withdot/rules") == 0);
             assert(strcmp(last_opened_name, "dir.withdot/rules") == 0);
             assert(strcmp(last_opened_mode, "rt") == 0);
             assert(strcmp(text.file_path_, "C:\\Data\\rules.txt") == 0);
-            assert(search_calls == 1 && strcmp(searched_file, text.file_name_) == 0);
+            assert(search_calls == 1 && search_slots[0] == 0);
+            assert(strcmp(searched_file, text.file_name_) == 0);
             assert(strcmp(searched_section, "OPTIONS") == 0);
             assert(strcmp(text.buffer_get_, "#OPTIONS") == 0);
             assert(text.current_pos_ == text.buffer_get_);
@@ -156,6 +196,7 @@ def fixture(body: str) -> str:
             text.close();
 
             reset_controls();
+            index_counts[0] = 1;
             Text dotted;
             assert(dotted.open("rules", "OPTIONS") == 0);
             assert(strcmp(dotted.file_name_, "rules.txt") == 0);
@@ -180,9 +221,10 @@ def fixture(body: str) -> str:
         }
         static void check_fallback_reopen_success_and_failure() {
             reset_controls();
+            index_counts[0] = 1;
+            index_results[0] = 0;
             Text reopened;
             strcpy(reopened.file_name_, "fallback.txt");
-            search_result = 0;
             assert(reopened.open(0, "OPTIONS") == 0);
             assert(strcmp(last_opened_name, "fallback.txt") == 0);
             assert(strcmp(last_opened_mode, "rt") == 0);
@@ -208,10 +250,11 @@ def fixture(body: str) -> str:
         }
         static void check_header_precedes_mutating_index_search() {
             reset_controls();
+            index_counts[0] = 1;
+            index_results[0] = 0;
             Text aliased;
             char section[] = "OPTIONS";
             section_to_mutate = section;
-            search_result = 0;
             assert(aliased.open("rules", section) == 0);
             assert(strcmp(section, "MUTATED") == 0);
             assert(search_calls == 1 && searched_section == section);
@@ -221,6 +264,8 @@ def fixture(body: str) -> str:
         }
         static void check_existing_stream_and_seek() {
             reset_controls();
+            index_counts[0] = 1;
+            index_results[0] = 0;
             Text existing;
             existing.text_file_ = tmpfile();
             assert(existing.text_file_);
@@ -228,18 +273,18 @@ def fixture(body: str) -> str:
             rewind(existing.text_file_);
             strcpy(existing.file_name_, "already-open.txt");
             strcpy(existing.file_path_, "keep existing path");
-            search_result = 0;
             assert(existing.open(0, "OPTIONS") == 0);
             assert(last_opened_name == 0 && existing.close_calls == 0);
             assert(strcmp(existing.file_path_, "keep existing path") == 0);
             assert(seek_calls == 1 && log_calls == 1 && rewind_calls == 0);
+            assert(seek_offset == 0);
             assert(strcmp(searched_file, "already-open.txt") == 0);
             existing.close();
         }
         static void check_eof_rewind_then_close() {
             reset_controls();
             file_contents = "no section here\n";
-        search_result = -1;
+            index_counts[0] = 1;
             Text missing;
         missing.text_file_ = tmpfile();
         assert(missing.text_file_);
@@ -253,6 +298,45 @@ def fixture(body: str) -> str:
             assert(rewind_calls == 1);
             assert(missing.close_calls == 1 && !missing.text_file_);
         }
+        static void check_zero_counts_and_all_misses_do_not_seek() {
+            reset_controls();
+            file_contents = "no section here\n";
+            Text no_entries;
+            assert(no_entries.open("rules", "MISSING") == TRUE_VALUE);
+            assert(search_calls == 0 && count_reads[0] == 1 && count_reads[1] == 1);
+            assert(count_reads[2] == 1 && count_reads[3] == 1);
+            assert(log_calls == 0 && seek_calls == 0);
+            assert(no_entries.close_calls == 2 && !no_entries.text_file_);
+
+            reset_controls();
+            file_contents = "no section here\n";
+            index_counts[0] = 1;
+            index_counts[2] = 1;
+            index_results[0] = -7;
+            index_results[2] = -1;
+            Text all_miss;
+            assert(all_miss.open("rules", "MISSING") == TRUE_VALUE);
+            assert(search_calls == 2 && search_slots[0] == 0 && search_slots[1] == 2);
+            assert(log_calls == 0 && seek_calls == 0);
+            assert(count_reads[0] == 1 && count_reads[1] == 1);
+            assert(count_reads[2] == 1 && count_reads[3] == 1);
+        }
+        static void check_negative_result_then_later_index_hit() {
+            reset_controls();
+            index_counts[1] = 1;
+            index_counts[2] = 1;
+            index_counts[3] = 1;
+            index_results[1] = -7;
+            index_results[2] = 0;
+            index_results[3] = 4;
+            Text text;
+            assert(text.open("rules", "OPTIONS") == 0);
+            assert(search_calls == 2 && search_slots[0] == 1 && search_slots[1] == 2);
+            assert(count_reads[0] == 1 && count_reads[1] == 1 && count_reads[2] == 1);
+            assert(count_reads[3] == 0);
+            assert(log_calls == 1 && seek_calls == 1 && seek_offset == 0);
+            text.close();
+        }
         int main() {
             check_filename_and_section();
             check_null_section_and_open_failure();
@@ -260,6 +344,8 @@ def fixture(body: str) -> str:
             check_header_precedes_mutating_index_search();
             check_existing_stream_and_seek();
             check_eof_rewind_then_close();
+            check_zero_counts_and_all_misses_do_not_seek();
+            check_negative_result_then_later_index_hit();
             return 0;
         }
         """)
@@ -279,6 +365,7 @@ def test_text_open_uses_original_copy_append_operations_and_order() -> None:
     assert body.index("strcat(sect_header, section_id);") < body.index("do {")
     assert body.index("strcat(sect_header, section_id);") < body.index(
         "int seek_addr = text_search_index(file_name_, section_id);")
+    assert "TxtIndex[i].search_index(file_name_, section_id)" not in body
 
 
 @pytest.mark.parametrize("compiler_name", ["g++", "clang++"])
@@ -286,7 +373,10 @@ def test_extracted_text_open_preserves_stream_and_parser_control_flow(tmp_path: 
     compiler = shutil.which(compiler_name)
     if compiler is None:
         pytest.skip(f"{compiler_name} is unavailable")
-    source = fixture(text_open_body(SOURCE.read_text()))
+    source = fixture(
+        text_open_body(SOURCE.read_text()),
+        text_search_body((ROOT / "src/textindex.h").read_text()),
+    )
     cpp = tmp_path / "text_open.cpp"
     executable = tmp_path / "text_open"
     cpp.write_text(source)
@@ -297,6 +387,37 @@ def test_extracted_text_open_preserves_stream_and_parser_control_flow(tmp_path: 
     assert built.returncode == 0, built.stderr
     ran = subprocess.run([str(executable)], capture_output=True, text=True)
     assert ran.returncode == 0, ran.stderr
+
+
+@pytest.mark.parametrize("compiler_name", ["g++", "clang++"])
+def test_actual_text_search_helper_rejects_wrong_miss_sentinel_and_early_exit(
+    tmp_path: Path, compiler_name: str,
+) -> None:
+    compiler = shutil.which(compiler_name)
+    if compiler is None:
+        pytest.skip(f"{compiler_name} is unavailable")
+    body = text_search_body((ROOT / "src/textindex.h").read_text())
+    sentry = "return -1;"
+    assert body.count(sentry) == 1
+    sentinel_mutant = body.replace(sentry, "return 0;", 1)
+    break_clause = "if (address >= 0) {\n                return address;\n            }"
+    assert body.count(break_clause) == 1
+    early_exit_mutant = body.replace(break_clause, "return address;", 1)
+    open_body = text_open_body(SOURCE.read_text())
+    helper_call = "int seek_addr = text_search_index(file_name_, section_id);"
+    assert open_body.count(helper_call) == 1
+    for label, mutant in (("zero-sentinel", sentinel_mutant), ("early-exit", early_exit_mutant)):
+        source = fixture(open_body, mutant)
+        cpp = tmp_path / f"text_open_{label}.cpp"
+        executable = tmp_path / f"text_open_{label}"
+        cpp.write_text(source)
+        built = subprocess.run(
+            [compiler, "-std=c++98", "-Wall", "-Wextra", "-Werror", str(cpp), "-o", str(executable)],
+            capture_output=True, text=True,
+        )
+        assert built.returncode == 0, built.stderr
+        ran = subprocess.run([str(executable)], capture_output=True, text=True)
+        assert ran.returncode != 0, f"{label} mutant unexpectedly passed all controls"
 
 
 def test_pinned_original_has_the_five_ordinary_call_witnesses() -> None:

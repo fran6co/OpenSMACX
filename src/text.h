@@ -42,7 +42,9 @@ void __cdecl text_shutdown_source(Text *text);
 class Text {
  public:
   Text(); // 005FD860
-  // DEFINED IN-CLASS so it can be INLINED, which is what the image does.
+  // Historical placement evidence: the image initializer inlines this
+  // constructor's stores and allocations. The current candidate definition
+  // is in text.cpp before `Text Txt(512)`, keeping it visible in that TU.
   // `??__ETxt@@YAXXZ` at 0x005FD400 - the dynamic initialiser for `Txt` -
   // writes these fields directly instead of calling 0x005FD880, and it can
   // only do that if the definition is visible where the object is
@@ -55,17 +57,7 @@ class Text {
   //
   // `int`, NOT `size_t`. The image's own name for it is `??0Text@@QAE@H@Z`
   // and `H` is `int`; 0x005FD880 is BYTE_EXACT against a body taking one.
-  MEASURED Text(int size) {  // 005FD880
-    file_name_[0] = 0;
-    current_pos_ = 0;
-    text_file_ = 0;
-    buffer_get_ = 0;
-    buffer_item_ = 0;
-    buffer_get_ = (LPSTR)mem_get(size);
-    if (buffer_get_) {
-      buffer_item_ = (LPSTR)mem_get(size);
-    }
-  }
+  MEASURED Text(int size);  // 005FD880
   // IN-CLASS for the same reason as the constructor above: `??__FTxt` at
   // 0x005FD460 - the atexit thunk the compiler pairs with `??__ETxt` - runs
   // the destructor INLINE, doing the fclose and the frees itself with no
