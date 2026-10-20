@@ -1406,29 +1406,7 @@ void __cdecl do_video();
 void __cdecl check_net();
 void __cdecl do_net();
 
-MEASURED inline BOOL __cdecl do_draw() {
-    do_video();
-    check_net();
-    do_net();
-    MSG msg;
-    if (!PeekMessage(&msg, NULL, WM_PAINT, WM_PAINT, WM_CREATE)) {
-        return false;
-    }
-    TranslateMessage(&msg);
-    DispatchMessage(&msg);
-    return true;
-}
-
-MEASURED inline BOOL __cdecl do_keyboard() {
-    do_video();
-    check_net();
-    MSG msg;
-    if (!PeekMessage(&msg, NULL, WM_KEYDOWN, WM_KEYLAST, WM_CREATE)) {
-        return false;
-    }
-    TranslateMessage(&msg);
-    DispatchMessage(&msg);
-    return true;
-}
+MEASURED BOOL __cdecl do_draw();
+MEASURED BOOL __cdecl do_keyboard();
 
 void __cdecl do_all_non_input();

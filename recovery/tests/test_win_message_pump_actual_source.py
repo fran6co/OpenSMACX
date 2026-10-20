@@ -12,7 +12,7 @@ import tempfile
 
 import pytest
 
-from match_recovery.source import read_file
+from match_recovery.source import read, read_file
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -45,14 +45,27 @@ def _actual_pump_bodies():
     cpp_paths = [ROOT / "src/win.cpp"]
     header_paths = [ROOT / "src/win.h"]
     return "\n".join([
-        _one_body("do_draw", "MEASURED inline BOOL __cdecl do_draw()", header_paths),
-        _one_body("do_keyboard", "MEASURED inline BOOL __cdecl do_keyboard()", header_paths),
+        _one_body("do_draw", "BOOL __cdecl do_draw()", cpp_paths),
+        _one_body("do_keyboard", "BOOL __cdecl do_keyboard()", cpp_paths),
         _one_body("do_all_non_input", "void __cdecl do_all_non_input()", cpp_paths),
         _one_body("do_non_input", "BOOL __cdecl do_non_input()", cpp_paths),
         _one_body("do_all_draws", "void __cdecl do_all_draws()", cpp_paths),
         _one_body("do_all_keyboard", "void __cdecl do_all_keyboard()", cpp_paths),
         _one_body("do_all_tasks(Win*)", "void __cdecl do_all_tasks(Win *window)", cpp_paths),
     ])
+
+
+def test_draw_helpers_have_one_win_cpp_body_and_measured_header_declarations():
+    cpp = (ROOT / "src/win.cpp").read_text(encoding="utf-8")
+    header = (ROOT / "src/win.h").read_text(encoding="utf-8")
+    for name in ("do_draw", "do_keyboard"):
+        signature = f"BOOL __cdecl {name}()"
+        declaration = f"MEASURED {signature};"
+        assert cpp.count(signature + " {") == 1
+        assert header.count(declaration) == 1
+        assert signature + " {" not in header
+    assert "while (do_draw())" in _body(cpp, "void __cdecl do_all_draws()")
+    assert "while (do_keyboard())" in _body(cpp, "void __cdecl do_all_keyboard()")
 
 
 def test_non_input_pump_is_an_ordinary_win_cpp_definition():
@@ -82,11 +95,12 @@ def test_pinned_direct_pump_callers_use_the_full_mapped_spans():
     # Addresses are instruction witnesses; the containing extents come from
     # the native source reader's ORIGINAL mappings, not hand-cut decode windows.
     witnesses = (
-        ("src/path.cpp", 0x0059C520, (0x0059C773,)),
-        ("src/map.cpp", 0x005C3F70, (0x005C4038, 0x005C40A5)),
+        (0x0059C520, (0x0059C773,)),
+        (0x005C3F70, (0x005C4038, 0x005C40A5)),
     )
-    for relative_path, owner_address, call_sites in witnesses:
-        records = read_file(ROOT / relative_path)
+    source_records = read(ROOT / "src")
+    for owner_address, call_sites in witnesses:
+        records = source_records
         record, = [row for row in records if row.address == owner_address]
         assert len(record.image_spans) == 1
         low, high = record.image_spans[0]
@@ -103,6 +117,34 @@ def test_pinned_direct_pump_callers_use_the_full_mapped_spans():
             instruction = by_address[call_site]
             assert instruction.mnemonic == "call"
             assert instruction.operands[0].imm == 0x005FCB20
+
+
+def test_pinned_draw_helper_direct_calls_are_in_netdaemon_send_files():
+    from capstone import Cs, CS_ARCH_X86, CS_MODE_32
+    from match_recovery.model import Span
+    from match_recovery.pe_coff import PeImage
+    from match_recovery.source_inventory import image_pin
+
+    image_path = Path(os.environ.get(
+        "OPENSMACX_IMAGE", ROOT / ".opensmacx/game/terranx_original.exe"))
+    if not image_path.is_file():
+        pytest.skip("pinned original required for caller-boundary verification")
+    image = PeImage(image_path.read_bytes(), image_pin(ROOT))
+    decoder = Cs(CS_ARCH_X86, CS_MODE_32)
+    decoder.detail = True
+    records = read_file(ROOT / "src/netdaemon.cpp")
+    record, = [row for row in records if row.address == 0x0052ED40]
+    direct_calls = []
+    for low, high in record.image_spans:
+        cursor = low
+        for instruction in decoder.disasm(image.read(Span(low, high)), low):
+            assert instruction.address == cursor, f"undecoded byte at {cursor:#x}"
+            cursor += instruction.size
+            if instruction.mnemonic == "call" and instruction.operands[0].type == 2:
+                if instruction.operands[0].imm == 0x005FCB60:
+                    direct_calls.append(instruction.address)
+        assert cursor == high
+    assert direct_calls == [0x0052F101, 0x0052F306, 0x0052F3FC, 0x0052F473]
 
 
 HARNESS = r'''

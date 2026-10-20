@@ -13092,7 +13092,7 @@ void __cdecl do_all_non_input() {
 /*
 Purpose: Process draw related message.
 // ORIGINAL: 0x005FCB60 ?do_draw@@YAHXZ 0x005FCB60-0x005FCBAC BYTE_EXACT
-// body      src/win.h
+// body      src/win.cpp
 // size      76 bytes
 // prototype
 // callers   1   call targets   3
@@ -13103,8 +13103,21 @@ Purpose: Process draw related message.
 Return Value: Is message available? true/false
 Status: Complete - testing
 */
-// BODY IN win.h, as `MEASURED inline`: do_draw is inlined by its
-// only caller and also exists standalone. The marker stays here.
+// The body is defined below in this translation unit; the local pump expands
+// it here, while NetDaemon::send_files has direct calls from another unit.
+
+BOOL __cdecl do_draw() {
+    do_video();
+    check_net();
+    do_net();
+    MSG msg;
+    if (!PeekMessage(&msg, NULL, WM_PAINT, WM_PAINT, WM_CREATE)) {
+        return false;
+    }
+    TranslateMessage(&msg);
+    DispatchMessage(&msg);
+    return true;
+}
 
 /*
 Purpose: Process all draw related messages.
@@ -13130,7 +13143,7 @@ void __cdecl do_all_draws() {
 /*
 Purpose: Process keyboard related message.
 // ORIGINAL: 0x005FCC20 ?do_keyboard@@YAXXZ 0x005FCC20-0x005FCC6D BYTE_EXACT
-// body      src/win.h
+// body      src/win.cpp
 // symbol    ?do_keyboard@@YAHXZ
 // size      77 bytes
 // prototype
@@ -13142,8 +13155,20 @@ Purpose: Process keyboard related message.
 Return Value: Is message available? true/false
 Status: Complete - testing
 */
-// BODY IN win.h, as `MEASURED inline`: do_keyboard is inlined by its
-// only caller and also exists standalone. The marker stays here.
+// The body is defined below in this translation unit and is expanded by the
+// local keyboard pump; no mapped direct caller is known.
+
+BOOL __cdecl do_keyboard() {
+    do_video();
+    check_net();
+    MSG msg;
+    if (!PeekMessage(&msg, NULL, WM_KEYDOWN, WM_KEYLAST, WM_CREATE)) {
+        return false;
+    }
+    TranslateMessage(&msg);
+    DispatchMessage(&msg);
+    return true;
+}
 
 /*
 Purpose: Process all keyboard related messages.
