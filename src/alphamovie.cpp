@@ -45,6 +45,8 @@
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00403BA0 ?amovie_project@@YAXH@Z 0x00403BA0-0x00403BDF BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Native403BA3..3BD4 opens MOVLIST/PROJECTS, consumes one row plus positive project_id rows, then dispatches text_item to the real char* movie overload403BE0; initial literals682754/682748 verified in pinned image.", "src/recovered/units/00403ba0.cpp", "Root-only console-movie-wrapper-20261001 central dependency closure; immutable task baseline preserved."], "reason": "Recover complete source-owned movie selection and project-index wrapper with proper Popup lifetime, typed facilities, actual text parsing and existing movie playback. Retain exact seed identities and all original spans; no match or acceptance claim is granted by this binding."}
+// RECOVERY_LITERAL: v1 0x00682748 0x00682751 ??_C@_08DKI@PROJECTS?$AA@ 0x00403BA0
+// RECOVERY_LITERAL: v1 0x00682754 0x0068275C ??_C@_07FCPL@MOVLIST?$AA@ 0x00403BA0
 void __cdecl amovie_project(int project_id) {
     if (text_open("MOVLIST", "PROJECTS") != 0) return;
     text_get();
