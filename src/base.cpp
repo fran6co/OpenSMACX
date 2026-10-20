@@ -1410,7 +1410,9 @@ extern "C" void __cdecl sub_4d5ff0(int *id_list) {
         if (count == 1 || count - 1 < 0) {
             return;
         }
-        for (int index = 0; index < count - 1; ++index, ++cursor) {
+        for (int index = 0;
+             index < GameDataStateStorage.fields_.base_current_count_ - 1;
+             ++index, ++cursor) {
             if (_stricmp(Bases[cursor[0]].name_string,
                          Bases[cursor[1]].name_string) > 0) {
                 did_swap = true;
