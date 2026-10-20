@@ -1,0 +1,30 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "54a3030e49c05b6aaa59919eba3143d1f314adb6",
+  "editable_files": [
+    "src/interlude.cpp",
+    "src/stringbox.cpp"
+  ],
+  "evidence": [
+    "Pinned Interlude close45F640 and StringBox close629210 retain the embedded StringList receiver in ESI, drain nodes with live count reads, clear head/cursor/count, and explicitly clear the cursor again before embedded Buffer/Scroll cleanup. Current source preserves effects but addresses the trailing cursor through the parent.",
+    "Two natural typed alias forms per target, pointer and reference, are a bounded untested hypothesis. Keep the repeated cursor-zero store, node destruction/freeing and subordinate close order. No flags, volatile, casts, fabricated storage, bug fixes or expanded spelling search.",
+    "Use native local variant unchanged-replica and changed-cursor-value controls. No source publication or byte claim from a trial; a winner requires actual-owner review, build/link, scoped original-reference checks, complete physical residual and destination verification.",
+    "This new bounded step has current committed source as baseline without resetting, replacing or erasing prior Interlude/StringBox owner task baselines, historical obligations or discoveries. Other six application owner workers remain independent; only coordinator compiles and performs Git mutations."
+  ],
+  "intent": "Recover the original embedded-StringList close family using bounded natural receiver forms.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4585024,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6459920,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "stringlist-close-family-oct20h"
+}
