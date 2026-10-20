@@ -133,7 +133,7 @@ int main() {
 def test_path_zero_bss_shutdown_order_and_mutation_controls(tmp_path: Path, host_compiler: str) -> None:
     path_cpp = (ROOT / "src/path.cpp").read_text(encoding="utf-8")
     assert len(re.findall(r"^Path\s+Paths\s*;", path_cpp, re.MULTILINE)) == 1
-    _mapped_record("src/path.cpp", 0x0059A1B0, "??__EPaths@@YAXXZ", (0x0059A1B0, 0x0059A1BC), "_$E7", True)
+    _mapped_record("src/path.cpp", 0x0059A1B0, "??__EPaths@@YAXXZ", (0x0059A1B0, 0x0059A1BC), "_$E8", True)
     _mapped_record("src/path.cpp", 0x0059A1C0, "??__FPaths@@YAXXZ", (0x0059A1C0, 0x0059A215), "_$E6", True)
     assert "free(map_table_)" in (ROOT / "src/path.h").read_text(encoding="utf-8")
     assert "free(x_table_)" in (ROOT / "src/path.h").read_text(encoding="utf-8")
