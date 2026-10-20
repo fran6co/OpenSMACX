@@ -1376,6 +1376,11 @@ Status: Complete
 // 0;` is not in the shipped bytes (13 instructions there, not 15) and is
 // left out deliberately; adding it back defeats the match, it does not fix
 // one.
+// Fidelity limitation: the pinned 0x00628ADF instruction is a 32-bit IDIV,
+// which also faults when the quotient does not fit EAX. This wide division
+// followed by an int conversion does not express that quotient-overflow trap;
+// the out-of-range quotient domain remains an unresolved original-fidelity
+// obligation. Do not synthesize a fault path here.
 int __cdecl fixed_div(int numerator, int denominator) {
     // EDX:EAX contains the signed numerator scaled by 65536. Multiplication
     // preserves that dividend for negative gradients without C++'s undefined
