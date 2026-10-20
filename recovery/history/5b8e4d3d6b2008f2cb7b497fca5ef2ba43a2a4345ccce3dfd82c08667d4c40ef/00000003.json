@@ -1,0 +1,22 @@
+{
+  "event_id": "94d4fa1b30cf0d4487092563776f72442c042bb9854eeea914bd163683332654",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/general.cpp"
+    ],
+    "evidence": [
+      "Continue retained bitmask-owner-oct16 with its unchanged a4f46d79 baseline under standing manual coordinator review. This continuation authorizes only two fresh single-candidate native schema2 controlled spelling screens against src/general.cpp, not the task inherited broad editable files or new source edits.",
+      "Pinned50BA06 computes input low3 bits before signed /8 and offset/mask stores. Natural candidate captures shift before the current two ordered output writes, preserving signed truncation/input-by-value and aliased outputs. Pinned592DB0 checks signed x<left,x>right,y<top,y>bottom in order; second candidate spells those same branches as four guards. No ABI/type/flags/algorithm changes, volatile/asm/register hacks or additional iteration budget.",
+      "Both candidate decks pin current source digest and original entity, pass native body-boundary validation and include unchanged-replica and body-damage controls. No identical prior candidate was found in available ignored deck history; this is a bounded experiment, not a claim of behavioral or byte improvement.",
+      "Coordinator owns preparation/resource leases and serial per-worktree screening. No source change is permitted during the epoch. A native exact result with no exact-neighbor loss may be proposed for the later combined owner checkpoint; only native recover record may bank a measured claim. Any non-gain is retained as derived ignored evidence and not repeated or forced. No build/game/linked/automatic acceptance follows from the experiment."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "b83a69a99524b333206bfd8ee05d2f168bd0e75e3843bf543287682d8de5ff1b",
+  "request_id": "central-general-two-order-screens-oct21b",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:bitmask-owner-oct16"
+}
