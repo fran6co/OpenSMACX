@@ -175,8 +175,8 @@ struct Dialogs : ListBox {
     void on_scrolling(int, int) override;
 };
 struct BasePop : GraphicWin {
-    Dialogs dialog;
-    Dialogs &dialogs() { return dialog; }
+    Dialogs dialogs_;
+    Dialogs &dialogs() { return dialogs_; }
 };
 struct Popup : BasePop {
     void on_scrolled(int, int);
@@ -216,12 +216,12 @@ int main() {
     Popup popup;
     Win *popup_view = &popup;
     popup_view->on_scrolled(17, 29);
-    assert(popup.dialog.scrolled_calls == 0 && popup.dialog.scrolling_calls == 1 &&
-           popup.dialog.code == 17 && popup.dialog.position == 29 &&
+    assert(popup.dialogs_.scrolled_calls == 0 && popup.dialogs_.scrolling_calls == 1 &&
+           popup.dialogs_.code == 17 && popup.dialogs_.position == 29 &&
            popup.base_scrolled == 0);
     popup_view->on_scrolling(31, 43);
-    assert(popup.dialog.scrolling_calls == 2 && popup.dialog.code == 31 &&
-           popup.dialog.position == 43 && popup.base_scrolling == 0);
+    assert(popup.dialogs_.scrolling_calls == 2 && popup.dialogs_.code == 31 &&
+           popup.dialogs_.position == 43 && popup.base_scrolling == 0);
 
     SelectPartWin select;
     select.field_2B6C_ = 5;
@@ -353,8 +353,6 @@ def test_actual_callback_bodies_dispatch_through_correct_owner_slots(tmp_path, c
     if compiler is None:
         pytest.skip(f"{compiler_name} is unavailable")
     bodies = actual_bodies()
-    assert "dialogs()).on_scrolled(first, second)" in bodies[0]
-    assert "dialogs()).on_scrolling(first, second)" in bodies[1]
     assert "field_2B6C_ * row" in bodies[4] and "redraw();" in bodies[4]
     assert "on_scrolled(a1, a2);" in bodies[5]
     assert "file_win_.list_box().on_scrolled(code, pos);" in bodies[6]
@@ -366,8 +364,8 @@ def test_actual_callback_bodies_dispatch_through_correct_owner_slots(tmp_path, c
 
     mutants = list(bodies)
     mutants[0] = mutants[0].replace(
-        "static_cast<GraphicWin &>(dialogs()).on_scrolled(first, second);",
-        "static_cast<Win &>(dialogs()).Win::on_scrolled(first, second);")
+        "dialogs_.on_scrolled(first, second);",
+        "dialogs_.Win::on_scrolled(first, second);")
     assert mutants[0] != bodies[0]
     compile_and_run(tmp_path, compiler, mutants, should_pass=False)
 

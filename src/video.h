@@ -4,7 +4,6 @@
 #define OPENSMACX_VIDEO_H
 #include "stdafx.h"
 #include "sound.h"
-#include "soundx_sound_abi.h"
 #include "palette.h"
 #include "buffer.h"
 #include "graphicwin.h"
@@ -24,7 +23,7 @@
 // 0x10005BF0 calls 0x100022B6, tests the flags argument and conditionally
 // frees the object. This supports a shared external prefix, not nominal game
 // class identity.
-class VideoSoundDevice : public SoundDeviceInterface {
+class VideoSoundDevice : public Sound {
 public:
   virtual int configure_streams(const void *audio_stream,
                                 const void *video_stream,

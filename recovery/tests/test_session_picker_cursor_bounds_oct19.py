@@ -20,7 +20,7 @@ from test_session_picker_actual_source import function as extract_definition
 ROOT = Path(__file__).resolve().parents[2]
 PICKER_CPP = ROOT / "src/net_session_picker.cpp"
 NET_CLASS_CPP = ROOT / "src/net_class.cpp"
-ALPHANET_CPP = ROOT / "src/alphanet.cpp"
+ALPHANET_CPP = ROOT / "src/alphanet_records.cpp"
 
 
 def actual_sources():

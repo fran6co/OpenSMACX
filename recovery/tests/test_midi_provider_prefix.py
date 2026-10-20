@@ -1,4 +1,4 @@
-"""Source and optional VC6 controls for MidiDelegate's shared Sound prefix."""
+"""Source and optional VC6 controls for the shared Sound/Midi hierarchy."""
 from __future__ import annotations
 
 import os
@@ -84,100 +84,113 @@ def test_pinned_midi_provider_init_and_load_slot_contracts():
     assert any(i.mnemonic == 'ret' and i.op_str == '' for i in load)
 
 
-def test_midi_delegate_inherits_sound_prefix_and_retains_all_extension_slots():
+def test_midi_inherits_sound_and_retains_all_extension_slots():
     header = (ROOT / "src/midi.h").read_text()
-    block = header.split("class MidiDelegate : public SoundDeviceInterface {", 1)[1]
+    block = header.split("class Midi : public Sound {", 1)[1]
     block = block.split("\n};", 1)[0]
-    methods = re.findall(r"virtual\s+[^;]+;", block)
+    extension = block.split("// Genuine added primary slots33..74", 1)[1]
+    methods = re.findall(r"virtual\s+[^;]+;", extension)
     assert len(methods) == 42
     assert len(VC6_CALLS) == 75
-    annotated = re.findall(r"virtual\s+[^;]+;\s*//\s*slot\s+(0x[0-9a-fA-F]+)", block)
-    assert all(0x84 <= int(slot, 16) <= 0x128 for slot in annotated)
-    assert "slot005" not in header
+    annotated = re.findall(r"virtual\s+[^;]+;\s*//\s*(\d+)", extension)
+    assert sorted(int(slot) for slot in annotated) == list(range(33, 75))
+    assert "class MidiDelegate" not in header
     assert "->unload()" in (ROOT / "src/midi.cpp").read_text()
     assert "->unload()" in (ROOT / "src/ambience.cpp").read_text()
-    assert "->slot005()" not in (ROOT / "src/midi.cpp").read_text()
-    assert "->slot005()" not in (ROOT / "src/ambience.cpp").read_text()
+    assert "Midi *const delegate = static_cast<Midi *>(device_);" in (ROOT / "src/midi.cpp").read_text()
+    assert "static_cast<Midi *>(device_)" in (ROOT / "src/ambience.cpp").read_text()
 
 
 def test_host_declarations_allow_inherited_and_midi_get_time_calls(tmp_path):
     compiler_name = shutil.which("g++") or shutil.which("clang++")
     if compiler_name is None:
         pytest.skip("g++ and clang++ are unavailable")
-    sound = (ROOT / "src/soundx_sound_abi.h").read_text()
     midi = (ROOT / "src/midi.h").read_text()
-    sound_decl = sound[sound.index("class SoundDeviceInterface {"):]
-    sound_decl = sound_decl[:sound_decl.index("};") + 2]
-    midi_decl = midi[midi.index("class MidiDelegate : public SoundDeviceInterface {"):]
+    midi_decl = midi[midi.index("class Midi : public Sound {"):]
     midi_decl = midi_decl[:midi_decl.index("\n};") + 3]
     source = tmp_path / "midi_prefix.cpp"
     source.write_text(f'''#include <cstdint>
-struct Sound;
+typedef unsigned char uint8_t;
 struct TrackSet; struct ChannelCtrl; struct ProgramCtrl; struct TrackCtrl;
-{sound_decl}
+class Sound {{ public:
+  virtual ~Sound() {{}}
+  virtual int set_fade(unsigned long); virtual int set_fade_interval(unsigned long);
+  virtual int UNK1(int); virtual int load(const char *); virtual int unload();
+  virtual int play(); virtual int play(unsigned int); virtual int stop();
+  virtual int fade(); virtual void fade(unsigned long);
+  virtual int fade_in(); virtual void fade_in(unsigned int);
+  virtual void ramp(int, int, unsigned int); virtual int release();
+  virtual int get_game_hwnd(); virtual void set_volume(int); virtual void set_pan(int);
+  virtual void set_loop_state(long); virtual void set_delay(unsigned int);
+  virtual void set_type(unsigned int); virtual int set_fade_in(unsigned int);
+  virtual int is_looping(); virtual int is_playing(); virtual int unk_slot24();
+  virtual Sound *get_next(); virtual Sound *get_prev();
+  virtual int set_attrib(unsigned long); virtual int get_attrib();
+  virtual int get_time(); virtual uint32_t get_type(); virtual int attach(); virtual int detach();
+}};
 {midi_decl}
-int call_inherited_time(MidiDelegate *p) {{
-  return static_cast<SoundDeviceInterface *>(p)->get_time();
+int call_inherited_time(Midi *p) {{
+  return static_cast<Sound *>(p)->get_time();
 }}
-int call_midi_time(MidiDelegate *p) {{ return p->get_time(1UL); }}
-int call_inherited_unload(MidiDelegate *p) {{ return p->unload(); }}
-int call_filename_load(MidiDelegate *p) {{ return p->load("x"); }}
-int call_noarg_load(MidiDelegate *p) {{ return p->load(); }}
-int call_midi_init(MidiDelegate *p) {{ return p->init("x", 0UL); }}
+int call_midi_time(Midi *p) {{ return p->get_time(1UL); }}
+int call_inherited_unload(Midi *p) {{ return p->unload(); }}
+int call_filename_load(Midi *p) {{ return p->load("x"); }}
+int call_noarg_load(Midi *p) {{ return p->load(); }}
+int call_midi_init(Midi *p) {{ return p->init("x", 0UL); }}
 ''')
     import subprocess
     subprocess.run([compiler_name, "-std=c++11", "-c", str(source), "-o", str(tmp_path / "midi_prefix.o")], check=True)
 
 
 VC6_CALLS = (
-    "static_cast<SoundDeviceInterface *>(p)->set_fade(1UL)",
-    "static_cast<SoundDeviceInterface *>(p)->set_fade_interval(1UL)",
-    "delete static_cast<SoundDeviceInterface *>(p)",
-    "static_cast<SoundDeviceInterface *>(p)->UNK1(1)",
+    "static_cast<Sound *>(p)->set_fade(1UL)",
+    "static_cast<Sound *>(p)->set_fade_interval(1UL)",
+    "delete static_cast<Sound *>(p)",
+    "static_cast<Sound *>(p)->UNK1(1)",
     'p->load("x")',
-    "static_cast<SoundDeviceInterface *>(p)->unload()",
-    "static_cast<SoundDeviceInterface *>(p)->play(1U)",
-    "static_cast<SoundDeviceInterface *>(p)->play()",
-    "static_cast<SoundDeviceInterface *>(p)->stop()",
-    "static_cast<SoundDeviceInterface *>(p)->fade(1UL)",
-    "static_cast<SoundDeviceInterface *>(p)->fade()",
-    "static_cast<SoundDeviceInterface *>(p)->fade_in(1U)",
-    "static_cast<SoundDeviceInterface *>(p)->fade_in()",
-    "static_cast<SoundDeviceInterface *>(p)->ramp(1, 2, 3U)",
-    "static_cast<SoundDeviceInterface *>(p)->release()",
-    "static_cast<SoundDeviceInterface *>(p)->get_game_hwnd()",
-    "static_cast<SoundDeviceInterface *>(p)->set_volume(1)",
-    "static_cast<SoundDeviceInterface *>(p)->set_pan(1)",
-    "static_cast<SoundDeviceInterface *>(p)->set_loop_state(1L)",
-    "static_cast<SoundDeviceInterface *>(p)->set_delay(1U)",
-    "static_cast<SoundDeviceInterface *>(p)->set_type(1U)",
-    "static_cast<SoundDeviceInterface *>(p)->set_fade_in(1U)",
-    "static_cast<SoundDeviceInterface *>(p)->is_looping()",
-    "static_cast<SoundDeviceInterface *>(p)->is_playing()",
-    "static_cast<SoundDeviceInterface *>(p)->unk_slot24()",
-    "static_cast<SoundDeviceInterface *>(p)->get_next()",
-    "static_cast<SoundDeviceInterface *>(p)->get_prev()",
-    "static_cast<SoundDeviceInterface *>(p)->set_attrib(1UL)",
-    "static_cast<SoundDeviceInterface *>(p)->get_attrib()",
-    "static_cast<SoundDeviceInterface *>(p)->get_time()",
-    "static_cast<SoundDeviceInterface *>(p)->get_type()",
-    "static_cast<SoundDeviceInterface *>(p)->attach()",
-    "static_cast<SoundDeviceInterface *>(p)->detach()",
+    "static_cast<Sound *>(p)->unload()",
+    "static_cast<Sound *>(p)->play(1U)",
+    "static_cast<Sound *>(p)->play()",
+    "static_cast<Sound *>(p)->stop()",
+    "static_cast<Sound *>(p)->fade(1UL)",
+    "static_cast<Sound *>(p)->fade()",
+    "static_cast<Sound *>(p)->fade_in(1U)",
+    "static_cast<Sound *>(p)->fade_in()",
+    "static_cast<Sound *>(p)->ramp(1, 2, 3U)",
+    "static_cast<Sound *>(p)->release()",
+    "static_cast<Sound *>(p)->get_game_hwnd()",
+    "static_cast<Sound *>(p)->set_volume(1)",
+    "static_cast<Sound *>(p)->set_pan(1)",
+    "static_cast<Sound *>(p)->set_loop_state(1L)",
+    "static_cast<Sound *>(p)->set_delay(1U)",
+    "static_cast<Sound *>(p)->set_type(1U)",
+    "static_cast<Sound *>(p)->set_fade_in(1U)",
+    "static_cast<Sound *>(p)->is_looping()",
+    "static_cast<Sound *>(p)->is_playing()",
+    "static_cast<Sound *>(p)->unk_slot24()",
+    "static_cast<Sound *>(p)->get_next()",
+    "static_cast<Sound *>(p)->get_prev()",
+    "static_cast<Sound *>(p)->set_attrib(1UL)",
+    "static_cast<Sound *>(p)->get_attrib()",
+    "static_cast<Sound *>(p)->get_time()",
+    "static_cast<Sound *>(p)->get_type()",
+    "static_cast<Sound *>(p)->attach()",
+    "static_cast<Sound *>(p)->detach()",
     "p->set_track(static_cast<uint8_t *>(0), 0UL)",
     "p->set_tempo(1UL)",
     "p->mute_track(1UL)",
     "p->set_active_tracks(1U)",
-    "p->slot037(1UL, 2UL)",
+    "p->set_active_tracks(1UL, 2UL)",
     "p->add_active_trackset(static_cast<TrackSet *>(0))",
     "p->get_trackset(1U)",
     "p->set_active_range_lo(1U, 2U)",
     "p->set_active_range_hi(1U, 2U)",
     "p->remove_active_trackset(1U)",
     "p->unmute_track(1UL)",
-    "p->slot044(1, 2)",
-    "p->slot045(1U)",
-    "p->slot046(1, 2)",
-    "p->slot047(1, 2)",
+    "p->sub_4c7f70(1, 2)",
+    "p->sub_4c7fa0(1U)",
+    "p->sub_4c7ff0(1, 2)",
+    "p->sub_4c7fc0(1, 2)",
     "p->set_track_ctrl(static_cast<TrackCtrl *>(0))",
     "p->get_ntracks()",
     "p->reset()",
@@ -185,12 +198,12 @@ VC6_CALLS = (
     "p->load()",
     "p->get_time(1UL)",
     "p->map_patch(static_cast<char *>(0), 1UL)",
-    "p->slot055(static_cast<char *>(0), 1UL, 2UL)",
+    "p->map_patch(static_cast<char *>(0), 1UL, 2UL)",
     "p->clear_patch(1UL)",
     "p->set_channel_ctrl(static_cast<ChannelCtrl *>(0))",
     "p->set_program_ctrl(static_cast<ProgramCtrl *>(0))",
     "p->set_base_path(\"x\")",
-    "p->slot060(1)",
+    "p->sub_4c8020(1)",
     "p->get_control_track()",
     "p->get_total_track_ticks(1UL)",
     "p->switch_state(true)",
@@ -225,7 +238,7 @@ def test_opt_in_vc6_probe_maps_sound_and_midi_delegate_calls_to_slots():
     expressions = []
     for slot, expression in enumerate(VC6_CALLS):
         expressions.append(
-            f'extern "C" int midi_provider_slot_{slot:02d}(MidiDelegate *p) '
+            f'extern "C" int midi_provider_slot_{slot:02d}(Midi *p) '
             f'{{ {expression}; return 0; }}'
         )
     overlay = original.decode("utf-8") + "\n" + "\n".join(expressions)

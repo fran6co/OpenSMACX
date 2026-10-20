@@ -1,0 +1,32 @@
+{
+  "event_id": "7f6c3dead4b9c386da47c390b119f9a4ff37b63b028f385e86d7362a2a016fdb",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "CMakeLists.txt",
+      "recovery/tests/alphanet-pick-service-control.cpp",
+      "recovery/tests/test_alphanet_pick_service_transfer.py",
+      "recovery/tests/test_alphanet_record_owner_oct20.py",
+      "recovery/tests/test_application_compiler_profiles.py",
+      "recovery/tests/test_application_link_recovery.py",
+      "recovery/tests/test_core_claim_continuity_oct14dt.py",
+      "recovery/tests/test_network_list_cleanup_visibility.py",
+      "recovery/tests/test_session_picker_cursor_bounds_oct19.py",
+      "recovery/tests/test_stringlist_recovery.py",
+      "src/alphanet_records.cpp"
+    ],
+    "evidence": [
+      "Root independently reviewed existing native alphanet-screen.json: actual default /O2 omits EBP; /Oy- restores four AlphaNet class identity methods but regresses two session-record functions. Do not globally flip the mixed TU or claim those screen results as application gains.",
+      "Authorize a genuine ownership split: AlphaNetStringStruct, AlphaNetLedger, AlphaNetLedgerEntry and compare_session_guid with their private typed list helpers belong together in src/alphanet_records.cpp under unchanged default /O2. AlphaNet controller and reset globals remain src/alphanet.cpp, allowed measured frame-based /Oy- owner policy. No per-function flags, pragmas or guessed original TU-name claim. Retain entire annotations, complete spans, claims and useful histories using native source reader/writer/remover and guarded publication, not hand-edited ORIGINAL tokens.",
+      "Existing task original subjects cover both owners. This expansion supersedes old no-flag-change restriction solely for this bounded coherent owner split. Compile every touched owner and inspect all29 mapped originals for collateral; reject unsupported nominal hierarchy or incomplete handoff. Native recorder alone grants any new claims. Workers no Git or sharedroot mutations. Freeze source before coordinator preparation of new recipes; worker host tests and bounded native existing-recipe overlays may run independently under one isolated compiler lease.",
+      "Update stale path assumptions in authorized fixtures without weakening any behavior/damage assertions. Keep all original lifecycle/allocator/GUI behavior; no broad stylistic rewrite. Return final hash manifest and bounded reports. This is coordinator-reviewed recovery, not automatic acceptance or complete historical TU proof."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "separate-session-record-owner-context",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:alphanet-identity-conversions-owner-oct20"
+}

@@ -1,0 +1,27 @@
+{
+  "event_id": "b7de5731fd6794df690b4e906f5cbac496677cc663d250983a6645d5a1c47cfb",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/stringstruct.cpp"
+    ],
+    "evidence": [
+      "Fresh actual177TU Release build9ljzje00 restores four AlphaNet lookup maskedmatches and StringStruct::remove_all402970 (50/50instructions) via its already-declared compile_context src/alphanet.cpp. Explicitly include this shared emitted body in collateral/claim review; its source implementation is unchanged. No newclaim granted.",
+      "The AlphaNetLedger complete-object wrapper4E34B0 is physically emitted in alphanet.cpp objectsection83 under symbol??_DAlphaNetLedger@@QAEXXZ, not in newalphanet_records.cpp object. Authorize native write_context to retain class-owned annotation with correct observed emitter context, without new wrappers, export attributes, handwritten markers or lost spans/claims.",
+      "The new frame-based AlphaNet constructor4E2490 remains semantically implemented but fullEH comparison nowrefuses unsupported cleanup-map interpretation; retain that measurement limitation/restoration obligation and all originalspans. No automaticacceptance/gameclaim or temporaryunmeasurable-as-match promotion."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4204912,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "7f6c3dead4b9c386da47c390b119f9a4ff37b63b028f385e86d7362a2a016fdb",
+  "request_id": "observe-controller-context-and-shared-list-emission",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:alphanet-identity-conversions-owner-oct20"
+}

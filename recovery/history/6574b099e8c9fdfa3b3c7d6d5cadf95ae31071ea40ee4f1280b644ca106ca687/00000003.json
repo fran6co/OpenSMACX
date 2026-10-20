@@ -1,0 +1,24 @@
+{
+  "event_id": "6b14b069e1964f1481f4d2191468e05b470acf8743c5e63023ca56144f650892",
+  "payload": {
+    "affects": [
+      "entity-1bccfb1a9527e60e3a3b33221bf8e0a4677573b28112acc59b6e779f28be2311",
+      "entity-41ec52c0d6b408ae9d1064c87a3ffedf534a189d88cad4bf4b4b7d29b4a3d9d2",
+      "entity-66273cd3be9a8ff2fe43be61069ea80c885c67beaf03b2b199c6644ac25c21d9",
+      "entity-ba2e8ee655af2cb42c48d600a97ab39e2a3dfb6660c4275eb80e5d5b66e5ef29"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "shared-sdk-sound-midi-model",
+    "evidence": [
+      "Pinned EXE4C75B0..4C766D and DLL10029520..100295DD both189bytes/68instructions; everyencoding/register/constant/dataoffsetequal except7referenceimmediates. Rootignoredmidi-shared-constructor-evidence.json preservesexactcomparison; targetEH/nominaldebugnames/fullprovidersize are notprovedbythatcontrol.",
+      "Pinned DLL mode2table10064794/mode5table10064000 share75relocatedentries; slots33..74identical. EXEMiditable66E538has75slots. Bothconstructors ownSoundstate through50 andoneMidi54byte; providerconcreteallocations mayextend beyondthisbase. Existingdirectset_mode4C7CC0followschild+3C andupdates54 assameMidibase."
+    ],
+    "hypothesis": "Existing external facade typing exposes cross-module shared Sound/Midi base state rather than unrelated interfaces: direct recursive+3C/+54 access and matching constructors support one reconstructed SDK class model.",
+    "kind": "discovery"
+  },
+  "previous_event": "6d5d6df588c8ec018afe74a173deebc1a4178b03ff95867f4e069503eabf4027",
+  "request_id": "shared-sdk-sound-midi-model",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:sound-device-provider-typing-oct20"
+}

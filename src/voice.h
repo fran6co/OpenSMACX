@@ -2,22 +2,21 @@
 
 // Sound-family voice owners and the DLL-provided device contracts.
 #include "sound.h"
-#include "soundx_sound_abi.h"
 struct _MMIOINFO;
 
 // The create_sound mode-1 wave provider exposes the same 33-slot Sound
 // prefix followed by Wave's observed extension. This is an external call
 // view only: application Wave objects are not instances of this interface.
-class WavePlaybackDeviceInterface : public SoundDeviceInterface {
+class WavePlaybackDeviceInterface : public Sound {
  public:
   virtual int reload() = 0;                                      // 33
   virtual void init(char *, unsigned long) = 0;                  // 34
   // Expose the inherited overload beside its Wave overload group. A
   // using-declaration adds no virtual entry.
-  using SoundDeviceInterface::load;
+  using Sound::load;
   virtual int load(char *, unsigned long) = 0;                   // 36
   virtual int load() = 0;                                        // 35, overload group
-  using SoundDeviceInterface::play;
+  using Sound::play;
   virtual int play(int) = 0;                                     // 37
   virtual int set_pitch(int) = 0;                                // 38
   virtual int set_bufflimit(unsigned int) = 0;                   // 39
@@ -26,7 +25,7 @@ class WavePlaybackDeviceInterface : public SoundDeviceInterface {
   virtual int set_sustain(unsigned int, unsigned int, unsigned int) = 0;// 42
   virtual int set_decay(unsigned int, unsigned int, unsigned int) = 0;  // 43
   virtual int set_release(unsigned int, unsigned int, unsigned int) = 0;// 44
-  using SoundDeviceInterface::get_time;
+  using Sound::get_time;
   virtual int get_time(uint32_t) = 0;                            // 45
   virtual int get_current_marker() = 0;                           // 46
   virtual int get_ndevices() = 0;                                 // 47
@@ -41,7 +40,7 @@ class WavePlaybackDeviceInterface : public SoundDeviceInterface {
   virtual int set_reverb_mix(float) = 0;                          // 56
 };
 
-class VoiceRxDeviceInterface : public SoundDeviceInterface {
+class VoiceRxDeviceInterface : public Sound {
  public:
   virtual int init(unsigned long, void *, unsigned long) = 0; // 33
   virtual int start() = 0;                                  // 34
@@ -50,7 +49,7 @@ class VoiceRxDeviceInterface : public SoundDeviceInterface {
   virtual int get_nbuffers() = 0;                           // 37
 };
 
-class VoiceTxDeviceInterface : public SoundDeviceInterface {
+class VoiceTxDeviceInterface : public Sound {
  public:
   virtual int init(unsigned long, void *, unsigned long) = 0; // 33
   virtual _MMIOINFO *get_next_buffer() = 0;                        // 34, borrowed MMIOINFO pointer

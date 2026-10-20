@@ -3372,7 +3372,7 @@ void __cdecl time_controls_dialog(Popup *popup) {
 // RECOVERY_BINDING: v1 {"evidence": ["historical seed:src/recovered/units/00406b70.cpp", "task:popup-linked-dialog-helper-owners", "Pinned Popup6695C8 slot48 forwards through actual Dialogs shared GraphicWin/Win virtual base. Other observed tables66A968/66CC20/66DE44 remain unresolved cross-owner occurrences, not new owner claims."], "reason": "Recover this complete operation in its genuine C++ popup/diplomacy owner using actual members, virtual dispatch and typed shared dependencies; retain original identity, spans, claims and seed discoveries."}
 // symbol    ?on_scrolled@Popup@@UAEXHH@Z
 void Popup::on_scrolled(int first, int second) {
-    static_cast<GraphicWin &>(dialogs()).on_scrolled(first, second);
+    dialogs_.on_scrolled(first, second);
 }
 
 // Superseded seed removal retains historical Git provenance below.
@@ -3380,7 +3380,7 @@ void Popup::on_scrolled(int first, int second) {
 // RECOVERY_BINDING: v1 {"evidence": ["historical seed:src/recovered/units/00406ba0.cpp", "task:popup-linked-dialog-helper-owners", "Pinned Popup6695C8 slot49 forwards through actual Dialogs shared GraphicWin/Win virtual base. Other observed tables66A968/66CC20/66DE44 remain unresolved cross-owner occurrences, not new owner claims."], "reason": "Recover this complete operation in its genuine C++ popup/diplomacy owner using actual members, virtual dispatch and typed shared dependencies; retain original identity, spans, claims and seed discoveries."}
 // symbol    ?on_scrolling@Popup@@UAEXHH@Z
 void Popup::on_scrolling(int first, int second) {
-    static_cast<GraphicWin &>(dialogs()).on_scrolling(first, second);
+    dialogs_.on_scrolling(first, second);
 }
 
 // Superseded seed removal retains historical Git provenance below.

@@ -148,6 +148,32 @@ def test_only_native_promotions_preserve_complete_source(relative):
     path = ROOT / relative
     old = subprocess.check_output(["git", "show", BASE + ":" + relative], cwd=ROOT)
     before = read_text(old.decode(), path)
+    if relative == "src/alphanet.cpp":
+        # Alpha's records now have a genuine source owner of their own. Compare
+        # the fixed historical TU against the complete two-owner mapped set,
+        # rather than requiring the migrated identities to remain in this file.
+        current = read_text(path.read_text(), path)
+        records_path = ROOT / "src/alphanet_records.cpp"
+        current += read_text(records_path.read_text(), records_path)
+        by_address = {row.address: row for row in current}
+        assert len(by_address) == len(current) == len(before)
+        for original in before:
+            recorded = by_address[original.address]
+            expected = (replace(original, byte_exact=True, semantic=False)
+                        if original.address in SELECTED else original)
+            if original.address == 0x4E34B0:
+                # The ledger owns this mapping; its complete-object wrapper
+                # is emitted by the controller's ledger-member destruction.
+                expected = replace(expected, context="src/alphanet.cpp")
+            for field in fields(original):
+                if field.name not in {"region", "path", "line", "origin"}:
+                    assert getattr(recorded, field.name) == getattr(expected, field.name), (
+                        hex(original.address), field.name)
+        assert {row.address for row in current if row.path == records_path.resolve()} == {
+            0x401C80, 0x402B40, 0x4E3300, 0x4E3350, 0x4E34B0,
+            0x5D4890, 0x5D4990, 0x401D80, 0x401CE0, 0x5D49D0, 0x5D4BB0,
+        }
+        return
     after = read_text(path.read_text(), path)
     promoted = [replace(row, byte_exact=True, semantic=False)
                 for row in before if row.address in SELECTED]

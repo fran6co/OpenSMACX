@@ -28,6 +28,7 @@ def extract_body(text: str) -> str:
 HARNESS = r'''
 #include <cassert>
 #include <cstring>
+#include <stdint.h>
 
 struct RECT { int left, top, right, bottom; };
 struct GraphicWin;
@@ -84,7 +85,7 @@ struct Buffer {
 struct GraphicWin : Win, Buffer {};
 struct Dialog {
     ItemList item_list_;
-    int column_count_, row_count_, field_24_, field_28_, selected_position_;
+    int column_count_, row_count_, window_x_, window_y_, selected_position_;
     int field_44_, field_64_, field_68_;
     int text_color_a_, text_color_b_, text_color_c_, text_color_d_;
     int text_color_2a_, text_color_2b_, text_color_2c_, text_color_2d_;
@@ -133,7 +134,8 @@ int main() {
     }
     box.list_.entry_count_=6; box.list_.head_=&entries[0]; box.list_.current_=0;
     box.item_list_.entry_count_=6; box.item_list_.head_=&entries[0]; box.item_list_.current_=0;
-    box.row_count_=3; box.column_count_=2; box.field_24_=100; box.field_28_=200;
+    box.row_count_=3; box.column_count_=2;
+    box.window_x_=2147483642; box.window_y_=2147483647;
     box.field_44_=6; box.field_64_=24; box.field_68_=20;
     box.selected_position_=5; box.win_parent_=&parent;
 
@@ -143,7 +145,7 @@ int main() {
     Buffer *control_buffer=static_cast<Buffer *>(static_cast<GraphicWin *>(&box));
     assert(parent_buffer->copy_receiver==parent_buffer);
     assert(parent_buffer->copy_source==control_buffer);
-    assert(parent_buffer->copy_sx==130 && parent_buffer->copy_sy==243);
+    assert(parent_buffer->copy_sx==-2147483624 && parent_buffer->copy_sy==-2147483606);
     assert(parent_buffer->copy_dx==30 && parent_buffer->copy_dy==43);
     assert(parent_buffer->copy_width==24 && parent_buffer->copy_height==20);
     assert(sprite.draw_calls==1 && sprite.draw_x==31 && sprite.draw_y==48);
@@ -192,8 +194,8 @@ def test_spritebox_draw_axes_copy_and_callback_order(tmp_path, compiler_name):
     mutants = (
         ("area.left = static_cast<int>(field_54_) + x + 4;",
          "area.left = static_cast<int>(field_54_) + y + 4;", "wrong-x-axis"),
-        ("parent_buffer->copy(control_buffer, Dialog::field_24_ + x,\n                        Dialog::field_28_ + y, x, y,",
-         "control_buffer->copy(parent_buffer, Dialog::field_24_ + x,\n                         Dialog::field_28_ + y, x, y,", "wrong-copy-receiver"),
+        ("parent_buffer->copy(\n        control_buffer,\n        static_cast<int32_t>(static_cast<uint32_t>(Dialog::window_x_) +\n                             static_cast<uint32_t>(x)),",
+         "control_buffer->copy(\n        parent_buffer,\n        static_cast<int32_t>(static_cast<uint32_t>(Dialog::window_x_) +\n                             static_cast<uint32_t>(x)),", "wrong-copy-receiver"),
         ("int sprite_x = x + (static_cast<int>(field_54_) - sprite_width) / 2;",
          "int sprite_x = y + (static_cast<int>(field_54_) - sprite_width) / 2;",
          "wrong-sprite-axis"),

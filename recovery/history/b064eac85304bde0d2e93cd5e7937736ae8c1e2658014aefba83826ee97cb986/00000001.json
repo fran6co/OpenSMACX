@@ -1,0 +1,21 @@
+{
+  "event_id": "0e97d35a42bf9692b69e65d10ee89652e460f36962f5b145e5a16edc28162432",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/picktech_host_fixture.inc",
+      "recovery/tests/test_picktech_behavior.py"
+    ],
+    "evidence": [
+      "Actual-sourcePickTechcontrols16baseline/mutantcompilationsrefuse stalefixtureStringStore::get(int) againstcurrentLPSTRcallers; recover properpointercontractusingexistingStringsbehavior, preservealllookup/readorder assertions andexecutedmutants. Onlytestfixtureclosure, no semanticCPPchangeclaimed.",
+      "Originaltask/sourcebaseline remainsunchanged; no SourceCpp edit needed. Ownerworker explicitlyauthorizedtestscope andfreshpairedhostcontrols; no bypass/skip/maskingfails."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "restore-existing-host-string-contract",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:picktech-owner-fast-pass-oct20"
+}

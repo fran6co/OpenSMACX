@@ -730,24 +730,29 @@ void ListBox::draw_item(int index) {
     GraphicWin *window = this;
     Buffer *canvas = static_cast<Buffer *>(window);
 
+    // At 0x0060B80C..0x0060B818 the pinned body passes this RECT to
+    // set_clip; the final box at 0x0060C18E..0x0060C19D uses the same edges.
+    // Its base is (field_40, field_38, field_64-field_40, field_38+field_68).
+    // Variable spans advance top/bottom (0x0060B6A3..0x0060B716); grid
+    // quotient/remainder offsets advance left/right and top/bottom respectively
+    // (0x0060B72D..0x0060B775).
     RECT row;
-    row.left = static_cast<int>(dialog.field_38_);
-    row.top = static_cast<int>(dialog.field_40_);
-    row.right = row.left + static_cast<int>(dialog.field_68_);
-    row.bottom = static_cast<int>(dialog.field_64_) + row.top
-        + static_cast<int>(dialog.field_40_) * -2;
+    row.left = static_cast<int>(dialog.field_40_);
+    row.top = static_cast<int>(dialog.field_38_);
+    row.right = static_cast<int>(dialog.field_64_)
+        - static_cast<int>(dialog.field_40_);
+    row.bottom = static_cast<int>(dialog.field_38_)
+        + static_cast<int>(dialog.field_68_);
 
     if (dialog.field_4C_ == 1) {
         int scroll = static_cast<int>(field_18_) - 1;
         if (scroll <= items.entry_count_ - 1) {
             items.current_ = items.head_;
             if (scroll < 0) {
-                typedef int (__cdecl * AbsFunction)(int);
-                AbsFunction abs_function = reinterpret_cast<AbsFunction>(&abs);
-                if (abs_function(scroll) > items.entry_count_) {
+                if (abs(scroll) > items.entry_count_) {
                     goto after_scroll_position;
                 }
-                int steps = abs_function(scroll);
+                int steps = abs(scroll);
                 while (steps > 0) {
                     --steps;
                     items.current_ = items.current_->previous;
@@ -792,8 +797,8 @@ after_scroll_position:
             occupied += span;
             --count;
         }
-        row.left += (static_cast<int>(dialog.field_68_)
-                     + static_cast<int>(dialog.field_44_)) * occupied;
+        row.top += (static_cast<int>(dialog.field_68_)
+                    + static_cast<int>(dialog.field_44_)) * occupied;
 
         StringStructEntry *const list_head = items.head_;
         if (list_head != 0) {
@@ -818,7 +823,7 @@ after_scroll_position:
         }
         const int gap = static_cast<int>(dialog.field_44_);
         row.bottom = (static_cast<int>(dialog.field_68_) + gap) * span
-            - gap + row.left;
+            - gap + row.top;
     } else {
         const int relative = index - static_cast<int>(field_18_);
         const int columns = dialog.row_count_;
@@ -828,9 +833,9 @@ after_scroll_position:
         const int across = (static_cast<int>(dialog.field_68_)
                             + static_cast<int>(dialog.field_44_))
             * (relative % columns);
+        row.left += along;
         row.right += along;
-        row.top += along;
-        row.left += across;
+        row.top += across;
         row.bottom += across;
     }
 
@@ -1260,8 +1265,8 @@ int ListBox::attach(GraphicWin *a1, int a2, int a3, int a4) {
         dialog.row_count_ = 1;
     }
 
-    dialog.field_24_ = static_cast<uint32_t>(a2);
-    dialog.field_28_ = static_cast<uint32_t>(a3);
+    dialog.window_x_ = a2;
+    dialog.window_y_ = a3;
 
     if (static_cast<int32_t>(field_20_) > static_cast<int32_t>(field_1C_)) {
         if (dialog.column_count_ > 1) {
@@ -1463,8 +1468,8 @@ int ListBox::update_changes() {
     } else {
         int a4 = static_cast<int>(iFlags_);
         GraphicWin *a1 = static_cast<GraphicWin *>(window->parent_window());
-        int a2 = static_cast<int>(dialog->field_24_);
-        int a3 = static_cast<int>(dialog->field_28_);
+        int a2 = dialog->window_x_;
+        int a3 = dialog->window_y_;
         int result = this->ListBox::attach(
             a1, a2, a3, a4);
         if (result != 0) {
@@ -1763,11 +1768,10 @@ void ListBox::on_redraw() {
         if ((iFlags_ & 0x80000u) != 0 && parent != 0) {
             GraphicWin *parent_graphic = static_cast<GraphicWin *>(parent);
             parent_graphic->copy(buffer,
-                static_cast<int>(Dialog::field_24_),
-                static_cast<int>(Dialog::field_28_), 0, 0,
+                Dialog::window_x_, Dialog::window_y_, 0, 0,
                 window->pixel_width(), -window->pixel_height());
         } else {
-            window->fill(static_cast<int>(Dialog::field_24_));
+            window->fill(Dialog::window_x_);
         }
     }
 
