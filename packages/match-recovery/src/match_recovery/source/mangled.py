@@ -106,16 +106,20 @@ _VC6_ANONYMOUS_DATA = re.compile(
     r"@@3(?:[EH]|PAE|[UV][A-Za-z_]\w*(?:@@|@1@))[ABCD]", re.ASCII)
 
 
-# The observed VC6 local class objects/arrays use an additional underscore,
-# a one-digit lexical block and an entire ordinary cdecl free-function name.
-# Recognize these data envelopes without interpreting their type or deriving
-# a C++ expression. Their prefix, block, overload and trailer all remain part
-# of the exact identity; generated locals and other enclosing forms refuse.
+# VC6 local data uses an additional underscore, a lexical-scope component and
+# an entire ordinary cdecl free-function name. The scope component is a
+# single decimal digit, the zero form `@`, or the encoded multi-digit form
+# `[B-P][A-P]*@`. Recognize only the observed class-object and const-char-array
+# trailers. This retains the complete opaque identity; it does not infer a C++
+# expression, class, array extent, or storage lifetime.
+_VC6_LOCAL_SCOPE = r"(?:\?[0-9]\?|\?@\?|\?[B-P][A-P]*@\?)"
+_VC6_LOCAL_FUNCTION = r"(?P<function>\?[A-Za-z_]\w*@@YA[A-Za-z_0-9@]+Z)"
 _VC6_LOCAL_DATA = re.compile(
-    r"_\?[A-Za-z_]\w*@\?[1-9]\?"
-    r"(?P<function>\?[A-Za-z_]\w*@@YA[A-Za-z_0-9@]+Z)"
-    r"@4(?:PAV|V)[A-Za-z_]\w*@@A", re.ASCII)
-_LOCAL_SCOPE_HEAD = re.compile(r"^\?[A-Za-z_]\w*@\?[0-9]+\?", re.ASCII)
+    r"_\?[A-Za-z_]\w*@" + _VC6_LOCAL_SCOPE + _VC6_LOCAL_FUNCTION +
+    r"(?:@4(?:PAV|V)[A-Za-z_]\w*@@A|@4QAY0(?:[0-9]|[A-P]+@)\$\$CBDA)", re.ASCII)
+# Once a name is followed by the local-scope introducer, malformed encodings
+# must not fall through to `_components` and become a partial ordinary name.
+_LOCAL_SCOPE_HEAD = re.compile(r"^_?\?[A-Za-z_]\w*@\?", re.ASCII)
 
 
 def _components(text: str) -> list[str] | None:

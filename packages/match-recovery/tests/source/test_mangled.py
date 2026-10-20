@@ -161,6 +161,10 @@ def test_recognized_anonymous_data_cannot_become_a_function_or_class_witness(enc
     "_?working@?1??work@@YAHHHH@Z@4VBuffer@@A",
     "_?saved@?2??work@@YAHHHH@Z@4PAVBuffer@@A",
     "_?saved@?1??work@@YAHMH@Z@4PAVBuffer@@A",
+    "_?saved@?0??work@@YAHHHH@Z@4PAVBuffer@@A",
+    "_?tokens@?HL@??parse_tokens@@YAHPAD0@Z@4QAY0BE@$$CBDA",
+    "_?tokens@?HM@??parse_tokens@@YAHPAH@Z@4QAY0BE@$$CBDA",
+    "_?tokens@?@??parse_tokens@@YAHPAD0@Z@4QAY0BE@$$CBDA",
 ])
 def test_vc6_local_data_retains_the_complete_encoded_identity(symbol):
     from match_recovery.function_witness import _expression
@@ -185,11 +189,34 @@ def test_local_data_block_overload_name_and_trailer_are_distinct():
     assert {qualified_name(symbol) for symbol in symbols} == set(symbols)
 
 
+def test_local_array_identity_is_opaque_and_distinguishes_scope_and_overload():
+    from match_recovery.function_witness import _expression
+    from match_recovery.ownership_source import class_hint
+    from match_recovery.source.mangled import qualified_name
+
+    symbols = [
+        "_?tokens@?HL@??parse_tokens@@YAHPAD0@Z@4QAY0BE@$$CBDA",
+        "_?tokens@?HM@??parse_tokens@@YAHPAD0@Z@4QAY0BE@$$CBDA",
+        "_?tokens@?HL@??parse_tokens@@YAHPAH@Z@4QAY0BE@$$CBDA",
+    ]
+    assert [qualified_name(symbol) for symbol in symbols] == symbols
+    assert len({qualified_name(symbol) for symbol in symbols}) == len(symbols)
+    for symbol in symbols:
+        assert class_hint(symbol) is None
+        with pytest.raises(ValueError):
+            _expression(symbol, "msvc")
+
+
+def test_local_array_reader_accepts_the_retained_real_symbol_shape():
+    from match_recovery.source.mangled import qualified_name
+    symbol = "_?part_speech@?HL@??parse_string@@YAHPAD0@Z@4QAY0BE@$$CBDA"
+    assert qualified_name(symbol) == symbol
+
+
 @pytest.mark.parametrize("symbol", [
     "?saved@?1??work@@YAHHHH@Z@4PAVBuffer@@A",  # missing exact prefix
     "__?saved@?1??work@@YAHHHH@Z@4PAVBuffer@@A",
     "_?saved@???work@@YAHHHH@Z@4PAVBuffer@@A",
-    "_?saved@?0??work@@YAHHHH@Z@4PAVBuffer@@A",
     "_?saved@?01??work@@YAHHHH@Z@4PAVBuffer@@A",
     "_?saved@?A@??work@@YAHHHH@Z@4PAVBuffer@@A",
     "_?saved@?1??work@@YAHHHH@Z@3PAVBuffer@@A",
@@ -214,3 +241,21 @@ def test_unsupported_local_prefix_block_function_and_data_forms_refuse(symbol):
     assert class_hint(symbol) is None
     with pytest.raises(ValueError):
         _expression(symbol, "msvc")
+
+
+@pytest.mark.parametrize("symbol", [
+    "_?tokens@?AL@??parse_tokens@@YAHPAD0@Z@4QAY0BE@$$CBDA",
+    "_?tokens@?HL??parse_tokens@@YAHPAD0@Z@4QAY0BE@$$CBDA",
+    "_?tokens@?HL@??parse_tokens@@YAHPAD0@Z@3QAY0BE@$$CBDA",
+    "_?tokens@?HL@??parse_tokens@@YAHPAD0@Z@4QAY0BQ@$$CBDA",
+    "_?tokens@?HL@??parse_tokens@@YAHPAD0@Z@4QAY1BE@$$CBDA",
+    "_?tokens@?HL@??parse_tokens@@YAHPAD0@Z@4QAY0BE$$CBDA",
+    "_?tokens@?HL@??parse_tokens@@YAHPAD0@Z@4QAY0BE@$$CBDAextra",
+    "?tokens@?HL@??parse_tokens@@YAHPAD0@Z@4QAY0BE@$$CBDA",
+    "?tokens@?AL@??parse_tokens@@YAHPAD0@Z@4QAY0BE@$$CBDA",
+    "?tokens@?HL??parse_tokens@@YAHPAD0@Z@4QAY0BE@$$CBDA",
+    "?tokens@?01??parse_tokens@@YAHPAD0@Z@4QAY0BE@$$CBDA",
+])
+def test_unsupported_local_char_array_envelopes_refuse(symbol):
+    from match_recovery.source.mangled import qualified_name
+    assert qualified_name(symbol) == ""

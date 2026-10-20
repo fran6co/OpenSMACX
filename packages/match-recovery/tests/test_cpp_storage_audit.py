@@ -174,6 +174,22 @@ def test_local_data_object_aliases_keep_prefix_block_overload_and_trailer():
         ("First", symbols[0]), ("Second", symbols[1])}
 
 
+def test_local_char_array_object_keeps_full_encoded_identity_and_duplicate_detection():
+    symbol = "_?part_speech@?HL@??parse_string@@YAHPAD0@Z@4QAY0BE@$$CBDA"
+    counts, _, rows = findings({
+        "general.cpp": f"// RECOVERY_OBJECT: v1 0x12345678 {symbol}\n",
+        "alias.hpp": "int Alias; // 0x12345678\n",
+    }, "msvc")
+    assert counts["duplicate global identities"] == 1
+    assert rows[0]["symbols"] == ["Alias", symbol]
+
+    with pytest.raises(ValueError, match="duplicate original object"):
+        findings({
+            "general.cpp": f"// RECOVERY_OBJECT: v1 0x12345678 {symbol}\n",
+            "other.cpp": f"// RECOVERY_OBJECT: v1 0x23456789 {symbol}\n",
+        }, "msvc")
+
+
 @pytest.mark.parametrize("duplicate", [
     "// RECOVERY_OBJECT: v1 0x23456789 _?saved@?1??work@@YAHHHH@Z@4PAVBuffer@@A\n",
     "// RECOVERY_OBJECT: v1 0x12345678 _?saved@?2??work@@YAHMH@Z@4VBuffer@@A\n",
