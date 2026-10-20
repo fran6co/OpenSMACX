@@ -32,6 +32,10 @@ class _LeaseChanged(ValueError):
     """A measured input changed; abort without further compiler calls."""
 
 
+class _LineSplicingRefused(ValueError):
+    """A line splice can affect source before or within a selected body."""
+
+
 _LINE_SPLICE = re.compile(r"\\[ \t\v\f]*(?:\r\n|\n|\r)")
 
 
@@ -39,7 +43,8 @@ def _reject_line_splicing(text: str) -> None:
     # Phase-two C/C++ splicing changes which physical lines are comments and
     # definitions. The source lexer does not implement that preprocessor step.
     if _LINE_SPLICE.search(text):
-        raise ValueError("local body screening does not support backslash-newline splicing")
+        raise _LineSplicingRefused(
+            "local body screening does not support backslash-newline splicing")
 
 
 def _function_body_bytes(text: str, name: str, *, after_line: int | None = None,
@@ -67,7 +72,7 @@ def _function_body_bytes(text: str, name: str, *, after_line: int | None = None,
         char = text[index]
         following = text[index:index + 2]
         if state == "line":
-            if char == "\n":
+            if char in "\r\n":
                 state = "code"
             index += 1
             continue
@@ -142,7 +147,6 @@ def _marker_identity(record) -> tuple:
 def _bound_function_body_bytes(text: str, name: str, source: Path,
                                target_record, expected_markers: tuple) -> tuple[int, int]:
     """Find one real definition inside its unchanged source mapping interval."""
-    _reject_line_splicing(text)
     markers = read_text(text, source)
     if tuple(_marker_identity(row) for row in markers) != expected_markers:
         raise ValueError("local candidate changed source mapping identities")
@@ -157,8 +161,13 @@ def _bound_function_body_bytes(text: str, name: str, source: Path,
         raise ValueError("target definition is not in its exact product source mapping")
     before_line = (markers[index + 1].line if index + 1 < len(markers)
                    else len(text.splitlines()) + 1)
-    return _function_body_bytes(text, name, after_line=marker.line,
+    body = _function_body_bytes(text, name, after_line=marker.line,
                                 before_line=before_line)
+    # The closing brace is included: a splice through it can continue a
+    # comment or macro into tokens that the source-only body walk saw later.
+    prefix = text.encode("utf-8")[:body[1]].decode("utf-8")
+    _reject_line_splicing(prefix)
+    return body
 
 
 def _check_body_only(original_text: str, original_body: tuple[int, int], name: str,
@@ -172,16 +181,30 @@ def _check_body_only(original_text: str, original_body: tuple[int, int], name: s
             text = contents.decode("utf-8")
         except UnicodeDecodeError as error:
             raise ValueError("local candidates must preserve the selected function definition") from error
-        _reject_line_splicing(text)
+        # The original prefix has already passed the body-bound check. A
+        # candidate splice there is both out of scope and potentially changes
+        # how the mapping/body is tokenized, so diagnose it before reparsing.
+        candidate_prefix = contents[:low]
+        try:
+            _reject_line_splicing(candidate_prefix.decode("utf-8"))
+        except UnicodeDecodeError as error:
+            raise ValueError("local candidates must preserve the selected function definition") from error
         try:
             body = _bound_function_body_bytes(text, name, source, target_record,
                                               expected_markers)
+        except _LineSplicingRefused:
+            raise
         except ValueError as error:
             if str(error) == "local candidate changed source mapping identities":
                 raise ValueError("local candidates may change only the selected function body") from error
             raise ValueError("local candidates must preserve the selected function definition") from error
         changed = contents[:body[0]] + contents[body[1]:]
         if changed != prefix + suffix:
+            candidate_suffix = contents[body[1]:]
+            if (_LINE_SPLICE.search(candidate_suffix.decode("utf-8"))
+                    or _LINE_SPLICE.search(suffix.decode("utf-8"))):
+                raise _LineSplicingRefused(
+                    "local candidates cannot add or alter trailing backslash-newline splicing")
             raise ValueError("local candidates may change only the selected function body")
 
 
@@ -250,7 +273,6 @@ def measure_local_variants(root: Path, task_name: str, image_path: Path, deck: d
         original_text = original.decode("utf-8")
     except UnicodeDecodeError as error:
         raise ValueError("local screening requires UTF-8 product source") from error
-    _reject_line_splicing(original_text)
 
     view, view_snapshot = project_view(root)
     pin = view_snapshot["image_sha256"]
@@ -311,6 +333,8 @@ def measure_local_variants(root: Path, task_name: str, image_path: Path, deck: d
                                               target_record, expected_markers)
             body_name = name
             break
+        except _LineSplicingRefused:
+            raise
         except ValueError as error:
             body_error = error
     if body is None:
