@@ -1,0 +1,52 @@
+{
+  "event_id": "a0f08862d180590a7b8420b1be25aeee3763e8d846138e1f79f461ceec982078",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_font_line_advance_visibility_oct21.py",
+      "src/buffer.cpp",
+      "src/jackal/font.h"
+    ],
+    "evidence": [
+      "Continue retained Font natural-emission owner under original b3be21d0 baseline and standing coordinator-reviewed recovery authority. Separate StringBox worker owns only stringbox.cpp/test; no source/header overlap. Prior implementation-sharing close/width evidence is precedent, not a passing measurement for this new candidate.",
+      "Complete pinned executable-section direct-call scan finds exactly3 calls to signed Font selector5E3650:5DADF2,5DB0C0,5DB338 in Buffer write_strings_height5DAD70 and write_strings5DB040. Preserve those3 source callsites to public Font::line_advance. Pinned write_vertical5DB450 expands the selector at5DB4B2..4C7 and wrap_cent_flying5DE320 expands it at5DE47B..491; current source incorrectly introduces extra out-of-line calls there.",
+      "Authorize exactly one natural definition-visibility candidate: add a private ordinary nonvirtual in-class Font::measure_line_advance() const containing the existing signed selector and defined32bit wrapping addition, and route ONLY the two originally expanded Buffer sites to it using existing Buffer friendship. Keep public Font::line_advance and its complete existing body, declaration, mapping/symbol/history unchanged; its separate short implementation remains the direct-call boundary. This avoids changing unrelated host fixtures or inventing extra original identities. Private helper is reconstruction-only sharing of observed source operation, never a new recovered original function. No layout/virtual/access-control/ABI/flags/forced-inline/noinline/export/volatile/raw-offset change.",
+      "Preserve lazy FontDefault resolution, original signed-negative branch, positive and zero behavior, wrapping addition, separate subsequent height clamp in write_vertical, and flying-text update/call/read ordering. No other Buffer statements or Font public bodies change. Other application line_advance callsites remain untouched obligations; no automatic inference that they should inline or that this is an original TU boundary.",
+      "Add concise actual-source controls in recovery/tests/test_font_line_advance_visibility_oct21.py, extracting actual private helper/public body and the relevant Buffer bodies/fragments. Cover negative/minimum/zero/positive adjustment,32bit wrap, original height clamp and flying Y/read ordering, and meaningful compile-success mutants. Reuse existing test extraction helpers where appropriate, retain all existing controls and do not replace source with translated formulas. Scope any required fixture change before editing unrelated tests.",
+      "Author uses isolated checkout/apply_patch/uv host tests only. Coordinator leases native compiler and checks actual production Font selector equality, exact3 direct caller relocations, absence of helper calls/symbols in the2 original expansions, full actual-domain matching/reference deltas, all-header-user compile/link, physical protected complement, source/history continuity, independent review and destination reproduction. Native automatic/full linked/game acceptance remains unproven. A failed diagnostic preserves findings and source work without accepting mismatches or forcing code generation."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6174288,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6141008,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6152992,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6139248,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6139968,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "a4f4593dc27c9f0977fcff10c1795e50487fec8be79462c6222d098558e93677",
+  "request_id": "central-font-original-selector-expansions-oct21c",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:font-natural-inline-emission-oct12g"
+}
