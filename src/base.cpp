@@ -9154,7 +9154,7 @@ BOOL __cdecl base_queue(int base_id) {
         if (queue_prod_id >= 0) {
             PlayersData[faction_id].proto_id_queue[queue_prod_id]--;
         }
-        for (uint32_t i = 0; i < base->queue_size; i++) {
+        for (int i = 0; i < base->queue_size; i++) {
             base->queue_production_id[i] = base->queue_production_id[i + 1];
         }
         base->queue_size--;
