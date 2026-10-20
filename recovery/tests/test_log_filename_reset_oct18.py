@@ -16,6 +16,10 @@ import subprocess
 import tempfile
 
 import pytest
+from test_log_native_formatting_oct19 import (
+    extract_log_owner_definition,
+    extract_log_storage_declarations,
+)
 
 
 ROOT = next(parent for parent in Path(__file__).resolve().parents
@@ -100,9 +104,9 @@ def init_text(mutant: str | None = None) -> str:
         assert init.count(needle) == 1
         init = init.replace(needle, needle + "\n        spy_free(log_file_);\n        log_file_ = nullptr;", 1)
     elif mutant == "wrong_open_pointer":
-        needle = 'env_open(input, "wt")'
+        needle = "env_open(input, LogInitializeMode)"
         assert init.count(needle) == 1
-        init = init.replace(needle, 'env_open(log_file_, "wt")', 1)
+        init = init.replace(needle, "env_open(log_file_, LogInitializeMode)", 1)
     elif mutant == "omit_null_store":
         needle = "        log_file_ = nullptr;"
         assert init.count(needle) == 1
@@ -188,7 +192,10 @@ def dependency_rewritten(source: str) -> str:
 def harness(mutant: str | None = None) -> str:
     klass = instrumented_class()
     init = init_text(mutant)
-    source = PRELUDE + "\n" + klass + r"""
+    storage = extract_log_storage_declarations(("LogInitializeMode", "LogAppendMode"))
+    say = dependency_rewritten(extract_log_owner_definition(
+        "MEASURED void Log::say(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3)"))
+    source = PRELUDE + "\n" + storage + "\n" + klass + "\n" + say + r"""
 
 static char *observed_filename() {
     return observed_log ? observed_log->log_file_ : nullptr;

@@ -20,6 +20,20 @@
 #include "log.h"
 #include "buffer.h"
 
+// Keep the five Log-owned string storage identities distinct as in the
+// original image; its writable data does not establish the original source
+// declaration's mutability, spelling, allocation or lifetime.
+// RECOVERY_OBJECT: v2 0x00697374 0x00697380 _LogDefaultFilename 0x00625F20
+static char LogDefaultFilename[] = "logfile.txt";
+// RECOVERY_OBJECT: v2 0x00697380 0x00697383 _LogInitializeMode 0x00626040
+static char LogInitializeMode[] = "wt";
+// RECOVERY_OBJECT: v2 0x00697384 0x00697387 _LogResetMode 0x006260D0
+static char LogResetMode[] = "wt";
+// RECOVERY_OBJECT: v2 0x00697388 0x0069738B _LogAppendMode 0x006260F0
+static char LogAppendMode[] = "at";
+// RECOVERY_OBJECT: v2 0x006973AC 0x006973AF _LogHexAppendMode 0x00626190
+static char LogHexAppendMode[] = "at";
+
 /*
 Purpose: Initialize a log file.
 // ORIGINAL: 0x00626040 ?init@Log@@QAEHPAD@Z 0x00626040-0x006260C3 BYTE_EXACT
@@ -52,7 +66,7 @@ int Log::init(LPCSTR input) {
     }
     *log_file_ = '\0';
     strcat(log_file_, input);
-    FILE *file = env_open(input, "wt");
+    FILE *file = env_open(input, LogInitializeMode);
     if (!file) {
         return 6;
     }
@@ -77,7 +91,7 @@ MEASURED Log::Log(LPCSTR input) {
         if (buf) {
             *(char *)buf = '\0';
             strcat(log_file_, input);
-            FILE *file = env_open(input, "wt");
+            FILE *file = env_open(input, LogInitializeMode);
             if (file) {
                 fclose(file);
             }
@@ -86,20 +100,20 @@ MEASURED Log::Log(LPCSTR input) {
 }
 
 // This global owns the filename constructor and destructor lifetime. Its
-// initial zero storage is followed by Log("logfile.txt") initialization.
+// initial zero storage is followed by Log(LogDefaultFilename) initialization;
+// that array contains "logfile.txt".
 // RECOVERY_OBJECT: v1 0x009BBFF8 ?Logging@@3VLog@@A
-Log Logging("logfile.txt");  // 0x009BBFF8
+Log Logging(LogDefaultFilename);  // 0x009BBFF8
 
-// TU-private format literals used by the original Log::say/say_hex bodies.
-// The two original "at" mode strings are distinct but the compiler pools the
-// current spelling; neither mode is assigned a single-original identity here.
+// The five named arrays above preserve distinct filename/write/reset/append/
+// hex-append storage targets; the four format literals below remain separate.
 // RECOVERY_LITERAL: v1 0x0069738C 0x0069739C ??_C@_0BA@OCHC@?$CFs?5?$CFs?5?$CFd?5?$CFd?5?$CFd?6?$AA@ 0x006260F0
 // RECOVERY_LITERAL: v1 0x0069739C 0x006973A9 ??_C@_0N@KIHH@?$CFs?5?$CFd?5?$CFd?5?$CFd?6?$AA@ 0x006260F0
 // RECOVERY_LITERAL: v1 0x006973B0 0x006973C6 ??_C@_0BG@DBHC@?$CFs?5?$CFs?5?$CF04x?5?$CF04x?5?$CF04x?6?$AA@ 0x00626190
 // RECOVERY_LITERAL: v1 0x006973C8 0x006973DB ??_C@_0BD@FBFL@?$CFs?5?$CF04x?5?$CF04x?5?$CF04x?6?$AA@ 0x00626190
 
 MEASURED void Log::reset() {
-    FILE *file = env_open(log_file_, "wt");
+    FILE *file = env_open(log_file_, LogResetMode);
     if (file) {
         fclose(file);
     }
@@ -109,7 +123,7 @@ MEASURED void Log::say(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3) {
     if (!log_file_ || is_disabled_ || IsLoggingDisabled) {
         return;
     }
-    FILE *file = env_open(log_file_, "at");
+    FILE *file = env_open(log_file_, LogAppendMode);
     if (file) {
         str2 ? fprintf(file, "%s %s %d %d %d\n", str1, str2, num1, num2, num3)
             : fprintf(file, "%s %d %d %d\n", str1, num1, num2, num3);
@@ -121,7 +135,7 @@ MEASURED void Log::say_hex(LPCSTR str1, LPCSTR str2, int num1, int num2, int num
     if (!log_file_ || is_disabled_ || IsLoggingDisabled) {
         return;
     }
-    FILE *file = env_open(log_file_, "at");
+    FILE *file = env_open(log_file_, LogHexAppendMode);
     if (file) {
         str2 ? fprintf(file, "%s %s %04x %04x %04x\n", str1, str2, num1, num2, num3)
             : fprintf(file, "%s %04x %04x %04x\n", str1, num1, num2, num3);

@@ -1,0 +1,23 @@
+{
+  "event_id": "453b1459916137f550b19d9e93b7239ab55a202ed40520080e5140b37bcebdab",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_log_filename_reset_oct18.py",
+      "recovery/tests/test_log_native_formatting_oct19.py",
+      "recovery/tests/test_logging_random_natural_lifetimes_oct12.py"
+    ],
+    "evidence": [
+      "Coordinator authorizes repairing only these three actual-source fixtures to extract the current out-of-line Log filename constructor and needed exact file-private array declarations from src/log.cpp. A small shared extraction helper may live in one authorized test module and be imported by the others; no new product/framework tool or publicCLI. Only include referenced arrays so strict host warning checks remain meaningful. Preserve actual statements, initializer order and dependency spying, no copied stand-in implementations or literal substitutions.",
+      "Adapt wrong_open_pointer and other string-spelling-dependent mutation anchors to actual named mode arguments while preserving each mutant compiling and failing at runtime for its intended reason. Keep all original formatting, allocation/error/lifetime/order/gate checks and immutable image/history/baseline pins. Update a literal global-spelling assertion only to inspect actual live initializer plus extracted filename payload; no weakened semantic assertion, test skips, changed baselines or guessed matching claims.",
+      "Keep the frozen product C++SHAe4ad9d661c89d4b60d829151fd9477cc3f5485ccbb407e7b501ff7906d4c3072 unchanged, including all five native-writer bindings. Do not repair framework private targets or other modules in this scope. Author uses apply_patch only; coordinator explicitly allows host-only tests in these3modules, not VC6/Wine/native builds or Git/task mutations. Independent review and coordinator integration follow actual green host controls; private target discovery remains pending."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "fac21d0519ac0dc57835a984741c065a43a2a0019344a015fe8bae2e277e6921",
+  "request_id": "authorize-log-fixture-closure-oct20an",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:log-mode-storage-identities-oct20an"
+}

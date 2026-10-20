@@ -23,6 +23,13 @@ ROOT = next(parent for parent in Path(__file__).resolve().parents
 PIN = "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
 HEADER = ROOT / "src/log.h"
 OWNER = ROOT / "src/log.cpp"
+LOG_STORAGE = {
+    "LogDefaultFilename": "logfile.txt",
+    "LogInitializeMode": "wt",
+    "LogResetMode": "wt",
+    "LogAppendMode": "at",
+    "LogHexAppendMode": "at",
+}
 
 
 def find_pinned_image() -> Path:
@@ -70,37 +77,52 @@ def extract_class() -> str:
     raise AssertionError("Log class definition is not brace-balanced")
 
 
-def extract_owner_methods() -> str:
+def extract_log_storage_declarations(names: tuple[str, ...]) -> str:
+    source = OWNER.read_text(encoding="utf-8")
+    declarations = []
+    for name in names:
+        assert name in LOG_STORAGE
+        matches = list(re.finditer(
+            rf"(?m)^static char {re.escape(name)}\[\] = "
+            rf"\"{re.escape(LOG_STORAGE[name])}\";$", source))
+        assert len(matches) == 1, (name, len(matches))
+        declarations.append(matches[0].group())
+    return "\n".join(declarations)
+
+
+def extract_log_owner_definition(signature: str, source_path: Path = OWNER) -> str:
     from match_recovery.includes import COMMENTS_OR_STRINGS
 
-    source = OWNER.read_text(encoding="utf-8")
+    source = source_path.read_text(encoding="utf-8")
     masked = COMMENTS_OR_STRINGS.sub(
         lambda match: "".join("\n" if char == "\n" else " "
                               for char in match[0]), source)
+    assert masked.count(signature) == 1, (signature, masked.count(signature))
+    start = masked.index(signature)
+    opening = masked.find("{", start)
+    assert opening >= 0
+    depth = 0
+    for index in range(opening, len(masked)):
+        if masked[index] == "{":
+            depth += 1
+        elif masked[index] == "}":
+            depth -= 1
+            if depth == 0:
+                return source[start:index + 1].replace("MEASURED ", "")
+    raise AssertionError(f"unbalanced owner definition: {signature}")
+
+
+def extract_owner_methods() -> str:
     signatures = (
         "MEASURED Log::Log(LPCSTR input)",
         "MEASURED void Log::reset()",
         "MEASURED void Log::say(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3)",
         "MEASURED void Log::say_hex(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3)",
     )
-    bodies = []
-    for signature in signatures:
-        assert masked.count(signature) == 1
-        start = masked.index(signature)
-        opening = masked.find("{", start)
-        assert opening >= 0
-        depth = 0
-        for index in range(opening, len(masked)):
-            if masked[index] == "{":
-                depth += 1
-            elif masked[index] == "}":
-                depth -= 1
-                if depth == 0:
-                    bodies.append(source[start:index + 1].replace("MEASURED ", ""))
-                    break
-        else:
-            raise AssertionError(f"unbalanced owner definition: {signature}")
-    body = "\n".join(bodies)
+    body = "\n".join(extract_log_owner_definition(signature)
+                     for signature in signatures)
+    body = extract_log_storage_declarations((
+        "LogInitializeMode", "LogResetMode", "LogAppendMode", "LogHexAppendMode")) + "\n" + body
     assert body.count("fprintf(") == 4
     return body
 

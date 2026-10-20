@@ -8,6 +8,10 @@ import textwrap
 
 import pytest
 from match_recovery.source import read_file
+from test_log_native_formatting_oct19 import (
+    extract_log_owner_definition,
+    extract_log_storage_declarations,
+)
 
 
 ROOT = next(parent for parent in Path(__file__).resolve().parents
@@ -109,8 +113,18 @@ def log_host_source(body):
     """) + body + "\n"
 
 
+def log_storage_declarations(names=("LogDefaultFilename", "LogInitializeMode")):
+    return extract_log_storage_declarations(names)
+
+
+def log_filename_constructor():
+    return extract_log_owner_definition("MEASURED Log::Log(LPCSTR input)")
+
+
 def test_filename_constructor_preserves_original_paths_and_destructor(tmp_path):
     log_class = class_definition(LOG_H.read_text(), "Log")
+    storage = log_storage_declarations(("LogInitializeMode",))
+    constructor = log_filename_constructor()
     checks = r"""
         int main() {
             {
@@ -147,7 +161,7 @@ def test_filename_constructor_preserves_original_paths_and_destructor(tmp_path):
             return 0;
         }
     """
-    source = log_host_source(log_class + checks)
+    source = log_host_source(log_class + "\n" + storage + "\n" + constructor + checks)
     result = compile_and_run(tmp_path, source)
     assert result.returncode == 0, result.stderr.decode(errors="replace")
 
@@ -155,7 +169,8 @@ def test_filename_constructor_preserves_original_paths_and_destructor(tmp_path):
 def test_global_log_and_random_objects_own_startup_and_reverse_cleanup(tmp_path):
     log_class = class_definition(LOG_H.read_text(), "Log")
     logging_declaration = product_global_declaration(LOG_CPP, "Log", "Logging")
-    source = log_host_source(log_class + textwrap.dedent(r"""
+    source = log_host_source(log_storage_declarations() + "\n" + log_class + "\n" +
+        log_filename_constructor() + textwrap.dedent(r"""
         struct CleanupObserver {
             ~CleanupObserver() { std::fprintf(stderr, "%d\n", free_count); }
         } observer;
@@ -179,7 +194,8 @@ def test_global_log_and_random_objects_own_startup_and_reverse_cleanup(tmp_path)
         #include <cstdio>
         #include <cstring>
         #define MEASURED
-    """) + random_class + textwrap.dedent(r"""
+    """) + random_class + extract_log_owner_definition(
+        "MEASURED void Random::reseed(uint32_t new_seed)", source_path=RANDOM_CPP) + textwrap.dedent(r"""
         extern Random Rand;
         struct CleanupObserver {
             ~CleanupObserver() {
@@ -235,7 +251,7 @@ def test_pinned_lifetime_annotations_match_baseline_parser_metadata(tmp_path):
     assert "MEASURED Log(LPCSTR input)" in log_header
     ctor = log_header.split("MEASURED Log(LPCSTR input)", 1)[1].split("MEASURED ~Log()", 1)[0]
     assert "is_disabled_" not in ctor
-    assert product_global_declaration(LOG_CPP, "Log", "Logging") == 'Log Logging("logfile.txt");'
+    assert product_global_declaration(LOG_CPP, "Log", "Logging") == "Log Logging(LogDefaultFilename);"
     assert product_global_declaration(RANDOM_CPP, "Random", "Rand") == "Random Rand;"
     for obsolete in ("log_logging()", "log_logging_exit()", "random_rand()", "random_rand_exit()"):
         assert obsolete not in log_header + log_source + random_header + random_source

@@ -1,0 +1,37 @@
+{
+  "event_id": "d9787be3b62f7ea2924bf50fba025ab8bdf21bb6dcc7712bca9718fc3128998b",
+  "payload": {
+    "affects": [
+      "entity-067d4031e7b5345d182bdb42e3137ea77ac3a8cf43abcf8a08c2327122962528",
+      "entity-0fb88c5137bd0e7056882ce3df8ee3e9eacea82e3e0aae0f664956541e06e322",
+      "entity-1bc613bf2b12cc0195aebbcd9929fc5ac6837ec1d82952e280bafd75456fcb3c",
+      "entity-24a2d9a1f21c6f92b92af4bb5fdad73bbdbee39fa85a886b4ce75b5eab808c14",
+      "entity-2669dc8fe3d27c156a16cf39f0268eb88bf86faee03e4b1854be6cc71e153dc6",
+      "entity-28d306913d4b8454628ad3febee5f68a0bebf0b2a685433882b0a430174a285d",
+      "entity-344c734598d667444d5164296a6ac92d3e2d134d792754659546d0cbe905ebd1",
+      "entity-37c9f3b6d58d2a3d4f96ba3b14be3faa37ed5d60196e71bd1dbf4f1f15a7b386",
+      "entity-6c08f0643be57353472c344d8a544e4bed58d362023e7a203c48ac65fc2ebea0",
+      "entity-73d9010cf71defb95476db87038a2bf1f77a2b7dd13cfe2c17d4edeab5cbdfa9",
+      "entity-8569f15ca2ea2fa20afefc71e357a2fa25ff79fd49878f9ed6e0b0e4e75863d1",
+      "entity-b08227b189b9a089ab9fa39f24b1eb70e7623fca6ba68bff4a1fa8cfc07ba3c6",
+      "entity-ba231b24ef00eb8b72893cd9a7306f82bbc3da0fef52f21f45f6881a4a53a57a",
+      "entity-c329d316dc2dd1fc2d33f7eef9dc0713e607a3957a7b65c2ffedbcebe6734418",
+      "entity-e4aa62d84eb46c4b46099b055b5b9ea3b6824ae3b07a92c0638ba13e3e33e068",
+      "entity-ee1c7d44fa8a1f8a5dafb45829c354f910063847de9b096699ce69f3591b9131"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "private-log-target-proof-oct20an",
+    "evidence": [
+      "Three native compiler controls establish unique class3 symbols, CodeView extents, exact original initialized payloads, matching intended source references and replica/damage discrimination. Final full179TU193object build links; native data5objects2profiles has10PASS rows and aggregatePASS with2compiles. All16matching verdicts and3329whole exacts remain unchanged; no strict gains follow. Do not change genuine private linkage simply to satisfy a verifier.",
+      "Native object_targets direct-definition matching requires symbol.storage==2; bound_objects resolves corresponding global externals only on class2. Literal verifier is intentionally restricted to independent compiler string COMDATs and cannot be repurposed for ordinary private arrays. A future generic TU-qualified private-object proof must preserve extent/content/source-owner evidence, collision/refusal and cross-TU isolation; no aliases or unsupported proof borrowing are authorized here.",
+      "The first derived observer incorrectly interpreted historical source under coordinator cwd, reporting15gains from16UNKNOWNs. scoped-match-correction.json freshly qualifies native historical objects under the correct baseline worktree source path:15exact1mismatch, all16verdicts identical, zero gains/losses. The invalid report is retained as diagnostic only, never acceptance or a claim."
+    ],
+    "hypothesis": "Five proven private source storage objects cannot resolve strict original references because the existing object-target verifier only admits external COFF storage class2, not TU-private class3.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "private-log-target-proof-oct20an",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:log-mode-storage-identities-oct20an"
+}
