@@ -1,0 +1,21 @@
+{
+  "event_id": "d9701efa9fde75b604f3c598ca20bfcde9f94bd489a26c19410ef89a2d2cba74",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/fixtures/basewin_draw_energy_alloc_host.cpp.in",
+      "recovery/tests/test_basewin_draw_energy_alloc_actual_source.py"
+    ],
+    "evidence": [
+      "Independent original full local def-use review:411C26 loads BaseCurrent;411C4B reads Base+108 labs_total;411C57 stores EBP-60;4125D0 reads EBP-60 and4125DD passes it to itoa. Saved renderer clip RECT at EBP-94..-88 is distinct.4128CE reads unrelated psych residual EBP-7C. Current production saved_clip.top display and existing fixture oracle2 are translation/test defects, not original quirks.",
+      "Authorize exactly the two existing test/fixture files to restore original LABS total expected100 and replace backward mutation anchor with genuine saved-clip-top damage. Retain independent clip restore/geometry, arithmetic widths, complete-body behavior and all existing other mutant controls; do not reset baselines or weaken unrelated assertions. Native original evidence anchors belong in authorized new test. Existing source/header/additional test scope and original baseline are unchanged."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "basewin-labs-oracle-test-scope-oct20y",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:owner-basewin-faithful-recovery-oct20y"
+}

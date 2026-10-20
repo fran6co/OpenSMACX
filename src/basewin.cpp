@@ -3907,7 +3907,7 @@ void BaseWin::draw_energy_alloc(int a1) {
     value_cell.right = psych_display_add(saved_top_label_end, 0x1D);
     canvas->set_text_color(TextColourTable[130], TextColourTable[131], 1, 1);
     StringTemp[0] = '\0';
-    _itoa(saved_clip.top, number, 10);
+    _itoa(labs_total, number, 10);
     strcat(StringTemp, number);
     canvas->write_right_l(StringTemp, &value_cell, strlen(StringTemp));
 
