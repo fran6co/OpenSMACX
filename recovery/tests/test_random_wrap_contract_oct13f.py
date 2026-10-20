@@ -34,11 +34,15 @@ def product_fragments():
     header = (ROOT / "src/random.h").read_text()
     implementation = (ROOT / "src/random.cpp").read_text()
     random_class = extract_braced(header, "class Random {")
-    get = extract_braced(random_class, "MEASURED uint32_t get(int min, int max)")
+    reseed = extract_braced(
+        implementation, "MEASURED void Random::reseed(uint32_t new_seed)")
+    get = extract_braced(
+        implementation, "MEASURED uint32_t Random::get(int min, int max)")
+    get_double = extract_braced(implementation, "MEASURED double Random::get()")
     wrapper = extract_braced(implementation,
                              "uint32_t __cdecl random(int min, int max)")
     seed_getter = extract_braced(implementation, "uint32_t __cdecl random_get()")
-    return random_class, get, wrapper, seed_getter
+    return random_class, reseed, get, get_double, wrapper, seed_getter
 
 
 HARNESS = r"""
@@ -52,6 +56,7 @@ HARNESS = r"""
 typedef char require_32_bit_int[(sizeof(int) == 4) ? 1 : -1];
 
 __RANDOM_CLASS__
+__RANDOM_METHODS__
 Random Rand;
 __RANDOM_GETTER__
 __RANDOM_WRAPPER__
@@ -99,24 +104,42 @@ int main() {
             if (random(low, high) != expected) return 13;
             if (random_get() != seed * 0x19660Du + 0x3C6EF35Fu)
                 return 14;
+
+            local.reseed(seed);
+            const uint32_t next = seed * 0x19660Du + 0x3C6EF35Fu;
+            const uint32_t bits = (next & 0x7FFFFFu) | 0x3F800000u;
+            float unit;
+            std::memcpy(&unit, &bits, sizeof(unit));
+            if (local.get() != static_cast<double>(unit) - 1.0) return 15;
+            if (local.get_seed() != next) return 16;
         }
     }
+    Random reseed_check;
+    reseed_check.reseed(1u);
+    reseed_check.reseed(0x12345678u);
+    if (reseed_check.get_seed() != 0x12345678u) return 17;
     return 0;
 }
 """
 
 
-def translation_unit(*, get_body: str | None = None,
+def translation_unit(*, reseed_body: str | None = None,
+                     get_body: str | None = None,
+                     get_double_body: str | None = None,
                      wrapper_body: str | None = None) -> str:
-    random_class, actual_get, actual_wrapper, seed_getter = product_fragments()
+    (random_class, reseed, actual_get, get_double,
+     actual_wrapper, seed_getter) = product_fragments()
+    if reseed_body is not None:
+        reseed = reseed_body
     if get_body is not None:
         actual_get = get_body
-        class_start = random_class.index("MEASURED uint32_t get(int min, int max)")
-        class_end = random_class.index("  // IN-CLASS", class_start)
-        random_class = random_class[:class_start] + actual_get + random_class[class_end:]
+    if get_double_body is not None:
+        get_double = get_double_body
     if wrapper_body is not None:
         actual_wrapper = wrapper_body
+    methods = "\n".join((reseed, actual_get, get_double))
     return (HARNESS.replace("__RANDOM_CLASS__", random_class + ";")
+            .replace("__RANDOM_METHODS__", methods)
             .replace("__RANDOM_GETTER__", seed_getter)
             .replace("__RANDOM_WRAPPER__", actual_wrapper))
 
@@ -144,7 +167,18 @@ def test_actual_random_header_and_free_wrapper_match_wrapping_oracle(
         compiler, tmp_path):
     if shutil.which(compiler) is None:
         pytest.skip(compiler + " unavailable")
-    random_class, get, wrapper, _ = product_fragments()
+    random_class, reseed, get, get_double, wrapper, _ = product_fragments()
+    assert "void reseed(uint32_t new_seed);" in random_class
+    assert "uint32_t get(int min, int max);" in random_class
+    assert "double get();" in random_class
+    assert random_class.count("MEASURED void reseed(uint32_t new_seed);") == 1
+    assert random_class.count("MEASURED uint32_t get(int min, int max);") == 1
+    assert random_class.count("MEASURED double get();") == 1
+    assert "MEASURED void reseed(uint32_t new_seed) {" not in random_class
+    assert "MEASURED uint32_t get(int min, int max) {" not in random_class
+    assert "MEASURED double get() {" not in random_class
+    assert reseed.startswith("MEASURED void Random::reseed")
+    assert get_double.startswith("MEASURED double Random::get()")
     assert "static_cast<uint32_t>(max) - min" in get
     assert "if (min > max)" in get
     assert "seed_ = seed_ * 0x19660D + 0x3C6EF35F" in get
@@ -158,7 +192,7 @@ def test_actual_random_header_and_free_wrapper_match_wrapping_oracle(
 def test_old_signed_endpoint_subtraction_is_rejected_by_ubsan(compiler, tmp_path):
     if shutil.which(compiler) is None:
         pytest.skip(compiler + " unavailable")
-    _, get, _, _ = product_fragments()
+    _, _, get, _, _, _ = product_fragments()
     old = get.replace(
         "static_cast<uint32_t>(max) - min",
         "static_cast<uint32_t>(max - min)")
@@ -175,7 +209,7 @@ def test_arithmetic_mutants_are_killed_by_boundary_vectors(
         compiler, damage, tmp_path):
     if shutil.which(compiler) is None:
         pytest.skip(compiler + " unavailable")
-    _, get, _, _ = product_fragments()
+    _, _, get, _, _, _ = product_fragments()
     if damage == "unsigned_order":
         mutant = get.replace(
             "static_cast<uint32_t>(max) - min",
@@ -193,4 +227,23 @@ def test_arithmetic_mutants_are_killed_by_boundary_vectors(
         mutant = get.replace("if (min > max)", "if (min < max)")
     assert mutant != get
     result = compile_and_run(compiler, translation_unit(get_body=mutant), tmp_path)
+    assert result.returncode != 0
+
+
+@pytest.mark.parametrize("compiler", COMPILERS)
+@pytest.mark.parametrize("damage", ["reseed_store", "double_mask"])
+def test_owned_member_mutants_are_killed(compiler, damage, tmp_path):
+    if shutil.which(compiler) is None:
+        pytest.skip(compiler + " unavailable")
+    _, reseed, _, get_double, _, _ = product_fragments()
+    if damage == "reseed_store":
+        mutant = reseed.replace(
+            "    *b ^= seed_;\n    seed_ ^= *b;", "    *b ^= seed_;")
+        assert mutant != reseed
+        source = translation_unit(reseed_body=mutant)
+    else:
+        mutant = get_double.replace("0x7FFFFF", "0x7FFFFE")
+        assert mutant != get_double
+        source = translation_unit(get_double_body=mutant)
+    result = compile_and_run(compiler, source, tmp_path)
     assert result.returncode != 0

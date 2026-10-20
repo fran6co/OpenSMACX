@@ -32,6 +32,10 @@ class Random {
   // assignment is byte exact.
   MEASURED ~Random() { seed_ = 0; }   // 00625740
 
+  // The optimization notes below record historical inline trials. These
+  // methods now have declaration-only interfaces here and sole definitions in
+  // random.cpp; MEASURED remains on each declaration to preserve linkage, not
+  // to expose a body to callers.
   // IN-CLASS so the free wrappers below fold them in, which is what the
   // image does: `random_reseed` is `mov ecx, [Rand]; xor ...` with no call
   // in it at all. MEASURED, and that is load-bearing here rather than
@@ -48,48 +52,20 @@ class Random {
   // three instructions against the image's eight. Reading and writing the
   // parameter through `*b` takes the non-aliasing away from it and the whole
   // chain survives - 0x00625750 and 0x006257E0 are both byte-exact on it.
-  MEASURED void reseed(uint32_t new_seed) {
-      uint32_t *const b = &new_seed;
-      seed_ ^= *b;
-      *b ^= seed_;
-      seed_ ^= *b;
-  }
-  // IN-CLASS for the same reason: the image's `random(int, int)` at
+  // Keep MEASURED on the declaration to preserve the original exported
+  // linkage. This does not make the body visible here; it lives only in
+  // random.cpp.
+  MEASURED void reseed(uint32_t new_seed);
+  // HISTORICAL IN-CLASS rationale: the image's `random(int, int)` at
   // 0x00625810 has this body folded into it - nineteen instructions with no
   // call - and VC6 only inlines what it can see here.
-  MEASURED uint32_t get(int min, int max) {   // 00625770
-      if (min > max) {
-          min ^= max;
-          max ^= min;
-          min ^= max;
-      }
-      const uint32_t range = static_cast<uint32_t>(max) - min;
-      seed_ = seed_ * 0x19660D + 0x3C6EF35F;
-      // A LOCAL MASK, NOT THE `LOWORD` MACRO. `LOWORD(seed_)` truncates to a
-      // 16-bit rvalue and VC6 satisfies that by RE-READING the low word from
-      // `seed_`'s memory (`mov si, word ptr [ecx]`) right after the store
-      // that just wrote it, rather than masking the register already
-      // holding the value. Copying `seed_` into a 32-bit local first and
-      // masking THAT keeps it in the register the image's `and edx, 0xffff`
-      // reuses.
-      const uint32_t new_seed = seed_;
-      // UNSIGNED SHIFT. The image is `shr eax, 0x10`; with `int` operands
-      // the same expression shifts arithmetically - `sar` - and that one
-      // byte was the last divergence in `random(int, int)`.
-      return ((range * (new_seed & 0xFFFF)) >> 16) + min;
-  }
-  // IN-CLASS for the same reason as reseed() and get(int, int): the image's
+  MEASURED uint32_t get(int min, int max);   // 00625770
+  // HISTORICAL IN-CLASS rationale, also applying to reseed() and get(int, int): the image's
   // free `random()` at 0x00625850 has this body FOLDED IN - twelve
   // instructions, `imul`/`and`/`or`/`fld`/`fsub`, with no call in it at all -
   // and VC6 only inlines what it can see here. It keeps its own claim because
   // /Ob0 still emits its COMDAT.
-  MEASURED double get() {   // 006257B0
-      seed_ = seed_ * 0x19660D + 0x3C6EF35F;
-      const uint32_t bits = (seed_ & 0x7FFFFF) | 0x3F800000;
-      float unit;
-      std::memcpy(&unit, &bits, sizeof(unit));
-      return static_cast<double>(unit) - 1.0;
-  }
+  MEASURED double get();   // 006257B0
   // additional functions to assist with encapsulation
   uint32_t get_seed() { return seed_; }
 

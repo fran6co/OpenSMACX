@@ -24,7 +24,7 @@
 Purpose: Update the seed value, by the xor-swap with the argument that the image spells out.
 // ORIGINAL: 0x00625750 ?reseed@Random@@QAEXK@Z 0x00625750-0x00625763 BYTE_EXACT
 // LEVER: BYTE_EXACT 8/8. The body IS the xor-swap - `seed_ ^= n; n ^= seed_; seed_ ^= n;` - but written PLAINLY, VC6 recognises the idiom and folds the whole thing to the one `mov dword ptr [ecx], eax` the previous `seed_ = new_seed;` already emitted (measured: 3 instructions against the image's 8). Taking the ADDRESS of the parameter and xoring through it, `uint32_t *const b = &new_seed;`, denies VC6 the non-aliasing that algebra needs, and it then emits the image's four xors and two stores exactly. The same one change also took 0x006257E0 byte-exact.
-// body      src/random.h
+// body      src/random.cpp
 // symbol    ?reseed@Random@@QAEXI@Z
 // size      19 bytes
 // prototype void (__thiscall ?reseed@Random@@QAEXK@Z)(Random* this, unsigned int)
@@ -45,7 +45,7 @@ Status: Complete
 /*
 Purpose: Get a random value between min and (max - 1).
 // ORIGINAL: 0x00625770 ?get@Random@@QAEIHH@Z 0x00625770-0x006257A7 BYTE_EXACT
-// body      src/random.h
+// body      src/random.cpp
 // size      55 bytes
 // prototype unsigned int (__thiscall ?get@Random@@QAEIHH@Z)(Random* this, int, int)
 // callers   5   call targets   0
@@ -60,7 +60,7 @@ Status: Complete
 /*
 Purpose: Get a random double value.
 // ORIGINAL: 0x006257B0 ?get@Random@@QAENXZ 0x006257B0-0x006257DA BYTE_EXACT
-// body      src/random.h
+// body      src/random.cpp
 // size      42 bytes
 // prototype unknown float (__thiscall ?get@Random@@QAENXZ)(Random* this)
 // callers   0   call targets   0
@@ -71,6 +71,43 @@ Return Value: Random double value
 Status: Complete
 */
 // body src/random.h
+
+MEASURED void Random::reseed(uint32_t new_seed) {
+    uint32_t *const b = &new_seed;
+    seed_ ^= *b;
+    *b ^= seed_;
+    seed_ ^= *b;
+}
+
+MEASURED uint32_t Random::get(int min, int max) {
+    if (min > max) {
+        min ^= max;
+        max ^= min;
+        min ^= max;
+    }
+    const uint32_t range = static_cast<uint32_t>(max) - min;
+    seed_ = seed_ * 0x19660D + 0x3C6EF35F;
+    // A LOCAL MASK, NOT THE `LOWORD` MACRO. `LOWORD(seed_)` truncates to a
+    // 16-bit rvalue and VC6 satisfies that by RE-READING the low word from
+    // `seed_`'s memory (`mov si, word ptr [ecx]`) right after the store
+    // that just wrote it, rather than masking the register already
+    // holding the value. Copying `seed_` into a 32-bit local first and
+    // masking THAT keeps it in the register the image's `and edx, 0xffff`
+    // reuses.
+    const uint32_t new_seed = seed_;
+    // UNSIGNED SHIFT. The image is `shr eax, 0x10`; with `int` operands
+    // the same expression shifts arithmetically - `sar` - and that one
+    // byte was the last divergence in `random(int, int)`.
+    return ((range * (new_seed & 0xFFFF)) >> 16) + min;
+}
+
+MEASURED double Random::get() {
+    seed_ = seed_ * 0x19660D + 0x3C6EF35F;
+    const uint32_t bits = (seed_ & 0x7FFFFF) | 0x3F800000;
+    float unit;
+    std::memcpy(&unit, &bits, sizeof(unit));
+    return static_cast<double>(unit) - 1.0;
+}
 
 // global
 // THE OBJECT, not a pointer to one. `(Random *)0x009BB568` named storage
