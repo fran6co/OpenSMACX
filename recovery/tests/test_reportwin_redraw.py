@@ -445,7 +445,7 @@ struct Buffer {
     void wrap_flying_flush() {}
 };
 struct Dialog {
-    int field_48_,field_B4_,field_24_,field_28_;
+    int field_48_,field_B4_,window_x_,window_y_;
     int init(RECT *,int) { return 1; }
     int set_dialog_font(void *,void *,void *) { return 1; }
     void set_dialog_text_color(int,int,int,int) {}

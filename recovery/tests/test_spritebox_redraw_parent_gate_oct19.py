@@ -62,8 +62,8 @@ struct GraphicWin : Win {
 };
 
 struct Dialog {
-    int field_24_;
-    int field_28_;
+    int window_x_;
+    int window_y_;
 };
 
 struct BitmapInfoHeader {
@@ -88,8 +88,8 @@ struct SpriteBox : GraphicWin, Dialog {
     SpriteBox()
         : win_parent_(0), draw_calls(0) {
         list_.entry_count_ = 0;
-        field_24_ = 0;
-        field_28_ = 0;
+        window_x_ = 0;
+        window_y_ = 0;
         dib_.bmiHeader.biWidth = 0;
         dib_.bmiHeader.biHeight = 0;
     }
@@ -140,8 +140,8 @@ static void resize_from_draw(SpriteBox *box, int index) {
 int main() {
     SpriteBox box;
     GraphicWin parent;
-    box.field_24_ = 37;
-    box.field_28_ = -12;
+    box.window_x_ = 37;
+    box.window_y_ = -12;
     box.dib_.bmiHeader.biWidth = 43;
     box.dib_.bmiHeader.biHeight = 29;
 
@@ -278,7 +278,7 @@ def test_spritebox_redraw_parent_gate_and_live_rows(tmp_path, compiler_name):
     assert cached_count.count("cached_count") == 3
 
     copy_call = """        static_cast<GraphicWin *>(parent)->copy(
-            this, Dialog::field_24_, Dialog::field_28_, 0, 0,
+            this, Dialog::window_x_, Dialog::window_y_, 0, 0,
             dib_.bmiHeader.biWidth, -dib_.bmiHeader.biHeight);"""
     assert body.count(copy_call) == 1
 

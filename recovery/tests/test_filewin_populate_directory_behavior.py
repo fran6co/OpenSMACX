@@ -33,7 +33,7 @@ def test_extracted_full_method_with_gcc_and_clang():
     assert "FileWinInitSharedParameters.field_00_" in body
     assert "dialog.attach(" in body
     assert "dialog.attach_at_stored_position(" not in body
-    assert "dialog.field_24_" in body and "dialog.field_28_" in body
+    assert "dialog.window_x_" in body and "dialog.window_y_" in body
     assert "FindClose(handle);" in body
     assert "list_box_.show(0);" in body
     fixture = FIXTURE.read_text()

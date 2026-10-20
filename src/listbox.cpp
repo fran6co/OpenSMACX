@@ -1265,8 +1265,8 @@ int ListBox::attach(GraphicWin *a1, int a2, int a3, int a4) {
         dialog.row_count_ = 1;
     }
 
-    dialog.field_24_ = static_cast<uint32_t>(a2);
-    dialog.field_28_ = static_cast<uint32_t>(a3);
+    dialog.window_x_ = a2;
+    dialog.window_y_ = a3;
 
     if (static_cast<int32_t>(field_20_) > static_cast<int32_t>(field_1C_)) {
         if (dialog.column_count_ > 1) {
@@ -1468,8 +1468,8 @@ int ListBox::update_changes() {
     } else {
         int a4 = static_cast<int>(iFlags_);
         GraphicWin *a1 = static_cast<GraphicWin *>(window->parent_window());
-        int a2 = static_cast<int>(dialog->field_24_);
-        int a3 = static_cast<int>(dialog->field_28_);
+        int a2 = dialog->window_x_;
+        int a3 = dialog->window_y_;
         int result = this->ListBox::attach(
             a1, a2, a3, a4);
         if (result != 0) {
@@ -1768,11 +1768,10 @@ void ListBox::on_redraw() {
         if ((iFlags_ & 0x80000u) != 0 && parent != 0) {
             GraphicWin *parent_graphic = static_cast<GraphicWin *>(parent);
             parent_graphic->copy(buffer,
-                static_cast<int>(Dialog::field_24_),
-                static_cast<int>(Dialog::field_28_), 0, 0,
+                Dialog::window_x_, Dialog::window_y_, 0, 0,
                 window->pixel_width(), -window->pixel_height());
         } else {
-            window->fill(static_cast<int>(Dialog::field_24_));
+            window->fill(Dialog::window_x_);
         }
     }
 

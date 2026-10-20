@@ -1134,8 +1134,8 @@ select_faction:
             PickWinGlobal.listBox_.item(StringTemp, i);
         }
         PickWinGlobal.listBox_.attach(&PickWinGlobal,
-            PickWinGlobal.listBox_.Dialog::field_24_,
-            PickWinGlobal.listBox_.Dialog::field_28_, 0x80020);
+            PickWinGlobal.listBox_.Dialog::window_x_,
+            PickWinGlobal.listBox_.Dialog::window_y_, 0x80020);
         picked = DefaultPrefs.faction_id;
         if (picked < 1) picked = 1;
         else if (picked > 7) picked = 7;

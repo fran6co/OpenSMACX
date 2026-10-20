@@ -4,6 +4,7 @@
 #include <assert.h>
 #include <string.h>
 typedef unsigned int uint32_t;
+typedef int int32_t;
 struct RECT { int left, top, right, bottom; };
 void equal(RECT a, int l, int t, int r, int b) {
     assert(a.left == l && a.top == t && a.right == r && a.bottom == b);
@@ -36,12 +37,14 @@ static char *expected_text;
 static bool checkbox, handled, focus, current_row, separator_text;
 static int state, copies, sprites, wraps, writes, right_writes, dots, heights, callbacks, ids;
 static int expected_top;
+static int expected_copy_x, expected_copy_y;
 struct Buffer {
     Font *font1_;
     int text_line_height() { ++heights; return 7; }
     void copy(Buffer *destination, int sx, int sy, int dx, int dy, int w, int h) {
         assert(this == expected_parent && destination == expected_control);
-        assert(sx == 111 && sy == 202 && dx == 11 && dy == 2 && w == 67 && h == 20);
+        assert(sx == expected_copy_x && sy == expected_copy_y &&
+               dx == 11 && dy == 2 && w == 67 && h == 20);
         ++copies;
     }
     void wrap(char *text, RECT *area) {
@@ -76,7 +79,7 @@ struct Win {
 struct GraphicWin : Win, Buffer {};
 struct Dialog {
     List item_list_;
-    int field_24_, field_28_, field_34_, field_40_, field_44_;
+    int window_x_, window_y_, field_34_, field_40_, field_44_;
     int row_count_, field_64_, field_68_;
     uint32_t field_F0_, field_B8_;
     int pos_to_id(int position) { assert(position == 0); ++ids; return 123; }
@@ -147,7 +150,10 @@ int main() {
             for (int path = 0; path != 3; ++path) {
                 copies = sprites = wraps = writes = right_writes = dots = heights = callbacks = ids = 0;
                 active_window->win_parent_ = path == 1 ? 0 : &parent;
-                active_dialog->field_24_ = 100; active_dialog->field_28_ = 200;
+                active_dialog->window_x_ = mode == 31 ? 0x7ffffffa : mode == 30 ? -100 : 100;
+                active_dialog->window_y_ = mode == 31 ? 0x7fffffff : mode == 30 ? -200 : 200;
+                expected_copy_x = mode == 31 ? -2147483643 : mode == 30 ? -89 : 111;
+                expected_copy_y = mode == 31 ? -2147483647 : mode == 30 ? -198 : 202;
                 active_dialog->field_34_ = 9; active_dialog->field_40_ = 11;
                 active_dialog->field_44_ = 4; active_dialog->row_count_ = 3;
                 active_dialog->field_64_ = 40; active_dialog->field_68_ = 20;
