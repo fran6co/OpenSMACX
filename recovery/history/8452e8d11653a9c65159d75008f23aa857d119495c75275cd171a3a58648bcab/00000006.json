@@ -1,0 +1,22 @@
+{
+  "event_id": "b066c1673d16537c409f29415ab6fb5880aa91aab6030e7e54b21a84b2fc9927",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/setupwin.cpp"
+    ],
+    "evidence": [
+      "Continue the genuine SetupWin owner under unchanged de91fffe baseline and standing user coordinator-reviewed recovery authority. Only src/setupwin.cpp is editable in this continuation; no inherited broad UI file scope authorizes unrelated edits.",
+      "Pinned constructor4AD880 stores zero to selected_row at+FD0 before row_count at+FCC, instructions4AD979/4AD97F. Current source reverses those adjacent independent stores; field identities/layout/lifetimes are correct. A fresh single natural body-only candidate swaps only their statement order; no prior exact trial for this swap was found.",
+      "Authorize one native schema2 local spelling screen with unchanged-replica and body-damage controls under both existing profiles. Preserve real automatic subobjects, EH spans, all ORIGINAL identities/claims/lessons, ABI/types, flags and other source. A measured exact candidate may be applied through apply_patch and banked only through native recover record. Do not force volatile/casts/exports or invent hierarchy to select scheduling.",
+      "Require all same-TU mapped sibling observations, native original byte/reference proof, fresh application build/link, identity continuity, independent review and fresh destination recheck. Native automatic/full-game acceptance remains unproven; do not weaken a gate or task baseline."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "da1697e3c761943ac7b553c641e99564e04d39eca1a2198bceacd39a1e0ae78c",
+  "request_id": "central-setup-radius-ui-eight-owner-coverage-oct21b",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:ui-eight-owner-coverage"
+}
