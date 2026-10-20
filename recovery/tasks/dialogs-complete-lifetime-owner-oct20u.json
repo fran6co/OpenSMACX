@@ -1,0 +1,26 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "9a558700b13a132df1447f496d289afb341a04fa",
+  "editable_files": [
+    "src/factionprofilewin.cpp",
+    "src/basepop.cpp",
+    "recovery/tests/test_complete_destructor_owner_lifecycle.py"
+  ],
+  "evidence": [
+    "The existing 406AF0..406B16 FILE mapping selects ??_DDialogs@@QAEXXZ in factionprofilewin.cpp, which no longer emits it. Qualified actual Release build-nlhfn9fo basepop.cpp COFF ac819db2b616f78661534489534ddb76f0ef6d08053ffdd3abb9806465ed3fb6 naturally emits the body through real BasePop::dialogs_ at +21D0. Native compare_unit observes all13 original instructions exact; bounded direct binding check observes body/references pass, with destructor callees ??1Dialogs, ??1Dialog, ??1GraphicWin and receiver views +188/+BA0. This is current member-lifetime emission, not originalTU or linked selection.",
+    "Authorize migrating ONLY the full existing annotation/history envelope to basepop.cpp beside its real member-teardown lifetime. Retain identity, catalog name, all original spans, FILE mode, game kind, mangled symbol, flags, claims, formal LEVER/TRIED notes and complete freeform RECOVERY_HISTORY bytes/digest. Use native source reader/writer for original mappings, verify expected native output; no handwritten ORIGINAL edits/new claims. Move all useful old evidence, explicitly historical former factionprofilewin consumer/MAP observations. Refresh essential RECOVERY_BINDING via native renderer to explain real current BasePop::dialogs_ lifetime and no originalTU/linked-selection claim. No compile_context alias, no duplicate identity or authored destructor wrapper/export/flags/type change; no C++ executable code changes.",
+    "Update existing complete-destructor regression control to require the sole406AF0 mapping in basepop.cpp, absent factionprofilewin, same identity/claim/lesson and full-history digest, real typed BasePop Dialogs member, and no compile_context. Keep other ListBox mapping and actual source host destructor/lifetime harness intact. Host tests only for worker; coordinator owns Git/preparation/native compiler and recording.",
+    "Fresh build/link, qualified all-object code/relocation identity before/after comment-only move, scoped exact body/reference checks via normal native source binding, full claim/mapping/reference continuity and destination checks required. Local exactness is not whole linked/runtime/game acceptance. No claim is banked except via native recorder after exact observation."
+  ],
+  "intent": "Bind the existing complete Dialogs destructor to its genuine BasePop member-lifetime emission owner, preserving all original facts and history.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4221680,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "dialogs-complete-lifetime-owner-oct20u"
+}
