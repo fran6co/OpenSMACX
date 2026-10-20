@@ -162,7 +162,7 @@
         "flags": ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Ob1"]
       },
       "src/alphamovie.cpp": {
-        "flags": ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Ob2"]
+        "flags": ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Oy-", "/Ob2"]
       },
       "src/mci_video.cpp": {
         "flags": ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Ob2"]
