@@ -113,7 +113,7 @@ class Wave : public Sound {
   int get_attrib();
 
   // Slot 24 is inherited from Sound but Wave overrides it to call
-  // the DLL-created SoundDeviceInterface at device_ (+0x3C).
+  // the DLL-created Sound-family object at device_ (+0x3C).
   virtual int unk_slot24();  // slot 24, original 0x00448340
   // Original Wave (0x0066E44C) and Effect (0x0066B7A4) tables agree on
   // this derived virtual sequence, slots 33..56. In particular FX::init

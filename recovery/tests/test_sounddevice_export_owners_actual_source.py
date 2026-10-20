@@ -37,6 +37,7 @@ def harness(source, header):
     return r'''
 #include <cassert>
 #define __cdecl
+struct Sound;
 struct SoundDeviceBase {};
 typedef void *SoundDllProcsTable[11];
 SoundDllProcsTable SoundDllProcs = {};

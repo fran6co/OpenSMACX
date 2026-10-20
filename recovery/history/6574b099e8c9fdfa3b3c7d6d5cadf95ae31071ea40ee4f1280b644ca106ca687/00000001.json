@@ -1,0 +1,26 @@
+{
+  "event_id": "f24f861283590a2eb3da8183137676ff9904be82b7a30b2d0941b4de237d7c5a",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/sound_export_storage_harness.cpp",
+      "recovery/tests/test_midi_load_pointer_return_actual_source.py",
+      "recovery/tests/test_sound_export_storage.py",
+      "recovery/tests/test_sounddevice_export_owners_actual_source.py",
+      "recovery/tests/test_soundx_typed_export_table_oct9.py",
+      "recovery/tests/test_wave_device_exports.py",
+      "recovery/tests/test_wave_device_provider_owner_oct9.py"
+    ],
+    "evidence": [
+      "Shared ordinal1factory output type changes require faithful host extraction/callback stubs in these seven existing test/harness paths. Preserve their actual runtime assertions, control coverage, meaningful mutants and unrelated ordinal5/7/9 contracts. This grants TEST fixtures only, not separate device factory production changes.",
+      "Coordinator authorizes dependent testclosure immediately while disjoint rootintegrationchecks continue. Preserve original task baseline/scope/history; no failed harness accepted or dropped to hide incomplete propagation."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "provider-factory-host-fixture-closure",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:sound-device-provider-typing-oct20"
+}

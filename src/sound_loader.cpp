@@ -186,7 +186,8 @@ int __cdecl get_sound_version() {
 // ORIGINAL: 0x004C6000 sub_4c6000 0x004C6000-0x004C602A BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["historical seed src/recovered/004c6000.cpp; docs/recovery/ghidra-functions.csv:1214; src/sound.h:SoundXOrdinal1CreateSound; src/wave.cpp/src/midi.cpp slot-0 calls"], "reason": "Image wrapper gates ordinal 1 on the existing wave-device release guard and forwards its three stack arguments to the typed slot-0 device-create callback; stack cleanup matches cdecl. The same signature is exercised by Midi/Wave call sites."}
 // symbol    _sub_4c6000
-extern "C" int __cdecl sub_4c6000(void **device_slot, const char *filename,
+extern "C" int __cdecl sub_4c6000(Sound **device_slot,
+                                 const char *filename,
                                   int mode) {
     if (WaveDeviceReleaseGuard == 0) {
         return 1;

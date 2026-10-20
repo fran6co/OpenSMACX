@@ -1,0 +1,19 @@
+{
+  "event_id": "409cd6a997f47c5b3b0cfc2619814475c85be8866b79dc245027723d74fdb074",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "shared-sdk-sound-midi-model",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/sound.h now owns Sound*device_ and typed ordinal1 Sound** output; src/midi.h/cpp retires duplicateMidiDelegate; src/wave.cpp follows namedSound::device_, no byteoffset cast. Obsolete src/soundx_sound_abi.h removed withoutcompatibilityaliases.",
+      "Pinned EXE4C75B0 and DLL10029520 constructor189bytes/68instructions equal exceptsevenreference immediates; mode2/5 75slotcontracts nativeprobed; Midi54byte remains distinctVoiceTx54dword. This resolves source-model implementation, not originalnominaldebugname/fullproviderextent proof.",
+      "Fresh actual176TU application builds/links; 285scopedcensusverdicts unchanged, scopedstrict222PASS15UNKNOWNunchanged. Rootfreshhost118PASS/oneunchangedbaselinehistoricalclaimcontrolFAIL. Nativephysical180PASS10FAIL outsideheaderconsumers remainsunaccepted pendingcaller/collateralreview/currentmastercatchup; notautomatic/gameacceptance."
+    ]
+  },
+  "previous_event": "76b001a5862d02ee0ed636c887d0a5af0689f1c23e0f24bc0e3460e80cc283a9",
+  "request_id": "incorporate-common-sdk-sound-midi-model",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:sound-device-provider-typing-oct20"
+}

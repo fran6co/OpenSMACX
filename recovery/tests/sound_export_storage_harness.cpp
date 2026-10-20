@@ -5,6 +5,7 @@
 typedef void *HMODULE;
 typedef int (__stdcall *FARPROC)();
 #define MAKEINTRESOURCEA(value) reinterpret_cast<const char *>(value)
+struct Sound;
 
 // LIVE_EXPORT_TYPE
 // LIVE_EXPORT_ABIS
@@ -17,10 +18,10 @@ static int creates, releases, alternate_releases, fake_device;
 static bool fail_load;
 static HMODULE driver = reinterpret_cast<HMODULE>(0x1234);
 
-static int __cdecl create_device(void **slot, const char *name, int mode) {
+static int __cdecl create_device(Sound **slot, const char *name, int mode) {
     assert(strcmp(name, "sample.wav") == 0 && mode == 1);
     ++creates;
-    *slot = &fake_device;
+    *slot = reinterpret_cast<Sound *>(&fake_device);
     return 17;
 }
 
@@ -83,9 +84,9 @@ int main() {
     assert(SoundDllModule == driver);
     assert(SoundXOrdinal1CreateSound() == create_device);
     assert(SoundXOrdinal2DeleteSound() == release_device);
-    void *device = 0;
+    Sound *device = 0;
     assert(SoundXOrdinal1CreateSound()(&device, "sample.wav", 1) == 17);
-    assert(device == &fake_device && creates == 1);
+    assert(device == reinterpret_cast<Sound *>(&fake_device) && creates == 1);
     SoundXOrdinal2DeleteSound()(device);
     assert(releases == 1);
     SoundDllProcs[1] = reinterpret_cast<void *>(alternate_release);
