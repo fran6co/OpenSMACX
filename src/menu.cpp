@@ -1750,15 +1750,17 @@ void Menu::on_left_up(int xCoord, int yCoord) {
     hide_menus();
     do_all_draws();
 
-    PullDown *pull_down = entries_[highlighted].pull_down;
-    const int selected = pull_down->get_selected();
+    // The original keeps this entry cell across get_selected and reloads its
+    // current PullDown* afterward (0x005FBB54, 0x005FBB5B, 0x005FBB71).
+    PullDown **pull_down_slot = &entries_[highlighted].pull_down;
+    const int selected = (*pull_down_slot)->get_selected();
     if (selected == -1) {
         return;
     }
 
     int selected_id = -1;
     if (selected < 0x40) {
-        selected_id = pull_down->items_[selected].id;
+        selected_id = (*pull_down_slot)->items_[selected].id;
     }
 
     hide_menus();
