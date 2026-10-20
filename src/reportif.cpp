@@ -1627,9 +1627,10 @@ Purpose: Close the satellite report: hide every faction's panel button
          hide the three satellite windows, stop both timers.
 
              esi = 1; edi = self + 0x13778 (flatButtonsC_)
-             do { if (esi != LocalFaction) slot002(edi)      - FlatButton::
-                                                                close, the
-                                                                virtual
+             do { if (esi != LocalFaction) slot002(edi)      - BaseButton::
+                                                                hide through
+                                                                FlatButton's
+                                                                primary vtable
                   esi++; edi += 0xB4C } while (esi < 8)
              esi = self + 0x18720 (flatButtonsD_); five slot002 calls at
              0xB4C strides
@@ -1659,16 +1660,16 @@ void ReportIf::close_sat() {
     FlatButton *button = flatButtonsC_;
     do {
         if (faction != ConsoleGlobal.faction_id_) {
-            button->close();
+            button->hide();
         }
-        ++button;
         ++faction;
+        ++button;
     } while (faction < 8);
 
     button = flatButtonsD_;
     int count = 5;
     do {
-        button->close();
+        button->hide();
         ++button;
         --count;
     } while (count != 0);
