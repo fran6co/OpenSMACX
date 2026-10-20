@@ -1,0 +1,24 @@
+{
+  "event_id": "aec6a4ee43fb1c00bd2f443c4321f07fec425c5eef95e8fa459c1a6787ba2031",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_caviar_record_api_typing_oct12.py",
+      "recovery/tests/test_caviar_rect_state_actual_source_oct9.py",
+      "recovery/tests/test_caviar_shape_chain_oct11.py"
+    ],
+    "evidence": [
+      "Fresh merged master64eb4cef6 builds/links and passes native identities/claims/references, but six historical Caviar tests fail; all six independently failed on untouched pre-migration master. Four share a helper that looks for327historical records only in two current files containing123after legitimate owner migrations; one freezes all source tokens sinceOct12; one freezes an incidental source comment suffix instead of RECT storage.",
+      "Authorize only the three listed tests to validate current source-owned original identities/spans and monotonic historical claims/useful findings across genuine configured source owners, not freeze old filenames or unrelated metadata. Preserve all original identity/extent/claim/history obligations and explicitly validated historical extent/fragment/symbol transitions. Do not blanket allow missing records, ignore a mismatch or fabricate an accepted migration. Read project source through native readers; no new public CLI or framework changes.",
+      "The typed API test must retain a precise historical migration proof at an immutable integrated Git checkpoint or equivalent exact scoped before/after controls, plus current identity/span/claim/finding continuity and all actual-source API/behavior/mutant tests. Replace the impossible permanent whole-file snapshot, not the recovery invariant. Added actual evidence and native claim upgrades must remain legal. Test meaningful removal/wrong-span/claim-loss/history-loss damage cases.",
+      "RECT control must inspect the real current typed declaration and original source-owned object binding independently of incidental whitespace/comments while retaining all actual accumulation/alias/reset-order behavior controls. No product C++/header/annotation/claim/compiler flag or task baseline edits; no native compiler/Git/preparation by worker. Independent review and a fresh broad suite required; retained14physical failures/full acceptance are not waived."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "681d36d1cc426564990df482c7971b4c642b16a23983c492b29b939d2959a533",
+  "request_id": "caviar-historical-tests-current-owner-closure-oct20t",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:caviar-typed-callback-prefix-oct20r"
+}
