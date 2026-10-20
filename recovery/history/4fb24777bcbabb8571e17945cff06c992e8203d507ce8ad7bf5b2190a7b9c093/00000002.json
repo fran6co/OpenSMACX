@@ -1,0 +1,21 @@
+{
+  "event_id": "9284ea1676109164d86a89f629a2835a34638ed303f31fd1ed6a45ebc758eaaf",
+  "payload": {
+    "affects": [
+      "entity-1aa8f291ed8141148d0412a88ed208db4cb0a84a4b551f0941dd1d79d337aa33"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "console-road-target-original-caption-oct20n",
+    "evidence": [
+      "Independent full pinned span004D8DC0..004D8F37 reviews agree:004D8E7B masks climate,004D8E7E compares0x60,004D8E8C pushes00688EC8 containing NOTINOCEAN followed by NUL,004D8E96 calls NetMsg::pop then returns. Existing ConsoleStrNotHere is NOTHERE at00688CC4.",
+      "This is a confirmed translation error, not a prospective bug fix. Preserve all original bounds, distance, map-wrap, region, lock-retargeting and synchronization behavior. The same-spelling literals at other original addresses remain distinct storage obligations."
+    ],
+    "hypothesis": "set_road_to currently reports NOTHERE on target climate below0x60; the original reports NOTINOCEAN on that same path.",
+    "kind": "discovery"
+  },
+  "previous_event": "510e5d5eba07fb3fcb2fddf75f148e66ee724eee4e52b349492911ebff7b4a37",
+  "request_id": "console-road-target-original-caption-oct20n",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:wide-console-source-decks-oct20n"
+}
