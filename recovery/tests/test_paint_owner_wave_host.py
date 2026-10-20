@@ -31,7 +31,7 @@ SPECS = {
         "fixture": "newtechwin_paint_owner_control.cpp",
     },
     "pushbutton": {
-        "unit": "src/gamma.cpp", "address": 0x0062C110,
+        "unit": "src/pushbutton.cpp", "address": 0x0062C110,
         "end": 0x0062C82D,
         "original_name": "?on_redraw@PushButton@@QAEXXZ",
         "symbol": "?on_redraw@PushButton@@UAEXXZ",
@@ -127,9 +127,9 @@ def test_graphicwin_caption_callback_uses_typed_storage_and_safe_raw_view():
 
 def test_pushbutton_sprite_producers_and_all_consumers_are_typed():
     header = (ROOT / "src/pushbutton.h").read_text(encoding="utf-8")
-    gamma = (ROOT / "src/gamma.cpp").read_text(encoding="utf-8")
+    pushbutton = (ROOT / "src/pushbutton.cpp").read_text(encoding="utf-8")
     game = (ROOT / "src/game.cpp").read_text(encoding="utf-8")
-    assert "Sprite *PushButtonDefaults[18];" in gamma
+    assert "Sprite *PushButtonDefaults[18];" in pushbutton
     for name in ("AB8", "ABC", "AC0", "AC4", "AC8", "ACC", "AD0",
                  "AD4", "AD8", "ADC", "AE0", "AE4", "AE8", "AEC",
                  "AF0", "AF4", "AF8", "AFC"):
@@ -141,10 +141,10 @@ def test_pushbutton_sprite_producers_and_all_consumers_are_typed():
     for index, name in enumerate(("AB8", "ABC", "AC0", "AC4", "AC8", "ACC",
                                   "AD0", "AD4", "AD8", "ADC", "AE0", "AE4",
                                   "AE8", "AEC", "AF0", "AF4", "AF8", "AFC")):
-        assert f"field_{name}_ = PushButtonDefaults[{index}];" in gamma
+        assert f"field_{name}_ = PushButtonDefaults[{index}];" in pushbutton
     body = _owner_body(SPECS["pushbutton"])
     assert "reinterpret_cast" not in body
-    assert "TWO parallel 9-draw sets" in gamma
+    assert "TWO parallel 9-draw sets" in pushbutton
 
 
 def test_newtech_technology_and_interface_producer_closure_is_retained():

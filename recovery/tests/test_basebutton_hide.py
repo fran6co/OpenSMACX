@@ -33,7 +33,7 @@ TABLES = {
     "BaseButton": ("src/basebutton.cpp", 0x670290, 0x606F30),
     "FlatButton": ("src/flatbutton.cpp", 0x669754, 0x607CF0),
     "ImageButton": ("src/imagebutton.cpp", 0x670A94, 0x6252E0),
-    "PushButton": ("src/gamma.cpp", 0x670C60, 0x62C010),
+    "PushButton": ("src/pushbutton.cpp", 0x670C60, 0x62C010),
 }
 
 

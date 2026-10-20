@@ -71,7 +71,7 @@ SPECS = (
     (0x005FC6D0, 'src/menu.cpp', '??_GMenu@@UAEPAXI@Z'),
     (0x00607CC0, 'src/basebutton.cpp', '??_GBaseButton@@UAEPAXI@Z'),
     (0x006256D0, 'src/imagebutton.cpp', '??_GImageButton@@UAEPAXI@Z'),
-    (0x0062C830, 'src/gamma.cpp', '??_GPushButton@@UAEPAXI@Z'),
+    (0x0062C830, 'src/pushbutton.cpp', '??_GPushButton@@UAEPAXI@Z'),
     (0x0060CF50, 'src/listbox.cpp', '?on_redraw@ListBox@@$4PPPPPPPM@A@AEXXZ'),
     (0x0060CF70, 'src/listbox.cpp', '?on_mouse_move@ListBox@@$4PPPPPPPM@A@AEXHH@Z'),
     (0x0060CF90, 'src/listbox.cpp', '?on_left_down@ListBox@@$4PPPPPPPM@A@AEXHH@Z'),

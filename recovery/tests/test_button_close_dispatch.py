@@ -52,9 +52,9 @@ def one(text, pattern):
 def actual():
     h = {n: (ROOT / f'src/{n}.h').read_text() for n in
          ('basebutton', 'flatbutton', 'imagebutton', 'pushbutton', 'graphicwin',
-          'win', 'buffer', 'sprite', 'general', 'dialog')}
+          'win', 'buffer', 'sprite', 'general', 'dialog', 'dialog_defaults')}
     c = {n: (ROOT / f'src/{n}.cpp').read_text() for n in
-         ('basebutton', 'flatbutton', 'imagebutton', 'gamma')}
+         ('basebutton', 'flatbutton', 'imagebutton', 'pushbutton')}
     parts = {}
     declarations = [
         one(h['win'], r'typedef void \(__cdecl \*WinNotificationCallback\)\(int selected_id\);'),
@@ -99,13 +99,13 @@ def actual():
         one(h['basebutton'], r'^extern Font \*BaseButtonDefaultFonts\[3\];'),
         one(c['basebutton'], r'^Font \*BaseButtonDefaultFonts\[3\];'),
         one(h['pushbutton'], r'^extern Sprite \*PushButtonDefaults\[18\];'),
-        one(c['gamma'], r'^Sprite \*PushButtonDefaults\[18\];'),
-        one(h['dialog'], r'^extern uint32_t DialogDefaults\[37\];'),
+        one(c['pushbutton'], r'^Sprite \*PushButtonDefaults\[18\];'),
+        one(h['dialog_defaults'], r'^extern uint32_t DialogDefaults\[37\];'),
         'uint32_t DialogDefaults[37];',
         one(h['general'], r'^LPVOID __cdecl mem_get\(int size\);'),
     ))
     for unit, cls in (('basebutton', 'BaseButton'), ('flatbutton', 'FlatButton'),
-                      ('imagebutton', 'ImageButton'), ('gamma', 'PushButton')):
+                      ('imagebutton', 'ImageButton'), ('pushbutton', 'PushButton')):
         key = cls.lower()
         for kind, sig in (('ctor', f'{cls}::{cls}()'), ('close', f'void {cls}::close()')):
             parts[f'{key}_{kind}'] = braced(c[unit], sig)
