@@ -75,6 +75,7 @@ def extract_definition(source, signature):
 def product_bodies():
     root = repo_root()
     strings = (root / "src/stringstruct.cpp").read_text()
+    string_header = (root / "src/stringstruct.h").read_text()
     sprites = (root / "src/spritebox.cpp").read_text()
     string_signatures = (
         "StringStruct::StringStruct()",
@@ -95,7 +96,8 @@ def product_bodies():
     if sprite_helper_signature in sprites:
         sprite_bodies.insert(0, extract_definition(sprites, sprite_helper_signature))
     return "\n\n".join(
-        [extract_definition(strings, sig) for sig in string_signatures]
+        [extract_definition(string_header, string_signatures[0])]
+        + [extract_definition(strings, sig) for sig in string_signatures[1:]]
         + sprite_bodies
     )
 

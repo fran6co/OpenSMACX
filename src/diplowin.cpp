@@ -1504,7 +1504,7 @@ found:
 
 // Compiler-generated source-owned lifecycle entry; no handwritten wrapper.
 /*
-// ORIGINAL: 0x004450B0 sub_4450b0 0x004450B0-0x0044511C FILE
+// ORIGINAL: 0x004450B0 sub_4450b0 0x004450B0-0x0044511C FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:bcad94a018ff94737abb85df10d24ca7aa405b1a:src/leaf_recoveries.cpp", "pinned:terranx_original lifecycle0x4450b0", "source:src/diplowin.cpp"], "reason": "The actual compiler-generated StringList constructor owns virtual-base allocation capture, inherited field initialization and both derived table transitions. This replaces the raw-address leaf transcription without changing StringList members. Preserve complete original spans, catalogue names, claims and historical lessons; current compiler emission is not a fresh grant or linked selection proof."}
 // symbol    ??0StringList@@QAE@XZ
 // TRIED: homed into game.cpp (its real TU) 2026-09-03 and reverted for one reason:

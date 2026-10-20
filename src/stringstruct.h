@@ -64,11 +64,11 @@ class Popup;
  *
  * Original StringBox construction inlines this chain: vbtable, then
  * StringAllocationBase's vtable and owner capture, StringStruct's table stage
- * and field zeroing, then StringList's own stage. Current construction is
- * genuine C++ with a standalone StringStruct constructor in stringstruct.cpp;
- * recovering its original entry also means callers may now emit a call rather
- * than this original inline sequence. Matching restoration must retain the
- * genuine virtual-base ownership, not reinstall tables manually.
+ * and field zeroing, then StringList's own stage. The genuine C++ constructor
+ * body is header-visible so those cross-TU callers can inline the five stores;
+ * the mapped standalone identity remains owned by the stringstruct.cpp
+ * mapping. Matching restoration must retain genuine virtual-base ownership,
+ * not reinstall tables manually.
  */
 
 // The eight-byte allocation-tracking virtual base the vbtables name: one
@@ -219,11 +219,11 @@ class StringStruct : public virtual StringAllocationBase {
   // RECOVERY_GENERATED: v1 vtable 0x006693A4 0x006693AC ??_7StringStruct@@6B0@@ 0x006086F0
   virtual int on_insert(void *payload);
   virtual void on_remove(void *payload);
-  // Zeroes the five list fields, which the implicit construction chain
-  // therefore emits between StringStruct's vtable stage and StringList's - the
-  // image's order. The standalone original401000 entry is source-owned in
-  // stringstruct.cpp; the virtual-base initialization flag is compiler-owned,
-  // not an explicit source integer parameter.
+  // Zeroes the five list fields between StringStruct's vtable stage and
+  // StringList's stage, in the image's order. The ordinary inline definition
+  // below makes this initialization available to the original cross-TU
+  // construction chains; the virtual-base initialization flag remains
+  // compiler-owned, not an explicit source integer parameter.
   StringStruct();
   // The compiler stages the base tables before this cleanup. StringList's
   // destructor owns the earlier derived stage, where its text-removal hook
@@ -297,6 +297,16 @@ class StringStruct : public virtual StringAllocationBase {
 
 static_assert(sizeof(StringStruct) == 0x24,
               "StringStruct layout must match the original executable");
+
+// Shared by the standalone mapped entry and callers whose original
+// construction sequence contains these five stores inline.
+inline StringStruct::StringStruct() {
+    head_ = 0;
+    current_ = 0;
+    entry_count_ = 0;
+    current_position_ = 0;
+    allocator_ = 0;
+}
 
 class StringList : public StringStruct {
  public:

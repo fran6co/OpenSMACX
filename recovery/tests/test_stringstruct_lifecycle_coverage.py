@@ -22,7 +22,7 @@ def test_actual_stringstruct_construction_and_deletion(tmp_path, compiler_name):
         begin = header.index(start)
         declarations.append(header[begin:header.index(end, begin)])
     source = (ROOT / 'src/stringstruct.cpp').read_text()
-    constructor = definition(source, r'StringStruct::StringStruct\(\)')
+    constructor = definition(header, r'StringStruct::StringStruct\(\)')
     publication = definition(source, r'StringAllocationBase::~StringAllocationBase\(\)')
     prefix = '''#include <cassert>
 #include <cstdlib>
