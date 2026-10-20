@@ -1,0 +1,20 @@
+{
+  "event_id": "8bdff825bac7201e562e01caa6b0e46f7c1fb38aae8b8f079ae8b736f37856ef",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_graphicwin_update_boundary_oct20e.py"
+    ],
+    "evidence": [
+      "Currentmaster already recovers both404290and5D56B0BYTE_EXACT inordinarygraphicwin_events.cpp/graphicwin.cpp boundary, superseding oldinline/newupdateTUproposal. Allsource/configconflicts resolved to exactmaster; oldproposal/fullcallee/mappings retained inGitb3e850a93. Do not replay newunit or headerbody.",
+      "Adapt useful actual-source callback/visibility/RECT mutation controls to currentevent/calleeTUs in accurately named newfixture; retire obsolete inline-hypothesis test. No product/CMake/annotation/compiler edits. NativeTaskbaseline unchanged; independentreviewandfocusedhosttests required, no recoverycountgain or automaticacceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "5ea82a133fd408e63aa30a327b206c33eb920b1438060aa4eb4ac2c6fce61183",
+  "request_id": "preserve-tests-for-already-integrated-event-boundary-oct20e",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:graphicwin-source-batch-oct19b"
+}

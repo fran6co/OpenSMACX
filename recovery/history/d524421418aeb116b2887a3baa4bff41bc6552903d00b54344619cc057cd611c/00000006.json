@@ -1,0 +1,18 @@
+{
+  "event_id": "63f4daf448a6d5acb48afa4aec3311c46dfc25fc4dfa12ed60e33652f24e239d",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "superseded-graphicwin-inline-route-oct20e",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/graphicwin_events.cpp andsrc/graphicwin.cpp retain complete originalidentities/spans/claims; workerproduct/CMake/headerfilesresolved to exactcurrentmaster. Redundantcandidatecalleeunitremoved onlyaftercompletebehavior/mappings verifiedexisting. No master source regression, sourcefilename not claimed original.",
+      "Usefulactualsource callback/null-target/visibility/RECT ordering controls retained in accurately namedtest_graphicwin_update_boundary_oct20e.py; oldinlinehypothesistestretired. Independent review and69hostcontrolsPASS; addeddelayed-dimension-readmutantfail +explicitcompiler skips. No new function/matchclaim or automatic/gameacceptance."
+    ]
+  },
+  "previous_event": "a986bb0b8d09f80e4c456a1c815c80026a7b4ecd382c6fdceb02e9e2418394f3",
+  "request_id": "close-superseded-graphicwin-route-with-controls-oct20e",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:graphicwin-source-batch-oct19b"
+}

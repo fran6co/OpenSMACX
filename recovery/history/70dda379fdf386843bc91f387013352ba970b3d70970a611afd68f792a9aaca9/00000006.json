@@ -1,0 +1,22 @@
+{
+  "event_id": "d9deee8a4705b900c627e9d000b0ba3778bbc77966c76a40ab4e081f44b1ddc3",
+  "payload": {
+    "affects": [
+      "entity-27faf5f6654bf50757ecb71cd5236cb99301430ac9155e92c6022eacab405e4f"
+    ],
+    "author": "coordinator",
+    "discovery_id": "retain-typed-spot-read-and-investigate-collateral-output",
+    "evidence": [
+      "Fresh actualRelease function29/29 and strict body/reference PASS, fresh application build/link and source continuity checks PASS; all5529compiled/52UNBOUND census has+1masked,+1strictPASS, noexactloss. Getter preserves old copy-output API and all6remainingproductioncallers, no storage/virtual/layout change.",
+      "Isolated whole-application physical comparison outside the sole AlphaMenu body reports15changedobjects. Detailed instruction review shows some independent register reload reorderings but also broader stack/reference/inlining changes; equivalence and linked preservation are not established. Keep every failure visible in ignored alphamenu-final/candidate-physical.json and outside-instruction-review.json. Structural source checkpoint retained, not accepted integration; no baseline reset, claim demotion, widened projection or code discard.",
+      "Continue independently verified NetWin/PrefWin recovery rather than serializing them behind this investigation."
+    ],
+    "hypothesis": "Retain the original-faithful borrowed Spot rectangle read and corrected border118 access; do not revert them to protect unrelated output. Keep integration pending broader header-dependent codegen investigation rather than claiming outside-body preservation.",
+    "kind": "discovery"
+  },
+  "previous_event": "80eac3217916a67b2dc07ee91dfa61c1b77284378a2ea109a9b3ba9e170f4c16",
+  "request_id": "retain-typed-spot-read-and-investigate-collateral-output",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:alphamenu-rect-snapshot-oct20c"
+}

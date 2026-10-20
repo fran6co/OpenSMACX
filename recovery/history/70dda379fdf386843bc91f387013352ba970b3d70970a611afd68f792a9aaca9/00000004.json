@@ -1,0 +1,20 @@
+{
+  "event_id": "d68644d7bd61040cab58352015c15f0b1002ca3e515bad5e97b095530ca951df",
+  "payload": {
+    "affects": [
+      "entity-27faf5f6654bf50757ecb71cd5236cb99301430ac9155e92c6022eacab405e4f"
+    ],
+    "author": "coordinator",
+    "discovery_id": "original-window-border-not-caption-height",
+    "evidence": [
+      "Typed indexed-rectangle read model restores original29instructionshape; paired actual Release object differs at sole instruction20: original mov[ecx+118], candidate mov[ecx+114]. Current Win declaration and actual native compiler accesses distinguish caption_height_114 from border_thickness_118."
+    ],
+    "hypothesis": "AlphaMenu placement reads Win border_thickness_ at118, not caption_height_ at114; old source binding named the offset incorrectly.",
+    "kind": "discovery"
+  },
+  "previous_event": "78cf0909ce401dacfbd45c23f1ba50451ebe57de98609adc3d1e90aeddfbcdba",
+  "request_id": "original-window-border-not-caption-height",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:alphamenu-rect-snapshot-oct20c"
+}
