@@ -1,0 +1,22 @@
+{
+  "event_id": "e6e19b607931ee587416de187f47ff08df096b7917b9f90a51e762459db7ad9e",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/basewin.h"
+    ],
+    "evidence": [
+      "Independent original add_queue416DE0 and production selection417840 use signed JLE/JGE/JG comparisons for complete BaseWin+40B2C selected slot, including comparisons9/end/current queue count. The unrelated unsigned dispatch at417868 reads a different field. Current uint32_t declaration and selected-index unsigned casts therefore encode a wrong structural type, not a merely inconvenient spelling.",
+      "Authorize the real member migration to int selected_queue_slot_ at the same proven40B2C byte offset, and coherent owning-CPP access/assignment/comparison updates. Retain Base::queue_size type/scope and explicit signed boundary reads where original requires them. All source references to this member are inside current BaseWin cpp/header; return any discovered outside reference before editing it. Preserve every original mapping/span/claim and prior source work (first candidate committed7caa125a7).",
+      "Do not introduce unsigned-normalization casts solely to define unreachable/corrupted signed overflow states. Ordinary int arithmetic retains original C++ signed semantics/unchecked behavior. Host fixture must model actual int member and must not assert undefined INT_MIN decrement behavior; retain the prior unsigned trial/test in Git and state this limitation explicitly. Valid negative/zero/positive selected-slot and signed branch cases should be contrasted with a wrong unsigned-type mutant where safe.",
+      "Run one bounded coherent baseline/candidate/replica/damage native whole-TU screen with already bound actual Release argv, persist raw objects before analysis, measure all102 mappings and report all exact gains/losses and protected residual changes. Header migration requires fresh affected-closure build/layout/reference checks at coordinator checkpoint. Do not revert a justified signed model solely for local equality; freeze/report any regression for explicit review. No CMake/global flags/assembly/volatile/artificial dispatch/claims/Git or unrelated headers."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "recover-signed-selected-queue-member",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:basewin-cohort-match-oct20b"
+}
