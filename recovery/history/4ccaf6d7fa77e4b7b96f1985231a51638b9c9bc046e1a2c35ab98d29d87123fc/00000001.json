@@ -1,0 +1,24 @@
+{
+  "event_id": "af4261102b42d1356b13af4a4f010e16fddff77ed55436023fc26091f017a751",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_statuswin_selection_snapshot_oct21.py",
+      "src/statuswin.cpp"
+    ],
+    "evidence": [
+      "Continue the retained full StatusWin owner under its unchangedc17889c9 baseline, standing faithful-recovery and manual coordinator-reviewed integration authority. No active worker edits this file; eight independent read-only owner investigations selected this evidence-backed correction.",
+      "Pinned StatusWin::UNK3 at4B8DF0 loads iUnitIndex once into ESI before its sign test, passes the saved value to veh_wake and stores the same saved value into ConsoleGlobal.selected_vehicle_ after callback. Current source reloads iUnitIndex after veh_wake, so callback mutation can change the selection. Capture the unit ID once and reuse it only along this original path; preserve later city-index reads and all other callbacks.",
+      "Authorize src/statuswin.cpp plus new actual-source host fixture recovery/tests/test_statuswin_selection_snapshot_oct21.py. Preserve original identities/spans/claims/lessons, branch/call order, real owner structure and original quirks. No casts/volatile/register or forced inline/export/flag tricks. Optional inexpensive body-only screen for existing reset_status_and_initialize_desktop515430 may use at most3 natural equivalent candidates and cannot bank a deck winner automatically.",
+      "The new fixture extracts the actual UNK3 body, mutates iUnitIndex in veh_wake and proves the original saved unit is selected; cover negative unit/city path and unchanged set_move/zoom order, compiling deliberate reload and wrong-target mutants. Coordinator owns native preparation/measurements/build/link/Git/tasks. Preserve historical matching obligations on any regression.",
+      "Require independent review, native unchanged/damage controls for optional spelling screen, selected/sibling native byte/reference observations, whole compiling/linking closure, historical continuity and destination recheck. No claim stamping/demotion or full game/native automatic acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "central-owner-clock-snapshot-status-oct21a",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:statuswin-source-batch-oct19e"
+}

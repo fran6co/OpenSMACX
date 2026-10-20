@@ -1,0 +1,22 @@
+{
+  "event_id": "03dff7d3aa92aab280117a608c27cf639ec83a630e67554f66b9fa43b782a49b",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_net_polling_clock_effects_oct21.py",
+      "src/net_class.cpp"
+    ],
+    "evidence": [
+      "Refine the already authorized polling clock correction from independent full pinned instruction review. No scope change, baseline reset, claim/mode edits or bug fixes.",
+      "Host timestamp63219A, row0 timestamp6321EA and neither-host timestamp63223E are each loaded once before clock calls6321A1/6321F8/632244, then reused for subtraction. Capture only timestamps before clock; player IDs deliberately reload afterward6321AF/632206 and poll_timeout is loaded afterward too. Current repeated source expressions do not sequence these effects faithfully.",
+      "Initial cached clock6320FA precedes poll_time_DC_ read6320FC. Authorize explicit DWORD threshold=now()-2000u followed by field comparison. Add callback-mutated timestamp, ID, timeout and poll-time witnesses plus compiling mutants to the already authorized fixture. Preserve stuck-busy, distinct equality tests, callback destinations and original quirks."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "600461476d55528ce539ae62dc3495dd5747711d1cb162a5e4e2d88abdf15b03",
+  "request_id": "central-owner-clock-snapshot-polling-oct21a",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:net-polling-player-id-oct11"
+}

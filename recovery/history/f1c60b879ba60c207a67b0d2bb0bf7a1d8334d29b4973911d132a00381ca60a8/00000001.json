@@ -1,0 +1,30 @@
+{
+  "event_id": "64a14f8ce36fa0016dcf237340493ebf30afa88203951e33801023cc8f38ce1a",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_netdaemon_clock_effects_oct21.py",
+      "src/netdaemon.cpp"
+    ],
+    "evidence": [
+      "Continue the retained NetDaemon wait owner and original69b24b5f baseline. Standing user authorization covers faithful recovery with coordinator-reviewed manual integration and cheaper parallel authors. The separately active Net polling worker owns src/net_class.cpp only; scopes do not overlap.",
+      "Pending historical net-clock-capture-restoration-20260920 remains after the SDK import identity repair. Pinned wait5303B0 calls timeGetTime via direct IAT at5303CF and5303F9, not one captured function pointer. Pinned add_global530AA0 directly rereads IAT530AF8/530B1D/530BC1/530BE6; its offline guard precedes all clock effects.",
+      "Authorize only replacing wait timeGetTimeFn capture and two calls with ordinary SDK timeGetTime() expressions, and add_global get_time capture and four calls likewise. Preserve busy-count arithmetic, mode save/restore, unsigned timeouts, two-phase pump/warning order, original unsafe branches and all source identities/spans/claims/lessons. No unrelated simplification, new casts, flags, headers or build-policy edits.",
+      "New actual-source host fixture must distinguish replaced clock targets across callbacks/iterations and phases, offline no clock, original warn/pump/exit semantics and DWORD wrap; compile negative cached-pointer mutants. Existing actual wait and receive closure tests remain independent. No native compiler/Wine/Git/task mutations by author.",
+      "Require independent C++/original evidence review, frozen candidate measurements, whole-TU exact/strict continuity and physical collateral observations, fresh combined full build/link, claims/mappings/references and destination recheck. Missing/full linked preservation, runtime and native automatic acceptance stay unknown; do not weaken gates or historical requirements."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5442208,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "central-owner-clock-snapshot-daemon-oct21a",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:netdaemon-wait-state-owner-oct9"
+}
