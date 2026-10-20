@@ -1,0 +1,19 @@
+{
+  "event_id": "af704ffcfa7c1dc6cc47e757307e7204136ba95883920297565f7e07b28e2028",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "paths-live-startup-symbol-oct20g",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/path.cpp source writer changes only actual emitted symbol _$E7 to _$E8; startup host control expectation follows current emission, not original-name recovery.",
+      "Fresh full177-TU application compile/link passes. All191 physical object residuals pass with no body/data/reference projection. Six host controls and claim/mapping/reference checks pass. Independent current-COFF lifetime review supports registration; full task-owned init/fini dependency closure strict byte/boundary/reference checks pass for59A1B0 and59A1C0.",
+      "Ignored reports .opensmacx/recovery/parallel-owners-oct20g/path retain original observation UNKNOWN and corrected closure proof. Historical bcad94 baseline and all original identities/spans/claims/lessons preserved; no new claim grant or linked/runtime/game acceptance. Destination fresh combined build/recheck remains required."
+    ]
+  },
+  "previous_event": "209f3abe0544270d0ad62889060a36181860ee5a7a331559317f6188fba01838",
+  "request_id": "paths-live-startup-symbol-oct20g-incorporated",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:startup-lifetimes-owner-oct5"
+}
