@@ -144,17 +144,17 @@ def test_one_shared_owner_and_no_fixed_result_aliases():
 def test_font_first_buffer_methods_use_named_slots():
     buffer = (ROOT / "src/buffer.cpp").read_text()
     signatures = (
-        "int Buffer::write_cent_l(Font* a1, char * a2, RECT* a3, int a4)",
-        "int Buffer::wrap_cent(Font *a1, char *a2, int a3, int a4, int a5, int a6)",
+        "int Buffer::write_cent_l(Font *font, char *text, RECT *area, int len)",
+        "int Buffer::wrap_cent(Font *font_override, char *text, int x_coord, int y_coord,",
         "int Buffer::write_l(Font * font, char * text, int x, int y, int maxLen)",
-        "int Buffer::wrap_right(Font * a1, char * a2, int a3, int a4, int a5)",
-        "int Buffer::wrap(Font *a1, char *a2, RECT *a3)",
+        "int Buffer::wrap_right(Font *font_override, char *text, int x_coord,",
+        "int Buffer::wrap(Font *font_override, char *text, RECT *area)",
     )
     bodies = [extract_function(buffer, signature) for signature in signatures]
     assert all("reinterpret_cast<BufferFontTriple *>" not in body for body in bodies)
     assert all("reinterpret_cast<int *>(&font1_)" not in body for body in bodies)
     assert "reinterpret_cast<Font **>(reinterpret_cast<char *>(this) + 0x52c)" not in buffer
-    assert "font1_ = a1;" in bodies[0] and "font2_ = 0;" in bodies[0]
+    assert "font1_ = font;" in bodies[0] and "font2_ = 0;" in bodies[0]
     assert "font3_ = 0;" in bodies[0]
     assert "Font *const *const fonts = &font1_;" in buffer
     assert buffer.count("Font *const *fontArray = &font1_;") == 2
@@ -277,11 +277,11 @@ int main() {
 def font_wrapper_source(mutant=None):
     source = (ROOT / "src/buffer.cpp").read_text()
     signatures = (
-        "int Buffer::write_cent_l(Font* a1, char * a2, RECT* a3, int a4)",
-        "int Buffer::wrap_cent(Font *a1, char *a2, int a3, int a4, int a5, int a6)",
+        "int Buffer::write_cent_l(Font *font, char *text, RECT *area, int len)",
+        "int Buffer::wrap_cent(Font *font_override, char *text, int x_coord, int y_coord,",
         "int Buffer::write_l(Font * font, char * text, int x, int y, int maxLen)",
-        "int Buffer::wrap_right(Font * a1, char * a2, int a3, int a4, int a5)",
-        "int Buffer::wrap(Font *a1, char *a2, RECT *a3)",
+        "int Buffer::wrap_right(Font *font_override, char *text, int x_coord,",
+        "int Buffer::wrap(Font *font_override, char *text, RECT *area)",
     )
     bodies = [extract_function(source, signature) for signature in signatures]
     if mutant == "omit_restore":

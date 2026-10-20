@@ -1,0 +1,17 @@
+{
+  "event_id": "c22582cda4c8b96a058c48c99695dc898c59b055b8168eae95298bc6e8958002",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "finite-natural-form-no-gain",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Keep current production index loops: original typed table ownership already exists and this source-form trial establishes no new structure or semantic correction. Preserve tested trial and useful host controls in Git; reject adoption rather than broadening residual waivers or spending further spelling iterations."
+    ]
+  },
+  "previous_event": "8484f866d27442dec4c99edd2bedf62ed79a301514a0423c7ae3ba8f0459cd84",
+  "request_id": "close-unhelpful-natural-form-with-tests-preserved",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:replay-sites-cohort-oct20c"
+}

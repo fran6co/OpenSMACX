@@ -124,11 +124,13 @@ struct PrefWin{
  int field_A5C_=0,field_A18_=0,field_A14_=4;
  void change_volume_button_text(int);void change_volume_button_state(int);void on_button_clicked(int);void redraw();void destroy();void hide_option_buttons();void get_preferences();
 };
-struct WaveDevice{void disable_group(int n){events.push_back("disable-group:"+std::to_string(n));}void enable_group(int n){events.push_back("enable-group:"+std::to_string(n));}void disable(){events.push_back("disable");}void enable(){events.push_back("enable");}void set_volume(int){}void set_group_volume(int,int){}} WaveDeviceGlobal;
+struct GameDataFields{uint32_t game_preferences_=0,game_more_preferences_=0;};
+struct GameDataWindow{GameDataFields fields_;} GameDataStateStorage;
+struct WaveDevice{void disable_group(int n){events.push_back("disable-group:"+std::to_string(n));}void enable_group(int n){events.push_back("enable-group:"+std::to_string(n));}void disable(){assert((GameDataStateStorage.fields_.game_preferences_&0xC00u)==0xC00u);assert((GameDataStateStorage.fields_.game_more_preferences_&0x4000u)!=0);events.push_back("disable");}void enable(){events.push_back("enable");}void set_volume(int){}void set_group_volume(int,int){}} WaveDeviceGlobal;
 struct MusicBase{virtual ~MusicBase(){events.push_back("base-dtor");}virtual void begin(){events.push_back("begin");}virtual void set_volume(int){}};
 struct MusicProbe:MusicBase{~MusicProbe()override{events.push_back("derived-dtor");}};MusicBase *FactionMusic=nullptr;
 struct Console{int faction_id_=3;} ConsoleGlobal;
-void load_music(int id){events.push_back("load:"+std::to_string(id));FactionMusic=new MusicProbe;}
+void load_music(int id){assert((GameDataStateStorage.fields_.game_preferences_&PREF_AV_VOLUME_MUSIC_TOGGLE)!=0);events.push_back("load:"+std::to_string(id));FactionMusic=new MusicProbe;}
 const char *label_get(int i){events.push_back("label:"+std::to_string(i));return "label";}
 '''
 
@@ -171,22 +173,75 @@ def test_music_off_virtual_deletion_order(tmp_path):
     assert result.returncode==0,result.stderr
 
 
-def test_music_on_order_and_pending_bit(tmp_path):
-    main=r'''int main(){PrefWin w;w.volumeMusicToggle_.selected=0;w.volumeMainToggle_.selected=0;w.change_volume_button_state(0x58);
+def test_music_on_sets_live_bit_before_load_without_changing_pending_words(tmp_path):
+    main=r'''int main(){PrefWin w;w.volumeMusicToggle_.selected=0;w.volumeMainToggle_.selected=0;
+ GameDataStateStorage.fields_.game_preferences_=0x12340001u;GameDataStateStorage.fields_.game_more_preferences_=0xA5004000u;
+ w.prefsAVPending_=0x5A5A5A5Au;w.morePrefsAVPending_=0xA5A5A5A5u;w.change_volume_button_state(0x58);
  assert(w.volumeMusicToggle_.selected&&w.volumeMainToggle_.selected);
  assert((events==std::vector<std::string>{"music.state:1","main.state:1","label:1081","main.name:label","load:3","begin"}));
- assert(w.prefsAVPending_&PREF_AV_VOLUME_MUSIC_TOGGLE);delete FactionMusic;FactionMusic=nullptr;}'''
+ assert(GameDataStateStorage.fields_.game_preferences_==(0x12340001u|PREF_AV_VOLUME_MUSIC_TOGGLE));
+ assert(GameDataStateStorage.fields_.game_more_preferences_==0xA5004000u);
+ assert(w.prefsAVPending_==0x5A5A5A5Au&&w.morePrefsAVPending_==0xA5A5A5A5u);
+ delete FactionMusic;FactionMusic=nullptr;}'''
     result=compile_run(tmp_path,STATE+state_functions(actual_source())+main,"music-on")
     assert result.returncode==0,result.stderr
 
 
-def test_main_off_order_and_pending_masks(tmp_path):
-    main=r'''int main(){PrefWin w;w.volumeMainToggle_.selected=1;w.change_volume_button_state(0x55);
+def test_main_off_clears_live_masks_after_disable_not_pending_words(tmp_path):
+    main=r'''int main(){PrefWin w;w.volumeMainToggle_.selected=1;
+ GameDataStateStorage.fields_.game_preferences_=0xFFFFFFFFu;GameDataStateStorage.fields_.game_more_preferences_=0xFFFFFFFFu;
+ w.prefsAVPending_=0xA5A5A5A5u;w.morePrefsAVPending_=0x5A5A5A5Au;w.change_volume_button_state(0x55);
  assert(!w.volumeMainToggle_.selected&&!w.volumeMusicToggle_.selected&&!w.volumeVoiceToggle_.selected&&!w.volumeSFXToggle_.selected);
  assert((events==std::vector<std::string>{"main.state:0","music.state:0","voice.state:0","sfx.state:0","disable","label:1086","music.name:label","label:1082","voice.name:label","label:1084","sfx.name:label"}));
- assert((w.prefsAVPending_&0xC00u)==0&&(w.morePrefsAVPending_&0x4000u)==0);}'''
+ assert(GameDataStateStorage.fields_.game_preferences_==0xFFFFF3FFu);
+ assert(GameDataStateStorage.fields_.game_more_preferences_==0xFFFFBFFFu);
+ assert(w.prefsAVPending_==0xA5A5A5A5u&&w.morePrefsAVPending_==0x5A5A5A5Au);}'''
     result=compile_run(tmp_path,STATE+state_functions(actual_source())+main,"main-off")
     assert result.returncode==0,result.stderr
+
+
+def test_main_on_does_not_change_either_live_or_pending_preference_word(tmp_path):
+    main=r'''int main(){PrefWin w;w.volumeMainToggle_.selected=0;
+ GameDataStateStorage.fields_.game_preferences_=0x12345678u;GameDataStateStorage.fields_.game_more_preferences_=0x87654321u;
+ w.prefsAVPending_=0xA5A5A5A5u;w.morePrefsAVPending_=0x5A5A5A5Au;w.change_volume_button_state(0x55);
+ assert(GameDataStateStorage.fields_.game_preferences_==0x12345678u);
+ assert(GameDataStateStorage.fields_.game_more_preferences_==0x87654321u);
+ assert(w.prefsAVPending_==0xA5A5A5A5u&&w.morePrefsAVPending_==0x5A5A5A5Au);}'''
+    result=compile_run(tmp_path,STATE+state_functions(actual_source())+main,"main-on-live-words")
+    assert result.returncode==0,result.stderr
+
+
+@pytest.mark.parametrize("mutation", ["music_pending_target", "off_pending_target", "off_before_disable"])
+def test_live_preference_word_mutants_are_detected(mutation,tmp_path):
+    text=actual_source()
+    if mutation=="music_pending_target":
+        old="GameDataStateStorage.fields_.game_preferences_ |= PREF_AV_VOLUME_MUSIC_TOGGLE;"
+        new="prefsAVPending_ |= PREF_AV_VOLUME_MUSIC_TOGGLE;"
+        main=r'''int main(){PrefWin w;w.volumeMusicToggle_.selected=0;w.volumeMainToggle_.selected=0;
+ GameDataStateStorage.fields_.game_preferences_=0x12340001u;w.change_volume_button_state(0x58);}'''
+    elif mutation=="off_pending_target":
+        old=("GameDataStateStorage.fields_.game_preferences_ &= ~0xC00u;\n"
+             "        GameDataStateStorage.fields_.game_more_preferences_ &= ~0x4000u;")
+        new="prefsAVPending_ &= ~0xC00u;\n        morePrefsAVPending_ &= ~0x4000u;"
+        main=r'''int main(){PrefWin w;w.volumeMainToggle_.selected=1;
+ GameDataStateStorage.fields_.game_preferences_=0xFFFFFFFFu;GameDataStateStorage.fields_.game_more_preferences_=0xFFFFFFFFu;
+ w.prefsAVPending_=0xA5A5A5A5u;w.morePrefsAVPending_=0x5A5A5A5Au;w.change_volume_button_state(0x55);
+ assert(GameDataStateStorage.fields_.game_preferences_==0xFFFFF3FFu);
+ assert(GameDataStateStorage.fields_.game_more_preferences_==0xFFFFBFFFu);}'''
+    else:
+        old=("WaveDeviceGlobal.disable();\n"
+             "        GameDataStateStorage.fields_.game_preferences_ &= ~0xC00u;\n"
+             "        GameDataStateStorage.fields_.game_more_preferences_ &= ~0x4000u;")
+        new=("GameDataStateStorage.fields_.game_preferences_ &= ~0xC00u;\n"
+             "        GameDataStateStorage.fields_.game_more_preferences_ &= ~0x4000u;\n"
+             "        WaveDeviceGlobal.disable();")
+        main=r'''int main(){PrefWin w;w.volumeMainToggle_.selected=1;
+ GameDataStateStorage.fields_.game_preferences_=0xFFFFFFFFu;GameDataStateStorage.fields_.game_more_preferences_=0xFFFFFFFFu;
+ w.change_volume_button_state(0x55);}'''
+    changed=text.replace(old,new,1)
+    assert changed!=text
+    result=compile_run(tmp_path,STATE+state_functions(changed)+main,f"live-word-{mutation}")
+    assert result.returncode!=0
 
 
 def test_click_dispatch_runs_state_then_text_then_redraw(tmp_path):

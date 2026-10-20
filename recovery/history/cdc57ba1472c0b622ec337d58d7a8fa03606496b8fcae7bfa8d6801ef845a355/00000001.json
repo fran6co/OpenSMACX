@@ -1,0 +1,22 @@
+{
+  "event_id": "209f3abe0544270d0ad62889060a36181860ee5a7a331559317f6188fba01838",
+  "payload": {
+    "affects": [
+      "entity-16ad9dee888f74f7f60aee481856fc8aecd2bc3af526ea688437eec5bc6f3c2b"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "paths-live-startup-symbol-oct20g",
+    "evidence": [
+      "Correct only the current emitted-symbol fact for original Paths registration59A1B0: current qualified path.cpp.obj .CRT$XCU selects _$E8, a12byte push _$E6/call _atexit/pop ecx/ret helper; original59A1B0 registers59A1C0 viaatexit645398. Existing _$E7 hint is absent in actual Release object. Natural Path Paths lifetime and all original identities/spans/claims/lessons remain unchanged.",
+      "Use native source.writer.write_symbol to prepare exact single-token _$E7 to _$E8 update; apply and validate identical writer bytes. Update owned startup actual-source test current-emission expectation only. No C++ statement/declaration/header/flags change, no handwritten callback or new claim. Preserve original bcad94 task baseline and all older debts.",
+      "Coordinator-reviewed manual checkpoint requires independent lifetime/symbol provenance review, host regression controls, fresh whole application build/link, current scoped measurement/strict references and zero-omission physical comparisons, claim/mapping/reference continuity, fresh destination build/checks; no automatic linked/runtime/game acceptance."
+    ],
+    "hypothesis": "The real global Paths startup emission is currently _$E8, registering _$E6; the old _$E7 source fact prevents observing its existing implementation.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "paths-live-startup-symbol-oct20g",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:startup-lifetimes-owner-oct5"
+}

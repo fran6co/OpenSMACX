@@ -1,0 +1,19 @@
+{
+  "event_id": "fd014c45544870a6e3fba747fa2d40e6da9a7b4024c3997baaa0ec95a299d1ee",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "console-road-target-original-caption-oct20n",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/console_commands.cpp Console::set_road_to now uses NOTINOCEAN on the unchanged original target-climate rejection branch; shared ConsoleStrNotHere remains NOTHERE.",
+      "Pinned complete004D8DC0..004D8F37 and literal688EC8 corroborate caption, condition, return and subsequent lock/order/synchronization path. Independent actual-source GCC/Clang suite9PASS with meaningful caption/return/region mutants.",
+      "Fresh actual fullbuild-se6_tbie BUILD/LINKPASS; native claims/mappings/references PASS;191physical outside-caption COFF comparisonsPASS versus prior integrated source. No byte claim added; matching stillMISMATCH and strictFAIL, pooled literal identity remainsunknown. This resolution covers only the caption discovery, not complete function/game acceptance."
+    ]
+  },
+  "previous_event": "2d033dd7e7b0d49d452f841ecd248ce02c2737188e89458bc36fb2008ccbf3ed",
+  "request_id": "console-road-target-original-caption-incorporated-oct20n",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:wide-console-source-decks-oct20n"
+}

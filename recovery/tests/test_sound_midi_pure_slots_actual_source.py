@@ -111,6 +111,7 @@ def test_pinned_sound_midi_ambience_and_wave_slot_targets_without_native_tools()
         pytest.skip("pinned original image is not installed")
     image = PeImage(path.read_bytes(), image_pin(ROOT))
     expected = {
+        (0x66E538, 2): 0x4C9330,
         (0x66E3C0, 15): 0x645844,
         (0x66E3C0, 27): 0x645844,
         (0x66E3C0, 28): 0x645844,
@@ -118,6 +119,7 @@ def test_pinned_sound_midi_ambience_and_wave_slot_targets_without_native_tools()
         (0x66E538, 27): 0x4C93E0,
         (0x66E538, 28): 0x406B30,
         (0x66E664, 15): 0x406B30,
+        (0x66E664, 2): 0x448390,
         (0x66E664, 27): 0x4C93E0,
         (0x66E664, 28): 0x406B30,
         (0x66E44C, 15): 0x4C7010,
@@ -135,6 +137,48 @@ def test_pinned_sound_midi_ambience_and_wave_slot_targets_without_native_tools()
         ("xor", "eax, eax"), ("ret", "")]
     assert [(op.mnemonic, op.op_str) for op in setter_body] == [
         ("mov", "eax, 0xb"), ("ret", "4")]
+
+
+def test_pinned_midi_and_ambience_deleting_views_keep_distinct_staging_and_calls():
+    """The two slot-2 identities represent different class construction stages.
+
+    This pins the original table selection and destructor/tail-call distinction;
+    it does not claim that a current compiler reproduces either code body.
+    """
+    assert image_pin(ROOT) == PIN
+    path = Path(os.environ.get("OPENSMACX_IMAGE",
+                              ROOT / ".opensmacx/game/terranx_original.exe"))
+    if not path.is_file():
+        pytest.skip("pinned original image is not installed")
+    image = PeImage(path.read_bytes(), PIN)
+    decoder = Cs(CS_ARCH_X86, CS_MODE_32)
+
+    def instructions(start: int, size: int):
+        return {op.address: op for op in decoder.disasm(
+            image.read(Span(start, start + size)), start)}
+
+    # The derived constructor first stages the Midi view, then publishes its
+    # final Ambience view.  These stores explain why slot 2 differs by stage.
+    midi_stage = instructions(0x4C84EF, 6)
+    ambience_stage = instructions(0x4C850F, 6)
+    assert (midi_stage[0x4C84EF].mnemonic,
+            midi_stage[0x4C84EF].op_str) == (
+                "mov", "dword ptr [esi], 0x66e538")
+    assert (ambience_stage[0x4C850F].mnemonic,
+            ambience_stage[0x4C850F].op_str) == (
+                "mov", "dword ptr [esi], 0x66e664")
+
+    # Midi's deleting entry calls its destructor directly; Ambience's entry
+    # calls the original five-byte tail entry, which then reaches Midi's dtor.
+    midi_delete = instructions(0x4C9330, 0x21)
+    ambience_delete = instructions(0x448390, 0x21)
+    ambience_tail = instructions(0x4483C0, 5)
+    assert (midi_delete[0x4C9336].mnemonic,
+            midi_delete[0x4C9336].op_str) == ("call", "0x4c7670")
+    assert (ambience_delete[0x448396].mnemonic,
+            ambience_delete[0x448396].op_str) == ("call", "0x4483c0")
+    assert (ambience_tail[0x4483C0].mnemonic,
+            ambience_tail[0x4483C0].op_str) == ("jmp", "0x4c7670")
 
 
 def test_pinned_play_type_null_path_returns_before_the_adjacent_initializer():

@@ -1,0 +1,21 @@
+{
+  "event_id": "e495179219643b65c6a5cad5b3aa8a74eae5d598301e77a9569bfdeea3b56567",
+  "payload": {
+    "affects": [
+      "entity-78a01a620867398246462f96a2cf948bf33c484397079dd69ca79167a335aeb7",
+      "entity-a6320d49d1eb682ce4f58c156895665171c86543b576021d56f0260a332d6b65"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "prefwin-original-transfer-order-discovery-oct20e",
+    "evidence": [
+      "Pinned4906F4..490729 directcall60EC10 for3D/3E/3F on+7AEC; masks800/400/4000 into+A4C/+A50. CheckBox count-gated original/source traversal returns ordinal8 bit on absentID in8item list. Direct volume member reads remainlater490802/81B/82B. Originalset warnings490844..490A29 precede map490A29..490AF7; originalget warnings490FEA..49112E precedemap491132..4911F0. Independent palette/graphic reviews plus coordinatorinstructioninspection; getterabsentID allegation rejected, no change requested to its directtoggle dispatch."
+    ],
+    "hypothesis": "Current preference transfer omits three original absent-ID CheckBox reads and reorders warning and map groups; recover original traversal and preference effects without creating absent UI rows.",
+    "kind": "discovery"
+  },
+  "previous_event": "89c576421d71aa97fbe230bea2686714d42dfe86f3376d54808359391aa2f6ef",
+  "request_id": "prefwin-original-transfer-order-discovery-oct20e",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:prefwin-initial-visibility-oct20e"
+}

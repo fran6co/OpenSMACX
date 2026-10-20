@@ -89,7 +89,7 @@
         "src/vendor"
       ],
       "ceilings": {
-        "unk-method": 205,
+        "unk-method": 197,
         "evidence-free unk": 31,
         "function-address binding": 0,
         "orphan redirect": 59,
@@ -97,7 +97,7 @@
         "undocumented trivial body": 0,
         "raw self-access": 56,
         "pointer-parameter as int": 7,
-        "scaffold name": 3116
+        "scaffold name": 2715
       },
       "counters": []
     }

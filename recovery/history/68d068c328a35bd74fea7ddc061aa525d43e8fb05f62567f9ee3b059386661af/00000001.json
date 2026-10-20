@@ -1,0 +1,21 @@
+{
+  "event_id": "15e4f721f8b4aca7cf94a73fe0be8fc2df95faac75ffaf32bad3944913af8b80",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_string_formatting_owner_batch_oct20.py"
+    ],
+    "evidence": [
+      "Supersede old coordinator-only compiler restriction for this worker: owns independent source/hosttest/bounded native Compiler.overlay compare loop under one isolated resource_environment lease and jobs1; no Git/sharedroot/preparation-during-epoch/record/claim mutations. Existing prepared recipes are present. Root previous strict variant CLI timed out1200s because of broad prerequisite work; preserve evidence, do not repeat full-task/strictdeck support compilation to screen four local declarations.",
+      "Retained four function-scope number[80] proposals are unverified. Use actual baseline/current one-TU source snapshots with native Compiler and compare_unit for all9mapped owner originals on existing source recipe. Native replica and meaningful damage controls; do not assert declaration placement as semantic correctness. Host actualsource suite remains behavioral only. If actual emitted instructions unchanged, conclude no matchinggain and preserve candidate without cosmetic integration; no new forms after this finite pass.",
+      "No blanket /Ob or flags changes, volatile, artificial lifetime or ABI tricks. Native wholeapplication build and strict references remain coordinatorfinalcheck if useful gain survives. Freeze source/test files and report hashes/results including limitations."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "worker-owned-bounded-formatter-verification",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:string-formatting-owner-batch-oct20"
+}

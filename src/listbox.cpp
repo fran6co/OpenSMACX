@@ -941,15 +941,17 @@ after_scroll_position:
         }
     }
 
-    // The original resets the StringList cursor to this row after frame
-    // callbacks and before the draw callback; later callbacks may mutate it.
-    items.current_ = items.head_;
-    int steps = index;
-    while (steps > 0) {
-        --steps;
-        items.current_ = items.current_->next;
+    // The original rechecks the live count after frame callbacks. If a
+    // callback removed this row, it leaves the current cursor untouched.
+    if (index <= items.entry_count_ - 1) {
+        items.current_ = items.head_;
+        int steps = index;
+        while (steps > 0) {
+            --steps;
+            items.current_ = items.current_->next;
+        }
+        items.current_position_ = index;
     }
-    items.current_position_ = index;
 
     if (draw_callback_ != 0) {
         CurrentListBoxDraw = this;
@@ -965,6 +967,14 @@ after_scroll_position:
                                             index, &row, callback_text);
         if (written != 0) {
             return;
+        }
+    }
+
+    if (selected != 0 && callback_result == 0
+        && window->is_dialog_focus() != 0) {
+        canvas->set_clip(&row);
+        if (field_14_ != static_cast<uint32_t>(-1)) {
+            window->fill(&row, static_cast<int>(field_14_));
         }
     }
 
@@ -1663,6 +1673,10 @@ void ListBox::on_mouse_move(int x, int y) {
 
 // 0x0060AF90's table at 0x60B4EC maps VK_LEFT/UP/RIGHT/DOWN to four
 // layout-sensitive arms and all remaining keys to MapVirtualKey typeahead.
+// At 0x60B388..401, an in-range selection seeds the list cursor, while a
+// selection above the live last ordinal skips setup. A too-negative ordinal
+// first resets current to head, then skips only the reverse walk/ordinal write.
+// 0x60B421..49D advances that current entry and its separate ordinal.
 // Dialogs::on_key_down routes kind 2 here.
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0060AF90 ?on_key_down@ListBox@@QAEXH@Z 0x0060AF90-0x0060B4D5
@@ -1688,29 +1702,58 @@ int ListBox::on_key_down(int key) {
         return 1;
     }
     if (navigation == 0) return 1;
-    if (count <= 0) {
-        return 0;
-    }
-
     const UINT character = MapVirtualKeyA(
         static_cast<UINT>(key) & 0xFFF8FFFFu, 2);
-    if (character == 0) {
+    const unsigned char first = static_cast<unsigned char>(character);
+    if (first == 0) {
         return 0;
     }
-    const unsigned char first = static_cast<unsigned char>(character);
-    for (int offset = 1; offset <= count; ++offset) {
-        const int candidate = (position + offset) % count;
-        if (!items.seek_pos(candidate)) {
-            continue;
+    position = Dialog::selected_position_;
+    const int search_count = items.entry_count_;
+
+    if (position <= search_count - 1) {
+        items.current_ = items.head_;
+        if (position < 0) {
+            if (abs(position) <= items.entry_count_) {
+                int steps = abs(position);
+                if (steps > 0) {
+                    do {
+                        --steps;
+                        items.current_ = items.current_->previous;
+                    } while (steps != 0);
+                }
+                items.current_position_ = position + items.entry_count_;
+            }
+        } else {
+            if (position > 0) {
+                int steps = position;
+                do {
+                    --steps;
+                    items.current_ = items.current_->next;
+                } while (steps != 0);
+            }
+            items.current_position_ = position;
         }
-        StringStructPayload *payload = items.current_entry();
-        if (payload == 0 || payload->text == 0 || payload->text[0] == 0) {
-            continue;
-        }
-        if (listbox_typeahead_matches(payload->text[0], first)) {
-            set_selected_pos(candidate, 1);
-            return 1;
-        }
+    }
+
+    int offset = 0;
+    if (items.entry_count_ > 0) {
+        do {
+            if (items.head_ != 0) {
+                items.current_ = items.current_->next;
+                const int next_position = items.current_position_ + 1;
+                items.current_position_ = next_position;
+                if (next_position == items.entry_count_) {
+                    items.current_position_ = 0;
+                }
+            }
+            StringStructPayload *payload = items.current_->string_payload();
+            if (listbox_typeahead_matches(payload->text[0], first)) {
+                set_selected_pos(items.current_position_, 1);
+                return 1;
+            }
+            ++offset;
+        } while (offset < items.entry_count_);
     }
     return 0;
 }

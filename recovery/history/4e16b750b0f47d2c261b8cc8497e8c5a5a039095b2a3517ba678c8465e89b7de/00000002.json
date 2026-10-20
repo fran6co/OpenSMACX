@@ -1,0 +1,19 @@
+{
+  "event_id": "53b3be1372b704f971999bfd3b81a782d14d20b0148b1fa3c6e04839ec049f0b",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_flic_close_lifetime_actual_source.py"
+    ],
+    "evidence": [
+      "Coordinator authorizes existing actual-source close fixture updates for the already authorized Flic private-field naming migration. Keep lifecycle assertions, faulty mutants and all behavior unchanged; stale historical ReportWin prose remains untouched."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "2de8224354ba8110c18e9310750ae204560c731821dfaf50235d4b7a588bb959",
+  "request_id": "flic-existing-close-fixture-oct20h",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:flic-owner-fast-pass-oct20"
+}

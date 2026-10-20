@@ -1,0 +1,101 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "56463abe00db32311e64d7a0fb29e71d52c85b2e",
+  "editable_files": [
+    "src/random.cpp",
+    "src/random.h",
+    "recovery/tests/test_random_wrap_contract_oct13f.py"
+  ],
+  "evidence": [
+    "Original Random methods have external calls in BaseWin, MapWin, NetWin and ReportWin while free random wrappers expand their logic. Move only three method definitions before owner wrappers, keeping ctor/dtor, Rand storage/startup and algorithms unchanged. Preserve and inspect historical failed out-of-line attempts; no claim of success before actual generated call boundaries.",
+    "Coordinator authorizes parallel isolated implementation and manual reviewed integration. Existing owner baselines, original identities, all historical claims and lessons remain intact. This current step does not reset any older restoration obligation.",
+    "Faithful C++ first; no algorithms, types, flags, ABI, lifetimes, original-address calls, new exports on consumer declarations or linker-order steering. Definitions use existing MEASURED only in their actual owner. Native body facts are updated by coordinator with guarded writer after source freeze.",
+    "Worker may edit only named files; request evidence-backed dependent scope immediately. Coordinator alone performs Git, preparation, leased compiler observations and integration. Source freeze precedes compilation; failed matching/preservation observations remain visible and require review, not silent reversion or weaker claims."
+  ],
+  "intent": "Recover original source-owner call and inline boundaries for random",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4228896,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4279104,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4600528,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4730256,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4838720,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6444800,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6444832,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6444848,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6444864,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6444880,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6444912,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6444976,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6445024,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6445056,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6445072,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6445136,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "random-source-ownership-oct20i"
+}

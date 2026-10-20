@@ -51,13 +51,20 @@ struct Dialog {
     uint32_t field_20_;
     int field_68_, field_44_, field_64_, row_count_;
     int field_4C_, field_2C_, field_40_;
+    int get_selected_id() { return selected_position_ + 100; }
 };
 struct Buffer { static int text_line_height() { return 10; } };
 static int callback_values[8];
 static int callback_count;
-static void selection_callback(int ordinal) { callback_values[callback_count++] = ordinal; }
+static int double_click_values[8];
 static int double_click_count;
-static void double_click_callback(int) { ++double_click_count; }
+static int event_log[32];
+static int event_count;
+static bool mutate_selection;
+struct RadioButton;
+static RadioButton *active_button;
+static void selection_callback(int ordinal);
+static void double_click_callback(int value);
 static int drawn[16];
 static int draw_count;
 static int updates;
@@ -66,14 +73,30 @@ struct RadioButton : Dialog {
     WinNotificationCallback selection_callback_;
     WinNotificationCallback double_click_callback_;
     Parent *win_parent_;
-    void draw_item(int position, int state) { drawn[draw_count++] = position * 2 + state; }
-    void soft_update() { ++updates; }
+    void draw_item(int position, int state) {
+        drawn[draw_count++] = position * 2 + state;
+        event_log[event_count++] = 1000 + position * 2 + state;
+    }
+    void soft_update() { ++updates; event_log[event_count++] = 3000; }
     void redraw() { ++updates; }
     void on_left_down(int x, int y);
     void on_mouse_move(int x, int y);
+    int on_key_down(int key);
+    void on_left_double_click(int x, int y);
 };
+static void selection_callback(int ordinal) {
+    callback_values[callback_count++] = ordinal;
+    event_log[event_count++] = 2000;
+    if (mutate_selection) active_button->selected_position_ = 1;
+}
+static void double_click_callback(int value) {
+    double_click_values[double_click_count++] = value;
+    event_log[event_count++] = 2100;
+}
 /* ACTUAL_LEFT_DOWN */
 /* ACTUAL_MOUSE_MOVE */
+/* ACTUAL_KEY_DOWN */
+/* ACTUAL_DOUBLE_CLICK */
 static void reset(ItemList &items, RadioButton &button) {
     items.current_ = 0;
     items.head_ = 0;
@@ -107,6 +130,85 @@ int main(int argc, char **argv) {
     }
     button.item_list_.head_ = &entries[0];
     button.item_list_.current_ = &entries[2];
+
+    if (argc > 1 && std::strcmp(argv[1], "--key") == 0) {
+        Parent parent = {};
+        button.win_parent_ = &parent;
+        button.selected_position_ = 0;
+        active_button = &button;
+        assert(button.on_key_down(0x25) == 1);
+        assert(button.selected_position_ == 2);
+        assert(callback_count == 1 && callback_values[0] == 2);
+        assert(double_click_count == 0);
+        assert(draw_count == 2 && drawn[0] == 0 && drawn[1] == 5);
+        assert(event_count == 4 && event_log[0] == 1000 &&
+               event_log[1] == 2000 && event_log[2] == 1005 &&
+               event_log[3] == 3000);
+        assert(WinCallbackWindow == &parent);
+        return 0;
+    }
+    if (argc > 1 && std::strcmp(argv[1], "--key-mutation") == 0) {
+        Parent parent = {};
+        button.win_parent_ = &parent;
+        button.selected_position_ = 0;
+        active_button = &button;
+        mutate_selection = true;
+        assert(button.on_key_down(0x25) == 1);
+        assert(callback_count == 1 && callback_values[0] == 2);
+        assert(double_click_count == 0);
+        assert(button.selected_position_ == 1);
+        assert(draw_count == 2 && drawn[0] == 0 && drawn[1] == 3);
+        assert(event_count == 4 && event_log[0] == 1000 &&
+               event_log[1] == 2000 && event_log[2] == 1003 &&
+               event_log[3] == 3000);
+        return 0;
+    }
+    if (argc > 1 && std::strcmp(argv[1], "--key-null") == 0) {
+        Parent parent = {};
+        button.win_parent_ = &parent;
+        button.selected_position_ = 0;
+        button.selection_callback_ = 0;
+        assert(button.on_key_down(0x25) == 1);
+        assert(button.selected_position_ == 2);
+        assert(callback_count == 0 && double_click_count == 0);
+        assert(draw_count == 2 && drawn[0] == 0 && drawn[1] == 5);
+        assert(event_count == 3 && event_log[0] == 1000 &&
+               event_log[1] == 1005 && event_log[2] == 3000);
+        return 0;
+    }
+    if (argc > 1 && std::strcmp(argv[1], "--key-default") == 0) {
+        Parent parent = {};
+        button.win_parent_ = &parent;
+        button.selected_position_ = 1;
+        assert(button.on_key_down(0x41) == 0);
+        assert(button.selected_position_ == 1);
+        assert(callback_count == 0 && double_click_count == 0);
+        assert(draw_count == 0 && updates == 0 && event_count == 0);
+        assert(WinCallbackWindow == &parent);
+        return 0;
+    }
+    if (argc > 1 && std::strcmp(argv[1], "--double-click") == 0) {
+        Parent parent = {};
+        button.win_parent_ = &parent;
+        button.selected_position_ = 2;
+        active_button = &button;
+        button.on_left_double_click(20, 22);
+        assert(callback_count == 0);
+        assert(double_click_count == 1 && double_click_values[0] == 102);
+        assert(event_count == 1 && event_log[0] == 2100);
+        assert(WinCallbackWindow == &parent);
+        return 0;
+    }
+    if (argc > 1 && std::strcmp(argv[1], "--double-null") == 0) {
+        Parent parent = {};
+        button.win_parent_ = &parent;
+        button.double_click_callback_ = 0;
+        button.on_left_double_click(20, 22);
+        assert(callback_count == 0 && double_click_count == 0);
+        assert(event_count == 0 && WinCallbackWindow == &parent);
+        return 0;
+    }
+
     button.on_left_down(20, 22);
     assert(button.selected_position_ == 2);
     assert(callback_count == 1 && callback_values[0] == 2);
@@ -117,7 +219,27 @@ int main(int argc, char **argv) {
         button.on_mouse_move(20, 22);
         assert(button.field_F0_ == 2 && updates == 2);
         button.on_mouse_move(20, 22);
+        assert(button.field_F0_ == 2 && updates == 3);
+        return 0;
+    }
+    if (argc > 1 && std::strcmp(argv[1], "--hover-matrix") == 0) {
+        updates = 0;
+        button.selected_position_ = 2;
+        button.field_F0_ = static_cast<uint32_t>(-1);
+        button.on_mouse_move(20, 22);
+        assert(button.field_F0_ == static_cast<uint32_t>(-1) && updates == 0);
+
+        button.field_F0_ = 2;
+        button.on_mouse_move(20, 22);
+        assert(button.field_F0_ == 2 && updates == 1);
+        button.on_mouse_move(20, 22);
         assert(button.field_F0_ == 2 && updates == 2);
+
+        button.selected_position_ = 0;
+        button.on_mouse_move(20, 22);
+        assert(button.field_F0_ == 2 && updates == 3);
+        button.on_mouse_move(20, 22);
+        assert(button.field_F0_ == 2 && updates == 4);
         return 0;
     }
     if (argc > 1 && std::strcmp(argv[1], "--null-current") == 0) {
@@ -165,9 +287,9 @@ def _mask(text):
                   flags=re.S)
 
 
-def _body(text, name):
+def _body(text, name, return_type="void"):
     masked = _mask(text)
-    signature = "void RadioButton::" + name
+    signature = return_type + " RadioButton::" + name
     matches = list(re.finditer(re.escape(signature) + r"\s*\(", masked))
     found = []
     for match in matches:
@@ -189,6 +311,8 @@ def _actual(text=None, *, validate=True):
     text = SOURCE.read_text() if text is None else text
     left = _body(text, "on_left_down")
     move = _body(text, "on_mouse_move")
+    key = _body(text, "on_key_down", "int")
+    double_click = _body(text, "on_left_double_click")
     if validate:
         assert "Dialog::field_68_ + Dialog::field_44_" in left
         assert "Dialog::field_68_ + Dialog::field_44_" in move
@@ -207,16 +331,33 @@ def _actual(text=None, *, validate=True):
                    "Dialog::field_F0_ =", "soft_update()")
         assert [left.index(token) for token in ordered] == sorted(
             left.index(token) for token in ordered)
-    return left, move
+        assert "selection_callback_(static_cast<int>(selected_position_))" in key
+        assert "double_click_callback_" not in key
+        key_ordered = ("draw_item(previous, 0)", "selection_callback_(",
+                       "draw_item(static_cast<int>(selected_position_), 1)",
+                       "soft_update()")
+        assert [key.index(token) for token in key_ordered] == sorted(
+            key.index(token) for token in key_ordered)
+        assert "double_click_callback_(Dialog::get_selected_id())" in double_click
+        assert "selection_callback_" not in double_click
+    return left, move, key, double_click
 
 
 def _compile(tmp_path, compiler, source_text=None, *, validate=True):
-    left, move = _actual(source_text, validate=validate)
+    left, move, key, double_click = _actual(source_text, validate=validate)
+    # The host stub uses unnamed parameters because the product body does not
+    # consume coordinates; only the extracted source body is under test here.
+    double_click = double_click.replace(
+        "RadioButton::on_left_double_click(int x_coord, int y_coord)",
+        "RadioButton::on_left_double_click(int, int)", 1)
     fixture = HARNESS_SOURCE
-    assert fixture.count("/* ACTUAL_LEFT_DOWN */") == 1
-    assert fixture.count("/* ACTUAL_MOUSE_MOVE */") == 1
+    for marker in ("/* ACTUAL_LEFT_DOWN */", "/* ACTUAL_MOUSE_MOVE */",
+                   "/* ACTUAL_KEY_DOWN */", "/* ACTUAL_DOUBLE_CLICK */"):
+        assert fixture.count(marker) == 1
     fixture = fixture.replace("/* ACTUAL_LEFT_DOWN */", left)
     fixture = fixture.replace("/* ACTUAL_MOUSE_MOVE */", move)
+    fixture = fixture.replace("/* ACTUAL_KEY_DOWN */", key)
+    fixture = fixture.replace("/* ACTUAL_DOUBLE_CLICK */", double_click)
     cpp = tmp_path / "radiobutton_input_actual.cpp"
     exe = tmp_path / "radiobutton_input_actual"
     cpp.write_text(fixture)
@@ -259,7 +400,11 @@ def test_actual_radiobutton_input_bodies(compiler_name, tmp_path):
     assert built.returncode == 0, built.stdout + built.stderr
     _execute(exe)
     _execute(exe, mode="--hover")
+    _execute(exe, mode="--hover-matrix")
     _execute(exe, mode="--null-current")
+    for mode in ("--key", "--key-mutation", "--key-null", "--key-default",
+                 "--double-click", "--double-null"):
+        _execute(exe, mode=mode)
     for mode in ("--head-fault-left", "--head-fault-move",
                  "--payload-fault-left", "--payload-fault-move"):
         _execute(exe, mode=mode, fault=True)
@@ -320,6 +465,46 @@ def test_mutated_callback_is_caught(tmp_path):
     result = subprocess.run([str(exe)], text=True, capture_output=True, timeout=20,
                             env={**__import__("os").environ, "ASAN_OPTIONS": "detect_leaks=0",
                                  "UBSAN_OPTIONS": "halt_on_error=1"})
+    assert result.returncode != 0
+
+
+def test_keyboard_double_click_callback_confusion_is_caught(tmp_path):
+    compiler = shutil.which("g++")
+    if compiler is None:
+        pytest.skip("g++ unavailable")
+    text = SOURCE.read_text()
+    key = _body(text, "on_key_down", "int")
+    damaged_key = key.replace("selection_callback_", "double_click_callback_")
+    assert damaged_key != key
+    text = text.replace(key, damaged_key, 1)
+    built, exe = _compile(tmp_path, compiler, text, validate=False)
+    assert built.returncode == 0, built.stdout + built.stderr
+    result = subprocess.run([str(exe), "--key"], text=True, capture_output=True,
+                            timeout=20, env={**__import__("os").environ,
+                                             "ASAN_OPTIONS": "detect_leaks=0",
+                                             "UBSAN_OPTIONS": "halt_on_error=1"})
+    assert result.returncode != 0
+
+
+def test_mutated_repeated_hover_suppression_is_caught(tmp_path):
+    compiler = shutil.which("g++")
+    if compiler is None:
+        pytest.skip("g++ unavailable")
+    text = SOURCE.read_text()
+    old = """    Dialog::field_F0_ = static_cast<uint32_t>(position);
+    redraw();"""
+    guarded = """    if (Dialog::field_F0_ != static_cast<uint32_t>(position)) {
+        Dialog::field_F0_ = static_cast<uint32_t>(position);
+        redraw();
+    }"""
+    assert text.count(old) == 1
+    text = text.replace(old, guarded, 1)
+    built, exe = _compile(tmp_path, compiler, text, validate=False)
+    assert built.returncode == 0, built.stdout + built.stderr
+    result = subprocess.run([str(exe), "--hover-matrix"], text=True, capture_output=True,
+                            timeout=20, env={**__import__("os").environ,
+                                             "ASAN_OPTIONS": "detect_leaks=0",
+                                             "UBSAN_OPTIONS": "halt_on_error=1"})
     assert result.returncode != 0
 
 

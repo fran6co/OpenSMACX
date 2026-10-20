@@ -358,32 +358,7 @@ void draw_dest_unk1(Buffer *, int, int, int, int, unsigned char *);
       ++hdc_lock_count_;
       return hdc2_;
   }
-  MEASURED void release_hdc(int count) {
-      // THE SURFACE TEST COMES FIRST, and the subtraction is inside each arm.
-      // The image reads `[esi + 0x58]` before either `sub`, and has two of
-      // them - one per arm - where a single subtraction above the branch
-      // would need only one.
-      if (surface_ == nullptr) {
-          hdc_lock_count_ -= count;
-          if (hdc_lock_count_ <= 0) {
-              hdc2_ = nullptr;
-              hdc_lock_count_ = 0;
-          }
-          return;
-      }
-      hdc_lock_count_ -= count;
-      // `hdc2_` is tested before the count, in that order.
-      if (hdc2_ == nullptr) {
-          return;
-      }
-      if (hdc_lock_count_ <= 0) {
-          if (surface_->ReleaseDC(hdc2_) != 0) {
-              get_graphic_win();
-          }
-          hdc_lock_count_ = 0;
-          hdc2_ = nullptr;
-      }
-  }
+  MEASURED void release_hdc(int count);
   int set_clip(RECT *rect);
   // 0x005D8200. The catalogue's prototype names the last two `length` and
   // `width`, but they are added to the first two to make right and bottom,
@@ -542,7 +517,7 @@ void draw_dest_unk1(Buffer *, int, int, int, int, unsigned char *);
   int wrap(char *text, int x_coord, int y_coord, int width);
   int wrap_cent(Font *font, char *text, int x_coord, int y_coord, int width);
   int wrap_cent(Font *font, char *text, int x_coord, int y_coord, int width,
-                int line_step);
+                int line_advance);
   int wrap_cent(char *text, RECT *area);
   int wrap_cent(char *text, int x_coord, int y_coord, int width);
   int wrap_cent(char *text, int x_coord, int y_coord, int width,
@@ -552,9 +527,9 @@ void draw_dest_unk1(Buffer *, int, int, int, int, unsigned char *);
   int wrap_right(Font *font, char *text, int x_coord, int len);
   int wrap_right(char *text, int x_coord, int y_coord, int width);
   int wrap_right(char *text, RECT *area);
-  int wrap_height(char *text, int width);
+  int wrap_height(char *text, int max_width);
   int wrap_height_flying(char *text, int width);
-  int wrap_height_flying(char *text);
+  int wrap_height_flying(char *input_text);
   int wrap_flying(char *text, int x_coord, int y_coord, int width);
   int wrap_flying(char *text);
   int wrap_flying_flush();

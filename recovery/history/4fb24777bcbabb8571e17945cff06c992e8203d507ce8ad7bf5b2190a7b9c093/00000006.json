@@ -1,0 +1,19 @@
+{
+  "event_id": "2da7debb972096efc048f5ad65c0e69df48ea9c54fbf2b150e99ad28f5dc352e",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "console-road-original-magtube-prerequisite-oct20n",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/console_commands.cpp road_to now selects Terraforming[TERRA_MAGTUBE].preq_tech, preserving original cursor-mode1C conditional and all other operations.",
+      "Pinned4D7CBC loads691940; actualsource/native640byte array evidence establishes row6 at stride32 and memberoffset8. Fresh actual build/link76gvjq5l passes, native claims/mappings/references pass, all191outside-bodyCOFF comparisons pass.",
+      "Historical masked84/84 claim retained, not treated as semantic proof. Native original Terraforming relocation222 nowPASS; wholebody strict remainsUNKNOWN for distinct original message storage and MapStorage member resolution. Independent13test host/pinned suite passes with distinct rows and wrong-row mutant; final coordinator test uses native object_source parser rather than ad hoc annotation regex. No bug fix, claim demotion, flag or baseline change; no full linked/runtime acceptance."
+    ]
+  },
+  "previous_event": "b0676bdf1ee937771ab5a18de235811eeb0732fd189a13aa994154af3209d2d1",
+  "request_id": "console-road-original-magtube-prerequisite-incorporated-oct20n",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:wide-console-source-decks-oct20n"
+}

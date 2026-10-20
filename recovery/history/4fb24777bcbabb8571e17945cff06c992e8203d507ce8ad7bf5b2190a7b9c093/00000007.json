@@ -1,0 +1,22 @@
+{
+  "event_id": "24dcb019e5f50a876ef6a92804f458ef5dec089419c1b38fa3d474c40d82dbb4",
+  "payload": {
+    "affects": [
+      "entity-1aa8f291ed8141148d0412a88ed208db4cb0a84a4b551f0941dd1d79d337aa33",
+      "entity-d5148da5b4cac5dc3d78f63a4d63bff4b419e7188cda887e1c30fccff6268f36"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "console-road-distinct-message-storage-oct20p",
+    "evidence": [
+      "Two independent full-span reviews identify road_to pushes at004D7C12,004D7C49,004D7C98 targeting00688E18..00688E29 NEEDTERRAFORMERS,00688E2C..00688E37 NOTINTRIAD,00688E38..00688E43 NOTINOCEAN; set_road_to push004D8E8C targets separate00688EC8..00688ED3 NOTINOCEAN. All spans include their NUL and are in original initialized writable data.",
+      "Current COFF literal pooling merges same spellings with other original locations. Global spelling-based RECOVERY_LITERAL aliases would misidentify them. Actual RW storage is evidence of representation, not proof of original declaration syntax or writes."
+    ],
+    "hypothesis": "road_to and set_road_to currently pool message literals whose original pushes name separate initialized writable storage identities.",
+    "kind": "discovery"
+  },
+  "previous_event": "2da7debb972096efc048f5ad65c0e69df48ea9c54fbf2b150e99ad28f5dc352e",
+  "request_id": "console-road-distinct-message-storage-oct20p",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:wide-console-source-decks-oct20n"
+}

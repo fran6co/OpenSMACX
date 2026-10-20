@@ -1,0 +1,40 @@
+{
+  "event_id": "f04427aa8ad19ce8c5041819126630068ae89ea8e9f5a8d65ecea65a398c1671",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Fresh complete build-q9qzpih_ physically shows close-body inlining changes in Interlude::exec and destructor, StringBox::init and destructor. The initial outside-two-body residual remains189PASS/2FAIL and is preserved, not overwritten or claimed passing.",
+      "Coordinator expands the affected lifetime/caller family immediately, without source baseline reset or new file authority. Review the complete four dependent COMDATs, associated debug/frame sections and relocation targets; a function-scope projection is not original matching, structural or linked-preservation acceptance.",
+      "Both selected close bodies freshly pass strict bytes/boundary/reference checks; all mapped owner measurements have no exact losses. Existing historical obligations remain. Independent before/after emitted-code review must qualify the dependent receiver-base spelling and shifted relocations; unexplained effects still refuse integration."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4584160,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4585280,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6460112,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4400576,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "close-inline-dependent-family-oct20h",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:stringlist-close-family-oct20h"
+}

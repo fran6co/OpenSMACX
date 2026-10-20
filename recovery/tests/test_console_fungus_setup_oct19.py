@@ -45,7 +45,20 @@ static int map_tiles_calls, visible_writes, world_calls, draw_calls;
 static int world_saw_native_life, draw_saw_native_life, draw_argument;
 static int mutate_area;
 static int MapArea;
-static uint32_t MapNativeLifeForms;
+struct TrackedNativeLifeCell {
+    uint32_t value;
+    int reads, writes;
+    operator uint32_t() {
+        ++reads;
+        return value;
+    }
+    TrackedNativeLifeCell &operator=(uint32_t next) {
+        ++writes;
+        value = next;
+        return *this;
+    }
+};
+static TrackedNativeLifeCell MapNativeLifeForms;
 static const char ConsoleStrFungosity[] = "FUNGOSITY";
 static const char ConsoleStrFungmotize[] = "FUNGMOTIZE";
 
@@ -109,6 +122,10 @@ static void draw_map(int value) {
     draw_saw_native_life = static_cast<int>(MapNativeLifeForms);
     event(E_DRAW);
 }
+static void clear_native_life_accesses() {
+    MapNativeLifeForms.reads = 0;
+    MapNativeLifeForms.writes = 0;
+}
 struct Console {
     int faction_id_;
     void editor_fungus();
@@ -125,7 +142,8 @@ static void reset(int first, int second, int count) {
     world_saw_native_life = draw_saw_native_life = draw_argument = -1;
     mutate_area = 0;
     MapArea = 0;
-    MapNativeLifeForms = 0;
+    MapNativeLifeForms.value = 0;
+    clear_native_life_accesses();
     std::memset(map_storage, 0, sizeof(map_storage));
     for (int tile = 0; tile < 8; ++tile) {
         for (int slot = 0; slot < 8; ++slot) {
@@ -145,7 +163,9 @@ int main() {
     console.faction_id_ = 51;
     MapArea = 4;
     MapNativeLifeForms = 77;
+    clear_native_life_accesses();
     console.editor_fungus();
+    assert(MapNativeLifeForms.reads == 0 && MapNativeLifeForms.writes == 0);
     expected[0] = E_UNDO; expected[1] = E_FIRST;
     expect_events(expected, 2);
     assert(answer_index == 1 && map_tiles_calls == 0 && visible_writes == 0);
@@ -158,7 +178,9 @@ int main() {
     console.faction_id_ = 51;
     MapArea = -3;
     MapNativeLifeForms = 42;
+    clear_native_life_accesses();
     console.editor_fungus();
+    assert(MapNativeLifeForms.reads == 1 && MapNativeLifeForms.writes == 0);
     expected[0] = E_UNDO; expected[1] = E_FIRST;
     expected[2] = E_MAP_TILES; expected[3] = E_DRAW;
     expect_events(expected, 4);
@@ -171,7 +193,9 @@ int main() {
     console.faction_id_ = 63;
     MapArea = 2;
     MapNativeLifeForms = 55;
+    clear_native_life_accesses();
     console.editor_fungus();
+    assert(MapNativeLifeForms.reads == 0 && MapNativeLifeForms.writes == 0);
     expected[0] = E_UNDO; expected[1] = E_FIRST; expected[2] = E_SECOND;
     expect_events(expected, 3);
     assert(answer_index == 2 && map_tiles_calls == 0 && visible_writes == 0);
@@ -182,7 +206,9 @@ int main() {
     reset(2, 0, 2);
     console.faction_id_ = 4;
     MapNativeLifeForms = 73;
+    clear_native_life_accesses();
     console.editor_fungus();
+    assert(MapNativeLifeForms.reads == 3 && MapNativeLifeForms.writes == 3);
     expected[0] = E_UNDO; expected[1] = E_FIRST; expected[2] = E_SECOND;
     expected[3] = E_WORLD_FUNGUS; expected[4] = E_DRAW;
     expect_events(expected, 5);
@@ -202,7 +228,9 @@ int main() {
     map_storage[1].bit = 0xA5u;
     map_storage[2].bit = 0x60u;
     mutate_area = 1;
+    clear_native_life_accesses();
     console.editor_fungus();
+    assert(MapNativeLifeForms.reads == 3 && MapNativeLifeForms.writes == 3);
     expected[0] = E_UNDO; expected[1] = E_FIRST; expected[2] = E_SECOND;
     expected[3] = E_MAP_TILES; expected[4] = E_WORLD_FUNGUS;
     expected[5] = E_DRAW;
@@ -227,7 +255,9 @@ int main() {
     console.faction_id_ = 2;
     MapArea = 0;
     MapNativeLifeForms = 91;
+    clear_native_life_accesses();
     console.editor_fungus();
+    assert(MapNativeLifeForms.reads == 3 && MapNativeLifeForms.writes == 3);
     expected[0] = E_UNDO; expected[1] = E_FIRST; expected[2] = E_SECOND;
     expected[3] = E_MAP_TILES; expected[4] = E_WORLD_FUNGUS;
     expected[5] = E_DRAW;
@@ -276,6 +306,20 @@ def test_console_fungus_actual_prompt_setup_restore_and_draw(compiler_name, tmp_
     ("while (i < MapArea)", "while (i < initial_area)"),
     ("if (answer >= 0)", "if (answer > 0)"),
     ("MapNativeLifeForms = saved;", "MapNativeLifeForms = saved + 1;"),
+    (
+        """        if (answer > 0) {
+            uint32_t saved = MapNativeLifeForms;
+            MapNativeLifeForms = answer - 1;
+            world_fungus();
+            MapNativeLifeForms = saved;
+        }""",
+        """        uint32_t saved = MapNativeLifeForms;
+        if (answer > 0) {
+            MapNativeLifeForms = answer - 1;
+            world_fungus();
+        }
+        MapNativeLifeForms = saved;""",
+    ),
 ))
 def test_console_fungus_actual_source_damage_mutants(
         compiler_name, tmp_path, before, after):

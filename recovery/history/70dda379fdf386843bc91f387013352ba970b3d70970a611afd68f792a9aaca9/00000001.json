@@ -1,0 +1,20 @@
+{
+  "event_id": "29ae1b276aec3a6b3d9e63077f99bc51d18bd3f1299feb975e52002d63aa171b",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/spot.h"
+    ],
+    "evidence": [
+      "Pinned403620 snapshots Win outer RECT before*x, then reads only the top coordinate of SpotInternal[index].rect after*x. The current provisional get_rect_at out-parameter helper instead copies all four Spot rectangle words to a second local; it has exactly one source caller, this AlphaMenu method. Its indexed SpotInternal record and stride0x18 are already source-owned and validated.",
+      "Authorize one bounded typed read-model correction: const RECT reference returned by indexed Spot accessor and direct .top use, preserving index read after*x and all original unchecked behavior. No fields/layout/lifetime, flags, exported providers, ORIGINAL/spans/claims or unrelated callers change. Baseline and first reviewed semantic candidate remain committed; native overlay must pair old CPP+old header for baseline and new CPP+new header for candidate, measure all owner16/Spot mappings and protect outside bodies. Do not chase additional spellings."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "typed-indexed-spot-rectangle-reference",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:alphamenu-rect-snapshot-oct20c"
+}

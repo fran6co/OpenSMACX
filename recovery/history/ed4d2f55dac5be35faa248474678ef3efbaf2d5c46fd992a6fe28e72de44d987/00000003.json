@@ -1,0 +1,20 @@
+{
+  "event_id": "ae698b47aa7e0e16dfe8003485ab9392b6ecfc37b420c6b2b4181f5c8a52b133",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "game-generators-live-count-finding-oct20l",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/game.cpp generators retains initial signed positive-count guard and now reloads base_current_count_ in the do/while tail after index increment, preserving original5247E3/524848/524856 behavior. No intentional bug fix or header/type/flag change.",
+      "Actual-source GCC/Clang growth/shrink, count-output, population/faction/facility and snapshot-mutant controls pass; complete pinned instruction-span anchors remain in test_game_generators_live_count_oct20.py. Native full application build/link passes; matching remains a miss and no claim is granted for generators.",
+      "Bounded native screen and fresh full application object independently establish get_phrase58/58 under the existing frame-based recipe; installed guarded recorder exit0 banks only58F810. Pretested-loop boundary/fallback tests execute actual source. PLAYERFILE pooled-literal reference remains unknown, not strict acceptance.",
+      "Independent review supports coordinator manual integration. Native outside-two-body physical check remains190PASS/1FAIL: unchanged end_of_game inlined game_year swaps two unsigned operand loads/registers before modulo32 addition, with no intervening call/store. This semantic review does not turn physical or linked preservation green. All other123Game observer matching verdicts remain unchanged. Historical task baseline and all original identities/spans/claims retained."
+    ]
+  },
+  "previous_event": "a9050bafbeb6f36b17be756898cfdcbb820e633b1ebadd92e725da4b97994ad4",
+  "request_id": "game-generators-live-bound-incorporated-oct20l",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:game-idiom-deck-oct20l"
+}

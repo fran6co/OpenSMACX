@@ -1690,7 +1690,7 @@ BOOL Path::sensors(int faction_id, int *x_sensor, int *y_sensor) {
 /*
 // ORIGINAL: 0x0059A1B0 ??__EPaths@@YAXXZ 0x0059A1B0-0x0059A1BC FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:bcad94a018ff94737abb85df10d24ca7aa405b1a:src/recovered/0059a1b0.cpp", "pinned:terranx_original lifecycle0x59a1b0", "source:src/path.cpp"], "reason": "Generated registration entry registers the actual Paths destructor. Original startup has no object-constructor call; natural static zero initialization replaces the unsupported explicit constructor. Preserve complete original spans, catalogue names, claims and historical lessons; current compiler emission is not a fresh grant or linked selection proof."}
-// symbol    _$E7
+// symbol    _$E8
 */
 
 // Historical seed finding: Original calls atexit with59A1C0; it is registration, not the Path constructor.

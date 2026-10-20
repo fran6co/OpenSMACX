@@ -1,0 +1,21 @@
+{
+  "event_id": "d90cdddfdb6d5a9ecc2ff569bf0bb77d6468a14a540986844049c73fce4123f7",
+  "payload": {
+    "affects": [
+      "entity-eeb99aa62163632b9038fe56f062f1ab3ca2e1d16e6d267812393aef6e4d0f8d"
+    ],
+    "author": "coordinator",
+    "discovery_id": "radiobutton-repeated-hover-original-redraw-oct20e",
+    "evidence": [
+      "Independent source/pin reviews confirm60E463 compares computedordinal withselected; only equalandhover==-1 returns60E467-472. Allotherpathsstorehover60E474andredraw60E47A-488. Currentextraif(hover!=position) incorrectly suppresses repeated hover paints, including unselectedrows. Retain selected/-1 earlyreturn then unconditionaltypedhoverstore/redraw; no CheckBox change.",
+      "Coordinator includes this evidence-backed correction with pending keyboard callback fix in SAME existing RadioButton ownership task/bdd1711baseline, no scope reset. Earlier key-only candidate build and bounded qualification preserved ignored; it is not final two-body candidate. Restrict edits to on_mouse_move60E320 and existing actual-source input test, leaving all class/layout/otherbodies/markers/claims/flags unchanged. Existing --hover second repaint expectation encodes wrong translation; correct from2to3 per original and add selected/-1 versus repeatedselected/unselected hover matrix plus restoration-of-extra-guard damagecontrol. Need fresh freeze/build/link, two-body residual and relevant checks before manual integration; no claim demotion/automatic/game acceptance."
+    ],
+    "hypothesis": "Original RadioButton mouse move redraws even when hover is unchanged, except the selected-row/hover-minus-one early return.",
+    "kind": "discovery"
+  },
+  "previous_event": "5f060d4790e3189f54a770da4c44defd27f62ffc2f792d0b07b3319e66a2172d",
+  "request_id": "radiobutton-repeated-hover-original-redraw-oct20e",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:radiobutton-input-structure-oct16"
+}

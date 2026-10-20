@@ -33,12 +33,12 @@ def _code(source):
 
 
 METHODS = (
-    ("int Flic::decode_frame(int x, int y) {", "buffer2_->get_data()", "null"),
-    ("int Flic::UNK1(int x, int y) {", "buffer2_->get_data()", "null"),
-    ("int Flic::UNK3(int target_frame) {", "buffer2_->get_data()", "present"),
-    ("void Flic::decode_byte_run_trans() {", "buffer_.get_data()", "pixels"),
-    ("void Flic::decode_delta_flc_trans() {", "buffer_.get_data()", "pixels"),
-    ("void Flic::decode_fli_copy_trans() {", "buffer_.get_data()", "pixels"),
+    ("int Flic::decode_frame(int x, int y) {", "destination_buffer_->get_data()", "null"),
+    ("int Flic::decode_frame_with_transparency(int x, int y) {", "destination_buffer_->get_data()", "null"),
+    ("int Flic::advance_to_frame(int target_frame) {", "destination_buffer_->get_data()", "present"),
+    ("void Flic::decode_byte_run_trans() {", "background_buffer_.get_data()", "pixels"),
+    ("void Flic::decode_delta_flc_trans() {", "background_buffer_.get_data()", "pixels"),
+    ("void Flic::decode_fli_copy_trans() {", "background_buffer_.get_data()", "pixels"),
 )
 
 
@@ -76,10 +76,10 @@ def test_actual_getter_expressions_compile_with_declaration_only_visibility(tmp_
         expression = match.group(0)
         if kind in ("null", "present"):
             comparison = "== 0" if kind == "null" else "!= 0"
-            wrappers.append(f"bool consumer_{index}(Buffer *buffer2_) {{ "
+            wrappers.append(f"bool consumer_{index}(Buffer *destination_buffer_) {{ "
                             f"return {expression} {comparison}; }}")
         else:
-            wrappers.append(f"uint8_t *consumer_{index}(Buffer &buffer_) {{ "
+            wrappers.append(f"uint8_t *consumer_{index}(Buffer &background_buffer_) {{ "
                             f"return static_cast<uint8_t *>({expression}); }}")
     cpp_source = textwrap.dedent(r"""
         #include <cstdint>

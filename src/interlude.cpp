@@ -39,13 +39,14 @@ Interlude::Interlude() {}
 // symbol    ??1Interlude@@UAE@XZ
 Interlude::~Interlude() { close(); }
 
-// ORIGINAL: 0x0045F640 ?close@Interlude@@QAEXXZ 0x0045F640-0x0045F6E5 FILE
+// ORIGINAL: 0x0045F640 ?close@Interlude@@QAEXXZ 0x0045F640-0x0045F6E5 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original instruction/call evidence retained from src/stringstruct.cpp", "source:src/interlude.h: real GraphicWin base, embedded StringList and Buffer, compiler-generated deleting/adjustor lifecycle", "Original45F640..45F6E5; retired seed git:117282ee:src/unrecovered/0045f640.cpp records the same identity and spans with its shim TRIED note kept below.", "The GraphicWin close chain is graphicwin.h's own close on the unadjusted receiver (the single-inheritance hypothesis layout), the caption list is the +0xA24 StringList block with head/next/count at +0xA2C/+0xA30/+0xA34, and the dialogue Buffer at +0xA54 closes through buffer.h's own close.", "The list's slot-1 release and each payload's deleting destructor run through member-fn-pointer unions because their classes are unnamed; the adjusted-receiver dispatch is the seed's vtbl+4 walk.", "Prior interpretation: Coverage transcription of the intermission teardown with the list drain kept at the seed's shape."], "reason": "Original member/callback/lifetime identity is owned by genuine Interlude C++ hierarchy; actual emitted symbol replaces the retired raw receiver shim, preserving historical spans and claims."}
 // symbol    ?close@Interlude@@QAEXXZ
 void Interlude::close() {
     GraphicWin::close();
-    captions_.remove_all();
-    captions_.current_position_ = 0;
+    StringList &captions = captions_;
+    captions.remove_all();
+    captions.current_position_ = 0;
     art_.close();
 }
 

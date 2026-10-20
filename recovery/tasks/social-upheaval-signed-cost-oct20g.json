@@ -1,0 +1,43 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "4d7f11985fae4197095c4e9360470d1cc5b9a00c",
+  "editable_files": [
+    "src/faction.h",
+    "src/faction.cpp",
+    "src/socialwin.cpp",
+    "recovery/tests/test_social_upheaval_signed_cost_oct20.py"
+  ],
+  "evidence": [
+    "Current faction.h returns uint32_t from social_upheaval. The actual social_ai caller adds social_upheaval(...)/-3 to signed score. Unsigned usual conversions turn the divisor into0xfffffffd and erase ordinary positive upheaval penalties; pinned5B5376..5B538E uses signed magic division by-3.",
+    "Pinned5B4550..5B45F8 preserves four-category count, zero early return, difficulty selection, cubic multiplication and alien half-cost. Original return contract is signed int; retain existing SocialCategory pointer contract and unsigned internal arithmetic unless independent effect evidence requires more. No bug fix, new bounds check, flag/layout change or extended spelling search.",
+    "Current direct caller closure is social_ai5B4790(two inlined uses), SocialWin::exit4AEF10 and SocialWin::draw_info4AFB60. Review both unsigned assignment/subtraction and explicitly signed UI use; no consumer behavior changes beyond original signed penalty restoration. Header include reachability is not permission to modify unrelated functions.",
+    "Prior signed-api-closure-oct18 explicitly excluded social_upheaval with a separate pointer-contract question. This bounded task addresses return signedness only, without resetting that task or changing original identities/spans/claims/lessons. Use native symbol writer for the actual emitted return decoration only.",
+    "Actual-source host controls must exercise unchanged/no-change costs, human/AI/alien inputs and original signed division, with unsigned-return damage mutant. Coordinator owns compiler/Git; fresh build/link, complete outside-target physical residual and all owner measurements, independent source/original review and destination recheck required. Retain any regressions/unknowns honestly; no full automatic linked/runtime/game acceptance."
+  ],
+  "intent": "Restore the original signed social-upheaval return contract across its complete AI/UI caller closure.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5981520,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5982096,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4910864,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4914016,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "social-upheaval-signed-cost-oct20g"
+}

@@ -1,0 +1,33 @@
+{
+  "event_id": "2de8224354ba8110c18e9310750ae204560c731821dfaf50235d4b7a588bb959",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/audits.json",
+      "recovery/tests/test_flic_chunk_prefix_actual_source_oct14et.py",
+      "recovery/tests/test_flic_get_data_calls_oct19.py",
+      "recovery/tests/test_flic_word_transfers_actual_source_oct14fj.py",
+      "src/diplopop.cpp",
+      "src/flic.h"
+    ],
+    "evidence": [
+      "Full24-method source/original audit identifies byte+0 as a transparent palette index, not animation flags. Original43F43E..43F46B writes9 into Flic2+0; transparent decoders compare decoded pixel indices against this byte. Correct the misleading setter/field together with its sole source producer, without changing type, value, order, bounds or original quirks.",
+      "Rename the proven palette offset+5A4, destination Buffer pointer+5A8 and actual saved background Buffer+4; preserve types/layout/member construction. Four non-no-op UNK methods have source role evidence for decode_frame_with_transparency, skip_frame, advance_to_frame and capture_background. Names are descriptive interpretations, not historical debug names. Keep unexplained UNK4..8 no-op identities unchanged.",
+      "Worker may edit declared C++/test closure, but coordinator alone updates emitted-symbol facts with the native writer and lowers measured relevant audit ceilings in the same verified commit. Never edit ORIGINAL markers, claims, source spans or legacy lessons manually. No alias wrappers or new API surface just for compatibility.",
+      "Independent source/ABI review, fresh full compile/link, actual complete physical symbol/byte/reference analysis, scoped original measurements, claim continuity and destination recheck remain required. Preserve original task baseline and all restoration obligations; no autonomous or game acceptance claimed."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4453040,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "flic-pixel-key-role-closure-oct20h",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:flic-owner-fast-pass-oct20"
+}

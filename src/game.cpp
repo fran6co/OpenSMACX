@@ -4230,7 +4230,7 @@ void __cdecl say_special(char *output, char *text, int faction_id) {
     strcat(output, parsed);
 }
 
-// ORIGINAL: 0x0058F810 ?get_phrase@@YAPADHH@Z 0x0058F810-0x0058F8A2
+// ORIGINAL: 0x0058F810 ?get_phrase@@YAPADHH@Z 0x0058F810-0x0058F8A2 BYTE_EXACT
 // LEVER: the faction-table bases at 0x00946A54 and 0x00946A6C are
 //         `Players[a1].filename` and `Players[a1].search_key` - the image
 //         computes `a1 * 0x59c` and adds those two constants, and 0x00946A50
@@ -4254,12 +4254,10 @@ char *__cdecl get_phrase(int faction_id, int phrase_id) {
             return StringTable.get(0);
         }
     }
-    int n = phrase_id + 9;
-    if (n > 0) {
-        do {
-            text_get();
-            n--;
-        } while (n != 0);
+    int remaining = phrase_id + 9;
+    while (remaining > 0) {
+        text_get();
+        --remaining;
     }
     // TRIED: the counter as one local driving both the guard and the loop
     //         (`int n = phrase_id + 9; if (n > 0) { do { text_get(); n--; }`)
@@ -4799,7 +4797,7 @@ int __cdecl generators(int faction_id, int *count_out) {
                 }
             }
             ++index;
-        } while (index < total);
+        } while (index < GameDataStateStorage.fields_.base_current_count_);
     }
     return count;
 }
@@ -6195,29 +6193,83 @@ extern "C" int __cdecl sub_5a6510(int x, int y) {
     return -1;
 }
 
-// ORIGINAL: 0x005A6890 ?game_io@@YAHHPAUFILE@@@Z 0x005A6890-0x005A6AC0
+// ORIGINAL: 0x005A6890 ?game_io@@YAHHPAUFILE@@@Z 0x005A6890-0x005A6AC0 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/005a6890.cpp", "recovery/tasks/game-save-load-owner-coverage.json"], "reason": "Recover the six ordered MapWin member transfers through standard buffered or encrypted I/O and shared transaction state, not raw self offsets."}
 // symbol    ?game_io@@YAHPAVMapWin@@PAU_iobuf@@@Z
 // TRIED: divergence at #4 (push edi/esi vs test) is register allocation for a1 not hoisting into a callee-saved reg; a hoisted `base` local and inline `(char*)a1+off` casts compile identically.
 int __cdecl game_io(MapWin *record, FILE *file) {
-    void *fields[6] = {
-        &record->map_view_index_, &record->view_active_, &record->field_1DD70_,
-        &record->field_1DD98_, &record->field_1DD9C_, &record->field_1DDA0_
-    };
-    for (int index = 0; index != 6; ++index) {
-        int result;
-        if (GameDataEncryptedMode != 0) {
-            result = GameDataWriteMode != 0
-                ? encrypt_write(fields[index], 4, 1, file)
-                : encrypt_read(fields[index], 4, 1, file);
-        } else {
-            result = GameDataWriteMode != 0
-                ? static_cast<int>(fwrite(fields[index], 4, 1, file))
-                : static_cast<int>(fread(fields[index], 4, 1, file));
-        }
-        if (result == 0) return 1;
+    int result;
+    void *field = &record->map_view_index_;
+    if (GameDataEncryptedMode != 0) {
+        result = GameDataWriteMode != 0
+            ? encrypt_write(field, 4, 1, file)
+            : encrypt_read(field, 4, 1, file);
+    } else {
+        result = GameDataWriteMode != 0
+            ? static_cast<int>(fwrite(field, 4, 1, file))
+            : static_cast<int>(fread(field, 4, 1, file));
     }
-    return 0;
+    if (result == 0) return 1;
+
+    field = &record->view_active_;
+    if (GameDataEncryptedMode != 0) {
+        result = GameDataWriteMode != 0
+            ? encrypt_write(field, 4, 1, file)
+            : encrypt_read(field, 4, 1, file);
+    } else {
+        result = GameDataWriteMode != 0
+            ? static_cast<int>(fwrite(field, 4, 1, file))
+            : static_cast<int>(fread(field, 4, 1, file));
+    }
+    if (result == 0) return 1;
+
+    field = &record->field_1DD70_;
+    if (GameDataEncryptedMode != 0) {
+        result = GameDataWriteMode != 0
+            ? encrypt_write(field, 4, 1, file)
+            : encrypt_read(field, 4, 1, file);
+    } else {
+        result = GameDataWriteMode != 0
+            ? static_cast<int>(fwrite(field, 4, 1, file))
+            : static_cast<int>(fread(field, 4, 1, file));
+    }
+    if (result == 0) return 1;
+
+    field = &record->field_1DD98_;
+    if (GameDataEncryptedMode != 0) {
+        result = GameDataWriteMode != 0
+            ? encrypt_write(field, 4, 1, file)
+            : encrypt_read(field, 4, 1, file);
+    } else {
+        result = GameDataWriteMode != 0
+            ? static_cast<int>(fwrite(field, 4, 1, file))
+            : static_cast<int>(fread(field, 4, 1, file));
+    }
+    if (result == 0) return 1;
+
+    field = &record->field_1DD9C_;
+    if (GameDataEncryptedMode != 0) {
+        result = GameDataWriteMode != 0
+            ? encrypt_write(field, 4, 1, file)
+            : encrypt_read(field, 4, 1, file);
+    } else {
+        result = GameDataWriteMode != 0
+            ? static_cast<int>(fwrite(field, 4, 1, file))
+            : static_cast<int>(fread(field, 4, 1, file));
+    }
+    if (result == 0) return 1;
+
+    field = &record->field_1DDA0_;
+    if (GameDataEncryptedMode != 0) {
+        result = GameDataWriteMode != 0
+            ? encrypt_write(field, 4, 1, file)
+            : encrypt_read(field, 4, 1, file);
+    } else {
+        result = GameDataWriteMode != 0
+            ? static_cast<int>(fwrite(field, 4, 1, file))
+            : static_cast<int>(fread(field, 4, 1, file));
+    }
+    return result == 0;
 }
 
 static int map_data_plain_block(FILE *file, void *buffer, unsigned int size) {

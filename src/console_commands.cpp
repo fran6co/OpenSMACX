@@ -244,6 +244,15 @@ char ConsoleStrNotBase[] = "NOTBASE";  // 0x00688C9C
 // RECOVERY_OBJECT: v2 0x00688CA4 0x00688CAF ?ConsoleStrNotInTriad@@3PADA 0x004D52A0
 char ConsoleStrNotInTriad[] = "NOTINTRIAD";  // 0x00688CA4
 
+// RECOVERY_OBJECT: v2 0x00688E18 0x00688E29 _RoadToNeedTerraformers 0x004D7BE0
+static char RoadToNeedTerraformers[] = "NEEDTERRAFORMERS";
+// RECOVERY_OBJECT: v2 0x00688E2C 0x00688E37 _RoadToNotInTriad 0x004D7BE0
+static char RoadToNotInTriad[] = "NOTINTRIAD";
+// RECOVERY_OBJECT: v2 0x00688E38 0x00688E43 _RoadToNotInOcean 0x004D7BE0
+static char RoadToNotInOcean[] = "NOTINOCEAN";
+// RECOVERY_OBJECT: v2 0x00688EC8 0x00688ED3 _SetRoadToNotInOcean 0x004D8DC0
+static char SetRoadToNotInOcean[] = "NOTINOCEAN";
+
 // RECOVERY_OBJECT: v2 0x00688CB0 0x00688CBC ?ConsoleStrDestroyBomb@@3PADA 0x004D52A0
 char ConsoleStrDestroyBomb[] = "DESTROYBOMB";  // 0x00688CB0
 
@@ -1031,26 +1040,26 @@ void Console::editor_diplomacy() {
 // The original order at 0x004D7BE0 checks the rover's plan, chassis and
 // current terrain before placing a road cursor.
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x004D7BE0 ?road_to@Console@@QAEXHH@Z 0x004D7BE0-0x004D7CED
+// ORIGINAL: 0x004D7BE0 ?road_to@Console@@QAEXHH@Z 0x004D7BE0-0x004D7CED BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004d7be0.cpp"], "reason": "Seed 004d7be0 identifies the Console road cursor order and extent; typed vehicle, prototype, terrain and technology owners preserve the sequence."}
 void Console::road_to(int veh_id, int cursor_mode) {
     const Veh &vehicle = Vehs[veh_id];
-    const VehPrototype &prototype = VehPrototypes[vehicle.proto_id];
-    if (prototype.plan != 9) {
-        NetMsgPrimary.pop("NEEDTERRAFORMERS", 5000, 0, 0);
+    const int prototype_id = Vehs[veh_id].proto_id;
+    if (VehPrototypes[prototype_id].plan != 9) {
+        NetMsgPrimary.pop(RoadToNeedTerraformers, 5000, 0, 0);
         return;
     }
-    if (Chassis[prototype.chassis_id].triad != TRIAD_LAND) {
-        NetMsgPrimary.pop("NOTINTRIAD", 5000, 0, 0);
+    if (Chassis[VehPrototypes[prototype_id].chassis_id].triad != TRIAD_LAND) {
+        NetMsgPrimary.pop(RoadToNotInTriad, 5000, 0, 0);
         return;
     }
     const Map &tile = map_tiles()[vehicle.y * MapLongitude + (vehicle.x >> 1)];
     if ((tile.climate & ~0x1F) < 0x60) {
-        NetMsgPrimary.pop("NOTINOCEAN", 5000, 0, 0);
+        NetMsgPrimary.pop(RoadToNotInOcean, 5000, 0, 0);
         return;
     }
     if (cursor_mode != 0x1C ||
-        has_tech(Terraforming[TERRA_FARM].preq_tech, vehicle.faction_id)) {
+        has_tech(Terraforming[TERRA_MAGTUBE].preq_tech, vehicle.faction_id)) {
         ConsoleGlobal.cursor_on((cursor_mode == 0x1C) + 2, -1);
     }
 }
@@ -1281,7 +1290,7 @@ void Console::set_road_to(int veh_id, int x_coord, int y_coord, int order) {
     const int target_index = MapLongitude * y_coord + (x_coord >> 1);
     const int origin_index = MapLongitude * vehicle.y + (vehicle.x >> 1);
     if ((map_tiles()[target_index].climate & ~0x1F) < 0x60) {
-        NetMsgPrimary.pop(ConsoleStrNotHere, 5000, 0, 0);
+        NetMsgPrimary.pop(SetRoadToNotInOcean, 5000, 0, 0);
         return;
     }
     if (map_tiles()[target_index].region != map_tiles()[origin_index].region) {
@@ -1936,7 +1945,7 @@ void Console::editor_rockiness() {
     }
 }
 
-// ORIGINAL: 0x004E13E0 ?editor_fungus@Console@@QAEXXZ 0x004E13E0-0x004E149B FILE
+// ORIGINAL: 0x004E13E0 ?editor_fungus@Console@@QAEXXZ 0x004E13E0-0x004E149B FILE BYTE_EXACT
 // LEVER: the FUNGMOTIZE answer is tested directly, not carried in a boolean.
 //        The archive body spelled `plant = (confirmed != 0)` and `if (plant)`,
 //        which compiles a setne/test pair the image does not have - the image
@@ -2006,12 +2015,12 @@ void Console::editor_fungus() {
                 } while (i < MapArea);
             }
         }
-        uint32_t saved = MapNativeLifeForms;
         if (answer > 0) {
+            uint32_t saved = MapNativeLifeForms;
             MapNativeLifeForms = answer - 1;
             world_fungus();
+            MapNativeLifeForms = saved;
         }
-        MapNativeLifeForms = saved;
         ::draw_map(1);
     }
 }

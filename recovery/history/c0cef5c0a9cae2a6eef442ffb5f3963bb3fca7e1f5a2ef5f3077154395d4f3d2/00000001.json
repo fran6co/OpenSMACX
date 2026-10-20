@@ -1,0 +1,21 @@
+{
+  "event_id": "27b4686672ea7117bb3cece109ca9114a424c7ab9ab66be8a7460995e0d40afb",
+  "payload": {
+    "affects": [
+      "entity-18a3d62d58f13268871ab890ee54711471fee3c45b983024407b1c1395eb05e3"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "reportif-satellite-hide-oct20f",
+    "evidence": [
+      "Pinned FlatButton vtable669754 slot2/+8 selects BaseButton::hide406860, not close607DA0 at slot90/+168. Original close_sat calls slot2 in both loops; current source calls destructive close. Restore hide in both loops; preserve faction skip, five-button traversal, tail reset/hide order and timer stops; correct ordinary misleading comment only. Extend existing actual-source typed-close test with distinct hide/close effects and mutants. Preserve historical BYTE_EXACT obligation; no marker edit, demotion, safety change or new claim.",
+      "Standing coordinator-reviewed manual integration: parallel source/host work, independent review, fresh build/link, scoped native comparisons/claim continuity and combined destination checks. No automatic/game acceptance, outside-body waiver, flags change or task baseline reset."
+    ],
+    "hypothesis": "Pinned FlatButton vtable669754 slot2/+8 selects BaseButton::hide406860, not close607DA0 at slot90/+168. Original close_sat calls slot2 in both loops; current source calls destructive close. Restore hide in both loops; preserve faction skip, five-button traversal, tail reset/hide order and timer stops; correct ordinary misleading comment only. Extend existing actual-source typed-close test with distinct hide/close effects and mutants. Preserve historical BYTE_EXACT obligation; no marker edit, demotion, safety change or new claim.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "reportif-satellite-hide-oct20f",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:reportif-typed-close-owner-oct9"
+}

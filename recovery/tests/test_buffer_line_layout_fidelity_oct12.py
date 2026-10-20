@@ -29,9 +29,14 @@ IMAGE = Path(os.environ.get("OPENSMACX_IMAGE",
     "/home/fran6co/code/OpenSMACX/.opensmacx/game/terranx_original.exe"))
 PIN = "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
 SPECS = (
-    (0x5DC410, 0x5DC70A, "char *Buffer::find_line_break_l(char * a1, int * a2, int a3)"),
-    (0x5DB9E0, 0x5DBAF5, "int Buffer::wrap_cent(Font * a1, char * a2, int a3, int a4, int a5)"),
-    (0x5DAD70, 0x5DB03E, "int Buffer::write_strings_height(StringList *strings, int width, int flags)"),
+    (0x5DC410, 0x5DC70A, "char *Buffer::find_line_break_l(char * a1, int * a2, int a3)",
+     "char *Buffer::find_line_break_l(char * a1, int * a2, int a3)"),
+    (0x5DB9E0, 0x5DBAF5,
+     "int Buffer::wrap_cent(Font * font_override, char * text, int x_coord,",
+     "int Buffer::wrap_cent(Font * a1, char * a2, int a3, int a4, int a5)"),
+    (0x5DAD70, 0x5DB03E,
+     "int Buffer::write_strings_height(StringList *strings, int width, int flags)",
+     "int Buffer::write_strings_height(StringList *strings, int width, int flags)"),
 )
 
 
@@ -113,10 +118,10 @@ def test_only_three_complete_bodies_change_and_all_obligations_survive():
         ["git", "show", task["base_revision"] + ":src/buffer.cpp"], cwd=ROOT).decode()
     current = (ROOT / "src/buffer.cpp").read_text()
     restored = current
-    for address, end, signature in SPECS:
+    for address, end, signature, baseline_signature in SPECS:
         current_body = body(current, signature)
         assert "BODY GOES HERE" not in current_body
-        restored = restored.replace(current_body, body(baseline, signature), 1)
+        restored = restored.replace(current_body, body(baseline, baseline_signature), 1)
         row, = (r for r in read_file(ROOT / "src/buffer.cpp") if r.address == address)
         assert row.image_spans == ((address, end),)
     reversed_source = reverse_exact_link_guard_migration(restored, baseline)
@@ -159,7 +164,7 @@ def test_pinned_complete_branch_evidence_and_dependencies():
     image = PeImage(raw, PIN)
     decoder = Cs(CS_ARCH_X86, CS_MODE_32)
     instructions = {}
-    for lo, hi in [(a, b) for a, b, _ in SPECS] + [
+    for lo, hi in [(a, b) for a, b, _, _ in SPECS] + [
             (0x628AF0, 0x628B23), (0x619370, 0x6195A7),
             (0x5DBB00, 0x5DBBFA), (0x5DB040, 0x5DB3F6)]:
         decoded = list(decoder.disasm(image.read(Span(lo, hi)), lo))
@@ -230,8 +235,6 @@ typedef int BOOL;
 #undef static_assert
 Heap *StringAllocationHeap = 0;
 StringAllocationBase::~StringAllocationBase() {}
-StringStruct::~StringStruct() {}
-StringList::~StringList() {}
 int StringStruct::on_insert(void *) { return 0; }
 void StringStruct::on_remove(void *) {}
 int StringList::on_insert(void *) { return 0; }
@@ -256,7 +259,7 @@ struct Buffer {
   @BUFFER_APIS@
 };
 @ADVANCE@
-LPSTR Font::find_line_break_l(LPSTR text,int *width,size_t length) {
+LPSTR Font::find_line_break_l(LPSTR text,int *width,int length) {
   measured_fonts.push_back(this); measured_lengths.push_back(int(length));
   measured_widths.push_back(*width);
   return font_probe ? font_probe(this,text,width,length) : nullptr;
@@ -455,10 +458,14 @@ static void list_controls() {
       assert(events==trace && list.current_position_==1);
       // Callback gets the original metadata even when the later gate sees a
       // replacement node; dispatch does not normalize to replacement metadata.
+      // The fixture nodes are stack-owned; detach them before the real inline
+      // StringList destructor, which otherwise owns and deletes its list.
+      list.head_=nullptr;
     }
   reset();Buffer b=fresh();assert(b.write_strings_height(nullptr,40,0)==0 && events.empty());
   StringList empty;assert(b.write_strings_height(&empty,40,0)==7);
   assert(events==std::vector<std::string>({"fly:null","flush"}));
+  empty.head_=nullptr;
   reset();StringList list;StringStructEntry nodes[2];StringStructPayload payloads[2];
   char first[]="first",second[]="second";
   for(int i=0;i!=2;++i) {nodes[i].id=10+i;nodes[i].payload=&payloads[i];nodes[i].next=&nodes[1-i];
@@ -467,6 +474,7 @@ static void list_controls() {
   active=&list;old_kind=2;new_kind=0;replace_node=false;clear_head=true;b.field_C_=list_callback;
   assert(b.write_strings_height(&list,40,0)==7);
   assert(events==std::vector<std::string>({"callback:10:0","fly:first","callback:11:2","fly:null","flush"}));
+  list.head_=nullptr;
   reset();list.head_=nodes;list.current_=nodes+1;list.entry_count_=2;list.current_position_=1;
   b.field_C_=nullptr;payloads[1].field_8_=3;
   assert(b.write_strings_height(&list,40,2)==15); // preserve caller position, initial kind3
@@ -475,6 +483,7 @@ static void list_controls() {
   b.markup_enabled_=0;b.field_10_=5;
   assert(b.write_strings_height(&list,40,0)==17);
   assert(events==std::vector<std::string>({"advance","fly:null","flush"}));
+  list.head_=nullptr;
 }
 int main() {
   initialize(primary);initialize(secondary);initialize(third);initialize(fourth);initialize(fallback);
@@ -498,7 +507,8 @@ def actual_source():
     parts = {
         "STRINGS": sh,
         "CURSORS": '\n'.join(body(source, s) for s in
-            ("StringStruct::StringStruct()", "StringStructPayload *StringStruct::current_entry()")),
+            ("StringStruct::StringStruct()", "StringStructPayload *StringStruct::current_entry()",
+             "char *StringList::current_text()")),
         "FONT_FIELDS": '\n'.join(one(fh, r'^  (' + typ + r' ' + name + r';)')
             for typ, name in (("int", "unk_1_"), ("BOOL", "is_fot_set_"),
             ("HFONT", "font_obj_"), ("int", "line_height_"), ("int", "height_"),
@@ -517,16 +527,16 @@ def actual_source():
             r'^  (char \*find_line_break_l\([^\n]+;)',
             r'^  (int wrap_cent\(Font \*font, char \*text, int x_coord, int y_coord, int width\);)',
             r'^  (int write_strings_height\([^\n]+;)',
-            r'^  (int wrap_height_flying\(char \*text\);)',
+            r'^  (int wrap_height_flying\(char \*input_text\);)',
             r'^  (int wrap_height_flying\(char \*text, int width\);)',
             r'^  (int wrap_height_flying_flush\(\);)',
-            r'^  (int wrap_height\(char \*text, int width\);)',
+            r'^  (int wrap_height\(char \*text, int max_width\);)',
             r'^  (int text_line_height\(\);)')) + '\n' + one(bh,
             r'^  (int write_cent_l\(LPSTR text, int x_coord, int y_coord, int width, int len\);)'),
         "ADVANCE": body((ROOT / "src/jackal/font.cpp").read_text(), "int Font::line_advance() const"),
         "SEARCH": search,
         "TOKEN": one(product, r'^(char BufferMarkupLinkToken\[\] = [^\n]+;)'),
-        "BODIES": '\n'.join(body(product, signature) for _, _, signature in SPECS),
+        "BODIES": '\n'.join(body(product, signature) for _, _, signature, _ in SPECS),
     }
     result = PRELUDE
     for key, value in parts.items():
@@ -568,7 +578,7 @@ MUTANTS = (
     ("null-outparam-order", "if (!a2) {\n        return 0;", "if (!a2) {\n        font1_ = FontDefault; return 0;"),
     ("search-exclusive-end", "const char *p = end;", "const char *p = end - 1;"),
     ("search-inclusive-start", "int count = (int)(end - start);", "int count = (int)(end - start) + 1;"),
-    ("residual-center-width", "write_cent_l(str, a3, y, a5, lineLen);", "write_cent_l(str, a3, y, outParam, lineLen);"),
+    ("residual-center-width", "write_cent_l(str, x_coord, y, width, lineLen);", "write_cent_l(str, x_coord, y, wrap_width, lineLen);"),
     ("font-restore", "font3_ = savedC;", "font3_ = font1_;"),
     ("cached-list-gate", "strings->head_ == 0 || strings->current_entry()->field_8_ == 0", "strings->head_ == 0 || line_payload == 0"),
     ("live-list-dispatch", "if (line_payload == 3)", "if (strings->current_entry()->field_8_ == 3)"),

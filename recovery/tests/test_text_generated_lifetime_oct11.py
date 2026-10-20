@@ -9,7 +9,7 @@ import subprocess
 import pytest
 
 from match_recovery.source import read_text
-from match_recovery.source.writer import write_symbol
+from match_recovery.source.writer import write_body, write_symbol
 from match_recovery.pe_coff import Coff, PeImage
 from match_recovery.model import Span
 
@@ -74,6 +74,72 @@ def test_only_writer_symbol_facts_and_corrected_current_documentation():
     index_call = b'    int seek_addr = text_search_index(file_name_, section_id);\n'
     assert expected.count(index_call) == 1
     expected = expected.replace(index_call, header_block + index_call, 1)
+    # The same constructor body now lives in this TU before the global whose
+    # initializer must be able to see it.
+    constructor = (
+        b'\nText::Text(int size) {\n'
+        b'    file_name_[0] = 0;\n'
+        b'    current_pos_ = 0;\n'
+        b'    text_file_ = 0;\n'
+        b'    buffer_get_ = 0;\n'
+        b'    buffer_item_ = 0;\n'
+        b'    buffer_get_ = (LPSTR)mem_get(size);\n'
+        b'    if (buffer_get_) {\n'
+        b'      buffer_item_ = (LPSTR)mem_get(size);\n'
+        b'    }\n'
+        b'}\n'
+    )
+    global_anchor = b'// global\n/*\nPurpose: The reader every `.txt` the game parses goes through'
+    assert expected.count(global_anchor) == 1
+    expected = expected.replace(global_anchor, constructor + global_anchor, 1)
+    expected = expected.replace(
+        b'Same shape as `Text(int)` in text.h, for the same\n',
+        b'Same shape as `Text(int)` above, for the same\n',
+        1,
+    )
+    old_placement_note = (
+        b'TWO ADDRESSES AND ONE DEFINITION, with no function to hang either on. MSVC\n'
+        b'emits a dynamic initialiser and an atexit thunk for every namespace-scope\n'
+        b'object with a non-trivial constructor and destructor: `??__ETxt` inlines\n'
+        b'`Text::Text(512)` and registers `??__FTxt`, which inlines `~Text()`. Both are\n'
+        b'defined in-class in text.h so that inlining can happen. This line is the only\n'
+        b'source either comes from.\n'
+    )
+    new_placement_note = (
+        b'TWO ADDRESSES AND ONE DEFINITION, with no function to hang either on. MSVC\n'
+        b'emits a dynamic initialiser and an atexit thunk for every namespace-scope\n'
+        b'object with a non-trivial constructor and destructor: `??__ETxt` inlines\n'
+        b'`Text::Text(512)` and registers `??__FTxt`, which inlines `~Text()`. The\n'
+        b'constructor definition is above `Txt` in this translation unit; the destructor\n'
+        b'remains defined in text.h. This line is the only source either comes from.\n'
+    )
+    assert expected.count(old_placement_note) == 1
+    expected = expected.replace(old_placement_note, new_placement_note, 1)
+    old_constructor_note = (
+        b'THE BODY IS IN text.h, IN-CLASS, and must stay there: `??__ETxt` at\n'
+        b'0x005FD400 - the dynamic initialiser for `Txt` - inlines it rather than\n'
+        b'calling it, and it can only do that where the definition is visible. The\n'
+        b'marker is here because the CLAIM has to sit somewhere the measurement can\n'
+        b'reach: `decomp.reader` globs `*.cpp` and `*.c`, and `compile_unit` compiles\n'
+        b'a translation unit, so a marker in a header could be read by neither. VC6\n'
+        b'emits `??0Text@@QAE@H@Z` into this unit\'s object as its own COMDAT anyway,\n'
+        b'which is what the comparison pulls out.\n'
+    )
+    new_constructor_note = (
+        b'Historical placement note: this body previously lived in text.h, in-class.\n'
+        b'`??__ETxt` at 0x005FD400 inlines the constructor\'s stores and allocations\n'
+        b'rather than calling it, so the definition had to be visible where the object\n'
+        b'was constructed. The marker was kept here because the native measurement\n'
+        b'compiles a `*.cpp` translation unit; VC6 also emits `??0Text@@QAE@H@Z` into\n'
+        b'this unit\'s object as its own COMDAT. The current candidate places the\n'
+        b'identical definition earlier in this translation unit, before `Txt`, so it\n'
+        b'remains visible to that initializer. Its body-location fact is\n'
+        b'coordinator-maintained.\n'
+    )
+    assert expected.count(old_constructor_note) == 1
+    expected = expected.replace(old_constructor_note, new_constructor_note, 1)
+    ctor_record = next(r for r in read_text(expected.decode(), path) if r.address == 0x5FD880)
+    expected = write_body(expected, ctor_record, 'src/text.cpp')
     assert expected == path.read_bytes()
     before, after = read_text(old.decode(), path), read_text(expected.decode(), path)
     assert len(before) == len(after)
@@ -81,13 +147,61 @@ def test_only_writer_symbol_facts_and_corrected_current_documentation():
         for field in fields(a):
             if field.name not in {'line', 'region', 'origin', 'symbol', 'body'}:
                 assert getattr(a, field.name) == getattr(b, field.name)
-        assert b.body == ('src/text.h' if a.address == 0x585120 else a.body)
+        expected_body = (
+            'src/text.h' if a.address == 0x585120 else
+            'src/text.cpp' if a.address == 0x5FD880 else a.body
+        )
+        assert b.body == expected_body
         assert b.symbol == BINDINGS.get(a.address, a.symbol)
         lessons = lambda r: [(l.kind, l.key, l.prose, tuple(t for _, t in l.lines)) for l in r.origin]
         assert lessons(a) == lessons(b)
     header = subprocess.check_output(['git', 'show', BASE+':src/text.h'], cwd=ROOT, text=True)
     assert header.count(OLD_HEADER) == 1
     expected_header = header.replace(OLD_HEADER, NEW_HEADER, 1)
+    old_constructor = '''  // DEFINED IN-CLASS so it can be INLINED, which is what the image does.
+  // `??__ETxt@@YAXXZ` at 0x005FD400 - the dynamic initialiser for `Txt` -
+  // writes these fields directly instead of calling 0x005FD880, and it can
+  // only do that if the definition is visible where the object is
+  // constructed. Measured on that initialiser: declared out of line it
+  // diverges at instruction #1 with the constructor called; defined here it
+  // reproduces 22 of 22 mnemonics, 87 bytes against 86, with ONE extra
+  // instruction - VC6 materialises `this` into eax for the first store,
+  // where the image addresses it absolutely, and no spelling of that store
+  // moves it (array index, `*file_name_`, a cast of `this`, a local).
+  //
+  // `int`, NOT `size_t`. The image's own name for it is `??0Text@@QAE@H@Z`
+  // and `H` is `int`; 0x005FD880 is BYTE_EXACT against a body taking one.
+  MEASURED Text(int size) {  // 005FD880
+    file_name_[0] = 0;
+    current_pos_ = 0;
+    text_file_ = 0;
+    buffer_get_ = 0;
+    buffer_item_ = 0;
+    buffer_get_ = (LPSTR)mem_get(size);
+    if (buffer_get_) {
+      buffer_item_ = (LPSTR)mem_get(size);
+    }
+  }
+'''
+    new_constructor = '''  // Historical placement evidence: the image initializer inlines this
+  // constructor's stores and allocations. The current candidate definition
+  // is in text.cpp before `Text Txt(512)`, keeping it visible in that TU.
+  // `??__ETxt@@YAXXZ` at 0x005FD400 - the dynamic initialiser for `Txt` -
+  // writes these fields directly instead of calling 0x005FD880, and it can
+  // only do that if the definition is visible where the object is
+  // constructed. Measured on that initialiser: declared out of line it
+  // diverges at instruction #1 with the constructor called; defined here it
+  // reproduces 22 of 22 mnemonics, 87 bytes against 86, with ONE extra
+  // instruction - VC6 materialises `this` into eax for the first store,
+  // where the image addresses it absolutely, and no spelling of that store
+  // moves it (array index, `*file_name_`, a cast of `this`, a local).
+  //
+  // `int`, NOT `size_t`. The image's own name for it is `??0Text@@QAE@H@Z`
+  // and `H` is `int`; 0x005FD880 is BYTE_EXACT against a body taking one.
+  MEASURED Text(int size);  // 005FD880
+'''
+    assert expected_header.count(old_constructor) == 1
+    expected_header = expected_header.replace(old_constructor, new_constructor, 1)
     unsigned_declaration = 'LPVOID __cdecl mem_get(size_t size);'
     assert expected_header.count(unsigned_declaration) == 1
     expected_header = expected_header.replace(

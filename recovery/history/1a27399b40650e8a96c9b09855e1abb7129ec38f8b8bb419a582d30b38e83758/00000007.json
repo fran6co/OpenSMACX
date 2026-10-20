@@ -1,0 +1,20 @@
+{
+  "event_id": "cf469ae8f52e894b9adb1ba6200bfa7f2f5b05fadd273dcba2ed675e519422b0",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "buffer-typed-api-names-oct20g",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/buffer.cpp twelve existing typed text-wrapper methods replace aN formal/local spellings with use-supported API roles, src/buffer.h synchronizes three parameter names. No behavior, type, ABI, call order, guards, original mapping, historical claim or lesson changes. All170 annotations continuous.",
+      "Fresh full177-TU application build/link and all191 physical object comparisons pass with ZERO body/data/reference omissions. All170 Buffer measurement verdicts unchanged. Source claims/mappings/references pass. Independent frozen-source, ratchet and host-fixture reviews find no blockers;43 actual-source host tests pass with damage mutants retained.",
+      "recovery/audits.json lowers only scaffold-name ceiling3116to2715; recomputed count2848to2715 removes133 names. Existing unrelated class-debt growth remains56 undocumentedtrivial and275unknownmethodsagainst205ceiling; no other ceiling changed or gate waived.",
+      "Ignored evidence .opensmacx/recovery/parallel-owners-oct20g/buffer retains failure attempts and final frozen approved-execution build-q86ly_a9 proof. Original24cd306 task baseline and other debts retained. Names-only quality improvement, not new function coverage/exact gains or linked/runtime/game acceptance; fresh combined destination verification required."
+    ]
+  },
+  "previous_event": "bf743f1dcff75d4e6737fe3f0f00cbf260506c3d2d2307c452f4b6823cbe9df5",
+  "request_id": "buffer-typed-api-names-oct20g-incorporated",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:buffer-source-batch-oct19b"
+}

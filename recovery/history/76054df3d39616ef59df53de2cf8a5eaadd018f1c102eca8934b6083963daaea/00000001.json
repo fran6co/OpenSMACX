@@ -1,0 +1,21 @@
+{
+  "event_id": "7c6857d02031d882609add861b8aa65466d9da7d064c03e14e5a2955c5cfe377",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_texture_raster_actual_source.py",
+      "recovery/tests/texture_raster_actual_host_control.cpp"
+    ],
+    "evidence": [
+      "Existing fixture explicitly expects61B780 borrowed rasterizer toskipkey-valuedtexel; independentpinned61BED1..61BEF6/61BF4F..61BF79 loops proveunconditionaltexelload/lightadd/store. Thisoracleencodes the currenttranslationerror and mustbecorrected tooriginalratherthanexcluded.",
+      "Authorizeonlynecessary keyvaluedpixel expectation/comment and corresponding actual-source test/mutant updates; preserveotherkeyedfamilyoracles, allotherdrawing/math/lifetimecontrols, originalquirks andallclaims. Executeexistingactualrastercontrols alongside newtargetedtest. Nativeverification andindependentreviewremainrequired; notfullrasterproof."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "correct-original-unkeyed-existing-host-oracle-oct20e",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:texture-gouraud-key-policy-oct20e"
+}

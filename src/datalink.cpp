@@ -3003,7 +3003,7 @@ void Datalink::set_cat_terraform() {
          ++category, ++terraform_index) {
         const RulesTerraforming &terraform = Terraforming[terraform_index];
         const RulesOrder &order = Order[4 + terraform_index];
-        if (terraform.preq_tech >= -1 && order.order != 0) {
+        if (terraform.preq_tech >= -1) {
             StringTemp[0] = '\0';
             strcat(StringTemp, StringTable.get(order.order));
             if ((GameDataStateStorage.fields_.game_state_ & 0x1000) != 0) {

@@ -78,7 +78,7 @@ void DiploPop::start(int faction_id) {
                         alternate_size ? 26 : 22, alternate_size ? 90 : 80, 1)) {
             return;
         }
-        flic2_.set_animation_flags(9);
+        flic2_.set_transparent_index(9);
         const int x = static_cast<int32_t>(portrait_text_rect_.left + 1);
         const int difference = static_cast<int32_t>(portrait_text_rect_.bottom - portrait_text_rect_.top);
         const int y = static_cast<int32_t>(portrait_text_rect_.top + difference / 4 + 1);

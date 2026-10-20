@@ -3719,7 +3719,7 @@ void __cdecl say_project(char *output, int project_id, int with_cost) {
     }
 }
 
-// ORIGINAL: 0x00590BA0 ?say_vehicles@@YAXPAXHH@Z 0x00590BA0-0x00590C14 FILE
+// ORIGINAL: 0x00590BA0 ?say_vehicles@@YAXPAXHH@Z 0x00590BA0-0x00590C14 FILE BYTE_EXACT
 // symbol    ?say_vehicles@@YAXPADHH@Z
 // size      116 bytes
 // prototype 
@@ -3785,7 +3785,8 @@ void __cdecl say_vehicles(char *text, int chassis_id, int with_height) {
     if (with_height != 0) {
         strcat(text, " ");
         strcat(text, "(");
-        strcat(StringTemp, label_get(0x314 / 4));
+        LPSTR label = Labels.strings_ptr[0x314 / 4];
+        strcat(StringTemp, StringTable.get(label));
         strcat(text, ")");
     }
 }

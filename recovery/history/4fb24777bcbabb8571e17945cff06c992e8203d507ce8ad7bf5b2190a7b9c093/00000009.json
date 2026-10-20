@@ -1,0 +1,20 @@
+{
+  "event_id": "6f53ec46b2a1dd1d394bb7edf4eb8be939abfdd9616e83f0b1ef0461fdfce574",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "console-road-distinct-message-storage-oct20p",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Four TU-private writable char arrays now preserve independently evidenced original storage identities and exact NUL-terminated bytes; only the four corresponding popup arguments change, all other pooled-text uses remain untouched. Native object_writer guarded publication preserves all original function identities/spans/historical claims.",
+      "Independent source/pinned review and26actual-source GCC/Clang tests pass, including same-content/wrong-identity damage controls. Two native configured layout recipes prove17/11/11/11byte CodeView extents and all initial bytes, unchanged replicas match, and all8byte-damage controls fail. Source-bound check-data has8/8selected object rows PASS, but overallUNKNOWN from independently checked shared functions; do not report that command green.",
+      "Fresh complete application build/link and native claim/mapping/reference checks pass. Production road_to remains84/84maskedexact; set_road_to retains existing mismatch. Complete physical residuals:190PASS/1FAILinconsole_commands.cpp, explicitly accounting for intentional distinct data allocation/pooling changes, not waived as body-only preservation. Native ordinary strict private object target resolution remainsUNKNOWN; no external-linkage workaround, falsealias, acceptance/gate weakening, claim grant or bug fix.",
+      "Coordinator-reviewed manual structural recovery only; not linked-selection, runtime/structure, automatic/full-game acceptance. Preserve all remaining restoration and reference proof obligations."
+    ]
+  },
+  "previous_event": "1aedac414e8f37836a01d7dde3aa7f18a3404a50c4478dfc68c40f82a2f75724",
+  "request_id": "console-road-distinct-message-incorporated-oct20p",
+  "schema_version": 1,
+  "sequence": 9,
+  "stream": "task:wide-console-source-decks-oct20n"
+}

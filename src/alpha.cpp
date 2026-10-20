@@ -136,13 +136,53 @@ int HallOfFameIOMode;  // 0x00759194
 // base+8 over flags/name) with the 0x2C stride declared in technology.h.
 // RECOVERY_OBJECT: v1 0x0094F358 ?Technology@@3PAURulesTechnology@@A
 RulesTechnology Technology[MaxTechnologyNum];       // 0x0094F358
+// RECOVERY_OBJECT: v2 0x0094B4A0 0x0094B4C0 ?Mandate@@3PAURulesMandate@@A 0x005873C0
 RulesMandate Mandate[MaxMandateNum];                // 0x0094B4A0
-RulesTerraforming Terraforming[MaxTerrainNum];      // 0x00691878
+// RECOVERY_OBJECT: v2 0x00691878 0x00691AF8 ?Terraforming@@3PAURulesTerraforming@@A 0x005873C0
+RulesTerraforming Terraforming[MaxTerrainNum] = {
+    { 0, 0, 0, 0, BIT_FARM,          BIT_FOREST, 0, 0 },
+    { 0, 0, 0, 0, BIT_SOIL_ENRICHER, BIT_FOREST, 0, 0 },
+    { 0, 0, 0, 0, BIT_MINE,
+      BIT_MINE | BIT_SOLAR_TIDAL | BIT_FOREST | BIT_CONDENSER | BIT_ECH_MIRROR
+          | BIT_THERMAL_BORE | BIT_SENSOR_ARRAY, 0, 0 },
+    { 0, 0, 0, 0, BIT_SOLAR_TIDAL,
+      BIT_MINE | BIT_SOLAR_TIDAL | BIT_FOREST | BIT_CONDENSER | BIT_ECH_MIRROR
+          | BIT_THERMAL_BORE | BIT_SENSOR_ARRAY, 0, 0 },
+    { 0, 0, 0, 0, BIT_FOREST,
+      BIT_MINE | BIT_FUNGUS | BIT_SOLAR_TIDAL | BIT_FARM | BIT_SOIL_ENRICHER
+          | BIT_FOREST | BIT_CONDENSER | BIT_ECH_MIRROR | BIT_THERMAL_BORE, 0, 0 },
+    { 0, 0, 0, 0, BIT_ROAD, 0, 0, 0 },
+    { 0, 0, 0, 0, BIT_MAGTUBE, 0, 0, 0 },
+    { 0, 0, 0, 0, BIT_BUNKER, BIT_AIRBASE, 0, 0 },
+    { 0, 0, 0, 0, BIT_AIRBASE, BIT_BUNKER, 0, 0 },
+    { 0, 0, 0, 0, BIT_SENSOR_ARRAY,
+      BIT_MINE | BIT_SOLAR_TIDAL | BIT_CONDENSER | BIT_ECH_MIRROR
+          | BIT_THERMAL_BORE, 0, 0 },
+    { 0, 0, 0, 0, 0, BIT_FUNGUS, 0, 0 },
+    { 0, 0, 0, 0, BIT_FUNGUS,
+      BIT_MINE | BIT_SOLAR_TIDAL | BIT_FARM | BIT_SOIL_ENRICHER | BIT_FOREST, 0, 0 },
+    { 0, 0, 0, 0, BIT_CONDENSER,
+      BIT_MINE | BIT_SOLAR_TIDAL | BIT_FOREST | BIT_CONDENSER | BIT_ECH_MIRROR
+          | BIT_THERMAL_BORE | BIT_SENSOR_ARRAY, 0, 0 },
+    { 0, 0, 0, 0, BIT_ECH_MIRROR,
+      BIT_MINE | BIT_SOLAR_TIDAL | BIT_FOREST | BIT_CONDENSER | BIT_ECH_MIRROR
+          | BIT_THERMAL_BORE | BIT_SENSOR_ARRAY, 0, 0 },
+    { 0, 0, 0, 0, BIT_THERMAL_BORE,
+      BIT_MINE | BIT_SOLAR_TIDAL | BIT_FARM | BIT_FOREST | BIT_CONDENSER
+          | BIT_ECH_MIRROR | BIT_THERMAL_BORE | BIT_SENSOR_ARRAY, 0, 0 },
+    { 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 0, 0, 0, 0, 0, 0, 0, 0 },
+    { 0, 0, 0, 0, BIT_MONOLITH,
+      BIT_SUPPLY_POD | BIT_NUTRIENT_RSC | BIT_RSC_BONUS, 0, 0 },
+}; // 0x00691878
 // Secret projects are the final 64 records, beginning at Facility[70]
 // (original 0x009A5888). The parser and consumers share this real array;
 // there is no separately allocated secret-project table.
 // RECOVERY_OBJECT: v1 0x009A4B68 ?Facility@@3PAURulesFacility@@A
 RulesFacility Facility[MaxFacilityNum];             // 0x009A4B68
+// RECOVERY_OBJECT: v2 0x00946020 0x00946138 ?Citizen@@3PAURulesCitizen@@A 0x005873C0
 RulesCitizen Citizen[MaxCitizenNum];                // 0x00946020
 // The pinned add-base path rejects when BaseCurrentCount reaches 512
 // (0x004E4B80); Base is 0x134 bytes, so the bounded array ends at 0x009A3840.

@@ -1,0 +1,23 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "dbaf58a5ecc0348bb7ef9dcba73a938da5452e04",
+  "editable_files": [
+    "src/alpha.cpp"
+  ],
+  "evidence": [
+    "Independent source and pinned read_rules reviews establish Citizen[10] stride1C at946020..946138 and Mandate[4] stride8 at94B4A0..94B4C0. Parser loops start at base+4 and stop end+4, writing two pointer fields each; only first7Citizen rows receive5numeric fields. Both full original initial spans are zero and relocation-free, adjacent to independently bound globals without overlaps.",
+    "Authorize source object annotations only through native object_writer guarded publication after fresh configured compiler/layout trials independently prove actual symbol, CodeView complete extent and initial content. Exact symbols ?Citizen@@3PAURulesCitizen@@A and ?Mandate@@3PAURulesMandate@@A must be verified, not guessed. Production COFF owner placement and linked bytes require separate observation; next-symbol guesses are not size proof.",
+    "Run unchanged-source replica signature controls and real nonzero initializer damage controls for both; content must fail, not just missing evidence. Actual source stays untouched by compiler overlays. No original function/body/parser/type/initializer/flags/claim changes; no lifetime, full linked-preservation, game or acceptance claim. Existing immutable task baseline is retained."
+  ],
+  "intent": "Qualify and publish real Citizen and Mandate original object extents beside their rule loader.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5796800,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "rules-citizen-mandate-bindings-oct20p"
+}

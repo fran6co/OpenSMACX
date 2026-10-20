@@ -208,12 +208,19 @@ def test_fake_comment_and_literal_definitions_do_not_confuse_extraction():
 
 
 @pytest.mark.parametrize("compiler", ("g++", "clang++"))
-def test_behavioral_mutant_in_actual_helper_fails_pixel_assertions(compiler, tmp_path):
+def test_keyed_entry_mutant_fails_pixel_assertions(compiler, tmp_path):
     compiler_path = shutil.which(compiler)
     if compiler_path is None:
         pytest.skip(f"{compiler} is unavailable")
     source = TEXTURE.read_text(encoding="utf-8")
-    mutated = source.replace("keyed && borrowed", "keyed", 1)
+    original_call = (
+        "texture_raster_gouraud_rows(this, buffer, min_y, max_y, top, 0,"
+    )
+    keyed_call = (
+        "texture_raster_gouraud_rows(this, buffer, min_y, max_y, top, 1,"
+    )
+    assert source.count(original_call) == 2
+    mutated = source.replace(original_call, keyed_call, 1)
     assert mutated != source, "mutant did not alter current installed source"
     cpp = tmp_path / "texture_mutant.cpp"
     binary = tmp_path / "texture_mutant"

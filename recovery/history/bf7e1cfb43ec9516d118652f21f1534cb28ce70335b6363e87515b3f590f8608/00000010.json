@@ -1,0 +1,21 @@
+{
+  "event_id": "feb72a045cfae3f778ead468099bc777b7fe1d93be2122ca04af19767160fb80",
+  "payload": {
+    "affects": [
+      "entity-42524977ec539834982804e79bfdcee662dd028403be9d4c459a61c0b7c67f80"
+    ],
+    "author": "coordinator",
+    "discovery_id": "world-fungus-original-gate-oct20f",
+    "evidence": [
+      "Pinned5C35BE JL processes a low-val3 tile immediately; only high-val3 reaches climate comparison5C35C7/JGE skip. Skip iff BOTH val3>=80 and masked climate>=60, val3 first. Current separate continues wrongly OR the predicates and make later high-climate vehicle path unreachable. Restore short-circuit AND only; preserve all sampling/random calls, field writes and fresh later climate read. Add focused actual-source C++98 host and damage controls, no bug fix or hand-written original annotation.",
+      "Standing coordinator-reviewed manual integration: parallel source/host work, independent review, fresh build/link, scoped native comparisons/claim continuity and combined destination checks. No automatic/game acceptance, outside-body waiver, flags change or task baseline reset."
+    ],
+    "hypothesis": "Pinned5C35BE JL processes a low-val3 tile immediately; only high-val3 reaches climate comparison5C35C7/JGE skip. Skip iff BOTH val3>=80 and masked climate>=60, val3 first. Current separate continues wrongly OR the predicates and make later high-climate vehicle path unreachable. Restore short-circuit AND only; preserve all sampling/random calls, field writes and fresh later climate read. Add focused actual-source C++98 host and damage controls, no bug fix or hand-written original annotation.",
+    "kind": "discovery"
+  },
+  "previous_event": "af344949a34fbc2beeb084f19de0be20378a5a9b564e858e556ddf30a0464b99",
+  "request_id": "world-fungus-original-gate-oct20f",
+  "schema_version": 1,
+  "sequence": 10,
+  "stream": "task:world-generation-owner-oct19"
+}

@@ -320,7 +320,7 @@ int Dialog::init(RECT *rect, Heap *heap) {
 /*
 Purpose: Find an item ID's bounded position in the dialog string list.
 // ORIGINAL: 0x00609AF0 ?id_to_pos@Dialog@@QAEHH@Z 0x00609AF0-0x00609B4B BYTE_EXACT
-// body      src/dialog.h
+// body      src/dialog.cpp
 // MEASURED inline: the body lives at the end of dialog.h. The image keeps
 //        this out-of-line copy at 0x00609AF0 AND inlines the same walk into
 //        set_selected_id (0x006099D0); the `inline` keyword is what makes
@@ -337,6 +337,23 @@ Purpose: Find an item ID's bounded position in the dialog string list.
 Return Value: Matching position, or the configured entry count on a miss
 Status: Complete
 */
+
+MEASURED int Dialog::id_to_pos(int id) {
+    if (item_list_.head_) {
+        int count = item_list_.entry_count_;
+        item_list_.current_position_ = 0;
+        item_list_.current_ = item_list_.head_;
+        for (int traversed = 0; traversed < count; traversed++) {
+            StringStructEntry *entry = item_list_.current_;
+            if (entry->id == id) {
+                break;
+            }
+            item_list_.current_position_++;
+            item_list_.current_ = entry->next;
+        }
+    }
+    return item_list_.current_position_;
+}
 
 /*
 Purpose: Select a dialog item by its bounded list ID.

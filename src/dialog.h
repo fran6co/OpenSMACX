@@ -150,10 +150,8 @@ class Dialog {
   void set_dialog_text_color(int color1, int color2, int color3, int color4);
   void set_dialog_text_color2(int color1, int color2, int color3, int color4);
   void set_dialog_text_color3(int color1, int color2, int color3, int color4);
-  // MEASURED (see the definition at the end of this header): the image keeps
-  // an out-of-line copy of id_to_pos at 0x00609AF0 AND inlines the same walk
-  // into set_selected_id, which only the explicit `inline` earns - VC6 will
-  // not auto-expand a function containing a loop.
+  // Used by CheckBox's mouse handler and by set_selected_id; the shared
+  // traversal is defined out of line in dialog.cpp.
   MEASURED int id_to_pos(int id);
   void set_selected_id(int id);
   int get_selected_id();
@@ -318,28 +316,3 @@ extern uint32_t DialogFieldB8Default;  // 0x009B8ED8
 // ?init@Dialog@@QAEHH@Z (0x006095F0), the one-int init overload. Unrecovered;
 // SpriteBox forwards to it, so its definition is a seam into the original.
 
-// 0x00609AF0, MEASURED inline. The image INLINES this into set_selected_id
-// (0x006099D0 is the same walk with the return value stored straight into
-// selected_position_) and keeps an out-of-line copy at 0x00609AF0 for the
-// same reason it keeps one for every other helper. VC6's automatic inline
-// expansion (/Ob2) will not take a function containing a loop, so the
-// `inline` keyword is what makes the call site expand - and MEASURED, which
-// is __declspec(dllexport), is what pins the out-of-line COMDAT this body's
-// own claim is measured against. The marker stays in dialog.cpp.
-
-inline int Dialog::id_to_pos(int id) {
-    if (item_list_.head_) {
-        int count = item_list_.entry_count_;
-        item_list_.current_position_ = 0;
-        item_list_.current_ = item_list_.head_;
-        for (int traversed = 0; traversed < count; traversed++) {
-            StringStructEntry *entry = item_list_.current_;
-            if (entry->id == id) {
-                break;
-            }
-            item_list_.current_position_++;
-            item_list_.current_ = entry->next;
-        }
-    }
-    return item_list_.current_position_;
-}

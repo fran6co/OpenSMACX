@@ -67,6 +67,24 @@ int Log::init(LPCSTR input) {
 // RECOVERY_OBJECT: v1 0x009BC004 ?IsLoggingDisabled@@3HA
 BOOL IsLoggingDisabled;  // 0x009BC004
 
+// The filename constructor lives with the global object's initialization so
+// its original setup remains available for same-translation-unit inlining.
+MEASURED Log::Log(LPCSTR input) {
+    log_file_ = nullptr;
+    if (input) {
+        void *buf = mem_get(strlen(input) + 1);
+        log_file_ = (LPSTR)buf;
+        if (buf) {
+            *(char *)buf = '\0';
+            strcat(log_file_, input);
+            FILE *file = env_open(input, "wt");
+            if (file) {
+                fclose(file);
+            }
+        }
+    }
+}
+
 // This global owns the filename constructor and destructor lifetime. Its
 // initial zero storage is followed by Log("logfile.txt") initialization.
 // RECOVERY_OBJECT: v1 0x009BBFF8 ?Logging@@3VLog@@A
@@ -79,6 +97,37 @@ Log Logging("logfile.txt");  // 0x009BBFF8
 // RECOVERY_LITERAL: v1 0x0069739C 0x006973A9 ??_C@_0N@KIHH@?$CFs?5?$CFd?5?$CFd?5?$CFd?6?$AA@ 0x006260F0
 // RECOVERY_LITERAL: v1 0x006973B0 0x006973C6 ??_C@_0BG@DBHC@?$CFs?5?$CFs?5?$CF04x?5?$CF04x?5?$CF04x?6?$AA@ 0x00626190
 // RECOVERY_LITERAL: v1 0x006973C8 0x006973DB ??_C@_0BD@FBFL@?$CFs?5?$CF04x?5?$CF04x?5?$CF04x?6?$AA@ 0x00626190
+
+MEASURED void Log::reset() {
+    FILE *file = env_open(log_file_, "wt");
+    if (file) {
+        fclose(file);
+    }
+}
+
+MEASURED void Log::say(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3) {
+    if (!log_file_ || is_disabled_ || IsLoggingDisabled) {
+        return;
+    }
+    FILE *file = env_open(log_file_, "at");
+    if (file) {
+        str2 ? fprintf(file, "%s %s %d %d %d\n", str1, str2, num1, num2, num3)
+            : fprintf(file, "%s %d %d %d\n", str1, num1, num2, num3);
+        fclose(file);
+    }
+}
+
+MEASURED void Log::say_hex(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3) {
+    if (!log_file_ || is_disabled_ || IsLoggingDisabled) {
+        return;
+    }
+    FILE *file = env_open(log_file_, "at");
+    if (file) {
+        str2 ? fprintf(file, "%s %s %04x %04x %04x\n", str1, str2, num1, num2, num3)
+            : fprintf(file, "%s %04x %04x %04x\n", str1, num1, num2, num3);
+        fclose(file);
+    }
+}
 
 // ORIGINAL: 0x00625F20 ??__ELogging@@YAXXZ 0x00625F20-0x00625F8B FILE BYTE_EXACT
 // symbol    _$E6
@@ -267,7 +316,7 @@ void __cdecl log_set_state(BOOL state) { Logging.set_state(state); }
 // LEVER: not a constructor - see the "NOT a constructor" note in log.h. `Logging.construct(input)` is an ordinary method (`??__ELogging` reaches it that way, not through a `new`-expression), which drops the SEH frame VC6 wraps around a placement-new'd non-trivial destructor. Inlines env_open/fclose directly on `input` rather than calling `reset()`, because the image keeps the incoming pointer live in edi and reopens THAT, not a reload of log_file_.
 // The original filename initialization is owned by Log(LPCSTR); it allocates
 // and copies the name, then opens the incoming pointer and closes only success.
-// body      src/log.h
+// body      src/log.cpp
 // symbol    ??0Log@@QAE@PBD@Z
 // size      86 bytes
 // prototype Log* (__thiscall ??0Log@@QAE@PAD@Z)(Log* this, int8*)
@@ -293,7 +342,7 @@ void __cdecl log_set_state(BOOL state) { Logging.set_state(state); }
 /*
 Purpose: Reset the log file.
 // ORIGINAL: 0x006260D0 ?reset@Log@@QAEXXZ 0x006260D0-0x006260EC BYTE_EXACT
-// body      src/log.h
+// body      src/log.cpp
 // LEVER: moved in-class (MEASURED) - the free-function wrappers in this file
 //        inline it, matching the image's own inlining at those call sites.
 // size      28 bytes
@@ -308,7 +357,7 @@ Return Value: n/a
 /*
 Purpose: Write to the log file with the numbers displayed in base 10.
 // ORIGINAL: 0x006260F0 ?say@Log@@QAEXPADPADHHH@Z 0x006260F0-0x0062618B BYTE_EXACT
-// body      src/log.h
+// body      src/log.cpp
 // LEVER: moved in-class (MEASURED) - the free-function wrappers in this file
 //        inline it, matching the image's own inlining at those call sites.
 // symbol    ?say@Log@@QAEXPBD0HHH@Z
@@ -324,7 +373,7 @@ Return Value: n/a
 /*
 Purpose: Write to the log file with the numbers displayed in base 16.
 // ORIGINAL: 0x00626190 ?say_hex@Log@@QAEXPADPADHHH@Z 0x00626190-0x0062622B BYTE_EXACT
-// body      src/log.h
+// body      src/log.cpp
 // LEVER: moved in-class (MEASURED) - the free-function wrappers in this file
 //        inline it, matching the image's own inlining at those call sites.
 // symbol    ?say_hex@Log@@QAEXPBD0HHH@Z

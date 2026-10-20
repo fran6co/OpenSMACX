@@ -159,6 +159,18 @@ const CheckEntry kAudioVisual[] = {
     {0x45, MPREF_AV_SLIDING_SCROLLBARS, 7, false},
     {0x16, MPREF_AV_WHOLE_VEH_BLINKS, 7, false},
 };
+// get_preferences' pinned dispatch order differs from set_preferences and
+// from the UI row order: 43..45, 16 precede 47 there.
+const CheckEntry kAudioVisualRead[] = {
+    {0x40, MPREF_AV_VOICEOVER_STOP_CLOSE_POPUP, 7, false},
+    {0x41, PREF_AV_SECRET_PROJECT_MOVIES, 6, false},
+    {0x42, PREF_AV_INTERLUDES_DISABLED, 6, true},
+    {0x43, PREF_AV_MAP_ANIMATIONS, 6, false},
+    {0x44, PREF_AV_SLIDING_WINDOWS, 6, false},
+    {0x45, MPREF_AV_SLIDING_SCROLLBARS, 7, false},
+    {0x16, MPREF_AV_WHOLE_VEH_BLINKS, 7, false},
+    {0x47, MPREF_AV_MONUMENTS_DISABLED, 7, true},
+};
 const CheckEntry kMap[] = {
     {0x48, MPREF_MAP_SHOW_FOG_WAR, 9, false},
     {0x49, PREF_MAP_SHOW_GRID, 8, false},
@@ -376,7 +388,7 @@ void PrefWin::init() {
   if (FactionMusic) on_scrolling(0x53, volumeMusicScroll_.position());
   for (int scroll_hide_index = 0; scroll_hide_index < 4; ++scroll_hide_index)
     scrolls[scroll_hide_index]->hide();
-  for (int box_hide_index = 0; box_hide_index < 6; ++box_hide_index)
+  for (int box_hide_index = 0; box_hide_index < 7; ++box_hide_index)
     boxes[box_hide_index]->hide();
 
   FlatButton *volume_toggles[] = {&volumeMainToggle_, &volumeVoiceToggle_,
@@ -646,6 +658,15 @@ void PrefWin::set_preferences() {
   write_controls(this, bscPrefCheckBox_, kBasic, sizeof(kBasic) / sizeof(kBasic[0]));
   write_controls(this, advPrefCheckBox_, kAdvanced, sizeof(kAdvanced) / sizeof(kAdvanced[0]));
   write_controls(this, autoPrefCheckBox_, kAutomation, sizeof(kAutomation) / sizeof(kAutomation[0]));
+  // The original probes these IDs even though init builds only the eight
+  // ordinary audio/visual rows.  CheckBox's missing-ID cursor therefore
+  // reads the one-past-end selected-position bit for each probe.
+  if (audioVisPrefCheckBox_.get_state_id(0x3D))
+    prefsAVPending_ |= PREF_AV_VOLUME_MUSIC_TOGGLE;
+  if (audioVisPrefCheckBox_.get_state_id(0x3E))
+    prefsAVPending_ |= PREF_AV_VOLUME_SFX_TOGGLE;
+  if (audioVisPrefCheckBox_.get_state_id(0x3F))
+    morePrefsAVPending_ |= MPREF_AV_VOICEOVER_TECH_FAC;
   write_controls(this, audioVisPrefCheckBox_, kAudioVisual, sizeof(kAudioVisual) / sizeof(kAudioVisual[0]));
   if (volumeVoiceToggle_.selected_state())
     morePrefsAVPending_ |= MPREF_AV_VOICEOVER_TECH_FAC;
@@ -653,7 +674,6 @@ void PrefWin::set_preferences() {
     prefsAVPending_ |= PREF_AV_VOLUME_SFX_TOGGLE;
   if (volumeMusicToggle_.selected_state())
     prefsAVPending_ |= PREF_AV_VOLUME_MUSIC_TOGGLE;
-  write_controls(this, mapPrefCheckBox_, kMap, sizeof(kMap) / sizeof(kMap[0]));
   for (unsigned int warning_index = 0;
        warning_index < sizeof(kWarnings) / sizeof(kWarnings[0]); ++warning_index)
     if (warnPrefCheckBox_.get_state_id(kWarnings[warning_index].id))
@@ -663,6 +683,7 @@ void PrefWin::set_preferences() {
        continue_index < sizeof(kWarningContinue) / sizeof(kWarningContinue[0]); ++continue_index)
     if (warnContPrefCheckBox_.get_state_id(kWarningContinue[continue_index].id))
       warningsPending_ |= kWarningContinue[continue_index].bit;
+  write_controls(this, mapPrefCheckBox_, kMap, sizeof(kMap) / sizeof(kMap[0]));
 }
 
 // ORIGINAL: 0x00490B00 ?get_preferences@PrefWin@@QAEXXZ 0x00490B00-0x004911FD FILE
@@ -683,8 +704,7 @@ void PrefWin::get_preferences() {
   volumeMusicToggle_.set_selected_state(
       (prefsAVPending_ & PREF_AV_VOLUME_MUSIC_TOGGLE) != 0);
   change_volume_button_text(0x58);
-  read_controls(this, audioVisPrefCheckBox_, kAudioVisual, sizeof(kAudioVisual) / sizeof(kAudioVisual[0]));
-  read_controls(this, mapPrefCheckBox_, kMap, sizeof(kMap) / sizeof(kMap[0]));
+  read_controls(this, audioVisPrefCheckBox_, kAudioVisualRead, sizeof(kAudioVisualRead) / sizeof(kAudioVisualRead[0]));
   for (unsigned int warning_index = 0;
        warning_index < sizeof(kWarnings) / sizeof(kWarnings[0]); ++warning_index)
     warnPrefCheckBox_.set_state_id(kWarnings[warning_index].id,
@@ -693,6 +713,7 @@ void PrefWin::get_preferences() {
        continue_index < sizeof(kWarningContinue) / sizeof(kWarningContinue[0]); ++continue_index)
     warnContPrefCheckBox_.set_state_id(kWarningContinue[continue_index].id,
         (warningsPending_ & kWarningContinue[continue_index].bit) != 0);
+  read_controls(this, mapPrefCheckBox_, kMap, sizeof(kMap) / sizeof(kMap[0]));
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
@@ -858,7 +879,7 @@ void PrefWin::change_volume_button_state(int button_id) {
         volumeMainToggle_.set_selected_state(1);
         change_volume_button_text(0x55);
       }
-      prefsAVPending_ |= PREF_AV_VOLUME_MUSIC_TOGGLE;
+      GameDataStateStorage.fields_.game_preferences_ |= PREF_AV_VOLUME_MUSIC_TOGGLE;
       load_music(ConsoleGlobal.faction_id_);
       if (FactionMusic) FactionMusic->begin();
       return;
@@ -869,8 +890,8 @@ void PrefWin::change_volume_button_state(int button_id) {
         volumeVoiceToggle_.set_selected_state(0);
         volumeSFXToggle_.set_selected_state(0);
         WaveDeviceGlobal.disable();
-        prefsAVPending_ &= ~0xC00u;
-        morePrefsAVPending_ &= ~0x4000u;
+        GameDataStateStorage.fields_.game_preferences_ &= ~0xC00u;
+        GameDataStateStorage.fields_.game_more_preferences_ &= ~0x4000u;
       } else {
         volumeMainToggle_.set_selected_state(1);
         volumeMusicToggle_.set_selected_state(1);

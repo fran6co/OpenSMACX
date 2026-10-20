@@ -22,6 +22,7 @@ ROOT = next(parent for parent in Path(__file__).resolve().parents
             if (parent / "src/log.h").is_file())
 PIN = "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
 HEADER = ROOT / "src/log.h"
+OWNER = ROOT / "src/log.cpp"
 
 
 def find_pinned_image() -> Path:
@@ -58,10 +59,50 @@ def extract_class() -> str:
                     end += 1
                 assert end < len(masked) and masked[end] == ";"
                 body = source[start:end + 1]
-                assert body.count("fprintf(") == 4
+                assert body.count("fprintf(") == 0
+                for declaration in (
+                        "MEASURED Log(LPCSTR input);", "MEASURED void reset();",
+                        "MEASURED void say(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3);",
+                        "MEASURED void say_hex(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3);"):
+                    assert declaration in body
                 return body.replace("MEASURED ", "").replace(
                     " private:", " public:", 1)
     raise AssertionError("Log class definition is not brace-balanced")
+
+
+def extract_owner_methods() -> str:
+    from match_recovery.includes import COMMENTS_OR_STRINGS
+
+    source = OWNER.read_text(encoding="utf-8")
+    masked = COMMENTS_OR_STRINGS.sub(
+        lambda match: "".join("\n" if char == "\n" else " "
+                              for char in match[0]), source)
+    signatures = (
+        "MEASURED Log::Log(LPCSTR input)",
+        "MEASURED void Log::reset()",
+        "MEASURED void Log::say(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3)",
+        "MEASURED void Log::say_hex(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3)",
+    )
+    bodies = []
+    for signature in signatures:
+        assert masked.count(signature) == 1
+        start = masked.index(signature)
+        opening = masked.find("{", start)
+        assert opening >= 0
+        depth = 0
+        for index in range(opening, len(masked)):
+            if masked[index] == "{":
+                depth += 1
+            elif masked[index] == "}":
+                depth -= 1
+                if depth == 0:
+                    bodies.append(source[start:index + 1].replace("MEASURED ", ""))
+                    break
+        else:
+            raise AssertionError(f"unbalanced owner definition: {signature}")
+    body = "\n".join(bodies)
+    assert body.count("fprintf(") == 4
+    return body
 
 
 def instrument_class(body: str) -> str:
@@ -144,6 +185,33 @@ static void clear_trace() {
     events.clear(); formats.clear(); outputs.clear();
 }
 int main() {
+    clear_trace();
+    {
+        Log filename_log("filename.log");
+        expect(filename_log.log_file_ && std::strcmp(filename_log.log_file_, "filename.log") == 0,
+               "filename constructor stores the copied name");
+        expect(events == std::vector<std::string>{"open:wt:filename.log", "close"},
+               "filename constructor opens and closes only a successful file");
+    }
+
+    clear_trace();
+    open_fails = true;
+    {
+        Log failed_open_log("missing.log");
+        expect(failed_open_log.log_file_ && std::strcmp(failed_open_log.log_file_, "missing.log") == 0,
+               "failed filename open retains the allocated name");
+        expect(events == std::vector<std::string>{"open:wt:missing.log"},
+               "failed filename open is not closed");
+    }
+    open_fails = false;
+
+    clear_trace();
+    {
+        Log null_name_log(static_cast<LPCSTR>(nullptr));
+        expect(null_name_log.log_file_ == nullptr && events.empty(),
+               "null filename leaves the file slot null without opening");
+    }
+
     Log log;
     char *name = make_name();
     log.log_file_ = name;
@@ -268,12 +336,12 @@ def test_pinned_log_calls_reach_fprintf_dependency_entry():
 
 
 def test_actual_log_source_formats_and_preserves_open_write_close_gates(tmp_path):
-    body = instrument_class(extract_class())
+    body = instrument_class(extract_class() + "\n" + extract_owner_methods())
     compile_run(tmp_path, body, "actual_log_formatting", expect_success=True)
 
 
 def test_reverting_log_to_fprintf_s_is_detected_by_executed_target(tmp_path):
-    body = instrument_class(extract_class())
+    body = instrument_class(extract_class() + "\n" + extract_owner_methods())
     assert body.count("spy_fprintf(") == 4
     damaged = body.replace("spy_fprintf(", "fprintf_s(")
     result = compile_run(tmp_path, damaged, "damaged_fprintf_s", expect_success=False)

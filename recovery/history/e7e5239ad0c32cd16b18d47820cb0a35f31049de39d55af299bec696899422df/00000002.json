@@ -1,0 +1,20 @@
+{
+  "event_id": "0a14c02d4428ca82ac165f4fbae07f2b053c00f5767ca7a6bf876dec224caf3e",
+  "payload": {
+    "affects": [
+      "entity-cdd4fb519436769ec894002dab660ef5fab1bf515953555a8da89e430ed717e9"
+    ],
+    "author": "coordinator",
+    "discovery_id": "finite-natural-form-no-gain",
+    "evidence": [
+      "The finite actual Release whole-owner18mapping screen changes no verdict or instruction metrics, with no exact gains/losses. The target physical bytes/reference count change, so this is not whole-object equality; outside the named body passes. Host test now uses a safe seven-row missed-write mutant."
+    ],
+    "hypothesis": "An eight-row typed cursor spelling restores the original lobby reset body more faithfully than existing indexed storage.",
+    "kind": "discovery"
+  },
+  "previous_event": "523a5372da50b067abe0d799d36d4233606d72b53f641c975e68a260e1bef01a",
+  "request_id": "finite-natural-form-no-gain",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:alphanet-row-cursors-oct20c"
+}

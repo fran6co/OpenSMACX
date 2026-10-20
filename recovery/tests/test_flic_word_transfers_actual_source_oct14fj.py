@@ -135,12 +135,12 @@ struct Buffer {
 };
 struct Rect { int left, top, right, bottom; };
 struct Flic {
-  uint32_t field_5A4_;
+  uint32_t palette_offset_;
   uint32_t decoded_width_;
   uint32_t origin_x_, origin_y_;
-  uint8_t field_0_;
-  Buffer *buffer2_;
-  Buffer buffer_;
+  uint8_t transparent_index_;
+  Buffer *destination_buffer_;
+  Buffer background_buffer_;
   void *file_;
   Rect update_rect_;
   void decode_delta_flc();
@@ -167,11 +167,11 @@ static int run_trans(uint8_t transparent, uint16_t raw_word,
   if (source_initial) std::memcpy(separate_source, source_initial, 8);
   Buffer destination{16, overlap ? shared + 1 : separate_output};
   Flic f = {};
-  f.field_5A4_ = 0x10;
-  f.field_0_ = transparent;
-  f.buffer2_ = &destination;
-  f.buffer_.stride_ = 16;
-  f.buffer_.bytes_ = overlap ? shared : separate_source;
+  f.palette_offset_ = 0x10;
+  f.transparent_index_ = transparent;
+  f.destination_buffer_ = &destination;
+  f.background_buffer_.stride_ = 16;
+  f.background_buffer_.bytes_ = overlap ? shared : separate_source;
   const uint8_t stream_bytes[] = {
       1, 0, 1, 0, 1, 0xfe,
       static_cast<uint8_t>(raw_word), static_cast<uint8_t>(raw_word >> 8)};
@@ -191,8 +191,8 @@ int main() {
   std::memset(delta_output, 0xa5, sizeof(delta_output));
   Buffer delta_buffer{16, delta_output};
   Flic delta = {};
-  delta.field_5A4_ = 0x10;
-  delta.buffer2_ = &delta_buffer;
+  delta.palette_offset_ = 0x10;
+  delta.destination_buffer_ = &delta_buffer;
   const uint8_t delta_stream_bytes[] = {1, 0, 1, 0, 1, 0xfe, 0xc0, 0xb0};
   Stream delta_stream{delta_stream_bytes, sizeof(delta_stream_bytes), 0};
   active_stream = &delta_stream;

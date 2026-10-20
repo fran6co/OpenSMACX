@@ -1,0 +1,33 @@
+{
+  "event_id": "1aedac414e8f37836a01d7dde3aa7f18a3404a50c4478dfc68c40f82a2f75724",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_console_road_to_actual_source_oct20n.py",
+      "recovery/tests/test_console_set_road_to_original_caption_oct20n.py"
+    ],
+    "evidence": [
+      "Coordinator authorizes four distinct ordinary TU-private static char arrays RoadToNeedTerraformers, RoadToNotInTriad, RoadToNotInOcean and SetRoadToNotInOcean near existing message storage, initialized with corresponding ordinary label strings; replace only four corresponding call arguments. Distinct writable source storage conservatively represents observed identities, not a claim of original identifier/declaration syntax. No other literal use, condition, arithmetic, mapping, signature, global or runtime behavior may change.",
+      "Worker may edit only console_commands.cpp and two listed actual-source tests. Extract real array declarations into host fixtures; cover original calls, text and distinct duplicate identity, original push operands and bytes, damage wrong-identity substitutions. Keep original unsafe/error paths and historical BYTE_EXACT/restoration obligations. No worker VC6/compiler preparation, recording, Git, or object annotation insertion.",
+      "Coordinator must freshly qualify native exact emitted object symbols, CodeView complete extents/initial data, independent pinned spans and strict function references before native object_writer plus guarded publication of v2 bindings. Missing compiler/private-symbol support stays unknown, never false alias or acceptance. Preserve immutable47aee8a54 task baseline and all discoveries."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5077984,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5082560,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "24dcb019e5f50a876ef6a92804f458ef5dec089419c1b38fa3d474c40d82dbb4",
+  "request_id": "console-road-distinct-message-implementation-oct20p",
+  "schema_version": 1,
+  "sequence": 8,
+  "stream": "task:wide-console-source-decks-oct20n"
+}

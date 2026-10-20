@@ -1,0 +1,50 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "47aee8a54fce929741ca80cf835294b1228a3b36",
+  "editable_files": [
+    "src/netdaemon.cpp"
+  ],
+  "evidence": [
+    "Standing user permission for cheaper parallel agents, isolated worktrees and coordinator-reviewed manual C++ integration. Source before this wave is47aee8a54:3292localexact,2738strictpass,5581knownidentities; not semantic/exhaustive/game completion.",
+    "At most two ordinary body-only forms per selected target, up to eight targets in this disjoint TU. Prefer genuinely simpler pretested loops, natural condition/return organization or evidence-backed ordinary aliases; preserve all call/read/write order, unsigned wrap, original invalid/error paths and lifetimes. Read pinned full spans and TRIED history first; skip exhausted/no-quality hypotheses rather than repeating long spelling searches.",
+    "Each native local deck changes ONLY one selected function body. Keep image/flags/ABI/types/signatures/headers/bindings/claims fixed; no assembly, copied machine bytes, address forwarding, forced inline/noinline/export, volatile steering or new casts. Discoveries that require structural/type/caller changes go immediately to coordinator for scope expansion, not discarded or silently normalized.",
+    "Workers author ignored JSON decks/proposals only, no C++/tests/Git/compiler/preparation/recording. Coordinator runs native controlled screens with isolated compiler leases and authorizes actual source/test edits only for reviewed improvements or justified original-fidelity findings. No acceptance inferred from screen status.",
+    "Compute origin entity IDs with native Origin and serialize with native publish_json/read_json, never invent or hand-copy digest suffixes. Use exact pinned current source hashes and unique inside-body anchors. Controls must visibly damage that target body; before/control/candidates may not edit neighbors. Preserve original task/baseline history and all source obligations."
+  ],
+  "intent": "Bounded natural C++ recovery screening across a short-function ownership cohort in src/netdaemon.cpp",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5440352,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5431088,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5442896,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5440432,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5844976,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5431376,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "wide-netdaemon-source-decks-oct20n"
+}

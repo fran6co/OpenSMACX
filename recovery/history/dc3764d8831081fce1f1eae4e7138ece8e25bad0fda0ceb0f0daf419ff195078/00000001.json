@@ -1,0 +1,20 @@
+{
+  "event_id": "b43f0648c359ab551d0ad335cd40de677f05565eaf9a518e3ba81ba2fc99818f",
+  "payload": {
+    "affects": [
+      "entity-7bc1d8bce67f6362c145e7e06f02957d3074af36edda3abe3b5ed193d96ecb07"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "text-open-seek-on-miss-hypothesis-oct20j",
+    "evidence": [
+      "Initial scan interpretation confused the zero local accumulator with the success-block entry. Standalone helper5FE230 returns minus one on total miss; inspect the original branch at5FDB25."
+    ],
+    "hypothesis": "The task basis inferred Text::open should seek zero on total index miss because EDI becomes zero; independent review must qualify the branch before any behavior change.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "text-open-seek-on-miss-hypothesis-oct20j",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:text-source-ownership-oct20j"
+}

@@ -315,6 +315,18 @@ int Text::item_hex() {
     int(__cdecl *const htoi_fn)(LPCSTR) = htoi;
     return htoi_fn(text_item_source(this));
 }
+
+Text::Text(int size) {
+    file_name_[0] = 0;
+    current_pos_ = 0;
+    text_file_ = 0;
+    buffer_get_ = 0;
+    buffer_item_ = 0;
+    buffer_get_ = (LPSTR)mem_get(size);
+    if (buffer_get_) {
+      buffer_item_ = (LPSTR)mem_get(size);
+    }
+}
 // global
 /*
 Purpose: The reader every `.txt` the game parses goes through, and the two
@@ -341,9 +353,9 @@ Status: Complete
 TWO ADDRESSES AND ONE DEFINITION, with no function to hang either on. MSVC
 emits a dynamic initialiser and an atexit thunk for every namespace-scope
 object with a non-trivial constructor and destructor: `??__ETxt` inlines
-`Text::Text(512)` and registers `??__FTxt`, which inlines `~Text()`. Both are
-defined in-class in text.h so that inlining can happen. This line is the only
-source either comes from.
+`Text::Text(512)` and registers `??__FTxt`, which inlines `~Text()`. The
+constructor definition is above `Txt` in this translation unit; the destructor
+remains defined in text.h. This line is the only source either comes from.
 
 TRIED: hand-writing them over `Text *const Txt = (Text *)0x009B7BA0`,
            which is what stood here. It could be scored - 0x005FD400 reached
@@ -529,7 +541,7 @@ Status: Complete
 Text::Text() {
     // NOT AN INITIALISER LIST: one runs in DECLARATION order, which puts the
     // four pointers before `file_name_[0]`, and the image writes the byte at
-    // offset 0 FIRST. Same shape as `Text(int)` in text.h, for the same
+    // offset 0 FIRST. Same shape as `Text(int)` above, for the same
     // reason.
     file_name_[0] = 0;
     current_pos_ = nullptr;
@@ -541,7 +553,7 @@ Text::Text() {
 /*
 Purpose: Construct a Text with `size` bytes of parse buffer.
 // ORIGINAL: 0x005FD880 ??0Text@@QAE@H@Z 0x005FD880-0x005FD8CF BYTE_EXACT
-// body      src/text.h
+// body      src/text.cpp
 // size      79 bytes
 // prototype Text* (__thiscall ??0Text@@QAE@H@Z)(Text* this, int size)
 // callers   1   call targets   1
@@ -549,14 +561,15 @@ Purpose: Construct a Text with `size` bytes of parse buffer.
 // flags     sp_ready;purged_ok
 // calls     0x005D4510
 
-THE BODY IS IN text.h, IN-CLASS, and must stay there: `??__ETxt` at
-0x005FD400 - the dynamic initialiser for `Txt` - inlines it rather than
-calling it, and it can only do that where the definition is visible. The
-marker is here because the CLAIM has to sit somewhere the measurement can
-reach: `decomp.reader` globs `*.cpp` and `*.c`, and `compile_unit` compiles
-a translation unit, so a marker in a header could be read by neither. VC6
-emits `??0Text@@QAE@H@Z` into this unit's object as its own COMDAT anyway,
-which is what the comparison pulls out.
+Historical placement note: this body previously lived in text.h, in-class.
+`??__ETxt` at 0x005FD400 inlines the constructor's stores and allocations
+rather than calling it, so the definition had to be visible where the object
+was constructed. The marker was kept here because the native measurement
+compiles a `*.cpp` translation unit; VC6 also emits `??0Text@@QAE@H@Z` into
+this unit's object as its own COMDAT. The current candidate places the
+identical definition earlier in this translation unit, before `Txt`, so it
+remains visible to that initializer. Its body-location fact is
+coordinator-maintained.
 
 It also used to run its stores in the wrong order: an initialiser list runs
 in DECLARATION order - current_pos_, text_file_, buffer_get_, buffer_item_ -

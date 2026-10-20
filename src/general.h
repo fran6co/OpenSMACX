@@ -174,11 +174,7 @@ MEASURED inline void __cdecl parse_set(int gender, BOOL plurality) {
     PluralityDefault = plurality;
 }
 
-MEASURED inline void __cdecl swap(uint8_t *var1, uint8_t *var2) {
-    *var1 ^= *var2;
-    *var2 ^= *var1;
-    *var1 ^= *var2;
-}
+MEASURED void __cdecl swap(uint8_t *var1, uint8_t *var2);
 
 void __cdecl swap(int *var1, int *var2);
 
@@ -186,27 +182,8 @@ void __cdecl swap(int *var1, int *var2);
 // truncating division and ordered out-parameter writes in general.cpp.
 void __cdecl bitmask(int input, int *offset, int *mask);
 
-MEASURED inline int __cdecl btoi(LPCSTR str) {
-    int result = 0;
-    while (*str == '0' || *str == '1') {
-        result = *str++ - '0' + 2 * result;
-    }
-    return result;
-}
-
-MEASURED inline int __cdecl htoi(LPCSTR str) {
-    int result = 0;
-    while (isxdigit(*str)) {
-        result *= 16;
-        if (isdigit(*str)) {
-            result += *str - '0';
-        } else {
-            result += toupper(*str) - '7';
-        }
-        *str++;
-    }
-    return result;
-}
+MEASURED int __cdecl btoi(LPCSTR str);
+MEASURED int __cdecl htoi(LPCSTR str);
 
 // LEVER: this had a `// ORIGINAL:` marker and was `__forceinline` but defined
 // in general.cpp, so it never satisfies `inline` for callers in OTHER
@@ -214,24 +191,7 @@ MEASURED inline int __cdecl htoi(LPCSTR str) {
 // here (MEASURED inline keeps its own claim measurable) so chas_name,
 // weap_name and arm_name fold it in place, matching the image's inlined
 // four-`strlen`-call body. See general.cpp for the ORIGINAL marker.
-MEASURED inline void __cdecl purge_trailing(LPSTR input) {
-    // IT OVERWRITES EACH TRAILING SPACE, walking back, rather than placing a
-    // single terminator: `mov byte ptr [eax], 0` at 0x006007A1 is inside the
-    // loop. The empty string leaves early - `test eax, eax; je` at 0x0060078E
-    // - and the `p == input` test comes AFTER the store.
-    const size_t length = strlen(input);
-    if (length == 0) {
-        return;
-    }
-    char *end = input + length - 1;
-    while (end >= input && *end == ' ') {
-        *end = 0;
-        if (end == input) {
-            return;
-        }
-        --end;
-    }
-}
+MEASURED void __cdecl purge_trailing(LPSTR input);
 
 // ---------------------------------------------------------------------------
 // THE MOVIE CODEC FAMILY (0x005CE340..0x005D44FC), homed 2026-09-06.

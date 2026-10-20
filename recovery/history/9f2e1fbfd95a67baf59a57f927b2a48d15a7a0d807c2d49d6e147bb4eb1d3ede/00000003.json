@@ -1,0 +1,19 @@
+{
+  "event_id": "d0e3e26da0ca4530d1a4e9ba11a3ca507f690f0e68e4f6de950182162589a4ca",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_prefwin_volume_contract_oct13h.py"
+    ],
+    "evidence": [
+      "Pinned491B17..491B2F musicenable storesGamePreferences9A6490|800 BEFOREload_music4457E0; original491B82..491B99 mainoff clears liveGamePreferencesC00 andGameMorePreferences4000 afterWaveDevice::disable. Currentbodyincorrectlychangespendingwindowfields. Existingvolumecontractassertions encodewrongdestination; correctfrompin withobservingload/disablecallbackmutants andnonaliasedpending/livewords. No changeambiencebodyororiginalflags/claims/baseline."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "e495179219643b65c6a5cad5b3aa8a74eae5d598301e77a9569bfdeea3b56567",
+  "request_id": "prefwin-live-audio-state-control-scope-oct20e",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:prefwin-initial-visibility-oct20e"
+}

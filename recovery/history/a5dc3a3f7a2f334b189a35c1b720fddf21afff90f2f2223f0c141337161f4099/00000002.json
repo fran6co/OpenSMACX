@@ -1,0 +1,24 @@
+{
+  "event_id": "b95411ebda03c10d05bdf8f07f844c5e020dca4c3c6c0917014ce8a5bda217f4",
+  "payload": {
+    "affects": [
+      "entity-100edd3e7bccfbbe3c5de7aa4b727a161bddd9397e9a2c01bf20570a18bbe5a4",
+      "entity-c07f1ce86a5f653e22dee09a2df5ee8f3f8ff0ebb4415063e76507b1d408d578",
+      "entity-c3ab6505cda74476379be71d572ca1adfe37784f992bf5d8728e321d44f07b68",
+      "entity-dc95d99ad63b88855aedf64a23684587c21c142baa07af943edfd35655cf6c51"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "gameio-collateral-c2-output-obligation-oct20e",
+    "evidence": [
+      "screen-run3 fullbaseline/replica equalityPASS; game_ioBYTE_EXACT224/224 and strictcheckbytes/boundary/referencesPASS; allTUmeasurementsgainonly5A6890withzeroexactlosses. net_upkeep4bytes reorderlocalreloads; end_of_game2932/3984byteschanged1132->1131instructions, externalreference-targetmultisetunchangedbutnotanequivalenceproof; net_control_turn/control_turnstillcallsameend_of_game symbol/offset withchangedsectionidentity. save_gameunchanged. IndependentCOFFreviewdoesnotwaiveanychange orprovecompiler-cause/runtime.",
+      "Authorize coordinator review of all affected outputs and preservation ofthisdiscovery; no Sourceedits outsidegame_io, noflags/headers/TUchanges, noautomaticadmission, no baseline reset. Fullapplicationcandidate/destinationbuildandremeasurestillrequired beforemanualintegrationdecision. Body-onlyresidual remainsFAIL; do notaddbodyprojectionstoeraseit."
+    ],
+    "hypothesis": "Correct original six-field I/O now matches224/224 with strict references PASS, but unchanged sibling game.cpp functions acquire unresolved compiler-output differences; preserve these outside-body obligations rather than passing or widening the one-body residual.",
+    "kind": "discovery"
+  },
+  "previous_event": "993b749562897479d96b0b3cae2a96e17546f357b5ff3ba663231eefb62f53e2",
+  "request_id": "gameio-collateral-c2-output-obligation-oct20e",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:gameio-six-word-transfer-oct20e"
+}

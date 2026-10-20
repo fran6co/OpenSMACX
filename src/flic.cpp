@@ -91,9 +91,9 @@ Flic::Flic() {
     decoder_flags_ = 0;
     file_ = nullptr;
     frame_ = 0;
-    buffer2_ = nullptr;
-    field_0_ = 0;
-    field_5A4_ = 0;
+    destination_buffer_ = nullptr;
+    transparent_index_ = 0;
+    palette_offset_ = 0;
     decoded_width_ = 0;
     decoded_height_ = 0;
 }
@@ -203,9 +203,9 @@ void Flic::close() {
     origin_y_ = 0;
     decoder_flags_ = 0;
     frame_ = 0;
-    buffer2_ = nullptr;
-    field_0_ = 0;
-    field_5A4_ = 0;
+    destination_buffer_ = nullptr;
+    transparent_index_ = 0;
+    palette_offset_ = 0;
     decoded_width_ = 0;
     decoded_height_ = 0;
     if (file) {
@@ -313,9 +313,9 @@ int Flic::init(Buffer *buffer, char *file_name, int x, int y,
     origin_y_ = 0;
     decoder_flags_ = 0;
     frame_ = 0;
-    buffer2_ = nullptr;
-    field_0_ = 0;
-    field_5A4_ = 0;
+    destination_buffer_ = nullptr;
+    transparent_index_ = 0;
+    palette_offset_ = 0;
     decoded_width_ = 0;
     decoded_height_ = 0;
     if (file) {
@@ -331,7 +331,7 @@ int Flic::init(Buffer *buffer, char *file_name, int x, int y,
 
     origin_x_ = x;
     origin_y_ = y;
-    buffer2_ = buffer;
+    destination_buffer_ = buffer;
 
     file_ = env_open(file_name, "rb");
     if (file_ == nullptr) {
@@ -358,10 +358,10 @@ int Flic::init(Buffer *buffer, char *file_name, int x, int y,
 
     fseek(file_, header_.first_frame_, SEEK_SET);
 
-    buffer_.init(decoded_width_, decoded_height_, 0, nullptr);
-    buffer_.sync_to_palette(PaletteCurrent);
+    background_buffer_.init(decoded_width_, decoded_height_, 0, nullptr);
+    background_buffer_.sync_to_palette(PaletteCurrent);
 
-    buffer->copy(&buffer_, origin_x_, origin_y_, 0, 0, decoded_width_,
+    buffer->copy(&background_buffer_, origin_x_, origin_y_, 0, 0, decoded_width_,
                  decoded_height_);
 
     if (transparent) {
@@ -390,7 +390,7 @@ int Flic::decode_frame(int x, int y) {
     if (!(decoder_flags_ & 1)) {
         return 7;
     }
-    if (buffer2_->get_data() == 0) {
+    if (destination_buffer_->get_data() == 0) {
         return 0x10;
     }
     origin_x_ = x;
@@ -410,6 +410,7 @@ Purpose: Decode the next frame in transparent mode - identical to
          decode_frame except the transparent bit is set for the duration
          of the decode and cleared again on every exit.
 // ORIGINAL: 0x0062A120 ?UNK1@Flic@@QAEHHH@Z 0x0062A120-0x0062A202
+// symbol    ?decode_frame_with_transparency@Flic@@QAEHHH@Z
 // size      226 bytes
 // prototype int (__thiscall ?UNK1@Flic@@QAEHHH@Z)(Flic* this, int, int)
 // callers   0   call targets   4
@@ -420,7 +421,7 @@ Return Value: 0 frame decoded; 7 when no file is open; 0x10 when the
               destination buffer has no pixel bits
 Status: Complete
 */
-int Flic::UNK1(int x, int y) {
+int Flic::decode_frame_with_transparency(int x, int y) {
     // Plain member read-modify-writes match the image's entry exactly
     // (0x0062A120): the cached `or edx,2` stays a dword op, the bit-1 test
     // goes through a copy (`mov eax,edx; test al,1`), and the
@@ -444,7 +445,7 @@ int Flic::UNK1(int x, int y) {
         decoder_flags_ &= ~2;
         return 7;
     }
-    if (buffer2_->get_data() == 0) {
+    if (destination_buffer_->get_data() == 0) {
         decoder_flags_ &= ~2;
         return 0x10;
     }
@@ -467,6 +468,7 @@ Purpose: Step over the next frame without decoding it - seek past the
          final frame. The wrap branch deliberately leaves the frame
          counter alone: the original returns without resetting it.
 // ORIGINAL: 0x0062A210 ?UNK2@Flic@@QAEHXZ 0x0062A210-0x0062A27B FILE BYTE_EXACT
+// symbol    ?skip_frame@Flic@@QAEHXZ
 // LEVER: fseek scaffolds nullary (not in declfix CRT_SIGNATURES); take &fseek and cast to the real function-pointer type instead of redeclaring
 // size      107 bytes
 // prototype int (__thiscall ?UNK2@Flic@@QAEHXZ)(Flic* this)
@@ -477,7 +479,7 @@ Purpose: Step over the next frame without decoding it - seek past the
 Return Value: 0 frame skipped; 7 when no file is open
 Status: Complete
 */
-int Flic::UNK2() {
+int Flic::skip_frame() {
     if (!(decoder_flags_ & 1)) {
         return 7;
     }
@@ -520,6 +522,7 @@ Purpose: Advance the animation to an arbitrary frame. When the target is
          7 and 0xC), and finally the remembered position is re-seeked and
          frames are decoded forward until the target is reached.
 // ORIGINAL: 0x0062A2C0 ?UNK3@Flic@@QAEHH@Z 0x0062A2C0-0x0062A4FA
+// symbol    ?advance_to_frame@Flic@@QAEHH@Z
 // size      570 bytes
 // prototype int (__thiscall ?UNK3@Flic@@QAEHH@Z)(Flic* this, int)
 // callers   0   call targets   5
@@ -554,7 +557,7 @@ Purpose: Advance the animation to an arbitrary frame. When the target is
 Return Value: 0
 Status: Complete
 */
-int Flic::UNK3(int target_frame) {
+int Flic::advance_to_frame(int target_frame) {
     int target = target_frame % header_.frames_;
 
     if (target < static_cast<int>(frame_) && (decoder_flags_ & 1)) {
@@ -620,7 +623,7 @@ int Flic::UNK3(int target_frame) {
             int y = origin_y_;
             int x = origin_x_;
             if (decoder_flags_ & 1) {
-                if (buffer2_->get_data() != 0) {
+                if (destination_buffer_->get_data() != 0) {
                     origin_x_ = x;
                     origin_y_ = y;
                     if (frame_ == header_.frames_) {
@@ -685,9 +688,9 @@ Status: Complete
 */
 void Flic::decode_byte_run() {
     void *scratch = nullptr;
-    uint8_t *dst = buffer2_->get_data(origin_x_, origin_y_);
-    if (field_5A4_ != 0) {
-        scratch = mem_get(buffer2_->stride_);
+    uint8_t *dst = destination_buffer_->get_data(origin_x_, origin_y_);
+    if (palette_offset_ != 0) {
+        scratch = mem_get(destination_buffer_->stride_);
         if (scratch == nullptr) {
             return;
         }
@@ -713,27 +716,27 @@ void Flic::decode_byte_run() {
             if (count > 0) {
                 uint8_t value;
                 fread(&value, 1, 1, file_);
-                if (field_5A4_ != 0) {
+                if (palette_offset_ != 0) {
                     value = static_cast<uint8_t>(
-                        value + static_cast<uint8_t>(field_5A4_));
+                        value + static_cast<uint8_t>(palette_offset_));
                 }
                 memset(row_dst, value, static_cast<uint8_t>(count));
             } else {
                 count = static_cast<int8_t>(abs(count));
-                if (field_5A4_ == 0) {
+                if (palette_offset_ == 0) {
                     fread(row_dst, 1, count, file_);
                 } else {
                     fread(scratch, 1, count, file_);
                     uint8_t *src = static_cast<uint8_t *>(scratch);
                     for (int i = 0; i < static_cast<uint8_t>(count); i++) {
-                        row_dst[i] = static_cast<uint8_t>(src[i] + field_5A4_);
+                        row_dst[i] = static_cast<uint8_t>(src[i] + palette_offset_);
                     }
                 }
             }
             row_dst += static_cast<uint8_t>(count);
             remaining -= static_cast<uint8_t>(count);
         }
-        dst += buffer2_->stride_;
+        dst += destination_buffer_->stride_;
     }
 
     if (scratch != nullptr) {
@@ -799,13 +802,13 @@ void Flic::decode_delta_flc() {
     int first_row;
     uint8_t skip_count;
 
-    if (field_5A4_ != 0) {
-        work_buf = mem_get(buffer2_->stride_);
+    if (palette_offset_ != 0) {
+        work_buf = mem_get(destination_buffer_->stride_);
         if (work_buf == nullptr) {
             return;
         }
     }
-    row = buffer2_->get_data(origin_x_, origin_y_);
+    row = destination_buffer_->get_data(origin_x_, origin_y_);
     fread(&num_lines, 2, 1, file_);
     min_touched = 0xffffffff;
     first_row = -1;
@@ -817,24 +820,24 @@ void Flic::decode_delta_flc() {
             fread(&line_hdr, 2, 1, file_);
             while ((line_hdr & 0xc000) == 0xc000) {
                 int skip_lines = abs(static_cast<int16_t>(line_hdr));
-                row += buffer2_->stride_ * skip_lines;
+                row += destination_buffer_->stride_ * skip_lines;
                 fread(&line_hdr, 2, 1, file_);
             }
             if (line_index == 0) {
-                uint8_t *base = buffer2_->get_data(origin_x_, origin_y_);
+                uint8_t *base = destination_buffer_->get_data(origin_x_, origin_y_);
                 first_row = static_cast<int>(row - base) /
-                            static_cast<int>(buffer2_->stride_);
+                            static_cast<int>(destination_buffer_->stride_);
             }
             if (line_index == static_cast<int>(num_lines) - 1) {
-                uint8_t *base = buffer2_->get_data(origin_x_, origin_y_);
+                uint8_t *base = destination_buffer_->get_data(origin_x_, origin_y_);
                 last_row = static_cast<int>(row - base) /
-                           static_cast<int>(buffer2_->stride_);
+                           static_cast<int>(destination_buffer_->stride_);
             }
             if (line_hdr & 0x8000) {
                 max_touched = decoded_width_;
                 row[max_touched - 1] =
                     static_cast<uint8_t>(static_cast<int8_t>(line_hdr) +
-                                         static_cast<int8_t>(field_5A4_));
+                                         static_cast<int8_t>(palette_offset_));
                 fread(&line_hdr, 2, 1, file_);
             }
             packet_index = 0;
@@ -849,7 +852,7 @@ void Flic::decode_delta_flc() {
                     }
                     fread(&run_count, 1, 1, file_);
                     if (static_cast<int8_t>(run_count) > 0) {
-                        if (field_5A4_ == 0) {
+                        if (palette_offset_ == 0) {
                             fread(dst, 2, run_count, file_);
                             dst += run_count * 2;
                         } else {
@@ -857,7 +860,7 @@ void Flic::decode_delta_flc() {
                             uint8_t *src = static_cast<uint8_t *>(work_buf);
                             for (int i = 0; i < run_count * 2; i++) {
                                 dst[i] = static_cast<uint8_t>(
-                                    src[i] + field_5A4_);
+                                    src[i] + palette_offset_);
                             }
                             dst += run_count * 2;
                         }
@@ -868,9 +871,9 @@ void Flic::decode_delta_flc() {
                         word = static_cast<uint16_t>(
                             (static_cast<uint8_t>(
                                  static_cast<uint8_t>(word >> 8) +
-                                 field_5A4_)
+                                 palette_offset_)
                              << 8) +
-                            static_cast<uint8_t>(word + field_5A4_));
+                            static_cast<uint8_t>(word + palette_offset_));
                         for (int i = 0; i < run_count; i++) {
                             std::memcpy(dst, &word, sizeof(word));
                             dst += 2;
@@ -882,7 +885,7 @@ void Flic::decode_delta_flc() {
             if (max_touched < static_cast<uint32_t>(dst - row)) {
                 max_touched = dst - row;
             }
-            row += buffer2_->stride_;
+            row += destination_buffer_->stride_;
             line_index++;
         } while (line_index < static_cast<int>(num_lines));
     }
@@ -987,7 +990,7 @@ void Flic::fill() {
     rect->top = y;
     rect->right = x + width;
     rect->bottom = y + height;
-    buffer2_->fill(origin_x_, origin_y_, decoded_width_, decoded_height_, 0);
+    destination_buffer_->fill(origin_x_, origin_y_, decoded_width_, decoded_height_, 0);
 }
 
 /*
@@ -1014,8 +1017,8 @@ Status: Complete
 */
 void Flic::decode_fli_copy() {
     void *scratch = nullptr;
-    if (field_5A4_ != 0) {
-        scratch = mem_get(buffer2_->stride_);
+    if (palette_offset_ != 0) {
+        scratch = mem_get(destination_buffer_->stride_);
         if (scratch == nullptr) {
             return;
         }
@@ -1031,19 +1034,19 @@ void Flic::decode_fli_copy() {
     rect->right = x + width;
     rect->bottom = y + height;
 
-    uint8_t *dst = buffer2_->get_data(origin_x_, origin_y_);
+    uint8_t *dst = destination_buffer_->get_data(origin_x_, origin_y_);
 
     for (int row = 0; row < static_cast<int>(decoded_height_); row++) {
-        if (field_5A4_ == 0) {
+        if (palette_offset_ == 0) {
             fread(dst, 1, decoded_width_, file_);
         } else {
             fread(scratch, 1, decoded_width_, file_);
             uint8_t *src = static_cast<uint8_t *>(scratch);
             for (int i = 0; i < static_cast<int>(decoded_width_); i++) {
-                dst[i] = static_cast<uint8_t>(src[i] + field_5A4_);
+                dst[i] = static_cast<uint8_t>(src[i] + palette_offset_);
             }
         }
-        dst += buffer2_->stride_;
+        dst += destination_buffer_->stride_;
     }
 
     if (scratch != nullptr) {
@@ -1158,8 +1161,8 @@ void Flic::decode_chunk(DataChunk *chunk) {
             rect->top = y;
             rect->right = x + width;
             rect->bottom = y + height;
-            if (field_0_ != 0) {
-                buffer_.copy(buffer2_, 0, 0, origin_x_, origin_y_,
+            if (transparent_index_ != 0) {
+                background_buffer_.copy(destination_buffer_, 0, 0, origin_x_, origin_y_,
                              decoded_width_, decoded_height_);
             }
             break;
@@ -1195,7 +1198,7 @@ skip:
             rect->top = y;
             rect->right = x + width;
             rect->bottom = y + height;
-            buffer2_->fill(origin_x_, origin_y_, decoded_width_,
+            destination_buffer_->fill(origin_x_, origin_y_, decoded_width_,
                            decoded_height_, 0);
             break;
         }
@@ -1266,8 +1269,8 @@ Status: Complete
 */
 void Flic::decode_byte_run_trans() {
     void *scratch = nullptr;
-    if (field_5A4_ != 0) {
-        scratch = mem_get(buffer2_->stride_);
+    if (palette_offset_ != 0) {
+        scratch = mem_get(destination_buffer_->stride_);
         if (scratch == nullptr) {
             return;
         }
@@ -1283,8 +1286,8 @@ void Flic::decode_byte_run_trans() {
     rect->right = x + width;
     rect->bottom = y + height;
 
-    uint8_t *row_dst = buffer2_->get_data(origin_x_, origin_y_);
-    uint8_t *row_src = static_cast<uint8_t *>(buffer_.get_data());
+    uint8_t *row_dst = destination_buffer_->get_data(origin_x_, origin_y_);
+    uint8_t *row_src = static_cast<uint8_t *>(background_buffer_.get_data());
 
     uint8_t value;
     int row = 0;
@@ -1300,8 +1303,8 @@ void Flic::decode_byte_run_trans() {
                 if (static_cast<int8_t>(count) > 0) {
                     fread(&value, 1, 1, file_);
                     value = static_cast<uint8_t>(
-                        value + static_cast<uint8_t>(field_5A4_));
-                    if (value != field_0_) {
+                        value + static_cast<uint8_t>(palette_offset_));
+                    if (value != transparent_index_) {
                         memset(dst, value, count & 0xff);
                     } else {
                         memcpy(dst, src, count & 0xff);
@@ -1317,8 +1320,8 @@ void Flic::decode_byte_run_trans() {
                             fread(&value, 1, 1, file_);
                             value = static_cast<uint8_t>(
                                 value +
-                                static_cast<uint8_t>(field_5A4_));
-                            if (value != field_0_) {
+                                static_cast<uint8_t>(palette_offset_));
+                            if (value != transparent_index_) {
                                 *dst = value;
                             } else {
                                 *dst = *src;
@@ -1330,8 +1333,8 @@ void Flic::decode_byte_run_trans() {
                     }
                 }
             }
-            row_dst += buffer2_->stride_;
-            row_src += buffer_.stride_;
+            row_dst += destination_buffer_->stride_;
+            row_src += background_buffer_.stride_;
             row++;
         } while (row < static_cast<int>(decoded_height_));
     }
@@ -1383,8 +1386,8 @@ void Flic::decode_delta_flc_trans() {
     uint8_t value;
     uint8_t run;
     uint16_t opcode;
-    uint8_t *dst = buffer2_->get_data(origin_x_, origin_y_);
-    uint8_t *src = static_cast<uint8_t *>(buffer_.get_data());
+    uint8_t *dst = destination_buffer_->get_data(origin_x_, origin_y_);
+    uint8_t *src = static_cast<uint8_t *>(background_buffer_.get_data());
     int row;
     uint16_t word;
     int packet;
@@ -1406,24 +1409,24 @@ void Flic::decode_delta_flc_trans() {
                 }
                 int skip = abs(static_cast<int16_t>(opcode));
                 opcode = static_cast<uint16_t>(skip);
-                dst += buffer2_->stride_ * (skip & 0xffff);
-                src += buffer_.stride_ * (skip & 0xffff);
+                dst += destination_buffer_->stride_ * (skip & 0xffff);
+                src += background_buffer_.stride_ * (skip & 0xffff);
             } while (true);
             if (row == 0) {
-                uint8_t *base = buffer2_->get_data(origin_x_, origin_y_);
+                uint8_t *base = destination_buffer_->get_data(origin_x_, origin_y_);
                 min_y = static_cast<int>(dst - base) /
-                        static_cast<int>(buffer2_->stride_);
+                        static_cast<int>(destination_buffer_->stride_);
             }
             if (row == static_cast<int>(line_count) - 1) {
-                uint8_t *base = buffer2_->get_data(origin_x_, origin_y_);
+                uint8_t *base = destination_buffer_->get_data(origin_x_, origin_y_);
                 max_y = static_cast<int>(dst - base) /
-                        static_cast<int>(buffer2_->stride_);
+                        static_cast<int>(destination_buffer_->stride_);
             }
             if (opcode & 0x8000) {
                 uint16_t last = static_cast<uint16_t>(
-                    static_cast<uint8_t>(field_5A4_ +
+                    static_cast<uint8_t>(palette_offset_ +
                                          static_cast<int8_t>(opcode)));
-                if (last != static_cast<uint16_t>(field_0_)) {
+                if (last != static_cast<uint16_t>(transparent_index_)) {
                     dst[decoded_width_ - 1] = static_cast<uint8_t>(last);
                 } else {
                     dst[decoded_width_ - 1] = src[decoded_width_ - 1];
@@ -1449,8 +1452,8 @@ void Flic::decode_delta_flc_trans() {
                             do {
                                 fread(&value, 1, 1, file_);
                                 value = static_cast<uint8_t>(
-                                    value + field_5A4_);
-                                if (field_0_ != value) {
+                                    value + palette_offset_);
+                                if (transparent_index_ != value) {
                                     *out = value;
                                 } else {
                                     *out = *src;
@@ -1467,12 +1470,12 @@ void Flic::decode_delta_flc_trans() {
                         word = static_cast<uint16_t>(
                             (static_cast<uint8_t>(
                                  static_cast<uint8_t>(word >> 8) +
-                                 field_5A4_)
+                                 palette_offset_)
                              << 8) +
-                            static_cast<uint8_t>(word + field_5A4_));
-                        if (static_cast<uint8_t>(word) == field_0_) {
+                            static_cast<uint8_t>(word + palette_offset_));
+                        if (static_cast<uint8_t>(word) == transparent_index_) {
                             if (static_cast<uint8_t>(word >> 8) ==
-                                field_0_) {
+                                transparent_index_) {
                                 for (int i = 0; i < run; i++) {
                                     uint16_t pixel;
                                     std::memcpy(&pixel, src, sizeof(pixel));
@@ -1490,7 +1493,7 @@ void Flic::decode_delta_flc_trans() {
                                 }
                             }
                         } else if (static_cast<uint8_t>(word >> 8) ==
-                                   field_0_) {
+                                   transparent_index_) {
                             for (int i = 0; i < run; i++) {
                                 out[0] = src[0];
                                 out[1] = static_cast<uint8_t>(word);
@@ -1510,8 +1513,8 @@ void Flic::decode_delta_flc_trans() {
             if (max_x < static_cast<uint32_t>(out - dst)) {
                 max_x = out - dst;
             }
-            dst += buffer2_->stride_;
-            src += buffer_.stride_;
+            dst += destination_buffer_->stride_;
+            src += background_buffer_.stride_;
             row++;
         } while (row < static_cast<int>(line_count));
     }
@@ -1544,8 +1547,8 @@ void Flic::decode_black_trans() {
     rect->top = y;
     rect->right = x + width;
     rect->bottom = y + height;
-    if (field_0_ != 0) {
-        buffer_.copy(buffer2_, 0, 0, origin_x_, origin_y_, decoded_width_,
+    if (transparent_index_ != 0) {
+        background_buffer_.copy(destination_buffer_, 0, 0, origin_x_, origin_y_, decoded_width_,
                      decoded_height_);
     }
 }
@@ -1576,15 +1579,15 @@ void Flic::decode_fli_copy_trans() {
     rect->right = x + width;
     rect->bottom = y + height;
 
-    uint8_t *dst = buffer2_->get_data(origin_x_, origin_y_);
-    uint8_t *src = static_cast<uint8_t *>(buffer_.get_data());
+    uint8_t *dst = destination_buffer_->get_data(origin_x_, origin_y_);
+    uint8_t *src = static_cast<uint8_t *>(background_buffer_.get_data());
 
     for (int row = 0; row < static_cast<int>(decoded_height_); row++) {
         for (int i = 0; i < static_cast<int>(decoded_width_); i++) {
             uint8_t value;
             fread(&value, 1, 1, file_);
-            value = static_cast<uint8_t>(value + field_5A4_);
-            if (value != field_0_) {
+            value = static_cast<uint8_t>(value + palette_offset_);
+            if (value != transparent_index_) {
                 *dst = value;
             } else {
                 *dst = *src;
@@ -1592,8 +1595,8 @@ void Flic::decode_fli_copy_trans() {
             dst++;
             src++;
         }
-        dst += buffer2_->stride_ - decoded_width_;
-        src += buffer_.stride_ - decoded_width_;
+        dst += destination_buffer_->stride_ - decoded_width_;
+        src += background_buffer_.stride_ - decoded_width_;
     }
 }
 
@@ -1602,6 +1605,7 @@ Purpose: Copy the rectangle the animation occupies on the destination
          buffer back into the embedded scratch buffer - the counterpart
          of the transparent-mode restore the black-chunk decoder performs.
 // ORIGINAL: 0x0062B780 ?UNK9@Flic@@QAEXXZ 0x0062B780-0x0062B7BF FILE BYTE_EXACT
+// symbol    ?capture_background@Flic@@QAEXXZ
 // size      63 bytes
 // prototype void (__thiscall ?UNK9@Flic@@QAEXXZ)(Flic* this)
 // callers   0   call targets   1
@@ -1611,9 +1615,9 @@ Purpose: Copy the rectangle the animation occupies on the destination
 Return Value: n/a
 Status: Complete
 */
-void Flic::UNK9() {
-    if (buffer2_ && (decoder_flags_ & 1)) {
-        buffer2_->copy(&buffer_, origin_x_, origin_y_, 0, 0, decoded_width_,
+void Flic::capture_background() {
+    if (destination_buffer_ && (decoder_flags_ & 1)) {
+        destination_buffer_->copy(&background_buffer_, origin_x_, origin_y_, 0, 0, decoded_width_,
                        decoded_height_);
     }
 }

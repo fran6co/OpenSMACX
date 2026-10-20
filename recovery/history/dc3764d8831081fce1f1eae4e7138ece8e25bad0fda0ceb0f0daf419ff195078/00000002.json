@@ -1,0 +1,19 @@
+{
+  "event_id": "254f3a7a33283be7516614b22c92ba893c3837112591d96bb46bdb74f2facb9d",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "text-open-seek-on-miss-hypothesis-oct20j",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Independent map reviewer and original researcher rechecked pinned instructions:5FDB25 is an unconditional jump to parser5FDB53, bypassing success5FDB27 log/fseek/is_file_open block. All zero-count/all-miss paths do NOT seek, log or set the retry flag. The prior seek-zero inference is false and is not implementation authority.",
+      "Current helper minus-one guard has equivalent no-hit side effects. Preserve that behavior. Recovering the own scan may preserve original direct TextIndex::search_index call boundaries but must retain a separate hit condition/negative sentinel. Extend actual-source controls for four slots, empty counts, all misses and later-index hits; no intentional behavior fix.",
+      "This correction narrows no subjects, changes no task baseline or source claim, and supersedes only the mistaken behavioral inference in the immutable initial task basis."
+    ]
+  },
+  "previous_event": "b43f0648c359ab551d0ad335cd40de677f05565eaf9a518e3ba81ba2fc99818f",
+  "request_id": "reject-text-open-seek-on-miss-oct20j",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:text-source-ownership-oct20j"
+}

@@ -1,0 +1,21 @@
+{
+  "event_id": "29e81d6524b9936208760165c6ee7c843e89fec943a4a7f463894a8970c371be",
+  "payload": {
+    "affects": [
+      "entity-0e09e23e6c3caef1e2ce6ac7c2aa81517116121764f91566f2e99823f9f5eb74"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "game-generators-live-count-finding-oct20l",
+    "evidence": [
+      "Independent pinned instruction review: 5247E3 reads BaseCount9A64CC for positive entry guard; 524848 reloads it after body, 52484D increments index, 524854 compares and 524856 signed JL repeats. Preserve signed population byte, facility call, faction and threshold ordering, output initialization and original invalid-input behavior.",
+      "The in-body has_fac_built call provides a distinguishing host fixture for count growth/shrinkage. Restore the initial-positive-guard do/while form with live tail read, regardless of lower instruction similarity than alternate while/for forms. This is original behavior restoration, not an intentional bug fix."
+    ],
+    "hypothesis": "The original generators loop reloads the mutable signed base count after each iteration; current source snapshots it, losing original live-bound behavior.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "game-generators-live-count-finding-oct20l",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:game-idiom-deck-oct20l"
+}

@@ -350,7 +350,7 @@ struct Base {
     int production_id_last;
     // RECOVERY_MEMBER: v1 Base eco_damage 0x48 0x004E80B0
     int eco_damage;
-    uint32_t queue_size;
+    int queue_size;
     // RECOVERY_MEMBER: v1 Base queue_production_id 0x50 0x004E80B0
     int queue_production_id[10]; // items in the production queue
     // Original 0x004E6C7A tests neighboring bases' worked-square bits here.
