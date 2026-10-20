@@ -1,0 +1,220 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "ed40b529956b8f0fb9a8fdd9b6eace872a68b111",
+  "editable_files": [
+    "src/text.cpp",
+    "src/textindex.cpp",
+    "src/text.h",
+    "src/textindex.h",
+    "recovery/tests/test_text_open_original_calls_oct19.py",
+    "recovery/tests/test_text_generated_lifetime_oct11.py",
+    "recovery/tests/test_text_owner_boundaries_oct20.py"
+  ],
+  "evidence": [
+    "Pinned Text::open5FDA00 contains a four-index scan calling TextIndex::search_index at5FDB0A, resetting negative results to zero before its seek. Standalone text_search_index5FE230 returns minus one on total miss. Current open incorrectly calls that helper: recover the original zero-fallback scan while preserving the standalone helper semantics. Move standalone helper to textindex.cpp. Separately move only Text(int)5FD880 before Text Txt(512) in text.cpp: pinned StringList::load608980 directly calls constructor6089BB, while original startup5FD400 inlines its stores and two allocations. Preserve default constructor/destructor and generated startup/fini identities; earlier failed out-of-line placement is contrary evidence to retain, not a reason to ignore this fresh placement hypothesis.",
+    "Coordinator authorizes isolated parallel implementation and independently reviewed manual integration. Older tasks/baselines, original identities, claims, discoveries and restoration obligations remain intact. No claim demotion or baseline replacement.",
+    "Preserve original quirks, allocation/lifetime/call order and load-bearing annotations. No bug fixes, flags/ABI changes, forced inline/noinline, linker steering, copied code or artificial address calls. Genuine source visibility is the investigated structural change. Preserve MEASURED declaration linkage; do not invent exports or literal bindings.",
+    "Only named source/tests are editable. Expand scope centrally on evidence before touching a dependent owner. Coordinator alone performs Git, recipe preparation, compiler leasing and native source body-fact publication after freeze. Actual-source behavioral/mutant controls and pinned call evidence precede native compiler observations. No native automatic acceptance claimed."
+  ],
+  "intent": "Recover faithful original source-owner boundaries and semantics for text",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5787936,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6024352,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6280192,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6280288,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6280384,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6280400,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6280416,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6280464,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6280496,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6280528,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6280560,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6280672,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6280816,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6280912,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6281024,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6281120,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6281216,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6281312,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6281344,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6281424,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6281584,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6281680,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6281728,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6282256,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6282368,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6282512,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6282624,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6282736,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6282848,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6282960,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6283072,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6283104,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6283136,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6283552,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6283760,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6283824,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6283888,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6326656,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6327296,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "text-source-ownership-oct20j"
+}
