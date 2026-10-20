@@ -1,0 +1,25 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "98bb905b845b0da0ce8ce940539c93b16dbcf4e6",
+  "editable_files": [
+    "src/prodpicker.cpp",
+    "recovery/tests/test_prodpicker_live_redraw_oct20r.py"
+  ],
+  "evidence": [
+    "Standing user direction authorizes original-faithful compiling recovery, not safety fixes. Root independently inspected493C74 initial cursor and493C90/493C96 live count/first reloads after direct draw_item493C8B, then signed loop comparison493C9F/A1. Current source freezes both bounds before drawing. Normal gameplay mutation is not established, but the original reload contract must be retained.",
+    "Authorize only replacing frozen first/end in ProdPicker::on_redraw with a retained initial cursor and fresh field_A77C_+field_A82C_ bound after every draw_item(item,0). Ordinary source int for-loop is preferred; no bounds/safety checks or normalization, no restarting cursor on bound changes, no other member/function/signature/annotation/claim/flag edits. Preserve original target32bit signed ADD/INC and comparisons; host controls avoid undefined overflow and do not establish extreme target behavior.",
+    "Add actual complete production-body host controls for stable and empty ranges, negative counts, callback-grown/shrunk bounds and changed first-visible values, retaining item cursor and exact draw order/update0. Meaningful frozen-bound, restarted-cursor and removed-call mutants must fail without infinite/unbounded execution. Independently anchor pinned loads if image is present, no proprietary tracked bytes.",
+    "Worker uses apply_patch and uv host tests only in isolated checkout; no Git/native compiler/preparation/recording or annotation edits. Coordinator independently reviews source/original, requires full build/link/native continuity, scoped matching and outside-body physical comparison, then destination recheck. Current function is nonexact; retain all historical obligations, no demotion or full-game/autonomous acceptance inference."
+  ],
+  "intent": "Restore original ProdPicker redraw bound reloads after drawing callbacks.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4799600,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "prodpicker-live-redraw-oct20r"
+}
