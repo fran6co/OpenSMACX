@@ -2752,9 +2752,13 @@ void DesignWin::suggest_abil(int ability) {
     }
 
     const Player &local = Players[ConsoleGlobal.faction_id_];
-    for (int i = 0; i < local.faction_bonus_count && i < 8; ++i) {
-        if (local.faction_bonus_id[i] == 15
-            && local.faction_bonus_val1[i] == ability_id) {
+    const int *const bonus_ids = local.faction_bonus_id;
+    const int *const bonus_values = local.faction_bonus_val1;
+    // The original walks 0x29 dwords from both member-array starts instead
+    // of honoring faction_bonus_count or the declared eight-entry extents.
+    // Keep its stale/overrun reads; this is an original access quirk.
+    for (int i = 0; i < 0x29; ++i) {
+        if (bonus_ids[i] == 15 && bonus_values[i] == ability_id) {
             return;
         }
     }
