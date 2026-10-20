@@ -116,7 +116,7 @@ def test_extracted_listbox_scroll_render_and_dialog_bridges(tmp_path, compiler_n
         assert bodies.count(draw_body) == 1
         return bodies.replace(draw_body, mutated, 1)
 
-    # Each negative control changes only one original-supported geometry rule;
+    # Each negative control changes one original-supported rendering rule;
     # every mutant must compile before its behavioral assertion can fail.
     transpose = re.sub(
         r"(row\.left\s*=\s*)([^;]+)(;\s*row\.top\s*=\s*)([^;]+)(;)",
@@ -141,3 +141,32 @@ def test_extracted_listbox_scroll_render_and_dialog_bridges(tmp_path, compiler_n
         result = subprocess.run([str(binary)], check=False, timeout=30,
                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         assert result.returncode != 0, f"{name} mutant survived the asymmetric source control"
+
+    wrong_focus = draw_body.replace(
+        "window->is_dialog_focus() != 0",
+        "window->is_dialog_focus() == 0", 1)
+    assert wrong_focus != draw_body
+    binary = compile_control(tmp_path / "wrong_focus", replace_draw(wrong_focus))
+    result = subprocess.run([str(binary)], check=False, timeout=30,
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    assert result.returncode != 0, "wrong selected-row focus mutant survived"
+
+    wrong_fill_owner = draw_body.replace(
+        "window->fill(&row, static_cast<int>(field_14_));",
+        "canvas->fill(&row, static_cast<int>(field_14_));", 1)
+    assert wrong_fill_owner != draw_body
+    binary = compile_control(tmp_path / "wrong_fill_owner",
+                             replace_draw(wrong_fill_owner))
+    result = subprocess.run([str(binary)], check=False, timeout=30,
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    assert result.returncode != 0, "Buffer fill receiver mutant survived"
+
+    missing_live_guard = draw_body.replace(
+        "index <= items.entry_count_ - 1",
+        "index <= items.entry_count_ - 1 || items.entry_count_ <= index", 1)
+    assert missing_live_guard != draw_body
+    binary = compile_control(tmp_path / "missing_live_guard",
+                             replace_draw(missing_live_guard))
+    result = subprocess.run([str(binary)], check=False, timeout=30,
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    assert result.returncode != 0, "unconditional post-callback reseek mutant survived"

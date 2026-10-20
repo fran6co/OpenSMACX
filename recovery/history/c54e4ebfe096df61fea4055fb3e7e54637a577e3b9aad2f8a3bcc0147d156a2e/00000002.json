@@ -1,0 +1,18 @@
+{
+  "event_id": "1cf452bed9b9d134e5b8a2e39601768f1a44ab9ef578fc908e5a7af4e379452e",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "original-selected-focus-fill-and-live-reseek-oct20e",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/listbox.cpp7d9b5abcebca7eeae74a73dda06894f208540628caf1088f45562b7d275e77b0 restores post-callbacklive-countguard and selected/focused callback-result-zero fill. Original60BF67 callsBuffer5D8000 forclip,60BF81 callsGraphicWin5D5350 with virtual-baseWin receiver, not Buffer+444. Wrong initial canvas-fill draft preserved d082a202e and first candidatebuild; corrected beforeintegration. Independent review confirms dispatch distinction, actualsource g++/clang++controls reject canvas-fill, focus, andlive-reseek mutants.",
+      "Freshcorrectednativebuild/link and receipt/input/recipecorrespondencepass. 191/191 physicalobjects preservedoutsideonlydraw_item; all43TUrecords measured21exact/18mismatch/3sharedtail/1refused. Candidatebody673vs1055instructions remainsmismatch, nofull/game/linkedacceptance. Reports ignored .opensmacx/recovery/retained-owner-resume-oct20e/batch-1/listbox/fill-owner-followup; originalbaseline1c8b944f unchanged."
+    ]
+  },
+  "previous_event": "630f91d06cfed4fd32e494a45e488d7934b7d251aa72a015ecc7e886ed5434cb",
+  "request_id": "listbox-live-count-and-graphic-fill-incorporated-oct20e",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:listbox-geometry-owner-oct20"
+}

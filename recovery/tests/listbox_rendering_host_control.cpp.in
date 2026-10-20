@@ -35,11 +35,12 @@ struct Buffer {
     Buffer *copy_destination;
     int sx, sy, dx, dy, width, height;
     int clips, boxes, wraps, writes;
-    RECT first_clip, last_clip;
+    int buffer_rect_fills, buffer_rect_fill_color;
+    RECT first_clip, last_clip, clips_seen[16], buffer_rect_fill_rect;
     int first_clip_set;
     Buffer() : copies(0), copy_destination(0), sx(0), sy(0), dx(0), dy(0),
                width(0), height(0), clips(0), boxes(0), wraps(0), writes(0),
-               first_clip_set(0) {}
+               buffer_rect_fills(0), buffer_rect_fill_color(0), first_clip_set(0) {}
     int pixel_width() const { return 37; }
     int pixel_height() const { return 19; }
     int copy(Buffer *source, int x, int y, int to_x, int to_y, int w, int h) {
@@ -48,8 +49,13 @@ struct Buffer {
     }
     void set_clip(RECT *r) {
         if (clips == 0) { first_clip = *r; first_clip_set = 1; }
+        if (clips < 16) clips_seen[clips] = *r;
         ++clips;
         last_clip = *r;
+    }
+    void fill(RECT *r, int color) {
+        ++buffer_rect_fills; buffer_rect_fill_color=color;
+        buffer_rect_fill_rect=*r;
     }
     void set_text_color(int, int, int, int) {}
     void set_text_color2(int, int, int, int) {}
@@ -71,10 +77,15 @@ struct Win {
     int slot_result;
     ListBox *mutate_child;
     Win *mutate_parent;
+    ListBox *mutate_list;
+    int mutate_count;
+    int dialog_focus_, focus_checks;
     Win() : parent_(0), iFlags_(0), slot_calls(0), slot_window(0),
             slot_index(0), slot_state(0), slot_rect(0), slot_result(0),
-            mutate_child(0), mutate_parent(0) {}
+            mutate_child(0), mutate_parent(0), mutate_list(0), mutate_count(0),
+            dialog_focus_(0), focus_checks(0) {}
     Win *parent_window() { return parent_; }
+    int is_dialog_focus() { ++focus_checks; return dialog_focus_; }
     bool has_listbox_backfill_flag() const { return (iFlags_ & 0x80000u) != 0; }
     virtual int on_dialog_item_back_draw(GraphicWin *window, int index, int state, RECT *rect);
 };
@@ -82,10 +93,17 @@ struct Win {
 struct GraphicWin : Win, Buffer {
     RECT work;
     int fills, fill_value, redraws, updates;
+    int graphic_rect_fills, graphic_rect_fill_color;
+    RECT graphic_rect_fill_rect;
     GraphicWin() : fills(0), fill_value(0), redraws(0), updates(0) {
         work.left=1; work.top=2; work.right=40; work.bottom=22;
+        graphic_rect_fills=0; graphic_rect_fill_color=0;
     }
     void fill(int value) { ++fills; fill_value=value; }
+    void fill(RECT *r, int color) {
+        ++graphic_rect_fills; graphic_rect_fill_color=color;
+        graphic_rect_fill_rect=*r;
+    }
     RECT *buffer_working_rect() { return &work; }
     void redraw() { ++redraws; }
     void soft_update() { ++updates; }
@@ -118,11 +136,11 @@ using WriteCallback = int (*)(GraphicWin *, int, int, RECT *, char *);
 using FillCallback = int (*)(GraphicWin *, int, int, RECT *);
 
 struct ListBox : virtual GraphicWin, virtual Dialog {
-    uint32_t field_4_, field_10_, field_18_, field_24_, field_28_, field_2C_;
+    uint32_t field_4_, field_10_, field_14_, field_18_, field_24_, field_28_, field_2C_;
     FillCallback fill_callback_;
     DrawCallback draw_callback_;
     WriteCallback write_callback_;
-    ListBox() : field_4_(0), field_10_(~0u), field_18_(0), field_24_(0), field_28_(0),
+    ListBox() : field_4_(0), field_10_(~0u), field_14_(~0u), field_18_(0), field_24_(0), field_28_(0),
                 field_2C_(0), fill_callback_(0), draw_callback_(0),
                 write_callback_(0) {}
     void set_draw_callback(DrawCallback callback) { draw_callback_=callback; }
@@ -142,6 +160,7 @@ int Win::on_dialog_item_back_draw(GraphicWin *window, int index, int state, RECT
     ++slot_calls; slot_window=window; slot_index=index; slot_state=state;
     slot_rect=rect;
     if (mutate_child != 0) mutate_child->parent_ = mutate_parent;
+    if (mutate_list != 0) mutate_list->item_list_.entry_count_ = mutate_count;
     return slot_result;
 }
 
@@ -176,9 +195,16 @@ static int fill(GraphicWin *window, int, int draw_position, RECT *rect) {
 static int bridge_draw_calls;
 static GraphicWin *bridge_draw_window;
 static int bridge_draw_ids[8];
+static ListBox *draw_target;
+static StringStructEntry *draw_cursor;
+static int draw_cursor_position;
 static void bridge_draw_with_id(GraphicWin *window, int item_id, int, int, int, int) {
     bridge_draw_ids[bridge_draw_calls]=item_id;
     ++bridge_draw_calls; bridge_draw_window=window;
+    if (draw_target != 0) {
+        draw_cursor=draw_target->item_list_.current_;
+        draw_cursor_position=draw_target->item_list_.current_position_;
+    }
 }
 
 static void link_rows(StringStructEntry *rows, int count, unsigned int *spans) {
@@ -195,6 +221,50 @@ int main() {
     StringStructEntry rows[8];
     unsigned int spans[8] = {2, 3, 4, 5, 6, 7, 8, 9};
     link_rows(rows, 8, spans);
+
+    ListBox focused_row;
+    focused_row.item_list_.entry_count_=8; focused_row.item_list_.head_=&rows[0];
+    focused_row.item_list_.current_=&rows[0]; focused_row.selected_position_=0;
+    focused_row.field_14_=77; focused_row.dialog_focus_=1;
+    focused_row.field_38_=3; focused_row.field_40_=7;
+    focused_row.field_64_=31; focused_row.field_68_=11;
+    focused_row.draw_item(0);
+    const RECT full_focus_row={7, 3, 24, 14};
+    assert(focused_row.focus_checks==1 && focused_row.graphic_rect_fills==1);
+    assert(focused_row.graphic_rect_fill_color==77);
+    assert(same_rect(focused_row.graphic_rect_fill_rect, full_focus_row));
+    assert(focused_row.buffer_rect_fills==0);
+    assert(focused_row.clips_seen[2].left==full_focus_row.left
+        && same_rect(focused_row.clips_seen[2], full_focus_row));
+
+    ListBox unfocused_row;
+    unfocused_row.item_list_.entry_count_=8; unfocused_row.item_list_.head_=&rows[0];
+    unfocused_row.item_list_.current_=&rows[0]; unfocused_row.selected_position_=0;
+    unfocused_row.field_14_=77; unfocused_row.dialog_focus_=0;
+    unfocused_row.field_38_=3; unfocused_row.field_40_=7;
+    unfocused_row.field_64_=31; unfocused_row.field_68_=11;
+    unfocused_row.draw_item(0);
+    const RECT inset_focus_row={8, 3, 23, 14};
+    assert(unfocused_row.focus_checks==1 && unfocused_row.graphic_rect_fills==0);
+    assert(unfocused_row.buffer_rect_fills==0);
+    assert(same_rect(unfocused_row.clips_seen[2], inset_focus_row));
+
+    // The image clips the selected full row even when the selected fill color
+    // is the -1 sentinel; only the fill call is suppressed.
+    ListBox sentinel_focus_row;
+    sentinel_focus_row.item_list_.entry_count_=8;
+    sentinel_focus_row.item_list_.head_=&rows[0];
+    sentinel_focus_row.item_list_.current_=&rows[0];
+    sentinel_focus_row.selected_position_=0;
+    sentinel_focus_row.field_14_=~0u; sentinel_focus_row.dialog_focus_=1;
+    sentinel_focus_row.field_38_=3; sentinel_focus_row.field_40_=7;
+    sentinel_focus_row.field_64_=31; sentinel_focus_row.field_68_=11;
+    sentinel_focus_row.draw_item(0);
+    assert(sentinel_focus_row.focus_checks==1
+        && sentinel_focus_row.graphic_rect_fills==0);
+    assert(sentinel_focus_row.buffer_rect_fills==0);
+    assert(same_rect(sentinel_focus_row.clips_seen[2], full_focus_row));
+
     ListBox box;
     box.item_list_.entry_count_=8; box.item_list_.head_=&rows[0];
     box.item_list_.current_=&rows[0]; box.item_list_.current_position_=0;
@@ -325,6 +395,44 @@ int main() {
     assert(replacement_parent.dx==0 && replacement_parent.dy==0);
     assert(replacement_parent.width==37 && replacement_parent.height==19);
     assert(child.fills==0);
+
+    // The frame callback can shrink the live list. The original checks the
+    // new count before re-seeking; when index is now out of range, the
+    // callback-visible cursor remains the prior one rather than being walked
+    // through a list that no longer contains the row.
+    GraphicWin shrinking_parent;
+    ListBox shrinking_list;
+    shrinking_list.item_list_.entry_count_=3;
+    shrinking_list.item_list_.head_=&rows[0];
+    shrinking_list.item_list_.current_=&rows[5];
+    shrinking_list.item_list_.current_position_=5;
+    shrinking_list.parent_=&shrinking_parent;
+    shrinking_parent.mutate_list=&shrinking_list;
+    shrinking_parent.mutate_count=1;
+    shrinking_list.set_draw_callback(&bridge_draw_with_id);
+    draw_target=&shrinking_list;
+    bridge_draw_calls=0;
+    shrinking_list.draw_item(1);
+    assert(shrinking_list.item_list_.entry_count_==1);
+    assert(bridge_draw_calls==1);
+    assert(draw_cursor==&rows[5] && draw_cursor_position==5);
+    draw_target=0;
+    bridge_draw_calls=0;
+
+    // Without a shrink, the same post-callback check still selects the row.
+    GraphicWin stable_parent;
+    ListBox stable_list;
+    stable_list.item_list_.entry_count_=3;
+    stable_list.item_list_.head_=&rows[0];
+    stable_list.item_list_.current_=&rows[5];
+    stable_list.item_list_.current_position_=5;
+    stable_list.parent_=&stable_parent;
+    stable_list.set_draw_callback(&bridge_draw_with_id);
+    draw_target=&stable_list;
+    stable_list.draw_item(1);
+    assert(draw_cursor==&rows[1] && draw_cursor_position==1);
+    draw_target=0;
+    bridge_draw_calls=0;
 
     // Complete-object Dialogs receivers reach their first declared ListBox
     // base; callbacks see its compiler-converted GraphicWin virtual base.
