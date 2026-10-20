@@ -196,7 +196,7 @@ void __cdecl parse_it(char *file_name, const char *section) {
 /*
 Purpose: Trim the trailing spaces in-line from the end of the string.
 // ORIGINAL: 0x00600780 ?purge_trailing@@YAXPAD@Z 0x00600780-0x006007AD BYTE_EXACT
-// body      src/general.h
+// body      src/general.cpp
 // size      45 bytes
 // prototype 
 // callers   0   call targets   1
@@ -210,6 +210,24 @@ Status: Complete
 // alpha.cpp fold it in place instead of emitting a `call`; chas_name,
 // weap_name and arm_name each showed a real `call` to this address where the
 // image inlines the four-`strlen`-call body directly. See general.h.
+MEASURED void __cdecl purge_trailing(LPSTR input) {
+    // IT OVERWRITES EACH TRAILING SPACE, walking back, rather than placing a
+    // single terminator: `mov byte ptr [eax], 0` at 0x006007A1 is inside the
+    // loop. The empty string leaves early - `test eax, eax; je` at 0x0060078E
+    // - and the `p == input` test comes AFTER the store.
+    const size_t length = strlen(input);
+    if (length == 0) {
+        return;
+    }
+    char *end = input + length - 1;
+    while (end >= input && *end == ' ') {
+        *end = 0;
+        if (end == input) {
+            return;
+        }
+        --end;
+    }
+}
 
 /*
 Purpose: Trim the leading spaces in-line from the start of the string.
@@ -368,6 +386,11 @@ Status: Complete
 // some call sites and calls it at others, and a .cpp definition is only ever
 // one of those. The marker stays here because that is where the catalogue
 // reads it.
+MEASURED void __cdecl swap(uint8_t *var1, uint8_t *var2) {
+    *var1 ^= *var2;
+    *var2 ^= *var1;
+    *var1 ^= *var2;
+}
 /*
 Purpose: Allocate memory with error checking.
 // ORIGINAL: 0x005D4510 ?mem_get@@YAPAXH@Z 0x005D4510-0x005D453C BYTE_EXACT
@@ -1304,7 +1327,7 @@ void __cdecl swap(int *var1, int *var2) {
 Purpose: Swap the values of two 8-bit variables. Added an additional check when swapping the same
          memory location.
 // ORIGINAL: 0x00628A80 ?swap@@YAXPAEPAE@Z 0x00628A80-0x00628AA3 BYTE_EXACT
-// body      src/general.h
+// body      src/general.cpp
 // symbol    ?swap@@YAXPAE0@Z
 // size      35 bytes
 // prototype 

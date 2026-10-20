@@ -21,7 +21,7 @@
 /*
 Purpose: Convert the binary string to an integer.
 // ORIGINAL: 0x006288D0 ?btoi@@YAHPAD@Z 0x006288D0-0x006288ED BYTE_EXACT
-// body      src/general.h
+// body      src/number_parsing.cpp
 // symbol    ?btoi@@YAHPBD@Z
 // size      29 bytes
 // prototype int (__cdecl ?btoi@@YAHPAD@Z)(int8* input)
@@ -35,11 +35,18 @@ Status: Complete
 // BODY IN general.h, as `MEASURED inline`: `stoi` at 0x00628950
 // makes no call to it - the image writes it out inside the jump
 // table's arms - while 0x006288D0 is a real body of its own.
+MEASURED int __cdecl btoi(LPCSTR str) {
+    int result = 0;
+    while (*str == '0' || *str == '1') {
+        result = *str++ - '0' + 2 * result;
+    }
+    return result;
+}
 
 /*
 Purpose: Convert the hex string to an integer.
 // ORIGINAL: 0x006288F0 ?htoi@@YAHPAD@Z 0x006288F0-0x0062894B BYTE_EXACT
-// body      src/general.h
+// body      src/number_parsing.cpp
 // symbol    ?htoi@@YAHPBD@Z
 // size      91 bytes
 // prototype int (__cdecl ?htoi@@YAHPAD@Z)(int8* input)
@@ -53,6 +60,19 @@ Status: Complete
 // BODY IN general.h, as `MEASURED inline`: `stoi` at 0x00628950
 // makes no call to it - the image writes it out inside the jump
 // table's arms - while 0x00628910 is a real body of its own.
+MEASURED int __cdecl htoi(LPCSTR str) {
+    int result = 0;
+    while (isxdigit(*str)) {
+        result *= 16;
+        if (isdigit(*str)) {
+            result += *str - '0';
+        } else {
+            result += toupper(*str) - '7';
+        }
+        *str++;
+    }
+    return result;
+}
 
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x00628950 0x00628A00 0x00628A10 0x00628976
 // RECOVERY_ASSOCIATED: v1 switch_selector 0x00628950 0x00628A10 0x00628A47 0x00628970
