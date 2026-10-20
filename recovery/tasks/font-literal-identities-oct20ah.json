@@ -1,0 +1,30 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "8cad8728d9041a771083fc7395e2730a884273b8",
+  "editable_files": [
+    "src/jackal/font.cpp"
+  ],
+  "evidence": [
+    "Standing user authorization for faithful bug-for-bug source recovery, genuine source ownership, cheap parallel agents and independently reviewed manual integration. Preserve every identity/span/claim and useful seed lesson. No new claim, body/layout/ABI/compiler setting change or acceptance waiver.",
+    "Fresh integrated root build-f8ixxs9w and known5581 census at8cad8728d establish both Font bodies currently exact and each strict UNKNOWN solely for its unique literal. Current root/candidate font.cpp SHA0b39ac919c9c86c7835c13a08af7393dbe38c13511170c485af9bf390d8cd400. Pinned619181 pushes6972AC inside Font::init6190D0; pinned6195F9 pushes6972B4 inside init_font_class6195B0. Review original instruction extents and current literal COMDAT uniqueness before editing.",
+    "The .fot NUL span is6972AC..6972B1 (5bytes) with current symbol ??_C@_04CLMM@?4fot?$AA@; Times New Roman NUL is6972B4..6972C4 (16bytes) with current symbol ??_C@_0BA@MIDB@Times?5New?5Roman?$AA@. Each is a unique standalone no-relocation current literal COMDAT referenced by its corresponding owner body. Do not include padding or neighboring data; no alternative spelling aliases or pooled duplicate original addresses.",
+    "Authorize only two native RECOVERY_LITERAL v1 annotations beside those actual Font owner definitions, carrying the verified original bounds, exact current symbols and corresponding function evidence addresses. read_literals must validate them. Original storage is initialized writable PE data (C0000040), not proof of original constness, complete allocation/type, runtime immutability or final linked selection.",
+    "One author in the isolated coordinator-prepared checkout; no source edits outside src/jackal/font.cpp, native compiler/Wine, tests, Git mutations or task edits. No ORIGINAL/exactness-token edits. Return exact source diff/hash and native parse observation. Coordinator owns compiler leases, fresh build/link, strict/literal/data and whole-object/identity checks, independent review, commit and serial destination integration. Keep missing/unknown evidence explicit; no full game/runtime/linked-selection or automatic acceptance claim."
+  ],
+  "intent": "Recover the two original Font file-extension and default-face literal identities",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6394064,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6395312,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "font-literal-identities-oct20ah"
+}
