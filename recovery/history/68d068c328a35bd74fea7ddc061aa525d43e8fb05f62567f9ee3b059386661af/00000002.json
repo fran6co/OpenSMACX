@@ -1,0 +1,23 @@
+{
+  "event_id": "5689fde75aa04971585bcfe1afdb57fb12ff817b3f27e9ed3d2d56c8dfd3859e",
+  "payload": {
+    "affects": [
+      "entity-243b31cc5f038b1b47bdaac28cdba2c13873b6ea94f3b9cff620c6cf06e90338",
+      "entity-5b86b9eae223d83fa83cc2335e591b8f989d6187f6ba11b5b95010d01bb7dea9",
+      "entity-5de921392e8e5eeca752e9daef2e48acea1f898a842404aa3aa9ac61da7fe225",
+      "entity-79607e44f34535de65fba5dbf0365152ea3714b46c86b9e8fa4acdc5c1c5fc9a"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "finite-natural-form-no-gain",
+    "evidence": [
+      "The actual Release baseline, unchanged replica and candidate whole objects are byte-identical88a0b80d2b04c5eb27e283cf2ab726ad943e1705c3c5c59f60bf1d8f661179e2; meaningful reactor damage changes the target. Original80byte frames alone do not identify lexical declaration scope."
+    ],
+    "hypothesis": "Hoisting the four trivial80byte scratch arrays to function scope restores original formatter code generation.",
+    "kind": "discovery"
+  },
+  "previous_event": "15e4f721f8b4aca7cf94a73fe0be8fc2df95faac75ffaf32bad3944913af8b80",
+  "request_id": "finite-natural-form-no-gain",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:string-formatting-owner-batch-oct20"
+}
