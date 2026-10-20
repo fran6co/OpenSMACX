@@ -1,0 +1,21 @@
+{
+  "event_id": "510e5d5eba07fb3fcb2fddf75f148e66ee724eee4e52b349492911ebff7b4a37",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_console_road_to_actual_source_oct20n.py"
+    ],
+    "evidence": [
+      "Coordinator authorizes applying only road_to004D7BE0 natural_form_1 from the frozen native local deck after the Console screening process terminated. Keep all other C++ bodies, headers, original annotations, historical obligations, flags and immutable47aee8a54 task baseline unchanged.",
+      "Native unchanged-replica and damaging-plan-predicate controls pass under both existing recipes. Candidate reaches84/84 historical local exact only under Oy-; actual Release compilation and independent C++/pinned review are still required. This permission is not acceptance or a claim grant.",
+      "Add actual-source extracted C++ host controls for plan, triad, climate, mode/technology and cursor ordering with differing vehicle/prototype ids and a wrong-prototype-index damage witness. Keep original unchecked/error paths; no bounds checks or bug fixes. Pin the complete original span/access sequence independently; host fixtures do not prove machine read count/order. No other product source/tests or task-baseline changes are authorized."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "console-road-to-reviewed-implementation-oct20n",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:wide-console-source-decks-oct20n"
+}
