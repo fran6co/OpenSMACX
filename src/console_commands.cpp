@@ -244,6 +244,15 @@ char ConsoleStrNotBase[] = "NOTBASE";  // 0x00688C9C
 // RECOVERY_OBJECT: v2 0x00688CA4 0x00688CAF ?ConsoleStrNotInTriad@@3PADA 0x004D52A0
 char ConsoleStrNotInTriad[] = "NOTINTRIAD";  // 0x00688CA4
 
+// RECOVERY_OBJECT: v2 0x00688E18 0x00688E29 _RoadToNeedTerraformers 0x004D7BE0
+static char RoadToNeedTerraformers[] = "NEEDTERRAFORMERS";
+// RECOVERY_OBJECT: v2 0x00688E2C 0x00688E37 _RoadToNotInTriad 0x004D7BE0
+static char RoadToNotInTriad[] = "NOTINTRIAD";
+// RECOVERY_OBJECT: v2 0x00688E38 0x00688E43 _RoadToNotInOcean 0x004D7BE0
+static char RoadToNotInOcean[] = "NOTINOCEAN";
+// RECOVERY_OBJECT: v2 0x00688EC8 0x00688ED3 _SetRoadToNotInOcean 0x004D8DC0
+static char SetRoadToNotInOcean[] = "NOTINOCEAN";
+
 // RECOVERY_OBJECT: v2 0x00688CB0 0x00688CBC ?ConsoleStrDestroyBomb@@3PADA 0x004D52A0
 char ConsoleStrDestroyBomb[] = "DESTROYBOMB";  // 0x00688CB0
 
@@ -1037,16 +1046,16 @@ void Console::road_to(int veh_id, int cursor_mode) {
     const Veh &vehicle = Vehs[veh_id];
     const int prototype_id = Vehs[veh_id].proto_id;
     if (VehPrototypes[prototype_id].plan != 9) {
-        NetMsgPrimary.pop("NEEDTERRAFORMERS", 5000, 0, 0);
+        NetMsgPrimary.pop(RoadToNeedTerraformers, 5000, 0, 0);
         return;
     }
     if (Chassis[VehPrototypes[prototype_id].chassis_id].triad != TRIAD_LAND) {
-        NetMsgPrimary.pop("NOTINTRIAD", 5000, 0, 0);
+        NetMsgPrimary.pop(RoadToNotInTriad, 5000, 0, 0);
         return;
     }
     const Map &tile = map_tiles()[vehicle.y * MapLongitude + (vehicle.x >> 1)];
     if ((tile.climate & ~0x1F) < 0x60) {
-        NetMsgPrimary.pop("NOTINOCEAN", 5000, 0, 0);
+        NetMsgPrimary.pop(RoadToNotInOcean, 5000, 0, 0);
         return;
     }
     if (cursor_mode != 0x1C ||
@@ -1281,7 +1290,7 @@ void Console::set_road_to(int veh_id, int x_coord, int y_coord, int order) {
     const int target_index = MapLongitude * y_coord + (x_coord >> 1);
     const int origin_index = MapLongitude * vehicle.y + (vehicle.x >> 1);
     if ((map_tiles()[target_index].climate & ~0x1F) < 0x60) {
-        NetMsgPrimary.pop("NOTINOCEAN", 5000, 0, 0);
+        NetMsgPrimary.pop(SetRoadToNotInOcean, 5000, 0, 0);
         return;
     }
     if (map_tiles()[target_index].region != map_tiles()[origin_index].region) {

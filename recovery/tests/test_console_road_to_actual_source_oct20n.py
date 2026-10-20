@@ -52,8 +52,27 @@ def terraforming_declarations() -> str:
     return enum + "\n" + rules + "\n" + max_count.group(0) + "\n"
 
 
+MESSAGE_ARRAYS = (
+    "RoadToNeedTerraformers",
+    "RoadToNotInTriad",
+    "RoadToNotInOcean",
+    "SetRoadToNotInOcean",
+)
+
+
+def message_array_declarations() -> str:
+    source = (ROOT / "src/console_commands.cpp").read_text(encoding="utf-8")
+    declarations = []
+    for name in MESSAGE_ARRAYS:
+        match = re.search(rf"static char {name}\[\]\s*=\s*\"[^\"]*\";", source)
+        assert match is not None, f"missing actual declaration for {name}"
+        declarations.append(match.group(0))
+    return "\n".join(declarations) + "\n"
+
+
 HARNESS = r'''#include <cassert>
 #include <cstdint>
+#include <cstring>
 #include <string>
 #include <vector>
 
@@ -80,8 +99,10 @@ enum { TRIAD_LAND = 0, TRIAD_SEA = 1 };
 static Map *map_tiles() { return MapTiles; }
 
 struct Popup { void pop(const char *label, int timeout, int flags, int) {
+    last_label = label;
     record(label, timeout, flags);
-} };
+} static const char *last_label; };
+const char *Popup::last_label = nullptr;
 static Popup NetMsgPrimary;
 static int tech_result;
 static int has_tech_calls;
@@ -100,11 +121,12 @@ class Console { public: void road_to(int veh_id, int cursor_mode); };
 
 
 def harness_source(definition: str) -> str:
-    return HARNESS + terraforming_declarations() + r'''
+    return HARNESS + message_array_declarations() + terraforming_declarations() + r'''
 static RulesTerraforming Terraforming[MaxTerrainNum];
 ''' + definition + r'''
 static void reset() {
     events.clear();
+    Popup::last_label = nullptr;
     has_tech_calls = 0;
     tech_result = 0;
     for (int i = 0; i < 16; ++i) {
@@ -128,15 +150,24 @@ static void expect_one(const char *name, int a, int b, int c) {
 
 int main() {
     Console console;
+    assert(&RoadToNeedTerraformers[0] != &RoadToNotInTriad[0]);
+    assert(&RoadToNotInTriad[0] != &RoadToNotInOcean[0]);
+    assert(&RoadToNotInOcean[0] != &SetRoadToNotInOcean[0]);
+    assert(std::strcmp(RoadToNeedTerraformers, "NEEDTERRAFORMERS") == 0);
+    assert(std::strcmp(RoadToNotInTriad, "NOTINTRIAD") == 0);
+    assert(std::strcmp(RoadToNotInOcean, "NOTINOCEAN") == 0);
+    assert(std::strcmp(SetRoadToNotInOcean, "NOTINOCEAN") == 0);
     reset();
     console.road_to(2, 0x1b);
     expect_one("NEEDTERRAFORMERS", 5000, 0, -999);
+    assert(Popup::last_label == RoadToNeedTerraformers);
     assert(has_tech_calls == 0);
 
     reset();
     VehPrototypes[7].plan = 9;
     console.road_to(2, 0x1b);
     expect_one("NOTINTRIAD", 5000, 0, -999);
+    assert(Popup::last_label == RoadToNotInTriad);
     assert(has_tech_calls == 0);
 
     reset();
@@ -146,6 +177,7 @@ int main() {
     MapTiles[19].climate = 0x40;
     console.road_to(2, 0x1b);
     expect_one("NOTINOCEAN", 5000, 0, -999);
+    assert(Popup::last_label == RoadToNotInOcean);
     assert(has_tech_calls == 0);
 
     reset();
@@ -204,7 +236,8 @@ def test_actual_road_to_preserves_typed_lookup_and_order(tmp_path, compiler_name
 
 
 @pytest.mark.parametrize("compiler_name", ("g++", "clang++"))
-@pytest.mark.parametrize("mutant", ("wrong_prototype", "wrong_chassis", "wrong_terraforming_row", "tech_before_cursor_gate",
+@pytest.mark.parametrize("mutant", ("wrong_prototype", "wrong_chassis", "wrong_terraforming_row",
+                                     "wrong_duplicate_message_identity", "tech_before_cursor_gate",
                                      "missing_plan_return"))
 def test_road_to_actual_body_controls_reject_wrong_owner_or_order(tmp_path, compiler_name, mutant):
     compiler = shutil.which(compiler_name)
@@ -220,6 +253,9 @@ def test_road_to_actual_body_controls_reject_wrong_owner_or_order(tmp_path, comp
     elif mutant == "wrong_terraforming_row":
         damaged = source.replace("Terraforming[TERRA_MAGTUBE].preq_tech",
                                  "Terraforming[TERRA_FARM].preq_tech", 1)
+    elif mutant == "wrong_duplicate_message_identity":
+        damaged = source.replace("NetMsgPrimary.pop(RoadToNotInOcean",
+                                 "NetMsgPrimary.pop(SetRoadToNotInOcean", 1)
     elif mutant == "tech_before_cursor_gate":
         damaged = source.replace("cursor_mode != 0x1C ||\n        has_tech(",
                                  "has_tech(", 1).replace(
@@ -246,10 +282,13 @@ def test_pinned_road_to_span_supports_typed_access_and_call_order():
     expected = {
         0x004D7BF0: "0x952832",  # Veh::proto_id, after the 0x34 stride calculation
         0x004D7C00: "0x9ab892",  # VehPrototype::plan
+        0x004D7C12: "0x688e18",  # this function's NEEDTERRAFORMERS object
         0x004D7C28: "0x9ab88c",  # VehPrototype::chassis_id, only after plan succeeds
         0x004D7C36: "0x94a379",  # RulesChassis::triad
+        0x004D7C49: "0x688e2c",  # this function's NOTINTRIAD object
         0x004D7C5D: "0x95282a",  # live Veh y, then x for the map index
         0x004D7C74: "0x94a30c",  # MapTiles load before the climate gate
+        0x004D7C98: "0x688e38",  # this function's NOTINOCEAN object
         0x004D7CAF: "0x1c",      # cursor mode gate precedes technology lookup
         0x004D7CBC: "0x691940",  # Terraforming[6].preq_tech
         0x004D7CC4: "0x5b9f20", # has_tech call
@@ -258,6 +297,12 @@ def test_pinned_road_to_span_supports_typed_access_and_call_order():
     for address, operand in expected.items():
         assert address in indexed and operand in indexed[address]
     assert list(expected) == sorted(expected)
+    for start, end, text in (
+        (0x00688E18, 0x00688E29, b"NEEDTERRAFORMERS\0"),
+        (0x00688E2C, 0x00688E37, b"NOTINTRIAD\0"),
+        (0x00688E38, 0x00688E43, b"NOTINOCEAN\0"),
+    ):
+        assert image.read(Span(start, end)) == text
     header = (ROOT / "src/terraforming.h").read_text(encoding="utf-8")
     alpha = (ROOT / "src/alpha.cpp").read_text(encoding="utf-8")
     enum = terraforming_declarations()
