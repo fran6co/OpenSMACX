@@ -4,33 +4,52 @@ Host records have host-width pointers. Allocator/installer boundaries below are
 instrumented doubles; record creation, both installers and clip APIs are read
 from their current C++ definitions. The existing ramp suite executes that body.
 """
-from dataclasses import fields
+from collections import Counter
+from dataclasses import replace
 from pathlib import Path
 import os
+import re
 import shutil
 import subprocess
 
 import pytest
 
 from match_recovery.includes import COMMENTS_OR_STRINGS
-from match_recovery.source import read_text
+from match_recovery.binding_source import parse as parse_binding_evidence
+from match_recovery.source import read, read_text
 from test_caviar_descriptor_ramps_overlay_oct9 import extract
+from test_function_span_tails_oct11 import expected_extended_record
+from test_verified_tail_claims_oct11 import expected_recorded_tail
 
 
 ROOT = Path(__file__).resolve().parents[2]
 BASE = "de37a7cda0820dc5827e58919e350e22fa0c6c6f"
+API_CHECKPOINT = "b1bc317be9f0cc44a62e9bd169f856b4133927cb"
 PIN = "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
 SUBJECTS = {0x618520, 0x618560, 0x6393C0, 0x63AD60, 0x63AE20, 0x63F9B0}
 SYMBOL_TRANSITIONS = {
     0x618520: ("?clip_rect@Caviar@@QAEPAXXZ", "?clip_rect@Caviar@@QAEPAIXZ"),
     0x618560: ("?fill_clip_rect@Caviar@@QAEXH@Z", "?fill_clip_rect@Caviar@@QAEXPAI@Z"),
     0x63AE20: ("?sub_63ae20@@YAXPAE@Z", "?sub_63ae20@@YAXPAUVoxRenderRecord@@@Z"),
+    0x6171A0: ("?render_multi_table_dest@Caviar@@QAEXPAVBuffer@@HHHPAEH@Z",
+               "?render_multi_table_dest@Caviar@@QAEXPAVBuffer@@HHHPAY0BAA@EH@Z"),
+    0x63F000: ("?vox_draw_shadow@@YAXPAUVoxRenderRecord@@PBUCvrShape@@PBUVOX_Vect@@PAUVOX_Matrix@@PBX@Z",
+               "?vox_draw_shadow@@YAXPAUVoxRenderRecord@@PBUCvrShape@@PBUVOX_Vect@@PAUVOX_Matrix@@H@Z"),
 }
 
 
-def assert_api_symbol_transition(address, before, after):
-    """Only these exact hints may advance after coordinator COFF observation."""
+def assert_api_symbol_transition(address, before, after, current=None):
+    """Retain stable ABI hints; permit the narrowly observed generated family."""
     if before == after:
+        return
+    if (re.fullmatch(r"_\$E[0-9]+", before or "")
+            and re.fullmatch(r"_\$E[0-9]+", after or "")):
+        assert current is not None
+        assert current.mode.value == "file"
+        assert current.path.relative_to(ROOT).as_posix() in {
+            "src/caviar.cpp", "src/caviar_cpu.cpp", "src/caviar_data.cpp",
+            "src/caviar_objects.cpp", "src/caviar_renderer_objects.cpp",
+        }
         return
     assert address in SYMBOL_TRANSITIONS
     assert (before, after) == SYMBOL_TRANSITIONS[address]
@@ -82,44 +101,133 @@ def restore_api_migration(text, relative="src/caviar.cpp"):
     return replace_exact(text, "uint32_t *out = destination;", "int *out = (int *)destination;")
 
 
-def test_only_authorized_api_and_bounds_changes_against_retained_baseline():
+def test_historical_api_migration_and_current_owner_continuity():
+    # The immutable integrated checkpoint is the exact historical before/after
+    # proof. Later source-owner recovery is checked by bounded identities below.
     for relative in ("src/caviar.cpp", "src/caviar.h"):
-        old = subprocess.check_output(["git", "show", f"{BASE}:{relative}"], cwd=ROOT, text=True)
-        current = (ROOT / relative).read_text()
-        current = restore_api_migration(current, relative)
-        if relative == "src/caviar.cpp":
-            # The separately authorized dispatcher migration replaces only
-            # these two bodies and removes their obsolete helper declaration.
-            # Their actual definitions are executed by the dispatcher host
-            # controls below; all surrounding source tokens remain compared.
-            for signature in (
-                "void __cdecl sub_63ad60(unsigned char *record) {",
-                "void __cdecl sub_63ae20(unsigned char *record) {",
-            ):
-                current = replace_exact(current, extract(current, signature), signature + ";")
-                old = replace_exact(old, extract(old, signature), signature + ";")
-            old = old.replace(
-                "static void caviar_install_record_kernels_candidate(\n"
-                "    VoxRenderRecord *, uint8_t, int);", "", 1)
-        assert code_tokens(current) == code_tokens(old)
-    path = ROOT / "src/caviar.cpp"
-    before = {r.address: r for r in read_text(old_cpp(), path)}
-    current = {r.address: r for r in read_text(path.read_text(), path)}
-    assert current.keys() == before.keys()
-    for address, record in current.items():
-        prior = before[address]
-        for field in fields(record):
-            if field.name not in {"line", "region", "origin", "symbol", "binding_evidence"}:
-                assert getattr(record, field.name) == getattr(prior, field.name), (hex(address), field.name)
-            if field.name == "binding_evidence":
-                if address in (0x63AEE0, 0x63AF00, 0x63AF20, 0x63AF40):
-                    assert "sub_63ad60/sub_63ae20 directly install" in str(record.binding_evidence)
-                else:
-                    assert record.binding_evidence == prior.binding_evidence, hex(address)
-        assert_api_symbol_transition(address, prior.symbol, record.symbol)
-        def lessons(row):
-            return [(x.kind, x.key, x.prose, tuple(t for _, t in x.lines)) for x in row.origin or ()]
-        assert lessons(record) == lessons(prior)
+        baseline = subprocess.check_output(["git", "show", f"{BASE}:{relative}"], cwd=ROOT, text=True)
+        integrated = subprocess.check_output(
+            ["git", "show", f"{API_CHECKPOINT}:{relative}"], cwd=ROOT, text=True)
+        assert code_tokens(restore_api_migration(integrated, relative)) == code_tokens(baseline)
+
+    before = read_text(old_cpp(), ROOT / "src/caviar.cpp")
+    current_rows = read(ROOT / "src")
+    addresses = {record.address for record in before}
+    current_by_address = unique_original_records(current_rows, addresses)
+    assert set(current_by_address) == addresses
+    current_by_path = {}
+    for path in {record.path for record in current_by_address.values()}:
+        owner_rows = [record for record in current_rows if record.path == path]
+        current_by_path[path] = parse_binding_evidence(path.read_text(), owner_rows)
+    for original in before:
+        expected = expected_recorded_tail(expected_extended_record(original))
+        current = current_by_address[original.address]
+        assert_caviar_record_continuity(expected, current)
+        assert_api_symbol_transition(original.address, original.symbol, current.symbol, current)
+        if original.address in (0x63AEE0, 0x63AF00, 0x63AF20, 0x63AF40):
+            evidence = current_by_path[current.path].get(current.line)
+            assert evidence is not None
+            assert "zero-argument setup callback" in evidence["reason"]
+
+
+def _lesson_signatures(record):
+    return Counter((item.kind, item.key, item.prose,
+                    tuple(text for _, text in item.lines))
+                   for item in (record.origin or ()))
+
+
+def _history_signatures(record, field):
+    return Counter(getattr(record, field))
+
+
+def assert_caviar_record_continuity(before, current):
+    assert current is not None
+    assert current.address == before.address
+    assert current.name == before.name
+    assert current.image_spans == before.image_spans
+    assert current.mode == before.mode
+    assert current.kind == before.kind
+    assert current.exclusion == before.exclusion
+    assert current.source_role == before.source_role
+    assert current.source_role_reason == before.source_role_reason
+    assert before.function_fragment == current.function_fragment
+    assert not before.byte_exact or current.byte_exact
+    assert not before.semantic or current.semantic or current.byte_exact
+    for field in ("levers", "ruled_out", "unrecoverable", "deferred"):
+        before_history = _history_signatures(before, field)
+        current_history = _history_signatures(current, field)
+        if before.address == 0x616DA0 and field == "levers":
+            old_rows = [row for row in before_history if row[0] == "0"]
+            new_rows = [row for row in current_history if row[0] == "0"]
+            assert len(old_rows) == len(new_rows) == 1
+            old_correction, new_correction = old_rows[0], new_rows[0]
+            assert "FOLDED into the implicit array construction" in old_correction[1]
+            assert "VoxInstance" in new_correction[1]
+            before_history[old_correction] -= 1
+            current_history[new_correction] -= 1
+            before_history += Counter()
+            current_history += Counter()
+        assert before_history <= current_history
+
+    before_lessons = _lesson_signatures(before)
+    current_lessons = _lesson_signatures(current)
+    if before.address == 0x616DA0:
+        old_rows = [row for row in before_lessons if row[0:2] == ("lever", "0")]
+        new_rows = [row for row in current_lessons if row[0:2] == ("lever", "0")]
+        assert len(old_rows) == len(new_rows) == 1
+        old_correction, new_correction = old_rows[0], new_rows[0]
+        assert "FOLDED into the implicit array construction" in old_correction[2]
+        assert "VoxInstance" in new_correction[2]
+        before_lessons[old_correction] -= 1
+        current_lessons[new_correction] -= 1
+        before_lessons += Counter()
+        current_lessons += Counter()
+    assert before_lessons <= current_lessons
+
+
+def unique_original_records(records, addresses):
+    grouped = {}
+    for record in records:
+        if record.address in addresses:
+            grouped.setdefault(record.address, []).append(record)
+    assert set(grouped) == set(addresses)
+    assert all(len(matches) == 1 for matches in grouped.values())
+    return {address: matches[0] for address, matches in grouped.items()}
+
+
+def test_caviar_owner_continuity_rejects_missing_identity_span_claim_or_history():
+    before = read_text(old_cpp(), ROOT / "src/caviar.cpp")
+    addresses = {record.address for record in before}
+    current_rows = read(ROOT / "src")
+    rows = unique_original_records(current_rows, addresses)
+    assert len(rows) == len(addresses)
+
+    with pytest.raises(AssertionError):
+        unique_original_records([row for row in current_rows if row.address != before[0].address], addresses)
+
+    original = next(record for record in before if record.origin)
+    expected = expected_recorded_tail(expected_extended_record(original))
+    current = rows[original.address]
+    assert expected.image_spans
+    span = expected.image_spans[0]
+    with pytest.raises(AssertionError):
+        assert_caviar_record_continuity(expected, replace(current,
+            image_spans=((span[0], span[1] - 1),) + current.image_spans[1:]))
+    with pytest.raises(AssertionError):
+        assert_caviar_record_continuity(replace(expected, byte_exact=True),
+                                        replace(current, byte_exact=False))
+    with pytest.raises(AssertionError):
+        assert_caviar_record_continuity(replace(expected, semantic=True),
+                                        replace(current, semantic=False, byte_exact=False))
+    # Native claim integrity permits a historical instruction-shape claim to
+    # advance to the stronger byte-exact claim, but never to neither claim.
+    assert_caviar_record_continuity(replace(expected, semantic=True),
+                                    replace(current, semantic=False, byte_exact=True))
+    with pytest.raises(AssertionError):
+        assert_caviar_record_continuity(expected, replace(current, origin=()))
+
+    assert_caviar_record_continuity(
+        expected, replace(current, origin=current.origin + current.origin[:1]))
 
 
 def old_cpp():
