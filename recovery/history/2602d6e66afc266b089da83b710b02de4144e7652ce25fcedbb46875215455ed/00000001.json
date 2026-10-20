@@ -1,0 +1,25 @@
+{
+  "event_id": "7cda8bb188bf7aeb6a2b6e0ebd8c8082ccee49199695d7a9fe1c697e3a6c0f09",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_boom_live_window_reload_oct21.py",
+      "src/veh.cpp"
+    ],
+    "evidence": [
+      "Standing user coordinator-reviewed source recovery authority; continue only boom504AA0 live MapWinTable re-read fidelity and its actual-source host control. Retain the task original a9f818ae baseline. This continuation does not authorize other vehicle functions or matching/animation-math/lifetime rewrites.",
+      "Pinned boom505095 Buffer::init precedes independent MapWinTable load5050A5 and Buffer receiver resolution5050C9 before copy5050D0. Redrawn init50542F precedes table load50543F and receiver resolution505461 before copy505468; a further table reload505470 precedes snapshot-to-window copy5054B2. Current source reuses window/window_buffer captured before these intervening calls.",
+      "Pinned Flic/Sprite draw joins505A76, reloads MapWinTable, then calls GraphicWin::update505A89. Current frame code updates the pre-draw window. Preserve current correct Flic/Buffer/Sprite source-destination roles: working_buffer at915068 really is the original Flic branch receiver. Do not follow obsolete TRIED prose into swapping receivers.",
+      "Authorize reacquiring the existing window=MapWinTable[slot] and typed GraphicWin/Buffer subobject after the identified calls, plus the post-frame-draw reload before update. Retain existing reloads after FX, draw_tile and Flic decoding. Do not add table null guards, bounds checks, globals, casts beyond existing real bases, volatile, noinline or changes to flags/types/ABI. Preserve every original identity/span/claim/history and all automatic/local-static lifetimes and wrapper identities.",
+      "Add a host control extracting the actual affected source fragments, not reimplementing their operation order. Replace the live table slot in Buffer init/copy and each Flic/Sprite draw probe; verify subsequent operations use the replacement. Include mutation controls deleting each new reload, keeping previous behavior assertions and unchanged paths. Probe table replacement is a dataflow control, not a claim that any specific original rendering method invokes such a callback.",
+      "Only src/veh.cpp and recovery/tests/test_boom_live_window_reload_oct21.py are editable in this continuation. Author is isolated and uses host tests only; coordinator owns native preparation/measurement/Git. Require independent original/source review, full application build/link, historical claim continuity, actual-object whole known-domain observations and physical complementary comparison, followed by destination reproduction. Preserve justified source corrections through reported matching changes; do not demote claims or waive whole TUs. No full game/automatic/linked acceptance is claimed."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "central-boom-live-window-reloads-oct21b",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:veh-cohort-match-oct20b"
+}
