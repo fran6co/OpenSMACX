@@ -450,7 +450,9 @@ Return Value: Distance radius
 Status: Complete
 */
 int __cdecl vector_dist(int x_point_a, int y_point_a, int x_point_b, int y_point_b) {
-    return vector_dist(x_dist(x_point_a, x_point_b), abs(y_point_a - y_point_b));
+    int x_distance = x_dist(x_point_a, x_point_b);
+    int y_distance = abs(y_point_a - y_point_b);
+    return vector_dist(x_distance, y_distance);
 }
 
 /*
@@ -3784,7 +3786,6 @@ void __cdecl say_vehicles(char *text, int chassis_id, int with_height) {
         strcat(text, " ");
         strcat(text, "(");
         strcat(StringTemp, label_get(0x314 / 4));
-        strcat(text, StringTemp);
         strcat(text, ")");
     }
 }
