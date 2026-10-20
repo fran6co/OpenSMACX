@@ -1,0 +1,102 @@
+{
+  "event_id": "165f59dd7c7a5944633eeda8d97437d96442b090e845432403ed7345fc31cd39",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Coordinator extends reviewed collateral output scope for the justified shared Sound/Midi header model; no outside caller source edits or whole-TU waivers are authorized. Original task baseline and all historical claims remain unchanged.",
+      "Fresh coherent candidate f22517af81fd5cd9f2777cf4c8711363b3ab2c4c is built at build-wu6dr41q; current epoch3 receipts and all 190 canonical object fingerprints reproduce epoch2 output. Full normalized physical comparison retains180PASS/10FAIL with zero body omissions; reports are disposable under .opensmacx/recovery/sound-device-provider-oct20/checkpoint-3/.",
+      "Independent read-only reviews identify the 16 affected mapped callers: same-reference MOV scheduling/register allocation, commutative-load order, end_of_game compare split, and editor_natural loop-entry scheduling. No source behavior change is intended. Masked5581-row census and strict3277 selection results remain unchanged. This is not full-function equivalence, linked-selection proof or native acceptance.",
+      "Focused current-object editor_natural review: baseline3104B/candidate3120B; MapStorage is loaded once per probe iteration on both entry/back-edge paths; no intervening callback. Both relocated Scroll Win/Buffer vptr stores remain in the real Popup destruction chain in the same order; do not interpret relocation placeholder zeros as absent stores.",
+      "User-authorized coordinator-reviewed manual integration is permitted after fresh build/link, identity/reference/claim checks and bounded regression review. Retain strict549UNKNOWN/4existingFAIL, unproved full linked preservation/runtime/nominal DLL identity, and unchanged baseline Net source-scope test failure. Do not waive raw physical failures or call this automatic acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5132880,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5197744,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4415632,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5783088,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5499728,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5570512,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4773952,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5894432,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5120000,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5117136,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4544016,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5392496,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4850272,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6008832,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5250464,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5744224,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "409cd6a997f47c5b3b0cfc2619814475c85be8866b79dc245027723d74fdb074",
+  "request_id": "review-shared-sound-header-collateral",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:sound-device-provider-typing-oct20"
+}

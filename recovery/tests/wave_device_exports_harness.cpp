@@ -14,6 +14,7 @@ typedef int (__stdcall *FARPROC)();
 #define MAKEINTRESOURCEA(value) reinterpret_cast<const char *>(value)
 
 class Wave;
+struct Sound;
 struct EAX_REVERB_PROPERTIES;
 struct IDirectSound;
 // LIVE_DEVICE_BASE_DECLARATION

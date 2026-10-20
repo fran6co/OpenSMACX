@@ -1,0 +1,143 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "6f8ac84ae7bde0b9ad3e854c6245b4aae23b5af8",
+  "editable_files": [
+    "src/flic.cpp",
+    "recovery/tests/test_flic_owner_fast_pass_oct20.py"
+  ],
+  "evidence": [
+    "Fresh actual application decode_fli_copy_trans62B670 is73/79, decode_black_trans62B60026/32, decode_chunk62ACD0148/175. These give a coherent decoder/control-family starting point. Preserve malformed-input/error quirks and full packet read/write order; do not silently add bounds safety or normalize arithmetic.",
+    "Standing user authorization for cheap parallel faithful whole-owner recovery; complete compiling implementations and genuine C++ structure first, cheap matching when supported. A source owner scope is not proof of original TU identity or a declaration that every body is wrong. Preserve mappings, spans, historical claims, quirks and useful findings.",
+    "Review current actual-application census at sharedroot .opensmacx/recovery/report-palette-oct20/checkpoint-2/destination-census.json and owner TRIED/history first. Audit up to12nonexact functions, prioritize highest similarity with positive unexplored structural/control-flow evidence. At most two natural candidate forms per function, preferably batch multi-function overlays per TU. Stop plateau; no cosmetic source integration without measured or semantic/structural improvement. No speculation presented as recovered facts.",
+    "Confirm full original control flow and register base before inferring member offsets; caller/signature/name/catalogue labels and proximity alone are not proof. Source casts are investigation hints, not permission for stylistic removal. Preserve unsafe/error behavior, arithmetic wrap and callback/load order. For necessary external header/type/global/caller changes, report full evidence-backed scope immediately for central expansion instead of abandoning the discovery.",
+    "Worker owns isolated edit/test/native compiler measurement via installed APIs, using ONE resource_environment(sharedroot/recovery/resources.json,[checkout]) lease per operation; one job per prefix and children inherit/no nested allocation. Absolute sharedpool root .opensmacx/wine, pinned image root .opensmacx/game/terranx_original.exe, trustedparsecache root .opensmacx/cache/parse, UVcache root .opensmacx/cache/uv. Python viauvrun; appropriate execution permission forWine, no unleased compiler.",
+    "Only listed CPP and optional named actual-source test editable. No Git, record/claims, hand ORIGINAL edits, preparation mid-epoch, flags/attributes/volatile tricks, assembly/raw executable addresses, synthetic dispatch, public CLI or framework work. Existing Compiler.overlay/compare_unit/COFF facilities with unchanged replica and meaningful damage controls. Actual source tests need meaningful executed mutants; failures stay visible.",
+    "Advisory settled-flag measurements are not actual Release application matching gains. Report both per-address measured values and exact command/environment/profile evidence in ignored JSON; coordinator verifies actual application artifacts before claiming gains. Do not compare counts from different optimization policies as a recovery speedup. Freeze final input hashes and stop source edits on return; coordinator owns batched review/integration/build."
+  ],
+  "intent": "Finite whole-owner faithful C++ recovery pass with worker-owned test and native measurement; batch useful improvements, stop exhausted spellings.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4401056,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6462816,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6462960,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6463056,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6463600,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6463776,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6464016,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6464128,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6464192,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6464768,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6465296,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6465312,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6466288,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6466304,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6466320,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6466432,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6466752,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6466768,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6467392,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6467984,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6469104,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6469120,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6469232,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6469504,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "flic-owner-fast-pass-oct20"
+}

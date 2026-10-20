@@ -43,14 +43,13 @@ VIDEO_METHODS = (
 
 def test_source_uses_shared_prefix_and_keeps_video_extension_slots():
     header = (ROOT / "src/video.h").read_text()
-    abi = (ROOT / "src/soundx_sound_abi.h").read_text()
-    video = header.split("class VideoSoundDevice : public SoundDeviceInterface {", 1)[1]
+    video = header.split("class VideoSoundDevice : public Sound {", 1)[1]
     video = video.split("\n};", 1)[0]
     methods = re.findall(r"virtual\s+[^;]+;\s*//\s*slot\s+(\d+)", video)
     assert methods == ["33", "34", "35", "36", "37", "38"]
-    assert "class SoundDeviceInterface {" in abi
+    assert not (ROOT / "src/soundx_sound_abi.h").exists()
     assert "destroy_device" not in header and "can_release" not in header
-    assert "class VideoSoundDevice : public SoundDeviceInterface" in header
+    assert "class VideoSoundDevice : public Sound" in header
     source = (ROOT / "src/video_sound.cpp").read_text()
     destructor = body(source, "VideoSoundState::~VideoSoundState()")
     release = body(source, "int VideoSoundState::release()")
@@ -90,14 +89,17 @@ def host_harness(source: str, mutation: str | None = None) -> str:
 #include <vector>
 static std::vector<std::string> events;
 static int detach_calls;
-struct Sound;
-class SoundDeviceInterface {
+class Sound {
 // This host-only subset executes client bodies; it does not model ABI slots.
 public:
-  virtual ~SoundDeviceInterface();
+  virtual ~Sound();
+  Sound *device_;
+  Sound() : device_(0) {}
+  int detach() { ++detach_calls; events.push_back("detach"); return 0; }
+  int attach() { events.push_back("attach"); return 0; }
   virtual int stop() = 0;
   virtual int release() = 0;
-  virtual int is_playing() = 0;
+  virtual int is_playing() { return 0; }
   virtual int configure_streams(const void *, const void *, const void *, int) = 0;
   virtual int set_target_frame(int) = 0;
   virtual void *acquire_audio_buffer(int) = 0;
@@ -105,14 +107,7 @@ public:
   virtual int current_frame() = 0;
   virtual int frame_status() = 0;
 };
-struct VideoSoundDevice : SoundDeviceInterface {};
-struct Sound {
-  void *device_;
-  Sound() : device_(0) {}
-  ~Sound();
-  int detach() { ++detach_calls; events.push_back("detach"); return 0; }
-  int attach() { events.push_back("attach"); return 0; }
-};
+struct VideoSoundDevice : Sound {};
 struct VideoSoundState : Sound {
   ~VideoSoundState(); int release(); int stop();
   int configure_streams(const void *, const void *, const void *, int);
@@ -128,16 +123,15 @@ static int create_result;
 static void sound_delete(void *p) { delete static_cast<VideoSoundDevice *>(p); }
 static void (*SoundDeleteTarget)(void *);
 static void (*SoundXOrdinal2DeleteSound())(void *) { return SoundDeleteTarget; }
-static int create_sound(void **device, const char *, int) {
+static int create_sound(Sound **device, const char *, int) {
   *device = 0;
   return create_result;
 }
-static int (*SoundXOrdinal1CreateSound())(void **, const char *, int) { return create_sound; }
+static int (*SoundXOrdinal1CreateSound())(Sound **, const char *, int) { return create_sound; }
 static int WaveDeviceReleaseGuard;
 ''' + ''.join(
         "\n" + signature + " {" + bodies[signature] + "}\n" for signature in VIDEO_METHODS
     ) + r'''
-SoundDeviceInterface::~SoundDeviceInterface() { events.push_back("abi-dtor"); }
 Sound::~Sound() {
   assert(device_ == 0);
   events.push_back("sound-dtor");
@@ -191,7 +185,7 @@ int main() {
     WaveDeviceReleaseGuard=1;
     assert(state.release()==0 && state.device_==0);
     assert(events.size()==4 && events[0]=="query" && events[1]=="provider-dtor");
-    assert(events[2]=="abi-dtor" && events[3]=="detach" && detach_calls==1);
+    assert(events[2]=="sound-dtor" && events[3]=="detach" && detach_calls==1);
   }
   {
     VideoSoundState state; reset(state);
@@ -210,7 +204,7 @@ int main() {
     Probe *device=new Probe; state->device_=device;
     delete state;
     assert(events.size() == 3);
-    assert(events[0]=="provider-dtor" && events[1]=="abi-dtor");
+    assert(events[0]=="provider-dtor" && events[1]=="sound-dtor");
     assert(events[2]=="sound-dtor");
   }
   {

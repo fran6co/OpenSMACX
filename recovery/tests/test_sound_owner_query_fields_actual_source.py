@@ -45,7 +45,7 @@ def namespace_helpers(source: str, marker: str) -> str:
 
 
 def product_host_program(sound_cpp: str, wave_cpp: str) -> str:
-    sound_helpers = namespace_helpers(sound_cpp, "__forceinline SoundDeviceInterface *sound_device")
+    sound_helpers = namespace_helpers(sound_cpp, "__forceinline Sound *sound_device(Sound *device)")
     sound_methods = "\n".join(
         extract_definition(sound_cpp, signature)
         for signature in ("int Sound::is_playing()", "int Sound::is_looping()", "int Sound::get_time()"))
@@ -63,21 +63,15 @@ struct EAX_REVERB_PROPERTIES;
 typedef void *SoundDllProcsTable[11];
 SoundDllProcsTable SoundDllProcs = {};
 struct SoundFadeState {};
-class SoundDeviceInterface {
-public:
-    virtual int is_playing() = 0;
-    virtual int is_looping() = 0;
-    virtual int get_time() = 0;
-};
 class Sound {
 protected:
-    void *device_;
+    Sound *device_;
 public:
     Sound() : device_(0) {}
-    void set_device(void *device) { device_ = device; }
-    int is_playing();
-    int is_looping();
-    int get_time();
+    void set_device(Sound *device) { device_ = device; }
+    virtual int is_playing();
+    virtual int is_looping();
+    virtual int get_time();
 };
 class SoundDeviceBase {
 protected:
@@ -121,10 +115,10 @@ static void d_34(void *p) { record(0x34, p); }
 static void d_rate(void *p, uint32_t value) { record(0x38, p); last_argument = value; }
 static void d_volume(void *p, uint32_t value) { record(0x20, p); last_argument = value; }
 static int q_hwnd(void *p, HWND value) { record(0x6C, p); last_argument = (int)(intptr_t)value; return answer; }
-struct SoundMock : SoundDeviceInterface {
-    int is_playing() { record(0x5C, this); return answer; }
-    int is_looping() { record(0x58, this); return answer; }
-    int get_time() { record(0x74, this); return answer; }
+struct SoundMock : Sound {
+    int is_playing() override { record(0x5C, this); return answer; }
+    int is_looping() override { record(0x58, this); return answer; }
+    int get_time() override { record(0x74, this); return answer; }
 };
 union VtableBytes { void *align; void *slots[42]; };
 struct Provider { void **vtable; };
@@ -147,7 +141,7 @@ static void install_wave(VtableBytes &t) {
 int main() {
     int failures = 0;
     SoundMock sound_provider_storage;
-    SoundDeviceInterface *sound_provider = &sound_provider_storage;
+    Sound *sound_provider = &sound_provider_storage;
     Sound sound;
     failures += check("Sound null defaults", sound.is_playing() == 0 && sound.is_looping() == 0 && sound.get_time() == 0 && calls == 0);
     sound.set_device(sound_provider);
@@ -199,7 +193,7 @@ def test_actual_owner_field_input_and_external_dispatch_behavior(
     wave_cpp = (ROOT / "src/wave_device.cpp").read_text()
     sound_h = (ROOT / "src/sound.h").read_text()
     device_h = (ROOT / "src/sounddevice.h").read_text()
-    assert "void *device_;" in sound_h and "void *device_14_;" in device_h
+    assert "Sound *device_;" in sound_h and "void *device_14_;" in device_h
     assert "sound_device(device_)->is_playing()" in sound_cpp
     assert "sound_device(device_)->is_looping()" in sound_cpp
     assert "sound_device(device_)->get_time()" in sound_cpp

@@ -1,0 +1,18 @@
+{
+  "event_id": "02635a7dd1979c3cf863ab8195ebb5810ebebfe2f5ea56babf251f8f4d3b2dca",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "recheck-first-player-base",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Pinned original62F4E8 loadsESI=this+15C; Net::players_ starts154, so62F545cmp[ECX] correctly reads player+8 acknowledgement DWORD. Current flaggedsourcefield_8_ is faithful; do not change tofield_0_. Scout proposal confused record base with its+8 subfield and is withdrawn.",
+      "Task retained for provenance but not dispatched; no new semantic recovery or acceptance claimed. Optional packet-header source form is separate matching-only hypothesis, not permission to implement the rejected field change."
+    ]
+  },
+  "previous_event": "d8541875cbba1690d312e32fdf36494f5d9d2c0b03dd360a94da2500a8297158",
+  "request_id": "reject-wrong-relative-base",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:net-group-first-player-owner-oct20"
+}

@@ -87,14 +87,14 @@ struct GraphicWin : Buffer {
   }
 };
 struct Dialog {
-  int field_24_, field_28_;
+  int window_x_, window_y_;
   uint32_t field_40_, field_44_, field_4C_, field_5C_, field_60_, field_68_;
   int column_count_, row_count_;
   void *font1_, *font2_, *font3_;
   uint32_t text_color_a_, text_color_b_, text_color_c_, text_color_d_;
   uint32_t text_color_2a_, text_color_2b_, text_color_2c_, text_color_2d_;
   uint32_t text_color_3a_, text_color_3b_, text_color_3c_, text_color_3d_;
-  Dialog() : field_24_(0), field_28_(0), field_40_(3), field_44_(1),
+  Dialog() : window_x_(0), window_y_(0), field_40_(3), field_44_(1),
     field_4C_(1), field_5C_(31), field_60_(47), field_68_(4),
     column_count_(1), row_count_(1), font1_(0), font2_(0), font3_(0), text_color_a_(1),
     text_color_b_(2), text_color_c_(3), text_color_d_(4), text_color_2a_(5),
@@ -150,7 +150,7 @@ static void reset() {
 static void mutate_radio() {
   // Callback-time source fields are intentionally read after GraphicWin::init.
   extern RadioButton *radio_under_test;
-  radio_under_test->field_24_=701; radio_under_test->field_28_=702;
+  radio_under_test->window_x_=701; radio_under_test->window_y_=702;
   radio_under_test->text_color_a_=21; radio_under_test->text_color_b_=22;
   radio_under_test->text_color_c_=23; radio_under_test->text_color_d_=24;
   radio_under_test->text_color_2a_=25; radio_under_test->text_color_2b_=26;
@@ -162,7 +162,7 @@ static void mutate_radio() {
 }
 static void mutate_checkbox() {
   extern CheckBox *checkbox_under_test;
-  checkbox_under_test->field_24_=701; checkbox_under_test->field_28_=702;
+  checkbox_under_test->window_x_=701; checkbox_under_test->window_y_=702;
   checkbox_under_test->text_color_a_=21; checkbox_under_test->text_color_b_=22;
   checkbox_under_test->text_color_c_=23; checkbox_under_test->text_color_d_=24;
   checkbox_under_test->text_color_2a_=25; checkbox_under_test->text_color_2b_=26;
@@ -174,7 +174,7 @@ static void mutate_checkbox() {
 }
 static void mutate_spritebox() {
   extern SpriteBox *spritebox_under_test;
-  spritebox_under_test->field_24_=701; spritebox_under_test->field_28_=702;
+  spritebox_under_test->window_x_=701; spritebox_under_test->window_y_=702;
   spritebox_under_test->text_color_a_=21; spritebox_under_test->text_color_b_=22;
   spritebox_under_test->text_color_c_=23; spritebox_under_test->text_color_d_=24;
   spritebox_under_test->text_color_2a_=25; spritebox_under_test->text_color_2b_=26;
@@ -204,7 +204,7 @@ static void check_radio() {
   int handle=1; HandleMain=&handle; Parent parent; RadioButton b; radio_under_test=&b;
   reset(); parent.iFlags_=0; init_result=-17; init_callback=mutate_radio;
   int result=b.attach(&parent,13,29,0x20);
-  assert(result==-17 && b.field_24_==701 && b.field_28_==702);
+  assert(result==-17 && b.window_x_==701 && b.window_y_==702);
   check_init_arguments(13,29,0x100020,&parent);
   assert(setter_calls==0 && spot_init_calls==0 && spot_add_calls==0);
   reset(); init_result=23; init_callback=mutate_radio;
@@ -226,7 +226,7 @@ static void check_radio() {
   reset(); parent.iFlags_=0x1000; init_callback=mutate_radio;
   assert(b.attach(&parent,-7,41,0x20)==0);
   check_init_arguments(-7,41,0x20,&parent); check_callback_setters();
-  assert(b.field_24_==701 && b.field_28_==702);
+  assert(b.window_x_==701 && b.window_y_==702);
   reset(); assert(b.attach(0,1,2,3)==3 && init_calls==0 && dimension_calls==0);
   int *old=HandleMain; HandleMain=0;
   assert(b.attach(&parent,1,2,3)==7 && init_calls==0 && dimension_calls==0);
@@ -236,7 +236,7 @@ static void check_checkbox() {
   int handle=1; HandleMain=&handle; Parent parent; CheckBox b; checkbox_under_test=&b;
   reset(); parent.iFlags_=0; dimension_result=-31; init_result=23; init_callback=mutate_checkbox;
   assert(b.attach(&parent,13,29,0x20)==23);
-  assert(dimension_calls==1 && b.field_24_==701 && b.field_28_==702);
+  assert(dimension_calls==1 && b.window_x_==701 && b.window_y_==702);
   check_init_arguments(13,29,0x100020,&parent);
   assert(setter_calls==0 && spot_init_calls==0 && spot_add_calls==0);
   reset(); dimension_result=37; init_result=-29; init_callback=mutate_checkbox;
@@ -245,7 +245,7 @@ static void check_checkbox() {
   reset(); parent.iFlags_=0x1000; dimension_result=-19; init_callback=mutate_checkbox;
   assert(b.attach(&parent,-7,41,0x20)==0);
   assert(dimension_calls==1); check_init_arguments(-7,41,0x20,&parent);
-  check_callback_setters(); assert(b.field_24_==701 && b.field_28_==702);
+  check_callback_setters(); assert(b.window_x_==701 && b.window_y_==702);
   reset(); assert(b.attach(0,1,2,3)==3 && init_calls==0 && dimension_calls==0);
   int *old=HandleMain; HandleMain=0;
   assert(b.attach(&parent,1,2,3)==7 && init_calls==0 && dimension_calls==0);
@@ -255,7 +255,7 @@ static void check_spritebox() {
   int handle=1; HandleMain=&handle; Parent parent; SpriteBox b; spritebox_under_test=&b;
   reset(); parent.iFlags_=0; dimension_result=-31; init_result=23; init_callback=mutate_spritebox;
   assert(b.attach(&parent,13,29,0x20)==23);
-  assert(dimension_calls==1 && b.field_24_==701 && b.field_28_==702);
+  assert(dimension_calls==1 && b.window_x_==701 && b.window_y_==702);
   check_init_arguments(13,29,0x100020,&parent);
   assert(setter_calls==0 && spot_init_calls==0 && spot_add_calls==0);
   reset(); dimension_result=37; init_result=-29; init_callback=mutate_spritebox;
@@ -267,7 +267,7 @@ static void check_spritebox() {
   assert(spot_init_calls==1 && spot_add_calls==1);
   assert(spot_args[0]==73 && spot_args[1]==0 && spot_args[2]==0 &&
          spot_args[3]==2 && spot_args[4]==40 && spot_args[5]==4);
-  check_callback_setters(); assert(b.field_24_==701 && b.field_28_==702);
+  check_callback_setters(); assert(b.window_x_==701 && b.window_y_==702);
   reset(); assert(b.attach(0,1,2,3)==3 && init_calls==0 && dimension_calls==0);
   int *old=HandleMain; HandleMain=0;
   assert(b.attach(&parent,1,2,3)==7 && init_calls==0 && dimension_calls==0);

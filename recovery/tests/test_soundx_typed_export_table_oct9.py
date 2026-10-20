@@ -32,6 +32,7 @@ PRELUDE = r"""
 #include <cstring>
 #define __cdecl
 typedef void *HMODULE;
+struct Sound;
 typedef void *SoundDllProcsTable[11];
 static SoundDllProcsTable SoundDllProcs;
 static HMODULE SoundDllModule;
@@ -48,9 +49,9 @@ static const char *filename_seen;
 static int mode_seen;
 static unsigned long arg_one, arg_two;
 static void *module_token;
-static int ordinal1(void **slot, const char *name, int mode) {
+static int ordinal1(Sound **slot, const char *name, int mode) {
     ++ordinal_calls[1]; provider_slot = slot; filename_seen = name; mode_seen = mode;
-    *slot = &module_token; return 101;
+    *slot = reinterpret_cast<Sound *>(&module_token); return 101;
 }
 static int ordinal2(void *value) { assert(value == &module_token); ++ordinal_calls[2]; return 102; }
 static int ordinal3(unsigned long a, unsigned long b) {
@@ -117,19 +118,20 @@ extern "C" void __cdecl sound_version_warning(const char *, const char *) { ++wa
 DIRECT_CALLS = r"""
 static void exercise_all_roles() {
     for (int i = 0; i != 11; ++i) SoundDllProcs[i] = proc_for_ordinal(i + 1);
-    void *slot = 0;
+    Sound *slot = 0;
     const char name[] = "score.wav";
     assert(SoundXOrdinal1CreateSound()(&slot, name, 3) == 101);
-    assert(provider_slot == &slot && slot == &module_token && filename_seen == name && mode_seen == 3);
+    assert(provider_slot == &slot && slot == reinterpret_cast<Sound *>(&module_token) && filename_seen == name && mode_seen == 3);
     assert(SoundXOrdinal2DeleteSound()(slot) == 102);
     assert(SoundXOrdinal3InitTimer()(0x1234UL, 0x5678UL) == 103);
     assert(arg_one == 0x1234UL && arg_two == 0x5678UL);
     assert(SoundXOrdinal4ReleaseSound()() == 104);
-    assert(SoundXOrdinal5WaveDeviceCreate()(&slot, 0x15UL) == 105 && provider_slot == &slot && arg_one == 0x15UL);
+    void *generic_slot = 0;
+    assert(SoundXOrdinal5WaveDeviceCreate()(&generic_slot, 0x15UL) == 105 && provider_slot == &generic_slot && arg_one == 0x15UL);
     assert(SoundXOrdinal6WaveDeviceDelete()() == 106);
-    assert(SoundXOrdinal7MidiDeviceCreate()(&slot, 0x27UL) == 107 && provider_slot == &slot && arg_one == 0x27UL);
+    assert(SoundXOrdinal7MidiDeviceCreate()(&generic_slot, 0x27UL) == 107 && provider_slot == &generic_slot && arg_one == 0x27UL);
     assert(SoundXOrdinal8MidiDeviceDelete()() == 108);
-    assert(SoundXOrdinal9WaveInDeviceCreate()(&slot, 0x39UL) == 109 && provider_slot == &slot && arg_one == 0x39UL);
+    assert(SoundXOrdinal9WaveInDeviceCreate()(&generic_slot, 0x39UL) == 109 && provider_slot == &generic_slot && arg_one == 0x39UL);
     assert(SoundXOrdinal10WaveInDeviceDelete()() == 110);
     assert(SoundXOrdinal11Version()() == 0x0101);
     for (int i = 1; i != 12; ++i) assert(ordinal_calls[i] == 1);
@@ -145,9 +147,9 @@ static void exercise_all_roles() {
 # Appended separately so the rebind callback can share the ordinal-1 state.
 REBIND = r"""
 static int ordinal1_rebound_calls;
-static int ordinal1_rebound(void **slot, const char *name, int mode) {
+static int ordinal1_rebound(Sound **slot, const char *name, int mode) {
     ++ordinal1_rebound_calls; provider_slot = slot; filename_seen = name;
-    mode_seen = mode; *slot = &module_token; return 201;
+    mode_seen = mode; *slot = reinterpret_cast<Sound *>(&module_token); return 201;
 }
 """
 

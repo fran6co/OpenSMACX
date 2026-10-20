@@ -353,8 +353,7 @@ void NetSessionPickerWin::refresh_player_list() {
     // This is the Dialog virtual base entry in the embedded ListBox. The
     // source cast performs the real virtual-base adjustment; no hand offset
     // or shim object stands in for it.
-    result = dialog.attach(this, static_cast<int>(dialog.field_24_),
-                           static_cast<int>(dialog.field_28_), 0x80000);
+    result = dialog.attach(this, dialog.window_x_, dialog.window_y_, 0x80000);
   }
   tail_.action_result_ = result;
   if (result != 0) return;

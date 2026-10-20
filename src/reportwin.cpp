@@ -1775,7 +1775,7 @@ void ReportWin::draw_energy() {
 
     listBox_.reset_report_selection();
     dialog.field_B4_ = 0;
-    listBox_.attach(this, dialog.field_24_, dialog.field_28_, 0x81020);
+    listBox_.attach(this, dialog.window_x_, dialog.window_y_, 0x81020);
     listBox_.set_selected_id(99999999);
     static_cast<GraphicWin &>(listBox_).show(0);
 }
