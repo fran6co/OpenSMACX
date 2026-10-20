@@ -12,6 +12,7 @@ from match_recovery.source import read_file
 
 ROOT = Path(__file__).resolve().parents[2]
 SWAP_SIGNATURE = "void __cdecl swap(int *var1, int *var2)"
+BYTE_SWAP_SIGNATURE = "void __cdecl swap(uint8_t *var1, uint8_t *var2)"
 
 
 def _definition(text: str, signature: str) -> str:
@@ -30,11 +31,18 @@ def test_integer_swap_is_owned_out_of_line_and_adapters_are_gone():
     owner = (ROOT / "src/general.cpp").read_text(encoding="utf-8")
     base = (ROOT / "src/base.cpp").read_text(encoding="utf-8")
     scroll = (ROOT / "src/scroll.cpp").read_text(encoding="utf-8")
-    console = (ROOT / "src/console.cpp").read_text(encoding="utf-8")
+    console = (ROOT / "src/console_commands.cpp").read_text(encoding="utf-8")
 
     assert header.count(SWAP_SIGNATURE + ";") == 1
     assert "MEASURED inline void __cdecl swap(int *var1" not in header
-    assert "MEASURED inline void __cdecl swap(uint8_t *var1" in header
+    assert "MEASURED void __cdecl swap(uint8_t *var1, uint8_t *var2);" in header
+    assert "MEASURED inline void __cdecl swap(uint8_t *var1" not in header
+    assert "MEASURED void __cdecl swap(uint8_t *var1, uint8_t *var2) {" in owner
+    assert "MEASURED inline void __cdecl swap(uint8_t *var1" not in owner
+    byte_body = _definition(owner, BYTE_SWAP_SIGNATURE)
+    assert owner.count(BYTE_SWAP_SIGNATURE + " {") == 1
+    assert byte_body.count("^=") == 3
+    assert "if (" not in byte_body and "std::swap" not in byte_body
     body = _definition(owner, SWAP_SIGNATURE)
     assert owner.count(SWAP_SIGNATURE + " {") == 1
     assert body.count("^=") == 3
@@ -67,7 +75,7 @@ def test_integer_swap_is_owned_out_of_line_and_adapters_are_gone():
     assert SWAP_SIGNATURE in mapped.region
 
     source_facts = (ROOT / "src/general.cpp").read_text(encoding="utf-8")
-    for address in ("0x00600780", "0x005A58E0", "0x00422F00"):
+    for address in ("0x005A58E0", "0x00422F00"):
         start = source_facts.index("// ORIGINAL: " + address)
         next_record = source_facts.find("// ORIGINAL: ", start + 1)
         record = source_facts[start: next_record if next_record >= 0 else len(source_facts)]
@@ -76,16 +84,19 @@ def test_integer_swap_is_owned_out_of_line_and_adapters_are_gone():
 
 
 @pytest.mark.parametrize("compiler_name", ("g++", "clang++"))
-def test_actual_integer_swap_body_and_xor_alias_contract(compiler_name, tmp_path):
+def test_actual_swap_bodies_and_xor_alias_contract(compiler_name, tmp_path):
     compiler = shutil.which(compiler_name)
     if compiler is None:
         pytest.skip(f"{compiler_name} is unavailable")
     owner = (ROOT / "src/general.cpp").read_text(encoding="utf-8")
     body = _definition(owner, SWAP_SIGNATURE)
+    byte_body = _definition(owner, BYTE_SWAP_SIGNATURE)
     program = r'''#include <cassert>
 #include <climits>
+#include <cstdint>
 #define __cdecl
-BODY
+INT_BODY
+BYTE_BODY
 int main() {
     int left = 17, right = -91;
     swap(&left, &right);
@@ -106,8 +117,16 @@ int main() {
     }
     assert(rows[0] == 1 && rows[1] == 10 &&
            rows[2] == 3 && rows[3] == 30);
+
+    uint8_t first = 0xA5, second = 0x3C;
+    swap(&first, &second);
+    assert(first == 0x3C && second == 0xA5);
+
+    uint8_t same_byte = 0xD7;
+    swap(&same_byte, &same_byte);
+    assert(same_byte == 0); // Preserve the byte overload's original XOR alias effect.
 }
-'''.replace("BODY", body)
+'''.replace("INT_BODY", body).replace("BYTE_BODY", byte_body)
     generated = tmp_path / "integer_swap.cpp"
     executable = tmp_path / f"integer-swap-{compiler_name}"
     generated.write_text(program, encoding="utf-8")
@@ -120,6 +139,63 @@ int main() {
     ran = subprocess.run([str(executable)], capture_output=True, text=True,
                          timeout=10, check=False)
     assert ran.returncode == 0, ran.stdout + ran.stderr
+
+
+@pytest.mark.parametrize("compiler_name", ("g++", "clang++"))
+def test_actual_purge_trailing_body_and_changed_loop_control_is_detected(
+        compiler_name, tmp_path):
+    compiler = shutil.which(compiler_name)
+    if compiler is None:
+        pytest.skip(f"{compiler_name} is unavailable")
+    owner = (ROOT / "src/general.cpp").read_text(encoding="utf-8")
+    body = _definition(owner, "void __cdecl purge_trailing(LPSTR input)")
+    assert "MEASURED void __cdecl purge_trailing(LPSTR input) {" in owner
+    assert "MEASURED inline void __cdecl purge_trailing" not in owner
+    program = r'''#include <cassert>
+#include <cstring>
+#define MEASURED
+#define __cdecl
+typedef char *LPSTR;
+BODY
+int main() {
+    char trailing[] = "keep  interior   ";
+    purge_trailing(trailing);
+    assert(std::strcmp(trailing, "keep  interior") == 0);
+
+    char all_spaces[] = "   ";
+    purge_trailing(all_spaces);
+    assert(all_spaces[0] == 0);
+
+    char empty[] = "";
+    purge_trailing(empty);
+    assert(empty[0] == 0);
+
+    char unchanged[] = "no trailing";
+    purge_trailing(unchanged);
+    assert(std::strcmp(unchanged, "no trailing") == 0);
+}
+'''
+
+    def compile_run(source, stem):
+        generated = tmp_path / f"{stem}.cpp"
+        executable = tmp_path / stem
+        generated.write_text(source, encoding="utf-8")
+        built = subprocess.run(
+            [compiler, "-std=c++11", "-Wall", "-Wextra", "-Werror",
+             str(generated), "-o", str(executable)],
+            capture_output=True, text=True, timeout=30, check=False,
+        )
+        assert built.returncode == 0, built.stdout + built.stderr
+        return subprocess.run([str(executable)], capture_output=True, text=True,
+                              timeout=10, check=False)
+
+    actual = compile_run(program.replace("BODY", body), "purge-trailing-actual")
+    assert actual.returncode == 0, actual.stdout + actual.stderr
+
+    damaged = body.replace("*end == ' '", "*end != ' '", 1)
+    assert damaged != body
+    mutant = compile_run(program.replace("BODY", damaged), "purge-trailing-mutant")
+    assert mutant.returncode != 0, "changed loop predicate passed the body-effect control"
 
 
 def test_pinned_integer_swap_body_and_original_direct_call_sites():

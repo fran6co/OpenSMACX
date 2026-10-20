@@ -247,11 +247,6 @@ void __cdecl text_make_index(LPCSTR source_txt) {
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005FE120
 //
-// MOVED TO textindex.h, INLINE: `Text::open` (0x005FDA00) carries this whole
-// loop rather than calling it, same reason as `text_get_source` and
-// neighbours in text.h. VC6 still emits this address as its own COMDAT for
-// the claim above, which is what the comparison pulls out.
-
 // ===== MANAGED GLOBALS - real objects, homed to their domain =====
 // In the shipped image these live at fixed data addresses and are
 // constructed before WinMain by the CRT's dynamic-initializer walk

@@ -56,7 +56,33 @@ def _assert_transport(general: bytes, numeric: bytes) -> None:
     frozen_general = _git("src/general.cpp")
     original_block = _block(frozen_general)
     assert general.count(START) == 0 and general.count(END) == 1
-    assert numeric == _prefix() + b'#include "general.h"\n\n' + original_block
+    number_text = numeric.decode()
+    historical_header = _git("src/general.h").decode()
+    historical_binary = extract_function(
+        historical_header, r"MEASURED\s+inline\s+int\s+__cdecl\s+btoi\s*\(")
+    historical_hex = extract_function(
+        historical_header, r"MEASURED\s+inline\s+int\s+__cdecl\s+htoi\s*\(")
+    binary = extract_function(
+        number_text, r"MEASURED\s+int\s+__cdecl\s+btoi\s*\(")
+    hexadecimal = extract_function(
+        number_text, r"MEASURED\s+int\s+__cdecl\s+htoi\s*\(")
+    normalize_inline = lambda body: re.sub(
+        r"\bMEASURED\s+inline\s+", "MEASURED ", body, count=1)
+    assert binary == normalize_inline(historical_binary)
+    assert hexadecimal == normalize_inline(historical_hex)
+    assert "MEASURED inline int __cdecl btoi" not in number_text
+    assert "MEASURED inline int __cdecl htoi" not in number_text
+    header_text = GENERAL_H.read_text(encoding="utf-8")
+    assert "MEASURED int __cdecl btoi(LPCSTR str);" in header_text
+    assert "MEASURED int __cdecl htoi(LPCSTR str);" in header_text
+    assert "MEASURED inline int __cdecl btoi" not in header_text
+    assert "MEASURED inline int __cdecl htoi" not in header_text
+    assert number_text.index(binary) < number_text.index("int __cdecl stoi(")
+    assert number_text.index(hexadecimal) < number_text.index("int __cdecl stoi(")
+
+    expected_numeric = _prefix() + b'#include "general.h"\n\n' + original_block
+    for line in re.findall(rb"^// ORIGINAL: [^\n]+$", original_block, re.M):
+        assert line in numeric
     assert general.count(b"// ORIGINAL: 0x00628950 ?stoi") == 0
     assert general.count(b"// ORIGINAL: 0x00628B30 ?findnum") == 0
     assert numeric.count(b"// ORIGINAL: 0x006288D0 ?btoi") == 1
@@ -69,11 +95,12 @@ def _assert_transport(general: bytes, numeric: bytes) -> None:
     assert b"// TRIED" in numeric and b"// LEVER" in numeric
     assert b"// ORIGINAL: 0x00625880 ?parse_string" in general
     assert b"int __cdecl parse_string" not in numeric
-    assert b"MEASURED inline int __cdecl btoi" in GENERAL_H.read_bytes()
-    assert b"MEASURED inline int __cdecl htoi" in GENERAL_H.read_bytes()
     current_parser = extract_function(general.decode(), r"int\s+__cdecl\s+parse_string\s*\(")
     original_parser = extract_function(_task_git("src/general.cpp").decode(), r"int\s+__cdecl\s+parse_string\s*\(")
     assert current_parser == original_parser, "parse_string body or inline table binding changed"
+    expected_text = expected_numeric.decode()
+    for signature in (r"int\s+__cdecl\s+stoi\s*\(", r"char\s*\*\s*__cdecl\s+findnum\s*\("):
+        assert extract_function(number_text, signature) == extract_function(expected_text, signature)
 
 
 def test_numeric_owner_transport_and_mapping_damage_controls():
@@ -164,9 +191,8 @@ def test_numeric_owner_actual_bodies_safe_host_controls():
     compiler = shutil.which("g++") or shutil.which("clang++")
     assert compiler, "neither GCC nor Clang is installed for host controls"
     number_text = NUMBER.read_text()
-    header_text = GENERAL_H.read_text()
-    binary = extract_function(header_text, r"MEASURED\s+inline\s+int\s+__cdecl\s+btoi\s*\(")
-    hexadecimal = extract_function(header_text, r"MEASURED\s+inline\s+int\s+__cdecl\s+htoi\s*\(")
+    binary = extract_function(number_text, r"MEASURED\s+int\s+__cdecl\s+btoi\s*\(")
+    hexadecimal = extract_function(number_text, r"MEASURED\s+int\s+__cdecl\s+htoi\s*\(")
     decimal = extract_function(number_text, r"int\s+__cdecl\s+stoi\s*\(")
     finder = extract_function(number_text, r"char\s*\*\s*__cdecl\s+findnum\s*\(")
     digits, = re.findall(r'^char\s+findnum_digits\[\]\s*=\s*"09";[^\n]*$', number_text, re.M)
