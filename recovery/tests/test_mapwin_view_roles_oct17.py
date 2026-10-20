@@ -258,8 +258,8 @@ def test_game_io_order_and_width_damage_controls(tmp_path):
     mutants = {
         "swap_role_order": None,
         "widen_first_encrypted_write": (
-            "encrypt_write(&record->map_view_index_, 4, 1, file)",
-            "encrypt_write(&record->map_view_index_, 8, 1, file)"),
+            "encrypt_write(field, 4, 1, file)",
+            "encrypt_write(field, 8, 1, file)"),
     }
     assert any(shutil.which(name) for name in ("g++", "clang++")), "host compiler required"
     for label, mutation in mutants.items():
@@ -269,7 +269,7 @@ def test_game_io_order_and_width_damage_controls(tmp_path):
             damaged = body.replace(first, marker).replace(second, first).replace(marker, second)
         else:
             old, new = mutation
-            assert body.count(old) == 1, "mutant anchor changed: " + label
+            assert body.count(old) == 6, "mutant anchor changed: " + label
             damaged = body.replace(old, new, 1)
         fixture = _game_io_fixture(damaged)
         for compiler_name in ("g++", "clang++"):
