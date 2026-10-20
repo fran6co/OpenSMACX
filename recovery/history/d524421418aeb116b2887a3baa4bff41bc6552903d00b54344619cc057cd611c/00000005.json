@@ -1,0 +1,21 @@
+{
+  "event_id": "a986bb0b8d09f80e4c456a1c815c80026a7b4ecd382c6fdceb02e9e2418394f3",
+  "payload": {
+    "affects": [
+      "entity-32d4ccd9aa391a342289a480ad08e492a75f21310a9161b1b228f72a53b883da"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "superseded-graphicwin-inline-route-oct20e",
+    "evidence": [
+      "Retainedde59b7b17/b3e850a93 proposal predates currentmaster eventTUboundary; preserved fullyinGit beforeconflictresolution.",
+      "Freshcurrentmaster c21e7e013 application alreadymeasures mappedon_update4042903/3 andmappedupdate5D56B036/36, inexistingevent/calleeTUs. Bothpropervirtualowner relationships and originalclaims arepresent; no newsourceTUneeded."
+    ],
+    "hypothesis": "An additional header-inline callback/new callee TU is needed to restore original GraphicWin direct call shape.",
+    "kind": "discovery"
+  },
+  "previous_event": "8bdff825bac7201e562e01caa6b0e46f7c1fb38aae8b8f079ae8b736f37856ef",
+  "request_id": "superseded-graphicwin-inline-route-oct20e",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:graphicwin-source-batch-oct19b"
+}

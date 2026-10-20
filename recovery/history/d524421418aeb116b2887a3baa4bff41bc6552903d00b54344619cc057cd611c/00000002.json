@@ -1,0 +1,19 @@
+{
+  "event_id": "67384296ede9328cc8bb26c852d0d7fc116b309e7854554c13bd24e145bf4a62",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_window_dispatch.py"
+    ],
+    "evidence": [
+      "Worker identified the existing actual-source dispatch fixture directly extracting the CPP-only GraphicWin::on_update body. Authorize following the source-owned header body location while retaining the same executed callback/delegation assertions; do not skip or weaken the fixture."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "da4fcf608a1b516dbb99bb9c2919bb6587ff591559c509564791ae7121b5303a",
+  "request_id": "graphicwin-inline-existing-dispatch-fixture-oct19b",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:graphicwin-source-batch-oct19b"
+}

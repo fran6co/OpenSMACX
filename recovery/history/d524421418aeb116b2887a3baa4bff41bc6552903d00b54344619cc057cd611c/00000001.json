@@ -1,0 +1,24 @@
+{
+  "event_id": "da4fcf608a1b516dbb99bb9c2919bb6587ff591559c509564791ae7121b5303a",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_graphicwin_frames.py",
+      "recovery/tests/test_graphicwin_inline_callback_oct19.py",
+      "src/graphicwin.h"
+    ],
+    "evidence": [
+      "Original404290 is a three-instruction inherited GraphicWin virtual callback calling out-of-line update5D56B0. Adjacent404260/4042A0 callbacks already have genuine header-inline bodies, as does the mapped MCIVideo destructor pattern in AlphaMovie.",
+      "Actual application tests refute moving only the out-of-line CPP definition: current callback remains36instructions. Authorize a natural in-class inline body with the canonical GraphicWin original marker retained and body path inserted through source.write_body.",
+      "Header expansion affects emitted copies and dependent TUs. Do not claim original TU provenance, unique emitter, selected COMDAT, linker preservation or exactness before fresh per-copy and whole-application evidence. No compiler attribute/flag workaround and no context annotation without supported evidence.",
+      "Preserve all41original task subjects and24cd306f6ff78af03fdd11405f16ba297fa6da27 baseline. Coordinator fast-forwarded only the clean source checkout to18ef32586, retaining task history and previously integrated recoveries."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "graphicwin-header-inline-callback-ownership-oct19b",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:graphicwin-source-batch-oct19b"
+}

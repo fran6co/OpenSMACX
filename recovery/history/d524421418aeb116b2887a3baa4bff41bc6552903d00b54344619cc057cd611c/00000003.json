@@ -1,0 +1,24 @@
+{
+  "event_id": "5ea82a133fd408e63aa30a327b206c33eb920b1438060aa4eb4ac2c6fce61183",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "CMakeLists.txt",
+      "src/graphicwin_update.cpp"
+    ],
+    "evidence": [
+      "Resume preserved and freshly rebased header-inline source hypothesis without resetting original24cd306f6ff78af03fdd11405f16ba297fa6da27 task baseline. Original404290 is push0/call5D56B0/ret, independently tied to GraphicWin constructor-installed table66FC50 slot63.",
+      "The prior actual175TU application emitted73short inlinecallback copies and one expanded canonical copy where the same TU sees update(GraphicWin*) body. Native ownership correctly refused inconsistent copies. Test an ordinary compilation boundary: move unchanged update(GraphicWin*)0x5D56B0, complete mapping/claims/history, into dedicated genuine GraphicWin source TU; not the RECT overload. No pragma/attribute/flag/body workaround.",
+      "New TU includes stdafx.h and graphicwin.h and defines only the unchanged update method. Existing Win/Buffer class declarations supply its full closure. Explicit CMake source list owns build membership. Source annotations identify current home and original relationship, not an invented original filename or unique historical TU.",
+      "Coordinator performs guarded annotation/block transfer using match_recovery.source and apply_patch; verify full identity/spans/claims/lessons continuity. Compiler preparation is required before the frozen epoch. New object and all emitted inline copies/references/selection remain explicit evidence obligations; no assumed duplicate or anonymous-section waiver.",
+      "Source/test workers do not run compilers/Git/preparation/measurement. Fresh build/link, complete native copy/damage observations, scoped matching, prior-claim continuity and reviewed outside-scope comparison required before manual integration. If new TU alone emits a long callback copy or unqualified changes remain, retain as unfinished rather than asserting acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "67384296ede9328cc8bb26c852d0d7fc116b309e7854554c13bd24e145bf4a62",
+  "request_id": "graphicwin-update-compilation-boundary-oct20",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:graphicwin-source-batch-oct19b"
+}
