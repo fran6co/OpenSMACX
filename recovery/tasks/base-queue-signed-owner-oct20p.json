@@ -1,0 +1,49 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "dbaf58a5ecc0348bb7ef9dcba73a938da5452e04",
+  "editable_files": [
+    "src/base.h",
+    "src/base.cpp",
+    "src/basewin.cpp",
+    "src/faction_strategy.cpp",
+    "recovery/tests/test_base_queue_signed_member_oct20p.py"
+  ],
+  "evidence": [
+    "Standing user direction authorizes evidence-backed structural corrections with compiling closure, original quirks and all historical claims retained. Two independent pinned-span reviews confirm queue_size at Base+4C is signed in base_queue4F0732..74D, do_upgrade4EFCB1..CD, retire_proto57F434..47F, enemy_strategy5614F7..1527 and BaseWin add_queue416EC1..C7. Original retire_proto writes -69 to this field. Saved queue sizes are already signed ints.",
+    "Authorize changing only Base::queue_size uint32_t to int and base_queue inner uint32_t counter to int as the minimal structural correction. The header fixes previously unsigned negative comparisons in enemy_strategy and BaseWin::add_queue. Additional edits inside listed owners need specific original consumer evidence and must be reported before implementation; do not perform general cast cleanup or change other members, queue capacity, virtuals, flags, spans or signatures.",
+    "Audit every read/write of this member across all source files, including basewin temporary uint32 counts, faction, game, veh, Console sentinel assignments and net checksum byte views; source field remains4bytes at+4C and array+50. Other active Console message work owns separate bodies/data; do not edit or merge its work. Report any new dependency for central scope coordination rather than silently patching it.",
+    "Add actual-source host controls proving base_queue retains outer nonzero loop but skips negative inner shifts, normal positive shift/callback behavior, BaseWin signed below9 behavior and AI inclusive signed-loop interpretation; meaningful unsigned-field/counter mutants must fail. Instrument accesses or callbacks to bound failure instead of hanging/invalid host memory; preserve original unchecked accesses and original signed-overflow obligations, no fixes, guards, bounds or initialization changes.",
+    "Worker uses apply_patch and uv host tests only; no native compiler/preparation/Git/recording or annotation edits. Coordinator verifies native class layout/build/link and relevant byte/reference continuity, independently reviews actual source and original evidence, and integrates with explicit limitations; no whole-game/automatic acceptance inferred."
+  ],
+  "intent": "Recover Base queue_size signed member semantics across original production and AI queue consumers.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5179104,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5176144,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5763536,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5640320,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4287968,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "base-queue-signed-owner-oct20p"
+}
