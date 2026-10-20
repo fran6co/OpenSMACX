@@ -405,7 +405,9 @@ def test_net_shared_defaults_and_all_primary_tables_match_original_bindings(comp
 
 
 def test_alphanet_records_are_complete_nonoverlapping_members(compiled):
-    for unit in ("src/net_class.cpp", "src/alphanet.cpp", "src/alphanet_records.cpp", "src/netdaemon.cpp"):
+    # The records implementation does not use the controller's complete type.
+    # Its ledger/payload layouts are checked separately below.
+    for unit in ("src/net_class.cpp", "src/alphanet.cpp", "src/netdaemon.cpp"):
         for obj in compiled[unit]:
             assert class_layout(obj, "Net")["size"] == 0x768
             if unit == "src/net_class.cpp":
