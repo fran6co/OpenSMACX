@@ -595,6 +595,14 @@ int main() {
  assert(propose_treaty(1,2)==1&&settlements==1&&!offs&&!crosses);
  reset();DiploFriction=16;PlayersData[2].flags=0x400000;DiplomacyProposalMode=4;
  assert(propose_treaty(1,2)==1&&!settlements&&!std::strcmp(notice,"REJTREATYBADBRIBE"));
+ reset();DiplomacyProposalMode=0;DiplomacyProposalGateCount=-1;DiploFriction=16;
+ DiploScratchF7E8=3;DiploScratchFA8C=3;PlayersData[2].diplo_treaties[3]=0x8000;
+ PlayersData[3].mil_strength_1=101;
+ assert(propose_treaty(1,2)==1&&!settlements&&!std::strcmp(notice,"REJTREATY"));
+ reset();PlayersData[1].diff_level=2;DiploScratchFA78=5;DiploScratchFA2C=5;
+ assert(propose_treaty(1,2)==1&&settlements==1&&money_amount==500);
+ reset();PlayersData[1].diff_level=2;DiploScratchFA78=5;DiploScratchFA2C=6;
+ assert(propose_treaty(1,2)==1&&!settlements&&!std::strcmp(notice,"REJTREATYMEEK"));
 }
 '''
     variants = {'actual': body}
@@ -604,6 +612,11 @@ int main() {
          'diplo_add(friction_units, 4) / 5, 0'),
         ('wrong_technology_direction', 'tech_achieved(other, DiploScratchFAA8, actor, 0)',
          'tech_achieved(actor, DiploScratchFAA8, other, 0)'),
+        ('wrong_ineligible_bias', 'eligible ? diplo_add(bias, 2) : 0',
+         'diplo_add(bias, diplo_mul(eligible, 2))'),
+        ('wrong_fa2c_uses_diff',
+         'diplo_add(diplo_add(diplo_add(bias, 4), eligible ? 1 : 0),',
+         'diplo_add(diplo_add(diplo_add(diplo_clamp(PlayersData[actor].diff_level, 0, 2), 4), eligible ? 1 : 0),'),
     ):
         assert old in body
         variants[name] = body.replace(old, new)
