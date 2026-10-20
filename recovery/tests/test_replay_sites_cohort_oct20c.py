@@ -108,7 +108,7 @@ def _program(methods: dict[int, str], damage: str | None = None) -> str:
     rendered = dict(methods)
     if damage == "skip_last_site":
         address = 0x005AD470
-        before, after = "site != end", "site != end - 1"
+        before, after = "index < 512", "index < 511"
         assert rendered[address].count(before) == 1
         rendered[address] = rendered[address].replace(before, after, 1)
     elif damage == "skip_first_duplicate":

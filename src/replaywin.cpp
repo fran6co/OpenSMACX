@@ -182,13 +182,12 @@ void ReplayWin::on_redraw() {
 // kind      game
 // symbol    ?add_base_site@ReplayWin@@QAEXHHH@Z
 void ReplayWin::add_base_site(int x, int y, int faction_id) {
-    ReplayBaseSite *site = base_sites_;
-    ReplayBaseSite *const end = site + 512;
-    for (; site != end; ++site) {
-        if (site->x < 0) {
-            site->x = x;
-            site->y = y;
-            site->faction_id = faction_id;
+    for (int index = 0; index < 512; ++index) {
+        ReplayBaseSite &site = base_sites_[index];
+        if (site.x < 0) {
+            site.x = x;
+            site.y = y;
+            site.faction_id = faction_id;
             return;
         }
     }
@@ -198,12 +197,10 @@ void ReplayWin::add_base_site(int x, int y, int faction_id) {
 // RECOVERY_BINDING: v1 {"evidence": ["git:7ba7935c:src/leaf_recoveries.cpp", "src/replaywin.h ReplayWin base_sites_ at 0xA20"], "reason": "Recover keyed site update on the ReplayWin owner; the original returns three times the slot index on a hit, and 512 on a miss."}
 // symbol    ?update_base_site@ReplayWin@@QAEHHHH@Z
 int ReplayWin::update_base_site(int x, int y, int faction_id) {
-    ReplayBaseSite *site = base_sites_;
-    ReplayBaseSite *const end = site + 512;
-    int index = 0;
-    for (; site != end; ++site, ++index) {
-        if (site->x == x && site->y == y) {
-            site->faction_id = faction_id;
+    for (int index = 0; index < 512; ++index) {
+        ReplayBaseSite &site = base_sites_[index];
+        if (site.x == x && site.y == y) {
+            site.faction_id = faction_id;
             return index * 3;
         }
     }
@@ -215,13 +212,12 @@ int ReplayWin::update_base_site(int x, int y, int faction_id) {
 // kind      game
 // symbol    ?remove_base_site@ReplayWin@@QAEXHHH@Z
 void ReplayWin::remove_base_site(int x, int y, int) {
-    ReplayBaseSite *site = base_sites_;
-    ReplayBaseSite *const end = site + 512;
-    for (; site != end; ++site) {
-        if (site->x == x && site->y == y) {
-            site->faction_id = -1;
-            site->y = -1;
-            site->x = -1;
+    for (int index = 0; index < 512; ++index) {
+        ReplayBaseSite &site = base_sites_[index];
+        if (site.x == x && site.y == y) {
+            site.faction_id = -1;
+            site.y = -1;
+            site.x = -1;
             return;
         }
     }
