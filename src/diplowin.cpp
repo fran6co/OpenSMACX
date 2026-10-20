@@ -616,11 +616,16 @@ int DiploWin::on_iface_dialog_item_back_draw(GraphicWin *window, int, int item,
 // symbol ?on_status@DiploWin@@UAEXH@Z
 void DiploWin::on_status(int mode) {
   GraphicWin *const front = static_cast<GraphicWin *>(this);
+  FlatButton *button;
+  int remaining;
   if (mode != 0) {
     front->on_redraw();
-    for (int i = 0; i != 13; ++i) {
-      flatButtons_[i].show(0);
-    }
+    button = flatButtons_;
+    remaining = 13;
+    do {
+      button->show(0);
+      ++button;
+    } while (--remaining != 0);
     slide_show(front, 2);
     front->Win::show(3);
     stringBox_.show(0);
@@ -636,9 +641,12 @@ void DiploWin::on_status(int mode) {
   editBox_.hide();
   slide_hide(front, 2);
   front->Win::hide();
-  for (int i = 0; i != 13; ++i) {
-    flatButtons_[i].hide();
-  }
+  button = flatButtons_;
+  remaining = 13;
+  do {
+    button->hide();
+    ++button;
+  } while (--remaining != 0);
 }
 
 // SubInterface vtable slots with exact native shared-stub targets. These are
@@ -764,59 +772,63 @@ void DiploWin::check_done() {
 // ORIGINAL: 0x00442740 ?do_it@DiploWin@@QAEXXZ 0x00442740-0x0044299D
 // RECOVERY_BINDING: v1 {"evidence": ["git:3f6ab06bdf3b791aa23454e19f71b4e8b5935caf:src/recovered/units/00442740.cpp"], "reason": "Rehome exchange execution into source-owned DiploWin arrays and faction/network globals."}
 void DiploWin::do_it() {
-    if ((faction_id_ <= faction_id_with_ || IsMultiplayerPBEM != 0)
-        && CommlinkPending < 2) {
-        CommlinkPending = 2;
-        if (diplo_lock(200) == 0) {
-            int side = 0;
-            do {
-                int i = 0;
-                while (i < offer_count_[side]) {
-                    int giver = side == 0 ? faction_id_ : faction_id_with_;
-                    int recipient = side == 0 ? faction_id_with_ : faction_id_;
-                    int value = offer_value_[side][i];
-                    switch (offer_type_[side][i]) {
-                    case 0:
-                        if (value > 88 || !has_tech(value, recipient)) {
-                            net_tech(recipient, value, giver, 1);
-                        }
-                        break;
-                    case 1: {
-                        int reserves = PlayersData[giver].energy_reserves;
-                        int amount = value;
-                        if (value < 0 || reserves < 0) {
-                            amount = 0;
-                        } else if (reserves < value) {
-                            amount = reserves;
-                        }
-                        net_energy(giver, -amount, recipient, amount, 1);
-                        break;
+    if (faction_id_ > faction_id_with_ && IsMultiplayerPBEM == 0) {
+        return;
+    }
+    if (CommlinkPending >= 2) {
+        return;
+    }
+    CommlinkPending = 2;
+    if (diplo_lock(200) == 0) {
+        int side = 0;
+        do {
+            int i = 0;
+            while (i < offer_count_[side]) {
+                int giver = side == 0 ? faction_id_ : faction_id_with_;
+                int recipient = side == 0 ? faction_id_with_ : faction_id_;
+                int value = offer_value_[side][i];
+                switch (offer_type_[side][i]) {
+                case 0:
+                    if (value > 88 || !has_tech(value, recipient)) {
+                        net_tech(recipient, value, giver, 1);
                     }
-                    case 2: net_treaty_on(giver, recipient, 1, 1); break;
-                    case 3: net_treaty_on(giver, recipient, 2, 1); break;
-                    case 4: net_treaty_on(giver, recipient, 4, 1); break;
-                    case 5:
-                        if (((1 << (value & 31)) & static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_)) != 0
-                            && !(PlayersData[giver].diplo_treaties[value] & 0x10)) {
-                            message_data(0x150F, value, giver, recipient, 0, 0);
-                        }
-                        net_treaty_on(giver, value, 8, 0);
-                        net_double_cross(giver, value, recipient, 1);
-                        break;
+                    break;
+                case 1: {
+                    int reserves = PlayersData[giver].energy_reserves;
+                    int amount = value;
+                    if (value < 0 || reserves < 0) {
+                        amount = 0;
+                    } else if (reserves < value) {
+                        amount = reserves;
                     }
-                    ++i;
+                    net_energy(giver, -amount, recipient, amount, 1);
+                    break;
                 }
-                ++side;
-            } while (side < 2);
-            diplo_unlock();
-            CommlinkPending = 1;
-            offer_state_[1] = 3;
-            offer_state_[0] = 3;
-            offer_count_[1] = 0;
-            offer_count_[0] = 0;
-            message_data(0x150D, faction_id_with_, 0, 0, 0, 0);
-            redraw();
-        }
+                case 2: net_treaty_on(giver, recipient, 1, 1); break;
+                case 3: net_treaty_on(giver, recipient, 2, 1); break;
+                case 4: net_treaty_on(giver, recipient, 4, 1); break;
+                case 5:
+                    if (((1 << (value & 31)) & static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_)) != 0
+                        && !(PlayersData[giver].diplo_treaties[value] & 0x10)) {
+                        message_data(0x150F, value, giver, recipient, 0, 0);
+                    }
+                    net_treaty_on(giver, value, 8, 0);
+                    net_double_cross(giver, value, recipient, 1);
+                    break;
+                }
+                ++i;
+            }
+            ++side;
+        } while (side < 2);
+        diplo_unlock();
+        CommlinkPending = 1;
+        const int recipient = faction_id_with_;
+        offer_state_[1] = 3;
+        offer_state_[0] = 3;
+        offer_count_[1] = 0;
+        offer_count_[0] = 0;
+        message_data(0x150D, recipient, 0, 0, 0, 0);
+        redraw();
     }
 }
 
