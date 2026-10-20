@@ -2408,7 +2408,7 @@ Status: Complete
 Purpose: Drop the given number of device-context references, releasing the
          handle once the last one is gone.
 // ORIGINAL: 0x005E3563 ?release_hdc@Buffer@@QAEXH@Z 0x005E3563-0x005E35C3 BYTE_EXACT
-// body      src/buffer.h
+// body      src/buffer.cpp
 // size      96 bytes
 // prototype void (__thiscall ?release_hdc@Buffer@@QAEXH@Z)(Buffer* this, int)
 // callers   8   call targets   0
@@ -2418,6 +2418,33 @@ Purpose: Drop the given number of device-context references, releasing the
 // indirect  0x005E35AA 0x005E35B5
 Status: Complete
 */
+
+MEASURED void Buffer::release_hdc(int count) {
+    // THE SURFACE TEST COMES FIRST, and the subtraction is inside each arm.
+    // The image reads `[esi + 0x58]` before either `sub`, and has two of
+    // them - one per arm - where a single subtraction above the branch
+    // would need only one.
+    if (surface_ == nullptr) {
+        hdc_lock_count_ -= count;
+        if (hdc_lock_count_ <= 0) {
+            hdc2_ = nullptr;
+            hdc_lock_count_ = 0;
+        }
+        return;
+    }
+    hdc_lock_count_ -= count;
+    // `hdc2_` is tested before the count, in that order.
+    if (hdc2_ == nullptr) {
+        return;
+    }
+    if (hdc_lock_count_ <= 0) {
+        if (surface_->ReleaseDC(hdc2_) != 0) {
+            get_graphic_win();
+        }
+        hdc_lock_count_ = 0;
+        hdc2_ = nullptr;
+    }
+}
 
 
 /*
@@ -2542,10 +2569,10 @@ int Buffer::set_clip(RECT *rect) {
     }
 
     // The image inlines the whole `get_hdc` / `release_hdc` protocol here -
-    // the marker above says `calls (none)` - and both bodies are in-class in
-    // `buffer.h` so that VC6 does the same. Defined in the .cpp they are
-    // ordinary calls: `/O2` implies `/Ob2` and it has seen them, but it
-    // declines on size.
+    // the marker above says `calls (none)`. `get_hdc` remains in-class in
+    // `buffer.h`; `release_hdc` has one out-of-class definition above, visible
+    // to this translation unit and to no consumer that only includes the
+    // header. Let the compiler choose whether to inline that same-TU body.
     // `int`, not `bool`: the image tests it with `cmp dword ptr [esp+0x54],
     // ebp`. A `bool` is a byte and compiles `mov al, [esp+0x54]; test al, al`.
     int acquired;
