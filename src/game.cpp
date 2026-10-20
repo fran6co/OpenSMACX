@@ -4230,7 +4230,7 @@ void __cdecl say_special(char *output, char *text, int faction_id) {
     strcat(output, parsed);
 }
 
-// ORIGINAL: 0x0058F810 ?get_phrase@@YAPADHH@Z 0x0058F810-0x0058F8A2
+// ORIGINAL: 0x0058F810 ?get_phrase@@YAPADHH@Z 0x0058F810-0x0058F8A2 BYTE_EXACT
 // LEVER: the faction-table bases at 0x00946A54 and 0x00946A6C are
 //         `Players[a1].filename` and `Players[a1].search_key` - the image
 //         computes `a1 * 0x59c` and adds those two constants, and 0x00946A50
@@ -4254,12 +4254,10 @@ char *__cdecl get_phrase(int faction_id, int phrase_id) {
             return StringTable.get(0);
         }
     }
-    int n = phrase_id + 9;
-    if (n > 0) {
-        do {
-            text_get();
-            n--;
-        } while (n != 0);
+    int remaining = phrase_id + 9;
+    while (remaining > 0) {
+        text_get();
+        --remaining;
     }
     // TRIED: the counter as one local driving both the guard and the loop
     //         (`int n = phrase_id + 9; if (n > 0) { do { text_get(); n--; }`)
@@ -4799,7 +4797,7 @@ int __cdecl generators(int faction_id, int *count_out) {
                 }
             }
             ++index;
-        } while (index < total);
+        } while (index < GameDataStateStorage.fields_.base_current_count_);
     }
     return count;
 }
