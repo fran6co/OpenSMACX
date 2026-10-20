@@ -3426,7 +3426,7 @@ NetUnk72C::~NetUnk72C() {
 Purpose: Copy one text record's string into fresh storage chosen by the
          record's own allocator (the CRT heap when none is installed) and
          hand the copy plus the four metadata words to the caller's array.
-// ORIGINAL: 0x005D47D0 sub_5d47d0 0x005D47D0-0x005D4851 FILE
+// ORIGINAL: 0x005D47D0 sub_5d47d0 0x005D47D0-0x005D4851 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original 5D47D0-5D4851 and its retained seed/history preserve identity and extent.", "Provider callback 630BF0 borrows name and provider GUID through ServiceList +1C/+20 before add; receiver +18 selects Heap versus mem_get. Payload owns copied name +4 and GUID +8. These are ServiceList/ServiceStruct roles, not the sibling nested-text owner.", "Native v3 emits the genuine virtual ServiceList insertion symbol; source nominal names remain evidence-backed interpretations, not new byte claims."], "reason": "Recover provider-list insertion as ServiceList::on_insert on the real enumerated provider payload."}
 // Historical superseded binding interpretation: {"evidence": ["Original5D47D0..5D4851; retired seed git:b18d3ac8:src/unrecovered/005d47d0.cpp records the same identity and spans.", "The receiver is the +0x18 Heap pointer, +0x1C string and +0x20 metadata record the sibling 0x005D4C50 installs into; mem_get is general.cpp's and Heap::get is heap.h's own, both already linked by this TU's list machinery."], "reason": "Coverage transcription of the record copy-out with the thiscall receiver spelled as an explicit first argument; no in-tree class owns the record yet, so its slots stay documented offsets."}
 // symbol    ?on_insert@ServiceList@@UAEHPAUServiceStruct@@@Z
@@ -3436,10 +3436,11 @@ int ServiceList::on_insert(ServiceStruct *payload) {
     const char *text = name_;
     if (text != 0) {
         char *copy;
-        if (allocator_ == 0) copy = static_cast<char *>(mem_get(strlen(text) + 1));
-        else {
+        if (allocator_ != 0) {
             const size_t length = strlen(text) + 1;
             copy = static_cast<char *>(allocator_->get(length));
+        } else {
+            copy = static_cast<char *>(mem_get(strlen(text) + 1));
         }
         payload->name_ = copy;
         if (copy == 0) return 4;
