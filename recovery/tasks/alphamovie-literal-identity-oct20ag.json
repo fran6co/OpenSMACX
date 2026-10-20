@@ -1,0 +1,25 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "a7c5530c18358144e67a665af82db34751e672ee",
+  "editable_files": [
+    "src/alphamovie.cpp"
+  ],
+  "evidence": [
+    "Standing faithful source recovery and coordinator-reviewed integration authorization. Source owns essential original code/data/reference bindings; no C++ behavior, ABI, source symbol, ORIGINAL marker, extent, claim or compiler flag changes.",
+    "Pinned403BA3 pushes682748 and403BA8 pushes682754 before text_open403BAD. text_open(source,section) establishes MOVLIST source at682754 and PROJECTS section at682748. Image bytes are PROJECTS NUL at682748..682751 (9bytes), MOVLIST NUL at682754..68275C (8bytes); do not absorb three zero padding bytes or following movies literal. Original section is initialized writable data; do not claim original readonly storage or full allocation/type recovery.",
+    "Current receipt-backed AlphaMovie object literal_storage independently accepts one literal COMDAT each,9/8exactbytes, no relocations, separate typed symbols ??_C@_08DKI@PROJECTS?$AA@ and ??_C@_07FCPL@MOVLIST?$AA@. Its function has DIR32 references at offsets4 and9. No existing literal/object/generated binding overlaps either original extent. Literal bindings remain TU-private targets, not a global spelling-alias inference or new named storage.",
+    "Authorize only adding the two RECOVERY_LITERAL annotations beside the actual int amovie_project text_open call, with original evidence403BA0 and the verified exact extents/symbols. Native parse/read_literals must validate them. No other edits, code changes, flags, tests, task/Git or native compiler/Wine by the worker. Coordinator owns fresh compilation and strict/data/reference checks; proof remains unknown unless native checks actually resolve it.",
+    "Independent original/candidate literal/reference review, native fresh build/link, claims/mappings/references/data checks and binary-neutral whole-object controls precede manual integration. This may close one strict function obligation, not add function coverage or prove full linked/structural/runtime/game acceptance. Preserve baseline and every historical claim."
+  ],
+  "intent": "Bind the two original movie-list literal identities referenced by amovie_project(int)",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4209568,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "alphamovie-literal-identity-oct20ag"
+}
