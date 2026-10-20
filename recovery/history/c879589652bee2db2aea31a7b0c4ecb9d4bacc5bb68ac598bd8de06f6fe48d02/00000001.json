@@ -1,0 +1,20 @@
+{
+  "event_id": "8a2439abb13b97dbe7365b3aa260c57d22c89c991dd3dbccb3fd12e396639309",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_spritebox_redraw_parent_gate_oct19.py"
+    ],
+    "evidence": [
+      "Independent pinned review confirms signed live-count for-loop preserves parent gate and callback-sensitive bounds. Native finite screen is target exact48/48 with unchanged replica and damaging control passing under original FPO recipe; not acceptance.",
+      "Existing test compiles and executes actual new source successfully, but then asserts old do-loop spelling and expects two textual count mentions. Authorize only loop-spelling-neutral mutation construction in this existing test; retain all original null-parent, positive/zero/negative count, callback-growth/shrink/copy and four compiling behavioral damage controls. Do not weaken expected outputs or source obligations, reset baselines or infer runtime/overflow acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "spritebox-loop-neutral-mutation-controls-oct20z",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:matching-spritebox-oct20z"
+}
