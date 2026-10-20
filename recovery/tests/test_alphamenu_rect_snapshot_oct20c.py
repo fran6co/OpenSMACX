@@ -32,14 +32,14 @@ struct RECT { int left, top, right, bottom; };
 
 struct Spot {
     RECT rows[8];
-    int calls;
-    int last_index;
+    mutable int calls;
+    mutable int last_index;
 
-    void get_rect_at(int index, RECT *out) {
+    const RECT &get_rect_at(int index) const {
         assert(index >= 0 && index < 8);
         ++calls;
         last_index = index;
-        *out = rows[index];
+        return rows[index];
     }
 };
 
@@ -47,6 +47,7 @@ struct AlphaMenu {
     int field_A24_;
     RECT outer_rect_;
     int caption_height_;
+    int border_thickness_;
     Spot spot_;
 
     void on_adjust_pulldown_pos(int *x, int *y);
@@ -60,7 +61,8 @@ static void initialize(AlphaMenu *menu) {
     menu->outer_rect_.top = 17;
     menu->outer_rect_.right = 2;
     menu->outer_rect_.bottom = 31;
-    menu->caption_height_ = 3;
+    menu->caption_height_ = 99;
+    menu->border_thickness_ = 3;
     menu->spot_.calls = 0;
     menu->spot_.last_index = -1;
     for (int i = 0; i < 8; ++i) {
@@ -142,10 +144,9 @@ def test_actual_alphamenu_snapshot_alias_contract_and_mutants(tmp_path, compiler
     body = _definition(source, "void AlphaMenu::on_adjust_pulldown_pos(int *x, int *y)")
     snapshot = "const RECT outer_rect_snapshot = outer_rect_;"
     x_store = "*x = outer_rect_snapshot.right;"
-    spot_read = "spot_.get_rect_at(field_A24_, &spot_rect);"
-    y_store = "*y = spot_rect.top + caption_height_ + outer_rect_snapshot.top;"
-    assert body.count(snapshot) == body.count(x_store) == body.count(spot_read) == body.count(y_store) == 1
-    assert body.index(snapshot) < body.index(x_store) < body.index(spot_read) < body.index(y_store)
+    y_store = "*y = spot_.get_rect_at(field_A24_).top + border_thickness_"
+    assert body.count(snapshot) == body.count(x_store) == body.count(y_store) == 1
+    assert body.index(snapshot) < body.index(x_store) < body.index(y_store)
 
     actual = _compile(compiler, tmp_path, "actual", body)
     for case in ("normal", "top_alias", "field_alias", "same_output", "sentinel"):
@@ -154,29 +155,27 @@ def test_actual_alphamenu_snapshot_alias_contract_and_mutants(tmp_path, compiler
 
     live_top = body.replace("outer_rect_snapshot.top", "outer_rect_.top", 1)
     early_spot = body.replace(
-        "        *x = outer_rect_snapshot.right;\n\n"
-        "        RECT spot_rect;\n"
-        "        spot_.get_rect_at(field_A24_, &spot_rect);",
-        "        RECT spot_rect;\n"
+        "        *x = outer_rect_snapshot.right;",
         "        const int saved_index = field_A24_;\n"
-        "        spot_.get_rect_at(saved_index, &spot_rect);\n"
         "        *x = outer_rect_snapshot.right;",
         1,
-    )
+    ).replace("get_rect_at(field_A24_).top", "get_rect_at(saved_index).top", 1)
     reversed_stores = body.replace(
-        "        *x = outer_rect_snapshot.right;\n\n"
-        "        RECT spot_rect;\n"
-        "        spot_.get_rect_at(field_A24_, &spot_rect);\n"
-        "        *y = spot_rect.top + caption_height_ + outer_rect_snapshot.top;",
-        "        RECT spot_rect;\n"
-        "        spot_.get_rect_at(field_A24_, &spot_rect);\n"
-        "        *y = spot_rect.top + caption_height_ + outer_rect_snapshot.top;\n"
+        "        *x = outer_rect_snapshot.right;\n"
+        "        *y = spot_.get_rect_at(field_A24_).top + border_thickness_\n"
+        "            + outer_rect_snapshot.top;",
+        "        *y = spot_.get_rect_at(field_A24_).top + border_thickness_\n"
+        "            + outer_rect_snapshot.top;\n"
         "        *x = outer_rect_snapshot.right;",
         1,
     )
     assert live_top != body and early_spot != body and reversed_stores != body
 
+    wrong_field = body.replace("border_thickness_", "caption_height_", 1)
+    assert wrong_field != body
+
     mutants = (
+        ("wrong_field", wrong_field, "normal"),
         ("live_top", live_top, "top_alias"),
         ("early_spot", early_spot, "field_alias"),
         ("reversed_stores", reversed_stores, "same_output"),

@@ -62,6 +62,9 @@ class Spot {
   void get_rect_at(int index, RECT *spot_rect) const {
     *spot_rect = spots_[index].rect;
   }
+  const RECT &get_rect_at(int index) const {
+    return spots_[index].rect;
+  }
 
  private:
   struct SpotInternal {

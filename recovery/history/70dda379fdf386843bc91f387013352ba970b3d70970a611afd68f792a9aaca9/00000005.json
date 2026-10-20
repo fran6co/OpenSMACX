@@ -1,0 +1,17 @@
+{
+  "event_id": "80eac3217916a67b2dc07ee91dfa61c1b77284378a2ea109a9b3ba9e170f4c16",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "original-window-border-not-caption-height",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Final owning method now uses border_thickness_ after*x and the corrected binding evidence states both118border and114caption. Actual-source host fixture keeps distinct99caption/3border, with wrongfield and alias/order damage controls. Final paired-header actualRelease measurement reproduces original29/29 instructions with unchanged outside-body COFF residual and no exact loss. Six unrelated production pointer-output callsites (fiveMenu, oneotherAlphaMenu) remain on the existing copy API; only placement uses new constreference overload. All historical identities/spans/claims preserved; full application checks still required."
+    ]
+  },
+  "previous_event": "d68644d7bd61040cab58352015c15f0b1002ca3e515bad5e97b095530ca951df",
+  "request_id": "recover-original-border-field-and-binding",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:alphamenu-rect-snapshot-oct20c"
+}
