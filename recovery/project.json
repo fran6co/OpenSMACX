@@ -173,6 +173,9 @@
       "src/prefwin_geometry.cpp": {
         "flags": ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Ob2"]
       },
+      "src/popmenu.cpp": {
+        "flags": ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Oy-", "/Ob2"]
+      },
       "src/popup.cpp": {
         "flags": ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Oy-", "/Ob2"]
       },
@@ -190,6 +193,9 @@
       },
       "src/sound.cpp": {
         "flags": ["/c", "/O2", "/Gy", "/GR-", "/Oy-", "/GX", "/Ob2"]
+      },
+      "src/squarelock.cpp": {
+        "flags": ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Oy-", "/Ob2"]
       },
       "src/wave.cpp": {
         "flags": ["/c", "/O2", "/Gy", "/GR-", "/Oy-", "/GX", "/Ob2"]
