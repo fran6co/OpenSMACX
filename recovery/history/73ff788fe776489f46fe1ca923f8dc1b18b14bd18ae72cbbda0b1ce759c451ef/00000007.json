@@ -1,0 +1,24 @@
+{
+  "event_id": "f96ea13c0df45935297d602871089eb8272d71ac1b185896797e661fc00e86e9",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_base_yield.py",
+      "src/base.cpp"
+    ],
+    "evidence": [
+      "Continue the retained Base ownership task and its unchanged c63a9c1f5 baseline; do not replace old decisions, historical matching obligations or pending header collateral. This is source recovery under standing coordinator-reviewed manual integration, not native automatic acceptance.",
+      "Independent source/pinned-image investigation confirms every base_yield_intake invocation is in an index0..3 loop. Original tile loop4E83D1..4E841E indexes C0..CC after each resource_yield and fresh BaseCurrent reload; satellite loop4E8120..4E8245 visits C0..CC, with index3 zeroed; final4E932F..4E934A copies all four C0..CC words to B0..BC.",
+      "Authorize retiring the unoriginal private base_yield_intake selector and replacing all seven call expressions with the already recovered intake_1/intake_2 arrays. This explicitly supersedes the previous helper-only unsupported-index fallback preservation policy: no original or source caller can invoke that artificial API with an invalid resource. It does not authorize removing original bounds quirks or changing any real error path.",
+      "Editable continuation scope is src/base.cpp and recovery/tests/test_base_yield.py only. Preserve resource3 call side effects, all BaseCurrent callback reloads, captured selected-pointer timing, population/satellite caps, wrap arithmetic, copy ordering, mapping fields/spans/symbols/claims and all other source. No flags, new API, unsafe-path normalization or forced compiler tricks.",
+      "Update only helper-specific fixture assertions and mutation anchors; retain actual-source sanitizer/mutant controls and explicitly exercise all four array lanes and callback/copy behavior. Require baseline/candidate focused fixture comparison, fresh native179TU build/link, whole mapped census/strict delta, continuity, zero-omission physical observations and independent review. Failures/unknowns stay unwaived; build success is not full-game acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "dc03bda5554530c1a265a03e23e0f9856fe51e12c7c19764b82da92d75369b93",
+  "request_id": "central-base-direct-intakes-oct20ap",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:owner-base-body-recovery-oct20ao"
+}

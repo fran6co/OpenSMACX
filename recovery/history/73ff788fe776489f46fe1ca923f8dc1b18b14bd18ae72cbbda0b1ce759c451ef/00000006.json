@@ -1,0 +1,22 @@
+{
+  "event_id": "dc03bda5554530c1a265a03e23e0f9856fe51e12c7c19764b82da92d75369b93",
+  "payload": {
+    "affects": [
+      "entity-8252ad9b514fc77bba32541f37db3820422a32fbfebab5a1ef73f5d6cfeb6d64"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "base-bounded-intake-selector-oct20ap",
+    "evidence": [
+      "Continue the retained Base ownership task and its unchanged c63a9c1f5 baseline; do not replace old decisions, historical matching obligations or pending header collateral. This is source recovery under standing coordinator-reviewed manual integration, not native automatic acceptance.",
+      "Independent source/pinned-image investigation confirms every base_yield_intake invocation is in an index0..3 loop. Original tile loop4E83D1..4E841E indexes C0..CC after each resource_yield and fresh BaseCurrent reload; satellite loop4E8120..4E8245 visits C0..CC, with index3 zeroed; final4E932F..4E934A copies all four C0..CC words to B0..BC.",
+      "Authorize retiring the unoriginal private base_yield_intake selector and replacing all seven call expressions with the already recovered intake_1/intake_2 arrays. This explicitly supersedes the previous helper-only unsupported-index fallback preservation policy: no original or source caller can invoke that artificial API with an invalid resource. It does not authorize removing original bounds quirks or changing any real error path."
+    ],
+    "hypothesis": "The artificial intake selector has no unsupported-index callers and can be retired in favor of the recovered four-word arrays.",
+    "kind": "discovery"
+  },
+  "previous_event": "d63652137cb18b89509988900e9c5af128a7c36aa814a3b60f6cd7c5785ad6f5",
+  "request_id": "base-bounded-intake-selector-oct20ap",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:owner-base-body-recovery-oct20ao"
+}
