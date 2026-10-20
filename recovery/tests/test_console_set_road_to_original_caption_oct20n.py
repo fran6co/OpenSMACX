@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+import re
 import shutil
 import subprocess
 
@@ -15,6 +16,12 @@ ROOT = Path(__file__).resolve().parents[2]
 IMAGE = Path(os.environ.get("OPENSMACX_IMAGE", ROOT / ".opensmacx/game/terranx_original.exe"))
 IMAGE_SHA256 = "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
 SIGNATURE = "void Console::set_road_to(int veh_id, int x_coord, int y_coord, int order)"
+MESSAGE_ARRAYS = (
+    "RoadToNeedTerraformers",
+    "RoadToNotInTriad",
+    "RoadToNotInOcean",
+    "SetRoadToNotInOcean",
+)
 
 
 def actual_definition() -> str:
@@ -29,9 +36,20 @@ def actual_definition() -> str:
     raise AssertionError("unterminated actual Console::set_road_to definition")
 
 
+def message_array_declarations() -> str:
+    source = (ROOT / "src/console_commands.cpp").read_text(encoding="utf-8")
+    declarations = []
+    for name in MESSAGE_ARRAYS:
+        match = re.search(rf"static char {name}\[\]\s*=\s*\"[^\"]*\";", source)
+        assert match is not None, f"missing actual declaration for {name}"
+        declarations.append(match.group(0))
+    return "\n".join(declarations) + "\n"
+
+
 HARNESS = r'''#include <cassert>
 #include <cstdint>
 #include <cstdlib>
+#include <cstring>
 #include <string>
 #include <vector>
 
@@ -61,10 +79,12 @@ static int MapIsFlat = 1;
 static Map *map_tiles() { return MapTiles; }
 
 struct Popup { void pop(const char *label, int timeout, int flags, int) {
+    last_label = label;
     record("pop", timeout, flags);
     // Keep the actual caption observable rather than reducing it to a boolean.
     captions.push_back(label);
-} static std::vector<std::string> captions; };
+} static const char *last_label; static std::vector<std::string> captions; };
+const char *Popup::last_label = nullptr;
 std::vector<std::string> Popup::captions;
 static Popup NetMsgPrimary;
 
@@ -89,9 +109,10 @@ class Console { public:
 
 
 def harness_source(definition: str) -> str:
-    return HARNESS + definition + r'''
+    return HARNESS + message_array_declarations() + definition + r'''
 static void reset() {
     events.clear();
+    Popup::last_label = nullptr;
     Popup::captions.clear();
     lock_result = 0;
     retarget_vehicle = -1;
@@ -114,6 +135,13 @@ static void expect_one(const char *name, int a = -999, int b = -999,
 
 int main() {
     Console console;
+    assert(&RoadToNeedTerraformers[0] != &RoadToNotInTriad[0]);
+    assert(&RoadToNotInTriad[0] != &RoadToNotInOcean[0]);
+    assert(&RoadToNotInOcean[0] != &SetRoadToNotInOcean[0]);
+    assert(std::strcmp(RoadToNeedTerraformers, "NEEDTERRAFORMERS") == 0);
+    assert(std::strcmp(RoadToNotInTriad, "NOTINTRIAD") == 0);
+    assert(std::strcmp(RoadToNotInOcean, "NOTINOCEAN") == 0);
+    assert(std::strcmp(SetRoadToNotInOcean, "NOTINOCEAN") == 0);
     reset();
     console.set_road_to(3, 12, -1, 7);
     assert(events.empty() && Popup::captions.empty()); // bounds: no message or lock
@@ -127,6 +155,7 @@ int main() {
     console.set_road_to(3, 12, 17, 7);
     expect_one("pop", 5000, 0);
     assert(Popup::captions.size() == 1 && Popup::captions[0] == "NOTINOCEAN");
+    assert(Popup::last_label == SetRoadToNotInOcean);
 
     reset();
     MapTiles[550].region = 8;
@@ -172,9 +201,9 @@ def test_actual_set_road_to_preserves_caption_gates_and_lock_retarget(tmp_path, 
     if compiler is None:
         pytest.skip("host C++ compiler unavailable")
     definition = actual_definition()
-    assert 'NetMsgPrimary.pop("NOTINOCEAN", 5000, 0, 0)' in definition
+    assert "NetMsgPrimary.pop(SetRoadToNotInOcean, 5000, 0, 0)" in definition
     assert definition.index("MapLatitudeBounds") < definition.index("MapLongitudeBounds")
-    assert definition.index('NetMsgPrimary.pop("NOTINOCEAN"') < definition.index("lock_veh(&veh_id")
+    assert definition.index("NetMsgPrimary.pop(SetRoadToNotInOcean") < definition.index("lock_veh(&veh_id")
     assert definition.index("Vehs[veh_id].order") < definition.index("synch_veh(veh_id)")
     assert definition.index("synch_veh(veh_id)") < definition.index("await_synch()")
     assert definition.index("await_synch()") < definition.index("unlock_veh()")
@@ -182,17 +211,22 @@ def test_actual_set_road_to_preserves_caption_gates_and_lock_retarget(tmp_path, 
 
 
 @pytest.mark.parametrize("compiler_name", ("g++", "clang++"))
-@pytest.mark.parametrize("mutant", ("wrong_caption", "missing_popup_return", "wrong_region_index"))
+@pytest.mark.parametrize("mutant", ("wrong_caption", "wrong_duplicate_identity",
+                                     "missing_popup_return", "wrong_region_index"))
 def test_set_road_to_actual_mutants_fail(tmp_path, compiler_name, mutant):
     compiler = shutil.which(compiler_name)
     if compiler is None:
         pytest.skip("host C++ compiler unavailable")
     source = actual_definition()
     if mutant == "wrong_caption":
-        damaged = source.replace('"NOTINOCEAN"', '"NOTHERE"', 1)
+        damaged = source.replace("NetMsgPrimary.pop(SetRoadToNotInOcean,",
+                                 'NetMsgPrimary.pop("NOTHERE",', 1)
+    elif mutant == "wrong_duplicate_identity":
+        damaged = source.replace("NetMsgPrimary.pop(SetRoadToNotInOcean",
+                                 "NetMsgPrimary.pop(RoadToNotInOcean", 1)
     elif mutant == "missing_popup_return":
-        damaged = source.replace('NetMsgPrimary.pop("NOTINOCEAN", 5000, 0, 0);\n        return;',
-                                 'NetMsgPrimary.pop("NOTINOCEAN", 5000, 0, 0);', 1)
+        damaged = source.replace("NetMsgPrimary.pop(SetRoadToNotInOcean, 5000, 0, 0);\n        return;",
+                                 "NetMsgPrimary.pop(SetRoadToNotInOcean, 5000, 0, 0);", 1)
     else:
         damaged = source.replace("map_tiles()[target_index].region",
                                  "map_tiles()[origin_index].region", 1)
@@ -222,5 +256,7 @@ def test_pinned_set_road_to_string_operand_and_effect_order():
     assert "0x593220" in indexed[0x004D8F14]  # synch
     assert "0x531480" in indexed[0x004D8F21]  # await synch
     assert "0x5310f0" in indexed[0x004D8F2B]  # unlock
-    text = image.read(Span(0x00688EC8, 0x00688ED5)).split(b"\0", 1)[0]
-    assert text == b"NOTINOCEAN"
+    for start, end, text in (
+        (0x00688EC8, 0x00688ED3, b"NOTINOCEAN\0"),
+    ):
+        assert image.read(Span(start, end)) == text
