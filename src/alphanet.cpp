@@ -251,14 +251,13 @@ void reset_net_session_options() {
 }
 
 void reset_net_lobby_rows() {
-    NetWinLobbyRow *row = NetWinLobbyRows;
-    for (int count = 8; count != 0; --count, ++row) {
-        row->owner_ = 0;
-        row->prefix_ = 0xFF;
-        row->ready_or_occupied_ = 0;
-        row->field_2_ = 0;
-        row->faction_or_color_ = -1;
-        row->field_4_ = 2;
+    for (int row = 0; row < 8; ++row) {
+        NetWinLobbyRows[row].owner_ = 0;
+        NetWinLobbyRows[row].prefix_ = 0xFF;
+        NetWinLobbyRows[row].ready_or_occupied_ = 0;
+        NetWinLobbyRows[row].field_2_ = 0;
+        NetWinLobbyRows[row].faction_or_color_ = -1;
+        NetWinLobbyRows[row].field_4_ = 2;
     }
 }
 

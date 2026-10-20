@@ -108,6 +108,6 @@ def test_actual_lobby_row_cursor_and_cross_row_damage_control(compiler_name):
         tmp_path = Path(directory)
         _run(tmp_path, compiler, actual, succeeds=True)
 
-        damaged = actual.replace("int count = 8", "int count = 7", 1)
+        damaged = actual.replace("row < 8", "row < 7", 1)
         assert damaged != actual
         _run(tmp_path, compiler, damaged, succeeds=False)
