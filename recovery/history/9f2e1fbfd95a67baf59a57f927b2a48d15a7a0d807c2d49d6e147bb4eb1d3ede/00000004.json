@@ -1,0 +1,20 @@
+{
+  "event_id": "e25ee50fcbe7ad60428a925360512d3c2bd61de5a5ed312a3d6db231d65f50c7",
+  "payload": {
+    "affects": [
+      "entity-4a34ab4f393b56af2ea491bd4cd23f84a6cce2dfd0f5a535860a74c03d231efe"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "prefwin-live-audio-word-discovery-oct20e",
+    "evidence": [
+      "Original491B17..491B2F writes9A6490|800 beforecall4457E0; ambienceSource loads thatword before musicload. Original491B82..491B99 afterdisable reads9A6490/94, clearsC00/4000, writesboth; noPrefWinpendingfieldwrite. Mainonbranchonlycontrols/Wave enable, no livewordwrite. Independentreview_cursoraudit + coordinator rawpin inspection. Restoreoriginaldestinations andorder, notbothpendingandglobal."
+    ],
+    "hypothesis": "Volume buttonstate incorrectly mutates staged PrefWin fields instead of original live game preference words, suppressing load_music gate and failing to disable livepreferences.",
+    "kind": "discovery"
+  },
+  "previous_event": "d0e3e26da0ca4530d1a4e9ba11a3ca507f690f0e68e4f6de950182162589a4ca",
+  "request_id": "prefwin-live-audio-word-discovery-oct20e",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:prefwin-initial-visibility-oct20e"
+}

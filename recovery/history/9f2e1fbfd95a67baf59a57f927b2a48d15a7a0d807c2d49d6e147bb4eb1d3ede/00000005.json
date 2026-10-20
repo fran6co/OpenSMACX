@@ -1,0 +1,18 @@
+{
+  "event_id": "8854cff5e8d0af7b045b191d64f6ded152b4132bd84ec70423a55302ff9953b3",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "prefwin-original-transfer-order-discovery-oct20e",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "d95337dc source restores three absent-ID reads and original transfer/group order; actual getter control proves bit8/cursor effects. No absent UI rows or spurious getter-side absent-ID setters introduced.",
+      "Fresh application compiles/links; effective command/input correspondence and claims/mappings/references pass; 58 focused host controls pass. All24 mapped bodies measured8exact/11mismatch/2mnemoniconly/3refused, none claims changed. Physical residual190pass1fail: new96-byte source helper table; bounded-table-review verifies exactly reordered existing8rows, all old RO bytes/symbols preserved and only getterreferencesnewtable. Native FAIL remains, not automatic/full/game acceptance; original task baselinec21e7e013 unchanged."
+    ]
+  },
+  "previous_event": "e25ee50fcbe7ad60428a925360512d3c2bd61de5a5ed312a3d6db231d65f50c7",
+  "request_id": "prefwin-original-transfer-order-discovery-oct20e-source-incorporated",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:prefwin-initial-visibility-oct20e"
+}

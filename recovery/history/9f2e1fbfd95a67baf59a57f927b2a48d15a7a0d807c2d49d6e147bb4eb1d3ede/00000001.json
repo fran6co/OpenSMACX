@@ -1,0 +1,19 @@
+{
+  "event_id": "89c576421d71aa97fbe230bea2686714d42dfe86f3376d54808359391aa2f6ef",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_prefwin_behavior.py"
+    ],
+    "evidence": [
+      "Independent pinned reviews and root instruction inspection: set_preferences4906F4..490729 queries absent audio IDs3D/3E/3F via CheckBox60EC10 on audioVis+7AEC, before8realIDs and directFlatButton loads. Preserve missing-ID bit8 behavior, do not addUIrows. Both directions process warnings/continuation before map. Authorize actual-source host controls in existing test_prefwin_behavior.py; original task baseline and all claims intact. Getter missing-ID allegation withdrawn after actual switch target review; no spurious set_state_id calls allowed."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "prefwin-transfer-control-scope-oct20e",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:prefwin-initial-visibility-oct20e"
+}
