@@ -1,11 +1,11 @@
 """Bounded actual-source controls for four EdgeScan-shaped raster inputs.
 
 The complete mapped bodies and EdgeScan declaration are extracted from product
-source. The fixture uses low-address memory because two recovered entries carry
-record addresses through int parameters. The shade cursor now uses product
-address-domain storage rather than accessing an int cell as a pointer. This
-is not a target-layout or ABI proof, nor
-does it establish the helpers' incoming producer identity.
+source. The fixture uses low-address memory for legacy raster globals stored in
+32-bit integer slots; all four entry functions receive typed EdgeScan pointers.
+The shade cursor now uses product address-domain storage rather than accessing
+an int cell as a pointer. This is not a target-layout or ABI proof, nor does it
+establish the helpers' incoming producer identity.
 """
 from pathlib import Path
 import platform
@@ -28,10 +28,10 @@ ROOT = next(parent for parent in Path(__file__).resolve().parents
 TEXTURE = ROOT / "src/texture.cpp"
 HEADER = ROOT / "src/texture.h"
 FUNCTIONS = (
-    ("void __cdecl sub_61f800(", "sub_61f800"),
-    ("void __cdecl sub_61fe70(", "sub_61fe70"),
-    ("void __cdecl sub_6202e0(", "sub_6202e0"),
-    ("void __cdecl sub_620640(", "sub_620640"),
+    ("void __cdecl sub_61f800(EdgeScan *left, EdgeScan *right)", "sub_61f800"),
+    ("void __cdecl sub_61fe70(EdgeScan *left, EdgeScan *right)", "sub_61fe70"),
+    ("void __cdecl sub_6202e0(EdgeScan *left, EdgeScan *right)", "sub_6202e0"),
+    ("void __cdecl sub_620640(EdgeScan *left, EdgeScan *right)", "sub_620640"),
 )
 DECLARATION_SLOT = "// ACTUAL_EDGESCAN_DECLARATION"
 VERT_DECLARATION_SLOT = "// ACTUAL_VERT_DECLARATION"
@@ -165,8 +165,7 @@ int main() {
     setup_case(arena, &left, &right, &source, &destination);
     snapshot_records(*left, *right, left_bytes, right_bytes);
     TextureRasterRowOffset = static_cast<int>(reinterpret_cast<uintptr_t>(destination));
-    sub_61fe70(static_cast<int>(reinterpret_cast<uintptr_t>(left)),
-               static_cast<int>(reinterpret_cast<uintptr_t>(right)));
+    sub_61fe70(left, right);
     assert_destination(destination, 50, 51);
     assert_records_unchanged(*left, *right, left_bytes, right_bytes);
 
@@ -194,8 +193,7 @@ int main() {
     TextureRasterScratch554 = shade_table;
     TextureRasterScratch550 = remap;
     TextureRasterScratch55C = static_cast<int>(reinterpret_cast<uintptr_t>(dither));
-    sub_620640(static_cast<int>(reinterpret_cast<uintptr_t>(left)),
-               static_cast<int>(reinterpret_cast<uintptr_t>(right)));
+    sub_620640(left, right);
     assert_destination(destination, 57, 58);
     assert_records_unchanged(*left, *right, left_bytes, right_bytes);
 
@@ -214,8 +212,7 @@ int main() {
     TextureRasterClipRight = 4;
     TextureRasterRowOffset = static_cast<int>(reinterpret_cast<uintptr_t>(destination));
     snapshot_records(*left, *right, left_bytes, right_bytes);
-    sub_61fe70(static_cast<int>(reinterpret_cast<uintptr_t>(left)),
-               static_cast<int>(reinterpret_cast<uintptr_t>(right)));
+    sub_61fe70(left, right);
     assert_destination(destination, 0x77, 0x77);
     assert(TextureRasterLightAccumB.dword == left->accumD);
     assert(TextureRasterLightStepB == right->accumD);
@@ -235,8 +232,7 @@ int main() {
     TextureRasterClipLeft = 2;
     TextureRasterClipRight = 4;
     snapshot_records(*left, *right, left_bytes, right_bytes);
-    sub_620640(static_cast<int>(reinterpret_cast<uintptr_t>(left)),
-               static_cast<int>(reinterpret_cast<uintptr_t>(right)));
+    sub_620640(left, right);
     assert_destination(destination, 0x77, 0x77);
     assert(TextureRasterLightAccumB.dword == left->accumD);
     assert(TextureRasterLightStepB == right->accumD);
@@ -257,8 +253,7 @@ int main() {
     right->accumC = 4;
     TextureRasterRowOffset = static_cast<int>(reinterpret_cast<uintptr_t>(destination));
     snapshot_records(*left, *right, left_bytes, right_bytes);
-    sub_61fe70(static_cast<int>(reinterpret_cast<uintptr_t>(left)),
-               static_cast<int>(reinterpret_cast<uintptr_t>(right)));
+    sub_61fe70(left, right);
     assert_destination(destination, 50, 50);
     assert_records_unchanged(*left, *right, left_bytes, right_bytes);
 
@@ -290,8 +285,7 @@ int main() {
     TextureRasterScratch550 = remap;
     TextureRasterScratch55C = static_cast<int>(reinterpret_cast<uintptr_t>(dither));
     snapshot_records(*left, *right, left_bytes, right_bytes);
-    sub_620640(static_cast<int>(reinterpret_cast<uintptr_t>(left)),
-               static_cast<int>(reinterpret_cast<uintptr_t>(right)));
+    sub_620640(left, right);
     assert_destination(destination, 6, 211);
     assert_records_unchanged(*left, *right, left_bytes, right_bytes);
 #endif

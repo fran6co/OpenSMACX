@@ -33,7 +33,7 @@ def extract_braced(source, signature):
 
 
 def extract_real_low_word_updates(source):
-    signature = "void __cdecl sub_620640(int param_1, int param_2)"
+    signature = "void __cdecl sub_620640(EdgeScan *left, EdgeScan *right)"
     masked = COMMENTS_OR_STRINGS.sub(
         lambda match: "".join("\n" if char == "\n" else " " for char in match[0]),
         source,
