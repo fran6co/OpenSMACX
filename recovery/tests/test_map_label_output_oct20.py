@@ -12,9 +12,21 @@ FIXTURE = r"""
 #include <cassert>
 #include <cstring>
 #define __cdecl
+typedef char *LPSTR;
 
 struct VehiclePrototype { char *veh_name; };
 VehiclePrototype VehPrototypes[1];
+struct LabelStore { LPSTR strings_ptr[0x314 / 4 + 1]; } Labels;
+struct Strings {
+    int calls;
+    LPSTR argument;
+    LPSTR get(LPSTR label) {
+        ++calls;
+        argument = label;
+        assert(label == Labels.strings_ptr[0x314 / 4]);
+        return label;
+    }
+} StringTable;
 char scratch[128];
 char *StringTemp = scratch;
 int strcat_calls;
@@ -33,29 +45,31 @@ extern "C" char *strcat(char *destination, const char *source) {
     return destination;
 }
 
-char *label_get(int index) {
-    assert(index == 0x314 / 4);
-    return const_cast<char *>("Label");
-}
-
 // @@FUNCTION@@
 
 int main(int argc, char **argv) {
     assert(argc == 2);
     char output[128] = "unit";
     VehPrototypes[0].veh_name = const_cast<char *>("Scout");
+    Labels.strings_ptr[0x314 / 4] = const_cast<char *>("Label");
     strcat_calls = self_appends = 0;
+    StringTable.calls = 0;
+    StringTable.argument = 0;
     if (strcmp(argv[1], "separate") == 0) {
         strcpy(scratch, "scratch");
         say_vehicles(output, 0, 1);
         assert(strcmp(output, "unitScout ()") == 0);
         assert(strcmp(scratch, "scratchLabel") == 0);
         assert(strcat_calls == 5 && self_appends == 0);
+        assert(StringTable.calls == 1);
+        assert(StringTable.argument == Labels.strings_ptr[0x314 / 4]);
     } else if (strcmp(argv[1], "alias") == 0) {
         strcpy(scratch, "unit");
         say_vehicles(StringTemp, 0, 1);
         assert(strcmp(scratch, "unitScout (Label)") == 0);
         assert(strcat_calls == 5 && self_appends == 0);
+        assert(StringTable.calls == 1);
+        assert(StringTable.argument == Labels.strings_ptr[0x314 / 4]);
     } else {
         assert(strcmp(argv[1], "plain") == 0);
         strcpy(output, "plain");
@@ -64,6 +78,8 @@ int main(int argc, char **argv) {
         assert(strcmp(output, "plainScout") == 0);
         assert(strcmp(scratch, "unchanged") == 0);
         assert(strcat_calls == 1 && self_appends == 0);
+        assert(StringTable.calls == 0);
+        assert(StringTable.argument == 0);
     }
 }
 """
@@ -79,7 +95,8 @@ def test_actual_vehicle_label_output_and_mutant(tmp_path, compiler_name):
     body = definition(source, r"void __cdecl say_vehicles\([^)]*\)")
     actual = FIXTURE.replace("// @@FUNCTION@@", body)
     assert "strcat(text, StringTemp);" not in body
-    assert body.count("strcat(StringTemp, label_get(0x314 / 4));") == 1
+    assert body.count("StringTable.get(label)") == 1
+    assert body.count("Labels.strings_ptr[0x314 / 4]") == 1
 
     mutant_body = body.replace(
         'strcat(text, ")");',
