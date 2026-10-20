@@ -167,17 +167,36 @@ int Sprite::change_color(int old_color, int new_color) {
     if (pcBits_ == 0) {
         return 7;
     }
-    const unsigned int size = static_cast<unsigned int>(iSpriteHeight_)
-                           * static_cast<unsigned int>(iSpriteWidth2_);
-    // Original 5EADFA skips the tail as well when there is no four-byte
-    // group: buffers of one, two or three pixels are deliberately untouched.
-    if (size < 4) {
-        return 0;
-    }
+    unsigned char *pixels = pcBits_;
+    const uint32_t height_bits = static_cast<uint32_t>(iSpriteHeight_);
+    const uint32_t stride_bits = static_cast<uint32_t>(iSpriteWidth2_);
+    const uint32_t pixel_count_bits = height_bits * stride_bits;
+    // The image arithmetic-shifts the signed product by two, then LOOP
+    // decrements that 32-bit count modulo 2^32. Reproduce SAR's sign fill
+    // without signed-overflow or implementation-defined right-shift rules.
+    const uint32_t group_count = (pixel_count_bits >> 2) |
+        ((pixel_count_bits & 0x80000000u) ? 0xC0000000u : 0u);
+    const uint32_t tail_count = pixel_count_bits - (group_count << 2);
     const unsigned char from = static_cast<unsigned char>(old_color);
     const unsigned char to = static_cast<unsigned char>(new_color);
-    unsigned char *pixels = pcBits_;
-    for (unsigned int index = 0; index < size; ++index) {
+    // At 5EADFA the original skips both loops only when the four-byte count
+    // is zero, including the one-to-three-byte tail. For a negative product,
+    // retaining the nonzero wrapped LOOP count is intentionally unsafe.
+    if (group_count == 0) {
+        return 0;
+    }
+
+    uint32_t groups_remaining = group_count;
+    do {
+        if (pixels[0] == from) pixels[0] = to;
+        if (pixels[1] == from) pixels[1] = to;
+        if (pixels[2] == from) pixels[2] = to;
+        if (pixels[3] == from) pixels[3] = to;
+        pixels += 4;
+        --groups_remaining;
+    } while (groups_remaining != 0);
+
+    for (uint32_t index = 0; index < tail_count; ++index) {
         if (pixels[index] == from) {
             pixels[index] = to;
         }
