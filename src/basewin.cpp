@@ -312,9 +312,9 @@ void BaseWin::queue_click(int row, int x, int y, int right) {
     const int faction = BaseCurrent->faction_id_current;
     if (row <= 1) return;
     const int position = row - 2;
-    if (position == field_40B2C_) return;
+    if (position == selected_queue_slot_) return;
     if (!right) {
-        field_40B2C_ = min(static_cast<int>(BaseCurrent->queue_size) + 1, position);
+        selected_queue_slot_ = min(static_cast<int>(BaseCurrent->queue_size) + 1, position);
         field_40B30_ = 0;
         draw_queue(1);
         if (prodPicker_.is_visible() && prodPicker_.queue_change_blocked()) return;
@@ -338,7 +338,7 @@ void BaseWin::queue_click(int row, int x, int y, int right) {
     --action;
     if (static_cast<unsigned>(action) > 4) return;
     if (action == 0) {
-        field_40B2C_ = min(static_cast<int>(BaseCurrent->queue_size) + 1, position);
+        selected_queue_slot_ = min(static_cast<int>(BaseCurrent->queue_size) + 1, position);
         field_40B30_ = 0;
         draw_queue(1);
         if (prodPicker_.is_visible()) return;
@@ -350,13 +350,13 @@ void BaseWin::queue_click(int row, int x, int y, int right) {
         if (!prodPicker_.is_visible()
             && NetDaemonNet.lock_base(BaseIDCurrentSelected, 0, -1, -1)) return;
         if (static_cast<int>(BaseCurrent->queue_size) < position) {
-            field_40B2C_ = max(static_cast<int>(field_40B2C_) - 1, 1);
+            selected_queue_slot_ = max(selected_queue_slot_ - 1, 1);
         } else {
             for (int i = position; i < 9; ++i)
                 BaseCurrent->queue_production_id[i] = BaseCurrent->queue_production_id[i + 1];
             --BaseCurrent->queue_size;
-            if (static_cast<int>(BaseCurrent->queue_size) < static_cast<int>(field_40B2C_))
-                field_40B2C_ = max(static_cast<int>(BaseCurrent->queue_size), 1);
+            if (static_cast<int>(BaseCurrent->queue_size) < selected_queue_slot_)
+                selected_queue_slot_ = max(static_cast<int>(BaseCurrent->queue_size), 1);
             draw_queue(1);
         }
         if (!prodPicker_.is_visible()) NetDaemonNet.unlock_base(BaseIDCurrentSelected);
@@ -1855,7 +1855,7 @@ void BaseWin::production(int a1, int a2) {
         run_picker_setup = false;
 
         int selected_id = prodPicker_.exec(BaseCurrent,
-            BaseCurrent->faction_id_current, &picker_preview, field_40B2C_);
+            BaseCurrent->faction_id_current, &picker_preview, selected_queue_slot_);
 
         // Native special cancel with a nonzero a1 restores the entry queue,
         // then resets the Base before entering the ordinary post-picker path.
@@ -1874,7 +1874,7 @@ void BaseWin::production(int a1, int a2) {
         g_FX.play(0x0F);
 
         if (selected_id <= -9999 || (GameDataStateStorage.fields_.game_state_ & 0x800u) != 0) {
-            field_40B2C_ = 0;
+            selected_queue_slot_ = 0;
             draw_queue(1);
             if (a2 == 0)
                 NetDaemonNet.unlock_base(BaseIDCurrentSelected);
@@ -1942,22 +1942,22 @@ void BaseWin::production(int a1, int a2) {
                 return;
             }
 
-            const int selected_slot = static_cast<int>(field_40B2C_);
+            const int selected_slot = selected_queue_slot_;
             if (selected_slot > static_cast<int>(BaseCurrent->queue_size)) {
-                --field_40B2C_;
-                if (static_cast<int32_t>(field_40B2C_) <= 1)
-                    field_40B2C_ = 1;
+                --selected_queue_slot_;
+                if (selected_queue_slot_ <= 1)
+                    selected_queue_slot_ = 1;
                 draw_queue(1);
             } else {
                 for (int slot = selected_slot; slot < 9; ++slot)
                     BaseCurrent->queue_production_id[slot] =
                         BaseCurrent->queue_production_id[slot + 1];
                 --BaseCurrent->queue_size;
-                if (static_cast<int32_t>(field_40B2C_)
+                if (selected_queue_slot_
                     > static_cast<int32_t>(BaseCurrent->queue_size)) {
-                    field_40B2C_ = BaseCurrent->queue_size;
-                    if (static_cast<int32_t>(field_40B2C_) <= 1)
-                        field_40B2C_ = 1;
+                    selected_queue_slot_ = static_cast<int>(BaseCurrent->queue_size);
+                    if (selected_queue_slot_ <= 1)
+                        selected_queue_slot_ = 1;
                 }
                 draw_queue(1);
                 draw_queue(1);
@@ -1999,7 +1999,7 @@ void BaseWin::production(int a1, int a2) {
             continue; // native 0x417DAE -> picker body 0x417751
         }
 
-        field_40B2C_ = 0; // native 0x41866C, immediately before base_compute
+        selected_queue_slot_ = 0; // native 0x41866C, immediately before base_compute
         finish_production_success(*this, a1, a2, old_queue_id,
                                   faction_snapshot);
         return;
@@ -2352,10 +2352,10 @@ void BaseWin::draw_queue(int update_mode) {
         spot1_.add(queue_index + 2, 8, row.left, row.top,
                    row.right - row.left, row_height);
 
-        const bool selected = field_40B2C_ == static_cast<uint32_t>(queue_index)
+        const bool selected = selected_queue_slot_ == queue_index
             || field_40B30_ == static_cast<uint32_t>(queue_index);
         if (selected) {
-            Buffer *pattern = field_40B2C_ == static_cast<uint32_t>(queue_index)
+            Buffer *pattern = selected_queue_slot_ == queue_index
                 ? InterfaceBoxStyles[29].mask_ : InterfaceBoxStyles[27].mask_;
             canvas->tile(pattern, row.left, row.top, row.left, row.top,
                          row.right - row.left, row.bottom - row.top);
@@ -2745,12 +2745,12 @@ void BaseWin::draw_production(int update_mode) {
 // ORIGINAL: 0x00416DE0 ?add_queue@BaseWin@@QAEXHH@Z 0x00416DE0-0x00416FA8 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x00416DE0-0x00416FA8 queue index/count and production-id accesses", "source:src/base.h:Base::queue_size", "source:src/base.h:Base::queue_production_id", "source:src/basewin.h:BaseWin queue selection fields"], "reason": "Apply the original queue insert/replace, sentinel removal and redraw sequence through typed Base queue storage; drawing remains an explicit unfinished dependency."}
 void BaseWin::add_queue(int insert, int production_id) {
-    int index = static_cast<int>(field_40B2C_);
+    int index = selected_queue_slot_;
     if (index == 0 || index == 9) {
         return;
     }
     if (insert == 0 && BaseCurrent->queue_production_id[index] == production_id
-        && BaseCurrent->queue_size >= static_cast<uint32_t>(index)) {
+        && static_cast<int>(BaseCurrent->queue_size) >= index) {
         return;
     }
 
@@ -2760,7 +2760,7 @@ void BaseWin::add_queue(int insert, int production_id) {
         while (slot < 9) {
             if (BaseCurrent->queue_production_id[slot] == production_id) {
                 if (slot < index) {
-                    field_40B2C_ = static_cast<uint32_t>(index - 1);
+                    selected_queue_slot_ = index - 1;
                 }
                 --BaseCurrent->queue_size;
                 if (slot < 8) {
@@ -2779,21 +2779,21 @@ void BaseWin::add_queue(int insert, int production_id) {
 
     if (insert != 0) {
         int end = 9;
-        if (field_40B2C_ < 9) {
+        if (selected_queue_slot_ < 9) {
             do {
                 BaseCurrent->queue_production_id[end] =
                     BaseCurrent->queue_production_id[end - 1];
                 --end;
-            } while (field_40B2C_ < static_cast<uint32_t>(end));
+            } while (selected_queue_slot_ < end);
         }
         if (BaseCurrent->queue_size < 9) {
             ++BaseCurrent->queue_size;
         }
     }
 
-    index = static_cast<int>(field_40B2C_);
+    index = selected_queue_slot_;
     BaseCurrent->queue_production_id[index] = production_id;
-    if (BaseCurrent->queue_size < static_cast<uint32_t>(index)) {
+    if (static_cast<int>(BaseCurrent->queue_size) < index) {
         ++BaseCurrent->queue_size;
     }
 
@@ -2801,7 +2801,7 @@ void BaseWin::add_queue(int insert, int production_id) {
     if (insert != 0) {
         const int count = static_cast<int>(BaseCurrent->queue_size);
         field_40B30_ = 0;
-        field_40B2C_ = static_cast<uint32_t>(count + 1);
+        selected_queue_slot_ = count + 1;
     }
 
     int count = static_cast<int>(BaseCurrent->queue_size);
@@ -2815,11 +2815,11 @@ void BaseWin::add_queue(int insert, int production_id) {
                 }
                 --BaseCurrent->queue_size;
                 count = static_cast<int>(BaseCurrent->queue_size);
-                if (count < static_cast<int>(field_40B2C_)) {
+                if (count < selected_queue_slot_) {
                     if (count < 2) {
                         count = 1;
                     }
-                    field_40B2C_ = static_cast<uint32_t>(count);
+                    selected_queue_slot_ = count;
                 }
                 draw_queue(1);
             }
@@ -2836,11 +2836,10 @@ void BaseWin::add_queue(int insert, int production_id) {
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x00416FB0-0x0041703C removes one queue entry, shifts later ids, clamps the selected index to at least one, and redraws the queue", "source:src/base.h:Base::queue_size", "source:src/base.h:Base::queue_production_id"], "reason": "Delete a selected production queue entry through the typed Base queue representation; the drawing dependency remains explicitly unfinished."}
 void BaseWin::delete_queue(int index) {
     if (index > static_cast<int>(BaseCurrent->queue_size)) {
-        int selection = static_cast<int>(field_40B2C_) - 1;
-        if (selection <= 1) {
-            selection = 1;
+        selected_queue_slot_ = selected_queue_slot_ - 1;
+        if (selected_queue_slot_ <= 1) {
+            selected_queue_slot_ = 1;
         }
-        field_40B2C_ = static_cast<uint32_t>(selection);
         return;
     }
     if (index < 9) {
@@ -2851,8 +2850,8 @@ void BaseWin::delete_queue(int index) {
     }
     --BaseCurrent->queue_size;
     const int count = static_cast<int>(BaseCurrent->queue_size);
-    if (count < static_cast<int>(field_40B2C_)) {
-        field_40B2C_ = static_cast<uint32_t>(count <= 1 ? 1 : count);
+    if (count < selected_queue_slot_) {
+        selected_queue_slot_ = count <= 1 ? 1 : count;
     }
     draw_queue(1);
 }
@@ -4470,10 +4469,10 @@ void BaseWin::on_button_clicked(int button_id) {
     // share their bodies; the no-op entries are deliberately unhandled.
     switch (selection) {
     case 22:
-        field_40B2C_ = BaseCurrent->queue_size + 1;
-        if (static_cast<int>(field_40B2C_) >= 10) field_40B2C_ = 9;
+        selected_queue_slot_ = BaseCurrent->queue_size + 1;
+        if (selected_queue_slot_ >= 10) selected_queue_slot_ = 9;
         draw_queue(1);
-        if (!prodPicker_.is_visible()) production(field_40B2C_, 0);
+        if (!prodPicker_.is_visible()) production(selected_queue_slot_, 0);
         return;
     case 0:
     case 2: {
@@ -7431,7 +7430,7 @@ void BaseWin::init() {
     base_init_rect(rect5_, commerce_outer_rect_.left,
                    commerce_outer_rect_.bottom + 3,
                    commerce_outer_rect_.right, rect6_.top - 6);
-    field_40B2C_ = 0;
+    selected_queue_slot_ = 0;
     field_40B30_ = 0;
     garrison_rect_ = MainInterfaceGlobal.lower_frame_rect_;
     base_init_inset(garrison_rect_, 4);

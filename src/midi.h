@@ -19,9 +19,8 @@
 
 #include "vc6_compat.h"
 #include "sound.h"
-#include "soundx_sound_abi.h"
 
-/* Midi and its delegate, recovered 2026-08-23 (see 2bbecdbd): the
+/* Midi and its provider relationship, recovered 2026-08-23 (see 2bbecdbd): the
  * declarations live here now, not in hypothesis_layouts.h - correct
  * work does not feed the scaffold it is meant to retire.
  *
@@ -39,20 +38,15 @@
  * Sound slots - the image's QAE spelling is catalogued on each body's
  * marker, the build's UAE on its `// symbol` fact.
  *
- * The wrapped sequencer is MidiDelegate below: a Sound-family table of
- * 75 slots extended with the sequencer interface at 0x84..0x128, the
- * same family shape ambience.h gives its own. Two of those slots (0x94,
- * 0xdc) carry neutral slotNNN names: VC6 does not place same-name
- * virtual overload groups in declaration order - measured on this class
- * 2026-09-18, both pairs emit with the higher-arity member first, and
- * the image's own Sound pairs (play, fade, fade_in) agree, so plain
- * declaration reversal cannot be the rule - and giving both members
- * Midi's forwarder name landed every dispatch of each pair on the wrong
- * slot (all four bodies measured exactly one constant apart: 0x90<->0x94
- * and 0xd8<->0xdc). Distinct names pin each slot by position under any
- * group ordering, and claim nothing: the wrapped class's own member
- * names are unevidenced, which is what this header's slotNNN spelling
- * has meant all along. Midi's own storage begins
+ * The wrapped sequencer is another reconstructed Midi object: its common
+ * Sound base and 42 added virtual slots match the EXE Midi table and pinned
+ * DLL mode-2/mode-5 tables. The SDK constructor bodies at EXE 0x004C75B0
+ * and DLL 0x10029520 are 189 bytes / 68 instructions with equal instruction
+ * encodings, registers, constants and field offsets, differing only in seven
+ * reference immediates (handler, tables and memset targets). Original debug
+ * names and full provider identity remain inferred. The old separate
+ * MidiDelegate declaration duplicated these same slots and hid the proven
+ * common object relationship. Midi's own storage begins
  * at 0x54 - one flag byte, the byte init clears; nothing else recovered
  * reads past the Sound sub-object yet, so no extent is pinned. */
 
@@ -61,54 +55,6 @@ struct ChannelCtrl;
 struct ProgramCtrl;
 struct TrackCtrl;
 extern int MidiTracksetTransposition;
-
-class MidiDelegate : public SoundDeviceInterface {
- public:
-  virtual int set_track(uint8_t *, unsigned long);           // slot 0x84
-  virtual int set_tempo(unsigned long);                      // slot 0x88
-  virtual int mute_track(unsigned long);                     // slot 0x8c
-  virtual int set_active_tracks(unsigned int);               // slot 0x90
-  virtual int slot037(unsigned long, unsigned long);         // slot 0x94
-  virtual int add_active_trackset(TrackSet *);               // slot 0x98
-  virtual int get_trackset(unsigned int);                    // slot 0x9c
-  virtual int set_active_range_lo(unsigned int, unsigned int);  // slot 0xa0
-  virtual int set_active_range_hi(unsigned int, unsigned int);  // slot 0xa4
-  virtual int remove_active_trackset(unsigned int);          // slot 0xa8
-  virtual int unmute_track(unsigned long);                   // slot 0xac
-  virtual int slot044(int, int);
-  virtual bool slot045(unsigned int);
-  virtual int slot046(int, int);
-  virtual int slot047(int, int);
-  virtual int set_track_ctrl(TrackCtrl *);                   // slot 0xc0
-  virtual int get_ntracks();                                 // slot 0xc4
-  virtual int reset();                                       // slot 0xc8
-  virtual int init(char *, unsigned long);                   // slot 0xcc
-  // Keep the inherited filename overload visible alongside the no-arg form.
-  using SoundDeviceInterface::load;
-  virtual int load();                                        // slot 0xd0
-  virtual int get_time(unsigned long);                       // slot 0xd4
-  virtual int map_patch(char *, unsigned long);              // slot 0xd8
-  virtual int slot055(char *, unsigned long, unsigned long);  // slot 0xdc
-  virtual int clear_patch(unsigned long);                    // slot 0xe0
-  virtual int set_channel_ctrl(ChannelCtrl *);               // slot 0xe4
-  virtual int set_program_ctrl(ProgramCtrl *);               // slot 0xe8
-  virtual int set_base_path(const char *path);               // slot 0x0ec
-  virtual int slot060(int);
-  virtual int get_control_track();                           // slot 0xf4
-  virtual int get_total_track_ticks(unsigned long);          // slot 0xf8
-  virtual int switch_state(bool on);                        // slot 0x0fc
-  virtual int set_switch_type(unsigned long);                // slot 0x100
-  virtual int set_nswitch_threads(unsigned long);            // slot 0x104
-  virtual int add_switch_range(unsigned long, unsigned long);   // slot 0x108
-  virtual int play_trackset(unsigned int);                   // slot 0x10c
-  virtual int stop_trackset(unsigned int);                   // slot 0x110
-  virtual int xpose_trackset(unsigned int, int);             // slot 0x114
-  virtual bool is_trackset_playing(unsigned int);            // slot 0x118
-  virtual int set_play_type(unsigned int type);             // slot 0x11c
-  virtual int load_patch(unsigned int);                      // slot 0x120
-  virtual int unload_patch(unsigned int);                    // slot 0x124
-  virtual int set_patch(unsigned int, unsigned int);         // slot 0x128
-};
 
 class Midi : public Sound {
  public:

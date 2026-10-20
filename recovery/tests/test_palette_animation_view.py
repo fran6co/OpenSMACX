@@ -28,18 +28,25 @@ def test_animation_view_observes_live_owned_slot(tmp_path):
     harness = """
 #include <cassert>
 #include <cstdint>
+#include <type_traits>
+struct PALETTEENTRY { uint8_t red, green, blue, flags; };
 struct Time;
 struct Palette {
 ACTUAL_FIELDS
 ACTUAL_GETTER
 };
+static_assert(std::is_same<decltype(Palette::PaletteInternal::colours),
+                           PALETTEENTRY *>::value,
+              "animation snapshots are owned palette-entry runs");
 int main() {
     Palette palette = {};
     const Palette &borrowed = palette;
-    unsigned char first[8] = {}, second[8] = {};
+    PALETTEENTRY first[2] = {{1, 2, 3, 4}, {5, 6, 7, 8}};
+    PALETTEENTRY second[2] = {{9, 10, 11, 12}, {13, 14, 15, 16}};
     assert(borrowed.animation_colours(4) == nullptr);
     palette.internal_[4].colours = first;
     assert(borrowed.animation_colours(4) == first);
+    assert(palette.internal_[4].colours[1].red == 5);
     palette.internal_[0].colours = second;
     assert(borrowed.animation_colours(0) == second);
     assert(borrowed.animation_colours(4) == first);

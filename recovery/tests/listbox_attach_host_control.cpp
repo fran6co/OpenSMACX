@@ -78,7 +78,7 @@ struct GraphicWin : Win, Buffer {
 };
 
 struct Dialog {
-    uint32_t field_24_, field_28_, field_2C_, field_30_;
+    int window_x_, window_y_, field_2C_, field_30_;
     int column_count_, row_count_, field_5C_, field_60_;
     StringList item_list_;
     int selected_position_;
@@ -87,7 +87,7 @@ struct Dialog {
     int text_color_b_, text_color_2b_, text_color_3b_;
     int text_color_c_, text_color_2c_, text_color_3c_;
     int text_color_d_, text_color_2d_, text_color_3d_;
-    Dialog() : field_24_(0), field_28_(0), field_2C_(2), field_30_(8),
+    Dialog() : window_x_(0), window_y_(0), field_2C_(2), field_30_(8),
         column_count_(1), row_count_(2), field_5C_(4), field_60_(6),
         selected_position_(0), font1_(0), font2_(0), font3_(0),
         text_color_a_(11), text_color_2a_(21), text_color_3a_(31),
@@ -175,7 +175,7 @@ static void test_fallback_and_vertical_scroll() {
     assert(box.attach(&parent, 17, 19, 0) == 0);
     assert(box.field_5C_ == 2 && box.field_60_ == 8);
     assert(box.column_count_ == 1 && box.row_count_ == 1);
-    assert(box.field_24_ == 17 && box.field_28_ == 19);
+    assert(box.window_x_ == 17 && box.window_y_ == 19);
     assert(box.init_width == 8 && box.init_height == 2);
     assert((box.init_flags & 0x100000) != 0);
     assert((box.init_flags & 8) != 0 && (box.init_flags & 4) == 0);
@@ -247,8 +247,8 @@ static void test_empty_list_and_parent_flags() {
     parent.iFlags_ = 0x1000;
     assert(box.attach(&parent, -7, -9, 0x4c) == 0);
     assert(box.init_flags == 0x860);
-    assert(box.field_24_ == static_cast<uint32_t>(-7));
-    assert(box.field_28_ == static_cast<uint32_t>(-9));
+    assert(box.window_x_ == -7);
+    assert(box.window_y_ == -9);
     assert(box.field_18_ == 0 && box.vert_pos == 0 && box.horz_pos == 0);
     assert(events.size() == 8);
     assert(events[0] == EVENT_DIMENSIONS && events[1] == EVENT_INIT);

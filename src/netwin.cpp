@@ -2032,9 +2032,14 @@ void NetWin::pick_diff(int slot) {
 
 // ORIGINAL: 0x0047D300 ?pick_map@NetWin@@QAEXXZ 0x0047D300-0x0047E003;0x00656BC5-0x00656D9D
 // RECOVERY_BINDING: v1 {"evidence": ["git:0db4f0dc:src/unrecovered/0047d300.cpp", "source:src/netwin.h", "source:recovery/tests/test_netwin_pick_map_behavior.py", "Pinned47DC27..47DC79: full packet opcode word/slot=-1/+8 zero and A64 row bytes;47DC99..47DCC5: session168 bytes at+10 and opcode word only;47DCDC..47DCEF: leave opcode word only. Unwritten packet bytes remain unspecified."], "reason": "Retain the typed map/game picker with its complete original primary/exceptional mapping. The retired unannotated scaffold omitted the host session population, used an unconstructed scratch Dialogs receiver, and approximated the local widget aggregate. Its useful lifetime observation is that nested Popup/Scroll/FlatButton cleanup belongs to genuine member destruction, not independent manually staged objects; complete native cleanup fidelity remains an obligation."}
+// Historical observation from an earlier source state:
 // TRIED: the popup and load-map/game dispatch are transcribed; the scenario
 // host guard now uses LockEnableMask's live-faction byte. Choice zero still
 // lacks the original session-record population and is explicitly unfinished.
+
+// Current source evidence: this body populates and sends NetWinSessionData in
+// session_packet below (original 0x0047DC99 onward), and represents the original
+// full-lobby packet's local row normalization at 0x0047DBF1..0x0047DC1E below.
 void NetWin::pick_map() {
     PopMenu menu;
     Buffer faction_art;
@@ -2209,6 +2214,15 @@ void NetWin::pick_map() {
     NetWinLobbyFullPacket assigned_packet;
     for (int packet_row = 0; packet_row < 7; ++packet_row) {
         assigned_packet.rows_[packet_row] = NetWinLobbyRows[packet_row + 1];
+    }
+    for (int normalized_row = 0; normalized_row < 7; ++normalized_row) {
+        NetWinLobbyRow &row = assigned_packet.rows_[normalized_row];
+        row.owner_ = 0;
+        row.prefix_ = 0xFF;
+        row.ready_or_occupied_ = 0;
+        row.field_2_ = 0;
+        row.faction_or_color_ = -1;
+        row.field_4_ = 2;
     }
     if (NetDaemonNet.primary_state_.leading_words_[0] != 0) {
         assigned_packet.header_.opcode_ = 0x04;

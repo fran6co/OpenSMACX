@@ -43,7 +43,7 @@ def compiled():
                      "src/menu.cpp", "src/popmenu.cpp", "src/console.cpp", "src/console_commands.cpp",
                      "src/netdaemon.cpp", "src/statuswin.cpp", "src/popup.cpp", "src/scroll.cpp",
                      "src/base.cpp", "src/basewin.cpp", "src/net_class.cpp", "src/general.cpp",
-                     "src/win.cpp", "src/alphanet.cpp")
+                     "src/win.cpp", "src/alphanet.cpp", "src/alphanet_records.cpp")
     }
 
 
@@ -405,6 +405,8 @@ def test_net_shared_defaults_and_all_primary_tables_match_original_bindings(comp
 
 
 def test_alphanet_records_are_complete_nonoverlapping_members(compiled):
+    # The records implementation does not use the controller's complete type.
+    # Its ledger/payload layouts are checked separately below.
     for unit in ("src/net_class.cpp", "src/alphanet.cpp", "src/netdaemon.cpp"):
         for obj in compiled[unit]:
             assert class_layout(obj, "Net")["size"] == 0x768
@@ -438,7 +440,7 @@ def test_alphanet_lookup_reset_and_member_lifetimes(tmp_path, monkeypatch):
 
 
 def test_session_ledger_payload_fields_and_virtual_hooks(compiled):
-    for unit in ("src/alphanet.cpp", "src/net_class.cpp", "src/netdaemon.cpp"):
+    for unit in ("src/alphanet.cpp", "src/alphanet_records.cpp", "src/net_class.cpp", "src/netdaemon.cpp"):
         for obj in compiled[unit]:
             payload = class_layout(obj, "NetAllocationNode")
             assert payload["size"] == 0x60
@@ -447,7 +449,7 @@ def test_session_ledger_payload_fields_and_virtual_hooks(compiled):
                 "max_players_", "current_players_", "field_28_", "entries_")} == {
                 "session_name_": 4, "password_": 8, "instance_guid_": 12, "session_flags_": 28,
                 "max_players_": 32, "current_players_": 36, "field_28_": 40, "entries_": 44}
-    for obj in compiled["src/alphanet.cpp"]:
+    for obj in compiled["src/alphanet_records.cpp"]:
         assert class_layout(obj, "AlphaNetStringStruct")["size"] == 0x24
         ledger = class_layout(obj, "AlphaNetLedger")
         assert ledger["size"] == 0x40
@@ -465,14 +467,14 @@ def test_session_ledger_payload_fields_and_virtual_hooks(compiled):
 
 def test_session_ledger_hooks_copy_and_release_by_allocator_ownership(tmp_path, monkeypatch):
     run_recovered_harness(tmp_path, monkeypatch, "alphanet_ledger_harness.cpp", [
-        ("// LIVE_INSERT", "src/alphanet.cpp", 0x5D4890),
-        ("// LIVE_REMOVE", "src/alphanet.cpp", 0x5D4990)], declarations=[
+        ("// LIVE_INSERT", "src/alphanet_records.cpp", 0x5D4890),
+        ("// LIVE_REMOVE", "src/alphanet_records.cpp", 0x5D4990)], declarations=[
         ("// LIVE_ALLOCATION_BASE", "src/stringstruct.h", "class StringAllocationBase {",
          "// REAL VIRTUAL INHERITANCE, like StringStructPayload"),
         ("// LIVE_PAYLOAD", "src/net_class.h", "class NetAllocationNode :", "static_assert(sizeof(NetAllocationNode)"),
         ("// LIVE_LEDGER_BASE", "src/alphanet.h", "class AlphaNetStringStruct;\nstruct AlphaNetLedgerEntry :", "static_assert(sizeof(AlphaNetStringStruct)"),
         ("// LIVE_DERIVED_DECLARATION", "src/alphanet.h", "class AlphaNetLedger :", "static_assert(sizeof(AlphaNetLedger)"),
-        ("// LIVE_LEDGER_CONSTRUCTOR", "src/alphanet.cpp", "AlphaNetStringStruct::AlphaNetStringStruct() {",
+        ("// LIVE_LEDGER_CONSTRUCTOR", "src/alphanet_records.cpp", "AlphaNetStringStruct::AlphaNetStringStruct() {",
          "// The base table's defaults are shared leaves"),
         ("// LIVE_NODE_CLEANUP", "src/net_class.cpp", "void cleanup_failed_net_construction(void *memory) {",
          "// ORIGINAL: 0x0062F8A0"),

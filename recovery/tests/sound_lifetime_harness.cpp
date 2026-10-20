@@ -16,7 +16,6 @@ struct _MMIOINFO;
 #undef private
 #undef protected
 
-// LIVE_DEVICE_INTERFACE
 // LIVE_DEVICE_VIEW
 // LIVE_FADE_CONSTRUCTOR
 // LIVE_FADE_INTERVAL

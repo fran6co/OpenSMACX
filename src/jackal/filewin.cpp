@@ -511,8 +511,7 @@ int FileWin::populate_directory(char *directory) {
         ? list_box_.update_changes()
         : dialog.attach(
               modal_window_,
-              static_cast<int>(dialog.field_24_),
-              static_cast<int>(dialog.field_28_),
+              dialog.window_x_, dialog.window_y_,
               FileWinInitSharedParameters.field_00_ != 0
                   ? FileWinInitSharedParameters.field_00_
                   : 0x80060);

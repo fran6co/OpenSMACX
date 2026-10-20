@@ -1,0 +1,21 @@
+{
+  "event_id": "6d5d6df588c8ec018afe74a173deebc1a4178b03ff95867f4e069503eabf4027",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/sound_lifetime_harness.cpp",
+      "recovery/tests/wave_device_exports_harness.cpp"
+    ],
+    "evidence": [
+      "Coordinator observed existing worker diffs adding only SoundDeviceInterface forward declarations to these two additional standalone harnesses. These paths were NOT granted by the named Python drivers or historical unrelated task scopes. Preserve the edits for review; this fresh decision authorizes those specific dependency fixtures now, not retroactively successful worker admission.",
+      "Reviewed typed declaration propagation is necessary for the shared ordinal1 alias/member. Preserve all actual executable assertions and original runtime/provider boundaries. Worker must request scope before any further outside-file edits and use fresh checks after scope changes."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "f24f861283590a2eb3da8183137676ff9904be82b7a30b2d0941b4de237d7c5a",
+  "request_id": "additional-two-harness-forward-declarations",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:sound-device-provider-typing-oct20"
+}

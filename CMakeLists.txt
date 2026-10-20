@@ -136,6 +136,7 @@ set(OPENSMACX_SOURCES
     src/shared_word.cpp
     src/fx.cpp
     src/alphanet.cpp
+    src/alphanet_records.cpp
     src/ambience.cpp
     src/autosound.cpp
     src/base.cpp
@@ -166,6 +167,7 @@ set(OPENSMACX_SOURCES
     src/header_io.cpp
     src/crt_random.cpp
     src/graphicwin.cpp
+    src/graphicwin_events.cpp
     src/heap.cpp
     src/log.cpp
     src/maininterface.cpp
@@ -443,7 +445,7 @@ set_source_files_properties(
 # The Strings implementation keeps its independently measured default recipe.
 set_source_files_properties(src/string_formatting.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Preserve measured frame-based accesses across the application owner batch.
-# Mixed AlphaNet and Strings recipes retain their measured default profiles.
+# AlphaNet record/lifecycle code has its own default-profile owner below.
 set_source_files_properties(
     src/infowin.cpp
     src/alphasave.cpp
@@ -484,6 +486,9 @@ set_source_files_properties(
 # Preserve Alpha's measured frame-based application context.
 # Shared graphics language state and its setter have a separate library owner.
 set_source_files_properties(src/alpha.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")
+# Preserve the measured frame-based AlphaNet controller context. Its record
+# and lifecycle owner remains on the default application profile.
+set_source_files_properties(src/alphanet.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Preserve measured frame-based accesses in the remaining application owners.
 # Mixed generic/application owners retain their independently measured defaults.
 set_source_files_properties(

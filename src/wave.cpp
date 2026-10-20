@@ -95,7 +95,8 @@ namespace {
 // The original captures the provider vptr before get_attrib and rereads the
 // receiver afterward; the typed calls preserve behavior for this pinned
 // read-only getter, not arbitrary replacement/reentrant provider DLLs.
-inline WavePlaybackDeviceInterface *wave_playback_device(void *device) {
+inline WavePlaybackDeviceInterface *wave_playback_device(
+    Sound *device) {
     return static_cast<WavePlaybackDeviceInterface *>(device);
 }
 }
@@ -133,7 +134,7 @@ inline WavePlaybackDeviceInterface *wave_playback_device(void *device) {
 // symbol    ?unk_slot24@Wave@@UAEHXZ
 int Wave::unk_slot24() {
     if (device_ != 0) {
-        return static_cast<SoundDeviceInterface *>(device_)->unk_slot24();
+        return device_->unk_slot24();
     }
     return 0;
 }
@@ -593,9 +594,9 @@ Return Value: 1, always
 Status: Complete
 */
 int Wave::probe_device_chain(int) {
-    uint8_t *cursor = static_cast<uint8_t *>(device_);
+    Sound *cursor = device_;
     while (cursor) {
-        cursor = *reinterpret_cast<uint8_t **>(cursor + 0x3C);
+        cursor = cursor->device_;
     }
     return 1;
 }

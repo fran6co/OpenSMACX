@@ -1,0 +1,19 @@
+{
+  "event_id": "a6674ae6f27b6c2a69494a72ffcf18b99d44acecd1124fe8ea5a9c9d09be5d61",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_map_label_output_oct20.py"
+    ],
+    "evidence": [
+      "Native candidate expands alpha.h label_get into exactly its existing Labels.strings_ptr/StringTable.get operations and matches all37 pinned instructions without changing behavior. The existing actual-body host fixture currently knows only label_get; authorize its adaptation to the same typed Labels/StringTable interface while retaining independent separate/alias/plain paths and extra-copy negative controls. No product/header/flag/claim change is authorized by this test-only expansion."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "adapt-actual-label-behavior-control",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:map-cohort-match-oct20b"
+}

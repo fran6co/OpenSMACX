@@ -25,7 +25,7 @@ ROOT = Path(__file__).resolve().parents[2]
 VC6_PROVIDER_PROBES = (
     (0, "p->set_fade(1UL)"),
     (1, "p->set_fade_interval(1UL)"),
-    (2, "delete static_cast<SoundDeviceInterface *>(p)"),
+    (2, "delete static_cast<Sound *>(p)"),
     (3, "p->UNK1(1)"),
     (4, 'p->load("x")'),
     (5, "p->unload()"),
@@ -113,14 +113,17 @@ def test_provider_interface_overloads_are_callable_without_adding_slots(compiler
     compiler = shutil.which(compiler_name)
     if compiler is None:
         pytest.skip(f"{compiler_name} is unavailable")
-    sound_abi = (ROOT / "src/soundx_sound_abi.h").read_text()
     voice = (ROOT / "src/voice.h").read_text()
-    declarations = sound_abi[sound_abi.index("class SoundDeviceInterface {"):]
-    declarations = declarations[:declarations.index("};") + 2]
-    declarations += "\n" + voice[voice.index("class WavePlaybackDeviceInterface :"):]
+    declarations = voice[voice.index("class WavePlaybackDeviceInterface :"):]
     declarations = declarations[:declarations.index("class VoiceRxDeviceInterface :")]
     harness = f'''#include <cstdint>
-struct Sound;
+class Sound {{ public:
+  virtual ~Sound() {{}}
+  virtual int load(const char *) {{ return 0; }}
+  virtual int play() {{ return 0; }}
+  virtual int play(unsigned int) {{ return 0; }}
+  virtual int get_time() {{ return 0; }}
+}};
 {declarations}
 void call_overloads(WavePlaybackDeviceInterface &device, unsigned int effect,
                     int wave_effect, char *mutable_name, const char *name,
@@ -240,24 +243,24 @@ def test_host_mock_controls_exercise_production_call_bodies(compiler_name, tmp_p
         wave, "int Wave::get_device_description(char *a1, int a2, int a3)"
     )
     harness = f'''#include <cassert>
-struct SoundDeviceInterface {{
-  virtual int play() = 0;
-  virtual void set_loop_state(long) = 0;
+struct Sound {{
+  virtual int play() {{ return 0; }}
+  virtual void set_loop_state(long) {{}}
 }};
-struct WavePlaybackDeviceInterface {{
+struct WavePlaybackDeviceInterface : Sound {{
   virtual int get_device_description(char *, int, int) = 0;
 }};
-static SoundDeviceInterface *sound_device(void *p) {{ return static_cast<SoundDeviceInterface *>(p); }}
-static WavePlaybackDeviceInterface *wave_playback_device(void *p) {{ return static_cast<WavePlaybackDeviceInterface *>(p); }}
-struct Sound {{ void *device_; long loop_flag_30_; int play(); void set_loop_state(long); }};
-struct Wave {{ void *device_; int get_device_description(char *, int, int); }};
-int Sound::play() {{{sound_play}}}
-void Sound::set_loop_state(long loop_state) {{{sound_loop}}}
+static Sound *sound_device(Sound *p) {{ return p; }}
+static WavePlaybackDeviceInterface *wave_playback_device(Sound *p) {{ return static_cast<WavePlaybackDeviceInterface *>(p); }}
+struct SoundOwner : Sound {{ Sound *device_; long loop_flag_30_; int play(); void set_loop_state(long); }};
+struct Wave {{ Sound *device_; int get_device_description(char *, int, int); }};
+int SoundOwner::play() {{{sound_play}}}
+void SoundOwner::set_loop_state(long loop_state) {{{sound_loop}}}
 int Wave::get_device_description(char *a1, int a2, int a3) {{{wave_description}}}
 static int play_calls, play_result;
 static long loop_argument;
 static int description_calls, description_result, description_a2, description_a3;
-struct SoundMock : SoundDeviceInterface {{
+struct SoundMock : Sound {{
   int play() override {{ ++play_calls; return play_result; }}
   void set_loop_state(long value) override {{ ++description_calls; loop_argument=value; }}
 }};
@@ -267,7 +270,7 @@ struct WaveMock : WavePlaybackDeviceInterface {{
   }}
 }};
 int main() {{
-  Sound sound={{nullptr, 0}};
+  SoundOwner sound={{}}; sound.device_=nullptr; sound.loop_flag_30_=0;
   assert(sound.play()==0x14 && play_calls==0);
   SoundMock sm; sound.device_=&sm; play_result=0x5a;
   assert(sound.play()==0x5a && play_calls==1);
