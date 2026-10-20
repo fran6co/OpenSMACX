@@ -1,0 +1,19 @@
+{
+  "event_id": "c2b8b43a8061d61a4e1de8148484c1a1e5a7cc228989b716080b25b1b6a64c49",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_listbox_remaining_behavior.py"
+    ],
+    "evidence": [
+      "Original60B388..60B401 onlyreseeksselectedwhenwithinlivecount, then60B421..60B475 advancesexistingcurrentcursor and wrapsordinal. Currenttypeahead derives modulo from stale selected and seek_poshead, losingcallback-shrinkcursor. Authorizeonlyon_key_downsemanticrecoverywithinexistingfullowner plusactualsourceexistingkeyboardtest; preserveerrorfaults andallotherkeybranches, no type/flags/claimchanges. CoordinatorownsGit/build/preparation/review; baseline1c8b944f intact. Priorcompletedcandidate/destinationartifactsremainimmutable andvalidforpreviousstep."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "1cf452bed9b9d134e5b8a2e39601768f1a44ab9ef578fc908e5a7af4e379452e",
+  "request_id": "listbox-keyboard-cursor-control-scope-oct20e",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:listbox-geometry-owner-oct20"
+}
