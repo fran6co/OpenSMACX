@@ -2773,15 +2773,14 @@ int NetDaemon::init(int option) {
 int NetDaemon::wait(char * message, uint32_t * state, int value, int timeout) {
     int saved = NetDaemonNet.channels_[0].leading_words_[3];
     ++NetBusyCount;
-    DWORD (WINAPI *const timeGetTimeFn)() = timeGetTime;
-    DWORD startTime = timeGetTimeFn();
+    DWORD startTime = timeGetTime();
     bool triggeredTimeout = false;
     while (*state == static_cast<uint32_t>(value)) {
         if (ExitTurnLoop != 0) {
             break;
         }
         if (!triggeredTimeout) {
-            DWORD now = timeGetTimeFn();
+            DWORD now = timeGetTime();
             // Original530405 SUB /530407 CMP /530409 JBE compares DWORD
             // bit patterns unsigned, including tick wrap and negative timeout.
             if (static_cast<DWORD>(now - startTime) > static_cast<DWORD>(timeout)) {
@@ -3092,8 +3091,6 @@ int NetDaemon::add_lock(int target, int x, int y) {
 // indirect  0x00530AF8 0x00530B1D 0x00530BC1 0x00530BE6
 
 int NetDaemon::add_global() {
-    DWORD (WINAPI *const get_time)() = timeGetTime;
-
     if (IsMultiplayerNet == 0) {
         return 0;
     }
@@ -3103,14 +3100,14 @@ int NetDaemon::add_global() {
     message_data(0x2211, 0, 0, 0, 0, 0);
     NetBusyCount = NetBusyCount + 1;
     int saved_e904 = NetDaemonNet.channels_[0].leading_words_[3];
-    unsigned long start_time1 = get_time();
+    unsigned long start_time1 = timeGetTime();
 
     bool warned1 = false;
     if (channels_[0].leading_words_[2] == 0) {
         do {
             if (ExitTurnLoop != 0) break;
             if (!warned1) {
-                unsigned long now = get_time();
+                unsigned long now = timeGetTime();
                 if (now - start_time1 > 0x640) {
                     warned1 = true;
                     NetMsgPrimary.pop("AWAITGLOBALLOCK", 0, 2, 0);
@@ -3133,13 +3130,13 @@ int NetDaemon::add_global() {
     int newE664 = NetBusyCount - 1;
 
     if (channels_[0].leading_words_[2] == 1) {
-        unsigned long start_time2 = get_time();
+        unsigned long start_time2 = timeGetTime();
         bool warned2 = false;
         if (locks_.field_E8_ == 0) {
             do {
                 if (ExitTurnLoop != 0) break;
                 if (!warned2) {
-                    unsigned long now = get_time();
+                    unsigned long now = timeGetTime();
                     if (now - start_time2 > 800) {
                         warned2 = true;
                         NetMsgPrimary.pop("AWAITGLOBALLOCK", 0, 2, 0);

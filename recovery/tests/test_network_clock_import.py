@@ -87,20 +87,23 @@ def test_original_and_compiler_reach_the_same_import_pointer(network_clocks, uni
         clock_operands(objects[unit], unit, address)
 
 
-@pytest.mark.parametrize("unit,address,before,after", [
-    ("src/net_class.cpp", 0x6320E0, b"= timeGetTime;", b"= GetTickCount;"),
+@pytest.mark.parametrize("unit,address,before,after,error", [
+    ("src/net_class.cpp", 0x6320E0, b"= timeGetTime;", b"= GetTickCount;",
+     "unexpected direct SDK import"),
     ("src/netdaemon.cpp", 0x592E10, b"message.time_ = timeGetTime();",
-     b"message.time_ = (*reinterpret_cast<DWORD (WINAPI **)()>(0x00669368))();"),
-    ("src/netdaemon.cpp", 0x5303B0, b"= timeGetTime;", b"= GetTickCount;"),
+     b"message.time_ = (*reinterpret_cast<DWORD (WINAPI **)()>(0x00669368))();",
+     "no source-bound multimedia clock"),
+    ("src/netdaemon.cpp", 0x5303B0, b"= timeGetTime()", b"= GetTickCount()",
+     "no source-bound multimedia clock"),
 ])
-def test_network_clock_controls_reject_wrong_api_and_old_address(network_clocks, unit, address, before, after):
+def test_network_clock_controls_reject_wrong_api_and_old_address(network_clocks, unit, address, before, after, error):
     compiler, settings, _, _ = network_clocks
     path = ROOT / unit
     source = path.read_bytes()
     assert before in source
     for flags in settings.flag_sets:
         obj = Coff(compiler.overlay(path, {unit: source.replace(before, after)}, (), flags + settings.layout_flags))
-        with pytest.raises(AssertionError, match="no source-bound multimedia clock"):
+        with pytest.raises(AssertionError, match=error):
             clock_operands(obj, unit, address)
     assert path.read_bytes() == source
 

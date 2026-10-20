@@ -1,0 +1,17 @@
+{
+  "event_id": "4ddd04353f83216a77707a39aac7549d5d1ad1e39dbce1816d76490c99fc0487",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "polling-clock-modulo-and-import-reads-oct21a",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Source Net::check_polling now uses the pinned modulo32 threshold and callback-visible stamp/ID/timeout read order, caches the clock only in the original arms and preserves both original busy-leak exits and row1-before-row0 stores. Independent review and pinned/actual-source compiling damage controls support these source corrections; body matching remainsMISMATCH and provider-chooser collateral remains pending."
+    ]
+  },
+  "previous_event": "018da933f3f3d5022bb8ac5769de2220ca5b617c3ec8bdba7208f9d7cb18d21b",
+  "request_id": "incorporate-original-polling-clock-effects-oct21a",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:net-polling-player-id-oct11"
+}

@@ -1776,9 +1776,10 @@ void StatusWin::UNK4() {
 // RECOVERY_BINDING: v1 {"evidence": ["The historical body tests StatusWin offsets +0x15BC and +0x15C0; statuswin.h maps these to iUnitIndex_ and iCityIndex_.", "The store at 0x0093928C is ConsoleGlobal.selected_vehicle_ (Console offset +0x23BDC), and the remaining dispatches match veh_wake, Console::set_move, and TutWinBaseWindow.zoom.", "git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/004b8df0.cpp"], "reason": "Home the compact selected-unit/base action in StatusWin using the recovered members and process-owned C++ objects. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
 // kind      game
 void StatusWin::UNK3() {
-    if (iUnitIndex_ >= 0) {
-        veh_wake(iUnitIndex_);
-        ConsoleGlobal.selected_vehicle_ = iUnitIndex_;
+    const int unit_id = iUnitIndex_;
+    if (unit_id >= 0) {
+        veh_wake(unit_id);
+        ConsoleGlobal.selected_vehicle_ = unit_id;
         ConsoleGlobal.set_move(1);
         return;
     }

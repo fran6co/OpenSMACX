@@ -1,0 +1,25 @@
+{
+  "event_id": "386ac99c3ca2b36028d362ea33c5fa436d39472f31d6ae2cbf0a477d3b868558",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Fresh combined179TU native build/link passes; all23native clock-import and wrong-API/address controls pass. Independent source/pinned reviews approve the polling, wait/add_global and StatusWin snapshot corrections. All3450claims, original mapping/lesson fields and source references remain intact. Complete5581-domain census gains only StatusWin4B8DF0 exact and strictPASS, with no exact/strict loss.",
+      "Four-edited-body native COFF residual is192PASS1FAIL. The only protected difference is unedited Net::choose_service630D70: both832bytes, same complete relocation list and section structure; only adjacent own-stack MOVs swap at section1E2/1E6, EBP from[ESP+10] and EDI from[ESP+14]. No flags/SP/read destinations change and no instruction intervenes. Explicitly admit this original identity into observation/restoration scope without editing its source or changing the original task baseline. Retain the FAIL as pending; this is not a linked-preservation or runtime waiver.",
+      "Coordinator-reviewed manual source checkpoint is permitted after independent collateral review and destination build/continuity rechecks. Whole class-debt gate, linked retention/preservation, full structure/runtime/game and native automatic acceptance remain unproven. Existing historical whole-file polling test fails on unchanged master too at004016B8 claim history; preserve it unmodified and unwaived."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6491504,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "583e64afb0f9708717ce43865323f351de6e5a35c42ed5e3d3df69c1b512583f",
+  "request_id": "central-polling-sibling-collateral-oct21a",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:net-polling-player-id-oct11"
+}

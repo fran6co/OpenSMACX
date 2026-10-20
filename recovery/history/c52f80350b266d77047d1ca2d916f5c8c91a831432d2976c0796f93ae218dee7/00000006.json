@@ -1,0 +1,22 @@
+{
+  "event_id": "018da933f3f3d5022bb8ac5769de2220ca5b617c3ec8bdba7208f9d7cb18d21b",
+  "payload": {
+    "affects": [
+      "entity-fafdbc980d6deb05c685ffe33b963fb92329750ba578d03d12cba9ec89912d76"
+    ],
+    "author": "coordinator",
+    "discovery_id": "polling-clock-sibling-codegen-collateral-oct21a",
+    "evidence": [
+      "Fresh combined179TU native build/link passes; all23native clock-import and wrong-API/address controls pass. Independent source/pinned reviews approve the polling, wait/add_global and StatusWin snapshot corrections. All3450claims, original mapping/lesson fields and source references remain intact. Complete5581-domain census gains only StatusWin4B8DF0 exact and strictPASS, with no exact/strict loss.",
+      "Four-edited-body native COFF residual is192PASS1FAIL. The only protected difference is unedited Net::choose_service630D70: both832bytes, same complete relocation list and section structure; only adjacent own-stack MOVs swap at section1E2/1E6, EBP from[ESP+10] and EDI from[ESP+14]. No flags/SP/read destinations change and no instruction intervenes. Explicitly admit this original identity into observation/restoration scope without editing its source or changing the original task baseline. Retain the FAIL as pending; this is not a linked-preservation or runtime waiver.",
+      "Coordinator-reviewed manual source checkpoint is permitted after independent collateral review and destination build/continuity rechecks. Whole class-debt gate, linked retention/preservation, full structure/runtime/game and native automatic acceptance remain unproven. Existing historical whole-file polling test fails on unchanged master too at004016B8 claim history; preserve it unmodified and unwaived."
+    ],
+    "hypothesis": "Unedited Net provider chooser retains a two-own-stack-load scheduling difference after the faithful polling clock recovery.",
+    "kind": "discovery"
+  },
+  "previous_event": "386ac99c3ca2b36028d362ea33c5fa436d39472f31d6ae2cbf0a477d3b868558",
+  "request_id": "polling-clock-sibling-codegen-collateral-oct21a",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:net-polling-player-id-oct11"
+}

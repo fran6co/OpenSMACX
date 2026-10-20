@@ -1180,11 +1180,12 @@ Purpose: Keep the session alive and reap the players that have gone quiet:
            3. neither                              - look at players 0 and 1,
              and if both are stale, cut every player at once.
 
-         The clock is the game's imported timeGetTime, reached through its
-         import slot: the image hoists that load into a callee-saved register
-         for the four calls in the first half of the body and falls back to a
-         memory-indirect call for the two after the register is spent, so the
-         source calls through the slot each time rather than copying it.
+         The image captures the imported clock after the DirectPlay guard,
+         keeps that pointer for the keep-alive and first two reap arms, then
+         reloads the import in the neither-host arm. Its first timeout check
+         compares now - 2000 with the stored tick as unsigned values; preserve
+         that wraparound behavior rather than rewriting it as an elapsed-time
+         subtraction.
 // ORIGINAL: 0x006320E0 ?check_polling@Net@@QAEXXZ 0x006320E0-0x00632290
 // RECOVERY_BINDING: v1 {"reason":"The one-player reaping arm compares the local player ID with row 1's ID, not row 1's timestamp. Preserve the original row-0 timestamp/drop logic, distinct timeout comparisons, failure returns and busy-flag effects.","evidence":["pinned:0x0063216E loads Net+0x760 into EAX; 0x006321E2 compares EAX with Net+0x1AC","source:Net players_ begins at +0x154; NetPlayer stride is 0x58, field_0_ is the ID at +0 and stamp_10_ is the timestamp at +0x10, so row 1 ID is +0x1AC and row 1 stamp is +0x1BC","pinned:0x006321EA reads row 0 stamp at +0x164; 0x00632206 loads row 0 ID at +0x154 for drop_player and 0x0063221A refreshes the timestamp after successful drop"]}
 // symbol    ?check_polling@Net@@QAEXXZ
@@ -1232,11 +1233,13 @@ Purpose: Keep the session alive and reap the players that have gone quiet:
 Return Value: n/a
 */
 void Net::check_polling() {
-    DWORD (WINAPI *const now)() = timeGetTime;
     if (NetDirectPlay == 0) {
         return;
     }
-    if (now() - poll_time_DC_ <= 2000) {
+    DWORD (WINAPI *const now)() = timeGetTime;
+    const DWORD initial_tick = now();
+    const DWORD keepalive_threshold = initial_tick - 2000U;
+    if (keepalive_threshold <= poll_time_DC_) {
         return;
     }
     if (NetKeepAliveBusy != 0) {
@@ -1257,14 +1260,17 @@ void Net::check_polling() {
             // successful cut stamps the time of the cut.
             int count = 0x10;
             do {
-                if (players_[0x10 - count].field_0_ != 0
-                    && players_[0x10 - count].field_0_ != local_player_id_
-                    && players_[0x10 - count].stamp_10_ != 0
-                    && now() - players_[0x10 - count].stamp_10_
-                           > poll_timeout_E0_
-                    && drop_player(players_[0x10 - count].field_0_, 0) == 0) {
-                    players_[0x10 - count].stamp_10_ =
-                        now();
+                NetPlayer &player = players_[0x10 - count];
+                if (player.field_0_ != 0
+                    && player.field_0_ != local_player_id_) {
+                    const DWORD stamp = player.stamp_10_;
+                    if (stamp != 0) {
+                        const DWORD tick = now();
+                        if (tick - stamp > poll_timeout_E0_
+                            && drop_player(players_[0x10 - count].field_0_, 0) == 0) {
+                            players_[0x10 - count].stamp_10_ = now();
+                        }
+                    }
                 }
                 --count;
             } while (count != 0);
@@ -1272,12 +1278,13 @@ void Net::check_polling() {
             return;
         }
         if (local_player_id_ == players_[1].field_0_) {
-            if (players_->stamp_10_ == 0) {
+            const DWORD stamp = players_->stamp_10_;
+            if (stamp == 0) {
                 NetReapBusy = 0;
                 return;
             }
-            if (now() - players_->stamp_10_
-                    <= poll_timeout_E0_) {
+            const DWORD tick = now();
+            if (tick - stamp <= poll_timeout_E0_) {
                 NetReapBusy = 0;
                 return;
             }
@@ -1292,16 +1299,17 @@ void Net::check_polling() {
         // Neither timer word names a player this table holds, so both leading
         // slots are stale: cut the lot.
         for (int checked = 0; checked < 2; ++checked) {
-            if (players_[checked].stamp_10_ == 0) {
+            const DWORD stamp = players_[checked].stamp_10_;
+            if (stamp == 0) {
                 return;
             }
-            if (now() - players_[checked].stamp_10_
-                    < poll_timeout_E0_) {
+            const DWORD tick = timeGetTime();
+            if (tick - stamp < poll_timeout_E0_) {
                 return;
             }
         }
         if (drop_player(0xFFFFFFFF, 0) == 0) {
-            uint32_t cut = now();
+            uint32_t cut = timeGetTime();
             players_[1].stamp_10_ = cut;
             players_[0].stamp_10_ = cut;
         }
