@@ -135,10 +135,10 @@ def test_pinned_mapwin_and_planwin_role_witnesses():
 
 
 def _game_io_fixture(body):
-    # Replace only the two host I/O entry points; the extracted game_io
+    # Replace only the host I/O entry points; the extracted game_io
     # transfer logic and its member-address order remain actual source.
-    assert body.count("fwrite(") == 1
-    assert body.count("fread(") == 1
+    assert body.count("fwrite(") == 6
+    assert body.count("fread(") == 6
     body = body.replace("fwrite(", "plain_write(").replace("fread(", "plain_read(")
     return r'''#include <stdint.h>
 #define __cdecl
@@ -150,6 +150,7 @@ struct MapWin {
 int GameDataEncryptedMode = 0;
 int GameDataWriteMode = 0;
 int EventCount = 0, FailAt = -1;
+int NextEncrypted[6], NextWrite[6];
 struct Event { void *address; int write, encrypted, width, count; };
 Event Events[8];
 static int transfer(void *p, int write, int encrypted, unsigned int width,
@@ -158,6 +159,10 @@ static int transfer(void *p, int write, int encrypted, unsigned int width,
   Events[i].address = p; Events[i].write = write; Events[i].encrypted = encrypted;
   Events[i].width = (int)width; Events[i].count = (int)count;
   if (!write) *(uint32_t *)p = 0xA5000000U + (uint32_t)i;
+  if (i < 5) {
+    GameDataEncryptedMode = NextEncrypted[i];
+    GameDataWriteMode = NextWrite[i];
+  }
   return i == FailAt ? 0 : 1;
 }
 int encrypt_write(void *p, unsigned int w, unsigned int n, FILE *) {
@@ -173,33 +178,48 @@ int plain_read(void *p, unsigned int w, unsigned int n, FILE *) {
   return transfer(p, 0, 0, w, n);
 }
 @@GAME_IO_BODY@@
-static int run_case(int encrypted, int writing, int fail_at) {
+static int run_case(const int encrypted[6], const int writing[6], int fail_at) {
   MapWin record = { 11, 12, 13, 14, 15, 16 };
   FILE file;
   void *expected[6] = { &record.map_view_index_, &record.view_active_,
     &record.field_1DD70_, &record.field_1DD98_, &record.field_1DD9C_,
     &record.field_1DDA0_ };
   uint32_t old_values[6] = { 11, 12, 13, 14, 15, 16 };
-  GameDataEncryptedMode = encrypted;
-  GameDataWriteMode = writing;
+  for (int i = 0; i < 6; ++i) {
+    NextEncrypted[i] = encrypted[i + 1 < 6 ? i + 1 : i];
+    NextWrite[i] = writing[i + 1 < 6 ? i + 1 : i];
+  }
+  GameDataEncryptedMode = encrypted[0];
+  GameDataWriteMode = writing[0];
   EventCount = 0; FailAt = fail_at;
   int result = game_io(&record, &file);
   int expected_count = fail_at < 0 ? 6 : fail_at + 1;
   if (EventCount != expected_count || result != (fail_at < 0 ? 0 : 1)) return 1;
   for (int i = 0; i < expected_count; ++i) {
-    if (Events[i].address != expected[i] || Events[i].write != writing ||
-        Events[i].encrypted != encrypted || Events[i].width != 4 ||
+    if (Events[i].address != expected[i] || Events[i].write != writing[i] ||
+        Events[i].encrypted != encrypted[i] || Events[i].width != 4 ||
         Events[i].count != 1) return 2;
-    if (writing && *(uint32_t *)Events[i].address != old_values[i]) return 3;
-    if (!writing && *(uint32_t *)Events[i].address != 0xA5000000U + (uint32_t)i) return 4;
+    if (writing[i] && *(uint32_t *)Events[i].address != old_values[i]) return 3;
+    if (!writing[i] && *(uint32_t *)Events[i].address != 0xA5000000U + (uint32_t)i) return 4;
   }
   return 0;
 }
 int main() {
-  for (int encrypted = 0; encrypted <= 1; ++encrypted)
-    for (int writing = 0; writing <= 1; ++writing)
-      if (run_case(encrypted, writing, -1) != 0) return 10;
-  if (run_case(1, 0, 2) != 0) return 11;
+  for (int encrypted = 0; encrypted <= 1; ++encrypted) {
+    for (int writing = 0; writing <= 1; ++writing) {
+      int encrypted_modes[6] = { encrypted, encrypted, encrypted,
+                                 encrypted, encrypted, encrypted };
+      int write_modes[6] = { writing, writing, writing, writing, writing, writing };
+      if (run_case(encrypted_modes, write_modes, -1) != 0) return 10;
+      for (int failure = 0; failure < 6; ++failure)
+        if (run_case(encrypted_modes, write_modes, failure) != 0) return 11;
+    }
+  }
+  int changing_encrypted[6] = { 1, 0, 1, 0, 0, 1 };
+  int changing_write[6] = { 0, 1, 1, 0, 1, 0 };
+  if (run_case(changing_encrypted, changing_write, -1) != 0) return 12;
+  for (int failure = 0; failure < 6; ++failure)
+    if (run_case(changing_encrypted, changing_write, failure) != 0) return 13;
   return 0;
 }
 '''.replace("@@GAME_IO_BODY@@", body)
@@ -236,17 +256,22 @@ def test_game_io_order_and_width_damage_controls(tmp_path):
     game_source = (ROOT / "src/game.cpp").read_text()
     body = _body(game_source, "int __cdecl game_io(MapWin *record, FILE *file)")
     mutants = {
-        "swap_role_order": (
-            "&record->map_view_index_, &record->view_active_",
-            "&record->view_active_, &record->map_view_index_"),
+        "swap_role_order": None,
         "widen_first_encrypted_write": (
-            "encrypt_write(fields[index], 4, 1, file)",
-            "encrypt_write(fields[index], 8, 1, file)"),
+            "encrypt_write(&record->map_view_index_, 4, 1, file)",
+            "encrypt_write(&record->map_view_index_, 8, 1, file)"),
     }
     assert any(shutil.which(name) for name in ("g++", "clang++")), "host compiler required"
-    for label, (old, new) in mutants.items():
-        assert body.count(old) == 1, "mutant anchor changed: " + label
-        fixture = _game_io_fixture(body.replace(old, new, 1))
+    for label, mutation in mutants.items():
+        if label == "swap_role_order":
+            first, second = "record->map_view_index_", "record->view_active_"
+            marker = "__MAPWIN_ROLE_SWAP__"
+            damaged = body.replace(first, marker).replace(second, first).replace(marker, second)
+        else:
+            old, new = mutation
+            assert body.count(old) == 1, "mutant anchor changed: " + label
+            damaged = body.replace(old, new, 1)
+        fixture = _game_io_fixture(damaged)
         for compiler_name in ("g++", "clang++"):
             compiler = shutil.which(compiler_name)
             if compiler is None:

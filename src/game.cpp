@@ -6200,24 +6200,72 @@ extern "C" int __cdecl sub_5a6510(int x, int y) {
 // symbol    ?game_io@@YAHPAVMapWin@@PAU_iobuf@@@Z
 // TRIED: divergence at #4 (push edi/esi vs test) is register allocation for a1 not hoisting into a callee-saved reg; a hoisted `base` local and inline `(char*)a1+off` casts compile identically.
 int __cdecl game_io(MapWin *record, FILE *file) {
-    void *fields[6] = {
-        &record->map_view_index_, &record->view_active_, &record->field_1DD70_,
-        &record->field_1DD98_, &record->field_1DD9C_, &record->field_1DDA0_
-    };
-    for (int index = 0; index != 6; ++index) {
-        int result;
-        if (GameDataEncryptedMode != 0) {
-            result = GameDataWriteMode != 0
-                ? encrypt_write(fields[index], 4, 1, file)
-                : encrypt_read(fields[index], 4, 1, file);
-        } else {
-            result = GameDataWriteMode != 0
-                ? static_cast<int>(fwrite(fields[index], 4, 1, file))
-                : static_cast<int>(fread(fields[index], 4, 1, file));
-        }
-        if (result == 0) return 1;
+    int result;
+    if (GameDataEncryptedMode != 0) {
+        result = GameDataWriteMode != 0
+            ? encrypt_write(&record->map_view_index_, 4, 1, file)
+            : encrypt_read(&record->map_view_index_, 4, 1, file);
+    } else {
+        result = GameDataWriteMode != 0
+            ? static_cast<int>(fwrite(&record->map_view_index_, 4, 1, file))
+            : static_cast<int>(fread(&record->map_view_index_, 4, 1, file));
     }
-    return 0;
+    if (result == 0) return 1;
+
+    if (GameDataEncryptedMode != 0) {
+        result = GameDataWriteMode != 0
+            ? encrypt_write(&record->view_active_, 4, 1, file)
+            : encrypt_read(&record->view_active_, 4, 1, file);
+    } else {
+        result = GameDataWriteMode != 0
+            ? static_cast<int>(fwrite(&record->view_active_, 4, 1, file))
+            : static_cast<int>(fread(&record->view_active_, 4, 1, file));
+    }
+    if (result == 0) return 1;
+
+    if (GameDataEncryptedMode != 0) {
+        result = GameDataWriteMode != 0
+            ? encrypt_write(&record->field_1DD70_, 4, 1, file)
+            : encrypt_read(&record->field_1DD70_, 4, 1, file);
+    } else {
+        result = GameDataWriteMode != 0
+            ? static_cast<int>(fwrite(&record->field_1DD70_, 4, 1, file))
+            : static_cast<int>(fread(&record->field_1DD70_, 4, 1, file));
+    }
+    if (result == 0) return 1;
+
+    if (GameDataEncryptedMode != 0) {
+        result = GameDataWriteMode != 0
+            ? encrypt_write(&record->field_1DD98_, 4, 1, file)
+            : encrypt_read(&record->field_1DD98_, 4, 1, file);
+    } else {
+        result = GameDataWriteMode != 0
+            ? static_cast<int>(fwrite(&record->field_1DD98_, 4, 1, file))
+            : static_cast<int>(fread(&record->field_1DD98_, 4, 1, file));
+    }
+    if (result == 0) return 1;
+
+    if (GameDataEncryptedMode != 0) {
+        result = GameDataWriteMode != 0
+            ? encrypt_write(&record->field_1DD9C_, 4, 1, file)
+            : encrypt_read(&record->field_1DD9C_, 4, 1, file);
+    } else {
+        result = GameDataWriteMode != 0
+            ? static_cast<int>(fwrite(&record->field_1DD9C_, 4, 1, file))
+            : static_cast<int>(fread(&record->field_1DD9C_, 4, 1, file));
+    }
+    if (result == 0) return 1;
+
+    if (GameDataEncryptedMode != 0) {
+        result = GameDataWriteMode != 0
+            ? encrypt_write(&record->field_1DDA0_, 4, 1, file)
+            : encrypt_read(&record->field_1DDA0_, 4, 1, file);
+    } else {
+        result = GameDataWriteMode != 0
+            ? static_cast<int>(fwrite(&record->field_1DDA0_, 4, 1, file))
+            : static_cast<int>(fread(&record->field_1DDA0_, 4, 1, file));
+    }
+    return result == 0;
 }
 
 static int map_data_plain_block(FILE *file, void *buffer, unsigned int size) {
