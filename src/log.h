@@ -27,23 +27,7 @@ class Log {
  public:
   MEASURED Log() : log_file_(nullptr), is_disabled_(false) {
   } // 00625FB0
-  // Filename initialization belongs to this constructor; Logging's global
-  // object receives the filename before ordinary application code runs.
-  MEASURED Log(LPCSTR input) {
-      log_file_ = nullptr;
-      if (input) {
-          void *buf = mem_get(strlen(input) + 1);
-          log_file_ = (LPSTR)buf;
-          if (buf) {
-              *(char *)buf = '\0';
-              strcat(log_file_, input);
-              FILE *file = env_open(input, "wt");
-              if (file) {
-                  fclose(file);
-              }
-          }
-      }
-  }
+  MEASURED Log(LPCSTR input);
   MEASURED ~Log() {
       if (log_file_) {
           free(log_file_);
@@ -52,39 +36,9 @@ class Log {
   } // 00626020
 
   int init(LPCSTR input);
-  // The image inlines reset/say/say_hex into every `Logging->...()` caller
-  // in log.cpp rather than emitting a call to these; defined in-class so
-  // this unit's own callers reproduce that. Each still carries its own
-  // ORIGINAL marker, moved to log.cpp below the class (see "DEFINED IN THE
-  // HEADER, CLAIMED HERE").
-  MEASURED void reset() {         // 006260D0
-      FILE *file = env_open(log_file_, "wt");
-      if (file) {
-          fclose(file);
-      }
-  }
-  MEASURED void say(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3) {   // 006260F0
-      if (!log_file_ || is_disabled_ || IsLoggingDisabled) {
-          return;
-      }
-      FILE *file = env_open(log_file_, "at");
-      if (file) {
-          str2 ? fprintf(file, "%s %s %d %d %d\n", str1, str2, num1, num2, num3)
-              : fprintf(file, "%s %d %d %d\n", str1, num1, num2, num3);
-          fclose(file);
-      }
-  }
-  MEASURED void say_hex(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3) {   // 00626190
-      if (!log_file_ || is_disabled_ || IsLoggingDisabled) {
-          return;
-      }
-      FILE *file = env_open(log_file_, "at");
-      if (file) {
-          str2 ? fprintf(file, "%s %s %04x %04x %04x\n", str1, str2, num1, num2, num3)
-              : fprintf(file, "%s %04x %04x %04x\n", str1, num1, num2, num3);
-          fclose(file);
-      }
-  }
+  MEASURED void reset();
+  MEASURED void say(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3);
+  MEASURED void say_hex(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3);
   // additional functions to assist with encapsulation
   void set_state(BOOL state) { is_disabled_ = (state == 0); }
 

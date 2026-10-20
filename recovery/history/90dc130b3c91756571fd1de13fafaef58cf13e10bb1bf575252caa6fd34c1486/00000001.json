@@ -1,0 +1,25 @@
+{
+  "event_id": "4f9602ea873726f87140852c9cd2c94c4dce0fe9325a162bc6b9acb17f7230d6",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Independent original instruction-boundary review confirms net_control_turn52A2E0..52A971 calls Log::reset6260D0 at52A3FA (E8 D1 BC0F00), matching current game.cpp Logging.reset(). Add this caller for complete source visibility and preservation observation, not permission to edit game.cpp. Historical task baseline stays56463abe00db32311e64d7a0fb29e71d52c85b2e.",
+      "Correct earlier raw edge attribution:5178AF is data inside a veh_key jump-table entry, not Console code. Reachable instruction-boundary decoding from Console on_key_click5178C0 with encountered switch targets instead confirms54 Log::say calls, first518C2F; it also calls reset at518C1B. Original free log wrappers contain formatting operations inline, not member calls. Raw call-byte scans are hints, not function-boundary proof.",
+      "Fresh first implementation builds refused VC6 C2375: moving exported definitions behind unannotated declarations changed declared linkage. Preserve the same existing MEASURED linkage on declaration-only header methods and owner definitions; do not reintroduce header bodies or add new method exports. Fresh corrected owner and full compile/link pass; no matching or acceptance conclusion is inferred from linkage correction."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5415648,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "log-pinned-reset-caller-oct20i",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:log-source-ownership-oct20i"
+}
