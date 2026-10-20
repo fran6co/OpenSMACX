@@ -210,6 +210,10 @@ int MapResamplePreviousHeight;
 // lived in alpha.cpp. All had static zero initialization. Their exact native
 // address/offset relationship is now declared in map.h in one real allocation.
 // MapLongitude (68FAF0) remains an independently initialized row-stride object.
+// map_read/map_write transfer this writable zero-fill window as 0xAA4 bytes.
+// This records the observed serialized region, not a claim about original type,
+// complete allocation, or lifetime.
+// RECOVERY_OBJECT: v2 0x00949870 0x0094A314 ?MapStorage@@3UMapStorageWindow@@A 0x005910B0
 // RECOVERY_OBJECT: v3 0x0094A30C ?MapTiles@@3PAUMap@@A member ?MapStorage@@3UMapStorageWindow@@A tiles_
 // RECOVERY_OBJECT: v3 0x0094A310 ?MapAbstractTiles@@3PAEA member ?MapStorage@@3UMapStorageWindow@@A abstract_tiles_
 // RECOVERY_OBJECT: v3 0x00949870 ?MapLongitudeBounds@@3HA member ?MapStorage@@3UMapStorageWindow@@A metadata_.longitude_bounds_

@@ -169,6 +169,48 @@ def parse_objects(text: str, path: str, pin: str, *, address_space: str) -> tupl
     return result
 
 
+def _same_start_parent_member(rows: tuple[ObjectBinding, ...]) -> bool:
+    """Recognize one bounded direct parent and its explicit offset-zero child."""
+    if len(rows) != 2:
+        return False
+    parents = [row for row in rows if row.parent_symbol is None]
+    children = [row for row in rows if row.parent_symbol is not None]
+    if len(parents) != 1 or len(children) != 1:
+        return False
+    parent, child = parents[0], children[0]
+    return (
+        parent.span is not None
+        and parent.target_symbol is None
+        and child.span is None
+        and child.target_symbol is None
+        and child.unit == parent.unit
+        and (child.origin.image_sha256, child.origin.address_space, child.origin.address)
+            == (parent.origin.image_sha256, parent.origin.address_space, parent.origin.address)
+        and child.parent_symbol == parent.symbol == parent.emitted_symbol
+        and child.symbol != parent.symbol
+    )
+
+
+def validate_object_extent_ownership(bindings) -> None:
+    """Validate bounded extents and member starts, narrowly allowing offset zero.
+
+    One explicit, unbounded v3 child may share a start with a bounded direct
+    parent only when that child is the parent's offset-zero member. All other
+    duplicate starts and bounded-span overlaps remain invalid.
+    """
+    rows = tuple(bindings)
+    starts = {}
+    for row in rows:
+        starts.setdefault(row.origin.entity_id, []).append(row)
+    for same_start in starts.values():
+        if len(same_start) > 1 and not _same_start_parent_member(tuple(same_start)):
+            raise ValueError("multiple objects claim the same original start address")
+
+    spans = sorted(row.span for row in rows if row.span is not None)
+    if any(left.end > right.start for left, right in zip(spans, spans[1:])):
+        raise ValueError("original object extents overlap")
+
+
 def read_objects(root: Path, pin: str) -> tuple[ObjectBinding, ...]:
     root = root.resolve()
     configuration = SourceConfiguration.read(root)
@@ -180,17 +222,13 @@ def read_objects(root: Path, pin: str) -> tuple[ObjectBinding, ...]:
         bindings.extend(parse_objects(path.read_text(encoding="utf-8"), relative, pin, address_space=configuration.address_space))
     if len({item.symbol for item in bindings}) != len(bindings):
         raise ValueError("duplicate original object symbol binding")
-    if len({item.origin.entity_id for item in bindings}) != len(bindings):
-        raise ValueError("multiple objects claim the same original start address")
+    validate_object_extent_ownership(bindings)
     owners = {}
     for item in bindings:
         if item.parent_symbol is not None:
             owner = owners.setdefault(item.parent_symbol, item.unit)
             if owner != item.unit:
                 raise ValueError("member parent symbol is bound from multiple source units")
-    spans = sorted(item.span for item in bindings if item.span is not None)
-    if any(left.end > right.start for left, right in zip(spans, spans[1:])):
-        raise ValueError("original object extents overlap")
     validate_object_symbol_ownership(bindings)
     return tuple(bindings)
 

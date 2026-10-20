@@ -1,0 +1,23 @@
+{
+  "event_id": "03fbfc0684dba726d4850c2070f97673c983aa278e09560b29aa2225a97dd999",
+  "payload": {
+    "affects": [
+      "entity-495987156da564797795652b48ada86c01e696588ca45a5dc486bfb87fd05ddd",
+      "entity-ea5c765736cf60a9e7906d3829b6c3c33bb21234da46509cd15fdb6aa16413ff"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "same-start-parent-member-oct20ak",
+    "evidence": [
+      "Trial v2 parent at949870 plus retained v3 MapLongitudeBounds at949870 reproducibly refuses read_objects with multiple objects claim the same original start address. Trial annotation was removed and baseline map.cpp SHAf0979d7145c14917419b9ea3ee698e977a63f2d7e52370f73ba394ee2cfe0be3 restored; no C++ recovery was lost.",
+      "object_source.read_objects rejects repeated origin.entity_id unconditionally; object_writer._unique has the same guard and only a strictly-inside bounded-parent/unbounded-child exception. Same physical start does not make the explicitly named first member and whole parent unrelated aliases.",
+      "A general duplicate/overlap allowance is unsafe. Existing object_targets independently requires fresh parent/member CodeView layout, derives each member-implied original base and refuses conflicting direct-parent anchors; preserve that fail-closed verification."
+    ],
+    "hypothesis": "Native object reader/writer reject the real bounded MapStorage parent and its first historical member sharing the serialized start; no body or layout change can resolve this source-representation conflict.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "same-start-parent-member-oct20ak",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:map-serialized-storage-oct20ak"
+}

@@ -112,6 +112,58 @@ def test_rejects_intra_batch_duplicates_overlap_and_existing_marker_shadow():
                            address_space=SPACE)
 
 
+@pytest.mark.parametrize("child_first", [False, True])
+def test_bounded_parent_and_same_start_unbounded_member_round_trip_in_either_order(child_first):
+    start = 0x00401000
+    origin = Origin(PIN, SPACE, start)
+    parent = ObjectBinding(origin, "_parent", PATH, 1, Span(start, start + 16), origin)
+    child = ObjectBinding(origin, "old_first", PATH, 1,
+                          parent_symbol="_parent", member_path=("first",))
+    additions = (child, parent) if child_first else (parent, child)
+    written = write_object_bytes(b"int aggregate;\n", expected=(), additions=additions,
+                                 path=PATH, pin=PIN, address_space=SPACE)
+    parsed = current(written)
+    assert [row.symbol for row in parsed] == [row.symbol for row in additions]
+    assert parsed[0].origin == parsed[1].origin == origin
+    assert next(row for row in parsed if row.symbol == "_parent").span == Span(start, start + 16)
+
+
+@pytest.mark.parametrize("damage", ["wrong_owner", "wrong_unit", "wrong_domain",
+                                     "missing_bounds", "two_children", "target_alias",
+                                     "bounded_child"])
+def test_same_start_parent_member_exception_rejects_every_noncanonical_pair(damage):
+    start = 0x00401000
+    origin = Origin(PIN, SPACE, start)
+    parent = ObjectBinding(origin, "_parent", PATH, 1, Span(start, start + 16), origin)
+    child = ObjectBinding(origin, "old_first", PATH, 2,
+                          parent_symbol="_parent", member_path=("first",))
+    if damage == "wrong_owner":
+        child = replace(child, parent_symbol="_other")
+    elif damage == "wrong_unit":
+        child = replace(child, unit="src/other.cpp")
+    elif damage == "wrong_domain":
+        child = replace(child, origin=Origin("b" * 64, SPACE, start))
+    elif damage == "missing_bounds":
+        parent = binding(start, "_parent", 1)
+    elif damage == "two_children":
+        second = replace(child, symbol="old_second", member_path=("second",))
+        with pytest.raises(ValueError, match="same original start|parent member|unit|image"):
+            write_object_bytes(b"int aggregate;\n", expected=(),
+                               additions=(parent, child, second), path=PATH,
+                               pin=PIN, address_space=SPACE)
+        return
+    elif damage == "target_alias":
+        parent = ObjectBinding(origin, "old_parent", PATH, 1,
+                               Span(start, start + 16), origin, target_symbol="_parent")
+    elif damage == "bounded_child":
+        child = ObjectBinding(origin, "old_first", PATH, 2,
+                              Span(start, start + 4), origin,
+                              parent_symbol="_parent", member_path=("first",))
+    with pytest.raises(ValueError):
+        write_object_bytes(b"int aggregate;\n", expected=(), additions=(parent, child),
+                           path=PATH, pin=PIN, address_space=SPACE)
+
+
 def test_round_trip_keeps_existing_record_and_adds_start_only_array():
     raw = b"// RECOVERY_OBJECT: v1 0x00401000 _existing\nint existing;\n"
     parsed = current(raw)
