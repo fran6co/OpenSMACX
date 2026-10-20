@@ -445,6 +445,12 @@ set_source_files_properties(
 # Keep the application Popup on its measured frame-based profile while the
 # generic modal API remains on the default frameless profile.
 set_source_files_properties(src/popup.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")
+# Preserve the measured frame-based contexts for the PopMenu and SquareLock
+# owners without changing their other compiler options.
+set_source_files_properties(
+    src/popmenu.cpp
+    src/squarelock.cpp
+    PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Application formatters retain calls into the separately compiled string table.
 # The Strings implementation keeps its independently measured default recipe.
 set_source_files_properties(src/string_formatting.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")
