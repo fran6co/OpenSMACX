@@ -1,0 +1,21 @@
+{
+  "event_id": "ebab7519e9d388ce59f171d74b00755eb98ea30fda1e2ac900a5074f9cbb3a27",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "base-bounded-intake-selector-oct20ap",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Frozen src/base.cpp7046810a1352c19f2ccc667513859fafce543bb31689dbd4c6596b3e5931679d retires the unoriginal selector and uses canonical arrays; no original error path or claim was removed.",
+      "Independent author, coordinator and reviewer checked original4E8120..8245,4E83D1..8426,4E932F..934A: all indices0..3, resource3effects, callbackBaseCurrentreloads and capturedselectedtiming preserved.",
+      "Fresh179TU/193object build/link PASS; eight relevant host modules81PASS/2preexisting historicalguardFAIL; baselineyield34PASS. Nativeclaims3450PASS missing0; mappings/referencesPASS. Whole5581known-domain census exact3330/strict2769 unchanged with zero exact/strict losses.",
+      "Zero-omission physical residual192PASS1FAIL confined tobase.cpp; the artificial helper disappears, tilehelper/base_yieldchange and uneditedbase_kill swaps two independentloads. BaseYield remainsMISMATCH and its mnemonic similarity drops0.1042to0.0586. These failures/unknowns are not waived. Manual source checkpoint only, no native automatic/runtime/game acceptance.",
+      "Derived frozen reports retained under .opensmacx/recovery/parallel-match-oct20l/owner-base-body-recovery-oct20ao-direct-intakes-oct20ap-candidate; destination must rebuild/recheck after integration."
+    ]
+  },
+  "previous_event": "f96ea13c0df45935297d602871089eb8272d71ac1b185896797e661fc00e86e9",
+  "request_id": "incorporate-base-direct-intakes-oct20ap",
+  "schema_version": 1,
+  "sequence": 8,
+  "stream": "task:owner-base-body-recovery-oct20ao"
+}

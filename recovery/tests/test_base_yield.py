@@ -383,16 +383,6 @@ void bounds_and_wrapping(){
 }
 int main(){
     reset();
-    for(int index=0;index<4;++index){
-        BaseCurrent->intake_1[index]=100+index;
-        BaseCurrent->intake_2[index]=200+index;
-        require(&base_yield_intake(*BaseCurrent,index,false)==&BaseCurrent->intake_1[index]);
-        require(&base_yield_intake(*BaseCurrent,index,true)==&BaseCurrent->intake_2[index]);
-    }
-    for(int invalid:{-1,4,INT_MIN,INT_MAX}){
-        require(&base_yield_intake(*BaseCurrent,invalid,false)==&BaseCurrent->intake_1[RSC_PSI]);
-        require(&base_yield_intake(*BaseCurrent,invalid,true)==&BaseCurrent->intake_2[RSC_PSI]);
-    }
     require(sizeof(BaseCurrentConvoyFrom)==16 && sizeof(BaseCurrentConvoyTo)==16);
     for(int i=0;i<4;++i)require(BaseCurrentConvoyFrom[i]==0 && BaseCurrentConvoyTo[i]==0);
     fast_path();satellites();forced_and_scoring();fallback_specialists();ecology();
@@ -445,8 +435,8 @@ def test_actual_base_yield(tmp_path):
     (3,"worked = (worked & ~new_bit) | old_bit;","/* lost restored allocation */"),
     (3,"base_yield_apply_tile(base, map_width, x, y, true);",
        "base_yield_apply_tile(base, map_width, x, y, false);"),
-    (3,"base_yield_intake(*selected, resource, false) = base_yield_intake(*selected, resource, true);",
-       "base_yield_intake(*selected, resource, false) = 0;"),
+    (3,"selected->intake_1[resource] = selected->intake_2[resource];",
+       "selected->intake_1[resource] = 0;"),
     (3,"if (used) damage += damage;","if (!used) damage += damage;"),
     (3,"if ((improvements & 0x200000) != 0) --damage;",
        "if ((improvements & 0x200000) != 0) ++damage;"),
@@ -458,7 +448,7 @@ def test_actual_base_yield(tmp_path):
     (1,"const int selected = BaseIDCurrentSelected;",
        "const int &selected = BaseIDCurrentSelected;"),
     (1,"base = BaseCurrent;","/* cached stale base pointer */"),
-    (1,"base.intake_2[index]","base.intake_2[RSC_MINERALS]"),
+    (1,"base->intake_2[resource]","base->intake_2[RSC_MINERALS]"),
     (1,"static_cast<uint32_t>(left) + static_cast<uint32_t>(right)","static_cast<uint32_t>(left + right)"),
     (2,"TileYieldRestricted = 0;","/* omitted type3 side effect */"),
     (1,"BaseCurrentConvoyTo[RSC_NUTRIENTS]","BaseCurrentConvoyFrom[RSC_NUTRIENTS]"),

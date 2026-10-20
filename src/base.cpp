@@ -375,11 +375,6 @@ int base_yield_denominator(int value) {
     return value < 1 ? 1 : (value > 99 ? 99 : value);
 }
 
-int &base_yield_intake(Base &base, int resource, bool second) {
-    const int index = resource >= RSC_NUTRIENTS && resource <= RSC_ENERGY
-        ? resource : RSC_PSI;
-    return second ? base.intake_2[index] : base.intake_1[index];
-}
 int base_yield_satellite(int faction, int resource) {
     switch (resource) {
     case 0: return base_yield_signed_bits(PlayersData[faction].satellites_[0]);
@@ -428,7 +423,7 @@ void base_yield_apply_tile(Base *&base, int &map_width, int x, int y, bool subtr
         const int amount = resource_yield(resource, base->faction_id_current,
                                           BaseIDCurrentSelected, x, y);
         base = BaseCurrent;
-        int &intake = base_yield_intake(*base, resource, true);
+        int &intake = base->intake_2[resource];
         intake = subtract ? base_yield_sub(intake, amount) : base_yield_add(intake, amount);
         base = BaseCurrent;
     }
@@ -725,7 +720,7 @@ void __cdecl base_yield() {
     int resource;
     for (resource = 0; resource < 4; ++resource) {
         if (resource < 3) {
-            base_yield_intake(*BaseCurrent, resource, true) = base_yield_satellite(faction, resource);
+            BaseCurrent->intake_2[resource] = base_yield_satellite(faction, resource);
             const bool aerospace = base_yield_has_facility(29);
             bool full_yield = aerospace;
             if (!full_yield && GameDataStateStorage.fields_.secret_project_.space_elevator() >= 0) {
@@ -735,14 +730,14 @@ void __cdecl base_yield() {
                 full_yield = Bases[GameDataStateStorage.fields_.secret_project_.cloudbase_academy()].faction_id_current == faction;
             }
             if (!full_yield) {
-                int &intake = base_yield_intake(*BaseCurrent, resource, true);
+                int &intake = BaseCurrent->intake_2[resource];
                 intake = base_yield_add(intake, 1) / 2;
             }
             Base *const selected = BaseCurrent;
-            int &intake = base_yield_intake(*selected, resource, true);
+            int &intake = selected->intake_2[resource];
             if (selected->population_size < intake) intake = selected->population_size;
         } else {
-            base_yield_intake(*BaseCurrent, resource, true) = 0;
+            BaseCurrent->intake_2[resource] = 0;
         }
     }
 
@@ -976,7 +971,7 @@ void __cdecl base_yield() {
     BaseCurrent->state &= ~0x100u;
     for (resource = 0; resource < 4; ++resource) {
         Base *const selected = BaseCurrent;
-        base_yield_intake(*selected, resource, false) = base_yield_intake(*selected, resource, true);
+        selected->intake_1[resource] = selected->intake_2[resource];
     }
 
     BaseCurrent->eco_damage = 0;

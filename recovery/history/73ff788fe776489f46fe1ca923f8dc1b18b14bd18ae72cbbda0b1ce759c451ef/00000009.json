@@ -1,0 +1,22 @@
+{
+  "event_id": "33d49e515a4a627cfa519b7768db1d55fae563e1af45df1052a469aa087fcb22",
+  "payload": {
+    "affects": [
+      "entity-40406d7ab7f5577dab4ec45fd1f34eb9abfc87602abf028242f9109f028daaa0",
+      "entity-8252ad9b514fc77bba32541f37db3820422a32fbfebab5a1ef73f5d6cfeb6d64"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "base-direct-intake-codegen-collateral-oct20ap",
+    "evidence": [
+      "Native physical zero-omission comparison192PASS1FAIL confined tobase.cpp.obj; no bodywaivers.",
+      "BaseKill2448-byte COMDAT differs only atoffset2B4/2B7: independent EAX load[ebp-28] and EBX load[ebp+8] swap. BaseYield1339to1303compiled instructions versus1597original and remainsMISMATCH. Exact3330andstrict2769setsunchanged; historicalclaimsretained."
+    ],
+    "hypothesis": "The reviewed direct-array source restoration changes BaseYield codegen and an unedited BaseKill two-load order; byte restoration and complete linked outside-scope preservation remain unfinished.",
+    "kind": "discovery"
+  },
+  "previous_event": "ebab7519e9d388ce59f171d74b00755eb98ea30fda1e2ac900a5074f9cbb3a27",
+  "request_id": "base-direct-intake-codegen-collateral-oct20ap",
+  "schema_version": 1,
+  "sequence": 9,
+  "stream": "task:owner-base-body-recovery-oct20ao"
+}
