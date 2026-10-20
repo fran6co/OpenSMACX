@@ -1,0 +1,19 @@
+{
+  "event_id": "0497c07267171b97541e33fabf037257645db3edc12f220cb11c4da064fc3cef",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_world_fungus_original_gate_oct20.py"
+    ],
+    "evidence": [
+      "Explicit coordinator grant for a new actual-source host fixture for world_fungus, absent from existing host controls. Target identity already owned; immutable original baseline and prior decisions unchanged."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "feb72a045cfae3f778ead468099bc777b7fe1d93be2122ca04af19767160fb80",
+  "request_id": "world-fungus-original-gate-oct20f-host-test-scope",
+  "schema_version": 1,
+  "sequence": 11,
+  "stream": "task:world-generation-owner-oct19"
+}

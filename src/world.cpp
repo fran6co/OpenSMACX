@@ -1202,10 +1202,8 @@ void __cdecl world_fungus() {
                     }
                 }
 
-                if ((tile->val3 & ~0x1F) >= 0x80) {
-                    continue;
-                }
-                if ((tile->climate & 0xE0) >= 0x60) {
+                if ((tile->val3 & ~0x1F) >= 0x80
+                    && (tile->climate & 0xE0) >= 0x60) {
                     continue;
                 }
 
