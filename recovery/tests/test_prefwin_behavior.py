@@ -249,7 +249,7 @@ def extract_table(source: str, name: str) -> str:
     return extract_braced(source, declaration, suffix=";")
 
 
-def audio_harness(*, add_ghost_ids: bool = False) -> str:
+def audio_harness(*, add_ghost_ids: bool = False, drop_absent_reads: bool = False) -> str:
     production = UNIT.read_text()
     alpha = ALPHA.read_text()
 
@@ -265,10 +265,21 @@ def audio_harness(*, add_ghost_ids: bool = False) -> str:
     )
     check_entry = extract_braced(production, "struct CheckEntry", suffix=";")
     table_names = (
-        "kBasic", "kAdvanced", "kAutomation", "kAudioVisual", "kMap",
+        "kBasic", "kAdvanced", "kAutomation", "kAudioVisual", "kAudioVisualRead", "kMap",
         "kWarnings", "kWarningContinue",
     )
     tables = {name: extract_table(production, name) for name in table_names}
+    if drop_absent_reads:
+        absent_reads = (
+            "  if (audioVisPrefCheckBox_.get_state_id(0x3D))\n"
+            "    prefsAVPending_ |= PREF_AV_VOLUME_MUSIC_TOGGLE;\n"
+            "  if (audioVisPrefCheckBox_.get_state_id(0x3E))\n"
+            "    prefsAVPending_ |= PREF_AV_VOLUME_SFX_TOGGLE;\n"
+            "  if (audioVisPrefCheckBox_.get_state_id(0x3F))\n"
+            "    morePrefsAVPending_ |= MPREF_AV_VOICEOVER_TECH_FAC;\n"
+        )
+        assert absent_reads in production
+        production = production.replace(absent_reads, "", 1)
     if add_ghost_ids:
         marker = "const CheckEntry kAudioVisual[] = {"
         ghosts = (
@@ -304,6 +315,8 @@ def audio_harness(*, add_ghost_ids: bool = False) -> str:
 #include <utility>
 #include <vector>
 
+std::vector<int> audio_order;
+std::vector<int> control_order;
 ENUMS
 
 CHECK_ENTRY
@@ -312,20 +325,34 @@ TABLES
 struct CheckBox {
     std::set<int> allowed;
     std::map<int, int> state;
+    std::vector<int> reads;
+    std::vector<int> writes;
+    int absent_id_state = 0;
+    int role = 0;
 
     void allow_entries(const CheckEntry *entries, unsigned int count) {
         for (unsigned int i = 0; i < count; ++i)
             allowed.insert(entries[i].id);
     }
     void set_state_id(int id, int value) {
+        control_order.push_back(role * 256 + id);
         // These three absent IDs were the former volume-toggle ghost entries.
         assert(id != 0x3D && id != 0x3E && id != 0x3F);
         assert(allowed.count(id) == 1);
         state[id] = value;
+        if (id == 0x40 || id == 0x41 || id == 0x42 || id == 0x43 ||
+            id == 0x44 || id == 0x45 || id == 0x16 || id == 0x47) {
+            writes.push_back(id);
+            audio_order.push_back(id);
+        }
     }
     int get_state_id(int id) {
-        assert(id != 0x3D && id != 0x3E && id != 0x3F);
-        assert(allowed.count(id) == 1);
+        control_order.push_back(role * 256 + id);
+        reads.push_back(id);
+        if (allowed.count(id) == 0) {
+            assert(id == 0x3D || id == 0x3E || id == 0x3F);
+            return absent_id_state;
+        }
         return state[id];
     }
 };
@@ -355,11 +382,20 @@ struct PrefWin {
         if (button == 0x56) value = volumeSFXToggle_.selected_state();
         if (button == 0x58) value = volumeMusicToggle_.selected_state();
         text_events_.push_back({button, value});
+        if (button == 0x57 || button == 0x56 || button == 0x58)
+            audio_order.push_back(button);
     }
     void set_preferences();
     void get_preferences();
 
     void permit_production_ids() {
+        bscPrefCheckBox_.role = 1;
+        advPrefCheckBox_.role = 2;
+        autoPrefCheckBox_.role = 3;
+        audioVisPrefCheckBox_.role = 4;
+        warnPrefCheckBox_.role = 5;
+        warnContPrefCheckBox_.role = 6;
+        mapPrefCheckBox_.role = 7;
         bscPrefCheckBox_.allow_entries(kBasic, sizeof(kBasic) / sizeof(kBasic[0]));
         advPrefCheckBox_.allow_entries(kAdvanced, sizeof(kAdvanced) / sizeof(kAdvanced[0]));
         autoPrefCheckBox_.allow_entries(kAutomation, sizeof(kAutomation) / sizeof(kAutomation[0]));
@@ -380,11 +416,13 @@ int main() {
     assert(prefs.audioVisPrefCheckBox_.allowed.count(0x3D) == 0);
     assert(prefs.audioVisPrefCheckBox_.allowed.count(0x3E) == 0);
     assert(prefs.audioVisPrefCheckBox_.allowed.count(0x3F) == 0);
+    assert(prefs.audioVisPrefCheckBox_.allowed.size() == 8);
 
     // Voice enabled, music/SFX disabled: load through production, then save
     // through production and ensure unrelated UI checkboxes do not invent bits.
     prefs.morePrefsAVPending_ = MPREF_AV_VOICEOVER_TECH_FAC;
     prefs.prefsAVPending_ = 0;
+    control_order.clear();
     prefs.get_preferences();
     assert(prefs.volumeVoiceToggle_.selected_state() == 1);
     assert(prefs.volumeSFXToggle_.selected_state() == 0);
@@ -397,11 +435,31 @@ int main() {
         assert(prefs.text_events_[i].button == expected_text[i].button);
         assert(prefs.text_events_[i].state == expected_text[i].state);
     }
+    const std::vector<int> expected_audio_order{
+        0x57, 0x56, 0x58, 0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x16, 0x47
+    };
+    assert(audio_order == expected_audio_order);
+    const std::vector<int> expected_audio_writes{
+        0x40, 0x41, 0x42, 0x43, 0x44, 0x45, 0x16, 0x47
+    };
+    assert(prefs.audioVisPrefCheckBox_.writes == expected_audio_writes);
+    assert(control_order.size() >= 12);
+    for (unsigned int i = 12; i > 8; --i)
+        assert(control_order[control_order.size() - i] / 256 == 6);
+    for (unsigned int i = 8; i > 0; --i)
+        assert(control_order[control_order.size() - i] / 256 == 7);
+    audio_order.clear();
 
+    control_order.clear();
     prefs.set_preferences();
     assert((prefs.morePrefsAVPending_ & MPREF_AV_VOICEOVER_TECH_FAC) != 0);
     assert((prefs.prefsAVPending_ & PREF_AV_VOLUME_SFX_TOGGLE) == 0);
     assert((prefs.prefsAVPending_ & PREF_AV_VOLUME_MUSIC_TOGGLE) == 0);
+    assert(control_order.size() >= 12);
+    for (unsigned int i = 12; i > 8; --i)
+        assert(control_order[control_order.size() - i] / 256 == 6);
+    for (unsigned int i = 8; i > 0; --i)
+        assert(control_order[control_order.size() - i] / 256 == 7);
 
     // The restore-default branch calls get_preferences after setting the
     // volume controls. Exercise that actual production read path from stale
@@ -420,6 +478,27 @@ int main() {
     assert(prefs.text_events_[0].button == 0x57 && prefs.text_events_[0].state == 1);
     assert(prefs.text_events_[1].button == 0x56 && prefs.text_events_[1].state == 1);
     assert(prefs.text_events_[2].button == 0x58 && prefs.text_events_[2].state == 1);
+
+    // The original set_preferences still queries three IDs that have no UI
+    // entries. The real CheckBox getter leaves its cursor at ordinal 8 for
+    // each absent ID, so a set bit there feeds all three preference flags.
+    PrefWin absent_id_probe{};
+    absent_id_probe.permit_production_ids();
+    absent_id_probe.audioVisPrefCheckBox_.absent_id_state = 1;
+    absent_id_probe.set_preferences();
+    assert((absent_id_probe.prefsAVPending_ & PREF_AV_VOLUME_MUSIC_TOGGLE) != 0);
+    assert((absent_id_probe.prefsAVPending_ & PREF_AV_VOLUME_SFX_TOGGLE) != 0);
+    assert((absent_id_probe.morePrefsAVPending_ & MPREF_AV_VOICEOVER_TECH_FAC) != 0);
+    const std::vector<int> expected_audio_reads{
+        0x3D, 0x3E, 0x3F, 0x40, 0x41, 0x42, 0x47, 0x43, 0x44, 0x45, 0x16
+    };
+    assert(absent_id_probe.audioVisPrefCheckBox_.reads == expected_audio_reads);
+
+    absent_id_probe.audioVisPrefCheckBox_.absent_id_state = 0;
+    absent_id_probe.set_preferences();
+    assert((absent_id_probe.prefsAVPending_ & PREF_AV_VOLUME_MUSIC_TOGGLE) == 0);
+    assert((absent_id_probe.prefsAVPending_ & PREF_AV_VOLUME_SFX_TOGGLE) == 0);
+    assert((absent_id_probe.morePrefsAVPending_ & MPREF_AV_VOICEOVER_TECH_FAC) == 0);
 }
 '''.replace("ENUMS", enums).replace("CHECK_ENTRY", check_entry).replace(
         "TABLES", "\n".join(tables.values())
@@ -439,6 +518,62 @@ def test_audio_table_ghost_id_damage_control_fails(tmp_path):
     harness = audio_harness(add_ghost_ids=True)
     result = compile_and_run(tmp_path, harness, "prefwin-audio-ghost-damaged")
     assert result.returncode != 0
+
+
+def test_audio_absent_id_reads_damage_control_fails(tmp_path):
+    harness = audio_harness(drop_absent_reads=True)
+    result = compile_and_run(tmp_path, harness, "prefwin-audio-absent-reads-damaged")
+    assert result.returncode != 0
+
+
+def test_real_checkbox_getter_reads_one_past_end_bit_for_absent_id(tmp_path):
+    checkbox_source = (ROOT / "src/jackal/checkbox.cpp").read_text()
+    getter = extract_function(checkbox_source, "int CheckBox::get_state_id(int id)")
+    harness = r'''
+#include <cassert>
+#include <cstdint>
+struct StringStructEntry {
+    int id;
+    StringStructEntry *next;
+};
+struct StringStruct {
+    StringStructEntry *head_ = nullptr;
+    StringStructEntry *current_ = nullptr;
+    int entry_count_ = 0;
+    int current_position_ = 0;
+};
+struct Dialog {
+    StringStruct item_list_;
+    uint32_t selected_position_ = 0;
+};
+struct CheckBox : Dialog {
+    int get_state_id(int id);
+};
+GETTER
+int main() {
+    CheckBox box;
+    StringStructEntry entries[8] = {
+        {0x40, nullptr}, {0x41, nullptr}, {0x42, nullptr}, {0x47, nullptr},
+        {0x43, nullptr}, {0x44, nullptr}, {0x45, nullptr}, {0x16, nullptr}
+    };
+    for (int i = 0; i < 7; ++i) entries[i].next = &entries[i + 1];
+    entries[7].next = &entries[0];
+    box.item_list_.head_ = &entries[0];
+    box.item_list_.entry_count_ = 8;
+    box.selected_position_ = 1U << 8;
+    assert(box.get_state_id(0x3D) == (1U << 8));
+    assert(box.item_list_.current_position_ == 8);
+    assert(box.get_state_id(0x3E) == (1U << 8));
+    assert(box.item_list_.current_position_ == 8);
+    box.selected_position_ = 0;
+    assert(box.get_state_id(0x3F) == 0);
+    assert(box.item_list_.current_position_ == 8);
+    assert(box.get_state_id(0x40) == 0);
+    assert(box.item_list_.current_position_ == 0);
+}
+'''.replace("GETTER", getter)
+    result = compile_and_run(tmp_path, harness, "prefwin-real-checkbox-absent-getter")
+    assert result.returncode == 0, result.stderr
 
 
 DISPLAY_FIXTURE = r'''

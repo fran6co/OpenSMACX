@@ -1,0 +1,18 @@
+{
+  "event_id": "7b746d61dde2114ce1cd095c085c375df80e68bea9ad0c43fc5046b4903b994c",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "prefwin-live-audio-word-discovery-oct20e",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "d95337dc source restores live game preference-word destinations, store-before-load_music and disable-before-clear; pending window words unchanged. Source/volume controls independently reviewed against original raw instructions.",
+      "Fresh application compiles/links; effective command/input correspondence and claims/mappings/references pass; 58 focused host controls pass. All24 mapped bodies measured8exact/11mismatch/2mnemoniconly/3refused, none claims changed. Physical residual190pass1fail: new96-byte source helper table; bounded-table-review verifies exactly reordered existing8rows, all old RO bytes/symbols preserved and only getterreferencesnewtable. Native FAIL remains, not automatic/full/game acceptance; original task baselinec21e7e013 unchanged."
+    ]
+  },
+  "previous_event": "8854cff5e8d0af7b045b191d64f6ded152b4132bd84ec70423a55302ff9953b3",
+  "request_id": "prefwin-live-audio-word-discovery-oct20e-source-incorporated",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:prefwin-initial-visibility-oct20e"
+}

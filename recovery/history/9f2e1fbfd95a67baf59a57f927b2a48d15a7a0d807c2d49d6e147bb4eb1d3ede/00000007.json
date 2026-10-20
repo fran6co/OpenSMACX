@@ -1,0 +1,20 @@
+{
+  "event_id": "fc1a6175f0409ee2c2bf5f8b43fea02296aa56365fd44598b60ebbdbba681dec",
+  "payload": {
+    "affects": [
+      "entity-78a01a620867398246462f96a2cf948bf33c484397079dd69ca79167a335aeb7"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "prefwin-added-read-table-preservation-debt-oct20e",
+    "evidence": [
+      "Coordinator permits bounded manual source integration under standing user policy, not native automatic admission: followup/native-physical-final.json remains190pass1fail. bounded-table-review.json independently proves all old912RO bytes preserved afterremovingonlynew96, matching all oldlocaldata symbols with expectedoffset shift; newtable is existingAudioVisual rows reordered0,1,2,4,5,6,7,3 referencedonlybychangedgetter. Nativeon_button_clickedcodeonlyreferenceidentitydifferenceisunchangedGammaScaleat.rdata+0. No functionprojectionwidened ordatahidden; linkedlayout/selectionandhistoricalmatchingobligations remain pending. This doesnotwaivepriorAlphaMenu15outside failures."
+    ],
+    "hypothesis": "The source-owned read-order table adds96bytes of RO storage; native body-only preservation therefore remains FAIL and linked/full-layout matching remains an explicit restoration obligation.",
+    "kind": "discovery"
+  },
+  "previous_event": "7b746d61dde2114ce1cd095c085c375df80e68bea9ad0c43fc5046b4903b994c",
+  "request_id": "prefwin-added-read-table-preservation-debt-oct20e",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:prefwin-initial-visibility-oct20e"
+}
