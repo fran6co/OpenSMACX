@@ -1,0 +1,24 @@
+{
+  "event_id": "684710ca1739af27de4f01cb3ee9a43205e9938ff7cf0d1a53569e03d7cd5c4f",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_stringbox_owner_batch_oct20.py",
+      "src/stringbox.cpp"
+    ],
+    "evidence": [
+      "Retained StringBox task baseline2d3094ef remains immutable. Standing user authority covers cheaper parallel authors and coordinator-reviewed faithful source recovery. No live writer or compiler epoch owns StringBox; prior three oct21b consumed checkouts have been verified and removed.",
+      "Independent worker and coordinator directly decoded pinned6292D0..629486. Prologue reserves20bytes;629395 and629434 reload original third explicit argument WIDTH from[esp+20]. EDI survives GraphicWin init and the optional borrowed-list branch;629458 subtracts ScrollDefaultThickness and629461 pushes resulting scrollbar X into Scroll::init_vert629464. Current source instead uses HEIGHT, creating incorrect placement for non-square widgets. Real width/height caller contract is independently visible in NewTechWin.",
+      "Authorize only changing height to width in StringBox::init scroll_.init_vert first argument in src/stringbox.cpp. Preserve its complete original identity/spans/symbols/history, close/init/list selection/order, failed init early return, stored DIB height, default flags, unchecked arithmetic, layout/lifetimes/ABI and all other function bodies. No new game bug fix, safety policy, flags, casts or annotation editing.",
+      "Extend existing recovery/tests/test_stringbox_owner_batch_oct20.py with concise actual extracted init-body controls under GCC/Clang: unequal width/height and thickness values, caller-owned vs null list, default/custom flags, failed GraphicWin initialization, and compile-success mutant changing width back to height. Keep all prior controls. Native original instruction anchors establish stack argument provenance, not only function names.",
+      "One unchanged-replica/body-damage native local-variant screen under existing two historical profiles is authorized before application; actual production output decides any gain. Worker cannot compile natively, mutate Git/tasks or shared headers. Coordinator handles isolation, compiler leases, native recording if exact, full application build/link, physical outside-body checks, identity/reference continuity, independent review and fresh destination recheck. No automatic/full-game acceptance or task-baseline reset."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "central-stringbox-original-width-oct21c",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:stringbox-owner-batch-oct20"
+}
