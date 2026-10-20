@@ -1084,6 +1084,10 @@ void BaseWin::rename() {
         && !(GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)) return;
     if (NetDaemonNet.lock_base(BaseIDCurrentSelected, 0, -1, -1)) return;
     parse_says(0, BaseCurrent->name_string, -1, -1);
+    // The pinned BaseWin::rename call references bytes 52 45 4E 41 4D 45 00
+    // at 0x682C70. This writable-data correspondence says nothing about
+    // runtime immutability or linker selection.
+    // RECOVERY_LITERAL: v1 0x682C70 0x682C77 ??_C@_06LABA@RENAME?$AA@ 0x41A2B0
     if (X_pop_ask("RENAME", 0x18, BaseCurrent->name_string, nullptr, 0)) {
         NetDaemonNet.unlock_base(BaseIDCurrentSelected);
         return;
