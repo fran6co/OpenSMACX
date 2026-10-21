@@ -1,0 +1,20 @@
+{
+  "event_id": "ea32626d60336617627e99dcea039ab9f5513476e5ef02efbf9afd0c10acfdef",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_address_call_closure_actual_source.py",
+      "recovery/tests/test_say_stats_original_separator.py"
+    ],
+    "evidence": [
+      "Fresh master baseline stats-baseline-host.xml:5failed4passed. Existing separator mock still assumes old integer string keys despite current real pointer-based StringTable.get; DesignWin assertion still demands replaced raw prototype pointer arithmetic. Author may repair these HOST TESTS to current genuine interface and typed Vehs[unit_id].proto_id call, preserving actual function extraction, branch/output/separator/mutant/runtime and negative fixed-address/seam assertions. No product code change or weaker behavioral assertions; correct pointer identity lookup instead of narrowing/casting. Keep baseline failures as evidence. This supersedes reader-only limitation for precisely these stale mocks/assertions; retain all other source grant limitations."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "a71f71c4661e4c47b104b1c2571f7f86722a1b2be6d2537277ce16f248404a39",
+  "request_id": "central-formatter-host-interface-repair-oct21f",
+  "schema_version": 1,
+  "sequence": 8,
+  "stream": "task:matching-veh-flags-oct20aa"
+}
