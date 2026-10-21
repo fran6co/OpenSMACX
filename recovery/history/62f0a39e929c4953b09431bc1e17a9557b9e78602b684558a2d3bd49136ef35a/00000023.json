@@ -1,0 +1,22 @@
+{
+  "event_id": "2d40a470ea0bc121d91382bffb6ad966916d6c9d7df2db01ff731c39419ccb0e",
+  "payload": {
+    "affects": [
+      "entity-219cd0e2899423dd0c9bdcd0718b1406f9eccf7f28df77221b51278212dbc055"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "game-data-write-header-runtime-dependency-oct21zd",
+    "evidence": [
+      "A fresh original/current startup pair, conditional debuggee-memory write watch and separate paired entry/header observations locate candidate vehicle-count corruption in game_data legacy memcpy during ordinary save_daemon autosave. Pinned full prologue independently confirms original uninitialized0x31C header fwrite then embedded-version branch too, with no omitted producer. Both observed calls use(file,1); no incorrect autosave caller was established.",
+      "Retain this finding pending. Do not initialize header/version, add count bounds, change callers or assert deterministic original stack residue. Source/ABI/compiler/caller recovery must preserve the original effects, including this defect. Current source builds but the candidate startup crashes; existing bounded serializer host controls deliberately do not establish write-header/runtime equivalence.",
+      "Separate save tick-local correction is supported by native operand identity, not a claim to repair this crash. Its end_of_game compiled collateral is two adjacent independent LOADS from frame locals, correcting the earlier authorization wording stores. Preserve every historical claim and task baseline; source-owned mapping and original uninitialized-header declaration stay unchanged."
+    ],
+    "hypothesis": "The source-equivalent indeterminate save header requires compiler/caller stack-effect restoration before runtime equivalence; do not normalize its embedded version or legacy copy.",
+    "kind": "discovery"
+  },
+  "previous_event": "ffa39618f053c4bfb42a371ea801d245377b6762177a161efac08bdea01fb008",
+  "request_id": "game-data-write-header-runtime-dependency-oct21zd",
+  "schema_version": 1,
+  "sequence": 23,
+  "stream": "task:game-save-load-owner-coverage"
+}

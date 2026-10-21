@@ -6436,8 +6436,7 @@ int __cdecl save_daemon(char *save_path) {
     if (fwrite(&version, 4, 1, file) != 0) {
         result = 3;
         if (game_data(file, 1) == 0) {
-            int tick_word = static_cast<int>(save_tick);
-            if (fwrite(&tick_word, 4, 1, file) != 0) result = 0;
+            if (fwrite(&save_tick, 4, 1, file) != 0) result = 0;
         }
     }
 

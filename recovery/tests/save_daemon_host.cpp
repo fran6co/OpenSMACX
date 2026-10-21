@@ -50,6 +50,10 @@ static int version_write_result;
 static int tick_write_result;
 static int serializer_result;
 static DWORD tick_value;
+static DWORD captured_tick;
+static DWORD written_tick;
+static bool change_tick_during_serializer;
+static int fwrite_calls;
 static int seed_calls;
 static int seed_value;
 static int game_data_calls;
@@ -69,11 +73,16 @@ static void reset_fixture() {
     version_write_result = tick_write_result = 1;
     serializer_result = 0;
     tick_value = 0xFEDCBA98u;
+    captured_tick = written_tick = 0;
+    change_tick_during_serializer = false;
+    fwrite_calls = 0;
     seed_calls = seed_value = game_data_calls = close_calls = remove_calls = 0;
     opened_path.clear(); removed_path.clear(); calls.clear();
 }
 
-static DWORD GetTickCount() { calls += "T"; return tick_value; }
+static DWORD GetTickCount() {
+    calls += "T"; captured_tick = tick_value; return tick_value;
+}
 static void my_srand(int value) { ++seed_calls; seed_value = value; calls += "S"; }
 static FILE *env_open(const char *path, const char *mode) {
     assert(std::strcmp(mode, "wb") == 0);
@@ -85,14 +94,19 @@ static void header_write(const char *header, FILE *) {
 }
 static int game_data(FILE *, int writing) {
     assert(writing == 1); ++game_data_calls; calls += "G";
+    if (change_tick_during_serializer) tick_value ^= 0xFFFFFFFFu;
     return serializer_result;
 }
 static size_t fixture_fwrite(const void *buffer, size_t size, size_t count, FILE *) {
     assert(size == 4 && count == 1);
-    int word = 0; std::memcpy(&word, buffer, 4);
-    if (word == 0x56) { calls += "V"; return version_write_result; }
+    DWORD word = 0; std::memcpy(&word, buffer, 4);
+    if (++fwrite_calls == 1) {
+        assert(word == 0x56); calls += "V"; return version_write_result;
+    }
+    assert(fwrite_calls == 2);
     calls += "K";
-    assert(static_cast<uint32_t>(word) == tick_value);
+    assert(word == captured_tick);
+    written_tick = word;
     return tick_write_result;
 }
 static int fixture_fclose(FILE *file) {
@@ -155,8 +169,24 @@ static void test_any_dot_suppresses_extension_and_postopen_failures_remove() {
     assert(game_data_calls == 1 && close_calls == 1 && remove_calls == 1);
 }
 
+static void test_tick_bits_survive_serializer_callbacks() {
+    const DWORD values[] = {0, 1, 0x56, 0x7FFFFFFFu,
+                            0x80000000u, 0xFEDCBA98u, 0xFFFFFFFFu};
+    for (unsigned int i = 0; i < sizeof values / sizeof values[0]; ++i) {
+        for (int change = 0; change < 2; ++change) {
+            reset_fixture();
+            tick_value = values[i];
+            change_tick_during_serializer = change != 0;
+            assert(save_daemon(const_cast<char *>("tick")) == 0);
+            assert(written_tick == values[i]);
+            assert(calls == "TOHVGKC" && fwrite_calls == 2);
+        }
+    }
+}
+
 int main() {
     test_filename_and_success_path();
     test_open_failure_keeps_prior_side_effects_and_skips_cleanup();
     test_any_dot_suppresses_extension_and_postopen_failures_remove();
+    test_tick_bits_survive_serializer_callbacks();
 }
