@@ -536,6 +536,7 @@ char *__cdecl get_noun_phrase(int phrase_id, int faction_id);            // 0x00
 // (increment, compare, clear), and the slot is zero-fill .data, so it starts
 // at 0 and the auto-play never fires until something - Console::on_key_click,
 // which registers the callback - starts it.
+// RECOVERY_OBJECT: v1 0x00939FD0 ?AutoPlayCounter@@3HA
 int AutoPlayCounter = 0;  // 0x00939FD0, defined here
 // The splitter-drag line's last drawn position, the pair the nc handlers
 // draw over with window_line_raw before the next move repaints it.

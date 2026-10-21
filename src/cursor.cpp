@@ -41,7 +41,9 @@ void Cursor::close_cursor_class() {
 }
 
 
+// RECOVERY_OBJECT: v1 0x009BE6D4 ?CursorWidth@@3HA
 int CursorWidth;   // 0x009BE6D4
+// RECOVERY_OBJECT: v1 0x009BE6D8 ?CursorHeight@@3HA
 int CursorHeight;  // 0x009BE6D8
 
 /*

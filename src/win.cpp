@@ -838,8 +838,11 @@ const char WinMsgIncreaseMaxChildren[] = "Increase #define MAX_CHILDREN";  // 0x
 const char WinMsgTooManyParents[] = "Too many parents";              // 0x00696DB4
 const char WinMsgIncreaseMaxParents[] = "Increase #define MAX_PARENTS";    // 0x00696D94
 const char WinMdebugCode[] = "mdebug";                               // 0x00696DF8
+// RECOVERY_OBJECT: v1 0x009B7AA8 ?WinTrackingMode@@3HA
 int WinTrackingMode;       // 0x009B7AA8
+// RECOVERY_OBJECT: v1 0x009B7AB0 ?WinTrackingX@@3HA
 int WinTrackingX;          // 0x009B7AB0
+// RECOVERY_OBJECT: v1 0x009B7AB4 ?WinTrackingY@@3HA
 int WinTrackingY;          // 0x009B7AB4
 Buffer *WinBackBuffer;         // 0x009B7A68
 // RECOVERY_OBJECT: v1 0x009B8D7C ?WinModalFocus@@3PAVWin@@A
@@ -1214,6 +1217,7 @@ int WinFlipClipped;
 // RECOVERY_OBJECT: v2 0x009BC49C 0x009BC4A0 ?DirectDrawBackBuffer@@3PAUIDirectDrawSurface2@@A 0x0062CD50
 IDirectDrawSurface2 *DirectDrawBackBuffer;
 // 0x009BC2D0. The rectangle a clipped flip intersects against.
+// RECOVERY_OBJECT: v1 0x009BC2D0 ?DirectDrawClipRect@@3UtagRECT@@A
 RECT DirectDrawClipRect;
 
 /*

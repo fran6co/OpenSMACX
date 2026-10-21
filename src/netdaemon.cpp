@@ -139,7 +139,9 @@ int CommlinkFaction;   // 0x0073B790
 // The spock pair: synch (0x00532E00) raises 0x93F670 when it has something to
 // notify, check_spock (below) sees it, arms 0x93F674 and calls help_spock
 // (0x0051F0C0), which clears both after re-synching the session.
+// RECOVERY_OBJECT: v1 0x0093F670 ?SpockNotifyPending@@3HA
 int SpockNotifyPending;  // 0x0093F670
+// RECOVERY_OBJECT: v1 0x0093F674 ?SpockHelpActive@@3HA
 int SpockHelpActive;     // 0x0093F674
 
 extern int BaseAtDebugPopupFlag;  // 0x0093A94C, defined in base.cpp

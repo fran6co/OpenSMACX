@@ -1372,6 +1372,7 @@ char *BasePopDefaultCancelText;  // 0x009B8D84
 // The fallout pair (basepop.h) and the two singleton slots `init_class`
 // below allocates and `pops` (popup.cpp) consumes - real storage, one name
 // per address. Zero-initialised dwords in the image, as here.
+// RECOVERY_OBJECT: v1 0x009B8D00 ?BasePopFalloutGate@@3HA
 int BasePopFalloutGate;   // 0x009B8D00
 // Original on_modal at 0x00604A80 reads the flag that fallout at 0x00604A99 sets; start only.
 // RECOVERY_OBJECT: v1 0x009B8CFC ?BasePopFalloutFlag@@3HA

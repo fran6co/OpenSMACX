@@ -39,6 +39,7 @@
 // EditGroupDefault - 0x009B8FCC. Read at construction time into field_84_;
 // a rebindable seam so tests can observe/control it, the same idiom
 // CheckBoxDefault1/2 use.
+// RECOVERY_OBJECT: v1 0x009B8FCC ?EditGroupDefault@@3IA
 uint32_t EditGroupDefault;
 
 /*

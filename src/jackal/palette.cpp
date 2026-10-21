@@ -54,6 +54,7 @@ const double hsv_value_byte_scale = 0.00390625;     // 1/255, 0x00670C50
 }
 
 // 0x0067022C - see palette.h. Blue, green, red, reserved, per RGBQUAD.
+// RECOVERY_OBJECT: v1 0x0067022C ?SystemColours@@3QBEB
 const uint8_t SystemColours[80] = {
       0,   0,   0, 0,   // 0   black
       0,   0, 128, 0,   // 1   dark red

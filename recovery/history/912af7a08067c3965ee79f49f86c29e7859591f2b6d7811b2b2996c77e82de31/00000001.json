@@ -1,0 +1,34 @@
+{
+  "event_id": "f3e9e16986e378ae9ddd00d028ccc1410b0fad1aa8963e25a4b6d3c02044db72",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_ordinary_global_bindings_oct21.py",
+      "src/base.cpp",
+      "src/basepop.cpp",
+      "src/console.cpp",
+      "src/cursor.cpp",
+      "src/dialog.cpp",
+      "src/editgroup.cpp",
+      "src/interface_fonts.cpp",
+      "src/jackal/palette.cpp",
+      "src/netdaemon.cpp",
+      "src/pulldown.cpp",
+      "src/time.cpp",
+      "src/win.cpp"
+    ],
+    "evidence": [
+      "Coordinator-reviewed manual admission under standing faithful-recovery authority. Publish exactly20native guarded v1 start bindings at existing definitions in12owners. Removing those20comment lines restores every source file byte-for-byte, including the previously integrated Win focus receiver and five data bindings. Whole-native source reader comparison preserves all5529C++ mappings, metadata/history, BODY regions and historical claims. Native object reader grows1688to1708 with no target/start/extent collisions; fresh Win snapshot regenerated rather than replayed from stale proposal. No new code/storage/types, array bounds, initializer/lifetime facts, aliases, original TU claims, flags or baseline changes.",
+      "Fresh actual Release application builds and links:185C++TUs,199physicalobjects. All106focused host/source/pinned-image controls pass without failures or skips, including40new parameterized cases covering all20data identities and operand directions/widths. Native claims/mappings/source-reference checks pass,3452claims and3461historical requirements retained with zero missing. Independent binding, publication and actual source/test reviews pass. Both physical comparisons cover all199objects with ZERO function/data/startup/section omissions; every native physical residual passes. These are compiled-input checks, not full linked retention/allocation or runtime acceptance.",
+      "Known5581identity census retains3355masked matches and every previous masked verdict. Strict reference-aware passes rise2785to2796, unknowns567to556, failures remain3; exactly11newstrict passes, no previous pass losses and no new strict failures. The20bindings are not20functions or20passes. Five additional functions remainunknown after genuine named-reference unknown-to-pass improvements. The normalized partial-reference report pairs offset/symbol and excludes rawCOFFindex churn; it supersedes the initial broad diagnostic-list comparison field, not the unchanged top-level census or11gains.",
+      "Admit the reviewed source binding checkpoint manually; no recover record operation or historical claim change, no new original function implementations, and no library/framework changes. Source owns essential bindings; journals own scope/review decisions; derived reports remain ignored. No complete object extents, initialization/lifetime, linked selection/provider/allocation, structure/runtime, game or automatic acceptance is claimed. Fresh destination build/link,106tests, wholecensus and zero-omission199object reproduction required before consumed worktree removal."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "central-manual-twenty-global-admission-oct21h",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:ordinary-global-owner-bindings-oct21h"
+}

@@ -616,6 +616,7 @@ int Dialog::item(char *text, int index) {
 
 
 
+// RECOVERY_OBJECT: v1 0x009B8EC0 ?DialogDefaultFonts@@3PAPAVFont@@A
 Font *DialogDefaultFonts[3];  // 0x009B8EC0
 
 /*

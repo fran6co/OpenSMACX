@@ -10513,7 +10513,9 @@ void __cdecl upgrade_prototypes(int faction_id, int proto_id) {
  * BSTATE_UNK_1000000 / _2000000 / _4000000 / _8000000 set one at a time, and
  * base_claimed (0x004F8110) tests a tile against them.
  */
+// RECOVERY_OBJECT: v1 0x0090EA44 ?BaseSiteClaimX@@3PAHA
 int BaseSiteClaimX[4];  // 0x0090EA44
+// RECOVERY_OBJECT: v1 0x0090EA54 ?BaseSiteClaimY@@3PAHA
 int BaseSiteClaimY[4];  // 0x0090EA54
 
 // ORIGINAL: 0x004F8110 ?base_claimed@@YAHHHHHHH@Z 0x004F8110-0x004F8195 FILE BYTE_EXACT

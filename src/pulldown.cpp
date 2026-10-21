@@ -830,6 +830,7 @@ PullDownFillCallback PullDownFieldF38Default;  // 0x009B7B58
 // Original 0x005F8883/0x005F89BA copy the separate callback-default cell; no extent claim.
 // RECOVERY_OBJECT: v1 0x009B7B5C ?PullDownFieldF3CDefault@@3P6AHPAVGraphicWin@@@ZA
 PullDownBackfillCallback PullDownFieldF3CDefault;  // 0x009B7B5C
+// RECOVERY_OBJECT: v1 0x009B7B68 ?PullDownDefaultFont@@3PAVFont@@A
 Font *PullDownDefaultFont;         // 0x009B7B68
 
 // Palette indices shared by the popup policy and PullDown rendering.
