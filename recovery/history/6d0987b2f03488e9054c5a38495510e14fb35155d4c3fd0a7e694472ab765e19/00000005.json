@@ -1,0 +1,88 @@
+{
+  "event_id": "ec60ccc0727e89c79581d3069b52b497a337182605a3f95373f079ca40120b05",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/console_commands.cpp",
+      "src/faction.cpp",
+      "src/game.cpp",
+      "src/probe.cpp",
+      "src/technology.cpp",
+      "src/tutwin.cpp",
+      "src/veh.cpp"
+    ],
+    "evidence": [
+      "Fresh fullbuild/link build-uvm9ia00 and5581identitycensus:3364BYTE_EXACT(+1 historicalConsole::skiprestored),1767MISMATCH(-1), othersunchanged; strict2807PASS557UNKNOWN0FAIL, allhistoricalclaims intact. Actual scopedphysical108PASS91FAIL retains observed twelve additional currentoriginalowner codegen changes. This records their real originalidentities forcentralreview, notpermissionforunrelatedsourceedits or a blankethash/headerwaiver.",
+      "The twelve discovered unchangedbody owners are Consolecustom_my_faction; factionsetup_player/communicate/buy_council_vote/propose_attack; gamesave_game/colortables_init_faction/load_interface; probe; tech_achieved; TutWintour; vehaction_give. Their actual changedinstructions/relocationtargets requireboundedindependentreview. No inventedcompilerhelperidentity or newOriginalclaim; taskbaselinec63a9c1f547fd4c2bb94aa8ee6777bdd9b1aa75d retained.",
+      "Only the unchangedpredicate moves from header to canonicalgame.cppbody and one obsoletecallercomment becomeshistorical. Existinglegacyclaims preservedeverywhere; no flags/wrappers/unsafe-pathfix or algorithm changes. Scopeexpansion doesnotacceptnativefailures. Reproject exactoriginalbodies only, retaining all directives/data/retainedselection and unexplainedoutside-scope differences. Manualadmission remainspending actualreview and freshdestinationverification."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5099952,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5967360,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5570512,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5499728,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5529216,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5938864,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4337664,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4544016,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5894432,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6008832,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4966112,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5041632,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "7329bf00e74a4862f2a2422999d779bc886487406680db78fb698d72c75f0365",
+  "request_id": "central-observed-turn-predicate-compiler-collateral-oct21v",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:owner-game-body-recovery-oct20ao"
+}
