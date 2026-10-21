@@ -1,0 +1,28 @@
+{
+  "event_id": "f3174d8507e7017cb601dbdae3d8bb27054ec415e8eb47e91dc96a46a22c735e",
+  "payload": {
+    "affects": [
+      "entity-5c5347ae27a8eefd0a546741a37e12a131d06e84605c528a6e80306331cab9e6",
+      "entity-f17f0bb8244d525ea49fa82b7f807bf18dc56aa454c0a28955e317cad7f677b3",
+      "entity-fc6a7a5cdd66194f851ca3d6136f911e278d9f506ad08ba5f5ad51bab40f041e"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "filewin-editbox-header-lifetime-recovery-oct22b",
+    "evidence": [
+      "Recover existing FileWin and EditBox close-only destructor definitions in their actual class headers, without layout/signature/flag/behavior changes or forced retention. Ordinary C++ nested teardown restores the pinned AlphaSave21-state, FileWin8-state and EditBox2-state physical primary/cold streams. The full original streams match with relocation masking, and72direct transfers have separately reviewed target identities. Branched-EH/vector-helper binder refusals remain explicit; these are not native qualified full matches.",
+      "Transport four existing mapping envelopes through native source writers to the independent AlphaSave emission. Preserve original identities/spans, symbols, historical claims, bindings, lessons and deleted-seed provenance; class definitions stay in their own headers. Original constructor Win/Buffer first slots positively bind the EditBox deleting entries. No new claim is granted. Fresh final5581identity census restores408010and408080MISMATCHtoBYTE_EXACT only;3370exact, strict2821PASS549UNKNOWN. No new implementation-count gain.",
+      "Five actual AlphaSave production-recipe replay/replica/current/header-close-damage controls pass; both compile-success damages affect standalone and enclosing teardown. Five current actual-source layout/lifecycle tests and two independently compiled/linked omitted-close runtime damage controls pass, including existing unwind/order/first-byte-only assertions. Four generated-owner identity tests pass. Broad historical module remains165PASS50FAIL with exactly the same50failing IDs as unchanged master; no weakening or omission is claimed as repair.",
+      "Fresh187TU201physical-object build/link and native claims/mappings/references/source checks pass. Zero-projection object comparison remains192PASS9FAIL, never a201PASSpreservation report. Six class-owner residuals reflect reviewed header-generated cleanup copies, class metadata and the separately documented EditBox section-auxiliary change. EditBox Win/Buffer full tables, weak fallback targets, and startup registrations match baseline in every final copy; the actual MAP selects AlphaSave tables/deleting entries now. This is bounded per-build selection evidence, not complete linked-retention proof.",
+      "Three collateral TUs change only six existing root instruction streams. Native scoped residual and a stronger all-nonroot code/data/EH/symbol/association equality check pass; root instruction differences were independently decoded for loads, vptr assignments, calls, live registers and flags. Ordinary stable-storage/ABI behavior is preserved in the reviewed windows; global read order really reverses in end_of_game and PrefWin, so asynchronous mutation/fault behavior and original byte restoration remain obligations. Their complete source bodies are unchanged; no outside body was edited.",
+      "Correction to task event00000005: game_data has all471relocation tuples identical; its only changed window swaps two independent stack loads atD11/D14. The ScenarioSave+10/GameDataStateStorage+44DIR32swap belongs to end_of_game at4EE/4F4, not game_data. make_gift COFF zero immediates are relocated FlatButtonWin/Buffer table addresses, not literal zeros. Reviewed paired register/store changes preserve each named vptr in its same field; all nonroot EH/local-label destinations compare equal in final objects. The earlier mistaken summary remains historical and is superseded by these actual object facts.",
+      "Coordinator-reviewed bounded manual integration under standing user authority. Preserve original task baseline, all discoveries and matching obligations. Native9residual failures, original branched EH refusals,50historical test failures and unknown complete linked/structure/runtime preservation remain explicit. No automatic acceptance, whole-game equivalence, playable-game claim, gate waiver or task/goal completion. Destination must be freshly built and verified before worker cleanup."
+    ],
+    "hypothesis": "The pinned nested destruction structure requires the existing close-only FileWin and EditBox lifetimes to be visible through their real class headers.",
+    "kind": "discovery"
+  },
+  "previous_event": "8f7cc2bbaeca3837b859995e75d549780edc244d179d17c88a8f155e4b16f22f",
+  "request_id": "filewin-editbox-header-lifetime-recovery-oct22b",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:filewin-jackal-boundary-oct9"
+}
