@@ -1,0 +1,27 @@
+{
+  "event_id": "f6575e7b61ec7c01b6f143ab5ff5d3855fd3f4178e0afcbca84fb221b390c4b9",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_turn_predicate_boundary_oct21v.py",
+      "src/console_commands.cpp",
+      "src/game.cpp",
+      "src/game.h"
+    ],
+    "evidence": [
+      "Coordinator-reviewed bounded source admission: unchanged not_my_turn52DC70 ordinarydefinition moved from game.h to canonicalgame.cpp using nativewrite_body, same MEASUREDdeclaration/signature/export/guards/types. No wrapper/noinline/flags/algorithm/unsafe-pathnormalization. Historicalinlineplacementrationale and callerwarning retainedexplicitlyhistorical; allOriginalidentities/spans/claims intact. Existingtaskbaselinec63a9c1f547fd4c2bb94aa8ee6777bdd9b1aa75d retained.",
+      "Finite actual /O2 /Ob2 replay/unchanged/damage controlsPASS. Fullfresh185TU199objectbuild/link build-uvm9ia00 and sourceclaims/mappings/referencesPASS;32newpredicate/ConsoleexistingownercontrolsPASS0skips/errors. Ten originaldirectE8predicatecallsrestoredacrosseightConsoleowners. Predicate remains15/15exact; historicalConsole::skip restored28/28from11/28. Whole5581census3364exact(+1),1767mismatch(-1),allotherverdictsunchanged. No newclaimbanked or demoted.",
+      "Strictresult2807PASS557UNKNOWN0FAIL: newmaskedexactConsole::skip staysUNKNOWNbecause NetDaemonNet absoluteobjectbindingunresolved; directveh_ready/predicate/order_vehrefsPASS. No stronger strict/linkedclaim. CurrentMAP selects ordinarypredicatefromgame.cpp instead ofalphaduplicate. Freshdefinition/directive/exportaudit reviewedseparately; retainedselectionforallotherfunctions isnotproven.",
+      "Nativephysical108PASS91FAIL explicitlyretained. Twelveactualunchanged-sourcecompiler-collateraloriginals scopedandreprojected;0non-directive residualoutside exactownedbodies. Boundedrealobjectreviews cover sixfaction/probe/technology bodies,threeindependentgame/vehloadswaps,Popup/ownedScrollvptrreuseatsameframeslots, and TutWintour blocklayout/calltargets. TutWinbroadbranch/registerequivalence remainsunproven; rawrelocationcountsnotproof. No nativeautomaticpreservation or gameacceptance.",
+      "Explicitremainingoriginalmatchingobligation: load_interface stores FlatButtonDefaultsTable[12] beforethreeplainintmetricglobals ratherthanafter. Distinctdestinations,no interveningcall/branch/read, samefinalvalues; no synchronousdifferencefound, asynchronousobservationandoldmachineorderunproven. Keep exactinstructionorderrestoration debt; do not labelphysicalpreservationPASS. Othercollateralbyte/CFG differences and historicalobligationsretained, no gates/masks/normalizers weakened.",
+      "Userauthorized coordinator-reviewed manualsourceintegration isboundedbyunchangedC++semantics, actualpinnedcallboundaryrestoration, freshbuild/link,ownercontrols,sourceidentitycontinuity and disclosedphysicalunknowns, notwholepathformalproof. Requirefreshdestinationbuild/link,census,32ownercontrolsand199zero-omissioncandidatereproductionbeforeconsumingthiscleanbranch. Independentactualreview hashes retainedignored; no fabricatedautomaticacceptancereport."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "ec60ccc0727e89c79581d3069b52b497a337182605a3f95373f079ca40120b05",
+  "request_id": "central-manual-turn-predicate-owner-admission-oct21v",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:owner-game-body-recovery-oct20ao"
+}
