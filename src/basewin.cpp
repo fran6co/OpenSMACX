@@ -6455,7 +6455,7 @@ void BaseWin::draw_commerce(int update_mode) {
     bool wrote_row = false;
     if ((Players[BaseCurrent->faction_id_current].rule_flags & RFLAG_ALIEN) != 0) {
         canvas->set_font(&font1_, nullptr, nullptr, nullptr);
-        int current_base_id = 0;
+        int current_base_id;
         for (int candidate = 0; candidate < GameDataStateStorage.fields_.base_current_count_; ++candidate) {
             if (&Bases[candidate] == BaseCurrent) current_base_id = candidate;
         }
