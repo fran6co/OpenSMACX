@@ -3172,8 +3172,8 @@ label_5a4b28:
                 // one faction-name helper because parser defaults are live.
                 parse_says(0, get_title(actor_faction_id), -1, -1);
                 parse_says(1, get_name(actor_faction_id), -1, -1);
-                parse_says(2, get_pact_hood(selected_response_faction,
-                                            actor_faction_id), -1, -1);
+                parse_says(2, get_pact_hood(actor_faction_id,
+                                            selected_response_faction), -1, -1);
                 parse_says(3, get_noun(actor_faction_id), -1, -1);
                 parse_says(4, get_his_her(actor_faction_id, 0), -1, -1);
                 parse_says(5, get_him_her(actor_faction_id, 0), -1, -1);

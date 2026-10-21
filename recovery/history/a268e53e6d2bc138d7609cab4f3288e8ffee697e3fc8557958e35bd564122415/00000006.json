@@ -1,0 +1,23 @@
+{
+  "event_id": "377262fac3ad0759a6850b52a60cb58602479c0bfe6bcfcf962bbb699914e479",
+  "payload": {
+    "affects": [
+      "entity-c85c2df93a3a021792e2e4c164aa2dcad08864b80da56d3806fd9adf3cf38a2f"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "probe-original-pact-hood-order-source-checkpoint-oct21w",
+    "evidence": [
+      "Pinned5A4F32/33 pushes establish cdecl formal operands EBX actor then ESI selected response. Current single slot2 expression now preserves that original order. Actual get_pact_hood58FB00 body reads argument1 first and conditionally argument2; valid-ID gender predicate and grammar-default effects are symmetric, but unchecked read order is not normalized. No guard or safety fix added. Neighboring parser/branch behavior and previous capturedrecord/action7 recoveries unchanged.",
+      "Fresh coordinator20-case combined host run passes:4 pact-order cases,3 atrocity cases,3 capturedrecord cases and10 existing source/runtime controls. Actual Probe expression plus mapped game.cpp getter body are extracted. Valid indexed-table instrumentation observes exact first/conditional-second read order for all4 gender pairs, label choice, default resets and parser slot2; compiled reversed-argument controls fail under GCC/Clang C++98. Instrumented host table is not native ABI, invalid-index behavior or full Probe/whole-game proof.",
+      "Complete original metadata matches before/after excluding only source extraction location/region. Originaltaskbaseline and all mappings/hot+coldspans/claims remain intact. No new claim banked or demoted. All13 declared original noun call sites are now source-correlated across three read-only audits;3 wrong producers are repaired. That bounded source correlation is not a compiled CFG/runtime proof or complete executable caller closure.",
+      "Preserve this source checkpoint for serial rebase onto reviewed Faction master. Final fresh native whole build/link/census/claim/reference/source verification and actual current residual review remain outstanding. Earlier5080 finite native screen is historical only; no automatic/full-game acceptance granted."
+    ],
+    "hypothesis": "The human-response pact parser passes actor then selected response, preserving the original indexed-read/short-circuit order.",
+    "kind": "discovery"
+  },
+  "previous_event": "758e6698748ea564179b9817286d03a0c5c0d713aeeefbef670c5d2be55bf548",
+  "request_id": "probe-original-pact-hood-order-source-checkpoint-oct21w",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:probe-action-owner-oct5"
+}
