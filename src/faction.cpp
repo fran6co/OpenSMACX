@@ -749,7 +749,7 @@ void __cdecl psych_check(int faction_id, int *drones, int *talents) {
 Purpose: Check whether the primary faction has at least one of the specified treaties (bitfield)
          with the secondary faction.
 // ORIGINAL: 0x005002F0 ?has_treaty@@YAHHHH@Z 0x005002F0-0x00500319 BYTE_EXACT
-// body      src/faction.h
+// body      src/faction.cpp
 // size      41 bytes
 // prototype int (__cdecl ?has_treaty@@YAHHHH@Z)(int factionID, int factionIDWith, int treaty)
 // callers   4   call targets   0
@@ -759,16 +759,18 @@ Purpose: Check whether the primary faction has at least one of the specified tre
 Return Value: Treaty status between the two factions, generally treated as a boolean
 Status: Complete
 */
-// BODY IN faction.h, as `MEASURED inline`: the image writes it out at
-// some call sites and calls it at others, and a .cpp definition is only ever
-// one of those. The marker stays here because that is where the catalogue
-// reads it.
+// Historical placement rationale: the image writes this helper out at some
+// call sites and calls it at others. Keep its original call/inlined behavior
+// available to the compiler through this ordinary faction.cpp definition.
+MEASURED int __cdecl has_treaty(int faction_id, int faction_id_with, int treaty) {
+    return PlayersData[faction_id].diplo_treaties[faction_id_with] & treaty;
+}
 
 
 /*
 Purpose: Get the faction's name adjective.
 // ORIGINAL: 0x0050B910 ?get_adjective@@YAHH@Z 0x0050B910-0x0050B92A BYTE_EXACT
-// body      src/faction.h
+// body      src/faction.cpp
 // symbol    ?get_adjective@@YAPADH@Z
 // size      26 bytes
 // prototype int (__cdecl ?get_adjective@@YAHH@Z)(int factionID)
@@ -779,10 +781,12 @@ Purpose: Get the faction's name adjective.
 Return Value: Faction name adjective
 Status: Complete
 */
-// BODY IN faction.h, as `MEASURED inline`: the image writes it out at
-// some call sites and calls it at others, and a .cpp definition is only ever
-// one of those. The marker stays here because that is where the catalogue
-// reads it.
+// Historical placement rationale: the image writes this helper out at some
+// call sites and calls it at others. Keep its original call/inlined behavior
+// available to the compiler through this ordinary faction.cpp definition.
+MEASURED LPSTR __cdecl get_adjective(int faction_id) {
+    return Players[faction_id].adj_name_faction;
+}
 
 
 /*
@@ -3020,7 +3024,7 @@ void __cdecl social_upkeep(int faction_id) {
 /*
 Purpose: Calculate the cost of the social upheaval for the specified faction.
 // ORIGINAL: 0x005B4550 ?social_upheaval@@YAHHPAH@Z 0x005B4550-0x005B45F8
-// body      src/faction.h
+// body      src/faction.cpp
 // symbol    ?social_upheaval@@YAHHPAUSocialCategory@@@Z
 // size      168 bytes
 // prototype int (__cdecl ?social_upheaval@@YAHHPAH@Z)(int factionID, social_category* category)
@@ -3031,12 +3035,29 @@ Purpose: Calculate the cost of the social upheaval for the specified faction.
 Return Value: Social upheaval cost
 Status: Complete
 */
-// BODY IN faction.h, as `MEASURED inline`: social_ai's own `calls` list
-// (0x004EF090 0x00539D40 0x00581260 0x005B4210 0x005B4600 0x005B9F20
-// 0x005FCB20) has no 0x005B4550 in it, so both of its call sites are
-// inlined in the image, not real calls - even though this address is a
-// real out-of-line body in its own right. The marker stays here because
-// that is where the catalogue reads it.
+// Historical inline rationale: social_ai's own `calls` list (0x004EF090
+// 0x00539D40 0x00581260 0x005B4210 0x005B4600 0x005B9F20 0x005FCB20) has no
+// 0x005B4550 in it, so its two call sites are inlined in the image even though
+// this address is also a real out-of-line body.
+MEASURED int __cdecl social_upheaval(int faction_id, SocialCategory *category_new) {
+    int change_count = 0;
+    for (int i = 0; i < MaxSocialCatNum; i++) {
+        if (category_new->models_[i] !=
+            PlayersData[faction_id].soc_category_active.models_[i]) {
+            change_count++;
+        }
+    }
+    if (!change_count) {
+        return 0;
+    }
+    change_count++;
+    int diff_lvl = is_human(faction_id) ? PlayersData[faction_id].diff_level : DLVL_LIBRARIAN;
+    int cost = change_count * change_count * change_count * diff_lvl;
+    if (is_alien_faction(faction_id)) {
+        cost += cost / 2;
+    }
+    return cost;
+}
 
 /*
 Purpose: Check to see whether the faction can utilize a specific social category and model.

@@ -1021,13 +1021,8 @@ void __cdecl pact_ends(int faction_id, int faction_id_with);
 void __cdecl wait_loop();
 int __cdecl spying(int subject);
 
-MEASURED inline int __cdecl has_treaty(int faction_id, int faction_id_with, int treaty) {
-    return PlayersData[faction_id].diplo_treaties[faction_id_with] & treaty;
-}
-
-MEASURED inline LPSTR __cdecl get_adjective(int faction_id) {
-    return Players[faction_id].adj_name_faction;
-}
+MEASURED int __cdecl has_treaty(int faction_id, int faction_id_with, int treaty);
+MEASURED LPSTR __cdecl get_adjective(int faction_id);
 
 // Faction dialogue forms. The leader-name/title/insult forms also select
 // singular grammar and the leader's gender for the next parse_says call.
@@ -1053,30 +1048,11 @@ inline BOOL __cdecl is_alien_faction(uint32_t faction_id) {
     return ExpansionEnabled && (Players[faction_id].rule_flags & RFLAG_ALIEN);
 }
 
-// MEASURED inline: social_ai's two call sites do not reach a `call` to
-// social_upheaval in the image - it is inlined there, even though it also
-// keeps its own out-of-line body (0x005B4550, in faction.cpp) for other
-// callers. See faction.cpp for the ORIGINAL marker; this definition is only
-// what lets social_ai's own translation unit fold the two call sites.
-MEASURED inline int __cdecl social_upheaval(int faction_id, SocialCategory *category_new) {
-    int change_count = 0;
-    for (int i = 0; i < MaxSocialCatNum; i++) {
-        if (category_new->models_[i] !=
-            PlayersData[faction_id].soc_category_active.models_[i]) {
-            change_count++;
-        }
-    }
-    if (!change_count) {
-        return 0;
-    }
-    change_count++;
-    int diff_lvl = is_human(faction_id) ? PlayersData[faction_id].diff_level : DLVL_LIBRARIAN;
-    int cost = change_count * change_count * change_count * diff_lvl;
-    if (is_alien_faction(faction_id)) {
-        cost += cost / 2;
-    }
-    return cost;
-}
+// Historical inline rationale: social_ai's two original call sites do not
+// reach a `call` to social_upheaval in the image, while other original callers
+// do call its out-of-line body. The definition now lives at its mapped marker
+// in faction.cpp, where social_ai also compiles.
+MEASURED int __cdecl social_upheaval(int faction_id, SocialCategory *category_new);
 
 // BODY IN faction.h, as `MEASURED inline` (marker stays in faction.cpp):
 // name_base (base.cpp) needs this folded in place - the image never calls

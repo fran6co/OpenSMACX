@@ -1,0 +1,27 @@
+{
+  "event_id": "0a3ec8423f2ca3af2462985dd912f5d0c68856ae98d72374b52d5ad7c0eb849d",
+  "payload": {
+    "affects": [
+      "entity-004b9cb8938cfd5f32c5e52958cb3c8e856176a4e7fa3eb96655012d8bbbb556",
+      "entity-21a0ac47b9730b4dfb23af579f0ddc1c680ac96d8e9cbb75518f654a9673b062",
+      "entity-415969aff399f8fc51dfc6ef6e933b5aed3e69b1b5d5e2fdb3f2cd7d5fe8ff4e",
+      "entity-c5b9e4340f90b5aa13e366307c99ae6ab6e989cb579b25ba8db95e37bc77d570",
+      "entity-d03fae97fcab072c34c36edb486f4e77e38535dd0eb22051898687d60cd7cd7d"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "faction-mixed-helper-visibility-needs-owner-refinement-oct21v",
+    "evidence": [
+      "Frozen unchangedbodytransport ofhas_treaty/get_adjective/social_upheaval header→canonicalfaction.cpp usesnativewrite_body. Five actualproductionrecipe replay/unchanged controls and treaty-operator damagecontrolPASS; has_treaty16/16 andadjective10/10 remainexact. Fifteen new/existing signed-cost hostcontrolsPASSwithcompile-successmutants and unchangednegative/signeddivision witnesses. Existingclaims/signatures/symbols/spans preserved; no behaviorfix.",
+      "Actualforeignnamedcallboundary gains: base_build14treaty, probe6treaty+8adjective, SocialWin2social_upheaval. SameTU social_ai remainsinlineexpected; communicate sameTU stillhas0namedquerycallswherepinnedoriginalcallsclearlyexist. Thus finitebodymoveisnot acompleteboundarysolution andno fullbuild/link/integration/admission isclaimed. FivemappedTUverdictsetsunchanged; onlypartialrestorationobserved.",
+      "Preserve partialsource/testwork and actualevidence; do notdiscardorrevertthebodymove toprotectscore. Investigate ordinarydefinitionordering or logicaldialogueTU withcompleteprivatehelperdependencies; any newTU/CMake/caller scope needsfreshauthorization and measurement. OthercurrentAPIcallerswithnoobserveddirectpinnededge needseparateoriginal-inline/directmemberexpressionevidence, notblindglobaloutofline assumption. get_noununtouched.",
+      "Source/testcheckpoint remainsunadmitted. Fullheaderclosure/buildlink/physicalresidual/retainedselection and originalmixedcalltopology arepending; originaltaskbaseline retained. No nativeautomatic/fullgameacceptance claim. Readonly structuralproposals arehints, notscopepermission or sourceproof."
+    ],
+    "hypothesis": "Ordinary faction helper ownership restores foreign direct calls but leaves communicate query calls inlined; complete original direct/inline topology needs a coordinated source-visibility/ownership refinement, not a forced wrapper or flags.",
+    "kind": "discovery"
+  },
+  "previous_event": "285e77d2504d345e5cc0def2dd057cd088e78b853f800e45803e36f73ec193db",
+  "request_id": "faction-mixed-helper-visibility-needs-owner-refinement-oct21v",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:owner-faction-body-recovery-oct20ao"
+}

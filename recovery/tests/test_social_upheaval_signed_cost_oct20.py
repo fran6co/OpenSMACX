@@ -17,7 +17,7 @@ ROOT = Path(__file__).resolve().parents[2]
 def function_body(path, name):
     text = (ROOT / path).read_text()
     matches = list(re.finditer(
-        r"(?m)^MEASURED inline (?:uint32_t|int) __cdecl " + re.escape(name) + r"\s*\([^\n]*\)\s*\{",
+        r"(?m)^MEASURED (?:uint32_t|int) __cdecl " + re.escape(name) + r"\s*\([^\n]*\)\s*\{",
         text,
     ))
     assert len(matches) == 1, (path, name, len(matches))
@@ -124,9 +124,9 @@ def compile_and_run(tmp_path, compiler, helper, damage=None):
             "// ACTUAL_PENALTY_EXPRESSION", expression
         )
     elif damage == "unsigned-return":
-        old = "MEASURED inline int __cdecl social_upheaval"
+        old = "MEASURED int __cdecl social_upheaval"
         assert helper.count(old) == 1
-        helper = helper.replace(old, "MEASURED inline uint32_t __cdecl social_upheaval")
+        helper = helper.replace(old, "MEASURED uint32_t __cdecl social_upheaval")
         source = PREAMBLE + helper + MAIN.replace(
             "// ACTUAL_PENALTY_EXPRESSION", expression
         )
@@ -147,7 +147,7 @@ def compile_and_run(tmp_path, compiler, helper, damage=None):
 def test_actual_helper_and_actual_social_ai_penalty_expression(tmp_path, compiler):
     if not shutil.which(compiler):
         pytest.skip(compiler + " unavailable")
-    helper = function_body("src/faction.h", "social_upheaval")
+    helper = function_body("src/faction.cpp", "social_upheaval")
     result = compile_and_run(tmp_path, compiler, helper)
     assert result.returncode == 0, result.stderr
 
@@ -157,7 +157,7 @@ def test_actual_helper_and_actual_social_ai_penalty_expression(tmp_path, compile
 def test_source_mutants_are_rejected(tmp_path, compiler, damage):
     if not shutil.which(compiler):
         pytest.skip(compiler + " unavailable")
-    helper = function_body("src/faction.h", "social_upheaval")
+    helper = function_body("src/faction.cpp", "social_upheaval")
     result = compile_and_run(tmp_path, compiler, helper, damage)
     assert result.returncode == 43, result.stderr
     expected = "positive human cost" if damage == "unsigned-return" else "negative cost uses signed truncating alien half"
