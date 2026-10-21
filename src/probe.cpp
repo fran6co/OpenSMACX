@@ -583,16 +583,16 @@ static int probe_apply_energy_transfer_native(int actor_faction_id,
     return amount;
 }
 
-// Native selector-8 cleanup at 0x5A3CB3..0x5A3CE3. Keep the fields opaque:
-// native compares the first DWORD in each of six records and clears the DWORD
-// at +8 only when it was nonzero. That is MonumentRecord::year_ / word_8_
-// under the existing data owner, not a guessed monument-status operation.
+// Native selector-8 cleanup at 0x5A3CB3..0x5A3CE3 scans the same six
+// FactionMonuments records 15..20 as the chooser. Their producer
+// (mon_killed_faction) stores the counterpart faction in word_8_ and the
+// achieved gate at +8; native compares that counterpart and clears achieved_.
 static void probe_native_clear_monument_choice_word(
-        MonumentFaction &faction, int selected_first_word) {
-    for (int record = 0; record < 6; ++record) {
+        MonumentFaction &faction, int selected_faction_id) {
+    for (int record = 15; record < 21; ++record) {
         MonumentRecord &entry = faction.records_[record];
-        if (entry.word_8_ != 0 && entry.year_ == selected_first_word) {
-            entry.word_8_ = 0;
+        if (entry.achieved_ != 0 && entry.word_8_ == selected_faction_id) {
+            entry.achieved_ = 0;
         }
     }
 }
@@ -611,7 +611,12 @@ static void probe_native_set_monument_selection_lock_bit(int selected_faction_id
     GameDataStateStorage.fields_.lock_masks_.enable_mask_ |= (uint32_t)selected_bit << 8;
 }
 
-// Typed Popup/Dialogs list region at 0x5A3B23..0x5A3C50. Popup lifetime is
+// Typed Popup/Dialogs list region at 0x5A3B23..0x5A3C50. The original pointer
+// starts at FactionMonuments[target].records_[15].word_8_ and advances six
+// records by 0x38, through record 20. word_8_ is the counterpart faction ID;
+// achieved_ gates inclusion. Preserve that produced cohort (the records are
+// populated by mon_killed_faction), not years or the similarly named fields
+// used by other monument records. Popup lifetime is
 // owned by the enclosing probe candidate. The apparent frame-local Sprite and
 // its pointer are actually Popup-owned members: the native addresses are
 // Popup+0x2118 and Popup+0x20E4, matching BasePop::sprite_ and
@@ -630,18 +635,18 @@ static int probe_native_monument_choice_list(Popup &popup,
         popup.select_owned_picture();
     }
 
-    for (int record = 0; record < 6; ++record) {
+    for (int record = 15; record < 21; ++record) {
         MonumentRecord &entry = faction.records_[record];
-        if (entry.word_8_ == 0) continue;
+        if (entry.achieved_ == 0) continue;
 
         StringTemp[0] = '\0';
-        says(get_title(entry.year_));
+        says(get_title(entry.word_8_));
         space();
-        says(get_name(entry.year_));
+        says(get_name(entry.word_8_));
         say_label(0xB4);
         space();
-        says(get_adjective(entry.year_));
-        popup.item(StringTemp, entry.year_);
+        says(get_noun(entry.word_8_));
+        popup.item(StringTemp, entry.word_8_);
     }
 
     const int selection = popup.exec();
@@ -686,7 +691,7 @@ static int probe_native_commit_monument_choice(Popup &popup,
         selected_faction_id == ConsoleGlobal.faction_id_) {
         parse_says(0, get_title(selected_faction_id), -1, -1);
         parse_says(1, get_name(selected_faction_id), -1, -1);
-        parse_says(2, get_adjective(selected_faction_id), -1, -1);
+        parse_says(2, get_noun(selected_faction_id), -1, -1);
         NetMsgPrimary.pop("fac_escape_sm.pcx", "WILLYFREE");
     }
 

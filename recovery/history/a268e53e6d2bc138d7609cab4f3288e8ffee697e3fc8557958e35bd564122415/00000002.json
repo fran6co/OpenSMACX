@@ -1,0 +1,24 @@
+{
+  "event_id": "e0e94080583785f97d6a22f8699cdeb153ee1d14b78959eaa4b53071b7f0c4ec",
+  "payload": {
+    "affects": [
+      "entity-c85c2df93a3a021792e2e4c164aa2dcad08864b80da56d3806fd9adf3cf38a2f"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "probe-original-captured-record-cohort-and-noun-source-oct21w",
+    "evidence": [
+      "Original5A3B23..5A3CE3 pointer bases+350/+358, six38-byte strides and independent mon_killed_faction writer prove records15..20, counterpart word_8_ and achieved_ gate/clear. The chooser and cleanup now use this existing typed owner/cohort without casts or a duplicate table. All other records, years and counterpart IDs remain untouched by clearing. No global year rename or invented layout/bounds.",
+      "Original5A3BED says(get_noun(counterpart)) and5A3D26 parser slot2 get_noun(selected faction) replace wrong adjective producers. Initial slot1 adjective stays unchanged. Popup/owned-picture lifetime, list order/IDs, negative exit, release/setup/net/research/accounting and original unchecked/error paths are otherwise unchanged. Corrected essential local storage comments carry original/producer evidence; no new run-log annotations.",
+      "Fresh coordinator13-case run passes: new3 actual-source owner controls plus existing10 Probe runtime/source-control cases. Both GCC/Clang C++98 compile20 damage variants total and detect wrong cohort/gate/ID/clear/producer effects; fixtures distinguish decoy0..5 records, years vs faction IDs, all21-record state preservation, noun grammar defaults and cancellation/initial adjective path. Getter extraction follows native body facts, supporting the pending Faction header-to-cpp migration without guessing owners.",
+      "Every parsed original mapping fact compares identical excluding only source line/region extraction. Original Probe hot/cold spans, symbols, history and all claims remain; no private helper receives a new original identity. Preserve original task baselinecefb36b328faa6f0623ba0d624c8529eaa0f6c35.",
+      "This is an unadmitted source checkpoint. Native actual-recipe calibration/unchanged/damage controls, eventual rebase onto reviewed Faction integration, fresh full build/link/matching/references and actual residual review remain required. Host models and typed source do not establish global allocation extent, full Probe/runtime/game acceptance or native linked preservation. Other eleven noun sites remain uncorrelated."
+    ],
+    "hypothesis": "The original captive-faction chooser/release code uses the last six monument records and their counterpart/achievement fields, not the first six records and year/word8 gate; both noun producers now preserve original grammar effects.",
+    "kind": "discovery"
+  },
+  "previous_event": "22c6b97158cbb890427fc3919be8caa9df4066839304c54270c25009baa8046c",
+  "request_id": "probe-original-captured-record-cohort-and-noun-source-oct21w",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:probe-action-owner-oct5"
+}
