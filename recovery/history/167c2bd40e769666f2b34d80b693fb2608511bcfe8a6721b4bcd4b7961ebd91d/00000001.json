@@ -1,0 +1,20 @@
+{
+  "event_id": "ce4fdb61df19fc4573ea85a21dbb77c912485244dfba97eb82646baa4a358340",
+  "payload": {
+    "affects": [
+      "entity-91505eca5bbef60ed90ba3e9903bd024b92ddc05e3f310e66f12a97c297dac29"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "vox-release-one-post-free-count-snapshot-oct21w",
+    "evidence": [
+      "Bounded refinement only: early-return spelling was already measured unchanged at32/36 in Oct21p; this trial adds an explicit one-load count snapshot after all five original free callbacks. No callback/read/zero-write/negative-count behavior is intentionally changed. Use native localvariant screen with immutable whole-TU overlays, fixed two configured profiles and physical replica/damage controls; no product source edit."
+    ],
+    "hypothesis": "A single explicit post-free count snapshot might restore the original guarded-decrement/epilogue scheduling without changing cleanup effects.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "vox-release-one-post-free-count-snapshot-oct21w",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:caviar-source-batch-oct19e"
+}

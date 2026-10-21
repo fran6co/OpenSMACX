@@ -1,0 +1,19 @@
+{
+  "event_id": "9e77e6b84f77197be22785a0e0459a9057848adc43a95f685ab30ff8b9a84749",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "vox-release-one-post-free-count-snapshot-oct21w",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Native measure_local_variants completes8compiler calls under one isolated lease at source revision88fc85196a09d3992c5518815188bd177bb32579. Both configured profiles pass whole-object unchanged-replica and changed-target damage controls. Exact target function signatures compare unchanged between baseline and snapshot candidate under both profiles.",
+      "Configured O2/Gy/GR-/GX target remains MISMATCH32/36; configured Oy- target remains MISMATCH0/36. These are distinct measured profiles, not a changed policy or a new permissive search. Overall screen incomplete because neighboring task measurements remain unknown; target observations are available and do not prove strict references, acceptance or a working game.",
+      "Retain production C++ unchanged and stop the post-free snapshot/early-return axis unless new structural/compiler evidence appears. No exact gain, claim banking/demotion, source mutation, baseline reset or build-policy change. Native current source hash39fc4320f3b7648c45d2a7ae0daf678f069dceda5b5dbcc791d8cb0a2b6cf3db retained. Recomputable diagnostics stay ignored; this records why a candidate was not integrated."
+    ]
+  },
+  "previous_event": "ce4fdb61df19fc4573ea85a21dbb77c912485244dfba97eb82646baa4a358340",
+  "request_id": "vox-release-one-post-free-count-snapshot-oct21w-rejected",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:caviar-source-batch-oct19e"
+}
