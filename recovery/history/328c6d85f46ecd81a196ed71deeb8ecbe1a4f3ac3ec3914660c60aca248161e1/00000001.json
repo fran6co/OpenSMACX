@@ -1,0 +1,21 @@
+{
+  "event_id": "9f551b2b947f4656e1ab6961cbb38998b4c30a7b459a116dd5ecbe3ef09f6c53",
+  "payload": {
+    "affects": [
+      "entity-2e88a2ca9fee0312387ec841a4816be6a2c4ffa85bae4e695e118bd5d528ca92"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "psych-check-staged-base-hypothesis-oct22a",
+    "evidence": [
+      "One causal ordinary-C++ psych_check proposal stages named adjusted_drones between the efficiency clamp and weight+4 to seek original LEA/register scheduling. Preserve current effects, output-store order, signed factor and arithmetic; no flags/casts/volatile or structural change proposed.",
+      "Actual-production-recipe replay, unchanged source overlay and compile-success +3 damage controls passed. Candidate emits exactly the same canonical function signature and stays36/52MISMATCH; full TU verdicts unchanged. Reject this source-form proposal rather than editing product code or repeating it. This does not prove structural recovery or impossibility of other evidence-backed changes."
+    ],
+    "hypothesis": "Staging adjusted drones between clamp and weight could restore original LEA scheduling.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "psych-check-staged-base-hypothesis-oct22a",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:owner-faction-faithful-recovery-oct20x"
+}
