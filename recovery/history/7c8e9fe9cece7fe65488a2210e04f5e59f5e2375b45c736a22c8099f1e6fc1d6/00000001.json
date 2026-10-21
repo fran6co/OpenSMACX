@@ -1,0 +1,57 @@
+{
+  "event_id": "211c485d51022b54b043616bccb2aa33d7574a1a4147f61ad3ed916a8f88e007",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_win_focus_bindings_oct21.py",
+      "recovery/tests/test_win_keyboard_focus_oct9.py",
+      "src/win.cpp"
+    ],
+    "evidence": [
+      "Standing user authority: faithful original C++ recovery, isolated parallel workers, coordinator-reviewed manual integration after actual source review, build/link and relevant regression and continuity checks. No flags, layouts, signatures, historical claims or task baselines may be weakened. Only the coordinator mutates Git, tasks, mappings, native compiler resources, recording and integration.",
+      "CORRECTION superseding the original task rationale about get_key_window: pinned 5F6A95 loads ECX from base_window+0xC4 and 5F6A9F calls is_visible at5F7E90 on that PARENT, while5F6AAC returns the base in ESI. Current source and old test incorrectly call/check base visibility. Independently rechecked in ignored parallel-match-oct21g/get-key-window-independent-review.md. This is receiver/read-topology fidelity, not a claimed stable-state return-value bug because actual is_visible recursively tests parents. Change only this receiver, add a concise durable source evidence comment, and preserve selection, WinActiveWindow publication, base bit/null gates, base return and five unchanged window_proc callers. No ABI/header change.",
+      "Authorize exactly five native pure-object-writer v1 start-only bindings immediately before existing Win definitions: modal9B8D7C, input9B7AC4, default9B7AEC, active9B7AC8 and cdecl WPARAM key hook9B7A8C. Current source digest3949553d11ce5ad699f622b8e7196f29aeda419acfe45ed6dbde6c5d88c9abd6 and guarded writer proposal parallel-match-oct21g/win-focus-data/proposal.json retain all existing45 objects and228 function histories. Recheck full-tree object conflicts. Four-byte accesses do not prove full original allocation, initializer, lifetime, callback target, retained selection or complete data equality; do not create bounded v2 records or new globals/types.",
+      "Original operand witnesses: OnKey5F15CA/15D7/15E0/15F0; OnChar5F166A/1677/1680/1688; OnSysKey5F16DA/16E7/16F0/16F8; key hook load5F1635 and indirect call5F1643; set_def_focus5F2CE4; DiploPop modal load43F293 and virtual call43F2A3. Consumer subjects confer measurement visibility only, not permission to edit input router or DiploPop source.",
+      "Repair actual keyboard-focus tests that became stale after the three input callbacks moved unchanged into win_input.cpp. Extract from both true owners, require unique definitions, preserve selection/null/bit/argument/hook/reread/system-route assertions. Correct visibility receiver assertion to original parent, retain return-base and publish-selection-before-rejection controls. Negative mutations must compile successfully and fail at runtime, not pass because compilation failed. New binding test may validate all five native start-only records and independently decoded pinned operands; absent optional image must remain explicitly unverified. Host stubs prove bounded call topology, not original widths, recursive runtime behavior or full ABI.",
+      "Files authorized below only. Source changes limited to corrected get_key_window plus five binding comments; new outside-owner findings require central scope. Fresh configured application build/link, scoped/full known census, native identity/claim/reference checks, physical complement and fresh destination reproduction before manual integration. No fabricated automatic/full-game or full linked preservation acceptance. Preserve any mismatch and historical restoration obligations; no extended spelling search."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6253136,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6231488,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6231648,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6231760,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6237408,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4453008,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "central-win-focus-original-receiver-oct21g",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:win-keyboard-focus-members-oct9"
+}
