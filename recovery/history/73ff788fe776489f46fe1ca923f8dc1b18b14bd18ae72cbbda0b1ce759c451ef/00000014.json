@@ -1,0 +1,27 @@
+{
+  "event_id": "6ffec204e0782f28c0501fec03f3038e7348cc6da990a796a5b23623d17c53a0",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_breed_owner_boundaries_oct21u.py",
+      "src/base.cpp",
+      "src/base.h",
+      "src/game.cpp"
+    ],
+    "evidence": [
+      "Userauthorizedcoordinator-reviewedmanualsourceintegration: unchangedbreed_mod4E65C0headerbody→canonicalbase.cpp usingnativewrite_body, ordinaryMEASUREDheaderAPI; worm_modsameTUcontinuesnaturalinlinewithunchangedemittedbody. Removedunoriginalbreed_mod_callandpragmaauto_inlineoff/on;repair_phase526030directAPIcallmatchespinned526366args/resultbranch;BaseWindraw_production40E360restorespinned40E717directcall. No types/algorithms/storage/lifetimes/flags/quirks changed. Historicalclaims/body/LEVERnotesandoriginaltaskbaselinepreserved.",
+      "Fresh185TU199COFFbuild-cc3t0zui links;4actual-sourcehostcasesPASSGCC/Clangincludingverbatimbodies/nativewriterfullmetadata/short-circuitfacilityorder andrealrepaircaller. Allsourceclaims/mappings/referencesPASS;nativecheck-source5646annotations387files9rules0fail fingerprint87899fade320eb235e007e9e87d153671e43fe1e9689478270163577f59b4be7. Full5581verdictsunchanged3364exact;strict2807PASS557UNKNOWNunchanged. No newimplementation/exactcountgain or claimbanking.",
+      "Actual91inlineinputdefinitions→oneordinarybaseprovider. Ninetyconsumerexportsremoveonlybreed_modtoken;ownerretainsreorderedtoken,allotherorderedtokensidentical. SelectedMAPprovideralpha→base;final103PEexportname/ordinalpairsidentical,breedordinal23. Originalcurrent3directcallsbase_build/draw_production/repairphase versusold1;twooriginalboundariesrestored. Originalworm_modfourhas_faccallsremainunrestored(3bitmask+1has_fac_built+1has_project); noclaimofcompleteoriginalcallclosure/retainedselection.",
+      "Nativephysical108PASS91FAIL retainedred. Eightexactadditionalcollateraloriginalowners recordedandprojectedonlyasindependentmappedbodies;0unexplainedunscopedcode/dataafterprojection. Twoexplicitunprojectedprivatecontributionsremain: originalenemy_moveparenthelperindependentx/yloadreorder, removedunoriginalbreed_mod_call. Nofakeidentity/alias/header/directive/data/EHnormalization. ScopedbodyprojectionisNOTequivalenceproof; all21changedemittedfingerprintsandrestorationobligationsremain.",
+      "Freshactualpairreviews classify narrowConsolego_to/new_base/corner_market/PrefWinload/sumorder,eliminate_playerlocalreloadandgamesave_gameindependentsumloads. BroadPickTech::pick,editor_natural/EHpathproofandsomeearlierscopedbodyemissionsremainunknown,notcalledsafeoracceptedbynativepreservation. Sourceforcollateralunchanged,andreviewedunchangedhelperbody/directAPIrepairisjustifiednormalC++ownership;coordinatormanualsourcecheckpointexplicitlyretainsremainingcompiler/UB/asynchronous/linked/runtimeuncertaintiesratherthanblockingallstructuralrecoveryorpretendingfullacceptance.",
+      "Thisdecisionadmitstheboundedsourcechangeunderstandinguserpolicy,notautomaticgate/fullgameacceptanceorwholecompiledpreservation. Missingnativeproofsremainred. Freshdestinationbuild/link/sourcechecks/currentcensus/4ownercontrols/199zero-omissioncandidatereproductionrequired beforeconsumingcheckout. Do notreplayolderafterTurn/UI/lifetimecodepairsascurrentproof; onlycurrentafterDatalinkfactsandexplicitunknownsapply."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "33ac395dc149a41950759d142e6954fcde8f4385ae4fced6175e34e2ea15430a",
+  "request_id": "central-manual-ordinary-breed-owner-admission-oct21w",
+  "schema_version": 1,
+  "sequence": 14,
+  "stream": "task:owner-base-body-recovery-oct20ao"
+}
