@@ -1,0 +1,25 @@
+{
+  "event_id": "e7bf56cc2a2031bc736ecc848bd3f53d1605a920ad713419d41e58fd850b01df",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "docs/DECOMP_MAP.md",
+      "packages/match-recovery/src/match_recovery/application_binary.py",
+      "packages/match-recovery/src/match_recovery/bound_objects.py",
+      "packages/match-recovery/src/match_recovery/object_source.py",
+      "packages/match-recovery/tests/test_tu_local_object_bindings.py"
+    ],
+    "evidence": [
+      "Concrete real recovery blocker: src/ambience.cpp already has source-owned RECOVERY_OBJECT records for AAmbience/BAmbience file-local state, but native object_targets accepts only COFF storage class2 and check_objects has no explicit TU-local ordinary-data target namespace. Existing masked-exact methods therefore retain unknown references despite real static definitions. Do not change C++ linkage or infer image addresses from tested operands.",
+      "Authorize generic, narrow static-data resolution through existing object identities and their owning TU, fresh unique ordinary COFF static definitions and exact per-symbol references. No whole-data-section placement, cross-TU name leakage, weak/common/undefined/code/duplicate fallbacks, implicit member/array bounds or initializer/lifetime acceptance. Unsupported cases remain unknown; source obligations and all historical claims remain.",
+      "Independent generic synthetic/negative controls plus real original-pinned body/reference observation must establish any newly verified references. Require unchanged game source and compiled output, package/project regression tests and independent implementation review before manual integration. Full linked/structure/runtime/automatic/game acceptance remains unfinished. This verifier change does not recover a new C++ body or grant byte claims."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "ambience-local-object-reference-verification-oct21y",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:ambience-faction-art-owner-oct5"
+}
