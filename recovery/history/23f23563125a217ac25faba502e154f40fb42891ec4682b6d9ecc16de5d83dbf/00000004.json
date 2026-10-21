@@ -1,0 +1,81 @@
+{
+  "event_id": "7b3c8f86d4f03dd178fac144f92bca959cd89f9c705822ab48eb4ab847cc7435",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "CMakeLists.txt",
+      "recovery/tests/test_vehicle_psi_owner_oct21.py",
+      "src/veh.cpp",
+      "src/vehicle_strategy.cpp"
+    ],
+    "evidence": [
+      "Select the measured narrower strategy/value owner, not the broad psi-helper split. Preserve previous controls and exact-block/test draft as evidence; same psi implementation remains source-owned in veh.cpp. New proposal copies only five contiguous arm_strat/weap_strat/weap_val/arm_val/armor_val blocks into src/vehicle_strategy.cpp with unchanged public veh.h APIs, minimal stdafx/alpha/veh headers and existing license. Do not create src/vehicle_psi.cpp in integrated product. Historical source filename/partition remains unproved.",
+      "Fresh unchanged actual Release replay/replica and two executable damage controls pass. Whole172source-domain same5exactgains50->55 with noexactloss. All basiccombat/battle_compute/propose_proto/prune/psi_factor physical function signatures stay unchanged. Only six retained output functions change: stack_check,wants_prototype,action_destruct,goody_box,veh_init,order_veh; broad-helper sixteen-function collateral is not admitted. Remaining six+five moved are explicit physical comparison/wholecensus scope, not blanket waivers. Existing storage and generic header emitted definitions require complete production accounting.",
+      "Authorize exact apply_patch block transport in isolated vehicle-strategy-control-oct21e, native metadata/history union and reader/writer roundtrip proof, unchanged parent vehicle Oy- recipe on new source added by coordinator. No bodies/flags/types/headers or annotated claims edited. Retain useful actual-source psi host tests from broad draft, updating only actual source path to veh.cpp; add negative rule-psi case and preserve signed/truncation/project-call/read-order behavior and compile-success mutants. Test remains bounded host behavior, not native ABI/full game proof.",
+      "Coordinator owns tasks/Git/native compiler/preparation/recording/CMake and combined checkpoint integration. Other owner changes have separate task decisions. Source author only source/test in this checkout. Preserve all source discoveries and old claims/baselines. Further adoption requires independent review, fresh actual application build/link, whole production matching/reference census and physical complements/new-object accounting, source historical continuity, and fresh destination reproduction. Manual bounded route only; no original TU, full linked retention, runtime, game or automatic acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5034736,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5744224,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5755504,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5755616,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5755744,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5755888,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5756032,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5851072,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6002048,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6021376,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6030288,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "49761aaf24a6307d23b8157960f750b05f9b558da07c5b1c2707df6682be3dcd",
+  "request_id": "central-vehicle-strategy-bounded-owner-oct21e",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:matching-veh-flags-oct20aa"
+}
