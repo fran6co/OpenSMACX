@@ -1610,7 +1610,7 @@ void ReportIf::on_iface_left_click(int x_coord, int y_coord) {
     field_1E244_ = y_coord;
 
     ReportWinGlobal.select_intel_topic();
-    field_8_ = 7;
+    ReportIfGlobal.field_8_ = 7;
 
     if (IfaceIdToSlotStorage[ActiveIfaceIdStorage] != 5) {
         Win &modal_window = ReportWinGlobal;
@@ -1618,7 +1618,7 @@ void ReportIf::on_iface_left_click(int x_coord, int y_coord) {
         return;
     }
 
-    ReportIfGlobal.report(7, report_faction_id_, 0);
+    ReportIfGlobal.report(7, ReportIfGlobal.report_faction_id_, 0);
 }
 
 /*

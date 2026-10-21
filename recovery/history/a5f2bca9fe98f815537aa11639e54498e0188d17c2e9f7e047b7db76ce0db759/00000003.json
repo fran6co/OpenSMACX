@@ -1,0 +1,23 @@
+{
+  "event_id": "0b415befc3d8789b6a818c69da97bf1dbf597b6de6dc43dfdd6f470c94e8491c",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_reportif_click_global_receiver_oct21m.py",
+      "src/reportif.cpp"
+    ],
+    "evidence": [
+      "Coordinator-reviewed original-fidelity correction: on_iface_left_click4A5F40 explicitly writes ReportIfGlobal.field_8_ and reads ReportIfGlobal.report_faction_id_. Original4A5F87 stores absolute885F40=global885F38+8;4A5FBC loads absolute8A4160=global+1E228. Preserve incomingreceiver modeguard, embeddedSpot receiver, receiverselectionstore, topic update, modal/direct branch and call/argument order. No assumption callbackthis equals singleton. No bugfix/type/header/ABI/flag/marker/symbol/claim changes.",
+      "Independent complete pinned-span and actual-C++ review plus actual-source host checks distinguish receiver and global even after Spot/call mutations. Independently compiled all actual/two wrong-receiver programs under GCC andClang: six successful builds, actual passes, four expected runtime assertion failures. Related host suite passes with no skips. Current production recipe replay, unchangedoverlay and damagedtarget controls pass; body improves36to41matching of43instructions but remains mismatch.",
+      "Fresh185TU199object full application build/link and claims/mappings/references pass. All199compiled complements pass with only selectedoriginalbody4A5F40 projected; zero unrelated code/data/startup omissions. Whole5581knownidentity census remains3358masked exact; strict2800pass555unknown3fail, every outcome unchanged. Preserve original baseline24cd306f6ff78af03fdd11405f16ba297fa6da27, all historical claims and restoration obligations; no native recording or demotion.",
+      "Manual faithful-source checkpoint only, not a new function, exact-count gain or full linkedselection/allocation/provider, exhaustiveoriginalcoverage, hierarchy/lifetime/runtime/game/autonomous acceptance. Fresh destination build/link, host tests, wholecensus/strict and199zero-omission physical reproductions required before cleanup. Unpromising batch spellings remain ignored evidence, not production churn."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "e3c8d12166ca966d7e734677ca1cc2c5852a63af011dfdd5cc9baf38448002a8",
+  "request_id": "central-manual-reportif-global-receiver-admission-oct21m",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:reportif-source-batch-oct19b"
+}
