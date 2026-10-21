@@ -1,0 +1,23 @@
+{
+  "event_id": "85b1d80428760e0088937cabb8c49f6369efeaab98305088f44f83f7be23b7ff",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_net_group_capacity_oct21.py",
+      "src/net_class.cpp"
+    ],
+    "evidence": [
+      "Standing user-authorized parallel faithful recovery and coordinator-reviewed integration. Preserve matching-net task baseline84a83530 and all source/claims/history. Coordinator reviewed all member uses and pinned guard evidence; no other author owns Net currently.",
+      "All four original Net senders compare payload size to member+6E4 using signed JG after signed negative/zero rejection. send_group62EED2 rejects negative size;62EEDA signed compare rejects size exceeding capacity. Current source alone compares unsigned and would differ at high-bit capacities. Other three source sender guards already use static_cast<int>(field_6E4_). Field writes0/0x2000 and DWORD Receive copies support capacity role but do not establish declared member signedness or normal high-bit reachability.",
+      "Authorize only replacing send_group unsigned capacity guard with static_cast<int>(field_6E4_) < size in src/net_class.cpp, preserving uint32_t field type and all initialization, callback, allocation, timeout/null-name and uninitialized pending/retry behavior. This restores pinned comparison semantics, not a new safety check or game bug fix. No header/flag/name/layout/symbol/ORIGINAL changes.",
+      "Add bounded actual-source early-guard tests in recovery/tests/test_net_group_capacity_oct21.py using GCC/Clang C++98: extract the two actual size guards without rewriting their semantics, check negative, zero, exactcapacity/oneover, INT_MAX and high-bit capacity. Compile-success unsigned-capacity and negative-guard mutants must fail. Host tests establish only these guards, not full group operation/ABI/runtime. Coordinator owns Git/native compiler/preparation/resource lease, physical protected checks, build/link and independent/destination review. Preserve all history; no new exact/coverage claim unless fresh measured."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "central-net-signed-capacity-oct21d",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:matching-net-oct20z"
+}
