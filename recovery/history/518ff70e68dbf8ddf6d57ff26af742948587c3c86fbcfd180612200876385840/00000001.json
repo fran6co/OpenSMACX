@@ -1,0 +1,22 @@
+{
+  "event_id": "956de6face6272772d2f3cccbae473e2d29f60080074b9181c57747ca50d342b",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/mapwin.cpp"
+    ],
+    "evidence": [
+      "PRIVATE unchanged-source diagnostic only, explicitly not a production flags change. Original mapped on_resize46FA00 and init470A90 call genuine bare-return do_image_buttons46FB80; current source retains both calls, but currentactualOb2 removes/inlines the no-op. Independent read-only boundary audit found no genuine separate semantic owner for this helper; do not manufacture another module. MapWin source/header/member/hierarchy corrections are not established by this discrepancy.",
+      "Authorize exactly one MapWin.cpp actual-command trial replacing the single /Ob2 with /Ob1, leaving /O2,/Oy-,source,macros,headers,SDK,compiler/backend,linker and everyotherargv token unchanged. This is separate from the previously exhausted Win source cohort, not a repeat or originalflag/TU assertion. Current MapWin actual object has @comp.id B1FE8; require same emitted compiler tag. Source flags restriction remains in force for production and ordinary workers.",
+      "Require actualOb2 whole-object replay matching retainedcurrentbuild, unchangedOb2overlay equivalence, one Ob1candidate and one successfullycompiled Ob1wrong-body on_resize guard control, under exclusive nativelease and source/task/tool/environment snapshots. Measure all106MapWin identities including45exact and1shape-exact, every mismatch/refused EH case, all generated/globalinitializers, receiver references and complete native physical residual. Expose every loss/newrefusal and unmapped/data/startup difference; do not score only the two no-op callers.",
+      "Do not change production code/config/flags, taskbaseline, objectbindings or historicalclaims. Even a positive diagnostic is not originalpolicyprovenance, linkedpreservation or full acceptance. Any eventual adoption requires affected-owner/compiler evidence, fullsource/historical/restoration checks, actualapplicationbuildlink, independentreview and freshdestinationverification; preserve unexpected/regressing source outputs rather than waiver/demotion."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "central-private-mapwin-ob1-single-factor-oct21i",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:mapwin-source-batch-oct19e"
+}
