@@ -1,0 +1,29 @@
+{
+  "event_id": "b51f879c84386df15ae5b0dcaeec0edc952d23484deb47fc4a7e82da75f9ff30",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_basewin_garrison_metric_oct21x.py",
+      "src/basewin.cpp"
+    ],
+    "evidence": [
+      "Fresh pinned/current audit confirms draw_garrison real Font ctor/init/dtor and current sizeofFont28; four-byte frame shift is not missing field evidence. Original draw_garrison4103B0 has no call to Font metric selector5E3650; it reads signed Font+0 adjustment, then only selected +10 height/+0C lineheight field. Current body instead calls out-of-line Font::line_advance. Existing named public unk_1_, pixel_height() and line_height() expose those exact fields without type/header changes.",
+      "Authorize only replacing draw_garrison line_height initializer with the equivalent inline signed selector using existing typed Font members/accessors. Preserve selected-field read behavior and current defined32bit wrap addition (copy the existing Font::line_advance unsigned-add/int32 conversion semantics, no signed-overflow shortcut). No raw offsets/addresses/newhelper/publicAPI/casts beyond that existing numeric conversion; no header/friend/layout/othercaller/global/flags/annotation/claims changes.",
+      "Author only basewin.cpp and new focused actual-source C++98 host test. Extract actual metric block plus real Font::line_advance reference if useful; exercise negative/zero/positive adjustment and wrapping valid32bit values, distinguish lineheight/pixelheight selected reads with bounded instrumentation, and compiledwrongbranch/wrongfield/noadjustment controls under GCC/Clang. Existing full body/callback/error/Font lifetime stays byte-for-byte source except metric block. Host tests do not prove whole garrison/ABI/runtime or exactness.",
+      "Separate MessageWin worker owns only messagewin.cpp/test; no shared header source writes. Coordinator owns Git/task/prep/nativecompiler and combined reviewed source integration. Absolute apply_patch required. Native task baseline and all historical claims preserved; no guarantee local source spelling improves exactness and no extended variants authorized."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4260784,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "d9701efa9fde75b604f3c598ca20bfcde9f94bd489a26c19410ef89a2d2cba74",
+  "request_id": "central-ui-original-basewin-garrison-metric-oct21x",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:owner-basewin-faithful-recovery-oct20y"
+}

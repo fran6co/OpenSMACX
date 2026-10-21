@@ -1,0 +1,29 @@
+{
+  "event_id": "9f7f7f7f27c9481082d4c63aa8bfc0e1836ae47a4346157ac882740a17a4c006",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_messagewin_init_lifetime_oct21x.py",
+      "src/messagewin.cpp"
+    ],
+    "evidence": [
+      "Independent original/current lifetime audit: pinned471D79 constructs scratch Buffer before font init471DA7 and closes it471DB2, with same-local normal+EH destruction. Current source and actual COFF build-fma4plfi call Font::init before Buffer ctor. This is a concrete lifetime/callback-order discrepancy, not evidence to change Buffer size or hand-place stack storage.",
+      "Authorize only moving the existing Buffer scratch declaration to function entry in MessageWin::init, before font_.init, leaving scratch.close after Font::init and every later statement unchanged. No signature/header/layout/global/flags/annotation/claim or error-path guard changes. Preserve original constructor/destructor behavior; do not replace the local with raw storage.",
+      "Author only messagewin.cpp and new focused actual-source host test, GCC/Clang C++98. Extract complete actual init body with bounded Buffer/Font/Dialog/ListBox stubs; verify ctor->fontinit->explicitclose and final automaticdtor, including injected Font::init throw unwinding the already constructed scratch. A compile-success declaration-order reversal must fail; explicitclose omission and changed callback/order controls where useful. These models are not original ABI, full method/game or EH-runtime proof.",
+      "Separate BaseWin worker alone edits basewin.cpp and its metric test; no shared headers. Coordinator owns task/Git/prep/nativecompiler/integration. Use absolute apply_patch. Native source/task baseline and all claims remain intact; fresh combined build/link, current measurements/source/claim/reference/residual checks and reviewed integration remain required."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4660560,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "central-ui-original-messagewin-lifetime-oct21x",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:message-list-draw-oct16"
+}
