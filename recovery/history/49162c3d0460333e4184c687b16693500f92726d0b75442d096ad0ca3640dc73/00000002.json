@@ -1,0 +1,18 @@
+{
+  "event_id": "65058166de0364a2d697779b59eb56f87892f493b11655009d6be952efc5c00c",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "gamma-single-natural-callback-branch-form-oct21x",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Gamma configured/Oy-/Ob2 profile:18/20 MNEMONIC_ONLY baseline becomes7/20 MISMATCH. Four compiler calls and both controls pass.",
+      "Reject only this measured single branch-form candidate; current source is kept unchanged. Do not repeat it absent new source/compiler/structural evidence. The exploratory operation remains incomplete for unmeasurable neighboring task functions, and does not provide strict reference, preservation, full-body semantics or acceptance proof. No exact gain, source publication, claim demotion or flag/baseline change. Original task baseline0ec339dabc3a1bd315644a1cf9a9a5b40d354bbb and all other discoveries/restoration obligations remain intact."
+    ]
+  },
+  "previous_event": "f60c58831937c349b71316655834b9f6cf4b92cf4e39a272d0b8f005754df930",
+  "request_id": "gamma-single-natural-callback-branch-form-oct21x-rejected",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:gamma-pushbutton-owner-oct20aj"
+}

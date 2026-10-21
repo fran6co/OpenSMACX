@@ -1,0 +1,21 @@
+{
+  "event_id": "f60c58831937c349b71316655834b9f6cf4b92cf4e39a272d0b8f005754df930",
+  "payload": {
+    "affects": [
+      "entity-9c33c02f0abb5098fd864ec4750e2c3a1573fec8c4747ec124de47bf849a46cb"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "gamma-single-natural-callback-branch-form-oct21x",
+    "evidence": [
+      "Read-only original full-span effect audit and targeted history review found no semantic defect and proposed one ordinary C++ body-only form, not a predicted match. Native measure_local_variants used the configured application compiler profile, one exact anchor, physical unchanged-source replica and a deliberate target-body damage witness. Source, flags, symbols, mappings and all claims remained untouched.",
+      "The completed configured screen is retained under ignored parallel-match-oct21x/two-callback-configured-screens/gamma-native-report.json with separate physical-focus/deck caches. An initial default-profile invocation refused missing font/stdint include paths and produced no usable target object; that separate failed observation is not replayed as measurement."
+    ],
+    "hypothesis": "A direct minus-two first branch could restore the original Gamma callback source shape without changing its effects.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "gamma-single-natural-callback-branch-form-oct21x",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:gamma-pushbutton-owner-oct20aj"
+}

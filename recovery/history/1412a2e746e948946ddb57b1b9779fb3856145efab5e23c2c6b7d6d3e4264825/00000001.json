@@ -1,0 +1,21 @@
+{
+  "event_id": "376e6ef5ca088f2ff5ce9a0dc70d0986943c184d0b0ba90038ceec6580e5f3aa",
+  "payload": {
+    "affects": [
+      "entity-740defa1892c9db01d6bbb76c9db1cec37add2906d9787b2cd2280ba326808b0"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "dialogs-single-natural-callback-branch-form-oct21x",
+    "evidence": [
+      "Read-only original full-span effect audit and targeted history review found no semantic defect and proposed one ordinary C++ body-only form, not a predicted match. Native measure_local_variants used the configured application compiler profile, one exact anchor, physical unchanged-source replica and a deliberate target-body damage witness. Source, flags, symbols, mappings and all claims remained untouched.",
+      "The completed configured screen is retained under ignored parallel-match-oct21x/two-callback-configured-screens/dialogs-native-report.json with separate physical-focus/deck caches. An initial default-profile invocation refused missing font/stdint include paths and produced no usable target object; that separate failed observation is not replayed as measurement."
+    ],
+    "hypothesis": "A short-circuit eligibility condition could restore the original Dialogs scroll-delete callback source shape without changing its effects.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "dialogs-single-natural-callback-branch-form-oct21x",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:dialogs-remaining-typed-dispatch-oct9"
+}

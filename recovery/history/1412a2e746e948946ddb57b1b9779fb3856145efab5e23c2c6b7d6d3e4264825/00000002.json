@@ -1,0 +1,18 @@
+{
+  "event_id": "2c669c0ae0c3f2ebf9c594d6e114cd5aba8f5407082548674952a33bd98e5a36",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "dialogs-single-natural-callback-branch-form-oct21x",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Dialogs configured/O2/GX profile:15/19 SHAPE_EXACT becomes0/19 MISMATCH; configured/Oy-/GX profile:0/19 becomes1/19 MISMATCH. Eight compiler calls and both controls pass per profile. The one-instruction alternative-profile change does not improve on the existing best shape.",
+      "Reject only this measured single branch-form candidate; current source is kept unchanged. Do not repeat it absent new source/compiler/structural evidence. The exploratory operation remains incomplete for unmeasurable neighboring task functions, and does not provide strict reference, preservation, full-body semantics or acceptance proof. No exact gain, source publication, claim demotion or flag/baseline change. Original task baseline72c91c34f8cf4d9519a9c558b6949475e0672ecd and all other discoveries/restoration obligations remain intact."
+    ]
+  },
+  "previous_event": "376e6ef5ca088f2ff5ce9a0dc70d0986943c184d0b0ba90038ceec6580e5f3aa",
+  "request_id": "dialogs-single-natural-callback-branch-form-oct21x-rejected",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:dialogs-remaining-typed-dispatch-oct9"
+}
