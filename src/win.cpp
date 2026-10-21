@@ -842,13 +842,16 @@ int WinTrackingMode;       // 0x009B7AA8
 int WinTrackingX;          // 0x009B7AB0
 int WinTrackingY;          // 0x009B7AB4
 Buffer *WinBackBuffer;         // 0x009B7A68
+// RECOVERY_OBJECT: v1 0x009B8D7C ?WinModalFocus@@3PAVWin@@A
 Win *WinModalFocus;         // 0x009B8D7C
 Win *WinPendingFocus;       // 0x009B7B38
 // Shared current receiver for window callbacks and redraw, not a pointer
 // through which to overwrite the previous receiver's object storage.
 // RECOVERY_OBJECT: v1 0x009B7AB8 ?WinCallbackWindow@@3PAVWin@@A
 Win *WinCallbackWindow;
+// RECOVERY_OBJECT: v1 0x009B7AC4 ?WinInputFocus@@3PAVWin@@A
 Win *WinInputFocus;       // 0x009B7AC4
+// RECOVERY_OBJECT: v1 0x009B7AC8 ?WinActiveWindow@@3PAVWin@@A
 Win *WinActiveWindow;     // 0x009B7AC8
 Win *WinBubbleCompanion;   // 0x009B7A4C
 // RECOVERY_OBJECT: v1 0x009B6630 ?WinZOrderArray@@3PAPAVWin@@A
@@ -861,6 +864,7 @@ RECT WinBubbleRect;        // 0x009B6E38
 // and flip at 5F17DC. Its right member at 9B6EF0 is not a modal result.
 // RECOVERY_OBJECT: v2 0x009B6EE8 0x009B6EF8 ?WinDirtyRect@@3UtagRECT@@A 0x005F1750
 RECT WinDirtyRect;
+// RECOVERY_OBJECT: v1 0x009B7AEC ?WinDefaultFocus@@3PAVWin@@A
 Win *WinDefaultFocus;      // 0x009B7AEC
 // Native6354D0 leaves pitch untouched, including on nonstatic objects.
 // The global instance is separately zero-initialized by C++ static storage.
@@ -944,6 +948,7 @@ void(__cdecl *WinCancelHook)();
 // RECOVERY_OBJECT: v1 0x009B7AA0 ?WinButtonHoverHook@@3P6AXXZA
 void(__cdecl *WinButtonHoverHook)();
 void(__cdecl *WinMouseHook)(HWND window, LPARAM position);  // 0x009B7A94
+// RECOVERY_OBJECT: v1 0x009B7A8C ?WinKeyHook@@3P6AXI@ZA
 void(__cdecl *WinKeyHook)(WPARAM key);                      // 0x009B7A8C
 
 /*
@@ -7490,12 +7495,9 @@ Win *Win::get_key_window() {
     Win *const base_window = window->poWinBase_;
     if (base_window != nullptr) {
         if ((base_window->iSomeFlag_ & 1U) == 0) return nullptr;
-        // Native checks the base window's parent but calls is_visible on the
-        // base window itself. OnChar and OnKey call it on that parent.
-        if (base_window->win_parent_ != nullptr
-            && base_window->is_visible() == 0) {
-            return nullptr;
-        }
+        // 5F6A95 loads base_window->win_parent_; 5F6A9F calls is_visible on it.
+        Win *const parent = base_window->win_parent_;
+        if (parent != nullptr && parent->is_visible() == 0) return nullptr;
     }
     return base_window;
 }

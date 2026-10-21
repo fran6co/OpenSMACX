@@ -1,0 +1,25 @@
+{
+  "event_id": "8153cc66bc4f5b545bac23a916790f3b2ed0c3e18048093a898271bf5da5a44c",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_win_focus_bindings_oct21.py",
+      "recovery/tests/test_win_keyboard_focus_oct9.py",
+      "src/win.cpp"
+    ],
+    "evidence": [
+      "Coordinator-reviewed manual admission under standing faithful-recovery authority, after actual source and independent pinned instruction review. Correct get_key_window to invoke parent visibility after unchanged base/null/flag checks and still return the base. Preserve all five window_proc call sites, focus/modal/input/default selection and publication. This corrects source receiver/read topology, not a claimed stable-state predicate bug: actual is_visible recursively tests parents. The old task/comment/test interpretation is explicitly superseded, not erased.",
+      "Add exactly five native guarded v1 object-start bindings for existing Win globals: modal9B8D7C, input9B7AC4, active9B7AC8, default9B7AEC and keyhook9B7A8C. Complete source-object reader validation and native writer roundtrip pass, no overlap/duplicate bindings or new storage/types. Original pointer accesses are independently decoded; complete allocation bounds, initializers, lifetime, callback target, source TU provenance and linked selection remain unproved.",
+      "Fresh actual Release application builds and links:185C++ TUs,199physical objects. All66focused tests pass without skips/failures, including GCC and Clang actual source routes and four compile-success/runtime-failing receiver/hook mutants. Pinned image tests independently check exact data operands, widths/directions, parent ECX load, base flag/return and all five original window_proc direct call sites. Native claims, mappings and source-reference checks pass;3452historical claims and3461requirements remain with zero missing. No new historical claims, code framework changes or newly implemented originals.",
+      "Known5581identity census retains3355masked matches with no previous exact losses. Strict passes rise2780to2785, unknowns572to567, fails remain3; exactly DiploPop43F290, OnKey5F15C0, OnChar5F1660, OnSysKey5F16D0 and set_def_focus5F2CE0 gain strict passes. get_key_window remains MISMATCH under bothconfigured historical flag sets; no claim is stamped and no extended spelling search or automatic reversion is performed.",
+      "First physical complement remains198pass1fail because actual VC6 C2 inlines get_key_window into all five window_proc paths. Explicit observed-caller scope expansion retains that failed evidence and independently reviews five current grandparent is_visible calls after inlining the parent check, the unchanged handler slots and ultimate visibility target. Projecting only get_key_window and this observed window_proc body gives199of199native object complements pass; ordinary data/startup, init_class and PrevWndFunc references remain verified, not exempted. No complete linked retention, provider, allocation, structure/runtime, game or automatic acceptance is claimed. Require fresh master build/link, host/census checks and zero-body-omission199object reproduction before removing the consumed worker."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "e97e128a6b56c7e3443e8287c71bac2509103cf943be53d8823cec7184007a3d",
+  "request_id": "central-manual-win-focus-admission-oct21g",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:win-keyboard-focus-members-oct9"
+}

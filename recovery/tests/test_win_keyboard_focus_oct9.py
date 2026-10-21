@@ -9,6 +9,7 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "src/win.cpp"
+INPUT_SOURCE = ROOT / "src/win_input.cpp"
 COMPILERS = [path for name in ("g++", "clang++")
              if (path := shutil.which(name)) is not None]
 
@@ -24,12 +25,21 @@ def _body(text, signature):
     raise AssertionError(f"unterminated function {signature}")
 
 
-def _actual_source(text=None):
+def _actual_source(text=None, input_text=None):
     text = SOURCE.read_text() if text is None else text
-    get_key = _body(text, "Win *Win::get_key_window()")
-    on_char = _body(text, "void __cdecl OnChar(void *hwnd, char ch, int flags)")
-    on_key = _body(text, "void __cdecl Win::OnKey(void * hwnd, unsigned int key, long flags, int repeat, unsigned int scan)")
-    on_sys_key = _body(text, "void __cdecl OnSysKey(void *hwnd, unsigned int key, long flags, int repeat,")
+    input_text = INPUT_SOURCE.read_text() if input_text is None else input_text
+    get_key_signature = "Win *Win::get_key_window()"
+    on_char_signature = "void __cdecl OnChar(void *hwnd, char ch, int flags)"
+    on_key_signature = "void __cdecl Win::OnKey(void * hwnd, unsigned int key, long flags, int repeat, unsigned int scan)"
+    on_sys_key_signature = "void __cdecl OnSysKey(void *hwnd, unsigned int key, long flags, int repeat,"
+    assert text.count(get_key_signature) == 1
+    assert input_text.count(on_char_signature) == 1
+    assert input_text.count(on_key_signature) == 1
+    assert input_text.count(on_sys_key_signature) == 1
+    get_key = _body(text, get_key_signature)
+    on_char = _body(input_text, on_char_signature)
+    on_key = _body(input_text, on_key_signature)
+    on_sys_key = _body(input_text, on_sys_key_signature)
     for body in (get_key, on_char, on_key, on_sys_key):
         assert "p_9b" not in body
         assert "reinterpret_cast" not in body
@@ -56,6 +66,7 @@ struct Win {
     long key_flags;
     int key_repeat;
     unsigned int key_scan;
+    // Production is_visible recurses; this stub records only its immediate receiver.
     int is_visible() { ++visible_calls; visible_receiver=this; events[event_count++]=1; return visible; }
     void on_char(char ch, int flags) { ++char_calls; char_value=ch; char_flags=flags; events[event_count++]=2; }
     void on_key(unsigned int key, long flags, int repeat, unsigned int scan) {
@@ -120,9 +131,13 @@ int main() {
 
     // The bit is iSomeFlag_+9C, not the neighboring iFlags_ word.
     clear_globals(); WinFocusWindow=&focus; base.iSomeFlag_=0; base.iFlags_=1;
+    base.win_parent_=&parent; base.visible_calls=parent.visible_calls=0;
     assert(focus.get_key_window()==nullptr);
+    assert(base.visible_calls==0 && parent.visible_calls==0);
     base.iSomeFlag_=1; base.iFlags_=0;
+    base.win_parent_=nullptr;
     assert(focus.get_key_window()==&base);
+    assert(base.visible_calls==0 && parent.visible_calls==0);
 
     // Null inner window suppresses all three dispatches.
     focus.poWinBase_=nullptr; clear_globals(); WinFocusWindow=&focus;
@@ -132,12 +147,13 @@ int main() {
     assert(base.char_calls==before_null_chars && base.key_calls==before_null_keys);
     focus.poWinBase_=&base; base.iSomeFlag_=1;
 
-    // get_key_window checks the parent pointer, but calls visibility on the
-    // base itself. OnChar/OnKey call visibility on the parent itself.
+    // get_key_window and the character/key handlers query the parent.
     base.win_parent_=&parent; base.visible=0; parent.visible=1;
+    base.visible_calls=parent.visible_calls=0;
     clear_globals(); WinFocusWindow=&focus;
-    assert(focus.get_key_window()==nullptr);
-    assert(base.visible_receiver==&base);
+    assert(focus.get_key_window()==&base);
+    assert(WinActiveWindow==&focus && parent.visible_receiver==&parent);
+    assert(parent.visible_calls==1 && base.visible_calls==0);
     int old_chars=base.char_calls, old_keys=base.key_calls;
     OnChar(nullptr, static_cast<char>(0xFE), 0x12345678);
     assert(base.char_calls==old_chars+1 && base.char_value==static_cast<char>(0xFE));
@@ -148,6 +164,9 @@ int main() {
 
     // Parent visibility false suppresses char/key even when base is visible.
     base.visible=1; parent.visible=0;
+    clear_globals(); WinFocusWindow=&focus;
+    assert(focus.get_key_window()==nullptr && WinActiveWindow==&focus);
+    assert(parent.visible_receiver==&parent && base.visible_calls==0);
     old_chars=base.char_calls; old_keys=base.key_calls;
     OnChar(nullptr, 'q', 2); focus.OnKey(nullptr, 11, 3, 4, 5);
     assert(base.char_calls==old_chars && base.key_calls==old_keys);
@@ -197,7 +216,7 @@ int main() {
                             "-Wno-unused-parameter", str(source), "-o", str(binary)],
                            capture_output=True, text=True)
     assert built.returncode == 0, built.stderr
-    ran = subprocess.run([str(binary)], capture_output=True, text=True)
+    ran = subprocess.run([str(binary)], capture_output=True, text=True, check=True)
     assert ran.returncode == 0, ran.stdout + ran.stderr
 
 
@@ -214,11 +233,14 @@ def test_actual_source_mutants_break_receiver_and_hook_controls(tmp_path):
     if compiler is None:
         pytest.skip("host GCC or Clang required")
     text = SOURCE.read_text()
+    input_text = INPUT_SOURCE.read_text()
     mutations = (
-        text.replace("base_window->is_visible() == 0", "base_window->win_parent_->is_visible() == 0", 1),
-        text.replace("if (WinKeyHook != nullptr && flags != 0)", "if (WinKeyHook != nullptr)", 1),
+        (text.replace("parent->is_visible() == 0", "base_window->is_visible() == 0", 1), input_text),
+        (text, input_text.replace("if (WinKeyHook != nullptr && flags != 0)", "if (WinKeyHook != nullptr)", 1)),
     )
-    for index, mutant in enumerate(mutations):
-        assert mutant != text
-        with pytest.raises(AssertionError):
-            _compile_and_run(tmp_path / str(index), _actual_source(mutant), compiler)
+    for compiler_index, mutant_compiler in enumerate(COMPILERS):
+        for index, (mutant, mutant_input) in enumerate(mutations):
+            assert mutant != text or mutant_input != input_text
+            with pytest.raises(subprocess.CalledProcessError):
+                _compile_and_run(tmp_path / str(compiler_index) / str(index),
+                                 _actual_source(mutant, mutant_input), mutant_compiler)
