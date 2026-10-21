@@ -1,0 +1,21 @@
+{
+  "event_id": "03c60d19cbf541aa2e7f0eccdf19227f5ace92c7d924f2d1594447efd8ac0bf0",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_reportif_spot_index_oct21.py"
+    ],
+    "evidence": [
+      "Authorize the one measured increment-result-zero-is-miss body in existing reportif.cpp and one focused actual-source host fixture. Pinned Spot check returns -1 or a bounded nonnegative index; this receiver is initialized with capacity256 and add checks capacity. The original consumer increments the result before its zero branch. No overflow is reachable under that existing receiver contract, and no safety behavior is added.",
+      "Preserve self guard/output store versus ReportIfGlobal singleton effects, source Spot coordinate output aliases, modal owner, report arguments and call ordering. No type/header/layout/symbol/flag change, historical identity/claim edit, baseline reset, new overflow masking or direct-address workaround. This is a cheap original-faithful source restoration, not a bug fix.",
+      "Require tests over miss and hit indices0/255, both modal/report paths and wrong receiver state, with source-extracted body and damage controls. Native local complete target BYTE_EXACT under /Oy-, controls pass and no exact neighbor loses its claim; three unchanged neighboring EH span refusals keep the report incomplete. Fresh source/binary/reference/claim checks, build/link, independent source review and native record are required before manual integration. No automatic/game acceptance is asserted."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "5c4cbbc6859a30f15411b7972f2527f29b2cc661a7f12243ad513893c452adda",
+  "request_id": "reportif-spot-index-actual-source-test-scope-oct21y",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:reportif-source-batch-oct19b"
+}
