@@ -1,0 +1,30 @@
+{
+  "event_id": "10485d246dd9967baed39f4a445971b8cc3b0e1a2d43ea4fb7d28f360d8db8ee",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_probe_actual_source_controls.py",
+      "recovery/tests/test_probe_actual_source_runtime.py",
+      "recovery/tests/test_probe_atrocity_noun_oct21w.py",
+      "recovery/tests/test_probe_captured_faction_owner_oct21w.py",
+      "recovery/tests/test_probe_pact_hood_order_oct21w.py",
+      "src/probe.cpp"
+    ],
+    "evidence": [
+      "User-authorized coordinator-reviewed manual source integration of original Probe behavior. Pinned choice/cleanup pointers+350/+358 and six38-byte strides, corroborated by mon_killed_faction producer, recover records15..20, counterpart word_8_, achieved_ gate/clear. Years/counterpart fields and other records remain untouched by clearing. Existing typed storage is reused; no fabricated table, layout, global, pointer cast or new bounds.",
+      "Restore three original noun/default producers: chooser5A3BED, positive selection slot2 at5A3D26 and actor atrocity notice slot1 at5A409F. Preserve the separate initial-selection adjective. Original cdecl5A4F34 formal order actor then selected response is restored; valid-ID gender result is symmetric but unchecked first/short-circuit read order is not normalized. All surrounding gameplay, selection/error, popup/picture lifetime, parser slots/order and unchecked behavior remain unchanged as source.",
+      "Fresh rebased186TU200COFF build-kga4cfal links and20 focused actual-source controls pass, with GCC/Clang compiled damage witnesses for cohort/fields/gates/clearing/noun/actor/slot/order. Captured fixture preserves all21records of one modeled row; atrocity checks exact markers and bounded14-event prefix; pact instrumentation covers4valid gender pairs. These tests do not establish native ABI, full Probe CFG/SEH/error/UB/actual-game behavior.",
+      "Fresh source claims/mappings/references pass. Native source annotation check passes with fingerprint 38e6d4353aa31d1848d4338e0b00aa393354f76d9920b664b53de03c71670c19. Full5581 verdicts and strict reference results unchanged from verified master:3364exact,2807strictPASS557UNKNOWN. All original metadata/hot+coldspans and historical claims remain; no new identity, claim banking/demotion, implementation-count gain or byte-exact gain.",
+      "Native compiled residual200PASS projects only unique Probe59F120 parent and its3ownedsections. All199other objects compare with no body omissions; Probe317 residual sections/symbols/associations compare unchanged. This is compiled outside-body accounting, not proof of changed parent semantics or complete linked allocation/retention. Independent actual COFF reviews retain changed parent and all linked/runtime/unsafe uncertainty; no fake private identities or expanded waivers.",
+      "The earlier5080 actual-recipe calibration/unchanged/clear-field control is historical only and is not replayed as current evidence. Final source is reviewed against pinned instructions and independently observed current build/tests/residuals. Probe remains REFUSED under complete original EH-region measurement and no whole-body exactness is claimed. Complete original13noun-site source correlation is bounded site analysis, not CFG/caller-closure proof.",
+      "This is a manual bounded source checkpoint, not native automatic/full-game acceptance. Preserve original task baselinecefb36b328faa6f0623ba0d624c8529eaa0f6c35, discoveries and restoration obligations. Fresh destination build/link,20controls, all current verdicts, source checks and200zero-omission candidate reproductions are required before consuming this clean recovery checkout. No deliberate bug fixes, flags/claims/comparator weakening or source work discarded."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "377262fac3ad0759a6850b52a60cb58602479c0bfe6bcfcf962bbb699914e479",
+  "request_id": "central-manual-probe-original-record-and-producer-admission-oct21w",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:probe-action-owner-oct5"
+}
