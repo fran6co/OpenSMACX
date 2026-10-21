@@ -1,0 +1,60 @@
+{
+  "event_id": "93d63fefcea72af489b4b00a056df37f842225e5eed54a6cb8250b2ee575dca1",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/console_commands.cpp",
+      "src/faction.cpp",
+      "src/game.cpp"
+    ],
+    "evidence": [
+      "Freshfullbuild/link build-2r_vnsop and5581identitycensusPASSboundedchecks:3364maskedexactandallverdictsunchanged,strict2807PASS557UNKNOWNunchanged,allclaims/mappings/referencesintact. Nativephysical184PASS15FAIL notwaived. Sevenobservedadditionaloriginalowners requireexactscope: Consoleeditor_natural/new_base; factionsetup_player/propose_attack; gamesave_game/colortables_init_faction/load_interface. TheirCPPsourcebytesunchanged; verificationimpactscope only, no unrelatedsourceedits.",
+      "Independentactualobjectreviews accountfor orderedcalltargetpreservation, boundedload/zero-store reorderings, editor_natural longitude-boundreloadwithnoobservedinloopwriter/callback andidentical589byteEHcleanup/464bytexdatapayloads. Large setup_playerpath-equivalence andasynchronousobservation remainunproven, notphysicalPASS. No header/directive/data/EH blanketexemption, no originalbindinginvented.",
+      "Private tech_trade_handle_dialog_result newhelp_topicE8 iscoupledrealAPIcall under existingoriginaltech_trade541100, matchingpinned541D0B topic0xE/dialogloop path. It hasNOindependentOriginalidentity; do notaliasnativeprojectionmultiplebodiestoonesubject. Keephelpercodeasexplicitreviewedunprojectedresidual, withallotherunknowncode/datarefused. Original27sitecorrespondenceincomplete(25currentwholeobjectcalls), noexactgaingrant/demotion.",
+      "Scopeexpansion recordsactualdiscoveryandreviewresponsibilityonly. FullnativephysicalfailsremainFAIL, allhistoricalrestorationobligations and originaltaskbaseline343ceab037cf0d2ebbb125f70e110eec8192e5a2retained. Admissionpendingboundedmanualdecision/freshdestinationbuildlink/controls/candidatereproduction; notfullgame/autonomousacceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5117136,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5044160,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5967360,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5529216,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4337664,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4544016,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5938864,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "5cb2d69916d6f12094d7d91f8d4cc7df203e15acc433b9993d68fe57c1aabea3",
+  "request_id": "central-observed-datalink-help-compiler-collateral-oct21w",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:owner-datalink-faithful-recovery-oct20y"
+}
