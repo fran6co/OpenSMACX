@@ -11,6 +11,7 @@ import pytest
 ROOT = Path(__file__).resolve().parents[2]
 HEADER = ROOT / "src/faction.h"
 SOURCE = ROOT / "src/faction.cpp"
+NETWORK_SOURCE = ROOT / "src/faction_network.cpp"
 
 EXPECTED = {
     "DiploLabelSendingTREATYON": "Sending TREATY ON",
@@ -96,7 +97,9 @@ int main() {{
 
 
 def test_source_owns_all_live_labels_and_preserves_consumers_and_address_notes():
-    header, source = HEADER.read_text(encoding="utf-8"), SOURCE.read_text(encoding="utf-8")
+    header = HEADER.read_text(encoding="utf-8")
+    source = SOURCE.read_text(encoding="utf-8")
+    network_source = NETWORK_SOURCE.read_text(encoding="utf-8")
     assert definitions(source) == EXPECTED
     for name in EXPECTED:
         assert re.search(r"extern char " + re.escape(name) + r"\[\];", header)
@@ -108,7 +111,7 @@ def test_source_owns_all_live_labels_and_preserves_consumers_and_address_notes()
     assert "0x0068D444" in header and '"Sending TREATY ON"' in header
     assert "0x0068E7A0" in header and "0x0068E7C0" in header
 
-    net_treaty = body(source, "net_treaty_on")
+    net_treaty = body(network_source, "net_treaty_on")
     assert "log_say(DiploLabelSendingTREATYON" in net_treaty
     atrocity = body(source, "major_atrocity")
     assert "DiploLabelMAJORATROCITY" in atrocity

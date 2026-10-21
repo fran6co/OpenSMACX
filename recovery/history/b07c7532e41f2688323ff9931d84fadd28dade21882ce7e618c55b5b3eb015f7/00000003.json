@@ -1,0 +1,23 @@
+{
+  "event_id": "e2d15551c122bff69f68f8550e40b1d131171bff53111063393be5a9d5111710",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/win.cpp",
+      "src/win_coordinates.cpp"
+    ],
+    "evidence": [
+      "Only six coordinate caller bodies moved; XY helpers stay in win.cpp. B restores six exact and changes no retained function signature. A remains rejected after prior exact regression. RECT FILE marker reunited with genuine RECT definition, clearing derived XY extract_error without changing any original identity/claim/history or XY body. Actual source tests include nested parents, flags, null/alias quirks and wrong-receiver/gate mutants.",
+      "Coordinator manual admission after independent source/test reviews and actual combined Release build/link183C++TUs197physicalobjects, unchanged compiler/flags/types/APIs/caller source/storage. Source module responsibility is justified, historical TU partition unproved. Installed recorder verifies all17related bodies with zero refusal; historical obligations preserved with zero new grants/demotion/missing identities. Source union548records139+237+172 retains all metadata/history; Win derived parse-diagnostic improvement explicitly checked, not a missing-identity waiver.",
+      "Fresh actual full5581known-domain production exact3335->3351 solely the16reviewed targets, no previous exact or strict loss. Strict current counts {'fail': 3, 'pass': 2780, 'unknown': 568}. Full physical residual passes194preexistingobjects, projecting exactly17moved+11knownretainedbodies. Three new TUs contain17moveddefinitions and77existingheaderdefinitions, no new startup/data/nonduplicatecode; all moved match controlled proposal output and all headers preserve baseline code/namedrefs/signatures. Existing MEASURED/export duplication unchanged, not endorsed historical policy; defined-to-external data edges remain full linked selection/provider obligations.",
+      "Scoped candidate host21passed0failed0skipped; existing baseline10passed. Native claims/mappings/references pass. No framework/library code change and no new function-implementation coverage. Full game/automatic/linked-selection/structure/runtime acceptance remains unproven. Slow standalone author source sweep was interrupted, never counted passing. Require fresh destination actual build, all197physicalobject zero-omission reproduction, relevant hostchecks and final per-identity comparison. Preserve discarded-alternative source evidence and useful tests before cleanup."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "ef6be816a9d47e1d6af02c743770370b50b0d6e3fb8f6ff995ac3474e4d46374",
+  "request_id": "central-three-owners-manual-admission-oct21e-wide-win-source-decks-oct20n",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:wide-win-source-decks-oct20n"
+}

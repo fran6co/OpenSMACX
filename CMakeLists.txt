@@ -153,6 +153,7 @@ set(OPENSMACX_SOURCES
     src/dialog.cpp
     src/dialogs.cpp
     src/faction.cpp
+    src/faction_network.cpp
     src/famewin.cpp
     src/filemap.cpp
     src/flatbutton.cpp
@@ -282,10 +283,12 @@ set(OPENSMACX_SOURCES
     src/timer_messages.cpp
     src/enemy.cpp
     src/veh.cpp
+    src/vehicle_strategy.cpp
     src/vehicle_orders.cpp
     src/vehicle_cost.cpp
     src/vector.cpp
     src/win.cpp
+    src/win_coordinates.cpp
     src/win_reparent.cpp
     src/winnodelist.cpp
 )
@@ -411,6 +414,7 @@ set_source_files_properties(
     src/territory.cpp
     src/world.cpp
     src/faction.cpp
+    src/faction_network.cpp
     src/veh.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Preserve the mapped frame-based vehicle owners after their source split.
@@ -419,6 +423,7 @@ set_source_files_properties(
 set_source_files_properties(
     src/vehicle_cost.cpp
     src/vehicle_orders.cpp
+    src/vehicle_strategy.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Preserve original frame-based accesses in the remaining application owners.
 # Keep all other source recipes on their independently measured defaults.

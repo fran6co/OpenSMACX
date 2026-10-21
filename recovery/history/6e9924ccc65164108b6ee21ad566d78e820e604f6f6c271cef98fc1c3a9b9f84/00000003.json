@@ -1,0 +1,23 @@
+{
+  "event_id": "9bbce06266e14c95b3a4448bc9d164f8c7d6f45cf7fab9ef88b61b670b73376d",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/faction.cpp",
+      "src/faction_network.cpp"
+    ],
+    "evidence": [
+      "Six whole annotated treaty/agenda wrappers moved verbatim, labels/storage remain source-owned in faction.cpp. Five restored exact, net_treaty_on preserved; five retained caller output changes explicit. Standard GPL notice copied; trailing blank cleaned. Actual-source tests preserve local/network/wait/log/message behavior and meaningful mutants.",
+      "Coordinator manual admission after independent source/test reviews and actual combined Release build/link183C++TUs197physicalobjects, unchanged compiler/flags/types/APIs/caller source/storage. Source module responsibility is justified, historical TU partition unproved. Installed recorder verifies all17related bodies with zero refusal; historical obligations preserved with zero new grants/demotion/missing identities. Source union548records139+237+172 retains all metadata/history; Win derived parse-diagnostic improvement explicitly checked, not a missing-identity waiver.",
+      "Fresh actual full5581known-domain production exact3335->3351 solely the16reviewed targets, no previous exact or strict loss. Strict current counts {'fail': 3, 'pass': 2780, 'unknown': 568}. Full physical residual passes194preexistingobjects, projecting exactly17moved+11knownretainedbodies. Three new TUs contain17moveddefinitions and77existingheaderdefinitions, no new startup/data/nonduplicatecode; all moved match controlled proposal output and all headers preserve baseline code/namedrefs/signatures. Existing MEASURED/export duplication unchanged, not endorsed historical policy; defined-to-external data edges remain full linked selection/provider obligations.",
+      "Scoped candidate host21passed0failed0skipped; existing baseline10passed. Native claims/mappings/references pass. No framework/library code change and no new function-implementation coverage. Full game/automatic/linked-selection/structure/runtime acceptance remains unproven. Slow standalone author source sweep was interrupted, never counted passing. Require fresh destination actual build, all197physicalobject zero-omission reproduction, relevant hostchecks and final per-identity comparison. Preserve discarded-alternative source evidence and useful tests before cleanup."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "44e1f2e334cb5d754bf92ac9e5b3895c0e67eeb103b55f18dc86a64f4c01524f",
+  "request_id": "central-three-owners-manual-admission-oct21e-wide-faction-source-decks-oct20n",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:wide-faction-source-decks-oct20n"
+}
