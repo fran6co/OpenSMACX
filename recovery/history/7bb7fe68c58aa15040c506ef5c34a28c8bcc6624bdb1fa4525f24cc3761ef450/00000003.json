@@ -1,0 +1,22 @@
+{
+  "event_id": "1cb2e8fa8394480987e1916bedee53e2a536368ee3597bf29babf5b881074ccd",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_game_data_format_state.py"
+    ],
+    "evidence": [
+      "Authorize changes only in game_data and its existing private player/header helpers in src/game.cpp, plus existing actual-source serializer fixture/tests and new focused format-state controls. All other previously editable files stay untouched in this step; scope is additive, not reset. Preserve original task baseline40725aaf50b3659421723f57832aab695d352563 and every identity/span/claim/history.",
+      "Pinned initial header+304 test5A6B17 selects398-byte current transfer versus31C-byte legacy copy/migration. Subsequent12format reads use mapped state9A6810 atGameDataStateStorage+380, not the captured header field. Current-format transfers may supply another value; optional encrypted398-byte retransfer precedes native reread5A6E51. Legacy final10DWORD migration5A6C08 DOES copy header+304 tostate+380; never assert prior-live retention after migration.",
+      "Recover exact original reload/capture intervals, including the separate player gates5A6E51/5A7252 and bounded vehicle/prototype/base intervals. Do not blindly replace every condition with a fresh read or cache one format value across transfers. No field/type/layout rename, flags, forced inline/frame padding or initialization of the original header. Preserve partial reads, allocation/error/leak and malformed-input quirks.",
+      "Fixture must model header selector and live state independently, preserving legacy migration equality. Add differing current-state values, encrypted second transfer mutation, threshold boundaries, short-read/failure and compile-success wrong-header/stale-global negative controls. Extend only evidenced correspondence; preserve existing tests and document bounded limitations. Require production-recipe replica/damage, independent source/compiled review, full build/link and relevant identity/reference/matching observations before manual integration. Existing runtime crash is not preclaimed fixed."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "2c214a095ea6e9d00f845d8494e532621534439d986b6abfbf288ee4370baa33",
+  "request_id": "serializer-live-format-source-controls-oct21ze",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:serializer-complete-owner-oct6"
+}
