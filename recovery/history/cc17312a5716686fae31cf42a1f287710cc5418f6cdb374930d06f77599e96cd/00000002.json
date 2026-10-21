@@ -1,0 +1,21 @@
+{
+  "event_id": "8cd248e53d0cb8e03e526a6bac39e92dc2b1da75dc8324036040fb511fd49773",
+  "payload": {
+    "affects": [
+      "entity-2914147df5411dbd1fcc54268e11c5bd624a8b28a5c476ff2628daafb378ecf2"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "save-daemon-original-tick-local-oct21zd",
+    "evidence": [
+      "Pinned5A951D stores GetTickCount toEBP-4;5A968B passes that same object to fwrite. Current source manufactured tick_word after game_data. Four actual-recipe compiler calls with replay/replica/damage controls support only the direct-object correction; no flag or forced-stack changes.",
+      "Independent source/test and compiled-collateral reviews completed.26focused host cases pass including seven DWORD values, callback mutation and six compile-success negative witnesses. Fresh187TU201COFF build/link, claims, mappings, references and annotation integrity pass. Expanded scope covers the observed unchanged-source end_of_game pair of reordered independent loads; zero-omission200PASS1FAIL, two-owner projected201PASS. save_daemon remainsMISMATCH, known5581verdicts and strict2819PASS548UNKNOWN unchanged."
+    ],
+    "hypothesis": "Use the captured DWORD tick object directly for the final four-byte write, rather than synthesizing a second signed local.",
+    "kind": "discovery"
+  },
+  "previous_event": "349c338668f9caf826f5fab541c0f361748f8830aad5a2a16b338927f321734e",
+  "request_id": "save-daemon-original-tick-local-oct21zd",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:save-daemon-owner-oct5"
+}

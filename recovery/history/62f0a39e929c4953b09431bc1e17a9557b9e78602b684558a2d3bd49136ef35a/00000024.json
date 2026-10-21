@@ -1,0 +1,21 @@
+{
+  "event_id": "7ea19f8ea2813f7fe88c6c196ab59f4d10d923f069a2f0b04c98fdc4b11560d0",
+  "payload": {
+    "affects": [
+      "entity-219cd0e2899423dd0c9bdcd0718b1406f9eccf7f28df77221b51278212dbc055"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "game-data-live-format-state-conflation-oct21zd",
+    "evidence": [
+      "Independent full-span audit finds the original header slotEBP-70 read only at5A6B17, while12later gates read9A6810, the mapped GameDataStateStorage.fields_.save_daemon_state_word_. Current source wrongly reuses header.version_ for subsequent thresholds and helper arguments. Current398-byte transfers can replace the live word, including a second encrypted-state transfer before native5A6E51 reread.",
+      "Keep pending for a separately reviewed source/fixture correction in the existing serializer owner. Preserve first-header indeterminacy and native capture/reload intervals; do not initialize the header, substitute a cached global version or normalize malformed/error paths. Existing fixture conflates header/state selectors and must gain deliberately distinct values, transfer mutation and threshold/negative controls before recovery adoption."
+    ],
+    "hypothesis": "Separate the initial legacy-header selector from subsequent live-state format tests in game_data.",
+    "kind": "discovery"
+  },
+  "previous_event": "2d40a470ea0bc121d91382bffb6ad966916d6c9d7df2db01ff731c39419ccb0e",
+  "request_id": "game-data-live-format-state-conflation-oct21zd",
+  "schema_version": 1,
+  "sequence": 24,
+  "stream": "task:game-save-load-owner-coverage"
+}
