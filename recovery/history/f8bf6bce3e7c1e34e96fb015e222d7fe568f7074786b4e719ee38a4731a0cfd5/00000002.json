@@ -1,0 +1,23 @@
+{
+  "event_id": "b1412f9ca8cda1e83039c769e664ffba034fe347f781b71cb39ffad93f2cbeca",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_mapwin_bases_only_actual_source.py",
+      "src/mapwin.cpp"
+    ],
+    "evidence": [
+      "Coordinator admits this bounded faithful-source checkpoint under standing manual recovery permission: Recover original469B40 repeated row-bound loads after each completed row and draw_bases call, using existing wrapping-add interpretation. Preserve initial signed bound, row parity, single cylindrical wrap, tile predicates, transform-before-draw and faction/vertical-offset arguments. Source and whole-span independent review support the correction; host controls include growing/shrinking callback bounds and a compile-success frozen-bound mutant.",
+      "Fresh actual185TU/199object application build/link, whole known5581identity census and strict reference-aware observations, actual-command replay/unchanged-overlay controls, full199compiled complement with only selected actual source-mapped bodies projected, and source claims/mappings/references continuity pass their bounded checks. Known current exact/strict outcomes unchanged; no new implementation identity, historical claim, exact gain or loss. All historical obligations and original task baseline retained.",
+      "Actual-source host controls and independent original/C++ review completed; cached current host report host-tests.xml has 117 distinct passed cases with zero skips/failures. Texture initial8staleharnessfailures remain cached; existing controls were adapted without weaker expectations, and560 entry-store omission blind spot corrected after fullbuild terminal with production C++ unchanged. Build-input receipts remain authoritative for their C++ snapshots, not obsolete test hashes.",
+      "This is coordinator-reviewed manual integration only. Full linked retained-selection/allocation/provider, complete original function enumeration, structure/runtime, gameplay and autonomous acceptance remain unfinished. Three existing strict failures and earlier DDInit unmapped-destructor native limitation remain recorded. Fresh combined destination build/link, relevant host/source checks, census/strict and zero-omission199object reproduction required before consumed worker cleanup; no native automatic refusal is waived."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "7736092266ba634001f0bcc98928a2c171d8816c9541a2f4bc8eddf304985d7f",
+  "request_id": "central-manual-mapwin-fidelity-admission-oct21j",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:owner-mapwin-body-recovery-oct20ao"
+}

@@ -1,0 +1,23 @@
+{
+  "event_id": "7736092266ba634001f0bcc98928a2c171d8816c9541a2f4bc8eddf304985d7f",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_mapwin_bases_only_actual_source.py",
+      "src/mapwin.cpp"
+    ],
+    "evidence": [
+      "Standing coordinator-reviewed manual recovery authority: restore MapWin gen_bases_only(469B40..469C9F) original live row-bound rereads at each outer loop tail following draw_bases calls. Full-span evidence is cached under parallel-match-oct21j/mapwin/gen-bases-dynamic-row-bound.md; current C++ caches this sum once at entry.",
+      "Authorize only this body plus the named new actual-source host control. Use existing x86 wrapping-add interpretation for the row-bound sum; retain all other original branches, map wrapping, tile predicates, argument evaluation, faction selection and call order. No safety fixes, guessed types/ownership, source mappings/history/claim changes, flags, baseline resets, or acceptance waivers.",
+      "Author uses isolated apply_patch edits and explicit host tests only. The new test must distinguish live growth and shrinkage across draw_bases callbacks, initial nonpositive/wrapping bounds and existing row parity, predicates and argument order, with a compile-success frozen-bound mutant. Host doubles are bounded control evidence, not proof the real draw callback mutates dimensions or game acceptance.",
+      "Coordinator reviews original paths and actual C++, leases compiler verification separately, measures full mapped TU and physical outside-body residuals, requires compiling/linking closure, continuity/reference checks and fresh destination rechecks before manual integration. No Git/task/native compiler/preparation authority delegated to author."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "central-mapwin-live-row-bound-oct21j",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:owner-mapwin-body-recovery-oct20ao"
+}
