@@ -1863,7 +1863,7 @@ void __cdecl reset_territory() {
 Purpose: Determine whether the turn currently belongs to another faction in a
          networked game, which is what gates local input.
 // ORIGINAL: 0x0052DC70 ?not_my_turn@@YAHXZ 0x0052DC70-0x0052DC9C BYTE_EXACT
-// body      src/game.h
+// body      src/game.cpp
 // size      44 bytes
 // prototype
 // callers   8   call targets   0
@@ -1874,10 +1874,23 @@ Return Value: TRUE only in a net game that is handing the turn around and whose
               active faction is not the local one
 Status: Complete
 */
-// BODY IN game.h, as `MEASURED inline`: the image writes it out at
-// some call sites and calls it at others, and a .cpp definition is only ever
-// one of those. The marker stays here because that is where the catalogue
-// reads it.
+// HISTORICAL: BODY IN game.h, as `MEASURED inline`: the image writes it out at
+// HISTORICAL: some call sites and calls it at others, and a .cpp definition is only ever
+// HISTORICAL: one of those. The marker stays here because that is where the catalogue
+// HISTORICAL: reads it.
+BOOL __cdecl not_my_turn() {
+    // Both guards return before the comparison, so a non-net game and a net
+    // game that is not currently passing the turn are both "my turn".
+    if (!IsMultiplayerNet) {
+        return false;
+    }
+    if (!(GameDataStateStorage.fields_.net_turn_flags_ & 0x10)) {
+        return false;
+    }
+    // `cmp ecx, edx` / `setne al`: the result is the inequality itself, not a
+    // normalised flag, and the faction identity is what decides it.
+    return GameDataStateStorage.fields_.net_turn_faction_ != ConsoleGlobal.faction_id_;
+}
 
 
 /*

@@ -1,0 +1,20 @@
+{
+  "event_id": "7329bf00e74a4862f2a2422999d779bc886487406680db78fb698d72c75f0365",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/console_commands.cpp"
+    ],
+    "evidence": [
+      "Actual production /O2 /Ob2 finite replay/unchanged and unique predicate-bit damage controls PASS in game.cpp/console.cpp/console_commands.cpp. Existing predicate remains15/15BYTE_EXACT, source-unchangedConsole::skip restores28/28BYTE_EXACT from11/28; ten named directE8calls restoredacrosseightConsoleowners. This restores anexistinghistoricalclaim, grantsnone. Fullbuild/link/headerclosure/physicalresidual/retainedselection remainpending; nointegration/admission.",
+      "Authorize only the obsolete two-line Console::skip seedwarning comment to become explicitlyhistorical and point to the ordinary game.cpp predicate ownership. Caller body/signature/Original/claim/binding unchanged; priorwarning preservedashistory. Freeze this reviewed3filebodymove and readerpathupdate asan unadmittedsourcecheckpoint beforefullcurrentapplicationverification. Originaltaskbaseline retained; no flags/wrappers/algorithm or unsafe-pathchanges."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "446bc6f9f5882e67f4ad7c54ce869711ebad1ebd2be83bb7040a8cc344822a83",
+  "request_id": "central-turn-predicate-measured-source-checkpoint-oct21v",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:owner-game-body-recovery-oct20ao"
+}

@@ -424,19 +424,7 @@ inline GraphicWin *&opening_window() {
 }
 int __cdecl init_opening(const char *filename);
 
-MEASURED inline BOOL __cdecl not_my_turn() {
-    // Both guards return before the comparison, so a non-net game and a net
-    // game that is not currently passing the turn are both "my turn".
-    if (!IsMultiplayerNet) {
-        return false;
-    }
-    if (!(GameDataStateStorage.fields_.net_turn_flags_ & 0x10)) {
-        return false;
-    }
-    // `cmp ecx, edx` / `setne al`: the result is the inequality itself, not a
-    // normalised flag, and the faction identity is what decides it.
-    return GameDataStateStorage.fields_.net_turn_faction_ != ConsoleGlobal.faction_id_;
-}
+MEASURED BOOL __cdecl not_my_turn();
 
 MEASURED inline uint32_t __cdecl game_year(int turn) {
     return ScenarioSave.starting_mission_year + turn;
