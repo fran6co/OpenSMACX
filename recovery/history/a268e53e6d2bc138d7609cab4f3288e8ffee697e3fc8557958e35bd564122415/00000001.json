@@ -1,0 +1,31 @@
+{
+  "event_id": "22c6b97158cbb890427fc3919be8caa9df4066839304c54270c25009baa8046c",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_probe_captured_faction_owner_oct21w.py",
+      "src/probe.cpp"
+    ],
+    "evidence": [
+      "Act immediately on source/call audit plus structural dataflow. Original choice-list pointer is FactionMonuments[target]+350, records_[15].word_8_, not record0.year_. Six iterations stride38 over records15..20, gate at pointer+8 is achieved_. Cleanup starts at+358 achieved_, compares preceding word_8_ to selected faction, clears achieved_. Native owner base94CA08, faction stride4F4, record38; mon_killed_faction independently produces same last-six records with year_=game_year,word_8_=counterpart,achieved_=1. This is a real wrong cohort/field interpretation, not permission to rename year globally or invent another table.",
+      "Authorize only three existing helper regions under complete originalprobe59F120 hot/cold identity: probe_native_monument_choice_list scans15..20, gates achieved_, gets counterpart ID fromword_8_, uses that ID for title/name/noun and popup.item; probe_native_clear_monument_choice_word scans samecohort, comparesword_8_ and clearsachieved_; probe_native_commit_monument_choice uses get_noun(selected_faction_id) in post-selection parser slot2. Keep initial-selection slot1 adjective unchanged unless separate evidence arises. Getter at5A3BED is noun then says, and5A3D26 is noun then parse_says2; preserve both grammar-default effects.",
+      "Keep full Popup/ownedSprite lifetime, image selection, six-record iteration, list ordering, negative selection exit, selectedfaction/actor/target directions, vehicle release/setup, flags/net/research/accounting, all original error/unsafe/unchecked paths unchanged. No guards, initialization fixes, rawaddresses, offset casts, new global/storage/header/type/layout or compiler changes. Keep original annotations/claims/spans/binding/history; no new Original for private helpers. Essential source comments may correct former field/cohort hypothesis with independently traced original anchor; not run logs.",
+      "Author ONLY probe.cpp and new focused actual-source hosttest. No sharedfaction/gameheaders, task/Git/prep/nativecompiler operations. Use absolute apply_patch paths. Native setup checkout-only preserves originaltaskbaseline; installed root uv project may drive host pytest against absolute worker test paths. No borrowed build/Wine prefix. Existing sourcecontrol/runtime/fixture files stay unchanged for now; report any impacted expectations for coordinator review rather than silently editing them.",
+      "Controls must use actual production helper code and distinguish records0..5 from15..20, years from counterpart IDs, achieved_ from word_8_, duplicate matching counterpart entries and unachieved rows, plus noun/adjective strings and grammar defaults/parser slots/order. Verify only achieved_ is cleared in the last-six cohort; years/counterparts/other records untouched. Cover list and positive/negative selection paths where feasible; compile-success cohort/gate/ID/clear/producer mutations must be detected under GCC and Clang C++98. Fixtures are bounded, not full Probe/VC6/game proof.",
+      "Factions branch is separately frozen/currently built and will not editprobe.cpp during this authoring epoch. Its broad Probe verificationimpact scope is not an active author reservation; this explicit coordinator split gives Probe author sole current sourcewrites toprobe.cpp/test. Shared header changes stay in Faction owner; later serial rebase/integration and fresh native verification coordinate both branches without discarding prior work or resetting baselines. No automatic or full-game acceptance granted."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5894432,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "central-probe-captured-faction-record-cohort-and-nouns-oct21w",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:probe-action-owner-oct5"
+}
