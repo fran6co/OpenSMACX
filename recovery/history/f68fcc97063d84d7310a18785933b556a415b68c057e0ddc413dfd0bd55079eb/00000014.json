@@ -1,0 +1,303 @@
+{
+  "event_id": "e3e1366fc416e41b2a73d62d0a8b3dcf6b2383dc03c8c551f959b621e312205f",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/base.cpp",
+      "src/console_commands.cpp",
+      "src/faction.cpp",
+      "src/faction_strategy.cpp",
+      "src/game.cpp",
+      "src/map.cpp",
+      "src/netdaemon.cpp",
+      "src/newgame.cpp",
+      "src/path.cpp",
+      "src/picktech.cpp",
+      "src/prefwin.cpp",
+      "src/probe.cpp",
+      "src/reportwin.cpp",
+      "src/socialwin.cpp",
+      "src/technology.cpp",
+      "src/technology_queries.cpp",
+      "src/terraforming.cpp",
+      "src/territory.cpp",
+      "src/tutwin.cpp",
+      "src/veh.cpp"
+    ],
+    "evidence": [
+      "Final source43fae8f8 fresh186TU200COFFbuild-je6adpg4 links,41 focused actual-source cases pass,claims/mappings/references PASS. All5581verdicts identical to master8fa:3364exact,strict2807PASS557UNKNOWN. Nativecheck-source388files5646annotationsPASS fingerprintfaef19b128b9b3bcf403d57469cce41251ec016db29864a1f41e86b891b523f1. These are bounded observations, not full game or preservation acceptance.",
+      "Actual current physical comparison112PASS87FAIL remains unwaived; all87 include directive differences,20also code/data/associations. Authoritative native impact now records52 mapped changed codeowners including41additional subjects. Impact-only scope does not authorize workers to edit unrelatedowners; central source authoring remains original bounded helper/consumer set. Exact owner list: 00455610 ?load_interface@@YAXH@Z src/game.cpp; 00486510 ?pick@PickTech@@QAEHHHHPAD@Z src/picktech.cpp; 0048D840 ?init@PrefWin@@QAEXXZ src/prefwin.cpp; 0049D540 ?draw_ops@ReportWin@@QAEXXZ src/reportwin.cpp; 004A0260 ?sat_attack@@YAXHHH@Z src/reportwin.cpp; 004A08E0 ?draw_security@ReportWin@@QAEXXZ src/reportwin.cpp; 004AEF10 ?exit@SocialWin@@QAEXXZ src/socialwin.cpp; 004AFB60 ?draw_info@SocialWin@@QAEXXZ src/socialwin.cpp; 004BC6E0 ?tour@TutWin@@QAEXXZ src/tutwin.cpp; 004C9420 ?terraform_cost@@YAHHHH@Z src/terraforming.cpp; 004CE790 ?action_fungal@@YAXHHH@Z src/veh.cpp; 004CEDE0 ?action_give@@YAXHH@Z src/veh.cpp; 004CF7C0 ?new_base@Console@@QAEXH@Z src/console_commands.cpp; 004D61A0 ?go_to@Console@@QAEXHHH@Z src/console_commands.cpp; 004DD1B0 ?custom_my_faction@Console@@QAEXXZ src/console_commands.cpp; 004E14D0 ?editor_natural@Console@@QAEXH@Z src/console_commands.cpp; 004E3D50 ?base_find@@YAHHHHHHH@Z src/base.cpp; 004E3EF0 ?whose_territory@@YAHHHHPAHH@Z src/territory.cpp; 004E5250 ?base_kill@@YAXH@Z src/base.cpp; 004E5FE0 ?base_reset@@YAXHH@Z src/base.cpp; 004F81A0 ?base_build@@YAHHPAH00@Z src/base.cpp; 00506490 ?invasions@@YAXH@Z src/veh.cpp; 0051F200 ?wait_loop@@YAXXZ src/faction.cpp; 00524870 ?end_of_game@@YAHH@Z src/game.cpp; 005275B0 ?control_turn@@YAXXZ src/game.cpp; 0052A2E0 ?net_control_turn@@YAXXZ src/game.cpp; 00534400 ?process_message@NetDaemon@@QAEXPADKH@Z src/netdaemon.cpp; 0054B1C0 ?battle_plans@@YAXHH@Z src/faction.cpp; 00558C60 ?commlink_attempt@@YAXH@Z src/faction.cpp; 0055C430 ?comm_check@@YAXHH@Z src/faction.cpp; 0055F930 ?enemy_diplomacy@@YAXH@Z src/faction.cpp; 00560B30 ?garrison_check@@YAHH@Z src/base.cpp; 00561080 ?enemy_strategy@@YAXH@Z src/faction_strategy.cpp; 0057A660 ?goody_box@@YAHHH@Z src/veh.cpp; 0058C2A0 ?custom_planet@@YAHHH@Z src/newgame.cpp; 0058D6B0 ?map_menu@@YAHH@Z src/newgame.cpp; 00593830 ?quick_zoc@@YAXHHHHHPAH0@Z src/map.cpp; 005947C0 ?order_veh@@YAHHHH@Z src/veh.cpp; 0059A370 ?zoc_path@Path@@QAEHHHH@Z src/path.cpp; 0059A530 ?find@Path@@QAEHHHHHHHHH@Z src/path.cpp; 0059BC10 ?move@Path@@QAEHHH@Z src/path.cpp; 0059CCA0 ?sensors@Path@@QAEHHPAH0@Z src/path.cpp; 0059F120 ?probe@@YAHHHHH@Z src/probe.cpp; 005A6AC0 ?game_data@@YAHPAU_iobuf@@H@Z src/game.cpp; 005B0E00 ?setup_player@@YAHHHH@Z src/faction.cpp; 005B3380 ?eliminate_player@@YAHHH@Z src/faction.cpp; 005B5EA0 ?want_to_wake@@YAHHHH@Z src/veh.cpp; 005BB000 ?tech_achieved@@YAXHHHH@Z src/technology.cpp; 005BCBE0 ?tech_val@@YAHHHH@Z src/technology_queries.cpp; 005C89F0 ?zoc_any@@YAHHHH@Z src/map.cpp; 005C8AC0 ?zoc_veh@@YAHHHH@Z src/map.cpp; 005C8BA0 ?zoc_sea@@YAHHHH@Z src/map.cpp",
+      "Private residuals remain unprojected: removed communicate_imul_high_sar belongs to moved communicate54FFD0; netdaemon_handle_table_h belongs to process_message534400; probe_native_selector2_notice belongs to probe59F120; fivebattle_fight private contributions belong to battle_fight506A60 pending source ownership confirmation. Do not fabricate original identities or project a parent twice. Literal relocation/data/EH/metadata/directive differences remain separate unwaived obligations.",
+      "Two branches have coordinated source ownership: Faction owns sharedfactionheader changes and originalconsumer edits; Probe worker solely owns its newprobe.cpp/capturedrecord edits. Verificationimpact expansion is not competing author reservation or permission to absorb Probe pending source. Later rebase/full build coordinates actual shared-header effects without resetting either originaltaskbaseline.",
+      "Userauthorizedmanualcoordinatorreview only after actual final source/COFF review; largePickTech/editor-natural/render/EH/ordinary-helpercollateral and newTUallocation/retainedselection/runtime proof are not inferred from unchanged source/counts. No comparator/flags/claims/taskbaseline weakening. This scope step itself does not admit or accept the change."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4544016,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4744464,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4773952,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4838720,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4850272,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4851936,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4910864,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4914016,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4966112,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5018656,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5040016,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5041632,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5044160,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5071264,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5099952,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5117136,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5127504,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5127920,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5132880,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5136352,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5210528,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5268624,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5370368,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5392496,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5404080,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5415648,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5456896,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5550528,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5606496,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5620784,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5634352,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5638960,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5640320,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5744224,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5816992,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5822128,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5847088,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5851072,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5874544,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5874992,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5880848,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5885088,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5894432,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5925568,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5967360,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5976960,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5988000,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6008832,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6015968,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6064624,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6064832,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6065056,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "1a14e6d9b0fb6841c2e7f5cc4497fac6da18ded2633825a5ed6f934bd89b6841",
+  "request_id": "central-faction-final-compiled-owner-impact-oct21w",
+  "schema_version": 1,
+  "sequence": 14,
+  "stream": "task:owner-faction-body-recovery-oct20ao"
+}
