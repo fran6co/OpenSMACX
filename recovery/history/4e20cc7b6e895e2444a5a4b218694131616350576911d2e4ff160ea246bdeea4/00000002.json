@@ -1,0 +1,22 @@
+{
+  "event_id": "22e836a0f351064f4e3d97a75bd5cb8c53419c8163eb286698ea6e60fb055c92",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_win_palette_hdc_owner_oct9.py",
+      "src/win.cpp"
+    ],
+    "evidence": [
+      "Standing faithful-source/manual-recovery permission; HDCcandidate5F2AC0 already independently reviewed and measured108/108actualrecipeexact. Only selectedbody changes: retain originalHDC value for nulltests, keep drawing/release sharedglobal rereads, refcount/errorquirks and uninitializedLOGPEN.y. Existing owner baseline and historicalobligations stay intact. No otherproductionbody/header/type/ABI/flags/binding edits permitted.",
+      "Three related hostfiles on exactcandidate yielded4passes2compilefailures; bothfailures are unrelatedOnQueryNewPalette fixture modelling PaletteInitialized asint while actualsource palette.h/palette.cpp defineHPALETTE and SDK SelectPalette expects HPALETTE. Author may correct ONLY that fixture globaltype and add a typednonnullhandle plus observedSelectPaletteargument assertion; preserve every existingcase/callback/refcount/return assertion. No productionpalettechange, permissiveconversion, removedassertion or skippedtest.",
+      "Coordinator owns Git, nativecompiler/preparation/recording, full application build/link, claims/mappings/references, fullcensus/strict and compiledcomplements and destinationreproduction. Native record alone can bank measuredclaim. Source/test review and host controls remain bounded, not full linkedselection/structure/runtime/game/autonomous acceptance. Other immutable experiments stay source-independent until separatelyreviewed."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "3d66eb8416d9a98dd434a5e26ed6e81f21e3293d85787b638b9ccea80f067164",
+  "request_id": "central-win-hdc-palette-fixture-oct21n",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:owner-win-body-recovery-oct20ao"
+}
