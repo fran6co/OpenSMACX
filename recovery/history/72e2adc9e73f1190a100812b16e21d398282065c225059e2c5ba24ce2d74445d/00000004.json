@@ -1,0 +1,21 @@
+{
+  "event_id": "bb4a77cc15897394557fa3b891363fcf24549df472cf5512b1bd6953cc61851d",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "tu-local-ordinary-object-reference-resolution-oct21y",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Generic native resolver admits only existing unbounded direct source-owned local data starts, separately keyed by TU and exact physical static symbol. Unique ordinary non-COMDAT/nonassociative data, no weak/common/undefined/code/aux/section/duplicate fallback. Malformed maps refuse; invalid explicit local bindings suppress global or section fallback. No local target is exported into global, generated, shared or initializer namespaces.",
+      "Fresh VC6 application build/link186TU200COFF passes; zero omitted bodies/sections physical comparison200PASS against build-r7y0rilt. All game source/compiler settings and original mappings/claims unchanged.212focused tests pass. Full23911case package/project run is RED:6232failures463errors. Its only two package failures reproduce on unchanged master with forced parse cache and both pass on master/candidate without that override;11411other package cases pass. Project failures include tmpfs quota, missing worker image and historical fixtures and are not fully triaged. This manual bounded decision does not waive or label the full suite green.",
+      "All5581masked verdicts unchanged,3364exact; strict2817PASS547UNKNOWN0FAIL, ten previousUNKNOWN bodies nowPASS and132reference edges resolved. Independent fresh-object/pinned-operand reviews confirm seven Ambience, two Game and one Popup improvement. Start witnesses do not prove aggregate extent, initialization, lifetime or retained-link selection.",
+      "Claims/mappings/references and annotation integrity388files5646records9rules0fail pass, fingerprint706dea449a22b2a3ae68e822f77445140518bd887a834d92cb5782e2bcba9478. No newly implemented game function, byte claim banking/demotion or automatic/full-game acceptance. Existing discoveries, historical obligations and original task baselineb295f3093b62e44258f0613f461fa2b0e48626ebremain.",
+      "User-authorized manual bounded integration of the demonstrated verification blocker. Destination fresh build/link, focused regressions, complete census/reference observation, annotation check and200zero-omission candidate reproductions remain required before consuming the clean merged worker. Review hashes and detailed observations are disposable ignored caches, not acceptance reports."
+    ]
+  },
+  "previous_event": "68a8e6771f582b8bcf327be6ae9d1b4dfae62db3e7d3298d0575948fce8699f4",
+  "request_id": "tu-local-ordinary-object-reference-resolution-oct21y-manual-incorporation",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:ambience-faction-art-owner-oct5"
+}
