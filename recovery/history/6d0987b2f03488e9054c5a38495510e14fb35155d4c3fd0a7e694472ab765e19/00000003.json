@@ -1,0 +1,73 @@
+{
+  "event_id": "446bc6f9f5882e67f4ad7c54ce869711ebad1ebd2be83bb7040a8cc344822a83",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_turn_predicate_boundary_oct21v.py",
+      "src/console.cpp",
+      "src/console_commands.cpp",
+      "src/game.cpp",
+      "src/game.h"
+    ],
+    "evidence": [
+      "Coordinate original-faithful global turn-predicate definition and Console input callers as one bounded ownership group. not_my_turn52DC70 already has canonicalgame.cpp marker and historicalBYTE_EXACTclaim, but bodyfactnamesgame.h and allcurrentforeigncallersinline it. Preserve everyOriginalidentity/span/claim/lesson and originaltaskbaselinec63a9c1f547fd4c2bb94aa8ee6777bdd9b1aa75d.",
+      "Pinned mappedcaller evidence shows10directCALLinstructions across8distinctConsole methods: set_move,on_key_click,oblit,skip,destroy,arty,use_ability,new_base. Destroy/new_base eachhave2edges. The marker callers8 countsowners consistently and mustnotbechanged asstale. Actualretained /O2 /Ob2 COFF callerobjects have0namedpredicatecallrelocations andskip expands thebody. Thereareno game.cppsourcecalls, so existingcanonicalgame.cpp ordinarydefinition with game.hprototype is the correctfinite all-out-of-line hypothesis, not an artificialwrapper or console.cppinlining split.",
+      "Authorize ONLYunchangedbodytransport from game.h to existinggame.cppmarker, ordinaryMEASUREDdeclarationretainingexportsemantics, and native source.write_body updateofbodypathalone. Sourceauthor mayeditonlygame.cpp/game.h plusfocusedtest; console.cpp/console_commands.cppareverificationownershipscope, notpermissionforunrelatededits. Keep priorinlineplacementrationale as explicitlyhistoricalevidence. No flags/noinline/pragmas/wrappers, bodysemanticfix, globals/type/layout/signaturechange, newOriginalbinding or handwrittenannotation/claim.",
+      "Predicate preserves originalguardorder: falseifnotmultiplayer; falseifnethandoffbit0x10absent; otherwisenetworkfaction!=localConsolefaction. Nativecompiler and fullheaderclosure/directives/data/othermappedbodies remainobligations. Firstcoordinatorfiniteactual-recipe trial must reproducebaseline/unchangedreplica, detectcompilabledamage and inspect all10restoredcalls. Expectedbytecountgains are notasserted or banked; no sourceintegrationbeforefreshbuild/link/references/claimcontinuity and manualreview.",
+      "Existing /Ob1 override and forcedwrapperideas arenotthisordinaryownershipcandidate. Workisolatedwhilecoordinatormergesotherrecoveries; no Git/task/prep/nativecompiler/provideroperations bysourceauthor. Scope expansion or newstructuralfindings returnedforcentralcoordination, notdiscarded. Nativeautomatic/fullgameacceptance remainsunfinished."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5044160,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5047376,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5067424,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5070128,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5078880,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5083504,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5313824,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5339328,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5430384,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "30eddbbad46ae5a8526163655eb562c263d658e8a63fbe92bbfba8107e9153f0",
+  "request_id": "central-original-turn-predicate-owner-boundary-oct21v",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:owner-game-body-recovery-oct20ao"
+}
