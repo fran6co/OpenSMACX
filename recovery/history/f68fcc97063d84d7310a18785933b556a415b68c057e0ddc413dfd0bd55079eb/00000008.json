@@ -1,0 +1,46 @@
+{
+  "event_id": "5c7c8d78783ba642934cd67debbad476b4803095f37d53a691cf84bb2c07e6e8",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_noun_inline_consumers_oct21w.py",
+      "src/dipedit.cpp",
+      "src/reportif.cpp",
+      "src/technology.cpp"
+    ],
+    "evidence": [
+      "ContinuegenuinemixednounAPI/inlineboundaryrecoverybeforefreshwholebuild. Exactlysevenforeignsitespositivelycorrelatedtopinnedoperations,notabsence-onlycallhints. Authorize ONLY one say_tech5B9C40 nounappend, four DipEditexpressions(on_button_clicked4D9DE0 two+init4DB080 titleone/listloopone), twoReportIfon_status4A41D0appends. Originaltaskbaseline preserved. CurrentworkerincludesrebasedBreedmaster8fa8bb5d4source,27hostcasesandnativeannotationcontrolpassedpriornounsource; latestcombinednativeverificationpending.",
+      "Pinnedpositiveanchors: say_tech5B9E66..80, DipEdit4DA241..25B/4DA2E3..2FD and4DB16F..18D. NewlycompletedDipEditlistloop4DB2FA..4DB31Fmatchesi/currentfactionskip,Players[1]+0x300cachedrowadvances0x59c,gender/pluralityreadbeforegrammardefaultstores+nounstrcatthenlistitem. ReportIfqualifyingfacilityloop4A5865..5888usesrowplurality9472ECwith-4gender/-1Cnoun; laterfactionloop4A5A94..5ABAusesPlayers[1]row946FEC,+2FC/+300/+2E4 afterseparatetitle/name/label. Exactbranchesandfactioninputsareevidence; nomassrewritetouncorrelatedorder_veh/probe/enemies/battle_fightsites.",
+      "Replacesevenget_nounexpressionswithsamePlayersnoun_gender/is_noun_plural→GenderDefault/PluralityDefaultassignmentsanddirectnoun_factionconsumptionatthatsite. Keepallsevenargumentindices,parse_saysslots/-1args,strcatdestinations,stringclears,precedinglabel/title/namework,loops/guards/selection/errorpaths andoperatorsemantics. No offset/cast/typeguess, boundsfix,extrahelper/wrapper,inlinepragma/compilerflag/CMakechange, newOriginalorclaim/bindingchange. Do notnormalizequirks or improveunrelatedbodycontent.",
+      "Addfocusedactual-sourcehostcontrolsfor allseven snippets, each compiledC++98 GCC/Clang withdistinctfactionrecordpointer/grammarvalues, strcatappendandparse_saysargumentwitnesses andcompile-successnegativecontrolswrongfaction,missinggrammarwrite,wrongparse_saysslot or nounpointer. Keep27existingtests unchanged. Testsareboundedsitecontrols,notwholefunction/VC6/linkedacceptance. AuthornoGit/task/preparation/nativecompile;allapply_patchabsoluteinsideworker. Newindependentreview/full186TU200COFFbuildlink/census/physicalresidualpendingaftercommittedsource."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6003776,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5086688,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5091456,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4866512,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "019d96d90e44852135fc7c0211fbc466ae1125ffe6da8ad8015142d241c8f230",
+  "request_id": "central-noun-seven-positive-inline-consumer-sites-oct21w",
+  "schema_version": 1,
+  "sequence": 8,
+  "stream": "task:owner-faction-body-recovery-oct20ao"
+}
