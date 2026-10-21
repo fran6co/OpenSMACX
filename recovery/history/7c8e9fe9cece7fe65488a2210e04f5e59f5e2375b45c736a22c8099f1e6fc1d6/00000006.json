@@ -1,0 +1,21 @@
+{
+  "event_id": "af6ecb491a9be1cc4789e64bda9767a2bb2d57543d1ad0c344bc474a6a0cadaf",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/win.cpp",
+      "src/win_input.cpp"
+    ],
+    "evidence": [
+      "Explicit fresh finite diagnostic authority after control-orchestration refusal: one completed replay object was returned, but no whole-object replay/overlay result qualified because the snapshot was incorrectly captured before leasing the declared VC6_PREFIX environment. No production source/flags changed. Prior raw object and guard refusal stay preserved. Resource worker-15 remains quarantined; do not automatically reclaim it.",
+      "Repeat the same single two-existing-file candidate, exact observed original Release commands unchanged, with one fresh actual replay and unchanged overlay per TU, one candidate per TU and one body-damage control per TU. Capture and verify Measurement snapshots entirely inside one new exclusive lease; after lease release check source/Git freshness separately, not environment equivalence. No new spellings, broader scope, production flag changes, source adoption, claims or task-baseline reset. All earlier independent review, build/link and publication requirements remain."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "055135fee79fc35752ba1c4bfa3a92d18556a1c4abfd2cbc2963cf86e6c7b871",
+  "request_id": "central-repaired-private-win-control-environment-oct21g",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:win-keyboard-focus-members-oct9"
+}
