@@ -1,0 +1,27 @@
+{
+  "event_id": "85080b00a1520e1e53427370b37c48e63c37ba7a66eef2d5467e99ad8f282d92",
+  "payload": {
+    "affects": [
+      "entity-1682298b3e3b2f1286ea5c49e6e6ad814c2ce49ab755d80ef3e5b7cbb3cd33aa",
+      "entity-aeafc174d8964d4ea3865d8c33f417fa338baa1ff58cd1088ef0d9be5a8e6df2",
+      "entity-ccf6a4f8261d99a26c6cb439a8821681d0901eaf2e37f8355d85587c1073636e",
+      "entity-ddb9cd51fdc9110e336f9ef1e56303d52b45e0fd227c074fd24dad59074e940c",
+      "entity-de39aae68b8b2638d71ebd2cdefdb64355b1e921d764a9a66d4776a373995a99"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "seven-correlated-noun-inline-sites-source-oct21w",
+    "evidence": [
+      "Seven source sites match positive pinned field/grammar/consumer paths: say_tech language-specific noun append; two DipEdit integrity/atrocity parse_says(0,...,-1,-1) sites; DipEdit title/list-item appends; two distinct ReportIf status loops. Same recovered Players fields, gender/plurality writes, indices and string destinations, with all surrounding loops/guards/prior label/name work and error paths unchanged. No generic absence-only caller rewrite.",
+      "New actual-source snippet harness passes GCC and Clang in C++98 mode and detects four compile-success mutants per compiler: wrong faction, missing plurality write, wrong parser slot and wrong list noun pointer. Coordinator combined 29 cases pass including all prior query/social/communicate and noun/territory controls. Snippet tests are not complete source-function, unsafe-path, runtime or VC6 fidelity proof.",
+      "Only technology.cpp, dipedit.cpp, reportif.cpp and the focused test contain new behavior-preserving spellings. The stale faction.h comment claiming get_noun still inlines parse_set is removed; its general.h include is retained unchanged. No original mappings, claims, spans, symbols, compiler flags, types, data bounds, initialization or lifetimes changed. All prior findings and the original task baseline remain.",
+      "The combined source now includes verified master Breed changes plus real dialogue ownership, ordinary faction helper APIs, name_base and territory inline restoration, and these seven sites. It requires fresh 186-TU/200-object native build/link, complete matching/reference census and actual residual review. Earlier ff496 or noun-only native observations are not proof for this source. Remaining probe/enemies/order_veh/battle_fight call correlations and adjective sites stay pending. Source checkpoint is not admitted or merged."
+    ],
+    "hypothesis": "The original mixes an ordinary noun API with direct player-field and grammar-state operations; seven individually traced foreign uses now retain that inline form without changing their effects.",
+    "kind": "discovery"
+  },
+  "previous_event": "5c7c8d78783ba642934cd67debbad476b4803095f37d53a691cf84bb2c07e6e8",
+  "request_id": "seven-correlated-noun-inline-sites-source-oct21w",
+  "schema_version": 1,
+  "sequence": 9,
+  "stream": "task:owner-faction-body-recovery-oct20ao"
+}

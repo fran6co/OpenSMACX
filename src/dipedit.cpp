@@ -656,7 +656,9 @@ void DipEdit::on_button_clicked(int button_id) {
 
         do_check();
     } else if (button_id == 2) {
-        parse_says(0, get_noun(faction_index_), -1, -1);
+        GenderDefault = Players[faction_index_].noun_gender;
+        PluralityDefault = Players[faction_index_].is_noun_plural;
+        parse_says(0, Players[faction_index_].noun_faction, -1, -1);
         if (X_pop_ask_number("EDITINTEGRITY",
                 PlayersData[faction_index_].integrity_blemishes,
                 0) == 0) {
@@ -664,7 +666,9 @@ void DipEdit::on_button_clicked(int button_id) {
                 = ParseNumTable[0];
         }
     } else if (button_id == 3) {
-        parse_says(0, get_noun(faction_index_), -1, -1);
+        GenderDefault = Players[faction_index_].noun_gender;
+        PluralityDefault = Players[faction_index_].is_noun_plural;
+        parse_says(0, Players[faction_index_].noun_faction, -1, -1);
         popup.start(PopupStartCaption, "EDITATROCITY", -1, nullptr, 0x44,
                     nullptr);
 
@@ -778,7 +782,9 @@ void DipEdit::init(int faction_index) {
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(866));
     strcat(StringTemp, " ");
-    strcat(StringTemp, get_noun(faction_index_));
+    GenderDefault = Players[faction_index_].noun_gender;
+    PluralityDefault = Players[faction_index_].is_noun_plural;
+    strcat(StringTemp, Players[faction_index_].noun_faction);
     CharUpperA(StringTemp);
 
     rect.left += 4;
@@ -825,7 +831,9 @@ void DipEdit::init(int faction_index) {
             continue;
         }
         StringTemp[0] = 0;
-        strcat(StringTemp, get_noun(i));
+        GenderDefault = Players[i].noun_gender;
+        PluralityDefault = Players[i].is_noun_plural;
+        strcat(StringTemp, Players[i].noun_faction);
         list_box_.item(StringTemp, i);
         if (selected_target_ == static_cast<int>(faction_index_)) {
             selected_target_ = i;

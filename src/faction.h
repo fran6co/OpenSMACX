@@ -18,7 +18,7 @@
 #pragma once
 
 #include "game.h"  // ExpansionEnabled, which is_alien_faction inlines
-#include "general.h"  // parse_set, which get_noun below inlines
+#include "general.h"
 #include "sprite.h"
 #include "stdafx.h"
 

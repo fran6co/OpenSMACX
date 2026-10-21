@@ -277,7 +277,10 @@ void ReportIf::on_status(int mode) {
         if (!(has_tech(Facility[65].preq_tech, other)
             || data.satellites_[0]+data.satellites_[1]+data.satellites_[2]+data.satellites_[3]+elevators
             || has_tech(Facility[41].preq_tech, other))) continue;
-        StringTemp[0] = 0; strcat(StringTemp, get_noun(other));
+        StringTemp[0] = 0;
+        GenderDefault = Players[other].noun_gender;
+        PluralityDefault = Players[other].is_noun_plural;
+        strcat(StringTemp, Players[other].noun_faction);
         draw_workspace_rect_.left = field_C_; draw_workspace_rect_.top = field_10_;
         draw_workspace_rect_.right = field_C_ + field_14_; draw_workspace_rect_.bottom = field_10_ + 20;
         report_iface_button(flatButtonsC_[other-1], draw_workspace_rect_, other, &MainInterfaceGlobal, true);
@@ -291,7 +294,9 @@ void ReportIf::on_status(int mode) {
         StringTemp[0] = 0; strcat(StringTemp, get_title(faction)); strcat(StringTemp, " ");
         strcat(StringTemp, get_name(faction)); strcat(StringTemp, " ");
         strcat(StringTemp, label_get(0xB4)); strcat(StringTemp, " ");
-        strcat(StringTemp, get_noun(faction));
+        GenderDefault = Players[faction].noun_gender;
+        PluralityDefault = Players[faction].is_noun_plural;
+        strcat(StringTemp, Players[faction].noun_faction);
         int left, top, width, height;
         if (faction != current) {
             left = report_button_positions_[faction < current ? faction-1 : faction-2];

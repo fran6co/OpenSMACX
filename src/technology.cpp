@@ -399,7 +399,9 @@ void __cdecl say_tech(LPSTR output, int tech_id, BOOL category_lvl) {
             strcat(output, label_get(487)); // 'Comm Frequency'
             strcat(output, " ");
             strcat(output, "(");
-            strcat(output, get_noun(tech_id - MaxTechnologyNum));
+            GenderDefault = Players[tech_id - MaxTechnologyNum].noun_gender;
+            PluralityDefault = Players[tech_id - MaxTechnologyNum].is_noun_plural;
+            strcat(output, Players[tech_id - MaxTechnologyNum].noun_faction);
             strcat(output, ")");
         } else {
             strcat(output, Players[tech_id - MaxTechnologyNum].adj_name_faction);
