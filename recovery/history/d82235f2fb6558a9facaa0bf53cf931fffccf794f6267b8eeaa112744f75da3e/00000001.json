@@ -1,0 +1,21 @@
+{
+  "event_id": "ca469d0a85f43492ae8d9ccd9c4a2bf81b9ccdcdca040b3e3edb0133d910d163",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_fractal_level_oct21.py"
+    ],
+    "evidence": [
+      "Authorize exactly the measured nonnegative-range-first Fractal::level body and an actual-source host fixture. Keep scaled coordinate locals, both sample calls, multiplication/shift expressions and all original signed arithmetic effects unchanged; only reorder equivalent clamp branch blocks.",
+      "Test negative/zero/positive/100/above100 outcomes, exact sample argument/order and coordinate reuse on defined inputs, plus compiling wrong-clamp and wrong-octave damage controls. Do not normalize overflow, signed shift, invalid shift counts or negative input behavior.",
+      "Preserve original address/spans/catalogue and emitted symbols, historical comments and claims. Native record only may bank a claim. Fresh build/link, neighbor/reference/claim checks, independent original review and destination recheck precede manual integration; no full-project/game acceptance follows."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "fractal-original-clamp-host-scope-oct21z",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:owner-world-faithful-recovery-oct20x"
+}
