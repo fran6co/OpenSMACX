@@ -1,0 +1,22 @@
+{
+  "event_id": "81fb5234ed5242446f9ded6674a381440286a13d11de5702818dc877736a2308",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_sprite_sheet_receiver_oct13ap.py"
+    ],
+    "evidence": [
+      "Coordinator baseline run before any new game source integration yields1FAIL12PASS: old receiver test incorrectly freezes ALL game.cpp at54f51003c1af9509f4c2abffc163c63b26df4e1e plus receiveredit, despite29 subsequent admitted original-source commits across unrelatedowners/functions. Currentf33ccd479 baseline has338line diff across lifetime symbols/claims, globals/imports, real class/member calls and prior recovered behavior; do not encode/revert all historical unrelated edits to repair this single-body test.",
+      "Authorize narrowly splitting two immutable witnesses without resetting any original task/history baseline. Keep BASE54f51003c1af9509f4c2abffc163c63b26df4e1e and verify target450FB0 full historical body plus exactly old→typed receiver edit and current two ordinaryplusconditional expressions, preserving all original identity/span/lesson/ABI metadata except natively recorded newbyteclaim. Compare target metadata, not unrelated historical functions that have validly changed. No broad normalization or change of historical provenance.",
+      "Separately add immutable current-step wholefile witness f33ccd479ac454752a51a204c5f1fe40b5656268: currentgame.cpp must equal that committed source plus EXACTLY two scalar expressions and one nativewriter-generated450FB0claim, no unrelatedbody/metadata/object/config changes. Assertall originalrows/metadata versus thatstepbase, allowing only targetedbyteclaim. This new complementary per-change witness does not replace taskbaseline84a83530865def508f9ea1716c9d70081062c144 or oldest receiver witness. Add rejection controls for unrelatedsourcechange, wrongsign/constant/receiver/claim and losthistoricalannotation. Keep all12existing actualsource GCC/Clang behavior and compile-success mutant cases intact.",
+      "Source is already frozen and natively recorded39/39exact. This amendment grants tests-only edits; no game.cpp changes or manualclaim edits. Require final independent testdiff review, allhostcontrols, native fullbuild/link/strict/claims/references,199scopedcomplement and destinationreproduction. Existing baselineFAIL is stale-test evidence, not a new game regression or permission to weaken native verification."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "6c62bbfc448319af05d4f73ba8e41ac53841f38b610569e4a9b75ab2b5a16231",
+  "request_id": "central-sheet-existing-inverse-staleness-controls-oct21q",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:matching-game-oct20z"
+}
