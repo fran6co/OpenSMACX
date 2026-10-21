@@ -1,0 +1,25 @@
+{
+  "event_id": "5d9c418b5b98df12911f5be29b291d6a4c145c6bde9facba20c628b5d70efaec",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/fixtures/texture_sub61df60/host.cpp",
+      "recovery/tests/test_texture_scratch_494_actual_source.py",
+      "recovery/tests/test_texture_sub61df60_actual_source.py",
+      "src/texture.cpp"
+    ],
+    "evidence": [
+      "Standing coordinator-reviewed manual recovery authority; authorize exactly original scratch494 publication and row reloads in Texture draw_color_key(6239E0) and draw2(624670), and scratch560 per-pixel signed comparison in sub_61df60(61DF60). Independent pinned instruction audit and concrete source proposals are cached under parallel-match-oct21i/texture-scratch-types.md and parallel-match-oct21j/texture-494 and texture-560. Preserve FINIT-before-publication order and original sentinel bypass.",
+      "Keep existing start-only int storage declarations and byte views: observed access width is not allocation extent evidence. No global narrowing, invented aggregate/ownership, new volatile/inline/asm, bug fixes, bounds guards, signature/marker/history/claim edits, compiler flags or source baseline resets. Full original effects and unsafe/error domains remain obligations.",
+      "Authorize the listed new494 actual-source test and existing560 test/fixture only, to exercise publication on early exits, alias-sensitive reloads at original decision points, signed threshold boundary and sentinel bypass. Require compile-success omission mutants to fail. These host projections prove only their bounded paths, not ABI/exactness/runtime/whole-game acceptance.",
+      "Only the designated author edits isolated source/test files with apply_patch; no Git/task/native compiler/preparation. Coordinator owns separate leased actual-recipe measurement, original span and independent C++ review, full build/link, all mapped TU outcomes, physical outside-body preservation, claim/mapping/reference continuity, and fresh destination rechecks before manual integration. Matching regressions must stay visible; no weaker proof is substituted."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "12bb52e0e4e2b6f151818bfea7f99bfbf4f0fed6cd947ebfac7b70b40e7bafe5",
+  "request_id": "central-texture-scratch-restoration-oct21j",
+  "schema_version": 1,
+  "sequence": 12,
+  "stream": "task:texture-rasterizer-recovery"
+}
