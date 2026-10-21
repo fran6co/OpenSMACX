@@ -13,10 +13,15 @@ import shutil
 import subprocess
 
 import pytest
+from match_recovery.includes import COMMENTS_OR_STRINGS
+from match_recovery.source import read as read_source
+from match_recovery.source import write as write_source
 
 
 ROOT = Path(__file__).resolve().parents[2]
 PIN = "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+CAVIAR_CPP = ROOT / "src/caviar.cpp"
+GEOMETRY_CPP = ROOT / "src/caviar_geometry.cpp"
 VECTOR = "vox_matrix_vector_mul"
 MATRIX = "vox_matrix_matrix_mul"
 
@@ -31,9 +36,13 @@ def braced(text, start):
 
 
 def sources():
-    source = (ROOT / "src/caviar.cpp").read_text()
+    source = CAVIAR_CPP.read_text()
+    geometry = GEOMETRY_CPP.read_text()
     result = {}
-    for name in (VECTOR, MATRIX, "vox_draw_scene", "vox_transform_camera"):
+    for name in (VECTOR, MATRIX):
+        match, = re.finditer(r"void __cdecl " + name + r"\([^;{]*\)\s*\{", geometry)
+        result[name] = braced(geometry, match.start())
+    for name in ("vox_draw_scene", "vox_transform_camera"):
         match, = re.finditer(r"void __cdecl " + name + r"\([^;{]*\)\s*\{", source)
         result[name] = braced(source, match.start())
     draw = result["vox_draw_scene"]
@@ -54,6 +63,62 @@ def sources():
     result["types"] = "\n".join(braced(header, header.index("struct " + name + " {")) + ";"
                                    for name in ("VOX_Matrix", "VOX_Vect"))
     return result
+
+
+def test_native_source_mapping_union_and_roundtrip():
+    expected = {
+        0x006280E0: ("?vox_matrix_vector_mul@@YAXPAY02$$CBMPBMPAM@Z",
+                     ((0x006280E0, 0x0062814B),)),
+        0x00627E20: ("?vox_matrix_matrix_mul@@YAXPAY02$$CBM0PAY02M@Z",
+                     ((0x00627E20, 0x00627F4F),)),
+    }
+    source_union = read_source(ROOT / "src")
+    rows = [record for record in source_union if record.address in expected]
+    assert {record.address for record in rows} == set(expected)
+    assert all(sum(record.address == address for record in rows) == 1
+               for address in expected)
+    for record in rows:
+        symbol, spans = expected[record.address]
+        assert record.path == GEOMETRY_CPP
+        assert record.name == symbol
+        assert record.image_spans == spans
+
+    for path in (CAVIAR_CPP, GEOMETRY_CPP):
+        text = path.read_text()
+        records = read_source(path)
+        assert write_source(text, records) == text
+
+
+def test_geometry_helpers_have_one_real_cpp_definition_each():
+    definitions = {VECTOR: 0, MATRIX: 0}
+    definition = re.compile(r"void __cdecl (vox_matrix_vector_mul|vox_matrix_matrix_mul)\s*\(")
+    for path in (ROOT / "src").rglob("*.cpp"):
+        text = path.read_text()
+        masked = COMMENTS_OR_STRINGS.sub(
+            lambda match: "".join("\n" if char == "\n" else " " for char in match[0]),
+            text,
+        )
+        for match in definition.finditer(masked):
+            name = match.group(1)
+            opening = masked.find("(", match.start())
+            depth = 0
+            for index in range(opening, len(masked)):
+                if masked[index] == "(":
+                    depth += 1
+                elif masked[index] == ")":
+                    depth -= 1
+                    if depth == 0:
+                        break
+            assert depth == 0, f"unterminated definition parameters: {name} in {path}"
+            following = index + 1
+            while following < len(masked) and masked[following].isspace():
+                following += 1
+            if following == len(masked) or masked[following] != "{":
+                continue  # A declaration is not a definition.
+            braced(masked, match.start())
+            definitions[name] += 1
+            assert path == GEOMETRY_CPP
+    assert definitions == {VECTOR: 1, MATRIX: 1}
 
 
 def harness(parts):

@@ -1,0 +1,66 @@
+{
+  "event_id": "fc1de9d65a8b3e5ef00c785ae2b9cd0780421db82fcb71f1c206e262b920ad5e",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "CMakeLists.txt",
+      "recovery/tests/test_caviar_matrix_operations.py",
+      "src/caviar_geometry.cpp"
+    ],
+    "evidence": [
+      "Authorize complete unchanged two-block transport of6280E0matrix-vector and627E20matrix-matrix definitions, original markers/binding evidence and useful history to normal src/caviar_geometry.cpp. Retain license and include owning public caviar.h through normal stdafx prelude. Existing caviar.h declarations/callers/class/VOX_Matrix storage remain unchanged. This is current semantic geometry grouping, not original filename/TU proof. No unrelated movement, wrapper, export, pragma/noinline, original-address call, algorithm rewrite or guessed type.",
+      "CMake change only adds caviar_geometry.cpp adjacent to caviar.cpp in existing app source list. New unit inherits exact same default application policy as caviar.cpp: actual retained Caviar command isO2Ob2DNDEBUG and hasNOOy- override. Do not add per-file flags or change measurement profiles, headers, target/linker/global ordering outside this one adjacent addition. Compiler recipes regenerated only by coordinator after source freeze.",
+      "Native scope includes eight original mapped Caviar caller identities for implicit compiled visibility changes, not permission to edit their bodies. Pin records17matrix-vector Caviar edges plus6external and8matrix-matrix Caviar edges plus1external. Current static direct relocation counts are lower; helper nesting/merged paths prevent a one-to-one count proof. Correlate actual fresh caller instructions/relocations before claiming restored original effects. No predicted exact gains.",
+      "Existing actual-source geometry tests may locate the same two real bodies in their new sole owner while still extracting actual scene/camera callers from caviar.cpp. Preserve float grouping, store ordering, overlap/cancellation cases, all7caller expressions and compile-success mutants. Add source-owner/unique-definition/mapping checks without weakening behavior or changing numerical oracles; source mapping/claim/history unions must survive native reader/writer roundtrips.",
+      "Coordinator alone runs native preparation/leases/measurements/recording/Git. Worker edits only these named files (caviar.cpp limited to exact block removal and obsolete adjacent original-address-dependency prose cleanup); no native compiles/measure/provider or metadata changes. Run cheap host controls then freeze. Fresh build/link, actual-recipe replay/replica/damage controls, helper/source transport, complete changed code/data/generated collateral, whole known census, reference/claim/mapping/annotation and independent review required before any manual integration. Preserve any regressions/uncertainty rather than demote claims or fabricate acceptance. Immutable task baseline retained."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6526624,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6529664,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6551008,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6552736,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6547792,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6549504,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6528608,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6530800,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "f6802e5a1b3227acdc902f3bb501c6241af5ba3ebcfff0fcb6059f499e7516da",
+  "request_id": "caviar-paired-geometry-implementation-scope-oct21zc",
+  "schema_version": 1,
+  "sequence": 24,
+  "stream": "task:caviar-matrix-operations"
+}
