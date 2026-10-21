@@ -1,0 +1,22 @@
+{
+  "event_id": "1c0f5e03ee9667819dfc1ac1761a8bb9aae79a5bf9ba020d3759d93ad69a9a57",
+  "payload": {
+    "affects": [
+      "entity-989de6354180d338598eb22da7a7e21fdacfae103340e49aef1432eb1e340959"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "reportif-actual-source-checkpoint-oct21y",
+    "evidence": [
+      "Coordinator reviewed actual source/evidence and scoped host tests: 6cases pass with no skips. Preserve original identities/spans, all historical claims and prior discoveries. Native record exit0is the only measurement/publication authority; no hand-edited byte claim, demotion or baseline reset.",
+      "ReportIf retains original self versus singleton effects, bounded Spot index result, coordinate output aliases and both report/modal branches. Source uses original increment-and-zero sentinel without new bounds checks or behavior fixes.",
+      "Unadmitted source checkpoint only. Fresh complete application build/link, scoped code/reference and outside-scope compiled checks, source annotation/claim continuity, independent review and destination recheck remain required. Existing neighboring EH/data-owner unknowns and historical fixture failures are not waived. No automatic or full-game acceptance."
+    ],
+    "hypothesis": "Preserve the reviewed original-faithful source reconstruction and verify its complete current application closure.",
+    "kind": "discovery"
+  },
+  "previous_event": "03c60d19cbf541aa2e7f0eccdf19227f5ace92c7d924f2d1594447efd8ac0bf0",
+  "request_id": "reportif-actual-source-checkpoint-oct21y",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:reportif-source-batch-oct19b"
+}

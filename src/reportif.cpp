@@ -1593,7 +1593,7 @@ Purpose: Show the report window modally with pop_wait as its poll callback,
                                                   modal owner
              set_modal(0, pop_wait, MainInterfaceGlobal) - slot 0xE4
              report(7, report_faction_id_, 0) on the 0x00885F38 singleton
-// ORIGINAL: 0x004A5F40 ?on_iface_left_click@ReportIf@@QAEXHH@Z 0x004A5F40-0x004A5FD6
+// ORIGINAL: 0x004A5F40 ?on_iface_left_click@ReportIf@@QAEXHH@Z 0x004A5F40-0x004A5FD6 BYTE_EXACT
 // symbol    ?on_iface_left_click@ReportIf@@UAEXHH@Z
 // size      150 bytes
 // prototype void (__thiscall ?on_iface_left_click@ReportIf@@QAEXHH@Z)(ReportIf* this, int, int)
@@ -1613,21 +1613,20 @@ void ReportIf::on_iface_left_click(int x_coord, int y_coord) {
     // back through the two argument slots - the push order is &y_coord then
     // &x_coord, so the position lands in the y argument, the type in the x.
     if (spot_.check(x_coord, y_coord,
-                    &y_coord, &x_coord) == -1) {
-        return;
+                    &y_coord, &x_coord) + 1 != 0) {
+        field_1E244_ = y_coord;
+
+        ReportWinGlobal.select_intel_topic();
+        ReportIfGlobal.field_8_ = 7;
+
+        if (IfaceIdToSlotStorage[ActiveIfaceIdStorage] != 5) {
+            Win &modal_window = ReportWinGlobal;
+            modal_window.set_modal(0, pop_wait, &MainInterfaceGlobal);
+            return;
+        }
+
+        ReportIfGlobal.report(7, ReportIfGlobal.report_faction_id_, 0);
     }
-    field_1E244_ = y_coord;
-
-    ReportWinGlobal.select_intel_topic();
-    ReportIfGlobal.field_8_ = 7;
-
-    if (IfaceIdToSlotStorage[ActiveIfaceIdStorage] != 5) {
-        Win &modal_window = ReportWinGlobal;
-        modal_window.set_modal(0, pop_wait, &MainInterfaceGlobal);
-        return;
-    }
-
-    ReportIfGlobal.report(7, ReportIfGlobal.report_faction_id_, 0);
 }
 
 /*
