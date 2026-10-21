@@ -1,0 +1,85 @@
+{
+  "event_id": "b544e24e7dcd0845dfd7dd1412fc6e67d93141e3adc63b5665e5b30e18f70738",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/console_commands.cpp",
+      "src/faction.cpp",
+      "src/game.cpp",
+      "src/probe.cpp",
+      "src/reportwin.cpp",
+      "src/technology.cpp",
+      "src/veh.cpp"
+    ],
+    "evidence": [
+      "Evidence-backed expansion of actual compiled ownership closure after the authorized four scalar getter definition move. Fresh build-ghol0j2b compiles/links, five pinned PickTech direct-call boundaries are restored, claims/mappings/references pass and every5581mapped verdict is unchanged. Preserve taskbaselineb5f92b663bf4a995e681aa374b1f27a08baeb371. Expansion does not reset baseline or accept the change.",
+      "Actual native residual162PASS37FAIL:36nonowner objects each lose exactly the same4getter export directives; technology.cpp retainsall4 and final PE103exportnames/ordinals unchanged. Eleven other mapped source-owned function bodies have actual code-byte/compilerlayout changes across7units. Source bodies are unchanged; this expansion records their observed collateral and restoration obligations rather than ignoring it or describing it all as label renumbering.",
+      "Additional original identities: 004A0260 ?sat_attack@@YAXHHH@Z (src/reportwin.cpp), 004CF7C0 ?new_base@Console@@QAEXH@Z (src/console_commands.cpp), 004DD1B0 ?custom_my_faction@Console@@QAEXXZ (src/console_commands.cpp), 00501DA0 ?battle_compute@@YAXHHPAH0H@Z (src/veh.cpp), 00524870 ?end_of_game@@YAHH@Z (src/game.cpp), 00547C10 ?make_gift@@YAXHH@Z (src/faction.cpp), 0054FFD0 ?communicate@@YAXHHH@Z (src/faction.cpp), 0057A660 ?goody_box@@YAHHH@Z (src/veh.cpp), 0059F120 ?probe@@YAHHHHH@Z (src/probe.cpp), 005B0E00 ?setup_player@@YAHHHH@Z (src/faction.cpp), 005BB000 ?tech_achieved@@YAXHHHH@Z (src/technology.cpp)",
+      "The goody_box code really changes beyond relocation fields, and setup_player compiled instruction count2850→2848; these are not no-op symbol-name differences. action_airdrop and its private corridor helper have stable code and a same-symbol goody_box target whose section identity changes; protect their complete residual instead of projecting them. Review actual instruction effects, original evidence, old/current directive/export/COMDATselection and all outside code/data/startup; broad header or wholeunit waivers are forbidden.",
+      "Only coordinator may authorize subsequent source edits or manual admission; at this point no edits to these eleven bodies are requested. No generic comparator mask, gate relaxation, altered compiler flags or claims. Native full preservation remains refused and no full linked/runtime/game/autonomous acceptance follows. Keep all original historical task protections/discoveries, finaltestupdate and source work. Fresh destination verification is required after any separately reviewed integration."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4850272,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5044160,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5099952,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5250464,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5392496,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5536784,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5570512,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5744224,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5894432,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5967360,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6008832,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "0dd660ce32bbf6d23c407c06da1987375fffeccf46e4b6a41a0879031e7d91ad",
+  "request_id": "central-tech-header-actual-compiler-collateral-oct21s",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:picktech-owner-coverage"
+}
