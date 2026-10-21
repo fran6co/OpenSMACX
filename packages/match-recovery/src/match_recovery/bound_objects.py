@@ -99,6 +99,7 @@ def check_objects(bindings: Sequence[FunctionBinding], objects: Mapping[str, Cof
                   image: PeImage, *, external_targets: Mapping[str, int | AbsoluteConstant] | None = None,
                   import_targets: Mapping[str, int] | None = None,
                   literal_targets: Mapping[tuple[str, str], BoundedTarget | None] | None = None,
+                  local_data_targets: Mapping[tuple[str, str], int] | None = None,
                   errors: Mapping[str, str] | None = None, member_functions: bool = False,
                   section_bases: Mapping[tuple[str, int], int] | None = None,
                   fragments: Sequence[FunctionFragmentBinding] = (),
@@ -138,6 +139,24 @@ def check_objects(bindings: Sequence[FunctionBinding], objects: Mapping[str, Cof
     externals = dict(external_targets or {})
     imports = dict(import_targets or {})
     literals = dict(literal_targets or {})
+    local_data = dict(local_data_targets or {})
+    for key, value in local_data.items():
+        if (not isinstance(key, tuple) or len(key) != 2
+                or any(not isinstance(part, str) or not part for part in key)
+                or type(value) is not int or not 0 <= value <= 0xFFFFFFFF):
+            raise ValueError("invalid TU-qualified local data target")
+        relative_path(key[0])
+    if local_data.keys() & literals.keys():
+        raise ValueError("TU-local data target also has a literal binding")
+    if local_data.keys() & {(item.unit, item.symbol) for item in bindings}:
+        raise ValueError("TU-local data target also has a function binding")
+    from .object_source import _local_data_symbol
+    checked_local_data = {}
+    for key, value in local_data.items():
+        obj = objects.get(key[0])
+        definition = _local_data_symbol(obj, key[1]) if obj is not None else None
+        if definition is not None:
+            checked_local_data[key] = (definition.index, value)
     local_names = {item.symbol for item in bindings if item.local_only}
     global_names = ({item.symbol for item in bindings if not item.local_only}
                     | externals.keys() | imports.keys())
@@ -249,6 +268,13 @@ def check_objects(bindings: Sequence[FunctionBinding], objects: Mapping[str, Cof
                         # to content search or exports a same-name global.
                         if literals[local_key] is not None:
                             targets[str(index)] = literals[local_key]
+                    elif local_key in local_data:
+                        # Recheck this exact definition even for explicit API
+                        # callers. Never infer a section base from a data start
+                        # or resolve a weak/external/duplicate name through it.
+                        definition = checked_local_data.get(local_key)
+                        if definition is not None and definition[0] == index:
+                            targets[str(index)] = definition[1]
                     elif base is not None:
                         targets[str(index)] = base + symbol.value
                     elif symbol.storage == 2 and symbol.name in externals:

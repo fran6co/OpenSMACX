@@ -13,7 +13,7 @@ from match_recovery.bound_objects import (FunctionBinding, FunctionFragmentBindi
                                           check_objects)
 from match_recovery.generated_source import read_generated
 from match_recovery.model import Origin, Result, Span, digest
-from match_recovery.object_source import (emitted_object_symbols, object_targets,
+from match_recovery.object_source import (emitted_object_symbols, object_targets, local_object_targets,
                                           require_disjoint_object_symbols,
                                           read_objects, referenced_object_units)
 from .literal_source import read_literals
@@ -409,6 +409,10 @@ def _compiled_evidence(bindings, object_bindings, generated_bindings, objects, i
                        associated_bindings=()):
     """Resolve targets from product objects, never from a retention probe."""
     data_targets, checked_objects = object_targets(object_bindings, objects)
+    local_data_targets, checked_local_objects = local_object_targets(object_bindings, objects)
+    local_reports = {(row["unit"], row["symbol"]): row for row in checked_local_objects
+                     if row["definition"] == "pass"}
+    checked_objects = [local_reports.get((row["unit"], row["symbol"]), row) for row in checked_objects]
     object_symbols = set(require_disjoint_object_symbols(
         object_bindings, set(externals) | {item.symbol for item in bindings},
         {item.symbol for item in generated_bindings}, {item.symbol for item in import_bindings},
@@ -438,6 +442,7 @@ def _compiled_evidence(bindings, object_bindings, generated_bindings, objects, i
     targets = {**externals, **data_targets, **generated_targets}
     rows = check_objects(bindings, objects, image,
                          external_targets=targets,
+                         local_data_targets=local_data_targets,
                          import_targets=imports, literal_targets=literal_targets, errors=errors,
                          fragments=fragments, associated_bindings=associated_bindings)
     return (rows, checked_objects, checked_generated, checked_imports, checked_shared, checked_literals), targets, imports

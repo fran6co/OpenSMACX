@@ -1,0 +1,24 @@
+{
+  "event_id": "68a8e6771f582b8bcf327be6ae9d1b4dfae62db3e7d3298d0575948fce8699f4",
+  "payload": {
+    "affects": [
+      "entity-6acf743cf90493452a3e6089ae2c6308c031b91c06273c9e2275b6bd114a0aeb",
+      "entity-8ba960c587da43078cb68b0cde14c8ae0a3bfd0a99f73151963f8ab758fc47ad"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "tu-local-ordinary-object-reference-resolution-oct21y",
+    "evidence": [
+      "New native helper resolves only unbounded direct v1/v4 source object starts in their declared owner, using one fresh COFF storage-class3 ordinary non-COMDAT/nonassociative data definition with no auxiliary/section-symbol/function/weak/common/duplicate fallback. The target namespace is(unit,symbol), not an external or section-base map. check_objects revalidates the physical definition once per invocation, resolves only that index and retains original relocation addends. Invalid declared local targets suppress other fallback routes.",
+      "Fresh coordinator focused and related package tests212PASS, including synthetic end-to-end check_compiled, wrong original addresses, rawless BSS, nonzero symbol value/addend, unbound neighbor and other-TU symbols, invalid global/section fallbacks, COMDAT/associative/mixeddata/executable/aux/common/weak/function/duplicate/bounds controls. Existing external/member/object-data/TUlocalfunction behavior remains covered. These are generic synthetic controls, not game/runtime acceptance.",
+      "Independent actual-source/COFF review at ignored parallel-match-oct21y/local-object-independent-review.md confirms16existing Ambience local bindings, two byte fields plus14dwords, and78original HIGHLOW operands across the complete BAmbience/AAmbience general spans matching exact current per-symbol relocation offsets. Starts, definitions and C++linkage remain unchanged; initializer bounds, lifecycle, final linked-selection and full-game fidelity are not inferred.",
+      "Only three generic library files, one generic test and the source grammar documentation change. All game source, compiler/configuration recipes, flags, original identities/claims and the original task baseline remain intact. This is an unadmitted implementation checkpoint; full regression suite, fresh application build/link and current-body/reference census, negative-reference observations and independent final review remain required. No new implementation or byte claim is granted."
+    ],
+    "hypothesis": "Existing source-owned static object identities can supply strict same-TU reference targets without changing C++ linkage or creating section/global aliases.",
+    "kind": "discovery"
+  },
+  "previous_event": "4f923da518151d71c8dbff108d69c6c04ff58c2c34f99e608318534503b465b2",
+  "request_id": "tu-local-ordinary-object-reference-resolution-oct21y",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:ambience-faction-art-owner-oct5"
+}

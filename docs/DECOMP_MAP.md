@@ -198,6 +198,18 @@ measurement. The installed `recover check-data` computes compiler extents, initi
 bytes and relocation-target agreement; missing bounds stay unknown. The active
 workflow explains history/review preservation and lifetime limitations.
 
+An unbounded direct v1/v4 object binding can also witness a file-local ordinary
+data definition. Strict function-reference verification requires one fresh,
+unique COFF static data symbol in a non-COMDAT, non-associative ordinary data
+section in that annotation's owning translation unit.
+Its start is resolved only for references to that exact local definition, never
+exported as a global target or used to place the surrounding data section.
+The same spelling in another unit, undefined/common/weak or section symbols,
+code and duplicate definitions remain unresolved. Bounded/member-backed local
+objects retain their separate unsupported proof obligations; a local start
+does not establish initializer bytes, allocation bounds, lifetime or linked
+selection.
+
 Version 3 binds an old object identity to a named embedded member of a current
 parent object. The unbounded and bounded forms are:
 

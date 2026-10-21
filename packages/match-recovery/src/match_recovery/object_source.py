@@ -291,6 +291,58 @@ def validate_object_symbol_ownership(bindings) -> None:
             raise ValueError("direct parent and member identities belong to different original address domains")
 
 
+def _local_data_symbol(obj, name):
+    """One named static data definition, never an entire section placement."""
+    matches = [symbol for symbol in obj.symbols.values() if symbol.name == name]
+    if len(matches) != 1:
+        return None
+    symbol, = matches
+    if (symbol.storage != 3 or not 0 < symbol.section <= len(obj.sections) or symbol.type & 0x20
+            or obj.auxiliary.get(symbol.index)):
+        return None
+    section = obj.sections[symbol.section - 1]
+    if (section.flags & 0xC0 not in (0x40, 0x80)
+            or section.flags & (0x20 | 0x1000 | 0x20000000)
+            or symbol.section in obj.associations
+            or symbol.name == section.name
+            or not 0 <= symbol.value < obj.section_sizes[symbol.section - 1]):
+        return None
+    return symbol
+
+
+def local_object_targets(bindings: tuple[ObjectBinding, ...], objects: dict) -> tuple[dict, list]:
+    """Resolve unbounded direct static objects only inside their source owner.
+
+    This establishes the declared symbol start, not allocation bounds, initial
+    contents, member layout or lifetime. Keep this namespace separate from
+    external targets: another TU's same spelling is never a definition witness.
+    Bounded/member-backed objects retain their existing separate proof route.
+    """
+    validate_object_symbol_ownership(bindings)
+    member_owners = {(row.unit, row.parent_symbol) for row in bindings if row.parent_symbol is not None}
+    targets, reports = {}, []
+    for binding in bindings:
+        key = (binding.unit, binding.emitted_symbol)
+        if binding.span is not None or binding.parent_symbol is not None or key in member_owners:
+            continue
+        report = {"symbol": binding.symbol, "target_symbol": binding.emitted_symbol,
+                  "unit": binding.unit, "address": f"0x{binding.origin.address:08X}",
+                  "definition": "unknown"}
+        reports.append(report)
+        obj = objects.get(binding.unit)
+        if obj is None or _local_data_symbol(obj, binding.emitted_symbol) is None:
+            report["reason"] = "no unique ordinary static data definition in the source owner"
+            continue
+        address = binding.origin.address
+        if type(address) is not int or not 0 <= address <= 0xFFFFFFFF:
+            report["reason"] = "local data start is outside the i386 address domain"
+            continue
+        targets[key] = address
+        report.update({"definition": "pass", "linkage": "translation_unit_local", "extent": "unbounded",
+                       "limitations": ["Source-bound symbol start only; no section placement, initializer, allocation, lifetime or linked-selection proof."]})
+    return targets, reports
+
+
 def object_targets(bindings: tuple[ObjectBinding, ...], objects: dict) -> tuple[dict, list]:
     """Require the owner's compiled definition before resolving object references."""
     validate_object_symbol_ownership(bindings)
