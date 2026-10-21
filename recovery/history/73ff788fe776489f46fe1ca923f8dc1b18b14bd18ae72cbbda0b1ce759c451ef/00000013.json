@@ -1,0 +1,68 @@
+{
+  "event_id": "33ac395dc149a41950759d142e6954fcde8f4385ae4fced6175e34e2ea15430a",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/console_commands.cpp",
+      "src/faction.cpp",
+      "src/game.cpp",
+      "src/picktech.cpp",
+      "src/prefwin.cpp"
+    ],
+    "evidence": [
+      "RebasedretainedBreedonfreshlyverifiedmasterbd3d withoutresettingoriginaltaskbaseline. Fresh185TU199COFFbuild-cc3t0zui links,4ownercontrolsPASS,claims/mappings/referencesPASS. Full5581verdictsunchanged3364exact;strict2807PASS557UNKNOWN unchanged. Nativephysical108PASS91FAILstaysred. Recordactualcurrent eightadditionalmappedcodeowners as verificationimpactscope only, notunrelatedsourceeditpermission or acceptance.",
+      "Actualcurrentadditionaloriginalowners: 00486510 ?pick@PickTech@@QAEHHHHPAD@Z src/picktech.cpp; 0048D840 ?init@PrefWin@@QAEXXZ src/prefwin.cpp; 004CF7C0 ?new_base@Console@@QAEXH@Z src/console_commands.cpp; 004D61A0 ?go_to@Console@@QAEXHHH@Z src/console_commands.cpp; 004E14D0 ?editor_natural@Console@@QAEXH@Z src/console_commands.cpp; 004E2000 ?corner_the_market@Console@@QAEXXZ src/console_commands.cpp; 005A9EB0 ?save_game@@YAHH@Z src/game.cpp; 005B3380 ?eliminate_player@@YAHHH@Z src/faction.cpp",
+      "AlladditionalcollateralCPPsourcebytesunchangedexceptgame.cpp intentionalrepaircaller/wrapperchange. Previouspair broadsetup_player/propose_attack/colortables changes do notautomaticallyreproducehere. FreshpairreviewsrequiredforConsolefourbodiesandEHassociations,PickTech,PrefWin,eliminate_player/save_game. Do notsubstitutepriorreview counts or unchangedsource/flags for compileroutput equivalence.",
+      "Unmappedenemy_move_tactical_action_tail remainsimplementationoforiginalenemy_move56B5B0; fourbyteindependentstackloadsorder keepsEDX=y[esp18]andEBX=x[esp10], notcoordinateswap. Removedbreed_mod_call isunoriginalrepairforwarder; actualrepaircallarguments/resultbranchunchangedandonlytargetrelocationnowrealbreed_mod4E65C0, matchingpinned526366. Bothprivatecontributions remain unprojectedphysicalfailures, nofakeOriginalor duplicateidentityprojection.",
+      "Preservealloriginalclaims/discoveries/restorationobligations. No comparator normalization, flags/claims/data/EH waivers or taskbaseline reset. Scopeexpansionisnotadmission; concretecurrentpairreview plusnativefreshsourcechecksanddestinationverification stillrequired foruserauthorizedmanualboundedmerge. No linkedretainedselection/runtime/game/autonomousacceptance established."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4744464,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4773952,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5044160,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5071264,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5117136,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5120000,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5938864,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5976960,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "eba71dc62e30d9c61782327abc41d6485960b993a5f3bcdde7bcb9f3d968d228",
+  "request_id": "central-breed-fresh-after-datalink-owner-impact-oct21w",
+  "schema_version": 1,
+  "sequence": 13,
+  "stream": "task:owner-base-body-recovery-oct20ao"
+}
