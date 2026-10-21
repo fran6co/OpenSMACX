@@ -1,0 +1,22 @@
+{
+  "event_id": "4155ce9de6cc6df46b6131ad2e163d3d7dc500d894c686be4625409f2a0c0a62",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_maininterface_call_order_oct22.py"
+    ],
+    "evidence": [
+      "Authorize two existing mapped subjects45CCB0 and45CF80 in src/maininterface.cpp plus actual-source host controls. Existing task baseline and all earlier identities/history remain immutable. No other previously editable files are changed by this step.",
+      "Pinned45CCD5 subtracts1000 from validated selection before group0 test; current source does so only afterward. Pinned45CFD9..45CFE9 stages RECT before existing Strings::get; direct StringTable.get(Labels.strings_ptr[0x313]) restores that natural public call expression. Preserve Win base conversion, coordinates, label index, call order and intentionally uninitialized Spot out-parameter.",
+      "Finite source-only diagnostics under actual recipe and replay/replica/damage controls show right_down33to45of45 BYTE_EXACT; selection evaluation49to56of63 MISMATCH, other whole-TU verdicts unchanged. Advisory is not a claim publication or admission. Require worker native replay, existing recorder only for any exact claim, focused host controls with compile-success mutants, independent review, full build/link and destination recheck.",
+      "Host controls must execute the actual source bodies, not a replacement behavior model. Preserve all existing assertions. Characterize stale historical snapshot tests separately; never weaken a test or gate to admit this recovery."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "773488084be572a718ca7e7f09e4573f15f555ee9eca08a01cfbb0b5a2625033",
+  "request_id": "maininterface-call-order-controls-oct22a",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:maininterface-click-symbols-oct10"
+}
