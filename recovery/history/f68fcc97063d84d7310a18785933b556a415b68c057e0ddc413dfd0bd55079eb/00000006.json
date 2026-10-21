@@ -1,0 +1,44 @@
+{
+  "event_id": "b85c0be85e9e539717ad4adfba7f450c6c035f542366d503bd87c6cb1829cd74",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_faction_noun_inline_boundaries_oct21w.py",
+      "src/base.cpp",
+      "src/faction.cpp",
+      "src/faction.h",
+      "src/map.cpp"
+    ],
+    "evidence": [
+      "Freshrebaseddialogueapplication186TU200COFFbuild/link and25ownercontrolsPASS;claims/mappings/referencesPASS. Existingnativephysical112PASS87FAILplusnewobject staysunwaived. Full5581censusfinds3363exactvsbaseline3364,onlyverdictlossbase_territory4E3FA0; preserveitsclaimandrestoreoriginalinlinepredicatewithoutrevertinggenuinedialogueownership. No fullacceptance.",
+      "Nativepinnedoriginalcommunicatehas11get_nouncalls; currentnewdialogueonly6. ActualoneargumentAPI?get_noun@@YAPADH@Z and unchangedbodyreadPlayersnoun_gender/is_noun_plural,writeGenderDefault/PluralityDefault,returnnoun_faction. Authorizeunchangedbodytransferheader→canonicalexistingfaction.cppmarker, ordinaryMEASUREDLPSTRcdeclheaderdeclaration, coordinatornativewrite_body onlyupdatesbodyfact. PreserveallOriginalidentities/spans/claims/symbol/historicalinlineandLEVERnotes,markoldinlineobservationhistoricalnotdelete.",
+      "Pinnedname_base4E4191..4E41B0 haspositiveinlinefield/grammarsequence withnodirectget_nouncall. AuthorizeONLYland-nameexpressionget_noun(faction_id)adjacenttoexistingstrcat→directPlayersgender/pluralityglobalassignmentsandnoun_factionstrcat. Keepname_out[0]=0,offsetcalculation,allwater/namefile/PRNG/error/initialization paths unchanged. Allreads/storesprecedestrcat; no newhelper/wrapper or field/typeguess. CurrentMapWindraw_warshassamenaturalidiom.",
+      "base_territory4E3FA0 formerly119-byteexact, becameamissafterhas_treatyordinaryAPI. ExistinghelperispurePlayersData[faction_id].diplo_treaties[owner]&maskrawreturn. Originalmappedcallslist/119-bytebodyhasonlywhose_territory, nothas_treaty. AuthorizeONLYreplace!has_treaty(...DTREATY_VENDETTA)withsamefieldmask==0insideunchangedshort-circuitcondition; leaveowner/factioncomparison,is_human,evaluationorder,returnandallotherMapquerycallers untouched. No claimdemotionorassumedmatch; immediatelyre-measure.",
+      "Foreignget_nounconsumerclosureisnotfullycorrelated. Do NOTmassrewritesay_tech/DipEdit/ReportIf/probe/order_veh/battle_fight/enemies_*; preservefindingsandremainingmatchingboundarydebts. TheordinaryAPIcanimproverealcallcohortwithoutclaimingalloriginalcall/inlinesitesrestored. Getnounstandaloneandallaffectedbody/referencecensusrequiresfreshfullapplicationverificationafterthisstep.",
+      "AuthoronlythefourCPP/headerpathsandnewfocusedactual-sourcehosttest. Existinghelper/communicatecontrolsremainunchanged. Include nounpointeridentityandbothgrammarwriteswithmultiplefactions; compile-successmutantsmustdetectwrongfield,missedgrammarwrite,andtreatypredicate/argumentdirection. Names/members/typesalreadyrecovered; no boundsfix/uninitializednormalization, wrappers, compilerflags/CMakechange, noinline/forceinline, rawaddresses, newOriginalorboguscoverage. AuthorsnoGit/task/prep/nativecompiles, allapply_patchpathsabsolute. Breedworkerisfrozenoncurrentmaster; centralintegrationwillcoordinatemutuallyretainedbase.cppchangeswithoutdiscardingwork."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5290288,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5128336,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5128096,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "efabf4fcb119f9499364c94319750f6a7c8e788a830c4a717b3334606f8f8b99",
+  "request_id": "central-faction-noun-api-and-proven-inline-uses-oct21w",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:owner-faction-body-recovery-oct20ao"
+}
