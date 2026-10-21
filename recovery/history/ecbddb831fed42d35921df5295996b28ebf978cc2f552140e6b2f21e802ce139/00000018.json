@@ -1,0 +1,19 @@
+{
+  "event_id": "685c5b865f1a3372c1f53ea8d5ccabd681be28776171fd7cdae1c5b68b3e2365",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "texture-explicit-uv-shared-state-source-checkpoint-oct21zc",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Coordinator-reviewed manual source integration under standing user authority, not native automatic acceptance. Independent source/compiled review, fresh full application compile/link, actual-recipe replay/replica/damage, complete known-function census, strict references and claim/mapping/annotation checks completed. Original task baseline and all source identities/spans/bindings/history/claims remain unchanged. No new implementation or exact function is claimed.",
+      "Texture restores omitted existing shared raster cells, target-width row/clip words, conditional max vertex, edge snapshots/advances, clipped X and actual mapped helper calls, preserving original unsafe/error/FPU/get-free/borrowed ordering.130actual-source host tests pass, retaining older helper mutants and adding shared-state/order controls. Exactly one emitted method changes; all200objects pass outside that method projection. This is bounded recovery, not complete x87 or runtime equivalence.",
+      "Whole5581verdicts unchanged:3367masked-exact,2819strictPASS548UNKNOWN; no gain/regression hidden. Pending texture-retained-restoration-obligation-oct21zc remains open. Serial Git transfer of two disjoint verified source owners followed by one combined fresh destination187TU201COFF build/observations,174hostcontrols and zero-omission candidate-composition reproduction. Full automatic/linked-selection/structure/runtime/game acceptance remains unproved."
+    ]
+  },
+  "previous_event": "ba11a0f7d03bde3db71562f0efcca52cb6007451fa02b96397f1cbcb3c9010ce",
+  "request_id": "texture-reviewed-source-incorporation-oct21zc",
+  "schema_version": 1,
+  "sequence": 18,
+  "stream": "task:texture-rasterizer-recovery"
+}

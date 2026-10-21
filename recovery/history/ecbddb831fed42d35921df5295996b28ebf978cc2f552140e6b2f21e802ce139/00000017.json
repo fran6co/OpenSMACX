@@ -1,0 +1,21 @@
+{
+  "event_id": "ba11a0f7d03bde3db71562f0efcca52cb6007451fa02b96397f1cbcb3c9010ce",
+  "payload": {
+    "affects": [
+      "entity-7d19e401fdbdbe5fe281e136b65a85e00736b9dfb503a32a3f64acde8b35d334"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "texture-retained-restoration-obligation-oct21zc",
+    "evidence": [
+      "Pinned shared publications and four setup_edge calls are restored; current actual method512instructions vs original352 and previous692, stillMISMATCH. Existing integer texture_span_step model and additional runtime arithmetic/FPU calls do not prove originalx87FISTPprecision/status/exceptional effects. Preserve identity/span/historical obligations; do not label whole method exact or replace original quirks with safety fixes.",
+      "Native200COFFresidual passes only after projecting the explicitUVmethod and associated output. This establishes compiler-local outside-body observations, not original linked selection, callback observation, dynamic aliasing, complete structure/runtime or game acceptance. No claim grant, demotion, baseline reset or gate weakening."
+    ],
+    "hypothesis": "Restore original explicit-UV x87/FISTP arithmetic, status and exceptional effects beyond shared-state recovery.",
+    "kind": "discovery"
+  },
+  "previous_event": "4dcec9f441af16730a907f7050f7b862fb76657f62bd0381fdb0ad95f381bdfe",
+  "request_id": "texture-retained-restoration-obligation-oct21zc",
+  "schema_version": 1,
+  "sequence": 17,
+  "stream": "task:texture-rasterizer-recovery"
+}
