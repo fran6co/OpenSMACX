@@ -1,0 +1,25 @@
+{
+  "event_id": "100ac8c0b8a47243bb4c974535ddc5bf740275c8e53f092c10f7a33e90168a7b",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_ddinit_metrics_boundary_oct21.py",
+      "src/win.cpp",
+      "src/win.h",
+      "src/win_coordinates.cpp"
+    ],
+    "evidence": [
+      "Coordinator authorizes actual isolated source migration of the unchanged full DDInitRefreshScreenMetrics mapping/body from Win.cpp to existing win_coordinates.cpp, plus exact one definition-location comment correction in win.h. Positive native single-candidate experiment passed both actual-command replays, unchanged overlays and compiled wrong-body controls; all234participating mapping identities/history preserved. The helper and constructor remain exact; globalcleanup635450 and teardown635750 become38/38maskedexact with no mapped pass loss. Init635510 improves100/182 matching instructions but remainsmismatch. These are measured control results, not production acceptance or originalTU proof.",
+      "No behavior, caller expressions, DDInit lifecycle delegation, fields/storage, ABI, compiler/linker options or historical taskbaseline changes. In particular do not duplicate teardown in the destructor. Native zero-omission two-object residual intentionally fails at the source-moved helper and changed init/teardown/generatedglobalcleanup plus ordinary unmapped DDInit destructor and their associated debug sections; retain this observation and account for the full compiled closure. Generated constructor registration/order and all other code/data remain protected. No new originalidentity or inventedmapping for the ordinary emitted destructor.",
+      "Add actual-source host controls for helper CX-then-CY calls, globalstores and heightreturn with meaningful successful-compile mutants; preserve existingDDInitlifecyclecontrols. Independently pinned directcall witnesses verify observedoriginal6354C3/6355D0/6357BA target5EFD00. No proprietarybytes or target-specificpasspredictions in trackedtests. Worker uses apply_patch in isolatedauthorizedtestfile only; coordinator performs exact native mapping transport/sourcepatches, Git and compiler calls.",
+      "Require fresh actual whole185TU/199objectbuildlink, nativeclaim/mapping/referencecontinuity, complete5581identitycensus+strictreferencecomparison, scope-accounted physical complement with all unmapped/generated changes visible, independent review and freshdestinationreproduction before removing consumedwork. Preserve originalspans/claims/usefulhistory through native sourcewriteguard. No automaticdemotion/gatewaiver/full linkedretainedselection/allocation/provider/structure/runtime/game or autonomousacceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "a27236cfc6f63508f158b8e46db21910fc64e00768fe08576594047210f3ad91",
+  "request_id": "central-ddinit-metrics-owner-migration-oct21h",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:ddinit-global-lifetime"
+}
