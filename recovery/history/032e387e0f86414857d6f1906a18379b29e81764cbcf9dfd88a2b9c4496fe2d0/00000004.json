@@ -1,0 +1,28 @@
+{
+  "event_id": "8f2d2d2088dd761907e7940a2d07e0d9caed22bb90079727b96840db59e7b82c",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_basewin_zoom_tutorial_oct13as.py",
+      "src/basewin.cpp"
+    ],
+    "evidence": [
+      "Standing faithful-original recovery and parallel isolated manual-review authority. Preserve task baselines, complete Original mappings/spans/symbols/claims, all useful historical findings and current source. Compiler/flags/types/layout/ABI unchanged; no game bug fixes, hidden dispatch wrappers, asm or raw original addresses. Coordinator alone owns tasks/Git/preparation/native compilation/recording/shared CMake/publication and cleanup.",
+      "Each grant below is bounded to its stated source correction or read-only diagnostic, not a whole-task editing license. Sources own essential original facts; caches/probes stay ignored. Any new outside-owner discovery returns for explicit central scope. Fresh actual full application build/link, historical continuity, relevant regressions/physical output and destination reproduction required before manual integration. Unknown remains unknown; no automatic/full linked-selection/structure/runtime/game acceptance.",
+      "SOURCE API RESTORATION: pinned BaseWin::zoom41A920..41AE40 calls actualwait_2 at41AE28, thenreloadspending41AE2D. Currentsource duplicates IsMultiplayerNet net_tasks/wait_task dispatch. Replace only duplicated in-loop dispatch with existing declared wait_2(), preserving wait/pending/visibility/ExitTurnLoop conditions and every tutorial/action/callback/read. No new wrapper/type/header/symbol. Existing test must compile actual wait_2 body against existing NetDaemon/wait_task fakes, preserving every offline/network/skip/exit/visibility/pending assertion and adding a meaningful compile-success mode/gate mutant. Actual caller-target and code restoration is measured, not assumed."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4303136,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "ba49524dedffb45cda6d2297f90fc789e2e7cf38b280d2665714cb24b2f6f779",
+  "request_id": "central-basewin-wait-owner-oct21f",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:basewin-zoom-tutorial-owner-oct13as"
+}

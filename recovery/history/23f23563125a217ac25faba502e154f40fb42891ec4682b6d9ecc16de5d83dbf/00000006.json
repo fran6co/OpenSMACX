@@ -1,0 +1,52 @@
+{
+  "event_id": "bdcf520812d6daec173babae80865dc7acd3898dca1b171a1e5f68a16dfcc1c3",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/veh.cpp"
+    ],
+    "evidence": [
+      "Standing faithful-original recovery and parallel isolated manual-review authority. Preserve task baselines, complete Original mappings/spans/symbols/claims, all useful historical findings and current source. Compiler/flags/types/layout/ABI unchanged; no game bug fixes, hidden dispatch wrappers, asm or raw original addresses. Coordinator alone owns tasks/Git/preparation/native compilation/recording/shared CMake/publication and cleanup.",
+      "Each grant below is bounded to its stated source correction or read-only diagnostic, not a whole-task editing license. Sources own essential original facts; caches/probes stay ignored. Any new outside-owner discovery returns for explicit central scope. Fresh actual full application build/link, historical continuity, relevant regressions/physical output and destination reproduction required before manual integration. Unknown remains unknown; no automatic/full linked-selection/structure/runtime/game acceptance.",
+      "DIAGNOSTIC ONLY: six coherent existing vehicle statistics formatters in ignored ordinaryvehicle_stats.cpp proposal, full annotated blocks unchanged; existing can_arty5C0DB0 staysveh.cpp and current veh.h APIs/caller source unchanged. Current say_offense is MISMATCH183vs126instructions despite historicalBYTE_EXACT; defense and int scratch-buffer overload are currently exact and protected. No cosmetic spellings or flags. Native full167record metadata/history/claim/nonFILEbody union and writer validation, exact Release replay/whole-object replica, per-output damage and wholeowner/caller/data/initializer checks. No historical TU claim or source adoption from diagnostic gain alone."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5756256,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5756624,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5756880,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5290400,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5757152,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5757600,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "9f075288ae0e0de4cff52dd073650702eb8c8dcfa37165aaafa6bcc2ac1f7d4f",
+  "request_id": "central-vehicle-stats-boundary-oct21f",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:matching-veh-flags-oct20aa"
+}

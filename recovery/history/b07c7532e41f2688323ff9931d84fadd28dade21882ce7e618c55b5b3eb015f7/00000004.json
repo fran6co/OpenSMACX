@@ -1,0 +1,37 @@
+{
+  "event_id": "f53bcf4d3432f3f2b21aae038db17382ebd9c64619001ab640eebad5001c9730",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/win.cpp"
+    ],
+    "evidence": [
+      "Standing faithful-original recovery and parallel isolated manual-review authority. Preserve task baselines, complete Original mappings/spans/symbols/claims, all useful historical findings and current source. Compiler/flags/types/layout/ABI unchanged; no game bug fixes, hidden dispatch wrappers, asm or raw original addresses. Coordinator alone owns tasks/Git/preparation/native compilation/recording/shared CMake/publication and cleanup.",
+      "Each grant below is bounded to its stated source correction or read-only diagnostic, not a whole-task editing license. Sources own essential original facts; caches/probes stay ignored. Any new outside-owner discovery returns for explicit central scope. Fresh actual full application build/link, historical continuity, relevant regressions/physical output and destination reproduction required before manual integration. Unknown remains unknown; no automatic/full linked-selection/structure/runtime/game acceptance.",
+      "DIAGNOSTIC ONLY: exact complete annotated/history blocks for three Win input routers OnKey/OnChar/OnSysKey in ignored ordinarywin_input.cpp proposal; public win.h declarations/friends/globals and Win::is_visible remain unchanged in current owner. Original helpercalls5F1616/5F16AC/5F171C target5F7E90; natural input routing family, not proven original TU. Keep unrelated set_caption separate; do not move broad120-caller is_visible. Native full metadata/history/nonFILEbody union/reader-writer checks before compiler. Coordinator actual Release replay and whole-object unchanged replica, damage each output, measure whole231Winrecord domain and all code/data/initializers; no flag/attribute/type/storage changes. Source publication needs separate decision after results."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6231488,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6231648,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6231760,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "e2d15551c122bff69f68f8550e40b1d131171bff53111063393be5a9d5111710",
+  "request_id": "central-win-input-boundary-oct21f",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:wide-win-source-decks-oct20n"
+}

@@ -1,0 +1,30 @@
+{
+  "event_id": "e5dfeae238faceb0fb034dff2e886a679cb3e64385c8379e5c0776d80f6256ac",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/fixtures/game_data_actual_host_control.cpp",
+      "recovery/tests/test_game_data_actual_source.py",
+      "recovery/tests/test_game_data_transcript_order_oct21.py",
+      "src/game.cpp"
+    ],
+    "evidence": [
+      "Standing faithful-original recovery and parallel isolated manual-review authority. Preserve task baselines, complete Original mappings/spans/symbols/claims, all useful historical findings and current source. Compiler/flags/types/layout/ABI unchanged; no game bug fixes, hidden dispatch wrappers, asm or raw original addresses. Coordinator alone owns tasks/Git/preparation/native compilation/recording/shared CMake/publication and cleanup.",
+      "Each grant below is bounded to its stated source correction or read-only diagnostic, not a whole-task editing license. Sources own essential original facts; caches/probes stay ignored. Any new outside-owner discovery returns for explicit central scope. Fresh actual full application build/link, historical continuity, relevant regressions/physical output and destination reproduction required before manual integration. Unknown remains unknown; no automatic/full linked-selection/structure/runtime/game acceptance.",
+      "SOURCE CORRECTION: current serializer starts [1][1], uses +2 StringLists and includes diagonal/incorrect cells. Independent original counter review CORRECTS the initial27hypothesis: 5A8A39 seeds737E90,5A8A50 sets innercounter1,5A8A57 skipsinitialouter<=737E90;5A8CC2 incrementsinnercounter and5A8CCE repeats only while LESS than outercounter. Outercursor+30 at5A8CDA, inner+180 at5A8CC3, exclusive737FE0 bound. Original domain is EXACTLY21distinctpairs columns2..7,rows1..column-1, not27 and not28. Existing genuine StringList[8][8] at737CD8,stride30,head+8 supplies storage; no layout/type/global changes. Replace only this loop with typed column-major indices row<column and concise original evidence comment, preserve helper/error return and every other stream field/call/quirk. No normalization of indeterminate write header, malformed counts/lengths, cursor, partial mutations or original leaks. Add actual-source order controls for all21unique addresses, skippedrow0/diagonals/1,1/2,0, both read/write transfer paths and failure at each list; compile-success wrong-stride/inclusive/transposed/ignored-error mutants. Existing broad fixture remains; do not initialize full write header to make a test pass. Test may bound actual loop/helper rather than claim full-write determinism or game-save compatibility."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5925568,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "central-serializer-transcript-owner-oct21f",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:serializer-complete-owner-oct6"
+}

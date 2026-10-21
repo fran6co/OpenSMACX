@@ -1,0 +1,27 @@
+{
+  "event_id": "229161fa7ec59f7804edde03ba6c1c1eb2d337d1ebd3c82c124de9a4179ef709",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/jackal/palette.cpp"
+    ],
+    "evidence": [
+      "Standing faithful-original recovery and parallel isolated manual-review authority. Preserve task baselines, complete Original mappings/spans/symbols/claims, all useful historical findings and current source. Compiler/flags/types/layout/ABI unchanged; no game bug fixes, hidden dispatch wrappers, asm or raw original addresses. Coordinator alone owns tasks/Git/preparation/native compilation/recording/shared CMake/publication and cleanup.",
+      "Each grant below is bounded to its stated source correction or read-only diagnostic, not a whole-task editing license. Sources own essential original facts; caches/probes stay ignored. Any new outside-owner discovery returns for explicit central scope. Fresh actual full application build/link, historical continuity, relevant regressions/physical output and destination reproduction required before manual integration. Unknown remains unknown; no automatic/full linked-selection/structure/runtime/game acceptance.",
+      "COORDINATOR COMMENT ONLY: correct unsupported current copy_from naming rationale that both callers destroy the destination immediately beforehand. Pinned load_palette copy451A9C precedes local Palette cleanup451C10; PrefWin copy491466 likewise has no preceding destructor. Partial400-byte entries copy, seed reroll and returnedreceiver are supported; original method/operator spelling remains unproved. Keep chosen semanticcopy_from name/API/body/symbol/Original/claims/TRIED history unchanged. No pragma, intrinsic policy, memcpy wrapper or body changes authorized."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6284016,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "442d59f1925979d3ba486d07b7da16c83d5a3b67fb3fc21549f1494d99d8ce95",
+  "request_id": "central-faithful-source-rationale-oct21f-palette-source-batch-oct19c",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:palette-source-batch-oct19c"
+}
