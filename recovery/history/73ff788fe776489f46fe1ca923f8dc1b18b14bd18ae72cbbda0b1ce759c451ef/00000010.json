@@ -1,0 +1,47 @@
+{
+  "event_id": "0d790e51609e446f0eefe873d907bd3ae05305bfcb0a0ef1a70b308202f5ce48",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_breed_owner_boundaries_oct21u.py",
+      "src/base.cpp",
+      "src/base.h",
+      "src/game.cpp"
+    ],
+    "evidence": [
+      "Standing user authorization for evidence-backed structural recoveries coordinated across the base, BaseWin production and repair-phase historical owners. Preserve original task bases, prior work, every original identity/span/claim and complete LEVER/TRIED history. No autonomous admission, acceptance or source discard.",
+      "Pinned draw_production40E360 at40E717 and repair_phase526030 at526366 directly call breed_mod4E65C0; worm_mod4E6740 instead has an inline expansion. Current base.h defines MEASURED inline breed_mod, BaseWin expands it and game.cpp stages a pragma-disabled breed_mod_call wrapper. Actual production base.cpp receipt uses /O2 /Ob2 /Oy-, so prior rejection solely from /Ob1 is invalid. Same-TU ordinary-definition inlining is a hypothesis to measure, not a promise.",
+      "Authorize one finite structural candidate: transport unchanged breed_mod body to its existing base.cpp marker immediately before worm_mod, ordinary matching MEASURED declaration in base.h; native source.write_body alone changes the body-path fact. Remove redundant unoriginal game.cpp wrapper/auto_inline pragmas and use direct breed_mod in repair_phase. BaseWin source and worm_mod bodies remain unchanged. No forced inline/noinline, export change, compiler/flag/CMake change, copied body, ABI trick, arbitrary owner invention, semantic bug fix or handwritten marker/claim.",
+      "First coordinator measurement must establish actual call boundaries in base, BaseWin and game physical objects using unchanged production recipes and replicas. If ordinary same-TU inlining fails, retain the source/evidence and investigate rather than substitute pragmas or silently accept a wrong call graph. Four original has_fac calls versus current facility-bitmask source forms remain independent restoration evidence; do not conflate disappearance of a breed_mod call with exact inner effects.",
+      "Header-dependent TUs, duplicate COMDATs, .drectve/export tokens and unscoped collateral remain obligations, not blanket waived. A viable finite result requires fresh complete build/link, claim/mapping/reference continuity, host controls and full physical collateral review before any coordinator-reviewed integration; full linked selection/structure/runtime/game and native automatic acceptance remain unproven."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5137856,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5138240,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4252512,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5398576,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "33d49e515a4a627cfa519b7768db1d55fae563e1af45df1052a469aa087fcb22",
+  "request_id": "central-breed-original-owner-boundaries-oct21u",
+  "schema_version": 1,
+  "sequence": 10,
+  "stream": "task:owner-base-body-recovery-oct20ao"
+}
