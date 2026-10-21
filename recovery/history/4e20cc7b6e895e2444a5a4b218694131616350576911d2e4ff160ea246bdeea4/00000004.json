@@ -1,0 +1,22 @@
+{
+  "event_id": "6795859b6892119ad5dfa64e2df6e3d390f3e3edb722e945d299327312172929",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/win.cpp",
+      "src/win_coordinates.cpp"
+    ],
+    "evidence": [
+      "Standing coordinator-reviewed faithful recovery permission. Narrow source annotation scope ONLY: add existing native RECOVERY_IMPORT v1 bindings for __imp__GetCursorPos@4 USER32.dll name:GetCursorPos in win_coordinates.cpp and __imp__CreatePenIndirect@4 GDI32.dll name:CreatePenIndirect in win.cpp. No C++ declaration/body/header/ABI/flags/build-policy or ORIGINAL binding/claim edits. These SDK dependencies are not new application recovery targets.",
+      "Pinned ordinary PE import table uniquely binds GetCursorPos to669284 and CreatePenIndirect to66904C. Current actual Win::get_mouse_pos5EC8A0 and window_line_raw5F2AC0 COFF relocations name precisely those SDK slots; whole strict census has both rows unknown solely because these two source import bindings are absent. Existing comments already preserve GetCursorPos versus old SetCursorPos target history. Keep all historical findings and original owner task baseline unchanged.",
+      "Require independent source/IAT/reference review; package import parser/duplicate refusal and actual strict compiler-backed checks must prove target agreement. Fresh full build/link and all199 physical object comparisons with zero omissions must preserve all C++ outputs; full5581 masked outcomes and every other strict outcome remain unchanged, claims/mappings/references pass. Annotation addition grants no byte claim or system/runtime/link-selection/game/autonomous acceptance. ShellExecuteA and Popup unresolved globals are separate owner work, not authorized here."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "3abf53887f22c4919140523d00731e1092c6c74972787a9d16a76041cdd583e0",
+  "request_id": "central-win-sdk-import-bindings-oct21o",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:owner-win-body-recovery-oct20ao"
+}
