@@ -1,0 +1,25 @@
+{
+  "event_id": "4e87e5343ca177e0cad5ddba384666814876aa49837e9a384a69c0839c1b3e14",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_technology_getter_boundaries_oct21s.py",
+      "src/technology.cpp",
+      "src/technology.h"
+    ],
+    "evidence": [
+      "Coordinator-reviewed bounded manual getter-definition ownership recovery. Transport unchanged tech_mil5BDD70/tech_tech5BDD90/tech_infra5BDDC0/tech_colonize5BDDF0 bodies from technology.h to existing canonical technology.cpp markers using nativewrite_body. HeaderkeepsordinaryMEASUREDdeclarations and alloriginalsymbols/spans/claims/LEVERhistory. Signedtech_id<89 guard and uncheckednegativeindices/fallback0or1unchanged; no behaviorfix, wrappers, pragmas or compilerflags.",
+      "Fresh current-rebase fullbuild/link build-0eifmr2b and sourceclaims/mappings/referencesPASS. Current actual PickTech::pick486510 restores exactly5directE8 gettercalls at corresponding logic for pinned486946/486951/48699D/4869A7/4869B2; PickTechCPPbodyunchanged. OriginalEHwholebodyrefusalremainsunknown. Fourselectedoldalpha getterbody signatures equal currentsoletechnologydefinitions;148duplicatedinputdefinitions→4, no fabricatednewOriginalfunctions or matchinggains.",
+      "Nativecompiledphysical162PASS37FAIL remainsFAIL, notfullpreservationpass. Elevenexplicitlyauthorizedandindependentlyreviewed actualcollateraloriginalbodies are scoped alongside getters/caller; completecurrentresidual has0unexplainedoutsidescopechanges. Everyremainingfailureis.drectve/aux:36consumerTUs loseexact4getterexporttokens, ownerretains4; allotherorderedtokensidentical, finalPE103exportnames/ordinalsunchanged. No header/body/directive normalization or nativegatewaiver; selectedallocation/linkretentionstillunproven.",
+      "Fresh completegetter/query/PickTech ownercontrolsPASS with0skips/errors/failures, including all9getterbodytransport/guard/field/fallback/compile-successmutants. Nativeoriginalknown5581verdicts unchanged3363maskedexact; all3457historicalclaimedidentities/3468requirements preserved, strict2807PASS556UNKNOWNunchanged. Bounded C++review and originalcall/ABI evidence supportmanualsourceintegration; not nativeautomatic, wholelinked, structure/runtime/gameacceptance.",
+      "Originaltaskbaselineb5f92b663bf4a995e681aa374b1f27a08baeb371 retainedthroughrebases. Nativebuildreceipts/artifacts/sourceinputs requalified immediatelybeforedecision. Freshdestinationbuild/link/source/census, ownercontrols and199zeroomission candidateobjectreproduction requiredbeforeconsumedbranchcleanup. Other source recoveries stayisolated; no acceptanceconditionweakened."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "b544e24e7dcd0845dfd7dd1412fc6e67d93141e3adc63b5665e5b30e18f70738",
+  "request_id": "central-manual-technology-getter-ownership-admission-oct21v",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:picktech-owner-coverage"
+}
