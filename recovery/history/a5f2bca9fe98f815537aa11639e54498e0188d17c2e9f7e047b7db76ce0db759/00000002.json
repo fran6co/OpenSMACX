@@ -1,0 +1,22 @@
+{
+  "event_id": "e3c8d12166ca966d7e734677ca1cc2c5852a63af011dfdd5cc9baf38448002a8",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_reportif_click_global_receiver_oct21m.py",
+      "src/reportif.cpp"
+    ],
+    "evidence": [
+      "Standing faithful-source/manual-recovery permission: correct only on_iface_left_click4A5F40 mode write and report faction read to their original explicit global receiver. Pinned885F40 is ReportIfGlobal885F38+8, NOT ReportWinGlobal; pinned8A4160 is ReportIfGlobal+1E228. Keep entryguard and selection output receiver-relative, Spot argument/output order, ReportWin topic flag and modal branch/calls exactly. Do not assume callback receiver equals global.",
+      "Author may edit only the existing function body and a focused actual-source host regression fixture. Distinguish receiver/global mode, faction and selection; test guard, no-spot, modal and direct paths, callback changes to globals, and compile-success wrong-receiver mutations. Do not introduce new behavior fixes, declarations/layout/types/storage/symbol/annotation/claim/flags or unrelated source cleanup. Prior source findings remain intact.",
+      "Isolated source author uses apply_patch and explicit host tests only. Coordinator owns native compilation, preparation, Git, actual-recipe overlay controls, full build/link, relevant matching/reference and identity checks, compiled outside-body complement, independent pinned review and destination reproduction. Preserve original task baseline and all restoration obligations. No automatic/full linked-selection/structure/runtime/game acceptance is granted."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "9f8943540c2e9380b507fc3214ffd5ee8eb1a89d6c4a385abeacf59fe5e1df89",
+  "request_id": "central-reportif-click-global-receiver-oct21m",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:reportif-source-batch-oct19b"
+}
