@@ -1,0 +1,21 @@
+{
+  "event_id": "4e618128f9f287908b297a1a4f02aca6d82513ce951fd0bb9f8d5757cfc0ad0a",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/mapwin.h"
+    ],
+    "evidence": [
+      "Authorize at most two private Compiler.overlay diagnostics: ordinary inline on the existing init_dummy declaration, with its complete unchanged annotated CPP definition either in place or moved before first use. Unlike moving the body into the class, an inline declaration needs no new map.h/general.h include cycle and preserves canonical mapping and its native interpretation. No method/body/type/algorithm/storage/flag change. Existing source has only the two CPP odr-uses; inspect them rather than forcing a desired call boundary.",
+      "All106existing mapped task functions remain protected except compiler-local observations. Retain full original mapping/span/symbol/claims/history byte-for-byte with any transported definition. Header damage witness may temporarily shrink brightness4to3 (record size still12) only inside a private compiling control, with no source or layout claim. CPP damage witness changes the helper scalar19to18 privately. Both must affect the named emitted original helper; all dependency/caller/publication proof remains separate.",
+      "Stop this hypothesis if configured VC6 leaves RECT-init out-of-line, expands both calls, removes mapped standalone helper, or creates unsupported collateral. No forced inline/noinline, pragma, flags, exports or measurement anchors. Source workers may only inspect, not mutate these files; coordinator owns overlays/leases/native compiles. Diagnostics create no product changes, claims or acceptance. Preserve original task baseline."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "956de6face6272772d2f3cccbae473e2d29f60080074b9181c57747ca50d342b",
+  "request_id": "mapwin-ordinary-inline-contract-diagnostic-scope-oct21zd",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:mapwin-source-batch-oct19e"
+}

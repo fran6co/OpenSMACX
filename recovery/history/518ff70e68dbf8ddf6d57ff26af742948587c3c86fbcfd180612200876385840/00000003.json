@@ -1,0 +1,23 @@
+{
+  "event_id": "c9198fa1d558b7d981f90124ce05d0afed34c44d1708f87805d6607f81fed208",
+  "payload": {
+    "affects": [
+      "entity-05e936318014f312c95c4fd333a2c718af4c57c5c0004f37116b92e8188ab01c",
+      "entity-13e141830e92ae425529aa74634e63c864b5b213062feb9682fef95b0d1ba8a4",
+      "entity-806b4267e5ec725cc7fc100d301d3aa25afe14a4928b43b5e44ea612b6931630"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "mapwin-selective-ordinary-inline-contract-oct21zd",
+    "evidence": [
+      "Pinned RECT-init470920contains cache effects after clear; system-init471030has direct helper call4710D6 and standalone470ED0exists. Both current source callers share one genuine typed helper. Earlier ordinary reorder/Ob1 experiments were for a different empty method, not evidence for this inline contract.",
+      "Bounded private diagnostics retained complete mappings/history and actualO2Ob2DNDEBUGOy-recipe. Whole-object actual-recipe replay/unchanged replica and separate CPP/header compile-success damage controls passed. Six compiles total; both ordinary-inline declaration and complete-definition-before-use variants expanded both calls and removed the standalone helper. Reports remain ignored, no source/claim publication."
+    ],
+    "hypothesis": "An ordinary inline declaration might restore RECT-init cache expansion while retaining the original system-init helper call.",
+    "kind": "discovery"
+  },
+  "previous_event": "4e618128f9f287908b297a1a4f02aca6d82513ce951fd0bb9f8d5757cfc0ad0a",
+  "request_id": "mapwin-selective-ordinary-inline-contract-oct21zd",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:mapwin-source-batch-oct19e"
+}
