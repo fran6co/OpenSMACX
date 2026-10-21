@@ -939,6 +939,18 @@ granularity of exploration, not recording or integration requirements. Header,
 inlining and shared-layout changes require investigation of collateral output;
 an unchanged neighboring function count is not preservation evidence.
 
+Before attributing a missing call or inline-body mismatch to source order,
+replay the actual retained application command, including its `/Ob` and `/Oy`
+options, and require whole-object replay/unchanged-overlay and target-damage
+controls. Historical matching trials can emit a different call boundary even
+for the unchanged source. A private source-order diagnostic may use the existing
+`Compiler.overlay` and `source.asm.compare_unit` APIs to screen the complete TU
+before recursively checking dependencies. Keep complete annotated definitions
+together and verify the identity/history union; do not detach binding evidence
+to bypass a deck refusal. This is advisory exploration, not strict-reference,
+preservation, recording or integration authority. Only promising source forms
+or independently justified structural recoveries proceed to the full checks.
+
 Keep pending compilations within the provisioned compiler leases, independent
 of the number of triage workers. Report landed function gains and observed
 compile attempts separately from candidates inspected or workers launched.
