@@ -1,0 +1,25 @@
+{
+  "event_id": "a7ef7c2a6b123c2902a34d0ab04f97f38f83dda48a05dca7ff19e908f485584c",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_global_starts_oct21l.py",
+      "src/alpha.cpp",
+      "src/base.cpp",
+      "src/game.cpp"
+    ],
+    "evidence": [
+      "Coordinator manually admits exactly six source-owned original data starts: TimeControl94F1B8, SocialEffects946580, BaseAtErrorGuard90EA38, BaseAtDebugPopupFlag93A94C, GameDataStateStorage9A6490, CoverWindow937118. Guarded native writer exactly reproduces six inserted marker lines; all other source bytes, function bodies, declarations, claims and prior1712objectbindings remain unchanged. No allocation bounds, new storage, initializer/lifetime or original TU claim is introduced.",
+      "Independent pinned operand/source/currentCOFF and final actual candidate reviews completed.68relatedtests pass with configured pinned image and zero skips. Fresh185TU199object native application build/link and claims/mappings/references continuity pass. All199actualcompiledobjects equal currentmaster with ZERO body/section omissions. Whole5581knownidentity masked results remain3358exact, with no identity or outcome changes.",
+      "Fresh strict reference-aware result2800pass555unknown3fail: only StatusWin::UNK2(4B4CD0) movesunknown-to-pass through CoverWindow. No strict loss or new historical claim. Six bindings are not six functions or six strict gains. GameDataStateStorage originalstart is evidenced but its25v3members still lack standaloneCodeView types inRelease; parent/member reference result remainsunknown. RulesStorage v1 is not published because its unbounded parent conflicts with offsetzeroTechValidCount and no originalextent isproven.",
+      "Manual reviewed checkpoint only. Preserve original taskbaseline and historical obligations. Three prior strictfailures and complete linked-retention/allocation/provider/structure/runtime/exhaustivecoverage/game/autonomous acceptance gaps remain. Fresh master fullbuild/link,68tests, wholecensus/reference observations and zero-omission199object reproduction must pass before removing the consumed worktree."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "5c57b5615ec2efc428f7f47d4e9d3a4991adbf383eb0cb241507cab9f7f30d50",
+  "request_id": "central-manual-six-global-start-admission-oct21l",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:ordinary-global-owner-bindings-oct21h"
+}

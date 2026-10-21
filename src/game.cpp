@@ -714,6 +714,7 @@ BOOL ExpansionEnabled;  // 0x009A6488
 // RECOVERY_OBJECT: v3 0x009A6670 0x009A66C9 ?GameTechAchieved@@3PAEA 0x004DFAD0 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.game_tech_achieved_
 // RECOVERY_OBJECT: v3 0x009A64BC ?TutWinFlags9A64BC@@3HA member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.tutwin_flags_9a64bc_
 // RECOVERY_OBJECT: v3 0x009A64DC 0x009A64E0 ?VehSelectionFollowLimit@@3HA 0x005C08C0 member ?GameDataStateStorage@@3UGameDataStateWindow@@A fields_.vehicle_selection_follow_limit_
+// RECOVERY_OBJECT: v1 0x009A6490 ?GameDataStateStorage@@3UGameDataStateWindow@@A
 GameDataStateWindow GameDataStateStorage;
 
 uint32_t SystemInterfaceFlags;  // 0x00933420
@@ -2450,6 +2451,7 @@ char ScenarioSaveNameBuffer[256];
 // with `mov ecx, 0x937118` immediates; the object keeps that fold, the
 // displacement relocated. time.cpp's go_reset hides it by name too (its
 // go_cover_window() helper is retired).
+// RECOVERY_OBJECT: v1 0x00937118 ?CoverWindow@@3VGraphicWin@@A
 GraphicWin CoverWindow;  // 0x00937118
 
 // The multiplayer window - REAL STORAGE at the image's 0x007FD648, not the

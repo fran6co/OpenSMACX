@@ -5704,7 +5704,9 @@ executable does not name either.
 // Reentrancy guard for the debug block below: set while it runs, so a callee
 // that re-enters base_at() (e.g. via rebuild_base_bits or Console::focus)
 // while it is busy skips straight to returning -1.
+// RECOVERY_OBJECT: v1 0x0090EA38 ?BaseAtErrorGuard@@3HA
 int BaseAtErrorGuard;  // 0x0090EA38
+// RECOVERY_OBJECT: v1 0x0093A94C ?BaseAtDebugPopupFlag@@3HA
 int BaseAtDebugPopupFlag;  // 0x0093A94C
 // Shared popup/action result lives in console.cpp as ConsoleGroupAction.
 

@@ -81,6 +81,7 @@ LPSTR Difficulty[MaxDiffNum];      // 0x0096C85C
 // converted to the objects themselves; the folded absolute addressing of
 // every use site is unchanged, the immediate now a relocation.
 RulesResourceinfo ResourceInfo[MaxResourceInfoNum]; // 0x00945F50
+// RECOVERY_OBJECT: v1 0x0094F1B8 ?TimeControl@@3PAURulesTimeControl@@A
 RulesTimeControl TimeControl[MaxTimeControlNum];    // 0x0094F1B8
 RulesResource Resource[MaxResourceNum];             // 0x00946158
 RulesEnergy Energy[MaxEnergyNum];                   // 0x0094A318
@@ -101,6 +102,7 @@ DefaultPref DefaultPrefs;                           // 0x0094B350
 // Original say_society at 0x00590A21 reads the category-row start at stride 0xD4; no full layout/extent claim.
 // RECOVERY_OBJECT: v1 0x0094B000 ?SocialCategories@@3PAURulesSocialCategory@@A
 RulesSocialCategory SocialCategories[MaxSocialCatNum];      // 0x0094B000
+// RECOVERY_OBJECT: v1 0x00946580 ?SocialEffects@@3PAURulesSocialEffect@@A
 RulesSocialEffect SocialEffects[MaxSocialEffectNum];        // 0x00946580
 LPSTR Mood[MaxMoodNum];                                     // 0x0094C9E4
 LPSTR Repute[MaxReputeNum];                                 // 0x00946A30
