@@ -1,0 +1,22 @@
+{
+  "event_id": "16200eeef573801e052543bd2ad88664f7329eabbb06563c250f179b56a79ce3",
+  "payload": {
+    "affects": [
+      "entity-ba01b215afa5e70dccc06b99c2b8b2834e9c5d0d984c0be016cebebbb8fe8b6d"
+    ],
+    "author": "coordinator",
+    "discovery_id": "facility-actual-source-checkpoint-oct21y",
+    "evidence": [
+      "Coordinator reviewed actual source/evidence and scoped host tests: 9cases pass with no skips. Preserve original identities/spans, all historical claims and prior discoveries. Native record exit0is the only measurement/publication authority; no hand-edited byte claim, demotion or baseline reset.",
+      "Selected-base facility predicate directly owns original bitmask argument-output alias and byte field access, reading selected base before cutoff. Int zero/one matches original machine boundary, not proof of original C++ spelling; historical bool catalogue identity remains. Explicit-base overload unchanged.",
+      "Unadmitted source checkpoint only. Fresh complete application build/link, scoped code/reference and outside-scope compiled checks, source annotation/claim continuity, independent review and destination recheck remain required. Existing neighboring EH/data-owner unknowns and historical fixture failures are not waived. No automatic or full-game acceptance."
+    ],
+    "hypothesis": "Preserve the reviewed original-faithful source reconstruction and verify its complete current application closure.",
+    "kind": "discovery"
+  },
+  "previous_event": "b1914794f6c3a05c74d225ee2028db0d16c7ad7fef7152fb8a15b3555c03bd28",
+  "request_id": "facility-actual-source-checkpoint-oct21y",
+  "schema_version": 1,
+  "sequence": 10,
+  "stream": "task:bitmask-owner-oct16"
+}

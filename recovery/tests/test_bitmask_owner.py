@@ -14,7 +14,7 @@ from match_recovery.source import read_file
 ROOT = Path(__file__).resolve().parents[2]
 BITMASK_SIGNATURE = "void __cdecl bitmask(int input, int *offset, int *mask)"
 BUILT_SIGNATURE = "inline int __cdecl has_fac_built(int facility_id, int base_id)"
-GUARDED_SIGNATURE = "bool __cdecl has_fac_built(int facility_id)"
+GUARDED_SIGNATURE = "int __cdecl has_fac_built(int facility_id)"
 
 
 def _definition(text: str, signature: str) -> str:
@@ -79,9 +79,14 @@ def test_bitmask_owner_and_two_argument_facility_predicate_are_direct():
     maint_start = base_source.index("void __cdecl base_maint()")
     assert base_source.count(GUARDED_SIGNATURE + " {") == 1
     assert base_source.index(build) + len(build) < base_source.index(guarded) < maint_start
-    assert guarded == ("bool __cdecl has_fac_built(int facility_id) {\n"
+    assert guarded == ("int __cdecl has_fac_built(int facility_id) {\n"
                       "    int base_id = BaseIDCurrentSelected;\n"
-                      "    return (facility_id >= FacilityRepStart) ? false : has_fac_built(facility_id, base_id);\n"
+                      "    if (facility_id >= FacilityRepStart) {\n"
+                      "        return false;\n"
+                      "    }\n"
+                      "    int mask;\n"
+                      "    bitmask(facility_id, &facility_id, &mask);\n"
+                      "    return (Bases[base_id].facilities_built[facility_id] & mask) != 0;\n"
                       "}")
 
     # The coordinator's native writer updates this path after source transport.
@@ -106,9 +111,10 @@ def test_actual_bitmask_and_facility_predicate_alias_contract(compiler_name, tmp
     one_arg = _definition(base_source, GUARDED_SIGNATURE)
     program = r'''#include <cassert>
 #include <climits>
+#include <stdint.h>
 #include <type_traits>
 #define __cdecl
-struct BaseStub { int facilities_built[64]; };
+struct BaseStub { uint8_t facilities_built[12]; };
 BaseStub Bases[2] = {};
 int BaseIDCurrentSelected = 0;
 const int FacilityRepStart = 0x41;
@@ -117,8 +123,8 @@ BODY_TWO_ARG
 BODY_ONE_ARG
 static_assert(std::is_same<decltype(has_fac_built(1, 0)), int>::value,
               "two-argument predicate preserves its integer contract");
-static_assert(std::is_same<decltype(has_fac_built(1)), bool>::value,
-              "one-argument guarded overload remains distinct");
+static_assert(std::is_same<decltype(has_fac_built(1)), int>::value,
+              "one-argument guarded overload preserves int return ABI");
 int main() {
     struct Case { int input, offset, mask; };
     const Case cases[] = {
@@ -152,6 +158,9 @@ int main() {
     BaseIDCurrentSelected = 0;
     assert(!has_fac_built(0x41)); // One-arg overload keeps its guard.
     assert(has_fac_built(7));
+    Bases[0].facilities_built[2] = 0x08;
+    assert(has_fac_built(19) == 1);
+    assert(has_fac_built(18) == 0);
 }
 '''.replace("BODY_BITMASK", bitmask).replace("BODY_TWO_ARG", two_arg).replace(
         "BODY_ONE_ARG", one_arg)

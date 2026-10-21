@@ -1,4 +1,4 @@
-"""Actual-source 0/1/read-order controls; not proof of original return ABI."""
+"""Actual-source controls for the measured int predicate and byte storage."""
 from pathlib import Path
 import shutil
 import subprocess
@@ -31,7 +31,7 @@ def test_actual_facility_predicates_keep_zero_one_results(compiler_name, tmp_pat
 
     header = (ROOT / "src/base.h").read_text()
     source = (ROOT / "src/base.cpp").read_text()
-    signature = "bool __cdecl has_fac_built(int facility_id)"
+    signature = "int __cdecl has_fac_built(int facility_id)"
     assert header.count(signature + ";") == 1, "selected-base facility declaration missing"
     assert "inline " + signature not in header
     one_arg = definition(source, signature)
@@ -43,12 +43,14 @@ def test_actual_facility_predicates_keep_zero_one_results(compiler_name, tmp_pat
     assert one_arg.index("int base_id = BaseIDCurrentSelected;") < one_arg.index(
         "facility_id >= FacilityRepStart"
     )
+    assert "bitmask(facility_id, &facility_id, &mask);" in one_arg
 
     fixture = r'''
 #include <assert.h>
+#include <stdint.h>
 #include <type_traits>
 #define __cdecl
-struct Base { int facilities_built[16]; };
+struct Base { uint8_t facilities_built[12]; };
 static Base Bases[3];
 static int selected_reads;
 static int read_selected_base() { ++selected_reads; return 1; }
@@ -62,10 +64,10 @@ static void bitmask(int input, int *offset, int *mask) {
 int main() {
     static_assert(std::is_same<decltype(has_fac_built(1, 1)), int>::value,
                   "two-argument helper contract must remain unchanged");
-static_assert(std::is_same<decltype(has_fac_built(1)), bool>::value,
-              "one-argument helper retains its bool contract");
+static_assert(std::is_same<decltype(has_fac_built(1)), int>::value,
+              "one-argument helper returns the original full-width predicate");
 
-    Bases[1].facilities_built[2] = 1 << 3;
+    Bases[1].facilities_built[2] = 1u << 3;
     selected_reads = 0;
     assert(has_fac_built(19) == 1);
     assert(selected_reads == 1);

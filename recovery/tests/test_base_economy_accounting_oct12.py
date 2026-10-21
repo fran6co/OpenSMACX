@@ -284,9 +284,9 @@ def program():
         "MEASURED inline int __cdecl base_project(", "MEASURED inline BOOL __cdecl has_project(",
         "inline int __cdecl has_fac_built(int facility_id, int base_id)",
         "MEASURED inline BOOL __cdecl ascending("))
-    assert "bool __cdecl has_fac_built(int facility_id);" in header
-    assert "inline bool __cdecl has_fac_built(int facility_id)" not in header
-    queries += "\n" + definition(source, "bool __cdecl has_fac_built(int facility_id)")
+    assert "int __cdecl has_fac_built(int facility_id);" in header
+    assert "inline int __cdecl has_fac_built(int facility_id)" not in header
+    queries += "\n" + definition(source, "int __cdecl has_fac_built(int facility_id)")
     queries = queries.replace("__forceinline", "inline")
     bodies = "\n".join(definition(source, sig) for _, sig in SUBJECTS.values())
     return declarations() + helpers() + "\n" + PROVIDERS + queries + "\n" + definition(general, "MEASURED inline int __cdecl range(") + "\n" + bodies + "\n" + MAIN

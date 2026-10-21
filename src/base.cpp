@@ -5120,9 +5120,14 @@ label_4fff8e:
   return v8;
 }
 
-bool __cdecl has_fac_built(int facility_id) {
+int __cdecl has_fac_built(int facility_id) {
     int base_id = BaseIDCurrentSelected;
-    return (facility_id >= FacilityRepStart) ? false : has_fac_built(facility_id, base_id);
+    if (facility_id >= FacilityRepStart) {
+        return false;
+    }
+    int mask;
+    bitmask(facility_id, &facility_id, &mask);
+    return (Bases[base_id].facilities_built[facility_id] & mask) != 0;
 }
 
 
@@ -9369,7 +9374,8 @@ Status: Complete
 
 /*
 Purpose: Checks whether the facility (non-SP) has been build in the currently selected base.
-// ORIGINAL: 0x00500290 ?has_fac_built@@YA_NH@Z 0x00500290-0x005002DE
+// ORIGINAL: 0x00500290 ?has_fac_built@@YA_NH@Z 0x00500290-0x005002DE BYTE_EXACT
+// symbol    ?has_fac_built@@YAHH@Z
 // body      src/base.cpp
 // size      78 bytes
 // prototype bool (__cdecl ?has_fac_built@@YA_NH@Z)(int facilityID)
