@@ -1,0 +1,19 @@
+{
+  "event_id": "916ac84e32f04dbcd3aca82e5459dd94628e01c9d8b316817c55d46997e95e04",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/veh.cpp"
+    ],
+    "evidence": [
+      "Coordinator finite NARROWER ownership control: retain int-only scratch-buffer overload50B9A0 in veh.cpp with its private inline consumers, move only five buffer-taking formatters57D560/57D6D0/57D7D0/57D8E0/57DAA0 in ignored proposal. Six-definition candidate preserves one exact gain but failed residual; do not discard it or call it clean. This control tests a concrete lost-inline cause, not arbitrary spelling. Same compiler/flags/types/storage/API/claims/baselines; actual replay+overlay+twooutputdamage controls, complete167record measurement and exact physical/code/literal transfer accounting required. Diagnostic only; author source permission to finish existing tests retained, narrower adoption needs reviewed decision."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "ea32626d60336617627e99dcea039ab9f5513476e5ef02efbf9afd0c10acfdef",
+  "request_id": "central-vehicle-buffer-boundary-control-oct21f",
+  "schema_version": 1,
+  "sequence": 9,
+  "stream": "task:matching-veh-flags-oct20aa"
+}
