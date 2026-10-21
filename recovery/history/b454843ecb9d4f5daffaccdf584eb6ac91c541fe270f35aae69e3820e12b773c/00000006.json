@@ -1,0 +1,24 @@
+{
+  "event_id": "e22a5dcbe4baae5b93e026308195c134dbd34e45bedc50bdf688544e4c1a5394",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_prefwin_geometry.py",
+      "recovery/tests/test_prefwin_startup_bindings_oct18.py",
+      "src/prefwin_geometry.cpp"
+    ],
+    "evidence": [
+      "Coordinator-reviewed faithful restoration of original PrefWin generated initializer references48D610 and48D7F0. Rotate existing three uint32 addends to ordinary C++ C+A+B spelling; unsigned modular value, signed output conversion, separate globals/types/storage, complete original spans, declaration/CRT order, production flags and ABI unchanged. Remove only contradicted top-level run-status prose; retain all historical TRIED/LEVER findings and source bindings.",
+      "Actual production-recipe replay, unchanged overlay, arithmetic damage controls and seven-instruction bodies pass. Native recover record alone banks two historical claims. Fresh strict full application check changes exactly these two FAILs toPASS, every prior verdict otherwise unchanged; all26 PrefWin code/reference/boundary rowsPASS. Fresh compiler-backed native control independently verifies36 input/output initialdata objects and26 original/candidate CRT entries, rejects wrongbinding/code/extent/order damage. No strict exception remains.",
+      "Independent final three-file review and frozen digests,27host tests plus1leasednative controlPASS. Exact immutable75b8ac5c projection also accounts for PRIOR e89337a3f admitted48D790 transition; BASE_REVISION and every other mapping/config/claim retained. Correct only stale Console aggregate expected symbolsE31/E29 toE18/E16; actual fullbuild CRT and five constructor/atexit order and complete strict Console bodies independently rechecked. No Console source edits.",
+      "Fresh185TU199object application build/link, claims/mappings/referencesPASS; all199compiled complementsPASS projecting ONLY two initializer bodies, no data/startup/othersections waiver. Known5581 inventory masked3361unchanged, strict2805PASS555UNKNOWN1FAIL. This resolves wrong original operand references, not additional original implementation coverage. The3455 currently claimed identities are unchanged because both upgraded rows already had instruction-shape claims; two new byte obligations will enter history. Remaining MainInterface switch-data strict failure, full linkedselection/allocation, structure/runtime/game/autonomous acceptance remain unproven. Manual matching checkpoint with original task baseline preserved; fresh destination build/census/tests and199zero-omission reproduction required before cleanup."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "a1fe64a0848e028342c0202e88596a90e4fc058acceaa6d607037c9526d9e73f",
+  "request_id": "central-manual-pref-ordered-references-admission-oct21p",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:prefwin-geometry-initializers"
+}

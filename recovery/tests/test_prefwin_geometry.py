@@ -52,7 +52,7 @@ SPAN_LENGTHS = [
 ]
 LEVER_COUNTS = [0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1,
                 1, 1, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 0]
-SEMANTIC_ADDRESSES = {0x48D610, 0x48D7F0}
+SEMANTIC_ADDRESSES = set()
 NO_CLAIM_ADDRESS = 0x48D810
 EXPECTED_BY_OUTPUT = {
     "8577D8": 256, "8577DC": 287, "8577E0": 92, "8577E4": 457,
@@ -255,17 +255,6 @@ def test_native_geometry_arithmetic_references_and_startup_edges(tmp_path):
     assert all(row["definition"] is Result.PASS and row["content"] is Result.PASS
                for row in data_bindings), data_bindings
 
-    outstanding_order = {
-        0x48D610: ("?PrefWinGeometryConstant_686B74@@3HA",
-                   "?PrefWinGeometryValue_857888@@3HA", "?PrefWinButtonWidth@@3HA",
-                   "?PrefWinGeometryValue_85789C@@3HA"),
-        0x48D790: ("?PrefWinGeometryValue_8578B0@@3HA",
-                   "?PrefWinGeometryValue_8577DC@@3HA", "?PrefWinGeometryConstant_686B78@@3HA",
-                   "?PrefWinGeometryValue_8577E0@@3HA"),
-        0x48D7F0: ("?PrefWinGeometryConstant_686B74@@3HA",
-                   "?PrefWinGeometryValue_8578B4@@3HA", "?PrefWinToggleWidth@@3HA",
-                   "?PrefWinGeometryValue_8578CC@@3HA"),
-    }
     strict_statuses = {}
     for row in rows:
         selected = obj.function(row.symbol)
@@ -277,43 +266,18 @@ def test_native_geometry_arithmetic_references_and_startup_edges(tmp_path):
                                    original_absolute_sites=absolute_sites,
                                    alignment=alignment)
         assert result["boundary"] is Result.PASS, (hex(row.address), result)
-        if row.address in outstanding_order:
-            referenced = tuple(obj.symbols[int(relocation.target)].name
-                               for relocation in relocations)
-            assert result["result"] in (Result.PASS, Result.FAIL), (hex(row.address), result)
-            if result["result"] is Result.FAIL:
-                # The strict comparator projects actual targets into operands;
-                # a changed read order therefore differs in both bytes and
-                # references. Permit only those exact resolved operand fields,
-                # never an opcode, extent or unresolved-reference difference.
-                assert result["bytes"] is Result.FAIL, (hex(row.address), result)
-                assert result["references"] is Result.FAIL, (hex(row.address), result)
-                assert result["missing_absolute_relocations"] == []
-                assert result["extra_absolute_relocations"] == []
-                assert result["unresolved_absolute_relocations"] == []
-                assert all(item["result"] is not Result.UNKNOWN
-                           for item in result["relocations"])
-                assert referenced == outstanding_order[row.address]
-                changed_operands = {
-                    byte for item in result["relocations"]
-                    if item["result"] is Result.FAIL
-                    for byte in range(item["offset"], item["offset"] + 4)
-                }
-                assert result["differing_offsets"]
-                assert set(result["differing_offsets"]) <= changed_operands
-        else:
-            assert result["result"] is Result.PASS, (hex(row.address), result)
-            assert result["references"] is Result.PASS
-            if relocations:
-                # A wrong source-owned binding must fail, not mask to equality.
-                damaged = dict(targets)
-                target = relocations[0].target
-                binding = damaged[target].span
-                damaged[target] = BoundedTarget(Span(binding.start + 4, binding.end + 4))
-                assert compare_bound_code(
-                    span, original, code, relocations, damaged,
-                    original_absolute_sites=absolute_sites, alignment=alignment
-                )["result"] is Result.FAIL
+        assert result["result"] is Result.PASS, (hex(row.address), result)
+        assert result["references"] is Result.PASS
+        if relocations:
+            # A wrong source-owned binding must fail, not mask to equality.
+            damaged = dict(targets)
+            target = relocations[0].target
+            binding = damaged[target].span
+            damaged[target] = BoundedTarget(Span(binding.start + 4, binding.end + 4))
+            assert compare_bound_code(
+                span, original, code, relocations, damaged,
+                original_absolute_sites=absolute_sites, alignment=alignment
+            )["result"] is Result.FAIL
         strict_statuses[f"0x{row.address:08X}"] = {
             "result": result["result"].value,
             "bytes": result["bytes"].value,
@@ -387,8 +351,8 @@ def test_real_window_and_timer_owners_retain_original_identity_and_order():
     assert "Time ConsoleTimer;" not in time_source
     assert "Time BlinkTimer," not in time_source
     for address, name, end, symbol in (
-        (0x0050E9B0, "sub_50e9b0", 0x0050E9EE, "_$E31"),
-        (0x0050E9F0, "sub_50e9f0", 0x0050EA22, "_$E29"),
+        (0x0050E9B0, "sub_50e9b0", 0x0050E9EE, "_$E18"),
+        (0x0050E9F0, "sub_50e9f0", 0x0050EA22, "_$E16"),
     ):
         rows = [row for row in read_text(console, Path("src/console.cpp")) if row.address == address]
         assert len(rows) == 1 and rows[0].name == name and rows[0].symbol == symbol

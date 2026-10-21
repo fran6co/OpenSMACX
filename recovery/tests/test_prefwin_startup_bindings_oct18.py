@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+from dataclasses import replace
 from pathlib import Path
 import re
 import subprocess
@@ -9,6 +10,7 @@ import subprocess
 import pytest
 
 from match_recovery.source import read_text
+from match_recovery.source.writer import write_bytes
 
 
 ROOT = next(parent for parent in Path(__file__).resolve().parents
@@ -37,10 +39,24 @@ NEW_RATIONALE = (
     b"// initializers directly, in declaration order. Bind the production /Ob2\n"
     b"// CRT-selected entries, not the separate helper names removed by inlining.\n"
     b"// The explicit measurement context retains that selection with /Gy as well.\n"
-    b"// The entries at 0x0048D610, 0x0048D790 and 0x0048D7F0 still differ in input\n"
-    b"// load order despite masked-byte equality. These bindings do not establish\n"
-    b"// whole-program startup order, linked retention or historical TU boundaries.\n"
+    b"// These bindings do not establish whole-program startup order, linked\n"
+    b"// retention or historical TU boundaries.\n"
 )
+INITIALIZER_TRANSITIONS = (
+    (
+        b"int32_t PrefWinGeometryValue_85789C = static_cast<int32_t>(static_cast<uint32_t>(PrefWinButtonWidth) + static_cast<uint32_t>(PrefWinGeometryConstant_686B74) + static_cast<uint32_t>(PrefWinGeometryValue_857888));",
+        b"int32_t PrefWinGeometryValue_85789C = static_cast<int32_t>(static_cast<uint32_t>(PrefWinGeometryValue_857888) + static_cast<uint32_t>(PrefWinButtonWidth) + static_cast<uint32_t>(PrefWinGeometryConstant_686B74));",
+    ),
+    (
+        b"int32_t PrefWinGeometryValue_8578CC = static_cast<int32_t>(static_cast<uint32_t>(PrefWinToggleWidth) + static_cast<uint32_t>(PrefWinGeometryConstant_686B74) + static_cast<uint32_t>(PrefWinGeometryValue_8578B4));",
+        b"int32_t PrefWinGeometryValue_8578CC = static_cast<int32_t>(static_cast<uint32_t>(PrefWinGeometryValue_8578B4) + static_cast<uint32_t>(PrefWinToggleWidth) + static_cast<uint32_t>(PrefWinGeometryConstant_686B74));",
+    ),
+    (
+        b"int32_t PrefWinGeometryValue_8577E0 = static_cast<int32_t>(static_cast<uint32_t>(PrefWinGeometryValue_8578B0) - static_cast<uint32_t>(PrefWinGeometryConstant_686B78) - static_cast<uint32_t>(PrefWinGeometryValue_8577DC));",
+        b"int32_t PrefWinGeometryValue_8577E0 = static_cast<int32_t>(static_cast<uint32_t>(PrefWinGeometryValue_8578B0) - static_cast<uint32_t>(PrefWinGeometryValue_8577DC) - static_cast<uint32_t>(PrefWinGeometryConstant_686B78));",
+    ),
+)
+RECORDED_ADDRESSES = {0x48D610, 0x48D7F0}
 SELECTED_FLAGS = ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Ob2"]
 PRESERVED_FIELDS = (
     "mode", "state", "name", "image_spans", "body", "context", "kind",
@@ -65,6 +81,17 @@ def _project_geometry(base: bytes) -> bytes:
         new = f"// symbol    _$E{2 + 3 * index}\n".encode()
         assert projected.count(old) == 1, (index, old)
         projected = projected.replace(old, new, 1)
+    for old, new in INITIALIZER_TRANSITIONS:
+        assert projected.count(old) == 1, old
+        projected = projected.replace(old, new, 1)
+    # Generate expected claim changes through the same native source writer
+    # used for recorded annotations; do not hand-author claim tokens.
+    old_records = [row for row in read_text(
+        projected.decode("utf-8"), Path("src/prefwin_geometry.cpp"))
+        if row.address in RECORDED_ADDRESSES]
+    assert {row.address for row in old_records} == RECORDED_ADDRESSES
+    updated = [replace(row, byte_exact=True, semantic=False) for row in old_records]
+    projected = write_bytes(projected, updated)
     return projected
 
 
@@ -157,8 +184,10 @@ def _assert_inverse(geometry: bytes, project: bytes, header: bytes, cmake: bytes
     assert list(before) == list(ADDRESSES) and list(after) == list(ADDRESSES)
     for index, address in enumerate(ADDRESSES):
         old, new = before[address], after[address]
+        expected = (replace(old, byte_exact=True, semantic=False)
+                    if address in RECORDED_ADDRESSES else old)
         for field in PRESERVED_FIELDS:
-            assert getattr(new, field) == getattr(old, field), (hex(address), field)
+            assert getattr(new, field) == getattr(expected, field), (hex(address), field)
         assert new.symbol == f"_$E{2 + 3 * index}"
 
 
@@ -198,6 +227,28 @@ def test_prefwin_binding_inverse_rejects_unapproved_damages(path_index, mutate) 
     assert sources[path_index] != original
     with pytest.raises(AssertionError):
         _assert_inverse(*sources)
+
+
+@pytest.mark.parametrize("old, new", INITIALIZER_TRANSITIONS)
+def test_prefwin_exact_initializer_inverse_rejects_reverted_order(old, new) -> None:
+    geometry, project, header, cmake = _actual()
+    assert geometry.count(new) == 1
+    reverted = geometry.replace(new, old, 1)
+    with pytest.raises(AssertionError):
+        _assert_inverse(reverted, project, header, cmake)
+
+
+@pytest.mark.parametrize("address", sorted(RECORDED_ADDRESSES))
+def test_prefwin_recorded_claim_inverse_rejects_semantic_reversion(address) -> None:
+    geometry, project, header, cmake = _actual()
+    record = next(row for row in read_text(
+        geometry.decode("utf-8"), Path("src/prefwin_geometry.cpp"))
+        if row.address == address)
+    assert record.byte_exact and not record.semantic
+    old_claim = replace(record, byte_exact=False, semantic=True)
+    reverted = write_bytes(geometry, [old_claim])
+    with pytest.raises(AssertionError):
+        _assert_inverse(reverted, project, header, cmake)
 
 
 def test_prefwin_configuration_allows_unrelated_source_local_properties() -> None:

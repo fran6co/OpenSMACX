@@ -8,9 +8,8 @@
 // initializers directly, in declaration order. Bind the production /Ob2
 // CRT-selected entries, not the separate helper names removed by inlining.
 // The explicit measurement context retains that selection with /Gy as well.
-// The entries at 0x0048D610, 0x0048D790 and 0x0048D7F0 still differ in input
-// load order despite masked-byte equality. These bindings do not establish
-// whole-program startup order, linked retention or historical TU boundaries.
+// These bindings do not establish whole-program startup order, linked
+// retention or historical TU boundaries.
 
 // RECOVERY_OBJECT: v2 0x00686B6C 0x00686B70 ?PrefWinGeometryConstant_686B6C@@3HA 0x0048D550
 int32_t PrefWinGeometryConstant_686B6C = 4;
@@ -168,7 +167,7 @@ int32_t PrefWinGeometryValue_8578C0 = static_cast<int32_t>(static_cast<uint32_t>
 /*
 Purpose: sub_48d610 - arithmetic over 4 fixed global(s), one
          statement per original instruction.
-// ORIGINAL: 0x0048D610 sub_48d610 0x0048D610-0x0048D62B FILE SEMANTIC
+// ORIGINAL: 0x0048D610 sub_48d610 0x0048D610-0x0048D62B FILE BYTE_EXACT
 // symbol    _$E23
 // TRIED 2026-09-03: six shapes for the four-global chain, including the
 //   register-liveness lever that landed the other sixteen bodies in this
@@ -190,7 +189,7 @@ Return Value: n/a
 Status: Complete
 */
 // RECOVERY_OBJECT: v2 0x0085789C 0x008578A0 ?PrefWinGeometryValue_85789C@@3HA 0x0048D610
-int32_t PrefWinGeometryValue_85789C = static_cast<int32_t>(static_cast<uint32_t>(PrefWinButtonWidth) + static_cast<uint32_t>(PrefWinGeometryConstant_686B74) + static_cast<uint32_t>(PrefWinGeometryValue_857888));
+int32_t PrefWinGeometryValue_85789C = static_cast<int32_t>(static_cast<uint32_t>(PrefWinGeometryValue_857888) + static_cast<uint32_t>(PrefWinButtonWidth) + static_cast<uint32_t>(PrefWinGeometryConstant_686B74));
 
 /*
 Purpose: sub_48d630 - arithmetic over 3 fixed global(s), one
@@ -468,7 +467,7 @@ int32_t PrefWinGeometryValue_8578BC = static_cast<int32_t>(static_cast<uint32_t>
 /*
 Purpose: sub_48d7f0 - arithmetic over 4 fixed global(s), one
          statement per original instruction.
-// ORIGINAL: 0x0048D7F0 sub_48d7f0 0x0048D7F0-0x0048D80B FILE SEMANTIC
+// ORIGINAL: 0x0048D7F0 sub_48d7f0 0x0048D7F0-0x0048D80B FILE BYTE_EXACT
 // symbol    _$E71
 // TRIED 2026-09-03: same six shapes as 0x0048D610, same wall - see that
 //   marker. The image's `add ecx,eax` needs the first global live past the
@@ -484,7 +483,7 @@ Return Value: n/a
 Status: Complete
 */
 // RECOVERY_OBJECT: v2 0x008578CC 0x008578D0 ?PrefWinGeometryValue_8578CC@@3HA 0x0048D7F0
-int32_t PrefWinGeometryValue_8578CC = static_cast<int32_t>(static_cast<uint32_t>(PrefWinToggleWidth) + static_cast<uint32_t>(PrefWinGeometryConstant_686B74) + static_cast<uint32_t>(PrefWinGeometryValue_8578B4));
+int32_t PrefWinGeometryValue_8578CC = static_cast<int32_t>(static_cast<uint32_t>(PrefWinGeometryValue_8578B4) + static_cast<uint32_t>(PrefWinToggleWidth) + static_cast<uint32_t>(PrefWinGeometryConstant_686B74));
 
 /*
 Purpose: sub_48d810 - arithmetic over 2 fixed global(s), one
