@@ -1007,8 +1007,8 @@ void MainInterface::on_iface_right_click(int x, int y) {
 // symbol    ?on_iface_group_clicked@MainInterface@@UAEXHHH@Z
 void MainInterface::on_iface_group_clicked(int group, int, int selected) {
     if (IfaceIdToSlotStorage[ActiveIfaceIdStorage] != 0 || selected < 0) return;
-    if (group == 0) { on_redraw(); return; }
     const int value = selected - 1000;
+    if (group == 0) { on_redraw(); return; }
     if (group == 2) {
         if (value >= 17) {
             int tool = value - 17;
@@ -1027,7 +1027,7 @@ void MainInterface::on_iface_group_clicked(int group, int, int selected) {
     else WorldClimateWorldWin.set_detail_map();
 }
 
-// ORIGINAL: 0x0045CF80 ?on_iface_right_down@MainInterface@@QAEXHH@Z 0x0045CF80-0x0045CFFD
+// ORIGINAL: 0x0045CF80 ?on_iface_right_down@MainInterface@@QAEXHH@Z 0x0045CF80-0x0045CFFD BYTE_EXACT
 // SPAN CORRECTED from the catalogue's 0x0045D0F5 (size 0x175): that span runs
 // over on_iface_mouse_move's own record at 0x0045D000 - two catalogue entries
 // cannot overlap, and the image's right_down body ends at 0x0045CFFD with the
@@ -1060,7 +1060,7 @@ void MainInterface::on_iface_right_down(int a1, int a2) {
         rect.top = a2;
         rect.right = a1;
         rect.bottom = a2;
-        Win::set_bubble_text(label_get(0x313), &rect);
+        Win::set_bubble_text(StringTable.get(Labels.strings_ptr[0x313]), &rect);
     }
 }
 
