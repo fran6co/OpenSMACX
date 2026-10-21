@@ -423,8 +423,8 @@ int __cdecl MessageWin::listbox_write(GraphicWin *target, int item_id, int,
 // ORIGINAL: 0x00471D50 ?init@MessageWin@@QAEXXZ 0x00471D50-0x00471F66;0x00655F75-0x00655F8A
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00471d50.cpp", "image:0x00471D50"], "reason": "The archived constructor-stage method initializes MessageWin font, pane bounds, embedded ListBox Dialog and callback slots."}
 void MessageWin::init() {
-    font_.init(DefaultFontFace, 12, 0);
     Buffer scratch;
+    font_.init(DefaultFontFace, 12, 0);
     scratch.close();
 
     bounds_ = MainInterfaceGlobal.message_bounds_;

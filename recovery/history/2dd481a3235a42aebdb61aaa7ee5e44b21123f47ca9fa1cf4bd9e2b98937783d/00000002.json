@@ -1,0 +1,21 @@
+{
+  "event_id": "a0a47b5640912401d735669d089e3ed66bc11a64978acd84b5f2802898376b82",
+  "payload": {
+    "affects": [
+      "entity-a9e0ed708a40508a378cc96df3ed517ea7e17e8d3fe95b7c989ed08b6aef7036"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "messagewin-lifetime-oct21x-source-preserved",
+    "evidence": [
+      "Original471D79 Buffer construction and471D8A active EHstate precede Fontinit471DA7; explicitclose471DB2 andsame-local destructor remain. Only existing declaration moves to function entry, no other statement/header/type/layout/global/mapping/claim or unsafe/error change. Actual whole-method fixture covers normal ctor/fontinit/explicitclose/callback/dtor order and injected Fontinit throw unwinding constructed Buffer; compiled old-order and missingclose controls observed.5new cases plus existing5callback controls pass.",
+      "Fresh coordinator combined14-case host run passes GCC/Clang C++98. Complete parsed original metadata preserved excluding only source extraction region/location. This is an unadmitted source checkpoint: host models are not complete original ABI/EH/CFG/runtime proof. Original task baseline retained; no byte claim granted/demoted. A shared isolated combined candidate will receive full native application build/link, matching/reference/claim/source and actual residual review before manual integration."
+    ],
+    "hypothesis": "Restore original MessageWin scratch lifetime before font initialization",
+    "kind": "discovery"
+  },
+  "previous_event": "9f7f7f7f27c9481082d4c63aa8bfc0e1836ae47a4346157ac882740a17a4c006",
+  "request_id": "messagewin-lifetime-oct21x-source-preserved",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:message-list-draw-oct16"
+}
