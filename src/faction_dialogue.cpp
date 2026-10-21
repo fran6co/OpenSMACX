@@ -4301,6 +4301,8 @@ if (communicate_late_contact_region_rival != 0) {
                                   communicate_late_contact_region_rival), -1, -1);
                 parse_says(3, get_noun(
                                   communicate_late_contact_region_rival), -1, -1);
+                parse_says(4, get_adjective(
+                                  communicate_late_contact_region_rival), -1, -1);
                 parse_says(5, get_noun_phrase(
                                   communicate_late_contact_region_rival, 8), -1, -1);
                 X_pops("REPORTEVEN", 0x00100000,
@@ -4399,7 +4401,7 @@ if (has_treaty(peer_id, faction_id, 3) == 0) { // 0x558392
         console_map_win()->focus(
             Bases[communicate_late_contact_base_id].x,
             Bases[communicate_late_contact_base_id].y);
-        parse_says(1, get_pact(peer_id), -1, -1);
+        parse_says(1, get_adjective(peer_id), -1, -1);
         X_pops("TERRITORY", 0x00100000,
                      FactionDiplomacyPortraits[peer_id], pop_wait);
         mention_prototypes(faction_id, peer_id); // 0x558425

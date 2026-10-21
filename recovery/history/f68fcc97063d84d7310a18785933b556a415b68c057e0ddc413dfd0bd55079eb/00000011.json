@@ -1,0 +1,24 @@
+{
+  "event_id": "bb17f1f5c9850ab2328d937681046e539ba6c2988988d643bc1dd8454358f626",
+  "payload": {
+    "affects": [
+      "entity-004b9cb8938cfd5f32c5e52958cb3c8e856176a4e7fa3eb96655012d8bbbb556",
+      "entity-21a0ac47b9730b4dfb23af579f0ddc1c680ac96d8e9cbb75518f654a9673b062"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "two-original-dialogue-adjective-producers-restored-source-oct21w",
+    "evidence": [
+      "Pinned558109 pushes EBX regional rival to get_adjective50B910 and parses slot4 between noun slot3 and noun-phrase slot5 before REPORTEVEN. The source now includes precisely that missing parser effect. Pinned5583F7 pushes ESI peer/faction_id_with and parses slot1 before TERRITORY; the source now calls get_adjective(peer_id), not the previously wrong get_pact producer. Same surrounding guards, loops, spot/focus, popup and prototype calls; four earlier direct adjective-field sites unchanged.",
+      "These are restoration of original behavior, not intentional bug fixes. All mapped source facts, hot/cold original spans, symbols, historical claims and lessons compare identical excluding only source line/region extraction metadata. Previous whole-block transport identity remains historical and must not be replayed as identity for this subsequently corrected body.",
+      "Fresh coordinator aggregate39 host cases pass across seven modules: prior29 query/social/complete-communicate/plea/noun/inline-consumer tests plus10 new actual-branch cases. New controls cover two positive compiler runs and eight expected runtime-negative compile-success mutations, four bounded report/territory paths, distinct actor/rival/peer adjectives versus pact strings, parser slots/defaults/order and popup arguments. Unsafe/out-of-domain/full-native/whole-game effects remain unproven.",
+      "Complete combined186TU200COFF native build/link, original helper-call census, all5581 body/reference verdicts and concrete physical residual review are next. Source checkpoint is preserved but not admitted. No claim banked/demoted, no task baseline reset, no compiler/type/storage/initialization or gate changes. Outstanding incoming noun-producer audits remain evidence for later coordinated epochs, not permission to mutate frozen current source."
+    ],
+    "hypothesis": "The original plain-adjective call-site audit reveals two real source producer discrepancies; the missing regional adjective field and mistranslated territory phrase now follow the pinned code.",
+    "kind": "discovery"
+  },
+  "previous_event": "0912bbe68e1383e97bf12f126104da25b31dc9c85ed2756a4fe2422e8d700995",
+  "request_id": "two-original-dialogue-adjective-producers-restored-source-oct21w",
+  "schema_version": 1,
+  "sequence": 11,
+  "stream": "task:owner-faction-body-recovery-oct20ao"
+}
