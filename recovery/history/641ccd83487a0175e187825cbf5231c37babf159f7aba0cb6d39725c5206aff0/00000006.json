@@ -1,0 +1,24 @@
+{
+  "event_id": "4bd0475293533fcd2a93eee500bc2612e9c0f06d14945d7c1a921617efbbe936",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_stringbox_owner_batch_oct20.py",
+      "src/stringbox.cpp"
+    ],
+    "evidence": [
+      "Coordinator-reviewed original-fidelity StringBox::init6292D0 prefix: preserve four own-field resets, GraphicWin::close and ownedStringList cleanup/cursorreset, but delay embeddedScroll teardown to its real init after successful parentinitialization. Original6293B7failure→62947E returns before629464Scrollwrapper. Real StringBox::close and all other initbody/sourcebindings/signatures/claims unchanged. This restores the original unsafe lifetime/errorpath behavior, not a deliberate game bugfix.",
+      "Six actual-source host cases with GCC/Clang retain flags, borrowedlist/callbackmutation, repeatedownedlistclear, widthplacement andpositive/negative parentfailreturns; failureScrollstate stays untouched and prematureclose compile-successmutantfails. Successful nonzero-length mock records its exactlyoneclose after parentinit. Actual zerolength wrapper and return handling remain unchanged; bounded host mocks do not establish fullcallee/runtime proof.",
+      "Freshfullbuild/link build-tu74ygmz and native claims/mappings/referencesPASS;199physicalcompiledcomplementsPASS projectingONLY6292D0body, no othersections/directives/data/startup/wholeTUomission. All other5580mappedverdictsunchanged, all3457historicalclaimedidentities/3468requirements preserved. Target has no historicalBYTE_EXACT claim to demote.",
+      "Explicitly retain matching debt: target observed priorMNEMONIC_ONLY154/159instructions(compiled159)→MISMATCH60/159(compiled157) after justified sourcecorrection. Do not revert the original-faithful lifecycle to regain the wrong earlycall or erase any priorfinding. WholeBYTE_EXACT3363 unchanged; MNEM33→32,MISMATCH1767→1768. No newimplementation/countgain or byte-exactclaim, automaticacceptance or gameacceptance follows.",
+      "This is a preserved branch-only sourcecheckpoint, NOT admitted or integrated. MainInterface fullsuite and its missing-input/flaky-fixture differences remain independently pending. Originaltaskbaseline2d3094ef3e11c5de26989464831471fd1ab1ff8b unchanged. Fresh reviewedintegration/destinationbuild and relevant reproduction/source/reference checks required beforecleanup. Full linkedselection/allocation, structure/runtime and faithfulwholegame milestone remain unproven."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "c15232b1b9ff8d98347b61803ad7faee4310a7a3308c603ee020c8f472dea841",
+  "request_id": "central-stringbox-faithful-source-checkpoint-oct21t",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:stringbox-owner-batch-oct20"
+}

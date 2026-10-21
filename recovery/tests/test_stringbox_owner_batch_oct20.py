@@ -120,13 +120,36 @@ struct Scroll {
     int x, y, length, setting;
     Win *parent;
     int range_minimum_, range_maximum_;
+    int position_, paging_, field_A30_;
+    int left_button_state_, right_button_state_;
+    int left_button_close_calls, right_button_close_calls;
+    int close_parent_init_calls;
+    int *parent_init_calls;
     Scroll() : close_calls(0), init_calls(0), hide_calls(0), x(0), y(0),
                length(0), setting(0), parent(0), range_minimum_(9),
-               range_maximum_(9) {}
-    void close() { ++close_calls; }
+               range_maximum_(9), position_(0), paging_(0), field_A30_(0),
+               left_button_state_(0), right_button_state_(0),
+               left_button_close_calls(0), right_button_close_calls(0),
+               close_parent_init_calls(-1), parent_init_calls(0) {}
+    void close() {
+        ++close_calls;
+        close_parent_init_calls = parent_init_calls ? *parent_init_calls : -1;
+        position_ = 0;
+        paging_ = 0;
+        field_A30_ = 0;
+        left_button_state_ = 0;
+        right_button_state_ = 0;
+        ++left_button_close_calls;
+        ++right_button_close_calls;
+        range_minimum_ = 0;
+        range_maximum_ = 0;
+    }
     int init_vert(int x_value, int y_value, int length_value,
                   Win *parent_value, int setting_value) {
         ++init_calls;
+        // Scroll::init_vert delegates to Scroll::init, which closes the old
+        // embedded state only after StringBox's parent GraphicWin init passed.
+        close();
         x = x_value;
         y = y_value;
         length = length_value;
@@ -177,6 +200,7 @@ struct StringBox : GraphicWin {
         dib_.bmiHeader.biHeight = 0;
         embedded_position = &stringList_.current_position_;
         embedded_allocator = &stringList_.allocator_;
+        scroll_.parent_init_calls = &init_calls;
     }
     void close();
     int init(int x, int y, int width, int height, Win *parent,
@@ -203,6 +227,9 @@ int main() {
     if (box.scroll_.init_calls != 1 || box.scroll_.x != 89 || box.scroll_.y != 0
         || box.scroll_.length != 37 || box.scroll_.parent != &box
         || box.scroll_.setting != 0 || box.scroll_.hide_calls != 1
+        || box.scroll_.close_calls != 1 || box.scroll_.close_parent_init_calls != 1
+        || box.scroll_.left_button_close_calls != 1
+        || box.scroll_.right_button_close_calls != 1
         || box.scroll_.range_minimum_ != 0 || box.scroll_.range_maximum_ != 0)
         return 6;
 
@@ -214,7 +241,9 @@ int main() {
     if (callback_mutated.stringList_.current_position_ != 41
         || callback_mutated.stringList_.allocator_ != 42
         || callback_mutated.stringList_.remove_calls != 1
-        || callback_mutated.list_override_ != &borrowed) return 8;
+        || callback_mutated.list_override_ != &borrowed
+        || callback_mutated.scroll_.close_calls != 1
+        || callback_mutated.scroll_.close_parent_init_calls != 1) return 8;
 
     StringBox embedded;
     embedded.dib_.bmiHeader.biHeight = -31;
@@ -224,7 +253,9 @@ int main() {
         || embedded.stringList_.remove_calls != 2
         || embedded.scroll_.x != 71 || embedded.scroll_.length != 31
         || embedded.stringList_.current_position_ != 0
-        || embedded.stringList_.allocator_ != 0)
+        || embedded.stringList_.allocator_ != 0
+        || embedded.scroll_.close_calls != 1
+        || embedded.scroll_.close_parent_init_calls != 1)
         return 10;
 
     StringBox failed;
@@ -233,21 +264,49 @@ int main() {
     failed.init_result = 7;
     failed.scroll_.range_minimum_ = 111;
     failed.scroll_.range_maximum_ = 222;
+    failed.scroll_.position_ = 333;
+    failed.scroll_.paging_ = 444;
+    failed.scroll_.field_A30_ = 555;
+    failed.scroll_.left_button_state_ = 666;
+    failed.scroll_.right_button_state_ = 777;
     if (failed.init(1, 2, 71, 23, &parent, &borrowed, -1) != 7) return 11;
     if (failed.close_calls != 1 || failed.init_calls != 1
         || failed.init_flags != 0x1000120 || failed.list_override_ != 0
         || failed.stringList_.remove_calls != 1) return 12;
-    if (failed.scroll_.close_calls != 1 || failed.scroll_.init_calls != 0
+    if (failed.scroll_.close_calls != 0 || failed.scroll_.init_calls != 0
         || failed.scroll_.hide_calls != 0 || failed.scroll_.range_minimum_ != 111
-        || failed.scroll_.range_maximum_ != 222) return 13;
+        || failed.scroll_.range_maximum_ != 222
+        || failed.scroll_.position_ != 333 || failed.scroll_.paging_ != 444
+        || failed.scroll_.field_A30_ != 555
+        || failed.scroll_.left_button_state_ != 666
+        || failed.scroll_.right_button_state_ != 777
+        || failed.scroll_.left_button_close_calls != 0
+        || failed.scroll_.right_button_close_calls != 0) return 13;
 
     StringBox failed_negative;
     failed_negative.init_result = -13;
+    failed_negative.scroll_.range_minimum_ = 121;
+    failed_negative.scroll_.range_maximum_ = 232;
+    failed_negative.scroll_.position_ = 343;
+    failed_negative.scroll_.paging_ = 454;
+    failed_negative.scroll_.field_A30_ = 565;
+    failed_negative.scroll_.left_button_state_ = 676;
+    failed_negative.scroll_.right_button_state_ = 787;
     if (failed_negative.init(2, 3, 61, 19, &parent, 0, 0) != -13)
         return 14;
     if (failed_negative.close_calls != 1 || failed_negative.init_calls != 1
+        || failed_negative.scroll_.close_calls != 0
         || failed_negative.scroll_.init_calls != 0
-        || failed_negative.scroll_.hide_calls != 0)
+        || failed_negative.scroll_.hide_calls != 0
+        || failed_negative.scroll_.range_minimum_ != 121
+        || failed_negative.scroll_.range_maximum_ != 232
+        || failed_negative.scroll_.position_ != 343
+        || failed_negative.scroll_.paging_ != 454
+        || failed_negative.scroll_.field_A30_ != 565
+        || failed_negative.scroll_.left_button_state_ != 676
+        || failed_negative.scroll_.right_button_state_ != 787
+        || failed_negative.scroll_.left_button_close_calls != 0
+        || failed_negative.scroll_.right_button_close_calls != 0)
         return 15;
     return 0;
 }
@@ -377,6 +436,20 @@ def test_stringbox_init_uses_width_for_vertical_scroll_x_and_preserves_paths(
     assert _compile_and_run(
         tmp_path, compiler, _init_harness(borrowed_clear_source),
         "init_unconditional_clear_mutant",
+    ) != 0
+
+
+    premature_scroll_close_mutant = init_method.replace(
+        "    if (init_result != 0) {",
+        "    if (init_result != 0) {\n        scroll_.close();",
+    )
+    assert premature_scroll_close_mutant != init_method
+    premature_scroll_close_source = source.replace(
+        init_method, premature_scroll_close_mutant
+    )
+    assert _compile_and_run(
+        tmp_path, compiler, _init_harness(premature_scroll_close_source),
+        "init_premature_scroll_close_mutant",
     ) != 0
 
 
