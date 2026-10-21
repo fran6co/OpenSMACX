@@ -1,0 +1,24 @@
+{
+  "event_id": "a1fe64a0848e028342c0202e88596a90e4fc058acceaa6d607037c9526d9e73f",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_prefwin_geometry.py",
+      "recovery/tests/test_prefwin_startup_bindings_oct18.py"
+    ],
+    "evidence": [
+      "Focused original baseline and isolated candidate each expose same3preexisting tests failures: stale Console E31/E29 symbol expectations and immutable source projection missing the PRIOR48D790 expression transition. Do not label these new code failures or silently waive them. Authorize tests-only repair of precisely these stale facts in already-editable tests; no production source/annotation edits in this amendment.",
+      "Commit e89337a3f482d2a7ff599b92e00027399bd61cea independently reviewed/restored48D790 original ordered references by swapping its two unsigned subtrahends, preserving modulo32 arithmetic; current full baseline strict row48D790 isPASS. Extend immutable75b8ac5c72a535bfa012883d3ba5aa5c34d4fa2a projection by that exact prior transition in addition to current two edits; keep BASE_REVISION, exact source/config inverse, all preserved metadata fields and controls. Do not reset baseline, accept arbitrary expressions or touch48D790 C++.",
+      "Tighten all26 current native initializer checks to unconditional byte/reference/boundaryPASS and wrongbindingdamageFAIL. Remove the last48D790 outstanding-order waiver; fresh whole baseline and prior admitted history contradict obsolete debt wording. All data/CRTorder/code damage controls stay intact, not merely conditionally passing.",
+      "Console aggregate timer initializer50E9B0 currentbound E18 and cleanup50E9F0 E16 each have fresh baseline full strict code/bytes/referencePASS. Retained actual Console COFF .CRT$XCU thirdslot uniquely selects E18; E18 calls real fiveTime constructors in Blink,Blink2,Line,Go,Turn order and registers E16 with atexit. Commit20e1fdbeb already removed old startup symbols and natively banked these lifetimes. Correct ONLY stale expected symbols E31→E18 andE29→E16; preserve exact names/spans/claims/owner/declarationorder assertions and verify actualCOFF again in candidate/destination builds. No Console C++ scope granted.",
+      "Run all existing affected host tests, added inverse mutants, previous48D790 high-bit arithmetic tests and opt-in native26-body/data/CRT/target-damage control before reviewed manual admission. Native-only recorded two claims remain intact. This is scoped regression-control repair and stricter verification, not relaxation of gates or global/framework/game acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "87875bb9f8488f590cf0b2a1bfe98f7387e5e5ed716e9377ae3ff75ba064dc0e",
+  "request_id": "central-pref-controls-prior-admitted-transition-oct21p",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:prefwin-geometry-initializers"
+}
