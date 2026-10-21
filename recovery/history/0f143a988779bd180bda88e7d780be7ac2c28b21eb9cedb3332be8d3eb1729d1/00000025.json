@@ -1,0 +1,32 @@
+{
+  "event_id": "8d7381f99ff8058ad73417b7c4ed3869263eedff1c00412e24a39ff62d7c013f",
+  "payload": {
+    "affects": [
+      "entity-06672bd3952c827f5d69f3178a907bb85e88139e1048ce915bfebf3879aa228e",
+      "entity-33a7ebdbfcd1103d790e265ea95f37233f738fb786d709affb68902c1733ba8c",
+      "entity-465d48db19ae14a737e00b8e2445adbfeae63aed253cc2443b0bccbcec84a01e",
+      "entity-4660d744ce11bf4dee88bd9b5bb6665e0e3059fc225cab0dfbe01c173bb71869",
+      "entity-5f7efefe131fac1c8785080fdf424625c575b122c27b1e4ef38a3a63a6e3c338",
+      "entity-764deda1da7e4cd8412daaae37c075c00f88a99cc842191689fbc6687fae9256",
+      "entity-ab28053361d7d2cb9401a40628cbc5580b993bef4c08396dc4a7cebe6d3c017d",
+      "entity-b77f7d1b05e6d98b661ff1630e662531eea38eac8e9305280a5d5d26bd405da2",
+      "entity-b9138cb0d4501629cbcb52b93867c0187b82f4af84f444a86c68c623f7d0932f",
+      "entity-ff5bc3651b87192b544ce9110cba477b08d596bfa5162da39aaf0ffa05b96c96"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "caviar-paired-geometry-source-checkpoint-oct21zc",
+    "evidence": [
+      "Coordinator and independent source review confirm exact full annotated two-block transport from caviar.cpp to caviar_geometry.cpp. All122original source records retain complete identity/spans/bindings/claims/history; only paths, source offsets and file recipe regions change. Native reader/writer roundtrips pass. Existing public declarations, caller bodies, row types, arithmetic grouping, sequential stores and storage remain unchanged.",
+      "CMake adds only the adjacent geometry source with unchanged application policy. This is coherent present-day source ownership, not original filename/TU proof. Actual Caviar production recipe isO2Ob2DNDEBUG withoutOy-; no flag/profile/linker change or forced retention is authorized.",
+      "Fourteen pinned-image/actual-source tests pass without skips, retaining original x87 expression/store decoding, cancellation and alias tests, seven actual caller expressions and compile-success mutants. Strengthened test asserts exact two-address set and one mapping per identity. Host float evaluation is not complete x87 precision/runtime equivalence.",
+      "Unadmitted source checkpoint; new implementation/exact gain not claimed. Fresh187TU201COFF build/link, original caller relocation comparison, whole-known-function census, strict references/claims/mappings/source and complete compiled/data/generated collateral review follow. Preserve all changes/regressions and pending linked-retention/structure obligations; task baseline unchanged. No automatic or game acceptance."
+    ],
+    "hypothesis": "A genuine shared geometry owner preserves the two matrix operations and restores out-of-line caller visibility for fresh comparison.",
+    "kind": "discovery"
+  },
+  "previous_event": "fc1de9d65a8b3e5ef00c785ae2b9cd0780421db82fcb71f1c206e262b920ad5e",
+  "request_id": "caviar-paired-geometry-source-checkpoint-oct21zc",
+  "schema_version": 1,
+  "sequence": 25,
+  "stream": "task:caviar-matrix-operations"
+}
