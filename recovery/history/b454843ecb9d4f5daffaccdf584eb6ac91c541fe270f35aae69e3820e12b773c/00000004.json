@@ -1,0 +1,24 @@
+{
+  "event_id": "87875bb9f8488f590cf0b2a1bfe98f7387e5e5ed716e9377ae3ff75ba064dc0e",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_prefwin_geometry.py",
+      "recovery/tests/test_prefwin_startup_bindings_oct18.py",
+      "src/prefwin_geometry.cpp"
+    ],
+    "evidence": [
+      "Native actual-production-recipe replay/unchanged-overlay/damage controls pass for both selected initializers. Independent native strict comparison of each compiled overlay proves48D610 and48D7F0 FAIL toPASS with exact original ordered operands, not just masked equality. Author may apply both measured C+A+B expressions in isolated source, retaining original uint32 arithmetic/int32 narrowing, all other expressions, declaration/CRT order, identities/spans, object extents and full historical LEVER/TRIED findings. No header/config/build/ABI/flag changes.",
+      "Coordinator may native-record only these two newly strict-proven existing mappings; no manual ORIGINAL token changes. Preserve all claims/notes and original task baselinee2ca5ba3613267d15cc4f38371f75210beab8047. Remove only the obsolete top two-line status assertion that all three original entries still differ in order, retaining structural CRT-selection and limited-evidence prose. Keep older per-function TRIED seed history verbatim.",
+      "Authorize surgical updates to existing geometry/source-inverse tests for this exact admitted transition. Nativewriter may generate expected two new claims, preserving all other original identity/claim/lesson fields. Extend immutable old-base projection by exactly the two source expression replacements and stale-prose removal; do not reset historical test base or relax unrelated inverse checks. Add mutation controls rejecting reversions/wrong addend order and wrong claims/operands; remove48D610/48D7F0 from native outstanding-order FAIL allowances so they MUST pass and their wrong-target controls MUST fail. Existing separate48D790 debt remains; unchanged host arithmetic/startup/data controls retained.",
+      "Coordinator alone owns Git/native compiler/prepare/record/integration. Independent source/CRT/test review, fresh full build/link, all26 initializer complete-code/data/CRT/native-reference checks, whole5581census/strict, claim/mapping/reference continuity,199compiledcomplements projecting onlytwo bodies and destination reproduction required. Exact masks remain unchanged; this is2strict-reference restorations, not2new implementations or full linked/startup/runtime/game/autonomous acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "45bea24c71f811eb4ec599b1ab33469c0d822296f5dac465a0ec491cab03d4f3",
+  "request_id": "central-pref-two-confirmed-source-and-controls-oct21p",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:prefwin-geometry-initializers"
+}
