@@ -19,7 +19,7 @@ ROOT = Path(__file__).resolve().parents[2]
 BASE = "8992788a853c19bca576c1a191021a8b00f300f9"
 SPECS = (
     (0x00408390, 'src/alphasave.cpp', '??_EAlphaSave@@WEEE@AEPAXI@Z'),
-    (0x004083A0, 'src/editbox.cpp', '??_EEditBox@@WEEE@AEPAXI@Z'),
+    (0x004083A0, 'src/alphasave.cpp', '??_EEditBox@@WEEE@AEPAXI@Z'),
     (0x0044B330, 'src/famewin.cpp', '??_EFameWin@@WEEE@AEPAXI@Z'),
     (0x00477E00, 'src/monuwin.cpp', '??_EMonuWin@@WEEE@AEPAXI@Z'),
     (0x0047A760, 'src/multiwin.cpp', '??_EMultiWin@@WEEE@AEPAXI@Z'),
@@ -34,7 +34,7 @@ SPECS = (
     (0x004068E0, 'src/flatbutton.cpp', '??_GFlatButton@@UAEPAXI@Z'),
     (0x00406B40, 'src/basepop.cpp', '??_GBasePop@@UAEPAXI@Z'),
     (0x00406BD0, 'src/popup.cpp', '??_GPopup@@UAEPAXI@Z'),
-    (0x00408080, 'src/editbox.cpp', '??_GEditBox@@UAEPAXI@Z'),
+    (0x00408080, 'src/alphasave.cpp', '??_GEditBox@@UAEPAXI@Z'),
     (0x00408140, 'src/alphasave.cpp', '??_GAlphaSave@@UAEPAXI@Z'),
     (0x004213A0, 'src/prodpicker.cpp', '??_GProdPicker@@UAEPAXI@Z'),
     (0x004213D0, 'src/basewin.cpp', '??_GBaseWin@@UAEPAXI@Z'),
