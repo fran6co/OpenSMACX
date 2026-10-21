@@ -1357,8 +1357,9 @@ void MapWin::set_center(int x, int y, int draw_type) {
 // ORIGINAL: 0x00469B40 ?gen_bases_only@MapWin@@QAEXXZ 0x00469B40-0x00469C9F
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00469b40.cpp retains the complete tile-walk seed; MapWin fields at 0x1DDA4..0x1DDD8 and map_loc determine the source-owned traversal."], "reason": "Home the base-only tile traversal reached by WorldWin redraw; base_draw remains an explicitly unfinished rendering dependency."}
 void MapWin::gen_bases_only() {
-    const int rows = field_1DDD0_ + field_1DDD8_ + 1;
-    for (int row = 0; row < rows; ++row) {
+    for (int row = 0;
+         row < mapwin_dest_add(mapwin_dest_add(field_1DDD0_, field_1DDD8_), 1);
+         ++row) {
         const int tile_y = field_1DDA8_ + row;
         int tile_x = field_1DDA4_ + (row & 1);
         int count = (row & 1) == 0 ? field_1DDD4_ : field_1DDCC_;
