@@ -25,6 +25,7 @@ struct Font {
 
 struct Buffer {
     RECT rect1_;
+    RECT current_clip() { RECT clip = {0, 0, 0, 0}; return clip; }
     int set_clip(RECT *) { return 0; }
     int box_sprite(RECT *, BoxSpriteParams *) { return 0; }
     int set_font(Font *, Font *, Font *, Font *) { return 0; }
@@ -124,11 +125,33 @@ int main(int argc, char **argv) {
     BaseCommerceReceipts[1] = 5;
     BaseCommercePartnerReceipts[1] = mode == 2 ? 5 : 9;
 
+    if (mode == 3 || mode == 4) {
+        const int base_index = mode == 3 ? 0 : 2;
+        GameDataStateStorage.fields_.base_current_count_ = base_index + 1;
+        BaseCurrent = &Bases[base_index];
+        Bases[base_index].faction_id_current = 1;
+        Players[1].rule_flags = RFLAG_ALIEN;
+        PlayersData[1].sanction_turns = 0;
+        for (int project = 0; project < MaxSecretProjectNum; ++project) {
+            GameDataStateStorage.fields_.secret_project_.home_base[project] = -1;
+        }
+        GameDataStateStorage.fields_.secret_project_.home_base[0] = base_index;
+    }
+
     window.commerce_outer_rect_.right = 100;
     window.commerce_title_rect_.right = 100;
     window.commerce_report_rect_.right = 100;
     window.commerce_report_rect_.bottom = 120;
     window.draw_commerce(0);
+
+    if (mode == 3 || mode == 4) {
+        int alien_score = -1;
+        for (int i = 0; i < writes; ++i) {
+            if (strstr(written[i], "+2 L36")) alien_score = i;
+        }
+        assert(alien_score >= 0);
+        return 0;
+    }
 
     int partner_row = -1;
     int sanction_line = -1;

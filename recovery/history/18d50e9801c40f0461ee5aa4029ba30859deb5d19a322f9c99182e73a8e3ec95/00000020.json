@@ -1,0 +1,24 @@
+{
+  "event_id": "36b6bb5504d352f8a09c49a785834977866ca6fbb63ff70393da4d0c078bbe47",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/basewin_draw_commerce_host_control.cpp",
+      "recovery/tests/test_basewin_draw_commerce_actual_source.py",
+      "src/basewin.cpp"
+    ],
+    "evidence": [
+      "Coordinator admits this bounded faithful-source checkpoint under standing manual recovery permission: Remove source-only zero initialization of alien commerce current_base_id. Original4108BE assigns only on BaseCurrent pointer match;410BA7 consumes that local, while410D68 belongs to the other faction branch. Preserve uninitialized no-match source semantics, not an invented deterministic stack value. Valid host controls cover matched indices0and2 and existing sanctions/treaty branches; the undefined unmatched path remains unproved, not normalized or executed by tests.",
+      "Fresh actual185TU/199object application build/link, whole known5581identity census and strict reference-aware observations, actual-command replay/unchanged-overlay controls, full199compiled complement with only selected actual source-mapped bodies projected, and source claims/mappings/references continuity pass their bounded checks. Known current exact/strict outcomes unchanged; no new implementation identity, historical claim, exact gain or loss. All historical obligations and original task baseline retained.",
+      "Actual-source host controls and independent original/C++ review completed; cached current host report host-tests.xml has 3 distinct passed cases with zero skips/failures. Texture initial8staleharnessfailures remain cached; existing controls were adapted without weaker expectations, and560 entry-store omission blind spot corrected after fullbuild terminal with production C++ unchanged. Build-input receipts remain authoritative for their C++ snapshots, not obsolete test hashes.",
+      "This is coordinator-reviewed manual integration only. Full linked retained-selection/allocation/provider, complete original function enumeration, structure/runtime, gameplay and autonomous acceptance remain unfinished. Three existing strict failures and earlier DDInit unmapped-destructor native limitation remain recorded. Fresh combined destination build/link, relevant host/source checks, census/strict and zero-omission199object reproduction required before consumed worker cleanup; no native automatic refusal is waived."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "faa4ef16f956b7a3d030bfe454ad2f8eca03dbfe5689ff4f2201089a0468302a",
+  "request_id": "central-manual-basewin-fidelity-admission-oct21j",
+  "schema_version": 1,
+  "sequence": 20,
+  "stream": "task:basewin-owner-coverage"
+}

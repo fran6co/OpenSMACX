@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 import shutil
 import subprocess
 from pathlib import Path
@@ -127,3 +128,32 @@ def test_actual_source_preserves_receipt_delta_during_sanctions(
     # receipts must not create an annotation in either implementation.
     assert _compile_run(compiler, tmp_path, mutant, "mutant-treaty", 1) == 0
     assert _compile_run(compiler, tmp_path, mutant, "mutant-equal", 2) == 0
+
+
+def test_alien_score_uses_the_matched_current_base_index(
+    tmp_path: Path,
+) -> None:
+    source = (ROOT / "src" / "basewin.cpp").read_text(encoding="utf-8")
+    actual = _extract_function(source)
+    # Native code stores this local only in the pointer-equality branch. Do not
+    # run the original's unmatched-pointer path: its local is indeterminate.
+    assert re.search(r"\bint\s+current_base_id\s*;", actual)
+    assert not re.search(r"\bint\s+current_base_id\s*=", actual)
+    assert re.search(
+        r"if\s*\(\s*&Bases\[candidate\]\s*==\s*BaseCurrent\s*\)\s*"
+        r"current_base_id\s*=\s*candidate\s*;",
+        actual,
+    )
+    assert actual.count("current_base_id = candidate;") == 1
+
+    fixture = FIXTURE.read_text(encoding="utf-8")
+    assert "BaseCurrent = &Bases[base_index];" in fixture
+    assert "mode == 3 ? 0 : 2" in fixture
+    # Both valid locations are found by the scan and score their project home.
+    for compiler_name in ("g++", "clang++"):
+        compiler = shutil.which(compiler_name)
+        if compiler is None:
+            continue
+        for mode in (3, 4):
+            assert _compile_run(compiler, tmp_path, actual,
+                                f"alien-base-{compiler_name}-{mode}", mode) == 0

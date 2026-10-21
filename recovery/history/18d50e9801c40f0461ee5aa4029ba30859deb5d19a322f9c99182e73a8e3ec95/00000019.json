@@ -1,0 +1,24 @@
+{
+  "event_id": "faa4ef16f956b7a3d030bfe454ad2f8eca03dbfe5689ff4f2201089a0468302a",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/basewin_draw_commerce_host_control.cpp",
+      "recovery/tests/test_basewin_draw_commerce_actual_source.py",
+      "src/basewin.cpp"
+    ],
+    "evidence": [
+      "Standing coordinator-reviewed faithful recovery authority: include already mapped draw_commerce(410870) solely to remove current_base_id source-only zero initialization absent from the original no-match path. Native 4108AF..4108CA assigns [ebp-34] only on Bases[index] == BaseCurrent, and later project scan reads it. Full-span path evidence is cached under parallel-match-oct21j/ui/deep-basewin-draw-commerce.md. No new original identity, marker/claim edit or task baseline reset.",
+      "Author may remove only that initializer in the C++ body; retain all original branches/calls/order and historical obligations. No invented fallback, guard, initialization, project-owner normalization, compiler flags or acceptance waiver. The original indeterminate error path remains unknown, not a deterministic behavioral result or proof of byte equality.",
+      "Extend only the existing actual-source commerce test/fixture for valid BaseCurrent at index0 and a nonzero index and preserve existing sanctions/treaty receipt controls. Assert the local is uninitialized until the evidenced equality-guarded assignment; do not execute undefined no-match behavior and invent an oracle. Any host warning about the intentionally indeterminate path must be exposed and handled narrowly, never silenced in production.",
+      "Isolated source author uses apply_patch and explicit host tests; no Git/task/native compiler/preparation. Coordinator independently reviews original/control flow and actual diff, runs leased whole-owner native and full build/link/continuity checks and fresh destination verification before any manual integration. No automatic, runtime, whole-game or full byte-exact acceptance is asserted."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "6c716d84a992a41229ce86575cc417a1a1ed54b9d9586536c40390691b704cd0",
+  "request_id": "central-basewin-commerce-indeterminate-index-oct21j",
+  "schema_version": 1,
+  "sequence": 19,
+  "stream": "task:basewin-owner-coverage"
+}
