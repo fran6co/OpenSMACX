@@ -89,6 +89,40 @@ def test_actual_product_body_and_storage_under_cpp98(tmp_path):
         subprocess.run([str(binary)], check=True, timeout=30)
 
 
+@pytest.mark.parametrize("mutation", ["wrong_word", "recapture", "clear_high_bit"])
+@pytest.mark.parametrize("compiler", ["g++", "clang++"])
+def test_tick_storage_compile_success_mutations_fail(tmp_path, mutation, compiler):
+    executable = shutil.which(compiler)
+    if executable is None:
+        pytest.skip(f"{compiler} is unavailable")
+    body = extract_definition((ROOT / "src/game.cpp").read_text(),
+                              "int __cdecl save_daemon(char *save_path)",
+                              expect_semicolon=False)
+    anchor = "fwrite(&save_tick, 4, 1, file)"
+    assert body.count(anchor) == 1
+    if mutation == "wrong_word":
+        body = body.replace(anchor, "fwrite(&GameDataPlayerCountSnapshot, 4, 1, file)")
+    elif mutation == "recapture":
+        body = body.replace(anchor, "(save_tick = GetTickCount(), " + anchor + ")")
+    else:
+        original = "DWORD save_tick = GetTickCount();"
+        assert body.count(original) == 1
+        body = body.replace(original, "DWORD save_tick = GetTickCount() & 0x7FFFFFFFu;")
+    source = FIXTURE.read_text().replace("// ACTUAL_STORAGE_DECLARATIONS",
+                                         actual_storage_declarations())
+    source = source.replace("/* ACTUAL_GAME_DATA_STATE_HEADER */",
+                            f'#include "{ROOT / "src/game_data_state_window.h"}"')
+    source = source.replace("// ACTUAL_SAVE_DAEMON_BODY", body)
+    cpp, binary = tmp_path / "tick_mutation.cpp", tmp_path / "tick_mutation"
+    cpp.write_text(source)
+    built = subprocess.run([executable, "-std=c++98", "-Wall", "-Wextra", "-Werror",
+                            str(cpp), "-o", str(binary)], capture_output=True,
+                           text=True, timeout=30)
+    assert built.returncode == 0, built.stdout + built.stderr
+    ran = subprocess.run([str(binary)], capture_output=True, text=True, timeout=30)
+    assert ran.returncode != 0, "compile-success mutation escaped the actual-source control"
+
+
 def test_seed_identity_and_history_are_owned_by_real_definition():
     owner = (ROOT / "src/game.cpp").read_text()
     assert not (ROOT / "src/unrecovered/005a94f0.cpp").exists()
