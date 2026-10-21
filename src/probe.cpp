@@ -1171,7 +1171,7 @@ static void probe_native_atrocity_followup(int actor_faction_id,
         !(GameDataStateStorage.fields_.game_state_ & 0x80)) return;
 
     parse_says(0, base.name_string, -1, -1);
-    parse_says(1, get_adjective(actor_faction_id), -1, -1);
+    parse_says(1, get_noun(actor_faction_id), -1, -1);
     StringTemp[0] = '\0';
     says("GENETICWARFARE");
     says(actor_faction_id == ConsoleGlobal.faction_id_ ? "0" : "1");

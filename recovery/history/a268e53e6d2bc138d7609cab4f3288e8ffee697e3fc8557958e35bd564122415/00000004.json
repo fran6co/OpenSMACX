@@ -1,0 +1,23 @@
+{
+  "event_id": "4a0492d3201d821c7d195ed01db3d47a2df4b6b8a0ee89dea645f918967dbee5",
+  "payload": {
+    "affects": [
+      "entity-c85c2df93a3a021792e2e4c164aa2dcad08864b80da56d3806fd9adf3cf38a2f"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "probe-original-action7-noun-source-checkpoint-oct21w",
+    "evidence": [
+      "Pinned5A409F calls get_noun50B930 with EBX, then parser slot1. Prologue independently loads EBX from actor Veh faction byte+0E; actor/target local comparisons agree. The only production edit is the one adjective-to-noun expression in probe_native_atrocity_followup; surrounding helper/gameplay/unsafe behavior unchanged. Complete parsed original record metadata is identical, and earlier capturedrecord work remains intact.",
+      "Fresh coordinator combined16-case host run passes after strengthening final fixture: new3 atrocity cases, prior3 capturedrecord cases and existing10 source/runtime controls. GCC/Clang C++98 compile and reject six total wrong-adjective/wrong-faction/slot-order variants. Actual whole helper and mapped getter bodies are extracted; valid actor-local/target-local/visibility/no-notice and alien-art paths observe exact GENETICWARFARE0/1 markers, parser/default order, complete bounded14-event gameplay prefix and notice tail. This is bounded fixture behavior, not actual game/ABI proof.",
+      "Independent source review confirms the original producer/actor binding and no collateral production edit. Its initial fixture comments on weak marker/order checks were acted on: final testhash78104bb0c42af3808a0fa9a841b6513013ba16083eb6fb2fe70d67fa900fb963 now checks both explicitly. One-vehicle and limited field/path models still do not establish complete Probe behavior.",
+      "Preserve all annotations/claims/spans and original task baseline. No byte claim recorded or demoted; no bug fix or bounds/initialization change. Prior capturedrecord native actual-recipe calibration/unchanged/damage screen belongs to5080 and is not current qualification. Fresh rebase onto verified Faction integration, full native build/link/census/references and actual current residual review remain required; this source checkpoint is unadmitted."
+    ],
+    "hypothesis": "The original action-seven notice parses the actor faction noun and its grammar defaults, not the adjective.",
+    "kind": "discovery"
+  },
+  "previous_event": "13ff9c1a9051cd13830456ee3c064f8e4910b773ad11e09da9496252fafd5135",
+  "request_id": "probe-original-action7-noun-source-checkpoint-oct21w",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:probe-action-owner-oct5"
+}
