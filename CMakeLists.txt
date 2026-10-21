@@ -153,6 +153,7 @@ set(OPENSMACX_SOURCES
     src/dialog.cpp
     src/dialogs.cpp
     src/faction.cpp
+    src/faction_dialogue.cpp
     src/faction_network.cpp
     src/famewin.cpp
     src/filemap.cpp
@@ -416,6 +417,7 @@ set_source_files_properties(
     src/territory.cpp
     src/world.cpp
     src/faction.cpp
+    src/faction_dialogue.cpp
     src/faction_network.cpp
     src/veh.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")

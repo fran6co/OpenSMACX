@@ -13,8 +13,8 @@ from match_recovery.source import read_file
 
 
 ROOT = next(p for p in Path(__file__).resolve().parents
-            if (p / "src/faction.cpp").exists())
-SOURCE = ROOT / "src/faction.cpp"
+            if (p / "src/faction_dialogue.cpp").exists())
+SOURCE = ROOT / "src/faction_dialogue.cpp"
 
 
 def extract():

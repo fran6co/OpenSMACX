@@ -12,7 +12,7 @@ import subprocess
 import pytest
 from match_recovery.source import read_file
 
-ROOT = next(parent for parent in Path(__file__).resolve().parents if (parent / 'src/faction.cpp').exists())
+ROOT = next(parent for parent in Path(__file__).resolve().parents if (parent / 'src/faction_dialogue.cpp').exists())
 FIXTURE = ROOT / 'recovery/tests/communicate_owner_host_fixture.cpp'
 HELPERS = ('communicate_i32_from_bits', 'communicate_wrapped_add', 'communicate_wrapped_sub',
            'communicate_wrapped_mul', 'communicate_pending_social_model',
@@ -32,14 +32,16 @@ def braced(source, signature):
     raise AssertionError('unterminated actual owner definition: ' + signature)
 
 def actual_parts():
-    source = (ROOT / 'src/faction.cpp').read_text()
-    row, = [row for row in read_file(ROOT / 'src/faction.cpp') if row.address == 0x54FFD0]
+    source_path = ROOT / 'src/faction_dialogue.cpp'
+    source = source_path.read_text()
+    row, = [row for row in read_file(source_path) if row.address == 0x54FFD0]
     assert row.name == '?communicate@@YAXHHH@Z'
     assert row.image_spans == ((0x54FFD0, 0x558980), (0x65FF4F, 0x65FF64))
     assert not row.extract_error and 'BODY GOES HERE.' not in row.region
     function = braced(row.region, 'void __cdecl communicate(')
     support = '\n'.join(braced(source, 'static int ' + name + '(') for name in HELPERS)
-    support += '\n' + braced(source, 'int communicate_round_down_multiple(int value, int step) {')
+    support += '\n' + braced((ROOT / 'src/faction.cpp').read_text(),
+                              'int communicate_round_down_multiple(int value, int step) {')
     effect = braced((ROOT / 'src/faction.h').read_text(), 'struct SocialEffect {') + ';'
     assert 'int values_[11];' in effect
     return function, support, effect
