@@ -1,0 +1,107 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "20274601fa4bd1e0221f69272e823c451e4c1985",
+  "editable_files": [
+    "src/dialog.cpp",
+    "src/base.cpp",
+    "src/time.cpp",
+    "src/cursor.cpp",
+    "src/netdaemon.cpp",
+    "src/console.cpp",
+    "src/interface_fonts.cpp",
+    "src/basepop.cpp",
+    "src/editgroup.cpp",
+    "src/pulldown.cpp",
+    "src/win.cpp",
+    "src/jackal/palette.cpp",
+    "recovery/tests/test_ordinary_global_bindings_oct21.py"
+  ],
+  "evidence": [
+    "Standing faithful recovery authority and coordinator-reviewed manual integration. This is a bounded multi-owner data-reference batch, not a new generic owner or permission to rewrite function bodies. Bind exactly20already-existing C++ global starts in their actual12owningTUs using native object_writer, preserving all function bodies, identities/spans/symbols/claims, useful history, existing1688object bindings, types, storage, ABI, compiler policy and task baselines. Only coordinator mutates source bindings, tasks, Git, native compiler/preparation/recording/integration and cleanup. Workers edit only explicitly isolated authorized test paths.",
+    "Source-owned starts and exact emitted spellings are independently reviewed in parallel-match-oct21g/fresh-global-binding-cohort.md and fresh-global-binding-independent-review.md. Existing definitions and physical ordinary external symbols agree with pinned original decoded operands, with no symbol/start/containing-extent conflicts. Regenerate the stale Win snapshot against current8fcf5b...source, retaining five integrated focus bindings and the corrected visibility receiver. Other11source hashes match the proposal. Every complete expected parse_objects snapshot must be native writer guarded and roundtrip validated before apply_patch publication.",
+    "Scope is the exact20proposed targets only: DialogDefaultFonts; BaseSiteClaimX/Y; Blink2Counter,PlanLineCounter,TurnRedrawPending; CursorWidth/Height; SpockNotifyPending/SpockHelpActive; AutoPlayCounter; FontSizeTable; BasePopFalloutGate; EditGroupDefault; PullDownDefaultFont; DirectDrawClipRect; SystemColours; WinTrackingMode/X/Y. Use corrected exact tagRECT decoration. Spock51F1B9readsNotify while51F1D9stores1toHelp; do not conflate these flags. This grants no new globals, aliases, array bounds, initializers, lifetime, callback target or original TU conclusions. All additions are unbounded v1; pointer/word widths, nearby starts and current array lengths cannot establish original complete extents.",
+    "Add native source/pinned-image controls for all20starts, exact symbols and adjacent existing definitions; validate global object conflict rules. Decode the independently reviewed original operand witnesses for each target using detailed operand addresses and directions where relevant. Pinned image must be explicitly configured or project-local and hash checked, without personal-path fallback. Image absence may explicitly skip image cases; coordinator actual verification supplies the pinned image and requires zero skips. No original proprietary table bytes in tracked tests. No test hardcodes a strict-pass prediction or accepts compiler failure as evidence.",
+    "Fresh source-frozen full actual185TU/199object application build/link, whole5581known identity census and strict reference comparison, unchanged-code/data/startup physical complement with ZERO function/section omissions, historical claim/mapping/reference continuity, independent source review and fresh master reproduction are required before removing consumed work. Twentybindings are not twentyfunctions or twentystrictpasses; several consumers still have additional unresolved globals/vtables. No record, demotion, score-based compiler change, full linked-selection/structure/runtime/game or autonomous acceptance."
+  ],
+  "intent": "Recover twenty source-owned ordinary-data identities across their existing owners without changing behavior or inferring original extents.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6331680,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5210384,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5303856,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5303936,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5304080,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6535440,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5370288,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5302416,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5800688,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6310544,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6363792,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6261024,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6476256,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6284080,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6234928,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "ordinary-global-owner-bindings-oct21h"
+}
