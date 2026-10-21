@@ -1,0 +1,26 @@
+{
+  "event_id": "d51eccde95fc76de01763972123085dc9708ede0a5765976f09d2d31b58956d8",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_breed_owner_boundaries_oct21u.py",
+      "src/base.cpp",
+      "src/base.h",
+      "src/game.cpp"
+    ],
+    "evidence": [
+      "Preserve branch-only ordinary breed_mod owner-boundary recovery, not admission or integration. Existing body is transported verbatim to original base.cpp marker before worm_mod; native write_body alone moves body path. Header keeps ordinary MEASURED declaration/export semantics. game.cpp removes only unoriginal pragma-disabled breed_mod_call and directly calls breed_mod. BaseWin and worm source bodies unchanged; original symbols/spans/claims/complete history and task base retained.",
+      "Fresh finite actual-production-recipe trial with replay/unchanged/damage controlsPASS: /Ob2 naturally keeps same-TU worm_mod inlining and byte-identical base.cpp breed/worm116/138instruction bodies; unrelated BaseWin and repair calls now directly reference original breed_mod target. Repair557instructions72matching unchanged. Original worm fourhas_fac calls are NOT restored: actualcurrent3bitmask+1has_fac_built+1has_project debt remains, distinct from recovered breed boundary.",
+      "Fresh full185TU199object build/link build-delfe8se plus claims/mappings/referencesPASS, all5581known verdict categories unchanged3363exact;3457historicalclaimedidentities/3468requirements preserved. Fouractualsource controlsPASS including GCC/Clang behavior/order/fallback/shortcircuit and native-writer projected-current marker metadata equality. This test-only addition/refinement followed native build; C++inputs stay exactlyhashidentical.",
+      "Do NOT admit nativephysicalresidual108PASS91FAIL. Seventy-ninefailedobjects are directive-only;12also have code deltas, with20affectedoriginalidentities enumerated in independentcollateral review. Ninetyconsumer directives remove only breed exporttoken; owner keeps/reordersit; finalPEordered103exportnamesunchanged. Drone_riot/game_data fourbyteloadswaps have equalrelocs; load_interface/end_of_game and otherbodycollateral remain concrete review obligations. No header/directive/body/linked-selection waiver or generic normalization introduced.",
+      "Sourcecheckpoint only, not game/automatic/fullacceptance or matchinggain. Keep sourcework ratherthan forcedinline wrappers or a prior incorrect /Ob1 rejection. Rebase onto currentmaster only at safe coordinator boundary, retaining original taskbaseline; fresh combined/current verification remains required before manual integration. Existing MainInterface merge and StringBox/technology work are independently preserved."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "0d790e51609e446f0eefe873d907bd3ae05305bfcb0a0ef1a70b308202f5ce48",
+  "request_id": "central-breed-compiling-source-checkpoint-oct21u",
+  "schema_version": 1,
+  "sequence": 11,
+  "stream": "task:owner-base-body-recovery-oct20ao"
+}

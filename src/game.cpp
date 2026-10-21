@@ -2031,16 +2031,6 @@ void __cdecl say_year(LPSTR output) {
     strcat(output, year);
 }
 
-// Out-of-line forwarder for repair_phase's breed_mod helper, which the image
-// calls and this tree would otherwise fold in. The redraw now calls the
-// source-owned draw_tile boundary directly. VC6 6.0 uses this pragma instead
-// of `__declspec(noinline)` for the remaining forwarder.
-#pragma auto_inline(off)
-static int __cdecl breed_mod_call(int base_id, int faction_id) {
-    return breed_mod(base_id, faction_id);
-}
-#pragma auto_inline(on)
-
 /*
 Purpose: Run the repair phase for the specified faction: reset the per-turn unit state, heal every
          damaged unit by its reactor-weighted repair rate, and redraw the tiles the units stand on.
@@ -2256,7 +2246,7 @@ void __cdecl repair_phase(int faction_id) {
                 && Vehs[veh_id].proto_id < MaxVehProtoFactionNum) {
                 // Native life is healed outright by any base whose owner has a lifecycle bonus,
                 // and the bonus is the base owner's rather than the unit owner's.
-                if (breed_mod_call(base_id, Bases[base_id].faction_id_current)) {
+                if (breed_mod(base_id, Bases[base_id].faction_id_current)) {
                     repair_rate = Vehs[veh_id].dmg_incurred;
                 }
             } else {

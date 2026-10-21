@@ -7451,7 +7451,7 @@ int __cdecl morale_mod(int base_id, int faction_id, int triad) {
 /*
 Purpose: Calculate the new native unit lifecycle bonus modifier provided by a base and faction.
 // ORIGINAL: 0x004E65C0 ?breed_mod@@YAHHH@Z 0x004E65C0-0x004E673D
-// body      src/base.h
+// body      src/base.cpp
 // LEVER: body lives in base.h (MEASURED inline) as four has_fac_built_call()
 //        checks instead of has_fac_built() - fixes breed_mod's OWN call
 //        count (0 -> 4 real bitmask() calls) and moves its best similarity
@@ -7475,13 +7475,35 @@ Purpose: Calculate the new native unit lifecycle bonus modifier provided by a ba
 Return Value: Lifecycle bonus
 Status: Complete
 */
-// BODY IN base.h, as `MEASURED inline`: worm_mod (base.cpp) needs it folded
-// in place, matching the image, which writes breed_mod's whole body out at
-// its one call site rather than calling 0x004E65C0. LEVER: also swapped
-// the four has_fac_built(FAC_X, base_id) facility tests for
-// has_fac(FAC_X, base_id, 0) - the recorded LEVER on base_minerals
-// (base.cpp:1820, at the time of writing) found the same swap moved that
-// body's call count from 1 to 6 of 7.
+// HISTORICAL: the body was placed in base.h as `MEASURED inline` so worm_mod
+// could fold it in place; the image writes breed_mod's whole body there
+// rather than calling 0x004E65C0. The four has_fac_built(FAC_X, base_id)
+// checks were also previously swapped for has_fac(FAC_X, base_id, 0), based
+// on the recorded LEVER on base_minerals (base.cpp:1820 at the time), which
+// found that swap moved that body's call count from 1 to 6 of 7.
+int __cdecl breed_mod(int base_id, int faction_id) {
+    uint32_t lifecycle_modifier = has_project(SP_XENOEMPATYH_DOME, faction_id) ? 1 : 0;
+    if (has_project(SP_PHOLUS_MUTAGEN, faction_id)) {
+        lifecycle_modifier++;
+    }
+    if (has_project(SP_VOICE_OF_PLANET, faction_id)) {
+        lifecycle_modifier++;
+    }
+    if (has_fac_built(FAC_CENTAURI_PRESERVE, base_id)) {
+        lifecycle_modifier++;
+    }
+    if (has_fac_built(FAC_TEMPLE_OF_PLANET, base_id)) {
+        lifecycle_modifier++;
+    }
+    if (has_fac_built(FAC_BIOLOGY_LAB, base_id)) {
+        lifecycle_modifier++;
+    }
+    if (has_fac_built(FAC_BIOENHANCEMENT_CENTER, base_id)
+        || has_project(SP_CYBORG_FACTORY, faction_id)) {
+        lifecycle_modifier++;
+    }
+    return lifecycle_modifier;
+}
 
 /*
 Purpose: Calculate the count of lifecycle/psi bonuses that are provided by a base and faction.
