@@ -1,0 +1,21 @@
+{
+  "event_id": "5f9895ccd126aae42b2e07d6d45e9a2970a17c56da8c25be081af829dde55e76",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "basewin-garrison-inline-font-metric-oct21x-source-preserved",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Source-owned BaseWin::draw_garrison now spells the original41044A..410464 conditional metric through existing Font member/accessor types, preserving signed choice, branch-specific reads and32-bit wrap. No header/layout change or behavior fix; entire subsequent traversal/drawing/error behavior remains unchanged.",
+      "User-authorized coordinator-reviewed manual source integration, not native automatic or full-game acceptance. Both separately owned source changes share one fresh186TU200COFF VC6 application build-wjguf8b3, successful build/link and14 focused actual-source host controls. Independent pinned-source and fresh object reviews are retained at ignored parallel-match-oct21x; hashes are in the verification cache. Host controls are not complete native ABI/CFG/SEH/runtime proof.",
+      "Fresh claims/mappings/references pass; source-annotation check388files5646annotations9rules0fail fingerprintb843a1e13515a62e1d27625289c28f5ed8f5c6ee41878af6a14f5197c1ec32d7. All5581matching verdicts and strict results remain unchanged:3364maskedexact,2807strictPASS557UNKNOWN. Both changed parents remain MISMATCH, not exact or fully behavior-proven. No new implementation or match count, no claim banking/demotion, flags or gate changes.",
+      "Native physical residual200PASS projects only the two unique mapped parent bodies, each within its own preexisting task scope. All other sections, data, symbols, directives, associations and generated cleanup outside those projections remain unwaived. This does not prove changed-parent complete fidelity or full linked retention/allocation/selection, structure or runtime acceptance.",
+      "Preserve original task baseline343ceab037cf0d2ebbb125f70e110eec8192e5a2, historical source claims and all other discoveries/restoration obligations. Fresh destination build/link,14controls, full current census/reference results, source check and200zero-omission candidate reproductions are required before consuming the isolated clean checkouts. Incorporation resolves this bounded source discovery only, not the full owner recovery."
+    ]
+  },
+  "previous_event": "7bec628362e13093229d4e9e62290fd86828c1e4ea8ea4d98213f95ed12af192",
+  "request_id": "basewin-garrison-inline-font-metric-oct21x-source-preserved-manual-incorporation",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:owner-basewin-faithful-recovery-oct20y"
+}

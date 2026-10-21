@@ -1,0 +1,21 @@
+{
+  "event_id": "52e8a74399313ced0cc0ff29f9fc5a3b74dc7a7cb506bf6f8fa7a5fc7bb24d1e",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "messagewin-lifetime-oct21x-source-preserved",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Source-owned MessageWin::init now constructs its real Buffer scratch before Font::init, matching471D79/471DA7; close remains later, and compiler-generated normal/unwind destruction belongs to the same scratch. No class/frame-size reinterpretation or old-executable dispatch.",
+      "User-authorized coordinator-reviewed manual source integration, not native automatic or full-game acceptance. Both separately owned source changes share one fresh186TU200COFF VC6 application build-wjguf8b3, successful build/link and14 focused actual-source host controls. Independent pinned-source and fresh object reviews are retained at ignored parallel-match-oct21x; hashes are in the verification cache. Host controls are not complete native ABI/CFG/SEH/runtime proof.",
+      "Fresh claims/mappings/references pass; source-annotation check388files5646annotations9rules0fail fingerprintb843a1e13515a62e1d27625289c28f5ed8f5c6ee41878af6a14f5197c1ec32d7. All5581matching verdicts and strict results remain unchanged:3364maskedexact,2807strictPASS557UNKNOWN. Both changed parents remain MISMATCH, not exact or fully behavior-proven. No new implementation or match count, no claim banking/demotion, flags or gate changes.",
+      "Native physical residual200PASS projects only the two unique mapped parent bodies, each within its own preexisting task scope. All other sections, data, symbols, directives, associations and generated cleanup outside those projections remain unwaived. This does not prove changed-parent complete fidelity or full linked retention/allocation/selection, structure or runtime acceptance.",
+      "Preserve original task baselineb249adb3c479cc1dfb6e4ec51e63438a58822b8d, historical source claims and all other discoveries/restoration obligations. Fresh destination build/link,14controls, full current census/reference results, source check and200zero-omission candidate reproductions are required before consuming the isolated clean checkouts. Incorporation resolves this bounded source discovery only, not the full owner recovery."
+    ]
+  },
+  "previous_event": "a0a47b5640912401d735669d089e3ed66bc11a64978acd84b5f2802898376b82",
+  "request_id": "messagewin-lifetime-oct21x-source-preserved-manual-incorporation",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:message-list-draw-oct16"
+}
