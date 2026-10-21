@@ -1,0 +1,25 @@
+{
+  "event_id": "349c338668f9caf826f5fab541c0f361748f8830aad5a2a16b338927f321734e",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Authorize only removing redundant tick_word local and writing original DWORD save_tick directly. Native5A951D stores GetTickCount toEBP-4,5A968B passes that same object; do not alter seed conversion, calls, result/error order or uninitialized game_data header. Independent source/operand review agrees.",
+      "Finite actual-production-recipe overlay passed baseline replay, unchanged replica and compile-success CPP damage control; four compiler calls, no flags/attributes/padding. save_daemon matching25to44of136 instructions, remainsMISMATCH; game TU verdicts unchanged. Outside-save-only compiled residualFAIL: end_of_game same-length3984-byte section has two local stores reordered at offsets398..405 and compiler-local label renumbering, with no relocation target-value changes. Admit end_of_game524870 for observed compiled impact only, not source edits or a waiver. Preserve original immutable baseline and all pending restoration obligations.",
+      "Extend existing save-daemon actual-source fixture for DWORD tick boundaries and captured-before-callback behavior, with compile-success mutation controls. Require fresh full build/link, identity/reference checks, actual-source tests, independent review and destination recheck before manual integration. A scoped compiler miss or residual does not become green; no automatic/game acceptance or deterministic write-header behavior is claimed."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5392496,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "save-tick-compiled-endgame-impact-oct21zd",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:save-daemon-owner-oct5"
+}
