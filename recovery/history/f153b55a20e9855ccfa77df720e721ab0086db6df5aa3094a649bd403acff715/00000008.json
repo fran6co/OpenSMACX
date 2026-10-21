@@ -1,0 +1,29 @@
+{
+  "event_id": "3b3a4aabd9d806dd5f96e04a7ab900539dd20d79c2ac5a66bf645c492e805e71",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_font_line_advance_visibility_oct21.py",
+      "src/buffer.cpp",
+      "src/jackal/font.h"
+    ],
+    "evidence": [
+      "Original private-selector candidate built and preserved public metric and exactly3directcalls, but introduced compiler collateral in14uneditedTUs; raw179PASS14FAIL remains retained and census3332/2772 unchanged. Do not accept/waive this residual or discard authored source findings.",
+      "Existing genuine Buffer::text_line_height5DCAB0 already performs same lazyFontDefault resolution and signedselector with defined32bit addition; authorize ONE diagnostic replacement of the two newly added privatehelper call sites AND their adjacent manualdefault statement by int advance=text_line_height(), while overlaying the exact originalFontheader to remove new privatehelper. Keep all otherBufferstatements, threepublicFontcalls, publicFontbody and identities/history unchanged; no flags/forcedinline/casts/neworiginalidentity. Native overlay before application only, with complete actualRelease compilercommand recovered losslessly from fresh CMake entry, unchanged direct/replica physical equality against actual object, body and header damage controls. No inference from historicalflaggrid.",
+      "If fresh production evidence confirms proper expansion/directcallboundary and protected residual, a separate reviewed source adoption is needed. Preserve candidate snapshots/authoredtests and original red report; no task baseline reset, automatic acceptance or wholeTU waiver."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6146736,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "a0f08862d180590a7b8420b1be25aeee3763e8d846138e1f79f461ceec982078",
+  "request_id": "central-font-existing-buffer-metric-probe-oct21c",
+  "schema_version": 1,
+  "sequence": 8,
+  "stream": "task:font-natural-inline-emission-oct12g"
+}

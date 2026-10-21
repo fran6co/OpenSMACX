@@ -1,0 +1,24 @@
+{
+  "event_id": "0b953179578da08388fe62670b48fd331bbcc2a12e4e893b8b13ec54a8afc071",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_font_line_advance_visibility_oct21.py",
+      "src/buffer.cpp",
+      "src/jackal/font.h"
+    ],
+    "evidence": [
+      "Fresh actual-Release controlled overlay recovered exact full CMake invocation; baseline direct output and unchanged private replica physically equal actual application buffer.cpp.obj. Anchored body damage and header#error controls pass. New two-site existing text_line_height candidate has no privatehelper symbols or Font/text_line_height calls in those expansions; mapped text_line_height remains BYTE_EXACT14/14. Native protected Buffer complement against master PASS with only two edited original bodies projected. Original privateheader candidate raw14objectfails remain retained, not relabeled.",
+      "Authorize replacing only the two adjacent manualdefault+privatehelper sequences in Buffer write_vertical5DB450 and wrap_cent_flying5DE320 by int advance=text_line_height(). Restore font.h exactly to unchanged master original header; remove only the new privatehelper added in the diagnostic, not original source work. PublicFontline_advance/fullBuffertext_line_height and three original directcall sites remain unchanged. This uses an existing genuine owner API, removes extra headerfanout/helper, and retains same lazyFontDefault/signedwrap/no-nullguard/order/verticalclamp behavior. Sourcecandidate comes from ignored existing-buffer-metric-probe-anchored/candidate-inputs.json; not permission to edit otherBufferbodies or flags.",
+      "Adapt the new actual-source host control to extract existing Buffer::text_line_height and exercise it plus the two full consumers; retain all signednegative/INT_MIN/zero/positive/wrap, verticalshrink/cliprestore/flyingpostwriteY controls and meaningfulmutants, adding lazydefault check. Remove obsoleteprivatehelper-specificfixture assertions while preserving all behavioral coverage; publicFontbody still unchanged. Keep original authorprivateheader/testwork frozen in its separateworktree and cache until reviewedreplacement is banked; preserve original rejectedcandidate evidence in nativejournal and ignoredreports.",
+      "Fresh full actualapplication build/link,52orstrongerhostcontrols, wholeknown-domain exact/strict preservation,193-object complementarycheck without wholeTUwaivers, source/claim/referencecontinuity, independentreview and destinationreproduction are still required. Diagnostic is not adoptionacceptance, newbyteclaim, linkedretention/structure/runtime/fullgameproof; baselinesandhistoricalclaimsunchanged."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "3b3a4aabd9d806dd5f96e04a7ab900539dd20d79c2ac5a66bf645c492e805e71",
+  "request_id": "central-adopt-existing-buffer-metric-oct21c",
+  "schema_version": 1,
+  "sequence": 9,
+  "stream": "task:font-natural-inline-emission-oct12g"
+}

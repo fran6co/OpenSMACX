@@ -10623,8 +10623,7 @@ int Buffer::write_vertical(char *text, RECT *area) {
     RECT saved = rect1_;
     set_clip(area);
     int length = static_cast<int>(strlen(text));
-    if (font1_ == 0) font1_ = FontDefault;
-    int advance = font1_->line_advance();
+    int advance = text_line_height();
     int room = area->bottom - area->top;
     int total = advance * length;
     for (;;) {
@@ -10697,8 +10696,7 @@ int Buffer::wrap_cent_flying(char *text) {
         BufferFlyingText[0] = 0;
         BufferStrHeight = 0;
         ++field_18_;
-        if (font1_ == 0) font1_ = FontDefault;
-        int advance = font1_->line_advance();
+        int advance = text_line_height();
         BufferFlyingY += advance;
         text = next;
     }

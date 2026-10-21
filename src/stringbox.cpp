@@ -121,10 +121,10 @@ void StringBox::init(int x, int y, int width, int height, Win *parent,
         list_override_ = list;
     } else {
         stringList_.remove_all();
+        stringList_.current_position_ = 0;
+        stringList_.allocator_ = 0;
     }
-    stringList_.current_position_ = 0;
-    stringList_.allocator_ = 0;
-    scroll_.init_vert(height - ScrollDefaultThickness, 0,
+    scroll_.init_vert(width - ScrollDefaultThickness, 0,
                       -dib_.bmiHeader.biHeight, this, 0);
     scroll_.hide();
     scroll_.range_minimum_ = 0;
