@@ -1,0 +1,21 @@
+{
+  "event_id": "40f7fe154a02200c3b85cb396a7166b8106726392ec31cd549370f029f948e0e",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/mapwin.cpp"
+    ],
+    "evidence": [
+      "Coordinator admits the already-authorized equivalent C++ cleanup:8redundantcasts removed across four existing functions; five unusedDirectDrawdeclarations and unreadMapWinselfalias retired. DirectPlay uses SDK HKEY_LOCAL_MACHINE and declared _strcmpi; Buffer array/result types flow directly. Required BYTE* and mutable text_width conversions, result-initialization/call/branch/read/write order, historical RGNDATA evidence and every annotation/claim remain. No bug fix, type/ABI/header/flag/lifetime/storage change.",
+      "Independent actual-diff/source/SDK review,44existinghostcases, native binding-continuity check, fresh full185TU199object application build/link and claims/mappings/references pass. ALL199physicalcompiledobjects equal priorverifiedmaster with ZERO body/section omissions. Full5581knownidentity census remains3358masked exact; strict2800pass555unknown3fail, all individual outcomes unchanged. Advisory source-quality observations retained separately; reduced pattern counts are not structural recovery proof.",
+      "Manual source-quality checkpoint, not a new implementation, original matching gain, historicalclaim or full linked-selection/allocation/structure/runtime/game/autonomous acceptance. Preserve original task baselines and all restoration obligations. Fresh master fullbuild/link,44relatedtests, wholecensus/strict and zero-omission199object reproduction required before consumed worktree cleanup."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "d566ab08ba840d87d41c7d80631d052642a6096cb424633771057ac2d780d4b8",
+  "request_id": "central-manual-clean-cpp-mapwin-oct21m",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:owner-mapwin-body-recovery-oct20ao"
+}

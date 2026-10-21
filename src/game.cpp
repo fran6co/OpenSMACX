@@ -4527,10 +4527,9 @@ void __cdecl load_bases() {
 //         `push esi`).
 
 extern "C" int __cdecl directplay_install_is_complete() {
-    typedef int (__cdecl *StrcmpiFn)(const char *, const char *);
     int result = 0;
     HKEY key;
-    LONG status = RegOpenKeyExA(reinterpret_cast<HKEY>(0x80000002),
+    LONG status = RegOpenKeyExA(HKEY_LOCAL_MACHINE,
         "SOFTWARE\\Microsoft\\DirectPlay\\Applications\\"
         "Sid Meier's Alpha Centauri", 0, 0, &key);
     if (status != 0) {
@@ -4542,8 +4541,7 @@ extern "C" int __cdecl directplay_install_is_complete() {
     status = RegQueryValueExA(key, "Complete", 0, &valueType,
         reinterpret_cast<BYTE *>(valueBuf), &valueSize);
     if (status == 0) {
-        StrcmpiFn fn = reinterpret_cast<StrcmpiFn>(_strcmpi);
-        if (fn(valueBuf, "Yes") == 0) {
+        if (_strcmpi(valueBuf, "Yes") == 0) {
             result = 1;
         }
     }

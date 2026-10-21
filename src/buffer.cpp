@@ -1071,18 +1071,6 @@ namespace {
 //
 }  // namespace
 
-namespace {
-
-typedef long(__stdcall *func_surface_lock)(void *, void *, void *, uint32_t, void *);
-typedef long(__stdcall *func_surface_unlock)(void *, void *);
-
-// DDSURFACEDESC fields the lock path consumes.
-static const size_t SurfaceDescriptorSize = 0x6C;
-static const size_t SurfaceDescriptorPitch = 0x10;
-static const size_t SurfaceDescriptorData = 0x24;
-
-}  // namespace
-
 /*
 Purpose: Release acquired references to the buffer's pixel data, unlocking the
          DirectDraw surface once the last reference is dropped.
@@ -5892,7 +5880,7 @@ int Buffer::wrap_height_flying(char *input_text) {
         if (*text != '\0') {
             do {
                 int remaining = BufferFlyingWidth - BufferStrHeight;
-                text = (char *)find_line_break_l(text, &remaining, strlen(text));
+                text = find_line_break_l(text, &remaining, strlen(text));
                 if (text == 0) {
                     break;
                 }
@@ -5996,11 +5984,11 @@ int Buffer::wrap_flying(char * a1) {
     }
 
     char *cur = a1;
-    char *buf = (char *)BufferFlyingText;
+    char *buf = BufferFlyingText;
     for (;;) {
         if (buf[0] != 0) {
-            strcat(buf, (const char *)BufferJoinSpace);
-            unsigned int len = strlen((const char *)BufferWriteSpace);
+            strcat(buf, BufferJoinSpace);
+            unsigned int len = strlen(BufferWriteSpace);
             int w = this->text_width((char *)BufferWriteSpace, len);
             BufferStrHeight += w;
         }
@@ -6009,7 +5997,7 @@ int Buffer::wrap_flying(char * a1) {
         if (BufferStrHeight < BufferFlyingWidth) {
             unsigned int len2 = strlen(cur);
             int avail = BufferFlyingWidth - BufferStrHeight;
-            brk = (char *)this->find_line_break_l(cur, &avail, len2);
+            brk = this->find_line_break_l(cur, &avail, len2);
         }
         if (brk == 0) {
             break;

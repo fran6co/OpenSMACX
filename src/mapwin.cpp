@@ -6723,7 +6723,6 @@ void MapWin::gen_map(int a1, int a2) {
 // calls     0x0046A2A0
 
 void MapWin::draw_tile(int a1, int a2, int a3) {
-    char *self = reinterpret_cast<char *>(this);
     int rowStart = field_1DDA8_;
     if (a2 >= rowStart &&
         a2 < field_1DDD8_ + field_1DDD0_ + rowStart) {
