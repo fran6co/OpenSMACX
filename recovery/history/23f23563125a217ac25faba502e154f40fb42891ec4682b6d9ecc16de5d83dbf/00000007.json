@@ -1,0 +1,68 @@
+{
+  "event_id": "a71f71c4661e4c47b104b1c2571f7f86722a1b2be6d2537277ce16f248404a39",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "CMakeLists.txt",
+      "recovery/tests/test_address_call_closure_actual_source.py",
+      "recovery/tests/test_say_stats_original_separator.py",
+      "recovery/tests/test_vehicle_stats_owner_oct21.py",
+      "src/veh.cpp",
+      "src/vehicle_stats.cpp"
+    ],
+    "evidence": [
+      "Standing coordinator-reviewed faithful recovery authority. Source work for coherent six-formatter vehicle_stats.cpp module: exact full annotated/history blocks unchanged, ordinary required general.h before veh.h, existing public APIs and storage retained. Native replay/overlay/damage controls pass; whole167record domain yields say_offense exact gain with both existing exact formatter bodies preserved. Existing /Oy- vehicle recipe retained. No original TU claim, flags, types, wrappers or algorithm changes.",
+      "IMPORTANT: native physical residual FAILS, not an acceptance pass. Two mapped retained functions change output and private helper/literal changes remain outside native mapped-body projection. Independent review must enumerate every changed helper and exact code/reference/ordinary literal transfer, including possible address identity/storage effects. No source integration based on net gains alone, no function or whole-TU waiver, invented original identity, policy weakening or false pass. Keep failed first include attempt and all physical diagnostic findings. Preserve useful candidate work while finishing evidence.",
+      "Authorize isolated author apply_patch exact reviewed source transport plus C++98 actual-source tests for all6formatters and meaningful compile-success mutants. Preserve ability/arty repeat reads, symbol/number/signed-division/label/triad/reactor/overload/custom-spacer output ordering and original unsafe buffer behavior. Update existing test readers only to find genuine relocated owner, retaining every assertion. Only coordinator edits sharedCMake/prepares/compiles/records/Git/tasks/integrates. No outside files or semantic fixes authorized.",
+      "Manual integration still requires actual full application build/link, allknownidentity masked/strict measurements with priorclaims intact, independent review, precise residual findings disposition and destination recheck. Full linked retention/provider/storage, automatic, structure/runtime/game acceptance remains unproven. Existing MEASURED/export/header duplication policy unchanged, not endorsed historical code."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5756256,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5756624,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5756880,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5290400,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5757152,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5757600,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5744224,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5851072,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "bdcf520812d6daec173babae80865dc7acd3898dca1b171a1e5f68a16dfcc1c3",
+  "request_id": "central-vehicle-stats-source-owner-oct21f",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:matching-veh-flags-oct20aa"
+}
