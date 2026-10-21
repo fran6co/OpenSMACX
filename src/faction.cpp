@@ -7245,7 +7245,7 @@ void __cdecl enemies_war(int faction_id, int faction_id_with) {
         parse_says(1, Players[faction_id].name_leader, -1, -1);
         parse_says(2, get_noun(faction_id), -1, -1);
         parse_says(3, get_he_she(faction_id, 0), -1, -1);
-        parse_says(4, get_noun(faction_id_with), -1, -1);
+        parse_says(4, get_noun(faction_id), -1, -1);
         NetMsgPrimary.pop("PACTATTACKS", 5000, 0, nullptr);
     } else if ((PlayersData[local_faction_id].diplo_treaties[faction_id_with]
                 & DTREATY_PACT) != 0) {
@@ -7789,7 +7789,7 @@ evaluate_existing_state:
     }
 
     faction_parse_leader_fields(faction_id, 0, 1, 2, 3);
-    parse_says(4, get_noun(faction_id_with), -1, -1);
+    parse_says(4, get_noun(faction_id), -1, -1);
     NetMsgPrimary.pop("PACTTREATY", 5000, 0, nullptr);
     treaty_on(faction_id, faction_id_with, DTREATY_TREATY);
 }

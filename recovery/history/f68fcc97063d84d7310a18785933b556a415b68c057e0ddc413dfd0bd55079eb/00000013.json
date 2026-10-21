@@ -1,0 +1,24 @@
+{
+  "event_id": "1a14e6d9b0fb6841c2e7f5cc4497fac6da18ded2633825a5ed6f934bd89b6841",
+  "payload": {
+    "affects": [
+      "entity-59d6c2e91b85654b0f4f979499b728716c453eeff580f90ae64be5bbb4443de3",
+      "entity-88dd5464593edad0af17de9a150cb928dc8b3b5b4b5c7c1aa31757fc45472e81"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "enemies-war-treaty-original-slot-four-nouns-source-oct21w",
+    "evidence": [
+      "Only two production identifiers change: war local-to-A pact arm slot4 and treaty final local-to-A pact arm slot4 now pass faction_id, not faction_id_with. Pinned55C9E8/EDI and55DDB9/ESI identify argument1/A. All other branches, shared-call factoring, parser slots/defaults, leader values, treaty/notification order, types, compiler flags and original quirks are unchanged.",
+      "Complete parsed original metadata compares identical for every faction.cpp record except line/region/extraction fields. All identities/spans/claims/body facts/symbols/history remain. This is original behavior restoration, not a prospective bug fix or claim grant.",
+      "Fresh coordinator41-case aggregate passes: previous39 plus two compiler-parametrized actual-branch noun controls. New controls include actual get_noun body, A/B text/gender/plurality distinctions, slot4 snapshots at pop, treaty/notice ordering and opposite pact directions; compile-success argument-reversal mutants fail as intended. No whole-function/native/unsafe-path acceptance is inferred.",
+      "Earlier combined2318 native epoch passed build/link/39cases,163 helper boundaries and unchanged5581 verdicts3364exact, but nativephysical112PASS87FAIL remains unwaived. It is pre-change evidence, not current source acceptance. Fresh full native rebuild, source checks, current matching/reference census and actual residual requalification follow; original task baseline and all other pending findings are preserved."
+    ],
+    "hypothesis": "The original shared pact-notice continuation uses argument A for slot4 on both paths; two current B producers now use the original faction and its noun grammar defaults.",
+    "kind": "discovery"
+  },
+  "previous_event": "ce1263c03aa8d99e75f9ffefb158029dfec095f2080136167074f12c75e2f9be",
+  "request_id": "enemies-war-treaty-original-slot-four-nouns-source-oct21w",
+  "schema_version": 1,
+  "sequence": 13,
+  "stream": "task:owner-faction-body-recovery-oct20ao"
+}
