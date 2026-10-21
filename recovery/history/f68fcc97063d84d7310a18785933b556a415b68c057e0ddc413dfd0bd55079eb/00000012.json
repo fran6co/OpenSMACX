@@ -1,0 +1,36 @@
+{
+  "event_id": "ce1263c03aa8d99e75f9ffefb158029dfec095f2080136167074f12c75e2f9be",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_enemies_noun_producers_oct21w.py",
+      "src/faction.cpp"
+    ],
+    "evidence": [
+      "The current combined Faction epoch is terminal: full build/link,39 owner cases, source claims/mappings/references and all5581 verdicts pass bounded checks;3364 exact unchanged, strict2807PASS557UNKNOWN. Original/current dialogue helper counts now match141 treaty/7 adjective/11 noun/4 rounding. Native physical112PASS87FAIL remains red. Preserve this diagnostic before the two newly identified local corrections; it is not future-source acceptance.",
+      "Pinned enemies_war55C840 loads EDI=argument1/A and ESI=argument2/B. The common slot4 noun call55C9E8 pushes EDI/A on both pact paths. Current local-to-A pact branch incorrectly uses get_noun(faction_id_with) at slot4; change only that argument to faction_id. Its local-to-B branch already supplies A correctly and must remain unchanged.",
+      "Pinned enemies_treaty55D760 uses ESI=argument1/A and EDI=argument2/B. Common slot4 noun call55DDB9 pushes ESI/A. Current final local-to-A pact branch incorrectly passes B; change only this slot4 getter argument to faction_id. Do not alter the other early or lower branches. Current source has4 noun expressions, not3 in the earlier closure note; original2 calls include shared control-flow joins. Counts alone are not a rewriting instruction.",
+      "Restore both noun text and GenderDefault/PluralityDefault to original faction A. Keep all treaty/agenda/notification order, parser slots/defaults, leader fields, branches, first/second faction direction, existing unsafe paths and original identities/spans/claims/history. No factoring of shared continuations solely for matching, no other source edits, wrappers, flags, types, layout or bug fixes.",
+      "New focused tests must extract the actual corrected production branch code and genuine noun helper, distinguish A/B names and grammar values, cover both local-pact directions where feasible, record parser slot4 and NetMsg notification snapshot/order, and detect compile-success reversal mutants for each function under GCC/Clang C++98. All39 prior cases remain unchanged. Author only faction.cpp and new test; no task/Git/native compiler/preparation. Absolute apply_patch paths required.",
+      "The separate Probe worker alone owns current probe.cpp writes for its captured-faction record cohort correction. No overlapping source author edits. Fresh combined Faction native rebuild/census and actual object requalification will follow these two argument changes; all prior reports retain their epoch labels and are not replayed as current proof. Original task baseline and all outstanding discoveries remain intact."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5621824,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5625696,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "bb17f1f5c9850ab2328d937681046e539ba6c2988988d643bc1dd8454358f626",
+  "request_id": "central-enemies-war-treaty-original-noun-faction-oct21w",
+  "schema_version": 1,
+  "sequence": 12,
+  "stream": "task:owner-faction-body-recovery-oct20ao"
+}
