@@ -1,0 +1,20 @@
+{
+  "event_id": "243cdc6f20d3c549ec2480000622b1d927ace06fa4301a974978b8b3a23cc8df",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/territory.cpp"
+    ],
+    "evidence": [
+      "Clarification of previous manual review evidence only; existing edit scope/baseline and all source/claim facts unchanged. Prior event4 and source commit e8ed7c12 used 14/12 host passes as shorthand for TOTAL TEST CASES. Actual XML is candidate13passed1skipped, baseline11passed1skipped, zero failures; destination also13passed1skipped. The same optional test_vc6_x86_actual_body_and_damage_controls_under_existing_lease did not run because the host-test subprocesses were started outside the compiler lease. A skip is not a pass. Do not use that missing optional native control as positive evidence, replay acceptance or weaken its existing guard/test.",
+      "The bounded manual source judgment instead retains independently pinned original effect/call evidence, real fresh actual180TU194object compile/link and native byte/reference checks, and full no-omission destination194object reproduction, all completed on source checkpoint e8ed7c12. Those do not prove the missing optional control, full linked selection, original TU, structure/runtime/game or automatic acceptance. This correction adds no implementation, match claim, coverage, scope waiver or test change; every src/CMake byte remains identical to that verified source checkpoint. All actual XML/native raw reports remain in ignored verification caches."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "f2e5de253dba6083103164764b09f950604e55ebf2d54f681c31a05aefb77990",
+  "request_id": "central-territory-host-case-count-clarification-oct21d",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:map-cohort-match-oct20b"
+}
