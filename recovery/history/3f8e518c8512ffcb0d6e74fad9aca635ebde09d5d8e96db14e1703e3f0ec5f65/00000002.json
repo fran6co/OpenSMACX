@@ -1,0 +1,23 @@
+{
+  "event_id": "a3798c1b641bc2faea6ca1df724dd1928c26c14c5b7e97b2f935d1e8ad55455b",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_net_session_receive_host.py",
+      "src/net_class.cpp"
+    ],
+    "evidence": [
+      "Standing faithful recovery/parallel manual integration authority; preserve matching-net task baseline84a83530 and all identities/history. Prior signed group capacity fix is integrated and destination-verified, old author worktree consumed. This is a new original session configuration contract finding, not a safety fix or broad retry rewrite.",
+      "Original create_session62EAA0 compares incoming max_players at original[esp+6C]62EAD4, overwrites SAME slot with2 at62EB52 for serial/modem providers, uses it for Open descriptor and later62ECFA stores that preserved/overwritten argument into Net+720 (allocation_node_.max_players_). Current source sets desc.dwMaxPlayers using seeded_max_players but stores unchanged original max_players at its node. Native NetWin config_players directly consumes low byte of this same node member; preserve full original word effect, no type/ABI changes inferred.",
+      "Authorize src/net_class.cpp create_session metadata store using the same seeded maximum already sent to Open, preserving original argument/provider checks and all success/failure/GetSessionDesc/callback ordering. Investigate other cohort functions read-only; no additional body edit without explicit evidence/authorization. No header/type/flag/symbol/Original/claim changes or normalization of unsafe paths.",
+      "Extend existing actual-source recovery/tests/test_net_session_receive_host.py to assert resulting node maximum for ordinary/serial/modem providers, exact native argument-slot provenance, GetSessionDesc result not substituted for original seeded argument, and compile-success old-store mutant. Retain prior controls. Coordinator owns native compilers/resourceleases/preparation/Git/tasks/recording/claim publication and verifies full build/link, protected output, historical continuity, review and destination reproduction. Worker isolated source/host only; preserve all discoveries and request scope expansion rather than guessing."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "85b1d80428760e0088937cabb8c49f6369efeaab98305088f44f83f7be23b7ff",
+  "request_id": "central-net-session-capacity-owner-oct21d",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:matching-net-oct20z"
+}
