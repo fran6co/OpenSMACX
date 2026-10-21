@@ -6946,13 +6946,13 @@ static void game_data_migrate_legacy_player_v3(
            sizeof(player.score_items_));
 }
 
-static int game_data_candidate_transfer_players(FILE *file, int version) {
+static int game_data_candidate_transfer_players(FILE *file) {
     // Native allocates the v3 row window even for a current v11+ file. Keep
     // allocation and failed-transfer return order: early errors leak these
     // buffers in the original routine.
     GameDataLegacyPlayerRowV3 *const rows =
         static_cast<GameDataLegacyPlayerRowV3 *>(mem_get(0x105E0));
-    if (version <= 2) {
+    if (GameDataStateStorage.fields_.save_daemon_state_word_ < 3) {
         GameDataLegacyPlayerRowV2 *const old_rows =
             static_cast<GameDataLegacyPlayerRowV2 *>(mem_get(0xE5E0));
         if (game_data_candidate_transfer(file, old_rows, 0xE5E0) == 0)
@@ -6961,15 +6961,19 @@ static int game_data_candidate_transfer_players(FILE *file, int version) {
             game_data_expand_legacy_player_v2(
                 rows[old_faction], old_rows[old_faction]);
         free(old_rows);
-    } else if (version < 0xB) {
-        if (game_data_candidate_transfer(file, rows, 0x105E0) == 0)
-            return 1;
     }
 
-    if (version >= 0xB) {
+    // 5A7252 reloads after the optional old-row transfer and expansion.
+    // This one value selects both the current and remaining legacy paths.
+    const int player_format =
+        GameDataStateStorage.fields_.save_daemon_state_word_;
+    if (player_format >= 0xB) {
         if (game_data_candidate_transfer(file, PlayersData, 0x10660) == 0)
             return 1;
     } else {
+        if (player_format >= 3
+            && game_data_candidate_transfer(file, rows, 0x105E0) == 0)
+            return 1;
         for (int legacy_faction = 0; legacy_faction < 8; ++legacy_faction)
             game_data_migrate_legacy_player_v3(
                 PlayersData[legacy_faction], rows[legacy_faction]);
@@ -7039,8 +7043,10 @@ int __cdecl game_data(FILE *file, int write_mode) {
     if (game_data_candidate_transfer(file, &header, sizeof(header)) == 0)
         return 1;
 
-    const int version = header.version_;
-    if (version >= 0xB) {
+    // The legacy header selects only this first state-record layout. Later
+    // format gates use the live word carried in that state record instead.
+    const int header_version = header.version_;
+    if (header_version >= 0xB) {
         if (game_data_candidate_transfer(
                 file, &GameDataStateStorage, 0x398) == 0)
             return 1;
@@ -7049,10 +7055,10 @@ int __cdecl game_data(FILE *file, int write_mode) {
         // before the field-by-field legacy conversion; do not stage this in a
         // success-only temporary or normalize its read/write ordering.
         memcpy(&GameDataStateStorage, &header, 0x31C);
-        game_data_migrate_legacy_header(&header, version);
+        game_data_migrate_legacy_header(&header, header_version);
     }
 
-    if (version >= 4) {
+    if (GameDataStateStorage.fields_.save_daemon_state_word_ >= 4) {
         GameDataEncryptedMode =
             static_cast<int>(GameDataStateStorage.fields_.game_state_
                              & 0x10000000u);
@@ -7090,7 +7096,7 @@ int __cdecl game_data(FILE *file, int write_mode) {
             return 1;
     }
 
-    if (game_data_candidate_transfer_players(file, version) != 0)
+    if (game_data_candidate_transfer_players(file) != 0)
         return 1;
 
     if (game_data_candidate_transfer(file, Players, 0x2CE0) == 0)
@@ -7146,7 +7152,7 @@ int __cdecl game_data(FILE *file, int write_mode) {
     if (game_data_candidate_transfer(file, Continents, 0xE00) == 0)
         return 1;
 
-    if (version >= 3) {
+    if (GameDataStateStorage.fields_.save_daemon_state_word_ >= 3) {
         if (game_data_candidate_transfer(file, VehPrototypes, 0x6800) == 0)
             return 1;
     } else {
@@ -7165,9 +7171,14 @@ int __cdecl game_data(FILE *file, int write_mode) {
         }
     }
 
-    if (veh_game_data_bunglist(file, version) == 0) return 1;
+    if (veh_game_data_bunglist(
+            file, GameDataStateStorage.fields_.save_daemon_state_word_) == 0)
+        return 1;
 
-    if (version <= 10) {
+    // 5A7CCB retains this format across the prototype-ID and vehicle stages.
+    const int vehicle_format =
+        GameDataStateStorage.fields_.save_daemon_state_word_;
+    if (vehicle_format < 0xB) {
         for (int prototype_id = 0; prototype_id < 512; ++prototype_id) {
             if (VehPrototypes[prototype_id].weapon_id >= 0x0C)
                 VehPrototypes[prototype_id].weapon_id += 3;
@@ -7175,7 +7186,7 @@ int __cdecl game_data(FILE *file, int write_mode) {
     }
 
     if (GameDataStateStorage.fields_.vehicle_current_count_ != 0) {
-        if (version >= 3) {
+        if (vehicle_format >= 3) {
             if (game_data_candidate_transfer(
                     file, Vehs,
                     static_cast<unsigned int>(GameDataStateStorage.fields_.vehicle_current_count_) * 0x34u) == 0)
@@ -7223,15 +7234,14 @@ int __cdecl game_data(FILE *file, int write_mode) {
                 memcpy(&vehicle.next_veh_id_stack, row + 0x2C, 2);
                 memcpy(&vehicle.prev_veh_id_stack, row + 0x2E, 2);
             }
-            for (int expanded_vehicle_id = 0; expanded_vehicle_id < GameDataStateStorage.fields_.vehicle_current_count_; ++expanded_vehicle_id)
-                Vehs[expanded_vehicle_id].proto_id = static_cast<int16_t>(
-                    game_data_expand_legacy_prototype_id(
-                        Vehs[expanded_vehicle_id].proto_id));
             if (old_rows != 0) free(old_rows);
         }
     }
 
-    if (version <= 7) {
+    // 5A7EE7 supplies both the icon correction and base-record layout tests.
+    const int base_format =
+        GameDataStateStorage.fields_.save_daemon_state_word_;
+    if (base_format <= 7) {
         // The two byte stores are inside the real VehPrototype icon_offset
         // fields: 0x9ABA36 is prototype 8 + 0x2E, then 0x9ABA02 is
         // prototype 7 + 0x2E.
@@ -7239,7 +7249,7 @@ int __cdecl game_data(FILE *file, int write_mode) {
         VehPrototypes[7].icon_offset = 2;
     }
 
-    if (version >= 0xB) {
+    if (base_format >= 0xB) {
         if (GameDataStateStorage.fields_.base_current_count_ != 0
             && game_data_candidate_transfer(
                    file, Bases,
@@ -7259,7 +7269,15 @@ int __cdecl game_data(FILE *file, int write_mode) {
         if (old_rows != 0) free(old_rows);
     }
 
-    if (version <= 2) {
+    // The fresh 5A8179 gate follows base loading and cleanup; failures there
+    // must leave these vehicle and queue IDs unconverted.
+    if (GameDataStateStorage.fields_.save_daemon_state_word_ < 3) {
+        for (int expanded_vehicle_id = 0;
+             expanded_vehicle_id < GameDataStateStorage.fields_.vehicle_current_count_;
+             ++expanded_vehicle_id)
+            Vehs[expanded_vehicle_id].proto_id = static_cast<int16_t>(
+                game_data_expand_legacy_prototype_id(
+                    Vehs[expanded_vehicle_id].proto_id));
         for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
             Base &base = Bases[base_id];
             const int queue_count = static_cast<int>(base.queue_size);
@@ -7278,26 +7296,26 @@ int __cdecl game_data(FILE *file, int write_mode) {
     if ((GameDataStateStorage.fields_.game_state_ & 0x10u) != 0
         && game_data_candidate_transfer(file, ScenarioSaveNameBuffer, 0x100) == 0)
         return 1;
-    if (version >= 1) {
+    if (GameDataStateStorage.fields_.save_daemon_state_word_ >= 1) {
         if (game_data_candidate_transfer(file, SaveNameBuffer, 0x100) == 0)
             return 1;
     } else {
         strcpy(SaveNameBuffer,
                SaveNameDefaultStorageGlobal.game_data_migration_default_);
     }
-    if (version >= 2) {
+    if (GameDataStateStorage.fields_.save_daemon_state_word_ >= 2) {
         if (game_data_candidate_transfer(file, &ScenarioSave, 0x98) == 0)
             return 1;
     } else {
         clear_scenario();
     }
-    if (version >= 7) {
+    if (GameDataStateStorage.fields_.save_daemon_state_word_ >= 7) {
         if (game_data_candidate_transfer(file, FactionMonuments, 0x27A0) == 0)
             return 1;
     } else {
         clear_monuments();
     }
-    if (version >= 12) {
+    if (GameDataStateStorage.fields_.save_daemon_state_word_ >= 12) {
         if (game_data_candidate_transfer(file, TectonicDetonationCount, 0x20) == 0)
             return 1;
     } else {

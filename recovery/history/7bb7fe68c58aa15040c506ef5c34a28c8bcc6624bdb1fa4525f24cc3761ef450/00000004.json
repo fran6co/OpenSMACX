@@ -1,0 +1,23 @@
+{
+  "event_id": "42b6e1ea7b87f0bb8c22c5193a695449b298eb03f34236da1c9c500b9756b9e7",
+  "payload": {
+    "affects": [
+      "entity-219cd0e2899423dd0c9bdcd0718b1406f9eccf7f28df77221b51278212dbc055"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "serializer-live-format-source-candidate-oct21ze",
+    "evidence": [
+      "Initial header selector remains indeterminate on writes. Later native9A6810 state decisions, the post-old-player-row reread5A7252, ESIvehicle-format interval5A7CCB and EAXbase-format interval5A7EE7 are expressed separately. Legacy fifth of10DWORD migration copies header+304 tolive+380. Move only the existing vehicle-ID loop to post-base fresh<3 gate5A8179 before queue conversion; base-transfer failure must not expose premature conversion.",
+      "Independent source/test review completed;37focused actual-source tests pass. Model-only fixture defaults first preserved4original baseline cases. New witnesses distinguish header/live formats0..12, encryptedstate5to6, old-player2to11, legacy migration equality, post-base3to2 and failed base transfer with rawID32. GCC/Clang compile-success wrong-header, stale-read-without-storage-write and early-conversion mutants are rejected.",
+      "Four native production-recipe compiles pass baseline replay, unchanged replica and CPP damage controls. Only mapped game_data compiled output changes; native outside-body comparisonPASS, all game-TU verdicts unchanged. Target remainsMISMATCH; instruction agreement49to22of3243, compiled2236to2247. Retain the evidence-backed semantic correction despite lower local score. No historical claim, source identity, task baseline, compiler flag, header initialization, guard or original error/leak behavior changed.",
+      "This is a candidate checkpoint pending full fresh application build/link and whole-domain observations, not accepted source integration, runtime-crash fix or full-game/native automatic acceptance. Preserve unresolved uninitialized-header runtime dependency and all earlier restoration obligations."
+    ],
+    "hypothesis": "Recover distinct legacy-header and live-state format decisions, exact reload/capture intervals, and post-base prototype-ID conversion order.",
+    "kind": "discovery"
+  },
+  "previous_event": "1cb2e8fa8394480987e1916bedee53e2a536368ee3597bf29babf5b881074ccd",
+  "request_id": "serializer-live-format-source-candidate-oct21ze",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:serializer-complete-owner-oct6"
+}

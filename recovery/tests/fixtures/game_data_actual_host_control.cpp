@@ -369,8 +369,16 @@ struct TransferStep { void *buffer; unsigned int size; };
 static std::vector<TransferStep> transfer_steps;
 static int fail_at_step = -1;
 static int transfer_header_version = 12;
+// A current-format wire record carries the live version independently of
+// the leading legacy-header selector. The second slot models the optional
+// encrypted-state reread; ordinary existing controls keep both at v12.
+static int transfer_live_format_state[2] = {12, 12};
+static int live_format_transfer_count;
+static int live_format_after_legacy_player_transfer = -1;
+static int live_format_after_base_transfer = -1;
 static int transfer_header_vehicle_count;
 static int transfer_header_base_count;
+static unsigned char legacy_vehicle_proto_id = 7;
 static int plain_transfer_count;
 static int read_scenario_from_stream;
 static int read_header_from_stream;
@@ -386,6 +394,14 @@ static int map_data_block(FILE *file, void *buffer, unsigned int size) {
         // particular, do not inspect the intentionally indeterminate native
         // 0x31C header buffer on this path.
         return 1;
+    }
+    if (buffer == &GameDataStateStorage && size == 0x398) {
+        const int transfer_index = live_format_transfer_count++;
+        if (!read_state_from_stream) {
+            const int state_index = transfer_index < 2 ? transfer_index : 1;
+            GameDataStateStorage.fields_.save_daemon_state_word_ =
+                transfer_live_format_state[state_index];
+        }
     }
     if (read_header_from_stream && size == 0x31C)
         return static_cast<int>(fread(buffer, size, 1, file));
@@ -440,7 +456,7 @@ static int map_data_block(FILE *file, void *buffer, unsigned int size) {
         *reinterpret_cast<int16_t *>(bytes + 0x02) = 0x2222;
         *reinterpret_cast<uint32_t *>(bytes + 0x04) = 0x33334444;
         *reinterpret_cast<uint16_t *>(bytes + 0x08) = 0x5555;
-        bytes[0x0A] = 7;
+        bytes[0x0A] = legacy_vehicle_proto_id;
         bytes[0x0C] = 8;
         bytes[0x0D] = 9;
         bytes[0x0E] = 10;
@@ -478,6 +494,15 @@ static int map_data_block(FILE *file, void *buffer, unsigned int size) {
         *reinterpret_cast<unsigned int *>(bytes + 0x128) = 0x6789ABCD;
         *reinterpret_cast<unsigned int *>(bytes + 0x12C) = 0x789ABCDE;
     }
+    if (buffer != &GameDataStateStorage && size == 0xE5E0
+        && live_format_after_legacy_player_transfer >= 0) {
+        GameDataStateStorage.fields_.save_daemon_state_word_ =
+            live_format_after_legacy_player_transfer;
+    }
+    if (size == 0x130 && live_format_after_base_transfer >= 0) {
+        GameDataStateStorage.fields_.save_daemon_state_word_ =
+            live_format_after_base_transfer;
+    }
     return 1;
 }
 int __cdecl game_data_plain_transfer(FILE *file, void *buffer,
@@ -495,6 +520,9 @@ static int veh_game_data_bunglist(FILE *file, int version) {
 
 static void reset_trace() {
     transfer_steps.clear();
+    live_format_transfer_count = 0;
+    live_format_after_legacy_player_transfer = -1;
+    live_format_after_base_transfer = -1;
     plain_transfer_count = 0;
     fail_at_step = -1;
     read_scenario_from_stream = 0;
@@ -516,13 +544,24 @@ static void reset_trace() {
     map_read_calls = 0;
     map_write_calls = 0;
     transfer_header_version = 12;
+    transfer_live_format_state[0] = 12;
+    transfer_live_format_state[1] = 12;
     transfer_header_vehicle_count = 0;
     transfer_header_base_count = 0;
+    legacy_vehicle_proto_id = 7;
 }
 
 static int has_transfer_size(unsigned int size) {
     for (size_t index = 0; index < transfer_steps.size(); ++index)
         if (transfer_steps[index].size == size) return 1;
+    return 0;
+}
+
+static int has_transfer_buffer(const void *buffer, unsigned int size) {
+    for (size_t index = 0; index < transfer_steps.size(); ++index)
+        if (transfer_steps[index].buffer == buffer
+            && transfer_steps[index].size == size)
+            return 1;
     return 0;
 }
 
@@ -960,6 +999,8 @@ int main() {
     assert(transfer_steps[1].size == 0x398);
     assert(transfer_steps[3].buffer == PlayersData);
     assert(transfer_steps[3].size == 0x10660);
+
+    /* GAME_DATA_FORMAT_STATE_SCENARIOS */
 
     fclose(file);
     return 0;
