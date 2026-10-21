@@ -1,0 +1,22 @@
+{
+  "event_id": "634cbf0f2ee807457aac086c661c74a231d197cbfca9bcbbf72a467908cd43d6",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/buffer.cpp"
+    ],
+    "evidence": [
+      "Standing faithful-source recovery and manual review permission; bounded clean-C++ authoring only: Remove only five unused legacy DirectDraw declarations func_surface_lock/func_surface_unlock/SurfaceDescriptorSize/Pitch/Data and their now-empty namespace wrapper. Preserve separate RGNDATA historical evidence. In5DDFB0/5DDDE0 remove only exact-type casts of char arrays, const-char arrays and the char* find_line_break_l result. Keep the required const-discard text_width boundary cast and all reads/calls/unbounded copy/error behavior unchanged.",
+      "Evidence-reviewed proposals are cached under parallel-match-oct21l/game-quality, map-quality and render-quality. Existing SDK/source declarations and complete pinned effects establish equivalence. No type, ABI, owner, signature, marker/symbol/span/claim, historical lesson, storage lifetime/extent or compiler-policy change; do not add a behavior fix or investigate speculative substitutions in this batch.",
+      "One isolated author may edit only the named source file in this multi-owner coordinator batch, using apply_patch; no Git/task/native compiler/preparation/recording. No new tests for dead declarations or exact-type syntax alone. Run existing relevant Buffer actual-source tests as directed; fixture failures must be reported and any test edit needs a separate narrow grant, not weakened expectations.",
+      "Coordinator independently reviews actual diff, runs current-recipe native verification and fresh full application build/link with zero-omission199object equality, full5581census/strict outcomes and claims/mapping/reference continuity, then fresh master reproduction before cleanup. This is a quality improvement, not a new function or promised byte-match gain. Preserve original task baselines and all historical matching obligations; no automatic/linked/runtime/game acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "5a489e66ac9aa85326987b519feb496691a1305f791268379950a04a45475f86",
+  "request_id": "central-clean-cpp-buffer-oct21m",
+  "schema_version": 1,
+  "sequence": 9,
+  "stream": "task:buffer-source-batch-oct19b"
+}
