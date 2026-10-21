@@ -1,0 +1,21 @@
+{
+  "event_id": "7c99293a4351fab91b5e1359f1a6f7b1f866da59a033982e30f99d5c8df06679",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_facility_result_width_oct16.py"
+    ],
+    "evidence": [
+      "Pinned500290 is a distinct bool(int) original callable body. Current complete base_build expands its one-argument inline definition into16calls to the different two-argument predicate; base_maint has the original two direct bitmask shape. Investigate ordinary header declaration plus unchanged one-argument definition after base_build and before base_maint. No alias, forced inlining/retention, flags, return-type change or bug fix.",
+      "Cumulative existing scope already includes all three original identities, base.cpp/base.h, bitmask controls and production/economy historical bridges. Explicitly authorize the remaining facility-width extractor test so it can follow the actual moved definition. Exact-source historical comparisons must reverse only this fully checked transfer, preserving original baselines, all other facts/lessons and outside-group code. Native source writer alone updates body-path fact.",
+      "This is a bounded native-measurement hypothesis, not an accepted correction. Require actual-source host tests, fresh configured compilation/link and caller/collateral/reference/claim observations. Original selected-base read-before-guard and original unsafe behavior remain. Scope or structural discoveries outside this migration return to coordinator."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "a06d6921c37433f2eaca7c11712244f456d347bbe7e0461fdcf16505d8640827",
+  "request_id": "selected-base-facility-source-order-test-scope-oct21y",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:bitmask-owner-oct16"
+}
