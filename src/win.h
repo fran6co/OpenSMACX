@@ -1319,7 +1319,7 @@ class DDInit { public:
 extern DDInit WinDisplayInit;    // 0x009BE618, the object, not a pointer to it
 
 // 0x005EFD00, 27 bytes - refreshes `WinScreenWidth`/`WinScreenHeight` from
-// `GetSystemMetrics`. Defined in win.cpp; it was a forwarder until the body
+// `GetSystemMetrics`. Defined in win_coordinates.cpp; it was a forwarder until the body
 // it already had, byte-exact and owned by no file, was promoted.
 extern "C" int __cdecl DDInitRefreshScreenMetrics();
 

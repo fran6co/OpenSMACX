@@ -1,0 +1,25 @@
+{
+  "event_id": "490a64232ffcdb2a5e5c72bfc4a62b98d73b05f54eeb494f52493f72069bd0e1",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_ddinit_metrics_boundary_oct21.py",
+      "src/win.cpp",
+      "src/win.h",
+      "src/win_coordinates.cpp"
+    ],
+    "evidence": [
+      "Coordinator manually admits reviewed unchanged-body screen-metrics relocation into existingcoordinateowner and one headerlocationcomment update. All source originalidentities/spans/symbols/modes/claims/usefulhistory preserved, with exact native reader/writer roundtrip. Actual init/teardown/destructor/sourceglobals and compiler/linker flags unchanged; no cleanup duplication, safetyfix or originalTU claim. Nativecontrolled replay/unchangedoverlay/damage controls pass. Independent actualsource/test/control/adoption reviews support bounded manual checkpoint under standinguserauthority.",
+      "Fresh actual full185TU/199object application buildlink and114host/source/pinnedcontrols pass with zerofailures/skips. Nativeclaim/mapping/referencechecks pass,3452claims and originalhistoricalrequirementsretained. Complete5581identitycensus improves3355to3357maskedexact: globalcleanup635450 formerlyunresolved becomes38/38 and teardown635750formerlymismatch becomes38/38; no priorpassloss. Strict2796to2797, gain635410constructor, failuresremain3; bothnewmaskedbodiesstilllackfullstrictreferenceproof. Initremainsmismatch. No new function implementation or recordedclaim.",
+      "Native physical refusal is explicitly RETAINED, not weakened: raw197pass/2fail; projection of onlyfoursource-ownedoriginalidentities yields198pass/1fail. Sole remainingWinresidual is ordinary emitted??1DDInitdestructor plus its associateddebugF and helperexternal-symboltransition. This destructor has no separateoriginalmapping, so no fakeentity, newclaim or omission supplied. Its source still delegatesunchangedteardown; actualnativebodyreview and existingmutantlifecyclecontrols support preserved cleanuporder/calls after the legitimatehelperboundarychange. Coordinator authorizes that related effect for MANUAL integration only. Native automaticpreservation remainsfailed; full linkedretainedselection/allocation/provider/structure/runtime/game and autonomousacceptance remainunproven.",
+      "Historicaltaskbaseline stays e52374fb32e2eebd235d8779379dce2b1db042dd. No taskreset/demotion/frameworkchange/gatewaiver. Fresh destinationbuildlink,114tests, wholecensus/strictresult and199objectcandidate-to-masterzeroomissionreproduction required before consumedworkerremoval. Preserve partial or failedintegration and all evidence; do not reset source or replay acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "100ac8c0b8a47243bb4c974535ddc5bf740275c8e53f092c10f7a33e90168a7b",
+  "request_id": "central-manual-ddinit-metrics-admission-oct21h",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:ddinit-global-lifetime"
+}
