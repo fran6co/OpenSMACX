@@ -514,6 +514,10 @@ int VehLiftY;  // 0x009B2284
 BOOL VehBitError;  // 0x009B228C
 int VehMoraleModifierCount; // only used by say_morale(), optimize to local var?
 // Battle related globals
+// Structural evidence superseding the unresolved object-binding note below:
+// defense_value stores the terrain string pointer here, and battle_compute
+// reads the same pointer for the battle display.
+// RECOVERY_OBJECT: v1 0x0090F550 ?VehBattleDisplayTerrain@@3PADA
 LPSTR VehBattleDisplayTerrain;
 
 // ===== MANAGED GLOBALS - the veh.h tables, homed here =====
@@ -547,6 +551,9 @@ RulesOrder Order[MaxOrderNum];  // 0x0096C878
 LPSTR PlansShortName[MaxPlanNum];  // 0x00945FE0
 LPSTR PlansFullName[MaxPlanNum];  // 0x00952360
 LPSTR Triad[MaxTriadNum];  // 0x0094F1A8
+// get_basic_offense/get_basic_defense write the two side values; battle_report
+// reads the selected value at 0x004227DC.
+// RECOVERY_OBJECT: v1 0x00912420 ?VehBasicBattleMorale@@3PAIA
 uint32_t VehBasicBattleMorale[2];  // 0x00912420
 // Original battle_init at 0x00501D32 clears the start; add_bat at 0x00501D5D/0x00501D70 indexes counters; no bounds claim.
 // RECOVERY_OBJECT: v1 0x00915614 ?VehBattleModCount@@3PAIA
@@ -554,7 +561,11 @@ uint32_t VehBattleModCount[2];  // 0x00915614
 // Original battle_init/planet_busting write 0x0091561C; kill and alt_set read it.
 // RECOVERY_OBJECT: v1 0x0091561C ?VehBattleUnkTgl@@3HA
 BOOL VehBattleUnkTgl;  // 0x0091561C
+// add_bat/battle_compute write indexed modifiers; battle_report reads them.
+// RECOVERY_OBJECT: v1 0x009155F0 ?VehBattleModifier@@3PAHA
 int VehBattleModifier[8];  // 0x009155F0
+// add_bat/battle_compute fill rows consumed by battle_report.
+// RECOVERY_OBJECT: v1 0x0090F554 ?VehBattleDisplay@@3PAY0FA@DA
 char VehBattleDisplay[8][80];  // 0x0090F554
 
 // boom temporarily suppresses one vehicle while redrawing the affected tile,
