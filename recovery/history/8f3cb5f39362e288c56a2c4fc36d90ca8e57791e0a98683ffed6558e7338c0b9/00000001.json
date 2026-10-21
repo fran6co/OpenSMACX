@@ -1,0 +1,45 @@
+{
+  "event_id": "a27236cfc6f63508f158b8e46db21910fc64e00768fe08576594047210f3ad91",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/win.cpp",
+      "src/win.h",
+      "src/win_coordinates.cpp"
+    ],
+    "evidence": [
+      "PRIVATE FINITE DIAGNOSTIC, not source publication: independently reviewed screen-metrics boundary proposal in parallel-match-oct21h/ddinit-boundary. Move the complete unchanged mapped DDInitRefreshScreenMetrics definition from Win.cpp into existing built Win coordinate owner, with exact native record/history/body continuity. Original observed direct calls6354C3/6355D0/6357BA target5EFD00. Preserve destructor delegation, all methods/fields/globals/initialization registration, all compiler/linker options and task baseline. This is coherent semantic grouping, not proof of original translation-unit filename.",
+      "The source overlay may also update ONLY the win.h documentation sentence Defined in win.cpp to Defined in win_coordinates.cpp; declaration/type/linkage remain byte-for-byte. That closes independent review stale-location finding, not an ABI/header-policy change. No cleanup duplication, flags/pragmas, body rewriting, layout/extent guesses, source claim demotion or recording.",
+      "Use fresh current actual application command recipes with exclusive provisioned native compiler lease. Require both actual-command replays matching retained199object master build, unchanged multi-file overlay controls and successful wrong-body controls for the metrics helper and teardown caller. Capture source/tool/environment snapshots only inside the selected lease. Parse exact identity/history union and expose every mapped verdict and unmasked code/data/initializer residual in both participating objects, including635410/635450/generated exit dispatch. Stop after one candidate overlay; do not select options by score.",
+      "This diagnostic grants no production source adoption. Positive results require explicit reviewed native source migration, isolated source checkout, actual full application build/link, complete census/reference/claim continuity, physical complement accounting, source/lifecycle controls and fresh master reproduction before cleanup. Missing linked retained-selection/allocation/provider/structure/runtime or game proofs remain missing. Earlier blanket Ob1 and get-key-boundary controls do not establish acceptance of this candidate."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6225152,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6509648,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6509840,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6510416,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "central-private-ddinit-metrics-boundary-oct21h",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:ddinit-global-lifetime"
+}
