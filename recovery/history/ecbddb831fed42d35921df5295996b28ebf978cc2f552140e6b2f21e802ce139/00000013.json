@@ -1,0 +1,23 @@
+{
+  "event_id": "d33ac07d9f8d47bb836dff9143cc1fb442a3ebadc772332b1625583c41f2dfe4",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/fixtures/texture_span_prefetch_owner_oct10.cpp",
+      "recovery/tests/test_texture_span_prefetch_owner_oct10.py",
+      "recovery/tests/test_texture_vertices.py"
+    ],
+    "evidence": [
+      "Fresh actual native full application build/link and 199 physical object qualification pass; whole5581 census3358masked/2798strict unchanged, all mapped TU verdicts unchanged and outside3body native physical overlay pass. Broader133host tests expose8existing-harness failures, not C++ compile/link failures: one old alternate-local mutation anchor and seven isolated row-kernel missing-global/redecl contexts. Retain original failed report in ignored texture-candidate/host-tests.xml.",
+      "Authorize only the named existing host test/fixture adaptations to supply the actual scratch494 context and update the old color-high-byte negative mutation at the new entry store. Preserve all pixel/prefetch/fault-order expectations and compile-success mutation sensitivity, with explicit setup of global bytes from isolated kernel parameters where appropriate. No skip, dropped control, weakened assertion, production helper or source/C++ change. Original source body and compiler snapshots remain exactly those qualified by prior native build.",
+      "Independent review also found560 entry-store omission blind spot: coordinator already seeded scratch6 before threshold4 and added compile-success store-omission mutant after fullbuild terminal. Rerun all affected host tests and supersede cached test hashes explicitly; native C++ hashes/input receipts unchanged. This test repair is not byte matching, recorded claim or acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "5d9c418b5b98df12911f5be29b291d6a4c145c6bde9facba20c628b5d70efaec",
+  "request_id": "central-texture-preserve-host-prefetch-controls-oct21j",
+  "schema_version": 1,
+  "sequence": 13,
+  "stream": "task:texture-rasterizer-recovery"
+}
