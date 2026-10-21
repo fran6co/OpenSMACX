@@ -1,0 +1,23 @@
+{
+  "event_id": "2acb3be9a458bd7db4782f789b7af306db7f89c665db5f88d8bb920c5a7be2c0",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_media_state_observations_oct20z.py",
+      "src/movie_media.cpp"
+    ],
+    "evidence": [
+      "Standing faithful-source/manual integration permission. Authorize only selected stop helper5CB660 branch-local observed-state condition variant, measured39/39 instructions exact under unchanged productionrecipe, with fullTU existingverdicts unchanged and selected-body compiledcomplementPASS. Preserve saved protocol gate captured before InterlockedExchange state4 request, null-runtime defaultgate0/state5 wait, gate1/state6 wait, every Sleep10 state reread and return0. No timeout, bugfix, state/member/SDK/ABI/flag or volatile declaration changes.",
+      "Explicit correction to previous task wording: original tests the SAVED gate after exchange before reading the first polled state. Native pinned39instruction body and captured actualCOFF independently expose current common initialstate sample before gate test. Move observations into each selected branch, not before selection. Existing const volatile LONG reference remains a demonstrated shared-state observation, not arbitrary volatileforcing or a new synchronization guarantee. Both finitebranchlocalforms measuredexact; choose simpler directobserved whileconditions.",
+      "Preserve original task baselinecd036e813ede724af4e71595496d37b7073aea9d and all identities/spans/claims/lessons. Existing actualsource stop/readiness/pinned state tests and compile-success mutants must remain intact; update only tests structurally dependent on removed redundantstate temporary and strengthen gate-snapshot/polling/order witnesses. No hidden new atomicity/FP/timing assumption. Native record alone banks new measuredhistoricalclaim.",
+      "Coordinator alone owns Git/compiler/preparation/record/integration. Require independent full original/source/hostcontrols review, fresh full build/link, source/claim/reference checks, whole5581census/strict,199compiledcomplements scopedonlyselectedbody and destination rechecks. Sourceowner recovery, not extra functioncoverage, whole-game/runtime/thread-safety/full-linked/autonomous acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "central-media-stop-original-branch-polling-oct21p",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:matching-media-stop-oct20aa"
+}
