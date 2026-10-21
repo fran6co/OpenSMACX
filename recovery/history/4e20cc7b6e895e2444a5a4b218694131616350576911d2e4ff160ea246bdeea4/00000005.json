@@ -1,0 +1,23 @@
+{
+  "event_id": "6d97e0b1583bcb6e4e9746160feb995d42c6989e2f34a4e1c761cd9932d91886",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/win.cpp",
+      "src/win_coordinates.cpp"
+    ],
+    "evidence": [
+      "Coordinator-reviewed source-owned native import metadata only: Win get_mouse_pos calls USER32 GetCursorPos via unique original IAT669284; window_line_raw calls GDI32 CreatePenIndirect via unique original IAT66904C. Only matching RECOVERY_IMPORT comments added in actual source owners; no original-address C++, system implementation, declaration/body/ABI/flags change or historicalclaim edit.",
+      "Independent full pinned ordinary PE imports/current actual COFF relocation review confirms exact SDK identities. Fresh185TU199object full applicationbuild/link passes. All199physicalcompiledobjects preserved with zero omitted bodies or sections. Native claims/mappings/references pass;62native import tests pass; wrongknownexport mutation for eachselectedimport FAILS strict comparator and duplicateimport control refuses. No gate weakened.",
+      "Whole5581knownidentity masked outcomes unchanged at3360exact. Strict two existing rows5EC8A0 and5F2AC0 UNKNOWN toPASS; every other result/refusal unchanged:2803pass554unknown3fail. Historical3454claims3463requirements0missing retained. Preserve original owner task baseline c63a9c1f547fd4c2bb94aa8ee6777bdd9b1aa75d.",
+      "Manual reference-recovery checkpoint, not two new function implementations, new byteclaims, exhaustive callable inventory, system-provider equivalence, complete linkedselection/allocation/structure/runtime/game/autonomous acceptance. Fresh destination build/census/strict and199zero-omission candidate reproduction required before cleanup."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "6795859b6892119ad5dfa64e2df6e3d390f3e3edb722e945d299327312172929",
+  "request_id": "central-manual-win-import-binding-admission-oct21o",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:owner-win-body-recovery-oct20ao"
+}

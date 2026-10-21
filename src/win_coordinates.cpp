@@ -18,6 +18,8 @@
 #include "stdafx.h"
 #include "win.h"
 
+// RECOVERY_IMPORT: v1 __imp__GetCursorPos@4 USER32.dll name:GetCursorPos
+
 /*
 Purpose: Refresh the cached screen metrics from the system.
 // ORIGINAL: 0x005EFD00 sub_5efd00 0x005EFD00-0x005EFD1B BYTE_EXACT

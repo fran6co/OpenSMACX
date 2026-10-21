@@ -46,6 +46,7 @@
 // Original window/palette/drawing calls use named SDK exports; PE imports supply unique IAT slots.
 // RECOVERY_IMPORT: v1 __imp__DestroyWindow@4 USER32.dll name:DestroyWindow
 // RECOVERY_IMPORT: v1 __imp__LineTo@12 GDI32.dll name:LineTo
+// RECOVERY_IMPORT: v1 __imp__CreatePenIndirect@4 GDI32.dll name:CreatePenIndirect
 // RECOVERY_IMPORT: v1 __imp__MoveToEx@16 GDI32.dll name:MoveToEx
 // RECOVERY_IMPORT: v1 __imp__RealizePalette@4 GDI32.dll name:RealizePalette
 // RECOVERY_IMPORT: v1 __imp__SelectPalette@12 GDI32.dll name:SelectPalette
