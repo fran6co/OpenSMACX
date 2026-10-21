@@ -1,0 +1,27 @@
+{
+  "event_id": "5cb2d69916d6f12094d7d91f8d4cc7df203e15acc433b9993d68fe57c1aabea3",
+  "payload": {
+    "affects": [
+      "entity-394ad3b30849977175e8ec8753bc6e2c0cd51b9d06028033e3047a4afdadc6e9",
+      "entity-5607535bc3031387a15e4a3919bfcfce81ebbb571a59ccc31006713936c1938d",
+      "entity-6481757b38d2526dcc7682c680b339a2b930d88ca3c429c0b067369d19f7ec86",
+      "entity-b60e515481664873d2e75e15d9613300caf913faeaab76bb50efff7abf4ba837",
+      "entity-f398f737dfbd612fb2dc33e8dcb5aea2413ab63cd019e2f39d3fe25762c02d0c"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "datalink-help-ordinary-api-restored-calls-remaining-topology-oct21w",
+    "evidence": [
+      "Fiveactualproductionrecipe replay/unchanged and compiledargument-damagecontrolsPASS. Unchangedhelp_topicbodyremains10/10exact; original23bytewrapperpushesindex/topic, usesrealDatalinkMain703EA0andcallsDatalinkexec429180. TwoactualsourceGCC/Clangcaseswith8compile-successmutantsPASS; relatedselectionqueue/typedbasecontrolsPASS. Current8callbackfixturefailuresreproduceonbaseline, unrelatedunchangedvoid*/char*signaturefixtureissue; notwaivedasgreen.",
+      "Candidate mappedcallerfocus has24namedhelp_topicE8calls: base1,basewin3,console14,faction6; actualfullcode-sectionrelocationreportalsoenumeratesprivatehelpercallswithoutinventingOriginalidentity. Pinnedoriginal27edgesacross9ownersandcurrentsource26expressionsareNOTa1:1bijection. BaseWinfacilities_click/productioncallcounts1/2versuspinned2/3needdataflow/factoringrestoration; tech_tradeoriginalparentisREFUSEDanditsnewcalllivesinprivateextractedhelper. Recordremainingtopology, donotclaimall27restored or missingbehaviorwithoutproof.",
+      "AllfiveTUverdictsetsunchanged; noextraexactfunctionorhistoricalclaimgrant/demotion. OrdinarysourceAPIownershipreducesoverbroadheaderbodyvisibilitywithoutnewwrapper/flags/algorithm/layoutchanges. Existingmixed-inlineobservationretainedashistoricalunverifiedwarning. Otherhelp-familybodiesuntouchedbecausenopositivebulkcallerclosure; nofakeworktoincreasecounts.",
+      "Preservethisreviewedsource/testcheckpointbeforefreshfullheaderclosurebuild/link/sourceclaims/references/physicalresidualandindependentreview. Notadmittedormerged; noautomatic/wholelinked/runtime/gameacceptance. Originaltaskbaseline343ceab037cf0d2ebbb125f70e110eec8192e5a2 retained."
+    ],
+    "hypothesis": "Ordinary help_topic definition restores original API calls but current BaseWin call factoring and extracted tech_trade helper ownership still need original-site correspondence; preserve them as explicit restoration obligations.",
+    "kind": "discovery"
+  },
+  "previous_event": "be7013f81b2f91b887820366e88a8d81520d815c502440d2e36c3c096f81b10b",
+  "request_id": "datalink-help-ordinary-api-restored-calls-remaining-topology-oct21w",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:owner-datalink-faithful-recovery-oct20y"
+}

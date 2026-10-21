@@ -1758,7 +1758,7 @@ Purpose: Show an arbitrary help topic/index pair, for callers that already
          hold the topic id rather than going through one of the typed
          help_* wrappers above.
 // ORIGINAL: 0x0044CB60 ?help_topic@@YAXIH@Z 0x0044CB60-0x0044CB77 BYTE_EXACT
-// body      src/datalink.h
+// body      src/datalink.cpp
 // size      23 bytes
 // prototype void (__cdecl ?help_topic@@YAXIH@Z)(DatalinkID id, int entryID)
 // callers   9   call targets   1
@@ -1768,10 +1768,13 @@ Purpose: Show an arbitrary help topic/index pair, for callers that already
 Return Value: n/a
 Status: Complete
 */
-// BODY IN datalink.h, as `MEASURED inline`: the image writes it out at
-// some call sites and calls it at others, and a .cpp definition is only ever
-// one of those. The marker stays here because that is where the catalogue
-// reads it.
+// HISTORICAL: this body was in datalink.h as `MEASURED inline`. The earlier
+// mixed inline/call-site observation remains unverified; this ordinary
+// definition is a bounded visibility experiment, not proof of original TU
+// placement or of every original inline site.
+void __cdecl help_topic(unsigned int topic, int index) {
+    DatalinkMain.exec(topic, index);
+}
 
 
 /*
