@@ -1,0 +1,22 @@
+{
+  "event_id": "721a4a60f80f94e8bcf3bad0314c8e77b2075ff98792eb72c33646a78438fd32",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/jackal/palette.cpp"
+    ],
+    "evidence": [
+      "Comment-only correction: original partial copy, seed and returned receiver are supported, but the prior claim that both callers destroy the destination before copying is false. Keep the semantic copy_from API, body, symbol, Original mapping, claims and TRIED history. The original method/operator name remains unproved.",
+      "Coordinator-reviewed manual admission under standing user authority. The fresh combined Release application builds and links: 185 C++ TUs, 199 physical objects, unchanged parent compiler flags, types, interfaces and storage. All 60 host tests pass without failures or skips, including the pinned-image SHA/separator witness, actual 21-receiver walk, both actual zoom/wait_2 definitions, input routers and all six vehicle formatter definitions. All 3,452 claims and 3,461 historical requirements remain, with zero missing; native claim, mapping and source-reference checks pass. Masked matches increase from 3,351 to 3,355, exactly four reviewed gains and no previous exact or strict status losses. Strict results are 2,780 pass, 572 unknown, three fail; all four new matches remain unknown. No new original implementation coverage or historical claims. Whole-project, automatic and game acceptance are not claimed.",
+      "Physical accounting: 196 of 197 old objects pass the native complement check. The vehicle residual remains FAIL, not waived or relabelled. Its 18 changed sections are exhaustively classified: 13 literal-provider transfers with identical bytes, flags, alignment and relocations, plus five unchanged-code/named-target definition-to-external transitions. The two explicitly scoped retained mapped bodies, goody_box and order_veh, have bounded independent-load ordering changes reviewed against original targets. The two new TUs contain eight moved functions, 37 unchanged header definitions and 19 exact old literal providers (13 transferred, six duplicated), with no unassigned startup, data or code. Public definition-value versus external-zero differences are checked separately against unchanged retained provider sections, not mistaken for operand addends. Full linked retention, allocation, provider, structure, runtime and game proof remain unknown.",
+      "Independent bounded source, test and physical reviews are cached under parallel-match-oct21f. The broader six-formatter proposal, failed first include attempt, Text retained-copy finding and negative investigations remain preserved as ignored evidence; native task baselines are unchanged. Source owns original mappings and durable structural facts; the journal records selection and review. No framework/library code changed. Require fresh destination build, host tests and census, plus zero-omission reproduction of all 199 objects, before removing consumed worktrees."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "229161fa7ec59f7804edde03ba6c1c1eb2d337d1ebd3c82c124de9a4179ef709",
+  "request_id": "central-faithful-owner-manual-admission-oct21f-palette-source-batch-oct19c",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:palette-source-batch-oct19c"
+}

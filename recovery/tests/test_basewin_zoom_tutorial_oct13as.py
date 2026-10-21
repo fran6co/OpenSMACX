@@ -21,6 +21,7 @@ ROOT = next(parent for parent in Path(__file__).resolve().parents
             if (parent / "src/basewin.cpp").is_file())
 SOURCE = ROOT / "src/basewin.cpp"
 INSERTION = "/* ACTUAL_BASEWIN_ZOOM */"
+WAIT_INSERTION = "/* ACTUAL_WAIT_2 */"
 
 
 def _definition(source: str, signature: str) -> str:
@@ -45,6 +46,7 @@ HARNESS = r'''#include <cassert>
 #include <cstring>
 #include <string>
 #include <vector>
+#define __cdecl
 
 struct RECT { int left, top, right, bottom; };
 static const uint32_t BSTATE_UNK_10 = 0x10;
@@ -234,6 +236,7 @@ static void base_compute(int arg) {
     if (mutate_radius) ++Bases[BaseIDCurrentSelected].resource_sqr_radius;
 }
 
+/* ACTUAL_WAIT_2 */
 /* ACTUAL_BASEWIN_ZOOM */
 
 static void reset_case() {
@@ -541,20 +544,23 @@ int main() { run_all_controls(); return 0; }
 '''
 
 
-def _translation_unit(source: str) -> str:
+def _translation_unit(source: str, wait_source: str) -> str:
     assert HARNESS.count(INSERTION) == 1
+    assert HARNESS.count(WAIT_INSERTION) == 1
     body = _definition(source, "void BaseWin::zoom(int base_id, int wait)")
-    return HARNESS.replace(INSERTION, body, 1)
+    wait_body = _definition(wait_source, "void __cdecl wait_2()")
+    return HARNESS.replace(WAIT_INSERTION, wait_body, 1).replace(
+        INSERTION, body, 1)
 
 
-def _compile_and_run(source: str, compiler_name: str, tmp_path: Path,
-                     stem: str) -> subprocess.CompletedProcess[str]:
+def _compile_and_run(source: str, wait_source: str, compiler_name: str,
+                     tmp_path: Path, stem: str) -> subprocess.CompletedProcess[str]:
     compiler = shutil.which(compiler_name)
     if compiler is None:
         pytest.skip(f"{compiler_name} unavailable")
     cpp = tmp_path / f"{stem}.cpp"
     executable = tmp_path / stem
-    cpp.write_text(_translation_unit(source), encoding="utf-8")
+    cpp.write_text(_translation_unit(source, wait_source), encoding="utf-8")
     built = subprocess.run(
         [compiler, "-std=c++11", "-Wall", "-Wextra", "-Werror",
          str(cpp), "-o", str(executable)],
@@ -569,7 +575,8 @@ def _compile_and_run(source: str, compiler_name: str, tmp_path: Path,
 def test_actual_zoom_tutorial_branches_and_rejoin(compiler_name: str,
                                                    tmp_path: Path) -> None:
     source = SOURCE.read_text(encoding="utf-8")
-    result = _compile_and_run(source, compiler_name, tmp_path,
+    wait_source = (ROOT / "src/netdaemon.cpp").read_text(encoding="utf-8")
+    result = _compile_and_run(source, wait_source, compiler_name, tmp_path,
                               "basewin_zoom_tutorial_actual")
     assert result.returncode == 0, result.stdout + result.stderr
 
@@ -598,8 +605,23 @@ def test_actual_zoom_mutants_are_observable(compiler_name: str, name: str,
                                             old: str, new: str,
                                             tmp_path: Path) -> None:
     source = SOURCE.read_text(encoding="utf-8")
+    wait_source = (ROOT / "src/netdaemon.cpp").read_text(encoding="utf-8")
     assert source.count(old) == 1, (name, source.count(old))
     mutant = source.replace(old, new, 1)
-    result = _compile_and_run(mutant, compiler_name, tmp_path,
+    result = _compile_and_run(mutant, wait_source, compiler_name, tmp_path,
                               f"basewin_zoom_{name}")
     assert result.returncode != 0, f"{name} mutant escaped actual-body controls"
+
+
+@pytest.mark.parametrize("compiler_name", ("g++", "clang++"))
+def test_actual_wait_2_route_mutant_is_observable(compiler_name: str,
+                                                  tmp_path: Path) -> None:
+    source = SOURCE.read_text(encoding="utf-8")
+    wait_source = (ROOT / "src/netdaemon.cpp").read_text(encoding="utf-8")
+    old = "        NetDaemonNet.net_tasks();"
+    new = "        wait_task();"
+    assert wait_source.count(old) == 1
+    mutant = wait_source.replace(old, new, 1)
+    result = _compile_and_run(source, mutant, compiler_name, tmp_path,
+                              "basewin_zoom_wrong_wait_2_route")
+    assert result.returncode != 0, "wait_2 route mutant escaped actual-body controls"

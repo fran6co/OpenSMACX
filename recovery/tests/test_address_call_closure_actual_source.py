@@ -26,17 +26,17 @@ def test_designwin_uses_typed_source_owned_stats_formatter():
     source = (ROOT / "src/designwin.cpp").read_text()
     veh_header = (ROOT / "src/veh.h").read_text()
     veh_source = (ROOT / "src/veh.cpp").read_text()
+    stats_source = (ROOT / "src/vehicle_stats.cpp").read_text()
     assert "void __cdecl say_stats_3(LPSTR stat, int proto_id);" in veh_header
-    assert "void __cdecl say_stats_3(LPSTR stat, int proto_id) {" in veh_source
+    assert "void __cdecl say_stats_3(LPSTR stat, int proto_id) {" not in veh_source
+    assert "void __cdecl say_stats_3(LPSTR stat, int proto_id) {" in stats_source
 
     draw_stack = _function_body(source, "void DesignWin::draw_stack()")
     draw_flash = _function_body(source, "void DesignWin::draw_flash()")
-    assert re.search(
-        r"say_stats_3\(StringTemp,\s*\*reinterpret_cast<const short \*>\(\s*"
-        r"ProtoAbilityIdBase\s*\+\s*unit_id\s*\*\s*0x34\s*\)\);",
-        draw_stack,
-    )
-    assert "say_stats_3(StringTemp, ability_id);" in draw_flash
+    assert "say_stats_3(StringTemp, Vehs[unit_id].proto_id);" in draw_stack
+    assert "ProtoAbilityIdBase" not in draw_stack
+    assert "int prototype_id = Vehs[shown].proto_id;" in draw_flash
+    assert "say_stats_3(StringTemp, prototype_id);" in draw_flash
     assert "0x0057D7D0" not in draw_stack
     assert "0x0057D7D0" not in draw_flash
     assert "say_stats_3_seam" not in draw_stack + draw_flash

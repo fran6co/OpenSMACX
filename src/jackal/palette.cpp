@@ -2022,17 +2022,14 @@ void Palette::stop_animation(int key) {
 
 // ORIGINAL: 0x005FE2F0 ?__as@Palette@@QAEHQAUPalette@@@Z 0x005FE2F0-0x005FE32F FILE BYTE_EXACT
 // symbol    ?copy_from@Palette@@QAEAAV1@PAV1@@Z
-// CORRECTED from operator= (and before that the census's `__as`): three
-//   pieces of evidence, none of them a name. Both image callers
-//   (0x00451A10, 0x00491400) run ??1Palette - the DESTRUCTOR - immediately
-//   before this body: destroy-then-refill is a reset idiom, and no
-//   assignment operator is preceded by its assignee's destructor. The copy
-//   is PARTIAL - entries_ only, the five animation slots untouched - and it
-//   rerolls seed_, the change-stamp fade_to_entry compares against
-//   PaletteSeedCache: "become a copy, marked dirty" is a method, not
-//   operator=. And the census names 119 real ??0 constructors yet zero ??4
-//   anywhere - `__as` was an analyzer's tag for "assignment-like", never
-//   evidence of the operator.
+// copy_from is a semantic name; the original method/operator spelling is
+//   unproved. The image copies only entries_ (0x400 bytes), leaves the five
+//   animation slots untouched, rerolls seed_ and returns the receiver.
+//   These effects alone do not distinguish a method from operator=.
+//   Neither caller destroys the destination immediately beforehand:
+//   load_palette copies at 0x00451A9C and cleans up its local Palette later
+//   at 0x00451C10; PrefWin copies at 0x00491466. The old destroy-then-refill
+//   naming rationale was unsupported; the analyzer's __as tag is not proof.
 // size      63 bytes
 // prototype int (__thiscall ?__as@Palette@@QAEHQAUPalette@@@Z)(Palette* this, Palette*)
 // callers   2   call targets   2

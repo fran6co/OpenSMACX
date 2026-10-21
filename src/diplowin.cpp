@@ -1877,8 +1877,9 @@ void DiploWin::on_left_click(int a1, int a2) {
 }
 
 /*
-Purpose: Clear the hot-seat chat log: walk the eight 0x30-byte records at
-         0x00737CE0, and for each live one walk its entry chain - freeing
+Purpose: Clear the hot-seat chat log: walk all 64 0x30-byte records (eight
+         groups of eight), whose first head is at 0x00737CE0, and for each
+         live one walk its entry chain - freeing
          every node through the owning object's vtable-adjusted release
          slot and each node's own scalar-deleting slot - then clear the
          record's head, count and trailing words.

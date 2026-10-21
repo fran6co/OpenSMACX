@@ -1,13 +1,14 @@
 """Actual-body controls for pinned say_stats separator and name branches.
 
-The full owner is extracted from current src/veh.cpp. Host-only pointer-to-int
-casts are explicitly narrowed through intptr_t; lookup compares the narrowed
-addresses of fixture strings and never dereferences a key. These bounded
-controls test sea, air, and transport formatting, not all owner branches or
-native ABI. An optional pinned-image witness skips when the image is absent.
+The formatter is extracted from its current vehicle_stats.cpp owner. The
+host fake StringTable models the production pointer-taking API. These bounded
+controls test sea, air, and transport formatting, not native ABI. An optional
+pinned-image witness skips when the image is absent.
 """
 
 from pathlib import Path
+import hashlib
+import os
 import shutil
 import re
 import subprocess
@@ -17,7 +18,7 @@ from match_recovery.includes import COMMENTS_OR_STRINGS
 
 
 ROOT = Path(__file__).resolve().parents[2]
-SOURCE = ROOT / "src" / "veh.cpp"
+SOURCE = ROOT / "src" / "vehicle_stats.cpp"
 SIGNATURE = "void __cdecl say_stats(LPSTR stat, int proto_id, LPSTR custom_spacer)"
 
 
@@ -38,21 +39,6 @@ def extract_function(source: str, signature: str) -> str:
 
 def actual_body() -> str:
     body = extract_function(SOURCE.read_text(encoding="utf-8"), SIGNATURE)
-    # 32-bit Windows accepts these C-style pointer-to-int casts. Narrow through
-    # intptr_t solely for the 64-bit host fixture; fake keys stay low and are
-    # never dereferenced. Keep this compatibility rewrite explicit.
-    replacements = {
-        "(int)PlansFullName[3]": "static_cast<int>(reinterpret_cast<intptr_t>(PlansFullName[3]))",
-        "(int)*((LPSTR *)Labels.strings_ptr + 312)": "static_cast<int>(reinterpret_cast<intptr_t>(*((LPSTR *)Labels.strings_ptr + 312)))",
-        "(int)*((LPSTR *)Labels.strings_ptr + 196)": "static_cast<int>(reinterpret_cast<intptr_t>(*((LPSTR *)Labels.strings_ptr + 196)))",
-        "(int)PlansShortName[plan]": "static_cast<int>(reinterpret_cast<intptr_t>(PlansShortName[plan]))",
-        "int(PlansShortName[mode])": "static_cast<int>(reinterpret_cast<intptr_t>(PlansShortName[mode]))",
-        "(int)*((LPSTR *)Labels.strings_ptr + 163)": "static_cast<int>(reinterpret_cast<intptr_t>(*((LPSTR *)Labels.strings_ptr + 163)))",
-        "(int)*((LPSTR *)Labels.strings_ptr + 162)": "static_cast<int>(reinterpret_cast<intptr_t>(*((LPSTR *)Labels.strings_ptr + 162)))",
-        "(int)PlansFullName[mode]": "static_cast<int>(reinterpret_cast<intptr_t>(PlansFullName[mode]))",
-    }
-    for old, new in replacements.items():
-        body = body.replace(old, new)
     return body
 
 
@@ -82,18 +68,10 @@ static LPSTR label_storage[313] = {};
 static char sea_name[] = "Sea";
 static char air_name[] = "Air";
 static char plan_name[] = "Transport";
-static char empty_name[] = "";
-static int key_for(const char *pointer) {
-    return static_cast<int>(reinterpret_cast<intptr_t>(pointer));
-}
 struct FakeStringTable {
-    char *get(int key) {
-        if (key == key_for(plan_name)) return plan_name;
-        if (key == key_for(sea_name)) return sea_name;
-        if (key == key_for(air_name)) return air_name;
-        if (key == key_for(empty_name)) return empty_name;
-        assert(!"unexpected label key");
-        return empty_name;
+    char *get(char *address) {
+        assert(address != 0);
+        return address;
     }
 } StringTable;
 static int get_proto_offense_rating(int) { return 1; }
@@ -185,12 +163,15 @@ def test_missing_separator_space_mutant_compiles_but_fails_output(compiler_name,
 
 
 def test_optional_pinned_image_separator_literals():
-    image_path = ROOT / ".opensmacx/game/terranx_original.exe"
+    image_path = Path(os.environ.get("OPENSMACX_IMAGE", str(ROOT / ".opensmacx/game/terranx_original.exe")))
     if not image_path.exists():
         pytest.skip("pinned executable is absent; host source controls remain independent")
     from match_recovery.pe_coff import PeImage
     from match_recovery.model import Span
     from match_recovery.source_inventory import image_pin
-    image = PeImage(image_path.read_bytes(), image_pin(ROOT))
+    raw = image_path.read_bytes()
+    pin = image_pin(ROOT)
+    assert hashlib.sha256(raw).hexdigest() == pin, "original executable pin mismatch"
+    image = PeImage(raw, pin)
     assert image.read(Span(0x00682E90, 0x00682E93)) == b", \0"
     assert image.read(Span(0x00682820, 0x00682822)) == b" \0"

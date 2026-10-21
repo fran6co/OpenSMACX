@@ -3049,11 +3049,7 @@ void BaseWin::zoom(int base_id, int wait) {
 
     if (wait != 0) {
         while (zoom_wait_pending_ && Win::is_visible() && !ExitTurnLoop) {
-            if (IsMultiplayerNet) {
-                NetDaemonNet.net_tasks();
-            } else {
-                wait_task();
-            }
+            wait_2();
         }
     }
 }

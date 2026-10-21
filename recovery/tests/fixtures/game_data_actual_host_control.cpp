@@ -301,8 +301,12 @@ struct BaseSecretProjectMock { int words[64]; };
 struct BaseSecretProject { unsigned char bytes_[0x100]; };
 /* ACTUAL_GAME_DATA_STATE_HEADER */
 GameDataStateWindow GameDataStateStorage;
-struct NetSaveStorageMock { unsigned char process_slots_[0xCE0]; };
-struct NetDaemonNetMock { NetSaveStorageMock save_storage_; };
+struct NetDaemonSaveProcessSlotMock { unsigned char bytes_[0x19C]; };
+struct NetDaemonNetMock {
+    NetDaemonSaveProcessSlotMock saved_process_slots_[8];
+};
+typedef char NetDaemonSavedProcessSlotsFixtureHasCurrentExtent[
+    sizeof(((NetDaemonNetMock *)0)->saved_process_slots_) == 0xCE0 ? 1 : -1];
 NetDaemonNetMock NetDaemonNet;
 
 struct StringStructPayload { char *text; unsigned int field_8_; unsigned int field_C_; };
@@ -529,7 +533,7 @@ int main() {
     reset_trace();
     GameDataStateStorage.fields_.game_state_ = 0;
     assert(game_data(file, 0) == 0);
-    assert(transfer_steps.size() == 74);
+    assert(transfer_steps.size() == 67);
     assert(transfer_steps[0].size == 0x31C);
     assert(transfer_steps[1].size == 0x398);  // initial v11+ state record
     assert(transfer_steps[2].size == 4);      // plain current faction
@@ -555,16 +559,16 @@ int main() {
     assert(transfer_steps[20].size == 0x100);  // PendingDiplomacyFlags
     assert(transfer_steps[21].size == 0x20);   // faction combat wins
     assert(transfer_steps[22].size == 0x20);   // faction combat losses
-    for (int list_step = 23; list_step < 58; ++list_step)
+    for (int list_step = 23; list_step < 51; ++list_step)
         assert(transfer_steps[list_step].size == 4);
-    assert(transfer_steps[58].buffer == &CouncilWindow.field_A1C_);
-    assert(transfer_steps[62].buffer == CouncilWindow.leader_label_kind_);
-    assert(transfer_steps[63].buffer == CouncilWindow.leader_tech_);
-    assert(transfer_steps[64].buffer == &CouncilPbemGate);
-    assert(transfer_steps[72].size == 4);  // saved screen width local
-    assert(transfer_steps[73].size == 4);  // saved screen height local
+    assert(transfer_steps[51].buffer == &CouncilWindow.field_A1C_);
+    assert(transfer_steps[55].buffer == CouncilWindow.leader_label_kind_);
+    assert(transfer_steps[56].buffer == CouncilWindow.leader_tech_);
+    assert(transfer_steps[57].buffer == &CouncilPbemGate);
+    assert(transfer_steps[65].size == 4);  // saved screen width local
+    assert(transfer_steps[66].size == 4);  // saved screen height local
     assert(GameDataEncryptedMode == 0);
-    assert(plain_transfer_count == 35);
+    assert(plain_transfer_count == 28);
 
     reset_trace();
     PlayersData[1].unk_102 = 0x11223344;
@@ -580,7 +584,7 @@ int main() {
     GameDataStateStorage.fields_.game_state_ = 0;
     GameDataStateStorage.fields_.game_more_preferences_ = 0x20;
     assert(game_data(file, 0) == 0);
-    assert(transfer_steps.size() == 74);
+    assert(transfer_steps.size() == 67);
     for (size_t step = 0; step < transfer_steps.size(); ++step)
         assert(transfer_steps[step].size != 0x2400);
 
@@ -589,7 +593,7 @@ int main() {
     GameDataStateStorage.fields_.game_more_preferences_ = 0;
     GameDataStateStorage.fields_.net_turn_flags_ = 0x20;
     assert(game_data(file, 0) == 0);
-    assert(transfer_steps.size() == 75);
+    assert(transfer_steps.size() == 68);
     assert(transfer_steps[20].size == 0x2400);
     assert(transfer_steps[21].size == 0x100);
     assert(transfer_steps[22].size == 0x20);
@@ -600,8 +604,8 @@ int main() {
     for (int index = 0; index < 6; ++index)
         TimeControl[index].name = reinterpret_cast<char *>(0x1000 + index * 4);
     assert(game_data(file, 0) == 0);
-    assert(transfer_steps.size() == 78);
-    assert(plain_transfer_count == 35);
+    assert(transfer_steps.size() == 71);
+    assert(plain_transfer_count == 28);
     assert(transfer_steps[0].size == 0x31C);
     assert(transfer_steps[1].size == 0x398);
     assert(transfer_steps[2].size == 0x398);  // encrypted duplicate record
@@ -629,7 +633,7 @@ int main() {
     assert(transfer_steps[24].size == 0x100);
     assert(transfer_steps[25].size == 0x20);
     assert(transfer_steps[26].size == 0x20);
-    for (int list_step = 27; list_step < 62; ++list_step)
+    for (int list_step = 27; list_step < 55; ++list_step)
         assert(transfer_steps[list_step].size == 4);
     for (int index = 0; index < 6; ++index)
         assert(TimeControl[index].name ==
@@ -640,7 +644,7 @@ int main() {
     GameDataStateStorage.fields_.vehicle_current_count_ = 2;
     GameDataStateStorage.fields_.base_current_count_ = 3;
     assert(game_data(file, 0) == 0);
-    assert(transfer_steps.size() == 76);
+    assert(transfer_steps.size() == 69);
     assert(transfer_steps[10].size == 0x1000);
     assert(transfer_steps[11].buffer == Vehs);
     assert(transfer_steps[11].size == 2 * 0x34);
@@ -709,7 +713,7 @@ int main() {
     reset_trace();
     transfer_header_version = 3;
     assert(game_data(file, 0) == 0);
-    assert(transfer_steps.size() == 70);
+    assert(transfer_steps.size() == 63);
     assert(transfer_steps[0].size == 0x31C);
     assert(transfer_steps[1].size == 4);       // old-version faction word
     assert(transfer_steps[2].size == 0x105E0); // v3..10 wire array
@@ -758,7 +762,7 @@ int main() {
     VehPrototypes[32].unk_1 = 7;
     VehPrototypes[32].preq_tech = 9;
     assert(game_data(file, 0) == 0);
-    assert(transfer_steps.size() == 79);
+    assert(transfer_steps.size() == 72);
     assert(transfer_steps[0].size == 0x31C);
     assert(transfer_steps[1].size == 4);
     assert(transfer_steps[2].size == 0xE5E0);  // old rows expand in memory

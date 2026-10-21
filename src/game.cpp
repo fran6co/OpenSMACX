@@ -7340,24 +7340,18 @@ int __cdecl game_data(FILE *file, int write_mode) {
             return 1;
     }
 
-    // Native starts at DiplomacyTranscriptLists[1][1] and traverses a
-    // triangular set with one-list outer and two-list inner steps. The stop
-    // address is the [2][0] head field (+8), so these typed array pointers
-    // retain the image's exact 0x30/0x60 progression without raw aliases.
-    StringList *outer = &DiplomacyTranscriptLists[1][1];
-    StringList *const stop = &DiplomacyTranscriptLists[2][0];
-    int inner_count = 1;
-    while (outer < stop) {
-        StringList *const row_begin = outer;
-        StringList *inner = row_begin;
-        for (int pair = 0; pair < inner_count; ++pair) {
+    // 5A8A39/4A begins at [1][1] but skips that equal initial pointer;
+    // 5A8CC3 advances one row (0x180 bytes), and 5A8CDA/DE advances one
+    // column (0x30 bytes) up to [2][0] exclusive. The inner counter is
+    // incremented before its strict comparison, so each column visits rows
+    // 1 through column-1: the 21 off-diagonal lists in columns 2 through 7.
+    for (int column = 2; column < 8; ++column) {
+        for (int row = 1; row < column; ++row) {
             if (game_data_candidate_string_list(
-                    file, *inner, write_mode) != 0)
+                    file, DiplomacyTranscriptLists[row][column],
+                    write_mode) != 0)
                 return 1;
-            inner += 2;
         }
-        outer = row_begin + 1;
-        ++inner_count;
     }
 
     if (game_data_candidate_transfer(

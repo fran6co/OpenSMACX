@@ -1,0 +1,24 @@
+{
+  "event_id": "18797ec20ec85cf3faba6e6030859f7080acad3fbc026f0ceb2ae56e10a220b9",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_win_input_owner_oct21.py",
+      "src/win.cpp",
+      "src/win_input.cpp"
+    ],
+    "evidence": [
+      "Separate three exact input-router source blocks under ordinary Win input responsibility, without claiming an original TU boundary. The native whole-231-record control establishes three exact gains and no retained function changes; complete annotation, history and BODY-region unions remain. Existing public declarations, globals, owners, virtual dispatch and hooks are unchanged.",
+      "Coordinator-reviewed manual admission under standing user authority. The fresh combined Release application builds and links: 185 C++ TUs, 199 physical objects, unchanged parent compiler flags, types, interfaces and storage. All 60 host tests pass without failures or skips, including the pinned-image SHA/separator witness, actual 21-receiver walk, both actual zoom/wait_2 definitions, input routers and all six vehicle formatter definitions. All 3,452 claims and 3,461 historical requirements remain, with zero missing; native claim, mapping and source-reference checks pass. Masked matches increase from 3,351 to 3,355, exactly four reviewed gains and no previous exact or strict status losses. Strict results are 2,780 pass, 572 unknown, three fail; all four new matches remain unknown. No new original implementation coverage or historical claims. Whole-project, automatic and game acceptance are not claimed.",
+      "Physical accounting: 196 of 197 old objects pass the native complement check. The vehicle residual remains FAIL, not waived or relabelled. Its 18 changed sections are exhaustively classified: 13 literal-provider transfers with identical bytes, flags, alignment and relocations, plus five unchanged-code/named-target definition-to-external transitions. The two explicitly scoped retained mapped bodies, goody_box and order_veh, have bounded independent-load ordering changes reviewed against original targets. The two new TUs contain eight moved functions, 37 unchanged header definitions and 19 exact old literal providers (13 transferred, six duplicated), with no unassigned startup, data or code. Public definition-value versus external-zero differences are checked separately against unchanged retained provider sections, not mistaken for operand addends. Full linked retention, allocation, provider, structure, runtime and game proof remain unknown.",
+      "Independent bounded source, test and physical reviews are cached under parallel-match-oct21f. The broader six-formatter proposal, failed first include attempt, Text retained-copy finding and negative investigations remain preserved as ignored evidence; native task baselines are unchanged. Source owns original mappings and durable structural facts; the journal records selection and review. No framework/library code changed. Require fresh destination build, host tests and census, plus zero-omission reproduction of all 199 objects, before removing consumed worktrees."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "2e1d29dbdc0534853b2e975aaa51f25f85c1622b5c5d2543fd475afac6970c74",
+  "request_id": "central-faithful-owner-manual-admission-oct21f-wide-win-source-decks-oct20n",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:wide-win-source-decks-oct20n"
+}
