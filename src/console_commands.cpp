@@ -1259,8 +1259,8 @@ void Console::disband(int veh_id) {
 // ORIGINAL: 0x004D0450 ?skip@Console@@QAEXH@Z 0x004D0450-0x004D0494 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x004D0450-0x004D0494", "source:src/netdaemon.h", "source:src/veh.h", "source:src/game.h", "source:src/console.h"], "reason": "Home the skip order through the typed vehicle-ready predicate, turn guard and NetDaemon order API, and the already named Console skip-state member; remove the seed's receiver/table pointer arithmetic."}
 // The seed's blocked callee at 0x00531780 is now NetDaemon::order_veh; its
-// not_my_turn seed warning remains relevant because that predicate is inline
-// here while the original contains a call at 0x0052DC70.
+// Historical seed warning: the header definition inlined not_my_turn here,
+// unlike the original call at 0x0052DC70. Its ordinary definition is in game.cpp.
 void Console::skip(int veh_id) {
     if (veh_ready(veh_id) != 0 && not_my_turn() == 0) {
         NetDaemonNet.order_veh(veh_id, -1, 0);
