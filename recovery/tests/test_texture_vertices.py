@@ -128,16 +128,19 @@ def scan_harness(declaration, scan):
     return harness.replace(PRELUDE_MARKER, direct_storage_prelude(source), 1)
 
 
-def run_host(tmp_path, source):
+def run_host(tmp_path, source, disable_shift_ubsan=False):
     compiler = shutil.which("g++")
     if compiler is None:
         pytest.skip("host g++ required")
     cpp = tmp_path / "vertices.cpp"
     executable = tmp_path / "vertices"
     cpp.write_text(source)
+    command = [compiler, "-std=c++11", "-O1", "-fsanitize=undefined",
+               "-fno-sanitize-recover=undefined"]
+    if disable_shift_ubsan:
+        command.append("-fno-sanitize=shift")
     compiled = subprocess.run(
-        [compiler, "-std=c++11", "-O1", "-fsanitize=undefined",
-         "-fno-sanitize-recover=undefined", str(cpp), "-o", str(executable)],
+        command + [str(cpp), "-o", str(executable)],
         capture_output=True, text=True, timeout=30)
     assert compiled.returncode == 0, compiled.stderr
     return subprocess.run([str(executable)], capture_output=True, text=True, timeout=10)
@@ -433,9 +436,6 @@ def test_actual_color_key_raster_and_helpers(tmp_path):
     ("draw_trans", "if (y >= clip.top && y < clip.bottom", "if (!done && y >= clip.top && y < clip.bottom"),
     ("draw_trans", "buffer->free_data(1);\n    texture_reset_fpu();",
      "texture_reset_fpu();\n    buffer->free_data(1);"),
-    ("texture_edge", "edge.fracAccum = dx < 0 ? 1 - edge.counter : 0;", "edge.fracAccum = 0;"),
-    ("texture_edge", "index = next;", "return 0;"),
-    ("texture_advance_edge", "if (--edge.counter == 0)", "if (--edge.counter <= 1)"),
     ("texture_span_step", "int reciprocal_shift = 23;", "int reciprocal_shift = 24;"),
     # The unrounded product is at most 55 bits. Keeping all 55 incorrectly gives
     # the multiply the same exactness it would have under PC64.
@@ -473,39 +473,86 @@ def test_lock_callback_state_cannot_be_captured_early(tmp_path, declaration):
 
 def packed_bodies():
     actual = raster_bodies()
+    source = (ROOT / "src/texture.cpp").read_text()
     actual["draw_trans"] = braced(
-        (ROOT / "src/texture.cpp").read_text(),
+        source,
         "void Texture::draw_trans(Buffer *buffer, Vert *vertices, int count, Vert *uv) {")
+    actual["setup_edge"] = braced(
+        source, "int __cdecl Texture::setup_edge(EdgeScan *a1, int a2) {")
     return actual
 
 
-def packed_harness(methods, observe_initial=True):
+def packed_harness(methods, observe_initial=True, observe_rollover_state=False):
     methods = dict(methods)
-    # Observe initial calls while delegating every calculation to the actual
-    # helper. The macro is scoped to the unchanged draw body only; the already
-    # defined advance helper retains its direct actual edge-helper calls.
+    # Observe the mapped setup_edge calls, checking shared inputs before
+    # delegating to the extracted product definition.
     if observe_initial:
+        assert methods["draw_trans"].count("Texture::setup_edge(") == 4
+        methods["draw_trans"] = methods["draw_trans"].replace(
+            "Texture::setup_edge(", "observe_setup_edge(")
         methods["draw_trans"] = r'''
-        int initial_edge_calls;
-        template<class Coordinates>
-        int observe_initial_edge(EdgeScan &edge, int index, const Vert *vertices,
-                                 const Coordinates *uv, int count, int bottom) {
-            require(events == std::vector<int>({1,2,3}));
-            ++initial_edge_calls;
-            require(initial_edge_calls <= 2);
-            require(edge.f0 == (initial_edge_calls == 1 ? -1 : 1));
-            return texture_edge(edge, index, vertices, uv, count, bottom);
+        static int initial_edge_calls, setup_edge_calls;
+        static int expected_count, expected_top, expected_max;
+        static uint32_t expected_clip_top, expected_clip_bottom;
+        static bool check_first_rollover_state;
+        static const Vert *expected_screen, *expected_uv;
+        static int observe_setup_edge(EdgeScan *edge, int index) {
+            require(TextureRasterVertexCount == expected_count);
+            require(TextureRasterEdgeVerticesB == expected_screen);
+            require(TextureRasterEdgeVerticesA == expected_uv);
+            require(TextureRasterMaxYIndex == expected_max);
+            require(static_cast<uint32_t>(TextureRasterClipTop) == expected_clip_top);
+            require(static_cast<uint32_t>(TextureRasterClipBottom) == expected_clip_bottom);
+            if (check_first_rollover_state && setup_edge_calls == 2) {
+                // This fixture has a one-row edge: rollover setup is reached
+                // before the row's positive-span FISTP destination cells are
+                // published, so their entry values must still be visible.
+                require(TextureRasterScratch4E4.dword == 0);
+                require(TextureRasterScratch4C8.dword == 0);
+                if (edge->f0 < 0) {
+                    require(TextureRasterUAccumulator.dword == edge->accumA);
+                    require(TextureRasterVAccumulator.dword == edge->accumB);
+                    require(TextureRasterSpanRight == edge->accumC);
+                } else {
+                    require(TextureRasterScratch4C4 == edge->accumA);
+                    require(TextureRasterScratch530 == edge->accumB);
+                    require(TextureRasterSpanLeft == edge->accumC);
+                }
+            }
+            ++setup_edge_calls;
+            if (initial_edge_calls < 2) {
+                require(events == std::vector<int>({1,2,3}));
+                require(index == expected_top);
+                require(edge->f0 == (initial_edge_calls == 0 ? -1 : 1));
+                ++initial_edge_calls;
+            }
+            return Texture::setup_edge(edge, index);
         }
-        #define texture_edge observe_initial_edge
-        ''' + methods["draw_trans"] + "\n#undef texture_edge\n"
+        ''' + methods["draw_trans"]
     else:
-        methods["draw_trans"] = "int initial_edge_calls;\n" + methods["draw_trans"]
+        methods["draw_trans"] = r'''
+        static int initial_edge_calls, setup_edge_calls;
+        static int expected_count, expected_top, expected_max;
+        static uint32_t expected_clip_top, expected_clip_bottom;
+        static bool check_first_rollover_state;
+        static const Vert *expected_screen, *expected_uv;
+        ''' + methods["draw_trans"]
     # Reuse declaration extraction and the explicit Buffer/FPU doubles from
     # the color-key fixture. These replacements change fixture scaffolding
     # only, never any extracted product definition.
     common = raster_harness(methods).split("        void start() {", 1)[0]
+    common = common.replace(
+        "static bool check_first_rollover_state;",
+        "static bool check_first_rollover_state = " +
+        ("true;" if observe_rollover_state else "false;"))
     common = common.replace("void draw_trans(Buffer *, Vert *, int);",
                             "void draw_trans(Buffer *, Vert *, int, Vert *);")
+    common = common.replace("void draw_trans(Buffer *, Vert *, int, Vert *);",
+                            "static int setup_edge(EdgeScan *, int);\n            "
+                            "void draw_trans(Buffer *, Vert *, int, Vert *);")
+    common = common.replace("#include <vector>", "#include <vector>\n        #define __cdecl")
+    common = common.replace("struct Buffer {",
+                            "static int fixed_div(int, int);\n        struct Buffer {")
     common = common.replace("static unsigned char output[16 * 14], expected[16 * 14], pixels[8 * 8];", r'''
         static unsigned char output[16 * 14], expected[16 * 14];
         static unsigned char pixel_storage[65536+64], preserved_pixels[65536+64];
@@ -515,6 +562,11 @@ def packed_harness(methods, observe_initial=True):
     common = common.replace("TextureRasterKey = lock_key;",
                             "TextureRasterKey = lock_key; publish_texture();")
     common += "\nconst bool observe_initial = " + ("true" if observe_initial else "false") + ";\n"
+    common += r'''
+        static int fixed_div(int numerator, int denominator) {
+            return static_cast<int>((static_cast<int64_t>(numerator) * 65536) / denominator);
+        }
+    '''
     return common + r'''
         unsigned publish_borrowed;
         void publish_texture() {
@@ -522,7 +574,7 @@ def packed_harness(methods, observe_initial=True):
             texture.borrowed_ = publish_borrowed;
         }
         void start() {
-            events.clear(); initial_edge_calls = 0;
+            events.clear(); initial_edge_calls = setup_edge_calls = 0;
             std::memset(output, 0xee, sizeof(output));
             std::memset(expected, 0xee, sizeof(expected));
             std::memset(pixel_storage, 0xa5, sizeof(pixel_storage));
@@ -536,6 +588,20 @@ def packed_harness(methods, observe_initial=True):
             buffer.rect1_={0,0,0,0}; buffer.stride_=8;
             lock_clip={0,0,12,12}; lock_stride=16;
             TextureRasterKey=255; lock_key=0x120000u | pixels[3*256+2];
+            TextureRasterPixelBase = 0;
+            TextureRasterScratch544 = 0;
+            TextureRasterEdgeVerticesA = TextureRasterEdgeVerticesB = 0;
+            TextureRasterVertexCount = -1;
+            TextureRasterMaxYIndex = 91;
+            TextureRasterBufferStride = -1;
+            TextureRasterTextureWidth = TextureRasterTextureHeight = -1;
+            TextureRasterClipRight = TextureRasterClipLeft =
+                TextureRasterClipBottom = TextureRasterClipTop = -1;
+            TextureRasterRowOffset = 0x12345678;
+            TextureRasterScratch4C4 = TextureRasterScratch530 = 0;
+            TextureRasterSpanLeft = TextureRasterSpanRight = 0;
+            TextureRasterUAccumulator.dword = TextureRasterVAccumulator.dword = 0;
+            TextureRasterScratch4E4.dword = TextureRasterScratch4C8.dword = 0;
         }
         void sample(int x, int y, int u, int v) {
             require(x >= 0 && x < 16 && y >= 0 && y < 12);
@@ -544,13 +610,49 @@ def packed_harness(methods, observe_initial=True):
             expected[16+y*lock_stride+x] = pixels[v*256+u];
         }
         void finish(Vert *vertices, int count, Vert *uv, bool raster=true, int setups=2) {
+            int expected_top_index=0, expected_max_index=91;
+            int min_y=0x7fff, max_y=-0x7ffd;
+            for (int i=0; i<count; ++i) {
+                if (vertices[i].y < min_y) { min_y=vertices[i].y; expected_top_index=i; }
+                if (vertices[i].y > max_y) { max_y=vertices[i].y; expected_max_index=i; }
+            }
+            const uint32_t target_base = static_cast<uint32_t>(
+                reinterpret_cast<uintptr_t>(output + 16));
+            const uint32_t clip_bottom = min_y < max_y ?
+                target_base + static_cast<uint32_t>(lock_stride) *
+                    static_cast<uint32_t>(lock_clip.bottom) :
+                static_cast<uint32_t>(lock_clip.bottom);
+            const uint32_t clip_top = min_y < max_y ?
+                target_base + static_cast<uint32_t>(lock_stride) *
+                    static_cast<uint32_t>(lock_clip.top) :
+                static_cast<uint32_t>(lock_clip.top);
+            expected_count=count; expected_top=expected_top_index;
+            expected_max=expected_max_index;
+            expected_clip_bottom=clip_bottom; expected_clip_top=clip_top;
+            expected_screen=vertices; expected_uv=uv;
             std::vector<Vert> saved_vertices, saved_uv;
             if (count > 0) {
                 saved_vertices.assign(vertices, vertices+count);
                 saved_uv.assign(uv, uv+count);
             }
             texture.draw_trans(&buffer, vertices, count, uv);
-            if (observe_initial) require(initial_edge_calls == setups);
+            if (observe_initial) {
+                require(initial_edge_calls == setups);
+                require(setup_edge_calls >= setups);
+            }
+            require(TextureRasterPixelBase == output + 16);
+            require(TextureRasterScratch544 == texture.pixels_);
+            require(TextureRasterEdgeVerticesB == vertices);
+            require(TextureRasterEdgeVerticesA == uv);
+            require(TextureRasterVertexCount == count);
+            require(TextureRasterBufferStride == static_cast<int>(lock_stride));
+            require(TextureRasterTextureWidth == static_cast<int>(texture.iWidth_));
+            require(TextureRasterTextureHeight == static_cast<int>(texture.iHeight_));
+            require(TextureRasterClipRight == lock_clip.right);
+            require(TextureRasterClipLeft == lock_clip.left);
+            require(static_cast<uint32_t>(TextureRasterClipBottom) == clip_bottom);
+            require(static_cast<uint32_t>(TextureRasterClipTop) == clip_top);
+            require(TextureRasterMaxYIndex == expected_max);
             const std::vector<int> active = {1,2,3,4,5,2,3};
             const std::vector<int> inactive = {1,2,3,5,2,3};
             require(events == (raster ? active : inactive));
@@ -664,11 +766,22 @@ def packed_harness(methods, observe_initial=True):
 
 @pytest.mark.parametrize("observe_initial", [False, True])
 def test_actual_packed_opaque_raster(tmp_path, observe_initial):
-    result = run_host(tmp_path, packed_harness(packed_bodies(), observe_initial))
+    # The actual setup_edge retains original signed `<< 16` expressions; x86
+    # wraps these bits, while ISO C++ calls negative left shift undefined.
+    # Disable only UBSan's shift check for this legacy body; keep its other
+    # undefined-behavior checks active.
+    result = run_host(tmp_path, packed_harness(packed_bodies(), observe_initial),
+                      disable_shift_ubsan=True)
     assert result.returncode == 0, result.stderr
 
 
 @pytest.mark.parametrize("before,after", [
+    ("TextureRasterEdgeVerticesA = uv;", "TextureRasterEdgeVerticesA = vertices;"),
+    ("TextureRasterVertexCount = count;", "TextureRasterVertexCount = 4;"),
+    ("TextureRasterClipRight = buffer->rect1_.right;", "TextureRasterClipRight = 0;"),
+    ("TextureRasterMaxYIndex = i;", "TextureRasterMaxYIndex = 0;"),
+    ("TextureRasterUAccumulator.dword = left.accumA;",
+     "TextureRasterUAccumulator.dword = right.accumA;"),
     ("i < count", "i < (count > 4 ? 4 : count)"),
     ("+ 1u;", "+ 0u;"),
     ("*out = pixels[row * 256 + column];",
@@ -684,32 +797,34 @@ def test_actual_packed_opaque_raster(tmp_path, observe_initial):
      "row = (row + row_step + (uf >> 16)) & 0xff;"),
     ("const unsigned int column_step = static_cast<unsigned char>(du >> 16);",
      "const unsigned int column_step = 0;"),
-    ("if (y >= clip.top && end > clip.left && x < clip.right && end > x)",
-     "if (!done && y >= clip.top && end > clip.left && x < clip.right && end > x)"),
-    ("end > clip.left && x < clip.right", "end >= clip.left && x <= clip.right"),
-    ("if (min_y < max_y && texture_edge", "if (borrowed_ != 0 && min_y < max_y && texture_edge"),
+    ("if (TextureRasterRowOffset >= TextureRasterClipTop && end > TextureRasterClipLeft &&",
+     "if (!done && TextureRasterRowOffset >= TextureRasterClipTop && end > TextureRasterClipLeft &&"),
 ])
 def test_compiling_packed_mutations_are_rejected(tmp_path, before, after):
     actual = packed_bodies()
     assert actual["draw_trans"].count(before) == 1
     actual["draw_trans"] = actual["draw_trans"].replace(before, after)
-    result = run_host(tmp_path, packed_harness(actual))
+    result = run_host(tmp_path, packed_harness(actual), disable_shift_ubsan=True)
     assert result.returncode == 42, result.stderr
 
 
 @pytest.mark.parametrize("declaration", [
-    "const unsigned char *pixels = pixels_;",
-    "const int stride = static_cast<int>(buffer->stride_);",
-    "const RECT clip = buffer->rect1_;",
+    "TextureRasterClipRight = buffer->rect1_.right;",
+    "TextureRasterBufferStride = static_cast<int>(buffer->stride_);",
+    "TextureRasterScratch544 = pixels_;",
 ])
 def test_packed_lock_publication_cannot_be_captured_early(tmp_path, declaration):
     actual = packed_bodies()
     method = actual["draw_trans"]
     assert method.count(declaration) == 1
-    method = method.replace(declaration, "")
-    brace = method.index("{") + 1
-    actual["draw_trans"] = method[:brace] + "\n" + declaration + method[brace:]
-    result = run_host(tmp_path, packed_harness(actual))
+    if declaration.startswith("TextureRasterClipRight"):
+        method = method.replace(declaration, "TextureRasterClipRight = 0;")
+    elif declaration.startswith("TextureRasterBufferStride"):
+        method = method.replace(declaration, "TextureRasterBufferStride = 8;")
+    else:
+        method = method.replace(declaration, "TextureRasterScratch544 = pixel_storage;")
+    actual["draw_trans"] = method
+    result = run_host(tmp_path, packed_harness(actual), disable_shift_ubsan=True)
     assert result.returncode == 42, result.stderr
 
 
@@ -934,13 +1049,23 @@ def test_shared_pitch_publication_and_callback_epoch(tmp_path, mutation, which):
                 brace = body.index("{") + 1
                 body = body[:brace] + "\n" + publication + body[brace:]
         bodies[name] = body
+    # The explicit-UV rasterizer now delegates edge initialization and row
+    # rollovers to the real mapped setup_edge member. Keep that production
+    # definition and its typed globals in this host projection; the flat-row
+    # callback fixture does not enter the edge path, but must still compile
+    # the complete consumer body honestly.
+    bodies["setup_edge"] = braced(
+        source, "int __cdecl Texture::setup_edge(EdgeScan *a1, int a2) {")
     fixture = raster_harness(bodies).split("        void start() {", 1)[0]
     fixture = fixture.replace("void draw_trans(Buffer *, Vert *, int);", """
+            static int setup_edge(EdgeScan *, int);
             void draw_trans(Buffer *, Vert *, int);
             void draw_trans(Buffer *, Vert *, int, Vert *);
             void draw_color_key(Buffer *, Vert *, int, Vert *);
             void draw_color_key(Buffer *, Vert *, int, Vert *, int);
     """)
+    fixture = fixture.replace("#include <vector>", "#include <vector>\n        #define __cdecl")
+    fixture = fixture.replace("struct Buffer {", "static int fixed_div(int, int);\n        struct Buffer {")
     fixture = fixture.replace("struct Buffer {", "void publish_width();\n        struct Buffer {")
     fixture = fixture.replace("require(events.empty()); events.push_back(1);",
                               "require(events.empty()); require(TextureRowPitchScratch == -19); publish_width(); events.push_back(1);")
@@ -954,6 +1079,9 @@ def test_shared_pitch_publication_and_callback_epoch(tmp_path, mutation, which):
     }
     fixture += """
         void publish_width() { texture.iWidth_ = 37; }
+        static int fixed_div(int numerator, int denominator) {
+            return static_cast<int>((static_cast<int64_t>(numerator) * 65536) / denominator);
+        }
         int main() {
             texture.iWidth_ = 11; texture.iHeight_ = 8; texture.borrowed_ = 1;
             texture.pixels_ = pixels; TextureRowPitchScratch = -19;
@@ -989,6 +1117,25 @@ def test_compiling_keyed_mutations_are_rejected(tmp_path, method, before, after)
     actual = keyed_bodies()
     assert actual[method].count(before) == 1
     actual[method] = actual[method].replace(before, after)
+    result = run_host(tmp_path, keyed_harness(actual))
+    assert result.returncode == 42, result.stderr
+
+
+@pytest.mark.parametrize("helper,before,after", [
+    ("texture_edge", "edge.fracAccum = dx < 0 ? 1 - edge.counter : 0;",
+     "edge.fracAccum = 0;"),
+    ("texture_edge", "index = next;", "return 0;"),
+    ("texture_advance_edge", "if (--edge.counter == 0)",
+     "if (--edge.counter <= 1)"),
+])
+def test_compiling_still_used_edge_helper_mutations_are_rejected(
+        tmp_path, helper, before, after):
+    # The explicit-UV opaque body now uses mapped setup_edge, but these shared
+    # helpers remain live in the separate color-key overload. Keep their old
+    # compile-success behavioral controls against that actual consumer.
+    actual = keyed_bodies()
+    assert actual[helper].count(before) == 1
+    actual[helper] = actual[helper].replace(before, after)
     result = run_host(tmp_path, keyed_harness(actual))
     assert result.returncode == 42, result.stderr
 
