@@ -1,0 +1,126 @@
+{
+  "event_id": "346e7223246ec7cd0709112f4ce977bd1089b533bdd0459bec7265b754a75ed9",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_control_lifetimes.py",
+      "src/editbox.cpp",
+      "src/editbox.h"
+    ],
+    "evidence": [
+      "Join source-owned FileWin/EditBox headers and canonical AlphaSave emission for existing complete destructors. Authorize unchanged close()-only destructor bodies moving to actual class headers and original mapping envelopes moving through native writers to AlphaSave FILE records with body facts to those headers. No compile_context, invented anchors, forced inlining, duplicated implementations or manual ORIGINAL/claim edits.",
+      "Pinned AlphaSave original21-state cleanup contains typed FileWin/EditBox member expansion. Retained actual-recipe overlay emits matching complete primary/cold instruction streams for AlphaSave/FileWin/EditBox. Prior wrapper late freshness failure remains refused; this authorization requires fresh production reproduction, not replaying that result as acceptance.",
+      "Fresh full201physical-object scope audit finds25header-dependent TUs and six reference-bearing owner objects. Include AlphaSave/FileWin constructors/destructors, EditBox constructor/complete and generated deleting entries, DiploWin destructor, Gamma and NetWin constructor/destructor/close callers as compiled-impact obligations. No direct caller source changes authorized by this expansion; expand separately if evidence demands edits.",
+      "Preserve complete original spans, EditBox historical BYTE_EXACT, all earlier claims, symbols, lessons and useful provenance. Existing test_control_lifetimes assertions remain; route only actual destructor emission checks to AlphaSave and execute actual header bodies in existing lifetime harness. Keep constructor/offset/type/order/unwind tests intact.",
+      "Require native uniqueness/claim/reference/source checks, fresh full build/link, scoped compiled-impact and every observed header copy review, actual-TU compile-success body damage, independent review and destination verification. EH parser graph/vector-action limitations remain explicit refusals. Standing manual structural recovery permission preserves justified migrations and restoration obligations, not automatic, linked-selection or game acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4223824,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4226816,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4227088,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4227200,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4227440,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4228000,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4476336,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4546832,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4725840,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4726032,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4727952,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4731664,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4732128,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6065568,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6065760,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6066992,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6371408,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6371584,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6377040,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6377264,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "9e0e63bbf4d12026f8bfd94dfef3a831ef467fd3befae41192624ee2e28c2b3d",
+  "request_id": "filewin-editbox-inline-closure-oct22b",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:filewin-jackal-boundary-oct9"
+}

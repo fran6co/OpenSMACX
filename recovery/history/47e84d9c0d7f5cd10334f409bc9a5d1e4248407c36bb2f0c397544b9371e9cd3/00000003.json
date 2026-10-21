@@ -1,0 +1,21 @@
+{
+  "event_id": "b08c54087114c85e6dbcc9120978c5f937cd19b9fb31c8a1f17692ca74aabc1e",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_generated_owner_migrations_oct6.py"
+    ],
+    "evidence": [
+      "The actual source-backed AlphaSave TU independently emits EditBox primary G deleting entry and secondary E adjustment. Pinned EditBox constructor writes Win table66A038 and Buffer table66A030; original first slots name408080 and4083A0. Candidate class-view slots select weak primary E with search-mode2 fallback to defined G, and the secondary E adjustor. This is positive class/view ownership evidence, not selection of a convenient scoring copy.",
+      "Primary candidate14/14 instructions and secondary2/2 match pinned spans after relocation masking. Ordinary primary still mapped editbox.cpp is a measured mismatch under its actual recipe. Canonical FILE mappings must follow the evidenced AlphaSave emission; original class implementation stays in editbox.h. Preserve exact original G identities, emitted G/E symbols, spans, claims and complete binding/history envelopes.",
+      "Authorize only transporting the two complete existing FILE mapping envelopes from editbox.cpp to alphasave.cpp without code changes, and updating only the two owner paths in generated-owner history SPECS. All existing historical continuity assertions remain. Any new rationale must distinguish current header-owned lifetime/AlphaSave emission from preserved historical per-build observations. Do not infer global E/G equivalence, linked selection or native automatic acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "346e7223246ec7cd0709112f4ce977bd1089b533bdd0459bec7265b754a75ed9",
+  "request_id": "editbox-generated-inline-owner-test-scope-oct22b",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:filewin-jackal-boundary-oct9"
+}

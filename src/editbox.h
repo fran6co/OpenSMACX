@@ -33,7 +33,7 @@
 // RECOVERY_GENERATED: v1 vtable 0x0066A030 0x0066A038 ??_7EditBox@@6BBuffer@@@ 0x00614E50
 class EditBox : public GraphicWin {
  public:
-  ~EditBox();
+  ~EditBox() { close(); }
 
   // ??0EditBox@@QAE@XZ (0x00614E50), the real bare constructor - the body
   // is recovered in editbox.cpp, with compiler-owned base/member construction.
