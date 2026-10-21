@@ -1,0 +1,48 @@
+{
+  "event_id": "6d5b4a5f5f5f8b9642a4a9ab4a1aa6911aeed819cd8c6a1b2112986cfb0b1350",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/win.cpp",
+      "src/win_input.cpp"
+    ],
+    "evidence": [
+      "DIAGNOSTIC ONLY, no production C++ adoption: existing win_input.cpp semantically owns keyboard-focus routing, while the corrected get_key_window remains in Win.cpp with is_visible. Pinned window_proc has five actual direct get_key_window calls and that helper calls parent is_visible. Current actual C2 inlines get_key_window five times and recursively inlines the first parent visibility check; current source homes therefore do not reproduce the observed out-of-line call topology. A natural same-class input-owner grouping is worth one controlled test, not evidence of an original TU name or license for arbitrary splitting.",
+      "Use ignored get-key-input-boundary full proposals, verified231record metadata/history/body union,228+3to227+4, all five data bindings and all callers unchanged. Atomic two-existing-file overlays only; keep actual Release commands, /Oy-, /O2 /Ob2 and all other flags, declarations, types, storage, source bodies and history unchanged. No noinline attributes, volatile/cast steering or source spelling hunt.",
+      "Coordinator alone may acquire a provisioned prefix and perform exactly one unchanged actual-command replay and unchanged-overlay equivalence control per TU, one proposed overlay per TU and one deliberate function-body damage control per TU. Measure all231mapped records and expose all retained changes, ordinary data and startup. No source/Git/task changes during the compiler epoch. No claim stamping or source adoption from a diagnostic alone; later explicit source/test scope, independent review, actual application build/link and destination verification remain required. Task baseline and historical restoration obligations unchanged; no full linked, runtime, game or automatic acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6253136,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6227536,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6231488,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6231648,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6231760,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "8153cc66bc4f5b545bac23a916790f3b2ed0c3e18048093a898271bf5da5a44c",
+  "request_id": "central-private-win-input-boundary-control-oct21g",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:win-keyboard-focus-members-oct9"
+}
