@@ -1396,64 +1396,155 @@ int __cdecl Texture::setup_edge(EdgeScan *a1, int a2) {
 // calls     0x005E3373 0x005E34A3 0x00624D80
 // The explicit-UV overload is opaque despite its historical name. At
 // 0x00619D24 every sampled byte is stored, and DEC/JNS at 0x00619D30 makes
-// the span inclusive, even at clip.right. U and V wrap independently in
-// the low pointer bytes. TexHeap::get_tex_mem supplies a 64-KiB-aligned
-// payload; Texture::extract writes its borrowed rows at a 256-byte pitch.
-// Per-call edge scratch has the same bounded-domain limitations as the
-// color-key overload: ordinary convex geometry, established extrema, no
-// fixed-point/row-address overflow and valid sampled allocation bounds.
-// Manually misaligned borrowed textures and shared-scratch/FP status observed
-// by callbacks remain unverified. No original-address storage is used here.
+// the span inclusive, even at clip.right. U and V wrap independently in the
+// low pointer bytes. TexHeap::get_tex_mem supplies a 64-KiB-aligned payload;
+// Texture::extract writes its borrowed rows at a 256-byte pitch.
+//
+// 0x6198FE..0x61997A publishes the destination, texture/UV/screen-vertex
+// pointers, count, dimensions, stride and clip bounds into the existing
+// TextureRaster cells. After the vertex scan, the bottom/top clip words are
+// rebased to low-32-bit destination row addresses before setup_edge consumes
+// the vertex/count/UV/max-Y cells. Each row republishes edge accumulators
+// before rollover setup; positive-span slopes publish after those edge
+// advances and before row clipping. Left clipping also writes its adjusted X
+// back to the shared span cell. Keep these effects even where locals could
+// calculate the same pixels. 0x9BB508 is a target-width scratch word: this
+// body stores low 32-bit destination-row address bits there, but the shared
+// cell has other scalar uses and its original type is not established. Host
+// pixel stores retain a full pointer through texture_pointer_offset rather
+// than converting those truncated bits back to a host pointer.
+//
+// texture_span_step remains the current integer model of original x87
+// arithmetic; exact FISTP results/status under every caller control-word
+// state, invalid geometry, aliasing and runtime effects remain unproved.
 void Texture::draw_trans(Buffer *buffer, Vert *vertices, int count, Vert *uv) {
-    unsigned char *destination = static_cast<unsigned char *>(buffer->get_data());
+    TextureRasterPixelBase = buffer->get_data();
     texture_reset_fpu();
-    const unsigned char *pixels = pixels_;
+    TextureRasterEdgeVerticesB = vertices;
+    TextureRasterScratch544 = pixels_;
     TextureRowPitchScratch = static_cast<int>(iWidth_);
-    const int stride = static_cast<int>(buffer->stride_);
-    const RECT clip = buffer->rect1_;
+    TextureRasterTextureHeight = static_cast<int>(iHeight_);
+    TextureRasterVertexCount = count;
+    TextureRasterEdgeVerticesA = uv;
+    TextureRasterBufferStride = static_cast<int>(buffer->stride_);
+    TextureRasterTextureWidth = static_cast<int>(iWidth_);
+    TextureRasterClipRight = buffer->rect1_.right;
+    TextureRasterClipLeft = buffer->rect1_.left;
+    TextureRasterClipBottom = buffer->rect1_.bottom;
+    TextureRasterClipTop = buffer->rect1_.top;
 
     int min_y = 0x7fff, max_y = -0x7ffd;
-    int top = 0, bottom = 0;
+    int top = 0;
     for (int i = 0; i < count; ++i) {
         if (vertices[i].y < min_y) { min_y = vertices[i].y; top = i; }
-        if (vertices[i].y > max_y) { max_y = vertices[i].y; bottom = i; }
+        if (vertices[i].y > max_y) {
+            max_y = vertices[i].y;
+            TextureRasterMaxYIndex = i;
+        }
+    }
+    if (min_y < max_y) {
+        const uint32_t pixel_base = static_cast<uint32_t>(
+            texture_pointer_address(TextureRasterPixelBase));
+        const uint32_t stride = static_cast<uint32_t>(TextureRasterBufferStride);
+        TextureRasterRowOffset = static_cast<int>(
+            pixel_base + static_cast<uint32_t>(min_y) * stride);
+        TextureRasterClipBottom = static_cast<int>(
+            pixel_base + stride * static_cast<uint32_t>(TextureRasterClipBottom));
+        TextureRasterClipTop = static_cast<int>(
+            pixel_base + stride * static_cast<uint32_t>(TextureRasterClipTop));
     }
     EdgeScan left, right;
     left.f0 = -1;
     right.f0 = 1;
-    if (min_y < max_y && texture_edge(left, top, vertices, uv, count, bottom) &&
-        texture_edge(right, top, vertices, uv, count, bottom) && borrowed_ != 0) {
+    if (min_y < max_y && Texture::setup_edge(&left, top) &&
+        Texture::setup_edge(&right, top) && borrowed_ != 0) {
         _control87(_PC_24 | _RC_CHOP, _MCW_PC | _MCW_RC);
-        int du = 0, dv = 0;
         int y = min_y;
-        if (y >= clip.bottom) {
+        if (TextureRasterRowOffset >= TextureRasterClipBottom) {
             buffer->free_data(1);
             texture_reset_fpu();
             return;
         }
         for (;;) {
-            int x = left.accumC;
-            int end = right.accumC;
-            int u = left.accumA, v = left.accumB;
+            TextureRasterScratch4C4 = right.accumA;
+            TextureRasterScratch530 = right.accumB;
+            TextureRasterSpanLeft = right.accumC;
+            TextureRasterUAccumulator.dword = left.accumA;
+            TextureRasterVAccumulator.dword = left.accumB;
+            TextureRasterSpanRight = left.accumC;
+            int x = TextureRasterSpanRight;
+            int end = TextureRasterSpanLeft;
+            int u = TextureRasterUAccumulator.dword;
+            int v = TextureRasterVAccumulator.dword;
             const int span = texture_fixed(texture_difference(end, x));
-            if (span > 0) {
-                du = texture_span_step(texture_difference(right.accumA, u), span >> 16);
-                dv = texture_span_step(texture_difference(right.accumB, v), span >> 16);
-            }
-            const int done = !texture_advance_edge(left, vertices, uv, count, bottom) ||
-                             !texture_advance_edge(right, vertices, uv, count, bottom);
-            if (y >= clip.bottom) break;
-            if (y >= clip.top && end > clip.left && x < clip.right && end > x) {
-                if (end > clip.right) end = clip.right;
-                if (x < clip.left) {
-                    const int skip = texture_fixed(texture_difference(clip.left, x));
-                    u = static_cast<int>(static_cast<unsigned int>(u) +
-                        static_cast<unsigned int>((static_cast<int64_t>(du) * skip) >> 16));
-                    v = static_cast<int>(static_cast<unsigned int>(v) +
-                        static_cast<unsigned int>((static_cast<int64_t>(dv) * skip) >> 16));
-                    x = clip.left;
+            int du = TextureRasterScratch4E4.dword;
+            int dv = TextureRasterScratch4C8.dword;
+            int done = 0;
+            if (--left.counter == 0) {
+                if (!Texture::setup_edge(&left, left.id)) done = 1;
+            } else {
+                left.accumA = static_cast<int>(static_cast<unsigned int>(left.accumA) +
+                                               static_cast<unsigned int>(left.deltaA));
+                left.accumB = static_cast<int>(static_cast<unsigned int>(left.accumB) +
+                                               static_cast<unsigned int>(left.deltaB));
+                left.accumC = static_cast<int>(static_cast<unsigned int>(left.accumC) +
+                                               static_cast<unsigned int>(left.deltaC));
+                left.fracAccum = static_cast<int>(static_cast<unsigned int>(left.fracAccum) +
+                                                  static_cast<unsigned int>(left.fracDelta));
+                if (left.fracAccum > 0) {
+                    left.accumC = static_cast<int>(static_cast<unsigned int>(left.accumC) +
+                                                   static_cast<unsigned int>(left.extraDeltaC));
+                    left.fracAccum = texture_difference(left.fracAccum, left.fracSub);
                 }
-                unsigned char *out = destination + static_cast<int64_t>(y) * stride + x;
+            }
+            if (!done) {
+                if (--right.counter == 0) {
+                    if (!Texture::setup_edge(&right, right.id)) done = 1;
+                } else {
+                    right.accumA = static_cast<int>(static_cast<unsigned int>(right.accumA) +
+                                                    static_cast<unsigned int>(right.deltaA));
+                    right.accumB = static_cast<int>(static_cast<unsigned int>(right.accumB) +
+                                                    static_cast<unsigned int>(right.deltaB));
+                    right.accumC = static_cast<int>(static_cast<unsigned int>(right.accumC) +
+                                                    static_cast<unsigned int>(right.deltaC));
+                    right.fracAccum = static_cast<int>(static_cast<unsigned int>(right.fracAccum) +
+                                                       static_cast<unsigned int>(right.fracDelta));
+                    if (right.fracAccum > 0) {
+                        right.accumC = static_cast<int>(static_cast<unsigned int>(right.accumC) +
+                                                        static_cast<unsigned int>(right.extraDeltaC));
+                        right.fracAccum = texture_difference(right.fracAccum, right.fracSub);
+                    }
+                }
+            }
+            if (span > 0) {
+                du = texture_span_step(texture_difference(TextureRasterScratch4C4, u), span >> 16);
+                dv = texture_span_step(texture_difference(TextureRasterScratch530, v), span >> 16);
+                TextureRasterScratch4E4.dword = du;
+                TextureRasterScratch4C8.dword = dv;
+            }
+            if (TextureRasterRowOffset >= TextureRasterClipBottom) break;
+            if (TextureRasterRowOffset >= TextureRasterClipTop && end > TextureRasterClipLeft &&
+                x < TextureRasterClipRight && end > x) {
+                if (end > TextureRasterClipRight) end = TextureRasterClipRight;
+                if (x < TextureRasterClipLeft) {
+                    const int skip = texture_fixed(texture_difference(TextureRasterClipLeft, x));
+                    TextureRasterUAccumulator.dword = static_cast<int>(
+                        static_cast<unsigned int>(TextureRasterUAccumulator.dword) +
+                        static_cast<unsigned int>((static_cast<int64_t>(du) * skip) >> 16));
+                    TextureRasterVAccumulator.dword = static_cast<int>(
+                        static_cast<unsigned int>(TextureRasterVAccumulator.dword) +
+                        static_cast<unsigned int>((static_cast<int64_t>(dv) * skip) >> 16));
+                    u = TextureRasterUAccumulator.dword;
+                    v = TextureRasterVAccumulator.dword;
+                    TextureRasterSpanRight = TextureRasterClipLeft;
+                    x = TextureRasterSpanRight;
+                }
+                unsigned char *out = reinterpret_cast<unsigned char *>(
+                    texture_pointer_offset(TextureRasterPixelBase,
+                        static_cast<uint32_t>(y) *
+                        static_cast<uint32_t>(TextureRasterBufferStride))) + x;
+                const unsigned char *pixels =
+                    static_cast<const unsigned char *>(TextureRasterScratch544);
                 unsigned int column = static_cast<unsigned char>(static_cast<unsigned int>(u) >> 16);
                 unsigned int row = static_cast<unsigned char>(static_cast<unsigned int>(v) >> 16);
                 unsigned int uf = static_cast<unsigned short>(u);
@@ -1473,6 +1564,9 @@ void Texture::draw_trans(Buffer *buffer, Vert *vertices, int count, Vert *uv) {
             }
             if (done) break;
             ++y;
+            TextureRasterRowOffset = static_cast<int>(
+                static_cast<uint32_t>(TextureRasterRowOffset) +
+                static_cast<uint32_t>(TextureRasterBufferStride));
         }
     }
     buffer->free_data(1);

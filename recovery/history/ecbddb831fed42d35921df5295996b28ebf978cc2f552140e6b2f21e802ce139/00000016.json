@@ -1,0 +1,24 @@
+{
+  "event_id": "4dcec9f441af16730a907f7050f7b862fb76657f62bd0381fdb0ad95f381bdfe",
+  "payload": {
+    "affects": [
+      "entity-7d19e401fdbdbe5fe281e136b65a85e00736b9dfb503a32a3f64acde8b35d334",
+      "entity-df9867ecd9c3a2a302aa1042fdbda4b1d05c146c05c06fb9bf9322afc8223e4a"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "texture-explicit-uv-shared-state-source-checkpoint-oct21zc",
+    "evidence": [
+      "Coordinator and independent pinned instruction/source review confirm omitted shared input cells, conditional max-index publication, target-width row/clip rebasing before initial setup, signed row-word gates, six edge snapshots before rollover, positive-span slopes after rollovers, clipped-X publication and row advancement restored in6198E0. Existing mapped setup_edge624D80 replaces a distinct local-only template; its definition, sibling kernels, globals/types/layout, headers and all compiler policies remain unchanged.",
+      "All source original identities/spans/bindings/claims/history survive native reader/writer equality. Only the explicit-UV body and its concise evidence/limitations note change in product source. Original unchecked/error/borrowed/get-free/FPU order is retained; no bug fix or new storage is introduced. Mixed-use row/clip scratch words retain existing int representation; target low32bits are never reconstructed as a truncated host pointer.",
+      "Coordinator reran130actual-source host controls with no skips: vertex/UV/clip/borrowed/overflow-domain and scratch494 checks, original helper controls restored against the still-used color-key overload, and new shared-input/snapshot/rollover/slope/rowword/clipped-X compile-success damage controls. Preserve all earlier regression oracles. Host fixtures disable only signed-shift UBSan for the unchanged mapped legacy setup_edge body; that does not prove defined C++ or full original exceptional geometry.",
+      "Unadmitted fidelity source checkpoint. Existing integer texture_span_step remains an incomplete model of original x87/FISTP precision/status, and aliasing/runtime observations remain unproved. No byte equality, new implementation count, native physical preservation or acceptance assertion. Fresh186TU200COFF build/link, whole known census/strict references, claim/mapping/source integrity and compiled collateral review follow before bounded manual integration. Immutable task baseline retained."
+    ],
+    "hypothesis": "Restore the original explicit-UV rasterizer shared input, edge and row publications and genuine mapped edge helper dataflow.",
+    "kind": "discovery"
+  },
+  "previous_event": "c8a64f995271728423c74bbf297dcc35513c5bd6410c94e68c4e1c2e0ab7c3b1",
+  "request_id": "texture-explicit-uv-shared-state-source-checkpoint-oct21zc",
+  "schema_version": 1,
+  "sequence": 16,
+  "stream": "task:texture-rasterizer-recovery"
+}
