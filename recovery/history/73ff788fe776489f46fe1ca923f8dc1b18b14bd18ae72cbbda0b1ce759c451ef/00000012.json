@@ -1,0 +1,136 @@
+{
+  "event_id": "eba71dc62e30d9c61782327abc41d6485960b993a5f3bcdde7bcb9f3d968d228",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/base.cpp",
+      "src/console_commands.cpp",
+      "src/designwin.cpp",
+      "src/enemy.cpp",
+      "src/faction.cpp",
+      "src/game.cpp",
+      "src/net_class.cpp",
+      "src/probe.cpp",
+      "src/reportwin.cpp",
+      "src/socialwin.cpp",
+      "src/technology.cpp",
+      "src/veh.cpp"
+    ],
+    "evidence": [
+      "Coordinate actual compiler impact from the reviewed ordinary breed_mod header-to-base.cpp definition move. Record20actual original ownership identities below, in addition to4original focus functions; no source edits to these collateral bodies are authorized by this observation. Preserve original taskbaselinec63a9c1f547fd4c2bb94aa8ee6777bdd9b1aa75d and all historical protections/discoveries. Scope expansion is not acceptance or preservation waiver.",
+      "Observed before rebase: fullbuild-delfe8se links and sourcechecksPASS, all5581verdicts unchanged3363exact, nativephysical108PASS91FAIL. Ninetyconsumer exportdirectives loseonlybreed_modtoken, owner reorderssameexporttoken; final103exportnames unchanged. Seventy-ninefailuresdirective-only and12alsohavecode. Nativefailures remain failures. OldnativebuildisnotcurrentHEAD evidence after MainInterface/StringBox rebase; fresh current combined build required.",
+      "Additionaloriginalowners: 00436090 ?draw_vehicle@DesignWin@@QAEXH@Z src/designwin.cpp; 00455610 ?load_interface@@YAXH@Z src/game.cpp; 004A0260 ?sat_attack@@YAXHHH@Z src/reportwin.cpp; 004B2740 ?init@SocialWin@@QAEXH@Z src/socialwin.cpp; 004CEDE0 ?action_give@@YAXHH@Z src/veh.cpp; 004DD1B0 ?custom_my_faction@Console@@QAEXXZ src/console_commands.cpp; 004F4FB0 ?drone_riot@@YAXXZ src/base.cpp; 00501DA0 ?battle_compute@@YAXHHPAH0H@Z src/veh.cpp; 00524870 ?end_of_game@@YAHH@Z src/game.cpp; 005275B0 ?control_turn@@YAXXZ src/game.cpp; 0052A2E0 ?net_control_turn@@YAXXZ src/game.cpp; 0053EB50 ?buy_council_vote@@YAXHHHH@Z src/faction.cpp; 00547C10 ?make_gift@@YAXHH@Z src/faction.cpp; 0054FFD0 ?communicate@@YAXHHH@Z src/faction.cpp; 0056B5B0 ?enemy_move@@YAHH@Z src/enemy.cpp; 0057A660 ?goody_box@@YAHHH@Z src/veh.cpp; 0059F120 ?probe@@YAHHHHH@Z src/probe.cpp; 005A6AC0 ?game_data@@YAHPAU_iobuf@@H@Z src/game.cpp; 005BB000 ?tech_achieved@@YAXHHHH@Z src/technology.cpp; 00630D70 ?choose_service@Net@@QAEHXZ src/net_class.cpp",
+      "The compiler helper enemy_move_tactical_action_tail belongs to the existing enemy_move56B5B0original; do not fabricate a newOriginalidentity or treat it as an independent recovered function. Retain its changed physical code as parent-owner evidence with unsupported native helper projection explicit. The removed breed_mod_call is an unoriginal repair forwarder, not an original mapping or coverage gain.",
+      "IndependentactualCOFF reviews identify small stackload/register permutations for15mappedcollateralfunctions plus enemyparenthelper. Load_interface and end_of_game retain orderedcalls/relocationtargetmultisets and inspectedvalue/branch/storeinputs, but wholepath/jumptableproof remains incomplete. Custom_my_faction trackedPopup/Scroll vptrvalues to the sameEBPsubobjectslots andsameEHstates/cleanupcalls: changes are preload/registerreuse, not merely similarlynamedrelocations. REFUSED originalEH mapping remainsREFUSED. Do not equate these bounded observations with fulloriginal or linked preservation.",
+      "Continue review and freshverifications before manualintegration; no comparator mask, directive normalization, baseline reset, claimdemotion, compilerflag change, newgeneratedbinding or automatic/fullgame acceptance. Keep all source work and explicit matching/lifetime/linked/runtime obligations."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4415632,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4544016,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4850272,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4925248,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5041632,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5099952,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5197744,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5250464,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5392496,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5404080,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5415648,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5499728,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5536784,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5570512,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5682608,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5744224,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5894432,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5925568,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6008832,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6491504,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "d51eccde95fc76de01763972123085dc9708ede0a5765976f09d2d31b58956d8",
+  "request_id": "central-breed-header-actual-owner-collateral-oct21v",
+  "schema_version": 1,
+  "sequence": 12,
+  "stream": "task:owner-base-body-recovery-oct20ao"
+}
