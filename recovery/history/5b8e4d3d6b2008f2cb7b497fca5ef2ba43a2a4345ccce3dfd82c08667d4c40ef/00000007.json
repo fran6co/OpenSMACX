@@ -1,0 +1,19 @@
+{
+  "event_id": "91010ebea035ce76bef85738a8c18d0b40464d2d601d99aa29c19d70945cf880",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "selected-base-facility-call-boundary-source-oct21y",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Fresh build-p3ih7i8h links,8actual-source controls pass, claims/mappings/references and388file5646record9rule annotation integrity pass.500290 now emits a96byte bool helper with directbitmask, but all16base_build relocations still target the other two-argument predicate. Source order alone does not restore the original call boundary. base_maint480bytes and its two bitmask relocations are unchanged.",
+      "Whole known5581census retains3364maskedexact and2817strictPASS547UNKNOWN; only500290 changesUNRESOLVEDtoMISMATCH. Native outside-two-body residual191PASS9FAIL is not suppressed. Independent collateral review finds real neighboring instruction/load/relocation changes as well as unchanged EH payloads under changed association identities; unresolved custom_my_faction address-point selection remains an obligation.",
+      "Reject this narrow prediction, not the preserved source/history. Keep committed39ced315f trial and all original claims, baselines and discoveries available for direct-owner investigation. No source merge or automatic/game acceptance follows."
+    ]
+  },
+  "previous_event": "3a4dabd46b5611187779135d7e870e213c68dab849ab01154dbd2272e840c3a2",
+  "request_id": "selected-base-facility-source-order-only-measured-negative-oct21y",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:bitmask-owner-oct16"
+}

@@ -777,10 +777,7 @@ inline int __cdecl has_fac_built(int facility_id, int base_id) {
     return (Bases[base_id].facilities_built[offset] & mask) != 0;
 }
 
-inline bool __cdecl has_fac_built(int facility_id) {
-    int base_id = BaseIDCurrentSelected;
-    return (facility_id >= FacilityRepStart) ? false : has_fac_built(facility_id, base_id);
-}
+int __cdecl has_fac_built(int facility_id);
 
 // HISTORICAL BODY PLACEMENT: breed_mod was in base.h as `MEASURED inline`; worm_mod
 // (base.cpp) is the caller that needs it folded in place - the image writes

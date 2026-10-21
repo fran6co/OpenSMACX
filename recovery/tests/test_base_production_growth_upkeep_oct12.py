@@ -13,7 +13,7 @@ import subprocess
 
 import pytest
 from match_recovery.includes import COMMENTS_OR_STRINGS
-from match_recovery.source import read_file, read_text
+from match_recovery.source import read_file, read_text, write_body, write_symbol
 from test_map_metadata_owner import definition
 from test_base_economy_accounting_oct12 import declarations, helpers
 from test_base_colony_production import PRODUCTION_HARNESS, helper, _assert_production_harness_constants
@@ -39,6 +39,10 @@ SCOPED_DEFINITIONS = (
     "bool production_reveal_faction(",
     "int production_abs(", "int production_project(", "void production_set_project_owner(",
 )
+FACILITY_ADDRESS = 0x00500290
+FACILITY_DEFINITION = "int __cdecl has_fac_built(int facility_id)"
+FACILITY_HEADER_DEFINITION = "inline bool __cdecl has_fac_built(int facility_id)"
+FACILITY_EMITTED_SYMBOL = "?has_fac_built@@YAHH@Z"
 
 
 def source():
@@ -61,6 +65,76 @@ def tokens(text):
     return result + text[cursor:].split()
 
 
+def _restore_facility_transfer(current, baseline, path):
+    """Undo only the pinned direct-predicate and owner move in a comparison copy."""
+    header = subprocess.check_output(
+        ["git", "show", BASE + ":src/base.h"], cwd=ROOT, text=True)
+    old_body = definition(header, FACILITY_HEADER_DEFINITION)
+    current_body = actual(current, FACILITY_DEFINITION)
+    expected_body = ("int __cdecl has_fac_built(int facility_id) {\n"
+                     "    int base_id = BaseIDCurrentSelected;\n"
+                     "    if (facility_id >= FacilityRepStart) {\n"
+                     "        return false;\n"
+                     "    }\n"
+                     "    int mask;\n"
+                     "    bitmask(facility_id, &facility_id, &mask);\n"
+                     "    return (Bases[base_id].facilities_built[facility_id] & mask) != 0;\n"
+                     "}")
+    assert current_body == expected_body, "facility direct-predicate migration changed"
+    assert current.count(FACILITY_DEFINITION + " {") == 1
+
+    record, = (row for row in read_text(current, path)
+               if row.address == FACILITY_ADDRESS)
+    assert record.symbol == FACILITY_EMITTED_SYMBOL
+    assert record.body == "src/base.cpp", "facility body migration target changed"
+    old_record, = (row for row in read_text(baseline, path)
+                   if row.address == FACILITY_ADDRESS)
+    restored_body = write_body(current.encode("utf-8"), record, "src/base.h")
+    current_record, = (row for row in read_text(restored_body.decode("utf-8"), path)
+                       if row.address == FACILITY_ADDRESS)
+    old_emitted_symbol = old_record.symbol or old_record.name
+    assert old_emitted_symbol == "?has_fac_built@@YA_NH@Z"
+    restored_symbol = write_symbol(restored_body, current_record, old_emitted_symbol)
+    if old_record.symbol:
+        assert old_record.symbol == old_emitted_symbol
+        current = restored_symbol.decode("utf-8")
+    else:
+        old_symbol_line = b"// symbol    " + old_emitted_symbol.encode("utf-8")
+        original_facts = [line for line in baseline.splitlines()
+                          if line.lstrip().startswith("// symbol")]
+        assert old_symbol_line.decode("utf-8") not in original_facts
+        lines = restored_symbol.splitlines(keepends=True)
+        symbol_lines = [i for i, line in enumerate(lines)
+                        if line.rstrip(b"\r\n") == old_symbol_line]
+        assert len(symbol_lines) == 1
+        marker_line = current_record.line - 1
+        assert symbol_lines[0] in (marker_line + 1, marker_line + 2)
+        del lines[symbol_lines[0]]
+        current = b"".join(lines).decode("utf-8")
+
+    old_build = actual(baseline, "int __cdecl base_build(")
+    new_build = actual(current, "int __cdecl base_build(")
+    old_end = baseline.index(old_build) + len(old_build)
+    new_end = current.index(new_build) + len(new_build)
+    body_start = current.index(current_body)
+    body_end = body_start + len(current_body)
+
+    def skip_space(text, offset):
+        while offset < len(text) and text[offset].isspace():
+            offset += 1
+        return offset
+
+    old_next = skip_space(baseline, old_end)
+    new_next = skip_space(current, body_end)
+    # The old guard below still checks the entire surrounding source against
+    # its historical predecessor. Here only reconstruct its original spacing
+    # around base_build; do not compare or normalize the body itself.
+    assert current[new_end:body_start].isspace()
+    assert current[body_end:new_next].isspace()
+    assert baseline[old_end:old_next].isspace()
+    return current[:new_end] + baseline[old_end:old_next] + current[new_next:]
+
+
 def assert_group_continuity(before, current, path):
     """Exact 19-definition authorization; identities/history never exempted."""
     assert len(SCOPED_DEFINITIONS) == 19
@@ -70,6 +144,12 @@ def assert_group_continuity(before, current, path):
     for address, record in new.items():
         for field in fields(record):
             if field.name not in {"line", "region", "origin"}:
+                if address == FACILITY_ADDRESS and field.name in {"body", "symbol"}:
+                    expected_old = "src/base.h" if field.name == "body" else old[address].symbol
+                    expected_new = "src/base.cpp" if field.name == "body" else FACILITY_EMITTED_SYMBOL
+                    assert getattr(old[address], field.name) == expected_old
+                    assert getattr(record, field.name) == expected_new
+                    continue
                 assert getattr(record, field.name) == getattr(old[address], field.name), (hex(address), field.name)
         def lessons(row):
             return [(x.kind, x.key, x.prose, tuple(t for _, t in x.lines)) for x in row.origin or ()]
@@ -79,6 +159,7 @@ def assert_group_continuity(before, current, path):
     for signature in SCOPED_DEFINITIONS:
         before = before.replace(actual(before, signature), "SCOPED_OWNER_BODY", 1)
         current = current.replace(actual(current, signature), "SCOPED_OWNER_BODY", 1)
+    current = _restore_facility_transfer(current, before, ROOT / "src/base.cpp")
     assert tokens(before) == tokens(current)
     # Also retain outside-body source annotations/comments verbatim, including
     # object/member bindings not represented by the function-record parser.
@@ -102,6 +183,7 @@ def restore_group_to_baseline(current, path):
     restored = current
     for signature in SCOPED_DEFINITIONS:
         restored = restore_body(restored, actual(current, signature), actual(before, signature))
+    restored = _restore_facility_transfer(restored, before, path)
     assert tokens(restored) == tokens(before), "restored body continuity failed"
     assert restored == before, "restored source text continuity failed"
     return restored
@@ -118,6 +200,38 @@ def test_guarded_historical_group_restoration_matches_exact_predecessor():
     restored = restore_group_to_baseline(source(), path)
     before = subprocess.check_output(["git", "show", BASE + ":src/base.cpp"], cwd=ROOT, text=True)
     assert tokens(restored) == tokens(before)
+
+
+def test_facility_inverse_bridge_reaches_real_migration_and_rejects_damage():
+    path = ROOT / "src/base.cpp"
+    before = subprocess.check_output(
+        ["git", "show", BASE + ":src/base.cpp"], cwd=ROOT, text=True)
+    current = source()
+    current_body = actual(current, FACILITY_DEFINITION)
+    current_build = actual(current, "int __cdecl base_build(")
+
+    restored = _restore_facility_transfer(current, before, path)
+    assert FACILITY_DEFINITION + " {" not in restored
+    assert actual(restored, "int __cdecl base_build(") == current_build
+    restored_record, = (row for row in read_text(restored, path)
+                        if row.address == FACILITY_ADDRESS)
+    historical_record, = (row for row in read_text(before, path)
+                          if row.address == FACILITY_ADDRESS)
+    assert restored_record.body == historical_record.body == "src/base.h"
+    assert restored_record.symbol == historical_record.symbol
+
+    damaged_body = current.replace(
+        "bitmask(facility_id, &facility_id, &mask);",
+        "bitmask(facility_id, &mask, &facility_id);", 1)
+    with pytest.raises(AssertionError, match="facility direct-predicate migration changed"):
+        _restore_facility_transfer(damaged_body, before, path)
+
+    current_record, = (row for row in read_text(current, path)
+                       if row.address == FACILITY_ADDRESS)
+    damaged_mapping = write_body(
+        current.encode("utf-8"), current_record, "src/base.h").decode("utf-8")
+    with pytest.raises(AssertionError, match="facility body migration target changed"):
+        _restore_facility_transfer(damaged_mapping, before, path)
 
 
 @pytest.mark.parametrize("damage", ("outside_body", "outside_binding", "identity", "failed_restoration"))

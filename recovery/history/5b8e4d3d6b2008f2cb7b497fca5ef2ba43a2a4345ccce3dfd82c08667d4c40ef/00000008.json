@@ -1,0 +1,26 @@
+{
+  "event_id": "ec1b716dc4eaf7dccca9889b93e3c2712c0c7f3a984ce3241b9496598c72770e",
+  "payload": {
+    "affects": [
+      "entity-0fc721491660b5cd0595b44b331f22f8c392edf5e695c0896621da06ac83bcf7",
+      "entity-7e1927d2edca9bf8b87efb933e9a496195b7aec43c021555e234097bfc6b9b67",
+      "entity-ba01b215afa5e70dccc06b99c2b8b2834e9c5d0d984c0be016cebebbb8fe8b6d"
+    ],
+    "author": "coordinator",
+    "discovery_id": "selected-base-facility-direct-predicate-investigation-oct21y",
+    "evidence": [
+      "Coordinator authorizes at most two native private-overlay alternatives within existing source/header/function scope: direct typed predicate retaining bool, and the same body returning int with an explicit native-writer-produced emitted-symbol fact. Original markers/spans/historical claims and all object/layout bindings remain fixed; no live source or signature change is authorized by a score alone.",
+      "Pinned body independently shows selected-base read before signed65guard, bitmask(input,&facility_id,&mask) with argument-slot alias, and byte facilities test. The original callable body directly owns that behavior; the reconstructed forwarding layer gives the inliner a smaller wrapper and leaves16wrong-callee edges in base_build. A direct body is an evidence-led structural hypothesis, not an invented noinline/retention trick.",
+      "Return type remains uncertain: historicalbooldecoration is reconstructed, not binary debug proof. Actual original consumers useEAX, including arithmetic and indexing, with noAL-only/movzx sites observed; full-register callee normalization alone is not proof ofint. The privateintalternative tests this ABI hypothesis while preserving0/1 semantics. Adoption needs independent actual compiler/body/caller evidence, not merely a smaller byte distance.",
+      "Use the existing general native variant engine because explicit body-path mappings are intentionally outside the local-only screen. Require unchanged whole-object replicas, separately compiled body/header damage witnesses, fresh task/source/compiler inputs and both configured flag trials. Every task-TU/dependency failure remains visible. No new CLI, checker relaxation, forced flags, fixed addresses, casts, source banking or baseline reset.",
+      "The first trial collateral191/9 and legacy historical fixture failures remain unresolved. This investigation neither enlarges physical waivers nor proves outside-scope semantic preservation. Preserve all structural and restoration obligations for reviewed integration."
+    ],
+    "hypothesis": "Own the guarded original predicate directly instead of forwarding through the explicit-base overload; measure bool and full-EAX int return contracts privately before any source adoption.",
+    "kind": "discovery"
+  },
+  "previous_event": "91010ebea035ce76bef85738a8c18d0b40464d2d601d99aa29c19d70945cf880",
+  "request_id": "selected-base-facility-direct-predicate-investigation-oct21y",
+  "schema_version": 1,
+  "sequence": 8,
+  "stream": "task:bitmask-owner-oct16"
+}

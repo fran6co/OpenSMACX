@@ -1,0 +1,26 @@
+{
+  "event_id": "3a4dabd46b5611187779135d7e870e213c68dab849ab01154dbd2272e840c3a2",
+  "payload": {
+    "affects": [
+      "entity-0fc721491660b5cd0595b44b331f22f8c392edf5e695c0896621da06ac83bcf7",
+      "entity-7e1927d2edca9bf8b87efb933e9a496195b7aec43c021555e234097bfc6b9b67",
+      "entity-ba01b215afa5e70dccc06b99c2b8b2834e9c5d0d984c0be016cebebbb8fe8b6d"
+    ],
+    "author": "coordinator",
+    "discovery_id": "selected-base-facility-call-boundary-source-oct21y",
+    "evidence": [
+      "Move the existing one-argument body unchanged except removal of inline from base.h into base.cpp immediately after the complete base_build body and before base_maint. The header now has its ordinary bool(int) declaration; the distinct int(int,int) overload is unchanged. Native writer changes only the500290 body-location token. All original markers, historical claims and lessons remain intact.",
+      "Pinned original500290..5002DE reads selected-base ID before signed65guard, calls bitmask once, tests the byte facilities member and returns canonical0/1. Originalbase_build has16directcalls to500290. Originalbase_maint has no such call and two directbitmask calls; stale historical prose saying one is not current evidence. No original unsafe path or logic is normalized.",
+      "The bool decoration is a historical reconstructed identity retained for this unchanged-body experiment, not independent proof of original ABI. Original post-call consumers use fullEAX, including arithmetic/indexing; a later evidence-backed return-ABI investigation remains possible, but is not authorized by this source transport.",
+      "Worker focused host controls reported7PASS1SKIP before explicit image environment; coordinator will rerun and capture actual final results. Existing production/economy historical guards and fixture failures remain red; a parent continuity node independently fails at mapping-key equality before this migration. Narrow inverse-transfer bridge leaves all unrelated source and original baseline guards intact. No broad failure waiver or baseline reset.",
+      "Unadmitted source checkpoint only. Fresh native application build/link, helper emission, original caller boundary, base_maint preservation, narrow physical residual, claims/references/mappings and full matching/reference census remain required. No implementation-count, byte claim, automatic or game acceptance is granted."
+    ],
+    "hypothesis": "Ordinary definition placement can restore the original standalone selected-base helper in base_build while leaving its later base_maint inline context intact.",
+    "kind": "discovery"
+  },
+  "previous_event": "7c99293a4351fab91b5e1359f1a6f7b1f866da59a033982e30f99d5c8df06679",
+  "request_id": "selected-base-facility-call-boundary-source-oct21y",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:bitmask-owner-oct16"
+}
