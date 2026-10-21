@@ -1,0 +1,22 @@
+{
+  "event_id": "9cb9168b9aa765f5bdb4396304dfc577af6905f4160a9bb55d71d59ee4585755",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/win.cpp",
+      "src/win_input.cpp"
+    ],
+    "evidence": [
+      "Completed the single two-existing-TU private control with exact observed production commands unchanged. Two actual-command whole-object replays, two unchanged atomic overlays and two compile-success/body-damage controls all pass. Moving the complete get_key_window block into existing win_input.cpp restores five emitted direct calls from window_proc; only these two mapped function signatures change. All231known Win records retain their identity/history and previous verdict; there is no new byte-exact claim or source adoption.",
+      "Coordinator disposition: preserve the complete proposal and controls, but defer production TU adoption pending compiler-provenance review. Current production /Ob2 differs from historical matching trial flag sets; original out-of-line call topology alone cannot distinguish a source-boundary explanation from original inlining policy. Do not use arbitrary file splitting or flag changes to manufacture matching. Fresh evidence-backed compiler-policy diagnostic needs separate authority, unchanged/damage controls and full-owner measurement. The reviewed20ordinary-global proposals are independently ready for separate source scope; regenerate their stale Win snapshot after the focus merge.",
+      "RESOURCE ATTRIBUTION CORRECTION: the earlier statement that the ordinary guard AssertionError quarantined worker-15 was false. The actual native resource_environment releases its ownership marker on completed ordinary Exception; only abrupt/BaseException interruption retains quarantine. No marker was manually cleared, no resource was reclaimed outside the native allocator, and the fresh control used worker-15 under a new valid exclusive lease. All provisioned15..22active/quarantine markers are absent after terminal execution, including worker-16; do not propagate earlier stale-summary assumptions. Production C++, compiler environment and build flags remain byte-identical to verified source checkpoint148f78119."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "af6ecb491a9be1cc4789e64bda9767a2bb2d57543d1ad0c344bc474a6a0cadaf",
+  "request_id": "central-win-input-control-disposition-oct21g",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:win-keyboard-focus-members-oct9"
+}
