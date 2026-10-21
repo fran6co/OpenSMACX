@@ -566,7 +566,7 @@ int __cdecl tech_ai(int faction_id) {
 /*
 Purpose: Get power_value from technology struct for tech id.
 // ORIGINAL: 0x005BDD70 ?tech_mil@@YAHH@Z 0x005BDD70-0x005BDD8E BYTE_EXACT
-// body      src/technology.h
+// body      src/technology.cpp
 // size      30 bytes
 // prototype
 // callers   1   call targets   0
@@ -576,22 +576,29 @@ Purpose: Get power_value from technology struct for tech id.
 Return Value: power_value or 0 if tech_id is greater than max
 Status: Complete
 */
-// BODY IN technology.h, as `MEASURED inline`: the image writes it out at
-// some call sites and calls it at others, and a .cpp definition is only ever
-// one of those. The marker stays here because that is where the catalogue
-// reads it.
+// HISTORICAL PLACEMENT NOTE (superseded): this body was in technology.h as
+// `MEASURED inline`. The image writes it out at some call sites and calls it
+// at others, and a .cpp definition is only ever one of those. The marker stays
+// here because that is where the catalogue reads it.
 // LEVER: branch polarity - guard clause 'if (tech_id < MaxTechnologyNum) return
 //        Technology[tech_id].power_value; return 0;' instead of the
 //        '(tech_id >= MaxTechnologyNum) ? 0 : ...' ternary. The ternary put the
 //        constant-return block first; the guard clause falls through to the
 //        work and tails the constant return, matching the image's jge-past-work
 //        layout.
+MEASURED int __cdecl tech_mil(int tech_id) {
+    // TODO: why only this one returns 0 with other three returning 1? typo/bug?
+    if (tech_id < MaxTechnologyNum) {
+        return Technology[tech_id].power_value;
+    }
+    return 0;
+}
 
 
 /*
 Purpose: Get tech_value from technology struct for tech id.
 // ORIGINAL: 0x005BDD90 ?tech_tech@@YAHH@Z 0x005BDD90-0x005BDDB1 BYTE_EXACT
-// body      src/technology.h
+// body      src/technology.cpp
 // size      33 bytes
 // prototype
 // callers   1   call targets   0
@@ -601,17 +608,23 @@ Purpose: Get tech_value from technology struct for tech id.
 Return Value: tech_value or 1 if tech_id is greater than max
 Status: Complete
 */
-// BODY IN technology.h, as `MEASURED inline`: the image writes it out at
-// some call sites and calls it at others, and a .cpp definition is only ever
-// one of those. The marker stays here because that is where the catalogue
-// reads it.
+// HISTORICAL PLACEMENT NOTE (superseded): this body was in technology.h as
+// `MEASURED inline`. The image writes it out at some call sites and calls it
+// at others, and a .cpp definition is only ever one of those. The marker stays
+// here because that is where the catalogue reads it.
 // LEVER: branch polarity - same guard-clause rewrite as tech_mil.
+MEASURED int __cdecl tech_tech(int tech_id) {
+    if (tech_id < MaxTechnologyNum) {
+        return Technology[tech_id].tech_value;
+    }
+    return 1;
+}
 
 
 /*
 Purpose: Get wealth_value from technology struct for tech id.
 // ORIGINAL: 0x005BDDC0 ?tech_infra@@YAHH@Z 0x005BDDC0-0x005BDDE1 BYTE_EXACT
-// body      src/technology.h
+// body      src/technology.cpp
 // LEVER: same guard-clause rewrite as tech_tech/tech_colonize - the ternary
 // spelling (`(tech_id >= Max) ? 1 : *(&Technology[tech_id].wealth_value)`)
 // was a different program, not just a different shape.
@@ -624,16 +637,22 @@ Purpose: Get wealth_value from technology struct for tech id.
 Return Value: wealth_value or 1 if tech_id is greater than max
 Status: Complete
 */
-// BODY IN technology.h, as `MEASURED inline`: the image writes it out at
-// some call sites and calls it at others, and a .cpp definition is only ever
-// one of those. The marker stays here because that is where the catalogue
-// reads it.
+// HISTORICAL PLACEMENT NOTE (superseded): this body was in technology.h as
+// `MEASURED inline`. The image writes it out at some call sites and calls it
+// at others, and a .cpp definition is only ever one of those. The marker stays
+// here because that is where the catalogue reads it.
+MEASURED int __cdecl tech_infra(int tech_id) {
+    if (tech_id < MaxTechnologyNum) {
+        return Technology[tech_id].wealth_value;
+    }
+    return 1;
+}
 
 
 /*
 Purpose: Get growth_value from technology struct for tech id.
 // ORIGINAL: 0x005BDDF0 ?tech_colonize@@YAHH@Z 0x005BDDF0-0x005BDE11 BYTE_EXACT
-// body      src/technology.h
+// body      src/technology.cpp
 // size      33 bytes
 // prototype
 // callers   1   call targets   0
@@ -643,11 +662,17 @@ Purpose: Get growth_value from technology struct for tech id.
 Return Value: growth_value or 1 if tech_id is greater than max
 Status: Complete
 */
-// BODY IN technology.h, as `MEASURED inline`: the image writes it out at
-// some call sites and calls it at others, and a .cpp definition is only ever
-// one of those. The marker stays here because that is where the catalogue
-// reads it.
+// HISTORICAL PLACEMENT NOTE (superseded): this body was in technology.h as
+// `MEASURED inline`. The image writes it out at some call sites and calls it
+// at others, and a .cpp definition is only ever one of those. The marker stays
+// here because that is where the catalogue reads it.
 // LEVER: branch polarity - same guard-clause rewrite as tech_mil.
+MEASURED int __cdecl tech_colonize(int tech_id) {
+    if (tech_id < MaxTechnologyNum) {
+        return Technology[tech_id].growth_value;
+    }
+    return 1;
+}
 
 
 /*

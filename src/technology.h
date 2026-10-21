@@ -193,34 +193,13 @@ MEASURED inline LPSTR __cdecl tech_name(int tech_id, BOOL category_lvl) {
     return TechName;
 }
 
-MEASURED inline int __cdecl tech_mil(int tech_id) {
-    // TODO: why only this one returns 0 with other three returning 1? typo/bug?
-    if (tech_id < MaxTechnologyNum) {
-        return Technology[tech_id].power_value;
-    }
-    return 0;
-}
-
-MEASURED inline int __cdecl tech_tech(int tech_id) {
-    if (tech_id < MaxTechnologyNum) {
-        return Technology[tech_id].tech_value;
-    }
-    return 1;
-}
-
-MEASURED inline int __cdecl tech_infra(int tech_id) {
-    if (tech_id < MaxTechnologyNum) {
-        return Technology[tech_id].wealth_value;
-    }
-    return 1;
-}
-
-MEASURED inline int __cdecl tech_colonize(int tech_id) {
-    if (tech_id < MaxTechnologyNum) {
-        return Technology[tech_id].growth_value;
-    }
-    return 1;
-}
+// PickTech::pick calls these out of line at 0x00486946, 0x00486951,
+// 0x0048699D, 0x004869A7 and 0x004869B2. Definitions live in technology.cpp;
+// these observed calls do not establish historical TU ownership elsewhere.
+MEASURED int __cdecl tech_mil(int tech_id);
+MEASURED int __cdecl tech_tech(int tech_id);
+MEASURED int __cdecl tech_infra(int tech_id);
+MEASURED int __cdecl tech_colonize(int tech_id);
 
 MEASURED inline int __cdecl tech_recurse(int tech_id, int base_lvl) {
     if (tech_id < 0 || tech_id >= MaxTechnologyNum) {
