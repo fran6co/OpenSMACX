@@ -1,0 +1,20 @@
+{
+  "event_id": "285e77d2504d345e5cc0def2dd057cd088e78b853f800e45803e36f73ec193db",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_social_upheaval_signed_cost_oct20.py"
+    ],
+    "evidence": [
+      "The authorized unchangedbody relocation makes the existing six signed-cost tests fail before compilation because their extractor requires MEASUREDinline infaction.h. Author must update only their source-owner extraction and signature-specific damage anchors to the actual ordinary faction.cpp definition. Preserve every semantic assertion, input, original signed/negative division witness and compiler-success mutant. Do not skip/remove/weaken tests or change product C++ beyond the prior grant.",
+      "This is a fixture reader migration, not a product behavior correction or new byte/ABI claim. Rerun all six old controls plus nine new body/ownership/mutant cases. The nativecompiler/headerclosure/directive/buildlink/claims checks remain pending. Original task baseline and all source obligations are retained."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "c44af2f4ddce5ab6051aa2d61c9b3866d7756cb1833fbaa154c5d4dd73d7a4af",
+  "request_id": "central-faction-existing-social-cost-fixture-owner-reader-oct21v",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:owner-faction-body-recovery-oct20ao"
+}
