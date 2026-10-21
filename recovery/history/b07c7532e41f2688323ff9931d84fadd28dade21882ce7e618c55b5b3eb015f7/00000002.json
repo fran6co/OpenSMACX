@@ -1,0 +1,56 @@
+{
+  "event_id": "ef6be816a9d47e1d6af02c743770370b50b0d6e3fb8f6ff995ac3474e4d46374",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "CMakeLists.txt",
+      "recovery/tests/test_win_coordinates_owner_oct21.py",
+      "src/win.cpp",
+      "src/win_coordinates.cpp"
+    ],
+    "evidence": [
+      "Standing user authority for faithful C++ recovery and coordinator-reviewed integration. Positive finite native controls at214474fe7 replay unchanged actual application Release recipes and unchanged complete overlays; retained/isolated executable damage controls detected. This is a source-level semantic partition preserving existing ownership/APIs, not proven original file membership or a new inline policy. No compiler/flags/types/wrapper/algorithm/source-symbol changes or fabricated object storage.",
+      "Authorize apply_patch transport of the exact reviewed annotated function/history blocks into named ordinary owner modules, validated through native parser/writer roundtrip and complete record metadata/history union. Existing copyright/license may be copied. Never manually create/edit Original markers or claim tokens. Preserve old claims and baselines. No further semantic edits or variant loops. Existing header export/MEASURED policy is unchanged, not endorsed historical code.",
+      "Isolated authors only edit their listed source/test files and run host controls; coordinator owns all Git/tasks/preparation/native compilation/recording and shared CMake edits. New sources carry exact parent recipe, including existing Oy- on faction/veh only. Fresh actual candidate and destination application builds/links and complete census must validate gains/collateral; account every new TU definition, ordinary data/startup/directive/export/provider obligation. Physical residual observations are not full linked retained-selection or structural/runtime proof. Missing/unknown evidence stays visible, no automatic or game acceptance.",
+      "Adopt only B six-coordinate-callers proposal, preserving both XY primitives in win.cpp. A-two-primitives remains rejected: it regresses formerly exact5ED3F0. B restores all6originalcalls under actual flags, no remaining Win function signature changes across237records and physical residual pass. Preserve unusual RECT FILE annotation provenance while placing it by its genuine RECT definition; all unrelated145intervening identities remain intact. Add C++98 actual-source coordinate tests for nested parents, both flag gates, null guards where present, GetCursorPos contract, output/alias behavior and meaningful mutants. Preserve rereads of win_parent_; no cached receiver or safety changes."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6211744,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6213408,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6213600,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6213792,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6214000,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6214944,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "809fc5d25fc62c1d80aff49d7a1ee7e24a4dfe0b5ee02e683b64ff0f5bd37e4d",
+  "request_id": "central-win-call-boundary-owner-oct21e",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:wide-win-source-decks-oct20n"
+}

@@ -1,0 +1,111 @@
+{
+  "event_id": "80d0b094fbf4624e3ead754fe1bf8326e9fe7ce257cdb502d8d46d44763a84d2",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "CMakeLists.txt",
+      "recovery/tests/test_vehicle_psi_owner_oct21.py",
+      "src/veh.cpp",
+      "src/vehicle_psi.cpp"
+    ],
+    "evidence": [
+      "Standing user authority for faithful C++ recovery and coordinator-reviewed integration. Positive finite native controls at214474fe7 replay unchanged actual application Release recipes and unchanged complete overlays; retained/isolated executable damage controls detected. This is a source-level semantic partition preserving existing ownership/APIs, not proven original file membership or a new inline policy. No compiler/flags/types/wrapper/algorithm/source-symbol changes or fabricated object storage.",
+      "Authorize apply_patch transport of the exact reviewed annotated function/history blocks into named ordinary owner modules, validated through native parser/writer roundtrip and complete record metadata/history union. Existing copyright/license may be copied. Never manually create/edit Original markers or claim tokens. Preserve old claims and baselines. No further semantic edits or variant loops. Existing header export/MEASURED policy is unchanged, not endorsed historical code.",
+      "Isolated authors only edit their listed source/test files and run host controls; coordinator owns all Git/tasks/preparation/native compilation/recording and shared CMake edits. New sources carry exact parent recipe, including existing Oy- on faction/veh only. Fresh actual candidate and destination application builds/links and complete census must validate gains/collateral; account every new TU definition, ordinary data/startup/directive/export/provider obligation. Physical residual observations are not full linked retained-selection or structural/runtime proof. Missing/unknown evidence stays visible, no automatic or game acceptance.",
+      "Move only exact existing psi_factor public calculation block; all seven original callers remain unchanged. Whole172domain control restores five exact with no exact loss, helper physical signature unchanged. SIXTEEN retained functions change output due to transitive visibility/inlining; every one is explicit scope, including basic offense/defense, battle_compute, stack_check, wants_prototype, action_destruct, goody_box, propose_proto/prune_protos, veh_init/order_veh. Physical complement passed only after exposing all16, not as a protected-body waiver. Original source bodies remain byte-identical and whole actual census/target/read-order checks must cover collateral. Add actual-source C++98 psi controls for positive/negative rule/combat ratios, attacker/defender/project/fungal ordering, truncation and meaningful mutants, avoiding host signed-overflow assumptions."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5034736,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5248256,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5248432,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5249344,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5250464,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5744224,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5755504,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5755616,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5755744,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5755888,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5756032,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5764272,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5769312,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5851072,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6002048,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6021376,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6030288,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "143b82d5108a7ac53d122cf80bc8a569e8f56f253e530544bf1c072f016b9637",
+  "request_id": "central-vehicle-call-boundary-owner-oct21e",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:matching-veh-flags-oct20aa"
+}

@@ -1,0 +1,82 @@
+{
+  "event_id": "44e1f2e334cb5d754bf92ac9e5b3895c0e67eeb103b55f18dc86a64f4c01524f",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "CMakeLists.txt",
+      "recovery/tests/test_faction_diplomacy_text_owner_oct9.py",
+      "recovery/tests/test_faction_network_owner_oct21.py",
+      "src/faction.cpp",
+      "src/faction_network.cpp"
+    ],
+    "evidence": [
+      "Standing user authority for faithful C++ recovery and coordinator-reviewed integration. Positive finite native controls at214474fe7 replay unchanged actual application Release recipes and unchanged complete overlays; retained/isolated executable damage controls detected. This is a source-level semantic partition preserving existing ownership/APIs, not proven original file membership or a new inline policy. No compiler/flags/types/wrapper/algorithm/source-symbol changes or fabricated object storage.",
+      "Authorize apply_patch transport of the exact reviewed annotated function/history blocks into named ordinary owner modules, validated through native parser/writer roundtrip and complete record metadata/history union. Existing copyright/license may be copied. Never manually create/edit Original markers or claim tokens. Preserve old claims and baselines. No further semantic edits or variant loops. Existing header export/MEASURED policy is unchanged, not endorsed historical code.",
+      "Isolated authors only edit their listed source/test files and run host controls; coordinator owns all Git/tasks/preparation/native compilation/recording and shared CMake edits. New sources carry exact parent recipe, including existing Oy- on faction/veh only. Fresh actual candidate and destination application builds/links and complete census must validate gains/collateral; account every new TU definition, ordinary data/startup/directive/export/provider obligation. Physical residual observations are not full linked retained-selection or structural/runtime proof. Missing/unknown evidence stays visible, no automatic or game acceptance.",
+      "Move only the exact six net treaty/agenda wrapper blocks, public declarations unchanged. Retain all six named log-label definitions/mappings in faction.cpp and existing extern declarations; no copied labels/global state. Controlled whole139domain yields five exact gains, no exact loss; five retained setup_player/communicate/comm_check/make_gift/propose_attack bodies also have changed output and remain explicit review/measurement scope, not waived. Add actual extracted six-wrapper C++98 host controls for local/network/wait paths, all arguments/opcodes/labels/receiver/call ordering and compile-success meaningful mutants. Update existing diplomacy-label consumer test to read the actual relocated owner, without weakening label/storage checks."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5476800,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5476912,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5477024,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5477136,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5477248,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5477360,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5529216,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5536784,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5570512,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5620784,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5967360,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "5ba953e5f4286d068038fb34fa078f21ed097fe7f90b2bb56771b1bdeaff73ad",
+  "request_id": "central-faction-call-boundary-owner-oct21e",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:wide-faction-source-decks-oct20n"
+}
