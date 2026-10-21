@@ -311,7 +311,7 @@ int __cdecl base_territory(int faction_id, int x, int y) {
     int base_id;
     int owner = whose_territory(faction_id, x, y, &base_id, false);
     if (owner >= 0 && faction_id != (uint32_t)owner && (is_human(faction_id) || is_human(owner))
-        && !has_treaty(faction_id, owner, DTREATY_VENDETTA)) {
+        && (PlayersData[faction_id].diplo_treaties[owner] & DTREATY_VENDETTA) == 0) {
         return base_id;
     }
     return -1;

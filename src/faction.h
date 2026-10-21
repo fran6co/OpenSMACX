@@ -1054,14 +1054,10 @@ inline BOOL __cdecl is_alien_faction(uint32_t faction_id) {
 // in faction.cpp, where social_ai also compiles.
 MEASURED int __cdecl social_upheaval(int faction_id, SocialCategory *category_new);
 
-// BODY IN faction.h, as `MEASURED inline` (marker stays in faction.cpp):
-// name_base (base.cpp) needs this folded in place - the image never calls
-// get_noun out of line there.
-MEASURED inline LPSTR __cdecl get_noun(int faction_id) {
-    GenderDefault = Players[faction_id].noun_gender;
-    PluralityDefault = Players[faction_id].is_noun_plural;
-    return Players[faction_id].noun_faction;
-}
+// Historical inline rationale: name_base (base.cpp) needs this folded in
+// place - the image never calls get_noun out of line there. The verified
+// name_base path now spells its own inline field/grammar operation.
+MEASURED LPSTR __cdecl get_noun(int faction_id);
 
 int __cdecl setup_player(int faction_id, int conqueror, int retry);
 int __cdecl eliminate_player(int faction_id, int conqueror);

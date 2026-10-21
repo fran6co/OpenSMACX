@@ -6047,7 +6047,9 @@ void __cdecl name_base(int faction_id, LPSTR name_out, BOOL is_final, BOOL is_se
     uint32_t offset = PlayersData[faction_id].base_name_offset + 1;
     // default if names exhausted
     name_out[0] = 0;
-    strcat(name_out, get_noun(faction_id));
+    GenderDefault = Players[faction_id].noun_gender;
+    PluralityDefault = Players[faction_id].is_noun_plural;
+    strcat(name_out, Players[faction_id].noun_faction);
     strcat(name_out, " ");
     char digits[0x54];
     _itoa(offset, digits, 10);

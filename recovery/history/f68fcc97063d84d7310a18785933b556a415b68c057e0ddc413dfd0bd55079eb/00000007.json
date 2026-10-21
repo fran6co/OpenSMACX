@@ -1,0 +1,26 @@
+{
+  "event_id": "019d96d90e44852135fc7c0211fbc466ae1125ffe6da8ad8015142d241c8f230",
+  "payload": {
+    "affects": [
+      "entity-21a0ac47b9730b4dfb23af579f0ddc1c680ac96d8e9cbb75518f654a9673b062",
+      "entity-4897768f1a4b3f8b8e7d1c8d3bb5a68794752f6f5004d54caebe26a163e3ac0c",
+      "entity-4d4f62e353620eac5a46dbc60626f37fd2cfd1825b2abe71242d9ad0076e8e61",
+      "entity-aeafc174d8964d4ea3865d8c33f417fa338baa1ff58cd1088ef0d9be5a8e6df2"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "faction-noun-api-and-positive-inline-restoration-source-oct21w",
+    "evidence": [
+      "Unchangedone-argumenttypedget_nounbody movesheader→canonicalfaction.cpp underordinaryMEASUREDLPSTRcdeclheaderAPI. Coordinatornativewrite_body updatesonlybodypath; Original/spans/emittedsymbol/historicalBYTE_EXACTandLEVERnotespreserved. Oldinlinereasonretainedexplicitlyhistorical. No flags/wrapper/noinline/rawaddresses/type/lifetime/algorithmchanges.",
+      "name_base changesONLYlandnounstrcat site topositivepinned4E4191..4E41B0Playersgender/pluralityreads,GenderDefault/PluralityDefaultwrites anddirectnoun_factionstrcat. Waterfile/PRNG/nameoffset/errorpathsuntouched. base_territory changesONLYpurehas_treatymasktesttosamePlayersData[faction_id].diplo_treaties[owner]&VENDETTA==0atunchangedshort-circuitposition, preservingowner/human/returnorder. Thisaddressesobserved119-bytehistoricalmatchlosswithoutrevertingdialogueowner; no unmeasuredrestoredclaim.",
+      "Fresh27focusedactual-sourcehostcasesPASS: prior25query/signedsocial/communicatecases plus2newGCC/ClangC++98controls. Newnounpointer/grammar/multiplefaction,name_baseboundedactualsnippetandcompletebase_territorybody witnessespass; sixcompile-successmutantswrongnounpointer,missedpluralitywrite,reversetreatyrow/columnfailatruntime. No fullname_base/fileloop/unsafe-pathproofclaimed. Sourceidentityclaims3457,requirements3468missing0.",
+      "Fullnative186TUapplication rebuild/link/currentmatching/reference/physicalresidualandindependentreviewpending. Previousff496/build-koceg922/112PASS87FAIL/3363exactreportsremain frozenearlierdiagnostics, notproof forthisnewsource. Foreignnounconsumerclosureismixedandnotfullycorrelated; no blanketcallerrewrite or presumedrestoration. Originaltaskbaselineandallpendingdiscoveriesretained; sourcecheckpointnotadmitted/gameaccepted."
+    ],
+    "hypothesis": "Ordinary faction noun API and separately evidenced inline field operations preserve original effects while enabling restoration of real dialogue calls and the historical territory predicate.",
+    "kind": "discovery"
+  },
+  "previous_event": "b85c0be85e9e539717ad4adfba7f450c6c035f542366d503bd87c6cb1829cd74",
+  "request_id": "faction-noun-api-and-positive-inline-restoration-source-oct21w",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:owner-faction-body-recovery-oct20ao"
+}
