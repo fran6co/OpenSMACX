@@ -1,0 +1,23 @@
+{
+  "event_id": "9d98f88177a7343671b6b29dd80dc2b21b0c5fa786763df37c7c66cca9d0a7a7",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_stringbox_owner_batch_oct20.py",
+      "src/stringbox.cpp"
+    ],
+    "evidence": [
+      "Coordinator directly decoded full pinned6292D0..629486 after reviewing width candidate. Original borrowed-list branch6293BD tests arglist, stores override6293C5, then jumps6293CB to629447. This skips embedded StringList current_position clear629441 and allocator clear629444, both only on the null-list arm. Current source unconditionally clears these two fields after the branch; initial author test incorrectly asserts borrowed allocator0.",
+      "Authorize moving only stringList_.current_position_=0 and stringList_.allocator_=0 into the existing null-list else immediately after remove_all. Existing close still clears current_position before GraphicWin::init but leaves allocator unchanged. Preserve current state on borrowed-list success, including values changed across GraphicWin initialization; null-list success retains original extra clears. Failed GraphicWin initialization still exits before either arm. Keep width correction and all remaining code, flags, ABI/layout/lifetimes, identities/claims/history unchanged.",
+      "Correct and strengthen existing actual-source init controls: borrowed pre-existing nonzero allocator survives; a GraphicWin initialization probe may modify embedded list cursor/allocator between close and list selection, and those values must survive borrowed selection but reset on null selection. This is an observation-order control, not a claim about a specific original callback. Add a compile-success mutant restoring unconditional clears, keep width/height mutant, default/custom flags, failed-init and original UNK2 controls. Anchor pinned branch6293CB->629447 and two skipped stores.",
+      "This is faithful original-effect restoration, not safety/bug-fix policy or new ownership. Preserve original task baseline and all past evidence. Author remains isolated, host tests only; coordinator handles native actual-production matching/build/link/physical protected checks, independent review and destination verification. Historical diagnostic incomplete/red reports remain unmodified. No automatic/full-game acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "684710ca1739af27de4f01cb3ee9a43205e9938ff7cf0d1a53569e03d7cd5c4f",
+  "request_id": "central-stringbox-borrowed-list-state-oct21c",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:stringbox-owner-batch-oct20"
+}
