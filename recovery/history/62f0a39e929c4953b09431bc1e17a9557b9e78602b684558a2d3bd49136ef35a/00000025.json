@@ -1,0 +1,19 @@
+{
+  "event_id": "b86185926f832bb4b471e51a62347d967b5359077af60962e7321a40ad4ec183",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "game-data-live-format-state-conflation-oct21zd",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Reviewed src/game.cpp restores the original distinct header selector and live format gates, exact reread/snapshot intervals and post-base vehicle/queue conversion order.37focused actual-source cases pass, including GCC/Clang compile-success wrong-selector, stale-read and early-conversion mutants. Original indeterminate write header, leaks and failure-visible mutation are deliberately preserved.",
+      "Fresh187TU201COFF application build/link, claims, mappings, source references and annotation integrity pass. Native production-recipe replay/replica/CPPdamage controls pass; only game_data output changes, all201projected object residuals pass, zero-omission200pass1fail. Known5581verdicts and strict2819pass548unknown unchanged. Target remainsMISMATCH, instruction agreement49to22of3243; keep source-correct recovery without claiming a match or changing historical claims.",
+      "Standing user permission authorizes coordinator-reviewed manual integration. Source/test and artifact reviews completed independently. This resolves only the live-format/order translation defect, not the game_data uninitialized-header runtime dependency. No task baseline, build flags, mapping, historical claim, automatic refusal, linked preservation or full-game acceptance changed. Fresh destination verification follows; bounded runtime results are retained separately, not acceptance."
+    ]
+  },
+  "previous_event": "7ea19f8ea2813f7fe88c6c196ab59f4d10d923f069a2f0b04c98fdc4b11560d0",
+  "request_id": "game-data-live-format-reviewed-incorporation-oct21zf",
+  "schema_version": 1,
+  "sequence": 25,
+  "stream": "task:game-save-load-owner-coverage"
+}
