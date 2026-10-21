@@ -148,10 +148,14 @@ void ReportIf::on_status(int mode) {
     window.fill(9); report_faction_id_ = ConsoleGlobal.faction_id_;
     for (int history = 0; history < 19; ++history) report_page_history_[history] = -1;
     window.shared_report_selection() = -1; field_1E1D8_ = 1;
-    int research = PlayersData[report_faction_id_].tech_id_researching;
-    if (!((GameDataStateStorage.fields_.game_state_ & 0x80) || !(GameDataStateStorage.fields_.game_rules_ & 0x200)) || research < 0 || research > 89)
-        research = 0;
-    window.shared_research_focus() = research;
+    if ((GameDataStateStorage.fields_.game_state_ & 0x80) || !(GameDataStateStorage.fields_.game_rules_ & 0x200)) {
+        int research = PlayersData[report_faction_id_].tech_id_researching;
+        window.shared_research_focus() = research;
+        if (research < 0 || research > 89)
+            window.shared_research_focus() = 0;
+    } else {
+        window.shared_research_focus() = 0;
+    }
     for (int topic = 0; topic < 7; ++topic) {
         StringTemp[0] = 0; strcat(StringTemp, label_get(0x2B1 + topic));
         FlatButton &button = flatButtonsB_[topic];

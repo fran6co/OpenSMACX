@@ -1,0 +1,23 @@
+{
+  "event_id": "5c4cbbc6859a30f15411b7972f2527f29b2cc661a7f12243ad513893c452adda",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_reportif_research_gate_oct21m.py",
+      "src/reportif.cpp"
+    ],
+    "evidence": [
+      "Coordinator-reviewed faithful-source correction only in on_status4A41D0 researchprefix: original4A4252..4A4296 testsstate80/rules200 before PlayersData researchread, skipsread on disabledpath, storesrawfocus before invalidrangeclamp. CurrentRelease physicallyreadsbeforegate; correctedactualrecipeCOFF gatesread and retainsstore-beforeclamp. No newboundscheck, behaviorfix, type/header/ABI/flag/annotation/claim change; all otherstatuspaths unchanged.",
+      "Independent fulloriginal/actualdiff/currentCOFF review and24relatedhostcases pass. New narrowregionfixture extractsactualmappedsource and explicitlydistinguishes sourcecontrolflow/gatedread andfocusstoresequence; instrumentedhosttypes are testseams, not ABI/fullmethod/runtime proof. GCC/Clang actual and compile-success wronggate/unguardedread mutants establish boundedcontrol sensitivity. Nativeproductionrecipe replay/unchanged/damage controls pass.",
+      "Fresh185TU199object fullbuild/link plus claims/mappings/references pass. All199compiledcomplements pass with only4A41D0body projected and no unrelatedcode/data/startup omission. Whole5581knownidentity outcomes3359masked/2801strictpass555unknown3fail unchanged. Bodyremains mismatch; matching33to40of1982instructions is not recoverycompletion. Preserve originaltaskbase24cd306f6ff78af03fdd11405f16ba297fa6da27 and all historicalobligations.",
+      "Manual originalfidelity checkpoint, not newfunctioncoverage, exact-countgain or full linkedselection/allocation/provider/structure/runtime/game/autonomous acceptance. Require fresh destinationbuild/link,24hostcases, wholecensus/strict and199zero-omission candidate reproduction before cleanup. No unmeasured claim granted or demoted."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "cc094363a7997048e23c1ccbab19e9d5262a676f3daf783016ed3817918b8231",
+  "request_id": "central-manual-reportif-research-gate-admission-oct21m",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:reportif-source-batch-oct19b"
+}
