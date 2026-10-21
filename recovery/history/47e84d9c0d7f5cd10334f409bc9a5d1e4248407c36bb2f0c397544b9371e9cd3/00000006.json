@@ -1,0 +1,28 @@
+{
+  "event_id": "8f7cc2bbaeca3837b859995e75d549780edc244d179d17c88a8f155e4b16f22f",
+  "payload": {
+    "affects": [
+      "entity-219cd0e2899423dd0c9bdcd0718b1406f9eccf7f28df77221b51278212dbc055",
+      "entity-5593b94b5eb67a238f9d41720f181fb144a174410bc5c7c346e65df78e6bbc72",
+      "entity-96dadf05f6cba9342cacfb7f5c6dcf826d71fd85d8f5dc99c0410ad135f92a17",
+      "entity-c07f1ce86a5f653e22dee09a2df5ee8f3f8ff0ebb4415063e76507b1d408d578",
+      "entity-c3ab6505cda74476379be71d572ca1adfe37784f992bf5d8728e321d44f07b68",
+      "entity-f2a45ff703697b88649f83ff5b99f0f5b226c869353d3a810aa61d252a776a8c"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "inline-lifetimes-collateral-output-oct22b",
+    "evidence": [
+      "The first fresh 201-object build exposed six collateral mapped bodies in faction.cpp, game.cpp and prefwin.cpp. Their complete source bodies are byte-identical to master, but compiler output changes register/load ordering or commuted addressing; game_data and PrefWin::init also exchange two relocation operand slots. These are real observations, not an automatic harmless-header classification.",
+      "Expand compiled-impact investigation to these six existing identities, plus the newly observed AlphaSave copy of the already mapped ListBox complete-object/vbase destructor at 0x4080B0. No unrelated source edits are authorized. Preserve the original task baseline, prior work, claims and any byte-restoration obligations. Require independent instruction/dataflow, flags, memory/reference/call and final reproduction review before a bounded manual integration decision.",
+      "The raw all-object comparison reports 192 passes and 9 failures with zero projection. Additional genuine class-header generated bodies, vtables, weak aliases and inherited Win inline-method copies must be individually accounted for, not erased with a TU-wide waiver. The three uncomparable CMake helper _main function signatures are distinct from the nine application-object residuals.",
+      "This scope expansion and discovery do not prove semantic equivalence, linked selection, native preservation or acceptance. Existing native refusals remain refusals; extra copies are not newly discovered original identities or increased function coverage."
+    ],
+    "hypothesis": "The natural header visibility migration changes six unchanged-source compiled bodies; their fidelity and restored byte obligations require a separate bounded review.",
+    "kind": "discovery"
+  },
+  "previous_event": "fba8d14d83b941f127a967ba8cbae673ae4ad3f02216a56981acd091ed20764f",
+  "request_id": "inline-lifetimes-collateral-output-oct22b",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:filewin-jackal-boundary-oct9"
+}

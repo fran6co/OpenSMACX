@@ -1,0 +1,56 @@
+{
+  "event_id": "fba8d14d83b941f127a967ba8cbae673ae4ad3f02216a56981acd091ed20764f",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "The first fresh 201-object build exposed six collateral mapped bodies in faction.cpp, game.cpp and prefwin.cpp. Their complete source bodies are byte-identical to master, but compiler output changes register/load ordering or commuted addressing; game_data and PrefWin::init also exchange two relocation operand slots. These are real observations, not an automatic harmless-header classification.",
+      "Expand compiled-impact investigation to these six existing identities, plus the newly observed AlphaSave copy of the already mapped ListBox complete-object/vbase destructor at 0x4080B0. No unrelated source edits are authorized. Preserve the original task baseline, prior work, claims and any byte-restoration obligations. Require independent instruction/dataflow, flags, memory/reference/call and final reproduction review before a bounded manual integration decision.",
+      "The raw all-object comparison reports 192 passes and 9 failures with zero projection. Additional genuine class-header generated bodies, vtables, weak aliases and inherited Win inline-method copies must be individually accounted for, not erased with a TU-wide waiver. The three uncomparable CMake helper _main function signatures are distinct from the nine application-object residuals.",
+      "This scope expansion and discovery do not prove semantic equivalence, linked selection, native preservation or acceptance. Existing native refusals remain refusals; extra copies are not newly discovered original identities or increased function coverage."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5536784,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5967360,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5392496,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5925568,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5410976,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4773952,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4227248,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "366d90288b8eee92c03a92e37552824c86b3ca12f584486ebc9711a40372c2f2",
+  "request_id": "inline-lifetimes-collateral-compiled-scope-oct22b",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:filewin-jackal-boundary-oct9"
+}
