@@ -1,0 +1,51 @@
+{
+  "event_id": "5c57b5615ec2efc428f7f47d4e9d3a4991adbf383eb0cb241507cab9f7f30d50",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_global_starts_oct21l.py",
+      "src/alpha.cpp",
+      "src/base.cpp",
+      "src/game.cpp"
+    ],
+    "evidence": [
+      "Standing coordinator-reviewed faithful recovery authority, no task baseline reset. Add exactly six unbounded v1 bindings next to existing definitions via guarded native object_writer: TimeControl94F1B8, SocialEffects946580, BaseAtErrorGuard90EA38, BaseAtDebugPopupFlag93A94C, GameDataStateStorage9A6490, CoverWindow937118. Pinned operands, existing typed declarations and actual external COFF definitions are reviewed in parallel-match-oct21k/timecontrol-binding and ui-data-frontier; grouped writer/start/symbol ownership preflight is cached in global-start-cohort. No function bodies/identities/spans/symbols/claims, types, capacities, initialization, lifetime, flags or historical annotations change.",
+      "GameDataStateStorage start is source-supported but native target remains unknown because its25existingv3member layouts lack standalone CodeView types in currentReleaseCOFF. This is not reference closure, full layout, or a waiver. RulesStorage parent is expressly excluded: unbounded direct start conflicts with offset-zero TechValidCount; no proven parent span exists and none may be invented. All existing bindings and task baselines remain.",
+      "Only coordinator publishes source bindings, tasks, Git, native compilation/preparation, integration and cleanup. Isolated worker may author only test_global_starts_oct21l.py, checking exact source/native starts and decoded pinned operands with explicit image pin, no proprietary data copies or personal-path fallback. Source tests stay useful when image is absent through explicit skips; live coordinator verification requires zero skips. CoverTime selection/refresh, producer stride and original operand read/write directions must not be inferred from source names alone.",
+      "Require native writer exact-byte reproduction and complete prior source continuity; fresh full185TU199object build/link, zero-omission compiled equality to currentmaster, claims/mappings/references, full5581knownidentity masked and strict-reference delta, independent actual-source review and fresh master reproduction before cleanup. Six object starts are not six functions, exact gains or acceptance. New strict failures must be reported/investigated, not hidden by dropping correct bindings or weakening checks. No automatic, linked-selection/allocation, structure/runtime or game acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5337184,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5126736,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5796800,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5804848,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5389408,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "f3e9e16986e378ae9ddd00d028ccc1410b0fad1aa8963e25a4b6d3c02044db72",
+  "request_id": "central-six-original-global-starts-oct21l",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:ordinary-global-owner-bindings-oct21h"
+}
