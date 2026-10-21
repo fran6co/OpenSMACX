@@ -1,0 +1,21 @@
+{
+  "event_id": "055135fee79fc35752ba1c4bfa3a92d18556a1c4abfd2cbc2963cf86e6c7b871",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/win.cpp",
+      "src/win_input.cpp"
+    ],
+    "evidence": [
+      "Correct one factual assumption in the private input-owner control grant: unlike the vehicle formatter recipe, these Win TUs have NO explicit /Oy- in either current compilation database command or fresh physical VC6 compile receipts. The control refused before compiler or resource acquisition when its assertion required /Oy-. No source/production flag/prefix state changed. Preserve that refusal and use a new output directory.",
+      "Authorize the same single finite two-TU source grouping control with the exact observed ordered /O2 /Ob2 /DNDEBUG commands and all other existing flags unchanged; do NOT add /Oy- or select a different flag policy. Actual-command replay and unchanged-overlay whole-object equivalence are required independently for both TUs. All earlier scope, count, damage, source/history preservation and no-adoption constraints remain unchanged. This corrects an authorization description, not compiler policy or the original task baseline."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "6d5b4a5f5f5f8b9642a4a9ab4a1aa6911aeed819cd8c6a1b2112986cfb0b1350",
+  "request_id": "central-correct-win-control-recipe-fact-oct21g",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:win-keyboard-focus-members-oct9"
+}
