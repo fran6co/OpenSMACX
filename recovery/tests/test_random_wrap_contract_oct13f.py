@@ -7,6 +7,7 @@ it does not claim full original caller closure or linked/runtime equivalence.
 from __future__ import annotations
 
 from pathlib import Path
+import re
 import shutil
 import subprocess
 
@@ -35,10 +36,10 @@ def product_fragments():
     implementation = (ROOT / "src/random.cpp").read_text()
     random_class = extract_braced(header, "class Random {")
     reseed = extract_braced(
-        implementation, "MEASURED void Random::reseed(uint32_t new_seed)")
+        implementation, "void Random::reseed(uint32_t new_seed)")
     get = extract_braced(
-        implementation, "MEASURED uint32_t Random::get(int min, int max)")
-    get_double = extract_braced(implementation, "MEASURED double Random::get()")
+        implementation, "uint32_t Random::get(int min, int max)")
+    get_double = extract_braced(implementation, "double Random::get()")
     wrapper = extract_braced(implementation,
                              "uint32_t __cdecl random(int min, int max)")
     seed_getter = extract_braced(implementation, "uint32_t __cdecl random_get()")
@@ -171,14 +172,17 @@ def test_actual_random_header_and_free_wrapper_match_wrapping_oracle(
     assert "void reseed(uint32_t new_seed);" in random_class
     assert "uint32_t get(int min, int max);" in random_class
     assert "double get();" in random_class
-    assert random_class.count("MEASURED void reseed(uint32_t new_seed);") == 1
-    assert random_class.count("MEASURED uint32_t get(int min, int max);") == 1
-    assert random_class.count("MEASURED double get();") == 1
-    assert "MEASURED void reseed(uint32_t new_seed) {" not in random_class
-    assert "MEASURED uint32_t get(int min, int max) {" not in random_class
-    assert "MEASURED double get() {" not in random_class
-    assert reseed.startswith("MEASURED void Random::reseed")
-    assert get_double.startswith("MEASURED double Random::get()")
+    declarations = re.sub(r"/\*.*?\*/|//[^\n]*", "", random_class, flags=re.S)
+    assert re.search(r"(?m)^\s*MEASURED\s+Random\s*\(", declarations)
+    assert re.search(r"(?m)^\s*MEASURED\s+~Random\s*\(", declarations)
+    for declaration in ("void reseed(uint32_t new_seed);",
+                        "uint32_t get(int min, int max);", "double get();"):
+        assert re.search(r"(?m)^\s*" + re.escape(declaration) + r"\s*$", declarations)
+        assert not re.search(r"(?m)^\s*MEASURED\s+" +
+                             re.escape(declaration) + r"\s*$", declarations)
+    assert reseed.startswith("void Random::reseed")
+    assert get.startswith("uint32_t Random::get(int min, int max)")
+    assert get_double.startswith("double Random::get()")
     assert "static_cast<uint32_t>(max) - min" in get
     assert "if (min > max)" in get
     assert "seed_ = seed_ * 0x19660D + 0x3C6EF35F" in get

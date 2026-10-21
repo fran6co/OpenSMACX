@@ -195,7 +195,7 @@ def test_global_log_and_random_objects_own_startup_and_reverse_cleanup(tmp_path)
         #include <cstring>
         #define MEASURED
     """) + random_class + extract_log_owner_definition(
-        "MEASURED void Random::reseed(uint32_t new_seed)", source_path=RANDOM_CPP) + textwrap.dedent(r"""
+        "void Random::reseed(uint32_t new_seed)", source_path=RANDOM_CPP) + textwrap.dedent(r"""
         extern Random Rand;
         struct CleanupObserver {
             ~CleanupObserver() {
