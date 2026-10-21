@@ -321,8 +321,11 @@ jump-table target or selector byte, and the complete comparison envelope includi
 alignment gaps. A recognized unsigned guarded-dispatch path must establish the
 complete table domain; a single operand reference is insufficient extent evidence.
 The narrow i386 alignment domain admits NOP/INT3 fill and exactly an identical
-two-byte `MOV EDI,EDI` between an independently terminated body and its immediately
-following DWORD-aligned target table. It does not trim at a return, mask table cells, infer bounds from
+two-byte `MOV EDI,EDI` or the unprefixed three-byte default-width
+`LEA r32,[same_r32+disp8(0)]` (no index, segment override or REX prefix) between
+an independently terminated body and its immediately following DWORD-aligned
+target table. The LEA form is admitted only when the original and candidate gap
+bytes are identical. It does not trim at a return, mask table cells, infer bounds from
 the candidate's length, or replace an unresolved relocation with a passing mask.
 Unclaimed bytes, overlaps, extra entries, wrong targets/maps, absent evidence and
 unsupported EH/multi-entry layouts cannot pass. Ordinary checks without these

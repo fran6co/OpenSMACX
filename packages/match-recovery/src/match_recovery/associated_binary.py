@@ -26,6 +26,9 @@ from .pe_coff import Coff, PeImage, Symbol
 _ENGINE = Cs(CS_ARCH_X86, CS_MODE_32)
 _ENGINE.detail = True
 _FILL = frozenset((0x90, 0xCC))
+_GPR32 = frozenset((x86.X86_REG_EAX, x86.X86_REG_EBX, x86.X86_REG_ECX,
+                    x86.X86_REG_EDX, x86.X86_REG_ESI, x86.X86_REG_EDI,
+                    x86.X86_REG_EBP, x86.X86_REG_ESP))
 _SAFE_X87_MNEMONICS = frozenset(("fild", "fsub", "fsubr", "fld", "fld1", "fmul", "fstp"))
 _REGISTER_FAMILIES = {
     "al": "eax", "ah": "eax", "ax": "eax", "eax": "eax",
@@ -53,6 +56,38 @@ def _decode_exact(image: PeImage, span: Span):
     if not (last.mnemonic.startswith("ret") or last.id == x86.X86_INS_JMP):
         raise ValueError("source body must end at a decoded return or unconditional jump")
     return code, instructions
+
+
+def _is_canonical_lea_identity_padding(code: bytes) -> bool:
+    """Recognize only one unprefixed three-byte LEA r32,[r32+disp8(0)]."""
+    if type(code) is not bytes or len(code) != 3:
+        return False
+    instructions = list(_ENGINE.disasm(code, 0))
+    if len(instructions) != 1:
+        return False
+    instruction, = instructions
+    if (instruction.address != 0 or instruction.size != 3
+            or instruction.id != x86.X86_INS_LEA
+            or instruction.addr_size != 4
+            or instruction.disp_size != 1
+            or instruction.disp != 0
+            or instruction.rex != 0
+            or any(instruction.prefix)
+            or instruction.eflags != 0
+            or len(instruction.operands) != 2):
+        return False
+    destination, address = instruction.operands
+    if (destination.type != x86.X86_OP_REG or destination.size != 4
+            or destination.reg not in _GPR32
+            or address.type != x86.X86_OP_MEM or address.size != 4):
+        return False
+    memory = address.mem
+    return (memory.base == destination.reg
+            and memory.base in _GPR32
+            and memory.index == 0
+            and memory.scale == 1
+            and memory.disp == 0
+            and memory.segment == 0)
 
 
 def _symbol_target(obj: Coff, section_number: int, section_data: bytes, offset: int):
@@ -470,18 +505,33 @@ def compare_associated_code(obj: Coff, subject: Symbol, span: Span, image: PeIma
         switch_alignment = (left == span.end and right == table_binding.span.start
                             and original_gap == b"\x8b\xff" and len(original_gap) == 2
                             and span.end % 4 == 2 and table_binding.span.start % 4 == 0)
+        lea_identity_alignment = (
+            left == span.end and right == table_binding.span.start
+            and len(original_gap) == 3
+            and (span.end + len(original_gap)) % 4 == 0
+            and table_binding.span.start % 4 == 0
+            and _is_canonical_lea_identity_padding(original_gap)
+        )
+        if candidate_gap == original_gap and lea_identity_alignment:
+            # The candidate is classified only when it preserves the exact
+            # original instruction bytes. If it differs, keep the original
+            # gap bounded here and let the strict envelope comparison report
+            # the candidate byte mismatch below.
+            lea_identity_alignment = _is_canonical_lea_identity_padding(candidate_gap)
         ordinary_alignment = (left == span.end and right == table_binding.span.start
                               and len(original_gap) <= 3
                               and (span.end + len(original_gap)) % 4 == 0
                               and table_binding.span.start % 4 == 0)
         if (not original_gap or (any(byte not in _FILL for byte in original_gap)
-                                 and not switch_alignment)
-                or (not ordinary_alignment and not switch_alignment)
+                                 and not switch_alignment and not lea_identity_alignment)
+                or (not ordinary_alignment and not switch_alignment
+                    and not lea_identity_alignment)
                 ):
-            raise ValueError("unaccounted code/data gap is not identical NOP/INT3 alignment fill")
+            raise ValueError("unaccounted code/data gap is not a supported alignment form")
         if candidate_gap and (candidate_gap != original_gap
                               or (any(byte not in _FILL for byte in candidate_gap)
-                                  and not switch_alignment)):
+                                  and not switch_alignment
+                                  and not lea_identity_alignment)):
             # The strict whole-envelope comparison reports this candidate
             # mutation as a byte mismatch; do not reinterpret it as a gap.
             pass

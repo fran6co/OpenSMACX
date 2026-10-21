@@ -136,7 +136,21 @@ def test_actual_constructor_contract_rejects_damaged_initialization(tmp_path, mo
     assert original_read(target).count(before) == 1
     def damaged_read(path, *args, **kwargs):
         text = original_read(path, *args, **kwargs)
-        return text.replace(before, after) if path == target else text
+        if path != target:
+            return text
+        text = text.replace(before, after)
+        if unit == "src/sound.cpp" and before == "device_ = 0;":
+            # Reject this mutant before dispatch through its fabricated pointer.
+            # The unmodified constructor and its positive control are unchanged.
+            dispatch = "if (device_) {\n        sound_device(device_)->set_fade(fade);"
+            assert text.count(dispatch) == 1
+            text = text.replace(
+                dispatch,
+                "if (device_) {\n        assert(device_ == 0);\n"
+                "        sound_device(device_)->set_fade(fade);",
+                1,
+            )
+        return text
     monkeypatch.setattr(Path, "read_text", damaged_read)
     with pytest.raises(AssertionError):
         run_constructor(tmp_path, monkeypatch)

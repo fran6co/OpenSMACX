@@ -7,7 +7,8 @@ import pytest
 
 from match_recovery.associated_binary import compare_associated_code
 from match_recovery.associated_binary import (
-    _ENGINE, _guard_for_dispatch, _memory_operand, _prove_dispatch_extent,
+    _ENGINE, _guard_for_dispatch, _is_canonical_lea_identity_padding,
+    _memory_operand, _prove_dispatch_extent,
 )
 from match_recovery.associated_source import AssociatedDataBinding
 from match_recovery.model import Origin, Result, Span
@@ -20,12 +21,25 @@ GAP = b"\x8b\xff"
 TABLE_TARGET = BASE + 21
 
 
-def _original_envelope():
-    return BODY + GAP + struct.pack("<I", TABLE_TARGET) + b"\0"
+def _table_start() -> int:
+    return len(BODY) + len(GAP)
 
 
-def _pe_fixture():
-    original_envelope = _original_envelope()
+def _original_body():
+    body = bytearray(BODY)
+    table = BASE + _table_start()
+    struct.pack_into("<I", body, 9, table + 4)
+    struct.pack_into("<I", body, 16, table)
+    return bytes(body)
+
+
+def _original_envelope(*, gap_relocation=False):
+    body = _original_body()
+    return body + GAP + struct.pack("<I", TABLE_TARGET) + b"\0"
+
+
+def _pe_fixture(*, gap_relocation=False):
+    original_envelope = _original_envelope(gap_relocation=gap_relocation)
     raw = bytearray(1024)
     raw[:2] = b"MZ"
     struct.pack_into("<I", raw, 0x3C, 0x80)
@@ -38,7 +52,9 @@ def _pe_fixture():
     struct.pack_into("<IIII", raw, 0x180, 512, 0x1000, 512, 512)
     struct.pack_into("<I", raw, 0x178 + 36, 0x60000020)  # executable code/read
     raw[512:512 + len(original_envelope)] = original_envelope
-    sites = (9, 16, 24)
+    sites = (9, 16, _table_start())
+    if gap_relocation:
+        sites = (*sites, len(BODY))
     entries = [0x3000 + site for site in sites]
     block_size = 8 + 2 * len(entries)
     struct.pack_into("<II", raw, 0x98 + 96 + 5 * 8, 0x1100, block_size)
@@ -49,17 +65,25 @@ def _pe_fixture():
 
 
 def _coff_fixture(*, cell_addend=0, selector_byte=0, extra_relocation=False,
-                  candidate_gap=GAP):
+                  candidate_gap=None, gap_relocation=False,
+                  truncate_candidate_at=None):
     # The exact body and data bytes are represented by compiler output with
     # zeroed absolute fields plus physical same-section COFF relocations.
+    if candidate_gap is None:
+        candidate_gap = GAP
+    table_start = len(BODY) + len(candidate_gap)
     data = bytearray(BODY + candidate_gap + bytes(4) + bytes((selector_byte,)))
     data += b"\x90" * (-len(data) % 16)
     data[9:13] = bytes(4)
     data[16:20] = bytes(4)
-    struct.pack_into("<i", data, 24, cell_addend)
-    relocations = [(9, 4, 6), (16, 3, 6), (24, 5, 6)]
+    struct.pack_into("<i", data, table_start, cell_addend)
+    relocations = [(9, 4, 6), (16, 3, 6), (table_start, 5, 6)]
+    if gap_relocation:
+        relocations.append((len(BODY), 5, 6))
     if extra_relocation:
-        relocations.append((28, 4, 6))
+        relocations.append((table_start + 4, 4, 6))
+    if truncate_candidate_at is not None:
+        data = data[:truncate_candidate_at]
     relocation_blob = b"".join(struct.pack("<IIH", *row) for row in relocations)
 
     symbols = bytearray()
@@ -67,9 +91,9 @@ def _coff_fixture(*, cell_addend=0, selector_byte=0, extra_relocation=False,
     symbols += b".text\0\0\0" + struct.pack("<IhHBB", 0, 1, 0, 3, 1)
     # IMAGE_AUX_SYMBOL_SECTION_DEF, selection=ANY; length/count checked by Coff.
     symbols += struct.pack("<IHHIHB", len(data), len(relocations), 0, 0, 0, 2) + bytes(3)
-    symbols += b".Lswitch" + struct.pack("<IhHBB", 24, 1, 0, 6, 0)
-    symbols += b".Lselect" + struct.pack("<IhHBB", 28, 1, 0, 6, 0)
-    symbols += b".Lcase\0\0" + struct.pack("<IhHBB", 21, 1, 0, 6, 0)
+    symbols += b".Lswitch" + struct.pack("<IhHBB", table_start, 1, 0, 6, 0)
+    symbols += b".Lselect" + struct.pack("<IhHBB", table_start + 4, 1, 0, 6, 0)
+    symbols += b".Lcase\0\0" + struct.pack("<IhHBB", TABLE_TARGET - BASE, 1, 0, 6, 0)
 
     data_at = 60
     relocation_at = data_at + len(data)
@@ -82,21 +106,24 @@ def _coff_fixture(*, cell_addend=0, selector_byte=0, extra_relocation=False,
 
 
 def fixture(*, cell_addend=0, selector_byte=0, extra_relocation=False,
-            candidate_gap=GAP):
+            candidate_gap=None, original_gap_relocation=False,
+            candidate_gap_relocation=False, truncate_candidate_at=None):
     """Return (object, function, body span, pinned image, bindings, targets)."""
-    raw = _pe_fixture()
+    raw = _pe_fixture(gap_relocation=original_gap_relocation)
     pin = hashlib.sha256(raw).hexdigest()
     image = PeImage(raw, pin)
     obj = Coff(_coff_fixture(cell_addend=cell_addend, selector_byte=selector_byte,
                             extra_relocation=extra_relocation,
-                            candidate_gap=candidate_gap))
+                            candidate_gap=candidate_gap,
+                            gap_relocation=candidate_gap_relocation,
+                            truncate_candidate_at=truncate_candidate_at))
     subject = obj.function("_f")
     source_span = Span(BASE, BASE + len(BODY))
     owner = Origin(pin, "pe:va", BASE)
     bindings = (
-        AssociatedDataBinding(owner, Span(BASE + 24, BASE + 28), "switch_targets",
+        AssociatedDataBinding(owner, Span(BASE + _table_start(), BASE + _table_start() + 4), "switch_targets",
                               Origin(pin, "pe:va", BASE + 13), "fixture.cpp", 2),
-        AssociatedDataBinding(owner, Span(BASE + 28, BASE + 29), "switch_selector",
+        AssociatedDataBinding(owner, Span(BASE + _table_start() + 4, BASE + _table_start() + 5), "switch_selector",
                               Origin(pin, "pe:va", BASE + 7), "fixture.cpp", 1),
     )
     return obj, subject, source_span, image, bindings, {}
@@ -241,7 +268,7 @@ def test_hotpatch_exception_requires_body_end_two_mod_four(monkeypatch):
     changed = BODY[:-1] + b"\x90\xc3"
     monkeypatch.setitem(globals(), "BODY", changed)
     obj, subject, span, image, bindings, targets = fixture()
-    with pytest.raises(ValueError, match="gap"):
+    with pytest.raises(ValueError, match="DWORD-aligned"):
         compare_associated_code(obj, subject, span, image, bindings, targets)
 
 
@@ -249,4 +276,132 @@ def test_original_table_target_inside_instruction_is_not_an_entry(monkeypatch):
     monkeypatch.setitem(globals(), "TABLE_TARGET", BASE + 1)
     obj, subject, span, image, bindings, targets = fixture()
     with pytest.raises(ValueError, match="instruction boundary"):
+        compare_associated_code(obj, subject, span, image, bindings, targets)
+
+
+@pytest.mark.parametrize("register", [0, 1, 2, 3, 5, 6, 7])
+def test_canonical_three_byte_lea_identity_predicate(register):
+    modrm = 0x40 | (register << 3) | register
+    code = bytes((0x8D, modrm, 0))
+    decoded = list(_ENGINE.disasm(code, 0))
+    assert len(decoded) == 1 and decoded[0].size == 3
+    assert decoded[0].mnemonic == "lea"
+    assert decoded[0].addr_size == 4 and decoded[0].disp_size == 1
+    assert decoded[0].prefix == [0, 0, 0, 0]
+    assert _is_canonical_lea_identity_padding(code)
+
+
+@pytest.mark.parametrize("code", [
+    bytes.fromhex("8d 48 00"),  # destination differs from base
+    bytes.fromhex("8d 4c 08"),  # indexed SIB address
+    bytes.fromhex("8d 49 01"),  # nonzero displacement
+    bytes.fromhex("8b 49 00"),  # memory read, not LEA
+    bytes.fromhex("8d 09"),     # register-direct, two-byte form
+    bytes.fromhex("66 8d 49 00"),  # operand-size prefix
+    bytes.fromhex("67 8d 49 00"),  # address-size prefix
+    bytes.fromhex("2e 8d 49 00"),  # segment override
+    bytes.fromhex("40 8d 49 00"),  # prefix bytes are never admitted
+    bytes.fromhex("8d 49 00 90"),  # exact whole-gap decoding required
+])
+def test_lea_identity_predicate_rejects_noncanonical_shapes(code):
+    assert not _is_canonical_lea_identity_padding(code)
+
+
+def test_identical_lea_gap_between_body_and_aligned_table_is_strictly_compared(monkeypatch):
+    body = bytearray(BODY[:-2] + b"\xc3")
+    body[4] = 0x0F  # default branch lands on the retained NOP at offset 20.
+    monkeypatch.setitem(globals(), "BODY", bytes(body))
+    monkeypatch.setitem(globals(), "GAP", bytes.fromhex("8d 49 00"))
+    monkeypatch.setitem(globals(), "TABLE_TARGET", BASE + 20)
+    obj, subject, span, image, bindings, targets = fixture()
+    report = compare_associated_code(obj, subject, span, image, bindings, targets)
+    assert report["result"] == Result.PASS
+    assert report["comparison_span"] == {"start": BASE, "end": BASE + 29}
+
+
+def test_changed_candidate_lea_gap_is_a_strict_mismatch_not_a_mask(monkeypatch):
+    body = bytearray(BODY[:-2] + b"\xc3")
+    body[4] = 0x0F
+    monkeypatch.setitem(globals(), "BODY", bytes(body))
+    monkeypatch.setitem(globals(), "GAP", bytes.fromhex("8d 49 00"))
+    monkeypatch.setitem(globals(), "TABLE_TARGET", BASE + 20)
+    obj, subject, span, image, bindings, targets = fixture(
+        candidate_gap=bytes.fromhex("8d 48 00"))
+    report = compare_associated_code(obj, subject, span, image, bindings, targets)
+    assert report["result"] == Result.FAIL
+
+
+@pytest.mark.parametrize("gap", [
+    bytes.fromhex("8d 48 00"),  # LEA, but destination and base differ.
+    bytes.fromhex("8b 49 00"),  # same length, but reads memory.
+])
+def test_original_nonidentity_three_byte_instruction_is_not_alignment(monkeypatch, gap):
+    body = bytearray(BODY[:-2] + b"\xc3")
+    body[4] = 0x0F
+    monkeypatch.setitem(globals(), "BODY", bytes(body))
+    monkeypatch.setitem(globals(), "GAP", gap)
+    monkeypatch.setitem(globals(), "TABLE_TARGET", BASE + 20)
+    obj, subject, span, image, bindings, targets = fixture(candidate_gap=gap)
+    with pytest.raises(ValueError, match="supported alignment"):
+        compare_associated_code(obj, subject, span, image, bindings, targets)
+
+
+def test_three_byte_lea_does_not_waive_original_or_candidate_relocations(monkeypatch):
+    body = bytearray(BODY[:-2] + b"\xc3")
+    body[4] = 0x0F
+    monkeypatch.setitem(globals(), "BODY", bytes(body))
+    monkeypatch.setitem(globals(), "GAP", bytes.fromhex("8d 49 00"))
+    monkeypatch.setitem(globals(), "TABLE_TARGET", BASE + 20)
+    obj, subject, span, image, bindings, targets = fixture(original_gap_relocation=True)
+    with pytest.raises(ValueError, match="cuts through a relocation"):
+        compare_associated_code(obj, subject, span, image, bindings, targets)
+    obj, subject, span, image, bindings, targets = fixture(candidate_gap_relocation=True)
+    with pytest.raises(ValueError, match="candidate COFF relocation"):
+        compare_associated_code(obj, subject, span, image, bindings, targets)
+
+
+def test_three_byte_gap_requires_actual_alignment_and_complete_candidate(monkeypatch):
+    body = bytearray(BODY[:-2] + b"\xc3")
+    body[4] = 0x0F
+    monkeypatch.setitem(globals(), "BODY", bytes(body))
+    monkeypatch.setitem(globals(), "GAP", bytes.fromhex("8d 49 00"))
+    monkeypatch.setitem(globals(), "TABLE_TARGET", BASE + 20)
+    # The candidate must physically contain the target cell and its relocation.
+    obj, subject, span, image, bindings, targets = fixture(truncate_candidate_at=23)
+    with pytest.raises(ValueError, match="in-bounds ABS32 relocation"):
+        compare_associated_code(obj, subject, span, image, bindings, targets)
+
+
+def test_three_byte_gap_does_not_make_an_unaligned_table_valid(monkeypatch):
+    monkeypatch.setitem(globals(), "GAP", bytes.fromhex("8d 49 00"))
+    obj, subject, span, image, bindings, targets = fixture()
+    with pytest.raises(ValueError, match="DWORD-aligned"):
+        compare_associated_code(obj, subject, span, image, bindings, targets)
+
+
+@pytest.mark.parametrize("body_suffix,gap", [
+    (b"\x90\x90\xc3", b"\x90"),
+    (b"\x90\xc3", b"\x90\x90"),
+])
+def test_existing_one_and_two_byte_alignment_fill_still_pass(monkeypatch, body_suffix, gap):
+    body = bytearray(BODY[:-2] + body_suffix)
+    if len(body) != 22:
+        body[4] = 0x0F
+    monkeypatch.setitem(globals(), "BODY", bytes(body))
+    monkeypatch.setitem(globals(), "GAP", gap)
+    monkeypatch.setitem(globals(), "TABLE_TARGET", BASE + 21)
+    obj, subject, span, image, bindings, targets = fixture(candidate_gap=gap)
+    report = compare_associated_code(obj, subject, span, image, bindings, targets)
+    assert report["result"] == Result.PASS
+
+
+def test_four_byte_nonfill_gap_remains_outside_the_supported_alignment_domain(monkeypatch):
+    body = bytearray(BODY[:-2] + b"\x90\x90\x90\xc3")
+    body[4] = 0x0F
+    monkeypatch.setitem(globals(), "BODY", bytes(body))
+    monkeypatch.setitem(globals(), "GAP", bytes.fromhex("8d 49 00 90"))
+    monkeypatch.setitem(globals(), "TABLE_TARGET", BASE + 21)
+    obj, subject, span, image, bindings, targets = fixture(
+        candidate_gap=bytes.fromhex("8d 49 00 90"))
+    with pytest.raises(ValueError, match="supported alignment"):
         compare_associated_code(obj, subject, span, image, bindings, targets)

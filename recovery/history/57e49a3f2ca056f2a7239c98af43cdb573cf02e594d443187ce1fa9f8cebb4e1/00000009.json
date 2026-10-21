@@ -1,0 +1,29 @@
+{
+  "event_id": "19e40597a71e80ba5fa0b90821c7ff23b0298d76928000c065d2a64049687790",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "docs/DECOMP_MAP.md",
+      "packages/match-recovery/src/match_recovery/associated_binary.py",
+      "packages/match-recovery/tests/test_associated_binary.py",
+      "recovery/tests/test_movie_media_owner_actual_source.py",
+      "recovery/tests/test_sound_lifetime.py",
+      "src/maininterface.cpp"
+    ],
+    "evidence": [
+      "Coordinator-reviewed bounded recovery of the independently guarded eight relocated DWORD switch targets45D274..45D294 referenced at45D184 by45D170. Native writer adds only source-owned associated-data binding and four rationale comments; original independent257byte body, markers/spans/claims/symbols and all C++ remain unchanged. Do not manufacture a switch table or widen the function body.",
+      "Demonstrated verifier blocker only: generic single decoded unprefixed32bit3byte LEA r32,[same_r32+encodeddisp8zero] identity alignment between independent terminatedbody and immediately DWORDaligned declaredtable. All gap/code/table bytes remain strict compared; existing HIGHLOW/COFF overlap and dispatch/table extent/target checks remain. No opcode whitelist, mask, parser/CLI/compiler policy, bodytail or fullacceptance relaxation.",
+      "Independent actual source/package/original review;52focused generic controlsPASS. Real retained-production unannotated/annotated probes and opcode/gap/otheridentitygap/invalidtarget/otherVALIDcasetarget damage controlsPASS. Both complete enumerated suites terminal: baseline22110PASS1587FAIL13ERROR82SKIP, candidate21930PASS1592FAIL13ERROR284SKIP; no removedIDs,27newassociatedPASS. RAW full-suite parityFAIL with216outcomedifferences remains immutable, not globalgreen or reclassified as passing.",
+      "All216differences freshly rerun on both isolated sides with identical2independentlyreviewedfixturefixes,3hashpinnedprivateinputcopies, owncompilerrecipes/prefixes and separateemptyparsecaches. Selected baseline252PASS5FAIL, candidate279PASS5FAIL, zeroSKIP/ERROR/lostcases/outcomechanges;27newPASS. Fivecommonfailures remain four runtime_fp_frontier fixture-image errors and source_asm StopIteration. Original2fixture nondeterminism, missingimage inputs, sharedsyntheticcache interference and180second timing controls are concretely reviewed; no timeoutincrease, waivedtest, fullsuitegreen or automaticacceptance claimed. The fixturecontrol wrapper separately failed its initial19-vs18countassert after successfulpytest; retained evidence independentlyqualifies18cases and doesnotrewrite that failure.",
+      "Fresh185TU199physicalobject fullbuild/link and claims/mappings/referencesPASS. All199 complete compiled-object complementsPASS with ZEROprojectedbodies/ZEROomittedsections. Whole5581knownidentities unchanged3363maskedexact and allcategory outcomes unchanged. MainInterface strictboundaryFAIL→PASS but OVERALLFAIL→UNKNOWN: production MultiWindow parent/member CodeView evidence is absent, so two memberreferences remain unknown. Strict2807PASS556UNKNOWNzeroFAIL; total incomplete556unchanged. No new function implementation, matchingfunction/claim gain, linked/runtime/structure/game/autonomous acceptance.",
+      "Originaltaskbaseline53682a304e8800c02f8d950d64d676d01c964161 retained. Fresh current native receipts/sourcechecks and199zeroomission objectcomparisons requalified after fixturechanges. Fresh destinationbuild/link/sourcechecks/census, focusedtests and199zero-omission candidate reproduction required before consumed checkout cleanup. Independent technology, StringBox and breed recovery stay isolated and are not authorized by this checkpoint."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "6007c268cc5831d67cdbd206a5726e8f01384fbea9152e7a2f48026d00be222f",
+  "request_id": "central-manual-maininterface-switch-data-admission-oct21r",
+  "schema_version": 1,
+  "sequence": 9,
+  "stream": "task:maininterface-owner-coverage"
+}

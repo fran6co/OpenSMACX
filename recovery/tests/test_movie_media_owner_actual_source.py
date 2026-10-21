@@ -84,6 +84,7 @@ struct FakeSurface: IDirectDrawSurface {
 };
 struct FakeDraw: IDirectDraw2 {
  FakeSurface surface; DDSURFACEDESC seen; int calls;
+ FakeDraw() : calls(0) {}
  HRESULT CreateSurface(DDSURFACEDESC *d,IDirectDrawSurface **out,void *){
    seen=*d;++calls;if(create_result==0)*out=&surface;return create_result;
  }
@@ -112,7 +113,8 @@ int main(){
 
   FakeDraw draw; IDirectDrawSurface2 *output=0; create_result=0;query_result=0;
   release_count=0;ck(sub_5cdad0(&draw,&output,320,200,0x32595559)==0,"surface create success");
-  ck(draw.calls==1&&draw.seen.dwSize==0x6c&&draw.seen.dwFlags==0x1007&&
+  ck(draw.calls==1,"CreateSurface call count");
+  ck(draw.seen.dwSize==0x6c&&draw.seen.dwFlags==0x1007&&
      draw.seen.dwWidth==320&&draw.seen.dwHeight==200&&
      draw.seen.ddpfPixelFormat.dwSize==0x20&&draw.seen.ddpfPixelFormat.dwFlags==4&&
      draw.seen.ddpfPixelFormat.dwFourCC==0x32595559&&draw.seen.ddsCaps.dwCaps==0x4040,

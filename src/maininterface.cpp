@@ -594,6 +594,11 @@ void MainInterface::on_status(int active) {
     }
 }
 
+// The unsigned button-1003 guard admits eight entries; the indexed jump at
+// 0x0045D184 selects the DWORD targets following the independent function body.
+// Each target is an instruction start within that body. The intervening
+// three-byte LEA preserves its register and flags; it is not extra body code.
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x0045D170 0x0045D274 0x0045D294 0x0045D184
 // ORIGINAL: 0x0045D170 ?on_iface_button_clicked@MainInterface@@QAEXH@Z 0x0045D170-0x0045D271 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/maininterface.h", "git:b4601390:recovery/tasks/maininterface-owner-coverage.json", "git:f7bbce35:src/recovered/units/0045d170.cpp"], "reason": "Original owner calls, secondary interface receiver and ordinary embedded-member lifecycle identify this MainInterface operation; compatible historical seed spans are retained, without a matching claim."}
 // symbol    ?on_iface_button_clicked@MainInterface@@UAEXH@Z

@@ -1,0 +1,22 @@
+{
+  "event_id": "6007c268cc5831d67cdbd206a5726e8f01384fbea9152e7a2f48026d00be222f",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_movie_media_owner_actual_source.py",
+      "recovery/tests/test_sound_lifetime.py"
+    ],
+    "evidence": [
+      "Both complete baseline/candidate enumerated full-suite fleets are terminal and their original reports remain immutable. No removed tests,27new associated-data cases; raw suite parity fails with216outcome differences. Do not rewrite that result or label full suites green.",
+      "Independently reviewed fixture-only corrections passed18selected controls in an isolated baseline checkout: initialize FakeDraw.calls and retain separate descriptor checks; reject the Sound constructor invalid-device mutant before its undefined virtual dispatch. The unmodified product and positive harness remain unchanged. The original wrapper expected19and failed after successful18casepytest; the independent retained-evidence qualifier and reviewer disclose that error, not a replayed success.",
+      "Authorize only the same2test-file corrections here. No C++/package/claim/compiler policy edits are added by this expansion. Rerun complete outcome-difference selectors with immutable identical private-input copies and each checkout own valid database, plus all associated-data cases and all18fixture controls. Retain original failures/skips and distinguish repaired fixture/input checks from raw full-suite parity. All unexplained candidate-only differences need investigation before coordinator manual checkpoint."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "c56a3aa7ac54ccb64925b9c612d0ad027adb5a64c2cb25f5a1f09a2d41796dc3",
+  "request_id": "central-maininterface-qualified-fixture-repairs-oct21u",
+  "schema_version": 1,
+  "sequence": 8,
+  "stream": "task:maininterface-owner-coverage"
+}
