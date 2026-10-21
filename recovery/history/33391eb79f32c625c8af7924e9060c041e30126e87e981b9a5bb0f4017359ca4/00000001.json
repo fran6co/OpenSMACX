@@ -1,0 +1,23 @@
+{
+  "event_id": "150a8c9ed4cfbbfdfea2cb4a3f77c0d887630455787bbaf0851e5f553c7ae0d0",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_vehicle_battle_storage_bindings_oct21.py",
+      "src/veh.cpp"
+    ],
+    "evidence": [
+      "Standing coordinator-reviewed manual recovery authority: bind only existing VehBattleDisplayTerrain at90F550, VehBasicBattleMorale at912420, VehBattleModifier at9155F0 and VehBattleDisplay at90F554 to their actual emitted symbols. Existing declarations, all historical lessons and C++ behavior remain unchanged. Pin producers/consumers and retained actual COFF definition evidence are cached in parallel-match-oct21j/game/four-veh-global-bindings.md.",
+      "Source-owned v1 object starts only, no bounds/allocation/lifetime/type or exact data claim. No function marker/claim/history changes, body edits, guessed globals, original-address forwarding or compiler/build policy changes. Keep complete historical LEVER note; append concise superseding structural evidence as ordinary source prose, not a dated run log or new LEVER entry.",
+      "Allow one local test using native object/source APIs for these load-bearing starts and unchanged typed declarations, plus pinned operand evidence where available. No retained-build path may become a required test dependency, no new public CLI/framework code, and missing/wrong pinned evidence cannot pass. Author uses isolated apply_patch and explicit non-native tests only; Git/task/native compiler/preparation remain coordinator-owned.",
+      "Earlier owner candidates integrate independently while this author works. After the author freezes WIP, coordinator rebases only at a safe checkpoint, preserving task baseline and source work, then runs fresh compiled data/reference, continuity, full build/link and destination checks before any integration. This scope authorization and tests are not acceptance, new function coverage or matching progress."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "central-vehicle-battle-storage-starts-oct21j",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:owner-vehicle-body-recovery-oct20ao"
+}
