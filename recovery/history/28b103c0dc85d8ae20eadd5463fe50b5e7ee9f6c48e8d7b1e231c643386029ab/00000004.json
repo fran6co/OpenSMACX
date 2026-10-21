@@ -1,0 +1,23 @@
+{
+  "event_id": "a02be767d9f73381d103f740c43fa12d4706bb9fb0c6b3314ad631b5f3e297c1",
+  "payload": {
+    "affects": [
+      "entity-2904af4e609c442e3f421f40d91146016f75d0b6edfe730f62e8846b684ff3dd",
+      "entity-716c3a32db2795cd9282ec205a22b08b832682a26f8eec90c86367238e4fc00f"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "maininterface-evaluation-order-recovery-oct22a",
+    "evidence": [
+      "Pinned selected-value subtraction precedes group0 dispatch; direct existing StringTable/Labels lookup restores right-down argument staging. Preserve all guards, receivers, coordinates, uninitialized Spot output, identities, spans and earlier claims. Only native record banks45CF80;45CCB0 remainsMISMATCH.",
+      "Independent frozen actual-source/test review,4mapped-body host tests with compile-success mutants, actual-recipe replay/replica/label-damage and outside-two-body residual pass. Fresh187TU201COFF build/link, claims, mappings, references and annotation checks pass. All201scoped object residuals pass; only MainInterface object differs without projection; only known census change45CF80MISMATCHtoBYTE_EXACT.",
+      "Three historical whole-file snapshot tests already fail on unchanged master and remain unresolved. Manual coordinator-reviewed integration under standing user permission, not native automatic, linked preservation, ABI/layout, full-game or runtime acceptance. Task baseline/flags unchanged. Fresh destination build/recheck still required."
+    ],
+    "hypothesis": "Original source-level selection evaluation and existing typed string lookup are recovered in the two mapped input handlers.",
+    "kind": "discovery"
+  },
+  "previous_event": "4155ce9de6cc6df46b6131ad2e163d3d7dc500d894c686be4625409f2a0c0a62",
+  "request_id": "maininterface-evaluation-order-recovery-oct22a",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:maininterface-click-symbols-oct10"
+}
