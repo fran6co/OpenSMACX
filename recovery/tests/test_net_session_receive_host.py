@@ -38,18 +38,29 @@ def test_actual_net_player_allocator_receive_and_session_version():
         '  GUID *guid_6E8_ = 0; GUID service_provider_guid_{};',
         1,
     )
+    prefix = prefix.replace(
+        '  int Open(DPSESSIONDESC2 *desc, DWORD) { opened = *desc; live = *desc; return DP_OK; }',
+        '  int Open(DPSESSIONDESC2 *desc, DWORD) { opened = *desc; live = *desc; live.dwMaxPlayers = 99; return DP_OK; }',
+        1,
+    )
     tests = tests.replace(
         '  assert(std::strcmp(net.allocation_node_.password_, "secret") == 0);',
         '  assert(std::strcmp(net.allocation_node_.password_, "secret") == 0);\n'
+        '  assert(net.allocation_node_.max_players_ == 7);\n'
+        '  assert(dp.live.dwMaxPlayers == 99);\n'
         '  assert(dp.opened.guidApplication.Data1 == app.Data1);\n'
         '  Net modem; IDirectPlay2 modem_dp; modem.guid_6E8_ = &app;\n'
         '  modem.service_provider_guid_ = NetModemServiceGuid; NetDirectPlay = &modem_dp;\n'
         '  assert(modem.create_session(const_cast<char *>("m"), 9, 0) == &modem.allocation_node_);\n'
         '  assert(modem_dp.opened.dwMaxPlayers == 2);\n'
+        '  assert(modem.allocation_node_.max_players_ == 2);\n'
+        '  assert(modem_dp.live.dwMaxPlayers == 99);\n'
         '  Net serial; IDirectPlay2 serial_dp; serial.guid_6E8_ = &app;\n'
         '  serial.service_provider_guid_ = NetSerialServiceGuid; NetDirectPlay = &serial_dp;\n'
         '  assert(serial.create_session(const_cast<char *>("s"), 9, 0) == &serial.allocation_node_);\n'
-        '  assert(serial_dp.opened.dwMaxPlayers == 2);',
+        '  assert(serial_dp.opened.dwMaxPlayers == 2);\n'
+        '  assert(serial.allocation_node_.max_players_ == 2);\n'
+        '  assert(serial_dp.live.dwMaxPlayers == 99);',
         1,
     )
     program = prefix + '\n' + provider_guids + '\n'
@@ -57,13 +68,29 @@ def test_actual_net_player_allocator_receive_and_session_version():
     program += receive + '\n' + create_session + '\n' + tests
     with tempfile.TemporaryDirectory(prefix='net-v3-host-control-') as temp:
         binary = str(Path(temp) / 'control')
-        built = subprocess.run(['g++', '-std=c++17', '-Wall', '-Wextra', '-Werror', '-x', 'c++', '-', '-o', binary], input=program, text=True, capture_output=True, timeout=30)
+        built = subprocess.run(['g++', '-std=c++17', '-Wall', '-Wextra', '-Werror', '-x', 'c++', '-', '-o', binary], input=program, text=True, capture_output=True, timeout=45)
         if built.returncode:
             raise SystemExit(built.stderr)
-        result = subprocess.run([binary], text=True, capture_output=True, timeout=30)
+        result = subprocess.run([binary], text=True, capture_output=True, timeout=15)
         if result.returncode:
             raise SystemExit(result.stderr or f'host control exited {result.returncode}')
         print(result.stdout, end='')
+        old_store = 'allocation_node_.max_players_ = seeded_max_players;'
+        assert old_store in create_session
+        mutant = create_session.replace(
+            old_store, 'allocation_node_.max_players_ = max_players;', 1
+        )
+        mutant_program = program.replace(create_session, mutant, 1)
+        mutant_binary = str(Path(temp) / 'old-store-mutant')
+        mutant_built = subprocess.run(
+            ['g++', '-std=c++17', '-Wall', '-Wextra', '-Werror', '-x', 'c++', '-', '-o', mutant_binary],
+            input=mutant_program, text=True, capture_output=True, timeout=45,
+        )
+        assert mutant_built.returncode == 0, mutant_built.stderr
+        mutant_result = subprocess.run(
+            [mutant_binary], text=True, capture_output=True, timeout=15,
+        )
+        assert mutant_result.returncode != 0, 'old raw-argument store unexpectedly passed'
 
 """Actual C++ body controls with host service doubles, not target ABI/game proof."""
 import shutil

@@ -1,0 +1,23 @@
+{
+  "event_id": "f2e5de253dba6083103164764b09f950604e55ebf2d54f681c31a05aefb77990",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/map.cpp",
+      "src/territory.cpp"
+    ],
+    "evidence": [
+      "Coordinator and independent source reviewers approve exact definition-only whose_territory relocation to ordinary territory.cpp with minimal original headers and unchanged Map/Oy- recipe. Native source reader/writer proves complete101-identity union100+1 and original identity/span/symbol/claim/history continuity. Six caller algorithms are byte-for-byte unchanged source; no source partition is claimed as historically original. No new inline/noinline/export/asm/cast/flag or fake dispatch operation.",
+      "Fresh actual Release application builds/links180C++TUs194physicalobjects. Native physical comparison passes all193preexistingobjects while projecting only moved whose_territory, six evidenced caller bodies and corrected Net create_session. New TU contains the same complete query plus38preexisting header MEASURED definitions: all39 preserve code/function signatures/named relocation sequences, no new startup/ordinarydata/nonduplicatecode. Existing forced-export policy is unchanged, not endorsed as original; duplicate emitted bodies and nineteen defined-to-external target transitions are separately reviewed consequences, not whole linked retained-selection/provider proof.",
+      "Original caller evidence establishes ten direct query calls with existing ABI and original null/output pointer choices. Fresh whole5581known-domain actual production masked exact3332->3335, solely base_territory4E3FA0,valid_landmark592650,has_temple5BF130, with zero prior exact or strict losses. All3332old strict outcomes identical. Three new exact functions remain strictUNKNOWN because existing GameDataStateStorage/MapStorage aggregate-window targets lack qualified direct bindings; do not fabricate original parent objects or call these strict passes. Strict2775pass557unknown3fail retained.",
+      "Installed native recorder remeasures all three related Map functions successfully and alone banks new has_temple claim; historical3451->3452, zero missing requirements, no demotion/manual marker edits. Fresh build follows that publication. Native claims/mappings/references pass. Scoped host candidate14pass vsbaseline12pass. Net creator restores original same-argument max_players publication after serial/modem override2, preserving failure paths and returned-live-descriptor distinction; independent review and compile-success mutant support it. No new function-implementation coverage, full project/automatic/complete linked/structure/runtime/game acceptance. Require fresh destination build, whole194object zero-omission reproduction and per-identity checks; preserve original raw diagnostic MapFAIL and append-only acquisition error evidence."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "9886b0878ad8a7c0f2b919b70c8564a94ef89018f1ff752ffc36dcd1fc118c07",
+  "request_id": "central-territory-real-build-manual-admission-oct21d",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:map-cohort-match-oct20b"
+}

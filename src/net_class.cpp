@@ -2498,7 +2498,7 @@ NetAllocationNode *Net::create_session(char *name, int max_players, char *passwo
 
     allocation_node_.instance_guid_ = live->guidInstance;
     allocation_node_.session_flags_ = live->dwFlags;
-    allocation_node_.max_players_ = max_players;
+    allocation_node_.max_players_ = seeded_max_players;
     allocation_node_.current_players_ = 0;
     free(live);
     voice_flags_D8_ |= 0x10000;

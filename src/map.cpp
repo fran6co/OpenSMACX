@@ -289,42 +289,7 @@ Status: Complete
 // reads it.
 
 
-/*
-Purpose: Check who owns a tile. Optional parameter to get closest base.
-// ORIGINAL: 0x004E3EF0 ?whose_territory@@YAHHHHPAHH@Z 0x004E3EF0-0x004E3F9D
-// TRIED: hoisting `Map *tile = map_loc(x, y)` before the territory read
-//            (compiler already CSEs it, identical bytes); flattening the
-//            nested owner==faction_id check into an early-return guard
-//            clause. Both plateau at 0.944 sim / 34 of 74 instructions;
-//            divergence starts in the prologue (image keeps x in edi, this
-//            tree picks ebx) - a pure register-allocation difference.
-// size      173 bytes
-// prototype int (__cdecl ?whose_territory@@YAHHHHPAHH@Z)(int factionID, int xCoord, int yCoord, int* baseID, int ignoreComm)
-// callers   40   call targets   1
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     0x004E3D50
-Return Value: Faction id of the territory's owner or -1 if no owner or unknown faction
-Status: Complete
-*/
-int __cdecl whose_territory(int faction_id, int x, int y, int *base_id, 
-                            BOOL ignore_comm) {
-    int owner = (int)map_loc(x, y)->territory;
-    if (owner <= 0) {
-        return -1; // no owner
-    }
-    if ((uint32_t)owner != faction_id) {
-        if (!ignore_comm && !(GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)
-            && has_treaty(faction_id, owner, DTREATY_COMMLINK | DTREATY_UNK_8000000)
-                != (DTREATY_COMMLINK | DTREATY_UNK_8000000)) {
-            return -1; // owner unknown to faction
-        }
-        if (base_id) {
-            *base_id = base_find(x, y, -1, region_at(x, y), -1, -1);
-        }
-    }
-    return owner;
-}
+
 
 /*
 Purpose: Find closest base to territory owned by another faction not at war with specified faction.
@@ -2855,7 +2820,7 @@ int __cdecl good_sensor(int faction_id, int x, int y) {
 
 /*
 Purpose: Check if faction controls the initial tile (code offset 0) of the Manifold Nexus.
-// ORIGINAL: 0x005BF130 ?has_temple@@YAHH@Z 0x005BF130-0x005BF1EE
+// ORIGINAL: 0x005BF130 ?has_temple@@YAHH@Z 0x005BF130-0x005BF1EE BYTE_EXACT
 // LEVER: needs /Oy- (the marker's own `frame` flag) to even form the ebp-frame
 //        prologue the image has; that alone was 3/70 -> 51/70. Caching
 //        `uint32_t bit2 = map_loc(x, y)->bit2;` once and testing
