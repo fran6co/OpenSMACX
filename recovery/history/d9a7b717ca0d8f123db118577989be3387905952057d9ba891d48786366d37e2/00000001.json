@@ -1,0 +1,23 @@
+{
+  "event_id": "0fc72531d5949adf90ee9c361191a7adf8b2764020111499761313b826fa10e2",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_sound_wave_provider_calls_oct9.py",
+      "src/wave.cpp"
+    ],
+    "evidence": [
+      "Coordinator-reviewed faithful Wave set_volume4C7130 restoration. Stage existing double reciprocal and masked volume normalization as ordinary C++ statements, preserving unsigned group volume/table/slot<16 access, storedmask, truncating int64 conversion, device guard and provider slot40. Existing model/types/header/ABI/flags/runtime state unchanged. All historical comments retained verbatim; no new runlog or safetyfix.",
+      "Actual production-recipe whole Wave TU screen has33/33exact selected instructions, all prior verdicts unchanged and compiled complementPASS. Original table address90D9A0 equals genuine WaveDeviceGlobal90D978+groups24+volume4, stride18; independently reviewed. Native recover record alone banks measured historicalclaim exit0; guarded writer reproduces recorded source from original plus three-line edit and actual recorded record. Original complete span[4C7130,4C718D) and catalogueQAEX/currentUAEXinterpretation unchanged.",
+      "Independent complete pinned/source/model/finalfixture review,9GCC/Clang host cases with two compile-success mutants percompiler, fresh185TU199object fullbuild/link and claims/mappings/references pass. All199compiled complements pass projecting only4C7130body, no unrelatedsections. Whole5581knownidentities3361maskedexact(+1), strict {'fail': 3, 'pass': 2803, 'unknown': 555}, every prior strict outcome unchanged; new target strict unknown. Host controls intentionally avoid FP truncation-boundary oracles; entry x87 precision control state is unverified. Actual matching machine body introduces no extra rounding/store for any unchanged entry state.",
+      "Preserve original sound-wave-provider-closure-oct9 baseline360fe125ab139f13a75ab4fed1368b42b1053fe3 and all obligations. New target strict UNKNOWN solely unbound TU-private reciprocal literal __real@8@3ff88102040810204000; WaveDeviceGlobal and __ftol references pass and no bytes differ. Do not invent a literal correspondence from the instruction operand under test or a repeated-content search, or call this a strict pass. Manual matching checkpoint, not additional original implementationcoverage, complete originaluniverse, full linkedselection/allocation/structure/runtime/game/autonomous acceptance. Existing3strictfailures unchanged. Fresh destination build/link,9hostcases,census/strict and199zero-omission candidate reproduction required before cleanup."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "central-manual-wave-volume-admission-oct21o",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:sound-wave-provider-closure-oct9"
+}

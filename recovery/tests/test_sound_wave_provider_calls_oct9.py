@@ -290,3 +290,84 @@ int main() {{
     source.write_text(harness)
     subprocess.run([compiler, "-std=c++11", str(source), "-o", str(binary)], check=True)
     subprocess.run([str(binary)], check=True)
+
+
+@pytest.mark.parametrize("compiler_name", ("g++", "clang++"))
+def test_wave_set_volume_stages_mask_and_group_scaling(compiler_name, tmp_path):
+    """Exercise non-boundary host behavior; this is not an x87 rounding oracle."""
+    compiler = shutil.which(compiler_name)
+    if compiler is None:
+        pytest.skip(f"{compiler_name} is unavailable")
+    wave = (ROOT / "src/wave.cpp").read_text()
+    body = function_body(wave, "void Wave::set_volume(int volume)")
+    harness = f'''#include <cassert>
+#include <cstdint>
+struct Group {{ uint32_t volume; }};
+struct DeviceGroups {{ Group groups_[16]; }};
+static DeviceGroups WaveDeviceGlobal;
+struct Device {{
+  int calls;
+  int last;
+  Device() : calls(0), last(-1) {{}}
+  void set_volume(int value) {{ ++calls; last=value; }}
+}};
+static Device *wave_playback_device(Device *device) {{ return device; }}
+struct Wave {{
+  uint32_t group_slot_;
+  int volume_;
+  Device *device_;
+  void set_volume(int volume);
+}};
+void Wave::set_volume(int volume) {{{body}}}
+int main() {{
+  Device device;
+  Wave wave={{16, -1, &device}};
+  wave.set_volume(0x1C5);
+  assert(wave.volume_==69 && device.calls==1 && device.last==69);
+  wave.group_slot_=0;
+  WaveDeviceGlobal.groups_[0].volume=100;
+  wave.set_volume(0);
+  assert(wave.volume_==0 && device.calls==2 && device.last==0);
+  wave.set_volume(63);
+  assert(wave.volume_==63 && device.calls==3 && device.last==49);
+  WaveDeviceGlobal.groups_[0].volume=0;
+  wave.set_volume(127);
+  assert(wave.volume_==127 && device.calls==4 && device.last==0);
+  wave.group_slot_=16;
+  wave.set_volume(63);
+  assert(wave.volume_==63 && device.calls==5 && device.last==63);
+  wave.set_volume(127);
+  assert(wave.volume_==127 && device.calls==6 && device.last==127);
+  wave.device_=0;
+  wave.set_volume(0x1C5);
+  assert(wave.volume_==69 && device.calls==6);
+  wave.device_=&device;
+  wave.group_slot_=1;
+  WaveDeviceGlobal.groups_[1].volume=0x80000000U;
+  wave.set_volume(1);
+  assert(wave.volume_==1 && device.calls==7 && device.last==16909320);
+}}
+'''
+    source = tmp_path / "wave_set_volume.cpp"
+    binary = tmp_path / "wave_set_volume"
+    source.write_text(harness)
+    subprocess.run([compiler, "-std=c++11", str(source), "-o", str(binary)], check=True)
+    subprocess.run([str(binary)], check=True)
+
+    mutants = {
+        "stored-mask": body.replace("volume &= 0x7F;", "volume &= 0x3F;", 1),
+        "group-scaling": body.replace("scaled *= reciprocal;", "scaled *= 1.0;", 1),
+    }
+    for name, mutant in mutants.items():
+        assert mutant != body, name
+        mutant_source = tmp_path / f"wave_set_volume_{name}.cpp"
+        mutant_binary = tmp_path / f"wave_set_volume_{name}"
+        mutant_source.write_text(harness.replace(body, mutant))
+        compiled = subprocess.run(
+            [compiler, "-std=c++11", str(mutant_source), "-o", str(mutant_binary)],
+            capture_output=True,
+            text=True,
+        )
+        assert compiled.returncode == 0, compiled.stderr
+        ran = subprocess.run([str(mutant_binary)], capture_output=True, text=True)
+        assert ran.returncode != 0, (name, ran.stdout, ran.stderr)

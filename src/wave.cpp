@@ -898,7 +898,7 @@ Purpose: Set the wave's volume. The low seven bits of the argument are stored
          every 24 bytes in the singleton's table), as level/127 * group in
          double precision truncated back to an integer. The wrapped device,
          if any, hears the result through its vtable slot 0x40.
-// ORIGINAL: 0x004C7130 ?set_volume@Wave@@QAEXH@Z 0x004C7130-0x004C718D
+// ORIGINAL: 0x004C7130 ?set_volume@Wave@@QAEXH@Z 0x004C7130-0x004C718D BYTE_EXACT
 // symbol    ?set_volume@Wave@@UAEXH@Z
 // TRIED: 26/33 MISMATCH, instruction COUNT now matches the image (33/33)
 //   but the `fild dword ptr [ebp+8]` + `fmul qword ptr [const]` pair that
@@ -939,7 +939,9 @@ void Wave::set_volume(int volume) {
         // emit the `fild`+`fmul`-by-constant PAIR the image has instead of
         // folding volume's conversion into a single `fimul` at the end. 13/33 ->
         // 26/33 MISMATCH.
-        const double scaled = static_cast<double>(volume) * (1.0 / 127.0);
+        const double reciprocal = 1.0 / 127.0;
+        double scaled = static_cast<double>(volume);
+        scaled *= reciprocal;
         level = static_cast<int>(static_cast<int64_t>(
             scaled * static_cast<double>(WaveDeviceGlobal.groups_[group_slot_].volume)));
     }
