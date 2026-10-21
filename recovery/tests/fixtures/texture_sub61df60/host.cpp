@@ -27,6 +27,8 @@ static Vert test_vertices[5];
 static Vert test_uv[5];
 static int test_light[5];
 static int reset_calls, control_calls, free_calls, setup_calls;
+static int mutate_scratch560_on_setup_call;
+static unsigned char scratch560_mutation;
 
 enum { _PC_24 = 1, _RC_CHOP = 2, _MCW_PC = 4, _MCW_RC = 8 };
 static int _control87(int, int) { ++control_calls; return 0; }
@@ -72,6 +74,8 @@ static void reset_state() {
     memset(palette_data, 0, sizeof(palette_data));
     memset(remap_data, 0, sizeof(remap_data));
     reset_calls = control_calls = free_calls = setup_calls = 0;
+    mutate_scratch560_on_setup_call = 0;
+    scratch560_mutation = 0;
 }
 
 static void test_dual_texture_modes_and_light() {
@@ -185,6 +189,33 @@ static void test_light_at_or_above_threshold_is_direct_add() {
     assert(TextureRasterScratch498 == (5 << 8));
 }
 
+static void test_per_pixel_threshold_reloads_shared_byte() {
+    reset_state();
+    source_page[0] = 10;
+    memset(mask_page, 11, sizeof(mask_page));
+    remap_data[11] = 1;
+    palette_data[0x0500 + 0x31] = 0xA1;
+    set_vertex(test_vertices[0], 0, 0); set_vertex(test_vertices[1], 2, 0);
+    set_vertex(test_vertices[2], 2, 3); set_vertex(test_vertices[3], 0, 3);
+    set_vertex(test_uv[0], 0, 0); set_vertex(test_uv[1], 2, 0);
+    set_vertex(test_uv[2], 2, 3); set_vertex(test_uv[3], 0, 3);
+    test_light[0] = test_light[1] = test_light[2] = test_light[3] = 5;
+    Buffer buffer;
+    Texture source(source_page), mask(mask_page);
+    mutate_scratch560_on_setup_call = 3;
+    scratch560_mutation = 6;
+    // Distinguish the entry publication from a stale byte left by a prior call.
+    *reinterpret_cast<unsigned char *>(&TextureRasterScratch560) = 6;
+    source.sub_61df60(&buffer, test_vertices, test_light, &mask, remap_data,
+                      4, test_uv, 4, palette_data);
+    // Row zero compares shade 5 with the stored incoming byte 4 and direct-adds.
+    // At row two, the controlled setup seam has changed the shared byte to 6;
+    // a source read at the pixel decision selects the palette instead.
+    assert(destination[0] == 15);
+    assert(destination[2 * 16] == 0xA1);
+    assert(static_cast<unsigned char>(TextureRasterScratch560) == 6);
+}
+
 static void test_signed_threshold_and_page_wrap() {
     reset_state();
     // U=255 plus a +1 fixed-point step wraps the low source byte; V=255 plus
@@ -283,6 +314,7 @@ int main() {
     test_short_right_edge_refresh_changes_geometry();
     test_row_gradient_uses_pending_previous_span();
     test_light_at_or_above_threshold_is_direct_add();
+    test_per_pixel_threshold_reloads_shared_byte();
     test_signed_threshold_and_page_wrap();
     test_receiver_and_mask_borrowed_guards();
     test_unsigned_clipped_light_and_scratch();

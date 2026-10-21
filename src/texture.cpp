@@ -4065,7 +4065,9 @@ void Texture::sub_61df60(Buffer *buffer, Vert *vertices, int *zvals,
                             unsigned char value = static_cast<unsigned char>(
                                 static_cast<unsigned int>(base_texel) + shade);
                             if (static_cast<signed char>(shade) <
-                                static_cast<signed char>(threshold)) {
+                                static_cast<signed char>(
+                                    *reinterpret_cast<const unsigned char *>(
+                                        &TextureRasterScratch560))) {
                                 const unsigned int table_index =
                                     (static_cast<unsigned int>(shade) << 8) | out[0];
                                 value = palette[table_index];
@@ -7366,7 +7368,8 @@ void Texture::draw_color_key(Buffer *buffer, Vert *vertices, int count, Vert *uv
     }
     unsigned char *destination = static_cast<unsigned char *>(buffer->get_data());
     texture_reset_fpu();
-    const unsigned char alternate = static_cast<unsigned char>(color);
+    *reinterpret_cast<unsigned char *>(&TextureRasterScratch494) =
+        static_cast<unsigned char>(color);
     const unsigned char *pixels = pixels_;
     const int width = static_cast<int>(iWidth_);
     const unsigned char key = static_cast<unsigned char>(TextureRasterKey);
@@ -7428,6 +7431,11 @@ void Texture::draw_color_key(Buffer *buffer, Vert *vertices, int count, Vert *uv
                 const int64_t step = static_cast<int64_t>(dv >> 16) * width + (du >> 16);
                 const unsigned int remaining = texture_span_pixels(texture_difference(end, x));
                 const volatile unsigned char *source_reads = pixels;
+                unsigned char alternate = 0;
+                if ((parity & 1) == 0) {
+                    alternate =
+                        *reinterpret_cast<unsigned char *>(&TextureRasterScratch494);
+                }
                 unsigned char texel = source_reads[source];
                 for (unsigned int written = 0; written < remaining; ++written) {
                     if (texel != key) *out = (parity & 1) != 0 ? texel : alternate;
@@ -7766,6 +7774,8 @@ void Texture::draw2(Buffer *buffer, Vert *vertices, int *zvals, int count,
 
     unsigned char *destination = static_cast<unsigned char *>(buffer->get_data());
     texture_reset_fpu();
+    *reinterpret_cast<unsigned char *>(&TextureRasterScratch494) =
+        static_cast<unsigned char>(fillColor);
     const unsigned char *pixels = pixels_;
     const int stride = static_cast<int>(buffer->stride_);
     const int width = iWidth_;
@@ -7833,8 +7843,11 @@ void Texture::draw2(Buffer *buffer, Vert *vertices, int *zvals, int count,
                     const volatile unsigned char *source_reads = pixels;
                     unsigned char texel = source_reads[source];
                     if ((y & 1) == 0) {
+                        const unsigned char fill =
+                            *reinterpret_cast<unsigned char *>(
+                                &TextureRasterScratch494);
                         for (unsigned int written = 0; written < remaining; ++written)
-                            out[written] = static_cast<unsigned char>(fillColor);
+                            out[written] = fill;
                     } else {
                         unsigned int uf = static_cast<unsigned short>(u);
                         unsigned int vf = static_cast<unsigned short>(v);

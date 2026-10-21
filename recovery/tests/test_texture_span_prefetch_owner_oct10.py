@@ -15,6 +15,7 @@ ROOT = next(
 SOURCE = ROOT / "src/texture.cpp"
 FIXTURE = ROOT / "recovery/tests/fixtures/texture_span_prefetch_owner_oct10.cpp"
 HELPER_INSERTION = "// ACTUAL_HELPER_INSERTION"
+SCRATCH_INSERTION = "// ACTUAL_SCRATCH_INSERTION"
 KERNEL_INSERTION = "// ACTUAL_KERNEL_INSERTION"
 MAIN_INSERTION = "// ACTUAL_MAIN_INSERTION"
 HELPERS = (
@@ -120,9 +121,16 @@ def _loop_kernel(method: str, kind: str) -> str:
         "unsigned char *pixels, unsigned char *out, int64_t source, int width, "
         "int64_t step, unsigned int uf, unsigned int vf, int du, int dv, "
         "unsigned short light, unsigned short dz, unsigned char key, "
-        "unsigned char alternate, int cutoff, unsigned int remaining, int parity"
+        "unsigned char scratch_value, int cutoff, unsigned int remaining, int parity"
     )
-    return f"static void kernel_{kind}({params}) {{\n{snippet}\n}}"
+    setup = ""
+    if kind == "alternate_draw_color_key_alt":
+        # This projection starts inside the body, after the real entry store.
+        setup = (
+            "    *reinterpret_cast<unsigned char *>(&TextureRasterScratch494) = "
+            "scratch_value;\n"
+        )
+    return f"static void kernel_{kind}({params}) {{\n{setup}{snippet}\n}}"
 
 
 def _draw2_row_block(method: str) -> str:
@@ -152,16 +160,24 @@ def _draw2_row_block(method: str) -> str:
     return (
         "static void kernel_draw2_row(unsigned char *pixels, unsigned char *out, "
         "int y, int width, int u, int v, int du, int dv, int z, unsigned short dz, "
-        "int cutoff, int fillColor, unsigned int remaining) {\n" + block + "\n}"
+        "int cutoff, int fillColor, unsigned int remaining) {\n"
+        "    *reinterpret_cast<unsigned char *>(&TextureRasterScratch494) = "
+        "static_cast<unsigned char>(fillColor);\n"
+        + block + "\n}"
     )
 
 
 def _translation_unit(source: str, main: str, mutations: dict[str, str] | None = None) -> str:
     fixture = FIXTURE.read_text(encoding="utf-8")
+    assert fixture.count(SCRATCH_INSERTION) == 1
     assert fixture.count(HELPER_INSERTION) == 1
     assert fixture.count(KERNEL_INSERTION) == 1
     assert fixture.count(MAIN_INSERTION) == 1
     helpers = {name: _definition(source, name) for name in HELPERS}
+    scratch = re.search(
+        r"^static int TextureRasterScratch494;\s*$", source, re.MULTILINE
+    )
+    assert scratch is not None
     kernels = []
     for name, (signature, kind) in METHODS.items():
         method = _braced(source, signature)
@@ -179,7 +195,8 @@ def _translation_unit(source: str, main: str, mutations: dict[str, str] | None =
         for kernel_index, old, new in mutations.get("kernels", []):
             assert old in kernels[kernel_index]
             kernels[kernel_index] = kernels[kernel_index].replace(old, new, 1)
-    return (fixture.replace(HELPER_INSERTION,
+    return (fixture.replace(SCRATCH_INSERTION, scratch.group(0), 1)
+            .replace(HELPER_INSERTION,
                             "\n\n".join(helpers[name] for name in HELPERS), 1)
             .replace(KERNEL_INSERTION, "\n\n".join(kernels), 1)
             .replace(MAIN_INSERTION, main, 1))

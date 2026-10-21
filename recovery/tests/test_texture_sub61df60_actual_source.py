@@ -69,7 +69,12 @@ def live_translation_unit() -> str:
         "texture_light_step", "texture_raster_gradient_span_admitted"))
     setup = definition(source, "Texture::setup_edge_gouraud")
     opening = setup.index("{") + 1
-    setup = setup[:opening] + "\n  ++setup_calls;" + setup[opening:]
+    setup = setup[:opening] + """
+  ++setup_calls;
+  if (mutate_scratch560_on_setup_call == setup_calls)
+    *reinterpret_cast<unsigned char *>(&TextureRasterScratch560) =
+        scratch560_mutation;
+""" + setup[opening:]
     assert fixture.count(PRELUDE_MARKER) == 1
     return (fixture.replace(PRELUDE_MARKER, direct_storage_prelude(source), 1)
             .replace("/* ACTUAL_HELPERS */", helpers, 1)
@@ -108,6 +113,11 @@ def test_live_owner_gcc_clang(tmp_path: Path) -> None:
     ("TextureRasterScratch498 = light >> 8;", "TextureRasterScratch498 = light;"),
     ("static_cast<unsigned short>(light_step)) * skip", "static_cast<short>(light_step)) * skip"),
     ("| out[0];", "| base_texel;"),
+    ("static_cast<signed char>(\n                                    *reinterpret_cast<const unsigned char *>(\n                                        &TextureRasterScratch560))",
+     "static_cast<signed char>(threshold)"),
+    ("*reinterpret_cast<unsigned char *>(&(TextureRasterScratch560)) =\n"
+     "            static_cast<unsigned char>(threshold);",
+     "(void)threshold;"),
 ])
 def test_actual_owner_mutants_are_rejected(old: str, new: str, tmp_path: Path) -> None:
     compiler = shutil.which("g++")

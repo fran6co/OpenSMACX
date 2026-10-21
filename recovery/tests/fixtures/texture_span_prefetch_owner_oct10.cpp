@@ -12,6 +12,7 @@ static int texture_span_pixels(int difference) {
     return static_cast<int>(pixels - 1u < 0x8001u ? pixels : 1u);
 }
 
+// ACTUAL_SCRATCH_INSERTION
 // ACTUAL_HELPER_INSERTION
 // ACTUAL_KERNEL_INSERTION
 // ACTUAL_MAIN_INSERTION

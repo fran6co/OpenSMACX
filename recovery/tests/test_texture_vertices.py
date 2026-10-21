@@ -1171,8 +1171,10 @@ def test_actual_alternating_row_color_key_raster(tmp_path, main_body, observer):
      "*out = texel;"),
     ("if (texel != key) *out = (parity & 1) != 0 ? texel : alternate;",
      "*out = (parity & 1) != 0 ? texel : alternate;"),
-    ("const unsigned char alternate = static_cast<unsigned char>(color);",
-     "const unsigned char alternate = static_cast<unsigned char>(color >> 8);"),
+    ("*reinterpret_cast<unsigned char *>(&TextureRasterScratch494) =\n"
+     "        static_cast<unsigned char>(color);",
+     "*reinterpret_cast<unsigned char *>(&TextureRasterScratch494) =\n"
+     "        static_cast<unsigned char>(color >> 8);"),
 ])
 def test_compiling_alternating_mutations_are_rejected(tmp_path, before, after):
     actual = alternating_bodies()
