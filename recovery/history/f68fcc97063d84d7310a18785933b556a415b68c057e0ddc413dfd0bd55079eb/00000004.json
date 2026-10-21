@@ -1,0 +1,39 @@
+{
+  "event_id": "ad1a80ae52e39dc0fd2dd8d9fc31b091fc64647473ad959e102745aaf7e29cc7",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "CMakeLists.txt",
+      "recovery/tests/test_communicate_owner.py",
+      "recovery/tests/test_communicate_plea_actual_source.py",
+      "src/faction.cpp",
+      "src/faction_dialogue.cpp"
+    ],
+    "evidence": [
+      "Act on preserved mixedvisibility discovery: originalcommunicate54FFD0 hasdirecthas_treaty/get_adjectivecalls, while earlieraah_ooga539D40 hasanoriginalinline treatyuse andsocial_ai5B4790 needs local social_upheavalinlineuses. No singledefinitionorderingcanreproducebothqueryboundarieswithincurrentgiantfactionTU. Authorize logicaldialogueownership extraction as genuineordinaryC++, not proof oforiginalTUname or direct/inlineclosurefor everyAPI.",
+      "Move ONLY completeexistingcommunicate annotatedoriginalrecordincludingallhot/coldspans/history/bindings and unchangedfunctionbody into new src/faction_dialogue.cpp, with unchangedsevenprivate communicate_* arithmetic/model helpers. Keep entirelicense/provenance and neededexistingincludeclosure; no inventedforwarders/vtable/oldaddresscalls. Nativewriterisrequiredforanyannotationfactchange; exactwholeannotationtransferisnotpermissiontoeditOriginal/claims or dropoldlessons. Do not simplify/fix branches, signed/wrappedarithmetic, unsafeindices, uninitialized paths or Popupcleanup.",
+      "Keepcommunicate_round_down_multiple559210 completecanonicalmappeddefinitionandhistoricalBYTE_EXACTclaiminfaction.cpp. Only add its identical int(int,int) forwarddeclaration innewcallerTU; itsfourcalls muststayexternalasbefore. KeepALLDiploScratch/label/FactionsArt storage, constructors/destructors, CRT mappings andglobalinitialization inoriginalowners. Header externs remainshared; do notcopy/reinitialize/liftglobals orduplicateprivatehelpers. ExistingpubliccommunicateAPI/callerbodies unchanged.",
+      "OnlyCMakechange is addingnewlogicalapplicationTU totargetandtheexistingparent/Oy-frameprofilegroup, preservingallotherflags/link/buildpolicy unchanged. NewTU usesexistingfactionproductionprofile, notarbitraryrecipeinference. CoordinatornativeCompiler.materialize supportscomplete private-source-tree trials fornewTU; fullprepare/build/link requiredsubsequently. No compiler/prep/Git/task operationsbysourceauthor.",
+      "UpdateONLYtwoexistingactualsourcereaders test_communicate_owner.py and test_communicate_plea_actual_source.py tolocatecommunicate/sevenhelpersinnewownerwhilecontinuingtoextractmappedround_down_multiplefromfaction.cpp. Preserveeveryoriginalspan/claimassertion, actual20pathwitnesses, unsafe-prooflimits, allmutants andzero-skips expectation. Existing559210ownerassertionin test_small_game_owner_closure.py staysunchanged. Addnooneoff fakecoverageclaim.",
+      "has_treaty/get_adjective/social_upheaval remaininpreviouslyauthorizedfaction.cpp positions; get_nounstaysuntouchedheader-visibleforname_base. Itsoriginaldirectcallsfromcommunicate remainanexplicitunresolveddependencyfornativeCOFFinspection, notassumedsatisfiedbythissplit. Otherforeigninlinequeryconsumersandalloriginalmatchingobligations persist. Thischeckpointisnotadmitted; callerreferences, packageclaims/mappings, newlycompiled186TU200COFFphysicalclosure, buildlink, independentreview andmanualintegration requirefreshcoordinatorchecks. Originaltaskbaseline retained."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5570512,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5607952,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "0a3ec8423f2ca3af2462985dd912f5d0c68856ae98d72374b52d5ad7c0eb849d",
+  "request_id": "central-faction-dialogue-real-owner-extraction-oct21w",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:owner-faction-body-recovery-oct20ao"
+}
