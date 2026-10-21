@@ -1,0 +1,63 @@
+{
+  "event_id": "809fc5d25fc62c1d80aff49d7a1ee7e24a4dfe0b5ee02e683b64ff0f5bd37e4d",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/win.cpp"
+    ],
+    "evidence": [
+      "Coordinator authorizes finite read-only original call-boundary diagnostics, not source publication or an assertion of historical translation-unit membership. Preserve original task baselines, all mappings, symbols, claims and findings. Current source checkpoint14ad18455 builds/links; historical global Ob1 experiment is rejected, not to be repeated.",
+      "Only coordinator may prepare isolated resources or compile. Replay complete actual current Release command including O2/Ob2 and owner frame policy; whole-object unchanged overlay must reproduce real current application output. Save every successful raw output and input hash before analysis; damage each relevant output with an anchored executable change. Separate worker processes and separate native leases, never concurrent os.environ resource contexts in one process.",
+      "Ignored exact-block proposals only; no tracked source/CMake, compiler/profile/flags, types, declarations, algorithms, Original annotations, claim tokens or task baselines may change. Measure whole current owner output and expose every exact loss plus physical code/data/initializer collateral. No positive diagnostic alone permits adoption. Further source scope decision, fresh actual application build/link, independent review, protected obligations and destination reproduction required. Unknown remains unknown; no automatic or game acceptance.",
+      "Exactly two alternative coordinate-boundary controls: A move only two existing XY primitive definitions; B move only six existing coordinate callers. Preserve interleaved FILE mapping for screen_to_client RECT with its real body, not the adjacent XY definition. Full native identity/history union and unchanged body hashes required; minimal existing headers, no fake declarations or storage. All other Win callers remain collateral obligations, no selection by only six desired scores."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6214208,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6214352,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6211744,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6213408,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6213600,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6213792,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6214000,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6214944,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "central-win-visibility-controls-oct21e",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:wide-win-source-decks-oct20n"
+}
