@@ -14,7 +14,7 @@ from match_recovery.source import read_file
 ROOT = Path(__file__).resolve().parents[2]
 BITMASK_SIGNATURE = "void __cdecl bitmask(int input, int *offset, int *mask)"
 BUILT_SIGNATURE = "inline int __cdecl has_fac_built(int facility_id, int base_id)"
-GUARDED_SIGNATURE = "inline bool __cdecl has_fac_built(int facility_id)"
+GUARDED_SIGNATURE = "bool __cdecl has_fac_built(int facility_id)"
 
 
 def _definition(text: str, signature: str) -> str:
@@ -32,6 +32,7 @@ def test_bitmask_owner_and_two_argument_facility_predicate_are_direct():
     header = (ROOT / "src/general.h").read_text(encoding="utf-8")
     owner = (ROOT / "src/general.cpp").read_text(encoding="utf-8")
     base_header = (ROOT / "src/base.h").read_text(encoding="utf-8")
+    base_source = (ROOT / "src/base.cpp").read_text(encoding="utf-8")
     sources = [
         (ROOT / f"src/{name}").read_text(encoding="utf-8")
         for name in (
@@ -58,9 +59,10 @@ def test_bitmask_owner_and_two_argument_facility_predicate_are_direct():
     assert "has_fac_built_call" not in code
     assert "static __forceinline int has_fac_built" not in base_header
     assert BUILT_SIGNATURE in base_header
-    assert GUARDED_SIGNATURE in base_header
+    assert base_header.count(GUARDED_SIGNATURE + ";") == 1
+    assert "inline " + GUARDED_SIGNATURE not in base_header
     assert "inline bool __cdecl has_fac_built(int facility_id, int base_id)" not in base_header
-    assert "facility_id >= FacilityRepStart" in _definition(base_header, GUARDED_SIGNATURE)
+    assert "facility_id >= FacilityRepStart" in _definition(base_source, GUARDED_SIGNATURE)
     two_arg = _definition(base_header, BUILT_SIGNATURE)
     assert "return (Bases[base_id].facilities_built[offset] & mask) != 0;" in two_arg
     assert "bitmask(facility_id, &offset, &mask);" in two_arg
@@ -72,6 +74,24 @@ def test_bitmask_owner_and_two_argument_facility_predicate_are_direct():
     assert mapped.path == ROOT / "src/general.cpp"
     assert BITMASK_SIGNATURE in mapped.region
 
+    build = _definition(base_source, "int __cdecl base_build(")
+    guarded = _definition(base_source, GUARDED_SIGNATURE)
+    maint_start = base_source.index("void __cdecl base_maint()")
+    assert base_source.count(GUARDED_SIGNATURE + " {") == 1
+    assert base_source.index(build) + len(build) < base_source.index(guarded) < maint_start
+    assert guarded == ("bool __cdecl has_fac_built(int facility_id) {\n"
+                      "    int base_id = BaseIDCurrentSelected;\n"
+                      "    return (facility_id >= FacilityRepStart) ? false : has_fac_built(facility_id, base_id);\n"
+                      "}")
+
+    # The coordinator's native writer updates this path after source transport.
+    # Keep this assertion explicit; the pre-writer worker snapshot is expected
+    # to fail here rather than silently accepting the stale header binding.
+    record, = (row for row in read_file(ROOT / "src/base.cpp")
+               if row.address == 0x00500290)
+    assert record.body == "src/base.cpp"
+    assert record.image_spans == ((0x00500290, 0x005002DE),)
+
 
 @pytest.mark.parametrize("compiler_name", ("g++", "clang++"))
 def test_actual_bitmask_and_facility_predicate_alias_contract(compiler_name, tmp_path):
@@ -80,9 +100,10 @@ def test_actual_bitmask_and_facility_predicate_alias_contract(compiler_name, tmp
         pytest.skip(f"{compiler_name} is unavailable")
     owner = (ROOT / "src/general.cpp").read_text(encoding="utf-8")
     base_header = (ROOT / "src/base.h").read_text(encoding="utf-8")
+    base_source = (ROOT / "src/base.cpp").read_text(encoding="utf-8")
     bitmask = _definition(owner, BITMASK_SIGNATURE)
     two_arg = _definition(base_header, BUILT_SIGNATURE)
-    one_arg = _definition(base_header, GUARDED_SIGNATURE)
+    one_arg = _definition(base_source, GUARDED_SIGNATURE)
     program = r'''#include <cassert>
 #include <climits>
 #include <type_traits>

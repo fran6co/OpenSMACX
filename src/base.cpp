@@ -5120,6 +5120,11 @@ label_4fff8e:
   return v8;
 }
 
+bool __cdecl has_fac_built(int facility_id) {
+    int base_id = BaseIDCurrentSelected;
+    return (facility_id >= FacilityRepStart) ? false : has_fac_built(facility_id, base_id);
+}
+
 
 
 
@@ -9365,7 +9370,7 @@ Status: Complete
 /*
 Purpose: Checks whether the facility (non-SP) has been build in the currently selected base.
 // ORIGINAL: 0x00500290 ?has_fac_built@@YA_NH@Z 0x00500290-0x005002DE
-// body      src/base.h
+// body      src/base.cpp
 // size      78 bytes
 // prototype bool (__cdecl ?has_fac_built@@YA_NH@Z)(int facilityID)
 // callers   1   call targets   1

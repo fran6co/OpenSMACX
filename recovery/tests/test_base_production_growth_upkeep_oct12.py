@@ -13,7 +13,7 @@ import subprocess
 
 import pytest
 from match_recovery.includes import COMMENTS_OR_STRINGS
-from match_recovery.source import read_file, read_text
+from match_recovery.source import read_file, read_text, write_body
 from test_map_metadata_owner import definition
 from test_base_economy_accounting_oct12 import declarations, helpers
 from test_base_colony_production import PRODUCTION_HARNESS, helper, _assert_production_harness_constants
@@ -39,6 +39,9 @@ SCOPED_DEFINITIONS = (
     "bool production_reveal_faction(",
     "int production_abs(", "int production_project(", "void production_set_project_owner(",
 )
+FACILITY_ADDRESS = 0x00500290
+FACILITY_DEFINITION = "bool __cdecl has_fac_built(int facility_id)"
+FACILITY_HEADER_DEFINITION = "inline bool __cdecl has_fac_built(int facility_id)"
 
 
 def source():
@@ -61,6 +64,45 @@ def tokens(text):
     return result + text[cursor:].split()
 
 
+def _restore_facility_transfer(current, baseline, path):
+    """Undo only the pinned one-argument helper move in a comparison copy."""
+    header = subprocess.check_output(
+        ["git", "show", BASE + ":src/base.h"], cwd=ROOT, text=True)
+    old_body = definition(header, FACILITY_HEADER_DEFINITION)
+    expected_body = old_body.replace("inline bool __cdecl", "bool __cdecl", 1)
+    current_body = actual(current, FACILITY_DEFINITION)
+    assert current_body == expected_body, "facility helper transport changed its body"
+    assert current.count(FACILITY_DEFINITION + " {") == 1
+
+    record, = (row for row in read_text(current, path)
+               if row.address == FACILITY_ADDRESS)
+    assert record.body == "src/base.cpp"
+    restored_fact = write_body(current.encode("utf-8"), record, "src/base.h")
+    current = restored_fact.decode("utf-8")
+
+    old_build = actual(baseline, "int __cdecl base_build(")
+    new_build = actual(current, "int __cdecl base_build(")
+    old_end = baseline.index(old_build) + len(old_build)
+    new_end = current.index(new_build) + len(new_build)
+    body_start = current.index(current_body)
+    body_end = body_start + len(current_body)
+
+    def skip_space(text, offset):
+        while offset < len(text) and text[offset].isspace():
+            offset += 1
+        return offset
+
+    old_next = skip_space(baseline, old_end)
+    new_next = skip_space(current, body_end)
+    # The old guard below still checks the entire surrounding source against
+    # its historical predecessor. Here only reconstruct its original spacing
+    # around base_build; do not compare or normalize the body itself.
+    assert current[new_end:body_start].isspace()
+    assert current[body_end:new_next].isspace()
+    assert baseline[old_end:old_next].isspace()
+    return current[:new_end] + baseline[old_end:old_next] + current[new_next:]
+
+
 def assert_group_continuity(before, current, path):
     """Exact 19-definition authorization; identities/history never exempted."""
     assert len(SCOPED_DEFINITIONS) == 19
@@ -70,6 +112,10 @@ def assert_group_continuity(before, current, path):
     for address, record in new.items():
         for field in fields(record):
             if field.name not in {"line", "region", "origin"}:
+                if address == FACILITY_ADDRESS and field.name == "body":
+                    assert getattr(old[address], field.name) == "src/base.h"
+                    assert getattr(record, field.name) == "src/base.cpp"
+                    continue
                 assert getattr(record, field.name) == getattr(old[address], field.name), (hex(address), field.name)
         def lessons(row):
             return [(x.kind, x.key, x.prose, tuple(t for _, t in x.lines)) for x in row.origin or ()]
@@ -79,6 +125,7 @@ def assert_group_continuity(before, current, path):
     for signature in SCOPED_DEFINITIONS:
         before = before.replace(actual(before, signature), "SCOPED_OWNER_BODY", 1)
         current = current.replace(actual(current, signature), "SCOPED_OWNER_BODY", 1)
+    current = _restore_facility_transfer(current, before, ROOT / "src/base.cpp")
     assert tokens(before) == tokens(current)
     # Also retain outside-body source annotations/comments verbatim, including
     # object/member bindings not represented by the function-record parser.
@@ -102,6 +149,7 @@ def restore_group_to_baseline(current, path):
     restored = current
     for signature in SCOPED_DEFINITIONS:
         restored = restore_body(restored, actual(current, signature), actual(before, signature))
+    restored = _restore_facility_transfer(restored, before, path)
     assert tokens(restored) == tokens(before), "restored body continuity failed"
     assert restored == before, "restored source text continuity failed"
     return restored

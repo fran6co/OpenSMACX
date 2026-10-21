@@ -1,6 +1,5 @@
 """Actual-source 0/1/read-order controls; not proof of original return ABI."""
 from pathlib import Path
-import re
 import shutil
 import subprocess
 
@@ -31,11 +30,11 @@ def test_actual_facility_predicates_keep_zero_one_results(compiler_name, tmp_pat
         pytest.skip(f"{compiler_name} is unavailable")
 
     header = (ROOT / "src/base.h").read_text()
-    signature = re.search(
-        r"inline (?:bool|int) __cdecl has_fac_built\(int facility_id\)", header
-    )
-    assert signature, "selected-base facility predicate missing"
-    one_arg = definition(header, signature.group())
+    source = (ROOT / "src/base.cpp").read_text()
+    signature = "bool __cdecl has_fac_built(int facility_id)"
+    assert header.count(signature + ";") == 1, "selected-base facility declaration missing"
+    assert "inline " + signature not in header
+    one_arg = definition(source, signature)
     two_arg = definition(
         header, "inline int __cdecl has_fac_built(int facility_id, int base_id)"
     )
@@ -63,6 +62,8 @@ static void bitmask(int input, int *offset, int *mask) {
 int main() {
     static_assert(std::is_same<decltype(has_fac_built(1, 1)), int>::value,
                   "two-argument helper contract must remain unchanged");
+static_assert(std::is_same<decltype(has_fac_built(1)), bool>::value,
+              "one-argument helper retains its bool contract");
 
     Bases[1].facilities_built[2] = 1 << 3;
     selected_reads = 0;
