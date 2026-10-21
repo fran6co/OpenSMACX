@@ -1,0 +1,24 @@
+{
+  "event_id": "c8a64f995271728423c74bbf297dcc35513c5bd6410c94e68c4e1c2e0ab7c3b1",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_texture_scratch_494_actual_source.py",
+      "recovery/tests/test_texture_shared_raster_state.py",
+      "recovery/tests/test_texture_vertices.py"
+    ],
+    "evidence": [
+      "Authorize only explicit-UV Texture::draw_trans6198E0 structural dataflow restoration: publish existing typed shared destination/pixel/UV/vertex/count/dimension/stride/clip/max-index cells at independently reviewed pinned acquisition points, and use mapped Texture::setup_edge624D80 for initial/rollover setup. Preserve explicit-UV byte sampling/inclusive span/get-free/FPU ordering, borrowed gate after both initial edge attempts, signed/unchecked/error behavior. Do not change private templates used by sibling overloads, setup_edge algorithm, storage definitions, headers, function signatures, compiler/linker policy or original source annotations/claims.",
+      "Current ordinary geometry may already render identically. The concrete recovery is omitted original shared-cell publications and mapped helper dataflow, not a safety fix or assertion of reentrant callback observability. Full original semantics, FP/traps, aliasing and runtime proof remain open; do not invent bounds/fallbacks or initialize original holes. If additional original shared reads/writes are needed, preserve evidence and ask for exact scope before changing other owners.",
+      "Authorize additive actual-source tests for original shared publications, edge input/reload and original call/read order with compiling damaged controls. Existing texture_vertices and scratch494 fixtures may follow genuine mapped setup_edge/globals instead of the former local template path; retain all geometry/UV/borrowed/overflow/domain/mutant oracles. No blanket skip/xfail/weakened acceptance or unrelated legacy-test repair.",
+      "Coordinator alone handles native compiler leases/preparation/recording/Git. Worker may author only named files in this isolated checkout, run cheap host tests and freeze. Native body/reference/claim/mapping/annotation, fresh application link and complete changed output/census review before any manual integration; matching regression does not erase correct structure or historical obligations. No automatic/full-game acceptance or new implementation count is asserted."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "32fea24048d3a92649282f6a2677809857620282f5165723422feb1e07210326",
+  "request_id": "texture-explicit-uv-shared-state-scope-oct21zc",
+  "schema_version": 1,
+  "sequence": 15,
+  "stream": "task:texture-rasterizer-recovery"
+}
