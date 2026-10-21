@@ -1,0 +1,22 @@
+{
+  "event_id": "b3234d5bda7be4ba27cf5fb1a6536b862a16f992942bd577e8d885ccb15655f2",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/map.cpp"
+    ],
+    "evidence": [
+      "Coordinator authorizes exactly one new read-only native source-overlay control for Map whose_territory definition visibility, under the complete unchanged actual Release command including Ob2. No tracked source, CMake, flags, compiler/profile, Original mappings, baseline, body semantics or claims may change during the diagnostic. This is not an assertion of the original translation-unit partition or permission to adopt a new source split.",
+      "Existing same-revision globalOb1 audit is retained and REJECTED (425loss74gain). Its Map slice146rows shows three gains base_territory4E3FA0/valid_landmark592650/has_temple5BF130 with exact original whose_territory4E3EF0 targets, and one initializer4C38B0 loss. Do not repeat or adopt globalOb1, source-order rearrangements, forced attributes or scope waivers. Actual pinned calls also establish two coast_or_border callsites.",
+      "Natural hypothesis: a separately compiled genuine territory query would be unavailable for same-TU expansion, without changing its implementation or existing public declaration. Diagnostic author may create ignored full source overlays only: map.cpp with the exact complete whose_territory annotated/history block removed, and minimal includes plus that verbatim block for an independently compiled probe. No tracked new TU or fabricated definitions. Native source parsing must retain complete identity/history union; constructor/startup/data collateral stays visible.",
+      "Coordinator owns native resource lease, preparation, compiler calls and analysis: lossless actual command replay and unchanged whole-object replica; one anchored body damage per relevant output; measure every Map original against old/new physical outputs, inspect five original direct-call boundaries and exact target/addend/call multiplicity, and protect all other code/data/generatedinitializers. Save successful raw objects and input hashes before analyses. No source adoption until independent review, explicit further scope/publication decision, full application build/link, historical continuity and destination verification. Existing unknown/refused evidence remains unknown; no automatic/game acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "a6674ae6f27b6c2a69494a72ffcf18b99d44acecd1124fe8ea5a9c9d09be5d61",
+  "request_id": "central-map-definition-visibility-control-oct21d",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:map-cohort-match-oct20b"
+}
