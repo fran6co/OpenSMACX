@@ -1,0 +1,22 @@
+{
+  "event_id": "2b7737f309a36193e5531f70d87e99a6ed02c5c4df5e40b86f4d53ef5b3fc8f7",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_use_time_bonus_actual_source.py",
+      "src/console.cpp"
+    ],
+    "evidence": [
+      "Standing manual faithful-recovery permission: investigate and correct only Console::use_time_bonus517060 no-bonus parse argument. Original5170D4 shifts captured selection by5 and5170D7 loads94F1D0+selection*32; TimeControl94F1B8 and existing RulesTimeControl refresh at18 identify refresh, not extra at14. Require full-span independent confirmation before source edit. Preserve all original guards, global early faction/receiver late faction distinction, captured selection, callback order and error-path behavior.",
+      "Extend existing actual-source host fixture to distinguish extra and refresh through separately seeded values and compile-success wrong-field mutation. Retain every existing gate, popup, no-bonus zero/negative, callback selection-change and success control; no safety fixes, production ABI/header/global/marker/claim/compiler-policy changes.",
+      "Isolated worker may edit only these two files with apply_patch and run explicit host tests. Coordinator owns native compiles, preparation, Git, scoped/full build/link, claims/mappings/references, compiled complement and fresh destination verification before manual integration. Preserve original task baseline and all historical matching obligations. This decision grants no automatic, game, runtime or full linked preservation acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "f70e5b3560bad5e543e6d8fcf14bb51beaf3f201114e0a37618d4eed3f3d7733",
+  "request_id": "central-console-time-control-refresh-oct21k",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:console-clean-matching-oct15"
+}
