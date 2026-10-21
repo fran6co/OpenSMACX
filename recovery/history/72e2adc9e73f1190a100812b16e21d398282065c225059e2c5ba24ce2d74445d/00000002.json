@@ -1,0 +1,74 @@
+{
+  "event_id": "4f923da518151d71c8dbff108d69c6c04ff58c2c34f99e608318534503b465b2",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "The existing task originally owns ambience dispatch and faction art, not the eleven AAmbience/BAmbience methods supplying this static-state proof. Explicitly add their existing original identities for the local-data verifier investigation; no original task baseline or C++ body is changed. This coordinator decision corrects the witness scope instead of treating unrelated historical task subjects as implicit authorization.",
+      "Source-bound16local starts and exact unique current COFF definitions are shared by the two complete general methods; independent pinned HIGHLOW-to-symbol correlation supplies78operand witnesses. The native change is limited to the already authorized generic checker/test/doc files; source/initializer/lifetime changes require separate review. Broader application observations remain diagnostics, never scope expansion or acceptance from a count."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4487488,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4487920,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4488624,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4488656,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4487376,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4487456,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4487856,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4487872,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4487984,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4488032,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4489856,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "e7bf56cc2a2031bc736ecc848bd3f53d1605a920ad713419d41e58fd850b01df",
+  "request_id": "ambience-static-state-method-witness-scope-oct21y",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:ambience-faction-art-owner-oct5"
+}
