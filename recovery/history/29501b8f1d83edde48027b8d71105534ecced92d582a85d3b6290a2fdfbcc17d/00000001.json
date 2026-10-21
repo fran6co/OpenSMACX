@@ -1,0 +1,22 @@
+{
+  "event_id": "5a24227c92ea2500a19dd60707f09641da550d7cdba7f4179fa7b8d0ad057305",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_logging_random_natural_lifetimes_oct12.py"
+    ],
+    "evidence": [
+      "Authorize exactly six MEASURED token removals on Random::reseed and both Random::get declaration/definition pairs. They already have sole ordinary definitions in random.cpp. Remove only obsolete active header export-linkage instructions; retain useful historical inline/xor/wrapping findings and every original marker/body/symbol/span/claim. No algorithm, type, storage, lifetime, wrapper, constructor/destructor or compiler/linker change.",
+      "Allow existing actual-source Random wrapping fixture to follow ordinary signature anchors and assert absence of export attributes on these3methods while retaining ctor/dtor emission annotations. Allow only the reseed signature anchor in the existing Log/Random lifetime fixture to follow the same declaration; do not weaken behavioral/UBSan/damage or lifecycle checks.",
+      "Require private native emission/body/reference observations and fresh application build/link plus exports comparison, all known-function matching deltas, claim/mapping/reference/annotation checks and bounded outside-scope physical review. If linker retention changes, keep original implementation/mapping and report pending original linked-selection obligations; do not add a force-export/retention anchor, erase identity or label unsupported acceptance green.",
+      "Pinned original export header count0/namecount0 has nonzero zero-length array RVAs; the conservative package export parser currently refuses that layout. Manual header observation is not native acceptance and does not authorize weakening its guard in this C++ cleanup. Full automatic/link/runtime/structure/game acceptance remains unproven."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "random-ordinary-api-export-cleanup-scope-oct21za",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:random-source-ownership-oct20i"
+}

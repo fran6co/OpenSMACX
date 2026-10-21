@@ -72,14 +72,14 @@ Status: Complete
 */
 // body src/random.h
 
-MEASURED void Random::reseed(uint32_t new_seed) {
+void Random::reseed(uint32_t new_seed) {
     uint32_t *const b = &new_seed;
     seed_ ^= *b;
     *b ^= seed_;
     seed_ ^= *b;
 }
 
-MEASURED uint32_t Random::get(int min, int max) {
+uint32_t Random::get(int min, int max) {
     if (min > max) {
         min ^= max;
         max ^= min;
@@ -101,7 +101,7 @@ MEASURED uint32_t Random::get(int min, int max) {
     return ((range * (new_seed & 0xFFFF)) >> 16) + min;
 }
 
-MEASURED double Random::get() {
+double Random::get() {
     seed_ = seed_ * 0x19660D + 0x3C6EF35F;
     const uint32_t bits = (seed_ & 0x7FFFFF) | 0x3F800000;
     float unit;

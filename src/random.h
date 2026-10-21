@@ -33,13 +33,12 @@ class Random {
   MEASURED ~Random() { seed_ = 0; }   // 00625740
 
   // The optimization notes below record historical inline trials. These
-  // methods now have declaration-only interfaces here and sole definitions in
-  // random.cpp; MEASURED remains on each declaration to preserve linkage, not
-  // to expose a body to callers.
-  // IN-CLASS so the free wrappers below fold them in, which is what the
-  // image does: `random_reseed` is `mov ecx, [Rand]; xor ...` with no call
-  // in it at all. MEASURED, and that is load-bearing here rather than
-  // inherited style: under /Ob2 the optimiser folds reseed into its caller
+  // methods now have ordinary declaration-only interfaces here and sole
+  // definitions in random.cpp; no body is exposed to callers.
+  // HISTORICAL IN-CLASS rationale: the free wrappers folded these methods in,
+  // as the image does: `random_reseed` is `mov ecx, [Rand]; xor ...` with no call
+  // in it at all. Historically MEASURED was load-bearing here rather than
+  // inherited style: under /Ob2 the optimiser folded reseed into its caller
   // and /Gy drops the COMDAT, so 0x00625750 was left with nothing to be
   // measured against. __declspec(dllexport) on the declaration forces the
   // out-of-line copy out whatever the expansion does - the pin the other
@@ -52,20 +51,19 @@ class Random {
   // three instructions against the image's eight. Reading and writing the
   // parameter through `*b` takes the non-aliasing away from it and the whole
   // chain survives - 0x00625750 and 0x006257E0 are both byte-exact on it.
-  // Keep MEASURED on the declaration to preserve the original exported
-  // linkage. This does not make the body visible here; it lives only in
-  // random.cpp.
-  MEASURED void reseed(uint32_t new_seed);
+  // These methods now use ordinary external linkage, not reconstruction-only
+  // exports. Their sole definitions remain in random.cpp.
+  void reseed(uint32_t new_seed);
   // HISTORICAL IN-CLASS rationale: the image's `random(int, int)` at
   // 0x00625810 has this body folded into it - nineteen instructions with no
   // call - and VC6 only inlines what it can see here.
-  MEASURED uint32_t get(int min, int max);   // 00625770
+  uint32_t get(int min, int max);   // 00625770
   // HISTORICAL IN-CLASS rationale, also applying to reseed() and get(int, int): the image's
   // free `random()` at 0x00625850 has this body FOLDED IN - twelve
   // instructions, `imul`/`and`/`or`/`fld`/`fsub`, with no call in it at all -
   // and VC6 only inlines what it can see here. It keeps its own claim because
   // /Ob0 still emits its COMDAT.
-  MEASURED double get();   // 006257B0
+  double get();   // 006257B0
   // additional functions to assist with encapsulation
   uint32_t get_seed() { return seed_; }
 

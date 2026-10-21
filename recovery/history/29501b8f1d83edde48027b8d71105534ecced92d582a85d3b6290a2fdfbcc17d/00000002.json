@@ -1,0 +1,24 @@
+{
+  "event_id": "3d31e9ba2052f3efcf157670019f12811fd9ded87666d9068bfc947d0efb1530",
+  "payload": {
+    "affects": [
+      "entity-813a8925f7e594dbc3f90bab6c9f5aba49f4c09929f642b1b27f20c38e394776",
+      "entity-ab7da1762c2e0bef3fad1cee7bfca5ca0c9ae42d7fcbfc967127690b6b3d26e1",
+      "entity-e9113ca6f6602df9ceb83ef3b074a8df4ff19b5e7f920d068174b5b92f4076a0"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "random-ordinary-api-source-checkpoint-oct21za",
+    "evidence": [
+      "Coordinator reviewed exact source diff: only six export attributes and obsolete active header instructions changed. All method body tokens, wrappers, types, storage, ctor/dtor annotations, original identities/spans/body/symbol facts and historical claims remain. Ordinary C++ external linkage replaces reconstruction-only exports; no compiler or linker policy changes.",
+      "Nineteen actual-source GCC/Clang/UBSan boundary and compile-success arithmetic/seed/double mutation controls plus natural global lifetime witness pass without skips. Native recorder freshly observes all3methods exact without export attributes; exit0, no source publication or new claim. This is emitted-body evidence, not final linked-retention proof.",
+      "Unadmitted source checkpoint. Fresh186TU200COFF build/link, actual export delta, known-function census, strict reference/claim/mapping/annotation and outside-scope physical observations still required before manual integration. Preserve original standalone-body and lifetime/selection obligations even if linker removes an unused method. Original zero-count export layout remains conservatively refused by package export parsing; no gate relaxation or automatic/game acceptance."
+    ],
+    "hypothesis": "Ordinary out-of-line Random methods do not require artificial DLL exports to compile or retain their current source bodies.",
+    "kind": "discovery"
+  },
+  "previous_event": "5a24227c92ea2500a19dd60707f09641da550d7cdba7f4179fa7b8d0ad057305",
+  "request_id": "random-ordinary-api-source-checkpoint-oct21za",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:random-source-ownership-oct20i"
+}
