@@ -1,0 +1,22 @@
+{
+  "event_id": "7bec628362e13093229d4e9e62290fd86828c1e4ea8ea4d98213f95ed12af192",
+  "payload": {
+    "affects": [
+      "entity-541701e9a04928e399f7b5f3f8374f5301053709e81fe8de68aea377ca0f61f5"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "basewin-garrison-inline-font-metric-oct21x-source-preserved",
+    "evidence": [
+      "Pinned41044A..410464 reads Font adjustment+0 after init, signed-tests it, reads only height+10 and adds on the nonnegative branch or only line_height+C on the negative branch. Existing public typed accessors and defined uint32/int32 arithmetic preserve the current selector semantics, including wrap. Only the row-pitch expression changes; all later garrison behavior, unsafe/error paths, lifetimes, headers, mappings and claims remain intact.",
+      "Independent pinned-instruction/source/test review is retained in ignored parallel-match-oct21x/basewin-independent-source-review.md. Coordinator combined14-case host run passes, including4 BaseWin cases across GCC/Clang C++98, six selected metric cases and four compiled mutants per compiler. Host fragment controls do not prove full garrison, native ABI, VC6 or game behavior.",
+      "All parsed original record metadata, lesson kinds/keys/prose and exact raw historical comment text remain equal; only source line locations move by the inserted block. Original task baseline343ceab037cf0d2ebbb125f70e110eec8192e5a2 remains unchanged. No claim banking/demotion, bug fix or invented identity. This is an unadmitted source checkpoint; fresh native build/link, census, references and scoped compiled residual review remain required."
+    ],
+    "hypothesis": "The original garrison row pitch locally selects the initialized Font metrics instead of calling the out-of-line selector.",
+    "kind": "discovery"
+  },
+  "previous_event": "b51f879c84386df15ae5b0dcaeec0edc952d23484deb47fc4a7e82da75f9ff30",
+  "request_id": "basewin-garrison-inline-font-metric-oct21x-source-preserved",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:owner-basewin-faithful-recovery-oct20y"
+}

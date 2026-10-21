@@ -4023,7 +4023,16 @@ void BaseWin::draw_garrison(int update_mode) {
 
     // The row pitch every garrison line uses: `height_ + unk_1_` when the
     // font's own ascent adjustment is not negative, `line_height_` when it is.
-    int line_height = font.line_advance();
+    const int metric_adjustment = font.unk_1_;
+    int line_height;
+    if (metric_adjustment >= 0) {
+        const int font_height = font.pixel_height();
+        line_height = static_cast<int32_t>(
+            static_cast<uint32_t>(font_height) +
+            static_cast<uint32_t>(metric_adjustment));
+    } else {
+        line_height = font.line_height();
+    }
 
     int left = garrison_rect_.left;
     int top = garrison_rect_.top;
