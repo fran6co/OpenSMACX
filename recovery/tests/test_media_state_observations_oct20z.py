@@ -137,8 +137,16 @@ def test_pinned_original_stop_helper_snapshots_null_gate_and_wait_targets():
     # The state4 exchange precedes one initial state read; zero gate branches
     # to the independent state5 polling loop rather than using state6.
     assert bytes_at(0x005CB67A, 8) == bytes.fromhex("6a0456ff15009166")
+    # The gate check precedes that branch's initial shared-state load.
+    assert bytes_at(0x005CB683, 9) == bytes.fromhex("85ff8b06741b83f806")
     assert bytes_at(0x005CB685, 9) == bytes.fromhex("8b06741b83f806742c")
     assert bytes_at(0x005CB6A4, 7) == bytes.fromhex("83f80574118b3d")
+    body = stop_body()
+    gate_branch = body.index("if (protocol_gate != 0)")
+    assert body.index("InterlockedExchange(&d->state, 4);") < gate_branch
+    assert body.index("while (observed_state != 6)", gate_branch) > gate_branch
+    assert body.index("while (observed_state != 5)", gate_branch) > gate_branch
+    assert "LONG state =" not in body
 
 
 def stop_harness(body):
@@ -224,6 +232,10 @@ def stop_mutant(body, damage):
     if damage == "cached_state":
         if "state = observed_state;" in body:
             return body.replace("state = observed_state;", "state = state;")
+        if "while (observed_state != 6) Sleep(10);" in body:
+            return body.replace(
+                "while (observed_state != 6) Sleep(10);",
+                "LONG state = observed_state; while (state != 6) Sleep(10);", 1)
         return body.replace("while (d->state != (LONG)expected) Sleep(10);",
                             "LONG state = d->state; while (state != (LONG)expected) Sleep(10);", 1)
     raise AssertionError("unknown stop-helper mutant")

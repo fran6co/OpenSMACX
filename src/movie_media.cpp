@@ -2323,7 +2323,7 @@ extern "C" int __cdecl sub_5cb610(MediaDescriptor *d) {
   return 0;
 }
 
-// ORIGINAL: 0x005CB660 sub_5cb660 0x005CB660-0x005CB6BF
+// ORIGINAL: 0x005CB660 sub_5cb660 0x005CB660-0x005CB6BF BYTE_EXACT
 // symbol    _sub_5cb660
 // kind      game
 extern "C" int __cdecl sub_5cb660(MediaDescriptor *d) {
@@ -2332,17 +2332,10 @@ extern "C" int __cdecl sub_5cb660(MediaDescriptor *d) {
   if (runtime != 0) protocol_gate = runtime->protocol_gate;
   InterlockedExchange(&d->state, 4);
   const volatile LONG &observed_state = d->state;
-  LONG state = observed_state;
   if (protocol_gate != 0) {
-    while (state != 6) {
-      Sleep(10);
-      state = observed_state;
-    }
+    while (observed_state != 6) Sleep(10);
   } else {
-    while (state != 5) {
-      Sleep(10);
-      state = observed_state;
-    }
+    while (observed_state != 5) Sleep(10);
   }
   return 0;
 }

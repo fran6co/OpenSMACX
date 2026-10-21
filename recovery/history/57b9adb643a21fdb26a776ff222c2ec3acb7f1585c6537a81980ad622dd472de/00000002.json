@@ -1,0 +1,23 @@
+{
+  "event_id": "b0d06ff134b53aa552f8f465912590a6cee5f0ed29c9a1b8e2fa28006a3c2f09",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_media_state_observations_oct20z.py",
+      "src/movie_media.cpp"
+    ],
+    "evidence": [
+      "Coordinator-reviewed original-faithful source recovery of95-byte media stop helper5CB660..5CB6BF. Replace local cached-state loop update spelling with ordinary gate-specific conditions on the existing const volatile LONG reference. Keep descriptor/runtime ownership, saved default-zero gate and runtime+3D0 snapshot before InterlockedExchange(state,4), descriptor state+98, terminal6 vs zero/nullgate5, Sleep10, endless waits, return0, API declarations/storage/qualifiers/ABI/flags and all other source behavior. No timeout, safetyfix or concurrency guarantee.",
+      "Pinned TEST5CB683 precedes initial stateMOV5CB685; conditionalJE5CB687 follows that common load, with MOV preserving testflags. Selected source form compiles39/39instructions byteexact including this order. Do not describe sourcebranchselection as an observable synchronization correction. Stable host tests do not prove cross-thread interleavings, portable atomics or synchronization semantics.",
+      "Actual production recipe baseline replay and unchangedoverlay plus state-request damage controlPASS. Whole Movie object from fresh full application build equals frozen measured39/39candidate object signature. Native recover record alone banks new historical claim; guarded native writer accounts for all annotation changes and preserves other original identities/spans/claims/history. Independent final source/test/original review and16host tests with compile-success cached-state/wrong-target damage controlsPASS.",
+      "Fresh185TU199object full application build/link, claims/mappings/referencesPASS;199compiled complementsPASS projecting ONLY5CB660body, no sibling/readiness/data/startup/othersection waiver. Whole5581knownidentity census gains exactly one maskedbody3361→3362 and one strictPASS2805→2806;555UNKNOWN and1existingFAIL unchanged. Preserve original task baselinecd036e813ede724af4e71595496d37b7073aea9d and every obligation. This is existing implementation matching progress, not new original function coverage or complete callable universe. Full linkedselection/allocation, structure/runtime/game/autonomous acceptance remain unproven; fresh destination build/census/tests and199zero-omission reproduction follow before cleanup."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "2acb3be9a458bd7db4782f789b7af306db7f89c665db5f88d8bb920c5a7be2c0",
+  "request_id": "central-manual-movie-original-stop-admission-oct21p",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:matching-media-stop-oct20aa"
+}
