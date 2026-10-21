@@ -58,7 +58,7 @@ class FileWin {
   char *save();
   char *load();
   FileWin();
-  ~FileWin();
+  ~FileWin() { close(); }
   void UNK6();
   void UNK1();
   void UNK2(int pos);

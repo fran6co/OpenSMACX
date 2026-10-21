@@ -614,13 +614,6 @@ EditBox::EditBox() {
     field_B3C_ = 0;
 }
 
-// ORIGINAL: 0x00408010 ??1EditBox@@QAE@XZ 0x00408010-0x00408077;0x00650CF0-0x00650D10 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00408010.cpp", "Original constructor/destructor direct-call receivers and unwind stages"], "reason": "408010 closes EditBox then destroys its Time member and nonvirtual GraphicWin base; normal and unwind paths agree."}
-// Deleted seed provenance: git:117282ee0186f316fd18d2d25f9ae0223c8186ae:src/unrecovered/00408010.cpp
-// symbol    ??1EditBox@@UAE@XZ
-EditBox::~EditBox() {
-    close();
-}
 
 /*
 Purpose: Reset the edit box - clear its state, republish the seven defaults,

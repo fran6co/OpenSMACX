@@ -28,6 +28,38 @@
 #include "maininterface.h"
 #include "palette.h"
 
+// These independent destructor mappings are emitted in this translation
+// unit from their real class-header definitions. AlphaSave destruction
+// also expands the same member lifetimes; it is a separate mapping.
+/*
+Purpose: Tear down a FileWin: close it, then destroy the ListBox, EditBox and
+         two FlatButton members in reverse declaration order. C++ owns the
+         member/base destruction and partial-construction unwind.
+// ORIGINAL: 0x00407F00 ??1FileWin@@QAE@XZ 0x00407F00-0x00408003;0x00650C80-0x00650CE8 FILE
+// body src/jackal/filewin.h
+// size      363 bytes
+// prototype void (__thiscall ??1FileWin@@QAE@XZ)(FileWin* this)
+// callers   2   call targets   8
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005D4DD0 0x00607040 0x00607DA0 0x00608E10 0x00609EC0 0x00613900 0x00614F30 0x00616200
+// TRIED: MEASURED 14/62 agreeing with named members - better than the
+//            preserved artifact's raw-offset form (src/recovered/units/
+//            00407f00.cpp, since deleted, reported divergence 1 against a
+//            DIFFERENT flag set/scaffold). First mismatch is again register
+//            allocation (`sub esp,8` vs `,0xc`; `push esi` vs `push ebx`)
+//            starting right after the SEH prologue, which matches through
+//            instruction 6.
+Return Value: n/a
+Status: Complete
+*/
+
+// ORIGINAL: 0x00408010 ??1EditBox@@QAE@XZ 0x00408010-0x00408077;0x00650CF0-0x00650D10 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00408010.cpp", "Original constructor/destructor direct-call receivers and unwind stages"], "reason": "408010 closes EditBox then destroys its Time member and nonvirtual GraphicWin base; normal and unwind paths agree."}
+// body src/editbox.h
+// Deleted seed provenance: git:117282ee0186f316fd18d2d25f9ae0223c8186ae:src/unrecovered/00408010.cpp
+// symbol    ??1EditBox@@UAE@XZ
+
 extern int TextColourTable[195];
 extern BoxSpriteParams InterfaceStandardPopupBoxStyle;
 
