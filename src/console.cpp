@@ -3430,7 +3430,7 @@ void Console::use_time_bonus() {
     }
     const int faction = ConsoleGlobal.faction_id_;
     if (PlayersData[faction].time_bonus_count <= 0) {
-        parse_num(0, TimeControl[selection].extra);
+        parse_num(0, TimeControl[selection].refresh);
         NetMsgPrimary.pop("NOTIMEBONUSES", 5000, 0, nullptr);
         return;
     }

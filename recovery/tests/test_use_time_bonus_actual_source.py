@@ -25,6 +25,7 @@ def _body(source: str, signature: str) -> str:
 
 HARNESS = r'''
 #include <cassert>
+#include <cstddef>
 #include <cstdint>
 #include <string>
 #include <vector>
@@ -40,8 +41,16 @@ int ConsoleControlTurnActive = 0;
 int IsMultiplayerNet = 0;
 struct ConsoleState { int faction_id_; } ConsoleGlobal{};
 struct PlayerData { int time_bonus_count; } PlayersData[8]{};
-struct TimeControlEntry { int extra; };
-TimeControlEntry TimeControl[5]{};
+// Match the native 0x20-byte row and +0x18 refresh member using a 32-bit
+// name placeholder; host pointer width must not move the tested field.
+struct TimeControlEntry {
+    uint32_t name;
+    int turn, base, unit, event, extra, refresh, accumulated;
+};
+static_assert(sizeof(TimeControlEntry) == 0x20, "native time-control stride");
+static_assert(offsetof(TimeControlEntry, refresh) == 0x18,
+              "native time-control refresh offset");
+TimeControlEntry TimeControl[6]{};
 struct NetDaemonPrimary { uint32_t trailing_words_[8]; };
 struct NetDaemon { NetDaemonPrimary primary_state_; } NetDaemonNet{};
 
@@ -87,7 +96,10 @@ static void reset() {
     IsMultiplayerNet = 1;
     ConsoleGlobal.faction_id_ = 3;
     for (auto &player : PlayersData) player.time_bonus_count = 1;
-    for (int i = 0; i != 5; ++i) TimeControl[i].extra = 100 + i;
+    for (int i = 0; i != 6; ++i) {
+        TimeControl[i].extra = 100 + i;
+        TimeControl[i].refresh = 700 + i;
+    }
     for (auto &word : NetDaemonNet.primary_state_.trailing_words_) word = 0;
     events.clear();
     selection_after_parse = -1;
@@ -114,14 +126,14 @@ static void test_network_turn_mismatch() {
     assert(last_popup && std::string(last_popup) == "SIMULNO");
 }
 
-static void test_no_bonus_keeps_selected_extra_across_callback() {
+static void test_no_bonus_keeps_selected_refresh_across_callback() {
     Console self{2}; reset();
     GameDataStateStorage.fields_.time_controls_selection_ = 3;
     PlayersData[3].time_bonus_count = 0;
     selection_after_parse = 4;
     self.use_time_bonus();
     assert((events == std::vector<std::string>{"parse_num", "pop:NOTIMEBONUSES"}));
-    assert(last_parse_arg0 == 0 && last_parse_arg1 == 103);
+    assert(last_parse_arg0 == 0 && last_parse_arg1 == 703);
     assert(GameDataStateStorage.fields_.time_controls_selection_ == 4);
 
     reset();
@@ -129,7 +141,16 @@ static void test_no_bonus_keeps_selected_extra_across_callback() {
     PlayersData[3].time_bonus_count = -1;
     self.use_time_bonus();
     assert((events == std::vector<std::string>{"parse_num", "pop:NOTIMEBONUSES"}));
-    assert(last_parse_arg0 == 0 && last_parse_arg1 == 102);
+    assert(last_parse_arg0 == 0 && last_parse_arg1 == 702);
+
+    reset();
+    GameDataStateStorage.fields_.time_controls_selection_ = 1;
+    PlayersData[3].time_bonus_count = 0;
+    TimeControl[1].extra = 111;
+    TimeControl[1].refresh = 0;
+    self.use_time_bonus();
+    assert((events == std::vector<std::string>{"parse_num", "pop:NOTIMEBONUSES"}));
+    assert(last_parse_arg0 == 0 && last_parse_arg1 == 0);
 }
 
 static void test_end_of_game_and_already_used_gates() {
@@ -156,7 +177,7 @@ static void test_success_message() {
 int main() {
     test_three_early_gates();
     test_network_turn_mismatch();
-    test_no_bonus_keeps_selected_extra_across_callback();
+    test_no_bonus_keeps_selected_refresh_across_callback();
     test_end_of_game_and_already_used_gates();
     test_success_message();
 }
@@ -198,3 +219,23 @@ def test_use_time_bonus_gate_damage_control(tmp_path: Path) -> None:
     )
     result = subprocess.run([str(binary)], capture_output=True, text=True)
     assert result.returncode != 0, "removing the turn-active gate escaped the host controls"
+
+
+def test_use_time_bonus_wrong_time_control_field_damage_control(tmp_path: Path) -> None:
+    source = (ROOT / "src/console.cpp").read_text(encoding="utf-8")
+    body = _body(source, "void Console::use_time_bonus()")
+    anchor = "TimeControl[selection].refresh"
+    assert anchor in body
+    mutated = body.replace(anchor, "TimeControl[selection].extra", 1)
+    program = HARNESS.replace("BODY", mutated[len("void Console::use_time_bonus() ") :])
+    cpp = tmp_path / "use_time_bonus_wrong_field_mutant.cpp"
+    cpp.write_text(program, encoding="utf-8")
+    compiler = shutil.which("clang++") or shutil.which("g++")
+    assert compiler, "host C++ compiler required"
+    binary = tmp_path / "use_time_bonus_wrong_field_mutant"
+    subprocess.run(
+        [compiler, "-std=c++11", "-Wall", "-Wextra", "-Werror", str(cpp), "-o", str(binary)],
+        check=True,
+    )
+    result = subprocess.run([str(binary)], capture_output=True, text=True)
+    assert result.returncode != 0, "substituting TimeControl.extra escaped the host controls"

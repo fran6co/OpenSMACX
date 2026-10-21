@@ -1,0 +1,23 @@
+{
+  "event_id": "4a04636b45954c3de7aa760676a4b06b910505dcd1e4243ae0f1097c58acf960",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_use_time_bonus_actual_source.py",
+      "src/console.cpp"
+    ],
+    "evidence": [
+      "Coordinator-reviewed original-fidelity correction only: use_time_bonus517060 now parses selected RulesTimeControl.refresh at18, not extra at14. Original51706E captures selection;5170D4 shifts by5;5170D7 reads94F1D0 = table94F1B8+18. All guards/calls/order and early-global/late-receiver faction distinction remain. No bug fix or safety normalization, header/type/ABI/flag/claim changes.",
+      "Independent complete pinned-span and actual-C++ reviews,48 related actual-source host cases including original-field confusion and gate compile-success mutants, fresh185TU199physical-object application build/link, claims/mappings/references continuity pass. Actual current recipe replay and unchanged-overlay controls pass. Complete199 compiled complement passes projecting only the selected mapped function; no other code/data/startup sections omitted.",
+      "Whole5581 known-identity masked outcomes remain3358exact; strict2799pass556unknown3fail unchanged. The wrong old field also masked exact because relocation addend was hidden; corrected semantic source is not counted as a new implementation or masked gain. Original TimeControl start binding/reference closure remains separate unresolved work; no native record or claim demotion.",
+      "Manual source checkpoint only, not complete linked retained-selection/allocation/provider, exhaustive function coverage, hierarchy/lifetime/runtime/game or autonomous acceptance. Fresh destination verification and zero-omission reproduction required before consumed worktree cleanup. Preserve task original baseline2afe83b4f359776832271aa2f0522206c3652885 and all historical obligations."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "2b7737f309a36193e5531f70d87e99a6ed02c5c4df5e40b86f4d53ef5b3fc8f7",
+  "request_id": "central-manual-console-refresh-admission-oct21k",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:console-clean-matching-oct15"
+}
