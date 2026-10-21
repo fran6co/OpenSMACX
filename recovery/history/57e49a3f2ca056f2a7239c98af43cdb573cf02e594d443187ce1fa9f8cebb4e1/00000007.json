@@ -1,0 +1,26 @@
+{
+  "event_id": "c56a3aa7ac54ccb64925b9c612d0ad027adb5a64c2cb25f5a1f09a2d41796dc3",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "docs/DECOMP_MAP.md",
+      "packages/match-recovery/src/match_recovery/associated_binary.py",
+      "packages/match-recovery/tests/test_associated_binary.py",
+      "src/maininterface.cpp"
+    ],
+    "evidence": [
+      "Standing faithful-source/manual integration permission. Last actual strictFAIL45D170 is boundary refusal for unannotated compiler switch targets outside independent bodyspan45D170..45D271. Pinned unsignedguard CMPeax7/JA plusindexedjump45D184 independently establishes8dwordtargets45D274..45D294 with originalHIGHLOWcellfields; alltargets original instructionstarts insidebody. Retained actualCoff rootsection has same targetoffsets and identical3byte gap8D4900, but current nativeassociated verifier refuses this LEA identity gap. This is a demonstrated source-data recovery blocker, not authority for general acceptance/framework rewrite.",
+      "Authorize isolated portable package change ONLYassociated_binary alignment-gap interpretation: exactly one unprefixed default32bit three-byte LEA r32,[same_r32+disp8zero], noindex/segment/prefix/REX, exactdecode/defaultoperand/addresswidth, no memoryread/flags/state change. Apply ONLYindependent terminatedbody→immediateDWORDaligneddeclaredswitchtable gap ofexactly3bytes, requiring identical original/candidatebytes and existingnooriginalHIGHLOW/noCOFFrelocationintersections. Allbytes stay in strict envelopecomparison; no mask/normalization/bodyextentgrowth/tableextentinference, functiontailfill change, projectaddress whitelist or bypass ofcurrentguard/tabletargets/strict/fullacceptance requirements.",
+      "Add portablepositive/negativepredicate and fullsyntheticassociated-proof controls includingwrongreg/index/disp/memoryload/prefix/length, candidateunequal/truncatedgap, wrongposition/alignment, original/candidate gaprelocations and body/table/guard damages. Retain existingtests unchanged. Update only docs/DECOMP_MAP.md alignmentdomain description. No binary.py, sourceparser/CLI, compilerpolicy/flags/CMake or fullacceptance code changes.",
+      "Coordinator alone may use guarded associated_writer.write_associated_bytes against exact snapshot to insert ONEsourceowned switch_targets annotation for45D170/table45D274..45D294/evidence45D184, plus concise independentguard/eighttarget/alignment rationale. No hand ORIGINAL edit/newclaim or authoredC++table. All C++source behavior/bodies, identities/spans/symbols/claim/history/objectbindings remain unchanged. Onlycoordinator owns Git/compiler/preparation/integration; workers isolated and cannot start compiler/record or expand scope.",
+      "Preserve original maininterface-owner-coverage baseline53682a304e8800c02f8d950d64d676d01c964161. Require independent package/source/fulltestreview, complete package+projectpytest, fresh fullbuild/link, claims/mappings/references, realoriginal/body/table/code/target damage controls, wholeknown5581census/strict and199compiledobject equality withZEROomittedbodies/sections (annotation-only C++change). Freshdestination verificationbeforecleanup. Expected no implementation/maskedgain; strictresult MUSTbe measured, noassumptionlastFAILclears. Remainingunknownbindings/full linkedselection/allocation/structure/runtime/game/autonomous acceptance unproven."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "89dfa8ef4be22eaf5517e1d86d6017cf702e9c46a8be9acbd399d72b13a1af0c",
+  "request_id": "central-maininterface-bounded-associated-gap-oct21r",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:maininterface-owner-coverage"
+}
