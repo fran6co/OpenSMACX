@@ -105,7 +105,7 @@ int main() {
 
 def _init_harness(source: str) -> str:
     close_method = _definition(source, "void StringBox::close(")
-    init_method = _definition(source, "void StringBox::init(")
+    init_method = _definition(source, "int StringBox::init(")
     return r"""
 struct Win {};
 struct StringList {
@@ -179,8 +179,8 @@ struct StringBox : GraphicWin {
         embedded_allocator = &stringList_.allocator_;
     }
     void close();
-    void init(int x, int y, int width, int height, Win *parent,
-              StringList *list, int flags);
+    int init(int x, int y, int width, int height, Win *parent,
+             StringList *list, int flags);
 };
 int ScrollDefaultThickness = 12;
 """ + close_method + init_method + r"""
@@ -191,40 +191,41 @@ int main() {
     StringBox box;
     box.dib_.bmiHeader.biHeight = -37;
     box.list_override_ = &borrowed;
-    box.init(5, 6, 101, 47, &parent, &borrowed, -1);
-    if (box.close_calls != 1 || box.init_calls != 1) return 1;
+    if (box.init(5, 6, 101, 47, &parent, &borrowed, -1) != 0) return 1;
+    if (box.close_calls != 1 || box.init_calls != 1) return 2;
     if (box.init_x != 5 || box.init_y != 6 || box.init_width != 101
         || box.init_height != 47 || box.init_flags != 0x1000120
-        || box.init_parent != &parent) return 2;
+        || box.init_parent != &parent) return 3;
     if (box.list_override_ != &borrowed || box.stringList_.remove_calls != 1)
-        return 3;
-    if (box.stringList_.current_position_ != 0 || box.stringList_.allocator_ != 9)
         return 4;
+    if (box.stringList_.current_position_ != 0 || box.stringList_.allocator_ != 9)
+        return 5;
     if (box.scroll_.init_calls != 1 || box.scroll_.x != 89 || box.scroll_.y != 0
         || box.scroll_.length != 37 || box.scroll_.parent != &box
         || box.scroll_.setting != 0 || box.scroll_.hide_calls != 1
         || box.scroll_.range_minimum_ != 0 || box.scroll_.range_maximum_ != 0)
-        return 5;
+        return 6;
 
     StringBox callback_mutated;
     callback_mutated.dib_.bmiHeader.biHeight = -29;
     callback_mutated.mutate_embedded_list = 1;
-    callback_mutated.init(3, 4, 97, 29, &parent, &borrowed, 0x2468);
+    if (callback_mutated.init(3, 4, 97, 29, &parent, &borrowed, 0x2468) != 0)
+        return 7;
     if (callback_mutated.stringList_.current_position_ != 41
         || callback_mutated.stringList_.allocator_ != 42
         || callback_mutated.stringList_.remove_calls != 1
-        || callback_mutated.list_override_ != &borrowed) return 6;
+        || callback_mutated.list_override_ != &borrowed) return 8;
 
     StringBox embedded;
     embedded.dib_.bmiHeader.biHeight = -31;
     embedded.mutate_embedded_list = 1;
-    embedded.init(8, 9, 83, 31, &parent, 0, 0x12345);
+    if (embedded.init(8, 9, 83, 31, &parent, 0, 0x12345) != 0) return 9;
     if (embedded.init_flags != 0x12345 || embedded.list_override_ != 0
         || embedded.stringList_.remove_calls != 2
         || embedded.scroll_.x != 71 || embedded.scroll_.length != 31
         || embedded.stringList_.current_position_ != 0
         || embedded.stringList_.allocator_ != 0)
-        return 7;
+        return 10;
 
     StringBox failed;
     failed.dib_.bmiHeader.biHeight = -23;
@@ -232,13 +233,22 @@ int main() {
     failed.init_result = 7;
     failed.scroll_.range_minimum_ = 111;
     failed.scroll_.range_maximum_ = 222;
-    failed.init(1, 2, 71, 23, &parent, &borrowed, -1);
+    if (failed.init(1, 2, 71, 23, &parent, &borrowed, -1) != 7) return 11;
     if (failed.close_calls != 1 || failed.init_calls != 1
         || failed.init_flags != 0x1000120 || failed.list_override_ != 0
-        || failed.stringList_.remove_calls != 1) return 8;
+        || failed.stringList_.remove_calls != 1) return 12;
     if (failed.scroll_.close_calls != 1 || failed.scroll_.init_calls != 0
         || failed.scroll_.hide_calls != 0 || failed.scroll_.range_minimum_ != 111
-        || failed.scroll_.range_maximum_ != 222) return 9;
+        || failed.scroll_.range_maximum_ != 222) return 13;
+
+    StringBox failed_negative;
+    failed_negative.init_result = -13;
+    if (failed_negative.init(2, 3, 61, 19, &parent, 0, 0) != -13)
+        return 14;
+    if (failed_negative.close_calls != 1 || failed_negative.init_calls != 1
+        || failed_negative.scroll_.init_calls != 0
+        || failed_negative.scroll_.hide_calls != 0)
+        return 15;
     return 0;
 }
 """
@@ -321,7 +331,7 @@ def test_stringbox_init_uses_width_for_vertical_scroll_x_and_preserves_paths(
     source = (ROOT / "src/stringbox.cpp").read_text()
     assert _compile_and_run(tmp_path, compiler, _init_harness(source), "init_faithful") == 0
 
-    init_method = _definition(source, "void StringBox::init(")
+    init_method = _definition(source, "int StringBox::init(")
     height_mutant = init_method.replace(
         "scroll_.init_vert(width - ScrollDefaultThickness, 0,",
         "scroll_.init_vert(height - ScrollDefaultThickness, 0,",
@@ -331,6 +341,27 @@ def test_stringbox_init_uses_width_for_vertical_scroll_x_and_preserves_paths(
     height_mutant_source = source.replace(init_method, height_mutant)
     assert _compile_and_run(
         tmp_path, compiler, _init_harness(height_mutant_source), "init_height_mutant"
+    ) != 0
+
+    init_method = _definition(source, "int StringBox::init(")
+    failure_normalization_mutant = init_method.replace(
+        "return init_result;", "return init_result < 0 ? -1 : 1;"
+    )
+    assert failure_normalization_mutant != init_method
+    failure_normalization_source = source.replace(
+        init_method, failure_normalization_mutant
+    )
+    assert _compile_and_run(
+        tmp_path, compiler, _init_harness(failure_normalization_source),
+        "init_normalized_failure_mutant",
+    ) != 0
+
+    nonzero_success_mutant = init_method.replace("    return 0;", "    return 1;")
+    assert nonzero_success_mutant != init_method
+    nonzero_success_source = source.replace(init_method, nonzero_success_mutant)
+    assert _compile_and_run(
+        tmp_path, compiler, _init_harness(nonzero_success_source),
+        "init_nonzero_success_mutant",
     ) != 0
 
     borrowed_clear_mutant = init_method.replace(

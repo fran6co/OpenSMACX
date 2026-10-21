@@ -34,6 +34,9 @@
 // RECOVERY_OBJECT: v1 0x009B22F0 ?WinBubbleWindow@@3VMultiDebug@@A
 MultiDebug WinBubbleWindow;
 
+// The pinned constructor stores these starts at 0x005C9838/3E; its matching COFF relocations at +0x4A/+0x54 name the Win/Buffer tables.
+// RECOVERY_GENERATED: v1 vtable 0x0066FA88 ? ??_7MultiDebug@@6BWin@@@ 0x005C97F0
+// RECOVERY_GENERATED: v1 vtable 0x0066FA80 ? ??_7MultiDebug@@6BBuffer@@@ 0x005C97F0
 /*
 Purpose: Construct the GraphicWin base, the embedded Font and Time, then
          install MultiDebug's own vtables and zero the session pointer.

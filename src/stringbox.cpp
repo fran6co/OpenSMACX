@@ -107,15 +107,17 @@ void StringBox::close() {
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x006292D0 ?init@StringBox@@QAEXHHHHPAUWin@@PAUStringList@@H@Z 0x006292D0-0x00629486
 // RECOVERY_BINDING: v1 {"evidence": ["original:0x006292D0-0x00629486;seed:src/recovered/units/006292d0.cpp;source:src/stringbox.h;source:src/stringstruct.h;source:src/scroll.h"], "reason": "Reinitialize GraphicWin, StringList and embedded Scroll through their real owned subobjects."}
-// symbol    ?init@StringBox@@QAEXHHHHPAVWin@@PAVStringList@@H@Z
-void StringBox::init(int x, int y, int width, int height, Win *parent,
-                     StringList *list, int flags) {
+// symbol    ?init@StringBox@@QAEHHHHHPAVWin@@PAVStringList@@H@Z
+int StringBox::init(int x, int y, int width, int height, Win *parent,
+                    StringList *list, int flags) {
     close();
     if (flags == -1) {
         flags = 0x1000120;
     }
-    if (GraphicWin::init(x, y, width, height, 0, flags, parent, 0, 0) != 0) {
-        return;
+    const int init_result =
+        GraphicWin::init(x, y, width, height, 0, flags, parent, 0, 0);
+    if (init_result != 0) {
+        return init_result;
     }
     if (list != 0) {
         list_override_ = list;
@@ -129,6 +131,7 @@ void StringBox::init(int x, int y, int width, int height, Win *parent,
     scroll_.hide();
     scroll_.range_minimum_ = 0;
     scroll_.range_maximum_ = 0;
+    return 0;
 }
 
 // Refit the selected list to the visible row budget and keep the embedded

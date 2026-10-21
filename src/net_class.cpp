@@ -1423,7 +1423,7 @@ int Net::send_group(void *data, int size, long group_id, int flags) {
 
     if (NetDirectPlay == 0) return 0;
     if (size < 0) return 0;
-    if (field_6E4_ < static_cast<uint32_t>(size)) return 0;
+    if (static_cast<int>(field_6E4_) < size) return 0;
 
     check_polling();
 

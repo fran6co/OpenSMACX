@@ -583,6 +583,9 @@ void Menu::menu_event(int id) {
     }
 }
 
+// The pinned constructor stores these starts at 0x005FAC94/9A; its matching COFF relocations at +0x36/+0x40 name the Win/Buffer tables.
+// RECOVERY_GENERATED: v1 vtable 0x006700B0 ? ??_7Menu@@6BWin@@@ 0x005FAC60
+// RECOVERY_GENERATED: v1 vtable 0x006700A8 ? ??_7Menu@@6BBuffer@@@ 0x005FAC60
 /*
 Purpose: Construct the GraphicWin base and the embedded Spot, install
          Menu's own vtables, then zero the scalar fields and the 15-entry

@@ -47,6 +47,9 @@ void BaseButton::hide() {
     Win::hide();
 }
 
+// The pinned constructor stores these starts at 0x00606F77/7D; its matching COFF relocations at +0x49/+0x53 name the Win/Buffer tables.
+// RECOVERY_GENERATED: v1 vtable 0x00670290 ? ??_7BaseButton@@6BWin@@@ 0x00606F30
+// RECOVERY_GENERATED: v1 vtable 0x00670288 ? ??_7BaseButton@@6BBuffer@@@ 0x00606F30
 /*
 Purpose: Construct the GraphicWin base and two Time members, then install the
          BaseButton tables and process defaults.

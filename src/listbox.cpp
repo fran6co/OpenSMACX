@@ -341,6 +341,10 @@ Scroll *ListBox::on_scroll_delete(Scroll *scroll) {
     return scroll;
 }
 
+// Pinned 0x00609DB0 stores 0x0067041C/14/08 at 0x00609E08/14/24; matching COFF relocations at +0x5B/6B/77 identify these starts.
+// RECOVERY_GENERATED: v1 vtable 0x0067041C ? ??_7ListBox@@6BWin@@@ 0x00609DB0
+// RECOVERY_GENERATED: v1 vtable 0x00670414 ? ??_7ListBox@@6BBuffer@@@ 0x00609DB0
+// RECOVERY_GENERATED: v1 vtable 0x00670408 ? ??_7ListBox@@6B@ 0x00609DB0
 // ORIGINAL: 0x00609DB0 ??0ListBox@@QAE@H@Z 0x00609DB0-0x00609EB7;0x00662EF0-0x00662F14 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["promoted historical seed src/recovered/units/00609db0.cpp", "Original constructor/destructor direct-call receivers and unwind stages"], "reason": "609DB0 calls GraphicWin and Dialog constructors only for the hidden most-derived ABI flag, then stores own defaults. Genuine virtual bases synthesize this flag; it is not an explicit int source parameter."}
 // symbol    ??0ListBox@@QAE@XZ

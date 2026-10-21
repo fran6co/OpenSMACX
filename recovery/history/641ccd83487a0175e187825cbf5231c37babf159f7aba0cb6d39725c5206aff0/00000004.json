@@ -1,0 +1,22 @@
+{
+  "event_id": "feb6f8297a95d95817d83d7d67c669bc16d0c9570385bf5391748434498877a1",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/stringbox.h"
+    ],
+    "evidence": [
+      "Coordinator and independent reviewer admit precisely the observed void-to-int StringBox init symbol transition for manual integration, preserving original6292D0 catalogue/spans/history and task baseline2d3094ef. Native actual Release controls reproduce old whole object, detect success-return/header damage, and observe unique defined ?init@StringBox@@QAEHHHHHPAVWin@@PAVStringList@@H@Z. Native write_symbol and guarded publication retain historical QAEX catalogue. Pinned success explicitly zeros EAX; failure preserves GraphicWin result; all nine recovered caller results ignored. No original debug-signature or indirect-caller completeness claim.",
+      "Raw native physical comparison remains188pass5fail with only two source-edited bodies projected (StringBoxinit and Netsend_group). The five failures are Datalink, DiploWin, Game, NetWin and NewTechWin caller objects. Their six affected functions contain exactly nine REL32 references whose sole change is oldQAEX to observedQAEH external name at identical offsets/kinds/addends. Every instruction byte, extent, other reference, data, generated section, symbol auxiliary and association is unchanged. Separately binding ONLY that observed external entry to the same retained original entity makes all five COMPLETE objects equal under native object evidence, zero excluded sections; wrong-identity control fails. This explicit original-identity-specific review is NOT a raw checker pass, arbitrary symbol alias, scope-body waiver, new native acceptance route or linked preservation proof.",
+      "Combined current application builds/links179C++TUs193physicalobjects; native claims/mappings/references pass; no missing historical identities or prior actual-exact/strict losses. Fresh whole5581 known-domain masked exact remains3332; StringBoxinit improves MISMATCH to MNEMONIC_ONLY159instructions, not exact. Twelve unbounded GUI vftable starts yield three measured strict gains ImageButtonctor/dtor and ListBoxdtor; no table extents/hierarchy/selection claim. Net signed capacity comparison restores original JG semantics while retaining unsigned member type and original unsafe group paths.",
+      "Independent host review confirms corrected candidate109cases vsbaseline107 share exactly one preexisting failing Oct12 whole-Net-identity fixture: ServiceStruct original402A60 gained a historical claim since its old task baseline. Candidate107pass1skip1fail, baseline105pass1skip1fail; both new actual-source Net tests pass. No failure/test skipped or weakened; initial nonexistent test path and subsequent actual red reports retained. Whole host suite is not green. Initial symbol publication outside lease correctly refused environment change; successful rerun retained lease and complete controls. Manual publication is authorized under standing user route, not full automatic/linked/structure/runtime/game acceptance. Fresh destination build, complete candidate reproduction and per-identity rechecks required."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "2318cb288988e2b5dcae613faa8250ccc355d25acf6d76c47034941863a8dce1",
+  "request_id": "central-stringbox-observed-return-reference-admission-oct21d",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:stringbox-owner-batch-oct20"
+}

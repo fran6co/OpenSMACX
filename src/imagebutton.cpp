@@ -27,6 +27,8 @@
 // Constructor 6252E8 installs this Win table; slot12 paints, and slots62/63
 // retain GraphicWin redraw/update. Full table extent remains unestablished.
 // RECOVERY_GENERATED: v1 vtable 0x00670A94 ? ??_7ImageButton@@6BWin@@@ 0x006252E0
+// The pinned constructor also stores 0x00670A8C at 0x006252EE; its COFF relocation at +0x14 names this Buffer table.
+// RECOVERY_GENERATED: v1 vtable 0x00670A8C ? ??_7ImageButton@@6BBuffer@@@ 0x006252E0
 
 /*
 Purpose: Construct the button on its BaseButton base and clear its one field.
