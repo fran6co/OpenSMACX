@@ -1,0 +1,24 @@
+{
+  "event_id": "c15232b1b9ff8d98347b61803ad7faee4310a7a3308c603ee020c8f472dea841",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_stringbox_owner_batch_oct20.py",
+      "src/stringbox.cpp"
+    ],
+    "evidence": [
+      "Standing user faithful-source recovery permission, preserving original quirks and all claims. Actual pinned StringBox::init6292D0 own-field resets6292D9..6292EF, GraphicWin::close6292F5, ownedlistclear/cursorreset and GraphicWin::init6293B0 precede failure branch6293B7→62947E. EmbeddedScroll initcall629464 is success-only. Current unqualified close() calls StringBox::close, whose final scroll_.close() executes too early, including on parent-init failure. Existing host fixture wrongly expects that premature close.",
+      "Authorize only bounded StringBox::init entry-prefix recovery and accurate adjacent prose: explicitly retain fourownfieldresets, qualified GraphicWin::close, ownedStringList.remove_all/currentcursorreset in pinned order, OMITembeddedScroll close there. Keep real StringBox::close and Scroll implementations unchanged. Successful Scroll::init_vert still owns its later close through genuine Scroll::init. Use distinct owned_list local (list is already pointerparameter). No raw offsets, helper wrapper, macro/flag/ABI change, bounds/safety fix or behavior normalization.",
+      "Retain exact flagsconversion, parent GraphicWin init/nonzeroresult return (positive/negative), borrowed list/callback effects, repeated ownedlistclear andallocator reset, width-based Scroll placement, hide/range effects and caller arguments. Preserve all ORIGINAL identities/spans/symbols/historicalclaims/sourcebindings/LEVER/TRIED; native recorder alone may bank a fresh measured exactness claim.",
+      "Update only existing actual-source host harness: parent-init failures leave all seeded Scroll fields/counters untouched, positive andnegativefailure returns preserved. Successful Scroll mock init_vert must model its real delayed close; assert ordering and exactlyoneclose after successfulparentinit. Add compile-success prematureclose mutant rejected by hostcontrol; retain all other original host scenarios and mutants. Independent source/original/test review, fresh isolated native compile/build/link, claims/mappings/references, scopedbyte/reference check and complete compiledcollateralpreservation beforemanualadmission. Wholegame/fullautonomous acceptance remains unproven.",
+      "Preserve original taskbaseline2d3094ef3e11c5de26989464831471fd1ab1ff8b and all pending discoveries. Source work is isolated from ongoing MainInterface/master fulltest epochs and technologybranch; no coordinatorfastforward/rebase/merge during live measurements. Capture actual residual differences and expandownership whenevidence-backed; never hide them with wholeTUprojection, dropclaims or revert an established faithfulcorrection solelyforamatchscore."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "feb6f8297a95d95817d83d7d67c669bc16d0c9570385bf5391748434498877a1",
+  "request_id": "central-stringbox-init-original-scroll-lifetime-oct21t",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:stringbox-owner-batch-oct20"
+}
