@@ -1,0 +1,23 @@
+{
+  "event_id": "bc43a272b9d287a22017db726db93e621e9f1c0c7fd3c8e7eb0ecf5609a9c090",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_sprite_sheet_receiver_oct13ap.py",
+      "src/game.cpp"
+    ],
+    "evidence": [
+      "Coordinator-reviewed original-faithful extract_sheet_icon450FB0..451021: replace negativebooleanAND1D coordinate masks with ordinary existingbitcondition?29:0 additions. Pinned AND/NEG/SBB/AND1D/ADD proves POSITIVE29; rejected research subtraction was corrected before any compiler. Preserve signed parameters, borrowed Sprite receiver, genuine shared Buffer, ordered107→109 then106→109 recolors, coordinates/dimensions/zero flag, returnedextractresult, every original identity/span/claim/LEVER/TRIED and flags/ABI. No climate/source/type/header/controlpolicy changes or safetyfix.",
+      "Finite actual production recipe replay, unchangedoverlay and changedconstant/sign damage controlsPASS. Selected39/39instructions exact; unchanged wholeTU verdicts elsewhere; fresh production wholeGame COFF matches frozen selectedcandidate signature. Native recover record alone banks historicalclaim under unchanged configured profiles. Original signedoverflow effects are not established by modern host control; do not silently change signedtypes/normalization. Matching machine body is compiler-scoped evidence, not portable source UB proof.",
+      "Independent source/original/finaltest review and21host cases with compile-success wrongreceiver/buffer/recolor/offset/sign/constant/return mutantsPASS. Baseline test was already1FAIL12PASS because old54f wholefile inverse ignored29admittedcommits. Retain immutable54f targetbody/history witness, add immutablef33 fullfile stepwitness permitting onlytwoexpressions and nativewriter targetclaim; no original task/history baseline reset or generic normalizer. All other current source bytes and target historical metadata stay guarded; new rejection controls preserve unrelatedsource/mapping/claim/history.",
+      "Fresh185TU199object fullbuild/link and claims/mappings/referencesPASS;199compiledcomplementsPASS with ONLY450FB0body projected and noothersections/data/startup waiver. Whole5581knownidentities3363maskedexact(+1), strict2807PASS555UNKNOWN1FAIL, every prior outcome unchanged. Existing-body quality/matching progress, not new originalimplementation coverage or exhaustivecallableuniverse. Preserve originaltaskbaseline84a83530865def508f9ea1716c9d70081062c144. Full linkedselection/allocation, structure/runtime/game/autonomous acceptance unproven. Fresh destinationbuild/census/tests and199zero-omission reproduction required beforecleanup."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "81fb5234ed5242446f9ded6674a381440286a13d11de5702818dc877736a2308",
+  "request_id": "central-manual-sheet-natural-offset-admission-oct21q",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:matching-game-oct20z"
+}

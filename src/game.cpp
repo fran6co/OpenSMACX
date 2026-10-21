@@ -4331,7 +4331,7 @@ char *__cdecl get_noun_phrase(int faction_id, int phrase_id) {
     return TextBufferGetPtr;
 }
 
-// ORIGINAL: 0x00450FB0 sub_450fb0 0x00450FB0-0x00451021 FILE
+// ORIGINAL: 0x00450FB0 sub_450fb0 0x00450FB0-0x00451021 FILE BYTE_EXACT
 // symbol    _extract_sheet_icon
 // LEVER: the fixed-address binding renamed to buffer.h's
 //         g_PCX_PARSE_TEMP_BUFFER1 (0x00798668, defined in buffer.cpp) - the
@@ -4353,8 +4353,8 @@ extern "C" int __cdecl extract_sheet_icon(Sprite *sprite, int sheet_x, int sheet
         g_PCX_PARSE_TEMP_BUFFER1.change_color(0x107, 0x109);
         g_PCX_PARSE_TEMP_BUFFER1.change_color(0x106, 0x109);
     }
-    int off_x = (-static_cast<int>(((quadrant + 1) & 2) != 0) & 0x1d) + sheet_x;
-    int off_y = (-static_cast<int>((quadrant & 2) != 0) & 0x1d) + sheet_y;
+    int off_x = sheet_x + (((quadrant + 1) & 2) ? 0x1d : 0);
+    int off_y = sheet_y + ((quadrant & 2) ? 0x1d : 0);
     return sprite->extract(
         &g_PCX_PARSE_TEMP_BUFFER1, 0x109, off_x, off_y, 0x1c, 0x1c, 0);
 }

@@ -7,7 +7,7 @@ pixel output.
 """
 
 from pathlib import Path
-from dataclasses import fields
+from dataclasses import fields, replace
 import shutil
 import subprocess
 
@@ -15,10 +15,12 @@ import pytest
 
 from match_recovery.includes import COMMENTS_OR_STRINGS
 from match_recovery.source import read_text
+from match_recovery.source.writer import write_bytes
 
 
 ROOT = Path(__file__).resolve().parents[2]
 BASE = "54f51003c1af9509f4c2abffc163c63b26df4e1e"
+STEP_BASE = "f33ccd479ac454752a51a204c5f1fe40b5656268"
 SOURCE_PATH = ROOT / "src/game.cpp"
 SIGNATURE = "int __cdecl extract_sheet_icon(Sprite *sprite,"
 OLD_SIGNATURE = (
@@ -31,6 +33,14 @@ NEW_SIGNATURE = (
 )
 OLD_RECEIVER = "return reinterpret_cast<Sprite *>(sprite)->extract("
 NEW_RECEIVER = "return sprite->extract("
+OLD_OFFSET_X = (
+    "int off_x = (-static_cast<int>(((quadrant + 1) & 2) != 0) & 0x1d) + sheet_x;"
+)
+OLD_OFFSET_Y = "int off_y = (-static_cast<int>((quadrant & 2) != 0) & 0x1d) + sheet_y;"
+NEW_OFFSET_X = "int off_x = sheet_x + (((quadrant + 1) & 2) ? 0x1d : 0);"
+NEW_OFFSET_Y = "int off_y = sheet_y + ((quadrant & 2) ? 0x1d : 0);"
+TARGET_MARKER = "// ORIGINAL: 0x00450FB0"
+TARGET_CLAIM = "// ORIGINAL: 0x00450FB0 sub_450fb0 0x00450FB0-0x00451021 FILE BYTE_EXACT"
 
 
 def _baseline_source() -> str:
@@ -41,12 +51,20 @@ def _baseline_source() -> str:
     return result.stdout
 
 
-def _extract_function(source: str) -> str:
+def _step_source() -> str:
+    result = subprocess.run(
+        ["git", "show", f"{STEP_BASE}:src/game.cpp"], cwd=ROOT,
+        check=True, capture_output=True, text=True, timeout=30,
+    )
+    return result.stdout
+
+
+def _extract_function(source: str, signature: str = SIGNATURE) -> str:
     masked = COMMENTS_OR_STRINGS.sub(
         lambda match: "".join("\n" if char == "\n" else " " for char in match[0]),
         source,
     )
-    start = masked.index(SIGNATURE)
+    start = masked.index(signature)
     opening = masked.index("{", start)
     depth = 0
     for end in range(opening, len(masked)):
@@ -67,33 +85,104 @@ def _continuity(row):
     )
 
 
+def _replace_once(source: str, old: str, new: str) -> str:
+    assert source.count(old) == 1, f"expected one exact anchor: {old!r}"
+    return source.replace(old, new, 1)
+
+
+def _target_marker(source: str) -> str:
+    matches = [line for line in source.splitlines() if line.startswith(TARGET_MARKER)]
+    assert len(matches) == 1
+    return matches[0]
+
+
+def _with_current_target_marker(expected: str, current: str) -> str:
+    return _replace_once(expected, _target_marker(expected), _target_marker(current))
+
+
 def _assert_exact_source_transition(current: str, baseline: str) -> None:
-    assert baseline.count(OLD_SIGNATURE) == 1
-    expected = baseline.replace(OLD_SIGNATURE, NEW_SIGNATURE, 1)
-    assert expected.count(OLD_RECEIVER) == 1
-    expected = expected.replace(OLD_RECEIVER, NEW_RECEIVER, 1)
-    assert current == expected, "game.cpp changed outside the two authorized receiver edits"
+    expected = _replace_once(baseline, OLD_SIGNATURE, NEW_SIGNATURE)
+    expected = _replace_once(expected, OLD_RECEIVER, NEW_RECEIVER)
+    expected = _replace_once(expected, OLD_OFFSET_X, NEW_OFFSET_X)
+    expected = _replace_once(expected, OLD_OFFSET_Y, NEW_OFFSET_Y)
+    expected = _with_current_target_marker(expected, current)
+    assert _extract_function(current) == _extract_function(expected, SIGNATURE)
+    assert _target_marker(current) == TARGET_CLAIM
+
+
+def _assert_exact_step_transition(current: str, step_base: str) -> None:
+    expected = _replace_once(step_base, OLD_OFFSET_X, NEW_OFFSET_X)
+    expected = _replace_once(expected, OLD_OFFSET_Y, NEW_OFFSET_Y)
+    rows = read_text(expected, SOURCE_PATH)
+    target = [row for row in rows if row.address == 0x450FB0]
+    assert len(target) == 1 and not target[0].byte_exact
+    promoted = replace(target[0], byte_exact=True)
+    expected_bytes = write_bytes(expected.encode("utf-8"), [promoted])
+    assert current.encode("utf-8") == expected_bytes, (
+        "game.cpp changed outside the two offsets and nativewriter target claim"
+    )
 
 
 def test_original_identity_and_history_are_preserved():
     before = _baseline_source()
+    step_before = _step_source()
     current = SOURCE_PATH.read_text(encoding="utf-8")
     _assert_exact_source_transition(current, before)
+    _assert_exact_step_transition(current, step_before)
 
     old_rows = read_text(before, SOURCE_PATH)
+    step_rows = read_text(step_before, SOURCE_PATH)
     new_rows = read_text(current, SOURCE_PATH)
-    assert len(old_rows) == len(new_rows)
-    assert [_continuity(row) for row in old_rows] == [
-        _continuity(row) for row in new_rows
-    ]
     old_icon = [row for row in old_rows if row.address == 0x450FB0]
+    step_icon = [row for row in step_rows if row.address == 0x450FB0]
     new_icon = [row for row in new_rows if row.address == 0x450FB0]
-    assert len(old_icon) == len(new_icon) == 1
+    assert len(old_icon) == len(step_icon) == len(new_icon) == 1
+    old_fields = tuple(
+        (name, value) for name, value in _continuity(old_icon[0])
+        if name in {"address", "image_spans", "symbol"}
+    )
+    new_fields = _continuity(new_icon[0])
+    new_identity = tuple(
+        (name, value) for name, value in new_fields
+        if name in {"address", "image_spans", "symbol"}
+    )
+    assert old_fields == new_identity
+    assert len(step_rows) == len(new_rows)
+    for prior, recorded in zip(step_rows, new_rows):
+        prior_fields = _continuity(prior)
+        recorded_fields = _continuity(recorded)
+        if prior.address == 0x450FB0:
+            prior_fields = tuple(item for item in prior_fields if item[0] != "byte_exact")
+            recorded_fields = tuple(item for item in recorded_fields if item[0] != "byte_exact")
+        assert prior_fields == recorded_fields
     assert old_icon[0].image_spans == ((0x450FB0, 0x451021),)
     assert old_icon[0].symbol == new_icon[0].symbol == "_extract_sheet_icon"
-    assert old_icon[0].byte_exact == new_icon[0].byte_exact
+    assert step_icon[0].byte_exact is False
+    assert new_icon[0].byte_exact is True
+    assert _target_marker(current) == TARGET_CLAIM
     assert _extract_function(current).count("sprite->extract(") == 1
     assert "reinterpret_cast<Sprite *>(sprite)" not in _extract_function(current)
+
+
+@pytest.mark.parametrize("mutation", ("unrelated_source", "mapping", "claim", "history"))
+def test_inverse_rejects_unrelated_source_or_evidence_loss(mutation: str) -> None:
+    current = SOURCE_PATH.read_text(encoding="utf-8")
+    before = _baseline_source()
+    if mutation == "unrelated_source":
+        damaged = _replace_once(current, "void __cdecl load_cursors()", "void __cdecl load_cursors_mutated()")
+    elif mutation == "mapping":
+        damaged = _replace_once(current, TARGET_MARKER, "// ORIGINAL: 0x00450FB1")
+    elif mutation == "claim":
+        damaged = _replace_once(current, TARGET_CLAIM, TARGET_CLAIM.removesuffix(" BYTE_EXACT"))
+    else:
+        damaged = _replace_once(
+            current,
+            "// LEVER: the fixed-address binding renamed to buffer.h's",
+            "// NOTE: the fixed-address binding renamed to buffer.h's",
+        )
+    with pytest.raises((AssertionError, ValueError)):
+        _assert_exact_source_transition(damaged, before)
+        _assert_exact_step_transition(damaged, _step_source())
 
 
 HOST_PREFIX = r"""
@@ -177,6 +266,18 @@ def _harness(body: str, mutation: str | None = None) -> str:
         old = "((quadrant + 1) & 2)"
         assert body.count(old) == 1
         body = body.replace(old, "(quadrant & 2)", 1)
+    elif mutation == "wrong_sign":
+        old = "sheet_x + (((quadrant + 1) & 2) ? 0x1d : 0)"
+        assert body.count(old) == 1
+        body = body.replace(
+            old, "sheet_x - (((quadrant + 1) & 2) ? 0x1d : 0)", 1
+        )
+    elif mutation == "wrong_constant":
+        old = "sheet_x + (((quadrant + 1) & 2) ? 0x1d : 0)"
+        assert body.count(old) == 1
+        body = body.replace(
+            old, "sheet_x + (((quadrant + 1) & 2) ? 0x1c : 0)", 1
+        )
     elif mutation == "wrong_result":
         old = "return sprite->extract("
         assert body.count(old) == 1
@@ -258,6 +359,8 @@ def test_actual_sheet_helper_receiver_behavior(compiler_name: str, tmp_path: Pat
     ("wrong_buffer", "extract-shared-buffer-identity"),
     ("recolor_order", "recolor-event-order"),
     ("wrong_offset", "extract-offsets-and-constants"),
+    ("wrong_sign", "extract-offsets-and-constants"),
+    ("wrong_constant", "extract-offsets-and-constants"),
     ("wrong_result", "extract-return-value"),
 ))
 def test_compile_success_damages_are_observable(
