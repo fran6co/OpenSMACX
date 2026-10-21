@@ -1,0 +1,46 @@
+{
+  "event_id": "0dd660ce32bbf6d23c407c06da1987375fffeccf46e4b6a41a0879031e7d91ad",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_technology_getter_boundaries_oct21s.py",
+      "src/technology.cpp",
+      "src/technology.h"
+    ],
+    "evidence": [
+      "User-authorized immediate evidence-backed structural recovery, preserving faithful behavior and prior claims. Coordinate the existing technology-faithful/query and PickTech historical owners as one bounded manual checkpoint; preserve every original task base and outstanding discovery. No automatic driver admission or ownership-reservation claim.",
+      "Pinned direct call anchors486946(mil),486951(tech),48699D(colonize),4869A7(infra),4869B2(tech) inside PickTech::pick486510. Current production build-evivnbtc PickTech object has five inline expansions and zero getter call relocations. Four standalone getter mappings/claims already live in technology.cpp but body facts point to technology.h. All four existing bodies guard only signed tech_id<MaxTechnologyNum and retain existing0/1 fallbacks and unchecked negative indexing.",
+      "Authorize ordinary non-inline definitions at their existing technology.cpp records and ordinary MEASURED declarations in technology.h; transport each existing body unchanged, using native source.write_body alone for four body-path facts. Keep current export semantics, symbols, markers, original spans, historical claims, all LEVER/TRIED and old inline rationale as explicitly historical context. No wrapper, pragma, noinline, macro/compiler/CMake/flag change, source-address dispatcher or bug fix. PickTech source body must stay unchanged; caller output may change only through restored ordinary cross-TU getter calls.",
+      "Actual fresh-baseline retained compilation receipts enumerate37 header-dependent TUs and148 helper LINK_ONCE_DISCARD COMDAT definitions; linker currently selects alpha.cpp copies. All37 unit outputs, directives, references/data/startup and all199 physical objects remain verification obligations. Expected144 duplicate copies removed and sole4 technology definitions must be observed, not assumed. Only named original getter bodies and affected PickTech body can be projected for native residual checks; any other changes require investigation/review, never a blanket header waiver.",
+      "Require host controls for unchanged getter bodies, field/guard/fallback mutants, native writer identity/claims/history continuity and real header/CPP ownership. Fresh scoped production compiles and fullbuild/link; verify five getter relocations in actual caller, all four original-span measurements, masks/strict references, historical claims/mappings/references and complete collateral object checks. PickTech whole-body EH refusal stays unknown; call-boundary progress is not strict function acceptance. Do not replace a justified structural move to preserve a local score, erase claims, reset task bases or fabricate full linked/runtime/game acceptance. Integration is separately coordinator reviewed, after current frozen MainInterface/master test epochs finish."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6020464,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6020496,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6020544,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6020592,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "dfe1d6ec7d81eb1c60aedf2bfd172718a9d556646e33739c8bf5975d4e71c17d",
+  "request_id": "central-tech-getters-real-definition-ownership-oct21s",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:picktech-owner-coverage"
+}
