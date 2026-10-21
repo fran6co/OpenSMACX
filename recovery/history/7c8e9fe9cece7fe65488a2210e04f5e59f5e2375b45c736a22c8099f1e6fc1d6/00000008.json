@@ -1,0 +1,22 @@
+{
+  "event_id": "b71b666676837d8427eb3ebb1d95378b549a90b07a084b1b29a52b01475e9256",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/win.cpp",
+      "src/win_input.cpp"
+    ],
+    "evidence": [
+      "PRIVATE DIAGNOSTIC ONLY: independent inlining-policy review confirms actual production Win commands use /O2 /Ob2 /DNDEBUG without explicit /Oy-, while historical matching invocation strips all optimizer/debug flags and its Win trial profiles omit /Ob. Prior two-existing-TU control restored five original get_key_window calls but left all231verdicts unchanged, so source boundary versus compiler policy is not attributed. Current window_proc has1238instructions versus657original. No production policy, original TU or original /Ob setting is proved by those observations.",
+      "Coordinator authorizes exactly ONE unchanged-source Win.cpp comparison replacing its single actual /Ob2 option with /Ob1 at the same argv position, leaving all other options and all source/headers/SDK/compiler/linker inputs unchanged. The existing win_input.cpp context remains the unchanged qualified actual object. Require fresh actual-command whole-object /Ob2 replay, unchanged /Ob2 source overlay equivalence, one /Ob1 candidate and one successfully compiled /Ob1 wrong-body damage control. Capture/verify full source/tool/environment snapshots inside the exclusive native lease. No production CMake/config edits, source rewrites, TU relocation, recording or task baseline reset.",
+      "Measure all228Win.cpp plus3input records and expose every mapped and unmapped emitted code/data/initializer difference. Report losses as well as gains and retain refused cases; do not select /Ob by function, erase historical obligations or claim full acceptance. Any eventual compiler-policy adoption needs affected-owner provenance, full current application build/link, historical identity/matching continuity, independent review, linked-effect accounting and fresh destination verification. Do not generalize to other owners with separately measured /Ob2 policy."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "9cb9168b9aa765f5bdb4396304dfc577af6905f4160a9bb55d71d59ee4585755",
+  "request_id": "central-private-win-ob1-single-factor-oct21g",
+  "schema_version": 1,
+  "sequence": 8,
+  "stream": "task:win-keyboard-focus-members-oct9"
+}
