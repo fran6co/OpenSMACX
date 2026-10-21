@@ -1,0 +1,23 @@
+{
+  "event_id": "c85a1baef119e42439190973ccb6654d7323b2aad87f66881f28cc2b56be4b97",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_vehicle_battle_storage_bindings_oct21.py",
+      "src/veh.cpp"
+    ],
+    "evidence": [
+      "Coordinator admits four original battle-storage start identities beside their existing genuine veh.cpp definitions: terrain string pointer90F550, basic morale912420, modifier array9155F0 and display rows90F554. Original producer/consumer instructions and current physical COFF data definitions independently reviewed. Native guarded object writer exactly reproduces all four additions, global overlap/symbol checks pass, and complete original function metadata/history/body union is unchanged; all edits are comment insertions.",
+      "Retain start-only v1 semantics, source types and historical LEVER text. No original allocation bounds, row count, initializer, lifetime, historical TU provenance, linked selection or stronger data claim is granted. Optional native source/pinned-operand witnesses explicitly distinguish indexed dword reads/writes from base-address ADDs. No C++ behavior, flag, function marker or historical byte claim changes.",
+      "After safe coordinator rebase onto verified master49d429be2, task baselinec63a9c1f547fd4c2bb94aa8ee6777bdd9b1aa75d and source WIP remained intact. Fresh complete application build/link and all199 physical objects pass with ZERO omitted bodies/sections. Claims/mappings/references continuity,33host/source/pinned cases and independent source/test review pass. Full5581known-identity masked outcomes unchanged; strict add_bat501D50 improves unknown to pass, no other outcome changes. This improves reference qualification, not new function implementation or new historical claim.",
+      "Coordinator-reviewed manual integration only. Fresh destination build/link, census/strict, relevant tests and zero-omission199object reproduction required before consumed worker removal. Three existing strict failures, prior DDInit unmapped-destructor limitation and full linked retention/allocation/provider, exhaustive executable function coverage, structure/runtime/game/autonomous acceptance remain unfinished. No native automatic refusal is waived."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "150a8c9ed4cfbbfdfea2cb4a3f77c0d887630455787bbaf0851e5f553c7ae0d0",
+  "request_id": "central-manual-vehicle-battle-storage-admission-oct21j",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:owner-vehicle-body-recovery-oct20ao"
+}
