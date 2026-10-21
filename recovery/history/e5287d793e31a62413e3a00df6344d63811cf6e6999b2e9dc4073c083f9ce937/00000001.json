@@ -1,0 +1,21 @@
+{
+  "event_id": "979cdc60ff3f7c7946d9f0fc4a83f36a8b45ec67cd69f244b06c9729e8503880",
+  "payload": {
+    "affects": [
+      "entity-983605f766f5818fdd156df7f58a093eb9d1ffb9f813ed2cc29f4d7ddf910faa"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "finite-ui-ordinary-forms-oct21zf",
+    "evidence": [
+      "Coordinator authorized this bounded advisory screen only. Source declarations, full mapped bodies, original unsafe shifts/out-parameters, DWORD read stages and call order remain intact. Native schema2 decks validate source/task bindings before any compile. No source or claim publication.",
+      "Thirteen compiler calls across both UI translation units provide actual-recipe replay and unchanged-overlay controls perTU, compile-success mapped-target damage perdeck, and six candidate outputs. Whole-TU verdicts unchanged; no candidate improves matching. Detailed reevaluable physical reports remain ignored."
+    ],
+    "hypothesis": "Test a finite set of ordinary equivalent C++ forms against the unchanged production compiler recipe.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "finite-ui-ordinary-forms-oct21zf",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:councwin-live-byte-stages-oct15"
+}

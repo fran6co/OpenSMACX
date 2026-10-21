@@ -1,0 +1,18 @@
+{
+  "event_id": "773488084be572a718ca7e7f09e4573f15f555ee9eca08a01cfbb0b5a2625033",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "finite-ui-ordinary-forms-oct21zf",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Keep existing C++ rather than adopting non-improving forms: 0x45ccb0 group2-indexed-while; 0x45ccb0 group2-rule-cursor; 0x45cf80 point-rect-aggregate; 0x45cf80 point-rect-paired-stores.",
+      "Reject only these measured forms, not genuine source ownership or all future work on these functions. No code/header/build/compiler-policy changes, historical claim changes, baseline resets, acceptance waiver or matching gain. Require new evidence before repeating the same forms."
+    ]
+  },
+  "previous_event": "69d411c7d92625010daa3bdfd050da0f3f62301c61c1443fc74ca67aa23525e8",
+  "request_id": "reject-finite-ui-ordinary-forms-oct21zf",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:maininterface-click-symbols-oct10"
+}

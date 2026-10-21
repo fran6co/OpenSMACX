@@ -1,0 +1,18 @@
+{
+  "event_id": "421700b3f3735e70ca332713fb1e58d7c6ec4ca6cd1b7d3d9d5f5f11cb6ba8fa",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "finite-ui-ordinary-forms-oct21zf",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Keep existing C++ rather than adopting non-improving forms: 0x4271c0 mask-width-explicit-low-byte; 0x4271c0 mask-width-explicit-byte-field.",
+      "Reject only these measured forms, not genuine source ownership or all future work on these functions. No code/header/build/compiler-policy changes, historical claim changes, baseline resets, acceptance waiver or matching gain. Require new evidence before repeating the same forms."
+    ]
+  },
+  "previous_event": "979cdc60ff3f7c7946d9f0fc4a83f36a8b45ec67cd69f244b06c9729e8503880",
+  "request_id": "reject-finite-ui-ordinary-forms-oct21zf",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:councwin-live-byte-stages-oct15"
+}
