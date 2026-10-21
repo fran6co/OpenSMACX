@@ -1,0 +1,22 @@
+{
+  "event_id": "9beb24f7ae174b523812bdd3323f513fb49247d3fc4541f26daaef76a3d8014e",
+  "payload": {
+    "affects": [
+      "entity-171c79b45fbe03bb151f61a84fc506fc5ead2727cdb18666ead5714a29b707b8"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "fractal-clamp-source-checkpoint-oct21z",
+    "evidence": [
+      "Coordinator reviewed exact source diff and independent pinned96-byte40-instruction review. Only final clamp blocks reorder; original scaled coordinate reuse, two sample calls, arithmetic and signed shift/overflow edges remain unchanged. No bug fix, new type, symbol or compiler policy.",
+      "Six actual-source GCC/Clang C++03 controls pass, including compiling wrong-negative-clamp and wrong-second-octave mutants. Native recorder exit0 alone banks the historical exact claim. Original identity/spans, catalogue symbol, emitted symbol and all prior findings remain.",
+      "Unadmitted source checkpoint: full application build/link, exact neighbor/reference/claim checks, outside-method physical comparison and destination reproduction remain required. Exploratory TU screen leaves27task entities unmeasured and strict references unknown; no automatic or full-game acceptance."
+    ],
+    "hypothesis": "Preserve the measured original clamp branch layout without changing arithmetic or sample effects.",
+    "kind": "discovery"
+  },
+  "previous_event": "ca469d0a85f43492ae8d9ccd9c4a2bf81b9ccdcdca040b3e3edb0133d910d163",
+  "request_id": "fractal-clamp-source-checkpoint-oct21z",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:owner-world-faithful-recovery-oct20x"
+}

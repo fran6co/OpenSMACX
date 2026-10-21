@@ -1081,7 +1081,7 @@ int Fractal::sample(int x_coord, int y_coord) {
 Purpose: Two octaves of sample() reduced to one 0..100 intensity - the value
          the fungus and erosion passes threshold against. Both callers spell
          the same arithmetic inline, which is how the name was read off them.
-// ORIGINAL: 0x005C1FC0 ?UNK2@Fractal@@QAEHHHH@Z 0x005C1FC0-0x005C2020 FILE
+// ORIGINAL: 0x005C1FC0 ?UNK2@Fractal@@QAEHHHH@Z 0x005C1FC0-0x005C2020 FILE BYTE_EXACT
 // symbol    ?level@Fractal@@QAEHHHH@Z
 // size      96 bytes
 // prototype int (__thiscall ?UNK2@Fractal@@QAEHHHH@Z)(Fractal* this, int, int, int)
@@ -1101,21 +1101,19 @@ Purpose: Two octaves of sample() reduced to one 0..100 intensity - the value
 // it behind a `jns`), so the shape is block placement, not source form.
 */
 int Fractal::level(int x_coord, int y_coord, int shift) {
-    // Both scaled coordinates live in registers across the first call - the
-    // image shifts the SAME two registers again for the second octave - and
-    // the *5 lands before the second call.
+    // Preserve the original scaled-coordinate reuse and arithmetic order.
     int coarse_x = x_coord << 4;
     int coarse_y = y_coord << 4;
     int coarse = sample(coarse_x, coarse_y) * 5;
     int fine = sample(coarse_x << shift, coarse_y << shift);
     int value = (coarse + fine * 2) * 7 >> 8;
-    if (value < 0) {
-        return 0;
+    if (value >= 0) {
+        if (value > 100) {
+            return 100;
+        }
+        return value;
     }
-    if (value > 100) {
-        return 100;
-    }
-    return value;
+    return 0;
 }
 
 /*
