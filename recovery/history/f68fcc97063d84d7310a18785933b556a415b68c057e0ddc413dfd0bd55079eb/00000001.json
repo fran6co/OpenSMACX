@@ -1,0 +1,85 @@
+{
+  "event_id": "c44af2f4ddce5ab6051aa2d61c9b3866d7756cb1833fbaa154c5d4dd73d7a4af",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_faction_helper_boundaries_oct21v.py",
+      "src/base.cpp",
+      "src/faction.cpp",
+      "src/faction.h",
+      "src/probe.cpp",
+      "src/socialwin.cpp",
+      "src/veh.cpp"
+    ],
+    "evidence": [
+      "Coordinate three existing faction helper definitions and the named currentcallerownership group, preserving everyOriginalidentity/span/claim/emittedsymbol/history and originaltaskbaselinec63a9c1f547fd4c2bb94aa8ee6777bdd9b1aa75d. Sourceauthor mayeditONLYfaction.cpp/faction.h plusfocusedtest; otherCPPunitsareverificationimpactscope, notpermissionforunrelatedsourceedits.",
+      "Pinned mappedspancaller evidence supports foreigndirectcalls to has_treaty5002F0, get_adjective50B910 and social_upheaval5B4550. SocialWin exit/draw_info directlycallsocial_upheaval, while social_ai sameTU has2originalinlineuses. Current /O2 /Ob2 actualCOFF foreignownersshow0namedhelperrefs despiteheadercopies. This is a bounded ordinarydefinitionvisibilityhypothesis, not provenhistoricalTUownership or unmeasuredcall/bytegain. Nativecurrentown-faction direct-versus-inline sites mustalsobechecked, notsilentlyassumedrestored.",
+      "Authorize unchangedbodytransport of these3helpers from faction.h to existingcanonicalfaction.cppmarkers, ordinaryMEASUREDheaderdeclarations keepingexports/ABI, and nativewrite_body updatesofonly3bodypaths. Canonicalsocial_upheaval marker isbefore social_ai, so ordinarydefinition is visible to its localcaller; actualnatural/Ob2inlining remains a measuredquestion. Preserve allprior LEVER/TRIED/sourceinline rationale as historical. get_nounstaysuntouched because originalname_base inline use needs separateownerdecision.",
+      "No wrapper, duplicatebody, noinline/forceinline/pragmas, compilerflags/CMake, functiontype/parameter, datawidth, lifetime, algorithm, unsafe-path normalization, newOriginalbinding or manualmarker/claim edits. Keep has_treaty rawmaskreturn, adjectivepointeridentity andsocial-costloop/branch/default/alien behavior identical, includingoriginalquirks. Do not repair global sourceABI/naming aspartofthisbodymove.",
+      "Coordinator firstfiniteactualrecipe trial must establish physicalunchanged/damage controls and compare all3standalonebodies plus faction/socialwin/base/probe/veh local/foreigncalltopology. Headerclosure/directives/retainedselection/data/otherbodies remain obligations, no blanketwaiver. Anylocaloriginalcall/inlinemiss is explicitrestorationdebt andnewstructuralfindings returnforcentralplanning; expectedbenefitsare notacceptance. Freshbuild/link/sourceclaims/references/actualreviewrequiredbeforemanualintegration."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4910864,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4914016,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5210528,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5243632,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5270112,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5270256,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5290256,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5570512,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5894432,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5981520,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5982096,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "central-faction-query-and-social-helper-boundaries-oct21v",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:owner-faction-body-recovery-oct20ao"
+}
