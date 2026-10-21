@@ -1,0 +1,40 @@
+{
+  "event_id": "2e1d29dbdc0534853b2e975aaa51f25f85c1622b5c5d2543fd475afac6970c74",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "CMakeLists.txt",
+      "recovery/tests/test_win_input_owner_oct21.py",
+      "src/win.cpp",
+      "src/win_input.cpp"
+    ],
+    "evidence": [
+      "Standing coordinator-reviewed faithful recovery authority. Exact three Win input-router blocks (OnKey, OnChar, OnSysKey) move into ordinary win_input.cpp under unchanged parent recipe and public APIs. Native actual Release replay, unchanged-overlay, each-output damage controls pass; all231owner records measured, three exact gains, zero changed retained functions and physical complement pass. Original helper calls are restored; no original TU provenance inferred.",
+      "Authorize apply_patch transport of exact complete annotated/history blocks and existing license to new source, preserving every identity/span/claim/prose and native full metadata/history/nonFILEbody union plus writer fixedpoint. Keep is_visible, set_caption, globals/storage, types, symbols and declarations unchanged. No new wrapper, attribute, flags or algorithm change. Source author may edit only two sourcefiles and listed actual-source C++98hosttest. Coordinator alone owns shared CMake source registration, native compilation/recording, Git/tasks and integration.",
+      "Test actual three bodies for mouse/modal/focus/visibility/parent/null dispatch, key-vs-character/syskey arguments and callback/order, hook branches, original quirks and meaningful compile-success mutants. Fresh combined actual application build/link and all-identity masked/strict checks, new TU accounting, claim/reference continuity and independent source review required. Manual integration is not full linked retention/provider, automatic, runtime or game acceptance. Existing MEASURED/export policy remains unchanged and unproven original instrumentation."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6231760,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6231648,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6231488,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "f53bcf4d3432f3f2b21aae038db17382ebd9c64619001ab640eebad5001c9730",
+  "request_id": "central-win-input-source-owner-oct21f",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:wide-win-source-decks-oct20n"
+}
