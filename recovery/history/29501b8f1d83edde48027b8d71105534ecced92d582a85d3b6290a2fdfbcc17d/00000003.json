@@ -1,0 +1,22 @@
+{
+  "event_id": "f7ed19ceeee3cf84591e32abd5e9d2c28ebc9960d65757e493fa32ecba85587b",
+  "payload": {
+    "affects": [
+      "entity-e9113ca6f6602df9ceb83ef3b074a8df4ff19b5e7f920d068174b5b92f4076a0"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "random-double-get-linked-retention-oct21zb",
+    "evidence": [
+      "Fresh candidate0701175fa retains exact42-byte emitted COFF body and original6257B0mapping/claim but has no get-double public in the final MAP; baseline did. Exact compiled matching is not retained linked selection. No original direct/raw/HIGHLOW incoming root was found in bounded all-raw-section scans, which does not prove dead original code or explain retention policy.",
+      "The strict floating-constant __real reference is unknown before and after this cleanup. Native original zero-count export layout is conservatively refused because unused array RVAs are nonzero. Neither unknown is a pass. No new original reachability, original TU/link-policy, full retained-selection or original export validity proof is asserted.",
+      "Keep pending for an evidence-backed original compiler/linker, source-owner, indirect-root or dependency explanation. Preserve implementation, original identity/spans and historical claim. Do not invent export/address-taking anchors, change flags, erase the mapping, or reset baselines to close this obligation."
+    ],
+    "hypothesis": "Original standalone Random::get() double body still requires genuine linked retention after removing reconstruction-only exports.",
+    "kind": "discovery"
+  },
+  "previous_event": "3d31e9ba2052f3efcf157670019f12811fd9ded87666d9068bfc947d0efb1530",
+  "request_id": "random-double-get-linked-retention-oct21zb",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:random-source-ownership-oct20i"
+}
