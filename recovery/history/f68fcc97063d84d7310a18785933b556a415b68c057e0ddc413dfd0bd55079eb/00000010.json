@@ -1,0 +1,37 @@
+{
+  "event_id": "0912bbe68e1383e97bf12f126104da25b31dc9c85ed2756a4fe2422e8d700995",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_communicate_adjective_producers_oct21w.py",
+      "src/faction.h",
+      "src/faction_dialogue.cpp"
+    ],
+    "evidence": [
+      "Read-only pinned audit enumerates all seven original get_adjective50B910 calls in communicate, with exact pushed faction IDs and parser slots. Five current API expressions are correctly placed; the other two are actual source omissions/wrong values, not two of the four direct adjective-field reads. Act on this evidence immediately inside existing dialogue owner, preserving complete original hot/cold mappings/history and task baseline.",
+      "Pinned558109 uses regional rival EBX and parse_says slot4 between noun slot3 and noun-phrase slot5 before REPORTEVEN. Authorize adding exactly parse_says(4,get_adjective(communicate_late_contact_region_rival),-1,-1) there in the second regional report path. Preserve all region loops, guard predicates, rival selection, popup arguments/order and break.",
+      "Pinned5583F7 pushes ESI, proven peer/faction_id_with by function prologue, and parses returned get_adjective pointer into slot1 before TERRITORY. Current source incorrectly uses get_pact(peer_id) in that exact path. Authorize replacing only that producer with get_adjective(peer_id), keeping successful territory check, spot_base, focus, popup and mention_prototypes order. This restores original behavior; it is not an intentional bug fix.",
+      "Four earlier direct Players adjective fields belong to separate earlier slots/branches; leave them untouched. No other getter/phrase substitution, branch normalization, bounds/initialization change, wrapper, flags, type/layout, claim, Original or binding edit is permitted. The previous whole-block verbatim-transport finding remains historical; it must not be asserted for the subsequently corrected dialogue body.",
+      "Add actual-source controls for these two conditional regions, with distinguishable rival/peer/actor adjective values and pact strings, parser-slot/default arguments, popup snapshots and call ordering. Cover report branch active/skipped and territory success/failure, detect compile-success omitted-slot/wrong-rival/wrong-producer/wrong-slot mutants. Both GCC and Clang C++98; all prior 29 focused tests unchanged. Author no Git/task/native compile/preparation, all apply_patch paths absolute inside worker.",
+      "Scope clarification: faction.h already belongs to cumulative native editable scope from earlier expansions. The seven-site worker edited only its authorized three CPPs/test. Coordinator separately removed exactly one stale include comment under existing header scope and user cleanup authority, retaining general.h inclusion and all annotations; event9 records provenance, not permission. This expansion explicitly retains header review scope too, without claiming that discoveries grant edit authority. Native combined build/link/census/physical and independent reviews remain pending; no automatic or full-game acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5570512,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5290256,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "85080b00a1520e1e53427370b37c48e63c37ba7a66eef2d5467e99ad8f282d92",
+  "request_id": "central-two-original-dialogue-adjective-producers-oct21w",
+  "schema_version": 1,
+  "sequence": 10,
+  "stream": "task:owner-faction-body-recovery-oct20ao"
+}
