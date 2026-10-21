@@ -1,0 +1,29 @@
+{
+  "event_id": "13ff9c1a9051cd13830456ee3c064f8e4910b773ad11e09da9496252fafd5135",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_probe_atrocity_noun_oct21w.py",
+      "src/probe.cpp"
+    ],
+    "evidence": [
+      "Fresh pinned PE5A4085..40AF parses base name slot0, get_noun50B930(EBX) into slot1, then GENETICWARFARE message/popup. Independent prologue trace identifies EBX from actor vehicle faction byte+0E, no intervening EBX assignment before noun call; nearby separate actor/target local-faction comparisons agree. Current probe_native_atrocity_followup wrongly uses get_adjective(actor_faction_id) at this one slot.",
+      "Authorize ONLY replacement with get_noun(actor_faction_id) at the atrocity-followup slot1 and a new focused actual-source host test. Keep whole population/morale/random/draw/state/spot order, double health reads, original unchecked/arithmetic/error behavior, localvisibility guard, base name slot0, alien artwork and message order unchanged. No class/layout/global/header/flags/marker/claims changes. Capturedrecord work preserved.",
+      "New host control should extract actual whole helper and mapped getter bodies, exercise relevant actor/target/localvisibility/alien branches with bounded valid models, verify noun text and both grammar defaults at parser slot1, slot0/order and preservation of prior effects. Compile-success wrongadjective, wrongfaction or parser-order mutations must fail under GCC/Clang C++98. Host fixture not whole Probe/ABI/native/runtime proof; avoid broad code refactoring.",
+      "Only coordinator owns native task/Git/preparation/compiler/integration. Author uses absolute apply_patch and scoped test only. Faction source/sharedheaders remain separately frozen; its Probe impactscope is verification only, not competing author ownership. Native capturedrecord calibration/unchanged/damage controls completed on5080, not current proof after this edit; fresh post-rebase fullbuild/link/census/claims/references and actual current residual review remain required. Originaltaskbaseline preserved; no automatic/fullgame acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5894432,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "e0e94080583785f97d6a22f8699cdeb153ee1d14b78959eaa4b53071b7f0c4ec",
+  "request_id": "central-probe-action7-original-noun-producer-oct21w",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:probe-action-owner-oct5"
+}
