@@ -1,0 +1,29 @@
+{
+  "event_id": "758e6698748ea564179b9817286d03a0c5c0d713aeeefbef670c5d2be55bf548",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_probe_pact_hood_order_oct21w.py",
+      "src/probe.cpp"
+    ],
+    "evidence": [
+      "Pinned5A4F32 pushes ESI then5A4F33 EBX before cdecl get_pact_hood58FB00; formal arguments are EBX actor first, ESI selected response second. Fresh branch/register trace and neighboring actor title/name/noun producers establish identities, not count inference. Current source wrongly reverses formal arguments in this one human-response parser slot2.",
+      "Authorize only that one get_pact_hood(actor_faction_id,selected_response_faction) expression and new focused actual-source test; no helper or header edits. Preserve every neighboring parser slot/guard/default/callback/unsafe path and the capturedrecord/action7 work. For valid IDs helper returns symmetric bothfemale label, but original first-index/short-circuit order is load-bearing for bug-for-bug recovery. Do not execute invalid indices or claim a user-visible valid-ID bug fix.",
+      "Actual mapped get_pact_hood body can be extracted from game.cpp with exact Probe source expression. A bounded host indexed-player witness may log valid indexed access order, all four gender pairs, grammar-default resets and labels/slot2; compiled reversed-argument mutation must fail. Distinguish instrumented valid-table observation from actual ABI/unchecked-read/wholeProbe runtime proof. No artificial production instrumentation.",
+      "Author only isolated probe.cpp and new test, absolute apply_patch. Coordinator owns task/Git/nativecompiler/preparation and final fresh post-Faction-rebase build/link/measurements. No annotations/claims/flags/storage/safety changes or baseline reset; manual/native full admission still pending."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5894432,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "4a0492d3201d821c7d195ed01db3d47a2df4b6b8a0ee89dea645f918967dbee5",
+  "request_id": "central-probe-original-pact-hood-operand-order-oct21w",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:probe-action-owner-oct5"
+}
