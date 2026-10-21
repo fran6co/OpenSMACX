@@ -1,0 +1,24 @@
+{
+  "event_id": "72cb77b36645e212d20390cc77094125efe15d5c2c3535261d5a69fb0a77ff63",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_stringbox_owner_batch_oct20.py",
+      "src/stringbox.cpp"
+    ],
+    "evidence": [
+      "Coordinator-reviewed manual integration of StringBox::init6292D0 original lifecycle/failure sequencing. Preserve four own-field resets then qualified GraphicWin::close and ownedStringList clear/cursorreset; do NOT call StringBox::close/embeddedScrollclose before parentinit. Original parentfail6293B5/6293B7→62947E precedes laterScrollinit629464. Original unsafe/error/zero-length paths remain, no deliberate bugfix.",
+      "Independent pinned/source/test review and fresh rebased fullbuild/link build-nkbyh1_4, claims/mappings/referencesPASS. All199physicalcompiledcomplementsPASS projectingONLY6292D0, no otherbody/data/directive/startup/wholeTUwaiver. Actual compile/linkreceipt inputs and artifacts requalified immediately before this decision. Originaltaskbaseline2d3094ef3e11c5de26989464831471fd1ab1ff8b retained through rebase, no baseline reset.",
+      "Fresh all4StringBox owner testmodules34PASS0SKIP/FAIL/ERROR, including GCC/Clang actualbody mutation/errorpath/width/flags/list/callback/borrowedlist checks and originalpinned add/clip evidence. The successfulScrollmock exercises nonzero-lengthcloseafterparentinit; zero-lengthwrapper behavior is unchanged, not separately established by that mock. Hashpinned readonly independentimagecopy only for legacyrelativepathtest; no environment/testpredicate waiver.",
+      "Explicit coordinator permission to retain temporary matching regression for a justified original-faithful structural/lifetime correction: targetpriorMNEMONIC_ONLY154/159(compiled159)→MISMATCH60/159(compiled157). Do not restore the wrong earlyScrollclose or demote/erase historical claims. No historicalBYTE_EXACTclaimoninit; all3457claimedidentities/3468requirements remain. Allother5580verdicts unchanged,3363maskedexactunchanged; strict2807PASS556UNKNOWN unchanged.",
+      "This is bounded manual coordinator admission, not nativeautomatic or fullgame acceptance. Existing wholeprojectfailure/linkedselection/allocation/structure/runtime gaps remain. Commitdecision retains matching debt; freshdestinationbuild/link/sourcechecks/census, complete199zeroomission candidate reproduction and34ownercontrols required before consumedbranchcleanup. Technology andbreedwork stay isolated."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "4bd0475293533fcd2a93eee500bc2612e9c0f06d14945d7c1a921617efbbe936",
+  "request_id": "central-manual-stringbox-original-lifetime-admission-oct21u",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:stringbox-owner-batch-oct20"
+}
