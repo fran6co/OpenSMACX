@@ -1,0 +1,22 @@
+{
+  "event_id": "3d66eb8416d9a98dd434a5e26ed6e81f21e3293d85787b638b9ccea80f067164",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/win.cpp"
+    ],
+    "evidence": [
+      "Coordinator-reviewed original-fidelity restoration: Win::on_r_button_down5F6710 inverts only the dbl condition and swaps the two owner-assignment arms to preserve original fallthrough/write order. No casts, new declarations, ABI/virtuality/lifetime/storage/flag policy or behaviorfix. Preserve original mapped span[5F6710,5F687F) and all bindings/history; body equality does not settle historicalQAEXcatalogue versuscurrentUAEXvirtualsymbol interpretation.",
+      "Finite actual production-recipe full-TU replay, unchanged-overlay and changedbody controls pass. Restored body measures138/138instructions exact, without prior exact losses; wholecompiledcomplement passes. Native recover record alone banks the selected measured historicalclaim using configuredO2flagtrial, exit0; no hand-added marker or demotion. Guarded nativewriter reproduces resulting source exactly from candidate body and actual recorded record.",
+      "Independent complete pinned/actualsource review,22relatedhostcases and fresh185TU199physicalobject fullbuild/link plus claims/mappings/references pass. All199compiledcomplements pass projecting only5F6710body and no unrelated sections. Whole5581knownidentity census3359masked exact (+1); strictcounts {'fail': 3, 'pass': 2801, 'unknown': 555}, all prior outcomes unchanged; new target strictresult pass. Preserve original taskbasec63a9c1f547fd4c2bb94aa8ee6777bdd9b1aa75d and all obligations.",
+      "Manual matching-restoration checkpoint, not newfunctioncoverage, complete originaluniverse or full linkedselection/allocation/provider/structure/runtime/game/autonomous acceptance. Existingthree strictfailures unchanged. Fresh destination fullbuild/link,22hosttests, wholecensus/strict and199zero-omission candidate reproduction required before cleanup."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "central-manual-win-right-button-admission-oct21m",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:owner-win-body-recovery-oct20ao"
+}

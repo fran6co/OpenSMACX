@@ -10115,7 +10115,7 @@ void Win::update_window_to_buffer(Buffer * buffer) {
 
 // ===== homed from src/recovered/units/005f6710.cpp =====
 
-// ORIGINAL: 0x005F6710 ?on_r_button_down@Win@@QAEXJHHIH@Z 0x005F6710-0x005F687F
+// ORIGINAL: 0x005F6710 ?on_r_button_down@Win@@QAEXJHHIH@Z 0x005F6710-0x005F687F BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git show 3cb99d43^:src/recovered/units/005f6710.cpp preserves this identity and span. The body remains in win.cpp beneath its original homing heading. Its parentless path calls the receiver-free root-order helper at0x5F672A; declaration repair changes that ABI without rewriting the handler body."], "reason": "Restore the unclaimed original mapping omitted during homing of the existing right-button handler. This binding is not a matching or behavioral claim."}
 // symbol    ?on_r_button_down@Win@@UAEXJHHIH@Z
 void Win::on_r_button_down(long flags, int x, int y, unsigned int keys, int dbl) {
@@ -10131,12 +10131,12 @@ void Win::on_r_button_down(long flags, int x, int y, unsigned int keys, int dbl)
         parent->set_dialog_focus(this);
     }
 
-    if (dbl == 0) {
-        WinPointerOwner2 = nullptr;
-        WinPointerOwner1 = this;
-    } else {
-        WinPointerOwner1 = nullptr;
+    if (dbl != 0) {
         WinPointerOwner2 = this;
+        WinPointerOwner1 = nullptr;
+    } else {
+        WinPointerOwner1 = this;
+        WinPointerOwner2 = nullptr;
     }
     WinSizingFlag = 0;
 
