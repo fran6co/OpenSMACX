@@ -1,0 +1,18 @@
+{
+  "event_id": "c4cc27c74c534a78b9b16e50c8a87e70b6bdbd827cbae1cae27ff938dc2eba22",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "mapwin-selective-ordinary-inline-contract-oct21zd",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Reject product adoption of both forms: the original selective call boundary and mapped standalone helper are not retained. This is a rejected source-form hypothesis, not rejection of genuine MapWin ownership or proof of dead original code. Do not force inline/noinline, export/address-taking anchors or compiler flags to manufacture the expected result.",
+      "No product C++/header/test/compiler/build-policy change is integrated. Current faithful helper/source identities and immutable task baseline remain. The earlier explicit-cache-in-RECT diagnostic is also unadmitted; avoid duplicating fifty lines merely for a local score. Return to this plateau only with new original/source/compiler evidence."
+    ]
+  },
+  "previous_event": "c9198fa1d558b7d981f90124ce05d0afed34c44d1708f87805d6607f81fed208",
+  "request_id": "reject-mapwin-inline-contract-oct21zd",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:mapwin-source-batch-oct19e"
+}
