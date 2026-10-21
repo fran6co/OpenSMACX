@@ -1,0 +1,64 @@
+{
+  "event_id": "18195bce911a0e0e79222fb2ada078b301b5efee22288a3777136cf349026df8",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/alphamovie.cpp",
+      "src/basebutton.cpp",
+      "src/graphicwin.cpp",
+      "src/imagebutton.cpp",
+      "src/listbox.cpp",
+      "src/menu.cpp",
+      "src/multidebug.cpp"
+    ],
+    "evidence": [
+      "Standing user authority for parallel cheaper workers and coordinator-reviewed manual recovery. Continue existing task baseline without resetting any original identity/history. Seven owners receive only twelve essential generated-start annotations; no C++ body, declaration, flag, class layout, ownership or method changes authorized.",
+      "Fresh pinned constructor stores and exact physical COFF relocation/symbol correspondence are documented in ignored parallel-match-oct21c/strict-binding-batch/gui-vtable-starts.md. All seven physical objects match both current build-k0idz1ty and prior build-naa6gn7i. Author independently checks the instruction offset-to-symbol correspondence before insertion.",
+      "Authorize unbounded RECOVERY_GENERATED v1 vtable starts only: BaseButton Win670290 Buffer670288; Menu Win6700B0 Buffer6700A8; MultiDebug Win66FA88 Buffer66FA80; GraphicWin Buffer66FC48; ImageButton Buffer670A8C; AlphaMovie Buffer669450; ListBox Win67041C Buffer670414 primary670408. Exact emitted ??_7 names and evidence functions follow the pinned report. No ??_8 or original extent inference from current section sizes.",
+      "Use parser/model validated apply_patch insertions because installed package has no generated writer; no new serializer/CLI/framework changes. Preserve full native source/generated snapshots, all existing bounds and claims. Essential source rationale only, no run log. Independently review original store operands plus current physical definitions; measure strict outcomes rather than assuming twelve passes. Coordinator owns Git/task/preparation/compiler leases and destination verification. These facts prove starts only, not original table contents/hierarchy/selection or game acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6319920,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6270048,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6068208,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6114544,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6443744,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4210704,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6331824,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "7243c146a3b6e957fe66fb2ecc6d9bf00b1e21c2ce95d144f25331be9512ea85",
+  "request_id": "central-gui-vtable-starts-oct21d",
+  "schema_version": 1,
+  "sequence": 8,
+  "stream": "task:ui-eight-owner-coverage"
+}

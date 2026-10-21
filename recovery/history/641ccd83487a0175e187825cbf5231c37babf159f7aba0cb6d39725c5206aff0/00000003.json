@@ -1,0 +1,30 @@
+{
+  "event_id": "2318cb288988e2b5dcae613faa8250ccc355d25acf6d76c47034941863a8dce1",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_stringbox_owner_batch_oct20.py",
+      "src/stringbox.cpp",
+      "src/stringbox.h"
+    ],
+    "evidence": [
+      "Standing coordinator-reviewed recovery authority. Preserve retained StringBox baseline2d3094ef and complete source/history. Current width and conditional list-state corrections are integrated on clean master106615603. No live compiler measurement owns the candidate; only this worker may edit the StringBox closure.",
+      "Original6293B0 calls GraphicWin::init;6293B5 compares EAX;6293B7 jumps directly to62947E epilogue on failure preserving its nonzero result. Success explicitly xor eax,eax62947C. Nine mapped direct callers ignore the result, so int-return contract is an instruction-backed inference, not an original debug signature or proven absence of indirect callers. Read ignored stringbox-return-contract/init-return-contract.md and independently inspect original.",
+      "Authorize int StringBox::init declaration/definition, capture GraphicWin::init result, return it unchanged on failure and0 on success. Preserve all remaining call/order, list, scrollbar, default flag, storage/lifetime and unsafe original behavior. All nine callers remain statement calls. Historical ORIGINAL catalogue QAEX spelling is retained; coordinator publishes native write_symbol fact only after observing fresh actual emitted COFF symbol. No handwritten marker/claim modification.",
+      "Extend existing actual-source tests to require0 success and both positive/negative nonzero base results unchanged, failed-init early exit, borrowed/null state and unequal-dimension behavior. Compile-success return-value mutants must fail. No public tool or tautological replacement implementation. Shared-header propagation means all dependent native objects are protected, not implicitly editable. Preserve all matching obligations; coordinator handles actual production output, physical outside-body preservation, continuity, independent review, build/link and fresh destination checks. No automatic or full-game acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6460112,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "9d98f88177a7343671b6b29dd80dc2b21b0c5fa786763df37c7c66cca9d0a7a7",
+  "request_id": "central-stringbox-return-contract-oct21d",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:stringbox-owner-batch-oct20"
+}
