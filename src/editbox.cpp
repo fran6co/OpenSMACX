@@ -152,11 +152,9 @@ int EditBox::text_position(int x) {
     if (*text == 0) return 0;
     const int length = static_cast<int>(strlen(text));
     int count = 1;
-    if (length > 1) {
-        do {
-            if (Buffer::text_width(text, count) > x) break;
-            ++count;
-        } while (count < length);
+    while (count < length) {
+        if (Buffer::text_width(text, count) > x) break;
+        ++count;
     }
     if (count < static_cast<int>(field_B44_))
         return static_cast<int>(field_B18_) + count - 1;
