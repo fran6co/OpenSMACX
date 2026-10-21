@@ -6946,26 +6946,30 @@ typedef int (__stdcall *DeleteObjectProc)(void *);
 
 // The pair ORDER is the image's: lineTo takes (a1,a2) and moveTo takes
 // (a3,a4), so the first pair is the END of the segment.
-// ORIGINAL: 0x005F2AC0 ?window_line_raw@Win@@QAEXHHHHHHI@Z 0x005F2AC0-0x005F2C37 FILE
+// ORIGINAL: 0x005F2AC0 ?window_line_raw@Win@@QAEXHHHHHHI@Z 0x005F2AC0-0x005F2C37 FILE BYTE_EXACT
 // symbol    ?window_line_raw@Win@@QAEXHHHHHHI@Z
 // kind game
 void Win::window_line_raw(int x2, int y2, int x1, int y1, int colour,
                           int width, unsigned int style) {
+    HDC current_hdc;
     if (WinHdcRefCount != 0) {
         WinHdcRefCount = WinHdcRefCount + 1;
+        current_hdc = WinSharedHdc;
     } else {
         IDirectDrawSurface2 *iface = DirectDrawSurface;
         if (iface != 0) {
             iface->GetDC(&WinSharedHdc);
+            current_hdc = WinSharedHdc;
         } else {
-            WinSharedHdc = GetDC(HandleMain);
+            current_hdc = GetDC(HandleMain);
+            WinSharedHdc = current_hdc;
         }
-        if (WinSharedHdc == 0) {
+        if (current_hdc == 0) {
             return;
         }
         WinHdcRefCount = 1;
     }
-    if (WinSharedHdc != 0) {
+    if (current_hdc != 0) {
         if (palette_seed_cache_ != PaletteActive->seed_) {
             PaletteActive->set_active_window(this);
             palette_seed_cache_ = PaletteActive->seed_;

@@ -56,14 +56,16 @@ static int BufferDirectDraw, WinHdcRefCount;
 static HDC WinSharedHdc, callback_hdc;
 static HWND HandleMain = 12;
 static IDirectDrawSurface2 *DirectDrawSurface;
-static int PaletteInitialized;
+static HPALETTE PaletteInitialized;
 static int selected_calls, realized_calls, desktop_releases;
 static HDC selected_hdc, realized_hdc, desktop_hdc;
+static HPALETTE selected_palette;
 static IDirectDrawSurface2 *replacement_surface;
 struct Win { int OnQueryNewPalette(void *); };
-static int SelectPalette(HDC hdc, HPALETTE, int) {
+static int SelectPalette(HDC hdc, HPALETTE palette, int) {
     ++selected_calls;
     selected_hdc = hdc;
+    selected_palette = palette;
     if (callback_hdc) {
         WinSharedHdc = callback_hdc;
         DirectDrawSurface = replacement_surface;
@@ -92,6 +94,8 @@ int main() {
     IDirectDrawSurface2 first{}, second{};
     HDC initial = reinterpret_cast<HDC>(0x1234);
     HDC changed = reinterpret_cast<HDC>(0x5678);
+    int palette_token = 0;
+    PaletteInitialized = &palette_token;
 
     // The surface owns GetDC's output and ReleaseDC receives the handle value.
     first.get_result = initial;
@@ -99,6 +103,7 @@ int main() {
     assert(win.OnQueryNewPalette(nullptr) == 0);
     assert(first.get_calls == 1 && first.release_calls == 1);
     assert(first.received == initial);
+    assert(selected_palette == PaletteInitialized);
     assert(WinHdcRefCount == 0 && WinSharedHdc == nullptr);
 
     // Failed surface acquisition preserves the null handle and zero count.

@@ -1,0 +1,23 @@
+{
+  "event_id": "3abf53887f22c4919140523d00731e1092c6c74972787a9d16a76041cdd583e0",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_win_palette_hdc_owner_oct9.py",
+      "src/win.cpp"
+    ],
+    "evidence": [
+      "Coordinator-reviewed faithful recovery: window_line_raw5F2AC0 retains original acquired/incremented HDC value for the two null tests only; later drawing and release reread WinSharedHdc and DirectDrawSurface exactly as before. Original refcount/null/error leaks and uninitialized LOGPEN.y retained. No production type/ABI/virtuality/flags/global/storage change. Same original identity and complete span[5F2AC0,5F2C37).",
+      "Actual production-recipe full Win TU replay plus unchanged-overlay/changed-target controls pass; candidate108/108 instructions exact. Native recover record alone banks this previously unclaimed historicalbody, exit0. Guarded nativewriter reproduces recorded source from frozen candidate and actual new record. No manualclaim or demotion.",
+      "Independent pinned/full-source and fixture reviews,6 related GCC/Clang host cases,185TU199object fresh fullbuild/link and claims/mappings/references pass. All199 compiled complements pass projecting only selectedbody, no othersections. Whole5581knownidentity census3360maskedexact(+1), strict {'fail': 3, 'pass': 2801, 'unknown': 556}, all prior outcomes unchanged, new target unknown. Palette fixture correction matches actual HPALETTE declaration and adds nonnull SelectPalette argument assertion without removing prior checks.",
+      "Keep original task baseline c63a9c1f547fd4c2bb94aa8ee6777bdd9b1aa75d and all historical obligations. Target strict UNKNOWN: all known relocations pass but existing __imp__CreatePenIndirect@4 lacks source original binding; no target bytes differ. This is not a strict pass. Manual checkpoint, not new original functioncoverage, exhaustive callable inventory or full linkedselection/allocation/provider/structure/runtime/game/autonomous acceptance. Existing3strictfailures remain. Fresh destination build/link,6hostcases,census/strict and199zero-omission candidate reproduction required before cleanup."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "22e836a0f351064f4e3d97a75bd5cb8c53419c8163eb286698ea6e60fb055c92",
+  "request_id": "central-manual-win-hdc-admission-oct21n",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:owner-win-body-recovery-oct20ao"
+}
