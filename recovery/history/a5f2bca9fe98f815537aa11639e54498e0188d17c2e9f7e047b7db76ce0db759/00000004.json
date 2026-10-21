@@ -1,0 +1,22 @@
+{
+  "event_id": "cc094363a7997048e23c1ccbab19e9d5262a676f3daf783016ed3817918b8231",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_reportif_research_gate_oct21m.py",
+      "src/reportif.cpp"
+    ],
+    "evidence": [
+      "Standing faithful-source/manual-recovery authorization: only on_status4A41D0 research selection prefix. Pinned4A4252..4A4296 tests statebit80 and rulesbit200 BEFORE indexedPlayersData researchload, skipsread when stateclear/rulesset, storesoriginalresearch toReportWinfocus before invalidrangezeroing. Actual currentRelease COFF emits the researchread before gate, confirming originalaccesspath discrepancy; no claim realruntimebadindex proven. Use frozen on-status-gated-research.json candidate exactly, preserve all otherstatus paths and no safetyfix/boundscheck.",
+      "Author may change only mapped function four-line researchprefix and new focused actual-source host regression fixture. Bounded extractedregion witness must be described as such, not full on_status/ABI/runtime proof. Test state/rules combinations, gated-away lookup vs selected lookup, researchbounds minus1/0/89/90 and exact originalfocusstores; compile-success wronggate/unguardedlookup mutants must fail at runtime. Do not author productionhelpers/annotations, newtypes/layout, compilerflags or unrelatedcleanup.",
+      "Isolated author uses apply_patch/explicit host tests only. Coordinator owns native compiles/prep/Git/integration. Prior immutable actualrecipe overlay already passes replay/unchanged/damage and alloutsidebody physicalcomplements; body remains mismatch. Require fullbuild/link, claims/mapping/reference continuity and neighborchecks, independent fulloriginalreview and fresh destinationreproduction. Preserve original taskbaseline and all historicalclaims/restoration obligations; no full/game/autonomous acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "0b415befc3d8789b6a818c69da97bf1dbf597b6de6dc43dfdd6f470c94e8491c",
+  "request_id": "central-reportif-original-research-gate-oct21m",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:reportif-source-batch-oct19b"
+}
