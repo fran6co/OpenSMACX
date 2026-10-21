@@ -1,0 +1,18 @@
+{
+  "event_id": "a371c1e09fbcb0f81d1d8cbf94a6f00c4defe4e7815f049473f05a909f0f6a47",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "prototype-history-return-width-alone-oct21y",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Reject return-width-only as a sufficient recovery/restoration step, not the possibility of a later evidence-backed int ABI reconstruction. Both controlled current candidates still miss the original extent; there is no demonstrated semantic correction to bank. Preserve original declaration uncertainty and unchanged current source rather than applying a type change merely for instruction resemblance.",
+      "Do not repeat this identical full dependency screen or reset baselines. Further work needs new body/type/owner/caller evidence and cheap TU-local preliminary controls before repeating strict recursive verification. Detailed compiler results are ignored disposable caches; this non-derivable rejection and scope survive in task history. No implementation/matching gain or acceptance is claimed."
+    ]
+  },
+  "previous_event": "304513bc852b020bfa8943cc54d2e4b7b0d13443cbb6651947f27d07da7a49cb",
+  "request_id": "prototype-history-return-width-alone-oct21y-bounded-negative",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:owner-vehicle-body-recovery-oct20ao"
+}

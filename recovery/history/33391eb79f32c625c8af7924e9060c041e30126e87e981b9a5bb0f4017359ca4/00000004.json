@@ -1,0 +1,22 @@
+{
+  "event_id": "304513bc852b020bfa8943cc54d2e4b7b0d13443cbb6651947f27d07da7a49cb",
+  "payload": {
+    "affects": [
+      "entity-a4b5355e8f1b01ae8131d5036d7a87938a448115697e69bd2896ff832419cf68"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "prototype-history-return-width-alone-oct21y",
+    "evidence": [
+      "Pinned helper returns canonical EAX zero/one and original propose_proto tests EAX. Current bool standalone returns AL; current same-TU caller is inlined. The original C++ type is unproven and no current runtime consumer defect was demonstrated. One controlled private int candidate preserves every body effect and original identity, with native emitted-symbol proposal only.",
+      "Both configured trials pass physical task-TU replicas and wrong-result compiled witnesses. Five task TUs plus recursive object owners required488compiler attempts. Both int candidates remain outside the complete original extent; the overall report also retains basepop.h/voice.h/win.h unconfigured data-owner dependencies. No passing-neighbor loss is reported, but these observations are not full preservation.",
+      "Captured propose_proto absence used the wrong proposed symbol; do not infer a missing caller from it. Original mapped caller proof and actual previous retained object remain the relevant bounded observations. No product source, marker, historical claim or compiler policy was changed."
+    ],
+    "hypothesis": "Changing only the reconstructed is_bunged return width could restore its original full-EAX helper boundary.",
+    "kind": "discovery"
+  },
+  "previous_event": "3fa749be2a46894fedb1068273f2283540d1cb85abd47fea129d46644e8ea573",
+  "request_id": "prototype-history-return-width-alone-oct21y",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:owner-vehicle-body-recovery-oct20ao"
+}
