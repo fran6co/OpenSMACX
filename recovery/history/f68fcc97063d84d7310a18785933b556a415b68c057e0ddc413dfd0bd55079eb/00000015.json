@@ -1,0 +1,48 @@
+{
+  "event_id": "b6e80e0af4fc5e3a50e9b9f04c240ebd44be317744aa85804a9c927b08ce75c9",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "CMakeLists.txt",
+      "recovery/tests/test_communicate_adjective_producers_oct21w.py",
+      "recovery/tests/test_communicate_owner.py",
+      "recovery/tests/test_communicate_plea_actual_source.py",
+      "recovery/tests/test_enemies_noun_producers_oct21w.py",
+      "recovery/tests/test_faction_helper_boundaries_oct21v.py",
+      "recovery/tests/test_faction_noun_inline_boundaries_oct21w.py",
+      "recovery/tests/test_noun_inline_consumers_oct21w.py",
+      "recovery/tests/test_social_upheaval_signed_cost_oct20.py",
+      "src/base.cpp",
+      "src/dipedit.cpp",
+      "src/faction.cpp",
+      "src/faction.h",
+      "src/faction_dialogue.cpp",
+      "src/map.cpp",
+      "src/reportif.cpp",
+      "src/technology.cpp"
+    ],
+    "evidence": [
+      "User-authorized coordinator-reviewed manual source integration. Four unchanged query bodies move from faction.h to their mapped faction.cpp owners through native writer facts; ordinary MEASURED declarations retain ABI. Same-TU social_ai inlining remains available. Communicate and seven private helpers have a real logical faction_dialogue.cpp home under unchanged parent Oy- profile; no claim this proves a historical TU boundary. Parent retains storage, FactionsArt startup and mapped rounding helper.",
+      "Original producer recoveries: REPORTEVEN restores missing rival adjective slot4 (558109), TERRITORY slot1 uses peer adjective rather than pact (5583F7), and the two pact notice slot4 nouns use faction A, not B (55C9E8/55DDB9). Name_base plus seven individually traced foreign inline noun sites retain both grammar writes before consuming the same faction noun. Base_territory restores its original inline pure mask test. No new bounds/initialization/safety fixes, types, globals, hierarchy, storage, lifetime or compiler-policy changes.",
+      "Fresh final186TU200COFF build-je6adpg4 links and41 actual-source host controls pass including bounded mutation detections. Claims/mappings/references pass; native source check scans388files5646annotations with zero failures, fingerprint faef19b128b9b3bcf403d57469cce41251ec016db29864a1f41e86b891b523f1. All5581 current verdicts equal master:3364exact, strict2807PASS557UNKNOWN. No new implementation or matching-count gain, no claim banking or demotion.",
+      "Complete declared communicate direct helper census matches141 treaty,7adjective,11noun,4rounding edges. This is not per-site/CFG equivalence. Actual final-vs-prior candidate COFF review isolates semantic changes to two authorized enemies noun arguments; other fifteen raw differences are COFF timestamp-only. Parent enemies_treaty text contracts16bytes; later MAP entries/export RVAs shift accordingly. All103 export names/ordinals remain, but addresses are not identical.",
+      "Baseline physical112PASS87FAIL remains red. Current impact52mapped changed owners includes41additional subjects; only real independent mapped bodies projected. Four replicated helper bodies and moved communicate are accounted under their real identities. Remaining104non-directive sections are95moved literal definitions and9private-code differences; added dialogue object remains unpaired, never a pass. Native residual comparison is not semantic equivalence. The symbol union retains all literals;57 normalized CRT contributions match and new TU has no CRT section, but allocation/selection/global runtime proof is unfinished.",
+      "Correction to event14 explanatory prose: five changed private battle helpers implement the seven-parameter combat owner506AF0, NOT wrapper506A60. Source marker/full span and actual callers establish506AF0; it is now explicitly in impact scope. Event14 is retained as history, not silently edited. Private helpers remain unprojected; no duplicate parent identity or fabricated new Original is used. Other private changes belong to communicate54FFD0, NetDaemon process_message534400 and Probe59F120.",
+      "Manual actual-source review admits ordinary API ownership and evidence-backed producer repairs despite unproven broad compiler residuals. PickTech, editor_natural, enemy_strategy, render/game/Probe/battle CFG/EH/UB/asynchronous effects and full retained-selection/linked preservation remain unknown, not cleared by unchanged source, helper counts or body projection. Native automatic/full acceptance remains refused. Original task baseline, all source claims and restoration obligations remain intact.",
+      "Separate Probe worker retains exclusive authoring of its pending probe.cpp and tests; this source integration does not absorb that work or reset its baseline. Fresh destination186TU build/link,41 controls, claim/reference checks, all5581 verdicts and200zero-omission candidate-to-destination reproductions are required before consuming this clean Faction checkout. Report limitations honestly; no full game/playability or autonomous acceptance is claimed."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5270256,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "e3e1366fc416e41b2a73d62d0a8b3dcf6b2383dc03c8c551f959b621e312205f",
+  "request_id": "central-manual-faction-query-and-dialogue-owner-admission-oct21w",
+  "schema_version": 1,
+  "sequence": 15,
+  "stream": "task:owner-faction-body-recovery-oct20ao"
+}
