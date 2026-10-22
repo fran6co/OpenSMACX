@@ -37,7 +37,6 @@ HELPERS = (
     ("static void texture_raster_span(",),
     ("static int texture_raster_step_gouraud(",),
     ("static int texture_raster_step_plain(",),
-    ("static void texture_raster_gouraud_rows(",),
     ("static void texture_raster_plain_rows(",),
 )
 METHODS = tuple(f"void {name}(" for _, name in SOURCE_IDS)
@@ -213,14 +212,11 @@ def test_keyed_entry_mutant_fails_pixel_assertions(compiler, tmp_path):
     if compiler_path is None:
         pytest.skip(f"{compiler} is unavailable")
     source = TEXTURE.read_text(encoding="utf-8")
-    original_call = (
-        "texture_raster_gouraud_rows(this, buffer, min_y, max_y, top, 0,"
-    )
-    keyed_call = (
-        "texture_raster_gouraud_rows(this, buffer, min_y, max_y, top, 1,"
-    )
-    assert source.count(original_call) == 2
-    mutated = source.replace(original_call, keyed_call, 1)
+    entry = _extract_definition(source, METHODS[0])
+    original_key_test = "if (texel != key) {"
+    assert entry.count(original_key_test) == 1
+    mutated_entry = entry.replace(original_key_test, "if (true) {", 1)
+    mutated = source.replace(entry, mutated_entry, 1)
     assert mutated != source, "mutant did not alter current installed source"
     cpp = tmp_path / "texture_mutant.cpp"
     binary = tmp_path / "texture_mutant"
@@ -233,4 +229,4 @@ def test_keyed_entry_mutant_fails_pixel_assertions(compiler, tmp_path):
     assert built.returncode == 0, built.stdout + built.stderr
     ran = subprocess.run([str(binary)], check=False, capture_output=True,
                          text=True, timeout=45)
-    assert ran.returncode != 0, "pixel behavior mutant escaped fixture assertions"
+    assert ran.returncode != 0, "removing the actual borrowed-key test escaped pixel assertions"
