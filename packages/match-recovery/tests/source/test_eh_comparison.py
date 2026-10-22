@@ -9,7 +9,7 @@ from match_recovery.source import read_text
 from match_recovery.source.asm import (RegionCandidate, SpanComparisonRefused,
                                        compare_record, compare_subject, subject_asm)
 from match_recovery.source.model import Tier
-from test_eh_regions import ROOT, SPANS, _coff, _pe
+from test_eh_regions import ROOT, SPANS, _coff, _linear_fixture, _pe
 
 
 def fixture(tmp_path, *, image_damage=None, original_cold_size=21):
@@ -145,3 +145,48 @@ def test_original_unwind_damage_refuses_the_entire_function(tmp_path):
     result = compare_record(row, image, [], ("trial",), compiler=lambda *args: _coff())
     assert result.verdict == Tier.REFUSED
     assert result.compared_bytes == 0
+
+
+def test_valid_but_different_predecessor_topology_is_not_byte_exact(tmp_path):
+    original_predecessors = (0xFFFFFFFF, 0, 0)
+    compiled_predecessors = (0xFFFFFFFF, 0, 1)
+    image_bytes, object_bytes, spans = _linear_fixture(
+        (8, 8, 8), original_predecessors=original_predecessors,
+        object_predecessors=compiled_predecessors, return_artifacts=True)
+    path = tmp_path / "branched.cpp"
+    span_text = ";".join(f"0x{low:08X}-0x{high:08X}" for low, high in spans)
+    path.write_text(
+        f"// ORIGINAL: 0x{spans[0][0]:08X} owner {span_text} FILE\n"
+        f"// symbol {ROOT}\nvoid owner() {{}}\n")
+    row = read_text(path.read_text(), path)[0]
+    image = tmp_path / "branched.exe"
+    image.write_bytes(image_bytes)
+
+    candidate = subject_asm(object_bytes, row, "trial")
+    result = compare_subject(row, image, candidate)
+
+    assert result.verdict == Tier.MISMATCH
+    assert result.compared_bytes == 0
+    assert "valid EH unwind predecessor topology differs" in result.diagnostic
+    assert repr(original_predecessors) in result.diagnostic
+    assert repr(compiled_predecessors) in result.diagnostic
+
+
+def test_identical_branched_predecessor_topology_remains_comparable(tmp_path):
+    predecessors = (0xFFFFFFFF, 0, 0)
+    image_bytes, object_bytes, spans = _linear_fixture(
+        (8, 8, 8), original_predecessors=predecessors,
+        object_predecessors=predecessors, return_artifacts=True)
+    path = tmp_path / "branched.cpp"
+    span_text = ";".join(f"0x{low:08X}-0x{high:08X}" for low, high in spans)
+    path.write_text(
+        f"// ORIGINAL: 0x{spans[0][0]:08X} owner {span_text} FILE\n"
+        f"// symbol {ROOT}\nvoid owner() {{}}\n")
+    row = read_text(path.read_text(), path)[0]
+    image = tmp_path / "branched.exe"
+    image.write_bytes(image_bytes)
+
+    candidate = subject_asm(object_bytes, row, "trial")
+    result = compare_subject(row, image, candidate)
+
+    assert result.verdict == Tier.BYTE_EXACT

@@ -1,6 +1,6 @@
 """Narrow owner proof for VC6's disjoint x86 C++-EH code regions.
 
-This binds bounded linear VC6 destructor-cleanup chains without assigning
+This binds bounded VC6 destructor-cleanup chains without assigning
 generated symbols by section order. It proves a root -> handler -> FuncInfo ->
 unwind cleanup chain in the pinned image and one COFF object. It returns
 bounded bytes for a caller to compare; it grants no match verdict.
@@ -57,6 +57,8 @@ class EHOwnershipEvidence:
     original_cleanup: int
     cleanup_offsets: tuple[int, ...]
     original_cleanups: tuple[int, ...]
+    original_predecessors: tuple[int, ...]
+    compiled_predecessors: tuple[int, ...]
     original_cleanup_targets: tuple[int, ...]
     original_runtime_target: int
     compiled_runtime_symbol: str
@@ -109,7 +111,7 @@ def _checked_spans(spans: tuple[tuple[int, int], ...]) -> tuple[Span, Span]:
         raise ValueError("EH spans are reordered or overlap")
     cold_size = cold.end - cold.start
     if not _HANDLER_STUB_SIZE < cold_size <= _MAX_COLD_SIZE:
-        raise ValueError("cold EH region exceeds the bounded linear VC6 extent")
+        raise ValueError("cold EH region exceeds the bounded VC6 extent")
     return primary, cold
 
 
@@ -291,25 +293,25 @@ def _handler_stub(code: bytes, base: int) -> tuple[int, int, int]:
             instructions[1].operands[0].imm & 0xFFFFFFFF)
 
 
-def _linear_map(data: bytes, count: int, *, base: int,
-                first_action: int) -> tuple[int, ...]:
-    """Validate a bounded linear unwind map and return its action targets."""
+def _unwind_map(data: bytes, count: int, *, base: int,
+                first_action: int) -> tuple[tuple[int, ...], tuple[int, ...]]:
+    """Validate a bounded backward-only unwind graph and its action starts."""
     if not 1 <= count <= _MAX_CLEANUP_ACTIONS:
         raise ValueError("EH cleanup action count exceeds the bounded resource cap")
     if len(data) != count * 8:
         raise ValueError("EH unwind map has an incomplete action table")
     entries = struct.unpack("<" + "I" * (count * 2), data)
-    actions = []
+    actions, predecessors = [], []
     for index in range(count):
         predecessor, action = entries[index * 2:index * 2 + 2]
-        expected_state = 0xFFFFFFFF if index == 0 else index - 1
-        if predecessor != expected_state:
-            raise ValueError("EH unwind states are not the exact linear predecessor chain")
+        if predecessor != 0xFFFFFFFF and predecessor >= index:
+            raise ValueError("EH unwind predecessor is not a sentinel or earlier state")
         if (action < base or (index == 0 and action != first_action)
                 or (actions and action <= actions[-1])):
             raise ValueError("EH unwind actions are not strictly ordered from the first cleanup")
+        predecessors.append(predecessor)
         actions.append(action)
-    return tuple(actions)
+    return tuple(actions), tuple(predecessors)
 
 
 def _action_targets(code: bytes, base: int, starts: tuple[int, ...],
@@ -357,7 +359,7 @@ def _original_eh(image: PeImage, primary: Span, cold: Span):
         raise ValueError("original FuncInfo is not a supported bounded cleanup layout")
     map_span = Span(unwind_map, unwind_map + 8 * max_state)
     map_data = image.read(map_span)
-    original_cleanups = _linear_map(
+    original_cleanups, original_predecessors = _unwind_map(
         map_data, max_state, base=cold.start, first_action=cold.start)
     if any(action >= handler for action in original_cleanups):
         raise ValueError("original unwind action starts at or beyond its handler")
@@ -381,7 +383,7 @@ def _original_eh(image: PeImage, primary: Span, cold: Span):
     if image.absolute_sites(cold) != frozenset({handler_offset + info_offset - handler_offset}):
         raise ValueError("original cold region has unexpected HIGHLOW sites outside the handler pointer")
     return (handler_offset, handler, func_info, cold.start, tuple(cleanup_targets),
-            runtime_target, original_action_starts)
+            runtime_target, original_action_starts, original_predecessors)
 
 
 def _associated_root(obj: Coff, section: int, root: int) -> bool:
@@ -462,7 +464,7 @@ def _validate_local_destructor(obj: Coff, symbol: Symbol, root: int, child: int)
 def _cold_layout(code: bytes) -> tuple[int, tuple[int, ...], int, int, tuple[int, ...]]:
     """Parse complete adjacent cleanup actions followed by one handler stub."""
     if not _HANDLER_STUB_SIZE < len(code) <= _MAX_COLD_SIZE:
-        raise ValueError("COFF EH child exceeds the bounded linear cold extent")
+        raise ValueError("COFF EH child exceeds the bounded cold extent")
     handler_offset, info_offset, runtime_target = _handler_stub(code, 0)
     instructions = _decoded(code[:handler_offset], 0)
     starts, destructor_offsets = [], []
@@ -584,10 +586,13 @@ def _object_child_and_info(obj: Coff, root: Symbol, child: int):
     unwind_symbol = _reloc_at(obj, data_section_number, 8, RelocationKind.ABSOLUTE32)
     map_entries = struct.unpack_from("<" + "I" * (2 * action_count),
                                      data_section.data, _FUNCINFO_HEADER_SIZE)
+    compiled_predecessors = []
     for index in range(action_count):
         predecessor, action_addend = map_entries[index * 2:index * 2 + 2]
-        if predecessor != (0xFFFFFFFF if index == 0 else index - 1) or action_addend != 0:
-            raise ValueError("COFF unwind map is not the exact linear predecessor chain")
+        if ((predecessor != 0xFFFFFFFF and predecessor >= index)
+                or action_addend != 0):
+            raise ValueError("COFF unwind predecessor is not a sentinel or earlier state")
+        compiled_predecessors.append(predecessor)
     cleanup_symbols = [
         _reloc_at(obj, data_section_number, _FUNCINFO_HEADER_SIZE + 4 + 8 * index,
                   RelocationKind.ABSOLUTE32)
@@ -607,7 +612,7 @@ def _object_child_and_info(obj: Coff, root: Symbol, child: int):
         raise ValueError("COFF unwind map does not own exactly the child cleanup entry")
     return (child_section, child_code, child_relocs, child_alignment,
             data_section_number, runtime.name, handler_offset, destructor_offsets,
-            action_starts)
+            action_starts, tuple(compiled_predecessors))
 
 
 def bind_eh_regions(raw_object: bytes, emitted_symbol: str, original_image: PeImage,
@@ -627,7 +632,7 @@ def bind_eh_regions(raw_object: bytes, emitted_symbol: str, original_image: PeIm
     primary, cold = _checked_spans(spans)
     (original_handler_offset, original_handler, original_func_info,
      original_cleanup, original_cleanup_targets, original_runtime,
-     original_action_starts) = _original_eh(
+     original_action_starts, original_predecessors) = _original_eh(
          original_image, primary, cold)
 
     obj = Coff(raw_object)
@@ -652,7 +657,8 @@ def bind_eh_regions(raw_object: bytes, emitted_symbol: str, original_image: PeIm
     _object_push_edge(obj, root, child, handler_offset)
     (_child_section, child_code, child_relocs, child_alignment,
      info_section, runtime_symbol, object_handler_offset,
-     destructor_offsets, compiled_action_starts) = _object_child_and_info(obj, root, child)
+     destructor_offsets, compiled_action_starts,
+     compiled_predecessors) = _object_child_and_info(obj, root, child)
     if handler_offset != object_handler_offset:
         raise ValueError("COFF EH handler offset changed during ownership validation")
 
@@ -669,6 +675,8 @@ def bind_eh_regions(raw_object: bytes, emitted_symbol: str, original_image: PeIm
         original_cleanup=original_cleanup,
         cleanup_offsets=compiled_action_starts,
         original_cleanups=original_action_starts,
+        original_predecessors=original_predecessors,
+        compiled_predecessors=compiled_predecessors,
         original_cleanup_targets=original_cleanup_targets,
         original_runtime_target=original_runtime,
         compiled_runtime_symbol=runtime_symbol,

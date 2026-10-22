@@ -1182,6 +1182,16 @@ def compare_subject(record: DecompilationState, exe: Path | str,
         try:
             bound = bind_eh_regions(compiled.object_bytes, compiled.emitted_symbol,
                                     image, record.image_spans)
+            ownership = bound[0].ownership
+            if ownership.original_predecessors != ownership.compiled_predecessors:
+                return AsmComparison(
+                    verdict=Tier.MISMATCH,
+                    flags=compiled.flags,
+                    diagnostic=(
+                        "valid EH unwind predecessor topology differs: "
+                        f"original={ownership.original_predecessors!r}, "
+                        f"compiled={ownership.compiled_predecessors!r}"),
+                )
             pairs = []
             for region in bound:
                 low = region.original.start

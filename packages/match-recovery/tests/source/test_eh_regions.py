@@ -513,10 +513,20 @@ def _bind(*, object_damage=None, image_damage=None, spans=SPANS,
 
 
 def _linear_fixture(original_widths, object_widths=None, *, original_damage=None,
-                    object_damage=None, truncate_original=False):
-    """Build complete independent PE/COFF linear maps with supported action grammar."""
+                    object_damage=None, truncate_original=False,
+                    original_predecessors=None, object_predecessors=None,
+                    return_artifacts=False):
+    """Build complete independent PE/COFF unwind maps with supported actions."""
     if object_widths is None:
         object_widths = original_widths
+    if original_predecessors is None:
+        original_predecessors = tuple(
+            0xFFFFFFFF if index == 0 else index - 1
+            for index in range(len(original_widths)))
+    if object_predecessors is None:
+        object_predecessors = tuple(
+            0xFFFFFFFF if index == 0 else index - 1
+            for index in range(len(object_widths)))
 
     def action_bytes(width, target=None, pc=0):
         result = bytearray(b"\x8b\x4d\xf0")
@@ -565,7 +575,7 @@ def _linear_fixture(original_widths, object_widths=None, *, original_damage=None
                      0, 0, 0, 0, 0)
     for index, start in enumerate(orig_starts):
         struct.pack_into("<II", info, 32 + 8 * index,
-                         0xFFFFFFFF if index == 0 else index - 1,
+                         original_predecessors[index],
                          orig_cold + start)
     if original_damage == "state":
         struct.pack_into("<I", info, 32 + 8 * (len(orig_starts) - 1), 9)
@@ -628,7 +638,7 @@ def _linear_fixture(original_widths, object_widths=None, *, original_damage=None
     struct.pack_into("<8I", data, 0, 0x19930520, len(object_widths), 0, 0, 0, 0, 0, 0)
     for index in range(len(object_widths)):
         struct.pack_into("<II", data, 32 + 8 * index,
-                         0xFFFFFFFF if index == 0 else index - 1, 0)
+                         object_predecessors[index], 0)
     if object_damage == "state":
         struct.pack_into("<I", data, 32 + 8 * (len(obj_starts) - 1), 9)
     if object_damage == "extra_reloc":
@@ -724,6 +734,8 @@ def _linear_fixture(original_widths, object_widths=None, *, original_damage=None
     raw_coff.extend(b"".join(symbols))
     struct.pack_into("<I", raw_coff, 8, symbol_start)
     raw_coff.extend(strings)
+    if return_artifacts:
+        return image_bytes, bytes(raw_coff), spans
     return bind_eh_regions(bytes(raw_coff), ROOT, image, spans)
 
 
@@ -780,6 +792,40 @@ def test_original_and_compiled_linear_action_inventories_are_independent():
     assert root.ownership.cleanup_offsets == (0,)
     assert len(root.ownership.original_cleanups) == 3
     assert len(cold.code) == 24
+    assert root.ownership.original_predecessors == (0xFFFFFFFF, 0, 1)
+    assert root.ownership.compiled_predecessors == (0xFFFFFFFF,)
+
+
+def test_binds_backward_branched_predecessor_graphs_independently():
+    original = (0xFFFFFFFF, 0, 0, 1)
+    compiled = (0xFFFFFFFF, 0, 0, 1)
+    root, cold = _linear_fixture(
+        (8, 8, 8, 8), original_predecessors=original,
+        object_predecessors=compiled)
+    assert root.ownership.original_predecessors == original
+    assert cold.ownership.original_predecessors == original
+    assert root.ownership.compiled_predecessors == compiled
+    assert cold.ownership.compiled_predecessors == compiled
+
+
+@pytest.mark.parametrize("bad_graph", [
+    (0xFFFFFFFF, 1, 0),  # self/forward edge at state 1
+    (0xFFFFFFFF, 2, 1),  # forward edge at state 1 (would close a cycle)
+    (0xFFFFFFFF, 0, 9),  # out-of-range predecessor
+])
+def test_rejects_original_non_backward_predecessor_graph(bad_graph):
+    with pytest.raises(ValueError, match="predecessor"):
+        _linear_fixture((8, 8, 8), original_predecessors=bad_graph)
+
+
+@pytest.mark.parametrize("bad_graph", [
+    (0xFFFFFFFF, 1, 0),
+    (0xFFFFFFFF, 2, 1),
+    (0xFFFFFFFF, 0, 9),
+])
+def test_rejects_compiled_non_backward_predecessor_graph(bad_graph):
+    with pytest.raises(ValueError, match="predecessor"):
+        _linear_fixture((8, 8, 8), object_predecessors=bad_graph)
 
 
 @pytest.mark.parametrize("damage", ["state", "action", "missing_reloc"])
