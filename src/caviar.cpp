@@ -298,10 +298,9 @@ Return Value: n/a
 Status: Complete
 */
 Caviar::Caviar() {
-    const uint32_t default_scene_scale = 0x3F2AAAAB;
     field_108_ = 0x461C4000;
     field_13CC_ = 0;
-    memcpy(&scene_scale_, &default_scene_scale, sizeof(scene_scale_));
+    scene_scale_ = 0.6666667f;
 }
 
 /*
