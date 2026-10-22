@@ -30,7 +30,9 @@ struct EdgeScan {
 // TEXTURE_DIRECT_STORAGE_PRELUDE
 static int reset_calls;
 static int edge_advance_calls;
+static int setup_edge_calls;
 static int mutate_scratch494_at_call;
+static int mutate_scratch494_at_setup;
 static unsigned char scratch494_mutation;
 static int forward_calls;
 static int mutation_enabled;
@@ -77,33 +79,17 @@ class Texture {
 public:
   unsigned char *pixels_;
   unsigned int iWidth_;
-  Texture(unsigned char *pixels) : pixels_(pixels), iWidth_(4) {}
+  unsigned int iHeight_;
+  Texture(unsigned char *pixels) : pixels_(pixels), iWidth_(4), iHeight_(4) {}
   void draw_color_key(Buffer *, Vert *, int, Vert *);
   void draw_color_key(Buffer *, Vert *, int, Vert *, int);
   void draw2(Buffer *, Vert *, int *, int, Vert *, int, int);
   void draw_below_cutoff(Buffer *, Vert *, int *, int, Vert *, int);
+  static int setup_edge(EdgeScan *, int);
 };
 void Texture::draw_color_key(Buffer *, Vert *, int, Vert *) { ++forward_calls; }
 void Texture::draw_below_cutoff(Buffer *, Vert *, int *, int, Vert *, int) {
   ++forward_calls;
-}
-template<class Coordinates>
-static int texture_edge(EdgeScan &edge, int, const Vert *, const Coordinates *,
-                        int, int) {
-  edge.counter = 3;
-  edge.accumA = edge.f0 < 0 ? 0 : 3 << 16;
-  edge.accumB = 0;
-  edge.accumC = edge.f0 < 0 ? 0 : 3;
-  return 1;
-}
-template<class Coordinates>
-static int texture_advance_edge(EdgeScan &, const Vert *, const Coordinates *,
-                                int, int) {
-  ++edge_advance_calls;
-  if (mutation_enabled && edge_advance_calls == mutate_scratch494_at_call)
-    *reinterpret_cast<unsigned char *>(&TextureRasterScratch494) =
-        scratch494_mutation;
-  return edge_advance_calls <= 4;
 }
 static int texture_gouraud_edge(EdgeScan &edge, int, const Vert *, const Vert *,
                                 const int *, int, int) {
@@ -158,11 +144,35 @@ DRAW2 = (
 
 def live_translation_unit() -> str:
     source = SOURCE.read_text(encoding="utf-8")
-    bodies = _function(source, DRAW_COLOR_KEY) + "\n\n" + _function(source, DRAW2)
+    edge_step = _function(source, r"static void edge_step\(EdgeScan &e\) \{")
+    uv_edge_step = _function(
+        source, r"static void texture_uv_edge_step\(EdgeScan &edge\) \{")
+    setup_edge = _function(
+        source, r"int __cdecl Texture::setup_edge\s*\(EdgeScan\s*\*a1,\s*int\s+a2\)\s*\{")
+    draw_color_key = _function(source, DRAW_COLOR_KEY)
+    draw_color_key = draw_color_key.replace(
+        "Texture::setup_edge(", "observe_setup_edge(")
+    observer = r'''
+static int observe_setup_edge(EdgeScan *edge, int index) {
+  ++setup_edge_calls;
+  if (mutation_enabled && setup_edge_calls == mutate_scratch494_at_setup)
+    *reinterpret_cast<unsigned char *>(&TextureRasterScratch494) =
+        scratch494_mutation;
+  return Texture::setup_edge(edge, index);
+}
+'''
+    bodies = (edge_step + "\n\n" + uv_edge_step + "\n\n" + setup_edge + "\n\n" + observer + "\n\n" + draw_color_key
+              + "\n\n" + _function(source, DRAW2))
     assert "TextureRasterScratch494" in bodies
-    return PREFIX.replace("// TEXTURE_DIRECT_STORAGE_PRELUDE",
-                          direct_storage_prelude(source), 1).replace(
-                              "/* ACTUAL_BODIES */", bodies, 1)
+    prefix = PREFIX.replace("// TEXTURE_DIRECT_STORAGE_PRELUDE",
+                            direct_storage_prelude(source), 1)
+    prefix = prefix.replace("static int reset_calls;", "static int fixed_div(int, int);\nstatic int reset_calls;")
+    prefix = prefix.replace("static void texture_reset_fpu()", "#define __cdecl\nstatic void texture_reset_fpu()")
+    return prefix.replace("/* ACTUAL_BODIES */", bodies, 1) + r'''
+static int fixed_div(int numerator, int denominator) {
+  return static_cast<int>((static_cast<int64_t>(numerator) * 65536) / denominator);
+}
+'''
 
 
 MAIN = r'''
@@ -172,8 +182,9 @@ static unsigned char scratch_byte() {
 static void reset_case() {
   TextureRasterScratch494 = 0x44332211;
   TextureRasterKey = 0xFF;
-  reset_calls = edge_advance_calls = forward_calls = 0;
+  reset_calls = edge_advance_calls = setup_edge_calls = forward_calls = 0;
   mutate_scratch494_at_call = 5;
+  mutate_scratch494_at_setup = 3;
   scratch494_mutation = 0xB6;
   mutation_enabled = 1;
 }
@@ -191,6 +202,11 @@ static void test_color_key_scratch_rows() {
   reset_case();
   unsigned char pixels[64] = {};
   pixels[0] = 0xFF; pixels[1] = 0x12; pixels[2] = 0x13;
+  // The extracted real setup_edge advances V on each screen row. Repeat the
+  // keyed/sample pattern in all three source rows so these assertions isolate
+  // shared fill-color changes rather than sampling unseeded texels.
+  pixels[4] = 0xFF; pixels[5] = 0x12; pixels[6] = 0x13;
+  pixels[8] = 0xFF; pixels[9] = 0x12; pixels[10] = 0x13;
   Vert vertices[4], uv[4]; setup_shape(vertices, uv);
   Buffer buffer;
   Texture texture(pixels);
@@ -210,7 +226,10 @@ static void test_color_key_scratch_rows() {
 static void test_draw2_scratch_rows() {
   reset_case();
   unsigned char pixels[64] = {};
-  pixels[0] = pixels[1] = pixels[2] = 20;
+  // The extracted real setup_edge advances V on each screen row. Seed every
+  // sampled source row so this case isolates shared fill-color changes.
+  pixels[0] = pixels[1] = pixels[2] = pixels[4] = pixels[5] = pixels[6] =
+      pixels[8] = pixels[9] = pixels[10] = 20;
   Vert vertices[4], uv[4]; setup_shape(vertices, uv);
   int zvals[4] = {0, 0, 0, 0};
   Buffer buffer;

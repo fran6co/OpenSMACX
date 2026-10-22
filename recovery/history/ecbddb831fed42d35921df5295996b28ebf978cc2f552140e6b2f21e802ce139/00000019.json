@@ -1,0 +1,48 @@
+{
+  "event_id": "0bfa00ecde4349ba17f083d0c082ab06955ec0d20afdf7e8266a9931d2fcbb51",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_texture_scratch_494_actual_source.py",
+      "recovery/tests/test_texture_shared_raster_state.py",
+      "recovery/tests/test_texture_vertices.py",
+      "src/texture.cpp"
+    ],
+    "evidence": [
+      "Authorize coherent correction only in the three existing mapped keyed raster bodies61A240/61A760/6239E0: recover their complete original ordered shared input/count/key/dimensions/clip/max-index publications, target-width row/clip address rebasing, per-row six edge snapshots before left-then-right advance, conditional slope-cell writes after advances, clipped-X publication, row-offset advancement and third-body dither/low-byte-color state. Exact color-1 forwarding precedes all lock/reset/state writes. See independently decoded complete protocol proposal, not historical similarity comments, for the pinned operation order.",
+      "All twelve original initial/rollover calls select existing typed static Texture::setup_edge624D80; recover those genuine calls, not the parallel texture_edge template. Preserve first-extremum ties, nonpositive-count stale max index, original unsafe/unchecked/error paths, last-row handling when edge refresh fails, lock before stores/FNINIT and free_data before final reset on every path. Do not initialize stale slope/stack cells or add geometry checks. Pixel algorithms and terminal source reads remain intact except changes directly required by the original shared-cell protocol.",
+      "Scope does not authorize changing setup_edge body, other rasterizers, headers, storage types/bindings or compiler policy. The existing helper is a subject for caller/testing/verification closure only. Report any demonstrated helper arithmetic/lifetime issue before editing it. Remove texture_edge/texture_advance_edge and their now-unused private texture_u/v helpers only after all current uses are converted and no independent mapping or useful behavior is lost. No new public CLI or fake original wrapper/helper.",
+      "Source and test authors use disjoint files in this coordinator-prepared owner worktree. Adapt all existing actual-source extraction/fixtures affected by removal of the local helpers, retaining every pixel, key, clipping, parity, row-count, trailing-read, callback and compile-success mutant assertion. Extend shared-state controls to all three complete bodies using real extracted setup_edge plus delegating observers, source-ordered original publication anchors, stale/tie/count and failed-left/right control paths and unlock observations. Do not weaken sanitizer policy or replace product behavior with copied fixture implementation to manufacture a pass; report any unsupported host/native UB domain explicitly.",
+      "Preserve every ORIGINAL line, span, symbol/body binding, historical claim, useful LEVER/TRIED text and existing immutable699d3779 task baseline. Source notes may clarify superseded local-scratch interpretation without becoming run logs. No claim demotion/hand stamping. This is semantic fidelity repair, not a new function-count or byte-exact gain. Root alone controls native writer/recorder if later needed.",
+      "Coordinator alone controls Git/preparation/leased native compilers, source freeze, actual-recipe bounded measurement, full build/link, source/claim/mapping/reference continuity, outside-object/native residual checks, independent review and serial manual integration with fresh destination checks. Known whole-project/linked/runtime unknowns remain unwaived; no automatic/full-game acceptance inferred. Preserve justified whole-family work and findings if measurements regress; request review rather than reverting structural effects for score."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6398528,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6399840,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6437344,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6442368,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "685c5b865f1a3372c1f53ea8d5ccabd681be28776171fd7cdae1c5b68b3e2365",
+  "request_id": "restore-keyed-three-body-shared-protocol-oct22v",
+  "schema_version": 1,
+  "sequence": 19,
+  "stream": "task:texture-rasterizer-recovery"
+}

@@ -41,6 +41,26 @@ static void edge_step(EdgeScan &e) {
     e.accumD += e.deltaD;
 }
 
+// The three plain textured scan converters advance only U, V, X and the
+// fractional X accumulator. Their pinned update blocks do not touch the
+// Gouraud-only D channel, which setup_edge does not initialize.
+static void texture_uv_edge_step(EdgeScan &edge) {
+    edge.accumA = static_cast<int>(
+        static_cast<uint32_t>(edge.accumA) + static_cast<uint32_t>(edge.deltaA));
+    edge.accumB = static_cast<int>(
+        static_cast<uint32_t>(edge.accumB) + static_cast<uint32_t>(edge.deltaB));
+    edge.accumC = static_cast<int>(
+        static_cast<uint32_t>(edge.accumC) + static_cast<uint32_t>(edge.deltaC));
+    edge.fracAccum = static_cast<int>(
+        static_cast<uint32_t>(edge.fracAccum) + static_cast<uint32_t>(edge.fracDelta));
+    if (edge.fracAccum > 0) {
+        edge.accumC = static_cast<int>(
+            static_cast<uint32_t>(edge.accumC) + static_cast<uint32_t>(edge.extraDeltaC));
+        edge.fracAccum = static_cast<int>(
+            static_cast<uint32_t>(edge.fracAccum) - static_cast<uint32_t>(edge.fracSub));
+    }
+}
+
 // Pinned 61C304-341/366-3AC keyed rows use DWORD ADDs in this field order,
 // including the conditional C correction. Retain their 32-bit wrap locally
 // instead of using rasterizers' signed-add helper.
@@ -124,62 +144,6 @@ static int texture_fixed(int value) {
 static int texture_difference(int a, int b) {
     return static_cast<int>(static_cast<unsigned int>(a) -
                             static_cast<unsigned int>(b));
-}
-
-static int texture_u(const Vert &uv) { return uv.x; }
-static int texture_v(const Vert &uv) { return uv.y; }
-
-template<class Coordinates>
-static int texture_edge(EdgeScan &edge, int index, const Vert *vertices,
-                        const Coordinates *uv, int count, int bottom) {
-    if (index == bottom) return 0;
-    for (;;) {
-        int next = index + edge.f0;
-        if (next >= count) next = 0;
-        else if (next < 0) next = count - 1;
-        edge.counter = texture_difference(vertices[next].y, vertices[index].y);
-        if (edge.counter != 0) {
-            if (edge.counter < 0) return 0;
-            edge.id = next;
-            edge.accumA = texture_fixed(texture_u(uv[index]));
-            edge.accumB = texture_fixed(texture_v(uv[index]));
-            const int height = texture_fixed(edge.counter);
-            edge.deltaA = static_cast<int>(
-                static_cast<int64_t>(texture_difference(texture_fixed(texture_u(uv[next])), edge.accumA))
-                * 65536 / height);
-            edge.deltaB = static_cast<int>(
-                static_cast<int64_t>(texture_difference(texture_fixed(texture_v(uv[next])), edge.accumB))
-                * 65536 / height);
-            edge.accumC = vertices[index].x;
-            const int dx = texture_difference(vertices[next].x, vertices[index].x);
-            const int magnitude = dx < 0 ? texture_difference(0, dx) : dx;
-            edge.extraDeltaC = dx < 0 ? -1 : 1;
-            edge.fracAccum = dx < 0 ? 1 - edge.counter : 0;
-            const int quotient = magnitude / edge.counter;
-            edge.deltaC = dx < 0 ? texture_difference(0, quotient) : quotient;
-            edge.fracSub = edge.counter;
-            edge.fracDelta = static_cast<int>(magnitude % edge.counter);
-            return 1;
-        }
-        index = next;
-        if (index == bottom) return 0;
-    }
-}
-
-template<class Coordinates>
-static int texture_advance_edge(EdgeScan &edge, const Vert *vertices,
-                                const Coordinates *uv, int count, int bottom) {
-    if (--edge.counter == 0)
-        return texture_edge(edge, edge.id, vertices, uv, count, bottom);
-    edge.accumA = static_cast<int>(static_cast<unsigned int>(edge.accumA) + edge.deltaA);
-    edge.accumB = static_cast<int>(static_cast<unsigned int>(edge.accumB) + edge.deltaB);
-    edge.accumC = static_cast<int>(static_cast<unsigned int>(edge.accumC) + edge.deltaC);
-    edge.fracAccum = static_cast<int>(static_cast<unsigned int>(edge.fracAccum) + edge.fracDelta);
-    if (edge.fracAccum > 0) {
-        edge.accumC = static_cast<int>(static_cast<unsigned int>(edge.accumC) + edge.extraDeltaC);
-        edge.fracAccum = texture_difference(edge.fracAccum, edge.fracSub);
-    }
-    return 1;
 }
 
 // 0x0061A3DF clears the x87 precision bits (AND AX,FCFF), then 0x0061A3E3
@@ -1593,74 +1557,126 @@ unsigned int TextureRasterKey;
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x005E3373 0x005E34A3 0x00624D80
-// 0x0061A55D..0x0061A6C5 packs U/V fractions and a pixel count into
-// registers, including ESP. It is color-key copying, not a jump table.
-// Edge and scanline scratch is local here; original shared-scratch side
-// effects/reentrancy and FP status visible inside surface Unlock are not
-// established by this reconstruction. The terrain writers of TextureRasterKey
-// and the other legacy rasterizers remain separate recovery dependencies.
-// The local-scratch interpretation covers ordinary convex screen polygons:
-// edge/span heights fit positive signed 16.16, fixed_div quotients fit int,
-// and positive-stride clipped row addresses do not wrap signed 32-bit order.
-// Oversized spans can reuse preceding calls' shared slopes in the executable;
-// those exceptional-input and callback-status behaviors remain unverified.
+// The scanline edge protocol shares the mapped TextureRaster cells, including
+// the original address-word clipping and rollover snapshots. 0x0061A55D..0x0061A6C5
+// packs U/V fractions and a pixel count into registers, including ESP. It is
+// color-key copying, not a jump table.
+// The existing integer span-step model and packed pixel loop remain bounded
+// reconstructions; this restores the independently observed shared edge state.
 void Texture::draw_trans(Buffer *buffer, Vert *vertices, int use_eight_vertices) {
-    unsigned char *destination = static_cast<unsigned char *>(buffer->get_data());
+    TextureRasterPixelBase = buffer->get_data();
     texture_reset_fpu();
-    const Vert *uv = use_eight_vertices ? cornersAndMids_ : corners_;
-    const int count = use_eight_vertices ? 8 : 4;
-    const unsigned char key = static_cast<unsigned char>(TextureRasterKey);
-    const unsigned char *pixels = pixels_;
-    const int width = static_cast<int>(iWidth_);
+    TextureRasterEdgeVerticesB = vertices;
+    TextureRasterScratch544 = pixels_;
     TextureRowPitchScratch = static_cast<int>(iWidth_);
-    const int stride = static_cast<int>(buffer->stride_);
-    const RECT clip = buffer->rect1_;
+    TextureRasterTextureHeight = static_cast<int>(iHeight_);
+    if (use_eight_vertices) {
+        TextureRasterVertexCount = 8;
+        TextureRasterEdgeVerticesA = cornersAndMids_;
+    } else {
+        TextureRasterVertexCount = 4;
+        TextureRasterEdgeVerticesA = corners_;
+    }
+    TextureRasterLightThreshold = static_cast<int>(TextureRasterKey);
+    TextureRasterBufferStride = static_cast<int>(buffer->stride_);
+    TextureRasterTextureWidth = static_cast<int>(iWidth_);
+    TextureRasterClipRight = buffer->rect1_.right;
+    TextureRasterClipLeft = buffer->rect1_.left;
+    TextureRasterClipBottom = buffer->rect1_.bottom;
+    TextureRasterClipTop = buffer->rect1_.top;
+    const int width = TextureRasterTextureWidth;
 
     int min_y = 0x7fff, max_y = -0x7ffd;
-    int top = 0, bottom = 0;
-    for (int i = 0; i < count; ++i) {
-        if (vertices[i].y < min_y) { min_y = vertices[i].y; top = i; }
-        if (vertices[i].y > max_y) { max_y = vertices[i].y; bottom = i; }
+    int top = 0;
+    for (int i = 0; i < TextureRasterVertexCount; ++i) {
+        if (TextureRasterEdgeVerticesB[i].y < min_y) {
+            min_y = TextureRasterEdgeVerticesB[i].y;
+            top = i;
+        }
+        if (TextureRasterEdgeVerticesB[i].y > max_y) {
+            max_y = TextureRasterEdgeVerticesB[i].y;
+            TextureRasterMaxYIndex = i;
+        }
+    }
+    if (min_y < max_y) {
+        const uint32_t pixel_base = static_cast<uint32_t>(
+            texture_pointer_address(TextureRasterPixelBase));
+        const uint32_t stride = static_cast<uint32_t>(TextureRasterBufferStride);
+        TextureRasterRowOffset = static_cast<int>(
+            pixel_base + static_cast<uint32_t>(min_y) * stride);
+        TextureRasterClipBottom = static_cast<int>(pixel_base + stride *
+            static_cast<uint32_t>(TextureRasterClipBottom));
+        TextureRasterClipTop = static_cast<int>(pixel_base + stride *
+            static_cast<uint32_t>(TextureRasterClipTop));
     }
     EdgeScan left, right;
     left.f0 = -1;
     right.f0 = 1;
-    if (min_y < max_y && texture_edge(left, top, vertices, uv, count, bottom) &&
-        texture_edge(right, top, vertices, uv, count, bottom)) {
+    if (min_y < max_y && Texture::setup_edge(&left, top) &&
+        Texture::setup_edge(&right, top)) {
         _control87(_PC_24 | _RC_CHOP, _MCW_PC | _MCW_RC);
-        int du = 0, dv = 0;
-        int y = min_y;
-        if (y >= clip.bottom) {
+        if (TextureRasterRowOffset >= TextureRasterClipBottom) {
             buffer->free_data(1);
             texture_reset_fpu();
             return;
         }
         for (;;) {
-            int x = left.accumC;
-            int end = right.accumC;
-            int u = left.accumA, v = left.accumB;
+            TextureRasterScratch4C4 = right.accumA;
+            TextureRasterScratch530 = right.accumB;
+            TextureRasterSpanLeft = right.accumC;
+            TextureRasterUAccumulator.dword = left.accumA;
+            TextureRasterVAccumulator.dword = left.accumB;
+            TextureRasterSpanRight = left.accumC;
+            const int right_u = TextureRasterScratch4C4;
+            const int right_v = TextureRasterScratch530;
+            int x = TextureRasterSpanRight;
+            int end = TextureRasterSpanLeft;
+            int u = TextureRasterUAccumulator.dword;
+            int v = TextureRasterVAccumulator.dword;
             const int span = texture_fixed(texture_difference(end, x));
-            if (span > 0) {
-                du = texture_span_step(texture_difference(right.accumA, u), span >> 16);
-                dv = texture_span_step(texture_difference(right.accumB, v), span >> 16);
+            int du = TextureRasterScratch4E4.dword;
+            int dv = TextureRasterScratch4C8.dword;
+            int done = 0;
+            if (--left.counter == 0) {
+                if (!Texture::setup_edge(&left, left.id)) done = 1;
+            } else {
+                texture_uv_edge_step(left);
             }
-            // Both sides advance before the saved row is drawn. Left failure
-            // skips right advancement, but never suppresses this final row.
-            const int done = !texture_advance_edge(left, vertices, uv, count, bottom) ||
-                             !texture_advance_edge(right, vertices, uv, count, bottom);
-            if (y >= clip.bottom) break;
-            if (y >= clip.top && y < clip.bottom && end > clip.left &&
-                x < clip.right && end > x) {
-                if (end > clip.right) end = clip.right;
-                if (x < clip.left) {
-                    const int skip = texture_fixed(texture_difference(clip.left, x));
+            if (!done) {
+                if (--right.counter == 0) {
+                    if (!Texture::setup_edge(&right, right.id)) done = 1;
+                } else {
+                    texture_uv_edge_step(right);
+                }
+            }
+            if (span > 0) {
+                du = texture_span_step(texture_difference(right_u, u), span >> 16);
+                dv = texture_span_step(texture_difference(right_v, v), span >> 16);
+                TextureRasterScratch4E4.dword = du;
+                TextureRasterScratch4C8.dword = dv;
+            }
+            if (TextureRasterRowOffset >= TextureRasterClipBottom) break;
+            if (TextureRasterRowOffset >= TextureRasterClipTop && end > TextureRasterClipLeft &&
+                x < TextureRasterClipRight && end > x) {
+                if (end > TextureRasterClipRight) end = TextureRasterClipRight;
+                if (x < TextureRasterClipLeft) {
+                    const int skip = texture_fixed(texture_difference(TextureRasterClipLeft, x));
                     u = static_cast<int>(static_cast<unsigned int>(u) +
                         static_cast<unsigned int>((static_cast<int64_t>(du) * skip) >> 16));
                     v = static_cast<int>(static_cast<unsigned int>(v) +
                         static_cast<unsigned int>((static_cast<int64_t>(dv) * skip) >> 16));
-                    x = clip.left;
+                    TextureRasterUAccumulator.dword = u;
+                    TextureRasterVAccumulator.dword = v;
+                    TextureRasterSpanRight = TextureRasterClipLeft;
+                    x = TextureRasterSpanRight;
                 }
-                unsigned char *out = destination + static_cast<int64_t>(y) * stride + x;
+                const uint32_t destination_address =
+                    static_cast<uint32_t>(TextureRasterRowOffset) +
+                    static_cast<uint32_t>(TextureRasterSpanRight);
+                const uint32_t destination_offset = destination_address -
+                    static_cast<uint32_t>(texture_pointer_address(TextureRasterPixelBase));
+                unsigned char *out = reinterpret_cast<unsigned char *>(
+                    texture_pointer_offset(TextureRasterPixelBase, destination_offset));
                 int64_t source = static_cast<unsigned short>(static_cast<unsigned int>(v) >> 16)
                     * static_cast<int64_t>(width)
                     + static_cast<unsigned short>(static_cast<unsigned int>(u) >> 16);
@@ -1673,10 +1689,12 @@ void Texture::draw_trans(Buffer *buffer, Vert *vertices, int use_eight_vertices)
                 // still writes one pixel. The next source byte is read after
                 // each address advance, including after the final store.
                 const unsigned int remaining = texture_span_pixels(texture_difference(end, x));
-                const volatile unsigned char *source_reads = pixels;
+                const volatile unsigned char *source_reads =
+                    static_cast<const unsigned char *>(TextureRasterScratch544);
                 unsigned char texel = source_reads[source];
                 for (unsigned int written = 0; written < remaining; ++written) {
-                    if (texel != key) *out = texel;
+                    if (texel != static_cast<unsigned char>(TextureRasterLightThreshold))
+                        *out = texel;
                     uf += static_cast<unsigned short>(du);
                     vf += static_cast<unsigned short>(dv);
                     source += step + (uf >> 16) + static_cast<int64_t>(vf >> 16) * width;
@@ -1687,7 +1705,9 @@ void Texture::draw_trans(Buffer *buffer, Vert *vertices, int use_eight_vertices)
                 }
             }
             if (done) break;
-            ++y;
+            TextureRasterRowOffset = static_cast<int>(
+                static_cast<uint32_t>(TextureRasterRowOffset) +
+                static_cast<uint32_t>(TextureRasterBufferStride));
         }
     }
     buffer->free_data(1);
@@ -1726,61 +1746,117 @@ void Texture::draw_trans(Buffer *buffer, Vert *vertices, int use_eight_vertices)
 
 // Superseding recovery evidence: source_reads below now performs the original
 // post-advance load on every pixel, including the final/key-suppressed path.
+// The edge setup and row loop also publish/consume the mapped shared raster
+// cells in the original order; the older local-edge reconstruction is superseded.
 void Texture::draw_color_key(Buffer *buffer, Vert *vertices, int count, Vert *uv) {
-    unsigned char *destination = static_cast<unsigned char *>(buffer->get_data());
+    TextureRasterPixelBase = buffer->get_data();
     texture_reset_fpu();
-    const unsigned char *pixels = pixels_;
-    const int width = static_cast<int>(iWidth_);
-    const unsigned char key = static_cast<unsigned char>(TextureRasterKey);
+    TextureRasterEdgeVerticesB = vertices;
+    TextureRasterScratch544 = pixels_;
     TextureRowPitchScratch = static_cast<int>(iWidth_);
-    const int stride = static_cast<int>(buffer->stride_);
-    const RECT clip = buffer->rect1_;
+    TextureRasterTextureHeight = static_cast<int>(iHeight_);
+    TextureRasterEdgeVerticesA = uv;
+    TextureRasterVertexCount = count;
+    TextureRasterLightThreshold = static_cast<int>(TextureRasterKey);
+    TextureRasterBufferStride = static_cast<int>(buffer->stride_);
+    TextureRasterTextureWidth = static_cast<int>(iWidth_);
+    TextureRasterClipRight = buffer->rect1_.right;
+    TextureRasterClipLeft = buffer->rect1_.left;
+    TextureRasterClipBottom = buffer->rect1_.bottom;
+    TextureRasterClipTop = buffer->rect1_.top;
+    const int width = TextureRasterTextureWidth;
 
     int min_y = 0x7fff, max_y = -0x7ffd;
-    int top = 0, bottom = 0;
-    for (int i = 0; i < count; ++i) {
-        if (vertices[i].y < min_y) { min_y = vertices[i].y; top = i; }
-        if (vertices[i].y > max_y) { max_y = vertices[i].y; bottom = i; }
+    int top = 0;
+    for (int i = 0; i < TextureRasterVertexCount; ++i) {
+        if (TextureRasterEdgeVerticesB[i].y < min_y) {
+            min_y = TextureRasterEdgeVerticesB[i].y;
+            top = i;
+        }
+        if (TextureRasterEdgeVerticesB[i].y > max_y) {
+            max_y = TextureRasterEdgeVerticesB[i].y;
+            TextureRasterMaxYIndex = i;
+        }
+    }
+    if (min_y < max_y) {
+        const uint32_t pixel_base = static_cast<uint32_t>(
+            texture_pointer_address(TextureRasterPixelBase));
+        const uint32_t stride = static_cast<uint32_t>(TextureRasterBufferStride);
+        TextureRasterRowOffset = static_cast<int>(
+            pixel_base + static_cast<uint32_t>(min_y) * stride);
+        TextureRasterClipBottom = static_cast<int>(pixel_base + stride *
+            static_cast<uint32_t>(TextureRasterClipBottom));
+        TextureRasterClipTop = static_cast<int>(pixel_base + stride *
+            static_cast<uint32_t>(TextureRasterClipTop));
     }
     EdgeScan left, right;
     left.f0 = -1;
     right.f0 = 1;
-    if (min_y < max_y && texture_edge(left, top, vertices, uv, count, bottom) &&
-        texture_edge(right, top, vertices, uv, count, bottom)) {
+    if (min_y < max_y && Texture::setup_edge(&left, top) &&
+        Texture::setup_edge(&right, top)) {
         _control87(_PC_24 | _RC_CHOP, _MCW_PC | _MCW_RC);
-        int du = 0, dv = 0;
-        int y = min_y;
-        if (y >= clip.bottom) {
+        if (TextureRasterRowOffset >= TextureRasterClipBottom) {
             buffer->free_data(1);
             texture_reset_fpu();
             return;
         }
         for (;;) {
-            int x = left.accumC;
-            int end = right.accumC;
-            int u = left.accumA, v = left.accumB;
+            TextureRasterScratch4C4 = right.accumA;
+            TextureRasterScratch530 = right.accumB;
+            TextureRasterSpanLeft = right.accumC;
+            TextureRasterUAccumulator.dword = left.accumA;
+            TextureRasterVAccumulator.dword = left.accumB;
+            TextureRasterSpanRight = left.accumC;
+            const int right_u = TextureRasterScratch4C4;
+            const int right_v = TextureRasterScratch530;
+            int x = TextureRasterSpanRight;
+            int end = TextureRasterSpanLeft;
+            int u = TextureRasterUAccumulator.dword;
+            int v = TextureRasterVAccumulator.dword;
             const int span = texture_fixed(texture_difference(end, x));
-            if (span > 0) {
-                du = texture_span_step(texture_difference(right.accumA, u), span >> 16);
-                dv = texture_span_step(texture_difference(right.accumB, v), span >> 16);
+            int du = TextureRasterScratch4E4.dword;
+            int dv = TextureRasterScratch4C8.dword;
+            int done = 0;
+            if (--left.counter == 0) {
+                if (!Texture::setup_edge(&left, left.id)) done = 1;
+            } else {
+                texture_uv_edge_step(left);
             }
-            // Both sides advance before the saved row is drawn. Left failure
-            // skips right advancement, but never suppresses this final row.
-            const int done = !texture_advance_edge(left, vertices, uv, count, bottom) ||
-                             !texture_advance_edge(right, vertices, uv, count, bottom);
-            if (y >= clip.bottom) break;
-            if (y >= clip.top && y < clip.bottom && end > clip.left &&
-                x < clip.right && end > x) {
-                if (end > clip.right) end = clip.right;
-                if (x < clip.left) {
-                    const int skip = texture_fixed(texture_difference(clip.left, x));
+            if (!done) {
+                if (--right.counter == 0) {
+                    if (!Texture::setup_edge(&right, right.id)) done = 1;
+                } else {
+                    texture_uv_edge_step(right);
+                }
+            }
+            if (span > 0) {
+                du = texture_span_step(texture_difference(right_u, u), span >> 16);
+                dv = texture_span_step(texture_difference(right_v, v), span >> 16);
+                TextureRasterScratch4E4.dword = du;
+                TextureRasterScratch4C8.dword = dv;
+            }
+            if (TextureRasterRowOffset >= TextureRasterClipBottom) break;
+            if (TextureRasterRowOffset >= TextureRasterClipTop && end > TextureRasterClipLeft &&
+                x < TextureRasterClipRight && end > x) {
+                if (end > TextureRasterClipRight) end = TextureRasterClipRight;
+                if (x < TextureRasterClipLeft) {
+                    const int skip = texture_fixed(texture_difference(TextureRasterClipLeft, x));
                     u = static_cast<int>(static_cast<unsigned int>(u) +
                         static_cast<unsigned int>((static_cast<int64_t>(du) * skip) >> 16));
                     v = static_cast<int>(static_cast<unsigned int>(v) +
                         static_cast<unsigned int>((static_cast<int64_t>(dv) * skip) >> 16));
-                    x = clip.left;
+                    TextureRasterUAccumulator.dword = u;
+                    TextureRasterVAccumulator.dword = v;
+                    TextureRasterSpanRight = TextureRasterClipLeft;
+                    x = TextureRasterSpanRight;
                 }
-                unsigned char *out = destination + static_cast<int64_t>(y) * stride + x;
+                const uint32_t destination_address =
+                    static_cast<uint32_t>(TextureRasterRowOffset) +
+                    static_cast<uint32_t>(TextureRasterSpanRight);
+                const uint32_t destination_offset = destination_address -
+                    static_cast<uint32_t>(texture_pointer_address(TextureRasterPixelBase));
+                unsigned char *out = reinterpret_cast<unsigned char *>(
+                    texture_pointer_offset(TextureRasterPixelBase, destination_offset));
                 int64_t source = static_cast<unsigned short>(static_cast<unsigned int>(v) >> 16)
                     * static_cast<int64_t>(width)
                     + static_cast<unsigned short>(static_cast<unsigned int>(u) >> 16);
@@ -1788,10 +1864,11 @@ void Texture::draw_color_key(Buffer *buffer, Vert *vertices, int count, Vert *uv
                 unsigned int vf = static_cast<unsigned short>(v);
                 const int64_t step = static_cast<int64_t>(dv >> 16) * width + (du >> 16);
                 const unsigned int remaining = texture_span_pixels(texture_difference(end, x));
-                const volatile unsigned char *source_reads = pixels;
+                const volatile unsigned char *source_reads =
+                    static_cast<const unsigned char *>(TextureRasterScratch544);
                 unsigned char texel = source_reads[source];
                 for (unsigned int written = 0; written < remaining; ++written) {
-                    if (texel != key) *out = texel;
+                    if (texel != static_cast<unsigned char>(TextureRasterLightThreshold)) *out = texel;
                     uf += static_cast<unsigned short>(du);
                     vf += static_cast<unsigned short>(dv);
                     source += step + (uf >> 16) + static_cast<int64_t>(vf >> 16) * width;
@@ -1802,7 +1879,9 @@ void Texture::draw_color_key(Buffer *buffer, Vert *vertices, int count, Vert *uv
                 }
             }
             if (done) break;
-            ++y;
+            TextureRasterRowOffset = static_cast<int>(
+                static_cast<uint32_t>(TextureRasterRowOffset) +
+                static_cast<uint32_t>(TextureRasterBufferStride));
         }
     }
     buffer->free_data(1);
@@ -7455,68 +7534,124 @@ void Texture::sub_61f0d0(Buffer *param_2, Vert *param_3, int *param_4,
 
 // Superseding recovery evidence: each row kernel below now performs the
 // original post-advance load, including the final/key-suppressed path.
+// This body likewise uses the shared EdgeScan publication/rollover protocol;
+// dither parity is the original shared TextureRasterDither cell.
 void Texture::draw_color_key(Buffer *buffer, Vert *vertices, int count, Vert *uv, int color) {
     if (color == -1) {
         draw_color_key(buffer, vertices, count, uv);
         return;
     }
-    unsigned char *destination = static_cast<unsigned char *>(buffer->get_data());
+    TextureRasterPixelBase = buffer->get_data();
     texture_reset_fpu();
     *reinterpret_cast<unsigned char *>(&TextureRasterScratch494) =
         static_cast<unsigned char>(color);
-    const unsigned char *pixels = pixels_;
-    const int width = static_cast<int>(iWidth_);
-    const unsigned char key = static_cast<unsigned char>(TextureRasterKey);
+    TextureRasterEdgeVerticesB = vertices;
+    TextureRasterScratch544 = pixels_;
     TextureRowPitchScratch = static_cast<int>(iWidth_);
-    const int stride = static_cast<int>(buffer->stride_);
-    const RECT clip = buffer->rect1_;
+    TextureRasterTextureHeight = static_cast<int>(iHeight_);
+    TextureRasterEdgeVerticesA = uv;
+    TextureRasterVertexCount = count;
+    TextureRasterLightThreshold = static_cast<int>(TextureRasterKey);
+    TextureRasterBufferStride = static_cast<int>(buffer->stride_);
+    TextureRasterTextureWidth = static_cast<int>(iWidth_);
+    TextureRasterClipRight = buffer->rect1_.right;
+    TextureRasterClipLeft = buffer->rect1_.left;
+    TextureRasterClipBottom = buffer->rect1_.bottom;
+    TextureRasterClipTop = buffer->rect1_.top;
+    const int width = TextureRasterTextureWidth;
 
     int min_y = 0x7fff, max_y = -0x7ffd;
-    int top = 0, bottom = 0;
-    for (int i = 0; i < count; ++i) {
-        if (vertices[i].y < min_y) { min_y = vertices[i].y; top = i; }
-        if (vertices[i].y > max_y) { max_y = vertices[i].y; bottom = i; }
+    int top = 0;
+    for (int i = 0; i < TextureRasterVertexCount; ++i) {
+        if (TextureRasterEdgeVerticesB[i].y < min_y) {
+            min_y = TextureRasterEdgeVerticesB[i].y;
+            top = i;
+        }
+        if (TextureRasterEdgeVerticesB[i].y > max_y) {
+            max_y = TextureRasterEdgeVerticesB[i].y;
+            TextureRasterMaxYIndex = i;
+        }
+    }
+    if (min_y < max_y) {
+        const uint32_t pixel_base = static_cast<uint32_t>(
+            texture_pointer_address(TextureRasterPixelBase));
+        const uint32_t stride = static_cast<uint32_t>(TextureRasterBufferStride);
+        TextureRasterRowOffset = static_cast<int>(
+            pixel_base + static_cast<uint32_t>(min_y) * stride);
+        TextureRasterDither = min_y & 1;
+        TextureRasterClipBottom = static_cast<int>(pixel_base + stride *
+            static_cast<uint32_t>(TextureRasterClipBottom));
+        TextureRasterClipTop = static_cast<int>(pixel_base + stride *
+            static_cast<uint32_t>(TextureRasterClipTop));
     }
     EdgeScan left, right;
     left.f0 = -1;
     right.f0 = 1;
-    if (min_y < max_y && texture_edge(left, top, vertices, uv, count, bottom) &&
-        texture_edge(right, top, vertices, uv, count, bottom)) {
+    if (min_y < max_y && Texture::setup_edge(&left, top) &&
+        Texture::setup_edge(&right, top)) {
         _control87(_PC_24 | _RC_CHOP, _MCW_PC | _MCW_RC);
-        int du = 0, dv = 0;
-        int parity = min_y & 1;
-        int y = min_y;
-        if (y >= clip.bottom) {
+        if (TextureRasterRowOffset >= TextureRasterClipBottom) {
             buffer->free_data(1);
             texture_reset_fpu();
             return;
         }
         for (;;) {
-            int x = left.accumC;
-            int end = right.accumC;
-            int u = left.accumA, v = left.accumB;
+            TextureRasterScratch4C4 = right.accumA;
+            TextureRasterScratch530 = right.accumB;
+            TextureRasterSpanLeft = right.accumC;
+            TextureRasterUAccumulator.dword = left.accumA;
+            TextureRasterVAccumulator.dword = left.accumB;
+            TextureRasterSpanRight = left.accumC;
+            const int right_u = TextureRasterScratch4C4;
+            const int right_v = TextureRasterScratch530;
+            int x = TextureRasterSpanRight;
+            int end = TextureRasterSpanLeft;
+            int u = TextureRasterUAccumulator.dword;
+            int v = TextureRasterVAccumulator.dword;
             const int span = texture_fixed(texture_difference(end, x));
-            if (span > 0) {
-                du = texture_span_step(texture_difference(right.accumA, u), span >> 16);
-                dv = texture_span_step(texture_difference(right.accumB, v), span >> 16);
+            int du = TextureRasterScratch4E4.dword;
+            int dv = TextureRasterScratch4C8.dword;
+            int done = 0;
+            if (--left.counter == 0) {
+                if (!Texture::setup_edge(&left, left.id)) done = 1;
+            } else {
+                texture_uv_edge_step(left);
             }
-            // Both sides advance before the saved row is drawn. Left failure
-            // skips right advancement, but never suppresses this final row.
-            const int done = !texture_advance_edge(left, vertices, uv, count, bottom) ||
-                             !texture_advance_edge(right, vertices, uv, count, bottom);
-            if (y >= clip.bottom) break;
-            if (y >= clip.top && y < clip.bottom && end > clip.left &&
-                x < clip.right && end > x) {
-                if (end > clip.right) end = clip.right;
-                if (x < clip.left) {
-                    const int skip = texture_fixed(texture_difference(clip.left, x));
+            if (!done) {
+                if (--right.counter == 0) {
+                    if (!Texture::setup_edge(&right, right.id)) done = 1;
+                } else {
+                    texture_uv_edge_step(right);
+                }
+            }
+            if (span > 0) {
+                du = texture_span_step(texture_difference(right_u, u), span >> 16);
+                dv = texture_span_step(texture_difference(right_v, v), span >> 16);
+                TextureRasterScratch4E4.dword = du;
+                TextureRasterScratch4C8.dword = dv;
+            }
+            if (TextureRasterRowOffset >= TextureRasterClipBottom) break;
+            if (TextureRasterRowOffset >= TextureRasterClipTop && end > TextureRasterClipLeft &&
+                x < TextureRasterClipRight && end > x) {
+                if (end > TextureRasterClipRight) end = TextureRasterClipRight;
+                if (x < TextureRasterClipLeft) {
+                    const int skip = texture_fixed(texture_difference(TextureRasterClipLeft, x));
                     u = static_cast<int>(static_cast<unsigned int>(u) +
                         static_cast<unsigned int>((static_cast<int64_t>(du) * skip) >> 16));
                     v = static_cast<int>(static_cast<unsigned int>(v) +
                         static_cast<unsigned int>((static_cast<int64_t>(dv) * skip) >> 16));
-                    x = clip.left;
+                    TextureRasterUAccumulator.dword = u;
+                    TextureRasterVAccumulator.dword = v;
+                    TextureRasterSpanRight = TextureRasterClipLeft;
+                    x = TextureRasterSpanRight;
                 }
-                unsigned char *out = destination + static_cast<int64_t>(y) * stride + x;
+                const uint32_t destination_address =
+                    static_cast<uint32_t>(TextureRasterRowOffset) +
+                    static_cast<uint32_t>(TextureRasterSpanRight);
+                const uint32_t destination_offset = destination_address -
+                    static_cast<uint32_t>(texture_pointer_address(TextureRasterPixelBase));
+                unsigned char *out = reinterpret_cast<unsigned char *>(
+                    texture_pointer_offset(TextureRasterPixelBase, destination_offset));
                 int64_t source = static_cast<unsigned short>(static_cast<unsigned int>(v) >> 16)
                     * static_cast<int64_t>(width)
                     + static_cast<unsigned short>(static_cast<unsigned int>(u) >> 16);
@@ -7524,15 +7659,17 @@ void Texture::draw_color_key(Buffer *buffer, Vert *vertices, int count, Vert *uv
                 unsigned int vf = static_cast<unsigned short>(v);
                 const int64_t step = static_cast<int64_t>(dv >> 16) * width + (du >> 16);
                 const unsigned int remaining = texture_span_pixels(texture_difference(end, x));
-                const volatile unsigned char *source_reads = pixels;
+                const volatile unsigned char *source_reads =
+                    static_cast<const unsigned char *>(TextureRasterScratch544);
                 unsigned char alternate = 0;
-                if ((parity & 1) == 0) {
+                if ((TextureRasterDither & 1) == 0) {
                     alternate =
                         *reinterpret_cast<unsigned char *>(&TextureRasterScratch494);
                 }
                 unsigned char texel = source_reads[source];
                 for (unsigned int written = 0; written < remaining; ++written) {
-                    if (texel != key) *out = (parity & 1) != 0 ? texel : alternate;
+                    if (texel != static_cast<unsigned char>(TextureRasterLightThreshold))
+                        *out = (TextureRasterDither & 1) != 0 ? texel : alternate;
                     uf += static_cast<unsigned short>(du);
                     vf += static_cast<unsigned short>(dv);
                     source += step + (uf >> 16) + static_cast<int64_t>(vf >> 16) * width;
@@ -7543,8 +7680,10 @@ void Texture::draw_color_key(Buffer *buffer, Vert *vertices, int count, Vert *uv
                 }
             }
             if (done) break;
-            ++y;
-            ++parity;
+            ++TextureRasterDither;
+            TextureRasterRowOffset = static_cast<int>(
+                static_cast<uint32_t>(TextureRasterRowOffset) +
+                static_cast<uint32_t>(TextureRasterBufferStride));
         }
     }
     buffer->free_data(1);
