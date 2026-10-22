@@ -1,0 +1,24 @@
+{
+  "event_id": "e215419c1b8323796ccb3a8d5bdc79f7e5033832d7294231c13e375fa5777106",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_map_setter_operand_widths_oct15.py",
+      "src/map.cpp"
+    ],
+    "evidence": [
+      "Authorize src/map.cpp site_set0x00591B50 only, plus native exact-claim publication after independent confirmation, and existing recovery/tests/test_map_setter_operand_widths_oct15.py mutation-anchor adaptation. No other body, header, ABI, compiler setting or historical obligation changes.",
+      "Pinned591B50 loads tile+2 before narrowing/shifting the site argument and stores back through the typed tile member. Screen short-screen-kvnp9if5 used actual unchanged master9864099dd map.cpp recipe and receipt-qualified object, replay/unchanged-overlay/material-damage controls; the typed tile/old_value snapshot matches19/19 instructions with no exact losses.",
+      "Source map.cpp is unchanged between screening master9864099dd and current2a9e8598ac; the intervening reviewed recovery changes enemy_turn in General only. Retain all146 task subjects and immutable historical base; no cap reset or unrelated spelling changes.",
+      "Preserve uint8 narrowing before shift, low nibble, one map_loc call, all other fields and original unsafe/error-path effects. Existing GCC/Clang UBSan controls cover input extremes; make the compiling signed-shift mutant target the new body rather than silently missing its anchor.",
+      "Coordinator requires independent source/pin/test review, fresh application build/link, claims/mappings/references, owner-wide measurements and outside-owner object replicas, strict old-result continuity, and fresh integrated-destination verification. Not automatic, linked-preservation, runtime or game acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "site-set-member-matching-oct22t",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:map-setter-operand-widths-oct15"
+}
