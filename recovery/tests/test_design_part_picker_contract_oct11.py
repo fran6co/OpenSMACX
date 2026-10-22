@@ -59,10 +59,11 @@ def test_exact_bounded_source_and_original_obligations(relative):
     # The historical recipe remains an independently reversible migration.
     # Current owner files have since accumulated other reviewed migrations, so
     # comparing their whole text to this one recipe would reject valid source.
-    original,current = read_text(old,path),read_text(path.read_text(),path)
+    current_path = ROOT / ('src/designwin.cpp' if relative == 'src/selectpartwin.cpp' else relative)
+    original,current = read_text(old,path),read_text(current_path.read_text(),current_path)
     key = lambda r:(r.address,r.name,r.symbol)
     by_key = {key(r):r for r in current}
-    assert len(original)==len(current) and set(map(key,original))==set(by_key)
+    assert set(map(key,original)) <= set(by_key)
     lessons = lambda r:[(l.kind,l.key,l.prose,tuple(t for _,t in l.lines))
                         for l in r.origin]
     for before in original:
@@ -194,7 +195,7 @@ int main(){
 @pytest.mark.parametrize('compiler_name',['g++','clang++'])
 @pytest.mark.parametrize('damage',['','palette_argument','omit_decrement'])
 def test_actual_exec_initialization_and_saved_cancel_selection(tmp_path,compiler_name,damage):
-    body=extract((ROOT/'src/selectpartwin.cpp').read_text(),'int SelectPartWin::exec(')
+    body=extract((ROOT/'src/designwin.cpp').read_text(),'int SelectPartWin::exec(')
     initialization=body[body.index('    (void)x;'):body.index('    caviar_.init();')]
     if damage=='palette_argument':initialization=initialization.replace('palette_ = SpotlightColorTable;','palette_ = palette;')
     elif damage=='omit_decrement':initialization=initialization.replace('--selected;',';')

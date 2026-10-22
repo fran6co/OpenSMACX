@@ -11,7 +11,7 @@ import pytest
 
 
 ROOT = Path(__file__).resolve().parents[2]
-SELECTPART = ROOT / "src/selectpartwin.cpp"
+SELECTPART = ROOT / "src/designwin.cpp"
 PALETTE_OWNER = ROOT / "src/interface_palette.cpp"
 
 OWNERS = (

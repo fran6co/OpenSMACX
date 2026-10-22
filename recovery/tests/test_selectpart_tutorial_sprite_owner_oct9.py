@@ -65,7 +65,7 @@ def _statement(body: str, marker: str) -> str:
 
 
 def test_selectpart_sprite_calls_use_the_existing_typed_member(tmp_path: Path) -> None:
-    source_path = ROOT / "src/selectpartwin.cpp"
+    source_path = ROOT / "src/designwin.cpp"
     source = source_path.read_text()
     basewin_header = (ROOT / "src/basewin.h").read_text()
     tutwin_header = (ROOT / "src/tutwin.h").read_text()
@@ -79,7 +79,7 @@ def test_selectpart_sprite_calls_use_the_existing_typed_member(tmp_path: Path) -
     assert "sprite6_.extract(&assets, WinFillColour, 439, 64, 20, 20, 0);" in basewin_source
     assert 0x006A7628 + 0xBDD0 == 0x006B33F8
 
-    records = {record.address: record for record in read_text(source, "src/selectpartwin.cpp")}
+    records = {record.address: record for record in read_text(source, "src/designwin.cpp")}
     assert records[0x00433F70].image_spans[0] == (0x00433F70, 0x0043446F)
     assert records[0x00433D60].image_spans[0] == (0x00433D60, 0x00433F1D)
 

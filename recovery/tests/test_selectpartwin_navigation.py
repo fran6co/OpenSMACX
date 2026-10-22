@@ -24,7 +24,7 @@ def _body(source: str, prefix: str) -> str:
 
 
 def test_selectpartwin_keyboard_and_feedback(tmp_path: Path) -> None:
-    source = (ROOT / "src/selectpartwin.cpp").read_text()
+    source = (ROOT / "src/designwin.cpp").read_text()
     methods = "\n".join(
         _body(source, prefix)
         for prefix in (

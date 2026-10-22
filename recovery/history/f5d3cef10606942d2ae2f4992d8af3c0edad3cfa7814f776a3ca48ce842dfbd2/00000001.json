@@ -1,0 +1,25 @@
+{
+  "event_id": "420e6d3e72d3e1a78b47360b1936e9c65e856f54db85a6fcef4e718393b1b696",
+  "payload": {
+    "affects": [
+      "entity-69f1d181e7a05c0d9898afe6702a88b84c4f485328f6c668760fe201c813f264",
+      "entity-c07da51b6167476b1191c94a1198802ca886042aa6f04fc0b177a8eb16e2a148"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "picker-specific-redraw-oct22w",
+    "evidence": [
+      "Pinned image01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf. Root independently decoded full mapped primary spans using installed source.asm.original_asm after the cheaper owner review; cold spans and cleanup graph remain separate obligations.",
+      "Armor0x0043A760 normal redraws: optional suggest_abil at0x43A85B; check_abil0x43A862; draw_armor0x43A86A; draw_vehicle0x43A872; draw_special_1/2 at0x43A87A/0x43A882; draw_flash0x43A889; draw_info0x43A890; virtual slot0xFC update0x43A899. No chassis/reactor/weapon redraw call occurs in this interval.",
+      "Reactor0x0043AA00: check_abil0x43AADA; draw_reactor0x43AAE2; draw_vehicle0x43AAEA; draw_special_1/2 at0x43AAF2/0x43AAFA; draw_flash0x43AB01; draw_info0x43AB08; virtual slot0xFC update0x43AB11. No chassis/armor/weapon redraw call occurs in this interval.",
+      "Current source helper invokes all four component panel draws before common vehicle/special/flash/info/update. This is observable extra work, not just instruction spelling. Private exact-text proposal .opensmacx/recovery/parallel-match-oct22w/design-picker-original-fidelity-proposal.json sha2561bc0cf85b86ac703973465748d8cfc29ecc7368c94f220122744407c03df969f. Proposal is uncompiled; do not infer exactness or historical source/TU placement.",
+      "Keep pending for the next finite owner recovery step after the current migration checkpoint; requires explicit implementation/test scope decision, meaningful actual-source call-order mutants, fresh compile/link and whole neighbor/reference/claim checks. This record grants no source edit, waiver, resolution or automatic acceptance."
+    ],
+    "hypothesis": "The generic redraw_design_picker_changes helper adds three panel redraw calls absent from each original armor/reactor picker. Restore their independently observed member-call sequences, preserving selection scans, lifetime and original bugs; do not mask this known fidelity discrepancy with the completed visibility migration.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "picker-specific-redraw-oct22w",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:selectpart-design-shared-visibility-oct22w"
+}

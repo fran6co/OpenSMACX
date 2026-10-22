@@ -43,7 +43,7 @@ def test_designwin_uses_typed_source_owned_stats_formatter():
 
 
 def test_select_part_modal_passes_real_cdecl_wait_callback():
-    source = (ROOT / "src/selectpartwin.cpp").read_text()
+    source = (ROOT / "src/designwin.cpp").read_text()
     faction_header = (ROOT / "src/faction.h").read_text()
     faction_source = (ROOT / "src/faction.cpp").read_text()
     win_header = (ROOT / "src/win.h").read_text()

@@ -132,7 +132,6 @@ set(OPENSMACX_SOURCES
     src/scale_adjustment.cpp
     src/technology_queries.cpp
     src/byte_utilities.cpp
-    src/selectpartwin.cpp
     src/shared_word.cpp
     src/fx.cpp
     src/alphanet.cpp
@@ -523,7 +522,6 @@ set_source_files_properties(src/alphanet.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")
 set_source_files_properties(
     src/base.cpp
     src/multiwin.cpp
-    src/selectpartwin.cpp
     src/socialwin.cpp
     src/technology.cpp
     src/technology_queries.cpp
