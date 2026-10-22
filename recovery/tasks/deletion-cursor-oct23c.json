@@ -1,0 +1,45 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "1d04cc16580d218868701d7b4fd70d0e9e45ccd5",
+  "editable_files": [
+    "src/deletionlist.cpp",
+    "recovery/tests/test_deletion_owner_cursor_oct23c.py"
+  ],
+  "evidence": [
+    "Original52DD10..52DD4B walks24records using ECX+=0x3C, byte acknowledgement mask, owner dword+4, first matching slot or-1. Existing exact neighboring find_free_slot already uses a typed record cursor. New frontier screen identifies an untried ordinary pointer-cursor source form; this is not a layout or historical TU claim.",
+    "Only replace find_owner_slot indexed traversal with the equivalent typed pointer cursor, retain24iterations, mask capture, short-circuit predicate, owner equality and first-slot/-1 behavior. No other mapped body/header/API/storage/compiler changes. Preserve every original marker, binding/history/claims verbatim. No hand annotations or new claims.",
+    "At most3 candidate compiles per unchanged context including errors; no repeated exhausted variants. No asm, raw original addresses, generated adapters, forced inlining, exports, flags, safety fixes or byte copies. Root owns native measurement/resources/Git/metadata/integration; worker edits only assigned C++ body in isolated checkout. Return cross-owner discoveries before expansion.",
+    "Root adds actual-source host regression controls. Require native measurement, positive identity preservation, build/link, source/claims/mappings/references and fresh destination checks before reviewed manual integration. Missing whole-link/runtime/game/automatic acceptance remains unknown; do not weaken native refusals. Baseline is immutable."
+  ],
+  "intent": "Measure the original record-cursor traversal in DeletionList::find_owner_slot",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5430432,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5430480,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5430512,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5430544,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5430608,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "deletion-cursor-oct23c"
+}
