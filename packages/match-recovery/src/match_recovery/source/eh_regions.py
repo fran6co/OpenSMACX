@@ -129,38 +129,79 @@ def _decoded(code: bytes, base: int):
 
 
 def _registration_push(instructions, target: int) -> int | None:
-    """Return the handler immediate offset only for the complete EH chain."""
+    """Return the handler immediate for one bounded VC6 EH setup schedule."""
+    def fs_load(item):
+        return (item.mnemonic == "mov" and len(item.operands) == 2
+                and _is_reg(item.operands[0], x86.X86_REG_EAX)
+                and item.operands[1].type == x86.X86_OP_MEM
+                and item.operands[1].size == 4
+                and item.operands[1].mem.segment == x86.X86_REG_FS
+                and item.operands[1].mem.base == 0
+                and item.operands[1].mem.index == 0
+                and item.operands[1].mem.disp == 0)
+
+    def sentinel(item):
+        return (item.mnemonic == "push" and len(item.operands) == 1
+                and item.operands[0].type == x86.X86_OP_IMM
+                and item.operands[0].size == 4 and item.operands[0].imm == -1
+                and item.encoding.imm_size in (1, 4))
+
+    def handler_push(item):
+        return (item.mnemonic == "push" and len(item.operands) == 1
+                and item.operands[0].type == x86.X86_OP_IMM
+                and item.operands[0].size == 4 and item.operands[0].imm == target
+                and item.encoding.imm_size == 4)
+
+    def push_eax(item):
+        return (item.mnemonic == "push" and len(item.operands) == 1
+                and _is_reg(item.operands[0], x86.X86_REG_EAX))
+
+    def fs_install(item):
+        return (item.mnemonic == "mov" and len(item.operands) == 2
+                and item.operands[0].type == x86.X86_OP_MEM
+                and item.operands[0].size == 4
+                and item.operands[0].mem.segment == x86.X86_REG_FS
+                and item.operands[0].mem.base == 0
+                and item.operands[0].mem.index == 0
+                and item.operands[0].mem.disp == 0
+                and _is_reg(item.operands[1], x86.X86_REG_ESP))
+
+    def permitted_saved_eax_move(item):
+        if (item.mnemonic != "mov" or len(item.operands) != 2
+                or not _is_reg(item.operands[0], x86.X86_REG_EAX)):
+            return False
+        source = item.operands[1]
+        if source.type == x86.X86_OP_IMM:
+            return source.size == 4 and item.encoding.imm_size == 4
+        return (source.type == x86.X86_OP_MEM and source.size == 4
+                and source.mem.segment == 0
+                and source.mem.base == x86.X86_REG_ESP
+                and source.mem.index == 0 and source.mem.disp == 0x14)
+
+    schedules = (
+        ("sentinel-handler-load", (sentinel, handler_push, fs_load, push_eax)),
+        ("load-sentinel-handler", (fs_load, sentinel, handler_push, push_eax)),
+        ("sentinel-load-handler", (sentinel, fs_load, handler_push, push_eax)),
+    )
     matches = []
-    for index in range(max(0, len(instructions) - 4)):
-        push_minus_one, push_handler, read_fs, push_eax, write_fs = instructions[index:index + 5]
-        if (push_minus_one.mnemonic != "push" or len(push_minus_one.operands) != 1
-                or push_minus_one.operands[0].type != x86.X86_OP_IMM
-                or push_minus_one.operands[0].imm != -1
-                or push_handler.mnemonic != "push" or len(push_handler.operands) != 1
-                or push_handler.operands[0].type != x86.X86_OP_IMM
-                or push_handler.operands[0].imm != target
-                or push_handler.encoding.imm_size != 4
-                or read_fs.mnemonic != "mov" or len(read_fs.operands) != 2
-                or read_fs.operands[0].type != x86.X86_OP_REG
-                or read_fs.operands[0].reg != x86.X86_REG_EAX
-                or read_fs.operands[1].type != x86.X86_OP_MEM
-                or read_fs.operands[1].mem.segment != x86.X86_REG_FS
-                or read_fs.operands[1].mem.base != 0
-                or read_fs.operands[1].mem.index != 0
-                or read_fs.operands[1].mem.disp != 0
-                or push_eax.mnemonic != "push" or len(push_eax.operands) != 1
-                or push_eax.operands[0].type != x86.X86_OP_REG
-                or push_eax.operands[0].reg != x86.X86_REG_EAX
-                or write_fs.mnemonic != "mov" or len(write_fs.operands) != 2
-                or write_fs.operands[0].type != x86.X86_OP_MEM
-                or write_fs.operands[0].mem.segment != x86.X86_REG_FS
-                or write_fs.operands[0].mem.base != 0
-                or write_fs.operands[0].mem.index != 0
-                or write_fs.operands[0].mem.disp != 0
-                or write_fs.operands[1].type != x86.X86_OP_REG
-                or write_fs.operands[1].reg != x86.X86_REG_ESP):
-            continue
-        matches.append(push_handler.address + push_handler.encoding.imm_offset)
+    for index in range(len(instructions)):
+        for _name, prefix in schedules:
+            for saved_move in (False, True):
+                width = len(prefix) + int(saved_move) + 1
+                candidate = instructions[index:index + width]
+                if len(candidate) != width:
+                    continue
+                if not all(check(item) for check, item in zip(prefix, candidate)):
+                    continue
+                cursor = len(prefix)
+                if saved_move:
+                    if not permitted_saved_eax_move(candidate[cursor]):
+                        continue
+                    cursor += 1
+                if not fs_install(candidate[cursor]):
+                    continue
+                handler = candidate[1] if _name == "sentinel-handler-load" else candidate[2]
+                matches.append(handler.address + handler.encoding.imm_offset)
     if len(matches) != 1:
         return None
     return matches[0]

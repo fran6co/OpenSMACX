@@ -11,6 +11,7 @@ from match_recovery.source.eh_regions import (
     EHRegionRole,
     _cleanup_action,
     _decoded,
+    _registration_push,
     bind_eh_regions,
 )
 
@@ -22,7 +23,61 @@ SPANS = ((BASE + 0x1000, BASE + 0x1016),
 TWO_SPANS = (SPANS[0], (BASE + 0x1100, BASE + 0x1120))
 
 
-def _pe(*, damage=None, cold_size=21, short_cleanup_jump=False, mode="default"):
+def _registration_code(variant, target, damage=None):
+    """Build one exact registration schedule and return its relocation site."""
+    saved_move_kind = ("imm" if variant.endswith("-imm") else
+                       "esp14" if variant.endswith("-esp14") else None)
+    schedule = variant.removesuffix("-imm").removesuffix("-esp14")
+    fs_load = b"\x64\xa1\0\0\0\0"
+    sentinel = b"\x6a\xff"
+    handler = b"\x68" + struct.pack("<I", target)
+    push_eax = b"\x50"
+    install = b"\x64\x89\x25\0\0\0\0"
+    if schedule == "sentinel-handler-load":
+        pieces = [sentinel, handler, fs_load, push_eax]
+    elif schedule == "load-sentinel-handler":
+        pieces = [fs_load, sentinel, handler, push_eax]
+    elif schedule == "sentinel-load-handler":
+        pieces = [sentinel, fs_load, handler, push_eax]
+    else:
+        raise ValueError(f"unknown registration schedule: {variant}")
+    handler_site = sum(map(len, pieces[:pieces.index(handler)])) + 1
+    saved_move = b""
+    if saved_move_kind == "imm":
+        saved_move = b"\xb8\x34\x12\x00\x00"
+    elif saved_move_kind == "esp14":
+        saved_move = b"\x8b\x44\x24\x14"
+    code = bytearray(b"".join((*pieces, saved_move, install, b"\xc3")))
+    if damage == "bad_registration_sentinel":
+        sentinel_start = next(i for i in range(len(code) - 1)
+                              if code[i:i + 2] == sentinel)
+        code[sentinel_start + 1] = 0xFE
+    elif damage == "bad_registration_clobber":
+        push_start = next(i for i in range(len(code)) if code[i:i + 1] == push_eax)
+        code[push_start:push_start] = b"\x8b\xc1"  # Clobber saved EAX before it is pushed.
+    elif damage == "bad_registration_fs_read":
+        read_start = code.index(fs_load)
+        code[read_start] = 0x65  # GS rather than the thread's FS chain.
+    elif damage == "bad_registration_fs_read_offset":
+        read_start = code.index(fs_load)
+        code[read_start + 2] = 4
+    elif damage == "bad_registration_fs_write":
+        write_start = code.index(install)
+        code[write_start] = 0x65
+    elif damage == "bad_registration_fs_offset":
+        write_start = code.index(install)
+        code[write_start + 3] = 4
+    elif damage == "bad_registration_branch":
+        push_start = next(i for i in range(len(code)) if code[i:i + 1] == push_eax)
+        code[push_start:push_start + 1] = b"\xeb\x00"
+    elif damage == "bad_registration_stack":
+        push_start = next(i for i in range(len(code)) if code[i:i + 1] == push_eax)
+        code[push_start:push_start + 1] = b"\x83\xec\x04"
+    return bytes(code), handler_site
+
+
+def _pe(*, damage=None, cold_size=21, short_cleanup_jump=False, mode="default",
+        registration_variant="sentinel-handler-load"):
     """Build a small PE32 with relocated root/handler/FuncInfo pointers."""
     text = bytearray(0x200)
     cold = BASE + 0x1100
@@ -30,14 +85,13 @@ def _pe(*, damage=None, cold_size=21, short_cleanup_jump=False, mode="default"):
     cleanup_target = cold + 0x20 if short_cleanup_jump else BASE + 0x11F0
     handler_target = BASE + 0x11F8
 
-    text[0:2] = b"\x6a\xff"
-    text[2] = 0x68
     handler_offset = cold_size - 10
-    struct.pack_into("<I", text, 3, cold + handler_offset)
-    text[7:13] = b"\x64\xa1\0\0\0\0"
-    text[13] = 0x50
-    text[14:21] = b"\x64\x89\x25\0\0\0\0"
-    text[21] = 0xC3
+    registration_damage = (damage.removeprefix("original_")
+                           if damage and damage.startswith("original_bad_registration_")
+                           else damage)
+    root_code, root_site = _registration_code(
+        registration_variant, cold + handler_offset, registration_damage)
+    text[:len(root_code)] = root_code
     handler_offset = cold_size - 10
     two_actions = cold_size == 32 or mode == "lea_pair"
     if mode == "lea_pair":
@@ -99,11 +153,20 @@ def _pe(*, damage=None, cold_size=21, short_cleanup_jump=False, mode="default"):
     if damage == "original_cleanup_shape":
         text[0x100] = 0x90
     if damage == "original_bad_registration_sentinel":
-        text[0] = 0x90
+        damaged_code, _ = _registration_code(registration_variant,
+                                              cold + handler_offset,
+                                              "bad_registration_sentinel")
+        text[:len(damaged_code)] = damaged_code
     if damage == "original_bad_registration_fs_read":
-        text[7] = 0x90
+        damaged_code, _ = _registration_code(registration_variant,
+                                              cold + handler_offset,
+                                              "bad_registration_fs_read")
+        text[:len(damaged_code)] = damaged_code
     if damage == "original_bad_registration_fs_write":
-        text[14] = 0x90
+        damaged_code, _ = _registration_code(registration_variant,
+                                              cold + handler_offset,
+                                              "bad_registration_fs_write")
+        text[:len(damaged_code)] = damaged_code
 
     info = bytearray(48 if two_actions else 40)
     struct.pack_into("<8I", info, 0, 0x19930520, 2 if two_actions else 1, func_info + 32,
@@ -142,11 +205,13 @@ def _pe(*, damage=None, cold_size=21, short_cleanup_jump=False, mode="default"):
                          cold + second_start - (first_jump + 5))
 
     reloc_entries = {
-        0x1000: [0x3003, 0x3100 + handler_offset + 1],
+        0x1000: [0x3000 + root_site, 0x3100 + handler_offset + 1],
         0x2000: [0x3008, 0x3024] + ([0x302C] if two_actions else []),
     }
+    if damage == "original_duplicate_root_reloc":
+        reloc_entries[0x1000].append(0x3000 + root_site)
     if damage == "original_missing_root_reloc":
-        reloc_entries[0x1000].remove(0x3003)
+        reloc_entries[0x1000].remove(0x3000 + root_site)
     if damage == "original_missing_handler_reloc":
         reloc_entries[0x1000].remove(0x310C)
     if damage == "original_missing_funcinfo_reloc":
@@ -206,7 +271,8 @@ def _pe(*, damage=None, cold_size=21, short_cleanup_jump=False, mode="default"):
     return bytes(data)
 
 
-def _coff(*, damage=None, cold_size=21, mode="default"):
+def _coff(*, damage=None, cold_size=21, mode="default",
+          registration_variant="sentinel-handler-load"):
     """Build a root, one supported-size associative child, and EH data."""
     handler_offset = cold_size - 10
     two_actions = cold_size == 32 or mode == "lea_pair"
@@ -260,8 +326,11 @@ def _coff(*, damage=None, cold_size=21, mode="default"):
         child_data = bytearray(child_data)
         struct.pack_into("<I", child_data, info_offset, 1)
         child_data = bytes(child_data)
+    root_code, root_handler_site = _registration_code(
+        registration_variant, 0,
+        damage if damage and damage.startswith("bad_registration_") else None)
     sections = [
-        {"name": ".text", "data": _root_code(damage),
+        {"name": ".text", "data": root_code,
          "flags": 0x60501020, "selection": 2, "parent": 0},
         {"name": ".text$x",
          "data": child_data,
@@ -359,7 +428,9 @@ def _coff(*, damage=None, cold_size=21, mode="default"):
         # A separate local target avoids relying on a generated label spelling.
         add_symbol("wrong_handler", "$Lwrong", 10, 2, 0, 6)
 
-    root_relocs = [(3, "handler" if damage != "handler_offset" else "wrong_handler", 6)]
+    root_relocs = [(root_handler_site, "handler" if damage != "handler_offset" else "wrong_handler", 6)]
+    if damage == "duplicate_root_relocation":
+        root_relocs.append((root_handler_site, "handler", 6))
     child_relocs = [(destructor_offset,
                      "local_destructor" if damage == "first_local_defined" else "destructor",
                      20)]
@@ -494,27 +565,26 @@ def _eh_data(damage, *, two_actions=False):
     return bytes(data)
 
 
-def _root_code(damage):
-    code = bytearray.fromhex(
-        "6a ff 68 00 00 00 00 64 a1 00 00 00 00 50 64 89 25 00 00 00 00 c3")
-    if damage == "bad_registration_sentinel":
-        code[0] = 0x90
-    if damage == "bad_registration_fs_read":
-        code[7] = 0x90
-    if damage == "bad_registration_fs_write":
-        code[14] = 0x90
-    return bytes(code)
+def _root_code(damage, registration_variant="sentinel-handler-load"):
+    code, _ = _registration_code(registration_variant, 0, damage)
+    return code
 
 
 def _bind(*, object_damage=None, image_damage=None, spans=SPANS,
-          object_cold_size=21, mode="default"):
+          object_cold_size=21, mode="default",
+          object_registration_variant="sentinel-handler-load",
+          image_registration_variant="sentinel-handler-load"):
     original_size = (spans[1][1] - spans[1][0]
                      if type(spans) is tuple and len(spans) == 2
                      and type(spans[1]) is tuple and len(spans[1]) == 2
                      and spans[1][1] - spans[1][0] in (18, 21, 26, 29, 32) else 21)
-    image_data = _pe(damage=image_damage, cold_size=original_size, mode=mode)
+    image_data = _pe(damage=image_damage, cold_size=original_size, mode=mode,
+                     registration_variant=image_registration_variant)
     image = PeImage(image_data, hashlib.sha256(image_data).hexdigest())
-    return bind_eh_regions(_coff(damage=object_damage, cold_size=object_cold_size, mode=mode), ROOT, image, spans)
+    return bind_eh_regions(_coff(damage=object_damage, cold_size=object_cold_size,
+                                 mode=mode,
+                                 registration_variant=object_registration_variant),
+                           ROOT, image, spans)
 
 
 def _linear_fixture(original_widths, object_widths=None, *, original_damage=None,
@@ -758,6 +828,71 @@ def test_binds_only_the_root_and_its_proven_cleanup_handler_bundle():
     assert (cold.ownership.original_handler, cold.ownership.original_cleanup,
             cold.ownership.handler_offset, cold.ownership.cleanup_offset) == (
                 SPANS[1][0] + 11, SPANS[1][0], 11, 0)
+
+
+@pytest.mark.parametrize("variant", [
+    "sentinel-handler-load",
+    "load-sentinel-handler",
+    "sentinel-load-handler",
+    "load-sentinel-handler-imm",
+    "load-sentinel-handler-esp14",
+    "sentinel-load-handler-esp14",
+])
+def test_binds_only_observed_complete_registration_schedules(variant):
+    root_code, _ = _registration_code(variant, SPANS[1][0] + 11)
+    spans = ((SPANS[0][0], SPANS[0][0] + len(root_code)), SPANS[1])
+    root, cold = _bind(spans=spans,
+                       object_registration_variant=variant,
+                       image_registration_variant=variant)
+    assert (root.role, cold.role) == (EHRegionRole.ROOT, EHRegionRole.COLD)
+    assert (root.original.start, root.original.end) == spans[0]
+    assert root.ownership.original_handler == SPANS[1][0] + 11
+
+
+@pytest.mark.parametrize("bad_schedule", [
+    "bad_registration_sentinel",
+    "bad_registration_clobber",
+    "bad_registration_fs_read",
+    "bad_registration_fs_read_offset",
+    "bad_registration_fs_write",
+    "bad_registration_fs_offset",
+    "bad_registration_branch",
+    "bad_registration_stack",
+])
+@pytest.mark.parametrize("where", ["image", "object"])
+def test_refuses_damaged_scheduled_registration_chain(bad_schedule, where):
+    variant = "load-sentinel-handler-imm"
+    code, _ = _registration_code(variant, SPANS[1][0] + 11)
+    rejected_code = (code if where == "object" else
+                     _registration_code(variant, SPANS[1][0] + 11,
+                                        bad_schedule)[0])
+    spans = ((SPANS[0][0], SPANS[0][0] + len(rejected_code)), SPANS[1])
+    kwargs = {"spans": spans,
+              "object_registration_variant": variant,
+              "image_registration_variant": variant}
+    if where == "image":
+        kwargs["image_damage"] = "original_" + bad_schedule
+    else:
+        kwargs["object_damage"] = bad_schedule
+    with pytest.raises(ValueError):
+        _bind(**kwargs)
+
+
+def test_registration_recognizer_refuses_two_complete_chains():
+    first, _ = _registration_code("load-sentinel-handler", 0x12345678)
+    second, _ = _registration_code("sentinel-load-handler", 0x12345678)
+    instructions = _decoded(first + second, 0)
+    assert _registration_push(instructions, 0x12345678) is None
+
+
+def test_refuses_duplicate_compiled_root_handler_relocation():
+    with pytest.raises(ValueError, match="COFF EH relocations overlap"):
+        _bind(object_damage="duplicate_root_relocation")
+
+
+def test_refuses_duplicate_original_root_handler_relocation():
+    with pytest.raises(ValueError, match="duplicate PE base relocation"):
+        _bind(image_damage="original_duplicate_root_reloc")
 
 
 @pytest.mark.parametrize("metadata", [None, "local_target_debug_child"])
