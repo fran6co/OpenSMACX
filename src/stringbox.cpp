@@ -294,15 +294,13 @@ void StringBox::on_redraw() {
     }
 }
 
-// The member and base destructors follow this body implicitly, in reverse
+// The member and base destructors follow the header body implicitly, in reverse
 // construction order: StringList, Scroll, then GraphicWin.
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x004325C0 ??1StringBox@@QAE@XZ 0x004325C0-0x00432713;0x006533B0-0x0065341D
-// RECOVERY_BINDING: v1 {"evidence": ["original:0x004325C0-0x00432713;0x006533B0-0x0065341D;seed:src/recovered/units/004325c0.cpp;source:src/stringbox.h;source:src/stringstruct.h;source:src/scroll.h"], "reason": "Run StringBox cleanup then let C++ destroy its StringList, Scroll and GraphicWin subobjects in lifetime order."}
+// ORIGINAL: 0x004325C0 ??1StringBox@@QAE@XZ 0x004325C0-0x00432713;0x006533B0-0x0065341D FILE
+// RECOVERY_BINDING: v1 {"evidence": ["original:0x004325C0-0x00432713;0x006533B0-0x0065341D;seed:src/recovered/units/004325c0.cpp;source:src/stringbox.h;source:src/stringstruct.h;source:src/scroll.h", "Pinned Datalink destructor0x432290 and its0x6531D0 cold cleanup expand the nested StringBox, StringList virtual-base, Scroll and GraphicWin lifetimes; src/datalink.h owns the four actual concept_box_, blurb_box_, detail_box_ and stringBox_ members.", "src/stringbox.h owns the existing StringList/Scroll/GraphicWin declaration and unchanged class destructor body; src/stringbox.cpp retains the standalone original entry, emitted symbol and complete spans. The normal containing-owner paths and independent exceptional entry remain distinct obligations.", "Definition visibility does not identify an original filename/TU, guarantee which inline COMDAT the linker selects, or settle the remaining normal-body, frame, reference or runtime obligations."], "reason": "Run StringBox cleanup then let C++ destroy its StringList, Scroll and GraphicWin subobjects in lifetime order. Keep the unchanged class-defined lifetime visible to genuine containing owners while retaining this independently emitted standalone identity in its canonical current translation unit."}
+// body src/stringbox.h
 // symbol    ??1StringBox@@UAE@XZ
-StringBox::~StringBox() {
-    close();
-}
 
 // Remove the first list entry with this ID, retaining the original cursor
 // position side effect and then re-fitting the visible rows.

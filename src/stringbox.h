@@ -59,7 +59,8 @@ class StringBox : public GraphicWin {
   // 0x00629110. A REAL constructor: the image constructs its GraphicWin
   // base and its Scroll member, and carries the unwind frame that implies.
   StringBox();
-  ~StringBox();
+  // Keep close and compiler-owned subobject teardown visible in consumers.
+  ~StringBox() { close(); }
   int add(char *text, int index, int flag);
   void set_visible_rows(uint32_t rows) { visible_rows_ = rows; }
 
