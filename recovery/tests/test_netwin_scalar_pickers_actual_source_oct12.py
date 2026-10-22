@@ -30,7 +30,7 @@ def material():
     accessor = extract_function((ROOT / "src/basepop.h").read_text(), "Dialogs &dialogs()")
     owner = (ROOT / "src/popmenu.cpp").read_text()
     menu_methods = "\n".join(extract_function(owner, name) for name in (
-        "PopMenu::~PopMenu()", "int PopMenu::init()", "int PopMenu::exec(int"))
+        "int PopMenu::init()", "int PopMenu::exec(int"))
     methods = {name: extract_function(source, "void NetWin::pick_" + name + "()") for name in NAMES}
     # Complete actual case-1 tail, including its gate, selector and send join.
     # The parent spot/other cases are unchanged by this bounded caller change.
