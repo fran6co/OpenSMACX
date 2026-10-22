@@ -5769,41 +5769,7 @@ static int texture_raster_step_plain(EdgeScan &edge, TextureStore *edge_cache) {
     return 1;
 }
 
-static void texture_raster_gouraud_rows(Texture *texture, Buffer *buffer,
-                                        int first_y, int last_y, int top_index, int keyed,
-                                        int borrowed, const unsigned char *pixels,
-                                        int pitch) {
-    EdgeScan left, right;
-    left.f0 = -1;
-    right.f0 = 1;
-    if (!texture->setup_edge_gouraud(&left, top_index)) return;
-    if (!texture->setup_edge_gouraud(&right, top_index)) return;
 
-    const RECT clip = buffer->current_clip();
-    const int stride = buffer->stride_;
-    unsigned char *destination = reinterpret_cast<unsigned char *>(texture_pointer_address(TextureRasterPixelBase));
-    const unsigned char key = static_cast<unsigned char>(TextureRasterLightThreshold);
-    int y = first_y;
-    while (y < last_y && y < clip.bottom) {
-        const int x = left.accumC;
-        const int end = right.accumC;
-        if (y >= clip.top && end > clip.left && x < clip.right && end > x) {
-            const int span = end - x;
-            const int du = texture_span_step(texture_difference(right.accumA, left.accumA), span);
-            const int dv = texture_span_step(texture_difference(right.accumB, left.accumB), span);
-            const unsigned short dl = texture_light_step(
-                texture_difference(right.accumD, left.accumD), span);
-            const int phase_u = borrowed ? 0 : du >> 1;
-            const int phase_v = borrowed ? 0 : dv >> 1;
-            texture_raster_span(destination, pixels, pitch, y, stride, x, end,
-                clip.left, clip.right, left.accumA, left.accumB, phase_u, phase_v,
-                left.accumD, du, dv, dl, key, keyed && borrowed, borrowed);
-        }
-        if (!texture_raster_step_gouraud(left, texture)) break;
-        if (!texture_raster_step_gouraud(right, texture)) break;
-        ++y;
-    }
-}
 
 static void texture_raster_plain_rows(Texture *texture, Buffer *buffer,
                                       int first_y, int last_y, int top_index,
@@ -5894,9 +5860,312 @@ void Texture::sub_61b780(Buffer *buffer, Vert *vertices, int *zvals, int mode) {
         if (x > max_x) max_x = x;
     }
     if (min_y < max_y) {
-        texture_raster_gouraud_rows(this, buffer, min_y, max_y, top, 0,
-            borrowed_ != 0, pixels_,
-            borrowed_ ? 256 : TextureRowPitchScratch);
+        const unsigned char *pixels = pixels_;
+        const uint32_t pixel_base = static_cast<uint32_t>(
+            texture_pointer_address(TextureRasterPixelBase));
+        const uint32_t stride_word = static_cast<uint32_t>(
+            TextureRasterBufferStride);
+        TextureRasterRowOffset = static_cast<int>(pixel_base +
+            stride_word * static_cast<uint32_t>(min_y));
+        TextureRasterClipBottom = static_cast<int>(pixel_base +
+            stride_word * static_cast<uint32_t>(TextureRasterClipBottom));
+        TextureRasterClipTop = static_cast<int>(pixel_base +
+            stride_word * static_cast<uint32_t>(TextureRasterClipTop));
+        EdgeScan left, right;
+        left.f0 = -1;
+        right.f0 = 1;
+        if (setup_edge_gouraud(&left, top) &&
+            setup_edge_gouraud(&right, top)) {
+            const int borrowed = borrowed_ != 0;
+            const RECT clip = buffer->current_clip();
+            const int stride = buffer->stride_;
+            unsigned char *row_base =
+                static_cast<unsigned char *>(TextureRasterPixelBase);
+
+            if (borrowed) {
+                _control87(_PC_24 | _RC_CHOP, _MCW_PC | _MCW_RC);
+                int row_offset = TextureRasterRowOffset;
+                const int pitch = 256;
+                while (row_offset < TextureRasterClipBottom) {
+                    const EdgeScan row_left = left;
+                    const EdgeScan row_right = right;
+                    int done = 0;
+                    if (--left.counter == 0) {
+                        if (!setup_edge_gouraud(&left, left.id)) done = 1;
+                    } else {
+                        left.accumA = static_cast<int>(
+                            static_cast<uint32_t>(left.accumA) +
+                            static_cast<uint32_t>(left.deltaA));
+                        left.accumB = static_cast<int>(
+                            static_cast<uint32_t>(left.accumB) +
+                            static_cast<uint32_t>(left.deltaB));
+                        left.accumC = static_cast<int>(
+                            static_cast<uint32_t>(left.accumC) +
+                            static_cast<uint32_t>(left.deltaC));
+                        left.accumD = static_cast<int>(
+                            static_cast<uint32_t>(left.accumD) +
+                            static_cast<uint32_t>(left.deltaD));
+                        left.fracAccum = static_cast<int>(
+                            static_cast<uint32_t>(left.fracAccum) +
+                            static_cast<uint32_t>(left.fracDelta));
+                        if (left.fracAccum > 0) {
+                            left.accumC = static_cast<int>(
+                                static_cast<uint32_t>(left.accumC) +
+                                static_cast<uint32_t>(left.extraDeltaC));
+                            left.fracAccum = texture_difference(
+                                left.fracAccum, left.fracSub);
+                        }
+                    }
+                    if (!done) {
+                        if (--right.counter == 0) {
+                            if (!setup_edge_gouraud(&right, right.id)) done = 1;
+                        } else {
+                            right.accumA = static_cast<int>(
+                                static_cast<uint32_t>(right.accumA) +
+                                static_cast<uint32_t>(right.deltaA));
+                            right.accumB = static_cast<int>(
+                                static_cast<uint32_t>(right.accumB) +
+                                static_cast<uint32_t>(right.deltaB));
+                            right.accumC = static_cast<int>(
+                                static_cast<uint32_t>(right.accumC) +
+                                static_cast<uint32_t>(right.deltaC));
+                            right.accumD = static_cast<int>(
+                                static_cast<uint32_t>(right.accumD) +
+                                static_cast<uint32_t>(right.deltaD));
+                            right.fracAccum = static_cast<int>(
+                                static_cast<uint32_t>(right.fracAccum) +
+                                static_cast<uint32_t>(right.fracDelta));
+                            if (right.fracAccum > 0) {
+                                right.accumC = static_cast<int>(
+                                    static_cast<uint32_t>(right.accumC) +
+                                    static_cast<uint32_t>(right.extraDeltaC));
+                                right.fracAccum = texture_difference(
+                                    right.fracAccum, right.fracSub);
+                            }
+                        }
+                    }
+                    const int x = row_left.accumC;
+                    const int end = row_right.accumC;
+                    if (row_offset < TextureRasterClipBottom &&
+                        row_offset >= TextureRasterClipTop &&
+                        end > clip.left &&
+                        x < clip.right && end > x) {
+                        const int span = end - x;
+                        const int du = texture_span_step(
+                            texture_difference(row_right.accumA, row_left.accumA),
+                            span);
+                        const int dv = texture_span_step(
+                            texture_difference(row_right.accumB, row_left.accumB),
+                            span);
+                        const unsigned short dl = texture_light_step(
+                            texture_difference(row_right.accumD, row_left.accumD),
+                            span);
+                        int u = row_left.accumA;
+                        int v = row_left.accumB;
+                        uint32_t light = static_cast<uint32_t>(row_left.accumD);
+                        int left_x = x;
+                        int right_x = end;
+                        if (left_x < clip.left) {
+                            const int skip = clip.left - left_x;
+                            u = static_cast<int>(
+                                static_cast<uint32_t>(u) +
+                                static_cast<uint32_t>(
+                                    static_cast<int64_t>(du) * skip));
+                            v = static_cast<int>(
+                                static_cast<uint32_t>(v) +
+                                static_cast<uint32_t>(
+                                    static_cast<int64_t>(dv) * skip));
+                            int signed_skip = static_cast<int>(
+                                static_cast<uint32_t>(skip) & 0xffffu);
+                            if (signed_skip >= 0x8000)
+                                signed_skip -= 0x10000;
+                            const int product =
+                                signed_skip * static_cast<int>(dl);
+                            light += static_cast<uint32_t>(product);
+                            left_x = clip.left;
+                        }
+                        if (right_x > clip.right) right_x = clip.right;
+                        if (right_x > left_x) {
+                            const uint32_t destination_address =
+                                static_cast<uint32_t>(row_offset) +
+                                static_cast<uint32_t>(left_x);
+                            const uint32_t destination_offset =
+                                destination_address - pixel_base;
+                            unsigned char *out = row_base +
+                                static_cast<int32_t>(destination_offset);
+                            const int width = right_x - left_x;
+                            const unsigned char key = static_cast<unsigned char>(
+                                TextureRasterLightThreshold);
+                            for (int column = 0; column < width; ++column) {
+                                unsigned int source_x =
+                                    static_cast<uint32_t>(u) >> 16;
+                                unsigned int source_y =
+                                    static_cast<uint32_t>(v) >> 16;
+                                source_x &= 0xffu;
+                                source_y &= 0xffu;
+                                const unsigned char texel = pixels[
+                                    static_cast<int64_t>(source_y) * pitch +
+                                    source_x];
+                                if (texel != key) {
+                                    out[column] = static_cast<unsigned char>(
+                                        texel + ((light >> 8) & 0xffu));
+                                }
+                                u = static_cast<int>(
+                                    static_cast<uint32_t>(u) +
+                                    static_cast<uint32_t>(du));
+                                v = static_cast<int>(
+                                    static_cast<uint32_t>(v) +
+                                    static_cast<uint32_t>(dv));
+                                light = (light & 0xffff0000u) |
+                                    ((light + static_cast<uint32_t>(dl)) &
+                                     0xffffu);
+                            }
+                        }
+                    }
+                    if (done) break;
+                    row_offset = static_cast<int>(
+                        static_cast<uint32_t>(row_offset) +
+                        static_cast<uint32_t>(stride));
+                    TextureRasterRowOffset = row_offset;
+                }
+            } else {
+                int row_offset = TextureRasterRowOffset;
+                const int pitch = TextureRowPitchScratch;
+                while (row_offset < TextureRasterClipBottom) {
+                    const int x = left.accumC;
+                    const int end = right.accumC;
+                    if (row_offset < TextureRasterClipBottom &&
+                        row_offset >= TextureRasterClipTop && end > clip.left &&
+                        x < clip.right && end > x) {
+                        const int span = end - x;
+                        const int du = texture_span_step(
+                            texture_difference(right.accumA, left.accumA),
+                            span);
+                        const int dv = texture_span_step(
+                            texture_difference(right.accumB, left.accumB),
+                            span);
+                        const unsigned short dl = texture_light_step(
+                            texture_difference(right.accumD, left.accumD),
+                            span);
+                        int u = left.accumA;
+                        int v = left.accumB;
+                        uint32_t light = static_cast<uint32_t>(left.accumD);
+                        int left_x = x;
+                        int right_x = end;
+                        if (left_x < clip.left) {
+                            const int skip = clip.left - left_x;
+                            u = static_cast<int>(
+                                static_cast<uint32_t>(u) +
+                                static_cast<uint32_t>(
+                                    static_cast<int64_t>(du) * skip));
+                            v = static_cast<int>(
+                                static_cast<uint32_t>(v) +
+                                static_cast<uint32_t>(
+                                    static_cast<int64_t>(dv) * skip));
+                            int signed_skip = static_cast<int>(
+                                static_cast<uint32_t>(skip) & 0xffffu);
+                            if (signed_skip >= 0x8000)
+                                signed_skip -= 0x10000;
+                            const int product =
+                                signed_skip * static_cast<int>(dl);
+                            light += static_cast<uint32_t>(product);
+                            left_x = clip.left;
+                        }
+                        u = static_cast<int>(static_cast<uint32_t>(u) +
+                            static_cast<uint32_t>(du >> 1));
+                        v = static_cast<int>(static_cast<uint32_t>(v) +
+                            static_cast<uint32_t>(dv >> 1));
+                        if (right_x > clip.right) right_x = clip.right;
+                        if (right_x > left_x) {
+                            const uint32_t destination_address =
+                                static_cast<uint32_t>(row_offset) +
+                                static_cast<uint32_t>(left_x);
+                            const uint32_t destination_offset =
+                                destination_address - pixel_base;
+                            unsigned char *out = row_base +
+                                static_cast<int32_t>(destination_offset);
+                            const int width = right_x - left_x;
+                            for (int column = 0; column < width; ++column) {
+                                const unsigned int source_x =
+                                    static_cast<uint32_t>(u) >> 16;
+                                const unsigned int source_y =
+                                    static_cast<uint32_t>(v) >> 16;
+                                const unsigned char texel = pixels[
+                                    static_cast<int64_t>(source_y) * pitch +
+                                    source_x];
+                                out[column] = static_cast<unsigned char>(
+                                    texel + ((light >> 8) & 0xffu));
+                                u = static_cast<int>(
+                                    static_cast<uint32_t>(u) +
+                                    static_cast<uint32_t>(du));
+                                v = static_cast<int>(
+                                    static_cast<uint32_t>(v) +
+                                    static_cast<uint32_t>(dv));
+                                light = (light & 0xffff0000u) |
+                                    ((light + static_cast<uint32_t>(dl)) &
+                                     0xffffu);
+                            }
+                        }
+                    }
+                    if (--left.counter == 0) {
+                        if (!setup_edge_gouraud(&left, left.id)) break;
+                    } else {
+                        left.accumA = static_cast<int>(
+                            static_cast<uint32_t>(left.accumA) +
+                            static_cast<uint32_t>(left.deltaA));
+                        left.accumB = static_cast<int>(
+                            static_cast<uint32_t>(left.accumB) +
+                            static_cast<uint32_t>(left.deltaB));
+                        left.accumC = static_cast<int>(
+                            static_cast<uint32_t>(left.accumC) +
+                            static_cast<uint32_t>(left.deltaC));
+                        left.accumD = static_cast<int>(
+                            static_cast<uint32_t>(left.accumD) +
+                            static_cast<uint32_t>(left.deltaD));
+                        left.fracAccum = static_cast<int>(
+                            static_cast<uint32_t>(left.fracAccum) +
+                            static_cast<uint32_t>(left.fracDelta));
+                        if (left.fracAccum > 0) {
+                            left.accumC = static_cast<int>(
+                                static_cast<uint32_t>(left.accumC) +
+                                static_cast<uint32_t>(left.extraDeltaC));
+                            left.fracAccum = texture_difference(
+                                left.fracAccum, left.fracSub);
+                        }
+                    }
+                    if (--right.counter == 0) {
+                        if (!setup_edge_gouraud(&right, right.id)) break;
+                    } else {
+                        right.accumA = static_cast<int>(
+                            static_cast<uint32_t>(right.accumA) +
+                            static_cast<uint32_t>(right.deltaA));
+                        right.accumB = static_cast<int>(
+                            static_cast<uint32_t>(right.accumB) +
+                            static_cast<uint32_t>(right.deltaB));
+                        right.accumC = static_cast<int>(
+                            static_cast<uint32_t>(right.accumC) +
+                            static_cast<uint32_t>(right.deltaC));
+                        right.accumD = static_cast<int>(
+                            static_cast<uint32_t>(right.accumD) +
+                            static_cast<uint32_t>(right.deltaD));
+                        right.fracAccum = static_cast<int>(
+                            static_cast<uint32_t>(right.fracAccum) +
+                            static_cast<uint32_t>(right.fracDelta));
+                        if (right.fracAccum > 0) {
+                            right.accumC = static_cast<int>(
+                                static_cast<uint32_t>(right.accumC) +
+                                static_cast<uint32_t>(right.extraDeltaC));
+                            right.fracAccum = texture_difference(
+                                right.fracAccum, right.fracSub);
+                        }
+                    }
+                    row_offset = static_cast<int>(
+                        static_cast<uint32_t>(row_offset) +
+                        static_cast<uint32_t>(stride));
+                    TextureRasterRowOffset = row_offset;
+                }
+            }
+        }
     }
     if (buffer != 0) buffer->free_data(1);
     texture_reset_fpu();
@@ -6025,7 +6294,9 @@ void Texture::sub_61d090(Buffer *buffer, Vert *vertices, int *zvals,
     int min_y = 0x7fff, max_y = -0x7ffd;
     int min_x = 0x7fff, max_x = -0x7ffd;
     int top = 0;
-    TextureRasterPixelBase = buffer->get_data();
+    unsigned char *destination =
+        static_cast<unsigned char *>(buffer->get_data());
+    TextureRasterPixelBase = destination;
     texture_reset_fpu();
     TextureRasterEdgeVerticesB = vertices;
     TextureRasterEdgeVerticesA = flag == 0 ? corners_ : cornersAndMids_;
@@ -6038,19 +6309,350 @@ void Texture::sub_61d090(Buffer *buffer, Vert *vertices, int *zvals,
     TextureRasterClipLeft = buffer->rect1_.left;
     TextureRasterClipBottom = buffer->rect1_.bottom;
     TextureRasterClipTop = buffer->rect1_.top;
-    const Vert *vertex_pairs = vertices;
-    for (int i = 0; i < count; ++i) {
-        const int x = vertex_pairs[i].x;
-        const int y = vertex_pairs[i].y;
-        if (y < min_y) { min_y = y; top = i; }
-        if (y > max_y) { max_y = y; TextureRasterMaxYIndex = i; }
-        if (x < min_x) min_x = x;
-        if (x > max_x) max_x = x;
-    }
-    if (min_y < max_y) {
-        texture_raster_gouraud_rows(this, buffer, min_y, max_y, top, 0,
-            borrowed_ != 0, pixels_,
-            borrowed_ ? 256 : TextureRowPitchScratch);
+    if (&buffer->rect1_ != 0) {
+        const RECT clip = buffer->rect1_;
+        for (int i = 0; i < count; ++i) {
+            const int x = vertices[i].x;
+            const int y = vertices[i].y;
+            if (y < min_y) {
+                min_y = y;
+                top = i;
+            }
+            if (y > max_y) {
+                max_y = y;
+                TextureRasterMaxYIndex = i;
+            }
+            if (x < min_x) min_x = x;
+            if (x > max_x) max_x = x;
+        }
+        (void)min_x;
+        (void)max_x;
+
+        if (min_y < max_y) {
+            const int stride = static_cast<int>(buffer->stride_);
+            const uintptr_t pixel_base = texture_pointer_address(destination);
+            TextureRasterRowOffset = static_cast<int>(
+                static_cast<uint32_t>(stride) * static_cast<uint32_t>(min_y) +
+                static_cast<uint32_t>(pixel_base));
+            TextureRasterClipBottom = static_cast<int>(
+                static_cast<uint32_t>(stride) *
+                    static_cast<uint32_t>(clip.bottom) +
+                static_cast<uint32_t>(pixel_base));
+            TextureRasterClipTop = static_cast<int>(
+                static_cast<uint32_t>(stride) *
+                    static_cast<uint32_t>(clip.top) +
+                static_cast<uint32_t>(pixel_base));
+
+            EdgeScan left;
+            EdgeScan right;
+            left.f0 = -1;
+            right.f0 = 1;
+            if (setup_edge_gouraud(&left, top) != 0 &&
+                setup_edge_gouraud(&right, top) != 0) {
+                unsigned char *destination_row = destination +
+                    static_cast<int64_t>(stride) * min_y;
+
+                if (borrowed_ != 0) {
+                    _control87(_PC_24 | _RC_CHOP, _MCW_PC | _MCW_RC);
+                    int left_rows = left.counter;
+                    int right_rows = right.counter;
+                    bool done = false;
+
+                    while (TextureRasterRowOffset < TextureRasterClipBottom) {
+                        const EdgeScan row_left = left;
+                        const EdgeScan row_right = right;
+                        bool left_failed = false;
+                        if (--left_rows == 0) {
+                            if (setup_edge_gouraud(&left, left.id) == 0) {
+                                done = true;
+                                left_failed = true;
+                            } else {
+                                left_rows = left.counter;
+                            }
+                        } else {
+                            left.accumA = static_cast<int>(
+                                static_cast<uint32_t>(left.accumA) +
+                                static_cast<uint32_t>(left.deltaA));
+                            left.accumB = static_cast<int>(
+                                static_cast<uint32_t>(left.accumB) +
+                                static_cast<uint32_t>(left.deltaB));
+                            left.accumC = static_cast<int>(
+                                static_cast<uint32_t>(left.accumC) +
+                                static_cast<uint32_t>(left.deltaC));
+                            left.accumD = static_cast<int>(
+                                static_cast<uint32_t>(left.accumD) +
+                                static_cast<uint32_t>(left.deltaD));
+                            left.fracAccum = static_cast<int>(
+                                static_cast<uint32_t>(left.fracAccum) +
+                                static_cast<uint32_t>(left.fracDelta));
+                            if (left.fracAccum > 0) {
+                                left.accumC = static_cast<int>(
+                                    static_cast<uint32_t>(left.accumC) +
+                                    static_cast<uint32_t>(left.extraDeltaC));
+                                left.fracAccum = texture_difference(
+                                    left.fracAccum, left.fracSub);
+                            }
+                        }
+                        if (!left_failed) {
+                            if (--right_rows == 0) {
+                                if (setup_edge_gouraud(&right, right.id) == 0) {
+                                    done = true;
+                                } else {
+                                    right_rows = right.counter;
+                                }
+                            } else {
+                                right.accumA = static_cast<int>(
+                                    static_cast<uint32_t>(right.accumA) +
+                                    static_cast<uint32_t>(right.deltaA));
+                                right.accumB = static_cast<int>(
+                                    static_cast<uint32_t>(right.accumB) +
+                                    static_cast<uint32_t>(right.deltaB));
+                                right.accumC = static_cast<int>(
+                                    static_cast<uint32_t>(right.accumC) +
+                                    static_cast<uint32_t>(right.deltaC));
+                                right.accumD = static_cast<int>(
+                                    static_cast<uint32_t>(right.accumD) +
+                                    static_cast<uint32_t>(right.deltaD));
+                                right.fracAccum = static_cast<int>(
+                                    static_cast<uint32_t>(right.fracAccum) +
+                                    static_cast<uint32_t>(right.fracDelta));
+                                if (right.fracAccum > 0) {
+                                    right.accumC = static_cast<int>(
+                                        static_cast<uint32_t>(right.accumC) +
+                                        static_cast<uint32_t>(right.extraDeltaC));
+                                    right.fracAccum = texture_difference(
+                                        right.fracAccum, right.fracSub);
+                                }
+                            }
+                        }
+
+                        const int span = texture_difference(
+                            row_right.accumC, row_left.accumC);
+                        if (span > 0) {
+                            const int du = texture_span_step(
+                                texture_difference(row_right.accumA,
+                                                   row_left.accumA), span);
+                            const int dv = texture_span_step(
+                                texture_difference(row_right.accumB,
+                                                   row_left.accumB), span);
+                            const unsigned short light_step = texture_light_step(
+                                texture_difference(row_right.accumD,
+                                                   row_left.accumD), span);
+                            int x = row_left.accumC;
+                            int end = row_right.accumC;
+                            const unsigned char *row_pixels =
+                                static_cast<const unsigned char *>(
+                                    TextureRasterScratch544);
+                            if (TextureRasterRowOffset >= TextureRasterClipTop &&
+                                end > clip.left &&
+                                x < clip.right && end > x &&
+                                TextureRasterRowOffset < TextureRasterClipBottom) {
+                                if (end > clip.right) end = clip.right;
+                                int u = row_left.accumA;
+                                int v = row_left.accumB;
+                                uint32_t light = static_cast<uint32_t>(
+                                    row_left.accumD);
+                                if (x < clip.left) {
+                                    const int skip = texture_difference(
+                                        clip.left, x);
+                                    u = static_cast<int>(
+                                        static_cast<uint32_t>(u) +
+                                        static_cast<uint32_t>(
+                                            static_cast<int64_t>(du) * skip));
+                                    v = static_cast<int>(
+                                        static_cast<uint32_t>(v) +
+                                        static_cast<uint32_t>(
+                                            static_cast<int64_t>(dv) * skip));
+                                    int signed_skip = skip & 0xffff;
+                                    if (signed_skip >= 0x8000)
+                                        signed_skip -= 0x10000;
+                                    light += static_cast<uint32_t>(
+                                        signed_skip * static_cast<int>(light_step));
+                                    x = clip.left;
+                                }
+                                uint32_t light_accumulator = light;
+                                unsigned char *out = destination_row + x;
+                                for (int column = 0; column < end - x; ++column) {
+                                    const unsigned int source_x =
+                                        (static_cast<uint32_t>(u) >> 16) & 0xffu;
+                                    const unsigned int source_y =
+                                        (static_cast<uint32_t>(v) >> 16) & 0xffu;
+                                    const unsigned char texel = row_pixels[
+                                        source_y * 256u + source_x];
+                                    out[column] = static_cast<unsigned char>(
+                                        texel + ((light_accumulator >> 8) & 0xffu));
+                                    u = static_cast<int>(
+                                        static_cast<uint32_t>(u) +
+                                        static_cast<uint32_t>(du));
+                                    v = static_cast<int>(
+                                        static_cast<uint32_t>(v) +
+                                        static_cast<uint32_t>(dv));
+                                    light_accumulator = (light_accumulator &
+                                        0xffff0000u) |
+                                        ((light_accumulator + light_step) & 0xffffu);
+                                }
+                            }
+                        }
+                        if (done) break;
+                        TextureRasterRowOffset = static_cast<int>(
+                            static_cast<uint32_t>(TextureRasterRowOffset) +
+                            static_cast<uint32_t>(stride));
+                        destination_row += stride;
+                    }
+                } else {
+                    int left_rows = left.counter;
+                    int right_rows = right.counter;
+                    bool done = false;
+
+                    while (TextureRasterRowOffset < TextureRasterClipBottom) {
+                        const EdgeScan row_left = left;
+                        const EdgeScan row_right = right;
+                        const int span = texture_difference(
+                            row_right.accumC, row_left.accumC);
+                        if (span > 0 &&
+                            TextureRasterRowOffset >= TextureRasterClipTop &&
+                            row_right.accumC > clip.left &&
+                            row_left.accumC < clip.right) {
+                            const int du = texture_span_step(
+                                texture_difference(row_right.accumA,
+                                                   row_left.accumA), span);
+                            const int dv = texture_span_step(
+                                texture_difference(row_right.accumB,
+                                                   row_left.accumB), span);
+                            const unsigned short light_step = texture_light_step(
+                                texture_difference(row_right.accumD,
+                                                   row_left.accumD), span);
+                            const unsigned char *row_pixels =
+                                static_cast<const unsigned char *>(
+                                    TextureRasterScratch544);
+                            int x = row_left.accumC;
+                            int end = row_right.accumC;
+                            if (end > clip.right) end = clip.right;
+                            int u = row_left.accumA;
+                            int v = row_left.accumB;
+                            uint32_t light = static_cast<uint32_t>(
+                                row_left.accumD);
+                            if (x < clip.left) {
+                                const int skip = texture_difference(
+                                    clip.left, x);
+                                u = static_cast<int>(
+                                    static_cast<uint32_t>(u) +
+                                    static_cast<uint32_t>(
+                                        static_cast<int64_t>(du) * skip));
+                                v = static_cast<int>(
+                                    static_cast<uint32_t>(v) +
+                                    static_cast<uint32_t>(
+                                        static_cast<int64_t>(dv) * skip));
+                                int signed_skip = skip & 0xffff;
+                                if (signed_skip >= 0x8000)
+                                    signed_skip -= 0x10000;
+                                light += static_cast<uint32_t>(
+                                    signed_skip * static_cast<int>(light_step));
+                                x = clip.left;
+                            }
+                            const int phase_u = du >> 1;
+                            const int phase_v = dv >> 1;
+                            u = static_cast<int>(static_cast<uint32_t>(u) +
+                                                 static_cast<uint32_t>(phase_u));
+                            v = static_cast<int>(static_cast<uint32_t>(v) +
+                                                 static_cast<uint32_t>(phase_v));
+                            unsigned char *out = destination_row + x;
+                            uint32_t light_accumulator = light;
+                            for (int column = 0; column < end - x; ++column) {
+                                const unsigned int source_x =
+                                    static_cast<unsigned int>(u) >> 16;
+                                const unsigned int source_y =
+                                    static_cast<unsigned int>(v) >> 16;
+                                const unsigned char texel = row_pixels[
+                                    static_cast<int64_t>(source_y) *
+                                        TextureRowPitchScratch + source_x];
+                                out[column] = static_cast<unsigned char>(
+                                    texel + ((light_accumulator >> 8) & 0xffu));
+                                u = static_cast<int>(
+                                    static_cast<uint32_t>(u) +
+                                    static_cast<uint32_t>(du));
+                                v = static_cast<int>(
+                                    static_cast<uint32_t>(v) +
+                                    static_cast<uint32_t>(dv));
+                                light_accumulator = (light_accumulator &
+                                    0xffff0000u) |
+                                    ((light_accumulator + light_step) & 0xffffu);
+                            }
+                        }
+
+                        bool left_failed = false;
+                        if (--left_rows == 0) {
+                            if (setup_edge_gouraud(&left, left.id) == 0) {
+                                done = true;
+                                left_failed = true;
+                            } else {
+                                left_rows = left.counter;
+                            }
+                        } else {
+                            left.accumA = static_cast<int>(
+                                static_cast<uint32_t>(left.accumA) +
+                                static_cast<uint32_t>(left.deltaA));
+                            left.accumB = static_cast<int>(
+                                static_cast<uint32_t>(left.accumB) +
+                                static_cast<uint32_t>(left.deltaB));
+                            left.accumC = static_cast<int>(
+                                static_cast<uint32_t>(left.accumC) +
+                                static_cast<uint32_t>(left.deltaC));
+                            left.accumD = static_cast<int>(
+                                static_cast<uint32_t>(left.accumD) +
+                                static_cast<uint32_t>(left.deltaD));
+                            left.fracAccum = static_cast<int>(
+                                static_cast<uint32_t>(left.fracAccum) +
+                                static_cast<uint32_t>(left.fracDelta));
+                            if (left.fracAccum > 0) {
+                                left.accumC = static_cast<int>(
+                                    static_cast<uint32_t>(left.accumC) +
+                                    static_cast<uint32_t>(left.extraDeltaC));
+                                left.fracAccum = texture_difference(
+                                    left.fracAccum, left.fracSub);
+                            }
+                        }
+                        if (!left_failed) {
+                            if (--right_rows == 0) {
+                                if (setup_edge_gouraud(&right, right.id) == 0) {
+                                    done = true;
+                                } else {
+                                    right_rows = right.counter;
+                                }
+                            } else {
+                                right.accumA = static_cast<int>(
+                                    static_cast<uint32_t>(right.accumA) +
+                                    static_cast<uint32_t>(right.deltaA));
+                                right.accumB = static_cast<int>(
+                                    static_cast<uint32_t>(right.accumB) +
+                                    static_cast<uint32_t>(right.deltaB));
+                                right.accumC = static_cast<int>(
+                                    static_cast<uint32_t>(right.accumC) +
+                                    static_cast<uint32_t>(right.deltaC));
+                                right.accumD = static_cast<int>(
+                                    static_cast<uint32_t>(right.accumD) +
+                                    static_cast<uint32_t>(right.deltaD));
+                                right.fracAccum = static_cast<int>(
+                                    static_cast<uint32_t>(right.fracAccum) +
+                                    static_cast<uint32_t>(right.fracDelta));
+                                if (right.fracAccum > 0) {
+                                    right.accumC = static_cast<int>(
+                                        static_cast<uint32_t>(right.accumC) +
+                                        static_cast<uint32_t>(right.extraDeltaC));
+                                    right.fracAccum = texture_difference(
+                                        right.fracAccum, right.fracSub);
+                                }
+                            }
+                        }
+                        if (done) break;
+                        TextureRasterRowOffset = static_cast<int>(
+                            static_cast<uint32_t>(TextureRasterRowOffset) +
+                            static_cast<uint32_t>(stride));
+                        destination_row += stride;
+                    }
+                }
+            }
+        }
     }
     if (buffer != 0) buffer->free_data(1);
     texture_reset_fpu();

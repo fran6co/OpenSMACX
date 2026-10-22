@@ -1,0 +1,22 @@
+{
+  "event_id": "d73db380653dd71673818cfa32ab5be724ce2fc2fa450fb7f7e99c853b9cc456",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "texture-gouraud-original-mode-key-and-row-order",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "git:627c47b1f:src/texture.cpp and guarded sourceSHAda76f18b5d8c7a0c3ed673bc1066a43380bb0e45d892073e8041c2d32c218d99: both full row/span/edge-advance algorithms now live in their mapped Texture61B780/61D090 bodies with six realsetup_edge_gouraud callsites each. Only unsharedtexture_raster_gouraud_rows is retired; other helpers and all original identities, source bindings, extents, historical claims and TRIED/LEVER findings remain.",
+      "Pinned branch61B91FJE61BCB1 determines original borrowedNONZERO key suppression, ownedZERO unkeyed stores. This supersedes earlier reversed review labels and the prior borrowed-unkeyed host assertion. Original row/clip address publication, mode-read-afterinitialsetup, borrowedrefresh-before-draw with failedrefill stillpainting terminalrow, owneddraw-before-refresh, clipbottomtermination and borrowedprecision/chop intent are recovered. This is recovery toward original effects, not a prospective safety/gameplay fix.",
+      "git:6b3bdfe7b:four actual-source regression files. Independent and coordinator product runs24GCC/Clang controls pass without skips, including compiling/runtime-failing key, full-widthclip-skip and low-WORDlight mutants, both mode/order cases, refill/clip limits, eight-vertex entry selection and Buffer/FPU cleanup. Definitions are literal current-source extractions; edge/Buffer/FPU service doubles and selected paths do not establish productionedge, exhaustive original semantics, actualx87 or game behavior.",
+      "First complete frozen native candidate compiles and links189TUs/203COFFobjects; claims/mappings/references/sourceannotation checks pass.202nonowner normalizedobjects are unchanged. Of56Textureoriginalrecords,21supported completeclosures compare equal;35closureassignments remain unknown, including both changed bodies and preexisting unresolvednullsub. Canonical mapped differences are exactly the two authorized bodies. No original identity, exact or strict-positive identity is lost or gained:5581knownmapped domain,3414masked exact and2827strictpass remain. Both targets remain MISMATCH; no byte claim banked.",
+      "Native outside-two-original-bodies residual FAILS on the retired rowhelper text and its associateddebugsection; that result is retained, not waived or promoted. Shared supporthelper emissions/data remain; no syntheticoriginalidentity was assigned to the removed adapter. This is coordinator-reviewed manual source incorporation under standing userauthority, not nativeautomatic acceptance.",
+      "Known arithmetic/fidelity debt remains: x87 intermediate/status/exceptions, packedcarry/negative-step/phase/sourceaddress equivalence, unusual wrapped/out-of-allocation pointers, producerbounds/lifetime, possible unobserved reentrantglobalwriters, complete linkedretainedselection/allocation and runtime/game proof are unfinished. Justified structure and historical obligations are preserved despite nonmatching output. Fresh destination build/link and relevant regression/identity checks are required after integration; immutable taskbaseline958fa2bd remains unchanged."
+    ]
+  },
+  "previous_event": "3b3f6022a33657c47a38f8f3f1a3e980972716b4973e5ab0719b3836d4e1f915",
+  "request_id": "texture-gouraud-original-mode-key-and-row-order-incorporated",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:texture-row-boundaries-oct23c"
+}
