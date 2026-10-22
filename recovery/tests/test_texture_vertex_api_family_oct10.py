@@ -4,15 +4,25 @@ from pathlib import Path
 import re
 import shutil
 import subprocess
+from collections import defaultdict
 
 import pytest
-from match_recovery.source import read_text
+from match_recovery.binding_source import parse as parse_bindings
+from match_recovery.source import read_file, read_text
+from match_recovery.source_config import SourceConfiguration
 from test_texture_edge_cache_actual_source import _definition, _masked
 from test_texture_raster_actual_source import _continuity_fields
 from test_texture_sub61f0d0_actual_source import extract_method, translation_unit, build_and_run
 
 ROOT = Path(__file__).resolve().parents[2]
 BASE = "fdf7feb74cc492ce3fb2bfb88afff15b95496ffb"
+BYTE_EXACT_PROMOTIONS = frozenset({
+    0x0044E5F0, 0x0044E620, 0x0044E650, 0x0044E6A0, 0x0044E6F0,
+    0x0044E720, 0x0044E770, 0x0044E7C0, 0x0044E810, 0x0044E840,
+    0x0044E890, 0x0044E8E0, 0x0044E930, 0x0044E980, 0x0044E9D0,
+    0x0044EA20, 0x0044EA70, 0x0044EAC0, 0x0044EB10, 0x0044EB60,
+})
+# Recorded initializer claims: 1bf9c1634. Typed free-helper ABI: fff91bbe8.
 SYMBOLS = {
     0x619D80: "?draw_trans2@Texture@@QAEHPAVBuffer@@PAUVert@@H@Z",
     0x61C630: "?sub_61c630@Texture@@QAEXPAVBuffer@@PAUVert@@PAV1@PAEH1@Z",
@@ -22,25 +32,146 @@ SYMBOLS = {
     0x61F0D0: "?sub_61f0d0@Texture@@QAEXPAVBuffer@@PAUVert@@PAHPBXPBIPBEH@Z",
     0x623F50: "?sub_623f50@Texture@@QAEXPAVBuffer@@PAUVert@@PAV1@PAEH1H@Z",
 }
+CURRENT_FREE_HELPER_SYMBOLS = {
+    0x61F800: "?sub_61f800@@YAXPAUEdgeScan@@0@Z",
+    0x6202E0: "?sub_6202e0@@YAXPAUEdgeScan@@0@Z",
+    0x61FE70: "?sub_61fe70@@YAXPAUEdgeScan@@0@Z",
+    0x620640: "?sub_620640@@YAXPAUEdgeScan@@0@Z",
+}
 
 
 def test_all_original_identities_claims_and_history_survive_type_recovery():
     path = ROOT / "src/texture.cpp"
     prior = subprocess.check_output(["git", "show", BASE + ":src/texture.cpp"],
                                     cwd=ROOT, text=True)
-    before = {r.address: r for r in read_text(prior, path)}
-    after = {r.address: r for r in read_text(path.read_text(), path)}
+    before_rows = read_text(prior, path)
+    before = _unique_texture_family(before_rows,
+                                    {row.address for row in before_rows})
+    configuration = SourceConfiguration.read(ROOT)
+    configured_rows = [row for source_path in configuration.files(ROOT)
+                       for row in read_file(source_path)]
+    after = _unique_texture_family(configured_rows, set(before))
     assert set(before) == set(after)
+    _assert_all_relocated_bindings_are_source_owned(after, configured_rows)
+    promoted = set()
     for address, old in before.items():
         current = after[address]
-        assert _continuity_fields(current) == _continuity_fields(old)
-        assert current.symbol == SYMBOLS.get(address, old.symbol)
+        # The only changed historical claims are the twenty recorded FILE
+        # initializer matches. Normalize that one monotonic field while
+        # comparing every other annotation field and lesson byte-for-byte.
+        _assert_annotation_continuity(old, current)
+        if current.byte_exact and not old.byte_exact:
+            promoted.add(address)
+        if address in SYMBOLS:
+            assert current.symbol == SYMBOLS[address]
+        elif address in CURRENT_FREE_HELPER_SYMBOLS:
+            assert current.symbol == CURRENT_FREE_HELPER_SYMBOLS[address]
+        elif current.path != old.path:
+            # The ORIGINAL name remains the identity. This adjacent field is
+            # the emitted local lifetime symbol supplied by the real owner.
+            assert old.symbol == ""
+            assert current.symbol.startswith("_$E")
+        else:
+            assert current.symbol == old.symbol
         if address == 0x61F785:
             assert current.function_fragment == replace(
                 old.function_fragment, parent_symbol=SYMBOLS[0x61F0D0])
         else:
             assert current.function_fragment == old.function_fragment
+    _assert_recorded_promotions(promoted)
     assert after[0x623F50].byte_exact and after[0x61F785].byte_exact
+
+
+def _unique_texture_family(records, expected_addresses):
+    selected = defaultdict(list)
+    for record in records:
+        if record.address in expected_addresses:
+            selected[record.address].append(record)
+    duplicates = {address: rows for address, rows in selected.items()
+                  if len(rows) != 1}
+    missing = set(expected_addresses) - set(selected)
+    assert not duplicates, "original Texture identity has duplicate current owners"
+    assert not missing, "original Texture identity is missing from configured source selection"
+    return {address: rows[0] for address, rows in selected.items()}
+
+
+def _assert_all_relocated_bindings_are_source_owned(family, all_records):
+    configured = SourceConfiguration.read(ROOT)
+    configured_paths = set(configured.files(ROOT))
+    assert all(record.path in configured_paths for record in family.values())
+    relocated = [record for record in family.values()
+                 if record.path != ROOT / "src/texture.cpp"]
+    relocated_paths = {record.path for record in relocated}
+    rows_by_path = defaultdict(list)
+    for record in all_records:
+        if record.path in relocated_paths:
+            rows_by_path[record.path].append(record)
+    bindings = set()
+    for source_path, rows in rows_by_path.items():
+        text = source_path.read_text(encoding="utf-8")
+        bindings.update((source_path, line)
+                        for line in parse_bindings(text, rows))
+    assert len(relocated) == 40
+    for record in relocated:
+        assert (record.path, record.line) in bindings, \
+            f"relocated identity 0x{record.address:08X} lacks adjacent native binding evidence"
+        assert record.symbol.startswith("_$E"), \
+            f"relocated identity 0x{record.address:08X} lacks its emitted lifetime symbol fact"
+        assert record.name.startswith("_$E"), \
+            f"relocated identity 0x{record.address:08X} lost its original identity name"
+
+
+def test_identity_regression_rejects_missing_duplicate_span_and_claim_demotion():
+    path = ROOT / "src/texture.cpp"
+    prior = subprocess.check_output(["git", "show", BASE + ":src/texture.cpp"],
+                                    cwd=ROOT, text=True)
+    baseline_rows = read_text(prior, path)
+    before = _unique_texture_family(baseline_rows,
+                                    {row.address for row in baseline_rows})
+    configuration = SourceConfiguration.read(ROOT)
+    current_rows = [row for source_path in configuration.files(ROOT)
+                    for row in read_file(source_path)]
+    after = _unique_texture_family(current_rows, set(before))
+
+    missing_address = next(iter(before))
+    with pytest.raises(AssertionError, match="missing from configured source selection"):
+        _unique_texture_family([row for row in current_rows
+                                if row.address != missing_address], set(before))
+    with pytest.raises(AssertionError, match="duplicate current owners"):
+        _unique_texture_family([*current_rows, after[missing_address]], set(before))
+
+    changed_span = next(address for address, row in after.items()
+                        if row.image_spans and row.image_spans[0][1] -
+                        row.image_spans[0][0] > 1)
+    current = after[changed_span]
+    low, high = current.image_spans[0]
+    with pytest.raises(AssertionError):
+        _assert_annotation_continuity(before[changed_span],
+                                      replace(current, image_spans=((low, high - 1),)))
+
+    retained_claim = next(address for address, row in before.items()
+                          if row.byte_exact and address not in BYTE_EXACT_PROMOTIONS)
+    with pytest.raises(AssertionError, match="was demoted"):
+        _assert_annotation_continuity(
+            before[retained_claim], replace(after[retained_claim], byte_exact=False))
+
+
+def _assert_annotation_continuity(old, current):
+    assert _continuity_fields(replace(current, byte_exact=old.byte_exact)) == \
+        _continuity_fields(old)
+    assert not old.byte_exact or current.byte_exact, \
+        f"historical BYTE_EXACT claim was demoted at 0x{old.address:08X}"
+
+
+def _assert_recorded_promotions(promoted):
+    assert promoted == BYTE_EXACT_PROMOTIONS, "historical claim promotions differ from recorded evidence"
+
+
+def test_claim_promotions_reject_unrecorded_addition_and_missing_recorded_claim():
+    with pytest.raises(AssertionError, match="differ from recorded evidence"):
+        _assert_recorded_promotions(BYTE_EXACT_PROMOTIONS | {0x619650})
+    with pytest.raises(AssertionError, match="differ from recorded evidence"):
+        _assert_recorded_promotions(BYTE_EXACT_PROMOTIONS - {0x44E5F0})
 
 
 def run_cpp(tmp_path, source):
