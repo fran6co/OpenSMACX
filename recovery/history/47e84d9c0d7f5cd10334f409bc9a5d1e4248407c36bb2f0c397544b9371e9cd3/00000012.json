@@ -1,0 +1,24 @@
+{
+  "event_id": "f90ac378a61e5d4266290cf49c71973d4fa0275c4cf9f4ab28b13f27152adcd9",
+  "payload": {
+    "affects": [
+      "entity-5c5347ae27a8eefd0a546741a37e12a131d06e84605c528a6e80306331cab9e6",
+      "entity-f17f0bb8244d525ea49fa82b7f807bf18dc56aa454c0a28955e317cad7f677b3"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "recovered-lifetime-branched-eh-blocker-oct22c",
+    "evidence": [
+      "Demonstrated recovery blocker, not speculative acceptance engineering: current whole census has39branched predecessor-map refusals and95cold-extent refusals. The actual integrated FileWin8-state graph and AlphaSave21-state graph have matching primary/cold streams and predecessor metadata under independent physical review but remain refused. These are existing mapped identities, not new implementations or permission to bank a claim.",
+      "Authorize only reusable VC6/i386 EH format ownership/measurement support with bounded resource limits, explicit complete physical backing, unique root-registration/handler/FuncInfo/unwind edges, exact relocation inventories and fully partitioned supported action grammar. No project constants/addresses or compiler-command inference may enter the library. Do not merely raise caps or ignore unknown action bytes, zero-action states, reordered/duplicate targets or extra ownership edges.",
+      "Each original and compiled unwind map needs independently validated acyclic earlier-state predecessors, including terminal -1, with explicit metadata comparison before any exact verdict. Identical root/cold code and differing valid predecessor graphs must never pass exactness. Preserve independent original/compiled inventories and mismatch reporting; missing or ambiguous evidence remains refusal. Local destructor targets require physical independent function ownership, not name-only admission or broad target masking.",
+      "Require synthetic adversarial graph/ownership/metadata-only damage controls, full relevant package tests and actual compiler-backed source/replica/graph-damage controls before integration. Current mapped C++ and compiler settings remain unchanged; source measurements use fresh qualified physical receipts rather than claiming private exploratory monkeypatches as passes. Preserve original immutable filewin task baseline and all existing claims/discoveries. No CLI, legacy tool, gate weakening, native automatic acceptance, linked retention or game-completion claim."
+    ],
+    "hypothesis": "The recovered nested class lifetime code requires independently owned branched VC6 cleanup graphs and exact unwind-topology comparison, which the current linear-only native binder cannot represent.",
+    "kind": "discovery"
+  },
+  "previous_event": "4c939e80f0467f862bc70fdf6c5b46d7c332e1e64c970b6d895c0c424371efc9",
+  "request_id": "recovered-lifetime-branched-eh-blocker-oct22c",
+  "schema_version": 1,
+  "sequence": 12,
+  "stream": "task:filewin-jackal-boundary-oct9"
+}
