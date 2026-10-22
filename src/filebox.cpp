@@ -57,17 +57,12 @@ void FileBox::reset() {
 
 /*
 Purpose: Show the common save dialog over FileBox's own editable buffers.
-// ORIGINAL: 0x00634C30 ?save@FileBox@@QAEXXZ 0x00634C30-0x00634CEE FILE
+// ORIGINAL: 0x00634C30 ?save@FileBox@@QAEXXZ 0x00634C30-0x00634CEE FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"reason":"The dialog fields are FileBox's inline filename, title, filter, extension and initial-directory buffers, not an independent leaf redirect.","evidence":["Original 0x00634C30-0x00634CEE calls strcat and GetSaveFileNameA using offsets +0, +0x104, +0x30c, +0x414 and +0x418.","The prior compiling redirect and its observations are preserved at git:06248782:src/leaf_recoveries.cpp."]}
 // symbol    ?save@FileBox@@QAEPADXZ
 */
 char *FileBox::save() {
     char *const file = file_;
-    char *const title = def_name_;
-    if (*title != 0) {
-        *file = 0;
-        strcat(file, title);
-    }
     OPENFILENAMEA ofn;
     ofn.lStructSize = 0x4C;
     ofn.hwndOwner = 0;
@@ -75,6 +70,11 @@ char *FileBox::save() {
     ofn.lpstrFilter = filter_;
     ofn.lpstrCustomFilter = 0;
     ofn.nMaxCustFilter = 0;
+    char *const title = def_name_;
+    if (*title != 0) {
+        *file = 0;
+        strcat(file, title);
+    }
     ofn.lpstrFile = file;
     ofn.nMaxFile = 0x104;
     ofn.lpstrFileTitle = title;
