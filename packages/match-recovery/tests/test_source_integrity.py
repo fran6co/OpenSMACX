@@ -53,6 +53,87 @@ def test_parallel_check_has_the_same_evidence(project):
     assert integrity.check_source(project, jobs=2) == integrity.check_source(project)
 
 
+def test_annotation_parse_reuse_is_exact_text_and_call_local(monkeypatch):
+    real = integrity.read_text
+    inputs = []
+
+    def counted(text, path):
+        inputs.append(text)
+        return real(text, path)
+
+    monkeypatch.setattr(integrity, "read_text", counted)
+    first = integrity.check_annotation_text(Path("unit.cxx"), TEXT)
+    assert first == {"annotations": 2, "findings": []}
+    # Initial parse plus the BYTE_EXACT record's changed demotion. The
+    # unfinished record's writer result is the exact original text and reuses
+    # only the parse made above.
+    assert len(inputs) == 2
+    assert inputs[0] == TEXT and inputs[1] != TEXT
+
+    before_second_call = len(inputs)
+    second = integrity.check_annotation_text(Path("unit.cxx"), TEXT)
+    assert second == first
+    assert len(inputs) == before_second_call + 2
+    assert inputs[before_second_call] == TEXT
+
+
+def test_changed_writer_text_for_unfinished_record_is_reparsed(monkeypatch):
+    real_write = integrity.write
+    real_read = integrity.read_text
+    inputs = []
+
+    def counted_read(text, path):
+        inputs.append(text)
+        return real_read(text, path)
+
+    def damaged_write(text, records):
+        after = real_write(text, records)
+        if (len(records) == 1 and records[0].address == 0x00402000
+                and not records[0].byte_exact):
+            return after.replace("TRIED: an earlier spelling", "TRIED: corrupted spelling")
+        return after
+
+    monkeypatch.setattr(integrity, "read_text", counted_read)
+    monkeypatch.setattr(integrity, "write", damaged_write)
+    report = integrity.check_annotation_text(Path("unit.cxx"), TEXT)
+    assert "demotion_lessons" in {finding["rule"] for finding in report["findings"]}
+    assert len(inputs) == 3  # initial, changed first-record demotion, changed unfinished-record text
+    assert inputs[0] == TEXT and inputs[-1] != TEXT
+
+
+@pytest.mark.parametrize("mutation_stage", ["initial", "demotion"])
+def test_identical_writer_text_does_not_reuse_mutated_records(monkeypatch, mutation_stage):
+    real_write = integrity.write
+    real_read = integrity.read_text
+    inputs = []
+
+    def counted_read(text, path):
+        inputs.append(text)
+        return real_read(text, path)
+
+    def mutating_write(text, records):
+        if mutation_stage == "initial" and len(records) == 2:
+            records[1].ruled_out = ("writer-only mutation",)
+            return text
+        if len(records) == 1 and records[0].address == 0x00402000:
+            if mutation_stage == "initial":
+                return text
+            if mutation_stage == "demotion" and not records[0].byte_exact:
+                records[0].ruled_out = ("writer-only mutation",)
+                return text
+        return real_write(text, records)
+
+    monkeypatch.setattr(integrity, "read_text", counted_read)
+    monkeypatch.setattr(integrity, "write", mutating_write)
+    report = integrity.check_annotation_text(Path("unit.cxx"), TEXT)
+
+    # The former fresh-reread check rejected both mutations. Exact-text reuse
+    # must compare against an untouched parse, not mutable writer arguments.
+    assert "demotion_lessons" in {finding["rule"] for finding in report["findings"]}
+    assert len(inputs) == 2  # initial plus changed BYTE_EXACT demotion only
+    assert inputs[0] == TEXT and inputs[1] != TEXT
+
+
 @pytest.mark.parametrize("rule", ["noop_identity", "keyword_isolation", "demotion_line_count",
                                    "demotion_lessons", "lesson_deletion"])
 def test_writer_damage_is_detected_even_when_record_roundtrips_could_agree(monkeypatch, rule):

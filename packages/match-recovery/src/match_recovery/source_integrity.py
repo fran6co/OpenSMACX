@@ -6,6 +6,7 @@ mutations below are in-memory damage controls; this command never stamps claims.
 
 from collections import Counter
 from concurrent.futures import ProcessPoolExecutor
+from copy import deepcopy
 from dataclasses import replace
 from hashlib import sha256
 import os
@@ -33,6 +34,10 @@ MARKER_HEAD = re.compile(r"^\s*(?://|/\*|\*)\s*ORIGINAL:")
 def check_annotation_text(path: Path, text: str) -> dict:
     """Check a file in memory, preserving its path for parser ownership rules."""
     records = read_text(text, path)
+    # Writer inputs are mutable records. Keep a private pristine parse so a
+    # writer that mutates one of its arguments cannot poison the exact-text
+    # reuse path below. This snapshot is local to this invocation only.
+    original_records = deepcopy(records)
     findings = []
 
     def fail(rule, line, reason):
@@ -86,7 +91,11 @@ def check_annotation_text(path: Path, text: str) -> dict:
         if len(after.splitlines()) != len(before_lines):
             fail("demotion_line_count", record.line, "demotion changes the source line count")
         else:
-            reread = [item for item in read_text(after, path) if item.line == record.line]
+            # Reuse only the parse of this exact input text within this call.
+            # A changed writer result must be reparsed even for an unfinished
+            # record: writer damage is checked against emitted bytes, not state.
+            parsed_after = original_records if after == text else read_text(after, path)
+            reread = [item for item in parsed_after if item.line == record.line]
             if (len(reread) != 1 or reread[0].address != record.address
                     or Counter(reread[0].ruled_out) != Counter(down.ruled_out)
                     or Counter(reread[0].levers) != Counter(down.levers)
