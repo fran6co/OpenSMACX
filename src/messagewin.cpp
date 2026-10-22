@@ -400,18 +400,18 @@ int __cdecl MessageWin::listbox_fill(GraphicWin *target, int, int, RECT *) {
     return 1;
 }
 
-// 0x00471FD0. The archived unit retains its historical BYTE_EXACT claim;
-// this source-owned spelling currently measures a miss and needs restoration.
+// Original identity and current emitted callback symbol are retained separately.
+// Returning zero lets ListBox continue rendering the row after setting its colors.
 // ORIGINAL: 0x00471FD0 ?listbox_write@MessageWin@@QAAHPAUGraphicWin@@HHPAURECT@@PAD@Z 0x00471FD0-0x0047201F BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/00471fd0.cpp", "image:0x00471FD0"], "reason": "The archived callback selects two text colors for the supplied GraphicWin Buffer and is installed by MessageWin init. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
 // kind      game
 // symbol    ?listbox_write@MessageWin@@SAHPAVGraphicWin@@HHPAUtagRECT@@PAD@Z
 int __cdecl MessageWin::listbox_write(GraphicWin *target, int item_id, int,
                                        RECT *, char *) {
-    Buffer &buffer = *static_cast<Buffer *>(target);
-    buffer.set_text_color(MessageWinTextColor, MessageWinTextBackground, 1, 1);
+    target->set_text_color(MessageWinTextColor, MessageWinTextBackground, 1, 1);
+
     if ((item_id & 0x10000000) != 0 && (item_id & 0xefffffff) != 0) {
-        buffer.set_text_color(MessageWinTextColor, -1, 1, 1);
+        target->set_text_color(MessageWinTextColor, -1, 1, 1);
     }
     return 0;
 }

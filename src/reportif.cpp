@@ -87,7 +87,7 @@ void __cdecl draw_radius(int x, int y, int mode, int draw_type);
 // kind      game
 // symbol    ?labs_write@@YAHPAVGraphicWin@@HHPAUtagRECT@@PAD@Z
 int __cdecl labs_write(GraphicWin *window, int technology, int, RECT *, char *) {
-    static_cast<Buffer *>(window)->set_text_color3(
+    window->set_text_color3(
         mandate_color(tech_category(technology)), 0, 1, 1);
     return 0;
 }
