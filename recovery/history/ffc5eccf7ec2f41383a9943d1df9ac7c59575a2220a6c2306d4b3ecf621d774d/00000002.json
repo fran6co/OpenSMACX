@@ -1,0 +1,24 @@
+{
+  "event_id": "977d96900a41642c3ca0689fe153c66e779dab261a47188d9ad587c84c9cf104",
+  "payload": {
+    "affects": [
+      "entity-4882c5c2703cd4731866a439fc4864151c5827cf87bab3c598dcc9d8e3776caf"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "designwin-tooltip-original-lookup-order-oct22r",
+    "evidence": [
+      "Coordinator complete pinned decode of 0x0043D290..0x0043D327 confirms TutorialWindow reset, Spot check and signed position guard; label pointer load from Labels.strings_ptr[0x33A] and Strings::get call0x0043D2E4 precede Win::client_to_screen call0x0043D2F8, whose converted coordinates form the zero-area rectangle passed with retained lookup result to Win::set_bubble_text call0x0043D319.",
+      "Current source and physical COFF call client_to_screen before fetching/resolving that label. Restore the original read/call sequence through existing source-owned Labels, StringTable and MainInterfaceGlobal/Win interfaces, without adding storage, changing coordinate meanings, replacing callbacks, normalizing error paths or inventing a user-visible bug consequence.",
+      "Authorize only the on_iface_right_click statement-order correction and adjacent binding rationale via native binding parse/render. Preserve useful existing comments explaining label offset/slot and the explicitly qualified Win method hidden by MainInterface. Keep all ORIGINAL identities, symbol overrides, spans, historical claims, mode and provenance unchanged; no manual marker edits or new byte claims.",
+      "Add actual-source host controls for reset/check/lookup/coordinate conversion/bubble order, both failed-hit and negative-position exits, exact label pointer/result propagation, original x/y and converted rectangle, and the explicit Win receiver rather than its hiding MainInterface overload. Meaningful compile-success mutants must expose late lookup, wrong label/raw untranslated pointer, swapped coordinates, missing guard and wrong receiver/overload as appropriate. Keep fixtures bounded and do not copy production implementation.",
+      "The first immutable overlay candidate misses matching but does not lose historical local exacts. Do not delay this original-order correction for prolonged byte spelling. Coordinator owns Git/native compile/preparation/integration. Require source/test review, fresh build/link and native census/collateral/source/claim/reference checks plus fresh destination verification; immutable historical task baseline and full-game/linked/runtime/automatic limitations remain unchanged."
+    ],
+    "hypothesis": "The tooltip resolves its localized label after screen conversion in the reconstruction but before it in the pinned original; restore that concrete ordered effect.",
+    "kind": "discovery"
+  },
+  "previous_event": "8041102af51f1c0ec56d9f52bda147336def6566fb8d7e37e93b499a9d662b68",
+  "request_id": "designwin-tooltip-original-lookup-order-oct22r",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:owner-designwin-faithful-recovery-oct20y"
+}
