@@ -1,0 +1,24 @@
+{
+  "event_id": "5e159dbb01c176653c05cb50620e467d49efbb8f3de27ae247ec0100848b705a",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_texture_scratch_494_actual_source.py",
+      "recovery/tests/test_texture_shared_raster_state.py",
+      "recovery/tests/test_texture_vertices.py",
+      "src/texture.cpp"
+    ],
+    "evidence": [
+      "Coordinator directly decoded original non-rollover blocks at 61A497-61A529, 61A997-61AA29 and 623C47-623CD9. They advance only UV/X/fraction fields, not the trailing Gouraud D channel. Existing mapped setup_edge624D80 initializes the first thirteen EdgeScan words, not accumD/deltaD. Reusing generic edge_step reads uninitialized, nonexistent-in-this-protocol channel state; do not suppress this with fixture initialization or sanitizer changes.",
+      "Authorize one small unmapped private UV-only edge-step helper in texture.cpp, using the pinned 32-bit ADD/SUB behavior and the existing source-owned EdgeScan fields, called only by the three already-authorized bodies61A240/61A760/6239E0. Leave existing generic/Gouraud helpers and every other mapped body unchanged. No new classes, header/storage/layout/binding changes, fake original mapping, bug fix, flag change, or setup_edge modification.",
+      "Tests extract the actual UV helper and mapped setup_edge, retain sanitizer policy and all original controls, and explicitly distinguish accidental D-channel access using supported host instrumentation/source checks. Do not avoid the demonstrated path with rollover-only fixtures or use unrelated sanitizer failures as successful mutation kills. Preserve exact historical source obligations; this supplements event19 without resetting the task base or granting acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "0bfa00ecde4349ba17f083d0c082ab06955ec0d20afdf7e8266a9931d2fcbb51",
+  "request_id": "keyed-uv-edge-step-without-gouraud-channel-oct22v",
+  "schema_version": 1,
+  "sequence": 20,
+  "stream": "task:texture-rasterizer-recovery"
+}
