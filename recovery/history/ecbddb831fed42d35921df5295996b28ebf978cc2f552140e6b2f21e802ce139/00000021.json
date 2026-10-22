@@ -1,0 +1,20 @@
+{
+  "event_id": "37bac90b1455d4b4558aa4a471ed44fad1ea5dd7d911f72e1d8cdd6a4530a6ad",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_texture_span_prefetch_owner_oct10.py"
+    ],
+    "evidence": [
+      "The existing baseline prefetch test passes but extracts the three changed kernels using obsolete literal source_reads=pixels and local-key aliases. Root frozen focused run131pass17fail retains eight extraction failures from that dependency, not evidence to erase original read-order controls.",
+      "Authorize test-only adaptation to the actual shared source-pixel/key cells in the three existing keyed bodies. Retain all opaque/Gouraud kernels, distinct original prefetch order, final/key-suppressed reads, compile-success damage controls and sanitizer policy. No product source, expectations, mappings, bytes, flags, task base or acceptance change. Product C++ remains frozen; investigate any non-extraction discrepancy rather than fabricate a fixture pass."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "5e159dbb01c176653c05cb50620e467d49efbb8f3de27ae247ec0100848b705a",
+  "request_id": "keyed-raster-prefetch-fixture-dependency-oct22v",
+  "schema_version": 1,
+  "sequence": 21,
+  "stream": "task:texture-rasterizer-recovery"
+}
