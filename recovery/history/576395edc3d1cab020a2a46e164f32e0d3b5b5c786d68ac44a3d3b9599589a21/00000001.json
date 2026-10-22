@@ -1,0 +1,27 @@
+{
+  "event_id": "7b607d71ece35b44df560e1b7edd757bc728837dd1304402213c5a1e1f3859bc",
+  "payload": {
+    "affects": [
+      "entity-421d7d7e14a656f2fd70d7836556862bd3838269168ff2dee0d874e340fcffb4",
+      "entity-6bdd3083f8e975321220257c1fe6e7e2f9abe95b157bb1404476426728e0071f",
+      "entity-a5ace58353d3210408c862b56c5752e5de4163492cf5aef7a0bb989157545d83",
+      "entity-b8500dd1250518c72a26c72094b0634cda8125cf6b30f1530c5fcd8521754617",
+      "entity-bc59ea28cb7bc3b303789b40bea8a9573a433c67abcbc82cc25c34b11f692265",
+      "entity-fafdbc980d6deb05c685ffe33b963fb92329750ba578d03d12cba9ec89912d76"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "voice-clear-owner-and-session-reset-oct23b",
+    "evidence": [
+      "git:1a5f2853fc3ef6eaeb00cbe71d0f358cf354b1b3:src/general.cpp; src/net_class.cpp; src/net_class.h",
+      "pinned:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:62E184 conditional branch to62E1EF skips list resets;62E1F5/62E1FB clear D4/D8 before queues",
+      "sha256:7a360ede4a24d0fed4a75c4f7531a20966a134d6098e7c3d5203969c0d1ba407:ignored physical residual report; initial five-body residual failure retained separately"
+    ],
+    "hypothesis": "The real receiver cleanup definition belongs with Net lifecycle code, while Net::close omits pinned post-callback D4 and repeated D8 reset stores. Home the unchanged definition, restore only those original stores, and preserve null-head stale list state. Fresh compiler output additionally reorders two independent stack loads in already-owned choose_service; account for that precise unchanged-source effect rather than waive an unexplained outside-body difference.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "voice-clear-owner-and-session-reset-oct23b",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:voice-clear-owner-oct23b"
+}
