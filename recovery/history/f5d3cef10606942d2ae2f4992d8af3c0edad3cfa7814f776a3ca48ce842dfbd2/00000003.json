@@ -1,0 +1,21 @@
+{
+  "event_id": "e1037ccecb59c47c4ff1450fec3b023cdade067e0a5e95cef12de46d8f919159",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "picker-specific-redraw-oct22w",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Coordinator incorporates pending picker-specific-redraw-oct22w into genuine DesignWin source at d9599c3c469afccc43cbf30e62b63d34c2a75139. Only armor0x43A760/reactor0x43AA00 helper tails change to the pinned original member-call sequence, zero arguments and final virtual on_update. Chassis/weapon, selection, unchecked/cancel behavior, conditional suggestion, class layout and lifecycle are unchanged. This resolves the source discrepancy, not remaining byte restoration or task/game acceptance.",
+      "Independent source/original review .opensmacx/recovery/parallel-match-oct22x/picker-redraw-independent-review.md sha256a601241e34793faf91e5aacbb52e355bd43872210f037a83836d2a905d3674c6. Corrected src/designwin.cpp sha2561861b77c40e372b525199879a27805014a0005d3bb11739065937b4e8831cf89.",
+      "Fresh frozen native candidate d9599c3c469afccc43cbf30e62b63d34c2a75139 built and linked all189 C++ units/203 objects; source, references, mappings and historical claims pass. Receipt-qualified comparison to per-change checkpoint dfd3d9e59cc0d8c9e42eabe7f3a2ce8c010e6558 finds202 non-owner objects identical and exactly the two intended complete function closures changed among227 defined functions; the native compiled residual projecting only those two functions passes. This is not complete linked selection/preservation proof and does not replace immutable task baseline.",
+      "All89 owner original identities, names/spans, claims and useful source history retained; all5581 known mapped verdicts and strict pass identity set unchanged (3414 locally exact,2827 strict passes). Both corrected functions remain MISMATCH. Whole mapped domain is not exhaustive executable coverage. New actual-source tests pass17/17, combined owner suite76 pass/6 unchanged known failures/0 skips; those failures are retained, not waived or reset.",
+      "Coordinator-reviewed manual integration is authorized under the standing user workflow, contingent on fresh destination build/link and relevant rechecks after transfer. Automatic publication/full linked preservation, complete structure/runtime proofs, working game and full acceptance remain unproven. Audit .opensmacx/recovery/parallel-match-oct22x/picker-redraw-candidate-physical-review.json sha256bdbd02acd8490db99c2a05e063d8411ab60b058fb338ba3b6ca76c69d55dc33c."
+    ]
+  },
+  "previous_event": "88c1c85164ee83c244029ed253b84eeee1cfb17b216b70f4e9a0fa94fd00ff34",
+  "request_id": "incorporate-picker-specific-redraw-oct22x",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:selectpart-design-shared-visibility-oct22w"
+}
