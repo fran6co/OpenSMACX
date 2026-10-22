@@ -1,0 +1,45 @@
+{
+  "event_id": "d044db5b9c9f40f12c53feb6d485585fa565abc14a92d3881c1736a328e8f199",
+  "payload": {
+    "affects": [
+      "entity-0d663d1ff3b75f8c877540672a984d089999e317e57f86b9679a49175b9b5312",
+      "entity-18255b24351cb8050fd41c6853cfdf6fab30977968ad1012c76d4a3619cb41d3",
+      "entity-189e438252e1e81cf2f4f6f8c044999157efefde77280a2a764f144af4cbbd40",
+      "entity-270f3015e155de81903d9b182140291ba0bcb6b37173759c2436b3bd14e12eec",
+      "entity-2bc0fc678f58e16dda22425f7abceaef97b87beaebccfafba3a622f9a613900a",
+      "entity-35ad32902e6e9eb6ced88ac95540147b7d0f2613bc894843b42493b4acc19d1a",
+      "entity-3bd83f1392b9d9755438a48f2bc9f9b22e4d087a1c89604d59b705fe135dd79b",
+      "entity-3f1c618bc5bfe9b77efe42e42055a6a95f830216f6a45dec8338b15ee44f7857",
+      "entity-535cb726f450a084bc40b6cb00dee5a5f29429a216b6028edfcddf59e05dd5da",
+      "entity-622e074f1bc6a9eaf98d8299c58516f7c46f94e90a47e3d212257e9335778cbd",
+      "entity-726d8eed58aeb61667bfe5dbad4be0bbc8b97e2e11cd27804f5ffb85462b8c3a",
+      "entity-766b5f7c4931a0e8e6fc20304a9edee0d30b606337efb8b6a123e9f568ffc023",
+      "entity-80357eedf8c5ab295e2fb66d031ef5a27bd2a8ac11ca02a1d283af687a1df7f5",
+      "entity-864e5fe3a50133a69c1acc49b6621f0773c159731fb954177fbb82e0ea73f775",
+      "entity-977d75b7be3f9d548b714e0df1cb04cba88d99b1bf4b5265ea398994f48f73ba",
+      "entity-9c33c02f0abb5098fd864ec4750e2c3a1573fec8c4747ec124de47bf849a46cb",
+      "entity-a1fc0ffd00b766fe8f8ada66a6af4bb57b8fec0d031af472daacc225852cc679",
+      "entity-af20e80aa0fbbec8d19296e46e6e99133e2ec2530e0fdd55993e27c0ddb38606",
+      "entity-bef1cf6cdafd69565271da54379348f90602643854b82300f2a69e433e242931",
+      "entity-c1cf34add26ebcef07b4d7f09d037309874e4f78bcab821ffcdf8f7c6b93493c",
+      "entity-d42e2e8eacd48a3c247fe8420a7c3eb533e811171c5775fdef0c90b1e96fd209"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "gamma-header-normal-and-cold-visibility-oct22e",
+    "evidence": [
+      "The original normal paths in PrefWin491400 and load_palette451A10 expand Gamma cleanup while their cold entries call standalone destructor456110. The existing source owns a genuine Gamma automatic object in each consumer; body visibility is a class-lifetime issue, not an arbitrary emitter search.",
+      "The actual unchanged production-recipe screen retains40compiled controls across Gamma and StringBox families. Gamma header-visible unchanged destructor emits the complete original root/cold body exactly in both real Gamma consumers; its gamma.cpp copy still expands close and mismatches. Replay, unchanged-source replicas and nonempty emitted-code damage controls pass. Retained-object advisory report: .opensmacx/recovery/parallel-match-oct22a/header-lifetimes-actual-screen-oct22d-v2/report.json. This is not source publication, strict target identity or linked-selection proof.",
+      "Authorize only moving the unchanged Gamma::~Gamma(){close();} definition into its real class header and removing the duplicate out-of-line definition. Preserve Gamma::close body/call target, typed member/base hierarchy/order, all original mappings/spans/historical claims and seed lessons. No manual vtables, hand-written cleanup, noinline/inline-forcing attributes, flags or body/behavior changes. Keep PushButton and unrelated owners untouched.",
+      "Retain the standalone destructor identity with the native source writer, FILE/body header and explicit current compilation context src/interface_palette.cpp, one of the two independently observed real consumers. This selection describes current physical emission, not original filename, historical TU ownership, linked COMDAT selection or a fabricated C++ wrapper. Preserve all other generated Gamma mappings in their existing owner. Source/binding evidence must distinguish inline normal paths and independent exceptional entry.",
+      "Scope includes the two genuine consumer mappings and files for necessary reviewed binding/reference coordination, not permission for unrelated body rewrites. Identify all affected emitted copies; preserve code work and restoration obligations on regressions. Coordinator owns Git, preparation/compiler leases and fresh build/link, complete census/claim/reference checks and integration. Use actual-source behavioral controls when useful; do not add test-only source-string tautologies or a project CLI.",
+      "StringBox visibility is a separately retained proposal, not part of these C++ edits: its original cleanup still encounters unsupported action grammar and five formerly exact constructor observations refuse in the header experiment. Preserve that evidence for separate complete-action validation rather than silently approving those unknowns."
+    ],
+    "hypothesis": "Expose the unchanged genuine Gamma destructor to its actual automatic-object consumers while retaining independently mapped standalone EH teardown; source visibility must not be confused with linked copy selection.",
+    "kind": "discovery"
+  },
+  "previous_event": "fe676551e244dcbfc25b3af9c8ddf7770b9a5b071f3f2d1e39220142599dc202",
+  "request_id": "gamma-header-normal-and-cold-visibility-oct22e",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:gamma-pushbutton-owner-oct20aj"
+}

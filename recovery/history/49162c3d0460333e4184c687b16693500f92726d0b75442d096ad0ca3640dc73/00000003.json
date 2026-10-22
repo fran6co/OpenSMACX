@@ -1,0 +1,39 @@
+{
+  "event_id": "fe676551e244dcbfc25b3af9c8ddf7770b9a5b071f3f2d1e39220142599dc202",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_gamma_inline_lifetime.py",
+      "src/gamma.cpp",
+      "src/gamma.h",
+      "src/interface_palette.cpp",
+      "src/prefwin.cpp"
+    ],
+    "evidence": [
+      "The original normal paths in PrefWin491400 and load_palette451A10 expand Gamma cleanup while their cold entries call standalone destructor456110. The existing source owns a genuine Gamma automatic object in each consumer; body visibility is a class-lifetime issue, not an arbitrary emitter search.",
+      "The actual unchanged production-recipe screen retains40compiled controls across Gamma and StringBox families. Gamma header-visible unchanged destructor emits the complete original root/cold body exactly in both real Gamma consumers; its gamma.cpp copy still expands close and mismatches. Replay, unchanged-source replicas and nonempty emitted-code damage controls pass. Retained-object advisory report: .opensmacx/recovery/parallel-match-oct22a/header-lifetimes-actual-screen-oct22d-v2/report.json. This is not source publication, strict target identity or linked-selection proof.",
+      "Authorize only moving the unchanged Gamma::~Gamma(){close();} definition into its real class header and removing the duplicate out-of-line definition. Preserve Gamma::close body/call target, typed member/base hierarchy/order, all original mappings/spans/historical claims and seed lessons. No manual vtables, hand-written cleanup, noinline/inline-forcing attributes, flags or body/behavior changes. Keep PushButton and unrelated owners untouched.",
+      "Retain the standalone destructor identity with the native source writer, FILE/body header and explicit current compilation context src/interface_palette.cpp, one of the two independently observed real consumers. This selection describes current physical emission, not original filename, historical TU ownership, linked COMDAT selection or a fabricated C++ wrapper. Preserve all other generated Gamma mappings in their existing owner. Source/binding evidence must distinguish inline normal paths and independent exceptional entry.",
+      "Scope includes the two genuine consumer mappings and files for necessary reviewed binding/reference coordination, not permission for unrelated body rewrites. Identify all affected emitted copies; preserve code work and restoration obligations on regressions. Coordinator owns Git, preparation/compiler leases and fresh build/link, complete census/claim/reference checks and integration. Use actual-source behavioral controls when useful; do not add test-only source-string tautologies or a project CLI.",
+      "StringBox visibility is a separately retained proposal, not part of these C++ edits: its original cleanup still encounters unsupported action grammar and five formerly exact constructor observations refuse in the header experiment. Preserve that evidence for separate complete-action validation rather than silently approving those unknowns."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4789248,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4528656,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "65058166de0364a2d697779b59eb56f87892f493b11655009d6be952efc5c00c",
+  "request_id": "gamma-header-lifetime-scope-oct22e",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:gamma-pushbutton-owner-oct20aj"
+}
