@@ -1,0 +1,24 @@
+{
+  "event_id": "3b3f6022a33657c47a38f8f3f1a3e980972716b4973e5ab0719b3836d4e1f915",
+  "payload": {
+    "affects": [
+      "entity-2c1477b51a6640862893bc06e59a64d5d63e6981671d4dd97884c1442c27c72b",
+      "entity-fae7c39f2851844a1f96cd8312930b335b8d0a77bdf6307ce078bb8c02f62c3a"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "texture-gouraud-original-mode-key-and-row-order",
+    "evidence": [
+      "Pinned01901cbf:61B91A reads Texture+6C;61B91Dtests;61B91FJE61BCB1. Zero owned mode jumps to later unkeyed loops61BED1/BF4F. Nonzero borrowed mode falls through61B925 into keyload61BC45,texelload61BC70,compare61BC7B,JE61BC7D skipping store; nonkey61BC7Fadds light and61BC81stores. Root independently decoded the hash-verified entire span with native PeImage/Capstone.",
+      "The initial checklist and root summary incorrectly labelled those two paths in reverse. They are superseded by the actual conditional branch and complete-loop reachability. This is a correction to original behavior, not an approved gameplay improvement. Earlier borrowed-unkeyed host assertions preserve a recovery defect and must be replaced, retaining their Git provenance.",
+      "Pinned61B8D3/61B8D9/61B8DF publish address-valued row/clip cells before initialsetup;61B91A reads mode only after both successfulinitialsetups. The original borrowed loop updates/refills edges before rendering a captured row; owned loop renders then advances. The two full mapped bodies and test files are already inside this owner Task; no scope, baseline, flag or claim changes are granted.",
+      "Independent candidate review and actual-source mutation controls must verify both mode effects. Packed texture-address arithmetic, exact x87 effects, producers, runtime and complete linked selection remain unresolved. Neither the erroneous older test nor the new local observation proves whole-body semantic or byte fidelity."
+    ],
+    "hypothesis": "The current 61B780 helper delegation and its focused key-policy test omit original borrowed-path key suppression. The original condition is determined by control-flow reachability, not by the initially reversed labels in the independent checklist. Full body reconstruction must follow original callback, mode-read, row-state and edge-refill ordering rather than merely inline the current helper graph.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "texture-gouraud-original-mode-key-and-row-order",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:texture-row-boundaries-oct23c"
+}
