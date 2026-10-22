@@ -1,0 +1,20 @@
+{
+  "event_id": "3472f34d8319ee5a903cdb3fdd8cd318cc22b05c2e76911781e6dafc5187eb24",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "texture-cached-edge-transitive-call-boundary-oct23a",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Source src/texture.cpp at original625080 now directly owns the complete typed cached-edge operation, not the wrapper. Actual candidatec70ed5ec7 source SHA5806250e6877a6821b8515181a7ba5dc37b233aff84e48cd4dd39d1ad1c57881 was independently reviewed against the full pinned original branch/store/call trace; historical identities, spans, symbols, all56owner obligations and binding rationale are retained.",
+      "Fresh native full application build/link build-_ll0kufi, source annotation integrity, mappings, references and historical claims all pass. Receipt-qualified actual COFF at625080 now makes exactly3 fixed_div calls; each of the3actual original raster callers6212B0/622810/622200 now makes4 calls to625080 rather than texture_cached_edge. Onlythese4 mapped functions change. The shared helper/provider definitions and202nonownerobjects are unchanged, no function definitions added/removed, native compiled residual outside4 passes.",
+      "The known5581-identity census retains all3414 local byte-exact identities and2827 strict-reference passes; no new exactness was obtained or recorded.625080 has178 bounded candidate instructions versus183original, stillMISMATCH. Seventy-eight related host tests pass including actual-source callback-diagnostic/damage controls;2legacy failures (old destructor mutation anchor and historical whole-source projection) are independently reproduced unchanged on mastere9244fc.",
+      "Incorporated means only this source boundary discovery is acted upon, not that any function or game is accepted. Existing fixed_div quotient-overflow/exception fidelity debt remains. Thirty-five exact local-data closure comparisons remain unknown; the native residual is not full linked selection/allocation/preservation, original historical TU proof, runtime or autonomous acceptance. Coordinator-reviewed integration still requires a fresh destination build and checks; no baseline reset, marker edit, byte grant or demotion."
+    ]
+  },
+  "previous_event": "75fc77bf14a6cd689b2afae6b51422a33401446526ca959369322abe714b6150",
+  "request_id": "texture-cached-edge-transitive-call-boundary-incorporated-oct23a",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:texture-cached-edge-oct23a"
+}
