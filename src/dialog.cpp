@@ -338,7 +338,7 @@ Return Value: Matching position, or the configured entry count on a miss
 Status: Complete
 */
 
-MEASURED int Dialog::id_to_pos(int id) {
+int Dialog::id_to_pos(int id) {
     if (item_list_.head_) {
         int count = item_list_.entry_count_;
         item_list_.current_position_ = 0;

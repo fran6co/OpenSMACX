@@ -1,4 +1,4 @@
-"""Source and host-runtime controls for the technology getter owner move.
+"""Source and host-runtime controls for ordinary technology getter APIs.
 
 These checks establish source ownership continuity and ordinary C++ behavior;
 they do not establish VC6 ABI or instruction equivalence.
@@ -35,10 +35,11 @@ def _masked(text):
     )
 
 
-def _extract_definition(text, name, *, inline=False):
-    inline_part = r"\s+inline" if inline else r"(?:\s+inline)?"
+def _extract_definition(text, name, *, inline=False, measured=True):
+    measured_part = r"MEASURED\s+" if measured else ""
+    inline_part = r"inline\s+" if inline else ""
     signature = re.compile(
-        rf"\bMEASURED{inline_part}\s+int\s+__cdecl\s+{re.escape(name)}"
+        rf"(?m)^[ \t]*{measured_part}{inline_part}int\s+__cdecl\s+{re.escape(name)}"
         r"\s*\(\s*int\s+tech_id\s*\)\s*\{"
     )
     masked = _masked(text)
@@ -141,17 +142,28 @@ def test_native_body_writer_preserves_four_mapping_records_and_moves_only_body_o
     current_header = (ROOT / HEADER_REL).read_text()
     current_cpp = (ROOT / CPP_REL).read_text()
     for _address, (name, _field, _fallback) in GETTERS.items():
-        old_definition = _extract_definition(old_header, name, inline=True)
-        current_definition = _extract_definition(current_cpp, name)
+        old_definition = _extract_definition(old_header, name, inline=True, measured=True)
+        current_definition = _extract_definition(current_cpp, name, measured=False)
         expected_definition = re.sub(r"\binline\s+", "", old_definition, count=1)
+        expected_definition = re.sub(r"\bMEASURED\s+", "", expected_definition, count=1)
         assert current_definition == expected_definition
         declaration = re.compile(
-            rf"\bMEASURED\s+int\s+__cdecl\s+{re.escape(name)}"
+            rf"(?m)^[ \t]*int\s+__cdecl\s+{re.escape(name)}"
             r"\s*\(\s*int\s+tech_id\s*\)\s*;"
         )
         assert len(declaration.findall(current_header)) == 1
+        exported_declaration = re.compile(
+            rf"(?m)^[ \t]*MEASURED\s+int\s+__cdecl\s+{re.escape(name)}"
+            r"\s*\(\s*int\s+tech_id\s*\)\s*;"
+        )
+        exported_definition = re.compile(
+            rf"(?m)^[ \t]*MEASURED\s+(?:inline\s+)?int\s+__cdecl\s+{re.escape(name)}"
+            r"\s*\(\s*int\s+tech_id\s*\)\s*\{"
+        )
+        assert not exported_declaration.search(current_header)
+        assert not exported_definition.search(current_cpp)
         with pytest.raises(AssertionError):
-            _extract_definition(current_header, name)
+            _extract_definition(current_header, name, measured=False)
 
     old_picktech = _git_show(BASELINE, Path("src/picktech.cpp")).decode("utf-8")
     current_picktech = (ROOT / "src/picktech.cpp").read_text()
@@ -218,7 +230,10 @@ int main() {
 
 def _actual_bodies():
     source = (ROOT / CPP_REL).read_text()
-    return {name: _extract_definition(source, name) for name, _, _ in GETTERS.values()}
+    return {
+        name: _extract_definition(source, name, inline=False, measured=False)
+        for name, _, _ in GETTERS.values()
+    }
 
 
 def _compile_and_run(compiler, tmp_path, source, label):

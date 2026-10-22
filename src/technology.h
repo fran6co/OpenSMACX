@@ -196,10 +196,10 @@ MEASURED inline LPSTR __cdecl tech_name(int tech_id, BOOL category_lvl) {
 // PickTech::pick calls these out of line at 0x00486946, 0x00486951,
 // 0x0048699D, 0x004869A7 and 0x004869B2. Definitions live in technology.cpp;
 // these observed calls do not establish historical TU ownership elsewhere.
-MEASURED int __cdecl tech_mil(int tech_id);
-MEASURED int __cdecl tech_tech(int tech_id);
-MEASURED int __cdecl tech_infra(int tech_id);
-MEASURED int __cdecl tech_colonize(int tech_id);
+int __cdecl tech_mil(int tech_id);
+int __cdecl tech_tech(int tech_id);
+int __cdecl tech_infra(int tech_id);
+int __cdecl tech_colonize(int tech_id);
 
 MEASURED inline int __cdecl tech_recurse(int tech_id, int base_lvl) {
     if (tech_id < 0 || tech_id >= MaxTechnologyNum) {

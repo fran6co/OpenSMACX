@@ -588,7 +588,7 @@ Status: Complete
 //        constant-return block first; the guard clause falls through to the
 //        work and tails the constant return, matching the image's jge-past-work
 //        layout.
-MEASURED int __cdecl tech_mil(int tech_id) {
+int __cdecl tech_mil(int tech_id) {
     // TODO: why only this one returns 0 with other three returning 1? typo/bug?
     if (tech_id < MaxTechnologyNum) {
         return Technology[tech_id].power_value;
@@ -615,7 +615,7 @@ Status: Complete
 // at others, and a .cpp definition is only ever one of those. The marker stays
 // here because that is where the catalogue reads it.
 // LEVER: branch polarity - same guard-clause rewrite as tech_mil.
-MEASURED int __cdecl tech_tech(int tech_id) {
+int __cdecl tech_tech(int tech_id) {
     if (tech_id < MaxTechnologyNum) {
         return Technology[tech_id].tech_value;
     }
@@ -643,7 +643,7 @@ Status: Complete
 // `MEASURED inline`. The image writes it out at some call sites and calls it
 // at others, and a .cpp definition is only ever one of those. The marker stays
 // here because that is where the catalogue reads it.
-MEASURED int __cdecl tech_infra(int tech_id) {
+int __cdecl tech_infra(int tech_id) {
     if (tech_id < MaxTechnologyNum) {
         return Technology[tech_id].wealth_value;
     }
@@ -669,7 +669,7 @@ Status: Complete
 // at others, and a .cpp definition is only ever one of those. The marker stays
 // here because that is where the catalogue reads it.
 // LEVER: branch polarity - same guard-clause rewrite as tech_mil.
-MEASURED int __cdecl tech_colonize(int tech_id) {
+int __cdecl tech_colonize(int tech_id) {
     if (tech_id < MaxTechnologyNum) {
         return Technology[tech_id].growth_value;
     }

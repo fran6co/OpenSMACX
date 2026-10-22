@@ -152,7 +152,7 @@ class Dialog {
   void set_dialog_text_color3(int color1, int color2, int color3, int color4);
   // Used by CheckBox's mouse handler and by set_selected_id; the shared
   // traversal is defined out of line in dialog.cpp.
-  MEASURED int id_to_pos(int id);
+  int id_to_pos(int id);
   void set_selected_id(int id);
   int get_selected_id();
   int pos_to_id(int position);
