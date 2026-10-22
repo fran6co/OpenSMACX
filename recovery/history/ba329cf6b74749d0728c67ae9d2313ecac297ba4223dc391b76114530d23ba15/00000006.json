@@ -1,0 +1,21 @@
+{
+  "event_id": "b8a1fc6a480a113452a659f05c913bd0faec1a8b4cd5e1bca623a4e27db845b8",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/console_commands.cpp"
+    ],
+    "evidence": [
+      "Authorize native recorder bookkeeping only for existing in-scope Console::editor_date4E0210 in src/console_commands.cpp. Its implementation is unchanged; the reviewed game helper ownership correction restores the original game_year call. Actual-recipe candidate and fresh combined master6ggirj census both observe31/31instructions exact, without other exact-count losses.",
+      "Coordinator runs recover prepare and recover record against the pinned image under one provisioned compiler lease. Only the installed native recorder may grant the measured historical claim. No hand token/marker editing, other function claim change, function-body edit, demotion, flag change or weakening of any proof requirement is permitted. A recorder refusal remains refusal.",
+      "Local equality does not establish strict references: combined master has2827strict passes/587unknown; this new locally exact identity is not a claimed strict-reference gain. Preserve automatic acceptance refusals, compiler collateral, linked/runtime unknowns and the original task baseline. Fresh source/claim/reference and build/link checks follow publication."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "edbd71eee69536d4c3fad3a2cd6bfedb67584e8f4b3afa24b671ea55f1da9df4",
+  "request_id": "bank-restored-editor-date-after-game-helper-ownership-oct22v",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:matching-game-oct20z"
+}
