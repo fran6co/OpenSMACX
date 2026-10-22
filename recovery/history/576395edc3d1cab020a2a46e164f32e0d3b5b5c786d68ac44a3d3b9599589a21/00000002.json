@@ -1,0 +1,19 @@
+{
+  "event_id": "975f45d5a9d5e6766482408edf838b1930618cfc0ebb59710cf355a4c9f59f49",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "voice-clear-owner-and-session-reset-oct23b",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "git:b846667e48cf47a838ae3767aed284c213d76a71:src/general.cpp; src/net_class.cpp; actual-source controls in recovery/tests/test_voice_clear_owner_oct23b.py",
+      "sha256:381e201468da9136f8fc30ff432c0fbcdd6b3e0fddbb705fdea0fd8ef68ddff2:independent physical review of unique identical transported clear provider and exact commuting two-load change in630D70",
+      "Coordinator-reviewed manual checkpoint only: fresh candidate build/link, native source/mapping/reference/claim checks and four actual-source/damage controls pass. Existing matching obligations retained; no generated-destructor match gain asserted. Linked selection/allocation, runtime/game and autonomous acceptance remain unproven. Require fresh destination checks after integration; do not treat this resolution as automatic acceptance."
+    ]
+  },
+  "previous_event": "7b607d71ece35b44df560e1b7edd757bc728837dd1304402213c5a1e1f3859bc",
+  "request_id": "voice-clear-owner-and-session-reset-oct23b-incorporated",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:voice-clear-owner-oct23b"
+}

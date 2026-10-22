@@ -2342,34 +2342,6 @@ int __cdecl trig_init() {
     return sin(static_cast<int>(0xe02d82d7), 100);
 }
 
-// ORIGINAL: 0x00538EC0 ??1JackalVoiceRx@@QAE@XZ 0x00538EC0-0x00538F2E FILE BYTE_EXACT
-// kind      game
-// symbol    ?clear@JackalVoiceRx@@QAEXXZ
-// The catalogue destructor label names this shared list-clearing helper.
-// Callers stage receiver/base tables and allocation-owner handoff outside it
-// (0x00538E5A..0x00538E9E); the complete receiver destructor is separate
-// (0x004E3660). Keep the original identity, not the skeleton's class fiction.
-// Insertion 0x00633180 establishes distinct 0x1C circular entries and 0x60
-// voice payloads. The three virtual calls below are respectively a receiver
-// hook, Sound-family destruction, and entry virtual-base destruction.
-// This does not complete Net/AlphaNet/NetDaemon lifetime recovery.
-void JackalVoiceRx::clear() {
-    if (head_) {
-        for (int removed = 0; removed < count_; ++removed) {
-            cursor_ = head_->next_;
-            Sound *payload = head_->payload_;
-            on_remove(payload);
-            delete payload;
-            head_->payload_ = 0;
-            delete head_;
-            head_ = cursor_;
-        }
-        head_ = 0;
-        cursor_index_ = 0;
-        count_ = 0;
-    }
-}
-
 // ORIGINAL: 0x005D271D sub_5d271d 0x005D271D-0x005D2761 FILE
 // size      68 bytes
 // prototype 

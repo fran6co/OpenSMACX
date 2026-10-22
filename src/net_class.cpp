@@ -227,6 +227,34 @@ static const GUID KeptServiceProviderGuid = {
 
 // The receiver's no-op insertion/removal hooks have one pointer argument.
 // The other embedded list's virtual surface remains unfinished.
+// ORIGINAL: 0x00538EC0 ??1JackalVoiceRx@@QAE@XZ 0x00538EC0-0x00538F2E FILE BYTE_EXACT
+// kind      game
+// symbol    ?clear@JackalVoiceRx@@QAEXXZ
+// The catalogue destructor label names this shared list-clearing helper.
+// Callers stage receiver/base tables and allocation-owner handoff outside it
+// (0x00538E5A..0x00538E9E); the complete receiver destructor is separate
+// (0x004E3660). Keep the original identity, not the skeleton's class fiction.
+// Insertion 0x00633180 establishes distinct 0x1C circular entries and 0x60
+// voice payloads. The three virtual calls below are respectively a receiver
+// hook, Sound-family destruction, and entry virtual-base destruction.
+// This does not complete Net/AlphaNet/NetDaemon lifetime recovery.
+void JackalVoiceRx::clear() {
+    if (head_) {
+        for (int removed = 0; removed < count_; ++removed) {
+            cursor_ = head_->next_;
+            Sound *payload = head_->payload_;
+            on_remove(payload);
+            delete payload;
+            head_->payload_ = 0;
+            delete head_;
+            head_ = cursor_;
+        }
+        head_ = 0;
+        cursor_index_ = 0;
+        count_ = 0;
+    }
+}
+
 int JackalVoiceRx::on_insert(void *) { return 0; }
 void JackalVoiceRx::on_remove(void *) { }
 
@@ -526,6 +554,8 @@ void Net::close() {
     if (jackal_voice_rx_.head_ != 0) {
         jackal_voice_rx_.clear();
     }
+    voice_key_D4_ = 0;
+    voice_flags_D8_ = 0;
     queue_e8_.close();
     queue_10c_.close();
     queue_130_.close();
