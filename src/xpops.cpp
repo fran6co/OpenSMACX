@@ -67,9 +67,8 @@ int __cdecl X_pops(char *caption, const char *label, char *text, int value,
     if (text == nullptr) {
         return -1;
     }
-    const int length = static_cast<int>(std::strlen(text));
-    return X_pops(caption, label, length, text, value, sprite, flag1, flag2,
-                  callback);
+    return X_pops(caption, label, static_cast<int>(std::strlen(text)), text,
+                  value, sprite, flag1, flag2, callback);
 }
 
 /*
@@ -741,7 +740,7 @@ int __cdecl X_pop_ask_number(const char *label,
 
 // Full numeric-entry routing mirrors X_pop_ask's alien-script fallback,
 // with the alternate file/caption pair selected by the same faction gates.
-// ORIGINAL: 0x005BFD70 ?X_pop_ask_number@@YAHPADPBDHP6AHXZ@Z 0x005BFD70-0x005BFE8E
+// ORIGINAL: 0x005BFD70 ?X_pop_ask_number@@YAHPADPBDHP6AHXZ@Z 0x005BFD70-0x005BFE8E BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/005bfd70.cpp", "src/xpops.h", "src/popup.h", "src/faction.h"], "reason": "Recover numeric X_pop_ask_number mod-caption and alien-script routing using typed popup and faction state."}
 // TRIED: `#pragma function(strcmp)` to stop VC6 inlining the two `strcmp` calls into a byte-compare loop (without it, similarity was 0.61 with 38 extra mnemonics from the inlined loop; with it, 0.76). Calling `fopen`/`fclose` through a cast function pointer INLINE (not via an intermediate local) to avoid materialising their address in a register first, same lever as 0x004C5E50's import calls. Landed at 0.76: the remaining gap is a `push edi` register-save the original keeps for a callee-saved register this body's simpler live-range set does not need.
 int __cdecl X_pop_ask_number(char *caption, const char *label, int value,
@@ -752,25 +751,25 @@ int __cdecl X_pop_ask_number(char *caption, const char *label, int value,
         return pop_ask_number(caption, section, value, callback);
     }
 
-    if ((Players[ConsoleGlobal.faction_id_].rule_flags & RFLAG_ALIEN) == 0) {
-        if (ExpansionEnabled != 0 && PopupDialogFactionID > 0 &&
-            PopupDialogFactionID < 8 &&
-            (Players[PopupDialogFactionID].rule_flags & RFLAG_ALIEN) != 0) {
-            FILE *const file = fopen(XPopModCheckFile2Text,
-                                          XPopModCheckMode2Text);
+    if ((Players[ConsoleGlobal.faction_id_].rule_flags & RFLAG_ALIEN) != 0) {
+        if (ExpansionEnabled != 0) {
+            FILE *const file = fopen(XPopModCheckFile1Text,
+                                          XPopModCheckMode1Text);
             if (file != nullptr) {
                 fclose(file);
-                const int result = pop_ask_number(PopupStartAltFile2, section,
+                const int result = pop_ask_number(PopupStartAltFile1, section,
                                                   value, callback);
                 if (result != -1) return result;
             }
         }
-    } else if (ExpansionEnabled != 0) {
-        FILE *const file = fopen(XPopModCheckFile1Text,
-                                      XPopModCheckMode1Text);
+    } else if (ExpansionEnabled != 0 && PopupDialogFactionID > 0 &&
+               PopupDialogFactionID < 8 &&
+               (Players[PopupDialogFactionID].rule_flags & RFLAG_ALIEN) != 0) {
+        FILE *const file = fopen(XPopModCheckFile2Text,
+                                      XPopModCheckMode2Text);
         if (file != nullptr) {
             fclose(file);
-            const int result = pop_ask_number(PopupStartAltFile1, section,
+            const int result = pop_ask_number(PopupStartAltFile2, section,
                                               value, callback);
             if (result != -1) return result;
         }

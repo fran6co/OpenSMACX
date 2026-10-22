@@ -1,0 +1,36 @@
+{
+  "event_id": "9e07952d3fdcdbcd658ec5a67308531af053d82ca7af3c6950c0a96ea87281e2",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_xpops_numeric_routing_actual_source_oct22.py",
+      "src/xpops.cpp"
+    ],
+    "evidence": [
+      "Authorize only these two existing overload definitions plus bounded actual-source/pinned regression and damage controls. Preserve the immutable c4f3e64c task baseline and all previous discoveries/claims; do not rewrite old task evidence or silently expand to other popup owners.",
+      "Pinned5BFDD3 tests current faction ALIEN and JE routes to non-alien dialog-faction path; alien branch is fallthrough5BFDE1. Invert source branch bodies/predicate together to ordinary alien-first order, preserving guarded expansion/file/close/pop/fallback behavior, including alternate result !=-1 and original invalid-input behavior.",
+      "For5BF730, eliminate only the unnecessary const length local by passing static_cast<int>(std::strlen(text)) to the existing full overload. Keep null return-1, text/flags/callback identity and order. No wrapper, callback evaluation, signature, layout or storage changes.",
+      "Fresh native actual-recipe overlays short-screen-xonhzryv score111/111 and31/31 with no existing owner exact losses. Physical replay, unchanged overlay and material source-damage controls pass; each has exactly one exploratory form. These are candidate results, not acceptance or historical claim grants.",
+      "Only installed recover record may bank the newly matching5BFD70 claim after fresh measurement; preserve existing5BF730 historical claim. This is explicit coordinator permission for this measured claim in addition to the old coverage task scope, not hand-stamping or automatic demotion.",
+      "Require independent actual C++/pin/test review, fresh native record, build/link, full owner census and strict-reference checks, source/history continuity, outside-body native residual and outside-object replicas, then fresh destination verification. Existing broader failures stay unwaived. No automatic, full linked, structure/runtime or game acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6028656,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6027056,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "xpops-two-easy-overloads-oct22u",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:popup-wrapper-owner-coverage"
+}
