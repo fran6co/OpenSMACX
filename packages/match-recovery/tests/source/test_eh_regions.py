@@ -9,6 +9,8 @@ import pytest
 from match_recovery.pe_coff import PeImage
 from match_recovery.source.eh_regions import (
     EHRegionRole,
+    _cleanup_action,
+    _decoded,
     bind_eh_regions,
 )
 
@@ -549,7 +551,7 @@ def _linear_fixture(original_widths, object_widths=None, *, original_damage=None
         code, starts, branches = bytearray(), [], []
         for index, width in enumerate(widths):
             starts.append(len(code))
-            action, branch = action_bytes(width, BASE + 0x1300 + 0x10 * index,
+            action, branch = action_bytes(width, BASE + 0x13FF,
                                           BASE + 0x1100 + len(code))
             branches.append(len(code) + branch)
             code.extend(action)
@@ -866,19 +868,27 @@ def test_rejects_original_direct_relative_edge_into_cold_child():
 
 def test_rejects_original_cleanup_count_above_explicit_resource_cap():
     with pytest.raises(ValueError, match="action cap"):
-        _linear_fixture((8,) * 17)
+        _linear_fixture((8,) * 65)
 
 
 def test_rejects_compiled_cleanup_count_above_explicit_resource_cap():
     with pytest.raises(ValueError, match="action cap"):
-        _linear_fixture((8,), object_widths=(8,) * 17)
+        _linear_fixture((8,), object_widths=(8,) * 65)
 
 
-def test_accepts_maximum_supported_linear_action_count():
-    root, cold = _linear_fixture((8,) * 16)
-    assert len(root.ownership.original_cleanups) == 16
-    assert len(cold.ownership.cleanup_offsets) == 16
-    assert len(cold.code) == 16 * 8 + 10
+@pytest.mark.parametrize("count", [16, 64])
+def test_accepts_supported_linear_action_count(count):
+    root, cold = _linear_fixture((8,) * count)
+    assert len(root.ownership.original_cleanups) == count
+    assert len(cold.ownership.cleanup_offsets) == count
+    assert len(cold.code) == count * 8 + 10
+
+
+def test_array_action_rejects_unenumerated_address_size_prefix_on_base_push():
+    code = (b"\x68\x30\x1f\x40\x00\x6a\x03\x6a\x0c\x8b\x45\xf0"
+            b"\x05\x50\x5f\x00\x00\x67\x50\xe8\0\0\0\0\xc3")
+    with pytest.raises(ValueError, match="complete EH action"):
+        _cleanup_action(_decoded(code, 0), code_base=0)
 
 
 def test_binds_second_action_to_undefined_external_destructor():
@@ -940,6 +950,34 @@ class _EHFixtureCoff:
                     offset, self._relocation_kind("absolute32" if kind == 6 else "relative32"),
                     str(target))
                       for offset, target, kind in section.relocations), 4)
+
+
+@pytest.mark.parametrize("name", [".debug$F"])
+def test_debug_f_accepts_bounded_dir32nb_rva_write(name):
+    from match_recovery.pe_coff import Symbol
+    from match_recovery.source.eh_regions import _debug_relocation_bounds
+
+    section = _EHFixtureSection(bytes(16), ((0, 1, 7),), 0x40401040, name)
+    obj = _EHFixtureCoff([section], [Symbol(1, "??1Element@@QAE@XZ", 0, 1, 0x20, 2)], {})
+    _debug_relocation_bounds(obj, 1)
+
+
+@pytest.mark.parametrize(("name", "relocations"), [
+    (".debug$S", ((0, 1, 7),)),
+    (".debug$F", ((13, 1, 7),)),
+    (".debug$F", ((0, 2, 7),)),
+    (".debug$F", ((0, 1, 7), (2, 1, 11))),
+    (".debug$F", ((0, 1, 8),)),
+])
+def test_debug_dir32nb_is_limited_to_valid_nonoverlapping_debug_f_writes(
+        name, relocations):
+    from match_recovery.pe_coff import Symbol
+    from match_recovery.source.eh_regions import _debug_relocation_bounds
+
+    section = _EHFixtureSection(bytes(16), relocations, 0x40401040, name)
+    obj = _EHFixtureCoff([section], [Symbol(1, "??1Element@@QAE@XZ", 0, 1, 0x20, 2)], {})
+    with pytest.raises(ValueError):
+        _debug_relocation_bounds(obj, 1)
 
 
 def _nested_local_owner_fixture(damage=None):

@@ -3814,10 +3814,25 @@ a narrowly verified i386 C++-EH primary/cold pair. The latter requires one
 independent code COMDAT with exactly one associated cleanup/handler child,
 complete frame registration, and independently valid ownership chains through
 `0x19930520` exception metadata on both the PE and COFF sides. A cold child is
-bounded to at most 16 complete actions and one 10-byte handler stub (234 bytes
-total). Each action is exactly a frame-relative `lea ecx,[ebp+disp]; jmp`,
+bounded to at most 64 complete actions and one 10-byte handler stub. Each
+action is at most 34 bytes, for a derived 2,186-byte cold-region work budget;
+these are parser resource limits, not inferred compiler or program maxima.
+A direct action is exactly a frame-relative `lea ecx,[ebp+disp]; jmp`,
 `mov ecx,[ebp+disp8]; jmp`, or that `mov` followed by `add ecx,imm8/imm32`
-and a long `jmp`. The original and COFF maps are each parsed in full; their
+and a long `jmp`. The separately typed array action has exactly eight
+instructions: an absolute destructor-callback push, positive count and stride
+pushes, `mov eax,[ebp+disp8/disp32]`, an immediate EAX base adjustment,
+`push eax`, a relative call to the vector destructor iterator, and `ret`.
+Both immediate-push widths and the supported EAX-add encodings are decoded;
+count, stride, frame displacement and adjustment remain compared code bytes.
+This frame-relative pointer load does not identify `this` or prove class layout.
+An array action owns two independent operands: a callback DIR32 and a helper
+REL32. The original callback requires its own exact PE HIGHLOW site; neither
+operand can hide an extra or missing relocation. The COFF helper must be the
+undefined external VC6 ABI iterator `??_M@YGXPAXIHP6EX0@Z@Z`; the callback
+must satisfy ordinary external/local complete-destructor ownership, not an
+arbitrary function pointer or an interior label.
+The original and COFF maps are each parsed in full; their
 predecessor states must each be `-1` or a strictly earlier state, so bounded
 branching cleanup graphs are supported without admitting forward edges or
 cycles. Every relocation, addend, action boundary and associated data/code
@@ -3831,13 +3846,18 @@ so differing supported encodings or counts are ownership evidence only.
 The ownership evidence retains both complete predecessor tuples. A different
 valid topology reports an explicit `MISMATCH` before byte comparison: identical
 root/cold instructions cannot hide a changed unwind map. With identical
-topology, ordinary byte comparison can still report a mismatch. Cleanup targets
+topology, different decoded array counts, strides, frame displacements or base
+adjustments also report `MISMATCH`, independently of opcode shape. Relocated
+callback/helper target identity is not inferred by that check. Ordinary byte
+comparison still covers each complete instruction region. Cleanup targets
 may be undefined external destructors or uniquely owned local complete `??1`
 destructors. A local destructor must own one fully backed executable COMDAT;
 its optional directly associated cold child and FuncInfo undergo the same
 complete ownership and relocation checks. A leaf without an EH child may not
 access FS. Associated debug metadata has its own raw-backing, relocation-width,
-bounds and non-overlap checks for SECTION/SECREL writes; it never enters the
+bounds and non-overlap checks for SECTION/SECREL writes and, only in a directly
+associated `.debug$F` child, four-byte DIR32NB RVA writes. This is physical write
+validation, not validation of all FPO record semantics. It never enters the
 executable relocation decoder or proves CodeView/PDB target identity.
 Unknown associations and edges back into any active ancestor's
 root/cold sections refuse. Recursive local ownership is bounded by a

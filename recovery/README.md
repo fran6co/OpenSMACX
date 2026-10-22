@@ -188,8 +188,17 @@ exercises a bounded branched unwind map through the historical whole-function
 comparator. It checks an unchanged object replica, a code-identical valid
 predecessor change that must mismatch, and malformed original/compiled maps
 that must refuse. Run compiler controls under a coordinator-owned compiler
-lease. This does not qualify unsupported game cleanup forms, destructor target
-identity, linked preservation or runtime acceptance.
+lease. `tests/test_array_eh_compiler.py` additionally requires the real compiler
+and linker to emit an array cleanup with its independent callback DIR32 and
+iterator REL32, for both external and local ordinary-destructor callbacks.
+It checks unchanged object replicas and original/compiled operand and code
+damage, including a valid array-count change that must mismatch. Its test-only
+frame-pointer-omission variant requires an actual local callback's associated
+`.debug$F` RVA relocation; production flags do not change. The historical binder
+validates its physical write bounds, not full FPO/PDB correspondence. These
+controls do not qualify unsupported game cleanup forms or establish original
+callback/helper identity, runtime-provider equivalence, linked preservation or
+runtime acceptance.
 Older retained build policies and task baselines are not upgraded implicitly.
 Native ordinary-data placement also supports one-hop references from independently
 placed data, after verifying the entire referring section against the linked image.
