@@ -1,0 +1,28 @@
+{
+  "event_id": "2083b35eb4603a175251f098715d363e9edabd8bd86c6dd8b7e81c356a5fb527",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_messagewin_listbox_write_actual_source_oct22.py",
+      "src/messagewin.cpp"
+    ],
+    "evidence": [
+      "Expand the reviewed ListBox writer callback closure to its other actual non-null producer MessageWin::listbox_write0x00471FD0, plus bounded actual-source regression controls. No header, callback type, ABI, compiler flag, global layout or unrelated function changes; retain the immutable task base and every original identity/history/claim.",
+      "The proven labs_write natural inherited-call axis has one fresh supporting MessageWin overlay. Current explicit Buffer reference originates in a nullable pointer cast, with an emitted null-selection branch; pinned471FE5 unconditionally adds444. Direct inherited calls preserve both color argument sets, bit predicates and return0; short-screen-p65n75mz matches29/29 with physical replay/unchanged/color-damage controls and no local exact losses.",
+      "Authorize replacing only the existing callback body and its misleading preexisting current-miss prose with durable original callback-result semantics. Preserve both historical and emitted symbols and complete span; no new claim token or demotion. Root will verify native measurements, source/claim/reference continuity, full build/link, owner and outside-owner compiled artifacts, independent source/test review and fresh integrated destination; not native automatic or game acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4661200,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "e3607318969aa7c1384e33722c9d1e3fe11e07aeb2a0505a4a03309f4a8d376e",
+  "request_id": "messagewin-listbox-writer-natural-member-oct22u",
+  "schema_version": 1,
+  "sequence": 56,
+  "stream": "task:interface-contract-report-closure"
+}
