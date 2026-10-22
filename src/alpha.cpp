@@ -1323,6 +1323,7 @@ void __cdecl noun_item(int *gender, int *plurality) {
 /*
 Purpose: Parse the #UNITS section inside the alpha(x).txt.
 // ORIGINAL: 0x00587240 ?read_units@@YAHXZ 0x00587240-0x005873B1
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned read_units: ability parser call at 0x00587316 proceeds directly to the prototype switch; make_proto call at 0x00587364 receives reactor 1/2/3 for prototypes 16/17/18, default 1.", "Pinned 0x0058736F..0x00587373 tests the signed plan and branches past its byte store on JL.", "Git 11a07309a introduced the optional reactor-token extension; it is preserved in Git for the later improvement milestone."], "reason": "The faithful rules reader consumes no optional reactor token after abilities, derives reactors from prototype IDs, and skips the plan override for every negative plan. Historical TRIED prose below describes the superseded reactor extension, retained as seed history only."}
 // LEVER: 0x00645460 is plain `strcpy` (2 args - confirmed at its call site,
 //        `push name; push &veh_name; call`, no length/size pushed anywhere
 //        nearby) not `strncpy_s`; the tree's `strncpy_s(veh_name, 32, name,
@@ -1373,25 +1374,24 @@ BOOL __cdecl read_units() {
         VehPrototypes[proto_id].preq_tech = (int16_t)tech_name(text_item());
         int icon = text_item_number();
         int ability = text_item_binary();
-        int reactor_id = text_item_number(); // Add ability to read reactor for #UNITS
-        if (!reactor_id) { // if not set or 0, default behavior
-            switch (proto_id) {
-              // There was a pointless explicit check for BSC_BATTLE_OGRE_MK1 to set reactor to 1
-              // The parameters set by check are no different than default
-              case BSC_BATTLE_OGRE_MK2:
-                reactor_id = RECT_FUSION;
-                break;
-              case BSC_BATTLE_OGRE_MK3:
-                reactor_id = RECT_QUANTUM;
-                break;
-              default:
-                reactor_id = RECT_FISSION;
-                break;
-            }
+        int reactor_id;
+        switch (proto_id) {
+          case BSC_BATTLE_OGRE_MK1:
+            reactor_id = RECT_FISSION;
+            break;
+          case BSC_BATTLE_OGRE_MK2:
+            reactor_id = RECT_FUSION;
+            break;
+          case BSC_BATTLE_OGRE_MK3:
+            reactor_id = RECT_QUANTUM;
+            break;
+          default:
+            reactor_id = RECT_FISSION;
+            break;
         }
         make_proto(proto_id, chas_id, weap_id, armor_id, ability, reactor_id);
         // If set, override auto calculated values from make_proto()
-        if (plan != -1) { // plan auto calculate: -1
+        if (plan >= 0) {
             VehPrototypes[proto_id].plan = (uint8_t)plan;
         }
         if (cost) { // cost auto calculate: 0
