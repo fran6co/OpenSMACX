@@ -3,7 +3,7 @@
 from pathlib import Path
 import re
 
-from match_recovery.source import read
+from match_recovery.source import Mode, read
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -28,7 +28,12 @@ def test_complete_alpha_identity_set_has_one_real_owner_per_mapping():
     assert len(rows) == len(ALPHANET_ROWS)
     by_address = {row.address: row for row in rows}
     assert set(by_address) == ALPHANET_ROWS
-    assert by_address[0x4E34B0].context == "src/alphanet.cpp"
+    for address in (0x401CE0, 0x4E3300, 0x4E3350, 0x4E34B0):
+        assert by_address[address].context == "src/alphanet.cpp"
+    for address in (0x401CE0, 0x4E3350):
+        assert by_address[address].mode is Mode.FILE
+        assert by_address[address].body == "src/alphanet.h"
+    assert not by_address[0x402B40].context
     assert {row.address for row in rows if row.path == records_path.resolve()} == RECORDS
     assert {row.address for row in rows if row.path == controller_path.resolve()} == ALPHANET_ROWS - RECORDS
     assert len({row.address for row in rows if row.path not in {
@@ -38,17 +43,21 @@ def test_complete_alpha_identity_set_has_one_real_owner_per_mapping():
 def test_records_and_controller_code_stay_in_their_coherent_units():
     records = (ROOT / "src/alphanet_records.cpp").read_text()
     controller = (ROOT / "src/alphanet.cpp").read_text()
+    header = (ROOT / "src/alphanet.h").read_text()
     for signature in (
         "AlphaNetStringStruct::AlphaNetStringStruct()",
-        "AlphaNetStringStruct::~AlphaNetStringStruct()",
         "AlphaNetStringStruct::add(int id)",
         "AlphaNetStringStruct::sort_sessions()",
         "AlphaNetLedger::on_insert(NetAllocationNode *payload)",
         "AlphaNetLedger::on_remove(NetAllocationNode *payload)",
-        "AlphaNetLedger::~AlphaNetLedger()",
         "compare_session_guid(const GUID *left, const GUID *right)",
     ):
         assert signature in records, signature
+    for name in ("AlphaNetStringStruct", "AlphaNetLedger"):
+        assert f"{name}::~{name}()" not in records
+        body = re.search(rf"~{name}\(\)\s*\{{([^{{}}]*)\}}", header)
+        assert body is not None
+        assert body.group(1).split() == ["remove_all();", "current_position_", "=", "0;"]
     assert "template<class List> inline int seek_owned_list" in records
     assert "template<class List> inline int seek_owned_list" not in controller
     assert "AlphaNetStringStruct::add(int id)" not in controller

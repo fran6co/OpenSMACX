@@ -27,10 +27,13 @@ int __stdcall compare_session_guid(const GUID *left, const GUID *right);
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00402b40.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "Receiver-1C, stages session-base669408/669404, clear402970, owner publication then bit1/free."}
 // symbol    ??_GAlphaNetStringStruct@@UAEPAXI@Z
 // ORIGINAL: 0x004E3300 sub_4e3300 0x004E3300-0x004E334B FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/004e3300.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed.", "Genuine declared C++ destructor emits the independently named generated COFF body; original receiver/table/lifetime interpretation and current emitted ABI remain separate from the historical byte obligation."], "reason": "Receiver-38 then calls4E3350; publishes ledger owner and conditionally frees complete object on bit1. Superseded scaffold retired after observing this independently emitted generated body; historical claims and findings transfer without a new matching or linked-preservation claim."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/004e3300.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed.", "Genuine declared C++ destructor emits the independently named generated COFF body; original receiver/table/lifetime interpretation and current emitted ABI remain separate from the historical byte obligation.", "Pinned original picker0x633010/0x663730 and ledger0x4E3350/0x65C7F0 preserve separate ledger and base cleanup roles."], "reason": "Receiver-38 then calls4E3350; publishes ledger owner and conditionally frees complete object on bit1. Superseded scaffold retired after observing this independently emitted generated body; historical claims and findings transfer without a new matching or linked-preservation claim. Original picker and ledger normal/cold paths retain distinct derived/base cleanup stages. Class-defined unchanged destructors expose that nested lifetime; the callback-sensitive walker remains inline. The canonical records owner retains this identity; the named compilation context physically emits the body. Definition visibility and emission do not establish original TU, helper identity or linked selection."}
+// compile_context src/alphanet.cpp
 // symbol    ??_GAlphaNetLedger@@UAEPAXI@Z
 // ORIGINAL: 0x004E3350 sub_4e3350 0x004E3350-0x004E34A8;0x0065C7F0-0x0065C805 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["git:293937ab6f3be75999e0c0a4c9c110c02930624c:src/unrecovered/004e3350.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the transferred historical seed findings and complete original spans.", "git:293937ab6f3be75999e0c0a4c9c110c02930624c:src/unrecovered/004e3350.cpp", "Historical seed spelling sub_4e3350; current source mapping sub_4e3350; emitted symbol ??1AlphaNetLedger@@UAE@XZ."], "reason": "Receiver-38 stages session-derived tables, walk then session-base cleanup; retained65C7F0 EH span. Superseded seed retired after owner review; original spans, existing claims and useful seed findings remain in source. This cleanup grants no new match or acceptance claim."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:293937ab6f3be75999e0c0a4c9c110c02930624c:src/unrecovered/004e3350.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the transferred historical seed findings and complete original spans.", "git:293937ab6f3be75999e0c0a4c9c110c02930624c:src/unrecovered/004e3350.cpp", "Historical seed spelling sub_4e3350; current source mapping sub_4e3350; emitted symbol ??1AlphaNetLedger@@UAE@XZ.", "Pinned original picker0x633010/0x663730 and ledger0x4E3350/0x65C7F0 preserve separate ledger and base cleanup roles."], "reason": "Receiver-38 stages session-derived tables, walk then session-base cleanup; retained65C7F0 EH span. Superseded seed retired after owner review; original spans, existing claims and useful seed findings remain in source. This cleanup grants no new match or acceptance claim. Original picker and ledger normal/cold paths retain distinct derived/base cleanup stages. Class-defined unchanged destructors expose that nested lifetime; the callback-sensitive walker remains inline. The canonical records owner retains this identity; the named compilation context physically emits the body. Definition visibility and emission do not establish original TU, helper identity or linked selection."}
+// compile_context src/alphanet.cpp
+// body src/alphanet.h
 // symbol    ??1AlphaNetLedger@@UAE@XZ
 // TRIED: no SEH-frame modelling attempted - the function installs a real fs:[0] frame (push -1; push 0x65c7fb; ...) whose unwind funclet at 0x0065C7F0 calls the real `SessionStruct::close` (0x00401ce0, see src/alphanet.cpp) on `this-0x1c`, matching the precedent at 0x004C86D0/0x00538D10: none of the calls in the body throws in practice, so the frame is unreachable and is dropped. `ecx` does real work (`lea edi,[ecx-0x38]`, no stack access) so this is __thiscall, written as `ClassX::sub_4e3350()` per the 0x004E3300 precedent, which already calls `sub->sub_4e3350()` on the same class. The body is TWO back-to-back rounds of the same list-teardown loop (own-stage vtable 0x66eae8/0x66eae4 first, then the same 0x669408/0x669404 pair `SessionStruct::close` itself uses), both operating on the SAME member at `this-0x38`; reproduced as two literal blocks (not a loop, matching the original's duplication) via a `VCall` shim for the two indirect calls per node (slot1 with `this=self,payload`, slot0 with an adjusted `this` and `arg=1`), simplified to skip the raw adjustor-thunk arithmetic (same simplification already accepted at 0x0062E010's `Net::close`). 0.496 mnemonic similarity - the dropped SEH prologue alone accounts for most of the gap - not chased further.
 // ORIGINAL: 0x004E34B0 sub_4e34b0 0x004E34B0-0x004E34CB FILE BYTE_EXACT
@@ -229,7 +232,10 @@ int AlphaNetStringStruct::add(int id) {
 
 
 /*
-// ORIGINAL: 0x00401CE0 SessionStruct::close 0x00401CE0-0x00401D79
+// ORIGINAL: 0x00401CE0 SessionStruct::close 0x00401CE0-0x00401D79 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original picker0x633010/0x663730 and ledger0x4E3350/0x65C7F0 preserve separate ledger and base cleanup roles."], "reason": "Original picker and ledger normal/cold paths retain distinct derived/base cleanup stages. Class-defined unchanged destructors expose that nested lifetime; the callback-sensitive walker remains inline. The canonical records owner retains this identity; the named compilation context physically emits the body. Definition visibility and emission do not establish original TU, helper identity or linked selection."}
+// compile_context src/alphanet.cpp
+// body src/alphanet.h
 // symbol    ??1AlphaNetStringStruct@@UAE@XZ
 // size      153 bytes
 // prototype 
@@ -240,10 +246,6 @@ int AlphaNetStringStruct::add(int id) {
 // indirect  0x00401D22 0x00401D34 0x00401D50
 Status: Complete
 */
-AlphaNetStringStruct::~AlphaNetStringStruct() {
-    remove_all();
-    current_position_ = 0;
-}
 
 
 /*
@@ -358,8 +360,3 @@ void AlphaNetLedgerEntry::operator delete(void *memory) {
 int AlphaNetStringStruct::seek_pos(int position) { return seek_owned_list(this, position); }
 
 NetAllocationNode *AlphaNetStringStruct::next_entry() { return next_owned_list(this); }
-
-AlphaNetLedger::~AlphaNetLedger() {
-    remove_all();
-    current_position_ = 0;
-}
