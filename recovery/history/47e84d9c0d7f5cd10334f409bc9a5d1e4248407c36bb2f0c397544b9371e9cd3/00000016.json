@@ -1,0 +1,23 @@
+{
+  "event_id": "11ed9245b782316d51c45e98ff2e6bc8304906aa678c981d145e9c354996e559",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "packages/match-recovery/src/match_recovery/source/eh_regions.py",
+      "packages/match-recovery/tests/source/test_eh_vector_regions.py",
+      "recovery/tests/test_array_eh_compiler.py"
+    ],
+    "evidence": [
+      "The real AlphaSave object callback Sprite ordinary destructor owns a directly associated fully backed16byte .debug$F child with a sole kind7 relocation at0 to its function entry. The existing debug write-bound checker refuses this before callback closure; ignoring metadata is not authorized.",
+      "Installed VC6 INCLUDE/WINNT.H and Microsoft PE/COFF format (https://learn.microsoft.com/en-us/windows/win32/debug/pe-format) define IMAGE_REL_I386_DIR32NB0x0007 as a32bitRVA. Authorize bounded four-byte write validation ONLY in directly associated .debug$F storage, preserving known-target, full raw backing, bounds and non-overlap checks. Retain unknown-kind refusals in other debug sections and all executable relocation restrictions.",
+      "This validates physical metadata writes, not complete FPO frame semantics, PDB correspondence, runtime unwind behavior or source/original callback identity. Do not mask metadata or grant linked retention/full acceptance. Require serialized adversarial bounds/kind/target controls and an actual compiler-emitted local callback with this debug relocation under a test-owned omit-frame-pointer control; no production compiler-policy changes."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "a187c8ac59349f2e2378d3ef0535b1309daa197f664416a2be9756c1e4732c56",
+  "request_id": "array-callback-debug-rva-bounds-oct22d",
+  "schema_version": 1,
+  "sequence": 16,
+  "stream": "task:filewin-jackal-boundary-oct9"
+}
