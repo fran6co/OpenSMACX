@@ -1,0 +1,20 @@
+{
+  "event_id": "5e7be9f23ab14744e2351b21fd2d1a87a103c156b65c7abd653a0c9af234a42c",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_texture_raster_actual_source.py",
+      "recovery/tests/texture_raster_actual_host_control.cpp"
+    ],
+    "evidence": [
+      "The existing actual-source test explicitly extracts the three private plain helpers and directly calls texture_raster_span in its host fixture. Retiring the superseded product helpers requires updating these exact consumers to exercise the genuine owner/body behavior instead. Preserve existing identity/claim/lesson, Gouraud pixel/phase/light/clip/lifecycle and damage controls; replace retired-helper-only checks with actual-owner tests. Do not retain dead product helpers solely for a host harness or waive obsolete test failures. Independent test worker owns these two files plus the new plain-owner test in its isolated checkout; root integrates and freshly verifies the complete test/source closure."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "plain-owner-existing-host-control-closure",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:texture-plain-owner-oct23e"
+}
