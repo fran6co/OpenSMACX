@@ -1277,6 +1277,87 @@ def _validate_nested_fixture(damage=None, *, depth=1, roots=1):
     eh_regions._validate_local_complete_destructor(obj, owner, 10, 11, walk, depth)
 
 
+def _completed_subtree_fixture(*, descendant_root_ref=False,
+                               descendant_target="leaf", debug_target=False,
+                               damage=None, alias=False, nonentry=False):
+    """Three-level bounded COFF fixture for transitive local-proof reuse."""
+    from match_recovery.pe_coff import Symbol
+    from match_recovery.source.eh_regions import _CODE
+
+    flags = 0x60501020
+    data_flags = 0x40401040
+    symbols = [
+        Symbol(1, "??1ReuseA@@QAE@XZ", 0, 1, 0x20, 2),
+        Symbol(2, "$LReuseAHandler", 11, 2, 0, 6),
+        Symbol(3, "$TReuseAInfo", 0, 3, 0, 3),
+        Symbol(4, "$TReuseAUnwind", 32, 3, 0, 6),
+        Symbol(5, "$LReuseAAction", 0, 2, 0, 6),
+        Symbol(6, "??1ReuseB@@QAE@XZ", 0, 4, 0x20, 2),
+        Symbol(7, "$LReuseBHandler", 11, 5, 0, 6),
+        Symbol(8, "$TReuseBInfo", 0, 6, 0, 3),
+        Symbol(9, "$TReuseBUnwind", 32, 6, 0, 6),
+        Symbol(10, "$LReuseBAction", 0, 5, 0, 6),
+        Symbol(11, "??1ReuseLeaf@@QAE@XZ", 0, 7, 0x20, 2),
+        Symbol(12, "??1ActiveAncestor@@QAE@XZ", 0, 8, 0x20, 2),
+        Symbol(13, "___CxxFrameHandler", 0, 0, 0, 2),
+    ]
+    if alias:
+        symbols.append(Symbol(14, "??1AliasReuseA@@QAE@XZ", 0, 1, 0x20, 2))
+    if nonentry:
+        symbols[0] = Symbol(1, "??1ReuseA@@QAE@XZ", 1, 1, 0x20, 2)
+
+    runtime = next(s for s in symbols if s.name == "___CxxFrameHandler")
+    root_a, site_a = _registration_code("sentinel-handler-load", 0)
+    root_b, site_b = _registration_code("sentinel-handler-load", 0)
+    root_b_relocs = [(site_b, 7, 6)]
+    if descendant_root_ref:
+        operand = len(root_b) + 1
+        root_b += b"\xa1\0\0\0\0\xc3"  # mov eax,[absolute]; ret
+        root_b_relocs.append((operand, 12, 6))
+
+    cold_a = bytes.fromhex(
+        "8d 8d f0 ff ff ff e9 00 00 00 00 b8 00 00 00 00 e9 00 00 00 00")
+    cold_b_target = 12 if descendant_target == "ancestor" else 11
+    cold_b = bytes.fromhex(
+        "8d 8d f0 ff ff ff e9 00 00 00 00 b8 00 00 00 00 e9 00 00 00 00")
+    info_a = bytearray(40)
+    info_b = bytearray(40)
+    for info in (info_a, info_b):
+        struct.pack_into("<8I", info, 0, 0x19930520, 1, 0, 0, 0, 0, 0, 0)
+        struct.pack_into("<II", info, 32, 0xFFFFFFFF, 0)
+    if damage == "descendant_info":
+        struct.pack_into("<I", info_b, 0, 0)
+
+    sections = [
+        _EHFixtureSection(root_a, ((site_a, 2, 6),), flags, ".text$reuse_a"),
+        _EHFixtureSection(cold_a, ((7, 6, 20), (12, 3, 6), (17, 13, 20)),
+                          flags, ".text$reuse_a_eh"),
+        _EHFixtureSection(bytes(info_a), ((8, 4, 6), (36, 5, 6)),
+                          data_flags, ".xdata$reuse_a"),
+        _EHFixtureSection(root_b, tuple(root_b_relocs), flags, ".text$reuse_b"),
+        _EHFixtureSection(cold_b, ((7, cold_b_target, 20), (12, 8, 6),
+                                   (17, 13, 20)), flags, ".text$reuse_b_eh"),
+        _EHFixtureSection(bytes(info_b), ((8, 9, 6), (36, 10, 6)),
+                          data_flags, ".xdata$reuse_b"),
+        _EHFixtureSection(b"\xc3", (), flags, ".text$reuse_leaf"),
+        _EHFixtureSection(b"\xc3", (), flags, ".text$active_ancestor"),
+    ]
+    associations = {2: 1, 3: 1, 5: 4, 6: 4}
+    if debug_target:
+        sections.append(_EHFixtureSection(bytes(16), ((0, 12, 7),),
+                                          0x42101048, ".debug$F"))
+        associations[9] = 1
+    if damage == "missing_descendant_info":
+        associations.pop(6)
+    return _EHFixtureCoff(sections, symbols, associations)
+
+
+def _validate_reusable_subtree(obj, walk, *, depth=1):
+    from match_recovery.source import eh_regions
+    return eh_regions._validate_local_complete_destructor(
+        obj, obj.function("??1ReuseA@@QAE@XZ"), 50, 51, walk, depth)
+
+
 @pytest.mark.parametrize("damage", [None, "duplicate_function_alias"])
 def test_local_complete_nested_eh_fixture_and_alias_refusal(damage):
     if damage is None:
@@ -1331,6 +1412,170 @@ def test_cached_nested_owner_rechecks_helper_edges_against_new_ancestor():
     walk.active.add(4)
     with pytest.raises(ValueError, match="root/EH relocation"):
         eh_regions._validate_local_complete_destructor(obj, owner, 10, 11, walk, 1)
+
+
+def test_completed_multilevel_subtree_reuses_under_unrelated_active_context():
+    from match_recovery.source.eh_regions import _LocalEHWalk
+    obj = _completed_subtree_fixture()
+    walk = _LocalEHWalk(active={50}, complete=set())
+    _validate_reusable_subtree(obj, walk)
+    proved_roots = walk.roots
+    assert proved_roots == 4  # the initial owner budget plus A, B, and its leaf
+
+    walk.active.add(52)  # a distinct live owner unrelated to this subtree
+    _validate_reusable_subtree(obj, walk)
+    assert walk.roots == proved_roots
+
+
+def test_reused_multilevel_subtree_obeys_cached_height_boundary():
+    from match_recovery.source.eh_regions import _LocalEHWalk
+    obj = _completed_subtree_fixture()
+    walk = _LocalEHWalk(active={50}, complete=set())
+    _validate_reusable_subtree(obj, walk, depth=1)
+    proved_roots = walk.roots
+
+    # A -> B -> leaf contributes two nested destructor edges, so depth 2 is
+    # exactly the existing maximum of four, while depth 3 exceeds it.
+    _validate_reusable_subtree(obj, walk, depth=2)
+    assert walk.roots == proved_roots
+    with pytest.raises(ValueError, match="budget"):
+        _validate_reusable_subtree(obj, walk, depth=3)
+
+
+def test_descendant_code_reference_to_new_ancestor_blocks_cached_reuse():
+    from match_recovery.source.eh_regions import _LocalEHWalk
+    obj = _completed_subtree_fixture(descendant_root_ref=True)
+    walk = _LocalEHWalk(active={50}, complete=set())
+    _validate_reusable_subtree(obj, walk)
+    walk.active.add(8)
+    with pytest.raises(ValueError, match="active EH owner"):
+        _validate_reusable_subtree(obj, walk)
+
+
+def test_nested_local_destructor_target_cannot_be_hidden_by_summary():
+    from match_recovery.source.eh_regions import _LocalEHWalk
+    obj = _completed_subtree_fixture(descendant_target="ancestor")
+    walk = _LocalEHWalk(active={50}, complete=set())
+    _validate_reusable_subtree(obj, walk)
+    walk.active.add(8)
+    with pytest.raises(ValueError, match="cycle"):
+        _validate_reusable_subtree(obj, walk)
+
+
+def test_active_target_in_accepted_debug_metadata_does_not_block_reuse():
+    from match_recovery.source.eh_regions import _LocalEHWalk
+    obj = _completed_subtree_fixture(debug_target=True)
+    walk = _LocalEHWalk(active={50}, complete=set())
+    _validate_reusable_subtree(obj, walk)
+    proved_roots = walk.roots
+    walk.active.add(8)  # .debug$F names this independent active function.
+    _validate_reusable_subtree(obj, walk)
+    assert walk.roots == proved_roots
+
+
+def test_failed_descendant_proof_does_not_publish_parent_summary():
+    from match_recovery.source.eh_regions import _LocalEHWalk
+    obj = _completed_subtree_fixture(damage="descendant_info")
+    walk = _LocalEHWalk(active={50}, complete=set())
+    for _ in range(2):
+        with pytest.raises(ValueError, match="FuncInfo"):
+            _validate_reusable_subtree(obj, walk)
+        assert walk.active == {50}
+
+
+def test_completed_proof_is_scoped_to_one_coff_object_and_exact_identity():
+    from match_recovery.source.eh_regions import _LocalEHWalk
+    valid = _completed_subtree_fixture()
+    walk = _LocalEHWalk(active={50}, complete=set())
+    _validate_reusable_subtree(valid, walk)
+    same_layout = _completed_subtree_fixture()
+    roots_after_first_object = walk.roots
+    with pytest.raises(ValueError, match="COFF|object"):
+        _validate_reusable_subtree(same_layout, walk)
+    assert walk.roots == roots_after_first_object
+
+    aliased = _completed_subtree_fixture(alias=True)
+    alias_walk = _LocalEHWalk(active={50}, complete=set())
+    with pytest.raises(ValueError, match="uniquely owned"):
+        _validate_reusable_subtree(aliased, alias_walk)
+    nonentry = _completed_subtree_fixture(nonentry=True)
+    nonentry_walk = _LocalEHWalk(active={50}, complete=set())
+    with pytest.raises(ValueError, match="function entry"):
+        _validate_reusable_subtree(nonentry, nonentry_walk)
+    missing_owner = _completed_subtree_fixture(damage="missing_descendant_info")
+    missing_owner_walk = _LocalEHWalk(active={50}, complete=set())
+    with pytest.raises(ValueError, match="FuncInfo"):
+        _validate_reusable_subtree(missing_owner, missing_owner_walk)
+
+
+def test_exact_context_cache_cannot_authorize_cross_coff_descendant_edge():
+    from match_recovery.source.eh_regions import _LocalEHWalk
+
+    obj1 = _completed_subtree_fixture()
+    walk = _LocalEHWalk(active={50, 8}, complete=set())
+    _validate_reusable_subtree(obj1, walk)
+
+    # A different object may not seed or consult this walk's exact-context
+    # cache, even when its A root would otherwise be checked under active Y.
+    obj2 = _completed_subtree_fixture(descendant_root_ref=True)
+    walk.active.remove(8)
+    walk.active.add(60)
+    roots_before_mixed_object = walk.roots
+    with pytest.raises(ValueError, match="COFF|object"):
+        _validate_reusable_subtree(obj2, walk)
+    assert walk.roots == roots_before_mixed_object
+
+    # Within obj2's own walk, proving A under Y must not make its exact-context
+    # completion for Y authorize the same A under X, which B references.
+    obj2_walk = _LocalEHWalk(active={50, 60}, complete=set())
+    _validate_reusable_subtree(obj2, obj2_walk)
+    obj2_walk.active.remove(60)
+    obj2_walk.active.add(8)
+    with pytest.raises(ValueError, match="ancestor|active|reference"):
+        _validate_reusable_subtree(obj2, obj2_walk)
+
+
+def test_exact_context_child_reuse_merges_transitive_active_references():
+    from match_recovery.source.eh_regions import _LocalEHWalk
+
+    obj = _completed_subtree_fixture(descendant_root_ref=True)
+    walk = _LocalEHWalk(active={50, 1, 2}, complete=set())
+    child = obj.function("??1ReuseB@@QAE@XZ")
+    from match_recovery.source import eh_regions
+    eh_regions._validate_local_complete_destructor(
+        obj, child, 1, 2, walk, 2)
+
+    # Proving A reaches B in the exact context just completed above. That hit
+    # must contribute B's transitive reference to A's own reusable summary.
+    walk.active = {50}
+    _validate_reusable_subtree(obj, walk)
+    walk.active.add(8)
+    with pytest.raises(ValueError, match="ancestor|active|reference"):
+        _validate_reusable_subtree(obj, walk)
+
+
+def test_distinct_uncached_local_roots_still_exhaust_original_root_budget():
+    from match_recovery.pe_coff import Symbol
+    from match_recovery.source.eh_regions import _LocalEHWalk
+
+    count = 16
+    sections = [_EHFixtureSection(b"\xc3", (), 0x60501020,
+                                  f".text$budget_{index}")
+                for index in range(count)]
+    symbols = [Symbol(index + 1, f"??1Budget{index}@@QAE@XZ", 0,
+                      index + 1, 0x20, 2)
+               for index in range(count)]
+    obj = _EHFixtureCoff(sections, symbols, {})
+    walk = _LocalEHWalk(active={50}, complete=set())
+    for symbol in symbols[:15]:
+        from match_recovery.source import eh_regions
+        eh_regions._validate_local_complete_destructor(
+            obj, symbol, 50, 51, walk, 1)
+    assert walk.roots == 16
+    from match_recovery.source import eh_regions
+    with pytest.raises(ValueError, match="budget"):
+        eh_regions._validate_local_complete_destructor(
+            obj, symbols[15], 50, 51, walk, 1)
 
 
 def test_local_leaf_without_associations_rejects_fs_registration():
