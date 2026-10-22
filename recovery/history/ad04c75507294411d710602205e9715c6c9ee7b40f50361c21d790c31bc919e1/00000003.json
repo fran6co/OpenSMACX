@@ -1,0 +1,21 @@
+{
+  "event_id": "9f7f074a03bcb7b3a627112b7354abbc5c736226c1c55297d948e25b9d246e9c",
+  "payload": {
+    "affects": [
+      "entity-65e7709f54e12f8c5b1af4d770db66dd87b4e7fa193ac220531f16ec631bebca"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "plain-raster-distinct-original-mode-protocols",
+    "evidence": [
+      "Complete pinned620A10..6212A4 independently decoded. Initial cached setup pair620BB3/620BCC precedes the mode read620BDC; borrowed rollovers620C97/620CF5 use624EB0 before current-row emission, owned rollovers6211AB/62120C use624D80 afterward. Top-clipped rows still advance edges. Left refill failure suppresses right refill; the current row is retained according to its original mode.",
+      "The pinned owned address calculation62108D..6210A1 multiplies the already-rebased row again and adds the pixel base. Root also inspected both actual setup callees and their direct integer fixed_div dependency: no intervening row-global reset was found. Preserve the unusual target-width arithmetic, clipping shift/multiply, post-clip half-pixel phase and keyed writes; do not normalize them into a safety fix."
+    ],
+    "hypothesis": "The single plain-row helper wrongly collapses two distinct original raster protocols: borrowed storage has cached edge refills before drawing the saved row, while owned storage uses integer slopes and uncached refills after drawing. Recover the complete mapped owner body and retire its superseded private helper graph.",
+    "kind": "discovery"
+  },
+  "previous_event": "e8a03039cc49d7295a4b7988cbb373d1cdfd9201e73b59f247d79c149f527130",
+  "request_id": "plain-raster-distinct-original-mode-protocols",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:texture-plain-owner-oct23e"
+}

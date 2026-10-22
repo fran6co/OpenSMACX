@@ -1,0 +1,17 @@
+{
+  "event_id": "c77d1cdedaf6ad242874963244117b09aea932f7935f831da117385375511c60",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "plain-helper-retirement-transitive-closure",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Removed the three additional newly dead scalar helper definitions, their obsolete proposal banner, and strict test-extraction requirements. The only retained helper in the affected test tuple is the still-live Gouraud edge step; no optional/missing-helper waiver exists. Actual mapped owner and dedicated light tests replace the retired-helper probes. Final current-source build/link and76 tests pass, original identities/claims/history remain, and no coverage or matching gain is attributed to deleting scaffolding."
+    ]
+  },
+  "previous_event": "8d4b1479e6471d19da68036e127de92e95f3e51feee9e660fd5b9b64b5ff7711",
+  "request_id": "plain-helper-retirement-transitive-closure-incorporated",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:texture-plain-owner-oct23e"
+}
