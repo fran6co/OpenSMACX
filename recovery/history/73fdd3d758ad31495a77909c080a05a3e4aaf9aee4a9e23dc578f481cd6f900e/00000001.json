@@ -1,0 +1,19 @@
+{
+  "event_id": "1ffb08d297ab870c4d06939bdfece68800cb567ec3e6bb1d536b08033f5879d7",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_button_close_dispatch.py"
+    ],
+    "evidence": [
+      "The full relevant host suite passed63tests and failed only the old exact group<9 mutation anchor after the reviewed nine-copy unroll. Preserve its same omitted-last-group obligation by nulling the typed column+24 destination; the existing all27entry behavioral assertion remains unchanged. Independent review approved this narrow test repair. Full candidate nativebuild and observer are terminal; no C++/header/flag/annotation change is authorized here."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "preserve-ninth-group-damage-control",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:flatbutton-family-oct23f"
+}
