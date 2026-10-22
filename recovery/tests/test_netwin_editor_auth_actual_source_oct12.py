@@ -28,7 +28,7 @@ def material():
     accessor=extract_function((ROOT/"src/basepop.h").read_text(),"Dialogs &dialogs()")
     menu_source=(ROOT/"src/popmenu.cpp").read_text()
     owners="\n".join(extract_function(menu_source,n) for n in (
-        "PopMenu::~PopMenu()","int PopMenu::init()","int PopMenu::exec(int"))
+        "int PopMenu::init()","int PopMenu::exec(int"))
     helpers="\n".join(extract_function(source,n) for n in (
         "static int __cdecl pick_daemon_callback()","static int pick_answer(NetWin"))
     general=(ROOT/"src/general.cpp").read_text()

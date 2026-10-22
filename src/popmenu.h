@@ -91,7 +91,7 @@ class PopMenu : public Popup, public PullDown {
  public:
   PopMenu() { ; }
   // Original 0x00421400: destroy PullDown then Popup in reverse base order.
-  ~PopMenu();
+  ~PopMenu() {}
   int init();
   // The caller at 0x004B9178 switches on the selected index returned in EAX;
   // the catalogue's void return omitted that observed result.
