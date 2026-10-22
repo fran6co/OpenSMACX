@@ -235,7 +235,8 @@ def test_receiver_cleanup_uses_the_shared_layout_and_virtual_owners(compiled):
         base, = node["bases"]
         assert base["class"] == "StringAllocationBase" and base["virtual"]
         assert base["vbptr_offset"] == 0 and base["vbtable_index"] == 1
-        code, relocations, _ = obj.subject(obj.function(symbol_at("src/general.cpp", 0x538EC0)))
+    for obj in compiled["src/net_class.cpp"]:
+        code, relocations, _ = obj.subject(obj.function(symbol_at("src/net_class.cpp", 0x538EC0)))
         assert not relocations  # All three operations dispatch virtually.
         decoder = Cs(CS_ARCH_X86, CS_MODE_32)
         decoder.detail = True
@@ -245,7 +246,7 @@ def test_receiver_cleanup_uses_the_shared_layout_and_virtual_owners(compiled):
         assert [i.operands[0].mem.disp for i in calls] == [4, 8, 0]
     for obj in compiled["src/netdaemon.cpp"]:
         targets = references(obj, symbol_at("src/netdaemon.cpp", 0x538D10))
-        assert symbol_at("src/general.cpp", 0x538EC0) not in targets
+        assert symbol_at("src/net_class.cpp", 0x538EC0) not in targets
         assert not any("JackalVoiceRxShim" in target or "NetFifoShim" in target for target in targets)
         assert not any("VoiceTx" in target or "NetFifo" in target for target in targets)
         assert targets.count("??1AlphaNet@@QAE@XZ") == 1
@@ -258,7 +259,7 @@ def test_receiver_cleanup_uses_the_shared_layout_and_virtual_owners(compiled):
         assert targets.index("??1Heap@@QAE@XZ") < targets.index("??1Net@@QAE@XZ")
     for obj in compiled["src/net_class.cpp"]:
         targets = references(obj, "??1Net@@QAE@XZ")
-        cleanup = symbol_at("src/general.cpp", 0x538EC0)
+        cleanup = symbol_at("src/net_class.cpp", 0x538EC0)
         assert "??_M@YGXPAXIHP6EX0@Z@Z" not in targets
         assert targets.count("??1NetFifo@@QAE@XZ") == 3
         assert targets.count(cleanup) == 1
@@ -728,6 +729,76 @@ def test_base_computation_owns_its_shared_state_and_orders_resource_passes(compi
         assert "?unlock_base@NetDaemon@@QAEXH@Z" in targets
 
 
+def extract_cpp_definition(text, declaration):
+    """Return one actual C++ definition, without coupling to the next marker."""
+    assert text.count(declaration) == 1
+    start = text.index(declaration)
+    opening = text.index("{", start)
+    depth = 0
+    state = "code"
+    index = opening
+    while index < len(text):
+        char = text[index]
+        following = text[index + 1] if index + 1 < len(text) else ""
+        if state == "code":
+            if char == "/" and following == "/":
+                state = "line"
+                index += 2
+                continue
+            if char == "/" and following == "*":
+                state = "block"
+                index += 2
+                continue
+            if char == '"':
+                state = "string"
+            elif char == "'":
+                state = "char"
+            elif char == "{":
+                depth += 1
+            elif char == "}":
+                depth -= 1
+                if depth == 0:
+                    return text[start:index + 1]
+        elif state == "line":
+            if char == "\n":
+                state = "code"
+        elif state == "block":
+            if char == "*" and following == "/":
+                state = "code"
+                index += 2
+                continue
+        else:
+            if char == "\\":
+                index += 2
+                continue
+            if (state == "string" and char == '"') or (state == "char" and char == "'"):
+                state = "code"
+        index += 1
+    raise AssertionError("unterminated C++ definition: " + declaration)
+
+
+def recovered_harness_source(harness_name, handlers, declarations=()):
+    """Build a harness using actual source declarations and bodies."""
+    harness = Path(__file__).with_name(harness_name).read_text()
+    for anchor, unit, start, end in declarations:
+        text = (ROOT / unit).read_text()
+        assert text.count(start) == harness.count(anchor) == 1
+        if end == "__DEFINITION__":
+            region = extract_cpp_definition(text, start)
+        else:
+            assert end is None or text.count(end) == 1
+            first, last = text.index(start), len(text) if end is None else text.index(end)
+            assert first < last
+            region = text[first:last]
+        harness = harness.replace(anchor, region)
+    for anchor, unit, address in handlers:
+        record, = (row for row in read_file(ROOT / unit) if row.address == address)
+        assert record.region and not record.extract_error
+        assert harness.count(anchor) == 1
+        harness = harness.replace(anchor, record.region)
+    return harness
+
+
 def run_recovered_harness(tmp_path, monkeypatch, harness_name, handlers, declarations=()):
     """Compile actual source bodies with doubles; not full-game acceptance."""
     from recovery.environment.compile import compile_object
@@ -736,19 +807,7 @@ def run_recovered_harness(tmp_path, monkeypatch, harness_name, handlers, declara
         pytest.skip("the project compiler and Wine32 are required")
     for name in ("CL", "_CL_", "VC6_INCLUDE"):
         monkeypatch.delenv(name, raising=False)
-    harness = Path(__file__).with_name(harness_name).read_text()
-    for anchor, unit, start, end in declarations:
-        text = (ROOT / unit).read_text()
-        assert text.count(start) == harness.count(anchor) == 1
-        assert end is None or text.count(end) == 1
-        first, last = text.index(start), len(text) if end is None else text.index(end)
-        assert first < last
-        harness = harness.replace(anchor, text[first:last])
-    for anchor, unit, address in handlers:
-        record, = (row for row in read_file(ROOT / unit) if row.address == address)
-        assert record.region and not record.extract_error
-        assert harness.count(anchor) == 1
-        harness = harness.replace(anchor, record.region)
+    harness = recovered_harness_source(harness_name, handlers, declarations)
     source = tmp_path / "menu.cpp"
     source.write_text(harness)
     wrapper = ROOT / "recovery/environment/wine.py"
@@ -771,8 +830,8 @@ def test_receiver_cleanup_respects_payload_and_allocation_ownership(tmp_path, mo
     # The historical FILE marker intentionally exposes the complete TU as
     # record.region. Select its live definition using unique neighboring anchors.
     run_recovered_harness(tmp_path, monkeypatch, "receiver_cleanup_harness.cpp", [], declarations=[
-        ("// LIVE_CLEAR_BODY", "src/general.cpp", "void JackalVoiceRx::clear() {",
-         "// ORIGINAL: 0x005D271D"),
+        ("// LIVE_CLEAR_BODY", "src/net_class.cpp", "void JackalVoiceRx::clear() {",
+         "__DEFINITION__"),
         ("// LIVE_ALLOCATION_BASE", "src/stringstruct.h", "class StringAllocationBase {",
          "// REAL VIRTUAL INHERITANCE, like StringStructPayload"),
         ("// LIVE_OWNER_PUBLICATION", "src/stringstruct.cpp", "StringAllocationBase::~StringAllocationBase() {",
