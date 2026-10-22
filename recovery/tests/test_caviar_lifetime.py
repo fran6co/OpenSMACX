@@ -141,6 +141,10 @@ def run_host(tmp_path,parts):
             {
                 Caviar renderer;require_empty(renderer);
                 require(renderer.field_108_==0x461C4000 && renderer.field_13CC_==0);
+                uint32_t scene_scale_word=0;
+                require(sizeof(scene_scale_word)==sizeof(renderer.scene_scale_));
+                std::memcpy(&scene_scale_word,&renderer.scene_scale_,sizeof(scene_scale_word));
+                require(scene_scale_word==0x3F2AAAAB);
                 renderer.init();require(allocated.size()==600 && released.empty());
                 require(renderer.scene_context_.state_.instances_==renderer.slots_);
             }
@@ -179,7 +183,7 @@ def test_actual_model_and_instance_lifetimes(tmp_path):
     result=run_host(tmp_path,actual_source());assert result.returncode==0,result.stderr
 
 
-@pytest.mark.parametrize("damage",["no_model_dtor","no_renderer_dtor","short_array","wrong_release","model_clear","model_fd_close","wrong_owner","instance_vector_not_zero"])
+@pytest.mark.parametrize("damage",["no_model_dtor","no_renderer_dtor","short_array","wrong_release","model_clear","model_fd_close","wrong_owner","instance_vector_not_zero","wrong_initial_scene_scale"])
 def test_lifetime_damage_controls(tmp_path,damage):
     parts=actual_source()
     if damage=="no_model_dtor":parts["model_dtor"]=parts["model_dtor"].replace("close();","")
@@ -189,6 +193,10 @@ def test_lifetime_damage_controls(tmp_path,damage):
     elif damage=="model_clear":parts["model_close"]=parts["model_close"].replace("record_ = nullptr;","record_ = nullptr; field_0_ = 0;")
     elif damage=="model_fd_close":parts["model_dtor"]=parts["model_dtor"].replace("close();","close(); _close(fileDescriptor_);")
     elif damage=="instance_vector_not_zero":parts["instance_ctor"]=parts["instance_ctor"].replace("instance_vector_(0)","instance_vector_(reinterpret_cast<VOX_Vect *>(1))")
+    elif damage=="wrong_initial_scene_scale":
+        before="scene_scale_ = 0.6666667f;"
+        assert parts["renderer_ctor"].count(before)==1
+        parts["renderer_ctor"]=parts["renderer_ctor"].replace(before,"scene_scale_ = 0.5f;",1)
     else:parts["renderer_dtor"]=parts["renderer_dtor"].replace("close();","caviar_free_record(reinterpret_cast<CvrRecord*>(slots_[0].instance_matrix_)); close();")
     result=run_host(tmp_path,parts);assert result.returncode==42
 

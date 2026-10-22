@@ -1,0 +1,23 @@
+{
+  "event_id": "c97497482cf2b5fde3ebd6505ba21c91acc365233a71ca0e61df67c891b2f320",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_caviar_lifetime.py"
+    ],
+    "evidence": [
+      "Caviar::Caviar0x616DA0 initializes its real float scene_scale_ through a uint32_t0x3F2AAAAB temporary and memcpy. Ordinary scene_scale_=0.6666667f has the identical IEEE32 representation and preserves field-store order. Actual production-recipe overlay, replay, unchanged-source and changed-target damage controls pass; the entire Caviar object is a normalized zero-omission replica, not an exact-function-count gain.",
+      "Authorize replacing only this temporary/bit-copy seam by the typed float literal, with unchanged two preceding field stores and all implicit member construction. No other math-call/local-spelling proposal, flag/header/layout/type/global/symbol/annotation/claim change. Preserve all original spans/history/claims and baseline.",
+      "Add a constructor-value assertion to the existing actual-source lifetime harness before init can overwrite scene_scale_. Compare its raw float word against0x3F2AAAAB in the test only and add a compile-success wrong-scale mutant. Keep all existing model/instance/error/unwind/600allocation-path controls and pinned evidence. Host controls and normalized object equality are not original provider, linked selection or game/runtime acceptance.",
+      "Coordinator may bundle this independently scoped code-quality step with the separately owned faithful rules-reader recovery for one combined fresh build/link and destination verification, preserving both native task baselines. No autonomous acceptance or outside-scope waiver follows.",
+      "Evidence: .opensmacx/recovery/parallel-match-oct22i/render-proposals.json; owner-screen-e343jb7v/caviar-direct-exact-float-literal-for-scene-scale.obj and.json; owner-screen-e343jb7v/report.json; current source declaration src/caviar.h::scene_scale_."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "9e77e6b84f77197be22785a0e0459a9057848adc43a95f685ab30ff8b9a84749",
+  "request_id": "caviar-literal-quality-control-scope-oct22i",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:caviar-source-batch-oct19e"
+}
