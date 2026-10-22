@@ -1,0 +1,22 @@
+{
+  "event_id": "48b4bbde9f9470b0fc073b66f7fc8c5b2d2e0ad300c226a808b6a45a7d9fb64b",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "packages/match-recovery/src/match_recovery/source/asm.py",
+      "packages/match-recovery/tests/source/test_eh_comparison.py"
+    ],
+    "evidence": [
+      "Serialized valid vector operand mutations remain physically well-owned but legacy opcode-shape classification can return SHAPE_EXACT. That is not byte equality or acceptance, yet explicit array cleanup operands require a visible mismatch obligation just as the independently parsed predecessor graph does.",
+      "Authorize a narrow pre-byte-comparison check of action kind and decoded array count, stride, frame displacement, base adjustment and scratch-register facts from each independently bound side. Differing valid facts must report MISMATCH; malformed inputs still refuse. Keep source instructions and every nonrelocated byte in ordinary comparison too. Do not compare masked original addresses to COFF names or promote callback/helper identity from this check.",
+      "Preserve all one-span classification and non-array comparison behavior, complete original/compiled topology, every action boundary and exact relocation/bounds/ownership check, claim gates and unsupported-case refusals. No package project constants, production compiler changes or baseline resets. Both hermetic mutations and real compiler-generated count damage must exercise this comparison."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "11ed9245b782316d51c45e98ff2e6bc8304906aa678c981d145e9c354996e559",
+  "request_id": "array-action-fact-comparison-oct22d",
+  "schema_version": 1,
+  "sequence": 17,
+  "stream": "task:filewin-jackal-boundary-oct9"
+}

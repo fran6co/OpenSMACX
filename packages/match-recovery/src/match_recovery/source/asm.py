@@ -25,6 +25,7 @@ from capstone import CS_ARCH_X86, CS_MODE_32, CS_GRP_CALL, CS_GRP_JUMP, Cs, x86
 
 from ..pe_coff import Coff, PeImage
 from .eh_regions import bind_eh_regions
+from .eh_actions import EHActionKind
 from .model import DecompilationState, Mode, Tier
 
 @dataclass(frozen=True)
@@ -1192,6 +1193,43 @@ def compare_subject(record: DecompilationState, exe: Path | str,
                         f"original={ownership.original_predecessors!r}, "
                         f"compiled={ownership.compiled_predecessors!r}"),
                 )
+            if len(ownership.original_actions) != len(ownership.compiled_actions):
+                return AsmComparison(
+                    verdict=Tier.MISMATCH,
+                    flags=compiled.flags,
+                    diagnostic="valid EH cleanup action counts differ",
+                )
+            for index, (original_action, compiled_action) in enumerate(zip(
+                    ownership.original_actions, ownership.compiled_actions)):
+                if original_action.kind is not compiled_action.kind:
+                    return AsmComparison(
+                        verdict=Tier.MISMATCH,
+                        flags=compiled.flags,
+                        diagnostic=f"valid EH action kind differs at index {index}",
+                    )
+                if original_action.kind is EHActionKind.ARRAY_DESTRUCTOR:
+                    original_facts = (
+                        original_action.element_count,
+                        original_action.element_size,
+                        original_action.frame_displacement,
+                        original_action.base_adjustment,
+                        original_action.scratch_register,
+                    )
+                    compiled_facts = (
+                        compiled_action.element_count,
+                        compiled_action.element_size,
+                        compiled_action.frame_displacement,
+                        compiled_action.base_adjustment,
+                        compiled_action.scratch_register,
+                    )
+                    if original_facts != compiled_facts:
+                        return AsmComparison(
+                            verdict=Tier.MISMATCH,
+                            flags=compiled.flags,
+                            diagnostic=(
+                                f"valid EH array-cleanup semantics differ at index {index}: "
+                                f"original={original_facts!r}, compiled={compiled_facts!r}"),
+                        )
             pairs = []
             for region in bound:
                 low = region.original.start
