@@ -5065,7 +5065,7 @@ void DesignWin::draw_info() {
 
 
 // ORIGINAL: 0x00439F20 ?select_chassis@DesignWin@@QAEXXZ 0x00439F20-0x0043A300;0x006541FC-0x00654281
-// RECOVERY_BINDING: v1 {"evidence": ["git:caf4963a:src/recovered/units/00439f20.cpp", "RulesChassis in src/veh.h", "DesignWin component members in src/designwin.h", "SelectPartWin::exec in src/selectpartwin.cpp"], "reason": "Open the chassis picker, translate its eligible-row result into the chassis table, preserve chassis-dependent weapon and ability constraints, and redraw the design preview."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:caf4963a:src/recovered/units/00439f20.cpp", "RulesChassis in src/veh.h", "DesignWin component members in src/designwin.h", "SelectPartWin::exec homed from git:2c2c407fba69ba73e4556995d5cc2cf85e3e0308:src/selectpartwin.cpp to src/designwin.cpp"], "reason": "Open the chassis picker, translate its eligible-row result into the chassis table, preserve chassis-dependent weapon and ability constraints, and redraw the design preview."}
 void DesignWin::select_chassis() {
     SelectPartWin picker;
     const int row = picker_row_before(protoChassisType_, Chassis,
@@ -5128,7 +5128,7 @@ void DesignWin::select_chassis() {
 }
 
 // ORIGINAL: 0x0043A300 ?select_weapon@DesignWin@@QAEXXZ 0x0043A300-0x0043A754;0x00654281-0x00654306
-// RECOVERY_BINDING: v1 {"evidence": ["git:caf4963a:src/recovered/units/0043a300.cpp", "RulesWeapon/RulesArmor in src/veh.h", "DesignWin component members in src/designwin.h", "SelectPartWin::exec in src/selectpartwin.cpp"], "reason": "Open the weapon picker, apply the selected record's chassis restrictions, update implicit abilities, and redraw the design preview."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:caf4963a:src/recovered/units/0043a300.cpp", "RulesWeapon/RulesArmor in src/veh.h", "DesignWin component members in src/designwin.h", "SelectPartWin::exec homed from git:2c2c407fba69ba73e4556995d5cc2cf85e3e0308:src/selectpartwin.cpp to src/designwin.cpp"], "reason": "Open the weapon picker, apply the selected record's chassis restrictions, update implicit abilities, and redraw the design preview."}
 void DesignWin::select_weapon() {
     SelectPartWin picker;
     const int row = picker_row_before(protoWeaponType_, Weapon, MaxWeaponNum);
@@ -5186,7 +5186,7 @@ void DesignWin::select_weapon() {
 }
 
 // ORIGINAL: 0x0043A760 ?select_armor@DesignWin@@QAEXXZ 0x0043A760-0x0043A9F8;0x00654306-0x0065438B
-// RECOVERY_BINDING: v1 {"evidence": ["git:caf4963a:src/recovered/units/0043a760.cpp", "RulesArmor/RulesWeapon in src/veh.h", "DesignWin component members in src/designwin.h", "SelectPartWin::exec in src/selectpartwin.cpp"], "reason": "Open the armor picker, preserve the armor/weapon compatibility suggestion, and redraw the design preview."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:caf4963a:src/recovered/units/0043a760.cpp", "RulesArmor/RulesWeapon in src/veh.h", "DesignWin component members in src/designwin.h", "SelectPartWin::exec homed from git:2c2c407fba69ba73e4556995d5cc2cf85e3e0308:src/selectpartwin.cpp to src/designwin.cpp"], "reason": "Open the armor picker, preserve the armor/weapon compatibility suggestion, and redraw the design preview."}
 void DesignWin::select_armor() {
     SelectPartWin picker;
     const int row = picker_row_before(protoArmorType_, Armor, MaxArmorNum);
@@ -5203,7 +5203,7 @@ void DesignWin::select_armor() {
 }
 
 // ORIGINAL: 0x0043AA00 ?select_reactor@DesignWin@@QAEXXZ 0x0043AA00-0x0043AC69;0x0065438B-0x00654410
-// RECOVERY_BINDING: v1 {"evidence": ["git:caf4963a:src/unrecovered/0043aa00.cpp", "RulesReactor in src/veh.h", "DesignWin component members in src/designwin.h", "SelectPartWin::exec in src/selectpartwin.cpp"], "reason": "Open the reactor picker, translate its enabled-row result, update the reactor selection, and redraw the design preview."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:caf4963a:src/unrecovered/0043aa00.cpp", "RulesReactor in src/veh.h", "DesignWin component members in src/designwin.h", "SelectPartWin::exec homed from git:2c2c407fba69ba73e4556995d5cc2cf85e3e0308:src/selectpartwin.cpp to src/designwin.cpp"], "reason": "Open the reactor picker, translate its enabled-row result, update the reactor selection, and redraw the design preview."}
 void DesignWin::select_reactor() {
     SelectPartWin picker;
     const int row = picker_row_before(protoReactorType_, Reactor,
