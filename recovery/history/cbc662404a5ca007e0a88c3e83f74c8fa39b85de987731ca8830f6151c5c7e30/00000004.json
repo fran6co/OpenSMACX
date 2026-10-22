@@ -1,0 +1,30 @@
+{
+  "event_id": "dab672492122e4b7f89e527a0e52808e9f50b0b96c9738741c14598eee109008",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Fresh independent review parallel-match-oct22i/win-modal-starts-fresh-review.md (including complete-span decode correction) independently establishes WinModalWindow start9B7ADC: set_modal owner argument store5EE1F5; release_modal restore5EE30E from focus-stack owner; get_mouse_window direct tests/reloads at5F71E6,5F71FE,5F7226. This new producer/restoration/consumer chain supersedes the older insufficient-evidence exclusion, not the original identity or any claim.",
+      "WinBubbleCompanion start9B7A4C directly cleared/published by set_bubble_text5F83FC/5F841B and cleared by clear_bubble_text5F8512. Both current symbols are unique ordinary external COFF data definitions in fresh build-e7rjv6qj/win.cpp.obj. Source pointer-cell identity only, no pointee, callback, extent, original type/name, allocation or lifetime claim.",
+      "Expand src/win.cpp add-only native v1 object annotations for exactly these two cells under the same no-C++-body/no-flags/no-baseline/no-claim-change restrictions. Existing six authorized cells and every unresolved structural/restoration obligation remain. Source original init_class four zero stores are independently confirmed; DO NOT alter its existing memset from a sparse-read misinterpretation."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 10189532,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 10189388,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "4f02ea75f73c01a7486814d433ffa15195ee2029475bdf1da3a0a780495666b6",
+  "request_id": "win-modal-bubble-direct-cell-scope-oct22j",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:win-pointer-identity-owner-oct10"
+}
