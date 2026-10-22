@@ -1,0 +1,53 @@
+{
+  "event_id": "56cea5468d22c4e25c4698787d1deb2d9d298668d42de8af1d9b7ee6dc0f0428",
+  "payload": {
+    "affects": [
+      "entity-0cb0d5a392ffd695ae665a515a2af61976d982d019b9c52d8e3fd691a80bd93e",
+      "entity-0fbe95eeb925b7299ae165c9fbee9383c9e88a3d09451d097024b898582c6435",
+      "entity-1d9b32c8e4e58ea6fb95d8c09504fe79e3168708ad506f32789bd3e7ec97ee30",
+      "entity-27f23afb695f67f9119cfe07674c14a77d28e9f422afa867114f8a0b5b854184",
+      "entity-280267d65d2851a50bc31be3d2ef4f1101a0de0bba206ce27fc957b8ac792b75",
+      "entity-282225a728afe51137290c60004fc78d61854107a4829d6a15d0ad411983715e",
+      "entity-28e94ba6dd71930bfdcf388987e6a597ab1fbf0c49b4593ce003949499f84ec8",
+      "entity-2d82d5f3dec0c4a1f9d0bc354b064760069ff5e5ba9b414696f74e97af52b4c9",
+      "entity-341ead1405c6768ae11013ab10cabac4d63ba834c33e225d0cde9cd88015eed5",
+      "entity-364f7a38cfaa49c68465ef23cccef7b08fbccceaac39fc1db7cca4e4ded8a1a5",
+      "entity-37bea69ba05e70b68bff38dff0013b42cac88b17a077e486e4d4b8f5863c4cfe",
+      "entity-4fabe4dcd453a1866bd3a752038ec3c9caed79de94deba2b16fb5dabb196639e",
+      "entity-51cd350ab049aa870bb13867e527b027e2eb14bfd5bf4159e6649b185eb31770",
+      "entity-55ca3c9f435991e5324cb50d47147273a354c54de126d0f486e71d2f1ccae54d",
+      "entity-723e4f28d607e2217c7395a786633ba5e276b610e9ade1cae129e3798395521d",
+      "entity-7a68ce4521c8abe034be18de261a94e7af7a8bb2688e10090824724533c5ae47",
+      "entity-987ef18e4dc0d82db95b312dcc714309890c91ee0de7adeb260404973e788126",
+      "entity-a60790912f54a38314dc81dd2cda5a68ec7d5fb311df25f5050a66cb1acb19f6",
+      "entity-a773f2305ac026745c407b59d73e942be15148332499a45b1866b575321ed795",
+      "entity-a94242edb23d4ce75cc1054000c1c527d48bab1c54b578ac42c35d7c0ca46664",
+      "entity-aadbc54a7a3130d6157ce0e2c28306394990cec472b85af0ca7783fc3fdc53e3",
+      "entity-be75cfb411b4c6902a3f4013ef1db80c09481d5f859da4b797289dfc49917ebb",
+      "entity-c605ad57ac33a79dd33abf834314b7ffa08f7980cdd75fcc0d800d6d2054b61b",
+      "entity-c7ebdac2e622acda5920c19be2ab0d9ac957e8c635527d2056b9f8a7c5c4a053",
+      "entity-cdd4fb519436769ec894002dab660ef5fab1bf515953555a8da89e430ed717e9",
+      "entity-ecc8c939672aeca28dcd606fb1e479bb69d70a3070d4d40fa6817fe83c162eb2",
+      "entity-f891b5ce6cebbfb00fe0daea3686d7889ab173a85e75ce7674ddc0c9ba5f6c5c",
+      "entity-f9b055416a1659451fa624b1a4b813df7e327d2192c01a56b7d36bd2d8fb6762",
+      "entity-fa07e06c2e5b7bc7146275e1211511592c8215dbad0025db8b53706eb0a74c49"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "ledger-coupled-visibility-selection-oct22h",
+    "evidence": [
+      "Coordinator whole-family selection supersedes the tentative derived-only/public-walker proposal, not the task baseline. Actual recipe both-visible screen restores the parent ninth cleanup state and exact cold span, while preserving standalone base walk shape64original/66compiled and ledger131original/134compiled with exact cold span. These are local observations, not claims or full equivalence.",
+      "Reject the privately screened public remove_all outline as unproved: both-public-walk reduces original standalone base64instructions to11 and ledger131 to52, with a cold-frame mismatch. The derived-only outlined98versus99parent count is not sufficient evidence. Preserve the unresolved generic-helper/context-selection finding; do not alias StringStruct::remove_all0x402970 to the typed Alpha owner or invent inheritance.",
+      "Authorize root to class-define both existing unchanged destructor bodies and remove their duplicate CPP definitions. Keep remove_all inline unchanged, all three parent/derived/base passes, callback-sensitive reload/count/null/delete order and virtual allocation-owner publication. No layout, flags, behavior fixes or artificial emission.",
+      "Actual alphanet.cpp screen physically emits base ordinary401CE0 and ledger ordinary4E3350/scalar4E3300 after header visibility; alphanet_records.cpp ceases to emit these ordinary/ledger scalar entries. Coordinator may migrate base BODY to FILE with explicit header body and set their native compile_context to alphanet.cpp, retaining canonical mapping host, original IDs/fullspans/claims/lessons. Base scalar402B40 stays with records; complete ledger wrapper4E34B0 already has alpha context. This is a measurement witness, not historical TU or linked selection proof.",
+      "Fresh whole application build/link, source/claims/mappings/references, changed-object review and destination recheck remain required before manual integration. Full automatic/game acceptance remains unproved. Any newly observed collateral must be retained and ownership expanded before outside source edits.",
+      ".opensmacx/recovery/parallel-match-oct22h/ledger-visibility-x3nl4arf/report.json; ledger-public-walk-0wc4a2op/report.json; ledger-both-public-walk-ypi82_vk/report.json; stringstruct-remove-all-alpha-identity-review.md; net-session-picker-visibility-review.md"
+    ],
+    "hypothesis": "Expose both unchanged genuine ledger destructor bodies in their class header, retaining the existing inline callback-sensitive walker and the independent original ordinary/generated identities.",
+    "kind": "discovery"
+  },
+  "previous_event": "299c690b1f1c000d2588e182caf7cb409a5ea6efc71f65654e7627b18dae3176",
+  "request_id": "ledger-coupled-visibility-selection-oct22h",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:alphanet-identity-conversions-owner-oct20"
+}

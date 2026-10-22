@@ -291,12 +291,14 @@ def source_methods():
     assert "for (int removed = 0; removed < entry_count_; ++removed)" in alpha_method
     assert "NetTextListBase::remove_all" not in net_source
     assert "AlphaNetStringStruct::remove_all" not in alpha_source
-    for source, signature in (
-            (net_source, "NetTextListBase::~NetTextListBase()"),
-            (alpha_source, "AlphaNetStringStruct::~AlphaNetStringStruct()")):
-        destructor = function_body(source, signature)
+    destructors = [function_body(net_source, "NetTextListBase::~NetTextListBase()")]
+    for name in ("AlphaNetStringStruct", "AlphaNetLedger"):
+        assert f"{name}::~{name}()" not in alpha_source
+        destructors.append(class_method(alpha_header, name, f"~{name}()"))
+    for destructor in destructors:
         assert "remove_all();" in destructor
         assert "current_position_ = 0;" in destructor
+        assert destructor.index("remove_all();") < destructor.index("current_position_ = 0;")
     return net_method, alpha_method
 
 
