@@ -1,0 +1,20 @@
+{
+  "event_id": "8188d39d93c86adc36c64c88cb4efafca2d6c6c912711ccc1a23ca958b281b7d",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "dialogs-base-receiver-path-source-forms",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Three candidate forms exhausted per configured flag context, including errors: implicit typed pointers and references each compile63/66instructions vs original51 and remainMISMATCH; both emit null-preservingderived-to-base conversion guards. The reference spelling does not eliminate those guards. Originalsourceform is still unknown; no additional variant in this unchanged context.",
+      "Third ordinary nestedqualified form RadioButton::Dialog::init etal is refused byVC6 C2039underbothcontexts; no candidateobject/measurements. Initial private log printed absentrows as apparent exactlosses: those are UNMEASURED, not measured regressions. The native JSON correctly retains unknown. Earlier two compiled candidates show no exactneighbor gains/losses; current productsource and all claims are untouched.",
+      "24total compiler calls comprise6candidatecalls plus18separately counted baseline/replica/damagecontrols. Allreplica/damagecontrols pass; scope/strict/acceptance remain incomplete/unknown/not_evaluated. A prior proposalhash transcription mismatch was refused before any compiler call; its setup refusal is retained separately, actual bytes re-read and hash-qualified before reference trial.",
+      "Do not add forced wrappers, rawslots, casts, flagchanges or declarationchanges solely to manufacture a match or reset the cap. New evidence-backed owner/API discoveries can justify future affected-context work; none is established by these failed source forms. Native Task/history preserve the negative decisions; private full proposals/decks/frozeninputs/control results remain ignored. No coverage/exactness gain, buildacceptance, baseline reset or automatic/gameacceptance is claimed."
+    ]
+  },
+  "previous_event": "67b39faf1b73185a996293608c9a841a036e60e499b098c277149f3977aad7d1",
+  "request_id": "dialogs-base-receiver-path-source-forms-rejected",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:dialogs-init-views-oct23c"
+}

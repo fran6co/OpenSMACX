@@ -1,0 +1,21 @@
+{
+  "event_id": "67b39faf1b73185a996293608c9a841a036e60e499b098c277149f3977aad7d1",
+  "payload": {
+    "affects": [
+      "entity-ff5e0c79d068c379b7587ce4f71c0857369a697c5531ca43f830e1366e9631f1"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "dialogs-base-receiver-path-source-forms",
+    "evidence": [
+      "Pinned constructor612830 and init6136B0; vbtables at0/44/58/70/F8 with Dialog deltasBA0/B5C/B48/B30/AA8. Currentqualified COFFroot path is equivalent for the observed complete layout. Read-only report dialogs-shared-init-structure-review.json preserves exact source/object/pin provenance.",
+      "Private native screens:dialogs-init-views-oct23c-screen,refinement-screen,qualified-screen. No proposals were ever written into src. Task and source baselines are unchanged."
+    ],
+    "hypothesis": "Ordinary per-widget base views may recover the original initializer receiver lowering without changing the real shared virtual Dialog. Pinned five vbtable paths and the current root path all reach complete-object Dialog+BA0, so this is a source/compiler-context hypothesis, not evidence that the present hierarchy or effects are wrong.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "dialogs-base-receiver-path-source-forms",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:dialogs-init-views-oct23c"
+}
