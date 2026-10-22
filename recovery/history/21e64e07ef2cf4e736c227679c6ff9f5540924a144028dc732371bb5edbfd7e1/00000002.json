@@ -1,0 +1,21 @@
+{
+  "event_id": "718ceed9ce0842bbf78e9c2ff298688af87cca778304ae4cc1dac285c0c43cd6",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "vehicle-original-body-boundaries-oct23b",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "git:a0b2014e7c5b77d650195f79317d1fa38aac0571:src/veh.cpp; complete mapped algorithms, no recovery-only contexts/helper definitions; native full application compilation/link succeeds on final170cefd3source after2retained failed candidate compiles. No further spelling attempts in this unchanged context. Final normal candidate-loop continue replaces an illegal goto-to-loop-end, preserving its iteration target.",
+      "git:9e75dd503e674790de3a9572d68cf382afad2274:5actual-source test files;12product GCC/Clang controls pass with runtime-failing compiled mutants. Independent followup closes prior callback-order/valid-entry gaps. Ordered subsequences are not exact full traces; stack_check ordering, specialized candidate paths, production sensor geometry and exhaustive original behavior remain unproved.",
+      "sha256:5dc42cd0feaf777933b7dd4b570d00752bfd641d449938527b332ae43a4165bc:644F3A is existing VC6-runtime LIBCMT abs.obj _abs, both pinned and archive bodies8b44240485c07d02f7d8c3 without relocations. Earlier checklist/unmapped-app concern is superseded; component cdq/xor/sub prose is stale. No new application implementation, original library-selection proof or INT_MIN C semantics is claimed.",
+      "Coordinator-reviewed manual source incorporation only.200nonowner normalized objects equal under the original qualified comparison excluding separately integrated General/Net. All5581mapped verdicts and3414exact/2827strict-positive identity sets retained; all3affected functions remain MISMATCH. Source-unchanged goody_box common-block load/branch/table-layout change independently reviewed; its full byte obligation is preserved, not waived.",
+      "Native outside-function residual still fails on20retired emitted helpers; no fabricated original identities or generic omission waivers. Supported unchanged Veh complete closures compare equal,14local-target closure walks remain unknown. Later old-master receipt qualification refuses because Game was legitimately superseded, not Vehicle artifact corruption; retained object/output hashes remain intact. Full linked allocation/selection, exhaustive semantic/runtime/game and autonomous acceptance remain unproven. Fresh destination build/link and relevant checks are required after manual integration; do not replay reports or reset task baseline."
+    ]
+  },
+  "previous_event": "6ac07c78df1e2eea4848b4f1883f184dcd2a75d14e8dc239d721deeb854771b7",
+  "request_id": "vehicle-original-body-boundaries-oct23b-incorporated",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:vehicle-body-boundaries-oct23b"
+}
