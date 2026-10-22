@@ -1,0 +1,24 @@
+{
+  "event_id": "2fde0bdacd09c69fcbdcf1dec1d52a2929e3d882eb4ab7dd435c04209ca2b166",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_read_units_original.py"
+    ],
+    "evidence": [
+      "Current read_units0x587240 still consumes a fifth per-record numeric reactor token after ability, an unofficial-patch enhancement confirmed by Git11a07309a and current source. Pinned587316 calls text_item_binary then directly branches on prototype16/17/18 to pass reactor1/2/3 (default1) to make_proto587364; no optional reactor token read exists. Restore original four numeric record fields(plan,cost,carry,icon), retaining total-count parsing and all other token/call order.",
+      "Pinned58736F tests plan and587371 JL skips its byte override for EVERYnegative value. Current plan!=-1 incorrectly overrides other negatives. Restore plan>=0, retaining byte truncation for nonnegative values, original cost/carry nonzero-only writes and unconditional signed icon-byte write after make_proto. Preserve prerequisite signed-short store before make_proto and every original unsafe/unchecked behavior.",
+      "Authorize only the complete existing read_units definition in src/alpha.cpp and a new actual-source control recovery/tests/test_read_units_original.py. Keep explicit MK1/Fission, MK2/Fusion, MK3/Quantum and defaultFission original interpretation, ordinary C++ calls, complete original identities/spans/claims and legacy LEVER/TRIED history. No header/API/global/layout/profile/flag changes or new match claims. Preserve the optional-token enhancement in Git history for a subsequent milestone, not on the faithful path.",
+      "Host controls must extract the actual current product definition, observe token trace and make_proto arguments, cover missing-section and count clamp, IDs16/17/18, negative/positive/default plans, nonzero cost/carry and byte/short truncation, and compile-success mutants for extra token consumption, plan!=-1, wrong reactor and reordered/missing stores. Stubs model only bounded collaborators; do not claim Windows/native ABI or game runtime. Keep existing tests unchanged unless a separate demonstrated fixture issue is reviewed.",
+      "Coordinator owns all Git/native compiler/resources/preparation/annotation writers/review/integration. Require fresh complete build/link, whole original/strict census and physical outside-body checks, source/claims/mappings/references, independent C++/binary review and fresh destination recheck. No automatic/game acceptance or task-baseline reset is authorized.",
+      "Evidence: .opensmacx/recovery/parallel-match-oct22i/read-units-original-reactor-review.md; pinned original0x587240..0x5873B1 SHA01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; current mastera8eca8982."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "d0a2506c6fc198cbf7d29b6edd2f5b997ed9cfdeaa2103ef4028e51aa7fcceca",
+  "request_id": "read-units-faithful-original-scope-oct22i",
+  "schema_version": 1,
+  "sequence": 14,
+  "stream": "task:alpha-rules-loader-recovery"
+}
