@@ -1,0 +1,20 @@
+{
+  "event_id": "47c43384f4e0181a28cabe752d998613fd74b0a113710e82f04f42865b398174",
+  "payload": {
+    "affects": [
+      "entity-48fc4d3a261a5aa3691f7541a6469983127b4dd9afa0d210f25ea2eec7bab043"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "editbox-typed-head-capture-before-tail-reset",
+    "evidence": [
+      "Pinned61616F/175/17F and complete616140span versus current typed WinNodeList fields; unchanged source and exact candidate/control saved in the ignored frozen native deck."
+    ],
+    "hypothesis": "The ordinary typed head capture expresses the pinned load-head/store-tail/store-current order without changing the established focus-list owner or original branches. Test this source-form hypothesis, not a semantic defect.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "editbox-typed-head-capture-before-tail-reset",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:editbox-focus-oct23e"
+}

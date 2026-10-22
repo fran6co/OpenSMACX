@@ -1,0 +1,18 @@
+{
+  "event_id": "abe17ceb1029669df8eb4de39baaf00b93d6468c101df7d6d79be1b6fef13dd1",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "editbox-typed-head-capture-before-tail-reset",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "One candidate under each of the two prepared flag sets remains MISMATCH, 21 emitted instructions versus original22, ten matching. Eight compiler calls comprise two candidate calls plus six baseline/replica/damage controls; all controls pass, and no measured exact-neighbor loss. No source form was adopted or claim changed.",
+      "Retain original task baseline and negative candidate evidence. No new causal source/type/caller dependency is established; do not add arbitrary forms, casts, wrappers or compiler flag changes to continue this unchanged plateau. Strict/complete owner/linked/runtime/game acceptance remains unknown or not evaluated. No coverage or exactness gain is claimed."
+    ]
+  },
+  "previous_event": "47c43384f4e0181a28cabe752d998613fd74b0a113710e82f04f42865b398174",
+  "request_id": "editbox-typed-head-capture-before-tail-reset-rejected",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:editbox-focus-oct23e"
+}
