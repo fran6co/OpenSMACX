@@ -42,7 +42,7 @@ def _definition(source: str, signature: str) -> str:
 
 
 def _actual_bodies() -> tuple[str, str, str]:
-    source = (ROOT / "src/selectpartwin.cpp").read_text(encoding="utf-8")
+    source = (ROOT / "src/designwin.cpp").read_text(encoding="utf-8")
     chassis = _definition(source, "int SelectPartWin::draw_chassis(int a1, RECT *a2, int a3)")
     start = chassis.index("const RulesChassis *entry = Chassis;")
     end = chassis.index("\n\n    if (slot == 9)", start)

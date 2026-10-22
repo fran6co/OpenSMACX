@@ -68,7 +68,6 @@ NEW_OWNERS = (
 REMAINING_OWNERS = (
     "src/base.cpp",
     "src/multiwin.cpp",
-    "src/selectpartwin.cpp",
     "src/socialwin.cpp",
     "src/technology.cpp",
     "src/technology_queries.cpp",
@@ -105,7 +104,6 @@ REMAINING_PROFILE_BLOCK_TEXT = (
     "set_source_files_properties(\n"
     "    src/base.cpp\n"
     "    src/multiwin.cpp\n"
-    "    src/selectpartwin.cpp\n"
     "    src/socialwin.cpp\n"
     "    src/technology.cpp\n"
     "    src/technology_queries.cpp\n"

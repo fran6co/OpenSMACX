@@ -172,7 +172,7 @@ def run_control(tmp_path, compiler_name, phase, damage, init_result):
                                      'stale_scroll_width'])
 def test_literal_exec_parent_frame_and_scroll_phase(
         tmp_path, compiler_name, damage, init_result):
-    source = (ROOT / 'src/selectpartwin.cpp').read_text()
+    source = (ROOT / 'src/designwin.cpp').read_text()
     phase = source_phase(source)
     assert 'const int width = TutWinDesWindow.pixel_width();' in phase
     assert 'const int height = TutWinDesWindow.pixel_height();' in phase

@@ -12,7 +12,7 @@ ROOT = (Path(os.environ["OPENSMACX_ROOT"]).resolve()
 
 
 def test_selectpartwin_uses_owned_palette_and_sprite_tables(tmp_path: Path) -> None:
-    source = (ROOT / "src/selectpartwin.cpp").read_text()
+    source = (ROOT / "src/designwin.cpp").read_text()
     game_header = (ROOT / "src/game.h").read_text()
     sprite_header = (ROOT / "src/sprite.h").read_text()
 

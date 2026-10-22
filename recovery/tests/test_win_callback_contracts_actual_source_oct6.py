@@ -95,7 +95,7 @@ BASELINE_SCOPE = {
 def actual_bodies():
     popup = (ROOT / "src/popup.cpp").read_text(encoding="utf-8")
     dialogs = (ROOT / "src/dialogs.cpp").read_text(encoding="utf-8")
-    select = (ROOT / "src/selectpartwin.cpp").read_text(encoding="utf-8")
+    select = (ROOT / "src/designwin.cpp").read_text(encoding="utf-8")
     alpha = (ROOT / "src/alphasave.cpp").read_text(encoding="utf-8")
     stringbox = (ROOT / "src/stringbox.cpp").read_text(encoding="utf-8")
     replaywin = (ROOT / "src/replaywin.cpp").read_text(encoding="utf-8")
@@ -281,7 +281,7 @@ def test_actual_owner_method_names_keep_original_identity_spans():
             0x00406B70: ("sub_406b70", ((0x00406B70, 0x00406B9C),)),
             0x00406BA0: ("sub_406ba0", ((0x00406BA0, 0x00406BCC),)),
         },
-        "src/selectpartwin.cpp": {
+        "src/designwin.cpp": {
             0x00433F30: ("?vslot_48@SelectPartWin@@UAEXHH@Z", ((0x00433F30, 0x00433F4F),)),
             0x00433F50: ("?on_scrolling@SelectPartWin@@QAEXHH@Z", ((0x00433F50, 0x00433F67),)),
         },
@@ -310,7 +310,7 @@ def test_actual_owner_method_names_keep_original_identity_spans():
     popup = (ROOT / "src/popup.cpp").read_text(encoding="utf-8")
     assert "void Popup::on_scrolled(int first, int second)" in popup
     assert "void Popup::on_scrolling(int first, int second)" in popup
-    select = (ROOT / "src/selectpartwin.cpp").read_text(encoding="utf-8")
+    select = (ROOT / "src/designwin.cpp").read_text(encoding="utf-8")
     assert "void SelectPartWin::on_scrolled(int, int row)" in select
     assert "void SelectPartWin::on_scrolling(int a1, int a2)" in select
 
@@ -322,7 +322,8 @@ def test_full_original_identity_claim_and_comment_history_continuity():
             cwd=ROOT, text=True)
         original_rows = {row.address: row
                          for row in read_text(original_text, relative_path)}
-        current_rows = {row.address: row for row in read_file(ROOT / relative_path)}
+        current_path = relative_path.replace("src/selectpartwin.cpp", "src/designwin.cpp")
+        current_rows = {row.address: row for row in read_file(ROOT / current_path)}
         for address in addresses:
             assert address in original_rows, f"baseline identity missing: {relative_path}:{address:08X}"
             assert address in current_rows, f"current identity missing: {relative_path}:{address:08X}"
@@ -330,7 +331,7 @@ def test_full_original_identity_claim_and_comment_history_continuity():
             current = current_rows[address]
             assert preserved_record(current) == preserved_record(original), (
                 f"historical identity/claim/lesson/comment changed: "
-                f"{relative_path}:{address:08X}")
+                f"{current_path}:{address:08X}")
 
 
 def test_full_tu_extractor_masks_comments_and_literals_and_rejects_hidden_body():
