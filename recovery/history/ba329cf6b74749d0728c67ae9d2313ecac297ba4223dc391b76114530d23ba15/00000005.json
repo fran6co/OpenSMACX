@@ -1,0 +1,41 @@
+{
+  "event_id": "edbd71eee69536d4c3fad3a2cd6bfedb67584e8f4b3afa24b671ea55f1da9df4",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Fresh complete candidate build382e22b66 and retained receipt qualification identify header-consumer changes outside the initially listed13TU caller family: PrefWin::init48D840, goody_box57A660, order_veh5947C0, design_workshop583E30. Include these original identities in review/restoration scope without authorizing edits to their source files. Existing task base and claims remain intact.",
+      "Private physical review SHA256=d2b0c5cc4498918661bfe97c27b0548b3e1c7d8350b8d2cf3b1c4e48e5d9f943:94of204objects differ;93consumers lose precisely two duplicate header-inline helper definitions (186copies), game.cpp retains providers, and22existing function COMDATs change. This is source/header compiler context evidence, not a proof that every change comes from an original direct call. No new defined function names were found.",
+      "Preserve explicit unresolved physical residuals: design_workshop exchanges two independent stack MOVs at+2B9 despite no helper use; load_interface initializer instruction/reference scheduling changes despite no direct helper use. The latter comparison includes whole section decoding, which is not an instruction-only extent proof. Their cause and complete semantic/outside-link preservation are unproved. Neither is a native pass or authorized body waiver; no gate/claim/baseline is weakened.",
+      "Coordinator manual source review retains the unchanged helper semantics/signatures, genuine single source owner, restored original caller boundaries and observed editor_date exact gain. Existing source/build/reference/claim checks and independent C++ review pass; no previous measured exact row regresses. Bounded manual integration, if chosen, must state remaining compiled/linked/runtime unknowns and freshly verify the combined destination; automatic acceptance remains refused under its stronger prerequisites."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4773952,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5744224,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5851072,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5783088,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "231c5b1e07da9625d2de278d62eb10cdd738c9b78d9f5b1bb07799a5cbd0227c",
+  "request_id": "observed-game-helper-header-consumer-collateral-oct22v",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:matching-game-oct20z"
+}
