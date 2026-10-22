@@ -49,9 +49,9 @@ class Gamma : public GraphicWin {
   virtual void on_scrolled(int code, int position);
   virtual void on_scrolling(int code, int position);
   Gamma();
-  // 0x00456110 lives in gamma.cpp. C++ emits the reverse member teardown;
-  // the body first closes the dialog's owned controls.
-  ~Gamma();
+  // The standalone 0x00456110 identity stays mapped in gamma.cpp; this real
+  // inline class lifetime exposes the close and implicit teardown to consumers.
+  ~Gamma() { close(); }
   void close();
   void on_button_clicked(int button_id);
   void adjust_pal(double gamma);
