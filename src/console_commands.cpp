@@ -2813,6 +2813,7 @@ void Console::editor_terrain() {
     }
     const int result = popup.exec(0, nullptr);
     editor_paints(result + 6);
+    PopupModalState = 0;
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
