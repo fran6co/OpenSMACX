@@ -1,0 +1,20 @@
+{
+  "event_id": "11e60de51c22ff7982680e2ed4c01e43eec815637e5c734968853a583a9941c6",
+  "payload": {
+    "affects": [
+      "entity-9c33c02f0abb5098fd864ec4750e2c3a1573fec8c4747ec124de47bf849a46cb"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "gamma-button-oct23d-ordinary-source-forms",
+    "evidence": [
+      "Complete selected original span and current body were inspected before the frozen overlay deck. The private frozen inputs, source digest, compiler trials, unchanged replica and deliberate damage results are retained under parallel-match-oct23d."
+    ],
+    "hypothesis": "An ordinary source-order spelling may recover the pinned compiler output without changing the existing typed owner or original effects. This experiment does not establish a semantic defect.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "gamma-button-oct23d-ordinary-source-forms",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:gamma-button-oct23d"
+}
