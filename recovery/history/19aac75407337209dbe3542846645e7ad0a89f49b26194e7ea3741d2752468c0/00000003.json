@@ -1,0 +1,20 @@
+{
+  "event_id": "2b919de91771575109e9a29100e622f470281fc33c152d44ff6a4d930cb914fb",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "enemy-turn-bands-original-dispatch-oct22t",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/general.cpp enemy_turn preserves pinned579646 late-band bypass,57968A..5796A5 priority8 guard and5795A7 common descending-vehicle tail through a for-loop increment clause. All79 source identities, spans, emitted symbols, historical claims and prior provenance are unchanged; native RECOVERY_BINDING render/parse roundtrips.",
+      "Actual bounded production definition and complete pinned184-instruction span checked by recovery/tests/test_enemy_turn_bands_actual_source_oct22.py; GCC and Clang execute the scenario fixture and reject six compiling mutants. Fresh final test result15 passed, zero failures/errors/skips. These controls do not prove native ABI, full-game runtime or acceptance.",
+      "Independent source/pin/test review: ignored parallel-match-oct22t/enemy-turn-band-independent-review.md. Existing owner selection76 pass/4 fail on both unchanged master9864099dd and candidate; all four failures stop at the same preexisting General header/API inverse-test assertion. Those failures remain unwaived; no header or old test was changed.",
+      "Coordinator-reviewed manual recovery checkpoint only. Fresh native build/link, all-owner mapped measurements, prior exact/reference preservation, outside-owner object replicas and destination recheck are required before completion of integration. No task baseline reset, automatic acceptance or game acceptance claimed."
+    ]
+  },
+  "previous_event": "c8465e6164071dc461b43fe8e2e249d8d0a158e6dfd44f6aae7df4cada65f4d2",
+  "request_id": "enemy-turn-bands-source-incorporated-oct22t",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:owner-general-faithful-recovery-oct20x"
+}

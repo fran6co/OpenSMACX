@@ -4385,6 +4385,7 @@ void MCIVideo::blit_frame() {
 }
 
 // ORIGINAL: 0x00579510 ?enemy_turn@@YAHH@Z 0x00579510-0x00579769
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned 0x00579643-0x00579687 routes priorities7..9 around the DROP_POD, plan4 and unk_1==0x15 filters used by priorities0..6; priority8 alone then requires plan7 and nonzero faction at0x0057968A-0x005796A5.", "Original rejected priority8 paths jump0x005795A7 to decrement the vehicle index and pointer; the for-loop increment clause preserves this tail for continue as well as ordinary completion."], "reason": "Preserve original enemy-turn early-band filters, late-band bypass and common descending-vehicle tail."}
 // symbol    ?enemy_turn@@YAXH@Z
 // LEVER: void, not the catalogue's int - the body's only `ret` leaves eax
 //        holding whatever the last address calculation left there
@@ -4406,7 +4407,7 @@ void __cdecl enemy_turn(int faction_id) {
             continue;
         }
         Veh *veh = &Vehs[veh_id];
-        do {
+        for (; veh_id >= 0; --veh_id, --veh) {
             if (veh_id < GameDataStateStorage.fields_.vehicle_current_count_ && veh->faction_id == faction_id) {
                 bool matched = false;
                 if (priority == 0) {
@@ -4426,13 +4427,14 @@ void __cdecl enemy_turn(int faction_id) {
                     matched = VehPrototypes[veh->proto_id].plan == 1;
                 } else if (priority == 4) {
                     matched = veh->dmg_incurred == 0;
-                } else if (priority < 7) {
+                } else {
                     matched = true;
                 }
 
-                if (matched && !has_abil(veh->proto_id, ABL_DROP_POD)
+                if (matched && (priority >= 7
+                        || (!has_abil(veh->proto_id, ABL_DROP_POD)
                         && VehPrototypes[veh->proto_id].plan != 4
-                        && VehPrototypes[veh->proto_id].unk_1 != 0x15) {
+                        && VehPrototypes[veh->proto_id].unk_1 != 0x15))) {
                     if (priority == 8
                             && (VehPrototypes[veh->proto_id].plan != 7
                                    || faction_id == 0)) {
@@ -4473,9 +4475,7 @@ void __cdecl enemy_turn(int faction_id) {
                     }
                 }
             }
-            --veh_id;
-            --veh;
-        } while (veh_id >= 0);
+        }
     }
 
     PlayersData[faction_id].flags &= ~PFLAG_UNK_10000;
