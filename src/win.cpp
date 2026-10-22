@@ -763,7 +763,11 @@ int WinHdcRefCount;        // 0x009B3AB0
 HDC WinSharedHdc;          // 0x009B7B2C
 // RECOVERY_OBJECT: v2 0x009BC498 0x009BC49C ?DirectDrawSurface@@3PAUIDirectDrawSurface2@@A 0x0062CD50
 IDirectDrawSurface2 *DirectDrawSurface;  // 0x009BC498
+// Original: set_modal writes the indexed receiver at 5EE1B2; release_modal compacts/clears it. Start only, not original capacity.
+// RECOVERY_OBJECT: v1 0x009B6EF8 ?WinModalStack@@3PAPAVWin@@A
 Win *WinModalStack[4];     // 0x009B6EF8
+// Original: init_class publishes GetModuleHandleA at 5F0242; close_class reloads/clears this cell at 5F0504/5F0516.
+// RECOVERY_OBJECT: v1 0x009B7B14 ?WinInstance@@3PAUHINSTANCE__@@A
 HINSTANCE WinInstance;     // 0x009B7B14
 // RECOVERY_OBJECT: v2 0x009B7B1C 0x009B7B20 ?WinScreenWidth@@3HA 0x004E0EA0
 int WinScreenWidth;        // 0x009B7B1C
@@ -773,6 +777,8 @@ int WinScreenHeight;       // 0x009B7B20
 // Original 0x005F2502 publishes a receiver; 0x005F2290 loads it and 0x005F257A clears the cell.
 // RECOVERY_OBJECT: v1 0x009B7AAC ?WinTrackingWindow@@3PAVWin@@A
 Win *WinTrackingWindow;    // 0x009B7AAC
+// Original: OnMouseMove reads/publishes the hover pointer at 5F22D6/5F231C. This binds pointer storage, not its pointee.
+// RECOVERY_OBJECT: v1 0x009B7A7C ?WinHoverWindow@@3PAVWin@@A
 Win *WinHoverWindow;      // 0x009B7A7C
 // flush_input clears these Win pointer cells at 5FD15D/5FD163 and again
 // at 5FD19E/5FD1A4. These bind starts only, not allocation or lifetime bounds.
@@ -789,6 +795,8 @@ Win *WinPointerOwner4;
 // Original 0x005EE314 restores the pointer compared with receivers at 0x0063C390/0x0063C4E8; cell only.
 // RECOVERY_OBJECT: v1 0x009B7AE0 ?WinFocusWindow@@3PAVWin@@A
 Win *WinFocusWindow;       // 0x009B7AE0
+// Original: set_modal publishes owner at 5EE1F5; release_modal restores it at 5EE30E; get_mouse_window reloads it at 5F71FE.
+// RECOVERY_OBJECT: v1 0x009B7ADC ?WinModalWindow@@3PAVWin@@A
 Win *WinModalWindow;       // 0x009B7ADC
 // init stores Win pointers at 5EC067/5EC08C; add_parent repeats those
 // array accesses at 5F509C/5F50C7. init admits 40 roots (5EC030);
@@ -857,6 +865,8 @@ Win *WinCallbackWindow;
 Win *WinInputFocus;       // 0x009B7AC4
 // RECOVERY_OBJECT: v1 0x009B7AC8 ?WinActiveWindow@@3PAVWin@@A
 Win *WinActiveWindow;     // 0x009B7AC8
+// Original: set_bubble_text clears/publishes this pointer at 5F83FC/5F841B; clear_bubble_text clears it at 5F8512.
+// RECOVERY_OBJECT: v1 0x009B7A4C ?WinBubbleCompanion@@3PAVWin@@A
 Win *WinBubbleCompanion;   // 0x009B7A4C
 // RECOVERY_OBJECT: v1 0x009B6630 ?WinZOrderArray@@3PAPAVWin@@A
 Win *WinZOrderArray[512];
@@ -908,8 +918,12 @@ int DDInit::init_default_mode(int depth) {
 // TRIED: falling off the end without a return (C4716, error under the scoring flags); "return 0" adds an extra "xor eax,eax" the original's bare "pop esi; ret" tail does not have (#36). Modelled the 3 vtable dispatches as raw __stdcall function pointers (COM-style, this pushed as an explicit arg) rather than the VCall thiscall shim, since the disassembly pushes "this" onto the stack instead of loading it into ecx.
 // RECOVERY_OBJECT: v1 0x009BE618 ?WinDisplayInit@@3VDDInit@@A
 DDInit WinDisplayInit;     // 0x009BE618
+// Original: set_modal writes indexed owners at 5EE1B9; release_modal compacts/clears and restores them. Start only, not capacity.
+// RECOVERY_OBJECT: v1 0x009B7A1C ?WinFocusStack@@3PAPAVWin@@A
 Win *WinFocusStack[4];     // 0x009B7A1C
 char WinKeyRing[10];       // 0x009B7B48
+// Original: The key matcher reads this pointer at 5F5F6E; on_char advances/wraps it at 5F61B8/5F61BF. Ring bounds remain unproven.
+// RECOVERY_OBJECT: v1 0x00696D5C ?WinKeyRingCursor@@3PADA
 char *WinKeyRingCursor = WinKeyRing;  // 0x00696D5C
 // RECOVERY_OBJECT: v1 0x00696D34 ?WinStaticDefaults@@3PAIA
 uint32_t WinStaticDefaults[10] = {  // 0x00696D34, the image's values
@@ -934,6 +948,8 @@ int WinZOrderFlag;
 // Original 0x005EE79A/0x005F2543 load and invoke this callback cell; its target remains unbound.
 // RECOVERY_OBJECT: v1 0x009B7A90 ?WinLeftDownHook@@3P6AXHH@ZA
 void(__cdecl *WinLeftDownHook)(int x, int y);  // 0x009B7A90
+// Original: OnMouseMove clears/tests this cell at 5F2299/5F22E0; update_cursor sets it in hit-region branches.
+// RECOVERY_OBJECT: v1 0x009B7B3C ?WinCursorMoved@@3HA
 int WinCursorMoved;        // 0x009B7B3C
 // Original 0x00445BC1 installs the callback; 0x005F255B reloads this cell, not a callback target binding.
 // RECOVERY_OBJECT: v1 0x009B7A88 ?WinMessageHook@@3P6AXXZA
