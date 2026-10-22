@@ -1,0 +1,31 @@
+{
+  "event_id": "5523da3c79ec49346704564af2ccd1e669045fe683c1da069aa97883780996d2",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "packages/match-recovery/README.md",
+      "packages/match-recovery/src/match_recovery/source/eh_actions.py",
+      "packages/match-recovery/src/match_recovery/source/eh_regions.py",
+      "packages/match-recovery/tests/source/test_eh_actions.py",
+      "packages/match-recovery/tests/source/test_eh_comparison.py",
+      "packages/match-recovery/tests/source/test_eh_regions.py",
+      "packages/match-recovery/tests/source/test_eh_vector_regions.py",
+      "recovery/README.md",
+      "recovery/tests/test_array_eh_compiler.py"
+    ],
+    "evidence": [
+      "The existing source owns genuine Sprite array members and the corresponding AlphaSave lifetime. Native measurement still refuses its larger complete cleanup bundle and vector destructor action. The observed21-state272-byte shape is a positive example, never a project-specific semantic maximum or permission to ignore its second callback operand.",
+      "Authorize a typed action model that retains all decoded action boundaries, relative helper/destructor transfers and optional absolute callback fields, with independent PE/COFF validation. Preserve simple actions, complete original/compiled predecessor comparison, exact registration/handler/FuncInfo/map ownership, addend/bounds/non-overlap checks, local destructor traversal and every unsupported-case refusal. No primary-only or missing-operand fallback.",
+      "Generic finite work policy may support up to64states and eight-instruction array-cleanup forms with at most34bytes per action; derive the total cold bound from the count/action limits. These are parser-resource bounds, not inferred original program values. Do not hardcode project names, addresses, member offsets, element count/stride, class layout or compiler commands into library code.",
+      "The vector form records a frame-relative pointer load and register-relative base adjustment; it does not by itself prove that pointer is this or establish original class ownership. Observable constants/registers are compared in the complete code; source layout and target identity remain separate. Preserve legacy masked measurement versus strict reference/runtime/retention boundaries; no new strict or full acceptance claim.",
+      "Require complete serialized synthetic PE/COFF original and compiled callback/helper relocation mutations, independent mixed action inventories, topology-only/code-constant damages, generic capacity boundaries, and real test-owned compiler/linker controls with unchanged replicas and nested array cleanup. Current real source and historical claims remain untouched. Coordinator owns Git/compiler leases and will review actual implementation and fresh game measurements before integration."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "58aed371a0425ad2fffbfb4dfb3001272105cafccf3d0696d6757ce2712765af",
+  "request_id": "composite-array-eh-parser-scope-oct22d",
+  "schema_version": 1,
+  "sequence": 14,
+  "stream": "task:filewin-jackal-boundary-oct9"
+}
