@@ -1,0 +1,155 @@
+{
+  "event_id": "1c51b9ea4f87b85d6197a4607e2ceb53e3fb48f39b5764fa1b1f92f6869f0406",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_alphanet_ledger_lifetime.py",
+      "recovery/tests/test_alphanet_record_owner_oct20.py",
+      "recovery/tests/test_network_list_cleanup_visibility.py",
+      "src/alphanet.cpp",
+      "src/alphanet.h",
+      "src/alphanet_records.cpp",
+      "src/net_session_picker.cpp",
+      "src/stringlist.cpp",
+      "src/stringstruct.cpp"
+    ],
+    "evidence": [
+      "Fresh verified master 89dca8ed9 / build-io7ar564 shows NetSessionPicker destructor 0x633010 with nine original unwind states versus eight compiled. Original normal and cold paths retain separate ledger complete/vbase-wrapper 0x4E34B0 and base destructor 0x401CE0 stages; actual classes/member at +0x36A8 already represent that ownership. No missing-member, virtual-slot, or runtime semantic defect is inferred from state counts alone.",
+      "Finite native overlay experiment ledger-visibility-x3nl4arf retains 18 compiler outputs under actual unchanged recipes: replay and true unchanged-overlay replicas pass for three TUs. Derived-only and both destructor visibility restore the nine predecessors and locally exact cold span; base-only does not. Keep the base destructor out of line unless separate evidence requires otherwise. Normal parent remains mismatching; no function-count gain or new claim follows.",
+      "Authorize class-defining only the unchanged AlphaNetLedger destructor (remove_all, then cursor reset), removing its duplicate CPP body. Preserve all three parent-close/derived/base cleanup passes, callback-sensitive reloads and allocation-owner handoff, member/base order/layout, hook types, original identities/full spans, historical claims and seed findings. No flags, noinline/export, copied code/manual tables, raw receiver views, runtime fixes or invented extra members.",
+      "Coupled ordinary public-walker boundary is a separately reviewed hypothesis: unchanged AlphaNetStringStruct::remove_all may be defined in its genuine records CPP before the existing base destructor, keeping that implementation visible to its same-TU lifetime while external callers use the public method. The pinned parent has direct 0x402970 calls rather than expanded loops. This does NOT grant Alpha-specific ownership of the separately mapped StringStruct::remove_all identity, nominal inheritance, forced symbol aliases or a shared-body annotation without independent full-body/reference and layout evidence. Preserve both class types and deletion semantics.",
+      "Header-defined ledger destructor ceases to emit its ordinary/scalar-deleting entries in alphanet_records.cpp in the private screen. Existing caller alphanet.cpp physically emits them, alongside the already context-bound complete wrapper. Coordinator may use native body/context writers for these existing FILE mappings only after verifying their real emitted definitions. Keep mappings in the genuine records owner and preserve all historical claims; no artificial use, export, wrapper or favorable-score emitter selection.",
+      "Initial ownership closure is the three actual compiled destructor-reference TUs plus cross-host original mappings compiled there, including StringStruct bindings. Other included TUs remain protected; full fresh physical observations can reveal secondary effects requiring explicit retention/expansion. Scope is not a body/data/generated-entry waiver. New parent/API/behavior edits require further coordinator authorization.",
+      "Actual-source lifetime tests should extract the real derived/base and virtual allocation-base operations, cover normal/base-only/exception-prefix unwind and owner release, and detect omitted cleanup/hook/delete-order mutations. Preserve existing callback-reload/count/null controls. Update stale body-location fixtures without weakening their behavior or identity assertions. Only coordinator owns Git, native annotation migration, compiler leases, preparation, measurements, review and integration; full automatic/game acceptance remains unfinished.",
+      "Evidence: .opensmacx/recovery/parallel-match-oct22h/structural-eh-next-cohort.md; net-session-picker-visibility-review.md; ledger-visibility-x3nl4arf/report.json; ledger-public-walk-0wc4a2op retained private compiler cells. Derived local code/cold results are not strict reference, historical TU, linked retention or runtime proof. All failures and unknowns remain visible."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6535968,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6538496,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6500704,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6502208,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6500368,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6536464,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6540624,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6539728,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6539936,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6539200,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6538048,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6538464,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6538128,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6536976,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6538512,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6538960,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6538144,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6492240,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6536880,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6536928,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4220608,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4205040,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4204912,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4198496,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "b7de5731fd6794df690b4e906f5cbac496677cc663d250983a6645d5a1c47cfb",
+  "request_id": "ledger-original-staged-lifetime-scope-oct22h",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:alphanet-identity-conversions-owner-oct20"
+}
