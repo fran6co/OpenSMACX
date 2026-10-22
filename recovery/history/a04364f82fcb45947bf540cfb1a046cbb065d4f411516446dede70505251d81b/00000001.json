@@ -1,0 +1,23 @@
+{
+  "event_id": "6284beaa0959174da9e727d71893f4372cc76c2f0312e1e2b5ffe5acdb1a230a",
+  "payload": {
+    "affects": [
+      "entity-09e09f5e6db78c0efb5d4c344ca4ef1302e53da4ca330e939fda3698eced4e9a"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "design-bubble-oct23c-source-form-exhausted",
+    "evidence": [
+      "pinned:0x00439700..0x00439948 original DesignWin selector body; candidate owner remains byte-identical to master source SHA-256 1861b77c40e372b525199879a27805014a0005d3bb11739065937b4e8831cf89.",
+      "screen: design-bubble-oct23c-screen SHA-256 070a985676e6ce9d50f1a929fd4b30a7b9c4269b50ea2e04cc39a6514b17bfc9; original-cfg target mismatches under both recorded flag sets.",
+      "screen: design-bubble-oct23c-refinement-screen SHA-256 5c7f29526164b797eebfc5b7222a5ab84c7df7fa850256c9fe82bd1f5c40313d; argument-homes and case-local-yx both mismatch under both flags.",
+      "Both screens record passing damage and unchanged-replica controls; neighboring EH actions/topology remain refused or mismatched, strict references are unknown, scope is incomplete and acceptance is not evaluated."
+    ],
+    "hypothesis": "The bounded ordinary-C++ source-form screen for the six palette-help selector arms is exhausted in this unchanged source/compiler context: original-cfg, argument-homes and case-local-yx all mismatch 0x00439700. No source correction or byte gain is supported; close the iteration hypothesis without changing product source, scope, claims or compiler policy.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "design-bubble-oct23c-source-form-exhausted",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:design-bubble-oct23c"
+}
