@@ -1,0 +1,20 @@
+{
+  "event_id": "b81e5bf128d0d78060f01e39f34fee818f1bedcaa89143dafd0499503d25d595",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "design-bubble-oct23c-source-form-exhausted",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "All three frozen candidate forms failed the exact target in their tested contexts; do not adopt a source candidate or claim gain.",
+      "Candidate source stayed private and was not written into the worktree; src/designwin.cpp remains byte-identical to master.",
+      "Preserve the task, candidate, deck, frozen input, preparation and screen records; this rejection closes only the exhausted hypothesis and does not satisfy task acceptance, preservation, references or runtime proof.",
+      "Exactly3candidateforms per unchanged configured flag context were exhausted:6candidateCLcalls plus12baseline/unchanged-replica/damagecontrolCLcalls,18total. No exact neighbor gains or losses in either context. Requeue only after genuinely changed dependency/source/compiler evidence; no baseline reset, flag change or automatic acceptance is authorized."
+    ]
+  },
+  "previous_event": "6284beaa0959174da9e727d71893f4372cc76c2f0312e1e2b5ffe5acdb1a230a",
+  "request_id": "design-bubble-oct23c-source-form-exhausted-rejected",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:design-bubble-oct23c"
+}
