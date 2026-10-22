@@ -3679,17 +3679,113 @@ static int texture_advance_cached_edge(EdgeScan &edge, const Vert *vertices,
 // flags     hidden;sp_ready;purged_ok
 // calls     0x00628AD0
 
-// The original three-argument entry consumes shared polygon context. Its
-// remaining legacy callers still publish that context to the old scratch
-// block; the genuine cached-light body passes its context directly to the
-// same typed implementation. Those old raster bodies remain recovery work.
+// The mapped entry performs this cache setup from the shared polygon context.
+// Keep its cache selection and channel writes in the body: the original calls
+// fixed_div between observable record/edge stores and rereads shared tables.
 
 int __cdecl sub_625080(EdgeScan *edge, int index, TextureStore *cache) {
-    return texture_cached_edge(*edge, index,
-        TextureRasterEdgeVerticesB,
-        TextureRasterEdgeVerticesA,
-        reinterpret_cast<const int *>(TextureRasterZValues),
-        TextureRasterVertexCount, TextureRasterMaxYIndex, *cache);
+    if (index == TextureRasterMaxYIndex) return 0;
+
+    for (;;) {
+        const int direction = edge->f0;
+        const int next = static_cast<int>(static_cast<unsigned int>(index) +
+                                          static_cast<unsigned int>(direction));
+        const int last = texture_difference(TextureRasterVertexCount, 1);
+        int endpoint = next;
+        if (endpoint > last) endpoint = 0;
+        else if (endpoint < 0) endpoint = last;
+
+        edge->counter = texture_difference(
+            TextureRasterEdgeVerticesB[endpoint].y,
+            TextureRasterEdgeVerticesB[index].y);
+        if (edge->counter != 0) {
+            if (edge->counter <= 0) return 0;
+
+            const int old_slot = cache->next_record_;
+            const int advanced = static_cast<int>(
+                static_cast<unsigned int>(old_slot) + 1u);
+            cache->next_record_ = advanced;
+            if (advanced == 10) cache->next_record_ = 0;
+            EdgeScan *record = &cache->edges_[old_slot];
+
+            edge->id = endpoint;
+            edge->accumA = texture_difference(
+                texture_fixed(TextureRasterEdgeVerticesA[index].x), -0x8000);
+            edge->accumB = texture_difference(
+                texture_fixed(TextureRasterEdgeVerticesA[index].y), -0x8000);
+            const int scale = texture_fixed(edge->counter);
+
+            if (cache->flags_ & 2u) {
+                const int delta_a = fixed_div(
+                    texture_difference(
+                        texture_fixed(TextureRasterEdgeVerticesA[endpoint].x),
+                        edge->accumA), scale);
+                record->deltaA = delta_a;
+                edge->deltaA = delta_a;
+                const int delta_b = fixed_div(
+                    texture_difference(
+                        texture_fixed(TextureRasterEdgeVerticesA[endpoint].y),
+                        edge->accumB), scale);
+                record->deltaB = delta_b;
+                edge->deltaB = delta_b;
+            } else {
+                edge->deltaA = record->deltaA;
+                edge->deltaB = record->deltaB;
+            }
+
+            edge->accumC = TextureRasterEdgeVerticesB[index].x;
+            const int dx = texture_difference(
+                TextureRasterEdgeVerticesB[endpoint].x,
+                TextureRasterEdgeVerticesB[index].x);
+            if (cache->flags_ & 2u) {
+                const int delta_c = dx / edge->counter;
+                record->deltaC = delta_c;
+                edge->deltaC = delta_c;
+                int magnitude = dx;
+                if (dx < 0) {
+                    magnitude = texture_difference(0, dx);
+                    edge->extraDeltaC = -1;
+                    edge->fracAccum = texture_difference(1, edge->counter);
+                } else {
+                    edge->extraDeltaC = 1;
+                    edge->fracAccum = 0;
+                }
+                const int frac_delta = magnitude % edge->counter;
+                record->fracDelta = frac_delta;
+                edge->fracSub = edge->counter;
+                edge->fracDelta = frac_delta;
+            } else {
+                edge->deltaC = record->deltaC;
+                if (dx < 0) {
+                    edge->extraDeltaC = -1;
+                    edge->fracAccum = texture_difference(1, edge->counter);
+                } else {
+                    edge->extraDeltaC = 1;
+                    edge->fracAccum = 0;
+                }
+                edge->fracDelta = record->fracDelta;
+                edge->fracSub = edge->counter;
+            }
+
+            if (cache->flags_ & 1u) {
+                record->accumD = texture_fixed(TextureRasterZValues[index]);
+                edge->accumD = record->accumD;
+                const int delta_d = fixed_div(
+                    texture_difference(
+                        texture_fixed(TextureRasterZValues[endpoint]),
+                        edge->accumD), scale);
+                record->deltaD = delta_d;
+                edge->deltaD = delta_d;
+            } else {
+                edge->accumD = record->accumD;
+                edge->deltaD = record->deltaD;
+            }
+            return 1;
+        }
+
+        index = endpoint;
+        if (index == TextureRasterMaxYIndex) return 0;
+    }
 }
 
 // Fixed-slot bindings carried from 00620100.cpp
