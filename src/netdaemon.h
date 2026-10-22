@@ -365,7 +365,7 @@ extern int CommlinkFaction;     // 0x0073B790
 // those bodies can home here without dragging in the whole window stack.
 // Win owns the application event pump; the network notification gate and its
 // paired session refresh live with the NetDaemon resynchronization operation.
-void __cdecl wait_task();     // 0x0051F200
+void __cdecl wait_task();     // 0x005FC700, Win's application event pump
 void __cdecl check_spock();   // 0x0051F1B0, defined in netdaemon_spock.cpp
 void __cdecl do_all_draws();  // Win's application-wide draw dispatch
 // Vehicle action entry points are owned in veh.cpp.
@@ -401,11 +401,10 @@ void __cdecl message_landmark(int opcode, int target, char *text,
 void __cdecl message_chat(int opcode, int target, char *text);
 
 
-// NetDaemon::synch itself is not recovered - 4,905 bytes with its own call
-// targets, so it remains an original dependency. The fourteen synch_*
-// forwarders below all funnel into it, loading the same daemon at 0x0093CD90
-// that NetDaemonNet already binds above, and differ only in the opcode (and,
-// for synch_diplo, which of the two leading arguments carries which value).
+// Application-facing operations, implemented in netdaemon_interface.cpp.
+// The fourteen notifications call the real NetDaemon::synch implementation
+// with distinct opcodes and payload contracts; synch_diplo supplies two IDs.
+// wait_2 selects the network pump or Win's ordinary wait using multiplayer state.
 
 void __cdecl synch_veh(int id);
 void __cdecl synch_base(int id);

@@ -1,6 +1,6 @@
 """Native word geometry, typed transfer storage and shared dispatch tail."""
 from pathlib import Path
-from netdaemon_packet_source import historical_source
+from netdaemon_packet_source import historical_source, apply_interface_owner_comment_migration
 import shutil
 import subprocess
 import os
@@ -95,8 +95,29 @@ def test_spock_owner_comment_transition_is_exact_and_reversible():
     # project those through the older snapshot. Prove the owner-comment edit
     # itself round-trips against the actual current file without wildcards.
     current=(ROOT/"src/netdaemon.h").read_text()
-    reversed_current=apply_spock_owner_comment_migration(current,True)
-    assert apply_spock_owner_comment_migration(reversed_current)==current
+    without_interface=apply_interface_owner_comment_migration(current,True)
+    assert apply_interface_owner_comment_migration(without_interface)==current
+    parent9c=subprocess.check_output(["git","show","9c2b8717430cefdb6c7caca356e32d2609a9cffe:src/netdaemon.h"],
+                                    cwd=ROOT,text=True)
+    assert without_interface==parent9c
+    # Compose the current interface projection back to the prior Spock-only
+    # header before applying the older inverse; neither migration hides the
+    # other's declarations or comment changes.
+    reversed_current=apply_spock_owner_comment_migration(without_interface,True)
+    assert apply_spock_owner_comment_migration(reversed_current)==without_interface
+
+
+@pytest.mark.parametrize("damage", ["owner", "wait_task_address"])
+def test_interface_comment_projection_rejects_unreviewed_header_changes(damage):
+    current=(ROOT/"src/netdaemon.h").read_text()
+    if damage=="owner":
+        current=current.replace("implemented in netdaemon_interface.cpp",
+                                "implemented in netdaemon.cpp",1)
+    else:
+        current=current.replace("0x005FC700, Win's application event pump",
+                                "0x0051F200, Win's application event pump",1)
+    with pytest.raises(AssertionError):
+        apply_interface_owner_comment_migration(current,True)
 
 
 @pytest.mark.parametrize("relative",["src/netdaemon.cpp","src/netdaemon.h"])
@@ -106,9 +127,12 @@ def test_only_reviewed_storage_changes_and_all_original_identities_survive(relat
     migrated=apply_typed_storage_migration(before,relative)
     if relative == "src/netdaemon.h":
         migrated=apply_spock_owner_comment_migration(migrated)
+        migrated=apply_interface_owner_comment_migration(migrated)
         assert current == migrated
-        assert apply_spock_owner_comment_migration(current,True)==apply_typed_storage_migration(before,relative)
-        reverse_comments=apply_spock_owner_comment_migration(current,True)
+        projected=apply_interface_owner_comment_migration(current,True)
+        projected=apply_spock_owner_comment_migration(projected,True)
+        assert projected==apply_typed_storage_migration(before,relative)
+        reverse_comments=projected
         assert apply_typed_storage_migration(reverse_comments,relative,True)==before
     else:
         assert apply_typed_storage_migration(migrated,relative,True)==before
