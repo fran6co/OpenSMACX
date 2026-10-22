@@ -1,0 +1,20 @@
+{
+  "event_id": "5350976b1df8d25819f5c1c21a4e2255ef8149682acbee6ce3472e65178be1c3",
+  "payload": {
+    "affects": [
+      "entity-1e08659eecc33b696d0cdedfccea16415821d007e8aeff843c10a9893efbb902"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "graphic-rect-oct23d-ordinary-source-forms",
+    "evidence": [
+      "Complete selected original span and current body were inspected before the frozen overlay deck. The private frozen inputs, source digest, compiler trials, unchanged replica and deliberate damage results are retained under parallel-match-oct23d."
+    ],
+    "hypothesis": "An ordinary source-order spelling may recover the pinned compiler output without changing the existing typed owner or original effects. This experiment does not establish a semantic defect.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "graphic-rect-oct23d-ordinary-source-forms",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:graphic-rect-oct23d"
+}
