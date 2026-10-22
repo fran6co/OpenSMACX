@@ -1,0 +1,19 @@
+{
+  "event_id": "f70f1296816b70369f16f22f3564df3439111cd86852323c8befbb404bd2be1f",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "gamma-button-oct23d-ordinary-source-forms",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Three forms were scored under the single prepared Gamma recipe: pinned-source-order, switch-two-cases and cancel-early-return. Six CL invocations comprise three candidates and three baseline/replica/damage controls. Best candidate remains MNEMONIC_ONLY, 18 of 20 instructions matching; no exact gains or measured exact-neighbor losses. All three forms exhaust this unchanged context.",
+      "No candidate was materialized, no historical claim was changed, and the product source remains the immutable task baseline. Baseline, replica and damage controls all pass; strict references, complete owner evidence, linked preservation and runtime remain unproven. No recovery coverage or exactness gain is claimed.",
+      "Retain the negative evidence and original task baseline. Revisit only with a new evidence-backed affected source/type/caller/compiler dependency, not extra wrappers, casts, flags or a reset baseline. Coordinator-reviewed integration of these decisions does not establish native or game acceptance."
+    ]
+  },
+  "previous_event": "11e60de51c22ff7982680e2ed4c01e43eec815637e5c734968853a583a9941c6",
+  "request_id": "gamma-button-oct23d-ordinary-source-forms-rejected",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:gamma-button-oct23d"
+}
