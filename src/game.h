@@ -426,13 +426,8 @@ int __cdecl init_opening(const char *filename);
 
 MEASURED BOOL __cdecl not_my_turn();
 
-MEASURED inline uint32_t __cdecl game_year(int turn) {
-    return ScenarioSave.starting_mission_year + turn;
-}
-
-MEASURED inline int __cdecl energy_limit(int) {
-    return 10;
-}
+MEASURED uint32_t __cdecl game_year(int turn);
+MEASURED int __cdecl energy_limit(int);
 
 // Original691B0C is the mutable shared script-file pointer cell, initially
 // pointing at SCRIPT text691B7C. Consumers read this cell through ScriptPopupFile.

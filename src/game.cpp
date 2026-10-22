@@ -1988,7 +1988,7 @@ void __cdecl clear_scenario() {
 /*
 Purpose: Calculate game year from start date and turn number.
 // ORIGINAL: 0x005C89A0 ?game_year@@YAHH@Z 0x005C89A0-0x005C89B0 BYTE_EXACT
-// body      src/game.h
+// body      src/game.cpp
 // symbol    ?game_year@@YAIH@Z
 // size      16 bytes
 // prototype int (__cdecl ?game_year@@YAHH@Z)(int turn)
@@ -1999,10 +1999,13 @@ Purpose: Calculate game year from start date and turn number.
 Return Value: Game year
 Status: Complete
 */
-// BODY IN game.h, as `MEASURED inline`: the image writes it out at
-// some call sites and calls it at others, and a .cpp definition is only ever
-// one of those. The marker stays here because that is where the catalogue
-// reads it.
+// HISTORICAL: BODY IN game.h, as `MEASURED inline`: the image writes it out at
+// HISTORICAL: some call sites and calls it at others, and a .cpp definition is only ever
+// HISTORICAL: one of those. The marker stays here because that is where the catalogue
+// HISTORICAL: reads it.
+MEASURED uint32_t __cdecl game_year(int turn) {
+    return ScenarioSave.starting_mission_year + turn;
+}
 
 
 /*
@@ -2368,7 +2371,7 @@ void __cdecl repair_phase(int faction_id) {
 Purpose: The ceiling on a single energy allocation slider. The legacy
          implementation is a constant return.
 // ORIGINAL: 0x00445440 ?energy_limit@@YAHH@Z 0x00445440-0x00445446 BYTE_EXACT
-// body      src/game.h
+// body      src/game.cpp
 // size      6 bytes
 // prototype int (__cdecl ?energy_limit@@YAHH@Z)(int factionID)
 // callers   3   call targets   0
@@ -2378,10 +2381,13 @@ Purpose: The ceiling on a single energy allocation slider. The legacy
 Return Value: 10
 Status: Complete
 */
-// BODY IN game.h, as `MEASURED inline`: the image writes it out at
-// some call sites and calls it at others, and a .cpp definition is only ever
-// one of those. The marker stays here because that is where the catalogue
-// reads it.
+// HISTORICAL: BODY IN game.h, as `MEASURED inline`: the image writes it out at
+// HISTORICAL: some call sites and calls it at others, and a .cpp definition is only ever
+// HISTORICAL: one of those. The marker stays here because that is where the catalogue
+// HISTORICAL: reads it.
+MEASURED int __cdecl energy_limit(int) {
+    return 10;
+}
 
 
 // ---------------------------------------------------------------------------
