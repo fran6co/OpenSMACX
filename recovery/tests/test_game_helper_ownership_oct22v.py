@@ -56,6 +56,14 @@ def test_helpers_have_one_out_of_line_definition_and_header_declarations():
     )
     assert not re.search(r"\binline\b[^;{}]*\bgame_year\s*\(", header)
     assert not re.search(r"\binline\b[^;{}]*\benergy_limit\s*\(", header)
+    assert not re.search(
+        r"\bMEASURED\s+uint32_t\s+__cdecl\s+game_year\s*\([^;{}]*\)\s*\{",
+        header,
+    )
+    assert not re.search(
+        r"\bMEASURED\s+int\s+__cdecl\s+energy_limit\s*\([^;{}]*\)\s*\{",
+        header,
+    )
     assert cpp.count("MEASURED uint32_t __cdecl game_year(int turn)") == 1
     assert cpp.count("MEASURED int __cdecl energy_limit(int)") == 1
     assert "return ScenarioSave.starting_mission_year + turn;" in actual_bodies()[0]
