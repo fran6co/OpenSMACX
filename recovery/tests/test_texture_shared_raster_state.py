@@ -1,16 +1,22 @@
-"""Actual-source controls for the shared-state 0x6198E0 rasterizer path.
+"""Actual-source controls for shared-state textured rasterizer paths.
 
-The full body and mapped `setup_edge` definition are extracted from
-`src/texture.cpp`; host checks cover their typed-cell dataflow, not native ABI,
-x87 status, callback observability, or full game behavior.
+The 0x6198E0 body and mapped `setup_edge` definition are extracted from
+`src/texture.cpp`; additional source-order controls bind the three plain
+textured methods at 0x61A240, 0x61A760 and 0x6239E0 to their shared row/edge
+cells, cursor-based pixel addressing and the UV-only step helper. Host checks
+cover typed-cell dataflow and a test-only cursor perturbation, not native ABI,
+x87 status, actual callback observability, or full game behavior.
 """
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 import pytest
 
-from test_texture_vertices import packed_bodies, packed_harness, run_host
+from test_texture_vertices import (
+    braced, packed_bodies, packed_harness, raster_bodies, run_host,
+)
 
 
 ROOT = next(parent for parent in Path(__file__).resolve().parents
@@ -190,3 +196,44 @@ def test_compiling_left_edge_snapshot_after_rollover_is_rejected(tmp_path):
     assert marker >= 0
     result = run_host(tmp_path, full[:marker] + MAIN, disable_shift_ubsan=True)
     assert result.returncode == 42, result.stderr
+
+
+def test_three_plain_rasters_keep_the_shared_row_and_edge_protocol():
+    source = SOURCE.read_text(encoding="utf-8")
+    actual = raster_bodies()
+    actual["draw_color_key"] = braced(
+        source, "void Texture::draw_color_key(Buffer *buffer, Vert *vertices, int count, Vert *uv) {")
+    actual["draw_color_key5"] = braced(
+        source, "void Texture::draw_color_key(Buffer *buffer, Vert *vertices, int count, Vert *uv, int color) {")
+    helper = actual["texture_uv_edge_step"]
+    assert all(field not in helper for field in ("accumD", "deltaD"))
+    for name in ("draw_trans", "draw_color_key", "draw_color_key5"):
+        body = actual[name]
+        assert len(re.findall(r"(?m)^\s*texture_uv_edge_step\(left\);$", body)) == 1, name
+        assert len(re.findall(r"(?m)^\s*texture_uv_edge_step\(right\);$", body)) == 1, name
+        assert not re.search(r"(?m)^\s*edge_step\((?:left|right)\);$", body), name
+        assert body.index("TextureRasterPixelBase = buffer->get_data();") < body.index(
+            "TextureRasterEdgeVerticesB = vertices;")
+        snapshots = [
+            "TextureRasterScratch4C4 = right.accumA;",
+            "TextureRasterScratch530 = right.accumB;",
+            "TextureRasterSpanLeft = right.accumC;",
+            "TextureRasterUAccumulator.dword = left.accumA;",
+            "TextureRasterVAccumulator.dword = left.accumB;",
+            "TextureRasterSpanRight = left.accumC;",
+        ]
+        places = [body.index(item) for item in snapshots]
+        assert places == sorted(places), name
+        left = body.index("if (--left.counter == 0)")
+        right = body.index("if (--right.counter == 0)")
+        slope = body.index("TextureRasterScratch4E4.dword = du;")
+        assert places[-1] < left < right < slope, name
+        assert body.count("TextureRasterRowOffset >= TextureRasterClipBottom") == 2, name
+        assert body.count("TextureRasterRowOffset >= TextureRasterClipTop") == 1, name
+        destination = ("const uint32_t destination_address =\n"
+                       "                    static_cast<uint32_t>(TextureRasterRowOffset) +\n"
+                       "                    static_cast<uint32_t>(TextureRasterSpanRight);")
+        assert body.count(destination) == 1, name
+        assert "static_cast<uint32_t>(y) *" not in body, name
+        assert body.index("TextureRasterRowOffset = static_cast<int>(") < body.index(
+            "Texture::setup_edge(&left, top)"), name

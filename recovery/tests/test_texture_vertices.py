@@ -5,13 +5,16 @@ are extracted unchanged. Local count/index slots explicitly double its global
 dependencies. The remainder of that draw function is not executed by the scan
 test: it still has separate depth, edge, buffer and raster obligations.
 
-The color-key test executes the complete live 61A240 draw_trans and its local
-helpers. Buffer lock/unlock and floating-point environment calls are explicit
-doubles; native layout, actual x87 flags, shared scratch side effects and game
-rendering remain outside this host evidence.
+The color-key test executes the complete live 61A240 draw_trans and extracted
+helpers, including its mapped setup_edge and UV-only row step. Buffer
+lock/unlock and floating-point environment calls are explicit doubles; native
+layout, actual x87 flags, callback-time observations of every shared cell and
+full game rendering remain outside this host evidence.
 
 The packed 6198E0 test retains the actual body and typed edge helpers, with a
-delegating call observer for its initial edge setups. Guarded host buffers test
+delegating call observer for its initial edge setups. Three additional plain
+textured raster bodies are extracted with their shared `setup_edge` and
+UV-only step definitions. Guarded host buffers test
 inclusive opaque copying and independent packed coordinate arithmetic, not the
 original allocator's 64-KiB alignment or shared-scratch side effects.
 
@@ -19,9 +22,11 @@ The keyed 61A760 and alternating 6239E0 tests execute those complete bodies
 with caller-owned vertex counts and explicit UV arrays, including the packed
 countdown's zero/inverted clipped spans and its high-word 0x8000 boundary,
 absolute even/odd and negative-Y parity, low-byte alternate colors, and the
-exactly-minus-one forward that precedes the lock. The countdown oracle and
-wide fixtures stay inside allocated arrays so rejected mutants fail by
-comparison rather than by writing out of bounds.
+exactly-minus-one forward that precedes the lock. A one-shot host observer
+perturbs the shared row cursor to prove each target body consumes it for
+destination selection; this observer is not evidence of real callback effects.
+The countdown oracle and wide fixtures stay inside allocated arrays so
+rejected mutants fail by comparison rather than by writing out of bounds.
 
 The 61AC60 cutoff controls extract its whole body and real Gouraud helpers.
 Independent rectangular planes exercise every-row lighting, clipping and UV
@@ -171,15 +176,12 @@ def raster_bodies():
     source = (ROOT / "src/texture.cpp").read_text()
     result = {name: braced(source, "static int " + name + "(")
               for name in ("texture_fixed", "texture_difference")}
-    for coordinate_type in ("Vert",):
-        for axis in ("u", "v"):
-            signature = "static int texture_" + axis + "(const " + coordinate_type + " &uv)"
-            result[axis + "_" + coordinate_type] = braced(source, signature)
-    for name in ("texture_edge", "texture_advance_edge"):
-        # Include the actual template prefix, not a fixture-created substitute.
-        signature = re.search(r"template\s*<class Coordinates>\s*static int "
-                              + name + r"\(", source).group()
-        result[name] = braced(source, signature)
+    result["edge_step"] = braced(source, "static void edge_step(EdgeScan &e) {")
+    if "static void texture_uv_edge_step(EdgeScan &edge) {" in source:
+        result["texture_uv_edge_step"] = braced(
+            source, "static void texture_uv_edge_step(EdgeScan &edge) {")
+    result["setup_edge"] = braced(
+        source, "int __cdecl Texture::setup_edge(EdgeScan *a1, int a2) {")
     result["texture_span_step"] = braced(source, "static int texture_span_step(")
     result["texture_span_pixels"] = braced(source, "static unsigned int texture_span_pixels(")
     result["texture_reset_fpu"] = braced(source, "static void texture_reset_fpu() {")
@@ -206,7 +208,13 @@ def x87_span_step_expected(delta, width):
     return -magnitude if delta < 0 else magnitude
 
 
-def raster_harness(methods):
+def raster_harness(methods, observe_row_cursor=False):
+    methods = dict(methods)
+    if observe_row_cursor:
+        for name in ("draw_trans", "draw_color_key", "draw_color_key5"):
+            if name in methods:
+                methods[name] = methods[name].replace(
+                    "texture_uv_edge_step(", "observe_uv_edge_step(")
     header = (ROOT / "src/texture.h").read_text()
     records = "\n".join(braced(header, "struct " + name + " {") + ";"
                         for name in ("EdgeScan",))
@@ -240,6 +248,8 @@ def raster_harness(methods):
         ACTUAL_VERTEX
         ACTUAL_RECORDS
         // TEXTURE_DIRECT_STORAGE_PRELUDE
+        #define __cdecl
+        static int fixed_div(int, int);
         // Distinct symbolic fields let the double check the requested policy;
         // these are not a replacement implementation of the floating-point API.
         const unsigned _MCW_EM=0x003f, _MCW_PC=0x0300, _MCW_RC=0x0c00, _MCW_IC=0x1000;
@@ -278,9 +288,14 @@ def raster_harness(methods):
         } buffer;
         struct Texture {
             ACTUAL_FIELDS
+            static int setup_edge(EdgeScan *, int);
             void draw_trans(Buffer *, Vert *, int);
         } texture;
+        ROW_CURSOR_OBSERVER
         ACTUAL_BODIES
+        static int fixed_div(int numerator, int denominator) {
+            return static_cast<int>((static_cast<int64_t>(numerator) * 65536) / denominator);
+        }
         void start() {
             events.clear();
             std::memset(output, 0xee, sizeof(output));
@@ -288,7 +303,7 @@ def raster_harness(methods):
             for (unsigned i=0; i<sizeof(pixels); ++i) pixels[i] = i + 1;
             texture.pixels_ = pixels; texture.iWidth_ = texture.iHeight_ = 8;
             texture.borrowed_ = 1;
-            buffer.rect1_ = {0,0,0,0}; buffer.stride_ = 8;
+            buffer.rect1_ = {0,6,0,0}; buffer.stride_ = 8;
             lock_clip = {0,0,12,12}; lock_stride = 16;
             TextureRasterKey = 255; lock_key = 0x120002u;
             for (auto &uv : texture.corners_) uv = {0,0};
@@ -413,8 +428,26 @@ def raster_harness(methods):
             for (int i=0; i<5; ++i) sample(1+i,1,1,2);
             finish(truncated, 0);
         }
-    '''.replace("ACTUAL_VERTEX", vertex_declaration()).replace("ACTUAL_RECORDS", records).replace(
-        "ACTUAL_FIELDS", "\n".join(fields)).replace("ACTUAL_BODIES", "\n".join(methods.values())).replace(
+    '''
+    observer = ""
+    if observe_row_cursor:
+        observer = r'''
+        static int perturb_row_cursor;
+        static void texture_uv_edge_step(EdgeScan &);
+        static void observe_uv_edge_step(EdgeScan &edge) {
+            texture_uv_edge_step(edge);
+            if (perturb_row_cursor) {
+                TextureRasterRowOffset = static_cast<int>(
+                    static_cast<uint32_t>(TextureRasterRowOffset) +
+                    2u * static_cast<uint32_t>(TextureRasterBufferStride));
+                perturb_row_cursor = 0;
+            }
+        }
+        '''
+    harness = harness.replace("ACTUAL_VERTEX", vertex_declaration()).replace(
+        "ACTUAL_RECORDS", records).replace("ACTUAL_FIELDS", "\n".join(fields)).replace(
+        "ROW_CURSOR_OBSERVER", observer).replace(
+        "ACTUAL_BODIES", "\n".join(methods.values())).replace(
         "SLOPE_CASES", ",\n".join(cases))
     assert harness.count(PRELUDE_MARKER) == 1
     return harness.replace(PRELUDE_MARKER, direct_storage_prelude(source), 1)
@@ -425,15 +458,196 @@ def test_actual_color_key_raster_and_helpers(tmp_path):
     assert result.returncode == 0, result.stderr
 
 
+def _cursor_mutant(methods, body_name):
+    address = ("const uint32_t destination_address =\n"
+               "                    static_cast<uint32_t>(TextureRasterRowOffset) +\n"
+               "                    static_cast<uint32_t>(TextureRasterSpanRight);")
+    replacement = ("const uint32_t destination_address =\n"
+                   "                    static_cast<uint32_t>(texture_pointer_address(TextureRasterPixelBase)) +\n"
+                   "                    static_cast<uint32_t>(TextureRasterSpanRight);")
+    assert methods[body_name].count(address) == 1
+    methods[body_name] = methods[body_name].replace(address, replacement)
+    return methods
+
+
+def test_three_raster_bodies_use_the_shared_row_cursor_and_clipped_x():
+    source = (ROOT / "src/texture.cpp").read_text()
+    signatures = (
+        ("void Texture::draw_trans(Buffer *buffer, Vert *vertices, int use_eight_vertices) {",
+         "draw_trans"),
+        ("void Texture::draw_color_key(Buffer *buffer, Vert *vertices, int count, Vert *uv) {",
+         "draw_color_key"),
+        ("void Texture::draw_color_key(Buffer *buffer, Vert *vertices, int count, Vert *uv, int color) {",
+         "draw_color_key5"),
+    )
+    destination = (
+        "const uint32_t destination_address =\n"
+        "                    static_cast<uint32_t>(TextureRasterRowOffset) +\n"
+        "                    static_cast<uint32_t>(TextureRasterSpanRight);"
+    )
+    for signature, name in signatures:
+        body = braced(source, signature)
+        assert body.count(destination) == 1, name
+        assert body.count("static_cast<uint32_t>(y) *") == 0, name
+
+
+UV_EDGE_STEP_MAIN = r'''
+        int main() {
+            EdgeScan edge = {};
+            edge.accumA = 1; edge.deltaA = -2;
+            edge.accumB = -3; edge.deltaB = 4;
+            edge.accumC = 4; edge.deltaC = -1;
+            edge.extraDeltaC = -1;
+            edge.fracAccum = -1; edge.fracDelta = 2; edge.fracSub = 3;
+            edge.accumD = 0x1234; edge.deltaD = 0x4321;
+            texture_uv_edge_step(edge);
+            require(edge.accumA == -1 && edge.accumB == 1);
+            require(edge.accumC == 2 && edge.fracAccum == -2);
+            require(edge.accumD == 0x1234 && edge.deltaD == 0x4321);
+            edge.accumC = 9; edge.extraDeltaC = 7;
+            edge.fracAccum = -5; edge.fracDelta = 1;
+            texture_uv_edge_step(edge);
+            require(edge.accumC == 8 && edge.fracAccum == -4);
+            require(edge.accumD == 0x1234 && edge.deltaD == 0x4321);
+            return 0;
+        }
+'''
+
+
+def _replace_raster_main(source, main_body):
+    main_at = source.rfind("        int main() {")
+    assert main_at >= 0
+    return source[:main_at] + main_body
+
+
+def test_actual_plain_uv_edge_step_preserves_gouraud_fields(tmp_path):
+    methods = raster_bodies()
+    helper = methods["texture_uv_edge_step"]
+    assert "accumD" not in helper and "deltaD" not in helper
+    source = _replace_raster_main(raster_harness(methods), UV_EDGE_STEP_MAIN)
+    result = run_host(tmp_path, source)
+    assert result.returncode == 0, result.stderr
+
+
+def test_compiling_gouraud_channel_access_in_plain_uv_step_is_rejected(tmp_path):
+    methods = raster_bodies()
+    helper = methods["texture_uv_edge_step"]
+    before = ("edge.fracAccum = static_cast<int>(\n"
+              "        static_cast<uint32_t>(edge.fracAccum) + "
+              "static_cast<uint32_t>(edge.fracDelta));")
+    assert helper.count(before) == 1
+    helper = helper.replace(before,
+        "edge.accumD = static_cast<int>(static_cast<uint32_t>(edge.accumD) + "
+        "static_cast<uint32_t>(edge.deltaD));\n    " + before, 1)
+    methods["texture_uv_edge_step"] = helper
+    source = _replace_raster_main(raster_harness(methods), UV_EDGE_STEP_MAIN)
+    result = run_host(tmp_path, source)
+    assert result.returncode == 42, result.stderr
+
+
+CURSOR_PACKED_MAIN = r'''
+        int main() {
+            Vert rectangle[]={{1,0},{4,0},{4,2},{1,2}};
+            // Width-three PC24/chop produces a 65535 fixed-point U step, so
+            // the first three sampled columns are [0,0,1], not [0,1,2].
+            const int u[] = {0,0,1};
+            start();
+            texture.corners_[0]={0,0}; texture.corners_[1]={3,0};
+            texture.corners_[2]={3,2}; texture.corners_[3]={0,2};
+            for (int y=0; y<2; ++y)
+                for (int x=1; x<4; ++x) sample(x,y+2,u[x-1],y);
+            perturb_row_cursor = 1;
+            finish(rectangle,0);
+            require(perturb_row_cursor == 0);
+        }
+'''
+
+CURSOR_KEYED_MAIN = r'''
+    int main() {
+        Vert rectangle[]={{1,0},{4,0},{4,2},{1,2}};
+        Vert uv[]={{0,0},{3,0},{3,2},{0,2}};
+        const int u[] = {0,0,1};
+        start();
+        for (int y=0; y<2; ++y)
+            for (int x=1; x<4; ++x) sample(x,y+2,u[x-1],y);
+        perturb_row_cursor = 1;
+        finish(rectangle,4,uv);
+        require(perturb_row_cursor == 0);
+    }
+'''
+
+CURSOR_ALTERNATING_MAIN = r'''
+    int main() {
+        Vert rectangle[]={{1,0},{4,0},{4,2},{1,2}};
+        Vert uv[]={{0,0},{3,0},{3,2},{0,2}};
+        const int u[] = {0,0,1};
+        start();
+        for (int y=0; y<2; ++y)
+            for (int x=1; x<4; ++x) sample(x,y+2,u[x-1],y,7);
+        perturb_row_cursor = 1;
+        finish(rectangle,4,uv,7);
+        require(perturb_row_cursor == 0);
+    }
+'''
+
+
+@pytest.mark.parametrize("kind", ["packed", "keyed", "alternating"])
+def test_pixel_destination_depends_on_shared_row_cursor(tmp_path, kind):
+    if kind == "packed":
+        methods = raster_bodies()
+        source = raster_harness(methods, observe_row_cursor=True)
+        source = _replace_raster_main(source, CURSOR_PACKED_MAIN)
+    elif kind == "keyed":
+        methods = keyed_bodies()
+        source = keyed_harness(methods, main_body=CURSOR_KEYED_MAIN,
+                               observe_row_cursor=True)
+    else:
+        methods = alternating_bodies()
+        source = alternating_harness(methods, main_body=CURSOR_ALTERNATING_MAIN,
+                                     observe_row_cursor=True)
+    result = run_host(tmp_path, source)
+    assert result.returncode == 0, result.stderr
+
+
+@pytest.mark.parametrize("kind", ["packed", "keyed", "alternating"])
+def test_recomputed_row_base_is_rejected_for_each_raster_body(tmp_path, kind):
+    if kind == "packed":
+        methods = _cursor_mutant(raster_bodies(), "draw_trans")
+        source = raster_harness(methods, observe_row_cursor=True)
+        source = _replace_raster_main(source, CURSOR_PACKED_MAIN)
+    elif kind == "keyed":
+        methods = _cursor_mutant(keyed_bodies(), "draw_color_key")
+        source = keyed_harness(methods, main_body=CURSOR_KEYED_MAIN,
+                               observe_row_cursor=True)
+    else:
+        methods = _cursor_mutant(alternating_bodies(), "draw_color_key5")
+        source = alternating_harness(methods, main_body=CURSOR_ALTERNATING_MAIN,
+                                     observe_row_cursor=True)
+    result = run_host(tmp_path, source)
+    assert result.returncode == 42, result.stderr
+
+
 @pytest.mark.parametrize("method,before,after", [
-    ("draw_trans", "const int count = use_eight_vertices ? 8 : 4;", "const int count = 4;"),
-    ("draw_trans", "if (texel != key) *out = texel;", "*out = texel;"),
-    ("draw_trans", "const RECT clip = buffer->rect1_;", "RECT clip = buffer->rect1_; ++clip.bottom;"),
-    ("draw_trans", "if (y >= clip.top && y < clip.bottom", "if (y > clip.top && y < clip.bottom"),
-    ("draw_trans", "if (end > clip.right) end = clip.right;", "if (end > clip.right) end = clip.right + 1;"),
-    ("draw_trans", "if (x < clip.left)", "if (false)"),
-    ("draw_trans", "if (done) break;", "if (done) break; if (y == min_y) break;"),
-    ("draw_trans", "if (y >= clip.top && y < clip.bottom", "if (!done && y >= clip.top && y < clip.bottom"),
+    ("draw_trans", "if (use_eight_vertices)", "if (false)"),
+    ("draw_trans", "if (texel != static_cast<unsigned char>(TextureRasterLightThreshold))",
+     "if (false)"),
+    ("draw_trans", "if (texel != static_cast<unsigned char>(TextureRasterLightThreshold))\n"
+     "                        *out = texel;", "*out = texel;"),
+    ("draw_trans", "TextureRasterClipRight = buffer->rect1_.right;",
+     "TextureRasterClipRight = 0;"),
+    ("draw_trans", "if (end > TextureRasterClipRight) end = TextureRasterClipRight;",
+     "if (end > TextureRasterClipRight) end = TextureRasterClipRight + 1;"),
+    ("draw_trans", "pixel_base + stride *\n            static_cast<uint32_t>(TextureRasterClipBottom)",
+     "pixel_base + stride *\n            (static_cast<uint32_t>(TextureRasterClipBottom) + 1u)"),
+    ("draw_trans", "TextureRasterRowOffset >= TextureRasterClipTop",
+     "TextureRasterRowOffset > TextureRasterClipTop"),
+    ("draw_trans", "x < TextureRasterClipRight && end > x", "false && end > x"),
+    ("draw_trans", "if (x < TextureRasterClipLeft)", "if (false)"),
+    ("draw_trans", "if (done) break;",
+     "if (done) break; if (TextureRasterRowOffset == TextureRasterClipTop + "
+     "static_cast<uint32_t>(TextureRasterBufferStride)) break;"),
+    ("draw_trans", "if (TextureRasterRowOffset >= TextureRasterClipBottom) break;",
+     "if (false) break;"),
     ("draw_trans", "buffer->free_data(1);\n    texture_reset_fpu();",
      "texture_reset_fpu();\n    buffer->free_data(1);"),
     ("texture_span_step", "int reciprocal_shift = 23;", "int reciprocal_shift = 24;"),
@@ -456,9 +670,9 @@ def test_compiling_raster_mutations_are_rejected(tmp_path, method, before, after
 
 
 @pytest.mark.parametrize("declaration", [
-    "const unsigned char key = static_cast<unsigned char>(TextureRasterKey);",
-    "const int stride = static_cast<int>(buffer->stride_);",
-    "const RECT clip = buffer->rect1_;",
+    "TextureRasterBufferStride = static_cast<int>(buffer->stride_);",
+    "TextureRasterClipRight = buffer->rect1_.right;",
+    "TextureRasterClipTop = buffer->rect1_.top;",
 ])
 def test_lock_callback_state_cannot_be_captured_early(tmp_path, declaration):
     actual = raster_bodies()
@@ -482,7 +696,8 @@ def packed_bodies():
     return actual
 
 
-def packed_harness(methods, observe_initial=True, observe_rollover_state=False):
+def packed_harness(methods, observe_initial=True, observe_rollover_state=False,
+                   observe_row_cursor=False, main_body=None):
     methods = dict(methods)
     # Observe the mapped setup_edge calls, checking shared inputs before
     # delegating to the extracted product definition.
@@ -540,19 +755,15 @@ def packed_harness(methods, observe_initial=True, observe_rollover_state=False):
     # Reuse declaration extraction and the explicit Buffer/FPU doubles from
     # the color-key fixture. These replacements change fixture scaffolding
     # only, never any extracted product definition.
-    common = raster_harness(methods).split("        void start() {", 1)[0]
+    common = raster_harness(methods, observe_row_cursor=observe_row_cursor).split(
+        "        void start() {", 1)[0]
     common = common.replace(
         "static bool check_first_rollover_state;",
         "static bool check_first_rollover_state = " +
         ("true;" if observe_rollover_state else "false;"))
     common = common.replace("void draw_trans(Buffer *, Vert *, int);",
                             "void draw_trans(Buffer *, Vert *, int, Vert *);")
-    common = common.replace("void draw_trans(Buffer *, Vert *, int, Vert *);",
-                            "static int setup_edge(EdgeScan *, int);\n            "
-                            "void draw_trans(Buffer *, Vert *, int, Vert *);")
-    common = common.replace("#include <vector>", "#include <vector>\n        #define __cdecl")
-    common = common.replace("struct Buffer {",
-                            "static int fixed_div(int, int);\n        struct Buffer {")
+    common = common.replace("#include <vector>", "#include <vector>")
     common = common.replace("static unsigned char output[16 * 14], expected[16 * 14], pixels[8 * 8];", r'''
         static unsigned char output[16 * 14], expected[16 * 14];
         static unsigned char pixel_storage[65536+64], preserved_pixels[65536+64];
@@ -562,12 +773,7 @@ def packed_harness(methods, observe_initial=True, observe_rollover_state=False):
     common = common.replace("TextureRasterKey = lock_key;",
                             "TextureRasterKey = lock_key; publish_texture();")
     common += "\nconst bool observe_initial = " + ("true" if observe_initial else "false") + ";\n"
-    common += r'''
-        static int fixed_div(int numerator, int denominator) {
-            return static_cast<int>((static_cast<int64_t>(numerator) * 65536) / denominator);
-        }
-    '''
-    return common + r'''
+    fixture = common + r'''
         unsigned publish_borrowed;
         void publish_texture() {
             texture.pixels_ = pixels;
@@ -762,6 +968,11 @@ def packed_harness(methods, observe_initial=True, observe_rollover_state=False):
             start(); finish(flat,4,negative_uv,false,0);
         }
     '''
+    if main_body is not None:
+        main_at = fixture.rfind("        int main() {")
+        assert main_at >= 0
+        fixture = fixture[:main_at] + main_body
+    return fixture
 
 
 @pytest.mark.parametrize("observe_initial", [False, True])
@@ -964,7 +1175,8 @@ KEYED_WIDE_MAIN = r'''
 '''
 
 
-def keyed_harness(methods, wide=False, main_body=KEYED_MAIN):
+def keyed_harness(methods, wide=False, main_body=KEYED_MAIN,
+                  observe_row_cursor=False):
     """Call the explicit-UV color-key overload with caller-owned counts.
 
     The normal fixture reuses the color-key doubles and its width-eight
@@ -973,7 +1185,8 @@ def keyed_harness(methods, wide=False, main_body=KEYED_MAIN):
     the allocated arrays and fail by comparison, not by smashing memory.
     """
     methods = dict(methods)
-    common = raster_harness(methods).split("        void start() {", 1)[0]
+    common = raster_harness(methods, observe_row_cursor=observe_row_cursor).split(
+        "        void start() {", 1)[0]
     common = common.replace(
         "void draw_trans(Buffer *, Vert *, int);",
         "void draw_trans(Buffer *, Vert *, int);\n"
@@ -991,7 +1204,7 @@ def keyed_harness(methods, wide=False, main_body=KEYED_MAIN):
             for (unsigned i=0; i<sizeof(pixels); ++i) pixels[i] = i + 1;
             texture.pixels_ = pixels; texture.iWidth_ = texture.iHeight_ = 8;
             texture.borrowed_ = 1;
-            buffer.rect1_ = {0,0,0,0}; buffer.stride_ = 8;
+            buffer.rect1_ = {0,6,0,0}; buffer.stride_ = 8;
             lock_clip = {0,0,12,12}; lock_stride = 16;
             TextureRasterKey = 255; lock_key = 0x120002u;
             for (auto &uv : texture.corners_) uv = {0,0};
@@ -1058,14 +1271,11 @@ def test_shared_pitch_publication_and_callback_epoch(tmp_path, mutation, which):
         source, "int __cdecl Texture::setup_edge(EdgeScan *a1, int a2) {")
     fixture = raster_harness(bodies).split("        void start() {", 1)[0]
     fixture = fixture.replace("void draw_trans(Buffer *, Vert *, int);", """
-            static int setup_edge(EdgeScan *, int);
             void draw_trans(Buffer *, Vert *, int);
             void draw_trans(Buffer *, Vert *, int, Vert *);
             void draw_color_key(Buffer *, Vert *, int, Vert *);
             void draw_color_key(Buffer *, Vert *, int, Vert *, int);
     """)
-    fixture = fixture.replace("#include <vector>", "#include <vector>\n        #define __cdecl")
-    fixture = fixture.replace("struct Buffer {", "static int fixed_div(int, int);\n        struct Buffer {")
     fixture = fixture.replace("struct Buffer {", "void publish_width();\n        struct Buffer {")
     fixture = fixture.replace("require(events.empty()); events.push_back(1);",
                               "require(events.empty()); require(TextureRowPitchScratch == -19); publish_width(); events.push_back(1);")
@@ -1079,9 +1289,6 @@ def test_shared_pitch_publication_and_callback_epoch(tmp_path, mutation, which):
     }
     fixture += """
         void publish_width() { texture.iWidth_ = 37; }
-        static int fixed_div(int numerator, int denominator) {
-            return static_cast<int>((static_cast<int64_t>(numerator) * 65536) / denominator);
-        }
         int main() {
             texture.iWidth_ = 11; texture.iHeight_ = 8; texture.borrowed_ = 1;
             texture.pixels_ = pixels; TextureRowPitchScratch = -19;
@@ -1104,14 +1311,15 @@ def test_actual_explicit_uv_color_key_wide_boundaries(tmp_path):
 
 
 @pytest.mark.parametrize("method,before,after", [
-    ("draw_color_key", "if (texel != key) *out = texel;", "*out = texel;"),
+    ("draw_color_key", "if (texel != static_cast<unsigned char>(TextureRasterLightThreshold)) *out = texel;",
+     "*out = texel;"),
     ("draw_color_key", "texture_span_pixels(texture_difference(end, x))",
      "texture_span_pixels(texture_difference(x, end))"),
-    ("draw_color_key", "if (min_y < max_y && texture_edge", "if (4 <= count && texture_edge"),
-    ("draw_color_key", "if (vertices[i].y > max_y) { max_y = vertices[i].y; bottom = i; }",
-     "if (vertices[i].y > max_y) { max_y = vertices[i].y; bottom = 0; }"),
-    ("draw_color_key", "const unsigned char key = static_cast<unsigned char>(TextureRasterKey);",
-     "const unsigned char key = 0;"),
+    ("draw_color_key", "if (min_y < max_y && Texture::setup_edge(&left, top) &&",
+     "if (4 <= count && Texture::setup_edge(&left, top) &&"),
+    ("draw_color_key", "TextureRasterMaxYIndex = i;", "TextureRasterMaxYIndex = 0;"),
+    ("draw_color_key", "TextureRasterLightThreshold = static_cast<int>(TextureRasterKey);",
+     "TextureRasterLightThreshold = 0;"),
 ])
 def test_compiling_keyed_mutations_are_rejected(tmp_path, method, before, after):
     actual = keyed_bodies()
@@ -1121,22 +1329,28 @@ def test_compiling_keyed_mutations_are_rejected(tmp_path, method, before, after)
     assert result.returncode == 42, result.stderr
 
 
-@pytest.mark.parametrize("helper,before,after", [
-    ("texture_edge", "edge.fracAccum = dx < 0 ? 1 - edge.counter : 0;",
-     "edge.fracAccum = 0;"),
-    ("texture_edge", "index = next;", "return 0;"),
-    ("texture_advance_edge", "if (--edge.counter == 0)",
-     "if (--edge.counter <= 1)"),
+@pytest.mark.parametrize("target,before,after", [
+    ("setup_edge", "a1->fracAccum = 1 - a1->counter;", "a1->fracAccum = 0;"),
+    ("setup_edge", "a2 = iVar3;", "return 0;"),
+    ("draw_trans", "if (--left.counter == 0)",
+     "if (--left.counter <= 1)"),
 ])
-def test_compiling_still_used_edge_helper_mutations_are_rejected(
-        tmp_path, helper, before, after):
-    # The explicit-UV opaque body now uses mapped setup_edge, but these shared
-    # helpers remain live in the separate color-key overload. Keep their old
-    # compile-success behavioral controls against that actual consumer.
-    actual = keyed_bodies()
-    assert actual[helper].count(before) == 1
-    actual[helper] = actual[helper].replace(before, after)
-    result = run_host(tmp_path, keyed_harness(actual))
+def test_compiling_mapped_edge_protocol_mutations_are_rejected(
+        tmp_path, target, before, after):
+    # Keep the historical edge-fraction, horizontal-skip and rollover
+    # controls against the mapped helper/actual caller rather than deleted
+    # fixture-local edge templates.
+    if target == "draw_trans":
+        actual = packed_bodies()
+        assert actual[target].count(before) == 1
+        actual[target] = actual[target].replace(before, after)
+        source = packed_harness(actual)
+    else:
+        actual = keyed_bodies()
+        assert actual[target].count(before) == 1
+        actual[target] = actual[target].replace(before, after)
+        source = keyed_harness(actual)
+    result = run_host(tmp_path, source)
     assert result.returncode == 42, result.stderr
 
 
@@ -1229,7 +1443,8 @@ ALTERNATING_MAIN = r'''
 '''
 
 
-def alternating_harness(methods, forward_observer=False, main_body=ALTERNATING_MAIN):
+def alternating_harness(methods, forward_observer=False, main_body=ALTERNATING_MAIN,
+                        observe_row_cursor=False):
     methods = dict(methods)
     observer = ""
     if forward_observer:
@@ -1241,7 +1456,8 @@ def alternating_harness(methods, forward_observer=False, main_body=ALTERNATING_M
             require(events.empty());
         }
         '''
-    common = raster_harness(methods).split("        void start() {", 1)[0]
+    common = raster_harness(methods, observe_row_cursor=observe_row_cursor).split(
+        "        void start() {", 1)[0]
     common = common.replace(
         "void draw_trans(Buffer *, Vert *, int);",
         "void draw_trans(Buffer *, Vert *, int);\n"
@@ -1312,12 +1528,13 @@ def test_actual_alternating_row_color_key_raster(tmp_path, main_body, observer):
 
 @pytest.mark.parametrize("before,after", [
     ("if (color == -1) {", "if (color != 0) {"),
-    ("int parity = min_y & 1;", "int parity = 0;"),
-    ("++parity;", ";"),
-    ("*out = (parity & 1) != 0 ? texel : alternate;",
+    ("TextureRasterDither = min_y & 1;", "TextureRasterDither = 0;"),
+    ("++TextureRasterDither;", ";"),
+    ("*out = (TextureRasterDither & 1) != 0 ? texel : alternate;",
      "*out = texel;"),
-    ("if (texel != key) *out = (parity & 1) != 0 ? texel : alternate;",
-     "*out = (parity & 1) != 0 ? texel : alternate;"),
+    ("if (texel != static_cast<unsigned char>(TextureRasterLightThreshold))\n"
+     "                        *out = (TextureRasterDither & 1) != 0 ? texel : alternate;",
+     "*out = (TextureRasterDither & 1) != 0 ? texel : alternate;"),
     ("*reinterpret_cast<unsigned char *>(&TextureRasterScratch494) =\n"
      "        static_cast<unsigned char>(color);",
      "*reinterpret_cast<unsigned char *>(&TextureRasterScratch494) =\n"
@@ -1346,9 +1563,9 @@ def test_alternating_forward_runs_before_lock(tmp_path):
 
 
 @pytest.mark.parametrize("declaration", [
-    "const unsigned char key = static_cast<unsigned char>(TextureRasterKey);",
-    "const int stride = static_cast<int>(buffer->stride_);",
-    "const RECT clip = buffer->rect1_;",
+    "TextureRasterLightThreshold = static_cast<int>(TextureRasterKey);",
+    "TextureRasterBufferStride = static_cast<int>(buffer->stride_);",
+    "TextureRasterClipTop = buffer->rect1_.top;",
 ])
 def test_keyed_lock_publication_cannot_be_captured_early(tmp_path, declaration):
     actual = keyed_bodies()

@@ -104,9 +104,12 @@ def _loop_kernel(method: str, kind: str) -> str:
         "for (unsigned int written = 0; written < remaining; ++written)"
     )
     prefetch = masked.rfind(
-        "const volatile unsigned char *source_reads = pixels;", 0, loop_start
+        "const volatile unsigned char *source_reads", 0, loop_start
     )
     assert prefetch >= 0
+    declaration_end = masked.index(";", prefetch, loop_start) + 1
+    declaration = masked[prefetch:declaration_end]
+    assert "source_reads" in declaration
     opening = masked.index("{", loop_start)
     depth = 0
     for end in range(opening, len(masked)):
@@ -124,9 +127,19 @@ def _loop_kernel(method: str, kind: str) -> str:
         "unsigned char scratch_value, int cutoff, unsigned int remaining, int parity"
     )
     setup = ""
+    if "TextureRasterScratch544" in declaration:
+        # These three actual bodies read the source pointer and key from the
+        # shared owner cells. Model those already-bound inputs at the extracted
+        # kernel boundary; keep the production read expression and its timing.
+        setup = (
+            "    TextureRasterScratch544 = pixels;\n"
+            "    TextureRasterLightThreshold = key;\n"
+        )
+    if "TextureRasterDither" in method:
+        setup += "    TextureRasterDither = parity;\n"
     if kind == "alternate_draw_color_key_alt":
         # This projection starts inside the body, after the real entry store.
-        setup = (
+        setup += (
             "    *reinterpret_cast<unsigned char *>(&TextureRasterScratch494) = "
             "scratch_value;\n"
         )
@@ -195,7 +208,13 @@ def _translation_unit(source: str, main: str, mutations: dict[str, str] | None =
         for kernel_index, old, new in mutations.get("kernels", []):
             assert old in kernels[kernel_index]
             kernels[kernel_index] = kernels[kernel_index].replace(old, new, 1)
-    return (fixture.replace(SCRATCH_INSERTION, scratch.group(0), 1)
+    scratch_globals = (
+        scratch.group(0)
+        + "\nstatic void *TextureRasterScratch544;"
+        + "\nstatic int TextureRasterLightThreshold;"
+        + "\nstatic int TextureRasterDither;"
+    )
+    return (fixture.replace(SCRATCH_INSERTION, scratch_globals, 1)
             .replace(HELPER_INSERTION,
                             "\n\n".join(helpers[name] for name in HELPERS), 1)
             .replace(KERNEL_INSERTION, "\n\n".join(kernels), 1)
@@ -495,9 +514,16 @@ def test_source_records_each_pinned_order_and_keeps_opaque_helper_separate() -> 
     assert "source_texel = source[source_offset];" in opaque
     assert "texture_draw_lit_span_mode" not in opaque
 
+    shared_source_methods = {"draw_trans", "draw_color_key", "draw_color_key_alt"}
     for name, (signature, _) in METHODS.items():
         body = _braced(source, signature)
-        assert "const volatile unsigned char *source_reads = pixels;" in body
+        if name in shared_source_methods:
+            assert ("const volatile unsigned char *source_reads =\n"
+                    "                    static_cast<const unsigned char *>("
+                    "TextureRasterScratch544);" in body)
+            assert "TextureRasterLightThreshold" in body
+        else:
+            assert "const volatile unsigned char *source_reads = pixels;" in body
         assert "texel = source_reads[source];" in body
     draw2 = _braced(
         source,
