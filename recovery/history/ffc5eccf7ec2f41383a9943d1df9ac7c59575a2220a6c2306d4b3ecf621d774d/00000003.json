@@ -1,0 +1,20 @@
+{
+  "event_id": "9fc2dcca5315257039f523a340baeebb9684875638886987512897bbe3920de5",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "designwin-tooltip-original-lookup-order-oct22r",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/designwin.cpp resolves Labels.strings_ptr[0x33A] through StringTable.get before client_to_screen and retains its returned LPSTR through converted rectangle construction to the explicitly qualified Win::set_bubble_text. Pinned calls43D2E4,43D2F8,43D319 establish the original ordering; all hit/position gates, inputs and other effects remain.",
+      "Native source facts and original provenance across all current owner mappings remain unchanged. Adjacent binding round-trips through native parse/render and retains its original source anchors/reason. No marker edits, new symbol, storage, layout, header, flag, claim or original-behavior fix.",
+      "Seventeen focused actual-source tests pass on the coordinator run, with GCC/Clang, original hit/failure/position behavior, pointer/rectangle/receiver checks and six compile-success/runtime-failing damage controls. Fixture label mutation is sensitivity instrumentation, not evidence actual conversion mutates labels.",
+      "Independent source/test review of final source cc707cb and test922f20 found no blocking issue. Source incorporation only: the local screen remains a byte miss; native fresh build/link, full census/collateral and source/claim/reference checks plus destination verification remain required. Historical task baseline and full linked/runtime/automatic/game acceptance limitations are unchanged."
+    ]
+  },
+  "previous_event": "977d96900a41642c3ca0689fe153c66e779dab261a47188d9ad587c84c9cf104",
+  "request_id": "designwin-tooltip-call-order-incorporated-oct22r",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:owner-designwin-faithful-recovery-oct20y"
+}

@@ -1406,7 +1406,7 @@ void DesignWin::on_iface_left_click(int a1, int a2) {
 }
 
 // ORIGINAL: 0x0043D290 ?on_iface_right_click@DesignWin@@QAEXHH@Z 0x0043D290-0x0043D327
-// RECOVERY_BINDING: v1 {"evidence": ["src/designwin.cpp:DesignWin::on_iface_right_click", "src/designwin.h:spot1_", "src/alpha.h:Labels.strings_ptr"], "reason": "Resolve the prototype-stack hover target and show its localized label at the target's screen-space anchor."}
+// RECOVERY_BINDING: v1 {"evidence": ["src/designwin.cpp:DesignWin::on_iface_right_click", "src/designwin.h:spot1_", "src/alpha.h:Labels.strings_ptr", "Pinned 0x0043D2E4 calls Strings::get with Labels.strings_ptr[0x33A] before Win::client_to_screen at 0x0043D2F8; the returned LPSTR is retained through the conversion and passed with the point RECT to Win::set_bubble_text at 0x0043D319.", "The current typed owner uses existing Labels, StringTable and MainInterfaceGlobal/Win APIs; only statement order is corrected. The signed position guard, check inputs, coordinate conversion, point rectangle, and explicit hidden-base call remain unchanged."], "reason": "Resolve the prototype-stack hover target and show its localized label at the target's screen-space anchor. Preserve the pinned lookup-before-conversion order and pass the retained translated string to Win::set_bubble_text."}
 // symbol    ?on_iface_right_click@DesignWin@@UAEXHH@Z
 // size      151 bytes
 // prototype void (__thiscall ?on_iface_right_click@DesignWin@@QAEXHH@Z)(DesignWin* this, int, int)
@@ -1424,13 +1424,14 @@ void DesignWin::on_iface_right_click(int xCoord, int yCoord) {
     int position;
     int type;
     if (spot1_.check(xCoord, yCoord, &position, &type) != -1 && position >= 0) {
-        // The image swaps its two argument slots so the client_to_screen call
-        // receives (&xCoord, &yCoord); the anchor rect is that screen square.
-        MainInterfaceGlobal.client_to_screen(&xCoord, &yCoord);
         // The label pointer sits at byte offset 0xCE8 of the game block - slot
         // 0x33A of the LPSTR array, the same walk datalink.cpp's
         // CATEGORY_LABEL makes over Labels.strings_ptr.
         LPSTR label = Labels.strings_ptr[0x33A];
+        LPSTR resolved_label = StringTable.get(label);
+        // The image swaps its two argument slots so the client_to_screen call
+        // receives (&xCoord, &yCoord); the anchor rect is that screen square.
+        MainInterfaceGlobal.client_to_screen(&xCoord, &yCoord);
         RECT rect;
         rect.left = xCoord;
         rect.top = yCoord;
@@ -1438,8 +1439,7 @@ void DesignWin::on_iface_right_click(int xCoord, int yCoord) {
         rect.bottom = yCoord;
         // MainInterface declares its own (button_id, text) set_bubble_text,
         // which would hide the Win member the image calls directly.
-        MainInterfaceGlobal.Win::set_bubble_text(StringTable.get(label),
-                                                 &rect);
+        MainInterfaceGlobal.Win::set_bubble_text(resolved_label, &rect);
     }
 }
 
