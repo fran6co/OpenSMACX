@@ -1,0 +1,85 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "316b04eddaf8039bea262952f3ee17c3ac271198",
+  "editable_files": [
+    "src/gamma.cpp",
+    "recovery/tests/test_gamma_button_oct23d.py"
+  ],
+  "evidence": [
+    "Original complete mapped span and current typed source inspected; this is a compiler-visible ordinary source-form hypothesis, not evidence of a semantic defect. Preserve all original effects, callback/field rereads, aliasing/error domains, class/API/ABI/storage/header/compiler policy, source bindings, identities/extents and historical claims/lessons.",
+    "Gamma5C93C0 original tests-2then-1; cancel restores floatinitialGamma into doublegamma beforemodalrelease; accept readsScrollposition,scales,stores,releases once andreturns; otherids releaseonly. Three ordinary dispatch spellings in one native deck amortize controls. GraphicWin5D5630 originalstages RECTtop,left,bottom,right beforedimensions; one ordinary local-order candidate preservesnullfallback, live update API andzero return. No source type/caller defect is claimed.",
+    "Root owns all Task/annotation publication, Git, resource leases, preparation, measurement and integration. Overlay candidates never bank or modify the tree. Cap3candidateforms per unchanged configured context including errors, separately count baseline/replica/damage controls. No blind retries, asm/copiedbytes/addressforwarding/forcedinline/casts/newwrappergraphs/flagchanges or intentional bug fixes.",
+    "All owner mappings are preservation observations; source edit is bounded to this selected existing body. Structural discoveries require fresh coordinator expansion, not score-driven rejection. Materialize only measured/reviewed useful winners; actual-source controls, fresh build/link and relevant source/reference/claim checks precede manual integration. Native refusals/unknowns and linked/runtime/game/fullautomatic acceptance limits remain; immutable baseline is never reset."
+  ],
+  "intent": "Bounded ordinary C++ source-form recovery in the genuine Gamma owner",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4547200,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6065760,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6067488,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6067232,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6066992,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6067680,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4546832,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6067136,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6067216,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6067088,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6065568,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4547248,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6067104,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "gamma-button-oct23d"
+}
