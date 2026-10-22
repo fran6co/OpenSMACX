@@ -82,11 +82,12 @@ Purpose: Find the occupied deletion record for an owner, or return -1.
 */
 int DeletionList::find_owner_slot(int owner) {
     const unsigned char mask = static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_);
+    DeletionRecord *record = records_;
     for (int slot = 0; slot < 24; ++slot) {
-        const DeletionRecord &record = records_[slot];
-        if ((record.acknowledgements_ & mask) != mask && record.owner_ == owner) {
+        if ((record->acknowledgements_ & mask) != mask && record->owner_ == owner) {
             return slot;
         }
+        ++record;
     }
     return -1;
 }
