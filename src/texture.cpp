@@ -5669,35 +5669,6 @@ void Texture::sub_61d990(Buffer *buffer, Vert *vertices, int *zvals,
 
 // Fixed-slot bindings carried from 0061b780.cpp
 
-/* Ignored proposal payload only; emitted into an overlay by the guarded writer. */
-static unsigned int texture_raster_pixel_count(int width) {
-    return width > 0 ? static_cast<unsigned int>(width) : 0u;
-}
-
-static uint32_t texture_raster_advance_light(uint32_t light,
-                                            unsigned short amount) {
-    // 61D869 / 61BEEF add AX only; wrapping texture coordinates do not
-    // change this accumulator's format or propagate carry into its high word.
-    return (light & 0xffff0000u) |
-        ((light + static_cast<uint32_t>(amount)) & 0xffffu);
-}
-
-static uint32_t texture_raster_skip_light(uint32_t light,
-                                         unsigned short amount,
-                                         uint32_t skipped_pixels) {
-    // Original: (skip << 16) is a 32-bit operand to signed IMUL, so only
-    // the low 16 bits of skip survive and are interpreted as signed. The
-    // product by zero-extended WORD amount fits signed 32-bit; SHRD by 16
-    // then yields that product's bit pattern.
-    // 61D724..61D738 / 61BE28..61BE3C add it to the full DWORD, unlike
-    // the per-pixel low-word update above.
-    int signed_skip = static_cast<int>(skipped_pixels & 0xffffu);
-    if (signed_skip >= 0x8000) signed_skip -= 0x10000;
-    const int product = signed_skip * static_cast<int>(amount);
-    const uint32_t increment = static_cast<uint32_t>(product);
-    return light + increment;
-}
-
 static int texture_raster_step_gouraud(EdgeScan &edge, Texture *texture) {
     if (--edge.counter == 0) return texture->setup_edge_gouraud(&edge, edge.id);
     edge.accumA = static_cast<int>(static_cast<unsigned int>(edge.accumA) + edge.deltaA);
@@ -6272,81 +6243,81 @@ void Texture::sub_620a10(Buffer *buffer, Vert *vertices_arg, int count,
                             if (row >= TextureRasterClipTop &&
                                 end > TextureRasterClipLeft &&
                                 x < TextureRasterClipRight) {
-                            int clipped_left = x;
-                            int clipped_right = end;
-                            if (clipped_right >= TextureRasterClipRight) {
-                                clipped_right = TextureRasterClipRight;
-                                TextureRasterSpanLeft = clipped_right;
-                            }
-                            if (clipped_left < TextureRasterClipLeft) {
-                                const int skip = texture_difference(
-                                    TextureRasterClipLeft, clipped_left);
-                                const int scaled_skip = static_cast<int>(
-                                    static_cast<uint32_t>(skip) << 16);
-                                const uint32_t u_advance = static_cast<uint32_t>(
-                                    static_cast<uint64_t>(static_cast<int64_t>(du) *
-                                        static_cast<int64_t>(scaled_skip)) >> 16);
-                                const uint32_t v_advance = static_cast<uint32_t>(
-                                    static_cast<uint64_t>(static_cast<int64_t>(dv) *
-                                        static_cast<int64_t>(scaled_skip)) >> 16);
-                                u = static_cast<int>(
-                                    static_cast<unsigned int>(u) +
-                                    u_advance);
-                                v = static_cast<int>(
-                                    static_cast<unsigned int>(v) +
-                                    v_advance);
-                                TextureRasterUAccumulator.dword = u;
-                                TextureRasterVAccumulator.dword = v;
-                                TextureRasterSpanRight = TextureRasterClipLeft;
-                                clipped_left = TextureRasterSpanRight;
-                            }
-                            if (clipped_right > clipped_left) {
-                                const uint32_t destination_offset =
-                                    static_cast<uint32_t>(row) - pixel_base +
-                                    static_cast<uint32_t>(clipped_left);
-                                unsigned char *out = reinterpret_cast<unsigned char *>(
-                                    texture_pointer_offset(data, destination_offset));
-                                const uintptr_t source_base =
-                                    texture_pointer_address(TextureRasterScratch544);
-                                unsigned int source_x = static_cast<unsigned int>(
-                                    (source_base +
-                                     ((static_cast<unsigned int>(u) >> 16) & 0xffu)) &
-                                    0xffu);
-                                unsigned int source_y =
-                                    (static_cast<unsigned int>(v) >> 16) & 0xffu;
-                                unsigned int frac_u =
-                                    static_cast<unsigned short>(u);
-                                unsigned int frac_v =
-                                    static_cast<unsigned short>(v);
-                                const unsigned int step_x =
-                                    static_cast<unsigned char>(du >> 16);
-                                const unsigned int step_y =
-                                    static_cast<unsigned char>(dv >> 16);
-                                unsigned int remaining = static_cast<unsigned int>(
-                                    texture_difference(clipped_right, clipped_left));
-                                while (remaining != 0) {
-                                    const uintptr_t source_address =
-                                        (source_base & ~static_cast<uintptr_t>(0xffffu)) |
-                                        (static_cast<uintptr_t>(source_y) << 8) |
-                                        static_cast<uintptr_t>(source_x);
-                                    const unsigned char *source_pixel =
-                                        reinterpret_cast<const unsigned char *>(
-                                            source_address);
-                                    const unsigned char texel = *source_pixel;
-                                    if (texel != static_cast<unsigned char>(
-                                            TextureRasterLightThreshold)) {
-                                        *out = texel;
-                                    }
-                                    frac_u += static_cast<unsigned short>(du);
-                                    frac_v += static_cast<unsigned short>(dv);
-                                    source_x = (source_x + step_x + (frac_u >> 16)) & 0xffu;
-                                    source_y = (source_y + step_y + (frac_v >> 16)) & 0xffu;
-                                    frac_u &= 0xffffu;
-                                    frac_v &= 0xffffu;
-                                    ++out;
-                                    --remaining;
+                                int clipped_left = x;
+                                int clipped_right = end;
+                                if (clipped_right >= TextureRasterClipRight) {
+                                    clipped_right = TextureRasterClipRight;
+                                    TextureRasterSpanLeft = clipped_right;
                                 }
-                            }
+                                if (clipped_left < TextureRasterClipLeft) {
+                                    const int skip = texture_difference(
+                                        TextureRasterClipLeft, clipped_left);
+                                    const int scaled_skip = static_cast<int>(
+                                        static_cast<uint32_t>(skip) << 16);
+                                    const uint32_t u_advance = static_cast<uint32_t>(
+                                        static_cast<uint64_t>(static_cast<int64_t>(du) *
+                                            static_cast<int64_t>(scaled_skip)) >> 16);
+                                    const uint32_t v_advance = static_cast<uint32_t>(
+                                        static_cast<uint64_t>(static_cast<int64_t>(dv) *
+                                            static_cast<int64_t>(scaled_skip)) >> 16);
+                                    u = static_cast<int>(
+                                        static_cast<unsigned int>(u) +
+                                        u_advance);
+                                    v = static_cast<int>(
+                                        static_cast<unsigned int>(v) +
+                                        v_advance);
+                                    TextureRasterUAccumulator.dword = u;
+                                    TextureRasterVAccumulator.dword = v;
+                                    TextureRasterSpanRight = TextureRasterClipLeft;
+                                    clipped_left = TextureRasterSpanRight;
+                                }
+                                if (clipped_right > clipped_left) {
+                                    const uint32_t destination_offset =
+                                        static_cast<uint32_t>(row) - pixel_base +
+                                        static_cast<uint32_t>(clipped_left);
+                                    unsigned char *out = reinterpret_cast<unsigned char *>(
+                                        texture_pointer_offset(data, destination_offset));
+                                    const uintptr_t source_base =
+                                        texture_pointer_address(TextureRasterScratch544);
+                                    unsigned int source_x = static_cast<unsigned int>(
+                                        (source_base +
+                                         ((static_cast<unsigned int>(u) >> 16) & 0xffu)) &
+                                        0xffu);
+                                    unsigned int source_y =
+                                        (static_cast<unsigned int>(v) >> 16) & 0xffu;
+                                    unsigned int frac_u =
+                                        static_cast<unsigned short>(u);
+                                    unsigned int frac_v =
+                                        static_cast<unsigned short>(v);
+                                    const unsigned int step_x =
+                                        static_cast<unsigned char>(du >> 16);
+                                    const unsigned int step_y =
+                                        static_cast<unsigned char>(dv >> 16);
+                                    unsigned int remaining = static_cast<unsigned int>(
+                                        texture_difference(clipped_right, clipped_left));
+                                    while (remaining != 0) {
+                                        const uintptr_t source_address =
+                                            (source_base & ~static_cast<uintptr_t>(0xffffu)) |
+                                            (static_cast<uintptr_t>(source_y) << 8) |
+                                            static_cast<uintptr_t>(source_x);
+                                        const unsigned char *source_pixel =
+                                            reinterpret_cast<const unsigned char *>(
+                                                source_address);
+                                        const unsigned char texel = *source_pixel;
+                                        if (texel != static_cast<unsigned char>(
+                                                TextureRasterLightThreshold)) {
+                                            *out = texel;
+                                        }
+                                        frac_u += static_cast<unsigned short>(du);
+                                        frac_v += static_cast<unsigned short>(dv);
+                                        source_x = (source_x + step_x + (frac_u >> 16)) & 0xffu;
+                                        source_y = (source_y + step_y + (frac_v >> 16)) & 0xffu;
+                                        frac_u &= 0xffffu;
+                                        frac_v &= 0xffffu;
+                                        ++out;
+                                        --remaining;
+                                    }
+                                }
                             }
                         }
 
@@ -6480,6 +6451,9 @@ void Texture::sub_620a10(Buffer *buffer, Vert *vertices_arg, int count,
                                 ? texture_difference(0, whole_step) : whole_step;
                             unsigned int remaining = static_cast<unsigned int>(
                                 texture_difference(clipped_right, clipped_left));
+                            // 62108D..6210A1 multiplies the already-rebased row
+                            // again and re-adds the pixel base. Preserve this
+                            // original owned-path quirk, even for invalid addresses.
                             const uint32_t target_address = pixel_base +
                                 static_cast<uint32_t>(row) *
                                     static_cast<uint32_t>(TextureRasterBufferStride) +

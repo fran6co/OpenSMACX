@@ -31,13 +31,7 @@ SOURCE_IDS = (
     (0x0061D090, "Texture::sub_61d090"),
 )
 HELPERS = (
-    ("static unsigned int texture_raster_pixel_count(",),
-    ("static uint32_t texture_raster_advance_light(",),
-    ("static uint32_t texture_raster_skip_light(",),
-    ("static void texture_raster_span(",),
     ("static int texture_raster_step_gouraud(",),
-    ("static int texture_raster_step_plain(",),
-    ("static void texture_raster_plain_rows(",),
 )
 METHODS = tuple(f"void {name}(" for _, name in SOURCE_IDS)
 INSERTION = "// ACTUAL_TEXTURE_DEFINITIONS_INSERTED_BY_TEST"
