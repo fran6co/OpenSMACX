@@ -1,0 +1,24 @@
+{
+  "event_id": "e3607318969aa7c1384e33722c9d1e3fe11e07aeb2a0505a4a03309f4a8d376e",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_labs_write_actual_source_oct22.py",
+      "src/reportif.cpp"
+    ],
+    "evidence": [
+      "Authorize only the existing labs_write0x004A8440 body and new bounded actual-source callback regression/damage controls. The existing task already contains its identity and reportif source; preserve the immutable task base and all historical claims/discoveries.",
+      "Fresh original/COFF audit: GraphicWin publicly derives from Buffer. Current explicit base-pointer conversion emits a null-preserving branch and saves ESI; pin4A8458..4A8465 unconditionally loads GraphicWin receiver and adds444. Calling the public inherited member naturally removes that artifact without changing names, type contracts, helpers or return0.",
+      "Original ListBox consumer60BD33 tests EAX and pinned callback4A846A zeroes EAX. Keep current int callback type despite historical void catalogue decoration; no unsupported shared-typedef migration or bug fix.",
+      "One bounded actual-recipe overlay, short-screen-s8eqz7o_, matches18/18 original instructions with no owner exact losses. Physical replay, unchanged overlay and return1 damage controls passed. This is the first candidate on this new concrete cast-adjustment evidence; no cap reset.",
+      "Require independent source/pin/test review, native confirmation, fresh application build/link, source identities/history/claims/references, complete owner measurements, outside-owner object replicas and fresh integrated-destination rechecks. Manual reviewed recovery only; not automatic, linked-preservation, runtime or game acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "159153fe6ee5d14c17d83bbdd027e68e6fb54bf00fc747ec46aeba7b3c8c220a",
+  "request_id": "labs-write-natural-member-oct22u",
+  "schema_version": 1,
+  "sequence": 55,
+  "stream": "task:interface-contract-report-closure"
+}
