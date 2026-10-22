@@ -1,0 +1,20 @@
+{
+  "event_id": "c2442683374dc265611ff0adf0b1ccf68f492d0c9684e6f5f410739ba6d1e842",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "deletion-owner-cursor-spelling-oct23c",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Fresh native configured two-witness measurement of one frozen candidate remains MISMATCH for52DD10(27compiled/31originalinstructions); no exact gain. Existing constructor, clear and find_free_slot remain exact in the selected owner observations. No further spelling retries in this unchanged context.",
+      "The existing indexed source already preserves the same genuine typed records, masks, first occupied-owner match and24slot/-1behavior. No structural migration, missing behavior or original-source syntax proof was discovered. Restore that unchanged product body instead of spending more compilation/integration work on an unhelpful spelling; the complete experiment remains reachable in Git.",
+      "Retain actual-source controls against the unchanged body and real layout:8GCC/Clang tests pass, including compiling last-slot/predicate/exhaustion mutants. Test-only friend placement bypasses unrelated constructor work; constructor/runtime/full game behavior is not established.",
+      "Final branch net product source difference from original baseline is empty; merged change must contain only native task/history and host regression test. This grants no matching/coverage claim or full/autonomous acceptance, resets no baseline and changes no compiler policy. Requeue only after relevant new source/type/compiler evidence."
+    ]
+  },
+  "previous_event": "19aaa51219d9bd5d46d54a43da7310d97251560fa9443f89f86c8802bd9c7bfd",
+  "request_id": "deletion-owner-cursor-spelling-oct23c-not-retained",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:deletion-cursor-oct23c"
+}

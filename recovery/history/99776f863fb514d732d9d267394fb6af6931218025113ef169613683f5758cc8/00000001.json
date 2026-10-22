@@ -1,0 +1,21 @@
+{
+  "event_id": "19aaa51219d9bd5d46d54a43da7310d97251560fa9443f89f86c8802bd9c7bfd",
+  "payload": {
+    "affects": [
+      "entity-09dca1059f63973660334d3cd662818457ef3fb706e137c61988713018aaad67"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "deletion-owner-cursor-spelling-oct23c",
+    "evidence": [
+      "pinned:52DD10..52DD4B record traversal and current typed DeletionRecord/DeletionList owners.",
+      "git:1a7749551:src/deletionlist.cpp preserves the complete one-form cursor candidate; original mapping and all obligations untouched."
+    ],
+    "hypothesis": "An ordinary typed pointer-cursor spelling, suggested by the original0x3Citerator advance, may improve find_owner_slot52DD10 matching without behavior or structural changes. This is a source-form hypothesis, not evidence that the existing typed indexed implementation is wrong.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "deletion-owner-cursor-spelling-oct23c",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:deletion-cursor-oct23c"
+}

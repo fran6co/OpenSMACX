@@ -1,4 +1,4 @@
-"""Host controls for the actual mapped DeletionList owner cursor."""
+"""Host controls for the actual mapped DeletionList owner search."""
 
 from __future__ import annotations
 
@@ -17,7 +17,6 @@ SIGNATURE = "int DeletionList::find_owner_slot(int owner)"
 SYMBOL = "?find_owner_slot@DeletionList@@QAEHH@Z"
 CATALOGUE_NAME = "?UNK2@DeletionList@@QAEHH@Z"
 SPAN = (0x0052DD10, 0x0052DD4B)
-PIN_SHA256 = "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
 
 
 def _root() -> Path:
@@ -130,8 +129,8 @@ def _mutant(body: str, kind: str) -> str:
     if kind == "wrong_exhaustion_value":
         return _mutate(body, "return -1;", "return 0;")
     if kind == "reverse_occupied_predicate":
-        return _mutate(body, "(record->acknowledgements_ & mask) != mask",
-                       "(record->acknowledgements_ & mask) == mask")
+        return _mutate(body, "(record.acknowledgements_ & mask) != mask",
+                       "(record.acknowledgements_ & mask) == mask")
     raise AssertionError("unknown mutant: " + kind)
 
 
