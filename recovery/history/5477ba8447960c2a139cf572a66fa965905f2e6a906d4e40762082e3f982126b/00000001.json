@@ -1,0 +1,23 @@
+{
+  "event_id": "06a06296a52ff823c4e576ce2a9caf098c0cf343d245ad4291fa0eed1ef4a652",
+  "payload": {
+    "affects": [
+      "entity-ce62e6e74d3f95d53092ca64bbebbccf412c265c06a5ba2c2c9e94af0fd8e8be",
+      "entity-f67020b4c0b864666ea2b2c0813956d50a4e1e70b2c2fe43a9d35664220a5185"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "random-events-original-body-boundary-oct23b",
+    "evidence": [
+      "pinned:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:51F2E0..52211D contains the22event algorithms;525F0B is a direct call from turn_upkeep5258C0 to51F2E0;522120 is the actual switch table. Older seed prose confusing97D044 with a switch table is history, not corrected pin evidence.",
+      "git:1a5f2853fc3ef6eaeb00cbe71d0f358cf354b1b3:src/game.cpp; short mapped dispatcher delegates to recovery-only helpers; compiler inlines part of that decomposition into turn_upkeep.",
+      "sha256:ff010610061413cb0ffed0d13082db40144155ad6cdbaae8c5eb3cab63852f66:native closure/provider correction report;103unchanged mapped closures equal,18unassigned local-data closures explicitly unknown, shared has_fac_built providers identical."
+    ],
+    "hypothesis": "Restore the complete current22event algorithms to the existing mapped random_events body and the original out-of-line turn_upkeep boundary; retire recovery-only service/dispatch/helper code rather than assign it fabricated original functions. Preserve snapshots, callback rereads, original defects and all historical obligations. Case14 uses the pinned signed base-count predicate despite the currently unsigned declaration; the local conversion is not proof of the global field type.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "random-events-original-body-boundary-oct23b",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:random-events-boundary-oct23b"
+}

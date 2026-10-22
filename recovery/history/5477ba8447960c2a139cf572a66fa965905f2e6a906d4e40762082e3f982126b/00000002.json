@@ -1,0 +1,20 @@
+{
+  "event_id": "ff6ef7ef755c2399f56c630616bb03fcabef85214b9bade642dbb72acb8a3eb5",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "random-events-original-body-boundary-oct23b",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "git:d8084d96720041635dd71d70033790e5eefd9f9f:src/game.cpp; native compiled/linked source957cc47. All algorithms are inside51F2E0;5258C0now calls it out-of-line. Neither identity is currently exact; no claim is granted or demoted.",
+      "git:ac26b0a8636b43106fa3fba3cc516d55a03d696a:12actual-source test files.31host controls pass including all22selection-prefix probes, annual paths, callbacks and runtime-failing compiled damage. Whole entry-to-each-case dynamic routing remains untested, not claimed.",
+      "sha256:13196269e1eae9ff2ad375c87ccb1914ef48db79fb5c02a448d72d7460312ad9:independent final test-gap closure; separate corrected source review retracts the false mode-selector finding after actual argument-slot dataflow.",
+      "Explicit coordinator-reviewed manual integration decision only: expected native outside-function residual remains FAIL on15retired helper COMDATs and associated frame metadata. One retired Game emission is the genuine shared inline has_fac_built, not case scaffolding; equivalent Base/Map providers remain, selected linked copy unknown. No original identities or native waivers are invented for these emissions. Full linked selection/allocation,18local-data closure assignments, exhaustive semantic/runtime/game and autonomous acceptance remain unproven. Preserve these failures/unknowns; require fresh destination build and relevant checks after integration."
+    ]
+  },
+  "previous_event": "06a06296a52ff823c4e576ce2a9caf098c0cf343d245ad4291fa0eed1ef4a652",
+  "request_id": "random-events-original-body-boundary-oct23b-incorporated",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:random-events-boundary-oct23b"
+}
