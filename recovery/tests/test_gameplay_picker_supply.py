@@ -65,8 +65,8 @@ def test_controls_detect_source_damage(tmp_path, damage):
         old = "if (selected_action == 0) {\n            return 0;"
         new = "if (selected_action == 0) {\n            return 1;"
     elif damage == "text_pointer":
-        old = 'parse_say(0, reinterpret_cast<int>(Facility[facility_id].name), -1, -1);\n        parse_string(TextBufferGetPtr, StringTemp);'
-        new = 'parse_say(0, reinterpret_cast<int>(Facility[facility_id].name), -1, -1);\n        parse_string(localized, StringTemp);'
+        old = 'parse_say(0, Facility[facility_id].name, -1, -1);\n        parse_string(TextBufferGetPtr, StringTemp);'
+        new = 'parse_say(0, Facility[facility_id].name, -1, -1);\n        parse_string(localized, StringTemp);'
     elif damage == "picture_binding":
         old = 'popup.set_caller_picture(&popup.owned_picture());'
         new = '(void)popup.owned_picture();'

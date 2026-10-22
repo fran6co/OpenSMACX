@@ -49,10 +49,14 @@ struct RulesFacility { int name; int cost; };
 struct PlayerData { uint32_t diplo_treaties[8]; };
 struct Player { uint32_t rule_flags; };
 struct ConsoleGlobalType { int faction_id_; };
+struct GameDataLockMasks { uint32_t enable_mask_; };
+struct GameDataStateFields { GameDataLockMasks lock_masks_; };
+struct GameDataState { GameDataStateFields fields_; };
+GameDataState GameDataStateStorage;
 int exec_flag_after=-1, selected=1, picture_bound=0;
-int close_trace[32], close_trace_count;
+int close_trace[32], close_trace_count, modal_execs;
 struct LockState { uint32_t leading_words_[4]; };
-struct NetDaemonMock { LockState lock_state_[2]; void await_exec(int){} };
+struct NetDaemonMock { LockState channels_[2]; void await_exec(int){} };
 NetDaemonMock NetDaemonNet;
 struct Sprite { int init(char *,int,int){return 0;} void close(){
     ++sprite_closes; close_trace[close_trace_count++]=2;}
@@ -73,7 +77,8 @@ struct Popup { Sprite picture; Dialogs box; Popup():modal_result(0){}
     int start(char *,const char *s,int v,char *,int,void *){
         assert(std::strcmp(s,"SUPPLYUNIT")==0&&v==-1);return 0;}
     int exec(int,int(__cdecl *)()){
-        if(exec_flag_after>=0) NetDaemonNet.lock_state_[1].leading_words_[3]=
+        ++modal_execs;
+        if(exec_flag_after>=0) NetDaemonNet.channels_[0].leading_words_[3]=
             static_cast<uint32_t>(exec_flag_after);
         return selected;
     }
@@ -85,7 +90,7 @@ struct NetMsgMock { int last_amount, pops; NetMsgMock():last_amount(-1),pops(0){
 Veh Vehs[2]; VehPrototype VehPrototypes[128]; Base Bases[2];
 RulesFacility Facility[134]; PlayerData PlayersData[8]; Player Players[8];
 ConsoleGlobalType ConsoleGlobal; NetMsgMock NetMsgPrimary;
-uint32_t LockEnableMask=0xFF; BOOL MapIsFlat=1; uint32_t MapLongitude=80,
+BOOL MapIsFlat=1; uint32_t MapLongitude=80,
     MapLongitudeBounds=160; int PopupModalState=0,IsMultiplayerNet=0;
 char PopupStartCaption[32]; char *ScriptPopupFile=PopupStartCaption;
 char StringTemp[1032], localized[64], parsed_template[64];
@@ -127,11 +132,12 @@ static void reset(){
     std::memset(Bases,0,sizeof(Bases));std::memset(Facility,0,sizeof(Facility));
     std::memset(PlayersData,0,sizeof(PlayersData));std::memset(Players,0,sizeof(Players));
     std::memset(&NetDaemonNet,0,sizeof(NetDaemonNet)); Sprite::sprite_closes=0;
-    LockEnableMask=0xFF;MapIsFlat=1;MapLongitude=80;MapLongitudeBounds=160;
+    GameDataStateStorage.fields_.lock_masks_.enable_mask_=0xFF;
+    MapIsFlat=1;MapLongitude=80;MapLongitudeBounds=160;
     PopupModalState=IsMultiplayerNet=sync_calls=kills=messages=awaits=0;
     parse_num_calls=0;last_parse_num=-999;text_open_result=0;mutate_parse=mutate_parse_num=0;
     close_trace_count=0;std::memset(close_trace,0,sizeof(close_trace));
-    exec_flag_after=-1;selected=1;NetMsgPrimary.last_amount=-1;NetMsgPrimary.pops=0;
+    exec_flag_after=-1;selected=1;modal_execs=0;NetMsgPrimary.last_amount=-1;NetMsgPrimary.pops=0;
     picture_bound=facility_parse_calls=text_reads=0;TextBufferGetPtr=localized;
     cost_calls=mutate_cost_proto=cost_trace_count=0;
     captured_facility_row[0]='\0';
@@ -146,7 +152,7 @@ static void reset(){
 int main(){
     // Native modal zero/decline result returns zero after automatic teardown,
     // without applying a supply/convoy action or storing a probe action.
-    reset();NetDaemonNet.lock_state_[1].leading_words_[3]=1;selected=0;
+    reset();NetDaemonNet.channels_[0].leading_words_[3]=1;selected=0;
     assert(supply_options(0,0)==0);
     assert(Vehs[0].order==ORDER_NONE&&Vehs[0].probe_action==0);
     assert(sync_calls==0&&kills==0&&PopupModalState==0);
@@ -161,7 +167,7 @@ int main(){
     // native reads must see both changes. parse_num mutates current minerals,
     // then synch_base changes them again before the amount-needed calculation.
     reset();mutate_parse=1;mutate_parse_num=1;
-    NetDaemonNet.lock_state_[1].leading_words_[3]=1;
+    NetDaemonNet.channels_[0].leading_words_[3]=1;
     selected=1;exec_flag_after=2;Vehs[0].proto_id=0;Bases[0].queue_production_id[0]=0;
     assert(supply_options(0,0)==1);
     assert(Vehs[0].proto_id==1&&Bases[0].queue_production_id[0]==-70);
@@ -176,7 +182,7 @@ int main(){
     // The native path rereads lock flags after modal exec. Bit 1 set selects
     // action dispatch even when bit 0 was cleared by the callback; the stored
     // probe action must therefore still be applied.
-    reset();NetDaemonNet.lock_state_[1].leading_words_[3]=1;
+    reset();NetDaemonNet.channels_[0].leading_words_[3]=1;
     PopupModalState=0;selected=1;exec_flag_after=2;
     assert(supply_options(0,0)==1);
     assert(Bases[0].minerals_accumulated==1&&sync_calls==1&&kills==1);
@@ -185,7 +191,7 @@ int main(){
 
     // Each native veh_cost call precedes cost_factor. The final cost factor
     // callback runs before the live prototype cost is read for the action.
-    reset();NetDaemonNet.lock_state_[1].leading_words_[3]=1;
+    reset();NetDaemonNet.channels_[0].leading_words_[3]=1;
     selected=1;exec_flag_after=2;mutate_cost_proto=1;
     assert(supply_options(0,0)==1);
     assert(cost_trace_count==5&&cost_trace[0]==5&&cost_trace[1]==6&&
@@ -194,7 +200,7 @@ int main(){
 
     // With both action bits clear, the native path does not take the simple
     // return; it dispatches the default (non-supply) action and changes order.
-    reset();NetDaemonNet.lock_state_[1].leading_words_[3]=0;
+    reset();NetDaemonNet.channels_[0].leading_words_[3]=0;
     PopupModalState=0;selected=0;
     assert(supply_options(0,0)==0);
     assert(Vehs[0].order==ORDER_CONVOY&&Vehs[0].probe_sabotage_id==254);
@@ -202,7 +208,7 @@ int main(){
     assert(close_trace_count>=5&&close_trace[0]==1&&close_trace[1]==2&&
            close_trace[2]==2);
 
-    reset();NetDaemonNet.lock_state_[1].leading_words_[3]=2;
+    reset();NetDaemonNet.channels_[0].leading_words_[3]=2;
     PopupModalState=0;selected=0;
     assert(supply_options(0,0)==0);
     assert(Vehs[0].order==ORDER_CONVOY&&Vehs[0].probe_sabotage_id==254);
@@ -210,10 +216,22 @@ int main(){
            close_trace[2]==2);
 
     // Bit 0 without bit 1 is the sole simple-return case after modal exec.
-    reset();NetDaemonNet.lock_state_[1].leading_words_[3]=1;
+    reset();NetDaemonNet.channels_[0].leading_words_[3]=1;
     PopupModalState=0;selected=1;exec_flag_after=1;
     assert(supply_options(0,0)==1);
     assert(Bases[0].minerals_accumulated==0&&sync_calls==0&&kills==0);
     assert(close_trace_count==2&&close_trace[0]==1&&close_trace[1]==2);
+
+    // For the local human owner, bit 0 opens the modal. Bit 1 keeps the
+    // post-modal path on action dispatch, where selected action 1 is stored
+    // and applied through the normal synch/kill sequence.
+    reset();NetDaemonNet.channels_[0].leading_words_[3]=3;
+    PopupModalState=0;selected=1;exec_flag_after=3;
+    assert(supply_options(0,0)==1);
+    assert(modal_execs==1&&Vehs[0].probe_action==1);
+    assert(Bases[0].minerals_accumulated==1&&sync_calls==1&&kills==1);
+    assert(messages==0&&awaits==0);
+    assert(close_trace_count>=5&&close_trace[0]==1&&close_trace[1]==2&&
+           close_trace[2]==2);
     return 0;
 }

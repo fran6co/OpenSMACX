@@ -1,0 +1,21 @@
+{
+  "event_id": "b0313f10c347f071c6f1ac6b0c53c85b3fe24d9f4144c2f20ef9bd008efd500e",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "console-convoy-owned-action-slot-oct22q",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/console_commands.cpp restores only NetDaemonNet.channels_[0].leading_words_[3]=3 in the base-found branch before supply_options. Pinned4D8FF4 stores this exact dword to93E904 before4D8FFE; the existing singleton/member offsets identify the same word. Existing lock-rewritten vehicle ID and all other behavior remain unchanged.",
+      "The adjacent binding rationale is updated through native binding rendering to identify the existing member rather than claim an unowned omitted effect. Original identities/spans, historical claims and useful provenance across all101 owner mappings are unchanged; no new global, type, layout, declaration or compiler policy is introduced.",
+      "Live actual-source GCC/Clang convoy controls and seven compile-success/runtime-failing mutations verify exact value/channel, pre-callback timing, branch locality, lock remap and unlock/extraction behavior. The related unchanged supply_options implementation is tested with producer flags3 and existing callback/lifetime checks. Thirty combined tests pass.",
+      "Seven directly relevant legacy supply-fixture failures were first reproduced on unchanged master. The scoped fixture update only follows the existing channels_[0] and nested enable-mask owners, updates an obsolete cast-dependent mutation anchor, and adds the flags3 case; assertions and C++98 fixture flags remain. Independent source and final test review found no blocking discrepancy or weakened checks.",
+      "Source incorporation only. One native controlled screen remains a local byte miss with no exact losses, not a new historical claim. Fresh complete build/link, whole-census and native typed-store/collateral evidence plus fresh destination recheck remain required before manual integration. The immutable task baseline and full linked/structure/runtime/automatic/game limitations remain unchanged."
+    ]
+  },
+  "previous_event": "6c3be9296dac39a67e1b61a6fe699c124ef53c84ea9a0695b3d0ef3a08e56f67",
+  "request_id": "console-convoy-action-slot-incorporated-oct22q",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:console-commands-source-batch-oct19d"
+}
