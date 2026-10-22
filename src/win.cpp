@@ -7287,19 +7287,23 @@ void Win::remove_child(Win *child) {
 
     int count = child_count_;
     int i = 0;
+    Win **slot = children_;
     if (count > 0) {
         do {
-            if (children_[i] == child) break;
+            if (*slot == child) break;
             ++i;
+            ++slot;
         } while (i < count);
     }
     if (i < count) {
         child_count_ = count - 1;
         child->hide();
         if (i < child_count_) {
+            slot = children_ + i;
             do {
-                children_[i] = children_[i + 1];
+                *slot = slot[1];
                 ++i;
+                ++slot;
             } while (i < child_count_);
         }
     }
