@@ -1,0 +1,19 @@
+{
+  "event_id": "ce55e53f432dfcb9441271b805a1e3a3796ea1033a56cf20c9062e66732f7cf2",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "graphic-rect-oct23d-ordinary-source-forms",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "One four-RECT-read source-order form was scored under both prepared GraphicWin flag sets. Eight CL invocations comprise two candidate calls and six baseline/replica/damage controls. Targets remain MISMATCH, 23/26 emitted instructions versus original 45. No measured exact-neighbor losses. Native reports retain incomplete scope/evidence; this is not acceptance. No further arbitrary spelling is justified by this trial.",
+      "No candidate was materialized, no historical claim was changed, and the product source remains the immutable task baseline. Baseline, replica and damage controls all pass; strict references, complete owner evidence, linked preservation and runtime remain unproven. No recovery coverage or exactness gain is claimed.",
+      "Retain the negative evidence and original task baseline. Revisit only with a new evidence-backed affected source/type/caller/compiler dependency, not extra wrappers, casts, flags or a reset baseline. Coordinator-reviewed integration of these decisions does not establish native or game acceptance."
+    ]
+  },
+  "previous_event": "5350976b1df8d25819f5c1c21a4e2255ef8149682acbee6ce3472e65178be1c3",
+  "request_id": "graphic-rect-oct23d-ordinary-source-forms-rejected",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:graphic-rect-oct23d"
+}
