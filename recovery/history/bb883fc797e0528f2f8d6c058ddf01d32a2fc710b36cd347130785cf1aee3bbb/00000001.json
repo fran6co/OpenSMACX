@@ -1,0 +1,25 @@
+{
+  "event_id": "75fc77bf14a6cd689b2afae6b51422a33401446526ca959369322abe714b6150",
+  "payload": {
+    "affects": [
+      "entity-2b19148d4d4334da66e9db02aab5e844197d1db0c74c43f7786af127e61e1862",
+      "entity-2dec3da77295191f2af641cab878f12122fb19a71833da333aa3d99b9a526775",
+      "entity-594d6733ec8f319baa4a9cd2b2458879a2cc10c67c3392d88fd7cba56a481956",
+      "entity-fa962719162780556e7f5c9461a6355982920ce7a9a383c53d604e9e6086b60e"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "texture-cached-edge-transitive-call-boundary-oct23a",
+    "evidence": [
+      "Fresh e9244fc full application build build-0c_yb2eq was physically qualified against all189 current TU inputs and203 outputs before recovery. The original625080 mapped wrapper has one relocation to texture_cached_edge; each of its original three mapped callers6212B0/622810/622200 has four relocations to the same recovery-only helper and no surviving call to625080. This is actual COFF evidence, not just an instruction-count inference.",
+      "Pinned complete625080 body has183instructions and directly calls fixed_div628AD0 at625152,625174,625266. Native caller inspection names6212B0,622810,622200. The task already owns all56 Texture originals; only625080 source body changes, while these three dependent compiler bodies are reviewed as affected ownership, never silently waived.",
+      "The full original branch/store trace and independent candidate review live in ignored parallel-match-oct23a evidence. Fresh physical observation must enumerate actual changed functions and prove other owner residuals. Existing historical exact/strict identities remain mandatory; a dependency discovery does not authorize any acceptance or new byte claim."
+    ],
+    "hypothesis": "The small recovery-only wrapper is naturally inlined into three mapped raster callers, so their compiled calls also target the invented texture_cached_edge helper rather than original625080. Restoring the full mapped body should restore those original call boundaries without editing caller source.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "texture-cached-edge-transitive-call-boundary-oct23a",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:texture-cached-edge-oct23a"
+}
