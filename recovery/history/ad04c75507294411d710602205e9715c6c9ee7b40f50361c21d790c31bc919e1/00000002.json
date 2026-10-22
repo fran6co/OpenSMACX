@@ -1,0 +1,21 @@
+{
+  "event_id": "e8a03039cc49d7295a4b7988cbb373d1cdfd9201e73b59f247d79c149f527130",
+  "payload": {
+    "affects": [
+      "entity-65e7709f54e12f8c5b1af4d770db66dd87b4e7fa193ac220531f16ec631bebca"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "plain-helper-retirement-transitive-closure",
+    "evidence": [
+      "Fresh source call census after the complete owner reconstruction found texture_raster_pixel_count, texture_raster_advance_light and texture_raster_skip_light each only at its own definition. Native candidate COFF from the first completed build emits none of those names. The old direct-helper fixture probes have already migrated to actual mapped Gouraud/plain owner behavior and dedicated light controls.",
+      "Root removed only these three unannotated dead definitions and their obsolete proposal banner, plus mechanical indentation inside the reviewed plain-owner visibility guard. All original identities, spans, claims, symbols and useful authored recovery history remain. Candidate c1cf2f46 requires fresh native qualification; the earlier2d230e82 build is preliminary checkpoint evidence, not re-labelled current-source proof."
+    ],
+    "hypothesis": "Retiring the sole plain-row/span consumer also leaves three scalar helpers without a product caller. Remove those newly dead definitions, not preserve test-only scaffolding in the application.",
+    "kind": "discovery"
+  },
+  "previous_event": "5e7be9f23ab14744e2351b21fd2d1a87a103c156b65c7abd653a0c9af234a42c",
+  "request_id": "plain-helper-retirement-transitive-closure",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:texture-plain-owner-oct23e"
+}

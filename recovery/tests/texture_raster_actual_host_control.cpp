@@ -151,7 +151,6 @@ int Texture::setup_edge(EdgeScan *edge, int) {
 // ACTUAL_TEXTURE_DEFINITIONS_INSERTED_BY_TEST
 
 int main() {
-    unsigned char source[4] = {0, 5, 10, 255};
     unsigned char owned_source[16] = {
         0, 5, 10, 255, 0, 15, 20, 255,
         0, 25, 30, 255, 0, 35, 40, 255,
@@ -163,90 +162,6 @@ int main() {
         borrowed_source[y * 256 + 2] = static_cast<unsigned char>(10 + y * 10);
         borrowed_source[y * 256 + 3] = 255;
     }
-    unsigned char destination[4] = {77, 77, 77, 77};
-    TextureRasterKey = 0;
-    texture_raster_span(destination, source, 4, 0, 4, 0, 4,
-                        0, 4, 0, 0, 0, 0, 1 << 8, 1 << 16, 0, 0,
-                        0, 1, 0);
-    assert(destination[0] == 77); // keyed sample preserves destination
-    assert(destination[1] == 6);
-    assert(destination[2] == 11);
-    assert(destination[3] == 0); // byte addition wraps, it does not clamp
-
-    unsigned char phase_output[1] = {77};
-    texture_raster_span(phase_output, source, 4, 0, 1, 0, 1,
-                        0, 1, 0x8000, 0, 0x8000, 0, 0,
-                        0, 0, 0, 0, 0, 0);
-    assert(phase_output[0] == 5); // phase crosses the texel boundary before sample
-
-    unsigned char borrowed_light_output[3] = {77, 77, 77};
-    texture_raster_span(borrowed_light_output, source, 4, 0, 3, 0, 3,
-                        0, 3, 0, 0, 0, 0, 0xff00, 1 << 16, 0, 1,
-                        0, 0, 1);
-    assert(borrowed_light_output[0] == 255);
-    assert(borrowed_light_output[1] == 4);
-    assert(borrowed_light_output[2] == 9);
-
-    assert(texture_raster_advance_light(0x0000ffffu, 1) == 0x00000000u);
-    assert(texture_raster_advance_light(0x0001ffffu, 1) == 0x00010000u);
-    assert(texture_raster_skip_light(0x0000ffffu, 1, 1) == 0x00010000u);
-    assert(texture_raster_skip_light(0x12340000u, 0x8000, 3) == 0x12358000u);
-    // Preserve signed IMUL behavior of the 32-bit 16.16 skip operand.
-    assert(texture_raster_skip_light(0, 1, 32768) == 0xffff8000u);
-    assert(texture_raster_skip_light(0, 1, 65535) == 0xffffffffu);
-    assert(texture_raster_skip_light(0, 1, 65536) == 0x00000000u);
-    // Independently model native signed IMUL's 64-bit product and SHRD.
-    // Exercise every retained skip word, not just ordinary screen widths.
-    const unsigned short clip_steps[] = {0, 1, 0x7fff, 0x8000, 0xffff};
-    for (uint32_t skip = 0; skip < 0x10000u; ++skip) {
-        const uint32_t fixed_bits = skip << 16;
-        const int64_t signed_fixed = static_cast<int64_t>(fixed_bits) -
-            ((fixed_bits & 0x80000000u) ? (static_cast<int64_t>(1) << 32) : 0);
-        for (unsigned int n = 0; n < sizeof(clip_steps)/sizeof(clip_steps[0]); ++n) {
-            const uint64_t product_bits = static_cast<uint64_t>(
-                signed_fixed * static_cast<int64_t>(clip_steps[n]));
-            const uint32_t increment = static_cast<uint32_t>(product_bits >> 16);
-            const uint32_t expected = 0xfffffff0u + increment;
-            assert(texture_raster_skip_light(0xfffffff0u, clip_steps[n], skip) == expected);
-            assert(texture_raster_skip_light(0xfffffff0u, clip_steps[n], skip + 0x10000u) == expected);
-        }
-    }
-
-    unsigned char borrowed_signed_light[2] = {77, 77};
-    const unsigned char one_texel[1] = {1};
-    texture_raster_span(borrowed_signed_light, one_texel, 1, 0, 2, 0, 2,
-                        0, 2, 0, 0, 0, 0, 0x00018000, 0, 0, 0xffff,
-                        0, 0, 1);
-    assert(borrowed_signed_light[0] == 129);
-    assert(borrowed_signed_light[1] == 128);
-
-    unsigned char clipped_light[2] = {77, 77};
-    texture_raster_span(clipped_light, one_texel, 1, 0, 1, 0, 2,
-                        1, 2, 0, 0, 0, 0, 0x0000ff00, 0, 0, 1,
-                        0, 0, 1);
-    assert(clipped_light[0] == 77);
-    assert(clipped_light[1] == 0);
-
-    unsigned char wrapped_source[1] = {7};
-    unsigned char wrapped_output[1] = {77};
-    texture_raster_span(wrapped_output, wrapped_source, 1, 0, 1, 0, 1,
-                        0, 1, 256 << 16, 0, 0, 0, 0x00018000, 0, 0, 0,
-                        0, 0, 1);
-    assert(wrapped_output[0] == 135);
-    unsigned char unwrapped_output[1] = {77};
-    const unsigned char unwrapped_source[257] = {0};
-    texture_raster_span(unwrapped_output, unwrapped_source, 257, 0, 1, 0, 1,
-                        0, 1, 256 << 16, 0, 0, 0, 0x00018000, 0, 0, 0,
-                        0, 0, 0);
-    assert(unwrapped_output[0] == 128);
-
-    unsigned char owned_light_output[2] = {77, 77};
-    texture_raster_span(owned_light_output, source, 4, 0, 2, 0, 2,
-                        0, 2, 0, 0, 0, 0, 0xffff, 1 << 16, 0, 1,
-                        0, 0, 0);
-    assert(owned_light_output[0] == 255);
-    assert(owned_light_output[1] == 5); // low-word wrap drops carry into high word
-
     unsigned char *surface = static_cast<unsigned char *>(
         mmap(0, 4096, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS | MAP_32BIT, -1, 0));
     assert(surface != MAP_FAILED);
@@ -320,58 +235,6 @@ int main() {
 
     memset(surface, 77, 16);
     buffer.frees_ = 0;
-    TextureStore out_cache = {};
-    out_cache.flags_ = 0xA5A5A5A5u;
-    out_cache.next_record_ = 9;
-    expected_edge_cache = &out_cache;
-    Vert affine_vertices[4], affine_uv[4];
-    static_assert(sizeof(affine_vertices) == sizeof(points), "coordinate-pair extent");
-    memcpy(affine_vertices, points, sizeof(points));
-    memcpy(affine_uv, points, sizeof(points));
-    texture.sub_620a10(&buffer, affine_vertices, 4, affine_uv, &out_cache);
-    assert(TextureRasterEdgeVerticesB == affine_vertices &&
-           TextureRasterEdgeVerticesA == affine_uv);
-    assert(buffer.frees_ == 1 && fpu_resets == 10);
-    assert(out_cache.next_record_ == 0 && out_cache.flags_ == 1);
-    for (int y = 0; y < 3; ++y) {
-        assert(surface[y * 4] == 77); // 0x620a10 keys in owned and borrowed modes
-        assert(surface[y * 4 + 1] == 5 + y * 10);
-        assert(surface[y * 4 + 2] == 10 + y * 10);
-        assert(surface[y * 4 + 3] == 255);
-    }
-    assert(edge_helper_calls == 2);
-    assert(edge_directions == 3u);
-    assert(edge_helper_direction[0] == -1 && edge_helper_direction[1] == 1);
-    assert(edge_helper_index[0] == 0 && edge_helper_index[1] == 0);
-
-    memset(surface, 77, 16);
-    buffer.frees_ = 0;
-    texture.borrowed_ = 1;
-    texture.pixels_ = borrowed_source;
-    texture.sub_620a10(&buffer, affine_vertices, 4, affine_uv, &out_cache);
-    assert(buffer.frees_ == 1 && fpu_resets == 12);
-    assert(edge_helper_calls == 4);
-    for (int y = 0; y < 3; ++y) {
-        assert(surface[y * 4] == 77); // borrowed path compares the texture key
-        assert(surface[y * 4 + 1] == 5 + y * 10);
-        assert(surface[y * 4 + 2] == 10 + y * 10);
-        assert(surface[y * 4 + 3] == 255);
-    }
-
-    // A failed left-edge refresh terminates before the right-edge helper call;
-    // both calls mutate the shared edge cache cursor in the original.
-    memset(surface, 77, 16);
-    buffer.frees_ = 0;
-    edge_helper_calls = 0;
-    edge_directions = 0;
-    edge_helper_period = 2;
-    edge_helper_fail_at = 3;
-    texture.sub_620a10(&buffer, affine_vertices, 4, affine_uv, &out_cache);
-    assert(buffer.frees_ == 1 && edge_helper_calls == 3 && fpu_resets == 14);
-    assert(edge_helper_direction[0] == -1 && edge_helper_direction[1] == 1 &&
-           edge_helper_direction[2] == -1);
-    edge_helper_fail_at = 0;
-
     // The keyed Gouraud body snapshots the borrowed row, refills its edge,
     // then paints that row even when the refill fails. A one-row bottom clip
     // admits just the initial edge pair and this row's left refill.
@@ -388,7 +251,7 @@ int main() {
     reset_lifecycle();
     texture.sub_61b780(&buffer, points, shade, 0);
     assert(gouraud_edge_calls == 3 && buffer.frees_ == 1);
-    assert(control87_calls == 1 && fpu_resets == 16);
+    assert(control87_calls == 1 && fpu_resets == 10);
     assert(surface[0] == 77 && surface[1] == 133 && surface[2] == 138 &&
            surface[3] == 127);
     assert(lifecycle_count == 8);
