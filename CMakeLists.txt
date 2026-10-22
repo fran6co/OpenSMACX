@@ -231,6 +231,7 @@ set(OPENSMACX_SOURCES
     src/playerlock.cpp
     src/netdaemon.cpp
     src/netdaemon_message_data.cpp
+    src/netdaemon_spock.cpp
     src/prefwin.cpp
     src/prefwin_geometry.cpp
     src/quaylewin.cpp
@@ -391,6 +392,7 @@ set_source_files_properties(
 set_source_files_properties(
     src/netdaemon.cpp
     src/netdaemon_message_data.cpp
+    src/netdaemon_spock.cpp
     src/diplowin.cpp
     src/diplopop.cpp
     src/worldwin.cpp

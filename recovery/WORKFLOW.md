@@ -127,6 +127,38 @@ remaining obligations. No current coverage count, historical claim ledger or
 bounded host test proves this milestone. Once independently verified, preserve a
 Git checkpoint of the faithful source before implementing fixes or improvements.
 
+## Bounded alphabetical easy-matching pass
+
+Use fresh compiled-artifact measurements to select non-exact mapped functions,
+ordered by source-relative filename, then emitted symbol (case-insensitive),
+then original address. Work through batches of 24, grouping independent source
+owners for parallel inspection and isolated compiler resources. This ordering
+is a scheduling policy, not evidence of historical translation-unit boundaries.
+
+Cap inspection at five minutes per assigned group and candidate compiler attempts
+at three per function per unchanged source/compiler context. Candidate compile
+failures consume the cap; unchanged baseline, object-replica and deliberate damage
+controls are reported separately. Use fewer attempts when no evidence-backed,
+ordinary C++ candidate is apparent. Record explicit skip/defer reasons, preserve
+structural discoveries, and advance rather than repeatedly polishing a plateau.
+Generated proposals, measurements and dependency fingerprints belong in ignored
+run artifacts, not source comments or a second versioned recovery ledger.
+
+Requeue an inspected function only when new evidence changes its affected body,
+caller/callee, type, member/layout, included declaration or compiler context.
+Recompute that dependency closure conservatively; uncertain header/type impacts
+broaden the closure, never silently suppress a needed recheck. A function merely
+becoming exact does not invalidate every previous attempt. Check newly affected
+callers and generated lifetime entries, including functions outside the next
+alphabetical batch. Unchanged exhausted contexts receive no additional retries.
+
+Existing exact functions stay in preservation checks; unbound, unresolved,
+refused and shared-tail identities remain visible recovery obligations, not
+exclusions. Do not add wrappers, compiler tricks or behavior fixes to manufacture
+matches. Materialize winners only through authorized owner scopes with source
+review, original identity/claim continuity, fresh build/link and relevant regression
+checks. A score improvement or successful screen is not automatic acceptance.
+
 ## 1. Establish ownership and evidence
 
 For executable-first exploration, `uv run recover survey --image <image> --summary`

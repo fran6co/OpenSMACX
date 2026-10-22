@@ -54,14 +54,64 @@ def apply_typed_storage_migration(source,relative="src/netdaemon.cpp",reverse=Fa
     return source
 
 
+def apply_spock_owner_comment_migration(source,reverse=False):
+    """Project only the reviewed declaration-comment owner correction."""
+    old = """// The wait-loop callees the daemon's lock and synch bodies poll through, so
+// those bodies can home here without dragging in the whole window stack.
+// Both are forwarders in pending_bodies.cpp; wait_task is the image's
+// ?wait_loop@@YAXXZ, renamed for what this tree's callers do with it.
+void __cdecl wait_task();     // 0x0051F200
+void __cdecl check_spock();   // 0x0051F1B0, defined in netdaemon.cpp
+void __cdecl do_all_draws();  // also declared in temp.h, which this header
+                              // deliberately does not pull in
+// Airdrop is recovered in veh.cpp. order_veh remains an unfinished forwarder;
+// the daemon's network methods dispatch through these typed contracts.
+int __cdecl action_airdrop(int veh_id, int x, int y, int mode);
+int __cdecl order_veh(int veh_id, int x, int y);"""
+    new = """// The wait-loop callees the daemon's lock and synch bodies poll through, so
+// those bodies can home here without dragging in the whole window stack.
+// Win owns the application event pump; the network notification gate and its
+// paired session refresh live with the NetDaemon resynchronization operation.
+void __cdecl wait_task();     // 0x0051F200
+void __cdecl check_spock();   // 0x0051F1B0, defined in netdaemon_spock.cpp
+void __cdecl do_all_draws();  // Win's application-wide draw dispatch
+// Vehicle action entry points are owned in veh.cpp.
+int __cdecl action_airdrop(int veh_id, int x, int y, int mode);
+int __cdecl order_veh(int veh_id, int x, int y);"""
+    before,after = (new,old) if reverse else (old,new)
+    assert source.count(before)==1, "exact historical/current owner-comment block must be unique"
+    return source.replace(before,after,1)
+
+
+def test_spock_owner_comment_transition_is_exact_and_reversible():
+    parent=subprocess.check_output(["git","show","d95a81695:src/netdaemon.h"],
+                                   cwd=ROOT,text=True)
+    projected=apply_spock_owner_comment_migration(parent)
+    assert apply_spock_owner_comment_migration(projected,True)==parent
+    assert parent.count("void __cdecl check_spock();   // 0x0051F1B0, defined in netdaemon.cpp")==1
+    assert projected.count("void __cdecl check_spock();   // 0x0051F1B0, defined in netdaemon_spock.cpp")==1
+
+    # Newer declarations may be present in the current full header; do not
+    # project those through the older snapshot. Prove the owner-comment edit
+    # itself round-trips against the actual current file without wildcards.
+    current=(ROOT/"src/netdaemon.h").read_text()
+    reversed_current=apply_spock_owner_comment_migration(current,True)
+    assert apply_spock_owner_comment_migration(reversed_current)==current
+
+
 @pytest.mark.parametrize("relative",["src/netdaemon.cpp","src/netdaemon.h"])
 def test_only_reviewed_storage_changes_and_all_original_identities_survive(relative):
     before=subprocess.check_output(["git","show",BASE+":"+relative],cwd=ROOT,text=True)
     current=historical_source(ROOT) if relative == "src/netdaemon.cpp" else (ROOT/relative).read_text()
     migrated=apply_typed_storage_migration(before,relative)
     if relative == "src/netdaemon.h":
+        migrated=apply_spock_owner_comment_migration(migrated)
         assert current == migrated
-    assert apply_typed_storage_migration(migrated,relative,True)==before
+        assert apply_spock_owner_comment_migration(current,True)==apply_typed_storage_migration(before,relative)
+        reverse_comments=apply_spock_owner_comment_migration(current,True)
+        assert apply_typed_storage_migration(reverse_comments,relative,True)==before
+    else:
+        assert apply_typed_storage_migration(migrated,relative,True)==before
     assert "NetDaemonFileIndexRecord *file_index_records_;" in (ROOT/"src/netdaemon.h").read_text()
     from dataclasses import fields
     from match_recovery.source import read_text

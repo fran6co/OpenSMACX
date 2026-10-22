@@ -363,14 +363,12 @@ extern int CommlinkFaction;     // 0x0073B790
 
 // The wait-loop callees the daemon's lock and synch bodies poll through, so
 // those bodies can home here without dragging in the whole window stack.
-// Both are forwarders in pending_bodies.cpp; wait_task is the image's
-// ?wait_loop@@YAXXZ, renamed for what this tree's callers do with it.
+// Win owns the application event pump; the network notification gate and its
+// paired session refresh live with the NetDaemon resynchronization operation.
 void __cdecl wait_task();     // 0x0051F200
-void __cdecl check_spock();   // 0x0051F1B0, defined in netdaemon.cpp
-void __cdecl do_all_draws();  // also declared in temp.h, which this header
-                              // deliberately does not pull in
-// Airdrop is recovered in veh.cpp. order_veh remains an unfinished forwarder;
-// the daemon's network methods dispatch through these typed contracts.
+void __cdecl check_spock();   // 0x0051F1B0, defined in netdaemon_spock.cpp
+void __cdecl do_all_draws();  // Win's application-wide draw dispatch
+// Vehicle action entry points are owned in veh.cpp.
 int __cdecl action_airdrop(int veh_id, int x, int y, int mode);
 int __cdecl order_veh(int veh_id, int x, int y);
 
