@@ -1,0 +1,59 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "0f106c8f47486beb329a5d0693be3655de6908a5",
+  "editable_files": [
+    "src/flatbutton.cpp",
+    "recovery/tests/test_flatbutton_close_actual_source.py"
+  ],
+  "evidence": [
+    "One ordinary typed nine-copy unroll in existing607DA0body; same column/group read-write ordering, resets, BaseButton/Time calls, borrowed Sprite* storage, original quirks, ABI and all annotations/claims remain. No defect or compiler gain asserted before measurement. This differs from exhausted raw object-relative uint32 walker and incidental pointer-valued return.",
+    "Measure every native owner mapping including406880destructor and generated lifetime entries in the same compiled candidate, preserving the header-inline destructor and all declarations/flags. One form planned, cap3per unchanged context including compiler failures; baseline/replica/damage controls counted separately. No wrappers, forced inline, assembly, casts or source/flag tricks.",
+    "Root alone owns Task/annotation/Git/compiler leases/preparation/publication. Overlay screening does not write source or bank claims. Materialize only a reviewed measured benefit and require actual-source controls, build/link, relevant regressions, identity/reference continuity and physical impact review before manual integration. Native automatic/linked/structure/runtime/game proofs remain independent obligations. Immutable baseline not reset."
+  ],
+  "intent": "Recover FlatButton cleanup source form with complete family measurement",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4221152,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6323616,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4221056,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6323440,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4223200,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6325504,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6325856,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6323792,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "flatbutton-family-oct23f"
+}

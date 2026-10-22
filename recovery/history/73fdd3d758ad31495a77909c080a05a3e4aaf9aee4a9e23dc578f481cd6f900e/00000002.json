@@ -1,0 +1,22 @@
+{
+  "event_id": "3da2e3dec7dd6a0a85ffd0ed3b730c2b56a703d8a328d35709a7bdee18288ef1",
+  "payload": {
+    "affects": [
+      "entity-3d7e9d6f096254fa3e190a7c352fd154993956afc092773953c90f6609c6bb77",
+      "entity-c9c2c3b1e9fa185d957d7f9a45f1aea931343db9e406ebb5e93d8689321810c1"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "typed-default-groups-restore-owner-cleanup-boundary",
+    "evidence": [
+      "Pinned607DA0..607E41 calls real Time cleanup before scalar resets and BaseButton cleanup, then for each column sets its sentinel, copies nine borrowed Sprite pointers in increasing group order and clears its icon/style links. The typed direct-index unroll preserves that exact ordering without a raw object walker, incidental return residue, changed header or flags.",
+      "Historical measurement flag sets omit applicationOb2 and already had a matching destructor baseline underOy-. They establish no new match. The separate current application-recipe replay, unchanged-overlay and mapped-target damage controls pass with the actual unchangedOb2/noOy recipe; the candidate modifies only close and destructor signatures. Its freshly built physical destructor directly calls FlatButton close, then BaseButton destructor with the expected cleanup-state staging. This is source/codegen recovery, not full original unwind-table equivalence."
+    ],
+    "hypothesis": "Represent FlatButton cleanup as the nine actual typed default-group assignments in each state column, preserving all pointer storage/effects and restoring the ordinary out-of-line cleanup boundary in the configured application destructor.",
+    "kind": "discovery"
+  },
+  "previous_event": "1ffb08d297ab870c4d06939bdfece68800cb567ec3e6bb1d536b08033f5879d7",
+  "request_id": "typed-default-groups-restore-owner-cleanup-boundary",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:flatbutton-family-oct23f"
+}
