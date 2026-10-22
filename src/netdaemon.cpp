@@ -137,7 +137,7 @@ int CommlinkPending;   // 0x007492CC
 int CommlinkFaction;   // 0x0073B790
 
 // The spock pair: synch (0x00532E00) raises 0x93F670 when it has something to
-// notify, check_spock (below) sees it, arms 0x93F674 and calls help_spock
+// notify, check_spock sees it, arms 0x93F674 and calls help_spock
 // (0x0051F0C0), which clears both after re-synching the session.
 // RECOVERY_OBJECT: v1 0x0093F670 ?SpockNotifyPending@@3HA
 int SpockNotifyPending;  // 0x0093F670
@@ -6805,67 +6805,6 @@ void NetDaemon::process_message(char *message, unsigned long message_size, int s
     netdaemon_forward_default_message(*this, message, message_size);
 
     netdaemon_process_message_marker_tail(*this, msg);
-}
-
-// ORIGINAL: 0x0051F1B0 ?check_spock@@YAXXZ 0x0051F1B0-0x0051F1F2 BYTE_EXACT
-// size      66 bytes
-// prototype void (__cdecl ?check_spock@@YAXXZ)(void)
-// callers   9   call targets   2
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x0051F0C0
-// LEVER: the four gates are named, not bound - 0x93E8C0 is the daemon's own
-// lock_state_[0].dword_[1], 0x93E230 is &locks_, and the pair 0x93F670/74
-// are the flags synch sets and help_spock clears. Homed 2026-09-04 so the
-// wait loops in this file could call it with the image's `E8` instead of a
-// forwarder beside a compiled claim.
-// 0x0093A934 is base.cpp's UnkGlobal0093A934 (the energy-event flag), and
-// 0x0093E230 is &NetDaemonNet.locks_ - the Lock the image dereferences as an
-// absolute, and NetDaemonNet.locks_.any_locks() folds to the same load.
-void __cdecl help_spock();  // defined below
-void __cdecl check_spock() {
-    if (NetDaemonNet.primary_state_.leading_words_[0] != 0 &&
-        SpockNotifyPending != 0 && UnkGlobal0093A934 == 0 &&
-        ConsoleControlTurnActive == 0) {
-        SpockHelpActive = 1;
-        if (NetDaemonNet.locks_.any_locks() == 0) {
-            help_spock();
-        }
-    }
-}
-
-// ORIGINAL: 0x0051F0C0 ?help_spock@@YAXXZ 0x0051F0C0-0x0051F1AA BYTE_EXACT
-// size      234 bytes
-// prototype void (__cdecl ?help_spock@@YAXXZ)(void)
-// callers   1   call targets   2
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x0052E00 0x00530320
-// Homed 2026-09-04 for the same reason as check_spock below it: its caller
-// is in this file, and a forwarder beside the compiled claim is what
-// address_index refuses. The four synch/receive sweeps are the session
-// refresh the game runs when a turn boundary catches an unnotified client.
-void __cdecl help_spock() {
-    if (NetDaemonNet.primary_state_.leading_words_[0] != 0) {
-        NetDaemonNet.synch(0x25, 0, 0, 0, 0, 1, 0x2101);
-        while (NetDaemonNet.receive() != 0) {
-        }
-
-        NetDaemonNet.synch(0x12, 0, 0, 0, 0, 1, 0x2101);
-        while (NetDaemonNet.receive() != 0) {
-        }
-
-        NetDaemonNet.synch(0x26, 0, 0, 0, 0, 1, 0x2101);
-        while (NetDaemonNet.receive() != 0) {
-        }
-
-        NetDaemonNet.synch(0x14, 0, 0, 0, 0, 1, 0x2101);
-        while (NetDaemonNet.receive() != 0) {
-        }
-    }
-
-    SpockNotifyPending = 0;
-    SpockHelpActive = 0;
 }
 
 // ORIGINAL: 0x00530360 ?net_tasks@NetDaemon@@QAEXXZ 0x00530360-0x005303A9 BYTE_EXACT

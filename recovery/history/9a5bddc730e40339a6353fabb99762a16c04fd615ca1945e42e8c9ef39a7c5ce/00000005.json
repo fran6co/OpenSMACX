@@ -1,0 +1,20 @@
+{
+  "event_id": "4398e70a625d04bdc1e08d41da1f92a9b89869aa6ba0936583d25b17d1e491c1",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "net-spock-paired-source-oct22n",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/netdaemon_spock.cpp owns the complete unchanged check_spock/help_spock bodies and original annotation envelopes as one paired resynchronization operation. Existing state/object bindings remain in netdaemon.cpp, whose net_tasks body still calls the declared gate after its event/message/lock work.",
+      "CMakeLists.txt builds the pair under the same existing NetDaemon source profile. src/netdaemon.h keeps the original signatures and corrects source-owner comments. The placement is not a proven historical translation-unit boundary.",
+      "Focused actual-source gate/sweep/flag tests and strict inverse source-home controls read the new owner, compare immutable historical bodies/annotations, and reject behavior/extra-code/identity mutations. recovery/WORKFLOW.md documents bounded alphabetical inspection, retry caps and conservative affected-context requeueing; attempts remain ignored artifacts.",
+      "Source incorporation only: fresh candidate/destination build, whole census and physical comparisons remain required for coordinator-reviewed integration. No new claim, demotion, baseline reset, linked/runtime/automatic/game acceptance is granted."
+    ]
+  },
+  "previous_event": "a6e07bdb6a2287fd099c516e42f229226ea72935310d443c5dbf56a4d7ef4945",
+  "request_id": "net-spock-paired-source-incorporated-oct22n",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:netdaemon-packet-boundary-oct18"
+}

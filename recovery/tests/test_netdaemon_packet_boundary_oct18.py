@@ -24,25 +24,48 @@ CALLERS=(0x530D50,0x52E370,0x5310F0,0x530D00,0x530600,0x52E050,
     0x532570,0x531780,0x532E00)
 
 
-def test_inverse_rehome_retains_complete_receiver_tokens_and_all_native_facts():
+def test_spock_moved_blocks_are_complete_immutable_original_identities():
+    from netdaemon_packet_source import _spock_blocks,SPOCK_OWNERS
+    blocks,positions=_spock_blocks(ROOT)
+    assert set(blocks)==set(SPOCK_OWNERS)
+    assert len(set(positions.values()))==2
+    assert all(blocks[address].count("// ORIGINAL: ")==1 for address in SPOCK_OWNERS)
+    # The physical owner TU may add only includes and scalar declarations
+    # around these transported blocks; _spock_blocks rejects every extra code
+    # statement or detached annotation before returning these bodies.
+
+
+def assert_native_rows_preserved():
     before=subprocess.check_output(['git','show',BASE+':src/netdaemon.cpp'],cwd=ROOT,text=True)
-    reconstructed=historical_source(ROOT)
-    assert _cpp_tokens(reconstructed)==_cpp_tokens(before)
     old={r.address:r for r in read_text(before,ROOT/'src/netdaemon.cpp')}
-    rows=[*read_file(ROOT/'src/netdaemon.cpp'),*read_file(ROOT/'src/netdaemon_message_data.cpp')]
+    rows=[*read_file(ROOT/'src/netdaemon.cpp'),*read_file(ROOT/'src/netdaemon_message_data.cpp'),
+          *read_file(ROOT/'src/netdaemon_spock.cpp')]
     current={r.address:r for r in rows}
     assert len(rows)==len(current)==len(old) and current.keys()==old.keys()
     for address,record in old.items():
         for field in fields(record):
-            if field.name=='path' and address==0x592EE0:
+            if field.name=='path' and address in (0x592EE0,0x51F1B0,0x51F0C0):
                 assert record.path==ROOT/'src/netdaemon.cpp'
-                assert current[address].path==ROOT/'src/netdaemon_message_data.cpp'
+                expected_owner = ('src/netdaemon_message_data.cpp' if address==0x592EE0
+                                  else 'src/netdaemon_spock.cpp')
+                assert current[address].path==ROOT/expected_owner
                 continue
             if field.name not in {'line','region','origin'}:
                 assert getattr(current[address],field.name)==getattr(record,field.name),(address,field.name)
         def lessons(row):
             return [(x.kind,x.key,x.prose,tuple(line for _,line in x.lines)) for x in row.origin]
         assert lessons(current[address])==lessons(record)
+
+
+def test_spock_and_packet_native_facts_remain_one_to_one():
+    assert_native_rows_preserved()
+
+
+def test_inverse_rehome_retains_complete_receiver_tokens_and_all_native_facts():
+    before=subprocess.check_output(['git','show',BASE+':src/netdaemon.cpp'],cwd=ROOT,text=True)
+    reconstructed=historical_source(ROOT)
+    assert _cpp_tokens(reconstructed)==_cpp_tokens(before)
+    assert_native_rows_preserved()
     cmake=(ROOT/'CMakeLists.txt').read_text()
     assert cmake.count('    src/netdaemon_message_data.cpp\n')==2
     for section in cmake.split('set_source_files_properties(')[1:]:
@@ -53,11 +76,13 @@ def test_inverse_rehome_retains_complete_receiver_tokens_and_all_native_facts():
 
 @pytest.mark.parametrize('damage',['sender-return','sender-callback-order','sender-extra-code',
     'sender-extra-identity','sender-orphan-symbol','record-field','record-extra-code',
-    'record-orphan-context','receiver-duplicate-sender'])
+    'record-orphan-context','receiver-duplicate-sender','spock-guard','spock-opcode',
+    'spock-extra-code','spock-fake-state','spock-duplicate-marker','spock-orphan-fact'])
 def test_inverse_projection_rejects_changed_or_hidden_new_owner_inputs(damage):
     sender=(ROOT/'src/netdaemon_message_data.cpp').read_text()
     header=(ROOT/'src/netdaemon_message_record.h').read_text()
     receiver=(ROOT/'src/netdaemon.cpp').read_text()
+    spock=(ROOT/'src/netdaemon_spock.cpp').read_text()
     if damage=='sender-return': sender=sender.replace('return result;','return 0;',1)
     elif damage=='sender-callback-order':
         sender=sender.replace('message.timestamp_ = timeGetTime();','message.timestamp_ = 0;',1)
@@ -70,8 +95,17 @@ def test_inverse_projection_rejects_changed_or_hidden_new_owner_inputs(damage):
     elif damage=='record-extra-code': header='int unexpected_packet_storage;\n'+header
     elif damage=='record-orphan-context': header='// compile_context src/netdaemon.cpp\n'+header
     elif damage=='receiver-duplicate-sender': receiver+='\nint __cdecl message_data() {}\n'
+    elif damage=='spock-guard': spock=spock.replace('SpockNotifyPending != 0', 'SpockNotifyPending == 0', 1)
+    elif damage=='spock-opcode': spock=spock.replace('NetDaemonNet.synch(0x12,', 'NetDaemonNet.synch(0x13,', 1)
+    elif damage=='spock-extra-code': spock+='\nint unexpected_spock_state;\n'
+    elif damage=='spock-fake-state': spock=spock.replace('#include "netdaemon.h"', '#include "netdaemon.h"\nint SpockNotifyPending;', 1)
+    elif damage=='spock-duplicate-marker':
+        marker='// ORIGINAL: 0x0051F1B0'
+        spock=spock.replace(marker, marker+'\n'+marker, 1)
+    elif damage=='spock-orphan-fact': spock='// symbol    _unexpected_spock\n'+spock
     with pytest.raises(AssertionError):
-        historical_source(ROOT,receiver_text=receiver,sender_text=sender,header_text=header)
+        historical_source(ROOT,receiver_text=receiver,sender_text=sender,header_text=header,
+                          spock_text=spock)
 
 
 def test_pinned_complete_caller_spans_retain_original_packet_builder_calls():

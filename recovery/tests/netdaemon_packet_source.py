@@ -17,6 +17,11 @@ RECORD_START = "// The two bytes after opcode are observed unwritten"
 RECORD_END = "// Borrowed wire view over the layout already owned"
 SIGNATURE = "int __cdecl message_data("
 NEXT = "// Native automatic wire records. Bytes 2..3 remain unwritten"
+SPOCK_INSERTION = "// ORIGINAL: 0x00530360 ?net_tasks@NetDaemon@@QAEXXZ"
+SPOCK_OWNERS = {
+    0x0051F1B0: "void __cdecl check_spock() {",
+    0x0051F0C0: "void __cdecl help_spock() {",
+}
 
 
 @lru_cache(maxsize=None)
@@ -72,16 +77,66 @@ def sender_block(root, sender_text=None):
     return body + "\n\n"
 
 
-def historical_source(root, *, receiver_text=None, sender_text=None, header_text=None):
+def _spock_blocks(root, spock_text=None):
+    """Read and validate both moved annotated bodies against immutable history."""
+    root = Path(root)
+    path = root / "src/netdaemon_spock.cpp"
+    text = path.read_text() if spock_text is None else spock_text
+    baseline = _baseline(root)
+
+    blocks = {}
+    baseline_positions = {}
+    for address, signature in SPOCK_OWNERS.items():
+        marker = f"// ORIGINAL: 0x{address:08X}"
+        assert text.count(marker) == 1, f"Spock identity {address:08X} must have one actual owner"
+        assert baseline.count(marker) == 1, f"immutable Spock identity {address:08X} missing/ambiguous"
+        start = text.index(marker)
+        end = _function_end(text, text.index(signature, start))
+        block = text[start:end]
+        base_start = baseline.index(marker)
+        base_end = _function_end(baseline, baseline.index(signature, base_start))
+        expected = baseline[base_start:base_end]
+        assert block == expected, f"Spock {address:08X} annotation/body differs from immutable history"
+        blocks[address] = block
+        baseline_positions[address] = base_start
+
+    residual = text
+    for address, signature in SPOCK_OWNERS.items():
+        marker = f"// ORIGINAL: 0x{address:08X}"
+        start = residual.index(marker)
+        end = _function_end(residual, residual.index(signature, start))
+        residual = residual[:start] + residual[end:]
+    code = [line.strip() for line in _without_comments(residual).splitlines() if line.strip()]
+    allowed = [
+        '#include "stdafx.h"', '#include "netdaemon.h"',
+        "extern int SpockNotifyPending;", "extern int SpockHelpActive;",
+        "extern int UnkGlobal0093A934;", "extern int ConsoleControlTurnActive;",
+    ]
+    assert code == allowed, "Spock TU contains code/state outside its includes, declarations and two mapped bodies"
+    assert "ORIGINAL:" not in residual and "RECOVERY_BINDING:" not in residual
+    assert not re.search(r"(?m)^\s*//\s*(?:symbol|body|compile_context)\b", residual)
+    rows = read_text(text, path)
+    assert {row.address for row in rows} == set(SPOCK_OWNERS)
+    assert len(rows) == len(SPOCK_OWNERS)
+    return blocks, baseline_positions
+
+
+def historical_source(root, *, receiver_text=None, sender_text=None, header_text=None,
+                      spock_text=None):
     """Inverse only this migration, validating all discarded new-owner envelope."""
     root = Path(root)
     receiver = (root / "src/netdaemon.cpp").read_text() if receiver_text is None else receiver_text
     record = sender_record_block(root, header_text)
     sender = sender_block(root, sender_text)
+    spock_blocks, positions = _spock_blocks(root, spock_text)
     assert receiver.count(INCLUDE) == 1, "sole record include expansion"
     assert SIGNATURE not in receiver, "sender must not remain in receiver TU"
     assert RECORD_START not in receiver, "record must not remain in receiver TU"
     assert receiver.count(NEXT) == 1, "sole historical sender insertion anchor"
     receiver = receiver.replace(INCLUDE + "\n\n", record, 1)
     assert INCLUDE not in receiver, "record include newline contract"
-    return receiver.replace(NEXT, sender + NEXT, 1)
+    receiver = receiver.replace(NEXT, sender + NEXT, 1)
+    assert receiver.count(SPOCK_INSERTION) == 1, "sole original Spock insertion anchor"
+    ordered = sorted(spock_blocks, key=positions.__getitem__)
+    restored_spock = "\n\n".join(spock_blocks[address] for address in ordered) + "\n\n"
+    return receiver.replace(SPOCK_INSERTION, restored_spock + SPOCK_INSERTION, 1)
