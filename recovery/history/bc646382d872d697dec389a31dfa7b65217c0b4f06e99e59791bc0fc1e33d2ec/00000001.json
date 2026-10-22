@@ -1,0 +1,23 @@
+{
+  "event_id": "db2e1a24089589d5751f2f31b5cf1119fe000dd079e1dbeb20da0028a29ae3e5",
+  "payload": {
+    "affects": [
+      "entity-45c90ee4a4402458da77bcb4f215f81eb90641c6f1b9fd2deeb434444616db01"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "prefs-join-oct23c-source-form-exhausted",
+    "evidence": [
+      "pinned:0x0059D980..0x0059DA19 original prefs_get body; candidate owner remains byte-identical to master source SHA-256 77027065ca8e61d0c3b74df25b7f16dc7a85d2656d1917a0d015e3cbe3098c49.",
+      "screen: prefs-join-oct23c-screen SHA-256 3aee12b5c33de077ea411f3b7ca25610b3c737556f0a21a1e8a44faced412da2; original-cfg target mismatches under both recorded flag sets.",
+      "screen: prefs-join-oct23c-refinement-screen SHA-256 6362f7713fa332a7b3f7fc8010845bd0a8fd7ac38d9eb86e731b37ebb74dcecd; branch-local-returns and nested-key-return each mismatch under both flags, including equal-length /Oy- output with a wrong jne target.",
+      "Both screens record passing damage and unchanged-replica controls but strict references are unknown, scope is incomplete and acceptance is not evaluated; these results are exploratory only."
+    ],
+    "hypothesis": "The bounded ordinary-C++ source-form screen for the shared-default preference join is exhausted in this unchanged source/compiler context: original-cfg, branch-local-returns and nested-key-return all mismatch 0x0059D980. No source correction or byte gain is supported; close the iteration hypothesis without changing product source, scope, claims or compiler policy.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "prefs-join-oct23c-source-form-exhausted",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:prefs-join-oct23c"
+}

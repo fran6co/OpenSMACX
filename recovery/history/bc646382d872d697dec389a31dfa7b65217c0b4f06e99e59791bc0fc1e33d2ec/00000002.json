@@ -1,0 +1,20 @@
+{
+  "event_id": "12de733fd3a4f2dd689b6b390593548c06ddc077df2c3814115dcc7d8053c8e0",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "prefs-join-oct23c-source-form-exhausted",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "All three frozen candidate forms failed the exact target in their tested contexts; do not adopt a source candidate or claim gain.",
+      "Candidate source stayed private and was not written into the worktree; src/alpha.cpp remains byte-identical to master.",
+      "Preserve the task, candidate, deck, frozen input, preparation and screen records; this rejection closes only the exhausted hypothesis and does not satisfy task acceptance, preservation, references or runtime proof.",
+      "Exactly3candidateforms per unchanged configured flag context were exhausted:6candidateCLcalls plus12baseline/unchanged-replica/damagecontrolCLcalls,18total. No exact neighbor gains or losses in either context. Requeue only after genuinely changed dependency/source/compiler evidence; no baseline reset, flag change or automatic acceptance is authorized."
+    ]
+  },
+  "previous_event": "db2e1a24089589d5751f2f31b5cf1119fe000dd079e1dbeb20da0028a29ae3e5",
+  "request_id": "prefs-join-oct23c-source-form-exhausted-rejected",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:prefs-join-oct23c"
+}
