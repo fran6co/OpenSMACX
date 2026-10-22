@@ -1,0 +1,24 @@
+{
+  "event_id": "6ac07c78df1e2eea4848b4f1883f184dcd2a75d14e8dc239d721deeb854771b7",
+  "payload": {
+    "affects": [
+      "entity-c00413bfd09dc722e0052975b8781ee90a2d943f55b0964e7532891b8c991075",
+      "entity-c46d88454f5459c23f8836f548a51a19e7f6832387f028ccf247914fd91373f7",
+      "entity-d7c9bb3adec63cc290d8e7a245809ad0ca8836f3147363afe5b6a77a3a41340c"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "vehicle-original-body-boundaries-oct23b",
+    "evidence": [
+      "git:1a5f2853fc3ef6eaeb00cbe71d0f358cf354b1b3:src/veh.cpp; existing full algorithms decomposed into unannotated recovery helpers, changing original compiler-visible body boundaries.",
+      "pinned:5678C0..56A89E and5B6260..5B8AE2; complete3711/3124instruction spans with original real-service call sites and reviewed snapshot/range/loop/callback obligations.",
+      "sha256:05b7e4b26f55496d2ba1a6314ccbfb7cad26201aa4fb9f7d5b6806aee587a6e7:independent whole goody_box diff; common-block load reordering and predecessor rerouting retain bounded stack-derived register effects; embedded table relocations/branch shifts remain physically different."
+    ],
+    "hypothesis": "Restore complete air_power and spot_all algorithms to their mapped original bodies instead of recovery-only helper/context graphs. Preserve source snapshots, live callback rereads, all nested-loop exits, original quirks and full identity/history. Observe the complete compiler-affected closure, including source-unchanged goody_box; do not infer its equivalence from unchanged text alone.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "vehicle-original-body-boundaries-oct23b",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:vehicle-body-boundaries-oct23b"
+}
