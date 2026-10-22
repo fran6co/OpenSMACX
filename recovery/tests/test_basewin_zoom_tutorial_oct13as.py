@@ -575,7 +575,7 @@ def _compile_and_run(source: str, wait_source: str, compiler_name: str,
 def test_actual_zoom_tutorial_branches_and_rejoin(compiler_name: str,
                                                    tmp_path: Path) -> None:
     source = SOURCE.read_text(encoding="utf-8")
-    wait_source = (ROOT / "src/netdaemon.cpp").read_text(encoding="utf-8")
+    wait_source = (ROOT / "src/netdaemon_interface.cpp").read_text(encoding="utf-8")
     result = _compile_and_run(source, wait_source, compiler_name, tmp_path,
                               "basewin_zoom_tutorial_actual")
     assert result.returncode == 0, result.stdout + result.stderr
@@ -605,7 +605,7 @@ def test_actual_zoom_mutants_are_observable(compiler_name: str, name: str,
                                             old: str, new: str,
                                             tmp_path: Path) -> None:
     source = SOURCE.read_text(encoding="utf-8")
-    wait_source = (ROOT / "src/netdaemon.cpp").read_text(encoding="utf-8")
+    wait_source = (ROOT / "src/netdaemon_interface.cpp").read_text(encoding="utf-8")
     assert source.count(old) == 1, (name, source.count(old))
     mutant = source.replace(old, new, 1)
     result = _compile_and_run(mutant, wait_source, compiler_name, tmp_path,
@@ -617,7 +617,7 @@ def test_actual_zoom_mutants_are_observable(compiler_name: str, name: str,
 def test_actual_wait_2_route_mutant_is_observable(compiler_name: str,
                                                   tmp_path: Path) -> None:
     source = SOURCE.read_text(encoding="utf-8")
-    wait_source = (ROOT / "src/netdaemon.cpp").read_text(encoding="utf-8")
+    wait_source = (ROOT / "src/netdaemon_interface.cpp").read_text(encoding="utf-8")
     old = "        NetDaemonNet.net_tasks();"
     new = "        wait_task();"
     assert wait_source.count(old) == 1

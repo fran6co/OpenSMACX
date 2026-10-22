@@ -1,0 +1,20 @@
+{
+  "event_id": "6c6d71eb698410d0e108eb39426eef5675468b1f01a5469f9e1182f4affacdac",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "net-interface-owner-oct22p",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/netdaemon_interface.cpp owns unchanged wait_2 and fourteen existing public synch_* notifications with their complete original identities, spans, claims and prose. Real state and daemon method implementations remain with existing owners. This is a coherent public interface, not proof of a historical TU boundary.",
+      "CMake builds the interface under the existing NetDaemon source profile without flag, ABI, storage or behavior changes. The header corrects obsolete implementation-owner comments and the original Win wait_task address to5FC700; declarations are unchanged.",
+      "Actual-source host and deliberate damage tests verify network/offline wait routing, all fourteen notification opcodes and arguments, and inverse complete-block/annotation/order/envelope/header preservation against immutable source parents. Independent source and inverse-test reviews found no blocker. The combined focused run has128passes,2skips and the same2preexisting old-baseline assertions, not a green whole suite.",
+      "Source incorporation only. Fresh candidate and destination build/link, whole-census and physical object checks remain prerequisites to manual integration. Historical claims/task baseline are unchanged; linked, structure, runtime, automatic and game acceptance remain unproven."
+    ]
+  },
+  "previous_event": "bb8a4a983b7c51120d018a71f0006a6e497f5f4c6b3eea713d43298b357d0e1b",
+  "request_id": "net-interface-source-incorporated-oct22p",
+  "schema_version": 1,
+  "sequence": 8,
+  "stream": "task:netdaemon-packet-boundary-oct18"
+}
