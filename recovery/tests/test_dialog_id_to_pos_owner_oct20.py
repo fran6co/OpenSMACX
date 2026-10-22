@@ -28,7 +28,6 @@ def _body(source: str, signature: str) -> str:
 HARNESS = r'''
 #include <cassert>
 
-#define MEASURED
 struct StringStructEntry {
     int id;
     StringStructEntry *next;
@@ -41,7 +40,7 @@ struct ItemList {
 };
 struct Dialog {
     ItemList item_list_;
-    MEASURED int id_to_pos(int id);
+    int id_to_pos(int id);
 };
 
 __DIALOG_BODY__
@@ -109,8 +108,10 @@ def test_id_to_pos_owner_traversal_and_miss_semantics(tmp_path: Path) -> None:
 
     source = (ROOT / "src/dialog.cpp").read_text()
     header = (ROOT / "src/dialog.h").read_text()
-    assert "MEASURED int id_to_pos(int id);" in header
-    body = _body(source, "MEASURED int Dialog::id_to_pos(int id)")
+    assert "int id_to_pos(int id);" in header
+    assert "MEASURED int id_to_pos(int id);" not in header
+    assert "MEASURED int Dialog::id_to_pos(int id)" not in source
+    body = _body(source, "int Dialog::id_to_pos(int id)")
     assert "entry_count_" in body and "entry->next" in body
     actual = _run(compiler, body, tmp_path / "dialog_id_to_pos")
     assert actual.returncode == 0, actual.stdout + actual.stderr

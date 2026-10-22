@@ -1,0 +1,46 @@
+{
+  "event_id": "b706980afc67f5087d237adac0e47274db56a11f50d4e996d15109b18aabf726",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_technology_getter_boundaries_oct21s.py",
+      "src/technology.cpp",
+      "src/technology.h"
+    ],
+    "evidence": [
+      "Authorize symmetric removal of MEASURED (__declspec(dllexport)) from only the named ordinary out-of-line declaration/definition pairs. Pinned original has no named exports. This is removal of recovery instrumentation, not original source-name/TU inference; leave every body, signature, class/member/global, source order, mapping, symbol hint, claim and historical lesson unchanged.",
+      "Dialog owner already has declaration-only header and real CheckBox cross-TU calls. Four Technology getters already have canonical cpp definitions and five real PickTech::pick calls at original486946/486951/48699D/4869A7/4869B2. Natural external calls are the retention evidence to verify; no forced retention anchors, wrappers, flags, noinline or new exports.",
+      "Prior source-owner baselines and task findings remain immutable. Do not repeat failed guard-clause/source spelling searches. Only adapt test signature extraction and explicit declaration expectations to ordinary APIs; preserve all historical body transport, identity/claim continuity, valid/invalid traversal and getter field/bound/fallback controls and compile-success damage mutants.",
+      "Coordinator alone owns Git, compiler leases, build/link, native checks and serial manual integration. Require fresh build/link, all current mapped verdict/strict-row continuity, original identity/history checks, full compiled residual diagnostics and exact expected .drectve/section-aux deltas only, selected linked providers and export delta. Native residual directive differences remain failed, never waived or promoted to acceptance.",
+      "Require independent actual-source/test review and fresh destination rechecks before cleaning the worker. Do not claim new implementation/exactness gains, whole linked outside preservation, automatic/full-game acceptance or playability from this bounded cleanup."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6020464,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6020496,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6020544,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6020592,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "4e87e5343ca177e0cad5ddba384666814876aa49837e9a384a69c0839c1b3e14",
+  "request_id": "ordinary-api-remove-obsolete-exports-oct22v",
+  "schema_version": 1,
+  "sequence": 8,
+  "stream": "task:picktech-owner-coverage"
+}
