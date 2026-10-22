@@ -1,0 +1,53 @@
+{
+  "event_id": "cb3f54a1b32d773bee551ff272bd850d3166b05786fccd4b6a8fc9f9a85fdf10",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/win.cpp"
+    ],
+    "evidence": [
+      "Authorize add-only source-owned unbounded Win data starts for existing WinModalStack9B6EF8, WinFocusStack9B7A1C, WinHoverWindow9B7A7C, WinCursorMoved9B7B3C, WinInstance9B7B14 and WinKeyRingCursor696D5C only after fresh original producer/consumer and actual external COFF-definition review. No inferred bounds from source array size or neighboring storage, parent member arithmetic, pointee identity or original symbol spelling.",
+      "Existing independent original evidence: terrain-harness-repair-oct19/remaining-array-object-starts-independent-review.md and remaining-scalar-pointer-starts-independent-review-oct19.md. Fresh bc6189500 build-e7rjv6qj strict diagnostics confirm unresolved references, not authorization or a proven gain. Fresh review is win-modal-starts-fresh-review.md under parallel-match-oct22i.",
+      "Authorize only src/win.cpp add-only native object-writer annotations and short durable original access evidence beside the owning definitions. No C++ body, declaration, initial value, header, compiler flag/recipe/link policy, historical identity/claim or task-baseline change. WinModalWindow, WinBubbleCompanion and WinKeyRing array remain outside this scope pending separate fresh original evidence and explicit coordinator expansion.",
+      "Keep complete existing source mappings, spans, historical claims and unresolved discoveries. Native malformed/wrong-start controls must not pass; correct v1 starts establish reference identity only and retain initial-data/allocation/lifetime obligations. Coordinator may manually integrate only after fresh build/link, unchanged physical code/data objects, scoped reference damage controls, claim/mapping/source checks and destination recheck. No automatic/game acceptance or denominator pruning."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 10186488,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 10189340,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 10189436,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 10189628,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 10189588,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6909276,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "c77efaa18a35eecfc47b47ecd7bb4ec68d7d8cc7babb15536367e71e42e13040",
+  "request_id": "win-original-data-starts-scope-oct22j",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:win-pointer-identity-owner-oct10"
+}

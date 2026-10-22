@@ -1,0 +1,28 @@
+{
+  "event_id": "4f02ea75f73c01a7486814d433ffa15195ee2029475bdf1da3a0a780495666b6",
+  "payload": {
+    "affects": [
+      "entity-282548edfb2e106b31a089d524203a5dc342fb33628c60e0a31d6ac51cbfaae4",
+      "entity-6eb797c8cc785422de6bb46ccdfbe654a21737c317d807d5c581b30a61126db8",
+      "entity-83530b78768e674fa49029c5b7f7579d6810db15bdb06fe8f8bcc8fccc83e613",
+      "entity-8ad8db7911e72d2c5c76960110913bc7264b27b3502c3eb3a877a4e89335b8f2",
+      "entity-9260789c1dc032e1f1a2c1901daea3b6a631133a173416db0ace1f4a09bff8bf",
+      "entity-92be6ffeb2b31c3d81b33c3e6281c99bc333ad8060c7b1a229e4369c71fb3b45"
+    ],
+    "author": "coordinator",
+    "discovery_id": "win-original-data-starts-oct22j",
+    "evidence": [
+      "Authorize add-only source-owned unbounded Win data starts for existing WinModalStack9B6EF8, WinFocusStack9B7A1C, WinHoverWindow9B7A7C, WinCursorMoved9B7B3C, WinInstance9B7B14 and WinKeyRingCursor696D5C only after fresh original producer/consumer and actual external COFF-definition review. No inferred bounds from source array size or neighboring storage, parent member arithmetic, pointee identity or original symbol spelling.",
+      "Existing independent original evidence: terrain-harness-repair-oct19/remaining-array-object-starts-independent-review.md and remaining-scalar-pointer-starts-independent-review-oct19.md. Fresh bc6189500 build-e7rjv6qj strict diagnostics confirm unresolved references, not authorization or a proven gain. Fresh review is win-modal-starts-fresh-review.md under parallel-match-oct22i.",
+      "Authorize only src/win.cpp add-only native object-writer annotations and short durable original access evidence beside the owning definitions. No C++ body, declaration, initial value, header, compiler flag/recipe/link policy, historical identity/claim or task-baseline change. WinModalWindow, WinBubbleCompanion and WinKeyRing array remain outside this scope pending separate fresh original evidence and explicit coordinator expansion.",
+      "Keep complete existing source mappings, spans, historical claims and unresolved discoveries. Native malformed/wrong-start controls must not pass; correct v1 starts establish reference identity only and retain initial-data/allocation/lifetime obligations. Coordinator may manually integrate only after fresh build/link, unchanged physical code/data objects, scoped reference damage controls, claim/mapping/source checks and destination recheck. No automatic/game acceptance or denominator pruning."
+    ],
+    "hypothesis": "Existing genuine Win storage requires explicit original start identities derived from pinned producer/consumer operations, without fabricated allocation bounds.",
+    "kind": "discovery"
+  },
+  "previous_event": "cb3f54a1b32d773bee551ff272bd850d3166b05786fccd4b6a8fc9f9a85fdf10",
+  "request_id": "win-original-data-starts-oct22j",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:win-pointer-identity-owner-oct10"
+}
