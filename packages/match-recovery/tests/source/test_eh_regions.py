@@ -2,6 +2,7 @@
 
 import hashlib
 import struct
+from dataclasses import dataclass
 
 import pytest
 
@@ -266,7 +267,7 @@ def _coff(*, damage=None, cold_size=21, mode="default"):
         {"name": ".xdata$x", "data": _eh_data(damage, two_actions=two_actions),
          "flags": 0x40401040, "selection": 5, "parent": 1},
     ]
-    if two_actions:
+    if two_actions or damage == "first_local_defined":
         sections.append({"name": ".text$l", "data": b"\xc3",
                          "flags": 0x60501020, "selection": 2, "parent": 0})
         if damage == "local_target_writable":
@@ -329,7 +330,7 @@ def _coff(*, damage=None, cold_size=21, mode="default"):
     add_symbol("info", "$Tinfo", 0, 3, 0, 6 if damage == "bad_info_storage" else 3)
     add_symbol("unwind", "$Tunwind", 32, 3, 0, 6)
     add_symbol("destructor", "??1Thing@@QAE@XZ", 0, 0, 0x20, 2)
-    if two_actions:
+    if two_actions or damage == "first_local_defined":
         external_second = damage in {
             "second_external_destructor", "second_external_wrong_name",
             "second_external_nonzero_value", "second_external_nonfunction",
@@ -344,7 +345,7 @@ def _coff(*, damage=None, cold_size=21, mode="default"):
         local_section = (0 if external_second else
                          1 if damage == "local_target_root_owned" else 4)
         local_value = 1 if damage == "second_external_nonzero_value" else 0
-        if damage == "second_external_defined":
+        if damage in {"second_external_defined", "first_local_defined"}:
             local_name = "??1Time@@QAE@XZ"
         add_symbol("local_destructor", local_name, local_value, local_section, local_type, 2)
         if damage == "local_target_overlapping_owner":
@@ -357,7 +358,9 @@ def _coff(*, damage=None, cold_size=21, mode="default"):
         add_symbol("wrong_handler", "$Lwrong", 10, 2, 0, 6)
 
     root_relocs = [(3, "handler" if damage != "handler_offset" else "wrong_handler", 6)]
-    child_relocs = [(destructor_offset, "destructor", 20)]
+    child_relocs = [(destructor_offset,
+                     "local_destructor" if damage == "first_local_defined" else "destructor",
+                     20)]
     if two_actions:
         child_relocs.append((destructor_offsets[1], "local_destructor", 20))
     child_relocs.extend([(info_offset, "info", 6), (runtime_offset, "runtime", 20)])
@@ -885,6 +888,338 @@ def test_binds_second_action_to_undefined_external_destructor():
     assert cold.ownership.original_cleanups == (TWO_SPANS[1][0], TWO_SPANS[1][0] + 8)
 
 
+def test_binds_local_complete_destructor_at_first_action_position():
+    root, cold = _bind(object_damage="first_local_defined")
+    assert root.ownership.cleanup_offsets == (0,)
+    assert cold.ownership.handler_offset == 11
+
+@dataclass
+class _EHFixtureSection:
+    data: bytes
+    relocations: tuple[tuple[int, int, int], ...]
+    flags: int
+    name: str
+
+
+class _EHFixtureCoff:
+    """Parsed-record-shaped fixture; byte arrays are the exact bounded sections."""
+    def __init__(self, sections, symbols, associations, damage=None):
+        from match_recovery.binary import Relocation, RelocationKind
+        self.sections = tuple(sections)
+        self.symbols = {s.index: s for s in symbols}
+        self.associations = associations
+        self.section_sizes = tuple(len(s.data) for s in sections)
+        self._relocation_type = Relocation
+        self._relocation_kind = RelocationKind
+        self.damage = damage
+
+    def function(self, name):
+        rows = [s for s in self.symbols.values()
+                if s.name == name and s.section > 0 and s.storage in (2, 3)
+                and s.type & 0x20]
+        if len(rows) != 1:
+            raise ValueError("ambiguous fixture function")
+        return rows[0]
+
+    def code_sections(self, symbol):
+        children = []
+        for child in self.associations:
+            current = child
+            while current in self.associations:
+                current = self.associations[current]
+                if current == symbol.section:
+                    if self.sections[child - 1].flags & 0x20:
+                        children.append(child)
+                    break
+        return (symbol.section, *sorted(children))
+
+    def section_subject(self, number):
+        section = self.sections[number - 1]
+        return (section.data,
+                tuple(self._relocation_type(
+                    offset, self._relocation_kind("absolute32" if kind == 6 else "relative32"),
+                    str(target))
+                      for offset, target, kind in section.relocations), 4)
+
+
+def _nested_local_owner_fixture(damage=None):
+    """A local ??1 root, its registration PUSH, cold action/handler, and FuncInfo."""
+    from match_recovery.pe_coff import Symbol
+    from match_recovery.source.eh_regions import _CODE, _EXECUTE, _COMDAT, _READ, _INITIALIZED_DATA
+    # Function entry has the complete five-instruction FS registration chain.
+    root = _root_code(None)
+    if damage == "bad_registration":
+        root = b"\x90" + root[1:]
+    if damage == "bad_registration_addend_leaf":
+        root = bytearray(root)
+        struct.pack_into("<I", root, 3, 1)
+        root = bytes(root)
+    # One 6-byte frame load + rel32 cleanup JMP, then the complete 10-byte handler.
+    if damage == "cached_context_edge":
+        cold = bytearray.fromhex(
+            "8b 4d f0 e9 00 00 00 00 8b 4d f0 e9 00 00 00 00"
+            "b8 00 00 00 00 e9 00 00 00 00")
+        info = bytearray(48)
+        struct.pack_into("<8I", info, 0, 0x19930520, 2, 0, 0, 0, 0, 0, 0)
+        struct.pack_into("<4I", info, 32, 0xFFFFFFFF, 0, 0, 0)
+    else:
+        cold = bytearray.fromhex("8d 8d f0 ff ff ff e9 00 00 00 00 b8 00 00 00 00 e9 00 00 00 00")
+        info = bytearray(40)
+        struct.pack_into("<8I", info, 0, 0x19930520, 1, 0, 0, 0, 0, 0, 0)
+        struct.pack_into("<II", info, 32, 0xFFFFFFFF, 0)
+    if damage == "bad_magic":
+        info[0] = 0
+    if damage == "bad_predecessor":
+        struct.pack_into("<I", info, 32, 1)
+    if damage == "writable_root":
+        root_flags = 0xE0501020
+    else:
+        root_flags = 0x60501020
+    if damage == "noncomdat_root":
+        root_flags &= ~_COMDAT
+    if damage == "writable_child":
+        child_flags = 0xE0501020
+    else:
+        child_flags = 0x60501020
+    if damage == "truncated_root":
+        root = root[:3]
+    if damage == "truncated_child":
+        cold = cold[:-1]
+    if damage == "truncated_info":
+        info = info[:-1]
+    if damage == "bad_root_addend":
+        root = bytearray(root)
+        struct.pack_into("<I", root, 3, 1)
+        root = bytes(root)
+    if damage == "bad_funcinfo_addend":
+        struct.pack_into("<I", cold, 12, 1)
+    if damage == "bad_cleanup_addend":
+        struct.pack_into("<I", cold, 7, 1)
+    if damage == "bad_runtime_addend":
+        struct.pack_into("<I", cold, 17, 1)
+    if damage == "child_not_comdat":
+        child_flags &= ~_COMDAT
+    if damage == "child_not_code":
+        child_flags &= ~_CODE
+    if damage == "info_writable":
+        info_flags = 0xC0401040
+    else:
+        info_flags = 0x40401040
+    if damage == "extra_child_code":
+        extra_code = True
+    else:
+        extra_code = False
+    if damage == "extra_child_data":
+        extra_data = True
+    else:
+        extra_data = False
+    owner = Symbol(1, "??1NestedOwner@@QAE@XZ",
+                   1 if damage == "nonentry" else 0, 1, 0x20, 2)
+    symbols = [
+        owner,
+        Symbol(2, "$Lnested_handler", 16 if damage == "cached_context_edge" else 11, 2, 0, 6),
+        Symbol(3, "$Tnested_info", 0, 3, 0, 3),
+        Symbol(4, "$Tnested_unwind", 32, 3, 0, 6),
+        Symbol(5, "??1NestedMember@@QAE@XZ", 0, 0, 0x20, 2),
+        Symbol(6, "___CxxFrameHandler", 0, 0, 0, 2),
+        Symbol(7, "$Lnested_action", 0, 2, 0, 6),
+        Symbol(8, "?WrongAction@@YAXXZ", 0, 0, 0x20, 2),
+    ]
+    root_relocs = [(3, 2, 6)]
+    child_target = 9 if damage == "ancestor_cycle" else (8 if damage == "wrong_action" else 5)
+    if damage == "cached_context_edge":
+        cold_relocs = [(4, 5, 20), (12, 10, 20), (17, 3, 6), (22, 6, 20)]
+        info_relocs = [(8, 4, 6), (36, 7, 6), (44, 11, 6)]
+    else:
+        cold_relocs = [(7, child_target, 20), (12, 3, 6), (17, 6, 20)]
+        info_relocs = [(8, 4, 6), (36, 7, 6)]
+    if damage == "root_reloc_overlap":
+        root_relocs.append((4, 2, 6))
+    if damage == "child_reloc_overlap":
+        cold_relocs.append((8, 5, 20))
+    if damage == "child_reloc_oob":
+        cold_relocs.append((len(cold) - 2, 5, 20))
+    if damage == "missing_info_reloc":
+        cold_relocs = [r for r in cold_relocs if r[0] != 12]
+    if damage == "missing_runtime_reloc":
+        cold_relocs = [r for r in cold_relocs if r[0] != 17]
+    if damage == "extra_info_reloc":
+        info_relocs.append((12, 3, 6))
+    if damage == "duplicate_function_alias":
+        symbols.append(Symbol(9, "?Alias@@QAE@XZ", 0, 1, 0x20, 2))
+    if damage == "duplicate_function_name":
+        symbols.append(Symbol(9, owner.name, 0, 4, 0x20, 2))
+    if damage == "ancestor_cycle":
+        symbols.append(Symbol(9, "??1Ancestor@@QAE@XZ", 0, 4, 0x20, 2))
+    if damage == "cached_context_edge":
+        symbols.extend([
+            Symbol(9, "??1Ancestor@@QAE@XZ", 0, 4, 0x20, 2),
+            Symbol(10, "??_DHelper@@QAE@XZ", 0, 5, 0x20, 2),
+            Symbol(11, "$Lnested_action2", 8, 2, 0, 6),
+        ])
+    sections = [
+        _EHFixtureSection(root, tuple(root_relocs), root_flags, ".text$local"),
+        _EHFixtureSection(bytes(cold), tuple(cold_relocs), child_flags, ".text$eh"),
+        _EHFixtureSection(bytes(info), tuple(info_relocs), info_flags, ".xdata$eh"),
+    ]
+    if damage == "duplicate_function_name":
+        sections.append(_EHFixtureSection(b"\xc3", (), 0x60501020, ".text$duplicate"))
+    if damage == "ancestor_cycle":
+        sections.append(_EHFixtureSection(b"\xc3", (), 0x60501020, ".text$ancestor"))
+    if damage == "cached_context_edge":
+        sections.extend([
+            _EHFixtureSection(b"\xc3", (), 0x60501020, ".text$ancestor"),
+            _EHFixtureSection(b"\xe9\x00\x00\x00\x00", ((1, 9, 20),),
+                              0x60501020, ".text$helper"),
+        ])
+    if damage in {"unknown_with_code_child", "unknown_without_code_child"}:
+        sections.append(_EHFixtureSection(b"\x00", (), 0x00000001, ".mystery"))
+    associations = {2: 1, 3: 1}
+    if damage == "missing_child_association":
+        associations.pop(2)
+    if damage == "missing_info_association":
+        associations.pop(3)
+    if damage in {"missing_child_and_info_association", "bad_registration_addend_leaf"}:
+        associations.clear()
+    if damage == "unknown_with_code_child":
+        associations[4] = 1
+    if damage == "unknown_without_code_child":
+        associations.clear()
+        associations[4] = 1
+    if extra_code:
+        sections.append(_EHFixtureSection(b"\xc3", (), 0x60501020, ".text$extra"))
+        associations[4] = 1
+    if extra_data:
+        sections.append(_EHFixtureSection(bytes(8), (), 0x40401040, ".xdata$extra"))
+        associations[4] = 1
+    return _EHFixtureCoff(sections, symbols, associations)
+
+
+def _validate_nested_fixture(damage=None, *, depth=1, roots=1):
+    from match_recovery.source import eh_regions
+    obj = _nested_local_owner_fixture(damage)
+    owner = obj.function("??1NestedOwner@@QAE@XZ")
+    active = {10, 4} if damage == "ancestor_cycle" else {10}
+    walk = eh_regions._LocalEHWalk(active=active, complete=set(), roots=roots)
+    eh_regions._validate_local_complete_destructor(obj, owner, 10, 11, walk, depth)
+
+
+@pytest.mark.parametrize("damage", [None, "duplicate_function_alias"])
+def test_local_complete_nested_eh_fixture_and_alias_refusal(damage):
+    if damage is None:
+        _validate_nested_fixture()
+    else:
+        with pytest.raises(ValueError):
+            _validate_nested_fixture(damage)
+
+
+@pytest.mark.parametrize("damage", [
+    "duplicate_function_name", "nonentry", "writable_root", "noncomdat_root",
+    "truncated_root", "writable_child", "child_not_comdat", "child_not_code", "truncated_child",
+    "truncated_info", "bad_root_addend", "bad_funcinfo_addend",
+    "bad_cleanup_addend", "bad_runtime_addend",
+    "root_reloc_overlap", "child_reloc_overlap", "child_reloc_oob",
+    "missing_child_association", "missing_info_association", "extra_child_code",
+    "extra_child_data", "info_writable", "bad_registration", "bad_magic",
+    "bad_predecessor", "missing_info_reloc", "missing_runtime_reloc",
+    "extra_info_reloc", "wrong_action", "ancestor_cycle",
+    "unknown_with_code_child", "unknown_without_code_child",
+])
+def test_local_nested_eh_requires_complete_unambiguous_physical_ownership(damage):
+    with pytest.raises(ValueError):
+        _validate_nested_fixture(damage)
+
+
+@pytest.mark.parametrize("depth,roots", [(5, 1), (1, 16)])
+def test_local_nested_eh_recursion_budgets_refuse(depth, roots):
+    with pytest.raises(ValueError, match="budget"):
+        _validate_nested_fixture(depth=depth, roots=roots)
+
+
+def test_repeated_local_owner_reuses_only_same_active_context():
+    from match_recovery.source import eh_regions
+    obj = _nested_local_owner_fixture()
+    owner = obj.function("??1NestedOwner@@QAE@XZ")
+    walk = eh_regions._LocalEHWalk(active={10}, complete=set())
+    eh_regions._validate_local_complete_destructor(obj, owner, 10, 11, walk, 1)
+    roots_after_first = walk.roots
+    eh_regions._validate_local_complete_destructor(obj, owner, 10, 11, walk, 1)
+    assert walk.roots == roots_after_first
+    assert walk.complete == {(1, frozenset({10}), 1)}
+
+
+def test_cached_nested_owner_rechecks_helper_edges_against_new_ancestor():
+    from match_recovery.source import eh_regions
+    obj = _nested_local_owner_fixture("cached_context_edge")
+    owner = obj.function("??1NestedOwner@@QAE@XZ")
+    walk = eh_regions._LocalEHWalk(active={10}, complete=set())
+    eh_regions._validate_local_complete_destructor(obj, owner, 10, 11, walk, 1)
+    assert (1, frozenset({10}), 1) in walk.complete
+    walk.active.add(4)
+    with pytest.raises(ValueError, match="root/EH relocation"):
+        eh_regions._validate_local_complete_destructor(obj, owner, 10, 11, walk, 1)
+
+
+def test_local_leaf_without_associations_rejects_fs_registration():
+    from match_recovery.source import eh_regions
+    obj = _nested_local_owner_fixture("missing_child_and_info_association")
+    owner = obj.function("??1NestedOwner@@QAE@XZ")
+    walk = eh_regions._LocalEHWalk(active={10}, complete=set())
+    with pytest.raises(ValueError, match="FS registration"):
+        eh_regions._validate_local_complete_destructor(obj, owner, 10, 11, walk, 1)
+
+
+def test_leaf_with_nonzero_registration_addend_is_not_misclassified_as_no_eh():
+    from match_recovery.source import eh_regions
+    obj = _nested_local_owner_fixture("bad_registration_addend_leaf")
+    owner = obj.function("??1NestedOwner@@QAE@XZ")
+    walk = eh_regions._LocalEHWalk(active={10}, complete=set())
+    with pytest.raises(ValueError, match="FS registration"):
+        eh_regions._validate_local_complete_destructor(obj, owner, 10, 11, walk, 1)
+
+
+@pytest.mark.parametrize("damage", [
+    None, "unknown_kind", "section_oob", "secrel_oob", "overlap",
+    "negative_offset", "raw_truncated", "writable", "executable",
+])
+def test_local_nested_debug_metadata_has_separate_bounded_relocations(damage):
+    from match_recovery.source import eh_regions
+    obj = _nested_local_owner_fixture()
+    flags = 0x42101048
+    relocations = ((0, 1, 11), (4, 1, 10), (8, 5, 11), (12, 5, 10))
+    if damage == "unknown_kind":
+        relocations = ((0, 1, 13),)
+    elif damage == "section_oob":
+        relocations = ((15, 1, 10),)
+    elif damage == "secrel_oob":
+        relocations = ((13, 1, 11),)
+    elif damage == "overlap":
+        relocations = ((0, 1, 11), (2, 1, 10))
+    elif damage == "negative_offset":
+        relocations = ((-1, 1, 11),)
+    elif damage == "writable":
+        flags |= 0x80000000
+    elif damage == "executable":
+        flags |= 0x20000020
+    obj.sections += (_EHFixtureSection(bytes(16), relocations, flags, ".debug$S"),)
+    obj.section_sizes += (17 if damage == "raw_truncated" else 16,)
+    obj.associations[len(obj.sections)] = 1
+    owner = obj.function("??1NestedOwner@@QAE@XZ")
+    walk = eh_regions._LocalEHWalk(active={10}, complete=set())
+    if damage is None:
+        eh_regions._validate_local_complete_destructor(obj, owner, 10, 11, walk, 1)
+    else:
+        with pytest.raises(ValueError):
+            eh_regions._validate_local_complete_destructor(obj, owner, 10, 11, walk, 1)
+
+
+def test_binds_local_complete_destructor_at_later_action_position():
+    root, cold = _bind(spans=TWO_SPANS, object_cold_size=32,
+                       object_damage="second_external_defined")
+    assert root.ownership.cleanup_offsets == (0, 8)
+    assert cold.ownership.handler_offset == 22
+
+
 @pytest.mark.parametrize(("original_size", "object_size", "expected_second"), [
     (26, 26, 8), (29, 29, 8), (32, 32, 11),
     (26, 29, 8), (32, 26, 8),
@@ -925,7 +1260,7 @@ def test_original_action_inventory_is_independent_of_compiled_action_inventory()
     "local_target_overlapping_relocations", "local_target_out_of_bounds_relocation",
     "bad_registration_sentinel", "bad_registration_fs_read", "bad_registration_fs_write",
     "second_external_wrong_name", "second_external_nonzero_value",
-    "second_external_nonfunction", "second_external_defined",
+    "second_external_nonfunction",
     "func_info_nonzero_addend",
 ])
 def test_refuses_damaged_two_action_ownership_graph(damage):

@@ -31,6 +31,8 @@ _MAX_CLEANUP_ACTIONS = 16
 _MAX_ACTION_SIZE = 14
 _HANDLER_STUB_SIZE = 10
 _MAX_COLD_SIZE = _MAX_CLEANUP_ACTIONS * _MAX_ACTION_SIZE + _HANDLER_STUB_SIZE
+_MAX_LOCAL_EH_DEPTH = 4
+_MAX_LOCAL_EH_ROOTS = 16
 _EH_RUNTIME = "___CxxFrameHandler"
 
 _ENGINE = Cs(CS_ARCH_X86, CS_MODE_32)
@@ -425,7 +427,8 @@ def _reloc_at(obj: Coff, section: int, offset: int, kind: RelocationKind) -> Sym
     return obj.symbols[rows[0][1]]
 
 
-def _validate_local_destructor(obj: Coff, symbol: Symbol, root: int, child: int) -> None:
+def _validate_local_destructor(obj: Coff, symbol: Symbol, root: int, child: int, *,
+                               forbidden_sections: frozenset[int] = frozenset()) -> None:
     """Admit a bounded independent local ??_D function, without semantic claims."""
     section_number = symbol.section
     if (section_number <= 0 or not symbol.name.startswith("??_D")
@@ -453,12 +456,140 @@ def _validate_local_destructor(obj: Coff, symbol: Symbol, root: int, child: int)
     if same_section != [symbol]:
         raise ValueError("COFF local cleanup target is not uniquely owned by one function symbol")
     for _offset, target_index, _kind in section.relocations:
-        if obj.symbols[target_index].section in (root, child):
+        if obj.symbols[target_index].section in ({root, child} | forbidden_sections):
             raise ValueError("COFF local cleanup target has an ambiguous root/EH relocation")
     _raw, code, _helper_relocations, _alignment = _relocations(obj, section_number)
     if len(code) != obj.section_sizes[section_number - 1]:
         raise ValueError("COFF local cleanup target is not fully raw-backed")
     _decoded(code, 0)
+
+
+def _debug_relocation_bounds(obj: Coff, number: int) -> None:
+    """Validate debug storage writes, without interpreting code or CV identity."""
+    section = obj.sections[number - 1]
+    if len(section.data) != obj.section_sizes[number - 1]:
+        raise ValueError("COFF local destructor debug metadata is not fully raw-backed")
+    occupied = set()
+    # Debug SECTION and SECREL are not executable DIR32/REL32 operands.
+    # A no-op relocation has no write; unknown kinds do not acquire a width.
+    widths = {0: 0, 10: 2, 11: 4}
+    for offset, target, kind in section.relocations:
+        width = widths.get(kind)
+        if (width is None or target not in obj.symbols or offset < 0
+                or offset + width > len(section.data)):
+            raise ValueError("COFF local destructor has unsupported debug relocation bounds")
+        field = set(range(offset, offset + width))
+        if occupied & field:
+            raise ValueError("COFF local destructor debug relocations overlap")
+        occupied.update(field)
+
+
+@dataclass
+class _LocalEHWalk:
+    """Bounded active paths and context-specific proofs for local ??1 roots."""
+
+    active: set[int]
+    complete: set[tuple[int, frozenset[int], int]]
+    roots: int = 1
+
+
+def _validate_local_complete_destructor(
+        obj: Coff, symbol: Symbol, parent_root: int, parent_child: int,
+        walk: _LocalEHWalk, depth: int) -> None:
+    """Prove a local ??1 function and any directly owned EH subtree."""
+    section_number = symbol.section
+    if (section_number <= 0 or not symbol.name.startswith("??1")
+            or section_number in (parent_root, parent_child)
+            or section_number > len(obj.sections)
+            or section_number in obj.associations or symbol.value != 0):
+        raise ValueError("COFF local ??1 target is not an independent function entry")
+    if section_number in walk.active:
+        raise ValueError("COFF local ??1 EH ownership contains a cycle")
+    section = obj.sections[section_number - 1]
+    if (not section.flags & _CODE or not section.flags & _EXECUTE
+            or section.flags & _WRITE or not section.flags & _COMDAT
+            or not section.data or len(section.data) != obj.section_sizes[section_number - 1]):
+        raise ValueError("COFF local ??1 target lacks a bounded executable COMDAT")
+    same_section = [candidate for candidate in obj.symbols.values()
+                    if candidate.section == section_number and candidate.storage in (2, 3)
+                    and candidate.type & 0x20]
+    if same_section != [symbol]:
+        raise ValueError("COFF local ??1 target is not uniquely owned by one function symbol")
+    if obj.function(symbol.name) != symbol:
+        raise ValueError("COFF local ??1 target name is absent or ambiguous")
+    _raw, code, relocations, _alignment = _relocations(obj, section_number)
+    _decoded(code, 0)
+    if any(obj.symbols[int(item.target)].section in (*walk.active, parent_child)
+           for item in relocations):
+        raise ValueError("COFF local ??1 target references an active EH owner")
+    if depth > _MAX_LOCAL_EH_DEPTH:
+        raise ValueError("COFF local ??1 EH ownership exceeds its bounded traversal budget")
+    proof_key = (section_number, frozenset(walk.active), depth)
+    if proof_key in walk.complete:
+        return
+    if walk.roots >= _MAX_LOCAL_EH_ROOTS:
+        raise ValueError("COFF local ??1 EH ownership exceeds its bounded traversal budget")
+
+    direct_children = [number for number, parent in obj.associations.items()
+                       if parent == section_number]
+    owned_descendants = [number for number in obj.associations
+                         if _associated_root(obj, number, section_number)]
+    if set(owned_descendants) != set(direct_children):
+        raise ValueError("COFF local ??1 target has unsupported nested COMDAT descendants")
+    code_children, data_children, unexplained_children = [], [], []
+    for number in direct_children:
+        child = obj.sections[number - 1]
+        if child.name.startswith(".debug$"):
+            if (child.flags & (_CODE | _EXECUTE | _WRITE)
+                    or not child.flags & (_INITIALIZED_DATA | 0x00000080)
+                    or not child.flags & _READ):
+                raise ValueError("COFF local ??1 target has unsupported debug ownership")
+            _debug_relocation_bounds(obj, number)
+        elif child.flags & _CODE:
+            code_children.append(number)
+        elif child.flags & (_INITIALIZED_DATA | 0x00000080):
+            data_children.append(number)
+        else:
+            unexplained_children.append(number)
+    if len(code_children) > 1:
+        raise ValueError("COFF local ??1 target has ambiguous associated EH code children")
+    if tuple(obj.code_sections(symbol)) != (section_number, *code_children):
+        raise ValueError("COFF local ??1 target has hidden associated code descendants")
+    if unexplained_children or len(data_children) > 1:
+        raise ValueError("COFF local ??1 target has unowned associated data")
+    if not code_children and data_children:
+        raise ValueError("COFF local ??1 leaf has unsupported associated data")
+    if not code_children:
+        instructions = _decoded(code, 0)
+        if any(operand.type == x86.X86_OP_MEM
+               and operand.mem.segment == x86.X86_REG_FS
+               for instruction in instructions for operand in instruction.operands):
+            raise ValueError("COFF local ??1 leaf has an unsupported FS registration or access")
+
+    walk.active.add(section_number)
+    walk.roots += 1
+    if code_children:
+        child_number = code_children[0]
+        _child, child_code, _relocs, _alignment = _relocations(obj, child_number)
+        child_section = obj.sections[child_number - 1]
+        if (not child_section.flags & _CODE or not child_section.flags & _EXECUTE
+                or child_section.flags & _WRITE
+                or not child_section.flags & _COMDAT):
+            raise ValueError("COFF local ??1 EH child lacks executable COMDAT ownership")
+        handler_offset, _actions, _info, _runtime, _starts = _cold_layout(child_code)
+        _object_push_edge(obj, symbol, child_number, handler_offset)
+        walk.active.add(child_number)
+        (_section, _code, _relocs, _alignment, info_number, _runtime,
+         _handler, _dtors, _starts, _preds) = _object_child_and_info(
+             obj, symbol, child_number, walk=walk, depth=depth + 1)
+        _info_section, _info_code, _info_relocs, _info_alignment = _relocations(
+            obj, info_number)
+        if (obj.associations.get(info_number) != section_number
+                or data_children != [info_number]):
+            raise ValueError("COFF local ??1 target does not own exactly its EH FuncInfo")
+        walk.active.remove(child_number)
+    walk.active.remove(section_number)
+    walk.complete.add(proof_key)
 
 
 def _cold_layout(code: bytes) -> tuple[int, tuple[int, ...], int, int, tuple[int, ...]]:
@@ -505,7 +636,8 @@ def _object_push_edge(obj: Coff, root: Symbol, child: int, handler_offset: int) 
         raise ValueError("COFF root lacks one exact relocated PUSH to child handler offset")
 
 
-def _object_child_and_info(obj: Coff, root: Symbol, child: int):
+def _object_child_and_info(obj: Coff, root: Symbol, child: int, *,
+                           walk: _LocalEHWalk, depth: int):
     child_section, child_code, child_relocs, child_alignment = _relocations(obj, child)
     handler_offset, destructor_offsets, info_offset, runtime_offset, action_starts = _cold_layout(child_code)
     if (len(child_code) != handler_offset + _HANDLER_STUB_SIZE
@@ -519,15 +651,17 @@ def _object_child_and_info(obj: Coff, root: Symbol, child: int):
     for index, destructor in enumerate(destructors):
         if destructor.storage != 2 or not destructor.type & 0x20:
             raise ValueError("COFF cleanup stub does not transfer to a function symbol")
-        if index == 0 and (destructor.section != 0 or destructor.value != 0
-                           or not destructor.name.startswith("??1")):
-            raise ValueError("COFF first cleanup does not transfer to its external destructor")
-        if index > 0:
-            if destructor.section == 0:
-                if (destructor.value != 0 or not destructor.name.startswith("??1")):
-                    raise ValueError("COFF cleanup does not transfer to an undefined external destructor")
-            else:
-                _validate_local_destructor(obj, destructor, root.section, child)
+        if destructor.section == 0:
+            if destructor.value != 0 or not destructor.name.startswith("??1"):
+                raise ValueError("COFF cleanup does not transfer to an undefined external destructor")
+        elif destructor.name.startswith("??1"):
+            _validate_local_complete_destructor(
+                obj, destructor, root.section, child, walk, depth)
+        elif index > 0:
+            _validate_local_destructor(obj, destructor, root.section, child,
+                                       forbidden_sections=frozenset(walk.active))
+        else:
+            raise ValueError("COFF first local cleanup is not a complete ??1 destructor")
     func_info_symbol = _reloc_at(obj, child, info_offset, RelocationKind.ABSOLUTE32)
     if struct.unpack_from("<I", child_code, info_offset)[0] != 0:
         raise ValueError("COFF handler FuncInfo pointer has a nonzero addend")
@@ -655,10 +789,12 @@ def bind_eh_regions(raw_object: bytes, emitted_symbol: str, original_image: PeIm
     _child_section, child_code, _child_relocs, _child_alignment = _relocations(obj, child)
     handler_offset, _destructor_offset, _info_offset, _runtime_offset, _action_starts = _cold_layout(child_code)
     _object_push_edge(obj, root, child, handler_offset)
+    walk = _LocalEHWalk(active={root.section, child}, complete=set())
     (_child_section, child_code, child_relocs, child_alignment,
      info_section, runtime_symbol, object_handler_offset,
      destructor_offsets, compiled_action_starts,
-     compiled_predecessors) = _object_child_and_info(obj, root, child)
+     compiled_predecessors) = _object_child_and_info(
+         obj, root, child, walk=walk, depth=0)
     if handler_offset != object_handler_offset:
         raise ValueError("COFF EH handler offset changed during ownership validation")
 

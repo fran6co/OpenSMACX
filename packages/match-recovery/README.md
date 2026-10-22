@@ -3831,10 +3831,23 @@ so differing supported encodings or counts are ownership evidence only.
 The ownership evidence retains both complete predecessor tuples. A different
 valid topology reports an explicit `MISMATCH` before byte comparison: identical
 root/cold instructions cannot hide a changed unwind map. With identical
-topology, ordinary byte comparison can still report a mismatch. The first cleanup must
-target an undefined external destructor. Later cleanups may target undefined
-external destructors or separately bounded, independent local `??_D` helpers;
-defined ordinary destructors and arbitrary action forms remain unsupported.
+topology, ordinary byte comparison can still report a mismatch. Cleanup targets
+may be undefined external destructors or uniquely owned local complete `??1`
+destructors. A local destructor must own one fully backed executable COMDAT;
+its optional directly associated cold child and FuncInfo undergo the same
+complete ownership and relocation checks. A leaf without an EH child may not
+access FS. Associated debug metadata has its own raw-backing, relocation-width,
+bounds and non-overlap checks for SECTION/SECREL writes; it never enters the
+executable relocation decoder or proves CodeView/PDB target identity.
+Unknown associations and edges back into any active ancestor's
+root/cold sections refuse. Recursive local ownership is bounded by a
+zero-based depth cap of four and sixteen proof contexts including the primary
+root; cached proofs are qualified by the complete active ancestor set and depth.
+Later cleanups may also target separately bounded, independent local `??_D`
+helpers. Arbitrary action forms remain unsupported. None of these physical
+ownership checks joins an original destructor target to a candidate symbol;
+that remains separate reference-identity evidence, not an implication of a
+decorated name or masked code equality.
 This is a bounded extension within annotated cold
 extents, not discovery of arbitrary cleanup graphs. Section order, adjacency
 and generated label spelling do not bind a region. Every declared byte is

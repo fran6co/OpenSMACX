@@ -63,6 +63,23 @@ void branch_cleanup(int mode) {
 }
 """
 
+LOCAL_OWNER = r"""
+#include "piece.h"
+struct Local {
+    Piece member;
+    ~Local() { use(&member, 11); }
+};
+void branch_cleanup(int mode) {
+    Local first;
+    if (mode) {
+        Local conditional;
+        use(&conditional.member, 1);
+    }
+    Local last;
+    use(&last.member, 2);
+}
+"""
+
 ENTRY = r"""
 #include "piece.h"
 int main() {
@@ -129,10 +146,12 @@ def _spans_and_record(root_address: int, root_code: bytes, child_code: bytes, tm
     return spans, record
 
 
-def test_linked_branched_eh_predecessor_topology_and_damage(tmp_path):
+@pytest.mark.parametrize("local_cleanup", [False, True])
+def test_linked_branched_eh_predecessor_topology_and_damage(tmp_path, local_cleanup):
     _require_toolchain()
+    owner_source = LOCAL_OWNER if local_cleanup else OWNER
     for name, contents in (("piece.h", HEADER), ("piece.cpp", PIECE),
-                           ("owner.cpp", OWNER), ("entry.cpp", ENTRY)):
+                           ("owner.cpp", owner_source), ("entry.cpp", ENTRY)):
         (tmp_path / name).write_text(contents)
 
     command = (sys.executable, str(ROOT / "recovery" / "environment" / "wine.py"),
@@ -175,8 +194,20 @@ def test_linked_branched_eh_predecessor_topology_and_damage(tmp_path):
     spans, record = _spans_and_record(root_address, linked_root_code, child_code, tmp_path)
     regions = bind_eh_regions(objects["owner"], SYMBOL, image, spans)
     assert len(regions) == 2
-    assert regions[0].ownership.original_predecessors == (0xFFFFFFFF, 0, 0)
-    assert regions[0].ownership.compiled_predecessors == (0xFFFFFFFF, 0, 0)
+    expected_predecessors = ((0xFFFFFFFF, 0, 0, 0, 0, 0xFFFFFFFF)
+                             if local_cleanup else (0xFFFFFFFF, 0, 0))
+    assert regions[0].ownership.original_predecessors == expected_predecessors
+    assert regions[0].ownership.compiled_predecessors == expected_predecessors
+
+    if local_cleanup:
+        # The first cleanup really transfers to a local complete destructor,
+        # whose member lifetime requires its own independent EH subtree.
+        local = owner.function("??1Local@@QAE@XZ")
+        assert local.value == 0 and local.section != root.section
+        assert len(owner.code_sections(local)) == 2
+        cleanup_targets = [owner.symbols[index]
+                           for _, index, _ in owner.sections[child_section - 1].relocations]
+        assert sum(target == local for target in cleanup_targets) == 3
 
     compiled = subject_asm(objects["owner"], record, "test-owned-vc6-link")
     baseline = compare_subject(record, image_path, compiled)
@@ -192,7 +223,7 @@ def test_linked_branched_eh_predecessor_topology_and_damage(tmp_path):
     assert len(info_offsets) == 1
     info_offset = info_offsets[0]
     state_count, = struct.unpack_from("<I", info_data, info_offset + 4)
-    assert state_count == 3
+    assert state_count == len(expected_predecessors)
     predecessor_offset = info_offset + 32 + 2 * 8
     assert struct.unpack_from("<I", info_data, predecessor_offset)[0] == 0
     section_header = 20 + (info_section - 1) * 40
@@ -217,12 +248,28 @@ def test_linked_branched_eh_predecessor_topology_and_damage(tmp_path):
     # bytes; the code layout and source record stay unchanged.
     info_va = regions[0].ownership.original_func_info
     unwind_map, = struct.unpack("<I", image.read(Span(info_va + 8, info_va + 12)))
-    original_map = image.read(Span(unwind_map, unwind_map + 3 * 8))
+    original_map = image.read(Span(unwind_map, unwind_map + state_count * 8))
     assert struct.unpack_from("<I", original_map, 2 * 8)[0] == 0
     changed_image = bytearray(image_bytes)
-    map_file_offset = _file_offset(image, unwind_map, 3 * 8)
+    map_file_offset = _file_offset(image, unwind_map, state_count * 8)
     struct.pack_into("<I", changed_image, map_file_offset + 2 * 8, 2)
     altered_image_path = tmp_path / "branched-control-original-topology-damaged.exe"
     altered_image_path.write_bytes(changed_image)
     with pytest.raises(SpanComparisonRefused, match="predecessor"):
         compare_subject(record, altered_image_path, compiled)
+
+    if local_cleanup:
+        # Corrupt only the nested owner's FuncInfo. Parent instructions and
+        # relocations are identical, so a root-only ownership check would miss it.
+        local_data = [number for number, parent in owner.associations.items()
+                      if parent == local.section
+                      and owner.sections[number - 1].name == ".xdata$x"]
+        assert len(local_data) == 1
+        nested_info, = local_data
+        pointer, = struct.unpack_from("<I", objects["owner"],
+                                      20 + (nested_info - 1) * 40 + 20)
+        nested_damage = bytearray(objects["owner"])
+        struct.pack_into("<I", nested_damage, pointer, 0)
+        with pytest.raises(SpanComparisonRefused, match="COFF FuncInfo"):
+            compare_subject(record, image_path,
+                            subject_asm(bytes(nested_damage), record, "nested-info-damage"))
