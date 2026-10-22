@@ -1,0 +1,19 @@
+{
+  "event_id": "58aed371a0425ad2fffbfb4dfb3001272105cafccf3d0696d6757ce2712765af",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_branched_eh_compiler.py"
+    ],
+    "evidence": [
+      "Authorize a test-owned three-state branched cleanup compiler/linker control using local project compiler interaction. No proprietary bytes, fixed game layouts, compiler inference in the library, claim changes or acceptance permissions. Require a real relocatable PE, unchanged COFF replica, exact predecessor tuple, complete comparison, code-identical valid metadata-only mismatch and invalid-edge refusal. Existing experimental control passed only after using a normal CRT entry and real HIGHLOW-producing relocatable link; retain those earlier failures as diagnostics, not passes."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "f90ac378a61e5d4266290cf49c71973d4fa0275c4cf9f4ab28b13f27152adcd9",
+  "request_id": "branched-eh-real-compiler-control-scope-oct22c",
+  "schema_version": 1,
+  "sequence": 13,
+  "stream": "task:filewin-jackal-boundary-oct9"
+}

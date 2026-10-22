@@ -183,6 +183,13 @@ destructor weak calls, establish class lifetime, or grant recovery acceptance.
 Missing companions, conflicting placements and unsupported metadata refuse proof.
 These checks establish emitted-region correspondence, not C++ ownership, shared
 multi-entry code coverage, data contents, runtime behavior or recovery acceptance.
+The test-owned VC6/linker control in `tests/test_branched_eh_compiler.py`
+exercises a bounded branched unwind map through the historical whole-function
+comparator. It checks an unchanged object replica, a code-identical valid
+predecessor change that must mismatch, and malformed original/compiled maps
+that must refuse. Run compiler controls under a coordinator-owned compiler
+lease. This does not qualify unsupported game cleanup forms, destructor target
+identity, linked preservation or runtime acceptance.
 Older retained build policies and task baselines are not upgraded implicitly.
 Native ordinary-data placement also supports one-hop references from independently
 placed data, after verifying the entire referring section against the linked image.

@@ -3818,19 +3818,24 @@ bounded to at most 16 complete actions and one 10-byte handler stub (234 bytes
 total). Each action is exactly a frame-relative `lea ecx,[ebp+disp]; jmp`,
 `mov ecx,[ebp+disp8]; jmp`, or that `mov` followed by `add ecx,imm8/imm32`
 and a long `jmp`. The original and COFF maps are each parsed in full; their
-predecessor states must be exactly `-1, 0, 1, ...`, and every relocation,
-addend, action boundary and associated data/code extent is checked. COFF root
+predecessor states must each be `-1` or a strictly earlier state, so bounded
+branching cleanup graphs are supported without admitting forward edges or
+cycles. Every relocation, addend, action boundary and associated data/code
+extent is checked. COFF root
 ownership permits only its unique relocated handler registration edge. Original
 root screening checks the registration chain, rejects extra PE HIGHLOW operands
 into the cold span, and rejects decoded direct CALL/JMP targets there; it does
 not prove indirect reachability or dataflow.
 The action counts and boundaries are independently derived on the two sides,
-so differing supported encodings or counts are ownership evidence only and
-ordinary byte comparison can still report a mismatch. The first cleanup must
+so differing supported encodings or counts are ownership evidence only.
+The ownership evidence retains both complete predecessor tuples. A different
+valid topology reports an explicit `MISMATCH` before byte comparison: identical
+root/cold instructions cannot hide a changed unwind map. With identical
+topology, ordinary byte comparison can still report a mismatch. The first cleanup must
 target an undefined external destructor. Later cleanups may target undefined
 external destructors or separately bounded, independent local `??_D` helpers;
-defined ordinary destructors, arbitrary action forms and non-linear unwind
-graphs remain unsupported. This is a bounded extension within annotated cold
+defined ordinary destructors and arbitrary action forms remain unsupported.
+This is a bounded extension within annotated cold
 extents, not discovery of arbitrary cleanup graphs. Section order, adjacency
 and generated label spelling do not bind a region. Every declared byte is
 compared independently; gaps are never read through. Only exact, relocation-free
