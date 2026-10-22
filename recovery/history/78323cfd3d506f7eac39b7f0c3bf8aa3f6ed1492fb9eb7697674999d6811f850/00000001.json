@@ -1,0 +1,68 @@
+{
+  "event_id": "63ccad412079e524686d6199330c7df3d11bfff67b675ebc11e61d9ea43865dc",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/filebox.cpp"
+    ],
+    "evidence": [
+      "Authorize only FileBox::save at0x00634C30 and its native recorder claim publication after fresh exact measurement. The nine whole-owner subjects supply collateral continuity; no other source behavior is authorized to change.",
+      "Original634C3A..634C62 initializes common-dialog prefix fields before optional default-title copy; original634C42 computes filter+30C before title+104 at634C48. The second bounded ordinary declaration-order overlay matches all57instructions with no owner exact losses. No forced code-generation construct, cast, volatile, new helper or changed flags.",
+      "Preserve deliberately unwritten nFilterIndex, exact pointer/call/return behavior and all other bodies. Reuse actual-source host common-dialog tests, fresh build/link, owner census, strict references, original identities/provenance and whole-object outside-owner replicas; recheck after manual integration.",
+      "Task baseline remains immutable; current checkpoint comparisons use explicit master080e219e as destination-before-change, not a reset task baseline. This bounded manual route is not native automatic, linked retained-selection, runtime or game acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6507488,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6507552,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6508400,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6507568,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6507760,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6507952,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6508160,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6508240,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6508320,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "filebox-save-matching-order-oct22s",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:game-save-load-complete-oct5"
+}
