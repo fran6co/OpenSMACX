@@ -1064,7 +1064,7 @@ void __cdecl owner_set(int x, int y, int faction_id) {
 
 /*
 Purpose: Set the site for the specified tile.
-// ORIGINAL: 0x00591B50 ?site_set@@YAXHHH@Z 0x00591B50-0x00591B86 SEMANTIC
+// ORIGINAL: 0x00591B50 ?site_set@@YAXHHH@Z 0x00591B50-0x00591B86 BYTE_EXACT
 // TRIED: SHAPE_EXACT 17/19 plateau. Image folds the +2 field offset
 //            into the READ's addressing mode but recomputes a bare tile
 //            pointer (no offset) for the WRITE, applying +2 as the store's
@@ -1085,10 +1085,10 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl site_set(int x, int y, int site) {
-    // Through a pointer to the field; see `code_set` for why.
-    uint8_t *const field = &map_loc(x, y)->val2;
+    Map *const tile = map_loc(x, y);
+    const uint8_t old_value = tile->val2;
     const uint8_t site_byte = static_cast<uint8_t>(site);
-    *field = static_cast<uint8_t>((*field & 0x0F) | (site_byte << 4));
+    tile->val2 = static_cast<uint8_t>((old_value & 0x0F) | (site_byte << 4));
 }
 
 /*

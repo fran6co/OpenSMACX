@@ -207,12 +207,12 @@ def test_actual_signed_shift_mutants_are_rejected_by_ubsan(compiler_name, setter
 
     bodies = actual_bodies()
     if setter == "site":
+        declaration = "    const uint8_t site_byte = static_cast<uint8_t>(site);\n"
+        shift = "(site_byte << 4)"
+        assert bodies["site"].count(declaration) == bodies["site"].count(shift) == 1
         bodies["site"] = bodies["site"].replace(
-            "    const uint8_t site_byte = static_cast<uint8_t>(site);\n"
-            "    *field = static_cast<uint8_t>((*field & 0x0F) | (site_byte << 4));",
-            "    *field = static_cast<uint8_t>((*field & 0x0F) | (site << 4));",
-            1,
-        )
+            declaration, "", 1,
+        ).replace(shift, "(site << 4)", 1)
         call = "site_set(-17, 29, -1);"
     elif setter == "rocky":
         bodies["rocky"] = bodies["rocky"].replace(
