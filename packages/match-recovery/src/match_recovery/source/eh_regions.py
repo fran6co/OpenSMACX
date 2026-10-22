@@ -592,8 +592,11 @@ def _reloc_at(obj: Coff, section: int, offset: int, kind: RelocationKind) -> Sym
 
 
 def _validate_local_destructor(obj: Coff, symbol: Symbol, root: int, child: int, *,
-                               forbidden_sections: frozenset[int] = frozenset()) -> None:
+                               forbidden_sections: frozenset[int] = frozenset(),
+                               walk: _LocalEHWalk | None = None) -> None:
     """Admit a bounded independent local ??_D function, without semantic claims."""
+    if walk is not None:
+        _bind_local_eh_object(obj, walk)
     section_number = symbol.section
     if (section_number <= 0 or not symbol.name.startswith("??_D")
             or section_number in (root, child)
@@ -626,6 +629,51 @@ def _validate_local_destructor(obj: Coff, symbol: Symbol, root: int, child: int,
     if len(code) != obj.section_sizes[section_number - 1]:
         raise ValueError("COFF local cleanup target is not fully raw-backed")
     _decoded(code, 0)
+    if walk is not None and walk.frames:
+        frame = walk.frames[-1]
+        frame.function_identities.add(_symbol_proof_identity(symbol))
+        _record_proof_section(obj, walk, section_number, forbidden_refs=True)
+        frame.owned_sections.update(associated_children)
+
+
+def _symbol_proof_identity(symbol: Symbol) -> tuple[object, ...]:
+    return (symbol.section, symbol.name, symbol.value, symbol.type, symbol.storage)
+
+
+def _section_proof_facts(obj: Coff, number: int) -> tuple[object, ...]:
+    """Bind all validated physical section/edge facts to this call-local COFF."""
+    section = obj.sections[number - 1]
+    edges = tuple(
+        (offset, target_index, kind,
+         _symbol_proof_identity(obj.symbols[target_index]))
+        for offset, target_index, kind in section.relocations
+    )
+    return (number, section.name, section.flags, obj.section_sizes[number - 1],
+            section.data, edges, obj.associations.get(number))
+
+
+@dataclass(frozen=True)
+class _LocalEHProofSummary:
+    """Immutable, fully validated subtree proof scoped to one Coff instance."""
+
+    obj: Coff
+    root_identity: tuple[object, ...]
+    function_identities: frozenset[tuple[object, ...]]
+    owned_sections: frozenset[int]
+    forbidden_refs: frozenset[int]
+    section_facts: tuple[tuple[object, ...], ...]
+    height: int
+
+
+@dataclass
+class _LocalEHProofFrame:
+    """Private post-order accumulator; published only after full validation."""
+
+    root_identity: tuple[object, ...]
+    function_identities: set[tuple[object, ...]]
+    owned_sections: set[int]
+    forbidden_refs: set[int]
+    height: int = 0
 
 
 def _debug_relocation_bounds(obj: Coff, number: int) -> None:
@@ -659,12 +707,46 @@ class _LocalEHWalk:
     active: set[int]
     complete: set[tuple[int, frozenset[int], int]]
     roots: int = 1
+    obj: Coff | None = None
+    summaries: dict[tuple[object, ...], _LocalEHProofSummary] | None = None
+    frames: list[_LocalEHProofFrame] | None = None
+
+
+def _bind_local_eh_object(obj: Coff, walk: _LocalEHWalk) -> None:
+    """Keep context keys and summaries scoped to one parsed object."""
+    if walk.obj is None:
+        walk.obj = obj
+    elif walk.obj is not obj:
+        raise ValueError("COFF local ??1 walk cannot mix object instances")
+
+
+def _record_proof_section(obj: Coff, walk: _LocalEHWalk, number: int, *,
+                          forbidden_refs: bool = False) -> None:
+    if not walk.frames:
+        return
+    frame = walk.frames[-1]
+    frame.owned_sections.add(number)
+    if forbidden_refs:
+        section = obj.sections[number - 1]
+        frame.forbidden_refs.update(
+            obj.symbols[target_index].section
+            for _offset, target_index, _kind in section.relocations
+        )
+
+
+def _merge_proof_summary(frame: _LocalEHProofFrame,
+                         summary: _LocalEHProofSummary) -> None:
+    frame.function_identities.update(summary.function_identities)
+    frame.owned_sections.update(summary.owned_sections)
+    frame.forbidden_refs.update(summary.forbidden_refs)
+    frame.height = max(frame.height, summary.height + 1)
 
 
 def _validate_local_complete_destructor(
         obj: Coff, symbol: Symbol, parent_root: int, parent_child: int,
-        walk: _LocalEHWalk, depth: int) -> None:
+        walk: _LocalEHWalk, depth: int) -> _LocalEHProofSummary:
     """Prove a local ??1 function and any directly owned EH subtree."""
+    _bind_local_eh_object(obj, walk)
     section_number = symbol.section
     if (section_number <= 0 or not symbol.name.startswith("??1")
             or section_number in (parent_root, parent_child)
@@ -694,7 +776,22 @@ def _validate_local_complete_destructor(
         raise ValueError("COFF local ??1 EH ownership exceeds its bounded traversal budget")
     proof_key = (section_number, frozenset(walk.active), depth)
     if proof_key in walk.complete:
-        return
+        summary = (walk.summaries or {}).get(_symbol_proof_identity(symbol))
+        if summary is not None and summary.obj is obj:
+            if walk.frames:
+                _merge_proof_summary(walk.frames[-1], summary)
+            return summary
+        # Exact-context completion without its immutable summary is not
+        # sufficient evidence for a caller that needs to compose a proof.
+    summary = (walk.summaries or {}).get(_symbol_proof_identity(symbol))
+    forbidden = frozenset(walk.active | {parent_child})
+    if (summary is not None and summary.obj is obj
+            and not (summary.owned_sections & forbidden)
+            and not (summary.forbidden_refs & forbidden)
+            and depth + summary.height <= _MAX_LOCAL_EH_DEPTH):
+        if walk.frames:
+            _merge_proof_summary(walk.frames[-1], summary)
+        return summary
     if walk.roots >= _MAX_LOCAL_EH_ROOTS:
         raise ValueError("COFF local ??1 EH ownership exceeds its bounded traversal budget")
 
@@ -734,30 +831,61 @@ def _validate_local_complete_destructor(
                for instruction in instructions for operand in instruction.operands):
             raise ValueError("COFF local ??1 leaf has an unsupported FS registration or access")
 
+    frame = _LocalEHProofFrame(
+        _symbol_proof_identity(symbol), {_symbol_proof_identity(symbol)},
+        {section_number, *direct_children}, set(),
+    )
+    frame.forbidden_refs.update(obj.symbols[int(item.target)].section
+                                for item in relocations)
+    if walk.frames is None:
+        walk.frames = []
+    walk.frames.append(frame)
     walk.active.add(section_number)
     walk.roots += 1
-    if code_children:
-        child_number = code_children[0]
-        _child, child_code, _relocs, _alignment = _relocations(obj, child_number)
-        child_section = obj.sections[child_number - 1]
-        if (not child_section.flags & _CODE or not child_section.flags & _EXECUTE
-                or child_section.flags & _WRITE
-                or not child_section.flags & _COMDAT):
-            raise ValueError("COFF local ??1 EH child lacks executable COMDAT ownership")
-        handler_offset, _actions, _info, _runtime, _starts = _cold_layout(child_code)
-        _object_push_edge(obj, symbol, child_number, handler_offset)
-        walk.active.add(child_number)
-        (_section, _code, _relocs, _alignment, info_number, _runtime,
-         _handler, _dtors, _starts, _preds) = _object_child_and_info(
-             obj, symbol, child_number, walk=walk, depth=depth + 1)
-        _info_section, _info_code, _info_relocs, _info_alignment = _relocations(
-            obj, info_number)
-        if (obj.associations.get(info_number) != section_number
-                or data_children != [info_number]):
-            raise ValueError("COFF local ??1 target does not own exactly its EH FuncInfo")
-        walk.active.remove(child_number)
-    walk.active.remove(section_number)
+    try:
+        if code_children:
+            child_number = code_children[0]
+            _child, child_code, _relocs, _alignment = _relocations(obj, child_number)
+            child_section = obj.sections[child_number - 1]
+            if (not child_section.flags & _CODE or not child_section.flags & _EXECUTE
+                    or child_section.flags & _WRITE
+                    or not child_section.flags & _COMDAT):
+                raise ValueError("COFF local ??1 EH child lacks executable COMDAT ownership")
+            handler_offset, _actions, _info, _runtime, _starts = _cold_layout(child_code)
+            _object_push_edge(obj, symbol, child_number, handler_offset)
+            if child_number in walk.active:
+                raise ValueError("COFF local ??1 EH child is already active")
+            walk.active.add(child_number)
+            try:
+                (_section, _code, _relocs, _alignment, info_number, _runtime,
+                 _handler, _dtors, _starts, _preds) = _object_child_and_info(
+                     obj, symbol, child_number, walk=walk, depth=depth + 1)
+                _info_section, _info_code, _info_relocs, _info_alignment = _relocations(
+                    obj, info_number)
+                if (obj.associations.get(info_number) != section_number
+                        or data_children != [info_number]):
+                    raise ValueError("COFF local ??1 target does not own exactly its EH FuncInfo")
+                frame.owned_sections.add(info_number)
+            finally:
+                walk.active.remove(child_number)
+    finally:
+        walk.active.remove(section_number)
+        if walk.frames and walk.frames[-1] is frame:
+            walk.frames.pop()
+    facts = tuple(_section_proof_facts(obj, number)
+                  for number in sorted(frame.owned_sections))
+    summary = _LocalEHProofSummary(
+        obj, frame.root_identity, frozenset(frame.function_identities),
+        frozenset(frame.owned_sections), frozenset(frame.forbidden_refs),
+        facts, frame.height,
+    )
+    if walk.summaries is None:
+        walk.summaries = {}
+    walk.summaries[frame.root_identity] = summary
     walk.complete.add(proof_key)
+    if walk.frames:
+        _merge_proof_summary(walk.frames[-1], summary)
+    return summary
 
 
 def _cold_layout(code: bytes) -> tuple[int, tuple[EHActionFact, ...], int, int, tuple[int, ...]]:
@@ -831,6 +959,7 @@ def _object_push_edge(obj: Coff, root: Symbol, child: int, handler_offset: int) 
 def _object_child_and_info(obj: Coff, root: Symbol, child: int, *,
                            walk: _LocalEHWalk, depth: int):
     child_section, child_code, child_relocs, child_alignment = _relocations(obj, child)
+    _record_proof_section(obj, walk, child)
     handler_offset, action_shapes, info_offset, runtime_offset, action_starts = _cold_layout(child_code)
     if (len(child_code) != handler_offset + _HANDLER_STUB_SIZE
             or len(child_code) > _MAX_COLD_SIZE):
@@ -889,7 +1018,8 @@ def _object_child_and_info(obj: Coff, root: Symbol, child: int, *,
                         obj, symbol, root.section, child, walk, depth)
                 elif action_index > 0:
                     _validate_local_destructor(obj, symbol, root.section, child,
-                                               forbidden_sections=frozenset(walk.active))
+                                               forbidden_sections=frozenset(walk.active),
+                                               walk=walk)
                 else:
                     raise ValueError("COFF first local cleanup is not a complete ??1 destructor")
                 if raw_addend != 0:
@@ -945,6 +1075,7 @@ def _object_child_and_info(obj: Coff, root: Symbol, child: int, *,
             unsupported_children.append(number)
     if data_children != [data_section_number] or unsupported_children:
         raise ValueError("COFF root has missing, extra, or ambiguous associated EH data")
+    _record_proof_section(obj, walk, data_section_number)
 
     fields = struct.unpack("<8I", data_section.data[:_FUNCINFO_HEADER_SIZE])
     magic, max_state, raw_unwind, try_count, try_map, ip_count, ip_map, es_types = fields
@@ -1023,7 +1154,7 @@ def bind_eh_regions(raw_object: bytes, emitted_symbol: str, original_image: PeIm
     _child_section, child_code, _child_relocs, _child_alignment = _relocations(obj, child)
     handler_offset, _action_shapes, _info_offset, _runtime_offset, _action_starts = _cold_layout(child_code)
     _object_push_edge(obj, root, child, handler_offset)
-    walk = _LocalEHWalk(active={root.section, child}, complete=set())
+    walk = _LocalEHWalk(active={root.section, child}, complete=set(), obj=obj)
     (_child_section, child_code, child_relocs, child_alignment,
      info_section, runtime_symbol, object_handler_offset,
      compiled_actions, compiled_action_starts,
