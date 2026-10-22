@@ -1,0 +1,19 @@
+{
+  "event_id": "797e9ccebd95ccb75714209a35920a06f3ac317b4615503ecbf0fdd8a4e31021",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "texture-original-family-current-source-selection",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "The test reads annotations through native SourceConfiguration and source.read_file, rejects every missing/duplicate original identity, and compares full continuity fields across source homes. Existing BYTE_EXACT demotion is forbidden; the exact documented promotion set is asserted. No baseline, source mapping, C++ body or historical claim was changed.",
+      "Independent review requested shared assertions for both main path and negative controls, plus unauthorized-promotion controls; root incorporated those changes, removed unused state and limited binding parsing to relocated owner paths. Negative controls reject dropped identity, duplicate identity, shortened span, claim demotion, unrecorded promotion and missing recorded promotion.",
+      "Fresh candidate run: 62 tests passed, zero skipped, across the six Texture identity/raster/edge/Gouraud regression files. This includes literal actual-source controls, but does not establish exhaustive original semantics, native matching, linked selection, runtime or game acceptance. Product/compiler inputs remain unchanged; destination checks and physical receipt requalification precede cleanup."
+    ]
+  },
+  "previous_event": "107a07b280f479bfd62f63299f62aca38452c0df94b19d57eb5d87a6c93c5057",
+  "request_id": "texture-original-family-current-source-selection-incorporated",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:texture-identity-test-oct23d"
+}
