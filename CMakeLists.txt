@@ -147,6 +147,7 @@ set(OPENSMACX_SOURCES
     src/buttongroup.cpp
     src/caviar_objects.cpp
     src/caviar.cpp
+    src/caviar_io.cpp
     src/caviar_geometry.cpp
     src/caviar_data.cpp
     src/caviar_cpu.cpp

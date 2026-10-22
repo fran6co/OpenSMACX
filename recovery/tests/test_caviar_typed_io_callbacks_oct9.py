@@ -8,6 +8,7 @@ import tempfile
 ROOT = next(parent for parent in Path(__file__).resolve().parents
             if (parent / "src/caviar.cpp").is_file())
 SOURCE = ROOT / "src/caviar.cpp"
+IO_SOURCE = ROOT / "src/caviar_io.cpp"
 HEADER = ROOT / "src/caviar.h"
 
 
@@ -105,6 +106,7 @@ static int scripted_read(int fd, char *buffer, long count) {
 
 def compile_actual_source(mutant=None):
     source = SOURCE.read_text()
+    io_source = IO_SOURCE.read_text()
     header = HEADER.read_text()
     callback_type = extract(header, "struct VoxIoCallbacks {") + ";"
     shared_type = extract(header, "struct CaviarOutputMessageWindowCandidate {") + ";"
@@ -126,7 +128,7 @@ def compile_actual_source(mutant=None):
         extract(source, "long Caviar::vx_seek("),
         extract(source, "long Caviar::vx_tell("),
         extract(source, "char __cdecl vox_init_callbacks("),
-        extract(source, "extern \"C\" int __cdecl vox_read_exact("),
+        extract(io_source, "extern \"C\" int __cdecl vox_read_exact("),
     ]
     assert "callbacks->allocate" in actual[8]
     assert "callbacks->tell" in actual[8]

@@ -62,13 +62,16 @@ def assert_native_layouts(obj):
 
 def actual_source():
     source = (ROOT / "src/caviar.cpp").read_text()
+    io_source = (ROOT / "src/caviar_io.cpp").read_text()
     header = (ROOT / "src/caviar.h").read_text()
+    io_header = (ROOT / "src/caviar_io.h").read_text()
     parts = {}
     for name in FUNCTIONS:
-        match, = re.finditer(r"^(?:extern \"C\" )?(?:static )?[\w *]+(?:__cdecl )?" + name + r"\([^;{]*\)\s*\{", source, re.M)
-        parts[name] = braced(source, match.start())
-    begin = source.index("template<class T>\ninline int vox_alloc_typed")
-    parts["template"] = braced(source, begin)
+        owner = io_source if name in ("vox_read_exact", "vox_alloc_block") else source
+        match, = re.finditer(r"^(?:extern \"C\" )?(?:static )?[\w *]+(?:__cdecl )?" + name + r"\([^;{]*\)\s*\{", owner, re.M)
+        parts[name] = braced(owner, match.start())
+    begin = io_header.index("template<class T>\ninline int vox_alloc_typed")
+    parts["template"] = braced(io_header, begin)
     parts["callback"] = re.search(r"typedef char \(__cdecl \*vox_user_chunk_fn\)[^;]+;", source).group()
     types = ("VOX_Vect", "VOX_Matrix", "CvrPart", "CvrShape", "CvrStep", "CvrShadow", "CvrRecord", "CvrChunkHeader")
     parts["types"] = "\n".join(braced(header, header.index("struct " + name + " {")) + ";" for name in types)
@@ -100,9 +103,13 @@ def run_host(tmp_path, parts):
         using Bytes=std::vector<unsigned char>;
         CALLBACK_TYPE
         vox_user_chunk_fn vox_user_chunk;
-        // Only the message window is modeled here, not the native callback/
-        // projection overlap or the complete shared object's layout.
-        struct { char message_[256]; } CaviarOutputMessageWindow;
+        // Model the shared allocation callback and message bytes used by these
+        // extracted bodies, not the native callback/projection overlap or the
+        // complete shared object's layout.
+        struct CaviarOutputMessageWindowFixture {
+            void *(*io_allocate_)(unsigned long);
+            char message_[256];
+        } CaviarOutputMessageWindow;
         char (&vox_message_buffer)[256]=CaviarOutputMessageWindow.message_;
         const char *vox_msg_bad_file_format="Bad file format";
         const char *vox_msg_reading_file="Reading file";
@@ -213,6 +220,7 @@ def run_host(tmp_path, parts):
             for(void *p:allocations)std::free(p);
             allocations.clear();allocation_sizes.clear();freed.clear();input=bytes;position=0;reads=allocs=seeks=0;
             fail_read=fail_alloc=fail_seek=-1;user_mode=user_calls=0;
+            CaviarOutputMessageWindow.io_allocate_=&allocate;
             vox_user_chunk=nullptr;std::strcpy(vox_message_buffer,"old error");
             loaded=free_record=nullptr;mutate_free=shorten_free=false;watched_failure=nullptr;
             capture_count=mutate_count=false;captured_count=nullptr;mutate_at=mutate_to=1;
@@ -259,6 +267,9 @@ def run_host(tmp_path, parts):
             reset(chunk(0x00525643,{}));r=vox_load_record(17);require(r && r->state_==3 && r->part_count_==0 && r->user_length_==0);
             reset({});void *slot=reinterpret_cast<void*>(1);watched_failure=&slot;fail_alloc=1;
             require(vox_alloc_block(12,&slot)==-1 && slot==nullptr);
+            reset({});CvrRecord *typed_slot=nullptr;
+            require(vox_alloc_typed(sizeof(CvrRecord),&typed_slot)==0);
+            require(typed_slot==allocations[0] && allocation_sizes[0]==sizeof(CvrRecord));
             reset(fixture(false,false));r=vox_load_record(17);check_loaded(r,false);
             free_record=r;mutate_free=true;alternate_part=r->parts_[0];
             alternate_part.vectors_=reinterpret_cast<VOX_Vect*>(late_pointer);r->slot_table_[0]=nullptr;
@@ -356,7 +367,11 @@ def test_behavior_damage_controls(tmp_path,damage):
         parts["caviar_free_record"]=parts["caviar_free_record"].replace("    char *first =", "    int cached_count = record->part_count_;\n    char *first =")
         parts["caviar_free_record"]=parts["caviar_free_record"].replace("index < record->part_count_","index < cached_count")
     elif damage=="allocator_publication":
-        parts["template"]=parts["template"].replace("    *out = block;","").replace("vox_stage_error(vox_msg_no_room);","vox_stage_error(vox_msg_no_room);\n        *out = block;").replace("    return 0;","    *out = block;\n    return 0;")
+        parts["vox_alloc_block"]=parts["vox_alloc_block"].replace(
+            "    memcpy(out_storage, &block, sizeof(block));","").replace(
+            "        vox_stage_error(vox_msg_no_room);",
+            "        vox_stage_error(vox_msg_no_room);\n        memcpy(out_storage, &block, sizeof(block));").replace(
+            "    return 0;","    memcpy(out_storage, &block, sizeof(block));\n    return 0;")
     elif damage=="names_count_reload":
         parts["vox_read_parts"]=parts["vox_read_parts"].replace("memset(record->slot_table_, 0, names_bytes)","memset(record->slot_table_, 0, (uint32_t)expected_count * sizeof(*record->slot_table_))")
     elif damage=="parts_count_reload":

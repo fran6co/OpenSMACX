@@ -1,0 +1,19 @@
+{
+  "event_id": "ed1c21e877cab6141778bda57d1570b9a27032b8b1e248da02b104d898c9e5f5",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "caviar-io-source-boundary-oct22l",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/caviar_io.cpp: shared callback-backed read_exact and allocator, unchanged read/error quirks, single existing callback/message owner; allocator publishes pointer representation before synchronous error staging.",
+      "src/caviar_io.h: typed caller forwarding to genuine shared allocator using storage-pointer API, restoring calls rather than a void-double-pointer alias cast.",
+      "All120 native original source identities, spans, claims, symbols and lesson provenance checked unchanged across source migration. Focused actual-source host controls41pass/4skip; fresh native build/caller-census and coordinator integration still required, not accepted or original-TU proof."
+    ]
+  },
+  "previous_event": "fc490ccda02c5539c75010d791b6671593c695a3604f16b846baa09f372110a6",
+  "request_id": "caviar-io-source-incorporated-oct22l",
+  "schema_version": 1,
+  "sequence": 8,
+  "stream": "task:caviar-source-batch-oct19e"
+}
