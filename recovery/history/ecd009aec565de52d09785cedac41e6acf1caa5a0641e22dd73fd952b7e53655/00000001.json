@@ -1,0 +1,31 @@
+{
+  "event_id": "cd759e35aa2111f1e250c7dfc341f40fca7372fb830ff385f13f9c3e242907ee",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "packages/match-recovery/README.md",
+      "packages/match-recovery/src/match_recovery/source/asm.py",
+      "packages/match-recovery/src/match_recovery/source/eh_actions.py",
+      "packages/match-recovery/src/match_recovery/source/eh_regions.py",
+      "packages/match-recovery/tests/source/test_eh_actions.py",
+      "packages/match-recovery/tests/source/test_eh_regions.py",
+      "packages/match-recovery/tests/source/test_eh_sub_regions.py",
+      "recovery/README.md",
+      "recovery/tests/test_subtracting_eh_compiler.py"
+    ],
+    "evidence": [
+      "Pinned StringBox4325C0 original cold action at6533D4 is MOV ECX,[EBP-14h]; SUB ECX,0Ch; JMP401060. The current real locally emitted StringBox destructor in the retained controlled header-visibility screen has the same complete operation with a different saved frame slot. The parser currently refuses this finite action, blocking measurement of five complete constructor closures. Read-only reports parallel-match-oct22a/stringbox-eh-unsupported-action-analysis.md and parallel-match-oct22e/stringbox-sub-eh-native-control-proposal.md retain decoding and genuine virtual-base hierarchy evidence.",
+      "Authorize the narrow generic complete frame-transfer grammar extension only after a test-owned real VC6 C++ hierarchy emits the subtracting action. Keep source-owned identities, original/current complete cold/action boundaries, root/child association, predecessor topology, local-target recursive ownership, relocation kinds/addends/complete inventory, context-sensitive cycle/cache controls and resource bounds intact. No project-specific constants, addresses, class names, mask widening, primary-only fallback, cap-only relaxation or arbitrary instruction acceptance in the library.",
+      "Decode only explicitly bounded observed i386 widths/opcodes/register flows. Add serialized PE/COFF positives and malformed/operand/relocation/damage controls for every accepted variant, plus a real test-owned compile/link unchanged replica and still-valid operand damage demonstrating MISMATCH. Strict original target identity, runtime helper/FPO meaning and full linked selection remain separate; parser success cannot waive them.",
+      "No product C++ or ORIGINAL annotation, compiler/build/link policy or task-baseline changes in this step. StringBox header lifetime migration remains a separate reviewed and authorized source change after measuring the complete affected caller closure. No source claims banked, demotion, weaker claim, fabricated acceptance or new ad hoc public CLI. Full relevant package controls and fresh application build/census/collateral are required before coordinator manual integration.",
+      "Coordinator owns Git, actual compiler/linker calls and isolated leases, preparation, review and integration. Library/test authors may edit only this explicit scope in their isolated worker. Preserve failed/control evidence and unaccepted source work."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "stringbox-sub-cleanup-measurement-scope-oct22f",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:owner-stringbox-faithful-recovery-oct20w"
+}
