@@ -318,7 +318,7 @@ int Dialog::init(RECT *rect, Heap *heap) {
 }
 
 /*
-Purpose: Find an item ID's bounded position in the dialog string list.
+Purpose: Find an item ID's bounded position in the dialog string list. Inline-placement notes below are historical; this is now an ordinary cpp API.
 // ORIGINAL: 0x00609AF0 ?id_to_pos@Dialog@@QAEHH@Z 0x00609AF0-0x00609B4B BYTE_EXACT
 // body      src/dialog.cpp
 // MEASURED inline: the body lives at the end of dialog.h. The image keeps
@@ -356,7 +356,7 @@ int Dialog::id_to_pos(int id) {
 }
 
 /*
-Purpose: Select a dialog item by its bounded list ID.
+Purpose: Select a dialog item by its bounded list ID. The following LEVER/TRIED notes retain prior header-inline experiments, not the current placement.
 // ORIGINAL: 0x006099D0 ?set_selected_id@Dialog@@QAEXH@Z 0x006099D0-0x00609A43
 // LEVER: the body is the whole id_to_pos walk, INLINED - the image never
 //        calls it here. Declaring id_to_pos `MEASURED` + `inline` (definition
