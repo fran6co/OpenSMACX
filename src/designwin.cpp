@@ -5199,7 +5199,14 @@ void DesignWin::select_armor() {
         Weapon[protoWeaponType_].offense_rating <= 1) {
         suggest_abil(0x200);
     }
-    redraw_design_picker_changes(this);
+    check_abil();
+    draw_armor(0);
+    draw_vehicle(0);
+    draw_special_1(0);
+    draw_special_2(0);
+    draw_flash();
+    draw_info();
+    on_update();
 }
 
 // ORIGINAL: 0x0043AA00 ?select_reactor@DesignWin@@QAEXXZ 0x0043AA00-0x0043AC69;0x0065438B-0x00654410
@@ -5214,7 +5221,14 @@ void DesignWin::select_reactor() {
         protoAbilityFlags_, protoReactorType_, SpotlightColorTable);
     protoReactorType_ = picker_record_at(selected_row, Reactor,
                                          MaxReactorNum);
-    redraw_design_picker_changes(this);
+    check_abil();
+    draw_reactor(0);
+    draw_vehicle(0);
+    draw_special_1(0);
+    draw_special_2(0);
+    draw_flash();
+    draw_info();
+    on_update();
 }
 
 // ORIGINAL: 0x0043D510 ?draw_stack@DesignWin@@QAEXXZ 0x0043D510-0x0043DD43;0x006546DA-0x006546EC FILE

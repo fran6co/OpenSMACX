@@ -157,7 +157,9 @@ def test_actual_reactor_caller_with_distinct_state_and_cancel(tmp_path,compiler_
     harness=r'''
 #include <cassert>
 #include <initializer_list>
-struct Record {int preq_tech;} Reactor[4]={{-2},{0},{-1},{0}};
+struct Record {int preq_tech;} Reactor[5]={{-2},{0},{-1},{0},{0}};
+// Test-only sentinel lets the original unchecked count result be observed
+// without host-test UB; this is not a production bounds or layout claim.
 const int MaxReactorNum=4;
 unsigned char SpotlightColorTable[256];
 int reply, redraws, calls;
@@ -173,9 +175,17 @@ struct DesignWin {
  Rect outer_rect_={111,222};int factionID_=3;
  int protoChassisType_=17,protoWeaponType_=23,protoArmorType_=31;
  int protoAbilityFlags_=0x40000,protoReactorType_=2;
+ void check_abil(){}
+ void draw_reactor(int arg){assert(arg==0);}
+ void draw_armor(int arg){assert(arg==0);}
+ void draw_vehicle(int arg){assert(arg==0);}
+ void draw_special_1(int arg){assert(arg==0);}
+ void draw_special_2(int arg){assert(arg==0);}
+ void draw_flash(){}
+ void draw_info(){}
+ void on_update(){++redraws;}
  void select_reactor();
 };
-void redraw_design_picker_changes(DesignWin*){++redraws;}
 '''
     cases=r'''
 int main(){

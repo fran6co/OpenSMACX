@@ -1,0 +1,23 @@
+{
+  "event_id": "88c1c85164ee83c244029ed253b84eeee1cfb17b216b70f4e9a0fa94fd00ff34",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_design_picker_redraw_order_oct22x.py"
+    ],
+    "evidence": [
+      "Coordinator authorizes the next implementation step within this genuine DesignWin/SelectPartWin owner group, responding to pending discovery picker-specific-redraw-oct22w. Historical task baseline, all89 subjects, mappings, claims and restoration obligations remain unchanged. Fresh per-change observation checkpoint is masterdfd3d9e59cc0d8c9e42eabe7f3a2ce8c010e6558, not a task-baseline replacement or accepted linked-preservation result.",
+      "Change only select_armor0x0043A760 and select_reactor0x0043AA00 redraw tails: direct ordinary member calls in independently pinned order, removing the three extra panel draws in each. Preserve selection scans, callback-visible state reloads, cancel/out-of-range behavior, arguments, conditional suggest_abil, lifetime, original unsafe paths and all historical source evidence. No casts/types/layout, flags, padding, wrappers, exports/forced inlining, source-marker/claim edits or bug fixes.",
+      "The complete chassis0x439F20 and weapon0x43A300 call sequences match the current generic helper and require no edit. Keep that helper for these callers. Independent family review .opensmacx/recovery/parallel-match-oct22w/selectpart-chassis-weapon-redraw-review.md sha256e3a23e225a40a0efea5e280bd2a5ae6d9f4660f675975366e371b25168ca24dc; armor/reactor original sites are already versioned in discovery evidence.",
+      "Adapt only the existing test_design_part_picker_contract_oct11.py reactor boundary fixture to support direct real member calls, retaining every argument/ordinal/palette/cancellation mutant and expected behavior. New authorized test exercises both complete actual source bodies, zero draw arguments, conditional ability suggestion, exact order, virtual update and destruction after redraw, with meaningful compiling behavioral mutants and pinned image call anchors. No baseline resets, xfails, skip additions or broad unrelated test fixes.",
+      "Cheaper workers may edit only authorized tests in this isolated checkout; coordinator owns C++, native journal/source writes, Git, compiler leasing/preparation/build/link, bounded measurements and manual integration. One supported semantic form per function; do not spend extended iterations on frame/spelling equality. Preserve correct recovery if matching remains incomplete. Review all89 neighboring mappings and physical functions plus whole-project exact/reference identity continuity; unsupported full linked/runtime/autonomous acceptance stays unproven."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "420e6d3e72d3e1a78b47360b1936e9c65e856f54db85a6fcef4e718393b1b696",
+  "request_id": "authorize-picker-specific-redraw-oct22x",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:selectpart-design-shared-visibility-oct22w"
+}
