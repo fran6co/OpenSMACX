@@ -1,0 +1,25 @@
+{
+  "event_id": "3367a044f66a07f6b727b25922f9c2b14424054e7f09763c4ec890d6640672c1",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/fixtures/enemy_turn_bands_actual_source_oct22.cpp",
+      "recovery/tests/test_enemy_turn_bands_actual_source_oct22.py"
+    ],
+    "evidence": [
+      "Pinned original579643..579687: priorities0..6 pass through has_abil DROP_POD, plan!=4 and unk_1!=15 filters; JGE at579646 sends priorities7..9 directly to579687, bypassing all three. At57968A priorities7/9 go to work, while priority8 requires plan7 and nonzero faction at579695..5796A5.",
+      "Current reconstruction only matches priorities0..6, so it omits the late bands. Merely making its fallback true remains wrong because that would apply early-band-only filters to late bands. Preserve the original distinct filter domains and read/call order.",
+      "Original priority8 rejection jumps5795A7 to decrement vehicle index/pointer. A C++ continue in the current do/while would skip the explicit body-tail decrement if activated. A structured for-loop decrement expression may preserve the original tail for all early exits without new safety behavior.",
+      "Authorize src/general.cpp enemy_turn only plus new recovery/tests/test_enemy_turn_bands_actual_source_oct22.py and recovery/tests/fixtures/enemy_turn_bands_actual_source_oct22.cpp. Preserve original outer10 bands, descending/live vehicle-count scan, sentry and move-order handling, speed gates, callback/count-change breaks, turn counter/skip threshold and final faction flag clear. No fixes to original unsafe effects or long matching search.",
+      "Tests execute the actual native-bounded production definition with pinned branch anchors and independent scenario outcomes. Distinguish late-band filter bypass, priority8 plan/faction failure advancing the sweep, its first-call speed exemption, early-band predicates, count mutation, wrong faction, sentry, thresholds and final flag mask. Compile-success mutants must expose the old omitted bands, incorrectly shared filters and continue/decrement regression.",
+      "Keep all79 original identities, symbol overrides, full spans, historical claims and useful history unchanged. Essential dispatch/tail evidence may be added with native binding render/parse, no run log or manual ORIGINAL edits. Coordinator owns native compilation, Git and integration; require fresh application build/link, scoped references, whole-owner/native census and outside-owner physical replicas, independent review and destination recheck. Historical task baseline remains immutable; no automatic/linked/runtime/game acceptance follows."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "enemy-turn-bands-test-scope-oct22t",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:owner-general-faithful-recovery-oct20x"
+}
