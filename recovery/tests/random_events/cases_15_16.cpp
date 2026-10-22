@@ -103,6 +103,23 @@ static int territory_calls;
 static std::string call_log;
 static Console ConsoleGlobal;
 
+struct RandomEventFieldsView {
+    int &turn_current_num_;
+    uint32_t &game_state_;
+    int &dust_cloud_duration_;
+    int &vehicle_current_count_;
+    RandomEventFieldsView(int &turn, uint32_t &state, int &dust, int &vehicles)
+        : turn_current_num_(turn), game_state_(state), dust_cloud_duration_(dust),
+          vehicle_current_count_(vehicles) {}
+};
+struct RandomEventStateView {
+    RandomEventFieldsView fields_;
+    RandomEventStateView(int &turn, uint32_t &state, int &dust, int &vehicles)
+        : fields_(turn, state, dust, vehicles) {}
+};
+static RandomEventStateView GameDataStateStorage(TurnCurrentNum, GameState,
+                                                 DustCloudDuration, VehCurrentCount);
+
 static Map *map_tiles() { return MapTiles; }
 static int near_landmark(int, int) {
     call_log.push_back('N');
@@ -209,7 +226,6 @@ static int popp(const char *caption, const char *label, int flags,
     return 0;
 }
 
-#include "actual_blight_cache.inc"
 #include "actual_cases_15_16.inc"
 
 static Map &tile_at(int x, int y) {

@@ -40,6 +40,7 @@ static const int RadiusOffsetY[21] = {
     0, -1, 0, 1, 2, 1, 0, -1, -2, -2, 2, 2, -2, -3, -1, 1, 3, 3, 1, -1, -3
 };
 static int TurnCurrentNum, MapLongitudeBounds, MapLatitudeBounds, MapIsFlat;
+static uint32_t GameState;
 static uint32_t MapLongitude;
 static int IsMultiplayerPBEM, IsMultiplayerNet;
 static int territory_result, mutate_climate_in_territory;
@@ -59,6 +60,18 @@ struct Console {
     }
 };
 static Console ConsoleGlobal;
+
+struct RandomEventFieldsView {
+    int &turn_current_num_;
+    uint32_t &game_state_;
+    RandomEventFieldsView(int &turn, uint32_t &state)
+        : turn_current_num_(turn), game_state_(state) {}
+};
+struct RandomEventStateView {
+    RandomEventFieldsView fields_;
+    RandomEventStateView(int &turn, uint32_t &state) : fields_(turn, state) {}
+};
+static RandomEventStateView GameDataStateStorage(TurnCurrentNum, GameState);
 
 static Map *map_tiles() { return MapTiles; }
 static int has_tech(int tech, int faction) {
@@ -84,7 +97,7 @@ static int whose_territory(int, int x, int y, int *base, int ignore_comm) {
         map_tiles()[y * MapLongitude + (x >> 1)].climate = 0x60;
     return territory_result;
 }
-static void bit_set_call(int x, int y, int bit, int set) {
+static void bit_set(int x, int y, int bit, int set) {
     assert(x == 4 && y == 4 && set == 0);
     Map &tile = map_tiles()[y * MapLongitude + (x >> 1)];
     tile.bit &= ~static_cast<uint32_t>(bit);

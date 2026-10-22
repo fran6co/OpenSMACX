@@ -28,6 +28,7 @@ static Map MapTiles[72];
 static int RadiusOffsetX[289];
 static int RadiusOffsetY[289];
 static int TurnCurrentNum, MapLongitudeBounds, MapLatitudeBounds, MapLongitude;
+static unsigned int GameState;
 static int MapIsFlat, IsMultiplayerNet, IsMultiplayerPBEM;
 static int has_tech_result, territory_result, focus_result, shift_state;
 static int tech_rate_result, energy_bank_checks, network_node_checks;
@@ -57,6 +58,18 @@ struct Console {
     int focus_calls;
 };
 static Console ConsoleGlobal;
+
+struct RandomEventFieldsView {
+    int &turn_current_num_;
+    unsigned int &game_state_;
+    RandomEventFieldsView(int &turn, unsigned int &state)
+        : turn_current_num_(turn), game_state_(state) {}
+};
+struct RandomEventStateView {
+    RandomEventFieldsView fields_;
+    RandomEventStateView(int &turn, unsigned int &state) : fields_(turn, state) {}
+};
+static RandomEventStateView GameDataStateStorage(TurnCurrentNum, GameState);
 
 static bool has_tech(int preq, int faction) {
     (void)faction; ++tech_checks; last_tech_preq = preq;

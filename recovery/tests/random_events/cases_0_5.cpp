@@ -45,6 +45,21 @@ static char popup_caption[1032];
 static char popup_picture[64];
 static int popup_value;
 
+struct RandomEventsLockMasks { unsigned int &enable_mask_; RandomEventsLockMasks(unsigned int &v) : enable_mask_(v) {} };
+struct RandomEventsFields {
+    unsigned int (&faction_rankings_)[8];
+    RandomEventsLockMasks lock_masks_;
+    int &turn_current_num_;
+    RandomEventsFields(unsigned int (&rankings)[8], unsigned int &lock, int &turn)
+        : faction_rankings_(rankings), lock_masks_(lock), turn_current_num_(turn) {}
+};
+struct RandomEventsGameDataStateStorage {
+    RandomEventsFields fields_;
+    RandomEventsGameDataStateStorage(unsigned int (&rankings)[8], unsigned int &lock, int &turn)
+        : fields_(rankings, lock, turn) {}
+};
+static RandomEventsGameDataStateStorage GameDataStateStorage(FactionRankings, LockEnableMask, TurnCurrentNum);
+
 static int random(int low, int high) {
     assert(low == 0);
     assert(high == 4);

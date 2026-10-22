@@ -29,25 +29,35 @@ struct Veh {
 typedef char veh_proto_and_damage_offsets[(offsetof(Veh,proto_id)==0x0A && offsetof(Veh,dmg_incurred)==0x10)?1:-1];
 struct VehPrototype { char veh_name[32]; uint32_t ability_flags; uint8_t chassis_id,weapon_id,armor_id,reactor_id,carry_capacity,cost,plan; int8_t unk_1; uint8_t obsolete_factions; int8_t combat_factions,icon_offset,padding; uint16_t flags; int16_t preq_tech; };
 typedef char proto_reactor_plan_offsets[(offsetof(VehPrototype,reactor_id)==0x27 && offsetof(VehPrototype,plan)==0x2A)?1:-1];
-struct PlayerData { uint32_t flags,ranking; unsigned char prefix_to_current_bases[0x1054]; int current_num_bases; };
+struct PlayerData { uint32_t flags,ranking; unsigned char prefix_to_current_bases[0x1054]; uint32_t current_num_bases; };
 typedef char current_bases_is_at_0x105c[(offsetof(PlayerData,current_num_bases)==0x105C)?1:-1];
 
-#include "actual_case14.inc"
+struct GameDataFields {
+    int turn_current_num_, game_state_;
+    uint32_t mount_planet_x_, mount_planet_y_;
+    int vehicle_current_count_, base_current_count_, dust_cloud_duration_;
+};
+struct GameDataState { GameDataFields fields_; };
 
 struct Fixture {
-    bool pbem, net; int turn, local, flat, longitude, longitude_bounds, latitude_bounds;
+    bool pbem, net; int turn, local, faction_id_, flat, longitude, longitude_bounds, latitude_bounds;
     uint32_t event_flags, mount_x, mount_y, unknown_bitfield1; int dust_duration;
     PlayerData players[8]; Base bases[16]; Veh vehicles[16]; VehPrototype prototypes[16];
+    GameDataState game_data;
     Map tiles[128*64]; int base_count, veh_count;
     int radius_x[81], radius_y[81]; int bit_sets, syncs, rocky_calls;
     int kills[16], kill_count, base_kills, parses, focuses, draws, popps;
     char trace[2048]; int trace_count;
     bool focus_result;
-    Fixture() : pbem(false),net(false),turn(75),local(2),flat(1),longitude(64),
+    Fixture() : pbem(false),net(false),turn(75),local(2),faction_id_(2),flat(1),longitude(64),
         longitude_bounds(128),latitude_bounds(64),event_flags(0),mount_x(40),mount_y(40),unknown_bitfield1(0),
         dust_duration(0),base_count(0),veh_count(0),bit_sets(0),syncs(0),rocky_calls(0),
         kill_count(0),base_kills(0),parses(0),focuses(0),draws(0),popps(0),trace_count(0),focus_result(false) {
         for (int i=0;i<8;++i) { players[i].flags=0; players[i].ranking=0; players[i].current_num_bases=0; }
+        game_data.fields_.turn_current_num_=turn; game_data.fields_.game_state_=0;
+        game_data.fields_.mount_planet_x_=mount_x; game_data.fields_.mount_planet_y_=mount_y;
+        game_data.fields_.vehicle_current_count_=veh_count; game_data.fields_.base_current_count_=base_count;
+        game_data.fields_.dust_cloud_duration_=0;
         std::memset(bases,0,sizeof(bases)); std::memset(vehicles,0,sizeof(vehicles));
         std::memset(prototypes,0,sizeof(prototypes)); std::memset(tiles,0,sizeof(tiles));
         for (int i=0;i<16;++i) { bases[i].alive=true; bases[i].fixture_tag=-1; vehicles[i].alive=true; vehicles[i].home_base_id=-1; }
@@ -97,6 +107,62 @@ struct Fixture {
     void popp_big_fat_volcano() { note('p'); ++popps; }
 };
 
+static Fixture *CurrentFixture;
+static Map *map_loc(int x,int y) { return &CurrentFixture->map_tile(x,y); }
+static void bit_set(int x,int y,int mask,int set) { CurrentFixture->bit_set(x,y,mask,set!=0); }
+static void synch_bit(int x,int y,int faction) { CurrentFixture->synch_bit(x,y,faction); }
+static void rocky_set(int x,int y,int value) { CurrentFixture->rocky_set(x,y,value); }
+static void veh_kill(int id) {
+    CurrentFixture->kill_vehicle(id);
+    CurrentFixture->game_data.fields_.vehicle_current_count_=CurrentFixture->veh_count;
+}
+static int base_at(int x,int y) { return CurrentFixture->base_at(x,y); }
+static void parse_says(int,const char *name,int,int) { CurrentFixture->parse_base_name_suffix(name); }
+static bool is_objective(int id) { return CurrentFixture->is_objective_base(id); }
+static void base_kill(int id) { CurrentFixture->kill_base(id); }
+static void draw_map(int mode) { CurrentFixture->draw_map(mode); }
+static const int ScriptPopupFile=0;
+static void popp(int,const char *,int,const char *,int) {
+    assert(CurrentFixture->game_data.fields_.dust_cloud_duration_==10);
+    CurrentFixture->popp_big_fat_volcano();
+}
+static void random_events_case14_from_mapped_body(int,int,int,int,int,int);
+static void run_case14(Fixture &f,int event_kind,int faction,int base) {
+    CurrentFixture=&f;
+    f.faction_id_=f.local;
+    f.game_data.fields_.turn_current_num_=f.turn;
+    f.game_data.fields_.game_state_=(int)f.event_flags;
+    f.game_data.fields_.mount_planet_x_=f.mount_x;
+    f.game_data.fields_.mount_planet_y_=f.mount_y;
+    f.game_data.fields_.vehicle_current_count_=f.veh_count;
+    f.game_data.fields_.base_current_count_=f.base_count;
+    random_events_case14_from_mapped_body(event_kind,faction,base,0,0,0);
+    f.dust_duration=f.game_data.fields_.dust_cloud_duration_;
+}
+
+#define IsMultiplayerPBEM (CurrentFixture->pbem)
+#define GameDataStateStorage (CurrentFixture->game_data)
+#define PlayersData (CurrentFixture->players)
+#define Bases (CurrentFixture->bases)
+#define Vehs (CurrentFixture->vehicles)
+#define VehPrototypes (CurrentFixture->prototypes)
+#define MapLongitudeBounds (CurrentFixture->longitude_bounds)
+#define MapLatitudeBounds (CurrentFixture->latitude_bounds)
+#define MapLongitude (CurrentFixture->longitude)
+#define MapIsFlat (CurrentFixture->flat)
+#define RadiusOffsetX (CurrentFixture->radius_x)
+#define RadiusOffsetY (CurrentFixture->radius_y)
+#define ConsoleGlobal (*CurrentFixture)
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-variable"
+#endif
+#include "actual_case14.inc"
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
+
 static void set_offset(Fixture &f,int index,int dx,int dy) {
     f.radius_x[index]=dx; f.radius_y[index]=dy;
 }
@@ -129,29 +195,38 @@ static void prepare(Fixture &f) {
 int main() {
     // Failure gates have no terrain, vehicle, base, display, or popup effects.
     Fixture gate; prepare(gate); gate.pbem=true;
-    random_events_case14(gate,1,0);
+    run_case14(gate,14,1,0);
     assert(gate.bit_sets==0 && gate.veh_count==3 && gate.base_kills==0 && gate.popps==0);
     gate.pbem=false; gate.turn=74;
-    random_events_case14(gate,1,0);
+    run_case14(gate,14,1,0);
     assert(gate.bit_sets==0);
     gate.turn=75; gate.event_flags=0x10;
-    random_events_case14(gate,1,0);
+    run_case14(gate,14,1,0);
     assert(gate.bit_sets==0);
 
     Fixture unseen; prepare(unseen); unseen.players[1].flags=0;
     unseen.map_tile(40,40).visibility &= ~(1u<<1);
-    random_events_case14(unseen,1,0);
+    run_case14(unseen,14,1,0);
     assert(unseen.bit_sets==0 && unseen.popps==0);
     Fixture low_rank; prepare(low_rank); low_rank.players[1].ranking=5;
-    random_events_case14(low_rank,1,0);
+    run_case14(low_rank,14,1,0);
     assert(low_rank.bit_sets==0 && low_rank.popps==0);
+
+    Fixture high_bit_count; prepare(high_bit_count);
+    high_bit_count.players[1].current_num_bases=0x80000000u;
+    run_case14(high_bit_count,14,1,0);
+    assert(high_bit_count.bit_sets==0 && high_bit_count.popps==0);
+    Fixture negative_count; prepare(negative_count);
+    negative_count.players[1].current_num_bases=static_cast<uint32_t>(-1);
+    run_case14(negative_count,14,1,0);
+    assert(negative_count.bit_sets==0 && negative_count.popps==0);
 
     // The exact body mutates each in-bounds radius tile in bit/sync/rocky order,
     // kills units on the live volcano, damages other units, kills a non-objective
     // inner base, scales protected/farther populations by ring band, and then
     // drives focus/redraw and the volcano popup.
     Fixture f; prepare(f);
-    random_events_case14(f,1,0);
+    run_case14(f,14,1,0);
     assert(f.bit_sets==5 && f.syncs==5 && f.rocky_calls==5);
     assert(f.unknown_bitfield1==1);
     assert(f.trace[0]=='b' && f.trace[1]=='s' && f.trace[2]=='r' && f.trace[3]=='v');
@@ -164,20 +239,20 @@ int main() {
     assert(f.bases[2].fixture_tag==3 && f.bases[2].population_size==4);
     assert(f.bases[3].fixture_tag==4 && f.bases[3].population_size==6);
     assert(f.focuses==1 && f.draws==1 && f.popps==1 && f.dust_duration==10);
-    assert(f.trace[f.trace_count-4]=='f' && f.trace[f.trace_count-3]=='d' &&
-           f.trace[f.trace_count-2]=='D' && f.trace[f.trace_count-1]=='p');
+    assert(f.trace[f.trace_count-3]=='f' && f.trace[f.trace_count-2]=='d' &&
+           f.trace[f.trace_count-1]=='p');
 
     // Focus success suppresses draw_map but not state mutation or popup.
     Fixture focused; prepare(focused); focused.focus_result=true;
-    random_events_case14(focused,1,0);
+    run_case14(focused,14,1,0);
     assert(focused.focuses==1 && focused.draws==0 && focused.popps==1);
 
     // Dormant/marked center and out-of-range selected base reject before effects.
     Fixture dormant; prepare(dormant); dormant.map_tile(40,40).bit2|=BIT2_UNK_80000000;
-    random_events_case14(dormant,1,0);
+    run_case14(dormant,14,1,0);
     assert(dormant.bit_sets==0 && dormant.popps==0);
     Fixture far; prepare(far); far.bases[0].x=100;
-    random_events_case14(far,1,0);
+    run_case14(far,14,1,0);
     assert(far.bit_sets==0 && far.popps==0);
 
     // Round-map wrapping takes the single native add/subtract branch. A base
@@ -188,7 +263,7 @@ int main() {
     set_offset(wrap,0,0,0);
     wrap.map_tile(0,40).bit2=BIT2_VOLCANO;
     wrap.map_tile(0,40).visibility=(1u<<1)|(1u<<2);
-    random_events_case14(wrap,1,0);
+    run_case14(wrap,14,1,0);
     assert(wrap.bit_sets==1 && wrap.kills[0]==0 && wrap.popps==1);
     return 0;
 }

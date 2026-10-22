@@ -51,6 +51,7 @@ static const int RadiusOffsetY[21] = {
 };
 static unsigned int LockEnableMask;
 static int TurnCurrentNum;
+static unsigned int GameState;
 static int MapIsFlat;
 static int MapLongitudeBounds;
 static int MapLatitudeBounds;
@@ -72,6 +73,21 @@ static int popup_value;
 static std::string call_log;
 static Console ConsoleGlobal;
 static Map *map_tiles() { return MapTiles; }
+
+struct LockMaskView { unsigned int &enable_mask_; explicit LockMaskView(unsigned int &v) : enable_mask_(v) {} };
+struct RandomEventFieldsView {
+    int &turn_current_num_;
+    unsigned int &game_state_;
+    LockMaskView lock_masks_;
+    RandomEventFieldsView(int &turn, unsigned int &state, unsigned int &lock)
+        : turn_current_num_(turn), game_state_(state), lock_masks_(lock) {}
+};
+struct RandomEventStateView {
+    RandomEventFieldsView fields_;
+    RandomEventStateView(int &turn, unsigned int &state, unsigned int &lock)
+        : fields_(turn, state, lock) {}
+};
+static RandomEventStateView GameDataStateStorage(TurnCurrentNum, GameState, LockEnableMask);
 
 static int parse_num(int channel, int value) {
     ++parse_calls;
