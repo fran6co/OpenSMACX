@@ -1,0 +1,21 @@
+{
+  "event_id": "fc490ccda02c5539c75010d791b6671593c695a3604f16b846baa09f372110a6",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_caviar_typed_io_callbacks_oct9.py",
+      "recovery/tests/test_caviar_typed_prefix_oct20r.py",
+      "recovery/tests/test_cvr_record_loader.py"
+    ],
+    "evidence": [
+      "Authorize relocation-aware actual-source test extraction for shared Caviar I/O owner and typed forwarding. Retain behavioral oracles and positive/negative controls; add pointer publication/callback behavior checks rather than weakening or deleting existing tests."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "df8b0873ed368ec024fa12ec451b4601556a1037d5f66e9ee4b86f5057c79ffb",
+  "request_id": "caviar-io-actual-source-tests-oct22l",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:caviar-source-batch-oct19e"
+}

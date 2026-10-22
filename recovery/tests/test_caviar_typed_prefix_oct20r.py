@@ -10,6 +10,7 @@ ROOT = next(parent for parent in Path(__file__).resolve().parents
             if (parent / "src/caviar.cpp").is_file())
 HEADER = ROOT / "src/caviar.h"
 SOURCE = ROOT / "src/caviar.cpp"
+IO_SOURCE = ROOT / "src/caviar_io.cpp"
 
 
 def extract(source, signature):
@@ -89,6 +90,7 @@ int main() {
 def compile_and_run(mutant=None):
     header = HEADER.read_text()
     source = SOURCE.read_text()
+    io_source = IO_SOURCE.read_text()
     callbacks = extract(header, "struct VoxIoCallbacks {") + ";"
     storage = extract(header, "struct CaviarOutputMessageWindowCandidate {") + ";"
     helper = "template <typename Callback>\n" + extract(
@@ -100,7 +102,7 @@ def compile_and_run(mutant=None):
                             "#define vox_alloc_slot ", "#define vox_free_slot ",
                             "#define vox_read_slot ", "#define vox_write_slot ",
                             "#define vox_seek_slot ", "#define vox_tell_slot ")))
-    read_exact = extract(source,
+    read_exact = extract(io_source,
         "extern \"C\" int __cdecl vox_read_exact(int fd, void *buffer, int count) {")
     if mutant == "wrong_read_member":
         slots = slots.replace("CaviarOutputMessageWindow.io_read_",
