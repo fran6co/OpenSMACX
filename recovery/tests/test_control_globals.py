@@ -32,15 +32,15 @@ def control_globals():
     compiler = Compiler(ROOT, profile=settings.compiler_profile)
     objects = {unit: [Coff(compiler(ROOT / unit, (), flags + settings.layout_flags))
                       for flags in settings.flag_sets]
-               for unit in ("src/win.cpp", "src/editbox.cpp", "src/listbox.cpp")}
+               for unit in ("src/win.cpp", "src/win_input.cpp", "src/editbox.cpp", "src/listbox.cpp")}
     return compiler, settings, objects
 
 
 def test_keyboard_updates_pointer_storage_not_the_pointed_to_window(control_globals):
     _, _, objects = control_globals
-    handler = symbol_at("src/win.cpp", 0x5F5FB0)
+    handler = symbol_at("src/win_input.cpp", 0x5F5FB0)
     assert handler == "?on_char@Win@@UAEXDH@Z"
-    for obj in objects["src/win.cpp"]:
+    for obj in objects["src/win_input.cpp"]:
         for symbol in ("?WinPointerOwner4@@3PAVWin@@A", "?WinZOrderFlag@@3HA"):
             assert any(access & CS_AC_WRITE for access in global_accesses(obj, handler, symbol))
         for symbol in ("?WinRootCount@@3HA", "?JackalInitFlags@@3HA", "?WinZOrderWindow@@3PAVWin@@A"):
@@ -49,15 +49,15 @@ def test_keyboard_updates_pointer_storage_not_the_pointed_to_window(control_glob
 
 def test_compiled_damage_control_cannot_hide_a_pointee_write(control_globals):
     compiler, settings, _ = control_globals
-    path = ROOT / "src/win.cpp"
+    path = ROOT / "src/win_input.cpp"
     source = path.read_bytes()
     good = b"if (WinPointerOwner4 == &WinBubbleWindow) {\n                WinPointerOwner4 = 0;"
     bad = b"if (*(void **)WinPointerOwner4 == &WinBubbleWindow) {\n                *(int *)WinPointerOwner4 = 0;"
     assert source.count(good) == 1
     for flags in settings.flag_sets:
-        obj = Coff(compiler.overlay(path, {"src/win.cpp": source.replace(good, bad)},
+        obj = Coff(compiler.overlay(path, {"src/win_input.cpp": source.replace(good, bad)},
                                     (), flags + settings.layout_flags))
-        accesses = global_accesses(obj, symbol_at("src/win.cpp", 0x5F5FB0),
+        accesses = global_accesses(obj, symbol_at("src/win_input.cpp", 0x5F5FB0),
                                    "?WinPointerOwner4@@3PAVWin@@A")
         assert accesses and not any(access & CS_AC_WRITE for access in accesses)
     assert path.read_bytes() == source
@@ -78,7 +78,7 @@ def test_editbox_key_state_import_resolves_to_the_pinned_sdk_slot(control_global
 
 def test_live_keyboard_bubble_owners_and_mutable_z_order(tmp_path, monkeypatch):
     run_recovered_harness(tmp_path, monkeypatch, "win_keyboard_harness.cpp", [
-        ("// LIVE_KEYBOARD", "src/win.cpp", 0x5F5FB0)])
+        ("// LIVE_KEYBOARD", "src/win_input.cpp", 0x5F5FB0)])
 
 
 def test_live_keyboard_control_rejects_the_old_extra_indirection(tmp_path, monkeypatch):
@@ -107,7 +107,7 @@ def test_live_keyboard_control_rejects_the_old_extra_indirection(tmp_path, monke
     ("Win **list = debug_window.children_;",
      "Win *snapshot[4]; for (int k = 0; k < 4; ++k) "
      "snapshot[k] = debug_window.children_[k]; Win **list = snapshot;"),
-    ("Win *w = debug_window.val_4_;", "Win *w = val_4_;"),
+    ("Sound *w = debug_window.val_4_;", "Sound *w = val_4_;"),
 ])
 def test_live_keyboard_controls_require_owned_members_and_fresh_children(
         tmp_path, monkeypatch, good, bad):

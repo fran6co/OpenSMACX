@@ -18,6 +18,10 @@
 
 #include "stdafx.h"
 #include "win.h"
+#include "sound.h"
+#include "multidebug.h"
+#include "jackal.h"
+#include "scroll.h"
 
 /*
 Purpose: The window class's WM_SYSKEYDOWN/WM_SYSCHAR router. It resolves
@@ -153,4 +157,129 @@ void __cdecl Win::OnKey(void * hwnd, unsigned int key, long flags, int repeat, u
 
     if (WinKeyHook != nullptr && flags != 0) WinKeyHook(key);
     if (WinMessageHook != nullptr) WinMessageHook();
+}
+
+// ===== homed from src/unrecovered/005f5fb0.cpp =====
+
+// ORIGINAL: 0x005F5FB0 sub_5f5fb0 0x005F5FB0-0x005F622B
+// RECOVERY_BINDING: v1 {"evidence": ["git:85fc7721f56c2a5cae754b993fe04fcfec74fec1:src/unrecovered/005f5fb0.cpp", "Pinned original5F5FB0..5F622B; direct global accesses5F60DD..5F619C"], "reason": "Restore the lost homing identity for the existing Win keyboard handler; its receiver, scroll dispatch and two stack words identify this method, not the separate string matcher at5F5F60."}
+// symbol    ?on_char@Win@@UAEXDH@Z
+// TRIED: extern "C" __stdcall(int,int) free function per IDA's guess - the spilled ecx is read back later ([esp+0x10] resolves to the "push ecx" slot itself, not a caller stack arg) and used as a Win* (scroll_vert_/scroll_horz_/key_click_event), so this is landed as Win::sub_5f5fb0(char, int) __thiscall instead; the unused 2nd stack dword explains `ret 8` with only 1 real read.
+void Win::on_char(char param2, int param3) {
+    char **cursor = &WinKeyRingCursor;
+    **cursor = param2;
+
+    bool matched = true;
+    {
+        // the LAST character; the loop below compares backward from it
+        const char *pat = WinMdebugCode + 5;
+        char *pos = *cursor;
+        int count = 6;
+        do {
+            if (*pos != *pat) {
+                matched = false;
+                break;
+            }
+            pos--;
+            pat--;
+            if (pos < (char *)WinKeyRing) {
+                pos = (char *)(WinKeyRing + 9);
+            }
+            count--;
+        } while (count > 0);
+    }
+
+    if (matched) {
+        Win &debug_window = WinBubbleWindow;
+        if ((static_cast<uint8_t>(debug_window.iSomeFlag_) & 1) == 0 ||
+            (debug_window.win_parent_ != 0 &&
+             debug_window.win_parent_->is_visible() == 0)) {
+            (&WinBubbleWindow)->show(0);
+        } else if ((static_cast<uint8_t>(debug_window.iSomeFlag_) & 1) != 0) {
+            if (WinBubbleCompanion == &WinBubbleWindow &&
+                WinBubbleActive != 0) {
+                WinBubbleCompanion = nullptr;
+                WinBubbleActive = 0;
+                (&WinBubbleWindow)->update_screen(&WinBubbleRect, 0);
+                (&WinBubbleWindow)->flip(&WinBubbleRect);
+            }
+
+            Win *cand = WinPointerOwner1;
+            if (cand == nullptr) {
+                cand = WinPointerOwner2;
+            }
+            if (cand == &WinBubbleWindow) {
+                WinPointerOwner1 = nullptr;
+                WinPointerOwner2 = 0;
+            } else if (cand != nullptr && debug_window.child_count_ > 0) {
+                Win **list = debug_window.children_;
+                int i = 0;
+                do {
+                    if (list[i] == cand || list[i]->is_descendant(cand)) {
+                        WinPointerOwner1 = nullptr;
+                        WinPointerOwner2 = 0;
+                        break;
+                    }
+                    i++;
+                } while (i < debug_window.child_count_);
+            }
+
+            if (WinPointerOwner3 == &WinBubbleWindow) {
+                WinPointerOwner3 = 0;
+                (&WinBubbleWindow)->on_lose_mouse_capture();
+            }
+            if (WinPointerOwner4 == &WinBubbleWindow) {
+                WinPointerOwner4 = 0;
+            }
+            debug_window.iSomeFlag_ &= ~1;
+            if (WinFocusWindow == &WinBubbleWindow) {
+                (&WinBubbleWindow)->release_modal();
+            }
+
+            if ((JackalInitFlags & 1) != 0) {
+                WinZOrderCount = 0;
+                if (WinRootCount > 0) {
+                    Win **entries = WinRootWindows;
+                    Win *cur = WinZOrderWindow;
+                    int j = 0;
+                    do {
+                        if (cur != 0 && cur == entries[j]) {
+                            WinZOrderCount = 0;
+                            WinZOrderFlag = 0;
+                        }
+                        if ((entries[j]->iSomeFlag_ & 1) != 0) {
+                            recurse_zorder(entries[j]);
+                            cur = WinZOrderWindow;
+                        }
+                        j++;
+                    } while (j < WinRootCount);
+                }
+
+                InvalidateRect(HandleMain, 0, 0);
+
+                Sound *w = debug_window.val_4_;
+                if (w != 0 && w->is_playing() == 0) {
+                    w->play();
+                }
+            }
+        }
+    }
+
+    *cursor = *cursor + 1;
+    if (*cursor > (char *)(WinKeyRing + 9)) {
+        *cursor = (char *)WinKeyRing;
+    }
+
+    bool handled = false;
+    if (scroll_vert_ != 0 &&
+        scroll_vert_->on_key_click((int)param2, WinKeyModifiers) != 0) {
+        handled = true;
+    }
+    if (!handled && scroll_horz_ != 0 &&
+        scroll_horz_->on_key_click((int)param2, WinKeyModifiers) != 0) {
+        handled = true;
+    }
+    if (!handled) {
+        key_click_event((int)param2, WinKeyModifiers);
+    }
 }

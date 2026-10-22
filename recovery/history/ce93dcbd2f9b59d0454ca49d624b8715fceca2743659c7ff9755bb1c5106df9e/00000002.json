@@ -1,0 +1,34 @@
+{
+  "event_id": "4e0d772e36768e8b8dc392a406be843966dd5eebbcbc645bdecd6ce40ee7a465",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_control_globals.py",
+      "recovery/tests/test_win_character_input_owner_oct22.py",
+      "recovery/tests/win_keyboard_harness.cpp",
+      "src/win.cpp",
+      "src/win_input.cpp"
+    ],
+    "evidence": [
+      "Move only the complete existing keyboard-ring/debug-chord/scroll dispatch handler and its ORIGINAL/RECOVERY_BINDING/emitted symbol/TRIED block unchanged into the already compiled input owner beside OnChar/OnKey/OnSysKey. Preserve class, declaration, all globals, behavior and original quirks; no new claim, compiler/CMake change, source-order trick or historical-TU assertion.",
+      "Win::on_char consumes the existing input router virtual slot79 and shares actual keyboard state, supporting this semantic source grouping. The complete mouse resolver/helper remains in win.cpp; get_key_window-only relocation and same-TU order experiments are exhausted and not repeated.",
+      "The receiving owner needs actual sound.h, multidebug.h, jackal.h and scroll.h declarations. Two private input compiles failed incomplete dependencies before the third succeeded; all remain counted. Native replay/unchanged controls passed for both actual recipes, no source body was altered. The final private pair retains all230 original identities/history, all154 current exact verdicts and all other categories; on_char improves222 to197 instructions versus196original but remains MISMATCH. No further exploratory spelling iteration is authorized in this step.",
+      "Native win_input outside-body residual passes; win.cpp residual explicitly fails only the Win vtable slot79 DIR32 target transitioning from a defined scoped symbol to the same external symbol, plus that undefined entry. This permission authorizes reviewing that precise cross-TU provider migration with fresh full build/link, complete object/table/symbol closure and independent review; it neither changes the native result to pass nor waives unknown linked selection or game acceptance.",
+      "Update owner-specific test extraction only for0x5F5FB0, not the Win storage checks. Bring stale keyboard doubles into agreement with the already recovered Sound pointer and Scroll::on_key_click interfaces while retaining every runtime assertion and damage case; host tests must extract actual mapped source, not copy its implementation.",
+      "Preserve immutable aa1a3ce6 task baseline, all prior scopes/discoveries/claims and the separate typed_keys_differ0x5F5F60 body. Require source/history union continuity, fresh build/link, whole census/strict-reference comparison, explicit physical outside-body/table/provider review, relevant tests and fresh destination rechecks before coordinator manual integration. Do not fabricate automatic, full linked-preservation, runtime or game acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6250416,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "e1b174f0dcf9bcd07e5153eb633ea1b442b0553005a6d06075939fe26e995adf",
+  "request_id": "central-win-character-input-owner-oct22v",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:win-input-callback-owner-oct10"
+}

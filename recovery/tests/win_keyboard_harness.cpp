@@ -5,18 +5,24 @@
 #define nullptr 0
 typedef unsigned char uint8_t;
 struct RECT { int left, top, right, bottom; };
-struct ScrollSlots {
+struct Scroll {
     int calls, handled;
-    int slot025(int key, int modifiers) {
+    int on_key_click(int key, int modifiers) {
         assert(key == 'g' && modifiers == 23); ++calls; return handled;
     }
+};
+struct Sound {
+    int playing_calls, play_calls, playing_result;
+    virtual int is_playing() { ++playing_calls; return playing_result; }
+    virtual int play() { ++play_calls; return 0; }
 };
 struct Win {
     void *guard;
     unsigned int iSomeFlag_;
-    Win *win_parent_, *val_4_, *children_[4], *descendant;
+    Win *win_parent_, *children_[4], *descendant;
+    Sound *val_4_;
     int child_count_, visible, visibility_queries, descendant_queries;
-    ScrollSlots *scroll_vert_, *scroll_horz_;
+    Scroll *scroll_vert_, *scroll_horz_;
     int released, shown, updated, flipped, activated, fallback, query;
     void on_char(char, int);
     int is_visible() { ++visibility_queries; return visible; }
@@ -35,6 +41,7 @@ struct Win {
 struct MultiDebug : Win {};
 MultiDebug WinBubbleWindow;
 Win other, root1, root2, receiver, parent, child1, child2;
+Sound sound;
 Win *WinBubbleCompanion, *WinPointerOwner1, *WinPointerOwner2;
 Win *WinPointerOwner3, *WinPointerOwner4, *WinFocusWindow;
 Win *WinZOrderWindow, *WinRootWindows[4];
@@ -86,6 +93,7 @@ void arm() {
     WinPointerOwner3 = 0;
     WinPointerOwner4 = 0;
     receiver.fallback = 0;
+    sound.playing_calls = sound.play_calls = sound.playing_result = 0;
 }
 
 int main() {
@@ -108,8 +116,9 @@ int main() {
     WinRootWindows[0] = &root1; WinRootWindows[1] = &root2;
     root1.iSomeFlag_ = root2.iSomeFlag_ = 1;
     WinZOrderWindow = &root1; WinZOrderFlag = 41; WinZOrderCount = 17;
-    WinBubbleWindow.val_4_ = &other; receiver.on_char('g', 0);
-    assert(traversals == 2 && invalidations == 1 && other.activated == 1);
+    WinBubbleWindow.val_4_ = &sound; receiver.on_char('g', 0);
+    assert(traversals == 2 && invalidations == 1);
+    assert(sound.playing_calls == 1 && sound.play_calls == 1);
     assert(WinZOrderFlag == 0 && WinZOrderCount == 0);
 
     // The traversal callback can change both the selected window and count.
@@ -151,7 +160,7 @@ int main() {
     }
 
     // Unmatched input still routes vertical, horizontal, then fallback.
-    ScrollSlots vertical = {0, 1}, horizontal = {0, 1};
+    Scroll vertical = {0, 1}, horizontal = {0, 1};
     arm(); WinKeyRing[0] = 'x'; receiver.scroll_vert_ = &vertical;
     receiver.scroll_horz_ = &horizontal; receiver.on_char('g', 0);
     assert(vertical.calls == 1 && horizontal.calls == 0 && receiver.fallback == 0);
