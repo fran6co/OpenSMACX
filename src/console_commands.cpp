@@ -1127,12 +1127,12 @@ void Console::automate(int veh_id, int order) {
 
 // A convoy either opens the supply panel at its base or chooses an extraction
 // resource at its current site. The vehicle lock covers both interactions.
-// Resource labels are RulesResource members. The original also sets an
-// unowned net action slot at 0x0093E904 before opening supply_options;
-// that effect still requires its owner.
+// Resource labels are RulesResource members. Before the base supply panel,
+// the original sets the already-owned NetDaemon channel action word to 3.
+// Keep this write ahead of the panel's callback-capable work.
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004D8FA0 ?convoy@Console@@QAEXH@Z 0x004D8FA0-0x004D916D
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004d8fa0.cpp", "source:src/alpha.h"], "reason": "Seed 004d8fa0 identifies the Console convoy order and lock lifecycle; typed Veh, Base and RulesResource records replace receiver and table offsets. The resource label run at 0x0094615C is Resource[0].name_plural, with the singular member selected for a yield of one. The net action slot at 0x0093E904 remains an external ownership discovery; this binding does not claim that effect."}
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004d8fa0.cpp", "source:src/alpha.h", "pinned:0x004D8FF4 dword value 3 store before supply_options at 0x004D8FFE", "source:src/netdaemon.h:channels_ at 0x1B68 and LockStateEntry::leading_words_[3] at 0xC", "source:src/console.cpp:supply_options reads the same source-owned action flags"], "reason": "Seed 004d8fa0 identifies the Console convoy order and lock lifecycle; typed Veh, Base and RulesResource records replace receiver and table offsets. The resource label run at 0x0094615C is Resource[0].name_plural, with the singular member selected for a yield of one. The original pre-panel dword value 3 write at 0x004D8FF4 targets the already-owned NetDaemonNet.channels_[0].leading_words_[3], whose singleton-relative offset 0x1B74 identifies 0x0093E904. Preserve that write before supply_options without adding duplicate storage or claiming full matching/acceptance."}
 void Console::convoy(int veh_id) {
     if (NetDaemonNet.lock_veh(&veh_id, 0, -1, -1, 0) != 0) {
         return;
@@ -1140,6 +1140,7 @@ void Console::convoy(int veh_id) {
     Veh &vehicle = Vehs[veh_id];
     const int base_id = base_at(vehicle.x, vehicle.y);
     if (base_id >= 0) {
+        NetDaemonNet.channels_[0].leading_words_[3] = 3;
         supply_options(veh_id, base_id);
         NetDaemonNet.unlock_veh();
         return;

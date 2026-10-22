@@ -1,0 +1,24 @@
+{
+  "event_id": "b8a24ca5b3ff6915ddf1e274b4281210e18662e1f2e8b7035f46bc4534a7cea2",
+  "payload": {
+    "affects": [
+      "entity-bc2213e619aeb5ff32b67bd5c372f9692439a0bb68ed66a433b190001ab63311"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "console-convoy-owned-action-slot-oct22q",
+    "evidence": [
+      "Pinned Console::convoy4D8FA0..4D916D writes dword3 at4D8FF4 to93E904 immediately before supply_options call4D8FFE. Current source explicitly records the omitted effect as unowned; the complete current function lacks it. This is faithful recovery, not an original behavior fix.",
+      "Existing NetDaemon source owns channels_ at+1B68; channels_[0].leading_words_[3] is+1B74 and singleton93CD90 makes93E904. The already modeled constructor clears this field and ordinary typed producers/consumers use it, including supply_options reading the same action flags. Reuse that genuine member, preserve opaque naming, and add no storage/type/layout/API or fixed-address dispatcher.",
+      "Authorize adding the single exact dword3 member write only in the base-found branch before supply_options, preserving lock-rewritten vehicle ID, base ID, error/extraction/callback/sync/unlock paths. Remove obsolete unowned-effect prose by updating the adjacent rationale with native binding rendering, while retaining all original markers/identities/spans/claims and useful historical provenance.",
+      "Add actual-current-body host controls with callbacks observing the write timing and exact target/value. Cover lock rejection, lock-remapped ID, at-base path, no-home/nonconvoy paths, extraction cancel/success and resource labels; compile-success mutations must reject wrong value/channel, missing/misordered write, and writes outside the base path. Preserve surrounding implementation and use genuine typed owners; no flags, attributes, assembly, safety fixes or invented semantics.",
+      "Do not delay this complete semantic correction for prolonged byte matching. Native immutable overlay has one capped candidate and wrong-value damage; it is not acceptance. Require independent source/test review, fresh build/link, whole-census/physical collateral observations, source/claim/reference continuity and destination recheck before coordinator-reviewed manual integration. Historical task baseline remains immutable; full linked/automatic/structure/runtime/game acceptance is unproven."
+    ],
+    "hypothesis": "The omitted convoy action write is to an already source-owned NetDaemon channel word; restore its original timing/value without a new global.",
+    "kind": "discovery"
+  },
+  "previous_event": "3e2e419e075916c3d07cff6339fdc8146407e0b9c6a7d8dafd9c09be58a1ad80",
+  "request_id": "console-convoy-owned-action-slot-oct22q",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:console-commands-source-batch-oct19d"
+}

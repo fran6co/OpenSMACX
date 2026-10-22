@@ -1,0 +1,20 @@
+{
+  "event_id": "6c3be9296dac39a67e1b61a6fe699c124ef53c84ea9a0695b3d0ef3a08e56f67",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/gameplay_picker_supply/supply_options.cpp",
+      "recovery/tests/test_gameplay_picker_supply.py"
+    ],
+    "evidence": [
+      "The unchanged master reproduces seven preexisting failures in the directly relevant supply_options host controls. Its fixture still names the retired lock_state_[1] instead of the existing product channels_[0], and one mutation anchor expects the already-removed reinterpret_cast of the now-typed facility label. Authorize only updating fixture member spelling/index and the exact text-pointer mutation anchor to the live source. Preserve all callback/dataflow assertions, compile-success damage requirements and C++98 settings; no production supply_options/header change, task-baseline reset or waiver. Add the original convoy producer value3 consumer case to prove both modal selection and action dispatch on that state if supported by pinned checks."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "b8a24ca5b3ff6915ddf1e274b4281210e18662e1f2e8b7035f46bc4534a7cea2",
+  "request_id": "convoy-supply-host-control-scope-oct22q",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:console-commands-source-batch-oct19d"
+}
