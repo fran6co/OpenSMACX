@@ -102,35 +102,102 @@ def guarded(source, macro):
     raise AssertionError("unterminated guard: " + macro)
 
 
+def _definition_parts(definition):
+    code = masked(definition)
+    opening = code.find("{")
+    assert opening >= 0
+    closing = len(code.rstrip()) - 1
+    assert code[closing] == "}"
+    return definition[:opening + 1], definition[opening + 1:closing]
+
+
+def _mapped_case_block(body, condition):
+    code = masked(body)
+    match = re.search(r"\bif\s*\(\s*" + re.escape(condition) + r"\s*\)", code)
+    assert match, "mapped random_events branch missing: " + condition
+    return block(body, match.start())
+
+
+def _test_case_wrapper(name, signature, branch, context):
+    return ("static void " + name + "(" + signature + ") {\n" + context +
+            "\n" + branch + "\n}\n")
+
+
 def source_fragments():
     path = ROOT / "src/game.cpp"
     text = path.read_text(encoding="utf-8")
     rows = [r for r in read_file(path) if r.address == 0x51F2E0]
     assert len(rows) == 1 and rows[0].mode is Mode.BODY
     assert "BODY GOES HERE." not in rows[0].region
-    assert "random_events_candidate" not in rows[0].region
-    result = {
-        "actual_cases_0_5.inc": function(text, "random_events_cases_0_5"),
-        "actual_case6.hpp": guarded(text, "RANDOM_EVENTS_CASE6_HPP"),
-        "actual_cases_7_8.hpp": guarded(text, "RANDOM_EVENTS_CASES_7_8_POSITION_HPP"),
-        "actual_cases_9_11.hpp": guarded(text, "RANDOM_EVENTS_CASES_9_11_HPP"),
-        "actual_cases_12_13.inc": function(text, "random_events_cases_12_13"),
-        "actual_blight_cache.inc": function(text, "random_events_blight_cache_word"),
-        "actual_cases_15_16.inc": function(text, "random_events_cases_15_16"),
-        "actual_cases_17_18.inc": function(text, "random_events_cases_17_18"),
-        "actual_ceil_quarter.inc": function(text, "random_events_ceil_quarter"),
-        "actual_cases_19_21.inc": function(text, "random_events_cases_19_21"),
-        "actual_case14.inc": function(text, "random_events_case14"),
-        "actual_native_services.inc": "\n".join([*(struct(text, n) for n in (
-            "RandomEventsNativePlayerView", "RandomEventsNativeState9_11",
-            "RandomEventsNativeServices9_11", "RandomEventsNativePositionServices",
-            "RandomEventsNativeCase6State", "RandomEventsNativeCase6Services")),
-            function(text, "random_events_native_cases_9_11")]),
-        "actual_dispatch_input.inc": struct(text, "RandomEventsDispatchInput"),
-        "actual_entry_prepare.inc": function(text, "random_events_entry_prepare"),
-        "actual_dispatch.inc": function(text, "random_events_dispatch_cases"),
-        "actual_wrapper.inc": struct(text, "RandomEventsNativeCases"),
+    definition = function(text, "random_events")
+    header, body = _definition_parts(definition)
+    code = masked(body)
+    first_case = re.search(r"\bif\s*\(\s*event_kind\s*<=\s*5\s*\)", code)
+    assert first_case
+    entry_prefix = body[:first_case.start()]
+    cases = {
+        "actual_cases_0_5.inc": ("random_events_cases_0_5",
+            "int event_kind, int selected_faction, int selected_base_arg, int selected_roll",
+            "event_kind <= 5"),
+        "actual_case6.hpp": ("random_events_case6_from_mapped_body",
+            "int event_kind, int selected_faction, int selected_base_arg, int selected_roll, int snapshot_x, int snapshot_y",
+            "event_kind == 6"),
+        "actual_cases_7_8.hpp": ("random_events_cases_7_8_from_mapped_body",
+            "int event_kind, int selected_faction, int selected_base_arg, int selected_roll, int snapshot_x, int snapshot_y",
+            "event_kind == 7 || event_kind == 8"),
+        "actual_cases_9_11.hpp": ("random_events_native_cases_9_11",
+            "int event_kind",
+            "event_kind >= 9 && event_kind <= 11"),
+        "actual_cases_12_13.inc": ("random_events_cases_12_13",
+            "int event_kind, int selected_faction, int selected_base_arg, int selected_roll, int snapshot_x, int snapshot_y",
+            "event_kind == 12 || event_kind == 13"),
+        "actual_case14.inc": ("random_events_case14_from_mapped_body",
+            "int event_kind, int selected_faction, int selected_base_arg, int selected_roll, int snapshot_x, int snapshot_y",
+            "event_kind == 14"),
+        "actual_cases_15_16.inc": ("random_events_cases_15_16",
+            "int event_kind, int selected_faction, int selected_base_arg, int selected_roll, int snapshot_x, int snapshot_y",
+            "event_kind == 15 || event_kind == 16"),
+        "actual_cases_17_18.inc": ("random_events_cases_17_18",
+            "int event_kind, int selected_faction, int selected_base_arg, int selected_roll, int snapshot_x, int snapshot_y",
+            "event_kind == 17 || event_kind == 18"),
+        "actual_cases_19_21.inc": ("random_events_cases_19_21",
+            "int event_kind, int selected_faction, int selected_base_arg, int selected_roll, int snapshot_x, int snapshot_y",
+            "event_kind >= 19 && event_kind <= 21"),
     }
+    result = {}
+    for filename, (name, signature, condition) in cases.items():
+        branch = _mapped_case_block(body, condition)
+        if condition == "event_kind >= 9 && event_kind <= 11":
+            context_for_branch = """const int selected_base_id = 0;
+    const int base_roll = 0;
+    const int faction_id = 0;
+    const int base_x_snapshot = 0;
+    const int base_y_snapshot = 0;"""
+        elif condition == "event_kind >= 19 && event_kind <= 21":
+            context_for_branch = """const int selected_base_id = selected_base_arg;
+    (void)selected_roll;
+    const int faction_id = selected_faction;
+    const int base_x_snapshot = snapshot_x;
+    const int base_y_snapshot = snapshot_y;"""
+        elif condition == "event_kind <= 5":
+            context_for_branch = """const int selected_base_id = selected_base_arg;
+    const int base_roll = selected_roll;
+    const int faction_id = selected_faction;"""
+        else:
+            context_for_branch = """const int selected_base_id = selected_base_arg;
+    const int base_roll = selected_roll;
+    const int faction_id = selected_faction;
+    const int base_x_snapshot = snapshot_x;
+    const int base_y_snapshot = snapshot_y;"""
+        result[filename] = _test_case_wrapper(name, signature, branch, context_for_branch)
+    result["actual_entry_prefix.inc"] = entry_prefix
+    result["actual_entry_probe.inc"] = (
+        "static void random_events_entry_probe(int mode) {\n" + entry_prefix +
+        "\nentry_probe_reached = 1;\n" +
+        "entry_probe_event = event_kind; entry_probe_faction = faction_id;\n" +
+        "entry_probe_base = selected_base_id; entry_probe_roll = base_roll;\n" +
+        "entry_probe_x = base_x_snapshot; entry_probe_y = base_y_snapshot;\n}\n")
+    result["actual_random_events_definition.inc"] = definition
     return text, rows[0].region, result
 
 
@@ -150,179 +217,82 @@ def test_reviewed_case_bodies_are_extracted_from_current_owner(tmp_path, compile
     _, _, fragments = source_fragments()
     for name, body in fragments.items():
         (tmp_path / name).write_text(body + "\n")
-    if fixture == "cases_17_18.cpp":
-        (tmp_path / "actual_cases_17_18.inc").write_text(
-            fragments["actual_ceil_quarter.inc"] + "\n" + fragments["actual_cases_17_18.inc"])
     compile_run(tmp_path, compiler, (TESTS / fixture).read_text(), fixture)
 
 
-ENTRY_HOST = r'''#define __cdecl
-#include <cassert>
-#include <cstring>
-struct Base { short x,y; unsigned char faction_id_current; signed char population_size;
- unsigned int event; int random_event_turns; char name_string[25]; };
-struct PlayerData { unsigned int current_num_bases; unsigned int diplo_treaties[8];
- unsigned int diff_level,ranking,energy_reserves,flags,satellites_[4]; };
-static int GlobalEnergyEventState,SunspotDuration,DustCloudDuration,LockEnableMask;
-static int BaseCurrentCount,TurnCurrentNum,DiffLevelCurrent,StartingMissionYear;
-static unsigned int GameState,GameRules,MapRandSeed;
-static Base Bases[8]; static PlayerData PlayersData[8]; static char StringTemp[1032];
-static int random_values[8],random_count,random_index,reseed_count,reseed_value;
-static int parser_order_count,mutate_base_on_parse;
-static int dispatch_calls,dispatch_bucket; static RandomEventsDispatchInput dispatch_input;
-static int treaty_calls,treaty_row,treaty_column,popup_calls;
-static char popup_captions[4][32],popup_images[4][32];
-static int game_year(int turn){return StartingMissionYear+turn;}
-static int random(int low,int high){assert(low==0);(void)high;return random_values[random_index++];}
-static void random_reseed(unsigned int seed){++reseed_count;reseed_value=(int)seed;}
-static int parse_num(int low,int high){assert(low==0&&high==10);++parser_order_count;
- if(mutate_base_on_parse){Bases[0].x=19;Bases[0].y=20;}return 0;}
-static int parse_says(int,const char *name,int,int){assert(strcmp(name,"NATIVE BASE")==0);++parser_order_count;return 0;}
-static void set_treaty(int row,int column,int treaty,int enabled){assert(treaty==0xC00&&enabled==0);++treaty_calls;treaty_row=row;treaty_column=column;}
-static int POP2(const char *caption,const char *image,int){assert(popup_calls<4);strcpy(popup_captions[popup_calls],caption);strcpy(popup_images[popup_calls],image);++popup_calls;return 0;}
-struct Recorder {
- void save(int b,const RandomEventsDispatchInput &i){++dispatch_calls;dispatch_bucket=b;dispatch_input=i;}
- void cases_0_5(const RandomEventsDispatchInput&i){save(5,i);} void case6(const RandomEventsDispatchInput&i){save(6,i);}
- void cases_7_8(const RandomEventsDispatchInput&i){save(78,i);} void cases_9_11(const RandomEventsDispatchInput&i){save(911,i);}
- void cases_12_13(const RandomEventsDispatchInput&i){save(1213,i);} void case14(const RandomEventsDispatchInput&i){save(14,i);}
- void cases_15_16(const RandomEventsDispatchInput&i){save(1516,i);} void cases_17_18(const RandomEventsDispatchInput&i){save(1718,i);}
- void cases_19_21(const RandomEventsDispatchInput&i){save(1921,i);}
-};
-struct RandomEventsNativeCases : Recorder {};
-static void reset(){memset(Bases,0,sizeof(Bases));memset(PlayersData,0,sizeof(PlayersData));
- GlobalEnergyEventState=SunspotDuration=DustCloudDuration=LockEnableMask=0;BaseCurrentCount=2;
- TurnCurrentNum=100;DiffLevelCurrent=0;StartingMissionYear=0;GameState=GameRules=MapRandSeed=0;
- StringTemp[0]='\0';random_count=random_index=reseed_count=parser_order_count=0;mutate_base_on_parse=0;
- reseed_value=treaty_calls=popup_calls=0;treaty_row=treaty_column=-1;
- dispatch_calls=0;dispatch_bucket=-1;Bases[0].x=4;Bases[0].y=5;Bases[0].population_size=4;
- Bases[0].faction_id_current=2;strcpy(Bases[0].name_string,"NATIVE BASE");PlayersData[2].current_num_bases=2;}
-'''
-
-ENTRY_MAIN = r'''
-int main(){const int buckets[22]={5,5,5,5,5,5,6,78,78,911,911,911,1213,1213,14,1516,1516,1718,1718,1921,1921,1921};
- for(int e=0;e<22;++e){reset();random_values[random_count++]=0;random_values[random_count++]=e;
- mutate_base_on_parse=1;random_events(1);assert(parser_order_count==2&&StringTemp[0]=='\0');
- assert(dispatch_calls==1&&dispatch_bucket==buckets[e]&&dispatch_input.event_kind==e);
- assert(dispatch_input.faction_id==2&&dispatch_input.selected_base_id==0&&dispatch_input.base_roll==0);
- assert(dispatch_input.base_x_snapshot==4&&dispatch_input.base_y_snapshot==5&&Bases[0].x==19&&Bases[0].y==20);}
- reset();random_values[random_count++]=0;random_values[random_count++]=22;random_events(1);
- assert(parser_order_count==2&&dispatch_calls==0);
- reset();GlobalEnergyEventState=1;SunspotDuration=1;DustCloudDuration=1;LockEnableMask=1u<<1;
- for(int row=3;row<8;++row)PlayersData[row].diplo_treaties[1]=0x30;
- Bases[1].event=0x200;Bases[1].random_event_turns=1;MapRandSeed=1000;
- random_values[random_count++]=0;random_values[random_count++]=3;random_events(0);
- assert(GlobalEnergyEventState==2&&SunspotDuration==0&&DustCloudDuration==0);
- assert(treaty_calls==1&&treaty_row==2&&treaty_column==1);
- assert(Bases[1].event==0&&Bases[1].random_event_turns==0);
- assert(popup_calls==2&&strcmp(popup_captions[0],"NOMORESPOTS")==0&&strcmp(popup_captions[1],"NOMOREDUST")==0);
- assert(reseed_count==1&&reseed_value==1000+13*TurnCurrentNum);
- reset();GameRules=0x8000;random_events(0);assert(random_count==0&&reseed_count==0&&dispatch_calls==0);
- reset();TurnCurrentNum=74;random_events(1);assert(random_count==0&&dispatch_calls==0);
- reset();StartingMissionYear=0x8A2 - TurnCurrentNum;GameState=0x100000;random_events(0);
- assert(popup_calls==1&&strcmp(popup_captions[0],"PERIHELIONENDS")==0&&random_count==0);
- reset();StartingMissionYear=0x88E - TurnCurrentNum;random_events(0);
- assert((GameState&0x100000)!=0&&popup_calls==1&&strcmp(popup_captions[0],"PERIHELION")==0&&random_count==0);
- return 0;}
-'''
-
-WRAPPER_HOST = r'''#include <cassert>
-struct RandomEventsDispatchInput { int event_kind,faction_id,selected_base_id,base_roll,base_x_snapshot,base_y_snapshot; };
-static int calls,bucket,observed[6];
-static void note(int b,int e,int f,int base,int roll,int x,int y){++calls;bucket=b;observed[0]=e;observed[1]=f;observed[2]=base;observed[3]=roll;observed[4]=x;observed[5]=y;}
-struct RandomEventsNativeCase6State {}; struct RandomEventsNativeCase6Services {};
-struct RandomEventsNativePositionServices {}; struct RandomEventsCase14NativeOps {};
-namespace random_events_cases { template<class S,class V> inline void case6(S&,V&,int f,int b,int r){note(6,6,f,b,r,-1,-1);} }
-static void random_events_native_cases_7_8(const RandomEventsDispatchInput&i){note(78,i.event_kind,i.faction_id,i.selected_base_id,i.base_roll,i.base_x_snapshot,i.base_y_snapshot);}
-static void random_events_native_cases_9_11(int e){note(911,e,-1,-1,-1,-1,-1);}
-static void random_events_cases_0_5(int e,int f,int b,int r){note(5,e,f,b,r,-1,-1);}
-static void random_events_cases_12_13(int e,int f,int b,int r,int x,int y){note(1213,e,f,b,r,x,y);}
-static void random_events_case14(RandomEventsCase14NativeOps&,int f,int b){note(14,14,f,b,-1,-1,-1);}
-static void random_events_cases_15_16(int e,int f,int b,int r,int x,int y){note(1516,e,f,b,r,x,y);}
-static void random_events_cases_17_18(int e,int f,int b,int r,int x,int y){note(1718,e,f,b,r,x,y);}
-static void random_events_cases_19_21(int e,int f,int b,int r,int x,int y){note(1921,e,f,b,r,x,y);}
-'''
-WRAPPER_MAIN = r'''
-int main(){const int expected[22]={5,5,5,5,5,5,6,78,78,911,911,911,1213,1213,14,1516,1516,1718,1718,1921,1921,1921};
- for(int event=0;event<22;++event){RandomEventsDispatchInput input={event,31,47,59,71,73};RandomEventsNativeCases cases;calls=0;
- random_events_dispatch_cases(input,cases);assert(calls==1&&bucket==expected[event]);
- if(bucket==78||bucket==1213||bucket==1516||bucket==1718||bucket==1921){assert(observed[0]==event&&observed[1]==31&&observed[2]==47&&observed[3]==59&&observed[4]==71&&observed[5]==73);}
- else if(bucket==5){assert(observed[0]==event&&observed[1]==31&&observed[2]==47&&observed[3]==59);}
- else if(bucket==6){assert(observed[1]==31&&observed[2]==47&&observed[3]==59);}
- else if(bucket==911){assert(observed[0]==event);}else if(bucket==14){assert(observed[1]==31&&observed[2]==47);}}
- return 0;}
-'''
+def test_mapped_entry_source_has_snapshot_and_prefix_before_case_selection():
+    text, region, fragments = source_fragments()
+    assert "void __cdecl random_events(int mode)" in region
+    assert fragments["actual_entry_prefix.inc"]
+    assert "const int base_x_snapshot = selected_base.x;" in fragments["actual_entry_prefix.inc"]
+    assert "const int base_y_snapshot = selected_base.y;" in fragments["actual_entry_prefix.inc"]
+    assert fragments["actual_entry_prefix.inc"].index("base_x_snapshot") < fragments["actual_entry_prefix.inc"].index("parse_num")
+    assert fragments["actual_entry_prefix.inc"].index("base_y_snapshot") < fragments["actual_entry_prefix.inc"].index("parse_says")
+    assert "RandomEventsDispatchInput" not in text
 
 
-@pytest.mark.parametrize("compiler", COMPILERS)
-def test_mapped_entry_dispatches_all_kinds_and_snapshots_before_callbacks(tmp_path, compiler):
-    _, body, fragments = source_fragments()
-    for name, text in fragments.items(): (tmp_path / name).write_text(text + "\n")
-    source = (fragments["actual_dispatch_input.inc"] + "\n" + ENTRY_HOST + "\n" +
-              fragments["actual_entry_prepare.inc"] + "\n" +
-              fragments["actual_dispatch.inc"] + "\n" + body + ENTRY_MAIN)
-    compile_run(tmp_path, compiler, source, "mapped-entry")
-
-
-@pytest.mark.parametrize("compiler", COMPILERS)
-def test_concrete_wrapper_and_dispatch_route_all_cases(tmp_path, compiler):
+def test_test_fragments_select_each_mapped_case_branch():
     _, _, fragments = source_fragments()
-    for name, text in fragments.items(): (tmp_path / name).write_text(text + "\n")
-    compile_run(tmp_path, compiler, WRAPPER_HOST + fragments["actual_wrapper.inc"] +
-                fragments["actual_dispatch.inc"] + WRAPPER_MAIN, "concrete-wrapper")
-
-
-def test_blight_cache_uses_seven_repeated_live_faction_reads():
-    text, _, _ = source_fragments()
-    body = function(text, "random_events_cases_15_16")
-    start = body.index("for (int clear_pass = 0; clear_pass < 7;")
-    end = body.index("\n            }", start)
-    clear_loop = body[start:end]
-    assert "random_events_blight_cache_word(\n                    tile, ConsoleGlobal.faction_id_)" in clear_loop
-
-
-@pytest.mark.parametrize("compiler", COMPILERS)
-def test_blight_cache_selects_real_members_including_factions_zero_and_seven(tmp_path, compiler):
-    _, _, fragments = source_fragments()
-    host = r'''#include <cassert>
-typedef unsigned int uint32_t;
-struct Map { uint32_t bit2, bit_visible[7]; };
-'''
-    main = r'''
-int main() {
-    Map tile = {0, {1,2,3,4,5,6,7}};
-    for (int faction = 0; faction < 8; ++faction) {
-        uint32_t *expected = faction == 0 ? &tile.bit2 : &tile.bit_visible[faction-1];
-        assert(&random_events_blight_cache_word(tile, faction) == expected);
-        random_events_blight_cache_word(tile, faction) = 100u + faction;
-        assert(*expected == 100u + faction);
+    expected = {
+        "actual_cases_0_5.inc": "event_kind <= 5",
+        "actual_case6.hpp": "event_kind == 6",
+        "actual_cases_7_8.hpp": "event_kind == 7 || event_kind == 8",
+        "actual_cases_9_11.hpp": "event_kind >= 9 && event_kind <= 11",
+        "actual_cases_12_13.inc": "event_kind == 12 || event_kind == 13",
+        "actual_case14.inc": "event_kind == 14",
+        "actual_cases_15_16.inc": "event_kind == 15 || event_kind == 16",
+        "actual_cases_17_18.inc": "event_kind == 17 || event_kind == 18",
+        "actual_cases_19_21.inc": "event_kind >= 19 && event_kind <= 21",
     }
-}
-'''
-    compile_run(tmp_path, compiler, host + fragments["actual_blight_cache.inc"] + main, "cache-members")
+    assert set(expected).issubset(fragments)
+    for filename, condition in expected.items():
+        assert condition in fragments[filename]
+    assert "random_events_dispatch_cases" not in fragments["actual_random_events_definition.inc"]
+    assert "random_events_case6(" not in fragments["actual_random_events_definition.inc"]
 
 
-@pytest.mark.parametrize("damage", ["snapshot", "reseed", "wrapper_coordinates"])
+def test_case15_16_cache_access_is_owned_by_the_mapped_branch():
+    _, _, fragments = source_fragments()
+    branch = fragments["actual_cases_15_16.inc"]
+    assert "tile.bit2" in branch
+    assert "cache_word = &tile.bit_visible[0]" in branch
+    assert "clear_pass < 7" in branch
+    assert "random_events_blight_cache_word" not in branch
+
+
+@pytest.mark.parametrize("damage", [
+    "case0_event", "case12_reserves", "case21_popup", "entry_snapshot", "entry_reseed",
+])
 def test_controls_reject_damaged_actual_source(tmp_path, damage):
     compiler = shutil.which("g++")
     if compiler is None:
         pytest.skip("g++ is unavailable")
-    _, body, fragments = source_fragments()
-    if damage == "wrapper_coordinates":
-        wrapper = fragments["actual_wrapper.inc"]
-        old = "input.base_x_snapshot, input.base_y_snapshot"
-        assert old in wrapper
-        wrapper = wrapper.replace(old, "input.base_y_snapshot, input.base_x_snapshot", 1)
-        source = WRAPPER_HOST + wrapper + fragments["actual_dispatch.inc"] + WRAPPER_MAIN
+    _, _, fragments = source_fragments()
+    if damage in ("entry_snapshot", "entry_reseed"):
+        fixture = "native_services.cpp"
+        fragment = "actual_entry_probe.inc"
+        old, new = (
+            ("const int base_x_snapshot = selected_base.x;",
+             "const int base_x_snapshot = selected_base.x + 1;")
+            if damage == "entry_snapshot" else
+            ("13u * static_cast<unsigned int>(current_turn)",
+             "14u * static_cast<unsigned int>(current_turn)")
+        )
     else:
-        entry = fragments["actual_entry_prepare.inc"]
-        old, new = (("const int base_x_snapshot = selected_base.x;",
-                     "const int base_x_snapshot = selected_base.x + 1;") if damage == "snapshot" else
-                    ("13u * static_cast<unsigned int>(current_turn)",
-                     "14u * static_cast<unsigned int>(current_turn)"))
-        assert entry.count(old) == 1
-        entry = entry.replace(old, new)
-        source = "\n".join((fragments["actual_dispatch_input.inc"], ENTRY_HOST, entry,
-                            fragments["actual_dispatch.inc"], body, ENTRY_MAIN))
+        fixture, fragment, old, new = {
+            "case0_event": ("cases_0_5.cpp", "actual_cases_0_5.inc",
+                            "base.event |= BEVENT_BUMPER;", "base.event &= ~BEVENT_BUMPER;"),
+            "case12_reserves": ("cases_12_13.cpp", "actual_cases_12_13.inc",
+                                "PlayersData[faction_id].energy_reserves = new_reserves;",
+                                "PlayersData[faction_id].energy_reserves = 0;"),
+            "case21_popup": ("cases_19_21.cpp", "actual_cases_19_21.inc",
+                             "const int popup_base_id = faction_id == ConsoleGlobal.faction_id_\n                ? selected_base_id : -1;",
+                             "const int popup_base_id = -1;"),
+        }[damage]
+    assert fragments[fragment].count(old) >= 1
+    changed = dict(fragments)
+    changed[fragment] = fragments[fragment].replace(old, new, 1)
+    for name, body in changed.items(): (tmp_path / name).write_text(body + "\n")
     with pytest.raises(subprocess.CalledProcessError) as failure:
-        compile_run(tmp_path, compiler, source, "damaged-control")
+        compile_run(tmp_path, compiler, (TESTS / fixture).read_text(), "damaged-control")
     assert failure.value.returncode < 0, "damage must be detected at execution, not by compile failure"

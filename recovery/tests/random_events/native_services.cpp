@@ -1,205 +1,221 @@
-// Host control for the source-owner adapter's shape and its 9..11 dispatch.
+// The entry probe includes the exact mapped-function prefix before the first
+// event branch. It exercises annual controls and selection/callback ordering,
+// not game ABI.
 #include <assert.h>
 #include <stdint.h>
 #include <string.h>
 
-struct PlayerData { int satellites_[4]; int ranking; };
-struct RulesResource { const char *name_singular; const char *name_plural; };
-struct RulesFacility { const char *name; };
 struct Base {
-    int faction_id_current, population_size, visibility, x, y;
-    unsigned char facilities_built[12];
+    short x, y;
+    unsigned char faction_id_current;
+    signed char population_size;
+    unsigned int event;
+    int random_event_turns;
+    char name_string[25];
 };
-struct Map { unsigned int visibility; unsigned char climate; };
-struct FixtureMapWin {
-    int centers, last_x, last_y, last_animate;
-    FixtureMapWin() : centers(0), last_x(0), last_y(0), last_animate(0) {}
-    void set_center(int x, int y, int animate) {
-        ++centers;
-        last_x = x;
-        last_y = y;
-        last_animate = animate;
-    }
+struct PlayerData {
+    unsigned int current_num_bases;
+    unsigned int diplo_treaties[8];
+    unsigned int diff_level, ranking, energy_reserves, flags, satellites_[4];
 };
-struct FixtureConsole {
-    int faction_id_;
-    int focus(int, int, int) { return 0; }
-};
-static RulesResource Resource[4];
-static RulesFacility Facility[134];
-static Map FixtureTile;
-static FixtureMapWin PrimaryMapWindow;
-static FixtureMapWin FarmMapWindow;
-static FixtureMapWin *MapWinTable[8];
-static FixtureMapWin *&console_map_win() { return MapWinTable[0]; }
-static FixtureConsole ConsoleGlobal;
-static PlayerData PlayersData[8];
 static Base Bases[8];
-static int GlobalEnergyEventState;
-static int SunspotDuration;
-static int TurnCurrentNum;
+static PlayerData PlayersData[8];
+static char StringTemp[1032];
+static unsigned int faction_rankings[8];
+static unsigned int lock_enable_mask;
+static int global_energy_event_state, sunspot_duration, dust_cloud_duration;
+static int base_current_count, turn_current_num, diff_level_current;
+static int game_state, game_rules;
+static unsigned int MapRandSeed;
+static int StartingMissionYear;
 static int IsMultiplayerPBEM;
-static int MapLongitudeBounds, MapLongitude, MapIsFlat, BaseCurrentCount;
-static int ProjectOwners[32];
-static const int MaxPlayerNum = 8;
 static int random_values[8], random_count, random_index;
-static int parse_calls, popup_calls, popup_arg;
-static char popup_caption[32], popup_image[32];
+static int random_calls, reseed_calls, reseed_value;
+static int parse_calls, parse_order[4], mutate_base_on_parse;
+static int set_treaty_calls, treaty_row, treaty_column, popup_calls;
+static char popup_captions[8][32], popup_images[8][32];
+static int popup_args[8];
+static int entry_probe_reached, entry_probe_event, entry_probe_faction;
+static int entry_probe_base, entry_probe_roll, entry_probe_x, entry_probe_y;
 
+struct LockMasksRef { unsigned int &enable_mask_; explicit LockMasksRef(unsigned int &v) : enable_mask_(v) {} };
+struct GameFieldsRef {
+    int &global_energy_event_state_, &sunspot_duration_, &dust_cloud_duration_;
+    LockMasksRef lock_masks_;
+    int &base_current_count_, &turn_current_num_, &diff_level_current_;
+    int &game_state_, &game_rules_;
+    unsigned int (&faction_rankings_)[8];
+    GameFieldsRef(int &energy, int &sunspot, int &dust, unsigned int &lock,
+                  int &base_count, int &turn, int &diff, int &state, int &rules,
+                  unsigned int (&rankings)[8])
+        : global_energy_event_state_(energy), sunspot_duration_(sunspot),
+          dust_cloud_duration_(dust), lock_masks_(lock),
+          base_current_count_(base_count), turn_current_num_(turn),
+          diff_level_current_(diff), game_state_(state), game_rules_(rules),
+          faction_rankings_(rankings) {}
+};
+struct GameStateRef {
+    GameFieldsRef fields_;
+    GameStateRef(int &energy, int &sunspot, int &dust, unsigned int &lock,
+                 int &base_count, int &turn, int &diff, int &state, int &rules,
+                 unsigned int (&rankings)[8])
+        : fields_(energy, sunspot, dust, lock, base_count, turn, diff, state,
+                  rules, rankings) {}
+};
+static GameStateRef GameDataStateStorage(global_energy_event_state, sunspot_duration,
+    dust_cloud_duration, lock_enable_mask, base_current_count, turn_current_num,
+    diff_level_current, game_state, game_rules, faction_rankings);
+
+static int game_year(int turn) { return StartingMissionYear + turn; }
 static int random(int low, int high) {
-    assert(low == 0 && (high == 3 || high == 5 || high == 11));
     assert(random_index < random_count);
+    assert(low == 0 && (high == 100 || high == 0x16));
+    ++random_calls;
     return random_values[random_index++];
 }
+static void random_reseed(int seed) { ++reseed_calls; reseed_value = seed; }
 static int parse_num(int low, int high) {
-    ++parse_calls;
-    return high - low;
+    assert(low == 0 && high == 10);
+    parse_order[parse_calls++] = 1;
+    if (mutate_base_on_parse) { Bases[0].x = 19; Bases[0].y = 20; }
+    return 0;
 }
-static int parse_say(int, int, int, int) { return 0; }
-static bool has_fac_built(int facility_id, int base_id) {
-    const int offset = facility_id / 8;
-    const int mask = 1 << (facility_id & 7);
-    return (Bases[base_id].facilities_built[offset] & mask) != 0;
+static int parse_says(int, const char *name, int x, int y) {
+    assert(strcmp(name, "NATIVE BASE") == 0 && x == -1 && y == -1);
+    parse_order[parse_calls++] = 2;
+    return 0;
 }
-static int base_project(int slot) { return ProjectOwners[slot]; }
-static int bonus_at(int, int, int) { return 0; }
-static int whose_territory(int, int, int, int *, int) { return -1; }
-static Map *map_loc(int, int) { return &FixtureTile; }
-static void bit_set(int, int, int, int) {}
-static void synch_bit(int, int, int) {}
-static void draw_tile(int, int, int) {}
-static void clock_wait(int) {}
-static short GetAsyncKeyState(int key) { return (short)key; }
-static int IsMultiplayerNet, NetBusyCount;
+static void set_treaty(int row, int column, int treaty, int enabled) {
+    assert(row >= 0 && row < 8 && column >= 0 && column < 8);
+    assert(treaty == 0xC00 && enabled == 0);
+    ++set_treaty_calls; treaty_row = row; treaty_column = column;
+}
 static int POP2(const char *caption, const char *image, int argument) {
-    strcpy(popup_caption, caption);
-    strcpy(popup_image, image);
-    popup_arg = argument;
+    assert(popup_calls < 8);
+    strcpy(popup_captions[popup_calls], caption);
+    strcpy(popup_images[popup_calls], image);
+    popup_args[popup_calls] = argument;
     ++popup_calls;
     return 0;
 }
 
-#include "actual_cases_9_11.hpp"
-#include "actual_case6.hpp"
+#include "actual_entry_probe.inc"
 
-#include "actual_native_services.inc"
-
-static void reset() {
-    memset(PlayersData, 0, sizeof(PlayersData));
-    memset(Bases, 0, sizeof(Bases));
-    memset(ProjectOwners, 0xFF, sizeof(ProjectOwners));
-    GlobalEnergyEventState = 0;
-    SunspotDuration = -40;
-    TurnCurrentNum = 50;
-    IsMultiplayerPBEM = 0;
-    MapLongitudeBounds = 128; MapLongitude = 64; MapIsFlat = 1;
-    BaseCurrentCount = 0; ConsoleGlobal.faction_id_ = 1;
-    PrimaryMapWindow = FixtureMapWin();
-    FarmMapWindow = FixtureMapWin();
-    MapWinTable[0] = &PrimaryMapWindow;
-    random_count = random_index = parse_calls = popup_calls = 0;
-    popup_caption[0] = popup_image[0] = '\0';
-    popup_arg = 0;
-}
-
-static void test_position_adapter_centers_primary_not_farm_window() {
-    reset();
-    RandomEventsNativePositionServices services;
-    services.center_map(17, 23, 1);
-    assert(PrimaryMapWindow.centers == 1);
-    assert(PrimaryMapWindow.last_x == 17 && PrimaryMapWindow.last_y == 23);
-    assert(PrimaryMapWindow.last_animate == 1);
-    assert(FarmMapWindow.centers == 0);
-}
-
-static void test_position_wait_gate_binds_multiplayer_net_not_busy_count() {
-    reset();
-    RandomEventsNativePositionServices services;
-    NetBusyCount = 7;
-    IsMultiplayerNet = 0;
-    assert(services.is_multiplayer_net() == 0);
-    NetBusyCount = 0;
-    IsMultiplayerNet = 1;
-    assert(services.is_multiplayer_net() == 1);
-}
-
-static void test_case9_actual_global_and_players() {
-    reset();
-    TurnCurrentNum = 0;
-    random_values[random_count++] = 0;
-    PlayersData[1].satellites_[2] = 1;
-    random_events_native_cases_9_11(9);
-    assert(GlobalEnergyEventState == 1);
-    assert(PlayersData[1].satellites_[2] == 0);
-    assert(popup_calls == 1);
-    assert(strcmp(popup_caption, "SOLARSTORM") == 0);
-    assert(strcmp(popup_image, "sun_sm.pcx") == 0);
-}
-
-static void test_case10_only_notifies_on_change() {
-    reset();
-    TurnCurrentNum = 0;
-    random_values[random_count++] = 0;
-    PlayersData[1].satellites_[1] = 1;
-    random_events_native_cases_9_11(10);
-    assert(GlobalEnergyEventState == 1);
-    assert(PlayersData[1].satellites_[1] == 0);
-    assert(popup_calls == 1);
-    assert(strcmp(popup_caption, "ASTEROID") == 0);
-    assert(strcmp(popup_image, "astm_sm.pcx") == 0);
-}
-
-static void test_case9_unchanged_message() {
-    reset();
-    random_values[random_count++] = 0;
-    random_events_native_cases_9_11(9);
-    assert(GlobalEnergyEventState == 1);
-    assert(popup_calls == 1);
-    assert(strcmp(popup_caption, "SOLARFLARE") == 0);
-    assert(strcmp(popup_image, "heat_sm.pcx") == 0);
-}
-
-static void test_case11_store_parse_popup_order_result() {
-    reset();
-    SunspotDuration = -40;
-    random_values[random_count++] = 3;
-    random_events_native_cases_9_11(11);
-    assert(SunspotDuration == 13);
-    assert(parse_calls == 1 && popup_calls == 1);
-    assert(strcmp(popup_caption, "SUNSPOTS") == 0);
-    assert(strcmp(popup_image, "solar_sm.pcx") == 0);
-    assert(popup_arg == -1);
-}
-
-static void test_case6_native_owner_bindings() {
-    reset();
-    TurnCurrentNum = 100;
-    MapLongitudeBounds = 100; MapLongitude = 50; MapIsFlat = 1;
-    BaseCurrentCount = 2;
-    ConsoleGlobal.faction_id_ = 1;
-    PlayersData[2].ranking = 4;
-    Bases[0].x = 10; Bases[0].y = 10;
-    Bases[0].faction_id_current = 2; Bases[0].population_size = 6;
-    Bases[0].visibility = 1u << 1;
-    Bases[1].x = 12; Bases[1].y = 10;
-    Bases[1].faction_id_current = 1; Bases[1].population_size = 7;
-    RandomEventsNativeCase6State state;
-    RandomEventsNativeCase6Services services;
-    random_events_cases::case6(state, services, 2, 0, 9);
-    assert(Bases[0].population_size == 3);
-    assert(Bases[1].population_size == 4);
-    assert(popup_calls == 1);
-    assert(strcmp(popup_caption, "PROMETHEUS0") == 0);
-    assert(strcmp(popup_image, "biohazd_sm.pcx") == 0);
+static void reset_fixture() {
+    memset(Bases, 0, sizeof(Bases)); memset(PlayersData, 0, sizeof(PlayersData));
+    memset(faction_rankings, 0, sizeof(faction_rankings)); memset(StringTemp, 0, sizeof(StringTemp));
+    global_energy_event_state = sunspot_duration = dust_cloud_duration = 0;
+    lock_enable_mask = 0; base_current_count = 2; turn_current_num = 100;
+    diff_level_current = game_state = game_rules = 0; MapRandSeed = 0;
+    StartingMissionYear = 0;
+    IsMultiplayerPBEM = 0; random_count = random_index = random_calls = 0;
+    reseed_calls = reseed_value = parse_calls = set_treaty_calls = popup_calls = 0;
+    treaty_row = treaty_column = -1;
+    memset(popup_captions, 0, sizeof(popup_captions));
+    memset(popup_images, 0, sizeof(popup_images));
+    memset(popup_args, 0, sizeof(popup_args));
+    mutate_base_on_parse = entry_probe_reached = 0;
+    entry_probe_event = entry_probe_faction = entry_probe_base = entry_probe_roll = -1;
+    entry_probe_x = entry_probe_y = -1;
+    Bases[0].x = 4; Bases[0].y = 5; Bases[0].population_size = 4;
+    Bases[0].faction_id_current = 2; strcpy(Bases[0].name_string, "NATIVE BASE");
+    PlayersData[2].current_num_bases = 2;
 }
 
 int main() {
-    test_position_adapter_centers_primary_not_farm_window();
-    test_position_wait_gate_binds_multiplayer_net_not_busy_count();
-    test_case9_actual_global_and_players();
-    test_case10_only_notifies_on_change();
-    test_case9_unchanged_message();
-    test_case11_store_parse_popup_order_result();
-    test_case6_native_owner_bindings();
-}
+    // Every event kind traverses the actual common selection prefix; parser
+    // callbacks mutate live coordinates only after the captured pair exists.
+    for (int event = 0; event < 22; ++event) {
+        reset_fixture(); random_values[0] = 0; random_values[1] = event; random_count = 2;
+        mutate_base_on_parse = 1; random_events_entry_probe(1);
+        assert(entry_probe_reached && random_calls == 2 && parse_calls == 2);
+        assert(parse_order[0] == 1 && parse_order[1] == 2);
+        assert(entry_probe_event == event && entry_probe_faction == 2 && entry_probe_base == 0);
+        assert(entry_probe_roll == 0 && entry_probe_x == 4 && entry_probe_y == 5);
+        assert(Bases[0].x == 19 && Bases[0].y == 20 && StringTemp[0] == '\0');
+    }
 
+    reset_fixture(); random_values[0] = 2; random_count = 1;
+    random_events_entry_probe(1);
+    assert(!entry_probe_reached && random_calls == 1 && parse_calls == 0);
+
+    reset_fixture(); Bases[0].population_size = 3;
+    random_values[0] = 0; random_count = 1;
+    random_events_entry_probe(1);
+    assert(!entry_probe_reached && random_calls == 1 && parse_calls == 0);
+
+    reset_fixture(); PlayersData[2].current_num_bases = 1;
+    random_values[0] = 0; random_count = 1;
+    random_events_entry_probe(1);
+    assert(!entry_probe_reached && random_calls == 1 && parse_calls == 0);
+
+    reset_fixture(); turn_current_num = 40;
+    random_events_entry_probe(1);
+    assert(!entry_probe_reached && random_calls == 0 && reseed_calls == 0);
+
+    reset_fixture(); MapRandSeed = 1000; random_values[0] = 0;
+    random_values[1] = 4; random_count = 2;
+    random_events_entry_probe(0);
+    assert(reseed_calls == 1 && reseed_value == 2300);
+    assert(entry_probe_reached && entry_probe_event == 4);
+
+    // Annual timer ordering and its intentionally distinct negative paths.
+    reset_fixture(); global_energy_event_state = 3; sunspot_duration = -1500;
+    dust_cloud_duration = -1; random_values[0] = 0; random_values[1] = 4; random_count = 2;
+    random_events_entry_probe(0);
+    assert(global_energy_event_state == 0); // bit 2 clears before bit 1 is tested
+    assert(sunspot_duration == -1001 && dust_cloud_duration == 0);
+    assert(popup_calls == 0);
+
+    reset_fixture(); global_energy_event_state = 1; sunspot_duration = 1;
+    dust_cloud_duration = 1; random_values[0] = 0; random_values[1] = 4; random_count = 2;
+    random_events_entry_probe(0);
+    assert(global_energy_event_state == 2 && sunspot_duration == 0 && dust_cloud_duration == 0);
+    assert(popup_calls == 2);
+    assert(strcmp(popup_captions[0], "NOMORESPOTS") == 0 &&
+           strcmp(popup_images[0], "space_sm.pcx") == 0 && popup_args[0] == -1);
+    assert(strcmp(popup_captions[1], "NOMOREDUST") == 0 &&
+           strcmp(popup_images[1], "stars_sm.pcx") == 0 && popup_args[1] == -1);
+
+    reset_fixture(); lock_enable_mask = 1u << 2;
+    for (int row = 0; row < 8; ++row) PlayersData[row].diplo_treaties[2] = 0x10;
+    PlayersData[4].diplo_treaties[2] = 0;
+    random_values[0] = 0; random_values[1] = 4; random_count = 2;
+    random_events_entry_probe(0);
+    assert(set_treaty_calls == 1 && treaty_row == 4 && treaty_column == 2);
+
+    reset_fixture(); base_current_count = 3;
+    Bases[0].event = 0x200; Bases[0].random_event_turns = 1;
+    Bases[1].event = 0x400; Bases[1].random_event_turns = -1;
+    Bases[2].event = 0x100; Bases[2].random_event_turns = 0;
+    random_values[0] = 0; random_values[1] = 4; random_count = 2;
+    random_events_entry_probe(0);
+    assert(Bases[0].random_event_turns == 0 && Bases[0].event == 0);
+    assert(Bases[1].random_event_turns == -1 && Bases[1].event == 0x400);
+    assert(Bases[2].random_event_turns == 0 && Bases[2].event == 0x100);
+
+    reset_fixture(); game_state = 0x100000;
+    StartingMissionYear = 0x8A2 - turn_current_num;
+    random_events_entry_probe(0);
+    assert((game_state & 0x100000) == 0 && random_calls == 0);
+    assert(popup_calls == 1 && strcmp(popup_captions[0], "PERIHELIONENDS") == 0);
+    assert(strcmp(popup_images[0], "heat_sm.pcx") == 0 && popup_args[0] == -1);
+
+    reset_fixture(); game_state = 0;
+    StartingMissionYear = 0x88E - turn_current_num;
+    random_events_entry_probe(0);
+    assert((game_state & 0x100000) != 0 && random_calls == 0);
+    assert(popup_calls == 1 && strcmp(popup_captions[0], "PERIHELION") == 0);
+
+    reset_fixture(); game_rules = 0x8000;
+    random_events_entry_probe(1);
+    assert(!entry_probe_reached && random_calls == 0 && reseed_calls == 0);
+    reset_fixture(); diff_level_current = 1; turn_current_num = 64;
+    random_events_entry_probe(1);
+    assert(!entry_probe_reached && random_calls == 0);
+    reset_fixture(); diff_level_current = 1; turn_current_num = 65;
+    random_values[0] = 0; random_values[1] = 4; random_count = 2;
+    random_events_entry_probe(1);
+    assert(entry_probe_reached && random_calls == 2);
+    return 0;
+}
