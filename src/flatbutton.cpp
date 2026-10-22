@@ -119,10 +119,15 @@ void FlatButton::close() {
     BaseButton::close();
     for (int column = 0; column < 3; ++column) {
         field_ABC_[column] = 0xFFFFFFFFU;
-        for (int group = 0; group < 9; ++group) {
-            config[group * 3 + column] =
-                FlatButtonDefaultsTable[group * 3 + column];
-        }
+        config[column] = FlatButtonDefaultsTable[column];
+        config[column + 3] = FlatButtonDefaultsTable[column + 3];
+        config[column + 6] = FlatButtonDefaultsTable[column + 6];
+        config[column + 9] = FlatButtonDefaultsTable[column + 9];
+        config[column + 12] = FlatButtonDefaultsTable[column + 12];
+        config[column + 15] = FlatButtonDefaultsTable[column + 15];
+        config[column + 18] = FlatButtonDefaultsTable[column + 18];
+        config[column + 21] = FlatButtonDefaultsTable[column + 21];
+        config[column + 24] = FlatButtonDefaultsTable[column + 24];
         field_AD4_[column] = nullptr;
         border_styles_[column] = 0;
     }
