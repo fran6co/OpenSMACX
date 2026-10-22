@@ -1199,6 +1199,7 @@ def compare_subject(record: DecompilationState, exe: Path | str,
                     flags=compiled.flags,
                     diagnostic="valid EH cleanup action counts differ",
                 )
+            frame_semantic_diagnostic = None
             for index, (original_action, compiled_action) in enumerate(zip(
                     ownership.original_actions, ownership.compiled_actions)):
                 if original_action.kind is not compiled_action.kind:
@@ -1230,6 +1231,22 @@ def compare_subject(record: DecompilationState, exe: Path | str,
                                 f"valid EH array-cleanup semantics differ at index {index}: "
                                 f"original={original_facts!r}, compiled={compiled_facts!r}"),
                         )
+                elif original_action.kind is EHActionKind.FRAME_TRANSFER:
+                    original_facts = (
+                        original_action.frame_displacement,
+                        original_action.base_adjustment,
+                        original_action.scratch_register,
+                    )
+                    compiled_facts = (
+                        compiled_action.frame_displacement,
+                        compiled_action.base_adjustment,
+                        compiled_action.scratch_register,
+                    )
+                    if original_facts != compiled_facts:
+                        frame_semantic_diagnostic = (
+                            f"valid EH frame-transfer semantics differ at index {index}: "
+                            f"original={original_facts!r}, compiled={compiled_facts!r}"
+                        )
             pairs = []
             for region in bound:
                 low = region.original.start
@@ -1242,7 +1259,16 @@ def compare_subject(record: DecompilationState, exe: Path | str,
                                         for item in region.relocations for byte in range(4)),
                                     flags=compiled.flags)
                 pairs.append((original, candidate))
-            return compare_regions(tuple(pairs), alignments=tuple(region.alignment for region in bound))
+            comparison = compare_regions(
+                tuple(pairs), alignments=tuple(region.alignment for region in bound))
+            if frame_semantic_diagnostic is not None:
+                return replace(
+                    comparison,
+                    verdict=Tier.MISMATCH,
+                    diagnostic=(frame_semantic_diagnostic + "; raw region comparison: "
+                                + comparison.diagnostic),
+                )
+            return comparison
         except ValueError as error:
             raise SpanComparisonRefused("complete EH-region measurement refused: " + str(error)) from error
     if len(record.image_spans) != 1:

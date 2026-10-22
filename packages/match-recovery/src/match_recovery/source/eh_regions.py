@@ -292,6 +292,9 @@ def _cleanup_action(instructions, *, code_base: int = 0) -> EHActionFact:
 
     target_instruction = None
     first = instructions[0]
+    frame_displacement = None
+    base_adjustment = 0
+    scratch_register = "ecx"
     if (len(instructions) == 2 and first.mnemonic == "lea"
             and len(first.operands) == 2
             and _is_reg(first.operands[0], x86.X86_REG_ECX)
@@ -303,6 +306,7 @@ def _cleanup_action(instructions, *, code_base: int = 0) -> EHActionFact:
             and first.bytes[:2] == (b"\x8d\x4d" if first.size == 3 else b"\x8d\x8d")
             and first.encoding.disp_size == first.size - 2):
         target_instruction = instructions[1]
+        frame_displacement = first.operands[1].mem.disp
     elif (len(instructions) in (2, 3) and first.mnemonic == "mov"
           and len(first.operands) == 2
           and _is_reg(first.operands[0], x86.X86_REG_ECX)
@@ -314,16 +318,37 @@ def _cleanup_action(instructions, *, code_base: int = 0) -> EHActionFact:
           and first.size == 3 and first.bytes[:2] == b"\x8b\x4d"
           and first.encoding.disp_size == 1):
         target_instruction = instructions[-1]
+        frame_displacement = first.operands[1].mem.disp
         if len(instructions) == 3:
-            add = instructions[1]
-            if not (add.mnemonic == "add" and len(add.operands) == 2
-                    and _is_reg(add.operands[0], x86.X86_REG_ECX)
-                    and add.operands[1].type == x86.X86_OP_IMM
-                    and ((add.size == 3 and add.bytes[:2] == b"\x83\xc1"
-                          and add.encoding.imm_size == 1)
-                         or (add.size == 6 and add.bytes[:2] == b"\x81\xc1"
-                             and add.encoding.imm_size == 4))):
+            adjustment = instructions[1]
+            ecx_adjustment = (
+                len(adjustment.operands) == 2
+                and _is_reg(adjustment.operands[0], x86.X86_REG_ECX)
+                and adjustment.operands[1].type == x86.X86_OP_IMM
+            )
+            add_form = (
+                adjustment.mnemonic == "add"
+                and ((adjustment.size == 3 and adjustment.bytes[:2] == b"\x83\xc1"
+                      and adjustment.encoding.imm_size == 1)
+                     or (adjustment.size == 6 and adjustment.bytes[:2] == b"\x81\xc1"
+                         and adjustment.encoding.imm_size == 4))
+            )
+            sub_form = (
+                adjustment.mnemonic == "sub"
+                and ((adjustment.size == 3 and adjustment.bytes[:2] == b"\x83\xe9"
+                      and adjustment.encoding.imm_size == 1)
+                     or (adjustment.size == 6 and adjustment.bytes[:2] == b"\x81\xe9"
+                         and adjustment.encoding.imm_size == 4))
+            )
+            if not (ecx_adjustment and (add_form or sub_form)):
                 target_instruction = None
+            else:
+                immediate = adjustment.operands[1].imm
+                if adjustment.encoding.imm_size == 1:
+                    immediate = ((immediate & 0xFF) ^ 0x80) - 0x80
+                else:
+                    immediate = ((immediate & 0xFFFFFFFF) ^ 0x80000000) - 0x80000000
+                base_adjustment = immediate if adjustment.mnemonic == "add" else -immediate
     if (target_instruction is None or target_instruction.mnemonic != "jmp"
             or target_instruction.size != 5 or target_instruction.bytes[:1] != b"\xe9"
             or len(target_instruction.operands) != 1
@@ -335,7 +360,10 @@ def _cleanup_action(instructions, *, code_base: int = 0) -> EHActionFact:
         EHTransferRole.CLEANUP,
         target_instruction.address + target_instruction.encoding.imm_offset - code_base,
         4, "REL32", None, target_instruction.operands[0].imm & 0xFFFFFFFF, None)
-    return EHActionFact(EHActionKind.FRAME_TRANSFER, start, end, (transfer,))
+    return EHActionFact(EHActionKind.FRAME_TRANSFER, start, end, (transfer,),
+                        frame_displacement=frame_displacement,
+                        base_adjustment=base_adjustment,
+                        scratch_register=scratch_register)
 
 
 def _handler_stub(code: bytes, base: int) -> tuple[int, int, int]:

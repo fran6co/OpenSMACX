@@ -3818,8 +3818,13 @@ bounded to at most 64 complete actions and one 10-byte handler stub. Each
 action is at most 34 bytes, for a derived 2,186-byte cold-region work budget;
 these are parser resource limits, not inferred compiler or program maxima.
 A direct action is exactly a frame-relative `lea ecx,[ebp+disp]; jmp`,
-`mov ecx,[ebp+disp8]; jmp`, or that `mov` followed by `add ecx,imm8/imm32`
-and a long `jmp`. The separately typed array action has exactly eight
+`mov ecx,[ebp+disp8]; jmp`, or that `mov` followed by an exact
+`add ecx,imm8/imm32` or `sub ecx,imm8/imm32` and a long `jmp`.
+The signed frame displacement and net ECX adjustment are decoded facts;
+valid differences force `MISMATCH` while retaining the complete raw-region
+comparison and its byte/instruction diagnostics. Equal net adjustments do not
+normalize different opcodes or instruction encodings into equality.
+The separately typed array action has exactly eight
 instructions: an absolute destructor-callback push, positive count and stride
 pushes, `mov eax,[ebp+disp8/disp32]`, an immediate EAX base adjustment,
 `push eax`, a relative call to the vector destructor iterator, and `ret`.

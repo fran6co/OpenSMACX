@@ -199,6 +199,13 @@ validates its physical write bounds, not full FPO/PDB correspondence. These
 controls do not qualify unsupported game cleanup forms or establish original
 callback/helper identity, runtime-provider equivalence, linked preservation or
 runtime acceptance.
+`tests/test_subtracting_eh_compiler.py` uses a test-owned virtual-base hierarchy
+to require actual MOV-frame/SUB/JMP cleanup emission with both immediate widths,
+and a nonvirtual control without that adjustment. Unchanged compiler replicas,
+linked root/cold comparison, valid frame/adjustment damage and malformed
+transfers exercise the same bounded historical binder. Differing numeric
+frame-transfer facts force a mismatch without dropping raw comparison counters;
+this does not infer the original source class or prove strict target identity.
 Older retained build policies and task baselines are not upgraded implicitly.
 Native ordinary-data placement also supports one-hop references from independently
 placed data, after verifying the entire referring section against the linked image.
