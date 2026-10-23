@@ -1,0 +1,24 @@
+{
+  "event_id": "ebdd730301043f2d7eae11f8f8585da1c8ce1d4ff629e67f4d413888f6ab3d0c",
+  "payload": {
+    "affects": [
+      "entity-5e297bc01166fbedb4845ee6dd690664720cd6d67f14d04f7496d4128e276cbe"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "live-selection-automation-reviewed",
+    "evidence": [
+      "Original165instruction automate span4D8A70..4D8CC9 passes the parameter address to lock and reloads it after successful dispatch. It again reloads the tracked ID after action_home before order18 waypoint copies. Recover these live references while preserving original pre-lock prototype/chassis/tile/technology/direct-cursor validation, order argument and final writes/sync/await/unlock. Independent full source/pin/dependency review and4GCC/Clang actual-source/compiled-stale-reference controls pass. The initial mutant fixture compile error was corrected before counting its negative control.",
+      "Fresh application192TUs206qualifiedobjects builds and links;205othernormalizedobjects equal baseline and the changed Console object reproduces controlled candidate. All5581local outcomes and3430strict states remain identical. Source identity/full spans/symbol/history/claims and source/reference/mapping/claim checks pass. There are no exactness or genuine-function-coverage count gains, nor claim demotions. Coordinator review SHA256 2d5ee8d0d158c9f016ba9a11d7dec4de324b7dc845daf275ae3156a16266494a.",
+      "Unchanged editor_natural source has actual compiler root-code collateral: common-per-iteration longitude load replaces first-iteration preload plus backedge load, with RadiusOffsetX read order changed. Same named wrap/bounds/bit operations remain; associated EH code/maps are byte-identical. There is no automate source/COFF/pin call edge; prior inlined-caller description is corrected. Optimizer trigger is unproved. One-owner native residual stays FAIL; explicitly authorized two-owner residual passes. No blanket TU exemption, comparator relaxation or concurrent-mutation equivalence assertion.",
+      "Keep natural-original-loop-bound-snapshot pending: original caches bounds before loop and reads flat-map state live, whereas the pre-existing recovered source reloads bounds per iteration. This is a separate original-fidelity restoration question retained for future evidence-backed source work. It is not fixed, accepted as exact, or discarded because unrelated to the initial function-local assignment.",
+      "Standing user permission authorizes bounded coordinator-reviewed manual integration after this actual source/evidence/build and scoped verification. Original task baseline 297d15767deb2b800552409cf1169933d4b785fc remains; no automatic/full-game/complete-linked-preservation claim. Complete retained selection/allocation and structure/runtime remain unproved. After integrating this and independent reviewed CheckBox owner, require one fresh complete destination build/all206expectedphysicalobjects/local-and-strict-state checks and both owner harnesses before cleanup. Preserve both source histories/discoveries."
+    ],
+    "hypothesis": "Restore Console automate use of the live vehicle selection after network locking and home-action callbacks",
+    "kind": "discovery"
+  },
+  "previous_event": "3a271a6df3cc2bbc589e0d65c837cb12fa1777698b8c1b0862ad066607b4dabc",
+  "request_id": "live-selection-automation-reviewed",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:console-automate-follow-oct23za"
+}

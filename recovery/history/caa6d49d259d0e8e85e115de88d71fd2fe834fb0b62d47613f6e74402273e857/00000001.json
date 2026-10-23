@@ -1,0 +1,23 @@
+{
+  "event_id": "382ceea75c4e04321e519ae691b17185720d6b6ef5a4b161702eaf29803a9fd6",
+  "payload": {
+    "affects": [
+      "entity-1b902d7ec3c0a2e4b7a027d14d550ba303f4a8ffefca85c273ecdf16090d03ae"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "unchanged-natural-codegen-collateral",
+    "evidence": [
+      "The completed production replay, baseline/candidate replicas and selected-body damage expose actual code-generation collateral in unchanged editor_natural4E14D0, not a call/inline dependency on automate. Independent whole-root/associated EH review SHA256 2226587d7d87dc884b25855a5cbfd3a175e7173335fc50a8bcf532c131492d2d finds no such call in source, COFF or pin. The earlier coordinator inlining description was wrong and is explicitly corrected; retain both actual diagnostic reports.",
+      "Both replay/replica roots agree exactly within each input version. editor_natural root shrinks3120to3104 and its235to234relocations reflect replacing iteration-zero longitude-bounds preload plus later backedge loads with one common per-iteration load. Both read once per probe iteration; candidate loads RadiusOffsetX before longitude_bounds_. Wrap/bounds/tile-bit operations and named storage/helper targets persist; xrange is inline both sides. Associated589byte.text$x and464byte.xdata$x bytes/relocations are unchanged. This is real root codegen churn, not only symbol-ID renumbering. Trigger from the automate edit remains unproved; no inline-budget mechanism is asserted.",
+      "Coordinator explicitly expands compiled-impact review to this one independently source-mapped original identity, keeping its full original body/EH spans and unchanged C++ source. No additional file or source behavior change is authorized. One-owner native residual remains FAIL; exact two-owner recomputation must report its actual result, not erase that failure. Fresh application code/strict states, all other objects, original target/load/branch observations and destination verification remain required. This is a bounded manual reviewed compiler-collateral scope, not automatic admission or a blanket TU waiver.",
+      "Pin editor_natural itself caches MapLongitudeBounds before the loop and reads MapIsFlat inside; both old and new compiled source reload bounds per iteration. This is a pre-existing source/pin schedule/effect restoration question, not caused by the automate correction. Keep it as a separate pending discovery for the expanded owner and do not silently fix original behavior, claim semantic identity under asynchronous mutation, or discard the necessary automate work."
+    ],
+    "hypothesis": "Review the exact unchanged-source editor_natural code-generation collateral without inventing an automate call edge.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "unchanged-natural-codegen-collateral",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:console-automate-follow-oct23za"
+}
