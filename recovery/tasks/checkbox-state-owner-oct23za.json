@@ -1,0 +1,31 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "297d15767deb2b800552409cf1169933d4b785fc",
+  "editable_files": [
+    "src/jackal/checkbox.cpp",
+    "recovery/tests/test_checkbox_selected_state_oct23za.py"
+  ],
+  "evidence": [
+    "Full original/qualified-COFF source reviews easy-twelfth-6/7-findings identify real virtual-Dialog selected_position_ member accesses and original variable SHL. The paired private candidate screen SHA256 a573afba29aa6ca8c4a8a8ecebf5cf382940da3c591992a401b51e323669d391 reaches16/16BYTE_EXACT for UNK1 at60EB50 with ordinary int* to the actual member, forming that address before the shift. Native outside-two residual passes, no historical exact bodies regress. The initial uint32_t* candidate was refused by VC6 because the member is int; preserve that failed attempt and use the proven actual type without casting.",
+    "Implement exactly the corrected typed-followup deck bodies for selected60EB50 and getter60EC10. Preserve all original mapping/full spans/symbols/claims/history and existing in-body target/compiler evidence. No class/header/ABI/layout/compiler/flag changes. UNK1 shift/update logic stays the same; only address formation uses the genuine int member pointer. Getter adds count&31U so defined C++ preserves the original x86 SHL low-five-bit behavior for large/stale ordinals; no bounds check or safety fallback is introduced. Current getter remains mismatching, and its historical restoration obligation remains.",
+    "Add actual-source GCC/Clang regression tests using these complete source methods with a genuine virtual Dialog base fixture, an int selected-state member and matching cursor/list field types. Verify matching/nonmatching lookup, original cursor reset/advance and empty-list stale-position behavior, low-five-bit getter wrap for32/63 and stale negative positions without adding guards, preserving full selected mask return. Exercise UNK1 on defined in-range ordinals only (its target-specific raw shift is unchanged). Include a compiled wrong-member/toggle mutant that fails behavior and a compiled getter-damage mask mutant; sanitizer checks must reject reintroduced undefined getter shifts on out-of-range cases. Do not present fixture offsets as original layout proof.",
+    "Worker edits only the two permitted files through apply_patch then freezes/returns hashes; no tests/compiler/Git/Task/preparation/resources. Coordinator owns native guarded record for the measured exact method, independent review, replica/damage controls, fresh build/link and relevant reference/claim/preservation checks. Max3candidateattempts/function/context; first refused and corrected second screens are already consumed. No extended byte-polishing for getter.",
+    "Standing coordinator-reviewed manual integration requires actual source/evidence review and fresh destination verification. Preserve native FAIL/UNKNOWN and all original task baselines; do not demote claims or weaken gates. No complete linked retention/allocation, structure/runtime/game or automatic acceptance is established by these bounded matching and host observations."
+  ],
+  "intent": "Recover CheckBox selected-state member access ordering and original x86 ordinal-wrap behavior",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6351696,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6351888,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "checkbox-state-owner-oct23za"
+}
