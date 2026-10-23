@@ -4943,7 +4943,7 @@ Buffer g_BUFFER;
 // Here the same recovered constructors run through this build's own
 // startup, and the matching destructors close them at exit.
 
-// ORIGINAL: 0x005D7B40 ?load_tga@Buffer@@QAGHPBDPAVPalette@@HH@Z 0x005D7B40-0x005D7C78;0x00662B92-0x00662BA7 FILE
+// ORIGINAL: 0x005D7B40 ?load_tga@Buffer@@QAGHPBDPAVPalette@@HH@Z 0x005D7B40-0x005D7C78;0x00662B92-0x00662BA7 FILE BYTE_EXACT
 // symbol    ?load_tga@Buffer@@SGHPBDPAVPalette@@HH@Z
 // TRIED (historical, superseded by the pinned cleanup-only one-state evidence): plain `Filemap fm;` with early returns was measured without an SEH prologue; wrapping it in try{}catch(...){throw;} recovered most of the /GX frame shape but still diverged at #0 push/mov. Those obsolete catch-shape measurements do not justify a catch map here.
 // size      333 bytes
@@ -4962,14 +4962,11 @@ int __stdcall Buffer::load_tga(const char * a1, Palette * a2, int a3, int a4) {
     path[0] = 0;
     strcat(path, a1);
     char *end = path + strlen(a1);
+    while (end != path && *end != '.') {
+        end--;
+    }
     if (end != path) {
-        do {
-            if (*end == '.') {
-                if (end != path) goto has_ext;
-                break;
-            }
-            end--;
-        } while (end != path);
+        goto has_ext;
     }
     switch (Language) {
         case 1: strcat(path, BufferExtTgf); break;

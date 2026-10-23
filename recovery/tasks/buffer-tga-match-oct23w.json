@@ -1,0 +1,24 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "6883eaba57b531f5dfdf953a2d88a18202062211",
+  "editable_files": [
+    "src/buffer.cpp"
+  ],
+  "evidence": [
+    "Seventh bounded alphabetical candidate1 changes TGA loader from MISMATCH to87/87 BYTE_EXACT including original cold Filemap cleanup. The only source change replaces nested do/if extension scan with while(end!=path && *end!='.') then the same has_ext transfer. Preserve all original identities/spans/symbols/claims/findings and unrelated Buffer code. One candidate form used; replay/replica/damage qualification separate.",
+    "Preserve Filemap construction before null filename test, null/open errors3/6, ignored GetFileSize then return8 on open success, ordinary cleanup and unwind, localized suffixes and odd path behavior including empty/leading-dot/directory-dot/trailing-dot strings. Full pinned loader investigation confirms neither BMP nor TGA decodes data here; adding a decoder would change original behavior. No safety fix, initialization change, API/type/layout/ABI/header/flag/helper/cast/asm/volatile change.",
+    "Initial native outside-selected FAIL has zero changed sections/references or association changes and384 class101 bf/ef auxiliary records from shortened source. Keep this FAIL authoritative. Independent full code/data/reference/symbol-storage review and fresh application205outside whole-object comparison may support standing coordinator-reviewed manual integration; no automatic preservation pass is fabricated and no comparator is weakened.",
+    "Run existing actual-source Buffer Filemap lifetime/mutation, localized path and stack-contract tests without weakening assertions. Coordinator alone handles Git/Task/compiler leases/preparation/native guarded recording/full build/review/integration/destination recheck. Original task baseline retained. Only guarded record may bank measured exactness. Full linked/runtime/game/automatic acceptance unfinished; preserve all uncertainty. Do not delete worker until fresh destination verification proves useful work preserved."
+  ],
+  "intent": "Recover exact original TGA path scanning with ordinary short-circuit C++ and cleanup",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6126400,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "buffer-tga-match-oct23w"
+}
