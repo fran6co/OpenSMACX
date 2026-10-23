@@ -2368,8 +2368,8 @@ int Popup::on_draw_background() {
       y = y + field_30E4_ + has_anchor;
     }
 
-    if (static_cast<int>(field_21CC_) >= 0) {
-      x = static_cast<int>(field_21CC_);
+    if (field_21CC_ >= 0) {
+      x = field_21CC_;
     }
 
     // Preserve the original branch's conditional writes. With kind_ == -1,

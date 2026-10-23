@@ -489,7 +489,8 @@ class BasePop : public GraphicWin {
   uint32_t field_21C0_;
   uint32_t field_21C4_;
   uint32_t field_21C8_;
-  uint32_t field_21CC_;
+  // Signed optional X coordinate; -1 is the original unset sentinel (+0x21CC).
+  int32_t field_21CC_;
   // Split so `field_2274_` - the flag `pops()` (popup.cpp) tests, right
   // after the SpriteBox call below, to decide whether a caller-supplied
   // sprite replaces the popup's own - has a name.

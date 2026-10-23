@@ -981,7 +981,7 @@ int BasePop::exec(int flags, int (__cdecl *callback)()) {
     if (field_30D4_ != 0) {
         dialog_y += field_30E4_;
     }
-    int dialog_x = static_cast<int>(field_21CC_);
+    int dialog_x = field_21CC_;
     if (dialog_x < 0) {
         dialog_x = static_cast<int>(BasePopDrawnRight);
     }

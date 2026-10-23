@@ -1,0 +1,26 @@
+{
+  "event_id": "3402c1f8021961cd61f656ac521565fb5663d3e56359724904a2b658298cb2bd",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/basepop.cpp"
+    ],
+    "evidence": [
+      "The declaration/coordinate read anchor is BasePop::exec0x00602600 at basepop.cpp984, not BasePop::start0x00601BF0 as misnamed in the initial evidence. This was detected before editing that read; source owner0x602600 already belongs to the116subject measurement scope. Explicit coordinator permission now includes removing exactly its redundant field_21CC_ signed-read cast, with original negative fallback and all other body text preserved. It does not authorize any BasePop::start edit or additional semantic change.",
+      "Keep header signedmember and Popup inherited reads as initially authorized. Correct original-vs-current disassembly coordinates in derived review evidence; do not infer original instruction addresses from current mapped COFF display."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6301184,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "coordinate-read-actual-exec-owner",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:basepop-signed-coordinate-oct23h"
+}
