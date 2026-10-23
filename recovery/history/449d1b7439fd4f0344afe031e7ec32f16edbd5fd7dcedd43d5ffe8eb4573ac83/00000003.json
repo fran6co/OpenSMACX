@@ -1,0 +1,21 @@
+{
+  "event_id": "092653458476854407f07c37aef28346361960cbee8b73cf0566cfc99feb78ed",
+  "payload": {
+    "affects": [
+      "entity-265f4a25b3e7a9d039fbe91fa6dfddf5d9f7f18aa5beb534bbde24d695a9507d",
+      "entity-fdf9fea2aa2c5934be42ac8b83698008009ff6b38014c7511c64fef25a489486"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "migrate-existing-special-action-fixtures",
+    "evidence": [
+      "Root freshly runs oldmaster test_vehicle_special_actions.py:8fail/1pass, saved ignored oct23p/vehicle-baseline-tests.xml. Candidate adds12newpass andfixesoldfungal fixture, currently14pass/7fail; remaining6harnesses referenceactualGameDataStateStorage butstilldeclareobsolete globals, plus57E040implementedbodyisincorrectlyexpectedPLACEHOLDER. Authorizeonly existingeditabletestfile fixturemigration tocurrentownedstatefields usingactualtype/existingtesthelpers wherepossible, preservingall existingbehavior/mutationassertions andnotrewritingactualproductbody. Updatependingbodytesttoverifycurrentgenuineimplementation/sameidentity; noexclusionorplaceholderwaiver. No source/header/package/flag/CLI changes or extra bodypreservationwaivers. Fullfilererunmustreportanyrealremainingfailure."
+    ],
+    "hypothesis": "Existing actual-source fixtures retain obsolete scalar globals and a superseded placeholder expectation",
+    "kind": "discovery"
+  },
+  "previous_event": "a2f915f16f232b77795379b134148b7ea9fdfa81d1109a3ddf8e0cc7bda8f7ce",
+  "request_id": "migrate-existing-special-action-fixtures",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:vehicle-effects-oct23p"
+}
