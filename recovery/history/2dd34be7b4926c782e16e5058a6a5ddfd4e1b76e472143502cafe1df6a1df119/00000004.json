@@ -1,0 +1,21 @@
+{
+  "event_id": "8d243870cf4240676398ebc570640ceb09ced424c9d12e244f5be9a084eabd67",
+  "payload": {
+    "affects": [
+      "entity-3dae2f0119cc2afd4274f2475b55c2fb979d1b6b92a36f97229312bbd43d0ed4",
+      "entity-f3df4ea96282663f9409d6ace20e8c8dc0f5f1f729d1e172068af6cf121c8a88"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "loader-cold-compiler-references",
+    "evidence": [
+      "Full spans locally match and all six primary extension references now resolve, but native strict checks retain UNKNOWN for cold compiler-artifact targets. Do not add fake source objects, waive unsupported references or fabricate runtime/linked acceptance. Retain actual fresh quality report and original complete spans for future investigation."
+    ],
+    "hypothesis": "Establish complete native reference identity for original TGA/BMP cold cleanup compiler artifacts.",
+    "kind": "discovery"
+  },
+  "previous_event": "02a1f09f20579d3f1cbc4a6799a894cf6d12dfc03164af0c2c29a6a262bdc24d",
+  "request_id": "loader-cold-compiler-references",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:buffer-localized-loaders-oct23x"
+}

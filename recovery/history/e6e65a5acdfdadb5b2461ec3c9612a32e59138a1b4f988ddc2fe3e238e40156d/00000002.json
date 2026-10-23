@@ -1,0 +1,20 @@
+{
+  "event_id": "1bb5e3c77215ec7db015525faf9704db9a13079948b18130d694639db21f6690",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "map-save-result-lifetime",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Moving only result=1 to function entry restores75/75 original instructions and all14 relocation targets/order. Preserve unchecked path handling, header/version/map_data ordering, unconditional fclose including null on open failure, and remove after close. Independent source/pin/COFF review SHA256 e3ec51f1dacba1fa4b50bc718caa5b9e126344c278c3bae1810a3651d4ea1a6c. Strict remains UNKNOWN for unbound same-TU static strings; no behavior or data-target acceptance inferred.",
+      "Fresh shared application build/link passes for192 translation units and206 qualified objects. All203 objects outside the three edited owners normalize equal original master baseline; each edited object reproduces its isolated production replay, replica and deliberate damage controls. Source/claims/mappings/references pass; all original source facts and prior strict/local exact states preserved. Native guarded record exit0 banks exactly5A9B20,5D7CA0,600270. Whole known5581 domain has3428 local exact,3115 strict PASS,313 UNKNOWN. No additional function-implementation coverage is asserted. Coordinator review SHA256 cc4790eed7fb9b1cdb8ba47028748a4841c10427c0038e730ba9b33cc8207ea6.",
+      "Existing28 actual-source host tests pass, retaining original error paths, unsafe behavior and mutation controls; MCI tests do not dereference indeterminate parameter fields. Game/MCI native outside-selected PASS. Buffer remains native FAIL for384 class101 bf/ef auxiliary records after source line changes; outside sections/references/associations and other emitted bodies unchanged. Explicit manual coordinator review permits this bounded metadata change without native admission, comparator waiver or baseline reset.",
+      "Standing user permission authorizes coordinator-reviewed manual integration, not automatic/full-project/game/runtime/complete linked acceptance. Original task baseline is retained. Require a fresh destination build, all206 object comparison, source/claim/reference continuity and28hosttests before cleanup. Pending source/evidence findings remain open and must survive integration."
+    ]
+  },
+  "previous_event": "6b0cbe7255ee72d03dc29bd953e55b56c7ee6949dd8d0c13ad8fcd7ed4001c67",
+  "request_id": "map-save-result-lifetime-incorporated",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:game-map-save-match-oct23x"
+}

@@ -1,0 +1,20 @@
+{
+  "event_id": "7eb3da36e3ba2d60a9e1c4b506fa1a421b67546049c780cd1f50c80179224939",
+  "payload": {
+    "affects": [
+      "entity-a07fbdcfe8d0ed061639c908d316db559ca44f1b158cdf300cb5d15d4b4f0266"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "map-save-static-object-starts",
+    "evidence": [
+      "Strict diagnostics identify three unresolved same-TU static data references in the otherwise exact map saver. Native local_object_targets supports ordinary static starts. Independent read-only evidence places _PathDot at690DA4 with dot/NUL, _SaveFileMode at690DA8 with wb/NUL, and _MapSaveHeaderText at690DAC with TERRANMAP/NUL; source unchanged. Evidence SHA256 9998aafa6220a60a5bfa0ffc34b9360a835a7938ba11c2711eb1b33738bbaf94. No bindings or strict PASS granted in this batch; validate/source-publish under fresh scope, retaining data-section/constness limitations."
+    ],
+    "hypothesis": "Establish source-owned starts for PathDot, SaveFileMode and MapSaveHeaderText without assuming original constness or allocation bounds.",
+    "kind": "discovery"
+  },
+  "previous_event": "1bb5e3c77215ec7db015525faf9704db9a13079948b18130d694639db21f6690",
+  "request_id": "map-save-static-object-starts",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:game-map-save-match-oct23x"
+}
