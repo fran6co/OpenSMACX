@@ -654,9 +654,15 @@ RECT InfoPanelBounds;
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x00458D60-0x00458DBB", "git:3a14c197:src/recovered/units/00458d60.cpp", "source:src/console.h:GraphicWin virtual base", "source:src/buffer.h:Dib"], "reason": "The original stores one RECT at 0x00939EF8, sizing it from the screen-width copy and the Console GraphicWin Buffer DIB height; the source name describes the observed behavior, not the catalog placeholder UNK4."}
 // symbol    ?configure_panel_bounds@InfoWin@@QAEXXZ
 void InfoWin::configure_panel_bounds() {
-    const bool wide = WinScreenWidth >= 1000;
-    const int panel_width = wide ? 250 : 200;
-    const int panel_height = wide ? 212 : 180;
+    int panel_width;
+    int panel_height;
+    if (WinScreenWidth < 1000) {
+        panel_width = 200;
+        panel_height = 180;
+    } else {
+        panel_width = 250;
+        panel_height = 212;
+    }
     InfoPanelBounds.left = 0;
     InfoPanelBounds.right = panel_width;
     InfoPanelBounds.top = ConsoleGlobal.pixel_height();
