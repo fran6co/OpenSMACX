@@ -28,8 +28,8 @@ def definition(text: str, signature: str) -> str:
 
 def actual_parts():
     header = (ROOT / "src/time.h").read_text()
-    source = (ROOT / "src/time.cpp").read_text()
-    lifecycle = (ROOT / "src/time_lifecycle.cpp").read_text()
+    source = (ROOT / "src/jackal/time.cpp").read_text()
+    lifecycle = (ROOT / "src/jackal/time_lifecycle.cpp").read_text()
     helper = definition(header, "void stop_pending_events()")
     wrapper = definition(source, "void Time::stop()")
     return header, source, lifecycle, helper, wrapper
@@ -47,8 +47,8 @@ def test_mapped_stop_is_a_wrapper_and_internal_paths_keep_the_inline_core():
     private = header.index(" private:")
     helper_start = header.index("void stop_pending_events()", private)
     assert helper_start < header.index("// ONE-SHOT EMULATION", helper_start)
-    row, = (item for item in read_file(ROOT / "src/time.cpp") if item.address == 0x616730)
-    assert row.body == "src/time.cpp" and row.byte_exact
+    row, = (item for item in read_file(ROOT / "src/jackal/time.cpp") if item.address == 0x616730)
+    assert row.body == "src/jackal/time.cpp" and row.byte_exact
     assert row.name == "?stop@Time@@QAEXXZ"
 
 

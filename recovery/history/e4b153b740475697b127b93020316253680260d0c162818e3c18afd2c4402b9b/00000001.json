@@ -1,0 +1,20 @@
+{
+  "event_id": "27dfee8279fffae4997131d81491252e60b2f6051e823db04839296d2185c20b",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_netmsg_behavior.py",
+      "recovery/tests/test_time_stop_call_boundaries_oct15.py"
+    ],
+    "evidence": [
+      "Existing Time::stop/close_impl actual-source boundary test and NetMsg destructor harness name the retired time source homes directly. Retarget to the genuine Jackal class/lifecycle owners, retaining every original behavior/call-boundary/mutant assertion. No product-scope, baseline or acceptance change."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "time-owner-additional-test-paths-oct23zg",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:time-jackal-owner-oct23zg"
+}
