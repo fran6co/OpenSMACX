@@ -295,6 +295,7 @@ set(OPENSMACX_SOURCES
     src/vector.cpp
     src/win.cpp
     src/win_coordinates.cpp
+    src/win_point_coordinates.cpp
     src/win_input.cpp
     src/win_reparent.cpp
     src/winnodelist.cpp

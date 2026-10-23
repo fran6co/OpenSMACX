@@ -85,8 +85,9 @@ def _definition(text, signature):
 
 def _source():
     cpp = (ROOT / "src/win.cpp").read_text(encoding="utf-8")
+    point_cpp = (ROOT / "src/win_point_coordinates.cpp").read_text(encoding="utf-8")
     return (cpp, _definition(cpp, REDRAW_SIGNATURE),
-            _definition(cpp, NONCLIENT_SIGNATURE))
+            _definition(point_cpp, NONCLIENT_SIGNATURE))
 
 
 def test_only_two_win_predicates_change_and_existing_mappings_remain():
@@ -113,8 +114,11 @@ def test_only_two_win_predicates_change_and_existing_mappings_remain():
     assert "void nonclient_to_screen(RECT * rect);" in header
 
     records = read_text(cpp, ROOT / "src/win.cpp")
+    point_records = read_text(
+        (ROOT / "src/win_point_coordinates.cpp").read_text(encoding="utf-8"),
+        ROOT / "src/win_point_coordinates.cpp")
     redraw_row, = [row for row in records if row.address == REDRAW[0]]
-    nonclient_row, = [row for row in records if row.address == NONCLIENT[0]]
+    nonclient_row, = [row for row in point_records if row.address == NONCLIENT[0]]
     assert redraw_row.name == "?on_redraw_nc@Win@@QAEXPAURECT@@H@Z"
     assert redraw_row.image_spans == (REDRAW,)
     assert redraw_row.byte_exact is False and redraw_row.semantic is False

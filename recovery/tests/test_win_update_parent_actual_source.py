@@ -14,6 +14,7 @@ ADDRESS = 0x005F74A0
 HELPER_ADDRESS = 0x005ED240
 UPDATE_SIGNATURE = "int Win::update_window(RECT * area)"
 HELPER_SIGNATURE = "void Win::client_to_screen(int *x, int *y)"
+POINT_TU = "src/win_point_coordinates.cpp"
 
 
 def _root() -> Path:
@@ -42,16 +43,20 @@ def _actual_definitions() -> tuple[str, str]:
     path = root / "src/win.cpp"
     source = path.read_text(encoding="utf-8")
     rows = {row.address: row for row in read_file(path)}
-    assert ADDRESS in rows and HELPER_ADDRESS in rows
+    point_path = root / POINT_TU
+    point_source = point_path.read_text(encoding="utf-8")
+    point_rows = {row.address: row for row in read_file(point_path)}
+    assert ADDRESS in rows
     assert rows[ADDRESS].name == "?update_window@Win@@QAEHPAURECT@@@Z"
     assert rows[ADDRESS].symbol == "?update_window@Win@@QAEHPAUtagRECT@@@Z"
     assert rows[ADDRESS].image_spans == ((ADDRESS, 0x005F757F),)
-    assert rows[HELPER_ADDRESS].name == "?client_to_screen@Win@@QAEXPAH0@Z"
-    assert rows[HELPER_ADDRESS].image_spans == ((HELPER_ADDRESS, 0x005ED2C5),)
+    assert HELPER_ADDRESS in point_rows
+    assert point_rows[HELPER_ADDRESS].name == "?client_to_screen@Win@@QAEXPAH0@Z"
+    assert point_rows[HELPER_ADDRESS].image_spans == ((HELPER_ADDRESS, 0x005ED2C5),)
     update = _definition(source, UPDATE_SIGNATURE)
-    helper = _definition(source, HELPER_SIGNATURE)
+    helper = _definition(point_source, HELPER_SIGNATURE)
     assert update in rows[ADDRESS].region
-    assert helper in rows[HELPER_ADDRESS].region
+    assert helper in point_rows[HELPER_ADDRESS].region
     assert "win_parent_->client_to_screen(&x, &y);" in update
     return update, helper
 

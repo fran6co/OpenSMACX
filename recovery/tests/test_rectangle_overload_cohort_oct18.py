@@ -20,8 +20,8 @@ ROOT=Path(__file__).resolve().parents[2]
 SPEC=(
  ("graphicwin.cpp","int GraphicWin::update(RECT *area, GraphicWin *source)",0x5D5630,0x5D56AA),
  ("graphicwin.cpp","void GraphicWin::update(int x, int y, int width, int height,",0x5D55D0,0x5D562F),
- ("win.cpp","void Win::nonclient_to_screen(int * x, int * y)",0x5ED3F0,0x5ED48D),
- ("win.cpp","void Win::client_to_screen(int *x, int *y)",0x5ED240,0x5ED2C5),
+ ("win_point_coordinates.cpp","void Win::nonclient_to_screen(int * x, int * y)",0x5ED3F0,0x5ED48D),
+ ("win_point_coordinates.cpp","void Win::client_to_screen(int *x, int *y)",0x5ED240,0x5ED2C5),
  ("buffer.cpp","int Buffer::dotted_box(RECT * a1, int a2)",0x5E32F3,0x5E3370),
  ("buffer.cpp","void Buffer::dotted_box(int left, int top, int right, int bottom, int color)",0x5E3283,0x5E32E4),
 )
@@ -42,13 +42,13 @@ def actual():
 
 
 def test_win_point_and_rectangle_annotations_bind_their_own_overloads():
-    path=ROOT/"src/win.cpp"
-    text=path.read_text()
-    records=read_file(path)
-    for address,signature in (
-        (0x5ED3F0,"void Win::nonclient_to_screen(int * x, int * y) {"),
-        (0x5ED170,"void Win::nonclient_to_screen(RECT * rect) {"),
+    for filename,address,signature in (
+        ("win_point_coordinates.cpp",0x5ED3F0,"void Win::nonclient_to_screen(int * x, int * y) {"),
+        ("win_coordinates.cpp",0x5ED170,"void Win::nonclient_to_screen(RECT * rect) {"),
     ):
+        path=ROOT/"src"/filename
+        text=path.read_text()
+        records=read_file(path)
         record,=(row for row in records if row.address==address)
         assert text.count(signature)==1
         definition_line=text[:text.index(signature)].count("\n")+1
