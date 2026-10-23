@@ -1,0 +1,26 @@
+{
+  "event_id": "2c1c65f6844e9d80f5c0d282275e870733c165602a7908589013eeadebf9f04f",
+  "payload": {
+    "affects": [
+      "entity-3e8762df19b9c00db821c42065555f03e074886932ea9a8010729f02925cfd88",
+      "entity-7e1927d2edca9bf8b87efb933e9a496195b7aec43c021555e234097bfc6b9b67"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "base-climate-signed-wrapped-thresholds",
+    "evidence": [
+      "Pinned4FE976..4FE991 and4FE9E6..4FEA09 perform dwordSUB/ADD and signed comparison for both climate gates. Current unsigned AltNatural first comparison incorrectly accepted ordinary detail20/sea21. Restore original signed ordering with explicit uint32 wrapping intermediates and target-qualified int32 interpretation; no safety fallback, table/header/type migration, unrelated case or callback/order change.",
+      "One paired candidate and3separate actualrecipe baseline/replica/damage controls completed. Prior private analysis failures (Cunderscorelabel lookup, unexpectedly changeddrone_riot signature, numericlocal-label suffixes) remain recorded; no compiler retry or candidate budget reset was used. The native deck materializes exact candidateSHA3087a2ec4b788066c126c6b10dc1d388255106b8696e11ef0606e22e3af5f5d9. Fresh complete application receipts compile those samebytes; its normalized completeBaseobject equals the retained measured overlay.",
+      "Independent pin/COFF reviews verify the single changed base_build byte JA→JG, original equal-threshold behavior and unchanged signedsecondgate/dwordarithmetic. The unrelated unchanged-source drone_riot differs only by exchanging two independent initialized stacklocal reloads intoEDI/ESI at+2A4/+2A7, with no branch/label into the secondload and all164relocations unchanged. Its original matching obligation is retained; the compiler scheduling cause is not invented. Existing optimized second-contour reuse remains a separate fullfunction-fidelity obligation.",
+      "All90originalrecords/fullspans/claims/completeauthoredlessons andbase.h are preserved. Tennewactualsource GCC/ClangO2/UBSan controls pass, covering completeclimatecase/sharedrangeassignment, bytevaliddetails, ordinarybelowsea/equality/positive/highbitwrapping, first/last/noproject, flag/lock/clamp and livecoordinate reads. Eachof4compilingmutations firstpassesitsidenticalunmodifiedwitness thenfails. Independent source/test review and explicit deck-to-source binding close the sourcehash ambiguity.",
+      "The broader126test run is83pass43fail; unchangedmaster rerun ofall116sharedtests is73pass43fail. Exact testcaseoutcome continuity is checked; no test weakened or new failure observed. These preexisting stale fixture/storage/API failures remain RED, not accepted behavioral proof. The focusednew10pass plus physicalpreservation establish only this bounded correction, not fullbase_build semantics.",
+      "Fresh2200dcde4candidate application builds and links. Native source/mapping/reference/claims checks pass;202otherqualifiednormalizedobjects are equal; nativeoutside2body code/data/reference residual passes with no other body omissions. All5581knownmaskedverdictidentities andstrictresults remainunchanged (3417maskedexact,2830strictpass,587unknown). No newexactfunction or compilingbodycoveragegain. Coordinator manually reviews this boundedoriginal-semantic correction under standinguserauthority; nativeautomatic/fullproject/gameacceptance and complete linkedretention/structure/runtime remainunproven. Destinationfreshverification remainsrequired."
+    ],
+    "hypothesis": "Recover original signed climate threshold ordering after modulo32 arithmetic, preserving all other emitted effects and historical obligations.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "base-climate-signed-wrapped-thresholds",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:base-climate-order-oct23h"
+}
