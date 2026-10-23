@@ -1,0 +1,31 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "db9584f7bcd872fab5d879d91d78d10206a2228b",
+  "editable_files": [
+    "src/planwin.cpp",
+    "recovery/tests/test_planwin_centering_owner_oct24a.py",
+    "recovery/tests/planwin_centering_owner_control.cpp"
+  ],
+  "evidence": [
+    "Native source/pin review planwin-centering-owner-boundary-evidence-oct23zg establishes complete original spans opticenter48B630..48B8D6 andmonocenter48B8E0..48BAA1. Original scans occur inside each mapped method:25samplesfirstpoint then25secondpoint onlyif firstfits; mono81. Current recovery-added static plan_tiles_fit is called only by these2methods and has no original call counterpart. Restore direct ordinary C++ loops in both and removehelper onlyafterallusesgone; preserve everyexit/read/cache/bound/wrap/callback/redraw/copy order and completeoldbinding/spans/claims/usefulhistory.",
+    "Originalopticenter48B656..48B69A also computes abs(x2-x1), checksflat/halfwidth, conditionally computes minimumendpoint plus signed half-distance andcalls mappedxrange48BEE0 before storingx1/y1 andstartingzoom. Current sourceomits thispreamble. Revalidate exactregister/stackuseandrounding; preserveapparentlydiscardedreturn as originalquirk unlessactualdef-usecontradicts. Do not fix by assigningmidpoint, clampbounds/indices, normalize INTMIN/unsafe arithmetic, invent fields/globals or force anextra call through an artificial functionpointer/export/pragma. Currentheaderxrangevisibility maystilloptimize unusedcall; preservethat matching obligation ratherthan eraseoriginalsourcefact.",
+    "MapWin::field_1DD98_ alreadyint32_t; useordinarysignedzoom locals/initialization/comparisons withunchanged Header/layout. Follow originalgenuineGraphicWin/Buffer base relationships; removeunnecessaryGraphicWin*local andBufferpointercast in both redrawtails usingproperqualifiedinheritedaccess whereequivalent, asrecentPlanWin::init evidence supports. No header/build/compiler/propertychangesauthorized. Scopeoutside2methods/helpersrequirescoordinatordecision beforeediting.",
+    "CoordinatorownsGit/compilerresources/recipes/measurement/recording/integration; source andhosttestworkers editdistinctfiles. Two prior boundedmonoSpellings compilednoexactgain/loss andpassingoutsidechecks; capfutureunchangedcontext attempts, norepeat. Newcompleteopticenter preloop+bothdirectloops is a newsemanticownercontext; implementfaithfullyfirst, donotpostpone forbytechasing. Require independentpin/source/ABI/oldclaimcontinuity review, actual-source GCC/Clang positiveandmeaningfulmutants, production/replica/damage controls, allotherexact/strictpreservation andfresh194TU208objectbuild/link+destination rechecks. Preservejustifiedsource/matchingobligations; neverdemoteclaims/weaken gates orcallmanualscopefull-gameacceptance."
+  ],
+  "intent": "Restore complete original PlanWin centering scans and midpoint preamble",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4765232,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4765920,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "planwin-centering-owner-oct24a"
+}
