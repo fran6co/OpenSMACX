@@ -1,0 +1,31 @@
+{
+  "event_id": "c5dda6667b94e2a00f02799befe972bacdf0c45f647f90d24ddab5305d029472",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "The complete six-function controlled comparison retains native FAIL solely for two associated debug-frame records whose parent code/reference bytes do not change. Independent physical follow-up SHA256 6ed82d48c955818d3b6504ee4609693fb0447ac0289c161e3d54082df4531488 identifies Spot::shutdown5FA830 and current Buffer::get_hdc5E3503. These are additional affected metadata owners, not blanket header waivers.",
+      "Both old/new COMDAT bodies match their original spans byte for byte, retaining the same relocations. Only FPO byte14 changes: cbProlog0to1 for Spot and0to4 for Buffer. Baseline linked MAP selects both from alpha.cpp, whose actual /Oy- /Z7 object and image-bound PDB have the candidate FPO values. This corroborates intended metadata but does not qualify a future candidate link.",
+      "Buffer original annotation name has an int return while the current emitted symbol returns HDC. Preserve the original identity and explicit current symbol; do not conflate spelling/ABI identities or edit source markers. The reviewed typed handle and 32-bit return register are unchanged by this profile.",
+      "Coordinator explicitly expands the profile review to these two original identities and their associated FPO records. No additional C++/header file is editable. Original task baseline and all claims remain unchanged. The prior one/six-function native FAIL reports remain, and a new eight-identity comparison must retain its actual result. Fresh combined build/link, MAP/PE/PDB selection and destination verification remain required before manual integration."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6268976,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6173955,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "c2b5780b54b0cad28a199ac6fcb6feaeea4354178249116fc4fd49ea8f62fe5c",
+  "request_id": "authorize-eight-identity-frame-scope",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:spying-frame-profile-oct23z"
+}

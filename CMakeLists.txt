@@ -518,6 +518,8 @@ set_source_files_properties(
 # Preserve Alpha's measured frame-based application context.
 # Shared graphics language state and its setter have a separate library owner.
 set_source_files_properties(src/alpha.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")
+# Preserve spying's original frame-based argument accesses.
+set_source_files_properties(src/spying.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Preserve the measured frame-based AlphaNet controller context. Its record
 # and lifecycle owner remains on the default application profile.
 set_source_files_properties(src/alphanet.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")

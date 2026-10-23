@@ -1,0 +1,24 @@
+{
+  "event_id": "c2b5780b54b0cad28a199ac6fcb6feaeea4354178249116fc4fd49ea8f62fe5c",
+  "payload": {
+    "affects": [
+      "entity-3a109b4b9331fb13c021e54fcdaccf1ae4e12b0206f04a64b33f94208dfade12",
+      "entity-ba3693f1ed59252ceab134d32753290bc9ccd10d02813cc4cc57aa0f092020db"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "additional-inline-frame-metadata",
+    "evidence": [
+      "The complete six-function controlled comparison retains native FAIL solely for two associated debug-frame records whose parent code/reference bytes do not change. Independent physical follow-up SHA256 6ed82d48c955818d3b6504ee4609693fb0447ac0289c161e3d54082df4531488 identifies Spot::shutdown5FA830 and current Buffer::get_hdc5E3503. These are additional affected metadata owners, not blanket header waivers.",
+      "Both old/new COMDAT bodies match their original spans byte for byte, retaining the same relocations. Only FPO byte14 changes: cbProlog0to1 for Spot and0to4 for Buffer. Baseline linked MAP selects both from alpha.cpp, whose actual /Oy- /Z7 object and image-bound PDB have the candidate FPO values. This corroborates intended metadata but does not qualify a future candidate link.",
+      "Buffer original annotation name has an int return while the current emitted symbol returns HDC. Preserve the original identity and explicit current symbol; do not conflate spelling/ABI identities or edit source markers. The reviewed typed handle and 32-bit return register are unchanged by this profile.",
+      "Coordinator explicitly expands the profile review to these two original identities and their associated FPO records. No additional C++/header file is editable. Original task baseline and all claims remain unchanged. The prior one/six-function native FAIL reports remain, and a new eight-identity comparison must retain its actual result. Fresh combined build/link, MAP/PE/PDB selection and destination verification remain required before manual integration."
+    ],
+    "hypothesis": "Include the two unchanged-code helper owners whose FPO metadata changes under the tested frame profile.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "additional-inline-frame-metadata",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:spying-frame-profile-oct23z"
+}
