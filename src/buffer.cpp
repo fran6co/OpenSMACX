@@ -4918,11 +4918,17 @@ BufferSpriteLifetime BufferSpriteOwner;
 // See the declaration in buffer.h. Copied verbatim out of the image's .rdata,
 // four characters plus a NUL each, so the loader families append exactly what
 // the shipped build appends.
+// RECOVERY_OBJECT: v1 0x00696C58 ?BufferExtTgf@@3QBDB
 const char BufferExtTgf[] = ".tgf";
+// RECOVERY_OBJECT: v1 0x00696C60 ?BufferExtTgg@@3QBDB
 const char BufferExtTgg[] = ".tgg";
+// RECOVERY_OBJECT: v1 0x00696C68 ?BufferExtTga@@3QBDB
 const char BufferExtTga[] = ".tga";
+// RECOVERY_OBJECT: v1 0x00696C70 ?BufferExtBmf@@3QBDB
 const char BufferExtBmf[] = ".bmf";
+// RECOVERY_OBJECT: v1 0x00696C78 ?BufferExtBmg@@3QBDB
 const char BufferExtBmg[] = ".bmg";
+// RECOVERY_OBJECT: v1 0x00696C80 ?BufferExtBmp@@3QBDB
 const char BufferExtBmp[] = ".bmp";
 
 // ===== MANAGED GLOBALS - real objects, homed to their domain =====
@@ -7889,7 +7895,7 @@ forward:
     }
 }
 
-// ORIGINAL: 0x005D7CA0 ?load_bmp@Buffer@@QAGHPBDPAVPalette@@HH@Z 0x005D7CA0-0x005D7DD8;0x00662BA7-0x00662BBC FILE
+// ORIGINAL: 0x005D7CA0 ?load_bmp@Buffer@@QAGHPBDPAVPalette@@HH@Z 0x005D7CA0-0x005D7DD8;0x00662BA7-0x00662BBC FILE BYTE_EXACT
 // symbol    ?load_bmp@Buffer@@SGHPBDPAVPalette@@HH@Z
 // TRIED (historical, superseded by the pinned cleanup-only one-state evidence): this was grouped with the load_tga/load_bmp/load_pcx SEH-frame family at 0x005D7A30 and 0x005D7B40; try{}catch(...){throw;} was the closest measured shape and still diverged at #0 push/mov. The original has no catch map.
 // size      333 bytes
@@ -7908,14 +7914,11 @@ int __stdcall Buffer::load_bmp(const char * a1, Palette * a2, int a3, int a4) {
     path[0] = 0;
     strcat(path, a1);
     char *end = path + strlen(a1);
+    while (end != path && *end != '.') {
+        end--;
+    }
     if (end != path) {
-        do {
-            if (*end == '.') {
-                if (end != path) goto has_ext;
-                break;
-            }
-            end--;
-        } while (end != path);
+        goto has_ext;
     }
     switch (Language) {
         case 1: strcat(path, BufferExtBmf); break;

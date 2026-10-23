@@ -1,0 +1,29 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "b501590932e8110130389d38832987fce46624a3",
+  "editable_files": [
+    "src/buffer.cpp"
+  ],
+  "evidence": [
+    "Concrete new evidence requeues BMP after its earlier false missing-decoder deferral: complete pinned BMP and TGA both only build path/open/probe GetFileSize/cleanup/return8. Exact paired TGA scan motivated one BMP short-circuit-loop screen, now87/87 BYTE_EXACT across primary and cold spans with no exact losses. Materialize only that BMP scan hunk; preserve already exact TGA and all other Buffer bodies, APIs, unsafe quirks, localized suffix/path/error/lifetime behavior and historical annotations.",
+    "Add six reviewed start-only source-owned object identities using native object_writer.write_object_bytes with full current parse snapshot, exact source digest and add-only roundtrip. Root directly read all five NUL-terminated bytes from the SHA-pinned PE and current qualified production COFF, and checked exact external symbols. Correct map: Tgf696C58,Tgg696C60,Tga696C68,Bmf696C70,Bmg696C78,Bmp696C80. Initial TGA proposal reversed first/third starts and was independently rejected before any source edit; corrected evidence and original diagnostic errors remain preserved.",
+    "These v1 records establish original starts and source symbol correspondence only. No array allocation extent/padding, original constness, equivalent PE/COFF storage permissions, complete lifetime or fresh data-match claim: pin strings are in writable PE data while current const arrays are COFF rdata. Do not alter types from section names alone. Original cold compiler-artifact references remain UNKNOWN; source identity additions do not fabricate strict or game acceptance. Preserve all existing object/function identities, spans, findings and claims without demotion.",
+    "Native BMP outside-selected FAIL from source-line auxiliary metadata stays authoritative. Require production replay/replicas/damage and source-object roundtrips, all outside section/reference/association and other emitted function checks, existing four Buffer loader host tests, independent review, full batch build/link and fresh destination recheck. This Task shares the same unchanged baseline with separately scoped Game/MCI owners in one checkout; no worker source edits during compiler epochs. Only coordinator prepares/compiles/records/commits/integrates; no compiler or library changes. Standing reviewed manual integration only, not automatic/full linked/runtime/game acceptance."
+  ],
+  "intent": "Recover the paired original BMP scan and bind the real six localized asset extension objects",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6126400,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6126752,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "buffer-localized-loaders-oct23x"
+}

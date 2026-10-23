@@ -6452,10 +6452,11 @@ int __cdecl save_daemon(char *save_path) {
     return result;
 }
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x005A9B20 ?save_map_daemon@@YAHPAD@Z 0x005A9B20-0x005A9C05
+// ORIGINAL: 0x005A9B20 ?save_map_daemon@@YAHPAD@Z 0x005A9B20-0x005A9C05 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/005a9b20.cpp", "recovery/tasks/game-save-load-owner-coverage.json"], "reason": "Recover map-save header/version/data flow and preserve the original unconditional fclose and failed-file removal error behavior."}
 // symbol    ?save_map_daemon@@YAHPAD@Z
 int __cdecl save_map_daemon(char *path) {
+    int result = 1;
     char filename[256];
     filename[0] = 0;
     strcat(filename, path);
@@ -6465,7 +6466,6 @@ int __cdecl save_map_daemon(char *path) {
     }
 
     FILE *file = env_open(filename, SaveFileMode);
-    int result = 1;
     if (file != 0) {
         result = 2;
         header_write(MapSaveHeaderText, file);

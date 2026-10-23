@@ -1,0 +1,24 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "b501590932e8110130389d38832987fce46624a3",
+  "editable_files": [
+    "src/game.cpp"
+  ],
+  "evidence": [
+    "Eighth pass Game aggregate screen makes save_map_daemon75/75 BYTE_EXACT. Isolate ONLY moving int result=1 before filename construction; reject the other three nonwinning Game forms. Full original/candidate source and relocation order independently reviewed in save-map-independent-review.json. Keep complete source markers, symbols, spans, history and every other Game method unchanged.",
+    "Preserve unchecked path construction, original extension test, env_open/header_write/version5/fwrite/map_data order and all statuses. Unconditional fclose(file), including null on failed open, precedes conditional remove; no error-path fix, safety guard, API/header/ABI/type/layout/global/compiler/linker change. Existing game save/load actual-source GCC/Clang tests cover null close and cleanup; their incomplete map_data path coverage remains explicit.",
+    "Coordinator owns Git, Task, compiler resources, preparation, native recording and collection. Both independent owner tasks share this one isolated batch checkout and unchanged original baseline. No worker source edits during either compiler epoch. One source spelling per function already screened; production replay, replica and deliberate damage qualification are labeled separately.",
+    "Require full source identity/claim continuity, independent review, native scoped preservation, relevant existing host checks, fresh application compile/link and all outside objects. Standing user authorization allows reviewed manual integration, not native automatic or full-game/linked/runtime acceptance. Native FAIL/UNKNOWN stays explicit; no comparator waiver, baseline reset or claim demotion. Only native guarded record banks measured claims. Fresh destination verification required before cleanup."
+  ],
+  "intent": "Recover exact original map-save result lifetime with ordinary local initialization",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5937952,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "game-map-save-match-oct23x"
+}

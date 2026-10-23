@@ -243,12 +243,13 @@ void MCIVideo::play() {
     field_0_ |= 1;
 }
 
-// ORIGINAL: 0x00600270 ?stop@MCIVideo@@QAEXXZ 0x00600270-0x006002EB FILE
+// ORIGINAL: 0x00600270 ?stop@MCIVideo@@QAEXXZ 0x00600270-0x006002EB FILE BYTE_EXACT
 void MCIVideo::stop() {
     if (mciId_ != 0) {
-        MCI_DGV_WINDOW_PARMS windowParams = {0};
-        MCI_GENERIC_PARMS stopParams = {0};
-        MCI_GENERIC_PARMS closeParams = {0};
+        MCI_DGV_WINDOW_PARMS windowParams;
+        MCI_GENERIC_PARMS stopParams;
+        MCI_GENERIC_PARMS closeParams;
+        windowParams.nCmdShow = 0;
         mciSendCommandA(mciId_, MCI_WINDOW, MCI_DGV_WINDOW_STATE,
                        reinterpret_cast<DWORD_PTR>(&windowParams));
         mciSendCommandA(mciId_, MCI_STOP, 0,
