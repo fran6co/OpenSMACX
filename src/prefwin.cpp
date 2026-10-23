@@ -913,11 +913,18 @@ void PrefWin::on_redraw() {
   redraw_volume();
   hide_option_buttons();
   update_pref_buttons();
-  bscPrefCheckBox_.on_redraw();
-  advPrefCheckBox_.on_redraw();
-  warnPrefCheckBox_.on_redraw();
-  warnContPrefCheckBox_.on_redraw();
-  autoPrefCheckBox_.on_redraw();
-  audioVisPrefCheckBox_.on_redraw();
-  mapPrefCheckBox_.on_redraw();
+  bscPrefCheckBox_.redraw();
+  advPrefCheckBox_.redraw();
+  warnPrefCheckBox_.redraw();
+  warnContPrefCheckBox_.redraw();
+  autoPrefCheckBox_.redraw();
+  audioVisPrefCheckBox_.redraw();
+  mapPrefCheckBox_.redraw();
+  volumeMainToggle_.redraw();
+  volumeVoiceToggle_.redraw();
+  volumeSFXToggle_.redraw();
+  volumeMusicToggle_.redraw();
+  okButton_.redraw();
+  cancelButton_.redraw();
+  restoreDefaultButton_.redraw();
 }

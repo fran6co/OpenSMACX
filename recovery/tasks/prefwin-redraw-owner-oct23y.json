@@ -1,0 +1,27 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "088d2cee1345989a4a5c08a893be36e081ffc73a",
+  "editable_files": [
+    "src/prefwin.cpp",
+    "recovery/tests/test_prefwin_behavior.py",
+    "recovery/tests/test_prefwin_redraw_lifecycle_oct23y.py"
+  ],
+  "evidence": [
+    "Independent prefwin-redraw-virtual-structure.json proves the current seven CheckBox handler calls use slot12(+30), while pin uses GraphicWin redraw slot62(+F8) from child GraphicWin view+1C. Current hierarchy, seven child offsets and original constructor-installed tables agree. Use the existing public .redraw() lifecycle; do not rebuild vtables or alter inheritance to fix a wrong method call.",
+    "Pin491C00..491DEE also has seven trailing FlatButton redraws absent from current source and COFF: recover ALL seven using exact original receiver offsets, real existing members and order, not a partial slot-only fix. Preserve the first four helper calls and all callback/global/member reload ordering. All annotations, original spans, symbols, notes and prior claims remain; no manual marker changes or new byte token.",
+    "Update existing actual-source redraw tests from the incomplete seven-handler expectation to the complete original lifecycle/order, retaining earlier controls. Add meaningful mutations for wrong handler bypass and missing trailing button. Host fixtures must distinguish public wrapper from handler; GCC/Clang mutants must compile then fail. No new mirrors for unrelated methods, header/ABI/class changes, extra cleanup, error guards or speculative behavior.",
+    "Worker edits only its isolated authorized source/tests, using apply_patch; no Git, Task, compiler, prefix, preparation or package/environment changes. Return discoveries before expanding scope. Finish edits then report source frozen; no edits during coordinator measurement epochs. Coordinator alone handles native compilation/recording, independent review, commit, integration, destination verification and cleanup.",
+    "Standing user permission supports coordinator-reviewed manual recovery with fresh compile/link, scoped preservation/restoration, source identity continuity and relevant behavior checks. Original task baseline retained; temporary regressions require explicit coordinator review and never demotion or hidden gate weakening. No automatic/full-game/runtime/complete-linked acceptance inferred from build or scoped matches."
+  ],
+  "intent": "Recover complete original preference-window redraw lifecycle and missing child operations",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4791296,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "prefwin-redraw-owner-oct23y"
+}
