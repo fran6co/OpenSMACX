@@ -1,0 +1,27 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "297d15767deb2b800552409cf1169933d4b785fc",
+  "editable_files": [
+    "src/console_commands.cpp",
+    "recovery/tests/test_console_automate_selection_follow_oct23za.py"
+  ],
+  "evidence": [
+    "The full native original span and independent source/dependency review SHA256 3c1355028db10907122cf0a1167d955688e32c5b2bc6fba17787fd23c5442535 establish actual post-callback reloads: lock_veh receives the stack vehicle parameter address at4D8B31, pin reloads it4D8B49 for vehicle access, and reloads again4D8BAA after action_home. Pre-lock plan/triad/terrain/weapon/technology validation remains captured before lock.",
+    "Current source retains Veh/prototype/chassis references from before lock through these callbacks. NetDaemon stores the borrowed vehicle-selection pointer and processes messages; vehicle removal updates that pointed ID as slots move. Correct only the demonstrated post-lock/post-home reference lifetime in Console::automate. This is faithful recovery of original semantics, not an original bug fix. Do not mechanically refresh pre-lock snapshots, add guards, change initialization/unsafe/error behavior or modify NetDaemon/Veh/action_home.",
+    "The complete proposed body in easy-twelfth-3-findings.json is independently reviewed. Retain early direct cursor path/order argument, all plan9 preconditions, lock failure, order11 waypoint snapshots/range/home/order18 behavior, state mask/order writes and final sync/await/unlock. All original identities/full spans/historical claims/useful findings stay unchanged; no marker or BYTE_EXACT editing. No flags, class headers/layout, environment, framework or outside-owner changes.",
+    "Add an actual-source GCC/Clang harness using the complete production automate body. Test unchanged selection and failure/direct paths, a defined lock callback renumbering to a different valid vehicle with different prototype/chassis/range, plus order11 action_home callback changing selection and order18 waypoint copy. Distinguish pre-lock validation from post-lock selected storage, preserve callback/call order and stale-coordinate behavior where original does. A compiled mutant retaining old references must fail behavior. Use real constants/field widths; no fabricated guards or unsafe test inputs. The callback double is not multiplayer/game proof.",
+    "Worker may edit only these two files through apply_patch, then freeze and return hashes. No compiler/tests/Git/Task/preparation/resource changes; coordinator owns all verification, records and integration. Return cross-owner findings before further edits. Prefer complete faithful implementation over prolonged exactness attempts, preserve justified structural work even when mismatching.",
+    "Standing user permission allows a bounded coordinator-reviewed manual integration after independent actual-source/evidence review, relevant behavior/native residual/claim/reference checks, fresh compile/link and destination verification. Complete linked retention/allocation, structure/runtime/game and native automatic acceptance remain unproved and cannot be waived. Original baseline stays this full commit even after later integration."
+  ],
+  "intent": "Restore Console automate use of the live vehicle selection after network locking and home-action callbacks",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5081712,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "console-automate-follow-oct23za"
+}
