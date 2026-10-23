@@ -1,0 +1,25 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "8f5cf3d89838c277a1d0b22cf56b1bce951215fc",
+  "editable_files": [
+    "src/world.cpp",
+    "recovery/tests/test_world_hills_retry_oct23p.py"
+  ],
+  "evidence": [
+    "Pinned5C2B40..5C2CA8 decoded completely by owner and coordinator:5C2C3E signedJL to5C2CA0 reloads attempt count then jumps5C2B51 for another random seed. Current innerbreak falls through to paint and returns, losing rejection. Restore ordinary outer retry retaining nine checks, +2attemptcount, >100return AFTER seed RNG/parity, original y-odd increments x, map wrapping/bounds and paint/callback ordering. No safety fixes or RNG normalization.",
+    "Same complete body:5C2C48..5C2C80 computes low32 plateau_mod*(2-MapOceanCoverage), signed /4 unless altitude4; plateau_base is signed dword and signed /2 when ocean>=2 (CDQ/SUB/SAR), then low32 sum. Current unsigned plateau_base /2 differs for high-bit values. Authorize this same-function arithmetic fidelity correction if independently host-tested, preserving loaded field values, source types and all other world functions. Do not retag shared WorldBuilder fields or alter caller behavior.",
+    "Evidence:.opensmacx/recovery/parallel-match-oct23p/world-findings.json; source-owned marker and its full360bytes remain unchanged; preserve historical TRIED/claim obligations. Actual-source GCC/Clang controls must falsify rejected-first-then-valid, firstvalid, allrejected cap, ninthneighbor failure, parity/RNG/paintcallback order and signed radius cases. Baseline body must fail the retry witness.",
+    "Root owns Git/Task/compiler/preparation/resources/integration. Worker edits only assigned C++ body or authorized test; do not edit ORIGINAL markers/history or any other owner/header/build/config/package. Preserve mappings and all prior claims; scope expansion is coordinator-owned. Max3candidate compiler attempts per unchanged context, controls labelled separately; root runs actual-recipe screens and full build/link/source/claims/references before reviewed manual integration. A miss is preserved, not acceptance or claim demotion. No new exact/body coverage is assumed. Independent source/test review and fresh destination checks precede cleanup."
+  ],
+  "intent": "Restore original hill-seed rejection, retry and signed plateau arithmetic",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6040384,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "world-hills-oct23p"
+}
