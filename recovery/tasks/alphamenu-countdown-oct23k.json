@@ -1,0 +1,100 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "11a67c18796c71d8e2017b66872658dcf0b379ff",
+  "editable_files": [
+    "src/alphamenu.cpp",
+    "recovery/tests/test_alphamenu_show_animation_actual_source.py"
+  ],
+  "evidence": [
+    "Pinned original403680..40382F initializes frame counter6 at403766 and decrements/tests it at4037C6..4037CD. Current source increases a body-unused frame variable0..5. Fresh large001-024 report supports one ordinary equivalent countdown candidate; no show-specific exhausted attempt was found. Full owner scope is for matching/preservation, not otherbody edit authority.",
+    "Authorize only the six-iteration loop control in AlphaMenu::show, not hide: int frames=6; do unchangedbody while(--frames!=0). Keep visibilityguard, preferences/live state reads, audio/redraw, saved working RECT/clienttoscreen/y/step, clipsetup, animationgate/frameX/WinFlipClipped, exactlysix time/draw/flip/y/do_sound/wait effects, both original cliprestores, final Win::show(3) and button update/redraw unchanged. No new types/header/layout/flags/annotations/helperchanges or original-game bugfix.",
+    "Add actual-source host controls using complete current show body with service spies, visibleearlyreturn, animdisabled/multiplayer gates, optionalsound, exactlysix ordered draw/flip/audio/wait frames and y sequence, borrowedRECTsnapshot/cliprestores, finalflags/show/button effects. Compile-success five-frame mutant must fail after same unmodified witness passes under GCC/Clang; no oldcode execution or fake binding.",
+    "Worker edits exactlythese2files usingapply_patch; no Git/Task/annotation/nativeVC6/resource/preparation. Coordinator measures oneactualrecipe candidate withbaseline/replica/damage and fullowner/outsidepreservation, caps3attemptsperfunction/unchangedcontext includingerrors. No prolongedspelling, preserve priorobligations. Independentreview/fullapplicationbuild/link/sourcecontinuity/freshdestinationcheck precede boundedmanualintegration; scorealone isnotautomatic/gameacceptance."
+  ],
+  "intent": "Recover original six-frame AlphaMenu show-animation countdown form",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5364752,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4591056,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4206400,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4207264,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4207008,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4208144,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4208160,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4209520,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4209392,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4207424,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4208256,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4208688,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4207952,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4586272,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5364880,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5365616,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "alphamenu-countdown-oct23k"
+}
