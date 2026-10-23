@@ -443,13 +443,14 @@ int main() {
     dialog.parent_=&bridge_parent;
     dialog.set_draw_callback(&bridge_draw_with_id);
     dialog.on_scrolled(-1, 7);
-    assert(dialog.field_18_==7 && bridge_draw_calls==1 && bridge_draw_ids[0]==1000);
-    assert(bridge_draw_window==static_cast<GraphicWin *>(static_cast<ListBox *>(&dialog)));
-    assert(WinCallbackWindow==&bridge_parent && dialog.updates==1);
+    assert(dialog.field_18_==7 && bridge_draw_calls==0 && dialog.redraws==1);
+    assert(WinCallbackWindow==&bridge_parent && dialog.updates==0);
     int previous_draw_calls=bridge_draw_calls;
+    int previous_updates=dialog.updates;
     dialog.on_scrolling(42, 999);
     assert(dialog.field_18_==7 && dialog.redraws==1);
     assert(bridge_draw_calls==previous_draw_calls);
+    assert(dialog.updates==previous_updates+1);
     dialog.kind_=1; dialog.field_18_=7;
     dialog.on_scrolling(-1, 3);
     assert(dialog.field_18_==7); // non-list kind is not forwarded
