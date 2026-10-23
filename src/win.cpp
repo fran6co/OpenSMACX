@@ -9183,7 +9183,7 @@ int Win::update_window(RECT * area) {
     int x = client_rect_.left + outer_rect_.left;
     if ((iFlags_ & 0x20) != 0 &&
         win_parent_ != 0) {
-        client_to_screen(&x, &y);
+        win_parent_->client_to_screen(&x, &y);
         if ((iFlags_ & 0x8000) != 0) {
             x -= win_parent_->outer_rect_.left;
             y -= win_parent_->outer_rect_.top;
