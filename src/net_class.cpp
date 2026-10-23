@@ -877,7 +877,7 @@ int Net::send_group_flagged(void *data, int size, long target,
     DWORD wait_timeout = 0xFFFFFFFFU;
     int selected = -1;
     for (int first_index = 0; first_index < 16; ++first_index) {
-        if (players_[first_index].field_8_ != 0) {
+        if (players_[first_index].field_0_ != 0) {
             selected = first_index;
             break;
         }
