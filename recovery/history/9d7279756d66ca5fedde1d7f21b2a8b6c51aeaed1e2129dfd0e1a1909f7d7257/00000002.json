@@ -1,0 +1,21 @@
+{
+  "event_id": "3137c6017f044d94a9444991ad40e81b3acc8e219ff223a221cc8e866f54f889",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "original-mapwin-branch-local-scans",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Complete original46C020..46C0C9 contains two branch-local eight-slot scans, one after world_climate for paint0/2/12 and one for other paint IDs. Preserve editor arguments/call before clearing the whole field, single original paint branch, climate ordering, live slot/active reads, null-before-slot0 bypass and draw_map(1). Use real MapWin** array cursors, no executable addresses or numeric pointer casts.",
+      "One actual-recipe candidate improves18/56matching instructions to54/56 and emits the original56instruction count. The only remaining mnemonic edges are the two original signedJL versus pointerJb loop tests. Do not change types/cast pointers to manufacture equality. Full-owner comparison loses no current exact body; baseline/replica/target damage and414section outside-body native residual pass. This is an ordinary source-form improvement, not evidence that the previous shared-tail implementation had a different normal-path behavior.",
+      "Independent complete pin/source review and GCC/Clang actual-body controls cover five paint choices, reset/callback order, null/slot0/active selection, and live slot/activity mutation in BOTH climate and nonclimate branches. The climate scenario checks its call precedes all draws. A slot0-bypass mutant compiles and fails after the witness passes. No claim of dynamic/game-runtime or native exact acceptance.",
+      "Combined fresh190-TU application build/link passes and both complete owner objects reproduce screened candidates. All202other normalized physical objects and all332owner original identities/fullspans/historicalclaims/authorednotes remain unchanged; native claims/mappings/references/source checks pass. All5581known masked verdicts and strict outcomes are unchanged. Six new actual-source controls pass; all41shared older host outcomes match unchanged master, including16preexisting predicate/overload fixture failures. These are not weakened or claimed green.",
+      "Coordinator authorizes bounded manual integration after review, not automatic/full-project/game acceptance or additional compiling body coverage. Complete linked selection/allocation and structure/runtime proofs remain unfinished. Fresh destination build/link and source/object checks are required after transfer; preserve this task original baseline and all matching obligations."
+    ]
+  },
+  "previous_event": "6e74e249e4a10d9167d57989768fc74c2c3b55cc5a0eed766f7d7a209f57fe27",
+  "request_id": "original-mapwin-branch-local-scans-incorporated",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:mapwin-branch-scans-oct23j"
+}

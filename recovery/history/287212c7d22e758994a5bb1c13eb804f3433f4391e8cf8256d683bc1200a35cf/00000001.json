@@ -1,0 +1,24 @@
+{
+  "event_id": "c9453edf01d0982db5dc068638482b43052a817c6f6ecbc1c1a3f2a61de09597",
+  "payload": {
+    "affects": [
+      "entity-06e70bf9fb264612841b4aae447cefeda2a0796b41ef338c2c75bef4563f5717"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "original-win-parent-receiver",
+    "evidence": [
+      "Original5F74F2 loads parent intoECX and5F7506 calls5ED240; the old translation called on this and added its own already-accounted origin twice. Correct exactly the receiver. Preserve nullarea cdecl forwarding, entry origin computation, original flag20/nullparent guard, later fresh flag8000 and parent reads, RECT stores and update_screen return. This corrects the translation to the pinned game, not an original-game bug.",
+      "One candidate under the actual unchanged Ob2 application recipe passes baseline-production replay, whole-object overlay replica and target damage. The correct body remains MISMATCH95vs73instructions, versus oldincorrect86; retain faithful source despite lower similarity. Native residual outside this sole body/companions passes730sections and no other current exact function is lost. Helper visibility/inlining is a remaining structural/matching question; historical claims are preserved, not demoted.",
+      "Independent complete pin/source review supports the receiver. Actual-source GCC/Clang controls exercise nested nonzero self/parent/grandparent origins and independent parent/self8000 subtraction, no20/nullparent/nullarea paths, output/return and input preservation. Restoring the old receiver compiles but fails the same positive witness. Host evidence does not prove VC6 ABI, overflow/concurrency, whole layout or game runtime.",
+      "Combined fresh190-TU application build/link passes and both complete owner objects reproduce screened candidates. All202other normalized physical objects and all332owner original identities/fullspans/historicalclaims/authorednotes remain unchanged; native claims/mappings/references/source checks pass. All5581known masked verdicts and strict outcomes are unchanged. Six new actual-source controls pass; all41shared older host outcomes match unchanged master, including16preexisting predicate/overload fixture failures. These are not weakened or claimed green.",
+      "Coordinator authorizes bounded manual integration after review, not automatic/full-project/game acceptance or additional compiling body coverage. Complete linked selection/allocation and structure/runtime proofs remain unfinished. Fresh destination build/link and source/object checks are required after transfer; preserve this task original baseline and all matching obligations."
+    ],
+    "hypothesis": "Use the pinned parent receiver for Win update-window translation, without sacrificing correctness to local similarity.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "original-win-parent-receiver",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:win-update-parent-oct23j"
+}
