@@ -54,7 +54,10 @@ struct HSV { int h, s, v; };
 struct Player { char filename[32]; };
 Player Players[8] = {{"f0"}};
 char StringTemp[256];
-uint32_t GamePreferences;
+struct GameDataStateStorageType {
+  struct { uint32_t game_preferences_; } fields_;
+} GameDataStateStorage;
+uint32_t &GamePreferences = GameDataStateStorage.fields_.game_preferences_;
 const int WinFillColour = 255;
 int InfoFactionTextColors[8], InfoFactionShadowColors[8];
 int ChatItemIdTable[8], ChatShadowColors[8];
@@ -318,7 +321,8 @@ def test_extracted_cpp_bodies_execute_under_native_behavior_controls():
         # reject real control-flow mutants, not merely find expected substrings.
         mutations = (
             (extract("int __cdecl ambience(int ambience_id)"),
-             "GamePreferences & 0x800", "GamePreferences & 0x400"),
+             "GameDataStateStorage.fields_.game_preferences_ & 0x800",
+             "GameDataStateStorage.fields_.game_preferences_ & 0x400"),
             (extract("int __cdecl ambience(int ambience_id)"),
              "g_FX.effect(previous_effect).fade()",
              "g_FX.effect(previous_effect).stop()"),

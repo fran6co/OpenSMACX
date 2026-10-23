@@ -1049,7 +1049,7 @@ static int SAmbiencePass1 = 0; // Original 0x0074DAD0, independently read initia
 
 
 
-// ORIGINAL: 0x00447360 ?general@MAmbience@@QAEXXZ 0x00447360-0x0044746A FILE
+// ORIGINAL: 0x00447360 ?general@MAmbience@@QAEXXZ 0x00447360-0x0044746A FILE BYTE_EXACT
 // symbol    ?general@MAmbience@@UAEXXZ
 // size      266 bytes
 // prototype void (__thiscall ?general@MAmbience@@QAEXXZ)(MAmbience* this)
@@ -1067,8 +1067,7 @@ void MAmbience::general() {
     if (!is_trackset_playing(0x64)) {
         unsigned int now = get_time();
         unsigned int elapsed = now - static_cast<unsigned int>(AmbienceClock);
-        int pass = MAmbiencePass + 1;
-        MAmbiencePass = pass;
+        int pass = ++MAmbiencePass;
         if (elapsed >= 0x1388 && pass >= 5) {
             MAmbiencePass = 0;
             xpose_trackset(MAmbienceStep, MAmbienceCents);
@@ -1173,7 +1172,7 @@ void __cdecl input_callback() {
 }
 
 
-// ORIGINAL: 0x004476F0 ?general@SAmbience@@QAEXXZ 0x004476F0-0x004477A9 FILE
+// ORIGINAL: 0x004476F0 ?general@SAmbience@@QAEXXZ 0x004476F0-0x004477A9 FILE BYTE_EXACT
 // symbol    ?general@SAmbience@@UAEXXZ
 // LEVER: the delegate vtable - declaring Sound's 33 + the sequencer's 42 on
 //   Ambience (ambience.h slots 33..74) is what turned the VCall shims into
@@ -1197,18 +1196,13 @@ void __cdecl input_callback() {
 // indirect  0x00447727 0x00447738 0x00447767 0x00447773
 
 void SAmbience::general() {
-    // Read once and clamped in the local: the image keeps the clamped value
-    // live in ecx across the clamp store AND the xpose_trackset argument that
-    // follows it (0x004476FE `mov ecx, 0x11` -> 0x00447703 store ->
-    // 0x00447724 `push ecx`), and only reloads the field for play_trackset,
-    // after the call has possibly overwritten it.
-    int tick = AmbienceGeneralTick;
-    if (tick > 0x12) {
-        tick = 0x11;
-        AmbienceGeneralTick = tick;
+    // Read the clamped shared tick at the xpose call. Keep the later play_trackset
+    // read after xpose, since that callback may change AmbienceGeneralTick.
+    if (AmbienceGeneralTick > 0x12) {
+        AmbienceGeneralTick = 0x11;
     }
     if ((SAmbiencePass0)++ > 1) {
-        xpose_trackset(tick, SAmbienceCents);
+        xpose_trackset(AmbienceGeneralTick, SAmbienceCents);
         play_trackset(AmbienceGeneralTick);
         SAmbiencePass0 = 0;
     }

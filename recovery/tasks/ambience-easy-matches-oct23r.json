@@ -1,0 +1,30 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "39acf2216c44196938cd89cd4db794b5776c6429",
+  "editable_files": [
+    "src/ambience.cpp",
+    "recovery/tests/test_ambience_general_spelling_oct23r.py"
+  ],
+  "evidence": [
+    "Unpublishednativeactualproductionrecipe screen .opensmacx/recovery/parallel-match-oct23q/easy-physical-screen-3: onecandidatecompile forbothfunctions frommaster39. MA73/73andSA51/51 BYTE_EXACT(localmasked), nativeoutsidebothselectedPASS/nolostexact/nootherfunctionchanges. Exactdeckgroup3 .oct23q/easy-physical-deck.json replacementsarray: MApass`int pass=++MAmbiencePass` replacesoldread+store; SAclampssharedtickinplaceandreadsitforxpose, stillreloadsafterxposeforplay. No assumednewclaims/strictreferenceoracceptance fromthisscreen.",
+    "Sourceworker onlymaterializesthetwoEXACTwinningfullfunctionreplacementsusingapply_patch, preservesallORIGINAL/RECOVERY_BINDING/lessonhistory/claims andallothermethods; noasm/casts/volatile orbugfixes. Callback-sensitiveSAplayreadmustremainafterxpose, sourcecommentsdescribeunchangedtiming withoutnewrunlogs. Rootaloneusesnativeguardedrecordertobankclaimsafterfreshmeasurement; neverhandeditmarkers/typeBYTE_EXACT. Existingoriginalunsafeoverflow/errorbehaviorunchanged.",
+    "Testworker ownsnewfileonly; compileliteralactualMA/SAdefinitions underGCC/Clang. CoverMAclockarmed/no-current-track/elapsed+pass thresholds/postincrementordering/stepandcentswrap/membertranspose effects, SAclampboundary/pass0/pass1thresholds/centswrap/tickincrement andxposecallbackchangingsharedtickthenplayobservingnewvalue. Sensitivitymutantsforoffbyonepassandcachedpostcallbackplay mustcompileandfail; avoidsignedoverflowUBfixtures. Reuseexistingextracthelper, donotcopyproductionalgorithm; boundedhostcontrolsnotruntime/ABIproof. Existingambiencecolortables testsrununchanged.",
+    "Root ownsGit/Task/compiler/preparation/resources/fullbuild/verification/integration/cleanup. Needwinningcandidateproductionreplay/replica/damagecontrols,sourceidentity/history/claimscontinuity,independentreview,applicationbuild/link andstrictreferenceobservations beforemanualmerge, thenfreshdestinationcomparison. Firstcandidatealreadyconsumedoneattempt/function; sameformqualificationcontrolsnotnewcandidateiterations. No framework/compiler/flag/headerchanges. Fullgame/nativeautomaticacceptance remainsunfinished."
+  ],
+  "intent": "Restore exact ordinary C++ ambience pass increment and shared tick clamp spellings",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4485984,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4486896,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "ambience-easy-matches-oct23r"
+}
