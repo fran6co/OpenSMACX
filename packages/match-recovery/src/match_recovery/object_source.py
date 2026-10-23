@@ -311,12 +311,14 @@ def _local_data_symbol(obj, name):
 
 
 def local_object_targets(bindings: tuple[ObjectBinding, ...], objects: dict) -> tuple[dict, list]:
-    """Resolve unbounded direct static objects only inside their source owner.
+    """Resolve unbounded static objects only inside their source owner.
 
     This establishes the declared symbol start, not allocation bounds, initial
-    contents, member layout or lifetime. Keep this namespace separate from
-    external targets: another TU's same spelling is never a definition witness.
-    Bounded/member-backed objects retain their existing separate proof route.
+    contents or lifetime. Unbounded member identities additionally require
+    fresh same-TU member layout and a consistent group-derived parent start.
+    Keep this namespace separate from external targets: another TU's same
+    spelling is never a definition witness. Bounded members retain their
+    existing separate proof route.
     """
     validate_object_symbol_ownership(bindings)
     member_owners = {(row.unit, row.parent_symbol) for row in bindings if row.parent_symbol is not None}
@@ -340,6 +342,98 @@ def local_object_targets(bindings: tuple[ObjectBinding, ...], objects: dict) -> 
         targets[key] = address
         report.update({"definition": "pass", "linkage": "translation_unit_local", "extent": "unbounded",
                        "limitations": ["Source-bound symbol start only; no section placement, initializer, allocation, lifetime or linked-selection proof."]})
+
+    # Member rows are grouped by their explicitly named TU-local parent. This
+    # path deliberately accepts only unbounded v3 rows; a bounded member needs
+    # the separate original-span proof performed by object_targets.
+    groups = {}
+    for binding in bindings:
+        if binding.parent_symbol is not None:
+            groups.setdefault((binding.unit, binding.parent_symbol), []).append(binding)
+    for (unit, parent), rows in groups.items():
+        unbounded = [row for row in rows if row.span is None]
+        if not unbounded:
+            continue
+        report_rows = []
+        for row in unbounded:
+            report = {"symbol": row.symbol, "target_symbol": parent, "unit": unit,
+                      "address": f"0x{row.origin.address:08X}", "definition": "unknown",
+                      "parent_symbol": parent, "member_path": ".".join(row.member_path)}
+            report_rows.append((row, report))
+            reports.append(report)
+
+        reason = None
+        obj = objects.get(unit)
+        layouts = None
+        if obj is None:
+            reason = "no compiled object for the member source owner"
+        elif len(unbounded) != len(rows):
+            reason = "member group includes bounded rows outside the local unbounded proof route"
+        elif _local_data_symbol(obj, parent) is None:
+            reason = "no unique ordinary TU-local static parent data definition"
+        else:
+            try:
+                from .codeview_data import member_data_layout
+                layouts = [member_data_layout(obj, parent, row.member_path) for row in unbounded]
+                domains = {(row.origin.image_sha256, row.origin.address_space) for row in unbounded}
+                bases = [row.origin.address - layout["member_offset"]
+                         for row, layout in zip(unbounded, layouts)]
+                if len(domains) != 1:
+                    raise ValueError("member identities belong to different original image/address-space domains")
+                if any(layout["section"] != layouts[0]["section"]
+                       or layout["symbol_offset"] != layouts[0]["symbol_offset"]
+                       or layout["parent_size"] != layouts[0]["parent_size"]
+                       for layout in layouts):
+                    raise ValueError("member paths do not resolve to one static parent definition and layout")
+                if (len(set(bases)) != 1 or type(bases[0]) is not int
+                        or not 0 <= bases[0] < 2**32
+                        or type(layouts[0]["parent_size"]) is not int
+                        or layouts[0]["parent_size"] <= 0
+                        or bases[0] + layouts[0]["parent_size"] > 2**32):
+                    raise ValueError("member identities do not imply one in-range parent base and layout extent")
+
+                # A direct parent identity, when present, anchors the member
+                # group exactly as in object_targets. Its image/address-space
+                # identity and start must agree with the member-derived base.
+                anchors = [row for row in bindings if row.unit == unit
+                           and row.parent_symbol is None and row.emitted_symbol == parent]
+                if len(anchors) > 1:
+                    raise ValueError("member group has multiple direct parent anchors")
+                if anchors:
+                    anchor = anchors[0]
+                    if ((anchor.origin.image_sha256, anchor.origin.address_space) != next(iter(domains))
+                            or anchor.origin.address != bases[0]):
+                        raise ValueError("direct parent anchor disagrees with member-derived parent identity")
+            except (KeyError, ValueError) as error:
+                reason = str(error)
+            else:
+                targets[(unit, parent)] = bases[0]
+                for (row, report), layout in zip(report_rows, layouts):
+                    report.update({"definition": "pass", "linkage": "translation_unit_local",
+                                   "extent": "unbounded", "original_parent": f"0x{bases[0]:08X}",
+                                   "member_offset": layout["member_offset"],
+                                   "parent_layout_size": layout["parent_size"],
+                                   "limitations": ["TU-local parent symbol start derived from the full member path and same-TU layout; no allocation, lifetime or linked-selection proof."]})
+        if reason is not None:
+            for _, report in report_rows:
+                report["reason"] = reason
+
+        # Report a direct parent anchor through this same local group result;
+        # the direct-object loop above intentionally skips names shared with a
+        # member owner.
+        for anchor in (row for row in bindings if row.unit == unit
+                       and row.parent_symbol is None and row.emitted_symbol == parent):
+            report = {"symbol": anchor.symbol, "target_symbol": parent, "unit": unit,
+                      "address": f"0x{anchor.origin.address:08X}", "definition": "unknown"}
+            reports.append(report)
+            if reason is None:
+                report.update({"definition": "pass", "linkage": "translation_unit_local",
+                               "extent": "bounded" if anchor.span is not None else "unbounded",
+                               "limitations": ["Direct parent start is anchored by the unbounded member layout group; allocation and lifetime are not established."]})
+                if anchor.span is not None:
+                    report["original_span"] = {"start": anchor.span.start, "end": anchor.span.end}
+            else:
+                report["reason"] = reason
     return targets, reports
 
 
