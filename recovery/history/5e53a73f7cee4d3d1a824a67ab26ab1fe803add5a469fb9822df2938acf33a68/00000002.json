@@ -1,0 +1,35 @@
+{
+  "event_id": "2beb0437ff19ca23a0dc7b6b80fea5f6b82dc69acaf02cd32492c3f4d43bd915",
+  "payload": {
+    "affects": [
+      "entity-06e70bf9fb264612841b4aae447cefeda2a0796b41ef338c2c75bef4563f5717",
+      "entity-0fdee156193e61dfdda598c07a72235cdb29fb48be8f4d47ed41e4bb75d0d63d",
+      "entity-1d4a914cb2dd7185d2045f2968160cffecc9a5f70f9084cc201a9fd09301f1b8",
+      "entity-2ca1ed73e6c51ea78ac052caa9fdd327082330a3eeb2b34370e0ed1fc983076b",
+      "entity-3f905c3323f4749d3e847c2f13715001ef87a692be25c419706bfbe9061ac753",
+      "entity-4f8ac347d25b74b97fed9df98351737f74300dd223ea22b167f6cdc5a08791ee",
+      "entity-639afaee990c5f87f110610d148eb0411d5cf7a59c19a989f7d4f0ef940e9360",
+      "entity-73a6b5bde5e247f9a7b80531491b959eb59f11709d920d33344a9b4ed114c80a",
+      "entity-7758a3fc78d19a58345d815b11b6827d61f61c2dfddbe23545c1a4d1afbb722a",
+      "entity-aeaaac574c16a9996c4a6cb3781ed24042a4bc5eef1109b2936bb2a4144a07e5",
+      "entity-c9a1de011341eb94068d1ade78c987ba6c3e7dc3829e36945ce2845a7a52ce6e",
+      "entity-d991688ce35f2ff7d2860a2b4a585f4184c313dc62aba372c22a4b9a0bf59395"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "win-point-source-boundary",
+    "evidence": [
+      "Transport three complete annotated member definitions, unchanged bodies and authored history, into src/win_point_coordinates.cpp. Preserve client helper visibility before nonclient point wrapper, the seven existing coordinate-owner mappings and six already-exact wrappers. CMake adds one normal application source with unchanged options; no per-function flags/noinline/export workarounds. This establishes a justified present source boundary, not the original filename or historical TU identity.",
+      "Actual retained production-recipe screen reproduces the old object, whole-tree unchanged overlay and new point-owner replica; receiver/offset damage controls fail as intended. All three transported complete functions and companion sections equal old owner output. Independent full caller inspection confirms original direct helper-call patterns in all nine changed callers. They remain mismatches; no historical exact body is lost. Preserve source-ownership/visibility improvements without counting similarity as completion.",
+      "Coordinator authorizes this bounded manual recovery integration, not native automatic acceptance or game acceptance. Fresh191-TU/205-object application build-pjs666e4 compiles and links. Native claims/mappings/references/source checks pass. All233existing owner original identities/fullspans/claims/authorednotes and203other normalized physical objects are preserved; common Win residual outside nine changed callers and three transported functions passes. All5581known mapped masked verdicts and strict outcomes remain unchanged:3418masked exact,2831strict pass,587strict unknown. Zero new compiling body coverage or exact functions.",
+      "Native new-unit presence FAIL is retained, NOT waived or reported green. New point object contains three duplicate header-inline COMDATs (Spot::clear/shutdown, Buffer::get_hdc) with complete code/relocations/debug companions equal already-existing baseline copies. No extra ordinary data/BSS/initializer contribution was found. The added directive default-library multiset is equal but UUID requests now precede libcpmt, unlike the old object; export requests are an existing subset. Actual linked95export-slot names/ordinals/forwarders/holes inventory is equal. These observations do not prove retained archive/COMDAT selection/allocation or make the native refusal pass. No compiler flags, exported declarations, comparators or gates changed.",
+      "Final71related host outcomes:56pass,15unchanged preexisting flag-fixture failures. All17new controls pass and one stale rectangle owner lookup is repaired; no older assertion or mutant is weakened. Actual-source host controls do not prove VC6 ABI/layout, original runtime reachability, linked preservation or game acceptance. Fresh destination build/link, source/reference/claim and candidate/destination physical checks are required after integration. Original task baseline and historical matching obligations remain intact."
+    ],
+    "hypothesis": "Keep three complete Win point-coordinate methods together, with declaration-only visibility for external callers.",
+    "kind": "discovery"
+  },
+  "previous_event": "cf9176288765b3cfd887aa1c4e1c2cfe551dae7b09c39d3d524af9475395de95",
+  "request_id": "win-point-source-boundary",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:win-point-boundary-oct23k"
+}

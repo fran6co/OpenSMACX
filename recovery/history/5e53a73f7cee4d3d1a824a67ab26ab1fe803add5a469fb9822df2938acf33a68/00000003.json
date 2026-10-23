@@ -1,0 +1,21 @@
+{
+  "event_id": "250a2bcbc70013f39aae2f7dc6a5d83309de0908a1208768f2c4e455cfb9a9ec",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "win-point-source-boundary",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Transport three complete annotated member definitions, unchanged bodies and authored history, into src/win_point_coordinates.cpp. Preserve client helper visibility before nonclient point wrapper, the seven existing coordinate-owner mappings and six already-exact wrappers. CMake adds one normal application source with unchanged options; no per-function flags/noinline/export workarounds. This establishes a justified present source boundary, not the original filename or historical TU identity.",
+      "Actual retained production-recipe screen reproduces the old object, whole-tree unchanged overlay and new point-owner replica; receiver/offset damage controls fail as intended. All three transported complete functions and companion sections equal old owner output. Independent full caller inspection confirms original direct helper-call patterns in all nine changed callers. They remain mismatches; no historical exact body is lost. Preserve source-ownership/visibility improvements without counting similarity as completion.",
+      "Coordinator authorizes this bounded manual recovery integration, not native automatic acceptance or game acceptance. Fresh191-TU/205-object application build-pjs666e4 compiles and links. Native claims/mappings/references/source checks pass. All233existing owner original identities/fullspans/claims/authorednotes and203other normalized physical objects are preserved; common Win residual outside nine changed callers and three transported functions passes. All5581known mapped masked verdicts and strict outcomes remain unchanged:3418masked exact,2831strict pass,587strict unknown. Zero new compiling body coverage or exact functions.",
+      "Native new-unit presence FAIL is retained, NOT waived or reported green. New point object contains three duplicate header-inline COMDATs (Spot::clear/shutdown, Buffer::get_hdc) with complete code/relocations/debug companions equal already-existing baseline copies. No extra ordinary data/BSS/initializer contribution was found. The added directive default-library multiset is equal but UUID requests now precede libcpmt, unlike the old object; export requests are an existing subset. Actual linked95export-slot names/ordinals/forwarders/holes inventory is equal. These observations do not prove retained archive/COMDAT selection/allocation or make the native refusal pass. No compiler flags, exported declarations, comparators or gates changed.",
+      "Final71related host outcomes:56pass,15unchanged preexisting flag-fixture failures. All17new controls pass and one stale rectangle owner lookup is repaired; no older assertion or mutant is weakened. Actual-source host controls do not prove VC6 ABI/layout, original runtime reachability, linked preservation or game acceptance. Fresh destination build/link, source/reference/claim and candidate/destination physical checks are required after integration. Original task baseline and historical matching obligations remain intact."
+    ]
+  },
+  "previous_event": "2beb0437ff19ca23a0dc7b6b80fea5f6b82dc69acaf02cd32492c3f4d43bd915",
+  "request_id": "win-point-source-boundary-incorporated",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:win-point-boundary-oct23k"
+}

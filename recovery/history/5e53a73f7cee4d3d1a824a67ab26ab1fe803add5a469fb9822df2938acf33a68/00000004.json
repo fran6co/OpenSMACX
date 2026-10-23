@@ -1,0 +1,24 @@
+{
+  "event_id": "f971cb9e01bdd00eed4ae03e2ab4fb312ebde05c9cadfd0889136fe5504b4f0c",
+  "payload": {
+    "affects": [
+      "entity-aeaaac574c16a9996c4a6cb3781ed24042a4bc5eef1109b2936bb2a4144a07e5"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "win-back-original-parent-live-flags",
+    "evidence": [
+      "Independent complete pinned5F7EC0..5F813F review:5F7F57 reads live self bit2 after zorder traversal; clear-bit path5F7FD0 loads parent intoECX and5F7FE4 calls5ED240; set-bit5F7F6A/6C calls on self.5F8020 independently re-reads live bit2 for RECT choice;5F80D5 restores saved entry flags. Correct exactly the first receiver and two branch expressions, retaining other parent/global/RECT/Buffer/read/call order and original error paths. This corrects translation to original behavior, not an original-game bug fix.",
+      "One incremental actual-recipe candidate plus baseline replay/previous-boundary replica/oldreceiver damage controls passes outside this sole function. Back-update improves from old228instructions/10matching, through boundary-only171/15, to168/32 versus original170, still MISMATCH. Independent actual-source GCC/Clang controls pass eight tests, including nested origins, flags/null Buffer/parent, update ordering/cleanup, compiled oldreceiver damage and separately damaged first/second live reads. No synchronous bit2 writer was established in the inspected original traversal closure: synthetic host hooks check read points, not demonstrated reachable gameplay mutation.",
+      "Coordinator authorizes this bounded manual recovery integration, not native automatic acceptance or game acceptance. Fresh191-TU/205-object application build-pjs666e4 compiles and links. Native claims/mappings/references/source checks pass. All233existing owner original identities/fullspans/claims/authorednotes and203other normalized physical objects are preserved; common Win residual outside nine changed callers and three transported functions passes. All5581known mapped masked verdicts and strict outcomes remain unchanged:3418masked exact,2831strict pass,587strict unknown. Zero new compiling body coverage or exact functions.",
+      "Native new-unit presence FAIL is retained, NOT waived or reported green. New point object contains three duplicate header-inline COMDATs (Spot::clear/shutdown, Buffer::get_hdc) with complete code/relocations/debug companions equal already-existing baseline copies. No extra ordinary data/BSS/initializer contribution was found. The added directive default-library multiset is equal but UUID requests now precede libcpmt, unlike the old object; export requests are an existing subset. Actual linked95export-slot names/ordinals/forwarders/holes inventory is equal. These observations do not prove retained archive/COMDAT selection/allocation or make the native refusal pass. No compiler flags, exported declarations, comparators or gates changed.",
+      "Final71related host outcomes:56pass,15unchanged preexisting flag-fixture failures. All17new controls pass and one stale rectangle owner lookup is repaired; no older assertion or mutant is weakened. Actual-source host controls do not prove VC6 ABI/layout, original runtime reachability, linked preservation or game acceptance. Fresh destination build/link, source/reference/claim and candidate/destination physical checks are required after integration. Original task baseline and historical matching obligations remain intact."
+    ],
+    "hypothesis": "Restore original Win back-update parent receiver and both live flag reads, retaining the entry snapshot solely for restoration.",
+    "kind": "discovery"
+  },
+  "previous_event": "250a2bcbc70013f39aae2f7dc6a5d83309de0908a1208768f2c4e455cfb9a9ec",
+  "request_id": "win-back-original-parent-live-flags",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:win-point-boundary-oct23k"
+}
