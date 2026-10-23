@@ -1,0 +1,21 @@
+{
+  "event_id": "ce6d2a168e2560fb5cb0fc4bbcddba4bdc978fdb43d4c1672b66b2b0b1397f95",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "get-message-import-identity",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Owner-local RECOVERY_IMPORT v1 __imp__GetMessageA@16 USER32.dll name:GetMessageA is independently supported by the actual undefined COFF import, unique original PE DLL/export slot669350, four-argument BOOL WINAPI SDK declaration and matching physical USER32.LIB short-import record. Both on_key4BF390 and exec4BEA50 are explicitly scoped. No implementation, old-address alias, system-import header or SDK behavior change is introduced.",
+      "The annotation appends after all existing definitions and preserves every parsed function fact. Actual normalized UV2 object remains identical to current master, and fresh strict verification improves on_keyUNKNOWNtoPASS. Source identity binding is established; complete retained import-library member selection/allocation remains UNKNOWN, not waived or promoted by the identity result.",
+      "Fresh coordinator review SHA256 a04eee75cce915ce9a92971f0750b17b71ec160df287a29730c2caacd5f3d675 binds candidate 7f1d5f91136d1ae3bcf239963f1e3b6e49487c8c to destination-before-integration 92ba50d916f6b20ee7bb7faa009cda711e498949. This combines three disjoint explicitly authorized ownership changes for one application verification checkpoint. All original task baselines, scopes, claims and useful discoveries remain; no automatic acceptance report or baseline reset is substituted.",
+      "Fresh application192TUs206qualifiedobjects compiles and links.204othernormalizedobjects remain identical; changed Console/spying actual objects each pass the native outside-explicit-scope residual. Across5581knownidentities only spying55BC00 improves MISMATCHtoBYTE_EXACT; every old local result remains. Strict quality gains spyingPASS and on_key4BF390UNKNOWNtoPASS, retaining all other3428states, for3117PASS313UNKNOWN. Source-owned original mapping/full-span/symbol/history/claim facts are unchanged, no new historical claim is banked. References/mappings/claims/source checks and16host positive/damage tests pass.",
+      "Standing user permission authorizes this coordinator-reviewed bounded manual recovery integration only. Complete linked retained selection/allocation and outside-scope linked image preservation remain unproved. Build graph UNKNOWN, debug sidecar incomplete and ready_for_collection=false remain explicit; native automatic refusal conditions are unchanged. No full structure/runtime/game or exhaustive executable coverage claim. Require fresh destination build, all206candidate/destination object equality, full local/strict state equality and16host cases before cleanup."
+    ]
+  },
+  "previous_event": "46f8ddbcc94092c7f6a99919531085a651e2e4c9889a479d04a8247d54e1e1a4",
+  "request_id": "incorporate-get-message-import-identity",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:uv2-message-key-oct23z"
+}

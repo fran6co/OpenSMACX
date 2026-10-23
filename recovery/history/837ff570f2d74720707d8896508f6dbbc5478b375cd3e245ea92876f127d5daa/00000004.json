@@ -1,0 +1,21 @@
+{
+  "event_id": "070acc3d8f0b6ea0a494e4ac4b3ff2a3621934574348abb5faf025f17570b7ef",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "original-hold-terrain-gate",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Original hold4D24C0 LEA[EBP+8] passes the actual vehicle parameter address to NetDaemon::lock_veh. Its borrowed follow pointer is updated by vehicle removal while dispatching; hold reloads the live ID around callbacks while retaining original coordinate/tile snapshots. Passing &veh_id restores that contract. Original4D2564 JGE rejects owner>=8 in the low-climate land gate, as independently verified over the complete150-instruction span. The prior source comparison was inverted; its correction is original-equivalent recovery, not an original bug fix.",
+      "Full original terrain/air/airbase/artifact branch review and actual-source GCC/Clang controls support both corrections. Copied-local and old-inequality mutants compile and fail. Map bitfield double is32-bit like production, real constants retained. Native final terrain replay/replica/damage/outside-one controls pass without exact gains/losses. Independent initial withholding and superseded pointer-only build remain retained, never replayed as final-source proof.",
+      "Fresh coordinator review SHA256 a04eee75cce915ce9a92971f0750b17b71ec160df287a29730c2caacd5f3d675 binds candidate 7f1d5f91136d1ae3bcf239963f1e3b6e49487c8c to destination-before-integration 92ba50d916f6b20ee7bb7faa009cda711e498949. This combines three disjoint explicitly authorized ownership changes for one application verification checkpoint. All original task baselines, scopes, claims and useful discoveries remain; no automatic acceptance report or baseline reset is substituted.",
+      "Fresh application192TUs206qualifiedobjects compiles and links.204othernormalizedobjects remain identical; changed Console/spying actual objects each pass the native outside-explicit-scope residual. Across5581knownidentities only spying55BC00 improves MISMATCHtoBYTE_EXACT; every old local result remains. Strict quality gains spyingPASS and on_key4BF390UNKNOWNtoPASS, retaining all other3428states, for3117PASS313UNKNOWN. Source-owned original mapping/full-span/symbol/history/claim facts are unchanged, no new historical claim is banked. References/mappings/claims/source checks and16host positive/damage tests pass.",
+      "Standing user permission authorizes this coordinator-reviewed bounded manual recovery integration only. Complete linked retained selection/allocation and outside-scope linked image preservation remain unproved. Build graph UNKNOWN, debug sidecar incomplete and ready_for_collection=false remain explicit; native automatic refusal conditions are unchanged. No full structure/runtime/game or exhaustive executable coverage claim. Require fresh destination build, all206candidate/destination object equality, full local/strict state equality and16host cases before cleanup."
+    ]
+  },
+  "previous_event": "ca8f37acf26fe669bc840200f895a24841d9da0934ef53d3ff4411bdcf9f46bc",
+  "request_id": "incorporate-original-hold-terrain",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:console-hold-follow-oct23z"
+}

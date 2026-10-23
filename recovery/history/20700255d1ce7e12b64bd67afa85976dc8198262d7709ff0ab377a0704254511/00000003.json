@@ -1,0 +1,21 @@
+{
+  "event_id": "264a6fa85a9fb4e27bc2b3f0ef30399bf3a87b79e8f80c912d7088cc5d7884f1",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "additional-inline-frame-metadata",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "The single spying.cpp application /Oy- setting and matching measurement profile reproduce44/44originalinstructions without changing any C++ body/header/global/compiler hook. The fresh actual application spying.cpp.obj SHA256 equals the controlled candidate replica. This restores one canonical exact function; five header copies already have exact canonical owners and are not counted as new functions.",
+      "Explicit scope includes six code owners plus unchanged-code Spot::shutdown and Buffer::get_hdc associated FPO metadata. Actual application native outside-eight residual passes; earlier outside-one/outside-six FAIL reports remain. Fresh MAP selects the five helpers and two metadata owners from alpha.cpp and spying from spying.cpp. Image-bound PDB FPO verifies the two present Spot/Buffer records; the six other selected-root FPO records are absent and are not claimed verified. Historical int-return Buffer annotation and current HDC-decorated symbol remain distinct.",
+      "Fresh coordinator review SHA256 a04eee75cce915ce9a92971f0750b17b71ec160df287a29730c2caacd5f3d675 binds candidate 7f1d5f91136d1ae3bcf239963f1e3b6e49487c8c to destination-before-integration 92ba50d916f6b20ee7bb7faa009cda711e498949. This combines three disjoint explicitly authorized ownership changes for one application verification checkpoint. All original task baselines, scopes, claims and useful discoveries remain; no automatic acceptance report or baseline reset is substituted.",
+      "Fresh application192TUs206qualifiedobjects compiles and links.204othernormalizedobjects remain identical; changed Console/spying actual objects each pass the native outside-explicit-scope residual. Across5581knownidentities only spying55BC00 improves MISMATCHtoBYTE_EXACT; every old local result remains. Strict quality gains spyingPASS and on_key4BF390UNKNOWNtoPASS, retaining all other3428states, for3117PASS313UNKNOWN. Source-owned original mapping/full-span/symbol/history/claim facts are unchanged, no new historical claim is banked. References/mappings/claims/source checks and16host positive/damage tests pass.",
+      "Standing user permission authorizes this coordinator-reviewed bounded manual recovery integration only. Complete linked retained selection/allocation and outside-scope linked image preservation remain unproved. Build graph UNKNOWN, debug sidecar incomplete and ready_for_collection=false remain explicit; native automatic refusal conditions are unchanged. No full structure/runtime/game or exhaustive executable coverage claim. Require fresh destination build, all206candidate/destination object equality, full local/strict state equality and16host cases before cleanup."
+    ]
+  },
+  "previous_event": "c5dda6667b94e2a00f02799befe972bacdf0c45f647f90d24ddab5305d029472",
+  "request_id": "incorporate-explicit-frame-metadata-scope",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:spying-frame-profile-oct23z"
+}
