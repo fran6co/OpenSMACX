@@ -1,0 +1,20 @@
+{
+  "event_id": "4629b8fdcc2ee4bf9ae51d92945617ac1d3056170d38f6922ff245f97cd997ed",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "time-app-frame-header-collateral-oct23zg",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "CMakeLists.txt and recovery/project.json apply the independently controlled app-only frame profile; generic Time class/lifecycle now live in Jackal with their original profile and all18member bodies/identities preserved. Native scope explicitly includes25other original identities for the shared-header copies, without a header/body waiver.",
+      "Fresh actual194TU208object Release candidate build-ruo0ttbf passes build/link/source/claims/mappings/references. All5581outcomes show exactly3local and3strict gains, no losses,315existingUNKNOWN unchanged. Two endpoint views retain SCAFFOLD/unproved receiver roles; no new implementation coverage.",
+      "Independent nativeCOFF/MAP review verifies all25new header copies match baseline Alpha bodies and current provider remainsAlpha at sameVAs.23boundedPEwindows identical; native linked_function checks prove remaining seek_pos/x_dist wholeCOMDAT boundary/bytes/references, differing only at declared REL32fixups to unchangedLIBCMT abs.obj provider moved+0x20. This addresses the concrete copy/provider discovery, not complete retained selection or target-content proof.",
+      "Native defaulttransport/newclasspresence/appframe outside-body FAIL remains explicit for BSS/.drectve/frame copies. Target contents, anonymous allocation, complete linked preservation, runtime and automatic/full-game acceptance remain unproved and are not resolved by this coordinator decision. Original task baselineac10 retained; guarded record remeasures all3restorations exact without any source claim change."
+    ]
+  },
+  "previous_event": "c0e6988b27e97213a6e03f23379d78a94b8971ced300547297bd98e75a9b8467",
+  "request_id": "time-app-frame-collateral-reviewed-incorporation-oct23zg",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:time-jackal-owner-oct23zg"
+}
