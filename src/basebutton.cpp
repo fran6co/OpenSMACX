@@ -791,8 +791,7 @@ void BaseButton::on_left_up(int, int) {
         WinPointerOwner4 = 0;
     }
 
-    Win *const parent = win_parent_;
-    if (parent == 0) {
+    if (win_parent_ == 0) {
         return;
     }
     time2_.stop();
@@ -802,11 +801,11 @@ void BaseButton::on_left_up(int, int) {
     }
     if (field_A9C_ == 1) {
         field_A9C_ = 0;
-        Sound *const owner = parent->legacy_sound_29();
+        Sound *const owner = win_parent_->legacy_sound_29();
         if (owner != 0 && owner->is_playing() == 0) {
             owner->play();
         }
-        parent->vslot_42(static_cast<int>(field_A78_));
+        win_parent_->vslot_42(static_cast<int>(field_A78_));
         redraw();
     }
 }
