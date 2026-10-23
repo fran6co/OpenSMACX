@@ -1,0 +1,43 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "e1ef8eac12b606b2151ab69779f435d7163b85dc",
+  "editable_files": [
+    "src/stringbox.cpp",
+    "recovery/tests/test_stringbox_owner_batch_oct20.py",
+    "recovery/tests/test_owner_stringbox_faithful_oct20w.py",
+    "recovery/tests/test_stringbox_removal_lifetimes_oct24a.py",
+    "recovery/tests/stringbox_removal_lifetimes_control_oct24a.cpp"
+  ],
+  "evidence": [
+    "Pinned add_fixup629490..629703,UNK16298B0..62997B,UNK2629980..629A63,clip_ids629A70..629B69 perform typed list unlink, virtual remove hook, payload/node destruction and count updates inside each original method. Current recovery-added namespace helper erase_string_list_current has exactly four callsites and no original mapping; it also reverses the two original link-store operations. Native independent owner-closure evidence q/stringbox-removal-owner-closure-evidence-oct24a corroborates allfour. Restore actual operations in each scope; deletehelper onlywhenallusesgone, preserveotheranonymousnamespacedeclarations ifany.",
+    "Use existing genuine StringList/StringStructEntry/StringStructPayload members, virtual hooks and normal delete. Original order next->previous first, previous->next second, conditionalhead update,currentadvance,on_remove,payloaddelete,payloadclear,node delete,countdecrement. Preserve originallive current/count reloads,callbacks,lifetime/null/error/unsafe quirks, unsigneddescendinginterval inUNK2,shrinkingcount traversal,UNK1miss/emptycursor effects,clip_ids conditionalfixup andadd_fixup measurement/scrollservice order. No bounds fixes, fabricated owners/fields, header/type/ABI changes, forcedcallretention/padding/assembly/compilerpolicychanges.",
+    "Isolated ordinarysource screens from actual194TU208objectg0production restoreUNK2 BYTE_EXACT withoutsidePASS and nootherloss. UNK1 improved39to80instructions against78pin; secondscanorder spelling emittedsame score .962 and misses. Capunchangedcontext atthese2attempts; do notdelayfaithfulimplementation forprolongedmatching. Relatedother2callers are anew originalsourcecontext fromhelperclosure, atmost3candidateattempts each. Preservealloldmarkers,symbols,claimsandpendingrestorationobligations; onlynative recordercanbanknewclaims.",
+    "Coordinator ownsGit/compilerleases/recipepreparation/recording/integration. Separate source/testworkers editlistedfiles only; evidence-basedoutside-scope discoveries need coordinator expansion. Require actual-sourcecallback/lifetime/scroll controls andmeaningfuldamage,relevantneighbors, nativeproduction/replica/damage/otheroriginalpreservation, fullcompile/link, independentreview andfreshdestinationchecks. NativeoutsideFAIL causedonlybyremovedunmappedhelperisreviewablemanualmigration, neveraverifierwaiver/fullgameorautomaticacceptance. Reuseinstalledmatch_recovery; noframeworkchanges/adhoctools."
+  ],
+  "intent": "Restore original StringBox removal owner operations and retire artificial helper",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6460560,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6461616,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6461824,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6462064,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "stringbox-removal-owner-oct24a"
+}
