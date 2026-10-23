@@ -121,8 +121,8 @@ void ProdPicker::draw_item(int item, int update) {
     if (item < firstVisible || field_A82C_ + firstVisible <= item) return;
 
     const int relativeItem = item - firstVisible;
-    const int row = relativeItem / field_A810_;
-    int left = (relativeItem % field_A810_) * cell_width_;
+    const int row = relativeItem / column_count_;
+    int left = (relativeItem % column_count_) * cell_width_;
     const int top = row * row_height_;
     const int cellTop = top + 4;
     const int cellRight = cell_width_ + left + 0x18;
@@ -265,7 +265,7 @@ void ProdPicker::on_left_click(int x, int y) {
     const int row = y / row_height_;
     const uint32_t oldSelection = field_A774_;
     const int column = x / cell_width_;
-    const uint32_t newSelection = field_A77C_ + row * field_A810_ + column;
+    const uint32_t newSelection = field_A77C_ + row * column_count_ + column;
     field_A774_ = newSelection;
     if (oldSelection != newSelection) {
         field_B64_ = 0;
@@ -352,7 +352,7 @@ void ProdPicker::on_button_clicked(int button_id) {
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00493cb0.cpp", "source:src/prodpicker.h", "source:src/buffer.h", "source:src/win.h", "pinned original own table 0x0066A250, pointer word at +0xC0, identifies original entry 0x00493CB0", "source:src/win.h inherited virtual interface; actual emitted method ?vslot_48@ProdPicker@@UAEXHH@Z in primary Win table ??_7ProdPicker@@6BWin@@@"], "reason": "Scroll the displayed item window using measured picker geometry, its real Buffer blit operation, draw_item, and inherited redraw virtual. The original own Win table binds this entry as virtual slot 48. Use genuine member dispatch, not an opaque redirect; retain the catalogued original spelling as historical evidence. The previous on_scrolled definition is the class slot-48 target; renaming connects the unchanged body to its real virtual slot."}
 // symbol    ?on_scrolled@ProdPicker@@UAEXHH@Z
 void ProdPicker::on_scrolled(int, int position) {
-    const int pageSize = static_cast<int>(field_A810_);
+    const int pageSize = column_count_;
     const int oldPosition = static_cast<int>(field_A77C_);
     const int newPosition = pageSize * position;
     field_A77C_ = static_cast<uint32_t>(newPosition);
@@ -373,7 +373,7 @@ void ProdPicker::on_scrolled(int, int position) {
                  + 4 + row_height_ - (row_height_ + 4));
 
         int first = static_cast<int>(field_A77C_);
-        const int end = static_cast<int>(field_A810_ + field_A77C_);
+        const int end = column_count_ + field_A77C_;
         while (first < end) draw_item(first++, 0);
     } else if (newPosition != oldPosition) {
         set_clip(&rect2_);
@@ -383,7 +383,7 @@ void ProdPicker::on_scrolled(int, int position) {
 
         const int first = (static_cast<int>(field_A814_) - 1) * pageSize
             + static_cast<int>(field_A77C_);
-        const int end = first + static_cast<int>(field_A810_);
+        const int end = first + column_count_;
         for (int item = first; item < end; ++item) draw_item(item, 0);
     }
     soft_update();
@@ -413,14 +413,14 @@ int ProdPicker::on_key_click(int repeat, int key) {
         position = scroll_.paging() + scroll_.position();
 update_scroll:
         scroll_.set_pos(position);
-        field_A77C_ = field_A810_ * scroll_.position();
+        field_A77C_ = column_count_ * scroll_.position();
         break;
     case 0x23: // End
         field_A774_ = field_A818_ - 1;
         if (field_A82C_ < field_A818_)
-            field_A77C_ = (field_A774_ / static_cast<int>(field_A810_) + 1)
-                * static_cast<int>(field_A810_) - field_A82C_;
-        scroll_.set_pos(field_A77C_ / static_cast<int>(field_A810_));
+            field_A77C_ = (field_A774_ / column_count_ + 1)
+                * column_count_ - field_A82C_;
+        scroll_.set_pos(field_A77C_ / column_count_);
         break;
     case 0x24: // Home
         scroll_.set_pos(0);
@@ -430,9 +430,8 @@ update_scroll:
     case 0x25: // Left; keypad 4
     case 100:
     {
-        const int first = (oldSelection / static_cast<int>(field_A810_))
-            * static_cast<int>(field_A810_);
-        int last = first + field_A810_ - 1;
+        const int first = (oldSelection / column_count_) * column_count_;
+        int last = first + column_count_ - 1;
         if (field_A818_ - 1 <= last) last = field_A818_ - 1;
         const int previous = oldSelection - 1;
         if (first <= previous && first <= last)
@@ -444,7 +443,7 @@ update_scroll:
     case 0x26: // Up; keypad 8
     case 0x68:
     {
-        const int step = field_A810_;
+        const int step = column_count_;
         if (oldSelection < step) return 1;
         int current;
         do {
@@ -460,9 +459,8 @@ update_scroll:
     case 0x27: // Right; keypad 6
     case 0x66:
     {
-        const int first = (oldSelection / static_cast<int>(field_A810_))
-            * static_cast<int>(field_A810_);
-        int last = first + field_A810_ - 1;
+        const int first = (oldSelection / column_count_) * column_count_;
+        int last = first + column_count_ - 1;
         if (field_A818_ - 1 <= last) last = field_A818_ - 1;
         const int next = oldSelection + 1;
         if (next < first || last < first) {
@@ -475,11 +473,11 @@ update_scroll:
     case 0x28: // Down; keypad 2
     case 0x62:
     {
-        const int step = field_A810_;
+        const int step = column_count_;
         if (field_A818_ - step - 1 < oldSelection) {
             if (field_A818_ <= field_A82C_) return 1;
             scroll_.set_pos(scroll_.position() + 1);
-            field_A77C_ = scroll_.position() * field_A810_;
+            field_A77C_ = scroll_.position() * column_count_;
         } else {
             int current = field_A774_;
             do {
@@ -722,13 +720,13 @@ void ProdPicker::calculate() {
             static_cast<GraphicWin *>(&TutWinBaseWindow));
         field_A824_ = static_cast<uint32_t>(baseBuffer->pixel_width());
         field_A828_ = static_cast<uint32_t>(baseBuffer->pixel_height());
-        field_A810_ = 5;
+        column_count_ = 5;
         field_A814_ = (WinScreenWidth > 800) + 3;
         const int cellWidth = (baseBuffer->pixel_width() - 0x51) / 5;
         const int columns = (baseBuffer->pixel_width() - 0x51) / cellWidth;
         row_height_ = field_A838_;
         cell_width_ = cellWidth;
-        field_A810_ = columns;
+        column_count_ = columns;
         field_A82C_ = field_A814_ * columns;
 
         font1_.init(DefaultFontFace, 0xC, 1);
@@ -824,7 +822,7 @@ int ProdPicker::exec(Base *base, int factionId, GraphicWin *owner, int modal) {
                 scroll_.init(pixel_width() - 0x14,
                              0x15, 0x18, 0x13A, this, 0, 1);
                 scroll_.set_range(0,
-                    field_A818_ / field_A810_ - field_A814_ + 2);
+                    field_A818_ / column_count_ - field_A814_ + 2);
                 scroll_.set_paging(field_A814_ - 1);
                 scroll_.set_field_A30(0);
                 scroll_.redraw();
@@ -835,9 +833,9 @@ int ProdPicker::exec(Base *base, int factionId, GraphicWin *owner, int modal) {
             if (field_A82C_ <= field_A774_) {
                 int first = 0;
                 do {
-                    first += field_A810_;
+                    first += column_count_;
                     field_A77C_ = first;
-                    scroll_.set_pos(first / field_A810_);
+                    scroll_.set_pos(first / column_count_);
                 } while (first + field_A82C_ <= field_A774_);
             }
         }

@@ -199,7 +199,8 @@ void veh_cost(int,int,int *flags){++cost_calls;*flags=0;}
 int prototype_factor(int){return 0;}char *label_get(int){static char text[2];return text;}
 char *_itoa(int n,char *buffer,int){sprintf(buffer,"%d",n);return buffer;}
 struct ProdPicker {
- int field_A77C_=0,field_A82C_=1,field_A810_=1;
+ int field_A77C_=0,field_A82C_=1;
+ int32_t column_count_=1;
  int32_t cell_width_=80,row_height_=70;
  uint32_t field_A774_=99,field_A818_=1,field_B64_=0;
  RECT rect2_;StringList prod_a_,prod_b_,prod_c_;Font font1_,font3_;Caviar caviar_;

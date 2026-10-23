@@ -1,0 +1,22 @@
+{
+  "event_id": "398f609a4991de304b163ac280340e8a159911ee88a15420bdb5c72e9c542c2f",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_prodpicker_behavior.py"
+    ],
+    "evidence": [
+      "Independent review found original draw_item492801/492816 IDIV byA810, while the initial two-dimension candidate still emits DIV because guessed field_A810 remains unsigned. Original calculate produces signed int columns, and pinned on_key_click/exec also use signed division by this count. Full evidence SHA256 a59be46d3271ae648b1751da72bec7197ac9bd386472fe5238631ec8bbf8d584.",
+      "Coordinator authorizes the same complete26-identity ownership scope to replace A810 with int32_t column_count_, retain A81C cell_width andA820 row_height fixes, update all actual code references and remove only newly redundant casts. All original offsets/sizeA840/BaseWin embedA1C, all mappings and15claims preserved; no zero/overflow guard or local-cast workaround. Existing task baseline unchanged. No other member changes without returned evidence and coordinator review.",
+      "Add recovery/tests/test_prodpicker_behavior.py to fixture scope; retain all old signed-selection controls with correct renamed field anchor and compiling/failing unsigned-type mutant. Update display-id/signed-geometry fixtures using actual header types. Valid draw_item guard excludes negative relativeItem without unsafe overflow, so test original early guard rather than inventing such a runtime path. Cover reachable signed division in other consumers and native opcode evidence, preserving unsafe fault paths unexecuted.",
+      "Initial two-field full build/replay/tests are preserved as the completed383986071 evidence epoch; all handles are terminal. New field edits start a fresh epoch; no stale report replay or resetting baseline088d2cee1. Root handles compilers/Git/recording/full closure review and integration; no automatic reversion or claim demotion on score regressions."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "84dc2f07e7b9accd6db07dc635ec95ad3f1affbe35e195af9351914226029933",
+  "request_id": "signed-grid-column-count-scope",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:prodpicker-signed-geometry-oct23y"
+}

@@ -125,7 +125,7 @@ class ProdPicker : public GraphicWin {
   StringList prod_a_;  // 0xA780
   StringList prod_b_;  // 0xA7B0
   StringList prod_c_;  // 0xA7E0
-  uint32_t field_A810_;  // 0xA810
+  int32_t column_count_;  // 0xA810, production columns per row
   uint32_t field_A814_;  // 0xA814
   int32_t field_A818_;   // available production-entry count, 0xA818
   int32_t cell_width_;  // 0xA81C, horizontal cell stride

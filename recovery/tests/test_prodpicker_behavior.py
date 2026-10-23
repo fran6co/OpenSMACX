@@ -58,9 +58,9 @@ def compile_and_run(tmp_path, body: str, *, damaged: bool = False,
         assert corrected in body
         body = body.replace(corrected, original_wrap, 1)
     if damaged_signed_division:
-        token = "oldSelection / static_cast<int>(field_A810_)"
+        token = "oldSelection / column_count_"
         assert body.count(token) == 2
-        body = body.replace(token, "oldSelection / field_A810_")
+        body = body.replace(token, "oldSelection / static_cast<uint32_t>(column_count_)")
     fixture = r'''
 #include <cassert>
 #include <cstdint>
@@ -74,7 +74,7 @@ struct Scroll {
 };
 struct ProdPicker {
     int field_A77C_ = 0, field_A774_ = 4;
-    uint32_t field_A810_ = 4;
+    int32_t column_count_ = 4;
     int field_A818_ = 11, field_A82C_ = 8, field_B64_ = 7;
     Scroll scroll_;
     std::vector<int> events;
@@ -126,7 +126,7 @@ int main() {
     assert((p.events == std::vector<int>{3}));
 
     p.events.clear();
-    p.field_A810_ = 5;
+    p.column_count_ = 5;
     p.field_A818_ = 10;
     p.field_A774_ = -1; // original no-selection sentinel; IDIV rounds toward zero
     p.field_A77C_ = 0;

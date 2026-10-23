@@ -53,11 +53,12 @@ def compile_and_run(tmp_path: Path, compiler_name: str) -> subprocess.CompletedP
     declarations = "\n  ".join((
         member_declaration("field_A774_", "0xA774"),
         member_declaration("field_A77C_", "0xA77C"),
-        member_declaration("field_A810_", "0xA810"),
+        member_declaration("column_count_", "0xA810"),
         member_declaration("cell_width_", "0xA81C"),
         member_declaration("row_height_", "0xA820"),
         member_declaration("field_B64_"),
     ))
+    assert "int32_t column_count_;" in declarations
     assert "int32_t cell_width_;" in declarations
     assert "int32_t row_height_;" in declarations
 
@@ -77,13 +78,15 @@ static_assert(std::is_same<decltype(ProdPicker::cell_width_), int32_t>::value,
               "horizontal cell stride keeps the actual signed header type");
 static_assert(std::is_same<decltype(ProdPicker::row_height_), int32_t>::value,
               "vertical row pitch keeps the actual signed header type");
+static_assert(std::is_same<decltype(ProdPicker::column_count_), int32_t>::value,
+              "column count keeps the actual signed header type");
 
 BODY
 
 int main() {
   ProdPicker p;
   p.field_A77C_ = 8;
-  p.field_A810_ = 4;
+  p.column_count_ = 4;
   p.cell_width_ = 80;
   p.row_height_ = 70;
 

@@ -1,0 +1,48 @@
+{
+  "event_id": "84dc2f07e7b9accd6db07dc635ec95ad3f1affbe35e195af9351914226029933",
+  "payload": {
+    "affects": [
+      "entity-349b0a99cb9925fce5a81a310e5910674f18bc96e5cf96e9c200558e3e04aab9",
+      "entity-3c6f6bf9d51e68d38f0519d70ccaa219de01f6b92d2cbc0754a3424519f92a2c",
+      "entity-3d45453e35ab2907ad04ad29e5e71f0740fa7308a4eee377fbe9fc69dda6e5b3",
+      "entity-3f0c2fa8fedce7f28dd2935a843d512c6185732c0b3391e724ed1846ad060e84",
+      "entity-466a8fc0f87c788f4a49eae5786982cb2c680ded8e1240d86257a456351c0286",
+      "entity-4671d0f4308762b29ee5f31f0cfc4b96a7161e01e5edef403fa109f5cc5a5eaf",
+      "entity-46a3c25e7680e495c56a73b86ebe196ee0c021c59b15a4e23d883af0a1cd1655",
+      "entity-49a2ffb9100bfe25df21779d70ca760caec2344682656dfe3c2f4b125866ab71",
+      "entity-4a870633a0e4c731604e601c156de583e42adb4f7e8230a201766ad2e6d65813",
+      "entity-59b6ac8a215dac9ccc25117a6fa97c1ec8eb5a89ebc0d4b5fa9236bb7408626d",
+      "entity-65eb4582a3baccc6296b99a49763299b0ee3bd7d606d24bbcd482e5bfcb124ef",
+      "entity-69afc37b1603c115c869d3529ef81f126953b56df2dde5f8eec6426ea8c17362",
+      "entity-6cb9fc26751b405ebcb2bbe490696580d032ac47b97a19caaf28985dc0437a95",
+      "entity-6e770fc816edd507e6d00f86b40b273e1c847494d569eee2a2af1f010aa5a67b",
+      "entity-811b53d3f8ba632b0d87122de6e7530db0653e8480ccd9cb047f63a545ad8bc1",
+      "entity-8999576469401df68a83b127fe489d1f6007d6b2943654c31a0ce72a718f1f94",
+      "entity-95d83cfc19c1cd83dcde4e07276ddb9b7fd7a241030e44f4886d0649df7c414e",
+      "entity-a87faa9edab91cde5949d8fc2fa144ac127737ed4568cc91e49da5254549aa6e",
+      "entity-b0d8f1cb64c97d0dc7c3287273fabd466e75a877754dd9dcadded02a787390a3",
+      "entity-bda4c6233014adb0d4ad13b3d321425731d2cb3e3740505b7d27bdd040ee69fd",
+      "entity-c33631148d50bfa9ee0d0ba138e677290c52e234b51d7bd79213660a8740ad35",
+      "entity-d1b6120d4b6b82be029794c60aac65b9f3c8db4043965bae91f93990dea1976d",
+      "entity-d1c523c5e11f3dff381c05d2cb600ab3f121e81b3053524cb07f143a4077e152",
+      "entity-dae830007ab4ca18cd840b62694bd64c472dd4aa0180006d4e99805006b81dcb",
+      "entity-db4d581f68f0339abe67254590a4fee4d662e703614a09770ec75ed5294ddafb",
+      "entity-e0f5a7fc0d4619d8b8df26276f58cf4f2680e694c31fb9f8388fd94929a20b2e"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "signed-grid-column-count",
+    "evidence": [
+      "Independent review found original draw_item492801/492816 IDIV byA810, while the initial two-dimension candidate still emits DIV because guessed field_A810 remains unsigned. Original calculate produces signed int columns, and pinned on_key_click/exec also use signed division by this count. Full evidence SHA256 a59be46d3271ae648b1751da72bec7197ac9bd386472fe5238631ec8bbf8d584.",
+      "Coordinator authorizes the same complete26-identity ownership scope to replace A810 with int32_t column_count_, retain A81C cell_width andA820 row_height fixes, update all actual code references and remove only newly redundant casts. All original offsets/sizeA840/BaseWin embedA1C, all mappings and15claims preserved; no zero/overflow guard or local-cast workaround. Existing task baseline unchanged. No other member changes without returned evidence and coordinator review.",
+      "Add recovery/tests/test_prodpicker_behavior.py to fixture scope; retain all old signed-selection controls with correct renamed field anchor and compiling/failing unsigned-type mutant. Update display-id/signed-geometry fixtures using actual header types. Valid draw_item guard excludes negative relativeItem without unsafe overflow, so test original early guard rather than inventing such a runtime path. Cover reachable signed division in other consumers and native opcode evidence, preserving unsafe fault paths unexecuted.",
+      "Initial two-field full build/replay/tests are preserved as the completed383986071 evidence epoch; all handles are terminal. New field edits start a fresh epoch; no stale report replay or resetting baseline088d2cee1. Root handles compilers/Git/recording/full closure review and integration; no automatic reversion or claim demotion on score regressions."
+    ],
+    "hypothesis": "Restore original signed column-count member throughout the existing production-grid owner.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "signed-grid-column-count",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:prodpicker-signed-geometry-oct23y"
+}
