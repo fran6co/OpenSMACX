@@ -1,0 +1,21 @@
+{
+  "event_id": "1bd03a75b15bd12d5b2956db416364b01d104e85b51c5f50f4d76894a68bf745",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_terrain_helper_boundaries.py"
+    ],
+    "evidence": [
+      "Fresh baseline related suite passes36tests. Initial candidate suite has38pass/1failure/1skip: the historical map-header equality fixture detects exactly the two authorized coefficient extern declarations; the pin-dependent skip comes from missing absolute OPENSMACX_IMAGE in that worker test invocation, not a measured pin failure. Retain both observations and rerun with the shared pinned image explicitly set.",
+      "Authorize only the header snapshot test to construct its expected bytes by inserting exactly the two new extern lines after the existing MapTileFlagClearMask declaration in its unchanged historical WORLD_OWNER_BASE header. Require unique original insertion anchor and compare the entire current header to that exact expected header. Keep original near_landmark extraction/equality and every other helper/boundary/negative control untouched. Rename this one test to reflect the expanded exact contract; do not reset its historical baseline or permit arbitrary header changes. Add a deletion/wrong-type negative check for the new declarations if useful, not a gate waiver.",
+      "This test-only correction changes no compiler inputs, recipes, measurements, historical source claims or matching obligations. Complete the active source-frozen full application observation before modifying tracked test/task files so its committed clean-epoch checks remain valid. Fresh final host outcomes must cover all original36tests (with the one explicit renamed contract), the four new actual-source tests and no skips using OPENSMACX_IMAGE."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "f5a8f1935e393b09d096747bbc4ef91610bc345e0ef14d04db52346127d057ec",
+  "request_id": "terrain-header-expectation-coefficient-declarations",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:map-goody-signed-oct23l"
+}
