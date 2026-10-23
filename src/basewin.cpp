@@ -2836,7 +2836,7 @@ void BaseWin::add_queue(int insert, int production_id) {
     draw_queue(1);
 }
 
-// ORIGINAL: 0x00416FB0 ?delete_queue@BaseWin@@QAEXH@Z 0x00416FB0-0x0041703C FILE
+// ORIGINAL: 0x00416FB0 ?delete_queue@BaseWin@@QAEXH@Z 0x00416FB0-0x0041703C FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x00416FB0-0x0041703C removes one queue entry, shifts later ids, clamps the selected index to at least one, and redraws the queue", "source:src/base.h:Base::queue_size", "source:src/base.h:Base::queue_production_id"], "reason": "Delete a selected production queue entry through the typed Base queue representation; the drawing dependency remains explicitly unfinished."}
 void BaseWin::delete_queue(int index) {
     if (index > static_cast<int>(BaseCurrent->queue_size)) {
