@@ -1,0 +1,52 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "92ba50d916f6b20ee7bb7faa009cda711e498949",
+  "editable_files": [
+    "CMakeLists.txt",
+    "recovery/project.json"
+  ],
+  "evidence": [
+    "Existing native measure reaches44/44 BYTE_EXACT for spying with /Oy-. A separate actual-application probe replays the complete current production object exactly and reaches44/44 with the unchanged application command plus /Oy-, without any C++ source changes. Preserve the earlier fingerprint bookkeeping refusal; candidate ran once after the guard was corrected. This is an evidence-backed project compiler-profile correction, not a global flag experiment or function-local code trick.",
+    "Exactly six function signatures and associated frame metadata change in the tested spying object: spying and header COMDAT copies of base_project, has_project, parse_set, range and StringStruct::seek_pos. All six original identities are explicitly selected here. Independent native comparison finds the five candidate helper bodies locally exact to their original spans and current alpha.cpp copies; baseline spying copies mismatch. Baseline linked MAP selects these five helpers from alpha.cpp and spying from spying.cpp. Candidate linked selection/FPO remains unverified.",
+    "Authorize only src/spying.cpp COMPILE_OPTIONS /Oy- in CMake and its matching measurement unit_flag_sets explicit /c /O2 /Gy /GR- /GX /Oy- /Ob2 profile. Keep all global/default flags, other source profiles, compiler/environment hooks, headers and C++ bodies unchanged. Place the source-specific flag beside existing frame-based owners with one concise evidence/purpose comment; do not add a public tool or package/environment code.",
+    "The one-function outside-selected probe remains FAIL; do not waive or relabel it. Coordinator will re-evaluate the complete six-function/associated-FPO scope with replica/damage controls, a fresh complete build/link, canonical local/strict states, all other objects, and actual candidate MAP/PE/PDB selection observations before integration. Absence of complete linked retention remains explicit; native automatic admission may still refuse.",
+    "Worker edits only the two configuration files via apply_patch and then freezes/returns hashes. No compiler/tests/Git/Task/preparation/resources operations; coordinator owns those, independent review, manual integration and fresh destination verification. Preserve all source identities, existing claims and original task baseline. No gate weakening, demotion, original behavior fix or speculative source hierarchy change.",
+    "Standing coordinator-reviewed manual recovery authorization applies only after actual evidence review and relevant build/preservation/reference checks. No complete game/runtime/linked or automatic acceptance follows from the restored local match. The five helper copies do not count as five new recovered functions: their canonical source bodies are already exact."
+  ],
+  "intent": "Restore the original frame-preserving application compilation profile for the spying translation unit",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4199856,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4337408,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5210320,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5243616,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5618688,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5920992,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "spying-frame-profile-oct23z"
+}
