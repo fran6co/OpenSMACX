@@ -1,0 +1,22 @@
+{
+  "event_id": "aa4cb94bfd2311acae21663532c7a7bf460b424549188e47367d7806909c1ea9",
+  "payload": {
+    "affects": [
+      "entity-05749cf778e84eebf147ad1af15292e69fb08f8d7c26f43987a601de5d730bf5",
+      "entity-7bb24b0b8339604747794ac16d76dffff10fc9c8230eb4cbf992f5a5a7c4d652"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "planwin-centering-source-boundary",
+    "evidence": [
+      "Pinned48B630..48B8D6 and48B8E0..48BAA1; independent source/COFF reviews corroborate scopes and read/callback order.",
+      "CurrentSourceSHAce0bca685b9e25a63d3f7104bbbcc95798bd1245b31eea67efbfe28dfa8e7f04; no annotation/header/build-policy changes."
+    ],
+    "hypothesis": "The recovery-added static scan helper is not an original function boundary. The two original PlanWin members own their25+25 and81 scans, and opticenter has a previously omitted discarded-result midpoint preamble.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "planwin-centering-source-boundary",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:planwin-centering-owner-oct24a"
+}

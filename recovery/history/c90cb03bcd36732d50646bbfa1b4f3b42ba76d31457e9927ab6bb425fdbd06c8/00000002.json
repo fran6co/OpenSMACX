@@ -1,0 +1,19 @@
+{
+  "event_id": "040481bbd29b5e2580c6df789f1dbf223feb5d0c535984c1cb154ac92019d13a",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "planwin-centering-source-boundary",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Coordinator manually admits only the reviewed source-boundary migration: direct scans, signed zoom, original predicate ordering and proper GraphicWin/Buffer base access.",
+      "24actual-source host controls and30neighbor tests pass; native production+replicas+81to80damage pass; fresh194TU208object application compiles/links with source/claim/mapping/reference checks. Actual208objects differ onlyinPlanWin and its compiledbody equals controls. All5581mapped statuses andstrict3129PASS315UNKNOWN unchanged; no new claims or gains.",
+      "Native outside-scope FAIL remains exactly the removed unmapped plan_tiles_fit contribution/two symbols, independently reviewed. No verifier waiver, linked-selection/structure/runtime/game acceptance or resolution of matching obligations."
+    ]
+  },
+  "previous_event": "aa4cb94bfd2311acae21663532c7a7bf460b424549188e47367d7806909c1ea9",
+  "request_id": "planwin-centering-reviewed-source-action",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:planwin-centering-owner-oct24a"
+}

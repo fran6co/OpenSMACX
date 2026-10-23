@@ -1,0 +1,23 @@
+{
+  "event_id": "9fab2a0b5cda668675b13de9291da9b3990c4bd272d515d8f6788c1a35335d1e",
+  "payload": {
+    "affects": [
+      "entity-05749cf778e84eebf147ad1af15292e69fb08f8d7c26f43987a601de5d730bf5",
+      "entity-7bb24b0b8339604747794ac16d76dffff10fc9c8230eb4cbf992f5a5a7c4d652",
+      "entity-bb5cd9a486b3f586138a22605533379c4b4832efb29486129588c70c4fdee10d"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "planwin-xrange-original-call-boundary-pending",
+    "evidence": [
+      "Pin48B656..48B69A includes signed truncating midpoint and call48BEE0, then stores originalx1/y1 without usingEAX. Never assign/clamp midpoint, force fptr/exports/pragmas, normalizeunsafe arithmetic or demote claims.",
+      "Native candidate control object and actual fresh production object corroborate current non-exact status. Map header/owner changes are outside this task scope and require separate coordinator authorization plus affected exact-caller preservation."
+    ],
+    "hypothesis": "Original opticenter calls xrange48BEE0 and discards its result. Restored ordinary source retains this call expression but current header-inline visibility removes the emitted call. Investigate original/compiled caller closure before deciding any map.h/map.cpp boundary change; current two mapped members remain non-exact.",
+    "kind": "discovery"
+  },
+  "previous_event": "040481bbd29b5e2580c6df789f1dbf223feb5d0c535984c1cb154ac92019d13a",
+  "request_id": "planwin-xrange-original-call-boundary-pending",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:planwin-centering-owner-oct24a"
+}
