@@ -2430,7 +2430,7 @@ void BaseWin::draw_production(int update_mode) {
     Font unit_font;
     Font detail_font;
     Sprite blank_sprite;
-    RECT saved_clip = MainInterfaceGlobal.clip_rect();
+    RECT saved_clip = MainInterfaceGlobal.current_clip();
     RECT panel = queue_help_rect_;
     RECT outer = queue_outer_rect_;
     RECT border;
@@ -2451,7 +2451,7 @@ void BaseWin::draw_production(int update_mode) {
 
     // The native body copies style 3 before masking individual edge members.
     // Use the source-owned style record and typed Buffer API for both frames.
-    MainInterfaceGlobal.set_clip(&panel);
+    MainInterfaceGlobal.restore_clip();
     MainInterfaceGlobal.box_sprite(&panel, &panel_style);
     outer.left -= 5;
     outer.top += 5;

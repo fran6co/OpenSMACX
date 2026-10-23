@@ -1,0 +1,20 @@
+{
+  "event_id": "51a58ea88d7fe165696ec9ea4061943059cc5285493a87cb4fbbead66e50be89",
+  "payload": {
+    "affects": [
+      "entity-0040a1a1d7a662ac6de6e1a3b9d7b20f067801b733a8363e77a79770452b7232"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "defined-caviar-test-instrumentation",
+    "evidence": [
+      "Independent2x2hostcontrols ignoredparallel-match-oct23q/basewin-clang-diagnosis.json identifytestdouble Caviar.render_calls missingconstructorinitialization; render incrementsindeterminateint. NewfixtureClangfullrun observedreset2/render32766; tempcounterinitcontrolpassesallassertions. Clip-onlyalsoexecutesUB beforeearlyreturn, so priorhostpositivepassesarenotfinalqualification. Authorize onlytestinstrumentcounterinitialization andruncompleteharnessforbothcompilers, preservingeveryexisting/newassertionandmutant; removeunneedednewclip-onlybypassifunused. No productionC++state/semantics,originalbugs,fixturesourcebodyrewrite,package/compiler/gatechanges. Freshalltestresultsrequired; rootwillresolvefromevidence."
+    ],
+    "hypothesis": "Production panel test-double render counter is read uninitialized before full or clip-only assertions",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "defined-caviar-test-instrumentation",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:basewin-production-clip-oct23q"
+}

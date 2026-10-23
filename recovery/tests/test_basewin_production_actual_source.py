@@ -1,6 +1,7 @@
 from pathlib import Path
 import shutil
 import subprocess
+import pytest
 
 
 ROOT = Path(__file__).parent
@@ -29,7 +30,7 @@ def actual_source_body():
     return extracted
 
 
-def compile_and_run(tmp_path, mutant=None):
+def compile_and_run(tmp_path, mutant=None, compiler="g++"):
     shutil.copyfile(ROOT / "basewin_production_source_control.cpp", tmp_path / "source_harness.cpp")
     body = actual_source_body()
     if mutant is not None:
@@ -39,7 +40,7 @@ def compile_and_run(tmp_path, mutant=None):
     (tmp_path / "basewin_production_body.inc").write_text(body)
     executable = tmp_path / "source_harness"
     subprocess.run(
-        ["g++", "-std=c++98", "-fpermissive", "source_harness.cpp", "-o", str(executable)],
+        [compiler, "-std=c++98", "-fpermissive", "source_harness.cpp", "-o", str(executable)],
         cwd=tmp_path,
         check=True,
         capture_output=True,
@@ -122,3 +123,28 @@ def test_extracted_body_controls_reject_native_detail_mutants(tmp_path):
         case_path.mkdir()
         result = compile_and_run(case_path, mutant)
         assert result.returncode != 0
+
+
+@pytest.mark.parametrize("compiler", ["g++", "clang++"])
+def test_extracted_body_preserves_incoming_clip_and_full_first_frame(tmp_path, compiler):
+    if shutil.which(compiler) is None:
+        pytest.skip(f"{compiler} is unavailable")
+    result = compile_and_run(tmp_path, compiler=compiler)
+    assert result.returncode == 0, result.stderr
+
+
+@pytest.mark.parametrize("compiler", ["g++", "clang++"])
+def test_extracted_body_controls_reject_old_clip_getter_and_first_clip(tmp_path, compiler):
+    if shutil.which(compiler) is None:
+        pytest.skip(f"{compiler} is unavailable")
+    mutants = (
+        ("RECT saved_clip = MainInterfaceGlobal.current_clip();",
+         "RECT saved_clip = MainInterfaceGlobal.clip_rect();"),
+        ("MainInterfaceGlobal.restore_clip();",
+         "MainInterfaceGlobal.set_clip(&panel);"),
+    )
+    for index, mutant in enumerate(mutants):
+        case_path = tmp_path / f"clip-{index}"
+        case_path.mkdir()
+        result = compile_and_run(case_path, mutant, compiler)
+        assert result.returncode != 0, f"clip mutant {index} escaped"

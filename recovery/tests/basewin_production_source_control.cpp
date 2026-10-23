@@ -42,7 +42,7 @@ struct Caviar {
     int caption_divisor_during_rotation;
     int caption_scale_during_render;
     int caption_divisor_during_render;
-    Caviar() : reset_calls(0) {}
+    Caviar() : reset_calls(0), render_calls(0) {}
     void reset_objects() { ++reset_calls; }
     void set_scaling(float value) {
         scale = value;
@@ -109,10 +109,31 @@ struct BufferMock {
     int last_explicit_font_height, last_explicit_font_style;
     char last_text[128];
     int color_a[32], color_b[32];
-    RECT clip;
-    RECT clip_rect() { return clip; }
-    int box_sprite(RECT *, void *) { return 0; }
-    int set_clip(RECT *) { ++clip_calls; return 0; }
+    RECT current_clip_rect;
+    RECT full_clip_rect;
+    RECT first_box_rect, first_box_clip, second_set_clip;
+    int restore_clip_calls;
+    int box_sprite_calls;
+    const RECT &current_clip() const { return current_clip_rect; }
+    const RECT &clip_rect() const { return full_clip_rect; }
+    void restore_clip() {
+        ++restore_clip_calls;
+        set_clip(&full_clip_rect);
+    }
+    int box_sprite(RECT *rect, void *) {
+        if (box_sprite_calls == 0) {
+            first_box_rect = *rect;
+            first_box_clip = current_clip_rect;
+        }
+        ++box_sprite_calls;
+        return 0;
+    }
+    int set_clip(RECT *rect) {
+        ++clip_calls;
+        current_clip_rect = *rect;
+        if (clip_calls == 2) second_set_clip = *rect;
+        return 0;
+    }
     int set_font(Font *font, Font *, Font *, Font *) {
         ++set_font_calls; current_font = font; return 0;
     }
@@ -234,7 +255,10 @@ static void UnionRect(RECT *out, const RECT *a, const RECT *b) {
     out->bottom = a->bottom > b->bottom ? a->bottom : b->bottom;
 }
 static char * _itoa(int value, char *out, int) { sprintf(out, "%d", value); return out; }
-struct Strings { char *get(int) { return const_cast<char *>("display-name"); } };
+struct Strings {
+    char *get(int) { return const_cast<char *>("display-name"); }
+    char *get(char *) { return const_cast<char *>("display-name"); }
+};
 static Strings StringTable;
 static int cost_factor(int faction, int, int) {
     cost_factor_faction = faction;
@@ -288,6 +312,10 @@ struct GraphicWin {
 
 int main() {
     BaseWin win;
+    RECT incoming_clip = {11, 13, 711, 513};
+    RECT full_clip = {0, 0, 800, 600};
+    MainInterfaceGlobal.current_clip_rect = incoming_clip;
+    MainInterfaceGlobal.full_clip_rect = full_clip;
     for (int color_index = 0; color_index < 195; ++color_index)
         TextColourTable[color_index] = 1000 + color_index;
     RECT queue_rect = {0, 0, 250, 240};
@@ -309,6 +337,24 @@ int main() {
     Weapon[0].offense_rating = -1;
     veh_draw_result = 1;
     win.draw_production(0);
+    assert(MainInterfaceGlobal.restore_clip_calls == 1);
+    assert(MainInterfaceGlobal.box_sprite_calls >= 1);
+    assert(MainInterfaceGlobal.first_box_rect.left == queue_rect.left &&
+           MainInterfaceGlobal.first_box_rect.top == queue_rect.top &&
+           MainInterfaceGlobal.first_box_rect.right == queue_rect.right &&
+           MainInterfaceGlobal.first_box_rect.bottom == queue_rect.bottom);
+    assert(MainInterfaceGlobal.first_box_clip.left == full_clip.left &&
+           MainInterfaceGlobal.first_box_clip.top == full_clip.top &&
+           MainInterfaceGlobal.first_box_clip.right == full_clip.right &&
+           MainInterfaceGlobal.first_box_clip.bottom == full_clip.bottom);
+    assert(MainInterfaceGlobal.second_set_clip.left == queue_rect.left &&
+           MainInterfaceGlobal.second_set_clip.top == queue_rect.top &&
+           MainInterfaceGlobal.second_set_clip.right == queue_rect.right &&
+           MainInterfaceGlobal.second_set_clip.bottom == queue_rect.bottom);
+    assert(MainInterfaceGlobal.current_clip_rect.left == incoming_clip.left &&
+           MainInterfaceGlobal.current_clip_rect.top == incoming_clip.top &&
+           MainInterfaceGlobal.current_clip_rect.right == incoming_clip.right &&
+           MainInterfaceGlobal.current_clip_rect.bottom == incoming_clip.bottom);
     assert(MainInterfaceGlobal.clip_calls >= 3);
     assert(MainInterfaceGlobal.tile_calls == 32);
     assert(MainInterfaceGlobal.fill_calls == 0);
