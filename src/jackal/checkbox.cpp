@@ -326,7 +326,7 @@ void CheckBox::draw_item(int position, int state, int) {
         }
     }
 
-    area.top += Buffer::font1_->descent_;
+    area.top += Buffer::fonts_[0]->descent_;
     area.left += Dialog::field_34_;
     if (Dialog::item_list_.head_ != 0 &&
         Dialog::item_list_.current_->string_payload()->field_8_ == 1) {

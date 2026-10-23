@@ -58,10 +58,7 @@ struct Font {
 class Buffer {
 public:
     char *find_line_break_l(char *, int *, int);
-    Font *font1_;
-    Font *font2_;
-    Font *font3_;
-    Font *font4_;
+    Font *fonts_[4];
     int markup_enabled_;
     int field_514_;
     int markup_pending_;
@@ -72,7 +69,7 @@ MAIN = r"""
 int main() {
     Font f0 = {0}, f1 = {1}, f2 = {2}, f3 = {3};
     FontDefault = &f0;
-    Buffer buffer = {&f0, &f1, &f2, &f3, 1, 0, 0};
+    Buffer buffer = {{&f0, &f1, &f2, &f3}, 1, 0, 0};
     char text[] = "$LINK<abc";
     int break_len = 9;
     char *result = buffer.find_line_break_l(text, &break_len, 9);

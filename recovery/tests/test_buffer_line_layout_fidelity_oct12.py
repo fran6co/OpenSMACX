@@ -74,11 +74,13 @@ def exact_link_migration(original):
 
 
 def exact_owner_type_migration(source):
-    """The later task changes only the owned-label slot's source type/name."""
+    """Apply later owner slot-type/name and Buffer font-array migrations."""
     assert source.count('owned_[link_count_ - 1]') == 4
     expected = source.replace('owned_[', 'link_labels_[')
     expected = expected.replace("static_cast<char *>(link_labels_[link_count_ - 1])[label]",
                                 "link_labels_[link_count_ - 1][label]")
+    expected = expected.replace("font4_ ? font4_ : font1_",
+                                "fonts_[3] ? fonts_[3] : fonts_[0]")
     return expected
 
 
@@ -292,8 +294,8 @@ static void initialize(Font &f,int height=8,int spacing=0) {
   f.font_obj_=&f; f.unk_1_=spacing; f.height_=height; f.line_height_=height+3;
 }
 static Buffer fresh() {
-  Buffer b{}; b.font1_=&primary; b.font2_=&secondary; b.font3_=&third;
-  b.font4_=&fourth; b.markup_enabled_=1; return b;
+  Buffer b{}; b.fonts_[0]=&primary; b.fonts_[1]=&secondary; b.fonts_[2]=&third;
+  b.fonts_[3]=&fourth; b.markup_enabled_=1; return b;
 }
 static void reset() {
   writes.clear();events.clear();measured_fonts.clear();measured_lengths.clear();
@@ -305,7 +307,7 @@ static void parser_controls() {
   // is deliberately NOT reordered for an initial-segment result.
   for(bool terminal:{false,true}) for(bool missing:{false,true})
     for(int disposition=0;disposition!=5;++disposition) {
-      reset();Buffer b=fresh();if(missing)b.font2_=nullptr;
+      reset();Buffer b=fresh();if(missing)b.fonts_[1]=nullptr;
       char allocation[]="!aa bb{c d}";char *text=allocation+1;
       if(terminal)text[9]=0;
       char *returned=nullptr;char *expected=nullptr;
@@ -331,7 +333,7 @@ static void parser_controls() {
       assert(width==(disposition==4 && !terminal?31:34));
     }
   for(bool terminal:{false,true}) for(bool missing:{false,true}) {
-    reset();Buffer b=fresh();if(missing)b.font2_=nullptr;
+    reset();Buffer b=fresh();if(missing)b.fonts_[1]=nullptr;
     char allocation[]="!aa bb{cd}";char *text=allocation+1;
     if(terminal)text[8]=0;
     int calls=0;font_probe=[&](Font *,char *segment,int *,size_t)->char* {
@@ -341,7 +343,7 @@ static void parser_controls() {
     assert(reverse_calls==1); // search crosses the markup/segment boundary
   }
   for(bool terminal:{false,true}) for(bool missing:{false,true}) {
-    reset();Buffer b=fresh();if(missing)b.font2_=nullptr;
+    reset();Buffer b=fresh();if(missing)b.fonts_[1]=nullptr;
     char allocation[]="! aa{cd}";char *text=allocation+1;
     if(terminal)text[6]=0;
     int calls=0; font_probe=[&](Font *,char *segment,int *,size_t)->char* {
@@ -350,13 +352,13 @@ static void parser_controls() {
     int width=40;assert(b.find_line_break_l(text,&width,terminal?6:7)==nullptr);
     assert(reverse_calls==1); // start's space is excluded from reverse search
   }
-  reset();Buffer b=fresh();b.font1_=nullptr;b.markup_pending_=2;
+  reset();Buffer b=fresh();b.fonts_[0]=nullptr;b.markup_pending_=2;
   char allocation[]="!plain";char *text=allocation+1;
-  assert(b.find_line_break_l(text,nullptr,5)==nullptr && b.font1_==nullptr);
+  assert(b.find_line_break_l(text,nullptr,5)==nullptr && b.fonts_[0]==nullptr);
   b.markup_enabled_=0;
   font_probe=[](Font *,char *text,int *,size_t){return text+2;};
   int width=40;assert(b.find_line_break_l(text,&width,5)==text+2);
-  assert(b.font1_==&fallback && b.markup_pending_==2 && reverse_calls==0);
+  assert(b.fonts_[0]==&fallback && b.markup_pending_==2 && reverse_calls==0);
   b.markup_enabled_=1;b.markup_pending_=1;
   font_probe=[](Font *,char *text,int *,size_t){return text;};
   assert(b.find_line_break_l(text,&width,5)==text && b.markup_pending_==0);
@@ -396,19 +398,19 @@ static void centered_controls() {
   assert(writes[0].length==3 && writes[1].length==2);
   assert(writes[0].y==20 && writes[1].y==28);
   assert(measured_widths==std::vector<int>({40,40}));
-  assert(b.field_18_==2 && b.font1_==&primary && b.font2_==&secondary && b.font3_==&third);
-  assert(b.font4_==&fourth);
+  assert(b.field_18_==2 && b.fonts_[0]==&primary && b.fonts_[1]==&secondary && b.fonts_[2]==&third);
+  assert(b.fonts_[3]==&fourth);
   reset();b=fresh();b.markup_enabled_=0;
   font_probe=[&](Font *,char *,int *width,size_t)->char* {
-    *width=1;b.font1_=nullptr;b.font2_=&third;b.font3_=&fourth;return nullptr;
+    *width=1;b.fonts_[0]=nullptr;b.fonts_[1]=&third;b.fonts_[2]=&fourth;return nullptr;
   };
   fallback.unk_1_=-1;
   assert(b.wrap_cent(nullptr,text,3,5,60)==16); // live default font/line height
-  assert(writes[0].width==60 && b.font1_==&primary && b.font2_==&secondary && b.font3_==&third);
+  assert(writes[0].width==60 && b.fonts_[0]==&primary && b.fonts_[1]==&secondary && b.fonts_[2]==&third);
   fallback.unk_1_=0;
   reset();b=fresh();Font invalid{};
   assert(b.wrap_cent(&invalid,nullptr,4,17,20)==17 && writes.empty());
-  assert(b.font1_==&primary && b.font2_==&secondary && b.font3_==&third);
+  assert(b.fonts_[0]==&primary && b.fonts_[1]==&secondary && b.fonts_[2]==&third);
   font_probe=[](Font *f,char *,int *width,size_t)->char* {
     assert(f==&primary);*width=0;return nullptr;
   };
@@ -524,8 +526,7 @@ def actual_source():
             for typ, name in (("BufferWriteStringsCallback", "field_C_"),
             ("uint32_t", "field_10_"), ("uint32_t", "field_14_"), ("uint32_t", "field_18_"),
             ("uint32_t", "field_514_"), ("uint32_t", "markup_pending_"),
-            ("uint32_t", "markup_enabled_"), (r'Font \*', "font1_"),
-            (r'Font \*', "font2_"), (r'Font \*', "font3_"), (r'Font \*', "font4_"))),
+            ("uint32_t", "markup_enabled_"), (r'Font \*', r"fonts_\[4\]"))),
         "BUFFER_APIS": '\n'.join(one(bh, p) for p in (
             r'^  (char \*find_line_break_l\([^\n]+;)',
             r'^  (int wrap_cent\(Font \*font, char \*text, int x_coord, int y_coord, int width\);)',
@@ -578,11 +579,11 @@ MUTANTS = (
     ("space-before", "found[-1] == ' '", "found[0] == ' '"),
     ("segment-identity", "found == segStart", "found == a1"),
     ("pending-clear", "markup_pending_ = 0;", "markup_pending_ = 2;"),
-    ("null-outparam-order", "if (!a2) {\n        return 0;", "if (!a2) {\n        font1_ = FontDefault; return 0;"),
+    ("null-outparam-order", "if (!a2) {\n        return 0;", "if (!a2) {\n        fonts_[0] = FontDefault; return 0;"),
     ("search-exclusive-end", "const char *p = end;", "const char *p = end - 1;"),
     ("search-inclusive-start", "int count = (int)(end - start);", "int count = (int)(end - start) + 1;"),
     ("residual-center-width", "write_cent_l(str, x_coord, y, width, lineLen);", "write_cent_l(str, x_coord, y, wrap_width, lineLen);"),
-    ("font-restore", "font3_ = savedC;", "font3_ = font1_;"),
+    ("font-restore", "fonts_[2] = savedC;", "fonts_[2] = fonts_[0];"),
     ("cached-list-gate", "strings->head_ == 0 || strings->current_entry()->field_8_ == 0", "strings->head_ == 0 || line_payload == 0"),
     ("live-list-dispatch", "if (line_payload == 3)", "if (strings->current_entry()->field_8_ == 3)"),
     ("lost-position-flags", "(flags & 2) == 0", "true"),

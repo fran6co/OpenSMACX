@@ -20,7 +20,7 @@ int BufferStrHeight;
 int BufferLastWrapWriteResult;
 struct RECT { int left, top, right, bottom; };
 struct Buffer {
-    Font *font1_;
+    Font *fonts_[4];
     int field_10_, field_14_, field_18_, split_count, writer_count;
     char *find_line_break_l(char *text, int *, int length) {
         ++split_count;
@@ -51,38 +51,38 @@ int main() {
     // Process-static zero initialization, not a per-call reset in product.
     assert(BufferLastWrapWriteResult==0);
     font.font_obj_=&font;
-    Buffer buffer={&font, 0, 0, 0, 0, 0};
+    Buffer buffer={{&font, 0, 0, 0}, 0, 0, 0, 0, 0};
     RECT panel={0,0,100,100}; Arrow arrow={0,0};
     actual_netwin_expressions(&buffer,&panel,arrow);
     assert(BufferLastWrapWriteResult==24 && buffer.writer_count==2);
     assert(arrow.x==27 && arrow.y==110 && buffer.field_18_==2);
 
     char text[]="abcdef"; RECT rect={20,100,90,200};
-    Buffer inset={&font,5,0,0,0,0};
+    Buffer inset={{&font,0,0,0},5,0,0,0,0};
     assert(inset.wrap(text,&rect)==120);
     assert(BufferLastWrapWriteResult==29);
     assert(inset.field_14_==0 && inset.field_18_==2);
 
     // The original no-glyph branch stores current x and still advances y.
     char empty[]="";
-    Buffer empty_rect={&font,5,0,0,0,0};
+    Buffer empty_rect={{&font,0,0,0},5,0,0,0,0};
     assert(empty_rect.wrap(empty,&rect)==110);
     assert(BufferLastWrapWriteResult==20 && empty_rect.writer_count==0);
     assert(empty_rect.field_14_==0 && empty_rect.field_18_==1);
 
-    Buffer empty_four={&font,0,0,0,0,0};
+    Buffer empty_four={{&font,0,0,0},0,0,0,0,0};
     assert(empty_four.wrap(empty,20,100,70)==110);
     assert(BufferLastWrapWriteResult==20 && empty_four.writer_count==0);
 
     // Negative carry remains a signed adjustment, not a clamped inset.
-    Buffer negative_carry={&font,-5,0,0,0,0};
+    Buffer negative_carry={{&font,0,0,0},-5,0,0,0,0};
     assert(negative_carry.wrap(text,&rect)==120);
     assert(BufferLastWrapWriteResult==19 && negative_carry.writer_count==2);
     assert(negative_carry.field_14_==0 && negative_carry.field_18_==2);
 
     // Nonnegative first Font word selects height + that word, not line_height.
     font.unk_1_=3;
-    Buffer alternate_height={&font,0,0,0,0,0};
+    Buffer alternate_height={{&font,0,0,0},0,0,0,0,0};
     assert(alternate_height.wrap(text,&rect)==122);
     assert(BufferLastWrapWriteResult==24);
     font.unk_1_=-1;
@@ -90,17 +90,17 @@ int main() {
     // A non-null font without its provider takes the original sentinel path.
     // This does not establish reachability of that dependency state in game.
     font.font_obj_=0;
-    Buffer failed={&font,0,0,0,0,0};
+    Buffer failed={{&font,0,0,0},0,0,0,0,0};
     actual_netwin_expressions(&failed,&panel,arrow);
     assert(BufferLastWrapWriteResult==3 && failed.writer_count==0);
     assert(arrow.x==6 && arrow.y==110);
-    Buffer failed_rect={&font,0,0,0,0,0};
+    Buffer failed_rect={{&font,0,0,0},0,0,0,0,0};
     assert(failed_rect.wrap(text,&rect)==120);
     assert(BufferLastWrapWriteResult==3 && failed_rect.field_18_==2);
 
-    Buffer default_font={0,0,0,0,0,0};
+    Buffer default_font={{0,0,0,0},0,0,0,0,0};
     assert(default_font.wrap(text,&rect)==120);
-    assert(default_font.font1_==FontDefault && BufferLastWrapWriteResult==3);
+    assert(default_font.fonts_[0]==FontDefault && BufferLastWrapWriteResult==3);
 
     BufferLastWrapWriteResult=77;
     assert(buffer.wrap(0,20,33,70)==33);
@@ -152,12 +152,12 @@ def test_font_first_buffer_methods_use_named_slots():
     )
     bodies = [extract_function(buffer, signature) for signature in signatures]
     assert all("reinterpret_cast<BufferFontTriple *>" not in body for body in bodies)
-    assert all("reinterpret_cast<int *>(&font1_)" not in body for body in bodies)
+    assert all("reinterpret_cast<int *>(&fonts_[0])" not in body for body in bodies)
     assert "reinterpret_cast<Font **>(reinterpret_cast<char *>(this) + 0x52c)" not in buffer
-    assert "font1_ = font;" in bodies[0] and "font2_ = 0;" in bodies[0]
-    assert "font3_ = 0;" in bodies[0]
-    assert "Font *const *const fonts = &font1_;" in buffer
-    assert buffer.count("Font *const *fontArray = &font1_;") == 2
+    assert "fonts_[0] = font;" in bodies[0] and "fonts_[1] = 0;" in bodies[0]
+    assert "fonts_[2] = 0;" in bodies[0]
+    assert "Font *const *const fonts = fonts_;" in buffer
+    assert buffer.count("Font *const *fontArray = fonts_;") == 2
 
 
 FONT_WRAPPER_FIXTURE = r'''
@@ -172,14 +172,14 @@ Font *expected1, *expected2, *expected3;
 int observed, findCalls, writeCentCalls, writeCalls, rightCalls, rectCalls;
 int BufferStrHeight;
 struct Buffer {
-    Font *font1_, *font2_, *font3_;
+    Font *fonts_[4];
     int field_18_;
     int check_slots() {
-        assert(font1_ == expected1 && font2_ == expected2 && font3_ == expected3);
+        assert(fonts_[0] == expected1 && fonts_[1] == expected2 && fonts_[2] == expected3);
         ++observed;
         return 0;
     }
-    void mutate_slots() { font1_=&mutation1; font2_=&mutation2; font3_=&mutation3; }
+    void mutate_slots() { fonts_[0]=&mutation1; fonts_[1]=&mutation2; fonts_[2]=&mutation3; }
     char *find_line_break_l(char *text, int *width, unsigned int len) {
         check_slots(); assert(width && *width == 31 && len > 0);
         ++findCalls; return findCalls == 1 ? text + 2 : 0;
@@ -215,12 +215,12 @@ struct Buffer {
 void expect(Font *a, Font *b, Font *c) { expected1=a; expected2=b; expected3=c; }
 void reset_counts() { observed=findCalls=writeCentCalls=writeCalls=rightCalls=rectCalls=0; }
 void check_restored(Buffer &b, Font *a, Font *c, Font *d) {
-    assert(b.font1_==a && b.font2_==c && b.font3_==d);
+    assert(b.fonts_[0]==a && b.fonts_[1]==c && b.fonts_[2]==d);
 }
 int main() {
     char text[]="four"; RECT rect={1,2,3,4};
     Font old1={&old1}, old2={0}, old3={0};
-    Buffer b={&old1,&old2,&old3,0};
+    Buffer b={{&old1,&old2,&old3,0},0};
 
     // Valid replacement is visible to each actual inner call; inner mutation
     // proves the wrapper restores all three original slots after the call.
@@ -285,11 +285,11 @@ def font_wrapper_source(mutant=None):
     )
     bodies = [extract_function(source, signature) for signature in signatures]
     if mutant == "omit_restore":
-        assert "font3_ = old2;" in bodies[0]
-        bodies[0] = bodies[0].replace("font3_ = old2;", "", 1)
+        assert "fonts_[2] = old2;" in bodies[0]
+        bodies[0] = bodies[0].replace("fonts_[2] = old2;", "", 1)
     elif mutant == "wrong_restore":
-        assert "font3_ = savedFonts.third;" in bodies[2]
-        bodies[2] = bodies[2].replace("font3_ = savedFonts.third;", "font3_ = savedFonts.second;", 1)
+        assert "fonts_[2] = savedFonts.third;" in bodies[2]
+        bodies[2] = bodies[2].replace("fonts_[2] = savedFonts.third;", "fonts_[2] = savedFonts.second;", 1)
     return FONT_WRAPPER_FIXTURE.replace("// ACTUAL_FONT_WRAPPERS", "\n".join(bodies))
 
 

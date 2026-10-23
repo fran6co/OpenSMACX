@@ -747,22 +747,21 @@ void draw_dest_unk1(Buffer *, int, int, int, int, unsigned char *);
   uint32_t field_514_;
   // 0x518. WHICH OF THE FOUR FONTS THE NEXT SEGMENT IS MEASURED IN, and it
   // is an INDEX rather than a pointer: `text_width` reads
-  // `[edi + eax*4 + 0x52c]`, which is `(&font1_)[font_slot_]`. `{` selects 1,
-  // `[` selects 2, `$LINK<` selects 3, and `}`/`]` return to 0.
+  // `[edi + eax*4 + 0x52c]`, represented by the four consecutive entries in
+  // `fonts_[font_slot_]`. `{` selects 1, `[` selects 2, `$LINK<` selects 3,
+  // and `}`/`]` return to 0. The original declaration spelling is unproven.
   uint32_t font_slot_;
   // 0x51C. The markup token still being consumed: 1 while a `$LINK<` header
   // is being stepped over - five more bytes - and 2 while an `=` span runs
   // to its `>`. Zero otherwise, and cleared when the string ends.
   uint32_t markup_pending_;
   // 0x520. Whether the text is parsed for markup at all. Zero takes
-  // `text_width` straight to `font1_->width(text, len)` with no scan.
+  // `text_width` straight to `fonts_[0]->width(text, len)` with no scan.
   uint32_t markup_enabled_;
   uint32_t field_524_;
   uint32_t field_528_;
-  Font *font1_;
-  Font *font2_;
-  Font *font3_;
-  Font *font4_;
+  // RECOVERY_MEMBER: v1 Buffer fonts_ 0x52C 0x005DC917
+  Font *fonts_[4];
   uint32_t color_val_1_;
   uint32_t color_2_val_1_;
   uint32_t color_3_val_1_;

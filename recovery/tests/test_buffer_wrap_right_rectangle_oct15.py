@@ -57,7 +57,7 @@ char *find_line_break_l(char *text, int *width, int) {
   return split_next && find_calls==1 ? text+3 : 0;
 }
 struct Buffer {
-  Font *font1_, *font2_, *font3_;
+  Font *fonts_[4];
   int field_10_, field_14_, field_18_;
   int wrap_right(Font *,char *,RECT *);
   int wrap_right(char *,RECT *);
@@ -68,10 +68,10 @@ struct Buffer {
   }
   int write_multi_font_raw_l(char *,int x,int y,unsigned int len) {
     xs.push_back(x); ys.push_back(y); lengths.push_back(static_cast<int>(len));
-    active_fonts.push_back(font1_);
-    active_secondary.push_back((font2_!=0)+(font3_!=0));
+    active_fonts.push_back(fonts_[0]);
+    active_secondary.push_back((fonts_[1]!=0)+(fonts_[2]!=0));
     write_strlen_counts.push_back(test_strlen_calls);
-    if (static_cast<int>(ys.size())-1==clear_font_on_write_index) font1_=0;
+    if (static_cast<int>(ys.size())-1==clear_font_on_write_index) fonts_[0]=0;
     return y;
   }
 };
@@ -81,7 +81,7 @@ FONT_WRAPPER
 RECT_BODY
 int main() {
   Font primary_font={1,-1,5,7};
-  Buffer b={&primary_font,0,0,2,2,0};
+  Buffer b={{&primary_font,0,0,0},2,2,0};
   RECT area={10,20,40,50};
   char multiline[]="ab/cd";
   clear_font_on_write_index=0;
@@ -126,15 +126,15 @@ int main() {
   // the prior triple after the integer y/height result returns.
   Font supplied={1,0,6,99};
   Font old_second={1,0,1,1}, old_third={1,0,1,1};
-  b.font1_=&default_font; b.font2_=&old_second; b.font3_=&old_third;
+  b.fonts_[0]=&default_font; b.fonts_[1]=&old_second; b.fonts_[2]=&old_third;
   b.field_10_=0; b.field_14_=0; b.field_18_=0; find_calls=0;
   split_next=false;
   char single[]="x";
   RECT one_line={3,8,15,30};
   assert(b.wrap_right(&supplied,single,&one_line)==14);
   assert(active_fonts.back()==&supplied && active_secondary.back()==0);
-  assert(b.font1_==&default_font && b.font2_==&old_second &&
-         b.font3_==&old_third);
+  assert(b.fonts_[0]==&default_font && b.fonts_[1]==&old_second &&
+         b.fonts_[2]==&old_third);
   return 0;
 }
 '''

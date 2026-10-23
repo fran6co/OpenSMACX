@@ -47,8 +47,8 @@ def actual_source():
     out['LINK_DEFAULT'] = braced(header['graphicwin'], 'virtual int on_link_clicked(')
     out['PARENT_DECL'], = re.findall(r'^  Win \*win_parent_;', header['win'], re.M)
     out['WRITER_DECL'], = re.findall(r'^  int write_multi_font_raw_l\([^;]+;', header['buffer'], re.M)
-    out['BUFFER_FIELDS'] = '\n'.join(re.findall(r'^  (?:uint32_t (?:link_count_|write_font_slot_|markup_pending_|markup_enabled_)|Spot spot_|char \*link_labels_\[20\]|Font \*font[14]_);', header['buffer'], re.M))
-    assert len(out['BUFFER_FIELDS'].splitlines()) == 8
+    out['BUFFER_FIELDS'] = '\n'.join(re.findall(r'^  (?:uint32_t (?:link_count_|write_font_slot_|markup_pending_|markup_enabled_)|Spot spot_|char \*link_labels_\[20\]|Font \*fonts_\[4\]);', header['buffer'], re.M))
+    assert len(out['BUFFER_FIELDS'].splitlines()) == 7
     out['FONT_FIELDS'] = '\n'.join(re.findall(r'^  int (?:unk_1_|height_|line_height_);', header['font'], re.M))
     assert len(out['FONT_FIELDS'].splitlines()) == 3
     out['NETWORK_DECL'], = re.findall(r'^extern BOOL IsMultiplayerNet;', header['game'], re.M)
@@ -99,7 +99,7 @@ class Buffer {
 public:
  BUFFER_FIELDS
  WRITER_DECL
- Buffer():link_count_(0),write_font_slot_(0),markup_pending_(0),markup_enabled_(0),font1_(nullptr),font4_(nullptr){for(auto &p:link_labels_)p=nullptr;}
+ Buffer():link_count_(0),write_font_slot_(0),markup_pending_(0),markup_enabled_(0){for(auto &font:fonts_)font=nullptr;for(auto &p:link_labels_)p=nullptr;}
  ~Buffer(){for(auto p:link_labels_)std::free(p);}
  int write_raw_l(char *,int x,int,int count){require(count>=0);++raw_calls;return x+count;}
 };
@@ -174,7 +174,7 @@ void markup_tests(){
  Font regular{},link{};regular.unk_1_=-1;regular.height_=5;regular.line_height_=7;
  link.unk_1_=2;link.height_=11;link.line_height_=20;
  for(int font_mode: {0,1,2}){
-  Receiver own;own.markup_enabled_=1;own.font1_=&regular;own.font4_=font_mode==0?nullptr:&link;
+  Receiver own;own.markup_enabled_=1;own.fonts_[0]=&regular;own.fonts_[3]=font_mode==0?nullptr:&link;
   if(font_mode==2)link.unk_1_=-1;else link.unk_1_=2;
   char text[]="$LINK<A=17>/$LINK<BC=-4>";
   int old_alloc=allocations;require(own.write_multi_font_raw_l(text,10,30,std::strlen(text))==14);
@@ -215,7 +215,7 @@ MUTANTS = [
  ('wrong_parse','TECH_BODY','atoi(link)','17'),
  ('producer_index','WRITER_BODY','link_labels_[link_count_ - 1] = kept;','link_labels_[link_count_] = kept;'),
  ('spot_index','WRITER_BODY','spot_.add(link_count_ - 1,','spot_.add(link_count_,'),
- ('font_fallback','WRITER_BODY','font4_ ? font4_ : font1_','font1_'),
+ ('font_fallback','WRITER_BODY','fonts_[3] ? fonts_[3] : fonts_[0]','fonts_[0]'),
  ('font_negative','WRITER_BODY','link_font->line_height_','link_font->height_'),
  ('font_positive','WRITER_BODY','link_font->height_ + link_font->unk_1_','link_font->height_'),
  ('markup_off','WRITER_BODY','if (!markup_enabled_)','if (markup_enabled_)'),
@@ -351,7 +351,7 @@ void hook_cases(){
 }
 void whole_link_case(){
  Receiver own,unrelated;reset(own);own.answer=&unrelated;own.iFlags_=0x2000000;
- Font font{};font.unk_1_=-1;font.line_height_=6;own.font1_=&font;own.markup_enabled_=1;
+ Font font{};font.unk_1_=-1;font.line_height_=6;own.fonts_[0]=&font;own.markup_enabled_=1;
  char markup[]="$LINK<A=29>";require(own.write_multi_font_raw_l(markup,1,2,std::strlen(markup))==2);
  require(own.spot_.regions.size()==1&&own.spot_.regions[0].id==0&&std::strcmp(own.link_labels_[0],"29")==0);
  own.spot_.index=0;own.return_value=0;

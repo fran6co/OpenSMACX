@@ -1,0 +1,19 @@
+{
+  "event_id": "cdc23ecca522b10787e6febb583166ff2dfd1dbadecb2cdcd4121ee1e54bee18",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_font_line_advance_visibility_oct21.py"
+    ],
+    "evidence": [
+      "ActualsourceextractiontestcompilesBuffertext_line_height/write_vertical/wrap_cent_flyingandobservesfontselection/default/callbackmutation. MigrateonlyBufferhostfontstorage/assertionstogenuinefonts_[4], retainingallbehaviororacles/mutants. OtherunrelatedembeddedFontmembersunchanged. Thiseditingscopeexpansiondoesnotwaivecompiledmatching/layout/preservation/behaviorproof."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "font-line-advance-fixture-scope",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:buffer-font-array-oct23r"
+}

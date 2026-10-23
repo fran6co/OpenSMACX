@@ -89,7 +89,7 @@ static int write_y[4];
 
 class Buffer {
 public:
-    Font *font1_;
+    Font *fonts_[4];
     RECT rect1_;
     int field_18_;
     RECT active_clip;
@@ -99,7 +99,7 @@ public:
         (void)text; (void)x; (void)width; (void)length;
         if (write_count < 4) write_y[write_count] = y;
         ++write_count;
-        if (mutate_font_on_write && write_count == 1) font1_->unk_1_ = -1;
+        if (mutate_font_on_write && write_count == 1) fonts_[0]->unk_1_ = -1;
         return 0;
     }
     int text_width(char *text, int length) { (void)text; return length; }
@@ -120,7 +120,7 @@ public:
 int main() {
     Buffer metrics = {};
     Font f = { -1, 14, 20 };
-    metrics.font1_ = &f;
+    metrics.fonts_[0] = &f;
     check(metrics.text_line_height() == 14, "negative selects line_height");
     f.unk_1_ = INT_MIN;
     check(metrics.text_line_height() == 14, "INT_MIN selects line_height");
@@ -133,14 +133,14 @@ int main() {
     check(metrics.text_line_height() == INT_MIN,
           "addition wraps as defined 32-bit arithmetic");
     FontDefault = &f;
-    metrics.font1_ = 0;
-    check(metrics.text_line_height() == INT_MIN && metrics.font1_ == &f,
+    metrics.fonts_[0] = 0;
+    check(metrics.text_line_height() == INT_MIN && metrics.fonts_[0] == &f,
           "Buffer metric lazily installs FontDefault");
     FontDefault = &default_font;
 
     Buffer b = {};
     Font vertical_font = { 2, 14, 10 };
-    b.font1_ = &vertical_font;
+    b.fonts_[0] = &vertical_font;
     b.rect1_ = (RECT){ 1, 2, 3, 4 };
     RECT area = { 0, 3, 80, 23 };
     check(b.write_vertical((char *)"ab", &area) == 23,
@@ -161,7 +161,7 @@ int main() {
 
     Buffer flying = {};
     Font flying_font = { 2, 14, 10 };
-    flying.font1_ = &flying_font;
+    flying.fonts_[0] = &flying_font;
     BufferFlyingText[0] = 0;
     BufferFlyingX = 2; BufferFlyingY = 5; BufferFlyingWidth = 100;
     BufferStrHeight = 0; break_calls = 0; write_count = 0;
@@ -190,11 +190,11 @@ def assemble(parts, mutation=None):
             "static_cast<uint32_t>(font->height_)\n            + static_cast<uint32_t>(height_override)",
             "static_cast<uint32_t>(font->height_ + height_override)", 1)
     elif mutation == "vertical_member":
-        vertical = vertical.replace("text_line_height()", "font1_->height_", 1)
+        vertical = vertical.replace("text_line_height()", "fonts_[0]->height_", 1)
     elif mutation == "flying_member":
-        flying = flying.replace("text_line_height()", "font1_->height_", 1)
+        flying = flying.replace("text_line_height()", "fonts_[0]->height_", 1)
     elif mutation == "default_assignment":
-        metric = metric.replace("font1_ = FontDefault;", "font1_ = 0;", 1)
+        metric = metric.replace("fonts_[0] = FontDefault;", "fonts_[0] = 0;", 1)
     return (FIXTURE.replace("/* PRODUCT_PUBLIC */", parts["public"])
             .replace("/* PRODUCT_TEXT_LINE_HEIGHT */", metric)
             .replace("/* PRODUCT_VERTICAL */", vertical)
@@ -220,18 +220,18 @@ def compile_run(tmp_path: Path, compiler_name: str, parts, mutation=None):
 def test_two_expansion_sites_reuse_existing_buffer_metric():
     parts = product_parts()
     assert "measure_line_advance" not in parts["header"]
-    assert parts["buffer"].count("font1_->line_advance()") == 3
-    assert "font1_->measure_line_advance()" not in parts["buffer"]
+    assert parts["buffer"].count("fonts_[0]->line_advance()") == 3
+    assert "fonts_[0]->measure_line_advance()" not in parts["buffer"]
     assert "int advance = text_line_height();" in parts["vertical"]
     assert "int advance = text_line_height();" in parts["flying"]
     assert parts["vertical"].index("int advance = text_line_height();") < \
         parts["vertical"].index("for (;;)")
     # The loop's later fallback before the separate height clamp is retained.
-    assert parts["vertical"].count("if (font1_ == 0) font1_ = FontDefault;") == 1
-    assert "if (font1_ == 0) font1_ = FontDefault;" not in parts["flying"]
+    assert parts["vertical"].count("if (fonts_[0] == 0) fonts_[0] = FontDefault;") == 1
+    assert "if (fonts_[0] == 0) fonts_[0] = FontDefault;" not in parts["flying"]
     # The mapped Font API and existing Buffer metric are complete unchanged bodies.
     assert "int Font::line_advance() const" in parts["public"]
-    assert "font1_ = FontDefault;" in parts["metric"]
+    assert "fonts_[0] = FontDefault;" in parts["metric"]
     assert "height_override >= 0" in parts["metric"]
     assert "font->line_height_" in parts["metric"]
 

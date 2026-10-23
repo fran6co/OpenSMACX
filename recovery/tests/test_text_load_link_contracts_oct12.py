@@ -401,7 +401,7 @@ static void reset_links() {
   replacement_font.unk_1_=-1;replacement_font.height_=20;replacement_font.line_height_=24;
 }
 static void setup(Buffer &b) {
-  b.markup_enabled_=1;b.font1_=&primary;b.font4_=&link_font;b.spot_.init(40);
+  b.markup_enabled_=1;b.fonts_[0]=&primary;b.fonts_[3]=&link_font;b.spot_.init(40);
 }
 static int draw(Buffer &b,const char *text,int x=5,int y=7) {
   return b.write_multi_font_raw_l(const_cast<char *>(text),x,y,int(std::strlen(text)));
@@ -453,7 +453,7 @@ static void link_controls() {
   assert(draw(live,"$LINK<abc")==8 && live.link_count_==0);
   assert(live.spot_.add_count_==1);check_row(live,0,-1,5,7,3,12);
   reset_links();Buffer fonts{};setup(fonts);
-  raster_probe=[](Buffer *b,int call){if(call==2)b->font4_=&replacement_font;};
+  raster_probe=[](Buffer *b,int call){if(call==2)b->fonts_[3]=&replacement_font;};
   assert(draw(fonts,"$LINK<abc")==8);check_row(fonts,0,0,5,7,3,24);
   reset_links();Buffer warned{};setup(warned);warned.link_count_=20;
   warning_probe=[&](){warned.clear_links();};
@@ -465,9 +465,9 @@ static void link_controls() {
   ordinary.link_count_=0xffffffffU;
   assert(draw(ordinary,"plain")==10 && warnings==0 && ordinary.spot_.add_count_==0);
   assert(ordinary.link_count_==0xffffffffU && rasters.size()==1);
-  reset_links();Buffer fallback{};setup(fallback);fallback.font4_=nullptr;
+  reset_links();Buffer fallback{};setup(fallback);fallback.fonts_[3]=nullptr;
   assert(draw(fallback,"$LINK<abc")==8);check_row(fallback,0,0,5,7,3,8);
-  reset_links();Buffer absent{};setup(absent);absent.font4_=absent.font1_=nullptr;
+  reset_links();Buffer absent{};setup(absent);absent.fonts_[3]=absent.fonts_[0]=nullptr;
   assert(draw(absent,"$LINK<abc")==8 && absent.spot_.add_count_==0);
   reset_links();Buffer allocation_failure{};setup(allocation_failure);
   fail_next_alloc=true;
@@ -549,8 +549,7 @@ def actual_source(instrument=True):
             r'int unk_1_', r'int height_', r'int line_height_')),
         "BUFFER_FIELDS": '\n'.join(one(bh, r'^  (' + p + r';)') for p in (
             r'uint32_t link_count_', r'uint32_t write_font_slot_', r'uint32_t markup_pending_',
-            r'uint32_t markup_enabled_', r'Font \*font1_', r'Font \*font2_',
-            r'Font \*font3_', r'Font \*font4_', r'char \*link_labels_\[20\]', r'Spot spot_'))
+            r'uint32_t markup_enabled_', r'Font \*fonts_\[4\]', r'char \*link_labels_\[20\]', r'Spot spot_'))
             + '\n',
         "LINK_API": one(bh, r'^  (int write_multi_font_raw_l\([^\n]+;)'),
         "CLEAR_API": one(bh, r'^  (void clear_links\(\);)'),
@@ -610,7 +609,7 @@ MUTANTS = (
     ('terminal-unsigned', 'static_cast<int>(link_count_) < 20', 'link_count_ < 20'),
     ('twentieth-label', 'static_cast<int>(link_count_) < 20', 'static_cast<int>(link_count_) <= 20'),
     ('lost-wrap', '++link_count_', '(link_count_ == 0xffffffffU ? link_count_ : ++link_count_)'),
-    ('link-font-fallback', 'font4_ ? font4_ : font1_', 'font1_'),
+    ('link-font-fallback', 'fonts_[3] ? fonts_[3] : fonts_[0]', 'fonts_[0]'),
     ('cached-label-nullcheck', 'if (observe_link_label_slot(*this,link_count_ - 1))', 'if (kept)'),
     ('cached-label-copy', 'observed_copy(observe_link_label_slot(*this,link_count_ - 1), text, label);',
         'observed_copy(kept, text, label);'),

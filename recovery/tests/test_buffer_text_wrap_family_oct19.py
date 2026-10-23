@@ -72,7 +72,7 @@ static int clear_font_on_write_index=-1;
 static int write_calls=0;
 
 struct Buffer {
-  Font *font1_, *font2_, *font3_;
+  Font *fonts_[4];
   int field_10_, field_14_, field_18_;
   int wrap_cent(char *,int,int,int,int);
   int wrap_right(char *,int,int,int);
@@ -107,8 +107,8 @@ int Buffer::write_multi_font_raw_l(char *,int x,int y,unsigned int length) {
   write_ys.push_back(y);
   write_lengths.push_back(static_cast<int>(length));
   write_strlen_counts.push_back(test_strlen_calls);
-  active_fonts.push_back(font1_);
-  if (write_calls++==clear_font_on_write_index) font1_=0;
+  active_fonts.push_back(fonts_[0]);
+  if (write_calls++==clear_font_on_write_index) fonts_[0]=0;
   return y;
 }
 
@@ -127,7 +127,7 @@ static void reset_observations() {
 
 int main() {
   // Null input leaves the original scalar-wrap state untouched.
-  Buffer scalar_null={&primary_font,0,0,3,8,9};
+  Buffer scalar_null={{&primary_font,0,0,0},3,8,9};
   BufferStrHeight=31; reset_observations();
   assert(scalar_null.wrap_right(0,40,100,20)==100);
   assert(events.empty() && test_strlen_calls==0 && BufferStrHeight==31);
@@ -135,8 +135,8 @@ int main() {
 
   // A split followed by an unsplit tail exercises fresh per-line width,
   // fresh no-break strlen, one-time field_14 subtraction, and default reload
-  // after the first writer callback clears font1_.
-  Buffer scalar={&primary_font,0,0,3,3,7};
+  // after the first writer callback clears fonts_[0].
+  Buffer scalar={{&primary_font,0,0,0},3,3,7};
   char right_text[]="abcd";
   split_at[0]=2; split_at[1]=0; measure_width=4;
   clear_font_on_write_index=0; BufferStrHeight=17;
@@ -158,17 +158,17 @@ int main() {
 
   // The empty but non-null string still takes one loop iteration and advances
   // by the default font's line height, while both writers return before draw.
-  Buffer empty={&primary_font,0,0,5,5,4};
+  Buffer empty={{&primary_font,0,0,0},5,5,4};
   char empty_text[]=""; BufferStrHeight=23; reset_observations();
   assert(empty.wrap_right(empty_text,21,30,9)==39);
   assert(find_calls==1 && find_lengths[0]==0 && find_widths[0]==9);
   assert(events.size()==1 && events[0]=='F' && write_calls==0);
   assert(test_strlen_calls==4 && empty.field_18_==1 && empty.field_14_==0);
-  assert(empty.font1_==&primary_font && BufferStrHeight==0);
+  assert(empty.fonts_[0]==&primary_font && BufferStrHeight==0);
 
   // Centered wrapping uses fixed caller-supplied line advance, leaves field_14
   // alone, resets StringHeight, and makes a fresh no-break strlen call.
-  Buffer centered={&primary_font,0,0,0,11,6};
+  Buffer centered={{&primary_font,0,0,0},0,11,6};
   char center_text[]="abcd";
   measure_width=13; BufferStrHeight=29; reset_observations();
   split_at[0]=2; split_at[1]=0;
