@@ -1,0 +1,25 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "20b9b1612065457df9f9109c7c2b12d64b6a4817",
+  "editable_files": [
+    "src/basewin.cpp",
+    "recovery/tests/test_basewin_info_clip_oct23p.py"
+  ],
+  "evidence": [
+    "Coordinator fullpin415B20..415DCE:415B30push7AEC94 remainsfirstset_clipargument through415B61call, receiver7AEC64. This is Buffer+30rect2_, notinflatedouterstackrectangle. ExistingBuffer::restore_clip inline callsset_clip(&rect2_); authorizeusingthis genuineAPI instead ofcurrentset_clip(&outer). Keepinflatedouterboxdrawingunchanged. Later415B92..415BC1snapshotslivecurrentclip7AEC84..90 AFTERouterboxandBEFOREpanelset_clip415BC4; moveprevious_clip capturebeforepanelset_clip. Final415DC0 restorescapturedrect. This preservesoriginalclipstate, notidealizedincomingcliprestoration orabugfix.",
+    "SourceBaseWin SHAa933dac168c9fc4940545741a7c2d61d64ee766388e48977fbddeb21594705ec; oldignoredtriagewrongfullhash andouterclipwording are supersededbyrootactualhash/fullnativeargumentsequence. SourceBuffercurrent_clip returnsrect1_, restore_clip/set_clip useownedrects; noheader/layout/name/global/signature change. Onlydraw_infobody2smallstatementchanges authorized, preserve all ORIGINALmarker/fullspan/claims/TRIED/bindinghistory. Existingdirectcallers1108/4989 are affectedrecheckcontext, notpermissiontoeditthem.",
+    "Actual-sourceGCCClang fullbody hostfixture withdistinctincoming,fullbounds,inflatedouter,titlepanelclips mustprove fullboundsactiveouterdraw, livepostouterclipcapturedbeforepanel, paneldrawbounds, finalrestoration and update_modebranches/callbacks. A box_sprite testdouble maymutateclip toprove livecapturetiming, explicitlysensitivitynotproductionmutationclaim. Compilingmutants oldouterclipargument andpostpanelcapture fail, preservingstring/font/parser/draw/update lifecycle. Reuseexistingtestextraction/native reader, noadhoctool/framework.",
+    "RootownsTask/Git/compiler/prep/resources/integration. Isolatedsourceworker editsonlydraw_infobody; independenttestworker ownsnewtestfile. Max3candidatecompilesunchangedcontext, controlsseparate. Fresh actualrecipe/replay/replica/damage/outside checks, independentreview, applicationbuild/link/source/claims/references and freshdestinationproof precedemanualintegration. No newexact/bodycoverage assumed, no demotion/gateweakening orautomatic/gameacceptance. Preserveandreviewanycollateral ratherthanrevertjustifiedsourcecorrection."
+  ],
+  "intent": "Restore original full-buffer clipping and title-panel saved-clip lifetime",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4283168,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "basewin-info-clip-oct23p"
+}
