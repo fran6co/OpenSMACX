@@ -1,0 +1,20 @@
+{
+  "event_id": "624fc09ae8a0196dc346088d41578363edb1cb1b991fdea6942d8fdf7a722e0b",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "typed-snapshot-reset-induction",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "The native original/source review establishes five ordered byte stores per NetDaemonSaveProcessSlot at+24..28, exactly8rows and0x19Cstride. The ordinary typed cursor and positive countdown express that actual owned-array walk without a biased raw pointer, fixed address, layout change or register-forcing trick. Keep the prototype reset unchanged.",
+      "Two save-loop candidate attempts produce the same improved12-instruction SHAPE_EXACT7/12 body versus baseline MISMATCH3/12; stop here, no third unchanged trial. The original biases its pointer at field26 and the current compiler at field25, so byte equality and the historical restoration obligation remain unfinished. Each attempt retained replica/target-damage controls; no current exact loss or outside-body change.",
+      "Independent source review and actual-source GCC/Clang controls pass, checking every byte of all512prototypes and8snapshotrecords plus counters, return and wrong-owner/field/bounds mutations. Three stale lexical test anchors were explicitly authorized and adapted; mutants still compile then fail. All74shared broader-test outcomes equal the unchanged baseline;21old historical whole-file fixture failures remain, with2new passing controls. No assertions were weakened to hide these failures.",
+      "Combined fresh190-TU application build/link passes; complete current Game object equals the screened candidate and native outside52DB40 code/data/reference residual passes. All200nonowner objects equal master; all touched original facts, complete spans, claims and authored notes survive. Source codegen improvement is retained under coordinator-reviewed manual authority, not automatic/full-game acceptance or new body coverage. Fresh destination verification remains required."
+    ]
+  },
+  "previous_event": "c298262f1b436f1059c5c1ef543b0fe8db934872e6893a432246cb5e595a09a7",
+  "request_id": "typed-snapshot-reset-induction-incorporated",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:game-typed-reset-walks-oct23i"
+}

@@ -1,0 +1,24 @@
+{
+  "event_id": "782c29ed2aaeb4c0731c7f7d7c57259098950723c5b2c79b3b8b0e152672f3d9",
+  "payload": {
+    "affects": [
+      "entity-050c582a4d55d69078bfa8898762f51174940bccc1e778f57e26444d68f30a8a",
+      "entity-ba468cce9da26b402e83bf05d755d22660163a969f40223eff788bddc79038b3"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "real-wave-group-list-definition-boundary",
+    "evidence": [
+      "Pinned4C525C calls the real insert4C5BF0 then publishes Wave::group_slot_; current same-TU visibility had expanded the helper into add_to_group. Transport the exact existing declared class member, full mapping/history and body into src/wave_group_list.cpp. Leave its declaration and inline remove_head in the real owner header; add the CPP beside Wave_Device under the same existing Oy- profile. No noinline/export trick, body/type/layout/flag/global-lifetime change or original historical-TU claim.",
+      "One two-unit source-boundary candidate plus5replica/damage controls restores add_to_group25/25maskedexact and preserves insert36/36 with zero exact losses. All7compiler calls completed before an observer refused the new helper path under master; reanalyze those SAME objects against the unchanged existing worker helper, reconstructing the native-validated whole-block transport. No replacement compiler run or retry-budget reset. Fresh full build independently reproduces both complete screened objects; strict original target checking adds one pass, not just relocation-masked equality.",
+      "The new object emits only the transported insert code and no added runtime data or initializer. Its complete function/companion signature equals the old owner. Native new-unit presence still FAILS .drectve/@comp.id additions: manual review explicitly sees only the already requested ordered defaults libcpmt,LIBCMT,OLDNAMES and the identical compiler tag. The old owner retains uuid/export directives; do not falsely call whole directives equal. This bounded metadata review does not waive the native failure, prove retained archive selection/allocation or establish automatic acceptance.",
+      "Independent actual-source/CMake review and14related host controls pass. Adapt only the existing retirement test insert owner paths; its earlier constructor historical-claim assertion fails identically on unchanged master and is not weakened. Full build/link, native common-owner residual outside caller+transport, all200other normalized objects,218original mappings/claims/notes and global checks pass. Coordinator approves bounded manual integration with these linked/native limits and fresh destination recheck, not full-game acceptance or new function-body coverage."
+    ],
+    "hypothesis": "Separate the declared WaveGroupList implementation to preserve its original callable boundary.",
+    "kind": "discovery"
+  },
+  "previous_event": "fd91b36f103be1b78c816ae6906cd306ac4265a4b90c4d6cf9a85a9687230f3a",
+  "request_id": "real-wave-group-list-definition-boundary",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:wave-group-list-boundary-oct23i"
+}

@@ -1,0 +1,23 @@
+{
+  "event_id": "7c84ed449d2e12be2bb552658bf81148f34879673887b99d469a6b5477212f10",
+  "payload": {
+    "affects": [
+      "entity-ddf116a0ede0887952053523729fa292386642e91b28ab43af8f2e708f035e0b"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "original-listbox-scroll-paint-predicates",
+    "evidence": [
+      "Original CMP60C633/JE60C636 selects unchanged scroll at60C652; changed scroll invokes the typed virtual redraw slot and returns. Original comparison60C657/JE60C65E to60C67C skips BOTH row draws when selection matches; otherwise draw saved row then reload/draw live current row, followed by unconditional soft_update on the unchanged-scroll path. Root decoded full branch targets after correcting reviewers initial stale-source and inner-branch descriptions. Current source previously reversed the outer predicate and drew current row unconditionally inside refresh.",
+      "Correct only the two original repaint predicates and inaccurate Purpose prose. Preserve parent publication, entry snapshots, signed-2/-1 dispatch, low32bit arithmetic, notify callback and live field reloads, original unchecked behavior and real hierarchy/member dispatch. This is correcting translation to the original, not fixing an original-game bug or adding a safe path.",
+      "Independent pin/source review and actual-source host controls cover equal/changed scroll and selection, notify mutation of scroll/selection, live selection reload after drawing old row and parent publication order. Compiled wrong-predicate/unconditional-row mutants are rejected after the same unmodified witness passes. Adapt existing rendering expectations only for the now-correct original branch behavior; unrelated rendering controls remain. Primary combined host suite73pass plus16additional ListBox-related controls pass.",
+      "One actual-recipe candidate remains70vs68instructions MISMATCH; no prolonged matching or loss of current exact bodies. Native outside this sole changed function passes and fresh full application reproduces its screened object. Full mappings/spans/claims/notes and all200nonowner normalized objects are retained. Integrate the verified original semantic correction under manual coordinator review without pretending it is byte-exact, native automatically accepted, playable-game proof or increased compiling coverage; destination verification still required."
+    ],
+    "hypothesis": "Restore original changed-scroll redraw and conditional unchanged-scroll selection refresh.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "original-listbox-scroll-paint-predicates",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:listbox-scroll-redraw-oct23i"
+}

@@ -1,0 +1,21 @@
+{
+  "event_id": "7b5ba905f006cd97b14c83dd33d7c9c8534b9ea425921992a931ff671a32dd91",
+  "payload": {
+    "affects": [
+      "entity-78ba881b3de6e964b137b486a6a43d13cf03b808cf16f7dc81a8d69b20a2cb39",
+      "entity-ba468cce9da26b402e83bf05d755d22660163a969f40223eff788bddc79038b3"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "wave-device-explicit-inline-only-policy",
+    "evidence": [
+      "One immutable whole-owner profile diagnostic restores add_to_group4C5240 but loses global initializer4C5C50 and introduces extraE5/E7 wrappers and atexit references. Native outside residual fails. Keep the original application Ob2/Oy- recipe and generated lifecycle source; do not publish Ob1, choose flags per function or replay this unchanged experiment. All diagnostic objects and failure details remain ignored evidence."
+    ],
+    "hypothesis": "An owner-wide explicit-inline-only compiler policy might preserve the original direct helper call.",
+    "kind": "discovery"
+  },
+  "previous_event": "fb4e33964880f8d3780e919a32edad9142ca8c97e9b77b43b98f0f96118f8414",
+  "request_id": "wave-device-explicit-inline-only-policy",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:wave-group-list-boundary-oct23i"
+}

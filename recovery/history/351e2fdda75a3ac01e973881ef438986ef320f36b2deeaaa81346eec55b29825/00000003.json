@@ -1,0 +1,17 @@
+{
+  "event_id": "fd91b36f103be1b78c816ae6906cd306ac4265a4b90c4d6cf9a85a9687230f3a",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "wave-device-explicit-inline-only-policy",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "One immutable whole-owner profile diagnostic restores add_to_group4C5240 but loses global initializer4C5C50 and introduces extraE5/E7 wrappers and atexit references. Native outside residual fails. Keep the original application Ob2/Oy- recipe and generated lifecycle source; do not publish Ob1, choose flags per function or replay this unchanged experiment. All diagnostic objects and failure details remain ignored evidence."
+    ]
+  },
+  "previous_event": "7b5ba905f006cd97b14c83dd33d7c9c8534b9ea425921992a931ff671a32dd91",
+  "request_id": "wave-device-explicit-inline-only-policy-rejected",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:wave-group-list-boundary-oct23i"
+}

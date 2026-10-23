@@ -1,0 +1,18 @@
+{
+  "event_id": "a21d188be19f19bc743e40fa6d7acc79c7737d539c45d4ad91f770295aecd2e9",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "prototype-cursor-spelling",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "One actual-recipe source-form attempt reduced matching instructions from3/13 to0/16 with no independent semantic or structural benefit. Restore only this speculative spelling to the unchanged original owner body; all real flags-member width, low-byte access and counter work remains. Preserve the complete rejected source/object/report in ignored oct23i/game-reset-actual-recipe artifacts, not as another source implementation.",
+      "This is rejecting a speculative form, not reverting a justified structural migration. No retry without new relevant context; failed attempts and unchanged-context budget remain visible. No historical claim is demoted or erased."
+    ]
+  },
+  "previous_event": "7ca07f30e40425a1386fd15536df0bccd2824d1fb3ab473b8a8f36224a83f3d1",
+  "request_id": "prototype-cursor-spelling-rejected",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:game-typed-reset-walks-oct23i"
+}
