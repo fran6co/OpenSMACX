@@ -1,0 +1,44 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "64c0ced2d4c1aaf73dfb6438cb22a965995b1a9b",
+  "editable_files": [
+    "src/mapwin.cpp",
+    "recovery/tests/test_mapwin_routes.py",
+    "recovery/tests/test_mapwin_radius.py",
+    "recovery/tests/test_mapwin_vehicle_draw_gate.py",
+    "recovery/tests/test_mapwin_viewport_owner_oct24a.py",
+    "recovery/tests/mapwin_viewport_owner_control_oct24a.cpp"
+  ],
+  "evidence": [
+    "Independent pinned/COFF review q/mapwin-viewport-helper-owner-evidence-oct24a proves viewport checks are inside each original body: dest_line467730onward twice,draw_vehicles4690AE..469128,gen_radius terrain469439..4694A9,draw_radius46A35F..46A3DC. Current unmapped namespace map_dest_in_view is called by exactly these4mappedowners (5call expressions), with no originalhelperboundary. Retire onlythishelper afterallcalls migrated; do notdeleteothernamespacearithmetic/helpers/data.",
+    "Restore direct ordinary typed viewport operations in each scoped method, preserving Y top/bottom admission, X left/right checks, flat-bit/one-wrap semantics, shortcircuittwoendpoints in dest_line, caller-specific mapvalidity and everyload/callback timing. NormalizeonlylocalprobeX, preserve actualunwrapped direct_dest_line endpoints. Keep existingmapwin_dest_add/sub/mul arithmetichelpers andfieldtypes; do notintroduce signedoverflowUB, class/member guesses, casts/retentiontricks or behaviorfixes. Originalgen_radius overlaycalltile_in_view at4696A6 is distinct andmuststay. Noheader/layout/ABI/CMake/flag changesauthorized.",
+    "The two previouslyinspected radius/vehicle bodies are requeued onlybecause newlyprovenhelperownership changes their bodycontext; no retryofunchangedexhaustedspelling. Maximum3candidatesperfunctionunchangedcontext; implementfaithfully andstop ratherthan longmatchpolishing. Preserveallmarkers,symbols,claims,completeoriginalspans andhistoricalrestorationobligations. Onlynative recorderbanksclaims.",
+    "CoordinatorownsallGit/compilerleases/preparation/measurement/recording/integration. Source/testworkerseditdisjointlistedfiles; requestscopeexpansionbeforeoutsideedits. Existingroutes/radiusfixtures needretiredhelper extraction removedwhileallmeaningfulbehaviorcontrolspreserved. Addactualsourceviewport edge/wrap/endpoints/callbackcontrols andcompiledmeaningfulmutants asneeded, not source-textmirrortests. Requireindependentpin/source/COFF review, nativeproduction/replica/damage andallotherexact/strictpreservation, fresh194TU208objectbuild/link andrelevantdestinationchecks. Any nativeoutsideFAIL fromunmappedhelperremoval staysvisible formanualreview; nogateverifierwaivers, no runtime/game/automaticacceptance claim."
+  ],
+  "intent": "Restore original in-owner MapWin viewport admission and retire artificial helper",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4617264,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4624272,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4624784,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4629152,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "mapwin-viewport-owner-oct24a"
+}
