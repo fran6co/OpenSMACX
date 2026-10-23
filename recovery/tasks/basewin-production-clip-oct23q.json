@@ -1,0 +1,25 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "7cd96e3d8fe86446286a5f677a6c16922e9d50ca",
+  "editable_files": [
+    "src/basewin.cpp",
+    "recovery/tests/test_basewin_production_actual_source.py",
+    "recovery/tests/basewin_production_source_control.cpp"
+  ],
+  "evidence": [
+    "Coordinatorfullpinentry40E360..40E41A: savedcliploads7AEC84/88/8C/90 = Bufferrect1/currentclip beforefirstset_clip; literal7AEC94 =Bufferreceiver7AEC64+30rect2/fullbounds passedfirstset_clip40E41A. Currentdraw_production snapshotsMainInterfaceGlobal.clip_rect(rect2) andfirstsetscliptopanelqueue_help_rect. Authorizeonly saved_clip gettertocurrent_clip andfirstclipcalltorestore_clip. Unlike draw_info, thisfunction capturesINCOMINGclipBEFORErestoringfullbounds; donotapplyotherpaneltimingblindly. Laterpanelclip/finalrestore/string/style/font/sprite/RNG/economy/update/callback/lifetimes unchanged.",
+    "Evidence:ignoredparallel-match-oct23p/basewin-next2-findings.json pluscoordinatoractualcompletepinnedentry. Retainbothoriginalprimary/coldspans/history/claims andallotherBaseWinmethods; noheader/type/globalchanges. Extendexistingactualfullbodyproductioncontrol/harness, keepingallvehicle/facility/detailmutants andoracles. Distinctincoming/fullbounds/panelrects provefirstfullboundsdraw andfinalincomingrestore; compiling oldgetter/oldfirstargument mutants fail. TestBufferdouble shouldmodelactualcurrent_clip/clip_rect/restore_clip relationship andnotrewriteactualbody. No wholesale harnessreplacement orskippingoldassertions.",
+    "RootownsTask/Git/compiler/prep/resources/integration. Sourceworker editsonlynamedfunctionbody, testworker onlyauthorizedtests. PreserveallORIGINALidentity/spans/emissionfacts/authoredhistory/claims; nohandeditedmarkers/claims ornewasm/executableaddressbacking. Max3candidatecompilesunchangedcontext, controlslabelledseparately. Freshactualrecipe/replay/replica/damage/outsidecheck/independentreview/applicationbuildlink/sourcecontinuity beforemanualpublication; freshdestinationchecks beforecleanup. Newdiscoveries centrallyexpanded,neverdiscardedtoenforcefunctionscope. No newexact/bodycoverage assumed; fullgame/nativeautomaticacceptance unproved."
+  ],
+  "intent": "Restore original production-panel incoming clip capture and full-buffer first frame",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4252512,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "basewin-production-clip-oct23q"
+}
