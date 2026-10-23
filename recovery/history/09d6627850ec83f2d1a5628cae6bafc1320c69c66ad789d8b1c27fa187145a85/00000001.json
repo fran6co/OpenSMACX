@@ -1,0 +1,24 @@
+{
+  "event_id": "baedba88cde51c160c13181e4f5452f9d780873c1b595bfae97e20f15aacf31b",
+  "payload": {
+    "affects": [
+      "entity-3c127901ed9b5c56ff61ec70b72b852d82cd6a9e0e09d708eaf123802c1bf993",
+      "entity-d35da1b0011f646ceb25ef11127e86471e53401e79c5169744447efaf8512895"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "sprite-shrink-pointer-walk-screen",
+    "evidence": [
+      "Original5EAC6F..5EACFB and5EACFF..5EAD8D use sourceEDX/outputECX induction; qualifiedcurrentCOFF uses theopposite register routing but correct arrays, targets, signedextent/zeroearlyreturn, prefix and alias-visible read/store/count ordering. No type/member/storage/behavior discrepancy was established.",
+      "Exactly2paired candidate attempts under unchanged actualrecipe: positiveguard/twopointer do-while measured15/57matchinginstructions versusbaseline50/56; outputpointer/originalindexedfor measured38/56. Each invocation independently completedactualrecipe replay,unchangedoverlayreplica andtargetdamage controls; all54owner rows andoutside2body code/data/references were checked, no newexact/lostexact. A firstgenericframe-policy precompile assertion refused beforeCL; it changed no flags and consumedno candidatecompile. No unchanged-context budget reset or thirdattempt.",
+      "Both fullcandidate source texts/hashes, their measurements and physicalobjects remain in ignoredparallel-match-oct23h artifacts. Neither arbitrarysourceform improves recovery or has independent structural justification, so neither is integrated. The sourcebody is restored byte-for-byte to baseline; this is rejecting speculative spelling, not reverting a correct structural migration. Retain all original identities/fullspans/claims/lessons and both matching obligations.",
+      "Keep the independently reviewed actualsource hosttests: bothcompleteclipmethods andrealdeclarations/arrays, independentindexoracle, positive/zero/negativeextents, prefix/outputparameter ordering, sourcecount into futureScaling/output cells, sourceskipalias andscalaroutputaliases. Eachwrongstore mutation compiles and is rejected onlyafteridenticalunmodifiedwitnesspasses. All7tests pass underGCC/Clang againstrestoredmaster-equivalentSprite source. Hostboundedcontrols do not prove nativeABI/x87/runtime or fullgameacceptance."
+    ],
+    "hypothesis": "Ordinary source/destination pointer induction might recover the original shared shrink-loop register routing.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "sprite-shrink-pointer-walk-screen",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:sprite-shrink-pair-oct23h"
+}
