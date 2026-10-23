@@ -1,0 +1,23 @@
+{
+  "event_id": "999c4dec1829f21dd06a663cc16552f4169ad81a2fb2ed5837bcb79c90345ebf",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Unchanged Sprite::draw0x5E4B9A remains MISMATCH but physical relocations at0x497/0x49d exchange two distinct global loads after extraction. Scope includes this compiler collateral for independent review and restoration; no source change or claim demotion authorized by inference alone."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6179738,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "5faf31ea4185ed13b19eec467d667ce1ffab3cc1a37eebca369b2cc40dc13820",
+  "request_id": "sprite-draw-collateral-scope-oct23ze",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:sprite-assets-owner-oct23ze"
+}

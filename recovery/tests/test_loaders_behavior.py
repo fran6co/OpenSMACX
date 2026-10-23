@@ -24,7 +24,7 @@ def _pinned_image():
 
 # Current proposal homes; coordinator may adjust these with actual integration.
 OWNERS = {
-    0x00454D10: ("src/sprite.cpp", "void __cdecl load_misc()"),
+    0x00454D10: ("src/sprite_assets.cpp", "void __cdecl load_misc()"),
     0x00455EB0: ("src/game.cpp", "void __cdecl load_sprites()"),
     0x00451A10: ("src/interface_palette.cpp", "void __cdecl load_palette()"),
 }
@@ -128,7 +128,8 @@ def test_native_loader_objects_references_and_layout():
                      'g_BATTLE_MIND_WORM_SPRITE','g_BATTLE_ISLE_DEEP_SPRITE','g_BATTLE_LOCUSTS_CHIRON_SPRITE',
                      'g_BATTLE_FUNGAL_TOWER_SPRITE','g_BATTLE_SPORE_LAUNCHER_SPRITE','g_BATTLE_SEALURK_SPRITE'):
             assert any(s.startswith('?'+name+'@@') for s in misc), (name,misc)
-        sprite = class_layout(objects['src/sprite.cpp'],'Sprite')
+        sprite_type_owner = sprite_bindings['g_TECH_ICON_SPRITES'].unit
+        sprite = class_layout(objects[sprite_type_owner],'Sprite')
         assert sprite['size'] == 0x2C
         assert sprite['members']['iWidth_'] == 0x18
         assert sprite['members']['iHeight_'] == 0x1C

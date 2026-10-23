@@ -1,0 +1,17 @@
+{
+  "event_id": "1fd8f6558214aac20f7342bca5a567ce7ac25c594987518dc2d365c6d7ded58e",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "sprite-assets-emitted-c-symbols-oct23ze",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/sprite_assets.cpp: all six explicit //symbol facts were written through native write_symbol from the unique same-source physical definitions. Original markers/spans/claims and C++ bodies remain unchanged."
+    ]
+  },
+  "previous_event": "9fc68c4ed43746a417ce9c80ae5fb262b12e8a60e52680a0f9d2d9bacb7305ce",
+  "request_id": "sprite-assets-c-symbols-incorporated-oct23ze",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:sprite-assets-owner-oct23ze"
+}

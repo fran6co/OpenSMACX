@@ -271,6 +271,7 @@ set(OPENSMACX_SOURCES
     src/spot.cpp
     src/spying.cpp
     src/sprite.cpp
+    src/sprite_assets.cpp
     src/sprite_objects.cpp
     src/caviar_renderer_objects.cpp
     src/stdafx.cpp
@@ -458,7 +459,7 @@ set_source_files_properties(
     src/alphamenu.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Preserve measured frame-based accesses in the qualifying owner cohort.
-# Sprite and networking retain their measured default source recipes.
+# Generic Sprite implementation and networking retain their measured default recipes.
 set_source_files_properties(
     src/stringstruct.cpp
     src/councwin.cpp
@@ -573,6 +574,11 @@ set_source_files_properties(
     src/shared_word.cpp
     src/span_math.cpp
     src/scale_adjustment.cpp
+    PROPERTIES COMPILE_OPTIONS "/Oy-")
+# The application asset helpers retain the original EBP-based argument frame.
+# Keep this profile local to the extracted asset owner; generic Sprite methods
+# retain their measured default recipe. This does not assert the original TU.
+set_source_files_properties(src/sprite_assets.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Preserve the measured frame-based contexts of the shared stream wrappers.
 # General's unrelated helpers retain their independently measured default recipe.

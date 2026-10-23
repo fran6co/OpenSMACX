@@ -42,16 +42,16 @@ def braced(source, signature):
 
 
 def actual_source():
-    source = (ROOT / "src/sprite.cpp").read_text()
+    source = (ROOT / "src/sprite_assets.cpp").read_text()
     sh = (ROOT / "src/sprite.h").read_text()
     bh = (ROOT / "src/buffer.h").read_text()
     objects = "\n".join((ROOT / ("src/" + name + ".cpp")).read_text()
-                        for name in ("sprite", "buffer"))
+                        for name in ("sprite_objects", "buffer"))
     definitions = []
     for name in SPRITES:
         definition, = re.findall(r"^Sprite " + name + r"(?:\[\d+\])?;", objects, re.M)
         definitions.append(definition)
-    for pattern in (r"^Buffer g_PCX_PARSE_TEMP_BUFFER1;", r"^IDirectDraw \*BufferDirectDraw;"):
+    for pattern in (r"^Buffer g_PCX_PARSE_TEMP_BUFFER1;", r"^IDirectDraw2 \*BufferDirectDraw;"):
         definition, = re.findall(pattern, objects, re.M)
         definitions.append(definition)
     externs = []
@@ -59,7 +59,10 @@ def actual_source():
         public, = re.findall(r"^extern " + re.escape(definition), sh + "\n" + bh, re.M)
         externs.append(public)
     loader, = re.findall(r"^void __cdecl load_icons\(\);", (ROOT / "src/game.h").read_text(), re.M)
-    extract, = re.findall(r"  int extract\([^;]+\);", sh)
+    extract, = re.findall(
+        r"  int extract\(Buffer \*buffer, int a, int b, int c, int width, int height,\s*TexHeap \*heap\);",
+        sh,
+    )
     methods = []
     for pattern in (r"  int load_pcx\(const char \*[^;]+;",
                     r"  int change_color\(int a1, int a2\);", r"  void close\(\);"):
@@ -79,7 +82,7 @@ HARNESS = r'''
 #include <string>
 #include <vector>
 #define __cdecl
-struct Buffer;struct Palette;struct TexHeap;struct IDirectDraw {};
+struct Buffer;struct Palette;struct TexHeap;struct IDirectDraw2 {};
 INTERFACES
 DECLARATIONS
 OBJECTS
@@ -92,7 +95,7 @@ std::vector<Sprite*> assets;
 std::vector<int> payloads;
 size_t cursor;
 int loads,extracts,recolours,closes,buffer_payload;
-IDirectDraw surface;
+IDirectDraw2 surface;
 void verify_payloads(){require(g_PCX_PARSE_TEMP_BUFFER1.payload==buffer_payload);
     for(size_t n=0;n<assets.size();++n)require(assets[n]->payload==payloads[n]);}
 Event &observe(char kind){require(cursor<expected.size());Event&e=expected[cursor++];require(e.kind==kind);

@@ -13,13 +13,25 @@ ROOT = Path(__file__).resolve().parents[2]
 ADDRESSES = (0x404860, 0x450DE0, 0x450E30, 0x450E80, 0x450ED0, 0x450F30, 0x450F90)
 NAMES = ("sprite_draw_func", "sub_450de0", "sub_450e30", "sub_450e80",
          "sub_450ed0", "sub_450f30", "sub_450f90")
+SOURCE_PATHS = {
+    0x404860: "src/sprite.cpp",
+    0x450DE0: "src/sprite_assets.cpp",
+    0x450E30: "src/sprite_assets.cpp",
+    0x450E80: "src/sprite_assets.cpp",
+    0x450ED0: "src/sprite_assets.cpp",
+    0x450F30: "src/sprite_assets.cpp",
+    0x450F90: "src/sprite_assets.cpp",
+}
 
 
 def actual_bodies():
-    records = {r.address: r for r in read_file(ROOT / "src/sprite.cpp")}
+    parsed = {
+        path: {record.address: record for record in read_file(ROOT / path)}
+        for path in set(SOURCE_PATHS.values())
+    }
     bodies = []
     for address, name in zip(ADDRESSES, NAMES):
-        record = records[address]
+        record = parsed[SOURCE_PATHS[address]][address]
         assert record.region and "BODY GOES HERE." not in record.region
         result_type = "void" if name in ("sprite_draw_func", "sub_450f30") else "int"
         bodies.append(_definition(record.region, result_type + " __cdecl " + name + "("))
