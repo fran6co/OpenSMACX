@@ -1,0 +1,33 @@
+{
+  "event_id": "79a4690a6dac83dc4a0703c1d930a481f7d8ed5828a75af8f2abab42b4e6d0ac",
+  "payload": {
+    "affects": [
+      "entity-0cd69410f06bfa0d08e6224926004034d6abcc1e0afcd44c842408fe416fb993",
+      "entity-0f7c1d0be83075c20486f7581fb031158a7cd6d5396fd2e2a61bd44b68e970a3",
+      "entity-1ee6e0b1228b847571b8103f3d36a3a75ef02dffff65d1d5eb43bc933e5173cb",
+      "entity-3288ab6e63e87221e9ea7917a152d0ea03ce1ee73488a7f436065e2b9dcdac36",
+      "entity-37d368d8b302ba5410fb9c704dd5a3800631c71fde787326889ee5a815fa7eb2",
+      "entity-68c1cac89bec25545089cede3c59f6920abbf146bbf1c4ffe12bb871d574e5e3",
+      "entity-6b8d3d501beae8691b92694f2807bf66d601dbe546d52e8a909a43113de634e1",
+      "entity-710db9b630fc65a801fbe01d57c0ada4cc56c0944c1e25a3ac1568382ccf2a7b",
+      "entity-8749c0819d25cd63b972ebe0c797b787703e288253228a3e8f09cf5e84e0047d",
+      "entity-9845414b7227e3c581cbfd58c60c29959ac20e6eda55ae3cc140a2f7ca4b0fbc",
+      "entity-b4172f74fc1490f18efc95f375686b38b02630a78447662d56df7803e842b893",
+      "entity-f5a6a22dd4ba2cb9567e7968b7042e0677124856c1ef47bc323c922f3e52220b"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "time-app-frame-header-collateral-oct23zg",
+    "evidence": [
+      "time-owner-controls-release-oct23zg/report.json: app-frame candidate gains4C80C0/4C80E0/50DD90 with no Task30 loss; defaultclassmove preserves all30 current states.",
+      "Native app_frame_outside_bodies remains FAIL: compiled changes extend beyond12mapped app functions to other header copies. Function-body projection cannot waive these copies; complete source/copy/provider evidence remains required for coordinator adoption.",
+      "app-frame-profile-followup.json: actual materialized replica and wrong clock-duration damage controls pass. No product app-profile change yet; two bounded range views retain SCAFFOLD status and unproved original receiver ownership."
+    ],
+    "hypothesis": "After genuine Time component separation, an app-only frame profile restores three original body matches but also changes emitted copies from other headers. Review all physical copied bodies and their existing source/original owners, expand authorization for identified originals, and retain unknown header/link-selection effects instead of treating local score gains as preservation.",
+    "kind": "discovery"
+  },
+  "previous_event": "27dfee8279fffae4997131d81491252e60b2f6051e823db04839296d2185c20b",
+  "request_id": "time-app-frame-header-collateral-oct23zg",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:time-jackal-owner-oct23zg"
+}

@@ -239,6 +239,9 @@
       "src/jackal/time.cpp": {
         "flags": ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Ob2"]
       },
+      "src/time.cpp": {
+        "flags": ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Oy-", "/Ob2"]
+      },
       "src/jackal/time_lifecycle.cpp": {
         "flags": ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Ob2"]
       },
