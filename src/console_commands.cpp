@@ -1105,21 +1105,29 @@ void Console::automate(int veh_id, int order) {
         return;
     }
     if (order == 0xB) {
-        vehicle.waypoint_x[1] = vehicle.x;
-        vehicle.waypoint_y[1] = vehicle.y;
-        if (chassis.range != 0) {
+        Veh &locked_vehicle = Vehs[veh_id];
+        const VehPrototype &locked_prototype =
+            VehPrototypes[locked_vehicle.proto_id];
+        const RulesChassis &locked_chassis = Chassis[locked_prototype.chassis_id];
+        locked_vehicle.waypoint_x[1] = locked_vehicle.x;
+        locked_vehicle.waypoint_y[1] = locked_vehicle.y;
+        if (locked_chassis.range != 0) {
             action_home(veh_id, 0);
-            if (vehicle.order == 0x18) {
-                vehicle.waypoint_x[1] = vehicle.waypoint_x[0];
-                vehicle.waypoint_y[1] = vehicle.waypoint_y[0];
+            if (Vehs[veh_id].order == 0x18) {
+                Veh &after_home_vehicle = Vehs[veh_id];
+                after_home_vehicle.waypoint_x[1] =
+                    after_home_vehicle.waypoint_x[0];
+                after_home_vehicle.waypoint_y[1] =
+                    after_home_vehicle.waypoint_y[0];
             }
-            vehicle.order = 0;
+            Vehs[veh_id].order = 0;
         }
     }
-    vehicle.order_auto_type = static_cast<uint8_t>(order);
-    vehicle.order = 0;
-    vehicle.state = (vehicle.state & 0xFCFFFFFF) | 0x200;
-    vehicle.waypoint_count = 0;
+    Veh &updated_vehicle = Vehs[veh_id];
+    updated_vehicle.order_auto_type = static_cast<uint8_t>(order);
+    updated_vehicle.order = 0;
+    updated_vehicle.state = (updated_vehicle.state & 0xFCFFFFFF) | 0x200;
+    updated_vehicle.waypoint_count = 0;
     synch_veh(veh_id);
     NetDaemonNet.await_synch();
     NetDaemonNet.unlock_veh();
