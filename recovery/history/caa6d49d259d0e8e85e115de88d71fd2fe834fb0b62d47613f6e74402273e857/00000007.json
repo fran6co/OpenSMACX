@@ -1,0 +1,19 @@
+{
+  "event_id": "0d1e76fd36146d7a8be9678cc5430e263bdeaadb1c235cd78d2df9ea16822e68",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "natural-original-loop-bound-snapshot",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Add-only correction to earlier abbreviated snapshot interpretation. Independent complete-loop/owner review SHA256 075f547cd4537cfdf699bdfabc77701fe0f1820437895b01f47f87f3b73f9658 confirms original4E1A85 loads width before iteration zero,4E1A9E samples flatness inside each iteration, and4E1BB8 reloads width after per-tile/landmark work for the next backedge. It is not one unchanging width snapshot for the entire loop. Retain prior diagnostic reports/journal history with this correction, rather than rewriting evidence.",
+      "Typed MapStorage.metadata_ owns dimensions/flatness, with separately allocated Map tiles. Relevant bit/code/landmark helpers do not change these metadata fields; no map-size callback/message pump occurs in this loop, and the receive worker queues I/O rather than applying world state there. On evidenced stable inputs, current common-per-iteration loading and original entry/backedge loading yield the same values. Concurrent mutation would race ordinary nonvolatile metadata and is unsupported/unproved; no semantic correction, volatile/alias trick, blanket caching or additional source scope is justified.",
+      "This incorporates the requested investigation and its source-ownership/lifetime findings, not byte-exact completion. Exact load placements and the full mapped editor_natural body/EH spans remain in the original subject scope as matching restoration work. The source and claims remain unchanged, natural remains MISMATCH, native outside-one FAIL and the precisely expanded outside-two pass remain recorded, and the compiler trigger for unrelated root scheduling is still unproved. No runtime/game, complete linked preservation or automatic acceptance claim."
+    ]
+  },
+  "previous_event": "8fc74259c337fbf45a497c479c064f0efcfdb28806ebe03593288d10a1019f41",
+  "request_id": "incorporate-complete-loop-read-schedule-review",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:console-automate-follow-oct23za"
+}
