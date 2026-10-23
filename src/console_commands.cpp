@@ -1312,8 +1312,7 @@ void Console::set_road_to(int veh_id, int x_coord, int y_coord, int order) {
 // ORIGINAL: 0x004D24C0 ?hold@Console@@QAEXHH@Z 0x004D24C0-0x004D2697
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x004D24C0-0x004D2697", "source:src/veh.h", "source:src/map.h", "source:src/netdaemon.h", "source:src/basewin.h"], "reason": "Recover the hold order with Veh stack/waypoint state, typed map terrain and region bits, RulesChassis traits, and NetDaemon synchronization; base and tile refreshes use their product owners."}
 void Console::hold(int veh_id, int waypoint_y) {
-    int lock_vehicle = veh_id;
-    if (NetDaemonNet.lock_veh(&lock_vehicle, 0, -1, -1, 0) != 0) {
+    if (NetDaemonNet.lock_veh(&veh_id, 0, -1, -1, 0) != 0) {
         return;
     }
 
@@ -1326,7 +1325,7 @@ void Console::hold(int veh_id, int waypoint_y) {
 
     bool should_hold = (tile.climate & 0xE0) >= 0x60 || chassis.triad != 0;
     if (!should_hold) {
-        if ((tile.bit & 1) == 0 || (tile.val2 & 0x0F) < 8) {
+        if ((tile.bit & 1) == 0 || (tile.val2 & 0x0F) >= 8) {
             NetDaemonNet.unlock_veh();
             return;
         }
