@@ -1,0 +1,22 @@
+{
+  "event_id": "ff7075641f84cdeb9fa1ed9073ea6a2e169de6043081c5d53c8e833986049e5e",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "mask-original-scratch-and-helper-boundaries",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Pinned complete5E2B00..5E2DD3 copy_mask publishes three real loader-zero scratch words:9B3A80 groupcount,9B3A84 sourcegap,9B37D8 destgap. Source now owns separate bounded4byte int definitions with provisional role names; no aggregate, original names, historical TU, alias absence, lifetime or demonstrated concurrent gameplay invocation claim. Full direct-operand scan found all10uses in this function and no call while scratch live. Existing original identity/fullspans/historicalclaims/authoredlessons transported via native reader/writer validation; all170Buffer records retained.",
+      "Independent original/source review and actual-source host controls preserve storage/null guard precedence, negative source folding, source dimensions, IntersectRect alias and positive extents, destination-first then source get_data, original destination-lock leak on source failure, low-byte mask, forward live same-buffer overlap, separate pitch snapshots and source-first/destination-second release. Ordinary four-case Duff traversal restores source-owned global count/gap effects. Nonzero remainder count publication is earlier within a register-only/no-call setup interval than the pin; no ordinary synchronous observer found, but concurrent/computed-alias observation remains unresolved. Do not relabel this complete original concurrency fidelity or byte exactness.",
+      "Two initial production recipe candidate unit compiles plus one separately labelled debug-layout candidate witness, eight total VC6 compiles including five baseline/replica/body-and-data damage controls. Initial postprocessing refusals were fixed using the same retained immutable six objects, without repeating candidate compiles. Actual candidate restores2coordinate-getter directCALL+REL32 and2free_data directCALL+REL32, with IntersectRect import in original order. All185remaining main function root bytes equal baseline; local section/label shifts normalize, with tile_mask retaining identical call bytes/name now externally defined. Three new4byte data definitions/content pass native checks;0->1data damage fails. Target remainsMISMATCH207instructions versus original254; no exact gains/losses or historical claims banked.",
+      "Fresh192-TU/206-object candidate builds and links; both affected final objects reproduce actual recipe screen, and all204other normalized physical objects equal baseline. Final MAP has one new-owner entry each for copy_mask and the3scratch globals; this is named entry evidence, not full retained selection/allocation proof. Native claim/mapping/reference/source checks pass. All5581known masked verdicts and strict outcomes remain unchanged. GCC/Clang host cases and3compiling pixel mutants pass6; existing actual-compiler GraphicWin renderer/import and wrong-import mutation test passes1 after owner-path adaptation.",
+      "Native main outside-moved-function residual remainsFAIL for tile_mask external reference, and native new-unit presence remainsFAIL. Preserve both results verbatim. New owner includes3byte-equal ANY inline providers(clear/shutdown Spot,get_hdc Buffer), their companions, repeated export/defaultlib directives and12bytes ordinary scratch .bss. Independent physical review explains these contributions but cannot qualify linked selection/allocation; manual review does not waive native results or change automatic publication refusal.",
+      "Coordinator authorizes bounded manual recovery integration under standing user permission after source/pin/actual compiler/independent physical/host review. This is original source-state and call-boundary recovery, not new function coverage or exactness, automatic acceptance, full structure/runtime proof or a working game. Keep original task baseline and all matching obligations. Fresh destination192-TU build/link, all206candidate/destination normalized objects, identities/claims/references/source and host controls must agree before cleanup; retain work on any failure."
+    ]
+  },
+  "previous_event": "2aa14b73cfb11e1135a4e8677a7803a970030194fd949d21c9bab92b80d03037",
+  "request_id": "mask-original-scratch-and-helper-boundaries-incorporated",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:buffer-mask-owner-oct23m"
+}
