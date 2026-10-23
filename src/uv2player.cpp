@@ -65,21 +65,22 @@ int UV2PlayerQuitRequested;
 // symbol    ?on_key@UV2Player@@QAAHXZ
 int __cdecl UV2Player::on_key() {
     MSG message;
-    if (!PeekMessageA(&message, 0, 0, 0, 0) ||
-        !GetMessageA(&message, 0, 0, 0)) {
-        return 0;
-    }
-    if (message.message == WM_KEYDOWN) {
-        if (message.wParam != VK_RETURN && message.wParam != VK_ESCAPE &&
-            message.wParam != VK_SPACE) {
-            return 0;
+    if (PeekMessageA(&message, 0, 0, 0, 0)) {
+        if (GetMessageA(&message, 0, 0, 0)) {
+            if (message.message == WM_KEYDOWN) {
+                if (message.wParam == VK_RETURN || message.wParam == VK_ESCAPE ||
+                    message.wParam == VK_SPACE) {
+                    UV2PlayerQuitRequested = 1;
+                    return 1;
+                }
+            } else if (message.message == WM_LBUTTONDOWN ||
+                       message.message == WM_RBUTTONDOWN) {
+                UV2PlayerQuitRequested = 1;
+                return 1;
+            }
         }
-    } else if (message.message != WM_LBUTTONDOWN &&
-               message.message != WM_RBUTTONDOWN) {
-        return 0;
     }
-    UV2PlayerQuitRequested = 1;
-    return 1;
+    return 0;
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
