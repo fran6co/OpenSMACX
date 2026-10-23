@@ -251,13 +251,11 @@ void __cdecl load_palette() {
     Buffer buffer;
     Gamma gamma;
     int gamma_percent;
-    float gamma_value;
 
     gamma_percent = prefs_get("Gamma Correction", 100, 0);
-    gamma_value = static_cast<float>(gamma_percent) * 0.01f;
-    PrefWinGammaCorrection = gamma_value;
+    PrefWinGammaCorrection = static_cast<float>(gamma_percent) * 0.01f;
 
     buffer.load_pcx("PALETTE.PCX", &g_PALETTE1, 0x0A, 0xEC);
     g_PALETTE2.copy_from(&g_PALETTE1);
-    gamma.exec(&g_PALETTE1, gamma_value, 1);
+    gamma.exec(&g_PALETTE1, PrefWinGammaCorrection, 1);
 }

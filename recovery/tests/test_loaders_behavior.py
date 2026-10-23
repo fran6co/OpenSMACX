@@ -1,5 +1,6 @@
 """Actual-source loader controls, not asset-content or game acceptance."""
 from pathlib import Path
+import hashlib
 import struct
 import os
 import shutil
@@ -10,6 +11,16 @@ import pytest
 from match_recovery.source import Mode, read_file
 
 ROOT = Path(__file__).resolve().parents[2]
+
+
+def _pinned_image():
+    from match_recovery.pe_coff import PeImage
+    from match_recovery.source_inventory import image_pin
+    path = Path(os.environ.get("OPENSMACX_IMAGE", ROOT / '.opensmacx/game/terranx_original.exe'))
+    data = path.read_bytes()
+    pin = image_pin(ROOT)
+    assert hashlib.sha256(data).hexdigest() == pin
+    return PeImage(data, pin)
 
 # Current proposal homes; coordinator may adjust these with actual integration.
 OWNERS = {
@@ -44,9 +55,7 @@ def test_original_sprite_initializer_bounds_and_teardown():
     from capstone import Cs, CS_ARCH_X86, CS_MODE_32
     from capstone.x86 import X86_OP_IMM
     from match_recovery.model import Span
-    from match_recovery.pe_coff import PeImage
-    from match_recovery.source_inventory import image_pin
-    image = PeImage((ROOT / '.opensmacx/game/terranx_original.exe').read_bytes(),image_pin(ROOT))
+    image = _pinned_image()
     decoder = Cs(CS_ARCH_X86,CS_MODE_32)
     decoder.detail = True
     wrappers = ((0x44F8F0,0x44F910,0x779200,1), (0x44F920,0x44F940,0x76DC30,1),
@@ -82,7 +91,7 @@ def test_original_sprite_initializer_bounds_and_teardown():
 def test_native_loader_objects_references_and_layout():
     from match_recovery.compiler import Compiler
     from match_recovery.measurement import Measurement
-    from match_recovery.pe_coff import Coff, PeImage
+    from match_recovery.pe_coff import Coff
     from match_recovery.model import Span
     from match_recovery.source_inventory import image_pin
     from match_recovery.codeview import class_layout
@@ -94,7 +103,7 @@ def test_native_loader_objects_references_and_layout():
     from recovery.environment.wine import VC6_ROOT
     if not (VC6_ROOT / 'BIN/CL.EXE').is_file() or not shutil.which('wine32'):
         pytest.skip('VC6 and Wine32 required')
-    image = PeImage((ROOT / '.opensmacx/game/terranx_original.exe').read_bytes(), image_pin(ROOT))
+    image = _pinned_image()
     assert image.read(Span(0x66C540,0x66C544)) == struct.pack('<f',0.01)
     settings = Measurement.read(ROOT)
     compiler = Compiler(ROOT, profile=settings.compiler_profile)
@@ -231,10 +240,13 @@ struct Palette { int tag; int copies; Palette &copy_from(Palette *); };
 Palette g_PALETTE1 = {1,0}, g_PALETTE2 = {2,0};
 float PrefWinGammaCorrection;
 static int prefs_calls, pref_result, buffer_calls, gamma_calls;
+static int change_gamma_after_pcx, change_gamma_after_copy;
+static int pcx_gamma_hook_calls, copy_gamma_hook_calls;
 static std::string pref_key, pcx_name;
 static int pref_default, pref_flags, pcx_first, pcx_count, pcx_result;
 static Palette *pcx_palette, *copy_source, *gamma_palette;
 static float gamma_value;
+static float pcx_gamma_replacement, copy_gamma_replacement;
 static int gamma_apply;
 static std::vector<std::string> life;
 int prefs_get(const char *key, int default_value, int flags) {
@@ -259,10 +271,19 @@ Gamma::~Gamma() { assert(this==expected_gamma); life.push_back("gamma-"); }
 int Buffer::load_pcx(const char *name, Palette *palette, int first, int count) {
   assert(this==expected_buffer);
   ++buffer_calls; pcx_name=name; pcx_palette=palette; pcx_first=first; pcx_count=count;
+  if (change_gamma_after_pcx) {
+    PrefWinGammaCorrection=pcx_gamma_replacement;
+    ++pcx_gamma_hook_calls;
+  }
   life.push_back("pcx"); return pcx_result;
 }
 Palette &Palette::copy_from(Palette *source) {
-  ++copies; copy_source=source; life.push_back("copy"); tag=source->tag+1; return *this;
+  ++copies; copy_source=source; life.push_back("copy"); tag=source->tag+1;
+  if (change_gamma_after_copy) {
+    PrefWinGammaCorrection=copy_gamma_replacement;
+    ++copy_gamma_hook_calls;
+  }
+  return *this;
 }
 double Gamma::exec(Palette *palette, float gamma, int apply) {
   assert(this==expected_gamma);
@@ -291,6 +312,9 @@ static std::string expected_facility(int i) {
 static void reset() {
   events.clear(); life.clear(); prefs_calls=buffer_calls=gamma_calls=0;
   pref_result=100; pcx_result=9; PrefWinGammaCorrection=-9.0f;
+  change_gamma_after_pcx=change_gamma_after_copy=0;
+  pcx_gamma_hook_calls=copy_gamma_hook_calls=0;
+  pcx_gamma_replacement=copy_gamma_replacement=0.0f;
   g_PALETTE1.tag=1; g_PALETTE2.tag=2; g_PALETTE2.copies=0;
   for (int i=0;i<89;++i) g_TECH_ICON_SPRITES[i]=Sprite();
   for (int i=0;i<70;++i) g_FACILITY_ICON_SPRITES[i]=Sprite();
@@ -348,7 +372,25 @@ static void check_palette() {
   const std::vector<std::string> expected={"buffer+ ","gamma+","prefs","pcx","copy","gamma.exec","gamma-","buffer-"};
   assert(life==expected); // includes ignored nonzero PCX status and reverse teardown
 }
-int main() { check_misc(); check_sprites(); check_palette(); }
+static void check_palette_callback_reloads() {
+  struct HookCase { int after_pcx, after_copy; float expected; };
+  const HookCase cases[]={{1,0,2.25f},{0,1,3.75f},{1,1,3.75f}};
+  for (int i=0;i<3;++i) {
+    reset(); pref_result=137; pcx_result=77;
+    change_gamma_after_pcx=cases[i].after_pcx;
+    change_gamma_after_copy=cases[i].after_copy;
+    pcx_gamma_replacement=2.25f; copy_gamma_replacement=3.75f;
+    load_palette();
+    assert(PrefWinGammaCorrection==cases[i].expected);
+    assert(gamma_calls==1 && gamma_palette==&g_PALETTE1 &&
+           gamma_value==cases[i].expected && gamma_apply==1);
+    assert(pcx_gamma_hook_calls==cases[i].after_pcx);
+    assert(copy_gamma_hook_calls==cases[i].after_copy);
+    const std::vector<std::string> expected={"buffer+ ","gamma+","prefs","pcx","copy","gamma.exec","gamma-","buffer-"};
+    assert(life==expected);
+  }
+}
+int main() { check_misc(); check_sprites(); check_palette(); check_palette_callback_reloads(); }
 '''
 
 
@@ -390,19 +432,27 @@ def test_loader_source_host_controls(tmp_path, compiler_name):
         (0x00454D10, 'g_BATTLE_SEALURK_SPRITE.iHeight_ = 0x73;', 'g_BATTLE_SEALURK_SPRITE.iHeight_ = 0x74;'),
         (0x00451A10, 'buffer.load_pcx("PALETTE.PCX", &g_PALETTE1, 0x0A, 0xEC);', 'Buffer other; other.load_pcx("PALETTE.PCX", &g_PALETTE1, 0x0A, 0xEC);'),
         (0x00451A10, '''    gamma_percent = prefs_get("Gamma Correction", 100, 0);
-    gamma_value = static_cast<float>(gamma_percent) * 0.01f;
-    PrefWinGammaCorrection = gamma_value;
+    PrefWinGammaCorrection = static_cast<float>(gamma_percent) * 0.01f;
 
     buffer.load_pcx("PALETTE.PCX", &g_PALETTE1, 0x0A, 0xEC);''', '''    buffer.load_pcx("PALETTE.PCX", &g_PALETTE1, 0x0A, 0xEC);
     gamma_percent = prefs_get("Gamma Correction", 100, 0);
-    gamma_value = static_cast<float>(gamma_percent) * 0.01f;
-    PrefWinGammaCorrection = gamma_value;'''),
+    PrefWinGammaCorrection = static_cast<float>(gamma_percent) * 0.01f;'''),
         (0x00455EB0, "load_vehicles();\n    load_terrain();", "load_terrain();\n    load_vehicles();"),
         (0x00455EB0, "FactionBaseSprites[faction][terrain][size][defense]", "FactionBaseSprites[faction][terrain][defense][size]"),
         (0x00451A10, '"PALETTE.PCX", &g_PALETTE1, 0x0A, 0xEC', '"PALETTE.PCX", &g_PALETTE1, 0x00, 0xEC'),
         (0x00451A10, "g_PALETTE2.copy_from(&g_PALETTE1)", "g_PALETTE1.copy_from(&g_PALETTE2)"),
-        (0x00451A10, "gamma_value, 1", "gamma_value, 0"),
+        (0x00451A10, "PrefWinGammaCorrection, 1", "PrefWinGammaCorrection, 0"),
         (0x00451A10, "* 0.01f", "* 0.02f"),
+        (0x00451A10, '''    PrefWinGammaCorrection = static_cast<float>(gamma_percent) * 0.01f;
+
+    buffer.load_pcx("PALETTE.PCX", &g_PALETTE1, 0x0A, 0xEC);
+    g_PALETTE2.copy_from(&g_PALETTE1);
+    gamma.exec(&g_PALETTE1, PrefWinGammaCorrection, 1);''', '''    PrefWinGammaCorrection = static_cast<float>(gamma_percent) * 0.01f;
+    const float cached_gamma = PrefWinGammaCorrection;
+
+    buffer.load_pcx("PALETTE.PCX", &g_PALETTE1, 0x0A, 0xEC);
+    g_PALETTE2.copy_from(&g_PALETTE1);
+    gamma.exec(&g_PALETTE1, cached_gamma, 1);'''),
     )
     for number, (address, before, after) in enumerate(mutations):
         mutant = dict(bodies)
