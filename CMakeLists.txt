@@ -245,6 +245,7 @@ set(OPENSMACX_SOURCES
     src/sound.cpp
     src/sound_loader.cpp
     src/wave_device.cpp
+    src/wave_group_list.cpp
     src/spritebox.cpp
     src/listbox.cpp
     src/net_class.cpp
@@ -366,6 +367,7 @@ set_source_files_properties(
 set_source_files_properties(
     src/voice.cpp
     src/wave_device.cpp
+    src/wave_group_list.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")
 # The Midi, device-wrapper and sound-loader bodies also retain frame-based
 # argument accesses in the measured application release profile.

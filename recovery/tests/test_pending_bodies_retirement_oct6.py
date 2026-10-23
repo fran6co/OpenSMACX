@@ -57,7 +57,7 @@ def test_pending_translation_unit_is_retired_only_after_owners_are_present():
         assert row.mode is Mode.BODY and row.image_spans == (span,)
         assert not row.symbol and row.kind == "game"
         assert not row.byte_exact and not row.semantic
-    wave = [row for row in read_file(ROOT / "src/wave_device.cpp")
+    wave = [row for row in read_file(ROOT / "src/wave_group_list.cpp")
             if row.address == 0x004C5BF0]
     assert len(wave) == 1 and wave[0].mode is Mode.BODY
     row, = wave
@@ -66,7 +66,7 @@ def test_pending_translation_unit_is_retired_only_after_owners_are_present():
     assert row.image_spans == ((0x004C5BF0, 0x004C5C4A),)
     assert row.byte_exact and not row.semantic and row.kind == "game"
     assert row.levers and row.levers[0][0].startswith("`WaveGroupNode")
-    wave_source = (ROOT / "src/wave_device.cpp").read_text()
+    wave_source = (ROOT / "src/wave_group_list.cpp").read_text()
     append = _definition(wave_source, r"void WaveGroupList::insert\(Wave \*a1\)")
     assert "wave_group_insert_redirect" not in wave_source
     assert "WaveOperatorNew" not in wave_source

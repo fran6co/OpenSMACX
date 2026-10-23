@@ -1,0 +1,19 @@
+{
+  "event_id": "fb4e33964880f8d3780e919a32edad9142ca8c97e9b77b43b98f0f96118f8414",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_pending_bodies_retirement_oct6.py"
+    ],
+    "evidence": [
+      "Existingretirementtesthardcodes4C5BF0mappingandinsertbodyinwave_device.cpp. AuthorizedunchangedtransportmovesbothintorealWaveGroupListimplementationunit; updateonlythatmapping/sourcepath tosrc/wave_group_list.cpp, preserveallidentity/claim/lesson/order/assertions andunrelatedchecks. This is expectedownerpathadaptation,notpermissiontohideatestfailure orweakenbehavior."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "moved-list-owner-test-path",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:wave-group-list-boundary-oct23i"
+}
