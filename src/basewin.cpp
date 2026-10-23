@@ -6035,12 +6035,12 @@ void BaseWin::draw_info(int update_mode) {
     outer.top -= 3;
     outer.right += 3;
     outer.bottom += 3;
-    screen->set_clip(&outer);
+    screen->restore_clip();
     screen->box_sprite(&outer, &InterfaceBoxStyles[3]);
 
     RECT panel = info_title_rect_;
-    screen->set_clip(&panel);
     RECT previous_clip = screen->current_clip();
+    screen->set_clip(&panel);
     screen->box_sprite(&panel, &InterfaceBoxStyles[3]);
 
     const int trim = -6 - sprites8_[6].width();
