@@ -1,0 +1,25 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "5dfe7c65085238bf9ddb4d05c3bb9eb1635a29bc",
+  "editable_files": [
+    "src/interface_palette.cpp",
+    "recovery/tests/test_loaders_behavior.py"
+  ],
+  "evidence": [
+    "Bounded fifthwave native fullsource/pin/COFF review and one proposalcompile in ignored easy-fifth-followup-screen-0: original stores preference-scaledfloat only to PrefWinGammaCorrection before load_pcx then reloads that global after PCX/copy for Gamma::exec. Current source caches gamma_value across those calls; candidate directly stores and later reads the realglobal. This is correction of translation/callback-visible readorder to the original, not a game bugfix. Production oneform improves65/148 to146/148instructions, noexactloss/nativeoutsidePASS. Retain148instruction148candidate residual EH lea/state scheduling; no extendedmatching iteration or newclaim.",
+    "Sourceworker ONLY load_palette body: exact deck easy-fifth-followup-deck.json group0 removes localgamma_value, assigns existing floatPrefWinGammaCorrection from same integerpreference*0.01f, then passes liveglobalafter existing PCX/copy calls. Preserve Buffer thenGamma construction/reverse destruction/EHcleanup, prefs key/default100/flags0, filename PALETTE.PCX, Palette1 range10/236, Palette2copydirection, gamma apply1 and all original quirks. No sourceannotation/claim edit, type/header/global/compilerflag/API/ownership/bugfix changes; root retains full primary/cold originalspans and obligations.",
+    "Testworker only existing actual-source loaders behavior fixture: preserve all other loader controls and GCC/Clang actualbody tests, retarget obsolete localgamma_value spelling mutation anchors to new actualform. Add callback-sensitive evidence: PCX callback modifies globalgamma, copy callback modifies it again, Gamma::exec must receive live lastglobal value; ordinary nohook remains137percent→1.37. Cover each hook alone/both and real lifecycle/callordering. Cached-beforecallbacks mutant must compile and fail; preserve all existing othermutants, ranges, defaults and errorpaths. No copiedalgorithm or productionnormalization. Do not run VC6 or prep/Git/Task operations.",
+    "Coordinator alone owns Git/Task/preparation/compilerleases/nativecontrols/fullbuild/review/manualintegration/destinationcleanup. Initial candidatealreadyconsumedoneform, no furthermatchingforms without newevidence; productionreplay/replica/damage controls separatelycounted. Independent original/source review and actualsource tests must support semantic correction evenifbodyremainsnonexact. Onlynativeguardedrecord canbankifreadilyexact; no manualmarker/demotion/baseline reset. Preserve all previous source claims and knownexact/strictstates including pending45D170UNKNOWN frompriorobservabilitytask. Fullnative/game/runtime/linkedacceptance unfinished."
+  ],
+  "intent": "Recover original palette loader live gamma reload after PCX and palette-copy calls",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4528656,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "palette-gamma-reload-oct23v"
+}
