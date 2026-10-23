@@ -1,0 +1,42 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "8f5cf3d89838c277a1d0b22cf56b1bce951215fc",
+  "editable_files": [
+    "src/caviar.cpp",
+    "recovery/tests/test_caviar_projection_direction_oct23p.py",
+    "recovery/tests/fixtures/caviar_product_extraction.cpp"
+  ],
+  "evidence": [
+    "Full pinned63FCA0..63FDF6 verified by coordinator:inverse output is existing source-owned vox_projection_matrix_ at9C0AA0, later used as matrix-vector input. Final transformed vector is original9C0A64/A68/A6C, read/negated and passed toacos/atan2. Current stackinverse/vector omit persistent writes. Existing63E950 caller invokes63FCA0 then63FE00 which reads existing9C0AA0matrix; closure also includes63FFE0 writer. Restore existing matrix use and separate source-owned3floatwindow; no invented aggregate/TU/class/lifetime/fullallocation claim.",
+    "Coordinator read_initial9C0A64..9C0A70 returns12zero bytes; actualthreefloat accesses and nextindependent9C0A70intarray delimit observedwindow only. Authorize source-owned loader-zero VOX_Vect CaviarProjectionDirectionCandidate and start-only v1 RECOVERY_OBJECT mapping9C0A64 with observed-extent/provisional-name rationale. No hardcoded executable pointers, newextentclaim, header/layout changes or oldmarkers/claim edits. Existing matrix identity unchanged. Preserve exact callorder/stagepublication/globalstores rather than copying a stack result later.",
+    "Original63FD31FCOMP threshold0 C0set entersnegation;63FD71FCOMP limit1 C0set callsacos. Use negated>=predicates to retainfinite-less and unordered behavior. Third azimuth63FD9F FCOM0,63FDAA JE skipsSUB onlywhen C0clear:subtract originalnegativewrap for negative or unordered azimuth, not existing !(angle<0) which reversesfinite polarity. Pinconstants0/1/-6.2831854820251465/-14.642254829406738/-14.164789199829102 freshlyread. Do not clamp/guard NaNs, singularinverse, invalidindices or unsafe originalpaths. x87exception/status/payload behavior remainsunproved.",
+    "Evidence:parallel-match-oct23p/caviar-findings.json and caviar-scratch-review.json; firstreport azimuthcrosscheck requires correction by explicit fullpin facts above. Sourceworker may editonly63FCA0body and addtypedglobalbinding nexttoexistingprojectioncells; other3bodies are affected-preservation/consumer scope and not permission for speculative edits. Actual-source tests executefinite fullbody with realconstants/tabletypes and distinguish positive/negative/zero wrap; NaN branch probes stop atobservedacos/atan2 before undefinedfloat-to-int/tableaccess, notprooflaternonfinitebehavior. Test sharedmatrix/vector persistence with laterconsumer, helperoutputalias/callorder and rejectstack-only/orderedgates/wrap-polarity mutants. Existing fixture may add realglobal definitions and correctstale positive-wrap expectation/comment frompin; do not weaken tests.",
+    "Root owns Task/Git/compiler/prep/resources/publication. Workers editonlyauthorizedsource/testfiles inisolatedworktree. Max3candidatecompilesperunchangedcontext, controlsseparate. Preserve allsourceidentities/spans/history/claims. Freshactualrecipe/replica/bodydamage, native data/reference evidence, allotherfunctions/outside-scope checks and fullcombinedbuild/link beforemanualreview integration; freshdestination verification beforecleanup. No newexact/bodycoverage assumed, no automatic/gameacceptance or weakenednativegate. Structuralchange justifiedevenifmaskedmatchregresses; retainmatchingobligations and reportallunknowns."
+  ],
+  "intent": "Restore persistent projection matrix/vector and original ordered/unordered direction gates",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6552736,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6547792,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6553088,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6553568,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "caviar-direction-oct23p"
+}
