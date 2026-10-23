@@ -1,0 +1,19 @@
+{
+  "event_id": "c30f1010b4c0b3790a559f9b96d5b6048e4144f01689217cac2dbb9cd24a5c26",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_game_fixed_data_owner_actual_source_oct9.py"
+    ],
+    "evidence": [
+      "Scoped test run exposes three change-caused stale lexical anchors for record-dot assignments and indexed snapshot-owner mutation. Authorize only adapting these assertions/mutation to the typed pointer/countdown body while preserving store ordering and same original snapshot-versus-live-owner witness. A wrong-owner mutant must compile before behavioral rejection, adjusting its local pointer type only if required by the existing declared fixture. Do not touch unrelated legacy deletion-storage snapshot assertions, loosen behavior or accept a compile error as mutation success."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "actual-reset-control-cursor-anchor",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:game-typed-reset-walks-oct23i"
+}
