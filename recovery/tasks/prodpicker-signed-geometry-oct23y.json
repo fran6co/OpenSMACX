@@ -1,0 +1,154 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "088d2cee1345989a4a5c08a893be36e081ffc73a",
+  "editable_files": [
+    "src/prodpicker.h",
+    "src/prodpicker.cpp",
+    "recovery/tests/test_prodpicker_signed_geometry_oct23y.py",
+    "recovery/tests/test_prodpicker_display_id_oct11.py",
+    "recovery/audits.json"
+  ],
+  "evidence": [
+    "Original on_left_click4941C0 uses IDIV at4941CB/4941E4 for signed mouse y/x; current source uint32 member dimensions force unsigned DIV and change negative coordinate behavior. Owner-level evidence in prodpicker-dimension-types-structure.json ties A81C to horizontal cell width/stride and A820 to row height/pitch, with signed producers and geometry consumers. This is a source semantic correction, not a bug fix or local cast workaround.",
+    "Authorize both members as signed32 geometry with evidence-backed descriptive names cell_width_ and row_height_, updating all code uses in this owner and current layout references. Preserve original offsetsA81C/A820, complete sizeA840 and BaseWin embedded offsetA1C. Remove only redundant casts on these now-signed members; other fields/types require a returned discovery and coordinator expansion before edits. Preserve all26 original identities/spans/symbols/notes and15 historical BYTE_EXACT obligations. No reinterpret/offset/asm/vtable workaround, safety guard, clamp or normalization of division-zero/overflow paths.",
+    "Header impacts BaseWin consumers, so coordinator reviews the complete dependency closure, not just this click handler. Do not revert justified member correction merely for a local matching regression; retain all work and claims, and seek explicit review of any regression before integration. Tests must extract actual source and actual declared member types and cover negative x/y, positive/nondivisible values and unchanged old/new cell redraw effects without executing undefined fault paths. Existing display-id fixture may need faithful field/name retargeting; no weakening. Coordinator alone may lower justified audit ceilings in recovery/audits.json.",
+    "Worker edits only its isolated authorized source/tests, using apply_patch; no Git, Task, compiler, prefix, preparation or package/environment changes. Return discoveries before expanding scope. Finish edits then report source frozen; no edits during coordinator measurement epochs. Coordinator alone handles native compilation/recording, independent review, commit, integration, destination verification and cleanup.",
+    "Standing user permission supports coordinator-reviewed manual recovery with fresh compile/link, scoped preservation/restoration, source identity continuity and relevant behavior checks. Original task baseline retained; temporary regressions require explicit coordinator review and never demotion or hidden gate weakening. No automatic/full-game/runtime/complete-linked acceptance inferred from build or scoped matches."
+  ],
+  "intent": "Restore original signed production-grid geometry across the complete ProdPicker owner",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4330400,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4799344,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4799216,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4799520,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4794304,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4800960,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4799600,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4801072,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4802000,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4799664,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4801152,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4802256,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4796320,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4802304,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4800160,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4793376,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4329728,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4794048,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4794176,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4799504,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4800144,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4804960,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4794032,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4801984,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4331888,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4800112,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "prodpicker-signed-geometry-oct23y"
+}

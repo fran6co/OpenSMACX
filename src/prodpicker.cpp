@@ -122,11 +122,11 @@ void ProdPicker::draw_item(int item, int update) {
 
     const int relativeItem = item - firstVisible;
     const int row = relativeItem / field_A810_;
-    int left = (relativeItem % field_A810_) * field_A81C_;
-    const int top = row * field_A820_;
+    int left = (relativeItem % field_A810_) * cell_width_;
+    const int top = row * row_height_;
     const int cellTop = top + 4;
-    const int cellRight = field_A81C_ + left + 0x18;
-    const int cellBottom = top + field_A820_ + 1;
+    const int cellRight = cell_width_ + left + 0x18;
+    const int cellBottom = top + row_height_ + 1;
     left += 0x1B;
 
     RECT cell = { left, cellTop, cellRight, cellBottom };
@@ -207,13 +207,13 @@ void ProdPicker::draw_item(int item, int update) {
         Sprite *icon = iconId < 0x46
             ? &g_FACILITY_ICON_SPRITES[iconId]
             : &g_SECRET_PROJECT_ICON_SPRITES[iconId - 0x46];
-        const int iconSize = (field_A820_ * 3) / 7;
+        const int iconSize = (row_height_ * 3) / 7;
         const int iconX = (cell.bottom - cell.left) / 2 - iconSize / 2;
         const int iconY = (cell.right - cell.left) / 2 - iconSize / 2;
         icon->draw_mono(this, icon->transparent_index(), iconY + cell.left,
                         cell.left + iconX, textColor, iconSize, icon->width());
     } else {
-        const int iconSize = (field_A820_ << 1) / 3;
+        const int iconSize = (row_height_ << 1) / 3;
         const int modelSize = (iconSize * 0x4B) / 100;
         const int fakeId = veh_fake(displayId, BaseCurrent->faction_id_current);
         const int rotation = field_A774_ == static_cast<uint32_t>(item)
@@ -262,9 +262,9 @@ void ProdPicker::draw_item(int item, int update) {
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004941c0.cpp", "source:src/prodpicker.h", "source:src/prodpicker.cpp"], "reason": "Apply the click-to-grid selection through the picker’s measured geometry and redraw both changed cells through draw_item and GraphicWin."}
 // symbol    ?on_left_click@ProdPicker@@UAEXHH@Z
 void ProdPicker::on_left_click(int x, int y) {
-    const int row = y / field_A820_;
+    const int row = y / row_height_;
     const uint32_t oldSelection = field_A774_;
-    const int column = x / field_A81C_;
+    const int column = x / cell_width_;
     const uint32_t newSelection = field_A77C_ + row * field_A810_ + column;
     field_A774_ = newSelection;
     if (oldSelection != newSelection) {
@@ -367,20 +367,19 @@ void ProdPicker::on_scrolled(int, int position) {
 
     if (newPosition < oldPosition) {
         set_clip(&rect2_);
-        copy(this, 0x15, 4, 0x15, static_cast<int>(field_A820_) + 4,
-             static_cast<int>(field_A81C_) * pageSize + 4,
-             (static_cast<int>(field_A814_) - 1) * static_cast<int>(field_A820_)
-                 + 4 + static_cast<int>(field_A820_)
-                 - (static_cast<int>(field_A820_) + 4));
+        copy(this, 0x15, 4, 0x15, row_height_ + 4,
+             cell_width_ * pageSize + 4,
+             (static_cast<int>(field_A814_) - 1) * row_height_
+                 + 4 + row_height_ - (row_height_ + 4));
 
         int first = static_cast<int>(field_A77C_);
         const int end = static_cast<int>(field_A810_ + field_A77C_);
         while (first < end) draw_item(first++, 0);
     } else if (newPosition != oldPosition) {
         set_clip(&rect2_);
-        copy(this, 0x15, static_cast<int>(field_A820_) + 4, 0x15, 4,
-             static_cast<int>(field_A81C_) * pageSize + 4,
-             (static_cast<int>(field_A814_) - 1) * static_cast<int>(field_A820_));
+        copy(this, 0x15, row_height_ + 4, 0x15, 4,
+             cell_width_ * pageSize + 4,
+             (static_cast<int>(field_A814_) - 1) * row_height_);
 
         const int first = (static_cast<int>(field_A814_) - 1) * pageSize
             + static_cast<int>(field_A77C_);
@@ -727,8 +726,8 @@ void ProdPicker::calculate() {
         field_A814_ = (WinScreenWidth > 800) + 3;
         const int cellWidth = (baseBuffer->pixel_width() - 0x51) / 5;
         const int columns = (baseBuffer->pixel_width() - 0x51) / cellWidth;
-        field_A820_ = field_A838_;
-        field_A81C_ = cellWidth;
+        row_height_ = field_A838_;
+        cell_width_ = cellWidth;
         field_A810_ = columns;
         field_A82C_ = field_A814_ * columns;
 
@@ -859,11 +858,11 @@ int ProdPicker::exec(Base *base, int factionId, GraphicWin *owner, int modal) {
         }
 
         int y = static_cast<int>(field_B70_);
-        const int yFixed = static_cast<int>(field_A820_ * field_A814_) + 8;
+        const int yFixed = static_cast<int>(row_height_ * field_A814_) + 8;
         int x = ((pixel_width()
                   - (y + 3) * static_cast<int>(field_B6C_)) - 0x20) / 2
             + (static_cast<int>(field_B6C_) - 1) * (y + 3);
-        int yFixedBottom = static_cast<int>(field_A820_ * field_A814_) + 0x1C;
+        int yFixedBottom = static_cast<int>(row_height_ * field_A814_) + 0x1C;
         y += x;
 
         StringTemp[0] = 0;

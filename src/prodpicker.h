@@ -128,8 +128,8 @@ class ProdPicker : public GraphicWin {
   uint32_t field_A810_;  // 0xA810
   uint32_t field_A814_;  // 0xA814
   int32_t field_A818_;   // available production-entry count, 0xA818
-  uint32_t field_A81C_;  // 0xA81C
-  uint32_t field_A820_;  // 0xA820
+  int32_t cell_width_;  // 0xA81C, horizontal cell stride
+  int32_t row_height_;  // 0xA820, vertical cell pitch
   uint32_t field_A824_;  // 0xA824
   uint32_t field_A828_;  // 0xA828
   int32_t field_A82C_;   // visible-entry capacity, 0xA82C
