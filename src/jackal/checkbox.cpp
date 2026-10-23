@@ -630,11 +630,12 @@ void CheckBox::UNK1(int pos) {
     // The state word is Dialog::selected_position_, reached through the
     // virtual base - the compiler's member access walks the vbtable exactly
     // where the old hand walk read it.
+    int *const selected = &selected_position_;
     const uint32_t mask = 1U << static_cast<uint32_t>(pos);
-    if (selected_position_ & mask) {
-        selected_position_ &= ~mask;
+    if (*selected & mask) {
+        *selected &= ~mask;
     } else {
-        selected_position_ |= mask;
+        *selected |= mask;
     }
 }
 
@@ -929,7 +930,7 @@ int CheckBox::get_state_id(int id) {
         }
     }
     const uint32_t mask =
-        1U << static_cast<uint32_t>(items.current_position_);
+        1U << (static_cast<uint32_t>(items.current_position_) & 31U);
     return static_cast<int>(Dialog::selected_position_ & mask);
 }
 
