@@ -613,7 +613,7 @@ Purpose: Toggle one bit of the state word - clear it when set, set it when
          The shift count is whatever CL holds, so the position is masked to
          five bits by the hardware; `pos & 31` states that rather than relying
          on C++ shift-overflow, which is undefined rather than truncating.
-// ORIGINAL: 0x0060EB50 ?UNK1@CheckBox@@QAEXH@Z 0x0060EB50-0x0060EB7D
+// ORIGINAL: 0x0060EB50 ?UNK1@CheckBox@@QAEXH@Z 0x0060EB50-0x0060EB7D BYTE_EXACT
 // size      45 bytes
 // prototype void (__thiscall ?UNK1@CheckBox@@QAEXH@Z)(CheckBox* this, int)
 // callers   0   call targets   0
