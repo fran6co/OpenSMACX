@@ -1,0 +1,21 @@
+{
+  "event_id": "26f442e640a378ef2f346ebeb14fe0e207598431f16f892776ea9f2f751566cf",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "shared-signed-ability-slot-sentinels",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Original draw_vehicle4377B3/4377BC/4377BE and4378D2/4378DB/4378DD load abilityslot dwords at+14218/+1421C and use signed TEST/JGE before indexing. Original delete_abil439EB0 writes-1 and uses signednegative refill while scanning flags0..28. Current source incorrectly declared theseIDs uint32_t, making draw_vehicle bare<0 checks alwaysfalse and actualCOFF omit empty-slot paths. A shared signedint member model restores original behavior; this is recovery, not an original-game bug fix.",
+      "Only two samewidth member declarations and their corresponding assignment/selection/read consumers change; abilitybitmasks remainunsigned. Native source inventory finds all lexicalslotwriters in thisowner; reviewedwriter values are-1or0..28. Remove redundant cast scaffolding without changing layoutwidth/offsets, callbackorder, signatures or otherbodytext. All89originalfacts/fullspans/claims/completeauthoredlessons retained. Original Taskbaselinebf2 is unchanged; separately reviewed Base integration was caught up centrally beforefullbuild.",
+      "Independent pin/source andactualCOFF reviews confirm both signed empty-slot renderer branches and originaldelete/refill behavior. One pairedsource/header candidate plus threeactualrecipe baseline/replica/damage controls; noexactgain/loss. Fresh completeapplication build receipts bindCPP8c7110a41c6999b9ee4b9b402c77f984aa5ff42b1e8a1b485054d52390e286dc andheader80d9bf070048536ffbbd784a73e53d8a880846bd66cbaab766ab669f46707cd6; emittedcompleteownerobject equals measuredoverlay. BothchangedEHbodies on_button_clicked/select_special remain historicallyREFUSED, not calledexact or fullysemanticallyproven.",
+      "Newactualsource tests extractdeclaredmembers, complete delete_abil and bothrealrendererif/elseblocks. SeparateGCC/ClangO2/UBSan renderwitnesses firstpasswithsignedcandidate, then successfullycompileunsigned-member damages and fail eachslotindependently; no deletionassertion masks the render check. Original-1/validID/no-read/defaultlabel behavior is covered. Broader run50pass1fail; unchangedmaster48sharedtests47pass1fail, alloutcomes identical. Thepreexistinghistoricalroster assertion remainsred/unchanged, not weakened or used aspassingproof.",
+      "Freshfa60c2b5a candidatefullapplication builds/links; native source/mapping/reference/claims pass. All202otherqualifiednormalizedobjects equal currentmaster; nativeoutside6changedbodies residualincludingdata/targets passes withoutotheromissions. All5581knownmaskedverdictidentities andstrictresults unchanged:3417maskedexact,2830strictpass,587unknown. No newexactfunction/compilingbodycoveragegain. Coordinator manually reviews boundedstructural/originalsemantic correction understandinguserauthority, not nativeautomatic/fullproject/gameacceptance. Completeclasslayout/lifetime, linkedretention andunmeasurableEHfidelity obligations remain. Freshdestinationverification required."
+    ]
+  },
+  "previous_event": "c9365c213778673ea4b9347526866b112097ca63ac29d61b609a9170a9e16138",
+  "request_id": "shared-signed-ability-slot-sentinels-incorporated",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:designwin-ability-signed-owner-oct23h"
+}
