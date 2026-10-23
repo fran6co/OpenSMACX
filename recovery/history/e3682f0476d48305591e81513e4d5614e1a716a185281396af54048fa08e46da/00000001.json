@@ -1,0 +1,23 @@
+{
+  "event_id": "d69aa92c7820f3300de9c47f9fe35e02ac71f60b74b575473af3163787e07228",
+  "payload": {
+    "affects": [
+      "entity-bef1cf6cdafd69565271da54379348f90602643854b82300f2a69e433e242931"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "native-task-preservation-replaces-obsolete-snapshot",
+    "evidence": [
+      "As coordinator I authorize this precise revision to the initial test-worker instruction to retain historical compiler-signature assertions: those assertions are not valid current outside-scope preservation. The clean-master causal control reproduces the same mon_enemy_destroyed historical/current signature failure before any palette recovery, while current game.cpp and sprite.cpp are byte-identical to this unchanged task baseline. Source/shared-header structural migrations since3d36b6a make its never-changed-neighbor assumption obsolete. Keep its failure and provenance in ignored evidence; do not retarget that checkpoint or reset the task baseline.",
+      "Remove only the old historical compiler overlay and its mon_enemy_destroyed/TexHeap signature assertions. Retain BASE97ad seed identity/span/claim/findings assertions, original executable controls, same nine sprite addresses/spans/counts/evidence, data/layout/lifetime assertions, all loader references and complete GCC/Clang behavior/mutant controls. Resolve real definition owners through native read_objects; use configured image with pinned SHA validation. No C++ outside load_palette or verifier/compiler/gate changes.",
+      "Replacement requirements: fresh native task-preservation controls for both configured flag sets in the changed TU, and the already fresh actual application proof of all205otherwholeobjects plus selected-unit outside residualPASS against exact original task baseline5dfe. The diagnostic subset must retain its overallUNKNOWN for omitted units; it is not automatic/full-link/game acceptance. Independent test migration review and fresh destination application verification remain required before cleanup. Full standalone all-TU preservation is still running in the original worktree, which remains untouched.",
+      "Full application proof SHA256 3065ae28ee6567f56ea75679b35b909ace15b82c632e6ec28995f81af4389373. Baseline reproduction SHA256 2eb08f64825c94c62920f9e21007652068c8e09751f3f50d3a9fdd31279581fd. The retired snapshot did not own historical byte claims; all original source identities/restoration obligations remain source-owned and unchanged."
+    ],
+    "hypothesis": "Retire the ad hoc unchanged-neighbor compiler comparison against3d36b6a, replacing it with native task-baseline preservation and fresh whole-application object comparison while preserving original seed and claim obligations.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "native-task-preservation-replaces-obsolete-snapshot",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:palette-gamma-reload-oct23v"
+}

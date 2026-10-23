@@ -1,0 +1,20 @@
+{
+  "event_id": "ef3595fd30429df6b73d08efb578c776679118554b6f5e0cb80fc90e95bd1248",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "original-live-palette-gamma-reload",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Independent full pin/store/callback/copy/reload/primary+coldEH source review SHA256 0c6f426cc98f394f3755aa32efdd091562d5176a06b22cf30fd4f1f25038f91b. Pinned store precedes Buffer::load_pcx, Palette2copyfromPalette1, then sharedglobalreload for Gamma::exec. Remove only cached gamma_value; same integerpreference key/default100/flags0, 0.01f scale, filename/range10/236/copydirection/apply1, BufferthenGamma lifetime/reversecleanup and original errorquirks. This corrects translation to originalcallback-visible behavior, not a deliberate gamebugfix.",
+      "One bounded sourceform65/148→146/148instructions, stillMISMATCH; no additionalmatchingiterations/recording/newclaim/demotion. Five actualproductionreplay/replica/damage controlsPASS, nativeoutside-selectedPASS. Fresh frozen application192TUs206objects build/link/source/claim/mapping/referencechecksPASS;205otherwholeobjects normalizedequal originaltaskbaseline, onlyload_palette emittedfunctionchanges. All known5581verdicts and strict3113PASS310UNKNOWN identities unchanged. Originalsixownerfunctionfacts/alloriginalspans/claims/authoredhistory preserved.",
+      "Independent fixture review SHA256 7c66c4f4e2b09e3e94d253142c3e0eca5d44a2ef8f1135c1038759bb9bb22a21. Rootfresh7native/hosttests and damagecontrolledchangedTU nativepreservationrowsPASS, overallsubsetUNKNOWNretained. CoordinatorreviewSHA256 adc554707f61141184e5948e716f3f8f75b8e7c5058428c989ddf2039badce37. Longfullstandalonepreservationoriginalworker stillrunning, not counted aspass; no interruption or sourceepochmutation.",
+      "Standinguserauthorization permits reviewed manualintegration with these bounds; nativeautomatic/fullproject/linked/runtime/gameacceptance remainsunproved. Keeporiginaltaskbaseline 5dfe7c65085238bf9ddb4d05c3bb9eb1635a29bc and prior45D170debuglabelUNKNOWNobligation. Freshdestinationbuild/all206objectcomparison/sourcecontinuity/7tests beforecleanup; preserve anyfailure and rerunfresh, no reportreplay or baselinereset."
+    ]
+  },
+  "previous_event": "1ffe89c8d2a5f6d89f5ad0c31cbae66d34e2441b47ef5474dce6515a678a559b",
+  "request_id": "original-live-palette-gamma-reload-incorporated",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:palette-gamma-reload-oct23v"
+}

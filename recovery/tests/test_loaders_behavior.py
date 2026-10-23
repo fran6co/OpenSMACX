@@ -30,11 +30,9 @@ OWNERS = {
 }
 
 BASE = '97ad25151bb1c72962e41f711299c54a7912ed9d'
-# Pre-Palette-boundary checkpoint for unchanged neighboring bodies. BASE above
-# remains the seed/provenance baseline. Subsequent genuine storage migrations
-# (e.g. TurnCurrentNum -> GameDataStateStorage) changed their external references;
-# comparing today's complete bodies to BASE is not an unchanged-source control.
-PALETTE_BOUNDARY_BASE = '3d36b6a854332711f5168676086cde8d58caa550'
+# Outside-owner preservation uses native task baselines and fresh application
+# objects. Historical source snapshots retain seed provenance, not an assertion
+# that unrelated owners and shared headers have never changed since then.
 
 
 @pytest.mark.parametrize('address', tuple(OWNERS))
@@ -97,9 +95,6 @@ def test_native_loader_objects_references_and_layout():
     from match_recovery.codeview import class_layout
     from match_recovery.object_source import read_objects, object_targets
     from match_recovery.object_data import check_initial_data
-    from match_recovery.coff_replica import function_signature
-    from match_recovery.source_history import revision_files
-    from match_recovery.source_replica import replica_roots
     from recovery.environment.wine import VC6_ROOT
     if not (VC6_ROOT / 'BIN/CL.EXE').is_file() or not shutil.which('wine32'):
         pytest.skip('VC6 and Wine32 required')
@@ -107,22 +102,22 @@ def test_native_loader_objects_references_and_layout():
     assert image.read(Span(0x66C540,0x66C544)) == struct.pack('<f',0.01)
     settings = Measurement.read(ROOT)
     compiler = Compiler(ROOT, profile=settings.compiler_profile)
-    # A historical TU requires its historical headers and retired includes.
-    # Overlaying just game.cpp/sprite.h against current sources cannot preserve
-    # that context (temp.h and application palette declarations have moved).
-    roots = replica_roots((*settings.source.roots, *settings.input_roots))
-    historical = revision_files(ROOT, PALETTE_BOUNDARY_BASE, ('src', 'cmake'))
-    # Retain the current measurement recipe's generated compiler context, not
-    # current source headers. Both versions use today's compiler policy; this
-    # is a bounded body/reference comparison, not a historical build proof.
-    for name in roots:
-        if name not in ('src', 'cmake'):
-            for path in (ROOT / name).rglob('*'):
-                if path.is_file():
-                    historical[path.relative_to(ROOT).as_posix()] = path.read_bytes()
+    expected = {'g_TECH_ICON_SPRITES':0x759E28,'g_FACILITY_ICON_SPRITES':0x787200,
+                'g_SECRET_PROJECT_ICON_SPRITES':0x759320,'g_BATTLE_MIND_WORM_SPRITE':0x779200,
+                'g_BATTLE_ISLE_DEEP_SPRITE':0x76DC30,'g_BATTLE_LOCUSTS_CHIRON_SPRITE':0x78A4A0,
+                'g_BATTLE_FUNGAL_TOWER_SPRITE':0x787E70,'g_BATTLE_SPORE_LAUNCHER_SPRITE':0x7AC000,
+                'g_BATTLE_SEALURK_SPRITE':0x779570}
+    bindings = read_objects(ROOT,image_pin(ROOT))
+    sprite_bindings = {}
+    for name,address in expected.items():
+        binding, = (b for b in bindings if b.origin.address == address and
+                    b.symbol.startswith('?'+name+'@@'))
+        sprite_bindings[name] = binding
+    sprite_owner_units = {binding.unit for binding in sprite_bindings.values()}
     for flags in settings.flag_sets:
         objects = {unit: Coff(compiler(ROOT / unit,(),flags+settings.layout_flags))
-                   for unit in sorted({owner for owner,_ in OWNERS.values()})}
+                   for unit in sorted({owner for owner,_ in OWNERS.values()} |
+                                      sprite_owner_units)}
         def targets(address,name):
             obj = objects[OWNERS[address][0]]
             body,relocs,_ = obj.subject(obj.function(name))
@@ -137,13 +132,7 @@ def test_native_loader_objects_references_and_layout():
         assert sprite['size'] == 0x2C
         assert sprite['members']['iWidth_'] == 0x18
         assert sprite['members']['iHeight_'] == 0x1C
-        bindings = read_objects(ROOT,image_pin(ROOT))
         bound,_ = object_targets(bindings,objects)
-        expected = {'g_TECH_ICON_SPRITES':0x759E28,'g_FACILITY_ICON_SPRITES':0x787200,
-                    'g_SECRET_PROJECT_ICON_SPRITES':0x759320,'g_BATTLE_MIND_WORM_SPRITE':0x779200,
-                    'g_BATTLE_ISLE_DEEP_SPRITE':0x76DC30,'g_BATTLE_LOCUSTS_CHIRON_SPRITE':0x78A4A0,
-                    'g_BATTLE_FUNGAL_TOWER_SPRITE':0x787E70,'g_BATTLE_SPORE_LAUNCHER_SPRITE':0x7AC000,
-                    'g_BATTLE_SEALURK_SPRITE':0x779570}
         for name,address in expected.items():
             symbol, = (s for s in misc if s.startswith('?'+name+'@@'))
             assert bound[symbol] == address
@@ -169,16 +158,6 @@ def test_native_loader_objects_references_and_layout():
         assert any('load_pcx@Buffer@@' in s for s in palette)
         assert any('copy_from@Palette@@' in s for s in palette)
         assert any('exec@Gamma@@' in s for s in palette)
-        # Compare fresh pre-boundary/current native code and external references.
-        # This does not discharge either body's original restoration obligation
-        # or establish linked preservation.
-        old_game = Coff(compiler.materialize(ROOT/'src/game.cpp', roots,
-                                            historical, (), flags+settings.layout_flags))
-        assert function_signature(old_game,'?mon_enemy_destroyed@@YAXHH@Z') == function_signature(objects['src/game.cpp'],'?mon_enemy_destroyed@@YAXHH@Z')
-        # Observe the real TexHeap neighbor under the same bounded checkpoint.
-        old_sprite = Coff(compiler.materialize(ROOT/'src/sprite.cpp', roots,
-                                              historical, (), flags+settings.layout_flags))
-        assert function_signature(old_sprite,'?get_mem@TexHeap@@QAEPAXH@Z') == function_signature(objects['src/sprite.cpp'],'?get_mem@TexHeap@@QAEPAXH@Z')
 
 from test_game_logic_seed_batch_behavior import _definition
 

@@ -1,0 +1,17 @@
+{
+  "event_id": "acda6bd52ff616fdb96e2fc764030e7510f94cfc71585ce9359b7b1e3a57eb24",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "native-task-preservation-replaces-obsolete-snapshot",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Current native fixture uses the real nine sourcebound sprite ownerTUs; all same original addresses/spans/count/evidence/data/layout/lifetime/reference assertions remain. Configured original image is SHAvalidated. Seven current actual-source/pin/nativefixture casesPASS, including GCC/Clang PCX-only/copy-only/bothcallbacks and compiled cachedgamma/order/range/apply/lifetime mutants. Native changedTU preservation2flagrows/perfiledamagecontrolsPASS, overallUNKNOWNforomittedunits; all205otheractualapplicationobjects equal unchangedtaskbaseline. OldmonEnemy snapshotfailure reproducedcleanmaster; no claim that TexHeap independently failed. Both are obsolete current-preservation routes, replaced by formal currenttask/compilercontext evidence; no historicalsourceclaim or taskbaseline reset."
+    ]
+  },
+  "previous_event": "d69aa92c7820f3300de9c47f9fe35e02ac71f60b74b575473af3163787e07228",
+  "request_id": "loader-fixture-retirement-incorporated",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:palette-gamma-reload-oct23v"
+}
