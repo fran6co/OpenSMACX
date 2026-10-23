@@ -1,0 +1,17 @@
+{
+  "event_id": "940103e528516051cd83e5380ac2bfe2245a990d055e113b61e9df6217e073a3",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "defined-caviar-test-instrumentation",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "OnlyhostCaviartestdouble render_calls counterinitializedto0; productionCaviarstateandoriginalbugsunchanged. Temporarycausal2x2controlidentifiedUBinfullandclip-onlyharness; removedclip-onlybypass,retainedallassertionsandnowfullGCC/fullClangpositivesandmutantsPASS. Previousfailureanddiagnosiskeptignored; priorUBpositivepassnotqualification. Freshcombined17hostcasesPASS includingsevenfullproductioncases."
+    ]
+  },
+  "previous_event": "51a58ea88d7fe165696ec9ea4061943059cc5285493a87cb4fbbead66e50be89",
+  "request_id": "defined-caviar-instrumentation-incorporated",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:basewin-production-clip-oct23q"
+}

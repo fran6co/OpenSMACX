@@ -1,0 +1,19 @@
+{
+  "event_id": "fc067b1027a49fbed4bed9085f2c317e07d8195f7160810e8dbfdc4b177769fa",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "original-production-panel-clip-flow",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Pin40E3B9push7AEC94=Buffer7AEC64+30rect2fullbounds; currentcliprect1loads7AEC84..90at40E3DE..414BEFOREfirstset_clip40E41A; savedlocalpassedat40F09D. Changeonlydraw_production savedclipgettertocurrent_clip andfirstcliptorestore_clip, retaininglaterpanelclip/finalincomingrestore/allotherbodyandprimary+coldspans. Distinctfromdraw_infowhichsavesafterouterframe. Native5actualcompiles1candidate4controlsPASS/outside/noexactgainloss;1090vsoriginal1089instructionsstillMISMATCH. SevenhostcaseswithfullGCC/Clangpositiveharness/newclipmutantsandoldvehicle/facility/detailassertionsPASS; mockbehaviornotfullrenderingproof.",
+      "Freshthreeowner frozen3070339dcb7b application192TUs206qualifiedphysicalobjects compile/linkPASS;203otherwholeobjects normalizedequal freshlyverifiedmaster7cd96e3d8. All3candidateobjects exactlyreproduceindividuallyscreenedactualproductionrecipeoutput; fulloutsideeachselectedfunctionPASS. Allsourceoriginalidentities/fullspans/symbolfacts/authoredhistory/historicalclaimsretained. Native source/claims/mapping/referencesPASS. All5581knownmappedmaskedverdictsunchanged3418exact; same3003strictpass/415unknown identities. No newexact,implementationcoverageorhistoricalclaimbanked.",
+      "Independent source/test/physical reviewsinignoredparallel-match-oct23q; rootfreshcombined17hosttestsPASS. CoordinatorreviewSHA256 d23127078bb3a9d1be4d319cbd25c820d8ea965a42547691c4f5c1cbab29688b. OriginalTaskbaselines7cd96e3d8retained; noflag/header/compiler/package/gatechanges, demotion orscopewaivers. Hostdoubles/compiledresiduals do notprovewholelinkedretainedselection/structure/runtime/gameacceptance. Standinguserpermissionauthorizesboundedcoordinator-reviewedmanualintegration,notautomaticadmission. Freshdestinationbuild/all206objectcomparison/sourcecontinuity/17testsrequired beforeworkerbranchcleanup; preservefailuresandrerunfreshwithoutbaselineresets."
+    ]
+  },
+  "previous_event": "8dbfd70c6a832383a0d578e2666068e3802b864053c03da6cb9773b3313596f2",
+  "request_id": "original-production-panel-clip-flow-incorporated",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:basewin-production-clip-oct23q"
+}

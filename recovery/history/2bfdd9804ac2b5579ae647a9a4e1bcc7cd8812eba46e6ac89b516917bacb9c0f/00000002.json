@@ -1,0 +1,19 @@
+{
+  "event_id": "7352d6fb280fc7a5624afcca34490434667b365f83ab35aaf0ad6492624831c7",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "original-release-parent-reloads",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Pin60774Einitialparentnullread precedesTime::stop,timeGetTime,Sleep;607791reloadparentforsoundlookup;6077C0reloadparentforvslot42aftersoundstatus/play. Removeonlystaleearlyparentcachefromon_left_up, preserveinitialnullreturn/capturerelease/timer/statusreset/capturedSoundpointeracrossstatusplay/currentID/finalredraw/noaddedlaternullguard. Native5actualcompiles1candidate4controlsPASS/outside/noexactgainloss;52vsoriginal54instructionsMISMATCH. SixGCC/ClangactualbodypositiveandtwocompiledstaleparentmutantsPASS; null-aftercallbackunsafeoriginalpathnotexecutedandproductioncallbackmutationreachabilityunproved. AdjacentparentcachingTRIEDbelongsnexton_left_click,notthisbody.",
+      "Freshthreeowner frozen3070339dcb7b application192TUs206qualifiedphysicalobjects compile/linkPASS;203otherwholeobjects normalizedequal freshlyverifiedmaster7cd96e3d8. All3candidateobjects exactlyreproduceindividuallyscreenedactualproductionrecipeoutput; fulloutsideeachselectedfunctionPASS. Allsourceoriginalidentities/fullspans/symbolfacts/authoredhistory/historicalclaimsretained. Native source/claims/mapping/referencesPASS. All5581knownmappedmaskedverdictsunchanged3418exact; same3003strictpass/415unknown identities. No newexact,implementationcoverageorhistoricalclaimbanked.",
+      "Independent source/test/physical reviewsinignoredparallel-match-oct23q; rootfreshcombined17hosttestsPASS. CoordinatorreviewSHA256 d23127078bb3a9d1be4d319cbd25c820d8ea965a42547691c4f5c1cbab29688b. OriginalTaskbaselines7cd96e3d8retained; noflag/header/compiler/package/gatechanges, demotion orscopewaivers. Hostdoubles/compiledresiduals do notprovewholelinkedretainedselection/structure/runtime/gameacceptance. Standinguserpermissionauthorizesboundedcoordinator-reviewedmanualintegration,notautomaticadmission. Freshdestinationbuild/all206objectcomparison/sourcecontinuity/17testsrequired beforeworkerbranchcleanup; preservefailuresandrerunfreshwithoutbaselineresets."
+    ]
+  },
+  "previous_event": "26c33c5e8067ff2dd0783f4e15c72272f058900f91fadc6a79a332260fd305fb",
+  "request_id": "original-release-parent-reloads-incorporated",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:basebutton-parent-reload-oct23q"
+}

@@ -1,0 +1,22 @@
+{
+  "event_id": "8dbfd70c6a832383a0d578e2666068e3802b864053c03da6cb9773b3313596f2",
+  "payload": {
+    "affects": [
+      "entity-0040a1a1d7a662ac6de6e1a3b9d7b20f067801b733a8363e77a79770452b7232"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "original-production-panel-clip-flow",
+    "evidence": [
+      "Pin40E3B9push7AEC94=Buffer7AEC64+30rect2fullbounds; currentcliprect1loads7AEC84..90at40E3DE..414BEFOREfirstset_clip40E41A; savedlocalpassedat40F09D. Changeonlydraw_production savedclipgettertocurrent_clip andfirstcliptorestore_clip, retaininglaterpanelclip/finalincomingrestore/allotherbodyandprimary+coldspans. Distinctfromdraw_infowhichsavesafterouterframe. Native5actualcompiles1candidate4controlsPASS/outside/noexactgainloss;1090vsoriginal1089instructionsstillMISMATCH. SevenhostcaseswithfullGCC/Clangpositiveharness/newclipmutantsandoldvehicle/facility/detailassertionsPASS; mockbehaviornotfullrenderingproof.",
+      "Freshthreeowner frozen3070339dcb7b application192TUs206qualifiedphysicalobjects compile/linkPASS;203otherwholeobjects normalizedequal freshlyverifiedmaster7cd96e3d8. All3candidateobjects exactlyreproduceindividuallyscreenedactualproductionrecipeoutput; fulloutsideeachselectedfunctionPASS. Allsourceoriginalidentities/fullspans/symbolfacts/authoredhistory/historicalclaimsretained. Native source/claims/mapping/referencesPASS. All5581knownmappedmaskedverdictsunchanged3418exact; same3003strictpass/415unknown identities. No newexact,implementationcoverageorhistoricalclaimbanked.",
+      "Independent source/test/physical reviewsinignoredparallel-match-oct23q; rootfreshcombined17hosttestsPASS. CoordinatorreviewSHA256 d23127078bb3a9d1be4d319cbd25c820d8ea965a42547691c4f5c1cbab29688b. OriginalTaskbaselines7cd96e3d8retained; noflag/header/compiler/package/gatechanges, demotion orscopewaivers. Hostdoubles/compiledresiduals do notprovewholelinkedretainedselection/structure/runtime/gameacceptance. Standinguserpermissionauthorizesboundedcoordinator-reviewedmanualintegration,notautomaticadmission. Freshdestinationbuild/all206objectcomparison/sourcecontinuity/17testsrequired beforeworkerbranchcleanup; preservefailuresandrerunfreshwithoutbaselineresets."
+    ],
+    "hypothesis": "Restore original production-panel incoming clip capture and full-buffer first frame",
+    "kind": "discovery"
+  },
+  "previous_event": "940103e528516051cd83e5380ac2bfe2245a990d055e113b61e9df6217e073a3",
+  "request_id": "original-production-panel-clip-flow",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:basewin-production-clip-oct23q"
+}

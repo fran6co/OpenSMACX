@@ -1,0 +1,22 @@
+{
+  "event_id": "e24f9189d26c2fff088394a848b0a5443ddb623224396d6dc354001f138b4f4b",
+  "payload": {
+    "affects": [
+      "entity-457b472c77d0098887b5e3801204060dcbaff281d8df450f6e74b449b84d736e"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "original-first-occupied-player-id",
+    "evidence": [
+      "Pin62F543..62F558 firstscancomparesDWORDrow+0playerID!=0, stride58; callback62EE39..62EE68 matchesIDthenconditionallywritesmark+8basedonflags+14bit2. Changeonlysend_group_flagged firstselectionfield8tofield0, preservingfirstselectedtimeout/solependingretryinit/noneoccupiedexit/callbackmarks/allotherretryerrorpaths. Native5actualcompiles1candidate4controlsPASS outside/noexactgainloss; candidate483vsoriginal384instructionsMISMATCH. FourGCC/Clangactualcallbackandprefixcontrols/mutantPASS, stoptimingafterfirstwaitbeforeoriginalindeterminatestackreads; nofullretryprooforinitializationbugfix.",
+      "Freshthreeowner frozen3070339dcb7b application192TUs206qualifiedphysicalobjects compile/linkPASS;203otherwholeobjects normalizedequal freshlyverifiedmaster7cd96e3d8. All3candidateobjects exactlyreproduceindividuallyscreenedactualproductionrecipeoutput; fulloutsideeachselectedfunctionPASS. Allsourceoriginalidentities/fullspans/symbolfacts/authoredhistory/historicalclaimsretained. Native source/claims/mapping/referencesPASS. All5581knownmappedmaskedverdictsunchanged3418exact; same3003strictpass/415unknown identities. No newexact,implementationcoverageorhistoricalclaimbanked.",
+      "Independent source/test/physical reviewsinignoredparallel-match-oct23q; rootfreshcombined17hosttestsPASS. CoordinatorreviewSHA256 d23127078bb3a9d1be4d319cbd25c820d8ea965a42547691c4f5c1cbab29688b. OriginalTaskbaselines7cd96e3d8retained; noflag/header/compiler/package/gatechanges, demotion orscopewaivers. Hostdoubles/compiledresiduals do notprovewholelinkedretainedselection/structure/runtime/gameacceptance. Standinguserpermissionauthorizesboundedcoordinator-reviewedmanualintegration,notautomaticadmission. Freshdestinationbuild/all206objectcomparison/sourcecontinuity/17testsrequired beforeworkerbranchcleanup; preservefailuresandrerunfreshwithoutbaselineresets."
+    ],
+    "hypothesis": "Select original first occupied player row for flagged group-send retry state",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "original-first-occupied-player-id",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:net-first-peer-oct23q"
+}
