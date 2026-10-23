@@ -1,0 +1,25 @@
+{
+  "event_id": "9cdd788877f2eb8f63efe3ae3b82ca2ffee4accc328228e96eca55d1cebc3800",
+  "payload": {
+    "affects": [
+      "entity-56799b990bc00a3ff5b719b384a9c97539c8119cd64be13c2448291a6f4d4061",
+      "entity-f0a10cdaba5e719b53ad777f60eff2be3f8693396e73feafac0d123beffae399"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "original-wrapped-subtraction-and-signed-threshold-order",
+    "evidence": [
+      "Pinned5918A0zeroextends the tile detail byte, performs dwordSUBwithMapSeaLevel and uses signedJGE/JLwhile comparingAltNatural indices6through0. The former source unsigned comparison returned6forordinarybelowsea detail20/sea21 where the original returns0. This is a recovered-code defect, not an original-game safety/behavior fix.",
+      "MapSeaLevel is raw signed metadata loaded without a proven safe range. Explicit uint32 operands preserve every32bitsubtraction result before int32interpretation; direct signed subtraction could overflow. The independently inspected actualVC6/x86 candidate emits the same wrappedSUBand signedbranches for allwordpatterns in both standalonealt_natural and its inlinealt_set_both expansion. Signed bit conversion is configured target behavior, not a claim of compiler-independent conversion rules. Existing shared arrays/metadata/types/headers/bindings remain unchanged.",
+      "The new actual-source GCC/Clang-O2/UBSan controls use a separate wide signed oracle, everydetailbyte, positive/negative sea andINT_MIN/MAXboundaries, deterministic raw-word sea samples and synthetic high-bit/nonmonotonic thresholds. Detailgetter count/coordinates are checked. Original unsigned source fails the ordinarybelowseawitness; each compiler detects allfourcompilingwrong-behavior mutations. All92relevant broader owner/world/terrain tests pass with zero skips after coordinator catchup.",
+      "A canonical-owner parser test incorrectly froze the old unsigned predicate. Within native scope expansion, only that syntax assertion became complete actual-definition membership in its mapped region. All identity/span/claim/flag/call/TU/lifetime assertions remain; signed behavior is checked independently. The original Taskbaseline667c is unchanged; independently accepted64fbcontrol-owner changes were caught up by coordinator Gitmerge, not a task-baseline reset.",
+      "One candidate compile plus three baseline/replica/damage controls completed under unchanged actualrecipe. The private experiment driver then returned1 on an additional snapshot check after native lease environment restoration. This exit is preserved, not labeledgreen; a separate no-compiler postlease audit rechecked allfourobjects/currentoldbuild receipts/sourceHEAD/task/candidatehash before guarded materialization. Independent operation review and the fresh full189CPP/203object candidate build are separate stronger evidence; no failed automatic acceptance is bypassed."
+    ],
+    "hypothesis": "Restore original signed altitude-band selection after modulo32 sea-level subtraction, including the expanded setter call path.",
+    "kind": "discovery"
+  },
+  "previous_event": "92b2ce6b240eb5aa3e7ad72b6e600a1a8709670c82db26ccf7107c8434e598c2",
+  "request_id": "original-wrapped-subtraction-and-signed-threshold-order",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:altitude-signed-order-oct23g"
+}
