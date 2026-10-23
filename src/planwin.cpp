@@ -149,7 +149,7 @@ PlanWin::~PlanWin() {
 
 // Initialize the plan display using its inherited MapWin and virtual
 // GraphicWin state. The image does not read the caption argument.
-// ORIGINAL: 0x0048BC60 ?init@PlanWin@@QAEXPAD@Z 0x0048BC60-0x0048BCC5
+// ORIGINAL: 0x0048BC60 ?init@PlanWin@@QAEXPAD@Z 0x0048BC60-0x0048BCC5 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x0048BC60-0x0048BCC5;git:a899c9ea:src/recovered/units/0048bc60.cpp", "source:src/planwin.h:PlanWin;source:src/mapwin.h:MapWin;source:src/buffer.h:Buffer"], "reason": "The PlanWin member initializes its inherited MapWin fields and its own Buffer from the virtual GraphicWin dimensions, preserving the observed object relationships."}
 void PlanWin::init(char *) {
     field_21A68_ = 1;
@@ -159,9 +159,8 @@ void PlanWin::init(char *) {
     MapWin::init(3, 0);
     field_1DD98_ = -14;
 
-    GraphicWin *graphic = this;
-    buffer_.init(graphic->dib_.bmiHeader.biWidth,
-                 -graphic->dib_.bmiHeader.biHeight, 0, 0);
+    buffer_.init(dib_.bmiHeader.biWidth,
+                 -dib_.bmiHeader.biHeight, 0, 0);
 }
 
 // Midpoint along the shorter horizontal interval on a wrapped map. The

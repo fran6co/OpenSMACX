@@ -11859,11 +11859,12 @@ void __cdecl pump_all_key_messages() {
 // symbol    ?pump_mouse_move_message@@YAHXZ
 int __cdecl pump_mouse_move_message() {
     MSG message;
-    if (!PeekMessageA(&message, nullptr, WM_MOUSEMOVE, WM_MOUSEMOVE, PM_REMOVE))
-        return 0;
-    TranslateMessage(&message);
-    DispatchMessageA(&message);
-    return 1;
+    if (PeekMessageA(&message, nullptr, WM_MOUSEMOVE, WM_MOUSEMOVE, PM_REMOVE)) {
+        TranslateMessage(&message);
+        DispatchMessageA(&message);
+        return 1;
+    }
+    return 0;
 }
 
 // ORIGINAL: 0x005FCDF0 sub_5fcdf0 0x005FCDF0-0x005FCEC0 BYTE_EXACT
