@@ -7584,7 +7584,7 @@ void Win::update_back_to_window(Buffer * buffer) {
     }
 
     int tail;
-    if (!(savedFlags & 2)) {
+    if (!(iSomeFlag_ & 2)) {
         WinViewOriginX += client_rect_.left + outer_rect_.left;
         WinViewOriginY += client_rect_.top + outer_rect_.top;
 
@@ -7592,7 +7592,7 @@ void Win::update_back_to_window(Buffer * buffer) {
             win_parent_ == 0) {
             goto after_offset_fixup;
         }
-        this->client_to_screen(&WinViewOriginX, &WinViewOriginY);
+        win_parent_->client_to_screen(&WinViewOriginX, &WinViewOriginY);
         if (!(iFlags_ & 0x8000)) {
             goto after_offset_fixup;
         }
@@ -7609,7 +7609,7 @@ void Win::update_back_to_window(Buffer * buffer) {
 after_offset_fixup:;
 
     RECT rect;
-    if (!(savedFlags & 2)) {
+    if (!(iSomeFlag_ & 2)) {
         rect.left = outer_rect_.left;
         rect.top = outer_rect_.top;
         rect.right = outer_rect_.right;
