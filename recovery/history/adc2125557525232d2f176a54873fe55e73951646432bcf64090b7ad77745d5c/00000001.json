@@ -1,0 +1,19 @@
+{
+  "event_id": "92b2ce6b240eb5aa3e7ad72b6e600a1a8709670c82db26ccf7107c8434e598c2",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_terrain_helper_boundaries.py"
+    ],
+    "evidence": [
+      "The fresh actual-source signed-order matrix and all8compiled GCC/Clang behavioral damage controls pass;91of92broader owner tests pass. A canonical-owner parser assertion freezes the old incorrect unsigned while predicate and fails only on the verified int32 threshold expression. Replace only that spelling-specific assertion with complete actual-definition membership in its parsed owner region; preserve every source identity/span/claim/flag/TU/ownership and native compile-control assertion. Signed behavior is tested independently, not accepted by parser-text equality. No C++/header/flag changes authorized beyond the original owner body."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "decouple-altitude-owner-parser-test-from-wrong-unsigned-spelling",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:altitude-signed-order-oct23g"
+}

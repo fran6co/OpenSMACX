@@ -173,7 +173,11 @@ def test_mappings_parse_at_the_canonical_altitude_owner():
     assert rows[0x005C58C0].byte_exact
     assert rows[ALT_SET_BOTH].region.find("alt_natural(x, y)") >= 0
     assert rows[ALT_PUT_DETAIL].region.find("map_loc(x, y)->contour = detail;") >= 0
-    assert rows[ALT_NATURAL].region.find("while (contour < AltNatural[natural] && natural)") >= 0
+    # This checks the canonical source owner, not the historical unsigned
+    # predicate spelling. Actual-source controls verify the signed operation.
+    actual_natural = extract_body((ROOT / "src/map_altitude.cpp").read_text(),
+                                  "int __cdecl alt_natural(int x, int y)")
+    assert actual_natural in rows[ALT_NATURAL].region
 
 
 def test_pinned_spans_retain_direct_calls_and_the_setter_inline_exception():

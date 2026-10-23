@@ -40,9 +40,12 @@ Return Value: Natural altitude on a scale from 0 (ocean trench) to 6 (mountain t
 Status: Complete
 */
 int __cdecl alt_natural(int x, int y) {
-    uint32_t contour = alt_detail_at(x, y) - MapSeaLevel;
-    uint32_t natural = ALT_3_LEVELS_ABOVE_SEA;
-    while (contour < AltNatural[natural] && natural) {
+    // Native SUB wraps the metadata dword, then JGE orders the result and
+    // threshold as signed32. These bit conversions use the VC6/x86 contract.
+    const int32_t contour = static_cast<int32_t>(
+        static_cast<uint32_t>(alt_detail_at(x, y)) - static_cast<uint32_t>(MapSeaLevel));
+    int natural = ALT_3_LEVELS_ABOVE_SEA;
+    while (contour < static_cast<int32_t>(AltNatural[natural]) && natural) {
         natural--;
     }
     return natural;
