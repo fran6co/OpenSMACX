@@ -1,0 +1,19 @@
+{
+  "event_id": "339d100d14824444323acaac2efa999bfa69c4f04d9cd378530d8a749b3b8573",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "runtime-math-inventory-parent-closure-oct24a",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/vendor/vc6-runtime.recovery.h nowretains ordinary+20 anddistinct__CIoffset0 code-entry anchors in each of the same pinned complete contributions. Allothermanifest/import/evidence fields andnoncomponent prefix/suffix remainunchanged; nativeparser/rendererused. No intrinsic Cprototype, callablefunctionend orruntime-version inference.",
+      "Nativeentry_inventoryPASS andnonrelocationPASS. New parent-closure finding runtime-math-parent-relocation-closure-oct24a explicitlyretains byte/referenceUNKNOWN andnoncallable/unpublished entries. The initial invalid incomplete inventory is repaired without changing qualification rules or weakening oldpositivecontrols.",
+      "Focusedtests49PASS aftercorrectingnewfixtureprojection/indexerrors andoverstatedqualification expectations; alloldcontribution hashes/spans/bindings/qualifiers/imports retained. No C++implementation orclaimchange; no newscopedtargets andnofull-gameacceptance."
+    ]
+  },
+  "previous_event": "5d78118c7bf619c2db30d474d025ba3de30155e2d3a24b97e40920aab927a04d",
+  "request_id": "runtime-math-complete-inventory-incorporated-oct24a",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:runtime-math-entries-oct23zh"
+}

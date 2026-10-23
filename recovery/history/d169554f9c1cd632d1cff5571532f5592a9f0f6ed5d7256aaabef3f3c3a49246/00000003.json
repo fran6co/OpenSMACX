@@ -1,0 +1,27 @@
+{
+  "event_id": "5d78118c7bf619c2db30d474d025ba3de30155e2d3a24b97e40920aab927a04d",
+  "payload": {
+    "affects": [
+      "entity-1b297145eda436613dd1adba5bcb3d4a9413af80705471af3e588fde55252dcf",
+      "entity-38137e5d5c49e7afd2dc00e80d84dee7381acd8c790e5630b44c415db882a822",
+      "entity-49ab520dae40db52f69f9308112606d6aeb037345193d4453b1c9de5abf8a805",
+      "entity-bc86888447c026bb5a116bc56821353fd7f2781e0ed2e42d1bb7a2f60912d6d4",
+      "entity-c7c76ae8b9531656b82f43b7d92840badffc6272f50a3a1935cc36da4623ae68",
+      "entity-e35a365a8949f35a3f7070148eaad9a7e232daf1f8a7873541cbdb065a6eff25"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "runtime-math-parent-relocation-closure-oct24a",
+    "evidence": [
+      "Actual native whole-code verifier proves all3complete symbol inventories and nonrelocation bytes, while bytes/references and all6entries remain UNKNOWN, callableFALSE,scoped_reference_targetFALSE,addressNone. Overallcomponentresult remainsUNKNOWN, notFAIL/PASS.",
+      "Unresolved referenced symbols: _NAME_, __DEFAULT_CW_in_mem, ___fastflag, __checkTOS_withFB, __convertTOStoQNaN, __fast_exit, __fload_withFB, __indefinite, __load_CW, __math_exit, __pi_by_2_to_61, __startOneArgErrorHandling. These code/data/private-symbol dependencies require source-owned identity, address/ABI and supported verification; do not guess bounds/aliases, fabricate application globals, weaken the gate or infer the original runtime version/selection.",
+      "The49focused realarchive/image and damage cases pass while retaining allpreviousqualified sparseentry targets. Mathentrylabels add no application implementation, local byte claim or currently qualified strict target."
+    ],
+    "hypothesis": "Complete math entry inventories identify six observed code-entry labels, but parent sections still lack complete relocation target evidence. They must not publish scoped call targets until that closure is independently qualified; entry and function extents/selection/runtime remain distinct.",
+    "kind": "discovery"
+  },
+  "previous_event": "fd5fbd92c048eb787e7cab7c759b32cd43a9c7a9c98e518b38a53c8adcfa5d46",
+  "request_id": "runtime-math-parent-relocation-closure-oct24a",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:runtime-math-entries-oct23zh"
+}

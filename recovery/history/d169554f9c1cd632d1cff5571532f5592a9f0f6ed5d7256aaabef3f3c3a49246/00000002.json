@@ -1,0 +1,35 @@
+{
+  "event_id": "fd5fbd92c048eb787e7cab7c759b32cd43a9c7a9c98e518b38a53c8adcfa5d46",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Independent pinned COFF/original review runtime-math-intrinsic-entry-evidence-oct23zh.json proves each complete section also has one distinct external function symbol __CIsin/__CIcos/__CIsqrt at offset0, not a same-offset alias. Native schema requires the whole defined external function inventory. Explicitly supersede the initial ordinary-only restriction to add these3observed code-entry labels aswellasordinary+20anchors; all other originaltaskconstraints remain.",
+      "First20bytes observe incoming x87ST(0) storage and forwarding, distinct fromordinary stack-double entry. No source C prototype, independent end, runtime version/selection or completeABI inferred for intrinsic entries. Preserveexistingcompleteparentsection spans, fullsource metadata and all imports; code-entry labels remain verification obligations.",
+      "Existing parent references/bytes remain UNKNOWN after inventory completion. Newtests must verify completeinventoryPASS/nonrelocationPASS and refusal to expose anymath scopedtargets while parentproof isUNKNOWN. Preserve oldqualified sparseentry positives and all negativecontrols. Do not weaken native qualification or report newreference/applicationcoverage gains."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6579152,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6579328,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6579504,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "30b028bb48cdd6347bcce8041fb9b00474f67f114701f7ad5e701352d18ea73e",
+  "request_id": "runtime-math-complete-distinct-entry-inventory-oct24a",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:runtime-math-entries-oct23zh"
+}

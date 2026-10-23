@@ -6,6 +6,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import subprocess
 
 import pytest
@@ -13,7 +14,8 @@ import pytest
 from match_recovery.component_binary import verify_toolchain
 from match_recovery.component_source import parse_component, render_component
 from match_recovery.component_targets import component_targets
-from match_recovery.model import Span
+from match_recovery.model import Origin, Span
+from match_recovery.pe_coff import PeImage
 from match_recovery.source_inventory import source_snapshot
 
 
@@ -28,6 +30,7 @@ STRCHR_END = 0x00645E8C
 GENEXCEP_MEMBER = "../build/intel/mt_obj/genexcep.obj"
 GENEXCEP_START = 0x0064A970
 GENEXCEP_END = 0x0064A9C3
+MATH_HEADER_SHA256 = "0b65bf8d09c443d32b33cfb662896fd2d48bdcd6436725a691102637bb9116a7"
 
 SPARSE_ENTRY_SECTIONS = {
     STRCHR_MEMBER: {
@@ -42,6 +45,31 @@ SPARSE_ENTRY_SECTIONS = {
     },
 }
 
+MATH_ENTRY_SECTIONS = {
+    "../build/intel/mt_obj/sin.obj": {
+        "span": Span(0x006463D0, 0x0064647E),
+        "entries": (("__CIsin", 0x0, 0x006463D0),
+                    ("_sin", 0x14, 0x006463E4)),
+        "prototype": "double __cdecl sin(double)",
+    },
+    "../build/intel/mt_obj/cos.obj": {
+        "span": Span(0x00646480, 0x0064652E),
+        "entries": (("__CIcos", 0x0, 0x00646480),
+                    ("_cos", 0x14, 0x00646494)),
+        "prototype": "double __cdecl cos(double)",
+    },
+    "../build/intel/mt_obj/sqrt.obj": {
+        "span": Span(0x00646530, 0x006465EA),
+        "entries": (("__CIsqrt", 0x0, 0x00646530),
+                    ("_sqrt", 0x14, 0x00646544)),
+        "prototype": "double __cdecl sqrt(double)",
+    },
+}
+MATH_ENTRY_ANCHORS = tuple(
+    (unit, expected, anchor)
+    for unit, expected in MATH_ENTRY_SECTIONS.items()
+    for anchor in expected["entries"])
+
 
 def manifest():
     return parse_component((ROOT / COMPANION).read_text())
@@ -55,10 +83,12 @@ def section_for(value, unit):
     return next(item for item in value.code_sections if item.unit == unit)
 
 
-def snapshot_with_manifest(header):
+def snapshot_with_manifest(header, *, image_sha256=None):
     snapshot = source_snapshot(ROOT)
     snapshot["files"][COMPANION]["content_base64"] = base64.b64encode(
         header.encode("utf-8")).decode("ascii")
+    if image_sha256 is not None:
+        snapshot["image_sha256"] = image_sha256
     return snapshot
 
 
@@ -87,6 +117,31 @@ def test_source_retains_legacy_identity_and_declares_size_free_entries():
     assert {(item.name, item.offset) for item in section.entries} == {
         ("_strcpy", 0), ("_strcat", 0x10)}
     assert all(item.evidence.strip() for item in section.entries)
+
+
+def test_math_entries_are_anchored_inside_the_existing_whole_contributions():
+    value = manifest()
+    for unit, expected in MATH_ENTRY_SECTIONS.items():
+        section = section_for(value, unit)
+        assert section.span == expected["span"]
+        assert section.section == 1 and section.section_name == ".text"
+        assert section.origin.address == section.span.start
+        assert section.origin.image_sha256 == "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+        assert {(entry.name, entry.offset) for entry in section.entries} == {
+            (name, offset) for name, offset, _address in expected["entries"]}
+        assert all(section.span.start + entry.offset == address
+                   for entry, (_name, _offset, address) in zip(section.entries, expected["entries"], strict=True))
+        assert all(entry.name not in {binding.symbol for binding in value.bindings}
+                   for entry in section.entries)
+
+
+def test_math_entry_abi_matches_the_pinned_vc6_math_header(pinned_inputs):
+    _image, _archive, archive_path = pinned_inputs
+    math_header = archive_path.parent.parent / "INCLUDE" / "math.h"
+    assert hashlib.sha256(math_header.read_bytes()).hexdigest() == MATH_HEADER_SHA256
+    text = math_header.read_text(errors="strict")
+    for name in ("sin", "cos", "sqrt"):
+        assert re.search(rf"_CRTIMP\s+double\s+__cdecl\s+{name}\(double\);", text)
 
 
 def test_pinned_whole_contribution_qualifies_entries_not_function_extents(pinned_inputs):
@@ -118,6 +173,7 @@ def test_fresh_project_targets_include_both_verified_entries(pinned_inputs):
     targets, reports = component_targets(ROOT, source_snapshot(ROOT), image)
     assert targets["_strcpy"] == START
     assert targets["_strcat"] == START + 0x10
+    assert not (set(targets) & {anchor[0] for _, expected, anchor in MATH_ENTRY_ANCHORS})
     assert reports and all(report["link_verification"] == "unknown" for report in reports)
 
 
@@ -165,7 +221,7 @@ def test_wrong_anchor_or_archive_cannot_qualify_entries(pinned_inputs):
         assert all(item["scoped_reference_target"] is False for item in row["entries"])
 
 
-def test_source_adds_only_sparse_size_free_entries_to_existing_contributions():
+def test_source_adds_sparse_and_math_entries_to_existing_contributions():
     value = manifest()
     for unit, expected in SPARSE_ENTRY_SECTIONS.items():
         section = section_for(value, unit)
@@ -182,7 +238,7 @@ def test_source_adds_only_sparse_size_free_entries_to_existing_contributions():
         ["git", "show", "40cb844010428167d760de95780a0891bd95d55f:" + COMPANION],
         cwd=ROOT, text=True)
     baseline = parse_component(baseline_text)
-    target_units = set(SPARSE_ENTRY_SECTIONS)
+    target_units = set(SPARSE_ENTRY_SECTIONS) | set(MATH_ENTRY_SECTIONS)
     restored = replace(baseline, code_sections=tuple(
         replace(section, entries=section_for(value, section.unit).entries)
         if section.unit in target_units else section
@@ -195,9 +251,12 @@ def test_source_adds_only_sparse_size_free_entries_to_existing_contributions():
     assert section_for(value, MEMBER).span == Span(START, END)
     assert {(item.name, item.offset) for item in section_for(value, MEMBER).entries} == {
         ("_strcpy", 0), ("_strcat", 0x10)}
+    for unit, expected in MATH_ENTRY_SECTIONS.items():
+        assert {(entry.name, entry.offset) for entry in section_for(value, unit).entries} == set(
+            (name, offset) for name, offset, _address in expected["entries"])
 
 
-def test_pinned_sparse_entries_qualify_only_their_complete_sections(pinned_inputs):
+def test_pinned_sparse_and_math_entries_qualify_only_their_complete_sections(pinned_inputs):
     image, archive, _ = pinned_inputs
     value = manifest()
     report = verify_toolchain(value, image, archive)
@@ -220,6 +279,22 @@ def test_pinned_sparse_entries_qualify_only_their_complete_sections(pinned_input
     known_units = set(SPARSE_ENTRY_SECTIONS) | {MEMBER}
     qualified = {entry["symbol"] for row in report["code_sections"]
                  if row["unit"] in known_units for entry in row["entries"]}
+    for unit, expected in MATH_ENTRY_SECTIONS.items():
+        row, = (item for item in report["code_sections"] if item["unit"] == unit)
+        assert row["span"] == {"start": expected["span"].start,
+                               "end": expected["span"].end}
+        assert row["entry_inventory"] == row["nonrelocation_bytes"] == "pass"
+        assert row["bytes"] == row["references"] == "unknown"
+        assert row["callable"] is False and row["link_target"] is False
+        assert {item["symbol"]: (item["offset"], item["address"])
+                for item in row["entries"]} == {
+            name: (offset, None) for name, offset, _address in expected["entries"]}
+        for entry in row["entries"]:
+            assert entry["result"] == "unknown"
+            assert entry["callable"] is False
+            assert entry["scoped_reference_target"] is False
+            assert entry["link_target"] is False and entry["function_extent"] == "unknown"
+            assert not any(item["symbol"] == entry["symbol"] for item in report["functions"])
     assert qualified == {"_strcpy", "_strcat", "_strchr", "___from_strstr_to_strchr",
                          "__startTwoArgErrorHandling", "__startOneArgErrorHandling"}
     assert report["application_recoveries"] == 0
@@ -228,12 +303,15 @@ def test_pinned_sparse_entries_qualify_only_their_complete_sections(pinned_input
     assert report["ready_for_collection"] is False
 
 
-def test_fresh_native_targets_include_all_four_sparse_entries(pinned_inputs):
+def test_fresh_native_targets_include_sparse_and_math_entries(pinned_inputs):
     image, _, _ = pinned_inputs
     targets, reports = component_targets(ROOT, source_snapshot(ROOT), image)
     expected = {symbol: address for section in SPARSE_ENTRY_SECTIONS.values()
                 for symbol, (_offset, address) in section["entries"].items()}
+    expected.update({"_strcpy": START, "_strcat": START + 0x10})
     assert {symbol: targets[symbol] for symbol in expected} == expected
+    assert not (set(targets) & {name for unit, section, (name, _offset, _address) in
+                                MATH_ENTRY_ANCHORS})
     assert reports and all(report["link_verification"] == "unknown" for report in reports)
 
 
@@ -268,3 +346,100 @@ def test_missing_sparse_parent_cannot_publish_its_entries(pinned_inputs, unit):
         ROOT, snapshot_with_manifest(render_component(without_parent)), image)
     assert not (set(targets) & set(SPARSE_ENTRY_SECTIONS[unit]["entries"]))
     assert reports and all(report["link_verification"] == "unknown" for report in reports)
+
+
+@pytest.mark.parametrize("unit,expected,anchor", MATH_ENTRY_ANCHORS)
+def test_wrong_math_entry_offset_fails_closed_in_native_target_export(
+        pinned_inputs, unit, expected, anchor):
+    image, _, _ = pinned_inputs
+    value = manifest()
+    section = section_for(value, unit)
+    entry = next(item for item in section.entries if item.name == anchor[0])
+    damaged = replace(section, entries=tuple(
+        replace(item, offset=item.offset + 1) if item.name == entry.name else item
+        for item in section.entries))
+    changed = replace(value, code_sections=tuple(
+        damaged if item.unit == unit else item for item in value.code_sections))
+    targets, reports = component_targets(
+        ROOT, snapshot_with_manifest(render_component(changed)), image)
+    name = anchor[0]
+    assert name not in targets
+    row, = (item for item in reports[0]["code_sections"] if item["unit"] == unit)
+    assert row["entry_inventory"] == "fail"
+    entry_report, = (item for item in row["entries"] if item["symbol"] == name)
+    assert entry_report["symbol"] == name
+    assert entry_report["result"] == "fail" and entry_report["address"] is None
+    assert entry_report["scoped_reference_target"] is False
+
+
+@pytest.mark.parametrize("unit,expected,anchor", MATH_ENTRY_ANCHORS)
+def test_missing_math_parent_cannot_publish_its_entry(pinned_inputs, unit, expected, anchor):
+    image, _, _ = pinned_inputs
+    value = manifest()
+    without_parent = replace(value, code_sections=tuple(
+        item for item in value.code_sections if item.unit != unit))
+    targets, reports = component_targets(
+        ROOT, snapshot_with_manifest(render_component(without_parent)), image)
+    assert anchor[0] not in targets
+    assert all(item["unit"] != unit for item in reports[0]["code_sections"])
+    assert reports and all(report["link_verification"] == "unknown" for report in reports)
+
+
+@pytest.mark.parametrize("unit,expected,anchor", MATH_ENTRY_ANCHORS)
+def test_failed_math_parent_bytes_refuse_scoped_entry_targets(
+        pinned_inputs, unit, expected, anchor):
+    image, _archive, _ = pinned_inputs
+    value = manifest()
+    target = section_for(value, unit)
+    parsed = PeImage(image, target.origin.image_sha256)
+    region, file_offset, raw_size = next(
+        (region, file_offset, raw_size)
+        for region, file_offset, raw_size in parsed.sections
+        if region.start <= target.span.start < region.start + raw_size)
+    changed_at = file_offset + target.span.start - region.start
+    assert changed_at < file_offset + raw_size
+    damaged_image = bytearray(image)
+    damaged_image[changed_at] ^= 1
+    damaged_image = bytes(damaged_image)
+    changed_pin = hashlib.sha256(damaged_image).hexdigest()
+    changed = replace(
+        value,
+        bindings=tuple(replace(item, origin=Origin(changed_pin, "pe:va", item.origin.address))
+                       for item in value.bindings),
+        data_sections=tuple(replace(item, origin=Origin(changed_pin, "pe:va", item.origin.address))
+                            for item in value.data_sections),
+        code_sections=tuple(replace(item, origin=Origin(changed_pin, "pe:va", item.origin.address))
+                            for item in value.code_sections))
+    targets, reports = component_targets(
+        ROOT, snapshot_with_manifest(render_component(changed), image_sha256=changed_pin),
+        damaged_image)
+    name = anchor[0]
+    assert name not in targets
+    row, = (item for item in reports[0]["code_sections"] if item["unit"] == unit)
+    assert row["bytes"] == "fail"
+    entry, = (item for item in row["entries"] if item["symbol"] == name)
+    assert entry["result"] != "pass" and entry["scoped_reference_target"] is False
+
+
+@pytest.mark.parametrize("unit,expected,anchor", MATH_ENTRY_ANCHORS)
+def test_changed_archive_refuses_math_entry_targets(
+        pinned_inputs, tmp_path, unit, expected, anchor):
+    image, archive, _ = pinned_inputs
+    bad_archive = tmp_path / "LIBCMT.LIB"
+    bad_archive.write_bytes(archive + b"damaged")
+    recovery = tmp_path / "recovery"
+    recovery.mkdir()
+    (recovery / "project.json").write_text(json.dumps({
+        "schema_version": 1,
+        "components": {"toolchain_archives": {"vc6-runtime": str(bad_archive)}},
+    }))
+    targets, reports = component_targets(
+        tmp_path, snapshot_with_manifest(render_component(manifest())), image)
+    name = anchor[0]
+    assert name not in targets
+    assert reports and reports[0]["archive"]["result"] == "fail"
+    row, = (item for item in reports[0]["code_sections"] if item["unit"] == unit)
+    entry, = (item for item in row["entries"] if item["symbol"] == name)
+    assert entry["result"] != "pass"
+    assert entry["scoped_reference_target"] is False
+    assert entry["link_target"] is False and entry["function_extent"] == "unknown"

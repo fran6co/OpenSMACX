@@ -1,0 +1,24 @@
+{
+  "event_id": "30b028bb48cdd6347bcce8041fb9b00474f67f114701f7ad5e701352d18ea73e",
+  "payload": {
+    "affects": [
+      "entity-1b297145eda436613dd1adba5bcb3d4a9413af80705471af3e588fde55252dcf",
+      "entity-49ab520dae40db52f69f9308112606d6aeb037345193d4453b1c9de5abf8a805",
+      "entity-c7c76ae8b9531656b82f43b7d92840badffc6272f50a3a1935cc36da4623ae68"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "runtime-math-inventory-parent-closure-oct24a",
+    "evidence": [
+      "runtime-math-entry-candidate-verification-oct23zh.json: all3entry_inventoryFAIL because defined__CI*offset0 omitted; nonrelocation bytesPASS but bytes/referencesUNKNOWN. Parentclosure and original final-selection/runtime proof remain unfinished.",
+      "Testjob84104:33PASS4FAIL. Three failures expose genuine unsupportedqualification assumptions; one is a testfixture dictionary-index bug. Preserveoldqualified sparseentry positives and false-target refusal; do not weaken currentverifier or publish unqualified math targets.",
+      "Rawsource/COFF/ABI review supports ordinary API names at+20; completeintrinsic entry label evidence is being independently reviewed before explicit new scope authorizes them. No same-offsetaliases or new C++runtime implementations."
+    ],
+    "hypothesis": "The section verifier requires the complete distinct external-function entry inventory, and the existing FPU parent relocation closure remains unknown. Public +0x14 entries alone are invalid; qualify both observed entry labels per section without inventing compiler-entry prototypes, function ends or scoped targets, and retain the unsolved parent dependencies.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "runtime-math-inventory-parent-closure-oct24a",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:runtime-math-entries-oct23zh"
+}

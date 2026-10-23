@@ -1,0 +1,35 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "029c236f4bfce89e30bb1c653c6e643168465400",
+  "editable_files": [
+    "src/vendor/vc6-runtime.recovery.h",
+    "recovery/tests/test_crt_public_entries_oct16.py",
+    "recovery/tests/test_runtime_code_contributions_oct12d.py"
+  ],
+  "evidence": [
+    "Native report runtime-frontier-provider-evidence-oct23zg verifies existing pinned LIBCMT whole-contribution bindings for sin.obj/cos.obj/sqrt.obj. Each unique ordinary external _sin/_cos/_sqrt lies at section1offset0x14, at original6463E4/646494/646544; math.h corroborates double __cdecl(double) ABI. Add only these3typed CodeEntryAnchor values to existing sections, using native component_source parser/renderer. Preserve everyoldspan/member/archive/image pin/license/import/binding/evidence and all surrounding noncomponent text.",
+    "No independent function end is proven. Keep function_extent UNKNOWN, link_target false and current original runtime version/selection/retention/reference/runtime obligations. This is dependency attribution/scoped call-target qualification, not application implementation, a new source byte claim, code copied from runtime, or source recovery of a third-party library. Do not add __CI aliases or same-offsetaliases, guess bounds, change schema/package/compiler/flags, or adjust existing target/export rules.",
+    "Coordinator owns Git/integration and compiler resources. Source and tests workers edit distinct files. Extend existing pinned-archive/image positive and meaningful wrong-offset, absent-parent and wrong-archive controls. Preserve old identities and all semantic assertions while explicit reviewed entry sets grow; no count-ratchet reset or blanketignore. Require independent raw archive/source/ABI review, freshly qualified native component_targets, source claims/mapping/reference continuity, and current compiled-artifact scoped/whole reference assessment. No Python outsideuv. Source companion is not compiled; realCPPbuild inputs must stay unchanged. Coordinator-reviewed manual integration only; no automatic/full-game acceptance."
+  ],
+  "intent": "Qualify size-free public math entry anchors in existing pinned CRT contributions",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6579172,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6579348,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6579524,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "runtime-math-entries-oct23zh"
+}
