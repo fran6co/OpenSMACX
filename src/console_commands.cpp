@@ -1325,7 +1325,7 @@ void Console::hold(int veh_id, int waypoint_y) {
 
     bool should_hold = (tile.climate & 0xE0) >= 0x60 || chassis.triad != 0;
     if (!should_hold) {
-        if ((tile.bit & 1) == 0 || (tile.val2 & 0x0F) < 8) {
+        if ((tile.bit & 1) == 0 || (tile.val2 & 0x0F) >= 8) {
             NetDaemonNet.unlock_veh();
             return;
         }

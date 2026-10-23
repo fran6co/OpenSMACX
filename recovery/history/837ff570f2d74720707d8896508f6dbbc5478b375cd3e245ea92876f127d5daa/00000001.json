@@ -1,0 +1,24 @@
+{
+  "event_id": "df5fd7f5d6c9fc5f4a4ef5ac6b4a6b89b618f76fa107a6a865becd2c1849a784",
+  "payload": {
+    "affects": [
+      "entity-87cc1b21345174f114799a698ab58ae9e75dde4c0ece640851411a690f207162"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "original-hold-terrain-gate",
+    "evidence": [
+      "Independent full-span review SHA256 a6e19994becdff4b371f68e6841a48c6d8aa7089ab192d7b995b686690d212d8 finds an inherited wrong inequality in candidate and integration baseline: original4D252D..4D2568 sends absent-base or masked owner>=8 to unlock/return when climate/triad admission is false. Current C++ instead returns for masked owner<8. The borrowed-parameter correction is valid, but no source-semantic integration approval is granted while this contradiction remains.",
+      "Coordinator explicitly authorizes correcting this evidence-backed transcription error within the already selected complete hold function and its existing authorized test file. This follows the standing direction to act on discoveries immediately; file/identity scope and original task baseline do not change. The initial minimal pointer-hunk restriction does not require preserving an independently disproved translation. Preserve the original executable behavior, including all unsafe/error paths, rather than adding a safety fix.",
+      "Wait for the independent complete branch truth-table follow-up before editing any other gate. Correct only inequalities/effects proven wrong by the original. Extend actual-source GCC/Clang tests across low/high climate, triad/range, base-bit/owner nibble and airbase-bit paths as supported by the full pin, including valid original input combinations and a compiled old-inequality mutant. Keep all prior live-selection/callback/artifact/coordinate cases and copied-local mutant.",
+      "The prior host test Map.bit was uint8_t even though real Map.bit is a wider mask; fix that bounded test-double type to the actual declaration so the airbase bit can be exercised. Do not modify game types/headers or fabricate behavior to satisfy the fixture. Test expectations must derive from original branch conditions, not mirror the repaired C++ predicate.",
+      "Initial application run49940 is terminal: build/link/source/claims/mapping/reference checks pass and all3429localexact/3115strictPASS314UNKNOWN states remain. Keep these reports as evidence for the superseded pointer-only candidate, not the corrected function. Source/Task are now unfrozen for this authorized revision; after edits freeze again and rerun relevant controls/fresh application verification before integration. No baseline reset, claim demotion or acceptance replay."
+    ],
+    "hypothesis": "Restore the original valid-base-owner terrain condition within the same complete hold ownership scope.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "original-hold-terrain-gate",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:console-hold-follow-oct23z"
+}

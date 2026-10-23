@@ -39,12 +39,20 @@ def _old_copied_local_mutant(body):
     return body.replace(original, mutant, 1)
 
 
+def _old_terrain_inequality_mutant(body):
+    original = "(tile.val2 & 0x0F) >= 8) {"
+    mutant = "(tile.val2 & 0x0F) < 8) {"
+    assert body.count(original) == 2
+    return body.replace(original, mutant, 1)
+
+
 def _harness(body):
     return r'''
 #include <assert.h>
 #include <stdint.h>
 
-enum { TRIAD_AIR = 2, ORDER_HOLD = 9, PLAN_ALIEN_ARTIFACT = 7 };
+enum { TRIAD_SEA = 1, TRIAD_AIR = 2, ORDER_HOLD = 2,
+       PLAN_ALIEN_ARTIFACT = 12 };
 
 struct Veh {
     int x, y, proto_id;
@@ -52,7 +60,7 @@ struct Veh {
     int16_t waypoint_y[1];
     int8_t order;
 };
-struct Map { uint8_t climate, bit, val2; };
+struct Map { uint8_t climate; uint32_t bit; uint8_t val2; };
 struct RulesChassis { int triad, range; };
 struct VehPrototype { int chassis_id, plan; };
 
@@ -213,11 +221,115 @@ void await_dispatch_update_is_used_afterward_but_draw_keeps_snapshot() {
     assert(ordered_id == 2);
 }
 
+void low_climate_land_base_with_valid_owner_is_admitted() {
+    reset_state();
+    Vehs[0].x = 3; Vehs[0].y = 4; Vehs[0].proto_id = 0;
+    Tiles[16 * 4 + (3 >> 1)].climate = 0x20;
+    Tiles[16 * 4 + (3 >> 1)].bit = 1;
+    Tiles[16 * 4 + (3 >> 1)].val2 = 3;
+    const int events_expected[] = { EV_LOCK, EV_SYNCH, EV_AWAIT, EV_UNLOCK,
+                                    EV_CHECK, EV_DRAW };
+    hold(0, 33);
+    expect_prefix(events_expected, 6);
+    assert(Vehs[0].waypoint_y[0] == 33 && Vehs[0].order == ORDER_HOLD);
+    assert(synch_id == 0 && check_id == 0 && draw_x == 3 && draw_y == 4);
+}
+
+void low_climate_land_without_base_is_rejected() {
+    reset_state();
+    Vehs[0].x = 3; Vehs[0].y = 4;
+    Tiles[16 * 4 + (3 >> 1)].climate = 0x20;
+    Tiles[16 * 4 + (3 >> 1)].bit = 0;
+    const int events_expected[] = { EV_LOCK, EV_UNLOCK };
+    hold(0, 33);
+    expect_prefix(events_expected, 2);
+    assert(Vehs[0].waypoint_y[0] == 0 && Vehs[0].order == 0);
+}
+
+void sea_unit_bypasses_land_base_gate() {
+    reset_state();
+    Vehs[0].x = 3; Vehs[0].y = 4;
+    Chassis[0].triad = TRIAD_SEA;
+    Tiles[16 * 4 + (3 >> 1)].climate = 0x20;
+    Tiles[16 * 4 + (3 >> 1)].bit = 0;
+    const int events_expected[] = { EV_LOCK, EV_SYNCH, EV_AWAIT, EV_UNLOCK,
+                                    EV_CHECK, EV_DRAW };
+    hold(0, 33);
+    expect_prefix(events_expected, 6);
+    assert(Vehs[0].waypoint_y[0] == 33 && Vehs[0].order == ORDER_HOLD);
+}
+
+void invalid_owner_nibble_boundary_is_rejected() {
+    reset_state();
+    Vehs[0].x = 3; Vehs[0].y = 4;
+    Tiles[16 * 4 + (3 >> 1)].climate = 0x20;
+    Tiles[16 * 4 + (3 >> 1)].bit = 1;
+    Tiles[16 * 4 + (3 >> 1)].val2 = 9;
+    const int events_expected[] = { EV_LOCK, EV_UNLOCK };
+    hold(0, 33);
+    expect_prefix(events_expected, 2);
+    assert(Vehs[0].waypoint_y[0] == 0 && Vehs[0].order == 0);
+    /* Nibble 9 is only the invalid-owner boundary control; no reachability claim. */
+}
+
+void air_range_requires_base_or_airbase_exception() {
+    reset_state();
+    Vehs[0].x = 3; Vehs[0].y = 4;
+    Chassis[0].triad = TRIAD_AIR;
+    Chassis[0].range = 1;
+    Tiles[16 * 4 + (3 >> 1)].climate = 0x20;
+    const int rejected[] = { EV_LOCK, EV_UNLOCK };
+    hold(0, 33);
+    expect_prefix(rejected, 2);
+
+    reset_state();
+    Vehs[0].x = 3; Vehs[0].y = 4;
+    Chassis[0].triad = TRIAD_AIR;
+    Chassis[0].range = 1;
+    Tiles[16 * 4 + (3 >> 1)].climate = 0x20;
+    Tiles[16 * 4 + (3 >> 1)].bit = 0x40000;
+    const int admitted[] = { EV_LOCK, EV_SYNCH, EV_AWAIT, EV_UNLOCK,
+                             EV_CHECK, EV_DRAW };
+    hold(0, 33);
+    expect_prefix(admitted, 6);
+    assert(Vehs[0].waypoint_y[0] == 33 && Vehs[0].order == ORDER_HOLD);
+}
+
+void air_range_accepts_valid_base_and_range_zero_disables_air_gate() {
+    reset_state();
+    Vehs[0].x = 3; Vehs[0].y = 4;
+    Chassis[0].triad = TRIAD_AIR;
+    Chassis[0].range = 1;
+    Tiles[16 * 4 + (3 >> 1)].climate = 0x20;
+    Tiles[16 * 4 + (3 >> 1)].bit = 1;
+    Tiles[16 * 4 + (3 >> 1)].val2 = 3;
+    const int admitted[] = { EV_LOCK, EV_SYNCH, EV_AWAIT, EV_UNLOCK,
+                             EV_CHECK, EV_DRAW };
+    hold(0, 33);
+    expect_prefix(admitted, 6);
+
+    reset_state();
+    Vehs[0].x = 3; Vehs[0].y = 4;
+    Chassis[0].triad = TRIAD_AIR;
+    Chassis[0].range = 0;
+    Tiles[16 * 4 + (3 >> 1)].climate = 0x20;
+    const int range_zero[] = { EV_LOCK, EV_SYNCH, EV_AWAIT, EV_UNLOCK,
+                               EV_CHECK, EV_DRAW };
+    hold(0, 33);
+    expect_prefix(range_zero, 6);
+}
+
 int main() {
     lock_failure_is_early();
     unchanged_selection_uses_expected_order();
     lock_update_selects_live_vehicle_and_snapshots_coordinates();
     await_dispatch_update_is_used_afterward_but_draw_keeps_snapshot();
+    low_climate_land_base_with_valid_owner_is_admitted();
+    low_climate_land_without_base_is_rejected();
+    sea_unit_bypasses_land_base_gate();
+    invalid_owner_nibble_boundary_is_rejected();
+    air_range_requires_base_or_airbase_exception();
+    air_range_accepts_valid_base_and_range_zero_disables_air_gate();
     return 0;
 }
 '''.replace("BODY", body)
@@ -252,6 +364,18 @@ def test_actual_hold_copied_local_mutant_compiles_then_fails(tmp_path, compiler_
         pytest.skip(compiler_name + " unavailable")
     mutant = _old_copied_local_mutant(_actual_hold())
     built, exe = _compile_run(tmp_path, compiler, _harness(mutant), "copied_local_mutant")
+    assert built.returncode == 0, built.stderr
+    ran = subprocess.run((str(exe),), capture_output=True, text=True, timeout=10)
+    assert ran.returncode != 0
+
+
+@pytest.mark.parametrize("compiler_name", ("g++", "clang++"))
+def test_actual_hold_old_terrain_inequality_compiles_then_fails(tmp_path, compiler_name):
+    compiler = shutil.which(compiler_name)
+    if compiler is None:
+        pytest.skip(compiler_name + " unavailable")
+    mutant = _old_terrain_inequality_mutant(_actual_hold())
+    built, exe = _compile_run(tmp_path, compiler, _harness(mutant), "old_terrain_inequality")
     assert built.returncode == 0, built.stderr
     ran = subprocess.run((str(exe),), capture_output=True, text=True, timeout=10)
     assert ran.returncode != 0
