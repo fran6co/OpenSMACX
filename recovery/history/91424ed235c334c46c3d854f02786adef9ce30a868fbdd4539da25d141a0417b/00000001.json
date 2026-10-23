@@ -1,0 +1,20 @@
+{
+  "event_id": "7c413d8335fc5c792567d9b776b74b499c5edab4db3fb6504c14be9e63db04ac",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_ambience_colortables_behavior.py",
+      "recovery/tests/test_ambience_colortables_source.py"
+    ],
+    "evidence": [
+      "Rootfreshmaster39baselineexistingtests3fail3pass XMLambience-baseline-tests.xml: behaviorfixture lacksGameDataStateStorage.fields_.game_preferences_; sourcechecks/mutatorstillspellretiredGamePreferences. AuthorizeONLYfixtureprojectedcurrentGamestatepreference andcorrespondingassert/mutatorreference, preserveeveryoldbehaviorassertionandsamemaskmutant, noCppbodychanges/guardweaken/normalization. Usecurrentrealproductexpression, do notrewritetheextractedproductionbody. Thisfixturemigrationisnotnewcoverageorproductionbugfix; originalbaselineevidenceretained."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "ambience-existing-fixture-projection",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:ambience-easy-matches-oct23r"
+}

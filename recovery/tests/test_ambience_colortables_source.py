@@ -42,7 +42,7 @@ def test_native_ambience_state_cells_keep_the_pinned_initial_values():
 def test_real_ambience_dispatch_and_lifecycle_are_source_owned():
     ambience, _, _ = product_bodies()
     assert "PENDING_BODY" not in ambience
-    assert "GamePreferences & 0x800" in ambience
+    assert "GameDataStateStorage.fields_.game_preferences_ & 0x800" in ambience
     assert "AmbienceCurrentEffect == ambience_id" in ambience
     for event in (
         "general", "tech", "popup1", "eot", "hostility", "basewin_show",
@@ -112,7 +112,9 @@ def test_real_caller_populates_faction_art_and_color_bank_members():
 def test_mutations_of_the_actual_extracted_bodies_break_the_guards():
     ambience, tables, art = product_bodies()
     mutants = (
-        (ambience, "GamePreferences & 0x800", "GamePreferences & 0x400"),
+        (ambience,
+         "GameDataStateStorage.fields_.game_preferences_ & 0x800",
+         "GameDataStateStorage.fields_.game_preferences_ & 0x400"),
         (ambience, "g_FX.effect(previous_effect).fade()",
          "g_FX.effect(previous_effect).stop()"),
         (tables, "cache_file.close(saved + 12)",
