@@ -1,0 +1,36 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "667c196dd328fe742514f8463187ac9612083b3f",
+  "editable_files": [
+    "src/map_altitude.cpp",
+    "recovery/tests/test_altitude_signed_order_actual_source.py"
+  ],
+  "evidence": [
+    "Independent full pinned5918A0..5918EF review establishes zero-extended detail byte, dword SUB of raw loaded MapSeaLevel and signed JGE against descending AltNatural thresholds6through0. Current unsigned relational comparison chooses a wrong altitude even for ordinary belowsea detail20/sea21. This is correction to original behavior, not a game bug fix.",
+    "MapSeaLevel is a signed metadata dword loaded raw without a proven safe range. Preserve modulo32 subtraction for all bit patterns, and interpret the resulting bits and threshold as signed32 on configuredVC6/x86. Proposed explicit uint32 subtraction and int32 reinterpretation uses the existing fixed-width types, not assembly, raw addresses, safe fallback or a clamp. Signed conversion is implementation-defined; independently verify actual compiler lowering and preserve that target contract in source evidence. Do not claim portable signed-overflow equivalence.",
+    "A bounded whole-table review found no sufficient evidence to change AltNatural, AltNaturalDefault or AltContour element types or bindings. This task changes only local operations, not table declarations, map metadata, headers, flags, initializers or unrelated callers. Inlined alt_set_both is included in the full owner measurement/scope. Any broader discovery requires coordinator expansion.",
+    "Root alone owns Task, compiler resources, native measurements/recording, Git/publication/integration. The worker may author only the new actual-source behavioral test, not product source. Preserve all three original identities/fullspans/historical claims/lessons and do not reset baseline. Up to3candidate compiles/function/unchangedcontext includingerrors; controls/verification separate.",
+    "Require actual full owner-recipe baseline/replica/damage controls, semantic review including belowsea/boundaries/extreme raw metadata and thresholds, fresh build/link and relevant continuity/preservation checks before manual integration. Native automatic/full/game acceptance remains unfinished; do not claim it."
+  ],
+  "intent": "Restore original wrapping altitude subtraction and signed threshold ordering",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5839008,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5837408,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5839088,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "altitude-signed-order-oct23g"
+}
