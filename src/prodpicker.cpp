@@ -265,7 +265,8 @@ void ProdPicker::on_left_click(int x, int y) {
     const int row = y / row_height_;
     const uint32_t oldSelection = field_A774_;
     const int column = x / cell_width_;
-    const uint32_t newSelection = field_A77C_ + row * column_count_ + column;
+    uint32_t newSelection = row;
+    newSelection = newSelection * column_count_ + field_A77C_ + column;
     field_A774_ = newSelection;
     if (oldSelection != newSelection) {
         field_B64_ = 0;

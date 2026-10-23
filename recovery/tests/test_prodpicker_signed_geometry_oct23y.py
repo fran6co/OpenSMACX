@@ -45,7 +45,12 @@ def actual_click_definition() -> str:
     raise AssertionError("unterminated ProdPicker::on_left_click definition")
 
 
-def compile_and_run(tmp_path: Path, compiler_name: str) -> subprocess.CompletedProcess[str]:
+def compile_and_run(
+    tmp_path: Path,
+    compiler_name: str,
+    *,
+    signed_overflow_damage: bool = False,
+) -> subprocess.CompletedProcess[str]:
     compiler = shutil.which(compiler_name)
     if not compiler:
         pytest.skip(f"{compiler_name} unavailable")
@@ -61,6 +66,16 @@ def compile_and_run(tmp_path: Path, compiler_name: str) -> subprocess.CompletedP
     assert "int32_t column_count_;" in declarations
     assert "int32_t cell_width_;" in declarations
     assert "int32_t row_height_;" in declarations
+
+    body = actual_click_definition()
+    if signed_overflow_damage:
+        corrected = """    uint32_t newSelection = row;
+    newSelection = newSelection * column_count_ + field_A77C_ + column;
+"""
+        damaged = """    const uint32_t newSelection = field_A77C_ + row * column_count_ + column;
+"""
+        assert body.count(corrected) == 1
+        body = body.replace(corrected, damaged, 1)
 
     harness = r'''#include <cassert>
 #include <cstdint>
@@ -121,14 +136,28 @@ int main() {
   p.on_left_click(80, 70);
   assert(p.field_A774_ == 13 && p.field_B64_ == 6);
   assert(p.events.empty());
+
+  // The native IMUL/ADD sequence wraps the selected index to one 32-bit word.
+  // All divisions here are safe; only the old signed product overflows.
+  p.events.clear();
+  p.field_A77C_ = 17;
+  p.column_count_ = 2;
+  p.cell_width_ = 1;
+  p.row_height_ = 1;
+  p.field_A774_ = 11;
+  p.field_B64_ = 7;
+  p.on_left_click(0, 2147483647);
+  assert(p.field_A774_ == 15 && p.field_B64_ == 0);
+  assert((p.events == std::vector<int>{210, 250, 99999}));
 }
-'''.replace("DECLARATIONS", declarations).replace("BODY", actual_click_definition())
+'''.replace("DECLARATIONS", declarations).replace("BODY", body)
 
     source = tmp_path / f"prodpicker-signed-geometry-{compiler_name.replace('+', 'p')}.cpp"
     executable = source.with_suffix("")
     source.write_text(harness)
     subprocess.run(
-        [compiler, "-std=c++17", "-Wall", "-Wextra", "-Werror", str(source), "-o", str(executable)],
+        [compiler, "-std=c++17", "-Wall", "-Wextra", "-Werror", "-fsanitize=undefined",
+         "-fno-sanitize-recover=undefined", str(source), "-o", str(executable)],
         check=True,
         capture_output=True,
         text=True,
@@ -140,3 +169,10 @@ int main() {
 def test_actual_left_click_uses_signed_geometry_and_preserves_redraw_order(tmp_path, compiler_name):
     result = compile_and_run(tmp_path, compiler_name)
     assert result.returncode == 0, result.stderr
+
+
+@pytest.mark.parametrize("compiler_name", ["g++", "clang++"])
+def test_signed_selection_overflow_damage_control_compiles_then_fails_ubsan(tmp_path, compiler_name):
+    result = compile_and_run(tmp_path, compiler_name, signed_overflow_damage=True)
+    assert result.returncode != 0
+    assert "runtime error:" in result.stderr
