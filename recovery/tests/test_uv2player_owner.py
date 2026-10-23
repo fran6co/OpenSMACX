@@ -63,7 +63,7 @@ def test_actual_input_and_timed_writer(tmp_path, scenario):
 
 @pytest.mark.parametrize("old,new,scenario", [
     ("direct_draw2_ = 0;", "direct_draw2_ = this;", "constructor"),
-    ("!GetMessageA(&message, 0, 0, 0)", "GetMessageA(&message, 0, 0, 0) <= 0", "keys"),
+    ("if (GetMessageA(&message, 0, 0, 0))", "if (GetMessageA(&message, 0, 0, 0) > 0)", "keys"),
     ("buffer_.set_write_raw_callback(0);", "buffer_.set_write_raw_callback(&uv2_player_writer_redirect);", "member"),
     ("instance->write_delay_", "100u", "clock"),
     ("buffer.set_write_raw_callback(&uv2_player_writer_redirect);", "buffer.set_write_raw_callback(0);", "callback"),

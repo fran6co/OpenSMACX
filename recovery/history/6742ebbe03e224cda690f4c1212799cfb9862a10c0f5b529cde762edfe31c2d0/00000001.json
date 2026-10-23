@@ -1,0 +1,23 @@
+{
+  "event_id": "9b3314d3631097cd598ae2fe94fcf1232a1c113410e08e701eedb59d4761c370",
+  "payload": {
+    "affects": [
+      "entity-63170b9627d6c14264d45829b69b51a8954ec14aacaafec7c7de2a9814845e31"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "exact-original-message-key-branches",
+    "evidence": [
+      "Original complete43-instruction span4BF390..4BF3FE calls PeekMessageA then GetMessageA with the original zero filters/flags, rejects only zero returns, accepts Return/Escape/Space and either mouse-down, writes quit1 and returns1 for those paths, and otherwise returns0 without clearing the quit global. Ordinary nested positive guards and shared rejection return recover the exact local bytes. GetMessage minus-one remains truthy, with MSG supplied by PeekMessage; no original bugfix, initialization, dispatch or cleanup added.",
+      "Production replay, baseline/candidate replicas, deliberate GetMessage >0 damage and native outside-selected comparisons pass. Native guarded recorder exit0 updates only4BF390 after a43/43 measured match, without regressions or unresolved recording evidence. All other original mappings/full spans/symbols/authored history and claims are retained. Ten existing actual-source behavior/sanitizer/damage cases pass; only the old negated GetMessage mutation anchor was retargeted to the positive guard. Independent full-span source/pin review is retained.",
+      "Fresh frozen 7a0c1a17478014d905a62d471dc27b90fd2a6a82 application192TUs206qualifiedobjects compiles and links. Compared with current master a98d85da2c2a54a535aec4d6cb0081ef95647ab5,205othernormalizedobjects are equal and the changed object reproduces the independently controlled candidate. Source/claims/mapping/reference checks pass. Across5581 known mapped functions, only4BF390 changes MISMATCH to local BYTE_EXACT, raising3428to3429. All3428previous strict states remain identical:3115PASS/313UNKNOWN; the new body adds one UNKNOWN because GetMessageA lacks a source import identity binding. Keep that missing evidence explicit, not a strict pass or wrong-target assertion.",
+      "Coordinator review SHA256 27fa8a9020039da8bd3104b2206ced14999625b361657b6e3d6553d499f15b83. Original task baseline b253a5eb886486f70930face11f6a87bc99b2efe remains unchanged; current-master UI recoveries were merged into the worker without resetting history. No header/ABI/build/compiler/framework/flag change, claim demotion or native acceptance waiver. Standing user permission authorizes bounded coordinator-reviewed manual integration after these checks, not complete linked preservation, structure/runtime/game or automatic acceptance. Require fresh destination build/all206objectcomparison/tenhostcases before cleanup; preserve failures and rerun fresh."
+    ],
+    "hypothesis": "Recover exact ordinary message-pump branch structure in the UV2Player owner",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "exact-original-message-key-branches",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:uv2-message-key-oct23z"
+}

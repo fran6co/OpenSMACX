@@ -1,0 +1,21 @@
+{
+  "event_id": "bd2bcf830a1ea8f016edd704d0ee8e3388349ec6674090ed3445b0fbca914cb6",
+  "payload": {
+    "affects": [
+      "entity-63170b9627d6c14264d45829b69b51a8954ec14aacaafec7c7de2a9814845e31"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "get-message-import-identity",
+    "evidence": [
+      "Fresh strict diagnostics for the now-local-exact4BF390 pass boundary, the existing PeekMessageA import and the source-owned quit word. The sole unknown is ordinary external __imp__GetMessageA@16, which currently has no RECOVERY_IMPORT identity. This is incomplete evidence, not a measured target mismatch. Keep the314totalUNKNOWN result, including unchanged313olderUNKNOWNs.",
+      "A future binding must independently establish the current SDK/COFF import symbol and the unique original DLL/export slot using native import/physical evidence, then use the existing source grammar in the real owner and recheck affected references. Do not reintroduce system-import substitute headers or recovered system function bodies, infer the target only from matching operands, waive reference checks, or present masked byte equality as complete fidelity. This finding remains pending after the bounded source recovery integrates."
+    ],
+    "hypothesis": "Resolve the remaining strict GetMessageA reference through an independently justified source-owned SDK import identity.",
+    "kind": "discovery"
+  },
+  "previous_event": "367ad301f63cef2e70a51c61da52b0cb9cf67dd5bf1afee992cc766b3992214f",
+  "request_id": "get-message-import-identity",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:uv2-message-key-oct23z"
+}
