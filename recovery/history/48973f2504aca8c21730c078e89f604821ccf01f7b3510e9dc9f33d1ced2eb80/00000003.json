@@ -1,0 +1,21 @@
+{
+  "event_id": "03cd3a5470097ad1c766ed5cb18a3c2a55a59c85ea2e5a3defb6914c71d1e2d1",
+  "payload": {
+    "affects": [
+      "entity-8f81344e1ec1d0a5abe6bdc0c100e307efef87193d6f4f98a029d76c20cd6ae8"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "associated-codeview-label-verification",
+    "evidence": [
+      "Retained unresolved verifier obligation, not C++ behavior recovery or permission to edit outside CMake/task scope. Actual onlychild367 is .debug$S with canonical discardable flags0x42101048 and twelveSECREL/SECTION relocations: onefunction pair plus five local labels. Current compare_associated_code rejectsallchildren; source_procedure expectsonlyrootpair and decode_procedure rejectsrecord0x1007. Full runtime/EH/data companions must remain refused. Any future fix needs separate framework ownership, complete typed metadata proof and damage controls; never ignore arbitrarynameddebugsections or silently label currentunknownPASS.",
+      "Code/body/data/reference physical comparisons unchanged; historical exact claim remains and current localbyteexact remains. Coordinator exception admits only manually reviewed observability publication, with this finding pending through integration. Native automatic/fullgameacceptance staysunfinished."
+    ],
+    "hypothesis": "Strict associated-data verification needs supported validation of compiler CodeView local labels before45D170 can recover its previous strictPASS in the debug-observable build.",
+    "kind": "discovery"
+  },
+  "previous_event": "969e8fddc58503ef5d31c657185f1954ae6ad1a8db5c6dccf50f2f090117bfaf",
+  "request_id": "associated-codeview-label-verification",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:global-type-evidence-oct23u"
+}
