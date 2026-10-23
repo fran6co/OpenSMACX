@@ -15,6 +15,7 @@ static int g_veh_at_result = -1;
 static int g_base_at_calls;
 static int g_veh_at_calls;
 static int g_rotation_calls;
+static uint32_t g_rotation_angle_bits[3];
 static int g_font_init_calls[3];
 static int g_font_last_height[3];
 static int g_font_last_style[3];
@@ -103,10 +104,14 @@ int UnionRect(RECT *out, const RECT *a, const RECT *b) {
 
 void caviar_apply_rotation(const float *angles, VOX_Matrix *matrix) {
     ++g_rotation_calls;
+    for (int axis = 0; axis < 3; ++axis)
+        memcpy(&g_rotation_angle_bits[axis], &angles[axis], sizeof(uint32_t));
     for (int row = 0; row < 3; ++row)
         for (int col = 0; col < 3; ++col)
             matrix->values[row][col] = (row == col) ? 1.0f : 0.0f;
-    assert(angles[0] == 0.0f && angles[2] == 0.0f);
+    assert(g_rotation_angle_bits[0] == 0x00000000u);
+    assert(g_rotation_angle_bits[1] == 0x00000000u);
+    assert(g_rotation_angle_bits[2] == 0x3F48F5C3u);
 }
 
 struct StatusWin {

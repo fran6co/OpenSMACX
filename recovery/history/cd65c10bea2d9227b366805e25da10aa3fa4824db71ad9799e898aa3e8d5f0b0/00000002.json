@@ -1,0 +1,19 @@
+{
+  "event_id": "5bcb28ce2512a4826fef14d22f2262ec2a7f6b4271234424f30b39a026ad0bc8",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/statuswin_full_host_control.cpp"
+    ],
+    "evidence": [
+      "Coordinator authorizes only the stale Strings::get test-double signature correction. No other fixture/source/body/test bypass or removal. Rerun the complete positive and damage cases under GCC and Clang after source freeze. Original task baseline remains unchanged; preserve the failed first report."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "3b9eb984d9ec3cfabb4e37fc56a726bfa761f702d91826564aec9c1f236f7cd0",
+  "request_id": "authorize-current-hud-string-test-interface",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:statuswin-initial-rotation-oct23z"
+}

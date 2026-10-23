@@ -85,10 +85,21 @@ def extract_definition(source, name):
     raise AssertionError("unterminated StatusWin method: " + name)
 
 
-def extracted_source_pair():
+def extracted_source_pair(*, wrong_axis_damage=False):
     source_path = project_root() / "src" / "statuswin.cpp"
     source = source_path.read_text(encoding="utf-8")
     bodies = {name: extract_definition(source, name) for name in METHOD_NAMES}
+    if wrong_axis_damage:
+        corrected = """    camera_angles_.values[1] = 0.0f;
+    camera_angles_.values[2] = 0.785f;
+    camera_angles_.values[0] = 0.0f;"""
+        damaged = """    camera_angles_.values[0] = 0.0f;
+    const uint32_t initial_angle_bits = 0x3F48F5C3u;
+    memcpy(&camera_angles_.values[1], &initial_angle_bits,
+           sizeof(initial_angle_bits));
+    camera_angles_.values[2] = 0.0f;"""
+        assert bodies["init"].count(corrected) == 1
+        bodies["init"] = bodies["init"].replace(corrected, damaged, 1)
     three_template = METHODS_FIXTURE.read_text(encoding="utf-8")
     hud_template = HUD_FIXTURE.read_text(encoding="utf-8")
     assert three_template.count(THREE_MARKER) == 1
@@ -128,3 +139,24 @@ def test_statuswin_actual_source_methods(compiler, tmp_path):
             timeout=30, check=False,
         )
         assert ran.returncode == 0, ran.stdout + ran.stderr
+
+
+@pytest.mark.parametrize("compiler", ["g++", "clang++"])
+def test_statuswin_wrong_axis_damage_control_compiles_then_fails(compiler, tmp_path):
+    executable = shutil.which(compiler)
+    if executable is None:
+        pytest.skip("host C++ compiler is unavailable: " + compiler)
+    three_source, _ = extracted_source_pair(wrong_axis_damage=True)
+    cpp = tmp_path / "statuswin-three-wrong-axis.cpp"
+    binary = tmp_path / "statuswin-three-wrong-axis"
+    cpp.write_text(three_source, encoding="utf-8")
+    built = subprocess.run(
+        [executable, "-std=c++98", "-Wall", "-Wextra", "-Werror",
+         "-I", str(HERE), str(cpp), "-o", str(binary)],
+        capture_output=True, text=True, timeout=60, check=False,
+    )
+    assert built.returncode == 0, built.stdout + built.stderr
+    ran = subprocess.run(
+        [str(binary)], capture_output=True, text=True, timeout=30, check=False,
+    )
+    assert ran.returncode != 0, ran.stdout + ran.stderr

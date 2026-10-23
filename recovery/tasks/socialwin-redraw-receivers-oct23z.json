@@ -1,0 +1,26 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "b253a5eb886486f70930face11f6a87bc99b2efe",
+  "editable_files": [
+    "src/socialwin.cpp",
+    "recovery/tests/test_socialwin_redraw_receivers_oct23z.py"
+  ],
+  "evidence": [
+    "Independent read-only effective receiver trace in easy-tenth-social-redraw-structure.json corrects the prior unsubstantiated out-of-range interpretation. Original 4B1ADC initializes EDI0; bound7C44 is11 B4C strides; counter21E4 is skipped and later receivers subtract one B4C before this+1202C. Exact actual FlatButton indices are17,18,19,20,21,22,23,24,25,26, in order. The current source instead skips real element20 and adds27, a translation error. Recover the original behavior, not a bugfix.",
+    "Constructor4AEAE4/4AEAE6/4AEAEC constructs35 FlatButtons at6020, strideB4C; current header and sizeof agree. Init compacts the unused logical effect row; adjacent status/close/lifetime operations support the existing array. Change only the final redraw loop to actual contiguous real indices17through26, preserving all preceding helper/rectangle/global/member reload behavior and annotation facts. Do not invent fields, broaden arrays, change class shape/ABI, or add guards. Header/layout is investigation evidence, not authorized editable scope.",
+    "Add a meaningful actual-source redraw regression under GCC and Clang that distinguishes all35 real child identities, checks the full10receiver order and complete helper sequence, and catches a mutant restoring the old skip20/add27 behavior. Keep calls through the public redraw wrapper. Existing source/header/layout controls remain, no new implementation mirrors or trivial text-only coverage test.",
+    "Worker edits only the isolated authorized source and test file with apply_patch, then freezes. No Git, Task, compiler/test/preparation/resource mutations or framework changes; coordinator owns them. Cross-owner or fixture changes need a returned discovery and explicit scope expansion before editing. Never edit original markers, grant/demote claims, fix original unsafe paths or discard prior work.",
+    "Standing user permission allows coordinator-reviewed manual integration after independent review, source/claim/reference continuity, fresh application build/link and relevant native/host controls. It does not waive native automatic refusal or prove full linked/game/runtime acceptance. Preserve original task baseline and all FAIL/UNKNOWN; destination verification required before worker cleanup."
+  ],
+  "intent": "Recover the original ten compacted social-effect child redraw receivers",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4921760,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "socialwin-redraw-receivers-oct23z"
+}

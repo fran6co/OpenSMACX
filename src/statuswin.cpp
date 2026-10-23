@@ -1903,11 +1903,9 @@ void StatusWin::init() {
     caviar_.init();
     caviar_.set_field_A4(0);
 
+    camera_angles_.values[1] = 0.0f;
+    camera_angles_.values[2] = 0.785f;
     camera_angles_.values[0] = 0.0f;
-    const uint32_t initial_angle_bits = 0x3F48F5C3u;
-    memcpy(&camera_angles_.values[1], &initial_angle_bits,
-           sizeof(initial_angle_bits));
-    camera_angles_.values[2] = 0.0f;
 
     caviar_apply_rotation(camera_angles_.values, &camera_rotation_);
 

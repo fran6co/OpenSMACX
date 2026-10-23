@@ -1,0 +1,21 @@
+{
+  "event_id": "3b9eb984d9ec3cfabb4e37fc56a726bfa761f702d91826564aec9c1f236f7cd0",
+  "payload": {
+    "affects": [
+      "entity-92b91e2d3dcb6e6f84b52530d438cd676c1d86205c069d9a9f69290553013f07"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "obsolete-hud-string-test-interface",
+    "evidence": [
+      "Initial coordinator candidate host run statuswin-rotation-candidate-tests.xml retains two compile failures in the pre-existing HUD half, because Strings::get(int) rejects 17 current char-pointer label fields. Both new wrong-axis damage cases compile then fail as intended. The full HUD fixture is unchanged from original task baseline, and draw_status is untouched by this recovery.",
+      "Correct only the bounded test-double Strings::get argument type to the real current src/strings.h interface. Preserve all existing return values, behavior/assertions and every extracted production method. This repairs obsolete host integration, not game source behavior or a relaxation of the checks."
+    ],
+    "hypothesis": "The existing HUD host fixture still accepts integer StringTable keys, while unchanged production draw_status uses the recovered char-pointer API.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "obsolete-hud-string-test-interface",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:statuswin-initial-rotation-oct23z"
+}

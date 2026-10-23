@@ -1,0 +1,25 @@
+{
+  "event_id": "a3e9399d76770ce4341aa5f497bf853532d6df92569b04aa60b6453eb0120f17",
+  "payload": {
+    "affects": [
+      "entity-92b91e2d3dcb6e6f84b52530d438cd676c1d86205c069d9a9f69290553013f07"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "original-third-axis-camera-angle",
+    "evidence": [
+      "Fresh original native bytes at4BA050 store0 at1504,4BA056 store3F48F5C3 at1508,4BA060 store0 atEAX=this+1500. Source now uses camera_angles_[1]=0,[2]=0.785f,[0]=0 in that order. The typed float literal emits the exact original word, eliminating unnecessary uint32/memcpy spelling while preserving the real vector/matrix members and helper/camera-call order.",
+      "The old translation incorrectly set the second axis; restoring the third axis is faithful recovery, not an original behavior fix. Actual-source tests capture and compare every angle word and reject the compiled old-source mutant. The identity rotation double proves input/wiring only, not complete rotation mathematics/runtime. Read-only related-producer investigation finds the other five inspected camera initializers already agree with their original order.",
+      "Coordinator independently reviewed the actual source, original native listings, complete object comparisons and source/annotation facts. Fresh frozen a917f5e10d06bc5654f7f297c98188effcbfe776 compiles and links all192 TUs with206 qualified physical objects;204 other normalized objects are equal to master baseline b253a5eb886486f70930face11f6a87bc99b2efe. Both changed owner objects exactly reproduce the separately qualified candidates. Native production replay, baseline/candidate replicas, body damage and outside-selected comparisons pass for each owner. Source/claims/mapping/reference checks pass.",
+      "All5581 known mapped local verdicts and3428 strict states are identical:3428 local exact,3115 strict PASS,313 UNKNOWN. No new original identities, implementation-count gains, exact matches or historical claims are asserted. Six combined actual-source GCC/Clang cases pass, including compiled runtime-failing wrong-receiver and wrong-axis mutants. Prior failures and contradictory provisional interpretations remain as diagnostic history, corrected add-only with fresh original evidence; they are not accepted source truth.",
+      "The original task baseline remains b253a5eb886486f70930face11f6a87bc99b2efe. Source/header/ABI/build/compiler/gate settings and unrelated behaviors are unchanged. Coordinator review SHA256 8e1ca1749f7a6a6a7c96aa49b44723d303b1d0a337d8b2738ab7ad36ec52c822. Independent source/pin reviews and source/test/object hashes are retained in ignored recovery artifacts. Native FAIL/UNKNOWN and historical restoration obligations remain; no automatic/full-project/complete-linked/runtime/game acceptance is established.",
+      "Standing user permission authorizes this bounded coordinator-reviewed manual integration. Require a fresh destination application build/link, all206 candidate/destination object comparisons, source/claims/reference checks and the same six host cases before cleanup. Preserve failures and useful work without baseline resets, demotions or replayed acceptance reports."
+    ],
+    "hypothesis": "Recover the original third-axis camera rotation initialization",
+    "kind": "discovery"
+  },
+  "previous_event": "70586cb0b8e479aaf1c51dbb9c741f29b28a053f49aa14d08c96304f5d96e445",
+  "request_id": "original-third-axis-camera-angle",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:statuswin-initial-rotation-oct23z"
+}
