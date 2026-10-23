@@ -1,0 +1,21 @@
+{
+  "event_id": "5faf31ea4185ed13b19eec467d667ce1ffab3cc1a37eebca369b2cc40dc13820",
+  "payload": {
+    "affects": [
+      "entity-cce333f607e008399caf2bc16fc5b9ca28aeb268d2bab5926b29cf5a34cdc713"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "sprite-extraction-physical-collateral-oct23ze",
+    "evidence": [
+      "sprite-assets-owner-controls-oct23ze/report.json keeps old-core and new-unit native FAIL.",
+      "sprite-assets-owner-transport-review-oct23ze accounts fifteen literal sections and Strings/say_num header occurrences; no header-function waiver."
+    ],
+    "hypothesis": "Application extraction also changes compiler emission of unchanged Sprite::draw and transports literal/header contributions. Source code is unchanged; investigate and retain these physical obligations, not a function-local helper-only acceptance.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "sprite-extraction-physical-collateral-oct23ze",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:sprite-assets-owner-oct23ze"
+}

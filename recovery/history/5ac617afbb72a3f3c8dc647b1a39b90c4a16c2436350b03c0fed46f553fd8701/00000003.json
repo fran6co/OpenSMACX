@@ -1,0 +1,26 @@
+{
+  "event_id": "9fc68c4ed43746a417ce9c80ae5fb262b12e8a60e52680a0f9d2d9bacb7305ce",
+  "payload": {
+    "affects": [
+      "entity-29d97b6f020f7fe1058ea2114851be9a7bbaf4f57571ce734f0f181aa45a911c",
+      "entity-bd6017026da668a9013c28d53898b9485f6dea0d0271c76910a461472b3ec4e0",
+      "entity-c4be1bea3804c10e08080643888732915aafeb0b18afbee0400731a888ae4a6f",
+      "entity-d187b123ebf6e3bfa1ab66c314c567a2aa7957065f75513b37f6116c65b7545f",
+      "entity-e7f6ba1147e30431e1ba738648a71f192d12445be747b0b3f31bba734aa066cd",
+      "entity-ecb9d9d954a2fb33fba837f4c14e43eac1fd2f88493213ef3fac453f98464e55"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "sprite-assets-emitted-c-symbols-oct23ze",
+    "evidence": [
+      "candidate-assets.obj SHA256 7ab2afb58616a37524f29225ebc64d78026eea560661256c0f088105dd61cc45",
+      "Root control confirms exact pin23/25-instruction EBP-frame helpers, no local exact losses."
+    ],
+    "hypothesis": "Six legacy C helper records lack explicit emitted-symbol facts. The same-source control object independently defines their unique underscored C names; qualify these source-owned current symbols without changing original identity or body.",
+    "kind": "discovery"
+  },
+  "previous_event": "999c4dec1829f21dd06a663cc16552f4169ad81a2fb2ed5837bcb79c90345ebf",
+  "request_id": "sprite-assets-emitted-c-symbols-oct23ze",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:sprite-assets-owner-oct23ze"
+}

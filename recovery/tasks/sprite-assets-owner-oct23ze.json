@@ -1,0 +1,64 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "6136455084f75f1d3aa49d691c5964e867840dfc",
+  "editable_files": [
+    "src/sprite.cpp",
+    "src/sprite_assets.cpp",
+    "CMakeLists.txt",
+    "recovery/project.json",
+    "recovery/tests/test_sprite_scratch_helpers.py",
+    "recovery/tests/test_loaders_behavior.py",
+    "recovery/tests/test_icons_loader.py"
+  ],
+  "evidence": [
+    "Transfer all six shared-PCX extraction helpers450DE0/E30/E80/ED0/F30/F90 and bothload_icons4547E0/load_misc454D10 with exact full annotations/claims/bodies/history/literals into src/sprite_assets.cpp. This is a current semantic application asset owner, not asserted original TU reconstruction. Generic Sprite/TexHeap methods, raster state, InterfaceMetrics, shared PCX Buffer and sprite_objects storage/lifetimes remain in existing owners. Remove only now-unused app extern declarations from generic implementation after zero-use checks.",
+    "Per-source /Oy- for the new application asset TU is authorized as a diagnostic/recovery candidate because the four original helpers explicitly use EBP while current Sprite COFF is frameless. Keep all other compiler/linker policies unchanged; new unit measurement recipe must agree with actual CMake profile. Preserve historical byte claims/restoration obligations through any justified migration, no fabricated wrappers, dummy locals, pragma/export forcing or behavior fixes.",
+    "Coordinator owns Git, native compiler resources/preparation/recording/integration. Require native production/replica/damage controls, independent source/pin/physical object review, compiled transport/outside-scope and literal/data checks, source identity continuity, existing actual-source loader/helper tests, fresh full193TU207object compile/link and destination verification. All literal/inline initializer/link-selection gaps remain explicit; native failures are not waived or relabeled full acceptance."
+  ],
+  "intent": "Separate application sprite asset loading from generic Sprite implementation",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4525536,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4525616,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4525696,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4525776,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4525872,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4525968,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4540384,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4541712,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "sprite-assets-owner-oct23ze"
+}
