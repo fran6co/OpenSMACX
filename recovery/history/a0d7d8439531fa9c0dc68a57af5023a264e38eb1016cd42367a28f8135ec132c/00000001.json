@@ -1,0 +1,23 @@
+{
+  "event_id": "35f3ed04c0684896ff5eacf5a06e05794e92b303f9b182a0f53741f4165ef181",
+  "payload": {
+    "affects": [
+      "entity-9988ab25c5143f54a1a3ba43f78f4c8b7a8baab574f2950ecac3f8ffd37674da"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "original-signed-queue-clamp",
+    "evidence": [
+      "Pin416FB0..41703C uses signed index/count/selected comparisons, decrements and stores selected before register clamp then final store; queue copy reloads live BaseCurrent and shifts IDs before count decrement; tail clamps only if selected>count, then calls draw_queue(1). Ordinary local form preserves these original effects, unsafe negative-index and signed-overflow quirks; no bug fix or ABI/header/type/global/flag change. Independent read-only fullspan/COFF review SHA256 620717cf4815e5c608f76c1e1965408d6505d2ac14a852d93c0b213d08e10703.",
+      "Actual production replay, baseline/candidate replicas and deliberate body damage controls pass; native outside-selected PASS and no other emitted function change. Native guarded recorder exit0 adds measured416FB0 claim, preserving all other original source identities/spans/symbols/authored history/claims. Fresh frozen 91983e732742aade3745b94c7500ae0e3a78b8e6 application192TUs206objects build/linkPASS;205otherwholeobjects normalizedequal masterbaseline, changedunit exactly reproduces screened candidate. Wholeknown5581domain3423localexact3008strictPASS415UNKNOWN, only416FB0 gains; no oldexact/strictstate lost. Review SHA256 eecb36b4390ea5444808df503eea791aacefd6619a5e3034e38190ac1861fec5. Prior derived review display-count error retained/corrected without compiler retries; underlying source equality always passed.",
+      "Old actual-source host fixture stopped at an obsolete decrement-spelling assertion; retain baseline XML. Retarget only anchors/mutations to new local form, preserve all previous behavioral cases and all3compileddecrement/clamp/unsignedmutants underGCC/Clang. Added defined negative-selected valid-removal case to catch unsigned tail comparisons after local signed conversion. Rootfresh15focusedtestsPASS. Negative-array-access/INT_MINunsafeoriginalpaths unexecuted and unnormalized.",
+      "Standing user authorization permits bounded coordinator-reviewed manual integration after these checks, not nativeautomatic/fullproject/game acceptance. Complete linked retained-selection/runtime proof remains unfinished; local/strictfunctioncounts are not exhaustive executable or genuineimplementation coverage. Originaltaskbaseline ba4a748d0b7f8fb3ab75cda2ee4cbdcfb7de298f retained, no demotions or resets. Require freshdestination build/all206objectcomparison/15tests/sourcecontinuity before worker cleanup; preservefailure and rerunfresh without replayed acceptance."
+    ],
+    "hypothesis": "Restore exact original BaseWin production queue deletion using ordinary signed C++ locals",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "original-signed-queue-clamp",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:basewin-queue-match-oct23t"
+}
