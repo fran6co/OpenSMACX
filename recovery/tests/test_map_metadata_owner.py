@@ -139,17 +139,26 @@ def test_live_object_identities_are_members():
     rows = parse_objects((ROOT / "src/map.cpp").read_text(), "src/map.cpp", PIN,
                          address_space="pe:va")
     expected = {
-        0x949870: ("metadata_", "longitude_bounds_"),
-        0x949874: ("metadata_", "latitude_bounds_"),
-        0x949884: ("metadata_", "area_"),
-        0x94988C: ("metadata_", "is_flat_"),
-        0x94A30C: ("tiles_",),
-        0x94A310: ("abstract_tiles_",),
+        "?MapLongitudeBounds@@3HA": (0x949870, ("metadata_", "longitude_bounds_")),
+        "?MapLatitudeBounds@@3HA": (0x949874, ("metadata_", "latitude_bounds_")),
+        "?MapArea@@3IA": (0x949884, ("metadata_", "area_")),
+        "?MapIsFlat@@3HA": (0x94988C, ("metadata_", "is_flat_")),
+        "?MapTiles@@3PAUMap@@A": (0x94A30C, ("tiles_",)),
+        "?MapAbstractTiles@@3PAEA": (0x94A310, ("abstract_tiles_",)),
     }
-    for address, path in expected.items():
-        row = next(r for r in rows if r.origin.address == address)
+    for symbol, (address, path) in expected.items():
+        matches = [r for r in rows if r.symbol == symbol]
+        assert len(matches) == 1
+        row, = matches
+        assert row.origin.address == address
         assert row.parent_symbol == "?MapStorage@@3UMapStorageWindow@@A"
         assert row.member_path == path
+    parents = [r for r in rows if r.symbol == "?MapStorage@@3UMapStorageWindow@@A"]
+    assert len(parents) == 1
+    parent, = parents
+    assert parent.origin.address == 0x949870
+    assert parent.span == Span(0x949870, 0x94A314)
+    assert parent.parent_symbol is None and parent.member_path == ()
     text = (ROOT / "src/map.cpp").read_text()
     assert "fwrite(&MapStorage, 0xAA4, 1, map_file)" in text
     assert "fread(&MapStorage, 0xAA4, 1, map_file)" in text
@@ -271,7 +280,8 @@ SUBTRACTION_READERS = [
      r"uint32_t r_bound_bits = .*?memcpy\(&r_bound, &r_bound_bits, sizeof\(r_bound\)\);",
      "r_bound", "4u - static_cast<uint32_t>(MapLandCoverage)", "4 - MapLandCoverage", 3, "INT_MIN+4"),
     ("world.cpp", 0x5C2B40, "void __cdecl build_hills(",
-     r"int plat_mod = .*?;", "plat_mod", "2u - static_cast<uint32_t>(MapOceanCoverage)", "2 - MapOceanCoverage", 1, "INT_MIN+2"),
+     r"const uint32_t plat_mod_bits = .*?memcpy\(&plat_mod, &plat_mod_bits, sizeof\(plat_mod\)\);",
+     "plat_mod", "2u - static_cast<uint32_t>(MapOceanCoverage)", "2 - MapOceanCoverage", 1, "INT_MIN+2"),
     ("world.cpp", 0x5C3440, "void __cdecl world_fungus()",
      r"int fungus_level = .*?;", "fungus_level", "static_cast<uint32_t>(MapNativeLifeForms) - 1u", "MapNativeLifeForms - 1", 0, "INT_MAX"),
     ("world.cpp", 0x5C86E0, "void __cdecl world_build()",
