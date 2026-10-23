@@ -1,0 +1,23 @@
+{
+  "event_id": "a7816556108d26114b74a27dc2152b9ce74633c41fc7744d3512d6845471329f",
+  "payload": {
+    "affects": [
+      "entity-3dae2f0119cc2afd4274f2475b55c2fb979d1b6b92a36f97229312bbd43d0ed4"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "original-tga-path-scan",
+    "evidence": [
+      "Pinned5D7B40..5D7C78 plus662B92..662BA7 are original TGA path/open/probe/cleanup, not a decoder. Nullfilename3, failedopen6, success GetFileSize ignored then8, Filemap constructed before nulltest and cleanup-only lifetime, all localized and leading/directory/trailing-dot quirks remain. Ordinary short-circuit scan matches87/87instructions includingcoldspan. Guarded recorder exit0 banks only5D7B40. Independent complete original/current/candidate full source/pin/COFF/reference review SHA256 ac014fcfd11f489a5b68d17b839dc26a3079f0c89fcc286b69dd6e5a28d0ba60; originalloaderinvestigation SHA256 5cdf83da597b18727a3dcca21ef6481ebaf57bc29f9f6c89133a223de34ac513.",
+      "Production replay, baseline and candidate replicas, deliberate body damage PASS. Actual fresh192TU206objectapplication build/linkPASS,205otherwholeobjectsnormalizedequal originalmaster6883. Source/claims/mapping/reference checksPASS and all sourceoriginalfacts preserved except newly measuredclaim. Wholeknown5581domain3425localexact3114strictPASS311UNKNOWN; only5D7B40 gainslocalexact, strictreference qualificationforit remainsUNKNOWN, no oldstrict/exactstate lost. Four existing actual-source host testsPASS withGCC/Clang lifetime/error/extension/mutationcontrols pluslocalizedpathsandstackforwarding. Review report SHA256 8eddade1840c34a3e0233e68d09ce3e38c402a70cd88e186703ca4cdaf4d911b.",
+      "Native outside-selected remains FAIL:384 class101 bf/ef auxiliary metadatarecords differ after shortening source. No changed outside sections/reference bytes or associations; every other emitted function signature identical and all205otherwholeobjects equal. Coordinator explicitly reviews this bounded compilermetadata difference under standing user manual-integration authorization. This is not a native preservation PASS, automatic admission or comparator waiver; do not weaken native verifier or change source to pad debuglines.",
+      "Coordinator authorizes manual integration after current independent/behavior/build/physical review, retaining original baseline 6883eaba57b531f5dfdf953a2d88a18202062211 and allobligations. No full linkedretainedselection/runtime/game/automaticacceptance or exhaustiveimplementationcoverage. Freshdestinationfullbuild/206objectcomparison/sourceclaimreference andfourhosttestsrequiredbeforeworkercleanup. Preserve failures and rerunfresh, not replayacceptance."
+    ],
+    "hypothesis": "Recover exact original TGA path scanning with ordinary short-circuit C++ and cleanup",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "original-tga-path-scan",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:buffer-tga-match-oct23w"
+}
