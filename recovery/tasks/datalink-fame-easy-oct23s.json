@@ -1,0 +1,31 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "295361b18c6331b2bf747caddeb74533be600616",
+  "editable_files": [
+    "src/datalink.cpp",
+    "src/famewin.cpp",
+    "recovery/tests/test_datalink_fame_buttons_oct23s.py"
+  ],
+  "evidence": [
+    "Ignorednextbounded5proposal/6functionpass againstmaster39 foundDatalink431EC0(79instructions)andFameWin44A570(76instructions)BYTE_EXACT/noexactloss/nativeoutsideeachPASS fromoneproposalcompileperfunction. Sourcehasnotyetbeenmaterialized/banked. Newbaseline295includesgenuineBufferarrays; freshactualcurrentcontextqualificationrequired, do notassumeold39outputreplays. Exactwinningreplacementsaregroups2and4inignoredparallel-match-oct23q/easy-next-physical-deck.json.",
+    "Sourceworkeronlytwohandlerbodies: Datalinkon_button_clicked movespurecaptured-entryremaindercalculationAFTERset_cat whilekeepingquotient/entrysnapshotandlivecategoryselection/callbackeffects; FameWinon_button_clicked mutatesbyvaluebutton_id-=8AEinsteadoldawardlocal, sameclose/capacity/firstmatchingrecord/awardshift/redraweffects. PreserveallORIGINAL/spans/symbols/claims/history, everyothermethod, API/class/dataownership. No guards/overflowfixes/casts/volatile/asm/newhelpertricks. Rootalonebanksclaimsusingnativeguardedrecorderafterfreshmeasurement; neverhandmarkers.",
+    "Testworkeronlynewactualsourcehostfile,GCCClangbothhandlers. CoverDatalinkhistorycount<=1/release, backentrycapturedbeforeset_catcallbackmutateshistoryandcategory, itemremainderfromentryandlivecategoryselectedID, list/repaint/draworder, close/defaultReportdelegate. Fameclose7B8Bufferclose/modal/Graphiccloseorder; IDs8AE..8B3inclusive/outofrange, onlypresent&1/awardbit, firstrow/columnselection/group.row+1/selectedcolumn, redrawabsenceoronce. Mutantsreloadinghistoryaftercallback/wrongselectedcolumnorawardbitmustcompileandfail. Validarithmeticfixturesonly; originalsignedoverflow/unsafeinvalidIDpathsremainpin/native-only, no productionnormalization. Reuseexistingextractionhelper; noalgorithmcopytest.",
+    "RootownsTask/Git/compiler/prep/resources/sourceannotation/claimcontinuity/fullbuild/scopedreferences/independentreview/manualintegration/cleanup. Currentmasterdestinationreverificationfor295isstillrunning; thatisnotapprovaltolabelnewworkeraccepted. Max3candidateformsperunchangedcontextincludingfailures, withbaseline/replica/damage/replaycontrolsseparate. Noframework/gate/flag/headerchanges orclaimdemotions/baselineresets. Freshcurrentcontextcoordinatorreview/buildlink/destinationproofbeforepublication; fullgame/nativeautomaticacceptance remainsunproved."
+  ],
+  "intent": "Restore ordinary exact C++ button handlers in Datalink and FameWin",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4398784,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4498800,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "datalink-fame-easy-oct23s"
+}
