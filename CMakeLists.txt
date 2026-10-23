@@ -556,9 +556,14 @@ set_source_files_properties(src/scenario_undo.cpp PROPERTIES COMPILE_OPTIONS "/O
 # groups. This adds observability, not a different optimization/frame policy;
 # reference checks consume each production object's own types and relocations.
 set_property(SOURCE
+    src/alpha.cpp
+    src/buffer.cpp
     src/game.cpp
-    src/netdaemon.cpp
+    src/interface_palette.cpp
+    src/maininterface.cpp
+    src/map.cpp
     src/mapwin.cpp
+    src/netdaemon.cpp
     APPEND PROPERTY COMPILE_OPTIONS "/Z7")
 # Keep these measured frame-based helper owners on their explicit source profile.
 set_source_files_properties(
