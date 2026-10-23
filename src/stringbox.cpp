@@ -25,30 +25,6 @@
 #include "stringstruct.h"
 #include <cstring>
 
-namespace {
-
-// Remove the entry currently selected by the typed StringList cursor. The
-// list owns both allocations; its virtual remove hook owns any copied text.
-void erase_string_list_current(StringList &list) {
-    StringStructEntry *const entry = list.current_;
-    StringStructEntry *const next = entry->next;
-    entry->previous->next = next;
-    next->previous = entry->previous;
-    if (entry == list.head_) {
-        list.head_ = next;
-    }
-    list.current_ = next;
-
-    StringStructPayload *const payload = entry->string_payload();
-    list.on_remove(payload);
-    delete payload;
-    entry->payload = 0;
-    delete entry;
-    --list.entry_count_;
-}
-
-}
-
 // The getter is only an admission predicate. Reload the actual parent after
 // its callback; the returned GraphicWin pointer is not the dispatch receiver.
 // ORIGINAL: 0x00432720 ?on_link_clicked@StringBox@@QAEXHPAD@Z 0x00432720-0x00432761 BYTE_EXACT
@@ -166,7 +142,19 @@ void StringBox::add_fixup() {
                 list.current_position_ = 0;
             }
             if (list.head_ != 0) {
-                erase_string_list_current(list);
+                list.current_->next->previous = list.current_->previous;
+                list.current_->previous->next = list.current_->next;
+                StringStructEntry *const entry = list.current_;
+                if (entry == list.head_) {
+                    list.head_ = entry->next;
+                }
+                list.current_ = entry->next;
+                StringStructPayload *const payload = entry->string_payload();
+                list.on_remove(payload);
+                delete payload;
+                entry->payload = 0;
+                delete entry;
+                --list.entry_count_;
                 if (list.entry_count_ == 0) {
                     list.head_ = 0;
                 }
@@ -319,12 +307,25 @@ void StringBox::UNK1(int id) {
                     found = true;
                     break;
                 }
-                list.current_ = list.current_->next;
+                StringStructEntry *const next_entry = list.current_->next;
                 ++visited;
+                list.current_ = next_entry;
             } while (visited < count);
         }
         if (found) {
-            erase_string_list_current(list);
+            list.current_->next->previous = list.current_->previous;
+            list.current_->previous->next = list.current_->next;
+            StringStructEntry *const entry = list.current_;
+            if (entry == list.head_) {
+                list.head_ = entry->next;
+            }
+            list.current_ = entry->next;
+            StringStructPayload *const payload = entry->string_payload();
+            list.on_remove(payload);
+            delete payload;
+            entry->payload = 0;
+            delete entry;
+            --list.entry_count_;
         }
         if (list.entry_count_ == 0) {
             list.head_ = 0;
@@ -351,7 +352,19 @@ void StringBox::UNK2(int first_bound, int second_bound) {
                     id > static_cast<uint32_t>(second_bound)) {
                     list.current_ = list.current_->next;
                 } else {
-                    erase_string_list_current(list);
+                    list.current_->next->previous = list.current_->previous;
+                    list.current_->previous->next = list.current_->next;
+                    StringStructEntry *const entry = list.current_;
+                    if (entry == list.head_) {
+                        list.head_ = entry->next;
+                    }
+                    list.current_ = entry->next;
+                    StringStructPayload *const payload = entry->string_payload();
+                    list.on_remove(payload);
+                    delete payload;
+                    entry->payload = 0;
+                    delete entry;
+                    --list.entry_count_;
                 }
                 ++visited;
             } while (visited < list.entry_count_);
@@ -379,7 +392,19 @@ void StringBox::clip_ids(unsigned long count) {
                 const uint32_t id = static_cast<uint32_t>(list.current_->id);
                 if (id <= count) {
                     removed = true;
-                    erase_string_list_current(list);
+                    list.current_->next->previous = list.current_->previous;
+                    list.current_->previous->next = list.current_->next;
+                    StringStructEntry *const entry = list.current_;
+                    if (entry == list.head_) {
+                        list.head_ = entry->next;
+                    }
+                    list.current_ = entry->next;
+                    StringStructPayload *const payload = entry->string_payload();
+                    list.on_remove(payload);
+                    delete payload;
+                    entry->payload = 0;
+                    delete entry;
+                    --list.entry_count_;
                 } else {
                     list.current_->id = static_cast<int>(id - count);
                     list.current_ = list.current_->next;
