@@ -262,7 +262,7 @@ def test_frame_overlay_uses_real_renderers_and_screen_coordinate_imports(compile
     overlay = symbol_at("src/graphicwin.cpp", 0x005D6AC0)
     renderers = {symbol_at("src/sprite.cpp", 0x005E4B4A),
                  symbol_at("src/buffer.cpp", 0x005DA9F0),
-                 symbol_at("src/buffer.cpp", 0x005E2B00)}
+                 symbol_at("src/buffer_mask.cpp", 0x005E2B00)}
     expected = {"__imp__GetWindowRect@8": 0x006692A8,
                 "__imp__IntersectRect@12": 0x00669338}
     bindings = read_imports(ROOT)

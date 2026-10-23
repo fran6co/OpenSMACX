@@ -6,6 +6,7 @@ import shutil
 import subprocess
 
 import pytest
+from match_recovery.source import read_file
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -13,9 +14,42 @@ PIN = "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
 
 
 def body():
-    source = (ROOT / "src/buffer.cpp").read_text()
-    start = source.index("int Buffer::copy_mask(")
-    return source[start:source.index("\n}", start) + 2]
+    path = ROOT / "src/buffer_mask.cpp"
+    source = path.read_text()
+    signature = "int Buffer::copy_mask("
+    start = source.index(signature)
+    opening = source.index("{", start)
+    depth = 0
+    for offset in range(opening, len(source)):
+        if source[offset] == "{":
+            depth += 1
+        elif source[offset] == "}":
+            depth -= 1
+            if depth == 0:
+                result = source[start : offset + 1]
+                break
+    else:
+        raise AssertionError("unterminated Buffer::copy_mask body")
+    rows = {row.address: row for row in read_file(path)}
+    row = rows[0x005E2B00]
+    assert row.name == "?copy_mask@Buffer@@QAEHPAVBuffer@@HHHHHHH@Z"
+    assert row.image_spans == ((0x005E2B00, 0x005E2DD3),)
+    assert result in row.region
+    return result
+
+
+def scratch_definitions():
+    source = (ROOT / "src/buffer_mask.cpp").read_text()
+    result = {}
+    for name in (
+        "BufferMaskGroupCount",
+        "BufferMaskSourceRowGap",
+        "BufferMaskDestinationRowGap",
+    ):
+        marker = f"int {name} = 0;"
+        assert source.count(marker) == 1
+        result[name] = "static " + marker
+    return result
 
 
 HARNESS = r'''
@@ -23,6 +57,7 @@ HARNESS = r'''
 #include <cstdio>
 #include <cstdlib>
 #include <vector>
+@GLOBALS@
 struct RECT { int left, top, right, bottom; };
 bool IntersectRect(RECT *out, const RECT *a, const RECT *b) {
     RECT r = {std::max(a->left,b->left),std::max(a->top,b->top),
@@ -31,6 +66,8 @@ bool IntersectRect(RECT *out, const RECT *a, const RECT *b) {
     return r.left < r.right && r.top < r.bottom;
 }
 std::vector<int> events;
+struct ScratchSnapshot { int groups, source_gap, destination_gap; };
+std::vector<ScratchSnapshot> scratch_at_release;
 void require(bool condition, const char *witness) {
     if (!condition) { std::fprintf(stderr,"WITNESS: %s\n",witness); std::exit(17); }
 }
@@ -53,7 +90,14 @@ struct Buffer {
         ++locks;
         return &pixels[0]+y*stride_+x;
     }
-    void free_data(int count) { events.push_back(id*10+2); locks-=count; }
+    void free_data(int count) {
+        events.push_back(id*10+2);
+        ScratchSnapshot snapshot = {
+            BufferMaskGroupCount, BufferMaskSourceRowGap,
+            BufferMaskDestinationRowGap};
+        scratch_at_release.push_back(snapshot);
+        locks-=count;
+    }
     int copy_mask(Buffer *,int,int,int,int,int,int,int);
 };
 @BODY@
@@ -86,12 +130,38 @@ void scenario(int sx,int sy,int dx,int dy,int w,int h,RECT clip) {
     Buffer expected_source=source,expected_dest=dest;
     reference(expected_source,expected_dest,sx,sy,dx,dy,w,h,0x108);
     events.clear();
+    scratch_at_release.clear();
     require(source.copy_mask(&dest,sx,sy,dx,dy,w,h,0x108)==0,"valid return");
     require(dest.pixels==expected_dest.pixels,"rectangle pixels and untouched padding");
     require(source.pixels==expected_source.pixels,"source remains read-only");
     require(source.locks==0 && dest.locks==0,"balanced acquisition");
     const int order[]={21,11,12,22};
     require(events==std::vector<int>(order,order+4),"destination acquire, source acquire, source release, destination release");
+    int source_x=sx, destination_x=dx, columns=w;
+    if(source_x<0) { columns+=source_x; destination_x-=source_x; source_x=0; }
+    if(source_x+columns>source.dib_.bmiHeader.biWidth)
+        columns=source.dib_.bmiHeader.biWidth-source_x;
+    const int clipped_columns=std::min(destination_x+columns,clip.right)-
+                              std::max(destination_x,clip.left);
+    const int expected_groups=(clipped_columns+3)/4;
+    require(scratch_at_release.size()==2,"scratch observed at both releases");
+    for(unsigned i=0;i<scratch_at_release.size();++i) {
+        require(scratch_at_release[i].groups==expected_groups,
+                "scratch group count is ceil clipped width over four");
+        require(scratch_at_release[i].source_gap==13-clipped_columns,
+                "source scratch gap is stride minus clipped width");
+        require(scratch_at_release[i].destination_gap==17-clipped_columns,
+                "destination scratch gap is stride minus clipped width");
+    }
+}
+void set_scratch(int groups,int source_gap,int destination_gap) {
+    BufferMaskGroupCount=groups;
+    BufferMaskSourceRowGap=source_gap;
+    BufferMaskDestinationRowGap=destination_gap;
+}
+void require_scratch(int groups,int source_gap,int destination_gap,const char *label) {
+    require(BufferMaskGroupCount==groups && BufferMaskSourceRowGap==source_gap &&
+            BufferMaskDestinationRowGap==destination_gap,label);
 }
 void errors() {
     Buffer source(10,8,13,1),dest(12,10,17,2);
@@ -101,19 +171,24 @@ void errors() {
     source.surface_=&source;
     require(source.copy_mask(0,0,0,0,0,3,3,8)==3,"null destination");
     require(events.empty(),"null destination no acquisition");
+    set_scratch(31,41,59);
     require(source.copy_mask(&dest,11,0,0,0,3,3,8)==0,"source x beyond bounds");
     require(source.copy_mask(&dest,0,9,0,0,3,3,8)==0,"source y beyond bounds");
     require(source.copy_mask(&dest,10,0,0,0,3,3,8)==0,"source x equal bounds empty");
     require(source.copy_mask(&dest,0,8,0,0,3,3,8)==0,"source y equal bounds empty");
     require(source.copy_mask(&dest,0,0,20,20,3,3,8)==0,"destination empty intersection");
     require(events.empty(),"empty rectangles no acquisition");
+    require_scratch(31,41,59,"empty/error paths leave poisoned scratch unchanged");
+    set_scratch(31,41,59);
     dest.fail=true;
     require(source.copy_mask(&dest,0,0,0,0,3,3,8)==3,"destination acquisition failure");
     require(events.size()==1 && events[0]==21,"destination failure skips source and release");
+    require_scratch(31,41,59,"destination acquisition failure leaves scratch unchanged");
     events.clear(); dest.fail=false; source.fail=true;
     require(source.copy_mask(&dest,0,0,0,0,3,3,8)==3,"source acquisition failure");
     require(events.size()==2 && events[0]==21 && events[1]==11,"source failure retains destination acquisition");
     require(dest.locks==1 && source.locks==0,"historical destination acquisition leak");
+    require_scratch(31,41,59,"source acquisition failure leaves scratch unchanged");
 }
 void overlap() {
     Buffer actual(10,8,13,1);
@@ -122,12 +197,17 @@ void overlap() {
     Buffer expected=actual;
     reference(expected,expected,0,0,1,1,6,5,0x108);
     events.clear();
+    scratch_at_release.clear();
     require(actual.copy_mask(&actual,0,0,1,1,6,5,0x108)==0,"forward overlap return");
     require(actual.pixels==expected.pixels,"forward overlap keeps live source reads");
     const int order[]={11,11,12,12};
     require(events==std::vector<int>(order,order+4) && actual.locks==0,"same-buffer double acquire and release");
+    require(scratch_at_release.size()==2 && scratch_at_release[0].groups==2 &&
+            scratch_at_release[0].source_gap==7 && scratch_at_release[0].destination_gap==7,
+            "overlap scratch values observed at both releases");
 }
 int main() {
+    require_scratch(0,0,0,"three source scratch globals start at zero");
     RECT full={0,0,12,10}, inset={3,3,7,6};
     const int widths[]={1,3,4,5};
     for(unsigned i=0;i<4;++i) scenario(2,1,4,2,widths[i],4,full);
@@ -147,19 +227,26 @@ def execute(tmp_path, compiler, mutation=None):
         pytest.skip(f"{compiler} unavailable")
     actual = body()
     if mutation == "gap":
-        assert "read_ptr += read_stride;" in actual
-        actual = actual.replace("read_ptr += read_stride;", "read_ptr += read_stride - columns;")
-        actual = actual.replace("write_ptr += write_stride;", "write_ptr += write_stride - columns;")
+        assert "BufferMaskSourceRowGap = read_stride - columns;" in actual
+        assert "BufferMaskDestinationRowGap = write_stride - columns;" in actual
+        actual = actual.replace("BufferMaskSourceRowGap = read_stride - columns;",
+                                "BufferMaskSourceRowGap = read_stride - columns + 1;")
+        actual = actual.replace("BufferMaskDestinationRowGap = write_stride - columns;",
+                                "BufferMaskDestinationRowGap = write_stride - columns + 1;")
     elif mutation == "reversed":
-        assert "write_ptr[column] = read_ptr[column];" in actual
-        actual = actual.replace("write_ptr[column] = read_ptr[column];", "read_ptr[column] = write_ptr[column];")
+        assert actual.count("*write_ptr = *read_ptr;") == 4
+        actual = actual.replace("*write_ptr = *read_ptr;", "*read_ptr = *write_ptr;")
     elif mutation == "mask":
-        assert "write_ptr[column] == mask" in actual
-        actual = actual.replace("write_ptr[column] == mask", "write_ptr[column] != mask")
+        assert actual.count("*write_ptr == mask") == 4
+        actual = actual.replace("*write_ptr == mask", "*write_ptr != mask")
     cpp = tmp_path / "copy_mask.cpp"
-    cpp.write_text(HARNESS.replace("@BODY@", actual))
     exe = tmp_path / "copy_mask"
+    scratch = scratch_definitions()
+    harness = HARNESS.replace("@GLOBALS@", "\n".join(scratch.values()))
+    harness = harness.replace("@BODY@", actual)
+    cpp.write_text(harness)
     build = subprocess.run([compiler_path,"-std=c++98","-Wall","-Wextra","-Werror",
+                            "-Wno-implicit-fallthrough",
                             str(cpp),"-o",str(exe)], capture_output=True,text=True,timeout=30)
     assert build.returncode == 0, build.stderr
     return subprocess.run([str(exe)],capture_output=True,text=True,timeout=10)

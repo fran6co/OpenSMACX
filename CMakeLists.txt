@@ -142,6 +142,7 @@ set(OPENSMACX_SOURCES
     src/basebutton.cpp
     src/basepop.cpp
     src/buffer.cpp
+    src/buffer_mask.cpp
     src/polygon.cpp
     src/buttongroup.cpp
     src/caviar_objects.cpp
