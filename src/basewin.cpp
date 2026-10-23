@@ -2840,10 +2840,11 @@ void BaseWin::add_queue(int insert, int production_id) {
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x00416FB0-0x0041703C removes one queue entry, shifts later ids, clamps the selected index to at least one, and redraws the queue", "source:src/base.h:Base::queue_size", "source:src/base.h:Base::queue_production_id"], "reason": "Delete a selected production queue entry through the typed Base queue representation; the drawing dependency remains explicitly unfinished."}
 void BaseWin::delete_queue(int index) {
     if (index > static_cast<int>(BaseCurrent->queue_size)) {
-        selected_queue_slot_ = selected_queue_slot_ - 1;
-        if (selected_queue_slot_ <= 1) {
-            selected_queue_slot_ = 1;
+        int selected = --selected_queue_slot_;
+        if (selected <= 1) {
+            selected = 1;
         }
+        selected_queue_slot_ = selected;
         return;
     }
     if (index < 9) {
@@ -2854,8 +2855,12 @@ void BaseWin::delete_queue(int index) {
     }
     --BaseCurrent->queue_size;
     const int count = static_cast<int>(BaseCurrent->queue_size);
-    if (count < selected_queue_slot_) {
-        selected_queue_slot_ = count <= 1 ? 1 : count;
+    if (selected_queue_slot_ > count) {
+        int selected = count;
+        if (selected <= 1) {
+            selected = 1;
+        }
+        selected_queue_slot_ = selected;
     }
     draw_queue(1);
 }

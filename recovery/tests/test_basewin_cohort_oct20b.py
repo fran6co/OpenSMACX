@@ -127,6 +127,17 @@ int main() {
     for (int slot = 0; slot != 9; ++slot)
         if (BaseCurrent->queue_production_id[slot] != 101 + slot) return 93;
 
+    // A signed negative selection compares below the nonnegative new count;
+    // the body leaves it intact rather than applying an unsigned comparison.
+    reset_base(4);
+    window.selected_queue_slot_ = -3;
+    window.draw_calls = 0;
+    window.last_draw_argument = 0;
+    window.delete_queue(1);
+    if (BaseCurrent->queue_size != 3U) return 100;
+    if (window.selected_queue_slot_ != -3) return 101;
+    if (window.draw_calls != 1 || window.last_draw_argument != 1) return 102;
+
     return 0;
 }
 """.replace("DEFINITION", definition).replace("MEMBER_TYPE", member_type)
@@ -160,25 +171,23 @@ def test_actual_delete_queue_body_and_damage_controls(tmp_path: Path) -> None:
     source = SOURCE.read_text()
     member_type = selected_slot_declaration(HEADER.read_text())
     original = function_definition(source, SIGNATURE)
-    assert "selected_queue_slot_ = selected_queue_slot_ - 1;" in original
-    assert "if (selected_queue_slot_ <= 1)" in original
-    assert original.index("selected_queue_slot_ = selected_queue_slot_ - 1;") < original.index(
-        "if (selected_queue_slot_ <= 1)"
-    )
+    assert "int selected = --selected_queue_slot_;" in original
+    assert "if (selected <= 1)" in original
+    assert "selected_queue_slot_ = selected;" in original
 
     compilers = [path for name in ("g++", "clang++") if (path := shutil.which(name))]
     if not compilers:
         pytest.skip("neither g++ nor clang++ is installed")
 
     wrong_decrement = original.replace(
-        "selected_queue_slot_ = selected_queue_slot_ - 1;",
-        "selected_queue_slot_ = selected_queue_slot_ + 1;",
+        "int selected = --selected_queue_slot_;",
+        "int selected = ++selected_queue_slot_;",
         1,
     )
     assert wrong_decrement != original
     missing_clamp = original.replace(
-        "        if (selected_queue_slot_ <= 1) {\n"
-        "            selected_queue_slot_ = 1;\n"
+        "        if (selected <= 1) {\n"
+        "            selected = 1;\n"
         "        }\n",
         "",
         1,
