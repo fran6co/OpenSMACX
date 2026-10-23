@@ -179,27 +179,24 @@ int Cursor::init(Sprite *sprite, int hotspot_x, int hotspot_y) {
     const int color_y = cursor_half(cursor_subtract(CursorHeight, sprite->iHeight_));
     sprite->draw(&color, sprite->cTransparentIndex_, color_x, color_y);
 
-    struct CursorMonoInfo {
-        BITMAPINFOHEADER header;
-        RGBQUAD colors[2];
-    } mono_info;
-    mono_info.header.biSize = sizeof(BITMAPINFOHEADER);
-    mono_info.header.biWidth = CursorWidth;
-    mono_info.header.biHeight = -CursorHeight;
-    mono_info.header.biPlanes = 1;
-    mono_info.header.biBitCount = 1;
-    mono_info.header.biCompression = BI_RGB;
-    mono_info.header.biSizeImage = 0;
-    mono_info.header.biXPelsPerMeter = 0;
-    mono_info.header.biYPelsPerMeter = 0;
-    mono_info.header.biClrUsed = 0;
-    mono_info.header.biClrImportant = 0;
-    mono_info.colors[0].rgbBlue = 0;
-    mono_info.colors[0].rgbGreen = 0;
-    mono_info.colors[0].rgbRed = 0;
-    mono_info.colors[1].rgbBlue = 0xff;
-    mono_info.colors[1].rgbGreen = 0xff;
-    mono_info.colors[1].rgbRed = 0xff;
+    Dib mono_info;
+    mono_info.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+    mono_info.bmiHeader.biWidth = CursorWidth;
+    mono_info.bmiHeader.biHeight = -CursorHeight;
+    mono_info.bmiHeader.biPlanes = 1;
+    mono_info.bmiHeader.biBitCount = 1;
+    mono_info.bmiHeader.biCompression = BI_RGB;
+    mono_info.bmiHeader.biSizeImage = 0;
+    mono_info.bmiHeader.biXPelsPerMeter = 0;
+    mono_info.bmiHeader.biYPelsPerMeter = 0;
+    mono_info.bmiHeader.biClrUsed = 0;
+    mono_info.bmiHeader.biClrImportant = 0;
+    mono_info.bmiColors[0].rgbBlue = 0;
+    mono_info.bmiColors[0].rgbGreen = 0;
+    mono_info.bmiColors[0].rgbRed = 0;
+    mono_info.bmiColorsRest[0].rgbBlue = 0xff;
+    mono_info.bmiColorsRest[0].rgbGreen = 0xff;
+    mono_info.bmiColorsRest[0].rgbRed = 0xff;
 
     HDC mono_dc = CreateCompatibleDC(nullptr);
     if (mono_dc == nullptr) {
@@ -207,7 +204,7 @@ int Cursor::init(Sprite *sprite, int hotspot_x, int hotspot_y) {
     }
     void *mono_bits = nullptr;
     HBITMAP mono_bitmap = CreateDIBSection(mono_dc,
-        reinterpret_cast<BITMAPINFO *>(&mono_info), DIB_RGB_COLORS,
+        &mono_info, DIB_RGB_COLORS,
         &mono_bits, nullptr, 0);
     if (mono_bitmap == nullptr) {
         DeleteDC(mono_dc);
@@ -215,10 +212,9 @@ int Cursor::init(Sprite *sprite, int hotspot_x, int hotspot_y) {
     }
 
     SelectObject(mono_dc, mono_bitmap);
-    SetDIBColorTable(mono_dc, 0, 2, mono_info.colors);
+    SetDIBColorTable(mono_dc, 0, 2, mono_info.bmiColors);
     SetDIBits(mono_dc, mono_bitmap, 0, CursorHeight,
-        mono.get_data(),
-        reinterpret_cast<BITMAPINFO *>(&mono_info), DIB_RGB_COLORS);
+        mono.get_data(), &mono.dib_, DIB_RGB_COLORS);
 
     HDC display_dc = CreateDCA("DISPLAY", nullptr, nullptr, nullptr);
     const int display_planes = GetDeviceCaps(display_dc, PLANES);
@@ -231,11 +227,10 @@ int Cursor::init(Sprite *sprite, int hotspot_x, int hotspot_y) {
         return 1;
     }
 
-    // This is separate from color.dib_. Native code initializes the complete
-    // 40-byte header below; it never addresses a palette tail through this
-    // pointer. BITMAPINFO provides the Win32 API type without inventing a
-    // second 256-entry palette whose native stack extent is not evidenced.
-    BITMAPINFO color_info;
+    // This is a separate automatic Dib from color.dib_. The pinned stack
+    // layout gives it the complete Dib extent; preserve the uninitialized
+    // palette and reserved bytes beyond the header fields written here.
+    Dib color_info;
     color_info.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
     color_info.bmiHeader.biWidth = CursorWidth;
     color_info.bmiHeader.biHeight = -CursorHeight;
@@ -259,7 +254,7 @@ int Cursor::init(Sprite *sprite, int hotspot_x, int hotspot_y) {
 
     SelectObject(color_dc, color_bitmap);
     SetDIBColorTable(color_dc, 0, 256, color.dib_.bmiColors);
-    SetDIBColorTable(mono_dc, 0, 2, mono_info.colors);
+    SetDIBColorTable(mono_dc, 0, 2, mono_info.bmiColors);
     GdiFlush();
 
     const int blit_height = color.pixel_height();
