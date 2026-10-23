@@ -1,0 +1,25 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "7cd96e3d8fe86446286a5f677a6c16922e9d50ca",
+  "editable_files": [
+    "src/basebutton.cpp",
+    "recovery/tests/test_basebutton_release_parent_oct23q.py"
+  ],
+  "evidence": [
+    "Coordinator independently decoded complete original607720..6077E6. Parent+0xC4 initial null read60774E precedes Time::stop/timeGetTime/Sleep; original reload607791 supplies Sound receiver, reload6077C0 supplies later parent vslot42 after sound status/play callbacks. Current source caches initial parent across all calls. Change only on_left_up to reread real win_parent_ at those two postcallback use sites. Preserve initial null return, no second null guard, original Sound pointer capture across status/play, state/capture/timer/redraw effects and member argument reload after sound. Do not hand-stage vtables or normalize unsafe null mutation path.",
+    "Original fieldAA8 read/test6077BA..6077C6 has dead flags overwritten/no branch before dispatch, not evidence to invent behavior. Report easy-small-4-findings.json incorrectly attributes an adjacent on_left_click caching TRIED note to this body; preserve exact distinction. This is source correction not proof callbacks mutate parent in real runtime.",
+    "Source worker only named body; separate test worker only new actual-source GCC/Clang control. Test parent mutation in timer/Sleep and sound callbacks selects reloaded owner and ID, preserves initial null and sound null/nonplaying/playing semantics, capture release and redraw. Reject old cached-parent body and omitted second reload; do not execute null-aftercallback UB or rewrite production algorithm in test. Reuse installed extraction or existing test helpers. Preserve all original mapping/history/claims, no manual ORIGINAL or BYTE_EXACT edits.",
+    "Root owns Git/compiler/preparation/resources/task decisions/integration. Max3 candidate compiles per unchanged context, baseline/replica/damage controls separate. Require actual recipe full-object preservation, independent review, application compile/link and fresh destination verification before cleanup. No new body/exact coverage assumed; automatic/full-game acceptance unfinished."
+  ],
+  "intent": "Recover original BaseButton parent reloads across timer and sound callbacks",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6321952,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "basebutton-parent-reload-oct23q"
+}
