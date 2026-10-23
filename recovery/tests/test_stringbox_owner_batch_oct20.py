@@ -35,7 +35,6 @@ def _definition(source: str, signature: str) -> str:
 
 
 def _harness(source: str) -> str:
-    helper = _definition(source, "void erase_string_list_current(")
     method = _definition(source, "void StringBox::UNK2(")
     return r"""
 #include <stdint.h>
@@ -60,9 +59,6 @@ struct StringBox {
     void add_fixup() { ++fixups; }
     void UNK2(int first_bound, int second_bound);
 };
-namespace {
-""" + helper + r"""
-}
 """ + method + r"""
 
 int main() {

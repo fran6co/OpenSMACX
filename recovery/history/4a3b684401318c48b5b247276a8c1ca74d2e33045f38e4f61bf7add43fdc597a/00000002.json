@@ -1,0 +1,20 @@
+{
+  "event_id": "9b5e7238ebee317b779cd9d928a8377a1627955ef0e73405e8faa44e33d653fd",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "stringbox-inline-removal-owner-boundary",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Coordinator manually admits only this reviewed four-owner source migration and helper retirement. No header/type/ABI/flag changes, intentionally normalized error paths or claim demotions. Three members remain MISMATCH; historical matching obligations are preserved.",
+      "40focused/neighbor tests pass, including actual-source callback/head/current/lifetime/count/scroll behavior with compiled damage controls. Initial malformed test-only mutant refused compilation; fixed before final tests, old failure retained. Five native replay/replica/interval-damage controls pass.",
+      "Fresh194TU208physicalobject application compiles/links; source/claims/mappings/referencesPASS. All208 normalized objects compared to current coordinator production: onlyStringBoxchanges, and its actual build object equals reviewedcontrols. Full5581domain3445exact1850mismatch; strict3130PASS315UNKNOWN. Gain629980only/no losses. Guardednative record629980 exit0 and sourceunchanged; historicalclaimrestored, no new handwrittenclaim.",
+      "NativeoutsideFAIL remains exactly helper.text plus its associated.debug$F andthree removedsymbols; independentreview confirmsownerassociation, no waiver. Wholelinkedpreservation/structure/runtime/game/autonomousacceptance unproven. Destination rechecks required aftermanualintegration."
+    ]
+  },
+  "previous_event": "ab516a86d958dd3d2042dadccb440b2859f51ec002ee4f6ac3d8564a76d66157",
+  "request_id": "stringbox-removal-reviewed-source-action",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:stringbox-removal-owner-oct24a"
+}

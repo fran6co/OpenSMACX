@@ -35,7 +35,6 @@ def _definition(source: str, signature: str) -> str:
 
 
 def _harness(source: str) -> str:
-    helper = _definition(source, "void erase_string_list_current(")
     unk1 = _definition(source, "void StringBox::UNK1(")
     clip_ids = _definition(source, "void StringBox::clip_ids(")
     return r"""
@@ -62,9 +61,6 @@ struct StringBox {
     void UNK1(int id);
     void clip_ids(unsigned long count);
 };
-namespace {
-""" + helper + r"""
-}
 """ + unk1 + "\n" + clip_ids + r"""
 
 static void make_ring(StringBox &box, StringStructEntry **nodes,
@@ -181,14 +177,13 @@ def test_stringbox_actual_unk1_and_clip_ids_bodies(tmp_path, compiler_name):
     assert _compile_and_run(tmp_path, compiler, _harness(source), "faithful") == 0
 
     unk1 = _definition(source, "void StringBox::UNK1(")
-    remove_all = unk1.replace(
-        "if (list.current_->id == id) {\n                    found = true;\n                    break;\n                }",
-        "if (list.current_->id == id) {\n                    found = true;\n                    erase_string_list_current(list);\n                }",
+    skipped_removal = unk1.replace(
+        "if (found) {\n            list.current_->next->previous = list.current_->previous;",
+        "if (false && found) {\n            list.current_->next->previous = list.current_->previous;",
     )
-    assert remove_all != unk1
-    assert "found = true;\n                    erase_string_list_current(list);" in remove_all
-    remove_all_source = source.replace(unk1, remove_all)
-    assert _compile_and_run(tmp_path, compiler, _harness(remove_all_source), "remove_all_mutant") != 0
+    assert skipped_removal != unk1
+    skipped_removal_source = source.replace(unk1, skipped_removal)
+    assert _compile_and_run(tmp_path, compiler, _harness(skipped_removal_source), "skipped_removal_mutant") != 0
 
     clip = _definition(source, "void StringBox::clip_ids(")
     no_rebase = clip.replace(
