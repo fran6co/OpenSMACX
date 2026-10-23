@@ -1,0 +1,25 @@
+{
+  "event_id": "ac5fc44481baaa39e98a9ebd4dbe2cfce2d99987f8512736696de86bbe46e860",
+  "payload": {
+    "affects": [
+      "entity-1a9d478191e5bc2812953d25dd3b0df63230c8eb1d6d6cce5336d87422999b7b",
+      "entity-e1819ded15203ad02bbae9646cad7a0084cb5360470049a44587ee24df4e3358"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "typed-selected-state-and-ordinal-wrap",
+    "evidence": [
+      "Complete native UNK1 span60EB50..60EB7D has16instructions: dynamic virtual-Dialog member address formation precedes the variable bit shift and signed int state update. The actual member type is int, so an ordinary int* preserves target and order without casts, raw offsets or synthetic adapters. The initial uint32_t* spelling was refused, preserved and corrected; this is not a third blind spelling retry. Native guarded recorder exit0 grants exactly this new historical exactness claim, and no other source identity/span/symbol/history/claim changes.",
+      "Getter60EC10 preserves count-gated cursor reset/list traversal, miss one-past-tail and empty-list stale cursor/position. Explicit low-five-bit count reproduces original x86 SHL for32/63/negative stale ordinals as defined C++, with no guards, initialization or original bug fix. Existing getter historical claim remains MISMATCH and retains its restoration obligation. UNK1 raw out-of-range shifts remain target-specific C++ undefined behavior, and signed bit31 result conversion is implementation-defined; do not imply portable semantics beyond the demonstrated target. Positive-count/null-head and negative list-count inputs are neither exercised nor normalized.",
+      "Independent original/source/type/control review and both GCC/Clang parameter cases pass. Each case compiles actual complete method bodies against a genuine virtual Dialog fixture plus wrong-member/undefined-shift mutants with ASan+UBSan. Fixture offsets are not original layout evidence. Production replay, baseline/candidate replicas, deliberate branch damage and native outside-two COFF residual pass. Fresh192TU206object application compiles and links;205othernormalizedobjects equal current master and the changed object reproduces the controlled candidate.",
+      "Across5581knownmappedidentities only60EB50 changes MISMATCHtoBYTE_EXACT,3430to3431. All3430previous strict states remain identical; added method is strictPASS, giving3118PASS313UNKNOWN. Source/claims/mapping/reference checks pass, and source facts retain every historical identity with exactly the recorder-granted new claim. No new function implementation coverage is claimed. Coordinator review SHA256 50b821f147ce6e3cedf2d46f048b49f470b36bc19406d37686d164d157129fa9.",
+      "Standing user authorization permits bounded coordinator-reviewed manual integration after these source/evidence/build/scoped-preservation checks. Original task baseline 297d15767deb2b800552409cf1169933d4b785fc remains. Complete linked retained-selection/allocation, outside-scope linked image, structure/runtime/game and native automatic acceptance remain unproved, with refusal conditions unchanged. Require fresh integrated build/all206objects/local-and-strict-state equality and both host compiler cases before cleanup. This owner can join the independently authorized Console recovery batch without resetting either baseline or suppressing pending discoveries."
+    ],
+    "hypothesis": "Recover CheckBox selected-state member access ordering and original x86 ordinal-wrap behavior",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "typed-selected-state-and-ordinal-wrap",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:checkbox-state-owner-oct23za"
+}
