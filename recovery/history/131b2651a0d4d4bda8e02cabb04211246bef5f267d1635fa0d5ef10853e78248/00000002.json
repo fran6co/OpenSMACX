@@ -1,0 +1,26 @@
+{
+  "event_id": "eef8524f90e92793a0eba404efe9378ecac94bd74cd2744dba538349e4e552a2",
+  "payload": {
+    "affects": [
+      "entity-1d33aa0d91e3e925715ace6eb09d51a97c417d7c9f16fac6e37d19e5037b1e25",
+      "entity-90b3be7d514c3d328484973039ce8d84811132d83c047ddfe8e5f24890948619",
+      "entity-a0a7c7f9f3b76f0850d2f376d8a9ee2b4eef5fdaa052527f04478c244bced607",
+      "entity-c043d38573c83162a964031aad8ede121e10ab8fa95b65f241fe742cb1328c86"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "inherited-signed-optional-coordinate",
+    "evidence": [
+      "Original BasePop ctor600A95/600A9E stores allones at+21CC; calculate_dimensions603BAE/603BB6/603BB9 exact-compares-1; Popup40616C/406172/406174 uses signedTEST/JL before applying optionalX. Same inherited BasePop storage, not a duplicatePopup field. Initial derived review mixed currentCOFF coordinates withpin offsets and misnamed exec asstart; independently decodedoriginal evidence and native scopeevent1 explicitly correct those errors.",
+      "Samewidth signedint32 member andthree directreads replace uint32/cast scaffolding. Keep both-1stores, anynegativecoordinatefallbacks, distinct exact-1dimensionspredicate and originalunsignedmod32 arithmetic throughuint32 field30E0. No semanticname/setter invented; missing positive lexicalsetter remains an explicitoriginal-ownership/runtime obligation, not proof of deadfield or absence ofrawwrites.",
+      "Independent pin/source review and4newactualsource GCC/Clang C++98O2/UBSan controls pass withhighbitinputs, sentinel distinctions andcompile-success damages afterunmodifiedwitness. Broader relevanthostsuite33pass0skip; one directnativecompiler test was explicitlydeselected toavoidunleasedcompilation, not relabeledpassing. Actualrecipe controls forbothTUs independently usedseparateprefixes:1candidate/TUand3replay/replica/damagecontrols/TU,8totalcalls. Complete62BasePop/54Popup ownerobjects normalizeidentical, noexactgain/loss.",
+      "Fresh6c8b96bd0 completeapplicationbuild/link andnative source/mapping/reference/claims pass. All203qualifiedobjects equal reviewedf7ffmaster withzero bodyomissions; all116originalfacts/fullspans/claims/completeauthoredlessons andall5581knownmasked/strict verdict identities retained. Native Taskbaseline88a15de staysunchanged throughcoordinator mastercatchup. Manualcoordinatorreviews onlythisboundedtype cleanup. No newexact/bodycoveragegain, no fulloriginalclass/lifetime/runtime/linkedretention/nativeautomatic/gameacceptance. Freshdestinationverification required."
+    ],
+    "hypothesis": "Recover the signed inherited BasePop optionalX member and its original sentinel consumers without changing emitted application behavior.",
+    "kind": "discovery"
+  },
+  "previous_event": "3402c1f8021961cd61f656ac521565fb5663d3e56359724904a2b658298cb2bd",
+  "request_id": "inherited-signed-optional-coordinate",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:basepop-signed-coordinate-oct23h"
+}
