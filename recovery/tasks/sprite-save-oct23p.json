@@ -1,0 +1,24 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "8f5cf3d89838c277a1d0b22cf56b1bce951215fc",
+  "editable_files": [
+    "src/sprite.cpp",
+    "recovery/tests/test_sprite_file_header_oct14cu.py"
+  ],
+  "evidence": [
+    "Pinned5EAFF1IMUL and5EAFF5ADD compute low32 width*height+2C passed as uint32 size toFilemap::create. Current static_cast<uint32_t>(signed width*height+2C) casts after signed overflow. Authorize unsigned operands before multiply/add, preserving exact original dword pattern without guards, normalization or claiming reachable overflowing game dimensions.",
+    "Evidence:.opensmacx/recovery/parallel-match-oct23p/sprite-findings.json; Filemapuint32size, signed source dimension fields. Preserve complete primary/cold original spans, marker/symbol/history, Filemap lifecycle/error returns/unaligned29byteprefix/height*stride copy/close order. Existing actual-source fixture must cover ordinary/overflow dimensions with zero-stride/no huge copy, pass under UBSan and fail signed-overflow mutant; no original safety fixes.",
+    "Root owns Git/Task/compiler/preparation/resources/integration. Worker edits only assigned C++ body or authorized test; do not edit ORIGINAL markers/history or any other owner/header/build/config/package. Preserve mappings and all prior claims; scope expansion is coordinator-owned. Max3candidate compiler attempts per unchanged context, controls labelled separately; root runs actual-recipe screens and full build/link/source/claims/references before reviewed manual integration. A miss is preserved, not acceptance or claim demotion. No new exact/body coverage is assumed. Independent source/test review and fresh destination checks precede cleanup."
+  ],
+  "intent": "Express original Sprite file-size arithmetic without signed source overflow",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6205327,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "sprite-save-oct23p"
+}
