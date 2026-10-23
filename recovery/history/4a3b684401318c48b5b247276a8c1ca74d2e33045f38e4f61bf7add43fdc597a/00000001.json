@@ -1,0 +1,24 @@
+{
+  "event_id": "ab516a86d958dd3d2042dadccb440b2859f51ec002ee4f6ac3d8564a76d66157",
+  "payload": {
+    "affects": [
+      "entity-33641b7a0501eba8808516ec83821520407af719b9074a58206550662ea4b49e",
+      "entity-82adecf32acbb1e166ce6b85fb8cd7533e82ddd5c85a3ce3b3c1146ee08fbe5c",
+      "entity-8522960c18f5dcd4e97c2b50e97ed296818d97f3681d0e4aa508c9333293676d",
+      "entity-8e4f687b365f5fb20ba0d37353a29fbf56df70b1b3106accccf9bf9af9c8f39b"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "stringbox-inline-removal-owner-boundary",
+    "evidence": [
+      "Pinned629490..629703,6298B0..62997B,629980..629A63,629A70..629B69; independent source/COFF owner closure proves next->previous before previous->next, followed by head/current publication, virtual callback, payload/node destruction and live count decrement.",
+      "FrozenCPP84a8bd4fccbf154117965bfd5007e6d9481855f5684b71a357a4e03127654ebf preserves all17 source mappings/spans/claims; helper has no remaining references after allfour caller migrations."
+    ],
+    "hypothesis": "The four original StringBox members own their inline typed removal sequence; the recovery-added namespace helper is not an original function and reverses original link-store order.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "stringbox-inline-removal-owner-boundary",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:stringbox-removal-owner-oct24a"
+}
