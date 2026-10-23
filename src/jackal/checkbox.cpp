@@ -624,10 +624,13 @@ Return Value: n/a
 Status: Complete
 */
 void CheckBox::UNK1(int pos) {
+    // Preserve the original VC6/x86 variable-shift lowering: SHL masks
+    // counts to five bits, including negative/large ordinals. These raw
+    // shifts are target-specific C++, not portable out-of-range shifts.
     // The state word is Dialog::selected_position_, reached through the
     // virtual base - the compiler's member access walks the vbtable exactly
     // where the old hand walk read it.
-    const uint32_t mask = 1U << (static_cast<uint32_t>(pos) & 31U);
+    const uint32_t mask = 1U << static_cast<uint32_t>(pos);
     if (selected_position_ & mask) {
         selected_position_ &= ~mask;
     } else {
@@ -641,7 +644,7 @@ Purpose: Report whether one bit of the state word is set. Returns the MASKED
          WORD, not a normalised 0 or 1 - the body ends `and eax, esi` with no
          further narrowing, so a caller testing it against 1 would read a
          different answer than the original gives.
-// ORIGINAL: 0x0060ECC0 ?UNK2@CheckBox@@QAEHH@Z 0x0060ECC0-0x0060ECE0
+// ORIGINAL: 0x0060ECC0 ?UNK2@CheckBox@@QAEHH@Z 0x0060ECC0-0x0060ECE0 BYTE_EXACT
 // size      32 bytes
 // prototype int (__thiscall ?UNK2@CheckBox@@QAEHH@Z)(CheckBox* this, int)
 // callers   0   call targets   0
@@ -652,7 +655,7 @@ Return Value: the state word masked to the requested bit
 Status: Complete
 */
 int CheckBox::UNK2(int pos) {
-    const uint32_t mask = 1U << (static_cast<uint32_t>(pos) & 31U);
+    const uint32_t mask = 1U << static_cast<uint32_t>(pos);
     return static_cast<int>(selected_position_ & mask);
 }
 
@@ -660,7 +663,7 @@ int CheckBox::UNK2(int pos) {
 /*
 Purpose: Set or clear one bit of the state word, chosen by the second argument.
          Unlike UNK1 this does not depend on the bit's current value.
-// ORIGINAL: 0x0060EC80 ?set_state_pos@CheckBox@@QAEXHH@Z 0x0060EC80-0x0060ECB1
+// ORIGINAL: 0x0060EC80 ?set_state_pos@CheckBox@@QAEXHH@Z 0x0060EC80-0x0060ECB1 BYTE_EXACT
 // size      49 bytes
 // prototype void (__thiscall ?set_state_pos@CheckBox@@QAEXHH@Z)(CheckBox* this, int, int)
 // callers   0   call targets   0
@@ -671,11 +674,10 @@ Return Value: n/a
 Status: Complete
 */
 void CheckBox::set_state_pos(int pos, int state) {
-    const uint32_t mask = 1U << (static_cast<uint32_t>(pos) & 31U);
     if (state) {
-        selected_position_ |= mask;
+        selected_position_ |= 1U << static_cast<uint32_t>(pos);
     } else {
-        selected_position_ &= ~mask;
+        selected_position_ &= ~(1U << static_cast<uint32_t>(pos));
     }
 }
 
@@ -927,7 +929,7 @@ int CheckBox::get_state_id(int id) {
         }
     }
     const uint32_t mask =
-        1U << (static_cast<uint32_t>(items.current_position_) & 31U);
+        1U << static_cast<uint32_t>(items.current_position_);
     return static_cast<int>(Dialog::selected_position_ & mask);
 }
 
@@ -1012,8 +1014,8 @@ int CheckBox::item(char *text, int id, int state) {
     if (text == 0) {
         return 3;
     }
-    const uint32_t mask = 1u << (static_cast<uint32_t>(
-                                     item_list_.entry_count_) & 31u);
+    const uint32_t mask = 1u << static_cast<uint32_t>(
+                                     item_list_.entry_count_);
     if (state == 0) {
         selected_position_ &= ~mask;
     } else {
@@ -1130,7 +1132,7 @@ Purpose: A check box mouse move: locate the row under the cursor from the
          Dialog's column geometry, and park that row's ordinal in the hover
          field unless the row is selected, then repaint.
 
-// ORIGINAL: 0x0060FBB0 ?on_mouse_move@CheckBox@@QAEXHH@Z 0x0060FBB0-0x0060FC2B
+// ORIGINAL: 0x0060FBB0 ?on_mouse_move@CheckBox@@QAEXHH@Z 0x0060FBB0-0x0060FC2B BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; original identity 0x0060FBB0 retains name and all original spans/claims", "src/jackal/checkbox.h declares the actual CheckBox::on_mouse_move class member; body uses that existing owner API", "historical source was FILE-mode in git:e9190930285ebdae9121f3ac00645c634df1efea:src/leaf_recoveries.cpp; this transfer places the unchanged C++ member definition in its actual owner TU and changes measurement mode to BODY explicitly; it does not assert historical recipe equality", "the complete source body and existing TRIED/LEVER/DEFERRED history are carried forward unchanged; only annotation mode/location and transitional SCAFFOLD classification change"], "reason": "Transfer the complete CheckBox::on_mouse_move definition to its existing source owner without changing its C++ body. Keep the original FILE spans and historical claim state; BODY is the new per-member measurement scope, not a claim that the old whole-TU recipe is equivalent."}
 // symbol    ?on_mouse_move@CheckBox@@UAEXHH@Z
 // size      123 bytes
@@ -1156,7 +1158,7 @@ void CheckBox::on_mouse_move(int x_coord, int y_coord) {
     const uint32_t position = static_cast<uint32_t>(x_coord / cell_width)
                               * Dialog::row_count_
                               + static_cast<uint32_t>(y_coord / cell_height);
-    if (((1u << (position & 31u)) & selected_position_) != 0) {
+    if (((1u << position) & selected_position_) != 0) {
         // Native60FC00 skips redraw when the selected hover is already clear.
         if (Dialog::field_F0_ == 0xFFFFFFFFu) return;
         Dialog::field_F0_ = 0xFFFFFFFFu;

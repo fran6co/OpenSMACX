@@ -2,6 +2,7 @@
 
 Host doubles do not prove original Win32 layout or full executable matching.
 """
+from dataclasses import replace
 from pathlib import Path
 import shutil
 import subprocess
@@ -182,14 +183,48 @@ int main(){
     assert (result.returncode == 0) == (damage is None), result.stderr
 
 
+def _assert_original_continuity(before, after):
+    # The native recorder may add measured claims. Historical obligations may
+    # never disappear; all other identity/span/symbol/lesson facts stay exact.
+    assert len(before) == len(after), "original identity count changed"
+    for old, new in zip(before, after, strict=True):
+        assert not old.byte_exact or new.byte_exact, "historical byte claim demoted"
+        assert not old.semantic or new.semantic, "historical semantic claim demoted"
+        normalized = replace(new, byte_exact=old.byte_exact, semantic=old.semantic)
+        assert (_continuity_fields(old), old.symbol) == (
+            _continuity_fields(normalized), normalized.symbol
+        ), "original identity/span/symbol/lesson facts changed"
+
+
 def test_original_identity_span_claim_and_symbol_continuity():
     for filename in FILES:
         path = ROOT / f"src/jackal/{filename}.cpp"
         prior = subprocess.check_output(["git", "show", IDENTITY_BASE + ":" + str(path.relative_to(ROOT))],
                                         cwd=ROOT, text=True)
         before, after = read_text(prior, path), read_text(path.read_text(), path)
-        assert [(r.address, _continuity_fields(r), r.symbol) for r in before] == [
-            (r.address, _continuity_fields(r), r.symbol) for r in after]
+        _assert_original_continuity(before, after)
+
+
+def test_continuity_guard_allows_promotions_but_refuses_demotions_and_lost_facts():
+    path = ROOT / "src/jackal/checkbox.cpp"
+    source = subprocess.check_output(
+        ["git", "show", IDENTITY_BASE + ":src/jackal/checkbox.cpp"], cwd=ROOT, text=True
+    )
+    baseline = read_text(source, path)
+    promoted = [replace(row, byte_exact=True, semantic=True) for row in baseline]
+    _assert_original_continuity(baseline, promoted)
+    for field in ("byte_exact", "semantic"):
+        damaged = [replace(promoted[0], **{field: False}), *promoted[1:]]
+        with pytest.raises(AssertionError, match="claim demoted"):
+            _assert_original_continuity(promoted, damaged)
+    with pytest.raises(AssertionError, match="identity count"):
+        _assert_original_continuity(baseline, baseline[1:])
+    first = baseline[0]
+    lo, hi = first.image_spans[0]
+    damaged = [replace(first, image_spans=((lo, hi - 1), *first.image_spans[1:])),
+               *baseline[1:]]
+    with pytest.raises(AssertionError, match="identity/span/symbol/lesson"):
+        _assert_original_continuity(baseline, damaged)
 
 
 def test_pinned_receivers_and_hover_control_flow():
