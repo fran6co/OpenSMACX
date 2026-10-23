@@ -3081,8 +3081,8 @@ void Datalink::on_button_clicked(int button_id) {
         --field_2A34_;
         const int entry = history_[field_2A34_];
         const int category = entry / 10000;
-        const int item = entry - category * 10000;
         set_cat(static_cast<unsigned int>(category), 0);
+        const int item = entry - category * 10000;
         history_[0] = item;
 
         const int selected = field_29DC_ * 10000 + item;

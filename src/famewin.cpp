@@ -448,7 +448,7 @@ static void famewin_write_wrapped(Buffer *canvas, int x, int y, int width) {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x0044A570 ?on_button_clicked@FameWin@@QAEXH@Z 0x0044A570-0x0044A640
+// ORIGINAL: 0x0044A570 ?on_button_clicked@FameWin@@QAEXH@Z 0x0044A570-0x0044A640 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0044a570.cpp"], "reason": "Product definition uses the typed FameWin ownership model while retaining the historical seed and its recovery obligations."}
 // symbol    ?on_button_clicked@FameWin@@UAEXH@Z
 void FameWin::on_button_clicked(int button_id) {
@@ -458,12 +458,12 @@ void FameWin::on_button_clicked(int button_id) {
     GraphicWin::close();
     return;
   }
-  int award = button_id - 0x8AE;
-  if (award < 0 || award > 5) return;
+  button_id -= 0x8AE;
+  if (button_id < 0 || button_id > 5) return;
   for (int row = 0; row < 7; ++row) {
     for (int column = 0; column < 5; ++column) {
       const HallOfFameRecord &entry = HallOfFameRecords[row * 5 + column];
-      if ((entry.present & 1) && (entry.award_flags & (1 << award))) {
+      if ((entry.present & 1) && (entry.award_flags & (1 << button_id))) {
         buttonGroup_.set(row + 1, 1);
         selectedRecord_ = column;
         redraw();
