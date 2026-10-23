@@ -28,7 +28,9 @@ def test_actual_draw_vehicles_opening_gate():
 
 static int MapBaseDisplayOverride;
 static int ControlTurnPhase;
-static uint32_t GameRules;
+struct GameDataStateFieldsProjection {{ uint32_t game_rules_; }};
+struct GameDataStateProjection {{ GameDataStateFieldsProjection fields_; }};
+static GameDataStateProjection GameDataStateStorage;
 static uint32_t field_1DD70_;
 static int reached_after_gate;
 
@@ -36,7 +38,7 @@ static void run_gate(uint32_t flags, int override_value, int phase, uint32_t rul
     const int tile_x = 4;
     MapBaseDisplayOverride = override_value;
     ControlTurnPhase = phase;
-    GameRules = rules;
+    GameDataStateStorage.fields_.game_rules_ = rules;
     field_1DD70_ = flags;
     reached_after_gate = 0;
     {block}

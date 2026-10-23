@@ -1742,30 +1742,6 @@ int map_dest_distance(int x1, int y1, int x2, int y2) {
     return mapwin_dest_add(dx, map_dest_abs(mapwin_dest_sub(y1, y2)));
 }
 
-bool map_dest_in_view(const MapWin &window, int x, int y) {
-    const int top = window.field_1DDA8_;
-    if (y < top) {
-        return false;
-    }
-    const int bottom = mapwin_dest_add(mapwin_dest_add(window.field_1DDD8_,
-                                                window.field_1DDD0_), top);
-    if (y >= bottom) {
-        return false;
-    }
-    const int left = window.field_1DDA4_;
-    const int right = mapwin_dest_add(mapwin_dest_add(window.field_1DDD4_,
-                                               window.field_1DDCC_), left);
-    // Normalize a probe, not the endpoints passed to direct_dest_line.
-    if ((MapIsFlat & 1) == 0) {
-        if (x < left) {
-            x = mapwin_dest_add(x, MapLongitudeBounds);
-        }
-        if (x >= right) {
-            x = mapwin_dest_sub(x, MapLongitudeBounds);
-        }
-    }
-    return x >= left && x < right;
-}
 }
 
 // ORIGINAL: 0x004672C0 ?direct_dest_line@MapWin@@QAEXHHHHHHHH@Z 0x004672C0-0x0046742C
@@ -1915,8 +1891,96 @@ void MapWin::dest_line(int x1, int y1, int x2, int y2, int proto_id,
                     // hex_cost can update shared state: load the cost AFTER it.
                     MapDestinationCost = mapwin_dest_add(MapDestinationCost, cost);
                 }
-                if (map_dest_in_view(*this, current_x, current_y) ||
-                    map_dest_in_view(*this, next_x, next_y)) {
+                bool segment_visible = false;
+                {
+                    const int viewport_top = field_1DDA8_;
+                    if (current_y >= viewport_top) {
+                        const int viewport_bottom = mapwin_dest_add(
+                            mapwin_dest_add(field_1DDD8_, field_1DDD0_),
+                            viewport_top);
+                        if (current_y < viewport_bottom) {
+                            if ((MapIsFlat & 1) != 0) {
+                                const int viewport_left = field_1DDA4_;
+                                if (current_x >= viewport_left) {
+                                    const int viewport_right = mapwin_dest_add(
+                                        mapwin_dest_add(field_1DDD4_, field_1DDCC_),
+                                        viewport_left);
+                                    if (current_x < viewport_right) {
+                                        segment_visible = true;
+                                    }
+                                }
+                            } else {
+                                const int viewport_left = field_1DDA4_;
+                                int viewport_x = current_x;
+                                if (viewport_x < viewport_left) {
+                                    viewport_x = mapwin_dest_add(
+                                        viewport_x, MapLongitudeBounds);
+                                }
+                                const int viewport_right = mapwin_dest_add(
+                                    mapwin_dest_add(field_1DDD4_, field_1DDCC_),
+                                    viewport_left);
+                                if (viewport_x >= viewport_right) {
+                                    viewport_x = mapwin_dest_sub(
+                                        viewport_x, MapLongitudeBounds);
+                                }
+                                const int final_viewport_left = field_1DDA4_;
+                                if (viewport_x >= final_viewport_left) {
+                                    const int final_viewport_right = mapwin_dest_add(
+                                        mapwin_dest_add(field_1DDD4_, field_1DDCC_),
+                                        final_viewport_left);
+                                    if (viewport_x < final_viewport_right) {
+                                        segment_visible = true;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                if (!segment_visible) {
+                    const int viewport_top = field_1DDA8_;
+                    if (next_y >= viewport_top) {
+                        const int viewport_bottom = mapwin_dest_add(
+                            mapwin_dest_add(field_1DDD8_, field_1DDD0_),
+                            viewport_top);
+                        if (next_y < viewport_bottom) {
+                            if ((MapIsFlat & 1) != 0) {
+                                const int viewport_left = field_1DDA4_;
+                                if (next_x >= viewport_left) {
+                                    const int viewport_right = mapwin_dest_add(
+                                        mapwin_dest_add(field_1DDD4_, field_1DDCC_),
+                                        viewport_left);
+                                    if (next_x < viewport_right) {
+                                        segment_visible = true;
+                                    }
+                                }
+                            } else {
+                                const int viewport_left = field_1DDA4_;
+                                int viewport_x = next_x;
+                                if (viewport_x < viewport_left) {
+                                    viewport_x = mapwin_dest_add(
+                                        viewport_x, MapLongitudeBounds);
+                                }
+                                const int viewport_right = mapwin_dest_add(
+                                    mapwin_dest_add(field_1DDD4_, field_1DDCC_),
+                                    viewport_left);
+                                if (viewport_x >= viewport_right) {
+                                    viewport_x = mapwin_dest_sub(
+                                        viewport_x, MapLongitudeBounds);
+                                }
+                                const int final_viewport_left = field_1DDA4_;
+                                if (viewport_x >= final_viewport_left) {
+                                    const int final_viewport_right = mapwin_dest_add(
+                                        mapwin_dest_add(field_1DDD4_, field_1DDCC_),
+                                        final_viewport_left);
+                                    if (viewport_x < final_viewport_right) {
+                                        segment_visible = true;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                if (segment_visible) {
                     direct_dest_line(current_x, current_y, next_x, next_y,
                                      triad, pattern_on, pattern_off, cover);
                 }
@@ -2399,13 +2463,56 @@ void MapWin::draw_vehicles(int x, int y, int radius, int faction) {
         const int tile_y = mapwin_dest_add(y, row);
         for (int column = -half_width; column <= half_width; column += 2) {
             const int tile_x = map_radius_wrap_x(mapwin_dest_add(x, column));
-            if (map_radius_valid(tile_x, tile_y) &&
-                map_dest_in_view(*this, tile_x, tile_y)) {
-                int pixel_x;
-                int pixel_y;
-                tile_to_pixel(tile_x, tile_y, &pixel_x, &pixel_y);
-                draw_vehicles(tile_x, tile_y, pixel_x,
-                              mapwin_dest_sub(pixel_y, field_1DDC0_), faction);
+            if (map_radius_valid(tile_x, tile_y)) {
+                bool tile_visible = false;
+                const int viewport_top = field_1DDA8_;
+                if (tile_y >= viewport_top) {
+                    const int viewport_bottom = mapwin_dest_add(
+                        mapwin_dest_add(field_1DDD8_, field_1DDD0_), viewport_top);
+                    if (tile_y < viewport_bottom) {
+                        if ((MapIsFlat & 1) != 0) {
+                            const int viewport_left = field_1DDA4_;
+                            if (tile_x >= viewport_left) {
+                                const int viewport_right = mapwin_dest_add(
+                                    mapwin_dest_add(field_1DDD4_, field_1DDCC_),
+                                    viewport_left);
+                                if (tile_x < viewport_right) {
+                                    tile_visible = true;
+                                }
+                            }
+                        } else {
+                            const int viewport_left = field_1DDA4_;
+                            int viewport_x = tile_x;
+                            if (viewport_x < viewport_left) {
+                                viewport_x = mapwin_dest_add(
+                                    viewport_x, MapLongitudeBounds);
+                            }
+                            const int viewport_right = mapwin_dest_add(
+                                mapwin_dest_add(field_1DDD4_, field_1DDCC_),
+                                viewport_left);
+                            if (viewport_x >= viewport_right) {
+                                viewport_x = mapwin_dest_sub(
+                                    viewport_x, MapLongitudeBounds);
+                            }
+                            const int final_viewport_left = field_1DDA4_;
+                            if (viewport_x >= final_viewport_left) {
+                                const int final_viewport_right = mapwin_dest_add(
+                                    mapwin_dest_add(field_1DDD4_, field_1DDCC_),
+                                    final_viewport_left);
+                                if (viewport_x < final_viewport_right) {
+                                    tile_visible = true;
+                                }
+                            }
+                        }
+                    }
+                }
+                if (tile_visible) {
+                    int pixel_x;
+                    int pixel_y;
+                    tile_to_pixel(tile_x, tile_y, &pixel_x, &pixel_y);
+                    draw_vehicles(tile_x, tile_y, pixel_x,
+                                  mapwin_dest_sub(pixel_y, field_1DDC0_), faction);
+                }
             }
         }
     }
@@ -2460,13 +2567,57 @@ void MapWin::gen_radius(int x, int y, int radius, int faction, int skip_terrain)
             const int tile_y = mapwin_dest_add(y, row);
             for (int column = -half_width; column <= half_width; column += 2) {
                 const int tile_x = map_radius_wrap_x(mapwin_dest_add(x, column));
-                if (map_radius_valid(tile_x, tile_y) &&
-                    map_dest_in_view(*this, tile_x, tile_y)) {
-                    int pixel_x;
-                    int pixel_y;
-                    tile_to_pixel(tile_x, tile_y, &pixel_x, &pixel_y);
-                    gen_window_terrain(this, field_1DD98_, faction, -1,
-                                       field_1DD70_, tile_x, tile_y, pixel_x, pixel_y);
+                if (map_radius_valid(tile_x, tile_y)) {
+                    bool tile_visible = false;
+                    const int viewport_top = field_1DDA8_;
+                    if (tile_y >= viewport_top) {
+                        const int viewport_bottom = mapwin_dest_add(
+                            mapwin_dest_add(field_1DDD8_, field_1DDD0_), viewport_top);
+                        if (tile_y < viewport_bottom) {
+                            if ((MapIsFlat & 1) != 0) {
+                                const int viewport_left = field_1DDA4_;
+                                if (tile_x >= viewport_left) {
+                                    const int viewport_right = mapwin_dest_add(
+                                        mapwin_dest_add(field_1DDD4_, field_1DDCC_),
+                                        viewport_left);
+                                    if (tile_x < viewport_right) {
+                                        tile_visible = true;
+                                    }
+                                }
+                            } else {
+                                const int viewport_left = field_1DDA4_;
+                                int viewport_x = tile_x;
+                                if (viewport_x < viewport_left) {
+                                    viewport_x = mapwin_dest_add(
+                                        viewport_x, MapLongitudeBounds);
+                                }
+                                const int viewport_right = mapwin_dest_add(
+                                    mapwin_dest_add(field_1DDD4_, field_1DDCC_),
+                                    viewport_left);
+                                if (viewport_x >= viewport_right) {
+                                    viewport_x = mapwin_dest_sub(
+                                        viewport_x, MapLongitudeBounds);
+                                }
+                                const int final_viewport_left = field_1DDA4_;
+                                if (viewport_x >= final_viewport_left) {
+                                    const int final_viewport_right = mapwin_dest_add(
+                                        mapwin_dest_add(field_1DDD4_, field_1DDCC_),
+                                        final_viewport_left);
+                                    if (viewport_x < final_viewport_right) {
+                                        tile_visible = true;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    if (tile_visible) {
+                        int pixel_x;
+                        int pixel_y;
+                        tile_to_pixel(tile_x, tile_y, &pixel_x, &pixel_y);
+                        gen_window_terrain(this, field_1DD98_, faction, -1,
+                                           field_1DD70_, tile_x, tile_y,
+                                           pixel_x, pixel_y);
+                    }
                 }
             }
         }
@@ -2525,7 +2676,49 @@ void MapWin::draw_radius(int x, int y, int radius, int draw_type) {
             const int history = ConsoleGlobal.cursor_history_index_;
             const int cursor_y = ConsoleGlobal.cursor_history_y_[history];
             const int cursor_x = ConsoleGlobal.cursor_history_x_[history];
-            if (map_dest_in_view(*this, cursor_x, cursor_y)) {
+            bool cursor_visible = false;
+            const int viewport_top = field_1DDA8_;
+            if (cursor_y >= viewport_top) {
+                const int viewport_bottom = mapwin_dest_add(
+                    mapwin_dest_add(field_1DDD8_, field_1DDD0_), viewport_top);
+                if (cursor_y < viewport_bottom) {
+                    if ((MapIsFlat & 1) != 0) {
+                        const int viewport_left = field_1DDA4_;
+                        if (cursor_x >= viewport_left) {
+                            const int viewport_right = mapwin_dest_add(
+                                mapwin_dest_add(field_1DDD4_, field_1DDCC_),
+                                viewport_left);
+                            if (cursor_x < viewport_right) {
+                                cursor_visible = true;
+                            }
+                        }
+                    } else {
+                        const int viewport_left = field_1DDA4_;
+                        int viewport_x = cursor_x;
+                        if (viewport_x < viewport_left) {
+                            viewport_x = mapwin_dest_add(
+                                viewport_x, MapLongitudeBounds);
+                        }
+                        const int viewport_right = mapwin_dest_add(
+                            mapwin_dest_add(field_1DDD4_, field_1DDCC_),
+                            viewport_left);
+                        if (viewport_x >= viewport_right) {
+                            viewport_x = mapwin_dest_sub(
+                                viewport_x, MapLongitudeBounds);
+                        }
+                        const int final_viewport_left = field_1DDA4_;
+                        if (viewport_x >= final_viewport_left) {
+                            const int final_viewport_right = mapwin_dest_add(
+                                mapwin_dest_add(field_1DDD4_, field_1DDCC_),
+                                final_viewport_left);
+                            if (viewport_x < final_viewport_right) {
+                                cursor_visible = true;
+                            }
+                        }
+                    }
+                }
+            }
+            if (cursor_visible) {
                 Texture &texture = map_dest_signed(field_1DD98_) <= -8
                                        ? g_RADIUS2_TEXTURE : g_RADIUS1_TEXTURE;
                 texture.draw_trans(static_cast<Buffer *>(this), MapCornerCopy, 0);

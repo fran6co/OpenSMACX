@@ -106,7 +106,7 @@ def actual_source():
     parts["MAP_ACCESS"] = braced(h["map"], "inline Map *__cdecl map_loc(") + "\n" + braced(h["map"], "MEASURED inline BOOL __cdecl on_map(")
     parts["HELPERS"] = "\n".join(braced(source, sig) for sig in (
         "int map_dest_signed(", "int mapwin_dest_add(int left, int right) {", "int mapwin_dest_sub(int left, int right) {",
-        "int mapwin_dest_mul(int left, int right) {", "bool map_dest_in_view(",
+        "int mapwin_dest_mul(int left, int right) {",
         "int map_radius_wrap_x(", "bool map_radius_valid(", "int map_radius_half_width("))
     for key, signature in (("VIEW", "int MapWin::tile_in_view("), ("ADAPTER", "int __cdecl gen_window_terrain("),
                            ("VEHICLES", "void MapWin::draw_vehicles(int x, int y, int radius,"),
@@ -173,6 +173,7 @@ int gen_terrain_poly(Buffer *canvas,MapWin *owner,int zoom,int faction,int base,
     require(px==x*10+1&&py==y*10+2);note('T',{x,y,zoom,faction,flags});++terrain_calls;
     if(scenario==2)require(zoom==-7&&flags==0x12345);
     if(scenario==3){window.field_1DDA8_=159;window.field_1DDD0_=1;window.field_1DDD8_=0;}
+    if(scenario==11)window.field_1DDA8_=159;
     return -17;
 }
 void MapWin::draw_vehicles(int x,int y,int px,int py,int faction){require(this==&window&&faction==expected_faction);
@@ -282,6 +283,16 @@ void scan_boundaries_and_callbacks(){
     reset();center_y=1;left_y=right_y=0;auto expected=profile(4,2);window.draw_vehicles(50,1,0,3);require(points('V')==expected);
     reset();window.field_1DDA4_=48;window.field_1DDCC_=3;window.field_1DDD4_=2;window.field_1DDA8_=49;window.field_1DDD0_=2;window.field_1DDD8_=1;
     expected=profile(4,2);window.draw_vehicles(50,50,0,3);require(points('V')==expected);
+    for(int flat_mode=0;flat_mode<3;++flat_mode){
+        reset();MapIsFlat=flat_mode;center_x=50;center_y=50;window.field_1DDA4_=50;window.field_1DDCC_=4;window.field_1DDD4_=0;
+        window.field_1DDA8_=50;window.field_1DDD0_=3;window.field_1DDD8_=1;
+        expected=profile(4,2);window.draw_vehicles(50,50,0,3);require(points('V')==expected);
+        reset();MapIsFlat=flat_mode;center_x=50;center_y=50;window.field_1DDA4_=50;window.field_1DDCC_=4;window.field_1DDD4_=0;
+        window.field_1DDA8_=50;window.field_1DDD0_=3;window.field_1DDD8_=1;
+        expected=profile(4,2);window.gen_radius(50,50,0,3,0);
+        auto terrain_expected=expected;terrain_expected.insert(terrain_expected.begin(),{{49,47},{51,47}});
+        require(points('T')==terrain_expected&&points('V')==expected);
+    }
     reset();scenario=1;window.gen_radius(50,50,0,3,0);require(events('F').empty()&&terrain_calls==59);
     reset();scenario=2;window.gen_radius(50,50,1,3,0);require(terrain_calls==73&&vehicle_calls==73);
     reset();scenario=3;window.gen_radius(50,50,1,3,0);require(terrain_calls==1&&vehicle_calls==0);
@@ -308,6 +319,18 @@ void draw_controls(){
     reset();GameDataStateStorage.fields_.game_state_=0x80;expected_faction=-1;window.draw_radius(50,50,0,-1);require(terrain_calls==0&&vehicle_calls==57&&events('U').size()==1&&events('X').empty());
     reset();scenario=9;window.draw_radius(50,50,1,0);require(events('X').empty());
     reset();scenario=10;window.draw_radius(50,50,1,0);require(events('X').size()==1&&events('X')[0].a[0]==2);
+    reset();scenario=3;window.draw_radius(50,50,0,0);require((points('T')==std::vector<Point>{{49,47},{51,47}})&&events('X').empty());
+    reset();MapIsFlat=0;MapLongitudeBounds=200;window.field_1DDA4_=190;window.field_1DDCC_=20;window.field_1DDD4_=0;
+    ConsoleGlobal.cursor_history_x_[2]=5;window.draw_radius(50,50,0,0);require(events('X').size()==1);
+    reset();MapIsFlat=1;MapLongitudeBounds=200;window.field_1DDA4_=190;window.field_1DDCC_=20;window.field_1DDD4_=0;
+    ConsoleGlobal.cursor_history_x_[2]=5;window.draw_radius(50,50,0,0);require(events('X').empty());
+    for(int flat_mode=0;flat_mode<3;++flat_mode){
+        reset();MapIsFlat=flat_mode;window.field_1DDA4_=50;window.field_1DDCC_=4;window.field_1DDD4_=0;
+        ConsoleGlobal.cursor_history_x_[2]=54;window.draw_radius(50,50,0,0);require(events('X').empty());
+        reset();MapIsFlat=flat_mode;window.field_1DDA8_=50;window.field_1DDD0_=3;window.field_1DDD8_=1;
+        ConsoleGlobal.cursor_history_y_[2]=54;window.draw_radius(50,50,0,0);require(events('X').empty());
+    }
+    reset();scenario=11;window.draw_radius(50,50,0,0);require((points('T')==std::vector<Point>{{49,47},{51,47}})&&events('X').empty());
     reset();clip_results[0]=clip_results[1]=0;window.draw_radius(50,50,0,2);require(events('U').empty()&&events('D').empty());
     reset();clip_results[0]=0;window.field_1DD98_=uint32_t(-7);window.draw_radius(50,50,0,0);require(events('X').size()==1&&events('X')[0].a[0]==1);
 }
@@ -346,7 +369,13 @@ DAMAGE = [
     ("view_right_exclusive", "VIEW", "x < right;", "x <= right;"),
     ("view_margin_left", "VIEW", "mapwin_dest_add(field_1DDA4_, margin)", "field_1DDA4_"),
     ("view_margin_bottom", "VIEW", "mapwin_dest_sub(mapwin_dest_add(field_1DDD8_, field_1DDD0_), margin)", "mapwin_dest_add(field_1DDD8_, field_1DDD0_)"),
-    ("flat_bit_not_boolean", "HELPERS", "(MapIsFlat & 1) == 0", "MapIsFlat == 0"),
+    ("vehicle_bottom_exclusive", "VEHICLES", "if (tile_y < viewport_bottom)", "if (tile_y <= viewport_bottom)"),
+    ("terrain_bottom_exclusive", "GENERATE", "if (tile_y < viewport_bottom)", "if (tile_y <= viewport_bottom)"),
+    ("cursor_bottom_exclusive", "DRAW", "if (cursor_y < viewport_bottom)", "if (cursor_y <= viewport_bottom)"),
+    ("vehicle_right_exclusive", "VEHICLES", "if (tile_x < viewport_right)", "if (tile_x <= viewport_right)"),
+    ("terrain_right_exclusive", "GENERATE", "if (tile_x < viewport_right)", "if (tile_x <= viewport_right)"),
+    ("cursor_right_exclusive", "DRAW", "if (cursor_x < viewport_right)", "if (cursor_x <= viewport_right)"),
+    ("flat_bit_not_boolean", "VEHICLES", "(MapIsFlat & 1) != 0", "MapIsFlat != 0"),
     ("southern_parity", "HELPERS", "row & 1", "row"),
     ("northern_width", "HELPERS", "mapwin_dest_sub(0, row)", "0"),
     ("vehicle_cap", "VEHICLES", "span < 10", "span < 8"),
@@ -354,7 +383,7 @@ DAMAGE = [
     ("vehicle_last_row", "VEHICLES", "row <= extent + 1", "row <= extent"),
     ("vehicle_step", "VEHICLES", "column += 2", "column += 1"),
     ("vehicle_live_vertical_center", "VEHICLES", "mapwin_dest_sub(pixel_y, field_1DDC0_)", "mapwin_dest_sub(pixel_y, 7)"),
-    ("vehicle_view_filter", "VEHICLES", "map_dest_in_view(*this, tile_x, tile_y)", "true"),
+    ("vehicle_view_filter", "VEHICLES", "if (tile_visible) {", "if (true) {"),
     ("clip_refusal", "GENERATE", "compute_clip(x, y, radius, &clip) == 0", "compute_clip(x, y, radius, &clip) != 0"),
     ("fill_flag", "GENERATE", "(field_1DD70_ & 0x10000000U) == 0", "true"),
     ("fill_color", "GENERATE", "fill(&clip, 0x41)", "fill(&clip, 0x40)"),
@@ -365,7 +394,7 @@ DAMAGE = [
     ("terrain_skip", "GENERATE", "if (skip_terrain == 0)", "if (true)"),
     ("terrain_live_zoom", "GENERATE", "gen_window_terrain(this, field_1DD98_", "gen_window_terrain(this, 0"),
     ("terrain_faction_snapshot", "GENERATE", "gen_window_terrain(this, field_1DD98_, faction", "gen_window_terrain(this, field_1DD98_, ConsoleGlobal.faction_id_"),
-    ("terrain_live_view", "GENERATE", "map_dest_in_view(*this, tile_x, tile_y)", "true"),
+    ("terrain_live_view", "GENERATE", "if (tile_visible) {", "if (true) {"),
     ("names_missing", "GENERATE", "draw_base_names();", "/* omitted */"),
     ("overlays_flag", "GENERATE", "(field_1DD70_ & 0x2000) != 0", "false"),
     ("overlay_left_only", "GENERATE", "while (upper_left_y < mapwin_dest_sub(y, span))", "while (upper_y < mapwin_dest_sub(y, span))"),
@@ -382,7 +411,7 @@ DAMAGE = [
     ("display_mode_gate", "DRAW", "map_view_index_ == 0 || (field_1DD70_ & 0x80000000U) != 0", "true"),
     ("network_game_override", "DRAW", "network != 0 && (GameDataStateStorage.fields_.game_state_ & 2) != 0", "false"),
     ("history_index", "DRAW", "const int history = ConsoleGlobal.cursor_history_index_", "const int history = 0"),
-    ("history_view", "DRAW", "map_dest_in_view(*this, cursor_x, cursor_y)", "true"),
+    ("history_view", "DRAW", "if (cursor_visible) {", "if (true) {"),
     ("signed_zoom_boundary", "DRAW", "map_dest_signed(field_1DD98_) <= -8", "map_dest_signed(field_1DD98_) < -8"),
     ("texture_shared_count", "DRAW", "MapCornerCopy, 0", "MapCornerCopy, 1"),
     ("update_gate", "DRAW", "if (draw_type != 0)", "if (draw_type > 0)"),
@@ -398,3 +427,24 @@ def test_damage_is_observed(tmp_path, name, part, before, after):
     parts[part] = parts[part].replace(before, after, 1)
     result = run_host(tmp_path, parts)
     assert result.returncode == 92 and "assertion line" in result.stderr, (name, result.returncode, result.stderr)
+
+
+def test_draw_radius_uses_viewport_after_generation_callback(tmp_path):
+    parts = actual_source()
+    draw = parts["DRAW"]
+    cached = draw.replace(
+        "void MapWin::draw_radius(int x, int y, int radius, int draw_type) {",
+        "void MapWin::draw_radius(int x, int y, int radius, int draw_type) {\n"
+        "    const int cached_viewport_top = field_1DDA8_;",
+        1,
+    ).replace(
+        "const int viewport_top = field_1DDA8_;",
+        "const int viewport_top = cached_viewport_top;",
+        1,
+    )
+    assert cached != draw
+    parts["DRAW"] = cached
+    result = run_host(tmp_path, parts)
+    assert result.returncode == 92 and "assertion line" in result.stderr, (
+        result.returncode, result.stderr,
+    )
