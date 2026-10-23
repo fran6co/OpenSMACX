@@ -1,0 +1,26 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "b253a5eb886486f70930face11f6a87bc99b2efe",
+  "editable_files": [
+    "src/uv2player.cpp",
+    "recovery/tests/test_uv2player_owner.py"
+  ],
+  "evidence": [
+    "The tenth bounded actual-application screen uses the frozen current production recipe and reaches 43/43 instructions BYTE_EXACT for on_key by nesting the positive PeekMessage/GetMessage guards and accepted key/mouse branches, with a shared rejection return. Native outside-selected comparison passes and no existing exact body regresses. This is a source candidate, not a recorded claim or acceptance. Use exactly the reviewed old/new complete definition in easy-tenth-physical-deck.json, src/uv2player.cpp group.",
+    "Preserve original input flags, message queue calls and count, accepted Return/Escape/Space and left/right button messages, global quit writes and all returns. GetMessageA result -1 remains truthy, as in the original; do not convert to >0, initialize the MSG packet, dispatch/translate messages, or fix any error path. No class/header/ABI/flags/compiler/package changes, casts/volatile/asm/address tricks or unrelated methods.",
+    "Existing actual-source owner harness covers constructor, keys including GetMessage -1, timed member/callback and clock cases with ASan/UBSan. Retarget only the existing GetMessage mutation from old negated spelling to the positive-guard spelling; its damaged >0 form must still compile and fail for -1. Preserve all prior behavioral assertions, sanitizer settings and other mutations. No mirrored implementation or extra unrelated tests.",
+    "Worker edits only these authorized isolated source/tests with apply_patch, then freezes and returns hashes. No Git, Task, compiler/test/preparation/resources mutation; coordinator handles native guarded record, full build/link, independent review, integration and fresh destination verification. Return discoveries before expanding scope. Keep original task baseline and all mappings/spans/history/claims; native recorder alone may grant an exact claim.",
+    "Standing coordinator-reviewed manual integration is authorized after source/pin review and relevant checks, but no native automatic/full-game/complete linked preservation or runtime acceptance is inferred. Preserve FAIL/UNKNOWN and original unsafe semantics. Another UI batch is integrating independently; update this worker against master only at a coordinator-owned checkpoint after edits freeze."
+  ],
+  "intent": "Recover exact ordinary message-pump branch structure in the UV2Player owner",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4977552,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "uv2-message-key-oct23z"
+}
