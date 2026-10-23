@@ -1,0 +1,22 @@
+{
+  "event_id": "30883d493f48f5461a103bdee1ce091d5ee7a7237678dca7a751eba333c70893",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "signed-grid-column-count",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "The original calculate producer and draw_item/on_key_click/exec consumers establish signed column_count_ at A810, alongside signed cell_width_ at A81C and row_height_ at A820. All members remain four-byte fields at the same offsets. Updated all owner uses and removed only obsolete casts on these corrected members; no speculative adjacent field type changes.",
+      "Coordinator reviewed the actual complete owner diff, pinned signed IDIV/IMUL/ADD accesses, independent source/arithmetic review and fresh physical production artifacts. ProdPicker retains all 26 original identities and spans, symbols, authored history and 15 historical BYTE_EXACT obligations. No new claims, exact bodies, exclusions or implementation-count gains are asserted. Source/claims/mapping/reference checks pass. Original task baseline 088d2cee1345989a4a5c08a893be36e081ffc73a remains unchanged; integration target 8f1c7b392f7481dbafb0e91d5e31ebe9da84fecb includes the separately verified PrefWin recovery.",
+      "Fresh frozen candidate ffd7888e5748aadf5ac52b6ccc92dc18ee5befa7 compiles and links all 192 TUs with 206 qualified physical objects. Compared with current master, 202 normalized objects are equal. The three external consumers game/mapwin/netdaemon differ only in debug type metadata and associated section-definition records; executable code, data, references, directives and association evidence agree. ProdPicker has exactly three changed emitted functions: draw_item, exec and on_left_click; its other 140 signatures and non-text/non-debug sections agree. Full object differences remain visible, not converted to equality. Physical review direction typo for mapwin is corrected add-only in prodpicker-ready-physical-review-correction.json.",
+      "Actual production replay, baseline/candidate replicas and body-damage controls pass; native outside the complete selected ProdPicker owner passes. All 5,581 known mapped local verdicts and 3,428 strict states retain their identities: 3,428 local exact, 3,115 strict PASS and 313 UNKNOWN. The current-build PDB global TPI records the expected signed members, ProdPicker size A840 and BaseWin embedded member A1C; missing relevant module streams prevent module-attributed layout proof. No claim of complete linked retention, class/runtime/game or native automatic acceptance follows.",
+      "Combined current-source GCC/Clang behavior controls pass 75 cases; two tests skip because worker-local pinned assets are absent. Separate original-image anchor controls pass all three anchor cases; skipped candidate cases remain reported as skips. UBSan detects a compiled signed-product-overflow mutant. Existing fixtures retain behavioral assertions and deliberate damage checks while using the corrected signed member names/types. Coordinator review SHA256 b97098c0f37c1e8356631b49e4daae89680eb828420d46e8cb65b67f1785dcc6.",
+      "Standing user permission authorizes coordinator-reviewed manual integration of this faithful structural correction. Preserve original signed division faults, callback read ordering and target-word storage assumptions; no guards, initialization fixes, demotions, flag changes or baseline resets. Fresh integrated build/link, all 206 candidate/destination object comparisons, source/claim/reference checks and relevant tests are required before removing the worker. Preserve failed verification and rerun fresh rather than discarding work or replaying acceptance."
+    ]
+  },
+  "previous_event": "cf6c24ad90c3720d179c5a50cde8c3b645fe4add0136666e2ee6469708851a92",
+  "request_id": "signed-grid-column-count-incorporated",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:prodpicker-signed-geometry-oct23y"
+}
