@@ -910,10 +910,8 @@ void SocialWin::on_redraw() {
     draw_psych_alloc();
     draw_mouseover();
 
-    for (int button = 0; button < 11; ++button) {
-        if (button != 3) {
-            flatButtons_[17 + button].redraw();
-        }
+    for (int button = 17; button < 27; ++button) {
+        flatButtons_[button].redraw();
     }
 }
 

@@ -17,7 +17,7 @@ static const char *label_get(int id) {
     if (id >= 89 && id <= 92) ++rockiness_label_calls;
     return "label";
 }
-struct Strings { char *get(int) { return const_cast<char *>("name"); } };
+struct Strings { LPSTR get(LPSTR) { return const_cast<LPSTR>("name"); } };
 static Strings StringTable;
 
 struct Font {
