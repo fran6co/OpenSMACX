@@ -854,31 +854,29 @@ Buffer::Buffer() {
     markup_enabled_ = BufferField520Default;
     field_524_ = 0;
 
-    // THE FOUR TEXT STYLES, one `Font *` and four colours each. `set_text_color`
-    // through `set_text_color4` write one style apiece, which is what pairs
-    // `font2_` with the `color_2_val_*` row below it. Only the first gets the
-    // process default font; the other three start unset, and -1 is the "no
-    // colour" the drawing code tests for.
+    // Four font slots and four color-parameter columns. Only the primary font
+    // gets the process default; the other three start unset. Each slot's
+    // shadow color defaults to -1, the value the drawing code tests for.
     fonts_[0] = FontDefault;
-    color_val_1_ = 0;
-    color_val_2_ = -1;
-    color_val_3_ = 2;
-    color_val_4_ = 2;
+    text_parameters_[0][0] = 0;
+    text_parameters_[1][0] = -1;
+    text_parameters_[2][0] = 2;
+    text_parameters_[3][0] = 2;
     fonts_[1] = nullptr;
-    color_2_val_1_ = -1;
-    color_2_val_2_ = -1;
-    color_2_val_3_ = 2;
-    color_2_val_4_ = 2;
+    text_parameters_[0][1] = -1;
+    text_parameters_[1][1] = -1;
+    text_parameters_[2][1] = 2;
+    text_parameters_[3][1] = 2;
     fonts_[2] = nullptr;
-    color_3_val_1_ = -1;
-    color_3_val_2_ = -1;
-    color_3_val_3_ = 2;
-    color_3_val_4_ = 2;
+    text_parameters_[0][2] = -1;
+    text_parameters_[1][2] = -1;
+    text_parameters_[2][2] = 2;
+    text_parameters_[3][2] = 2;
     fonts_[3] = nullptr;
-    color_hyper_val_1_ = -1;
-    color_hyper_val_2_ = -1;
-    color_hyper_val_3_ = 2;
-    color_hyper_val_4_ = 2;
+    text_parameters_[0][3] = -1;
+    text_parameters_[1][3] = -1;
+    text_parameters_[2][3] = 2;
+    text_parameters_[3][3] = 2;
     has_palette_ = 0;
     field_580_ = 0;
     clip_region_ = nullptr;
@@ -953,10 +951,10 @@ Return Value: n/a
 Status: Complete
 */
 void Buffer::set_text_color(int color1, int color2, int color3, int color4) {
-    color_val_1_ = color1;
-    color_val_2_ = color2;
-    color_val_3_ = color3;
-    color_val_4_ = color4;
+    text_parameters_[0][0] = color1;
+    text_parameters_[1][0] = color2;
+    text_parameters_[2][0] = color3;
+    text_parameters_[3][0] = color4;
 }
 
 /*
@@ -973,10 +971,10 @@ Return Value: n/a
 Status: Complete
 */
 void Buffer::set_text_color2(int color1, int color2, int color3, int color4) {
-    color_2_val_1_ = color1;
-    color_2_val_2_ = color2;
-    color_2_val_3_ = color3;
-    color_2_val_4_ = color4;
+    text_parameters_[0][1] = color1;
+    text_parameters_[1][1] = color2;
+    text_parameters_[2][1] = color3;
+    text_parameters_[3][1] = color4;
 }
 
 /*
@@ -993,10 +991,10 @@ Return Value: n/a
 Status: Complete
 */
 void Buffer::set_text_color3(int color1, int color2, int color3, int color4) {
-    color_3_val_1_ = color1;
-    color_3_val_2_ = color2;
-    color_3_val_3_ = color3;
-    color_3_val_4_ = color4;
+    text_parameters_[0][2] = color1;
+    text_parameters_[1][2] = color2;
+    text_parameters_[2][2] = color3;
+    text_parameters_[3][2] = color4;
 }
 
 /*
@@ -1013,10 +1011,10 @@ Return Value: n/a
 Status: Complete
 */
 void Buffer::set_text_color_hyper(int color1, int color2, int color3, int color4) {
-    color_hyper_val_1_ = color1;
-    color_hyper_val_2_ = color2;
-    color_hyper_val_3_ = color3;
-    color_hyper_val_4_ = color4;
+    text_parameters_[0][3] = color1;
+    text_parameters_[1][3] = color2;
+    text_parameters_[2][3] = color3;
+    text_parameters_[3][3] = color4;
 }
 
 /*
@@ -2306,29 +2304,28 @@ void Buffer::close() {
     markup_pending_ = 0;
     markup_enabled_ = BufferField520Default;
     fonts_[0] = FontDefault;
-    // Four text slots at 0x530..0x53C with five rows 0x10 apart. The layout
-    // is deliberately not uniform: the fourth slot holds 2 where the others
-    // hold -1 at row two, and 0 where the others hold 2 at row four, so the
-    // stores are written out rather than generated.
-    color_val_1_ = 0;
-    color_val_2_ = 0xFFFFFFFFU;
-    color_val_3_ = 2;
-    color_val_4_ = 2;
+    // Initialize the four parameter columns in the original store order.
+    // Shadow offsets default to 2; the first foreground value is zero and
+    // the other foreground/shadow-color values use the -1 sentinel.
+    text_parameters_[0][0] = 0;
+    text_parameters_[1][0] = 0xFFFFFFFFU;
+    text_parameters_[2][0] = 2;
+    text_parameters_[3][0] = 2;
     fonts_[1] = nullptr;
-    color_2_val_1_ = 0xFFFFFFFFU;
-    color_2_val_2_ = 0xFFFFFFFFU;
-    color_2_val_3_ = 2;
-    color_2_val_4_ = 2;
+    text_parameters_[0][1] = 0xFFFFFFFFU;
+    text_parameters_[1][1] = 0xFFFFFFFFU;
+    text_parameters_[2][1] = 2;
+    text_parameters_[3][1] = 2;
     fonts_[2] = nullptr;
-    color_3_val_1_ = 0xFFFFFFFFU;
-    color_3_val_2_ = 0xFFFFFFFFU;
-    color_3_val_3_ = 2;
-    color_3_val_4_ = 2;
+    text_parameters_[0][2] = 0xFFFFFFFFU;
+    text_parameters_[1][2] = 0xFFFFFFFFU;
+    text_parameters_[2][2] = 2;
+    text_parameters_[3][2] = 2;
     fonts_[3] = nullptr;
-    color_hyper_val_1_ = 0xFFFFFFFFU;
-    color_hyper_val_2_ = 0xFFFFFFFFU;
-    color_hyper_val_3_ = 2;
-    color_hyper_val_4_ = 2;
+    text_parameters_[0][3] = 0xFFFFFFFFU;
+    text_parameters_[1][3] = 0xFFFFFFFFU;
+    text_parameters_[2][3] = 2;
+    text_parameters_[3][3] = 2;
     palette_ = nullptr;
     init_flags_ = 0;
 }
@@ -9894,14 +9891,10 @@ int Buffer::write_raw_l(char *text, int x, int y, int length) {
     // The array keeps the selected slot live across service callbacks. Producer
     // domains0..3 remain required; no new invalid-slot guard/clamp is invented.
     Font **fonts = fonts_;
-    uint32_t *colors[4] = {&color_val_1_, &color_2_val_1_,
-                            &color_3_val_1_, &color_hyper_val_1_};
-    uint32_t *shadow_colors[4] = {&color_val_2_, &color_2_val_2_,
-                                   &color_3_val_2_, &color_hyper_val_2_};
-    uint32_t *shadow_x[4] = {&color_val_3_, &color_2_val_3_,
-                              &color_3_val_3_, &color_hyper_val_3_};
-    uint32_t *shadow_y[4] = {&color_val_4_, &color_2_val_4_,
-                              &color_3_val_4_, &color_hyper_val_4_};
+    uint32_t *colors = text_parameters_[0];
+    uint32_t *shadow_colors = text_parameters_[1];
+    uint32_t *shadow_x = text_parameters_[2];
+    uint32_t *shadow_y = text_parameters_[3];
     unsigned int font_slot = 0;
     unsigned int color_slot = 0;
     int bounds_height = 0;
@@ -9910,7 +9903,7 @@ int Buffer::write_raw_l(char *text, int x, int y, int length) {
     } else {
         unsigned int requested = write_font_slot_;
         if (fonts[requested] != 0) font_slot = requested;
-        if (*colors[requested] != static_cast<uint32_t>(-1)) color_slot = requested;
+        if (colors[requested] != static_cast<uint32_t>(-1)) color_slot = requested;
         if (fonts_[0] != 0 && fonts_[0]->height_ > 0) bounds_height = fonts_[0]->height_;
         if (fonts_[1] != 0 && fonts_[1]->height_ > bounds_height) bounds_height = fonts_[1]->height_;
         if (fonts_[2] != 0 && fonts_[2]->height_ > bounds_height) bounds_height = fonts_[2]->height_;
@@ -9919,13 +9912,13 @@ int Buffer::write_raw_l(char *text, int x, int y, int length) {
     SelectObject(hdc2_, fonts[font_slot]->font_obj_);
     // Native005DBE61 reloads EDI from the selected color slot. Both shadow
     // banks and the non-special foreground use that slot, not always bank0.
-    if (*shadow_colors[color_slot] != static_cast<uint32_t>(-1)) {
-        SetTextColor(hdc2_, text_color_to_gdi(*shadow_colors[color_slot]));
-        TextOutA(hdc2_, static_cast<int>(*shadow_x[color_slot]) + x,
-                   static_cast<int>(*shadow_y[color_slot]) + y, text, length);
+    if (shadow_colors[color_slot] != static_cast<uint32_t>(-1)) {
+        SetTextColor(hdc2_, text_color_to_gdi(shadow_colors[color_slot]));
+        TextOutA(hdc2_, static_cast<int>(shadow_x[color_slot]) + x,
+                   static_cast<int>(shadow_y[color_slot]) + y, text, length);
     }
     if (field_524_ == 0) {
-        SetTextColor(hdc2_, text_color_to_gdi(*colors[color_slot]));
+        SetTextColor(hdc2_, text_color_to_gdi(colors[color_slot]));
         TextOutA(hdc2_, x, y, text, length);
         SelectObject(hdc2_, GetStockObject(SYSTEM_FONT));
         release_hdc(1);
@@ -9944,7 +9937,7 @@ int Buffer::write_raw_l(char *text, int x, int y, int length) {
             char *delimiter = strchr(cursor, '~');
             int segment_length = delimiter != 0
                 ? static_cast<int>(delimiter - cursor) : remaining;
-            SetTextColor(hdc2_, text_color_to_gdi(*colors[color_slot]));
+            SetTextColor(hdc2_, text_color_to_gdi(colors[color_slot]));
             TextOutA(hdc2_, x, y, cursor, segment_length);
             if (delimiter == 0) {
                 SelectObject(hdc2_, GetStockObject(SYSTEM_FONT));

@@ -1,0 +1,107 @@
+{
+  "event_id": "30900fa3a777b9e3583a466110e31f2daf6c63e81186a9ec383cedd49c1c59ca",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_buffer_text_parameter_arrays_oct23r.py",
+      "src/editbox.cpp"
+    ],
+    "evidence": [
+      "Independentfulloriginalwrite_raw_l5DBD00..5DC2C3(506instructions) directlyindexesfourDWORDrowsat53C/54C/55C/56C byslot*4 at5DBE04/5DBE86/5DBEDC/5DBEE8/5DBF28/5DC04E. Foursetters5DACB0/CE0/AD10/AD40writecolumns0/1/2/3acrosstherows; selector5E3660establishes0..3domain. Namedrowsareforeground/shadowcolor/shadowX/shadowY byactualconsumeroperations. Existing16uint32fieldswithfourlocalpointer-to-membertablesinflatewrite_raw_lstackto58h, comparedtooriginal14h; fontarrayalreadyremoved10hfromold68h. Authorizegenuineuint32_ttext_parameters_[4][4] [role][slot] at53C,size40h (orindependentfourrowsifbettergrounded), replacing16fieldsandlocalmember-pointertableswithliverowindexing. Originaldeclaration/names/signednessunproven; retainexistinguint32elementtype, settersintABI/operationorder/sentinels/signedoffsetcasts/bitwrap/publicforegroundaccessor/sizeof588andallneighboroffsets. No newclamps/defaultinitialization/bugfix.",
+      "EditBoxistheonlydirectexternalcolorfielduser(408/453/460); itsownerrecordsareaddedforcoupledsourceadaptationonly, nootherbehaviorchanges. ExistingBuffer+CheckBoxownerpermissionremains. Sourceworkerownsonly4cpp/headerfiles; testworkerretainsninecurrenttestfilesplusnewactualwrite_raw_l/setterarrayhostcontrolGCCClang coveringall4slots,fg/shadow/-1fallback/signedXY/livecallbackreads andmutants. No globalrenamingofotherclassfields, no macros/unions/rawoffsets/addressaliases. No unsupportedprimitive/multidimarrayv4annotation; freshCodeViewmustprovematrixshape/count/stride/offset/extentandunchangedothermembers. Allfunctionspans/claims/historyremain; sourcequalitydiscoveryactedonwithoutwaitingforlocalbyteequality. Thisisnewstructuralcontext, notpermissiontorepeatunchangedexhaustedspellings. Preservepreviousfont-onlyscreenasitsownqualifiedevidence; freshpostexpansioncompiler/build/layout/source/behaviorchecksrequired."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6381120,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6381040,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6381152,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6381248,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6381328,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6381888,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6381616,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6381392,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6379056,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6379584,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6378096,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6377440,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6377856,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6377040,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6377264,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6381984,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6377952,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "8595da84c4bba21647c6ea5a4fed7aa0c9e8c7b70a4ffa47ecd9dbc344241344",
+  "request_id": "buffer-four-text-parameter-rows",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:buffer-font-array-oct23r"
+}

@@ -38,6 +38,52 @@ LOAD = "int StringList::load(LPSTR file_name, LPSTR section_id, int clear_existi
 LINK = "int Buffer::write_multi_font_raw_l(LPSTR text, int x_coord, int y_coord,"
 
 
+def canonicalize_stringlist_destructor_migration(source, baseline):
+    """Reverse only the three reviewed later StringList owner changes."""
+    old_comment = (
+        "// Derived cleanup uses virtual remove_all() before the base destructor changes\n"
+        "// dispatch, then restores the cursor position even when the list was empty."
+    )
+    current_comment = (
+        "// Derived cleanup invokes the shared entry walk before the base destructor\n"
+        "// changes dispatch, then restores the cursor position even when the list was\n"
+        "// empty. remove_all() itself is nonvirtual; on_remove() supplies the virtual\n"
+        "// payload-cleanup hook."
+    )
+    assert baseline.count(old_comment) == 1
+    assert source.count(current_comment) == 1
+
+    base_marker, = re.findall(r"^// ORIGINAL: 0x004066C0[^\n]*$", baseline, re.M)
+    current_marker, = re.findall(r"^// ORIGINAL: 0x004066C0[^\n]*$", source, re.M)
+    assert not base_marker.endswith(" FILE")
+    assert current_marker == base_marker + " FILE"
+
+    base_start = baseline.index(old_comment)
+    base_signature = baseline.index("StringList::~StringList()", base_start)
+    base_body = body(baseline, "StringList::~StringList()")
+    base_end = base_signature + len(base_body)
+    if base_end < len(baseline) and baseline[base_end] == "\n":
+        base_end += 1
+    baseline_block = baseline[base_start:base_end]
+
+    current_start = source.index(current_comment)
+    descriptor_compile = "// compile_context src/alphanet.cpp\n"
+    descriptor_body = "// body      src/stringstruct.h\n"
+    assert source.count(descriptor_compile) == 1
+    assert source.count(descriptor_body) == 1
+    current_end = source.index(descriptor_body, current_start) + len(descriptor_body)
+    current_block = source[current_start:current_end]
+
+    expected_current = baseline_block.replace(old_comment, current_comment, 1)
+    expected_current = expected_current.replace(base_marker, current_marker, 1)
+    prefix, suffix = expected_current.split(base_body, 1)
+    assert suffix in ("", "\n")
+    expected_current = prefix.rstrip("\n") + "\n" + descriptor_compile + descriptor_body
+    assert current_block == expected_current
+
+    return source[:current_start] + baseline_block + source[current_end:]
+
+
 def test_original_owner_identities_and_unchanged_contracts():
     task = json.loads((ROOT / "recovery/tasks/text-load-link-contracts-oct12.json").read_text())
     for path, address, spans in (
@@ -63,15 +109,27 @@ def test_original_owner_identities_and_unchanged_contracts():
         # proves no other source body or annotation changed in either TU.
         restored = source.replace(body(source, signature), body(baseline, signature), 1)
         if address == 0x608980:
-            # This historical owner is still a complete transaction against
-            # its fixed task base.
-            assert restored == baseline
+            # Canonicalize only the independently authorized later lifecycle
+            # migration before enforcing this historical whole-TU boundary.
+            assert canonicalize_stringlist_destructor_migration(
+                restored, baseline) == baseline
         else:
             # Later recovered Buffer owners are outside this historical
             # transaction. Its restoration obligation is the complete local
             # writer body; current whole-file token scope is checked against
             # the separate immutable base for the typed-owner task.
             assert body(restored, signature) == body(baseline, signature)
+    stringlist_cpp = (ROOT / "src/stringlist.cpp").read_text()
+    stringlist_header = (ROOT / "src/stringstruct.h").read_text()
+    assert "// compile_context src/alphanet.cpp" in stringlist_cpp
+    assert "// body      src/stringstruct.h" in stringlist_cpp
+    stringlist_dtor = body(stringlist_header, "~StringList()")
+    assert stringlist_dtor.index("remove_all();") < stringlist_dtor.index(
+        "current_position_ = 0;")
+    dtor_row, = (row for row in read_file(ROOT / "src/stringlist.cpp")
+                 if row.address == 0x004066C0)
+    assert dtor_row.image_spans == ((0x004066C0, 0x00406818),
+                                    (0x00650980, 0x00650995))
     bh = (ROOT / "src/buffer.h").read_text()
     assert one(bh, r'^  (uint32_t link_count_;)') == 'uint32_t link_count_;'
     writer = body((ROOT / "src/buffer.cpp").read_text(), LINK)
@@ -216,13 +274,11 @@ class Heap {public:void *get(size_t size) {return mem_get(size);}};
 #undef static_assert
 Heap *StringAllocationHeap=0;
 StringAllocationBase::~StringAllocationBase() {}
-StringStruct::~StringStruct() {}
-StringList::~StringList() {}
-int StringStruct::on_insert(void *) {return 0;}
-void StringStruct::on_remove(void *) {}
-void StringList::on_remove(void *) {}
+@STRING_HELPER@
+@STRING_BASE_HOOKS@
 @STRING_CTOR@
 @INSERT@
+@REMOVE@
 // The append/clear services are probes. They publish real host allocations
 // and invoke the ACTUAL StringList virtual insertion hook; not add/teardown
 // provider acceptance or an invented replacement product body.
@@ -243,9 +299,6 @@ int StringStruct::add(int id) {
   if(!head_) {head_=entry;entry->next=entry->previous=entry;}
   else {entry->previous=head_->previous;entry->next=head_;head_->previous->next=entry;head_->previous=entry;}
   current_=entry;current_position_=entry_count_++;return 0;
-}
-void StringStruct::remove_all() {
-  events.push_back("clear");head_=nullptr;current_position_=entry_count_=0;
 }
 struct Text {
   @TEXT_STORAGE@
@@ -320,9 +373,16 @@ static void reset_loader(std::vector<std::string> lines={}) {
   open_result=add_result=parse_result=callbacks=0;throw_on_get=parsed_hash=false;insertion_probe={};
 }
 static void release_host_nodes() {
-  for(auto *p:host_payloads){free(p->text);p->~StringStructPayload();free(p);}
-  for(auto *p:host_entries){p->~StringStructEntry();free(p);}
+  // The real StringList/StringStruct destructors own and release these nodes.
+  // This drops only the fixture's observation lists; it never frees them.
   host_payloads.clear();host_entries.clear();
+}
+static void seed_existing_entry(StringList &list) {
+  auto *entry=::new(mem_get(sizeof(StringStructEntry))) StringStructEntry;
+  auto *payload=::new(mem_get(sizeof(StringStructPayload))) StringStructPayload;
+  entry->id=7;entry->payload=payload;entry->next=entry->previous=entry;
+  payload->text=nullptr;payload->field_8_=payload->field_C_=0;
+  list.head_=entry;list.current_=entry;list.entry_count_=1;list.current_position_=0;
 }
 static uintptr_t pointer_bits(const StringList &list) {
   uintptr_t value;std::memcpy(&value,&list.pending_text_,sizeof(value));return value;
@@ -357,15 +417,16 @@ static void loader_controls() {
   // Failures before pointer publication leave prior pending storage intact.
   char seed[]="borrowed";
   for(int clear:{0,1}) for(int reason:{0,1,2}) {
-    reset_loader({"#EMPTY"});StringList list;StringStructEntry existing;
-    list.head_=&existing;list.entry_count_=1;list.pending_text_=seed;
+    reset_loader({"#EMPTY"});StringList list;seed_existing_entry(list);
+    StringStructEntry *const existing=list.head_;
+    list.pending_text_=seed;
     open_result=reason==1?6:0;
     const int result=run_load(list,clear,reason==0?nullptr:"SECTION");
     assert(result==(reason==0?3:1));assert(list.pending_text_==seed);
     assert(pending_publications.empty() && callbacks==0);
     assert(events.front()=="ctor:512");
     if(clear)assert(events[1]=="clear" && list.head_==nullptr);
-    else assert(list.head_==&existing);
+    else assert(list.head_==existing);
     assert(events.back()=="shutdown");
   }
   // A blank permanently suppresses all later additions, not only that line.
@@ -522,21 +583,32 @@ def actual_source(instrument=True):
     string_ctor = body(sh, "StringStruct::StringStruct()")
     assert sh.count("inline " + string_ctor) == 1
     sh = sh.replace("inline " + string_ctor, "", 1)
+    remove_all = body(sh, "void remove_all()")
+    instrumented_remove_all = remove_all.replace(
+        "{", '{\n    events.push_back("clear");', 1)
+    sh = sh.replace(remove_all, instrumented_remove_all, 1)
     sc = (ROOT / "src/stringstruct.cpp").read_text()
     sl = (ROOT / "src/stringlist.cpp").read_text()
+    text_cpp = (ROOT / "src/text.cpp").read_text()
     bc = (ROOT / "src/buffer.cpp").read_text()
     sp = (ROOT / "src/spot.cpp").read_text()
-    ctor = body(th, "MEASURED Text(int size)").replace('{',
+    ctor = body(text_cpp, "Text::Text(int size)").replace(
+        "Text::Text(int size)", "MEASURED Text(int size)", 1).replace('{',
         '{\n    events.push_back("ctor:"+std::to_string(size));', 1)
     parts = {
         "STRINGS": sh,
+        "STRING_HELPER": body(sl, "inline void release_text(char *text)"),
+        "STRING_BASE_HOOKS": '\n'.join((
+            body(sc, "int StringStruct::on_insert(void *)"),
+            body(sc, "void StringStruct::on_remove(void *)"))),
         "STRING_CTOR": string_ctor,
         "INSERT": body(sl, "int StringList::on_insert(void *raw_payload)"),
+        "REMOVE": body(sl, "void StringList::on_remove(void *raw_payload)"),
         "TEXT_STORAGE": '\n'.join(one(th, r'^  (' + pattern + r';)') for pattern in (
             r'char file_name_\[80\]', r'char file_path_\[256\]', r'LPSTR current_pos_',
             r'FILE \*text_file_', r'LPSTR buffer_get_', r'LPSTR buffer_item_')),
         "TEXT_CTOR": ctor,
-        "TEXT_DTOR": one(th, r'^  (MEASURED ~Text\(\) OPENSMACX_NOEXCEPT_FALSE[^\n]+)'),
+        "TEXT_DTOR": body(th, "MEASURED ~Text() OPENSMACX_NOEXCEPT_FALSE"),
         "TEXT_APIS": '\n'.join(one(th, p) for p in (
             r'^  (BOOL open\([^\n]+;)', r'^  (LPSTR get\(\);)',
             r'^  (void close\(\);)', r'^  (void shutdown\(\);)')),

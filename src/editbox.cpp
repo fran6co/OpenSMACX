@@ -405,7 +405,7 @@ void EditBox::on_redraw() {
         }
         int x = Buffer::text_width(text, length);
         x += static_cast<int>(field_B34_);
-        int color = static_cast<int>(color_val_1_);
+        int color = static_cast<int>(text_parameters_[0][0]);
         int height = Buffer::text_line_height();
         Buffer::vline(x, center, height + center, color);
     }
@@ -450,14 +450,14 @@ void EditBox::on_redraw() {
         }
         int width = Buffer::text_width(selected, length);
         int foreground = static_cast<int>(field_B24_);
-        if (foreground == -1) foreground = static_cast<int>(color_val_1_);
+        if (foreground == -1) foreground = static_cast<int>(text_parameters_[0][0]);
         int background = static_cast<int>(field_B20_);
         if (background == -1) background = static_cast<int>(field_B1C_);
         int original_background = static_cast<int>(field_B1C_);
         int temporary_color = foreground + 1;
         int height = Buffer::text_line_height();
         Buffer::change_color(x, center, width, height, original_background, temporary_color);
-        int original_foreground = static_cast<int>(color_val_1_);
+        int original_foreground = static_cast<int>(text_parameters_[0][0]);
         height = Buffer::text_line_height();
         Buffer::change_color(x, center, width, height, original_foreground, background);
         height = Buffer::text_line_height();

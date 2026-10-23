@@ -300,7 +300,7 @@ void draw_dest_unk1(Buffer *, int, int, int, int, unsigned char *);
   int set_font(Font *font1, Font *font2, Font *font3, Font *font4);
   void set_text_color(int color1, int color2, int color3, int color4);
   // PullDown's mnemonic underline snapshots Buffer+0x53C before measuring.
-  int foreground_color() const { return static_cast<int>(color_val_1_); }
+  int foreground_color() const { return static_cast<int>(text_parameters_[0][0]); }
   void set_text_color2(int color1, int color2, int color3, int color4);
   void set_text_color3(int color1, int color2, int color3, int color4);
   void set_text_color_hyper(int color1, int color2, int color3, int color4);
@@ -762,22 +762,12 @@ void draw_dest_unk1(Buffer *, int, int, int, int, unsigned char *);
   uint32_t field_528_;
   // RECOVERY_MEMBER: v1 Buffer fonts_ 0x52C 0x005DC917
   Font *fonts_[4];
-  uint32_t color_val_1_;
-  uint32_t color_2_val_1_;
-  uint32_t color_3_val_1_;
-  uint32_t color_hyper_val_1_;
-  uint32_t color_val_2_;
-  uint32_t color_2_val_2_;
-  uint32_t color_3_val_2_;
-  uint32_t color_hyper_val_2_;
-  uint32_t color_val_3_;
-  uint32_t color_2_val_3_;
-  uint32_t color_3_val_3_;
-  uint32_t color_hyper_val_3_;
-  uint32_t color_val_4_;
-  uint32_t color_2_val_4_;
-  uint32_t color_3_val_4_;
-  uint32_t color_hyper_val_4_;
+  // Four contiguous rows of four 32-bit parameters at 0x53C..0x578. The
+  // pinned writer indexes each row by slot; setters write one slot column
+  // across the rows. Row roles are foreground, shadow color, shadow x, and
+  // shadow y. The original declaration and member names are unproven.
+  // RECOVERY_MEMBER: v1 Buffer text_parameters_ 0x53C 0x005DBE04
+  uint32_t text_parameters_[4][4];
   /*
    * 0x57C. A PALETTE HAS BEEN ATTACHED. Set to 1 at all eight sites that
    * publish one - `sync_to_palette`, both halves of `copy`, `copy_to_window`,

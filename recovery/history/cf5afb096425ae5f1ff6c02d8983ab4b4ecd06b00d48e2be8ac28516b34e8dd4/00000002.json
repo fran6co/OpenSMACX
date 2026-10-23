@@ -1,0 +1,20 @@
+{
+  "event_id": "8595da84c4bba21647c6ea5a4fed7aa0c9e8c7b70a4ffa47ecd9dbc344241344",
+  "payload": {
+    "affects": [
+      "entity-620d83560205effacb023bedd0f53def8a588f8075218cb4b41ecce1797f6774"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "live-text-load-fixture-providers",
+    "evidence": [
+      "Freshmaster39baseline23fail1pass; candidatearrayfixturehasthesame23failures. Diagnosisignoredtext-load-fixture-diagnosis.json identifiesduplicateStringStruct/StringListdtor/remove_all plusTextctorextractionstartingfromheaderdeclarationandcapturingnextinline-dtor. RootcompletehistoricalStringListload-restoredTUdiffisEXACTLYderiveddestructorcommentcorrection, markerFILEmode/bodyrehome toheaderwithcompile_contextalphanet. Existingstringlist-teardown-visibility-oct16Taskauthorizesnonvirtualentrywalkvisibilityandcomment; nootherwholeTUdifferencesfound. Authorizefixture-onlyproviderdedup/currentrealTextctorextraction/eventboundaryinstrumentation/validownednodes; noemptyreplacementofrecoveredteardownandno productionStringList/Textedits. Retainallhostbehavior/mutants; oldtaskbaselineunchanged. Whole-TUrestorationmuststillcompareexactafterONLYexplicitapproveddescriptor/comment/destructor-to-headercanonicalization, assertrealheaderdtorretainsremove_all/current_positionreset; do notreplacewithblanketlocal-bodywaiverorweakenbyteclaim/restorationgates."
+    ],
+    "hypothesis": "Text load/link test fixture duplicates now-real lifecycle definitions and asserts a superseded destructor source home",
+    "kind": "discovery"
+  },
+  "previous_event": "cdc23ecca522b10787e6febb583166ff2dfd1dbadecb2cdcd4121ee1e54bee18",
+  "request_id": "live-text-load-fixture-providers",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:buffer-font-array-oct23r"
+}
