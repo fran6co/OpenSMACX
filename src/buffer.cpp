@@ -9929,7 +9929,7 @@ int Buffer::write_raw_l(char *text, int x, int y, int length) {
         TextOutA(hdc2_, x, y, text, length);
         SelectObject(hdc2_, GetStockObject(SYSTEM_FONT));
         release_hdc(1);
-        return (*fonts[font_slot])->width(text, length) + x;
+        return fonts[font_slot]->width(text, length) + x;
     }
 
     int remaining = length;
@@ -9949,10 +9949,10 @@ int Buffer::write_raw_l(char *text, int x, int y, int length) {
             if (delimiter == 0) {
                 SelectObject(hdc2_, GetStockObject(SYSTEM_FONT));
                 release_hdc(1);
-                return (*fonts[font_slot])->width(text, length) + x;
+                return fonts[font_slot]->width(text, length) + x;
             }
             special = atoi(delimiter + 1);
-            x += (*fonts[font_slot])->width(cursor, segment_length);
+            x += fonts[font_slot]->width(cursor, segment_length);
             cursor += segment_length + 2;
             remaining -= segment_length + 2;
         }
@@ -9966,7 +9966,7 @@ int Buffer::write_raw_l(char *text, int x, int y, int length) {
         }
         SetTextColor(hdc2_, (BufferSpecialTextsOwner.at(special).color_ & 0xffff) | 0x10ff0000);
         TextOutA(hdc2_, x, y, cursor, segment_length);
-        int advanced = (*fonts[font_slot])->width(cursor, segment_length) + x;
+        int advanced = fonts[font_slot]->width(cursor, segment_length) + x;
         cursor += segment_length + 1;
         RECT &bounds = BufferSpecialTextsOwner.at(special).bounds[second_bounds];
         bounds.left = x;
@@ -9978,7 +9978,7 @@ int Buffer::write_raw_l(char *text, int x, int y, int length) {
         if (static_cast<int>(field_528_) >= 0) {
             SelectObject(hdc2_, GetStockObject(SYSTEM_FONT));
             release_hdc(1);
-            return (*fonts[font_slot])->width(text, length) + advanced;
+            return fonts[font_slot]->width(text, length) + advanced;
         }
     }
 }
