@@ -1,0 +1,24 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "7cd96e3d8fe86446286a5f677a6c16922e9d50ca",
+  "editable_files": [
+    "src/net_class.cpp",
+    "recovery/tests/test_net_group_flagged_peer_oct23q.py"
+  ],
+  "evidence": [
+    "Coordinatoractualpin62F539..62F57C: afterEnumGroupPlayers callback, firstplayerrowdiscriminator isDWORD[ECX]!=0 at62F545, rowsstride58, notcallbackfield8. FirstoccupiedIDrow controls solepending/retryinitialization andwait_timeout fromfieldC. Changeonlysend_group_flagged firstselectionpredicate field_8_!=0 tofield_0_!=0. Preserve callbackenumerationmarks, packetflags/size/sequence/errors/noneoccupiedexit, first-peeronlyindeterminatearrays, send/wait/retry/timeout behavior. No completepeerinitialization, guard, safereturnorbugfix.",
+    "Evidence:ignoredparallel-match-oct23p/net_class-last-two-findings.json andcoordinatornativefullentry/rangereview. Actualsourceprefix canbeobservedthroughfirstWaitForMultipleObjects beforeuninitializedpending/retryreads; hostWaitdoublethrows aftercapturingtimeout toavoidexecutingoriginalportableUB. Distinguish firstoccupiednon-enumeratedpeer withtimeout111 from latermarkedpeerwith222; testempty/leadingemptyindices/FFFFFFFFtimeout andpreservedcallbackmarkswherevalidprefix allows. Testrealcallback/selection/initialization statements andoldfield8mutantmustfail; preserveoriginaluninitializedhazard,notfullreliableloopproof. Reuseexistinggroup/wirehelpers/native extraction; noadhoctool orrewrittenproductionalgorithm.",
+    "RootownsTask/Git/compiler/prep/resources/integration. Sourceworker editsonlynamedfunctionbody, testworker onlyauthorizedtests. PreserveallORIGINALidentity/spans/emissionfacts/authoredhistory/claims; nohandeditedmarkers/claims ornewasm/executableaddressbacking. Max3candidatecompilesunchangedcontext, controlslabelledseparately. Freshactualrecipe/replay/replica/damage/outsidecheck/independentreview/applicationbuildlink/sourcecontinuity beforemanualpublication; freshdestinationchecks beforecleanup. Newdiscoveries centrallyexpanded,neverdiscardedtoenforcefunctionscope. No newexact/bodycoverage assumed; fullgame/nativeautomaticacceptance unproved."
+  ],
+  "intent": "Select original first occupied player row for flagged group-send retry state",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6484880,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "net-first-peer-oct23q"
+}
