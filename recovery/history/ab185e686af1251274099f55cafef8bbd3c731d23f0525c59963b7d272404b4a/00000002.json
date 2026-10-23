@@ -1,0 +1,20 @@
+{
+  "event_id": "b50215f5881498635d1cef1a37576630d08b2642666fc8848ceb5ca30546e2dc",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "frame-loop-lifetime",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "The original frame loop fills first, reads signed row_count, initializes zero counter before guard, calls box then updates all four RECT edges and reloads live row_count each iteration. Moving only the ordinary local declaration recovers complete pinned63CD50..63CDBB43/43instructions and strict reference PASS without changing behavior, layout, compiler flags or callbacks. Inlined on_redraw63C9D0 is already included in the original task scope; its MISMATCH status remains. Independent full source/pin/COFF/reference review SHA256 5af466a4e064fcd0287156c589ab208143f55ff632e8bd9c84d83b7bdf35154d.",
+      "Fresh actual compiler production replay, baseline/candidate replicas and deliberate loop-bound damage controls PASS. Guarded native record exit0 banks only63CD50, all other source record facts preserved. Original single-function residual FAIL retained; two explicitly authorized owner functions yield native outside-scoped PASS. Fresh full application192TUs206objects builds/links;205otherwholeobjects normalized equal originalmaster10e2. Complete known5581domain3424localexact3114strictPASS310UNKNOWN, only63CD50 gains; no old exact/reference state lost. Source/claims/mappings/references PASS. Review report SHA256 a72a03b26eefcc5bf1aaca568695cb93fbee27b559bd43f0761ad074eee4db76.",
+      "Seven existing actual-source session-picker host tests pass. They test adjacent lifetime/cursor behavior, not these drawing bodies; declaration-only movement is assessed by source and full pinned/compiled review. No extra mirrored low-impact test added, no runtime/gameplay proof claimed.",
+      "Coordinator authorizes manual integration under standing user permission after bounded independent and physical review, not automatic/game/full-linked/runtime acceptance. Original task baseline 10e2ae049d53eb9963b49b1b33682dae50b26fe5 retained without demotion or reset. Require fresh destination full build/all206objectcomparison/sourceclaimsreferences/hostchecks before workercleanup; preserve failures, do not replay acceptance."
+    ]
+  },
+  "previous_event": "05d8b476947dfc87697bc23d83c85d51166b5960715b498b648e8d52b190e07d",
+  "request_id": "frame-loop-lifetime-incorporated",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:net-picker-frame-match-oct23w"
+}
