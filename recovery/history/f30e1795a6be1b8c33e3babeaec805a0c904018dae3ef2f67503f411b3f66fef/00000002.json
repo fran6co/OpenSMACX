@@ -1,0 +1,19 @@
+{
+  "event_id": "29cb428bdb098b344429ac5b6733603705a86377c6e35f2cfdf9a39d365f45f7",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "complete-child-redraw-lifecycle",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Pinned491C00..491DEE calls four existing helpers then seven CheckBox public GraphicWin redraw wrappers (slot62/F8, adjusted view+1C), then seven FlatButton redraws in order main/voice/SFX/music/ok/cancel/restoreDefault. Current source now retains all18 original ordered helper/control operations instead of bypassing wrappers and omitting seven buttons. Existing hierarchy and offsets are unchanged. Independent full source/pin/COFF/test review SHA256 bdddbc9d116a6ff5fbd267363100bb5761442bafc25d846ba71ef7ea2745fc0f.",
+      "Fresh full application192TUs206objects builds/links;205otherwholeobjects normalizedequal original baseline088d2cee1. Changed object reproduces production replay, baseline/candidate replicas and deliberate damage controls. Native outside-selected PASS, all source record facts and prior claims preserved, source/claims/mapping/references PASS.21 actual-source GCC/Clang cases pass with compiling wrapper-bypass/dropped-button mutations. Wholeknown5581local/strictstates unchanged3428localexact3115strictPASS313UNKNOWN; current function remains MISMATCH107/107instructions92matches, no claim banked or demoted. Coordinator report SHA256 dfb9a24c22a6b82f5181460493608855ec9cdfde3073dcda5b634fb73a1814fe.",
+      "Coordinator authorizes manual integration under standing user permission. This is a correction to an existing incomplete function, not a new function count or full semantic/game/runtime/linked/automatic acceptance. Do not revert justified lifecycle recovery for remaining byte mismatch. Original task baseline retained; require fresh destination build/all206objectcomparison/21tests/continuity before cleanup."
+    ]
+  },
+  "previous_event": "a63fe9a8b46e8764fd0a1935d99c99a7bf7e0824935243f31448cd4675faf467",
+  "request_id": "complete-child-redraw-lifecycle-incorporated",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:prefwin-redraw-owner-oct23y"
+}
