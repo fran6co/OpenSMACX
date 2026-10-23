@@ -1,0 +1,27 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "a98d85da2c2a54a535aec4d6cb0081ef95647ab5",
+  "editable_files": [
+    "src/console_commands.cpp",
+    "recovery/tests/test_console_hold_selection_follow_oct23z.py"
+  ],
+  "evidence": [
+    "Original hold4D24C0 passes the stack parameter address via LEA[EBP+8] to NetDaemon::lock_veh and reloads the parameter after successful locking. The current source passes a copied lock_vehicle local but reads the stale veh_id parameter afterward. The complete easy-eleventh-5-findings.json contains the minimal original-equivalent hunk and full native listings.",
+    "This is an observable ownership/lifetime contract: NetDaemon::lock_veh stores the borrowed int pointer in channel0 payload.vehicle_selection_follow; NetDaemon::lock pumps process_message while waiting; original vehicle removal renumbers the pointed-to selection for lower removed IDs. Restore passing &veh_id directly and remove only the obsolete copy. Review these existing dependencies; no NetDaemon/Veh/header changes are authorized without another discovery and scope expansion. Other Console commands commonly already pass and consume their live IDs.",
+    "Preserve every later hold terrain/chassis/airbase decision, original unsafe paths, waypoint conversion, order store, sync/await/unlock, BaseWin check and tile draw sequence, final artifact/owner lookup and live ID use. Do not cache the ID around callbacks, initialize extra state, add bounds/negative-ID guards or correct original behaviors. All mappings, spans, authored evidence and historical claims remain. No flags/ABI/layout/compiler/framework changes.",
+    "Add a meaningful actual-source GCC/Clang regression using the complete production hold definition. Model lock failure, normal unchanged selection and the borrowed pointer being updated during lock/wait dispatch. Verify subsequent storage/sync/UI/artifact ordering and original coordinate snapshots use the appropriate live/captured values. Include a mutant restoring the copied-local parameter bug that must compile and fail at runtime. Keep test inputs valid; do not execute or normalize original unsafe branches. The network double is contract evidence, not real multiplayer acceptance.",
+    "Worker edits only the two isolated files via apply_patch then freezes and returns hashes. No compiler/tests/Git/Task/preparation/resources/package mutations; coordinator owns those and review/integration. Return discoveries before editing beyond scope; preserve prior work. Original baseline remains unchanged even when coordinator merges later master.",
+    "Standing manual integration authorization requires independent original/source review, relevant behavior/native preservation, source/claim/reference continuity, a fresh application compile/link and destination verification before cleanup. No automatic/full-project/complete-linked/runtime/game acceptance is inferred; all FAIL/UNKNOWN stay explicit."
+  ],
+  "intent": "Restore Console hold-order use of the live vehicle-selection parameter during network dispatch",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5055680,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "console-hold-follow-oct23z"
+}
