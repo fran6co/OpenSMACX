@@ -17,20 +17,49 @@ import pytest
 ROOT = Path(__file__).resolve().parents[2]
 
 
+GAME_DATA_FIXTURE = r"""
+struct GameDataLockMaskBytesFixture { uint8_t human_mask_, alive_mask_; };
+union GameDataLockMaskFixture {
+    uint32_t enable_mask_;
+    GameDataLockMaskBytesFixture bytes_;
+};
+struct GameDataFieldsFixture {
+    int base_current_count_, vehicle_current_count_, diff_level_current_;
+    uint32_t game_state_, game_preferences_, game_more_preferences_;
+    GameDataLockMaskFixture lock_masks_;
+};
+struct GameDataStateFixture { GameDataFieldsFixture fields_; };
+GameDataStateFixture GameDataStateStorage = {};
+int &BaseCurrentCount = GameDataStateStorage.fields_.base_current_count_;
+int &VehCurrentCount = GameDataStateStorage.fields_.vehicle_current_count_;
+int &DiffLevelCurrent = GameDataStateStorage.fields_.diff_level_current_;
+uint32_t &GameMorePreferences = GameDataStateStorage.fields_.game_more_preferences_;
+uint32_t &LockEnableMask = GameDataStateStorage.fields_.lock_masks_.enable_mask_;
+"""
+
+
+def with_game_data_fixture(harness_source):
+    marker = "#define __cdecl"
+    assert harness_source.count(marker) == 1
+    return harness_source.replace(marker, marker + "\n" + GAME_DATA_FIXTURE, 1)
+
+
 def test_partial_dependencies_remain_unfinished_in_native_source_reader():
     from match_recovery.source import read_file
 
-    partial = {0x57E040}
     records = {r.address: r for r in read_file(ROOT / "src/veh.cpp")}
-    assert partial <= records.keys()
-    assert all(records[address].state.name == "PLACEHOLDER" for address in partial)
+    name_proto = records[0x57E040]
+    assert name_proto.state.value == "implemented"
+    assert name_proto.image_spans == ((0x57E040, 0x57EF95),)
+    assert not name_proto.extract_error
+    assert "apply_prototype_name_collisions" in name_proto.region
     assert records[0x4CDAF0].state.name == "IMPLEMENTED"
     assert records[0x57F1D0].state.name == "IMPLEMENTED"
     assert records[0x580860].state.name == "IMPLEMENTED"
     assert records[0x57F4B0].state.name == "IMPLEMENTED"
 
 def retire_harness(function):
-    return r"""
+    harness_source = r"""
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
@@ -42,17 +71,15 @@ const uint32_t BIT_BASE_IN_TILE=1;
 struct VehPrototype { int8_t unk_1; uint8_t obsolete_factions; uint16_t flags; uint8_t cost; };
 VehPrototype VehPrototypes[MaxVehProtoNum];
 struct Veh { int16_t x,y; int16_t proto_id; uint8_t faction_id; uint8_t visibility; };
-Veh Vehs[16]; int VehCurrentCount;
+Veh Vehs[16];
 struct Map { uint8_t val2; uint32_t bit; } TestMap;
 Map *map_loc(int,int) { return &TestMap; }
-uint32_t LockEnableMask;
 struct PlayerData { uint8_t proto_id_active[MaxVehProtoNum]; };
 PlayerData PlayersData[8];
 struct Base {
     int minerals_accumulated, minerals_accumulated_2, production_id_last;
     uint32_t queue_size; int queue_production_id[10];
 } Bases[4];
-int BaseCurrentCount;
 int base_result, stack_result, killed_count, base_at_calls, stack_check_calls;
 int rewritten_proto, shrink_count_after_stack, lock_mask_after_stack;
 bool rewrite_proto_after_stack;
@@ -210,6 +237,7 @@ int main() {
     check(stack_check_calls==2 && VehCurrentCount==0,18);
 }
 """.replace("LIVE_RETIRE_BODY", function)
+    return with_game_data_fixture(harness_source)
 
 def test_live_retire_proto_replacement_fallback_and_queue_paths(tmp_path):
     compiler = shutil.which("g++")
@@ -252,7 +280,7 @@ def actual_function(name):
 
 
 def harness(function):
-    return r"""
+    harness_source = r"""
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
@@ -306,7 +334,7 @@ struct Player {
     char adj_name_faction[128];
 } Players[8];
 int GenderDefault, PluralityDefault;
-int ConsoleFaction=2, IsMultiplayerNet, LockEnableMask;
+int ConsoleFaction=2, IsMultiplayerNet;
 struct Console { int faction_id_; } ConsoleGlobal;
 char PopupTitle[]="EVENT"; char *ScriptPopupFile=PopupTitle;
 int parse_count, parse_num_count, popup_count, popup_result;
@@ -485,10 +513,11 @@ int main() {
     check(popup_count==2 && std::strcmp(popup_label,"FWESHOTIT")==0);
 }
 """.replace("LIVE_BODY", function)
+    return with_game_data_fixture(harness_source)
 
 
 def prune_harness(function):
-    return r"""
+    harness_source = r"""
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
@@ -570,7 +599,6 @@ struct Base {
     uint32_t queue_size;
     int queue_production_id[10];
 } Bases[8];
-int BaseCurrentCount=0;
 struct PlayerData {
     int enemy_best_armor_value, enemy_best_weapon_value;
     uint8_t proto_id_active[512], proto_id_queue[512];
@@ -583,8 +611,6 @@ int ExpansionEnabled=1;
 int psi_factor_calls=0;
 int psi_factor(int value,int,int,int) { ++psi_factor_calls; return value; }
 int IsMultiplayerNet=0;
-uint32_t GameMorePreferences=0;
-uint32_t LockEnableMask;
 int has_tech_result=1, has_tech_calls=0;
 int has_tech(int,int) { ++has_tech_calls; return has_tech_result; }
 int bit_count(int bits) {
@@ -1424,6 +1450,7 @@ int main() {
         + "\n"
         + actual_function("parse_prototype_report"),
     ).replace("LIVE_PRUNE_BODY", function)
+    return with_game_data_fixture(harness_source)
 
 def test_live_prune_protos_typed_completion_marking(tmp_path):
     compiler = shutil.which("g++")
@@ -1461,7 +1488,7 @@ def give_harness(function):
     veh_type = braced(veh_header, veh_header.index("struct Veh {")) + ";"
     prototype_type = braced(veh_header, veh_header.index("struct VehPrototype {")) + ";"
     chassis_type = braced(veh_header, veh_header.index("struct RulesChassis {")) + ";"
-    return r"""
+    harness_source = r"""
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
@@ -1482,7 +1509,7 @@ struct Player {
 };
 Player Players[8]; int GenderDefault; int PluralityDefault;
 struct PlayerData { uint8_t unk_83[128]; } PlayersData[8];
-uint32_t LockEnableMask, Language;
+uint32_t Language;
 int popup_count;
 const char *last_popup;
 struct NetMsg { int pop(const char *label, int, int, const char *) {
@@ -1589,6 +1616,7 @@ int main() {
 }
 """.replace("SOURCE_TYPES", "\n".join((veh_type, prototype_type, chassis_type))).replace(
     "LIVE_BODY", function)
+    return with_game_data_fixture(harness_source)
 
 
 def test_live_action_give_transfers_root_and_embarked_units(tmp_path):
@@ -1628,6 +1656,7 @@ def test_live_name_proto_composes_rule_strings(tmp_path):
     ]
     harness = r"""
 #include <cstdint>
+#include <cstddef>
 #include <cstdlib>
 #include <cstring>
 #include <cstdio>
@@ -1645,7 +1674,7 @@ SOURCE_TYPES
 RulesAbility Ability[29]; RulesChassis Chassis[19];
 RulesWeapon Weapon[26]; RulesArmor Armor[14]; RulesReactor Reactor[4];
 VehPrototype VehPrototypes[512];
-uint32_t LockEnableMask;
+
 int has_abil(int prototype, int ability) {
     return (VehPrototypes[prototype].ability_flags & static_cast<uint32_t>(ability)) != 0;
 }
@@ -1674,7 +1703,11 @@ struct StringTableStub { const char *get(int index) {
       case 14: return "Guard2";
       default: return "";
     }
-} } StringTable;
+    }
+    const char *get(char *pointer) {
+        return get(static_cast<int>(reinterpret_cast<intptr_t>(pointer)));
+    }
+} StringTable;
 NAME_HELPERS
 LIVE_BODY
 int main() {
@@ -1877,6 +1910,7 @@ int main() {
 }
 """.replace("SOURCE_TYPES", types).replace("NAME_HELPERS", name_helpers).replace(
         "LIVE_BODY", source_body)
+    harness = with_game_data_fixture(harness)
     cpp = tmp_path / "vehicle_name_proto.cpp"
     executable = tmp_path / "vehicle_name_proto"
     cpp.write_text(harness)
@@ -1926,11 +1960,10 @@ struct RulesBasic { uint32_t psi_combat_ratio_atk[3], psi_combat_ratio_def[3]; }
 VehPrototype VehPrototypes[512]; RulesChassis Chassis[19];
 RulesWeapon Weapon[26]; RulesArmor Armor[14]; RulesReactor Reactor[4];
 struct Base { uint8_t faction_id_current; uint32_t queue_size; int queue_production_id[10]; };
-Base Bases[512]; int BaseCurrentCount;
+Base Bases[512];
 int DesignConsiderOverride, DesignConsiderPrototype, DesignConsiderWeapon,
     DesignConsiderChassis, DesignConsiderArmor, DesignConsiderReactor;
-uint32_t DesignConsiderAbilities; int DiffLevelCurrent, ExpansionEnabled,
-    IsMultiplayerNet, VehCurrentCount, LockEnableMask;
+uint32_t DesignConsiderAbilities; int ExpansionEnabled, IsMultiplayerNet;
 int FirstProposedPrototype=-1;
 bool is_bunged(int,int,int,int,int,int) { return false; }
 bool has_tech(int,int) { return true; }
@@ -2085,6 +2118,7 @@ int main() {
     if(unavailable!=-1) return 51;
 }
 """.replace("SOURCE_TYPES", types).replace("LIVE_BODY", function)
+    harness = with_game_data_fixture(harness)
     cpp = tmp_path / "vehicle_propose_proto.cpp"
     executable = tmp_path / "vehicle_propose_proto"
     cpp.write_text(harness)
@@ -2097,7 +2131,7 @@ int main() {
     assert result.returncode == 0, result.stderr
 
 
-def action_harness(function, is_fungal):
+def action_harness(function, is_fungal, target_case="", mutation=None):
     veh_header = (ROOT / "src/veh.h").read_text()
     veh_type = braced(veh_header, veh_header.index("struct Veh {")) + ";"
     prototype_type = braced(veh_header, veh_header.index("struct VehPrototype {")) + ";"
@@ -2151,11 +2185,24 @@ def action_harness(function, is_fungal):
         if(kill_count!=1 || focus_count!=1 || popup_count!=1
            || std::strcmp(last_label,"TECTONICMISSILE")!=0) return 53;
 """)
-    return r"""
+    map_cpp = (ROOT / "src/map.cpp").read_text()
+    map_tables = "\n".join(re.findall(
+        r"const int (?:RadiusRange\[9\]|RadiusOffset[XY]\[289\])\s*=\s*\{.*?\};",
+        map_cpp, re.S))
+    xrange_body = braced(map_header, map_header.index("MEASURED inline int __cdecl xrange"))
+    on_map_body = braced(map_header, map_header.index("MEASURED inline BOOL __cdecl on_map"))
+    xrange_body = xrange_body[xrange_body.index("{"):]
+    on_map_body = on_map_body[on_map_body.index("{"):]
+    if mutation is not None:
+        before, after = mutation
+        assert function.count(before) == 1, (before, function.count(before))
+        function = function.replace(before, after, 1)
+    harness_source = r"""
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
 #include <cstdio>
+#include <string>
 #define __cdecl
 typedef char *LPSTR; typedef int BOOL;
 SOURCE_TYPES
@@ -2164,8 +2211,7 @@ const int BIT_FUNGUS=0x20, BIT_ROAD=0x4, BIT_MAGTUBE=0x8, BIT_MINE=0x10;
 const int BIT_SOLAR_TIDAL=0x40, BIT_FARM=0x80, BIT_SOIL_ENRICHER=0x100;
 const int BIT_FOREST=0x200, MapTileFlagClearMask=0x28805c;
 const int ALT_BIT_OCEAN_SHELF=0x40, BSC_MIND_WORMS=8, BSC_FUNGAL_TOWER=19;
-const int RadiusRange[3]={1,2,25};
-int RadiusOffsetX[25], RadiusOffsetY[25];
+RADIUS_TABLES
 int MapLongitudeBounds=100, MapLatitudeBounds=100, MapIsFlat=1, GameState=0x80;
 Veh Vehs[32]; VehPrototype VehPrototypes[512]; Map Tile;
 struct Base { uint8_t faction_id_current; char name_string[25]; } Bases[4];
@@ -2183,22 +2229,48 @@ int rand_script[8], rand_count, rand_index, whom_at=-1, territory_result=-1, scr
 int UnkBitfield1; uint32_t TectonicDetonationCount[8];
 int GenderDefault, PluralityDefault; char PopupTitleText[]="EVENT";
 char *ScriptPopupFile=PopupTitleText;
+std::string action_events; int base_result=0, fx_mutate, mutate_base;
+int fx_prev_link=1, fx_proto=0, base_changes_faction=3, base_changes_reactor=1;
+int focus_after_faction=3, focus_received=-1, neighbor_calls, wrapped_neighbor_calls;
+int wrapped_maploc_calls;
 int rand() { if(rand_index>=rand_count) std::exit(91); return rand_script[rand_index++]; }
-bool on_map(int x,int y) { return x>=0&&x<MapLongitudeBounds&&y>=0&&y<MapLatitudeBounds; }
-int xrange(int x) { return x; }
-Map *map_loc(int,int) { return &Tile; }
-int base_find(int,int) { return 0; }
+BOOL __cdecl on_map(int x,int y) ON_MAP_BODY
+int __cdecl xrange(int x) XRANGE_BODY
+Map *map_loc(int x,int) {
+    if(x==MapLongitudeBounds-2) ++wrapped_maploc_calls;
+    return &Tile;
+}
+int base_find(int,int) {
+    action_events += 'B';
+    if(mutate_base) {
+        Vehs[0].faction_id=(uint8_t)base_changes_faction;
+        VehPrototypes[1].reactor_id=(uint8_t)base_changes_reactor;
+    }
+    return base_result;
+}
 int whose_territory(int,int,int,void *,int) { return territory_result; }
-int veh_at(int,int) { return whom_at; }
+int veh_at(int x,int y) {
+    ++neighbor_calls;
+    if(x==MapLongitudeBounds-1) ++wrapped_neighbor_calls;
+    return whom_at;
+}
 int stack_fix(int v) { return v; }
 void kill(int vehicle_id) {
+    action_events += 'K';
     ++kill_count;
     Vehs[vehicle_id].faction_id=compact_faction;
     Vehs[vehicle_id].proto_id=compact_proto;
 }
-struct Fx { void play(int,int,int) {} } g_FX;
-struct Console { int faction_id_; void focus(int,int,int) {
-    ++focus_count; Vehs[0].faction_id=kill_count ? 4 : 3;
+struct Fx { void play(int,int,int) {
+    action_events += 'F';
+    if(fx_mutate) {
+        Vehs[0].prev_veh_id_stack=(int16_t)fx_prev_link;
+        Vehs[0].proto_id=(int16_t)fx_proto;
+    }
+} } g_FX;
+struct Console { int faction_id_; void focus(int,int,int faction) {
+    ++focus_count; focus_received=faction;
+    action_events += 'f'; Vehs[0].faction_id=(uint8_t)focus_after_faction;
 } } ConsoleGlobal;
 int parse_says(int slot,const char *text,int,int) {
     parse_slots[parse_count]=slot; parse_text[parse_count++]=text;
@@ -2228,19 +2300,23 @@ BODY
 int main() {
     std::memset(Vehs,0,sizeof(Vehs)); std::memset(VehPrototypes,0,sizeof(VehPrototypes));
     std::memset(&Tile,0,sizeof(Tile)); std::memset(Bases,0,sizeof(Bases));
-    RadiusOffsetX[1]=1; RadiusOffsetY[1]=0;
     ConsoleGlobal.faction_id_=ConsoleFaction;
     Vehs[0].x=8; Vehs[0].y=9; Vehs[0].faction_id=1; Vehs[0].proto_id=10;
+    Vehs[0].prev_veh_id_stack=10;
     VehPrototypes[10].reactor_id=1; VehPrototypes[11].reactor_id=2;
     Bases[0].faction_id_current=ConsoleFaction;
     PlayersData[ConsoleFaction].flags=PFLAG_MAP_REVEALED;
     Tile.visibility=1u<<ConsoleFaction;
     TEST_PATH
     FAILURE_PATH
+    TARGET_CASE
 }
 """.replace("SOURCE_TYPES", "\n".join((veh_type, prototype_type, map_type))).replace(
-        "BODY", function).replace("TEST_PATH", test_path).replace(
-            "FAILURE_PATH", failure_path)
+        "RADIUS_TABLES", map_tables).replace("ON_MAP_BODY", on_map_body).replace(
+            "XRANGE_BODY", xrange_body).replace("BODY", function).replace(
+                "TEST_PATH", test_path).replace("FAILURE_PATH", failure_path).replace(
+                    "TARGET_CASE", target_case)
+    return with_game_data_fixture(harness_source)
 
 
 @pytest.mark.parametrize(("name", "is_fungal"), [
@@ -2260,3 +2336,132 @@ def test_live_terraforming_action_effect_and_event_paths(tmp_path, name, is_fung
     assert result.returncode == 0, result.stderr
     result = subprocess.run([str(executable)], capture_output=True, text=True, timeout=10)
     assert result.returncode == 0, result.stderr
+
+
+TECTONIC_ENTRY_CASE = r"""
+    std::memset(Vehs,0,sizeof(Vehs)); std::memset(VehPrototypes,0,sizeof(VehPrototypes));
+    std::memset(&Tile,0,sizeof(Tile)); std::memset(Bases,0,sizeof(Bases));
+    std::memset(PlayersData,0,sizeof(PlayersData));
+    ConsoleGlobal.faction_id_=2; ConsoleFaction=2; MapLongitudeBounds=100;
+    MapLatitudeBounds=100; MapIsFlat=1; whom_at=-1; territory_result=-1;
+    base_result=0; mutate_base=1; fx_mutate=1; fx_prev_link=1; fx_proto=0;
+    base_changes_faction=3; base_changes_reactor=1; focus_after_faction=4;
+    focus_count=kill_count=raises=climates=maps_drawn=neighbor_calls=0;
+    wrapped_neighbor_calls=popup_count=parse_count=0; action_events.clear();
+    UnkBitfield1=0; TectonicDetonationCount[4]=0;
+    Vehs[0].x=30; Vehs[0].y=30; Vehs[0].faction_id=1;
+    Vehs[0].proto_id=0; Vehs[0].prev_veh_id_stack=0;
+    VehPrototypes[0].reactor_id=0; VehPrototypes[1].reactor_id=2;
+    Tile.visibility=1u<<2; PlayersData[2].flags=PFLAG_MAP_REVEALED;
+    Bases[0].faction_id_current=2;
+    action_tectonic(0,30,30);
+    if(action_events!="FBfK" || focus_received!=3) return 60;
+    if(neighbor_calls!=25 || raises!=2 || climates!=1 || maps_drawn!=1) return 61;
+    if(parse_count!=8 || parse_text[0]!=Players[4].title_leader) return 62;
+    if(TectonicDetonationCount[4]!=1 || (UnkBitfield1&4)==0) return 63;
+"""
+
+
+def _raw_flat_guard_mutation(function_name, site="neighbor"):
+    if site == "spread":
+        before = "if (!on_map(spread_x, spread_y)) {"
+        after = "if ((MapIsFlat && raw_x != spread_x) || !on_map(spread_x, spread_y)) {"
+    elif function_name == "action_tectonic":
+        before = "if (!on_map(near_x, near_y)) {"
+        after = "if ((MapIsFlat && near_x_unwrapped != near_x) || !on_map(near_x, near_y)) {"
+    else:
+        before = "if (!on_map(near_x, near_y)) {"
+        after = "if ((MapIsFlat && raw_x != near_x) || !on_map(near_x, near_y)) {"
+    return before, after
+
+
+def _flat_wrap_case(function_name):
+    if function_name == "action_tectonic":
+        return r"""
+    std::memset(Vehs,0,sizeof(Vehs)); std::memset(VehPrototypes,0,sizeof(VehPrototypes));
+    std::memset(&Tile,0,sizeof(Tile)); std::memset(Bases,0,sizeof(Bases));
+    ConsoleGlobal.faction_id_=2; MapLongitudeBounds=100; MapLatitudeBounds=100;
+    MapIsFlat=2; whom_at=-1; territory_result=-1; base_result=-1;
+    neighbor_calls=wrapped_neighbor_calls=raises=0; action_events.clear();
+    Vehs[0].x=0; Vehs[0].y=50; Vehs[0].faction_id=2; Vehs[0].prev_veh_id_stack=1;
+    VehPrototypes[1].reactor_id=2;
+    action_tectonic(0,0,50);
+    if(neighbor_calls!=25 || wrapped_neighbor_calls==0) return 64;
+"""
+    return r"""
+    std::memset(Vehs,0,sizeof(Vehs)); std::memset(VehPrototypes,0,sizeof(VehPrototypes));
+    std::memset(&Tile,0,sizeof(Tile)); std::memset(Bases,0,sizeof(Bases));
+    ConsoleGlobal.faction_id_=2; MapLongitudeBounds=100; MapLatitudeBounds=100;
+    MapIsFlat=2; whom_at=-1; territory_result=-1; base_result=-1;
+    neighbor_calls=wrapped_neighbor_calls=wrapped_maploc_calls=0; action_events.clear();
+    Vehs[0].x=0; Vehs[0].y=50; Vehs[0].faction_id=2; Vehs[0].proto_id=0;
+    VehPrototypes[11].reactor_id=1;
+    rand_script[0]=0; rand_script[1]=5; rand_script[2]=0; rand_index=0; rand_count=3;
+    action_fungal(0,0,50);
+    if(neighbor_calls!=9 || wrapped_neighbor_calls==0 || wrapped_maploc_calls==0) return 65;
+"""
+
+
+def _compile_action_case(tmp_path, compiler, function, is_fungal, target, mutation=None):
+    cpp = tmp_path / "actual_action.cpp"
+    executable = tmp_path / "actual_action"
+    cpp.write_text(action_harness(actual_function(function), is_fungal, target, mutation))
+    built = subprocess.run(
+        [compiler, "-std=c++11", "-O1", "-fsanitize=undefined",
+         "-fno-sanitize-recover=undefined", str(cpp), "-o", str(executable)],
+        capture_output=True, text=True, timeout=30)
+    assert built.returncode == 0, built.stderr
+    return subprocess.run([str(executable)], capture_output=True, text=True, timeout=10)
+
+
+@pytest.mark.parametrize("compiler_name", ["g++", "clang++"])
+@pytest.mark.parametrize("mutation", [
+    ("const int prototype_id = Vehs[vehicle_id].prev_veh_id_stack;",
+     "const int prototype_id = Vehs[vehicle_id].proto_id;"),
+    ("g_FX.play(0x53, Vehs[vehicle_id].x, Vehs[vehicle_id].y);\n\n    const int prototype_id = Vehs[vehicle_id].prev_veh_id_stack;\n    const int reactor = VehPrototypes[prototype_id].reactor_id;\n    const int affected_tile_count = RadiusRange[reactor];\n    const int base_id = base_find(x, y);",
+     "const int prototype_id = Vehs[vehicle_id].prev_veh_id_stack;\n    const int reactor = VehPrototypes[prototype_id].reactor_id;\n    const int affected_tile_count = RadiusRange[reactor];\n    const int base_id = base_find(x, y);\n    g_FX.play(0x53, Vehs[vehicle_id].x, Vehs[vehicle_id].y);"),
+    ("const int base_id = base_find(x, y);\n    int attacker = Vehs[vehicle_id].faction_id;",
+     "int attacker = Vehs[vehicle_id].faction_id;\n    const int base_id = base_find(x, y);"),
+])
+def test_tectonic_original_entry_reads_reject_source_mutants(tmp_path, compiler_name, mutation):
+    compiler = shutil.which(compiler_name)
+    if compiler is None:
+        pytest.skip(f"{compiler_name} required")
+    positive = _compile_action_case(
+        tmp_path, compiler, "action_tectonic", False, TECTONIC_ENTRY_CASE)
+    assert positive.returncode == 0, positive.stderr
+    damaged = _compile_action_case(
+        tmp_path, compiler, "action_tectonic", False, TECTONIC_ENTRY_CASE, mutation)
+    assert damaged.returncode != 0, "source mutation survived the mapped-entry witness"
+
+
+@pytest.mark.parametrize(("function_name", "is_fungal"), [
+    ("action_tectonic", False), ("action_fungal", True),
+])
+@pytest.mark.parametrize("compiler_name", ["g++", "clang++"])
+def test_special_action_map_flag_uses_original_low_bit_wrap(tmp_path, function_name, is_fungal,
+                                                             compiler_name):
+    compiler = shutil.which(compiler_name)
+    if compiler is None:
+        pytest.skip(f"{compiler_name} required")
+    target = _flat_wrap_case(function_name)
+    positive = _compile_action_case(tmp_path, compiler, function_name, is_fungal, target)
+    assert positive.returncode == 0, positive.stderr
+    damaged = _compile_action_case(
+        tmp_path, compiler, function_name, is_fungal, target,
+        _raw_flat_guard_mutation(function_name))
+    assert damaged.returncode != 0, "raw MapIsFlat guard survived noncanonical wrap witness"
+
+
+@pytest.mark.parametrize("compiler_name", ["g++", "clang++"])
+def test_fungal_spread_wrap_uses_original_low_bit(tmp_path, compiler_name):
+    compiler = shutil.which(compiler_name)
+    if compiler is None:
+        pytest.skip(f"{compiler_name} required")
+    target = _flat_wrap_case("action_fungal")
+    positive = _compile_action_case(tmp_path, compiler, "action_fungal", True, target)
+    assert positive.returncode == 0, positive.stderr
+    damaged = _compile_action_case(
+        tmp_path, compiler, "action_fungal", True, target,
+        _raw_flat_guard_mutation("action_fungal", "spread"))
+    assert damaged.returncode != 0, "raw MapIsFlat spread guard survived noncanonical wrap witness"

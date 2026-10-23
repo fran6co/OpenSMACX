@@ -13126,16 +13126,16 @@ void __cdecl action_give(int vehicle_id, int faction_id) {
 // ORIGINAL: 0x004CE210 ?action_tectonic@@YAXHHH@Z 0x004CE210-0x004CE6A1
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned entry 004CE210; retained seed src/recovered/units/004ce210.cpp", "recovery/tasks/vehicle-special-actions-coverage.json; native scope expansion preserves task baseline", "Native4CE326/4CE7F0 kill precedes announcement; fungal EBX retains initial combat faction while later slot reads observe compacted storage;580B51/580BF7 are mask immediates, not globals."], "reason": "Typed transfer or terrain action preserves native parser, kill, interception and post-call vehicle-slot read order; retained seed remains evidence, not executable backing."}
 void __cdecl action_tectonic(int vehicle_id, int x, int y) {
-    int attacker = Vehs[vehicle_id].faction_id;
-    const int prototype_id = Vehs[vehicle_id].proto_id;
+    g_FX.play(0x53, Vehs[vehicle_id].x, Vehs[vehicle_id].y);
+
+    const int prototype_id = Vehs[vehicle_id].prev_veh_id_stack;
     const int reactor = VehPrototypes[prototype_id].reactor_id;
     const int affected_tile_count = RadiusRange[reactor];
     const int base_id = base_find(x, y);
+    int attacker = Vehs[vehicle_id].faction_id;
     bool focused_on_event = false;
     int shot_result = 0;
     int hit_faction[MaxPlayerNum] = {0};
-
-    g_FX.play(0x53, Vehs[vehicle_id].x, Vehs[vehicle_id].y);
 
     if (attacker != ConsoleGlobal.faction_id_ && base_id >= 0) {
         const Map *tile = map_loc(x, y);
@@ -13175,9 +13175,7 @@ void __cdecl action_tectonic(int vehicle_id, int x, int y) {
         const int near_x_unwrapped = x + RadiusOffsetX[neighbor_index];
         const int near_x = xrange(near_x_unwrapped);
         const int near_y = y + RadiusOffsetY[neighbor_index];
-        if (!on_map(near_x, near_y)
-            || (MapIsFlat && (near_x_unwrapped < 0
-                              || near_x_unwrapped >= MapLongitudeBounds))) {
+        if (!on_map(near_x, near_y)) {
             continue;
         }
         const int nearby_vehicle = stack_fix(veh_at(near_x, near_y));
@@ -13256,8 +13254,7 @@ void __cdecl action_fungal(int vehicle_id, int x, int y) {
         const int raw_x = x + RadiusOffsetX[neighbor_index];
         const int near_x = xrange(raw_x);
         const int near_y = y + RadiusOffsetY[neighbor_index];
-        if (!on_map(near_x, near_y)
-            || (MapIsFlat && (raw_x < 0 || raw_x >= MapLongitudeBounds))) {
+        if (!on_map(near_x, near_y)) {
             continue;
         }
         const int nearby_vehicle = stack_fix(veh_at(near_x, near_y));
@@ -13287,8 +13284,7 @@ void __cdecl action_fungal(int vehicle_id, int x, int y) {
         const int raw_x = x + RadiusOffsetX[direction];
         const int spread_x = xrange(raw_x);
         const int spread_y = y + RadiusOffsetY[direction];
-        if (!on_map(spread_x, spread_y)
-            || (MapIsFlat && (raw_x < 0 || raw_x >= MapLongitudeBounds))) {
+        if (!on_map(spread_x, spread_y)) {
             continue;
         }
 

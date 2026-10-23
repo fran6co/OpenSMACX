@@ -1,0 +1,23 @@
+{
+  "event_id": "a2f915f16f232b77795379b134148b7ea9fdfa81d1109a3ddf8e0cc7bda8f7ce",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Coordinator immediately expands affected review/measurement closure to unedited order_veh5947C0 from fresh actual compiler evidence. This does not authorize editing its body, resettingbaseline, hidingoriginal2scopeFAIL or acceptingcollateral. Independent physical/source/reference comparison must classify the exact changes; unsupported effects remainunfinished."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5851072,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "031325c7b59dba38e37cde8a7c2ff895c7a2971e1554f2b5a1d3863139c41a9f",
+  "request_id": "review-compiled-order-veh-closure",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:vehicle-effects-oct23p"
+}
