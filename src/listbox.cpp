@@ -650,8 +650,9 @@ Purpose: Apply one WM_VSCROLL step to the list: publish the parent window
          code (SB_THUMBTRACK sets the position directly, SB_LINEUP/DOWN
          scale the delta by the Dialog's row stride), re-select through
          set_selected_pos when the notify global is armed, and repaint -
-         only the redraw slot when the position did not move, otherwise the
-         two rows that scrolled plus the surface update.
+         redraw the window when the scroll position moved; otherwise refresh
+         the old and new selected rows only if selection changed, then always
+         request a soft surface update.
 
 // ORIGINAL: 0x0060C5D0 ?on_scrolling@ListBox@@QAEXHH@Z 0x0060C5D0-0x0060C691
 // symbol    ?on_scrolling@ListBox@@UAEXHH@Z
@@ -696,13 +697,13 @@ void ListBox::on_scrolling(int a, int b) {
         front->set_selected_pos(static_cast<int>(front->field_18_), 1);
     }
 
-    if (static_cast<int>(front->field_18_) == old_position) {
+    if (static_cast<int>(front->field_18_) != old_position) {
         entered->redraw();
     } else {
         if (top_entry != dialog.selected_position_) {
             front->draw_item(top_entry);
+            front->draw_item(dialog.selected_position_);
         }
-        front->draw_item(dialog.selected_position_);
         entered->soft_update();
     }
 }
