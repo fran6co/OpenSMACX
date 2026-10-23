@@ -1,0 +1,20 @@
+{
+  "event_id": "ecceb0a24b8a731fa3badd4cf7e5949438dfe5b02d934e8d1e9c4864404eef45",
+  "payload": {
+    "affects": [
+      "entity-f8fea7c365ee928e38ba54888cd6cf92e409f45707229c82ce903d773542f39f"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "disambiguate-map-parent-member-test",
+    "evidence": [
+      "Fresh master and candidate test_live_object_identities_are_members both fail identically: next(originalstart949870) selects bounded aggregate MapStorage, but the test expects its longitude v3 member sharingthatstart. Actualsrc/map.cpp explicitly maps both; this is a test-selection ambiguity, not a sourceparentloss. Authorize selecting each expected member by its unique emittedsymbol then asserting originaladdress,parent and fullmemberpath unchanged, plus unique boundedparent949870..94A314 check. Preserve every read/write/partialread/runtime/damageassertion. No source/package/gate changes or waivedfailure. Rootbaseline failure preserved in ignored oct23p/baseline-parent.xml."
+    ],
+    "hypothesis": "Select exact source member identities rather than first parent-sharing original address",
+    "kind": "discovery"
+  },
+  "previous_event": "4c1291db7d5ee2bac639b6b3a3115f03b2395f714f1b80b314f0fc8699267587",
+  "request_id": "disambiguate-map-parent-member-test",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:world-hills-oct23p"
+}

@@ -1,0 +1,19 @@
+{
+  "event_id": "4c1291db7d5ee2bac639b6b3a3115f03b2395f714f1b80b314f0fc8699267587",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_map_metadata_owner.py"
+    ],
+    "evidence": [
+      "build_hills now explicitly copies low32 plateau product to signed int before division; the existing plateau subtraction test extracts only old int-plat_mod initializer. Authorize updating this one extraction regex to the full new product/bitcopy sequence, retaining its signed-subtraction damage mutant, ordinary and INT_MIN expectations and all unrelated assertions. This does not relax source arithmetic or recovery evidence."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "preserve-existing-wrapped-subtraction-witness",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:world-hills-oct23p"
+}

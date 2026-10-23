@@ -1,0 +1,27 @@
+{
+  "event_id": "d6df73712bfe4a04e4c72dbf6a12ba41573728c5b788cc0478b5f7565f9149d7",
+  "payload": {
+    "affects": [
+      "entity-06672bd3952c827f5d69f3178a907bb85e88139e1048ce915bfebf3879aa228e",
+      "entity-465d48db19ae14a737e00b8e2445adbfeae63aed253cc2443b0bccbcec84a01e",
+      "entity-60bb056a607b73c7acf959b29d1726735dceb892ea73a65c74fda614c0cd856f",
+      "entity-8da6224ce16476a83c375bac33aff13b763487a434ed1ccd415b2f05794d96f4"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "original-projection-persistent-state-and-gates",
+    "evidence": [
+      "Fullpin63FCA0..63FDF6writesinverse9C0AA0andvector9C0A64/A68/A6C. Reuseexistingvox_projection_matrix_ andnewloaderzeroVOX_Vect accessedwindow; restorepersistentstatevisibleto63FE00 after63E950caller, notstack-localstandins. Originalcompleteallocation/name/class/lifetime remainunproved,start-onlybindingdoesnotclaimthem. Freshpinnedinitialwindow12zeros. ThreeC0gates use!(>=) toretainfinitebelowandunordered:negatevector/acos, thennegativeorunorderedazimuthsubtractnegativewrap. Priorignoredtriageazimuthcrosscheckwaswrong; fullpinned TESTAH1/JE explicitlysupersedesit. NoNaNclamp/indexguard/singularmatrixfix.",
+      "Fiveactualcompiles(1candidate4controls) passproductionreplay/replicas/bodydamage; targetremainsMISMATCH91vs86instructions. NativeoutsideFAIL classifiedindependently:new12byteVOX_Vect andobservedpaddinggrowBSS16,15of30existingglobalsshift16.226otherfunctionCOMDATbytesunchanged;65outside.text residualrows have834pairedsame-site/kind/multiplicity/logicaltargetedges,221targets shift16 and613unchanged;noaddedinitializer/sectionrelocation. Soleaddeddata symbol has12selectedfunctionreferences. This isnotlinkedselection/allocationprooforwaiver. Actual-sourceGCC/Clangfiniteindices/helperalias/stage/persistence and4mutants pass; NaNprobesstopinacos/atan2 beforeunsafeconversion/tabletail. Fullnonfinite/x87status/exceptionpayloadbehavior unproved.",
+      "Fresh combined192-TU/206physicalobject application builds/links under frozen07af1533d. Native source/claim/mapping/reference checksPASS. All3changedsourceowners reproduce their actual-production-recipe overlayobjects exactly under native normalizedcompleteobject comparison;201objects equal oldbaseline,204equal independentlyreviewed metadata candidate. Sprite unsignedoperand language-fidelity correction emits identical VC6completeobject; World andCaviar actualcode/storage change. Nativeknown5581verdicts unchanged3418maskedexact; strictreferences3003pass/415unknown versus2831/587baseline, all172gains previouslyunknown andsolelymetadata3 effect.0newbodycoverage/0newmaskedexact/0newhistoricalclaims.",
+      "Fresh combined focusedhosttests67pass,0fail/skip; prior separate metadata82focusedtests and sixstandaloneprofilecontrols remain separately labelled supporting evidence. Actualsource bodytests exerciseGCC/Clang andcompile-successbehavior/signedoverflow mutants; notnativeABI/fullgameproof. Combined physical/helper/source reviews saved ignored parallel-match-oct23p; coordinator report SHA256 dd07c7039611e36bc4f7658a9eaedafd7d570109179477f159c0c03df2511655. Preservealloriginalidentities/spans/authoredhistory/historicalclaims unchanged, no demotion/relaxedgate.",
+      "Coordinator authorizes bounded manual integration under standing user direction, notnativeautomatic/fullproject/gameacceptance. Caviarold/new residualFAIL andmetadata3wholeCOFF residualFAIL remainFAIL, strict415unknown remainsunknown. Full linkedretention/allocation/globalICF/structure/runtime unproved. Native automaticpublication stillrefuses missingprerequisites. KeeporiginalTaskbaseline8f5cf3d89. Freshdestination build/link/census/source/reference/claims plusall206candidate/destination normalizedobjects andfocusedhosttests mustagreebeforecleanup. Retainandrepairanyfailure; donotreset/replayreports. Vehicle specialactions stayseparateunfinishedwork."
+    ],
+    "hypothesis": "Restore persistent projection matrix/vector and original ordered/unordered direction gates",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "original-projection-persistent-state-and-gates",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:caviar-direction-oct23p"
+}

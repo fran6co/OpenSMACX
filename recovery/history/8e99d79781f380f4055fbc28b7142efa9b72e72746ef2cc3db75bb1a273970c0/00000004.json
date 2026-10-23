@@ -1,0 +1,23 @@
+{
+  "event_id": "3231837f4d39f96840f915fd37fc8fe7e09755259bfa38e08868302795d8b949",
+  "payload": {
+    "affects": [
+      "entity-f8fea7c365ee928e38ba54888cd6cf92e409f45707229c82ce903d773542f39f"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "original-hill-seed-and-radius",
+    "evidence": [
+      "Fullpin5C2B40..5C2CA8: rejectedneighbor signedJL5C2C3E goes5C2CA0 then5C2B51retry; sourcepreviouslypaintedrejectedseed. Restore nineorderedchecks/retry, random/paritythen+2cap, originalodd-y incrementsx, independentMapIsFlatAND1reads, originalsignedplateauproduct/4 andbase/2 withlow32sum. Noextraoriginalbugfixes/guards. Actualrecipe2candidateforms/eightcompiles including6controls; nativescopeoutsidePASS/nootheremittedfunction changes; targetstillMISMATCH128vs130instructions. World45hostcontrols pass inclactual-sourceoverflow/subtractionmutants. Existingmapparent/membertestnowselectsuniqueemittedidentities plusseparateparentextent, preservingallassertions.",
+      "Fresh combined192-TU/206physicalobject application builds/links under frozen07af1533d. Native source/claim/mapping/reference checksPASS. All3changedsourceowners reproduce their actual-production-recipe overlayobjects exactly under native normalizedcompleteobject comparison;201objects equal oldbaseline,204equal independentlyreviewed metadata candidate. Sprite unsignedoperand language-fidelity correction emits identical VC6completeobject; World andCaviar actualcode/storage change. Nativeknown5581verdicts unchanged3418maskedexact; strictreferences3003pass/415unknown versus2831/587baseline, all172gains previouslyunknown andsolelymetadata3 effect.0newbodycoverage/0newmaskedexact/0newhistoricalclaims.",
+      "Fresh combined focusedhosttests67pass,0fail/skip; prior separate metadata82focusedtests and sixstandaloneprofilecontrols remain separately labelled supporting evidence. Actualsource bodytests exerciseGCC/Clang andcompile-successbehavior/signedoverflow mutants; notnativeABI/fullgameproof. Combined physical/helper/source reviews saved ignored parallel-match-oct23p; coordinator report SHA256 dd07c7039611e36bc4f7658a9eaedafd7d570109179477f159c0c03df2511655. Preservealloriginalidentities/spans/authoredhistory/historicalclaims unchanged, no demotion/relaxedgate.",
+      "Coordinator authorizes bounded manual integration under standing user direction, notnativeautomatic/fullproject/gameacceptance. Caviarold/new residualFAIL andmetadata3wholeCOFF residualFAIL remainFAIL, strict415unknown remainsunknown. Full linkedretention/allocation/globalICF/structure/runtime unproved. Native automaticpublication stillrefuses missingprerequisites. KeeporiginalTaskbaseline8f5cf3d89. Freshdestination build/link/census/source/reference/claims plusall206candidate/destination normalizedobjects andfocusedhosttests mustagreebeforecleanup. Retainandrepairanyfailure; donotreset/replayreports. Vehicle specialactions stayseparateunfinishedwork."
+    ],
+    "hypothesis": "Restore original hill-seed rejection, retry and signed plateau arithmetic",
+    "kind": "discovery"
+  },
+  "previous_event": "270301278f40beced5c20642e841439935e97c355c68979f7777cbbd5666c500",
+  "request_id": "original-hill-seed-and-radius",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:world-hills-oct23p"
+}

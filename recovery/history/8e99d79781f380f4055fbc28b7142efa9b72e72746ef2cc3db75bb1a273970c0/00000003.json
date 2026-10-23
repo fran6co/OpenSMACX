@@ -1,0 +1,17 @@
+{
+  "event_id": "270301278f40beced5c20642e841439935e97c355c68979f7777cbbd5666c500",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "disambiguate-map-parent-member-test",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Exact emitted member identity selection now verifies unique parent/memberrows, originalstart,parentpathandboundedparentextent. All original serializedread/write/partialread/runtime/damagemutant assertionsretained. Root fresh candidatefinaltests45pass; rootoriginalbaselinefailurepreserved, native source/claims/mappings/referencesallpass. This corrects an ambiguous testselection, not sourcebindings or a verifier/gate waiver."
+    ]
+  },
+  "previous_event": "ecceb0a24b8a731fa3badd4cf7e5949438dfe5b02d934e8d1e9c4864404eef45",
+  "request_id": "exact-map-member-test-incorporated",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:world-hills-oct23p"
+}

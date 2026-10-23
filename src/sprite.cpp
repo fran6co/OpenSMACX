@@ -2581,7 +2581,8 @@ int Sprite::save(const char *filename) {
     }
     SpriteFileHeader *header = static_cast<SpriteFileHeader *>(fm.create(
         filename,
-        static_cast<uint32_t>(iSpriteWidth_ * iSpriteHeight_ + 0x2c), 1));
+        static_cast<uint32_t>(iSpriteWidth_) *
+            static_cast<uint32_t>(iSpriteHeight_) + 0x2cu, 1));
     if (header == 0) {
         return 4;
     }

@@ -421,10 +421,9 @@ void __cdecl build_hills(int altitude) {
     int x;
     int y;
     int i = 0;
-    BOOL keep_going = true;
-    do {
-        int x_bound = MapLongitudeBounds - (MapIsFlat * 8);
-        x = ((x_bound - 1 > 0) ? rand() % x_bound : 0) + MapIsFlat * 4;
+    for (;;) {
+        int x_bound = MapLongitudeBounds - ((MapIsFlat & 1) * 8);
+        x = ((x_bound - 1 > 0) ? rand() % x_bound : 0) + ((MapIsFlat & 1) * 4);
         int y_bound = MapLatitudeBounds - 8;
         y = ((y_bound - 1 > 0) ? rand() % y_bound : 0) + 4;
         if (x & 1) {
@@ -437,25 +436,38 @@ void __cdecl build_hills(int altitude) {
         if (i > 100) {
             return;
         }
-        for (uint32_t j = 0; j < 9; j++) {
+        BOOL rejected_seed = false;
+        for (int j = 0; j < 9; j++) {
             int x_radius = xrange(x + RadiusOffsetX[j]);
             int y_radius = y + RadiusOffsetY[j];
             if (on_map(x_radius, y_radius) && alt_at(x_radius, y_radius) < (altitude - 1)) {
+                rejected_seed = true;
                 break;
             }
         }
-        keep_going = false;
-        int plat_mod = WorldBuilder.plateau_mod * (2u - static_cast<uint32_t>(MapOceanCoverage));
+        if (rejected_seed) {
+            continue;
+        }
+        const uint32_t plat_mod_bits = WorldBuilder.plateau_mod
+            * (2u - static_cast<uint32_t>(MapOceanCoverage));
+        int plat_mod;
+        memcpy(&plat_mod, &plat_mod_bits, sizeof(plat_mod));
         if (altitude != ALT_1_LEVEL_ABOVE_SEA) {
             plat_mod /= 4;
         }
-        uint32_t plat_base = WorldBuilder.plateau_base;
+        int plat_base;
+        memcpy(&plat_base, &WorldBuilder.plateau_base, sizeof(plat_base));
         if (MapOceanCoverage >= 2) {
             plat_base /= 2;
         }
-        paint_land(x, y, altitude, plat_mod + plat_base);
+        const uint32_t radius_bits = static_cast<uint32_t>(plat_mod)
+            + static_cast<uint32_t>(plat_base);
+        int radius;
+        memcpy(&radius, &radius_bits, sizeof(radius));
+        paint_land(x, y, altitude, radius);
         do_all_non_input();
-    } while (keep_going); // better way to set up outer loop?
+        return;
+    }
 }
 
 /*
