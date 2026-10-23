@@ -173,6 +173,14 @@ static_assert(sizeof(AltNaturalDefault) == 44, "default altitude table extent");
 static_assert(sizeof(AltContour) == 44, "river contour table extent");
 static_assert(sizeof(AltNatural) == 44, "mutable altitude table extent");
 
+// goody_at reads these signed words when distributing supply pods. The names
+// describe their observed roles, not recovered original identifiers. The pin
+// supplies their initial values and direct loads; no direct writer is known.
+// RECOVERY_OBJECT: v2 0x0068FB78 0x0068FB7C ?MapPodDifferenceMultiplier@@3HA 0x00592140
+int MapPodDifferenceMultiplier = 61;
+// RECOVERY_OBJECT: v2 0x0068FB7C 0x0068FB80 ?MapPodAverageMultiplier@@3HA 0x00592140
+int MapPodAverageMultiplier = 11;
+
 // The paired diagonal steps are also the farm raster's one-based lookup
 // data at 0x66EF28/0x66EF3C. farm_get skips index zero and uses [index - 1].
 // Keep the two measured four-dword windows independently source-owned.
@@ -1704,14 +1712,15 @@ int __cdecl goody_at(int x, int y) {
     if (!MapRandSeed) {
         return 0; // nothing
     }
-    uint32_t avg = (x + y) >> 1;
+    int avg = (x + y) >> 1;
     int x_diff = x - avg;
     uint32_t cmp = (avg & 3) + 4 * (x_diff & 3);
     if (!is_ocean(x, y)
         && cmp == ((-5 * (avg >> 2) - 3 * (x_diff >> 2) + MapRandSeed) & 0xF)) {
         return 2;
     }
-    return cmp == ((11 * (avg / 4) + 61 * (x_diff / 4) + MapRandSeed + 8) & 0x1F); // 0 or 1
+    return cmp == ((MapPodAverageMultiplier * (avg / 4)
+        + MapPodDifferenceMultiplier * (x_diff / 4) + MapRandSeed + 8) & 0x1F); // 0 or 1
 }
 
 /*

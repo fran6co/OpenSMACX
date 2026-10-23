@@ -396,6 +396,8 @@ static_assert(sizeof(void *) != 4 || sizeof(MapStorageWindow) == 0xAA4,
 // applying it. Image .data holds 0x00288050. See map.cpp, which defines it
 // beside the evidence.
 extern uint32_t MapTileFlagClearMask;          // 0x006919EC
+extern int MapPodDifferenceMultiplier;
+extern int MapPodAverageMultiplier;
 inline Map *&map_tiles() { return MapTiles; }
 // Byte-oriented legacy consumers view the same Map allocation; no second
 // pointer cell or pointer-to-pointer alias is maintained.
