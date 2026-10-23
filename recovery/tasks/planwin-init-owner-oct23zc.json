@@ -1,0 +1,22 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "02f63f90e208732ce54d7c504a3a6577777864cf",
+  "editable_files": [
+    "src/planwin.cpp"
+  ],
+  "evidence": [
+    "Coordinator authorizes only removing the redundant GraphicWin pointer local and accessing the same inherited dib_ in buffer_.init, as exact-screened in easy-thirteenth-screen-execution-control-4. Preserve original operation order, allocation/error paths, all other bodies, source mappings, full spans, claims and historical findings. No ABI/type/header/storage/flags/link change or behavior fix.",
+    "Coordinator alone owns Git, compiler resources, preparation, native recording and collection. Worker source frozen during measurements. Existing source and candidate replicas plus deliberate damage must agree with the physical production replay. Require independent actual-source review, native outside-selected preservation, relevant existing tests, fresh complete application compile/link and destination verification. Standing user authorization permits coordinator-reviewed manual integration; no automatic/full-game/linked-preservation acceptance is asserted. Do not weaken gates or reset the original baseline."
+  ],
+  "intent": "Restore direct inherited Dib access in PlanWin initialization",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4766816,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "planwin-init-owner-oct23zc"
+}
