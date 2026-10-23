@@ -1,0 +1,24 @@
+{
+  "event_id": "cf9176288765b3cfd887aa1c4e1c2cfe551dae7b09c39d3d524af9475395de95",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_win_back_update_parent_actual_source.py",
+      "src/win.cpp"
+    ],
+    "evidence": [
+      "Fresh independent and root complete5F7EC0..5F813F decode demonstrates second wrong-this translation: clear-bit2 path firstadds own client/outer origin; original5F7FD0 loads parent [ESI+C4], nullchecks5F7FD6, calls5ED240at5F7FE4 onparent. Current source calls this and duplicatesownorigin. Set-bit2 path5F7F6A/6C correctly calls this; leaveit unchanged. The new TU screen exposes this existing source fault; this scope expansion preserves original baseline/claims and does not label the earlier boundary-only candidate semantically accepted.",
+      "Authorize exactly first parent-guarded call in Win::update_back_to_window to win_parent_->client_to_screen(&WinViewOriginX,&WinViewOriginY), keeping the other this call, all guards, fresh flags/parent reads, globals/RECT/Buffer/init/update_screen effects, entrysavedFlags clearing/restoration and both originalzorderpasses unchanged. In same function replace BOTH savedFlags&2 branch selections by live iSomeFlag_&2 as pinned5F7F57 and5F8020. Original5F7EED..5F7EFA savesentryflags separately before clearingbit0; that snapshotremainsforrestore5F80D5. Do not add checks/initialization or changeerrorpaths.",
+      "The inspected recurse_zorder/is_visible closure reads flags and mutates zorderglobals but contains no synchronous flag2writer/callback. The original live reads are definite; no observed game mutation bug is claimed. Tests may check source/native instruction readpoints and stable-stateeffects but must not invent a reachable callback to claim whole-game equivalence.",
+      "New actual-source host control must execute complete back-update and real point client helper using bounded Buffer/update_screen/zorder service spies. Cover nullbuffer, savedbit2clear/set paths with distinct nonzero self/parent/grandparentorigins,20/8000/nonparentguards, correct outputdimensions/RECT/globalpublication+cleanup, originalflagrestore and both traversalstages. Compile-success old-this-receiver damage must fail same positivewitness after unmodifiedpasses underGCC/Clang. No changes to otherfunctions/headers/CMake/annotations. Worker only these2files, coordinator nativeCL/Git/tasks/resources/publication.",
+      "Existing boundary trial remainsattempt1; one incremental main-owner candidate planned withunchanged frozen helper/recipe/rootbaseline, count assecond affected main-source attempt (errorscount), no budgetreset. Retain prior productionbaseline/replica/helperdamage evidence with exact inputdigests and targetdamage for newbody. Fresh full191TU candidate build/link and strict/source/preservation/independent review plus destinationchecks required beforemanualintegration. Native newunitpresenceFAIL remains visible; noautomatic/gameacceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "back-update-original-parent-and-live-flags",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:win-point-boundary-oct23k"
+}
