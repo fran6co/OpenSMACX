@@ -1,0 +1,21 @@
+{
+  "event_id": "37fbaa21fee76ba0b5ed77ce61e137be46340d57bae379fa4707128d16a9aa06",
+  "payload": {
+    "affects": [
+      "entity-f28f52132adfe2a5b3b36c01e59453d57fd5f23389d35be9426c6ea881da9631"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "explicit-six-frame-countdown",
+    "evidence": [
+      "One actual unchanged production recipe candidate and3baseline/replica/damage controls completed. Compiler already lowers the source body-unused increasing index to the same countdown: complete normalized owner object and show function signatures are IDENTICAL for baseline and candidate; both124instructions/32matching/MISMATCH. No semantic or structural defect found; reject only unnecessary source-form edit, not a justified structural discovery. No further unchanged retries; preserve all ignored candidate source/objects/measurements and historical claims.",
+      "Restore source exactly to original11a67c187 alphamenu.cpp viaapply_patch; native task baseline remains11a. Retain the authored actual-source six-frame animation spy test, adapted to compile-success five-frame damage of the unchanged source form. GCC/Clang controls/independent source review and fresh integrated verification still required; no new exact/body coverage or acceptance claim."
+    ],
+    "hypothesis": "An explicit original-style countdown might improve AlphaMenu show emission.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "explicit-six-frame-countdown",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:alphamenu-countdown-oct23k"
+}
