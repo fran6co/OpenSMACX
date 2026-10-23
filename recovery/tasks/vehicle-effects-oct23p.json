@@ -1,0 +1,30 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "8f5cf3d89838c277a1d0b22cf56b1bce951215fc",
+  "editable_files": [
+    "src/veh.cpp",
+    "recovery/tests/test_vehicle_special_actions.py"
+  ],
+  "evidence": [
+    "Coordinator fullpin4CE210..4CE6A1 confirms FX::play53 with livevehiclecoordinates at4CE244 BEFORE reactor/radius/base/faction reads. 4CE249MOVSX accessesrecord+32, existingint16prev_veh_id_stack, notproto_id;4CE25C loadsprototypebyte+27reactor via9AB88F;4CE26A RadiusRange;4CE274 base_find;4CE27E firstfactionread. Current source usesownproto_id and snapshots faction/reactor/basebeforeFX, silentlyremovingoriginalwrong-index/uncheckedbehavior. Restore FX first, signedprevlink-as-prototypeindex with no guard/clamp, capturedreactor/radiusbeforebase_find, livefactionafterbase_find. Keep laterprekill factionreload and postkill slotreads/announcements/draw/count updates.",
+    "Originalfulltectonicloop4CE42B..476 andfungalloop4CE790..4CEDDB useMapIsFlat bit0 in wrapping then fouronmapbounds; currentredundant rawMapIsFlat && rawxoutside predicate rejects validwrappedneighbors fornoncanonical flags withbit0clear. Authorize removeonlythis redundantcondition inbothfunctions and relyonexistingtyped xrange/on_map whichuseoriginalAND1/bounds. Preserve looporder/everydefender/pact/hit flag/interception/random/territory/fungalwrite behavior. FungalentryalreadybasebeforeFX and retainsattackerbeforebase; doNOT applytectonicentryreorderorwrong-index tofungal.",
+    "Evidence:parallel-match-oct23p/veh-findings.json, completeoriginalnative listings readbycoordinator, src/veh.h signed16prevlinkmember and prototype +27reactor. Testactual completefunctions usingexistingharness/GCCClang; distinguishownproto fromnonnegativeprevlink differentreactor, FX andbase_find scriptedstate changes proving capturetiming (sensitivitycontrols, notclaimproductioncallee mutates), originalnegative-indexpath preservedinsource notexecutedportableUB, canonical/noncanonicalmapflagwrappedneighbor behavior, existingkill/parser/interception/effect/errorquirks. Restoreoldprotoindex/hoistFX/hoistfaction/rawflagmutantsmustfail withoutnewguards. No signature/header/type/newglobal changes.",
+    "RootownsGit/Task/compiler/prep/resources/integration. Worker editsonly2namedfunctionbodies andauthorizedexistingtestfile. Preserve allORIGINALmarkers/spans/claims/usefulhistory exactly. Max3candidatecompilerattemptsunchangedcontext, controlsseparatelylabelled. Freshactualrecipe/replica/damage and outsidefunctionchecks, independentreview, fullcombinedbuild/link and native source/claim/mapping/referencecontinuity precedeboundedmanualpublication; freshdestinationchecks beforecleanup.0newexact/bodycoverage assumed; sourceworknotautomatic/gameacceptance. Keepallunknowns andoriginaltaskbaseline."
+  ],
+  "intent": "Preserve original special-action effect order, wrong-index read and low-bit map semantics",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5038608,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5040016,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "vehicle-effects-oct23p"
+}
