@@ -1,0 +1,25 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "ba4a748d0b7f8fb3ab75cda2ee4cbdcfb7de298f",
+  "editable_files": [
+    "src/basewin.cpp",
+    "recovery/tests/test_basewin_cohort_oct20b.py"
+  ],
+  "evidence": [
+    "Third bounded alphabetical pass: ignored easy-third-physical-screen-1/report.json proves one ordinary form changes BaseWin delete_queue416FB0 MISMATCH to44/44instructions BYTE_EXACT, no exact losses and native outside-selected PASS against fresh master ba4a748d0 actual production build-kow_e2or. Source form in easy-third-physical-deck.json group1; no claim banked yet.",
+    "Worker source scope only delete_queue body, preserve all annotations/spans/claims/history and all other methods. First out-of-queue path must decrement/store selected_queue_slot_ before local <=1 clamp and final member assignment, matching pin416FC2..416FDB. Tail clamps local count before assignment only when selected>count. Preserve all original signed comparisons, queue_size/array shift writes/live BaseCurrent reloads and draw_queue(1), unsafe indices and overflow quirks. No bug fix, header/ABI/layout/global/cast/helper/asm/volatile or compiler flag changes.",
+    "Test scope only existing actual-source BaseWin cohort fixture. Preserve complete body extraction, GCC/Clang behavioral edge cases and current mutation controls. Retarget spelling-specific assertions/mutations to new ordinary local form; do not delete tests, weaken behavioral assertions or treat an uncompiled/rejected mutant as killed. Record baseline fixture failure if source-spelling assertions prevent current candidate execution. Relevant existing signed-queue tests also required. No parallel source edits during compiler epochs.",
+    "Coordinator alone handles Git/Task/native recording/compiler leases/preparation/full build, independent review/manual integration/destination proof and cleanup. Original task baseline retained, no demotion or acceptance fabrication. Screen already consumed one candidate form; qualification baseline/replica/damage/replay compiles labeled separately. Standing permission allows bounded manual integration after fresh build/link, source continuity, scoped refs/preservation and independent review; full native/game/runtime/linked acceptance unfinished."
+  ],
+  "intent": "Restore exact original BaseWin production queue deletion using ordinary signed C++ locals",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4288432,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "basewin-queue-match-oct23t"
+}
