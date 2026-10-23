@@ -107,8 +107,23 @@ struct CaviarSceneProjectionScratchCandidate {
 
 static CaviarSceneProjectionScratchCandidate CaviarSceneProjectionScratch;
 static VOX_Matrix CaviarProjectionShadowBasis;
+static VOX_Matrix vox_projection_matrix_;
+static VOX_Vect CaviarProjectionDirectionCandidate;
 static int32_t vox_projection_render_stage_ = 0;
 static const uint8_t *vox_projection_selected_angle_ = 0;
+static int projection_inverse_calls = 0;
+static int projection_vector_mul_calls = 0;
+static const float *projection_inverse_source = 0;
+static float *projection_inverse_output = 0;
+static const float *projection_vector_matrices[2] = {0, 0};
+static const float *projection_vector_inputs[2] = {0, 0};
+static float *projection_vector_outputs[2] = {0, 0};
+static int projection_stage_at_inverse = -1;
+static int projection_stage_at_vector_mul[2] = {-1, -1};
+static char projection_event_order[8] = {};
+static int projection_event_count = 0;
+static int projection_override_second_vector = 0;
+static float projection_forced_vector[3] = {0.0f, 0.0f, 0.0f};
 static const float CaviarProjectionZero = 0.0f;
 static const float CaviarProjectionMinusOne = -1.0f;
 static const float CaviarProjectionOne = 1.0f;
@@ -140,6 +155,20 @@ static void set_identity(VOX_Matrix &matrix) {
 
 static void vox_matrix_vector_mul(const float matrix[3][3], const float vector[3],
                                   float *out) {
+    const int call = projection_vector_mul_calls++;
+    if (call < 2) {
+        projection_vector_matrices[call] = &matrix[0][0];
+        projection_vector_inputs[call] = vector;
+        projection_vector_outputs[call] = out;
+        projection_stage_at_vector_mul[call] = vox_projection_render_stage_;
+    }
+    if (projection_event_count < 8)
+        projection_event_order[projection_event_count] = 'M';
+    ++projection_event_count;
+    if (call == 1 && projection_override_second_vector) {
+        memcpy(out, projection_forced_vector, sizeof(projection_forced_vector));
+        return;
+    }
     float result[3];
     for (int row = 0; row != 3; ++row)
         result[row] = (matrix[row][1] * vector[1] + matrix[row][2] * vector[2])
@@ -165,6 +194,13 @@ static void __cdecl vec3_subtract(const float *left, const float *right,
     memcpy(out, result, sizeof(result));
 }
 static void vox_matrix_inverse(const float source[3][3], float output[3][3]) {
+    ++projection_inverse_calls;
+    projection_inverse_source = &source[0][0];
+    projection_inverse_output = &output[0][0];
+    projection_stage_at_inverse = vox_projection_render_stage_;
+    if (projection_event_count < 8)
+        projection_event_order[projection_event_count] = 'I';
+    ++projection_event_count;
     float copy[3][3];
     memcpy(copy, source, sizeof(copy));
     memcpy(output, copy, sizeof(copy));
@@ -361,16 +397,52 @@ static void test_angle_row_wrap_special_case_and_interior_pointer() {
     set_identity(part);
     set_identity(camera);
     VOX_Vect direction = {{1.0f, 0.0f, 0.0f}};
+    projection_inverse_calls = projection_vector_mul_calls = 0;
+    projection_event_count = 0;
+    vox_projection_render_stage_ = 0;
     caviar_direction_to_projection_index(&part, &direction, 1.0f, &camera);
     assert(vox_projection_render_stage_ == 1);
     assert(vox_projection_selected_angle_ == rows[23] + 0x59);
+    assert(projection_inverse_calls == 1 && projection_vector_mul_calls == 2);
+    assert(projection_event_count == 3 &&
+           memcmp(projection_event_order, "IMM", 3) == 0);
+    assert(projection_stage_at_inverse == 0 &&
+           projection_stage_at_vector_mul[0] == 1 &&
+           projection_stage_at_vector_mul[1] == 1);
+    assert(projection_inverse_source == &part.values[0][0]);
+    assert(projection_inverse_output == &vox_projection_matrix_.values[0][0]);
+    assert(projection_vector_matrices[1] == &vox_projection_matrix_.values[0][0]);
+    assert(projection_vector_outputs[1] == &CaviarProjectionDirectionCandidate.values[0]);
+    assert(vox_projection_matrix_.values[0][0] == part.values[0][0] &&
+           vox_projection_matrix_.values[1][1] == part.values[1][1] &&
+           vox_projection_matrix_.values[2][2] == part.values[2][2]);
+    assert(CaviarProjectionDirectionCandidate.values[0] == direction.values[0] &&
+           CaviarProjectionDirectionCandidate.values[1] == direction.values[1] &&
+           CaviarProjectionDirectionCandidate.values[2] == direction.values[2]);
 
-    // Positive azimuths take the negated-wrap comparison path; the exact
-    // 0x59 result wraps to index zero, which selects the row's final byte.
+    // Positive azimuth is not wrapped; zero selects the row's final byte.
     direction.values[1] = 0.25f;
     caviar_direction_to_projection_index(&part, &direction, 1.0f, &camera);
-    assert(vox_projection_selected_angle_ >= rows[0]);
-    assert(vox_projection_selected_angle_ < rows[24 - 1] + 0x860);
+    assert(vox_projection_selected_angle_ == rows[23] + (0x59 - 3));
+
+    // Negative azimuth is wrapped by subtracting the image's negative 2*pi.
+    direction.values[1] = -0.25f;
+    caviar_direction_to_projection_index(&part, &direction, 1.0f, &camera);
+    assert(vox_projection_selected_angle_ == rows[23] + 3);
+
+    // The zero plane is not negated; below/equal/above the acos limit use the
+    // original polar branch: acos below one, constant angle at and above one.
+    direction.values[1] = 0.0f;
+    direction.values[2] = -0.25f;
+    caviar_direction_to_projection_index(&part, &direction, 1.0f, &camera);
+    assert(CaviarProjectionDirectionCandidate.values[0] == -1.0f &&
+           CaviarProjectionDirectionCandidate.values[2] == 0.25f);
+    direction.values[2] = 1.0f;
+    caviar_direction_to_projection_index(&part, &direction, 1.0f, &camera);
+    assert(vox_projection_selected_angle_ == rows[0] + 0x59);
+    direction.values[2] = 1.25f;
+    caviar_direction_to_projection_index(&part, &direction, 1.0f, &camera);
+    assert(vox_projection_selected_angle_ == rows[0] + 0x59);
 }
 
 int main() {

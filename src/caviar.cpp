@@ -110,6 +110,11 @@ float CaviarProjectionScaledMatrix[9] = {0}; // 0x009C0A7C
 // projection matrix/state rather than owning an invented scratch aggregate.
 // RECOVERY_OBJECT: v1 0x009C0AA0 ?vox_projection_matrix_@@3UVOX_Matrix@@A
 VOX_Matrix vox_projection_matrix_ = {0};    // 0x009C0AA0
+// Provisional descriptive name for this separately mapped three-float
+// output window; the pin establishes its start and accessed bytes, not a wider
+// allocation, original symbol, or lifetime.
+// RECOVERY_OBJECT: v1 0x009C0A64 ?CaviarProjectionDirectionCandidate@@3UVOX_Vect@@A
+VOX_Vect CaviarProjectionDirectionCandidate = {0}; // 0x009C0A64 observed bytes 0x009C0A64..0x009C0A6F
 // RECOVERY_OBJECT: v1 0x009C0A70 ?vox_projection_component_@@3PAHA
 int32_t vox_projection_component_[3] = {0}; // 0x009C0A70..0x009C0A78
 // RECOVERY_OBJECT: v1 0x009C0AC4 ?vox_projection_render_stage_@@3HA
@@ -3774,8 +3779,7 @@ void __cdecl caviar_direction_to_projection_index(
     const float xy_scale = shape_scale * CaviarSceneProjectionScratch.projected_scale_;
     const float z_scale = shape_scale * CaviarSceneProjectionScratch.viewport_aspect_;
 
-    VOX_Matrix inverse_part;
-    vox_matrix_inverse(part_matrix->values, inverse_part.values);
+    vox_matrix_inverse(part_matrix->values, vox_projection_matrix_.values);
     vox_projection_render_stage_ = 1;
 
     VOX_Vect camera_direction;
@@ -3785,25 +3789,29 @@ void __cdecl caviar_direction_to_projection_index(
     camera_direction.values[1] *= xy_scale;
     camera_direction.values[2] *= z_scale;
 
-    VOX_Vect local_direction;
-    vox_matrix_vector_mul(inverse_part.values, camera_direction.values,
-                          local_direction.values);
-    if (local_direction.values[2] < CaviarProjectionRoundThreshold) {
-        local_direction.values[0] = -local_direction.values[0];
-        local_direction.values[1] = -local_direction.values[1];
-        local_direction.values[2] = -local_direction.values[2];
+    vox_matrix_vector_mul(vox_projection_matrix_.values, camera_direction.values,
+                          CaviarProjectionDirectionCandidate.values);
+    if (!(CaviarProjectionDirectionCandidate.values[2] >=
+          CaviarProjectionRoundThreshold)) {
+        CaviarProjectionDirectionCandidate.values[0] =
+            -CaviarProjectionDirectionCandidate.values[0];
+        CaviarProjectionDirectionCandidate.values[1] =
+            -CaviarProjectionDirectionCandidate.values[1];
+        CaviarProjectionDirectionCandidate.values[2] =
+            -CaviarProjectionDirectionCandidate.values[2];
     }
 
     double polar_angle;
-    if (local_direction.values[2] < CaviarProjectionAngleLimit) {
-        polar_angle = acos(local_direction.values[2]);
+    if (!(CaviarProjectionDirectionCandidate.values[2] >=
+          CaviarProjectionAngleLimit)) {
+        polar_angle = acos(CaviarProjectionDirectionCandidate.values[2]);
     } else {
         polar_angle = CaviarProjectionRoundThreshold;
     }
 
-    double azimuth_angle = atan2(local_direction.values[1],
-                                 local_direction.values[0]);
-    if (!(azimuth_angle < CaviarProjectionRoundThreshold)) {
+    double azimuth_angle = atan2(CaviarProjectionDirectionCandidate.values[1],
+                                 CaviarProjectionDirectionCandidate.values[0]);
+    if (!(azimuth_angle >= CaviarProjectionRoundThreshold)) {
         azimuth_angle -= CaviarProjectionAngleWrap;
     }
 
