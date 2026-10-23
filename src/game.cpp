@@ -4037,15 +4037,16 @@ void __cdecl say_fac_special(char *a1, char *a2, int a3) {
 
 
 void sub_52db40() {
-    for (int slot = 0; slot < 8; ++slot) {
-        NetDaemonSaveProcessSlot &record =
-            NetDaemonNet.saved_process_slots_[slot];
-        record.identity_ = -1;
-        record.field_25_ = 0;
-        record.field_26_ = 0;
-        record.field_27_ = -1;
-        record.status_bytes_[0] = 2;
-    }
+    NetDaemonSaveProcessSlot *record = NetDaemonNet.saved_process_slots_;
+    int remaining = 8;
+    do {
+        record->identity_ = -1;
+        record->field_25_ = 0;
+        record->field_26_ = 0;
+        record->field_27_ = -1;
+        record->status_bytes_[0] = 2;
+        ++record;
+    } while (--remaining);
 }
 
 // RECOVERY_ROLE: SCAFFOLD Fabricated Widget receiver and manual virtual-slot adapter; original class, receiver ownership and lifecycle remain unproved.

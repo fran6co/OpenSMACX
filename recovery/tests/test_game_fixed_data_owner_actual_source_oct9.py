@@ -246,11 +246,11 @@ def test_actual_mapped_identities_and_token_address_evidence() -> None:
     assert ordered_prototype_writes == sorted(ordered_prototype_writes)
     save_body = actual_body("sub_52db40")
     ordered_save_writes = [
-        save_body.index("record.identity_ = -1"),
-        save_body.index("record.field_25_ = 0"),
-        save_body.index("record.field_26_ = 0"),
-        save_body.index("record.field_27_ = -1"),
-        save_body.index("record.status_bytes_[0] = 2"),
+        save_body.index("record->identity_ = -1"),
+        save_body.index("record->field_25_ = 0"),
+        save_body.index("record->field_26_ = 0"),
+        save_body.index("record->field_27_ = -1"),
+        save_body.index("record->status_bytes_[0] = 2"),
     ]
     assert ordered_save_writes == sorted(ordered_save_writes)
 
@@ -423,8 +423,8 @@ int main() {
 }
 '''
     owner_mutant = actual_body("sub_52db40").replace(
-        "NetDaemonNet.saved_process_slots_[slot]",
-        "NetDaemonNet.process_slots_[slot]",
+        "NetDaemonNet.saved_process_slots_;",
+        "NetDaemonNet.process_slots_;",
         1,
     )
     assert owner_mutant != actual_body("sub_52db40")
@@ -443,7 +443,7 @@ int main() {
     require_mutant_rejected(compiler, HARNESS + changed_tokens + phrase + markup_test, tmp_path)
 
     save_body = actual_body("sub_52db40")
-    save_field_mutant = save_body.replace("record.field_25_ = 0", "record.field_25_ = 1", 1)
+    save_field_mutant = save_body.replace("record->field_25_ = 0", "record->field_25_ = 1", 1)
     assert save_field_mutant != save_body
     save_field_test = r'''
 int main() {
