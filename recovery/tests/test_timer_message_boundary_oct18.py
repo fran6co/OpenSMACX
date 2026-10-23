@@ -210,9 +210,9 @@ def check_boundary(code,relocations,symbols,flush,kind):
 def test_native_all_seven_subjects_keep_direct_flush_boundary(timer_objects):
     _,_,objects=timer_objects
     flush=symbol_at("src/timer_messages.cpp",0x5FD370)
-    for obj in objects["src/time.cpp"]:
+    for obj in objects["src/jackal/time.cpp"]:
         for start,_,_ in CALLERS:
-            code,relocations,_=obj.subject(obj.function(symbol_at("src/time.cpp",start)))
+            code,relocations,_=obj.subject(obj.function(symbol_at("src/jackal/time.cpp",start)))
             check_boundary(code,relocations,obj.symbols,flush,"jmp" if start==0x616730 else "call")
 
 

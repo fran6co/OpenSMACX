@@ -286,7 +286,6 @@ set(OPENSMACX_SOURCES
     src/text.cpp
     src/textindex.cpp
     src/time.cpp
-    src/time_lifecycle.cpp
     src/timer_messages.cpp
     src/enemy.cpp
     src/veh.cpp
@@ -579,6 +578,10 @@ set_source_files_properties(
 # Keep this profile local to the extracted asset owner; generic Sprite methods
 # retain their measured default recipe. This does not assert the original TU.
 set_source_files_properties(src/sprite_assets.cpp
+    PROPERTIES COMPILE_OPTIONS "/Oy-")
+# Application timer integration retains the pinned argument frame. The generic
+# Time implementation is compiled separately in Jackal with its existing profile.
+set_source_files_properties(src/time.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Preserve the measured frame-based contexts of the shared stream wrappers.
 # General's unrelated helpers retain their independently measured default recipe.
