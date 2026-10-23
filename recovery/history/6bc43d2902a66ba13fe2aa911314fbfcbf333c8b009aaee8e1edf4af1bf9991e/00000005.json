@@ -1,0 +1,25 @@
+{
+  "event_id": "3f061dfe099e8d0e884b0148bfddffc880f207fdba15f06513c5d15e50494bd3",
+  "payload": {
+    "affects": [
+      "entity-202a29862bba6e439ba15f01b3462b5486b737bf74132158c25d4b63d74838c2"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "original-signed-pod-arithmetic-and-storage",
+    "evidence": [
+      "Independent complete pinned592140..592248 source review confirms avg SAR and final signed divide-by-four corrections, two global IMUL reads at59221B/592229, initial words61/11 at68FB78/68FB7C, original flags/rule/pod/seed precedence, unchanged unchecked tile indexing and no direct decoded coefficient writer. Use signed avg plus real initialized source-owned coefficient words; provisional role names do not assert original identifiers, aggregate declarations or historical TU.",
+      "Actual complete source goody_at and header dependency controls pass GCC/Clang: negative x=-2,y=1 aliases allocated tile31 under longitude32; actual map_loc/altitude_at/is_ocean and 32-bit narrowing are checked, original/source returns0 versus unsigned-average damage1. Positive harness runs before each damage, with core dumps disabled. Ordinary rule/remove/monolith/pod/seed and ocean/non-ocean paths pass. Logically out-of-map input does not establish ordinary caller reachability or an original-game bug fix.",
+      "Two bounded release candidates and corresponding native debug-layout witnesses, twelve total screen compiles including eight baseline/replica/damage controls. Final real-recipe Map release object equals first screened candidate byte-for-byte:112instructions/49matching vs original114, old106/39matching, stillMISMATCH. Both bounded four-byte data definitions/content pass native checks and61->60 damage fails. No current exact function is lost or new claim banked; historical obligations/spans/authored notes remain unchanged.",
+      "Final fresh191-TU/205-object application builds and links; Map object reproduces final screen and all204other normalized objects equal baseline. Initial shared-header declarations had changed ten untouched functions; removing only those unnecessary declarations restores whole header and historical terrain test exactly, without discarding the recovered source-owned storage. All40final related host tests pass, including all36baseline controls; initial candidate fixture failure/pin skip remain recorded rather than replayed as pass.",
+      "Native outside-goody residual remainsFAIL and is NOT waived or relabeled. Independent physical proof finds solely an eight-byte insertion61/11 at ordinary data offset132; all13prior named data definitions remain with exact splice-adjusted offsets, one data relocation moves240->248 with same target, all197other function code/companions match bytes, and adjusted external/local relocations retain verified target identity/location. Directives/CRT entries are unchanged. This bounded explanation does not prove full linked selection/allocation, lifetime, hierarchy or runtime/game acceptance.",
+      "Coordinator authorizes bounded manual integration after actual source/pin/native physical/host review, under the existing manual recovery permission. All100Map original identities/fullspans/historicalclaims/authorednotes, all5581known masked verdicts and strict outcomes are preserved. Native claim/mapping/reference/source checks pass. Zero new exact or compiling-body coverage; this improves original source/reference fidelity. Fresh destination build/link and all205normalized candidate/destination objects, source/claim/reference checks and40host outcomes must be rechecked before transfer is considered verified. Keep original task baseline; no automatic/full-game acceptance claim."
+    ],
+    "hypothesis": "Restore the pinned signed pod distribution and actual source-owned coefficient loads",
+    "kind": "discovery"
+  },
+  "previous_event": "dacb680451402d7dc79f15b5a217cc34e8a0416da1b2bbfb92fb49787effd4f7",
+  "request_id": "original-signed-pod-arithmetic-and-storage",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:map-goody-signed-oct23l"
+}
