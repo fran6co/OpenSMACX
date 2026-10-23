@@ -71,11 +71,19 @@ std::vector<int> events;
 struct CheckBox {
     int event;
     void on_redraw() { events.push_back(event); }
+    void redraw() { events.push_back(event + 100); on_redraw(); }
+};
+struct FlatButton {
+    int event;
+    void redraw() { events.push_back(event); }
 };
 struct PrefWin {
     CheckBox bscPrefCheckBox_{5}, advPrefCheckBox_{6}, warnPrefCheckBox_{7};
     CheckBox warnContPrefCheckBox_{8}, autoPrefCheckBox_{9};
     CheckBox audioVisPrefCheckBox_{10}, mapPrefCheckBox_{11};
+    FlatButton volumeMainToggle_{12}, volumeVoiceToggle_{13};
+    FlatButton volumeSFXToggle_{14}, volumeMusicToggle_{15};
+    FlatButton okButton_{16}, cancelButton_{17}, restoreDefaultButton_{18};
     void redraw_option() { events.push_back(1); }
     void redraw_volume() { events.push_back(2); }
     void hide_option_buttons() { events.push_back(3); }
@@ -86,7 +94,11 @@ BODY
 int main() {
     PrefWin window;
     window.on_redraw();
-    const std::vector<int> expected{1,2,3,4,5,6,7,8,9,10,11};
+    const std::vector<int> expected{
+        1,2,3,4,
+        105,5,106,6,107,7,108,8,109,9,110,10,111,11,
+        12,13,14,15,16,17,18
+    };
     assert(events == expected);
 }
 '''
@@ -100,7 +112,7 @@ def test_on_redraw_calls_every_owned_control_in_original_order(tmp_path):
 
 def test_on_redraw_damage_control_detects_dropped_map_callback(tmp_path):
     body = extract_function(UNIT.read_text(), "void PrefWin::on_redraw()")
-    omitted = "  mapPrefCheckBox_.on_redraw();\n"
+    omitted = "  mapPrefCheckBox_.redraw();\n"
     assert omitted in body
     damaged = body.replace(omitted, "", 1)
     result = compile_and_run(tmp_path, REDRAW_FIXTURE.replace("BODY", damaged), "prefwin-redraw-damaged")
