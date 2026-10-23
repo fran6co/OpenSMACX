@@ -1,0 +1,27 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "b253a5eb886486f70930face11f6a87bc99b2efe",
+  "editable_files": [
+    "src/statuswin.cpp",
+    "recovery/tests/statuswin_remaining_host_control.cpp",
+    "recovery/tests/test_statuswin_remaining_behavior.py"
+  ],
+  "evidence": [
+    "Independent statuswin-initial-rotation-structure.json establishes the pinned init writes angle[1]=0 at4BA050, angle[2]=3F48F5C3 at4BA056, angle[0]=0 at4BA060, then calls caviar_apply_rotation using actual camera_angles_ at1500 and camera_rotation_ at150C. Current translation instead initializes the nonzero second component. Correcting this translation is faithful original recovery, not an original bugfix. Existing member names/layout and CDECL helper/set_camera_direct argument order are supported; no class/header/ABI change is authorized.",
+    "Change only the three original angle stores in their evidenced order. Prefer ordinary typed 0.785f for the original third component if independently verified to have IEEE32 bits3F48F5C3 under both host control and actual VC6 output; remove the now-unnecessary uint32/memcpy bit spelling. Preserve all preceding and following init effects, font setup, return behavior, call ordering and annotations/history/claims. No new flags/casts/reinterpret/asm/volatile/guards, initialization fixes to other original fields or speculative cleanup.",
+    "The existing remaining-behavior fixture wrongly asserts only angles0and2zero and leaves1 unconstrained; its identity-matrix helper masks the wrong axis. Update the original assertion to verify the complete original input word triplet[0,0,3F48F5C3] at the actual extracted init/helper seam. Add a GCC/Clang damage case restoring the old wrong-axis assignment; it must compile and fail at runtime. Preserve all other prior arrow/init/draw-status assertions. The helper remains a bounded double, not proof of real matrix math/runtime.",
+    "Worker edits only these isolated authorized files with apply_patch then freezes. No Git, Task, tests, compiler/preparation/resources/package changes. Return cross-owner discoveries before edits; another worker owns disjoint SocialWin source/tests in this shared isolated batch. Coordinator alone mutates Git/Task and runs validation after both sources freeze.",
+    "Standing manual recovery authorization requires independent source/pin review, source identity and historical claim continuity, relevant host/native controls and a fresh compiling/linking application closure. Preserve original baseline and FAIL/UNKNOWN; no automatic/full-game/complete-linked/runtime acceptance inferred. Fresh destination verification required before cleanup."
+  ],
+  "intent": "Recover the original third-axis camera rotation initialization",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4956096,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "statuswin-initial-rotation-oct23z"
+}
