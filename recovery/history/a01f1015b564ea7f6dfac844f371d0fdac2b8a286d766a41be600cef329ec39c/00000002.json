@@ -1,0 +1,20 @@
+{
+  "event_id": "5b7ca1f78f1c9ea437e6f972ebbc47b339fee88113dfa25b1a9b19127bd4a135",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "original-sprite-size-word-arithmetic",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Pinned5EAFF1IMUL/5EAFF5ADD islow32width*height+2C; convertoperands BEFOREmultiply/add ratherthan signedoverflowthen cast. Filemapconstruction/errors/packed29byteprefix/stridecopy/close/destructor/fullprimary+coldspans unchanged. Nooverflowingdimensionreachabilityclaim or safetyguard. Fiveactualcompiles(1candidate4controls) passproductionreplay/replicas/bodydamage/nativeoutside; actualfullproductionobject equalsbaseline, function remainsMISMATCH90vs90. EighteenGCC/Clang actual-sourcecases inclUBSanpass+old-signedmutantfail; tinyfakeallocationuseszerostride so nohugecopy. Initialdisplay-onlyRegionCandidate.lines refusal retained, nativecomplete-span comparisonandrawobjectsreusedwithoutrecompiles.",
+      "Fresh combined192-TU/206physicalobject application builds/links under frozen07af1533d. Native source/claim/mapping/reference checksPASS. All3changedsourceowners reproduce their actual-production-recipe overlayobjects exactly under native normalizedcompleteobject comparison;201objects equal oldbaseline,204equal independentlyreviewed metadata candidate. Sprite unsignedoperand language-fidelity correction emits identical VC6completeobject; World andCaviar actualcode/storage change. Nativeknown5581verdicts unchanged3418maskedexact; strictreferences3003pass/415unknown versus2831/587baseline, all172gains previouslyunknown andsolelymetadata3 effect.0newbodycoverage/0newmaskedexact/0newhistoricalclaims.",
+      "Fresh combined focusedhosttests67pass,0fail/skip; prior separate metadata82focusedtests and sixstandaloneprofilecontrols remain separately labelled supporting evidence. Actualsource bodytests exerciseGCC/Clang andcompile-successbehavior/signedoverflow mutants; notnativeABI/fullgameproof. Combined physical/helper/source reviews saved ignored parallel-match-oct23p; coordinator report SHA256 dd07c7039611e36bc4f7658a9eaedafd7d570109179477f159c0c03df2511655. Preservealloriginalidentities/spans/authoredhistory/historicalclaims unchanged, no demotion/relaxedgate.",
+      "Coordinator authorizes bounded manual integration under standing user direction, notnativeautomatic/fullproject/gameacceptance. Caviarold/new residualFAIL andmetadata3wholeCOFF residualFAIL remainFAIL, strict415unknown remainsunknown. Full linkedretention/allocation/globalICF/structure/runtime unproved. Native automaticpublication stillrefuses missingprerequisites. KeeporiginalTaskbaseline8f5cf3d89. Freshdestination build/link/census/source/reference/claims plusall206candidate/destination normalizedobjects andfocusedhosttests mustagreebeforecleanup. Retainandrepairanyfailure; donotreset/replayreports. Vehicle specialactions stayseparateunfinishedwork."
+    ]
+  },
+  "previous_event": "71e3c0574dc4c9ca97ee0fcef3aaf3ba1285b347c08bb58c8e5e234e9ec37cbc",
+  "request_id": "original-sprite-size-word-arithmetic-incorporated",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:sprite-save-oct23p"
+}
