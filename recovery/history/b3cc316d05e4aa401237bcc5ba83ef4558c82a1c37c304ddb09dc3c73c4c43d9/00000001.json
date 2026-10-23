@@ -1,0 +1,20 @@
+{
+  "event_id": "4dff8b892038272b9c9d3650a88d9cb23abc492dbbe23293d49561be337bd284",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_checkbox_callback_annotation_oct11.py",
+      "recovery/tests/test_checkbox_key_notification_oct11.py"
+    ],
+    "evidence": [
+      "Both historical whole-file assertions fail on unchanged667c196ddmaster as well as currentcandidate: legitimate later annotationpromotions, member naming and state accessor additions invalidate the old entire-file snapshots. Preserve original baseline snapshots and actual callback behavior, all historicaloriginal identities/fullspans/claims/lessons, and exact callbackmember offset/evidence/typedef interpretation using native APIs rather than broadly normalizing currentfiles or discarding controls. No header/CPP changes authorized by this expansion."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "repair-obsolete-fullfile-callback-regressions",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:checkbox-state-family-oct23g"
+}
