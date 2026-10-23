@@ -602,6 +602,16 @@ reparsing it for every class. This is invocation-local parsing reuse, not an
 object/verdict cache or a change to compiler trials and coverage. Neither passing
 offsets nor class-pointer targets prove the full hierarchy or runtime lifetime.
 
+The Game, NetDaemon and MapWin production owners retain standalone `/Z7` type
+metadata as well as their unchanged release optimization and frame settings.
+Their matching per-unit measurement recipes retain the same metadata. Native
+reference checks can therefore validate their source-owned parent/member object
+groups against the very production COFF whose code and relocations they check.
+This is recovery-artifact observability, not evidence that the original game used
+these debug options. Separate layout objects are not grafted into production
+evidence. Missing original object bounds, lifetime and linked-selection proofs
+remain unknown; retained type information does not establish those properties.
+
 Repeated input snapshots now use cheaper component-based path operations while
 retaining full content hashing, path resolution and root re-enumeration. There
 is no mtime-based shortcut, cached alias target or narrowed dependency set.

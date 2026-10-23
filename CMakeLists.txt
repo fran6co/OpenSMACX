@@ -552,6 +552,14 @@ set_source_files_properties(src/gamma.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Preserve the measured frame-based context of the scenario-editor undo owner.
 # General's unrelated helpers retain their independently measured default recipe.
 set_source_files_properties(src/scenario_undo.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")
+# Retain standalone compiler type evidence for these source-owned global/member
+# groups. This adds observability, not a different optimization/frame policy;
+# reference checks consume each production object's own types and relocations.
+set_property(SOURCE
+    src/game.cpp
+    src/netdaemon.cpp
+    src/mapwin.cpp
+    APPEND PROPERTY COMPILE_OPTIONS "/Z7")
 # Keep these measured frame-based helper owners on their explicit source profile.
 set_source_files_properties(
     src/byte_utilities.cpp
