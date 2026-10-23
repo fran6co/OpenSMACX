@@ -79,6 +79,15 @@ EXPECTED = (
      "37f61b307a04ab04fd46e95dc8d7b9ba530ad796b2a36996b1b9dcbc2f5d929c"),
 )
 
+MATH_ENTRIES = {
+    "../build/intel/mt_obj/sin.obj": (("__CIsin", 0x0, 0x6463D0),
+                                      ("_sin", 0x14, 0x6463E4)),
+    "../build/intel/mt_obj/cos.obj": (("__CIcos", 0x0, 0x646480),
+                                      ("_cos", 0x14, 0x646494)),
+    "../build/intel/mt_obj/sqrt.obj": (("__CIsqrt", 0x0, 0x646530),
+                                       ("_sqrt", 0x14, 0x646544)),
+}
+
 
 @pytest.fixture(scope="module")
 def inputs():
@@ -170,6 +179,16 @@ def test_seventeen_full_contributions_preserve_the_complete_prior_manifest(input
                and "not a callable identity" in item.evidence.casefold()
                and "per-symbol extent" in item.evidence.casefold()
                for item in sections)
+    for unit, expected_entries in MATH_ENTRIES.items():
+        section = next(item for item in sections if item.unit == unit)
+        assert {(anchor.name, anchor.offset) for anchor in section.entries} == {
+            (name, offset) for name, offset, _address in expected_entries}
+        assert all(section.span.start + anchor.offset == address
+                   for anchor, (_name, _offset, address) in zip(
+                       section.entries, expected_entries, strict=True))
+        assert all(anchor.offset < section.span.end - section.span.start
+                   and anchor.name not in {binding.symbol for binding in manifest.bindings}
+                   for anchor in section.entries)
     genexcep = next(item for item in sections if item.unit.endswith("/genexcep.obj"))
     assert "__87except relocation is resolved through an existing source binding" in genexcep.evidence
     intervals = sorted((item.span.start, item.span.end) for item in sections)
@@ -208,6 +227,21 @@ def test_physical_sections_and_native_verification_keep_reference_uncertainty(in
         }
         assert physical_symbols
         assert all(0 <= offset < len(code) for _, offset in physical_symbols)
+        if unit in MATH_ENTRIES:
+            external_function_symbols = {
+                (symbol.name, symbol.value) for symbol in obj.symbols.values()
+                if symbol.section == binding.section and symbol.type == 0x20
+                and symbol.storage == 2
+            }
+            assert external_function_symbols == {
+                (name, offset) for name, offset, _address in MATH_ENTRIES[unit]}
+            assert {(anchor.name, anchor.offset) for anchor in binding.entries} == {
+                (name, offset) for name, offset, _address in MATH_ENTRIES[unit]}
+            for name, entry_offset, entry_address in MATH_ENTRIES[unit]:
+                symbol, = [item for item in obj.symbols.values() if item.name == name]
+                assert (binding.span.start + entry_offset, symbol.section, symbol.value,
+                        symbol.type, symbol.storage) == (
+                    entry_address, binding.section, entry_offset, 0x20, 2)
     assert no_relocation_count == 2
 
     report = verify_toolchain(manifest, image_data, archive_data)
@@ -223,6 +257,19 @@ def test_physical_sections_and_native_verification_keep_reference_uncertainty(in
     assert len(historical_rows) == 17
     assert Counter(row["result"] for row in historical_rows) == Counter({"pass": 3, "unknown": 14})
     assert sum(row["references"] == "unknown" for row in historical_rows) == 14
+    for unit, expected_entries in MATH_ENTRIES.items():
+        row, = (item for item in rows if item["unit"] == unit)
+        assert row["entry_inventory"] == row["nonrelocation_bytes"] == "pass"
+        assert row["bytes"] == row["references"] == "unknown"
+        assert row["callable"] is False and row["link_target"] is False
+        assert {entry["symbol"]: (entry["offset"], entry["address"])
+                for entry in row["entries"]} == {
+            name: (offset, None) for name, offset, _address in expected_entries}
+        for entry in row["entries"]:
+            assert entry["result"] == "unknown"
+            assert entry["callable"] is False
+            assert entry["scoped_reference_target"] is False
+            assert entry["link_target"] is False and entry["function_extent"] == "unknown"
 
 
 def test_nonrelocation_damage_fails_the_native_whole_section_check(inputs):
