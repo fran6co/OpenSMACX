@@ -1,0 +1,20 @@
+{
+  "event_id": "db0bfeb5b26e640bed12c240d267a07913134118672be6b7802a548a86021eca",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "original-button-handler-matches",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Coordinator reviewed both complete handlers against the pinned executable and independent source/physical reviews. Datalink 431EC0 captures entry and category before set_cat callback, then computes the pure remainder afterward; live category reload and selection/history/drawing flow preserved. FameWin 44A570 subtracts from its by-value button parameter; close order, six-ID domain, 35-row first match, presence bit, award bit, selected column and redraw preserved. No bounds checks, bug fixes or ABI/header changes.",
+      "Fresh frozen candidate 9580ed6878922eef72b51bd3e44391b0b4d4bf65 compiled and linked all 192 TUs with 206 qualified physical objects. All 204 other whole objects normalized equal to original baseline; each changed unit has native outside-selected PASS and exactly reproduces independently screened actual production output. Original 130 function facts retained, except FameWin historical byte claim added by the guarded native recorder. Both handlers now locally exact and strict reference-aware PASS; whole known domain 5581, 3422 locally exact, 3007 strict PASS and 415 UNKNOWN; no former exact or strict state lost. Eight actual-source GCC/Clang cases, including three rejected mutants, pass.",
+      "Initial native record exit 1 partially published only FameWin; retain that failed-profile observation. Datalink initial 51/79 mismatch used the default standalone profile without explicit Ob2. A separately authorized per-TU measurement profile now matches already existing actual CMake producer O2/Ob2/Oy-; unchanged actual CMake, build policy, global two flag sets and compiler interaction. Subsequent Datalink guarded record exit 0 at 79/79 restores its existing historical claim without new marker publication. FameWin is 76/76 and its sole new historical claim remains. No manual marker edits or claim demotions.",
+      "Manual coordinator review SHA256 8d71f8b9af98dac93d605e76957438c438245429c389d57f04f776150b02818a. Original baseline 295361b18c6331b2bf747caddeb74533be600616 retained. Standing user permission authorizes this bounded reviewed manual integration; native automatic/full-project acceptance, complete final-link retained-selection, runtime and game acceptance remain unfinished. Host GUI doubles do not establish unsafe-path behavior. Known mapped domain is not exhaustive executable or genuine implementation coverage. Fresh destination build, all 206 physical object comparisons, source/claim/reference continuity and eight host tests required before worker cleanup. On failure preserve source and rerun fresh, never reset baseline or replay acceptance reports."
+    ]
+  },
+  "previous_event": "2675eb3df774aa4978b1b55fa35a6eac553e44aae882e0b5247ce512ff6c1266",
+  "request_id": "original-button-handler-matches-incorporated",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:datalink-fame-easy-oct23s"
+}
