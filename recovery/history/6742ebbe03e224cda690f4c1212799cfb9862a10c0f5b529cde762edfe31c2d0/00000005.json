@@ -1,0 +1,24 @@
+{
+  "event_id": "46f8ddbcc94092c7f6a99919531085a651e2e4c9889a479d04a8247d54e1e1a4",
+  "payload": {
+    "affects": [
+      "entity-3ec05b49576c00c71195c96059beff250c92e9d8b282cd69c9f414393f3b97ec",
+      "entity-63170b9627d6c14264d45829b69b51a8954ec14aacaafec7c7de2a9814845e31"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "get-message-owner-binding",
+    "evidence": [
+      "Independent SDK/COFF/PE/import-library evidence SHA256 8f3e8d1933b0633b39a1439cc05cdcf163004bc37b5d3185d5bc88ee7006916c verifies ordinary undefined __imp__GetMessageA@16, the unique original USER32.dll/GetMessageA loader slot, the four-argument BOOL WINAPI SDK prototype and matching physical USER32.LIB short-import member. Identity was not inferred only from the code operand. Native in-memory import binding resolves identity PASS; actual linker member selection remains UNKNOWN.",
+      "Both UV2Player::on_key4BF390 and UV2Player::exec4BEA50 refer to this imported pointer. Expand the original task to the second identity for reference impact; no exec body change or new matching claim is authorized. Original task baseline remains b253a5eb8 and all prior source/claims/history remain.",
+      "Coordinator authorizes exactly one owner-local source annotation: RECOVERY_IMPORT v1 __imp__GetMessageA@16 USER32.dll name:GetMessageA in src/uv2player.cpp. Use the native import parser to validate it and verify all function annotation facts remain. Append after existing definitions to avoid changing their line metadata. Do not add an import header, function definition, address alias, DLL replacement, compiler flag or source behavior change.",
+      "This standalone reference correction joins the independently authorized Console/compilation-profile batch for one fresh build and integration checkpoint. Verify fresh actual objects, affected reference states and complete outside preservation; do not grant strict/full linked/game/automatic acceptance from an annotation alone. Keep the original missing-import finding pending until fresh verification supports its resolution."
+    ],
+    "hypothesis": "Use the independently verified source-owned SDK import identity to resolve both movie-owner call sites.",
+    "kind": "discovery"
+  },
+  "previous_event": "b216b28b6f10e4b5dc97507d2a9aa73988f81ffbef3d0bcf91366baa93fe6a94",
+  "request_id": "get-message-owner-binding",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:uv2-message-key-oct23z"
+}

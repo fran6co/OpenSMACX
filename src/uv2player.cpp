@@ -529,3 +529,5 @@ int UV2Player::exec(char *movie_file, int width, int height, int flags) {
     }
     return 0;
 }
+
+// RECOVERY_IMPORT: v1 __imp__GetMessageA@16 USER32.dll name:GetMessageA
