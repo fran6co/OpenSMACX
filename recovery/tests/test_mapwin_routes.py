@@ -40,7 +40,15 @@ def actual_source():
     parts = {}
     parts["STRUCTURES"] = "\n".join(braced(headers[unit], "struct " + name + " {") + ";" for unit, name in
         (("map", "Map"), ("veh", "VehPrototype"), ("veh", "RulesWeapon"), ("base", "Base"), ("base", "BaseSecretProject")))
-    parts["RULE_FIELD"], = re.findall(r"^    uint32_t move_rate_roads;", headers["alpha"], re.M)
+    parts["RULE_FIELD"], = re.findall(r"^    int move_rate_roads;", headers["alpha"], re.M)
+    landmark = braced(headers["map"], "struct Landmark {") + ";"
+    metadata = braced(headers["map"], "struct MapMetadataFields {") + ";"
+    storage = braced(headers["map"], "struct MapStorageWindow {") + ";"
+    max_landmarks, = re.findall(r"^static const int MaxLandmarkNum = \d+;", headers["map"], re.M)
+    aliases = re.findall(r"^#define Map(?:LongitudeBounds|IsFlat) .+$", headers["map"], re.M)
+    assert len(aliases) == 2
+    parts["MAP_STORAGE"] = "\n".join((landmark, max_landmarks, metadata, storage,
+                                       "MapStorageWindow MapStorage;", *aliases))
     # Only the accessed PlayerData field is projected; no claim about its host stride.
     player = braced(headers["faction"], "struct PlayerData {")
     parts["PLAYER_FIELD"], = re.findall(r"^    uint32_t flags;", player, re.M)
@@ -53,7 +61,7 @@ def actual_source():
     for unit, cls in (("win", "Win"), ("graphicwin", "GraphicWin"), ("mapwin", "MapWin")):
         parts[cls.upper() + "_BASES"], = re.findall(r"^class " + cls + r"\s*:[^{]+\{", headers[unit], re.M)
     globals_ = []
-    for unit, names in (("map", ("MapIsFlat", "MapLongitude", "MapLongitudeBounds")),
+    for unit, names in (("map", ("MapLongitude",)),
                         ("mapwin", ("MapDestinationCost",)), ("time", ("PlanLineCounter",))):
         for name in names:
             decl, = re.findall(r"^extern (?:int|uint32_t|BOOL) " + name + r";", headers[unit], re.M)
@@ -68,7 +76,7 @@ def actual_source():
     parts["BODY"] = "\n".join(braced(cpp, signature) for signature in (
         "int map_dest_signed(", "int mapwin_dest_add(int left, int right) {",
         "int mapwin_dest_sub(int left, int right) {", "int mapwin_dest_mul(int left, int right) {",
-        "int map_dest_abs(", "int map_dest_half(", "int map_dest_distance(", "bool map_dest_in_view(",
+        "int map_dest_abs(", "int map_dest_half(", "int map_dest_distance(",
         "void MapWin::direct_dest_line(", "void MapWin::dest_line("))
     assert all(parts.values())
     return parts
@@ -89,6 +97,7 @@ HARNESS = r'''
 typedef int BOOL;typedef char *LPSTR;
 struct AutoSound {virtual ~AutoSound(){}};
 STRUCTURES
+MAP_STORAGE
 struct RulesProjection {RULE_FIELD} Rules;
 struct GameDataStateFieldsProjection { uint32_t game_rules_, game_state_; BaseSecretProject secret_project_; int base_current_count_, vehicle_current_count_; };
 struct GameDataStateProjection { GameDataStateFieldsProjection fields_; } GameDataStateStorage;
@@ -223,6 +232,10 @@ void viewport_and_wrap(){
     reset(59);hook=[](char k,int n){if(k=='H'&&n==1)window.field_1DDA8_=5;if(k=='H'&&n==2)window.field_1DDA8_=0;};route();require(counts['L']==2);
     reset(60);MapIsFlat=0;window.dest_line(18,4,2,4,1,3,2,0,3,5,1);require(MapDestinationCost==6);
     reset(61);window.dest_line(2,4,7,4,1,3,2,0,3,5,1);require(MapDestinationCost==6);
+    // The signed viewport edge wraps through the existing destination
+    // arithmetic; replacing it with overflowing signed addition is invalid.
+    reset(62);window.field_1DDA4_=0x7ffffffa;window.field_1DDD4_=10;route();
+    require(counts['H']==3&&counts['L']==0);
 }
 void direct_dispatch(){
     for(int cover=0;cover<2;++cover)for(int triad:{0,1,2,9})for(int forced=0;forced<2;++forced){
@@ -292,10 +305,10 @@ MUTANTS = [
     ("editor-visibility", "(GameDataStateStorage.fields_.game_state_ & 0x80) == 0", "true"),
     ("rules-visibility", "(GameDataStateStorage.fields_.game_rules_ & 0x100) == 0", "true"),
     ("step-strict-limit", "steps > mapwin_dest_mul(MapLongitudeBounds, 2)", "steps >= mapwin_dest_mul(MapLongitudeBounds, 2)"),
-    ("both-endpoints", "map_dest_in_view(*this, current_x, current_y) ||", "map_dest_in_view(*this, current_x, current_y) &&"),
-    ("exclusive-bottom", "if (y >= bottom)", "if (y > bottom)"),
-    ("exclusive-right", "return x >= left && x < right;", "return x >= left && x <= right;"),
-    ("extent-margin", "window.field_1DDD4_,", "0,"),
+    ("both-endpoints", "if (!segment_visible) {", "if (segment_visible) {"),
+    ("exclusive-bottom", "if (current_y < viewport_bottom)", "if (current_y <= viewport_bottom)"),
+    ("exclusive-right", "if (current_x < viewport_right)", "if (current_x <= viewport_right)"),
+    ("extent-margin", "mapwin_dest_add(field_1DDD4_, field_1DDCC_)", "mapwin_dest_add(0, field_1DDCC_)"),
     ("wrapped-distance", "dx = mapwin_dest_sub(MapLongitudeBounds, dx);", "dx = dx;"),
     ("fallback-distance-half", "map_dest_half(map_dest_distance(x1, y1, x2, y2))", "map_dest_distance(x1, y1, x2, y2)"),
     ("source-y-default-color", "color = y1;", "color = triad;"),

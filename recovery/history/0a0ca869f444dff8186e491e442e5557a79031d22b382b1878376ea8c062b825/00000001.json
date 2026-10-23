@@ -1,0 +1,24 @@
+{
+  "event_id": "e1cd14b7d1f9eb15b93c2c563a248aff7f1e10522b32de92ab5ca78518437452",
+  "payload": {
+    "affects": [
+      "entity-27cc156a4330fe115a50e45e9bc4508653556611f66d0917a867d11e9a3b91c0",
+      "entity-65258580dd3ef62363f20eeb1bbca1f94999ccf813f3e96dc9a56a796eafd85a",
+      "entity-8fae3078e33d1b07ac206b8a54241b18b233765f46ab56a4acb81452cde5259e",
+      "entity-9ddfbdedc3ad986139fe75cb3020627018665757176dfc83c63df0b73556f0ea"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "mapwin-viewport-inline-owner-boundary",
+    "evidence": [
+      "Originaldest_line467730onwardtwice,draw_vehicles4690AE..469128,gen_radius469439..4694A9,draw_radius46A35F..46A3DC; separateoverlaytile_in_view4696A6 remains distinct.",
+      "FrozenCPPaf6f9ed5b9570f04765fbcdfc32d1febd2a464fbd38dd1bbdfa014de9e0740b2 independently reviewed; everyoriginalmarker/spans/claims andheaders/ABI/flags unchanged."
+    ],
+    "hypothesis": "Original viewport admission is inside four mapped MapWin bodies; current standalone map_dest_in_view is a recovery-added unannotated boundary and its5call sites must migrate together.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "mapwin-viewport-inline-owner-boundary",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:mapwin-viewport-owner-oct24a"
+}
