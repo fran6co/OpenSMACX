@@ -1,0 +1,22 @@
+{
+  "event_id": "0667254eaeb09b7b4aae4e3b8289d822578128305cd61152a6ee551087aa56f8",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "real-buffer-font-and-text-parameter-arrays",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Original0..3selectors, indexedFontslots52C..538 andfourDWORDrowSIBbases53C/54C/55C/56C+fourcolumnsettersjustifygenuineC++Font*fonts_[4]anduint32text_parameters_[4][4]. Removeinvalidseparate-memberfontindexingandartificialper-memberrowtables, retainalllivecallbackreads/first3onlywrapperrestore/fourthslot/publicABI/intsetters/storeorder/sentinels/signedoffsetcasts/uncheckednativeindices. OnlydirectCheckBoxfontand3EditBoxforegroundusesmigratedwithrealowners.225ownerfunctionidentities/spans/claims/authoredhistoryretained;21additionalCppownerbodiesareunchangedsourcewithreviewedcompiledobservations. OnlyrawtextwriterchangesBufferfunctioncode,557->500instructions(original506),stillMISMATCH. No manufacturedbyteclaim or reinterpret/vtable/addressstandin.",
+      "Earlierfont-onlyfullbuildfailedon5staleFontpointer-tableindirections; correctedtypedcallscompiledwithcontrolsandfullnewbuildpasses. No structuralworkdiscarded. Sourceoffsetbindingsv1fonts52C/evidence5DC917andtextparameters53C/evidence5DBE04 parsednative; type/countcheckedfreshphysicalCodeView. Initial139narrowtestsdidnotcompilefullraw_l; newactualfullwriter/settercontrolsclose thattestgapandrejectwrongrow/column/cachedcallbackmutants.",
+      "Freshfrozen69f82087d application192TUs206physicalobjects compile/linkPASS; source/claims/mappings/referencesPASS. All5581knownmappedverdicts preservedexcepttwoMISMATCHtoBYTE_EXACTambiencebodies; all3418previousmaskedexact/3003strictpassidentitiesretained, now3420localexact/3005strictpass/415unknown. Nonewimplementationcoverageclaim.180freshGCC/ClanghostcasesPASS includingfullrawtextwriter/setters, callbackmutantsandcurrentrealproviders.",
+      "ActualproductionrecipecontrolsbindBuffernewobjectandAmbiencetwoexactbodies; baseline/candidatereplicas/damage/outsidecontrolsPASS.190otherwholeobjectsnormalizedequal. Headeralsocauses21codegenchangesinuneditedCppfunctions; explicitobservation-scopeexpansiononlyand4independentreviewscoveractualrelocations/stackloads/vptrstores/callorder. Nativeoutsideempty-scopeFAILsretainFAIL; manualnamed-ownerexecutablecode/dataobservationprojectsONLYdeclared24changedfunctionclosuresanddebug/source-linemetadata. Allothercode/data bytes/references/symbolstorage/linkerassociationsobservedequal;notnativeautomaticorwholelinkedpreservation. Currentordinarynativegatesarenotwaivedorweakened.",
+      "Independentphysicalproofactual3production/Z7objects:Buffer588, fonts4x4-byteFontpointersat52C, textparameters4x4DWORDsat53C/rowstride10h/leaf4/size40h/end57C; everyothermemberoffset/normalizedtypeandbasesunchanged. Thisprovescurrentgeometry,notoriginaldeclarations/names/signedness/ownership. Olduint32types/API/quirksretained; v1offsetsourceexpectationsdonotclaimunsupportedarraytypeproof.",
+      "Coordinatorreviewsha256 7c06259e23e19164b2082e00aba84dfa553fad64c6d0ef7eeb56906737b47613. Standinguserpermissionauthorizesboundedmanualintegration,notchange_accepted/fullproject/gameacceptance. Specific12setup_playerbranchambiguities,tech_achievedcoldEH,StatusWinlifetime/unwind,concurrent/unsafe/runtime/linkedselectionevidenceremainunprovedandrestorationobligationsretained. Noclaimdemotion/baselinereset/sourceeditoutsidedeclared4Cpp/headerowners. Freshdestinationbuild/206objectcomparison/sourcecontinuity/180hosttestsrequired beforecleanup; preserveanyfailure."
+    ]
+  },
+  "previous_event": "a4cb36694a68d4cb05960be32f17830eb6ca199dabd35178389ce3ebaaaf26dc",
+  "request_id": "real-buffer-font-and-text-parameter-arrays-incorporated",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:buffer-font-array-oct23r"
+}

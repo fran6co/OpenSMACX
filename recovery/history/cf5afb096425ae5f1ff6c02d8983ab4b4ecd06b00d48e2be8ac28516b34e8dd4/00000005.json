@@ -1,0 +1,17 @@
+{
+  "event_id": "52ae41913a4458ec13dfd6e025abe88699f6c9c190ecbea1e9e37b9a0106f9c7",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "live-text-load-fixture-providers",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Freshmasterbaseline23fail1pass retained; actualcurrentStringStruct/StringListheaderteardown/remove_allusedoncewithonlyclear-entryobservation, correctTextconstructorfromtext.cppandoneinlineheaderdestructor, validheapentry/payload/noobserverdoublefree. Allbehaviorandcompiledmutantsretained. Historicalfixedtext-loadTaskbaselineunchanged; full-TUrestorationstillrequiresliteralwholesourceequalityafterONLYthethreeindependentlyreviewedStringListteardowncomment/FILEmode/inline-bodyhomemigrationreversals. Independenttext-load-fixture-reviewsha256 47ed6f725a5e0862dae73b5548673b5609781bdfc6c5d5781df985e78fd1f32a. Freshcoordinatorcombined180hostcasesPASS includingall24load/linkcontrols; no productionStringList/Textcodeedits, no genericrestorationwaiver."
+    ]
+  },
+  "previous_event": "4bb7f8db58cf868098411c707df89d368a6a55e7a365bd11fecc1e3dad6effc2",
+  "request_id": "live-text-load-fixture-incorporated",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:buffer-font-array-oct23r"
+}
