@@ -1,0 +1,181 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "ac10d4f7274763437f54873a8f24aa58dbb088a2",
+  "editable_files": [
+    "src/time.cpp",
+    "src/time_lifecycle.cpp",
+    "src/jackal/time.cpp",
+    "src/jackal/time_lifecycle.cpp",
+    "CMakeLists.txt",
+    "src/jackal/CMakeLists.txt",
+    "recovery/project.json",
+    "recovery/build.json",
+    "recovery/tests/test_timer_close_recovery.py",
+    "recovery/tests/test_timer_message_boundary_oct18.py",
+    "recovery/tests/test_time_callback_context_owner_actual_source_oct10.py",
+    "recovery/tests/test_reference_bindings_bulk_oct19.py",
+    "recovery/tests/test_sdk_import_identities_oct19.py"
+  ],
+  "evidence": [
+    "Native source and current dependency evidence in time-component-boundary-current-oct23zf.json and retained sprite-time-frame-owner-assessment.json establish the generic Time class already consumed by Jackal lifecycle/palette. Move the complete18mapped member entries and TimeModal/TimeInitCount storage plus relevant import annotations to src/jackal/time.cpp and separate src/jackal/time_lifecycle.cpp. Preserve every full annotated source block, body, claim, original span and useful evidence; no historical TU or standalone-library assertion.",
+    "Keep Time::close/destructor/close_impl in a separate lifecycle TU to preserve known compiler call boundaries. Leave the Time layout/header and console-owned timer instances, game timer callbacks/storage, flush_timer, Win message handler and provisional range-view mappings in their existing owners. Keep HandleMain, Win and flush_timer dependencies explicit. Do not invent hierarchy or fold unrelated range-view scaffolds into Time.",
+    "Update CMake source lists and explicit native archive-member bindings for the two Jackal objects; source-owned imports and object bindings move with genuine owners. Preserve generic production compiler profiles. New measurement recipe entries must agree with actual compiler receipts; do not narrow historical obligations or infer flags from library placement. A separately measured app-only /Oy- candidate is authorized only after isolating the class and checking all app controls, not from per-function best-profile results. No source function flags, dummy locals, export/pragma forcing, vtable arrays or behavior fixes.",
+    "Coordinator owns Git, recipes, native compiler resources and integration. Separate source/config and test workers edit assigned files only. Freeze all edits before measurement. Require native production/replica/damage and moved-body/remaining-TU/literal/header/import/storage/initializer/archive/reference evidence, independent source review, current original-identity continuity, actual-source behavioral controls and fresh complete194TU208object application build/link plus destination rechecks. Preserve all failures/unknown linked selection and matching obligations; manual integration is not automatic/full-game acceptance. Additional affected tests require coordinator scope expansion first."
+  ],
+  "intent": "Separate the genuine Jackal Time class from application timer callbacks",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5013696,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5013728,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5013776,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5014352,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5299600,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5302848,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5303856,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5303936,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5304080,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5304144,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5305296,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5305408,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6382032,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6382080,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6382176,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6382288,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6382416,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6382608,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6382800,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6382992,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6383184,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6383296,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6383408,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6383488,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6383584,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6383648,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6383712,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6383728,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6383744,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6383760,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "time-jackal-owner-oct23zg"
+}
