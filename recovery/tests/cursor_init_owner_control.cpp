@@ -13,7 +13,8 @@ typedef void *HBITMAP; typedef void *HCURSOR; typedef void *HGDIOBJ;
 struct BITMAPINFOHEADER { DWORD biSize; int32_t biWidth, biHeight; WORD biPlanes, biBitCount; DWORD biCompression, biSizeImage; int32_t biXPelsPerMeter, biYPelsPerMeter; DWORD biClrUsed, biClrImportant; };
 struct RGBQUAD { unsigned char rgbBlue, rgbGreen, rgbRed, rgbReserved; };
 struct BITMAPINFO { BITMAPINFOHEADER bmiHeader; RGBQUAD bmiColors[1]; };
-struct Dib { BITMAPINFOHEADER bmiHeader; RGBQUAD bmiColors[256]; };
+struct Dib : BITMAPINFO { RGBQUAD bmiColorsRest[255]; };
+typedef char Dib_extent_check[sizeof(Dib)==sizeof(BITMAPINFOHEADER)+256*sizeof(RGBQUAD) ? 1 : -1];
 struct ICONINFO { BOOL fIcon; DWORD xHotspot, yHotspot; HBITMAP hbmMask, hbmColor; };
 #define SRCCOPY 0x00cc0020
 const int BI_RGB=0, DIB_RGB_COLORS=0, HORZRES=8, VERTRES=10, BITSPIXEL=12, PLANES=14, FALSE=0;
@@ -25,6 +26,10 @@ static int last_mono_x, last_mono_y, last_color_x, last_color_y;
 static int fail_step, api_step, copied, destroyed_cursor, sprite_closed;
 static int buffer_inits, palette_pointer_matches;
 static const RGBQUAD *expected_color_palette;
+static const Dib *expected_mono_dib, *expected_color_dib;
+static const BITMAPINFO *observed_mono_create_info, *observed_color_create_info;
+static const BITMAPINFO *observed_setdibits_info;
+static int mono_palette_pointer_matches;
 static unsigned char bits[4];
 static int dummy_handles[8];
 static HBITMAP observed_mono_bitmap, observed_color_bitmap;
@@ -40,7 +45,7 @@ class Buffer {
 public:
     Buffer() { ++buffer_constructs; ++buffer_live; events.push_back("buffer+"+number(buffer_live)); }
     ~Buffer() { --buffer_live; ++buffer_destroys; events.push_back("buffer-"+number(buffer_live)); }
-    void init(int w,int h,int,int) { events.push_back("init:"+number(w)+","+number(h)); dib_.bmiHeader.biWidth=w; dib_.bmiHeader.biHeight=-h; if (++buffer_inits==2) { expected_color_palette=dib_.bmiColors; observed_color=this; } }
+    void init(int w,int h,int,int) { events.push_back("init:"+number(w)+","+number(h)); dib_.bmiHeader.biWidth=w; dib_.bmiHeader.biHeight=-h; dib_.bmiHeader.biPlanes=1; dib_.bmiHeader.biBitCount=8; if (++buffer_inits==1) expected_mono_dib=&dib_; else { expected_color_dib=&dib_; expected_color_palette=dib_.bmiColors; observed_color=this; } }
     int sync_to_palette(Palette *) { events.push_back("palette"); return 0; }
     int fill(int c) { events.push_back("fill:"+number(c)); return 0; }
     void *get_data() { return bits; }
@@ -72,20 +77,27 @@ static Palette *PaletteCurrent=&palette;
 static void *BufferDirectDraw=0;
 
 static bool step() { return ++api_step == fail_step; }
+static bool expected_header(const BITMAPINFO *info,int width,int height,int planes,int bits_per_pixel) {
+    const BITMAPINFOHEADER &h=info->bmiHeader;
+    return h.biSize==sizeof(BITMAPINFOHEADER) && h.biWidth==width && h.biHeight==height
+        && h.biPlanes==planes && h.biBitCount==bits_per_pixel && h.biCompression==BI_RGB
+        && h.biSizeImage==0 && h.biXPelsPerMeter==0 && h.biYPelsPerMeter==0
+        && h.biClrUsed==0 && h.biClrImportant==0;
+}
 HCURSOR CreateIconIndirect(ICONINFO *p) { events.push_back("icon:"+number(p->xHotspot)+","+number(p->yHotspot)); observed_icon_mask=p->hbmMask; observed_icon_color=p->hbmColor; return step()?0:new_handle(); }
 BOOL DestroyCursor(HCURSOR) { ++destroyed_cursor; events.push_back("destroy-cursor"); return 1; }
 HDC CreateCompatibleDC(HDC) { events.push_back("create-dc"); return step()?0:new_handle(); }
-HBITMAP CreateDIBSection(HDC,const BITMAPINFO *info,UINT,void **out,HANDLE,DWORD) { events.push_back("create-dib:"+number(info->bmiHeader.biPlanes)+","+number(info->bmiHeader.biBitCount)); *out=bits; HBITMAP h=step()?0:new_handle(); if(h) { if(info->bmiHeader.biBitCount==1) observed_mono_bitmap=h; else observed_color_bitmap=h; } return h; }
+HBITMAP CreateDIBSection(HDC,const BITMAPINFO *info,UINT,void **out,HANDLE,DWORD) { events.push_back("create-dib:"+number(info->bmiHeader.biPlanes)+","+number(info->bmiHeader.biBitCount)); *out=bits; HBITMAP h=step()?0:new_handle(); if(h) { if(info->bmiHeader.biBitCount==1) { observed_mono_bitmap=h; observed_mono_create_info=info; } else { observed_color_bitmap=h; observed_color_create_info=info; } } return h; }
 HGDIOBJ SelectObject(HDC,HGDIOBJ) { events.push_back("select"); return new_handle(); }
-UINT SetDIBColorTable(HDC,UINT,UINT count,RGBQUAD *colors) { events.push_back("colors:"+number(count)); if (count==256) palette_pointer_matches=(colors==expected_color_palette); return count; }
-int SetDIBits(HDC,HBITMAP,UINT,UINT,void *,const BITMAPINFO *,UINT) { events.push_back("dibits"); return 1; }
+UINT SetDIBColorTable(HDC,UINT,UINT count,RGBQUAD *colors) { events.push_back("colors:"+number(count)); if (count==256) palette_pointer_matches=(colors==expected_color_palette); if (count==2) mono_palette_pointer_matches=(observed_mono_create_info && colors==observed_mono_create_info->bmiColors); return count; }
+int SetDIBits(HDC,HBITMAP,UINT,UINT,void *,const BITMAPINFO *info,UINT) { events.push_back("dibits"); observed_setdibits_info=info; return 1; }
 HDC CreateDCA(const char *driver,const char *,const char *,const void *) { events.push_back(std::string("display:")+driver); return new_handle(); }
 int GetDeviceCaps(HDC,int cap) { events.push_back("caps:"+number(cap)); return cap==BITSPIXEL?24:1; }
 BOOL DeleteDC(HDC) { events.push_back("delete-dc"); return 1; }
 BOOL GdiFlush() { events.push_back("flush"); if(mutate_callbacks && ++flush_count==1) { observed_color->dib_.bmiHeader.biWidth=4; observed_color->dib_.bmiHeader.biHeight=-3; } return 1; }
 BOOL BitBlt(HDC,int,int,int w,int h,HDC,int,int,DWORD rop) { events.push_back("blit:"+number(w)+","+number(h)+","+number(rop)); return 1; }
 BOOL DeleteObject(HGDIOBJ) { events.push_back("delete-object"); return 1; }
-static void reset() { mutate_callbacks=flush_count=0; events.clear(); buffer_live=buffer_constructs=buffer_destroys=0; last_mono_x=last_mono_y=last_color_x=last_color_y=0; fail_step=api_step=copied=destroyed_cursor=sprite_closed=next_handle=buffer_inits=palette_pointer_matches=0; expected_color_palette=0; observed_mono_bitmap=observed_color_bitmap=observed_icon_mask=observed_icon_color=0; }
+static void reset() { mutate_callbacks=flush_count=0; events.clear(); buffer_live=buffer_constructs=buffer_destroys=0; last_mono_x=last_mono_y=last_color_x=last_color_y=0; fail_step=api_step=copied=destroyed_cursor=sprite_closed=next_handle=buffer_inits=palette_pointer_matches=mono_palette_pointer_matches=0; expected_color_palette=0; expected_mono_dib=expected_color_dib=0; observed_mono_create_info=observed_color_create_info=observed_setdibits_info=0; observed_mono_bitmap=observed_color_bitmap=observed_icon_mask=observed_icon_color=0; }
 
 // Private, typed proposal for the existing Cursor owner. This file is an
 // ignored review artifact; it has not been applied to src/.
@@ -136,6 +148,19 @@ int main() {
     }
     CHECK(std::find(events.begin(),events.end(),"colors:256")!=events.end());
     CHECK(palette_pointer_matches==1);
+    CHECK(expected_mono_dib!=0 && expected_color_dib!=0 && expected_mono_dib!=expected_color_dib);
+    CHECK(observed_mono_create_info!=0 && observed_color_create_info!=0);
+    CHECK(observed_mono_create_info!=static_cast<const BITMAPINFO *>(expected_mono_dib));
+    CHECK(observed_color_create_info!=static_cast<const BITMAPINFO *>(expected_color_dib));
+    CHECK(observed_mono_create_info!=observed_color_create_info);
+    CHECK(expected_header(observed_mono_create_info,8,-6,1,1));
+    CHECK(expected_header(observed_color_create_info,8,-6,1,24));
+    CHECK(expected_mono_dib->bmiHeader.biWidth==8 && expected_mono_dib->bmiHeader.biHeight==-6);
+    CHECK(expected_mono_dib->bmiHeader.biPlanes==1 && expected_mono_dib->bmiHeader.biBitCount==8);
+    CHECK(observed_setdibits_info==static_cast<const BITMAPINFO *>(expected_mono_dib));
+    CHECK(observed_setdibits_info!=observed_mono_create_info);
+    CHECK(observed_setdibits_info->bmiHeader.biBitCount==8);
+    CHECK(mono_palette_pointer_matches==1);
     CHECK(observed_mono_bitmap!=0 && observed_color_bitmap!=0 && observed_mono_bitmap!=observed_color_bitmap);
     CHECK(observed_icon_mask==observed_mono_bitmap && observed_icon_color==observed_color_bitmap);
     CHECK(std::find(events.begin(),events.end(),"blit:8,6,13369376")!=events.end());

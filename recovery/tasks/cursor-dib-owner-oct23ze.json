@@ -1,0 +1,25 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "6136455084f75f1d3aa49d691c5964e867840dfc",
+  "editable_files": [
+    "src/cursor.cpp",
+    "recovery/tests/test_cursor_init_owner.py",
+    "recovery/tests/cursor_init_owner_control.cpp"
+  ],
+  "evidence": [
+    "Pinned exact stack/address proof in cursor-bitmap-local-layout-evidence-oct23ze: two1064-byte local Dib windows at F+0x3c and F+0xF74, automatic Buffer windows F+0x464/F+0x9ec, and SetDIBits source BITMAPINFO at mono Buffer+Dib offset0x7c. Replace the ad hoc two-color struct/one-entry local with existing genuine Dib, and pass mono.dib_ to SetDIBits. Use existing Dib->BITMAPINFO derivation rather than casts; do not add padding to force the unexplained12-byte remainder.",
+    "Preserve written header fields, only six RGB component writes, uninitialized reserved/palette bytes, original RAII order, GDI leaks/failure returns, callback-sensitive rereads and status paths. No bounds/initialization/error-path fix, export, pragma, flag, ABI/header/global/class-size change. Keep every original span, source claim and useful history; stale source-layout commentary may be corrected without writing run logs.",
+    "Coordinator owns Git, native preparation/compiler resource leases, recording and integration. Separate C++ and test workers edit only assigned files, freeze during measurement. Require actual-source GCC/Clang positives plus wrong-DIB mutant controls, original-pinned argument proof, native exact/strict and outside-scope evidence, independent review, fresh complete build/link and destination rechecks. Preserve justified structure through matching regressions and prior obligations; never weaken tests/gates or treat scoped checks as full acceptance."
+  ],
+  "intent": "Restore Cursor automatic bitmap-info ownership and GDI source DIB",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6533856,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "cursor-dib-owner-oct23ze"
+}
