@@ -1247,6 +1247,26 @@ def compare_subject(record: DecompilationState, exe: Path | str,
                             f"valid EH frame-transfer semantics differ at index {index}: "
                             f"original={original_facts!r}, compiled={compiled_facts!r}"
                         )
+                elif original_action.kind is EHActionKind.FRAME_SLOT_CALL_CLEANUP:
+                    original_facts = (
+                        original_action.frame_displacement,
+                        original_action.base_adjustment,
+                        original_action.scratch_register,
+                    )
+                    compiled_facts = (
+                        compiled_action.frame_displacement,
+                        compiled_action.base_adjustment,
+                        compiled_action.scratch_register,
+                    )
+                    if original_facts != compiled_facts:
+                        return AsmComparison(
+                            verdict=Tier.MISMATCH,
+                            flags=compiled.flags,
+                            diagnostic=(
+                                "valid EH frame-local cleanup semantics differ at "
+                                f"index {index}: original={original_facts!r}, "
+                                f"compiled={compiled_facts!r}"),
+                        )
             pairs = []
             for region in bound:
                 low = region.original.start

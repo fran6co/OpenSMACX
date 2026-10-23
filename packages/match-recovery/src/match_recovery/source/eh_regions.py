@@ -331,6 +331,45 @@ def _cleanup_action(instructions, *, code_base: int = 0) -> EHActionFact:
                                 transfers, count, element_size, displacement,
                                 base_adjustment, "eax")
 
+    if len(instructions) == 5:
+        frame_load, argument_push, call, argument_pop, ret = instructions
+        displacement = None
+        if (frame_load.mnemonic == "mov" and len(frame_load.operands) == 2
+                and _is_reg(frame_load.operands[0], x86.X86_REG_EAX)
+                and frame_load.operands[1].type == x86.X86_OP_MEM
+                and frame_load.operands[1].size == 4):
+            memory = frame_load.operands[1].mem
+            if (memory.base == x86.X86_REG_EBP and memory.index == 0
+                    and memory.segment == 0):
+                if (frame_load.size == 3 and frame_load.bytes[:2] == b"\x8b\x45"
+                        and frame_load.encoding.disp_size == 1):
+                    displacement = memory.disp
+                elif (frame_load.size == 6 and frame_load.bytes[:2] == b"\x8b\x85"
+                      and frame_load.encoding.disp_size == 4):
+                    displacement = memory.disp
+        if (displacement is not None and displacement != 0 and displacement % 4 == 0
+                and argument_push.mnemonic == "push"
+                and len(argument_push.operands) == 1
+                and _is_reg(argument_push.operands[0], x86.X86_REG_EAX)
+                and argument_push.bytes == b"\x50"
+                and call.mnemonic == "call" and call.bytes[:1] == b"\xe8"
+                and call.size == 5 and call.encoding.imm_offset == 1
+                and call.encoding.imm_size == 4 and len(call.operands) == 1
+                and call.operands[0].type == x86.X86_OP_IMM
+                and argument_pop.mnemonic == "pop"
+                and len(argument_pop.operands) == 1
+                and _is_reg(argument_pop.operands[0], x86.X86_REG_ECX)
+                and argument_pop.bytes == b"\x59"
+                and ret.mnemonic == "ret" and ret.bytes == b"\xc3"):
+            transfer = EHTransferFact(
+                EHTransferRole.CLEANUP,
+                call.address + call.encoding.imm_offset - code_base,
+                4, "REL32", None, call.operands[0].imm & 0xFFFFFFFF, None)
+            return EHActionFact(
+                EHActionKind.FRAME_SLOT_CALL_CLEANUP, start, end, (transfer,),
+                frame_displacement=displacement, base_adjustment=0,
+                scratch_register="eax")
+
     target_instruction = None
     first = instructions[0]
     frame_displacement = None
@@ -473,7 +512,8 @@ def _action_targets(code: bytes, base: int, starts: tuple[int, ...],
             raise ValueError("EH action does not exactly cover its mapped boundary")
         primary_transfer = (next((item for item in action.transfers
                                   if item.role is EHTransferRole.CLEANUP), None)
-                            if action.kind is EHActionKind.FRAME_TRANSFER else
+                            if action.kind in (EHActionKind.FRAME_TRANSFER,
+                                               EHActionKind.FRAME_SLOT_CALL_CLEANUP) else
                             next((item for item in action.transfers
                                   if item.role is EHTransferRole.HELPER), None))
         if primary_transfer is None or not isinstance(primary_transfer.target, int):
@@ -913,14 +953,15 @@ def _cold_layout(code: bytes) -> tuple[int, tuple[EHActionFact, ...], int, int, 
                 if parsed is not None and parsed.kind is EHActionKind.ARRAY_DESTRUCTOR:
                     action, consumed = parsed, 8
         else:
-            for length in (2, 3):
+            for length in (2, 3, 5):
                 if index + length > len(instructions):
                     continue
                 try:
                     parsed = _cleanup_action(instructions[index:index + length], code_base=0)
                 except ValueError:
                     continue
-                if parsed.kind is EHActionKind.FRAME_TRANSFER:
+                if parsed.kind in (EHActionKind.FRAME_TRANSFER,
+                                   EHActionKind.FRAME_SLOT_CALL_CLEANUP):
                     if action is not None:
                         raise ValueError("COFF EH action has ambiguous bounded decoding")
                     action, consumed = parsed, length
@@ -1002,6 +1043,21 @@ def _object_child_and_info(obj: Coff, root: Symbol, child: int, *,
                         or symbol.storage != 2 or not symbol.type & 0x20
                         or symbol.name != "??_M@YGXPAXIHP6EX0@Z@Z"):
                     raise ValueError("COFF vector cleanup does not call the supported runtime helper")
+                resolved = resolve_transfer(
+                    resolved, role=transfer.role, relocation_kind="REL32",
+                    target=symbol.name, addend=raw_addend)
+            elif action.kind is EHActionKind.FRAME_SLOT_CALL_CLEANUP:
+                symbol = _reloc_at(obj, child, transfer.operand_offset,
+                                   RelocationKind.RELATIVE32)
+                named_symbols = [candidate for candidate in obj.symbols.values()
+                                 if candidate.name == symbol.name]
+                if (transfer.role is not EHTransferRole.CLEANUP
+                        or raw_addend != 0 or symbol.section != 0
+                        or symbol.value != 0 or symbol.storage != 2
+                        or not symbol.name or not symbol.type & 0x20
+                        or symbol.index in obj.auxiliary or len(named_symbols) != 1):
+                    raise ValueError(
+                        "COFF frame-local cleanup lacks one unambiguous external function relocation")
                 resolved = resolve_transfer(
                     resolved, role=transfer.role, relocation_kind="REL32",
                     target=symbol.name, addend=raw_addend)

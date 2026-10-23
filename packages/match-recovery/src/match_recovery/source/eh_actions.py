@@ -7,6 +7,8 @@ from enum import StrEnum
 
 class EHActionKind(StrEnum):
     FRAME_TRANSFER = "frame_transfer"
+    # The frame slot's source-level meaning is not encoded by this action kind.
+    FRAME_SLOT_CALL_CLEANUP = "frame_slot_call_cleanup"
     ARRAY_DESTRUCTOR = "array_destructor"
 
 
