@@ -1,0 +1,21 @@
+{
+  "event_id": "f5a8f1935e393b09d096747bbc4ef91610bc345e0ef14d04db52346127d057ec",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/map.h"
+    ],
+    "evidence": [
+      "Complete pinned goody_at adds two storage dependencies:59221B signed IMUL reads dword68FB7C(initial11) for avg/4,592229 reads68FB78(initial61) for difference/4. Existing AltNatural ends exclusively68FB78; no source-owned mapping covers these words. Executable-section decoded reference screen found only these direct reads and no direct decoded writes/address immediates. This does NOT prove absence of indirect mutation or a currently reachable behavior defect from literals.",
+      "Restore the actual storage/reference relationship as two source-owned four-byte initialized int words in map.cpp, with provisional role names MapPodDifferenceMultiplier=61 and MapPodAverageMultiplier=11 and bounded RECOVERY_OBJECT v2 bindings anchored to592140. Declare both in map.h; replace only goody_at final literal multipliers with those real globals. Do not claim original source identifiers, independent original declarations, historical TU, an observed mutable-global gameplay defect or proof of all indirect accesses. Writable .data-compatible storage conservatively preserves original load capability; no new writer is introduced.",
+      "This expands the same original Map recovery, alongside signed avg, without resetting baseline or retry budget. No other Map helper/header body/type/layout edits. The test may execute actual source definitions/declarations and named helper bodies; optional synthetic coefficient changes check pinned read dependence only, not an observed reachable original writer. Verify both initial four-byte windows and relocations with native object-data/object-target APIs, and independently damage an initial value and a goody output/read to show failures. Changes outside the sole goody body plus these two new data objects must remain explicitly visible; new object presence is not a function omission."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "goody-coefficient-storage-owner",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:map-goody-signed-oct23l"
+}
