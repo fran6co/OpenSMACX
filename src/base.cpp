@@ -4493,7 +4493,9 @@ label_4feda1:
         if (alt_at((int)v6,(int)v5) == 3) {
           v5 = BaseCurrent->y;
           v6 = BaseCurrent->x;
-          if (GameDataStateStorage.fields_.climate_sea_level_delta_ + AltNatural[3] <= alt_detail_at((int)v6,(int)v5) - MapSeaLevel) {
+          // Original climate gates use signed ordering of wrapping dword arithmetic.
+          if (static_cast<int32_t>(static_cast<uint32_t>(GameDataStateStorage.fields_.climate_sea_level_delta_) + AltNatural[3])
+              <= static_cast<int32_t>(static_cast<uint32_t>(alt_detail_at((int)v6,(int)v5)) - static_cast<uint32_t>(MapSeaLevel))) {
             if (PlayersData[faction_id].flags & 0x80000)
               v8 = 0;
             else {
@@ -4501,7 +4503,9 @@ label_4feda1:
               do {
                 if (base_project(v75) == BaseIDCurrentSelected) {
                   v8 = alt_detail_at((int)BaseCurrent->x,(int)BaseCurrent->y);
-                  if ((int)(WorldBuilder.sea_level_rises + GameDataStateStorage.fields_.climate_sea_level_delta_ + AltNatural[3]) <= v8 - MapSeaLevel) {
+                  if (static_cast<int32_t>(static_cast<uint32_t>(WorldBuilder.sea_level_rises)
+                          + static_cast<uint32_t>(GameDataStateStorage.fields_.climate_sea_level_delta_) + AltNatural[3])
+                      <= static_cast<int32_t>(static_cast<uint32_t>(v8) - static_cast<uint32_t>(MapSeaLevel))) {
                     v16 = 0xc;
                     v8 = (-(uint32_t)(((uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (uint8_t)v165) != 0) & 2) + 4;
                     v75 = 0x14 - (int)BaseCurrent->population_size / 2;
