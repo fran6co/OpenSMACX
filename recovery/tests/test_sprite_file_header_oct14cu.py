@@ -84,7 +84,8 @@ static unsigned char mapped_file[512];
 static const char *expected_filename;
 static int fail_create, fail_open;
 static int create_calls, open_calls, close_calls, destructor_calls;
-static int last_requested_size, lifecycle_sequence, last_close_sequence, last_destructor_sequence;
+static uint32_t last_requested_size;
+static int lifecycle_sequence, last_close_sequence, last_destructor_sequence;
 static int free_calls, SpriteMemoryUsed;
 
 class Filemap {
@@ -98,7 +99,7 @@ public:
         ++create_calls;
         if (filename != expected_filename) fail("save filename pointer changed");
         if (mode != 1) fail("save file mode changed");
-        last_requested_size = (int)size;
+        last_requested_size = size;
         if (fail_create) return 0;
         return mapped_file;
     }
@@ -210,6 +211,22 @@ static int save_early_returns() {
             "failed-create save Filemap lifetime changed");
     return 0;
 }
+static int save_wraparound_size() {
+    reset_filemap();
+    char filename[] = "wrapped.dat"; expected_filename = filename;
+    unsigned char pixels[8] = {0};
+    Sprite wrapped; initialize_sprite(wrapped, pixels);
+    wrapped.iSpriteWidth_ = 0x40000000;
+    wrapped.iSpriteHeight_ = 2;
+    wrapped.iSpriteWidth2_ = 0;
+    require(wrapped.save(filename) == 0, "wrapped-size save result changed");
+    require(last_requested_size == 0x8000002cu,
+            "save size did not preserve pinned 32-bit multiply/add wrapping");
+    require(close_calls == 1 && destructor_calls == 1 &&
+            last_close_sequence < last_destructor_sequence,
+            "wrapped-size save Filemap lifecycle changed");
+    return 0;
+}
 static void prepare_raw_load_fixture(const unsigned char *pixels) {
     const int fields[6] = { 3, 2, 7, 8, -2, 4 };
     int i;
@@ -283,6 +300,7 @@ int main() {
             "packed Sprite header layout changed");
     save_success();
     save_early_returns();
+    save_wraparound_size();
     load_borrowed_success();
     load_failed_open_cleanup();
     puts("Sprite packed file header and ownership controls: PASS");
@@ -291,7 +309,8 @@ int main() {
 """
 
 
-def run_host(tmp_path, compiler, sources, header=None, mutation=None):
+def run_host(tmp_path, compiler, sources, header=None, mutation=None,
+             extra_flags=()):
     actual_header, save_body, load_body = sources
     if header is not None:
         actual_header = header
@@ -309,7 +328,7 @@ def run_host(tmp_path, compiler, sources, header=None, mutation=None):
     binary = tmp_path / "sprite-file-header"
     source.write_text(projected, encoding="utf-8")
     built = subprocess.run([compiler, "-std=c++98", "-Wall", "-Wextra", "-Werror",
-                            "-Wno-unused-parameter",
+                            "-Wno-unused-parameter", *extra_flags,
                             str(source), "-o", str(binary)], capture_output=True,
                            text=True, timeout=30)
     assert built.returncode == 0, built.stdout + built.stderr
@@ -322,6 +341,16 @@ def test_actual_sprite_file_header_save_load_and_ownership(tmp_path, compiler_na
     if compiler is None:
         pytest.skip(compiler_name + " unavailable")
     result = run_host(tmp_path, compiler, actual_sources())
+    assert result.returncode == 0, result.stdout + result.stderr
+
+
+@pytest.mark.parametrize("compiler_name", ["g++", "clang++"])
+def test_save_size_wraps_without_signed_overflow_under_ubsan(tmp_path, compiler_name):
+    compiler = shutil.which(compiler_name)
+    if compiler is None:
+        pytest.skip(compiler_name + " unavailable")
+    result = run_host(tmp_path, compiler, actual_sources(), extra_flags=(
+        "-fsanitize=undefined", "-fno-sanitize-recover=undefined"))
     assert result.returncode == 0, result.stdout + result.stderr
 
 
@@ -376,3 +405,19 @@ def test_filename_copy_and_cleanup_mutants_fail_semantically(
                       mutation=(which, before, after))
     assert result.returncode == 97, (result.returncode, result.stdout, result.stderr)
     assert ("SEMANTIC97: " + diagnostic) in result.stderr
+
+
+@pytest.mark.parametrize("compiler_name", ["g++", "clang++"])
+def test_signed_save_size_mutant_trips_ubsan(tmp_path, compiler_name):
+    compiler = shutil.which(compiler_name)
+    if compiler is None:
+        pytest.skip(compiler_name + " unavailable")
+    header, save_body, load_body = actual_sources()
+    before = ("static_cast<uint32_t>(iSpriteWidth_) *\n"
+              "            static_cast<uint32_t>(iSpriteHeight_) + 0x2cu")
+    after = "static_cast<uint32_t>(iSpriteWidth_ * iSpriteHeight_ + 0x2c)"
+    result = run_host(tmp_path, compiler, (header, save_body, load_body),
+                      mutation=("save", before, after), extra_flags=(
+                          "-fsanitize=undefined", "-fno-sanitize-recover=undefined"))
+    assert result.returncode != 0, "signed-overflow save mutant unexpectedly passed UBSan"
+    assert "signed integer overflow" in result.stderr, result.stdout + result.stderr
