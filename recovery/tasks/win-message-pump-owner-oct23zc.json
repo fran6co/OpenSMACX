@@ -1,0 +1,22 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "02f63f90e208732ce54d7c504a3a6577777864cf",
+  "editable_files": [
+    "src/win.cpp"
+  ],
+  "evidence": [
+    "Coordinator authorizes only the complete pump_mouse_move_message proposal from easy-fourteenth-screen-3-1. Same PeekMessageA filtering/removal, uninitialized MSG, nonzero success test, TranslateMessage then DispatchMessageA and 1/0 results. No flags/storage/ABI/type/header/import/lifetime or other method edits. Preserve all source identities/spans/claims/history.",
+    "This independent Win owner shares the isolated PlanWin batch checkout but not scope; baseline remains02f63f90e. Coordinator owns Git, compiler/resource/preparation/recording/integration. Require independent review, production/replica/damage controls, native compiled outside-selected preservation, relevant checks, fresh full192TUcompile/link, strict/local census preservation and fresh destination verification. Manual reviewed integration is authorized, no full automatic/linked/structure/runtime/game acceptance or baseline reset."
+  ],
+  "intent": "Restore direct positive message-pump branch",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6278560,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "win-message-pump-owner-oct23zc"
+}
