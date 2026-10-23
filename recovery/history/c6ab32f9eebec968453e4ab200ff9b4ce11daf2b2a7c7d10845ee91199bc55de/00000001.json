@@ -1,0 +1,22 @@
+{
+  "event_id": "a7efbb99712bbc0a9c04966abf42ae300b3ac24b0989fdda0bc649c93bc69abf",
+  "payload": {
+    "affects": [
+      "entity-1da6b0f0d4c886d663812c0048287bdbf367866c22218a37d2f22e0b251ffe94",
+      "entity-ea6b8b53df3aa0430a0c06bc18c75acd285e5f167c154c82b7039d9cfe6cd0fe"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "paired-original-panel-dimension-branch",
+    "evidence": [
+      "Independent source/pin/actualCOFF review and actual-source runtime controls cover signed1000boundary, below/equal/above thresholds, live ConsoleDIBheight read after rectangle horizontal stores, distinct globals and StatusFlags bit preservation. The same control remains guarded in the inlined init emission; referenced functions/globals and ordering constraints are preserved.",
+      "Only458D60panel and4592A0init mapped physical signatures change. Actual unchangedOb2/Oy recipe yields panel20instead25instructions against20original and10instead1instructionmatches; inlined init104instead106against107original and25instead19matching. Both remainMISMATCH. No new exactness claim or function-count gain is attributed to this owner."
+    ],
+    "hypothesis": "Represent the original signed screenwidth branch as paired200x180or250x212panel dimensions, preserving live Console height and rectangle/status effects.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "paired-original-panel-dimension-branch",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:infowin-panel-owner-oct23g"
+}

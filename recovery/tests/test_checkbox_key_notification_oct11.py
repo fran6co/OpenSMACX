@@ -6,50 +6,108 @@ import subprocess
 
 import pytest
 
+from match_recovery.layout_source import parse_members
 from match_recovery.source import read_text
 from test_caviar_draw_callbacks_actual_source import extract
-from test_texture_raster_actual_source import _continuity_fields
 
 ROOT = Path(__file__).resolve().parents[2]
 BASE = "04ed99ab1a48ca7f91a87c828bb1da1f140e0941"
+PIN = "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
 
 
-def test_complete_source_change_and_historical_obligations():
+def _checkbox_records(source, path):
+    rows = read_text(source, path)
+    records = {row.address: row for row in rows}
+    assert len(records) == len(rows), "duplicate original identities are forbidden"
+    return records
+
+
+def _assert_checkbox_identity_continuity(before, after, path):
+    prior = _checkbox_records(before, path)
+    current = _checkbox_records(after, path)
+    assert len(prior) == 39
+    assert prior.keys() == current.keys(), "all 39 historical identities must remain"
+    for address, old in prior.items():
+        new = current[address]
+        assert (new.name, new.image_spans, new.mode) == (
+            old.name, old.image_spans, old.mode
+        ), f"identity/name/span/mode changed at 0x{address:08X}"
+        assert not old.byte_exact or new.byte_exact, (
+            f"historical BYTE_EXACT obligation demoted at 0x{address:08X}"
+        )
+        assert not old.semantic or new.semantic, (
+            f"historical semantic claim demoted at 0x{address:08X}"
+        )
+        old_lessons = {(lesson.kind, lesson.key) for lesson in old.origin or ()}
+        new_lessons = {(lesson.kind, lesson.key) for lesson in new.origin or ()}
+        assert old_lessons <= new_lessons, (
+            f"historical lesson categories/keys were lost at 0x{address:08X}"
+        )
+
+
+def _assert_key_member_is_typed_layout_member(header):
+    rows = parse_members(header, "src/jackal/checkbox.h", PIN, address_space="pe:va")
+    matching = [row for row in rows
+                if row.class_name == "CheckBox"
+                and row.member == "key_notification_callback_"]
+    assert len(matching) == 1
+    member = matching[0]
+    assert (member.offset, member.evidence.address) == (0x8, 0x0060F8B0)
+    assert member.class_type is member.class_pointer_type is member.class_array_type is None
+    assert "RECOVERY_MEMBER: v1 CheckBox key_notification_callback_ 0x8 0x0060F8B0" in header
+    assert "WinNotificationCallback key_notification_callback_;" in header
+    return member
+
+
+def test_focused_checkbox_member_lifecycle_and_historical_obligations():
     path = ROOT / "src/jackal/checkbox.cpp"
     before = subprocess.check_output(["git", "show", BASE + ":src/jackal/checkbox.cpp"], cwd=ROOT, text=True)
-    assert before.count("    field_8_ = 0;") == 3
-    expected = before.replace("    field_8_ = 0;", "    key_notification_callback_ = 0;")
-    old = "    WinNotificationCallback callback =\n        reinterpret_cast<WinNotificationCallback>(field_8_);"
-    assert expected.count(old) == 1
-    expected = expected.replace(old, "    WinNotificationCallback callback = key_notification_callback_;")
     current = path.read_text()
-    # Later native receiver/hover corrections change only these two methods;
-    # its actual-body controls are in test_control_parent_snapshot_oct11.py.
-    current_without_later_redraw = current
-    for signature in ("void CheckBox::on_redraw(", "void CheckBox::on_mouse_move("):
-        current_without_later_redraw = current_without_later_redraw.replace(
-            extract(current, signature), extract(expected, signature), 1)
-    # This task intentionally gives Dialog's signed grid counts their
-    # evidence-backed names; compare the retained historical edit after
-    # normalizing only those declaration/member spellings.
-    normalize_grid_names = lambda text: text.replace("column_count_", "field_54_").replace(
-        "row_count_", "field_58_")
-    assert normalize_grid_names(current_without_later_redraw) == normalize_grid_names(expected)
-    prior, after = read_text(before, path), read_text(current, path)
-    assert [(r.address, _continuity_fields(r), r.symbol, r.function_fragment) for r in prior] == [
-        (r.address, _continuity_fields(r), r.symbol, r.function_fragment) for r in after]
+    _assert_checkbox_identity_continuity(before, current, path)
+
+    # The callback cell is an ordinary typed member, and every lifecycle reset
+    # that previously cleared field_8_ still clears this same cell.
     header = (ROOT / "src/jackal/checkbox.h").read_text()
-    previous_header = subprocess.check_output(["git", "show", BASE + ":src/jackal/checkbox.h"], cwd=ROOT, text=True)
-    old_declaration = "  uint32_t field_8_;"
-    assert previous_header.count(old_declaration) == 1
-    new_declaration = (
-        "  // Key handling loads and invokes this cell at original 0x0060F9BD/0x0060F9D1.\n"
-        "  // Registration/producer remains unknown; the selected-position word is passed.\n"
-        "  // RECOVERY_MEMBER: v1 CheckBox key_notification_callback_ 0x8 0x0060F8B0\n"
-        "  WinNotificationCallback key_notification_callback_;  // 0x0008")
-    assert header == previous_header.replace(old_declaration, new_declaration, 1)
-    assert "WinNotificationCallback key_notification_callback_;" in header
-    assert "RECOVERY_MEMBER: v1 CheckBox key_notification_callback_ 0x8 0x0060F8B0" in header
+    _assert_key_member_is_typed_layout_member(header)
+    assert "typedef void (__cdecl *WinNotificationCallback)(int selected_id);" in (ROOT / "src/win.h").read_text()
+    constructor = extract(current, "CheckBox::CheckBox()")
+    destructor = extract(current, "CheckBox::~CheckBox()")
+    close = extract(current, "void CheckBox::close()")
+    for body in (constructor, destructor, close):
+        assert body.count("key_notification_callback_ = 0;") == 1
+        assert body.count("field_8_ = 0;") == 0
+    for body in (destructor, close):
+        assert body.index("key_notification_callback_ = 0;") < body.index("Dialog::close();")
+        assert body.index("Dialog::close();") < body.index("GraphicWin::close();")
+
+    key_body = extract(current, "int CheckBox::on_key_down(")
+    assert key_body.count("WinNotificationCallback callback = key_notification_callback_;") == 1
+    assert key_body.index("if (callback != 0)") < key_body.index(
+        "callback(static_cast<int>(selected_position_));")
+    assert key_body.index("callback(static_cast<int>(selected_position_));") < key_body.index(
+        "draw_item(static_cast<int>(field_4_),", key_body.index("callback(static_cast<int>"))
+    assert key_body.index("soft_update();") > key_body.index(
+        "callback(static_cast<int>(selected_position_));")
+
+
+def test_identity_guard_rejects_missing_span_change_and_claim_demotion():
+    path = ROOT / "src/jackal/checkbox.cpp"
+    baseline = subprocess.check_output(["git", "show", BASE + ":src/jackal/checkbox.cpp"], cwd=ROOT, text=True)
+    current = path.read_text()
+    _assert_checkbox_identity_continuity(baseline, current, path)
+
+    identity = "0x0060F8B0 ?on_key_down@CheckBox@@QAEHH@Z 0x0060F8B0-0x0060FA18"
+    assert current.count(identity) == 1
+    with pytest.raises(AssertionError, match="39 historical identities"):
+        _assert_checkbox_identity_continuity(baseline, current.replace(identity, "", 1), path)
+    changed_span = current.replace(identity, identity.replace("0x0060FA18", "0x0060FA17"), 1)
+    with pytest.raises(AssertionError, match="identity/name/span/mode changed"):
+        _assert_checkbox_identity_continuity(baseline, changed_span, path)
+    ctor_marker = "0x0060E670-0x0060E735;0x00662F60-0x00662F84 BYTE_EXACT"
+    assert current.count(ctor_marker) == 1
+    demoted = current.replace(ctor_marker, ctor_marker[:-len(" BYTE_EXACT")], 1)
+    with pytest.raises(AssertionError, match="demoted"):
+        _assert_checkbox_identity_continuity(baseline, demoted, path)
 
 
 def test_pinned_null_gate_argument_and_caller_cleanup():

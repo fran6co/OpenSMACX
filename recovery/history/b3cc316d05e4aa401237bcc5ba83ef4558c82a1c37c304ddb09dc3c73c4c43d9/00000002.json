@@ -1,0 +1,19 @@
+{
+  "event_id": "c6b2fb5d5038bcd798137d2d1ef6d8636013aaee33834bee4dedf5b072c59527",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_control_parent_snapshot_oct11.py"
+    ],
+    "evidence": [
+      "Fresh native recorder measured and published60ECC0/60EC80/60FBB0 exact under unchanged configured profiles. The parent-snapshot regression incorrectly requires historical claim booleans to remain false forever. Preserve the original historical baseline and exact all-other identity/span/symbol/role/lesson invariants; assert byte/semantic obligations are monotonic and explicitly damage-test demotion, identity removal and span corruption. Do not change behavior fixtures or permit claim withdrawal. Task baseline and compiler/source remain unchanged."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "4dff8b892038272b9c9d3650a88d9cb23abc492dbbe23293d49561be337bd284",
+  "request_id": "permit-monotonic-recorded-claim-promotions-in-parent-controls",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:checkbox-state-family-oct23g"
+}

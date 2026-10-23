@@ -1,0 +1,28 @@
+{
+  "event_id": "cf2811d0071cf3ba1d53c888ec9c01cdb9c94582ca4ec0eee7fd389b6025021f",
+  "payload": {
+    "affects": [
+      "entity-1a9d478191e5bc2812953d25dd3b0df63230c8eb1d6d6cce5336d87422999b7b",
+      "entity-1d25951cb61289e532764ca84c2bbf42e6c0eda911c5b8017bc4486c07215e01",
+      "entity-4913624e1817fc497c2ac8898ef05a48b8179b77aaa89bf070fc25a70628bdeb",
+      "entity-cde3c06a6da092dfcbd413217a63e36b78624f4e5afaf6e1dc67deb7c515f84b",
+      "entity-e1819ded15203ad02bbae9646cad7a0084cb5360470049a44587ee24df4e3358",
+      "entity-e4da13fa2bc8ed5ea408a204d91bc94fc0bc7f32be60557361dbb37064c2e82f"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "original-bit-state-shifts-and-branch-local-setter",
+    "evidence": [
+      "Independent fresh candidateCOFF and complete pinned spans show the same32bitcount producers, rawCL shifts, dynamicDialogselectedword, cursor gates, itempublication/returns and mouse hover/redraw effects. Setter state test precedes its two branch-local shifts as original. The three other edited bodies remainMISMATCH; historical get_state_id claim is retained, not demoted.",
+      "The source explicitly preserves the configured VC6/x86 low-five-bit shift-count hardware contract. Out-of-range raw C++ shifts are language-undefined; this checkpoint makes no portable equivalence or safety claim and adds no clamp/fallback. Actual application recipe screens and pinned operation review establish the specific target lowering. Relevant host positives/mutations are not general ABI/runtime proof.",
+      "Only native recorder freshly banks60ECC0/60EC80/60FBB0exact; one grouped historical-profile compile passes all3. Fresh complete actual application build independently confirms the same3newmaskedexact and3newstrictreference passes. Existing5581verdict identities differ only at those3; prior strict results all remain unchanged. Current totals3417maskedexact and2830strictpasses with587unknowns. No historical flags or alternate provider observations are relabeled new gains.",
+      "Obsolete whole-file and frozen-false-claim assertions were replaced within explicit native scope expansions. Their historical snapshots remain; callback annotation/layout/behavior and all39identity/span/claim/full-lesson facts remain protected, with claim-demotion, identity-removal, span-corruption and behavioral damage controls. The focused key-notification test is supplemental, not standalone complete history proof."
+    ],
+    "hypothesis": "Restore the six original VC6/x86 variable-bit operations and branch-local setter masks without changing typed virtualDialog/StringList storage or edge-path effects.",
+    "kind": "discovery"
+  },
+  "previous_event": "c6b2fb5d5038bcd798137d2d1ef6d8636013aaee33834bee4dedf5b072c59527",
+  "request_id": "original-bit-state-shifts-and-branch-local-setter",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:checkbox-state-family-oct23g"
+}
