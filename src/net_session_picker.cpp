@@ -133,15 +133,15 @@ void NetSessionPickerWin::close() {
   tail_.field_3794_ = 1;
 }
 
-// ORIGINAL: 0x0063CD50 sub_63cd50 0x0063CD50-0x0063CDBB FILE
+// ORIGINAL: 0x0063CD50 sub_63cd50 0x0063CD50-0x0063CDBB FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned constructor/destructor calls and direct accesses establish the GraphicWin base, ordered Time/Heap/ListBox/PushButton/list members, and observed tail through +0x37A4. The descriptive owner name and complete original allocation remain unproved.", "The integer timer adapter checks nonzero context; the distinct nullary focus member does not. Pinned table 0x670DDC establishes slot 12 at 0x670E0C -> 0x63C9D0 and slot 44 at 0x670E8C -> 0x63C3A0. Automatic owner destruction replaces manual table staging and executable-address forwarding.", "The Net caller retains one automatic picker, original unchecked copies and invalid-node error paths, and password-pointer reloads after modal execution. Indirect event linkage, precise unwind correspondence, historical matching and full linked/runtime fidelity remain obligations."], "reason": "Typed session-picker ownership and its Net receiver-backed caller, preserving the original entries and compiler-generated lifetime identities."}
 // symbol    ?draw_frame@NetSessionPickerWin@@QAEXXZ
 void NetSessionPickerWin::draw_frame() {
   RECT *rect = &tail_.frame_rect_;
   GraphicWin::fill(rect, tail_.frame_color_);
   int count = tail_.row_count_;
+  int i = 0;
   if (count > 0) {
-    int i = 0;
     do {
       Buffer::box(rect, tail_.box_color_a_, tail_.box_color_b_);
       ++rect->left;

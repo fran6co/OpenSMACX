@@ -1,0 +1,29 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "10e2ae049d53eb9963b49b1b33682dae50b26fe5",
+  "editable_files": [
+    "src/net_session_picker.cpp"
+  ],
+  "evidence": [
+    "Sixth bounded alphabetical pass candidate4: hoist ordinary int i=0 immediately before the positive row-count guard in draw_frame. Actual production-recipe screen changes 63CD50 from MISMATCH to 43/43 BYTE_EXACT with no exact losses. Only other emitted change is inlined caller on_redraw63C9D0; both functions are explicitly scoped here before any edit. Initial single-function native outside-selected FAIL remains recorded, not waived.",
+    "Change only local declaration placement. Preserve GraphicWin fill before live row-count load, signed positive guard, box call before rectangle inset, live row-count reload after every callback, original zero/negative and unsafe overflow behavior. No extra guard, cast, helper, volatile, asm, header, ABI, layout, data, compiler, library or linker change. Preserve every source identity/span/symbol/claim/history; do not modify on_redraw source simply to fix its emitted inlining.",
+    "Coordinator owns all Git, Task, preparation, compiler resources and guarded record. Screen used one candidate form; subsequent same-form production replay/replica/damage are qualification controls, not additional spelling proposals. Require independent source/full-emitted-closure review, scoped preservation, existing relevant host tests, current full application build/link, claim/source/mapping/reference continuity, then fresh destination recheck before cleanup.",
+    "Standing user permission authorizes coordinator-reviewed manual integration after relevant checks; no automatic/full-game/linked/runtime acceptance is asserted. Keep original task baseline, preserve FAIL/UNKNOWN and historical restoration obligations. Guarded native record alone may bank a measured exact claim. Scope expansion needs central review, not comparator suppression."
+  ],
+  "intent": "Recover exact session-picker frame-loop spelling and preserve its real inlined redraw caller",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6540624,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6539728,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "net-picker-frame-match-oct23w"
+}
