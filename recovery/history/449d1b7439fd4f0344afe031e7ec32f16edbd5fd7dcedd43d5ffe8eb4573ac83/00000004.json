@@ -1,0 +1,17 @@
+{
+  "event_id": "fc0d901a2e8997af8a8ad14a4f554b9aecc7027c5166bdcd1a88dd6a476e413c",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "migrate-existing-special-action-fixtures",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Rootoriginalbaseline testfile8fail/1pass preservedinignoredvehicle-baseline-tests.xml. Existingactual-sourcefixturesnowprojectGameDataStateStoragefields andaliaslegacytestvariables withoutrewritingproductionbody. StringTablepointeroverload/cstddeffixturecontext updatedforcurrentunchangedhelper. Stale57E040PLACEHOLDERexpectationreplacedwithsameoriginalidentity/fullspan/currentgenuineIMPLEMENTEDbodyhelperchecks, notnewcoverageclaim. Alloldbehavior/mutationassertions retained; independentlyreviewedtestdiff; freshrootfull21casesPASS includingGCC/Clangtiming/lowbitmapmutants."
+    ]
+  },
+  "previous_event": "092653458476854407f07c37aef28346361960cbee8b73cf0566cfc99feb78ed",
+  "request_id": "special-action-fixtures-incorporated",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:vehicle-effects-oct23p"
+}

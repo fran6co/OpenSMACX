@@ -1,0 +1,17 @@
+{
+  "event_id": "c1c6bde8d60114170967e6977f1010ef24fdf99e553663a7a1c94a4db268e648",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "observe-order-veh-collateral",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Preserveoriginal2body nativeoutsideFAIL. IndependentactualCOFFreviewofuneditedorder_veh5947C0 showssole8bytechange in17872byteCOMDAT:localstackbyte/globalGameDataStateStorage+58byte loads exchangeorderandCL/DL assignment; same DIR32target/+58addend nowatcorrespondingnewoperand, samecommutativeTEST/flags/branches, nointerveningcall/write. No otherfunctioncodechange; compilerchoicecause andconcurrentobservationnotproved. Explicitcoordinatorreviewclosure3 wasauthorizedbeforedecision; freshactualapplication reproducesbothscreenobjects, and nativeoutside3scopePASS. This doesnoterase2scopeFAIL,authorizebodyedits orgrantfuturewaivers; fullautomatic/linked/runtimeacceptance remainsunproved."
+    ]
+  },
+  "previous_event": "fc0d901a2e8997af8a8ad14a4f554b9aecc7027c5166bdcd1a88dd6a476e413c",
+  "request_id": "compiled-order-collateral-reviewed",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:vehicle-effects-oct23p"
+}

@@ -1,0 +1,25 @@
+{
+  "event_id": "87d16c73a112abd826337bf1dcf59f23907023a5bb0b03d1d6994668f9a69746",
+  "payload": {
+    "affects": [
+      "entity-265f4a25b3e7a9d039fbe91fa6dfddf5d9f7f18aa5beb534bbde24d695a9507d",
+      "entity-e2a3e61424aadb162163db797edd0287ebbc9268b43d6ab2f8d80543a5ec4ccf",
+      "entity-fdf9fea2aa2c5934be42ac8b83698008009ff6b38014c7511c64fef25a489486"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "original-special-action-reads-and-wrap",
+    "evidence": [
+      "Fullpin4CE210..4CE6A1:FX53 first, signextendedVeh+32previousstacklinkusedasprototypeindex(no guard/clamp), thenbyteprototype+27reactor/RadiusRangecaptured, base_find, liveattackerread; retainlaterprekillreload,killcompaction,parser/draw/postkillslotreads. Fungalownentryorderunchanged. ThreeextrarawMapIsFlat/unwrapped-xguardsremovedfromtectonicneighbor/fungalneighbor/fungalspread; existingxrange/on_mapretainoriginalbit0/bounds. Fiveactualrecipecompiles(1candidate4controls), replicas/damagePASS/noexactgainloss. Twenty-oneGCC/Clangactualbodycases andmutantsPASS. Negativeindexmemoryeffects remainunexecutedportableUB; scriptedcallbackmutations prove timing sensitivity,notproductionreachability.",
+      "Freshcombined frozen1c328c60a build:192TUs/206physicalobjects applicationbuild/linkPASS;204othernormalizedcompleteobjects equal freshlyverifiedmaster20b9b1612. Bothchangedunitobjects reproduceactual-production-recipe sourceoverlay candidates exactly, and baselineobjects reproduceknownmaster. All264sourcefunction identities/fullspans/symbolfacts/authoredhistory/historicalclaims retained. Native source/claims/mappings/referencesPASS, all5581knownmaskedverdicts unchanged3418exact andsame3003strictpass/415unknown identities.0newexact/0newbodycoverage/0newhistoricalclaims. Rootfreshcombined25hosttestsPASS.",
+      "Independentphysical/source/testreviews inignoredparallel-match-oct23p; coordinatorreportSHA256 7b8d271168d3395062c483520a0cc480d9faaaaba0b6bf9590f5a4bc8b474b3c. ExistingVehicleTaskoriginalbaseline8f5cf3d89 retainedthroughcoordinatoradoptionofalreadyreviewedmaster20b9; BaseWinTaskbaseline20b9retained. Currentintegrationcomparesagainstthatverifiedmaster,notabasalinereset orclaimthat earlieracceptedoutsidechangesareoriginalTasknativepreservation. Historicalmatching/linked/structure/runtimeobligations remain.",
+      "Standinguserpermission authorizes boundedcoordinator-reviewedmanualintegration only. NarrowVehicle2scope residualFAIL staysFAIL, expanded3scope compiledPASS isboundedbyexactindependentdifference review; fullnativeautomatic/fullproject/gameacceptance unproved. Relevantoriginalnegative-index/uninitialized/errorquirks preserved, notfixed. Freshdestinationbuild/link/all206objectcomparison/fullmappedcensus/sourcecontinuity/25hosttests precedeworktreecleanup. Preserveanyfailure, donotreset/replayacceptance."
+    ],
+    "hypothesis": "Preserve original special-action effect order, wrong-index read and low-bit map semantics",
+    "kind": "discovery"
+  },
+  "previous_event": "c1c6bde8d60114170967e6977f1010ef24fdf99e553663a7a1c94a4db268e648",
+  "request_id": "original-special-action-reads-and-wrap",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:vehicle-effects-oct23p"
+}

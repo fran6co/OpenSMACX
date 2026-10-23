@@ -1,0 +1,20 @@
+{
+  "event_id": "63cde2c8ac97645a1436c6f4c48abf21d8492905bab8275903d41002d13b6982",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "original-full-buffer-and-saved-clip-flow",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Rootfullpin415B20..415DCE:415B30push7AEC94 survivesfirstset_clip415B61, receiver7AEC64; actualargumentisBuffer+30rect2/fullbounds,notinflatedouterlocal. GenuineBuffer::restore_clip owns that call. Currentclip7AEC84..90 iscaptured415B92..C1afterouterboxbeforepanelset_clip415BC4, thenrestored415DC0. Sourcechangesonlyfirstrestore_clipcall andmovesprevious_clipcapturebeforepanelclip; allstrings/fonts/grammar/geometry/updatecallbacks unchanged. Fiveactualrecipecompiles(1candidate4controls), fullnormalizedoutside1scopePASS/nootherfunctionchanges/noexactgainloss. FourGCC/Clangactualbody/clipmutantcasesPASS; callbackclipmutationissensitivitynotclaimaboutactualBufferimplementation.",
+      "Freshcombined frozen1c328c60a build:192TUs/206physicalobjects applicationbuild/linkPASS;204othernormalizedcompleteobjects equal freshlyverifiedmaster20b9b1612. Bothchangedunitobjects reproduceactual-production-recipe sourceoverlay candidates exactly, and baselineobjects reproduceknownmaster. All264sourcefunction identities/fullspans/symbolfacts/authoredhistory/historicalclaims retained. Native source/claims/mappings/referencesPASS, all5581knownmaskedverdicts unchanged3418exact andsame3003strictpass/415unknown identities.0newexact/0newbodycoverage/0newhistoricalclaims. Rootfreshcombined25hosttestsPASS.",
+      "Independentphysical/source/testreviews inignoredparallel-match-oct23p; coordinatorreportSHA256 7b8d271168d3395062c483520a0cc480d9faaaaba0b6bf9590f5a4bc8b474b3c. ExistingVehicleTaskoriginalbaseline8f5cf3d89 retainedthroughcoordinatoradoptionofalreadyreviewedmaster20b9; BaseWinTaskbaseline20b9retained. Currentintegrationcomparesagainstthatverifiedmaster,notabasalinereset orclaimthat earlieracceptedoutsidechangesareoriginalTasknativepreservation. Historicalmatching/linked/structure/runtimeobligations remain.",
+      "Standinguserpermission authorizes boundedcoordinator-reviewedmanualintegration only. NarrowVehicle2scope residualFAIL staysFAIL, expanded3scope compiledPASS isboundedbyexactindependentdifference review; fullnativeautomatic/fullproject/gameacceptance unproved. Relevantoriginalnegative-index/uninitialized/errorquirks preserved, notfixed. Freshdestinationbuild/link/all206objectcomparison/fullmappedcensus/sourcecontinuity/25hosttests precedeworktreecleanup. Preserveanyfailure, donotreset/replayacceptance."
+    ]
+  },
+  "previous_event": "73b72498b4bcfc3036e1be3ce66fd2fba14c821167c297841fc9e17bbaaf8f35",
+  "request_id": "original-full-buffer-and-saved-clip-flow-incorporated",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:basewin-info-clip-oct23p"
+}
