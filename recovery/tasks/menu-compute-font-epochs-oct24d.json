@@ -1,0 +1,25 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "28e9da5aa3117d4da51bd9167eaad2af5a5cfdb0",
+  "editable_files": [
+    "src/menu.cpp",
+    "recovery/tests/test_menu_input_actual.py",
+    "recovery/tests/menu-owner-harness.cpp"
+  ],
+  "evidence": [
+    "Original5FB9C0..5FBABD independently decoded: fallback and initial null return precede Spot.init; capture current font then pixel width then left-label width; reload font and snapshot doubled height before right-label width; load entry text then live font per active entry; retain embedded entries[15], live flags/count and Spot.add coordinate/update ordering. Current source wrongly holds initial font and reads height after right width. Correct using ordered ordinary local snapshots without later null checks or new fallback. Private corrected production screen compiles with outside-selectedPASS and no exact gains/losses; selected body remainsMISMATCH. Extend existing Menu/PullDown actual-source C++03 harness with disabled-by-default call-boundary hooks and causal stale-font/late-height mutants; bounded controls do not prove actual GDI reentrancy.",
+    "All tasks share one explicitly coordinator-prepared isolated batch checkout. Only coordinator writes product source, runs compilers/preparation, records claims, mutates Git and integrates. Keep source/HEAD/configuration frozen during compiler epochs. Preserve all original identities/full spans/symbols/history and historical claims; no demotion, baseline reset, safety normalization or new assembly/wrappers. Ordinary spelling controls are bounded; no exact gain is required for a proven original-behavior correction.",
+    "Require native production/baseline/candidate replica and body-damage controls, independent source/evidence/test review, relevant actual-source regression controls, fresh application build/link, full mapped observations and other physical outputs before standing coordinator-reviewed manual integration. Retain every native FAIL/UNKNOWN and distinguish debug/relocation changes from real code effects; no verifier weakening or scope waiver. Fresh destination verification required before deleting worker checkout/branch. Full linked preservation, native automatic admission, exhaustive coverage, runtime and game acceptance remain unproved."
+  ],
+  "intent": "Preserve original Menu compute font and height read epochs",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6273472,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "menu-compute-font-epochs-oct24d"
+}

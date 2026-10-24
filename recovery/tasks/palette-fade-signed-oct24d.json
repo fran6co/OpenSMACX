@@ -1,0 +1,24 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "28e9da5aa3117d4da51bd9167eaad2af5a5cfdb0",
+  "editable_files": [
+    "src/jackal/palette.cpp",
+    "recovery/tests/test_palette_fade_signed_oct24d.py"
+  ],
+  "evidence": [
+    "Pin uses signed IMUL/CDQ/IDIV for RGB channel blends at5FFA21/3F/68; current unsigned channel casts force DIV. PALETTEENTRY unsigned-byte channels naturally promote to int. Remove exactly six unsigned casts, retaining narrowed byte stores, original zero-step fault, negative-step skip, unchecked bounds, copies, timer/AnimatePalette sequencing and nonzero seed retry. Private native outside-selectedPASS with no exact gains/losses. Abstract signed overflow is undefined; qualify actual VC6 wrapped products/signed division by emitted instructions and an explicitly modeled -fwrapv host diagnostic, not a standard-C++ overflow claim or a bug fix. Add actual-source normal full-method and causal old-unsigned tests; large-step witness may stop after first animation through a host-only exception.",
+    "All tasks share one explicitly coordinator-prepared isolated batch checkout. Only coordinator writes product source, runs compilers/preparation, records claims, mutates Git and integrates. Keep source/HEAD/configuration frozen during compiler epochs. Preserve all original identities/full spans/symbols/history and historical claims; no demotion, baseline reset, safety normalization or new assembly/wrappers. Ordinary spelling controls are bounded; no exact gain is required for a proven original-behavior correction.",
+    "Require native production/baseline/candidate replica and body-damage controls, independent source/evidence/test review, relevant actual-source regression controls, fresh application build/link, full mapped observations and other physical outputs before standing coordinator-reviewed manual integration. Retain every native FAIL/UNKNOWN and distinguish debug/relocation changes from real code effects; no verifier weakening or scope waiver. Fresh destination verification required before deleting worker checkout/branch. Full linked preservation, native automatic admission, exhaustive coverage, runtime and game acceptance remain unproved."
+  ],
+  "intent": "Recover original signed palette channel interpolation",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6289712,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "palette-fade-signed-oct24d"
+}

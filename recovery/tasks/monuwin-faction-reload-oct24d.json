@@ -1,0 +1,25 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "28e9da5aa3117d4da51bd9167eaad2af5a5cfdb0",
+  "editable_files": [
+    "src/monuwin.cpp",
+    "recovery/tests/test_monuwin_behavior.py",
+    "recovery/tests/monuwin_host_fixture.inc"
+  ],
+  "evidence": [
+    "Pin476786 reads faction for initial guard; Spot.check4767F2 precedes type45 substitution;47680B reloads faction,47681B stores per-faction latest type, then selected type476824/pending47682C/redraw476836. Current source reuses initial faction. Replace only the post-check FactionMonuments index with live ConsoleGlobal.faction_id_, preserving the initial guard snapshot and all other sequencing. Private native outside-selectedPASS/no exact loss or gain. Extend existing full-owner fixture with one-shot Spot hook and stale-index causal mutant. Actual Spot.check has no callbacks; injected mutation is a read-epoch control, not runtime mutation evidence.",
+    "All tasks share one explicitly coordinator-prepared isolated batch checkout. Only coordinator writes product source, runs compilers/preparation, records claims, mutates Git and integrates. Keep source/HEAD/configuration frozen during compiler epochs. Preserve all original identities/full spans/symbols/history and historical claims; no demotion, baseline reset, safety normalization or new assembly/wrappers. Ordinary spelling controls are bounded; no exact gain is required for a proven original-behavior correction.",
+    "Require native production/baseline/candidate replica and body-damage controls, independent source/evidence/test review, relevant actual-source regression controls, fresh application build/link, full mapped observations and other physical outputs before standing coordinator-reviewed manual integration. Retain every native FAIL/UNKNOWN and distinguish debug/relocation changes from real code effects; no verifier weakening or scope waiver. Fresh destination verification required before deleting worker checkout/branch. Full linked preservation, native automatic admission, exhaustive coverage, runtime and game acceptance remain unproved."
+  ],
+  "intent": "Restore original post-Spot faction lookup in monument selection",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4679552,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "monuwin-faction-reload-oct24d"
+}

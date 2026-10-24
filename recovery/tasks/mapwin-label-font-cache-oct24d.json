@@ -1,0 +1,24 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "28e9da5aa3117d4da51bd9167eaad2af5a5cfdb0",
+  "editable_files": [
+    "src/mapwin.cpp",
+    "recovery/tests/test_mapwin_view_roles_oct17.py"
+  ],
+  "evidence": [
+    "Pinned470DC2 directly loads pointer slot945778 into Win+F8 when map_view_index!=0; config_popups588F61 stores find_font(10,1) result to same source-owned PopupMapLabelFont. Pinned pre-CRT slot is zero. Replace extra lookup with typed cache read, include existing declaration-only popup_fonts.h, and update stale binding/owner prose through binding_source.render while retaining seed evidence. Preserve null/pre-write state without fallback and zero-view no-write. Private screen has no exact losses/gains but native outside-selectedFAIL: gen_terrain_poly text bytes plus four bf/ef symbols require complete collateral investigation before integration; do not assume metadata-only or widen function waivers. Existing role/game_io tests remain; append a bounded cache-vs-lookup/null control and old-lookup mutant.",
+    "All tasks share one explicitly coordinator-prepared isolated batch checkout. Only coordinator writes product source, runs compilers/preparation, records claims, mutates Git and integrates. Keep source/HEAD/configuration frozen during compiler epochs. Preserve all original identities/full spans/symbols/history and historical claims; no demotion, baseline reset, safety normalization or new assembly/wrappers. Ordinary spelling controls are bounded; no exact gain is required for a proven original-behavior correction.",
+    "Require native production/baseline/candidate replica and body-damage controls, independent source/evidence/test review, relevant actual-source regression controls, fresh application build/link, full mapped observations and other physical outputs before standing coordinator-reviewed manual integration. Retain every native FAIL/UNKNOWN and distinguish debug/relocation changes from real code effects; no verifier weakening or scope waiver. Fresh destination verification required before deleting worker checkout/branch. Full linked preservation, native automatic admission, exhaustive coverage, runtime and game acceptance remain unproved."
+  ],
+  "intent": "Restore the original MapWin borrowed label-font cache reference",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4655760,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "mapwin-label-font-cache-oct24d"
+}
