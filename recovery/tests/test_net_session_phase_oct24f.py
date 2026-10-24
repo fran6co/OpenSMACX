@@ -163,4 +163,3 @@ def test_net_session_phase_actual_owner_tail_and_exec_statements(tmp_path: Path,
     assert built.returncode == 0, built.stdout + built.stderr
     ran = subprocess.run([str(exe)], capture_output=True, text=True, timeout=10)
     assert ran.returncode == 0, ran.stdout + ran.stderr
-

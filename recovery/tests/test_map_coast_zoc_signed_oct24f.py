@@ -349,4 +349,3 @@ def test_map_signed_candidate_behavior_and_causal_controls(compiler_name: str, t
     ):
         result = _compile_run(compiler, _harness(mutant), tmp_path, label)
         assert result.returncode != 0, f'{label} mutant escaped the behavioral oracle'
-
