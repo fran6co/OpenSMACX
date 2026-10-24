@@ -4337,7 +4337,7 @@ void __cdecl pact_truce(int faction_id, int faction_id_with) {
 Purpose: Tell the local player that a pact between two factions has been
          dissolved - the same seven-sentence shape as pact_truce, with the
          possessive pronoun and the old-pact description added.
-// ORIGINAL: 0x0055CCA0 ?pact_unpact@@YAXHH@Z 0x0055CCA0-0x0055CE1D
+// ORIGINAL: 0x0055CCA0 ?pact_unpact@@YAXHH@Z 0x0055CCA0-0x0055CE1D BYTE_EXACT
 // size      373 bytes
 // prototype void (__cdecl ?pact_unpact@@YAXHH@Z)(int, int)
 // callers   1   call targets   3
@@ -4371,8 +4371,8 @@ void __cdecl pact_unpact(int faction_id, int faction_id_with) {
     parse_says(4, get_his_her(faction_id, 0), -1, -1);
     parse_says(5, get_pact_hood(faction_id, faction_id_with), -1, -1);
 
-    PluralityDefault = FALSE;
     GenderDefault = Players[faction_id_with].is_leader_female;
+    PluralityDefault = FALSE;
     parse_says(6, Players[faction_id_with].title_leader, -1, -1);
     GenderDefault = Players[faction_id_with].is_leader_female;
     PluralityDefault = FALSE;

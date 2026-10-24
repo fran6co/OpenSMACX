@@ -1,0 +1,20 @@
+{
+  "event_id": "b937d488b3578988de513fa2ae418bf57b032724a7fe5cc100a50acd6b28b3dc",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_popup_hide_selector.py",
+      "src/basepop.h"
+    ],
+    "evidence": [
+      "Independently pinned signed reciprocal/shift proves hide uses field_30AC_/10000, not1000. Add body-extracted boundary/negative/callback host controls and compile-success old-divisor negative control. Local seconds is inaccurate; use auto_hide_selector based on existing set_auto_hide_value and observed0/5/1000 transition gates. Header permission is comment-only correction of the false seconds description: no declaration/layout/signature/header code or binding changes. Preserve all old LEVER/TRIED/ORIGINAL evidence and all guards/error paths."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "popup-scaling-control-and-terminology",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:near-owner-5-oct24l"
+}
