@@ -1,0 +1,35 @@
+{
+  "event_id": "7e62d30e8eda445af51b4b2cda6917ada283fb9bcd1c0c8568defee0fd62224c",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Original add_line48AE90 restoration compiles39/39exact and naturally changes inlined battle_routine54B140 and sub_54DC90; back_redraw also inlines into opticenter48B630. All five mappings and historical claims must be protected/reviewed as one ownership closure.",
+      "Admit one additional ordinary back_redraw candidate (two cumulative attempts, maximumthree). Borrowed GraphicWin/Buffer references avoid nullable-pointer virtual-base conversion guards while preserving original receiver/call order and fresh post-draw_map conversion. No declarations, flags, layout or lifecycle changes.",
+      "Initial selected-only native FAIL reports remain immutable. Newly scoped comparison may protect all outside5, with raw original code/relocations reviewed independently. No automatic/game acceptance, no demotion and no unverified claim grant."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5550400,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5561488,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4765232,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "planwin-inline-callers-and-base-references-oct24u",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:easy-planwin-owner-oct24u"
+}
