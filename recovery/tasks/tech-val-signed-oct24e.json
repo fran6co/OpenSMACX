@@ -1,0 +1,23 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "3106862237c835bd2df5a0992cc865032226ad05",
+  "editable_files": [
+    "src/technology_queries.cpp",
+    "recovery/tests/test_tech_val_signed_oct24e.py"
+  ],
+  "evidence": [
+    "Pin5BCE39 signedJL and four regional CDQ/IDIV sequences support only local base_count and pwr_base as int. Shared uint32_t storage declaration stays unchanged. Natural unsigned-to-signed conversion and overflow need target VC6 qualification; preserve original zero/negative/error branches, all calls, read epochs and arithmetic order. Private native outsidePASS/no exact gain or loss. Use function-only canonical replacement from screen manifest; report synthetic comment wrapper is not literal source.",
+    "Coordinator owns product changes/Git/compiler epochs in one explicitly isolated two-owner batch worktree. Preserve all original annotations, symbols/spans/history/claims; no compiler policy/header change, safety normalization, baseline reset, demotion or assembly. Full source and evidence independent review, actual-source focused controls including causal old-unsigned damage, fresh build/link, source/reference/mapping/claim continuity and all mapped measurements before manual integration; fresh destination check before cleanup. Existing qualified private baseline/candidate screens are preliminary evidence, not acceptance; actual candidate must reproduce scoped operation and outside-selected evidence under current physical inputs. Historical matching obligations persist. Native FAIL/UNKNOWN remain unwaived; no full linked/runtime/structure/exhaustive discovery or game acceptance claim."
+  ],
+  "intent": "Recover signed local base-count and regional technology weighting",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6015968,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "tech-val-signed-oct24e"
+}

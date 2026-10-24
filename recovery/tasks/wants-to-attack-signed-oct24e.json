@@ -1,0 +1,23 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "3106862237c835bd2df5a0992cc865032226ad05",
+  "editable_files": [
+    "src/faction.cpp",
+    "recovery/tests/test_wants_to_attack_signed_oct24e.py"
+  ],
+  "evidence": [
+    "Pin uses signed score positive comparison, CDQ/IDIV and signed factor comparison. Existing uint32_t score decrements wrap negatives. Change exactly score and two bounded factor locals to int; retain peace-faction/count arrays, original uninitialized region_top_base_count and all call/guard/order/error behavior. Private native screen outsidePASS/no exact gain or loss. Do not expand into unrelated known UB without evidence/authorization.",
+    "Coordinator owns product changes/Git/compiler epochs in one explicitly isolated two-owner batch worktree. Preserve all original annotations, symbols/spans/history/claims; no compiler policy/header change, safety normalization, baseline reset, demotion or assembly. Full source and evidence independent review, actual-source focused controls including causal old-unsigned damage, fresh build/link, source/reference/mapping/claim continuity and all mapped measurements before manual integration; fresh destination check before cleanup. Existing qualified private baseline/candidate screens are preliminary evidence, not acceptance; actual candidate must reproduce scoped operation and outside-selected evidence under current physical inputs. Historical matching obligations persist. Native FAIL/UNKNOWN remain unwaived; no full linked/runtime/structure/exhaustive discovery or game acceptance claim."
+  ],
+  "intent": "Recover signed attack score and bounded factors in faction attack policy",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5618816,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "wants-to-attack-signed-oct24e"
+}
