@@ -1,0 +1,29 @@
+{
+  "event_id": "57ff10fe3dfd9eb9449beba07864dd9fa49a4b1da0555a6f3cdb889521bbce6b",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Act on the independently pinned play discovery across its MCIVideo ownership family. Whole close5FFDB0 pin writes only window nCmdShow=0 and no generic callback fields; load pin writes only explicit OPEN fields, STATUS dwItem, PUT rectangle, no pre-WHERE fields. Preserve all calls/flags/error/reset/width/reload effects and all original indeterminate fields.",
+      "Coordinator authorizes close/load body-only ordinary faithful partial-initialization corrections; no ABI/header/layout/flag/annotation/claim changes or bug fixes. Existing task baseline remains e7fcc21f42ad13a04d14b28236caf77990fe13bd. Actual experimental production context is fresh master build-toaumon6 after the reviewed play correction, with fresh whole-object replica/damage/outside controls. Up to3candidate attempts per added function/context, failures included. Prior trials and all restoration obligations persist."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6290864,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6291344,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "mci-caller-partial-initialization-family-oct24m",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:easy-owner-8-oct24m"
+}
