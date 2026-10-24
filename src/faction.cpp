@@ -3179,7 +3179,7 @@ void __cdecl social_ai(int faction_id, int growth_val, int tech_val, int wealth_
         }
     }
     // plan and enemy region metrics
-    uint32_t unk_sum1 = 0;
+    int unk_sum1 = 0;
     uint32_t unk_count1 = 0;
     uint32_t unk_count2 = 0;
     uint32_t unk_sum2 = 0;
@@ -3215,7 +3215,7 @@ void __cdecl social_ai(int faction_id, int growth_val, int tech_val, int wealth_
         unk_sum1 = 1;
     }
     // tech ranking
-    uint32_t unk_val3 = 1;
+    int unk_val3 = 1;
     if (GameDataStateStorage.fields_.game_state_ & 0x200 // set in rankings(), related to intense riv + end game
         && PlayersData[faction_id].ranking < 6) {
         int tech_rank_diff = PlayersData[GameDataStateStorage.fields_.ranking_faction_id_unk1_].tech_ranking / 2
@@ -3569,7 +3569,8 @@ void __cdecl social_ai(int faction_id, int growth_val, int tech_val, int wealth_
                 // industry
                 uint32_t unk_val3_temp = range(unk_val3, 1, 2);
                 int industry_weight = soc_eff.values_[SocialEffect::INDUSTRY] * unk_val3_temp
-                    * PlayersData[faction_id].pop_total * (2 * (wealth_val + unk_sum1) + 1) / 10;
+                    * PlayersData[faction_id].pop_total
+                    * (2 * (static_cast<uint32_t>(wealth_val) + unk_sum1) + 1) / 10;
                 if (power_val) {
                     industry_weight *= 2;
                 }
