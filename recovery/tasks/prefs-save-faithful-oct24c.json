@@ -1,0 +1,24 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "51d838808ccf5ca17b7feb4aad9a494f610bed9b",
+  "editable_files": [
+    "src/alpha.cpp",
+    "recovery/tests/test_prefs_save_faithful_oct24c.py"
+  ],
+  "evidence": [
+    "Original59E5D0..59E946 confirmed by native pinned disassembly and PE literal682E90: seven custom_world values each append comma-space including final; current C++ intentionally omits final delimiter. Original tests save_factions once then rereads ExpansionEnabled at each faction loop head, advancing all seven slots even when disabled; current hoists the flag outside. Restore these two behavior/read-order differences only.",
+    "Existing misleading historical TRIED context about all integer prefs_put sites inlined is retained as seed history, not policy. New evidence establishes seven inline sequences plus five direct calls, both with StringTemp persistent destination; do not manually inline helpers, alter scratch ownership or pursue unbounded matching. No schema/ABI/layout/storage/flags/header/compiler/helper changes. Preserve original identity/span/history and all historical claims.",
+    "Only coordinator owns Git/compiler/preparation/integration. Authorize isolated complete-function behavioral tests with actual-source extraction for ordered INI writes, exact trailing delimiter, save_factions admission, and callback mutation of ExpansionEnabled; include causal mutants. Native compiler replicas/body damage/outside-selected, independent review, fresh application build/link and integrated destination checks required before standing coordinator-reviewed manual merge. No full-game/automatic/linked-preservation acceptance claimed; do not weaken gates or reset baselines."
+  ],
+  "intent": "Restore original preference serialization and per-player expansion checks",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5891536,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "prefs-save-faithful-oct24c"
+}
