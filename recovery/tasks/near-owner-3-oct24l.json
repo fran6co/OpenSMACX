@@ -1,0 +1,50 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "4368b15f98fdbb4925a0b0cf0c97b3ee12c613e7",
+  "editable_files": [
+    "src/veh.cpp"
+  ],
+  "evidence": [
+    "Fresh complete actual-application source/receipt/COFF census at4368b15f9: each selected mismatch has >=0.9 mnemonic similarity and equal instruction counts; none was selected in prior formal easy-pass manifests. This is a bounded matching hypothesis queue, not proof these are easy or structurally correct.",
+    "Worker owns an isolated prepared checkout. May edit only authorized function bodies in listed source files and run native body-only candidate experiments through existing package APIs under one provisioned resource lease per experiment. Coordinator alone mutates Git, accepts scope changes, banks claims, integrates and cleans up. Preserve all ORIGINAL/mapping/symbol/historical claims and original bugs; no annotation/header/signature/build/flag/provider changes, no wrappers/asm/byte copies.",
+    "Ordinary equivalent C++ spellings supported by concrete native discrepancies are eligible without proving current source semantically wrong. At most three compiler candidate attempts per function/current context, including failures; unchanged replica and target-damage controls are separate. Check full TU neighbors/native outside-selected output and report all misses/regressions/discoveries; justified structural leads return for central scope expansion, never silently discarded.",
+    "Workers provide tested candidates, exact commands/hashes/native outcomes and source diff for coordinator review. Local screens do not bank claims or establish references/acceptance. Coordinator requires whole integrated batch build/link, scoped restoration/reference/identity/outside preservation review and fresh destination recheck; preserve unknowns/failures and manual acceptance limits.",
+    "Coordinator explicitly authorizes worker-generated schema-v2 decks only for these mapped bodies and current source digests, up to three ordinary candidates per function/context. Native physical unchanged-replica and damage controls required. Experiments use the unchanged actual production recipe through the documented native Compiler/compare_unit APIs; no compiler-flag search or implicit acceptance."
+  ],
+  "intent": "Bounded ordinary C++ matching recovery in isolated source owners src/veh.cpp",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6028944,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6032560,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6029216,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5987856,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4988976,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4986688,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "near-owner-3-oct24l"
+}
