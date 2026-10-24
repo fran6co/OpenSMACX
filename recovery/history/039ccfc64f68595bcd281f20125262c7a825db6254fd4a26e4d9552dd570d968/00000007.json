@@ -1,0 +1,19 @@
+{
+  "event_id": "b388ac76cc0810f062bc9a8351673eaa5865521dedfca163541b24e7e36703d5",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "social-ai-unsigned-local-type-chain-oct24r",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/faction.cpp at267eef909 now uses int for bounded regional count, technology multiplier and industry clamp, signed morale/industry products/divisions, and whole high-economy numerator before count+1 division. Original pin 5B4BFF/4C52,5B4E83..89,5B52A9..BB independently checked directly through native original_asm; previous unsigned-industry claim explicitly corrected by scope entry6.",
+      "The actual-source signed weights test SHA256 3e13d17f16a58641e55c4551ba198d41ab536bfbfa760d223b6c173cda8227c9 checks negative economy/morale/industry and asymmetric grouping with four causal mutants under GCC/Clang;13 focused tests pass. Fresh complete application compiles/links, all208 qualified native COFF residuals outside only social_ai PASS, only faction.cpp object and social_ai function change, all5581 local verdicts and strict original identities unchanged.",
+      "Incorporation resolves this specific type/arithmetic finding, not full social_ai recovery. It remains MISMATCH1342 versus original1353 instructions with separate economy divides instead of a common join. Stop at third-candidate cap; original task baseline85a9a2fef, historical claims and prior six-owner compiler-context/linked/runtime obligations remain intact."
+    ]
+  },
+  "previous_event": "2f056dbdf63f4bed5d2150d8179e82068b53b3c8981550f2995d16873de28029",
+  "request_id": "incorporate-reviewed-social-signed-arithmetic-oct24s",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:player-base-count-owner-oct24r"
+}
