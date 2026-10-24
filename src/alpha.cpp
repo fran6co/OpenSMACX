@@ -2272,19 +2272,19 @@ void __cdecl prefs_save(BOOL save_factions) {
     // global StringTemp buffer.
     StringTemp[0] = 0;
     for (uint32_t i = 0; i < 7; i++) {
-        if (i != 0) {
-            strcat(StringTemp, ", "); // removed last trailing comma
-        }
         say_num(AlphaIniPrefs.custom_world[i]);
+        strcat(StringTemp, ", ");
     }
     prefs_put("Custom World", StringTemp);
     prefs_put("Time Controls", AlphaIniPrefs.time_controls, false);
-    if (save_factions && ExpansionEnabled) {
+    if (save_factions) {
         for (uint32_t i = 1; i < MaxPlayerNum; i++) {
-            StringTemp[0] = 0;
-            strcat(StringTemp, "Faction ");
-            say_num(i);
-            prefs_put(StringTemp, Players[i].filename);
+            if (ExpansionEnabled) {
+                StringTemp[0] = 0;
+                strcat(StringTemp, "Faction ");
+                say_num(i);
+                prefs_put(StringTemp, Players[i].filename);
+            }
         }
     }
 }

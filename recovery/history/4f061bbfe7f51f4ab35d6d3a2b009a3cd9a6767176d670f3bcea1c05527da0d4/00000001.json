@@ -1,0 +1,22 @@
+{
+  "event_id": "af303df91f9d75ef8a8c8d12e222cbe20a2e7856a19abf1b37c8fb2d6871ca71",
+  "payload": {
+    "affects": [
+      "entity-6fba00491396ecea5cd1b7e02093f00e5b4b44b428f51fd66f3119966a0a03f9"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "original-preference-save-loop-behavior",
+    "evidence": [
+      "Pin59E5D0..59E946, literal682E90 and independent native source review prove a comma-space after every one of seven custom_world values includinglast; save_factions admitted once and ExpansionEnabled read at every faction loop head, disabled slots skipped while iteration advances. Restore both behaviors with existing source owners and helper APIs. No bug fix. Original mixed seven inlined integer-helper sequences plus five direct calls, all with persistent StringTemp; historical all-sites-inline TRIED note is superseded evidence, not a reason to manually expand code. This correction is retained in task authorization, commit and journal rather than a new source run log.",
+      "Five native actual-production compiler controlsPASS: baseline replay/replica, candidate replica, changed flag-predicate body witness; native outside-selectedPASS without section/symbol/association differences. Fresh isolated application194C++units208physicalobjects builds/links; all207outsideobjects equal current reviewed mastere904f0f. All5581mappedverdicts and strictreference outcomes unchanged3446exact/3131strictpass/315unknown; selectedprefs_save remainsMISMATCH. All original source record facts/identity/spans/symbols/history/claims unchanged. Original native Taskbaseline51d838808 retained, while reviewed unrelated EditBox integration is preserved in the worker startinge904f0f; no reset or automatic acceptance.",
+      "Six actual-source GCC/Clang positive and causal old-delimiter/hoisted-flag mutant testsPASS; original ordered INIvalues, helper-visible StringTemp effects, negative save_factions admission, expansionoff and callback disabling afterFaction1 covered. Initial GCC host fixture lacked calling-convention macro; only testprefix fixed, failedXMLretained, correctedfullsixpass. Native Windows INI runtime and actual reentrant flag mutation reachability remain unproved. Independent worker/source reviews support bounded manual merge only. ReviewSHA256 ec6e4ddbcbfc4f45398fd8f6eb970996f75e7e586f6b679cb61e3a37ab4b2f2c. Standing authorization permits coordinator-reviewed manual merge followed by fresh destination build/all208object/all5581verdict/test recheck; no whole-game/runtime/full-linked/nativeautomaticacceptance claimed."
+    ],
+    "hypothesis": "Restore original preference serialization and per-player expansion checks",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "original-preference-save-loop-behavior",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:prefs-save-faithful-oct24c"
+}
