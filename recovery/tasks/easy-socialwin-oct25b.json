@@ -1,0 +1,23 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "3c6b40b8fde086351afe2e38ecfddbe2a465df3c",
+  "editable_files": [
+    "src/socialwin.cpp"
+  ],
+  "evidence": [
+    "Source and qualified build-i0hj5xo8 pin the literal body proposals. SocialWin uses the original forward11-word typed array copy; veh_unmoved makes speed-before-moves load order explicit; sub_500380 reloads vehiclecount at each original loop latch instead of using a captured limit.",
+    "One candidate per selected function; all original guards, continue paths, arithmetic, callbacks and historical claims stay intact. No new unsafe-path normalization, flags/ABI trick, inventedstorage or copiedcode. NetWin planet-size direct-store proposal is rejected: full original47EA40 contains dec al and current source is correct.",
+    "Native scoped measurements, unchangedobject controls, full build/link, relevant behavioral tests, claim/reference continuity and global matchingpreservation required for manual integration. This is not full linked/runtime/game or nativeautomatic acceptance."
+  ],
+  "intent": "Recover pinned source-level copy and live read sequencing through genuine existing owners.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4910064,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "easy-socialwin-oct25b"
+}
