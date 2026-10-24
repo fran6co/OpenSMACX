@@ -1,11 +1,9 @@
-"""Actual-source host controls for the proto_cost combat_mod signed-type correction.
+"""Actual-source controls for prototype cost intermediate widths.
 
-This test extracts the
-complete source-owned proto_cost body through match_recovery.source, compiles
-that actual body, and compares it with a one-token uint32_t mutant. The real
-rule-table member widths are retained in the host doubles. Inputs stay within
-the declared table bounds and reactor range; no undefined shift, divide by
-zero, or invented negative cost is used to force an output difference.
+Compile the complete source-owned body with typed host doubles. Keep the signed
+combat-divisor diagnostic and isolate byte truncation with an armor-local mutant.
+The representable AIR cost-64/reactor-2 witness does not claim stock-data reachability.
+Inputs avoid invalid indices, undefined shifts and arithmetic overflow.
 """
 from pathlib import Path
 import shutil
@@ -74,7 +72,7 @@ def _definition(record_region: str) -> str:
     raise AssertionError("unterminated source-owned proto_cost definition")
 
 
-def actual_source_bodies() -> tuple[str, str]:
+def actual_source_bodies() -> tuple[str, str, str]:
     from match_recovery.source import read_file
 
     records = read_file(SOURCE)
@@ -83,15 +81,23 @@ def actual_source_bodies() -> tuple[str, str]:
     # Fail closed if the reviewed one-token source change was not materialized.
     assert signed.count("int combat_mod = armor_cost / 2 + 1;") == 1
     assert "uint32_t combat_mod =" not in signed
-    mutant = signed.replace(
+    assert signed.count("int armor_cost = Armor[armor_id].cost;") == 1
+    assert "uint8_t armor_cost = Armor[armor_id].cost;" not in signed
+    combat_mutant = signed.replace(
         "int combat_mod = armor_cost / 2 + 1;",
         "uint32_t combat_mod = armor_cost / 2 + 1;",
         1,
     )
-    assert mutant != signed
+    armor_mutant = signed.replace(
+        "int armor_cost = Armor[armor_id].cost;",
+        "uint8_t armor_cost = Armor[armor_id].cost;",
+        1,
+    )
+    assert combat_mutant != signed and armor_mutant != signed
     return (
         signed.replace("int __cdecl proto_cost(", "int __cdecl proto_cost_signed(", 1),
-        mutant.replace("int __cdecl proto_cost(", "int __cdecl proto_cost_unsigned_mutant(", 1),
+        combat_mutant.replace("int __cdecl proto_cost(", "int __cdecl proto_cost_unsigned_mutant(", 1),
+        armor_mutant.replace("int __cdecl proto_cost(", "int __cdecl proto_cost_byte_armor_mutant(", 1),
     )
 
 
@@ -199,6 +205,15 @@ int main() {
     assert(proto_cost_signed(0, 0, 0, 0, RECT_FISSION) == 6);
     same_valid_result(0, 0, 0, 0, RECT_FISSION);
 
+    // Isolated width witness: Armor.cost=64 is representable as uint8_t and
+    // all indices/reactor values are in bounds. Stock-data reachability is unknown.
+    clear_tables();
+    Chassis[0].cost = 1; Chassis[0].triad = TRIAD_AIR;
+    Weapon[0].cost = 2; Weapon[0].mode = WPN_MODE_MISSILE;
+    Armor[0].cost = 64;
+    assert(proto_cost_signed(0, 0, 0, 0, 2) == 1052);
+    assert(proto_cost_byte_armor_mutant(0, 0, 0, 0, 2) == 3);
+
     // Boundary grid uses representable unsigned-byte costs, valid table indices,
     // and reactor ids 1..4. It verifies ordinary results are unchanged by the
     // type correction. The unsigned mutant is diagnostic only: with these real
@@ -237,10 +252,10 @@ def _available_compilers():
 def test_actual_proto_cost_signed_type_and_unsigned_diagnostic(tmp_path, compiler):
     if compiler is None:
         pytest.skip("GCC or Clang host compiler unavailable")
-    signed_body, unsigned_mutant = actual_source_bodies()
+    signed_body, unsigned_mutant, byte_armor_mutant = actual_source_bodies()
     source = tmp_path / "proto_cost_signed.cpp"
     binary = tmp_path / "proto_cost_signed"
-    source.write_text(PREAMBLE + signed_body + "\n" + unsigned_mutant + "\n" + MAIN)
+    source.write_text(PREAMBLE + signed_body + "\n" + unsigned_mutant + "\n" + byte_armor_mutant + "\n" + MAIN)
     subprocess.run(
         [compiler, "-std=c++11", "-O2", str(source), "-o", str(binary)],
         check=True, capture_output=True, timeout=60,

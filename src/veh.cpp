@@ -5859,7 +5859,7 @@ Status: Complete
 int __cdecl proto_cost(int chassis_id, int weapon_id, int armor_id,
                             int ability, int reactor_id) {
     uint8_t weap_cost = Weapon[weapon_id].cost;
-    uint8_t armor_cost = Armor[armor_id].cost;
+    int armor_cost = Armor[armor_id].cost;
     int speed_cost = Chassis[chassis_id].cost;
     int abil_modifier = 0;
     if (ability) {
