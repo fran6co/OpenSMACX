@@ -1,0 +1,38 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "59eecf29872d07862ad5688906d5fe88db610768",
+  "editable_files": [
+    "src/base.cpp",
+    "src/jackal/palette.cpp",
+    "src/multiwin.cpp",
+    "recovery/tests/test_base_making_dispatch.py",
+    "recovery/tests/test_palette_blend_arithmetic.py"
+  ],
+  "evidence": [
+    "Bounded parallel easy-pass26 screened five isolated ordinary C++ proposals once each with actual production recipes. Retain supported semantic/source corrections only: base_making pin ordered signed dispatch0/2/>1/default-category including invalid rules; Palette blend signed byte promotion/IMUL/IDIV; MultiWin output locals have no original initial stores and Spot::check defines both outputs before nonnegative return. No safety fix or invented valid-state guarantee.",
+    "Native private overlays leave all historical exact outcomes and compiled outside-selected residuals unchanged. None of these three is newly byte exact. Independent full pinned/source reviews in ignored parallel-match-oct23q/base-making-independent-source-review-oct24i.json, palette-blend-independent-source-review-oct24i.json and multiwin-netdaemon-independent-source-review-oct24i.json support edits with explicit arithmetic overflow and runtime limits.",
+    "Coordinator alone edits product/Git/compiler/preparation/integration in one isolated checkout. Preserve every original identity/span/symbol/claim/lesson. New tests extract actual full source and use bounded defined arithmetic with specific former-switch/unsigned-casts causal mutants. MultiWin existing contact tests cover successful output and negative-return short circuit; never execute uninitialized reads as a test oracle.",
+    "Require fresh application build/link, source identity/reference continuity, scoped strict/masked and outside-owner checks, relevant behavioral tests and independent actual-output review, then fresh master build/recheck. Keep mismatches/refusals/unknowns visible. No demotion, hand claims, compiler flags, framework/gate changes or assertion of exhaustive inventory, full linked retention, runtime/game or automatic acceptance."
+  ],
+  "intent": "Restore pinned retool dispatch, signed palette blending and uninitialized successful output slots",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5129984,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6286976,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4686160,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "faithful-arithmetic-outputs-oct24i"
+}
