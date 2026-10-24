@@ -1,0 +1,17 @@
+{
+  "event_id": "60e5c4a44c30783397f7aa5f32a4aa31d9b90d6147385b91173e6f540695d702",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "tech-val-signed-oct24e-signed-discovery",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/technology_queries.cpp now uses the pinned signed local arithmetic; exact obligations unchanged. Full compiler/test and independent verification pending."
+    ]
+  },
+  "previous_event": "302435d3eb20168c044ce48dac9ff028684785ec6be532e325cd7d8b3b4492ce",
+  "request_id": "tech-val-signed-oct24e-source-incorporation",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:tech-val-signed-oct24e"
+}

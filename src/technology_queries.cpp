@@ -570,7 +570,7 @@ int __cdecl tech_val(int tech_id, int faction_id, BOOL simple_calc) {
         int tech = Technology[tech_id].tech_value;
         value_ret = growth * (factor_ai * ai_growth + 1) + wealth * (factor_ai * ai_wealth + 1)
             + tech * (factor_ai * ai_tech + 1) + power * (factor_ai * ai_power + 1);
-        uint32_t base_count = PlayersData[faction_id].current_num_bases;
+        int base_count = PlayersData[faction_id].current_num_bases;
         if ((!power || !ai_power && !vendetta_count) && (!tech || !ai_tech)
             && (!wealth || !ai_wealth) && (!growth || !ai_growth && base_count >= 4)) {
             value_ret = (value_ret + 1) / 2;
@@ -606,7 +606,7 @@ int __cdecl tech_val(int tech_id, int faction_id, BOOL simple_calc) {
         if (base_count) {
             for (int region = 1; region < MaxRegionLandNum; region++) {
                 if (!bad_reg(region)) {
-                    uint32_t pwr_base = PlayersData[faction_id].region_total_bases[region] * power;
+                    int pwr_base = PlayersData[faction_id].region_total_bases[region] * power;
                     uint8_t plan = PlayersData[faction_id].region_base_plan[region];
                     if (plan == PLAN_NAVAL_TRANSPORT && vendetta_count && !is_human_player) {
                         value_ret += (pwr_base / base_count);

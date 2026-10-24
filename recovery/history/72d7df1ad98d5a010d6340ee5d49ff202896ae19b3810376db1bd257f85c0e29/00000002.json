@@ -1,0 +1,17 @@
+{
+  "event_id": "e35bed4a5b0da3341e1884d00fbf07b59b6d033a995d69523bfa79fdc464f708",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "wants-to-attack-signed-oct24e-signed-discovery",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/faction.cpp now uses the pinned signed local arithmetic; exact obligations unchanged. Full compiler/test and independent verification pending."
+    ]
+  },
+  "previous_event": "a6111fdb3223dd2ed3946c2b09dec348c4c25356003357e1ecdffafc46503f2e",
+  "request_id": "wants-to-attack-signed-oct24e-source-incorporation",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:wants-to-attack-signed-oct24e"
+}
