@@ -881,8 +881,8 @@ void MultiWin::on_left_click(int x, int y) {
 // symbol    ?on_right_click@MultiWin@@UAEXHH@Z
 void MultiWin::on_right_click(int x, int y) {
     PullDown menu;
-    int faction = -1;
-    int kind = -1;
+    int faction;
+    int kind;
     if (spot_.check(x, y, &faction, &kind) < 0 || faction < 0 || kind != 1)
         return;
 
