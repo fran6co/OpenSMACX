@@ -1,0 +1,23 @@
+{
+  "event_id": "a69ca97f104c0619f494b4b1c46a7d0b6315436aa15402f76b08852054b7419d",
+  "payload": {
+    "affects": [
+      "entity-b837d4c0a46d9fe2a8c1b72b128ce9d952fcbdbe83c6aa3393cb58167c9d958e",
+      "entity-d1b9168096f453b5de382b71e44dc4ba34a238d866337f4a261c0e8324fd0074"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "ordinary-same-tu-visibility-retains-current-entry-oct24o",
+    "evidence": [
+      "Fresh native unchanged replicas passed for both units. Identical method body, unchanged ordinary header declaration and actual production flags; moving the definition only in virtual source makes BasePop emit the same function signature as old StringStruct, native original17/17 BYTE_EXACT. Header-inline-only experiment instead lost the callable body. No actual source edited.",
+      "Final report .opensmacx/recovery/tested-owner-batch-oct24o/same-tu-current-entry-probe-report-final.json SHA256324429783482c9ffd466fd511c9d3590947618bd2e8006c951ae9958c56a58e5. BasePop remains MISMATCH119vs117,23matching, no new exact neighbor. Its residual is FAIL on the newly added current_entry .text COMDAT and associated .debug$F/symbol. Old StringStruct mapped context becomes unresolved; explicit source/emitting-unit migration plus complete retained selection would still be required. Native FAIL is not waived.",
+      "Pinned pointer audit found no address-taken values in107760HIGHLOW sites/aligned data and zero exports, but19directcalls in9mappedcalleridentities. This is not dead-code proof or proof of original nonvirtual declarations/TU filenames. Preserve both useful visibility proposals and ordinary out-of-line source; investigate source grouping/caller context rather than manufacturing exports or changing settled compiler flags."
+    ],
+    "hypothesis": "A normal non-inline definition in the BasePop emitting unit can retain the original17byte callable current_entry while permitting its local expansion. This establishes a compiler-visibility model without forced exports; actual historical TU grouping and cross-object retained selection remain unproven, so the virtual migration is not published.",
+    "kind": "discovery"
+  },
+  "previous_event": "781587f3febbb352deeff1e98c5384cb0a67a2caab0cf4f68696916ecfcb7723",
+  "request_id": "ordinary-same-tu-visibility-retains-current-entry-oct24o",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:list-inline-investigation-oct24o"
+}
