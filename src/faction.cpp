@@ -1826,7 +1826,7 @@ BOOL __cdecl wants_to_attack(int faction_id, int faction_id_tgt, int faction_id_
     if (!is_human(faction_id_tgt) && PlayersData[faction_id].flags & PFLAG_TEAM_UP_VS_HUMAN) {
         return false;
     }
-    uint32_t want_to_attack = 0;
+    int want_to_attack = 0;
     for (uint32_t i = 1; i < MaxPlayerNum; i++) {
         if (i != faction_id && i != faction_id_tgt) {
             if (has_treaty(faction_id, i, DTREATY_HAVE_SURRENDERED | DTREATY_PACT)) {
@@ -1905,9 +1905,9 @@ BOOL __cdecl wants_to_attack(int faction_id, int faction_id_tgt, int faction_id_
             }
         }
     }
-    uint32_t factor_force_rating = 0;
+    int factor_force_rating = 0;
     uint32_t factor_count = 0;
-    uint32_t factor_unk = 1;
+    int factor_unk = 1;
     for (region = 1; region < MaxRegionLandNum; region++) {
         if (!bad_reg(region)) {
             uint32_t force_rating = PlayersData[faction_id].region_force_rating[region];
