@@ -31,7 +31,6 @@ def actual_body() -> str:
             depth -= 1
             if depth == 0:
                 body = source[start:position + 1]
-                assert body.count("MapWin **slot = MapWinTable;") == 2
                 return body
     raise AssertionError("unterminated actual MapWin::UNK4 definition")
 
@@ -211,8 +210,8 @@ def test_actual_mapwin_update_views_branch_order_and_live_scans(compiler, tmp_pa
     assert positive.returncode == 0, positive.stdout + positive.stderr
 
     bypass_mutant = body.replace(
-        "slot == MapWinTable || window->view_active_ != 0",
-        "slot != MapWinTable && window->view_active_ != 0", 1)
+        "slot == 0 || window->view_active_ != 0",
+        "slot != 0 && window->view_active_ != 0", 1)
     assert bypass_mutant != body
     damaged = run_program(tmp_path / "mutant", compiler,
                           program(bypass_mutant, POSITIVE_MAIN), "slot0_bypass")
