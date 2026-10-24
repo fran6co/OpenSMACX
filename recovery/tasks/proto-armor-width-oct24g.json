@@ -1,0 +1,25 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "bb9323ca7c99f58453afc8ce46461c5e5e571699",
+  "editable_files": [
+    "src/veh.cpp",
+    "recovery/tests/test_proto_cost_signed_oct24f.py"
+  ],
+  "evidence": [
+    "Change only uint8_t armor_cost to int in proto_cost. Original5A5A93 retains the raw byte;5A5BA2/5BA6 multiply/shift32-bit EDI. Existing source later reads Armor[].cost>1 separately, so add no redundant raw snapshot. Keep all other original operations, branches, unsafe/zero-input behavior, order and table member types unchanged.",
+    "Virtual source screen uses actual unchanged application recipe, one candidate attempt: native outside-selectedPASS, no exact gains/losses; proto_cost remains MISMATCH. Independent source/test reviews: proto-width-independent-source-review-oct24g.json and proto-width-independent-test-review-oct24g.json. Extend existing extracted-full-body controls with one byte-local mutant and representable AIR armor64/reactor2 witness1052vs3; stock-data reachability unknown. No fabricated overflow or arbitrary invalid cost. Update test description to cover both local corrections.",
+    "Coordinator alone mutates product source, Git, compiler/preparation and integration. Both disjoint owners share one isolated batch checkout and originalbb9323ca7 baseline. Preserve original identities/full spans/symbols/lessons and all historical claims; no hand-written claim, demotion, safety fix, assembler, wrapper, compiler/link policy or library/gate change.",
+    "Require independent source/pin review, relevant actual-source host controls, actual production COFF matching/reference and outside-owner comparisons, fresh application build/link and fresh destination recheck. Native FAIL/UNKNOWN remains explicit/unwaived; standing coordinator-reviewed manual integration is not automatic/full-game acceptance, exhaustive discovery, linked retention or runtime proof."
+  ],
+  "intent": "Restore full-width adjusted armor cost in prototype pricing",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5921376,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "proto-armor-width-oct24g"
+}

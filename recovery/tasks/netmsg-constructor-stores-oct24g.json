@@ -1,0 +1,24 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "bb9323ca7c99f58453afc8ce46461c5e5e571699",
+  "editable_files": [
+    "src/netmsg.cpp"
+  ],
+  "evidence": [
+    "Easy pass25group6 plain source assignment swap: put field_537C_=a1 before field_5380_=a2 so actual VC6 emits pinned field_5380_=a2 then field_537C_=a1. Distinct nonvolatile uint32_t members, no call/read between these writes; preserve all final values, base construction, vtable/lifetime code, other fields and source annotations.",
+    "Fresh virtual production screen:35/35 instructionsBYTE_EXACT, native outside-selectedPASS, no lost exacts. ExistingSHAPE_EXACT35/35 residual was solely four operand/register bytes. This is candidate evidence, not a banked claim or final reference/linked/game acceptance. Only native recover record may bank after preparation and full candidate validation.",
+    "Coordinator alone mutates product source, Git, compiler/preparation and integration. Both disjoint owners share one isolated batch checkout and originalbb9323ca7 baseline. Preserve original identities/full spans/symbols/lessons and all historical claims; no hand-written claim, demotion, safety fix, assembler, wrapper, compiler/link policy or library/gate change.",
+    "Require independent source/pin review, relevant actual-source host controls, actual production COFF matching/reference and outside-owner comparisons, fresh application build/link and fresh destination recheck. Native FAIL/UNKNOWN remains explicit/unwaived; standing coordinator-reviewed manual integration is not automatic/full-game acceptance, exhaustive discovery, linked retention or runtime proof."
+  ],
+  "intent": "Recover exact NetMsg constructor with independent member assignment order",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4697328,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "netmsg-constructor-stores-oct24g"
+}
