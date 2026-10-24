@@ -621,7 +621,7 @@ void ReportIf::on_iface_button_clicked(int button) {
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004a6d70.cpp retained original identity, full spans and seed history", "recovery/tasks/interface-contract-report-closure.json authorized coupled owner recovery", "original:0x4a6d70 complete control/data-access audit; ReportIf declarations and genuine ReportWin control storage"], "reason": "Recover ReportIf's group callback from the retained seed through its genuine SubInterface owner and ReportWin controls. Its current emitted virtual symbol is recorded separately from the historical catalogue spelling."}
 // symbol    ?on_iface_group_clicked@ReportIf@@UAEXHHH@Z
 void ReportIf::on_iface_group_clicked(int group, int, int item) {
-    if (group == 2 && (item == 0x92 || item == 0x93)) {
+    if (group == 2 && item >= 0x92 && item <= 0x93) {
         field_1E1D8_ = item == 0x92;
     } else {
         if (group == 4) {

@@ -103,6 +103,29 @@ class AlphaNetStringStruct : public virtual StringAllocationBase {
 };
 static_assert(sizeof(AlphaNetStringStruct) == 0x24, "session ledger base and virtual allocation owner");
 
+inline int AlphaNetStringStruct::seek_pos(int position) {
+    AbsFnT abs_fn = &abs;
+    if (position > entry_count_ - 1) return 0;
+    current_ = head_;
+    if (position < 0) {
+        if (abs_fn(position) > entry_count_) return 0;
+        int remaining = abs_fn(position);
+        while (remaining > 0) {
+            --remaining;
+            current_ = current_->previous_;
+        }
+        current_position_ = entry_count_ + position;
+    } else {
+        int remaining = position;
+        while (remaining > 0) {
+            --remaining;
+            current_ = current_->next_;
+        }
+        current_position_ = position;
+    }
+    return 1;
+}
+
 // RECOVERY_BASE: v1 AlphaNetLedger AlphaNetStringStruct 0x0 0x004E2490
 class AlphaNetLedger : public AlphaNetStringStruct {
  public:

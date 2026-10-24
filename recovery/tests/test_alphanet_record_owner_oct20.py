@@ -58,8 +58,6 @@ def test_records_and_controller_code_stay_in_their_coherent_units():
         body = re.search(rf"~{name}\(\)\s*\{{([^{{}}]*)\}}", header)
         assert body is not None
         assert body.group(1).split() == ["remove_all();", "current_position_", "=", "0;"]
-    assert "template<class List> inline int seek_owned_list" in records
-    assert "template<class List> inline int seek_owned_list" not in controller
     assert "AlphaNetStringStruct::add(int id)" not in controller
     assert "AlphaNetLedger::on_insert" not in controller
     assert "AlphaNet::close()" in controller

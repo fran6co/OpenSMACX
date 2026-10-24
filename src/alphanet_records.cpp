@@ -51,28 +51,6 @@ template<class List, class Node> inline Node *allocate_owned_node(List *list, No
     return new(list) Node;
 }
 
-template<class List> inline int seek_owned_list(List *list, int position) {
-    AbsFnT abs_fn = &abs;
-    if (position > list->entry_count_ - 1) return 0;
-    list->current_ = list->head_;
-    if (position < 0) {
-        if (abs_fn(position) > list->entry_count_) return 0;
-        int remaining = abs_fn(position);
-        while (remaining > 0) {
-            --remaining;
-            list->current_ = list->current_->previous_;
-        }
-        list->current_position_ = list->entry_count_ + position;
-    } else {
-        int remaining = position;
-        while (remaining > 0) {
-            --remaining;
-            list->current_ = list->current_->next_;
-        }
-        list->current_position_ = position;
-    }
-    return 1;
-}
 
 template<class List> inline typename List::Payload *next_owned_list(List *list) {
     if (list->head_ == 0) return 0;
@@ -267,7 +245,7 @@ void AlphaNetStringStruct::sort_sessions() {
     do {
         // Native inlines this same signed circular seek, including its abs
         // behavior; the callback-free scan starts only from valid list state.
-        seek_owned_list(this, walk_index);
+        seek_pos(walk_index);
         const GUID *best = head_ == 0 ? 0 : &current_->payload_->instance_guid_;
         int best_index = walk_index;
         int scan_index = walk_index + 1;
@@ -295,7 +273,7 @@ void AlphaNetStringStruct::sort_sessions() {
                 ++scan_index;
             } while (scan_index < total);
             if (best_index != walk_index && best_index <= total - 1) {
-                if (seek_owned_list(this, best_index) != 0) {
+                if (seek_pos(best_index) != 0) {
                     AlphaNetLedgerEntry *winner = current_;
                     if (seek_pos(walk_index) != 0) {
                         AlphaNetLedgerEntry *walked = current_;
@@ -356,7 +334,5 @@ void AlphaNetLedgerEntry::operator delete(void *memory, AlphaNetStringStruct *) 
 void AlphaNetLedgerEntry::operator delete(void *memory) {
     cleanup_failed_net_construction(memory);
 }
-
-int AlphaNetStringStruct::seek_pos(int position) { return seek_owned_list(this, position); }
 
 NetAllocationNode *AlphaNetStringStruct::next_entry() { return next_owned_list(this); }

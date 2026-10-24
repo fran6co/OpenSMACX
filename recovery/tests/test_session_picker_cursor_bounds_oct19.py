@@ -19,27 +19,21 @@ from test_session_picker_actual_source import function as extract_definition
 
 ROOT = Path(__file__).resolve().parents[2]
 PICKER_CPP = ROOT / "src/net_session_picker.cpp"
-NET_CLASS_CPP = ROOT / "src/net_class.cpp"
-ALPHANET_CPP = ROOT / "src/alphanet_records.cpp"
+ALPHANET_HEADER = ROOT / "src/alphanet.h"
 
 
 def actual_sources():
     picker = PICKER_CPP.read_text(encoding="utf-8")
-    net_class = NET_CLASS_CPP.read_text(encoding="utf-8")
-    alphanet = ALPHANET_CPP.read_text(encoding="utf-8")
-    helper_signature = "template<class List> inline int seek_owned_list(List *list, int position)"
+    alphanet_header = ALPHANET_HEADER.read_text(encoding="utf-8")
 
     join = extract_definition(picker, "int NetSessionPickerWin::join_selected_session()")
     button = extract_definition(picker, "void NetSessionPickerWin::on_button_clicked(int action)")
-    shared_seek = extract_definition(net_class, helper_signature)
-    alpha_seek = extract_definition(alphanet, helper_signature)
-    assert " ".join(shared_seek.split()) == " ".join(alpha_seek.split()), (
-        "AlphaNet's duplicated seek helper has diverged from the shared list helper"
+    alpha_seek = extract_definition(
+        alphanet_header, "inline int AlphaNetStringStruct::seek_pos(int position)"
     )
-    alpha_wrapper = extract_definition(
-        alphanet, "int AlphaNetStringStruct::seek_pos(int position)"
-    )
-    return join, button, shared_seek, alpha_wrapper
+    # The ServiceProviderList helper is a separate owner and is not part of
+    # this AlphaNet cursor fixture. Its former helper slot stays empty.
+    return join, button, "", alpha_seek
 
 
 HARNESS = r'''#include <cassert>
@@ -65,7 +59,7 @@ struct AlphaNetStringStruct {
 struct AlphaNetLedger : AlphaNetStringStruct {};
 
 ACTUAL_SEEK_HELPER
-ACTUAL_SEEK_WRAPPER
+ACTUAL_SEEK_MEMBER
 
 struct Dialog { int selected_position_; };
 struct ListBox : Dialog {};
@@ -188,9 +182,9 @@ int main() { run_controls(); }
 '''
 
 
-def fixture(join: str, button: str, helper: str, wrapper: str) -> str:
+def fixture(join: str, button: str, helper: str, alpha_seek: str) -> str:
     return (HARNESS.replace("ACTUAL_SEEK_HELPER", helper)
-            .replace("ACTUAL_SEEK_WRAPPER", wrapper)
+            .replace("ACTUAL_SEEK_MEMBER", alpha_seek)
             .replace("ACTUAL_JOIN", join)
             .replace("ACTUAL_BUTTON", button))
 
