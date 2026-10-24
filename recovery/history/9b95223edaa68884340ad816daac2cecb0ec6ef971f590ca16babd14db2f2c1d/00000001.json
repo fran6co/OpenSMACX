@@ -1,0 +1,22 @@
+{
+  "event_id": "e3ce119e9cb66e5e2c5e891d75fc6043693388d1b3bff4fe764a64e39cfa6bbe",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_prefwin_visibility_actual_source_oct24t.py",
+      "src/prefwin.cpp"
+    ],
+    "evidence": [
+      "Coordinator direct original_asm confirms all17 virtual show arguments0. It also exposes an original unconditional strcat call at49021F after clearing StringTemp and label lookup: the current if(label) guard changes the original null/error path and must be removed. Native switch targets place case6 immediately aftercase2 beforecases3/4/5. Original case2 computes the moreButton receiver before label lookup; current object-address evaluation is later. Preserve the complete original call/error behavior rather than only fixing visibility constants.",
+      "Permit up to two further ordinary C++ candidate measurements for update_pref_buttons (cumulative3 maximum); retain first attempt and raw controls. Correct unconditional append and grouped warning-case ordering first. If still a small receiver-evaluation scheduling miss, a normal FlatButton reference captured before label lookup is permitted, without casts, asm, volatile, flags or forced exports. Other methods receive no extra retries without new evidence.",
+      "Host controls must reflect original unconditional append, including a safe instrumented strcat hook that signals a null-source call without invoking host UB; do not assert graceful null-label skipping. Preserve case2 null argument forwarding and event sequence. Source identities, historical claims and original task baseline remain unchanged. All publication/build/preservation/claim checks still required before coordinator merge."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "prefwin-full-visibility-original-guard-and-order-oct24t",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:easy-prefwin-owner-oct24t"
+}
