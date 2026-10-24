@@ -663,7 +663,7 @@ Purpose: Does this window hold the dialog focus, and its partner too?
          from it just before. A NULL parent is not a failure: the answer is
          yes.
 
-// ORIGINAL: 0x006161A0 ?UNK2@EditBox@@QAEXXZ 0x006161A0-0x006161CA
+// ORIGINAL: 0x006161A0 ?UNK2@EditBox@@QAEXXZ 0x006161A0-0x006161CA BYTE_EXACT
 // symbol    ?is_dialog_focus_chain@EditBox@@QAEHXZ
 // TRIED (2026-08-26, deleting win_is_dialog_focus_redirect and calling
 // Win::is_dialog_focus directly): 2/17 -> 10/17 agreeing, 20 -> 18 compiled
@@ -685,15 +685,8 @@ Status: Complete
 // interpretation. The name describes observed behavior, not original debug
 // spelling; callers, full original class identity and lifetime remain unproved.
 int EditBox::is_dialog_focus_chain() {
-    if (is_dialog_focus() == 0) {
-        return 0;
-    }
-    // Reload only after the first call, as the original does at 0x006161AC.
-    Win *const parent = win_parent_;
-    if (parent != nullptr && parent->is_dialog_focus() == 0) {
-        return 0;
-    }
-    return 1;
+    return is_dialog_focus() != 0 &&
+        (win_parent_ == nullptr || win_parent_->is_dialog_focus() != 0);
 }
 
 /*

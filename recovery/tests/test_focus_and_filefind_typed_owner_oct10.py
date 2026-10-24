@@ -75,15 +75,17 @@ def test_focus_member(tmp_path, compiler, damage):
     body = actual("src/editbox.cpp", 0x6161A0,
                   "int EditBox::is_dialog_focus_chain()")
     assert "reinterpret_cast" not in body and "0xC4" not in body
-    if damage == "first_focus":
-        body = body.replace("if (is_dialog_focus() == 0)", "if (false)")
-    elif damage == "parent_focus":
-        body = body.replace("parent->is_dialog_focus()", "is_dialog_focus()")
-    elif damage == "null_parent":
-        body = body.replace("    return 1;", "    return parent != nullptr;")
-    elif damage == "early_parent":
-        body = body.replace("    Win *const parent = win_parent_;", "")
-        body = body.replace("{", "{\n    Win *const parent = win_parent_;", 1)
+    if damage is not None:
+        anchor, replacement = {
+            "first_focus": ("is_dialog_focus() != 0 &&", "true &&"),
+            "parent_focus": ("win_parent_->is_dialog_focus()", "is_dialog_focus()"),
+            "null_parent": ("win_parent_ == nullptr ||", "win_parent_ != nullptr &&"),
+            "early_parent": ("win_parent_", "parent"),
+        }[damage]
+        assert body.count(anchor) == (2 if damage == "early_parent" else 1)
+        body = body.replace(anchor, replacement)
+        if damage == "early_parent":
+            body = body.replace("{", "{\n    Win *const parent = win_parent_;", 1)
     run(tmp_path, compiler, FOCUS_PREFIX + body + FOCUS_MAIN, damage is None)
 
 
