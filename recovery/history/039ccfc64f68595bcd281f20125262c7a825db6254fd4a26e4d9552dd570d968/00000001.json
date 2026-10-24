@@ -1,0 +1,19 @@
+{
+  "event_id": "4be7dc81c50ef3d5166b5cfab1199dfa098d5c55282cc0332d33dc9a77e3ad3e",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_enemy_move_product_source.py"
+    ],
+    "evidence": [
+      "The signed-member focused parent run exposes stale host declaration/anchor failures in the already scoped enemy and turn-production fixtures. Authorize host harness API/storage/anchor alignment with actual current source, preserving all behavior assertions, damage controls and edge cases; no production behavior changes or suppressions."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "host-fixture-stale-anchor-repair-oct24r",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:player-base-count-owner-oct24r"
+}
