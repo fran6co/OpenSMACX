@@ -14,6 +14,9 @@ typedef void *HWND;
 HWND HandleMain = 0;
 class Font;
 static void (*AfterResize)() = 0;
+static void (*AfterFontWidth)(Font *, char *) = 0;
+static void (*AfterSpotInit)(int) = 0;
+static void (*AfterSpotAdd)(int) = 0;
 
 struct Sound {
     Sound() : active_(0), plays_(0) {}
@@ -94,9 +97,15 @@ class Font {
 public:
     int height_;
     int internal_leading_;
-    explicit Font(int h = 8) : height_(h), internal_leading_(1) {}
+    int id_;
+    explicit Font(int h = 8, int id = 0) : height_(h), internal_leading_(1), id_(id) {}
     int internal_leading() const { return internal_leading_; }
-    int width(char *s) { return static_cast<int>(std::strlen(s)) * 5; }
+    int width(char *s) {
+        int value = id_ == 0 ? static_cast<int>(std::strlen(s)) * 5
+                             : id_ * 10 + static_cast<int>(std::strlen(s));
+        if (AfterFontWidth) AfterFontWidth(this, s);
+        return value;
+    }
     int width(char *s, int n) { (void)s; return n * 5; }
 };
 Font *MenuDefaultFont = 0;
@@ -109,11 +118,19 @@ class Spot {
 public:
     struct Item { RECT rect; int pos; int type; } items[15];
     int used;
-    Spot() : used(0) {}
-    void init(int) { used = 0; }
+    int init_calls, last_init_count;
+    Spot() : used(0), init_calls(0), last_init_count(-1) {}
+    void init(int count) {
+        used = 0;
+        ++init_calls;
+        last_init_count = count;
+        if (AfterSpotInit) AfterSpotInit(count);
+    }
     int add(int pos, int type, int left, int top, int length, int width) {
         Item &i = items[used++]; i.rect.left = left; i.rect.top = top;
-        i.rect.right = left + length; i.rect.bottom = top + width; i.pos = pos; i.type = type; return 0;
+        i.rect.right = left + length; i.rect.bottom = top + width; i.pos = pos; i.type = type;
+        if (AfterSpotAdd) AfterSpotAdd(pos);
+        return 0;
     }
     int check(int x, int y, int *index, int) {
         for (int n=0; n<used; ++n) if (x>=items[n].rect.left && x<items[n].rect.right && y>=items[n].rect.top && y<items[n].rect.bottom) { *index=items[n].pos; return n; }
@@ -191,6 +208,134 @@ char MenuMnemonicMargin[] = " ";
 char MenuRedrawMargin[] = " ";
 
 #include "GENERATED_MENU_SOURCE"
+
+static Menu *ComputeMutationMenu = 0;
+static Font *ComputeFontA = 0;
+static Font *ComputeFontB = 0;
+static Font *ComputeFontC = 0;
+static Font *ComputeFontD = 0;
+static Font *ComputeFontE = 0;
+static int ComputeWidthCalls = 0;
+static int ComputeWidthFontIds[8];
+static char ComputeWidthTexts[8][32];
+static int EmptyWidthCalls = 0;
+static char EmptyWidthTexts[2][32];
+
+static void count_empty_font_width(Font *, char *text) {
+    assert(EmptyWidthCalls < 2);
+    std::strncpy(EmptyWidthTexts[EmptyWidthCalls], text, 31);
+    EmptyWidthTexts[EmptyWidthCalls][31] = 0;
+    ++EmptyWidthCalls;
+}
+
+static void compute_width_hook(Font *font, char *text) {
+    assert(ComputeWidthCalls < 8);
+    ComputeWidthFontIds[ComputeWidthCalls] = font->id_;
+    std::strncpy(ComputeWidthTexts[ComputeWidthCalls], text, 31);
+    ComputeWidthTexts[ComputeWidthCalls][31] = 0;
+    ++ComputeWidthCalls;
+    if (text == MenuComputeLeftSpace)
+        MenuDefaultFont = ComputeFontB;
+    else if (text == MenuComputeRightSpace)
+        MenuDefaultFont = ComputeFontC;
+    else if (std::strcmp(text, "left") == 0)
+        MenuDefaultFont = ComputeFontD;
+}
+
+static void compute_spot_init_hook(int count) {
+    assert(count == 1);
+    MenuDefaultFont = ComputeFontA;
+}
+
+static void compute_spot_add_hook(int pos) {
+    if (pos == 0) {
+        assert(ComputeMutationMenu != 0);
+        MenuDefaultFont = ComputeFontE;
+        ComputeMutationMenu->count_ = 2;
+    }
+}
+
+static void test_compute_live_font_order() {
+    Font *const saved_default_font = FontDefault;
+    Font *const saved_menu_font = MenuDefaultFont;
+    Font fallback(8, 0);
+    Font font_a(8, 1), font_b(11, 2), font_c(13, 3);
+    Font font_d(19, 4), font_e(23, 5);
+    Menu menu;
+    char left_text[] = "left";
+    char right_text[] = "right";
+    menu.pxwidth = 100;
+    menu.count_ = 1;
+    menu.entries_[0].text = left_text;
+    menu.entries_[0].flags = 5;
+    menu.entries_[1].text = right_text;
+    menu.entries_[1].flags = 1;
+
+    FontDefault = &fallback;
+    MenuDefaultFont = 0;
+    ComputeMutationMenu = &menu;
+    ComputeFontA = &font_a; ComputeFontB = &font_b; ComputeFontC = &font_c;
+    ComputeFontD = &font_d; ComputeFontE = &font_e;
+    ComputeWidthCalls = 0;
+    AfterFontWidth = compute_width_hook;
+    AfterSpotInit = compute_spot_init_hook;
+    AfterSpotAdd = compute_spot_add_hook;
+
+    menu.compute();
+
+    assert(MenuDefaultFont == &font_e);
+    assert(menu.spot_.init_calls == 1 && menu.spot_.last_init_count == 1);
+    assert(menu.count_ == 2 && menu.spot_.used == 2);
+    assert(ComputeWidthCalls == 4);
+    assert(ComputeWidthFontIds[0] == 1 &&
+           std::strcmp(ComputeWidthTexts[0], MenuComputeLeftSpace) == 0);
+    assert(ComputeWidthFontIds[1] == 2 &&
+           std::strcmp(ComputeWidthTexts[1], MenuComputeRightSpace) == 0);
+    assert(ComputeWidthFontIds[2] == 3 &&
+           std::strcmp(ComputeWidthTexts[2], "left") == 0);
+    assert(ComputeWidthFontIds[3] == 5 &&
+           std::strcmp(ComputeWidthTexts[3], "right") == 0);
+
+    const Spot::Item &left = menu.spot_.items[0];
+    const Spot::Item &right = menu.spot_.items[1];
+    assert(left.pos == 0 && left.rect.left == 55 && left.rect.right == 89);
+    assert(right.pos == 1 && right.rect.left == 21 && right.rect.right == 76);
+    assert(left.rect.bottom == 22 && right.rect.bottom == 22);
+
+    AfterFontWidth = 0;
+    AfterSpotInit = 0;
+    AfterSpotAdd = 0;
+    ComputeMutationMenu = 0;
+    ComputeFontA = ComputeFontB = ComputeFontC = ComputeFontD = ComputeFontE = 0;
+
+    MenuDefaultFont = 0;
+    FontDefault = 0;
+    Menu no_font;
+    no_font.count_ = 0;
+    EmptyWidthCalls = 0;
+    AfterFontWidth = count_empty_font_width;
+    no_font.compute();
+    assert(MenuDefaultFont == 0);
+    assert(no_font.spot_.init_calls == 0 && no_font.spot_.used == 0);
+    assert(EmptyWidthCalls == 0);
+
+    MenuDefaultFont = 0;
+    FontDefault = &fallback;
+    Menu fallback_menu;
+    fallback_menu.count_ = 0;
+    fallback_menu.compute();
+    assert(MenuDefaultFont == &fallback);
+    assert(fallback_menu.spot_.init_calls == 1);
+    assert(fallback_menu.spot_.last_init_count == 0);
+    assert(fallback_menu.spot_.used == 0);
+    // Empty count still measures both labels, after Spot::init.
+    assert(EmptyWidthCalls == 2);
+    assert(std::strcmp(EmptyWidthTexts[0], MenuComputeLeftSpace) == 0);
+    assert(std::strcmp(EmptyWidthTexts[1], MenuComputeRightSpace) == 0);
+    AfterFontWidth = 0;
+    FontDefault = saved_default_font;
+    MenuDefaultFont = saved_menu_font;
+}
 
 static Menu *ResizeMenu = 0;
 static Win *ReplacementParent = 0;
@@ -345,5 +490,6 @@ int main() {
     assert(fail_menu.UNK10(1, fail_text) == 4);
     assert(fail_menu.count_ == 0);
     allocation_fail_after = -1;
+    test_compute_live_font_order();
     std::puts("menu owner draft controls passed (host mock ABI only)");
 }

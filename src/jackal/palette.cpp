@@ -1429,16 +1429,16 @@ int Palette::fade_to(Palette *other, int start, int count, int steps,
         int k = start;
         do {
           dst->peRed = static_cast<char>(
-              (static_cast<unsigned int>(selfCopy[k].peRed) * weight +
-               static_cast<unsigned int>(otherCopy[k].peRed) * frame) /
+              (selfCopy[k].peRed * weight +
+               otherCopy[k].peRed * frame) /
               steps);
           dst->peGreen = static_cast<char>(
-              (static_cast<unsigned int>(selfCopy[k].peGreen) * weight +
-               static_cast<unsigned int>(otherCopy[k].peGreen) * frame) /
+              (selfCopy[k].peGreen * weight +
+               otherCopy[k].peGreen * frame) /
               steps);
           dst->peBlue = static_cast<char>(
-              (static_cast<unsigned int>(selfCopy[k].peBlue) * weight +
-               static_cast<unsigned int>(otherCopy[k].peBlue) * frame) /
+              (selfCopy[k].peBlue * weight +
+               otherCopy[k].peBlue * frame) /
               steps);
           ++k;
           ++dst;

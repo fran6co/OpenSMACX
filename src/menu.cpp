@@ -208,21 +208,28 @@ int Menu::UNK10(int menu_id, char *text) {
 // symbol    ?compute@Menu@@UAEXXZ
 // TRIED: `(seed = DAT_9bb484, DAT_9b7b94 = seed, seed != 0)` (single load reused for both the store and the test) instead of a comma expression that rereads the global twice, which forced an extra reload. `reinterpret_cast<Spot*>(self+0xa2c)` kept INLINE at each call site, not hoisted to a named local - hoisting moves the `lea` ahead of the `DAT_9bb484` fallback branch and regresses to MISMATCH #9. Best form lands at MISMATCH #33 (deep past the loop setup); divergence is a 'mov' vs 'test' pairing whose surrounding bytes still match, not a missed field.
 void Menu::compute() {
-    Font *font = MenuDefaultFont;
-    if (!font) {
-        font = FontDefault;
-        MenuDefaultFont = font;
+    if (!MenuDefaultFont) {
+        MenuDefaultFont = FontDefault;
     }
-    if (!font) return;
+    if (!MenuDefaultFont) return;
 
     spot_.init(count_);
-    int left_space = pixel_width() - font->width(MenuComputeLeftSpace);
-    int right_space = font->width(MenuComputeRightSpace);
-    const int line_height = font->height_ * 2;
+
+    Font *const left_font = MenuDefaultFont;
+    const int available_width = pixel_width();
+    const int left_label_width = left_font->width(MenuComputeLeftSpace);
+    int left_space = available_width - left_label_width;
+
+    Font *const right_font = MenuDefaultFont;
+    const int line_height = right_font->height_ * 2;
+    int right_space = right_font->width(MenuComputeRightSpace);
+
     for (int i = 0; i < count_; ++i) {
         MenuEntry &entry = entries_[i];
         if ((entry.flags & 1) == 0) continue;
-        const int width = font->width(entry.text);
+        char *const entry_text = entry.text;
+        Font *const entry_font = MenuDefaultFont;
+        const int width = entry_font->width(entry_text);
         if ((entry.flags & 4) == 0) {
             spot_.add(i, 0, right_space, 0, width, line_height);
             right_space += width;

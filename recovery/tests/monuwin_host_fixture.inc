@@ -24,6 +24,8 @@ struct Call {
 std::vector<Call> calls;
 std::map<const void *, int> ids;
 int pcx_calls, pcx_fail_at, flic_result, spot_position, spot_type;
+// Host-only one-shot mutation hook; production Spot::check is non-reentrant.
+void (*spot_check_callback)() = nullptr;
 int live_buffers, live_sprites, live_spots, live_buttons, live_palettes;
 int flic_closes, GenderDefault, PluralityDefault;
 void check(bool ok, const char *message) {
@@ -112,6 +114,9 @@ struct Spot {
     void kill_type(int type) { record("kill",this,{type}); }
     int check(int x,int y,int *position,int *type) {
         record("spot_check",this,{x,y}); *position=spot_position; *type=spot_type;
+        void (*callback)() = spot_check_callback;
+        spot_check_callback = nullptr;
+        if (callback != nullptr) callback();
         return spot_position == -1 ? -1 : 1;
     }
     int add(int position,int type,int x,int y,int w,int h) {
@@ -132,13 +137,13 @@ struct Sprite {
 };
 struct Palette { Palette() { ++live_palettes; } ~Palette() { --live_palettes; } };
 struct Flic {
-    Buffer buffer_; Palette palette_; int field_5A4_ = 0;
+    Buffer buffer_; Palette palette_; int palette_offset_ = 0;
     ~Flic() { close(); } // Real Flic destructor's sole close, then member teardown.
     int init(Buffer *target,char *path,int x,int y,int transparent) {
         record("flic_init",this,{x,y,transparent},path,target); return flic_result;
     }
 __FLIC_SETTER__
-    void decode_stored_frame() { record("decode",this,{field_5A4_,0,0}); }
+    void decode_stored_frame() { record("decode",this,{palette_offset_,0,0}); }
     void close() { ++flic_closes; record("flic_close",this); }
 };
 struct StringList {
@@ -155,6 +160,10 @@ struct ConsoleInfo { int faction_id_ = 3; } ConsoleGlobal;
 struct LockWord { uint32_t leading_words_[4]; union Payload { uint32_t flags; int *vehicle_selection_follow; } payload_; uint32_t trailing_words_[10]; };
 struct PrimaryStateDouble { uint32_t leading_words_[3]; uint32_t flags_; uint32_t trailing_words_[10]; };
 struct NetDaemonDouble { PrimaryStateDouble primary_state_; LockWord channels_[2]; LockWord lock_state_[24]; } NetDaemonNet;
+void mutate_faction_after_spot_check() {
+    ConsoleGlobal.faction_id_ = 5;
+    NetDaemonNet.primary_state_.trailing_words_[7] |= 1u << 5;
+}
 struct PlayerInfo {
     int is_leader_female, noun_gender, is_noun_plural;
     char filename[8], title_leader[32], name_leader[32], noun_faction[32], adj_name_faction[32];
@@ -184,7 +193,8 @@ __METHODS__
 
 void reset(MonuWin &window) {
     calls.clear(); ids.clear(); pcx_calls=0; pcx_fail_at=-1; flic_result=0; flic_closes=0;
-    spot_position=4; spot_type=0; GenderDefault=91; PluralityDefault=92;
+    spot_position=4; spot_type=0; spot_check_callback=nullptr;
+    GenderDefault=91; PluralityDefault=92;
     StringAllocationHeap=&heap_sentinel;
     ConsoleGlobal.faction_id_=3; ReportIfGlobal.field_1E230_=0; MonumentWindowCount=4;
     NetDaemonNet={}; std::memset(FactionMonuments,0,sizeof FactionMonuments);
@@ -270,6 +280,23 @@ void callback_contracts(MonuWin &window) {
     calls.clear(); window.on_button_clicked(999); check(named("modal").size()==1 && named("close").size()==1,"button releases modal then closes");
     reset(window); window.selected_monument_type_=14; spot_position=69; window.on_left_click(3,4);
     check(FactionMonuments[3].latest_type_==14,"primary spot resolves current selection");
+
+    reset(window);
+    spot_position=0x45; spot_type=0; window.selected_monument_type_=14;
+    check((NetDaemonNet.primary_state_.trailing_words_[7] & (1u << 3)) == 0,
+          "faction3 passes the initial primary-mask guard");
+    spot_check_callback=mutate_faction_after_spot_check;
+    window.on_left_click(101,202);
+    check(spot_check_callback==nullptr,"Spot callback is one-shot");
+    check(ConsoleGlobal.faction_id_==5,"Spot callback changes the live faction");
+    check((NetDaemonNet.primary_state_.trailing_words_[7] & (1u << 5)) != 0,
+          "Spot callback installs faction5 mask after initial guard");
+    check(FactionMonuments[5].latest_type_==14 && FactionMonuments[3].latest_type_==4,
+          "click reloads faction after Spot::check and applies primary type");
+    check(window.selected_monument_type_==14 && window.selection_pending_==1,
+          "post-Spot mutation preserves selected and pending fields");
+    check(named("spot_check").size()==1 && named("redraw").size()==1,
+          "post-Spot mutation still performs one hit check and one redraw");
     for(int gate=0;gate<3;++gate) {
         reset(window); if(gate==0) NetDaemonNet.primary_state_.trailing_words_[7]=1u<<3;
         if(gate==1) NetDaemonNet.channels_[1].payload_.flags=1;

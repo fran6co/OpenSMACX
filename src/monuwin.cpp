@@ -120,7 +120,7 @@ void MonuWin::on_left_click(int x, int y) {
   if (type == 0x45) {
     type = selected_monument_type_;
   }
-  FactionMonuments[faction].latest_type_ = type;
+  FactionMonuments[ConsoleGlobal.faction_id_].latest_type_ = type;
   selected_monument_type_ = type;
   selection_pending_ = 1;
   redraw();

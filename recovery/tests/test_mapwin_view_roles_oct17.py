@@ -287,3 +287,147 @@ def test_game_io_order_and_width_damage_controls(tmp_path):
                 [str(exe_path)], capture_output=True, text=True, timeout=10)
             assert run.returncode != 0, (
                 label + " unexpectedly survived under " + compiler_name)
+
+
+def _mapwin_label_font_fixture(body):
+    """Compile the actual extracted MapWin::init body with narrow host spies."""
+    return r'''#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
+#include "popup_fonts.h"
+
+class Font { public: int identity; };
+Font *PopupMapLabelFont = 0;
+Font *LookupFont = 0;
+int FindFontCalls = 0;
+Font *find_font(int, int) { ++FindFontCalls; return LookupFont; }
+
+struct RECT { int left, top, right, bottom; };
+struct BufferStub { void init(int, int, int, int) {} };
+class MapWin;
+MapWin *MapWinTable[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+int IsMultiplayerNet = 0;
+unsigned int MapPanelDirtyMask = 0;
+int WorldClimateSkipTerrainClear = 0;
+RECT WorldMapBounds = { 0, 0, 100, 100 };
+RECT MapPanelRects[8] = {};
+struct BaseWindowStub { RECT rect1_; };
+BaseWindowStub TutWinBaseWindow = {};
+struct PlayerStub {
+  int noun_gender;
+  int is_noun_plural;
+  char formal_name_faction[32];
+};
+typedef PlayerStub Player;
+PlayerStub Players[8] = {};
+struct ConsoleStub { int faction_id_; };
+ConsoleStub ConsoleGlobal = { 0 };
+int GenderDefault = 0;
+int PluralityDefault = 0;
+char StringTemp[256] = {};
+char *label_get(int) { return (char *)"label"; }
+void say_year(char *) {}
+char *_itoa(int value, char *buffer, int) {
+  sprintf(buffer, "%d", value);
+  return buffer;
+}
+
+class Win {
+ public:
+  Font *field_F8_;
+  Win() : field_F8_(0) {}
+};
+
+class MapWin : public Win {
+ public:
+  BufferStub buffer_a_;
+  unsigned int view_active_;
+  unsigned int map_view_index_;
+  unsigned int field_1DD70_;
+  int field_1DD98_;
+  MapWin() : view_active_(0), map_view_index_(0), field_1DD70_(0),
+      field_1DD98_(0) {}
+  void UNK5(unsigned int) {}
+  void init(RECT *, char *, int) {}
+  void do_image_buttons() {}
+  void standard_caption() {}
+  void redraw() {}
+  void init(int mode, int update);
+};
+struct WorldClimateWindowStub { MapWin mapWin_; };
+WorldClimateWindowStub WorldClimateWorldWin;
+@@MAPWIN_INIT_BODY@@
+
+int main() {
+  Font cached = { 1 };
+  Font lookup = { 2 };
+  MapWin win;
+  MapWinTable[1] = 0;
+  LookupFont = &lookup;
+
+  // The guarded nonzero-view case must read the typed cache even when its
+  // value differs from a fresh lookup result, and must not call find_font.
+  win.map_view_index_ = 2;
+  win.field_F8_ = 0;
+  PopupMapLabelFont = &cached;
+  FindFontCalls = 0;
+  win.init(1, 1);
+  if (win.field_F8_ != &cached || FindFontCalls != 0) return 1;
+
+  // The zero-view path does not write the font field.
+  win.map_view_index_ = 0;
+  win.field_F8_ = &lookup;
+  PopupMapLabelFont = &cached;
+  FindFontCalls = 0;
+  win.init(1, 1);
+  if (win.field_F8_ != &lookup || FindFontCalls != 0) return 2;
+
+  // Preserve the original cache's null value: no lookup or fallback.
+  win.map_view_index_ = 2;
+  win.field_F8_ = &lookup;
+  PopupMapLabelFont = 0;
+  FindFontCalls = 0;
+  win.init(1, 1);
+  if (win.field_F8_ != 0 || FindFontCalls != 0) return 3;
+  return 0;
+}
+'''.replace("@@MAPWIN_INIT_BODY@@", body).replace(
+        '"popup_fonts.h"', '"' + str(ROOT / "src/popup_fonts.h") + '"')
+
+
+def _compile_and_run_mapwin_label_font(body, tmp_path, name, compiler):
+    fixture = _mapwin_label_font_fixture(body)
+    source_path = tmp_path / ("mapwin_label_font_" + name + ".cpp")
+    exe_path = tmp_path / ("mapwin_label_font_" + name)
+    source_path.write_text(fixture)
+    subprocess.run(
+        [compiler, "-std=c++98", "-Wall", "-Wextra", "-Werror",
+         str(source_path), "-o", str(exe_path)],
+        check=True, capture_output=True, text=True, timeout=30)
+    return subprocess.run([str(exe_path)], capture_output=True, text=True, timeout=10)
+
+
+def test_actual_mapwin_init_uses_cached_map_label_font_and_preserves_null(tmp_path):
+    source = (ROOT / "src/mapwin.cpp").read_text()
+    body = _body(source, "void MapWin::init(int mode, int update)")
+    old_lookup = "Win::field_F8_ = find_font(10, 1);"
+    cached_read = "Win::field_F8_ = PopupMapLabelFont;"
+    assert body.count(cached_read) == 1
+
+    compilers = [(name, shutil.which(name)) for name in ("g++", "clang++")]
+    compilers = [(name, path) for name, path in compilers if path]
+    assert compilers, "host GCC/Clang required"
+    for name, compiler in compilers:
+        run = _compile_and_run_mapwin_label_font(body, tmp_path, name, compiler)
+        assert run.returncode == 0, name + ": " + run.stdout + run.stderr
+
+    # Causal mutant: restore the old re-lookup. The fixture gives the cache
+    # and lookup different Font addresses, so this must fail the nonzero-view
+    # expectation and expose the unwanted call.
+    damaged = body.replace(cached_read, old_lookup)
+    assert damaged != body and damaged.count(old_lookup) == 1
+    for name, compiler in compilers:
+        run = _compile_and_run_mapwin_label_font(
+            damaged, tmp_path, "old_lookup_mutant_" + name, compiler)
+        assert run.returncode != 0, (
+            "old lookup mutant unexpectedly passed under " + name)

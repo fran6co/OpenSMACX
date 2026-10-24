@@ -69,6 +69,7 @@
 // symbol    _$E11
 #include "stdafx.h"
 #include "interface_fonts.h"
+#include "popup_fonts.h"
 
 // MapWin constructor-installed Win branch: capture4, resize13, mouse17, update63.
 // Table start is observed in the original constructor; full extent remains unknown.
@@ -223,7 +224,7 @@ void MapWin::UNK5(int panel) {
 }
 
 // ORIGINAL: 0x00470A90 ?init@MapWin@@QAEXHH@Z 0x00470A90-0x00470EC2
-// RECOVERY_BINDING: v1 {"evidence": ["git:9f6ee90ae7baa6354fcca006def5561fb956792b:src/recovered/units/00470a90.cpp retains the complete 1074-byte seed; mode zero uses MapWin_UNK5 panels and Players records, mode two uses BaseWin::rect1_, and mode three selects label 0x204.", "git:9f6ee90ae7baa6354fcca006def5561fb956792b:src/recovered/units/00588aa0.cpp stores find_font(10, 1) at the original display-font slot."], "reason": "Home the map modes through typed source owners; resolve the font through its real lookup while its startup cache remains unowned."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:9f6ee90ae7baa6354fcca006def5561fb956792b:src/recovered/units/00470a90.cpp retains the complete 1074-byte seed; mode zero uses MapWin_UNK5 panels and Players records, mode two uses BaseWin::rect1_, and mode three selects label 0x204.", "git:9f6ee90ae7baa6354fcca006def5561fb956792b:src/recovered/units/00588aa0.cpp stores find_font(10, 1) at the original display-font slot.", "Pinned 0x00470DC2 reads pointer storage 0x00945778; config_popups at 0x00588F61 writes the selector result to that same slot. src/popup.cpp owns Font *PopupMapLabelFont and src/popup_fonts.h declares it; the pinned pre-CRT value is zero."], "reason": "Initialize the secondary MapWin view from the source-owned borrowed PopupMapLabelFont cache, preserving the original direct data reference and pre-write null state without another lookup or fallback."}
 void MapWin::init(int mode, int update) {
     buffer_a_.init(100, 50, 0, 0);
     view_active_ = 1;
@@ -293,10 +294,9 @@ void MapWin::init(int mode, int update) {
         field_1DD98_ = -7;
     }
     if (map_view_index_ != 0) {
-        // The original font-table initializer caches find_font(10, 1) at
-        // 0x00945778. Resolve the same Font through its typed owner until
-        // that initializer and cache have source-owned lifetimes.
-        Win::field_F8_ = find_font(10, 1);
+        // config_popups publishes this borrowed font. The original reads
+        // the cache directly, including its pre-initialization null value.
+        Win::field_F8_ = PopupMapLabelFont;
     }
     if (mode == 0) {
         do_image_buttons();
