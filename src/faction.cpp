@@ -935,8 +935,8 @@ BOOL __cdecl great_satan(int faction_id, BOOL is_aggressive) {
     if (climactic_battle() && aah_ooga(faction_id, -1) == faction_id) {
         return true;
     }
-    uint32_t diff_factor;
-    uint32_t factor;
+    int diff_factor;
+    int factor;
     if (has_intense_riv) {
         factor = 4;
         diff_factor = DLVL_TRANSCEND;
@@ -2769,7 +2769,7 @@ void __cdecl rankings(int apply_ranks) {
                 }
             }
         }
-        FactionRankingsUnk[faction_id] = (uint32_t)score;
+        FactionRankingsUnk[faction_id] = score;
         if (GameDataStateStorage.fields_.turn_current_num_ < MaxRankingHistoryTurns) {
             FactionRankingHistory[faction_id + GameDataStateStorage.fields_.turn_current_num_ * MaxPlayerNum] = (uint16_t)score;
         }
@@ -2781,12 +2781,12 @@ void __cdecl rankings(int apply_ranks) {
         int best_faction = 0;
         int best_score = -1;
         for (int faction_id = 1; faction_id < MaxPlayerNum; faction_id++) {
-            if ((int)FactionRankingsUnk[faction_id] > best_score) {
+            if (FactionRankingsUnk[faction_id] > best_score) {
                 best_faction = faction_id;
-                best_score = (int)FactionRankingsUnk[faction_id];
+                best_score = FactionRankingsUnk[faction_id];
             }
         }
-        FactionRankingsUnk[best_faction] = (uint32_t)-1;
+        FactionRankingsUnk[best_faction] = -1;
         PlayersData[best_faction].ranking = (uint32_t)rank;
     }
     for (rank = 0; rank < MaxPlayerNum; rank++) {
@@ -4449,8 +4449,11 @@ void __cdecl enemies_team_up(int faction_id, int faction_id_with,
 
 // Shared diplomacy evaluation state. Neutral names retain independently
 // observed original slots until their meanings can be named conclusively.
-// RECOVERY_OBJECT: v1 0x00945DD8 ?FactionRankingsUnk@@3PAIA
-uint32_t FactionRankingsUnk[MaxPlayerNum];
+// RECOVERY_OBJECT: v4 0x00945DD8 ?FactionRankingsUnk@@3PAIA target ?FactionRankingsUnk@@3PAHA
+// The producer computes signed ranking scores and stores -1 while selecting
+// winners; numeric consumers and pinned great_satan SETGE use signed ints.
+// Game/network serialization copies this 0x20-byte array unchanged.
+int FactionRankingsUnk[MaxPlayerNum];
 // Original faction-indexed reads establish the known eight game slots;
 // complete physical allocation is unresolved, hence a start-only binding.
 // RECOVERY_OBJECT: v1 0x0093F678 ?FactionDiplomacyFlags@@3PAIA
@@ -4759,8 +4762,8 @@ void __cdecl diplomacy_check(int faction, int other, int update) {
             && (static_cast<int>(PlayersData[other].ranking) < 5 || ((GameDataStateStorage.fields_.game_rules_ & 0x1000) && GameDataStateStorage.fields_.turn_current_num_ > 199))))
         DiploScratchFA3C = 0;
     else DiploScratchFA3C = 1;
-    DiploScratchF7F0 = diplo_mul(static_cast<int>(FactionRankingsUnk[faction]), 2)
-        < static_cast<int>(FactionRankingsUnk[GameDataStateStorage.fields_.faction_rankings_[7]]) && PlayersData[other].ranking != 7;
+    DiploScratchF7F0 = diplo_mul(FactionRankingsUnk[faction], 2)
+        < FactionRankingsUnk[GameDataStateStorage.fields_.faction_rankings_[7]] && PlayersData[other].ranking != 7;
     if (PlayersData[other].flags & 0x800000) { DiploScratchFA3C = 1; DiploScratchF7F0 = 0; }
     if (PlayersData[other].flags & 0x400000) { DiploScratchFA3C = 0; DiploScratchF7F0 = 1; }
     DiploFriction = static_cast<int>(PlayersData[other].diplo_friction[faction]);
@@ -4792,7 +4795,7 @@ void __cdecl diplomacy_check(int faction, int other, int update) {
             if (PlayersData[other].diplo_treaties[allied_faction] & 1) {
                 if (static_cast<int>(PlayersData[allied_faction].ranking) > 4 && static_cast<int>(PlayersData[other].ranking) < 5 && allied_faction != faction && !DiploScratchF7F0) ++DiploScratchF7FC;
                 ++DiploScratchF7E0;
-                DiploScratchF7F8 = diplo_add(DiploScratchF7F8, static_cast<int>(FactionRankingsUnk[allied_faction]));
+                DiploScratchF7F8 = diplo_add(DiploScratchF7F8, FactionRankingsUnk[allied_faction]);
             }
         }
     }
@@ -5077,7 +5080,7 @@ void __cdecl diplomacy_check(int faction, int other, int update) {
     } else DiploScratchFAA0 = DiploScratchFA50 = DiploScratchFA68 = DiploScratchFA60 = 0;
     const int final_satan = great_satan(faction, 1);
     if (!final_satan || DiploScratchF7E0 > 1
-        || static_cast<int>(FactionRankingsUnk[faction]) < diplo_add(DiploScratchF7F8, diplo_mul(static_cast<int>(FactionRankingsUnk[other]), 3))
+        || FactionRankingsUnk[faction] < diplo_add(DiploScratchF7F8, diplo_mul(FactionRankingsUnk[other], 3))
         || static_cast<int>(PlayersData[other].ranking) > 5 || PlayersData[faction].mil_strength_1 <= PlayersData[other].mil_strength_1) DiploScratchFA24 = 0;
     else {
         DiploScratchFA24 = 1;
@@ -13105,11 +13108,9 @@ if (target_rank > other_rank && target_rank > actor_rank &&
 }
 
 if (selected_target_faction_id == static_cast<int>(GameDataStateStorage.fields_.faction_rankings_[7])) {
-    const int target_power =
-        static_cast<int>(FactionRankingsUnk[selected_target_faction_id]);
+    const int target_power = FactionRankingsUnk[selected_target_faction_id];
     const int next_ranked_faction = static_cast<int>(GameDataStateStorage.fields_.faction_rankings_[6]);
-    const int next_ranked_power =
-        static_cast<int>(FactionRankingsUnk[next_ranked_faction]);
+    const int next_ranked_power = FactionRankingsUnk[next_ranked_faction];
     if (target_power >= diplo_mul(next_ranked_power, 2)) {
         proposal_attack_score /= 4;
     } else if (great_satan(selected_target_faction_id, 0) != 0) {
@@ -13737,10 +13738,9 @@ static TechTradePolicyDecision tech_trade_pre_offer_policy(
                 decision.route = TECH_TRADE_POLICY_REJECT_5423D8;
                 return decision;
             }
-            const int actor_power =
-                static_cast<int>(FactionRankingsUnk[actor]);
-            const int current_power = static_cast<int>(
-                FactionRankingsUnk[GameDataStateStorage.fields_.ranking_faction_id_unk2_]);
+            const int actor_power = FactionRankingsUnk[actor];
+            const int current_power =
+                FactionRankingsUnk[GameDataStateStorage.fields_.ranking_faction_id_unk2_];
             if (diplo_mul(actor_power, 3) > diplo_mul(current_power, 4) &&
                 diplo_mul(PlayersData[actor].tech_ranking, 3) >
                     diplo_mul(PlayersData[GameDataStateStorage.fields_.ranking_faction_id_unk2_].tech_ranking,
@@ -14618,9 +14618,9 @@ static TechTradeTailEntry tech_trade_ui_gate(int faction_id,
             GameDataStateStorage.fields_.ranking_faction_id_unk1_ == static_cast<uint32_t>(actor) &&
             (PlayersData[actor].diplo_treaties[partner] & 1u) == 0) {
             const int ranker = static_cast<int>(GameDataStateStorage.fields_.ranking_faction_id_unk2_);
-            const int ranker_power = static_cast<int>(FactionRankingsUnk[ranker]);
+            const int ranker_power = FactionRankingsUnk[ranker];
             if (static_cast<int>(PlayersData[ranker].ranking) < 5 ||
-                diplo_mul(static_cast<int>(FactionRankingsUnk[actor]), 2) >
+                diplo_mul(FactionRankingsUnk[actor], 2) >
                     diplo_mul(ranker_power, 3))
                 return TECH_TRADE_TAIL_BUY_RESULT_5437B7;
         }
@@ -14642,9 +14642,9 @@ static TechTradeTailEntry tech_trade_ui_gate(int faction_id,
         if ((actor_agenda & 0x80) != 0 &&
             GameDataStateStorage.fields_.ranking_faction_id_unk1_ == static_cast<uint32_t>(actor) &&
             (PlayersData[actor].diplo_treaties[partner] & 1u) == 0 &&
-            diplo_mul(static_cast<int>(FactionRankingsUnk[GameDataStateStorage.fields_.faction_rankings_[7]]),
+            diplo_mul(FactionRankingsUnk[GameDataStateStorage.fields_.faction_rankings_[7]],
                       3) >
-                diplo_mul(static_cast<int>(FactionRankingsUnk[GameDataStateStorage.fields_.faction_rankings_[6]]),
+                diplo_mul(FactionRankingsUnk[GameDataStateStorage.fields_.faction_rankings_[6]],
                           4))
             return TECH_TRADE_TAIL_BUY_RESULT_5437B7;
         if ((actor_agenda & 0x100) != 0 &&

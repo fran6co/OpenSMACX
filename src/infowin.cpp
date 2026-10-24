@@ -393,7 +393,7 @@ void InfoWin::setup_text() {
 
             int maximum = 1;
             for (int rank_index = 1; rank_index < MaxPlayerNum; ++rank_index) {
-                const int score = static_cast<int>(FactionRankingsUnk[rank_index]);
+                const int score = FactionRankingsUnk[rank_index];
                 if (score > maximum) maximum = score;
             }
             const int plot_height = clip.bottom - clip.top - natural_line_height - 4;
@@ -468,7 +468,7 @@ void InfoWin::setup_text() {
             rankings(0);
             int maximum = 1;
             for (int rank_index = 1; rank_index < MaxPlayerNum; ++rank_index) {
-                const int score = static_cast<int>(FactionRankingsUnk[rank_index]);
+                const int score = FactionRankingsUnk[rank_index];
                 if (score > maximum) maximum = score;
             }
 
@@ -479,7 +479,7 @@ void InfoWin::setup_text() {
             const int plot_height = clip.bottom - clip.top - natural_line_height - 4;
             const int bottom = clip.bottom - 2;
             for (int faction_index = 1; faction_index < MaxPlayerNum; ++faction_index) {
-                int bar_height = static_cast<int>(FactionRankingsUnk[faction_index]) *
+                int bar_height = FactionRankingsUnk[faction_index] *
                                  plot_height / maximum;
                 if (bar_height < 1) bar_height = 1;
                 RECT bar;
