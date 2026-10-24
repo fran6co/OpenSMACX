@@ -1,0 +1,23 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "40fa4335cbb36ed364c658be2fd4fc33a8ca8b55",
+  "editable_files": [
+    "src/win.cpp"
+  ],
+  "evidence": [
+    "Current40fa source and qualified build-eeqfhx4q bind the complete Win member. The original checks0xD,0x1B,0x1000D in order; the source proposal retains exactly one appropriate callback and all later child/key/Sound work.",
+    "One fixed ordinary candidate only; preserve original nullable receiver/child paths and every historical identity/claim. Native production replica and outside-body checks precede source selection. No flags, exports, ABI, arithmetic or safety changes.",
+    "Any codegen collateral remains pending evidence for coordinator review; full build/link and global local/strict identity preservation are required before manual integration. This is not automatic/full-game acceptance."
+  ],
+  "intent": "Restore pinned notification comparison order using ordinary Win callback C++ with unchanged values, dispatch, lifetime and error behavior.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6220432,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "win-key-click-order-oct25c"
+}
