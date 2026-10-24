@@ -1,0 +1,19 @@
+{
+  "event_id": "497b53ab546bcb102d1cc5233bf93cb254e0970d1d063ba94c65be6fbce7f66b",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "netwin-close-nonlocal-definition-oct24m",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "The complete unchanged close definition now directly follows its own annotation before the destructor-specific comment/marker. No annotation byte or source line/body was added, removed or changed. Both native body-bound checks now pass; all55identity/span/claim/history records retain their meanings.",
+      "Independent review plus fresh actual-production baseline replay and moved-source compilation pass. All55mapped verdicts and every physical function code signature are unchanged, whole-object compiler replica equality and zero-omission residual PASS. Raw COFF byte hashes differ; this compiler-local representation comparison is not linked/runtime/game acceptance.",
+      "This resolves source-definition locality only. Complete application build/link and coordinator-reviewed integration are still required. The uncertain daemon ABI lead was not acted on; all historical obligations remain."
+    ]
+  },
+  "previous_event": "716a481b6459281ab20b38b6098407dccad1ccd4c1e38e58b68364ed2124718a",
+  "request_id": "netwin-definition-locality-incorporated-oct24m",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:easy-owner-3-oct24m"
+}

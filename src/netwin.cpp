@@ -551,6 +551,24 @@ Return Value: n/a
 Status: Coverage transcription - unclaimed body (the preserved seed keeps its
         own FILE BYTE_EXACT claim until this converges)
 */
+void NetWin::close() {
+    if (faction_records_ != 0) {
+        free(faction_records_);
+        faction_records_ = 0;
+    }
+    if (faction_records_copy_ != 0) {
+        free(faction_records_copy_);
+        faction_records_copy_ = 0;
+    }
+    field_761C_ = 0xFFFFFFFF;
+    field_7620_ = 0xFFFFFFFF;
+    spot_.shutdown();
+    stringBox_.close();
+    editBox_.close();
+    checkBox_.close();
+    flatButton1_.close();
+}
+
 // Native 0x004834E0: explicit resource and control shutdown precedes normal
 // compiler-owned teardown of the typed members and GraphicWin base.
 // Superseded seed deleted; seed paths below are historical Git provenance.
@@ -569,24 +587,6 @@ NetWin::~NetWin() {
     field_761C_ = -1;
     field_7620_ = -1;
 
-    spot_.shutdown();
-    stringBox_.close();
-    editBox_.close();
-    checkBox_.close();
-    flatButton1_.close();
-}
-
-void NetWin::close() {
-    if (faction_records_ != 0) {
-        free(faction_records_);
-        faction_records_ = 0;
-    }
-    if (faction_records_copy_ != 0) {
-        free(faction_records_copy_);
-        faction_records_copy_ = 0;
-    }
-    field_761C_ = 0xFFFFFFFF;
-    field_7620_ = 0xFFFFFFFF;
     spot_.shutdown();
     stringBox_.close();
     editBox_.close();

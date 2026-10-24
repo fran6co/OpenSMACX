@@ -1,0 +1,22 @@
+{
+  "event_id": "0986aeaf65acf514a1260961dccf8a7e1c11f72ff03d984ce35f33d9d38401eb",
+  "payload": {
+    "affects": [
+      "entity-32d7849c271f161e5f8b6e8c7eaa43adc68f7f1c9be303df0b84e70662a53b82",
+      "entity-7ea071569ca6e9c01ee38b8c58c7021c14061a1b80833b1fbd3c5358a734f6da"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "netwin-close-nonlocal-definition-oct24m",
+    "evidence": [
+      "Native body-bound validation refuses close481D10: its mapping at540 precedes destructor4834E0 mapping557, while close definition579 is after the destructor. Both original identities already have real compiled implementations.",
+      "Move only the complete unchanged close definition before the destructor-specific comment/marker, immediately after its own original comment block. Preserve every source annotation byte; verify both native body bindings and compiler output, retaining any metadata residual differences."
+    ],
+    "hypothesis": "Restore the close and destructor definition-to-annotation locality without altering their complete bodies, signatures, identities, claims or original behavior.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "netwin-close-nonlocal-definition-oct24m",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:easy-owner-3-oct24m"
+}
