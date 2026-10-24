@@ -47,7 +47,7 @@ static void release(void *pointer) {
 // @@BODIES@@
 #undef free
 
-LPVOID Heap::get(size_t requested) {
+LPVOID Heap::get(int requested) {
     if (free_size_ < requested) return 0;
     void *result = current_;
     current_ = static_cast<unsigned char *>(current_) + requested;

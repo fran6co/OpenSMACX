@@ -41,6 +41,106 @@ def actual_implementation() -> str:
 
 
 SCENARIOS = r'''
+    // Feed a fully initialized legacy byte image through the existing stream
+    // path. Offsets below are literal pin-derived wire offsets; this oracle
+    // does not name or mirror an implementation-side header member.
+    #define PUT_LEGACY_DWORD(offset, value) do { \
+        const int legacy_word = (value); \
+        memcpy(legacy_header + (offset), &legacy_word, 4); \
+    } while (0)
+    unsigned char legacy_header[0x31C];
+    memset(legacy_header, 0, sizeof legacy_header);
+    legacy_header[0x10] = 0xA7; // untouched opaque prefix byte (current view also opaque)
+    PUT_LEGACY_DWORD(0x38, 0);  // current vehicle count slot
+    PUT_LEGACY_DWORD(0x3C, 0);  // current base count slot
+    PUT_LEGACY_DWORD(0x104, 0x1234567); // project entry 32
+    PUT_LEGACY_DWORD(0x108, 17); // governor dword
+    PUT_LEGACY_DWORD(0x10C, 101); // council count first
+    PUT_LEGACY_DWORD(0x134, 111); // council count last
+    PUT_LEGACY_DWORD(0x138, 201); // council turn first
+    PUT_LEGACY_DWORD(0x160, 211); // council turn last
+    legacy_header[0x164] = 0x5A; // achieved technology byte 0
+    legacy_header[0x1BC] = 0x6B; // achieved technology byte 88
+    legacy_header[0x1BD] = 'W'; // save-name first byte
+    legacy_header[0x1BE] = '\0';
+    legacy_header[0x2BB] = '\0'; // keep the byte before the endpoint terminated
+    legacy_header[0x2BC] = 'Z'; // save-name byte 255
+    PUT_LEGACY_DWORD(0x2C0, 301); // climate first dword
+    PUT_LEGACY_DWORD(0x2C4, 302);
+    PUT_LEGACY_DWORD(0x2C8, 303);
+    PUT_LEGACY_DWORD(0x2CC, 304);
+    PUT_LEGACY_DWORD(0x2D0, 305); // climate/bonus last dword
+    PUT_LEGACY_DWORD(0x2D4, 401); // weight 0
+    PUT_LEGACY_DWORD(0x2F0, 408); // weight 7
+    PUT_LEGACY_DWORD(0x2F4, 501); // first terminal dword
+    PUT_LEGACY_DWORD(0x2F8, 502);
+    PUT_LEGACY_DWORD(0x2FC, 503);
+    PUT_LEGACY_DWORD(0x300, 504);
+    PUT_LEGACY_DWORD(0x304, 10); // terminal word 4: legacy version
+    PUT_LEGACY_DWORD(0x308, 0);
+    PUT_LEGACY_DWORD(0x30C, 0);
+    PUT_LEGACY_DWORD(0x310, 0);
+    PUT_LEGACY_DWORD(0x314, 0);
+    PUT_LEGACY_DWORD(0x318, 509); // last terminal dword
+    FILE *legacy_wire = tmpfile();
+    assert(legacy_wire != 0);
+    assert(fwrite(legacy_header, sizeof legacy_header, 1, legacy_wire) == 1);
+    rewind(legacy_wire);
+    reset_trace();
+    read_header_from_stream = 1;
+    fail_at_step = 1; // stop on the first post-migration transfer
+    assert(game_data(legacy_wire, 0) == 1);
+    assert(transfer_steps.size() == 2);
+    assert(transfer_steps[0].size == 0x31C);
+    assert(transfer_steps[1].size == 4);
+    assert(GameDataStateStorage.fields_.secret_project_.project_base[32] == 0x1234567);
+    assert(GameDataStateStorage.fields_.secret_project_.project_base[33] == -1);
+    assert(GameDataStateStorage.fields_.secret_project_.project_base[63] == -1);
+    assert(GameDataStateStorage.fields_.governor_faction_ == 17);
+    assert(GameDataStateStorage.fields_.council_resolution_count_[0] == 101);
+    assert(GameDataStateStorage.fields_.council_resolution_count_[10] == 111);
+    assert(GameDataStateStorage.fields_.council_last_resolution_turn_[0] == 201);
+    assert(GameDataStateStorage.fields_.council_last_resolution_turn_[10] == 211);
+    assert(GameDataStateStorage.fields_.game_tech_achieved_[0] == 0x5A);
+    assert(GameDataStateStorage.fields_.game_tech_achieved_[88] == 0x6B);
+    assert(GameDataStateStorage.fields_.legacy_game_save_name_[0] == 'W');
+    assert(GameDataStateStorage.fields_.legacy_game_save_name_[254] == '\0');
+    assert(GameDataStateStorage.fields_.legacy_game_save_name_[255] == 'Z');
+    assert(GameDataStateStorage.fields_.climate_rise_step_ == 301);
+    assert(GameDataStateStorage.fields_.climate_rise_limit_ == 302);
+    assert(GameDataStateStorage.fields_.climate_rise_accum_ == 303);
+    assert(GameDataStateStorage.fields_.climate_sea_level_delta_ == 304);
+    assert(GameDataStateStorage.fields_.transcendence_score_bonus_ == 305);
+    assert(GameDataStateStorage.fields_.transcendence_score_weights_[0] == 401);
+    assert(GameDataStateStorage.fields_.transcendence_score_weights_[7] == 408);
+    assert(GameDataStateStorage.fields_.sunspot_duration_ == 501);
+    assert(GameDataStateStorage.fields_.save_daemon_state_word_ == 10);
+    assert(GameDataStateStorage.fields_.ecology_event_accumulator_ == 509);
+    assert(reinterpret_cast<const unsigned char *>(&GameDataStateStorage)[0x10] == 0xA7);
+    fclose(legacy_wire);
+
+    // Version 11 selects the current live-state transfer without first
+    // copying/migrating the legacy prefix. Fail that transfer before the
+    // mock can change state, then confirm old project sentinels are untouched.
+    memset(legacy_header + 0x304, 0, 4);
+    PUT_LEGACY_DWORD(0x304, 11);
+    legacy_wire = tmpfile();
+    assert(legacy_wire != 0);
+    assert(fwrite(legacy_header, sizeof legacy_header, 1, legacy_wire) == 1);
+    rewind(legacy_wire);
+    reset_trace();
+    memset(&GameDataStateStorage, 0x5C, sizeof GameDataStateStorage);
+    GameDataStateStorage.fields_.game_state_ = 0;
+    read_header_from_stream = 1;
+    fail_at_step = 1;
+    assert(game_data(legacy_wire, 0) == 1);
+    assert(transfer_steps.size() == 2);
+    assert(transfer_steps[1].buffer == &GameDataStateStorage);
+    assert(transfer_steps[1].size == 0x398);
+    assert(GameDataStateStorage.fields_.secret_project_.project_base[32] == 0x5C5C5C5C);
+    fclose(legacy_wire);
+    #undef PUT_LEGACY_DWORD
+
     // Header v12 selects the 0x398 live-state record, but the transferred
     // state word is v5. Later gates must follow v5, not header.version_.
     reset_trace();

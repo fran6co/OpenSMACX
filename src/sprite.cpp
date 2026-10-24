@@ -2204,18 +2204,16 @@ Status: Promoted from src/recovered/units/00635370.cpp.
 */
 void *TexHeap::get_tex_mem(int size) {
     if (base_ != 0) {
-        int index = 0;
         int count = static_cast<int>(count_) + 1;
         if (count > 0) {
             Heap **blocks = blocks_;
-            do {
+            for (int index = 0; index < count; ++index) {
                 Heap *block = blocks[index];
                 if ((reinterpret_cast<uintptr_t>(block->current_) & 0xffff) == 0 &&
                     static_cast<int>(block->free_size_) >= size) {
-                    return block->get(size);
+                    return blocks[index]->get(size);
                 }
-                ++index;
-            } while (index < count);
+            }
         }
     }
     return 0;

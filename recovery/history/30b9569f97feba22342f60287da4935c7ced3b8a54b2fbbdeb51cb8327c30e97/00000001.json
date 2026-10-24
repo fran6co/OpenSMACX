@@ -1,0 +1,20 @@
+{
+  "event_id": "cedb91e58a3113a32d00611375fc9ca983f6e9b50d9e0b968cced7387da9959c",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/fixtures/game_data_actual_host_control.cpp",
+      "recovery/tests/texheap_owner_control.cpp"
+    ],
+    "evidence": [
+      "The real typed destination now uses BaseSecretProject.project_base[64]; its old byte-only host mock cannot compile that actual source. Match the unchanged real member extent/type without weakening assertions. Unchanged master TexHeap controls already fail compilation because their Heap::get(size_t) model conflicts with production Heap::get(int); correct only the host signature. Scope is fixture maintenance, not added product editing or a preservation waiver."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "legacy-header-fixture-closure-oct24k",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:legacy-header-texheap-owner-oct24k"
+}

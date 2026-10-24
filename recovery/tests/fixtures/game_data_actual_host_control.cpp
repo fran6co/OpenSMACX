@@ -298,7 +298,7 @@ static int map_write(FILE *) { ++map_write_calls; return 0; }
 static int game_io(MapWin *, FILE *) { return 0; }
 static void *mem_get(size_t size) { return malloc(size); }
 struct BaseSecretProjectMock { int words[64]; };
-struct BaseSecretProject { unsigned char bytes_[0x100]; };
+struct BaseSecretProject { int project_base[64]; };
 /* ACTUAL_GAME_DATA_STATE_HEADER */
 GameDataStateWindow GameDataStateStorage;
 struct NetDaemonSaveProcessSlotMock { unsigned char bytes_[0x19C]; };
