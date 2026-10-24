@@ -1,0 +1,56 @@
+{
+  "event_id": "961fd89c9358adb7443fd5cd48a52756f377404c9d104973106418b6d5c4ab93",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/console_commands.cpp",
+      "src/game.cpp",
+      "src/mapwin.cpp",
+      "src/probe.cpp",
+      "src/technology.cpp",
+      "src/tutwin.cpp"
+    ],
+    "evidence": [
+      "Full194-unit/208-physical-COFF candidate comparison exposes six additional mapped function emissions changed in byte-identical source bodies by the shared header/type context: editor_natural, load_interface, gen_terrain_poly, probe, tech_achieved, TutWin::tour. Expand actual ownership review, preserve all baseline/source discoveries and native residual failures; no body edits or new matching trials authorized by this collateral review.",
+      "Independent reviewers assigned to inspect each full physical delta and original mapping. Shared intmember remains supported by original signed operations; no automatic rollback, baseline reset, weaker claims or native gate waiver. All local and strict original census statuses unchanged."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5117136,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4544016,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4600528,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5894432,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6008832,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4966112,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "a786b40dd5996ac31b1afadf7f9004dc952c45b5729de5dd7be3f0d02a698569",
+  "request_id": "shared-header-physical-collateral-owners-oct24r",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:player-base-count-owner-oct24r"
+}
