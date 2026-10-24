@@ -1,0 +1,23 @@
+{
+  "event_id": "723258a3aedaf5b0e2c92ed647f2378dc6c321a1fd98d9cd8ae9c8852e12210d",
+  "payload": {
+    "affects": [
+      "entity-b837d4c0a46d9fe2a8c1b72b128ce9d952fcbdbe83c6aa3393cb58167c9d958e",
+      "entity-d1b9168096f453b5de382b71e44dc4ba34a238d866337f4a261c0e8324fd0074"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "current-entry-header-placement-needs-retained-provider",
+    "evidence": [
+      "Fresh whole-object unchanged replicas passed for stringstruct.cpp and basepop.cpp before one plain-inline overlay. BasePop stayed MISMATCH119vs117 with23matching; current_entry changed BYTE_EXACT to UNRESOLVED with no emitting definition in either selected object. Other mapped neighbor verdicts unchanged; outside-selected PASS does not satisfy missing original retention.",
+      "Complete ignored report .opensmacx/recovery/tested-owner-batch-oct24o/inline-current-entry-probe-report-complete.json SHA2566698e3d8d828a45d9d53ffef74369c5570a42d9bf869d9b7e6049eb006ebf3c9. Production source is unchanged in this investigation. Keep the real current_entry definition and all historical claims; independently reviewed BasePop candidate3 is prepared for integration without this unproven header migration.",
+      "Pinned PE export parser found zero EAT entries in its52-byte directory. This constrains new exports, without proving historical retention causes. Next evidence must resolve actual original direct/indirect callers, TU visibility and retained contributions. Preserve this useful virtual proposal and restoration obligation; no claim demotion or accepted status."
+    ],
+    "hypothesis": "The original BasePop expands current_entry while preserving separate original402530 code. Plain header inline removes that out-of-line COMDAT from both selected production units; historical TU visibility and retained-provider evidence remain unresolved. Do not manufacture exports, addresses or callers.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "current-entry-header-placement-needs-retained-provider",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:list-inline-investigation-oct24o"
+}
