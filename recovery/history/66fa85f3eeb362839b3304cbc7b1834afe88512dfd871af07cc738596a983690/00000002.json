@@ -1,0 +1,22 @@
+{
+  "event_id": "781587f3febbb352deeff1e98c5384cb0a67a2caab0cf4f68696916ecfcb7723",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/basepop.cpp",
+      "src/stringstruct.cpp"
+    ],
+    "evidence": [
+      "New evidence: plain header inline removes original402530 COMDAT from both selected units; pinned scans found107760relocations and no address-taken data references/export entries for it, but19directcalls from9mappedcalleridentities. A remaining genuine C++ explanation is a normal externally visible non-inline definition sharing compiler TU visibility with BasePop, allowing /Ob2 expansion there while retaining a callable out-of-line body. Actual historical TU filenames/order remain unknown.",
+      "Authorize ONE additional distinct virtual-tree experiment only: keep header declaration/non-inline signature unchanged, move the exact ordinary current_entry definition virtually from stringstruct.cpp into basepop.cpp before the already tested BasePop candidate3. No source files/publication, exports/MEASURED/artificialreferences/callers/flags, or baseline changes. Prove fresh old full-object replicas and original402530 body equality/emission in its new physical unit; project the existing original identity into the newunit for diagnostic comparison explicitly, never label missing oldunit output preserved unless actual newunit definition matches. Report all other body changes/regressions and outside-object residuals.",
+      "This is the second candidate context, not retrying the failed plain-inline form. It tests compiler visibility/retention together before proposing a real source/TU migration. Complete linked retention and historical TU ownership remain unproven even if local bytes improve. Stop after this normal same-TU form."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "723258a3aedaf5b0e2c92ed647f2378dc6c321a1fd98d9cd8ae9c8852e12210d",
+  "request_id": "same-tu-noninline-accessor-investigation-oct24o",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:list-inline-investigation-oct24o"
+}
