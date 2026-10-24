@@ -1,0 +1,24 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "6633fa75a64173e97ddbb4f1fb922ed8c18ac7bc",
+  "editable_files": [
+    "src/editbox.cpp",
+    "recovery/tests/test_focus_and_filefind_typed_owner_oct10.py"
+  ],
+  "evidence": [
+    "Bounded twentieth-pass private production-recipe screen makes original6161A0..6161CA17instructions BYTE_EXACT with no exact losses and native outside-selected PASS. Replace only explicit early returns/local parent with equivalent short-circuit expression. Keep first Win::is_dialog_focus call before any parent load, null-parent success, nonzero normalization and live parent callback semantics. No field/header/API/ABI/compiler/linker/behavior policy changes.",
+    "Existing actual-source GCC/Clang focus tests already exercise first failure, negative nonzero success, parent failure/success, callback replacement and parent removal. Adapt only their old spelling-specific mutation anchors with explicit successful-substitution assertions; retain all independent behavior cases and Filefind controls. Native baseline/candidate replicas, body-damage witness, original identities/claims, fresh build/link and integrated destination checks required.",
+    "Only coordinator owns Git/Task/compiler/preparation/record/integration. Standing user authorization permits coordinator-reviewed manual merge after independent review and relevant checks; this is not native automatic/full-game acceptance or complete linked/structure/runtime proof. Do not reset baseline, weaken verifiers, demote claims or label unknown preservation as pass. Original historical claim retains restoration obligations; only guarded native record can bank current equality."
+  ],
+  "intent": "Recover the original EditBox focus-chain short-circuit expression",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6381984,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "editbox-focus-chain-oct24c"
+}
