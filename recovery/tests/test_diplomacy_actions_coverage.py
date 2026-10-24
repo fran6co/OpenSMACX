@@ -786,7 +786,7 @@ int tech_trade(int a,int b,int energy,int mode,int kind) {
 }
 void threaten(int a,int b) { assert(a==1&&b==2); ++threat_calls; DiplomacyProposalMode=99; }
 void make_gift(int a,int b) { assert(a==1&&b==2); ++gift_calls; }
-void base_swap(int a,int b) { assert(a==1&&b==2); ++swap_calls; }
+int base_swap(int a,int b) { assert(a==1&&b==2); ++swap_calls; return 1; }
 void buy_council_vote(int a,int b,int choice,int count) {
     assert(a==1&&b==2); ++vote_calls; council_choice=choice; value_arg=count;
 }
@@ -2111,7 +2111,7 @@ def test_actual_base_swap(tmp_path, compiler_name):
     if not compiler:
         pytest.skip(compiler_name + ' unavailable')
     source = (ROOT / 'src/faction.cpp').read_text()
-    body = definition(source, r'void __cdecl base_swap\([^)]*\)')
+    body = definition(source, r'int __cdecl base_swap\([^)]*\)')
     helpers = '\n'.join(definition(source, r'static int ' + name + r'\([^)]*\)(?=\s*\{)')
                         for name in ('diplo_add', 'diplo_sub', 'diplo_mul'))
     fixture = r'''
@@ -2193,27 +2193,28 @@ void reset() {
  PlayersData[1].current_num_bases=PlayersData[2].current_num_bases=2;
  Players[2].is_leader_female=1;
 }
-void run() { base_swap(1,2); assert(PopupDialogFactionID==2 && valuations==2); }
+int run() { int result=base_swap(1,2); assert(PopupDialogFactionID==2 && valuations==2); return result; }
 void label(const char *s) { assert(notice && !std::strcmp(notice,s)); }
 int main() {
- reset(); Bases[0].facilities_built[0]=2; run(); label("NOMYHQ"); assert(!transfer_count);
- reset(); DiploScratchFA30=1; PlayersData[1].current_num_bases=1; run(); label("NOHQ");
- reset(); PlayersData[2].diplo_treaties[1]=0x20; run(); label("NEVERBASESWAP");
- reset(); response=0; run(); label("PAYBASESWAP"); assert(!transfer_count && numeric==20);
- reset(); run(); label("BASEOK"); assert(transfer_count==1 && transfer_bases[0]==0 && transfer_owners[0]==1 && PlayersData[1].energy_reserves==80 && PlayersData[2].energy_reserves==25 && redraw_count==1 && unlock_count==1);
- reset(); IsMultiplayerNet=1; run(); label("BASEOK"); assert(transfer_count==1 && await_count==1 && !redraw_count && PlayersData[1].energy_reserves==100);
- reset(); Bases[0].faction_id_former=1; PlayersData[2].diplo_treaties[1]=0x2000001; run(); assert(numeric==5);
- reset(); FactionRankings[7]=1; run(); assert(numeric==40);
- reset(); PlayersData[1].energy_reserves=19; run(); label("NOBASESWAP"); assert(!transfer_count);
- reset(); DiplomacyProposalMode=1; run(); label("NOBASESWAP");
- reset(); DiplomacyProposalMode=4; PlayersData[2].tech_ranking=6; run(); label("NOBASESWAP2");
- reset(); DiplomacyProposalMode=4; response=0; run(); label("TECHBASESWAP"); assert(!transfer_count && !tech_count);
- reset(); DiplomacyProposalMode=4; IsMultiplayerNet=1; run(); label("BASEOK"); assert(tech_count==1 && transfer_count==1 && await_count==1 && unlock_count==1);
- reset(); DiplomacyProposalMode=2; PlayersData[1].energy_reserves=0; run(); label("BASEOK"); assert(tech_count==1 && !redraw_count);
- reset(); DiploScratchFA30=1; run(); label("YESBASESWAP"); assert(transfer_count==2 && transfer_bases[0]==0 && transfer_owners[0]==1 && transfer_bases[1]==1 && transfer_owners[1]==2);
- reset(); DiploScratchFA30=1; mutate_network=1; run(); assert(transfer_count==2 && await_count==1);
- reset(); DiploScratchFA30=1; random_values[0]=10; run(); label("NOBASESWAP3"); assert(!transfer_count);
- reset(); DiploScratchFA30=DiploScratchFA7C=-1; run(); assert(!notice && !transfer_count);
+ reset(); Bases[0].facilities_built[0]=2; assert(run()==1); label("NOMYHQ"); assert(!transfer_count);
+ reset(); DiploScratchFA30=1; PlayersData[1].current_num_bases=1; assert(run()==1); label("NOHQ");
+ reset(); PlayersData[2].diplo_treaties[1]=0x20; assert(run()==1); label("NEVERBASESWAP");
+ reset(); response=0; assert(run()==1); label("PAYBASESWAP"); assert(!transfer_count && numeric==20);
+ reset(); assert(run()==0); label("BASEOK"); assert(transfer_count==1 && transfer_bases[0]==0 && transfer_owners[0]==1 && PlayersData[1].energy_reserves==80 && PlayersData[2].energy_reserves==25 && redraw_count==1 && unlock_count==1);
+ reset(); IsMultiplayerNet=1; assert(run()==0); label("BASEOK"); assert(transfer_count==1 && await_count==1 && !redraw_count && PlayersData[1].energy_reserves==100);
+ reset(); Bases[0].faction_id_former=1; PlayersData[2].diplo_treaties[1]=0x2000001; assert(run()==0); assert(numeric==5);
+ reset(); FactionRankings[7]=1; assert(run()==0); assert(numeric==40);
+ reset(); PlayersData[1].energy_reserves=19; assert(run()==1); label("NOBASESWAP"); assert(!transfer_count);
+ reset(); DiplomacyProposalMode=1; assert(run()==1); label("NOBASESWAP");
+ reset(); DiplomacyProposalMode=4; PlayersData[2].tech_ranking=6; assert(run()==1); label("NOBASESWAP2");
+ reset(); DiplomacyProposalMode=4; response=0; assert(run()==1); label("TECHBASESWAP"); assert(!transfer_count && !tech_count);
+ reset(); DiplomacyProposalMode=4; IsMultiplayerNet=1; assert(run()==0); label("BASEOK"); assert(tech_count==1 && transfer_count==1 && await_count==1 && unlock_count==1);
+ reset(); DiplomacyProposalMode=2; PlayersData[1].energy_reserves=0; assert(run()==0); label("BASEOK"); assert(tech_count==1 && !redraw_count);
+ reset(); DiploScratchFA30=1; assert(run()==0); label("YESBASESWAP"); assert(transfer_count==2 && transfer_bases[0]==0 && transfer_owners[0]==1 && transfer_bases[1]==1 && transfer_owners[1]==2);
+ reset(); DiploScratchFA30=1; mutate_network=1; assert(run()==0); assert(transfer_count==2 && await_count==1);
+ reset(); DiploScratchFA30=1; random_values[0]=10; assert(run()==1); label("NOBASESWAP3"); assert(!transfer_count);
+ reset(); DiploScratchFA30=DiploScratchFA7C=-1; assert(run()==1); assert(!notice && !transfer_count);
+ reset(); DiploScratchFA30=1; DiploScratchFA7C=-1; assert(run()==1); assert(!notice && !transfer_count);
 }
 '''
     variants = {'actual': body}
@@ -2226,6 +2227,12 @@ int main() {
     ):
         assert old in body
         variants[name] = body.replace(old, new)
+    old_success = 'X_pops("BASEOK", 0x100000,\n                           FactionDiplomacyPortraits[faction_id_req], pop_wait);\n                    return 0;'
+    assert body.count(old_success) == 1
+    variants['wrong_return_success'] = body.replace(old_success, old_success.replace('return 0;', 'return 1;'))
+    old_noop = 'X_pops("NOBASESWAP3", 0x100000,\n               FactionDiplomacyPortraits[faction_id_req], pop_wait);\n    }\n    return 1;'
+    assert body.count(old_noop) == 1
+    variants['wrong_return_noop'] = body.replace(old_noop, old_noop.replace('return 1;', 'return 0;'))
     for name, candidate in variants.items():
         cpp, binary = tmp_path / (name + '.cpp'), tmp_path / name
         cpp.write_text(host_fixture(fixture).replace('@@BODY@@', helpers + '\n' + candidate))
