@@ -1,0 +1,20 @@
+{
+  "event_id": "e9844c920042bab485fdc45bc516ff9cdc6f05175ae7aebda053a7259ddf9a5c",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "original-menu-font-epochs",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Correct current MenuDefaultFont read epochs after Spot.init and left-label width; snapshot the right font height before its width call; snapshot entry text before fresh per-entry font and retain live flags/count and Spot.add coordinate ordering. No later null guards. Existing full Menu/PullDown C++03 ASan/UBSan harness and old assertions retained. New label hooks use pointer identities because the two distinct arrays both contain space; initial string-equality hook failure was fixture-only. Empty count still measures both labels; both-fonts-null returns before Spot.init. Saved global test font pointers restored to avoid dangling fixture state.",
+      "Fresh committed candidate92c7fb360 application194C++units208physicalobjects builds/links. All204outsidewholeobjects normalizedequal verifiedmaster28e9 source (master4ec adds only authorization). Each changed owner object matches its independently screened native candidate. All196source mapping records across four owners retain identity, full spans, emitted symbols, history and every claim. Native source/claims/mappings/referencesPASS. All5581knownmappedverdicts and strict rows unchanged3446localexact/3131strictpass/315unknown; no new genuine implementation coverage or measured claim.",
+      "Twenty actual-production native controlsPASS (baseline replay/replica, candidate replica and per-owner body damage); Menu/Monu/Palette init-only outside comparisonsPASS. MapWin remains nativeFAIL for unchanged-renderer parameter scheduling/local labels and UNK5 debug lines; affected renderer scope and discovery retained. Do not call that FAIL a pass or use expanded scope as a body waiver. All33actual-source focused host positive/sanitizer/mutation casesPASS in one finalrun; failed earlier fixtures and qualified overflow limits remain evidence.",
+      "CoordinatorreviewSHA256 2784bf22f93fb8d0bc735569a545dd3118932173ab43379ebacfbd3eb80143c0. Independent product, host and physical reviews are retained. Standing user permits reviewed manual integration, not native automatic, linked preservation, structure/runtime or game acceptance. Original Taskbaseline28e9da5aa retained; no flags/header-layout/library policy/gate changes, claim demotion or baseline reset. Fresh destination build/all208objects/all5581rows/33tests required before cleanup. Full matching and full-game goal remain unfinished."
+    ]
+  },
+  "previous_event": "0f0a23a2610208e88593f844980f0e874130387b208f1bbe2113e16eac480347",
+  "request_id": "original-menu-font-epochs-incorporated",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:menu-compute-font-epochs-oct24d"
+}
