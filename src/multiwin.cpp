@@ -160,7 +160,7 @@ void MultiWin::draw_player(int faction_id, int row, RECT *bounds) {
     const uint32_t turn_flags =
         GameDataStateStorage.fields_.net_turn_flags_ & 0x10;
     if (turn_flags == 0 &&
-        (NetDaemonNet.primary_state_.trailing_words_[4] & faction_bit) != 0) {
+        (NetDaemonNet.primary_state_.trailing_words_[3] & faction_bit) != 0) {
       strcat(StringTemp, label_get(0x444 / 4));
     } else {
       const uint32_t local_faction_bit =
@@ -302,7 +302,7 @@ void MultiWin::draw_time(RECT *bounds, int draw_type) {
   if (draw_type != 0) {
     ++MultiWinState7FFF7C;
     if (NetBusyCount == 0 &&
-        NetDaemonNet.primary_state_.trailing_words_[4] == 0 &&
+        NetDaemonNet.primary_state_.trailing_words_[3] == 0 &&
         NetDaemonProgressInterval == 0) {
       if (TurnRedrawPending == 0) {
         local_14 = 0;
@@ -419,8 +419,8 @@ void MultiWin::draw_time(RECT *bounds, int draw_type) {
   }
 
   if (draw_type != 0 &&
-      NetDaemonNet.primary_state_.trailing_words_[1] != 0 &&
-      NetDaemonNet.primary_state_.trailing_words_[4] == 0 &&
+      NetDaemonNet.primary_state_.trailing_words_[0] != 0 &&
+      NetDaemonNet.primary_state_.trailing_words_[3] == 0 &&
       GameDataStateStorage.fields_.time_controls_selection_ != 0) {
     const uint32_t local_faction_bit =
         1u << (ConsoleGlobal.faction_id_ & 0x1f);
@@ -444,7 +444,7 @@ void MultiWin::draw_time(RECT *bounds, int draw_type) {
   StringTemp[0] = 0;
   strcat(StringTemp, label_get(0x40c / 4));
   strcat(StringTemp, ": ");
-  if (NetDaemonNet.primary_state_.trailing_words_[4] == 0) {
+  if (NetDaemonNet.primary_state_.trailing_words_[3] == 0) {
     if (ConsoleControlTurnActive != 0) {
       StringTemp[0] = 0;
       strcat(StringTemp, label_get(0x988 / 4));

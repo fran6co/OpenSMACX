@@ -50,7 +50,7 @@ struct LockEntry {
     uint32_t trailing_words_[10];
     LockEntry() { memset(this,0,sizeof(*this)); }
 };
-struct PrimaryState { uint32_t leading_words_[3]; uint32_t flags_; uint32_t trailing_words_[10]; PrimaryState() { memset(this,0,sizeof(*this)); } };
+struct PrimaryState { uint32_t leading_words_[3]; uint32_t flags_; int session_phase_; uint32_t trailing_words_[9]; PrimaryState() { memset(this,0,sizeof(*this)); } };
 struct DeletionListProjection {
     int current_owner_;
     int cleared[24];
@@ -63,7 +63,7 @@ struct NetDaemonProjection : AlphaNet {
     DeletionListProjection deletion_list_; PrimaryState primary_state_; LockEntry channels_[2]; LockProjection locks_; int player_count_;
     int clear_playerlock_on_receive;
     NetDaemonProjection() : player_count_(1), clear_playerlock_on_receive(0) {}
-    uint32_t &factions_waiting_mask() { return primary_state_.trailing_words_[7]; }
+    uint32_t &factions_waiting_mask() { return primary_state_.trailing_words_[6]; }
     uint32_t &network_message_count() { return channels_[1].trailing_words_[7]; }
     void net_tasks() { event("net_tasks"); }
     void hang_up() { event("hang_up"); }
@@ -268,7 +268,7 @@ static int main_upkeep_clean() {
     LockEnableMask=0x0606; ConsoleGlobal.faction_id_=1; TurnCurrentNum=1;
     BaseCurrentCount=1; Bases[0].faction_id_current=1; Bases[0].state=0x10000010;
     VehCurrentCount=1; Vehs[0].faction_id=1; Vehs[0].state=0;
-    NetDaemonNet.primary_state_.trailing_words_[9]=0;
+    NetDaemonNet.primary_state_.trailing_words_[8]=0;
     GamePreferences=0; GameMorePreferences=0x100000; GameRules=0;
     BaseAtDebugPopupFlag=0; CouncilPendingMessageArgs[0]=-1;
     UpgradePromptAnswered=99; TurnRedrawPending=0;

@@ -154,7 +154,7 @@ def run(tmp_path, product, scenario, flags=()):
 
 
 @pytest.mark.parametrize("scenario", [
-    "added", "delete_found", "delete_inactive_lock", "delete_active_lock",
+    "added", "added_negative_phase", "delete_found", "delete_inactive_lock", "delete_active_lock",
     "delete_slot8_miss",
 ])
 def test_actual_netdaemon_and_storage_source(tmp_path, scenario):
@@ -165,8 +165,10 @@ def test_actual_netdaemon_and_storage_source(tmp_path, scenario):
 # The slot-8 case seeds the ledger low byte with 3. These controls do not prove
 # arbitrary ledger bytes are valid indices for locks_.records_[player_id].
 @pytest.mark.parametrize("old,new,scenario", [
-    ("if (primary_state_.trailing_words_[0] < 2) {\n            removed_row.prefix_",
-     "if (primary_state_.trailing_words_[0] <= 2) {\n            removed_row.prefix_", "delete_inactive_lock"),
+    ("if (primary_state_.session_phase_ < 2) {\n            removed_row.prefix_",
+     "if (primary_state_.session_phase_ <= 2) {\n            removed_row.prefix_", "delete_inactive_lock"),
+    ("if (player_count_ < 7 && primary_state_.session_phase_ < 2) {",
+     "if (player_count_ < 7 && static_cast<uint32_t>(primary_state_.session_phase_) < 2u) {", "added_negative_phase"),
     ("candidate.active() == 0", "false", "delete_inactive_lock"),
     ("strcpy(removed_row.noun_faction_, label_get(0xFE4 / 4));",
      "strcpy(removed_row.noun_faction_, removed_row.leader_name_);", "delete_found"),
@@ -174,7 +176,8 @@ def test_actual_netdaemon_and_storage_source(tmp_path, scenario):
 def test_native_control_damage_is_detected(tmp_path, old, new, scenario):
     source = product_source()
     assert old in source
-    marker = "void NetDaemon::on_player_deleted"
+    marker = ("void NetDaemon::on_player_added" if scenario == "added_negative_phase"
+              else "void NetDaemon::on_player_deleted")
     head, tail = source.split(marker, 1)
     assert old in tail
     result = run(tmp_path, head + marker + tail.replace(old, new, 1), scenario)

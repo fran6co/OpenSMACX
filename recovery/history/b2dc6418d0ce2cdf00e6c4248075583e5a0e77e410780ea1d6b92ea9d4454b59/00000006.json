@@ -1,0 +1,59 @@
+{
+  "event_id": "d6f3be4d599995d6513ec527793a42448c2592e4cf210753ff8e638f712284c9",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/console_commands.cpp",
+      "src/game.cpp",
+      "src/technology.cpp",
+      "src/veh.cpp"
+    ],
+    "evidence": [
+      "Coordinator authorizes collateral investigation/review under the existing coordinated batch with its original12431 baseline, not new independent workers or a baseline reset. Preserve actual C++ body text; any subsequently proposed behavioral or ABI edit requires new concrete evidence and verification.",
+      "Fresh source/pin/COFF review must distinguish original-to-candidate discrepancies from change-caused baseline-to-candidate effects. Source-level unchanged behavior, register/spill/reordering evidence and failed native residual are separate facts. No waiver, claim demotion, flag change or automatic acceptance is granted."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5744224,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5851072,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6008832,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5117136,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5392496,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5925568,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4544016,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "19c6789c97da1a99c38fca0ff0fd47ab446c6493faddbb944eb82a8455bd5e3e",
+  "request_id": "structural-collateral-scope-oct24f",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:net-session-phase-owner-oct24f"
+}

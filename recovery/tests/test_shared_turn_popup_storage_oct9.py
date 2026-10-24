@@ -56,7 +56,7 @@ SUPPORT = r'''#include <cassert>
 #include <cstring>
 #define __cdecl
 #define NullCallback void*
-struct PrimaryState { uint32_t leading_words_[3]{}, flags_{}, trailing_words_[10]{}; };
+struct PrimaryState { uint32_t leading_words_[3]{}; uint32_t flags_{}; int session_phase_{}; uint32_t trailing_words_[9]{}; };
 struct Net { PrimaryState primary_state_{}; };
 Net NetDaemonNet;
 struct LockMaskBytes { uint8_t human_mask_, alive_mask_, unassigned_[2]; };

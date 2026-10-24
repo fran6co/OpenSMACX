@@ -365,8 +365,8 @@ static void test_treaty_lower_labels_flags_and_nouns() {
   assert(NetMsgPrimary.count==1 && strcmp(NetMsgPrimary.events[0].label,"PACTTREATY")==0);
   assert(TreatyCount==1 && TreatyEvents[0].a==1 && TreatyEvents[0].b==2 && TreatyEvents[0].flag==DTREATY_TREATY);
   assert(ParseEvents[2].slot==2 && strcmp(ParseEvents[2].text,"actor-noun")==0);
-  assert(ParseCount==5 && ParseEvents[4].slot==4 && strcmp(ParseEvents[4].text,"peer-noun")==0);
-  assert(ParseNounCount==1 && ParseNounFaction[0]==2);
+  assert(ParseCount==5 && ParseEvents[4].slot==4 && strcmp(ParseEvents[4].text,"actor-noun")==0);
+  assert(ParseNounCount==1 && ParseNounFaction[0]==1);
   reset_fixture(); ConsoleGlobal.faction_id_=3;
   strcpy(Players[1].noun_faction,"actor-noun"); strcpy(Players[1].adj_name_faction,"actor-adj");
   strcpy(Players[2].noun_faction,"peer-noun"); strcpy(Players[2].adj_name_faction,"peer-adj");

@@ -1,0 +1,17 @@
+{
+  "event_id": "9fbaebfdcfceaf54a0a4ab3808fa283be130bee9d67abb3017fa727e7ed5ca8b",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "map-coast-zoc-signed-oct24f-evidence",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Scoped source corrections incorporated in coordinated checkout; original identity, spans, symbols, history and claims verified unchanged. Source is not acceptance; compiler, host controls and independent checks pending."
+    ]
+  },
+  "previous_event": "470490191915e17f6bbb669e48eefe15309cfa171111238185d8aa2b8505f17f",
+  "request_id": "map-coast-zoc-signed-oct24f-source-incorporation",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:map-coast-zoc-signed-oct24f"
+}

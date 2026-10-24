@@ -190,7 +190,7 @@ static struct { struct { unsigned game_state_, game_more_preferences_; } fields_
 static int IsMultiplayerNet, ConsoleControlTurnActive;
 static unsigned MapIsFlat, MapLongitude=8, MapLongitudeBounds=32;
 struct Channel { struct { unsigned flags; } payload_; };
-struct NetState { unsigned leading_words_[4], trailing_words_[8]; };
+struct NetState { unsigned leading_words_[4]; int session_phase_; unsigned trailing_words_[9]; };
 struct NetDaemonMock {
     Channel channels_[2]; NetState primary_state_;
     int lock_result;
@@ -286,7 +286,7 @@ static void reset_fixture() {
     MapWinTable[0]=0; MapWinTable[1]=0; BaseAtCalls=VehAtCalls=stack_calls=0;
     NetDaemonNet.channels_[1].payload_.flags=0;
     NetDaemonNet.primary_state_.leading_words_[2]=0;
-    NetDaemonNet.primary_state_.trailing_words_[7]=0;
+    NetDaemonNet.primary_state_.trailing_words_[6]=0;
     NetDaemonNet.lock_result=0; NetDaemonNet.lock_vehicle_result=4;
     for(int i=0;i<32;++i) Vehs[i]=Veh{};
     for(int i=0;i<4;++i) { Bases[i]=Base{}; PlayersData[i]=Player{}; }
@@ -497,7 +497,7 @@ static void multiplayer_action_gates_and_lock_case() {
         GameDataStateStorage.fields_.game_more_preferences_=MPREF_ADV_DETAIL_RIGHT_CLICK_MENUS;
         GameDataStateStorage.fields_.game_state_=0x4000;
         IsMultiplayerNet=1; PullDown::selected_id=id;
-        if(mask) NetDaemonNet.primary_state_.trailing_words_[7]=1;
+        if(mask) NetDaemonNet.primary_state_.trailing_words_[6]=1;
         else NetDaemonNet.channels_[1].payload_.flags=1;
         w.right_menu(2,3,10,20);
         CHECK(std::find_if(trace.begin(),trace.end(),action_event)==trace.end(),

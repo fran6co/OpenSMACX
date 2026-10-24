@@ -1,0 +1,27 @@
+{
+  "event_id": "19c6789c97da1a99c38fca0ff0fd47ab446c6493faddbb944eb82a8455bd5e3e",
+  "payload": {
+    "affects": [
+      "entity-1b902d7ec3c0a2e4b7a027d14d550ba303f4a8ffefca85c273ecdf16090d03ae",
+      "entity-219cd0e2899423dd0c9bdcd0718b1406f9eccf7f28df77221b51278212dbc055",
+      "entity-36d0cb2cbd52d912455a184a4f6bb8b671bd9eb400d69020794d91f7a2abe9fc",
+      "entity-7d8176751703cb7d8caa38917ee097499bb12c1624819b3dd971ad2d9ac57af6",
+      "entity-c3ab6505cda74476379be71d572ca1adfe37784f992bf5d8728e321d44f07b68",
+      "entity-c46d88454f5459c23f8836f548a51a19e7f6832387f028ccf247914fd91373f7",
+      "entity-e2a3e61424aadb162163db797edd0287ebbc9268b43d6ab2f8d80543a5ec4ccf"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "structural-output-collateral-oct24f",
+    "evidence": [
+      "All208 actual physical object receipts compare12431 source baseline to2e6e candidate;24 mapped root/code regions differ. Additional goody_box57A660, order_veh5947C0, tech_achieved5BB000, Console::editor_natural4E14D0, end_of_game524870, game_data5A6AC0, load_interface455610 were not in initial function measurement union. Their bodies have no source edits in this batch; this alone does not prove compiled preservation.",
+      "Native original scope residuals preserve8FAIL/5PASS among13 changed object signatures. Four baseline layoutFAIL/1162UNKNOWN remain. Complete masked/strict5581 observations unchanged, no lost exact match, no new coverage/claim; do not reinterpret this as full-game or linked acceptance."
+    ],
+    "hypothesis": "Fresh complete application output changes seven additional already recovered bodies without body-source edits; inspect their source/declaration closure and physical baseline/current output before the coordinated manual integration.",
+    "kind": "discovery"
+  },
+  "previous_event": "97f38cde33f4c35425a6663c295455fef6ba143ccc3c9a79b8ac454f8e3a4110",
+  "request_id": "structural-output-collateral-oct24f",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:net-session-phase-owner-oct24f"
+}

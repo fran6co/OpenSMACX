@@ -32,6 +32,7 @@ static int text_count = 2;
 static int task_runs = 0;
 static int modal_answer = 0;
 static int *registered_callback_state = nullptr;
+static int32_t *modal_phase_field = nullptr;
 static uint32_t *modal_ready_field = nullptr;
 int NetWinPlanetSizeLabelCount = 0;
 int NetWinExecAdjacentState = -1;
@@ -109,6 +110,7 @@ struct Win {
     void on_update() { trace.push_back("update"); }
     int set_modal(int, int (__cdecl *callback)(), Win *) {
         assert(registered_callback_state && *registered_callback_state == 1);
+        assert(modal_phase_field && *modal_phase_field == 1);
         trace.push_back("modal");
         int result = callback();
         if (result > 0 && modal_ready_field) *modal_ready_field = 1;
@@ -172,7 +174,11 @@ struct NetDaemon {
     uint32_t local_player_id() const { return local_player_id_; }
     uint32_t host_player_id() const { return host_player_id_; }
     LockState channels_[2];
-    struct Primary { uint32_t leading_words_[3]; uint32_t flags_; uint32_t trailing_words_[10]; } primary_state_;
+    struct Primary { uint32_t leading_words_[3]; uint32_t flags_; int session_phase_; uint32_t trailing_words_[9]; } primary_state_;
+    static_assert(offsetof(Primary, flags_) == 0x0C, "phase neighbor lock flag offset");
+    static_assert(offsetof(Primary, session_phase_) == 0x10, "signed session phase offset");
+    static_assert(offsetof(Primary, trailing_words_) == 0x14, "primary tail offset");
+    static_assert(sizeof(Primary) == 0x38, "primary phase layout size");
     int initial_sends = 0, option_sends = 0;
     uint16_t last_options_opcode = 0;
     int last_options_size = 0;
@@ -241,7 +247,9 @@ static void reset_fixture() {
     std::memset(observed_row_bytes, 0, sizeof(observed_row_bytes));
     NetWinPlanetSizeLabelCount = 0; NetWinExecAdjacentState = -1;
     NetDaemonNet.primary_state_.leading_words_[0] = 0;
-    NetDaemonNet.primary_state_.flags_ = 0;
+    NetDaemonNet.primary_state_.session_phase_ = 0;
+    NetDaemonNet.primary_state_.flags_ = 0x5A5AA5A5u;
+    modal_phase_field = &NetDaemonNet.primary_state_.session_phase_;
     NetDaemonNet.initial_sends = NetDaemonNet.option_sends = 0;
     NetDaemonNet.last_options_opcode = 0;
     NetDaemonNet.last_options_size = 0;
@@ -264,6 +272,8 @@ static void test_row_initializer() {
 static void test_exec() {
     reset_fixture(); ExitTurnLoop = 1;
     assert(NetWinDialog.exec() == 0 && trace.empty());
+    assert(NetDaemonNet.primary_state_.session_phase_ == 0);
+    assert(NetDaemonNet.primary_state_.flags_ == 0x5A5AA5A5u);
 
     reset_fixture(); ExitTurnLoop = 0;
     NetDaemonNet.primary_state_.leading_words_[0] = 1;
@@ -273,7 +283,8 @@ static void test_exec() {
     assert(NetDaemonNet.last_options_size == 0x28);
     assert(std::memcmp(&NetDaemonNet.last_options, &NetWinSessionOptions,
                        sizeof(NetWinSessionOptions)) == 0);
-    assert(NetDaemonNet.primary_state_.flags_ == 2);
+    assert(NetDaemonNet.primary_state_.session_phase_ == 2);
+    assert(NetDaemonNet.primary_state_.flags_ == 0x5A5AA5A5u);
     assert(NetWinPlanetSizeLabelCount == 2);
     assert(std::strcmp(NetWinDialog.world_size_labels_[0], "Tiny world") == 0);
     assert(NetWinDialog.field_761C_ == 0xFFFFFFFFU && NetWinDialog.field_7620_ == 0xFFFFFFFFU);

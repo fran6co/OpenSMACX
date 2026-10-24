@@ -100,7 +100,7 @@ int MonuWin::on_key_click(int key, int state) {
 // TRIED: fixed const-pointer global for 0x94cea0 (indexed table base, address itself scales - own raw cast used). First divergence #1 mov/push (prologue reg alloc), 214 vs 193 B.
 void MonuWin::on_left_click(int x, int y) {
   const int faction = ConsoleGlobal.faction_id_;
-  if ((NetDaemonNet.primary_state_.trailing_words_[7] & (1u << faction)) != 0 ||
+  if ((NetDaemonNet.primary_state_.trailing_words_[6] & (1u << faction)) != 0 ||
       NetDaemonNet.channels_[1].payload_.flags != 0 ||
       NetDaemonNet.primary_state_.leading_words_[2] != 0) {
     return;
@@ -134,7 +134,7 @@ void MonuWin::on_mouse_move(int x, int y) {
     return;
   }
   const int faction = ConsoleGlobal.faction_id_;
-  if ((NetDaemonNet.primary_state_.trailing_words_[7] & (1u << faction)) != 0 ||
+  if ((NetDaemonNet.primary_state_.trailing_words_[6] & (1u << faction)) != 0 ||
       NetDaemonNet.channels_[1].payload_.flags != 0 ||
       NetDaemonNet.primary_state_.leading_words_[2] != 0) {
     return;

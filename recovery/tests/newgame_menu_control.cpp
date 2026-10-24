@@ -1252,7 +1252,7 @@ struct MockNetDaemon {
     uint32_t local_player_id() const { return local_player_id_; }
     int player_count_;
     AlphaNetProcessSlot process_slots_[9];
-    struct PrimaryState { uint32_t leading_words_[3]; uint32_t flags_; uint32_t trailing_words_[10]; } primary_state_;
+    struct PrimaryState { uint32_t leading_words_[3]; uint32_t flags_; int session_phase_; uint32_t trailing_words_[9]; } primary_state_;
     LockStateEntry channels_[2];
     MockLock locks_;
     uint32_t voice_hotkey_48_, voice_hotkey_4c_, voice_flags_D8_;
@@ -1267,7 +1267,7 @@ struct MockNetDaemon {
         events.push_back("receive");
         ++receive_count;
         if (negative_loop_probe && receive_count == 1)
-            primary_state_.trailing_words_[2] = 0xFFFFFFFFu;
+            primary_state_.trailing_words_[1] = 0xFFFFFFFFu;
         else
             ExitTurnLoop = 1;
         return 0;
@@ -1570,7 +1570,7 @@ struct Lock {
 };
 struct NetDaemonDouble {
     struct DeletionListState { unsigned char records_[24][0x3C]; int current_owner_; } deletion_list_;
-    struct PrimaryState { unsigned int leading_words_[3]; unsigned int flags_; unsigned int trailing_words_[10]; } primary_state_;
+    struct PrimaryState { unsigned int leading_words_[3]; unsigned int flags_; int session_phase_; unsigned int trailing_words_[9]; } primary_state_;
     LockStateEntry channels_[2];
     void *file_index_records_;
     unsigned int field_1BE4_;
@@ -1625,7 +1625,8 @@ int main() {
             actual[0] = static_cast<unsigned int>(NetDaemonNet.deletion_list_.current_owner_);
             for (int i = 0; i != 3; ++i) actual[1 + i] = NetDaemonNet.primary_state_.leading_words_[i];
             actual[4] = NetDaemonNet.primary_state_.flags_;
-            for (int i = 0; i != 10; ++i) actual[5 + i] = NetDaemonNet.primary_state_.trailing_words_[i];
+            actual[5] = static_cast<unsigned int>(NetDaemonNet.primary_state_.session_phase_);
+            for (int i = 0; i != 9; ++i) actual[6 + i] = NetDaemonNet.primary_state_.trailing_words_[i];
         } else {
             const LockStateEntry &channel = NetDaemonNet.channels_[entry - 1];
             for (int i = 0; i != 4; ++i) actual[i] = channel.leading_words_[i];

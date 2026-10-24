@@ -177,7 +177,7 @@ void StatusWin::on_right_click(int x, int y, int) {
         (ConsoleControlTurnActive || NetDaemonNet.channels_[1].payload_.flags
          || NetDaemonNet.primary_state_.leading_words_[2]);
     bool faction_blocked = IsMultiplayerNet &&
-        (NetDaemonNet.primary_state_.trailing_words_[7] & (1U << ConsoleGlobal.faction_id_));
+        (NetDaemonNet.primary_state_.trailing_words_[6] & (1U << ConsoleGlobal.faction_id_));
 
     switch (selected) {
     case 1:

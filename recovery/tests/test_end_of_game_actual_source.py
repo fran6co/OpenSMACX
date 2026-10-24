@@ -56,7 +56,7 @@ struct LockStateEntry {
 struct LockCollection { int clears; void clear() { ++clears; } };
 struct AlphaNet { int closes; AlphaNet() : closes(0) {} void close() { ++closes; } };
 struct NetDaemon : AlphaNet {
-    struct PrimaryState { uint32_t leading_words_[3]; uint32_t flags_; uint32_t trailing_words_[10]; } primary_state_;
+    struct PrimaryState { uint32_t leading_words_[3]; uint32_t flags_; int session_phase_; uint32_t trailing_words_[9]; } primary_state_;
     LockStateEntry channels_[2];
     LockCollection locks_;
     int hangs;

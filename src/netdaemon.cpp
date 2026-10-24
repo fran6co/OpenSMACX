@@ -186,7 +186,7 @@ void NetDaemon::on_player_added(char *name, unsigned long id) {
     const bool same_host = (local_player_id() == host_player_id());
     primary_state_.leading_words_[0] = same_host ? 1 : 0;
 
-    if (player_count_ < 7 && primary_state_.trailing_words_[0] < 2) {
+    if (player_count_ < 7 && primary_state_.session_phase_ < 2) {
         const int slot = ++player_count_;
         AlphaNetProcessSlot &player = process_slots_[slot];
         player.pid_ = static_cast<uint32_t>(id);
@@ -256,7 +256,7 @@ void NetDaemon::on_player_deleted(char *, unsigned long id) {
     const bool found = slot <= player_count_;
 
     if (found) {
-        uint32_t &ready_players = primary_state_.trailing_words_[4];
+        uint32_t &ready_players = primary_state_.trailing_words_[3];
         if (ready_players != 0) {
             ready_players &= ~(1u << (slot & 31));
             if (ready_players == 0) {
@@ -268,7 +268,7 @@ void NetDaemon::on_player_deleted(char *, unsigned long id) {
         parse_says(0, player.name_, -1, -1);
         const int player_id = player.identity_;
 
-        if (primary_state_.trailing_words_[0] == 2) {
+        if (primary_state_.session_phase_ == 2) {
             GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ =
                 static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &
                 ~static_cast<uint8_t>(1u << (player_id & 31)));
@@ -323,7 +323,7 @@ void NetDaemon::on_player_deleted(char *, unsigned long id) {
          GameDataStateStorage.fields_.net_turn_faction_ == ConsoleGlobal.faction_id_) ||
         (turn_bit == 0 && primary_state_.leading_words_[0] != 0);
 
-    if (!skip_lock_notify && primary_state_.trailing_words_[0] == 2) {
+    if (!skip_lock_notify && primary_state_.session_phase_ == 2) {
         for (int faction = 1; faction < 8; ++faction) {
             const uint8_t bit = static_cast<uint8_t>(1u << (faction & 31));
             PlayerLock &candidate = locks_.records_[faction];
@@ -364,7 +364,7 @@ void NetDaemon::on_player_deleted(char *, unsigned long id) {
     }
 
     if (slot == 8) {
-        if (primary_state_.trailing_words_[0] < 2) {
+        if (primary_state_.session_phase_ < 2) {
             NetWinSessionData.write_row8_prefix(0xFF);
         }
         strcpy(NetWinSessionData.row8_leader_name(), label_get(0xFE4 / 4));
@@ -372,7 +372,7 @@ void NetDaemon::on_player_deleted(char *, unsigned long id) {
         strcpy(NetWinSessionData.row8_noun_faction(), label_get(0xFE4 / 4));
     } else {
         NetWinLobbyRow &removed_row = NetWinLobbyRows[slot];
-        if (primary_state_.trailing_words_[0] < 2) {
+        if (primary_state_.session_phase_ < 2) {
             removed_row.prefix_ = 0xFF;
         }
         strcpy(removed_row.leader_name_, label_get(0xFE4 / 4));
@@ -396,9 +396,9 @@ void NetDaemon::on_player_deleted(char *, unsigned long id) {
         ((post_turn_bit != 0 && ConsoleControlTurnActive == 0) ||
          primary_state_.leading_words_[0] == 0);
 
-    if (skip_after_delete && primary_state_.trailing_words_[0] == 2) {
+    if (skip_after_delete && primary_state_.session_phase_ == 2) {
         if (post_turn_bit == 0 &&
-            (primary_state_.trailing_words_[7] &
+            (primary_state_.trailing_words_[6] &
              (1u << (ConsoleGlobal.faction_id_ & 31))) != 0) {
             message_data(0x8301, 0, 0, 0, 0, 0);
         }
@@ -485,8 +485,8 @@ NetDaemon::NetDaemon() : AlphaNet(), deletion_list_(DeletionList::Uninitialized(
     primary_state_.leading_words_[1] = 0;
     primary_state_.leading_words_[2] = 0;
     primary_state_.flags_ = 0;
-    primary_state_.trailing_words_[8] = 0;
     primary_state_.trailing_words_[7] = 0;
+    primary_state_.trailing_words_[6] = 0;
     channels_[0].leading_words_[1] = 0;
     channels_[0].leading_words_[0] = 0;
     channels_[0].payload_.vehicle_selection_follow = 0;
@@ -495,20 +495,20 @@ NetDaemon::NetDaemon() : AlphaNet(), deletion_list_(DeletionList::Uninitialized(
     channels_[1].leading_words_[0] = 0;
     channels_[1].trailing_words_[4] = 0;
     channels_[1].trailing_words_[3] = 0;
+    primary_state_.trailing_words_[3] = 0;
     primary_state_.trailing_words_[4] = 0;
     primary_state_.trailing_words_[5] = 0;
-    primary_state_.trailing_words_[6] = 0;
     channels_[1].trailing_words_[1] = 0;
     channels_[1].trailing_words_[0] = 0;
     channels_[1].leading_words_[3] = 0;
     channels_[1].leading_words_[2] = 0;
     channels_[1].payload_.flags = 0;
+    primary_state_.session_phase_ = 0;
     primary_state_.trailing_words_[0] = 0;
-    primary_state_.trailing_words_[1] = 0;
     channels_[1].trailing_words_[7] = 0;
     channels_[1].trailing_words_[6] = 0;
+    primary_state_.trailing_words_[1] = 0;
     primary_state_.trailing_words_[2] = 0;
-    primary_state_.trailing_words_[3] = 0;
     channels_[0].leading_words_[3] = 0;
 
     // 0x1BD0 is lock_state_[2]'s eleventh dword - the ctor sets it to 0xFF.
@@ -673,7 +673,7 @@ uint32_t NetDaemon::unlock_veh() {
 // dynamic initializer at 0x0052DB10 constructs it at the fixed address
 // before WinMain; the recovered NetDaemon constructor here runs through this
 // build's own startup instead.
-// RECOVERY_OBJECT: v3 0x0093E8EC ?ConsoleFactionsWaitingMask@@3HA member ?NetDaemonNet@@3VNetDaemon@@A primary_state_.trailing_words_[7]
+// RECOVERY_OBJECT: v3 0x0093E8EC ?ConsoleFactionsWaitingMask@@3HA member ?NetDaemonNet@@3VNetDaemon@@A primary_state_.trailing_words_[6]
 // RECOVERY_OBJECT: v3 0x0093E964 0x0093E968 ?MessageWinNetworkMessageCount@@3HA 0x004713B0 member ?NetDaemonNet@@3VNetDaemon@@A channels_[1].trailing_words_[7]
 // RECOVERY_OBJECT: v3 0x0093D4F0 ?NetWinPlayerId@@3HA member ?NetDaemonNet@@3VNetDaemon@@A local_player_id_
 // RECOVERY_OBJECT: v3 0x0093D4F4 ?NetWinOtherPlayerId@@3HA member ?NetDaemonNet@@3VNetDaemon@@A host_player_id_
@@ -2321,7 +2321,7 @@ int NetDaemon::send_message(char *message, unsigned long length, int target) {
     }
     if (flags & 0x8000) {
         int value;
-        if (NetDaemonNet.primary_state_.trailing_words_[0] == 1) {
+        if (NetDaemonNet.primary_state_.session_phase_ == 1) {
             value = target;
         } else {
             value = host_player_id();
@@ -2330,7 +2330,7 @@ int NetDaemon::send_message(char *message, unsigned long length, int target) {
         return Net::send(message, length, target, 1);
     }
     if (flags & 0xA000) {
-        const int counter = NetDaemonNet.primary_state_.trailing_words_[0];
+        const int counter = NetDaemonNet.primary_state_.session_phase_;
         if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10) && ConsoleControlTurnActive == 0 &&
             GameDataStateStorage.fields_.net_turn_faction_ > 0 && counter > 1) {
             return Net::send(message, length,
@@ -2347,7 +2347,7 @@ int NetDaemon::send_message(char *message, unsigned long length, int target) {
     }
 
     int value;
-    if (NetDaemonNet.primary_state_.trailing_words_[0] == 1) {
+    if (NetDaemonNet.primary_state_.session_phase_ == 1) {
         value = target;
     } else {
         value = AlphaNet::who_2_pid(target);
@@ -2386,7 +2386,7 @@ int NetDaemon::lock_veh(int *veh_id, int target, int payload_1C,
     if (IsMultiplayerNet == 0) {
         return 0;
     }
-    if ((NetDaemonNet.primary_state_.trailing_words_[7] & (1 << ConsoleGlobal.faction_id_)) != 0 &&
+    if ((NetDaemonNet.primary_state_.trailing_words_[6] & (1 << ConsoleGlobal.faction_id_)) != 0 &&
         (GameDataStateStorage.fields_.net_turn_flags_ & 0x10) == 0) {
         NetMsgPrimary.pop("ALREADYDONE", 0, 2, 0);
         return 1;
@@ -2471,8 +2471,8 @@ int NetDaemon::init(int option) {
     primary_state_.leading_words_[1] = 0;
     primary_state_.leading_words_[2] = 0;
     primary_state_.flags_ = 0;
-    primary_state_.trailing_words_[8] = 0;
     primary_state_.trailing_words_[7] = 0;
+    primary_state_.trailing_words_[6] = 0;
     channels_[0].leading_words_[1] = 0;
     channels_[0].leading_words_[0] = 0;
     channels_[0].trailing_words_[0] = 0;
@@ -2481,20 +2481,20 @@ int NetDaemon::init(int option) {
     channels_[1].leading_words_[0] = 0;
     channels_[1].trailing_words_[5] = 0;
     channels_[1].trailing_words_[4] = 0;
+    primary_state_.trailing_words_[3] = 0;
     primary_state_.trailing_words_[4] = 0;
     primary_state_.trailing_words_[5] = 0;
-    primary_state_.trailing_words_[6] = 0;
     channels_[1].trailing_words_[3] = 0;
     channels_[1].trailing_words_[2] = 0;
     channels_[1].leading_words_[3] = 0;
     channels_[1].leading_words_[2] = 0;
     channels_[1].payload_.flags = 0;
+    primary_state_.session_phase_ = 0;
     primary_state_.trailing_words_[0] = 0;
-    primary_state_.trailing_words_[1] = 0;
     channels_[1].trailing_words_[8] = 0;
     channels_[1].trailing_words_[7] = 0;
+    primary_state_.trailing_words_[1] = 0;
     primary_state_.trailing_words_[2] = 0;
-    primary_state_.trailing_words_[3] = 0;
     channels_[1].trailing_words_[6] = 0xff;
     channels_[0].payload_.vehicle_selection_follow = 0;
 
@@ -4418,7 +4418,7 @@ static void netdaemon_handle_client_done_turn(NetDaemon *daemon,
                                               int resolved_sender) {
     const int faction = resolved_sender;
     const uint32_t faction_bit = static_cast<uint32_t>(1) << (faction & 0x1F);
-    uint32_t &turn_waiters = daemon->primary_state_.trailing_words_[7];
+    uint32_t &turn_waiters = daemon->primary_state_.trailing_words_[6];
     uint32_t &turn_info = daemon->channels_[0].leading_words_[0];
     turn_waiters |= faction_bit;
     turn_info |= faction_bit;
@@ -4584,11 +4584,11 @@ static void netdaemon_handle_server_lock_status(NetDaemon *daemon,
     case 0x4301: {
         my_srand(packet.timestamp_bits());
         daemon->channels_[0].leading_words_[0] = 0xFF;
-        daemon->primary_state_.trailing_words_[7] = 0xFF;
+        daemon->primary_state_.trailing_words_[6] = 0xFF;
         MultiWindow.draw(0);
         log_say("From Server: NEXT TURN",
                 GameDataStateStorage.fields_.turn_current_num_,
-                static_cast<int>(daemon->primary_state_.trailing_words_[7]), 0);
+                static_cast<int>(daemon->primary_state_.trailing_words_[6]), 0);
         NetDaemonProgressInterval = 0;
         NetDaemonProgressLastTick = 0;
         if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10u) != 0) {
@@ -4611,7 +4611,7 @@ static void netdaemon_handle_server_lock_status(NetDaemon *daemon,
         }
         my_srand(packet.timestamp_bits());
         daemon->channels_[0].leading_words_[1] = 0xFF;
-        daemon->primary_state_.trailing_words_[8] = 0xFF;
+        daemon->primary_state_.trailing_words_[7] = 0xFF;
         MultiWindow.draw(0);
         NetDaemonProgressInterval = 0;
         NetDaemonProgressLastTick = 0;
@@ -4711,7 +4711,7 @@ static void netdaemon_handle_client_done_upkeep(NetDaemon *daemon,
     }
 
     daemon->channels_[0].leading_words_[1] |= sender_bit;
-    uint32_t &already_notified = daemon->primary_state_.trailing_words_[8];
+    uint32_t &already_notified = daemon->primary_state_.trailing_words_[7];
     if ((already_notified & sender_bit) == 0) {
         already_notified |= sender_bit;
         for (int slot = 1; slot <= daemon->player_count_; ++slot) {
@@ -5019,7 +5019,7 @@ static bool netdaemon_handle_table_f(NetDaemon *daemon, unsigned short type,
     switch (type) {
     case 0x4304:
         log_say("From Server: UPKEEP_BASE", sender_identity, 0, 0);
-        daemon->primary_state_.trailing_words_[9] = 1;
+        daemon->primary_state_.trailing_words_[8] = 1;
         return true;
 
     case 0x4305: {
@@ -6104,10 +6104,10 @@ static bool netdaemon_handle_server_change_pause(NetDaemon &daemon,
         return true;
     }
     if (type == 0x4C00) {
-        uint32_t &paused = daemon.primary_state_.trailing_words_[4];
+        uint32_t &paused = daemon.primary_state_.trailing_words_[3];
         if (paused == 0) {
             const uint32_t now = static_cast<uint32_t>(timeGetTime());
-            daemon.primary_state_.trailing_words_[5] =
+            daemon.primary_state_.trailing_words_[4] =
                 now - static_cast<uint32_t>(NetDaemonWaitTicks);
             g_FX.play(21);
         }
@@ -6124,7 +6124,7 @@ static bool netdaemon_handle_server_change_pause(NetDaemon &daemon,
     if (type == 0x4C01) {
         const uint32_t sender_bit =
             uint32_t(1) << (static_cast<uint32_t>(identity) & 31u);
-        uint32_t &paused = daemon.primary_state_.trailing_words_[4];
+        uint32_t &paused = daemon.primary_state_.trailing_words_[3];
         paused &= ~sender_bit;
         log_say("Received UNPAUSE message", identity,
                 static_cast<int>(paused), 0);
@@ -6153,7 +6153,7 @@ static bool netdaemon_handle_chat_landmark_message(NetDaemon &daemon,
             static_cast<uint32_t>(MultiWindowContactStatusMask)) {
             return true;
         }
-        if (daemon.primary_state_.trailing_words_[0] == 1) {
+        if (daemon.primary_state_.session_phase_ == 1) {
             const int slot = NetDaemonNet.pid_2_idx(
                 static_cast<uint32_t>(sender_id));
             if (slot < 0) return true;
@@ -6167,8 +6167,7 @@ static bool netdaemon_handle_chat_landmark_message(NetDaemon &daemon,
         }
 
         StringTemp[0] = '\0';
-        int state;
-        std::memcpy(&state, &daemon.primary_state_.trailing_words_[0], sizeof state);
+        const int state = daemon.primary_state_.session_phase_;
         if (state < 2) {
             strcat(StringTemp, daemon.get_player_name(
                 static_cast<unsigned long>(sender_id)));
@@ -7695,8 +7694,8 @@ void NetDaemon::synch(int16_t opcode, int a2, int a3, int a4, char *packet,
     // dword slots 7/8. The popup and state transition order follows the native
     // first dispatch; these calls are before target capture/chunk callbacks.
     if (!outgoing) {
-        uint32_t &game_phase = primary_state_.trailing_words_[2];
-        uint32_t &rules_phase = primary_state_.trailing_words_[3];
+        uint32_t &game_phase = primary_state_.trailing_words_[1];
+        uint32_t &rules_phase = primary_state_.trailing_words_[2];
         if (opcode == 0x00 && static_cast<int32_t>(game_phase) >= 0) {
             NetMsgPrimary.pop("SYNCHINGGAME", outgoing, 1,
                              reinterpret_cast<const char *>(outgoing));
@@ -7891,8 +7890,8 @@ void NetDaemon::reset() {
     primary_state_.leading_words_[1] = 0;
     primary_state_.leading_words_[2] = 0;
     primary_state_.flags_ = 0;
-    primary_state_.trailing_words_[8] = 0;
     primary_state_.trailing_words_[7] = 0;
+    primary_state_.trailing_words_[6] = 0;
 
     channels_[0].leading_words_[1] = 0;
     channels_[0].leading_words_[0] = 0;
@@ -7903,20 +7902,20 @@ void NetDaemon::reset() {
     channels_[1].trailing_words_[5] = 0;
     channels_[1].trailing_words_[4] = 0;
 
+    primary_state_.trailing_words_[3] = 0;
     primary_state_.trailing_words_[4] = 0;
     primary_state_.trailing_words_[5] = 0;
-    primary_state_.trailing_words_[6] = 0;
     channels_[1].trailing_words_[3] = 0;
     channels_[1].trailing_words_[2] = 0;
     channels_[1].leading_words_[3] = 0;
     channels_[1].leading_words_[2] = 0;
     channels_[1].payload_.flags = 0;
+    primary_state_.session_phase_ = 0;
     primary_state_.trailing_words_[0] = 0;
-    primary_state_.trailing_words_[1] = 0;
     channels_[1].trailing_words_[8] = 0;
     channels_[1].trailing_words_[7] = 0;
+    primary_state_.trailing_words_[1] = 0;
     primary_state_.trailing_words_[2] = 0;
-    primary_state_.trailing_words_[3] = 0;
     channels_[1].trailing_words_[6] = 0xFF;
     channels_[0].payload_.vehicle_selection_follow = nullptr;
 

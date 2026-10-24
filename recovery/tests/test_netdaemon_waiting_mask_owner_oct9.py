@@ -44,10 +44,10 @@ def test_wait_mask_owner_and_callback_sensitive_server_paths(tmp_path: Path) -> 
     assert "int ConsoleFactionsWaitingMask;" not in console
     assert "extern int ConsoleFactionsWaitingMask;" not in header
     netdaemon_header = (ROOT / "src/netdaemon.h").read_text()
-    assert "return primary_state_.trailing_words_[7];" in netdaemon_header
+    assert "return primary_state_.trailing_words_[6];" in netdaemon_header
     assert sum(line.count("ConsoleFactionsWaitingMask") for line in cpp.splitlines()
                if "RECOVERY_OBJECT:" not in line) == 0
-    assert "RECOVERY_OBJECT: v3 0x0093E8EC ?ConsoleFactionsWaitingMask@@3HA member ?NetDaemonNet@@3VNetDaemon@@A primary_state_.trailing_words_[7]" in cpp
+    assert "RECOVERY_OBJECT: v3 0x0093E8EC ?ConsoleFactionsWaitingMask@@3HA member ?NetDaemonNet@@3VNetDaemon@@A primary_state_.trailing_words_[6]" in cpp
 
     harness = r'''
 #include <cassert>
@@ -59,7 +59,13 @@ struct Entry {
   union Payload { uint32_t flags; int *vehicle_selection_follow; } payload_;
   uint32_t trailing_words_[10];
 };
-struct PrimaryState { uint32_t leading_words_[3]; uint32_t flags_; uint32_t trailing_words_[10]; };
+static_assert(offsetof(Entry, payload_) == 0x10, "neighbor channel payload offset unchanged");
+static_assert(offsetof(Entry, trailing_words_) == 0x10 + sizeof(Entry::Payload), "neighbor channel follows its unchanged payload");
+struct PrimaryState { uint32_t leading_words_[3]; uint32_t flags_; int session_phase_; uint32_t trailing_words_[9]; };
+static_assert(offsetof(PrimaryState, flags_) == 0x0C, "primary lock flags offset");
+static_assert(offsetof(PrimaryState, session_phase_) == 0x10, "signed phase offset");
+static_assert(offsetof(PrimaryState, trailing_words_) == 0x14, "primary tail offset");
+static_assert(sizeof(PrimaryState) == 0x38, "primary lock-state extent");
 struct DeletionRecord { uint8_t ack_; uint8_t reserved_[3]; int owner_; int16_t count_; int16_t vehicles_[25]; };
 struct DeletionList { DeletionRecord records_[24]; int current_owner_; uint32_t sequence_bits() const { uint32_t x; std::memcpy(&x,&current_owner_,4); return x; } void set_sequence_bits(uint32_t x) { std::memcpy(&current_owner_,&x,4); } uint32_t advance_sequence() { uint32_t x=sequence_bits()+1; set_sequence_bits(x); return x; } };
 struct ProcessSlot { int identity_; };
@@ -71,7 +77,7 @@ struct NetDaemon : AlphaNet {
   void *file_index_records_; uint32_t field_1BE4_;
   ProcessSlot process_slots_[4]; int player_count_; LockOwner locks_;
   NetDaemon() : player_count_(1) { std::memset(&deletion_list_,0,sizeof(deletion_list_)); std::memset(&primary_state_,0,sizeof(primary_state_)); std::memset(channels_,0,sizeof(channels_)); }
-  uint32_t &factions_waiting_mask() { return primary_state_.trailing_words_[7]; }
+  uint32_t &factions_waiting_mask() { return primary_state_.trailing_words_[6]; }
       uint32_t &network_message_count() { return channels_[1].trailing_words_[7]; }
   void reset();
 };
@@ -100,11 +106,11 @@ int main() {
 
   NetDaemonNet.factions_waiting_mask()=0xA5;
   NetDaemonNet.network_message_count()=0x1234;
-  NetDaemonNet.primary_state_.trailing_words_[4]=0x55;
+  NetDaemonNet.primary_state_.trailing_words_[3]=0x55;
   NetDaemonNet.reset();
   assert(NetDaemonNet.factions_waiting_mask()==0);
   assert(NetDaemonNet.network_message_count()==0);
-  assert(NetDaemonNet.primary_state_.trailing_words_[4]==0);
+  assert(NetDaemonNet.primary_state_.trailing_words_[3]==0);
   NetDaemonNet.process_slots_[1].identity_=4;
   NetDaemonNet.player_count_=1;
 
@@ -152,7 +158,7 @@ int main() {
     # ownership/reload failures this closure is intended to prevent.
     mutants = {
         "reset-omits-wait-mask": harness.replace(
-            "primary_state_.trailing_words_[7] = 0;", "/* mutant omitted reset */", 1),
+            "primary_state_.trailing_words_[6] = 0;", "/* mutant omitted reset */", 1),
         "withdraw-snapshots-before-log": harness.replace(
             '    log_say("From Client: WITHDRAW END-OF-TURN", sender, 0, 0);\n\n'
             '    // The native handler reloads the shared mask after log_say; the callback\n'

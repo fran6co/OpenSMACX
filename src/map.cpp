@@ -244,7 +244,8 @@ uint32_t MapTileFlagClearMask = 0x00288050;  // 0x006919EC, defined here
 int MapBaseSubmergedCount[8];  // 0x009B2290
 int MapBaseIdClosestSubmergedVeh[8];  // 0x009B22BC
 int BrushVal1;  // 0x009B22B0
-uint32_t BrushVal2;  // 0x009B22B8
+// RECOVERY_OBJECT: v4 0x009B22B8 ?BrushVal2@@3IA target ?BrushVal2@@3HA
+int BrushVal2;  // 0x009B22B8
 int WorldBuildVal1;  // 0x009B22B4
 
 // RECOVERY_OBJECT: v4 0x0068FAF0 ?MapLongitude@@3IA target ?MapLongitude@@3HA
@@ -564,12 +565,15 @@ int __cdecl base_coast(int base_id) {
     int val = 0;
     int x = Bases[base_id].x;
     int y = Bases[base_id].y;
-    for (uint32_t i = 0; i < 8; i++) { // is_coast()
+    for (int i = 0; i < 8; i++) { // is_coast()
         int x_radius = xrange(x + VehMoveDeltaX[i]);
         int y_radius = y + VehMoveDeltaY[i];
         if (on_map(x_radius, y_radius) && is_ocean(x_radius, y_radius)) {
             region = region_at(x_radius, y_radius);
-            int compare = (region >= 127) ? 1 : Continents[region].tile_count;
+            int compare = Continents[region].tile_count;
+            if (region >= 127) {
+                compare = 1;
+            }
             if (compare >= val) {
                 val = compare; // value isn't used?
             }
@@ -606,7 +610,7 @@ BOOL __cdecl port_to_coast(int base_id, int region) {
     if (region_at(x, y) == region) {
         return true;
     }
-    for (uint32_t i = 0; i < 8; i++) { // is_coast()
+    for (int i = 0; i < 8; i++) { // is_coast()
         int x_radius = xrange(x + VehMoveDeltaX[i]);
         int y_radius = y + VehMoveDeltaY[i];
         if (on_map(x_radius, y_radius) && is_ocean(x_radius, y_radius)) {
@@ -2958,16 +2962,16 @@ Return Value: If ZOC, faction id + 1; Otherwise, 0 (however return seems to be t
 Status: Complete
 */
 int __cdecl zoc_veh(int x, int y, int faction_id) {
-    uint32_t ret = 0;
+    int ret = 0;
     for (uint32_t i = 0; i < 8; i++) {
         int x_radius = xrange(x + VehMoveDeltaX[i]);
         int y_radius = y + VehMoveDeltaY[i];
         if (on_map(x_radius, y_radius)) {
             int owner = veh_who(x_radius, y_radius);
-            if (owner >= 0 && (uint32_t)owner != faction_id
+            if (owner >= 0 && owner != faction_id
                 && !has_treaty(faction_id, owner, DTREATY_PACT)) {
                 owner++;
-                if (ret <= (uint32_t)owner) {
+                if (ret <= owner) {
                     ret = owner; // any point in continuing after 1st instance of ZOC is found?
                 }
             }

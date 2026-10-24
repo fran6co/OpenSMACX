@@ -133,7 +133,7 @@ def test_wrong_byte_destination_mutant_compiles_but_fails_neighbor_control(compi
 
 def test_human_update_avoids_the_old_wide_mask_read_modify_write():
     body = _function_body(SOURCE.read_text(), "void NetDaemon::on_player_deleted")
-    start = body.index("if (primary_state_.trailing_words_[0] == 2)")
+    start = body.index("if (primary_state_.session_phase_ == 2)")
     update = body[start : body.index("\n        }", start)]
     assert "bytes_.human_mask_ =" in update
     assert "enable_mask_" not in update

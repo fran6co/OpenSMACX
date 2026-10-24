@@ -106,7 +106,7 @@ def harness(bodies, api=None):
         struct LockStateEntry { uint32_t leading_words_[4]; union Payload { uint32_t flags; int *vehicle_selection_follow; } payload_; uint32_t trailing_words_[10]; };
         struct NetDaemon {
             LockStateEntry channels_[2]{};
-            struct Primary { uint32_t leading_words_[3]{}, flags_{}, trailing_words_[10]{}; } primary_state_;
+            struct Primary { uint32_t leading_words_[3]{}; uint32_t flags_{}; int session_phase_{}; uint32_t trailing_words_[9]{}; } primary_state_;
             ACTUAL_FOLLOW_API
         } NetDaemonNet;
 

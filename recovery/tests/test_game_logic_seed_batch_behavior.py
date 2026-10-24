@@ -165,8 +165,8 @@ struct Console { int faction_id_; };
 struct Window { int redraws,closes,execs; void redraw(){++redraws;}
     void close(){++closes;} void exec(int,int){++execs;} };
 struct NetState { uint32_t leading_words_[4]; union Payload { uint32_t flags; int *vehicle_selection_follow; } payload_; uint32_t trailing_words_[10]; };
-struct Net { NetState channels_[2]; struct PrimaryState { uint32_t leading_words_[3], flags_, trailing_words_[10]; } primary_state_; int waits,last_wait;
-    uint32_t &factions_waiting_mask() { return primary_state_.trailing_words_[7]; }
+struct Net { NetState channels_[2]; struct PrimaryState { uint32_t leading_words_[3]; uint32_t flags_; int session_phase_; uint32_t trailing_words_[9]; } primary_state_; int waits,last_wait;
+    uint32_t &factions_waiting_mask() { return primary_state_.trailing_words_[6]; }
     void await_diplo(int v){++waits;last_wait=v;} };
 struct Message { int calls; const char *label; int topic;
     void pop(const char *s,int,int,const char*){++calls;label=s;} };
@@ -175,12 +175,12 @@ Sprite Portraits[8]; Sprite *FactionDiplomacyPortraits[8];
 Console ConsoleGlobal; Window TutWinBaseWindow,DiploWindow; Net NetDaemonNet;
 uint32_t &ConsoleFactionsWaitingMask=NetDaemonNet.factions_waiting_mask();
 struct GameFields {
-    struct { uint32_t enable_mask_; } lock_masks_;
+    union { uint16_t enable_mask_; struct { uint8_t alive_mask_, human_mask_; } bytes_; } lock_masks_;
     int vehicle_current_count_,base_current_count_,sunspot_duration_,turn_current_num_;
     uint32_t game_state_,net_turn_flags_;
 };
 struct { GameFields fields_; } GameDataStateStorage;
-uint32_t &LockEnableMask=GameDataStateStorage.fields_.lock_masks_.enable_mask_;
+uint16_t &LockEnableMask=GameDataStateStorage.fields_.lock_masks_.enable_mask_;
 int &BaseCurrentCount=GameDataStateStorage.fields_.base_current_count_;
 int &VehCurrentCount=GameDataStateStorage.fields_.vehicle_current_count_;
 int &SunspotDuration=GameDataStateStorage.fields_.sunspot_duration_;

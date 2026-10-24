@@ -51,6 +51,15 @@ def test_original_identities_and_historical_obligations_are_unchanged():
         if address == 0x483420:
             old = replace(old, byte_exact=True, semantic=False)
         for field in fields(row):
+            if field.name == "byte_exact":
+                # Native recorder grants may strengthen later source facts;
+                # every historical claim must still remain present.
+                assert not old.byte_exact or row.byte_exact
+                continue
+            if field.name == "symbol" and not old.symbol:
+                # Empty historical bindings can gain a real emitted-symbol
+                # fact; native source/COFF checks qualify that new binding.
+                continue
             if address == 0x481DA0 and field.name == "symbol":
                 assert old.symbol == "?fill_player@NetWin@@QAEXPAUNetWinLobbyRow@@H@Z"
                 assert row.symbol == "?fill_player@NetWin@@QAEXVNetWinLobbyRowView@@H@Z"

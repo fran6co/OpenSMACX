@@ -1,0 +1,22 @@
+{
+  "event_id": "edd8188c0f26c36934a16517b03e485620a793e15d46b031617bed51f47f0a0b",
+  "payload": {
+    "affects": [
+      "entity-e29b10c18b96c864539697bbbde5122891de02aeb2ade39e031619442e9348e8"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "tech-val-faction-signed-oct24f-evidence",
+    "evidence": [
+      "Pin5BCCAF CDQ/IDIV versus actual unsignedDIV supports remaining local factor as int. Preserve both attack-predicate calls/order, 1/2/3 factor updates, unclamped ai_fight input and zero-divisor fault. Normal -1/0/1 states and explicitly diagnostic malformed -3 division; no overflow or whole-function proof. Canonical signature-to-end replacement only; parsed region synthetic wrappers are never copied.",
+      "All authorized owners are one coordinator-prepared isolated structural recovery batch; only coordinator mutates product source, Git, compiler/preparation and integration. Read-only agent proposals are hints. Preserve original identities/full spans/symbols/history and every historical byte claim; no baseline reset, demotion, safety normalization, compiler-policy trick, wrapper or assembly.",
+      "Require independent source/pin and actual-source controls, fresh application build/link, mapping/reference/claim continuity and fresh physical scoped comparisons. Explicitly review all changed output and preserve native FAIL/UNKNOWN without waivers; declared globals/member migrations can exceed a function-only residual, not fabricate preservation. Measure all mapped functions and fresh destination after integration. No full linked-selection/structure/runtime, exhaustive discovery, automatic/game acceptance or new coverage claim follows."
+    ],
+    "hypothesis": "Restore signed faction-value quotient",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "tech-val-faction-signed-oct24f-evidence",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:tech-val-faction-signed-oct24f"
+}

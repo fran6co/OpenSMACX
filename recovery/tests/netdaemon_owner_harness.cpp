@@ -79,6 +79,8 @@ struct AlphaNetLedger {
 };
 struct Net {
     uint32_t local_player_id_, host_player_id_;
+    uint32_t local_player_id() const { return local_player_id_; }
+    uint32_t host_player_id() const { return host_player_id_; }
     int send(void *, int, unsigned long, int);
 };
 struct AlphaNet : public Net {
@@ -87,7 +89,11 @@ struct AlphaNet : public Net {
     AlphaNetLedger ledger_;
 };
 struct LockStateEntry { uint32_t leading_words_[4]; union Payload { uint32_t flags; int *vehicle_selection_follow; } payload_; uint32_t trailing_words_[10]; };
-struct PrimaryState { uint32_t leading_words_[3]; uint32_t flags_; uint32_t trailing_words_[10]; };
+struct PrimaryState { uint32_t leading_words_[3]; uint32_t flags_; int session_phase_; uint32_t trailing_words_[9]; };
+static_assert(offsetof(PrimaryState, flags_) == 0x0C, "primary lock flags offset");
+static_assert(offsetof(PrimaryState, session_phase_) == 0x10, "signed phase offset");
+static_assert(offsetof(PrimaryState, trailing_words_) == 0x14, "primary tail offset");
+static_assert(sizeof(PrimaryState) == 0x38, "primary lock-state extent");
 
 struct PlayerLock {
     struct Entry { int flag, second, first; };
@@ -231,8 +237,8 @@ static void setup_two_player_delete(NetDaemon &daemon, int lock_phase) {
     daemon.process_slots_[2].identity_ = 2;
     daemon.local_player_id_ = 10;
     daemon.host_player_id_ = 10;
-    daemon.primary_state_.trailing_words_[0] = lock_phase;
-    daemon.primary_state_.trailing_words_[4] = 1u << 2;
+    daemon.primary_state_.session_phase_ = lock_phase;
+    daemon.primary_state_.trailing_words_[3] = 1u << 2;
     daemon.channels_[0].trailing_words_[0] = 0xFF;
     daemon.channels_[0].trailing_words_[3] = 0x8;
     NetWinLobbyRows[2].prefix_ = 0x55;
@@ -273,6 +279,37 @@ int main(int argc, char **argv) {
         assert_before("send-faction", "redraw");
         assert(send_count == 4 && send_order[0] == 1 && send_order[3] == 4);
         assert(NetWinDialog.redraws == 1);
+    } else if (strcmp(scenario, "added_negative_phase") == 0) {
+        reset_daemon(daemon);
+        daemon.player_count_ = 1;
+        daemon.local_player_id_ = daemon.host_player_id_ = 44;
+        daemon.process_slots_[1].pid_ = 44;
+        strcpy(daemon.process_slots_[1].name_, "host");
+        daemon.process_slots_[1].identity_ = 1;
+        daemon.primary_state_.session_phase_ = -1;
+        NetWinSessionOptions.difficulty_ = 4;
+        NetWinDialog.visible = 1;
+        clear_trace();
+        daemon.on_player_added(incoming_name, 20);
+        assert(daemon.player_count_ == 2);
+        assert(daemon.process_slots_[2].pid_ == 20);
+        assert(daemon.process_slots_[2].identity_ == 2);
+        assert(strcmp(daemon.process_slots_[2].name_, "new-player") == 0);
+        assert(NetWinLobbyRows[2].prefix_ == 2);
+        assert(NetWinLobbyRows[2].field_2_ == 4);
+        assert(NetWinLobbyRows[2].owner_ == 0);
+        assert(NetWinLobbyRows[2].faction_or_color_ == -1);
+        assert(daemon.primary_state_.session_phase_ == -1);
+        assert(find_event("popup:ADDED") >= 0);
+        assert_before("get-name:20", "parse:new-player");
+        assert_before("parse:new-player", "popup:ADDED");
+        assert_before("popup:ADDED", "send-all");
+        assert_before("send-all", "send-session");
+        assert_before("send-session", "send-session2");
+        assert_before("send-session2", "send-faction");
+        assert_before("send-faction", "redraw");
+        assert(send_count == 4 && send_order[0] == 1 && send_order[3] == 4);
+        assert(NetWinDialog.redraws == 1);
     } else if (strcmp(scenario, "delete_found") == 0) {
         setup_two_player_delete(daemon, 1);
         clear_trace();
@@ -300,7 +337,7 @@ int main(int argc, char **argv) {
         daemon.on_player_deleted(0, 20);
         assert(daemon.locks_.records_[3].active_ == 0);
         assert(daemon.locks_.records_[3].entries_[0].flag == 0);
-        assert(daemon.primary_state_.trailing_words_[0] == 2);
+        assert(daemon.primary_state_.session_phase_ == 2);
         assert(NetWinLobbyRows[2].prefix_ == 0x55); // phase 2: no prefix write
         assert(message_calls == 0);
         assert(label_calls == 2);
@@ -312,7 +349,7 @@ int main(int argc, char **argv) {
         clear_trace();
         daemon.on_player_deleted(0, 20);
         assert(daemon.locks_.records_[3].active_ == 4);
-        assert(daemon.primary_state_.trailing_words_[0] == 2);
+        assert(daemon.primary_state_.session_phase_ == 2);
         assert(NetWinLobbyRows[2].prefix_ == 0x55);
         assert(message_calls == 0);
     } else if (strcmp(scenario, "delete_slot8_miss") == 0) {

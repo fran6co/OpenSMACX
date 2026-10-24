@@ -59,14 +59,14 @@ struct GameFields {
 };
 struct { GameFields fields_{}; } GameDataStateStorage;
 struct Entry { uint32_t leading_words_[4]={}; uint32_t trailing_words_[10]={}; };
-struct Primary { uint32_t leading_words_[3]={}; uint32_t trailing_words_[10]={}; };
+struct Primary { uint32_t leading_words_[3]={}; uint32_t flags_{}; int session_phase_{}; uint32_t trailing_words_[9]={}; };
 struct NetDaemon {
     Entry channels_[2]{};
     Primary primary_state_{};
     ProcessSlot process_slots_[8]{};
     int player_count_=0;
     struct { int field_E8_=0; } locks_;
-    uint32_t &factions_waiting_mask() { return primary_state_.trailing_words_[7]; }
+    uint32_t &factions_waiting_mask() { return primary_state_.trailing_words_[6]; }
 };
 static NetDaemon NetDaemonNet;
 static Player Players[8];
@@ -169,12 +169,12 @@ int main() {
     // WITHDRAW reads payload after logging; the callback can make the
     // request current before it clears the owning singleton mask.
     reset(); put(packet,0x10,8);
-    NetDaemonNet.primary_state_.trailing_words_[7]=1u<<2;
+    NetDaemonNet.primary_state_.trailing_words_[6]=1u<<2;
     on_callback=[](const std::string &name) {
         if(name=="log:From Client: WITHDRAW END-OF-TURN") put(live_packet,0x10,9);
     };
     netdaemon_handle_withdraw_end_turn(&NetDaemonNet,packet,2);
-    assert(NetDaemonNet.primary_state_.trailing_words_[7]==0);
+    assert(NetDaemonNet.primary_state_.trailing_words_[6]==0);
     assert(sent_opcodes.size()==1 && sent_opcodes[0]==0x1302);
 
     // The packet starts at an unaligned address; no aligned dword load or
@@ -254,7 +254,7 @@ def test_callback_reload_controls_reject_field_snapshots(tmp_path, compiler_name
         "turn-cache": "channels_[0].leading_words_[0]",
         "upkeep-cache": "Upkeep instruction for wrong phase",
         "done-upkeep-cache": "logged_value",
-        "withdraw-cache": "primary_state_.trailing_words_[7]",
+        "withdraw-cache": "primary_state_.trailing_words_[6]",
     }[damage]
     assert result.returncode==98, (damage,result.returncode,result.stdout,result.stderr)
     assert "HARNESS_ASSERT:" in result.stderr and expected_assertion in result.stderr, result.stderr
@@ -267,7 +267,12 @@ def test_view_uses_actual_record_and_field_sized_memcpy_without_length_policy():
     assert "unresolved_2_[2]" in record
     for offset in ("opcode_","faction_","timestamp_","sequence_","payload_10_","payload_14_","payload_18_","payload_1C_"):
         assert f"offsetof(MessageDataRecord, {offset})" in view
-    assert view.count("std::memcpy(&value,")==8
+    # Eight record-field views plus the signed byte view of payload_18_.
+    # The byte getter intentionally reads one byte from that same field.
+    byte_view=extract(view,"int8_t payload_18_byte() const")
+    assert "int8_t value;" in byte_view
+    assert "offsetof(MessageDataRecord, payload_18_), sizeof value)" in byte_view
+    assert view.count("std::memcpy(&value,")==9
     assert "memcpy(this" not in view and "sizeof(MessageDataRecord)" not in view
     for signature in HANDLERS:
         body=extract(text,signature)

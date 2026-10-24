@@ -45,7 +45,7 @@ struct FakeNetWin {
 } NetWinDialog;
 struct Slot { unsigned char status_bytes_[4]; };
 struct LockWord { uint32_t leading_words_[4]; union Payload { uint32_t flags; int *vehicle_selection_follow; } payload_; uint32_t trailing_words_[10]; };
-struct PrimaryState { uint32_t leading_words_[3]; uint32_t flags_; uint32_t trailing_words_[10]; };
+struct PrimaryState { uint32_t leading_words_[3]; uint32_t flags_; int session_phase_; uint32_t trailing_words_[9]; };
 struct DeletionRecord { uint8_t acknowledgements_; uint8_t reserved_[3]; int owner_; int16_t count_; int16_t vehicle_ids_[25]; };
 struct DeletionList {
     DeletionRecord records_[24];
@@ -94,8 +94,8 @@ int PopupModalState;
 int NetDaemonTransferResetWord = -1;
 static void *mem_get(int size) { return malloc((size_t)size); }
 // This modal control doubles the transfer operation; the separate actual-body
-// owner controls exercise the recovered wrapper's statuses and size writeback.
-static int netdaemon_inflate_buffer(unsigned char *, unsigned long *, unsigned char *, unsigned int) {
+// owner controls exercise the linked zlib boundary's statuses and size writeback.
+static int uncompress(unsigned char *, unsigned long *, const unsigned char *, unsigned long) {
     return 0;
 }
 static void parse_says(int, const char *, int, int) {}

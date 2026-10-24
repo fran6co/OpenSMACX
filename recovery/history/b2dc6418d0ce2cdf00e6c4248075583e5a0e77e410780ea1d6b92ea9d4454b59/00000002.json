@@ -1,0 +1,17 @@
+{
+  "event_id": "50d04666485999cf9cbbd98d3f7ba91f1d23a4cea7ea870c7ff9045c14297560",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "net-session-phase-owner-oct24f-evidence",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Scoped source corrections incorporated in coordinated checkout; original identity, spans, symbols, history and claims verified unchanged. Source is not acceptance; compiler, host controls and independent checks pending."
+    ]
+  },
+  "previous_event": "525e32e7192e24fb9ad04f8a596ecebf272fcb26d1798811f810434f0607233c",
+  "request_id": "net-session-phase-owner-oct24f-source-incorporation",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:net-session-phase-owner-oct24f"
+}

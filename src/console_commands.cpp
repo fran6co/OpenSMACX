@@ -4164,7 +4164,7 @@ void Console::activate(int x, int y, int current_selection) {
         if (NetDaemonNet.channels_[1].leading_words_[2] ||
             NetDaemonNet.channels_[1].payload_.flags) return;
         const unsigned int faction_bit = 1u << ConsoleGlobal.faction_id_;
-        if (((NetDaemonNet.primary_state_.trailing_words_[7] & faction_bit) &&
+        if (((NetDaemonNet.primary_state_.trailing_words_[6] & faction_bit) &&
              !(GameDataStateStorage.fields_.net_turn_flags_ & 0x10)) || ConsoleControlTurnActive) {
             int vehicle = veh_at(x, y);
             if (stack_check(vehicle, 1, -1, -1, -1) != 1)
@@ -4173,7 +4173,7 @@ void Console::activate(int x, int y, int current_selection) {
                 selected_vehicle_ = vehicle;
                 focus_vehicle_ = vehicle;
             }
-            const bool ready_now = (NetDaemonNet.primary_state_.trailing_words_[7] &
+            const bool ready_now = (NetDaemonNet.primary_state_.trailing_words_[6] &
                 (1u << ConsoleGlobal.faction_id_)) && veh_ready(vehicle);
             NetMsgPrimary.pop(ready_now ? "ALREADYDONE" : "FIRSTMOVE", 2000, 0, nullptr);
             return;

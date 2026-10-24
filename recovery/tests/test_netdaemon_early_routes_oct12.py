@@ -287,11 +287,11 @@ int main() {
     assert(parsed_genders[1]==13 && parsed_pluralities[1]==0 && position("draw")<position("pop:SLOWPOKE"));
 
     // NEXT UPKEEP resets the ACK notification word, preserving base-ready.
-    reset(); receiver=NetDaemon{}; receiver.primary_state_.trailing_words_[9]=0x1234;
+    reset(); receiver=NetDaemon{}; receiver.primary_state_.trailing_words_[8]=0x1234;
     put(packet,0x10,0); put(packet,0x14,0);
     callback=[&](const std::string&s) { if(s=="log:From Server: NEXT UPKEEP") { put(packet,0x10,3); put(packet,0x14,9); } };
     netdaemon_handle_server_lock_status(&receiver,0x4303,packet,2);
-    assert(receiver.primary_state_.trailing_words_[8]==255 && receiver.primary_state_.trailing_words_[9]==0x1234);
+    assert(receiver.primary_state_.trailing_words_[7]==255 && receiver.primary_state_.trailing_words_[8]==0x1234);
     assert(position("log:(Upkeep instruction for wrong phase!)")==-1 && position("log:(Upkeep instruction for wrong turn!)")==-1);
     // Preserve wrong phase/turn paths: log, seed and masks still execute.
     reset(); receiver=NetDaemon{}; put(packet,0x10,4); put(packet,0x14,8);
@@ -299,7 +299,7 @@ int main() {
     assert(position("log:(Upkeep instruction for wrong phase!)")>=0 && position("seed")>=0);
     reset(); receiver=NetDaemon{}; put(packet,0x10,3);
     netdaemon_handle_server_lock_status(&receiver,0x4303,packet,2);
-    assert(position("log:(Upkeep instruction for wrong turn!)")>=0 && receiver.primary_state_.trailing_words_[8]==255);
+    assert(position("log:(Upkeep instruction for wrong turn!)")>=0 && receiver.primary_state_.trailing_words_[7]==255);
     // EXEC DONE logs old remaining as argument one, then tests live remaining.
     reset(); receiver=NetDaemon{}; receiver.channels_[1].trailing_words_[2]=7; receiver.channels_[1].leading_words_[3]=55;
     callback=[&](const std::string&s) { if(s=="log:From Server: EXEC DONE") { assert(last_log[0]==7 && last_log[1]==0 && last_log[2]==0); receiver.channels_[1].trailing_words_[2]=0; } };
@@ -356,7 +356,7 @@ int main() {
 
     // Table F carries resolved sender for logs and transport sender for names.
     reset(); receiver=NetDaemon{}; netdaemon_handle_table_f(&receiver,0x4304,packet,1001,2);
-    assert(last_log[0]==2 && receiver.primary_state_.trailing_words_[9]==1);
+    assert(last_log[0]==2 && receiver.primary_state_.trailing_words_[8]==1);
     put(packet,0x10,4); NetDaemonNet.network_message_count()=5;
     callback=[&](const std::string&s) { if(s=="log:From Server: MSG_EVENTS") { assert(last_log[0]==2 && last_log[1]==4); put(packet,0x10,7); } };
     netdaemon_handle_table_f(&receiver,0x4305,packet,1001,2); assert(NetDaemonNet.network_message_count()==7);
@@ -487,7 +487,7 @@ def test_behavior_damage_controls(tmp_path, damage):
         pytest.skip("host compiler unavailable")
     declarations, functions, state_fields, setter = source_material()
     mutations = {
-        "upkeep_word": ("daemon->primary_state_.trailing_words_[8] = 0xFF;", "daemon->primary_state_.trailing_words_[9] = 0xFF;"),
+        "upkeep_word": ("daemon->primary_state_.trailing_words_[7] = 0xFF;", "daemon->primary_state_.trailing_words_[8] = 0xFF;"),
         "bonus_exit": ("if (PlayersData[faction_id].time_bonus_count <= 0) return true;", "if (false) return true;"),
         "global_host": ("if (NetDaemonNet.primary_state_.leading_words_[0] != 0) return;", "if (daemon->primary_state_.leading_words_[0] != 0) return;"),
         "portrait": ("popup.set_caller_picture(popup.picture_enabled() ? 0 : portrait);", "popup.set_caller_picture(portrait);"),

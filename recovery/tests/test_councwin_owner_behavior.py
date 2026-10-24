@@ -69,7 +69,7 @@ struct GameDataStorageDouble { GameDataFieldsDouble fields_; } GameDataStateStor
 struct ConsoleGlobalDouble { int faction_id_=0; };
 static ConsoleGlobalDouble ConsoleGlobal;
 struct NetState { uint32_t leading_words_[4]; union Payload { uint32_t flags; int *vehicle_selection_follow; } payload_; uint32_t trailing_words_[10]; };
-struct NetDaemonDouble { NetState channels_[2]; struct { uint32_t leading_words_[3], flags_, trailing_words_[10]; } primary_state_; };
+struct NetDaemonDouble { NetState channels_[2]; struct { uint32_t leading_words_[3]; uint32_t flags_; int session_phase_; uint32_t trailing_words_[9]; } primary_state_; };
 static NetDaemonDouble NetDaemonNet;
 
 static int ai_votes[MaxPlayerNum];

@@ -1,0 +1,17 @@
+{
+  "event_id": "ac308eb0204c575b4e3d13f57424d78251ad17e360c99b9d8064bf25556430d1",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "brush-count-signed-oct24f-evidence",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Scoped source corrections incorporated in coordinated checkout; original identity, spans, symbols, history and claims verified unchanged. Source is not acceptance; compiler, host controls and independent checks pending."
+    ]
+  },
+  "previous_event": "ed2f7824f9a3536fe8427082e3989113186883cad9be7970fde39427c93af620",
+  "request_id": "brush-count-signed-oct24f-source-incorporation",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:brush-count-signed-oct24f"
+}

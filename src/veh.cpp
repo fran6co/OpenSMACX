@@ -5928,7 +5928,7 @@ int __cdecl proto_cost(int chassis_id, int weapon_id, int armor_id,
     if (Chassis[chassis_id].missile && Weapon[weapon_id].offense_rating >= 99) {
         return weap_cost;
     }
-    uint32_t combat_mod = armor_cost / 2 + 1;
+    int combat_mod = armor_cost / 2 + 1;
     if (combat_mod < weap_cost) { // which ever is greater
         combat_mod = weap_cost;
     }

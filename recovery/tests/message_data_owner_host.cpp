@@ -33,7 +33,7 @@ int ConsoleControlTurnActive;
 struct FakeGameDataStateFields { uint32_t net_turn_flags_; int net_turn_faction_; };
 struct FakeGameDataStateWindow { FakeGameDataStateFields fields_; } GameDataStateStorage;
 struct FakeDeletionList { int current_owner_; uint32_t sequence_bits() const { return static_cast<uint32_t>(current_owner_); } };
-struct FakePrimaryState { uint32_t leading_words_[3]; uint32_t flags_; uint32_t trailing_words_[10]; };
+struct FakePrimaryState { uint32_t leading_words_[3]; uint32_t flags_; int session_phase_; uint32_t trailing_words_[9]; };
 uint32_t fake_time;
 int fake_time_calls;
 int fake_send_result;
@@ -118,7 +118,7 @@ int main() {
     IsMultiplayerNet = 1;
     NetDaemonNet.host_player_id_ = 88;
     NetDaemonNet.deletion_list_.current_owner_ = 0x11223344;
-    NetDaemonNet.primary_state_.trailing_words_[0] = 1;
+    NetDaemonNet.primary_state_.session_phase_ = 1;
     ConsoleGlobal.faction_id_ = 7;
     NetBusyCount = 4;
     fake_time = 900;
@@ -154,13 +154,13 @@ int main() {
     fake_send_result = -37;
     uint16_t flags = 0x8000;
     memcpy(packet, &flags, sizeof flags);
-    NetDaemonNet.primary_state_.trailing_words_[0] = 1;
+    NetDaemonNet.primary_state_.session_phase_ = 1;
     reset_observations();
     assert(NetDaemonNet.send_message(reinterpret_cast<char *>(packet),
                                      sizeof packet, 13) == -37);
     assert(fake_target == 13 && fake_who_calls == 0);
 
-    NetDaemonNet.primary_state_.trailing_words_[0] = 2;
+    NetDaemonNet.primary_state_.session_phase_ = 2;
     reset_observations();
     assert(NetDaemonNet.send_message(reinterpret_cast<char *>(packet),
                                      sizeof packet, 13) == -37);
@@ -181,7 +181,7 @@ int main() {
     // branch; reaching it requires 0x2000 without 0x8000.
     flags = 0x2000;
     memcpy(packet, &flags, sizeof flags);
-    NetDaemonNet.primary_state_.trailing_words_[0] = 2;
+    NetDaemonNet.primary_state_.session_phase_ = 2;
     GameDataStateStorage.fields_.net_turn_flags_ = 0x10;
     ConsoleControlTurnActive = 0;
     GameDataStateStorage.fields_.net_turn_faction_ = 3;
@@ -193,7 +193,7 @@ int main() {
 
     flags = 0;
     memcpy(packet, &flags, sizeof flags);
-    NetDaemonNet.primary_state_.trailing_words_[0] = 2;
+    NetDaemonNet.primary_state_.session_phase_ = 2;
     reset_observations();
     assert(NetDaemonNet.send_message(reinterpret_cast<char *>(packet),
                                      sizeof packet, 13) == -37);
@@ -204,7 +204,7 @@ int main() {
     memset(&NetDaemonNet.deletion_list_, 0x55, sizeof NetDaemonNet.deletion_list_);
     memset(&NetDaemonNet.primary_state_, 0x55, sizeof NetDaemonNet.primary_state_);
     memset(NetDaemonNet.channels_, 0x55, sizeof NetDaemonNet.channels_);
-    NetDaemonNet.primary_state_.trailing_words_[0] = 1;
+    NetDaemonNet.primary_state_.session_phase_ = 1;
     fake_log_calls = 0;
     reset_observations();
     assert(NetDaemonNet.unlock_veh() == static_cast<uint32_t>(-37));
