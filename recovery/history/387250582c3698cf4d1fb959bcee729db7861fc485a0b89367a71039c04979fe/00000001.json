@@ -1,0 +1,26 @@
+{
+  "event_id": "0bba086c3f982de124e75cb41dae81a06b6d727d377cad315aa536e62f81c8cc",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/basebutton.cpp"
+    ],
+    "evidence": [
+      "Coordinator combines4direct inherited call proposals after independent source/pin review and native unchanged-production-object positive controls. Each candidate preserves all other COFF sections, with zero local exact losses; draw_line48BB80 and UNK1 48B3C0 are new actual production exacts.",
+      "No header or ABI change, no flag/spelling retries. Preserve all source identities, claims and quirks. Full fresh compile/link, source/claim/reference/mapping checks and global local/strict set preservation required before manual integration."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6320528,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "combine-reviewed-base-receiver-owners-oct25a",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:direct-base-plan-oct25a"
+}

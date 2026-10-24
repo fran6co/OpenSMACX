@@ -685,7 +685,7 @@ int BaseButton::UNK1(Font *font, char *name, int id, int x, int y,
     const int height = font->height_ * 7 / 4;
     const int result = init(name, id, x, y, width, height, parent, style_flag);
     if (result != 0) return result;
-    static_cast<Buffer *>(this)->set_font(font, 0, 0, 0);
+    set_font(font, 0, 0, 0);
     redraw();
     return 0;
 }

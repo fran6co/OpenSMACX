@@ -418,10 +418,8 @@ void PlanWin::draw_line_base(int base_id1, int base_id2, int color) {
     pixel_x2 += field_1DDBC_;
     pixel_y2 += field_1DDC0_;
 
-    GraphicWin *const graphics = static_cast<GraphicWin *>(this);
-    Buffer *const drawing_buffer = static_cast<Buffer *>(graphics);
-    drawing_buffer->line(pixel_x1, pixel_y1, pixel_x2, pixel_y2, 0, color,
-                         4, 4, PlanLineCounter);
+    line(pixel_x1, pixel_y1, pixel_x2, pixel_y2, 0, color,
+         4, 4, PlanLineCounter);
 }
 
 // ORIGINAL: 0x0054B140 ?battle_routine@@YAXH@Z 0x0054B140-0x0054B1B6 BYTE_EXACT
@@ -599,7 +597,7 @@ void PlanWin::add_line(int base_id1, int base_id2, int color) {
 // MapWin receiver, offsets them by the map's current pixel center, then draws
 // a four-on/four-off patterned line on the virtual GraphicWin Buffer. The
 // nine-argument Buffer overload remains an explicit unfinished dependency.
-// ORIGINAL: 0x0048BB80 ?draw_line@PlanWin@@QAEXHHHHH@Z 0x0048BB80-0x0048BC14
+// ORIGINAL: 0x0048BB80 ?draw_line@PlanWin@@QAEXHHHHH@Z 0x0048BB80-0x0048BC14 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0048bb80.cpp"], "reason": "Home tile-projected patterned PlanWin line in its real Buffer base path"}
 void PlanWin::draw_line(int tile_x1, int tile_y1, int tile_x2, int tile_y2,
                         int color) {
@@ -615,10 +613,8 @@ void PlanWin::draw_line(int tile_x1, int tile_y1, int tile_x2, int tile_y2,
     pixel_x2 += field_1DDBC_;
     pixel_y2 += field_1DDC0_;
 
-    GraphicWin *const graphics = static_cast<GraphicWin *>(this);
-    Buffer *const drawing_buffer = static_cast<Buffer *>(graphics);
-    drawing_buffer->line(pixel_x1, pixel_y1, pixel_x2, pixel_y2, 0, color,
-                         4, 4, PlanLineCounter);
+    line(pixel_x1, pixel_y1, pixel_x2, pixel_y2, 0, color,
+         4, 4, PlanLineCounter);
 }
 
 // ORIGINAL: 0x0048B3F0 ?back_redraw@PlanWin@@QAEXXZ 0x0048B3F0-0x0048B445 FILE BYTE_EXACT
@@ -690,7 +686,7 @@ void PlanWin::blink() {
 
 /*
 Purpose: Restore the window's backing image from the plan window's own buffer.
-// ORIGINAL: 0x0048B3C0 ?UNK1@PlanWin@@QAEXXZ 0x0048B3C0-0x0048B3EF
+// ORIGINAL: 0x0048B3C0 ?UNK1@PlanWin@@QAEXXZ 0x0048B3C0-0x0048B3EF BYTE_EXACT
 // size      47 bytes
 // prototype void (__thiscall ?UNK1@PlanWin@@QAEXXZ)(PlanWin* this)
 // callers   0   call targets   1
@@ -704,10 +700,7 @@ The height is passed negated. That is the original's, not a transcription
 slip: it loads the buffer's field at 0x84 and runs `neg edx` before pushing.
 */
 void PlanWin::UNK1() {
-    GraphicWin *const graphic = static_cast<GraphicWin *>(this);
-    Buffer *const window_buffer = static_cast<Buffer *>(graphic);
-    window_buffer->copy(&buffer_, 0, 0, graphic->pixel_width(),
-                        graphic->pixel_height());
+    copy(&buffer_, 0, 0, pixel_width(), pixel_height());
 }
 
 
