@@ -72,8 +72,10 @@ struct Popup {
 };
 Popup DiplomacyPopup;
 struct Strings {
-    char *get(int address) {
-        if (address >= 0x1000 && address < 0x1009) return mood_text[address - 0x1000];
+    LPSTR get(LPSTR address) {
+        for (int i = 0; i < 9; ++i) {
+            if (address == Mood[i]) return mood_text[i];
+        }
         assert(false && "unexpected StringTable key");
         return nullptr;
     }

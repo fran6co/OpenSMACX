@@ -1,0 +1,20 @@
+{
+  "event_id": "4c33e34fb2b4a2c82e433ba6e5583f73bec9a0bb3886bda7921ddc6bc127c0d8",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_diplomacy_caption_behavior.py"
+    ],
+    "evidence": [
+      "Fixture incorrectly models Mood LPSTR string keys as integers; update only test double to actual Strings.get(LPSTR), preserving all behavioral assertions.",
+      "Coordinator-authorized existing host-fixture repair only; no production flags/C++ behavior changes or weakened checks. Failed original runs remain retained. Native task baseline, historical claims and automatic acceptance refusal remain unchanged."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "initialization-host-fixture-1-oct24n",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:initialization-owner-1-oct24n"
+}
