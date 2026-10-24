@@ -7680,7 +7680,7 @@ int __cdecl crop_yield(int faction_id, int base_id, int x, int y,
                && (tile->climate & 0xE0) >= ALT_BIT_OCEAN_SHELF) {
         int planet = PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::PLANET];
         int planet_mod = (planet < -3) ? -3 : ((planet > 0) ? 0 : planet);
-        crop = range(PlayersData[faction_id].tech_fungus_nutrient + planet_mod,
+        crop = range(PlayersData[faction_id].tech_fungus_[RSC_NUTRIENTS] + planet_mod,
                      0, 99);
         if (has_project(SP_MANIFOLD_HARMONICS, faction_id) && planet > 0) {
             crop++;
@@ -7874,7 +7874,7 @@ int __cdecl mine_yield(int faction_id, int base_id, int x, int y,
         // Note there is no assume_improved suppressor here; crop_yield has one.
         int planet = PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::PLANET];
         int planet_mod = (planet < -3) ? -3 : ((planet > 0) ? 0 : planet);
-        mineral = range(PlayersData[faction_id].tech_fungus_mineral + planet_mod,
+        mineral = range(PlayersData[faction_id].tech_fungus_[RSC_MINERALS] + planet_mod,
                         0, 99);
         if (has_project(SP_MANIFOLD_HARMONICS, faction_id) && planet > 1) {
             mineral++;
@@ -8073,7 +8073,7 @@ int __cdecl energy_yield(int faction_id, int base_id, int x, int y,
                && (tile->climate & 0xE0) >= ALT_BIT_OCEAN_SHELF) {
         int planet = PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::PLANET];
         int planet_mod = (planet < -3) ? -3 : ((planet > 0) ? 0 : planet);
-        energy = range(PlayersData[faction_id].tech_fungus_energy + planet_mod,
+        energy = range(PlayersData[faction_id].tech_fungus_[RSC_ENERGY] + planet_mod,
                        0, 99);
         if (has_project(SP_MANIFOLD_HARMONICS, faction_id)) {
             if (planet >= 0) {
@@ -11959,9 +11959,9 @@ void __cdecl base_terraform(int force_improve) {
     bool thermal_borehole_present = false;
     bool condenser_present = false;
     int nearest_open_square_count = 0;
-    const int fungus_tech_total = PlayersData[faction].tech_fungus_nutrient +
-                                  PlayersData[faction].tech_fungus_mineral +
-                                  PlayersData[faction].tech_fungus_energy;
+    const int fungus_tech_total = PlayersData[faction].tech_fungus_[RSC_NUTRIENTS] +
+                                  PlayersData[faction].tech_fungus_[RSC_MINERALS] +
+                                  PlayersData[faction].tech_fungus_[RSC_ENERGY];
     for (radius_index = 0; radius_index < 21; ++radius_index) {
         int x = base.x + RadiusOffsetX[radius_index];
         if ((MapIsFlat & 1) == 0) {
@@ -12808,7 +12808,7 @@ after_growth:
                 const uint8_t rainfall = static_cast<uint8_t>(climate >> 3);
                 const uint8_t rainfall_class = rainfall & 3;
                 if ((flags & 0x20) == 0 || (climate & 0xE0) < 0x40
-                    || PlayersData[owner].tech_fungus_nutrient < 2) {
+                    || PlayersData[owner].tech_fungus_[RSC_NUTRIENTS] < 2) {
                     const bool worked = (BaseCurrent->resource_sqr_radius
                         & (1u << (direction & 0x1F))) != 0;
                     if (!worked) {

@@ -410,10 +410,14 @@ struct PlayerData {
     int turn_commerce_income;
     int unk_17;
     int unk_18;
-    int tech_fungus_nutrient; // Increases NUTRIENT production in fungus
-    int tech_fungus_mineral; // Increases MINERALS production in fungus
-    int tech_fungus_energy; // Increases ENERGY production in fungus
-    int tech_fungus_unk; // PSI? Dropped mechanic?
+    // Four 32-bit slots: 0x005BAE99 clears them; 0x005BAF9D clamps four in order.
+    // The group begins at PlayerData+0x314; the original C++ declarator is unknown.
+    // Crop/mine/energy readers at 0x004E70A5/0x004E7560/0x004E7A79 establish slots 0/1/2.
+    // Their faction-zero addresses are 0x0096CCF4/0x0096CCF8/0x0096CCFC.
+    // RECOVERY_MEMBER: v1 PlayerData tech_fungus_ 0x314 0x005BAE60
+    // Known indices are RSC_NUTRIENTS, RSC_MINERALS and RSC_ENERGY.
+    // Slot 3 is unknown; earlier notes speculated "PSI? Dropped mechanic?" without proof.
+    int tech_fungus_[4];
     int se_alloc_psych;
     int se_alloc_labs;
     uint32_t tech_pact_shared_goals[12]; // Bitfield; Suggested techID goals from pacts (TEAMTECH)

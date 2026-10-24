@@ -8,13 +8,23 @@ import pytest
 from match_recovery.source import read_file
 
 ROOT = Path(__file__).resolve().parents[2]
+
+def resource_enum():
+    source = (ROOT / "src/map.h").read_text(encoding="utf-8")
+    match = re.search(r"enum ResourceType\s*\{.*?\};", source, re.DOTALL)
+    assert match, "production ResourceType declaration missing"
+    return match.group(0)
+
+def with_resource_enum(harness):
+    assert harness.count("// @@RESOURCE_ENUM@@") == 1
+    return harness.replace("// @@RESOURCE_ENUM@@", resource_enum())
 GROWTH_HARNESS = r"""
 #include <cassert>
 #include <cstdint>
 #include <cstring>
 
 #define __cdecl
-enum { RSC_NUTRIENTS=0, RSC_MINERALS=1, RSC_ENERGY=2, RSC_PSI=3 };
+// @@RESOURCE_ENUM@@
 
 struct GameDataSecretProject {
     int cloning_vats_value_;
@@ -68,7 +78,7 @@ struct Player { uint32_t rule_flags; int rule_population; };
 struct PlayerData {
     uint32_t ranking;
     int energy_reserves;
-    int ai_power, ai_tech, tech_fungus_nutrient;
+    int ai_power, ai_tech; int tech_fungus_[4];
     uint8_t proto_id_active[512];
 };
 struct Veh { int16_t x, y; uint32_t state; uint16_t flags; int16_t proto_id, unk;
@@ -262,7 +272,7 @@ UPGRADE_HARNESS = r"""
 #include <initializer_list>
 
 #define __cdecl
-enum { RSC_NUTRIENTS=0, RSC_MINERALS=1, RSC_ENERGY=2, RSC_PSI=3 };
+// @@RESOURCE_ENUM@@
 
 struct GameDataSecretProject {
     int cloning_vats_value_;
@@ -421,7 +431,7 @@ def test_actual_colony_growth_upgrade(compiler, address, harness, tmp_path):
     assert "PENDING_BODY" not in records[0].region
     helpers = "\n".join(helper(source, n) for n in
                         ("base_yield_signed_bits", "base_yield_add", "base_yield_sub", "base_yield_mul"))
-    control = harness.replace("YIELD_HELPERS", helpers).replace("BODY", records[0].region)
+    control = with_resource_enum(harness).replace("YIELD_HELPERS", helpers).replace("BODY", records[0].region)
     if "SAR_HELPER" in control:
         control = control.replace("SAR_HELPER", helper(source, "upgrade_arithmetic_shift_three"))
     control_path = tmp_path / "control.cpp"
@@ -441,7 +451,7 @@ VEH_INIT_HARNESS = r"""
 #include <string.h>
 
 #define __cdecl
-enum { RSC_NUTRIENTS=0, RSC_MINERALS=1, RSC_ENERGY=2, RSC_PSI=3 };
+// @@RESOURCE_ENUM@@
 
 struct GameDataSecretProject {
     int cloning_vats_value_;
@@ -838,7 +848,7 @@ def test_actual_vehicle_creation(compiler, tmp_path):
     assert "PENDING_BODY" not in records[0].region
     helpers = "\n".join(helper(source, name) for name in
         ("veh_init_i32", "veh_init_add32", "veh_init_sub32", "veh_init_sar32", "veh_init_abs32"))
-    control = VEH_INIT_HARNESS.replace("HELPERS", helpers).replace("BODY", records[0].region)
+    control = with_resource_enum(VEH_INIT_HARNESS).replace("HELPERS", helpers).replace("BODY", records[0].region)
     control_path = tmp_path / "control.cpp"
     control_path.write_text(control)
     binary = tmp_path / "control"
@@ -1491,7 +1501,7 @@ ECOLOGY_HARNESS = r"""
 #include <vector>
 #define __cdecl
 typedef char *LPSTR;
-enum { RSC_NUTRIENTS=0, RSC_MINERALS=1, RSC_ENERGY=2, RSC_PSI=3 };
+// @@RESOURCE_ENUM@@
 
 struct GameDataSecretProject {
     int cloning_vats_value_;
@@ -1899,7 +1909,7 @@ def test_actual_colony_ecology(compiler, tmp_path):
     assert "BODY GOES HERE" not in records[0].region
     assert "PENDING_BODY" not in records[0].region
     helpers = "\n".join(helper(source, name) for name in ('ecology_wrap_int', 'ecology_wrapped_add', 'ecology_wrapped_shift_two', 'ecology_wrapped_double', 'ecology_wrapped_multiply', 'ecology_native_abs', 'ecology_wrapped_neg_sub'))
-    control = ECOLOGY_HARNESS.replace("HELPERS", helpers).replace("BODY", records[0].region)
+    control = with_resource_enum(ECOLOGY_HARNESS).replace("HELPERS", helpers).replace("BODY", records[0].region)
     control_path = tmp_path / "control.cpp"
     control_path.write_text(control)
     binary = tmp_path / "control"
