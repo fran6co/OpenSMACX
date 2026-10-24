@@ -1,0 +1,32 @@
+{
+  "event_id": "af13127af1e5b5f943f8d7ee735a60f2b1ad6dc12b1630a1cd2e3756d1df4b1e",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_basebutton_press_parent.py",
+      "src/basebutton.cpp",
+      "src/graphicwin.cpp"
+    ],
+    "evidence": [
+      "Wave31 pin6075C0 reloads live win_parent_ across timeGetTime and captured Sound callbacks; existing source incorrectly caches one parent. Restore typed member reloads, preserve saved Sound owner, notification/timer order, null-unsafe paths and all historical identities/claims. Ordinary GraphicWin fill short-circuit guard preserves flags/parent/virtual query order and live post-copy rectangle/table reads. Separate private production-recipe screens improve instruction correspondence with no exact gains/losses and native outside-selectedPASS. Add actual-source reentry controls, independently review, then fresh combined build/link/full physical/claim/reference/matching checks and master recheck. Scope expansion is no admission, no baseline reset or proof waiver."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6321600,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6116176,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "cedb91e58a3113a32d00611375fc9ca983f6e9b50d9e0b968cced7387da9959c",
+  "request_id": "press-parent-fill-guard-owner-closure-oct24k",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:legacy-header-texheap-owner-oct24k"
+}

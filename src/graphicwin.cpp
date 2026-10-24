@@ -363,12 +363,9 @@ void GraphicWin::fill(int color) {
 // RECOVERY_BINDING: v1 {"evidence": ["5D5373 queries Win slotF4;5D53D2 reloads parent before5D53E6 Buffer copy;5D53EB loads the shared table and5D53F5..5417 reread RECT and remap right/bottom-minus-one. Transparent exit returns0, opaque5D5435 returns Buffer fill result, both ret8."], "reason": "This rectangle fill uses the real Win hierarchy and Buffer base. Transparent admission queries the parent, but the reloaded actual parent supplies the copied pixels; opaque fill delegates and returns its result."}
 // symbol    ?fill@GraphicWin@@QAEHPAUtagRECT@@H@Z
 int GraphicWin::fill(RECT *area, int color) {
-    bool transparent = false;
-    if ((iFlags_ & 0x80000) != 0 && win_parent_ != nullptr) {
-        Win *const parent = win_parent_;
-        transparent = parent->get_graphic_win() != nullptr;
-    }
-    if (!transparent) {
+    if ((iFlags_ & 0x80000) == 0 ||
+        win_parent_ == nullptr ||
+        win_parent_->get_graphic_win() == nullptr) {
         return Buffer::fill(area, color);
     }
 

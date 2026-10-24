@@ -740,12 +740,11 @@ void BaseButton::on_left_down(int, int) {
     }
     Win::clear_bubble_text();
 
-    Win *const parent = win_parent_;
     if (field_A9C_ == 0) {
         field_A9C_ = 1;
-        Sound *const owner = parent->legacy_sound_30();
+        Sound *const owner = win_parent_->legacy_sound_30();
         if (owner != 0 && owner->is_playing() == 0) owner->play();
-        parent->vslot_43(static_cast<int>(field_A78_));
+        win_parent_->vslot_43(static_cast<int>(field_A78_));
         redraw();
         if (field_A44_ != 0xFFFFFFFFU) {
             time2_.pulse(base_button_timer_callback, 1, this, field_A44_, 5);
@@ -754,13 +753,13 @@ void BaseButton::on_left_down(int, int) {
     }
 
     field_AA4_ = timeGetTime();
-    WinCallbackWindow = parent;
+    WinCallbackWindow = win_parent_;
     if (field_AAC_ == 0) {
-        Sound *const owner = parent->legacy_sound_28();
+        Sound *const owner = win_parent_->legacy_sound_28();
         if (owner != 0 && owner->is_playing() == 0) {
             owner->play();
         }
-        const int accepted = parent->on_button_pressed(static_cast<int>(field_A78_));
+        const int accepted = win_parent_->on_button_pressed(static_cast<int>(field_A78_));
         if (accepted != 0 && field_A44_ != 0xFFFFFFFFU) {
             time2_.pulse(base_button_timer_callback, 1, this, field_A44_, 5);
         }

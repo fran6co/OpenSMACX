@@ -183,7 +183,7 @@ def test_transparent_null_rectangle_is_not_a_supported_domain(tmp_path):
     (0,"surface, origin_x, origin_y, 0, 0, width, -height",
        "surface, origin_x, origin_y, 0, 0, width, height"),
     (0,"(iFlags_ & 0x80000)","(iFlags_ & 0x40000)"),
-    (1,"parent->get_graphic_win() != nullptr","parent->get_graphic_win() == nullptr"),
+    (1,"win_parent_->get_graphic_win() == nullptr","win_parent_->get_graphic_win() != nullptr"),
     (1,"unsigned char *const table = GraphicWinColorMapTable;",
        "unsigned char *const table = old_lut;"),
     (0,"unsigned char *const table = GraphicWinColorMapTable;",
