@@ -1,0 +1,25 @@
+{
+  "event_id": "962bb3800b3f195f82291e97ddbdae3e68f1ed358617a4b598421799f9ef793c",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Coordinator includes actual affected setup_player ownership0x5B0E00 to review whole compiled closure and retain its originalspan/currentMISMATCH. Sourcebody is not edited. The original8subjects/taskbaseline remain intact.",
+      "Decoded instruction/relocation review supports the duplicate reload tail factoring as locally equivalent; exact globaloptimizer cause remainsunknown. Prior outsideFAIL retained; BSSsymbol/currenttarget residuals and source-only callback/macrohelperreferences stayFAIL, no waiver or automaticadmission.",
+      "Scope expansion is not acceptance. Fresh wholebatchbuild/link, all knownfunctions/strictreferences, claims/sourcefacts and physicaloutside reports plusmanual independent review and freshdestination verification remainrequired."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5967360,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "605580f0fb78ed692297df7203c1a710119fa75979c8c1c3e0d32f3e644df2dd",
+  "request_id": "signed-score-setup-player-owner-scope-oct24q",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:easy-owner-6-oct24q"
+}

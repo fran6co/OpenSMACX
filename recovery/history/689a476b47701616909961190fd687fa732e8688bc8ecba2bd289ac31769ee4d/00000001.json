@@ -1,0 +1,21 @@
+{
+  "event_id": "605580f0fb78ed692297df7203c1a710119fa75979c8c1c3e0d32f3e644df2dd",
+  "payload": {
+    "affects": [
+      "entity-f2a45ff703697b88649f83ff5b99f0f5b226c869353d3a810aa61d252a776a8c"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "signed-score-setup-player-context-oct24q",
+    "evidence": [
+      "owner-6-native-probe.json preserves nativeFAIL; owner-6-physical-residual-review.json and owner-6-setup-player-delta.json compare exactCOFFs.",
+      "All484orderedexternalrelocations/targets/addends remain identical. Two deleted instructions are redundant post-kill reload and jump, replaced by shared reload; aligned branchdestinations agree. Source body sha6d73dc... unchanged. This is bounded local generated-code review, not full runtime/linked proof."
+    ],
+    "hypothesis": "The signed score declaration/producer migration also changes generated setup_player code despite its identical source body. Two duplicate reload tails merge; old raw outside-selected report records bytes/extent differences. This actual affected owner requires central scope and restoration review; do not revert the justified score model or infer preservation merely from unchanged source.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "signed-score-setup-player-context-oct24q",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:easy-owner-6-oct24q"
+}
