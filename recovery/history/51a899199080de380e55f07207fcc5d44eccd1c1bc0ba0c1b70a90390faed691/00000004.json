@@ -1,0 +1,40 @@
+{
+  "event_id": "b85e1d007408d075c2e73fb47ca8f0fada80c705c8091ad3ea5f35121b5a6155",
+  "payload": {
+    "affects": [
+      "entity-1b902d7ec3c0a2e4b7a027d14d550ba303f4a8ffefca85c273ecdf16090d03ae",
+      "entity-219cd0e2899423dd0c9bdcd0718b1406f9eccf7f28df77221b51278212dbc055",
+      "entity-35fb1b969e3014f567ef996053f56f99efdfe90ca0f9d65e040874bb5c74b675",
+      "entity-36d0cb2cbd52d912455a184a4f6bb8b671bd9eb400d69020794d91f7a2abe9fc",
+      "entity-3d2ed9906a5d731cbf3ad8f2aa6a302a146a224324e08704fe21b89b56c93255",
+      "entity-3e8762df19b9c00db821c42065555f03e074886932ea9a8010729f02925cfd88",
+      "entity-40406d7ab7f5577dab4ec45fd1f34eb9abfc87602abf028242f9109f028daaa0",
+      "entity-5593b94b5eb67a238f9d41720f181fb144a174410bc5c7c346e65df78e6bbc72",
+      "entity-7d8176751703cb7d8caa38917ee097499bb12c1624819b3dd971ad2d9ac57af6",
+      "entity-885ef029d30da01dd8de61eb7bae58d474b136b72403dc235c4d88c8495d6edb",
+      "entity-b41ec120c1803fbf741847a629f7dc9d5c5b3ae5f4d4fd0dc8b4cb4d362f2ecf",
+      "entity-c1fd290099da8f4ebe8e6ea250ac1fda4ab3242d86df1c8419870628245555d8",
+      "entity-c3ab6505cda74476379be71d572ca1adfe37784f992bf5d8728e321d44f07b68",
+      "entity-c46d88454f5459c23f8836f548a51a19e7f6832387f028ccf247914fd91373f7",
+      "entity-c85c2df93a3a021792e2e4c164aa2dcad08864b80da56d3806fd9adf3cf38a2f",
+      "entity-e2a3e61424aadb162163db797edd0287ebbc9268b43d6ab2f8d80543a5ec4ccf",
+      "entity-e93b450e5f1722bb2f5ccf623695e0addc2ebf7fbef7b01e1663f89e4fd5e90b",
+      "entity-fdf9fea2aa2c5934be42ac8b83698008009ff6b38014c7511c64fef25a489486"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "alpha-header-compiler-context-collateral-oct24u",
+    "evidence": [
+      "Full208-object comparison identifies18mapped source-unchanged bodies in9additional TUs; all nine complete .cpp hashes and compilation recipes remain unchanged.",
+      "Native paired old/new-header controls independently reproduce both whole Base and DesignWin objects with only alphanet.h changed, establishing the compiler-context cause in those two TUs.",
+      "Three independent collateral review reports classify concrete load/operand permutations and retained EH/CodeView unknowns. editor_natural/goody_box residual differences remain specifically unproven; original source matching remains pending, not waived.",
+      "Whole5581-identity comparison has exactly two newly local-exact and two newly strict-PASS identities48AE90/48B3F0, with zero lost local-exact or strict-PASS identities."
+    ],
+    "hypothesis": "A correct header-visible cursor member changes ambient VC6 scheduling/register and EH/CodeView allocation in source-unchanged functions. These downstream owners retain independent original matching and metadata obligations; no source claim or runtime equivalence follows from unchanged C++ alone.",
+    "kind": "discovery"
+  },
+  "previous_event": "a1d10a2a6a6e9c4a52403b70d8fa8b2a6887586eee7229f011936dd12a6f4548",
+  "request_id": "alpha-header-compiler-context-collateral-oct24u",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:easy-planwin-owner-oct24u"
+}
