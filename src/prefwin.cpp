@@ -808,28 +808,34 @@ void PrefWin::redraw_volume() {
 // ORIGINAL: 0x004918C0 ?change_volume_button_text@PrefWin@@QAEXH@Z 0x004918C0-0x004919DD FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004918c0.cpp", "recovery/tasks/prefwin-owner-coverage-wave.json", "Original control parent 8578D8; ctor/destructor member order, 800-pixel branch, checkbox text-context and callback order independently reviewed."], "reason": "Recover the complete PrefWin ownership group through a genuine GraphicWin base and compiler-owned embedded control lifetimes; preserve seed identity, original spans and unresolved discoveries without granting byte claims."}
 void PrefWin::change_volume_button_text(int button_id) {
-  FlatButton *button = nullptr;
-  int offset = 0;
   switch (button_id) {
     case 0x55:
-      button = &volumeMainToggle_;
-      offset = volumeMainToggle_.selected_state() ? 0x10E4 : 0x10E0;
-      break;
+      if (volumeMainToggle_.selected_state())
+        volumeMainToggle_.set_name(label_get(0x439));
+      else
+        volumeMainToggle_.set_name(label_get(0x438));
+      return;
     case 0x57:
-      button = &volumeVoiceToggle_;
-      offset = volumeVoiceToggle_.selected_state() ? 0x10EC : 0x10E8;
-      break;
+      if (volumeVoiceToggle_.selected_state())
+        volumeVoiceToggle_.set_name(label_get(0x43B));
+      else
+        volumeVoiceToggle_.set_name(label_get(0x43A));
+      return;
     case 0x56:
-      button = &volumeSFXToggle_;
-      offset = volumeSFXToggle_.selected_state() ? 0x10F4 : 0x10F0;
-      break;
+      if (volumeSFXToggle_.selected_state())
+        volumeSFXToggle_.set_name(label_get(0x43D));
+      else
+        volumeSFXToggle_.set_name(label_get(0x43C));
+      return;
     case 0x58:
-      button = &volumeMusicToggle_;
-      offset = volumeMusicToggle_.selected_state() ? 0x10FC : 0x10F8;
-      break;
-    default: return;
+      if (volumeMusicToggle_.selected_state())
+        volumeMusicToggle_.set_name(label_get(0x43F));
+      else
+        volumeMusicToggle_.set_name(label_get(0x43E));
+      return;
+    default:
+      return;
   }
-  button->set_name(label_get(offset / 4));
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.

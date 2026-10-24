@@ -277,20 +277,45 @@ def test_behavioral_mutants_are_detected(kind,tmp_path):
     text=actual_source()
     if kind in ("label_offset","invalid_id","null_guard"):
         changed=text
+        body=braced(text,"void PrefWin::change_volume_button_text(int button_id)")
         if kind=="label_offset":
-            old="offset = volumeSFXToggle_.selected_state() ? 0x10F4 : 0x10F0;"
-            changed=text.replace(old,"offset = volumeSFXToggle_.selected_state() ? 0x10EC : 0x10E8;",1)
+            sfx_case=("    case 0x56:\n"
+                      "      if (volumeSFXToggle_.selected_state())\n"
+                      "        volumeSFXToggle_.set_name(label_get(0x43D));\n"
+                      "      else\n"
+                      "        volumeSFXToggle_.set_name(label_get(0x43C));")
+            assert body.count(sfx_case)==1
+            changed_body=body.replace(
+                sfx_case,
+                sfx_case.replace("label_get(0x43D)","label_get(0x43B)")
+                         .replace("label_get(0x43C)","label_get(0x43A)"),
+                1)
+            changed=text.replace(body,changed_body,1)
             assert changed!=text
             main=r'int main(){PrefWin w;w.change_volume_button_text(0x56);assert(events[0]=="label:1084");}'
         elif kind=="invalid_id":
-            changed=text.replace("    default: return;","    default: button = &volumeMainToggle_; offset = 0x10E0; break;",1)
+            old_default="    default:\n      return;"
+            assert body.count(old_default)==1
+            changed_body=body.replace(
+                old_default,
+                "    default:\n      volumeMainToggle_.set_name(label_get(0x438));\n      return;",
+                1)
+            changed=text.replace(body,changed_body,1)
             assert changed!=text
             main=r'int main(){PrefWin w;w.change_volume_button_text(INT_MIN);assert(events.empty());}'
         else:
-            body=braced(text,"void PrefWin::change_volume_button_text(int button_id)")
-            wrong=body.replace("button->set_name(label_get(offset / 4));","if (label_get(offset / 4)) button->set_name(label_get(offset / 4));",1)
-            assert wrong!=body
-            changed=text.replace(body,wrong,1)
+            old_main_on=("      if (volumeMainToggle_.selected_state())\n"
+                         "        volumeMainToggle_.set_name(label_get(0x439));")
+            assert body.count(old_main_on)==1
+            changed_body=body.replace(
+                old_main_on,
+                "      if (volumeMainToggle_.selected_state()) {\n"
+                "        if (const char *name = label_get(0x439))\n"
+                "          volumeMainToggle_.set_name(name);\n"
+                "      }",
+                1)
+            changed=text.replace(body,changed_body,1)
+            assert changed!=text
             main=r'int main(){PrefWin w;w.volumeMainToggle_.selected=1;null_index=1081;w.change_volume_button_text(0x55);assert(events.back()=="main.name:<null>");}'
         harness=TEXT+label_functions(changed)+main
     elif kind=="delete_order":
