@@ -1,0 +1,33 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "d49a305275b6c80c0da3608f1e8b3a77a67ab969",
+  "editable_files": [
+    "src/planwin.cpp"
+  ],
+  "evidence": [
+    "Fresh pinned full-function listing and qualified d49 build-c020vc50 bind source and production objects. Inspect exact receiver adjustment and argument order; preserve original quirks, callbacks, dimensions and all historical identities/claims.",
+    "One simplest ordinary inherited call candidate per function; no flags, exports, ABI changes, speculative layout changes or matching tricks. Native unchanged-object positive control, scoped comparisons and all exact preservation remain mandatory.",
+    "Coordinator-reviewed manual integration requires independent source review, full fresh build/link, claims/mappings/references and global exact-set preservation. This authorization does not establish automatic acceptance, full linked preservation, runtime correctness or a playable game."
+  ],
+  "intent": "Recover ordinary inherited Buffer receiver calls without spurious nullable-pointer base conversions.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4766384,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4766592,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4764608,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "direct-base-plan-oct25a"
+}
