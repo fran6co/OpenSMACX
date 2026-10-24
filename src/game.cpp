@@ -6649,14 +6649,68 @@ void __cdecl save_map() {
 // HISTORICAL DEFERRED ANALYSIS (retained from prior source; body below supersedes status): confirmed tractable shape, not yet landed - 1983 lines of Ghidra decompilation and 196 conditionals is more than this pass could hand-verify, but the structure is now characterised: Overwhelmingly mechanical: 220 of 256 call sites are __fwrite(60)/__fread(60)/?encrypt_write@@(50)/?encrypt_read@@(50); the other 36 are ?mem_get@@(4)/_memcpy(4)/_free(4)/_abs(4)/ _strcpy(3)/_strlen(2)/?game_io@@(2)/?add@StringStruct@@(2)/ ?map_write@@/?map_read@@/?clear_scenario@@/?clear_monuments@@/ ?clear_bunglist@@/?bit_count@@ (1 each). This is a save/load serializer, field after field. a2 selects the direction: the FIRST call is FUN_0064603f(local_378) when a2!=0 (write: pack current globals into a 0x31C-byte header buffer before writing it) vs FUN_00646178(local_378,0x31C,1,a1) when a2==0 (read: fread that many bytes off `a1` first). Confirmed against the raw disasm's branch on a2 at function entry. The named blockers are ONE gate, not many: `if (local_74 < 0xb)` (local_74 is the version field inside that same 0x31C legacy header) guards roughly 10 raw copy-loops migrating the OLD struct layout into the CURRENT globals (`?9a6490` region) - this is the whole "legacy-struct migration block" and it is READ-ONLY-PATH dead code on any save from version >= 0xb, i.e. every save this binary itself produces. It is real work to transcribe (found 0x2C/0x40/0x16-element copy loops in the first 120 Ghidra lines alone) but it is bounded and separable from the ~220 I/O calls. Frame is 0x374 bytes (from the brief) - count locals against it before landing; a batch of seven diverged only at the prologue over this exact mistake.
 // Complete source-owned serializer body; historical byte and seed obligations remain.
 
+// The legacy header is not the current 0x398 state record. Only fields
+// consumed by the pinned migration/legacy path are typed here; untouched
+// bytes remain opaque. Its final ten words are copied, in order, into the
+// current state tail at +0x370. Word four is the signed format version.
+// Pinned game_data 0x005A6B37-0x005A6C6C supplies offsets and copy widths;
+// names describe the current destinations, not known historical declarators.
 struct GameDataHeaderWire {
-    unsigned char prefix_[0x304];
-    int version_;
-    unsigned char suffix_[0x14];
+    unsigned char opaque_000_[0x30];
+    uint32_t game_state_;                       // +0x030, copied then read
+    unsigned char opaque_034_[4];
+    int vehicle_current_count_;                 // +0x038, legacy row bound
+    int base_current_count_;                    // +0x03C, legacy row bound
+    unsigned char opaque_040_[0x18];
+    GameDataLockMaskView lock_masks_;            // +0x058, copied then read
+    unsigned char opaque_05C_[0x28];
+    int legacy_secret_project_prefix_[33];       // +0x084, copied as 33 dwords
+    int governor_faction_;                      // +0x108
+    int council_resolution_count_[11];           // +0x10C
+    int council_last_resolution_turn_[11];       // +0x138
+    uint8_t game_tech_achieved_[89];             // +0x164
+    char legacy_game_save_name_[256];            // +0x1BD
+    unsigned char opaque_2BD_[3];
+    int climate_rise_step_;                     // +0x2C0
+    int climate_rise_limit_;                    // +0x2C4
+    int climate_rise_accum_;                    // +0x2C8
+    int climate_sea_level_delta_;               // +0x2CC
+    int transcendence_score_bonus_;             // +0x2D0
+    int transcendence_score_weights_[8];         // +0x2D4
+    int legacy_terminal_words_[10];              // +0x2F4; version is [4]
 };
 
 typedef char GameDataHeaderWireHasNativeExtent[
     sizeof(GameDataHeaderWire) == 0x31C ? 1 : -1];
+typedef char GameDataHeaderWireStateOffset[
+    offsetof(GameDataHeaderWire, game_state_) == 0x030 ? 1 : -1];
+typedef char GameDataHeaderWireVehicleCountOffset[
+    offsetof(GameDataHeaderWire, vehicle_current_count_) == 0x038 ? 1 : -1];
+typedef char GameDataHeaderWireBaseCountOffset[
+    offsetof(GameDataHeaderWire, base_current_count_) == 0x03C ? 1 : -1];
+typedef char GameDataHeaderWireLockMasksOffset[
+    offsetof(GameDataHeaderWire, lock_masks_) == 0x058 ? 1 : -1];
+typedef char GameDataHeaderWireProjectPrefixOffset[
+    offsetof(GameDataHeaderWire, legacy_secret_project_prefix_) == 0x084 ? 1 : -1];
+typedef char GameDataHeaderWireGovernorOffset[
+    offsetof(GameDataHeaderWire, governor_faction_) == 0x108 ? 1 : -1];
+typedef char GameDataHeaderWireCouncilCountOffset[
+    offsetof(GameDataHeaderWire, council_resolution_count_) == 0x10C ? 1 : -1];
+typedef char GameDataHeaderWireCouncilTurnOffset[
+    offsetof(GameDataHeaderWire, council_last_resolution_turn_) == 0x138 ? 1 : -1];
+typedef char GameDataHeaderWireTechOffset[
+    offsetof(GameDataHeaderWire, game_tech_achieved_) == 0x164 ? 1 : -1];
+typedef char GameDataHeaderWireSaveNameOffset[
+    offsetof(GameDataHeaderWire, legacy_game_save_name_) == 0x1BD ? 1 : -1];
+typedef char GameDataHeaderWireClimateOffset[
+    offsetof(GameDataHeaderWire, climate_rise_step_) == 0x2C0 ? 1 : -1];
+typedef char GameDataHeaderWireWeightsOffset[
+    offsetof(GameDataHeaderWire, transcendence_score_weights_) == 0x2D4 ? 1 : -1];
+typedef char GameDataHeaderWireTailOffset[
+    offsetof(GameDataHeaderWire, legacy_terminal_words_) == 0x2F4 ? 1 : -1];
+typedef char GameDataHeaderWireVersionOffset[
+    offsetof(GameDataHeaderWire, legacy_terminal_words_) + 4 * sizeof(int)
+        == 0x304 ? 1 : -1];
 
 static int game_data_candidate_transfer(FILE *file, void *buffer,
                                         unsigned int byte_count) {
@@ -6672,45 +6726,39 @@ extern int __cdecl game_data_plain_transfer(FILE *file, void *buffer,
                                             unsigned int byte_count,
                                             int write_mode);
 
-static int game_data_header_dword(const GameDataHeaderWire &header,
-                                  unsigned int offset) {
-    int value;
-    memcpy(&value,
-           reinterpret_cast<const unsigned char *>(&header) + offset,
-           sizeof(value));
-    return value;
-}
-
 static void game_data_migrate_legacy_header(
         const GameDataHeaderWire *header, int) {
-    const unsigned char *const bytes =
-        reinterpret_cast<const unsigned char *>(header);
-
-    // Native 5A6B2D copies the incoming 0x31C header over the live window
-    // before this migration. These typed destinations preserve the later
-    // field-specific writes without synthesizing or clearing other bytes.
-    memcpy(&GameDataStateStorage.fields_.secret_project_, bytes + 0x84, 33 * sizeof(int));
-    memset(reinterpret_cast<unsigned char *>(&GameDataStateStorage.fields_.secret_project_)
-               + 33 * sizeof(int),
+    // Keep the pin's field-specific order after game_data has copied the full
+    // 0x31C input record into the live state window.
+    memcpy(GameDataStateStorage.fields_.secret_project_.project_base,
+           header->legacy_secret_project_prefix_,
+           sizeof(header->legacy_secret_project_prefix_));
+    memset(&GameDataStateStorage.fields_.secret_project_.project_base[33],
            0xFF, 31 * sizeof(int));
-    GameDataStateStorage.fields_.governor_faction_ = game_data_header_dword(*header, 0x108);
-    memcpy(GameDataStateStorage.fields_.council_resolution_count_, bytes + 0x10C,
+    GameDataStateStorage.fields_.governor_faction_ = header->governor_faction_;
+    memcpy(GameDataStateStorage.fields_.council_resolution_count_,
+           header->council_resolution_count_,
            sizeof(GameDataStateStorage.fields_.council_resolution_count_));
-    memcpy(GameDataStateStorage.fields_.council_last_resolution_turn_, bytes + 0x138,
+    memcpy(GameDataStateStorage.fields_.council_last_resolution_turn_,
+           header->council_last_resolution_turn_,
            sizeof(GameDataStateStorage.fields_.council_last_resolution_turn_));
-    memcpy(GameDataStateStorage.fields_.game_tech_achieved_, bytes + 0x164,
+    memcpy(GameDataStateStorage.fields_.game_tech_achieved_,
+           header->game_tech_achieved_,
            sizeof(GameDataStateStorage.fields_.game_tech_achieved_));
-    memcpy(GameDataStateStorage.fields_.legacy_game_save_name_, bytes + 0x1BD,
+    memcpy(GameDataStateStorage.fields_.legacy_game_save_name_,
+           header->legacy_game_save_name_,
            sizeof(GameDataStateStorage.fields_.legacy_game_save_name_));
-    GameDataStateStorage.fields_.climate_rise_step_ = game_data_header_dword(*header, 0x2C0);
-    GameDataStateStorage.fields_.climate_rise_limit_ = game_data_header_dword(*header, 0x2C4);
-    GameDataStateStorage.fields_.climate_rise_accum_ = game_data_header_dword(*header, 0x2C8);
-    GameDataStateStorage.fields_.climate_sea_level_delta_ = game_data_header_dword(*header, 0x2CC);
+    GameDataStateStorage.fields_.climate_rise_step_ = header->climate_rise_step_;
+    GameDataStateStorage.fields_.climate_rise_limit_ = header->climate_rise_limit_;
+    GameDataStateStorage.fields_.climate_rise_accum_ = header->climate_rise_accum_;
+    GameDataStateStorage.fields_.climate_sea_level_delta_ = header->climate_sea_level_delta_;
     GameDataStateStorage.fields_.transcendence_score_bonus_ =
-        game_data_header_dword(*header, 0x2D0);
-    memcpy(GameDataStateStorage.fields_.transcendence_score_weights_, bytes + 0x2D4,
+        header->transcendence_score_bonus_;
+    memcpy(GameDataStateStorage.fields_.transcendence_score_weights_,
+           header->transcendence_score_weights_,
            sizeof(GameDataStateStorage.fields_.transcendence_score_weights_));
-    memcpy(&GameDataStateStorage.fields_.sunspot_duration_, bytes + 0x2F4, 10 * sizeof(int));
+    memcpy(&GameDataStateStorage.fields_.sunspot_duration_,
+           header->legacy_terminal_words_, sizeof(header->legacy_terminal_words_));
 }
 
 // Version 3..10 PlayerData wire rows are 0x20BC bytes, while the live owner
@@ -7052,7 +7100,7 @@ int __cdecl game_data(FILE *file, int write_mode) {
 
     // The legacy header selects only this first state-record layout. Later
     // format gates use the live word carried in that state record instead.
-    const int header_version = header.version_;
+    const int header_version = header.legacy_terminal_words_[4];
     if (header_version >= 0xB) {
         if (game_data_candidate_transfer(
                 file, &GameDataStateStorage, 0x398) == 0)
