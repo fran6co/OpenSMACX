@@ -119,7 +119,9 @@ def test_actual_tech_trade_gate_and_owner(tmp_path, compiler_name):
 #define __cdecl
 typedef unsigned int uint32_t;
 struct Data {
- unsigned diplo_treaties[8],traded_maps,flags,current_num_bases,ranking;
+ unsigned diplo_treaties[8],traded_maps,flags;
+ int current_num_bases;
+ unsigned ranking;
  int diplo_agenda[8],ai_power,ai_tech,ai_fight,tech_ranking,integrity_blemishes;
 } PlayersData[8];
 struct Base {int faction_id_current;unsigned visibility;} Bases[8];
@@ -240,7 +242,7 @@ const int MaxPlayerNum=8;
 struct Sprite {} portraits[8];Sprite *FactionDiplomacyPortraits[8];
 struct Player {int is_leader_female,noun_gender,is_noun_plural;
  char title_leader[24],name_leader[24],noun_faction[24];} Players[8];
-struct Data {uint32_t diplo_treaties[8],diplo_agenda[8],current_num_bases;
+struct Data {uint32_t diplo_treaties[8],diplo_agenda[8]; int current_num_bases;
  int loan_balance[8],energy_reserves;} PlayersData[8];
 struct Base {int faction_id_current;unsigned char visibility,facilities_built[16];short x,y;} Bases[3];
 struct Projects {int empath_guild_;

@@ -30,7 +30,7 @@ struct Base {
 struct PlayerData {
     uint32_t flags;
     uint8_t before_base_count[0x105C - 4];
-    uint32_t current_num_bases;
+    int current_num_bases;
     uint8_t tail[0x20CC - 0x1060];
 };
 struct Player { char adj_name_faction[128]; };

@@ -98,7 +98,8 @@ namespace SocialEffect { enum { MORALE = 0 }; }
 struct Player { int rule_flags, rule_morale; };
 struct PlayerData {
     int major_atrocities;
-    uint32_t current_num_bases, flags;
+    int current_num_bases;
+    uint32_t flags;
     int mil_strength_1, ai_fight, tech_commerce_bonus;
     int best_armor_value, best_weapon_value;
     uint16_t region_total_combat_vehs[128];

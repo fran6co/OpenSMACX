@@ -38,7 +38,7 @@ struct SocialEffect { enum { EFFICIENCY=0 }; int values_[11]; };
 struct PlayerData {
   unsigned diplo_treaties[8]; int sanction_turns; int tech_commerce_bonus;
   int se_alloc_psych, se_alloc_labs; SocialCategory soc_category_pending;
-  SocialEffect soc_effect_pending; unsigned current_num_bases; int unk_13;
+  SocialEffect soc_effect_pending; int current_num_bases; int unk_13;
 };
 struct Player { unsigned rule_flags; int rule_research; };
 struct Base {

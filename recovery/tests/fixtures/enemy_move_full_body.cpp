@@ -33,7 +33,7 @@ struct PlayerDataHost {
     uint16_t unk_80[128];
     uint16_t unk_81[128];
     uint8_t unk_82[128];
-    uint32_t current_num_bases;
+    int current_num_bases;
     int x_target,y_target;
     uint16_t region_total_combat_vehs[128];
     uint8_t region_total_bases[128];
@@ -449,7 +449,7 @@ inline int planet_buster(int) { return 0; }
 inline void do_all_non_input() { ++test_non_input_calls; }
 
 
-struct Continent { unsigned tile_count,open_terrain; }; extern Continent Continents[128];
+struct Continent { int tile_count; unsigned open_terrain; }; extern Continent Continents[128];
 struct Player { unsigned rule_flags; }; extern Player Players[8];
 extern unsigned GameState;
 extern int DiploScratchFA60,DiploScratchFA3C,SunspotDuration,ExpansionEnabled;

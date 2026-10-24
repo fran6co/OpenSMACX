@@ -17,7 +17,7 @@ struct PlayerDataHost {
     uint32_t diplo_treaties[8];
     int diplo_agenda[8];
     SocialPlanet soc_effect_active;
-    uint32_t current_num_bases;
+    int current_num_bases;
     int x_target,y_target;
     int region_force_rating[128];
     uint8_t region_base_plan[128];

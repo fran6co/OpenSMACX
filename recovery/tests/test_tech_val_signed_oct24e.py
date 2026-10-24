@@ -66,7 +66,7 @@ const int DTREATY_PACT = 2;
 const int DTREATY_TREATY = 4;
 const int DTREATY_WANT_REVENGE = 8;
 struct PlayerData {
-    uint32_t current_num_bases;
+    int current_num_bases;
     uint8_t region_total_bases[128];
     uint8_t region_base_plan[128];
     int best_weapon_value;

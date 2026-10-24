@@ -71,7 +71,7 @@ struct PlayerData {
     unsigned char proto_id_queue[512];
     short proto_id_lost[512];
     int total_mil_veh;
-    unsigned int current_num_bases;
+    int current_num_bases;
     int mil_strength_1;
     int mil_strength_2;
     int pop_total;

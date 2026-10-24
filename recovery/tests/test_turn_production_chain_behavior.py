@@ -61,7 +61,7 @@ struct PlayerData {
     uint32_t nutrient_surplus_total;
     int labs_total;
     uint8_t proto_id_active[512];
-    uint32_t current_num_bases;
+    int current_num_bases;
     int corner_market_turn, corner_market_active;
     int sanction_turns;
     Goal goals[75], sites[25];
@@ -89,6 +89,23 @@ extern int CurrentFactionEnergyReserves, BaseCurrentCount, DiffLevelCurrent;
 extern int GameState, GameRules, GamePreferences, TurnCurrentNum;
 extern int TechAchievedGate, UnkGlobal0093A934, GenderDefault, PluralityDefault;
 extern int IsMultiplayerNet;
+
+struct TurnHostGameDataFields {
+    int &base_current_count_;
+    int &diff_level_current_;
+    int &game_preferences_;
+    int &game_rules_;
+    int &game_state_;
+    int &turn_current_num_;
+    TurnHostGameDataFields()
+        : base_current_count_(BaseCurrentCount),
+          diff_level_current_(DiffLevelCurrent),
+          game_preferences_(GamePreferences),
+          game_rules_(GameRules), game_state_(GameState),
+          turn_current_num_(TurnCurrentNum) {}
+};
+struct TurnHostGameDataState { TurnHostGameDataFields fields_; };
+extern TurnHostGameDataState GameDataStateStorage;
 
 int base_upkeep(int);
 void tech_effects(int);
@@ -142,6 +159,7 @@ int CurrentFactionEnergyReserves, BaseCurrentCount, DiffLevelCurrent;
 int GameState, GameRules, GamePreferences, TurnCurrentNum;
 int TechAchievedGate, UnkGlobal0093A934, GenderDefault, PluralityDefault;
 int IsMultiplayerNet;
+TurnHostGameDataState GameDataStateStorage;
 
 int alive_state[MaxPlayerNum];
 int human_state[MaxPlayerNum];
@@ -408,6 +426,17 @@ struct TestBaseWin {
     int redraws = 0, zooms = 0;
 };
 
+struct BaseUpkeepGameDataFields {
+    int &base_current_count_;
+    int &game_state_;
+    uint32_t &game_preferences_;
+    int &game_rules_;
+    int &turn_current_num_;
+    BaseUpkeepGameDataFields();
+};
+struct BaseUpkeepGameDataState { BaseUpkeepGameDataFields fields_; };
+extern BaseUpkeepGameDataState GameDataStateStorage;
+
 PlayerData PlayersData[MaxPlayerNum];
 Player Players[MaxPlayerNum];
 Base Bases[8];
@@ -421,10 +450,16 @@ Base *BaseCurrent;
 uint32_t BaseUpkeepStage;
 int BaseProductionZoomRequested;
 int UnkGlobal0093A934;
-int TurnCurrentNum, IsMultiplayerNet, GameState;
+int TurnCurrentNum, IsMultiplayerNet, GameState, GameRules;
 uint32_t GamePreferences;
+char ScriptPopupFile[] = "fixture";
 uint32_t MapLongitude = 16;
 int GenderDefault, PluralityDefault;
+BaseUpkeepGameDataFields::BaseUpkeepGameDataFields()
+    : base_current_count_(BaseCurrentCount), game_state_(GameState),
+      game_preferences_(GamePreferences), game_rules_(GameRules),
+      turn_current_num_(TurnCurrentNum) {}
+BaseUpkeepGameDataState GameDataStateStorage;
 int control_parse_calls, control_name_calls, control_draw_map_calls,
     control_popp_calls, control_log_calls;
 const char *control_popup_label, *control_popup_picture;
@@ -643,6 +678,21 @@ struct BaseSecretProject {
  int &telepathic_matrix() { return telepathic_matrix_; }
  const int &telepathic_matrix() const { return telepathic_matrix_; }
 };
+struct BaseDronesLockBytes {
+    uint32_t &human_mask_;
+    explicit BaseDronesLockBytes(uint32_t &mask) : human_mask_(mask) {}
+};
+struct BaseDronesLockMasks {
+    BaseDronesLockBytes bytes_;
+    explicit BaseDronesLockMasks(uint32_t &mask) : bytes_(mask) {}
+};
+struct BaseDronesGameDataFields {
+    BaseDronesLockMasks lock_masks_;
+    BaseSecretProject &secret_project_;
+    BaseDronesGameDataFields(uint32_t &mask, BaseSecretProject &project)
+        : lock_masks_(mask), secret_project_(project) {}
+};
+struct BaseDronesGameDataState { BaseDronesGameDataFields fields_; };
 class Sprite {};
 Base Bases[8];
 Base *BaseCurrent;
@@ -650,6 +700,9 @@ int BaseIDCurrentSelected;
 uint32_t LockEnableMask;
 Player Players[8];
 BaseSecretProject SecretProject;
+BaseDronesGameDataState GameDataStateStorage = {
+    BaseDronesGameDataFields(LockEnableMask, SecretProject)
+};
 int pop_count, pop_flags, pop_value, reset_count, draw_count, riot_count;
 const char *pop_caption, *pop_picture;
 int draw_x, draw_y;
@@ -855,7 +908,7 @@ struct PlayerData {
     uint8_t padding_to_prototypes[0x858 - 0x46c];
     uint8_t proto_id_active[512];
     uint8_t padding_to_base_count[0x105c - 0xa58];
-    uint32_t current_num_bases;
+    int current_num_bases;
     uint8_t tail[0x20cc - 0x1060];
 };
 struct Player {
@@ -1050,7 +1103,7 @@ inline BOOL is_alien_faction(uint32_t faction) {
 void __cdecl draw_tile(int x, int y, int draw_type);
 void __cdecl base_reset(int base_id, int force);
 BOOL __cdecl has_tech(int tech_id, int faction_id);
-void __cdecl parse_say(int id, int input, int gender, int plurality);
+void __cdecl parse_say(int id, const char *input, int gender, int plurality);
 void __cdecl parse_says(int id, LPCSTR input, int gender, int plurality);
 int __cdecl popb(LPCSTR label, int x, int y, LPCSTR image, Sprite *callback);
 int __cdecl popp(LPCSTR caption, LPCSTR label, int flags,
@@ -1181,7 +1234,7 @@ BOOL __cdecl has_tech(int tech_id, int faction_id) {
     tech_last_faction = faction_id;
     return tech_enabled;
 }
-void __cdecl parse_say(int, int, int, int) { ++parse_text_calls; }
+void __cdecl parse_say(int, const char *, int, int) { ++parse_text_calls; }
 void __cdecl parse_says(int, LPCSTR, int, int) { ++parse_text_calls; }
 int __cdecl popb(LPCSTR label, int, int, LPCSTR, Sprite *) {
     ++popup_calls;

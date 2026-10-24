@@ -49,7 +49,7 @@ uint32_t &GamePreferences = GameDataStateStorage.fields_.game_preferences_;
 int MapIsFlat=1, MapArea=1000;
 struct Goal { int16_t type,priority; int x,y,base_id; };
 struct PlayerData {
-    int total_mil_veh; uint32_t current_num_bases; int mil_strength_1,mil_strength_2,pop_total;
+    int total_mil_veh; int current_num_bases; int mil_strength_1,mil_strength_2,pop_total;
     int unk_64,unk_65,unk_66,unk_68,unk_70,planet_busters,unk_71,unk_72;
     int unk_105,unk_106;
     uint16_t region_total_combat_vehs[128]; uint8_t region_total_bases[128];

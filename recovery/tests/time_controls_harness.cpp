@@ -29,7 +29,7 @@ struct RulesTimeControl {
 };
 
 struct PlayerData {
-    uint32_t current_num_bases;
+    int current_num_bases;
     int time_bonus_count;
 };
 

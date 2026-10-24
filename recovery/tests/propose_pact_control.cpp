@@ -31,7 +31,7 @@ struct PlayerData {
     uint32_t diplo_friction[8];
     int diplo_spoke[8];
     char diplo_patience[8];
-    uint32_t current_num_bases;
+    int current_num_bases;
 };
 // Minimal fixture view of the real nested GameDataStateStorage API used by
 // the extracted function; this supplies fields, not compatibility aliases.

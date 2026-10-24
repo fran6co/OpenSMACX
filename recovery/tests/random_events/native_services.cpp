@@ -14,7 +14,7 @@ struct Base {
     char name_string[25];
 };
 struct PlayerData {
-    unsigned int current_num_bases;
+    int current_num_bases;
     unsigned int diplo_treaties[8];
     unsigned int diff_level, ranking, energy_reserves, flags, satellites_[4];
 };

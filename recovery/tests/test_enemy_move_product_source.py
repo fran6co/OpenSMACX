@@ -150,8 +150,8 @@ def test_complete_enemy_direct_native_join_closure():
 def test_coast_or_border_declaration_matches_existing_signed_owner():
     header = (ROOT / "src/map.h").read_text()
     implementation = (ROOT / "src/map.cpp").read_text()
-    declaration = re.search(r"BOOL\s+__cdecl\s+coast_or_border\(([^)]*)\)\s*;", header)
-    definition = re.search(r"BOOL\s+__cdecl\s+coast_or_border\(([^)]*)\)\s*\{", implementation)
+    declaration = re.search(r"int\s+__cdecl\s+coast_or_border\(([^)]*)\)\s*;", header)
+    definition = re.search(r"int\s+__cdecl\s+coast_or_border\(([^)]*)\)\s*\{", implementation)
     assert declaration is not None and definition is not None
     arguments = [part.strip() for part in declaration[1].split(",")]
     assert len(arguments) == 5 and all(part.startswith("int ") for part in arguments)

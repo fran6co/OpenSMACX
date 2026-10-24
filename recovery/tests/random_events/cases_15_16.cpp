@@ -14,7 +14,7 @@ enum {
 struct PlayerData {
     uint32_t flags;
     int ranking;
-    uint32_t current_num_bases;
+    int current_num_bases;
 };
 struct Base {
     int16_t x;

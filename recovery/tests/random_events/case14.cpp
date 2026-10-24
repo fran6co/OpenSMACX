@@ -29,7 +29,7 @@ struct Veh {
 typedef char veh_proto_and_damage_offsets[(offsetof(Veh,proto_id)==0x0A && offsetof(Veh,dmg_incurred)==0x10)?1:-1];
 struct VehPrototype { char veh_name[32]; uint32_t ability_flags; uint8_t chassis_id,weapon_id,armor_id,reactor_id,carry_capacity,cost,plan; int8_t unk_1; uint8_t obsolete_factions; int8_t combat_factions,icon_offset,padding; uint16_t flags; int16_t preq_tech; };
 typedef char proto_reactor_plan_offsets[(offsetof(VehPrototype,reactor_id)==0x27 && offsetof(VehPrototype,plan)==0x2A)?1:-1];
-struct PlayerData { uint32_t flags,ranking; unsigned char prefix_to_current_bases[0x1054]; uint32_t current_num_bases; };
+struct PlayerData { uint32_t flags,ranking; unsigned char prefix_to_current_bases[0x1054]; int current_num_bases; };
 typedef char current_bases_is_at_0x105c[(offsetof(PlayerData,current_num_bases)==0x105C)?1:-1];
 
 struct GameDataFields {
@@ -213,11 +213,11 @@ int main() {
     assert(low_rank.bit_sets==0 && low_rank.popps==0);
 
     Fixture high_bit_count; prepare(high_bit_count);
-    high_bit_count.players[1].current_num_bases=0x80000000u;
+    high_bit_count.players[1].current_num_bases=(-2147483647 - 1);
     run_case14(high_bit_count,14,1,0);
     assert(high_bit_count.bit_sets==0 && high_bit_count.popps==0);
     Fixture negative_count; prepare(negative_count);
-    negative_count.players[1].current_num_bases=static_cast<uint32_t>(-1);
+    negative_count.players[1].current_num_bases=-1;
     run_case14(negative_count,14,1,0);
     assert(negative_count.bit_sets==0 && negative_count.popps==0);
 
