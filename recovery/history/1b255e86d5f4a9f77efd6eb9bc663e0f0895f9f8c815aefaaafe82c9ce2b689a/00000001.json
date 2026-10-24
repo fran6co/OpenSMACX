@@ -1,0 +1,55 @@
+{
+  "event_id": "b4fe4a25478e96dcc4d02bc7dd4f1bac3436b74eeafa0dcb82be91bb078e875e",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_deletionlist_owner_homing_oct24t.py",
+      "src/deletionlist.cpp",
+      "src/deletionlist.h",
+      "src/stringstruct.cpp"
+    ],
+    "evidence": [
+      "DeletionList ctor/clear/find_free_slot/find_owner_slot/ack reside in deletionlist.cpp, but convert/add_deletion and their sole-use static message objects reside in unrelated stringstruct.cpp. Seven original member spans form contiguous52DCA0..52DF2E. Both actual production recipes are /O2 /Ob2 /Oy-. Current ack COFF demonstrably inlines find_owner_slot, while add_deletion in the foreign TU emits two helper calls absent from the pin. Authorize class-coherent homing of unchanged implementations and complete source bindings before trying loop duplication. Historical TU membership remains an inference, not original PDB proof.",
+      "Move the complete native-source-identified records, full spans/claims/lessons, actual method definitions, and unchanged RECOVERY_OBJECT-bound StrDeletingVehicle/StrDelConvertedIndex initializers into the existing class TU via native publication with identity validation. Include veh.h/log.h as required. No new class layout, source-address wrappers, demotions, weakening, forced exports or compiler flags. Helpers and existing class declarations remain.",
+      "Measure baseline and natural rehomed class outputs across both TUs; verify current and original data string contents/identities and function/associated-data transport. Preserve raw residual failures from moved ordinary data and compiler context, do not normalize them into a pass. Require complete build/link, current claim/reference continuity, meaningful owner controls and coordinator review. No source work discarded on matching regression."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5430432,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5430480,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5430512,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5430544,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5430608,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5430720,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "deletionlist-whole-class-home-oct24t",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:easy-stringstruct-owner-oct24t"
+}
