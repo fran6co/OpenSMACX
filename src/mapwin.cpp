@@ -664,25 +664,19 @@ void MapWin::UNK4(int tile_x, int tile_y) {
         MapEditorPaintId == 0x12) {
         world_climate();
 
-        MapWin **slot = MapWinTable;
-        do {
-            MapWin *const window = *slot;
-            if (window != nullptr &&
-                (slot == MapWinTable || window->view_active_ != 0)) {
+        for (int slot = 0; slot < static_cast<int>(MapWinTableSlots); ++slot) {
+            MapWin *const window = MapWinTable[slot];
+            if (window != nullptr && (slot == 0 || window->view_active_ != 0)) {
                 window->draw_map(1);
             }
-            ++slot;
-        } while (slot < MapWinTable + MapWinTableSlots);
+        }
     } else {
-        MapWin **slot = MapWinTable;
-        do {
-            MapWin *const window = *slot;
-            if (window != nullptr &&
-                (slot == MapWinTable || window->view_active_ != 0)) {
+        for (int slot = 0; slot < static_cast<int>(MapWinTableSlots); ++slot) {
+            MapWin *const window = MapWinTable[slot];
+            if (window != nullptr && (slot == 0 || window->view_active_ != 0)) {
                 window->draw_map(1);
             }
-            ++slot;
-        } while (slot < MapWinTable + MapWinTableSlots);
+        }
     }
 }
 

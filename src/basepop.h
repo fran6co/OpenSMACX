@@ -179,7 +179,7 @@ class BasePop : public GraphicWin {
                           int pair_value_a, int pair_value_b,
                           int (__cdecl *callback)());
   // Popup is the derived class, and its own bodies reach this state directly -
-  // hide() reads field_30AC_ (the auto-hide seconds) and external_window_ the
+  // hide() reads field_30AC_ (signed /10000 auto-hide selector) and external_window_ the
   // way the image reads them, `mov ecx,[esi+0x30ac]` / `[esi+0xa14]`, with no
   // accessor call anywhere in the frame. Friendship is access only: it moves
   // no byte of layout and no line of codegen.

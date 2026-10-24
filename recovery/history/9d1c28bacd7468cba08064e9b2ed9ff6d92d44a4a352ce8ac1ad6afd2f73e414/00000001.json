@@ -1,0 +1,19 @@
+{
+  "event_id": "81786978f2e9b9bab6e842c40344995bdd743e1ee61a28bac8d714a5de683760",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_mapwin_update_views_actual_source.py"
+    ],
+    "evidence": [
+      "The verified exact index loop preserves live slot/activity/climate ordering, but the existing host extractor asserts the former pointer spelling and its slot-zero mutant anchor names a pointer. Remove only that implementation-shape assertion and retarget the equivalent slot-zero-bypass inversion to index0, retaining all dynamic scenarios and failing-mutant expectations."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "indexed-mapwin-host-control",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:near-owner-2-oct24l"
+}
