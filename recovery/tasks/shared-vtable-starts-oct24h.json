@@ -1,0 +1,85 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "1c92675d1e332d97bf62bed77ec1923542d0413e",
+  "editable_files": [
+    "src/subinterface.h",
+    "src/flatbutton.cpp"
+  ],
+  "evidence": [
+    "Add only3 native RECOVERY_GENERATED:v1 vtable start-only ? mappings: SubInterface66A6E4 witnessed by BattleWin422EE0 and8otherconstructors; FlatButtonWin669754 andBuffer66974C witnessed by607CF0 stores atthis+0/+444. Real C++ hierarchies already emitthese tables; no table array, aliasstorage, C++body, classlayout/type/ABI/compiler/gate change. No ORIGINALmarker or claim edits.",
+    "Independent PE reads show19relocated SubInterface cells pointing645844 andactual19-slot __purecall COMDATs. Do not turn currentCOFF sizes or nineteen observed cells into an original extent. Generated-table contents and retained selection remain UNKNOWN; a proven start can resolve an operand without proving all table contents/lifetimes.",
+    "Affected9 constructor origins and3destructor owners plus FlatButtonconstructor are measurement/review scope, not authorization to rewrite C++. All original identities/spans/symbols/historical claims/notes survive. Only coordinator mutates source/Git/compiler/preparation. Require independent evidence review, native generated-table definition/content reporting, actual fresh build/link, complete mapped-body/reference census, source/claim/reference continuity, physical code/data comparison against baseline and fresh destination verification.",
+    "No new byte claim, implementation coverage, exhaustive original discovery, original class debug-name identity, linked-selection/runtime or automatic/game acceptance. Do not classify missing table extents as passing content. User standing permission authorizes coordinator-reviewed manual integration after checks; do not weaken native refusal conditions."
+  ],
+  "intent": "Bind compiler-generated SubInterface and FlatButton view starts to pinned constructors",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4226816,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4227440,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4337376,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4359712,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4362176,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4408448,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4451856,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4452336,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4476864,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4583184,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4903280,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4909536,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6323440,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "shared-vtable-starts-oct24h"
+}
