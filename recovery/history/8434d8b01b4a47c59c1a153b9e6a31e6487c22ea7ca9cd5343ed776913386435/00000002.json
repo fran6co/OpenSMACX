@@ -1,0 +1,20 @@
+{
+  "event_id": "4627c1d26c96d7b8cfb593ca4ba014f68536c9860741f0f1fa2b7c0751710bba",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_mci_device_word_storage_oct13j.py"
+    ],
+    "evidence": [
+      "Whole original load pin ignores MCI_STATUS and MCI_WHERE failures and consumes their output blocks without caller zeroing. Existing host fixtures return failures without writing outputs, then assert deterministic zero contents; these assertions encode the previous unfaithful initialization and cause undefined host reads after the faithful recovery.",
+      "Keep all original path, call-order, storage-width, adjacent-byte, id-reload and lifetime controls. Make failure doubles explicitly supply distinct known STATUS/WHERE outputs while returning errors, and assert those outputs are consumed with ignored error returns. Add compiled return-on-error mutants and causal failure diagnostics. Do not claim API guarantees, native uninitialized values or full runtime equivalence. No source behavior fix, signature, flags or proof weakening."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "57ff10fe3dfd9eb9449beba07864dd9fa49a4b1da0555a6f3cdb889521bbce6b",
+  "request_id": "mci-defined-failure-output-controls-oct24n",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:easy-owner-8-oct24m"
+}
