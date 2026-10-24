@@ -1,0 +1,24 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "73a685950e4c44fb91f25d70dbe823578c3ee70b",
+  "editable_files": [
+    "src/caviar.cpp",
+    "recovery/tests/test_vox_transparent_key_actual_source.py"
+  ],
+  "evidence": [
+    "Pinned cmp ax,word ptr[esp+38] compares exactly16keybits; current shortkey is sign-extended and compared to unsignedshortpixel as32bits, incorrectly writing high-bit transparent pixels. Type/caller closure finds only C-linkage definition, no declarations/directsourcecallers/typedcallbacks. An unsignedshort parameter expresses this bitdomain without adding a cast; C linkage and argument slot remain unchanged. Original signedness/mapped caller completeness remain unproved;2decodefailures stay visible.",
+    "ONE concrete semantic/type candidate through unchanged actualproductionrecipe with whole-object replica, targetdamage, nativeall-neighbor/outside checks. Source/test files above only. No compiler/flag/provider/Git/annotation/historicalclaim changes. Preserve original loops, count/stride/unchecked paths and all mappings. Coordinator alone measures/publishes symbols, reviews/integrates; no automatic/fullgameacceptance.",
+    "Evidence: .opensmacx/recovery/easy-owners-oct24q/next-findings-A.json and vox-transparent-key-type-closure.json. Native task baseline remains committed current source checkpoint; preserve work, structural findings and restoration obligations across any byte regression."
+  ],
+  "intent": "Recover unsigned16 transparent-key comparison contract",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6533234,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "easy-owner-5-oct24q"
+}
