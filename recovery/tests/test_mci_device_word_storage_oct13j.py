@@ -4,6 +4,8 @@ MCIVideo method bodies are extracted from mci_video.cpp, and its user
 destructor body is extracted from alphamovie.h. The fixture supplies only
 the small SDK/application surface those bodies call; it does not replace them
 with a Python behavioral model or infer the unobserved extent after byte +5.
+Failure doubles explicitly supply outputs while returning errors. They test
+ignored-error flow and output consumption, not unwritten native stack values.
 """
 
 from __future__ import annotations
@@ -148,7 +150,7 @@ struct WaveDevice { int disables, enables; WaveDevice() : disables(0), enables(0
   void disable() { ++disables; } void enable() { ++enables; } };
 WaveDevice WaveDeviceGlobal;
 HWND HandleMain = reinterpret_cast<HWND>(0x4444);
-struct Call { MCIDEVICEID device; DWORD command, flags; };
+struct Call { MCIDEVICEID device; DWORD command, flags; DWORD_PTR parameters; };
 std::vector<Call> calls;
 int fail_command = 0;
 int mutate_id_after_first_status = 0;
@@ -201,26 +203,49 @@ def _harness(members: tuple[str, str], bodies: dict[str, str], destructor: str,
         assert before in bodies["load"]
         bodies["load"] = bodies["load"].replace(
             before, "static_cast<unsigned char>(openParams.wDeviceID)", 1)
+    elif damage in ("return_on_status_error", "return_on_where_error"):
+        command, flags, parameter, count = (
+            ("MCI_STATUS", "MCI_STATUS_ITEM", "statusParams", 2)
+            if damage == "return_on_status_error" else
+            ("MCI_WHERE", "MCI_DGV_WHERE_SOURCE", "sourceParams", 1))
+        call = (f"mciSendCommandA(mciId_, {command},\n"
+                f"                    {flags},\n"
+                f"                    reinterpret_cast<DWORD_PTR>(&{parameter}));")
+        assert bodies["load"].count(call) == count
+        bodies["load"] = bodies["load"].replace(
+            call, "if (" + call[:-1] + " != 0) return 1;", 1)
+    elif damage == "split_status_blocks":
+        before = "statusParams.dwItem = MCI_DGV_STATUS_HPAL;"
+        start = bodies["load"].index(before)
+        prefix, suffix = bodies["load"][:start], bodies["load"][start:]
+        suffix = suffix.replace("statusParams", "paletteStatusParams")
+        bodies["load"] = prefix + "MCI_DGV_STATUS_PARMS paletteStatusParams;\n    " + suffix
     source = HOST.replace("// INSERT_ACTUAL_FIELD", field)
     source = source.replace("// INSERT_ACTUAL_UNKNOWN", unknown)
     source = source.replace("// INSERT_ACTUAL_DESTRUCTOR", destructor)
     source += r'''
 MCIERROR mciSendCommandA(MCIDEVICEID device, DWORD command, DWORD flags, DWORD_PTR param) {
-  Call call = {device, command, flags}; calls.push_back(call);
+  Call call = {device, command, flags, param}; calls.push_back(call);
   if (command == MCI_CLOSE) lifecycle_events.push_back(1);
   if (command == MCI_OPEN && fail_command != MCI_OPEN) {
     MCI_DGV_OPEN_PARMS *p = reinterpret_cast<MCI_DGV_OPEN_PARMS *>(param);
     p->wDeviceID = opened_id;
   }
-  if (command == MCI_STATUS && fail_command != MCI_STATUS) {
+  // Supply known outputs even on failure to observe the caller's error policy
+  // without reading indeterminate host fields. Real driver outputs are unproved.
+  if (command == MCI_STATUS) {
     MCI_DGV_STATUS_PARMS *p = reinterpret_cast<MCI_DGV_STATUS_PARMS *>(param);
     if (p->dwItem == MCI_DGV_STATUS_HWND) p->dwReturn = status_hwnd;
     else if (p->dwItem == MCI_DGV_STATUS_HPAL) p->dwReturn = status_palette;
     else p->dwReturn = status_value;
   }
-  if (command == MCI_WHERE && fail_command != MCI_WHERE) {
+  if (command == MCI_WHERE) {
     MCI_DGV_WHERE_PARMS *p = reinterpret_cast<MCI_DGV_WHERE_PARMS *>(param);
-    p->rc.left=3; p->rc.top=4; p->rc.right=23; p->rc.bottom=34;
+    if (fail_command == MCI_WHERE) {
+      p->rc.left=5; p->rc.top=7; p->rc.right=13; p->rc.bottom=19;
+    } else {
+      p->rc.left=3; p->rc.top=4; p->rc.right=23; p->rc.bottom=34;
+    }
   }
   if (command == MCI_STATUS && mutate_id_after_first_status &&
       current_video && calls.size() == 2) current_video->mciId_ = 0x1357;
@@ -324,11 +349,13 @@ static void test_load_truncation_repeated_reads_and_error_continuation() {
   check(calls.size()==5, "load has exactly open, two status, where and put calls");
   for (size_t i=0; i<5; ++i)
     check(calls[i].command==expected_commands[i], "load MCI command order");
+  check(calls[1].parameters == calls[2].parameters,
+        "load reuses one status parameter block across both queries");
   check(calls[0].device==0 && calls[1].device==0xBEEF &&
         calls[2].device==0x1357 && calls[3].device==0x1357 &&
         calls[4].device==0x1357, "load re-reads id for every later API call");
-  check(video.window_handle_==0 && video.palette_handle_==0,
-        "failed status calls leave zero outputs but do not stop load");
+  check(video.window_handle_==(HWND)0x1111 && video.palette_handle_==(HPALETTE)0x2222,
+        "load consumes supplied outputs despite failed status calls");
   check(get_palette_calls==1 && video.palette_.init_calls==1 &&
         video.palette_.reseed_calls==1 && move_window_calls==1,
         "load continues palette and window work after ignored MCI errors");
@@ -339,8 +366,9 @@ static void test_load_truncation_repeated_reads_and_error_continuation() {
         "where failure is ignored and load still succeeds");
   check(calls.size()==5 && calls[3].command==MCI_WHERE &&
         calls[4].command==MCI_PUT && move_window_calls==1 &&
-        video.blit_width_==0 && video.blit_height_==0,
-        "where failure leaves zero dimensions but continues through put/window calls");
+        video.blit_width_==16 && video.blit_height_==24 &&
+        moved_width==16 && moved_height==24,
+        "where failure consumes supplied rectangle and continues through put/window calls");
 }
 
 static void test_status_returns_sdk_value_and_uses_word_device() {
@@ -479,8 +507,10 @@ def test_actual_mci_owner_methods_preserve_word_storage_and_api_paths(
 
 
 @pytest.mark.parametrize("compiler_name", ("g++", "clang++"))
-@pytest.mark.parametrize("damage", ("initialize_unknown_bytes", "truncate_to_byte"))
-def test_actual_mci_controls_reject_adjacent_write_and_wrong_truncation(
+@pytest.mark.parametrize("damage", (
+    "initialize_unknown_bytes", "truncate_to_byte",
+    "return_on_status_error", "return_on_where_error", "split_status_blocks"))
+def test_actual_mci_controls_reject_storage_and_error_flow_damage(
         tmp_path, compiler_name, damage, extracted_owner_source):
     compiler = shutil.which(compiler_name)
     if compiler is None:
@@ -497,3 +527,11 @@ def test_actual_mci_controls_reject_adjacent_write_and_wrong_truncation(
     assert built.returncode == 0, built.stdout + built.stderr
     ran = subprocess.run([str(executable)], text=True, capture_output=True, timeout=30)
     assert ran.returncode != 0, "host control accepted damaged extracted MCI behavior"
+    expected = {
+        "initialize_unknown_bytes": "constructor preserves unknown bytes +6..+7",
+        "truncate_to_byte": "load re-reads id for every later API call",
+        "return_on_status_error": "load success despite status errors",
+        "return_on_where_error": "where failure is ignored and load still succeeds",
+        "split_status_blocks": "load reuses one status parameter block across both queries",
+    }
+    assert "CHECK FAILED: " + expected[damage] in ran.stderr

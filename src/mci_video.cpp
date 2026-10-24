@@ -52,15 +52,16 @@ MCIVideo::MCIVideo() {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x005FFDB0 ?close@MCIVideo@@QAEXXZ 0x005FFDB0-0x005FFE3D
+// ORIGINAL: 0x005FFDB0 ?close@MCIVideo@@QAEXXZ 0x005FFDB0-0x005FFE3D BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:b55fcf8bd32d532e5050a5aaadf011bcff4394b5:src/unrecovered/005ffdb0.cpp", "source:src/alphamovie.h:MCIVideo", "original:0x005FFDB0"], "reason": "Recover the MCI device shutdown and handle reset on its owning MCIVideo member using the pinned call sequence and existing typed state."}
 // Stop and close the MCI device, clear the window/player state, and restore
 // wave output.
 void MCIVideo::close() {
     if (mciId_ != 0) {
-        MCI_DGV_WINDOW_PARMS windowParams = {0};
-        MCI_GENERIC_PARMS stopParams = {0};
-        MCI_GENERIC_PARMS closeParams = {0};
+        MCI_DGV_WINDOW_PARMS windowParams;
+        MCI_GENERIC_PARMS stopParams;
+        MCI_GENERIC_PARMS closeParams;
+        windowParams.nCmdShow = 0;
         mciSendCommandA(mciId_, MCI_WINDOW, MCI_DGV_WINDOW_STATE,
                        reinterpret_cast<DWORD_PTR>(&windowParams));
         mciSendCommandA(mciId_, MCI_STOP, 0,
@@ -152,7 +153,7 @@ int MCIVideo::load(char *moviePath, Win *targetWindow, int x, int y) {
     WaveDeviceGlobal.disable();
 
     char deviceType[] = "avivideo";
-    MCI_DGV_OPEN_PARMS openParams = {0};
+    MCI_DGV_OPEN_PARMS openParams;
     openParams.lpstrDeviceType = deviceType;
     openParams.lpstrElementName = moviePath;
     openParams.dwStyle = WS_CHILD;
@@ -167,7 +168,8 @@ int MCIVideo::load(char *moviePath, Win *targetWindow, int x, int y) {
     }
     mciId_ = static_cast<uint16_t>(openParams.wDeviceID);
 
-    MCI_DGV_STATUS_PARMS statusParams = {0};
+    // Both STATUS requests reuse this block, including any untouched outputs.
+    MCI_DGV_STATUS_PARMS statusParams;
     statusParams.dwItem = MCI_DGV_STATUS_HWND;
     mciSendCommandA(mciId_, MCI_STATUS,
                     MCI_STATUS_ITEM,
@@ -192,7 +194,7 @@ int MCIVideo::load(char *moviePath, Win *targetWindow, int x, int y) {
     }
     palette_.reseed();
 
-    MCI_DGV_WHERE_PARMS sourceParams = {0};
+    MCI_DGV_WHERE_PARMS sourceParams;
     mciSendCommandA(mciId_, MCI_WHERE,
                     MCI_DGV_WHERE_SOURCE,
                     reinterpret_cast<DWORD_PTR>(&sourceParams));
@@ -200,7 +202,7 @@ int MCIVideo::load(char *moviePath, Win *targetWindow, int x, int y) {
     const int width = (sourceRect.right - sourceRect.left) * 2;
     const int height = (sourceRect.bottom - sourceRect.top) * 2;
 
-    MCI_DGV_PUT_PARMS destinationParams = {0};
+    MCI_DGV_PUT_PARMS destinationParams;
     destinationParams.rc.left = sourceRect.left;
     destinationParams.rc.top = sourceRect.top;
     destinationParams.rc.right = sourceRect.right * 2 - sourceRect.left;
