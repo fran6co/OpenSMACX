@@ -1,0 +1,34 @@
+{
+  "event_id": "12aaa66d7843fa7aa7e3b2241876874f11ffff7defe7f5b5fcef3b854cb323da",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_planwin_back_redraw_direction_oct24u.py",
+      "src/buffer.cpp"
+    ],
+    "evidence": [
+      "Root and independent pin/callee review prove current back_redraw C++ reverses copy operands. Original48B43D pushes member Buffer+21A70 as destination;48B432 forms inherited GraphicWin::Buffer+444 receiver as source, matching the actual Buffer blitter.",
+      "Admit the third and final ordinary back_redraw attempt: direct inherited GraphicWin::fill and Buffer::copy(&buffer_) eliminate explicit nullable base-conversion scaffolding while fixing proven copy direction. Preserve original callbacks and source dimensions. This is a semantic recovery correction even if binary restoration remains imperfect.",
+      "Correct only the two false Buffer copy-wrapper Purpose sentences at5D95B0/5D95E0; receiver is source, pointer argument destination. No Buffer declaration/body/ABI or other behavior change. Source mappings/claims retained, focused actual-source direction control permitted.",
+      "All prior raw selected-only FAIL observations persist; full5 PlanWin codegen owners require review. Cumulative back_redraw trials maximum3, no further spellings without genuinely new structural evidence."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6133168,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6133216,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "7e62d30e8eda445af51b4b2cda6917ada283fb9bcd1c0c8568defee0fd62224c",
+  "request_id": "planwin-copy-direction-and-inherited-dispatch-oct24u",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:easy-planwin-owner-oct24u"
+}
