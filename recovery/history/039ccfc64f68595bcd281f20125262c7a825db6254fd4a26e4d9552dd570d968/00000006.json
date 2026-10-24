@@ -1,0 +1,23 @@
+{
+  "event_id": "2f056dbdf63f4bed5d2150d8179e82068b53b3c8981550f2995d16873de28029",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_social_ai_signed_weights_actual_source.py",
+      "src/faction.cpp"
+    ],
+    "evidence": [
+      "Correct the prior industry interpretation and explicitly supersede the unsigned-industry preservation instruction in social-ai-proven-local-type-followup-oct24s. Coordinator direct native original_asm verifies 0x5B529B..52BB: three low32 IMULs followed by 0x66666667 signed IMUL/SAR/sign correction. Authorize int unk_val3_temp and removal of the introduced uint32_t wealth conversion; preserve signed low32 target effects. Existing source unsigned industry arithmetic was a translation defect, not original behavior to preserve.",
+      "Coordinator directly verified 0x5B4BFF forms unk47+2*clamped_economy-4, then count+1 denominator and common signed IDIV at0x5B4C52. Authorize fixing high-economy expression parentheses so the complete numerator is divided, with the same source branch/loop/callback structure. Regional paths join the same original divider; economy0/-1 bypass. No additional guessed behavior changes.",
+      "Update actual-source oracles against these pinned operations: industry -120 for the existing negative input, asymmetric high-economy result -1 with unk47=-10/count1/factor3, causal unsigned-clamp and bad-parentheses mutants; actual constants128 regions and defensive plan2. Preserve old wrong reports/test checkpoint as evidence, not accepted original-fidelity proof.",
+      "One corrective semantic candidate, cumulative social_ai candidate3 at the cap; no further spelling, flags or allocation trials. Original task baseline85a9a2fef remains unchanged. Earlier candidate781872375 built and passed unchanged claim/census checks but is explicitly NOT admitted by that fact: its industry interpretation and numeric oracle are wrong. Coordinator pin report SHA256 e4ba734761b9b27189ad7a0e5f56bb12e92bf53f0c7b38fdd83d6d75de0f28fc."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "7153271b8a9a9014ad8d040c4498cf2141d6ec6e11bba4c3e1c3a2d8cb903bfd",
+  "request_id": "correct-social-arithmetic-pin-interpretation-oct24s",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:player-base-count-owner-oct24r"
+}
