@@ -29,7 +29,7 @@ class MCIVideo {
   MCIVideo();  // ??0MCIVideo@@QAE@XZ  0x005FFD80
   void close();  // ?close@MCIVideo@@QAEXXZ  0x005FFDB0
   int load(char *movie_path, Win *target_window, int x, int y);
-  void play();  // ?play@MCIVideo@@QAEXXZ  0x006001E0
+  int play();  // ?play@MCIVideo@@QAEHXZ  0x006001E0
   void stop();  // ?stop@MCIVideo@@QAEXXZ  0x00600270
   int is_playing();
   int status();  // 0x006002F0
