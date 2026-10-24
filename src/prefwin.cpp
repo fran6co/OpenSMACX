@@ -614,34 +614,35 @@ void PrefWin::hide_option_buttons() {
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00490140.cpp", "recovery/tasks/prefwin-owner-coverage-wave.json", "Original control parent 8578D8; ctor/destructor member order, 800-pixel branch, checkbox text-context and callback order independently reviewed."], "reason": "Recover the complete PrefWin ownership group through a genuine GraphicWin base and compiler-owned embedded control lifetimes; preserve seed identity, original spans and unresolved discoveries without granting byte claims."}
 void PrefWin::update_pref_buttons() {
   switch (field_A14_) {
-    case 0: bscPrefCheckBox_.show(3); break;
-    case 1: advPrefCheckBox_.show(3); break;
-    case 2:
-      warnPrefCheckBox_.show(3);
-      moreButton_.set_name(label_get(label_index(0x1100)));
-      moreButton_.show(3);
+    case 0: bscPrefCheckBox_.show(0); break;
+    case 1: advPrefCheckBox_.show(0); break;
+    case 2: {
+      warnPrefCheckBox_.show(0);
+      FlatButton &more_button = moreButton_;
+      more_button.set_name(label_get(label_index(0x1100)));
+      more_button.show(0);
       break;
-    case 3: autoPrefCheckBox_.show(3); break;
-    case 4:
-      audioVisPrefCheckBox_.show(3);
-      volumeMainScroll_.show(3);
-      volumeVoiceScroll_.show(3);
-      volumeSFXScroll_.show(3);
-      volumeMusicScroll_.show(3);
-      volumeMainToggle_.show(3);
-      volumeVoiceToggle_.show(3);
-      volumeSFXToggle_.show(3);
-      volumeMusicToggle_.show(3);
-      break;
-    case 5: mapPrefCheckBox_.show(3); break;
+    }
     case 6:
-      warnContPrefCheckBox_.show(3);
+      warnContPrefCheckBox_.show(0);
       StringTemp[0] = '\0';
-      if (const char *label = label_get(label_index(0xA60)))
-        strcat(StringTemp, label);
+      strcat(StringTemp, label_get(label_index(0xA60)));
       moreButton_.set_name(StringTemp);
-      moreButton_.show(3);
+      moreButton_.show(0);
       break;
+    case 3: autoPrefCheckBox_.show(0); break;
+    case 4:
+      audioVisPrefCheckBox_.show(0);
+      volumeMainScroll_.show(0);
+      volumeVoiceScroll_.show(0);
+      volumeSFXScroll_.show(0);
+      volumeMusicScroll_.show(0);
+      volumeMainToggle_.show(0);
+      volumeVoiceToggle_.show(0);
+      volumeSFXToggle_.show(0);
+      volumeMusicToggle_.show(0);
+      break;
+    case 5: mapPrefCheckBox_.show(0); break;
   }
 }
 

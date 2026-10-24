@@ -584,7 +584,6 @@ char *__cdecl get_he_she(int faction_id, int sentence_form) {
 #include "lock.h"      // LockEnableMask - the deletion-record occupancy mask
 #include "log.h"       // log_say - both deletion paths report through it
 #include "fx.h"        // FX - play is defined in this wave
-#include "deletionlist.h"  // DeletionList conversion and deletion enqueue
 #include "pulldown.h"   // PullDown - the menu handlers are defined in this wave
 #include "reportwin.h"  // ReportWin - on_redraw is defined in this wave
 #include "diplopop.h"   // DiploPop - on_redraw is defined in this wave
@@ -593,14 +592,6 @@ char *__cdecl get_he_she(int faction_id, int sentence_form) {
 #include "maininterface.h"  // MainInterface::restore_back - DiploPop's opener
 
 namespace {
-// The .rdata strings the deletion paths hand to log_say, read out of the
-// image beside the bindings the same family already carries in veh.cpp.
-// Original starts identify the read-only strings, not pointer cells or
-// enclosing allocations. log_say takes LPCSTR and borrows these bytes.
-// RECOVERY_OBJECT: v1 0x0068C134 _StrDeletingVehicle
-static const char StrDeletingVehicle[] = "Deleting vehicle";
-// RECOVERY_OBJECT: v1 0x0068C120 _StrDelConvertedIndex
-static const char StrDelConvertedIndex[] = "DelConverted index";
 
 // The one-space join string this file's flying-text wrapper already binds as
 // SpaceText, and the caret separator MultiWin's spot label builds from.
@@ -822,82 +813,10 @@ extern "C" void __cdecl tech_wizard_unk1(Popup *first_popup,
 // ---------------------------------------------------------------------------
 
 // ---------------------------------------------------------------------------
-// DeletionList::convert, 0x0052DDC0. Multiplayer id conversion: remap a
-// vehicle id across the deletion list's occupied records, walking every
-// record between the old and new owner and subtracting each queued id below
-// the value; both paths report through log_say. deletionlist.h declares the
-// member; its forwarder retires from pending_bodies.cpp in this change.
-/*
-Purpose: Convert a vehicle id across the deletion list's queued deletions.
-// ORIGINAL: 0x0052DDC0 ?convert@DeletionList@@QAEHHH@Z 0x0052DDC0-0x0052DE65 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["Original52DDC0..52DE65; retired seed git:117282ee:src/unrecovered/0052ddc0.cpp records the same identity and spans.", "The records are deletionlist.h's own 0x3C-stride entries with the occupancy mask lock.h's LockEnableMask (0x009A64E8), the owner count at +0x5A0 and the per-record id run at +0xA; the log_say format is the image's DelConverted string bound beside this body."], "reason": "Coverage transcription of the id conversion on the typed DeletionList receiver with the subtract-below walk exactly as the seed orders it."}
-Status: Coverage transcription - unclaimed body
-*/
-int DeletionList::convert(int original_id, int new_owner) {
-    int result = original_id;
-    int search = new_owner + 1;
-    const int total = current_owner_;
-    if (search <= total) {
-        const unsigned char mask = static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_);
-        do {
-            for (int slot = 0; slot < 0x18; slot++) {
-                const DeletionRecord &record = records_[slot];
-                if ((record.acknowledgements_ & mask) != mask
-                    && record.owner_ == search) {
-                    int count = record.count_;
-                    if (count > 0) {
-                        for (int index = 0; index < count; ++index) {
-                            const int deleted_id = record.vehicle_ids_[index];
-                            if (deleted_id == result) {
-                                result = -1;
-                            } else if (deleted_id < result) {
-                                result--;
-                            }
-                        }
-                    }
-                    break;
-                }
-            }
-            search++;
-        } while (search <= total);
-        if (original_id != result) {
-            log_say(StrDelConvertedIndex, original_id, result, 0);
-        }
-    }
-    return result;
-}
+
 
 // ---------------------------------------------------------------------------
-// DeletionList::add_deletion, 0x0052DE70. Enqueue one multiplayer deletion:
-// report the vehicle's position, find its record by owner (falling back to
-// the first free record), and append the id to that record's run.
-// deletionlist.h declares the member; its forwarder retires from
-// pending_bodies.cpp in this change.
-/*
-Purpose: Queue one vehicle deletion against its owner's deletion record.
-// ORIGINAL: 0x0052DE70 ?add_deletion@DeletionList@@QAEHH@Z 0x0052DE70-0x0052DF2E FILE
-// RECOVERY_BINDING: v1 {"evidence": ["Original52DE70..52DF2E; retired seed git:117282ee:src/unrecovered/0052de70.cpp records the same identity and spans with its raw-offset TRIED note kept below.", "The vehicles are veh.h's own Vehs (0x00952828, 0x34 stride) whose x/y words open the record; the occupancy mask is lock.h's LockEnableMask and the owner count sits at +0x5A0. The original uses 0x1E shorts as each 0x3C-byte record stride; 25 shorts fit after its 0xA-byte header."], "reason": "Coverage transcription of the deletion enqueue on the typed DeletionList receiver with Vehs and LockEnableMask named from their owners."}
-Status: Coverage transcription - unclaimed body
-*/
-int DeletionList::add_deletion(int veh_id) {
-    log_say(StrDeletingVehicle, veh_id, Vehs[veh_id].x, Vehs[veh_id].y);
 
-    int slot = find_owner_slot(current_owner_);
-    if (slot < 0) {
-        slot = find_free_slot();
-        DeletionRecord &new_record = records_[slot];
-        new_record.acknowledgements_ = 0xFF;
-        new_record.count_ = 0;
-        new_record.owner_ = current_owner_;
-        new_record.acknowledgements_ = 0;
-    }
-
-    DeletionRecord &record = records_[slot];
-    const int old_count = record.count_;
-    record.vehicle_ids_[old_count] = static_cast<short>(veh_id);
-    record.count_ = static_cast<short>(old_count + 1);
-    return old_count;
-}
 
 // ---------------------------------------------------------------------------
 // sub_5d8c20, 0x005D8C20. The unit-draw wrapper's four-argument form:

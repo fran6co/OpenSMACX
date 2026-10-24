@@ -1,0 +1,36 @@
+{
+  "event_id": "a4077846fe2c3a247e83ecea64cc71f5e50578ae33eeed85e0607bf44a4dce54",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_prefwin_visibility_actual_source_oct24t.py",
+      "recovery/tests/test_scroll_arrow_resize_actual_source_oct24t.py",
+      "src/prefwin.cpp",
+      "src/scroll.cpp"
+    ],
+    "evidence": [
+      "Coordinator combines independently reviewed PrefWin/Scroll behavioral corrections with the complete DeletionList owner migration; original task baseline and claims remain unchanged.",
+      "Native before/current production object trials reproduce the qualified baseline; PrefWin and Scroll outside-selected comparisons pass; DeletionList raw FAIL for transported data and existing header-emitted copies remains an explicit manual-review obligation.",
+      "Original unsafe label append remains unconditional; Scroll preserves unchecked dimensions. Maximum three PrefWin trials reached; its remaining scheduling mismatch is retained without another attempt.",
+      "Source/codegen review and GCC/Clang actual-source controls supplement complete fresh build/link and source/claim/mapping/reference checks. This editing authorization does not weaken automatic acceptance or prove game acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4784448,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6318176,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "b4fe4a25478e96dcc4d02bc7dd4f1bac3436b74eeafa0dcb82be91bb078e875e",
+  "request_id": "coordinator-combined-owner-checkpoint-oct24t",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:easy-stringstruct-owner-oct24t"
+}

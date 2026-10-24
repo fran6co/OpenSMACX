@@ -808,19 +808,18 @@ void Scroll::on_resize(int width, int height) {
         const int button_size = bar_thickness_ - 2;
         flat_button_right_.resize(button_size, button_size, 0);
         if (width <= height) {
-            flat_button_right_.move(width - bar_thickness_ + 1,
-                                    height - bar_thickness_ + 1);
+            flat_button_right_.move(1, height - bar_thickness_ + 1);
         } else {
-            flat_button_right_.move(1, 1);
+            flat_button_right_.move(width - bar_thickness_ + 1, 1);
         }
         return;
     }
 
     flat_button_right_.resize(bar_thickness_, bar_thickness_, 0);
     if (width <= height) {
-        flat_button_right_.move(width - bar_thickness_, height - bar_thickness_);
+        flat_button_right_.move(0, height - bar_thickness_);
     } else {
-        flat_button_right_.move(0, 0);
+        flat_button_right_.move(width - bar_thickness_, 0);
     }
 }
 
