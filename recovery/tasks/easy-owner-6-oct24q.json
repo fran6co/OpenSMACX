@@ -1,0 +1,62 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "a8aa6c5a00a60cd2a58609ad9e155a996b411a17",
+  "editable_files": [
+    "src/faction.cpp",
+    "src/faction.h",
+    "src/infowin.cpp",
+    "recovery/tests/test_faction_ranking_signed_score_actual_source.py"
+  ],
+  "evidence": [
+    "Independent pin 0x539D18..36 multiplies two ranking scores modulo32bits and compares signed SETGE. Current great_satan uses uint32 factors/storage and unsignedcomparison. Producer computes signed int scores, signed max selection and -1 sentinel; every numeric consumer interprets score asint. Correct globalstorage to int[8], direct score/-1 stores, redundant signedcasts only at auditedconsumers; preserve all copybytes/order/extents. Scope includes7numeric mappedowners plus rawcopy game_data; source-only tech_trade helpers and netcopy helper remain unbound, notinventedfunctions.",
+    "Authorizes one structural signed-score candidate over whole existing ownership closure. Nativecompiler interaction/annotation/objecttargetwriter/Git/claimbanking coordinatoronly. Worker may edit only listedsource/testfiles; game.cpp and netdaemon raw-copy paths inspected read-only and must retainexactbytesizes/ordering. Preserve current object historicalsymbol/address/unknownextent; coordinator uses existing object_writer.replace_object_records to emit v4 currenttarget onlyafteractualCOFFnewobjectsymbol verification.",
+    "Original integerproducts wrap low32bits before signedGE; preserve this target behavior. Ordinary signedint arithmetic is eligible only with actualVC6 emitted low32IMUL+signedcomparison verification and explicit originalVC6/x86 overflow evidence; hostcontrols may use -fwrapv to model the observedtarget, not change projectflags. Otherwise use existing reviewed bit-preserving diplo_mul. Do not clamp/widen/saturate/normalize sentinel or add safetypaths.",
+    "Evidence ignored: effect-owner-batch-oct24p/great-satan-ranking-type-closure.json and great-satan-mapped-closure.json; easy-owners-oct24q/next-findings-B.json. Source signedness inferred from independent producer/consumer/pin evidence, not original debugtypes. All claims/spans preserved. Native outsideFAIL/UNKNOWN remains visible; manualintegrations require fresh wholebatch build/link+relevantidentity/reference/structure/preservation review and destinationrecheck, not automatic/gameacceptance."
+  ],
+  "intent": "Recover signed ranking score storage and original signed wrapped comparison",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5479424,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5949072,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5482880,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5520320,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5529216,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4547328,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5509376,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5925568,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "easy-owner-6-oct24q"
+}
