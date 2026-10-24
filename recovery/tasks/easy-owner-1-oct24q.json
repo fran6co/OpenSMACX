@@ -1,0 +1,25 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "fb7dd34c8b87680d8016ac857c3e37972cda41c7",
+  "editable_files": [
+    "src/designwin.cpp"
+  ],
+  "evidence": [
+    "DesignWin::UNK2 chained short-circuit comparison candidate grounded in shared false exit; preserve five field reads in order. At most1initial compiler candidate, no previous local TRIED.",
+    "Evidence/proposals: ignored .opensmacx/recovery/easy-owners-oct24q findings-1/findings-6/findings-5-return-contract-closure; checkbox pin/dataflow and proposed actual-source controls in effect-owner-batch-oct24p. Current verified build-hh9t0lrl:194TUs208objects,3450local3135strict.",
+    "Coordinator authorizes this bounded isolated source ownership closure and no other files/functions. Only coordinator Git, native annotation writing/recording, acceptance/integration/cleanup. Preserve original bugs, all ORIGINAL spans/identities, historical claims, structural discoveries and restoration obligations. No flags/provider/compiler edits, asm/byte copies, wrappers, forced export/volatile/padding tricks or fabricated acceptance.",
+    "Source function trial limits above include compile failures; baseline physical replica/target damage are separate controls. Report full-TU neighbors and native outside-selected failures/unknowns without reverting justified structure. The signature task may use native Compiler/compare_unit/COFF APIs with in-memory current-symbol projection after real emission; this is exploration only, not a published fact or claim.",
+    "Manual coordinator review requires fresh batch build/link, identity/source/reference/restoration and preservation checks plus destination recheck. No automatic/game acceptance. Workers must return any needed scope expansion before outside edits."
+  ],
+  "intent": "DesignWin::UNK2 chained short-circuit comparison candidate grounded in shared false exit; preserve five field reads in order. At most1initial compiler candidate, no previous local TRIED.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4408784,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "easy-owner-1-oct24q"
+}
