@@ -1,0 +1,24 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "2ad8eebfd09d9b3dd62b38bb24b72202b46e8c5d",
+  "editable_files": [
+    "src/pulldown.cpp"
+  ],
+  "evidence": [
+    "Selected original spans and source-owning definitions were natively bounded and inspected in the oct24t queue; seven ownership groups have disjoint C++ units. Preserve identities, historical claims and findings. One ordinary C++ candidate per selected function; no flag, ABI, machine-code or export tricks.",
+    "Use actual production recipes and fresh full-object unchanged controls under independent leased prefixes. Score in temporary replicas; no source editing during measurement. Preserve native failures/unknowns and structural discoveries for coordinator scope expansion, never automatic reversion or lost work.",
+    "Preserve bug-for-bug behavior. PrefWin show arguments and Scroll axis coordinates have direct original instruction evidence; faithful corrections may integrate without new local exactness. Other spellings need justified improvement. No new bounds checks, initialization or unsafe-path normalization; never hand-edit markers or claims.",
+    "Coordinator alone owns Git, native publication/recording and cleanup. Build/link, relevant controls, matching/reference/claim continuity and outside-scope review precede manual integration. No automatic or full-game acceptance claim."
+  ],
+  "intent": "Faithful pulldown owner recovery and bounded ordinary C++ matching",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6263936,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "easy-pulldown-owner-oct24t"
+}
