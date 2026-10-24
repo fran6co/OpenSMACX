@@ -1,0 +1,21 @@
+{
+  "event_id": "22b5a5dab8a7caa880f7d73ebf23ec07f375023610798603db6a924ed1c78606",
+  "payload": {
+    "affects": [
+      "entity-7fada3d74da96c49c5d219bf974b7a2a06cf7924d7f8a23b86a311f89ff41d38"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "council-missing-per-candidate-clear-oct24n",
+    "evidence": [
+      "Native candidate1 removed only aggregate initialization; subsequent source/COFF inspection showed it would read uninitialized candidate cells. It was measured, counted and left unapplied.",
+      "Whole pin427DDB-DE writes zero at each current candidate slot before alien check. Candidate2 removes eager array initialization and adds that missing per-candidate store in the same authorized body; replica/damage/outside controls pass, no exact gain/loss. Actual source retains every original gate and option_votes initialization."
+    ],
+    "hypothesis": "Restore original per-candidate initialization, not merely remove eager clearing: the old source has no in-loop clear despite the initial audit assumption.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "council-missing-per-candidate-clear-oct24n",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:initialization-owner-3-oct24n"
+}

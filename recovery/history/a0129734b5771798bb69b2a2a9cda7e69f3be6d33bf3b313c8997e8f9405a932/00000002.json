@@ -1,0 +1,18 @@
+{
+  "event_id": "30947175f2c8473a4e4196214d03da48dad74ee22999cb548882e0d5e16db581",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "council-missing-per-candidate-clear-oct24n",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Coordinator authorized the corrected two-hunk body within the existing initialization-timing scope after the false audit assumption was identified. Native worker report and final diff retain first attempt as rejected/unapplied and candidate2 as sole source change.",
+      "This incorporates source initialization timing only; no aggregate claim, automatic acceptance, full link/runtime proof or byte-exactness is granted. Full application build/link, source review and destination verification still required."
+    ]
+  },
+  "previous_event": "22b5a5dab8a7caa880f7d73ebf23ec07f375023610798603db6a924ed1c78606",
+  "request_id": "council-clear-timing-incorporated-oct24n",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:initialization-owner-3-oct24n"
+}
