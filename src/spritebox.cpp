@@ -1110,21 +1110,20 @@ SpriteList::SpriteList() {}
 int SpriteList::on_insert(void *raw_payload) {
     SpriteStruct *const payload = static_cast<SpriteStruct *>(raw_payload);
     payload->sprite_ = pending_sprite_;
-    char *const source = pending_label_;
-    if (source == 0) {
+    if (pending_label_ == 0) {
         payload->label_ = 0;
         payload->field_C_ = field_24_;
         return 0;
     }
 
-    const size_t length = strlen(source);
+    const size_t length = strlen(pending_label_);
     char *copy = allocator_ != 0
         ? static_cast<char *>(allocator_->get(length + 1))
         : static_cast<char *>(mem_get(length + 1));
     payload->label_ = copy;
     if (copy == 0) return 4;
     *copy = '\0';
-    strcat(copy, source);
+    strcat(copy, pending_label_);
     payload->field_C_ = field_24_;
     return 0;
 }
