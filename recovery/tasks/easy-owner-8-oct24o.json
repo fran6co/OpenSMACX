@@ -1,0 +1,32 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "022c43981b5bf710a6dcda6d35f1007014d7361b",
+  "editable_files": [
+    "src/faction.cpp",
+    "src/faction.h",
+    "recovery/tests/test_diplomacy_actions_coverage.py"
+  ],
+  "evidence": [
+    "Current whole application194TU208object checkpoint022c43981: build-3w3gi6xb,3450local exact3135strict. Strong pin-backed contract review .opensmacx/recovery/mci-structure-oct24n/base-swap-contract-critical-review-oct24o.json: all10base_swap exits explicitly write EAX0/1 after final observable effects; no-transfer paths including both missing-base cases return1, completed transfers return0. Current void declaration/decoration is guessed recovery metadata, not shipping ABI evidence.",
+    "Authorize int __cdecl base_swap across faction.h/definition; map all11bare returns and final no-op fallthrough faithfully to pinned values. Caller make_a_proposal continues to discard result; do not add new tests of the return to gameplay. Preserve every original effect, callback/network/locking/unsafe path, branch order and all historical claims/mappings. No bug fixes or changes to other function bodies.",
+    "Update existing test_actual_base_swap to extract actual int body and assert pinned return values on successful/rejected/no-op cases while retaining every existing effect assertion/mutant; add meaningful compiled return damage. Fixture-only stale declaration fixes require concrete source/header evidence; do not weaken checks. Existing make_a_proposal fixture may need stub declaration updated to int but must still discard result.",
+    "Only coordinator mutates Git, publishes current emitted symbol through native write_symbol after physical verification, records exact claims, integrates or cleans. Workers may edit only authorized files; never hand-edit ORIGINAL, symbol, claim or binding metadata. Clarify old incidental/void comment as historical speculation now contradicted by explicit pin results; preserve useful seed history.",
+    "Use unchanged actual production recipe through native Compiler/compare_unit; require whole-object baseline replay, visible return damage, complete neighboring-function/outside preservation review. Justified structure remains through matching regressions; no claim demotion or acceptance waiver. Three candidate attempts maximum per new structural context; no flag search, asm, wrappers or copied bytes. Native failures/unknowns stay explicit. Final manual integration requires source review, full application build/link, claims/references/restoration and fresh destination checks; none of these establish game acceptance."
+  ],
+  "intent": "Restore original base-swap integer result across declaration, implementation and callers",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5559312,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5567520,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "easy-owner-8-oct24o"
+}
