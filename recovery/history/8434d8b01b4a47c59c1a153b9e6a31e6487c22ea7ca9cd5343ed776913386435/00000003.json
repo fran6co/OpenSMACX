@@ -1,0 +1,29 @@
+{
+  "event_id": "f757661e006b189d17fa27db01269cf8c715aa9b1f9e4c9959a91a58479ac198",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/alphamovie.cpp",
+      "src/alphamovie.h"
+    ],
+    "evidence": [
+      "Original play6001E0 explicitly returns1 on both error exits and0 on success. Current void declaration erases that contract. Complete caller scan finds only mapped direct AlphaMovie.exec404070, which ignores the return; no base/virtual layout is involved. Authorize int play() and matching returns, preserving ignored caller result and class layout. Use native source.write to add current emitted-symbol override QAEH after physical verification; never edit ORIGINAL identity/claim tokens.",
+      "Original load stores a pointer to static avivideo literal696E94, not a copied stack char array. Authorize ordinary static-lifetime string use compatible with actual legacy SDK LPSTR; preserve all original calls, fields, errors, mutable-interface limits and storage/provenance. A source literal binding, if needed, is coordinator-owned through native writer and fresh evidence.",
+      "Extend host fixtures to actual SDK field ordering and members; host pointer width remains host, native offsets require compiler proof. Preserve all existing12controls and add explicit play return checks/mutants. Target is VC6 C++98; any host language/deprecation handling must be explicit and must not alter production compiler flags or ignore real errors.",
+      "Compiler context is captured before-tree at e1ce58c20 with fresh full candidate194TU208COFF build. No baseline reset or automatic acceptance. Structural discoveries act across header/definition/mapped caller now; preserve all native residual failures, old claims and restoration obligations."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4210800,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "4627c1d26c96d7b8cfb593ca4ba014f68536c9860741f0f1fa2b7c0751710bba",
+  "request_id": "mci-play-return-and-load-static-lifetime-oct24n",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:easy-owner-8-oct24m"
+}
