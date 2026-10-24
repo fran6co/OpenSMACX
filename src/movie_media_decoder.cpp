@@ -981,8 +981,8 @@ void __cdecl sub_5d1278(BYTE *base, int stride, MediaDecoderContext *context) {
 }
 
 // Existing product owner in general.cpp; keep the one implementation.
-extern int __cdecl sub_5d2761(unsigned int *source,
-                              unsigned int *destination, int count);
+extern void __cdecl sub_5d2761(unsigned int *source,
+                               unsigned int *destination, int count);
 
 static void *movie_decoder_allocate(size_t bytes) {
   return calloc(1, bytes);

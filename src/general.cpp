@@ -3407,7 +3407,7 @@ void __cdecl sub_5d2037(int *data_row, int *selector_pair,
 }
 
 // ORIGINAL: 0x005D2761 sub_5d2761 0x005D2761-0x005D2834 FILE
-// symbol    ?sub_5d2761@@YAHPAI0H@Z
+// symbol    ?sub_5d2761@@YAXPAI0H@Z
 // LEVER: the four tbl_ globals are four of EIGHT 0x400-byte tables laid
 //         end to end at 0x009C672C + k*0x400 for k = 0..7, all ZERO in the
 //         file and filled at run time (image_data.py reads 0 at every one).
@@ -3441,7 +3441,9 @@ void __cdecl sub_5d2037(int *data_row, int *selector_pair,
 // context from the first token rather than behind a file read. This
 // emitter computes declarations; it does not carry lessons.
 
-int __cdecl sub_5d2761(unsigned int *src, unsigned int *dst, int count) {
+// The observed row-pack callers use a void callback and ignore any result;
+// the original source-level prototype remains unproven.
+void __cdecl sub_5d2761(unsigned int *src, unsigned int *dst, int count) {
     do {
         unsigned int w = *src;
         unsigned int sum1 = MovieColourTableByte1[(w & 0xff00) >> 8] + MovieColourTableByte3[w >> 24] + MovieColourTableByte0[w & 0xff];
@@ -3452,7 +3454,6 @@ int __cdecl sub_5d2761(unsigned int *src, unsigned int *dst, int count) {
         dst++;
         src++;
     } while (count != 0);
-    return 0;
 }
 
 // Fixed-slot bindings carried from 005d2834.cpp
