@@ -317,6 +317,127 @@ def test_mapped_overload_body_is_selected_by_exact_marker_interval(tmp_path):
                                             expected_markers=markers)
 
 
+def _file_mode_source(symbol="?create@AlphaNet@@QAEHXZ", *, extra=""):
+    return ("// ORIGINAL: 0x00401000 " + symbol +
+            " 0x00401000-0x00401020 FILE\n"
+            "// symbol    " + symbol + "\n" + extra +
+            "// ORIGINAL: 0x00401009 _other 0x00401030-0x00401040 FILE\n"
+            "// implementation follows later in the translation unit\n"
+            "int AlphaNet::create() {\n"
+            "  const char *raw = R\"tag(})tag\"; // brace in data/comment\n"
+            "  return 0;\n"
+            "}\n"
+            "void unrelated() { }\n")
+
+
+def _file_mode_binding(text, source, name="AlphaNet::create"):
+    markers = read_text(text, source)
+    target = next(row for row in markers if row.address == 0x401000)
+    identities = tuple(local_variants._marker_identity(row) for row in markers)
+    body = local_variants._bound_function_body_bytes(text, name, source, target, identities)
+    return target, identities, body
+
+
+def test_file_mode_binding_uses_explicit_symbol_for_unique_global_body(tmp_path):
+    source = tmp_path / "unit.cpp"
+    text = _file_mode_source()
+    target, identities, body = _file_mode_binding(text, source)
+    assert text.encode()[body[0]:body[1]].startswith(b"{\n  const char *raw")
+    candidate = text.replace("return 0;", "return 1;")
+    local_variants._check_body_only(text, body, "AlphaNet::create", [candidate.encode()],
+                                    source=source, target_record=target,
+                                    expected_markers=identities)
+    sibling = candidate.replace("void unrelated() { }", "void unrelated() { return; }")
+    with pytest.raises(ValueError, match="only the selected function body"):
+        local_variants._check_body_only(text, body, "AlphaNet::create", [sibling.encode()],
+                                        source=source, target_record=target,
+                                        expected_markers=identities)
+
+
+@pytest.mark.parametrize("symbol,name", [
+    ("?create@Other@@QAEHXZ", "AlphaNet::create"),
+    ("not-a-recognized-symbol!", "AlphaNet::create"),
+    ("?create@AlphaNet@@QAEHXZ", "AlphaNet::other"),
+])
+def test_file_mode_binding_rejects_wrong_or_unrecognized_current_symbol(tmp_path, symbol, name):
+    source = tmp_path / "unit.cpp"
+    text = _file_mode_source(symbol)
+    markers = read_text(text, source)
+    target = markers[0]
+    with pytest.raises(ValueError, match="FILE target lacks an explicit matching emitted symbol"):
+        local_variants._bound_function_body_bytes(
+            text, name, source, target,
+            tuple(local_variants._marker_identity(row) for row in markers))
+
+
+def test_file_mode_binding_rejects_competing_mapped_qualified_name(tmp_path):
+    source = tmp_path / "unit.cpp"
+    text = _file_mode_source(extra=(
+        "// ORIGINAL: 0x00401001 ?create@AlphaNet@@QAEHXZ "
+        "0x00401020-0x00401030 FILE\n"
+        "// symbol    ?create@AlphaNet@@QAEHXZ\n"))
+    markers = read_text(text, source)
+    with pytest.raises(ValueError, match="competing source mapping ownership"):
+        local_variants._bound_function_body_bytes(
+            text, "AlphaNet::create", source, markers[0],
+            tuple(local_variants._marker_identity(row) for row in markers))
+
+
+def test_file_mode_fallback_rejects_competing_catalogued_name_without_symbol(tmp_path):
+    source = tmp_path / "unit.cpp"
+    text = _file_mode_source(extra=(
+        "// ORIGINAL: 0x00401001 ?create@AlphaNet@@QAEHXZ "
+        "0x00401020-0x00401030 FILE\n"))
+    markers = read_text(text, source)
+    with pytest.raises(ValueError, match="competing source mapping ownership"):
+        local_variants._bound_function_body_bytes(
+            text, "AlphaNet::create", source, markers[0],
+            tuple(local_variants._marker_identity(row) for row in markers))
+
+
+def test_file_mode_adjacent_definition_keeps_interval_binding_without_symbol(tmp_path):
+    source = tmp_path / "unit.cpp"
+    text = ("// ORIGINAL: 0x00401000 _legacy 0x00401000-0x00401020 FILE\n"
+            "int AlphaNet::create() { return 0; }\n"
+            "// ORIGINAL: 0x00401001 _next 0x00401020-0x00401030 FILE\n")
+    markers = read_text(text, source)
+    body = local_variants._bound_function_body_bytes(
+        text, "AlphaNet::create", source, markers[0],
+        tuple(local_variants._marker_identity(row) for row in markers))
+    assert text.encode()[body[0]:body[1]] == b"{ return 0; }"
+
+
+@pytest.mark.parametrize("extra_definition", [
+    "int AlphaNet::create(int) { return 2; }\n",
+    "int AlphaNet::create() { return 2; }\n",
+])
+def test_file_mode_binding_rejects_overloaded_or_duplicate_global_definitions(
+        tmp_path, extra_definition):
+    source = tmp_path / "unit.cpp"
+    text = _file_mode_source() + extra_definition
+    markers = read_text(text, source)
+    with pytest.raises(ValueError, match="2 definitions found"):
+        local_variants._bound_function_body_bytes(
+            text, "AlphaNet::create", source, markers[0],
+            tuple(local_variants._marker_identity(row) for row in markers))
+
+
+def test_body_mode_does_not_fall_back_to_translation_unit_lookup(tmp_path):
+    source = tmp_path / "unit.cpp"
+    text = ("// ORIGINAL: 0x00401000 _before 0x00401000-0x00401001 BODY\n"
+            "// ORIGINAL: 0x00401001 ?create@AlphaNet@@QAEHXZ "
+            "0x00401001-0x00401020 BODY\n"
+            "// symbol    ?create@AlphaNet@@QAEHXZ\n"
+            "// ORIGINAL: 0x00401002 _after 0x00401020-0x00401030 BODY\n"
+            "int AlphaNet::create() { return 0; }\n")
+    markers = read_text(text, source)
+    target = markers[1]
+    with pytest.raises(ValueError, match="0 definitions found"):
+        local_variants._bound_function_body_bytes(
+            text, "AlphaNet::create", source, target,
+            tuple(local_variants._marker_identity(row) for row in markers))
+
+
 def test_local_body_screen_refuses_default_lambda_braces_in_signature(tmp_path):
     source = tmp_path / "unit.cc"
     text = ("// ORIGINAL: 0x00401000 _fill 0x00401000-0x00401001\n"

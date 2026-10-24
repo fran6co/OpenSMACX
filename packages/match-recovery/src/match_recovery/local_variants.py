@@ -146,7 +146,7 @@ def _marker_identity(record) -> tuple:
 
 def _bound_function_body_bytes(text: str, name: str, source: Path,
                                target_record, expected_markers: tuple) -> tuple[int, int]:
-    """Find one real definition inside its unchanged source mapping interval."""
+    """Find one real definition under its unchanged, explicitly named mapping."""
     markers = read_text(text, source)
     if tuple(_marker_identity(row) for row in markers) != expected_markers:
         raise ValueError("local candidate changed source mapping identities")
@@ -159,10 +159,47 @@ def _bound_function_body_bytes(text: str, name: str, source: Path,
     if (marker.line != target_record.line or marker.mode not in (Mode.FILE, Mode.BODY)
             or marker.body or _marker_identity(marker) != _marker_identity(target_record)):
         raise ValueError("target definition is not in its exact product source mapping")
-    before_line = (markers[index + 1].line if index + 1 < len(markers)
-                   else len(text.splitlines()) + 1)
-    body = _function_body_bytes(text, name, after_line=marker.line,
-                                before_line=before_line)
+    if marker.mode is Mode.FILE:
+        # Preserve an existing local binding when a FILE marker's following
+        # interval uniquely contains the requested definition. Some such
+        # mappings have no explicit emitted-symbol override.
+        before_line = (markers[index + 1].line if index + 1 < len(markers)
+                       else len(text.splitlines()) + 1)
+        try:
+            body = _function_body_bytes(text, name, after_line=marker.line,
+                                        before_line=before_line)
+        except ValueError as error:
+            # Only the exact no-definition result permits FILE's whole-TU
+            # fallback. Ambiguity, malformed declarators, and body-boundary
+            # failures remain refusals rather than broader searches.
+            if str(error) != f"{name}: 0 definitions found":
+                raise
+        else:
+            prefix = text.encode("utf-8")[:body[1]].decode("utf-8")
+            _reject_line_splicing(prefix)
+            return body
+
+        # A global definition lookup needs the target marker's explicit
+        # current emitted symbol; never infer its owner from a deck/card.
+        symbol = marker.symbol or ""
+        current_name = qualified_name(symbol)
+        if not symbol or not current_name or current_name != name:
+            raise ValueError("FILE target lacks an explicit matching emitted symbol")
+        competing = [row for row in markers
+                     if row.address != marker.address
+                     and row.mode is not Mode.UNBOUND
+                     and (row.symbol == symbol
+                          or qualified_name(row.symbol or row.name) == name)]
+        if competing:
+            raise ValueError("FILE definition has competing source mapping ownership")
+        # function_line rejects overloads and duplicate global definitions;
+        # the lexical body reader then bounds only that unique definition.
+        body = _function_body_bytes(text, name)
+    else:
+        before_line = (markers[index + 1].line if index + 1 < len(markers)
+                       else len(text.splitlines()) + 1)
+        body = _function_body_bytes(text, name, after_line=marker.line,
+                                    before_line=before_line)
     # The closing brace is included: a splice through it can continue a
     # comment or macro into tokens that the source-only body walk saw later.
     prefix = text.encode("utf-8")[:body[1]].decode("utf-8")
