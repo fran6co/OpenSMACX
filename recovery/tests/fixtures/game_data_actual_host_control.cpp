@@ -119,7 +119,7 @@ typedef char PlayerDataFixtureHasCurrentStride[
     sizeof(PlayerData) == 0x20CC ? 1 : -1];
 PlayerData PlayersData[8];
 struct Player { unsigned char bytes_[0x59C]; } Players[8];
-uint32_t FactionRankingsUnk[8];
+int FactionRankingsUnk[8];
 uint16_t FactionRankingHistory[8000];
 int ReplayEventBytes;
 struct ReplayEventRecord { unsigned char bytes_[8]; } ReplayEvents[1024];

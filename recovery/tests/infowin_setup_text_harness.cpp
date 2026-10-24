@@ -133,7 +133,7 @@ static int Mood[16];
 static NaturalItem Natural[16];
 static RuleItem Terraforming[64];
 static uint16_t FactionRankingHistory[MaxPlayerNum * MaxRankingHistoryTurns];
-static uint32_t FactionRankingsUnk[8];
+static int FactionRankingsUnk[8];
 static int InfoFactionTextColors[8], InfoFactionShadowColors[8];
 static int ChatItemIdTable[8], ChatShadowColors[8];
 static int MapWinCaptionScale, MapWinCaptionDivisor, Language;
