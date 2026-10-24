@@ -4229,7 +4229,7 @@ label_56f8ad:
         base_find(f.local_4,f.local_8);
         if (score < (8-BaseFindDist)*2 &&
             PlayersData[f.local_c].region_total_bases[f.local_34] &&
-            static_cast<int>(PlayersData[f.local_c].current_num_bases) >= 2) {
+            PlayersData[f.local_c].current_num_bases >= 2) {
             int threshold = f.local_88 != 8 ? 4 : 1;
             if (threshold < PlayersData[f.local_c].unk_82[f.local_34])
                 threshold = PlayersData[f.local_c].unk_82[f.local_34];
@@ -4453,7 +4453,7 @@ label_5702f7:
                         (PlayersData[f.local_c].region_total_bases[f.local_34] < 2 ? 2 : 0) &&
                         f.local_20 < PlayersData[f.local_c].unk_82[f.local_34] &&
                         PlayersData[f.local_c].region_total_bases[f.local_34] &&
-                        (int)PlayersData[f.local_c].current_num_bases >= 2)
+                        PlayersData[f.local_c].current_num_bases >= 2)
                         goto late_policy_next_tile;
                     f.local_58 = 1;
                     f.local_60 = 0;

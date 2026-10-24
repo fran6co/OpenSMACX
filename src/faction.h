@@ -489,7 +489,9 @@ struct PlayerData {
     uint8_t proto_id_queue[512];
     int16_t proto_id_lost[512];
     int total_mil_veh; // total combat units
-    uint32_t current_num_bases;
+    // Pinned users perform signed comparisons/division on this word; the
+    // original debug type is unknown. Keep its observed member position.
+    int current_num_bases;
     int mil_strength_1;
     int mil_strength_2;
     int pop_total;
@@ -567,6 +569,8 @@ struct PlayerData {
 // scaffolding may use.
 static_assert(sizeof(PlayerData) == 0x20CC,
               "PlayerData layout must match the original executable");
+static_assert(offsetof(PlayerData, current_num_bases) == 0x105C,
+              "Current base count must occupy the native faction member");
 static_assert(offsetof(PlayerData, facility_announced) == 0x458,
               "Facility announcement bitmap must occupy the native member");
 static_assert(offsetof(PlayerData, planet_ecology) == 0x464,

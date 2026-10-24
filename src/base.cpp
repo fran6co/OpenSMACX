@@ -2470,9 +2470,9 @@ label_4f94e1:
       v11 += 1;
     v16 += 1;
   } while (v16 < 0x40);
-  if (10 <= (int)(PlayersData[faction_id].current_num_bases))
+  if (10 <= PlayersData[faction_id].current_num_bases)
     v11 += 1;
-  if (0x14 <= (int)(PlayersData[faction_id].current_num_bases))
+  if (0x14 <= PlayersData[faction_id].current_num_bases)
     v11 += 1;
   v11 += (v130 + 2) / 3;
   v123 = v11;
@@ -2603,7 +2603,10 @@ label_4f94e1:
   }
   else {
 label_4f9c43:
-    if (((regional_plan == 8) || ((regional_plan == 7 && (((int)(PlayersData[faction_id].current_num_bases) < 4 || (!v111)))))) || ((v133 && (!v160)))) {
+    if (regional_plan == 8 ||
+         (regional_plan == 7 &&
+          (PlayersData[faction_id].current_num_bases < 4 || !v111)) ||
+         (v133 && !v160)) {
       v76 = 1;
       scan_diplo_target = v9;
       v159 = 1;
@@ -2619,7 +2622,7 @@ label_4f9c43:
 
 
       } while (scan_faction < &PlayersData[8]);
-      if (((v18) && (v159)) && (((v133 && (!v160)) || ((BaseCurrent->population_size <= 2 && (((v131 || ((int)(PlayersData[faction_id].current_num_bases) <= 2)) && (!(BaseCurrent->state & 0x1000000))))))))) {
+      if (((v18) && (v159)) && (((v133 && (!v160)) || ((BaseCurrent->population_size <= 2 && (((v131 || (PlayersData[faction_id].current_num_bases <= 2)) && (!(BaseCurrent->state & 0x1000000))))))))) {
         v162 = v18 - 1;
         v133 = (uint32_t)BaseCurrent->x;
         v154 = (uint32_t)BaseCurrent->y;
@@ -3000,11 +3003,11 @@ label_4fabb2:
             v16 = prototype_count_2[v75];
             if ((v11 < v16 + prototype_count_0[v75] * 2) && (regional_plan != 8))
               v142 = 1;
-            v75 = range(GameDataStateStorage.fields_.turn_current_num_ / 0x32,0,(int)(PlayersData[faction_id].current_num_bases) + -1);
-            if ((int)(PlayersData[faction_id].current_num_bases) - v75 < v16)
+            v75 = range(GameDataStateStorage.fields_.turn_current_num_ / 0x32,0,PlayersData[faction_id].current_num_bases + -1);
+            if (PlayersData[faction_id].current_num_bases - v75 < v16)
               v142 = 1;
           }
-          if (((((regional_plan != 8) && (v114)) || ((int)(v98 + v147 * 2) <= v114)) || ((!v147 && (((v160 || (v156)) || (v157)))))) || (((int)(PlayersData[faction_id].current_num_bases) + 1) / (int)((v147 == 0) + 1) <= v114)) {
+          if (((((regional_plan != 8) && (v114)) || ((int)(v98 + v147 * 2) <= v114)) || ((!v147 && (((v160 || (v156)) || (v157)))))) || ((PlayersData[faction_id].current_num_bases + 1) / (int)((v147 == 0) + 1) <= v114)) {
             if ((v154) && (!v115)) {
               v9 *= 0x20;
               if (BaseCurrent->eco_damage) {
@@ -3162,7 +3165,7 @@ label_4fad22:
             v8 = has_abil(v167,0x80000);
             if (v8)
               v9 = (int)(v9 * 3 + ((int)(v9 * 3) >> 0x1f & 3U)) >> 2;
-            v8 = (int)(PlayersData[faction_id].current_num_bases) / 2;
+            v8 = PlayersData[faction_id].current_num_bases / 2;
             if (v8 <= 1)
               v8 = 2;
             v75 = (&plan_count_1[18])[v18 + 3];
@@ -3208,14 +3211,14 @@ label_4fad22:
 label_4fb650:
                 v76 = BaseCurrent->state & 0x1000000;
                 if (v76) {
-                  v10 = ((((int)(PlayersData[faction_id].current_num_bases) - GameDataStateStorage.fields_.turn_current_num_ / (int)((-(uint32_t)(v18 != 0) & 0x14) + 0x14)) - v148) - v131) - 1;
+                  v10 = ((PlayersData[faction_id].current_num_bases - GameDataStateStorage.fields_.turn_current_num_ / (int)((-(uint32_t)(v18 != 0) & 0x14) + 0x14) - v148) - v131) - 1;
                   v166 += v10 & (uint32_t)((int)v10 < 0) - 1;
                 }
                 v10 = v9 * 5;
                 if (('\x02' <= BaseCurrent->population_size) || ((BaseCurrent->mineral_surplus <= BaseCurrent->nutrient_surplus && (1 <= BaseCurrent->nutrient_surplus)))) {
                   if ((3 <= (int)regional_plan) && (!v76)) {
                     if (v18) {
-                      if (((regional_plan == 7) && (GameDataStateStorage.fields_.base_current_count_ / 5 <= (int)(PlayersData[faction_id].current_num_bases))) && (10 <= (int)(PlayersData[faction_id].current_num_bases))) goto label_4fb765;
+                      if (((regional_plan == 7) && (GameDataStateStorage.fields_.base_current_count_ / 5 <= PlayersData[faction_id].current_num_bases)) && (10 <= PlayersData[faction_id].current_num_bases)) goto label_4fb765;
                       if ((!v18) || (!(BaseCurrent->governor & 0x80000000))) goto label_4fb755;
                       if (!v147) {
                         if ((v156) || (v160))
@@ -3250,9 +3253,9 @@ label_4fb765:
                 if (v164) {
                   if (v158) {
                     v9 = (int)v9 / 2;
-                    if ((int)(PlayersData[faction_id].current_num_bases) <= 3)
+                    if (PlayersData[faction_id].current_num_bases <= 3)
                       v9 = (int)v9 / 2;
-                    if ((int)(PlayersData[faction_id].current_num_bases) <= 7)
+                    if (PlayersData[faction_id].current_num_bases <= 7)
                       v9 = (int)v9 / 2;
                     if ((uint32_t)(Players[faction_id].rule_flags) & 0x100)
                       v9 = (int)v9 / 2;
@@ -3288,14 +3291,14 @@ label_4fba4f:
                   if (v18 == 8) {
 label_4fb90c:
                     v9 = (int)v9 / 2;
-                    if ((int)(PlayersData[faction_id].current_num_bases) == 1)
+                    if (PlayersData[faction_id].current_num_bases == 1)
                       v9 = (int)(v9 + ((int)v9 >> 0x1f & 3U)) >> 2;
                     goto label_4fba4f;
                   }
                   if (v18 != 7) goto label_4fba4f;
                   if ((!(BaseCurrent->state & 0x1000000)) && ((int)MapOceanCoverage <= 0)) goto label_4fb90c;
 label_4fba68:
-                  v8 = (int)(PlayersData[faction_id].current_num_bases);
+                  v8 = PlayersData[faction_id].current_num_bases;
                   if ((3 <= v8) && (v116 == (int)(PlayersData[faction_id].unk_28)))
                     v9 *= 2;
                   if ((4 <= v8) && (v101 < BaseCurrent->population_size))
@@ -3312,7 +3315,7 @@ label_4fba68:
                 goto label_4fc68f;
               }
             }
-            else if (((!v158) || (((int)(PlayersData[faction_id].current_num_bases) <= v130 && (3 <= v130)))) && (regional_plan != 2)) goto label_4fb650;
+            else if (((!v158) || ((PlayersData[faction_id].current_num_bases <= v130 && (3 <= v130)))) && (regional_plan != 2)) goto label_4fb650;
           }
           break;
         case 9:
@@ -3496,7 +3499,7 @@ label_4fc14e:
                 if ((uint8_t)v165 & (uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_)
                   v137 = 0;
                 else {
-                  v8 = range((int)(PlayersData[faction_id].mil_strength_1),(int)(PlayersData[faction_id].current_num_bases) + 1,999999);
+                  v8 = range((int)(PlayersData[faction_id].mil_strength_1),PlayersData[faction_id].current_num_bases + 1,999999);
                   v137 = ((int)(PlayersData[v76].mil_strength_1) / v8);
                 }
                 if (GameDataStateStorage.fields_.game_rules_ & 0x40)
@@ -3685,7 +3688,7 @@ label_4fcb64:
                 if (v113)
                   v9 = (int)((v113 + 5) * v9) / 5;
 label_4fcaf5:
-                if ((int)((int)(PlayersData[faction_id].current_num_bases) + ((int)(PlayersData[faction_id].current_num_bases) >> 0x1f & 3U)) >> 2 <= v113) goto label_4fcbbf;
+                if ((int)(PlayersData[faction_id].current_num_bases + (PlayersData[faction_id].current_num_bases >> 0x1f & 3U)) >> 2 <= v113) goto label_4fcbbf;
               }
               v3 = (char)(PlayersData[faction_id].region_base_plan[region]);
               switch(v3) {
@@ -4208,7 +4211,7 @@ label_4fdc5e:
           v166 = v8 + -1;
         v8 = range(v166,1,4);
         v9 = BaseCurrent->state & 0x1000000;
-        if ((!v9) && ((regional_plan == 8 || ((int)((uint32_t)(uint8_t)(PlayersData[faction_id].proto_id_active[0]) + (int)(PlayersData[faction_id].current_num_bases)) <= 3))))
+        if ((!v9) && ((regional_plan == 8 || ((int)((uint32_t)(uint8_t)(PlayersData[faction_id].proto_id_active[0]) + PlayersData[faction_id].current_num_bases) <= 3))))
           v8 *= 2;
         if (v157) {
           if ((!v9) && (regional_plan == 8)) goto label_4fef0c;

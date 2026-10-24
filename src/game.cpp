@@ -8583,7 +8583,7 @@ void __cdecl random_events(int mode) {
     Base &selected_base = Bases[selected_base_id];
     if (selected_base.population_size <= 3) return;
     const int faction_id = selected_base.faction_id_current;
-    if (static_cast<int>(PlayersData[faction_id].current_num_bases) <= 1)
+    if (PlayersData[faction_id].current_num_bases <= 1)
         return;
     if ((selected_base.event & 0x7E00u) != 0) return;
 
@@ -9091,7 +9091,7 @@ void __cdecl random_events(int mode) {
         if (IsMultiplayerPBEM != 0 ||
             GameDataStateStorage.fields_.turn_current_num_ < 0x4B) return;
         PlayerData &event_player = PlayersData[faction_id];
-        if (static_cast<int>(event_player.current_num_bases) < 8) return;
+        if (event_player.current_num_bases < 8) return;
         if ((GameDataStateStorage.fields_.game_state_ & 0x10u) != 0) return;
 
         const int event_x = static_cast<int>(GameDataStateStorage.fields_.mount_planet_x_);
@@ -9220,7 +9220,7 @@ void __cdecl random_events(int mode) {
         case 15: {
             if (IsMultiplayerPBEM ||
                 GameDataStateStorage.fields_.turn_current_num_ < 75) break;
-            if (static_cast<int>(PlayersData[faction_id].current_num_bases) < 8 ||
+            if (PlayersData[faction_id].current_num_bases < 8 ||
                 (GameDataStateStorage.fields_.game_state_ & 0x10u) != 0 ||
                 near_landmark(base_x, base_y)) break;
             const int initial_local_faction = ConsoleGlobal.faction_id_;
@@ -9258,7 +9258,7 @@ void __cdecl random_events(int mode) {
                 }
             }
             if (!suitable_crater_site ||
-                static_cast<int>(PlayersData[faction_id].current_num_bases) < 7)
+                PlayersData[faction_id].current_num_bases < 7)
                 break;
 
             int event_seen = local_map_visible ? 1 : 0;
@@ -9974,7 +9974,7 @@ void __cdecl set_time_controls() {
         }
 
         weighted_base_count += control.base *
-            static_cast<int>(faction.current_num_bases);
+            faction.current_num_bases;
         ++active_factions;
 
         for (int vehicle_id = 0; vehicle_id < GameDataStateStorage.fields_.vehicle_current_count_; ++vehicle_id) {

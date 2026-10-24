@@ -299,11 +299,11 @@ void __cdecl buy_council_vote(int faction, int other, int proposal, int choice) 
 
     int spend_self = diplo_sub(PlayersData[faction].unk_13,
                                static_cast<int>(PlayersData[faction].maint_cost_total));
-    const int minimum_self = static_cast<int>(PlayersData[faction].current_num_bases);
+    const int minimum_self = PlayersData[faction].current_num_bases;
     if (spend_self < minimum_self) {
         spend_self = minimum_self;
     }
-    const int minimum_other = static_cast<int>(PlayersData[other].current_num_bases);
+    const int minimum_other = PlayersData[other].current_num_bases;
     int spend_other = diplo_sub(PlayersData[other].unk_13,
                                 static_cast<int>(PlayersData[other].maint_cost_total));
     if (spend_other < minimum_other) spend_other = minimum_other;
@@ -863,7 +863,7 @@ BOOL __cdecl great_beelzebub(int faction_id, BOOL is_aggressive) {
         if (bases_threat < 4) {
             bases_threat = 4;
         }
-        if ((int)PlayersData[faction_id].current_num_bases > bases_threat
+        if (PlayersData[faction_id].current_num_bases > bases_threat
             && (PlayersData[faction_id].diff_level > DLVL_SPECIALIST
                 || GameDataStateStorage.fields_.game_rules_ & RULES_INTENSE_RIVALRY || is_aggressive)) {
             return true;
@@ -922,7 +922,7 @@ BOOL __cdecl great_satan(int faction_id, BOOL is_aggressive) {
     if (bases_threat < 4) {
         bases_threat = 4;
     }
-    if ((int)PlayersData[faction_id].current_num_bases <= bases_threat
+    if (PlayersData[faction_id].current_num_bases <= bases_threat
         || !(PlayersData[faction_id].diff_level > DLVL_SPECIALIST
             || GameDataStateStorage.fields_.game_rules_ & RULES_INTENSE_RIVALRY || is_aggressive)) {
         return false;
@@ -4757,7 +4757,7 @@ void __cdecl diplomacy_check(int faction, int other, int update) {
     DiploScratchFA64 = at_climax(faction);
     DiploScratchFA90 = static_cast<int>(PlayersData[faction].ranking) < static_cast<int>(PlayersData[other].ranking);
     const int satan = great_satan(faction, 0);
-    if (!satan || static_cast<int>(PlayersData[other].current_num_bases) < 2
+    if (!satan || PlayersData[other].current_num_bases < 2
         || ((PlayersData[faction].diplo_treaties[other] & 1)
             && (static_cast<int>(PlayersData[other].ranking) < 5 || ((GameDataStateStorage.fields_.game_rules_ & 0x1000) && GameDataStateStorage.fields_.turn_current_num_ > 199))))
         DiploScratchFA3C = 0;
@@ -4908,11 +4908,11 @@ void __cdecl diplomacy_check(int faction, int other, int update) {
         if (!(PlayersData[other].diplo_treaties[faction] & 0x20) && !(PlayersData[other].diplo_agenda[faction] & 0x200)) {
             const int difference = diplo_clamp(diplo_sub(diplo_add(diplo_sub(PlayersData[other].ai_wealth,
                 PlayersData[faction].tech_commerce_bonus), PlayersData[other].tech_commerce_bonus), fight), 0, 99);
-            DiploScratchFA88 = diplo_sub(DiploScratchFA88, diplo_mul(PlayersData[faction].unk_13 / static_cast<int>(PlayersData[faction].current_num_bases), difference));
+            DiploScratchFA88 = diplo_sub(DiploScratchFA88, diplo_mul(PlayersData[faction].unk_13 / PlayersData[faction].current_num_bases, difference));
             if (PlayersData[other].diplo_treaties[faction] & 0x2000) DiploScratchFA88 /= 2;
         } else {
             const int difference = diplo_clamp(diplo_add(diplo_sub(PlayersData[faction].tech_commerce_bonus, PlayersData[other].tech_commerce_bonus), fight), 0, 99);
-            DiploScratchFA88 = diplo_mul(diplo_add(diplo_mul(PlayersData[other].unk_13, difference) / static_cast<int>(PlayersData[other].current_num_bases), DiploScratchFA88), 2);
+            DiploScratchFA88 = diplo_mul(diplo_add(diplo_mul(PlayersData[other].unk_13, difference) / PlayersData[other].current_num_bases, DiploScratchFA88), 2);
         }
     }
     if (diplo_mul(PlayersData[other].best_weapon_value, 3) / 2 <= PlayersData[faction].best_weapon_value
@@ -14556,7 +14556,7 @@ static TechTradeTailEntry tech_trade_ui_gate(int faction_id,
             enough_base_coverage = seen_partner_bases == 0;
         } else {
             const int threshold = diplo_add(
-                static_cast<int>(PlayersData[actor].current_num_bases), 1) / 2;
+                PlayersData[actor].current_num_bases, 1) / 2;
             enough_base_coverage = seen_partner_bases < threshold;
         }
         if (enough_base_coverage && DiploFriction <= 7)
@@ -14662,7 +14662,7 @@ static TechTradeTailEntry tech_trade_ui_gate(int faction_id,
 
         if ((PlayersData[actor].traded_maps & (1u << partner)) != 0) {
             const int partner_bases =
-                static_cast<int>(PlayersData[partner].current_num_bases);
+                PlayersData[partner].current_num_bases;
             const int threshold = (GameDataStateStorage.fields_.game_rules_ & 0x100u) != 0
                 ? diplo_add(partner_bases, 3) / 4
                 : diplo_add(partner_bases, 1) / 2;

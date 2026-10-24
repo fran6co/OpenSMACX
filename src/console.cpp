@@ -293,7 +293,7 @@ void Console::turn_hints() { // 0x00511800
     if (!second_base_tutorial_shown) {
         const int turns_since_new_base = turn - faction.last_turn_new_base;
         if (turns_since_new_base >= 0x18 && faction.proto_id_active[0] == 0) {
-            const int base_count = static_cast<int>(faction.current_num_bases);
+            const int base_count = faction.current_num_bases;
             if (base_count > 1 && base_count <= 5) {
                 const int base_id = base_find(history_x, history_y, faction_id);
                 if (base_id >= 0) {

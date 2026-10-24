@@ -3755,7 +3755,7 @@ if (has_treaty(faction_id, peer_id, 2) == 0 &&
             communicate_wrapped_sub(3, PlayersData[peer_id].ai_fight));
     }
     const int actor_base_count =
-        static_cast<int>(PlayersData[faction_id].current_num_bases);
+        PlayersData[faction_id].current_num_bases;
     if (actor_base_count != 0 &&
         PlayersData[peer_id].tech_commerce_bonus >=
             PlayersData[faction_id].tech_commerce_bonus) {

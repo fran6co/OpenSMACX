@@ -12558,7 +12558,7 @@ dispatch_event:
                                    + faction.proto_id_active[12]
                                    + faction.proto_id_active[13];
             if (faction.proto_id_active[proto_id]
-                && !(native_total <= ((int)faction.current_num_bases + 1) / 2
+                && !(native_total <= (faction.current_num_bases + 1) / 2
                      && faction.proto_id_active[proto_id] < 2)) {
                 const uint32_t variant =
                     goody_box_detail::normalized_crt_mask_draw();
@@ -12826,7 +12826,7 @@ dispatch_event:
                 if (location >= 8) break;
                 if (created_units) {
                     int step = 5 - goody_box_detail::native_half(
-                        (int)faction.current_num_bases);
+                        faction.current_num_bases);
                     if (step < 1) step = 1;
                     if (step >= 5) step = 4;
                     location += step;
@@ -17745,7 +17745,7 @@ int __cdecl alien_move(int veh_id) {
     }
 
     int move_result;
-    if (base_id < 0 || static_cast<uint8_t>(PlayersData[faction].current_num_bases) < 3 ||
+    if (base_id < 0 || PlayersData[faction].current_num_bases < 3 ||
         GameDataStateStorage.fields_.turn_current_num_ < 0x33 ||
         (vehicle.order_auto_type != faction &&
          PlayersData[faction].soc_effect_active.values_[SocialEffect::PLANET] > 0 && vehicle.proto_id != 14)) {
