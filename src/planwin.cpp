@@ -577,17 +577,20 @@ void PlanWin::add_line(int x1, int y1, int x2, int y2, int color) {
 // ORIGINAL: 0x0048AE90 ?add_line@PlanWin@@QAEXHHH@Z 0x0048AE90-0x0048AF14 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["The original overload treats its first two arguments as Base indices and reads their source-owned signed x/y members before storing the four coordinates and color in the same PlanWin arrays.", "Base::x and Base::y are declared at offsets 0 and 2 with RECOVERY_MEMBER evidence; PlanWin's line arrays occupy +0x21FFC and +0x2200C.", "git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/unrecovered/0048ae90.cpp"], "reason": "Home the base-to-base plan line using the existing Base and PlanWin members instead of address arithmetic. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
 void PlanWin::add_line(int base_id1, int base_id2, int color) {
+    const int second_y = Bases[base_id2].y;
+    const int second_x = Bases[base_id2].x;
+    const int first_y = Bases[base_id1].y;
+    const int first_x = Bases[base_id1].x;
+
     if (line_count_ >= 4) {
         return;
     }
 
-    const Base &first = Bases[base_id1];
-    const Base &second = Bases[base_id2];
     PlanLineRecord &line = line_records_[line_count_];
-    line.x1 = first.x;
-    line.y1 = first.y;
-    line.x2 = second.x;
-    line.y2 = second.y;
+    line.x1 = first_x;
+    line.y1 = first_y;
+    line.x2 = second_x;
+    line.y2 = second_y;
     line_colors_[line_count_] = color;
     ++line_count_;
 }
@@ -618,23 +621,14 @@ void PlanWin::draw_line(int tile_x1, int tile_y1, int tile_x2, int tile_y2,
                          4, 4, PlanLineCounter);
 }
 
-// ORIGINAL: 0x0048B3F0 ?back_redraw@PlanWin@@QAEXXZ 0x0048B3F0-0x0048B445 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["The body sets MapWin +0x1DD70, fills the GraphicWin virtual base, redraws the MapWin, then copies that base's Buffer into PlanWin's own Buffer using DIB width and top-down height.", "MapWin virtually inherits GraphicWin and PlanWin declares its own Buffer at +0x21A70. Typed base conversions follow the vbtable; Buffer::dib_ supplies the observed +0x4C4/+0x4C8 dimensions."], "reason": "Recover PlanWin's backing-image refresh through its real MapWin/GraphicWin hierarchy and typed buffers."}
+// ORIGINAL: 0x0048B3F0 ?back_redraw@PlanWin@@QAEXXZ 0x0048B3F0-0x0048B445 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["The body sets MapWin +0x1DD70, fills the GraphicWin virtual base, redraws the MapWin, then copies that base's Buffer into PlanWin's own Buffer using DIB width and top-down height.", "MapWin virtually inherits GraphicWin and PlanWin declares its own Buffer at +0x21A70. Typed base conversions follow the vbtable; Buffer::dib_ supplies the observed +0x4C4/+0x4C8 dimensions.", "Pinned48B432 forms ECX=virtual GraphicWin base+0x444 (Buffer source);48B43D pushes PlanWin+0x21A70 as destination before Buffer::copy5D95B0. Its five-argument wrapper and full blitter preserve receiver-as-source and pointer-argument-as-destination."], "reason": "Recover PlanWin's backing-image refresh through its real MapWin/GraphicWin hierarchy and typed buffers."}
 void PlanWin::back_redraw() {
     field_1DD70_ = 0x84010002;
-
-    // This conversion follows MapWin's virtual GraphicWin base (the image's
-    // vbtable-selected +0x22050 subobject), then calls its inherited Buffer.
-    GraphicWin *graphics = static_cast<GraphicWin *>(this);
-    graphics->fill(0);
+    GraphicWin::fill(0);
     draw_map(0);
-
-    // Recompute the virtual-base path after draw_map just as the original
-    // reloads the vbtable before accessing the source surface.
-    graphics = static_cast<GraphicWin *>(this);
-    Buffer *source = static_cast<Buffer *>(graphics);
-    buffer_.copy(source, 0, 0, source->dib_.bmiHeader.biWidth,
-                 -source->dib_.bmiHeader.biHeight);
+    Buffer::copy(&buffer_, 0, 0, dib_.bmiHeader.biWidth,
+                 -dib_.bmiHeader.biHeight);
 }
 // ORIGINAL: 0x0048AF20 ?clear_lines@PlanWin@@QAEXXZ 0x0048AF20-0x0048AF2B BYTE_EXACT
 // kind      game

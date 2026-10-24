@@ -1428,7 +1428,7 @@ int Buffer::load_pcx(BYTE *data, DWORD size, Palette *palette,
 }
 
 /*
-Purpose: Copy a region of another buffer into the same position in this one.
+Purpose: Copy a region of this buffer into the destination buffer at the same coordinates.
 // ORIGINAL: 0x005D95B0 ?copy@Buffer@@QAEHPAVBuffer@@HHHH@Z 0x005D95B0-0x005D95D3 BYTE_EXACT
 // symbol    ?copy@Buffer@@QAEHPAV1@HHHH@Z
 // size      35 bytes
@@ -1452,8 +1452,8 @@ int Buffer::copy(Buffer *buffer, int xCoord, int yCoord, int width,
 
 
 /*
-Purpose: Copy the region a rectangle describes out of another buffer into the
-         same position in this one.
+Purpose: Copy the rectangle-described region of this buffer into the destination
+         buffer at the same coordinates.
 // ORIGINAL: 0x005D95E0 ?copy@Buffer@@QAEHPAVBuffer@@PAURECT@@@Z 0x005D95E0-0x005D960A BYTE_EXACT
 // symbol    ?copy@Buffer@@QAEHPAV1@PAUtagRECT@@@Z
 // size      42 bytes
