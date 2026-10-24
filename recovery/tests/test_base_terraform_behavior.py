@@ -10,6 +10,12 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
 
+def resource_enum():
+    source = (ROOT / "src/map.h").read_text(encoding="utf-8")
+    match = re.search(r"enum ResourceType\s*\{.*?\};", source, re.DOTALL)
+    assert match, "production ResourceType declaration missing"
+    return match.group(0)
+
 
 def mask_declarations():
     header = (ROOT / "src/game_data_state_window.h").read_text(encoding="utf-8")
@@ -40,7 +46,7 @@ HARNESS = r"""
 #include <cstdlib>
 #define __cdecl
 typedef int BOOL;
-enum { RSC_NUTRIENTS=0, RSC_MINERALS=1, RSC_ENERGY=2, RSC_PSI=3 };
+// @@RESOURCE_ENUM@@
 enum { TRUE=1, FALSE=0, ALT_BIT_SHORE_LINE=0x60,
        ALT_BIT_OCEAN_SHELF=0x40, BSTATE_UNK_1000=0x1000,
        BSTATE_UNK_2000=0x2000, BSTATE_UNK_4000=0x4000,
@@ -76,7 +82,7 @@ struct Base {
 struct Map { uint8_t climate,contour,val2,region,visibility,val3,unk_1; int8_t territory;
              uint32_t bit,bit2,bit_visible[7]; };
 struct PlayerData { uint32_t diplo_treaties[32]; int ai_growth,ai_wealth,ai_power,ai_fight;
-                    int tech_fungus_nutrient,tech_fungus_mineral,tech_fungus_energy,
+                    int tech_fungus_[4],
                     net_random_event; };
 struct Player { uint32_t rule_flags; };
 struct ConsoleGlobalType { int faction_id_; } ConsoleGlobal;
@@ -357,7 +363,7 @@ def test_base_priority_flags_and_native_radius_scan(tmp_path):
     // rank equal to aggregate fungus technology uses one, a greater rank uses
     // four. Place the factor-four candidate second to distinguish the winner.
     zoc_value=-1; tech_value=1; BaseCurrent->eco_damage=100;
-    PlayersData[2].tech_fungus_nutrient=2;
+    PlayersData[2].tech_fungus_[RSC_NUTRIENTS]=2;
     for (int i=0;i<21;i++) {
       const int x=BaseCurrent->x+RadiusOffsetX[i];
       const int y=BaseCurrent->y+RadiusOffsetY[i];
@@ -387,9 +393,9 @@ def test_base_priority_flags_and_native_radius_scan(tmp_path):
     // separate tech-total special-square count.
     tech_value=1; thermal_available=0; condenser_available=1;
     BaseCurrent->population_size=0; BaseCurrent->eco_damage=0;
-    PlayersData[2].tech_fungus_nutrient=3;
-    PlayersData[2].tech_fungus_mineral=0;
-    PlayersData[2].tech_fungus_energy=0;
+    PlayersData[2].tech_fungus_[RSC_NUTRIENTS]=3;
+    PlayersData[2].tech_fungus_[RSC_MINERALS]=0;
+    PlayersData[2].tech_fungus_[RSC_ENERGY]=0;
     for (int i=0;i<21;i++) {
       const int x=BaseCurrent->x+RadiusOffsetX[i];
       const int y=BaseCurrent->y+RadiusOffsetY[i];
@@ -417,7 +423,7 @@ def test_base_priority_flags_and_native_radius_scan(tmp_path):
     // the center and later region/ZOC/territory filters. An off-region
     // condenser therefore suppresses the local condenser objective.
     BaseCurrent->population_size=3; tech_value=0;
-    PlayersData[2].tech_fungus_nutrient=0;
+    PlayersData[2].tech_fungus_[RSC_NUTRIENTS]=0;
     thermal_available=0; condenser_available=1;
     for (int i=0;i<21;i++) {
       const int x=BaseCurrent->x+RadiusOffsetX[i];
@@ -451,7 +457,7 @@ def test_base_priority_flags_and_native_radius_scan(tmp_path):
     """
     cpp = tmp_path / "base_terraform.cpp"
     executable = tmp_path / "base_terraform"
-    harness = HARNESS.replace("// @@MASK_TYPES@@", mask_declarations())
+    harness = HARNESS.replace("// @@RESOURCE_ENUM@@", resource_enum()).replace("// @@MASK_TYPES@@", mask_declarations())
     cpp.write_text(harness + "\n" + body() + "\nint main(){\n" + checks + "\nreturn 0;}\n")
     compiled = subprocess.run([compiler, "-std=c++11", "-O1", "-fsanitize=undefined",
                                "-fno-sanitize-recover=undefined", str(cpp), "-o", str(executable)],

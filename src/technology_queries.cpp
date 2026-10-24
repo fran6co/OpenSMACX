@@ -461,18 +461,18 @@ Status: Complete
 */
 void __cdecl tech_effects(int faction_id) {
     PlayersData[faction_id].tech_commerce_bonus = Players[faction_id].rule_commerce;
-    memset(&PlayersData[faction_id].tech_fungus_nutrient, 0, 4 * sizeof(int));
+    memset(PlayersData[faction_id].tech_fungus_, 0, sizeof PlayersData[faction_id].tech_fungus_);
     for (uint32_t tech_id = 0; tech_id < MaxTechnologyNum; tech_id++) {
         if (has_tech(tech_id, faction_id)) {
             uint32_t flags = Technology[tech_id].flags;
             if (flags & TFLAG_INC_ENERGY_FUNGUS) {
-                PlayersData[faction_id].tech_fungus_energy++;
+                PlayersData[faction_id].tech_fungus_[RSC_ENERGY]++;
             }
             if (flags & TFLAG_INC_MINERALS_FUNGUS) {
-                PlayersData[faction_id].tech_fungus_mineral++;
+                PlayersData[faction_id].tech_fungus_[RSC_MINERALS]++;
             }
             if (flags & TFLAG_INC_NUTRIENT_FUNGUS) {
-                PlayersData[faction_id].tech_fungus_nutrient++;
+                PlayersData[faction_id].tech_fungus_[RSC_NUTRIENTS]++;
             }
             if (flags & TFLAG_INC_COMMERCE) {
                 PlayersData[faction_id].tech_commerce_bonus++;
@@ -483,15 +483,15 @@ void __cdecl tech_effects(int faction_id) {
     for (int i = 0; i < bonus_count; i++) {
         int bonus_val = Players[faction_id].faction_bonus_val1[i];
         if (Players[faction_id].faction_bonus_id[i] == RULE_FUNGNUTRIENT) {
-            PlayersData[faction_id].tech_fungus_nutrient += bonus_val;
+            PlayersData[faction_id].tech_fungus_[RSC_NUTRIENTS] += bonus_val;
         } else if (Players[faction_id].faction_bonus_id[i] == RULE_FUNGMINERALS) {
-            PlayersData[faction_id].tech_fungus_mineral += bonus_val;
+            PlayersData[faction_id].tech_fungus_[RSC_MINERALS] += bonus_val;
         } else if (Players[faction_id].faction_bonus_id[i] == RULE_FUNGENERGY) {
-            PlayersData[faction_id].tech_fungus_energy += bonus_val;
+            PlayersData[faction_id].tech_fungus_[RSC_ENERGY] += bonus_val;
         }
     }
     // if values are below zero, cap at zero
-    int *tech_fungus = &PlayersData[faction_id].tech_fungus_nutrient;
+    int *tech_fungus = PlayersData[faction_id].tech_fungus_;
     for (int n = 0; n < 4; n++) {
         if (tech_fungus[n] < 0) {
             tech_fungus[n] = 0;

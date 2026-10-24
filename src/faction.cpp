@@ -5262,7 +5262,7 @@ int __cdecl setup_player(int faction, int conqueror, int retry) {
     }
     p.unk_28 = p.unk_13 = p.maint_cost_total = p.unk_18 = p.unk_17 = 0;
     p.tech_commerce_bonus = p.turn_commerce_income = 0;
-    p.tech_fungus_nutrient = p.tech_fungus_mineral = p.tech_fungus_energy = p.tech_fungus_unk = 0;
+    p.tech_fungus_[RSC_NUTRIENTS] = p.tech_fungus_[RSC_MINERALS] = p.tech_fungus_[RSC_ENERGY] = p.tech_fungus_[3] = 0;
     p.best_weapon_value = p.best_armor_value = p.best_land_speed = 0;
     p.enemy_best_weapon_value = p.enemy_best_armor_value = p.enemy_best_land_speed = 0;
     p.best_psi_offense = p.best_psi_defense = p.enemy_best_psi_offense = p.enemy_best_psi_defense = 0;

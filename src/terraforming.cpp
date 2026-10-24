@@ -326,9 +326,9 @@ int __cdecl can_terraform(int faction_id, int x, int y, int force_improve, int b
     BOOL is_special = (bit & (BIT_CONDENSER | BIT_ECH_MIRROR | BIT_THERMAL_BORE))
         || (((tile->bit2 & (BIT2_UNK_80000000 | BIT2_VOLCANO)) == BIT2_VOLCANO)
             && !(tile->bit2 & 0xFF000000));  // landmark code zero, ie. the volcano's own tile
-    int fungus_value = PlayersData[faction_id].tech_fungus_nutrient
-        + PlayersData[faction_id].tech_fungus_mineral
-        + PlayersData[faction_id].tech_fungus_energy;
+    int fungus_value = PlayersData[faction_id].tech_fungus_[RSC_NUTRIENTS]
+        + PlayersData[faction_id].tech_fungus_[RSC_MINERALS]
+        + PlayersData[faction_id].tech_fungus_[RSC_ENERGY];
     int forest_value = ResourceInfo[RSCINFO_FOREST_SQ].nutrients
         + ResourceInfo[RSCINFO_FOREST_SQ].minerals
         + ResourceInfo[RSCINFO_FOREST_SQ].energy;
