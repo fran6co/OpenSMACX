@@ -1,0 +1,22 @@
+{
+  "event_id": "07d2861587ed8619930b83cbe7f6bb86cd09cad6085d0d0b4ce59f75821071a4",
+  "payload": {
+    "affects": [
+      "entity-6033c99aec7a01c4089f4f23d1398fdebdc5b9629d8e181b99f81e729b58d2f6"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "original-focus-expression",
+    "evidence": [
+      "Pin6161A0..6161CA direct Win::is_dialog_focus calls first on this then live parent+0xC4; null-parent succeeds and both nonzero results normalize to1. Ordinary short-circuit expression restores complete17instruction42byte original span. Independent source/test review plus marker correction confirms original mapping had no exact token; guarded native record exit0 adds only this measured claim. All17EditBoxsource records retain identity/spans/symbols/history and allpriorclaims.",
+      "Five native production compiler controls pass: current production replay, baseline replica, candidate replica and deliberately changed null-parent predicate distinguished; outside-selected compiled residual PASS with no sections/symbols/associations changed. Fresh isolated full application194C++TUs208physicalobjects build/linkPASS;207outside wholeobjects normalizedequal; all5581knownverdicts compared, sole mismatch-to-exact6161A0. Strict passes3130to3131;315unknown retained. Existing complete16GCC/Clangfocus/Filefindpositive+mutationchecksPASS; only spelling anchors changed with explicit occurrencecounts; harness expectations unchanged.",
+      "CoordinatorreviewSHA256 94c103ecf1d8dee4f58f99955d3b652ac9b7817ddbc16cf112a9e79919759dce. Standing user authorizes bounded coordinator-reviewed manual merge after these checks and fresh destination verification; original task baseline6633fa75a retained. This adds no new genuine implementation coverage and does not establish full executable discovery, linked outside-scope preservation, runtime/game or nativeautomaticacceptance. Source/claim/mapping/referencechecksPASS; no compiler/header/layout/ABI/settings/gate changes or claim demotion. Require fresh master build/link,208objects,all5581verdictsand16tests beforecleanup."
+    ],
+    "hypothesis": "Recover the original EditBox focus-chain short-circuit expression",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "original-focus-expression",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:editbox-focus-chain-oct24c"
+}
