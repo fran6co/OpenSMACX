@@ -3194,38 +3194,22 @@ int BasePop::UNK2() {
         }
     }
 
-    // StringStruct::seek_pos(-1), open-coded. Its two `abs` calls survive
-    // only through a pointer, because `abs` of a constant folds away.
+    // Keep the nonnegative-count gate, then use StringStruct's existing inline
+    // seek_pos body for the original -1 selection and its two abs calls.
     if (item_ids_.entry_count_ - 1 >= -1) {
-        item_ids_.current_ = item_ids_.head_;
-        AbsFnT abs_fn = reinterpret_cast<AbsFnT>(&abs);
-        if (abs_fn(-1) <= item_ids_.entry_count_) {
-            int walked = abs_fn(-1);
-            if (walked > 0) {
-                do {
-                    --walked;
-                    item_ids_.current_ = item_ids_.current_->previous;
-                } while (walked != 0);
-            }
-            item_ids_.current_position_ = item_ids_.entry_count_ - 1;
-        }
+        item_ids_.seek_pos(-1);
     }
 
     for (int i = 0; i < item_ids_.entry_count_; ++i) {
         if (item_ids_.head_ != 0) {
-            // StringStruct::next_entry(), open-coded.
-            item_ids_.current_ = item_ids_.current_->next;
-            int position = item_ids_.current_position_ + 1;
-            item_ids_.current_position_ = position;
-            if (position == item_ids_.entry_count_) {
-                item_ids_.current_position_ = 0;
-            }
+            // Reuse the existing inline next_entry state transition.
+            item_ids_.next_entry();
         }
 
-        // StringStruct::current_entry()->text, open-coded.
+        // Preserve the pin's null-payload dereference when current_ exists but
+        // the list head is absent; current_entry owns the observed head check.
         char *text = item_ids_.current_ != 0
-                   ? (item_ids_.head_ != 0 ? item_ids_.current_->string_payload()->text
-                                           : static_cast<char *>(0))
+                   ? item_ids_.current_entry()->text
                    : static_cast<char *>(0);
         int width = button_font1_->width(text);
         if (width > max_width) {
