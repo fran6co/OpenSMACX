@@ -1,0 +1,266 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "85a9a2fef82f298a52e80da6177fae88a037ebde",
+  "editable_files": [
+    "src/base.cpp",
+    "src/basewin.cpp",
+    "src/console.cpp",
+    "src/console_commands.cpp",
+    "src/enemy.cpp",
+    "src/faction.cpp",
+    "src/faction_dialogue.cpp",
+    "src/faction_strategy.cpp",
+    "src/game.cpp",
+    "src/map.cpp",
+    "src/reportwin.cpp",
+    "src/technology_queries.cpp",
+    "src/veh.cpp",
+    "src/faction.h",
+    "recovery/tests/altitude_owners/alt_set.cpp",
+    "recovery/tests/base_build_host_fixture.cpp",
+    "recovery/tests/fixtures/alien_buster/alien_host_fixture.h",
+    "recovery/tests/fixtures/enemy_move_full_body.cpp",
+    "recovery/tests/fixtures/game_data_actual_host_control.cpp",
+    "recovery/tests/propose_pact_control.cpp",
+    "recovery/tests/random_events/case14.cpp",
+    "recovery/tests/random_events/cases_15_16.cpp",
+    "recovery/tests/random_events/native_services.cpp",
+    "recovery/tests/test_base_energy_actual_source.py",
+    "recovery/tests/test_diplomacy_actions_coverage.py",
+    "recovery/tests/test_enemy_strategy_candidate.py",
+    "recovery/tests/test_tech_val_signed_oct24e.py",
+    "recovery/tests/test_turn_production_chain_behavior.py",
+    "recovery/tests/test_wants_to_attack_signed_oct24e.py",
+    "recovery/tests/time_controls_harness.cpp",
+    "recovery/tests/test_player_base_count_signed_actual_source.py"
+  ],
+  "evidence": [
+    "SharedPlayerData.current_num_bases offset105C/stride20CC is unsignedonly in currentheader, while multiple independent pinned sites use signedJLE/JL/IDIV. Current drone_riot usesunsignedJBE vsoriginalsignedJLE; social_ai currentlySHR vsoriginalCDQ/ADD/SAR3. Review-A/B/C/D artifacts trace all13CPPs and preserve unsigned+1U wrappers/rawPlayerData transfer sizes.",
+    "Authorize one coherent intmember candidate, redundant field-only signed cast cleanup, and the independently proven alien_move full-dwordcount guard in place of uint8 truncation. Preserve explicituint8 conversions elsewhere unless pinproveswrong, explicituint32 lanes/wraphelpers, uncheckedpaths and rawcopies. No blanketinteger-type migration, no compiler/flag/provider changes, no asm/bytescopy/forcedexport. Original debugtype remainsinferred, notproven.",
+    "Scope includes37directmapped consumers plus realparent owners for source-only enemy/techtrade/battle/design helpergroups and order_veh splitmapping. No originalidentities inventedforhelperfunctions. Source bodies unchanged exceptfield-onlyconversioncleanup/provenconsumerfix; newmetadata/ABI collateral returnedforcentral scopeexpansion, notrevertedautomatically.",
+    "Fieldincrements/decrements must preserve originalmodulo32 machineeffects; naturalintupdates eligibleonlywith actualVC6 low32 INC/ADD/DEC/SUB verification against original/productionbaseline, no portablesigned-overflow guarantee. Retain wraphelpers where used. KeepPlayerData fieldoffsetof105C andsizeof20CC; add ordinarycompiledoffsetofassert+brief essentialsourceevidence.",
+    "ONEstructuralcandidate perfunction/context. Native beforewholeobjectreplicas, targeted smallconstant damagecontrols (notinfinite-loop body), allTU-neighbor matching/reference/restoration/claim checks, fullbatchbuild/link andfreshdestinationrecheck requiredfor manualintegration. Rootcoordinator alone Git, sourcefactpublication/recording, scopes andintegration/cleanup. No automatic/gameacceptance or unknown->PASS promotion.",
+    "Hostfixture edits only align current_num_bases toint without changingneighborfields/padding/sizeof/wire expectations. Keep allhigh-bit/-1/overflow/unsigned-local sensitivitycontrols. Testhelper is isolated and owns onlytestfiles; sourceworker owns production files; coordinator combines afterfrozen source proof."
+  ],
+  "intent": "Recover signed PlayerData base-count ownership across all direct consumers",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4303136,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4838720,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5019360,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5044160,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5048000,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5131136,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5132880,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5142352,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5154112,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5158240,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5197744,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5210528,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5270112,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5270256,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5293328,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5314560,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5370592,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5389408,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5396672,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5403280,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5479280,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5479424,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5482880,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5499728,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5509376,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5520320,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5544240,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5559312,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5561584,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5570512,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5618816,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5640320,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5662736,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5682608,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5744224,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5771872,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5803920,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5837456,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5851072,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5967360,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5976960,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5982096,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6015968,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "player-base-count-owner-oct24r"
+}
