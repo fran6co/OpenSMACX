@@ -1,0 +1,82 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "f1b0c412daf93a212a5fa7b9783c7a78de08036f",
+  "editable_files": [
+    "src/faction.h",
+    "src/faction.cpp",
+    "src/technology_queries.cpp",
+    "src/base.cpp",
+    "src/terraforming.cpp",
+    "recovery/tests/base_build_host_fixture.cpp",
+    "recovery/tests/test_base_colony_production.py",
+    "recovery/tests/test_base_terraform_behavior.py",
+    "recovery/tests/test_tech_effects_fungus_storage.py"
+  ],
+  "evidence": [
+    "Original tech_effects5BAE99 clears four consecutive DWORDs and5BAF9D clamps exactlyfour signed slots in order. Independent crop/mine/energy readers establish slot0/1/2 meanings; slot3 remains unknown. Replace four separately declared scalars with a provisional inttech_fungus_[4] at PlayerData+0x314. Use existing ResourceType indices0/1/2 in all4consumerTUs, preserve unknown3, actual-array memset/sizeof/loop, all branch/callback/order/error/overflow behavior. This is a source storage interpretation, not proof of original declarator or PSI meaning.",
+    "All CPPcomments, ORIGINAL identities/spans/symbols/history/claims remain intact. Header prose must distinguish actual PlayerData+0x314 from absolute faction-zero fields96CCF4/F8/FC; add only v1 offset expectation, not an exact-layout/runtime claim. Update3existing hostfixtures and add full-actual-tech_effects bounded arithmetic/sentinel controls without weakening expected outcomes.",
+    "Private fresh actual-recipe overlay across4TUs had no exact verdict gains/losses. Base/technology_queries/terraforming outside-selected residuals pass. Faction residualFAIL correctly exposes changed code in unchanged battle_plans54B1C0, propose_attack545E80 and make_gift547C10; unchanged-source replicaPASS excludes reproduction drift. Explicitly include all3andtheirEHscope for review, not a waiver or equivalence assertion. Independent code/reference review: tech-fungus-collateral-review-oct24j.json; run existing battle and diplomacy actual-source controls. Source body equality and relocation multisets alone do not prove effects. Other collateral discovered by fullbuild requires fresh review/scope expansion before integration.",
+    "Coordinator alone edits product/Git/compiler/preparation/integration in isolated native worktree. Preserve justified structure and all historical matching obligations; do not demote or normalize bugs. Require fresh full application build/link, code/reference/source-identity continuity, native scoped/outside comparisons, header layout offset/type/extent observations and relevant host controls, independent source/output review, then fresh master recheck. Known FAIL/UNKNOWN remains explicit; manual coordinator integration is not native automatic/full-game/retained-link/runtime acceptance."
+  ],
+  "intent": "Model the bounded four-counter fungus yield storage as a genuine C++ array",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5140048,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5141264,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5142352,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5164016,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5173696,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5529216,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5536784,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5550528,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5657376,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5967360,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6008416,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "tech-fungus-storage-owner-oct24j"
+}
