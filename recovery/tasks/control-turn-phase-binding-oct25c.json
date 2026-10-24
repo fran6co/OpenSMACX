@@ -1,0 +1,78 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "40fa4335cbb36ed364c658be2fd4fc33a8ca8b55",
+  "editable_files": [
+    "src/game.cpp"
+  ],
+  "evidence": [
+    "Fresh source/pinned evidence establishes26direct dword accesses and one NetDaemon synchronization destination at9B2070. Independent writer Console::human_turn514050 supplies the bounded object evidence anchor. Existing GameSessionActive starts9B2074; GameDataStateWindow ends9A6828 and does not contain this standalone global.",
+    "Original initial bytes9B2070..74 are loader-zero, matching the existing int definition. Use native add-only object writer and source publication, preserve all function/object identities, claims and source bytes apart from the load-bearing annotation and concise evidence. No class migration, variable rename, executable address in C++ code, behavior fix or new claim.",
+    "Qualify actual emitted int symbol/type/size and initial data with native current compiler evidence. Re-measure strict references, global local/strict match identities and all physical outputs, build/link and continuity before manual integration. Debug line shifts and nativeFAIL/UNKNOWN remain explicit; no comparator weakening or automatic/fullgame acceptance."
+  ],
+  "intent": "Bind the existing independent ControlTurnPhase int to its original four-byte storage and caller evidence without changing code or introducing an alias.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4615328,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4616592,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4619744,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5324880,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5389408,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5404080,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5415648,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5417520,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5451264,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5823280,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5825376,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5936992,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "control-turn-phase-binding-oct25c"
+}
