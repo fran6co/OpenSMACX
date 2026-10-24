@@ -1,0 +1,20 @@
+{
+  "event_id": "56c81c4fa9df717c3ca7ec2bf4d0efd81ef2d3a26e050e2b513e48e0a8c6baf6",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_prefwin_volume_contract_oct13h.py"
+    ],
+    "evidence": [
+      "Three compiler attempts terminal, explicit switch body measured61/81matching with no exact gains/losses and outside-selected PASS; ordinary original per-case control shape is retained for review. Existing production-scenario tests pass, three test mutation anchors still target deleted shared-tail spelling. Authorize adapting those same mutant injections to actual per-case code without weakening their behavioral assertions or dropping any case.",
+      "Preserve wrong-SFX-label, invalid-ID action/default and suppressed-null-label update damage semantics. Source body/flags/header/claims stay frozen; no additional compiler trials or test-only behavior changes to hide a source defect. Root coordinator reviews body and all33existing cases before full build/integration."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "prefwin-explicit-case-mutant-anchors-oct24p",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:effect-owner-1-oct24p"
+}
