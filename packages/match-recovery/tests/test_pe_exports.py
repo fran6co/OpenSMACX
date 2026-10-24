@@ -7,7 +7,7 @@ import struct
 import pytest
 
 from match_recovery.pe_coff import PeImage
-from match_recovery.pe_exports import PeExport, exports
+from match_recovery.pe_exports import PeExport, export_metadata, exports
 from test_binary import pe_fixture
 
 
@@ -165,11 +165,28 @@ def test_loader_relocations_cannot_change_interpreted_export_metadata(at):
         parse(raw)
 
 
-@pytest.mark.parametrize("count,names,field", [(0, (), 28), (0, (), 32), (0, (), 36), (1, (), 32), (1, (), 36)])
-def test_absent_array_counts_cannot_hide_nonzero_array_pointers(count, names, field):
-    raw = bytearray(export_image((0x1000,) * count, names=names))
-    struct.pack_into("<I", raw, HEADER + field, 0x1500)
-    with pytest.raises(ValueError, match="contradictory"):
+@pytest.mark.parametrize("count", [0, 1])
+@pytest.mark.parametrize("unused_rva", [0, 0x13F0, 0xFFFFFFFF])
+def test_zero_length_arrays_do_not_interpret_unused_rvas(count, unused_rva):
+    raw = bytearray(export_image((0x1000,) * count, names=()))
+    if count == 0:
+        struct.pack_into("<I", raw, HEADER + 28, unused_rva)
+    struct.pack_into("<II", raw, HEADER + 32, unused_rva, unused_rva)
+    report = export_metadata(PeImage(bytes(raw), hashlib.sha256(raw).hexdigest()))
+    assert len(report.entries) == count
+    assert all(row.names == () for row in report.entries)
+    kinds = {row.kind for row in report.ranges}
+    assert {"export_directory", "export_header", "export_module_name"} <= kinds
+    assert "export_name_pointers" not in kinds and "export_ordinals" not in kinds
+    assert ("export_address_table" in kinds) == bool(count)
+    assert report.timestamp_rva == 0x1204 and report.timestamp == 0
+
+
+@pytest.mark.parametrize("array_rva", [0, 0x13F0, 0xFFFFFFFF])
+def test_nonempty_names_without_address_entries_remain_invalid(array_rva):
+    raw = bytearray(export_image((), names=(("Alpha", 0),)))
+    struct.pack_into("<III", raw, HEADER + 28, array_rva, array_rva, array_rva)
+    with pytest.raises(ValueError, match="empty PE export table"):
         parse(bytes(raw))
 
 

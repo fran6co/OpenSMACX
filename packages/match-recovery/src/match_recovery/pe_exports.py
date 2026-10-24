@@ -110,8 +110,11 @@ def export_metadata(image) -> ExportMetadata:
 
     string(module, kind="export_module_name")
     if not count:
-        if name_count or eat or name_table or ordinal_table:
+        if name_count:
             raise ValueError("empty PE export table has contradictory arrays")
+        # Counts delimit the arrays. Linkers can leave nonzero unused RVAs
+        # (including the module string's RVA) when no elements exist. These
+        # fields remain literal header bytes; they supply no targets/ranges.
         return ExportMetadata((), tuple(ranges), rva + 4, timestamp)
     values = struct.unpack("<" + "I" * count, read(eat, count * 4, "export_address_table"))
     names = [[] for _ in values]
@@ -129,8 +132,7 @@ def export_metadata(image) -> ExportMetadata:
             if not values[index]:
                 raise ValueError("PE export name points to an empty address slot")
             names[index].append(name)
-    elif name_table or ordinal_table:
-        raise ValueError("ordinal-only PE exports have contradictory name arrays")
+    # With no names, neither name array has elements, regardless of its RVA.
 
     result = []
     for index, target in enumerate(values):

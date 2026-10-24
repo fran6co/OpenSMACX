@@ -85,6 +85,40 @@ def test_native_exported_paired_images_only_project_recognized_identification(tm
     assert report['metadata']['baseline']['export_target_section_protection']['count'] == (2 if data else 1)
 
 
+def empty_export_arrays(raw, _):
+    # A linker may leave unused zero-length array RVAs at the module string.
+    # These values are header bytes, not references to array elements.
+    struct.pack_into('<IIIII', raw, 0x434, 0, 0, 0x2060, 0x2060, 0x2060)
+
+
+def test_empty_export_arrays_keep_metadata_protected_without_exported_targets(tmp_path):
+    old = fixture(tmp_path / 'old', mutate=empty_export_arrays)
+    new = fixture(tmp_path / 'new', stamp=321, mutate=empty_export_arrays)
+    a, b = observe(old), observe(new)
+    assert a['projected_bytes'] == b['projected_bytes']
+    for kind, offset, size in [('export_directory', 0x420, 0x80),
+                               ('export_header', 0x420, 40),
+                               ('export_module_name', 0x460, 9)]:
+        assert {'offset': offset, 'size': size, 'kind': kind} in a['protected_ranges']
+    assert not any(row['kind'] in {'export_address_table', 'export_name_pointers',
+                                  'export_ordinals', 'export_name'}
+                   for row in a['protected_ranges'])
+    report = compare(old, new)
+    assert report['result'] == 'pass', report
+    assert report['proof_basis'] == 'whole_projected_image_equality'
+    assert report['metadata']['baseline']['export_target_section_protection']['count'] == 0
+
+
+@pytest.mark.parametrize('offset', [0x43C, 0x440, 0x444, 0x460])
+def test_unused_export_rva_fields_and_module_stay_literal(tmp_path, offset):
+    old = observe(fixture(tmp_path / 'old', mutate=empty_export_arrays))
+    def changed(raw, streams):
+        empty_export_arrays(raw, streams)
+        raw[offset] ^= 1
+    new = observe(fixture(tmp_path / 'new', mutate=changed))
+    assert old['projected_bytes'] != new['projected_bytes']
+
+
 @pytest.mark.parametrize('offset,value', [
     (0x428, 1),  # export major/minor version is not creation identity
     (0x430, 3),  # ordinal base
