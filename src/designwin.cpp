@@ -3656,19 +3656,11 @@ void DesignWin::shut_that_badboy_down() {
 // 0x9AB88C..[.F] the chassis/weapon/armor/reactor bytes.
 int DesignWin::UNK2(int proto_id) {
     const VehPrototype &proto = VehPrototypes[proto_id];
-    if (protoChassisType_ != proto.chassis_id) {
-        return 0;
-    }
-    if (protoWeaponType_ != proto.weapon_id) {
-        return 0;
-    }
-    if (protoArmorType_ != proto.armor_id) {
-        return 0;
-    }
-    if (protoReactorType_ != proto.reactor_id) {
-        return 0;
-    }
-    return protoAbilityFlags_ == proto.ability_flags;
+    return protoChassisType_ == proto.chassis_id
+        && protoWeaponType_ == proto.weapon_id
+        && protoArmorType_ == proto.armor_id
+        && protoReactorType_ == proto.reactor_id
+        && protoAbilityFlags_ == proto.ability_flags;
 }
 
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x00439960 0x004399FC 0x00439A14 0x0043999B

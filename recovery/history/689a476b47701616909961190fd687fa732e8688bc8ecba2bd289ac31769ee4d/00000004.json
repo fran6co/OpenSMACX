@@ -1,0 +1,25 @@
+{
+  "event_id": "e8776c0ae94ca0b49bd0266a329e18840c851396f52dcfff2689a30f21ee9114",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/fixtures/game_data_actual_host_control.cpp",
+      "recovery/tests/infowin_setup_text_harness.cpp",
+      "recovery/tests/netdaemon_synch_owner_copy_harness.cpp",
+      "recovery/tests/propose_pact_control.cpp",
+      "recovery/tests/test_diplomacy_actions_coverage.py"
+    ],
+    "evidence": [
+      "Shared source scoretable type changed toint; complete fixture search finds6actual stub declarations in5files stillunsigned. Align ONLY FactionRankingsUnk declaration toactualsignedint domain, preservingarraywidth8x4, raw-copycontrols, expectedoutputs/assertions andallotherfixturetypes.",
+      "Mixeddeclaration in test_diplomacy_actions_coverage.py mustsplit: preserve separate FactionRankings arrayuint32, only FactionRankingsUnk becomesint. Do notalter intentionalunsignedmutant expressions, productionCPP, wirecopy code orsourcefacts. Tests mayaddexplicit uint32 view solely forunchangedrawbit assertions if sign-warning needsactualcontract adaptation; retainallcompares.",
+      "Run affectedhostcontrols and preservefirst95pass1staleanchor failure separately. Candidate native source/build epoch remainsfrozen elsewhere; no checkout changes there. This is fixturecontractmaintenance for the authorizedglobaltype migration, not a behavioral waiver."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "d7391c52a6071fa8ddc36254e5943380a9ea55de977e2297f89c29bb0c62191e",
+  "request_id": "signed-score-actual-host-stub-types-oct24q",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:easy-owner-6-oct24q"
+}

@@ -1,0 +1,20 @@
+{
+  "event_id": "d7391c52a6071fa8ddc36254e5943380a9ea55de977e2297f89c29bb0c62191e",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_infowin_setup_text.py"
+    ],
+    "evidence": [
+      "Combined candidatehost96cases:95pass, oneexistingInfoWin damagecontrol cannotfind sourceanchor because redundant signedcast removal deleted its closingparen. Preservebehavior/assertions, updateonlythis causalwrongfaction-index mutationanchor to actualnewbar-scoreexpression.",
+      "Authorize this testfixturefile only. If its scorearraystub is unsigned, alignittoactualsignedint declaration; no productionCPP/header/objectfacts orotherassertionweakening. RerunfocusedInfoWin controls plus newscoretypes test; retain originalfailedreport. Coördinator fullcandidate build remains frozen in anothercheckout, so do not editthatcheckout or disturbsourceepoch."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "962bb3800b3f195f82291e97ddbdae3e68f1ed358617a4b598421799f9ef793c",
+  "request_id": "signed-score-infowin-mutant-anchor-oct24q",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:easy-owner-6-oct24q"
+}

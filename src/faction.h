@@ -637,7 +637,7 @@ extern Sprite *FactionBaseSprites[MaxPlayerNum][2][4][3];  // 0x0076E590
 extern uint16_t FactionRankingHistory[MaxPlayerNum * MaxRankingHistoryTurns];  // 0x009A68AC
 extern uint32_t RankingFactionIDUnk1;
 extern uint32_t RankingFactionIDUnk2;
-extern uint32_t FactionRankingsUnk[MaxPlayerNum];  // 0x00945DD8
+extern int FactionRankingsUnk[MaxPlayerNum];  // 0x00945DD8; signed score and -1 sentinel
 extern int DiploFriction;
 extern uint32_t DiploFrictionFactionIDWith;
 extern uint32_t DiploFrictionFactionID;

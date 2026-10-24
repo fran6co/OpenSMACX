@@ -1,0 +1,21 @@
+{
+  "event_id": "7c651f5ca1f0b5a582bd70756780b3f83ad5fa51952a67d58f2689f0ccbeb725",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/designwin.cpp"
+    ],
+    "evidence": [
+      "Coordinator authorizes exactly ONE additional ordinary typed-pointer spelling after reviewed chained comparison recovery: const VehPrototype *const proto = &VehPrototypes[proto_id], same ordered ->member comparisons. Total cumulative candidate alternatives2ofglobalcap3; first chained candidate and all prior context retained, no reset of original task baseline or matching obligations. No field/type/header/flag/padding/volatile/asm changes.",
+      "Residual audit independently proves current effective field addresses equal original 0x9AB868+52*i+member offsets. This is a source-shape hypothesis within the existing owner, not a discovered type bug. Use current applied/committed39instruction body as measurement baseline, freshly reproduce its recorded wholeCOFF; original52instruction task baseline remains preservation anchor. Small local boolean mutation for damage, no noreturn-body control.",
+      "Only coordinator Git/currentfact/claimrecording. NativeCompiler compare_unit/outside APIs may score the one complete body overlay; scopedWIP can be applied only if exact or clearly better ordinarycode and outsidePASS. Miss leaves alreadybankedsource/chosenchain intact; no thirdtrial."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "design-prototype-pointer-residual-trial-oct24q",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:easy-owner-1-oct24q"
+}

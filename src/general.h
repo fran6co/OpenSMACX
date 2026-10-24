@@ -262,7 +262,7 @@ void __cdecl sub_5d2037(int *data_row, int *selector_pair,
                         unsigned int *packed_output);
 void __cdecl sub_5d2536(int *coefficient_row, int *selector_pair,
                         int *packed_output);
-int __cdecl sub_5d2761(unsigned int *src, unsigned int *dst, int count);
+void __cdecl sub_5d2761(unsigned int *src, unsigned int *dst, int count);
 int __cdecl sub_5d2834(unsigned int *param_1, int *param_2, int param_3);
 int __cdecl sub_5d2901(int *param_1, int *param_2, int *param_3, int param_4);
 void __fastcall sub_5d2e70(unsigned char *coefficient_block,

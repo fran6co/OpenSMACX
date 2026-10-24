@@ -2463,7 +2463,7 @@ Return Value: n/a
 extern "C" void __cdecl vox_blit_transparent(
     unsigned char *framebuffer, const unsigned short *source, int dest_x, int dest_y,
     int count_x, int count_y, unsigned source_step, int source_width,
-    int dest_width, short transparent_key) {
+    int dest_width, unsigned short transparent_key) {
     if (count_x > 0) {
         if (count_y > 0) {
             CaviarBlitState.source_row_bytes_ =
