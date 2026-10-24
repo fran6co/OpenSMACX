@@ -1,0 +1,28 @@
+{
+  "event_id": "716a481b6459281ab20b38b6098407dccad1ccd4c1e38e58b68364ed2124718a",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Coordinator authorizes pure definition relocation within src/netwin.cpp after worker3 experiments are terminal and unchanged. No ABI/header/class-layout change or annotation edit is authorized. Source bodies/claims remain byte-identical; fresh physical compilation and complete integration checks are required."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4726032,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4732128,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "0986aeaf65acf514a1260961dccf8a7e1c11f72ff03d984ce35f33d9d38401eb",
+  "request_id": "authorize-netwin-definition-locality-oct24m",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:easy-owner-3-oct24m"
+}
