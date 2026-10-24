@@ -224,7 +224,7 @@ void MCIVideo::play() {
     ActiveVideoPlayer = this;
     palette_.set();
 
-    MCI_DGV_WINDOW_PARMS windowParams = {0};
+    MCI_DGV_WINDOW_PARMS windowParams;
     windowParams.nCmdShow = SW_SHOW;
     if (mciSendCommandA(mciId_, MCI_WINDOW,
                         MCI_DGV_WINDOW_STATE,
