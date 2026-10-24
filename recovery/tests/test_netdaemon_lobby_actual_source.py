@@ -22,7 +22,11 @@ HARNESS = r'''#include <cstdint>
 
 /* ACTUAL_PACKETS */
 struct ProcessSlot { uint32_t pid_; };
-struct PrimaryState { uint32_t leading_words_[3]; uint32_t flags_; uint32_t trailing_words_[10]; };
+struct PrimaryState { uint32_t leading_words_[3]; uint32_t flags_; int session_phase_; uint32_t trailing_words_[9]; };
+static_assert(offsetof(PrimaryState, flags_) == 0x0C, "primary lock flags offset");
+static_assert(offsetof(PrimaryState, session_phase_) == 0x10, "signed phase offset");
+static_assert(offsetof(PrimaryState, trailing_words_) == 0x14, "primary tail offset");
+static_assert(sizeof(PrimaryState) == 0x38, "primary lock-state extent");
 struct ChannelState { uint32_t leading_words_[4]; union Payload { uint32_t flags_; void *pointer_; } payload_; uint32_t trailing_words_[10]; };
 struct Net {
     int sends = 0;

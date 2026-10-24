@@ -26,7 +26,7 @@ struct Net {
     }
 };
 struct NetDaemon : public Net {
-    struct PrimaryState { uint32_t leading_words_[3]; uint32_t flags_; uint32_t trailing_words_[10]; } primary_state_;
+    struct PrimaryState { uint32_t leading_words_[3]; uint32_t flags_; int session_phase_; uint32_t trailing_words_[9]; } primary_state_;
     LockStateEntry channels_[2];
     struct DeletionRecord { uint8_t acknowledgements_; uint8_t reserved_[3]; int owner_; int16_t count_; int16_t vehicle_ids_[25]; };
     struct DeletionList { DeletionRecord records_[24]; int current_owner_; uint32_t sequence_bits() const { uint32_t x; memcpy(&x, &current_owner_, 4); return x; } void set_sequence_bits(uint32_t x) { memcpy(&current_owner_, &x, 4); } uint32_t advance_sequence() { uint32_t x = sequence_bits() + 1; set_sequence_bits(x); return x; } } deletion_list_;

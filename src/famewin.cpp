@@ -761,7 +761,7 @@ void FameWin::on_redraw() {
 // symbol    ?on_left_click@FameWin@@UAEXHH@Z
 // kind      game
 void FameWin::on_left_click(int x, int y) {
-  if ((NetDaemonNet.primary_state_.trailing_words_[7] &
+  if ((NetDaemonNet.primary_state_.trailing_words_[6] &
        (1u << ConsoleGlobal.faction_id_)) == 0 &&
       NetDaemonNet.channels_[1].payload_.flags == 0 &&
       NetDaemonNet.primary_state_.leading_words_[2] == 0) {

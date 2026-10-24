@@ -5455,8 +5455,8 @@ search:
                 NetDaemonNet.primary_state_.leading_words_[1] = 0;
                 NetDaemonNet.primary_state_.leading_words_[2] = 0;
                 NetDaemonNet.primary_state_.flags_ = 0;
-                NetDaemonNet.primary_state_.trailing_words_[8] = 0;
                 NetDaemonNet.primary_state_.trailing_words_[7] = 0;
+                NetDaemonNet.primary_state_.trailing_words_[6] = 0;
                 NetDaemonNet.channels_[0].leading_words_[1] = 0;
                 NetDaemonNet.channels_[0].leading_words_[0] = 0;
                 NetDaemonNet.channels_[0].trailing_words_[0] = 0;
@@ -5465,20 +5465,20 @@ search:
                 NetDaemonNet.channels_[1].leading_words_[0] = 0;
                 NetDaemonNet.channels_[1].trailing_words_[5] = 0;
                 NetDaemonNet.channels_[1].trailing_words_[4] = 0;
+                NetDaemonNet.primary_state_.trailing_words_[3] = 0;
                 NetDaemonNet.primary_state_.trailing_words_[4] = 0;
                 NetDaemonNet.primary_state_.trailing_words_[5] = 0;
-                NetDaemonNet.primary_state_.trailing_words_[6] = 0;
                 NetDaemonNet.channels_[1].trailing_words_[3] = 0;
                 NetDaemonNet.channels_[1].trailing_words_[2] = 0;
                 NetDaemonNet.channels_[1].leading_words_[3] = 0;
                 NetDaemonNet.channels_[1].leading_words_[2] = 0;
                 NetDaemonNet.channels_[1].payload_.flags = 0;
+                NetDaemonNet.primary_state_.session_phase_ = 0;
                 NetDaemonNet.primary_state_.trailing_words_[0] = 0;
-                NetDaemonNet.primary_state_.trailing_words_[1] = 0;
                 NetDaemonNet.channels_[1].trailing_words_[8] = 0;
                 NetDaemonNet.channels_[1].trailing_words_[7] = 0;
+                NetDaemonNet.primary_state_.trailing_words_[1] = 0;
                 NetDaemonNet.primary_state_.trailing_words_[2] = 0;
-                NetDaemonNet.primary_state_.trailing_words_[3] = 0;
                 NetDaemonNet.channels_[1].trailing_words_[6] = 255;
                 NetDaemonNet.channels_[0].payload_.vehicle_selection_follow = 0;
                 for (int lockword = 6; lockword < 14; ++lockword)
@@ -7526,7 +7526,7 @@ static void faction_parse_leader_fields(int faction_id, int title_slot,
 void __cdecl enemies_unpact(int faction_id, int faction_id_with);
 
 // ORIGINAL: 0x0055D760 ?enemies_treaty@@YAXHHH@Z 0x0055D760-0x0055E370
-// RECOVERY_BINDING: v1 {"evidence": ["original:0x0055D760:complete-mapped-spans", "git:13693539:src/unrecovered/0055d760.cpp", "source:src/faction.h:PlayersData-and-diplomacy-interfaces"], "reason": "Recover the complete original truce/treaty/pact decision paths through typed player rows, ranking, rules and genuine parser/NetMsg calls. Initial pact notices use actor noun in slot 6; lower local-pact notices use the opposite faction noun in slot 4, PACTTREATY and treaty bit 2. Keep the original signed random masking and ally scan."}
+// RECOVERY_BINDING: v1 {"evidence": ["original:0x0055D760:complete-mapped-spans", "git:13693539:src/unrecovered/0055d760.cpp", "source:src/faction.h:PlayersData-and-diplomacy-interfaces", "original:0x0055D76B:actor-in-ESI;0x0055DDB8:get_noun-actor;0x0055DDC2:slot-4"], "reason": "Recover the complete original truce/treaty/pact decision paths through typed player rows, ranking, rules and genuine parser/NetMsg calls. Initial pact notices use actor noun in slot 6; both lower local-pact notices use the actor faction noun in slot 4, PACTTREATY and treaty bit 2. Keep the original signed random masking and ally scan."}
 // TRIED: shared-tail gotos (LAB_0055dab5/LAB_0055ddb9) replaced with inline duplication at each call site (same call sequence, fewer scope-crossing gotos); parse_says calls normalized to their real 4-arg form (idx, ptr, -1, -1) where Ghidra's own printout dropped the trailing -1,-1 pair pushed by a sibling call and shared across the two (get_noun/get_he_she then parse_says, same push-sharing idiom as veh_lift/veh_drop).
 void __cdecl enemies_treaty(int faction_id, int faction_id_with,
                              int check_technology) {

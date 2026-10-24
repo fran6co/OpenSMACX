@@ -1,0 +1,22 @@
+{
+  "event_id": "5f1a49ea4fc4eba6f031d785f411a2f6a29e8641269ff1a825ed4051a591c764",
+  "payload": {
+    "affects": [
+      "entity-0079fd3f96e30215c5d25c92eaf83b81dc32ced2efcb3cce93127a18c22fcfda"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "proto-cost-signed-oct24f-evidence",
+    "evidence": [
+      "Original5A5C24/25 signed preparation/IDIV; uint8 cost fields promote to int. Change only combat_mod to int, retain all bounds, casts, original unsafe input behavior, arithmetic order/ability/triad branches. Private screen outsidePASS/no exact gains/losses; full-body bounded controls compare normal values, no invented impossible negative byte-cost witness.",
+      "All authorized owners are one coordinator-prepared isolated structural recovery batch; only coordinator mutates product source, Git, compiler/preparation and integration. Read-only agent proposals are hints. Preserve original identities/full spans/symbols/history and every historical byte claim; no baseline reset, demotion, safety normalization, compiler-policy trick, wrapper or assembly.",
+      "Require independent source/pin and actual-source controls, fresh application build/link, mapping/reference/claim continuity and fresh physical scoped comparisons. Explicitly review all changed output and preserve native FAIL/UNKNOWN without waivers; declared globals/member migrations can exceed a function-only residual, not fabricate preservation. Measure all mapped functions and fresh destination after integration. No full linked-selection/structure/runtime, exhaustive discovery, automatic/game acceptance or new coverage claim follows."
+    ],
+    "hypothesis": "Restore signed prototype cost intermediate",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "proto-cost-signed-oct24f-evidence",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:proto-cost-signed-oct24f"
+}

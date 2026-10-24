@@ -39,7 +39,7 @@ extern NetMsg &NetMsgPrimary;
 class NetDaemon {
 public:
     struct LockWords { uint32_t leading_words_[4]; union Payload { uint32_t flags; int *vehicle_selection_follow; } payload_; uint32_t trailing_words_[10]; };
-    struct PrimaryState { uint32_t leading_words_[3]; uint32_t flags_; uint32_t trailing_words_[10]; } primary_state_;
+    struct PrimaryState { uint32_t leading_words_[3]; uint32_t flags_; int session_phase_; uint32_t trailing_words_[9]; } primary_state_;
     LockWords channels_[2];
     struct DeletionRecord { uint8_t acknowledgements_; uint8_t reserved_[3]; int owner_; int16_t count_; int16_t vehicle_ids_[25]; };
     struct DeletionList { DeletionRecord records_[24]; int current_owner_; uint32_t sequence_bits() const { uint32_t x; memcpy(&x, &current_owner_, 4); return x; } void set_sequence_bits(uint32_t x) { memcpy(&current_owner_, &x, 4); } uint32_t advance_sequence() { uint32_t x=sequence_bits()+1; set_sequence_bits(x); return x; } } deletion_list_;
@@ -849,10 +849,10 @@ int main() {
     // Literal zero count returns after the native progress callbacks, while
     // a nonzero count whose product wraps to zero goes through common math.
     reset(); VehCurrentCount = 0;
-    d.primary_state_.trailing_words_[2] = 4;
+    d.primary_state_.trailing_words_[1] = 4;
     incoming.assign(0x24 + 0x800, 0);
     d.synch(0x12, 0, 0, 0, reinterpret_cast<char *>(&incoming[0]), 0, 0);
-    assert(popup_count == 1 && draws_count == 1 && d.primary_state_.trailing_words_[2] == 5);
+    assert(popup_count == 1 && draws_count == 1 && d.primary_state_.trailing_words_[1] == 5);
     assert(copy_in_count == 0 && display_count == 0 && rebuild_v_count == 0);
     reset(); BaseCurrentCount = 0;
     d.synch(0x14, 0, 0, 0, reinterpret_cast<char *>(&incoming[0]), 0, 0);
@@ -980,7 +980,7 @@ int main() {
         ix = static_cast<int16_t>((high_sizes[high - 0x80] - 1) / 0x800);
         memcpy(&incoming[0] + 0x10, &op, 2);
         memcpy(&incoming[0] + 0x12, &ix, 2);
-        d.primary_state_.trailing_words_[3] = 0xFFFFFFFFu;
+        d.primary_state_.trailing_words_[2] = 0xFFFFFFFFu;
         d.synch(op, 0, 0, 0, reinterpret_cast<char *>(&incoming[0]), 0, 0);
         assert(copy_in_count == 1);
         assert(commit_count == ((high == 0x81 || high == 0x82 || high == 0x84) ? 0 : 1));
@@ -997,15 +997,15 @@ int main() {
                 op = static_cast<int16_t>(phase_ops[p]); ix = 0;
                 memcpy(&incoming[0] + 0x10, &op, 2);
                 memcpy(&incoming[0] + 0x12, &ix, 2);
-                d.primary_state_.trailing_words_[3] = phase_values[v];
-                rules_callback_phase = &d.primary_state_.trailing_words_[3];
+                d.primary_state_.trailing_words_[2] = phase_values[v];
+                rules_callback_phase = &d.primary_state_.trailing_words_[2];
                 mutate_phase_on_draw = true;
                 d.synch(op, 0, 0, 0, outgoing ? 0 : reinterpret_cast<char *>(&incoming[0]), outgoing, 0);
                 const bool notify = !outgoing && (p == 0 ? phase_values[v] <= 0x7FFFFFFFu : phase_values[v] == static_cast<uint32_t>(p));
                 assert(draws_count == (notify ? 1 : 0));
                 assert(popup_count == (notify && p != 4 ? 1 : 0));
                 assert(netmsg_close_count == (notify && p == 4 ? 1 : 0));
-                assert(d.primary_state_.trailing_words_[3] == (notify ? static_cast<uint32_t>(p + 1) : phase_values[v]));
+                assert(d.primary_state_.trailing_words_[2] == (notify ? static_cast<uint32_t>(p + 1) : phase_values[v]));
                 if (notify) assert(popup_phase_seen == phase_values[v] && draw_phase_seen == phase_values[v]);
             }
         }

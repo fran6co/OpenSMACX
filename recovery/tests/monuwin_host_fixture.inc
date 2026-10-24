@@ -158,11 +158,11 @@ struct StringList {
 struct ReportInfo { int field_1E230_ = 0; Font *field_1E184_ = &font; } ReportIfGlobal;
 struct ConsoleInfo { int faction_id_ = 3; } ConsoleGlobal;
 struct LockWord { uint32_t leading_words_[4]; union Payload { uint32_t flags; int *vehicle_selection_follow; } payload_; uint32_t trailing_words_[10]; };
-struct PrimaryStateDouble { uint32_t leading_words_[3]; uint32_t flags_; uint32_t trailing_words_[10]; };
+struct PrimaryStateDouble { uint32_t leading_words_[3]; uint32_t flags_; int session_phase_; uint32_t trailing_words_[9]; };
 struct NetDaemonDouble { PrimaryStateDouble primary_state_; LockWord channels_[2]; LockWord lock_state_[24]; } NetDaemonNet;
 void mutate_faction_after_spot_check() {
     ConsoleGlobal.faction_id_ = 5;
-    NetDaemonNet.primary_state_.trailing_words_[7] |= 1u << 5;
+    NetDaemonNet.primary_state_.trailing_words_[6] |= 1u << 5;
 }
 struct PlayerInfo {
     int is_leader_female, noun_gender, is_noun_plural;
@@ -283,13 +283,13 @@ void callback_contracts(MonuWin &window) {
 
     reset(window);
     spot_position=0x45; spot_type=0; window.selected_monument_type_=14;
-    check((NetDaemonNet.primary_state_.trailing_words_[7] & (1u << 3)) == 0,
+    check((NetDaemonNet.primary_state_.trailing_words_[6] & (1u << 3)) == 0,
           "faction3 passes the initial primary-mask guard");
     spot_check_callback=mutate_faction_after_spot_check;
     window.on_left_click(101,202);
     check(spot_check_callback==nullptr,"Spot callback is one-shot");
     check(ConsoleGlobal.faction_id_==5,"Spot callback changes the live faction");
-    check((NetDaemonNet.primary_state_.trailing_words_[7] & (1u << 5)) != 0,
+    check((NetDaemonNet.primary_state_.trailing_words_[6] & (1u << 5)) != 0,
           "Spot callback installs faction5 mask after initial guard");
     check(FactionMonuments[5].latest_type_==14 && FactionMonuments[3].latest_type_==4,
           "click reloads faction after Spot::check and applies primary type");
@@ -298,7 +298,7 @@ void callback_contracts(MonuWin &window) {
     check(named("spot_check").size()==1 && named("redraw").size()==1,
           "post-Spot mutation still performs one hit check and one redraw");
     for(int gate=0;gate<3;++gate) {
-        reset(window); if(gate==0) NetDaemonNet.primary_state_.trailing_words_[7]=1u<<3;
+        reset(window); if(gate==0) NetDaemonNet.primary_state_.trailing_words_[6]=1u<<3;
         if(gate==1) NetDaemonNet.channels_[1].payload_.flags=1;
         if(gate==2) NetDaemonNet.primary_state_.leading_words_[2]=1;
         window.on_left_click(3,4); window.on_mouse_move(3,4); check(calls.empty(),"all three network gates suppress callbacks");

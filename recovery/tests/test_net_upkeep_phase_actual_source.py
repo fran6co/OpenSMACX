@@ -29,7 +29,7 @@ struct MultiWinMock { int draws; void draw(int) { ++draws; } } MultiWindow;
 struct LockStateMock { uint32_t leading_words_[4]; uint32_t trailing_words_[10]; };
 struct NetDaemonMock {
     LockStateMock channels_[2];
-    struct PrimaryState { uint32_t leading_words_[3]; uint32_t flags_; uint32_t trailing_words_[10]; } primary_state_;
+    struct PrimaryState { uint32_t leading_words_[3]; uint32_t flags_; int session_phase_; uint32_t trailing_words_[9]; } primary_state_;
     int tasks, receives;
     void (*task_hook)(); void (*receive_hook)();
     void net_tasks() { ++tasks; if (task_hook) task_hook(); }
@@ -83,26 +83,26 @@ static void reset_fixture() {
 }
 static void finish_wait() {
     GameDataStateStorage.fields_.lock_masks_.enable_mask_ = 1;
-    NetDaemonNet.primary_state_.trailing_words_[8] = 1;
+    NetDaemonNet.primary_state_.trailing_words_[7] = 1;
 }
 static void exit_from_task() { ExitTurnLoop = 1; }
 static void finish_receive() {
-    NetDaemonNet.primary_state_.trailing_words_[8] =
+    NetDaemonNet.primary_state_.trailing_words_[7] =
         GameDataStateStorage.fields_.lock_masks_.enable_mask_;
 }
 static void exit_from_close() { ExitTurnLoop = 1; }
 static void test_normal_ack() {
     reset_fixture(); GameDataStateStorage.fields_.lock_masks_.enable_mask_ = 3;
-    NetDaemonNet.primary_state_.trailing_words_[8] = 3;
+    NetDaemonNet.primary_state_.trailing_words_[7] = 3;
     assert(net_upkeep_phase(2) == 0);
     assert(MultiWindow.draws == 1 && message_count == 1 && message_opcodes[0] == 0x2303);
     assert(NetMsgPrimary.closes == 1 && NetDaemonNet.tasks == 0);
     assert(NetDaemonNet.channels_[0].leading_words_[1] == 0);
-    assert(NetDaemonNet.primary_state_.trailing_words_[8] == 0);
+    assert(NetDaemonNet.primary_state_.trailing_words_[7] == 0);
 }
 static void test_timeout_callback_mutates_live_mask() {
     reset_fixture(); GameDataStateStorage.fields_.lock_masks_.enable_mask_ = 3;
-    NetDaemonNet.primary_state_.trailing_words_[8] = 1;
+    NetDaemonNet.primary_state_.trailing_words_[7] = 1;
     NetDaemonNet.task_hook = finish_wait;
     clock_values[0] = 100; clock_values[1] = 1201; clock_values[2] = 1202;
     assert(net_upkeep_phase(1) == 0);
@@ -127,12 +127,12 @@ static void test_callback_exit_and_phase_four_suppression() {
 }
 static void test_server_receive_and_cleanup() {
     reset_fixture(); GameDataStateStorage.fields_.lock_masks_.enable_mask_ = 1;
-    NetDaemonNet.primary_state_.trailing_words_[8] = 1;
+    NetDaemonNet.primary_state_.trailing_words_[7] = 1;
     NetDaemonNet.primary_state_.leading_words_[0] = 1;
     NetDaemonNet.receive_hook = finish_receive;
     assert(net_upkeep_phase(4) == 0);
     assert(message_count == 2 && message_opcodes[1] == 0x4303 && NetDaemonNet.receives == 1);
-    assert(NetMsgPrimary.closes == 1 && NetDaemonNet.primary_state_.trailing_words_[8] == 0);
+    assert(NetMsgPrimary.closes == 1 && NetDaemonNet.primary_state_.trailing_words_[7] == 0);
 }
 static void test_close_callback_exit_is_final_return() {
     reset_fixture(); NetMsgPrimary.close_hook = exit_from_close;

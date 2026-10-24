@@ -152,7 +152,7 @@ struct GameFields {
 } ;
 struct GameStorage { GameFields fields_; } GameDataStateStorage;
 struct LockStateEntry { uint32_t leading_words_[4], payload_, trailing_words_[10]; };
-struct PrimaryState { uint32_t leading_words_[3], flags_, trailing_words_[10]; };
+struct PrimaryState { uint32_t leading_words_[3]; uint32_t flags_; int session_phase_; uint32_t trailing_words_[9]; };
 struct PlayerLock { int active(); };
 struct Lock { PlayerLock records_[8]; };
 struct NetDaemon { Lock locks_; PrimaryState primary_state_; LockStateEntry channels_[2]; } NetDaemonNet;
@@ -310,7 +310,7 @@ int main() {
           label_calls==1 && label_ids[0]==0x42C/4,"multiplayer active-control status is separate from offline treaty gate");
 
   reset(w); IsMultiplayerNet=1; GameDataStateStorage.fields_.lock_masks_.enable_mask_=2;
-  NetDaemonNet.primary_state_.trailing_words_[4]=2;
+  NetDaemonNet.primary_state_.trailing_words_[3]=2;
   w.draw_player(1,1,&bounds);
   require(strcmp(w.right,"label273")==0 && label_ids[0]==0x444/4,"primary status word selects label 444");
 

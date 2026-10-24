@@ -75,7 +75,7 @@ struct LockStateEntry {
   struct Payload { uint32_t flags; } payload_;
   uint32_t leading_words_[4];
 };
-struct NetDaemon { LockStateEntry channels_[2]; struct Primary { uint32_t leading_words_[3], flags_, trailing_words_[10]; } primary_state_; void hang_up() {Trace.push_back("hang_up");} void reset() {Trace.push_back("daemon_reset");} };
+struct NetDaemon { LockStateEntry channels_[2]; struct Primary { uint32_t leading_words_[3], flags_; int session_phase_; uint32_t trailing_words_[9]; } primary_state_; void hang_up() {Trace.push_back("hang_up");} void reset() {Trace.push_back("daemon_reset");} };
 struct AlphaMenu {
   void check(int) {Trace.push_back("menu_check");}
   void uncheck_menu_item(...) {}
@@ -325,7 +325,7 @@ struct NetDaemon : AlphaNet {
     Lock locks_;
     DeletionList deletion_list_;
     LockStateEntry channels_[2];
-    struct Primary { uint32_t leading_words_[3], flags_, trailing_words_[10]; } primary_state_;
+    struct Primary { uint32_t leading_words_[3], flags_; int session_phase_; uint32_t trailing_words_[9]; } primary_state_;
     void *file_index_records_;
     uint32_t field_1BE4_;
     SavedProcessSlot saved_process_slots_[8];
@@ -363,10 +363,11 @@ int main() {
     assert(daemon.primary_state_.leading_words_[1] == 0);
     assert(daemon.primary_state_.leading_words_[2] == 0);
     assert(daemon.primary_state_.flags_ == 0);
-    for (int i = 0; i < 7; ++i) assert(daemon.primary_state_.trailing_words_[i] == 0);
+    assert(daemon.primary_state_.session_phase_ == 0);
+    for (int i = 0; i < 6; ++i) assert(daemon.primary_state_.trailing_words_[i] == 0);
+    assert(daemon.primary_state_.trailing_words_[6] == 0);
     assert(daemon.primary_state_.trailing_words_[7] == 0);
-    assert(daemon.primary_state_.trailing_words_[8] == 0);
-    assert(daemon.primary_state_.trailing_words_[9] == 0x7F7F7F7Fu);
+    assert(daemon.primary_state_.trailing_words_[8] == 0x7F7F7F7Fu);
     assert(daemon.channels_[0].leading_words_[0] == 0);
     assert(daemon.channels_[0].leading_words_[1] == 0);
     assert(daemon.channels_[0].leading_words_[2] == 0x7F7F7F7Fu);

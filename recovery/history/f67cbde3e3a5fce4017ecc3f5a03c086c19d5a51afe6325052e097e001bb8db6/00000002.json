@@ -1,0 +1,17 @@
+{
+  "event_id": "1e4c5903959784a5af5d7ad6a0b292d03cc4ee4c97b025b8ca6ab5efed35f1e0",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "proto-cost-signed-oct24f-evidence",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Scoped source corrections incorporated in coordinated checkout; original identity, spans, symbols, history and claims verified unchanged. Source is not acceptance; compiler, host controls and independent checks pending."
+    ]
+  },
+  "previous_event": "5f1a49ea4fc4eba6f031d785f411a2f6a29e8641269ff1a825ed4051a591c764",
+  "request_id": "proto-cost-signed-oct24f-source-incorporation",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:proto-cost-signed-oct24f"
+}

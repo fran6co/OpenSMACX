@@ -114,7 +114,7 @@ void ReportWin::on_redraw() {
 
 static bool reportwin_input_blocked() {
     return ConsoleControlTurnActive != 0
-        || (NetDaemonNet.primary_state_.trailing_words_[7]
+        || (NetDaemonNet.primary_state_.trailing_words_[6]
             & (1u << (ConsoleGlobal.faction_id_ & 31))) != 0
         || NetDaemonNet.channels_[1].payload_.flags != 0
         || NetDaemonNet.primary_state_.leading_words_[2] != 0;

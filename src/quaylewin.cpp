@@ -154,7 +154,7 @@ void QuayleWin::close() {
 // symbol    ?on_left_click@QuayleWin@@UAEXHH@Z
 void QuayleWin::on_left_click(int x, int y) {
   const unsigned int faction_bit = 1u << ConsoleGlobal.faction_id_;
-  if ((NetDaemonNet.primary_state_.trailing_words_[7] & faction_bit) != 0) return;
+  if ((NetDaemonNet.primary_state_.trailing_words_[6] & faction_bit) != 0) return;
   if (NetDaemonNet.channels_[1].payload_.flags != 0) return;
   if (NetDaemonNet.primary_state_.leading_words_[2] != 0) return;
   if (spot_.check(x, y, &y, &x) + 1 != 0) field_2144_ = y;

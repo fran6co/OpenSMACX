@@ -113,7 +113,7 @@ struct LockStateEntry {
 
 struct NetDaemon {
     LockStateEntry channels_[2];
-    struct PrimaryState { uint32_t leading_words_[3], flags_, trailing_words_[10]; } primary_state_;
+    struct PrimaryState { uint32_t leading_words_[3]; uint32_t flags_; int session_phase_; uint32_t trailing_words_[9]; } primary_state_;
     int add_calls, add_stop_after, await_calls, awaited_code, unlock_calls;
     int open_calls, open_result;
     NetDaemon() : add_calls(0), add_stop_after(0), await_calls(0),

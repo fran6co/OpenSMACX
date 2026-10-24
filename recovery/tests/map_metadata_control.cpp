@@ -75,7 +75,7 @@ static int WorldClimateRedrawRequest, WorldClimateSkipTerritoryReset;
 static int WorldClimateSkipTerrainClear = 1;
 static int ExpansionEnabled;
 static int BrushVal1, WorldBuildVal1;
-static uint32_t BrushVal2;
+static int BrushVal2;
 static struct {
     uint32_t land_mod, land_base;
     int islands;
@@ -114,6 +114,12 @@ static void brush(int x, int, int) {
 }
 
 int main() {
+    // Pinned paint_land compares the reset count as signed against radius.
+    // A negative radius enters neither loop and makes no brush/random calls.
+    draw_count = draw_cursor = paint_calls = 0;
+    invalid = 0;
+    paint_land(0, 0, 1, -1);
+    if (invalid || paint_calls != 0 || draw_cursor != 0) return 11;
     // Four negative sentinels must draw exactly once, in native ascending order.
     const int initial[7] = {-1, 2, -2, 0, -3, 2, -4};
     const int expected[7] = {2, 2, 2, 0, 1, 2, 2};

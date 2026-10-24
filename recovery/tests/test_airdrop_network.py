@@ -59,7 +59,7 @@ void treaty_on(int a,int b,int c) {
 }
 AGGRESSION
 struct Entry {uint32_t leading_words_[4]; union Payload { uint32_t flags; int *vehicle_selection_follow; } payload_; uint32_t trailing_words_[10];};
-struct PrimaryState {uint32_t leading_words_[3]; uint32_t flags_; uint32_t trailing_words_[10];};
+struct PrimaryState {uint32_t leading_words_[3]; uint32_t flags_; int session_phase_; uint32_t trailing_words_[9];};
 struct Locks {void check_global() {calls.push_back(4);}};
 struct NetDaemon {
     uint32_t deletion_owner_{};

@@ -180,7 +180,7 @@ uint32_t LockEnableMask = 0;
 int IsMultiplayerNet = 1;
 int IsMultiplayerPBEM = 0;
 struct LockState { uint32_t dword_[8]; uint32_t leading_words_[2]{}; };
-struct NetDaemon { LockState channels_[2]; struct Primary { uint32_t leading_words_[3], flags_, trailing_words_[10]; } primary_state_; } NetDaemonNet;
+struct NetDaemon { LockState channels_[2]; struct Primary { uint32_t leading_words_[3]; uint32_t flags_; int session_phase_; uint32_t trailing_words_[9]; } primary_state_; } NetDaemonNet;
 struct { int faction_id_; } ConsoleGlobal;
 std::vector<int> events;
 int council_get_vote(int faction, int proposal, int target) {

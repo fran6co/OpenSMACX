@@ -88,7 +88,7 @@ def test_lock_header_uses_map_owner_without_duplicate_declaration(tmp_path, dama
         assert subprocess.run([str(binary)], timeout=15).returncode == 0
 
 
-def projected(damage=None):
+def projected(damage=None, fixture_mutation=None):
     bundle = actual_bundle()
     if damage:
         old, new = damage
@@ -96,15 +96,20 @@ def projected(damage=None):
         bundle = bundle.replace(old, new)
     fixture = (Path(__file__).with_name("map_metadata_control.cpp")).read_text()
     assert fixture.count("// @@ACTUAL_MAP_OWNER@@") == 1
-    return fixture.replace("// @@ACTUAL_MAP_OWNER@@", bundle)
+    projected_source = fixture.replace("// @@ACTUAL_MAP_OWNER@@", bundle)
+    if fixture_mutation:
+        old, new = fixture_mutation
+        assert projected_source.count(old) == 1
+        projected_source = projected_source.replace(old, new, 1)
+    return projected_source
 
 
-def run_control(tmp_path, damage=None):
+def run_control(tmp_path, damage=None, fixture_mutation=None):
     compiler = shutil.which("c++")
     if compiler is None:
         pytest.skip("host C++ compiler unavailable")
     source = tmp_path / "map_owner.cpp"
-    source.write_text(projected(damage))
+    source.write_text(projected(damage, fixture_mutation))
     binary = tmp_path / "map_owner"
     built = subprocess.run([compiler, "-std=c++11", "-Wall", "-Wextra", "-Werror", "-Wno-sign-compare",
                             str(source), "-o", str(binary)], capture_output=True, timeout=60)
@@ -422,3 +427,18 @@ int main() {
     assert built.returncode == 0, built.stderr.decode(errors="replace")
     result = subprocess.run([str(binary)], capture_output=True, timeout=15)
     assert (result.returncode != 0) == damage, result.stderr.decode(errors="replace")
+
+
+def test_unsigned_brush_counter_rejects_negative_radius_control(tmp_path):
+    assert run_control(tmp_path, fixture_mutation=(
+        "static int BrushVal2;", "static uint32_t BrushVal2;")).returncode != 0
+
+
+def test_brush_counter_identity_retains_historical_symbol():
+    rows = parse_objects((ROOT / "src/map.cpp").read_text(), "src/map.cpp", PIN,
+                         address_space="pe:va")
+    row, = [r for r in rows if r.origin.address == 0x009B22B8]
+    assert row.symbol == "?BrushVal2@@3IA"
+    assert row.target_symbol == "?BrushVal2@@3HA"
+    assert row.span is None and row.parent_symbol is None
+    assert "extern int BrushVal2;" in (ROOT / "src/map.h").read_text()

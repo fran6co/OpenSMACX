@@ -83,7 +83,7 @@ struct Net {
 struct Daemon : Net {
     int player_count_ = 0;
     struct Entry { uint32_t leading_words_[4]; union Payload { uint32_t flags; int *vehicle_selection_follow; } payload_; uint32_t trailing_words_[10]; } channels_[2];
-    struct { uint32_t leading_words_[3], flags_, trailing_words_[10]; } primary_state_;
+    struct { uint32_t leading_words_[3]; uint32_t flags_; int session_phase_; uint32_t trailing_words_[9]; } primary_state_;
     int pid_2_idx(int) { return 1; }
 } NetDaemonNet;
 struct NetWin {

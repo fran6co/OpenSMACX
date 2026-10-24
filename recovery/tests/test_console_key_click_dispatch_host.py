@@ -341,7 +341,7 @@ struct LockEntry {
     struct Payload { int flags; } payload_;
     int leading_words_[4];
 };
-struct NetDaemon { LockEntry channels_[2]; struct { unsigned int leading_words_[3]; unsigned int flags_; unsigned int trailing_words_[10]; } primary_state_; } NetDaemonNet;
+struct NetDaemon { LockEntry channels_[2]; struct { unsigned int leading_words_[3]; unsigned int flags_; int session_phase_; unsigned int trailing_words_[9]; } primary_state_; } NetDaemonNet;
 int native_editor_lock;
 int dispatch() {
     native_editor_lock = 0;

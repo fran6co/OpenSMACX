@@ -10054,7 +10054,7 @@ int __cdecl net_upkeep_phase(int phase) {
     const uint32_t faction_bit =
         1u << (static_cast<unsigned int>(faction_id) & 31u);
     uint32_t &sent_mask = NetDaemonNet.channels_[0].leading_words_[1];
-    uint32_t &ack_mask = NetDaemonNet.primary_state_.trailing_words_[8];
+    uint32_t &ack_mask = NetDaemonNet.primary_state_.trailing_words_[7];
 
     sent_mask |= faction_bit;
     MultiWindow.draw(0);
@@ -10133,7 +10133,7 @@ void __cdecl net_upkeep() {
     DiploDefaultFlag93A968 = 0;
     NetUpkeepPhase = 0;
     TurnUpkeepPhase = 1;
-    NetDaemonNet.primary_state_.trailing_words_[9] = 0;
+    NetDaemonNet.primary_state_.trailing_words_[8] = 0;
     SpockHelpActive = 0;
     SpockNotifyPending = 0;
 
@@ -10165,7 +10165,7 @@ void __cdecl net_upkeep() {
                  static_cast<int32_t>(NetDaemonNet.network_message_count()),
                  0, 0, 0);
 
-    if (NetDaemonNet.primary_state_.trailing_words_[9] != 0) {
+    if (NetDaemonNet.primary_state_.trailing_words_[8] != 0) {
         for (i = 0; i < GameDataStateStorage.fields_.base_current_count_; ++i) {
             const Base &base = Bases[i];
             if (base.faction_id_current == ConsoleGlobal.faction_id_ &&
@@ -10180,7 +10180,7 @@ void __cdecl net_upkeep() {
                 synch_leader(static_cast<int>(faction));
             }
         }
-        if (NetDaemonNet.primary_state_.trailing_words_[9] != 0) {
+        if (NetDaemonNet.primary_state_.trailing_words_[8] != 0) {
             while (NetDaemonNet.receive() != 0) { }
             do_all_tasks();
             if (net_upkeep_phase(NetUpkeepPhase) != 0) return;
@@ -10331,7 +10331,7 @@ upkeep5:
 
     message_big_data(0x2307, 0, NetTurnChecksums, 0x15);
     if (net_upkeep_phase(NetUpkeepPhase) != 0) return;
-    NetDaemonNet.primary_state_.trailing_words_[2] = 0xFFFFFFFFu;
+    NetDaemonNet.primary_state_.trailing_words_[1] = 0xFFFFFFFFu;
     ++NetUpkeepPhase;
 
     {
@@ -10500,7 +10500,7 @@ void __cdecl net_end_of_turn() {
             const bool masks_incomplete =
                 (enabled_factions & NetDaemonNet.factions_waiting_mask()) !=
                     enabled_factions ||
-                (NetDaemonNet.primary_state_.trailing_words_[4] &
+                (NetDaemonNet.primary_state_.trailing_words_[3] &
                  enabled_factions) != 0;
             const bool daemon_pending =
                 NetDaemonNet.primary_state_.leading_words_[0] != 0 &&
@@ -10571,7 +10571,7 @@ after_wait:
 
 proceed_next_turn:
     log_say(NetEndTurnProceedingToNextTurnLog, 0, 0, 0);
-    NetDaemonNet.primary_state_.trailing_words_[8] = 0;
+    NetDaemonNet.primary_state_.trailing_words_[7] = 0;
     NetDaemonNet.channels_[0].leading_words_[1] = 0;
     NetUpkeepPhase = 0;
     ConsoleControlTurnActive = 1;
@@ -10666,11 +10666,11 @@ void __cdecl net_control_turn() {
 
     for (;;) {
         log_say(NetControlTurnClearTurnSemaphore,
-                NetDaemonNet.primary_state_.trailing_words_[7],
+                NetDaemonNet.primary_state_.trailing_words_[6],
                 NetDaemonNet.channels_[0].leading_words_[0], 0);
-        NetDaemonNet.primary_state_.trailing_words_[7] = 0;
+        NetDaemonNet.primary_state_.trailing_words_[6] = 0;
         NetDaemonNet.channels_[0].leading_words_[0] = 0;
-        NetDaemonNet.primary_state_.trailing_words_[1] = 1;
+        NetDaemonNet.primary_state_.trailing_words_[0] = 1;
         NetDaemonNet.network_message_count() = 0;
         // The adjacent 0x93E968 store is distinct from the message count.
         NetDaemonNet.channels_[1].trailing_words_[8] = 0;
@@ -10701,16 +10701,16 @@ void __cdecl net_control_turn() {
                 NetDaemonNet.primary_state_.leading_words_[1] = 0;
                 NetDaemonNet.primary_state_.leading_words_[2] = 0;
                 NetDaemonNet.primary_state_.flags_ = 0;
+                NetDaemonNet.primary_state_.session_phase_ = 0;
                 NetDaemonNet.primary_state_.trailing_words_[0] = 0;
                 NetDaemonNet.primary_state_.trailing_words_[1] = 0;
                 NetDaemonNet.primary_state_.trailing_words_[2] = 0;
                 NetDaemonNet.primary_state_.trailing_words_[3] = 0;
                 NetDaemonNet.primary_state_.trailing_words_[4] = 0;
                 NetDaemonNet.primary_state_.trailing_words_[5] = 0;
-                NetDaemonNet.primary_state_.trailing_words_[6] = 0;
                 NetDaemonNet.factions_waiting_mask() = 0;
+                NetDaemonNet.primary_state_.trailing_words_[7] = 0;
                 NetDaemonNet.primary_state_.trailing_words_[8] = 0;
-                NetDaemonNet.primary_state_.trailing_words_[9] = 0;
                 NetDaemonNet.channels_[0].leading_words_[0] = 0;
                 NetDaemonNet.channels_[0].leading_words_[1] = 0;
                 NetDaemonNet.channels_[0].leading_words_[2] = 0;
@@ -10745,7 +10745,7 @@ void __cdecl net_control_turn() {
         NetDaemonWaitTicks = static_cast<int>(GameDataStateStorage.fields_.turn_control_duration_milliseconds_);
         GameDataStateStorage.fields_.game_state_ &= 0xFFFFF7FFu;
         ConsoleControlTurnActive = 0;
-        NetDaemonNet.primary_state_.trailing_words_[5] = 0;
+        NetDaemonNet.primary_state_.trailing_words_[4] = 0;
 
         if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10u) != 0 &&
             (GameDataStateStorage.fields_.turn_current_num_ == 1 || ControlTurnPhase != 0)) {
@@ -10953,8 +10953,8 @@ void clear_multiplayer_endgame_state() {
     NetDaemonNet.primary_state_.leading_words_[1] = 0;
     NetDaemonNet.primary_state_.leading_words_[2] = 0;
     NetDaemonNet.primary_state_.flags_ = 0;
-    NetDaemonNet.primary_state_.trailing_words_[8] = 0;
     NetDaemonNet.primary_state_.trailing_words_[7] = 0;
+    NetDaemonNet.primary_state_.trailing_words_[6] = 0;
     NetDaemonNet.channels_[0].leading_words_[1] = 0;
     NetDaemonNet.channels_[0].leading_words_[0] = 0;
     NetDaemonNet.channels_[0].trailing_words_[0] = 0;
@@ -10963,21 +10963,21 @@ void clear_multiplayer_endgame_state() {
     NetDaemonNet.channels_[1].leading_words_[0] = 0;
     NetDaemonNet.channels_[1].trailing_words_[5] = 0;
     NetDaemonNet.channels_[1].trailing_words_[4] = 0;
+    NetDaemonNet.primary_state_.trailing_words_[3] = 0;
     NetDaemonNet.primary_state_.trailing_words_[4] = 0;
     NetDaemonNet.primary_state_.trailing_words_[5] = 0;
-    NetDaemonNet.primary_state_.trailing_words_[6] = 0;
     NetDaemonNet.channels_[1].trailing_words_[3] = 0;
     NetDaemonNet.channels_[1].trailing_words_[2] = 0;
     NetDaemonNet.channels_[1].leading_words_[3] = 0;
     NetDaemonNet.channels_[1].leading_words_[2] = 0;
     NetDaemonNet.channels_[1].payload_.flags = 0;
+    NetDaemonNet.primary_state_.session_phase_ = 0;
     NetDaemonNet.primary_state_.trailing_words_[0] = 0;
-    NetDaemonNet.primary_state_.trailing_words_[1] = 0;
     NetDaemonNet.network_message_count() = 0;
     NetDaemonNet.channels_[1].trailing_words_[8] = 0;
     NetDaemonNet.channels_[1].trailing_words_[7] = 0;
+    NetDaemonNet.primary_state_.trailing_words_[1] = 0;
     NetDaemonNet.primary_state_.trailing_words_[2] = 0;
-    NetDaemonNet.primary_state_.trailing_words_[3] = 0;
     NetDaemonNet.channels_[1].trailing_words_[6] = 0xFF;
     NetDaemonNet.channels_[0].payload_.flags = 0;
     for (int index = 0; index < 8; ++index) {
@@ -11995,6 +11995,7 @@ int __cdecl save_game(int mode) {
             network.primary_state_.leading_words_[1] = 0;
             network.primary_state_.leading_words_[2] = 0;
             network.primary_state_.flags_ = 0;
+            network.primary_state_.session_phase_ = 0;
             network.primary_state_.trailing_words_[0] = 0;
             network.primary_state_.trailing_words_[1] = 0;
             network.primary_state_.trailing_words_[2] = 0;
@@ -12003,7 +12004,6 @@ int __cdecl save_game(int mode) {
             network.primary_state_.trailing_words_[5] = 0;
             network.primary_state_.trailing_words_[6] = 0;
             network.primary_state_.trailing_words_[7] = 0;
-            network.primary_state_.trailing_words_[8] = 0;
             network.channels_[0].leading_words_[0] = 0;
             network.channels_[0].leading_words_[1] = 0;
             network.channels_[0].payload_.flags = 0;

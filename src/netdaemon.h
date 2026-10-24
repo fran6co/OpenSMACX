@@ -86,14 +86,19 @@ struct NetChecksumReport;
 struct PrimaryLockStateTail {
   uint32_t leading_words_[3];
   uint32_t flags_;
-  uint32_t trailing_words_[10];
+  // RECOVERY_MEMBER: v1 PrimaryLockStateTail session_phase_ 0x10 0x0048254A
+  int session_phase_;
+  uint32_t trailing_words_[9];
 };
 static_assert(sizeof(PrimaryLockStateTail) == 0x38,
               "primary channel excludes the deletion owner's dword");
 static_assert(offsetof(PrimaryLockStateTail, flags_) == 0xC,
               "primary channel flag offset from its tail");
-static_assert(offsetof(PrimaryLockStateTail, trailing_words_) == 0x10,
-              "primary channel trailing words offset");
+static_assert(sizeof(int) == 4, "session phase is one x86 dword");
+static_assert(offsetof(PrimaryLockStateTail, session_phase_) == 0x10,
+              "primary session phase offset");
+static_assert(offsetof(PrimaryLockStateTail, trailing_words_) == 0x14,
+              "primary trailing words follow the session phase");
 struct LockStateEntry {
   uint32_t leading_words_[4];
   // Channel0/2 use flags; channel1 borrows a vehicle-ID slot. These are
@@ -229,10 +234,10 @@ class NetDaemon : public AlphaNet {
   // The original address is also read by callers outside this class; keeping
   // the accessor on the genuine owner avoids a second scalar storage object.
   uint32_t &factions_waiting_mask() {
-    return primary_state_.trailing_words_[7];
+    return primary_state_.trailing_words_[6];
   }
   const uint32_t &factions_waiting_mask() const {
-    return primary_state_.trailing_words_[7];
+    return primary_state_.trailing_words_[6];
   }
   // MessageWin's network message count shares entry 2, trailing dword 7.
   uint32_t &network_message_count() {

@@ -1,0 +1,24 @@
+{
+  "event_id": "470490191915e17f6bbb669e48eefe15309cfa171111238185d8aa2b8505f17f",
+  "payload": {
+    "affects": [
+      "entity-4cf301429a5d772b1c97152a8fc723bab0aee1971572dc2c1097aff29879f105",
+      "entity-ac5c0a2f9dbaed911508212872e706edd3f71177cc3e23cd8eacdbef61555464",
+      "entity-d0268d27516aa01f944a6be103a298095ef190a27bd2886c5000be58715c8c8d"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "map-coast-zoc-signed-oct24f-evidence",
+    "evidence": [
+      "Original coast backedges use signedJL; choose ordinary int loop counters and preserve conditional i +=2-(i&1) plus loopincrement (not constant step2). base_coast always reads tile_count before region>=127 substitution; retain this original out-of-range-read possibility, no bounds guard. Keep xrange helper, no revived hand-inlining. zoc owner helper bounds0..7/-1; intret and directowner comparisons remove unnecessary casts with max result0..8. Private three-body screen has no exact gains/losses and native outsideFAIL; inspect collateral before manual integration, never waive it.",
+      "All authorized owners are one coordinator-prepared isolated structural recovery batch; only coordinator mutates product source, Git, compiler/preparation and integration. Read-only agent proposals are hints. Preserve original identities/full spans/symbols/history and every historical byte claim; no baseline reset, demotion, safety normalization, compiler-policy trick, wrapper or assembly.",
+      "Require independent source/pin and actual-source controls, fresh application build/link, mapping/reference/claim continuity and fresh physical scoped comparisons. Explicitly review all changed output and preserve native FAIL/UNKNOWN without waivers; declared globals/member migrations can exceed a function-only residual, not fabricate preservation. Measure all mapped functions and fresh destination after integration. No full linked-selection/structure/runtime, exhaustive discovery, automatic/game acceptance or new coverage claim follows."
+    ],
+    "hypothesis": "Recover signed coast counters, zone owner and original sentinel read",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "map-coast-zoc-signed-oct24f-evidence",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:map-coast-zoc-signed-oct24f"
+}

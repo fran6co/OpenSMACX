@@ -2456,7 +2456,7 @@ int NetWin::exec() {
         ::do_task();
     }
 
-    NetDaemonNet.primary_state_.flags_ = 1;
+    NetDaemonNet.primary_state_.session_phase_ = 1;
     NetWinExecAdjacentState = 0;
     field_7614_ = 0;
     spot_.init(0x55);
@@ -2612,7 +2612,7 @@ int NetWin::exec() {
         on_update();
         prepare_game();
     }
-    NetDaemonNet.primary_state_.flags_ = 2;
+    NetDaemonNet.primary_state_.session_phase_ = 2;
 
     if (faction_records_ != nullptr) {
         free(faction_records_);

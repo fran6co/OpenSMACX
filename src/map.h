@@ -405,7 +405,7 @@ void __cdecl map_resample(int width, int height);
 extern int MapBaseSubmergedCount[8];
 extern int MapBaseIdClosestSubmergedVeh[8];
 extern int BrushVal1; // TODO: more descriptive variable name
-extern uint32_t BrushVal2; // TODO: more descriptive variable name
+extern int BrushVal2; // TODO: more descriptive variable name
 extern int WorldBuildVal1; // TODO: more descriptive variable name
 
 extern Continent Continents[MaxContinentNum];  // 0x009AA730

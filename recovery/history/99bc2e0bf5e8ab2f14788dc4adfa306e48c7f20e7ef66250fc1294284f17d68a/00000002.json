@@ -1,0 +1,17 @@
+{
+  "event_id": "916aa1697a2b62adb9b328993f5e955490e7c0a9ac0df86b7b4f54c107d175b0",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "diplomacy-noun-evidence-oct24f-evidence",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Scoped source corrections incorporated in coordinated checkout; original identity, spans, symbols, history and claims verified unchanged. Source is not acceptance; compiler, host controls and independent checks pending."
+    ]
+  },
+  "previous_event": "f79c51f23e3322eeaaf1b0e4ee13247d73ea842b0325565b681567d1bf2f2b05",
+  "request_id": "diplomacy-noun-evidence-oct24f-source-incorporation",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:diplomacy-noun-evidence-oct24f"
+}

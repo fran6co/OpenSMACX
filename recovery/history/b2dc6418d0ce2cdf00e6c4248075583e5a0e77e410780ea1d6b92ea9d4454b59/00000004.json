@@ -1,0 +1,17 @@
+{
+  "event_id": "97f38cde33f4c35425a6663c295455fef6ba143ccc3c9a79b8ac454f8e3a4110",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "net-session-phase-owner-oct24f-typed-read",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/netdaemon.cpp same-point const int state snapshot, no guard/callback/lifetime change; historical records unchanged. Native compiler validation pending."
+    ]
+  },
+  "previous_event": "010669cfc07d67eecda7866160e834bd69d96465fb9a0629046342b243d9d238",
+  "request_id": "net-session-phase-owner-oct24f-typed-read-incorporated",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:net-session-phase-owner-oct24f"
+}

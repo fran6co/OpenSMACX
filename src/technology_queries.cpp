@@ -757,7 +757,7 @@ int __cdecl tech_val(int tech_id, int faction_id, BOOL simple_calc) {
             }
         }
     } else if (tech_id < 97) { // factions
-        uint32_t factor = 1;
+        int factor = 1;
         uint32_t faction_id_2 = tech_id - MaxTechnologyNum;
         if (!wants_to_attack(faction_id, faction_id_2, 0)) {
             factor = 2;

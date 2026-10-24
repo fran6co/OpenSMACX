@@ -51,7 +51,7 @@ static_assert(sizeof(TimeControlEntry) == 0x20, "native time-control stride");
 static_assert(offsetof(TimeControlEntry, refresh) == 0x18,
               "native time-control refresh offset");
 TimeControlEntry TimeControl[6]{};
-struct NetDaemonPrimary { uint32_t trailing_words_[8]; };
+struct NetDaemonPrimary { uint32_t leading_words_[3]; uint32_t flags_; int session_phase_; uint32_t trailing_words_[9]; };
 struct NetDaemon { NetDaemonPrimary primary_state_; } NetDaemonNet{};
 
 std::vector<std::string> events;
@@ -100,6 +100,7 @@ static void reset() {
         TimeControl[i].extra = 100 + i;
         TimeControl[i].refresh = 700 + i;
     }
+    NetDaemonNet.primary_state_.session_phase_ = 0;
     for (auto &word : NetDaemonNet.primary_state_.trailing_words_) word = 0;
     events.clear();
     selection_after_parse = -1;
@@ -161,7 +162,7 @@ static void test_end_of_game_and_already_used_gates() {
 
     reset();
     GameDataStateStorage.fields_.game_state_ = 2;
-    NetDaemonNet.primary_state_.trailing_words_[7] = 1u << 2;
+    NetDaemonNet.primary_state_.trailing_words_[6] = 1u << 2;
     self.use_time_bonus();
     assert((events == std::vector<std::string>{"pop:NOBONUSDONE"}));
 }
