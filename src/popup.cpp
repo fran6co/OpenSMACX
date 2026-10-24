@@ -917,11 +917,11 @@ Scroll *Popup::on_listbox_scroll_delete(Scroll *scroll) {
 
 void Popup::hide() {
     if (is_visible()) {
-        const int seconds = static_cast<int>(field_30AC_) / 1000;
-        if (seconds != 1000) {
+        const int auto_hide_selector = static_cast<int>(field_30AC_) / 10000;
+        if (auto_hide_selector != 1000) {
             if (external_window_ == 0) {
                 if (MainInterfaceGlobal.is_visible()) {
-                    if (seconds == 0 || seconds == 5) {
+                    if (auto_hide_selector == 0 || auto_hide_selector == 5) {
                         if (scroll_.is_visible()) {
                             scroll_hide(this, &scroll_);
                         }
