@@ -1,0 +1,30 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "d89b2af4e3f6497ce99614db9fbcf541e64ab880",
+  "editable_files": [
+    "src/game.cpp",
+    "src/sprite.cpp",
+    "recovery/tests/test_game_data_format_state.py"
+  ],
+  "evidence": [
+    "Pinned game_data5A6AC0 transfers31C legacy bytes, compares signed version304, preserves full prefix then maps independently bounded project/council/technology/name/climate/weights/tail windows into current state. Recover actual provisional wire fields with asserted offsets/extent, opaque unproved ranges, ten-word terminal array with version[4]; remove offset/dword helper and raw offset walks. Preserve original complete-copy/field-write order and indeterminate write header. Wire names reflect destinations, not recovered historical declarators.",
+    "TexHeap635370 pin independently advances probe/index and reloads indexed descriptor on success. Three bounded unchanged-recipe attempts: ordinary for with indexed success reload is clearer than redundant paired cursor; native mnemonic similarity31-vs35=.758 becomes37-vs35=.917, no exact gain/loss and outside-selected residualPASS. Keep original signed count/overflow, alignment/free-space/first-fit/null/error behavior. No flags/wrappers or safety fix.",
+    "Coordinator alone edits isolated source/Git/compiler. Preserve every mapping/span/symbol/history/claim and any justified structural regression; inspect and expand collateral scope rather than automatically revert. Existing actual-source TexHeap damage controls and game_data format/transcript tests plus independent literal-offset stream-fed legacy-header boundary control; then full build/link/native object/scoped matching/reference/identity checks and independent review; manual standing authorization with fresh destination recheck. Any FAIL/UNKNOWN retained explicitly; no automatic/full-linked/runtime/game acceptance claimed."
+  ],
+  "intent": "Recover typed legacy save-header fields and the original indexed texture-heap search structure",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5925568,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6509424,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "legacy-header-texheap-owner-oct24k"
+}
