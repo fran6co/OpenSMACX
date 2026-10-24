@@ -767,9 +767,10 @@ void CouncWin::init(int proposal, int faction_id) {
         // their selected faction. 0x427E9B..0x427F4A considers only live,
         // eligible candidates whose own tally lies in the native top-two
         // comparisons before calling diplomacy_check(local, candidate, 0).
-        int support_by_faction[MaxPlayerNum] = {0};
+        int support_by_faction[MaxPlayerNum];
         const uint8_t alive_factions = GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_;
         for (int tally_candidate = 1; tally_candidate < MaxPlayerNum; ++tally_candidate) {
+            support_by_faction[tally_candidate] = 0;
             if ((Players[tally_candidate].rule_flags & RFLAG_ALIEN) != 0) {
                 continue;
             }
