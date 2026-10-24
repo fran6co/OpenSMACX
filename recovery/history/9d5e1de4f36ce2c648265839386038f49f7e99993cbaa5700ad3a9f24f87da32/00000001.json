@@ -1,0 +1,22 @@
+{
+  "event_id": "c3ce4e9e2e1dc0d46f442095bc63485d9b61263dcdf70f607975556ac5a5e835",
+  "payload": {
+    "affects": [
+      "entity-546c2a42d275b8a5e1f0a466a9395421124e340fe373c4b74a6dd49114355002",
+      "entity-ceada8a2d0646e82f29d6067dc32d18f1acc6c0af754b8e82278833b09be644a"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "renderer-codegen-collateral",
+    "evidence": [
+      "Private native MapWin screen changes unedited gen_terrain_poly(4632D0..466C92 plus655920..655932) machine output: exactly three reorderings of a9/a10 stack-parameter loads; all later argument values/call targets and section size13968 remain,571relocations retain targets/addends despite nine local assembler-label renames. Four UNK5 bf/ef changes are source line auxiliary metadata; its352codebytes/29relocations unchanged. Independent physical review retained complete raw changes and kept native outside-selectedFAIL.",
+      "Expand affected verification/ownership context to the original renderer identity before any integration; do not edit its C++ or omit its body from the original init-only preservation comparison. This is not a waiver, original-match claim or complete equivalence proof for14KB renderer. Preserve both original spans/claims, compare full current native statuses and all unrelated bodies/data, inspect each changed instruction and retain FAIL/UNKNOWN. No automatic admission or linked preservation follows."
+    ],
+    "hypothesis": "Restoring the real cache reference changes VC6 scheduling in an otherwise unchanged terrain renderer; retain and review its full obligations",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "renderer-codegen-collateral",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:mapwin-label-font-cache-oct24d"
+}

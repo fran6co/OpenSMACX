@@ -29,7 +29,7 @@ DAMAGES = (
     "spot_output", "primary_spot", "sprite_owner", "local_scalar",
     "palette_offset", "duplicate_close", "current_clip", "selected_button",
     "sort_hole", "sparse_victory", "parser_owner", "parser_grammar",
-    "secrets_sentinel", "first_battle_year", "parser_defaults",
+    "secrets_sentinel", "first_battle_year", "parser_defaults", "stale_faction_index",
 )
 
 
@@ -109,6 +109,11 @@ def damage(methods, kind):
                             "GenderDefault = Players[record.owner_faction_].noun_gender;",
                             "GenderDefault = Players[faction].noun_gender;")
         return methods[:start] + case + methods[end:]
+    if kind == "stale_faction_index":
+        return replace_once(
+            methods,
+            "FactionMonuments[ConsoleGlobal.faction_id_].latest_type_ = type;",
+            "FactionMonuments[faction].latest_type_ = type;")
     raise AssertionError(kind)
 
 

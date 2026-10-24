@@ -1,0 +1,24 @@
+{
+  "event_id": "dacc109c2e0674018e4a0677b20393d1db66ad59566a1ce0ab3584137bc7b8d7",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Private native MapWin screen changes unedited gen_terrain_poly(4632D0..466C92 plus655920..655932) machine output: exactly three reorderings of a9/a10 stack-parameter loads; all later argument values/call targets and section size13968 remain,571relocations retain targets/addends despite nine local assembler-label renames. Four UNK5 bf/ef changes are source line auxiliary metadata; its352codebytes/29relocations unchanged. Independent physical review retained complete raw changes and kept native outside-selectedFAIL.",
+      "Expand affected verification/ownership context to the original renderer identity before any integration; do not edit its C++ or omit its body from the original init-only preservation comparison. This is not a waiver, original-match claim or complete equivalence proof for14KB renderer. Preserve both original spans/claims, compare full current native statuses and all unrelated bodies/data, inspect each changed instruction and retain FAIL/UNKNOWN. No automatic admission or linked preservation follows."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4600528,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "c3ce4e9e2e1dc0d46f442095bc63485d9b61263dcdf70f607975556ac5a5e835",
+  "request_id": "include-renderer-verification-context",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:mapwin-label-font-cache-oct24d"
+}

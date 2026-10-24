@@ -92,7 +92,7 @@ def extract_definition(source: str, signature: str) -> str:
     raise AssertionError(f"unclosed function body: {signature}")
 
 
-def build_actual_source_translation_unit(tmp_path: Path) -> Path:
+def build_actual_source_translation_unit(tmp_path: Path, compute_mutation=None) -> Path:
     if not ROOT.is_dir() or not (ROOT / "src").is_dir():
         raise AssertionError(f"project root is missing src/: {ROOT}")
     extracted = []
@@ -100,7 +100,10 @@ def build_actual_source_translation_unit(tmp_path: Path) -> Path:
         source_path = ROOT / relative
         if not source_path.is_file():
             raise AssertionError(f"product source missing: {source_path}")
-        extracted.append(extract_definition(source_path.read_text(encoding="utf-8"), signature))
+        definition = extract_definition(source_path.read_text(encoding="utf-8"), signature)
+        if compute_mutation is not None and signature == "void Menu::compute()":
+            definition = compute_mutation(definition)
+        extracted.append(definition)
     template = HARNESS.read_text(encoding="utf-8")
     marker = '#include "GENERATED_MENU_SOURCE"'
     if template.count(marker) != 1:
@@ -108,6 +111,62 @@ def build_actual_source_translation_unit(tmp_path: Path) -> Path:
     generated = tmp_path / "menu-product-source-host.cpp"
     generated.write_text(template.replace(marker, "\n\n".join(extracted)), encoding="utf-8")
     return generated
+
+
+def replace_compute_anchor(source: str, old: str, new: str, label: str) -> str:
+    count = source.count(old)
+    assert count == 1, f"{label} anchor should occur once, found {count}"
+    return source.replace(old, new, 1)
+
+
+def stale_font_mutant(body: str) -> str:
+    body = replace_compute_anchor(
+        body,
+        "    if (!MenuDefaultFont) return;\n\n    spot_.init(count_);",
+        "    if (!MenuDefaultFont) return;\n"
+        "    Font *const cached_font = MenuDefaultFont;\n\n"
+        "    spot_.init(count_);",
+        "stale-font cache insertion",
+    )
+    for name in ("left_font", "right_font", "entry_font"):
+        body = replace_compute_anchor(
+            body,
+            f"Font *const {name} = MenuDefaultFont;",
+            f"Font *const {name} = cached_font;",
+            f"{name} stale-font capture",
+        )
+    return body
+
+
+def late_height_mutant(body: str) -> str:
+    return replace_compute_anchor(
+        body,
+        "    const int line_height = right_font->height_ * 2;\n"
+        "    int right_space = right_font->width(MenuComputeRightSpace);",
+        "    int right_space = right_font->width(MenuComputeRightSpace);\n"
+        "    const int line_height = MenuDefaultFont->height_ * 2;",
+        "height-after-right-width ordering",
+    )
+
+
+@pytest.mark.parametrize("compiler", ["g++", "clang++"])
+@pytest.mark.parametrize("mutator", [stale_font_mutant, late_height_mutant])
+def test_compute_ordering_mutants_compile_and_fail(tmp_path, compiler, mutator):
+    executable = shutil.which(compiler)
+    if executable is None:
+        pytest.skip(f"{compiler} is unavailable")
+    source = build_actual_source_translation_unit(tmp_path, mutator)
+    binary = tmp_path / f"menu-product-mutant-{compiler}"
+    built = subprocess.run(
+        [executable, "-std=c++03", "-Wall", "-Wextra", "-Werror", "-pedantic",
+         "-fsanitize=address,undefined", "-fno-omit-frame-pointer", str(source), "-o", str(binary)],
+        check=False, capture_output=True, text=True,
+    )
+    assert built.returncode == 0, built.stderr
+    env = dict(os.environ)
+    env["ASAN_OPTIONS"] = "detect_leaks=0"
+    result = subprocess.run([str(binary)], check=False, capture_output=True, text=True, env=env)
+    assert result.returncode != 0, f"{mutator.__name__} escaped the actual-source assertions"
 
 
 def test_vc6_mouse_overload_declaration_order_is_explicit():
