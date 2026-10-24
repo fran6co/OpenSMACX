@@ -94,8 +94,8 @@ int PopupModalState;
 int NetDaemonTransferResetWord = -1;
 static void *mem_get(int size) { return malloc((size_t)size); }
 // This modal control doubles the transfer operation; the separate actual-body
-// owner controls exercise the recovered wrapper's statuses and size writeback.
-static int netdaemon_inflate_buffer(unsigned char *, unsigned long *, unsigned char *, unsigned int) {
+// owner controls exercise the linked zlib boundary's statuses and size writeback.
+static int uncompress(unsigned char *, unsigned long *, const unsigned char *, unsigned long) {
     return 0;
 }
 static void parse_says(int, const char *, int, int) {}

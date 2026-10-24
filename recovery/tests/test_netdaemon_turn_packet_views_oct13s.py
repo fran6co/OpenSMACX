@@ -267,7 +267,12 @@ def test_view_uses_actual_record_and_field_sized_memcpy_without_length_policy():
     assert "unresolved_2_[2]" in record
     for offset in ("opcode_","faction_","timestamp_","sequence_","payload_10_","payload_14_","payload_18_","payload_1C_"):
         assert f"offsetof(MessageDataRecord, {offset})" in view
-    assert view.count("std::memcpy(&value,")==8
+    # Eight record-field views plus the signed byte view of payload_18_.
+    # The byte getter intentionally reads one byte from that same field.
+    byte_view=extract(view,"int8_t payload_18_byte() const")
+    assert "int8_t value;" in byte_view
+    assert "offsetof(MessageDataRecord, payload_18_), sizeof value)" in byte_view
+    assert view.count("std::memcpy(&value,")==9
     assert "memcpy(this" not in view and "sizeof(MessageDataRecord)" not in view
     for signature in HANDLERS:
         body=extract(text,signature)
