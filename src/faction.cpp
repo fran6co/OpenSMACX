@@ -3313,7 +3313,7 @@ void __cdecl social_ai(int faction_id, int growth_val, int tech_val, int wealth_
                 if (econ_val > 4) {
                     econ_val = 4;
                 }
-                econ_weight = PlayersData[faction_id].unk_47 + econ_val * 2 - 4 / (unk_sum1 + 1);
+                econ_weight = (PlayersData[faction_id].unk_47 + econ_val * 2 - 4) / (unk_sum1 + 1);
             }
             for (; econ_weight > 0; econ_weight--, effic_val--) {
                 if (effic_val <= 0) {
@@ -3567,10 +3567,10 @@ void __cdecl social_ai(int faction_id, int growth_val, int tech_val, int wealth_
                 }
                 unk_val6 += research_weight;
                 // industry
-                uint32_t unk_val3_temp = range(unk_val3, 1, 2);
+                int unk_val3_temp = range(unk_val3, 1, 2);
                 int industry_weight = soc_eff.values_[SocialEffect::INDUSTRY] * unk_val3_temp
                     * PlayersData[faction_id].pop_total
-                    * (2 * (static_cast<uint32_t>(wealth_val) + unk_sum1) + 1) / 10;
+                    * (2 * (wealth_val + unk_sum1) + 1) / 10;
                 if (power_val) {
                     industry_weight *= 2;
                 }

@@ -1,9 +1,8 @@
-"""Bounded actual-source controls for social_ai's signed and unsigned lanes.
+"""Bounded actual-source controls for social_ai's signed numeric lanes.
 
 The harness compiles only the production local declarations and three numeric
 blocks. It does not reproduce social_ai's category search or establish full
-function/runtime behavior. Inputs keep signed products in range; the industry
-case exercises defined uint32_t wrap and a representable quotient.
+function/runtime behavior. Inputs keep signed products and divisions in range.
 """
 
 from pathlib import Path
@@ -67,16 +66,16 @@ def _parts(source):
 
 _HOST_PREFIX = r"""
 #include <stdint.h>
-enum { MaxContinentNum = 64 };
-enum Plan { PLAN_DEFENSIVE = 1 };
+enum { MaxContinentNum = 128 };
+enum Plan { PLAN_DEFENSIVE = 2 };
 struct SocialEffect {
     enum EffectIndex { ECONOMY, EFFICIENCY, SUPPORT, TALENT, MORALE, POLICE,
                        GROWTH, PLANET, PROBE, INDUSTRY, RESEARCH };
     int values_[11];
 };
 struct PlayerData {
-    int region_total_bases[64];
-    uint8_t region_base_plan[64];
+    int region_total_bases[128];
+    uint8_t region_base_plan[128];
     int unk_46[9];
     int unk_47;
     int ai_fight;
@@ -93,7 +92,8 @@ int range(int value, int low, int high) {
 def _program(source, case, expected):
     declarations, economy, morale, industry = _parts(source)
     declarations = textwrap.dedent(declarations)
-    if case == "economy":
+    if case in ("economy", "economy_asymmetric"):
+        unk47 = -6 if case == "economy" else -10
         body = f"""
 int actual() {{
     const int faction_id = 0;
@@ -104,7 +104,7 @@ int actual() {{
     unk_sum1 = 1;
     unk_val3 = 3;
     soc_eff.values_[SocialEffect::ECONOMY] = 2;
-    PlayersData[0].unk_47 = -6;
+    PlayersData[0].unk_47 = {unk47};
     PlayersData[0].ai_fight = 0;
 {textwrap.indent(economy, '    ')}
     return unk_val6;
@@ -171,7 +171,7 @@ def _compile_run(compiler, tmp_path, label, program, expected_pass):
         assert ran.returncode != 0, "compiled source mutant escaped the numeric oracle"
 
 
-def test_social_ai_signed_economy_morale_and_unsigned_industry_actual_blocks(tmp_path):
+def test_social_ai_signed_economy_morale_and_industry_actual_blocks(tmp_path):
     body = _social_ai_body()
     declarations, economy, morale, industry = _parts(body)
     assert "int unk_sum1 = 0;" in declarations
@@ -179,8 +179,7 @@ def test_social_ai_signed_economy_morale_and_unsigned_industry_actual_blocks(tmp
     assert "econ_weight /= (unk_sum1 + 1);" in economy
     assert "unk_val6 += econ_weight / unk_val3;" in economy
     assert "(unk_sum1 + 1)" in morale
-    assert "uint32_t unk_val3_temp = range(unk_val3, 1, 2);" in industry
-    assert "static_cast<uint32_t>(wealth_val)" in industry
+    assert "int unk_val3_temp = range(unk_val3, 1, 2);" in industry
 
     compilers = [path for name in ("g++", "clang++") if (path := shutil.which(name))]
     if not compilers:
@@ -189,10 +188,19 @@ def test_social_ai_signed_economy_morale_and_unsigned_industry_actual_blocks(tmp
     for compiler in compilers:
         _compile_run(compiler, tmp_path, "economy_signed_" + Path(compiler).name,
                      _program(body, "economy", -1), True)
+        _compile_run(compiler, tmp_path, "economy_asymmetric_" + Path(compiler).name,
+                     _program(body, "economy_asymmetric", -1), True)
+        bad_economy_parentheses = _mutated(
+            body,
+            "econ_weight = (PlayersData[faction_id].unk_47 + econ_val * 2 - 4) / (unk_sum1 + 1);",
+            "econ_weight = PlayersData[faction_id].unk_47 + econ_val * 2 - 4 / (unk_sum1 + 1);",
+        )
+        _compile_run(compiler, tmp_path, "mutant_bad_economy_parentheses_" + Path(compiler).name,
+                     _program(bad_economy_parentheses, "economy_asymmetric", -1), False)
         _compile_run(compiler, tmp_path, "morale_signed_" + Path(compiler).name,
                      _program(body, "morale", -3), True)
-        _compile_run(compiler, tmp_path, "industry_unsigned_" + Path(compiler).name,
-                     _program(body, "industry", 429496609), True)
+        _compile_run(compiler, tmp_path, "industry_signed_" + Path(compiler).name,
+                     _program(body, "industry", -120), True)
 
         unsigned_tech = _mutated(body, "int unk_val3 = 1;", "uint32_t unk_val3 = 1;")
         _compile_run(compiler, tmp_path, "mutant_unsigned_tech_" + Path(compiler).name,
@@ -202,15 +210,10 @@ def test_social_ai_signed_economy_morale_and_unsigned_industry_actual_blocks(tmp
         _compile_run(compiler, tmp_path, "mutant_unsigned_count_" + Path(compiler).name,
                      _program(unsigned_count, "morale", -3), False)
 
-        signed_industry = _mutated(
+        unsigned_industry_clamp = _mutated(
             body,
-            "uint32_t unk_val3_temp = range(unk_val3, 1, 2);",
             "int unk_val3_temp = range(unk_val3, 1, 2);",
+            "uint32_t unk_val3_temp = range(unk_val3, 1, 2);",
         )
-        signed_industry = _mutated(
-            signed_industry,
-            "static_cast<uint32_t>(wealth_val)",
-            "wealth_val",
-        )
-        _compile_run(compiler, tmp_path, "mutant_signed_industry_" + Path(compiler).name,
-                     _program(signed_industry, "industry", 429496609), False)
+        _compile_run(compiler, tmp_path, "mutant_unsigned_industry_clamp_" + Path(compiler).name,
+                     _program(unsigned_industry_clamp, "industry", -120), False)
