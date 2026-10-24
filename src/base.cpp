@@ -6302,22 +6302,13 @@ int __cdecl base_making(int production_id, int base_id) {
             }
         }
     }
-    switch (retool) { // converted into switch to improve readability and performance
-      case 0: // Always Free
-        return 0;
-      case 1: // Free in Category
-        if (production_id >= 0) {
-            return 0; // Veh
-        }
-        // SP (1), repeatable facility (2), non-repeatable facility (3)
-        return (production_id > -FacilitySPStart) ? (production_id > -FacilityRepStart) + 2 : 1;
-      case 2: // Free switching between SPs (default behavior)
+    if (retool == 0) return 0;
+    if (retool == 2)
         return (production_id <= -FacilitySPStart) ? -FacilitySPStart : production_id;
-      case 3: // Never Free
-        return production_id;
-      default:
-        return 1; // should never be reached unless problem with retool value
-    }
+    if (retool > 1) return production_id;
+    if (production_id >= 0) return 0;
+    // SP (1), repeatable facility (2), non-repeatable facility (3)
+    return (production_id > -FacilitySPStart) ? (production_id > -FacilityRepStart) + 2 : 1;
 }
 
 /*

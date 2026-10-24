@@ -1092,20 +1092,20 @@ int Palette::make_blend_table(const Palette *other, uint8_t *table, int start,
         int i = start;
         do {
             uint8_t r = static_cast<uint8_t>(
-                (static_cast<unsigned int>(otherCopy[i].peRed) * other_weight +
-                 static_cast<unsigned int>(selfCopy[i].peRed) * self_weight) /
+                (otherCopy[i].peRed * other_weight +
+                 selfCopy[i].peRed * self_weight) /
                 divisor);
             selfCopy[i].peRed = r;
 
             uint8_t g = static_cast<uint8_t>(
-                (static_cast<unsigned int>(otherCopy[i].peGreen) * other_weight +
-                 static_cast<unsigned int>(selfCopy[i].peGreen) * self_weight) /
+                (otherCopy[i].peGreen * other_weight +
+                 selfCopy[i].peGreen * self_weight) /
                 divisor);
             selfCopy[i].peGreen = g;
 
             int bSum =
-                static_cast<unsigned int>(otherCopy[i].peBlue) * other_weight +
-                static_cast<unsigned int>(selfCopy[i].peBlue) * self_weight;
+                otherCopy[i].peBlue * other_weight +
+                selfCopy[i].peBlue * self_weight;
             int b = bSum / divisor;
             selfCopy[i].peBlue = static_cast<uint8_t>(b);
 
