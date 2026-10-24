@@ -67,7 +67,7 @@ Player Players[8];
 PlayerData PlayersData[8];
 Sprite diplomacy_sprites[8];
 Sprite *FactionDiplomacyPortraits[8];
-uint32_t FactionRankingsUnk[8];
+int FactionRankingsUnk[8];
 Console ConsoleGlobal;
 InfoWin ConsoleInfoWin;
 NetDaemon NetDaemonNet;

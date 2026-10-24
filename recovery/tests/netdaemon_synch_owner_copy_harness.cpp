@@ -94,7 +94,7 @@ VehPrototype VehPrototypes[MaxVehProtoNum];
 Veh Vehs[2049];
 Base Bases[MaxBaseNum];
 int ControlTurnPhase;
-uint32_t FactionRankingsUnk[MaxPlayerNum];
+int FactionRankingsUnk[MaxPlayerNum];
 uint16_t FactionRankingHistory[MaxPlayerNum * MaxRankingHistoryTurns];
 int ReplayEventBytes;
 ReplayEventRecord ReplayEvents[1024];

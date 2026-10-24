@@ -231,8 +231,8 @@ def test_pinned_state_zero_heading_literal_and_call_order() -> None:
          "PlayersData[other].diplo_treaties[faction]", "treaty direction"),
         ("0x41c / 4", "0x41c", "case-six label units"),
         ("unk_78[4 + sample]", "unk_78[sample]", "region sample window"),
-        ("FactionRankingsUnk[faction_index]) *",
-         "FactionRankingsUnk[faction_index - 1]) *", "rank-seven bar score"),
+        ("FactionRankingsUnk[faction_index] *",
+         "FactionRankingsUnk[faction_index - 1] *", "rank-seven bar score"),
         ("static_cast<int>(GameDataStateStorage.fields_.faction_rankings_[7]));",
          "static_cast<int>(GameDataStateStorage.fields_.faction_rankings_[6]));", "shared ranking owner slot"),
         ("case 0: value = static_cast<int>(PlayersData[candidate].tech_ranking); break;",
@@ -245,7 +245,10 @@ def test_source_damage_controls_are_detected(needle: str, replacement: str,
     if not compiler:
         pytest.skip("no host C++ compiler available")
     source, _ = _actual_source()
-    assert needle in source, f"proposal/source lost mutation anchor: {case}"
+    if case == "rank-seven bar score":
+        assert source.count(needle) == 1, f"proposal/source mutation anchor not unique: {case}"
+    else:
+        assert needle in source, f"proposal/source lost mutation anchor: {case}"
     damaged = source.replace(needle, replacement, 1)
     harness = HARNESS.read_text().replace("/*ACTUAL_SOURCE*/", damaged)
     with tempfile.TemporaryDirectory(prefix="infowin-setup-damage-") as temp:

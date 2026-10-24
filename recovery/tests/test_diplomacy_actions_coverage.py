@@ -1341,7 +1341,7 @@ struct PlayerData { uint32_t diplo_treaties[8], ranking, flags; int tech_ranking
 const uint32_t PFLAG_COOP_WITH_HUMAN = 0x00400000u;
 PlayerData PlayersData[8];
 struct ReactorRecord { int preq_tech; } Reactor[2];
-uint32_t FactionRankingsUnk[8];
+int FactionRankingsUnk[8];
 int RankingFactionIDUnk2;
 int PopupDialogFactionID, DiploScratchF7C4, DiploScratchF800;
 int DiploScratchFA5C, DiploScratchFA2C, DiploScratchFA60, DiploScratchFA6C;
@@ -1668,7 +1668,8 @@ def test_actual_propose_attack(tmp_path, compiler_name):
     const uint32_t DTREATY_PACT=0x1u, DTREATY_COMMLINK=0x8u;
     const uint32_t DTREATY_VENDETTA=0x10u, DTREATY_WANT_REVENGE=0x20u;
     const uint32_t DTREATY_HAVE_SURRENDERED=0x02000000u;
-    uint32_t FactionRankings[8],FactionRankingsUnk[8];
+    uint32_t FactionRankings[8];
+    int FactionRankingsUnk[8];
     int DiploScratchFA5C,DiploScratchFA78,DiploScratchF7FC,DiploScratchF7F0;
     int DiploScratchFA54,DiploScratchFA3C,DiploScratchFA98;
     int DiploScratchFAA8,DiploScratchFA18,DiploScratchFA1C,DiploScratchFA28;
