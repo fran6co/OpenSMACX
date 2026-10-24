@@ -1,0 +1,28 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "6c6b29a9188afa25fe22e5978844b2633e6a6c1a",
+  "editable_files": [
+    "src/reportif.cpp"
+  ],
+  "evidence": [
+    "Current6c6b29a91 source, exact pin and qualified build-n7qvs_xc COFF bind these proposals; native source body and ABI remain guarded. No automatic acceptance, source publication or claim grant by experimental workers.",
+    "Maximum one candidate per selected function at this checkpoint; no compiler flag/export/ABI tricks. DeletionList helper change must measure all class members and protect its three exact bodies; its actual affected inline closure is helper, ack and add_deletion.",
+    "Preserve original behavior including unsafe paths, load/callback order and historical claims. PlanWin pre-capacity field reads follow pin evidence; no volatile tricks may force faults. DesignWin panel scratch reuse needs nonescape review. Any outside failure or structural discovery stays pending for coordinator review."
+  ],
+  "intent": "Bounded genuine-owner recovery/matching trial; one ordinary source proposal per selected function and all shared-helper consequences.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4864336,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4877680,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "easy-reportif-owner-oct24u"
+}
