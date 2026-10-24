@@ -171,6 +171,12 @@ Status: Complete
 
 /*
 // ORIGINAL: 0x00607CF0 ??0FlatButton@@QAE@XZ 0x00607CF0-0x00607D96
+// RECOVERY_GENERATED: v1 vtable 0x00669754 ? ??_7FlatButton@@6BWin@@@ 0x00607CF0
+// RECOVERY_GENERATED: v1 vtable 0x0066974C ? ??_7FlatButton@@6BBuffer@@@ 0x00607CF0
+// Pinned constructor stores the Win view at this+0 and Buffer at this+0x444.
+// FlatButton -> BaseButton -> GraphicWin, with GraphicWin's Win then Buffer
+// bases, supports those two subobject address points. These are start-only
+// bindings; candidate COFF lengths do not establish original table ends.
 // TRIED: THE NOTES BELOW WERE INVISIBLE UNTIL 2026-08-22. They sat AFTER
 //   this comment block's closing delimiter, so `decomp.reader` never read
 //   them and `frontier.py --untouched` kept offering this body as fresh.
