@@ -1,0 +1,32 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "12431a57471ae21de2f0b1d1a56f7846d5088984",
+  "editable_files": [
+    "src/map.h",
+    "src/map.cpp",
+    "src/world.cpp",
+    "recovery/tests/map_metadata_control.cpp",
+    "recovery/tests/test_map_metadata_owner.py"
+  ],
+  "evidence": [
+    "Pin5C28A3 loads global9B22B8 and5C28C1/5C28D9 compare signed to int radius. Change declaration+definition BrushVal2 to int together; source start-only v4 alias keeps historical emitted unsigned name and targets current signed definition, no original debug-name/extent/lifetime claim. Full reset/increment/guard source closure in brush/paint_land retained with no body/guard/high-range arithmetic edits. Negative radius must perform no brush/rand/body effects; keep original high-range tests and causal oldunsigned fixture control.",
+    "All authorized owners are one coordinator-prepared isolated structural recovery batch; only coordinator mutates product source, Git, compiler/preparation and integration. Read-only agent proposals are hints. Preserve original identities/full spans/symbols/history and every historical byte claim; no baseline reset, demotion, safety normalization, compiler-policy trick, wrapper or assembly.",
+    "Require independent source/pin and actual-source controls, fresh application build/link, mapping/reference/claim continuity and fresh physical scoped comparisons. Explicitly review all changed output and preserve native FAIL/UNKNOWN without waivers; declared globals/member migrations can exceed a function-only residual, not fabricate preservation. Measure all mapped functions and fresh destination after integration. No full linked-selection/structure/runtime, exhaustive discovery, automatic/game acceptance or new coverage claim follows."
+  ],
+  "intent": "Recover signed shared paint brush counter",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6038592,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6039536,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "brush-count-signed-oct24f"
+}

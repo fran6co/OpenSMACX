@@ -1,0 +1,34 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "12431a57471ae21de2f0b1d1a56f7846d5088984",
+  "editable_files": [
+    "src/map.cpp",
+    "recovery/tests/test_map_coast_zoc_signed_oct24f.py"
+  ],
+  "evidence": [
+    "Original coast backedges use signedJL; choose ordinary int loop counters and preserve conditional i +=2-(i&1) plus loopincrement (not constant step2). base_coast always reads tile_count before region>=127 substitution; retain this original out-of-range-read possibility, no bounds guard. Keep xrange helper, no revived hand-inlining. zoc owner helper bounds0..7/-1; intret and directowner comparisons remove unnecessary casts with max result0..8. Private three-body screen has no exact gains/losses and native outsideFAIL; inspect collateral before manual integration, never waive it.",
+    "All authorized owners are one coordinator-prepared isolated structural recovery batch; only coordinator mutates product source, Git, compiler/preparation and integration. Read-only agent proposals are hints. Preserve original identities/full spans/symbols/history and every historical byte claim; no baseline reset, demotion, safety normalization, compiler-policy trick, wrapper or assembly.",
+    "Require independent source/pin and actual-source controls, fresh application build/link, mapping/reference/claim continuity and fresh physical scoped comparisons. Explicitly review all changed output and preserve native FAIL/UNKNOWN without waivers; declared globals/member migrations can exceed a function-only residual, not fabricate preservation. Measure all mapped functions and fresh destination after integration. No full linked-selection/structure/runtime, exhaustive discovery, automatic/game acceptance or new coverage claim follows."
+  ],
+  "intent": "Recover signed coast counters, zone owner and original sentinel read",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5300016,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5300272,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6064832,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "map-coast-zoc-signed-oct24f"
+}
