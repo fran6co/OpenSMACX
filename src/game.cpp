@@ -6736,12 +6736,20 @@ static void game_data_migrate_legacy_header(
     memset(&GameDataStateStorage.fields_.secret_project_.project_base[33],
            0xFF, 31 * sizeof(int));
     GameDataStateStorage.fields_.governor_faction_ = header->governor_faction_;
-    memcpy(GameDataStateStorage.fields_.council_resolution_count_,
-           header->council_resolution_count_,
-           sizeof(GameDataStateStorage.fields_.council_resolution_count_));
-    memcpy(GameDataStateStorage.fields_.council_last_resolution_turn_,
-           header->council_last_resolution_turn_,
-           sizeof(GameDataStateStorage.fields_.council_last_resolution_turn_));
+
+    // The original loads each pair before storing that pair, then advances
+    // by one dword through all eleven records.
+    for (int resolution = 0; resolution < 11; ++resolution) {
+        const int resolution_count =
+            header->council_resolution_count_[resolution];
+        const int last_resolution_turn =
+            header->council_last_resolution_turn_[resolution];
+        GameDataStateStorage.fields_.council_resolution_count_[resolution] =
+            resolution_count;
+        GameDataStateStorage.fields_.council_last_resolution_turn_[resolution] =
+            last_resolution_turn;
+    }
+
     memcpy(GameDataStateStorage.fields_.game_tech_achieved_,
            header->game_tech_achieved_,
            sizeof(GameDataStateStorage.fields_.game_tech_achieved_));
@@ -6750,10 +6758,12 @@ static void game_data_migrate_legacy_header(
            sizeof(GameDataStateStorage.fields_.legacy_game_save_name_));
     GameDataStateStorage.fields_.climate_rise_step_ = header->climate_rise_step_;
     GameDataStateStorage.fields_.climate_rise_limit_ = header->climate_rise_limit_;
-    GameDataStateStorage.fields_.climate_rise_accum_ = header->climate_rise_accum_;
-    GameDataStateStorage.fields_.climate_sea_level_delta_ = header->climate_sea_level_delta_;
+    // Preserve the original target write order: +0x34C, +0x344, then +0x348.
     GameDataStateStorage.fields_.transcendence_score_bonus_ =
         header->transcendence_score_bonus_;
+    GameDataStateStorage.fields_.climate_rise_accum_ = header->climate_rise_accum_;
+    GameDataStateStorage.fields_.climate_sea_level_delta_ =
+        header->climate_sea_level_delta_;
     memcpy(GameDataStateStorage.fields_.transcendence_score_weights_,
            header->transcendence_score_weights_,
            sizeof(GameDataStateStorage.fields_.transcendence_score_weights_));
