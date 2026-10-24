@@ -1,0 +1,30 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "022c43981b5bf710a6dcda6d35f1007014d7361b",
+  "editable_files": [
+    "src/stringstruct.h",
+    "src/stringstruct.cpp",
+    "src/basepop.cpp"
+  ],
+  "evidence": [
+    "Read-only source investigation with ephemeral compiler input overlays only; do not edit production source or publish annotations/claims. Current_entry is the only remaining out-of-line helper among seek_pos/next_entry/current_entry; original BasePop604EA0 contains the current_entry guard/load inline. Test its real unchanged method body as ordinary inline in stringstruct.h, removing duplicate cpp definition, together with the already tested BasePop candidate3.",
+    "Use actual production recipe/native Compiler/Coff compare and verified whole-object unchanged replicas for stringstruct/basepop. Preserve ABI/body/error behavior, all original mappings/claims. Explicitly inspect original402530 COMDAT retention and all mapped neighbor exactness; missing code and any regressions are obligations, never pass. No MEASURED/dllexport, artificial callers/address-taking, asm/byte copies, flags changes or task baseline resets to force retention.",
+    "Pinned original PE export metadata has zero exported entries despite a small directory header; it does not prove all historical retention causes, but new artificial exports are unjustified. Existing forced retention elsewhere is not approval to add another. Native absence/unsupported retention stays recorded. Stop after one plain-inline experiment; this is source-structure evidence for central followup, not acceptance or published caller/class migration."
+  ],
+  "intent": "Investigate plain-inline current-entry placement without adding export retention",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4203824,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6311584,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "list-inline-investigation-oct24o"
+}
