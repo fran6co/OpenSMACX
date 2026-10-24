@@ -1,0 +1,22 @@
+{
+  "event_id": "7153271b8a9a9014ad8d040c4498cf2141d6ec6e11bba4c3e1c3a2d8cb903bfd",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_social_ai_signed_weights_actual_source.py",
+      "src/faction.cpp"
+    ],
+    "evidence": [
+      "Independent complete-use-chain evidence identifies signed IDIV and signed morale /8 in original social_ai, while current unk_sum1 and unk_val3 still force unsigned operations. Authorize one additional coherent local-type candidate (cumulative social_ai candidates two, within bounded policy), not a spelling search. Preserve the original task baseline 85a9a2fef; the integrated shared-field dependency context eda3605 is an experiment control, never a task baseline reset.",
+      "Change only the proven bounded count and technology multiplier locals to int, retain unsigned unk_val3_temp and the evidenced industry low32 unsigned /10 lane (one explicit unsigned operand if necessary). Preserve all existing branch/callback order, error/overflow quirks and helper paths. No blanket counter conversion, new loop, guard or flag changes. Native VC6 low32 products and signed quotient must be measured; portable signed-overflow semantics are not claimed.",
+      "Authorize meaningful actual-source negative economy/morale cases and unsigned-industry edge controls with causal unsigned-type mutants. Separate test helper owns only the new test file; production owner edits only faction.cpp. Coordinator combines, verifies, records discoveries and integrates; workers do not compile with Wine or mutate Git."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "638605ae4e673e301c34f91bbb0660526fc7d15ccc5793cdfef343a1ce12f84d",
+  "request_id": "social-ai-proven-local-type-followup-oct24s",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:player-base-count-owner-oct24r"
+}
