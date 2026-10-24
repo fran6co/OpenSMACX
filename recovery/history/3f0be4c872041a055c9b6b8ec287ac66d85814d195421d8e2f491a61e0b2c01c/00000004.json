@@ -1,0 +1,18 @@
+{
+  "event_id": "1d33161d92018d14b9c00034d100589ae76d5b69dd0194207257e4a643a1af72",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "unchanged-target-unmoved-spelling-not-admitted-oct25b",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Coordinator rejects only the redundant unintegrated source spelling; no historical claim, implementation, class discovery or source identity is discarded. Full proposal and raw probe remain in extension-proposals/005C1AB0.cpp and native evidence.",
+      "The candidate vehicle TU keeps the substantive sub_500380 live-count correction and every other prior body. Native whole-TU, build/link and global preservation will recheck this final composition."
+    ]
+  },
+  "previous_event": "a90f9c08f6d47fb4a135816fbb742309b04f200e51247fb54e1253014ed6e4ad",
+  "request_id": "unchanged-target-unmoved-spelling-not-admitted-oct25b-decision",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:direct-base-mapwin-oct25b"
+}

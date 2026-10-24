@@ -48,17 +48,17 @@ def test_shared_fields_and_production_divisions_are_signed():
     listbox = _normalized(LISTBOX)
     assert "dialog.row_count_ = dialog.field_30_ / dialog.field_68_;" in spritebox
     assert "dialog.column_count_ = dialog.field_2C_ / dialog.field_64_;" in spritebox
-    assert "dialog.field_2C_ / dialog.field_4C_" in radiobutton
-    assert "width_numerator / dialog.field_4C_" in radiobutton
-    assert "dialog.field_2C_) - static_cast<uint32_t>(dialog.field_40_) * 2u" in radiobutton
-    assert "dialog.row_count_ = dialog.field_30_ / dialog.field_68_;" in radiobutton
+    assert "Dialog::field_2C_ / Dialog::field_4C_" in radiobutton
+    assert "width_numerator / Dialog::field_4C_" in radiobutton
+    assert "Dialog::field_2C_) - static_cast<uint32_t>(Dialog::field_40_) * 2u" in radiobutton
+    assert "Dialog::row_count_ = Dialog::field_30_ / Dialog::field_68_;" in radiobutton
 
     # These existing unsigned intermediates preserve the original dword
     # wrap before the resulting bit pattern is interpreted as signed.
     assert "uint32_t rows_numerator = static_cast<uint32_t>(dialog.row_count_) - 1u" in spritebox
     assert "static_cast<int32_t>(rows_numerator) / dialog.row_count_" in spritebox
     assert "uint32_t product = static_cast<uint32_t>(columns)" in radiobutton
-    assert "static_cast<int32_t>(product) < dialog.item_list_.entry_count_" in radiobutton
+    assert "static_cast<int32_t>(product) < Dialog::item_list_.entry_count_" in radiobutton
 
     # Bind runtime wrap controls below to the actual production fragments in
     # both draw_item owners and the other consumers affected by the type edit.
@@ -69,8 +69,8 @@ def test_shared_fields_and_production_divisions_are_signed():
         assert "const uint32_t x_bits = (static_cast<uint32_t>(column_width) + static_cast<uint32_t>(cell_height)) * static_cast<uint32_t>(column) + static_cast<uint32_t>(Dialog::field_40_);" in source
         assert "static_cast<uint32_t>(x) + static_cast<uint32_t>(Dialog::field_64_)" in source
     assert "static_cast<uint32_t>(measured_edit) + static_cast<uint32_t>(dialog.field_40_) * 2u" in editgroup
-    assert "static_cast<uint32_t>(dialog.field_2C_) - static_cast<uint32_t>(ScrollDefaultThickness)" in listbox
-    assert "static_cast<uint32_t>(dialog.field_30_) - static_cast<uint32_t>(ScrollDefaultThickness)" in listbox
+    assert "static_cast<uint32_t>(Dialog::field_2C_) - static_cast<uint32_t>(ScrollDefaultThickness)" in listbox
+    assert "static_cast<uint32_t>(Dialog::field_30_) - static_cast<uint32_t>(ScrollDefaultThickness)" in listbox
 
 
 HARNESS = r"""

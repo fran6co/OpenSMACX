@@ -399,91 +399,89 @@ void CheckBox::draw_item(int position, int state, int) {
 // ORIGINAL: 0x0060ED10 ?calculate_dimensions@CheckBox@@QAEHXZ 0x0060ED10-0x0060F02B FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0060ed10.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x60ed10 complete control/data-access review and src/jackal/checkbox.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
 int CheckBox::calculate_dimensions() {
-    Dialog &dialog = *this;
-    Buffer *const buffer = static_cast<Buffer *>(static_cast<GraphicWin *>(this));
-    if (dialog.item_list_.entry_count_ == 0) {
+    if (Dialog::item_list_.entry_count_ == 0) {
         return 7;
     }
-    buffer->set_text_color(text_color_a_, text_color_b_, text_color_c_, text_color_d_);
-    buffer->set_text_color2(text_color_2a_, text_color_2b_, text_color_2c_, text_color_2d_);
-    buffer->set_text_color3(text_color_3a_, text_color_3b_, text_color_3c_, text_color_3d_);
-    buffer->set_font(Dialog::font1_, Dialog::font2_, Dialog::font3_, 0);
+    Buffer::set_text_color(text_color_a_, text_color_b_, text_color_c_, text_color_d_);
+    Buffer::set_text_color2(text_color_2a_, text_color_2b_, text_color_2c_, text_color_2d_);
+    Buffer::set_text_color3(text_color_3a_, text_color_3b_, text_color_3c_, text_color_3d_);
+    Buffer::set_font(Dialog::font1_, Dialog::font2_, Dialog::font3_, 0);
 
-    if (dialog.field_34_ == 0 && unchecked_sprite_ != 0 && checked_sprite_ != 0) {
-        dialog.field_34_ = unchecked_sprite_->width();
-        if (dialog.field_34_ < checked_sprite_->width()) {
-            dialog.field_34_ = checked_sprite_->width();
+    if (Dialog::field_34_ == 0 && unchecked_sprite_ != 0 && checked_sprite_ != 0) {
+        Dialog::field_34_ = unchecked_sprite_->width();
+        if (Dialog::field_34_ < checked_sprite_->width()) {
+            Dialog::field_34_ = checked_sprite_->width();
         }
     }
-    if (dialog.field_48_ == -1) {
-        dialog.field_68_ = 0;
+    if (Dialog::field_48_ == -1) {
+        Dialog::field_68_ = 0;
         if (unchecked_sprite_ != 0 && checked_sprite_ != 0) {
-            dialog.field_68_ = unchecked_sprite_->height();
-            if (dialog.field_68_ < checked_sprite_->height()) {
-                dialog.field_68_ = checked_sprite_->height();
+            Dialog::field_68_ = unchecked_sprite_->height();
+            if (Dialog::field_68_ < checked_sprite_->height()) {
+                Dialog::field_68_ = checked_sprite_->height();
             }
         }
     } else {
-        dialog.field_68_ = dialog.field_48_;
+        Dialog::field_68_ = Dialog::field_48_;
     }
 
-    dialog.row_count_ = dialog.item_list_.entry_count_;
+    Dialog::row_count_ = Dialog::item_list_.entry_count_;
     int max_text_width = 0;
-    for (int i = 0; i < dialog.item_list_.entry_count_; ++i) {
-        if (dialog.item_list_.head_ != 0) {
-            dialog.item_list_.current_ = dialog.item_list_.current_->next;
-            ++dialog.item_list_.current_position_;
-            if (dialog.item_list_.current_position_ == dialog.item_list_.entry_count_) {
-                dialog.item_list_.current_position_ = 0;
+    for (int i = 0; i < Dialog::item_list_.entry_count_; ++i) {
+        if (Dialog::item_list_.head_ != 0) {
+            Dialog::item_list_.current_ = Dialog::item_list_.current_->next;
+            ++Dialog::item_list_.current_position_;
+            if (Dialog::item_list_.current_position_ == Dialog::item_list_.entry_count_) {
+                Dialog::item_list_.current_position_ = 0;
             }
         }
-        StringStructEntry *const entry = dialog.item_list_.current_;
+        StringStructEntry *const entry = Dialog::item_list_.current_;
         char *text = entry == 0 ? 0 : entry->string_payload()->text;
-        const int width = buffer->text_width(text);
+        const int width = Buffer::text_width(text);
         if (max_text_width < width) {
             max_text_width = width;
         }
     }
-    dialog.field_64_ = dialog.field_44_ + dialog.field_34_ + max_text_width;
-    const int text_height = buffer->text_height();
-    if (dialog.field_68_ <= text_height) {
-        dialog.field_68_ = buffer->text_height();
+    Dialog::field_64_ = Dialog::field_44_ + Dialog::field_34_ + max_text_width;
+    const int text_height = Buffer::text_height();
+    if (Dialog::field_68_ <= text_height) {
+        Dialog::field_68_ = Buffer::text_height();
     }
 
-    if ((dialog.field_20_ & 2) != 0 && dialog.field_2C_ != 0) {
-        dialog.field_5C_ = dialog.field_2C_;
-        const uint32_t width_numerator_bits = static_cast<uint32_t>(dialog.field_2C_)
-                                            - static_cast<uint32_t>(dialog.field_40_) * 2u;
+    if ((Dialog::field_20_ & 2) != 0 && Dialog::field_2C_ != 0) {
+        Dialog::field_5C_ = Dialog::field_2C_;
+        const uint32_t width_numerator_bits = static_cast<uint32_t>(Dialog::field_2C_)
+                                            - static_cast<uint32_t>(Dialog::field_40_) * 2u;
         const int32_t width_numerator = static_cast<int32_t>(width_numerator_bits);
         const uint32_t cell_width_bits = static_cast<uint32_t>(
-            width_numerator / dialog.field_4C_) - dialog.field_44_;
-        dialog.field_64_ = static_cast<int32_t>(cell_width_bits);
+            width_numerator / Dialog::field_4C_) - Dialog::field_44_;
+        Dialog::field_64_ = static_cast<int32_t>(cell_width_bits);
     } else {
-        const uint32_t width_bits = static_cast<uint32_t>(dialog.field_64_)
-                                  * static_cast<uint32_t>(dialog.field_4C_)
-                                  + static_cast<uint32_t>(dialog.field_40_) * 2u;
+        const uint32_t width_bits = static_cast<uint32_t>(Dialog::field_64_)
+                                  * static_cast<uint32_t>(Dialog::field_4C_)
+                                  + static_cast<uint32_t>(Dialog::field_40_) * 2u;
         int width = static_cast<int32_t>(width_bits);
-        const uint32_t minimum_bits = static_cast<uint32_t>(dialog.field_2C_)
-                                    + static_cast<uint32_t>(dialog.field_40_) * 2u;
+        const uint32_t minimum_bits = static_cast<uint32_t>(Dialog::field_2C_)
+                                    + static_cast<uint32_t>(Dialog::field_40_) * 2u;
         const int minimum = static_cast<int32_t>(minimum_bits);
         if (width < minimum) width = minimum;
-        dialog.field_5C_ = width;
+        Dialog::field_5C_ = width;
         const uint32_t width_numerator_bits = static_cast<uint32_t>(width)
-                                            - static_cast<uint32_t>(dialog.field_40_) * 2u;
+                                            - static_cast<uint32_t>(Dialog::field_40_) * 2u;
         const int32_t width_numerator = static_cast<int32_t>(width_numerator_bits);
         const uint32_t cell_width_bits = static_cast<uint32_t>(
-            width_numerator / dialog.field_4C_) - dialog.field_44_;
-        dialog.field_64_ = static_cast<int32_t>(cell_width_bits);
-        dialog.field_5C_ -= dialog.field_44_;
+            width_numerator / Dialog::field_4C_) - Dialog::field_44_;
+        Dialog::field_64_ = static_cast<int32_t>(cell_width_bits);
+        Dialog::field_5C_ -= Dialog::field_44_;
     }
-    dialog.column_count_ = dialog.field_4C_;
-    if ((dialog.field_20_ & 1) != 0 && dialog.field_30_ != 0) {
-        dialog.field_60_ = dialog.field_30_;
-        dialog.row_count_ = dialog.field_30_ / dialog.field_68_;
+    Dialog::column_count_ = Dialog::field_4C_;
+    if ((Dialog::field_20_ & 1) != 0 && Dialog::field_30_ != 0) {
+        Dialog::field_60_ = Dialog::field_30_;
+        Dialog::row_count_ = Dialog::field_30_ / Dialog::field_68_;
     } else {
-        dialog.field_60_ = (static_cast<uint32_t>(dialog.field_68_)
-                          + dialog.field_44_)
-                         * static_cast<uint32_t>(dialog.row_count_);
+        Dialog::field_60_ = (static_cast<uint32_t>(Dialog::field_68_)
+                          + Dialog::field_44_)
+                         * static_cast<uint32_t>(Dialog::row_count_);
     }
     return 0;
 }
@@ -504,11 +502,10 @@ int CheckBox::attach(GraphicWin *parent, int x, int y, int flags) {
     const int init_result = GraphicWin::init(
         x, y, Dialog::field_5C_, Dialog::field_60_, 0, flags, parent, 0, 0);
     if (init_result != 0) return init_result;
-    Buffer *const buffer = static_cast<Buffer *>(static_cast<GraphicWin *>(this));
-    buffer->set_text_color(text_color_a_, text_color_b_, text_color_c_, text_color_d_);
-    buffer->set_text_color2(text_color_2a_, text_color_2b_, text_color_2c_, text_color_2d_);
-    buffer->set_text_color3(text_color_3a_, text_color_3b_, text_color_3c_, text_color_3d_);
-    buffer->set_font(Dialog::font1_, Dialog::font2_, Dialog::font3_, 0);
+    Buffer::set_text_color(text_color_a_, text_color_b_, text_color_c_, text_color_d_);
+    Buffer::set_text_color2(text_color_2a_, text_color_2b_, text_color_2c_, text_color_2d_);
+    Buffer::set_text_color3(text_color_3a_, text_color_3b_, text_color_3c_, text_color_3d_);
+    Buffer::set_font(Dialog::font1_, Dialog::font2_, Dialog::font3_, 0);
     return 0;
 }
 

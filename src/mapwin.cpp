@@ -1397,7 +1397,7 @@ void MapWin::gen_bases_only() {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00467190 ?draw_bases@MapWin@@QAEXHHHHH@Z 0x00467190-0x004672B8
+// ORIGINAL: 0x00467190 ?draw_bases@MapWin@@QAEXHHHHH@Z 0x00467190-0x004672B8 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00467190.cpp complete 296-byte seed; pinned original 0x00467190-0x004672B8; BaseWin+0x40B0C owns focused base id."], "reason": "Home map base-overlay eligibility and typed Base/Map visibility checks; base_draw remains explicitly unfinished."}
 void MapWin::draw_bases(int tile_x, int tile_y, int pixel_x, int pixel_y,
                         int faction_id) {
@@ -1427,9 +1427,8 @@ void MapWin::draw_bases(int tile_x, int tile_y, int pixel_x, int pixel_y,
         base_id != TutWinBaseWindow.focused_base_id()) {
         return;
     }
-    base_draw(static_cast<Buffer *>(static_cast<GraphicWin *>(this)), base_id,
-              pixel_x, pixel_y, field_1DD98_,
-              (field_1DD70_ >> 18) & 8);
+    base_draw(static_cast<Buffer *>(this), base_id, pixel_x, pixel_y,
+              field_1DD98_, (field_1DD70_ >> 18) & 8);
 }
 
 
@@ -2435,11 +2434,10 @@ draw_target:
 // ORIGINAL: 0x00468F90 ?draw_vehicles@MapWin@@QAEXHHHH@Z 0x00468F90-0x00469183
 // RECOVERY_BINDING: v1 {"evidence": ["Original468F90..469183; retired seed git:b55fcf8b:src/recovered/units/00468f90.cpp records this identity and exact span; the original vehicle scan caps extension at10, unlike terrain and overlay scans."], "reason": "The four-argument MapWin overload scans a clipped radius and calls the distinct five-argument tile renderer. It preserves the capped upward extension, asymmetric rows and live viewport/center reads."}
 void MapWin::draw_vehicles(int x, int y, int radius, int faction) {
-    Buffer *const canvas = static_cast<Buffer *>(this);
     int span = mapwin_dest_add(mapwin_dest_mul(radius, 2), 2);
     int upper_tile_y = 32000;
     int ignored_x;
-    const RECT &viewport = canvas->current_clip();
+    const RECT &viewport = current_clip();
     pixel_to_tile(viewport.left, viewport.top,
                   &ignored_x, &upper_tile_y);
     while (upper_tile_y < mapwin_dest_sub(y, span) && span < 10) {

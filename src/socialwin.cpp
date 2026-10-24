@@ -1463,9 +1463,10 @@ void SocialWin::UNK1(int soc_category, int soc_model) {
     draw_social(soc_category);
 
     // Snapshot the eleven-word working effect block as the undo copy.
-    // Original 0x004AEC21-0x004AEC2A uses a scalar dec/jne copy loop;
-    // the assignment preserves the value without asserting its code generation.
-    socEffectOrig_ = socEffect_;
+    // Preserve the original scalar copy loop over all eleven effect words.
+    for (int effect = 0; effect < 11; ++effect) {
+        socEffectOrig_.values_[effect] = socEffect_.values_[effect];
+    }
 
     social_calc(&socCategory_, &socEffect_, factionID_, 0, 0);
     social_calc(&socCategory_, &PlayersData[factionID_].soc_effect_pending,

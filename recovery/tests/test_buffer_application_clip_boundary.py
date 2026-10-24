@@ -39,7 +39,7 @@ def test_application_clip_paths_use_typed_views_and_original_restore_order():
     assert "MainInterfaceGlobal.Buffer::rect2_" not in hit_test
 
     viewport = body(map_source, "void MapWin::draw_vehicles(int x, int y, int radius, int faction)")
-    assert "const RECT &viewport = canvas->current_clip();" in viewport
+    assert "const RECT &viewport = current_clip();" in viewport
     assert "pixel_to_tile(viewport.left, viewport.top," in viewport
     assert "canvas->rect1_" not in viewport
 

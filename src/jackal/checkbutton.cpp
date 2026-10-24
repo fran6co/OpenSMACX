@@ -103,9 +103,7 @@ void CheckButton::on_redraw() {
     }
 
     GraphicWin *const parent = static_cast<GraphicWin *>(win_parent_);
-    Buffer *const destination = static_cast<Buffer *>(parent);
-    Buffer *const source = static_cast<Buffer *>(this);
-    destination->copy(source,
+    parent->copy(this,
                       client_rect_.left - rect2_.left,
                       client_rect_.top - rect2_.top,
                       0, 0,
@@ -113,7 +111,7 @@ void CheckButton::on_redraw() {
                       -dib_.bmiHeader.biHeight);
 
     Sprite *const sprite = checked_ != 0 ? checked_sprite_ : unchecked_sprite_;
-    sprite->draw(source, sprite->transparent_index(), 0, 0);
+    sprite->draw(this, sprite->transparent_index(), 0, 0);
 }
 
 /*

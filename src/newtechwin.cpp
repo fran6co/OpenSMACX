@@ -154,17 +154,16 @@ static const char NewTechCentempSuffix[] = " ";
 // symbol    ?on_redraw@NewTechWin@@UAEXXZ
 void NewTechWin::on_redraw() {
     const int faction_snapshot = ConsoleGlobal.faction_id_;
-    Buffer *buffer = static_cast<Buffer *>(this);
-    buffer->clear_links();
+    this->clear_links();
 
     RECT working = *buffer_working_rect();
-    buffer->box_sprite(&working, &InterfaceStandardPopupBoxStyle);
+    this->box_sprite(&working, &InterfaceStandardPopupBoxStyle);
 
     RECT main_area = {
         static_cast<LONG>(field_A24_), static_cast<LONG>(field_A28_),
         static_cast<LONG>(field_A2C_), static_cast<LONG>(field_A30_)
     };
-    buffer->box_sprite(&main_area, &InterfaceBoxStyles[3]);
+    this->box_sprite(&main_area, &InterfaceBoxStyles[3]);
 
     RECT inset_area = {
         static_cast<LONG>(field_AF4_), static_cast<LONG>(field_AF8_),
@@ -174,22 +173,22 @@ void NewTechWin::on_redraw() {
     inset_area.top -= 3;
     inset_area.right += 3;
     inset_area.bottom += 3;
-    buffer->box_sprite(&inset_area, &InterfaceBoxStyles[3]);
+    this->box_sprite(&inset_area, &InterfaceBoxStyles[3]);
 
-    buffer->set_font(find_font(0x10, 1), 0, 0, 0);
-    buffer->set_text_color(0xE1, -1, 1, 1);
+    this->set_font(find_font(0x10, 1), 0, 0, 0);
+    this->set_text_color(0xE1, -1, 1, 1);
 
     RECT title_area = {
         static_cast<LONG>(field_A34_), static_cast<LONG>(field_A38_),
         static_cast<LONG>(field_A3C_), static_cast<LONG>(field_A40_)
     };
-    buffer->box_sprite(&title_area, &InterfaceBoxStyles[0]);
+    this->box_sprite(&title_area, &InterfaceBoxStyles[0]);
 
     StringTemp[0] = '\0';
     strcat(StringTemp, label_get(static_cast<int>(field_B28_) > 0 ? 542 : 541));
     CharUpperA(StringTemp);
     if (StringTemp != 0) {
-        buffer->write_cent_l(StringTemp, &title_area,
+        this->write_cent_l(StringTemp, &title_area,
                              static_cast<unsigned int>(strlen(StringTemp)));
     }
 
@@ -224,12 +223,12 @@ void NewTechWin::on_redraw() {
             text_area.bottom = static_cast<LONG>(field_AD0_);
             break;
         }
-        buffer->box_sprite(&text_area, &InterfaceBoxStyles[6]);
+        this->box_sprite(&text_area, &InterfaceBoxStyles[6]);
         StringTemp[0] = '\0';
         strcat(StringTemp, label_get(title_offsets[i]));
         CharUpperA(StringTemp);
         if (StringTemp != 0) {
-            buffer->write_cent_l(StringTemp, &text_area,
+            this->write_cent_l(StringTemp, &text_area,
                                  static_cast<unsigned int>(strlen(StringTemp)));
         }
     }
@@ -252,26 +251,26 @@ void NewTechWin::on_redraw() {
     row_rects[3].right = static_cast<LONG>(field_A8C_);
     row_rects[3].bottom = static_cast<LONG>(field_A90_);
     for (i = 0; i != 4; ++i) {
-        buffer->box_sprite(&row_rects[i], &InterfaceBoxStyles[0]);
+        this->box_sprite(&row_rects[i], &InterfaceBoxStyles[0]);
     }
 
     RECT category_area = {
         static_cast<LONG>(field_A44_), static_cast<LONG>(field_A48_),
         static_cast<LONG>(field_A4C_), static_cast<LONG>(field_A50_)
     };
-    buffer->box_sprite(&category_area, &InterfaceBoxStyles[0]);
+    this->box_sprite(&category_area, &InterfaceBoxStyles[0]);
 
     const int technology_id = static_cast<int>(field_B24_);
     const int category = tech_category(technology_id);
-    buffer->set_font(find_font(0x28, 0), 0, 0, 0);
-    buffer->set_text_color(mandate_color(category), -1, 1, 1);
+    this->set_font(find_font(0x28, 0), 0, 0, 0);
+    this->set_text_color(mandate_color(category), -1, 1, 1);
 
     RECT category_label = category_area;
     category_label.left += 3;
     category_label.top += 3;
     category_label.right -= 3;
     category_label.bottom -= 3;
-    category_label.bottom = buffer->text_line_height() + category_label.top;
+    category_label.bottom = this->text_line_height() + category_label.top;
 
     StringTemp[0] = '\0';
     say_tech(StringTemp, technology_id, 0);
@@ -286,11 +285,11 @@ void NewTechWin::on_redraw() {
         strcat(StringTemp, number);
     }
     if (StringTemp != 0) {
-        buffer->write_cent_l(StringTemp, &category_label,
+        this->write_cent_l(StringTemp, &category_label,
                              static_cast<unsigned int>(strlen(StringTemp)));
     }
 
-    const int line_height = buffer->text_line_height();
+    const int line_height = this->text_line_height();
     const int image_top = category_area.top + line_height + 3;
     const int image_bottom = category_area.bottom - 3;
     const int image_height = image_bottom - image_top;
@@ -298,14 +297,14 @@ void NewTechWin::on_redraw() {
     Sprite *icon = &g_TECH_ICON_SPRITES[technology_id];
     const int icon_y = image_top + (image_height - 0xA0) / 2;
     const int icon_x = category_area.left + (image_width - 0xA0) / 2;
-    icon->draw_mono(buffer, icon->transparent_index(), icon_x, icon_y,
+    icon->draw_mono(static_cast<Buffer *>(this), icon->transparent_index(), icon_x, icon_y,
                     mandate_color(category), 0xA0, 0xD7);
 
     RECT bottom_area = {
         static_cast<LONG>(field_AD4_), static_cast<LONG>(field_AD8_),
         static_cast<LONG>(field_ADC_), static_cast<LONG>(field_AE0_)
     };
-    buffer->box_sprite(&bottom_area, &InterfaceBoxStyles[0]);
+    this->box_sprite(&bottom_area, &InterfaceBoxStyles[0]);
 }
 
 // ORIGINAL: 0x00483F90 ?exec@NewTechWin@@QAEXHH@Z 0x00483F90-0x0048480F

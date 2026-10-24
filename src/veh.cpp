@@ -10863,38 +10863,40 @@ void __cdecl sub_500380(int faction_id, int x, int y) {
         threshold = Rules.max_airdrop_sans_orb_insert;
     }
 
-    const int count = GameDataStateStorage.fields_.vehicle_current_count_;
-    for (int i = 0; i < count; ++i) {
-        if (Vehs[i].faction_id != faction_id) {
-            continue;
-        }
-        if (!has_abil(Vehs[i].proto_id, 0x10)) {
-            continue;
-        }
-        if (Vehs[i].state & VSTATE_MADE_AIRDROP) {
-            continue;
-        }
-        if (Vehs[i].moves_expended != 0) {
-            continue;
-        }
-        int dx = abs(x - Vehs[i].x);
-        if (!(MapIsFlat & 1) && dx > MapLongitude) {
-            dx = MapLongitudeBounds - dx;
-        }
-        const int dy = abs(y - Vehs[i].y);
-        if ((dy + dx) >> 1 > threshold) {
-            continue;
-        }
-        Map *tile = map_tiles()
-            + ((Vehs[i].x >> 1) + Vehs[i].y * MapLongitude);
-        if (tile->bit & BIT_BASE_IN_TILE) {
-            if ((tile->val2 & 0xf) < 8) {
+    int i = 0;
+    if (GameDataStateStorage.fields_.vehicle_current_count_ > 0) {
+        do {
+            if (Vehs[i].faction_id != faction_id) {
+                continue;
+            }
+            if (!has_abil(Vehs[i].proto_id, 0x10)) {
+                continue;
+            }
+            if (Vehs[i].state & VSTATE_MADE_AIRDROP) {
+                continue;
+            }
+            if (Vehs[i].moves_expended != 0) {
+                continue;
+            }
+            int dx = abs(x - Vehs[i].x);
+            if (!(MapIsFlat & 1) && dx > MapLongitude) {
+                dx = MapLongitudeBounds - dx;
+            }
+            const int dy = abs(y - Vehs[i].y);
+            if ((dy + dx) >> 1 > threshold) {
+                continue;
+            }
+            Map *tile = map_tiles()
+                + ((Vehs[i].x >> 1) + Vehs[i].y * MapLongitude);
+            if (tile->bit & BIT_BASE_IN_TILE) {
+                if ((tile->val2 & 0xf) < 8) {
+                    return;
+                }
+            }
+            if (tile->bit & BIT_AIRBASE) {
                 return;
             }
-        }
-        if (tile->bit & BIT_AIRBASE) {
-            return;
-        }
+        } while (++i < GameDataStateStorage.fields_.vehicle_current_count_);
     }
 }
 
