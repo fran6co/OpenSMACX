@@ -11,9 +11,12 @@
 
 class GraphicWin;
 
-// The original abstract interface subobject. Its pure table has nineteen
-// slots; concrete window owners provide their callbacks (including measured
-// shared return stubs) in their real class definitions.
+// Abstract callback interface; concrete window owners supply the implementations.
+// RECOVERY_GENERATED: v1 vtable 0x0066A6E4 ? ??_7SubInterface@@6B@ 0x00422EE0
+// Nine pinned constructors install this base view (subobject offsets 0 or
+// 0xA14); the first nineteen pinned cells are relocated pointers to 0x645844.
+// This binds the start only; it does not assert an original table end or the
+// behavior of that shared target.
 class SubInterface {
  public:
   void delete_iface_mode();
