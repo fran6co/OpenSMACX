@@ -1,0 +1,86 @@
+{
+  "event_id": "de1685a5b644bd3c7f2c26543f555b8093387e00f10c6fe30b8f0ba5facfa8f3",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Fresh whole candidate build identifies13additional source-mapped executable roots changed by the shared header context. Add their measured code/associated-section closure to the existing11-original scope for preservation/review only; do not edit their unchanged source bodies or reset baseline. Exact identities/spans and native ownership counts are recorded in ignored tech-fungus-full-closure-proposal-oct24j.json; no changed executable roots remain unassigned.",
+      "Fresh whole unchanged-master control reproduces all208 normalized objects. Candidate preserves all5581mapped verdicts and strict3132PASS/315UNKNOWN. Explicit24-function projection accounts for all executable/associated deltas. Six retained .debug$T residuals remain FAIL, not waived: native class graphs show approved PlayerData four scalars to16-byte/count4intarray plus dependent type-index changes; complete otherclassroots compare equal, unsupported/non-class/link type selection remains unknown.",
+      "Independent reviews of Game/Technology, Net/Console and other owner code retain limits. TutWin::tour has substantial block-layout churn with incomplete CFG correspondence; NetWin pick_map static vtable-reference counts differ but inspected four PopMenu views still address the same slots. Source bodies remain unchanged. Current source/class layout, scoped host checks and fresh linked build support coordinator review but do not prove full runtime or original unsafe-path equivalence. Preserve all matching/restoration obligations.",
+      "This scope permission is not native acceptance, a metadata waiver, semantic-equivalence certificate or integration decision. Whole-project/link/runtime proof remains unfinished; manual integration requires a separate coordinator decision after remaining tests and reports, with all failures/unknowns explicit."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5117136,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5044160,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4372016,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5392496,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5925568,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5410976,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4600528,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4707072,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4925248,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6008832,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4966112,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5744224,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5851072,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "header-collateral-closure-oct24j",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:tech-fungus-storage-owner-oct24j"
+}
