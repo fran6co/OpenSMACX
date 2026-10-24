@@ -9172,11 +9172,11 @@ void __cdecl make_gift(int giver, int receiver) {
 
 // ORIGINAL: 0x0054D410 ?base_swap@@YAXHH@Z 0x0054D410-0x0054DC8C
 // RECOVERY_BINDING: v1 {"evidence": ["task:diplomacy-actions-owner-coverage", "Pinned original54D410-54DC8C; caller54F77E", "historical seed:src/unrecovered/0054d410.cpp", "Independent native review:54D483/54D4FF name pointers;54D4AC/54D52E former owner;54D5C2-54D5E4 facilities; original dialogue keys and energy/tech/base transfer tuples."], "reason": "Recover complete base exchange, energy purchase and all-technology settlement with real Base/PlayerData fields, original lock/transfer order and source-owned selectors. Native Base+5 is former owner, Base+13h is the name start. Preserve catalogue void ABI: its sole caller does not consume a result."}
-// symbol    ?base_swap@@YAXHH@Z
+// symbol    ?base_swap@@YAHHH@Z
 // TRIED: transcribed full Ghidra structure (verified against raw disasm: value_of_base/parse_says/X_pops/log_say arg order, the parameter-slot reuse where [ebp+0xc] becomes the swap `amount`). Compiles; diverges at #7 (register alloc), close for a 2172-byte function with 10 return sites.
-// Historical seed proposed an int return from incidental EAX exit values.
-// The original mapped void ABI and caller ignoring EAX retain the void interpretation.
-void __cdecl base_swap(int faction_id_res, int faction_id_req) {
+// Earlier recovery guessed a void signature because its caller ignores EAX.
+// Each pinned exit explicitly returns 0 after transfers or 1 on no-transfer paths.
+int __cdecl base_swap(int faction_id_res, int faction_id_req) {
     PopupDialogFactionID = faction_id_req;
 
     const int contact = (DiploScratchFA68 != 0 || DiploScratchFAA0 != 0);
@@ -9203,7 +9203,7 @@ void __cdecl base_swap(int faction_id_res, int faction_id_req) {
             PlayersData[faction_id_res].current_num_bases == 1) {
             X_pops("NOHQ", 0x100000,
                    FactionDiplomacyPortraits[faction_id_req], pop_wait);
-            return;
+            return 1;
         }
     }
 
@@ -9218,14 +9218,14 @@ void __cdecl base_swap(int faction_id_res, int faction_id_req) {
     }
     X_pops("NOMYHQ", 0x100000,
            FactionDiplomacyPortraits[faction_id_req], pop_wait);
-    return;
+    return 1;
 
 home_swap:
     if ((PlayersData[faction_id_req].diplo_treaties[faction_id_res] & 0x20u) != 0 &&
         DiplomacyProposalMode != 3) {
         X_pops("NEVERBASESWAP", 0x100000,
                FactionDiplomacyPortraits[faction_id_req], pop_wait);
-        return;
+        return 1;
     }
 
     if (DiploScratchFA30 < 0) {
@@ -9243,7 +9243,7 @@ home_swap:
                     parse_num(0, amount);
                     if (X_pops("PAYBASESWAP", 0x100000,
                                FactionDiplomacyPortraits[faction_id_req], pop_wait) == 0)
-                        return;
+                        return 1;
 
                     log_say("Getting DIPLOMATIC LOCK", 0, 0, 0);
                     timeGetTime();
@@ -9282,13 +9282,13 @@ home_swap:
                     NetDaemonNet.unlock();
                     X_pops("BASEOK", 0x100000,
                            FactionDiplomacyPortraits[faction_id_req], pop_wait);
-                    return;
+                    return 0;
                 }
                 if (DiplomacyProposalMode == 5) {
                     parse_num(0, amount);
                     X_pops("NOBASESWAP", 0x100000,
                            FactionDiplomacyPortraits[faction_id_req], pop_wait);
-                    return;
+                    return 1;
                 }
             }
 
@@ -9296,7 +9296,7 @@ home_swap:
                 parse_num(0, amount);
                 X_pops("NOBASESWAP", 0x100000,
                        FactionDiplomacyPortraits[faction_id_req], pop_wait);
-                return;
+                return 1;
             }
 
             int transferable_tech_value = 0;
@@ -9314,7 +9314,7 @@ home_swap:
                 (diplo_mul(diplo_add(GameDataStateStorage.fields_.turn_current_num_, 7) / 8, transferable_tech_value) < amount)) {
                 X_pops("NOBASESWAP2", 0x100000,
                        FactionDiplomacyPortraits[faction_id_req], pop_wait);
-                return;
+                return 1;
             }
 
             PluralityDefault = 0;
@@ -9322,7 +9322,7 @@ home_swap:
             parse_says(2, Players[faction_id_req].name_leader, -1, -1);
             if (X_pops("TECHBASESWAP", 0x100000,
                        FactionDiplomacyPortraits[faction_id_req], pop_wait) == 0)
-                return;
+                return 1;
 
             log_say("Getting DIPLOMATIC LOCK", 0, 0, 0);
             timeGetTime();
@@ -9361,7 +9361,7 @@ home_swap:
             NetDaemonNet.unlock();
             X_pops("BASEOK", 0x100000,
                    FactionDiplomacyPortraits[faction_id_req], pop_wait);
-            return;
+            return 0;
         }
     } else if (DiploScratchFA7C >= 0) {
         const int chance_a = random(0, 100);
@@ -9397,11 +9397,12 @@ home_swap:
             NetDaemonNet.unlock();
             X_pops("YESBASESWAP", 0x100000,
                    FactionDiplomacyPortraits[faction_id_req], pop_wait);
-            return;
+            return 0;
         }
         X_pops("NOBASESWAP3", 0x100000,
                FactionDiplomacyPortraits[faction_id_req], pop_wait);
     }
+    return 1;
 }
 
 

@@ -1,0 +1,20 @@
+{
+  "event_id": "b25c6d1036088334329f4f7ced24e215a2ae3949104bd5ae4a1dd7646f747a64",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_basepop_list_width.py"
+    ],
+    "evidence": [
+      "Coordinator and independent review of native candidate3 support restoring original current_ guard followed by current_entry()->text. Pin604FD2..FE3 and actual candidateCOFF both dereference null+4 if current_ survives with head_ null; old safely nested ternary differed. Existing inline seek_pos/next_entry helpers match the observed state walks; no exact gains/losses, outside-selected PASS. Authorize applying that tested body and adding a meaningful actual-source host control with compiled damage; keep all original quirks and historical obligations.",
+      "Fixture uses extracted actual BasePop and actual StringStruct method bodies, ordinary list/Font service doubles, and callback-induced head/current changes. Test ordinary order/captions/widths plus null-current continuation and the pin-backed null-payload fault. Do not assert arbitrary host UB guarantees; sanitizer diagnostic controls are bounded observations, native VC6 evidence remains primary. Header/method relocation is a separate structural investigation, not authorized source editing here."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "basepop-list-fault-control-oct24o",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:easy-owner-3-oct24o"
+}

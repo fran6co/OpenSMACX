@@ -1240,6 +1240,7 @@ Purpose: Sum one base's terrain yields into the selected Base's intake_2
 
 // ORIGINAL: 0x004E7E50 sub_4e7e50 0x004E7E50-0x004E7F64 FILE
 // RECOVERY_BINDING: v1 {"evidence":["The body reads the existing BaseCurrent/Bases layout (x, y, faction, state and contiguous intake_2 words), Map records, map bounds, and declared crop_yield/mine_yield/energy_yield APIs.","The function's fourth pass deliberately clears TileYieldRestricted; the body and original pass order are carried unchanged.","The identity remains the unmangled global sub_4e7e50; no original class name is inferred from its Base dataflow."],"reason":"Place the complete existing base-radius yield routine beside its genuine Base/Map dependencies without renaming it, changing pass order, or normalizing the original state updates."}
+// symbol    _sub_4e7e50
 // TRIED: various expression orderings for the x/y base+offset sums and the wrap-around guard placement all keep the divergence at the first instructions (register allocation for edx/ecx/a1 differs from the original's push-ebx/push-esi-before-movsx order).
 // size      276 bytes
 // prototype
@@ -1302,6 +1303,7 @@ Purpose: The sibling pass of sub_4e7e50: identical walk and tile gating,
 
 // ORIGINAL: 0x004E7F80 sub_4e7f80 0x004E7F80-0x004E8094 FILE
 // RECOVERY_BINDING: v1 {"evidence":["The body reads the existing BaseCurrent/Bases layout, Map records, map bounds, and declared crop_yield/mine_yield/energy_yield APIs.","This is the subtracting sibling of 0x004E7E50; the original sum still accumulates positive yield values while intake_2 is decremented.","The identity remains the unmangled global sub_4e7f80; no original class name is inferred from its Base dataflow."],"reason":"Place the complete subtracting base-radius yield routine beside its genuine Base/Map dependencies, preserving its distinct subtraction and positive return-sum behavior."}
+// symbol    _sub_4e7f80
 // TRIED: the same prologue register-allocation divergence as its 0x004E7E50 sibling.
 // size      276 bytes
 // prototype
@@ -1364,6 +1366,7 @@ Purpose: Bubble-sort an id list into base-name order: repeatedly walk the
 
 // ORIGINAL: 0x004D5FF0 sub_4d5ff0 0x004D5FF0-0x004D606E FILE
 // RECOVERY_BINDING: v1 {"evidence":["The pinned routine repeatedly compares Bases[id].name_string using case-insensitive string comparison and swaps neighboring entries in the caller-owned id list.","The current Base array/count are source-owned in base.h/base.cpp; the global address-derived identity remains sub_4d5ff0, not a newly named Base method.","The one-element/negative-count early return, repeated bubble passes, comparator polarity, and caller-list mutation are preserved."],"reason":"Move the existing base-name id sort to the owner of its genuine Base storage while retaining the original global identity and exact comparison/swap control flow."}
+// symbol    _sub_4d5ff0
 // size      126 bytes
 // prototype
 // callers   0   call targets   2
