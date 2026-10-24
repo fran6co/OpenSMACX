@@ -5029,7 +5029,7 @@ void __cdecl setup_game(int reload) {
         }
     }
 
-    int setup_results[MaxPlayerNum] = {0};
+    int setup_results[MaxPlayerNum];
     for (int human_setup_faction = 0; human_setup_faction < MaxPlayerNum; ++human_setup_faction) {
         if ((GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1u << human_setup_faction)) != 0) {
             setup_player(human_setup_faction, -1 - reload, 0);
@@ -5108,8 +5108,10 @@ void __cdecl setup_game(int reload) {
                 for (int first = 1; first < MaxPlayerNum; ++first) {
                     for (int second = 1; second < MaxPlayerNum; ++second) {
                         if (first != second) {
-                            char first_key[24] = {0};
-                            char second_key[24] = {0};
+                            char first_key[24];
+                            char second_key[24];
+                            first_key[0] = 0;
+                            second_key[0] = 0;
                             strcat(first_key, Players[first].search_key);
                             strcat(second_key, Players[second].search_key);
                             CharUpperA(first_key);

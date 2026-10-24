@@ -152,7 +152,7 @@ int MCIVideo::load(char *moviePath, Win *targetWindow, int x, int y) {
     blit_x_ = x;
     WaveDeviceGlobal.disable();
 
-    char deviceType[] = "avivideo";
+    char *deviceType = "avivideo";
     MCI_DGV_OPEN_PARMS openParams;
     openParams.lpstrDeviceType = deviceType;
     openParams.lpstrElementName = moviePath;
@@ -222,7 +222,8 @@ int MCIVideo::load(char *moviePath, Win *targetWindow, int x, int y) {
 
 // ORIGINAL: 0x006001E0 ?play@MCIVideo@@QAEXXZ 0x006001E0-0x00600270 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["The original member accesses the active-player slot at 0x009B8190, invokes Palette::set on its embedded palette at +0x10, and sends MCI_WINDOW followed by MCI_PLAY through the WINMM import.", "MCIVideo::blit_frame uses +0x8 as the HWND passed to GetDC and ReleaseDC; the play body loads that field's low word into MCI_PLAY_PARMS::dwCallback. This unusual truncation is preserved as observed; the MCI device id occupies the low word at +0x4.", "MCIVideo::load stores its Win* argument at +0x468 and blit_frame tests it before blitting; the separate close path clears this window pointer."], "reason": "Move the existing play identity into MCIVideo's owning translation unit and express the receiver, palette, window handle and MCI parameter blocks as typed members."}
-void MCIVideo::play() {
+// symbol    ?play@MCIVideo@@QAEHXZ
+int MCIVideo::play() {
     ActiveVideoPlayer = this;
     palette_.set();
 
@@ -231,7 +232,7 @@ void MCIVideo::play() {
     if (mciSendCommandA(mciId_, MCI_WINDOW,
                         MCI_DGV_WINDOW_STATE,
                         reinterpret_cast<DWORD_PTR>(&windowParams)) != 0) {
-        return;
+        return 1;
     }
 
     MCI_PLAY_PARMS playParams = {0};
@@ -239,10 +240,11 @@ void MCIVideo::play() {
         reinterpret_cast<UINT_PTR>(window_handle_) & 0xffff);
     if (mciSendCommandA(mciId_, MCI_PLAY,
                         MCI_NOTIFY, reinterpret_cast<DWORD_PTR>(&playParams)) != 0) {
-        return;
+        return 1;
     }
 
     field_0_ |= 1;
+    return 0;
 }
 
 // ORIGINAL: 0x00600270 ?stop@MCIVideo@@QAEXXZ 0x00600270-0x006002EB FILE BYTE_EXACT

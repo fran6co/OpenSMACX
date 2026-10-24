@@ -50,28 +50,63 @@ struct Player {
       soc_anti_ideology_model, soc_ideology_effect, soc_anti_ideology_effect;
 } Players[8];
 struct PlayerData { int diff_level; int diplo_agenda[8]; } PlayersData[8];
-struct ProjectTable { int human_genome_project_; int values[63];
- int &human_genome_project() { return human_genome_project_; }
- const int &human_genome_project() const { return human_genome_project_; }
-} SecretProject;
-struct ReplayEventRecord { int a,b; } ReplayEvents[1024];
+// These fixture declarations retain the actual source-owned state objects.
+// BaseSecretProject's 64-int storage matches base.h; its accessors are not
+// used by this extracted caller body.
+struct BaseSecretProject { int project_base[64]; };
+#include "GAME_DATA_STATE_WINDOW_HEADER"
+GameDataStateWindow GameDataStateStorage;
+struct ScenarioSaveState {
+  int objective_req_victory;
+  uint32_t objectives_sudden_death_victory, objective_achieve_points,
+           victory_achieve_bonus_points, starting_mission_year,
+           ending_mission_year;
+  uint8_t wire_opaque_94b4d8[0x80];
+} ScenarioSave;
+auto &SecretProject = GameDataStateStorage.fields_.secret_project_;
+auto &GameRules = GameDataStateStorage.fields_.game_rules_;
+auto &GameState = GameDataStateStorage.fields_.game_state_;
+auto &GameInterludeFlags = GameDataStateStorage.fields_.game_interlude_flags_;
+auto &LockEnableMask = GameDataStateStorage.fields_.lock_masks_.enable_mask_;
+auto &DiffLevelCurrent = GameDataStateStorage.fields_.diff_level_current_;
+auto &TurnCurrentNum = GameDataStateStorage.fields_.turn_current_num_;
+auto &ObjectiveReqVictory = ScenarioSave.objective_req_victory;
+auto &ObjectivesSuddenDeathVictory = ScenarioSave.objectives_sudden_death_victory;
+auto &ObjectiveAchievePts = ScenarioSave.objective_achieve_points;
+auto &VictoryAchieveBonusPts = ScenarioSave.victory_achieve_bonus_points;
+auto &MissionYearCurrent = GameDataStateStorage.fields_.mission_year_current_;
+auto &StartingMissionYear = ScenarioSave.starting_mission_year;
+auto &EndingMissionYear = ScenarioSave.ending_mission_year;
+auto &SunspotDuration = GameDataStateStorage.fields_.sunspot_duration_;
+auto &GovernorFaction = GameDataStateStorage.fields_.governor_faction_;
+auto &ClimateRiseStep = GameDataStateStorage.fields_.climate_rise_step_;
+auto &ClimateRiseLimit = GameDataStateStorage.fields_.climate_rise_limit_;
+auto &ClimateRiseAccum = GameDataStateStorage.fields_.climate_rise_accum_;
+auto &ClimateSeaLevelDelta = GameDataStateStorage.fields_.climate_sea_level_delta_;
+auto &BaseCurrentCount = GameDataStateStorage.fields_.base_current_count_;
+int GameRestartQueued;
+auto &GameSetupResetWord = GameDataStateStorage.fields_.game_setup_reset_word_;
+auto &TurnControlDurationMilliseconds = GameDataStateStorage.fields_.turn_control_duration_milliseconds_;
+auto &MountPlanetX = GameDataStateStorage.fields_.mount_planet_x_;
+auto &MountPlanetY = GameDataStateStorage.fields_.mount_planet_y_;
+auto &ScnVictFacilityObj = GameDataStateStorage.fields_.scenario_victory_facility_;
+auto &NetTurnFlags = GameDataStateStorage.fields_.net_turn_flags_;
+auto &DustCloudDuration = GameDataStateStorage.fields_.dust_cloud_duration_;
+auto &SaveDaemonStateWord = GameDataStateStorage.fields_.save_daemon_state_word_;
+auto &GlobalEnergyEventState = GameDataStateStorage.fields_.global_energy_event_state_;
+auto &NetTurnFaction = GameDataStateStorage.fields_.net_turn_faction_;
+auto &EcologyEventAccumulator = GameDataStateStorage.fields_.ecology_event_accumulator_;
+auto &TutorialFlags = GameDataStateStorage.fields_.tutorial_flags_;
+auto &TutorialFlags2 = GameDataStateStorage.fields_.tutorial_flags_2_;
+auto &TutWinFlags9A64BC = GameDataStateStorage.fields_.tutwin_flags_9a64bc_;
+auto &CouncilResolutionCount = GameDataStateStorage.fields_.council_resolution_count_;
+auto &CouncilLastResolutionTurn = GameDataStateStorage.fields_.council_last_resolution_turn_;
+int ReplayEventBytes;
+struct ReplayEventRecord { uint8_t type, faction_id; int16_t turn, x, y; } ReplayEvents[1024];
 uint16_t FactionRankingHistory[8000];
-uint32_t GameRules, GameState, GameInterludeFlags, LockEnableMask;
-int DiffLevelCurrent, TurnCurrentNum, ObjectiveReqVictory;
-uint32_t ObjectivesSuddenDeathVictory, ObjectiveAchievePts,
-         VictoryAchieveBonusPts, MissionYearCurrent, StartingMissionYear,
-         EndingMissionYear;
-int SunspotDuration, GovernorFaction, ClimateRiseStep, ClimateRiseLimit,
-    ClimateRiseAccum, ClimateSeaLevelDelta, BaseCurrentCount, GameRestartQueued;
-int GameSetupResetWord, TurnControlDurationMilliseconds;
-uint32_t MountPlanetX, MountPlanetY, ScnVictFacilityObj, NetTurnFlags;
-int DustCloudDuration, SaveDaemonStateWord, GlobalEnergyEventState,
-    NetTurnFaction, EcologyEventAccumulator;
-int TutorialFlags, TutorialFlags2, TutWinFlags9A64BC;
-int CouncilResolutionCount[11], CouncilLastResolutionTurn[11], ReplayEventBytes;
-int TectonicDetonationCount[8];
-uint8_t GameTechAchieved[89];
-char LegacyGameSaveName[256]; // source-owned game.h storage, not a new game object
+uint32_t TectonicDetonationCount[8];
+auto &GameTechAchieved = GameDataStateStorage.fields_.game_tech_achieved_;
+auto &LegacyGameSaveName = GameDataStateStorage.fields_.legacy_game_save_name_;
 uint32_t TerraformAnnouncedMask[2];
 uint32_t PendingDiplomacyFlags[8][8];
 int IsMultiplayerNet;
@@ -180,8 +215,11 @@ int main() {
     for (int column=0; column<8; ++column)
       PendingDiplomacyFlags[row][column]=1 + row*8 + column;
   for (int i=0;i<11;++i) { CouncilResolutionCount[i]=1; CouncilLastResolutionTurn[i]=4; }
-  for (int i=0;i<64;++i) reinterpret_cast<int *>(&SecretProject)[i]=i;
-  for (int i=0;i<1024;++i) ReplayEvents[i].a=1;
+  for (int i=0;i<64;++i) SecretProject.project_base[i]=i;
+  for (int i=0;i<1024;++i) {
+    ReplayEvents[i].type=1; ReplayEvents[i].faction_id=2;
+    ReplayEvents[i].turn=3; ReplayEvents[i].x=4; ReplayEvents[i].y=5;
+  }
   for (int i=0;i<8000;++i) FactionRankingHistory[i]=9;
   for (int i=0;i<8;++i) TectonicDetonationCount[i]=10+i;
   setup_game(1);
@@ -202,8 +240,10 @@ int main() {
          EcologyEventAccumulator==0 &&
          (LockEnableMask & 0x0000FF00u)==0x0000FF00u);
   for (int i=0;i<11;++i) assert(CouncilResolutionCount[i]==0 && CouncilLastResolutionTurn[i]==-9999);
-  for (int i=0;i<64;++i) assert(reinterpret_cast<int *>(&SecretProject)[i]==-1);
-  for (int i=0;i<1024;++i) assert(ReplayEvents[i].a==0 && ReplayEvents[i].b==0);
+  for (int i=0;i<64;++i) assert(SecretProject.project_base[i]==-1);
+  for (int i=0;i<1024;++i)
+    assert(ReplayEvents[i].type==0 && ReplayEvents[i].faction_id==0 &&
+           ReplayEvents[i].turn==0 && ReplayEvents[i].x==0 && ReplayEvents[i].y==0);
   for (int i=0;i<8000;++i) assert(FactionRankingHistory[i]==0);
   for (int i=0;i<8;++i) assert(TectonicDetonationCount[i]==0);
   for (int row=0; row<8; ++row)
@@ -307,7 +347,10 @@ def test_setup_game_actual_typed_reset_and_player_order(tmp_path):
     compiler = shutil.which("g++")
     if not compiler:
         pytest.skip("host C++ compiler unavailable")
-    harness = HARNESS.replace("BODY", source_body())
+    harness = (
+        HARNESS.replace("BODY", source_body())
+        .replace("GAME_DATA_STATE_WINDOW_HEADER", str(ROOT / "src/game_data_state_window.h"))
+    )
     executable = tmp_path / "setup-game-host-control"
     built = subprocess.run(
         [compiler, "-std=c++17", "-x", "c++", "-", "-o", str(executable)],
