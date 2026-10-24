@@ -1,0 +1,19 @@
+{
+  "event_id": "f451fabd5c4b438e668c9b1d65809755222ec169613b7101d21ee0b7d2e2cd6c",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_string_sprite_add_actual_source.py"
+    ],
+    "evidence": [
+      "Pinned SpriteList.on_insert reloads pending_label_ after allocator returns. Extend existing actual-source allocator/add fixture with equal-length old->new label mutation on label allocation3, preserving all existing cases, and a compile-success cached-pointer negative control. This tests pin-supported read timing without inventing bounds/bug fixes or requiring byte matching."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "sprite-label-allocator-mutation-control-oct24m",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:easy-owner-6-oct24m"
+}

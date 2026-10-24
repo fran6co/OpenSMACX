@@ -121,6 +121,7 @@ static SpriteList *watch_sprite;
 static Heap *mutate_allocator_to;
 static Heap *mutate_fallback_to;
 static int mutate_heap_call;
+static char *mutate_pending_label_to;
 static int fatal_kind;
 
 class Heap {
@@ -235,6 +236,8 @@ void *Heap::get(size_t size) {
         }
         if (watch_sprite != 0) {
             watch_sprite->allocator_ = mutate_allocator_to;
+            if (mutate_pending_label_to != 0)
+                watch_sprite->pending_label_ = mutate_pending_label_to;
             if (mutate_fallback_to != 0)
                 watch_sprite->allocation_owner_ = mutate_fallback_to;
         }
@@ -290,6 +293,7 @@ static void reset_state() {
     watch_sprite = 0;
     mutate_allocator_to = mutate_fallback_to = 0;
     mutate_heap_call = 0;
+    mutate_pending_label_to = 0;
     fatal_kind = 0;
 }
 
@@ -465,6 +469,29 @@ static void test_string_null_failures_preserve_partial_effects() {
     assert(fourth.current_position_ == 0 && fourth.hooks == 1);
 }
 
+static void test_sprite_label_is_reloaded_after_allocation() {
+    reset_state();
+    Heap heap;
+    SpriteList list;
+    char old_label[] = "old";
+    char new_label[] = "new";
+    int sprite;
+    list.allocator_ = &heap;
+    list.pending_sprite_ = &sprite;
+    list.pending_label_ = old_label;
+    list.field_24_ = 81;
+    watch_sprite = &list;
+    mutate_heap_call = 3;
+    mutate_allocator_to = &heap;
+    mutate_pending_label_to = new_label;
+    assert(list.add(45) == 0);
+    assert(heap.calls == 3 && heap.sizes[2] == 4);
+    SpriteStruct *payload = list.head_->sprite_payload();
+    assert(strcmp(payload->label_, "new") == 0);
+    assert(list.pending_label_ == new_label);
+    assert(payload->sprite_ == &sprite && payload->field_C_ == 81);
+}
+
 static void test_sprite_null_failures_preserve_partial_effects() {
     reset_state();
     ProbeSprite first;
@@ -545,6 +572,7 @@ int main(int argc, char **argv) {
     test_sprite_explicit_snapshot_and_reload();
     test_sprite_fallback_owner_is_read_per_allocation();
     test_sprite_nonempty_append_and_hook_order();
+    test_sprite_label_is_reloaded_after_allocation();
     test_string_null_failures_preserve_partial_effects();
     test_sprite_null_failures_preserve_partial_effects();
     return 0;
@@ -552,8 +580,9 @@ int main(int argc, char **argv) {
 '''
 
 
-def compile_fixture(tmp_path):
-    source = product_bodies()
+def compile_fixture(tmp_path, source=None):
+    if source is None:
+        source = product_bodies()
     string_source = (repo_root() / "src/stringstruct.cpp").read_text()
     string_add = extract_definition(string_source, "int StringStruct::add(int id)")
     assert "static_cast<StringStructEntry *>(0)" not in source
@@ -595,3 +624,16 @@ def test_product_string_and_sprite_add_keep_heap_fatal_policy(tmp_path):
         run = subprocess.run([str(exe), argument], capture_output=True, text=True)
         assert run.returncode == 3
         assert f"fatal kind={kind}" in run.stdout
+
+
+def test_cached_pending_label_mutant_fails_allocator_callback(tmp_path):
+    source = product_bodies()
+    body = extract_definition(source, "int SpriteList::on_insert(void *raw_payload)")
+    anchor = "payload->sprite_ = pending_sprite_;"
+    assert body.count(anchor) == 1 and body.count("pending_label_") == 3
+    cached = body.replace("pending_label_", "saved_label").replace(
+        anchor, anchor + "\n    char *const saved_label = pending_label_;", 1)
+    exe = compile_fixture(tmp_path, source.replace(body, cached, 1))
+    run = subprocess.run([str(exe)], capture_output=True, text=True)
+    assert run.returncode != 0, "cached label survived allocator mutation"
+    assert 'strcmp(payload->label_, "new") == 0' in run.stderr
