@@ -438,7 +438,7 @@ int CheckBox::calculate_dimensions() {
             }
         }
         StringStructEntry *const entry = dialog.item_list_.current_;
-        char *text = entry == 0 || entry->payload == 0 ? 0 : entry->string_payload()->text;
+        char *text = entry == 0 ? 0 : entry->string_payload()->text;
         const int width = buffer->text_width(text);
         if (max_text_width < width) {
             max_text_width = width;
