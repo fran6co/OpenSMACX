@@ -1,0 +1,19 @@
+{
+  "event_id": "caf5e559c191ce3964b86958cae97527a6c1fedd762dbaa03635b01000d23eac",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_graphicwin_fill.py"
+    ],
+    "evidence": [
+      "The preserved callback-aware GraphicWin fill tests execute successfully but one damage-control source anchor names the removed parent temporary and now refuses before compiling its mutant. Update that one inversion anchor to the equivalent short-circuit null-result gate. Retain all behavioral scenarios, failing-mutant expectation and compile-success checks; this is test maintenance for the supported guard shape, not weakening a gate."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "af13127af1e5b5f943f8d7ee735a60f2b1ad6dc12b1630a1cd2e3756d1df4b1e",
+  "request_id": "fill-guard-damage-control-update-oct24k",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:legacy-header-texheap-owner-oct24k"
+}
