@@ -1,0 +1,20 @@
+{
+  "event_id": "c35f1e3325c8ed000a47cdbb849998861a1342d24961a8574b37ff3aca1360f8",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/base.cpp"
+    ],
+    "evidence": [
+      "Native actual production COFF defines unique exclusive C functions _sub_4d5ff0, _sub_4e7e50 and _sub_4e7f80 while source retains undecorated original identities and has no emitted fact. Masked legacy comparison permits that C ABI convention, but native damage/preservation/symbol checks require exact current names. Authorize coordinator native write_symbol facts for these three existing task subjects; preserve original identities/spans/claims and source behavior.",
+      "This is annotation-only; no compiler setting/body/task-baseline change, candidate retries or semantic qualification is granted. Interrupted pre-candidate damage guard remains a retained failure; candidate attempts remain zero. Fresh actual-production replica/damage controls must pass before testing saved candidates."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "explicit-c-coff-entry-facts-oct24o",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:easy-owner-2-oct24o"
+}
