@@ -1,0 +1,21 @@
+{
+  "event_id": "a786b40dd5996ac31b1afadf7f9004dc952c45b5729de5dd7be3f0d02a698569",
+  "payload": {
+    "affects": [
+      "entity-415969aff399f8fc51dfc6ef6e933b5aed3e69b1b5d5e2fdb3f2cd7d5fe8ff4e"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "social-ai-unsigned-local-type-chain-oct24r",
+    "evidence": [
+      "Independent actual baseline/candidate COFF inspection: both emit SHR EAX,3 at 0x5B4E8B; pinned original uses CDQ/AND7/ADD/SAR3 at 0x5B4E83..89. Retained review candidate-social-ai-signed-division.json SHA256 16589cd9e04120d2e5d6178abde5088d8cc5c9ad6527996290f8850fcc64b39d. Shared-field candidate is not claimed to fix this division.",
+      "Coordinator activated independent complete local-use type investigation while first shared-field build epoch remains frozen; no baseline reset, blanket cast insertion or repeated spelling search."
+    ],
+    "hypothesis": "The shared signed base-count correction alone leaves social_ai morale division unsigned: local unk_val3 and unk_sum1 still force unsigned arithmetic. Investigate and correct their complete evidence-backed signedness/lifetime use chains in the same real owner, preserving intentional low32 effects and explicit unsigned lanes.",
+    "kind": "discovery"
+  },
+  "previous_event": "4be7dc81c50ef3d5166b5cfab1199dfa098d5c55282cc0332d33dc9a77e3ad3e",
+  "request_id": "social-ai-unsigned-local-type-chain-oct24r",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:player-base-count-owner-oct24r"
+}
