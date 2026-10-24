@@ -5864,7 +5864,8 @@ void __cdecl diplomacy_caption(int faction_id, int faction_id_with) {
         mood = (DiploFriction > 19 ? 1 : 0) + 7;
     }
 
-    char caption[256] = {0};
+    char caption[256];
+    caption[0] = '\0';
     const Player &counterpart = Players[faction_id_with];
     GenderDefault = counterpart.noun_gender;
     PluralityDefault = counterpart.is_noun_plural;
