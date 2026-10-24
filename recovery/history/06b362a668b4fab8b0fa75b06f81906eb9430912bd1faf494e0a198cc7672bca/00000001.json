@@ -1,0 +1,20 @@
+{
+  "event_id": "36ca7439896f80ba033dface137b832eaa2a830faafde1a140cdb5c82b4aed7b",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_setup_game_behavior.py"
+    ],
+    "evidence": [
+      "Fixture lacks current source-owned GameDataStateStorage and ScenarioSave declarations; align fixture with actual headers, retain original indeterminate states and all ordering/reset assertions.",
+      "Coordinator-authorized existing host-fixture repair only; no production flags/C++ behavior changes or weakened checks. Failed original runs remain retained. Native task baseline, historical claims and automatic acceptance refusal remain unchanged."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "initialization-host-fixture-2-oct24n",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:initialization-owner-2-oct24n"
+}
