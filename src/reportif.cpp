@@ -2534,6 +2534,11 @@ void ReportIf::draw_sat() {
         draw_workspace_rect_.top = draw_workspace_rect_.bottom + 2;
         draw_workspace_rect_.bottom = field_20_.bottom - 6;
         buffer->box_sprite(&draw_workspace_rect_, &InterfaceBoxStyles[0]);
+        const int panel_bottom = field_20_.bottom - 6;
+        const int previous_bottom = draw_workspace_rect_.bottom;
+        draw_workspace_rect_.bottom = panel_bottom;
+        draw_workspace_rect_.right = previous_bottom + 2;
+        buffer->box_sprite(&draw_workspace_rect_, &InterfaceBoxStyles[0]);
         draw_workspace_rect_.left += 3; draw_workspace_rect_.top += 3;
         draw_workspace_rect_.right -= 3; draw_workspace_rect_.bottom -= 3;
         buffer->set_font(field_1E184_, field_1E194_, field_1E198_, 0);
@@ -2608,6 +2613,9 @@ void ReportIf::draw_sat() {
     } else {
         draw_workspace_rect_.top = draw_workspace_rect_.bottom + 2;
         // The original lower panel deliberately uses the upper panel's bottom.
+        draw_workspace_rect_.bottom = field_20_.bottom - 6;
+        buffer->box_sprite(&draw_workspace_rect_, &InterfaceBoxStyles[0]);
+        draw_workspace_rect_.right = draw_workspace_rect_.bottom + 2;
         draw_workspace_rect_.bottom = field_20_.bottom - 6;
         buffer->box_sprite(&draw_workspace_rect_, &InterfaceBoxStyles[0]);
         draw_workspace_rect_.left += 3; draw_workspace_rect_.top += 3;

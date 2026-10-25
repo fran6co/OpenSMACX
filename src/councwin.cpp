@@ -331,7 +331,7 @@ void CouncWin::draw_info() {
     RECT inner = {outer.left, outer.top, outer.right, outer.bottom};
     RECT heading = inner;
     heading.bottom = heading.top + 0x14;
-    buffer.box_sprite(&heading, &InterfaceBoxStyles[15]);
+    buffer.box_sprite(&heading, &InterfaceBoxStyles[6]);
     buffer.set_font(&font2_, 0, 0, 0);
     buffer.set_text_color(0xa0, -1, 1, 1);
     if (proposal == 1) {
