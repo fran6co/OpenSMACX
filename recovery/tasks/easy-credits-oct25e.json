@@ -1,0 +1,23 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "3bf0f7967aecc7b082828d05f9c714ae091580e6",
+  "editable_files": [
+    "src/credits.cpp"
+  ],
+  "evidence": [
+    "Next24parallel easy pass produced these complete source candidates from full pinned/actual production COFF windows; current source is unchanged from qualified3bf. No convenience bug fixes, annotations/claims changes, flags or artificial exports.",
+    "BaseButton timer receiver is original+A4C/time2 for mouse-move stop/start; capture stores follow originalOwner3thenOwner4. Credits reads TextBufferGetPtr separately before allocation and after mem_get. Preserve all other branch/callback/lifetime effects and original unsafe paths.",
+    "Coordinator-only isolated source overlays, exclusive provisioned compiler resource and exact unchanged production replica required. One candidate attempt per unchanged function context; full TU scores/native outside results and all historical identities retained. Candidate measurement is not source publication, acceptance or game proof."
+  ],
+  "intent": "Recover pinned timer-member selection, capture-store order and callback-separated global observation using one simplest faithful candidate per function.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4360320,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "easy-credits-oct25e"
+}
