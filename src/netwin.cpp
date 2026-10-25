@@ -883,38 +883,37 @@ void NetWin::on_redraw() {
     if (is_visible() == 0) {
         return;
     }
-    Buffer *buffer = static_cast<Buffer *>(this);
-    buffer->box_sprite(buffer_working_rect(),
-                       &InterfaceBoxStyles[3]);
+    Buffer::box_sprite(buffer_working_rect(),
+                       &InterfaceBoxStyles[9]);
 
     // The banner rectangle: painted as 0xA14 holds it, then inset by three
     // on every side and painted again - the inset copy is the one the title
     // is centred in.
     RECT banner = setup_rects_[0];
-    buffer->box_sprite(&banner, &InterfaceBoxStyles[1]);
+    Buffer::box_sprite(&banner, &InterfaceBoxStyles[3]);
     banner.left += 3;
     banner.top += 3;
     banner.right -= 3;
     banner.bottom -= 3;
-    buffer->box_sprite(&banner, &InterfaceBoxStyles[2]);
+    Buffer::box_sprite(&banner, &InterfaceBoxStyles[6]);
 
     StringTemp[0] = 0;
     strcat(StringTemp,
            label_get(0x3F0 / 4));
     CharUpperA(StringTemp);
-    buffer->set_font(find_font(0xE, 1), 0, 0, 0);
-    buffer->set_text_color(0xE1, -1, 1, 1);
+    Buffer::set_font(find_font(0xE, 1), 0, 0, 0);
+    Buffer::set_text_color(0xE1, -1, 1, 1);
     if (StringTemp != 0) {
-        buffer->write_cent_l(StringTemp, &banner,
+        Buffer::write_cent_l(StringTemp, &banner,
                              strlen(StringTemp));
     }
 
     draw_custom_rules();
-    buffer->box_sprite(&setup_rects_[45],
-                       &InterfaceBoxStyles[1]);
-    buffer->box_sprite(&setup_rects_[44],
+    Buffer::box_sprite(&setup_rects_[45],
+                       &InterfaceBoxStyles[3]);
+    Buffer::box_sprite(&setup_rects_[44],
                        &InterfaceBoxStyles[0]);
-    buffer->box_sprite(&setup_rects_[43],
+    Buffer::box_sprite(&setup_rects_[43],
                        &InterfaceBoxStyles[0]);
     draw_player_names();
     draw_diffs();
@@ -1441,33 +1440,32 @@ Status: Coverage transcription - unclaimed body
 */
 void NetWin::draw_custom_rules() {
     spot_.kill_type(1);
-    Buffer *buffer = static_cast<Buffer *>(this);
-    buffer->box_sprite(&setup_rects_[47],
-                       &InterfaceBoxStyles[1]);
+    Buffer::box_sprite(&setup_rects_[47],
+                       &InterfaceBoxStyles[3]);
     RECT *title_rect = &setup_rects_[46];
-    buffer->box_sprite(title_rect, &InterfaceBoxStyles[0]);
+    Buffer::box_sprite(title_rect, &InterfaceBoxStyles[0]);
 
     StringTemp[0] = 0;
     strcat(StringTemp,
            label_get(0xF9C / 4));
     CharUpperA(StringTemp);
-    buffer->set_font(find_font(0xE, 1), 0, 0, 0);
-    buffer->set_text_color(0xE1, -1, 1, 1);
+    Buffer::set_font(find_font(0xE, 1), 0, 0, 0);
+    Buffer::set_text_color(0xE1, -1, 1, 1);
     if (StringTemp != 0) {
-        buffer->write_cent_l(StringTemp, title_rect,
+        Buffer::write_cent_l(StringTemp, title_rect,
                              strlen(StringTemp));
     }
 
     RECT *rules_rect = &setup_rects_[48];
-    buffer->box_sprite(rules_rect, &InterfaceBoxStyles[0]);
-    buffer->box_sprite(&setup_rects_[49],
+    Buffer::box_sprite(rules_rect, &InterfaceBoxStyles[0]);
+    Buffer::box_sprite(&setup_rects_[49],
                        &InterfaceBoxStyles[0]);
 
     // The four layout words double as the row rectangle: left/top advance per
     // row while right/bottom stay put, and write_l reads them as a RECT.
     int left = rules_rect->left - 0x14;
     int top = setup_rects_[48].top;
-    buffer->set_font(find_font(0xC, 1), 0, 0, 0);
+    Buffer::set_font(find_font(0xC, 1), 0, 0, 0);
     int right = (rules_rect->right - rules_rect->left) + left - 6;
     int bottom = top + 0x12;
     RECT row_rect;
@@ -1479,7 +1477,7 @@ void NetWin::draw_custom_rules() {
     // The standing free-technology checkbox, spot id 100.
     int free_tech = (NetWinSessionOptions.rule_bits_c_ & 0x10) == 0 ? 2 : 0;
     Sprite &standing = g_IFACE_CLOSE_X_SPRITES[free_tech];
-    standing.draw(buffer, standing.transparent_index(), left, top);
+    standing.draw(this, standing.transparent_index(), left, top);
     if (NetDaemonNet.primary_state_.leading_words_[0] != 0) {
         spot_.add(0x64, 1, left, top, right - left, bottom - top);
     }
@@ -1556,18 +1554,18 @@ void NetWin::draw_custom_rules() {
 
         int on = state != 0 ? 2 : 0;
         Sprite &check = g_IFACE_CLOSE_X_SPRITES[on];
-        check.draw(buffer, check.transparent_index(), left + 0x19, top);
+        check.draw(this, check.transparent_index(), left + 0x19, top);
         if (NetDaemonNet.primary_state_.leading_words_[0] != 0) {
             spot_.add(row, 1, left + 0x19, top, right - left - 0x19,
                       bottom - top);
         }
 
-        buffer->set_text_color(state != 0 ? 0xDE : 0xE4, -1, 1, 1);
+        Buffer::set_text_color(state != 0 ? 0xDE : 0xE4, -1, 1, 1);
         row_rect.left = left;
         row_rect.top = top;
         row_rect.right = right;
         row_rect.bottom = bottom;
-        buffer->write_l(const_cast<char *>(line), &row_rect,
+        Buffer::write_l(const_cast<char *>(line), &row_rect,
                         static_cast<int>(strlen(line)));
 
         if (row == 7) {
