@@ -1,0 +1,20 @@
+{
+  "event_id": "e6800f871665c680520aecfa493e7a0a7155ffaa262c59628c9590d463562aec",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_reportif_satellite_panels.py"
+    ],
+    "evidence": [
+      "Existing ReportWin satellite tests exercise different mapped bodies; new actual-source complete ReportIf::draw_sat fixture checks six original non-help rectangle/style snapshots and two help snapshots, with GCC/Clang old-source failure/candidate pass controls.",
+      "Ignored proposal SHAabe82f9065b76513e02903fd27619fd42be0f3b0209a8352b0cddf8d8d918081; validation SHA486b217452c6cc73eac3a092769ffba17fa75720c854c22480e3f726fe9ad4f7. Host fixture is not an original ABI, real Buffer callback or full rendering proof."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "authorize-actual-satellite-rectangle-control-oct25an",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:reportif-satellite-panels-oct25an"
+}
