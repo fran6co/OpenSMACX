@@ -2,25 +2,25 @@
  "schema_version": 1,
  "slots": [
   {
-   "name": "worker-15",
-   "directory": "{env:OPENSMACX_COMPILER_POOL}/worker-15",
+   "name": "worker-23",
+   "directory": "{env:OPENSMACX_COMPILER_POOL}/worker-23",
    "environment": {
     "VC6_PREFIX": "{resource}"
    }
   },
   {
-   "name": "worker-16",
-   "directory": "{env:OPENSMACX_COMPILER_POOL}/worker-16",
+   "name": "worker-24",
+   "directory": "{env:OPENSMACX_COMPILER_POOL}/worker-24",
    "environment": {
     "VC6_PREFIX": "{resource}"
    }
   },
   {
-   "name": "worker-17",
+   "name": "worker-25",
    "environment": {
     "VC6_PREFIX": "{resource}"
    },
-   "directory": "{env:OPENSMACX_COMPILER_POOL}/worker-17"
+   "directory": "{env:OPENSMACX_COMPILER_POOL}/worker-25"
   },
   {
    "name": "worker-18",

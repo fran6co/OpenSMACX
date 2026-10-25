@@ -285,7 +285,7 @@ See the package README for the permission schema and fresh verification boundary
 For provisioned local prefixes, set `OPENSMACX_COMPILER_POOL` to the canonical
 absolute shared prefix directory and add `--resources recovery/resources.json`
 to `run`, `start`, `prepare`, `worktree prepare` or `integrate publish`. The current eight-slot configuration
-selects one of `worker-15` through `worker-22` and exports its `VC6_PREFIX` for the entire run.
+selects one of `worker-18` through `worker-25` and exports its `VC6_PREFIX` for the entire run.
 All cooperating worktrees must use the same pool path; an isolated checkout's own
 relative `.opensmacx/` is not the shared pool. Missing prefixes refuse; no copying,
 installation or increased compiler concurrency is implicit. Standalone commands
