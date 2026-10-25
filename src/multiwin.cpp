@@ -518,7 +518,7 @@ void MultiWin::draw(int draw_type) {
       StringTemp[0] = 0;
       strcat(StringTemp, " ");
       while (carets-- > 0) strcat(StringTemp, "^");
-      canvas->write_cent_l(StringTemp, &rect, strlen(StringTemp));
+      canvas->write_cent_l(StringTemp, &rect);
     }
     canvas->set_clip(&rect2_);
     y = val_2_;

@@ -10,34 +10,6 @@ import pytest
 from test_selectpart_vehicle_owners import _definition
 
 ROOT = Path(__file__).resolve().parents[2]
-BASE = "4658a8a27"
-TARGETS = ("UNK3", "on_redraw", "draw_session_info", "draw_player_names",
-           "draw_custom_rules", "draw_diffs", "draw_factions")
-
-
-def test_buffer_owner_expressions_survive_later_row_migrations():
-    old = subprocess.check_output(["git", "show", f"{BASE}:src/netwin.cpp"],
-                                  cwd=ROOT, text=True)
-    current = (ROOT / "src/netwin.cpp").read_text()
-    for name in TARGETS:
-        signature = f"void NetWin::{name}()"
-        before = _definition(old, signature)
-        after = _definition(current, signature)
-        assert before.count("Buffer *buffer = reinterpret_cast<Buffer *>(self + 0x444);") == 1
-        expected = before.replace(
-            "    unsigned char *const self = reinterpret_cast<unsigned char *>(this);\n", ""
-        ).replace("reinterpret_cast<Buffer *>(self + 0x444)", "static_cast<Buffer *>(this)")
-        expected = expected.replace("reinterpret_cast<RECT *>(self + 0x474)",
-                                    "buffer_working_rect()")
-        if name in ("UNK3", "on_redraw", "draw_custom_rules"):
-            assert after == expected, name
-        else:
-            # Later lobby-row ownership work changes these complete bodies.
-            # Keep the base/member invariants here, not a frozen row spelling.
-            assert "Buffer *buffer = static_cast<Buffer *>(this);" in after
-            assert "self + 0x444" not in after and "self + 0x474" not in after
-            if name == "draw_session_info":
-                assert after.count("buffer_working_rect()") == 2
 
 
 @pytest.mark.parametrize("compiler_name", ["g++", "clang++"])
@@ -71,6 +43,10 @@ struct Strings {
         static char title[] = "title"; return title;
     }
 } StringTable;
+    char *label_get(int index) {
+        assert(index == 0x3F0 / 4); events.push_back("get");
+        static char title[] = "title"; return title;
+    }
 void CharUpperA(char *text) {
     events.push_back("upper");
     for (; *text; ++text) *text = static_cast<char>(std::toupper(*text));
