@@ -1,0 +1,20 @@
+{
+  "event_id": "dc4e94037f165e573b8f726d8dca8f2975ce362ccea3fcc3c2fd40ae67e67544",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_string_formatting_owner_batch_oct20.py"
+    ],
+    "evidence": [
+      "The actual-source batch fixture also extracts the affected formatter bodies; project the existing shared space owner there.",
+      "Repair its stale ability-label mutation to alter the current typed table access and remove its now-unused fixture helper; retain all positive and damage checks. No production behavior changes."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "94b0a84aa4deda7b3db6233d97168bae8327c70a8f23e0d545a1ebe7adda2e60",
+  "request_id": "formatter-fixture-closure",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:formatter-literals-oct25m"
+}

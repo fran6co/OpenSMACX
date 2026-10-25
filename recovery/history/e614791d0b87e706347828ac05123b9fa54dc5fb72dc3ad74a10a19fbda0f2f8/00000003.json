@@ -1,0 +1,18 @@
+{
+  "event_id": "94b0a84aa4deda7b3db6233d97168bae8327c70a8f23e0d545a1ebe7adda2e60",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "existing-space-owner",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/string_formatting.cpp reuses BufferJoinSpace at all nine one-space append sites and includes buffer.h; source facts and historical claims unchanged.",
+      "Only the two independently corroborated parentheses retain RECOVERY_LITERAL declarations; the native overlap check now passes. Compilation and reference qualification are pending, not inferred."
+    ]
+  },
+  "previous_event": "0d726b5bc22abe20dea7aacb3b59f51ac937b454bc1742b3b1327254964da7a5",
+  "request_id": "existing-space-owner-incorporated",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:formatter-literals-oct25m"
+}

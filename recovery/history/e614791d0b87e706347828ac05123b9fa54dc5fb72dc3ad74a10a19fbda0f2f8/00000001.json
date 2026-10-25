@@ -1,0 +1,29 @@
+{
+  "event_id": "0bd79e8f9d32b3d196a20a77ab761f3ca5c7eb37fe4d102b459139c3d298c5cf",
+  "payload": {
+    "affects": [
+      "entity-007139a7f1af4528a1e6cffcbc894ed81d0a8d611d35daf5e74093229de7ed4b",
+      "entity-16bb5409045d0592d48a2d710f8aad13c4d294994c8673942a37358445f08406",
+      "entity-243b31cc5f038b1b47bdaac28cdba2c13873b6ea94f3b9cff620c6cf06e90338",
+      "entity-4bcf124db5bccfb7e262dd2d2d3883eb37122855db94ba81f6f48485265935bc",
+      "entity-5b86b9eae223d83fa83cc2335e591b8f989d6187f6ba11b5b95010d01bb7dea9",
+      "entity-5de921392e8e5eeca752e9daef2e48acea1f898a842404aa3aa9ac61da7fe225",
+      "entity-79607e44f34535de65fba5dbf0365152ea3714b46c86b9e8fa4acdc5c1c5fc9a",
+      "entity-7e16b05cd3eade560cf72f2aece144ed96cdc7b0892ba76a1802db4b300d1b6f",
+      "entity-860ad2315f1b8711beb734282ff72b62a9d8f8b82d37e7923078bf29b7d643fd"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "existing-space-owner",
+    "evidence": [
+      "src/buffer.cpp: RECOVERY_OBJECT at 0x00682820 and BufferJoinSpace definition.",
+      "read_literals rejected the duplicate source owner; the rejected proposal and failure are preserved in ignored task artifacts."
+    ],
+    "hypothesis": "The space at 0x682820 already belongs to BufferJoinSpace; formatter callers must reuse its source identity rather than declare overlapping private storage.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "existing-space-owner",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:formatter-literals-oct25m"
+}
