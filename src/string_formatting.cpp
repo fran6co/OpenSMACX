@@ -154,8 +154,10 @@ void __cdecl say_techs(char *text, int tech_id, int with_detail) {
     if (with_detail != 0) {
         strcat(text, " ");
         strcat(text, "(");
-        strcat(StringTemp, StringTable.get(
-            Labels.strings_ptr[0x274 / 4]));
+        LPSTR *label_table = Labels.strings_ptr;
+        LPSTR label = label_table[0x274 / 4];
+        LPSTR detail = StringTable.get(label);
+        strcat(StringTemp, detail);
         strcat(text, ")");
     }
 }
@@ -198,7 +200,8 @@ void __cdecl say_facility(char *text, int facility_id, int with_cost) {
     if (with_cost != 0) {
         strcat(text, " ");
         strcat(text, "(");
-        char *detail = label_get(0x9B);
+        LPSTR label = Labels.strings_ptr[0x9B];
+        LPSTR detail = strings->get(label);
         strcat(StringTemp, detail);
         strcat(text, ")");
     }
@@ -227,12 +230,16 @@ Status: Measured BYTE_EXACT here in place (wave 8 record-then-retire); the
         for the 7-int scale and loads StringTable after it.
 */
 void __cdecl say_ability(char *text, int ability_id, int with_detail) {
-    char *s1 = StringTable.get(Ability[ability_id].name);
+    LPSTR ability_name = Ability[ability_id].name;
+    LPSTR s1 = StringTable.get(ability_name);
     strcat(text, s1);
     if (with_detail != 0) {
         strcat(text, " ");
         strcat(text, "(");
-        char *detail = label_get(0xA4);
+        LPSTR *label_table = Labels.strings_ptr;
+        Strings *strings = &StringTable;
+        LPSTR label = label_table[0xA4];
+        LPSTR detail = strings->get(label);
         strcat(StringTemp, detail);
         strcat(text, ")");
     }

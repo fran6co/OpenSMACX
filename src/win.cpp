@@ -10048,7 +10048,7 @@ void Win::OnLButtonUp(void *hwnd, int x, int y, unsigned int keys) {
 // release arms call IDirectDrawSurface::GetDC/ReleaseDC by name - the
 // same slots 17/26 OnQueryNewPalette reaches.
 long Win::on_activate(unsigned int state, void * other, long minimized) {
-    if (state != 0 && minimized == 0 && BufferDirectDraw == 0) {
+    if (minimized == 0 && state != 0 && BufferDirectDraw == 0) {
         if (WinHdcRefCount == 0) {
             IDirectDrawSurface2 *obj = DirectDrawSurface;
             if (obj == 0) {
