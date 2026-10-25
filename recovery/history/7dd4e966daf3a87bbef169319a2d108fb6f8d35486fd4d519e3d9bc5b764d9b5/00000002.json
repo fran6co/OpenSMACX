@@ -1,0 +1,21 @@
+{
+  "event_id": "f7650c4b7c57f2c1d817a37024d01f4a269a37dcc2ef5159fb166c24d0c93ff4",
+  "payload": {
+    "affects": [
+      "entity-73781ab0a26d53cacc4e28e87863bb61b8341a04b4720b6bd864fa9bbaa11b41",
+      "entity-cfb79c433fd71a84ac122313028d21fd01081e0af2e3b21ebbae1f3d13e680e3"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "negative-coordinate-storage-window",
+    "evidence": [
+      "Complete native/source audit in coordinate-negative-alias-review.json SHA256 ca180010e98019be98daefc17b6832974208bb75310f8e9095c5931c78e1bb65. No named coordinate object or permission to extend Palette from proximity alone; preserve this discovery pending owner evidence."
+    ],
+    "hypothesis": "veh_promote and morale_alien also read missing-vehicle coordinates at0x9527F4..0x9527F8, immediately after declared Palette2 extent; the actual storage owner remains unresolved and must not be replaced by arbitrary array-prefix bytes.",
+    "kind": "discovery"
+  },
+  "previous_event": "322da564942ab395fa5a22eca3c98a6d7d2ab5cf1feafda7d069876f8d0f14f4",
+  "request_id": "negative-coordinate-storage-window",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:vehicle-negative-faction-alias-oct25bk"
+}

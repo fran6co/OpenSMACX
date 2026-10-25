@@ -1,0 +1,41 @@
+{
+  "event_id": "dee25ee655c9195aec9b8d954a0b7742c195acaced8bd9718158a3aac89dd2e0",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_vehicle_negative_prototype_alias.py"
+    ],
+    "evidence": [
+      "Act on the demonstrated shared storage relationship across the complete affected ownership group. Current compute_odds checkpoint is reviewed and merged; expand current task rather than reset its original baseline or discard findings. Authorize recovery of confirmed pointer-word reads and investigation of coordinate ownership, preserving all historical claims and original unsafe paths.",
+      "No compiler/layout tricks, invented data meaning, new initialization or arbitrary fixed executable address aliases. Coordinate source CPP/test work centrally in isolated workers. Complete native outside-scope preservation, host damage controls and whole application build/link remain required."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6033744,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6034064,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6029920,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5247824,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "f7650c4b7c57f2c1d817a37024d01f4a269a37dcc2ef5159fb166c24d0c93ff4",
+  "request_id": "admit-related-negative-vehicle-owners",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:vehicle-negative-faction-alias-oct25bk"
+}

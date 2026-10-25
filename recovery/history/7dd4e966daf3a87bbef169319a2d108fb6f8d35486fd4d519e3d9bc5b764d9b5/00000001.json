@@ -1,0 +1,21 @@
+{
+  "event_id": "322da564942ab395fa5a22eca3c98a6d7d2ab5cf1feafda7d069876f8d0f14f4",
+  "payload": {
+    "affects": [
+      "entity-3f9960830d8c59b5958568b6f39705a9fc993afe8efda97683474fae6bbeb1cb",
+      "entity-9128c82fb8a448db49100877a480af1f2a0c893cd1bc6bf20893f61b650381ed"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "negative-prototype-pointer-word",
+    "evidence": [
+      "Complete offense112/armor97 instruction spans independently reviewed in ignored proto-negative-alias-review.json, SHA256 f6f8be85cbec49a9716cb897c6ab60ad8c989d5ea395b38d48fe7d296d53bc97. Preserve original signed16 pointer-word effect, short-circuit order and every other index; no zero/skip fallback."
+    ],
+    "hypothesis": "The same negative-vehicle layout defect affects prototype reads: at exactly-1 native signed word0x9527FE aliases bits16..31 of Reactor0.name_short; independently allocated Vehs[-1] is not equivalent.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "negative-prototype-pointer-word",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:vehicle-negative-faction-alias-oct25bk"
+}
