@@ -1,0 +1,20 @@
+{
+  "event_id": "4d5a33c6fb7c96c7702108c24cac16f95f0d69d23690881668f86fbe8248d4a9",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_mapwin_generation.py"
+    ],
+    "evidence": [
+      "Broader host run exposes a preexisting fixture declaration projector still looking for field_1DD98_. The earlier reviewed MapWin family renamed that same signed member zoom_offset_; original offset0x1DD98 and type/layout were independently preserved before this task.",
+      "Authorize only updating this fixture lookup to the actual same member and optional isolated-source-root selection; keep every real body, expected value and damage mutant. Affected21controls pass in the isolated candidate overlay. Full196suite remains incomplete, not green."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "current-zoom-fixture-projection-oct25ab",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:mapwin-live-flags-oct25ab"
+}
