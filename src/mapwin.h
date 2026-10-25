@@ -357,7 +357,12 @@ class MapWin : public virtual GraphicWin {
   // Signed zoom offset: Console::zoom's original JGE/JLE tests clamp it
   // around +0x10 and -0xE, and MapWin init publishes values such as -8.
   int32_t field_1DD98_;  // 0x1DD98
-  uint32_t field_1DD9C_;  // 0x1DD9C
+  // Horizontal map-view center: set_center stores the wrapped signed x;
+  // calculate_dimensions and the interval test consume it as signed.
+  // This source model preserves the four-byte save word; the original
+  // declaration spelling/type is not established by those instructions.
+  // RECOVERY_MEMBER: v1 MapWin field_1DD9C_ 0x1DD9C 0x0046B1F0
+  int32_t field_1DD9C_;
   uint32_t field_1DDA0_;  // 0x1DDA0
   // Tile origins and visible extents are signed: tile_to_pixel at0x00462F00
   // compares them using JL/JGE, including maps whose viewport crosses zero.

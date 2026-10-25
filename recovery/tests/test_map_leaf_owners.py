@@ -72,7 +72,7 @@ void draw_tile(int x, int y, int mode) {
     ++draw_calls; draw_x=x; draw_y=y; draw_mode=mode;
 }
 
-struct MapWin { uint32_t field_1DD9C_; };
+struct MapWin { int32_t field_1DD9C_; };
 MapWin *test_mapwins[8];
 MapWin **MapWinTable = test_mapwins;
 int MapLongitudeBounds;
@@ -134,6 +134,13 @@ int main() {
     assert(sub_4468f0(10)==1); // edge == half-coordinate 5 is accepted
     assert(sub_4468f0(12)==-1);
     assert(sub_4468f0(60)==1); // half-coordinate == half-base is accepted
+
+    // The pin divides the signed center with truncation toward zero.
+    primary.field_1DD9C_=-5;
+    assert(sub_4468f0(-2)==1);
+    assert(sub_4468f0(-4)==-1);
+    assert(sub_4468f0(44)==1);
+    assert(sub_4468f0(46)==-1);
     return 0;
 }
 """

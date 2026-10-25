@@ -8687,7 +8687,7 @@ Status: Coverage transcription - unclaimed body (direct transcription of
 */
 extern "C" int __cdecl sub_4468f0(int a1) {
     int base =
-        static_cast<int>(MapWinTable[0]->field_1DD9C_);
+        MapWinTable[0]->field_1DD9C_;
     int iVar1 = base / 2;
     int n = MapLongitudeBounds;
     int iVar3 = n / 4;

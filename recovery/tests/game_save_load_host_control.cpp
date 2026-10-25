@@ -12,7 +12,8 @@ struct MapWin {
     uint32_t field_1DD70_, view_active_, map_view_index_;
     unsigned char gap_[0x1DD98 - 0x1DD7C];
     int field_1DD98_;
-    uint32_t field_1DD9C_, field_1DDA0_;
+    int32_t field_1DD9C_;
+    uint32_t field_1DDA0_;
     int closes_;
     void close() { ++closes_; }
 };

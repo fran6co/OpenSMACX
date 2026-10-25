@@ -2882,7 +2882,7 @@ void Console::end_of_turn() {
 // RECOVERY_BINDING: v1 {"evidence": ["The retained 0x005165B0 seed selects the nearest own base carrying Base::state bit 0x10, using the current MapWin camera coordinates and wraps X on round maps.", "base.h names the 0x0097D040 array as Bases with 0x134-byte Base records; its x/y/faction/state members are at offsets 0/2/4/0x30, matching all seed reads.", "MapWin fields 0x1DD9C/0x1DDA0 supply the camera point; map.cpp binds MapLongitude/MapIsFlat/MapLongitudeBounds; tutwin.h binds the image's BaseWin at 0x006A7628 as TutWinBaseWindow."], "reason": "Choose the nearest base of ConsoleGlobal's current faction with the seed's wrapped-map distance calculation and pass its typed index to the established BaseWin zoom path."}
 void Console::zoom_to_upkeep_base() {
     const MapWin *map_window = console_map_win();
-    const int camera_x = static_cast<int>(map_window->field_1DD9C_);
+    const int camera_x = map_window->field_1DD9C_;
     const int camera_y = static_cast<int>(map_window->field_1DDA0_);
     int best_distance = 99999;
     int best_base = -1;

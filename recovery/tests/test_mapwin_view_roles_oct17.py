@@ -141,11 +141,14 @@ def _game_io_fixture(body):
     assert body.count("fread(") == 6
     body = body.replace("fwrite(", "plain_write(").replace("fread(", "plain_read(")
     return r'''#include <stdint.h>
+#include <string.h>
 #define __cdecl
 struct FILE {};
 struct MapWin {
   uint32_t map_view_index_, view_active_, field_1DD70_;
-  uint32_t field_1DD98_, field_1DD9C_, field_1DDA0_;
+  uint32_t field_1DD98_;
+  int32_t field_1DD9C_;
+  uint32_t field_1DDA0_;
 };
 int GameDataEncryptedMode = 0;
 int GameDataWriteMode = 0;
@@ -158,7 +161,10 @@ static int transfer(void *p, int write, int encrypted, unsigned int width,
   int i = EventCount++;
   Events[i].address = p; Events[i].write = write; Events[i].encrypted = encrypted;
   Events[i].width = (int)width; Events[i].count = (int)count;
-  if (!write) *(uint32_t *)p = 0xA5000000U + (uint32_t)i;
+  if (!write) {
+    uint32_t raw = 0xA5000000U + (uint32_t)i;
+    memcpy(p, &raw, sizeof(raw));
+  }
   if (i < 5) {
     GameDataEncryptedMode = NextEncrypted[i];
     GameDataWriteMode = NextWrite[i];
@@ -199,8 +205,10 @@ static int run_case(const int encrypted[6], const int writing[6], int fail_at) {
     if (Events[i].address != expected[i] || Events[i].write != writing[i] ||
         Events[i].encrypted != encrypted[i] || Events[i].width != 4 ||
         Events[i].count != 1) return 2;
-    if (writing[i] && *(uint32_t *)Events[i].address != old_values[i]) return 3;
-    if (!writing[i] && *(uint32_t *)Events[i].address != 0xA5000000U + (uint32_t)i) return 4;
+    uint32_t raw;
+    memcpy(&raw, Events[i].address, sizeof(raw));
+    if (writing[i] && raw != old_values[i]) return 3;
+    if (!writing[i] && raw != 0xA5000000U + (uint32_t)i) return 4;
   }
   return 0;
 }

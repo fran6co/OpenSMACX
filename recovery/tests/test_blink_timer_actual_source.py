@@ -49,7 +49,8 @@ struct Plan { int blinks; void blink() { ++blinks; } };
 struct MapWin {
     uint32_t view_active_, field_1DD80_;
     int field_1DDCC_, field_1DDD0_, field_1DDD4_, field_1DDD8_;
-    uint32_t field_1DD9C_, field_1DDA0_;
+    int32_t field_1DD9C_;
+    uint32_t field_1DDA0_;
     int field_1DDA8_;
     uint32_t field_21A44_;
     int mouse_x, mouse_y, centers, center_x, center_y;
