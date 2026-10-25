@@ -70,7 +70,7 @@ def actual():
     bodies = {
         'handler': braced((ROOT / 'src/socialwin.cpp').read_text(),
                           'void SocialWin::on_iface_right_click('),
-        'in_box': braced((ROOT / 'src/win.cpp').read_text(),
+        'in_box': braced((ROOT / 'src/win_coordinates.cpp').read_text(),
                          'BOOL __cdecl in_box(int x, int y, const RECT *rect)'),
     }
     return declarations, bodies

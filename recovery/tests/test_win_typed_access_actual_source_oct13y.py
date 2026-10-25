@@ -95,10 +95,25 @@ def test_immutable_task_base_identity_claim_and_history_continuity():
         cwd=ROOT, text=True, timeout=30)
     before = {row.address: row for row in read_text(previous, path)}
     after = {row.address: row for row in read_text(path.read_text(), path)}
-    assert set(after) == set(before)
+    moved = {0x5FA7A0, 0x5FA7E0}
+    coordinates_path = ROOT / "src/win_coordinates.cpp"
+    coordinate_rows = read_text(coordinates_path.read_text(), coordinates_path)
+    coordinates = {row.address: row for row in
+                   coordinate_rows}
+    assert moved <= set(before)
+    assert set(after) == set(before) - moved
+    assert moved.isdisjoint(set(after))
+    assert moved <= set(coordinates)
+    assert sum(row.address in moved for row in coordinate_rows) == len(moved)
     for address, old in before.items():
-        current = after[address]
-        expected = old
+        current = coordinates[address] if address in moved else after[address]
+        if address in moved:
+            assert old.path == path
+            assert current.path == coordinates_path
+            expected = replace(old, path=coordinates_path)
+        else:
+            assert current.path == path
+            expected = old
         if address in {0x5F1070, 0x5EE9F0}:
             # Native recording in the later immutable claim-only task promotes
             # precisely these two obligations; all other metadata stays fixed.
@@ -334,3 +349,126 @@ def test_actual_l_button_up_word_masks_reload_after_callback_and_mutants(tmp_pat
         build_and_run(tmp_path, compiler_name, source, 0)
     else:
         build_and_run(tmp_path, compiler_name, source, 98, f"FAIL: {damage}:")
+
+
+RIGHT_BUTTON_FIXTURE = r"""
+#include <cstdint>
+#include <cstdio>
+#include <cstdlib>
+#include <string>
+#include <vector>
+typedef int BOOL;
+typedef char *LPSTR;
+typedef const char *LPCSTR;
+#define __cdecl
+#define FALSE 0
+struct RECT { int32_t left, top, right, bottom; };
+typedef void (*WinMouseEventCallback)(int, int);
+struct Sound { int is_playing() { return 0; } void play() {} };
+static std::vector<char> events;
+static int set_reentry_flag;
+struct Win {
+  uint32_t iFlags_, iSomeFlag_;
+  RECT outer_rect_;
+  WinMouseEventCallback field_420_, field_428_;
+  Sound *val_11_, *val_13_, *val_23_, *val_25_;
+  void on_right_click(int, int) { events.push_back('C'); if (set_reentry_flag) iSomeFlag_ |= 8U; }
+  void on_right_up(int, int) { events.push_back('U'); }
+  void vslot_35(int, int) { events.push_back('D'); }
+  void vslot_37(int, int) { events.push_back('V'); }
+  void on_r_button_up(int, int, unsigned int, int);
+};
+static Win *WinPointerOwner1, *WinPointerOwner2, *WinCallbackWindow;
+OFFSET_RECT_BODY
+IN_BOX_BODY
+RIGHT_BUTTON_BODY
+static void require_case(bool ok, const char *label) {
+  if (!ok) { std::fprintf(stderr, "FAIL: %s\n", label); std::exit(98); }
+}
+static void reset_case(Win &window, Win &other) {
+  events.clear();
+  set_reentry_flag = 0;
+  window.iFlags_ = window.iSomeFlag_ = 0;
+  window.outer_rect_ = RECT{20, 10, 100, 60};
+  window.field_420_ = window.field_428_ = 0;
+  window.val_11_ = window.val_13_ = window.val_23_ = window.val_25_ = 0;
+  WinPointerOwner1 = &window;
+  WinPointerOwner2 = &other;
+  WinCallbackWindow = 0;
+}
+int main() {
+  Win window, other;
+  // Nonzero origin still yields the local hit rectangle {0,0,80,50}.
+  reset_case(window, other);
+  window.on_r_button_up(79, 49, 0, 0);
+  require_case(events == std::vector<char>{'C', 'U'}, "inside-relative-right-edge");
+  require_case(WinPointerOwner1 == 0 && WinPointerOwner2 == 0,
+               "capture-cleared-before-dispatch");
+  require_case(WinCallbackWindow == &window, "common-up-callback-owner");
+
+  // The right edge is exclusive. This also verifies that the common up event
+  // still runs after the captured-click rectangle rejects the point.
+  reset_case(window, other);
+  window.on_r_button_up(80, 49, 0, 0);
+  require_case(events == std::vector<char>{'U'}, "right-edge-exclusive-common-up");
+  require_case(WinPointerOwner1 == 0 && WinPointerOwner2 == 0,
+               "outside-capture-still-cleared");
+  require_case(WinCallbackWindow == &window, "outside-common-up-owner");
+  return 0;
+}
+"""
+
+
+def right_button_program(tmp_path, compiler_name, damage):
+    win_source = (ROOT / "src/win.cpp").read_text()
+    coordinates_source = (ROOT / "src/win_coordinates.cpp").read_text()
+    right_up = extract_function(
+        win_source,
+        "void Win::on_r_button_up(int x, int y, unsigned int keys, int dbl)",
+    )
+    offset_rect = extract_function(
+        win_source,
+        "void __cdecl offset_rect(RECT *rect, int dx, int dy)",
+    )
+    in_box_body = extract_function(
+        coordinates_source,
+        "BOOL __cdecl in_box(int x, int y, const RECT *rect)",
+    )
+    if damage == "raw-right":
+        before = "offset_rect(&testRect, -fa, -fb);"
+        after = "(void)fa;\n        offset_rect(&testRect, 0, -fb);"
+        assert right_up.count(before) == 1
+        right_up = right_up.replace(before, after, 1)
+    return RIGHT_BUTTON_FIXTURE.replace("OFFSET_RECT_BODY", offset_rect).replace(
+        "IN_BOX_BODY", in_box_body
+    ).replace(
+        "RIGHT_BUTTON_BODY", right_up
+    )
+
+
+@pytest.mark.parametrize("compiler_name", ["g++", "clang++"])
+@pytest.mark.parametrize("damage", ["none", "raw-right"])
+def test_actual_right_button_uses_relative_rectangle_and_keeps_common_up(
+    tmp_path, compiler_name, damage
+):
+    compiler = shutil.which(compiler_name)
+    if compiler is None:
+        pytest.skip(compiler_name + " unavailable")
+    source = tmp_path / "right_button.cpp"
+    executable = tmp_path / "right_button"
+    source.write_text(right_button_program(tmp_path, compiler_name, damage))
+    built = subprocess.run(
+        [compiler, "-std=c++11", "-Wall", "-Wextra", "-Werror",
+         "-Wno-unused-parameter", "-fsanitize=address,undefined",
+         "-fno-sanitize-recover=all", str(source), "-o", str(executable)],
+        capture_output=True, text=True, timeout=45,
+    )
+    assert built.returncode == 0, built.stderr
+    result = subprocess.run(
+        [str(executable)], capture_output=True, text=True, timeout=15,
+        env=dict(os.environ, ASAN_OPTIONS="detect_leaks=0"),
+    )
+    if damage == "none":
+        assert result.returncode == 0, result.stderr
+    else:
+        assert result.returncode == 98 and "right-edge-exclusive-common-up" in result.stderr, result.stderr
