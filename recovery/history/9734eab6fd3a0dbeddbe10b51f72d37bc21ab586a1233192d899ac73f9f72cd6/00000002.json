@@ -1,0 +1,18 @@
+{
+  "event_id": "67ae1af5057ff300e3c40090aee801ddcab40f2c014581b88dd4c3232fa2b81a",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "menu-reference-order-capped-search-oct25aq",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/alphamenu.cpp now uses a genuine constRECTreference andbranch-localWin::move argumentevaluation, retaining the native-recorded historicalclaim. No originalfacts/claims changed.",
+      "Native strict success uses frozen actualproductionvariantCOFF andqualifiedotherobjects; allfailedvariants retained. Complete applicationbuild/destinationverification remainsrequired and no fullgameacceptance is claimed."
+    ]
+  },
+  "previous_event": "794ecf1fdca8e8872ed0080540c53fc59507f5d5c81ef54e9c75fa7c397a8e84",
+  "request_id": "incorporate-strict-menu-winner-oct25aq",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:alphamenu-branch-geometry-oct25aq"
+}

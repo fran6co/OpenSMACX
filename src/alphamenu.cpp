@@ -561,25 +561,16 @@ int AlphaMenu::init(Win *parent) {
 void AlphaMenu::adjust() {
   const int height = sprites_[0].height() * count_ + sprite1_.height();
   resize(sprite1_.width(), height, 0);
-
   const int screen_width = WinScreenWidth;
+  const RECT &bounds = MainInterfaceGlobal.window_bounds_;
   if (screen_width == 0x320) {
-    const int top = MainInterfaceGlobal.window_bounds_.top;
-    const int bottom = MainInterfaceGlobal.window_bounds_.bottom;
-    int y = top - bottom;
-    y -= height;
-    y += WinScreenHeight;
-    Win::move(0, y);
+    const int y = bounds.top - bounds.bottom - height;
+    Win::move(0, y + WinScreenHeight);
   } else {
-    const int top = MainInterfaceGlobal.window_bounds_.top;
-    const int bottom = MainInterfaceGlobal.window_bounds_.bottom;
-    int y = top - bottom;
+    const int y = bounds.top - bounds.bottom - height;
     const int x = (screen_width - 0x400) / 2;
-    y -= height;
-    y += WinScreenHeight;
-    Win::move(x, y);
+    Win::move(x, y + WinScreenHeight);
   }
-
   compute();
   redraw();
 }
