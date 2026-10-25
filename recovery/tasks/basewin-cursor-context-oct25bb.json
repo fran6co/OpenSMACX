@@ -1,0 +1,22 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "fa0aa299e34a1b8ab4d35d2579c723c51206f72e",
+  "editable_files": [
+    "src/basewin.cpp"
+  ],
+  "evidence": [
+    "Pinned41B1F0-41B491 includes the small-cursor logic currently delegated to an unmapped shared helper. Earlier global inline experiment changed the second caller and removed the helper contribution; this distinct single-caller expansion keeps both intact. No original source-TU or source boundary is inferred.",
+    "One ordinary C++ candidate specializes the literal large=0 path, preserving guards, repeated farm_get calls, live receiver/global reads and ordered small-sprite cursor setters. This is a matching trial, not a behavior fix. Keep only if exact or a separately justified structural correction after actual production/control, outside, reference, build/link, source continuity and destination checks. Native record alone may bank new historical claims."
+  ],
+  "intent": "Try the original small-cursor control flow directly in BaseWin::on_mouse_move, keeping the shared helper for other callers.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4305392,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "basewin-cursor-context-oct25bb"
+}

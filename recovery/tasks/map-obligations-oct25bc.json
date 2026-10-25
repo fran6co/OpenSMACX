@@ -1,0 +1,62 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "fa0aa299e34a1b8ab4d35d2579c723c51206f72e",
+  "editable_files": [
+    "src/map.cpp"
+  ],
+  "evidence": [
+    "All nine identities are already local-exact and strict-reference PASS in the fresh qualified application. They are counted in the existing3465 exact bodies; this work does not create nine new matching gains. Ordinary Map ownership and source bodies need independent review; exclude generated initializers and scaffolds.",
+    "Only installed native recover record may publish the existing evidence as historical source obligations, after fresh isolated compiler preparation and measurement. No C++ body, binding, mode, type, flags or layout changes are authorized. Preserve every other source fact and all prior claims. Build/link and relevant continuity/reference/source checks must pass; do not label legacy recording as full application acceptance."
+  ],
+  "intent": "Freshly record historical matching obligations for nine already verified genuine Map functions.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5243216,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5243264,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5243424,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5839760,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5839888,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5840176,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5740608,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5837328,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5837360,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "map-obligations-oct25bc"
+}
