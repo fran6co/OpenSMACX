@@ -1,0 +1,23 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "560b11518dc8a1f784cd1700848d245d298c8cab",
+  "editable_files": [
+    "src/reportif.cpp"
+  ],
+  "evidence": [
+    "Full pinned body4AA970..4AB54A contains direct Buffer::box_sprite calls4AABDE/4AB1B4 absent from current source; both use same source-owned draw_workspace_rect_ and table entry0.",
+    "Preserve live rereads after preceding box callbacks and branch-specific bottom/right write order, later inset, all original quirks and source claims. Candidate SHAc44b84462b07dbe05ef5054d3cdc3143e3c44c97133572f79f8399433578fd9f; independent source/pin review SHAbc4a8a8cf91ffdaa13b81371bda9a9dee4579f78483b1789a14a51749b3d9805.",
+    "Use isolated compiler and unchanged production-replica control, native outside-owner preservation, relevant actual-source host controls and one complete batch build/link followed by destination verification before coordinator-reviewed manual integration. Preserve unknown evidence; no automatic/game acceptance claim."
+  ],
+  "intent": "Recover both omitted original non-help satellite-panel box draws and their live rectangle updates.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4893040,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "reportif-satellite-panels-oct25an"
+}
