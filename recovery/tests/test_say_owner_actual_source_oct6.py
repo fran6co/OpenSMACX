@@ -76,9 +76,6 @@ PRELUDE = r'''
 #define __cdecl
 typedef char *LPSTR;
 static std::vector<std::string> events;
-struct Strings {
-  char *get(char *text) { events.push_back(std::string("get:") + text); return text; }
-};
 struct Named { char *name; };
 struct Social { char *type; };
 static char facility_name[] = "facility";
@@ -87,17 +84,41 @@ static char society_name[] = "society";
 static char facility_detail[] = "facility-detail";
 static char ability_detail[] = "ability-detail";
 static char society_detail[] = "society-detail";
+static char wrong_detail[] = "wrong-detail";
+static int last_label = -1;
+static int label_id_for(char *text) {
+  if (text == facility_detail) return 0x9B;
+  if (text == ability_detail) return 0xA4;
+  if (text == society_detail) return 0x45;
+  return -1;
+}
+struct Strings {
+  char *get(char *text) {
+    const int label = label_id_for(text);
+    if (label >= 0) {
+      last_label = label;
+      events.push_back("label:" + std::to_string(label));
+    }
+    if (text == facility_name) events.push_back("get:facility");
+    else if (text == ability_name) events.push_back("get:ability");
+    else if (text == society_name) events.push_back("get:society");
+    else if (text == facility_detail) events.push_back("get:facility-detail");
+    else if (text == ability_detail) events.push_back("get:ability-detail");
+    else if (text == society_detail) events.push_back("get:society-detail");
+    else events.push_back("get:wrong-detail");
+    return text;
+  }
+};
+struct LabelOwner { LPSTR *strings_ptr; };
+static LPSTR label_slots[256];
+static LabelOwner Labels = { label_slots };
 static Named Facility[4];
 static Named Ability[4];
 static Social SocialCategories[4];
 static Strings StringTable;
 static char StringTemp[128];
-static int last_label = -1;
 static char *label_get(int index) {
-  events.push_back("label:" + std::to_string(index));
-  last_label = index;
-  return StringTable.get(index == 0x9B ? facility_detail :
-                         index == 0xA4 ? ability_detail : society_detail);
+  return StringTable.get(Labels.strings_ptr[index]);
 }
 '''
 
@@ -106,7 +127,10 @@ def cpp_source(projected: str, mutation: str | None = None) -> str:
     bodies = [extract_body(projected, signature) for signature in SIGNATURES]
     assert all("reinterpret_cast<int>" not in body for body in bodies)
     if mutation == "wrong_label_index":
-        bodies[0] = bodies[0].replace("label_get(0x9B)", "label_get(0x9C)", 1)
+        correct = "Labels.strings_ptr[0x9B]"
+        wrong = "Labels.strings_ptr[0x9C]"
+        bodies[0] = bodies[0].replace(correct, wrong, 1)
+        assert correct not in bodies[0] and wrong in bodies[0]
     elif mutation == "append_detail_to_text":
         bodies[1] = bodies[1].replace("strcat(StringTemp, detail);",
                                       "strcat(static_cast<char *>(text), detail);", 1)
@@ -117,11 +141,15 @@ def cpp_source(projected: str, mutation: str | None = None) -> str:
     main = r'''
 int main() {
   char text[128];
+  for (int i = 0; i < 256; ++i) label_slots[i] = wrong_detail;
+  label_slots[0x9B] = facility_detail;
+  label_slots[0xA4] = ability_detail;
+  label_slots[0x45] = society_detail;
   Facility[1].name = facility_name;
   Ability[2].name = ability_name;
   SocialCategories[3].type = society_name;
 
-  std::strcpy(text, "prefix"); std::strcpy(StringTemp, ""); events.clear();
+  std::strcpy(text, "prefix"); std::strcpy(StringTemp, ""); events.clear(); last_label = -1;
   say_facility(text, 1, 2);
   assert(std::strcmp(text, "prefixfacility ()") == 0);
   assert(std::strcmp(StringTemp, "facility-detail") == 0);
@@ -129,7 +157,7 @@ int main() {
   assert(events.size() == 3 && events[0] == "get:facility" &&
          events[1] == "label:155" && events[2] == "get:facility-detail");
 
-  std::strcpy(text, ""); std::strcpy(StringTemp, "seed"); events.clear();
+  std::strcpy(text, ""); std::strcpy(StringTemp, "seed"); events.clear(); last_label = -1;
   say_ability(text, 2, -1);
   assert(std::strcmp(text, "ability ()") == 0);
   assert(std::strcmp(StringTemp, "seedability-detail") == 0);
@@ -137,7 +165,7 @@ int main() {
   assert(events.size() == 3 && events[0] == "get:ability" &&
          events[1] == "label:164" && events[2] == "get:ability-detail");
 
-  std::strcpy(text, ""); std::strcpy(StringTemp, ""); events.clear();
+  std::strcpy(text, ""); std::strcpy(StringTemp, ""); events.clear(); last_label = -1;
   say_society(text, 3, 1);
   assert(std::strcmp(text, "society ()") == 0);
   assert(std::strcmp(StringTemp, "society-detail") == 0);
@@ -145,10 +173,11 @@ int main() {
   assert(events.size() == 3 && events[0] == "get:society" &&
          events[1] == "label:69" && events[2] == "get:society-detail");
 
-  std::strcpy(text, "no-detail"); std::strcpy(StringTemp, "unchanged"); events.clear();
+  std::strcpy(text, "no-detail"); std::strcpy(StringTemp, "unchanged"); events.clear(); last_label = -1;
   say_ability(text, 2, 0);
   assert(std::strcmp(text, "no-detailability") == 0);
   assert(std::strcmp(StringTemp, "unchanged") == 0);
+  assert(last_label == -1);
   assert(events.size() == 1 && events[0] == "get:ability");
   puts("actual projected say_* controls passed");
 }

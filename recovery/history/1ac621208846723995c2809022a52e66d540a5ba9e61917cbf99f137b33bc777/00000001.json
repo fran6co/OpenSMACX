@@ -1,0 +1,22 @@
+{
+  "event_id": "ea43ef04441cf47c8a2b79aa754552ed48154f70bf5aeeb66e5f0fc7da286d91",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_say_owner_actual_source_oct6.py",
+      "recovery/tests/test_strings_formatter_boundary_oct18.py"
+    ],
+    "evidence": [
+      "Three separately measured formatter proposals restore full local byte equality with no owner exact losses and native outsidePASS; native recording independently confirms the historical claims without changing marker tokens.",
+      "The existing host fixture observes the synthetic label_get helper rather than the original typed lookup/get behavior. Project the existing Labels pointer table and observe Strings.get input values, keeping actual output/call-order checks and all negative mutants; do not skip or weaken behavior checks.",
+      "Audit the completed one-time formatter transfer inverse before maintaining it: its frozen body/header snapshot is not a permanent recovery requirement. Establish master behavior and exact references, retain current owner/identity/storage/compiler-policy checks through native facilities and meaningful tests. Only retire proved obsolete migration-only assertions; native gates and original obligations cannot be weakened."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "typed-lookup-host-controls-and-completed-transfer-audit-oct25l",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:easy-owners-oct25l"
+}

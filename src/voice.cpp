@@ -381,8 +381,8 @@ int VoiceTx::unload() {
 // ORIGINAL: 0x004C8F70 ?init@VoiceTx@@QAEHKPAXK@Z 0x004C8F70-0x004C9007 FILE
 // symbol    ?init@VoiceTx@@UAEHKPAXK@Z
 int VoiceTx::init(unsigned long size, void *context, unsigned long flags) {
-    unload();
     int result = 0;
+    unload();
     if (device_ == 0) {
         if (WaveDeviceReleaseGuard == 0) {
             return 1;
