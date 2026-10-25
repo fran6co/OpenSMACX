@@ -1,0 +1,28 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "a612ea3bffc4c4e17675bb2231326cdefd5ab364",
+  "editable_files": [
+    "src/caviar.cpp"
+  ],
+  "evidence": [
+    "Pinned close_class0x618D20 calls record release0x639630 at0x618D80. Current same-TU definition before caller is expanded into the caller, replacing its historical local exact claim with a current63-instruction mismatch versus33 original. Real source API/ownership is confirmed; no original TU-boundary claim is inferred.",
+    "One bounded source-order candidate: preserve both complete bodies and annotations verbatim, put the class frontend before the engine helper with a genuine file-scope forward declaration, preserve all other C++ source positions. No wrappers, noinline attributes, function-body changes, flags or baseline changes. If no call-boundary gain, preserve evidence and investigate a coherent module separation rather than repeat forms.",
+    "Fresh unchanged production replica, native whole-owner comparisons, historical continuity, independent review, relevant existing Caviar controls and full application build/link plus destination recheck required. Recorder alone grants new historical claims; none is planned. No full linked/runtime/game acceptance."
+  ],
+  "intent": "Restore the original Caviar frontend-to-engine release call through ordinary source organization.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6393120,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6526512,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "caviar-release-call-boundary-oct25bm"
+}
