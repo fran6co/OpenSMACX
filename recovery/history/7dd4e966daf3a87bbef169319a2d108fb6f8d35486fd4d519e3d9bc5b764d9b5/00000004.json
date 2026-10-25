@@ -1,0 +1,21 @@
+{
+  "event_id": "1db01b69ab605399045313ec786667b38b593edcdb885ad8cab37eea88fca01a",
+  "payload": {
+    "affects": [
+      "entity-c46d88454f5459c23f8836f548a51a19e7f6832387f028ccf247914fd91373f7"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "expose-goody-box-codegen-impact",
+    "evidence": [
+      "Physical independent review SHA256 aa703c705e5a6297afc7d1daaca29d19923de9b9e96509f53290395f57bb7b54:3339 versus3340 instructions; removal of movedi,[ebp-10] before a backedge whose destination reloads EDI before use, reordered independent header loads, all525 external relocation target/kind sequence entries preserved. Local jump-table targets follow their moved instructions. Initial native outsideFAIL preserved; this is not full equivalence or linked/runtime proof.",
+      "Coordinator admits goody_box as observed emitted-code impact scope. Source remains unchanged and historical obligations remain; no global flag changes, baselines reset or outsideFAIL waived. A fresh expanded-scope native comparison and full build/link are required before manual integration."
+    ],
+    "hypothesis": "Both pointer-word candidates also alter compiler output for source-unchanged goody_box0x57A660: loop-header load scheduling and elimination of a redundant stack reload. No offense/armor call or inlining edge was found; compiler selection trigger remains unknown.",
+    "kind": "discovery"
+  },
+  "previous_event": "dee25ee655c9195aec9b8d954a0b7742c195acaced8bd9718158a3aac89dd2e0",
+  "request_id": "expose-goody-box-codegen-impact",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:vehicle-negative-faction-alias-oct25bk"
+}

@@ -1,0 +1,21 @@
+{
+  "event_id": "a6f2fac9cc0de9ba51ce92beadb29b5b1f1666b156d7a3fe8f2f00ce1800e80c",
+  "payload": {
+    "affects": [
+      "entity-b41ec120c1803fbf741847a629f7dc9d5c5b3ae5f4d4fd0dc8b4cb4d362f2ecf"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "expose-action-give-load-scheduling",
+    "evidence": [
+      "Independent physical action_give review SHA256 06579cf447c45e16651f485ad99c035c2b027222cf15dabaf82fc175ac6416dd: both candidates swap only adjacent eax=[ebp-8] and ebx=[ebp-1c] loads at0x4CEFF7/0x4CEFFA; no intervening effect or flags change. Same413instructions and all23 relocation targets/kinds/offsets. Source unchanged. Full function/runtime equivalence and the compiler selection trigger remain unproven.",
+      "Coordinator admits the observed compiler impact for bounded review, preserving initial and goody-expanded native failures. Root/worker task baseline remains a7ba9e17d; no source change to action_give, global flags, historical claim or acceptance policy."
+    ],
+    "hypothesis": "Native residual after goody scope still reports source-unchanged action_give0x4CEDE0, caused by reordering two independent adjacent stack loads.",
+    "kind": "discovery"
+  },
+  "previous_event": "9a18c1bdbc978f60b75462a08bcd07e3e6fd5505166b55507ba83aa500503336",
+  "request_id": "expose-action-give-load-scheduling",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:vehicle-negative-faction-alias-oct25bk"
+}
