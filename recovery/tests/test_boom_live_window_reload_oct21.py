@@ -149,7 +149,7 @@ struct GraphicWin : Buffer {
     void update(RECT *, int);
 };
 struct MapWin : GraphicWin {
-    int field_1DD98_;
+    int zoom_offset_;
     void draw_tile(int, int, int);
 };
 struct Sprite {
@@ -316,7 +316,7 @@ static int frame_control(int use_flic) {
     Vehs[0].faction_id = Vehs[0].proto_id = 0;
     VehPrototypes[0].reactor_id = 0;
     saved_rectangles[0] = RECT{1, 2, 8, 9};
-    before.field_1DD98_ = after.field_1DD98_ = 0;
+    before.zoom_offset_ = after.zoom_offset_ = 0;
     MapWinTable[0] = &before;
     switch_on_draw_to = &after;
     replace_on_draw = 1;

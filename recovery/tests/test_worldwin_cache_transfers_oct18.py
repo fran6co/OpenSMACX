@@ -65,8 +65,8 @@ struct Buffer {
 };
 struct GraphicWin:Buffer {GraphicWin(int id=0):Buffer(id){} };
 struct MapWin:GraphicWin {
-    int field_1DDAC_,field_1DDB0_,field_1DD9C_,field_1DD98_,field_1DDA0_;unsigned field_1DD70_;
-    MapWin():GraphicWin(3),field_1DDAC_(19),field_1DDB0_(23),field_1DD9C_(0),field_1DD98_(0),field_1DDA0_(0),field_1DD70_(0){}
+    int field_1DDAC_,field_1DDB0_,center_x_,zoom_offset_,center_y_;unsigned field_1DD70_;
+    MapWin():GraphicWin(3),field_1DDAC_(19),field_1DDB0_(23),center_x_(0),zoom_offset_(0),center_y_(0),field_1DD70_(0){}
     virtual int resize(int w,int h,int repaint){require(repaint==1,"map-resize-mode");events.push_back("map-resize");allocate(w,h,44);return result_code;}
     int draw_map(int mode);
     int gen_bases_only(){require(field_1DD70_==0x80000080U,"base-draw-flags");events.push_back("bases");pixels[1]=77;return result_code;}
@@ -118,7 +118,7 @@ static void exercise(int flags,bool stretched,bool fail_results) {
     else {for(int py=0;py<w.height();++py)for(int px=0;px<w.width();++px){int expected=55;
         if(px>=x&&px<x+width&&py>=y&&py<y+height)expected=expected1[(py-y)*width+px-x];
         require(w.pixels[py*w.width()+px]==expected,"centered-cache-pixels");}}
-    if(flags&8){require(w.field_A14_==32&&w.field_A18_==8,"resize-dimensions");require(w.mapWin_.field_1DDAC_==0&&w.mapWin_.field_1DDB0_==0,"resize-view-reset");require(w.mapWin_.field_1DD9C_==4&&w.mapWin_.field_1DD98_==-14&&w.mapWin_.field_1DDA0_==4,"resize-view-configuration");}
+    if(flags&8){require(w.field_A14_==32&&w.field_A18_==8,"resize-dimensions");require(w.mapWin_.field_1DDAC_==0&&w.mapWin_.field_1DDB0_==0,"resize-view-reset");require(w.mapWin_.center_x_==4&&w.mapWin_.zoom_offset_==-14&&w.mapWin_.center_y_==4,"resize-view-configuration");}
     std::vector<std::string> expected;
     if(flags&8){expected.push_back("map-resize");expected.push_back("init2");expected.push_back("palette2");expected.push_back("init1");expected.push_back("palette1");}
     if(terrain){if(fill){expected.push_back("dirty");expected.push_back("fill-map");}else expected.push_back("copy");expected.push_back("terrain");expected.push_back("copy");expected.push_back("clean");}

@@ -58,7 +58,7 @@ def actual_source():
         "\n".join(re.findall(r"^#define Map(?:LongitudeBounds|LatitudeBounds|IsFlat) .+$", h["map"], re.M))
     )
     fields = []
-    for name in ("field_1DD70_", "map_view_index_", "field_1DD98_", "field_1DDC0_", "field_1DDA4_", "field_1DDA8_",
+    for name in ("field_1DD70_", "map_view_index_", "zoom_offset_", "field_1DDC0_", "field_1DDA4_", "field_1DDA8_",
                  "field_1DDCC_", "field_1DDD0_", "field_1DDD4_", "field_1DDD8_"):
         field, = re.findall(r"^  (?:int|int32_t|uint32_t) " + name + r";", h["mapwin"], re.M)
         fields.append(field)
@@ -165,7 +165,7 @@ int GraphicWin::fill(RECT *clip,int color){require(this==static_cast<GraphicWin*
 int MapWin::pixel_to_tile(int x,int y,int *tx,int *ty){require(this==&window);note('Q',{x,y});*tx=0;
     if(!conversion_fail)*ty=x==proposed_clip.right?right_y:left_y;return conversion_fail;}
 void MapWin::tile_to_pixel(int x,int y,int *px,int *py){require(this==&window);note('P',{x,y});*px=x*10+1;*py=y*10+2;
-    if(scenario==2){field_1DD98_=uint32_t(-7);field_1DD70_=0x12345;field_1DDC0_=13;}}
+    if(scenario==2){zoom_offset_=-7;field_1DD70_=0x12345;field_1DDC0_=13;}}
 int gen_terrain_poly(Buffer *canvas,MapWin *owner,int zoom,int faction,int base,int flags,int x,int y,int px,int py){
     if(adapter_mode){require((owner==nullptr&&canvas==nullptr)||(owner==&window&&canvas==static_cast<Buffer*>(&window)));
         note('A',{zoom,faction,base,flags,x,y,px,py});return -37;}
@@ -182,7 +182,7 @@ void MapWin::draw_vehicles(int x,int y,int px,int py,int faction){require(this==
 void MapWin::draw_base_names(){require(this==&window);note('N');
     if(scenario==5)field_1DD70_|=0x22000;
     if(scenario==9)ConsoleGlobal.cursor_active_=1;
-    if(scenario==10){field_1DD98_=uint32_t(-8);ConsoleGlobal.faction_id_=6;}}
+    if(scenario==10){zoom_offset_=-8;ConsoleGlobal.faction_id_=6;}}
 void MapWin::gen_overlays(int x,int y){require(this==&window);note('O',{x,y});++overlay_calls;
     if(scenario==6)field_1DD70_|=0x20000;
     if(scenario==7){field_1DDA8_=159;field_1DDD0_=1;field_1DDD8_=0;}}
@@ -204,7 +204,7 @@ void reset(){
     scenario=clip_calls=conversion_fail=adapter_mode=terrain_calls=vehicle_calls=overlay_calls=map_reads=0;
     center_x=center_y=50;expected_faction=3;left_y=right_y=48;clip_results[0]=clip_results[1]=1;
     proposed_clip={4,6,80,90};window.rect1_=proposed_clip;window.rect2_={0,0,200,160};
-    window.field_1DD70_=window.map_view_index_=0;window.field_1DD98_=0;window.field_1DDC0_=7;
+    window.field_1DD70_=window.map_view_index_=0;window.zoom_offset_=0;window.field_1DDC0_=7;
     window.field_1DDA4_=window.field_1DDA8_=0;window.field_1DDCC_=100;window.field_1DDD4_=100;window.field_1DDD0_=80;window.field_1DDD8_=80;
     MapLongitudeBounds=200;MapLongitude=100;MapLatitudeBounds=160;MapIsFlat=0;GameDataStateStorage.fields_.game_state_=0;IsMultiplayerNet=ConsoleControlTurnActive=0;
     ConsoleGlobal.faction_id_=3;ConsoleGlobal.cursor_active_=0;ConsoleGlobal.field_23BF8_=1;ConsoleGlobal.survey_mode_=0;ConsoleGlobal.field_23BE4_=1;
@@ -312,7 +312,7 @@ void draw_controls(){
         case 6:ConsoleGlobal.cursor_history_x_[2]=-250;break;case 7:ConsoleGlobal.cursor_history_y_[2]=160;break;}
         window.draw_radius(50,50,0,0);require(events('X').empty());}
     reset();clip_results[0]=0;ConsoleGlobal.field_23BF8_=0;ConsoleGlobal.survey_mode_=2;window.map_view_index_=1;window.field_1DD70_=0x80000000;
-    ConsoleGlobal.field_23BE4_=0;IsMultiplayerNet=1;GameDataStateStorage.fields_.game_state_=2;window.field_1DD98_=uint32_t(-8);window.draw_radius(50,50,0,0);require(events('X').size()==1&&events('X')[0].a[0]==2);
+    ConsoleGlobal.field_23BE4_=0;IsMultiplayerNet=1;GameDataStateStorage.fields_.game_state_=2;window.zoom_offset_=-8;window.draw_radius(50,50,0,0);require(events('X').size()==1&&events('X')[0].a[0]==2);
     for(int draw=-1;draw<4;++draw){reset();clip_results[0]=0;window.draw_radius(50,50,0,draw);
         require(events('U').size()==size_t(draw!=0)&&events('D').size()==size_t(draw>=2)&&events('X').size()==size_t(draw>=0));
         if(draw>=2)require(seen[seen.size()-2].kind=='U'&&seen.back().kind=='D');}
@@ -332,7 +332,7 @@ void draw_controls(){
     }
     reset();scenario=11;window.draw_radius(50,50,0,0);require((points('T')==std::vector<Point>{{49,47},{51,47}})&&events('X').empty());
     reset();clip_results[0]=clip_results[1]=0;window.draw_radius(50,50,0,2);require(events('U').empty()&&events('D').empty());
-    reset();clip_results[0]=0;window.field_1DD98_=uint32_t(-7);window.draw_radius(50,50,0,0);require(events('X').size()==1&&events('X')[0].a[0]==1);
+    reset();clip_results[0]=0;window.zoom_offset_=-7;window.draw_radius(50,50,0,0);require(events('X').size()==1&&events('X')[0].a[0]==1);
 }
 int main(){adapter_and_view();complete_scans();scan_boundaries_and_callbacks();draw_controls();}
 '''
@@ -392,8 +392,8 @@ DAMAGE = [
     ("conversion_sentinel", "GENERATE", "int upper_left_y = 32000", "int upper_left_y = 48"),
     ("terrain_radius_widening", "GENERATE", "half_width, 2", "half_width, 0"),
     ("terrain_skip", "GENERATE", "if (skip_terrain == 0)", "if (true)"),
-    ("terrain_live_zoom", "GENERATE", "gen_window_terrain(this, field_1DD98_", "gen_window_terrain(this, 0"),
-    ("terrain_faction_snapshot", "GENERATE", "gen_window_terrain(this, field_1DD98_, faction", "gen_window_terrain(this, field_1DD98_, ConsoleGlobal.faction_id_"),
+    ("terrain_live_zoom", "GENERATE", "gen_window_terrain(this, zoom_offset_", "gen_window_terrain(this, 0"),
+    ("terrain_faction_snapshot", "GENERATE", "gen_window_terrain(this, zoom_offset_, faction", "gen_window_terrain(this, zoom_offset_, ConsoleGlobal.faction_id_"),
     ("terrain_live_view", "GENERATE", "if (tile_visible) {", "if (true) {"),
     ("names_missing", "GENERATE", "draw_base_names();", "/* omitted */"),
     ("overlays_flag", "GENERATE", "(field_1DD70_ & 0x2000) != 0", "false"),
@@ -412,7 +412,7 @@ DAMAGE = [
     ("network_game_override", "DRAW", "network != 0 && (GameDataStateStorage.fields_.game_state_ & 2) != 0", "false"),
     ("history_index", "DRAW", "const int history = ConsoleGlobal.cursor_history_index_", "const int history = 0"),
     ("history_view", "DRAW", "if (cursor_visible) {", "if (true) {"),
-    ("signed_zoom_boundary", "DRAW", "map_dest_signed(field_1DD98_) <= -8", "map_dest_signed(field_1DD98_) < -8"),
+    ("signed_zoom_boundary", "DRAW", "zoom_offset_ <= -8", "zoom_offset_ < -8"),
     ("texture_shared_count", "DRAW", "MapCornerCopy, 0", "MapCornerCopy, 1"),
     ("update_gate", "DRAW", "if (draw_type != 0)", "if (draw_type > 0)"),
     ("pump_threshold", "DRAW", "draw_type >= 2", "draw_type >= 3"),

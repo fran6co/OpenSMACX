@@ -33,8 +33,8 @@ def actual_parts():
     source = (ROOT / "src/mapwin.cpp").read_text()
     body = braced(source, "void MapWin::calculate_dimensions()")
     begin = body.index("int32_t cache_area = 0;")
-    end = body.index("field_1EEC0_ = field_1DD98_;", begin) + len(
-        "field_1EEC0_ = field_1DD98_;"
+    end = body.index("field_1EEC0_ = zoom_offset_;", begin) + len(
+        "field_1EEC0_ = zoom_offset_;"
     )
     # The extracted prefix ends before font setup within the second trigger's
     # enclosing if. Close that harness scope; do not substitute any cache code.
@@ -54,13 +54,13 @@ int32_t MapArea;
 struct MapWin {
     TerrainCacheEntry *owned_;
     int32_t field_1DD6C_, field_1EEC4_;
-    int32_t field_1DD98_, field_1EEC0_;
+    int32_t zoom_offset_, field_1EEC0_;
 };
 void invalidate(MapWin *self) {
     TerrainCacheEntry *owned_ = self->owned_;
     int32_t field_1DD6C_ = self->field_1DD6C_;
     int32_t field_1EEC4_ = self->field_1EEC4_;
-    int32_t field_1DD98_ = self->field_1DD98_;
+    int32_t zoom_offset_ = self->zoom_offset_;
     int32_t field_1EEC0_ = self->field_1EEC0_;
     ACTUAL_INVALIDATION
     self->field_1EEC4_ = field_1EEC4_;
@@ -88,7 +88,7 @@ int main(){
     memset(cells,0x5a,sizeof cells);
     memset(expected,0x5a,sizeof expected);
     w.field_1DD6C_=9; w.field_1EEC4_=8;
-    w.field_1DD98_=13; w.field_1EEC0_=12;
+    w.zoom_offset_=13; w.field_1EEC0_=12;
     for(int i=0;i<3;++i) for(int j=0;j<9;++j) expected[i*12+j]=0xff;
     invalidate(&w);
     CHECK(memcmp(cells,expected,sizeof cells)==0);
@@ -100,7 +100,7 @@ int main(){
     memset(cells,0x6b,sizeof cells); memcpy(expected,cells,sizeof cells);
     MapArea=0; invalidate(&w); CHECK(memcmp(cells,expected,sizeof cells)==0);
     w.owned_=reinterpret_cast<TerrainCacheEntry *>(static_cast<uintptr_t>(1));
-    w.field_1DD6C_=11; w.field_1DD98_=14;
+    w.field_1DD6C_=11; w.zoom_offset_=14;
     MapArea=(-2147483647-1); invalidate(&w);
     w.owned_=cells;
     return 0;
@@ -138,7 +138,7 @@ def test_actual_invalidation_body_and_typed_fields(tmp_path):
     # The original has an initial count test and reloads after each row in all
     # three passes. Keep these explicit; a single saved bound is not equivalent.
     assert len(re.findall(r"cache_area\s*=\s*MapArea", block)) == 6
-    assert body.index("field_1EEC0_ = field_1DD98_;") < body.index("font_a_.init(")
+    assert body.index("field_1EEC0_ = zoom_offset_;") < body.index("font_a_.init(")
     result = run_host(tmp_path, pod, block)
     assert result.returncode == 0, result.stderr
 

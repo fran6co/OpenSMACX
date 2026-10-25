@@ -1752,7 +1752,7 @@ void Console::editor_generate() {
     GameDataStateStorage.fields_.game_state_ = GameDataStateStorage.fields_.game_state_ | 4;
     // 0x004E1033 loads slot zero before accessing the window's +0x1DD98
     // member. The array itself is neither the receiver nor member storage.
-    MapWinTable[0]->field_1DD98_ = static_cast<uint32_t>(-14);
+    MapWinTable[0]->zoom_offset_ = -14;
     MapWinTable[0]->draw_map(1);
 
     int flags = GameDataStateStorage.fields_.game_state_;
@@ -3926,8 +3926,8 @@ void Console::go_to(int subject, int order, int grouped) {
         }
     }
     PlanWindow.init(label_get(0x868 / 4));
-    GoToSourceX = PlanWindow.field_1DD9C_ = source_x;
-    GoToSourceY = PlanWindow.field_1DDA0_ = source_y;
+    GoToSourceX = PlanWindow.center_x_ = source_x;
+    GoToSourceY = PlanWindow.center_y_ = source_y;
     PlanWindow.GraphicWin::show(0);
     for (;;) {
         const char *title = "";

@@ -258,7 +258,7 @@ static void mutate_selected_on_third_vehicle_read() { ConsoleGlobal.selected_veh
 static void mutate_selected_on_set_move() { ConsoleGlobal.selected_vehicle_=-1; }
 static void move_selected_vehicle_far() { Vehs[3].x=25; Vehs[3].y=25; }
 struct MapWin {
-    int map_view_index_, field_1DD98_;
+    int map_view_index_, zoom_offset_;
     void right_menu(int tile_x, int tile_y, int screen_x, int screen_y);
     void set_center(int,int,int) { event("map_center"); }
     void on_redraw() { event("map_redraw"); }
@@ -457,12 +457,12 @@ static void distance_and_plan_cases() {
 static void quick_map_and_slot_cases() {
     MapWin w={1,0}, primary={0,0};
     for(int id : {0x320,0x321,0x322,0x323,0x324,0x325}) {
-        reset_fixture(); MapWinTable[0]=&primary; PullDown::selected_id=id; w.field_1DD98_=-6;
+        reset_fixture(); MapWinTable[0]=&primary; PullDown::selected_id=id; w.zoom_offset_=-6;
         w.right_menu(2,3,10,20);
         CHECK(LastMenuIds==std::vector<int>({0x320,0x63,0x323,0x324,0x325,0x63,0x321,0x322}),
               "quick-map indexed item order");
         if(id==0x321 || id==0x322 || id==0x325) {
-            CHECK(w.field_1DD98_==(id==0x325?-4:-8),"signed quick-map zoom action");
+            CHECK(w.zoom_offset_==(id==0x325?-4:-8),"signed quick-map zoom action");
             CHECK(std::count(trace.begin(),trace.end(),"map_redraw")==1,"changed zoom redraws once");
         }
         if(id==0x320) CHECK(std::find(trace.begin(),trace.end(),"world_map")!=trace.end(),"quick world action");

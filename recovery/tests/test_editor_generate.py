@@ -94,7 +94,7 @@ def harness(method):
         MAP_ACCESSOR
         void require(bool ok) { if (!ok) std::exit(42); }
         struct MapWin {
-            uint32_t field_1DD98_;
+            int32_t zoom_offset_;
             void draw_map(int);
         };
         struct Console : MapWin {
@@ -127,8 +127,8 @@ def harness(method):
         }
         void MapWin::draw_map(int repaint) {
             require(stage == 1 && this == &first_window && repaint == 1);
-            require(field_1DD98_ == static_cast<uint32_t>(-14));
-            require(other_window.field_1DD98_ == 0x55667788u);
+            require(zoom_offset_ == -14);
+            require(other_window.zoom_offset_ == 0x55667788u);
             require(GameDataStateStorage.fields_.game_state_ == (undo_state | 4u));
             require(GameDataStateStorage.fields_.vehicle_current_count_ == 0 &&
                     GameDataStateStorage.fields_.base_current_count_ == 0);
@@ -201,8 +201,8 @@ def harness(method):
                     second_draw_state = first_draw_state & ~0x80u;
                     if (callbacks_change_state) second_draw_state ^= 0x20000080u;
                     final_state = initially_set ? first_draw_state : second_draw_state;
-                    first_window.field_1DD98_ = 0x12345678u;
-                    other_window.field_1DD98_ = 0x55667788u;
+                    first_window.zoom_offset_ = 0x12345678u;
+                    other_window.zoom_offset_ = 0x55667788u;
                     for (auto &slot : MapWinTable) slot = &other_window;
                     MapWinTable[0] = &first_window;
                     GameDataStateStorage.fields_.game_state_ = 0x11223344u;
@@ -215,7 +215,7 @@ def harness(method):
                     ConsoleGlobal.field_23BF8_ = 21;
                     stage = free_calls = button_calls = 0;
                     Console console;
-                    console.field_1DD98_ = 0xaabbccddu;
+                    console.zoom_offset_ = 0xaabbccddu;
                     console.cursor_active_ = 0x13579u;
                     console.selected_vehicle_ = 73;
                     console.field_23BF8_ = 0x2468u;
@@ -223,7 +223,7 @@ def harness(method):
                     require(stage == 6 && button_calls == 1);
                     require(free_calls == (initially_set ? 1 : 2));
                     require(GameDataStateStorage.fields_.game_state_ == final_state);
-                    require(console.field_1DD98_ == 0xaabbccddu);
+                    require(console.zoom_offset_ == 0xaabbccddu);
                     require(console.cursor_active_ == 0x13579u);
                     require(console.selected_vehicle_ == 73);
                     require(console.field_23BF8_ == 0x2468u);

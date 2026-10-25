@@ -1081,7 +1081,7 @@ void __cdecl veh_scoot(int veh_id, int tile_x, int tile_y, int direction, int fl
                 RECT intersection;
                 if (IntersectRect(&intersection, &moving, &area[i])) {
                     veh_draw(static_cast<Buffer *>(MapWinTable[i]), veh_id, start_x[i], start_y[i],
-                        static_cast<int>(MapWinTable[i]->field_1DD98_), 0x12, turn_frame);
+                        MapWinTable[i]->zoom_offset_, 0x12, turn_frame);
                     MapWinTable[i]->update(&area[i], 0);
                     saved[i].copy(static_cast<Buffer *>(MapWinTable[i]),
                         start_x[i] - margin_x[i] - area[i].left,
@@ -1116,7 +1116,7 @@ void __cdecl veh_scoot(int veh_id, int tile_x, int tile_y, int direction, int fl
                     const int y = static_cast<int>(position[i].y_);
                     const int x = static_cast<int>(position[i].x_);
                     veh_draw(static_cast<Buffer *>(MapWinTable[i]), veh_id, x, y,
-                        static_cast<int>(MapWinTable[i]->field_1DD98_), 0x22, move_frame);
+                        MapWinTable[i]->zoom_offset_, 0x22, move_frame);
                     MapWinTable[i]->update(&area[i], 0);
                     const int restore_y = static_cast<int>(position[i].y_);
                     const int restore_x = static_cast<int>(position[i].x_);
@@ -1141,7 +1141,7 @@ void __cdecl veh_scoot(int veh_id, int tile_x, int tile_y, int direction, int fl
     for (int final_slot = 0; final_slot < 8; ++final_slot) if (active[final_slot]) {
         veh_draw(static_cast<Buffer *>(MapWinTable[final_slot]), veh_id,
             end_x[final_slot], end_y[final_slot],
-            static_cast<int>(MapWinTable[final_slot]->field_1DD98_), 2, 1);
+            MapWinTable[final_slot]->zoom_offset_, 2, 1);
         MapWinTable[final_slot]->soft_update(&area[final_slot]);
         do_all_draws();
     }
@@ -1699,7 +1699,7 @@ int __cdecl boom(int x, int y, int flags) {
         pixel_x += static_cast<int>(window->field_1DDB4_) / 2;
         pixel_y += static_cast<int>(window->field_1DDB8_);
 
-        const int zoom = window->field_1DD98_ + 0x10;
+        const int zoom = window->zoom_offset_ + 0x10;
         if (!flic_mode) {
             const bool use_xf = (flags & 1) == 0;
             Sprite *const sizing_sprite = use_xf
@@ -1879,7 +1879,7 @@ int __cdecl boom(int x, int y, int flags) {
                 MapWin *window = MapWinTable[slot];
                 Buffer *destination =
                     static_cast<Buffer *>(static_cast<GraphicWin *>(window));
-                int draw_type = window->field_1DD98_ + 0x10;
+                int draw_type = window->zoom_offset_ + 0x10;
                 if (MapWinCaptionScale < 1) {
                     SpriteScaleNumerator = draw_type;
                     SpriteScaleDenominator = 0x10;
@@ -1893,7 +1893,7 @@ int __cdecl boom(int x, int y, int flags) {
                     window = MapWinTable[slot];
                     destination =
                         static_cast<Buffer *>(static_cast<GraphicWin *>(window));
-                    draw_type = window->field_1DD98_ + 0x10;
+                    draw_type = window->zoom_offset_ + 0x10;
                     const int faction = Vehs[saved_selection].faction_id;
                     working_buffer.draw_multi_table_dest(
                         destination, 0xff, saved_rectangles[slot].left,

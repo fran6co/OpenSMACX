@@ -107,7 +107,7 @@ int __cdecl gen_terrain_poly(Buffer *buffer, MapWin *window, int texture,
 // SOURCE
 
 void reset(MapWin &w) {
-    w.field_1DD70_ = 0; w.field_1DD98_ = 55; w.field_1DDC0_ = 7;
+    w.field_1DD70_ = 0; w.zoom_offset_ = 55; w.field_1DDC0_ = 7;
     w.field_1DDA4_ = 0; w.field_1DDA8_ = 0;
     w.field_1DDCC_ = 0; w.field_1DDD0_ = 0; w.field_1DDD4_ = 0;
     w.field_1DDD8_ = 0;
@@ -365,8 +365,8 @@ def test_actual_generation_bodies(tmp_path):
 
 
 @pytest.mark.parametrize(('old', 'new'), [
-    ('gen_terrain_poly(this, this, field_1DD98_, a3, -1, field_1DD70_,',
-     'gen_terrain_poly(this, this, field_1DD98_, a3, -2, field_1DD70_,'),
+    ('gen_terrain_poly(this, this, zoom_offset_, a3, -1, field_1DD70_,',
+     'gen_terrain_poly(this, this, zoom_offset_, a3, -2, field_1DD70_,'),
     ('tile_to_pixel(x, y, &x, &y);',
      'tile_to_pixel(y, x, &x, &y);'),
     ('tile_x, tile_y, x, y);', 'tile_x, tile_y, y, x);'),

@@ -1126,8 +1126,8 @@ void Console::zoom(int zoom_command, int window_index) {
             }
             if (visible) {
                 MapWin *const primary = MapWinTable[0];
-                primary->field_1DD9C_ = tile_x;
-                primary->field_1DDA0_ = tile_y;
+                primary->center_x_ = tile_x;
+                primary->center_y_ = tile_y;
                 primary_map_hit = true;
             }
         }
@@ -1138,7 +1138,7 @@ void Console::zoom(int zoom_command, int window_index) {
                 MapWin *const window = MapWinTable[slot];
                 if (window == nullptr ||
                     (slot != 0 && window->view_active_ == 0) ||
-                    window->field_1DD98_ >= 0) {
+                    window->zoom_offset_ >= 0) {
                     continue;
                 }
                 int window_mouse_x;
@@ -1169,8 +1169,8 @@ void Console::zoom(int zoom_command, int window_index) {
                 if (!visible) {
                     continue;
                 }
-                window->field_1DD9C_ = candidate_x;
-                window->field_1DDA0_ = candidate_y;
+                window->center_x_ = candidate_x;
+                window->center_y_ = candidate_y;
                 selected_window = slot;
                 break;
             }
@@ -1186,26 +1186,26 @@ void Console::zoom(int zoom_command, int window_index) {
         }
         switch (zoom_command) {
         case 0x203:
-            if (window->field_1DD98_ < 0x10) {
-                window->field_1DD98_ += 2;
+            if (window->zoom_offset_ < 0x10) {
+                window->zoom_offset_ += 2;
             }
             break;
         case 0x204:
-            if (window->field_1DD98_ > -0xE) {
-                window->field_1DD98_ -= 2;
+            if (window->zoom_offset_ > -0xE) {
+                window->zoom_offset_ -= 2;
             }
             break;
         case 0x205:
-            window->field_1DD98_ = 0;
+            window->zoom_offset_ = 0;
             break;
         case 0x206:
-            window->field_1DD98_ = -6;
+            window->zoom_offset_ = -6;
             break;
         case 0x207:
-            window->field_1DD98_ = 0x10;
+            window->zoom_offset_ = 0x10;
             break;
         case 0x208:
-            window->field_1DD98_ = -0xE;
+            window->zoom_offset_ = -0xE;
             break;
         default:
             break;
@@ -2882,8 +2882,8 @@ void Console::end_of_turn() {
 // RECOVERY_BINDING: v1 {"evidence": ["The retained 0x005165B0 seed selects the nearest own base carrying Base::state bit 0x10, using the current MapWin camera coordinates and wraps X on round maps.", "base.h names the 0x0097D040 array as Bases with 0x134-byte Base records; its x/y/faction/state members are at offsets 0/2/4/0x30, matching all seed reads.", "MapWin fields 0x1DD9C/0x1DDA0 supply the camera point; map.cpp binds MapLongitude/MapIsFlat/MapLongitudeBounds; tutwin.h binds the image's BaseWin at 0x006A7628 as TutWinBaseWindow."], "reason": "Choose the nearest base of ConsoleGlobal's current faction with the seed's wrapped-map distance calculation and pass its typed index to the established BaseWin zoom path."}
 void Console::zoom_to_upkeep_base() {
     const MapWin *map_window = console_map_win();
-    const int camera_x = map_window->field_1DD9C_;
-    const int camera_y = static_cast<int>(map_window->field_1DDA0_);
+    const int camera_x = map_window->center_x_;
+    const int camera_y = map_window->center_y_;
     int best_distance = 99999;
     int best_base = -1;
 
@@ -7898,8 +7898,8 @@ default:
     if (a2 == 0x10025 || a2 == 0x10026 || a2 == 0x10027 ||
         a2 == 0x10028 || a2 == 0x10062 || a2 == 0x10064 ||
         a2 == 0x10066 || a2 == 0x10068) {
-        int destination_x = map_window->field_1DD9C_;
-        int destination_y = map_window->field_1DDA0_;
+        int destination_x = map_window->center_x_;
+        int destination_y = map_window->center_y_;
         if (a2 == 0x10026 || a2 == 0x10068) {
             // Native signed multiply-high sequence is truncating signed / 3.
             int step = (map_window->field_1DDD0_ + 2) / 3;
@@ -7938,8 +7938,8 @@ default:
             }
         }
 
-        if (destination_x != map_window->field_1DD9C_ ||
-            destination_y != map_window->field_1DDA0_) {
+        if (destination_x != map_window->center_x_ ||
+            destination_y != map_window->center_y_) {
             map_window->set_center(destination_x, destination_y, 1);
         }
     }

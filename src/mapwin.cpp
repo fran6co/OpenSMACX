@@ -231,7 +231,7 @@ void MapWin::init(int mode, int update) {
     RECT bounds;
     if (this == MapWinTable[1]) {
         bounds = WorldMapBounds;
-        field_1DD98_ = -8;
+        zoom_offset_ = -8;
     } else if (mode == 0) {
         unsigned int index = map_view_index_;
         const int panel_count = IsMultiplayerNet ? 2 : 1;
@@ -243,7 +243,7 @@ void MapWin::init(int mode, int update) {
             bounds.top = MapPanelRects[index].top;
             bounds.right = MapPanelRects[index].right;
             bounds.bottom = MapPanelRects[index].bottom;
-            if (index != 0) field_1DD98_ = -8;
+            if (index != 0) zoom_offset_ = -8;
         } else {
             bounds.left = static_cast<int>(index * 0x28);
             bounds.top = bounds.left;
@@ -288,10 +288,10 @@ void MapWin::init(int mode, int update) {
     init(&bounds, StringTemp, flags);
     if (mode == 0) {
         field_1DD70_ = 0x10EE3;
-        field_1DD98_ = map_view_index_ != 0 ? -8 : 0;
+        zoom_offset_ = map_view_index_ != 0 ? -8 : 0;
     } else {
         field_1DD70_ = 0x80000082;
-        field_1DD98_ = -7;
+        zoom_offset_ = -7;
     }
     if (map_view_index_ != 0) {
         // config_popups publishes this borrowed font. The original reads
@@ -907,8 +907,8 @@ void __cdecl mapwin_activate_free_slot(int tile_x, int tile_y) {
         if (window == nullptr || window->view_active_ != 0) continue;
         window->clear(window->map_view_index_);
         window->init(0, 1);
-        window->field_1DD9C_ = tile_x;
-        window->field_1DDA0_ = tile_y;
+        window->center_x_ = tile_x;
+        window->center_y_ = tile_y;
         window->show(0);
         return;
     }
@@ -1323,8 +1323,8 @@ void MapWin::set_center(int x, int y, int draw_type) {
             ++x;
         }
     }
-    const int old_x = field_1DD9C_;
-    const int old_y = field_1DDA0_;
+    const int old_x = center_x_;
+    const int old_y = center_y_;
     int wrapped = x;
     if ((MapIsFlat & 1) == 0) {
         if (x < 0) {
@@ -1333,8 +1333,8 @@ void MapWin::set_center(int x, int y, int draw_type) {
             wrapped -= MapLongitudeBounds;
         }
     }
-    field_1DD9C_ = wrapped;
-    field_1DDA0_ = y;
+    center_x_ = wrapped;
+    center_y_ = y;
 
     int destination = -1;
     if (this == static_cast<MapWin *>(&ConsoleGlobal)) {
@@ -1346,7 +1346,7 @@ void MapWin::set_center(int x, int y, int draw_type) {
             CoverWindow.fill(9);
         }
     }
-    if (old_x != field_1DD9C_ || old_y != field_1DDA0_) {
+    if (old_x != center_x_ || old_y != center_y_) {
         draw_map(draw_type);
         if (map_view_index_ == 0) {
             WorldClimateWorldWin.follow_center(x, y);
@@ -1428,7 +1428,7 @@ void MapWin::draw_bases(int tile_x, int tile_y, int pixel_x, int pixel_y,
         return;
     }
     base_draw(static_cast<Buffer *>(this), base_id, pixel_x, pixel_y,
-              field_1DD98_, (field_1DD70_ >> 18) & 8);
+              zoom_offset_, (field_1DD70_ >> 18) & 8);
 }
 
 
@@ -2427,7 +2427,7 @@ void MapWin::draw_vehicles(int tile_x, int tile_y, int pixel_x, int pixel_y,
 
 draw_target:
     veh_draw(static_cast<Buffer *>(this), target, pixel_x, pixel_y,
-             field_1DD98_, draw_state, 1);
+             zoom_offset_, draw_state, 1);
 }
 
 // Original468F90..469183: distinct from the five-argument tile renderer.
@@ -2531,7 +2531,7 @@ void MapWin::gen_radius(int x, int y, int radius, int faction, int skip_terrain)
                 int pixel_x;
                 int pixel_y;
                 tile_to_pixel(tile_x, tile_y, &pixel_x, &pixel_y);
-                gen_terrain_poly(canvas, this, field_1DD98_, faction, -1,
+                gen_terrain_poly(canvas, this, zoom_offset_, faction, -1,
                                  field_1DD70_, tile_x, tile_y, pixel_x, pixel_y);
                 on_map(tile_x, tile_y);
             }
@@ -2606,7 +2606,7 @@ void MapWin::gen_radius(int x, int y, int radius, int faction, int skip_terrain)
                         int pixel_x;
                         int pixel_y;
                         tile_to_pixel(tile_x, tile_y, &pixel_x, &pixel_y);
-                        gen_window_terrain(this, field_1DD98_, faction, -1,
+                        gen_window_terrain(this, zoom_offset_, faction, -1,
                                            field_1DD70_, tile_x, tile_y,
                                            pixel_x, pixel_y);
                     }
@@ -2711,7 +2711,7 @@ void MapWin::draw_radius(int x, int y, int radius, int draw_type) {
                 }
             }
             if (cursor_visible) {
-                Texture &texture = map_dest_signed(field_1DD98_) <= -8
+                Texture &texture = zoom_offset_ <= -8
                                        ? g_RADIUS2_TEXTURE : g_RADIUS1_TEXTURE;
                 texture.draw_trans(static_cast<Buffer *>(this), MapCornerCopy, 0);
             }
@@ -5278,7 +5278,7 @@ void MapWin::gen_tile(int x, int y, int a3, int a4) {
     const int tile_x = x;
     const int tile_y = y;
     tile_to_pixel(x, y, &x, &y);
-    gen_terrain_poly(this, this, field_1DD98_, a3, -1, field_1DD70_,
+    gen_terrain_poly(this, this, zoom_offset_, a3, -1, field_1DD70_,
                      tile_x, tile_y, x, y);
     if (tile_y >= 0 && tile_y < MapLatitudeBounds &&
         tile_x >= 0 && tile_x < MapLongitudeBounds && a4 != 0) {
@@ -5444,7 +5444,7 @@ void MapWin::draw_base_names() {
         canvas->set_clip(&saved_clip);
         return;
     }
-    if (show_base_names && field_1DD98_ < -10) {
+    if (show_base_names && zoom_offset_ < -10) {
         canvas->set_clip(&saved_clip);
         return;
     }
@@ -5506,7 +5506,7 @@ void MapWin::draw_base_names() {
                                  strlen(text));
 
             const bool show_region_plan = (GameDataStateStorage.fields_.game_state_ & 0x1000U) != 0 &&
-                omniscient && field_1DD98_ >= -3;
+                omniscient && zoom_offset_ >= -3;
             if (show_region_plan) {
                 const int region = tile->region;
                 const int plan = PlayersData[base.faction_id_current]
@@ -5601,10 +5601,10 @@ void MapWin::draw_base_names() {
     }
 
     int landmark_intensity = 1;
-    if (field_1DD98_ > 0) {
+    if (zoom_offset_ > 0) {
         landmark_intensity = MapWinCaptionScale > 0
             ? MapWinCaptionScale / MapWinCaptionDivisor
-            : (field_1DD98_ + 16) / 16;
+            : (zoom_offset_ + 16) / 16;
     }
     canvas->set_text_color(0xFF, 0, landmark_intensity,
                            landmark_intensity);
@@ -5725,18 +5725,18 @@ void MapWin::right_menu(int tile_x, int tile_y, int screen_x, int screen_y) {
             set_center(tile_x, tile_y, 1);
             return;
         case 0x325:
-            if (static_cast<int>(field_1DD98_) >= 0) return;
-            field_1DD98_ += 2;
+            if (zoom_offset_ >= 0) return;
+            zoom_offset_ += 2;
             on_redraw();
             return;
         case 0x321:
-            if (static_cast<int>(field_1DD98_) <= -0xE) return;
-            field_1DD98_ -= 2;
+            if (zoom_offset_ <= -0xE) return;
+            zoom_offset_ -= 2;
             on_redraw();
             return;
         case 0x322:
-            if (static_cast<int>(field_1DD98_) == -8) return;
-            field_1DD98_ = static_cast<uint32_t>(-8);
+            if (zoom_offset_ == -8) return;
+            zoom_offset_ = -8;
             on_redraw();
             return;
         default:
@@ -6796,7 +6796,7 @@ void MapWin::gen_map(int a1, int a2) {
                     int py;
                     tile_to_pixel(wrapped, row, &px, &py);
                     Buffer *const surface = this;
-                    gen_terrain_poly(surface, this, field_1DD98_, a1, -1,
+                    gen_terrain_poly(surface, this, zoom_offset_, a1, -1,
                                      field_1DD70_, wrapped, row, px, py);
                     on_map(wrapped, row);
                 }
@@ -6980,7 +6980,7 @@ void MapWin::init_dummy() {
 
 static int get_alt_ratio(MapWin * w, int count) {
     if (MapWinCaptionScale < 1) {
-        int v = ((int)w->field_1DD98_ + 0x10) * count;
+        int v = (w->zoom_offset_ + 0x10) * count;
         return (v + ((v >> 0x1f) & 0xf)) >> 4;
     }
     return (MapWinCaptionScale * count) / MapWinCaptionDivisor;
@@ -7519,21 +7519,21 @@ void __cdecl draw_cursor() {
 void MapWin::clear(int index) {
     map_view_index_ = index;
     field_1DD70_ = 0;
-    field_1DD98_ = (((IfaceScreenWidth < 1000) - 1) & 6) - 6;
+    zoom_offset_ = (((IfaceScreenWidth < 1000) - 1) & 6) - 6;
     view_active_ = (index == 0);
 
     int halfHeight = MapLatitudeBounds / 2;
-    field_1DDA0_ = halfHeight;
+    center_y_ = halfHeight;
     int halfWidth = MapLongitudeBounds / 2;
-    field_1DD9C_ = (halfWidth ^ halfHeight) & 1 ^ halfWidth;
+    center_x_ = (halfWidth ^ halfHeight) & 1 ^ halfWidth;
 
     if (index == 0) {
         int player = ConsoleGlobal.cursor_history_index_;
         int cy = ConsoleGlobal.cursor_history_y_[player];
         int cx = ConsoleGlobal.cursor_history_x_[player];
         if (cy >= 0 && cy < MapLatitudeBounds && cx >= 0 && cx < MapLongitudeBounds) {
-            field_1DD9C_ = cx;
-            field_1DDA0_ = ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_];
+            center_x_ = cx;
+            center_y_ = ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_];
         }
     }
 
@@ -7807,7 +7807,7 @@ void MapWin::calculate_dimensions() {
     if (MapWinCaptionScale > 0) {
         v = (MapWinCaptionScale * 50) / MapWinCaptionDivisor;
     } else {
-        v = ((field_1DD98_ + 0x10) * 50) / 16;
+        v = ((zoom_offset_ + 0x10) * 50) / 16;
     }
     v = (v + 1) / 4;
     field_1DDC8_ = v;
@@ -7830,8 +7830,8 @@ void MapWin::calculate_dimensions() {
     field_1DDD8_ = ((T * 4 - dib_.bmiHeader.biHeight) + c2 - 1) / (T * 4);
 
     if (this == static_cast<MapWin *>(&ConsoleGlobal)) {
-        int32_t a = field_1DDA0_;
-        int32_t b = field_1DD9C_;
+        int32_t a = center_y_;
+        int32_t b = center_x_;
         MapWinPrimaryCorner.left = b;
         MapWinPrimaryCorner.top = a;
         MapWinPrimaryCorner.right = b;
@@ -7869,7 +7869,7 @@ void MapWin::calculate_dimensions() {
     field_1DDD4_ = (field_1DDD4_ < halfW3) ? field_1DDD4_ : halfW3;
 
     int32_t f74_ = field_1DDD0_;
-    int32_t aVal = field_1DDA0_;
+    int32_t aVal = center_y_;
     int32_t panYinit = aVal - f74_;
     field_1DDA8_ = panYinit;
     int32_t altY = MapLatitudeBounds + (2 - f74_) * 2;
@@ -7884,7 +7884,7 @@ void MapWin::calculate_dimensions() {
     field_1DDA8_ = panY;
 
     int32_t f73_ = field_1DDCC_;
-    int32_t bVal = field_1DD9C_;
+    int32_t bVal = center_x_;
     int32_t panXinit = bVal - f73_;
     // Preserve this source snapshot; the pinned later reload at 0x462C32 is
     // an unresolved read-order obligation for this function.
@@ -7917,20 +7917,20 @@ void MapWin::calculate_dimensions() {
     field_1DDA4_ = ((field_1DDA4_ ^ field_1DDA8_) & 1) ^ field_1DDA4_;
 
     int32_t fogW;
-    if ((field_1DD70_ & 2) == 0 || field_1DD98_ < -10) {
+    if ((field_1DD70_ & 2) == 0 || zoom_offset_ < -10) {
         fogW = 0;
     } else if (MapWinCaptionScale < 1) {
-        fogW = ((field_1DD98_ * 3 + 0x30) * 4) / 16;
+        fogW = ((zoom_offset_ * 3 + 0x30) * 4) / 16;
     } else {
         fogW = (MapWinCaptionScale * 12) / MapWinCaptionDivisor;
     }
     field_1DDDC_ = fogW;
 
     int32_t fogH;
-    if ((field_1DD70_ & 2) == 0 || field_1DD98_ < -10) {
+    if ((field_1DD70_ & 2) == 0 || zoom_offset_ < -10) {
         fogH = 0;
     } else if (MapWinCaptionScale < 1) {
-        fogH = (field_1DD98_ * 4 + 0x40) / 16;
+        fogH = (zoom_offset_ * 4 + 0x40) / 16;
     } else {
         fogH = (MapWinCaptionScale * 4) / MapWinCaptionDivisor;
     }
@@ -7965,7 +7965,7 @@ void MapWin::calculate_dimensions() {
         cache_area = MapArea;
     }
 
-    if (field_1DD98_ != field_1EEC0_) {
+    if (zoom_offset_ != field_1EEC0_) {
         if (owned_ != 0) {
             if (cache_area > 0) {
                 int32_t ib = 0;
@@ -7988,7 +7988,7 @@ void MapWin::calculate_dimensions() {
                 } while (ic < cache_area);
             }
         }
-        field_1EEC0_ = field_1DD98_;
+        field_1EEC0_ = zoom_offset_;
 
         int32_t fs1 = (field_1DDB8_ * 5) / 16;
         if (fs1 > 0xc) {
@@ -8687,7 +8687,7 @@ Status: Coverage transcription - unclaimed body (direct transcription of
 */
 extern "C" int __cdecl sub_4468f0(int a1) {
     int base =
-        MapWinTable[0]->field_1DD9C_;
+        MapWinTable[0]->center_x_;
     int iVar1 = base / 2;
     int n = MapLongitudeBounds;
     int iVar3 = n / 4;

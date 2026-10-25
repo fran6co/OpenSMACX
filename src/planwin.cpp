@@ -157,7 +157,7 @@ void PlanWin::init(char *) {
     map_view_index_ = 1;
     MapWin::clear(1);
     MapWin::init(3, 0);
-    field_1DD98_ = -14;
+    zoom_offset_ = -14;
 
     buffer_.init(dib_.bmiHeader.biWidth,
                  -dib_.bmiHeader.biHeight, 0, 0);
@@ -189,22 +189,22 @@ static int plan_horizontal_midpoint(int left, int right) {
 
 // Center the view between two horizontal pairs and their vertical spans.
 // ORIGINAL: 0x0048B450 ?find_view@PlanWin@@QAEXHHHHHHHH@Z 0x0048B450-0x0048B629
-// RECOVERY_BINDING: v1 {"evidence": ["image:0x0048B450-0x0048B629;git:a899c9ea:src/recovered/units/0048b450.cpp", "source:src/map.h:MapLongitudeBounds,MapIsFlat;source:src/mapwin.h:field_1DD9C_,field_1DDA0_"], "reason": "The eight-argument PlanWin member selects the horizontal center of two map-view pairs and their vertical midpoint using inherited MapWin view fields."}
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x0048B450-0x0048B629;git:a899c9ea:src/recovered/units/0048b450.cpp", "source:src/map.h:MapLongitudeBounds,MapIsFlat;source:src/mapwin.h:center_x_,center_y_"], "reason": "The eight-argument PlanWin member selects the horizontal center of two map-view pairs and their vertical midpoint using inherited MapWin view fields."}
 void PlanWin::find_view(int x1, int y1, int x2, int y2,
                         int x3, int y3, int x4, int y4) {
     const int first_x = plan_horizontal_midpoint(x1, x2);
     const int second_x = plan_horizontal_midpoint(x3, x4);
-    field_1DD9C_ = plan_horizontal_midpoint(first_x, second_x);
-    field_1DDA0_ = ((y1 + y2) / 2 + (y3 + y4) / 2) / 2;
+    center_x_ = plan_horizontal_midpoint(first_x, second_x);
+    center_y_ = ((y1 + y2) / 2 + (y3 + y4) / 2) / 2;
 }
 
 // Zoom until both selected points and their neighboring tiles fit the view.
 // ORIGINAL: 0x0048B630 ?opticenter@PlanWin@@QAEXHHHHH@Z 0x0048B630-0x0048B8D6
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x0048B630-0x0048B8D6;git:a899c9ea:src/recovered/units/0048b630.cpp", "source:src/map.h:RadiusOffsetX,RadiusOffsetY;source:src/mapwin.h:viewport fields"], "reason": "The PlanWin member varies the inherited MapWin zoom until the selected two points and their radius samples fit the calculated viewport."}
 void PlanWin::opticenter(int x1, int y1, int x2, int y2, int force_redraw) {
-    const int32_t old_zoom = field_1DD98_;
-    const uint32_t old_x = field_1DD9C_;
-    const uint32_t old_y = field_1DDA0_;
+    const int32_t old_zoom = zoom_offset_;
+    const uint32_t old_x = center_x_;
+    const uint32_t old_y = center_y_;
     const int x_distance = abs(x2 - x1);
     const bool map_is_flat = (MapIsFlat & 1) != 0;
     if (map_is_flat || x_distance <= MapLongitudeBounds / 2) {
@@ -213,12 +213,12 @@ void PlanWin::opticenter(int x1, int y1, int x2, int y2, int force_redraw) {
         // The pinned body calls xrange here and discards the returned value.
         (void)xrange(middle_x);
     }
-    field_1DD9C_ = x1;
-    field_1DDA0_ = y1;
-    field_1DD98_ = -14;
+    center_x_ = x1;
+    center_y_ = y1;
+    zoom_offset_ = -14;
 
     do {
-        ++field_1DD98_;
+        ++zoom_offset_;
         calculate_dimensions();
 
         const bool flat = (MapIsFlat & 1) != 0;
@@ -262,7 +262,7 @@ void PlanWin::opticenter(int x1, int y1, int x2, int y2, int force_redraw) {
             }
         }
         if (!first_point_fits) {
-            --field_1DD98_;
+            --zoom_offset_;
             break;
         }
 
@@ -305,14 +305,14 @@ void PlanWin::opticenter(int x1, int y1, int x2, int y2, int force_redraw) {
             }
         }
         if (!second_point_fits) {
-            --field_1DD98_;
+            --zoom_offset_;
             break;
         }
-    } while (field_1DD98_ < -10);
+    } while (zoom_offset_ < -10);
 
     calculate_dimensions();
-    if (force_redraw || old_x != field_1DD9C_ ||
-        old_y != field_1DDA0_ || old_zoom != field_1DD98_) {
+    if (force_redraw || old_x != center_x_ ||
+        old_y != center_y_ || old_zoom != zoom_offset_) {
         back_redraw();
     }
 }
@@ -322,13 +322,13 @@ void PlanWin::opticenter(int x1, int y1, int x2, int y2, int force_redraw) {
 // ORIGINAL: 0x0048B8E0 ?monocenter@PlanWin@@QAEXHHH@Z 0x0048B8E0-0x0048BAA1
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x0048B8E0-0x0048BAA1;git:a899c9ea:src/recovered/units/0048b8e0.cpp", "source:src/planwin.h:PlanWin;source:src/map.h:RadiusOffsetX,RadiusOffsetY;source:src/buffer.h:Buffer"], "reason": "The PlanWin member varies inherited MapWin zoom until one point and its neighborhood fit, then redraws its real GraphicWin surface and owned Buffer."}
 void PlanWin::monocenter(int x, int y, int force_redraw) {
-    const int32_t old_zoom = field_1DD98_;
-    const uint32_t old_x = field_1DD9C_;
-    const uint32_t old_y = field_1DDA0_;
-    field_1DD98_ = -14;
+    const int32_t old_zoom = zoom_offset_;
+    const uint32_t old_x = center_x_;
+    const uint32_t old_y = center_y_;
+    zoom_offset_ = -14;
 
     do {
-        ++field_1DD98_;
+        ++zoom_offset_;
         calculate_dimensions();
 
         const bool flat = (MapIsFlat & 1) != 0;
@@ -371,14 +371,14 @@ void PlanWin::monocenter(int x, int y, int force_redraw) {
             }
         }
         if (!tiles_fit) {
-            --field_1DD98_;
+            --zoom_offset_;
             break;
         }
-    } while (field_1DD98_ <= -11);
+    } while (zoom_offset_ <= -11);
 
     calculate_dimensions();
-    if (force_redraw || old_x != field_1DD9C_ ||
-        old_y != field_1DDA0_ || old_zoom != field_1DD98_) {
+    if (force_redraw || old_x != center_x_ ||
+        old_y != center_y_ || old_zoom != zoom_offset_) {
         field_1DD70_ = 0x84010002U;
         GraphicWin::fill(0);
         draw_map(0);
@@ -509,7 +509,7 @@ void PlanWin::on_redraw() {
         const int flags = 0x100
             | ((field_21A6C_ != 0 && intersects_plan_line) ? 0x200 : 0);
         base_draw(surface_buffer, base_draw_index, pixel_x,
-                  pixel_y - field_1DDC0_, field_1DD98_, flags);
+                  pixel_y - field_1DDC0_, zoom_offset_, flags);
     }
 
     int vehicle_line_index;
@@ -532,7 +532,7 @@ void PlanWin::on_redraw() {
             const int vehicle_id = veh_fake(2, faction);
             const int flags = 0x100 | (field_21A6C_ ? 0x200 : 0);
             veh_draw(surface_buffer, vehicle_id, pixel_x, pixel_y,
-                     field_1DD98_, flags, 1);
+                     zoom_offset_, flags, 1);
         }
     }
 

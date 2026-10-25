@@ -49,8 +49,7 @@ struct Plan { int blinks; void blink() { ++blinks; } };
 struct MapWin {
     uint32_t view_active_, field_1DD80_;
     int field_1DDCC_, field_1DDD0_, field_1DDD4_, field_1DDD8_;
-    int32_t field_1DD9C_;
-    uint32_t field_1DDA0_;
+    int32_t center_x_, center_y_;
     int field_1DDA8_;
     uint32_t field_21A44_;
     int mouse_x, mouse_y, centers, center_x, center_y;
@@ -121,8 +120,8 @@ int main(int argc, char **argv) {
     window.field_1DDD0_ = 1;
     window.field_1DDD4_ = 10;
     window.field_1DDD8_ = 1;
-    window.field_1DD9C_ = 4;
-    window.field_1DDA0_ = 4;
+    window.center_x_ = 4;
+    window.center_y_ = 4;
     window.field_1DDA8_ = 0;
     window.view_active_ = window.field_1DD80_ = 1;
     window.mouse_x = 100;
@@ -130,7 +129,7 @@ int main(int argc, char **argv) {
     MapWinTable[0] = &window;
 
     if (strcmp(mode, "boundary") == 0) {
-        window.field_1DDA0_ = 64;
+        window.center_y_ = 64;
         window.mouse_x = 0;
         window.mouse_y = 100;
     }

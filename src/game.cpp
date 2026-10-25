@@ -6250,7 +6250,7 @@ int __cdecl game_io(MapWin *record, FILE *file) {
     }
     if (result == 0) return 1;
 
-    field = &record->field_1DD98_;
+    field = &record->zoom_offset_;
     if (GameDataEncryptedMode != 0) {
         result = GameDataWriteMode != 0
             ? encrypt_write(field, 4, 1, file)
@@ -6262,7 +6262,7 @@ int __cdecl game_io(MapWin *record, FILE *file) {
     }
     if (result == 0) return 1;
 
-    field = &record->field_1DD9C_;
+    field = &record->center_x_;
     if (GameDataEncryptedMode != 0) {
         result = GameDataWriteMode != 0
             ? encrypt_write(field, 4, 1, file)
@@ -6274,7 +6274,7 @@ int __cdecl game_io(MapWin *record, FILE *file) {
     }
     if (result == 0) return 1;
 
-    field = &record->field_1DDA0_;
+    field = &record->center_y_;
     if (GameDataEncryptedMode != 0) {
         result = GameDataWriteMode != 0
             ? encrypt_write(field, 4, 1, file)

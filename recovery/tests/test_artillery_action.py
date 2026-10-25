@@ -183,7 +183,7 @@ struct GraphicWin : Buffer {
 struct MapWin : GraphicWin {
     int view_active_, field_1DDA8_, field_1DDD8_, field_1DDD0_;
     int field_1DDA4_, field_1DDD4_, field_1DDCC_;
-    int field_1DDB4_, field_1DDB8_, field_1DD98_;
+    int field_1DDB4_, field_1DDB8_, zoom_offset_;
     void draw_tile(int, int, int) { ++tile_draw_calls; }
 };
 MapWin *MapWinTable[8];
@@ -224,7 +224,7 @@ void reset_case() {
     window.view_active_=1; window.field_1DDA8_=0;
     window.field_1DDD8_=20; window.field_1DDD0_=0;
     window.field_1DDA4_=0; window.field_1DDD4_=20; window.field_1DDCC_=0;
-    window.field_1DDB4_=0; window.field_1DDB8_=0; window.field_1DD98_=0;
+    window.field_1DDB4_=0; window.field_1DDB8_=0; window.zoom_offset_=0;
     for (int i=0;i<8;++i) { Vehs[i]=Veh{0,4,5,0}; }
     for (int i=0;i<32;++i) VehPrototypes[i]=VehPrototype{0,0,0};
     Vehs[0].proto_id=0; Vehs[1].proto_id=1;

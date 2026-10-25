@@ -72,11 +72,11 @@ def _program(damage: tuple[str, str, str] | None = None) -> str:
     if damage is not None:
         target, old, new = damage
         if target == "monocenter_cached_dims":
-            old_snapshot = """        ++field_1DD98_;
+            old_snapshot = """        ++zoom_offset_;
         calculate_dimensions();
 
         const bool flat = (MapIsFlat & 1) != 0;"""
-            new_snapshot = """        ++field_1DD98_;
+            new_snapshot = """        ++zoom_offset_;
         const int cached_left = field_1DDA4_;
         const int cached_top = field_1DDA8_;
         const int cached_width = field_1DDCC_ + field_1DDD4_;
@@ -138,10 +138,10 @@ MUTATIONS = [
     ("opticenter", "index < 25", "index < 26"),
     ("opticenter", "int x = x1 + RadiusOffsetX[index];", "int x = x2 + RadiusOffsetX[index];"),
     ("opticenter", "(void)xrange(middle_x);", "x1 = xrange(middle_x);"),
-    ("opticenter", "field_1DD98_ = -14;", "field_1DD98_ = -15;"),
-    ("opticenter", "--field_1DD98_;", "/* omitted failed-scan decrement */"),
+    ("opticenter", "zoom_offset_ = -14;", "zoom_offset_ = -15;"),
+    ("opticenter", "--zoom_offset_;", "/* omitted failed-scan decrement */"),
     ("monocenter", "index < 81", "index < 80"),
-    ("monocenter", "if (force_redraw || old_x != field_1DD9C_ ||", "if (old_x != field_1DD9C_ ||"),
+    ("monocenter", "if (force_redraw || old_x != center_x_ ||", "if (old_x != center_x_ ||"),
     ("monocenter", "Buffer::copy(&buffer_, 0, 0, dib_.bmiHeader.biWidth,\n                     -dib_.bmiHeader.biHeight);", "Buffer::copy(&buffer_, 0, 0, field_1DDCC_,\n                     -dib_.bmiHeader.biHeight);"),
     (
         "monocenter",

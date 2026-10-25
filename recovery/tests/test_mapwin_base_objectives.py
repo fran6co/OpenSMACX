@@ -175,7 +175,7 @@ typedef uint32_t DWORD;
 const DWORD MPREF_MAP_SHOW_BASE_NAMES = 0x2000U;
 static DWORD GameMorePreferences, GameRules, field_1DD70_;
 static int MapBaseDisplayOverride, ControlTurnPhase;
-static int field_1DD98_;
+static int zoom_offset_;
 struct RECT {{ int left, top, right, bottom; }} saved_clip;
 struct Canvas {{ int clip_restores; void set_clip(const RECT *) {{ ++clip_restores; }} }} canvas_storage;
 static Canvas *canvas = &canvas_storage;
@@ -194,7 +194,7 @@ static void reset(unsigned map_gate, unsigned preference_gate, int zoom) {{
     GameRules = 0;
     field_1DD70_ = map_gate ? 0x800U : 0;
     GameMorePreferences = preference_gate ? MPREF_MAP_SHOW_BASE_NAMES : 0;
-    field_1DD98_ = zoom;
+    zoom_offset_ = zoom;
     canvas_storage.clip_restores = 0;
     landmark_draws = 0;
 }}

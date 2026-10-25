@@ -130,7 +130,7 @@ struct MapWin : Buffer {
     int field_1DDD4_ = 0, field_1DDD8_ = 0;
     int field_1DDCC_ = 100, field_1DDD0_ = 100;
     uint32_t field_1DDB4_ = 12, field_1DDB8_ = 12, field_1DDC0_ = 2;
-    int field_1DD98_ = 7;
+    int zoom_offset_ = 7;
     int tile_to_pixel(int x, int y, int *px, int *py) {
         event("tile", {view_id,x,y}); *px=x*6; *py=y*6+2;
         ++tile_calls;
