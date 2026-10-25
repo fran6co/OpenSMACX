@@ -322,17 +322,24 @@ DRAW_INFO_HARNESS = r"""
 #include <cassert>
 #include <cstdint>
 #include <cstring>
+#include <iostream>
 #include <string>
 #include <vector>
 using LONG = int32_t;
 struct RECT { LONG left, top, right, bottom; };
 struct BoxSpriteParams {};
+extern BoxSpriteParams InterfaceBoxStyles[51];
+std::vector<int> box_styles;
 struct Font { int unk_1_ = 0, is_fot_set_ = 0, font_obj_ = 0, line_height_ = 12, height_ = 10; int line_advance() const { return line_height_; } };
 std::vector<std::string> events;
 char *CharUpperA(char *text) { for (char *p=text; *p; ++p) if (*p >= 'a' && *p <= 'z') *p -= 'a' - 'A'; return text; }
 struct Buffer {
   void set_clip(RECT *) { events.push_back("clip"); }
-  int box_sprite(RECT *, BoxSpriteParams *) { events.push_back("box"); return 0; }
+  int box_sprite(RECT *, BoxSpriteParams *style) {
+    box_styles.push_back(static_cast<int>(style - InterfaceBoxStyles));
+    events.push_back("box");
+    return 0;
+  }
   void set_font(Font *, int, int, int) { events.push_back("font"); }
   void set_text_color(int color, int, int, int) { events.push_back("color:" + std::to_string(color)); }
   int write_cent_l(char *s, RECT *, int) { events.push_back(std::string("center:") + s); return 0; }
@@ -352,6 +359,16 @@ int GenderDefault = 0, PluralityDefault = 0, WinScreenWidth = 1024;
 const int MaxPlayerNum = 8, RFLAG_ALIEN = 0x80;
 char StringTemp[1032];
 BoxSpriteParams InterfaceBoxStyles[51];
+void check_style_stream(std::vector<int> expected) {
+  if (box_styles != expected) {
+    std::cerr << "expected box style stream:";
+    for (int style : expected) std::cerr << " " << style;
+    std::cerr << "; got:";
+    for (int style : box_styles) std::cerr << " " << style;
+    std::cerr << '\n';
+  }
+  assert(box_styles == expected);
+}
 struct RulesProposal { char *name; char *description; int preq_tech; };
 RulesProposal Proposal[11];
 struct Strings { char *get(int handle) { return handle == 1 ? const_cast<char *>("PROPOSAL") : const_cast<char *>("DESCRIPTION"); } char *get(char *value) { return value == reinterpret_cast<char *>(1) ? const_cast<char *>("PROPOSAL") : const_cast<char *>("DESCRIPTION"); } } StringTable;
@@ -385,6 +402,7 @@ int main() {
   win.leader_label_kind_[3] = static_cast<uint32_t>(-1);
   win.leader_label_kind_[4] = static_cast<uint32_t>(-1);
   win.draw_info();
+  check_style_stream({6, 0});
   bool saw_for = false, saw_against = false;
   for (const std::string &event : events) {
     if (event == "left:FOR: 2") saw_for = true;
@@ -394,6 +412,7 @@ int main() {
   assert(events.front() == "clip" && events.back() == "update");
 
   events.clear();
+  box_styles.clear();
   win.field_A1C_ = 0;
   std::strcpy(Players[1].name_leader, "ONE");
   std::strcpy(Players[2].name_leader, "TWO");
@@ -401,6 +420,7 @@ int main() {
   win.leader_label_kind_[4] = 1;
   win.leader_label_kind_[5] = 2;
   win.draw_info();
+  check_style_stream({6, 0, 6, 0});
   bool saw_one = false, saw_two = false;
   int clips = 0;
   for (const std::string &event : events) {
