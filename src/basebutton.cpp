@@ -735,8 +735,8 @@ void BaseButton::on_right_click(int a, int b) {
 // symbol    ?on_left_down@BaseButton@@UAEXHH@Z
 void BaseButton::on_left_down(int, int) {
     if (WinPointerOwner3 == 0) {
-        WinPointerOwner4 = 0;
         WinPointerOwner3 = this;
+        WinPointerOwner4 = 0;
     }
     Win::clear_bubble_text();
 
@@ -874,24 +874,24 @@ void BaseButton::on_mouse_move(int x, int y) {
 
     const int inside = in_box(x, y, &area);
     if (inside == 0 && field_A9C_ == 1) {
-        time1_.stop();
+        time2_.stop();
         field_A9C_ = 0;
         Sound *const owner = win_parent_->legacy_sound_29();
         if (owner != 0 && owner->is_playing() == 0) owner->play();
         win_parent_->vslot_42(static_cast<int>(field_A78_));
-        on_update();
+        redraw();
         return;
     }
     if (inside != 0) {
         if (field_A9C_ == 0) {
             if (field_A44_ != 0xFFFFFFFFU) {
-                time1_.start(base_button_timer_callback, 1, this, field_A44_, 5);
+                time2_.start(base_button_timer_callback, 1, this, field_A44_, 5);
             }
             field_A9C_ = 1;
             Sound *const owner = win_parent_->legacy_sound_30();
             if (owner != 0 && owner->is_playing() == 0) owner->play();
             win_parent_->vslot_43(static_cast<int>(field_A78_));
-            on_update();
+            redraw();
         } else if (get_lbutton_state() != 0) {
             Win::on_mouse_move(x, y, 0, 0);
         }

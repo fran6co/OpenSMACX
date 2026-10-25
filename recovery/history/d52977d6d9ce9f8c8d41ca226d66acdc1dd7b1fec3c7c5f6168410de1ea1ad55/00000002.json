@@ -1,0 +1,21 @@
+{
+  "event_id": "f6bfb43a40f1e7d3af5861b8ad0c5d49a13dfc931fd6057dfc933f3184a7f984",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_basebutton_hover_timer_owner_oct25d.py",
+      "recovery/tests/test_credits_load_global_reload_oct25d.py"
+    ],
+    "evidence": [
+      "Pin60792Eand6079E3call+F8/Win::redraw; the old source and first timer-only candidate called+FC/Win::on_update. The second bounded candidate corrects this additional original behavior and again compiles with native outside PASS/no exact losses.",
+      "Admit two actual-source host controls distinguishing Time1/Time2 and redraw/update plus the allocation-separated TextBufferGetPtr reload. Their old-behavior mutants must compile and fail. Preserve unsupported linked residual/structure/runtime limits."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "81527e8ba45f7f6af1c9413e8b5fe3457b66c68ebf5e866df937623bf037987c",
+  "request_id": "add-actual-owner-negative-controls-oct25e",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:log-owner-oct25d"
+}

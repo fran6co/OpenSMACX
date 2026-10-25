@@ -77,12 +77,11 @@ void Credits::load() {
   if (text_open("CREDITS", "CREDITS") == 0) {
     field_1230_ = 0;
     while (*text_get() != '#') {
-      char *line = TextBufferGetPtr;
-      char *stored = static_cast<char *>(mem_get(strlen(line) + 1));
+      char *stored = static_cast<char *>(mem_get(strlen(TextBufferGetPtr) + 1));
       lines_[line_count_] = stored;
       if (stored != 0) {
         ++line_count_;
-        strcpy(stored, line);
+        strcpy(stored, TextBufferGetPtr);
         const int width = font_.width(stored);
         if (static_cast<int>(field_1230_) <= width) {
           field_1230_ = width;

@@ -68,9 +68,9 @@ def extract_class() -> str:
                 body = source[start:end + 1]
                 assert body.count("fprintf(") == 0
                 for declaration in (
-                        "MEASURED Log(LPCSTR input);", "MEASURED void reset();",
-                        "MEASURED void say(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3);",
-                        "MEASURED void say_hex(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3);"):
+                        "Log();", "Log(LPCSTR input);", "~Log();", "void reset();",
+                        "void say(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3);",
+                        "void say_hex(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3);"):
                     assert declaration in body
                 return body.replace("MEASURED ", "").replace(
                     " private:", " public:", 1)
@@ -114,10 +114,12 @@ def extract_log_owner_definition(signature: str, source_path: Path = OWNER) -> s
 
 def extract_owner_methods() -> str:
     signatures = (
-        "MEASURED Log::Log(LPCSTR input)",
-        "MEASURED void Log::reset()",
-        "MEASURED void Log::say(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3)",
-        "MEASURED void Log::say_hex(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3)",
+        "Log::Log()",
+        "Log::~Log()",
+        "Log::Log(LPCSTR input)",
+        "void Log::reset()",
+        "void Log::say(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3)",
+        "void Log::say_hex(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3)",
     )
     body = "\n".join(extract_log_owner_definition(signature)
                      for signature in signatures)
@@ -235,6 +237,8 @@ int main() {
     }
 
     Log log;
+    expect(log.log_file_ == nullptr, "default constructor clears filename storage");
+    expect(log.is_disabled_ == false, "default constructor enables instance logging");
     char *name = make_name();
     log.log_file_ = name;
 
