@@ -86,7 +86,7 @@ def test_a_method_still_drops_its_return_type():
     "src/unit.cpp", "other/unit.cpp", "unit.cpp", "src/../unit.cpp",
     "src/unit.cpp123", "src/unit.cpp456", r"C:\project\unit.cpp",
 ])
-@pytest.mark.parametrize("encoding", ["EA", "HA", "PAEA", "UPayload@1@A", "VBuffer@@A"])
+@pytest.mark.parametrize("encoding", ["EA", "HA", "PAEA", "PAGA", "UPayload@1@A", "VBuffer@@A"])
 def test_vc6_anonymous_data_keeps_the_entire_encoded_scope(path, encoding):
     from match_recovery.source.mangled import qualified_name
     assert qualified_name("?Global@?%" + path + "@@3" + encoding) == "?%" + path + "::Global"
@@ -112,6 +112,9 @@ def test_vc6_anonymous_data_does_not_merge_path_or_nonce_spellings():
     "?Global@?%src/unit.cpp@@3U?$Payload@H@@A",
     "?Global@?%src/unit.cpp@@3HAjunk", "?Global@?%src/unit.cpp@@3H\nA",
     "?Global@?%src/unit.cpp@@3PAE", "?Global@?%src/unit.cpp@@3PAEAjunk",
+    "?Global@?%src/unit.cpp@@3PAG", "?Global@?%src/unit.cpp@@3PAGAjunk",
+    "?Global@?%src/unit.cpp@@3PAGZ", "?Global@?%src/unit.cpp@@3PBG A",
+    "?Global@?%src/unit.cpp@@3PAXA", "?Global@?%src/unit.cpp@@3PAG\nA",
     "?Global@?%src/unit.cpp@@3P6AHXZEA", "?Global@?%src/unit.cpp@@3PAU@@A",
     "?Global@?%src/un it.cpp@@3HA", "?Global@?%src/unit%.cpp@@3HA",
     "?Global@?%src/unit.cpp@Outer@@3HA",
@@ -144,7 +147,7 @@ def test_anonymous_function_class_and_template_eligibility_is_unchanged(symbol):
         _expression(symbol, "msvc")
 
 
-@pytest.mark.parametrize("encoding", ["HA", "PAEA"])
+@pytest.mark.parametrize("encoding", ["HA", "PAEA", "PAGA"])
 def test_recognized_anonymous_data_cannot_become_a_function_or_class_witness(encoding):
     from match_recovery.function_witness import _expression
     from match_recovery.ownership_source import class_hint

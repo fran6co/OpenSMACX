@@ -652,18 +652,12 @@ CaviarSceneProjectionScratchCandidate CaviarSceneProjectionScratch = {0};
 
 namespace {
 
-// 0x009B9100. The 0x20000-byte colour table mem_get allocates here, filled
-// with 0xffff, copied into the render record and walked into its two ramps.
-// One scene row: 0x100 16-bit pixels, 0x200 bytes - 0x100 rows make the
-// scene's own 0x20000-byte surface, which vox_fill_colour_table clears to
-// 0xffff and the render record's ramp A walks in 0x100-byte (half-row)
-// steps.
-struct CaviarSceneRow { uint16_t pixel[0x100]; };
-
-static_assert(sizeof(CaviarSceneRow) == 0x200,
-              "scene row must be 0x200 bytes so 0x100 rows are 0x20000");
-
-CaviarSceneRow *CaviarSceneMemory;  // 0x009B9100
+// Original pointer cell at 0x009B9100; the allocation it holds is separate.
+// The colour table contains 0x10000 16-bit entries (0x20000 bytes), filled
+// with 0xffff and shared with the render record. Ramp A advances 0x80 words
+// per shade level; viewport clearing advances 0x100 words per scene row.
+// RECOVERY_OBJECT: v1 0x009B9100 ?CaviarSceneMemory@?%src/caviar.cpp@@3PAGA
+uint16_t *CaviarSceneMemory;
 
 // 0x009B9108 and 0x009B96B0. The two 256x256 scene surfaces this function
 // creates (init) and clears (fill 9 / fill 0). Their `dib_bits_` (+0x54) and
@@ -953,7 +947,7 @@ int Caviar::init_class() {
         return 4;
     }
 
-    CaviarSceneMemory = static_cast<CaviarSceneRow *>(mem_get(0x100 * sizeof(CaviarSceneRow)));
+    CaviarSceneMemory = static_cast<uint16_t *>(mem_get(0x10000 * sizeof(*CaviarSceneMemory)));
     if (CaviarSceneMemory == 0) {
         return 4;
     }
@@ -999,7 +993,7 @@ int Caviar::init_class() {
     // ZERO; the engine adds the scene base when it renders.
     uint16_t **const ramp_a = record->ramp_a_ptr_;
     int32_t *const ramp_b = record->ramp_b_ptr_;
-    uint16_t *shade_row = reinterpret_cast<uint16_t *>(CaviarSceneMemory);
+    uint16_t *shade_row = CaviarSceneMemory;
     for (int index = 0; index < 0x100; ++index) {
         ramp_a[index] = shade_row;
         shade_row += 0x80;
@@ -3005,7 +2999,7 @@ Purpose: Clear the two scene surfaces and the shared colour table over the
 // calls     0x005D8240 0x005DFB50 0x0063AF60
 //
 // Every global it touches is one this file already models: the shared 0x20000
-// -entry table (CaviarSceneMemory, 0x009B9100), the two scene surfaces
+// -byte table (CaviarSceneMemory, 0x009B9100), the two scene surfaces
 // (CaviarSceneBufferA / CaviarSceneBufferB), the viewport rectangle
 // (CaviarViewportState, 0x009B9690 with left, top, right, bottom coordinates) and
 // the scene record CaviarScene. The rows it fills are the table's own 0x200
@@ -3020,7 +3014,7 @@ void Caviar::clear_buffers(int fill) {
         int width = CaviarViewportState.left;
         int bottom = CaviarViewportState.bottom;
         int row_span = bottom - height;
-        uint16_t *row = reinterpret_cast<uint16_t *>(CaviarSceneMemory) +
+        uint16_t *row = CaviarSceneMemory +
                         height * 0x100 + width;
         int col_span = CaviarViewportState.right - width;
         CaviarSceneBufferA.buffer().fill(width, height, col_span, row_span, 9);

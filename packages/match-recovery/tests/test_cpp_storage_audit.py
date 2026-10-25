@@ -86,6 +86,21 @@ def test_anonymous_object_and_distinct_alias_keep_the_full_scoped_identity():
     assert all(row["symbols"] == ["?%nested/unit.cc::Global", "Alias"] for row in rows)
 
 
+def test_anonymous_word_pointer_binding_keeps_duplicate_storage_detection():
+    source = ("namespace {\n"
+              "// RECOVERY_OBJECT: v1 0x12345678 ?Pixels@?%nested/unit.cc@@3PAGA\n"
+              "unsigned short *Pixels;\n}\n")
+    counts, _, rows = findings({"nested/unit.cc": source}, "msvc")
+    assert counts["duplicate global identities"] == 0
+    assert not rows
+    counts, _, rows = findings({
+        "nested/unit.cc": source,
+        "other.hpp": "static uint16_t *const Alias = (uint16_t *)0x12345678;\n",
+    }, "msvc")
+    assert counts["duplicate global identities"] == 1
+    assert all(row["symbols"] == ["?%nested/unit.cc::Pixels", "Alias"] for row in rows)
+
+
 def test_same_leaf_in_distinct_anonymous_scopes_is_not_one_storage_identity():
     sources = {
         "left/unit.cc": "// RECOVERY_OBJECT: v1 0x12345678 ?Global@?%left/unit.cc@@3HA\nint Global;\n",
