@@ -1,0 +1,23 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "14f82d6c989f3c0d688fc87b4a2ae7e4ef817b4a",
+  "editable_files": [
+    "src/replaywin.cpp"
+  ],
+  "evidence": [
+    "Pin computes the real Buffer receiver at ReplayWin+0x444 unconditionally; source downcasts this to Buffer* and emits an extra null-adjust branch. Ordinary qualified nonvirtual Buffer calls preserve the real hierarchy and call order; no virtual dispatch bypass or lifetime change is admitted.",
+    "Independent source/pin/current COFF and prior-trial review required; one ordinary candidate first, cap3 under unchanged context. Keep every original identity, span, symbol and historical claim; no unsafe-path fixes, flags or wrappers.",
+    "Fresh native unchanged-production replica, complete-TU exact/outside preservation, complete application build/link and applicable source/reference/claim checks plus existing owner regressions before manual merge; freshly verify destination afterward. No complete linked/runtime/game acceptance claim. Baseline14f source/config for ReplayWin remains unchanged by intervening NetWin-only integration and production replica must prove it."
+  ],
+  "intent": "Use genuine nonvirtual Buffer base calls in ReplayWin redraw and restore its historical matching obligation.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5953040,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "replaywin-buffer-base-oct25ag"
+}
