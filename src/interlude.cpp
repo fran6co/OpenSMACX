@@ -226,3 +226,5 @@ void __cdecl interlude(int id, char *text, int mode, int ending) {
     strcat(StringTemp, number);
     popup.exec(StringTemp);
 }
+// RECOVERY_GENERATED: v1 vtable 0x0066C708 ? ??_7Interlude@@6BWin@@@ 0x0045F200
+// RECOVERY_GENERATED: v1 vtable 0x0066C700 ? ??_7Interlude@@6BBuffer@@@ 0x0045F200

@@ -257,7 +257,7 @@ def test_reader_rejects_missing_owner_or_function_overlap(tmp_path, extra,
 @pytest.mark.parametrize("other_record,reason", [
     ("// RECOVERY_OBJECT: v2 0x00002002 0x00002004 item 0x00001004\n",
      "source-owned object"),
-    ("// RECOVERY_GENERATED: v1 vtable 0x00002002 0x00002004 table 0x00001004\n",
+    ("// RECOVERY_GENERATED: v1 vtable 0x00002002 0x00002004 ??_7Table@@6B@ 0x00001004\n",
      "compiler-generated table"),
     ("// RECOVERY_LITERAL: v1 0x00002002 0x00002004 lit 0x00001004\n",
      "source-owned literal"),
@@ -283,7 +283,7 @@ def test_reader_checks_retained_seed_code_spans_for_collisions(tmp_path) -> None
 @pytest.mark.parametrize("annotation,reason", [
     ("// RECOVERY_OBJECT: v2 0x00002002 0x00002006 seed_item 0x00001004\n",
      "source-owned object"),
-    ("// RECOVERY_GENERATED: v1 vtable 0x00002002 0x00002006 seed_table 0x00001004\n",
+    ("// RECOVERY_GENERATED: v1 vtable 0x00002002 0x00002006 ??_7SeedTable@@6B@ 0x00001004\n",
      "compiler-generated table"),
     ("// RECOVERY_LITERAL: v1 0x00002002 0x00002006 seed_literal 0x00001004\n",
      "source-owned literal"),

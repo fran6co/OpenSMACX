@@ -6,7 +6,8 @@ from types import SimpleNamespace
 import pytest
 
 from match_recovery.generated_binary import check_generated, definition_absent, generated_coverage
-from match_recovery.generated_source import GeneratedBinding, read_generated
+from match_recovery.generated_source import (GeneratedBinding, add_generated, format_generated,
+                                             parse_generated, read_generated)
 from match_recovery.model import Origin, Span
 from match_recovery.pe_coff import PeImage, Section, Symbol
 from test_binary import pe_fixture
@@ -25,6 +26,143 @@ def fixture(*, bounded=True, target=0x402000, raw=False):
     section = Section(target.to_bytes(4, "little") if raw else bytes(4),
                       () if raw else ((0, 1, 6),), 0x40001040, ".rdata")
     return binding, {"src/widget.cpp": SimpleNamespace(symbols=symbols, sections=(section,))}, image
+
+
+def vbtable_fixture(*, bounded=True, candidate=None, absolute_site=None, symbol="??_8Widget@@7B@",
+                    relocations=()):
+    import struct
+
+    words = struct.pack("<ii", -4, 12)
+    pin = hashlib.sha256(pe_fixture(words, absolute_site=absolute_site)).hexdigest()
+    image = PeImage(pe_fixture(words, absolute_site=absolute_site), pin)
+    binding = GeneratedBinding(Origin(pin, "pe:va", 0x401000),
+                               Span(0x401000, 0x401008) if bounded else None,
+                               symbol, Origin(pin, "pe:va", 0x401020), "src/widget.h", 1, "vbtable")
+    symbols = {0: Symbol(0, symbol, 0, 1, 0, 2)}
+    section = Section(words if candidate is None else candidate, relocations, 0x40301040, ".rdata")
+    return binding, {"src/widget.cpp": SimpleNamespace(symbols=symbols, sections=(section,))}, image
+
+
+def test_vbtable_compares_bounded_signed_offset_bytes_without_relocations():
+    binding, objects, image = vbtable_fixture()
+    targets, rows = check_generated((binding,), objects, image, {})
+    row, = rows
+    assert targets == {binding.symbol: binding.origin.address}
+    assert row["definition"] == row["content"] == "pass"
+    assert row["diagnostic"]["original_signed_offsets"] == [-4, 12]
+    assert row["diagnostic"]["candidate_signed_offsets"] == [-4, 12]
+    assert row["diagnostic"]["original_absolute_relocations"] == []
+    assert row["proof"]["references"] == "pass"
+    assert binding.interpretation["kind"] == "compiler_generated_vbtable"
+
+
+def test_vbtable_wrong_word_and_original_absolute_relocation_fail_content():
+    binding, objects, image = vbtable_fixture(candidate=struct.pack("<ii", -4, 13))
+    _, rows = check_generated((binding,), objects, image, {})
+    assert rows[0]["content"] == "fail" and rows[0]["proof"]["bytes"] == "fail"
+
+    binding, objects, image = vbtable_fixture(absolute_site=0)
+    _, rows = check_generated((binding,), objects, image, {})
+    assert rows[0]["content"] == "fail"
+    assert rows[0]["diagnostic"]["original_absolute_relocations"] == [0]
+
+
+@pytest.mark.parametrize("candidate,relocations", [(b"", ()), (b"\0\0\0", ()), (bytes(8), ((0, 1, 6),))])
+def test_vbtable_partial_words_and_candidate_relocations_are_refused(candidate, relocations):
+    binding, objects, image = vbtable_fixture(candidate=candidate, relocations=relocations)
+    with pytest.raises(ValueError, match="at least one complete|complete signed|without COFF relocations"):
+        check_generated((binding,), objects, image, {})
+
+
+def test_vbtable_requires_aligned_original_start_and_four_byte_coff_alignment():
+    binding, objects, image = vbtable_fixture()
+    misaligned = replace(binding, origin=Origin(binding.origin.image_sha256, "pe:va", 0x401001),
+                         span=Span(0x401001, 0x401009))
+    with pytest.raises(ValueError, match="original start must be four-byte aligned"):
+        check_generated((misaligned,), objects, image, {})
+
+    obj = objects["src/widget.cpp"]
+    obj.sections = (replace(obj.sections[0], flags=0x40201040),)  # encoded two-byte alignment
+    with pytest.raises(ValueError, match="alignment must be at least four bytes"):
+        check_generated((binding,), objects, image, {})
+
+    obj.sections = (replace(obj.sections[0], flags=0x40001040),)  # no alignment encoding
+    with pytest.raises(ValueError, match="missing or unsupported COFF section alignment"):
+        check_generated((binding,), objects, image, {})
+
+
+@pytest.mark.parametrize("symbol", ["??_8Bad Name@@", "??_8Bad\\Name@@", "??_8Bad/Name@@",
+                                     "??_8Bad??=Name@@", "??_8RECOVERY_GENERATED:Name@@",
+                                     "??_8Bad\x7fName@@"])
+def test_generated_symbols_must_be_single_annotation_safe_tokens(symbol):
+    binding, _, _ = vbtable_fixture()
+    with pytest.raises(ValueError, match="annotation-safe token"):
+        replace(binding, symbol=symbol)
+
+
+def test_vbtable_requires_vbtable_symbol_kind_and_unknown_extent_stays_unknown():
+    binding, _, _ = vbtable_fixture()
+    with pytest.raises(ValueError, match="vbtable interpretation requires an exact \\?\\?_8"):
+        replace(binding, symbol=TABLE)
+    with pytest.raises(ValueError, match="vtable interpretation requires an exact \\?\\?_7"):
+        replace(fixture()[0], symbol="??_8Widget@@7B@")
+
+    binding, objects, image = vbtable_fixture(bounded=False)
+    targets, rows = check_generated((binding,), objects, image, {})
+    assert targets == {binding.symbol: binding.origin.address}
+    assert rows[0]["definition"] == "pass" and rows[0]["content"] == "unknown"
+    assert rows[0]["diagnostic"]["original_extent"] is None
+    assert rows[0]["diagnostic"]["original_signed_offsets"] is None
+    assert rows[0]["diagnostic"]["candidate_signed_offsets"] == [-4, 12]
+
+
+def test_vbtable_nonemission_remains_a_source_symbol_absence_witness():
+    binding, objects, _ = vbtable_fixture()
+    objects["src/caller.cpp"] = SimpleNamespace(symbols={}, sections=())
+    rows = generated_coverage((binding,), objects)
+    row, = [row for row in rows if row["unit"] == "src/caller.cpp"]
+    assert row["observation"] == "not_emitted" and definition_absent(row["witness"], source_kind="vbtable")
+    assert not definition_absent(row["witness"])
+
+
+def test_generated_writer_is_add_only_and_roundtrips_new_kind_without_rewriting_existing():
+    binding, _, _ = vbtable_fixture()
+    text = "// existing source\r\n"
+    formatted = format_generated(binding)
+    assert formatted.startswith("// RECOVERY_GENERATED: v1 vbtable ")
+    updated = add_generated(text, binding)
+    assert updated.startswith(text) and updated.endswith(formatted + "\n")
+    parsed, = parse_generated(updated, binding.path, binding.origin.image_sha256, address_space="pe:va")
+    assert parsed.interpretation_id == binding.interpretation_id
+    with pytest.raises(ValueError, match="already exists"):
+        add_generated(updated, binding)
+
+
+@pytest.mark.parametrize("text", ["/* unterminated", 'R"tag(unterminated', "#define VALUE x \\",
+                                 "source ??/", "/* closed */ #define VALUE x \\"])
+def test_generated_writer_refuses_unsafe_eof_continuations(text):
+    binding, _, _ = vbtable_fixture()
+    with pytest.raises(ValueError, match="unterminated block comment or raw string|continued source line or macro"):
+        add_generated(text, binding)
+
+
+def test_generated_writer_can_terminate_a_final_line_comment_before_appending():
+    binding, _, _ = vbtable_fixture()
+    updated = add_generated("// final line comment", binding)
+    assert updated.startswith("// final line comment\n// RECOVERY_GENERATED:")
+
+
+def test_legacy_vtable_interpretation_identity_remains_unchanged():
+    from dataclasses import asdict
+    from match_recovery.model import digest
+
+    binding, _, _ = fixture()
+    legacy_value = {"kind": "compiler_generated_vtable", "origin": asdict(binding.origin),
+                    "span": asdict(binding.span), "symbol": binding.symbol,
+                    "original_evidence": asdict(binding.evidence)}
+    assert binding.source_kind == "vtable"
+    assert binding.interpretation == legacy_value
+    assert binding.interpretation_id == digest({"entity_id": binding.evidence.entity_id, "value": legacy_value})
 
 
 @pytest.mark.parametrize("undefined", [False, True])

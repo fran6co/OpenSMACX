@@ -722,12 +722,19 @@ void __cdecl dialog_set_def_dialog_text_color(
 // The zero-init .bss slots the Dialog constructor reads its field defaults
 // from (0x009B8EB4..0x009B8ED8): rebindable, same idiom as
 // ListBoxCloseDynamicDefault.
+// RECOVERY_OBJECT: v1 0x009B8EB4 ?DialogField30Default@@3IA
 uint32_t DialogField30Default;  // 0x009B8EB4
+// RECOVERY_OBJECT: v1 0x009B8EB8 ?DialogField34Default@@3IA
 uint32_t DialogField34Default;  // 0x009B8EB8
+// RECOVERY_OBJECT: v1 0x009B8EBC ?DialogField40Default@@3IA
 uint32_t DialogField40Default;  // 0x009B8EBC
+// RECOVERY_OBJECT: v1 0x009B8ECC ?DialogFieldACDefault@@3IA
 uint32_t DialogFieldACDefault;  // 0x009B8ECC
+// RECOVERY_OBJECT: v1 0x009B8ED0 ?DialogFieldB0Default@@3IA
 uint32_t DialogFieldB0Default;  // 0x009B8ED0
+// RECOVERY_OBJECT: v1 0x009B8ED4 ?DialogFieldB4Default@@3IA
 uint32_t DialogFieldB4Default;  // 0x009B8ED4
+// RECOVERY_OBJECT: v1 0x009B8ED8 ?DialogFieldB8Default@@3IA
 uint32_t DialogFieldB8Default;  // 0x009B8ED8
 
 /*
@@ -1257,3 +1264,4 @@ int Dialog::init(int left, int top, int right, int bottom, Heap *heap) {
     item_list_.allocator_ = heap;
     return 0;
 }
+// RECOVERY_GENERATED: v1 vtable 0x006703FC ? ??_7Dialog@@6B@ 0x00608C10

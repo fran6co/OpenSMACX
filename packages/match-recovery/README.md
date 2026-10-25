@@ -3143,6 +3143,19 @@ symbol cases remain unknown. Coverage-only trials cannot prove table contents
 or full hierarchy/lifetime. This uses the already compiled objects and neither
 narrows the requested TU grid nor creates a stored source fact.
 
+The same source marker format accepts `v1 vbtable` for an MSVC `??_8` vbtable
+symbol. Unlike a vftable, a vbtable contains signed 32-bit offset words rather
+than relocated function pointers. Its compiled definition must be an isolated
+read-only data COMDAT with at least four-byte section alignment, containing
+complete words, and no COFF relocations. Its original start must also be
+four-byte aligned. A
+bounded original extent is compared as literal bytes and must contain no PE
+absolute relocation sites; signed values in diagnostics do not establish
+their target bases or hierarchy. Unknown original extents remain unknown, and
+candidate section size never supplies the missing extent. Vtable interpretation
+IDs and their pointer-slot checks are unchanged.
+
+
 A measured counterexample to a current declaration marks its `declared_structure`
 obligation failed. Source member/base/table/object annotations generate this
 bounded dimension, not a claim of complete hierarchy or lifetime. Passing all

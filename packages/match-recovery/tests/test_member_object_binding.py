@@ -752,10 +752,13 @@ def test_member_historical_identity_cannot_alias_another_emitted_member_owner(tm
 @pytest.mark.parametrize("namespace", ["function", "external", "generated", "import", "shared"])
 def test_check_compiled_rejects_parent_collision_with_every_global_namespace(namespace):
     image, pin = image_for(bytes(16))
-    item = bound_object(0x401004, pin=pin)
+    generated_symbol = "??_7Parent@@6B@"
+    item = bound_object(0x401004, pin=pin,
+                        parent=generated_symbol if namespace == "generated" else PARENT)
     origin = Origin(pin, "pe:va", 0x401000)
     function = FunctionBinding(origin, (Span(0x401000, 0x401004),), PARENT, UNIT)
-    generated = GeneratedBinding(origin, Span(0x401000, 0x401004), PARENT, origin, UNIT, 1)
+    generated = GeneratedBinding(origin, Span(0x401000, 0x401004),
+                                 generated_symbol, origin, UNIT, 1)
     imported = ImportBinding(PARENT, "module.dll", "name:target", None, UNIT, 1)
     shared = SharedFunctionBinding(origin, Span(0x401000, 0x401004), PARENT, origin, UNIT, 1)
     functions = (function,) if namespace == "function" else ()

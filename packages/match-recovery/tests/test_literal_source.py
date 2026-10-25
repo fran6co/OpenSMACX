@@ -128,7 +128,7 @@ def test_reader_does_not_silently_drop_malformed_product_annotation(tmp_path):
 @pytest.mark.parametrize("annotation", [
     "// RECOVERY_OBJECT: v1 0x1001 _g",
     "// RECOVERY_OBJECT: v2 0x0fff 0x1001 _g 0x2000",
-    "// RECOVERY_GENERATED: v1 vtable 0x1002 ? table 0x2000",
+    "// RECOVERY_GENERATED: v1 vtable 0x1002 ? ??_7Table@@6B@ 0x2000",
 ])
 def test_literal_cannot_relabel_another_declared_object_or_table(tmp_path, annotation):
     root = project(tmp_path)

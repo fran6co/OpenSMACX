@@ -1588,6 +1588,17 @@ not change an interpretation's identity; changing or removing a mapping preserve
 the old interpretation for explicit independent supersession or retraction.
 Neither that review nor an unknown extent establishes table-content correctness.
 
+The same `RECOVERY_GENERATED` annotation supports `v1 vbtable` for an MSVC
+`??_8` symbol. A vbtable is a vector of signed 32-bit offsets, not a vftable
+of relocated function pointers. Its emitted definition must be an isolated
+read-only data COMDAT with at least four-byte section alignment, complete words,
+and no COFF relocations. The original start must also be four-byte aligned. A
+separately declared original extent is compared as literal bytes and must have no PE
+absolute relocation sites. Unknown extents remain unknown; emitted size and
+the diagnostic signed values do not establish an original boundary, target
+bases or class hierarchy. Existing vtable identities and pointer-slot checks
+retain their existing meaning.
+
 Direct-member expectations are load-bearing source comments beside declarations:
 
 ```cpp

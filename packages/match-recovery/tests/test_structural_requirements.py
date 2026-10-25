@@ -13,7 +13,7 @@ from match_recovery.object_source import parse_objects
 from match_recovery.literal_source import parse_literals
 from match_recovery.shared_source import parse_shared
 from match_recovery.structural_requirements import check_requirements, declared_outcome, structural_outcome
-from test_generated import fixture
+from test_generated import fixture, vbtable_fixture
 
 
 MEMBER = parse_members("// RECOVERY_MEMBER: v3 Owner field_ Buffer* 0x8 0x10", "code/owner.hpp", "a" * 64,
@@ -427,6 +427,29 @@ def test_generated_tables_require_content_not_just_a_start_binding(bounded, targ
     assert row["result"] == expected
     assert structural_outcome([row])[0] == (Result.FAIL if expected == "fail" else Result.UNKNOWN)
     assert measured[0]["interpretation_id"] == binding.interpretation_id
+
+
+def test_generated_vbtable_measurements_and_absence_use_the_same_structural_coverage_contract():
+    binding, objects, image = vbtable_fixture()
+    objects["src/caller.cpp"] = SimpleNamespace(symbols={}, sections=())
+    _, measured = check_generated((binding,), objects, image, {})
+    report = candidate()
+    binary = report["checks"]["binary"]
+    binary.update({"translation_units": list(objects), "generated_units": list(objects),
+                   "generated_tables": [{**row, "flags": flags} for row in measured if row["unit"] == "src/widget.cpp"
+                                        for flags in FLAGS],
+                   "generated_coverage": [{**row, "flags": flags}
+                                          for row in generated_coverage((binding,), objects)
+                                          for flags in FLAGS]})
+    row, = check_requirements(inventory((binding, True)), report)
+    assert row["kind"] == "compiler_generated_vbtable"
+    assert row["result"] == "pass" and row["counts"] == {"pass": 4, "fail": 0, "unknown": 0}
+    assert sum(trial.get("coverage_only", False) for trial in row["trials"]) == 2
+    assert structural_outcome([row])[0] == Result.UNKNOWN
+
+    binary["generated_coverage"][0]["witness"]["symbol"] = "??_7Widget@@6B@"
+    with pytest.raises(ValueError, match="invalid generated definition-absence coverage"):
+        check_requirements(inventory((binding, True)), report)
 
 
 def test_no_emitted_table_does_not_erase_its_declared_requirement():

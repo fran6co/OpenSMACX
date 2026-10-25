@@ -41,7 +41,7 @@ def report(root):
 
 
 MEMBER = "// RECOVERY_MEMBER: v1 Owner field_ 0x4 0x10\n"
-GENERATED = "// RECOVERY_GENERATED: v1 vtable 0x100000000 ? _table 0x10\n"
+GENERATED = "// RECOVERY_GENERATED: v1 vtable 0x100000000 ? ??_7Table@@6B@ 0x10\n"
 
 
 def test_native_context_and_obligations_require_no_adapter(task_project, capsys):

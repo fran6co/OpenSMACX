@@ -160,7 +160,7 @@ def test_invalid_requested_source_version_refuses(tmp_path, versions):
 
 @pytest.mark.parametrize("raw", [
     b"// RECOVERY_SHARED: v1 0x00000010 0x00000018 _shared 0x00000010\nvoid shared() {}\n",
-    b"// RECOVERY_GENERATED: v1 vtable 0x00000020 0x00000028 _vtable 0x00000010\n",
+    b"// RECOVERY_GENERATED: v1 vtable 0x00000020 0x00000028 ??_7Widget@@6B@ 0x00000010\n",
     b"// RECOVERY_OBJECT: v2 0x00000020 0x00000024 _object 0x00000010\nint object;\n",
 ])
 def test_shared_generated_or_borrowed_object_evidence_is_not_original_owner(tmp_path, raw):

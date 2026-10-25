@@ -299,6 +299,23 @@ def check_objects(bindings: Sequence[FunctionBinding], objects: Mapping[str, Cof
                         targets[str(index)] = externals[symbol.name]
                     elif symbol.name in imports:
                         targets[str(index)] = imports[symbol.name]
+            if len(binding.spans) == 2:
+                try:
+                    from .source.eh_regions import eh_funcinfo_reference_target
+                    eh_index, eh_address = eh_funcinfo_reference_target(
+                        obj.raw_data, binding.symbol, image,
+                        tuple((span.start, span.end) for span in binding.spans),
+                        targets)
+                    eh_key = str(eh_index)
+                    # The narrowly derived proof may refine only the
+                    # unresolved compiler-local target it actually names.
+                    # Existing independent bindings retain their precedence.
+                    if isinstance(targets.get(eh_key), CompilerArtifact):
+                        targets[eh_key] = eh_address
+                except ValueError:
+                    # Unsupported/changed EH semantics keep compiler locals
+                    # unresolved. Ordinary span and reference checks continue.
+                    pass
             row["diagnostic"] = _emitted_references(obj, subject, targets)
             if layout is None:
                 raise ValueError("code sections require one entry and at most one uniquely associated recorded tail")

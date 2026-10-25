@@ -462,7 +462,7 @@ def test_every_source_symbol_binding_kind_blocks_anonymous_root_normalization(mo
     start = {"root": 0x401000, "table": 0x402004, "fpo": 0x403000}[alias]
     annotation = {
         "shared": f"// RECOVERY_SHARED: v1 0x{start:08X} 0x{start + 4:08X} {symbol} 0x00401100\nvoid mapped() {{}}\n",
-        "generated": f"// RECOVERY_GENERATED: v1 vtable 0x{start:08X} ? {symbol} 0x00401100\nclass Mapped {{}};\n",
+        "generated": f"// RECOVERY_GENERATED: v1 vtable 0x{start:08X} ? ??_7Mapped@@6B@ 0x00401100\nclass Mapped {{}};\n",
         "import": f"// RECOVERY_IMPORT: v1 {symbol} example.dll name:entry\nextern int mapped;\n",
     }[kind]
     path = "src/other_binding.h"
@@ -474,7 +474,7 @@ def test_every_source_symbol_binding_kind_blocks_anonymous_root_normalization(mo
         parser = parse_shared if kind == "shared" else parse_generated
         bindings = parser(annotation, path, "a" * 64, address_space="synthetic:va")
     binding, = bindings
-    assert binding.symbol == symbol
+    assert binding.symbol == ("??_7Mapped@@6B@" if kind == "generated" else symbol)
     if kind == "shared":
         assert binding.body_error is None
     inputs = {("old_sources" if version == "baseline" else "new_sources"): {path: annotation.encode()}}
@@ -483,7 +483,15 @@ def test_every_source_symbol_binding_kind_blocks_anonymous_root_normalization(mo
     pair = make_pair(monkeypatch, tmp_path, **inputs)
     assert_observed(pair)
     order = compare(pair)["projected_order"]
-    assert order["result"] == "fail", order
-    assert not order.get("root_renamings")
-    assert not order.get("root_metadata_comparisons")
-    assert any("source binding" in row["reason"] for row in order["root_renaming_refusals"])
+    if kind == "generated":
+        # A vftable name is not an arbitrary code/data alias. The exact typed
+        # marker must survive parsing without blocking a rename of an unrelated
+        # synthetic linker symbol.
+        assert order["result"] == "pass", order
+        assert order["root_renamings"]
+        assert not order.get("root_renaming_refusals")
+    else:
+        assert order["result"] == "fail", order
+        assert not order.get("root_renamings")
+        assert not order.get("root_metadata_comparisons")
+        assert any("source binding" in row["reason"] for row in order["root_renaming_refusals"])

@@ -10,7 +10,8 @@ from match_recovery.model import Origin, Result, Span
 from match_recovery.pe_coff import Coff, PeImage
 from match_recovery.source.asm import compare_subject, subject_asm
 from match_recovery.source.eh_actions import EHActionKind, EHTransferRole
-from match_recovery.source.eh_regions import bind_eh_regions
+from match_recovery.source.eh_regions import (bind_eh_regions,
+                                              eh_funcinfo_reference_target)
 from match_recovery.source.reader import read_text
 
 
@@ -127,6 +128,10 @@ def _build(*, action_kinds=("scalar",), displacement=-16,
         (handler_offset + 1, "info", 6),
         (handler_offset + 6, "runtime", 20),
     ])
+    if object_damage == "handler_info_addend":
+        struct.pack_into("<I", object_cold, handler_offset + 1, 1)
+    elif object_damage == "wrong_info_field":
+        object_action_relocs[-2] = (handler_offset + 1, "unwind", 6)
 
     root_code = bytearray.fromhex(
         "6a ff 68 00 00 00 00 64 a1 00 00 00 00 50 "
@@ -143,6 +148,8 @@ def _build(*, action_kinds=("scalar",), displacement=-16,
                      INFO_VA + 32, 0, 0, 0, 0, 0)
     struct.pack_into("<8I", object_info, 0, 0x19930520, count,
                      0, 0, 0, 0, 0, 0)
+    if object_damage == "wrong_count":
+        struct.pack_into("<I", object_info, 4, count + 1)
     data_relocs = [(8, "unwind", 6)]
     for index, start in enumerate(original_starts):
         predecessor = 0xFFFFFFFF if index == 0 else index - 1
@@ -350,6 +357,11 @@ def _measure(fixture, tmp_path):
     return Coff(object_bytes), bound, comparison
 
 
+def _indexed_targets(obj, targets):
+    return {str(symbol.index): targets[symbol.name]
+            for symbol in obj.symbols.values() if symbol.name in targets}
+
+
 @pytest.mark.parametrize("displacement", [-16, -24, -32, -0x120, 4, 8, 24, 36, 0x120])
 def test_scalar_action_binds_complete_pe_coff_and_compares_full_regions(tmp_path,
                                                                         displacement):
@@ -400,6 +412,123 @@ def test_changed_external_callee_stays_distinct_from_pinned_target(tmp_path):
         (binding,), {unit: obj}, image,
         external_targets={changed_symbol: CALL_TARGET + 4})
     assert wrong_target["result"] == Result.FAIL
+
+
+def test_bound_object_resolves_only_the_proved_local_funcinfo_reference():
+    raw, image, spans, _record = _build()
+    obj = Coff(raw)
+    binding = FunctionBinding(
+        Origin(hashlib.sha256(image.data).hexdigest(), "pe:va", ROOT_SPAN[0]),
+        tuple(Span(start, end) for start, end in spans), ROOT_NAME,
+        "synthetic_scalar_eh.cpp")
+    targets = {FRAME_SYMBOL: FRAME_TARGET, CALL_SYMBOL: CALL_TARGET,
+               RUNTIME_SYMBOL: RUNTIME_TARGET}
+    indexed_targets = _indexed_targets(obj, targets)
+    index, target = eh_funcinfo_reference_target(
+        raw, ROOT_NAME, image, spans, indexed_targets)
+    assert obj.symbols[index].name == "$Tinfo"
+    assert target == INFO_VA
+
+    row, = check_objects((binding,), {binding.unit: obj}, image,
+                         external_targets=targets)
+    assert row["result"] == Result.PASS
+    reference, = (item for item in row["diagnostic"]["emitted_references"]
+                  if item["symbol"] == "$Tinfo")
+    assert reference["binding_address"] == f"0x{INFO_VA:08X}"
+
+
+@pytest.mark.parametrize(("damage", "expected_reason"), [
+    ("wrong_info_field", "COFF FuncInfo is not an associated root-owned data section"),
+    ("handler_info_addend", "COFF handler FuncInfo pointer has a nonzero addend"),
+    ("bad_predecessor", "COFF unwind predecessor is not a sentinel or earlier state"),
+    ("wrong_count", "COFF FuncInfo does not have a supported bounded cleanup layout"),
+    ("call_addend", "COFF frame-local cleanup lacks one unambiguous external function relocation"),
+])
+def test_unowned_or_changed_eh_funcinfo_is_not_promoted(damage, expected_reason):
+    raw, image, spans, _record = _build(object_damage=damage,
+                                        action_kinds=("scalar", "frame"))
+    obj = Coff(raw)
+    binding = FunctionBinding(
+        Origin(hashlib.sha256(image.data).hexdigest(), "pe:va", ROOT_SPAN[0]),
+        tuple(Span(start, end) for start, end in spans), ROOT_NAME,
+        "synthetic_scalar_eh.cpp")
+    targets = {FRAME_SYMBOL: FRAME_TARGET, CALL_SYMBOL: CALL_TARGET,
+               RUNTIME_SYMBOL: RUNTIME_TARGET}
+    if damage == "call_addend":
+        call_index = next(symbol.index for symbol in obj.symbols.values()
+                          if symbol.name == CALL_SYMBOL)
+        call_offset, = (offset for offset, symbol_index, _kind
+                        in obj.sections[1].relocations if symbol_index == call_index)
+        assert struct.unpack_from("<I", obj.sections[1].data, call_offset)[0] == 1
+    with pytest.raises(ValueError, match=expected_reason):
+        eh_funcinfo_reference_target(
+            raw, ROOT_NAME, image, spans, _indexed_targets(obj, targets))
+    row, = check_objects((binding,), {binding.unit: obj}, image,
+                         external_targets=targets)
+    assert row["result"] != Result.PASS
+    info_refs = [item for item in row["diagnostic"]["emitted_references"]
+                 if item["symbol"] in ("$Tinfo", "$Tunwind")]
+    assert info_refs
+    assert all(item["binding_address"] == "compiler-artifact" for item in info_refs)
+
+
+def test_changed_frame_action_semantics_do_not_promote_funcinfo():
+    raw, image, spans, _record = _build(object_displacement=-24,
+                                        action_kinds=("scalar", "frame"))
+    obj = Coff(raw)
+    binding = FunctionBinding(
+        Origin(hashlib.sha256(image.data).hexdigest(), "pe:va", ROOT_SPAN[0]),
+        tuple(Span(start, end) for start, end in spans), ROOT_NAME,
+        "synthetic_scalar_eh.cpp")
+    targets = {FRAME_SYMBOL: FRAME_TARGET, CALL_SYMBOL: CALL_TARGET,
+               RUNTIME_SYMBOL: RUNTIME_TARGET}
+    indexed_targets = _indexed_targets(obj, targets)
+    with pytest.raises(ValueError, match="semantics differ"):
+        eh_funcinfo_reference_target(raw, ROOT_NAME, image, spans, indexed_targets)
+    row, = check_objects((binding,), {binding.unit: obj}, image,
+                         external_targets=targets)
+    assert row["result"] != Result.PASS
+    reference, = (item for item in row["diagnostic"]["emitted_references"]
+                  if item["symbol"] == "$Tinfo")
+    assert reference["binding_address"] == "compiler-artifact"
+
+
+def test_wrong_funcinfo_association_fails_before_local_target_resolution():
+    raw, image, spans, _record = _build(object_damage="wrong_info_association")
+    with pytest.raises(ValueError, match="associative COMDAT parent"):
+        Coff(raw)
+
+
+def test_other_function_cannot_reuse_this_owners_local_funcinfo_index():
+    raw, image, spans, _record = _build()
+    obj = Coff(raw)
+    targets = _indexed_targets(obj, {FRAME_SYMBOL: FRAME_TARGET,
+                                     CALL_SYMBOL: CALL_TARGET,
+                                     RUNTIME_SYMBOL: RUNTIME_TARGET})
+    with pytest.raises(ValueError):
+        eh_funcinfo_reference_target(
+            raw, "?different_owner@@YAXXZ", image, spans, targets)
+
+
+def test_changed_cleanup_transfer_target_does_not_prove_funcinfo():
+    changed_call = "?different_cleanup_target@@YAXPAX@Z"
+    raw, image, spans, _record = _build(call_symbol=changed_call)
+    obj = Coff(raw)
+    binding = FunctionBinding(
+        Origin(hashlib.sha256(image.data).hexdigest(), "pe:va", ROOT_SPAN[0]),
+        tuple(Span(start, end) for start, end in spans), ROOT_NAME,
+        "synthetic_scalar_eh.cpp")
+    targets = {FRAME_SYMBOL: FRAME_TARGET, changed_call: CALL_TARGET + 4,
+               RUNTIME_SYMBOL: RUNTIME_TARGET}
+    indexed_targets = _indexed_targets(obj, targets)
+    with pytest.raises(ValueError, match="cleanup transfer"):
+        eh_funcinfo_reference_target(raw, ROOT_NAME, image, spans, indexed_targets)
+    row, = check_objects((binding,), {binding.unit: obj}, image,
+                         external_targets=targets)
+    assert row["result"] == Result.FAIL
+    reference, = (item for item in row["diagnostic"]["emitted_references"]
+                  if item["symbol"] == "$Tinfo")
+    assert reference["binding_address"] == "compiler-artifact"
 
 
 def test_scalar_action_can_share_one_ordered_eh_map_with_frame_transfer(tmp_path):
