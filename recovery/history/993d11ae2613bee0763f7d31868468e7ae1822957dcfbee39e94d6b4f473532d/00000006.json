@@ -1,0 +1,18 @@
+{
+  "event_id": "f4c5040df9c1d8db36bf0a159d03c69cb2307c26b3a67f58591f803af7a5dda1",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "require-opaque-record-engine-boundary",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/caviar_record.cpp vox_release_record and src/caviar.cpp Caviar::close_class preserve original identities and complete engine release behavior; CMake registers actual module.",
+      "Reviewed manual merge e7754fe625b81dea388947d7b57289cf494e5869; master full build/link,209 tests,209 physical object reproduction, source/claim/reference continuity pass. Native added-unit metadataFAIL and unresolved scene-storage reference bindings remain; no automatic or game acceptance."
+    ]
+  },
+  "previous_event": "6874e455fe3ba3da0e8de54d8fa6a21cc76df74c3c2d12cbc8e8ef686952d86e",
+  "request_id": "incorporated-require-opaque-record-engine-boundary",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:caviar-release-call-boundary-oct25bm"
+}

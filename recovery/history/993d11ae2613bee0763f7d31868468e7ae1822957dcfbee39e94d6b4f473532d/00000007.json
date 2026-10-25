@@ -1,0 +1,18 @@
+{
+  "event_id": "49f6e376651dc844c4fa2b481792f2d85c3f7e1923327d87984eeef8005634a0",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "engine-shutdown-inline-elision",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/caviar_record.cpp vox_engine_close is the complete genuine no-op and external binding; src/caviar.cpp declares/calls it without noinline machinery; historical symbol transition is explicit in existing continuity controls.",
+      "Reviewed manual merge e7754fe625b81dea388947d7b57289cf494e5869; master full build/link,209 tests,209 physical object reproduction, source/claim/reference continuity pass. Native added-unit metadataFAIL and unresolved scene-storage reference bindings remain; no automatic or game acceptance."
+    ]
+  },
+  "previous_event": "f4c5040df9c1d8db36bf0a159d03c69cb2307c26b3a67f58591f803af7a5dda1",
+  "request_id": "incorporated-engine-shutdown-inline-elision",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:caviar-release-call-boundary-oct25bm"
+}
