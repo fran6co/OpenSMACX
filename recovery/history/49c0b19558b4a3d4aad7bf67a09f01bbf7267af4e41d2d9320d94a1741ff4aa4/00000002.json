@@ -1,0 +1,20 @@
+{
+  "event_id": "ee427f21aa10f54e3e3ca071c28883f716bba02725612eff0b9aa4130d81b6a7",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_owner_designwin_faithful_oct20y.py"
+    ],
+    "evidence": [
+      "Actual DesignWin header declares protoAbilityID1_/2_ as int; the old stale-tail fixture declares uint32_t and fails its extracted signed sentinel comparisons under-Werror even before this recovery. Refresh the fake fields/sentinel to the real signed type, retaining every stale-tail and bounded-loop negative control.",
+      "New draw fixture used AbilityRecord while actual extracted source names RulesAbility, and its wrap_cent spy failed to observe rendered name/description. Correct fake declarations/observer callbacks without touching product source or weakening compiler diagnostics."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "6067f0fc294c9938572ab3d742db16d0ae3e9cf252e23f7b767d1fcd3e48d85c",
+  "request_id": "refresh-existing-signed-ability-control-oct25f",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:design-owner-oct25f"
+}

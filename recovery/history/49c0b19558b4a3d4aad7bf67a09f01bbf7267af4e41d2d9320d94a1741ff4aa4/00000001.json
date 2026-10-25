@@ -1,0 +1,21 @@
+{
+  "event_id": "6067f0fc294c9938572ab3d742db16d0ae3e9cf252e23f7b767d1fcd3e48d85c",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_designwin_special_upper_guard_actual_source_oct25f.py",
+      "recovery/tests/test_designwin_suggest_abil_call_order_oct25f.py"
+    ],
+    "evidence": [
+      "Independent full-pin and physical-COFF review confirms direct nonvirtual Buffer calls and original nullable destination conversion for the member-source copy, negative-only ability guards, and all repeated abil_index call sites. Three fixed functions retain original identities/claims; all sampled exact identities and native outside-selected code pass.",
+      "Admit actual extracted-body controls for negative sentinels, normal IDs and a deliberately valid enlarged host row beyond the product bound; never execute native out-of-range storage. Add helper-call-order/control mutants while retaining the existing original0x29stale-tail fixture and limits. No safety normalization, layout or compiler policy change."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "actual-ability-owner-controls-oct25f",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:design-owner-oct25f"
+}

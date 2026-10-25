@@ -3906,10 +3906,14 @@ void DesignWin::suggest_abil(int ability) {
 
     const int ability_id = abil_index(ability);
     const int faction = static_cast<int>(factionID_);
-    if (!has_tech(Ability[ability_id].preq_tech, faction)
-        || !abil_cond(ability_id, static_cast<int>(protoChassisType_),
-                      static_cast<int>(protoWeaponType_),
-                      static_cast<int>(protoArmorType_))
+    if (!has_tech(Ability[ability_id].preq_tech, faction)) {
+        return;
+    }
+
+    const int armor_id = static_cast<int>(protoArmorType_);
+    const int weapon_id = static_cast<int>(protoWeaponType_);
+    const int chassis_id = static_cast<int>(protoChassisType_);
+    if (!abil_cond(abil_index(ability), chassis_id, weapon_id, armor_id)
         || bit_count(static_cast<int>(protoAbilityFlags_)) > 1
         || (protoAbilityFlags_ != 0
             && !has_tech(Rules.tech_two_spec_abilities, faction))) {
@@ -3923,8 +3927,11 @@ void DesignWin::suggest_abil(int ability) {
     // of honoring faction_bonus_count or the declared eight-entry extents.
     // Keep its stale/overrun reads; this is an original access quirk.
     for (int i = 0; i < 0x29; ++i) {
-        if (bonus_ids[i] == 15 && bonus_values[i] == ability_id) {
-            return;
+        if (bonus_ids[i] == 15) {
+            const int bonus_ability_id = abil_index(ability);
+            if (bonus_values[i] == bonus_ability_id) {
+                return;
+            }
         }
     }
 
@@ -4309,19 +4316,18 @@ void DesignWin::draw_reactor(int redraw) {
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00435b30.cpp", "RulesAbility and StringTable in src/veh.h and src/strings.h", "DesignWin::protoAbilityID1_ and panel/font members in src/designwin.h"], "reason": "Draw the first selected special ability through the typed ability record and the existing DesignWin panel, font and selection state."}
 void DesignWin::draw_special_1(int redraw) {
     (void)redraw;
-    Buffer *canvas = static_cast<Buffer *>(this);
     RECT area = component_panel_rects_[component_panel_special_one];
-    canvas->set_clip(&area);
-    buffer_.copy(canvas, &area);
+    Buffer::set_clip(&area);
+    buffer_.copy(this, &area);
 
     const int title_height = font2_.unk_1_ < 0
         ? font2_.line_height() : font2_.pixel_height() + font2_.unk_1_;
     RECT title = area;
     title.bottom = title.top + title_height;
-    canvas->set_text_color(0xE0, -1, 1, 1);
+    Buffer::set_text_color(0xE0, -1, 1, 1);
     char *caption = label_get(0x228 / 4);
     if (caption != 0) {
-        canvas->write_cent_l(&font2_, caption, &title,
+        Buffer::write_cent_l(&font2_, caption, &title,
                              static_cast<int>(strlen(caption)));
     }
 
@@ -4330,10 +4336,10 @@ void DesignWin::draw_special_1(int redraw) {
     text.right -= 5;
     text.top += title_height + 2;
     const int ability = protoAbilityID1_;
-    if (ability < 0 || ability >= MaxAbilityNum) {
+    if (ability < 0) {
         char *empty = label_get(0x64 / 4);
         if (empty != 0) {
-            canvas->write_cent_l(&font1_, empty, &text,
+            Buffer::write_cent_l(&font1_, empty, &text,
                                  static_cast<int>(strlen(empty)));
         }
         return;
@@ -4343,12 +4349,12 @@ void DesignWin::draw_special_1(int redraw) {
     char *name = StringTable.get(record.name);
     char *description = StringTable.get(record.description);
     if (name != 0) {
-        canvas->set_text_color(0xE0, -1, 1, 1);
-        text.top = canvas->wrap_cent(&font2_, name, &text);
+        Buffer::set_text_color(0xE0, -1, 1, 1);
+        text.top = Buffer::wrap_cent(&font2_, name, &text);
     }
     if (description != 0) {
-        canvas->set_text_color(0xE0, -1, 1, 1);
-        canvas->wrap_cent(&font1_, description, &text);
+        Buffer::set_text_color(0xE0, -1, 1, 1);
+        Buffer::wrap_cent(&font1_, description, &text);
     }
 }
 
@@ -4357,19 +4363,18 @@ void DesignWin::draw_special_1(int redraw) {
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00435de0.cpp", "RulesAbility and StringTable in src/veh.h and src/strings.h", "DesignWin::protoAbilityID2_ and panel/font members in src/designwin.h"], "reason": "Draw the second selected special ability through the typed ability record and the existing DesignWin panel, font and selection state."}
 void DesignWin::draw_special_2(int redraw) {
     (void)redraw;
-    Buffer *canvas = static_cast<Buffer *>(this);
     RECT area = component_panel_rects_[component_panel_special_two];
-    canvas->set_clip(&area);
-    buffer_.copy(canvas, &area);
+    Buffer::set_clip(&area);
+    buffer_.copy(this, &area);
 
     const int title_height = font2_.unk_1_ < 0
         ? font2_.line_height() : font2_.pixel_height() + font2_.unk_1_;
     RECT title = area;
     title.bottom = title.top + title_height;
-    canvas->set_text_color(0xE0, -1, 1, 1);
+    Buffer::set_text_color(0xE0, -1, 1, 1);
     char *caption = label_get(0x228 / 4);
     if (caption != 0) {
-        canvas->write_cent_l(&font2_, caption, &title,
+        Buffer::write_cent_l(&font2_, caption, &title,
                              static_cast<int>(strlen(caption)));
     }
 
@@ -4378,10 +4383,10 @@ void DesignWin::draw_special_2(int redraw) {
     text.right -= 5;
     text.top += title_height + 2;
     const int ability = protoAbilityID2_;
-    if (ability < 0 || ability >= MaxAbilityNum) {
+    if (ability < 0) {
         char *empty = label_get(0x64 / 4);
         if (empty != 0) {
-            canvas->write_cent_l(&font1_, empty, &text,
+            Buffer::write_cent_l(&font1_, empty, &text,
                                  static_cast<int>(strlen(empty)));
         }
         return;
@@ -4391,12 +4396,12 @@ void DesignWin::draw_special_2(int redraw) {
     char *name = StringTable.get(record.name);
     char *description = StringTable.get(record.description);
     if (name != 0) {
-        canvas->set_text_color(0xE0, -1, 1, 1);
-        text.top = canvas->wrap_cent(&font2_, name, &text);
+        Buffer::set_text_color(0xE0, -1, 1, 1);
+        text.top = Buffer::wrap_cent(&font2_, name, &text);
     }
     if (description != 0) {
-        canvas->set_text_color(0xE0, -1, 1, 1);
-        canvas->wrap_cent(&font1_, description, &text);
+        Buffer::set_text_color(0xE0, -1, 1, 1);
+        Buffer::wrap_cent(&font1_, description, &text);
     }
 }
 
