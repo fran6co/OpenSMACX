@@ -1,6 +1,7 @@
 """Host-only controls read only current installed source owner definitions."""
 from pathlib import Path
 import re
+import os
 import shutil
 import subprocess
 import tempfile
@@ -170,7 +171,8 @@ def test_tech_advance_preserves_early_return_batch_gate_and_callback_order(tmp_p
 #define __cdecl
 struct PlayerData { int tech_id_researching=0, earned_techs_saved=0; };
 struct Player { char *name_leader; };
-struct LockMasks { unsigned char enable_mask_=0; };
+struct LockMaskBytes { unsigned char human_mask_=0; };
+struct LockMasks { LockMaskBytes bytes_; };
 struct Fields { LockMasks lock_masks_; int turn_current_num_=0, base_current_count_=0; };
 struct Storage { Fields fields_; };
 struct Console { int faction_id_=0; };
@@ -179,7 +181,7 @@ static Storage GameDataStateStorage; static Console ConsoleGlobal;
 static int IsMultiplayerNet=0, IsMultiplayerPBEM=0, TurnUpkeepPhase=0;
 static int BaseIDCurrentSelected=0, TechAchievedGate=0, AiResearchBatchActive=0;
 static int log_calls=0, achieve_calls=0, reset_calls=0, set_calls=0, compute_calls=0, select_calls=0;
-static int trace[8], trace_count=0, selection_value=-9;
+static int trace[16], trace_count=0, selection_value=-9;
 static void log_say(const char*, char*, int, int, int) { ++log_calls; trace[trace_count++]=1; }
 static int tech_selection(int) { ++select_calls; trace[trace_count++]=2; return selection_value; }
 static void tech_achieved(int,int,int,int) { ++achieve_calls; trace[trace_count++]=3; }
@@ -220,7 +222,7 @@ def test_owner_transfer_preserves_original_mappings_and_lessons_from_history():
         ["git", "show", f"{HISTORY_BASELINE}:src/leaf_recoveries.cpp"],
         cwd=ROOT, check=True, text=True, capture_output=True,
     ).stdout
-    fields = ("address", "name", "image_spans", "byte_exact", "semantic", "levers",
+    fields = ("address", "name", "image_spans", "semantic", "levers",
               "ruled_out", "unrecoverable", "deferred", "kind")
     destinations = {
         0x51E000: ("game.cpp", "read_tamper"),
@@ -237,6 +239,8 @@ def test_owner_transfer_preserves_original_mappings_and_lessons_from_history():
         current = rows[0]
         before = old_rows[address]
         assert current.mode is Mode.BODY
+        # Later native recording may strengthen a transferred historical claim.
+        assert not before.byte_exact or current.byte_exact, hex(address)
         for field in fields:
             assert getattr(current, field) == getattr(before, field), (hex(address), field)
         old_lessons = tuple((lesson.kind, lesson.key, lesson.prose,
@@ -263,7 +267,8 @@ def test_farm_get_table_bindings_match_current_source_and_pinned_data():
     pin_match = re.search(r"(?m)^sha256 ([0-9a-f]{64})$", (ROOT / "src/IMAGE_PIN").read_text())
     assert pin_match
     pin = pin_match.group(1)
-    image_bytes = (ROOT / ".opensmacx/game/terranx_original.exe").read_bytes()
+    image_bytes = Path(os.environ.get(
+        "OPENSMACX_IMAGE", ROOT / ".opensmacx/game/terranx_original.exe")).read_bytes()
     assert hashlib.sha256(image_bytes).hexdigest() == pin
     image = PeImage(image_bytes, pin)
     expected = ((0x66EF28, 0x66EF38, "?RiverStepX@@3QBHB", (1, 1, -1, -1)),
@@ -332,7 +337,7 @@ def test_current_farm_get_tables_and_index_domain_controls(tmp_path, compiler):
     maph = (ROOT / "src/map.h").read_text()
     mapcpp = (ROOT / "src/map.cpp").read_text()
     farm = source_body(ROOT / "src/basewin.cpp", "BaseWin::farm_get")
-    radius = code_definition(maph, "MEASURED inline int __cdecl radius_move(int x_radius_off, int y_radius_off, int range)")
+    radius = code_definition(mapcpp, "int __cdecl radius_move(int x_radius_off, int y_radius_off, int range)")
     map_code = COMMENTS_OR_STRINGS.sub(lambda m: re.sub(r"[^\n]", " ", m[0]), mapcpp)
     table_defs = []
     for name in ("RiverStepX", "RiverStepY"):

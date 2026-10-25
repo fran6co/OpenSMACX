@@ -7737,12 +7737,9 @@ Purpose: Map a click on the base screen's farm panel back to the tile it
 Status: Coverage transcription of the retained seed
         (git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/unrecovered/00409100.cpp, plain FILE). The three rect reads
         are the typed rect1_ members (right 0x40B94, left 0x40B8C, top
-        0x40B90). Two known divergences from the image, both structural:
-        the image CALLS 0x005A65A0 (radius_move) here while the tree's
-        radius_move is MEASURED inline in map.h with no out-of-line body,
-        so this body can only expand it; and 0x0066EF24/0x0066EF38 are
-        unnamed per-radius offset tables, spelled as raw const-int
-        indexing like every other unnamed datum in this file.
+        0x40B90). The typed buffer2_ subobject supplies the raster pixel;
+        the nonzero index selects RiverStepX/Y before the radius_move call.
+        The original unchecked indexing is retained.
 */
 int BaseWin::farm_get(int a1, int a2) {
     const int right = rect1_.right;

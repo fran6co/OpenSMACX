@@ -2545,7 +2545,6 @@ void __cdecl quick_zoc(int x_src, int y_src, int faction_id, int x_dst, int y_ds
 /*
 Purpose: Determine if the specified offsets are within the range radius.
 // ORIGINAL: 0x005A65A0 ?radius_move@@YAHHHH@Z 0x005A65A0-0x005A65D0 BYTE_EXACT
-// body      src/map.h
 // size      48 bytes
 // prototype int (__cdecl ?radius_move@@YAHHHH@Z)(int xCoord, int yCoord, int range)
 // callers   1   call targets   0
@@ -2555,11 +2554,19 @@ Purpose: Determine if the specified offsets are within the range radius.
 Return Value: Range radius, otherwise -1 if not within range
 Status: Complete
 */
-// BODY IN map.h, as `MEASURED inline`: the image writes it out at
-// some call sites and calls it at others, and a .cpp definition is only ever
-// one of those. The marker stays here because that is where the catalogue
-// reads it.
+// Historical visibility note: the pinned image emits this body and also
+// calls it at different sites. The definition is now colocated with its
+// canonical marker; this pilot does not establish original TU provenance.
 
+
+int __cdecl radius_move(int x_radius_off, int y_radius_off, int range) {
+    for (int i = 0; i < range; i++) {
+        if (x_radius_off == RadiusOffsetX[i] && y_radius_off == RadiusOffsetY[i]) {
+            return i; // radius
+        }
+    }
+    return -1;
+}
 
 /*
 Purpose: Determine if the specified two tiles are within the range radius of each other.

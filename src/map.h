@@ -677,14 +677,7 @@ MEASURED inline uint8_t __cdecl abstract_at(int x, int y) {
 
 void __cdecl abstract_set(int x, int y, uint8_t region);
 
-MEASURED inline int __cdecl radius_move(int x_radius_off, int y_radius_off, int range) {
-    for (int i = 0; i < range; i++) {
-        if (x_radius_off == RadiusOffsetX[i] && y_radius_off == RadiusOffsetY[i]) {
-            return i; // radius
-        }
-    }
-    return -1;
-}
+int __cdecl radius_move(int x_radius_off, int y_radius_off, int range);
 
 // INLINE: the image has no temp_at - it open-codes what this names.
 inline uint32_t __cdecl temp_at(uint32_t x, uint32_t y) {
