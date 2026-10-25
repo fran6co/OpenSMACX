@@ -1274,3 +1274,5 @@ Status: Complete
 void ProdPicker::on_scrolling(int code, int position) {
   on_scrolled(code, position);
 }
+// RECOVERY_GENERATED: v1 vtable 0x0066A250 ? ??_7ProdPicker@@6BWin@@@ 0x00492420
+// RECOVERY_GENERATED: v1 vtable 0x0066A248 ? ??_7ProdPicker@@6BBuffer@@@ 0x00492420

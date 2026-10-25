@@ -1,0 +1,53 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "c482b797ace7a120132cbc2b03cb4b4912410b75",
+  "editable_files": [
+    "src/stringstruct.h",
+    "src/dialog.cpp",
+    "src/interlude.cpp",
+    "src/prodpicker.cpp",
+    "src/stringbox.cpp"
+  ],
+  "evidence": [
+    "The original StringList constructor and StringBox access the second vbtable word; the independent next DesignWin table begins at 0x0066B0F4. This proves the eight-byte [-4,36] table at 0x0066B0EC without borrowing current candidate size. Thirteen qualified compiler copies agree. Preserve genuine virtual inheritance; no array/store substitute.",
+    "Original constructor stores establish seven owner vftable starts. Original Dialog constructor/close loads and popups_normal writes establish seven existing separately defined default globals. Publish only start identities where original full extents are unproven; do not promote current COMDAT/BSS size or original immediate equality into content/layout proof.",
+    "Existing exact primary/cold constructors reference owner-associated compiler EH FuncInfo data. Prove these targets afresh from the actual original spans and compiler graph; never invent source static-object aliases or store reproducible EH metadata as authoritative annotations.",
+    "Source facts only: no application instructions, flags, layout, exports, behavior fixes or original-function marker edits. Fresh build/link, all mapped function measurements and strict-reference preservation, source/claim/mapping/reference checks and independent source/protocol review precede authorized manual integration. Unknown linked selection, complete structure/runtime and game acceptance remain unresolved."
+  ],
+  "intent": "Bind existing compiler-generated StringList/owner tables and real Dialog defaults to pinned original identities, preserving genuine C++ hierarchy and unknown extents.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4477104,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6327312,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4583936,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4793376,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4905088,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6459664,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "constructor-bindings-oct25g"
+}

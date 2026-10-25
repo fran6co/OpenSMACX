@@ -544,3 +544,5 @@ Purpose: Step the receiver back to the subobject ??_GStringBox@@UAEPAXI@Z
 Return Value: the forwarded call's
 Status: Complete
 */
+// RECOVERY_GENERATED: v1 vtable 0x0066ADC8 ? ??_7StringBox@@6BWin@@@ 0x00629110
+// RECOVERY_GENERATED: v1 vtable 0x0066ADC0 ? ??_7StringBox@@6BBuffer@@@ 0x00629110
