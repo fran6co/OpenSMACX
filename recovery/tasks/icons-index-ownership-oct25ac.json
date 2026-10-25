@@ -1,0 +1,25 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "53bb0c3d9ee3e87e388036884aa4eb0e067a25f5",
+  "editable_files": [
+    "src/sprite_assets.cpp",
+    "recovery/tests/test_icons_loader.py",
+    "recovery/tests/test_loaders_behavior.py"
+  ],
+  "evidence": [
+    "Pin six loop tails use signed JL while current pointer bounds emit unsigned JB. Authorize one ordinary signed-int indexed traversal variant for the same complete array domains16/2/32/12/12/4, retaining all46functional calls and every source coordinate/order.",
+    "No signed pointer casts, forced registers, compiler flags, array-bound changes or error normalization. Original spelling is unknown; bounded code-generation screen only, no guarantee of exact gain.",
+    "At most3candidate compiles in unchanged context. Preserve all original mappings/symbols/historical claims and source-owned literal facts. Native entire-TU exact-loss/outside controls plus fresh build/link and relevant host tests precede coordinator-reviewed integration."
+  ],
+  "intent": "load_icons faithful bounded owner pass",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4540384,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "icons-index-ownership-oct25ac"
+}

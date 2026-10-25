@@ -1,0 +1,24 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "53bb0c3d9ee3e87e388036884aa4eb0e067a25f5",
+  "editable_files": [
+    "src/datalink.cpp",
+    "recovery/tests/test_datalink_help_owner_actual_source_oct6.py"
+  ],
+  "evidence": [
+    "Pin reads each of19terraformation rows land first; after parse/emitter callbacks, loads sea and rereads prerequisites for duplicate suppression. Current two-element snapshot can be stale. Restore ordinary typed global member reads and original call/row order, preserving every other operation.",
+    "Independent corrected fullpin/source review supports only this loop correction; no callback mutation is assumed as observed fact, and no header/type/unsafe-path changes.",
+    "At most3candidate compiles in unchanged context. Preserve all original mappings/symbols/historical claims and source-owned literal facts. Native entire-TU exact-loss/outside controls plus fresh build/link and relevant host tests precede coordinator-reviewed integration."
+  ],
+  "intent": "tech_heck faithful bounded owner pass",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4502400,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "tech-live-prerequisites-oct25ac"
+}
