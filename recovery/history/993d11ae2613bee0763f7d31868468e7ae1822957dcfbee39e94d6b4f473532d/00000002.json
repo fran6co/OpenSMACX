@@ -1,0 +1,22 @@
+{
+  "event_id": "23191c93c462cfc1faac3f6c60e2c2874576bda1ebce6c3f1eb2d33dc5604658",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "CMakeLists.txt",
+      "recovery/tests/test_caviar_record_release_actual_source.py",
+      "src/caviar_record.cpp"
+    ],
+    "evidence": [
+      "Move the complete existing original record-release identity/body to a genuine engine source owner, keep shared counter/storage and callbacks, retain the frontend declaration and native source mapping/claim continuity. No empty bodies, code copies from executable, flag changes, baseline reset or original bug fixes.",
+      "Require fresh native baseline control, caller/helper matching and reference review, program-code/data preservation outside actual impacts, full build/link, actual-source callback/lifetime controls and destination recheck. Preserve unsupported native observations as FAIL/UNKNOWN; no automatic or game acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "799ab59c8a6ff2532d55b33e2db25d870e86d56b30085b6a73516cd6731efee5",
+  "request_id": "admit-engine-release-source-owner",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:caviar-release-call-boundary-oct25bm"
+}
