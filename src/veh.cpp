@@ -8396,13 +8396,13 @@ something else.
 
 Bug notes, reproduced rather than corrected:
 
-  - veh_at() answers -1 for a tile with no unit, and both neighbour loops read
-    Vehs[veh_id].faction_id from that -1 without checking. In the image the
-    address is fifty-two bytes below Vehs[0] - four bytes inside Reactor - and
-    it is compared against a live faction id. The read is preserved exactly:
-    Vehs[-1] is as far out of bounds below the real array as it was above the
-    image's Reactor table, and whatever uninitialised byte it compares is the
-    original's behaviour, not a defect to fix.
+  - veh_at() answers -1 for an empty tile. Both original neighbour loops read
+    byte[52*id + 0x952836] before comparing the faction (0x566308/0x566498).
+    For -1 that is 0x952802, the low byte of Reactor[0].power at offset 0xA.
+    The source arrays have independent storage, so indexing before Vehs does
+    not preserve this alias. Read the named reactor field for exactly -1;
+    retain other indices, the comparison, and stack_check(-1) when it agrees.
+    This preserves the original defective lookup, not a safe fallback.
   - The division by the attacker's prototype cost is a bare idiv with no zero guard.
   - The two terraform-order tests are two independent ifs in the original, not an else-if. They
     are mutually exclusive in practice because `order` holds one value, so this is a shape
@@ -8512,8 +8512,8 @@ int __cdecl compute_odds(int odds, int faction_id, int veh_id_atk, int veh_id_de
                     continue;
                 }
                 const int veh_id = veh_at(x_radius, y_radius);
-                // Unchecked -1: see the bug note. Preserved deliberately.
-                if (Vehs[veh_id].faction_id != faction_id) {
+                // Original empty-lookup alias is the low byte of Reactor[0].power.
+                if ((veh_id == -1 ? static_cast<uint8_t>(Reactor[0].power) : Vehs[veh_id].faction_id) != faction_id) {
                     continue;
                 }
                 if (stack_check(veh_id, 3, TRIAD_LAND, -1, -1)) {
@@ -8557,8 +8557,8 @@ int __cdecl compute_odds(int odds, int faction_id, int veh_id_atk, int veh_id_de
                 continue;
             }
             const int veh_id = veh_at(x_radius, y_radius);
-            // Unchecked -1 here too.
-            if (Vehs[veh_id].faction_id != faction_id) {
+            // Keep the same Reactor field alias in the ground-unit loop.
+            if ((veh_id == -1 ? static_cast<uint8_t>(Reactor[0].power) : Vehs[veh_id].faction_id) != faction_id) {
                 continue;
             }
             attackers += stack_check(veh_id, 3, TRIAD_LAND, -1, -1);
