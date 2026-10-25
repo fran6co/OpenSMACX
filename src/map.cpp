@@ -1788,7 +1788,7 @@ void __cdecl fungus_radius(int x, int y) {
 
 /*
 Purpose: Search for the first landmark found within the radius range of the specified tile.
-// ORIGINAL: 0x00592550 ?find_landmark@@YAHHHH@Z 0x00592550-0x005925F8
+// ORIGINAL: 0x00592550 ?find_landmark@@YAHHHH@Z 0x00592550-0x005925F8 BYTE_EXACT
 // body      src/map.h
 // size      168 bytes
 // prototype 
@@ -1869,7 +1869,7 @@ BOOL __cdecl valid_landmark(int x, int y, int faction_id) {
 
 /*
 Purpose: Remove the landmark at the specified tile.
-// ORIGINAL: 0x005926F0 ?kill_landmark@@YAXHH@Z 0x005926F0-0x005927D0
+// ORIGINAL: 0x005926F0 ?kill_landmark@@YAXHH@Z 0x005926F0-0x005927D0 BYTE_EXACT
 // LEVER: the image's shift-down is a per-element `MapLandmark[i] =
 //        MapLandmark[i+1]` loop (struct assignment of `Landmark`, 40 bytes,
 //        compiles to `mov ecx,0xa; rep movsd` per iteration) - NOT the
