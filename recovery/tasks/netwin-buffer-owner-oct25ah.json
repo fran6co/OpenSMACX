@@ -1,0 +1,29 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "950d5f25367e6e0b868ea04810c93baa7af9f8c6",
+  "editable_files": [
+    "src/netwin.cpp",
+    "recovery/tests/test_netwin_counted_loops_oct15.py"
+  ],
+  "evidence": [
+    "Original47FF08..47FF10 and4801B8..4801C0 dereference the mode3 first-record pointer without the extra source null guard. Retain original unsafe behavior, live row-bound reads and all branch/callback ordering.",
+    "Use qualified nonvirtual Buffer methods for the real inherited base; Sprite::draw retains its Buffer* argument via implicit this conversion. Independent hierarchy/pin/current COFF and prior-attempt review required; preserve the new arrow RECT snapshot and later live geometry reads.",
+    "One ordinary candidate per function first, cap3 in unchanged context. Native production-replica control, whole-TU exact/outside checks, all original mappings/spans/historical claims, actual-source callback/boundary mutants, fresh full application build/link and native checks precede manual integration and destination recheck. No fabricated null array guard, byte claim edits, flags or full-game acceptance claim."
+  ],
+  "intent": "Restore original NetWin mode3 record accesses and genuine Buffer base drawing in both lobby painters.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4718288,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4718976,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "netwin-buffer-owner-oct25ah"
+}
