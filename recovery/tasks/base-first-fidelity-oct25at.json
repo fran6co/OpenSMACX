@@ -1,0 +1,24 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "b4dcea86699cf23d6ce8afe91f81634b49f318be",
+  "editable_files": [
+    "src/base.cpp",
+    "recovery/tests/test_base_first_live_state.py"
+  ],
+  "evidence": [
+    "Pinned0x4E4ACE writes scout prototype2 to Base+0x50 before veh_avail;0x4E4AD6 loop reloads faction Base+4 on every call; finalqueuewrite remains0x4E4B6E. Current source delays the firstwrite and caches faction outside the loop. Independent full-function review confirms the correction; preserve unsafe indices and all remaining ranking/tie behavior.",
+    "Retain prior failed early-store/direct-plan spelling evidence; this correction retains plan local and restores the distinct live read. Preserve any historical claims; allow reviewed temporary matching regression rather than discarding original effects. One bounded source candidate; actual-source host controls, native unchanged production control, whole-TU preservation and build/link plus destination checks required.",
+    "No new exact claim without installed recover record; no automatic/linked/structure/runtime/game acceptance from this manual checkpoint."
+  ],
+  "intent": "Restore the original initial production queue write and live faction read during base_first selection.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5130912,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "base-first-fidelity-oct25at"
+}
