@@ -24,8 +24,7 @@ from pathlib import Path
 from capstone import CS_ARCH_X86, CS_MODE_32, CS_GRP_CALL, CS_GRP_JUMP, Cs, x86
 
 from ..pe_coff import Coff, PeImage
-from .eh_regions import bind_eh_regions
-from .eh_actions import EHActionKind
+from .eh_regions import bind_eh_regions, eh_action_semantic_difference
 from .model import DecompilationState, Mode, Tier
 
 @dataclass(frozen=True)
@@ -1202,71 +1201,19 @@ def compare_subject(record: DecompilationState, exe: Path | str,
             frame_semantic_diagnostic = None
             for index, (original_action, compiled_action) in enumerate(zip(
                     ownership.original_actions, ownership.compiled_actions)):
-                if original_action.kind is not compiled_action.kind:
+                difference = eh_action_semantic_difference(
+                    original_action, compiled_action, index)
+                if difference is None:
+                    continue
+                category, diagnostic = difference
+                if category == "frame-transfer":
+                    frame_semantic_diagnostic = diagnostic
+                else:
                     return AsmComparison(
                         verdict=Tier.MISMATCH,
                         flags=compiled.flags,
-                        diagnostic=f"valid EH action kind differs at index {index}",
+                        diagnostic=diagnostic,
                     )
-                if original_action.kind is EHActionKind.ARRAY_DESTRUCTOR:
-                    original_facts = (
-                        original_action.element_count,
-                        original_action.element_size,
-                        original_action.frame_displacement,
-                        original_action.base_adjustment,
-                        original_action.scratch_register,
-                    )
-                    compiled_facts = (
-                        compiled_action.element_count,
-                        compiled_action.element_size,
-                        compiled_action.frame_displacement,
-                        compiled_action.base_adjustment,
-                        compiled_action.scratch_register,
-                    )
-                    if original_facts != compiled_facts:
-                        return AsmComparison(
-                            verdict=Tier.MISMATCH,
-                            flags=compiled.flags,
-                            diagnostic=(
-                                f"valid EH array-cleanup semantics differ at index {index}: "
-                                f"original={original_facts!r}, compiled={compiled_facts!r}"),
-                        )
-                elif original_action.kind is EHActionKind.FRAME_TRANSFER:
-                    original_facts = (
-                        original_action.frame_displacement,
-                        original_action.base_adjustment,
-                        original_action.scratch_register,
-                    )
-                    compiled_facts = (
-                        compiled_action.frame_displacement,
-                        compiled_action.base_adjustment,
-                        compiled_action.scratch_register,
-                    )
-                    if original_facts != compiled_facts:
-                        frame_semantic_diagnostic = (
-                            f"valid EH frame-transfer semantics differ at index {index}: "
-                            f"original={original_facts!r}, compiled={compiled_facts!r}"
-                        )
-                elif original_action.kind is EHActionKind.FRAME_SLOT_CALL_CLEANUP:
-                    original_facts = (
-                        original_action.frame_displacement,
-                        original_action.base_adjustment,
-                        original_action.scratch_register,
-                    )
-                    compiled_facts = (
-                        compiled_action.frame_displacement,
-                        compiled_action.base_adjustment,
-                        compiled_action.scratch_register,
-                    )
-                    if original_facts != compiled_facts:
-                        return AsmComparison(
-                            verdict=Tier.MISMATCH,
-                            flags=compiled.flags,
-                            diagnostic=(
-                                "valid EH frame-local cleanup semantics differ at "
-                                f"index {index}: original={original_facts!r}, "
-                                f"compiled={compiled_facts!r}"),
-                        )
             pairs = []
             for region in bound:
                 low = region.original.start
