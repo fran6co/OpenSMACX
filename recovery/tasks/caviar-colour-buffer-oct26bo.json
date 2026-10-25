@@ -1,0 +1,35 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "778540f58803fc45a63afd5e32d259ef24e16d86",
+  "editable_files": [
+    "src/caviar.cpp",
+    "recovery/tests/test_caviar_colour_buffer_actual_source.py"
+  ],
+  "evidence": [
+    "Pinned init_class allocates0x20000 bytes and fills0x10000 words through pointer cell0x9B9100. Ramp A advances0x80 words; clear_buffers advances0x100 words per row. The provisional CaviarSceneRow struct is not accessed as a member anywhere; its two consumers immediately cast back to uint16_t*. A flatuint16_t* is supported by all observed uses, without claiming the original declarator.",
+    "Keep allocation size, branch/error behavior, callback order, viewport values and original pointer-cell identity. Remove only the unused provisional row wrapper and two raw reinterpretations; use an ordinary typed allocator result. Native object writer may add a start-only0x9B9100 binding to the fresh actual emitted symbol, never to the allocated heap.",
+    "Preserve both existing BufferA/B v3 member aliases and their missing-CodeView UNKNOWN. Do not fabricate parent bounds, weaken member proof, add flags or reset baselines. Typed global symbol change is an explicit reviewed outside-scope data-symbol obligation, not a fabricated native preservation PASS.",
+    "Require unchanged actual production replica control, all affected/caller mappings and historical claim continuity, whole-owner comparison, independent review, relevant actual-source controls, full application build/link and destination recheck. No new historical claims are planned."
+  ],
+  "intent": "Represent the shared colour table as the flat16-bit buffer its observed access paths use; bind the original pointer cell without inventing heap or Buffer extents.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6391200,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6390896,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6393120,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "caviar-colour-buffer-oct26bo"
+}
