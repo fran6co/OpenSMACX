@@ -332,7 +332,7 @@ def test_current_farm_get_tables_and_index_domain_controls(tmp_path, compiler):
     maph = (ROOT / "src/map.h").read_text()
     mapcpp = (ROOT / "src/map.cpp").read_text()
     farm = source_body(ROOT / "src/basewin.cpp", "BaseWin::farm_get")
-    radius = code_definition(maph, "MEASURED inline int __cdecl radius_move(int x_radius_off, int y_radius_off, int range)")
+    radius = code_definition(mapcpp, "int __cdecl radius_move(int x_radius_off, int y_radius_off, int range)")
     map_code = COMMENTS_OR_STRINGS.sub(lambda m: re.sub(r"[^\n]", " ", m[0]), mapcpp)
     table_defs = []
     for name in ("RiverStepX", "RiverStepY"):
