@@ -25,20 +25,14 @@ extern BOOL IsLoggingDisabled;
   */
 class Log {
  public:
-  MEASURED Log() : log_file_(nullptr), is_disabled_(false) {
-  } // 00625FB0
-  MEASURED Log(LPCSTR input);
-  MEASURED ~Log() {
-      if (log_file_) {
-          free(log_file_);
-          log_file_ = nullptr;
-      }
-  } // 00626020
+  Log(); // 00625FB0
+  Log(LPCSTR input);
+  ~Log(); // 00626020
 
   int init(LPCSTR input);
-  MEASURED void reset();
-  MEASURED void say(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3);
-  MEASURED void say_hex(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3);
+  void reset();
+  void say(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3);
+  void say_hex(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3);
   // additional functions to assist with encapsulation
   void set_state(BOOL state) { is_disabled_ = (state == 0); }
 

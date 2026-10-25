@@ -118,7 +118,15 @@ def log_storage_declarations(names=("LogDefaultFilename", "LogInitializeMode")):
 
 
 def log_filename_constructor():
-    return extract_log_owner_definition("MEASURED Log::Log(LPCSTR input)")
+    return extract_log_owner_definition("Log::Log(LPCSTR input)")
+
+
+def log_default_constructor():
+    return extract_log_owner_definition("Log::Log()")
+
+
+def log_destructor():
+    return extract_log_owner_definition("Log::~Log()")
 
 
 def test_filename_constructor_preserves_original_paths_and_destructor(tmp_path):
@@ -161,7 +169,9 @@ def test_filename_constructor_preserves_original_paths_and_destructor(tmp_path):
             return 0;
         }
     """
-    source = log_host_source(log_class + "\n" + storage + "\n" + constructor + checks)
+    source = log_host_source(log_class + "\n" + storage + "\n" +
+                             log_default_constructor() + "\n" + log_destructor() +
+                             "\n" + constructor + checks)
     result = compile_and_run(tmp_path, source)
     assert result.returncode == 0, result.stderr.decode(errors="replace")
 
@@ -170,7 +180,7 @@ def test_global_log_and_random_objects_own_startup_and_reverse_cleanup(tmp_path)
     log_class = class_definition(LOG_H.read_text(), "Log")
     logging_declaration = product_global_declaration(LOG_CPP, "Log", "Logging")
     source = log_host_source(log_storage_declarations() + "\n" + log_class + "\n" +
-        log_filename_constructor() + textwrap.dedent(r"""
+        log_filename_constructor() + "\n" + log_destructor() + textwrap.dedent(r"""
         struct CleanupObserver {
             ~CleanupObserver() { std::fprintf(stderr, "%d\n", free_count); }
         } observer;
@@ -248,8 +258,7 @@ def test_pinned_lifetime_annotations_match_baseline_parser_metadata(tmp_path):
     log_source = LOG_CPP.read_text()
     random_header = RANDOM_H.read_text()
     random_source = RANDOM_CPP.read_text()
-    assert "MEASURED Log(LPCSTR input)" in log_header
-    ctor = log_header.split("MEASURED Log(LPCSTR input)", 1)[1].split("MEASURED ~Log()", 1)[0]
+    ctor = log_filename_constructor()
     assert "is_disabled_" not in ctor
     assert product_global_declaration(LOG_CPP, "Log", "Logging") == "Log Logging(LogDefaultFilename);"
     assert product_global_declaration(RANDOM_CPP, "Random", "Rand") == "Random Rand;"

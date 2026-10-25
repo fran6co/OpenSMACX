@@ -65,12 +65,21 @@ def method_text(text: str, signature: str) -> tuple[str, int, int]:
     return text[hits[0].start():end], brace, end
 
 
-def instrumented_class(mutant: str | None = None) -> str:
+def instrumented_class() -> str:
     source = class_text().replace("MEASURED ", "")
     assert source.count(" private:") == 1
     # Test-only controlled visibility lets dependency spies inspect the live
     # receiver without changing data layout or the production declaration.
     source = source.replace(" private:", " public:", 1)
+    return dependency_rewritten(source)
+
+
+def instrumented_default_constructor() -> str:
+    return dependency_rewritten(extract_log_owner_definition("Log::Log()"))
+
+
+def instrumented_destructor(mutant: str | None = None) -> str:
+    source = extract_log_owner_definition("Log::~Log()")
     destructor, brace, _ = method_text(source, "~Log()")
     injected = "{ ++destructor_entries; if (init_active) std::exit(98);"
     if mutant == "destructor_probe_disabled":
@@ -80,6 +89,10 @@ def instrumented_class(mutant: str | None = None) -> str:
     absolute = source.index(destructor)
     relative_brace = brace - absolute
     source = source[:absolute + relative_brace] + injected + source[absolute + relative_brace + 1:]
+    destructor = method_text(source, "~Log()")[0]
+    closing = source.index(destructor) + len(destructor) - 1
+    clear_probe = "\n    if (observed_log && observed_log->log_file_ == nullptr) { ++destructor_clear_observations; }\n"
+    source = source[:closing] + clear_probe + source[closing:]
 
     return dependency_rewritten(source)
 
@@ -136,6 +149,7 @@ using LPSTR = char *;
 using LPCSTR = const char *;
 static bool init_active = false;
 static int destructor_entries = 0;
+static int destructor_clear_observations = 0;
 static int frees = 0, lengths = 0, allocations = 0, opens = 0, closes = 0;
 static bool allocation_fails = false, open_fails = false;
 static bool require_free_before_length = false, free_seen = false;
@@ -165,6 +179,7 @@ struct InitScope {
 };
 static void clear_observations() {
     events.clear(); frees = lengths = allocations = opens = closes = 0;
+    destructor_clear_observations = 0;
     free_seen = false; require_free_before_length = false;
     expect_null_at_length = expect_null_at_alloc = false;
     expected_alloc_size = 0;
@@ -194,8 +209,10 @@ def harness(mutant: str | None = None) -> str:
     init = init_text(mutant)
     storage = extract_log_storage_declarations(("LogInitializeMode", "LogAppendMode"))
     say = dependency_rewritten(extract_log_owner_definition(
-        "MEASURED void Log::say(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3)"))
-    source = PRELUDE + "\n" + storage + "\n" + klass + "\n" + say + r"""
+        "void Log::say(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3)"))
+    default_constructor = instrumented_default_constructor()
+    destructor = instrumented_destructor()
+    source = PRELUDE + "\n" + storage + "\n" + klass + "\n" + default_constructor + "\n" + destructor + "\n" + say + r"""
 
 static char *observed_filename() {
     return observed_log ? observed_log->log_file_ : nullptr;
@@ -299,6 +316,7 @@ static void test_null_and_free_order_alias() {
     }
     assert(destructor_entries == 1);
     assert(frees == 2); // init releases old storage; final scope releases new storage
+    assert(destructor_clear_observations == 1);
 }
 static void test_alloc_failure_clears_old_resource_and_preserves_flag() {
     clear_observations(); destructor_entries = 0;
@@ -324,6 +342,7 @@ static void test_alloc_failure_clears_old_resource_and_preserves_flag() {
         assert(opens == 0); // init did not change the disabled flag
     }
     assert(destructor_entries == 1 && frees == 1);
+    assert(destructor_clear_observations == 1);
 }
 static void test_open_failure_retains_owned_filename_and_enabled_state() {
     clear_observations(); destructor_entries = 0;
@@ -344,6 +363,7 @@ static void test_open_failure_retains_owned_filename_and_enabled_state() {
         clear_observations();
     }
     assert(destructor_entries == 1 && frees == 1);
+    assert(destructor_clear_observations == 1);
     assert(events.size() == 1 && events[0] == "free");
 }
 static void test_repeated_init_and_single_final_destruction() {
@@ -362,6 +382,7 @@ static void test_repeated_init_and_single_final_destruction() {
         clear_observations();
     }
     assert(destructor_entries == 1 && frees == 1);
+    assert(destructor_clear_observations == 1);
 }
 int main() {
     static_assert(sizeof(int) == 4, "the original target uses 32-bit int");
@@ -425,8 +446,7 @@ def test_named_compiling_damage_controls_fail(mutant: str) -> None:
 
 
 def test_filename_constructor_still_does_not_initialize_disabled_flag() -> None:
-    klass = class_text()
-    constructor, _, _ = method_text(klass, "Log(LPCSTR input)")
+    constructor = extract_log_owner_definition("Log::Log(LPCSTR input)")
     assert "is_disabled_" not in constructor
 
 

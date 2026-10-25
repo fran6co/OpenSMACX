@@ -81,9 +81,21 @@ int Log::init(LPCSTR input) {
 // RECOVERY_OBJECT: v1 0x009BC004 ?IsLoggingDisabled@@3HA
 BOOL IsLoggingDisabled;  // 0x009BC004
 
+// These pinned callable entries belong to the Log implementation owner.
+// Keep the filename constructor's existing partial initialization unchanged.
+Log::Log() : log_file_(nullptr), is_disabled_(false) {
+}
+
+Log::~Log() {
+    if (log_file_) {
+        free(log_file_);
+        log_file_ = nullptr;
+    }
+}
+
 // The filename constructor lives with the global object's initialization so
 // its original setup remains available for same-translation-unit inlining.
-MEASURED Log::Log(LPCSTR input) {
+Log::Log(LPCSTR input) {
     log_file_ = nullptr;
     if (input) {
         void *buf = mem_get(strlen(input) + 1);
@@ -112,14 +124,14 @@ Log Logging(LogDefaultFilename);  // 0x009BBFF8
 // RECOVERY_LITERAL: v1 0x006973B0 0x006973C6 ??_C@_0BG@DBHC@?$CFs?5?$CFs?5?$CF04x?5?$CF04x?5?$CF04x?6?$AA@ 0x00626190
 // RECOVERY_LITERAL: v1 0x006973C8 0x006973DB ??_C@_0BD@FBFL@?$CFs?5?$CF04x?5?$CF04x?5?$CF04x?6?$AA@ 0x00626190
 
-MEASURED void Log::reset() {
+void Log::reset() {
     FILE *file = env_open(log_file_, LogResetMode);
     if (file) {
         fclose(file);
     }
 }
 
-MEASURED void Log::say(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3) {
+void Log::say(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3) {
     if (!log_file_ || is_disabled_ || IsLoggingDisabled) {
         return;
     }
@@ -131,7 +143,7 @@ MEASURED void Log::say(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3) {
     }
 }
 
-MEASURED void Log::say_hex(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3) {
+void Log::say_hex(LPCSTR str1, LPCSTR str2, int num1, int num2, int num3) {
     if (!log_file_ || is_disabled_ || IsLoggingDisabled) {
         return;
     }
@@ -297,23 +309,16 @@ void __cdecl log_set_state(BOOL state) { Logging.set_state(state); }
 
 
 // ---------------------------------------------------------------------------
-// DEFINED IN THE HEADER, CLAIMED HERE.
-//
-// These pieces are written in-class so the image's own inlining reproduces -
-// a constructor or destructor the compiler is expected to fold into its
-// caller. A marker cannot live beside them: `decomp.reader` globs `*.cpp`
-// and `*.c`, and a comparison compiles a TRANSLATION UNIT, so a marker in a
-// header could be neither read nor measured. VC6 emits each of them into
-// this unit's object as its own COMDAT anyway, which is what the comparison
-// pulls out, and the `body` fact says where to go to edit one.
-//
-// The ratchet still covers the header: this unit includes it, so breaking an
-// in-class body here fails the claim below. Measured, not assumed.
+// Historical note: these constructor/destructor mappings were once measured
+// through in-class bodies in log.h. The pinned image has distinct callable
+// entries and callsites, so the current Log owner now defines them out of line
+// in this translation unit. The prior header-body/export experiment is retained in source history;
+// the ORIGINAL identities and byte claims remain unchanged.
 // ---------------------------------------------------------------------------
 
 /*
 // ORIGINAL: 0x00625FB0 ??0Log@@QAE@XZ 0x00625FB0-0x00625FC0 BYTE_EXACT
-// body      src/log.h
+// body      src/log.cpp
 // size      16 bytes
 // prototype Log* (__thiscall ??0Log@@QAE@XZ)(Log* this)
 // callers   1   call targets   0
@@ -343,7 +348,7 @@ void __cdecl log_set_state(BOOL state) { Logging.set_state(state); }
 
 /*
 // ORIGINAL: 0x00626020 ??1Log@@QAE@XZ 0x00626020-0x0062603A BYTE_EXACT
-// body      src/log.h
+// body      src/log.cpp
 // size      26 bytes
 // prototype void (__thiscall ??1Log@@QAE@XZ)(Log* this)
 // callers   1   call targets   1
@@ -357,8 +362,9 @@ void __cdecl log_set_state(BOOL state) { Logging.set_state(state); }
 Purpose: Reset the log file.
 // ORIGINAL: 0x006260D0 ?reset@Log@@QAEXXZ 0x006260D0-0x006260EC BYTE_EXACT
 // body      src/log.cpp
-// LEVER: moved in-class (MEASURED) - the free-function wrappers in this file
-//        inline it, matching the image's own inlining at those call sites.
+// LEVER: historical in-class (MEASURED) trial: free-function wrappers in
+//        this file inline it, matching the image's own inlining at those call
+//        sites. The current definition is out of line.
 // size      28 bytes
 // prototype void (__thiscall ?reset@Log@@QAEXXZ)(Log* this)
 // callers   2   call targets   2
@@ -372,8 +378,9 @@ Return Value: n/a
 Purpose: Write to the log file with the numbers displayed in base 10.
 // ORIGINAL: 0x006260F0 ?say@Log@@QAEXPADPADHHH@Z 0x006260F0-0x0062618B BYTE_EXACT
 // body      src/log.cpp
-// LEVER: moved in-class (MEASURED) - the free-function wrappers in this file
-//        inline it, matching the image's own inlining at those call sites.
+// LEVER: historical in-class (MEASURED) trial: free-function wrappers in
+//        this file inline it, matching the image's own inlining at those call
+//        sites. The current definition is out of line.
 // symbol    ?say@Log@@QAEXPBD0HHH@Z
 // size      155 bytes
 // prototype void (__thiscall ?say@Log@@QAEXPADPADHHH@Z)(Log* this, int8*, int8*, int, int, int)
@@ -388,8 +395,9 @@ Return Value: n/a
 Purpose: Write to the log file with the numbers displayed in base 16.
 // ORIGINAL: 0x00626190 ?say_hex@Log@@QAEXPADPADHHH@Z 0x00626190-0x0062622B BYTE_EXACT
 // body      src/log.cpp
-// LEVER: moved in-class (MEASURED) - the free-function wrappers in this file
-//        inline it, matching the image's own inlining at those call sites.
+// LEVER: historical in-class (MEASURED) trial: free-function wrappers in
+//        this file inline it, matching the image's own inlining at those call
+//        sites. The current definition is out of line.
 // symbol    ?say_hex@Log@@QAEXPBD0HHH@Z
 // size      155 bytes
 // prototype void (__thiscall ?say_hex@Log@@QAEXPADPADHHH@Z)(Log* this, int8*, int8*, int, int, int)
