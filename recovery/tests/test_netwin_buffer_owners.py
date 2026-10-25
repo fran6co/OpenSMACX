@@ -30,7 +30,7 @@ def test_actual_panel_and_redraw_bodies(tmp_path, compiler_name):
 #include <vector>
 struct RECT { int left, top, right, bottom; };
 struct BoxSpriteParams { int value; };
-BoxSpriteParams InterfaceBoxStyles[4];
+BoxSpriteParams InterfaceBoxStyles[51];
 struct Font {} font;
 static char storage[80];
 char *StringTemp = storage;
@@ -120,12 +120,12 @@ int main() {
         "get","upper","find_font","set_font","color","write","rules",
         "box","box","box","names","diffs","factions","session","update"}));
     assert(boxes.size() == 6 && boxes[0].address == &window.rect2_);
-    assert(boxes[0].value.left == 1 && boxes[0].style == 3);
+    assert(boxes[0].value.left == 1 && boxes[0].style == 9);
     assert(window.rect2_.left == 700); // callback sees the real shared rectangle
-    assert(boxes[1].value.left == 10 && boxes[1].value.right == 90 && boxes[1].style == 1);
-    assert(boxes[2].value.left == 13 && boxes[2].value.right == 87 && boxes[2].style == 2);
+    assert(boxes[1].value.left == 10 && boxes[1].value.right == 90 && boxes[1].style == 3);
+    assert(boxes[2].value.left == 13 && boxes[2].value.right == 87 && boxes[2].style == 6);
     assert(window.setup_rects_[0].left == 10 && window.setup_rects_[0].right == 90);
-    assert(boxes[3].address == &window.setup_rects_[45] && boxes[3].style == 1);
+    assert(boxes[3].address == &window.setup_rects_[45] && boxes[3].style == 3);
     assert(boxes[4].address == &window.setup_rects_[44] && boxes[4].style == 0);
     assert(boxes[5].address == &window.setup_rects_[43] && boxes[5].style == 0);
 }

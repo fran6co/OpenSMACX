@@ -222,19 +222,18 @@ void ImageButton::on_redraw() {
         return;
     }
     WinCallbackWindow = win_parent_;
-    Buffer *const canvas = static_cast<Buffer *>(this);
-    canvas->sync_to_palette(PaletteActive);
+    Buffer::sync_to_palette(PaletteActive);
     RECT area = rect2_;
     GraphicWin::fill(image_button_paint_signed(color_));
 
     int layers = 0;
     const int first_outline = image_button_paint_signed(field_A94_);
     if (first_outline != -1) {
-        canvas->box(&area, first_outline, first_outline);
+        Buffer::box(&area, first_outline, first_outline);
         image_button_paint_inset(&area);
         if (is_dialog_focus()) {
             const int focused_outline = image_button_paint_signed(field_A94_);
-            canvas->box(&area, focused_outline, focused_outline);
+            Buffer::box(&area, focused_outline, focused_outline);
             image_button_paint_inset(&area);
             layers = 1;
         }
@@ -261,10 +260,10 @@ void ImageButton::on_redraw() {
     const bool pressed = field_A9C_ != 0;
     while (layers < image_button_paint_signed(bevel_thickness_)) {
         if (!pressed) {
-            canvas->box(&area, image_button_paint_signed(bevel_upper_),
+            Buffer::box(&area, image_button_paint_signed(bevel_upper_),
                         image_button_paint_signed(bevel_lower_));
         } else {
-            canvas->box(&area, image_button_paint_signed(bevel_lower_),
+            Buffer::box(&area, image_button_paint_signed(bevel_lower_),
                         image_button_paint_signed(bevel_upper_));
         }
         image_button_paint_inset(&area);
@@ -294,7 +293,7 @@ void ImageButton::on_redraw() {
             numerator = 1;
             denominator = 1;
         }
-        drawn_sprite->draw(canvas, drawn_sprite->transparent_index(),
+        drawn_sprite->draw(this, drawn_sprite->transparent_index(),
                            x, y, numerator, denominator);
     }
 
@@ -308,6 +307,6 @@ void ImageButton::on_redraw() {
     }
     LPSTR const text = name_;
     if (text) {
-        canvas->write_cent_l(text, &area, static_cast<int>(strlen(text)));
+        Buffer::write_cent_l(text, &area, static_cast<int>(strlen(text)));
     }
 }
