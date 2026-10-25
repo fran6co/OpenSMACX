@@ -1,0 +1,24 @@
+{
+  "event_id": "2182bab1c87b2c4e730b43f314b582cad6d4cf2e6d3c88df783270e376afa5f9",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Independent physical action_give review SHA256 06579cf447c45e16651f485ad99c035c2b027222cf15dabaf82fc175ac6416dd: both candidates swap only adjacent eax=[ebp-8] and ebx=[ebp-1c] loads at0x4CEFF7/0x4CEFFA; no intervening effect or flags change. Same413instructions and all23 relocation targets/kinds/offsets. Source unchanged. Full function/runtime equivalence and the compiler selection trigger remain unproven.",
+      "Coordinator admits the observed compiler impact for bounded review, preserving initial and goody-expanded native failures. Root/worker task baseline remains a7ba9e17d; no source change to action_give, global flags, historical claim or acceptance policy."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5041632,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "a6f2fac9cc0de9ba51ce92beadb29b5b1f1666b156d7a3fe8f2f00ce1800e80c",
+  "request_id": "admit-action-give-physical-impact",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:vehicle-negative-faction-alias-oct25bk"
+}
