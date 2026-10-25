@@ -521,14 +521,12 @@ int __cdecl x_pops_no_flags(char *caption, const char *label, int title,
 // image to "SCRIPT", "alienIscript", "alienuscript") all pointed into
 // terranx.exe's read-only data, unmapped in the standalone build - the
 // very first X_pop call faulted reading the second compare string.
+// Each wrapper below has five distinct literal starts in the original. Its
+// local arrays preserve that storage identity; original spelling and
+// translation-unit boundaries remain unknown.
 // The three SLOT-HELD ones stay behind inline accessors reading through
 // a real slot variable, which is the one-instruction double indirection
 // the image's `mov eax, [slot]` has.
-static const char XPopModCheckString2Text[] = "SCRIPT.txt";
-static const char XPopModCheckFile1Text[] = "alienIscript.txt";
-static const char XPopModCheckMode1Text[] = "rb";
-static const char XPopModCheckFile2Text[] = "alienuscript.txt";
-static const char XPopModCheckMode2Text[] = "rb";
 inline LPCSTR XPopModCheckString1() {
     return ScriptPopupFile;
 }
@@ -560,6 +558,17 @@ Status: Complete
 */
 int __cdecl X_pop(char *caption, const char *label, int a3, char *a4, int a5,
                   int (__cdecl *callback)()) {
+// RECOVERY_OBJECT: v1 0x00691C80 _?XPopModCheckString2Text@?1??X_pop@@YAHPADPBDH0HP6AHXZ@Z@4QBDB
+    static const char XPopModCheckString2Text[] = "SCRIPT.txt";
+// RECOVERY_OBJECT: v1 0x00691C90 _?XPopModCheckFile1Text@?1??X_pop@@YAHPADPBDH0HP6AHXZ@Z@4QBDB
+    static const char XPopModCheckFile1Text[] = "alienIscript.txt";
+// RECOVERY_OBJECT: v1 0x00691C8C _?XPopModCheckMode1Text@?1??X_pop@@YAHPADPBDH0HP6AHXZ@Z@4QBDB
+    static const char XPopModCheckMode1Text[] = "rb";
+// RECOVERY_OBJECT: v1 0x00691CA8 _?XPopModCheckFile2Text@?1??X_pop@@YAHPADPBDH0HP6AHXZ@Z@4QBDB
+    static const char XPopModCheckFile2Text[] = "alienuscript.txt";
+// RECOVERY_OBJECT: v1 0x00691CA4 _?XPopModCheckMode2Text@?1??X_pop@@YAHPADPBDH0HP6AHXZ@Z@4QBDB
+    static const char XPopModCheckMode2Text[] = "rb";
+
     char *const label2 = const_cast<char *>(label);
     // THE ALIEN FLAG, not a "spying" flag: 0x00946F58 is &Players[0].
     // rule_flags (the old binding's own address proves it - Players sits at
@@ -663,6 +672,17 @@ int __cdecl X_pop_ask(char *caption, const char *label, char *text,
 // symbol    ?X_pop_ask@@YAHPADPBDH0P6AHXZH@Z
 int __cdecl X_pop_ask(char *caption, const char *label, int value,
                       char *text, int (__cdecl *callback)(), int flags) {
+// RECOVERY_OBJECT: v1 0x00691CF8 _?XPopModCheckString2Text@?1??X_pop_ask@@YAHPADPBDH0P6AHXZH@Z@4QBDB
+    static const char XPopModCheckString2Text[] = "SCRIPT.txt";
+// RECOVERY_OBJECT: v1 0x00691D08 _?XPopModCheckFile1Text@?1??X_pop_ask@@YAHPADPBDH0P6AHXZH@Z@4QBDB
+    static const char XPopModCheckFile1Text[] = "alienIscript.txt";
+// RECOVERY_OBJECT: v1 0x00691D04 _?XPopModCheckMode1Text@?1??X_pop_ask@@YAHPADPBDH0P6AHXZH@Z@4QBDB
+    static const char XPopModCheckMode1Text[] = "rb";
+// RECOVERY_OBJECT: v1 0x00691D20 _?XPopModCheckFile2Text@?1??X_pop_ask@@YAHPADPBDH0P6AHXZH@Z@4QBDB
+    static const char XPopModCheckFile2Text[] = "alienuscript.txt";
+// RECOVERY_OBJECT: v1 0x00691D1C _?XPopModCheckMode2Text@?1??X_pop_ask@@YAHPADPBDH0P6AHXZH@Z@4QBDB
+    static const char XPopModCheckMode2Text[] = "rb";
+
     char *const section = const_cast<char *>(label);
     if (std::strcmp(caption, XPopModCheckString1()) != 0 &&
         std::strcmp(caption, XPopModCheckString2Text) != 0) {
@@ -745,6 +765,17 @@ int __cdecl X_pop_ask_number(const char *label,
 // TRIED: `#pragma function(strcmp)` to stop VC6 inlining the two `strcmp` calls into a byte-compare loop (without it, similarity was 0.61 with 38 extra mnemonics from the inlined loop; with it, 0.76). Calling `fopen`/`fclose` through a cast function pointer INLINE (not via an intermediate local) to avoid materialising their address in a register first, same lever as 0x004C5E50's import calls. Landed at 0.76: the remaining gap is a `push edi` register-save the original keeps for a callee-saved register this body's simpler live-range set does not need.
 int __cdecl X_pop_ask_number(char *caption, const char *label, int value,
                              int (__cdecl *callback)()) {
+// RECOVERY_OBJECT: v1 0x00691D34 _?XPopModCheckString2Text@?1??X_pop_ask_number@@YAHPADPBDHP6AHXZ@Z@4QBDB
+    static const char XPopModCheckString2Text[] = "SCRIPT.txt";
+// RECOVERY_OBJECT: v1 0x00691D44 _?XPopModCheckFile1Text@?1??X_pop_ask_number@@YAHPADPBDHP6AHXZ@Z@4QBDB
+    static const char XPopModCheckFile1Text[] = "alienIscript.txt";
+// RECOVERY_OBJECT: v1 0x00691D40 _?XPopModCheckMode1Text@?1??X_pop_ask_number@@YAHPADPBDHP6AHXZ@Z@4QBDB
+    static const char XPopModCheckMode1Text[] = "rb";
+// RECOVERY_OBJECT: v1 0x00691D5C _?XPopModCheckFile2Text@?1??X_pop_ask_number@@YAHPADPBDHP6AHXZ@Z@4QBDB
+    static const char XPopModCheckFile2Text[] = "alienuscript.txt";
+// RECOVERY_OBJECT: v1 0x00691D58 _?XPopModCheckMode2Text@?1??X_pop_ask_number@@YAHPADPBDHP6AHXZ@Z@4QBDB
+    static const char XPopModCheckMode2Text[] = "rb";
+
     char *const section = const_cast<char *>(label);
     if (std::strcmp(caption, XPopModCheckString1()) != 0 &&
         std::strcmp(caption, XPopModCheckString2Text) != 0) {
@@ -808,6 +839,17 @@ int __cdecl X_pop_ask(const char *label, char *text,
 int __cdecl X_pops(char *caption, const char *label, int text_length,
                    char *text, int value, Sprite *sprite, int flag_a,
                    int flag_b, int (__cdecl *callback)()) {
+// RECOVERY_OBJECT: v1 0x00691CBC _?XPopModCheckString2Text@?1??X_pops@@YAHPADPBDH0HPAVSprite@@HHP6AHXZ@Z@4QBDB
+    static const char XPopModCheckString2Text[] = "SCRIPT.txt";
+// RECOVERY_OBJECT: v1 0x00691CCC _?XPopModCheckFile1Text@?1??X_pops@@YAHPADPBDH0HPAVSprite@@HHP6AHXZ@Z@4QBDB
+    static const char XPopModCheckFile1Text[] = "alienIscript.txt";
+// RECOVERY_OBJECT: v1 0x00691CC8 _?XPopModCheckMode1Text@?1??X_pops@@YAHPADPBDH0HPAVSprite@@HHP6AHXZ@Z@4QBDB
+    static const char XPopModCheckMode1Text[] = "rb";
+// RECOVERY_OBJECT: v1 0x00691CE4 _?XPopModCheckFile2Text@?1??X_pops@@YAHPADPBDH0HPAVSprite@@HHP6AHXZ@Z@4QBDB
+    static const char XPopModCheckFile2Text[] = "alienuscript.txt";
+// RECOVERY_OBJECT: v1 0x00691CE0 _?XPopModCheckMode2Text@?1??X_pops@@YAHPADPBDH0HPAVSprite@@HHP6AHXZ@Z@4QBDB
+    static const char XPopModCheckMode2Text[] = "rb";
+
     char *const mutable_label = const_cast<char *>(label);
     if (std::strcmp(caption, XPopModCheckString1()) != 0 &&
         std::strcmp(caption, XPopModCheckString2Text) != 0) {

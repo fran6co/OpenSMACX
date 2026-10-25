@@ -802,6 +802,7 @@ DDInit WinDisplayInit;     // 0x009BE618
 // Original: set_modal writes indexed owners at 5EE1B9; release_modal compacts/clears and restores them. Start only, not capacity.
 // RECOVERY_OBJECT: v1 0x009B7A1C ?WinFocusStack@@3PAPAVWin@@A
 Win *WinFocusStack[4];     // 0x009B7A1C
+// RECOVERY_OBJECT: v1 0x009B7B48 ?WinKeyRing@@3PADA
 char WinKeyRing[10];       // 0x009B7B48
 // Original: The key matcher reads this pointer at 5F5F6E; on_char advances/wraps it at 5F61B8/5F61BF. Ring bounds remain unproven.
 // RECOVERY_OBJECT: v1 0x00696D5C ?WinKeyRingCursor@@3PADA
@@ -848,6 +849,10 @@ void(__cdecl *WinCancelHook)();
 // original on_mouse_move (608500) invokes it on hover entry, not completion.
 // RECOVERY_OBJECT: v1 0x009B7AA0 ?WinButtonHoverHook@@3P6AXXZA
 void(__cdecl *WinButtonHoverHook)();
+// The original slot receives (HWND, LPARAM) in window_proc and translated
+// coordinates in OnRButtonDown. Only a two-word cdecl call shape is proved;
+// the semantic parameter contract remains unresolved.
+// RECOVERY_OBJECT: v1 0x009B7A94 ?WinMouseHook@@3P6AXPAUHWND__@@J@ZA
 void(__cdecl *WinMouseHook)(HWND window, LPARAM position);  // 0x009B7A94
 // RECOVERY_OBJECT: v1 0x009B7A8C ?WinKeyHook@@3P6AXI@ZA
 void(__cdecl *WinKeyHook)(WPARAM key);                      // 0x009B7A8C
@@ -2828,6 +2833,7 @@ int __cdecl Win::set_display_mode(int width, int height, int depth, int tgl) {
 // The class name `UnregisterClassA` is handed at teardown - a THIRD copy of
 // a window-class-name literal, distinct from `WinClassName` below. Read out
 // of the image at 0x00697F3C rather than assumed.
+// RECOVERY_OBJECT: v1 0x00697F3C _DDInitClassName
 static const char DDInitClassName[] = "DirectDClass";
 
 /*
