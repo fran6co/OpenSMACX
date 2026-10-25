@@ -1,0 +1,22 @@
+{
+  "event_id": "6b33e81943c2234ffbf0d9c4ea4673063d8e3bb6d0595ea0e1283701082609e7",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "packages/match-recovery/src/match_recovery/source/mangled.py",
+      "packages/match-recovery/tests/source/test_mangled.py",
+      "packages/match-recovery/tests/test_cpp_storage_audit.py"
+    ],
+    "evidence": [
+      "Actual production VC6 emits anonymous global data suffix3PAGA for uint16_t*. Existing storage audit qualified_name accepts3PAEA but refuses3PAGA, failing two existing actual-source Caviar controls before duplicate-identity detection. Add only the observed unsigned-short pointer name envelope, preserving opaque full scope and refusal of unsupported/malformed function/class/data shapes. No comparison/gate/claim policy changes.",
+      "Generic source-mangled and storage-audit tests must cover the valid word-pointer name and causal malformed-name/duplicate-storage controls; then all Caviar controls and full build/link remain required. Remove redundant trailing0x9B9100 address hint once the canonical source binding owns it."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "unblock-observed-vc6-word-pointer-name",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:caviar-colour-buffer-oct26bo"
+}
