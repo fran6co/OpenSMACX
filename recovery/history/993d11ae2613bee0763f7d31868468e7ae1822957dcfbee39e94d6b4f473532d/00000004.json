@@ -1,0 +1,23 @@
+{
+  "event_id": "da9e7369593bc8fd2eb2afca5a0f6e32a2e72eb5648c8c25212795ef2c7b174e",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Coordinate frontend and engine lifetime closure; ABI symbol change/native preservation, claim continuity and full build/link required. Historical source-path private symbol is replaced through native writer; no original identity or claim changed."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6525824,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "db7e2e48af5ed4710a58f637d6bdaac60108dda9e5c96e05b77215e1b66b1eca",
+  "request_id": "admit-engine-shutdown-boundary",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:caviar-release-call-boundary-oct25bm"
+}
