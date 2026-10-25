@@ -1,0 +1,22 @@
+{
+  "event_id": "db7e2e48af5ed4710a58f637d6bdaac60108dda9e5c96e05b77215e1b66b1eca",
+  "payload": {
+    "affects": [
+      "entity-845323693768ee85b7661ce3c2df288febbec3047297550e88dad0c87e75ebb4",
+      "entity-ded472541944fdcbc16e34e0ee537a11f7fbabfa87de8a1d3812739655ca3927"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "engine-shutdown-inline-elision",
+    "evidence": [
+      "Fresh production module caller has32 instructions vs33 original, matching first30; direct record-release CALL restored but shutdown call elided.",
+      "Pinned0x639380 is one RET; no invented behavior. Move complete hook to engine module, replace anonymous linkage with real external declaration, remove noinline annotation; preserve original identity/claim."
+    ],
+    "hypothesis": "Original shutdown CALL0x618D8E is absent despite the same-TU noinline empty hook; genuine engine lifetime module must own both release operations.",
+    "kind": "discovery"
+  },
+  "previous_event": "23191c93c462cfc1faac3f6c60e2c2874576bda1ebce6c3f1eb2d33dc5604658",
+  "request_id": "engine-shutdown-inline-elision",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:caviar-release-call-boundary-oct25bm"
+}

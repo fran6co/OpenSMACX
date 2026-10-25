@@ -1,0 +1,22 @@
+{
+  "event_id": "799ab59c8a6ff2532d55b33e2db25d870e86d56b30085b6a73516cd6731efee5",
+  "payload": {
+    "affects": [
+      "entity-845323693768ee85b7661ce3c2df288febbec3047297550e88dad0c87e75ebb4",
+      "entity-91505eca5bbef60ed90ba3e9903bd024b92ddc05e3f310e66f12a97c297dac29"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "require-opaque-record-engine-boundary",
+    "evidence": [
+      "One completed source-order candidate has no gains/losses and native outsidePASS, but caller still lacks its original release call. Raw source/body/annotation preservation and production replica control retained in ignored caviar-release-order-oct25bm artifacts.",
+      "Source/API graph and original0x618D80→0x639630 support an engine/frontend compilation boundary; the proposed module organization is not asserted to reproduce historical TU names or the full library boundary."
+    ],
+    "hypothesis": "Ordinary same-TU source order does not retain the original engine call under the actual production compiler. Separate the genuine VoxRenderRecord release implementation from the Caviar frontend; do not add noinline wrappers or alter behavior.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "require-opaque-record-engine-boundary",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:caviar-release-call-boundary-oct25bm"
+}

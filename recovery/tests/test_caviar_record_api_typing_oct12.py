@@ -28,6 +28,7 @@ API_CHECKPOINT = "b1bc317be9f0cc44a62e9bd169f856b4133927cb"
 PIN = "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
 SUBJECTS = {0x618520, 0x618560, 0x6393C0, 0x63AD60, 0x63AE20, 0x63F9B0}
 SYMBOL_TRANSITIONS = {
+    0x639380: ("?vox_engine_close@?%src/caviar.cpp@@YAXXZ", "?vox_engine_close@@YAXXZ"),
     0x618520: ("?clip_rect@Caviar@@QAEPAXXZ", "?clip_rect@Caviar@@QAEPAIXZ"),
     0x618560: ("?fill_clip_rect@Caviar@@QAEXH@Z", "?fill_clip_rect@Caviar@@QAEXPAI@Z"),
     0x63AE20: ("?sub_63ae20@@YAXPAE@Z", "?sub_63ae20@@YAXPAUVoxRenderRecord@@@Z"),
