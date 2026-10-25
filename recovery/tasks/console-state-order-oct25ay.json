@@ -1,0 +1,22 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "fa0aa299e34a1b8ab4d35d2579c723c51206f72e",
+  "editable_files": [
+    "src/console_commands.cpp"
+  ],
+  "evidence": [
+    "Native4E1318 computes ORbit4,4E131B initializes the localcounter,4E131D stores state. OneordinaryC++ stageduint32_tlocal reproduces that expressionorder withoutchanging globalaccesses, MapArea snapshot/livereload, mapfields orcallbacks. Existingunmeasureddeck body matchescurrent source; independentreview found no actualpriorcompile ofthisform.",
+    "One bounded matchingcandidate; bankonlyif actualproductionexact with relevantreference/outsidechecks andunchanged physicalcontrol. Preservealloriginalmappings/history, onlynative recoverrecord grantsnewclaims. Existingactual-source editorcontrols andfullbuild/link/destinationverification required beforemanualmerge. No newtests, flags, guards or automatic/linked/gameacceptance."
+  ],
+  "intent": "Try the pinned local-counter initialization between editor-state computation and publication.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5116672,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "console-state-order-oct25ay"
+}
