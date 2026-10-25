@@ -1,0 +1,18 @@
+{
+  "event_id": "ef10e34d87c91dcc86809bd091f94c8672676d8c716e62411425ecacf9bd8c1f",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "formatter-home-debug-residual-oct25ao",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/string_formatting.cpp now owns say_project andsay_vehicles with complete originalrecords/facts/history; Mapdefinitions removed. Both use existingBufferJoinSpace. Existingliteralrecords inclanchors remainbyteidentical; independentcorroboratingprose retains source limits.",
+      "Native unionexactness unchanged, formatterresidualPASS, MapresidualFAIL retained/debugdifferences separatelyreviewed. Source-extracted behavior/API/home controls are retargeted without replacing implementations; shared-space fixture declaration supplies existingowneddata only. Complete applicationbuild/strict/destination qualification stillpending."
+    ]
+  },
+  "previous_event": "5b26967b5232c6d9b6f90c624f1e5fd1fbbc72197f111493a3601eda29b1214b",
+  "request_id": "incorporate-reviewed-formatter-home-oct25ao",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:formatter-family-home-oct25ao"
+}
