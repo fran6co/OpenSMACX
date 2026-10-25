@@ -110,20 +110,19 @@ def test_producer_and_all_record_consumers_use_typed_in_stride_fields():
 
     fill = _definition(SOURCE, "void NetWin::fill_player(")
     assert "void NetWin::fill_player(NetWinLobbyRowView lobby_row, int slot)" in fill
-    assert "const NetWinFactionRecord &record = faction_records_[slot];" in fill
-    assert "record.leader_name_" in fill
-    assert "record.formal_faction_name_" in fill
-    assert "record.noun_faction_" in fill
-    assert "record.adjective_faction_" in fill
-    assert "record.leader_title_" in fill
+    assert "const NetWinFactionRecord &record = faction_records_[slot];" not in fill
+    for field in ("leader_name_", "formal_faction_name_", "noun_faction_",
+                  "adjective_faction_", "leader_title_"):
+        assert f"faction_records_[slot].{field}" in fill
     for field in ("leader_name_", "formal_faction_name_", "noun_faction_",
                   "adjective_faction_", "leader_title_", "adjective_leader_"):
         assert f"lobby_row.{field[:-1]}()" in fill
     assert "lobby_row.set_tail_0(" in fill
     assert "slot * 0x190" in fill
-    assert "allocation_bytes[slot * 0x190 + 0x192]" in fill
-    assert "strcpy(lobby_row.adjective_faction(), record.adjective_faction_);" in fill
-    assert "strcpy(lobby_row.leader_title(), record.leader_title_);" in fill
+    assert "allocation_bytes[slot * 0x190 + 0x192]" not in fill
+    assert "reinterpret_cast<const unsigned char *>(faction_records_)" in fill
+    assert "strcpy(lobby_row.adjective_faction()," in fill
+    assert "strcpy(lobby_row.leader_title()," in fill
     assert "memset(" not in producer
     read_faction = producer.index("read_faction(&player, 0)")
     assert "records = faction_records_;" in producer[read_faction:]
@@ -333,7 +332,24 @@ public:
     NetWinFactionRecord *faction_records_;
     void fill_player(NetWinLobbyRowView, int);
 };
+static NetWin *reload_subject;
+static NetWinFactionRecord *first_records;
+static NetWinFactionRecord *alternate_records;
+static int intercepted_copy_count;
+// Test stimulus models the owner pointer changing between copies; it does not
+// claim that the production CRT strcpy changes NetWin::faction_records_.
+static char *intercepted_strcpy(char *destination, const char *source) {
+    std::strcpy(destination, source);
+    if (reload_subject != nullptr) {
+        ++intercepted_copy_count;
+        reload_subject->faction_records_ =
+            (intercepted_copy_count & 1) ? alternate_records : first_records;
+    }
+    return destination;
+}
+#define strcpy intercepted_strcpy
 FILL_BODY
+#undef strcpy
 int run_control() {
     NetWinFactionRecord records[3] = {};
     NetWin win;
@@ -381,7 +397,53 @@ int run_control() {
     assert(static_cast<unsigned char>(message[0x10 + offsetof(NetWinLobbyRow, owner_)]) == 0xA9);
     return 0;
 }
-int main() { return run_control(); }
+int run_live_reload_control() {
+    NetWinFactionRecord first[3] = {};
+    NetWinFactionRecord alternate[3] = {};
+    std::strcpy(first[1].leader_name_, "first-leader");
+    std::strcpy(first[1].formal_faction_name_, "first-formal");
+    std::strcpy(first[1].noun_faction_, "first-noun");
+    std::strcpy(first[1].adjective_faction_, "first-adjective");
+    std::strcpy(first[1].leader_title_, "first-title");
+    std::strcpy(alternate[1].leader_name_, "alternate-leader");
+    std::strcpy(alternate[1].formal_faction_name_, "alternate-formal");
+    std::strcpy(alternate[1].noun_faction_, "alternate-noun");
+    std::strcpy(alternate[1].adjective_faction_, "alternate-adjective");
+    std::strcpy(alternate[1].leader_title_, "alternate-title");
+    unsigned char *first_bytes = reinterpret_cast<unsigned char *>(first);
+    unsigned char *alternate_bytes = reinterpret_cast<unsigned char *>(alternate);
+    std::memset(first_bytes + 0x190 + 0x112, 'f', 0x7F);
+    first_bytes[0x190 + 0x112 + 0x7F] = 0;
+    std::memset(alternate_bytes + 0x190 + 0x112, 'a', 0x7F);
+    alternate_bytes[0x190 + 0x112 + 0x7F] = 0;
+    first_bytes[0x190 + 0x192] = 0xA1;
+    alternate_bytes[0x190 + 0x192] = 0xB2;
+
+    NetWin win;
+    win.faction_records_ = first;
+    reload_subject = &win;
+    first_records = first;
+    alternate_records = alternate;
+    intercepted_copy_count = 0;
+    NetWinLobbyRow player = {};
+    win.fill_player(NetWinLobbyRowView(player), 1);
+    reload_subject = nullptr;
+    assert(intercepted_copy_count == 6);
+    assert(std::strcmp(player.leader_name_, "first-leader") == 0);
+    assert(std::strcmp(player.formal_faction_name_, "alternate-formal") == 0);
+    assert(std::strcmp(player.noun_faction_, "first-noun") == 0);
+    assert(std::strcmp(player.adjective_faction_, "alternate-adjective") == 0);
+    assert(std::strcmp(player.leader_title_, "first-title") == 0);
+    assert(player.adjective_leader_[0] == 'a');
+    assert(player.adjective_leader_[0x7E] == 'a');
+    assert(player.adjective_leader_[0x7F] == 0);
+    assert(player.tail_[0] == 0xA1);
+    return 0;
+}
+int main() {
+    assert(run_control() == 0);
+    return run_live_reload_control();
+}
 """
 
 
@@ -412,11 +474,39 @@ def test_actual_fill_player_boundary_runtime_and_mutants(
         assert (ran.returncode == 0) is expected, ran.stdout + ran.stderr
 
     compile_run(body, True, "current")
-    compile_run(body.replace("record.leader_name_", "record.formal_faction_name_", 1),
-                False, "wrong-field")
-    compile_run(body.replace("slot * 0x190\n                                          + 0x112",
-                             "slot * 0x190\n                                          + 0x111", 1),
-                False, "wrong-string-boundary")
-    compile_run(body.replace("slot * 0x190 + 0x192",
-                             "slot * 0x190 + 0x190", 1),
-                False, "wrong-spill-byte")
+    cached = body.replace(
+        "    strcpy(lobby_row.leader_name(), faction_records_[slot].leader_name_);",
+        "    const NetWinFactionRecord &record = faction_records_[slot];\n"
+        "    strcpy(lobby_row.leader_name(), record.leader_name_);", 1)
+    for field in ("formal_faction_name_", "noun_faction_", "adjective_faction_",
+                  "leader_title_"):
+        cached = cached.replace(f"faction_records_[slot].{field}",
+                                f"record.{field}")
+    cached = cached.replace(
+        "strcpy(lobby_row.adjective_leader(),\n"
+        "           reinterpret_cast<const char *>(\n"
+        "               reinterpret_cast<const unsigned char *>(faction_records_)\n"
+        "               + slot * 0x190 + 0x112));",
+        "const unsigned char *const allocation_bytes =\n"
+        "        reinterpret_cast<const unsigned char *>(faction_records_);\n"
+        "    strcpy(lobby_row.adjective_leader(),\n"
+        "           reinterpret_cast<const char *>(allocation_bytes + slot * 0x190\n"
+        "                                          + 0x112));")
+    cached = cached.replace(
+        "reinterpret_cast<const unsigned char *>(faction_records_)\n"
+        "            [slot * 0x190 + 0x192]",
+        "allocation_bytes[slot * 0x190 + 0x192]")
+    assert cached != body
+    compile_run(cached, False, "cached-base-mutant")
+    wrong_field = body.replace("faction_records_[slot].leader_name_",
+                               "faction_records_[slot].formal_faction_name_", 1)
+    wrong_string_boundary = body.replace("+ slot * 0x190 + 0x112",
+                                         "+ slot * 0x190 + 0x111", 1)
+    wrong_spill_byte = body.replace("slot * 0x190 + 0x192",
+                                    "slot * 0x190 + 0x190", 1)
+    assert wrong_field != body
+    assert wrong_string_boundary != body
+    assert wrong_spill_byte != body
+    compile_run(wrong_field, False, "wrong-field")
+    compile_run(wrong_string_boundary, False, "wrong-string-boundary")
+    compile_run(wrong_spill_byte, False, "wrong-spill-byte")

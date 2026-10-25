@@ -600,7 +600,7 @@ Purpose: Copy one faction record's name/title block into the lobby row
          members and the leader-gender byte in tail_[0]. Slot -1 instead
          re-reads just noun_faction_ through the string table, for the row
          the scenario file's own faction entry describes.
-// ORIGINAL: 0x00481DA0 ?fill_player@NetWin@@QAEXPAUPlayerData@@H@Z 0x00481DA0-0x00481E8D FILE
+// ORIGINAL: 0x00481DA0 ?fill_player@NetWin@@QAEXPAUPlayerData@@H@Z 0x00481DA0-0x00481E8D FILE BYTE_EXACT
 // symbol    ?fill_player@NetWin@@QAEXVNetWinLobbyRowView@@H@Z
 // size      237 bytes
 // prototype void (__thiscall ?fill_player@NetWin@@QAEXPAUPlayerData@@H@Z)(NetWin* this, PlayerData*, int)
@@ -610,7 +610,6 @@ Purpose: Copy one faction record's name/title block into the lobby row
 // calls     0x00644EF2
 // Homed from src/unrecovered/00481da0.cpp.
 Return Value: n/a
-Status: Coverage transcription - unclaimed body
 */
 void NetWin::fill_player(NetWinLobbyRowView lobby_row, int slot) {
     if (slot == -1) {
@@ -619,18 +618,20 @@ void NetWin::fill_player(NetWinLobbyRowView lobby_row, int slot) {
                label_get(0xFE4 / 4));
         return;
     }
-    const NetWinFactionRecord &record = faction_records_[slot];
-    strcpy(lobby_row.leader_name(), record.leader_name_);
-    strcpy(lobby_row.formal_faction_name(), record.formal_faction_name_);
-    strcpy(lobby_row.noun_faction(), record.noun_faction_);
-    strcpy(lobby_row.adjective_faction(), record.adjective_faction_);
-    strcpy(lobby_row.leader_title(), record.leader_title_);
-    const unsigned char *const allocation_bytes =
-        reinterpret_cast<const unsigned char *>(faction_records_);
+    strcpy(lobby_row.leader_name(), faction_records_[slot].leader_name_);
+    strcpy(lobby_row.formal_faction_name(),
+           faction_records_[slot].formal_faction_name_);
+    strcpy(lobby_row.noun_faction(), faction_records_[slot].noun_faction_);
+    strcpy(lobby_row.adjective_faction(),
+           faction_records_[slot].adjective_faction_);
+    strcpy(lobby_row.leader_title(), faction_records_[slot].leader_title_);
     strcpy(lobby_row.adjective_leader(),
-           reinterpret_cast<const char *>(allocation_bytes + slot * 0x190
-                                          + 0x112));
-    lobby_row.set_tail_0(allocation_bytes[slot * 0x190 + 0x192]);
+           reinterpret_cast<const char *>(
+               reinterpret_cast<const unsigned char *>(faction_records_)
+               + slot * 0x190 + 0x112));
+    lobby_row.set_tail_0(
+        reinterpret_cast<const unsigned char *>(faction_records_)
+            [slot * 0x190 + 0x192]);
 }
 
 // 0x0090E778 / 0x0090E79C - the two words beside the seven records
