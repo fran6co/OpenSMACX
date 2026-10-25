@@ -1,0 +1,21 @@
+{
+  "event_id": "5b5914e517bc4ca23bd7109629f833be9e81dd2d51a89bdde2c960187a0f675e",
+  "payload": {
+    "affects": [
+      "entity-8bb7c654bc70970cca94837fb42beed5fb6ec9f6be527db4ef0e8033600ad548"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "shared-space-pooled-contribution-oct25ao",
+    "evidence": [
+      "Independent raw COFF review SHA5e26f61f2e7c4ddc19da8432a992cf25958f9384d1e29efd95976979eae01d66: onlyremovedsection is2-byte20/00 selection2COMDAT, nooutgoingrelocs, solewithin-unitconsumer space offset1. Across194baselineobjects37definitions/366relocations exist, so do not claim globallyprivate storage or complete retainedselection.",
+      "Coordinator authorizes only a manual source/data migration after this bounded review and full build/destination checks. The native outsideFAIL is retained, not waived toPASS or automatic acceptance. Existing BufferJoinSpace v1 start-only limits and all historicalclaims preserved."
+    ],
+    "hypothesis": "space() must refer to the existing source-owned682820 storage, removing its unnecessary two-byte pooled literal contribution. Native data residual detects this actual change and remainsFAIL.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "shared-space-pooled-contribution-oct25ao",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:shared-space-reference-oct25ao"
+}
