@@ -1,0 +1,22 @@
+{
+  "event_id": "5b26967b5232c6d9b6f90c624f1e5fd1fbbc72197f111493a3601eda29b1214b",
+  "payload": {
+    "affects": [
+      "entity-7b06960fd07873d09adab5fd76b7f9f68415aa0926e7ca450253ad0d0e7d75ea",
+      "entity-c6910574b9a747e665edfece6a1bced5d1b6a44c6177fbf41fa1132035599bb9"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "formatter-home-debug-residual-oct25ao",
+    "evidence": [
+      "Independent raw review SHAd3c2078f1b18d76220f587bad715b53dada551af78b439e51650a69bc3bd0128: all193unscopedMaptextsections retain rawcode andnormalizedrelocationtargets; data/directiveflags/bytes unchanged. RawdebugS/T and50symbolrows change; synch_display size/code/relocs stable, onlyline-tablepointer changes. FullCodeView/PDBmeaning remainsunknown.",
+      "Coordinator authorizes bounded manual semantic-home migration after fullbuild/destinationchecks; preserve allnativeFAIL results and existing literal/claim identities. This is current C++ organization, not recovered originalTU or automatic/runtime/gameacceptance."
+    ],
+    "hypothesis": "Moving these two genuine formatters changes source/debug line/type bookkeeping in Map but not retained unscoped runtime code/data. Native outside remainsFAIL.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "formatter-home-debug-residual-oct25ao",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:formatter-family-home-oct25ao"
+}

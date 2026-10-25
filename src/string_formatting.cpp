@@ -29,8 +29,12 @@
 // storage and Strings implementation remain owned by strings.cpp.
 
 // The shared space is owned by BufferJoinSpace (buffer.cpp, 0x00682820).
-// Parenthesis storage is independently corroborated by say_vehicles
-// (0x00590BA0) in map.cpp, outside this translation unit.
+// The existing RECOVERY_LITERAL anchors are retained as historical
+// binding facts. This current source regrouping does not prove the
+// original translation-unit home. Unaffected formatters independently
+// corroborate all three starts: 26 original pushes across eight owners,
+// including say_facility at 0x00590910. The moved functions are not
+// treated as evidence of their own source home.
 // These are logical one-character-plus-NUL spans, not enclosing allocations.
 // The original spans are in writable .data; these bindings do not assert
 // constness, runtime immutability, lifetime or linked COMDAT retention.
@@ -286,6 +290,126 @@ void __cdecl say_society(char *text, int society_id, int with_model) {
         strcat(text, "(");
         char *model = label_get(0x45);
         strcat(StringTemp, model);
+        strcat(text, ")");
+    }
+}
+// Source-level formatter-family grouping proposed for the current tree.
+// The original translation-unit homes of say_project and say_vehicles
+// are unknown; this move preserves their mapped identities and does not
+// claim historical source-file provenance.
+// The legacy say_vehicles recovery note below is retained verbatim as
+// history; its old generated-tool and no-build instructions do not
+// describe this proposed production source owner.
+
+/*
+Purpose: Write a secret project's name, and its cost bracket when asked.
+// ORIGINAL: 0x00590990 ?say_project@@YAXPAXHH@Z 0x00590990-0x00590A0E FILE
+// size      126 bytes
+// prototype void (__cdecl ?say_project@@YAXPAXHH@Z)(void*, int, int)
+// callers   0   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x006169A0 0x00645470
+// ONE image reference outside its own body, as a raw function pointer in the
+//        file's .data, so the catalogue gives no parameter names; they are
+//        read off the body (an output buffer, a project index, a flag).
+//        SecretProjectRules is the 0x30-stride rules record whose first field
+//        is the original LPSTR name, matching the Facility[] representation;
+//        0x2CC into the label block is label_get(179).
+// TRIED: (as 00590990.cpp) the artifact's `strcat(StringTemp, ...)`,
+//        i.e. no append of StringTemp to the output - it is what the image
+//        does, and it is kept here.
+// symbol    ?say_project@@YAXPADHH@Z
+// TRIED: 32/40. Everything left is evaluation order around the first
+//        `StringTable.get`: the image hoists the receiver
+//        (`mov ecx, 0x9b90d8`) to the top of the body, before the
+//        `project_id * 0x30` index arithmetic, and reads the name into EAX;
+//        this tree computes the argument first and reads the name into ECX,
+//        which also costs the receiver load its own instruction. Spelling the
+//        receiver through a local `Strings &`, or the name through a local
+//        `LPSTR`, only adds the store the image does not have. Not chased
+//        further this pass.
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl say_project(char *output, int project_id, int with_cost) {
+    strcat(output, StringTable.get(Facility[FacilitySPStart + project_id].name));
+    if (with_cost != 0) {
+        strcat(output, BufferJoinSpace);
+        strcat(output, "(");
+        strcat(StringTemp, label_get(179));
+        strcat(output, ")");
+    }
+}
+
+// ORIGINAL: 0x00590BA0 ?say_vehicles@@YAXPAXHH@Z 0x00590BA0-0x00590C14 FILE BYTE_EXACT
+// symbol    ?say_vehicles@@YAXPADHH@Z
+// size      116 bytes
+// prototype 
+// callers   0   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x006169A0 0x00645470
+// PRESERVED UNIT - measured MISMATCH.
+//
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
+//
+// address        0x00590BA0
+// measured tier  MISMATCH
+// divergence     4
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/00590ba0/unit.cpp
+// and score it with tools/agent_brief.py.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ?say_vehicles@@YAXPAXHH@Z  at 0x00590BA0  (116 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// VC6 DIALECT - this must compile under cl 12.00.8168, which is the
+// only compiler this project builds with. Avoid: auto, nullptr, constexpr,
+// static_assert, enum class, range-for, lambdas, long long, <cstdint>,
+// and declaring `int i` twice in one function (VC6 leaks for-scope).
+// static_cast/reinterpret_cast are fine and are the right spelling.
+//
+// SOURCE-FORM RULES, each one learned by a fan-out agent that lost
+// attempts to it. They are here rather than in a prompt so the next
+// agent does not rediscover them:
+//
+//  * A ternary is not an if. `x ? a : b` lowers to `jne` with the arms
+//    swapped; `if (x) {...}` gives `je`.
+//  * VC6 NEVER hoists a same-polarity guard's body out of line. To get
+//    two special cases branching FAR away, write them negated and
+//    NESTED - `if (a != X) { if (a != Y) { return D; } ...; }` - not as
+//    sequential guard clauses, which inline each body instead.
+//  * VC6 rejects `__thiscall` on a free function pointer (C4234). For
+//    an indirect virtual call use the generated VCall shim below; for a
+//    thiscall function POINTER, take a member-function pointer of a
+//    dummy class instead of spelling the convention.
+//  * Loop form is visible: while / do-while / for lower differently,
+//    and so does counting up versus down.
+//  * If the original dedicates a callee-saved register to a constant
+//    across the whole body (an extra `push ebx`/`push edi` in the
+//    prologue), it had enough register pressure to do so. That is a
+//    hard case - the tool reports a similarity ratio so you can tell a
+//    near miss from a wrong body.
+void __cdecl say_vehicles(char *text, int chassis_id, int with_height) {
+    strcat(text, VehPrototypes[chassis_id].veh_name);
+    if (with_height != 0) {
+        strcat(text, BufferJoinSpace);
+        strcat(text, "(");
+        LPSTR label = Labels.strings_ptr[0x314 / 4];
+        strcat(StringTemp, StringTable.get(label));
         strcat(text, ")");
     }
 }
