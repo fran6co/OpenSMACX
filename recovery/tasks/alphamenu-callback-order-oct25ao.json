@@ -1,0 +1,23 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "2ef6cc0ef7ad87d8513b4f600a030cf9e71bc7a5",
+  "editable_files": [
+    "src/alphamenu.cpp"
+  ],
+  "evidence": [
+    "Pinned originaltail calls[vptr+0x170] slot92 then[reloadedvptr+0xF8] slot62; table66ED88 resolves these toAlphaMenu::compute4031A0 andGraphicWin::redraw5D5A70. Current source reverses them. Independentreview SHAf62742320633d8bf4cde54deb5c39ebcb2ee9c837d2c3b0b28f140063682c81c.",
+    "Swap only trailing calls; preserve geometry, move/resize, dynamicdispatch and freshvptr afterfirstcallback. Earlierdeferassertingordercorrect is contradicted by fullpin and retained as superseded evidence; no unrelated spelling/flag retries.",
+    "Isolated production-replica/nativeoutside/fullTU exactness controls, actual-source callbackregressioncheck and complete combined build/link/destinationverification required before coordinator-reviewed manualintegration. Preserve all sourcefacts/claims; no intentionalbugfix or automatic/game acceptance."
+  ],
+  "intent": "Restore the original menu compute-before-redraw virtual callback order.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4207264,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "alphamenu-callback-order-oct25ao"
+}

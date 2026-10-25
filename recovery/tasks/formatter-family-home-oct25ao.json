@@ -1,0 +1,31 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "2ef6cc0ef7ad87d8513b4f600a030cf9e71bc7a5",
+  "editable_files": [
+    "src/map.cpp",
+    "src/string_formatting.cpp",
+    "recovery/tests/test_map_label_output_oct20.py",
+    "recovery/tests/test_formatter_text_contract.py"
+  ],
+  "evidence": [
+    "This is current semantic C++ source organization, not recovered historical TU identity. Complete native-reader/writer/remover transfer preserves both FILE records, full spans/claims/facts/history. Proposal SHA101d7fda1059b20ff43f396ee207a1379e3896523208686301e193fc82fe07bf.",
+    "Both functions append the original682820 source, already owned by BufferJoinSpace; replace only their space literals. Preserve existing parenthesis literal records byte-for-byte including590BA0 anchors, with corroborating26pointeruses across8unaffected original formatters and unchanged originaldata/ownership limits.",
+    "Freeze whole-tree production recipes; compile both actual units under one isolatedlease with unchanged replica controls. Compare address-union exactness and outside-function residuals, explicitly review all storage/type/lifetime collateral. Full combined build/link and destinationchecks plus actual-source controls precede coordinator-reviewed manual integration; no automatic/game or historicalTU proof."
+  ],
+  "intent": "Home the project/vehicle name formatters with their genuine formatter family and reuse the existing shared space.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5835152,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5835680,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "formatter-family-home-oct25ao"
+}
