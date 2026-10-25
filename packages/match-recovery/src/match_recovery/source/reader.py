@@ -79,6 +79,7 @@ def _block_state_after(line: str, in_block: bool) -> bool:
 
 
 _RAW_STRING_OPEN = re.compile(r'(?:u8|u|U|L)?R"([^ ()\\\t\v\f\r\n]{0,16})\(')
+_ROLE_LEXICAL_START = re.compile(r'''[/"'uULR]''')
 
 
 def _role_lexical_state_after(line: str, in_block: bool,
@@ -106,12 +107,17 @@ def _role_lexical_state_after(line: str, in_block: bool,
                 return True, None, saw_raw
             index, in_block = close + 2, False
             continue
-        if line.startswith("//", index):
+        event = _ROLE_LEXICAL_START.search(line, index)
+        if event is None:
+            return in_block, raw_delimiter, saw_raw
+        index = event.start()
+        char = line[index]
+        if char == "/" and line.startswith("//", index):
             return False, None, saw_raw
-        if line.startswith("/*", index):
+        if char == "/" and line.startswith("/*", index):
             index, in_block = index + 2, True
             continue
-        if line[index] in "\"'":
+        if char in "\"'":
             quote, index = line[index], index + 1
             while index < length:
                 if line[index] == "\\":
@@ -122,7 +128,7 @@ def _role_lexical_state_after(line: str, in_block: bool,
                     break
                 index += 1
             continue
-        opener = _RAW_STRING_OPEN.match(line, index)
+        opener = _RAW_STRING_OPEN.match(line, index) if char in "uULR" else None
         if opener is not None:
             raw_delimiter = opener.group(1)
             saw_raw = True

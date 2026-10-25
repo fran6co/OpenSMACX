@@ -121,6 +121,30 @@ def test_multiline_raw_string_does_not_supply_role_or_original_annotations():
     assert "0x00409999" in body_record.region
 
 
+@pytest.mark.parametrize("prefix", ["R", "u8R", "uR", "UR", "LR"])
+def test_raw_string_prefixes_keep_annotation_text_as_data(prefix):
+    raw = (
+        f'const char *payload = {prefix}"tag(\n'
+        "// RECOVERY_ROLE: SCAFFOLD spoof inside prefixed raw data\n"
+        "// ORIGINAL: 0x00409999 ?fake@@YAXXZ 0x00409999-0x0040999A\n"
+        ')wrong" remains raw data\n'
+        ')tag";\n'
+    )
+    record, = read_text(raw + ANNOTATED, "prefixed-raw.cpp")
+    assert record.address == 0x401000
+    assert record.source_role is SourceRole.SCAFFOLD
+    assert "0x00409999" not in record.region
+
+
+def test_quotes_comments_and_raw_prefix_lookalikes_leave_following_annotation_visible():
+    inert = r'''const char *quoted = "u8R\"tag( // not a raw opener"; // R"fake(
+/* ordinary block with quotes " and raw-prefix lookalikes u8R"x( */
+'''
+    record, = read_text(inert + ANNOTATED, "lexical-lookalikes.cpp")
+    assert record.address == 0x401000
+    assert record.source_role is SourceRole.SCAFFOLD
+
+
 def test_body_region_presence_is_not_reported_as_implementation_coverage():
     record, = read_text(ANNOTATED, "inventory.cpp")
     assert record.region.strip()
