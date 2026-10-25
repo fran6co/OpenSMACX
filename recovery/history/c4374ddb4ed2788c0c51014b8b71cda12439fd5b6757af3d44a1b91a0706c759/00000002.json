@@ -1,0 +1,20 @@
+{
+  "event_id": "02ed58ace940d9788fb206ad05b12549c6670bdbd67fb9467742250c0f190449",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/win.cpp"
+    ],
+    "evidence": [
+      "Correction to prior authorization evidence: full pin 0x5F68D0 negates left into ECX; 0x5F68E6 adds it to loaded right in EDX. RECT offsets 0x13C/140/144/148 prove original right-left and bottom-top. Existing fc-fa is faithful. Raw-right proposal is rejected before compilation/publication; preserve the initial report and explicit erratum.",
+      "Only a semantically identical ordinary rectangle-copy/translation spelling may be screened within the existing three-attempt cap; no raw-right behavior change is authorized. Prior helper relocation, test scope and original preservation base remain unchanged."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "ba610a034fd15c1a21edc0ab1e2b2d1ac4156c3ad62c78f093c8b532725932d4",
+  "request_id": "win-right-pin-arithmetic-correction-oct25w",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:win-visibility-oct25t"
+}
