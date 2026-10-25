@@ -1,0 +1,24 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "14f82d6c989f3c0d688fc87b4a2ae7e4ef817b4a",
+  "editable_files": [
+    "src/netwin.cpp",
+    "recovery/tests/test_netwin_faction_record_owner_closure_oct9.py"
+  ],
+  "evidence": [
+    "Independent source/pin/qualified COFF review proves all six source offsets and member pointer reloads, destinations and final byte transfer. Current typed reference caches the base across five copies; candidate uses direct typed members and retains cross-stride0x112/0x192 reads without inventing fields.",
+    "One ordinary candidate initially, cap3 per unchanged context. Preserve slot-1 handling, signed stride/error paths, all mappings/spans/claims and copy order. Native unchanged control, complete-TU exact/outside comparisons and actual-source controls precede source publication.",
+    "Fresh full application compile/link and native source/claim/mapping/reference checks plus independent actual C++ review precede manual integration, then destination recheck. No full linked/runtime/game acceptance claim."
+  ],
+  "intent": "Restore native live faction-record base reads between the six lobby-row copies and final byte transfer.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4726176,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "netwin-fill-player-live-base-oct25ae"
+}
