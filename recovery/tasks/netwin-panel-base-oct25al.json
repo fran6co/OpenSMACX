@@ -1,0 +1,23 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "935dbb46bb1b20bdef397fd027854c63cb017e15",
+  "editable_files": [
+    "src/netwin.cpp",
+    "recovery/tests/test_netwin_buffer_owners.py"
+  ],
+  "evidence": [
+    "Original47FE80 computes the real Buffer secondary base at+444 and makes the three original box calls. Use qualified nonvirtual Buffer calls with the same rectangle/style/order; no flags, body/lifetime/behavior changes.",
+    "One ordinary candidate first, max3 under unchanged context. Preserve all annotations/claims. Review any actual generated-code collateral before source publication; expand only concrete affected owners. Fresh full build/link, native scoped/continuity/reference checks and existing owner controls precede manual integration."
+  ],
+  "intent": "Restore the real Buffer base in the three-panel NetWin painter.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4718208,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "netwin-panel-base-oct25al"
+}

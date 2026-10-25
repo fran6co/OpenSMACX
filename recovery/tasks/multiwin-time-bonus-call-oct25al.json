@@ -1,0 +1,22 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "935dbb46bb1b20bdef397fd027854c63cb017e15",
+  "editable_files": [
+    "src/multiwin.cpp"
+  ],
+  "evidence": [
+    "Pin call4794F2 passes only text and RECT to helper47A720 using Buffer receiver+444. Replace only this call with the existing two-argument overload; neighboring explicit-length calls remain. Existing helper source is already recovered; no speculative header inlining, pointer null test or copied implementation.",
+    "One ordinary candidate first, max3 per unchanged context. Preserve full body, identities/spans/claims, neighboring calls and lifecycle. Native unchanged production replica/outside/current exact protection, independent pin/source review, fresh full application build/link and relevant source/regression checks precede manual merge and destination verification."
+  ],
+  "intent": "Recover the original two-argument Buffer text call at the time-bonus site in MultiWin draw.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4690736,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "multiwin-time-bonus-call-oct25al"
+}
