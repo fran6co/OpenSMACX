@@ -1,0 +1,20 @@
+{
+  "event_id": "8cbd3a170ead9ec69d6f3431dc1bd003c9e058a0287762613243d00a7e0ec4b6",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_netwin_row_owners.py"
+    ],
+    "evidence": [
+      "Correct existing test path; previous unused test_netwin_rows.py authorization remains unused.",
+      "Row historical whole-painter comparison fails on unchanged master before this batch; retain its ignored baseline XML and retire only that obsolete snapshot assertion, preserving four actual-source row/layout/sanitizer controls."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "bee2a166e59aebb7a53b3a13856187f3d6a021b2cf9a7c94b8987b598e44cb73",
+  "request_id": "authorize-retire-preexisting-row-freeze-oct25am",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:netwin-base-painters-oct25am"
+}

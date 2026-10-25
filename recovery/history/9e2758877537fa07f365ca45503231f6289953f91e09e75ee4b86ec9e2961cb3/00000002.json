@@ -1,0 +1,32 @@
+{
+  "event_id": "d18a4e3365e7c16d13360c126983a6d9ebe5d10862c6340e93aa2c72df8f1092",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_netwin_rows.py",
+      "src/netwin.cpp"
+    ],
+    "evidence": [
+      "Independent original-pointer audit: InterfaceBoxStyles base0x78D528, verified BoxSpriteParams stride0x28, pin pointers0x78D5A0/0x78D618 => entries3/6, not current1/2.",
+      "Evidence .opensmacx/recovery/receiver-separation-oct25am/netwin-style-audit/findings.json SHAe86f52ad22daf4cf54548ed99357dbb65eb019b09203ecd73e839ab4bee9cddb. Preserve all other behavior, dynamic48+ready indices and historical obligations."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4720896,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4719472,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "66d22eee8653920b0c2417bc71cba28a7a34192de245b9d5c6415d87ddb5f8a1",
+  "request_id": "authorize-netwin-style-closure-oct25am",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:netwin-base-painters-oct25am"
+}

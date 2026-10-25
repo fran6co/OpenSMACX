@@ -1,0 +1,22 @@
+{
+  "event_id": "66d22eee8653920b0c2417bc71cba28a7a34192de245b9d5c6415d87ddb5f8a1",
+  "payload": {
+    "affects": [
+      "entity-16bb101e95824f74423c0e1c2966f3464e737908da540d77af539137e3b7bcfe",
+      "entity-1ccad07804da8219e9bf4f2e991a99c839d44a6a1f661c77d898a6dc002bfc58"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "netwin-painter-style-operands-oct25am",
+    "evidence": [
+      "Independent original-pointer audit: InterfaceBoxStyles base0x78D528, verified BoxSpriteParams stride0x28, pin pointers0x78D5A0/0x78D618 => entries3/6, not current1/2.",
+      "Evidence .opensmacx/recovery/receiver-separation-oct25am/netwin-style-audit/findings.json SHAe86f52ad22daf4cf54548ed99357dbb65eb019b09203ecd73e839ab4bee9cddb. Preserve all other behavior, dynamic48+ready indices and historical obligations."
+    ],
+    "hypothesis": "The old style record scaling error affects the same owner session and player-name painters as redraw and custom rules.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "netwin-painter-style-operands-oct25am",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:netwin-base-painters-oct25am"
+}
