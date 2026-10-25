@@ -1,0 +1,18 @@
+{
+  "event_id": "f63b920a2b8194e0adb09def9c5e829cc193f25cc407c532ec44c788c3fa0ebd",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "expose-action-give-load-scheduling",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "The alias checkpoint incorporates source-unchanged action_give emitted impact: only two adjacent independent stack loads swap order, all23 relocation targets/kinds/offsets unchanged. Fresh full candidate reproduces the independently reviewed shape; all outside contents are preserved.",
+      "Manually reviewed source checkpoint a98ddb15bb927fa51b92e0e2e7a551c1e137016e, src/veh.cpp SHA256 dbd47dbb89ec33baac22fe00c8ed9652dd779c7e84d70e9fe1e542d0a29fc8a4. All initial native failures retained. Original task baselinea7 unchanged; no new exactness, full linked/runtime/game acceptance. Master destination verification still required."
+    ]
+  },
+  "previous_event": "aeca62f26fbeb754feb90395604de8154c89be69863ccb9e43a9551db4ad56d7",
+  "request_id": "incorporate-reviewed-action-give-impact",
+  "schema_version": 1,
+  "sequence": 10,
+  "stream": "task:vehicle-negative-faction-alias-oct25bk"
+}

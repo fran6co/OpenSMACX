@@ -1,0 +1,18 @@
+{
+  "event_id": "32758cb9e95dfcf19f23f0ca509ec404b43e4f24fd9ea5d13b8d11fe93d39211",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "negative-prototype-pointer-word",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "offense_proto0x5C1150 and armor_proto0x5C1290 now read signed bits16..31 of named Reactor0.name_short for exactly-1 at the original predicate position. Their actual bodies reproduce independently compiled candidates; GCC/Clang actual-source and wrong-owner controls pass.",
+      "Manually reviewed source checkpoint a98ddb15bb927fa51b92e0e2e7a551c1e137016e, src/veh.cpp SHA256 dbd47dbb89ec33baac22fe00c8ed9652dd779c7e84d70e9fe1e542d0a29fc8a4. All initial native failures retained. Original task baselinea7 unchanged; no new exactness, full linked/runtime/game acceptance. Master destination verification still required."
+    ]
+  },
+  "previous_event": "2182bab1c87b2c4e730b43f314b582cad6d4cf2e6d3c88df783270e376afa5f9",
+  "request_id": "incorporate-negative-prototype-pointer-word",
+  "schema_version": 1,
+  "sequence": 8,
+  "stream": "task:vehicle-negative-faction-alias-oct25bk"
+}

@@ -1,0 +1,18 @@
+{
+  "event_id": "aeca62f26fbeb754feb90395604de8154c89be69863ccb9e43a9551db4ad56d7",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "expose-goody-box-codegen-impact",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "The alias checkpoint incorporates goody_box in its emitted-code review scope while leaving its C++ body unchanged. Current combined code restores the original checkpoint loop/table and swaps two independent EDI/EBX stack loads at two sites; independently reviewed signature ca10a02753015fa890dfb874fb127a26195eb1fb6adfaa1b3fb0a5cbc942b93f. Single-candidate reload-removal shapes were not replayed as combined proof.",
+      "Manually reviewed source checkpoint a98ddb15bb927fa51b92e0e2e7a551c1e137016e, src/veh.cpp SHA256 dbd47dbb89ec33baac22fe00c8ed9652dd779c7e84d70e9fe1e542d0a29fc8a4. All initial native failures retained. Original task baselinea7 unchanged; no new exactness, full linked/runtime/game acceptance. Master destination verification still required."
+    ]
+  },
+  "previous_event": "32758cb9e95dfcf19f23f0ca509ec404b43e4f24fd9ea5d13b8d11fe93d39211",
+  "request_id": "incorporate-reviewed-combined-goody-impact",
+  "schema_version": 1,
+  "sequence": 9,
+  "stream": "task:vehicle-negative-faction-alias-oct25bk"
+}
