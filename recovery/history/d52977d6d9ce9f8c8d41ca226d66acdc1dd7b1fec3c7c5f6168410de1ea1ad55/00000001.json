@@ -1,0 +1,38 @@
+{
+  "event_id": "81527e8ba45f7f6af1c9413e8b5fe3457b66c68ebf5e866df937623bf037987c",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/basebutton.cpp",
+      "src/credits.cpp"
+    ],
+    "evidence": [
+      "Next24parallel read-only review found original+A4C/time2 receiver for BaseButton mouse-move stop/start, original capture-cell store order, and a second Credits TextBufferGetPtr load after allocation. These are recovery corrections, preserving original error/unsafe paths and source identities.",
+      "Two isolated production-recipe probes reproduced the complete qualified unchanged objects. All three one-attempt candidates compile, have no local exact losses and native outside-selected residual PASS. They remain non-exact; no byte-claim grant or prolonged spelling search. Combine this independent compiling closure with Log to share full application verification.",
+      "Log-only physical review preserves all3455local exact and3140strict identities and restores explicit ctor/normaldtor/EHdtor calls, but native residual FAIL28 remains. Twelve source-unmodified functions in the authorized28contexts have changed signatures; some movement/relocations remain unproved. Two exported-only original Log callable bodies drop from linked selection while staying exact inCOFF. Preserve this matching/linked restoration debt and raw native outcomes; do not call the manual checkpoint automatic/full-game acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6321600,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6322256,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4360320,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "combine-screened-owner-read-order-oct25e",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:log-owner-oct25d"
+}
