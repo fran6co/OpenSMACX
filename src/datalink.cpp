@@ -3912,14 +3912,15 @@ void __cdecl tech_heck(void (__cdecl *a1)(char *), int a2) {
 
     {
         for (int row = 0; row < MaxTerrainNum - 1; ++row) {
-            const int prereq[2] = {Terraforming[row].preq_tech,
-                                   Terraforming[row].preq_tech_sea};
             for (int i = 0; i < 2; ++i) {
-                if (a2 == prereq[i] &&
-                    (i != 1 || prereq[0] != prereq[1])) {
+                const RulesTerraforming &terraform = Terraforming[row];
+                const int prerequisite = i == 0 ? terraform.preq_tech
+                                                : terraform.preq_tech_sea;
+                if (a2 == prerequisite &&
+                    (i != 1 || terraform.preq_tech != terraform.preq_tech_sea)) {
                     LPSTR order = i == 0 ? Order[4 + row].order
                                          : Order[4 + row].order_sea;
-            parse_say(0, order, -1, -1);
+                    parse_say(0, order, -1, -1);
                     parse_string(StringTemp, TextBufferGetPtr);
                     emit_help(a1);
                 }
