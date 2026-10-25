@@ -5,7 +5,7 @@ from dataclasses import replace
 import pytest
 
 from match_recovery import binding_source
-from match_recovery.source import read_text, write_body
+from match_recovery.source import read_text, remove_body, write_body
 
 
 PATH = "fixture.cpp"
@@ -178,3 +178,84 @@ def test_insert_keeps_macro_raw_string_snapshot_and_unbound_refusals():
         write_body(raw.replace(b"old", b"changed"), row, "src/header.h", insert=True)
     with pytest.raises(ValueError, match="relative path"):
         write_body(raw, row, "../escape.h", insert=True)
+
+
+def test_remove_body_retires_only_selected_location_fact_and_preserves_peer():
+    next_marker = b"// ORIGINAL: 0x00402000 _next 0x00402000-0x00402001 FILE"
+    raw = (MARKER + b"\r\n" + BINDING + b"\r\n"
+           + b"// symbol    ?f@@QAEHXZ\r\n"
+           + b"// compile_context src/owner.cpp\r\n"
+           + b"// LEVER: moved canonical body location\r\n"
+           + b"// TRIED: retain the historical experiment\r\n"
+           + b"// body src/old.h  \t\r\n// note \xff\r\nint f() {}\r\n"
+           + next_marker + b"\r\n// body src/next.cpp\r\nint next() {}\r\n")
+    first, second = records(raw)
+
+    changed = remove_body(raw, first)
+
+    assert changed == raw.replace(b"// body src/old.h  \t\r\n", b"", 1)
+    after_first, after_second = records(changed)
+    assert after_first.body == ""
+    assert after_first.address == first.address
+    assert after_first.name == first.name
+    assert after_first.image_spans == first.image_spans
+    assert after_first.mode is first.mode
+    assert after_first.byte_exact == first.byte_exact
+    assert after_first.symbol == first.symbol == "?f@@QAEHXZ"
+    assert after_first.context == first.context == "src/owner.cpp"
+    assert after_first.levers == first.levers
+    assert after_first.ruled_out == first.ruled_out == \
+        ("retain the historical experiment",)
+    assert after_second.body == second.body == "src/next.cpp"
+    old_bindings = binding_source.parse(raw.decode("utf-8", errors="replace"),
+                                        [first, second])
+    new_bindings = binding_source.parse(changed.decode("utf-8", errors="replace"),
+                                        [after_first, after_second])
+    assert [old_bindings.get(row.line) for row in (first, second)] == \
+        [new_bindings.get(row.line) for row in (after_first, after_second)]
+    with pytest.raises(ValueError, match="exactly one"):
+        remove_body(changed, after_first)
+
+
+@pytest.mark.parametrize("newline", [b"\n", b"\r\n", b"\r"])
+def test_remove_body_preserves_newline_style_and_unterminated_eof(newline):
+    raw = MARKER + newline + b"// body src/old.h" + newline + b"int f() {}" + newline
+    row, = records(raw)
+    assert remove_body(raw, row) == MARKER + newline + b"int f() {}" + newline
+
+    eof = MARKER + newline + b"// body src/old.h"
+    row, = records(eof)
+    assert remove_body(eof, row) == MARKER + newline
+
+
+@pytest.mark.parametrize("facts", [
+    b"// body src/one.h\n// body src/two.h\n",
+    b"// body\n",
+    b"// body src/../outside.h\n",
+    b"",
+])
+def test_remove_body_refuses_missing_duplicate_or_malformed_facts(facts):
+    raw = MARKER + b"\n" + facts + b"int f() {}\n"
+    row, = records(raw)
+    with pytest.raises(ValueError):
+        remove_body(raw, row)
+
+
+def test_remove_body_refuses_stale_snapshot_and_unsafe_source_contexts():
+    raw = MARKER + b"\n// body src/old.h\n// TRIED: retained\nint f() {}\n"
+    row, = records(raw)
+    with pytest.raises(ValueError, match="current record snapshot"):
+        remove_body(raw.replace(b"retained", b"changed"), row)
+    with pytest.raises(ValueError, match="current record snapshot"):
+        remove_body(raw, replace(row, body="src/other.h"))
+
+    unsafe_sources = (
+        b"#define BODY_MACRO \\\n" + MARKER + b"\n// body src/old.h\nint f() {}\n",
+        b'const char *s = R"tag(opaque)tag";\n' + MARKER
+        + b"\n// body src/old.h\nint f() {}\n",
+        MARKER + b"\nint f() {} \\\n" + b"// body src/old.h\n",
+    )
+    for unsafe in unsafe_sources:
+        row, = records(unsafe)
+        with pytest.raises(ValueError):
+            remove_body(unsafe, row)

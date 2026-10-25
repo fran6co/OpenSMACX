@@ -452,9 +452,13 @@ An adjacent `// body` fact names the source file containing a definition hosted
 elsewhere, for example `// body src/stringstruct.h` for a header-defined method.
 The guarded pure `source.write_body` updates an existing fact; explicit
 `insert=True` also permits a missing fact after the marker and any adjacent
-binding rationale. Both preserve all other identities, claims and lessons and
-require a fresh reader snapshot. Neither infers definition presence, compiler
-emission or recovery acceptance.
+binding rationale. `source.remove_body` removes exactly one existing body
+location. All three operations preserve other identities, claims, lessons and
+facts and require a fresh complete reader snapshot; malformed, duplicate,
+stale, macro-contained, spliced or raw-string contexts refuse. They do not infer
+definition presence, compiler emission or recovery acceptance. Removing a
+location fact is appropriate only after a coordinator has verified the body's
+new canonical source owner; the writer itself makes no such determination.
 Keep the canonical original marker in its owning TU, not a duplicate per emitted
 copy. The fact is a load-bearing location/ownership interpretation, not a claim
 that the body compiles or matches. Native preservation additionally requires

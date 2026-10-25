@@ -1,0 +1,19 @@
+{
+  "event_id": "8e71bcf9fc30fb4030502239cc26a7d81553dadc697082c709a4098216fe86e3",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_terrain_helper_boundaries.py"
+    ],
+    "evidence": [
+      "The existing source-owner assertion requires byte-identical map.h and reads near_landmark there. Retarget only this assertion to unchanged original helper body in world.cpp, public declaration and one real definition. It is a migration integrity check, not new behavior or a byte/linked acceptance claim."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "7aade49a551f7229ebd01edfc6d85c7fbd6d23ed59f1c79ba9d559f9c5544b66",
+  "request_id": "near-owner-existing-test-migration-oct25j",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:helper-visibility-oct25j"
+}

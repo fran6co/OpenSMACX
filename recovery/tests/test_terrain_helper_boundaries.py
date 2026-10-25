@@ -91,16 +91,23 @@ def test_site_helper_identity_rejects_duplicate_nonheader_definition(name):
         helper_definition(duplicate + "\n" + duplicate, name)
 
 
-def test_map_header_is_unchanged_and_near_landmark_body_is_preserved():
+def test_near_landmark_moves_unchanged_to_one_world_owner():
     baseline = subprocess.check_output(
         ["git", "show", WORLD_OWNER_BASE + ":src/map.h"], cwd=ROOT,
-    )
-    current = (ROOT / "src/map.h").read_bytes()
-    assert current == baseline
-    baseline_text = baseline.decode("utf-8")
-    current_text = current.decode("utf-8")
-    assert helper_definition(current_text, "near_landmark") == helper_definition(
-        baseline_text, "near_landmark")
+    ).decode("utf-8")
+    header = (ROOT / "src/map.h").read_text(encoding="utf-8")
+    world = (ROOT / "src/world.cpp").read_text(encoding="utf-8")
+    original = helper_definition(baseline, "near_landmark")
+    current = helper_definition(world, "near_landmark")
+    assert current == original.removeprefix("MEASURED inline ")
+    assert "BOOL __cdecl near_landmark(int x, int y);" in header
+    with pytest.raises(ValueError, match=r"0 definitions found"):
+        helper_definition(header, "near_landmark")
+    with pytest.raises(ValueError, match=r"2 definitions found"):
+        helper_definition(current + "\n" + current, "near_landmark")
+    record, = [row for row in read_file(ROOT / "src/world.cpp")
+               if row.address == 0x005C5BD0]
+    assert not record.body and not record.extract_error
 
 
 def test_altitude_helpers_have_one_canonical_owner_and_world_callers():
