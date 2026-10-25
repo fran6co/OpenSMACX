@@ -1,0 +1,21 @@
+{
+  "event_id": "cc2b9ced73f96ccdaf3a0db71a31c0ca5359fe4cc5645b16e0dba8276d1a222a",
+  "payload": {
+    "affects": [
+      "entity-2c6a6c11e90efb06db022f32e0f855f86354cb641b3e8b3a89a03a7425040eb1"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "painter-collateral-pick-map-generated-code",
+    "evidence": [
+      "Fresh baseline950d5f qualified NetWin object and unchanged-production replica match. Each candidate changes only its selected painter source; both generate identical changed pick_map primary code while associated EH code/relocations remain identical.",
+      "Independent reviews root-cause-review.json b33deae074f1372049eba02dd2ca1872bc7cfbb6ace10211bb7e9740abf65ef5 and outside-pickmap-review.json219b327633536e9b2f09e0a12fe6ced8014072dd647b048f9a08b285c6e0d402 preserve complete physical comparisons. No compiler-cause claim or automatic acceptance is made."
+    ],
+    "hypothesis": "Both single-painter source changes alter compiler-generated PopMenu vptr setup/reinstall instructions inside unchanged NetWin::pick_map; the old two-function outside comparison fails and requires review of this affected owner function.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "painter-collateral-pick-map-generated-code",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:netwin-buffer-owner-oct25ah"
+}

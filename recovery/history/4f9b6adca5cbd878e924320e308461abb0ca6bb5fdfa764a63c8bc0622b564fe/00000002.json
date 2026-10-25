@@ -1,0 +1,24 @@
+{
+  "event_id": "f75d316761cc037743eefd084cfca5736f71b1ac8572bf99b5a35d7af8ac9a04",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Review the actual changed generated body at original47D300 and its associated lifetime regions as part of this ownership group, without changing its source merely to tune emitter order. The old two-painter outside FAIL remains recorded, not relabelled.",
+      "Both reviews confirm the same four PopMenu views installed at PopupWin/Buffer and PullDownWin/Buffer locations with no calls within changed store groups; all original constructor/destructor calls and associated EH data remain. Exact scheduling cause unproven; historical matching/lifetime obligations persist. A new explicit three-function comparison must cover all other code, and full build/link/native/source/host checks precede manual integration."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4707072,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "cc2b9ced73f96ccdaf3a0db71a31c0ca5359fe4cc5645b16e0dba8276d1a222a",
+  "request_id": "admit-affected-pick-map-owner-review",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:netwin-buffer-owner-oct25ah"
+}

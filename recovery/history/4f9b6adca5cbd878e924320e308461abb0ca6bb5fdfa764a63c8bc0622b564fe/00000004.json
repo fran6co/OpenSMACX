@@ -1,0 +1,24 @@
+{
+  "event_id": "d31dbe0daf4318323843c18ae68bfa7eb7c3d292d6ef5f3885abcfcec233af77",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Only remove the proven extra faction_records_!=0 conjunct in draw_player_names; no further spelling search or type/lifetime changes. First actual application compilation qualifies this source correction, with four-function outside comparison and all other exact/reference outcomes protected.",
+      "Actual-source tests retain initialmode0 callback transition using a valid record block, cover live loop bounds and original prefix behavior, and avoid executing mode3/null UB."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4719472,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "e3ca91823b8c7e447c08a07e6e3c024d59faaed6a4b7c79a5477587ccb8c948a",
+  "request_id": "include-third-lobby-painter-read",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:netwin-buffer-owner-oct25ah"
+}

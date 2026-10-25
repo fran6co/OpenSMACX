@@ -1,0 +1,21 @@
+{
+  "event_id": "e3ca91823b8c7e447c08a07e6e3c024d59faaed6a4b7c79a5477587ccb8c948a",
+  "payload": {
+    "affects": [
+      "entity-16bb101e95824f74423c0e1c2966f3464e737908da540d77af539137e3b7bcfe"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "same-owner-player-name-null-read",
+    "evidence": [
+      "Native pin48047A loads faction_records_ and480482 dereferences its first byte without a null test; current source/qualified COFF adds a null test and branch. Reachability of this unsafe mode3/null state is not established, but original read behavior must remain.",
+      "Readonly next-draw-names-obligation.json324bfe1b601053c88bda50d99e0fb96fa28857db43ed7ff1d4486967846d1a18; keep all other player-name operations, adjusted Buffer pointer use, callbacks and row reads unchanged."
+    ],
+    "hypothesis": "The third lobby painter draw_player_names has the same added mode3 record-pointer guard absent from the original. Carry this verified shared-owner correction into the current batch.",
+    "kind": "discovery"
+  },
+  "previous_event": "f75d316761cc037743eefd084cfca5736f71b1ac8572bf99b5a35d7af8ac9a04",
+  "request_id": "same-owner-player-name-null-read",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:netwin-buffer-owner-oct25ah"
+}

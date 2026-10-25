@@ -1,0 +1,19 @@
+{
+  "event_id": "aecea9ff355e5e6a376f98353af3acbe928dc88198683e2b3186f7cf10884c04",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "painter-collateral-pick-map-generated-code",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/netwin.cpp retains unchanged pick_map source: real PopMenu then Buffer automatic objects. The current compiled application reproduces the independently reviewed generated vptr code, with same four subobject states/call barriers and identical cold EH section. The concrete changed generated body is retained within the explicitly admitted owner scope, not erased or demoted.",
+      "Native candidate d32c6fad with fresh194production compilations and208physical objects passes the four-function residual; all other207objects,5581local classifications and3463strict outcomes persist. Two-painter and three-before-names reports still fail and remain recorded separately.",
+      "Only the bounded ownership/collateral review is incorporated. The precise compiler allocation cause, original-byte restoration of all four functions, complete lifetime/linked-selection and runtime/game acceptance remain obligations; no native full acceptance is claimed."
+    ]
+  },
+  "previous_event": "ec516bf563d54fb17d23a5a5b1b92d5fbb744cadb4054f7fa5f5a079312149ad",
+  "request_id": "incorporate-reviewed-generated-owner-closure",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:netwin-buffer-owner-oct25ah"
+}
