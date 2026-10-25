@@ -1,0 +1,23 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "6e929c2e362fa438cab4455d00cc8563809e0bff",
+  "editable_files": [
+    "src/faction.cpp"
+  ],
+  "evidence": [
+    "Full pin and independent source review support strcmp before one GateCount load/reuse and treaty-bit/FA78 read before conditional other-then-actor commerce reads. Saved accepted decision remains tested after four intro parse_says calls. Preserve all existing effects and original unsafe paths.",
+    "The separately retained division-by-100 proposal is rejected before compile: signed and unsigned 0x51EB851F high multiply then shift4 implements division by50. Existing actual-source rounding controls deliberately reject /100. Only read-order-only candidate f33ea21a0f182f5fafd441a0300d002304e2e92d69efa4193536852750a004a7 is authorized.",
+    "One ordinary full-function trial, <=3attempts per unchanged context. No flags, symbols, original markers or claims change. Compare full TU and native outside this single function; fresh build/link and existing diplomacy rounding/behavior controls precede manual integration."
+  ],
+  "intent": "Restore pinned propose_treaty read ordering with original division-by-50 arithmetic unchanged.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5525056,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "treaty-read-order-oct25x"
+}
