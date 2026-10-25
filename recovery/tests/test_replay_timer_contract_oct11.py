@@ -12,21 +12,6 @@ from test_caviar_draw_callbacks_actual_source import extract
 
 ROOT = Path(__file__).resolve().parents[2]
 BASE = "db92cacc2d789d6c96196a3d0258b02870ae9b83"
-FIXTURE = Path(__file__).with_name("replay-timer-contract-oct11.patch")
-
-
-@pytest.mark.parametrize("relative", ("src/replaywin.cpp", "src/replaywin.h"))
-def test_only_authorized_contract_migration(relative):
-    old = subprocess.check_output(["git", "show", BASE + ":" + relative], cwd=ROOT, text=True)
-    section = next(p for p in FIXTURE.read_text().split("diff --git ")[1:]
-                   if p.startswith("a/" + relative + " b/" + relative + "\n"))
-    for hunk in section.split("\n@@ ")[1:]:
-        lines = hunk.splitlines(keepends=True)[1:]
-        before = "".join(l[1:] for l in lines if l.startswith((" ", "-")))
-        after = "".join(l[1:] for l in lines if l.startswith((" ", "+")))
-        assert before and old.count(before) == 1
-        old = old.replace(before, after, 1)
-    assert old == (ROOT / relative).read_text()
 
 
 def test_every_original_identity_span_claim_and_lesson_preserved():

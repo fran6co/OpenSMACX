@@ -1,0 +1,21 @@
+{
+  "event_id": "ba0089e63d16e6370bce7246dcb91e7d33d8ac6ed8f131531e6e693d118be919",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/replay-timer-contract-oct11.patch",
+      "recovery/tests/test_replay_timer_contract_oct11.py"
+    ],
+    "evidence": [
+      "The oct11 frozen entire-file patch comparison already fails on unchanged verified master577d43ea due later legitimate member names and recovered bodies, before this ReplayWin correction. Existing actual callback ABI/pinned instructions, callback mutation controls and complete original metadata/history tests remain.",
+      "Retire only the obsolete whole-file freeze and its sole-consumer historical patch fixture, not callback/pin/metadata checks. Fresh application compile/link and continuity/source/reference verification remain required."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "retire-obsolete-whole-file-replay-freeze",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:replaywin-buffer-base-oct25ag"
+}
