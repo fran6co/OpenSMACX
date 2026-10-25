@@ -1,0 +1,24 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "3237e953aadff35bdb7f52083fe7b336b15340ad",
+  "editable_files": [
+    "src/general.cpp",
+    "recovery/tests/test_movie_lz_long_command_actual_source.py"
+  ],
+  "evidence": [
+    "Pinned0x5D4361 computes literal input EBX+4 for C0..DF commands;0x5D4366 updates EBX after literal copy. Current source advances only1. Correct this translation error without changing command dispatch, length/distance, error paths, signature or caller behavior.",
+    "Preserve all original mappings, historical claims and prior findings. Existing generated integer return0 does not prove original return ABI: native loads size before POPAD restores entryEAX, and current mapped caller ignores it. Full register preservation remains unresolved; do not silently assert a size return or fix it here.",
+    "One source candidate; independent pin/source review, actual-source host command vectors and damage control, native unchanged production replica and whole-TU outside checks, build/link and fresh destination continuity required. No new exact claim except installed recorder; no automatic, linked or game acceptance."
+  ],
+  "intent": "Restore original four-byte command consumption in the movie LZ decoder, with complete actual-source command controls.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6111868,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "movie-lz-long-command-oct25bg"
+}
