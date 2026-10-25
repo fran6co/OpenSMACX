@@ -11,6 +11,7 @@ from __future__ import annotations
 from dataclasses import dataclass, replace
 from enum import StrEnum
 import struct
+from typing import Mapping
 
 from capstone import CS_ARCH_X86, CS_GRP_CALL, CS_GRP_JUMP, CS_MODE_32, Cs, x86
 
@@ -81,6 +82,39 @@ class EHRegionPair:
     relocations: tuple[Relocation, ...]
     alignment: int
     ownership: EHOwnershipEvidence
+
+
+def eh_action_semantic_difference(original: EHActionFact,
+                                 compiled: EHActionFact,
+                                 index: int) -> tuple[str, str] | None:
+    """Shared bounded semantic check used by both EH comparison paths."""
+    if original.kind is not compiled.kind:
+        return "ordinary", f"valid EH action kind differs at index {index}"
+    if original.kind is EHActionKind.ARRAY_DESTRUCTOR:
+        original_facts = (original.element_count, original.element_size,
+                          original.frame_displacement, original.base_adjustment,
+                          original.scratch_register)
+        compiled_facts = (compiled.element_count, compiled.element_size,
+                          compiled.frame_displacement, compiled.base_adjustment,
+                          compiled.scratch_register)
+        if original_facts != compiled_facts:
+            return ("ordinary",
+                    f"valid EH array-cleanup semantics differ at index {index}: "
+                    f"original={original_facts!r}, compiled={compiled_facts!r}")
+    elif original.kind in (EHActionKind.FRAME_TRANSFER,
+                           EHActionKind.FRAME_SLOT_CALL_CLEANUP):
+        original_facts = (original.frame_displacement, original.base_adjustment,
+                          original.scratch_register)
+        compiled_facts = (compiled.frame_displacement, compiled.base_adjustment,
+                          compiled.scratch_register)
+        if original_facts != compiled_facts:
+            label = ("frame-transfer" if original.kind is EHActionKind.FRAME_TRANSFER
+                     else "frame-local cleanup")
+            return ("frame-transfer" if original.kind is EHActionKind.FRAME_TRANSFER
+                    else "ordinary",
+                    f"valid EH {label} semantics differ at index {index}: "
+                    f"original={original_facts!r}, compiled={compiled_facts!r}")
+    return None
 
 
 def _image_section(image: PeImage, span: Span, *, code: bool) -> int:
@@ -1246,3 +1280,82 @@ def bind_eh_regions(raw_object: bytes, emitted_symbol: str, original_image: PeIm
         EHRegionPair(EHRegionRole.COLD, cold, child,
                      child_code, child_relocs, child_alignment, evidence),
     )
+
+
+def eh_funcinfo_reference_target(raw_object: bytes, emitted_symbol: str,
+                                 original_image: PeImage,
+                                 spans: tuple[tuple[int, int], ...],
+                                 resolved_targets: Mapping[str, int]) -> tuple[int, int]:
+    """Prove one exact COFF local FuncInfo symbol against this EH owner.
+
+    This is deliberately narrower than ``bind_eh_regions``: it additionally
+    requires matching action topology/shape and independently resolved
+    transfer targets. It returns the exact symbol-table index used by this
+    owner's handler relocation and its pinned FuncInfo VA. It does not bind
+    other local symbols in the section or infer linker selection.
+    """
+    root_region, cold_region = bind_eh_regions(
+        raw_object, emitted_symbol, original_image, spans)
+    if not isinstance(resolved_targets, Mapping):
+        raise ValueError("EH reference proof requires current-object resolved targets")
+    ownership = root_region.ownership
+    if ownership.original_predecessors != ownership.compiled_predecessors:
+        raise ValueError("EH FuncInfo reference has changed predecessor topology")
+    if len(ownership.original_actions) != len(ownership.compiled_actions):
+        raise ValueError("EH FuncInfo reference has changed action count")
+
+    obj = Coff(raw_object)
+
+    def target_for_relocation(section: int, offset: int, kind: int) -> tuple[int, Symbol]:
+        found = [(index, coff_kind) for at, index, coff_kind
+                 in obj.sections[section - 1].relocations if at == offset]
+        if len(found) != 1 or found[0][1] != kind:
+            raise ValueError("EH target lacks its exact unique relocation")
+        index, _coff_kind = found[0]
+        return index, obj.symbols[index]
+
+    for index, (original_action, compiled_action) in enumerate(zip(
+            ownership.original_actions, ownership.compiled_actions, strict=True)):
+        if original_action.kind not in (EHActionKind.ARRAY_DESTRUCTOR,
+                                        EHActionKind.FRAME_TRANSFER,
+                                        EHActionKind.FRAME_SLOT_CALL_CLEANUP):
+            raise ValueError("EH FuncInfo reference has an unsupported action kind")
+        difference = eh_action_semantic_difference(
+            original_action, compiled_action, index)
+        if difference is not None:
+            raise ValueError(difference[1])
+        if len(original_action.transfers) != len(compiled_action.transfers):
+            raise ValueError(f"EH FuncInfo reference has changed transfer count at {index}")
+        for original_transfer, compiled_transfer in zip(
+                original_action.transfers, compiled_action.transfers, strict=True):
+            if (original_transfer.role is not compiled_transfer.role
+                    or type(original_transfer.target) is not int
+                    or compiled_transfer.addend != 0
+                    or compiled_transfer.relocation_kind not in ("DIR32", "REL32")):
+                raise ValueError("EH FuncInfo reference has an unresolved or changed transfer")
+            coff_kind = 6 if compiled_transfer.relocation_kind == "DIR32" else 20
+            symbol_index, _symbol = target_for_relocation(
+                ownership.child_section, compiled_transfer.operand_offset, coff_kind)
+            resolved_target = resolved_targets.get(str(symbol_index))
+            if (type(resolved_target) is not int
+                    or resolved_target != original_transfer.target):
+                raise ValueError("EH cleanup transfer does not resolve to its pinned target")
+
+    # Bind the runtime edge too; a valid-looking local FuncInfo is not enough
+    # if the associated handler calls a different runtime entry.
+    _handler, _actions, info_offset, runtime_offset, _starts = _cold_layout(cold_region.code)
+    runtime_index, _runtime_symbol = target_for_relocation(
+        ownership.child_section, runtime_offset, 20)
+    runtime_target = resolved_targets.get(str(runtime_index))
+    if (type(runtime_target) is not int
+            or runtime_target != ownership.original_runtime_target):
+        raise ValueError("EH handler runtime does not resolve to its pinned target")
+
+    func_info_index, func_info_symbol = target_for_relocation(
+        ownership.child_section, info_offset, 6)
+    if (func_info_symbol.section != ownership.func_info_section
+            or func_info_symbol.value != 0 or func_info_symbol.storage != 3
+            or func_info_symbol.type != 0
+            or obj.associations.get(func_info_symbol.section) != ownership.root_section):
+        raise ValueError("EH handler target is not this root's exact local FuncInfo definition")
+    return func_info_index, ownership.original_func_info
