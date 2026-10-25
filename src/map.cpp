@@ -988,7 +988,7 @@ int __cdecl elev_at(int x, int y) {
 
 /*
 Purpose: Get the bit shifted (down) altitude of the specified tile.
-// ORIGINAL: 0x00500150 ?alt_at@@YAHHH@Z 0x00500150-0x0050017B
+// ORIGINAL: 0x00500150 ?alt_at@@YAHHH@Z 0x00500150-0x0050017B BYTE_EXACT
 // body      src/map.h
 // TRIED: best 12/16, 0.875 similar (MISMATCH) at every flag set - image
 //            schedules `xor ecx,ecx` (the future zero-extend register) right
@@ -1026,7 +1026,7 @@ Status: Complete
 
 /*
 Purpose: Get the altitude details of the specified tile.
-// ORIGINAL: 0x00500180 ?alt_detail_at@@YAHHH@Z 0x00500180-0x005001A9
+// ORIGINAL: 0x00500180 ?alt_detail_at@@YAHHH@Z 0x00500180-0x005001A9 BYTE_EXACT
 // body      src/map.h
 // TRIED: same plateau as `alt_at` - image schedules `xor ecx,ecx` before
 //            loading the map_tiles() pointer into edx; this tree loads the
@@ -1105,7 +1105,7 @@ void __cdecl site_set(int x, int y, int site) {
 
 /*
 Purpose: Get the region of the specified tile.
-// ORIGINAL: 0x00500220 ?region_at@@YAHHH@Z 0x00500220-0x00500249
+// ORIGINAL: 0x00500220 ?region_at@@YAHHH@Z 0x00500220-0x00500249 BYTE_EXACT
 // body      src/map.h
 // TRIED: same plateau as `alt_at` - image schedules `xor ecx,ecx` before
 //            loading the map_tiles() pointer into edx; this tree loads the
@@ -1129,7 +1129,7 @@ Status: Complete
 
 /*
 Purpose: Set the region for the specified tile.
-// ORIGINAL: 0x00591B90 ?region_set@@YAXHHH@Z 0x00591B90-0x00591BB8 SEMANTIC
+// ORIGINAL: 0x00591B90 ?region_set@@YAXHHH@Z 0x00591B90-0x00591BB8 BYTE_EXACT
 // body      src/map.cpp
 // TRIED: same plateau as alt_put_detail - byte-parameter load and
 //            map_tiles() pointer load are swapped by the compiler
@@ -1152,7 +1152,7 @@ void __cdecl region_set(int x, int y, int region) {
 
 /*
 Purpose: Set the using faction id for the specified tile.
-// ORIGINAL: 0x00591C10 ?using_set@@YAXHHH@Z 0x00591C10-0x00591C48
+// ORIGINAL: 0x00591C10 ?using_set@@YAXHHH@Z 0x00591C10-0x00591C48 BYTE_EXACT
 // TRIED: 12/20 plateau. Image reads tile->val3 TWICE (once via the
 //   pre-offset [ecx+eax*4+5] load, once again via [eax+5] after computing
 //   the plain tile pointer); this tree's `&=0xF8; |=faction&7;` compiles the
@@ -1302,7 +1302,7 @@ Status: Complete
 
 /*
 Purpose: Set the bit for the specified tile.
-// ORIGINAL: 0x00591D30 ?bit_put@@YAXHHH@Z 0x00591D30-0x00591D58 SEMANTIC
+// ORIGINAL: 0x00591D30 ?bit_put@@YAXHHH@Z 0x00591D30-0x00591D58 BYTE_EXACT
 // body      src/map.h
 // size      40 bytes
 // prototype void (__cdecl ?bit_put@@YAXHHH@Z)(int xCoord, int yCoord, int bit)
@@ -2094,7 +2094,7 @@ Status: Complete
 
 /*
 Purpose: Check whether a faction can see the specified tile.
-// ORIGINAL: 0x00579840 ?is_known@@YAHHHH@Z 0x00579840-0x00579896
+// ORIGINAL: 0x00579840 ?is_known@@YAHHHH@Z 0x00579840-0x00579896 BYTE_EXACT
 // size      86 bytes
 // prototype int (__cdecl ?is_known@@YAHHHH@Z)(int xCoord, int yCoord, int factionID)
 // callers   1   call targets   0
@@ -2429,9 +2429,13 @@ void __cdecl map_resample(int width, int height) {
 
 /*
 Purpose: Get the region value for the specified tile.
-// ORIGINAL: 0x00591210 ?abstract_at@@YAHHH@Z 0x00591210-0x00591230 SEMANTIC
+// ORIGINAL: 0x00591210 ?abstract_at@@YAHHH@Z 0x00591210-0x00591230 BYTE_EXACT
 // body      src/map.h
 // symbol    ?abstract_at@@YAEHH@Z
+// ABI evidence: the getter defines AL only. Both mapped enemy_strategy
+// calls (0x56313B and 0x5631C3) mask EAX to one byte before using it.
+// This supports the current byte-valued interface; the catalogue int
+// spelling is historical and does not prove the original source prototype.
 // size      32 bytes
 // prototype int (__cdecl ?abstract_at@@YAHHH@Z)(int xCoord, int yCoord)
 // callers   1   call targets   0
@@ -2461,7 +2465,7 @@ Status: Complete
 
 /*
 Purpose: Set the region value for the specified tile.
-// ORIGINAL: 0x00591230 ?abstract_set@@YAXHHE@Z 0x00591230-0x00591253 SEMANTIC
+// ORIGINAL: 0x00591230 ?abstract_set@@YAXHHE@Z 0x00591230-0x00591253 BYTE_EXACT
 // body      src/map.cpp
 // TRIED: same plateau as abstract_at/alt_at. Image computes a row
 //            pointer (base + y*(bounds>>1)) explicitly, then indexes it by
