@@ -5076,7 +5076,6 @@ void BaseWin::update_gov_buttons() {
 void BaseWin::draw_expenses(int a1) {
     typedef unsigned int uint;
 
-    Buffer *buffer = static_cast<Buffer *>(this);
     Font local_font;
     RECT saved_clip, panel, frame, title, line, tile_rect;
 
@@ -5125,22 +5124,22 @@ void BaseWin::draw_expenses(int a1) {
   panel.top = production_outer_rect_.top;
   panel.right = production_outer_rect_.right;
   panel.bottom = production_outer_rect_.bottom;
-  saved_clip.left = buffer->current_clip().left;
-  saved_clip.top = buffer->current_clip().top;
-  saved_clip.right = buffer->current_clip().right;
-  saved_clip.bottom = buffer->current_clip().bottom;
-  buffer->set_clip(&panel);
+  saved_clip.left = Buffer::current_clip().left;
+  saved_clip.top = Buffer::current_clip().top;
+  saved_clip.right = Buffer::current_clip().right;
+  saved_clip.bottom = Buffer::current_clip().bottom;
+  Buffer::set_clip(&panel);
   frame.left = 0x17;
   frame.top = 0;
   frame.right = 0x2bf;
   frame.bottom = 0x194;
-  buffer->box_sprite(&frame, &InterfaceBoxStyles[9]);
-  buffer->box_sprite(&production_outer_rect_, &InterfaceBoxStyles[3]);
+  Buffer::box_sprite(&frame, &InterfaceBoxStyles[9]);
+  Buffer::box_sprite(&production_outer_rect_, &InterfaceBoxStyles[3]);
   frame.left = 0x12a;
   frame.top = 0x107;
   frame.right = 0x2b9;
   frame.bottom = 0x145;
-  buffer->box_sprite(&frame, &InterfaceBoxStyles[0]);
+  Buffer::box_sprite(&frame, &InterfaceBoxStyles[0]);
   frame.left = production_outer_rect_.left;
   frame.top = production_outer_rect_.top;
   frame.right = production_outer_rect_.right;
@@ -5234,7 +5233,7 @@ void BaseWin::draw_expenses(int a1) {
   local_80 = 0x107;
   line.left = 0xa9;
   local_84 = 0xa9;
-  buffer->set_font(&local_font,0,0,0);
+  Buffer::set_font(&local_font,0,0,0);
   title.bottom = line.bottom;
   title.top = line.top;
   expenses_help_rects_[1].left = line.left;
@@ -5248,17 +5247,17 @@ void BaseWin::draw_expenses(int a1) {
   else {
     title.left = production_outer_rect_.left + 3;
   }
-  buffer->box_sprite(&title, &InterfaceBoxStyles[6]);
+  Buffer::box_sprite(&title, &InterfaceBoxStyles[6]);
   title.left = title.left + 3;
   title.right = title.right + -3;
   title.bottom = title.bottom + -3;
   title.top = title.top + 3;
-  buffer->set_text_color(TextColourTable[90],TextColourTable[91],1,1);
+  Buffer::set_text_color(TextColourTable[90],TextColourTable[91],1,1);
   StringTemp[0] = 0;
   strcat(StringTemp, label_get(520));
   CharUpperA(StringTemp);
   sVar4 = strlen(StringTemp);
-  buffer->write_cent_l(StringTemp, &title, sVar4);
+  Buffer::write_cent_l(StringTemp, &title, sVar4);
   iVar6 = BaseCurrent->intake_2[RSC_NUTRIENTS];
   line.right = line.right + -3;
   line.top = line.top + 3;
@@ -5271,12 +5270,12 @@ void BaseWin::draw_expenses(int a1) {
     uVar3 = TextColourTable[90];
     uVar9 = TextColourTable[91];
   }
-  buffer->set_text_color(uVar3,uVar9,1,1);
+  Buffer::set_text_color(uVar3,uVar9,1,1);
   iVar5 = iVar6;
   if (iVar6 < 0) {
     strcat(StringTemp, "-");
     sVar4 = strlen(StringTemp);
-    line.left = buffer->write_l(StringTemp, &line, sVar4);
+    line.left = Buffer::write_l(StringTemp, &line, sVar4);
     StringTemp[0] = 0;
     iVar5 = -iVar6;
   }
@@ -5285,7 +5284,7 @@ void BaseWin::draw_expenses(int a1) {
       _itoa(0,local_f0,10);
       strcat(StringTemp, local_f0);
       sVar4 = strlen(StringTemp);
-      line.left = buffer->write_l(StringTemp, &line, sVar4);
+      line.left = Buffer::write_l(StringTemp, &line, sVar4);
       StringTemp[0] = 0;
       goto LAB_00413015;
     }
@@ -5301,7 +5300,7 @@ LAB_00413015:
     _itoa(0,local_f0,10);
     strcat(StringTemp, local_f0);
     sVar4 = strlen(StringTemp);
-    line.left = buffer->write_l(StringTemp, &line, sVar4);
+    line.left = Buffer::write_l(StringTemp, &line, sVar4);
     StringTemp[0] = 0;
   }
   if (iVar6 < 0) {
@@ -5310,25 +5309,25 @@ LAB_00413015:
   _itoa(iVar6,local_f0,10);
   strcat(StringTemp, local_f0);
   sVar4 = strlen(StringTemp);
-  line.left = buffer->write_l(StringTemp, &line, sVar4);
+  line.left = Buffer::write_l(StringTemp, &line, sVar4);
   StringTemp[0] = 0;
   strcat(StringTemp, " - ");
   sVar4 = strlen(StringTemp);
-  line.left = buffer->write_l(StringTemp, &line, sVar4);
+  line.left = Buffer::write_l(StringTemp, &line, sVar4);
   iVar6 = local_14;
   StringTemp[0] = 0;
   if (local_14 < 100) {
     _itoa(0,local_f0,10);
     strcat(StringTemp, local_f0);
     sVar4 = strlen(StringTemp);
-    line.left = buffer->write_l(StringTemp, &line, sVar4);
+    line.left = Buffer::write_l(StringTemp, &line, sVar4);
   }
   StringTemp[0] = 0;
   if (iVar6 < 10) {
     _itoa(0,local_f0,10);
     strcat(StringTemp, local_f0);
     sVar4 = strlen(StringTemp);
-    line.left = buffer->write_l(StringTemp, &line, sVar4);
+    line.left = Buffer::write_l(StringTemp, &line, sVar4);
   }
   StringTemp[0] = 0;
   if (iVar6 < 0) {
@@ -5339,7 +5338,7 @@ LAB_00413015:
   strcat(StringTemp, " ");
   strcat(StringTemp, " ");
   sVar4 = strlen(StringTemp);
-  tile_rect.left = buffer->write_l(StringTemp, &line, sVar4);
+  tile_rect.left = Buffer::write_l(StringTemp, &line, sVar4);
   StringTemp[0] = 0;
   local_28 = 1;
   if (0 < iVar2 + -1) {
@@ -5357,7 +5356,7 @@ LAB_00413015:
       local_14 = local_68;
       iVar6 = local_68;
       do {
-        buffer->tile(&sprites3_[0], tile_rect.left,tile_rect.top,tile_rect.left,tile_rect.top,tile_rect.right - tile_rect.left,
+        Buffer::tile(&sprites3_[0], tile_rect.left,tile_rect.top,tile_rect.left,tile_rect.top,tile_rect.right - tile_rect.left,
                      tile_rect.bottom - tile_rect.top);
         tile_rect.left = tile_rect.left + iVar2;
         tile_rect.right = tile_rect.right + iVar2;
@@ -5371,7 +5370,7 @@ LAB_00413015:
         iVar5 = -local_64;
       }
       if (iVar5 <= iVar6) break;
-      buffer->tile(&sprite5_, tile_rect.left,tile_rect.top,tile_rect.left,tile_rect.top,tile_rect.right - tile_rect.left,
+      Buffer::tile(&sprite5_, tile_rect.left,tile_rect.top,tile_rect.left,tile_rect.top,tile_rect.right - tile_rect.left,
                    tile_rect.bottom - tile_rect.top);
       tile_rect.left = tile_rect.left + iVar2;
       tile_rect.right = tile_rect.right + iVar2;
@@ -5385,7 +5384,7 @@ LAB_00413015:
       local_14 = local_68;
       iVar6 = local_68;
       do {
-        buffer->tile(&sprites3_[0], tile_rect.left,tile_rect.top,tile_rect.left,tile_rect.top,tile_rect.right - tile_rect.left,
+        Buffer::tile(&sprites3_[0], tile_rect.left,tile_rect.top,tile_rect.left,tile_rect.top,tile_rect.right - tile_rect.left,
                      tile_rect.bottom - tile_rect.top);
         tile_rect.left = tile_rect.left + iVar2;
         tile_rect.right = tile_rect.right + iVar2;
@@ -5408,7 +5407,7 @@ LAB_00413015:
       local_28 = local_64;
       local_14 = local_14 + local_64;
       do {
-        buffer->tile(&sprites3_[1], tile_rect.left,tile_rect.top,tile_rect.left,tile_rect.top,tile_rect.right - tile_rect.left,
+        Buffer::tile(&sprites3_[1], tile_rect.left,tile_rect.top,tile_rect.left,tile_rect.top,tile_rect.right - tile_rect.left,
                      tile_rect.bottom - tile_rect.top);
         tile_rect.left = tile_rect.left + iVar2;
         tile_rect.right = tile_rect.right + iVar2;
@@ -5436,7 +5435,7 @@ LAB_00413015:
     uVar3 = TextColourTable[110];
     uVar9 = TextColourTable[111];
   }
-  buffer->set_text_color(uVar3,uVar9,1,1);
+  Buffer::set_text_color(uVar3,uVar9,1,1);
   if (iVar6 < 0) {
     local_8c = 1;
     strcat(StringTemp, "-");
@@ -5446,7 +5445,7 @@ LAB_00413015:
     strcat(StringTemp, "+");
     sVar4 = strlen(StringTemp);
   }
-  line.left = buffer->write_l(StringTemp, &line, sVar4);
+  line.left = Buffer::write_l(StringTemp, &line, sVar4);
   StringTemp[0] = 0;
   iVar5 = iVar6;
   if (iVar6 < 0) {
@@ -5456,7 +5455,7 @@ LAB_00413015:
     _itoa(0,local_f0,10);
     strcat(StringTemp, local_f0);
     sVar4 = strlen(StringTemp);
-    line.left = buffer->write_l(StringTemp, &line, sVar4);
+    line.left = Buffer::write_l(StringTemp, &line, sVar4);
   }
   StringTemp[0] = 0;
   iVar5 = iVar6;
@@ -5467,7 +5466,7 @@ LAB_00413015:
     _itoa(0,local_f0,10);
     strcat(StringTemp, local_f0);
     sVar4 = strlen(StringTemp);
-    line.left = buffer->write_l(StringTemp, &line, sVar4);
+    line.left = Buffer::write_l(StringTemp, &line, sVar4);
   }
   StringTemp[0] = 0;
   if (iVar6 < 0) {
@@ -5476,7 +5475,7 @@ LAB_00413015:
   _itoa(iVar6,local_f0,10);
   strcat(StringTemp, local_f0);
   sVar4 = strlen(StringTemp);
-  buffer->write_l(StringTemp, &line, sVar4);
+  Buffer::write_l(StringTemp, &line, sVar4);
   line.right = local_7c;
   local_80 = local_80 + 0x15;
   line.left = local_84;
@@ -5491,17 +5490,17 @@ LAB_00413015:
   title.bottom = local_78;
   line.top = local_80;
   line.bottom = local_78;
-  buffer->box_sprite(&title, &InterfaceBoxStyles[6]);
+  Buffer::box_sprite(&title, &InterfaceBoxStyles[6]);
   title.left = title.left + 3;
   title.top = title.top + 3;
   title.right = title.right + -3;
   title.bottom = title.bottom + -3;
-  buffer->set_text_color(TextColourTable[94],TextColourTable[95],1,1);
+  Buffer::set_text_color(TextColourTable[94],TextColourTable[95],1,1);
   StringTemp[0] = 0;
   strcat(StringTemp, label_get(40));
   CharUpperA(StringTemp);
   sVar4 = strlen(StringTemp);
-  buffer->write_cent_l(StringTemp, &title, sVar4);
+  Buffer::write_cent_l(StringTemp, &title, sVar4);
   iVar6 = BaseCurrent->intake_2[RSC_MINERALS];
   line.right = line.right + -3;
   line.top = line.top + 3;
@@ -5514,12 +5513,12 @@ LAB_00413015:
     uVar3 = TextColourTable[94];
     uVar9 = TextColourTable[95];
   }
-  buffer->set_text_color(uVar3,uVar9,1,1);
+  Buffer::set_text_color(uVar3,uVar9,1,1);
   iVar5 = iVar6;
   if (iVar6 < 0) {
     strcat(StringTemp, "-");
     sVar4 = strlen(StringTemp);
-    line.left = buffer->write_l(StringTemp, &line, sVar4);
+    line.left = Buffer::write_l(StringTemp, &line, sVar4);
     StringTemp[0] = 0;
     iVar5 = -iVar6;
   }
@@ -5528,7 +5527,7 @@ LAB_00413015:
       _itoa(0,local_f0,10);
       strcat(StringTemp, local_f0);
       sVar4 = strlen(StringTemp);
-      line.left = buffer->write_l(StringTemp, &line, sVar4);
+      line.left = Buffer::write_l(StringTemp, &line, sVar4);
       StringTemp[0] = 0;
       goto LAB_00413885;
     }
@@ -5544,7 +5543,7 @@ LAB_00413885:
     _itoa(0,local_f0,10);
     strcat(StringTemp, local_f0);
     sVar4 = strlen(StringTemp);
-    line.left = buffer->write_l(StringTemp, &line, sVar4);
+    line.left = Buffer::write_l(StringTemp, &line, sVar4);
     StringTemp[0] = 0;
   }
   if (iVar6 < 0) {
@@ -5553,26 +5552,26 @@ LAB_00413885:
   _itoa(iVar6,local_f0,10);
   strcat(StringTemp, local_f0);
   sVar4 = strlen(StringTemp);
-  line.left = buffer->write_l(StringTemp, &line, sVar4);
+  line.left = Buffer::write_l(StringTemp, &line, sVar4);
   StringTemp[0] = 0;
   strcat(StringTemp, " - ");
   local_90 = line.left;
   sVar4 = strlen(StringTemp);
-  line.left = buffer->write_l(StringTemp, &line, sVar4);
+  line.left = Buffer::write_l(StringTemp, &line, sVar4);
   iVar6 = local_88;
   StringTemp[0] = 0;
   if (local_88 < 100) {
     _itoa(0,local_f0,10);
     strcat(StringTemp, local_f0);
     sVar4 = strlen(StringTemp);
-    line.left = buffer->write_l(StringTemp, &line, sVar4);
+    line.left = Buffer::write_l(StringTemp, &line, sVar4);
   }
   StringTemp[0] = 0;
   if (iVar6 < 10) {
     _itoa(0,local_f0,10);
     strcat(StringTemp, local_f0);
     sVar4 = strlen(StringTemp);
-    line.left = buffer->write_l(StringTemp, &line, sVar4);
+    line.left = Buffer::write_l(StringTemp, &line, sVar4);
   }
   StringTemp[0] = 0;
   if (iVar6 < 0) {
@@ -5582,9 +5581,9 @@ LAB_00413885:
   strcat(StringTemp, local_f0);
   strcat(StringTemp, " ");
   strcat(StringTemp, " ");
-  buffer->set_text_color(TextColourTable[94],TextColourTable[95],1,1);
+  Buffer::set_text_color(TextColourTable[94],TextColourTable[95],1,1);
   sVar4 = strlen(StringTemp);
-  tile_rect.left = buffer->write_l(StringTemp, &line, sVar4);
+  tile_rect.left = Buffer::write_l(StringTemp, &line, sVar4);
   StringTemp[0] = 0;
   local_28 = 1;
   if (0 < iVar2 + -1) {
@@ -5605,7 +5604,7 @@ LAB_00413885:
       local_14 = local_6c;
       iVar6 = local_6c;
       do {
-        buffer->tile(&sprites2_[0], tile_rect.left,tile_rect.top,tile_rect.left,tile_rect.top,tile_rect.right - tile_rect.left,
+        Buffer::tile(&sprites2_[0], tile_rect.left,tile_rect.top,tile_rect.left,tile_rect.top,tile_rect.right - tile_rect.left,
                      tile_rect.bottom - tile_rect.top);
         tile_rect.left = tile_rect.left + iVar2;
         tile_rect.right = tile_rect.right + iVar2;
@@ -5619,7 +5618,7 @@ LAB_00413885:
         iVar5 = -local_5c;
       }
       if (iVar5 <= iVar6) break;
-      buffer->tile(&sprite5_, tile_rect.left,tile_rect.top,tile_rect.left,tile_rect.top,tile_rect.right - tile_rect.left,
+      Buffer::tile(&sprite5_, tile_rect.left,tile_rect.top,tile_rect.left,tile_rect.top,tile_rect.right - tile_rect.left,
                    tile_rect.bottom - tile_rect.top);
       tile_rect.left = tile_rect.left + iVar2;
       tile_rect.right = tile_rect.right + iVar2;
@@ -5633,7 +5632,7 @@ LAB_00413885:
       local_14 = local_6c;
       iVar6 = local_6c;
       do {
-        buffer->tile(&sprites2_[0], tile_rect.left,tile_rect.top,tile_rect.left,tile_rect.top,tile_rect.right - tile_rect.left,
+        Buffer::tile(&sprites2_[0], tile_rect.left,tile_rect.top,tile_rect.left,tile_rect.top,tile_rect.right - tile_rect.left,
                      tile_rect.bottom - tile_rect.top);
         tile_rect.left = tile_rect.left + iVar2;
         tile_rect.right = tile_rect.right + iVar2;
@@ -5656,7 +5655,7 @@ LAB_00413885:
       local_28 = local_5c;
       local_14 = local_14 + local_5c;
       do {
-        buffer->tile(&sprites2_[1], tile_rect.left,tile_rect.top,tile_rect.left,tile_rect.top,tile_rect.right - tile_rect.left,
+        Buffer::tile(&sprites2_[1], tile_rect.left,tile_rect.top,tile_rect.left,tile_rect.top,tile_rect.right - tile_rect.left,
                      tile_rect.bottom - tile_rect.top);
         tile_rect.left = tile_rect.left + iVar2;
         tile_rect.right = tile_rect.right + iVar2;
@@ -5685,7 +5684,7 @@ LAB_00413885:
     uVar3 = TextColourTable[128];
     uVar9 = TextColourTable[129];
   }
-  buffer->set_text_color(uVar3,uVar9,1,1);
+  Buffer::set_text_color(uVar3,uVar9,1,1);
   if (iVar6 < 0) {
     strcat(StringTemp, "-");
     sVar4 = strlen(StringTemp);
@@ -5694,7 +5693,7 @@ LAB_00413885:
     strcat(StringTemp, "+");
     sVar4 = strlen(StringTemp);
   }
-  line.left = buffer->write_l(StringTemp, &line, sVar4);
+  line.left = Buffer::write_l(StringTemp, &line, sVar4);
   StringTemp[0] = 0;
   iVar5 = iVar6;
   if (iVar6 < 0) {
@@ -5704,7 +5703,7 @@ LAB_00413885:
     _itoa(0,local_f0,10);
     strcat(StringTemp, local_f0);
     sVar4 = strlen(StringTemp);
-    line.left = buffer->write_l(StringTemp, &line, sVar4);
+    line.left = Buffer::write_l(StringTemp, &line, sVar4);
   }
   StringTemp[0] = 0;
   iVar5 = iVar6;
@@ -5715,7 +5714,7 @@ LAB_00413885:
     _itoa(0,local_f0,10);
     strcat(StringTemp, local_f0);
     sVar4 = strlen(StringTemp);
-    line.left = buffer->write_l(StringTemp, &line, sVar4);
+    line.left = Buffer::write_l(StringTemp, &line, sVar4);
   }
   StringTemp[0] = 0;
   iVar5 = iVar6;
@@ -5728,7 +5727,7 @@ LAB_00413885:
     strcat(StringTemp, "*");
   }
   sVar4 = strlen(StringTemp);
-  buffer->write_l(StringTemp, &line, sVar4);
+  Buffer::write_l(StringTemp, &line, sVar4);
   line.right = local_7c;
   local_80 = local_80 + 0x15;
   local_78 = local_78 + 0x15;
@@ -5743,17 +5742,17 @@ LAB_00413885:
   title.bottom = local_78;
   line.top = local_80;
   line.bottom = local_78;
-  buffer->box_sprite(&title, &InterfaceBoxStyles[6]);
+  Buffer::box_sprite(&title, &InterfaceBoxStyles[6]);
   title.left = title.left + 3;
   title.top = title.top + 3;
   title.right = title.right + -3;
   title.bottom = title.bottom + -3;
-  buffer->set_text_color(TextColourTable[86],TextColourTable[87],1,1);
+  Buffer::set_text_color(TextColourTable[86],TextColourTable[87],1,1);
   StringTemp[0] = 0;
   strcat(StringTemp, label_get(36));
   CharUpperA(StringTemp);
   sVar4 = strlen(StringTemp);
-  buffer->write_cent_l(StringTemp, &title, sVar4);
+  Buffer::write_cent_l(StringTemp, &title, sVar4);
   iVar6 = BaseCurrent->intake_2[RSC_ENERGY];
   line.right = line.right + -3;
   line.top = line.top + 3;
@@ -5766,12 +5765,12 @@ LAB_00413885:
     uVar3 = TextColourTable[86];
     uVar9 = TextColourTable[87];
   }
-  buffer->set_text_color(uVar3,uVar9,1,1);
+  Buffer::set_text_color(uVar3,uVar9,1,1);
   iVar5 = iVar6;
   if (iVar6 < 0) {
     strcat(StringTemp, "-");
     sVar4 = strlen(StringTemp);
-    line.left = buffer->write_l(StringTemp, &line, sVar4);
+    line.left = Buffer::write_l(StringTemp, &line, sVar4);
     StringTemp[0] = 0;
     iVar5 = -iVar6;
   }
@@ -5780,7 +5779,7 @@ LAB_00413885:
       _itoa(0,local_f0,10);
       strcat(StringTemp, local_f0);
       sVar4 = strlen(StringTemp);
-      line.left = buffer->write_l(StringTemp, &line, sVar4);
+      line.left = Buffer::write_l(StringTemp, &line, sVar4);
       StringTemp[0] = 0;
       goto LAB_00414178;
     }
@@ -5796,7 +5795,7 @@ LAB_00414178:
     _itoa(0,local_f0,10);
     strcat(StringTemp, local_f0);
     sVar4 = strlen(StringTemp);
-    line.left = buffer->write_l(StringTemp, &line, sVar4);
+    line.left = Buffer::write_l(StringTemp, &line, sVar4);
     StringTemp[0] = 0;
   }
   if (iVar6 < 0) {
@@ -5805,25 +5804,25 @@ LAB_00414178:
   _itoa(iVar6,local_f0,10);
   strcat(StringTemp, local_f0);
   sVar4 = strlen(StringTemp);
-  line.left = buffer->write_l(StringTemp, &line, sVar4);
+  line.left = Buffer::write_l(StringTemp, &line, sVar4);
   StringTemp[0] = 0;
   strcat(StringTemp, " - ");
   sVar4 = strlen(StringTemp);
-  line.left = buffer->write_l(StringTemp, &line, sVar4);
+  line.left = Buffer::write_l(StringTemp, &line, sVar4);
   iVar6 = local_54;
   StringTemp[0] = 0;
   if (local_54 < 100) {
     _itoa(0,local_f0,10);
     strcat(StringTemp, local_f0);
     sVar4 = strlen(StringTemp);
-    line.left = buffer->write_l(StringTemp, &line, sVar4);
+    line.left = Buffer::write_l(StringTemp, &line, sVar4);
   }
   StringTemp[0] = 0;
   if (iVar6 < 10) {
     _itoa(0,local_f0,10);
     strcat(StringTemp, local_f0);
     sVar4 = strlen(StringTemp);
-    line.left = buffer->write_l(StringTemp, &line, sVar4);
+    line.left = Buffer::write_l(StringTemp, &line, sVar4);
   }
   StringTemp[0] = 0;
   if (iVar6 < 0) {
@@ -5834,7 +5833,7 @@ LAB_00414178:
   strcat(StringTemp, " ");
   strcat(StringTemp, " ");
   sVar4 = strlen(StringTemp);
-  tile_rect.left = buffer->write_l(StringTemp, &line, sVar4);
+  tile_rect.left = Buffer::write_l(StringTemp, &line, sVar4);
   StringTemp[0] = 0;
   local_54 = 1;
   if (0 < iVar2 + -1) {
@@ -5853,7 +5852,7 @@ LAB_00414178:
       local_14 = local_60;
       iVar6 = local_60;
       do {
-        buffer->tile(&sprite5_, tile_rect.left,tile_rect.top,tile_rect.left,tile_rect.top,tile_rect.right - tile_rect.left,
+        Buffer::tile(&sprite5_, tile_rect.left,tile_rect.top,tile_rect.left,tile_rect.top,tile_rect.right - tile_rect.left,
                      tile_rect.bottom - tile_rect.top);
         tile_rect.left = tile_rect.left + iVar2;
         tile_rect.right = tile_rect.right + iVar2;
@@ -5861,7 +5860,7 @@ LAB_00414178:
       } while (iVar6 != 0);
     }
     for (iVar6 = 0; iVar6 < -local_74; iVar6 = iVar6 + 1) {
-      buffer->tile(&sprite5_, tile_rect.left,tile_rect.top,tile_rect.left,tile_rect.top,tile_rect.right - tile_rect.left,
+      Buffer::tile(&sprite5_, tile_rect.left,tile_rect.top,tile_rect.left,tile_rect.top,tile_rect.right - tile_rect.left,
                    tile_rect.bottom - tile_rect.top);
       tile_rect.left = tile_rect.left + iVar2;
       tile_rect.right = tile_rect.right + iVar2;
@@ -5874,7 +5873,7 @@ LAB_00414178:
       local_14 = local_60;
       iVar6 = local_60;
       do {
-        buffer->tile(&sprite5_, tile_rect.left,tile_rect.top,tile_rect.left,tile_rect.top,tile_rect.right - tile_rect.left,
+        Buffer::tile(&sprite5_, tile_rect.left,tile_rect.top,tile_rect.left,tile_rect.top,tile_rect.right - tile_rect.left,
                      tile_rect.bottom - tile_rect.top);
         tile_rect.left = tile_rect.left + iVar2;
         tile_rect.right = tile_rect.right + iVar2;
@@ -5896,7 +5895,7 @@ LAB_00414178:
       local_14 = local_14 + local_74;
       iVar6 = local_74;
       do {
-        buffer->tile(&sprites1_[1], tile_rect.left,tile_rect.top,tile_rect.left,tile_rect.top,tile_rect.right - tile_rect.left,
+        Buffer::tile(&sprites1_[1], tile_rect.left,tile_rect.top,tile_rect.left,tile_rect.top,tile_rect.right - tile_rect.left,
                      tile_rect.bottom - tile_rect.top);
         tile_rect.left = tile_rect.left + iVar2;
         tile_rect.right = tile_rect.right + iVar2;
@@ -5924,7 +5923,7 @@ LAB_00414178:
     uVar3 = TextColourTable[110];
     uVar9 = TextColourTable[111];
   }
-  buffer->set_text_color(uVar3,uVar9,1,1);
+  Buffer::set_text_color(uVar3,uVar9,1,1);
   if (iVar2 < 0) {
     strcat(StringTemp, "-");
     sVar4 = strlen(StringTemp);
@@ -5933,7 +5932,7 @@ LAB_00414178:
     strcat(StringTemp, "+");
     sVar4 = strlen(StringTemp);
   }
-  line.left = buffer->write_l(StringTemp, &line, sVar4);
+  line.left = Buffer::write_l(StringTemp, &line, sVar4);
   StringTemp[0] = 0;
   iVar6 = iVar2;
   if (iVar2 < 0) {
@@ -5943,7 +5942,7 @@ LAB_00414178:
     _itoa(0,local_f0,10);
     strcat(StringTemp, local_f0);
     sVar4 = strlen(StringTemp);
-    line.left = buffer->write_l(StringTemp, &line, sVar4);
+    line.left = Buffer::write_l(StringTemp, &line, sVar4);
   }
   StringTemp[0] = 0;
   iVar6 = iVar2;
@@ -5954,7 +5953,7 @@ LAB_00414178:
     _itoa(0,local_f0,10);
     strcat(StringTemp, local_f0);
     sVar4 = strlen(StringTemp);
-    line.left = buffer->write_l(StringTemp, &line, sVar4);
+    line.left = Buffer::write_l(StringTemp, &line, sVar4);
   }
   StringTemp[0] = 0;
   if (iVar2 < 0) {
@@ -5963,13 +5962,13 @@ LAB_00414178:
   _itoa(iVar2,local_f0,10);
   strcat(StringTemp, local_f0);
   sVar4 = strlen(StringTemp);
-  line.left = buffer->write_l(StringTemp, &line, sVar4);
-  buffer->set_text_color(TextColourTable[84],TextColourTable[85],1,1);
+  line.left = Buffer::write_l(StringTemp, &line, sVar4);
+  Buffer::set_text_color(TextColourTable[84],TextColourTable[85],1,1);
   line.bottom = local_78 + 0x15;
   line.top = local_80 + 0x15;
   line.left = local_84;
   line.right = local_7c;
-  buffer->box_sprite(&line, &InterfaceBoxStyles[6]);
+  Buffer::box_sprite(&line, &InterfaceBoxStyles[6]);
   StringTemp[0] = 0;
   line.left = uVar7;
   strcat(StringTemp, "  =  ");
@@ -5978,23 +5977,23 @@ LAB_00414178:
     CharUpperA(StringTemp);
   }
   else {
-    buffer->set_text_color(TextColourTable[110],TextColourTable[111],1,1);
+    Buffer::set_text_color(TextColourTable[110],TextColourTable[111],1,1);
     strcat(StringTemp, label_get(697));
   }
   sVar4 = strlen(StringTemp);
-  buffer->write_l(StringTemp, &line, sVar4);
-  buffer->set_text_color(TextColourTable[84],TextColourTable[85],1,1);
+  Buffer::write_l(StringTemp, &line, sVar4);
+  Buffer::set_text_color(TextColourTable[84],TextColourTable[85],1,1);
   line.left = local_90;
   line.right = local_90;
   StringTemp[0] = 0;
   strcat(StringTemp, label_get(655));
   CharUpperA(StringTemp);
   sVar4 = strlen(StringTemp);
-  buffer->write_right_l(StringTemp, &line, sVar4);
+  Buffer::write_right_l(StringTemp, &line, sVar4);
   StringTemp[0] = 0;
   strcat(StringTemp, " - ");
   sVar4 = strlen(StringTemp);
-  iVar6 = buffer->write_l(StringTemp, &line, sVar4);
+  iVar6 = Buffer::write_l(StringTemp, &line, sVar4);
   iVar2 = local_60;
   line.left = iVar6 + 5;
   StringTemp[0] = 0;
@@ -6007,18 +6006,18 @@ LAB_00414178:
   }
   CharUpperA(StringTemp);
   sVar4 = strlen(StringTemp);
-  uVar7 = buffer->write_l(StringTemp, &line, sVar4);
+  uVar7 = Buffer::write_l(StringTemp, &line, sVar4);
   if (local_60 != 0) {
-    buffer->set_text_color(TextColourTable[110],TextColourTable[111],1,1);
+    Buffer::set_text_color(TextColourTable[110],TextColourTable[111],1,1);
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(56));
     CharUpperA(StringTemp);
     line.left = uVar7;
     sVar4 = strlen(StringTemp);
-    line.left = buffer->write_l(StringTemp, &line, sVar4);
-    buffer->set_text_color(TextColourTable[84],TextColourTable[85],1,1);
+    line.left = Buffer::write_l(StringTemp, &line, sVar4);
+    Buffer::set_text_color(TextColourTable[84],TextColourTable[85],1,1);
     sVar4 = strlen(")");
-    buffer->write_l(const_cast<char *>(")"), &line, sVar4);
+    Buffer::write_l(const_cast<char *>(")"), &line, sVar4);
   }
   if (param_2 == 0) {
     this->soft_update(&production_outer_rect_);
@@ -6026,7 +6025,7 @@ LAB_00414178:
   else {
     this->update(&production_outer_rect_, 0);
   }
-  buffer->set_clip(&saved_clip);
+  Buffer::set_clip(&saved_clip);
   return;
 }
 // Superseded seed deleted; seed paths below are historical Git provenance.
