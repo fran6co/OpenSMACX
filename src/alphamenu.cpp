@@ -642,14 +642,13 @@ int AlphaMenu::backfill_func(GraphicWin *target) {
 // RECOVERY_BINDING: v1 {"evidence": ["Retained seeds src/unrecovered/00402f40.cpp,004032a0.cpp,00403af0.cpp and src/recovered/units/00403340.cpp,00403680.cpp,00403830.cpp; pinned original callback style27/29, positive hide height, branch-only clip restoration and actual caller dispatch audited by coordinator."], "reason": "Recover AlphaMenu owner behavior through existing Menu/GraphicWin/Buffer inheritance and owned Sprite lifetimes; historical seed identity and extents remain obligations, not measurement claims."}
 // symbol    ?fill_func@AlphaMenu@@SAHPAVGraphicWin@@HPAUtagRECT@@@Z
 int __cdecl AlphaMenu::fill_func(GraphicWin *target, int mode, RECT *clip) {
-  Buffer *const canvas = static_cast<Buffer *>(target);
   RECT draw_clip = *clip;
   draw_clip.left = 1;
   draw_clip.right = target->buffer_working_rect()->right - 1;
-  canvas->set_clip(&draw_clip);
-  canvas->box_sprite(target->buffer_working_rect(),
-                     &InterfaceBoxStyles[mode != 0 ? 29 : 27]);
-  canvas->set_clip(target->buffer_working_rect());
+  target->Buffer::set_clip(&draw_clip);
+  target->Buffer::box_sprite(target->buffer_working_rect(),
+                    &InterfaceBoxStyles[mode != 0 ? 29 : 27]);
+  target->Buffer::set_clip(target->buffer_working_rect());
   return 1;
 }
 
