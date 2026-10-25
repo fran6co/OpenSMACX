@@ -142,7 +142,8 @@ def check_requirements(inventory, candidate):
     grids = {name: _grid(report) for name, report in reports.items()}
     binary_graph_required = ("unit_flag_sets" in reports["binary"] and any(
         item["current"] and item["value"].get("kind") in {
-            "compiler_generated_vtable", "object_initial_data", "tu_private_literal", "shared_function_body"}
+            "compiler_generated_vtable", "compiler_generated_vbtable",
+            "object_initial_data", "tu_private_literal", "shared_function_body"}
         for item in known.values()))
     graph_grids = {
         name: _graph_trial_grid(report, grids[name][0], grids[name][1],
@@ -201,14 +202,19 @@ def check_requirements(inventory, candidate):
         item = known[key]["value"]
         unit, flags, observation, witness = (row.get(name) for name in ("unit", "flags", "observation", "witness"))
         generated_units, generated_trials, coverage_gap = generated_grid
-        if (item.get("kind") != "compiler_generated_vtable" or not isinstance(unit, str) or not unit
+        source_kind = {"compiler_generated_vtable": "vtable",
+                       "compiler_generated_vbtable": "vbtable"}.get(item.get("kind"))
+        prefix = {"vtable": "??_7", "vbtable": "??_8"}.get(source_kind)
+        if (prefix is None
+                or not isinstance(unit, str) or not unit
                 or not isinstance(flags, list) or any(not isinstance(flag, str) for flag in flags)
                 or (not coverage_gap and (unit, tuple(flags)) not in generated_trials)
                 or (coverage_gap and tuple(flags) not in tuple(tuple(value) for value in reports["binary"].get("flag_sets", [])))
                 or observation not in ("not_emitted", "unsupported_symbol")
                 or (not coverage_gap and unit not in generated_units)
                 or not isinstance(witness, dict) or witness.get("symbol") != item.get("symbol")
-                or (observation == "not_emitted" and not definition_absent(witness))):
+                or not isinstance(witness.get("symbol"), str) or not witness["symbol"].startswith(prefix)
+                or (observation == "not_emitted" and not definition_absent(witness, source_kind=source_kind))):
             raise ValueError("invalid generated definition-absence coverage")
         require_graph_context("binary", unit, flags, row.get("graph_flags"))
         identity = (unit, tuple(flags))
@@ -223,12 +229,13 @@ def check_requirements(inventory, candidate):
             continue
         generated_absences[key][identity] = {**row, "graph_flags": [row.get("graph_flags", flags)]}
     observations = defaultdict(dict)
-    for backend, collection, kind in (("layout", "members", "direct_member_offset"),
-                                       ("layout", "bases", "nonvirtual_base_offset"),
-                                       ("binary", "generated_tables", "compiler_generated_vtable"),
-                                       ("binary", "object_definitions", "object_initial_data"),
-                                       ("binary", "literal_definitions", "tu_private_literal"),
-                                       ("binary", "shared_functions", "shared_function_body")):
+    for backend, collection, kinds in (("layout", "members", {"direct_member_offset"}),
+                                       ("layout", "bases", {"nonvirtual_base_offset"}),
+                                       ("binary", "generated_tables", {"compiler_generated_vtable",
+                                                                         "compiler_generated_vbtable"}),
+                                       ("binary", "object_definitions", {"object_initial_data"}),
+                                       ("binary", "literal_definitions", {"tu_private_literal"}),
+                                       ("binary", "shared_functions", {"shared_function_body"})):
         for row in reports[backend].get(collection, []):
             key = row.get("interpretation_id")
             if key is None:
@@ -236,7 +243,8 @@ def check_requirements(inventory, candidate):
             require_digest(key)
             if key not in known or not known[key]["current"]:
                 continue  # Other source requirements, or stale historical measurements.
-            if known[key]["value"].get("kind") != kind:
+            kind = known[key]["value"].get("kind")
+            if kind not in kinds:
                 raise ValueError("structural measurement kind disagrees with source interpretation")
             unit, flags = row.get("unit"), row.get("flags")
             if (not isinstance(unit, str) or not unit or not isinstance(flags, list)
@@ -244,7 +252,8 @@ def check_requirements(inventory, candidate):
                 raise ValueError("structural measurement has no compiler witness identity")
             require_graph_context(backend, unit, flags, row.get("graph_flags"))
             witness = (unit, tuple(flags))
-            if kind in ("compiler_generated_vtable", "object_initial_data", "tu_private_literal"):
+            if kind in ("compiler_generated_vtable", "compiler_generated_vbtable",
+                        "object_initial_data", "tu_private_literal"):
                 result = _all((Result(row.get("definition", Result.UNKNOWN)),
                                Result(row.get("content", Result.UNKNOWN))))
                 reason = row.get("reason", row.get("proof", {}).get("reason", "table definition and bounded contents compared"))
@@ -279,7 +288,8 @@ def check_requirements(inventory, candidate):
     for key, item in sorted(known.items()):
         kind = item["value"].get("kind")
         backend = {"direct_member_offset": "layout", "nonvirtual_base_offset": "layout",
-                   "compiler_generated_vtable": "binary", "object_initial_data": "binary",
+                   "compiler_generated_vtable": "binary", "compiler_generated_vbtable": "binary",
+                   "object_initial_data": "binary",
                    "tu_private_literal": "binary",
                    "shared_function_body": "binary"}.get(kind)
         row = {"interpretation_id": key, "entity_id": item["entity_id"], "kind": kind,
@@ -293,7 +303,7 @@ def check_requirements(inventory, candidate):
         else:
             units, expected_pairs, gap = grids[backend]
             observed = observations[key]
-            if kind == "compiler_generated_vtable":
+            if kind in ("compiler_generated_vtable", "compiler_generated_vbtable"):
                 generated_units, _, generated_gap = generated_grid
                 units = sorted(set(units) | set(generated_units))
                 gap = gap or generated_gap
@@ -397,7 +407,7 @@ def check_requirements(inventory, candidate):
                             for trial in row["trials"])
                     for flags in {flags for _, flags in expected_pairs}):
                 gap = gap or "each declared requirement needs an actual layout witness in every configured trial; absence alone is insufficient"
-            if kind == "compiler_generated_vtable" and any(
+            if kind in ("compiler_generated_vtable", "compiler_generated_vbtable") and any(
                     not any(trial["flags"] == list(flags)
                             and not trial.get("coverage_only") and (trial["unit"], flags) in observed
                             for trial in row["trials"])

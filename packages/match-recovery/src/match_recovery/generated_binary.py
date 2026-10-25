@@ -16,7 +16,7 @@ from match_recovery.pe_coff import weak_external
 MAX_ENTRY_DIAGNOSTICS = 128
 
 
-def definition_absent(witness):
+def definition_absent(witness, *, source_kind="vtable"):
     """Only an inspected symbol table can establish non-emission in one object.
 
     Ordinary unresolved externals are declarations, not definitions. Common,
@@ -24,8 +24,10 @@ def definition_absent(witness):
     them absence just because the ordinary external-definition scan skips them.
     This evidence is consumed within the same fresh native check, not replayed.
     """
-    if (not isinstance(witness, dict) or witness.get("basis") != "compiled_coff_symbols"
-            or not isinstance(witness.get("symbol"), str) or not witness["symbol"].startswith("??_7")
+    prefix = {"vtable": "??_7", "vbtable": "??_8"}.get(source_kind)
+    if (prefix is None or not isinstance(witness, dict) or witness.get("basis") != "compiled_coff_symbols"
+            or not isinstance(witness.get("symbol"), str)
+            or not witness["symbol"].startswith(prefix)
             or not isinstance(witness.get("records"), list)):
         return False
     return all(isinstance(row, dict) and set(row) == {"storage", "section", "value", "type"}
@@ -51,7 +53,8 @@ def generated_coverage(bindings, objects):
                        "records": [{key: getattr(symbol, key) for key in ("storage", "section", "value", "type")}
                                    for symbol in matches]}
             rows.append({"interpretation_id": binding.interpretation_id, "unit": unit,
-                         "observation": "not_emitted" if definition_absent(witness) else "unsupported_symbol",
+                         "observation": ("not_emitted" if definition_absent(witness, source_kind=binding.source_kind)
+                                         else "unsupported_symbol"),
                          "witness": witness})
     return rows
 
@@ -149,14 +152,92 @@ def _validate_pointer_slots(binding, section):
         raise ValueError("overlapping vtable relocations")
 
 
+def _validate_vbtable_words(binding, section):
+    if binding.origin.address % 4:
+        raise ValueError("i386 vbtable original start must be four-byte aligned")
+    if section.alignment < 4:
+        raise ValueError("MSVC vbtable COFF section alignment must be at least four bytes")
+    if not section.data:
+        raise ValueError("MSVC vbtable must contain at least one complete signed offset word")
+    if len(section.data) % 4 or (binding.span is not None and (binding.span.end - binding.span.start) % 4):
+        raise ValueError("i386 vbtable extent must contain complete signed four-byte offsets")
+    if section.relocations:
+        raise ValueError("MSVC vbtable must contain literal offsets without COFF relocations")
+
+
+def _signed_offsets(data):
+    return [int.from_bytes(data[offset:offset + 4], "little", signed=True)
+            for offset in range(0, len(data), 4)]
+
+
+def _check_vbtable(binding, unit, section, image):
+    _validate_vbtable_words(binding, section)
+    candidate_offsets = _signed_offsets(section.data)
+    diagnostic = {"original_extent": (None if binding.span is None else
+                                       {"start": binding.span.start, "end": binding.span.end}),
+                  "emitted_size": len(section.data),
+                  "candidate_signed_offsets": candidate_offsets[:MAX_ENTRY_DIAGNOSTICS],
+                  "omitted_candidate_offsets": max(0, len(candidate_offsets) - MAX_ENTRY_DIAGNOSTICS),
+                  "original_signed_offsets": None,
+                  "omitted_original_offsets": None,
+                  "candidate_coff_relocations": [],
+                  "original_absolute_relocations": None,
+                  "limitations": ["signed offset values are diagnostic; they do not identify their target bases",
+                                  "candidate size does not supply an unknown original extent",
+                                  "exact bounded bytes do not prove complete class hierarchy or linked selection"]}
+    row = {"symbol": binding.symbol, "unit": unit, "address": f"0x{binding.origin.address:08X}",
+           "interpretation_id": binding.interpretation_id,
+           "source": {"path": binding.path, "line": binding.line},
+           "definition": Result.PASS, "content": Result.UNKNOWN, "diagnostic": diagnostic}
+    if binding.span is None:
+        row["reason"] = "original vbtable extent is not declared; content remains unverified"
+        return row
+    original = image.read(binding.span)
+    original_offsets = _signed_offsets(original)
+    diagnostic["original_signed_offsets"] = original_offsets[:MAX_ENTRY_DIAGNOSTICS]
+    diagnostic["omitted_original_offsets"] = max(0, len(original_offsets) - MAX_ENTRY_DIAGNOSTICS)
+    try:
+        absolute_sites = image.absolute_sites(binding.span)
+    except ValueError as error:
+        row["reason"] = f"original vbtable relocation evidence unavailable: {error}"
+        return row
+    diagnostic["original_absolute_relocations"] = sorted(absolute_sites)
+    if absolute_sites:
+        row.update(content=Result.FAIL, reason="original vbtable contains PE absolute relocation sites",
+                   proof={"result": Result.FAIL, "boundary": Result.PASS,
+                          "bytes": Result.UNKNOWN, "references": Result.FAIL,
+                          "original_size": len(original), "candidate_size": len(section.data)})
+    elif len(section.data) != len(original):
+        row.update(content=Result.FAIL, reason="candidate does not match the independently declared vbtable extent",
+                   proof={"result": Result.FAIL, "boundary": Result.FAIL,
+                          "bytes": Result.UNKNOWN, "references": Result.PASS,
+                          "original_size": len(original), "candidate_size": len(section.data)})
+    elif section.data != original:
+        row.update(content=Result.FAIL, reason="literal signed vbtable offset bytes differ",
+                   proof={"result": Result.FAIL, "boundary": Result.PASS,
+                          "bytes": Result.FAIL, "references": Result.PASS,
+                          "original_size": len(original), "candidate_size": len(section.data)})
+    else:
+        row.update(content=Result.PASS, proof={"result": Result.PASS, "boundary": Result.PASS,
+                                               "bytes": Result.PASS, "references": Result.PASS,
+                                               "original_size": len(original), "candidate_size": len(section.data),
+                                               "original_sha256": hashlib.sha256(original).hexdigest(),
+                                               "candidate_sha256": hashlib.sha256(section.data).hexdigest(),
+                                               "pe_absolute_relocations": []})
+    return row
+
+
 def check_generated(bindings, objects, image, external_targets):
     pin = hashlib.sha256(image.data).hexdigest()
     targets, rows, emitted = {}, [], []
     for binding in bindings:
         if binding.origin.image_sha256 != pin or binding.origin.address_space != "pe:va":
             raise ValueError("generated binding belongs to another image")
-        if not binding.symbol.startswith("??_7"):
-            raise ValueError("MSVC vtable binding requires an exact compiler vftable symbol")
+        prefix = "??_7" if binding.source_kind == "vtable" else "??_8"
+        if not binding.symbol.startswith(prefix):
+            if binding.source_kind == "vtable":
+                raise ValueError("MSVC vtable binding requires an exact compiler vftable symbol")
+            raise ValueError(f"MSVC {binding.source_kind} binding requires an exact compiler symbol")
         image.read(Span(binding.origin.address, binding.origin.address + 4))
         found = []
         for unit, obj in objects.items():
@@ -173,7 +254,9 @@ def check_generated(bindings, objects, image, external_targets):
                      and section.flags & 0x1000 and section.flags & 0x40
                      and not section.flags & (0x20 | 0x80000000))
             if not valid:
-                raise ValueError("vtable requires an isolated read-only data COMDAT at offset zero")
+                if binding.source_kind == "vtable":
+                    raise ValueError("vtable requires an isolated read-only data COMDAT at offset zero")
+                raise ValueError(f"{binding.source_kind} requires an isolated read-only data COMDAT at offset zero")
             found.append((unit, obj, section))
         if not found:
             continue  # Uncompiled owners do not create reference bindings.
@@ -187,6 +270,9 @@ def check_generated(bindings, objects, image, external_targets):
         if type(address) is int:
             source_symbols[address].append(symbol)
     for binding, unit, obj, section in emitted:
+        if binding.source_kind == "vbtable":
+            rows.append(_check_vbtable(binding, unit, section, image))
+            continue
         row = {"symbol": binding.symbol, "unit": unit, "address": f"0x{binding.origin.address:08X}",
                "interpretation_id": binding.interpretation_id,
                "source": {"path": binding.path, "line": binding.line},

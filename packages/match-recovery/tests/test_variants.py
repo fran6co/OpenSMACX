@@ -460,7 +460,7 @@ def test_body_variant_preserves_existing_tu_local_domain_with_static_coff(projec
 
 @pytest.mark.parametrize("annotation", [
     "// RECOVERY_OBJECT: v1 0x00401100 _object",
-    "// RECOVERY_GENERATED: v1 vtable 0x00401100 ? _table 0x00401000",
+    "// RECOVERY_GENERATED: v1 vtable 0x00401100 ? ??_7Table@@6B@ 0x00401000",
     "// RECOVERY_MEMBER: v1 C member 0x10 0x00401000",
 ])
 def test_other_recovery_interpretations_cannot_change_under_baseline_scoring(project, annotation):

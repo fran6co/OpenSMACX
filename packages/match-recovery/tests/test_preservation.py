@@ -277,7 +277,7 @@ def test_unannotated_product_unit_is_not_silently_omitted(project):
                                         "// RECOVERY_MEMBER: v1 Model field 0x4 0x00401010",
                                         "// RECOVERY_MEMBER: v3 Model field Other* 0x4 0x00401010",
                                         "// RECOVERY_BASE: v1 Model Base 0x0 0x00401010",
-                                        "// RECOVERY_GENERATED: v1 vtable 0x00402000 ? _table 0x00401010"])
+                                        "// RECOVERY_GENERATED: v1 vtable 0x00402000 ? ??_7Table@@6B@ 0x00401010"])
 def test_object_and_structural_source_bindings_are_not_hidden_by_unchanged_code(project, annotation):
     header = project / "code/model.h"
     header.write_text(header.read_text() + annotation + "\n")
