@@ -1,0 +1,24 @@
+{
+  "event_id": "ba610a034fd15c1a21edc0ab1e2b2d1ac4156c3ad62c78f093c8b532725932d4",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_socialwin_handlers.py",
+      "recovery/tests/test_win_tree_helpers_actual_source.py",
+      "recovery/tests/test_win_typed_access_actual_source_oct13y.py",
+      "src/win.cpp"
+    ],
+    "evidence": [
+      "Current unchanged-helper trial restores original calls without exact losses or scoped residual changes. Authorize at most three ordinary body candidates per affected caller in this new helper-visibility context; no flags, annotations or unsafe-path changes.",
+      "Pin 0x5F68D8-0x5F6901 constructs a right-click RECT with zero left/top, unchanged original right and bottom minus top. Review and recover this original quirk rather than normalizing it to width. Add relevant actual-source regression control.",
+      "Adapt existing relocation-sensitive fixtures only for the two complete helper block moves. Preserve identity, spans, historical claims and all lessons. Full build/link, source checks, scoped preservation and independent source review still precede integration."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "win-callers-and-relocation-controls-oct25w",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:win-visibility-oct25t"
+}
