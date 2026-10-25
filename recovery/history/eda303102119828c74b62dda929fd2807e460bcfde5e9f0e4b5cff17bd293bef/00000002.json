@@ -1,0 +1,24 @@
+{
+  "event_id": "a7f0ccc9d0c76bfb60e8b5364a45258cdf4f01c8d264eda89b3f711559e57b92",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/game_save_load_host_control.cpp",
+      "recovery/tests/test_blink_timer_actual_source.py",
+      "recovery/tests/test_editor_generate.py",
+      "recovery/tests/test_mapwin_radius.py",
+      "recovery/tests/test_mapwin_view_roles_oct17.py"
+    ],
+    "evidence": [
+      "Align these host declarations and signed scenarios with the recovered three-member family; no positive or damage assertion is removed.",
+      "If affected actual-source tests expose old mock APIs, the coordinator may repair those host mocks against actual existing production semantics, preserving scenarios/assertions and retaining paired baseline failure evidence. Do not change product behavior, weaken checks or label incomplete test runs passing."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "47ebc72b1d234a946a79686de7423fd3a2b7a0eaed6a91fefadfd4ae8afbd4fc",
+  "request_id": "actual-source-host-fixture-closure",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:mapwin-coordinate-oct25q"
+}

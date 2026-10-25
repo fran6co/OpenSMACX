@@ -185,8 +185,8 @@ struct GraphicWin : Win, Buffer {
     void on_update() { ++updates; update_event = event_count; }
 };
 struct MapWin : virtual GraphicWin {
-    int field_1DD98_, field_1DDBC_, field_1DDC0_;
-    MapWin() : GraphicWin(), field_1DD98_(-7), field_1DDBC_(0), field_1DDC0_(0) {}
+    int zoom_offset_, field_1DDBC_, field_1DDC0_;
+    MapWin() : GraphicWin(), zoom_offset_(-7), field_1DDBC_(0), field_1DDC0_(0) {}
     void tile_to_pixel(int x,int y,int *px,int *py) {
         *px=x*8+5; *py=y*6+3;
     }

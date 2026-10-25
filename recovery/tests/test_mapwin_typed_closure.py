@@ -98,10 +98,10 @@ struct MapWin {
     uint32_t vfptr_word;
     TerrainCacheEntry *owned_;
     int field_1DD6C_;
-    int field_1DD98_;
+    int zoom_offset_;
     int redraw_calls;
     int redraw_arg;
-    MapWin() : vfptr_word(0), owned_(0), field_1DD6C_(25), field_1DD98_(0),
+    MapWin() : vfptr_word(0), owned_(0), field_1DD6C_(25), zoom_offset_(0),
         redraw_calls(0), redraw_arg(-1) {}
     void draw_map(int mode) { ++redraw_calls; redraw_arg=mode; }
     void on_redraw();
@@ -221,7 +221,7 @@ int main() {
     w.owned_=cache;
     MapWinCaptionScale=0;
     MapWinCaptionDivisor=1;
-    w.field_1DD98_=0;
+    w.zoom_offset_=0;
     tile_storage[tile_index(4,1)].climate=0x80;
     tile_storage[tile_index(4,1)].bit2=0x200;
     AltDirectionTable[0]=3;

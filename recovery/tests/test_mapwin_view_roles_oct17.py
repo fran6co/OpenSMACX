@@ -141,11 +141,12 @@ def _game_io_fixture(body):
     assert body.count("fread(") == 6
     body = body.replace("fwrite(", "plain_write(").replace("fread(", "plain_read(")
     return r'''#include <stdint.h>
+#include <string.h>
 #define __cdecl
 struct FILE {};
 struct MapWin {
   uint32_t map_view_index_, view_active_, field_1DD70_;
-  uint32_t field_1DD98_, field_1DD9C_, field_1DDA0_;
+  int32_t zoom_offset_, center_x_, center_y_;
 };
 int GameDataEncryptedMode = 0;
 int GameDataWriteMode = 0;
@@ -158,7 +159,10 @@ static int transfer(void *p, int write, int encrypted, unsigned int width,
   int i = EventCount++;
   Events[i].address = p; Events[i].write = write; Events[i].encrypted = encrypted;
   Events[i].width = (int)width; Events[i].count = (int)count;
-  if (!write) *(uint32_t *)p = 0xA5000000U + (uint32_t)i;
+  if (!write) {
+    uint32_t raw = 0xA5000000U + (uint32_t)i;
+    memcpy(p, &raw, sizeof(raw));
+  }
   if (i < 5) {
     GameDataEncryptedMode = NextEncrypted[i];
     GameDataWriteMode = NextWrite[i];
@@ -182,8 +186,8 @@ static int run_case(const int encrypted[6], const int writing[6], int fail_at) {
   MapWin record = { 11, 12, 13, 14, 15, 16 };
   FILE file;
   void *expected[6] = { &record.map_view_index_, &record.view_active_,
-    &record.field_1DD70_, &record.field_1DD98_, &record.field_1DD9C_,
-    &record.field_1DDA0_ };
+    &record.field_1DD70_, &record.zoom_offset_, &record.center_x_,
+    &record.center_y_ };
   uint32_t old_values[6] = { 11, 12, 13, 14, 15, 16 };
   for (int i = 0; i < 6; ++i) {
     NextEncrypted[i] = encrypted[i + 1 < 6 ? i + 1 : i];
@@ -199,8 +203,10 @@ static int run_case(const int encrypted[6], const int writing[6], int fail_at) {
     if (Events[i].address != expected[i] || Events[i].write != writing[i] ||
         Events[i].encrypted != encrypted[i] || Events[i].width != 4 ||
         Events[i].count != 1) return 2;
-    if (writing[i] && *(uint32_t *)Events[i].address != old_values[i]) return 3;
-    if (!writing[i] && *(uint32_t *)Events[i].address != 0xA5000000U + (uint32_t)i) return 4;
+    uint32_t raw;
+    memcpy(&raw, Events[i].address, sizeof(raw));
+    if (writing[i] && raw != old_values[i]) return 3;
+    if (!writing[i] && raw != 0xA5000000U + (uint32_t)i) return 4;
   }
   return 0;
 }
@@ -230,8 +236,8 @@ def test_actual_game_io_keeps_six_word_transfer_order(tmp_path):
     body = _body(game_source, "int __cdecl game_io(MapWin *record, FILE *file)")
     expected = [
         "&record->map_view_index_", "&record->view_active_",
-        "&record->field_1DD70_", "&record->field_1DD98_",
-        "&record->field_1DD9C_", "&record->field_1DDA0_",
+        "&record->field_1DD70_", "&record->zoom_offset_",
+        "&record->center_x_", "&record->center_y_",
     ]
     assert [body.index(member) for member in expected] == sorted(
         body.index(member) for member in expected)
@@ -344,9 +350,9 @@ class MapWin : public Win {
   unsigned int view_active_;
   unsigned int map_view_index_;
   unsigned int field_1DD70_;
-  int field_1DD98_;
+  int zoom_offset_;
   MapWin() : view_active_(0), map_view_index_(0), field_1DD70_(0),
-      field_1DD98_(0) {}
+      zoom_offset_(0) {}
   void UNK5(unsigned int) {}
   void init(RECT *, char *, int) {}
   void do_image_buttons() {}

@@ -5699,8 +5699,8 @@ respawn:
         p.unk_26 = p.tech_ranking * 3 / 4;
     }
     if (faction == ConsoleGlobal.faction_id_) {
-        MapWinTable[0]->field_1DD9C_ = x;
-        MapWinTable[0]->field_1DDA0_ = y;
+        MapWinTable[0]->center_x_ = x;
+        MapWinTable[0]->center_y_ = y;
         for (int history = 0; history < 32; ++history) {
             ConsoleGlobal.cursor_history_x_[history] = x;
             ConsoleGlobal.cursor_history_y_[history] = y;

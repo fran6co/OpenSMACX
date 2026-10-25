@@ -81,9 +81,9 @@ struct GraphicWin : Buffer {
 };
 
 struct MapWin : virtual GraphicWin {
-    int32_t field_1DD98_ = -14;
-    int field_1DD9C_ = 0;
-    int field_1DDA0_ = 0;
+    int32_t zoom_offset_ = -14;
+    int center_x_ = 0;
+    int center_y_ = 0;
     int field_1DDA4_ = 0;
     int field_1DDA8_ = 0;
     int field_1DDCC_ = 100;
@@ -125,7 +125,7 @@ struct PlanWin : MapWin {
 
 void MapWin::calculate_dimensions() {
     ++calculate_calls;
-    zoom_history.push_back(field_1DD98_);
+    zoom_history.push_back(zoom_offset_);
     events.push_back("calculate_dimensions");
     if (dimension_hook) dimension_hook(active_plan);
 }
@@ -152,9 +152,9 @@ static void reset_observations() {
 }
 
 static void reset_window(PlanWin &view) {
-    view.field_1DD98_ = -14;
-    view.field_1DD9C_ = 10;
-    view.field_1DDA0_ = 10;
+    view.zoom_offset_ = -14;
+    view.center_x_ = 10;
+    view.center_y_ = 10;
     view.field_1DDA4_ = 0;
     view.field_1DDA8_ = 0;
     view.field_1DDCC_ = 100;
@@ -176,7 +176,7 @@ static void reset_window(PlanWin &view) {
 static void keep_full_view(PlanWin *) {}
 
 static void fail_at_zoom_minus_ten(PlanWin *view) {
-    if (view->field_1DD98_ >= -10) {
+    if (view->zoom_offset_ >= -10) {
         view->field_1DDCC_ = 1;
         view->field_1DDD0_ = 1;
     } else {
@@ -211,8 +211,8 @@ static void check_opticenter_preamble_and_live_center() {
     assert(xrange_calls == 1 && xrange_argument == 12);
     assert(events.front() == "xrange");
     assert(events[1] == "calculate_dimensions");
-    assert(view.field_1DD9C_ == 10 && view.field_1DDA0_ == 12);
-    assert(view.field_1DD98_ == -10);
+    assert(view.center_x_ == 10 && view.center_y_ == 12);
+    assert(view.zoom_offset_ == -10);
     assert((zoom_history == std::vector<int>{-13, -12, -11, -10, -10}));
 }
 
@@ -261,7 +261,7 @@ static void check_opticenter_scan_order_and_early_rejection() {
     MapLatitudeBounds = 100;
     RadiusOffsetX.values[24] = 55;
     view.opticenter(0, 10, 10, 10, 0);
-    assert(view.field_1DD98_ == -14);
+    assert(view.zoom_offset_ == -14);
     assert(x_sample_indices.size() == 50);
     assert(y_sample_indices.size() == 50);
     for (int index = 0; index < 25; ++index) {
@@ -276,7 +276,7 @@ static void check_opticenter_scan_order_and_early_rejection() {
     active_plan = &view;
     view.field_1DDCC_ = 30;
     view.opticenter(40, 10, 10, 10, 0);
-    assert(view.field_1DD98_ == -14);
+    assert(view.zoom_offset_ == -14);
     assert(x_sample_indices.size() == 1 && x_sample_indices[0] == 0);
     assert(y_sample_indices.size() == 1 && y_sample_indices[0] == 0);
 }
@@ -288,7 +288,7 @@ static void check_monocenter_81_samples_and_signed_zoom() {
     active_plan = &view;
     dimension_hook = fail_at_zoom_minus_ten;
     view.monocenter(10, 10, 0);
-    assert(view.field_1DD98_ == -11);
+    assert(view.zoom_offset_ == -11);
     assert((zoom_history == std::vector<int>{-13, -12, -11, -10, -11}));
 
     reset_observations();
@@ -297,7 +297,7 @@ static void check_monocenter_81_samples_and_signed_zoom() {
     view.field_1DDCC_ = 60;
     RadiusOffsetX.values[80] = 50;
     view.monocenter(10, 10, 0);
-    assert(view.field_1DD98_ == -14);
+    assert(view.zoom_offset_ == -14);
     assert(x_sample_indices.size() == 81 && y_sample_indices.size() == 81);
     for (int index = 0; index < 81; ++index) {
         assert(x_sample_indices[index] == index);
@@ -314,7 +314,7 @@ static void check_out_of_map_skip_and_flat_wrapping() {
     MapLongitudeBounds = 100;
     RadiusOffsetX.values[0] = 200; // One wrap leaves this sample out of map.
     view.monocenter(10, 10, 0);
-    assert(view.field_1DD98_ == -10);
+    assert(view.zoom_offset_ == -10);
 
     reset_observations();
     reset_window(view);
@@ -322,7 +322,7 @@ static void check_out_of_map_skip_and_flat_wrapping() {
     view.field_1DDCC_ = 60;
     MapLongitudeBounds = 100;
     view.monocenter(-1, 10, 0);
-    assert(view.field_1DD98_ == -14); // Nonflat path wraps -1 to 99.
+    assert(view.zoom_offset_ == -14); // Nonflat path wraps -1 to 99.
 
     reset_observations();
     reset_window(view);
@@ -331,7 +331,7 @@ static void check_out_of_map_skip_and_flat_wrapping() {
     MapLongitudeBounds = 100;
     MapIsFlat = 1;
     view.monocenter(-1, 10, 0);
-    assert(view.field_1DD98_ == -10); // Flat path leaves -1 out of map.
+    assert(view.zoom_offset_ == -10); // Flat path leaves -1 out of map.
 }
 
 static void check_live_dimensions_force_redraw_and_copy_snapshot() {
@@ -341,7 +341,7 @@ static void check_live_dimensions_force_redraw_and_copy_snapshot() {
     active_plan = &view;
     dimension_hook = shifted_view_after_callback;
     view.monocenter(20, 20, 0);
-    assert(view.field_1DD98_ == -14);
+    assert(view.zoom_offset_ == -14);
     assert(view.back_redraw_calls == 0);
     assert(x_sample_indices.size() == 1);
 
@@ -373,11 +373,11 @@ static void check_live_dimensions_force_redraw_and_copy_snapshot() {
     reset_window(view);
     active_plan = &view;
     dimension_hook = fail_every_scan;
-    view.field_1DD98_ = -14;
-    view.field_1DD9C_ = 10;
-    view.field_1DDA0_ = 10;
+    view.zoom_offset_ = -14;
+    view.center_x_ = 10;
+    view.center_y_ = 10;
     view.monocenter(10, 10, 1);
-    assert(view.field_1DD98_ == -14);
+    assert(view.zoom_offset_ == -14);
     assert(view.back_redraw_calls == 0);
     assert(view.copy_calls == 1 && view.fill_calls == 1 && view.draw_map_calls == 1);
 
@@ -385,9 +385,9 @@ static void check_live_dimensions_force_redraw_and_copy_snapshot() {
     reset_window(view);
     active_plan = &view;
     dimension_hook = keep_full_view;
-    view.field_1DD98_ = -10;
-    view.field_1DD9C_ = 10;
-    view.field_1DDA0_ = 10;
+    view.zoom_offset_ = -10;
+    view.center_x_ = 10;
+    view.center_y_ = 10;
     view.monocenter(10, 10, 0);
     assert(view.buffer_.copy_calls == 0 && view.fill_calls == 0 && view.draw_map_calls == 0);
 }

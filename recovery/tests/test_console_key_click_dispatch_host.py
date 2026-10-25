@@ -705,11 +705,11 @@ def _pan_harness(block):
 #include <assert.h>
 int MapLatitudeBounds, MapLongitudeBounds, MapIsFlat;
 struct MapWin {
-    int field_1DD9C_, field_1DDA0_, field_1DDA8_;
+    int center_x_, center_y_, field_1DDA8_;
     int field_1DDCC_, field_1DDD0_, field_1DDD8_, calls;
     void set_center(int x, int y, int mode) {
         assert(mode == 1);
-        field_1DD9C_ = x; field_1DDA0_ = y; ++calls;
+        center_x_ = x; center_y_ = y; ++calls;
     }
 } map_window;
 MapWin *MapWinTable[] = {&map_window};
@@ -718,7 +718,7 @@ PAN_BLOCK
 }
 void reset(int x=20, int y=20) {
     MapLatitudeBounds=40; MapLongitudeBounds=80; MapIsFlat=0;
-    map_window.field_1DD9C_=x; map_window.field_1DDA0_=y;
+    map_window.center_x_=x; map_window.center_y_=y;
     map_window.field_1DDA8_=18; map_window.field_1DDD8_=10;
     map_window.field_1DDCC_=16; map_window.field_1DDD0_=16;
     map_window.calls=0;
@@ -728,25 +728,25 @@ int main() {
     const int west[]={0x10025,0x10064}, east[]={0x10027,0x10066};
     for (int i=0;i<2;++i) {
         reset(); pan(north[i]);
-        assert(map_window.field_1DDA0_==14 && map_window.calls==1);
+        assert(map_window.center_y_==14 && map_window.calls==1);
         reset(); pan(south[i]);
-        assert(map_window.field_1DDA0_==23 && map_window.calls==1);
+        assert(map_window.center_y_==23 && map_window.calls==1);
         reset(); MapLatitudeBounds=10; pan(south[i]);
-        assert(map_window.field_1DDA0_==20 && map_window.calls==0);
+        assert(map_window.center_y_==20 && map_window.calls==0);
         reset(); map_window.field_1DDA8_=-1; pan(north[i]);
-        assert(map_window.field_1DDA0_==20 && map_window.calls==0);
+        assert(map_window.center_y_==20 && map_window.calls==0);
         reset(1); MapLatitudeBounds=10; pan(west[i]);
-        assert(map_window.field_1DD9C_==75 && map_window.field_1DDA0_==20);
+        assert(map_window.center_x_==75 && map_window.center_y_==20);
         reset(79); MapLatitudeBounds=10; pan(east[i]);
-        assert(map_window.field_1DD9C_==5 && map_window.field_1DDA0_==20);
+        assert(map_window.center_x_==5 && map_window.center_y_==20);
         reset(1); MapIsFlat=1; pan(west[i]);
-        assert(map_window.field_1DD9C_==-5);
+        assert(map_window.center_x_==-5);
         reset(79); MapIsFlat=1; pan(east[i]);
-        assert(map_window.field_1DD9C_==85);
+        assert(map_window.center_x_==85);
         reset(); map_window.field_1DDCC_=-8; pan(west[i]);
-        assert(map_window.field_1DD9C_==22);
+        assert(map_window.center_x_==22);
         reset(); map_window.field_1DDCC_=-8; pan(east[i]);
-        assert(map_window.field_1DD9C_==18);
+        assert(map_window.center_x_==18);
     }
     reset(); pan(0x12345);
     assert(map_window.calls==0);

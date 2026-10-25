@@ -356,9 +356,19 @@ class MapWin : public virtual GraphicWin {
   uint32_t field_1DD94_;  // 0x1DD94
   // Signed zoom offset: Console::zoom's original JGE/JLE tests clamp it
   // around +0x10 and -0xE, and MapWin init publishes values such as -8.
-  int32_t field_1DD98_;  // 0x1DD98
-  uint32_t field_1DD9C_;  // 0x1DD9C
-  uint32_t field_1DDA0_;  // 0x1DDA0
+  // Role names below are recovered semantics, not original identifiers.
+  // RECOVERY_MEMBER: v1 MapWin zoom_offset_ 0x1DD98 0x005150D0
+  int32_t zoom_offset_;
+  // Horizontal map-view center: set_center stores the wrapped signed x;
+  // calculate_dimensions and the interval test consume it as signed.
+  // This source model preserves the four-byte save word; the original
+  // declaration spelling/type is not established by those instructions.
+  // RECOVERY_MEMBER: v1 MapWin center_x_ 0x1DD9C 0x0046B1F0
+  int32_t center_x_;
+  // set_center stores its signed Y argument here; dimension calculations
+  // and key-driven panning consume the vertical center as signed.
+  // RECOVERY_MEMBER: v1 MapWin center_y_ 0x1DDA0 0x0046B1F0
+  int32_t center_y_;
   // Tile origins and visible extents are signed: tile_to_pixel at0x00462F00
   // compares them using JL/JGE, including maps whose viewport crosses zero.
   // RECOVERY_MEMBER: v1 MapWin field_1DDA4_ 0x1DDA4 0x00462F00
@@ -578,7 +588,7 @@ void __cdecl terrain_fixup(MapWin *window);
 // compiled call sites (gen_tile at 0x00468C73 and gen_map's terrain scan
 // at 0x00469E47) spell - they push exactly ten words with the window as
 // the SECOND argument and clean up 0x28 bytes themselves, so no implicit
-// receiver rides the call. Arguments 3..10 are, in order, field_1DD98_,
+// receiver rides the call. Arguments 3..10 are, in order, zoom_offset_,
 // the caller's draw_type, the literal -1, field_1DD70_, the original tile
 // x, the original tile y, and the pair tile_to_pixel wrote back.
 int __cdecl gen_terrain_poly(Buffer *buffer, MapWin *window, int a3,

@@ -59,10 +59,12 @@ def actual_parts():
     )
 
     field_names = set(re.findall(r"\bfield_[A-Za-z0-9_]+\b", calculate + pixel))
-    field_names.update(("owned_", "font_a_", "font_b_", "font_c_"))
+    field_names.update(("zoom_offset_", "center_x_", "center_y_",
+                        "owned_", "font_a_", "font_b_", "font_c_"))
     declarations = [member_declaration(map_header, name) for name in sorted(field_names)]
     initializers = [name + " = 0;" for name in sorted(field_names)
-                    if name.startswith("field_")]
+                    if name.startswith("field_") or name in
+                    ("zoom_offset_", "center_x_", "center_y_")]
     initializers.append("owned_ = 0;")
 
     dib = braced(buffer_header, "struct Dib : BITMAPINFO") + ";"
@@ -163,8 +165,8 @@ static void init_dimensions(MapWin &w, int width, int signed_height,
                             int zoom, int bounds) {
     w.dib_.bmiHeader.biWidth = width;
     w.dib_.bmiHeader.biHeight = signed_height;
-    w.field_1DD98_ = zoom; w.field_1EEC0_ = 0;
-    w.field_1EEC4_ = 25; w.field_1DDA0_ = 25; w.field_1DD9C_ = 25;
+    w.zoom_offset_ = zoom; w.field_1EEC0_ = 0;
+    w.field_1EEC4_ = 25; w.center_y_ = 25; w.center_x_ = 25;
     w.field_1EEF0_ = 0; w.field_1EF48_ = 0; w.field_1EF1C_ = 0;
     w.field_1DD70_ = 0; w.owned_ = 0;
     MapWinCaptionScale = -1; MapWinCaptionDivisor = 16;

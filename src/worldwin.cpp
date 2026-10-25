@@ -109,8 +109,8 @@ void WorldWin::right_menu(int x, int y) {
         GraphicWin::soft_update();
         break;
     case 4:
-        MapWinTable[1]->set_center(MapWinTable[0]->field_1DD9C_,
-                                   MapWinTable[0]->field_1DDA0_, 1);
+        MapWinTable[1]->set_center(MapWinTable[0]->center_x_,
+                                   MapWinTable[0]->center_y_, 1);
         set_detail_map();
         MainInterfaceGlobal.button_group(1).set(1007, 1);
         break;
@@ -138,8 +138,8 @@ void WorldWin::click(int x, int y, int button, int is_double) {
         return;
     }
     if (detail_click) {
-        MapWinTable[1]->set_center(MapWinTable[0]->field_1DD9C_,
-                                   MapWinTable[0]->field_1DDA0_, 1);
+        MapWinTable[1]->set_center(MapWinTable[0]->center_x_,
+                                   MapWinTable[0]->center_y_, 1);
         MainInterfaceGlobal.button_group(1).set(1007, 0);
         detail_map_selected_ = 1;
         MapWinTable[1]->show(0);
@@ -591,9 +591,9 @@ void WorldWin::on_redraw() {
         field_A18_ = (MapLatitudeBounds / 2 - 2) * cell_size;
         mapWin_.field_1DDAC_ = 0;
         mapWin_.field_1DDB0_ = 0;
-        mapWin_.field_1DD9C_ = MapLongitudeBounds / 2;
-        mapWin_.field_1DD98_ = -14;
-        mapWin_.field_1DDA0_ = MapLatitudeBounds / 2;
+        mapWin_.center_x_ = MapLongitudeBounds / 2;
+        mapWin_.zoom_offset_ = -14;
+        mapWin_.center_y_ = MapLatitudeBounds / 2;
         mapWin_.field_1DD70_ = 0x80000000;
         mapWin_.resize(field_A14_, field_A18_, 1);
         buffer2_.init(field_A14_, field_A18_, 0, 0);
@@ -658,9 +658,9 @@ void WorldWin::refresh_world_map(int resize_buffers) {
 
     field_A14_ = (MapLongitudeBounds / 2) * cell_size * 2;
     field_A18_ = (MapLatitudeBounds / 2 - 2) * cell_size;
-    mapWin_.field_1DD9C_ = MapLongitudeBounds / 2;
-    mapWin_.field_1DD98_ = -14;
-    mapWin_.field_1DDA0_ = MapLatitudeBounds / 2;
+    mapWin_.center_x_ = MapLongitudeBounds / 2;
+    mapWin_.zoom_offset_ = -14;
+    mapWin_.center_y_ = MapLatitudeBounds / 2;
     mapWin_.field_1DD70_ = 0x80000000;
 
     Buffer *map_surface = static_cast<Buffer *>(

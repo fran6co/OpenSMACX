@@ -92,8 +92,8 @@ void __cdecl blink_timer(int a1) {
             continue;
         }
 
-        int row = static_cast<int32_t>(window->field_1DDA0_);
-        col = static_cast<int32_t>(window->field_1DD9C_);
+        int row = window->center_y_;
+        col = window->center_x_;
 
         int mouse_x;
         int mouse_y;
@@ -165,8 +165,8 @@ void __cdecl blink_timer(int a1) {
         if ((col & 1) != 0) col -= 1;
         if ((row & 1) != 0) col += 1;
 
-        if (col == static_cast<int32_t>(window->field_1DD9C_)
-            && row == static_cast<int32_t>(window->field_1DDA0_)) {
+        if (col == window->center_x_
+            && row == window->center_y_) {
             continue;
         }
         if (row < 0) continue;

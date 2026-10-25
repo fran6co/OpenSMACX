@@ -932,9 +932,9 @@ void BaseWin::draw_support() {
         width_step -= 50;
         height_step -= 25;
     } while (width_step > 50);
-    mapWin_.field_1DD98_ = zoom;
-    mapWin_.field_1DD9C_ = BaseCurrent->x;
-    mapWin_.field_1DDA0_ = BaseCurrent->y;
+    mapWin_.zoom_offset_ = zoom;
+    mapWin_.center_x_ = BaseCurrent->x;
+    mapWin_.center_y_ = BaseCurrent->y;
     mapWin_.redraw();
     mapWin_.copy(canvas, 0, 0,
         area.left + (area.right - area.left) / 2 - width / 2,

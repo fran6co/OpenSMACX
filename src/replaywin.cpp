@@ -75,11 +75,11 @@ void ReplayWin::init() {
     rect.top += 0x1A;
     map_win_.init(&rect, 0, 0x20);
     map_win_.GraphicWin::init(&rect, 0, 0x200020, this, 0, 0);
-    map_win_.field_1DD98_ = zoom;
+    map_win_.zoom_offset_ = zoom;
     map_win_.field_1DD70_ = 0x85010080;
     const int cursor = ConsoleGlobal.cursor_history_index_;
-    map_win_.field_1DD9C_ = ConsoleGlobal.cursor_history_x_[cursor];
-    map_win_.field_1DDA0_ = ConsoleGlobal.cursor_history_y_[cursor];
+    map_win_.center_x_ = ConsoleGlobal.cursor_history_x_[cursor];
+    map_win_.center_y_ = ConsoleGlobal.cursor_history_y_[cursor];
 
     rect.top = rect.bottom + 3;
     rect.bottom = rect.top + 0x14;
