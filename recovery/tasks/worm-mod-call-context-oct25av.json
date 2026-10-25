@@ -1,0 +1,23 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "fa0aa299e34a1b8ab4d35d2579c723c51206f72e",
+  "editable_files": [
+    "src/base.cpp",
+    "recovery/tests/test_worm_mod_facility_calls.py"
+  ],
+  "evidence": [
+    "Pin4E6740-4E68AB makesfourhas_fac421670 calls IDs31,32,9,30 withqueue0; currentbody folds breed_mod and emits differentcallee work. Retain all projectchecks/order/shortcircuit andpsi/count. Independentfull-pin review supportsonecompleteordinary C++ candidate; prior shared siblingtrade-off preserved. Keep pin-faithful call recovery evenwithout exactgain after source/build andscoped review; no change to breed_mod/header/flags.",
+    "Manual coordinator-reviewed recovery only. Independent review a4a6e1e6 and BasePopclarification9840c7dd are ignored inputcaches. Preserve originalmarkers/spans/historicalclaims; nativepublisherchecksfacts andinstalledrecordonly canbank. Scopeexpansion beforeanydependencies. Fullapplicationbuild/link andactualdestination verificationrequired; no automatic/linked/structure/runtime/gameacceptance."
+  ],
+  "intent": "Restore worm_mod original facility-call context while retaining independently recovered standalone breed_mod.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5138240,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "worm-mod-call-context-oct25av"
+}

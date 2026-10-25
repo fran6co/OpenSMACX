@@ -1,0 +1,22 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "fa0aa299e34a1b8ab4d35d2579c723c51206f72e",
+  "editable_files": [
+    "src/basepop.cpp"
+  ],
+  "evidence": [
+    "Pin604328 selects dialogs_ CheckBoxbase+58 and its virtualDialog lookup. Bothcurrent/candidate spellings reach the SAME shared Dialogfield; this is no semanticfield correction. Oneordinaryqualified memberaccess only, keepall effectsandbugs. Clarification confirms complete53instruction single-spanListing, not destructorRegionCandidate. Bankonlyif nativecurrentproduction exact plus relevantreference/outside/build/review checks; otherwise defer ratherthan add noisyspelling.",
+    "Manual coordinator-reviewed recovery only. Independent review a4a6e1e6 and BasePopclarification9840c7dd are ignored inputcaches. Preserve originalmarkers/spans/historicalclaims; nativepublisherchecksfacts andinstalledrecordonly canbank. Scopeexpansion beforeanydependencies. Fullapplicationbuild/link andactualdestination verificationrequired; no automatic/linked/structure/runtime/gameacceptance."
+  ],
+  "intent": "Try the pinned CheckBox-qualified path to BasePop shared virtual Dialog selection.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6308608,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "basepop-checkbox-route-oct25av"
+}
