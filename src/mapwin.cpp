@@ -2304,11 +2304,11 @@ int __cdecl gen_window_terrain(MapWin *window, int zoom, int faction,
 void MapWin::draw_vehicles(int tile_x, int tile_y, int pixel_x, int pixel_y,
                            int faction_id) {
     int draw_state = 2;
-    const uint32_t window_flags = field_1DD70_;
     if (MapBaseDisplayOverride == 0 && ControlTurnPhase == 0 &&
         (GameDataStateStorage.fields_.game_rules_ & 0x80) == 0) {
         return;
     }
+    const uint32_t window_flags = field_1DD70_;
     if ((window_flags & 0x01000000U) != 0 ||
         (window_flags & 0x802000C0U) == 0 ||
         (window_flags & 0x00001000U) != 0) {
@@ -2328,7 +2328,7 @@ void MapWin::draw_vehicles(int tile_x, int tile_y, int pixel_x, int pixel_y,
     if (draw_base) {
         draw_bases(tile_x, tile_y, pixel_x, pixel_y, faction_id);
     }
-    if ((window_flags & 0x80000000U) != 0) return;
+    if ((field_1DD70_ & 0x80000000U) != 0) return;
 
     int target = -1;
     if (VehDrawSuppressedVehicle != -1 &&
@@ -2389,11 +2389,11 @@ void MapWin::draw_vehicles(int tile_x, int tile_y, int pixel_x, int pixel_y,
         }
     } else {
         target = ConsoleGlobal.selected_vehicle_;
-        if ((window_flags & 0x00020040U) == 0) return;
+        if ((field_1DD70_ & 0x00200040U) == 0) return;
         target = veh_at(tile_x, tile_y);
     }
 
-    if ((window_flags & 0x00200000U) != 0) {
+    if ((field_1DD70_ & 0x00200000U) != 0) {
         target = veh_at(tile_x, tile_y);
         if (target < 0) return;
         while (Vehs[target].home_base_id !=
