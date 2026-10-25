@@ -7688,14 +7688,14 @@ int __cdecl offense_proto(int proto_id, int veh_id_def, BOOL is_bombard) {
         && VehPrototypes[Vehs[veh_id_def].proto_id].plan == PLAN_INFO_WARFARE) {
         return 16; // probe attacking another probe
     }
-    // BUG IN THE ORIGINAL: Vehs[veh_id_def].proto_id is read unguarded here
-    // - if veh_id_def is -1 (no defender), this reads Vehs[-1], an
-    // arbitrary out-of-bounds (Reactor struct) memory read. The image has
-    // no `veh_id_def < 0` guard on this specific comparison (unlike the
-    // guarded one a few lines up), so it is left alone deliberately.
+    // Original -1 reads signed word0x9527FE: bits16..31 of the stored
+    // Reactor[0].name_short pointer, not an actual prototype field.
+    // Preserve that pointer representation through its named storage;
+    // the comparison stays inside the original short-circuit predicate.
+    // Other indices and the original unguarded path are not normalized.
     if ((is_bombard || (Weapon[VehPrototypes[proto_id].weapon_id].offense_rating >= 0
         && (veh_id_def < 0 || get_defense_rating(veh_id_def) >= 0)))
-        && Vehs[veh_id_def].proto_id != BSC_SPORE_LAUNCHER
+        && (veh_id_def == -1 ? static_cast<int16_t>(reinterpret_cast<uintptr_t>(Reactor[0].name_short) >> 16) : Vehs[veh_id_def].proto_id) != BSC_SPORE_LAUNCHER
         && proto_id != BSC_SPORE_LAUNCHER) {
         int8_t off_rating_byte = get_proto_offense_rating(proto_id);
         int off_rating = (off_rating_byte < 0) ? -off_rating_byte : off_rating_byte;
@@ -7730,11 +7730,11 @@ int __cdecl armor_proto(int proto_id, int veh_id_atk, BOOL is_bombard) {
         && VehPrototypes[Vehs[veh_id_atk].proto_id].plan == PLAN_INFO_WARFARE) {
         return 16; // probe defending against another probe
     }
-    // BUG IN THE ORIGINAL: this branch reads Vehs[veh_id_atk].proto_id with no veh_id_atk >= 0
-    // guard, unlike the get_offense_rating() check a few lines below which does guard it. When
-    // is_bombard is set and veh_id_atk is -1 (no attacker), the image reads Vehs[-1], an
-    // out-of-bounds array access. Left as shipped rather than adding the missing guard.
-    if (is_bombard && Vehs[veh_id_atk].proto_id != BSC_SPORE_LAUNCHER
+    // The bombardment path's original -1 prototype word aliases bits16..31
+    // of Reactor[0].name_short (signed WORD0x9527FE). Keep the live pointer
+    // bits, not a default prototype or a skip; the lookup still follows the
+    // original bombardment gate and retains every other index unchanged.
+    if (is_bombard && (veh_id_atk == -1 ? static_cast<int16_t>(reinterpret_cast<uintptr_t>(Reactor[0].name_short) >> 16) : Vehs[veh_id_atk].proto_id) != BSC_SPORE_LAUNCHER
         && proto_id != BSC_SPORE_LAUNCHER || (get_proto_defense_rating(proto_id) >= 0
             && (veh_id_atk < 0 || get_offense_rating(veh_id_atk) >= 0))) {
         uint32_t def_rating = range(get_proto_defense_rating(proto_id), 1, 9999);
