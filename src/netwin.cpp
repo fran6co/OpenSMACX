@@ -965,9 +965,9 @@ void NetWin::draw_session_info() {
     StringStruct list;
 
     buffer->box_sprite(&setup_rects_[3],
-                       &InterfaceBoxStyles[1]);
+                       &InterfaceBoxStyles[3]);
     RECT *title_rect = &setup_rects_[2];
-    buffer->box_sprite(title_rect, &InterfaceBoxStyles[2]);
+    buffer->box_sprite(title_rect, &InterfaceBoxStyles[6]);
 
     StringTemp[0] = 0;
     if (NetDaemonNet.allocation_node().session_name_ != 0) {
@@ -1276,9 +1276,9 @@ void NetWin::draw_player_names() {
     int pid_idx = NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id());
     Buffer *buffer = static_cast<Buffer *>(this);
     buffer->box_sprite(&setup_rects_[5],
-                       &InterfaceBoxStyles[1]);
+                       &InterfaceBoxStyles[3]);
     RECT *title_rect = &setup_rects_[4];
-    buffer->box_sprite(title_rect, &InterfaceBoxStyles[2]);
+    buffer->box_sprite(title_rect, &InterfaceBoxStyles[6]);
 
     StringTemp[0] = 0;
     strcat(StringTemp,

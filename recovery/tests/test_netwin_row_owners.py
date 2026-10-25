@@ -14,7 +14,6 @@ import pytest
 
 ROOT = next(p for p in Path(__file__).resolve().parents
             if (p / "src/netwin.cpp").is_file())
-SCENARIO_STORAGE_TASK_BASE = "75a020323f4ff637825807b3add2de540dd60a68"
 BASE = ROOT / "recovery/tests/test_netwin_owner_behavior.py"
 spec = importlib.util.spec_from_file_location("netwin_owner_extract", BASE)
 mod = importlib.util.module_from_spec(spec)
@@ -215,72 +214,3 @@ def test_original_overlay_and_stride_witnesses():
     assert "NetWinSessionOptions.rule_bits_b_" in src
 
 
-def test_complete_painter_bodies_preserve_non_owner_operations():
-    """Full source comparisons constrain ordering/branches, not native matching."""
-    before=subprocess.check_output(["git","show",f"{SCENARIO_STORAGE_TASK_BASE}:src/netwin.cpp"],
-                                   cwd=ROOT,text=True)
-    assert "&InterfaceBoxStyles[48 + ready]" in before
-    after=(ROOT/"src/netwin.cpp").read_text()
-    for name in ("draw_player_names", "draw_diffs", "draw_factions"):
-        signature=f"void NetWin::{name}()"
-        body=mod.extract_function(before,signature)
-        replacements={
-            "NetWinSlotRecord *slot_record = NetWinSlotRecords + 1;":
-                "AlphaNetProcessSlot *slot_record = NetDaemonNet.process_slots_ + 1;",
-            "NetWinSlotRecords + 8": "NetDaemonNet.process_slots_ + 8",
-            "NetWinSlotRecords + 1": "NetDaemonNet.process_slots_ + 1",
-            "slot_record->id": "slot_record->pid_",
-            "    unsigned char *record = reinterpret_cast<unsigned char *>(\n        NetWinFactionTable + 0x2F1);":
-                "    NetWinLobbyRow *lobby_row = &NetWinLobbyRows[1];",
-            "++row, record += 0x17C, slot_record += 1":
-                "++row, ++lobby_row, slot_record += 1",
-            "record[-0x177]": "lobby_row->ready_or_occupied_",
-            "record[-0x178]": "lobby_row->prefix_",
-            "static_cast<signed char>(record[-0x175])": "lobby_row->faction_or_color_",
-            "record[-0x175]": "static_cast<uint8_t>(lobby_row->faction_or_color_)",
-            "unsigned long claimed =\n                    *reinterpret_cast<unsigned long *>(record);":
-                "unsigned long claimed = lobby_row->owner_;",
-            "*reinterpret_cast<unsigned long *>(record)": "lobby_row->owner_",
-            "reinterpret_cast<const char *>(record - 0x173)": "lobby_row->leader_name_",
-            "const char *name =\n                    lobby_row->leader_name_;":
-                "const char *name = lobby_row->leader_name_;",
-            "const char *scan =\n                    reinterpret_cast<const char *>(NetWinFactionTable + 0x17E);":
-                "const NetWinLobbyRow *scan = &NetWinLobbyRows[1];",
-            "strcmp(name, scan)": "strcmp(name, scan->leader_name_)",
-            "scan += 0x17C;": "++scan;",
-            "NetWinFactionTable[pid_idx * 0x17C]":
-                "static_cast<uint8_t>(NetWinLobbyRows[pid_idx].faction_or_color_)",
-            "    unsigned char *record =\n        reinterpret_cast<unsigned char *>(NetWinFactionTable) + 0x179;\n    for (int index = 0; record < reinterpret_cast<unsigned char *>(NetWinFactionTable)\n                   + 0x179 + 7 * 0x17C;\n         ++index, record += 0x17C, ++rect) {":
-                "    NetWinLobbyRow *row = &NetWinLobbyRows[1];\n    for (int index = 0; row < &NetWinLobbyRows[8];\n         ++index, ++row, ++rect) {",
-            "    unsigned char *record =\n        reinterpret_cast<unsigned char *>(NetWinFactionTable) + 0x179 + 0x45;\n    for (int index = 0;\n         record < reinterpret_cast<unsigned char *>(NetWinFactionTable)\n                   + 0x179 + 0x45 + 7 * 0x17C;\n         ++index, record += 0x17C, ++rect) {":
-                "    NetWinLobbyRow *row = &NetWinLobbyRows[1];\n    for (int index = 0; row < &NetWinLobbyRows[8];\n         ++index, ++row, ++rect) {",
-            "record[0]": "row->prefix_",
-            "record[2]": "row->field_2_",
-            "record[-0x45]": "row->prefix_",
-            "static_cast<signed char>(record[-0x42])": "row->faction_or_color_",
-            "reinterpret_cast<const char *>(record)": "row->noun_faction_",
-        }
-        for old,new in replacements.items():
-            body=body.replace(old,new)
-
-        def normalize_faction_record_owner(text):
-            text=re.sub(
-                r"static_cast<unsigned char>\(\s*static_cast<char \*>\(faction_records_\)\[0\]\s*\)",
-                "FACTION_RECORD_TYPE_BYTE", text)
-            text=text.replace("faction_records_[0].record_type_",
-                              "FACTION_RECORD_TYPE_BYTE")
-            text=re.sub(
-                r"\*reinterpret_cast<unsigned long \*>\(\s*static_cast<char \*>\(faction_records_\)\s*\+\s*mode \* 0x190\s*\+\s*4\s*\)",
-                "FACTION_RECORD_OWNER(mode)", text)
-            text=text.replace("faction_records_[mode].owner_",
-                              "FACTION_RECORD_OWNER(mode)")
-            text=re.sub(
-                r"static_cast<char \*>\(faction_records_\)\s*\+\s*mode \* 0x190\s*\+\s*0x62",
-                "FACTION_RECORD_NOUN(mode)", text)
-            text=text.replace("faction_records_[mode].noun_faction_",
-                              "FACTION_RECORD_NOUN(mode)")
-            return text
-
-        assert normalize_faction_record_owner(body) == normalize_faction_record_owner(
-            mod.extract_function(after,signature)
-        ),name

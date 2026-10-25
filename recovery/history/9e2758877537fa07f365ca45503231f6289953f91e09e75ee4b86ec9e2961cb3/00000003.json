@@ -1,0 +1,18 @@
+{
+  "event_id": "bee2a166e59aebb7a53b3a13856187f3d6a021b2cf9a7c94b8987b598e44cb73",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "netwin-painter-style-operands-oct25am",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/netwin.cpp draw_session_info and draw_player_names now retain exact fixed style indices3/6 from pinned pointers78D5A0/78D618 and source-owned0x28 stride. Dynamic48+ready and all non-style source bytes in those functions preserved.",
+      "Native combined COFF outside all four owned functions PASS; no historical facts changed and no exact losses/gains. Independent pin/source review SHA1d8db24f5a05814c1f32e48e8ce4a490c23f7a66f14159aa96cb61aa43e5c640. Full build/destination verification still required."
+    ]
+  },
+  "previous_event": "d18a4e3365e7c16d13360c126983a6d9ebe5d10862c6340e93aa2c72df8f1092",
+  "request_id": "incorporate-netwin-style-closure-oct25am",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:netwin-base-painters-oct25am"
+}
