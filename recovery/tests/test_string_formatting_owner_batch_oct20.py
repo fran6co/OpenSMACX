@@ -93,6 +93,7 @@ PRELUDE = r'''
 using LPSTR = char *;
 using BOOL = int;
 static std::vector<std::string> events;
+static const char BufferJoinSpace[] = " ";
 struct Strings {
   char *get(char *value) {
     events.push_back(std::string("get:") + value);
@@ -116,9 +117,6 @@ static RulesChassis Chassis[8];
 static RulesAbility Ability[8];
 static Strings StringTable;
 static char StringTemp[256];
-static char *label_get(int label_offset) {
-  return StringTable.get(Labels.strings_ptr[label_offset]);
-}
 static char * _itoa(int value, char *buffer, int radix) {
   assert(radix == 10);
   events.push_back(std::string("itoa:") + std::to_string(value));
@@ -249,7 +247,8 @@ def projected_program(source: str, mutation: str | None = None) -> str:
             "chassis.triad == 1 ? 0x288 : 0x28C", 1)
     elif mutation == "wrong_ability_label_index":
         bodies[0x00590AA0] = bodies[0x00590AA0].replace(
-            "label_get(0xA4)", "label_get(0xA3)", 1)
+            "LPSTR label = label_table[0xA4];",
+            "LPSTR label = label_table[0xA3];", 1)
     elif mutation is not None:
         raise AssertionError(f"unknown mutation: {mutation}")
     return PRELUDE + "\n".join(bodies[address] for address, _ in TARGETS) + MAIN

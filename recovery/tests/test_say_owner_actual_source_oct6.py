@@ -85,6 +85,7 @@ static char facility_detail[] = "facility-detail";
 static char ability_detail[] = "ability-detail";
 static char society_detail[] = "society-detail";
 static char wrong_detail[] = "wrong-detail";
+static const char BufferJoinSpace[] = " ";
 static int last_label = -1;
 static int label_id_for(char *text) {
   if (text == facility_detail) return 0x9B;
@@ -135,7 +136,7 @@ def cpp_source(projected: str, mutation: str | None = None) -> str:
         bodies[1] = bodies[1].replace("strcat(StringTemp, detail);",
                                       "strcat(static_cast<char *>(text), detail);", 1)
     elif mutation == "drop_space_literal":
-        before = 'strcat(text, " ");'
+        before = "strcat(text, BufferJoinSpace);"
         bodies[2] = bodies[2].replace(before, 'strcat(text, "");', 1)
         assert before not in bodies[2]
     main = r'''

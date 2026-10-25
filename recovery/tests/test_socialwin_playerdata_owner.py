@@ -55,7 +55,6 @@ def harness():
         "static void energy_compute(int, int) { ++energy_calls; timeline[timeline_size++]=20; "
         "BreakthroughTurnsGlobal=42; NetIncomeGlobal=17; "
         "if (callback_faction) *callback_faction=4; }\n"
-        "static void set_social_category_value(SocialCategory &c, int i, int v) { c.models_[i]=v; }\n"
         "struct SocialWin : GraphicWin, SubInterface { uint32_t field_A1C_; ")
     text = text.replace("unsigned char pad_to_faction[0xCF4-0xA1C]; uint32_t factionID_;",
                         "unsigned char pad_to_faction[0xCF4-0xA20]; uint32_t factionID_;")

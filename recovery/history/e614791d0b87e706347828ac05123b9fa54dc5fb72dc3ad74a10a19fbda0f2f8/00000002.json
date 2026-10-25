@@ -1,0 +1,21 @@
+{
+  "event_id": "0d726b5bc22abe20dea7aacb3b59f51ac937b454bc1742b3b1327254964da7a5",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_say_owner_actual_source_oct6.py",
+      "src/string_formatting.cpp"
+    ],
+    "evidence": [
+      "Coordinator supersedes the initial comments-only restriction: reuse the existing BufferJoinSpace in the nine formatter space arguments, include its owning header, and adapt the actual-source host fixture if needed.",
+      "Preserve original behavior, append order, claims and identities; only the two nonoverlapping parentheses receive TU-private literal bindings. No new storage or changes to Buffer owner are authorized."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "0bd79e8f9d32b3d196a20a77ab761f3ca5c7eb37fe4d102b459139c3d298c5cf",
+  "request_id": "reuse-existing-space-authorization",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:formatter-literals-oct25m"
+}

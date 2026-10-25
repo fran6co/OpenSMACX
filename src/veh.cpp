@@ -9002,8 +9002,11 @@ void __cdecl action_destruct(int veh_id) {
     const int proto_id = Vehs[veh_id].proto_id;
     const int faction_id = Vehs[veh_id].faction_id;
     int weapon_value = weap_val(proto_id, faction_id);
-    if (weapon_value < 1) weapon_value = 1;
-    else if (weapon_value > 20) weapon_value = 20;
+    if (weapon_value >= 1) {
+        if (weapon_value > 20) weapon_value = 20;
+    } else {
+        weapon_value = 1;
+    }
     const int damage =
         static_cast<int>(VehPrototypes[Vehs[veh_id].proto_id].reactor_id) * weapon_value / 2;
 

@@ -17,6 +17,7 @@
  */
 #include "stdafx.h"
 #include "strings.h"
+#include "buffer.h"
 #include "alpha.h"
 #include "technology.h"
 #include "veh.h"
@@ -26,6 +27,16 @@
 // Keep these application formatters separate from Strings::get's definition so
 // VC6's same-TU /Ob2 inliner cannot absorb the original get calls. Their shared
 // storage and Strings implementation remain owned by strings.cpp.
+
+// The shared space is owned by BufferJoinSpace (buffer.cpp, 0x00682820).
+// Parenthesis storage is independently corroborated by say_vehicles
+// (0x00590BA0) in map.cpp, outside this translation unit.
+// These are logical one-character-plus-NUL spans, not enclosing allocations.
+// The original spans are in writable .data; these bindings do not assert
+// constness, runtime immutability, lifetime or linked COMDAT retention.
+// Identical compiler symbols in other translation units remain independent.
+// RECOVERY_LITERAL: v1 0x00682E9C 0x00682E9E ??_C@_01GFI@?$CI?$AA@ 0x00590BA0
+// RECOVERY_LITERAL: v1 0x00682E98 0x00682E9A ??_C@_01KMMP@?$CJ?$AA@ 0x00590BA0
 
 // Append a caller-supplied string to the shared scratch buffer.
 // ORIGINAL: 0x00500130 ?says@@YAXPBD@Z 0x00500130-0x00500146 BYTE_EXACT
@@ -46,7 +57,7 @@ void __cdecl says(const char *text) {
 void __cdecl say_reactor(char *text, int reactor_id, int with_detail) {
     strcat(text, StringTable.get(Reactor[reactor_id].name));
     if (with_detail != 0) {
-        strcat(text, " ");
+        strcat(text, BufferJoinSpace);
         strcat(text, "(");
         strcat(StringTemp, StringTable.get(
             Labels.strings_ptr[0x13C / 4]));
@@ -66,7 +77,7 @@ void __cdecl say_weapon(char *text, int weapon_id, int with_detail) {
     const RulesWeapon &weapon = Weapon[weapon_id];
     strcat(text, StringTable.get(weapon.name));
     if (with_detail != 0) {
-        strcat(text, " ");
+        strcat(text, BufferJoinSpace);
         strcat(text, "(");
         if (weapon.offense_rating == 0) {
             strcat(text, StringTable.get(
@@ -99,7 +110,7 @@ void __cdecl say_armor(char *text, int armor_id, int with_detail) {
     const RulesArmor &armor = Armor[armor_id];
     strcat(text, StringTable.get(armor.name));
     if (with_detail != 0) {
-        strcat(text, " ");
+        strcat(text, BufferJoinSpace);
         strcat(text, "(");
         strcat(StringTemp, StringTable.get(
             Labels.strings_ptr[0x154 / 4]));
@@ -127,7 +138,7 @@ void __cdecl say_chassis(char *text, int chassis_id, int with_detail) {
     const RulesChassis &chassis = Chassis[chassis_id];
     strcat(text, StringTable.get(chassis.offsv_1_name));
     if (with_detail != 0) {
-        strcat(text, " ");
+        strcat(text, BufferJoinSpace);
         strcat(text, "(");
         strcat(StringTemp, StringTable.get(
             Labels.strings_ptr[0x140 / 4]));
@@ -136,7 +147,7 @@ void __cdecl say_chassis(char *text, int chassis_id, int with_detail) {
         _itoa(chassis.speed, number, 10);
         strcat(text, number);
         if (chassis.triad == 1 || chassis.triad == 2) {
-            strcat(text, " ");
+            strcat(text, BufferJoinSpace);
             const int offset = chassis.triad == 1 ? 0x28C : 0x288;
             strcat(text, StringTable.get(
                 Labels.strings_ptr[offset / 4]));
@@ -152,7 +163,7 @@ void __cdecl say_chassis(char *text, int chassis_id, int with_detail) {
 void __cdecl say_techs(char *text, int tech_id, int with_detail) {
     say_tech(text, tech_id, with_detail);
     if (with_detail != 0) {
-        strcat(text, " ");
+        strcat(text, BufferJoinSpace);
         strcat(text, "(");
         LPSTR *label_table = Labels.strings_ptr;
         LPSTR label = label_table[0x274 / 4];
@@ -198,7 +209,7 @@ void __cdecl say_facility(char *text, int facility_id, int with_cost) {
     LPSTR name = Facility[facility_id].name;
     strcat(text, strings->get(name));
     if (with_cost != 0) {
-        strcat(text, " ");
+        strcat(text, BufferJoinSpace);
         strcat(text, "(");
         LPSTR label = Labels.strings_ptr[0x9B];
         LPSTR detail = strings->get(label);
@@ -234,7 +245,7 @@ void __cdecl say_ability(char *text, int ability_id, int with_detail) {
     LPSTR s1 = StringTable.get(ability_name);
     strcat(text, s1);
     if (with_detail != 0) {
-        strcat(text, " ");
+        strcat(text, BufferJoinSpace);
         strcat(text, "(");
         LPSTR *label_table = Labels.strings_ptr;
         Strings *strings = &StringTable;
@@ -271,7 +282,7 @@ void __cdecl say_society(char *text, int society_id, int with_model) {
     LPSTR type = SocialCategories[society_id].type;
     strcat(text, strings->get(type));
     if (with_model != 0) {
-        strcat(text, " ");
+        strcat(text, BufferJoinSpace);
         strcat(text, "(");
         char *model = label_get(0x45);
         strcat(StringTemp, model);

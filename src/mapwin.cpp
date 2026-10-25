@@ -8692,10 +8692,10 @@ extern "C" int __cdecl sub_4468f0(int a1) {
     int n = MapLongitudeBounds;
     int iVar3 = n / 4;
     int iVar2 = iVar3 + iVar1;
-    int half = a1 / 2;
     if (n / 2 < iVar2) {
         iVar2 = iVar2 - n / 2;
     }
+    int half = a1 / 2;
     if (iVar1 < iVar3) {
         if (half <= iVar1 || iVar2 <= half) {
             return -1;

@@ -3559,7 +3559,7 @@ Purpose: Broadcast the session state blob: copy the 0x168-byte payload,
          then send it addressed to everyone (0x4F03), to this client's
          counterpart (0x2F03), or to the slot a2 names (0x1F03).
 
-// ORIGINAL: 0x0047B2E0 ?send_session2_packet@@YAXHH@Z 0x0047B2E0-0x0047B379 FILE
+// ORIGINAL: 0x0047B2E0 ?send_session2_packet@@YAXHH@Z 0x0047B2E0-0x0047B379 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/netwin.h owns the 0x168-byte NetWinSessionData block and declares this sender; the NetDaemonNet owns AlphaNet process slots.", "The first argument remains unused, and packet bytes/header fields and the target==0 comparison are retained."], "reason": "Move the complete second-session sender into netwin.cpp, preserving its 0x178-byte frame, copy, opcode branches and unused first argument."}
 // size      153 bytes
 // prototype
@@ -3572,19 +3572,19 @@ Status: Coverage transcription - unclaimed body
 */
 void __cdecl send_session2_packet(int slot_id, int target) {
     NetWinSessionBlockPacket packet;
-    memcpy(&packet.session_, &NetWinSessionData, sizeof(packet.session_));
+    packet.session_ = NetWinSessionData;
     if (target < 0) {
         packet.opcode_ = 0x4F03;
         NetDaemonNet.Net::send(&packet, sizeof(packet), 0, 1);
         return;
     }
     uint32_t who;
-    if (target == 0) {
-        packet.opcode_ = 0x2F03;
-        who = NetDaemonNet.host_player_id();
-    } else {
+    if (target != 0) {
         packet.opcode_ = 0x1F03;
         who = NetDaemonNet.process_slots_[target].pid_;
+    } else {
+        packet.opcode_ = 0x2F03;
+        who = NetDaemonNet.host_player_id();
     }
     NetDaemonNet.Net::send(&packet, sizeof(packet), who, 1);
 }

@@ -1,0 +1,20 @@
+{
+  "event_id": "2f24ea4ee646779223a89ff2c042c4523f50d476f4d0b25af444d912565ba444",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_socialwin_playerdata_owner.py"
+    ],
+    "evidence": [
+      "Remove the unused host-only category-switch fixture helper after restoring the original direct indexed member store. All real-body behavior and callback assertions remain.",
+      "The prior host run is retained: four failures were fixture compile/mutation anchors; no passing behavior control is removed or accepted without rerunning."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "actual-source-fixture-adaptation",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:easy-socialwin-oct25n"
+}
