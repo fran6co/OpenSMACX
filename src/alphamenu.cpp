@@ -555,17 +555,22 @@ int AlphaMenu::init(Win *parent) {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x004032A0 ?adjust@AlphaMenu@@QAEXXZ 0x004032A0-0x00403335 FILE
+// ORIGINAL: 0x004032A0 ?adjust@AlphaMenu@@QAEXXZ 0x004032A0-0x00403335 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Retained seeds src/unrecovered/00402f40.cpp,004032a0.cpp,00403af0.cpp and src/recovered/units/00403340.cpp,00403680.cpp,00403830.cpp; pinned original callback style27/29, positive hide height, branch-only clip restoration and actual caller dispatch audited by coordinator."], "reason": "Recover AlphaMenu owner behavior through existing Menu/GraphicWin/Buffer inheritance and owned Sprite lifetimes; historical seed identity and extents remain obligations, not measurement claims."}
 // symbol    ?adjust@AlphaMenu@@UAEXXZ
 void AlphaMenu::adjust() {
   const int height = sprites_[0].height() * count_ + sprite1_.height();
   resize(sprite1_.width(), height, 0);
-
-  const int x = WinScreenWidth == 0x320 ? 0 : (WinScreenWidth - 0x400) / 2;
-  const int y = MainInterfaceGlobal.window_bounds_.top
-      - MainInterfaceGlobal.window_bounds_.bottom + WinScreenHeight - height;
-  Win::move(x, y);
+  const int screen_width = WinScreenWidth;
+  const RECT &bounds = MainInterfaceGlobal.window_bounds_;
+  if (screen_width == 0x320) {
+    const int y = bounds.top - bounds.bottom - height;
+    Win::move(0, y + WinScreenHeight);
+  } else {
+    const int y = bounds.top - bounds.bottom - height;
+    const int x = (screen_width - 0x400) / 2;
+    Win::move(x, y + WinScreenHeight);
+  }
   compute();
   redraw();
 }

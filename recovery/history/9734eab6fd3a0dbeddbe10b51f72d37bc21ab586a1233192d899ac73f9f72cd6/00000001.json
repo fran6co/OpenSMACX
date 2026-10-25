@@ -1,0 +1,21 @@
+{
+  "event_id": "794ecf1fdca8e8872ed0080540c53fc59507f5d5c81ef54e9c75fa7c397a8e84",
+  "payload": {
+    "affects": [
+      "entity-c073ae22a4aa6bb9ebcfb405eb3ba91d662b2d06ba850cee2c0d5f3499953992"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "menu-reference-order-capped-search-oct25aq",
+    "evidence": [
+      "Preserved full application firstcandidate strictFAIL and direct-expression variant strictFAIL; no weaker result promoted.",
+      "Third and final unchangedcontext candidate matches all49instructions, native strict reference resultPASS, nativeoutsidePASS and no otherexactloss. Uses ordinary constRECTreference andexistingfields, no flags/casts/bytecopies/volatiletricks."
+    ],
+    "hypothesis": "First masked-exact candidate algebraically reordered global-read operands and fails strict reference equality. A real RECT reference plus branch-local arithmetic restores both code and reference order.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "menu-reference-order-capped-search-oct25aq",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:alphamenu-branch-geometry-oct25aq"
+}
