@@ -2621,9 +2621,9 @@ void __cdecl sub_5d4240(unsigned char *palette_rgb) {
 }
 
 // ORIGINAL: 0x005D427C sub_5d427c 0x005D427C-0x005D439F
+// symbol    _sub_5d427c
 // TRIED: entry uses pushal/popal (all eight registers saved and restored) around the whole body with cld and only rep movsb/ rep movsd inside, which VC6 never emits for ordinary compiled C++ - this is very likely inline assembly in the original source, which the rules here bar reproducing. Transcribed Ghidra's decompilation (already a faithful read of the byte stream) into plain C++ instead: a byte-oriented decoder that walks a control word one bit at a time, alternating literal dword/byte copies from the source with back-reference copies from already-written output, matching an LZ-style unpacker. No `__asm`; this compiles but will not reach the original's register-saving shape.
 // size      291 bytes
-// prototype
 // callers   1   call targets   0
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
@@ -2682,7 +2682,7 @@ extern "C" int __cdecl sub_5d427c(unsigned short *samples, unsigned char *steps,
               uVar4 = *(unsigned int *)puVar8;
               cVar5 = (signed char)uVar4;
             } else {
-              puVar8 = puVar8 + 1;
+              puVar8 = puVar8 + 4; // Original 0x005D4361: literals follow the four-byte command.
               for (uVar2 = uVar4 & 3; uVar2 != 0; uVar2 = uVar2 - 1) {
                 *param_4 = *puVar8;
                 puVar8 = puVar8 + 1;
