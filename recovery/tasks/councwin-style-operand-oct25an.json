@@ -1,0 +1,24 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "560b11518dc8a1f784cd1700848d245d298c8cab",
+  "editable_files": [
+    "src/councwin.cpp",
+    "recovery/tests/councwin_owner_control_fixture.py"
+  ],
+  "evidence": [
+    "Independent pin/stack and source table review confirms0x426497 pushes0x78D618 retained until Buffer::box_sprite at0x4264DD; table base0x78D528 and verified0x28 stride imply entry6, not current15.",
+    "Only this literal changes. Preserve all source identities, symbols, spans, original quirks and historical claims; native record alone grants claims. Source proposal SHA4a6d8257f62dc8e218b1a22f2891ef9c2046d05a014a11d660c716ae7f305d21; independent review SHAc9ebd358c877860853db58edaf6bc0552ff3b50f64b7a8f89ca7268f89206881.",
+    "Use isolated compiler resources, native unchanged production replica, outside-owner checks and complete batch build/link/destination recheck before coordinator-reviewed manual integration. Actual-source behavior/heading style controls do not establish full linked or game acceptance."
+  ],
+  "intent": "Recover the original Council information heading style through its source-owned table.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4351088,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "councwin-style-operand-oct25an"
+}
