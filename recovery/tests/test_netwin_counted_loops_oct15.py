@@ -77,11 +77,23 @@ static NetWinLobbyRow NetWinLobbyRows[8];
 struct NetWinFactionRecord { uint8_t record_type_=7; uint8_t pad[3]{}; uint32_t owner_=0; char gap[0x5A]{}; char noun_faction_[24]="Faction"; };
 struct NetWinSessionBlock { int mode_=0; };
 static NetWinSessionBlock NetWinSessionData;
+static RECT *rect_to_mutate_during_pid = nullptr;
+static bool mutate_rect_on_pid = false;
+static int forced_pid_index = 99;
 struct AlphaNetProcessSlot { char name_[0x20]{}; uint32_t pid_=0; };
 struct AlphaNet {
     AlphaNetProcessSlot process_slots_[8];
     struct Primary { uint32_t leading_words_[2]{}; } primary_state_;
-    uint32_t pid_2_idx(uint32_t) { return 99; }
+    uint32_t pid_2_idx(uint32_t) {
+        if (mutate_rect_on_pid && rect_to_mutate_during_pid) {
+            rect_to_mutate_during_pid->left=30;
+            rect_to_mutate_during_pid->top=40;
+            rect_to_mutate_during_pid->right=90;
+            rect_to_mutate_during_pid->bottom=80;
+            mutate_rect_on_pid=false;
+        }
+        return forced_pid_index;
+    }
     uint32_t local_player_id() { return 1; }
     uint32_t host_player_id() { return 2; }
     char *get_player_name(uint32_t) { return const_cast<char *>("remote"); }
@@ -91,6 +103,10 @@ static AlphaNet NetDaemonNet;
 static std::vector<int> box_indices;
 static std::vector<int> spot_indices;
 static std::vector<int> write_indices;
+static std::vector<RECT> clipped_rects;
+static std::vector<RECT> spot_rects;
+static std::vector<int> arrow_x;
+static std::vector<int> arrow_y;
 static int callback_mode = 0;
 static NetWinFactionRecord *callback_records = nullptr;
 static RECT *callback_rect = nullptr;
@@ -108,14 +124,16 @@ struct Buffer {
     void set_font(int, int, int, int) {}
     void set_text_color(int, int, int, int) {}
     void write_cent_l(const char *, RECT *, size_t) {}
-    void set_clip(RECT *) {}
+    void set_clip(RECT *r) { clipped_rects.push_back(*r); }
     void write_l(const char *, RECT *, size_t) {}
     void restore_clip() {}
 };
 struct Sprite {
     int transparent_index() { return 0; }
     int height() { return 4; }
-    void draw(Buffer *, int, int, int, int=1, int=1) {}
+    void draw(Buffer *, int, int x, int y, int=1, int=1) {
+        arrow_x.push_back(x); arrow_y.push_back(y);
+    }
 };
 static int InterfaceBoxStyles[64];
 static Sprite g_IFACE_LOCK_SPRITES[2], g_IFACE_MP_COMBO_ARROW_SPRITES[1];
@@ -141,7 +159,11 @@ static void soft_update(RECT *) {}
 static char *_itoa(int value, char *out, int) { std::sprintf(out,"%d",value); return out; }
 struct Spot {
     void kill_type(int) {}
-    void add(int row, int, int, int, int, int) { spot_indices.push_back(row); }
+    void add(int row, int, int x, int y, int width, int height) {
+        spot_indices.push_back(row);
+        RECT r; r.left=x; r.top=y; r.right=x+width; r.bottom=y+height;
+        spot_rects.push_back(r);
+    }
 };
 struct FlatButton { void set_name(char *) {} void redraw() {} };
 struct NetWin : Buffer {
@@ -160,7 +182,7 @@ BODY_DIFFS
 BODY_FACTIONS
 
 static void fail(const char *message) { std::fprintf(stderr,"FAIL: %s\n",message); std::exit(1); }
-static void reset() { box_indices.clear(); spot_indices.clear(); write_indices.clear(); callbacks=0; callback_mode=0; callback_records=nullptr; callback_rect=nullptr; callback_stride=1; }
+static void reset() { box_indices.clear(); spot_indices.clear(); write_indices.clear(); clipped_rects.clear(); spot_rects.clear(); arrow_x.clear(); arrow_y.clear(); callbacks=0; callback_mode=0; callback_records=nullptr; callback_rect=nullptr; callback_stride=1; rect_to_mutate_during_pid=nullptr; mutate_rect_on_pid=false; forced_pid_index=99; }
 static void init_rows() {
     std::memset(NetWinLobbyRows,0,sizeof(NetWinLobbyRows));
     for (int i=1;i<=7;++i) {
@@ -222,6 +244,27 @@ int main() {
     callback_stride=3;
     win.draw_player_names();
     if (box_indices.size()!=7) fail("draw_player_names omitted row 7");
+
+    // The arrow geometry is captured before pid_2_idx; text clipping and the
+    // later spot registration use the live rectangle after that helper.
+    reset(); init_rows(); win.faction_records_=records; records[0].record_type_=1;
+    NetWinSessionData.mode_=3; NetWinLobbyRows[1].prefix_=0;
+    win.setup_rects_[20].left=10; win.setup_rects_[20].top=20;
+    win.setup_rects_[20].right=50; win.setup_rects_[20].bottom=40;
+    callback_rect=&win.setup_rects_[20];
+    forced_pid_index=1; rect_to_mutate_during_pid=&win.setup_rects_[20];
+    mutate_rect_on_pid=true;
+    win.draw_diffs();
+    if (arrow_x.size()!=1 || arrow_y.size()!=1 || arrow_x[0]!=40 || arrow_y[0]!=28)
+        fail("draw_diffs arrow did not use pre-helper RECT snapshot");
+    if (clipped_rects.size()!=1 || clipped_rects[0].left!=34 ||
+        clipped_rects[0].top!=40 || clipped_rects[0].right!=86 ||
+        clipped_rects[0].bottom!=80)
+        fail("draw_diffs text clip did not use live post-helper RECT");
+    if (spot_rects.size()!=1 || spot_rects[0].left!=30 ||
+        spot_rects[0].top!=40 || spot_rects[0].right!=90 ||
+        spot_rects[0].bottom!=80)
+        fail("draw_diffs spot registration did not use live post-helper RECT");
     return 0;
 }
 '''
@@ -294,3 +337,25 @@ def test_compiled_hoisted_record_count_mutant_fails_runtime(compiler_name, tmp_p
                            "netwin-hoisted-record-count")
     assert run.returncode != 0
     assert "draw_factions did not reread callback-mutated record bound" in run.stderr
+
+
+@pytest.mark.parametrize("compiler_name", ("g++", "clang++"))
+def test_compiled_live_arrow_rectangle_mutant_fails_runtime(compiler_name, tmp_path):
+    compiler = shutil.which(compiler_name)
+    if compiler is None:
+        pytest.skip(f"{compiler_name} unavailable")
+    bodies = _painter_bodies()
+    body = bodies["BODY_DIFFS"]
+    assert body.count("const RECT arrow_rect = *rect;") == 1
+    old = ("arrow_rect.right - 0xA,\n"
+           "                       arrow_rect.top\n"
+           "                           + (arrow_rect.bottom - arrow.height() - arrow_rect.top) / 2")
+    new = ("rect->right - 0xA,\n"
+           "                       rect->top\n"
+           "                           + (rect->bottom - arrow.height() - rect->top) / 2")
+    assert body.count(old) == 1
+    bodies["BODY_DIFFS"] = body.replace(old, new, 1)
+    run = _compile_and_run(_host_source(bodies), compiler, tmp_path,
+                           "netwin-live-arrow-rectangle-mutant")
+    assert run.returncode != 0
+    assert "draw_diffs arrow did not use pre-helper RECT snapshot" in run.stderr

@@ -1620,6 +1620,7 @@ void NetWin::draw_diffs() {
             continue;
         }
 
+        const RECT arrow_rect = *rect;
         // The combo-arrow chip: the player's own slot, or - with the two ids
         // still equal - the row whose prefix is the 0xFF default.
         int slot = index + 1;
@@ -1628,9 +1629,9 @@ void NetWin::draw_diffs() {
                 && row->prefix_ == 0xFF)) {
             Sprite &arrow = g_IFACE_MP_COMBO_ARROW_SPRITES[0];
             arrow.draw(buffer, arrow.transparent_index(),
-                       rect->right - 0xA,
-                       rect->top
-                           + (rect->bottom - arrow.height() - rect->top) / 2);
+                       arrow_rect.right - 0xA,
+                       arrow_rect.top
+                           + (arrow_rect.bottom - arrow.height() - arrow_rect.top) / 2);
         }
 
         buffer->set_font(find_font(0xE, 1), 0, 0, 0);
