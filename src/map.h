@@ -595,11 +595,9 @@ MEASURED inline BOOL __cdecl on_map(int x, int y) {
 
 MEASURED inline int __cdecl xrange(int x) {
     if (!(MapIsFlat & 1)) {
-        if (x < 0) {
-            x += MapLongitudeBounds;
-        } else if (x >= (int)MapLongitudeBounds) {
-            x -= MapLongitudeBounds;
-        }
+        const int longitude_bounds = MapLongitudeBounds;
+        if (x < 0) return x + longitude_bounds;
+        if (x >= longitude_bounds) return x - longitude_bounds;
     }
     return x;
 }
