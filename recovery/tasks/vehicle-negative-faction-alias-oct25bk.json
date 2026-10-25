@@ -1,0 +1,24 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "a7ba9e17d5551c86b4ccc1622b4c3e72ea671437",
+  "editable_files": [
+    "src/veh.cpp",
+    "recovery/tests/test_vehicle_negative_faction_alias.py"
+  ],
+  "evidence": [
+    "Original0x566308 and0x566498 read byte[52*id+0x952836]. For id=-1 this is0x952802, equal to source-owned Reactor0x9527F8 plus RulesReactor.power offset0xA. Current separately allocated Vehs[-1].faction_id does not preserve that physical storage relationship. Independent full-span/layout/loader review supports explicit low-byte member access for exactly-1.",
+    "Use two owner-local conditional expressions, retaining every other id path, faction comparison, continue, stack_check call and order. No zero/default faction, negative-id skip, initialization, clamp or behavior fix. Preserve historical claims and matching obligations through any reviewed temporary structural regression. Correct the stale source explanation of the alias without dropping useful findings.",
+    "One bounded candidate; unchanged native production replica, independent source/pin review, native outside-function preservation, actual-source air/ground live-storage and causal-damage controls, whole application build/link and destination recheck required. No new historical byte claim except installed recorder; no full linked/runtime/game acceptance."
+  ],
+  "intent": "Restore the original Reactor field alias for empty neighboring vehicle lookups in compute_odds.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5660448,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "vehicle-negative-faction-alias-oct25bk"
+}
