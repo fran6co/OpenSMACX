@@ -617,8 +617,8 @@ int main() {
         ('wrong_ineligible_bias', 'eligible ? diplo_add(bias, 2) : 0',
          'diplo_add(bias, diplo_mul(eligible, 2))'),
         ('wrong_fa2c_uses_diff',
-         'diplo_add(diplo_add(diplo_add(bias, 4), eligible ? 1 : 0),',
-         'diplo_add(diplo_add(diplo_add(diplo_clamp(PlayersData[actor].diff_level, 0, 2), 4), eligible ? 1 : 0),'),
+         'diplo_add(diplo_add(bias, 4), eligible ? 1 : 0)',
+         'diplo_add(diplo_add(diplo_clamp(PlayersData[actor].diff_level, 0, 2), 4), eligible ? 1 : 0)'),
     ):
         assert old in body
         variants[name] = body.replace(old, new)
