@@ -2432,10 +2432,6 @@ Purpose: Get the region value for the specified tile.
 // ORIGINAL: 0x00591210 ?abstract_at@@YAHHH@Z 0x00591210-0x00591230 BYTE_EXACT
 // body      src/map.h
 // symbol    ?abstract_at@@YAEHH@Z
-// ABI evidence: the getter defines AL only. Both mapped enemy_strategy
-// calls (0x56313B and 0x5631C3) mask EAX to one byte before using it.
-// This supports the current byte-valued interface; the catalogue int
-// spelling is historical and does not prove the original source prototype.
 // size      32 bytes
 // prototype int (__cdecl ?abstract_at@@YAHHH@Z)(int xCoord, int yCoord)
 // callers   1   call targets   0
@@ -2457,10 +2453,10 @@ Purpose: Get the region value for the specified tile.
 Return Value: Abstract value (region)
 Status: Complete
 */
-// BODY IN map.h, as `MEASURED inline`: the image writes it out at
-// some call sites and calls it at others, and a .cpp definition is only ever
-// one of those. The marker stays here because that is where the catalogue
-// reads it.
+// ABI evidence: the getter defines AL only. Both mapped enemy_strategy
+// calls (0x56313B and 0x5631C3) mask EAX to one byte before using it.
+// This supports the current byte-valued interface; the catalogue int
+// spelling is historical and does not prove the original source prototype.
 
 
 /*
