@@ -357,6 +357,11 @@ def _measure(fixture, tmp_path):
     return Coff(object_bytes), bound, comparison
 
 
+def _indexed_targets(obj, targets):
+    return {str(symbol.index): targets[symbol.name]
+            for symbol in obj.symbols.values() if symbol.name in targets}
+
+
 @pytest.mark.parametrize("displacement", [-16, -24, -32, -0x120, 4, 8, 24, 36, 0x120])
 def test_scalar_action_binds_complete_pe_coff_and_compares_full_regions(tmp_path,
                                                                         displacement):
@@ -418,8 +423,7 @@ def test_bound_object_resolves_only_the_proved_local_funcinfo_reference():
         "synthetic_scalar_eh.cpp")
     targets = {FRAME_SYMBOL: FRAME_TARGET, CALL_SYMBOL: CALL_TARGET,
                RUNTIME_SYMBOL: RUNTIME_TARGET}
-    indexed_targets = {str(symbol.index): targets[symbol.name]
-                       for symbol in obj.symbols.values() if symbol.name in targets}
+    indexed_targets = _indexed_targets(obj, targets)
     index, target = eh_funcinfo_reference_target(
         raw, ROOT_NAME, image, spans, indexed_targets)
     assert obj.symbols[index].name == "$Tinfo"
@@ -433,10 +437,14 @@ def test_bound_object_resolves_only_the_proved_local_funcinfo_reference():
     assert reference["binding_address"] == f"0x{INFO_VA:08X}"
 
 
-@pytest.mark.parametrize("damage", ["wrong_info_field", "handler_info_addend",
-                                     "bad_predecessor", "wrong_count",
-                                     "call_addend"])
-def test_unowned_or_changed_eh_funcinfo_is_not_promoted(damage):
+@pytest.mark.parametrize(("damage", "expected_reason"), [
+    ("wrong_info_field", "COFF FuncInfo is not an associated root-owned data section"),
+    ("handler_info_addend", "COFF handler FuncInfo pointer has a nonzero addend"),
+    ("bad_predecessor", "COFF unwind predecessor is not a sentinel or earlier state"),
+    ("wrong_count", "COFF FuncInfo does not have a supported bounded cleanup layout"),
+    ("call_addend", "COFF frame-local cleanup lacks one unambiguous external function relocation"),
+])
+def test_unowned_or_changed_eh_funcinfo_is_not_promoted(damage, expected_reason):
     raw, image, spans, _record = _build(object_damage=damage,
                                         action_kinds=("scalar", "frame"))
     obj = Coff(raw)
@@ -446,8 +454,15 @@ def test_unowned_or_changed_eh_funcinfo_is_not_promoted(damage):
         "synthetic_scalar_eh.cpp")
     targets = {FRAME_SYMBOL: FRAME_TARGET, CALL_SYMBOL: CALL_TARGET,
                RUNTIME_SYMBOL: RUNTIME_TARGET}
-    with pytest.raises(ValueError):
-        eh_funcinfo_reference_target(raw, ROOT_NAME, image, spans, targets)
+    if damage == "call_addend":
+        call_index = next(symbol.index for symbol in obj.symbols.values()
+                          if symbol.name == CALL_SYMBOL)
+        call_offset, = (offset for offset, symbol_index, _kind
+                        in obj.sections[1].relocations if symbol_index == call_index)
+        assert struct.unpack_from("<I", obj.sections[1].data, call_offset)[0] == 1
+    with pytest.raises(ValueError, match=expected_reason):
+        eh_funcinfo_reference_target(
+            raw, ROOT_NAME, image, spans, _indexed_targets(obj, targets))
     row, = check_objects((binding,), {binding.unit: obj}, image,
                          external_targets=targets)
     assert row["result"] != Result.PASS
@@ -467,8 +482,7 @@ def test_changed_frame_action_semantics_do_not_promote_funcinfo():
         "synthetic_scalar_eh.cpp")
     targets = {FRAME_SYMBOL: FRAME_TARGET, CALL_SYMBOL: CALL_TARGET,
                RUNTIME_SYMBOL: RUNTIME_TARGET}
-    indexed_targets = {str(symbol.index): targets[symbol.name]
-                       for symbol in obj.symbols.values() if symbol.name in targets}
+    indexed_targets = _indexed_targets(obj, targets)
     with pytest.raises(ValueError, match="semantics differ"):
         eh_funcinfo_reference_target(raw, ROOT_NAME, image, spans, indexed_targets)
     row, = check_objects((binding,), {binding.unit: obj}, image,
@@ -488,11 +502,9 @@ def test_wrong_funcinfo_association_fails_before_local_target_resolution():
 def test_other_function_cannot_reuse_this_owners_local_funcinfo_index():
     raw, image, spans, _record = _build()
     obj = Coff(raw)
-    targets = {str(symbol.index): target for symbol in obj.symbols.values()
-               for name, target in ((FRAME_SYMBOL, FRAME_TARGET),
-                                    (CALL_SYMBOL, CALL_TARGET),
-                                    (RUNTIME_SYMBOL, RUNTIME_TARGET))
-               if symbol.name == name}
+    targets = _indexed_targets(obj, {FRAME_SYMBOL: FRAME_TARGET,
+                                     CALL_SYMBOL: CALL_TARGET,
+                                     RUNTIME_SYMBOL: RUNTIME_TARGET})
     with pytest.raises(ValueError):
         eh_funcinfo_reference_target(
             raw, "?different_owner@@YAXXZ", image, spans, targets)
@@ -508,8 +520,7 @@ def test_changed_cleanup_transfer_target_does_not_prove_funcinfo():
         "synthetic_scalar_eh.cpp")
     targets = {FRAME_SYMBOL: FRAME_TARGET, changed_call: CALL_TARGET + 4,
                RUNTIME_SYMBOL: RUNTIME_TARGET}
-    indexed_targets = {str(symbol.index): targets[symbol.name]
-                       for symbol in obj.symbols.values() if symbol.name in targets}
+    indexed_targets = _indexed_targets(obj, targets)
     with pytest.raises(ValueError, match="cleanup transfer"):
         eh_funcinfo_reference_target(raw, ROOT_NAME, image, spans, indexed_targets)
     row, = check_objects((binding,), {binding.unit: obj}, image,
