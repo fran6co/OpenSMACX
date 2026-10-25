@@ -155,23 +155,22 @@ ReplayWin::~ReplayWin() {
 // symbol    ?on_redraw@ReplayWin@@UAEXXZ
 void ReplayWin::on_redraw() {
     GraphicWin::fill(9);
-    Buffer *canvas = static_cast<Buffer *>(this);
     RECT title = *buffer_working_rect();
-    canvas->box_sprite(&title, &InterfaceBoxStyles[9]);
+    Buffer::box_sprite(&title, &InterfaceBoxStyles[9]);
 
     title.left += 4;
     title.right -= 4;
     title.top += 4;
     title.bottom = title.top + 0x14;
-    canvas->box_sprite(&title, &InterfaceBoxStyles[6]);
+    Buffer::box_sprite(&title, &InterfaceBoxStyles[6]);
 
     title.left += 3;
     title.right -= 3;
     title.top += 3;
     title.bottom -= 3;
-    canvas->set_font(MainInterfaceGlobal.primary_font(), 0, 0, 0);
-    canvas->set_text_color(TextColourTable[180], TextColourTable[181], 1, 1);
-    canvas->write_cent_l(year_label_, &title, strlen(year_label_));
+    Buffer::set_font(MainInterfaceGlobal.primary_font(), 0, 0, 0);
+    Buffer::set_text_color(TextColourTable[180], TextColourTable[181], 1, 1);
+    Buffer::write_cent_l(year_label_, &title, strlen(year_label_));
 
     make_bases();
     map_win_.on_redraw();
