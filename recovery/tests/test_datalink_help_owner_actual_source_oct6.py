@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import shutil
 import subprocess
+import os
 from pathlib import Path
 
 import pytest
@@ -11,6 +12,9 @@ from match_recovery.source import Mode, SourceRole, read_file, read_text
 
 
 def root_dir() -> Path:
+    override = os.environ.get("OPENSMACX_SOURCE_ROOT")
+    if override:
+        return Path(override).resolve()
     for candidate in Path(__file__).resolve().parents:
         if (candidate / "CMakeLists.txt").is_file() and (candidate / "src/IMAGE_PIN").is_file():
             return candidate
@@ -39,6 +43,37 @@ def extract_function(text: str, signature: str) -> str:
             if depth == 0:
                 return text[start:pos + 1]
     raise AssertionError(f"unterminated function {signature}")
+
+
+def extract_block_containing(text: str, marker: str) -> str:
+    masked = code_only(text)
+    assert masked.count(marker) == 1, marker
+    position = masked.index(marker)
+    opening = masked.rfind("{", 0, position)
+    assert opening >= 0
+    depth = 0
+    for end in range(opening, len(masked)):
+        if masked[end] == "{":
+            depth += 1
+        elif masked[end] == "}":
+            depth -= 1
+            if depth == 0:
+                return text[opening:end + 1]
+    raise AssertionError(f"unterminated block containing {marker}")
+
+
+TECH_LOOP_MARKER = "for (int row = 0; row < MaxTerrainNum - 1; ++row)"
+TECH_HECK_SIGNATURE = "void __cdecl tech_heck(void (__cdecl *a1)(char *), int a2)"
+EMIT_HELP_SIGNATURE = "static void emit_help(void (__cdecl *cb)(char *))"
+
+
+def actual_tech_loop(source_root: Path | None = None) -> tuple[str, str]:
+    root = source_root or root_dir()
+    datalink = (root / "src/datalink.cpp").read_text()
+    tech_heck = extract_function(datalink, TECH_HECK_SIGNATURE)
+    loop = extract_block_containing(tech_heck, TECH_LOOP_MARKER)
+    helper = extract_function(datalink, EMIT_HELP_SIGNATURE)
+    return loop, helper
 
 
 def test_installed_records_keep_seed_identity_and_history():
@@ -194,3 +229,167 @@ def test_installed_reportwin_draw_pass_host_control(compiler, tmp_path):
     subprocess.run([executable, "-std=c++98", str(source), "-o", str(binary)],
                    check=True, capture_output=True, text=True)
     subprocess.run([str(binary)], check=True, capture_output=True, text=True)
+
+
+TECH_LOOP_HARNESS = r'''#include <cassert>
+#include <cstring>
+#define __cdecl
+typedef char *LPSTR;
+struct RulesTerraforming { int preq_tech; int preq_tech_sea; };
+struct OrderRow { char *order; char *order_sea; };
+static const int MaxTerrainNum = 20;
+static RulesTerraforming Terraforming[MaxTerrainNum];
+static OrderRow Order[24];
+static int TechnologyHelpPrefixEmitted = 1;
+static int TechnologyHelpSectionSelector = 0;
+static char TechnologyHelpPrefixText[] = "prefix";
+static char StringTemp[64];
+static char text_buffer[64];
+static char *TextBufferGetPtr = text_buffer;
+static int events[32], event_count;
+static int parse_say_count, parse_string_count, emit_count, callback_mode;
+static char order_seen[4][24];
+static void parse_say(int, char *order, int, int) {
+    events[event_count++] = 1;
+    strcpy(order_seen[parse_say_count++], order);
+    strcpy(TextBufferGetPtr, order);
+}
+static void parse_string(char *out, char *in) {
+    events[event_count++] = 2;
+    strcpy(out, in);
+    ++parse_string_count;
+}
+static void tech_callback(char *) {
+    events[event_count++] = 3;
+    ++emit_count;
+    if (emit_count == 1) {
+        if (callback_mode == 1) {
+            Terraforming[0].preq_tech = 9;
+            Terraforming[0].preq_tech_sea = 7;
+        } else if (callback_mode == 2) {
+            Terraforming[0].preq_tech = 7;
+            Terraforming[0].preq_tech_sea = 7;
+        } else if (callback_mode == 3) {
+            Terraforming[0].preq_tech = 9;
+        }
+    }
+}
+EMIT_HELP_BODY
+static void run_loop(int a2, void (__cdecl *a1)(char *)) {
+    LOOP_BODY
+}
+static void reset_case(int land, int sea, int mode) {
+    for (int row = 0; row < MaxTerrainNum; ++row) {
+        Terraforming[row].preq_tech = -1;
+        Terraforming[row].preq_tech_sea = -1;
+    }
+    Terraforming[0].preq_tech = land;
+    Terraforming[0].preq_tech_sea = sea;
+    Order[4].order = (char *)"land-order";
+    Order[4].order_sea = (char *)"sea-order";
+    event_count = parse_say_count = parse_string_count = emit_count = 0;
+    callback_mode = mode;
+    TechnologyHelpPrefixEmitted = 1;
+}
+static void check_events(int expected_emit) {
+    assert(emit_count == expected_emit);
+    assert(parse_say_count == expected_emit);
+    assert(parse_string_count == expected_emit);
+    assert(event_count == expected_emit * 3);
+    for (int i = 0; i < expected_emit; ++i) {
+        assert(events[i * 3] == 1 && events[i * 3 + 1] == 2 && events[i * 3 + 2] == 3);
+    }
+}
+int main() {
+    reset_case(7, 8, 0);
+    run_loop(7, tech_callback);
+    check_events(1);
+    assert(strcmp(order_seen[0], "land-order") == 0);
+
+    // The land emitter changes both live row fields. The sea leg now matches
+    // the requested technology and is no longer a duplicate of land.
+    reset_case(7, 8, 1);
+    run_loop(7, tech_callback);
+    check_events(2);
+    assert(strcmp(order_seen[0], "land-order") == 0);
+    assert(strcmp(order_seen[1], "sea-order") == 0);
+
+    // A callback can make the two current prerequisites equal; the sea leg
+    // must be suppressed after its live read.
+    reset_case(7, 8, 2);
+    run_loop(7, tech_callback);
+    check_events(1);
+
+    // The live land value can also make a formerly duplicate pair distinct.
+    reset_case(7, 7, 3);
+    run_loop(7, tech_callback);
+    check_events(2);
+    assert(strcmp(order_seen[1], "sea-order") == 0);
+    return 0;
+}
+'''
+
+
+def _replace_once(text: str, old: str, new: str) -> str:
+    assert text.count(old) == 1, (old, text.count(old))
+    return text.replace(old, new, 1)
+
+
+def _cached_row_mutant(loop: str) -> str:
+    live = """for (int i = 0; i < 2; ++i) {
+                const RulesTerraforming &terraform = Terraforming[row];
+                const int prerequisite = i == 0 ? terraform.preq_tech
+                                                : terraform.preq_tech_sea;"""
+    snapshot = """const RulesTerraforming &terraform = Terraforming[row];
+            const int prereq[2] = {terraform.preq_tech, terraform.preq_tech_sea};
+            for (int i = 0; i < 2; ++i) {
+                const int prerequisite = prereq[i];"""
+    mutant = _replace_once(loop, live, snapshot)
+    return _replace_once(
+        mutant,
+        "(i != 1 || terraform.preq_tech != terraform.preq_tech_sea)",
+        "(i != 1 || prereq[0] != prereq[1])",
+    )
+
+
+def _compile_and_run_loop(loop: str, helper: str, compiler: str,
+                          tmp_path: Path, expect_success: bool) -> None:
+    tmp_path.mkdir(parents=True, exist_ok=True)
+    source = tmp_path / "tech-loop.cpp"
+    binary = tmp_path / "tech-loop"
+    program = TECH_LOOP_HARNESS.replace("EMIT_HELP_BODY", helper).replace("LOOP_BODY", loop)
+    source.write_text(program)
+    built = subprocess.run([compiler, "-std=c++98", str(source), "-o", str(binary)],
+                           capture_output=True, text=True)
+    assert built.returncode == 0, built.stderr
+    result = subprocess.run([str(binary)], capture_output=True, text=True)
+    if expect_success:
+        assert result.returncode == 0, result.stderr
+    else:
+        assert result.returncode != 0, "causal stale-read mutant unexpectedly passed"
+
+
+@pytest.mark.parametrize("compiler", ["g++", "clang++"])
+def test_actual_tech_heck_loop_reloads_live_land_and_sea_prerequisites(compiler, tmp_path):
+    executable = shutil.which(compiler)
+    if executable is None:
+        pytest.skip(f"{compiler} unavailable")
+    loop, helper = actual_tech_loop()
+    _compile_and_run_loop(loop, helper, executable, tmp_path, True)
+
+
+@pytest.mark.parametrize("compiler", ["g++", "clang++"])
+def test_tech_heck_loop_rejects_cached_row_and_missing_duplicate_suppression(compiler, tmp_path):
+    executable = shutil.which(compiler)
+    if executable is None:
+        pytest.skip(f"{compiler} unavailable")
+    loop, helper = actual_tech_loop()
+    cached = _cached_row_mutant(loop)
+    no_duplicate_suppression = _replace_once(
+        loop,
+        "(i != 1 || terraform.preq_tech != terraform.preq_tech_sea)",
+        "(i != 1 || true)",
+    )
+    _compile_and_run_loop(cached, helper, executable, tmp_path / "cached", False)
+    _compile_and_run_loop(no_duplicate_suppression, helper, executable,
+                          tmp_path / "duplicate", False)
