@@ -112,6 +112,8 @@ static NetWinFactionRecord *callback_records = nullptr;
 static RECT *callback_rect = nullptr;
 static int callback_stride = 1;
 static int callbacks = 0;
+static int label_get_calls = 0;
+static bool vary_label_lookup = false;
 struct Buffer {
     void box_sprite(RECT *r, int *) {
         for (int i=0;i<7;++i) if (r == callback_rect + i*callback_stride) box_indices.push_back(i);
@@ -148,7 +150,10 @@ struct Strings {
         return s;
     }
 } StringTable;
-static char *label_get(int) { return const_cast<char *>("lobby"); }
+static char *label_get(int) {
+    ++label_get_calls;
+    return const_cast<char *>(vary_label_lookup && label_get_calls == 2 ? "Noun" : "Lobby");
+}
 typedef char *LPSTR;
 struct LabelsBlock { char *strings_ptr[0x1060/4]{}; };
 static LabelsBlock Labels;
@@ -182,7 +187,7 @@ BODY_DIFFS
 BODY_FACTIONS
 
 static void fail(const char *message) { std::fprintf(stderr,"FAIL: %s\n",message); std::exit(1); }
-static void reset() { box_indices.clear(); spot_indices.clear(); write_indices.clear(); clipped_rects.clear(); spot_rects.clear(); arrow_x.clear(); arrow_y.clear(); callbacks=0; callback_mode=0; callback_records=nullptr; callback_rect=nullptr; callback_stride=1; rect_to_mutate_during_pid=nullptr; mutate_rect_on_pid=false; forced_pid_index=99; }
+static void reset() { box_indices.clear(); spot_indices.clear(); write_indices.clear(); clipped_rects.clear(); spot_rects.clear(); arrow_x.clear(); arrow_y.clear(); callbacks=0; label_get_calls=0; vary_label_lookup=false; callback_mode=0; callback_records=nullptr; callback_rect=nullptr; callback_stride=1; rect_to_mutate_during_pid=nullptr; mutate_rect_on_pid=false; forced_pid_index=99; }
 static void init_rows() {
     std::memset(NetWinLobbyRows,0,sizeof(NetWinLobbyRows));
     for (int i=1;i<=7;++i) {
@@ -201,9 +206,17 @@ int main() {
     win.faction_records_=records;
     init_rows();
 
-    // Seven records reach row 7; a drawing callback can mutate a later row
-    // before that row is consumed, and a live type bound stops on reread.
-    reset(); NetWinSessionData.mode_=0; win.faction_records_=nullptr;
+    // A null record pointer is not read outside mode 3.
+    reset(); NetWinSessionData.mode_=2; win.faction_records_=nullptr;
+    callback_rect=&win.setup_rects_[20];
+    win.draw_diffs();
+    if (box_indices.size()!=7 || spot_indices.size()!=7)
+        fail("draw_diffs read a null record pointer outside mode 3");
+
+    // Seven records reach row 7; a drawing callback can switch mode and
+    // mutate a later row before it is consumed, and the live bound is reread.
+    reset(); NetWinSessionData.mode_=0; win.faction_records_=records;
+    records[0].record_type_=7;
     NetWinLobbyRows[1].prefix_=0xFF;
     callback_rect=&win.setup_rects_[20]; callback_mode=5;
     win.draw_diffs();
@@ -237,7 +250,8 @@ int main() {
     if (box_indices.size()!=2) fail("draw_player_names did not reread callback-mutated record bound");
     if (!spot_indices.empty()) fail("draw_player_names prefix continue was not preserved");
 
-    reset(); init_rows(); win.faction_records_=nullptr; NetWinSessionData.mode_=0;
+    reset(); init_rows(); win.faction_records_=records; records[0].record_type_=7;
+    NetWinSessionData.mode_=0;
     NetDaemonNet.primary_state_.leading_words_[0]=1;
     for (int i=1;i<=7;++i) NetWinLobbyRows[i].field_2_=1;
     callback_rect=&win.setup_rects_[12]; callback_mode=3;
@@ -265,6 +279,37 @@ int main() {
         spot_rects[0].top!=40 || spot_rects[0].right!=90 ||
         spot_rects[0].bottom!=80)
         fail("draw_diffs spot registration did not use live post-helper RECT");
+
+    // draw_factions uses the pre-helper rectangle for arrow and clipping;
+    // its spot registration reads the live rectangle after the helper.
+    reset(); init_rows(); win.faction_records_=records; records[0].record_type_=1;
+    NetWinSessionData.mode_=3; NetWinLobbyRows[1].faction_or_color_=0;
+    win.setup_rects_[13].left=10; win.setup_rects_[13].top=20;
+    win.setup_rects_[13].right=50; win.setup_rects_[13].bottom=40;
+    callback_rect=&win.setup_rects_[13]; forced_pid_index=1;
+    rect_to_mutate_during_pid=&win.setup_rects_[13]; mutate_rect_on_pid=true;
+    win.draw_factions();
+    if (arrow_x.size()!=1 || arrow_y.size()!=1 || arrow_x[0]!=40 || arrow_y[0]!=28)
+        fail("draw_factions arrow did not use pre-helper RECT snapshot");
+    if (clipped_rects.size()!=1 || clipped_rects[0].left!=14 ||
+        clipped_rects[0].top!=20 || clipped_rects[0].right!=39 ||
+        clipped_rects[0].bottom!=40)
+        fail("draw_factions clipping did not use pre-helper RECT snapshot");
+    if (spot_rects.size()!=1 || spot_rects[0].left!=30 ||
+        spot_rects[0].top!=40 || spot_rects[0].right!=90 ||
+        spot_rects[0].bottom!=80)
+        fail("draw_factions spot registration did not use live post-helper RECT");
+
+    // The source reacquires the fallback label for strcmp after strcat.
+    // This double is a call-count/value seam model, not a claim that the CRT
+    // mutates labels or invokes callbacks.
+    reset(); init_rows(); win.faction_records_=records; records[0].record_type_=1;
+    NetWinSessionData.mode_=3;
+    std::strcpy(NetWinLobbyRows[1].noun_faction_, "Noun");
+    vary_label_lookup=true;
+    win.draw_factions();
+    if (label_get_calls!=2 || std::strcmp(StringTemp, "Lobby")!=0)
+        fail("draw_factions did not reacquire fallback label for strcmp");
     return 0;
 }
 '''
@@ -314,20 +359,20 @@ def test_compiled_hoisted_record_count_mutant_fails_runtime(compiler_name, tmp_p
     bodies = _painter_bodies()
     body = bodies["BODY_FACTIONS"]
     live_check = (
-        "if (NetWinSessionData.mode_ == 3 && faction_records_ != 0\n"
+        "if (NetWinSessionData.mode_ == 3\n"
         "            && index >= faction_records_[0].record_type_)"
     )
     assert live_check in body
     body = body.replace(
         "    for (int index = 0; index < 7;",
-        "    const int record_type_snapshot = faction_records_ != 0\n"
+        "    const int record_type_snapshot = NetWinSessionData.mode_ == 3\n"
         "        ? faction_records_[0].record_type_ : 0;\n"
         "    for (int index = 0; index < 7;",
         1,
     )
     body = body.replace(
         live_check,
-        "if (NetWinSessionData.mode_ == 3 && faction_records_ != 0\n"
+        "if (NetWinSessionData.mode_ == 3\n"
         "            && index >= record_type_snapshot)",
         1,
     )
@@ -359,3 +404,64 @@ def test_compiled_live_arrow_rectangle_mutant_fails_runtime(compiler_name, tmp_p
                            "netwin-live-arrow-rectangle-mutant")
     assert run.returncode != 0
     assert "draw_diffs arrow did not use pre-helper RECT snapshot" in run.stderr
+
+
+@pytest.mark.parametrize("compiler_name", ("g++", "clang++"))
+def test_compiled_live_faction_arrow_rectangle_mutant_fails_runtime(
+    compiler_name, tmp_path
+):
+    compiler = shutil.which(compiler_name)
+    if compiler is None:
+        pytest.skip(f"{compiler_name} unavailable")
+    bodies = _painter_bodies()
+    body = bodies["BODY_FACTIONS"]
+    old = ("field.right - 0xA,\n"
+           "                       field.top\n"
+           "                           + (field.bottom - arrow.height() - field.top) / 2")
+    new = ("rect->right - 0xA,\n"
+           "                       rect->top\n"
+           "                           + (rect->bottom - arrow.height() - rect->top) / 2")
+    assert body.count(old) == 1
+    bodies["BODY_FACTIONS"] = body.replace(old, new, 1)
+    run = _compile_and_run(_host_source(bodies), compiler, tmp_path,
+                           "netwin-live-faction-arrow-rectangle-mutant")
+    assert run.returncode != 0
+    assert "draw_factions arrow did not use pre-helper RECT snapshot" in run.stderr
+
+
+@pytest.mark.parametrize("compiler_name", ("g++", "clang++"))
+def test_compiled_live_faction_clip_rectangle_mutant_fails_runtime(
+    compiler_name, tmp_path
+):
+    compiler = shutil.which(compiler_name)
+    if compiler is None:
+        pytest.skip(f"{compiler_name} unavailable")
+    bodies = _painter_bodies()
+    body = bodies["BODY_FACTIONS"]
+    old = "        field.left += 4;"
+    new = "        field = *rect;\n        field.left += 4;"
+    assert body.count(old) == 1
+    bodies["BODY_FACTIONS"] = body.replace(old, new, 1)
+    run = _compile_and_run(_host_source(bodies), compiler, tmp_path,
+                           "netwin-live-faction-clip-rectangle-mutant")
+    assert run.returncode != 0
+    assert "draw_factions clipping did not use pre-helper RECT snapshot" in run.stderr
+
+
+@pytest.mark.parametrize("compiler_name", ("g++", "clang++"))
+def test_compiled_wrong_vertical_faction_inset_mutant_fails_runtime(
+    compiler_name, tmp_path
+):
+    compiler = shutil.which(compiler_name)
+    if compiler is None:
+        pytest.skip(f"{compiler_name} unavailable")
+    bodies = _painter_bodies()
+    body = bodies["BODY_FACTIONS"]
+    old = "        field.left += 4;\n        field.right -= 0xB;"
+    new = "        field.top += 4;\n        field.bottom -= 0xB;"
+    assert body.count(old) == 1
+    bodies["BODY_FACTIONS"] = body.replace(old, new, 1)
+    run = _compile_and_run(_host_source(bodies), compiler, tmp_path,
+                           "netwin-wrong-vertical-faction-inset-mutant")
+    assert run.returncode != 0
+    assert "draw_factions clipping did not use pre-helper RECT snapshot" in run.stderr

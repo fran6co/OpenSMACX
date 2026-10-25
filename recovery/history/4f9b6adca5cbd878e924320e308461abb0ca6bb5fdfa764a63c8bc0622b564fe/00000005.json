@@ -1,0 +1,18 @@
+{
+  "event_id": "ec516bf563d54fb17d23a5a5b1b92d5fbb744cadb4054f7fa5f5a079312149ad",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "same-owner-player-name-null-read",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/netwin.cpp draw_player_names now performs the original mode3 live first-record byte read without the extra null guard, exactly the pin48047A..482 order. Every other byte of its source body is unchanged, and original identities/spans/symbols/history are preserved.",
+      "Full candidate application compile/link, native outside-four-function comparison, claim/reference checks and source-level callback controls are still required before integration; no new match or runtime acceptance claimed."
+    ]
+  },
+  "previous_event": "d31dbe0daf4318323843c18ae68bfa7eb7c3d292d6ef5f3885abcfcec233af77",
+  "request_id": "incorporate-third-painter-original-read",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:netwin-buffer-owner-oct25ah"
+}

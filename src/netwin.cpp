@@ -1298,7 +1298,7 @@ void NetWin::draw_player_names() {
     RECT *rects = &setup_rects_[6];
     for (int row = 0; row < 7;
          ++row, ++lobby_row, slot_record += 1) {
-        if (NetWinSessionData.mode_ == 3 && faction_records_ != 0
+        if (NetWinSessionData.mode_ == 3
             && row >= faction_records_[0].record_type_) {
             break;
         }
@@ -1607,16 +1607,15 @@ Status: Coverage transcription - unclaimed body
 */
 void NetWin::draw_diffs() {
     spot_.kill_type(4);
-    Buffer *buffer = static_cast<Buffer *>(this);
     RECT *rect = &setup_rects_[20];
     NetWinLobbyRow *row = &NetWinLobbyRows[1];
     for (int index = 0; index < 7;
          ++index, ++row, ++rect) {
-        if (NetWinSessionData.mode_ == 3 && faction_records_ != 0
+        if (NetWinSessionData.mode_ == 3
             && index >= faction_records_[0].record_type_) {
             break;
         }
-        buffer->box_sprite(rect, &InterfaceBoxStyles[0]);
+        Buffer::box_sprite(rect, &InterfaceBoxStyles[0]);
         if (NetWinSessionData.mode_ == 3 && row->prefix_ == 0xFF) {
             continue;
         }
@@ -1629,23 +1628,23 @@ void NetWin::draw_diffs() {
             || (NetDaemonNet.local_player_id() == NetDaemonNet.host_player_id()
                 && row->prefix_ == 0xFF)) {
             Sprite &arrow = g_IFACE_MP_COMBO_ARROW_SPRITES[0];
-            arrow.draw(buffer, arrow.transparent_index(),
+            arrow.draw(this, arrow.transparent_index(),
                        arrow_rect.right - 0xA,
                        arrow_rect.top
                            + (arrow_rect.bottom - arrow.height() - arrow_rect.top) / 2);
         }
 
-        buffer->set_font(find_font(0xE, 1), 0, 0, 0);
-        buffer->set_text_color(get_player_color(slot), 0, 1, 1);
+        Buffer::set_font(find_font(0xE, 1), 0, 0, 0);
+        Buffer::set_text_color(get_player_color(slot), 0, 1, 1);
         RECT field = *rect;
         field.left += 4;
         field.right -= 4;
-        buffer->set_clip(&field);
+        Buffer::set_clip(&field);
         char *name = StringTable.get(Difficulty[row->field_2_]);
         if (name != 0) {
-            buffer->write_l(name, &field, strlen(name));
+            Buffer::write_l(name, &field, strlen(name));
         }
-        buffer->restore_clip();
+        Buffer::restore_clip();
         spot_.add(index, 4, rect->left, rect->top,
                   rect->right - rect->left, rect->bottom - rect->top);
     }
@@ -1672,54 +1671,57 @@ Status: Coverage transcription - unclaimed body
 */
 void NetWin::draw_factions() {
     spot_.kill_type(3);
-    Buffer *buffer = static_cast<Buffer *>(this);
     RECT *rect = &setup_rects_[13];
     NetWinLobbyRow *row = &NetWinLobbyRows[1];
     for (int index = 0; index < 7;
          ++index, ++row, ++rect) {
-        if (NetWinSessionData.mode_ == 3 && faction_records_ != 0
+        if (NetWinSessionData.mode_ == 3
             && index >= faction_records_[0].record_type_) {
             break;
         }
-        buffer->box_sprite(rect, &InterfaceBoxStyles[0]);
+        Buffer::box_sprite(rect, &InterfaceBoxStyles[0]);
         if (NetWinSessionData.mode_ == 3 && row->prefix_ == 0xFF) {
             continue;
         }
 
+        RECT field = *rect;
         int slot = index + 1;
         int mode = row->faction_or_color_;
         if (slot == NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id())
             || (NetDaemonNet.local_player_id() == NetDaemonNet.host_player_id()
                 && row->prefix_ == 0xFF)) {
             Sprite &arrow = g_IFACE_MP_COMBO_ARROW_SPRITES[0];
-            arrow.draw(buffer, arrow.transparent_index(),
-                       rect->right - 0xA,
-                       rect->top
-                           + (rect->bottom - arrow.height() - rect->top) / 2);
+            arrow.draw(this, arrow.transparent_index(),
+                       field.right - 0xA,
+                       field.top
+                           + (field.bottom - arrow.height() - field.top) / 2);
         }
 
-        buffer->set_font(find_font(0xE, 1), 0, 0, 0);
-        buffer->set_text_color(get_player_color(slot), 0, 1, 1);
-        RECT field = *rect;
-        field.top += 4;
-        field.bottom -= 0xB;
-        buffer->set_clip(&field);
+        Buffer::set_font(find_font(0xE, 1), 0, 0, 0);
+        Buffer::set_text_color(get_player_color(slot), 0, 1, 1);
+        field.left += 4;
+        field.right -= 0xB;
+        Buffer::set_clip(&field);
 
         StringTemp[0] = 0;
-        const char *named;
         if (mode != -1) {
-            named = faction_records_[mode].noun_faction_;
+            strcat(StringTemp, faction_records_[mode].noun_faction_);
+            if (strcmp(faction_records_[mode].noun_faction_,
+                       row->noun_faction_) != 0) {
+                strcat(StringTemp, ": ");
+                strcat(StringTemp, " ");
+                strcat(StringTemp, row->noun_faction_);
+            }
         } else {
-            named = label_get(0xFE4 / 4);
+            strcat(StringTemp, label_get(0xFE4 / 4));
+            if (strcmp(label_get(0xFE4 / 4), row->noun_faction_) != 0) {
+                strcat(StringTemp, ": ");
+                strcat(StringTemp, " ");
+                strcat(StringTemp, row->noun_faction_);
+            }
         }
-        strcat(StringTemp, named);
-        if (strcmp(named, row->noun_faction_) != 0) {
-            strcat(StringTemp, ": ");
-            strcat(StringTemp, " ");
-            strcat(StringTemp, row->noun_faction_);
-        }
-        buffer->write_l(StringTemp, &field, strlen(StringTemp));
-        buffer->restore_clip();
+        Buffer::write_l(StringTemp, &field, strlen(StringTemp));
+        Buffer::restore_clip();
         spot_.add(index, 3, rect->left, rect->top,
                   rect->right - rect->left, rect->bottom - rect->top);
     }
