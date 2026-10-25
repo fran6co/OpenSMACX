@@ -1,0 +1,24 @@
+{
+  "event_id": "db254f2578ad6e43d05285b71f1453aabe35834c638e5b985091b8498b372906",
+  "payload": {
+    "affects": [
+      "entity-b4b43d7f864c17bc6f255c822639447625d3dd464d2bda3baa32803054ea785a",
+      "entity-b71e2fe800040ba3a32f2bfbdd8eeec4ac3215fa17896f563c435e02c840644a",
+      "entity-f5a36c005fa785791c96960e9cec905aed7479bd60427041376eea997040490e"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "shared-inline-context-remains-open",
+    "evidence": [
+      "Bounded ordinary source trial was not published: explicit has_fac calls were inlined into bitmask in current production context; no artificial noinline directive or source-unit move is authorized by that result. Original source/helper structure remains unresolved.",
+      "Independent source/history review found a prior same-TU inline form retaining direct has_fac calls, a counterexample to claiming that different-TU placement is necessary. Original PDB/MAP contribution evidence was not found; address adjacency mixes UI types and is not source ownership proof.",
+      "Current reviewed source remains unchanged for these functions. Investigate new shared-context evidence, retain historical obligations and all negative trial caches; do not blindly repeat the local expansion or reset the task baseline."
+    ],
+    "hypothesis": "Resolve the shared breed_mod/has_fac inline context before more worm_mod spelling trials. Four original out-of-line calls do not establish an original translation-unit owner; retain this cross-function finding and require expanded authorization before changing the helpers.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "shared-inline-context-remains-open",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:worm-mod-call-context-oct25av"
+}
