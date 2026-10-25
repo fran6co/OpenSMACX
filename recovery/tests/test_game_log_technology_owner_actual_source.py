@@ -1,6 +1,7 @@
 """Host-only controls read only current installed source owner definitions."""
 from pathlib import Path
 import re
+import os
 import shutil
 import subprocess
 import tempfile
@@ -263,7 +264,8 @@ def test_farm_get_table_bindings_match_current_source_and_pinned_data():
     pin_match = re.search(r"(?m)^sha256 ([0-9a-f]{64})$", (ROOT / "src/IMAGE_PIN").read_text())
     assert pin_match
     pin = pin_match.group(1)
-    image_bytes = (ROOT / ".opensmacx/game/terranx_original.exe").read_bytes()
+    image_bytes = Path(os.environ.get(
+        "OPENSMACX_IMAGE", ROOT / ".opensmacx/game/terranx_original.exe")).read_bytes()
     assert hashlib.sha256(image_bytes).hexdigest() == pin
     image = PeImage(image_bytes, pin)
     expected = ((0x66EF28, 0x66EF38, "?RiverStepX@@3QBHB", (1, 1, -1, -1)),
