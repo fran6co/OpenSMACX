@@ -782,21 +782,8 @@ MEASURED inline int __cdecl base_who(int x, int y) {
     return -1;
 }
 
-// MEASURED inline: world_unity (0x005C7750) and world_geothermal (0x005C83B0)
-// call_diff FEWER/MORE by exactly one call each on near_landmark alone - the image
-// inlines it at both, while world_borehole (0x005C7020) already inlined it with or
-// without this keyword. Kept out-of-line as a plain function did not reproduce those
-// two; this reproduces both without moving world_borehole.
-MEASURED inline BOOL __cdecl near_landmark(int x, int y) {
-    for (int i = 0; i < RadiusRange[8]; i++) {
-        int x_radius = xrange(x + RadiusOffsetX[i]);
-        int y_radius = y + RadiusOffsetY[i];
-        if (on_map(x_radius, y_radius) && code_at(x_radius, y_radius)) {
-            return true;
-        }
-    }
-    return false;
-}
+// Defined by the world-generation owner in world.cpp.
+BOOL __cdecl near_landmark(int x, int y);
 
 // MEASURED inline: naval_base (0x0050E3C0) and convoy (0x0050E5C0) call_diff MORE
 // by exactly this - the image inlines port_to_port's whole 422-byte body at both,

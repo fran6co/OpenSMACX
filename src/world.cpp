@@ -1529,7 +1529,6 @@ void __cdecl world_linearize_contours() {
 /*
 Purpose: Determine if the specified tile is near a landmark.
 // ORIGINAL: 0x005C5BD0 ?near_landmark@@YAHHH@Z 0x005C5BD0-0x005C5C61
-// body      src/map.h
 // size      145 bytes
 // prototype BOOL (__cdecl ?near_landmark@@YAHHH@Z)(int xCoord, int yCoord)
 // callers   1   call targets   0
@@ -1549,10 +1548,18 @@ Purpose: Determine if the specified tile is near a landmark.
 Return Value: Is the tile near a landmark? true/false
 Status: Complete
 */
-// BODY IN map.h, as `MEASURED inline`: the image writes it out at
-// some call sites and calls it at others, and a .cpp definition is only ever
-// one of those. The marker stays here because that is where the catalogue
-// reads it.
+// Defined here so this owner can inline it; other TUs use the public declaration.
+
+BOOL __cdecl near_landmark(int x, int y) {
+    for (int i = 0; i < RadiusRange[8]; i++) {
+        int x_radius = xrange(x + RadiusOffsetX[i]);
+        int y_radius = y + RadiusOffsetY[i];
+        if (on_map(x_radius, y_radius) && code_at(x_radius, y_radius)) {
+            return true;
+        }
+    }
+    return false;
+}
 
 /*
 Purpose: Setup the 'Garland Crater' landmark.
