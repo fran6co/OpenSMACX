@@ -537,6 +537,7 @@ static const char FileWinTextTableDefault[4] = {'.', 0, 0, 0};  // 0x00697118
 // The table's NEXT entry (0x0069711C), also "." in the shipped image:
 // close() resets the name buffer to it, exactly as the constructor resets
 // the buffer to the first. Same real-storage argument as above.
+// RECOVERY_OBJECT: v1 0x0069711C _FileWinTextTableDefaultNext
 static const char FileWinTextTableDefaultNext[4] = {'.', 0, 0, 0};  // 0x0069711C
 
 // Original .data at 0x00697128 contains "jackal.pcx"; the filename is an
@@ -911,7 +912,9 @@ Status: Complete
 // ("FILEWIN", then "jackal"), so the tree stores them inline too. The raw
 // fixed-address bindings read unmapped memory in the standalone build, which
 // is where the boot's `return 6` out of jackal_init_real came from.
+// RECOVERY_OBJECT: v1 0x006971CC _kFileWinSection
 static const char kFileWinSection[] = "FILEWIN";  // 0x006971CC
+// RECOVERY_OBJECT: v1 0x006971D4 _kFileWinTextName
 static const char kFileWinTextName[] = "jackal";  // 0x006971D4
 // 0x009B90A8 - the loaded file's text buffer: init_class stages text_get()'s
 // string into it through mem_get, and close_class frees it once. THE OBJECT,
