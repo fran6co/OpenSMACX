@@ -1,0 +1,24 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "53bb0c3d9ee3e87e388036884aa4eb0e067a25f5",
+  "editable_files": [
+    "src/mapwin.cpp",
+    "recovery/tests/test_mapwin_vehicle_draw_gate.py"
+  ],
+  "evidence": [
+    "Pin reads the initial uint32 field only after the global early return, then rereads this+0x1DD70 at0x466D84,0x467029,0x467048 across original calls. Preserve observed live reads without volatile/type/guard changes.",
+    "Raw bytes F7...40 00 20 00 at0x467029 prove mask0x00200040. Existing0x00020040 erroneously prevents the original filter path. Restore original behavior, not an intentional fix. Independent whole-body source/pin review plus v2 raw mask audit precedes compiler trial.",
+    "One fixed ordinary full-function candidate, at most3attempts per unchanged context. Native full-TU exact-loss and outside-function controls, fresh build/link and meaningful host regressions precede reviewed integration. Preserve every original identity/span, symbol and historical claim; no raw offsets, wrappers, flags or bug normalization."
+  ],
+  "intent": "MapWin::draw_vehicles faithful owner recovery",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4615328,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "mapwin-live-flags-oct25ab"
+}
