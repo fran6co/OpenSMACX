@@ -82,6 +82,9 @@ def test_council_keyboard_override_dispatches_through_base(tmp_path):
     assert len(derived_decl) == 1 and "override" in derived_decl[0]
     source = (ROOT / "src/councwin.cpp").read_text(encoding="utf-8")
     body = extract_definition(source, "int CouncWin::on_key_click(int, int key)")
+    mask_header = (ROOT / "src/game_data_state_window.h").read_text(encoding="utf-8")
+    mask_types = (extract_definition(mask_header, "struct GameDataLockMaskBytes") + ";\n" +
+                  extract_definition(mask_header, "union GameDataLockMaskView") + ";\n")
     fixture = r'''
 #include <cassert>
 #include <cstdint>
@@ -89,7 +92,11 @@ def test_council_keyboard_override_dispatches_through_base(tmp_path):
 const int MaxPlayerNum=8;
 std::vector<int> Events;
 struct { int faction_id_=1; } ConsoleGlobal;
-uint32_t LockEnableMask, GameMorePreferences;
+// MASK_TYPES
+struct FixtureGameFields { GameDataLockMaskView lock_masks_; uint32_t game_more_preferences_; };
+struct FixtureGameState { FixtureGameFields fields_; } GameDataStateStorage;
+uint32_t &LockEnableMask = GameDataStateStorage.fields_.lock_masks_.enable_mask_;
+uint32_t &GameMorePreferences = GameDataStateStorage.fields_.game_more_preferences_;
 int IsMultiplayerPBEM, IsMultiplayerNet, CouncilPbemGate;
 int TurnRedrawPending=1, CouncilDialogActive=1, Votes;
 int council_get_vote(int faction,int proposal,int target) {
@@ -126,7 +133,7 @@ int main(){
  Events.clear(); IsMultiplayerNet=1;
  base->key_click_event(0,13); assert(Events.size()==13&&Events.back()==20);
 }
-'''.replace("// DERIVED", derived_decl[0]).replace("// BODY", body)
+'''.replace("// MASK_TYPES", mask_types).replace("// DERIVED", derived_decl[0]).replace("// BODY", body)
     source_path = tmp_path / "key_click_hierarchy.cpp"
     binary = tmp_path / "key_click_hierarchy"
     source_path.write_text(fixture, encoding="utf-8")

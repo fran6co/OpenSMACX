@@ -1,0 +1,22 @@
+{
+  "event_id": "4596bf30d60820589bfd4c588c371931bf770da1e2973722d5dcba4626b4a368",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_key_event_hierarchy.py",
+      "recovery/tests/test_win_retired_dispatch_oct14ax.py"
+    ],
+    "evidence": [
+      "Focused19-test Win run has17passes and2pre-existing stale test failures: whole-file historical identity freeze forbids already integrated rehomings, and Council host fixture lacks current GameDataStateStorage-backed mask/preferences.",
+      "Retire only the obsolete per-file frozen inventory test and its helpers/imports; native whole-project claim/mapping/source integrity checks retain original identity and historical obligation protection. Preserve all direct-dispatch source checks.",
+      "Update the Council fixture to use actual source lock-mask type declarations and shared field-backed aliases; preserve all callback mutation, vote/notification order and virtual dispatch assertions. No production Council or data declaration change."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "e699770cc750e2d43d91360be6f67aa57746798b14e06e1ee24a5dff0b156323",
+  "request_id": "refresh-scoped-win-regression-controls-oct25c",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:control-turn-phase-binding-oct25c"
+}

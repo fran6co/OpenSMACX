@@ -9054,9 +9054,11 @@ int Win::key_click_event(int key, int flags) {
     }
 
     {
-        if (flags == 0x1b) {
+        if (flags == 0xd) {
+            this->on_button_clicked(-1);
+        } else if (flags == 0x1b) {
             this->on_button_clicked(-2);
-        } else if (flags == 0xd || flags == 0x1000d) {
+        } else if (flags == 0x1000d) {
             this->on_button_clicked(-1);
         }
     }

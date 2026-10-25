@@ -1,0 +1,27 @@
+{
+  "event_id": "5bacec89d0c67fc6e69cd35941c5c4c3f366f4a7e7a3c718544d533561c72565",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/win.cpp"
+    ],
+    "evidence": [
+      "Coordinator combines one Win comparison-order candidate with the source-owned global binding checkpoint to share full application verification. Native production replica is identical to the qualified original; candidate remains92instructions, improves matching3to6, passes outside-body residual and loses no exact identities.",
+      "This source ordering preserves the same constant cases and callback values, exactly one applicable callback, all later child/keyboard/Sound operations and original unsafe paths. No flags/types/layout changes or new historical byte claim.",
+      "Native selected ControlTurnPhase data definition/content/reference proofs pass in both settled trials; the complete data driver remainsUNKNOWN for existing shared header-owner coverage and runtime/structure limitations. Keep the raw report and refuse full/automatic acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6220432,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "include-screened-win-notification-order-oct25c",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:control-turn-phase-binding-oct25c"
+}
