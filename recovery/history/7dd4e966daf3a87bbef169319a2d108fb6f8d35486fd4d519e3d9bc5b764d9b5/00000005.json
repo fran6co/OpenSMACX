@@ -1,0 +1,24 @@
+{
+  "event_id": "9a18c1bdbc978f60b75462a08bcd07e3e6fd5505166b55507ba83aa500503336",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Physical independent review SHA256 aa703c705e5a6297afc7d1daaca29d19923de9b9e96509f53290395f57bb7b54:3339 versus3340 instructions; removal of movedi,[ebp-10] before a backedge whose destination reloads EDI before use, reordered independent header loads, all525 external relocation target/kind sequence entries preserved. Local jump-table targets follow their moved instructions. Initial native outsideFAIL preserved; this is not full equivalence or linked/runtime proof.",
+      "Coordinator admits goody_box as observed emitted-code impact scope. Source remains unchanged and historical obligations remain; no global flag changes, baselines reset or outsideFAIL waived. A fresh expanded-scope native comparison and full build/link are required before manual integration."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5744224,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "1db01b69ab605399045313ec786667b38b593edcdb885ad8cab37eea88fca01a",
+  "request_id": "admit-goody-box-physical-impact",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:vehicle-negative-faction-alias-oct25bk"
+}
