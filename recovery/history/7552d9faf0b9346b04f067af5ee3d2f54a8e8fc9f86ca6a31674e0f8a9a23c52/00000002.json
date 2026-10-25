@@ -1,0 +1,33 @@
+{
+  "event_id": "e699770cc750e2d43d91360be6f67aa57746798b14e06e1ee24a5dff0b156323",
+  "payload": {
+    "affects": [
+      "entity-100edd3e7bccfbbe3c5de7aa4b727a161bddd9397e9a2c01bf20570a18bbe5a4",
+      "entity-546ad32bf160a8b69132196c9ffd975e5934ff31c987aec21eed252b273a2847",
+      "entity-726449cdc97c713cbbcb6501eab3538543e1804d5541bc81ff1fc43f6b016424",
+      "entity-8bb681f5eaa16924ec36e8c3e879aacf644b64fc39e4f4fbe1812430918394c1",
+      "entity-8cf72fd519346dbca99d08fe761c9bbb7c0417cbf9dd918a465d08a8952114f9",
+      "entity-99fc853d7c8a5823e880339b78d78a3af09eddc2937a4cb4e6d2d997b58d2532",
+      "entity-b240cbc346eb73cc8abe0a7b8c7fb3ef23e27cf0fcd0fad2766c16085c4bd17f",
+      "entity-b3b03b477114c19e750a05d1d8825bef8d092a494a9d4e3d948d8756254cd3b6",
+      "entity-c17cc7a3e712cf8c6f3b972ab510a7002a883b36524579113f90719b35febf99",
+      "entity-d4acf660cee2f15f9b9ff27350b6a73d6df51bbb6cf8a5fd19cccca4ee7d8bde",
+      "entity-d924315f26eb4c2db925692e4633154f3f459e17e2e9c0667395c19d33b66a6d",
+      "entity-dc95d99ad63b88855aedf64a23684587c21c142baa07af943edfd35655cf6c51"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "selected-data-pass-composite-unknown-oct25c",
+    "evidence": [
+      "Native data-check.json has two signedint0x74/size4 rows with definition/content/proof PASS and lifetime UNKNOWN; composite result UNKNOWN is retained.",
+      "Independent pinned read/write, zero initial bytes, non-overlapping bounded source storage and the original source declaration support this load-bearing binding. No source type/body change is justified.",
+      "Fresh full application build, strict reference/wrong-target controls, continuity and global match preservation must precede coordinator-reviewed manual integration."
+    ],
+    "hypothesis": "The independent primitive global storage is qualified in both compiler trials, but the complete initial-data driver still reports UNKNOWN due to existing shared header-owner support and missing structure/runtime proof. This is not a clean full data gate or full acceptance.",
+    "kind": "discovery"
+  },
+  "previous_event": "5bacec89d0c67fc6e69cd35941c5c4c3f366f4a7e7a3c718544d533561c72565",
+  "request_id": "selected-data-pass-composite-unknown-oct25c",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:control-turn-phase-binding-oct25c"
+}

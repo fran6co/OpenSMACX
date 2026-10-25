@@ -2435,7 +2435,10 @@ uint32_t TectonicDetonationCount[8];
 char ScriptPopupFileText[] = "SCRIPT";
 // RECOVERY_OBJECT: v1 0x00691B0C ?ScriptPopupFile@@3PADA
 char *ScriptPopupFile = ScriptPopupFileText;
-int ControlTurnPhase;   // 0x009B2070
+// human_turn514263 writes this independent dword; draw_bases4671B5 reads it.
+// Loader-zero storage ends before the separately owned GameSessionActive.
+// RECOVERY_OBJECT: v2 0x009B2070 0x009B2074 ?ControlTurnPhase@@3HA 0x00514050
+int ControlTurnPhase;
 // net_upkeep5290D0/5292BD publish phases1/2; tech_advance5BE580 and
 // tech_research5BEB3A read this distinct shared dword. Original virtual-tail
 // storage is loader-zero; fresh compiler objects establish one int owner.
