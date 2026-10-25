@@ -77,7 +77,7 @@ static int abil_index(int value) {
 class DesignWin {
 public:
   uint32_t protoAbilityFlags_;
-  uint32_t protoAbilityID1_, protoAbilityID2_;
+  int protoAbilityID1_, protoAbilityID2_;
   int factionID_, protoChassisType_, protoWeaponType_, protoArmorType_;
   void check_abil() {}
   void suggest_abil(int ability);
@@ -86,7 +86,7 @@ public:
 int main() {
   DesignWin win;
   win.protoAbilityFlags_ = 0;
-  win.protoAbilityID1_ = win.protoAbilityID2_ = 0xffffffffu;
+  win.protoAbilityID1_ = win.protoAbilityID2_ = -1;
   win.factionID_ = win.protoChassisType_ = win.protoWeaponType_ = win.protoArmorType_ = 0;
   ConsoleGlobal.faction_id_ = 0;
   GameDataStateStorage.fields_.game_preferences_ = 0x4000;
