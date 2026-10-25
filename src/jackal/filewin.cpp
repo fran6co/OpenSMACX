@@ -919,6 +919,7 @@ static const char kFileWinTextName[] = "jackal";  // 0x006971D4
 // the slot itself is real storage now, a pointer-sized object seeded zero
 // like the image's, and every `*s_filewin_text_ptr` read/write through the
 // binding becomes a read/write of the object at the same folded addresses.
+// RECOVERY_OBJECT: v1 0x009B90A8 _s_filewin_text_ptr
 static char *s_filewin_text_ptr = nullptr;  // 0x009B90A8
 
 int __cdecl FileWin::init_class() {
