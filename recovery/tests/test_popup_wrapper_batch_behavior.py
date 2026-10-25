@@ -252,12 +252,14 @@ def build_program(root: Path, damage_cursor: bool = False) -> str:
                 "StringStructPayload *const history_payload = history.head_->previous->payload;",
                 1)
         definitions.append(definition)
-    helper_start = xpops.read_text(encoding="utf-8").find(
-        "static const char XPopModCheckString2Text[]")
-    helper_end = xpops.read_text(encoding="utf-8").find(
+    xpops_source = xpops.read_text(encoding="utf-8")
+    # The mod-key literal arrays now belong to each actual X_pop wrapper body.
+    # Only the shared accessor functions remain file-scope dependencies here.
+    helper_start = xpops_source.find("inline LPCSTR XPopModCheckString1()")
+    helper_end = xpops_source.find(
         "/*\nPurpose: The full builder", helper_start)
     assert helper_start >= 0 and helper_end > helper_start
-    helpers = xpops.read_text(encoding="utf-8")[helper_start:helper_end]
+    helpers = xpops_source[helper_start:helper_end]
     return HARNESS_PREFIX + helpers + "\n".join(definitions) + HARNESS_SUFFIX
 
 

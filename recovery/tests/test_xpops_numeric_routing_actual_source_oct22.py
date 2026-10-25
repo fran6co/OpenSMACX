@@ -51,9 +51,7 @@ static int ExpansionEnabled;
 static char ScriptPopupFile[] = "alienIscript.txt";
 static char XPopModCheckString2Text[] = "SCRIPT.txt";
 static char XPopModCheckFile1Text[] = "alienIscript.txt";
-static char XPopModCheckMode1Text[] = "rb";
 static char XPopModCheckFile2Text[] = "alienuscript.txt";
-static char XPopModCheckMode2Text[] = "rb";
 static char PopupStartAltFile1[] = "ALT-ISCRIPT";
 static char PopupStartAltFile2[] = "ALT-USCRIPT";
 
