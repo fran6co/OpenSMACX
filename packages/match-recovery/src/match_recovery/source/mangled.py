@@ -95,15 +95,15 @@ _SPECIAL = {
 # an opaque scope component. Keep every path/nonce character: this is name
 # reading, not the separate unchanged-replica identity normalization. Limit
 # this addition to ordinary data names and the observed global-data prefix;
-# E/H scalars, the observed PAE byte-pointer/array spelling, and untemplated
-# U/V names cover the evidenced data trailers. PAE does not distinguish an
+# E/H scalars, the observed PAE/PAG byte/word-pointer spellings, and untemplated
+# U/V names cover the evidenced data trailers. These do not distinguish an
 # array from a pointer or establish its extent; this reads only the name.
 # Unnamed functions, classes and template name heads remain unsupported.
 _VC6_ANONYMOUS_DATA = re.compile(
     r"\?(?P<name>[A-Za-z_]\w*)@"
     r"(?P<scope>\?%(?:[A-Za-z]:)?[\\/]?"
     r"(?:[A-Za-z_0-9.-]+[\\/])*[A-Za-z_0-9.-]+\.[A-Za-z_0-9]+)"
-    r"@@3(?:[EH]|PAE|[UV][A-Za-z_]\w*(?:@@|@1@))[ABCD]", re.ASCII)
+    r"@@3(?:[EH]|PA[EG]|[UV][A-Za-z_]\w*(?:@@|@1@))[ABCD]", re.ASCII)
 
 
 # VC6 local data uses an additional underscore, a lexical-scope component and
