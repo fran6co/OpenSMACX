@@ -11684,9 +11684,11 @@ int __cdecl energy_trade(int faction, int other) {
 int __cdecl propose_treaty(int actor, int other)
 {
     PopupDialogFactionID = other;
-    int bias = DiplomacyProposalGateCount < 0 ? 1 : 0;
-    if (strcmp(Players[other].filename, "GAIANS") == 0 &&
-        DiplomacyProposalGateCount < 0) ++bias;
+    const int target_is_gaians =
+        strcmp(Players[other].filename, "GAIANS") == 0;
+    const int gate_count = DiplomacyProposalGateCount;
+    int bias = gate_count < 0 ? 1 : 0;
+    if (target_is_gaians && gate_count < 0) ++bias;
     const int partner_id = DiploScratchF7E8 != 0 ? DiploScratchF7E8 : DiploScratchFA8C;
     const int partner_threat = partner_id != 0 &&
         (PlayersData[other].diplo_treaties[partner_id] & 0x8000u) != 0 &&
@@ -11699,24 +11701,35 @@ int __cdecl propose_treaty(int actor, int other)
         static_cast<int>(PlayersData[actor].ranking) >= 5 && DiploScratchFA54 == 0)
         ++bias;
     int accepted = 0;
-    const int commerce_gap = diplo_sub(PlayersData[other].tech_commerce_bonus,
-                                     PlayersData[actor].tech_commerce_bonus);
     if (DiploFriction <= diplo_add(15, eligible ? diplo_add(bias, 2) : 0) &&
-        (PlayersData[other].diplo_agenda[actor] & 0x400u) == 0 &&
-        ((PlayersData[other].diplo_treaties[actor] & 0x20u) == 0 ||
-         (DiploScratchFA78 <= 6 && DiploScratchFA78 <=
-          diplo_add(diplo_sub(diplo_add(commerce_gap, eligible ? 2 : 0),
-                              DiplomacyProposalGateCount), 2)))) {
-        if (partner_threat) {
-            accepted = 1;
-        } else if (DiploScratchFA3C == 0 &&
-            DiploScratchFA78 <= diplo_sub(diplo_add(diplo_add(bias, 5), eligible ? 2 : 0),
-                                        diplo_clamp(PlayersData[actor].diff_level, 0, 2)) &&
-            DiploScratchFA2C <= diplo_add(diplo_add(diplo_add(bias, 4), eligible ? 1 : 0),
-                                        DiplomacyProposalMode == 3 ? 2 : 0) &&
-            (DiploFriction <= diplo_add(10 + 5 * eligible, diplo_mul(bias, 3)) ||
-             DiplomacyProposalMode == 3)) {
-            accepted = 1;
+        (PlayersData[other].diplo_agenda[actor] & 0x400u) == 0) {
+        const bool treaty_clear =
+            (PlayersData[other].diplo_treaties[actor] & 0x20u) == 0;
+        const int score_for_treaty_gate = DiploScratchFA78;
+        bool treaty_commerce_gate = treaty_clear;
+        if (!treaty_clear && score_for_treaty_gate <= 6) {
+            const int other_commerce = PlayersData[other].tech_commerce_bonus;
+            const int actor_commerce = PlayersData[actor].tech_commerce_bonus;
+            const int commerce_gap = diplo_sub(other_commerce, actor_commerce);
+            treaty_commerce_gate = score_for_treaty_gate <=
+                diplo_add(diplo_sub(diplo_add(commerce_gap, eligible ? 2 : 0),
+                                    DiplomacyProposalGateCount), 2);
+        }
+        if (treaty_commerce_gate) {
+            if (partner_threat) {
+                accepted = 1;
+            } else if (DiploScratchFA3C == 0 &&
+                DiploScratchFA78 <= diplo_sub(
+                    diplo_add(diplo_add(bias, 5), eligible ? 2 : 0),
+                    diplo_clamp(PlayersData[actor].diff_level, 0, 2)) &&
+                DiploScratchFA2C <= diplo_add(
+                    diplo_add(diplo_add(bias, 4), eligible ? 1 : 0),
+                    DiplomacyProposalMode == 3 ? 2 : 0) &&
+                (DiploFriction <= diplo_add(10 + 5 * eligible,
+                                            diplo_mul(bias, 3)) ||
+                 DiplomacyProposalMode == 3)) {
+                accepted = 1;
+            }
         }
     }
     if ((PlayersData[other].flags & 0x400000u) != 0 &&

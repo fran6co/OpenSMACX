@@ -6169,11 +6169,10 @@ void BaseWin::draw_misc(int update_mode) {
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x0040F0F0; original spans remain load-bearing.", "Retired seed provenance git:1432fed4:src/unrecovered/0040f0f0.cpp; historical transcription conflicts remain evidence, not runtime targets.", "image:41E8D0 owns panel geometry; source:src/basewin.h owns real GraphicWin/Buffer and existing Base/Player/Veh/Rules receivers."], "reason": "Recover the complete BaseWin draw_farm panel using genuine owned rectangles, automatic Font lifetime and existing application globals, retaining original branch/call order and unchecked input obligations."}
 void BaseWin::draw_farm(int update_mode) {
     int tile; int resource;
-    Buffer *canvas = static_cast<Buffer *>(this);
     RECT panel = rect1_;
-    RECT saved_clip = canvas->current_clip();
-    canvas->set_clip(&panel);
-    canvas->box_sprite(&rect1_, &InterfaceBoxStyles[15]);
+    RECT saved_clip = Buffer::current_clip();
+    Buffer::set_clip(&panel);
+    Buffer::box_sprite(&rect1_, &InterfaceBoxStyles[15]);
     ++panel.left;
     ++panel.top;
     --panel.right;
@@ -6219,20 +6218,20 @@ void BaseWin::draw_farm(int update_mode) {
             if (FarmStatus[radius] & 2) continue;
             const int px = dx * quarter * 4 + origin_x;
             const int py = dy * quarter * 2 + origin_y;
-            gen_terrain_poly(canvas, 0, 0, BaseCurrent->faction_id_current,
+            gen_terrain_poly(this, 0, 0, BaseCurrent->faction_id_current,
                              radius, 0x4010621, x, y, px, py);
             if (FarmStatus[radius] & 0x20)
-                polygon_dest(canvas, MapCornerScratch, 4, ReddishColorTable);
+                polygon_dest(this, MapCornerScratch, 4, ReddishColorTable);
             const unsigned status = FarmStatus[radius];
             if ((status & 4) || radius == 0) {
                 const int base = base_at(x, y);
-                if (base >= 0) base_draw(canvas, base, px, py - quarter * 2, 0, 0);
+                if (base >= 0) base_draw(this, base, px, py - quarter * 2, 0, 0);
             } else if (status & 8) {
                 const int vehicle = veh_at(x, y);
-                if (vehicle >= 0) veh_draw(canvas, vehicle, px, py - quarter * 2, 0, 0, 0);
+                if (vehicle >= 0) veh_draw(this, vehicle, px, py - quarter * 2, 0, 0, 0);
             } else if (status & 0x10) {
-                polygon_dest(canvas, MapCornerScratch, 4, ReddishColorTable);
-                g_RADIUS1_TEXTURE.draw_trans(canvas, MapCornerScratch, 0);
+                polygon_dest(this, MapCornerScratch, 4, ReddishColorTable);
+                g_RADIUS1_TEXTURE.draw_trans(this, MapCornerScratch, 0);
             }
         }
 
@@ -6312,18 +6311,18 @@ void BaseWin::draw_farm(int update_mode) {
                         Sprite &actual_icon = g_RESOURCE_ICON_SPRITES[resource * 8 + actual];
                         Sprite &potential_icon = g_RESOURCE_ICON_SPRITES[resource * 8 + potential];
                         if (potential != actual) {
-                            potential_icon.draw_mono(canvas, potential_icon.transparent_index(),
+                            potential_icon.draw_mono(this, potential_icon.transparent_index(),
                                                      cursor, icon_y, 0, 1, 1);
-                            actual_icon.draw(canvas, actual_icon.transparent_index(),
+                            actual_icon.draw(this, actual_icon.transparent_index(),
                                 cursor + (potential - actual) / 2, icon_y, 1, 1);
                         } else {
-                            actual_icon.draw(canvas, actual_icon.transparent_index(),
+                            actual_icon.draw(this, actual_icon.transparent_index(),
                                              cursor, icon_y, 1, 1);
                         }
                         cursor += potential_icon.source_width();
                     }
                     if (!total)
-                        g_NULL_RESOURCE_ICON_SPRITE.draw(canvas,
+                        g_NULL_RESOURCE_ICON_SPRITE.draw(this,
                             g_NULL_RESOURCE_ICON_SPRITE.transparent_index(), cursor, icon_y);
                     base = BaseCurrent;
                     longitude = MapLongitudeBounds;
@@ -6334,7 +6333,7 @@ void BaseWin::draw_farm(int update_mode) {
         Font *font = find_font(12, 1);
         const int text_right = rect1_.right - 2;
         const int text_top = rect1_.top + 2;
-        canvas->set_font(font, 0, 0, 0);
+        Buffer::set_font(font, 0, 0, 0);
         StringTemp[0] = 0;
         const unsigned event = BaseCurrent->event;
         int label = -1, suffix = 0, colour = 0;
@@ -6349,15 +6348,15 @@ void BaseWin::draw_farm(int update_mode) {
             strcat(StringTemp, label_get(label));
             strcat(StringTemp, ": ");
             strcat(StringTemp, label_get(suffix));
-            canvas->set_text_color(TextColourTable[colour], TextColourTable[colour + 1], 1, 1);
+            Buffer::set_text_color(TextColourTable[colour], TextColourTable[colour + 1], 1, 1);
         }
-        canvas->write_right_l(StringTemp, text_right, text_top, strlen(StringTemp));
+        Buffer::write_right_l(StringTemp, text_right, text_top, strlen(StringTemp));
     }
     SpriteScaleNumerator = SpriteScaleDenominator = 1;
     MapWinCaptionScale = MapWinCaptionDivisor = -1;
     if (!update_mode) soft_update(&rect1_);
     else update(&rect1_, 0);
-    canvas->set_clip(&saved_clip);
+    Buffer::set_clip(&saved_clip);
 }
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00414B40 ?draw_pop@BaseWin@@QAEXH@Z 0x00414B40-0x00415078;0x00651B76-0x00651B93
