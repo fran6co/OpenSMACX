@@ -1,0 +1,23 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "8aa125b8fdc73d0220a8c8d2e52d5850241278c3",
+  "editable_files": [
+    "src/alphamenu.cpp"
+  ],
+  "evidence": [
+    "Fresh source context follows the independently verified compute-before-redraw correction. Pinned49-instruction body duplicates y/move argument evaluation in800-width andother branches; currentxternary merges it. Proposal SHA812c2763e24ade32cffdf5232c5dde1f2e557c7e640fc1ca6652fd04593b49f8 records full original/source/old-attempt checks.",
+    "One candidate only: preserve cachedheight acrossresize, widthreadtiming, branch-localtop/bottom reads, signed/2 wordeffects andvirtualcompute→redraw order. No register/name/flag spray or behaviorfix. This is a purematchingtrial: bank only if fully exact under the actualproductionrecipe and relevantpreservation; otherwise defer without replacing reviewed source.",
+    "Frozen unchanged production control, allunitexactness andoutside comparisons, existing actualsourcegeometry/callbackcontrols and complete application build/link/destinationchecks precede reviewed manualintegration. Only installed native recoverrecord maygrant a new historicalclaim; no hand-edit ORIGINAL/BYTE_EXACT."
+  ],
+  "intent": "Try one ordinary branch-local menu placement spelling grounded in the original full control flow.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4207264,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "alphamenu-branch-geometry-oct25aq"
+}
