@@ -25,7 +25,7 @@ from functools import lru_cache
 import pytest
 
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(os.environ.get("OPENSMACX_SOURCE_ROOT", Path(__file__).resolve().parents[2])).resolve()
 
 
 def body(text, signature):
@@ -350,7 +350,7 @@ def fields():
              '1DDD4', '1DDD8', '21A44']
     out = []
     for n in names:
-        name = 'field_' + n + '_'
+        name = 'zoom_offset_' if n == '1DD98' else 'field_' + n + '_'
         declaration, = re.findall(r'(?:int|int32_t|uint32_t) ' + name + ';', header)
         out.append(declaration)
     for name in ('horizontal_damage_', 'vertical_damage_'):
