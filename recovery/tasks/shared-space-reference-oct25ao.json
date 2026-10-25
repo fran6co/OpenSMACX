@@ -1,0 +1,23 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "2ef6cc0ef7ad87d8513b4f600a030cf9e71bc7a5",
+  "editable_files": [
+    "src/strings.cpp"
+  ],
+  "evidence": [
+    "Pin5A58B0 pushes682820 thenStringTemp9B86A0 and callsstrcat. Existing BufferJoinSpace source object and independent say_project pointer corroborate the same start; retain v1 start-only extent/lifetime/mutability limitations. Independent review SHA8bce92a413df827238843e070ff58d99f5e22bc044deec3a3d5f650d695f0079.",
+    "Use existing real declaration from buffer.h, keep ordinary strcat behavior and all original claims/source facts. Only native record banks new claims. Do not duplicate object/literal bindings or introduce test-only arrays.",
+    "Native full-TU screens must expose header/data residuals and exact preservation; independently review any removed unbound duplicate literal storage rather than treating a failed outside-data check as pass. Require complete application build/link, relevant source/reference/data checks and fresh destination verification for coordinator-reviewed manual integration; not automatic or game acceptance."
+  ],
+  "intent": "Recover free space() use of the existing shared original space storage.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5920944,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "shared-space-reference-oct25ao"
+}
