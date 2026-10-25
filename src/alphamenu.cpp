@@ -566,8 +566,8 @@ void AlphaMenu::adjust() {
   const int y = MainInterfaceGlobal.window_bounds_.top
       - MainInterfaceGlobal.window_bounds_.bottom + WinScreenHeight - height;
   Win::move(x, y);
-  redraw();
   compute();
+  redraw();
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
