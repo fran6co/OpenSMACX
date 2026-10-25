@@ -1,0 +1,20 @@
+{
+  "event_id": "80c7e43def5b7b5726e39bb399ce2806ad951dfee6f12b3a24dd5d0c87b06669",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_diplomacy_actions_coverage.py"
+    ],
+    "evidence": [
+      "Combined C++ owner build/link and native claims/mappings/references/source checks pass; all original formulas remain unchanged. Two existing treaty host cases refuse at a mutation anchor before compilation because the new outer diplo_add is formatted across lines.",
+      "Authorize only the mutation target adjustment to the same inner FA2C bias arithmetic expression, preserving every behavior case and wrong-difficulty mutant. No expected values, assertions, service doubles, detector exclusions, original mappings or compiler settings may weaken. Validate both actual treaty bodies and compiled mutants then the complete selected host cohort."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "treaty-host-mutation-anchor-oct25x",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:treaty-read-order-oct25x"
+}
