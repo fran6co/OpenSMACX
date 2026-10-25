@@ -1,0 +1,29 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "0181fdcd589fc0e4d737c01ebfcd648b7461cc9e",
+  "editable_files": [
+    "src/netwin.cpp",
+    "recovery/tests/test_netwin_buffer_owners.py"
+  ],
+  "evidence": [
+    "Qualified nonvirtual Buffer own calls and ordinary implicit this conversion for foreign Sprite arguments; visibility, layout/read timing, text/checkbox loops and callback order remain pinned.",
+    "Independent pin/current source/COFF and prior-attempt review before screen. One natural source candidate per function first; cap3 per unchanged context. Preserve all original spans, symbols, source facts and historical claims; only native record can grant claims.",
+    "Native production-replica, full-TU exact/outside checks and specific review of collateral required before source publication. Actual-source owner controls, complete combined application build/link, native source/claim/reference checks and fresh destination verification precede manual integration; no automatic/full-game acceptance claim."
+  ],
+  "intent": "Recover genuine Buffer member calls in NetWin redraw/rules painters.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4725456,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4716896,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "netwin-base-painters-oct25am"
+}

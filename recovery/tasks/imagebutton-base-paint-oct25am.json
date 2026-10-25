@@ -1,0 +1,24 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "0181fdcd589fc0e4d737c01ebfcd648b7461cc9e",
+  "editable_files": [
+    "src/imagebutton.cpp",
+    "recovery/tests/test_imagebutton_paint.py"
+  ],
+  "evidence": [
+    "Preserve wrapping arithmetic, conditional uninitialized centers, live colors/thickness/borrowed Sprite reads and scaling, callback order and ordinary foreign Buffer-pointer conversion; no new guards or safe fallbacks.",
+    "Independent pin/current source/COFF and prior-attempt review before screen. One natural source candidate per function first; cap3 per unchanged context. Preserve all original spans, symbols, source facts and historical claims; only native record can grant claims.",
+    "Native production-replica, full-TU exact/outside checks and specific review of collateral required before source publication. Actual-source owner controls, complete combined application build/link, native source/claim/reference checks and fresh destination verification precede manual integration; no automatic/full-game acceptance claim."
+  ],
+  "intent": "Recover real Buffer base calls in the ImageButton painter.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6443984,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "imagebutton-base-paint-oct25am"
+}
