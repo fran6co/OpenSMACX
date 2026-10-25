@@ -1,0 +1,71 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "c86b816d7e06f488e3dbc79faa03e01f2efaa0c8",
+  "editable_files": [
+    "src/string_formatting.cpp"
+  ],
+  "evidence": [
+    "Masterc86b compiles and independently restores three formatter bodies. Their strict rows remain UNKNOWN solely for compiler literal symbols. Existing RECOVERY_LITERALv1 and check_literals already support this; no new package/project command, fake storage, codegen option or target waiver is authorized.",
+    "Review exactly three logical one-character-plus-NUL spans and independently observed original uses. The instruction operands being qualified and repeated-content search cannot establish correspondence. Corroborating map.cpp say_vehicles0x590BA0 is included only as an evidence owner outside the new literal TU; its identical compiler symbols may not borrow this binding.",
+    "Candidate facts are source interpretations, not proof of original allocation, mutability, lifetime or linked COMDAT selection. Original .data writability and current literal section facts must be retained as limitations. Publication waits for independent correspondence/bounds review; inability to establish it leaves UNKNOWN, not a weaker comparison.",
+    "Only comments/essential source bindings in string_formatting.cpp may change. Keep ordinary inline literals and all original function identities/spans/symbols/claims/history; native source parsing checks uniqueness, overlaps and scope. Compiler symbol/section selection never supplies the original address automatically.",
+    "Fresh source/COFF/PE literal checking, positive and damaged extent/symbol/content/NUL/scope controls, and strict comparisons of the complete same-TU use closure precede a manual checkpoint. Never export the new targets to other TUs. No function byte claim may be typed or demoted.",
+    "Root owns source publication/Git. Compile preparation precedes source freeze inside an exclusive pool lease. Build/link and original evidence/claim/source continuity are required; no automatic/linked/structure/runtime/game acceptance is inferred."
+  ],
+  "intent": "Bind bounded TU-private punctuation literal identities using the existing source protocol and independent original-use evidence; keep C++ behavior and all unproven runtime properties unchanged.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5243184,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5834000,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5834176,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5834480,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5834752,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5835568,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5835024,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5835424,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5835280,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5835680,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "formatter-literals-oct25m"
+}
