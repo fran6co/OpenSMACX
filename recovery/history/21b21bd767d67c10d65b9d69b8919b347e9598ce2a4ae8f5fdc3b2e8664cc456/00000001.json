@@ -1,0 +1,20 @@
+{
+  "event_id": "c005f263d321cb125b2bba1426f95188c976658610cbdfcd69fc7fae7170d54a",
+  "payload": {
+    "affects": [
+      "entity-9ce6e19ec58f8a07e651d0fbfc9723eaf701916c5de33f78527d9e8eac6bc7a7"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "recheck-original-register-attribution",
+    "evidence": [
+      "The independently reviewed original task interpretation needs correction against full pinned register def-use. No source was published from the three native trials."
+    ],
+    "hypothesis": "The initial trial rationale interpreted the interstitial XOR EAX as the loop-counter initialization; determine whether that attribution is supported.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "recheck-original-register-attribution",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:console-state-order-oct25ay"
+}

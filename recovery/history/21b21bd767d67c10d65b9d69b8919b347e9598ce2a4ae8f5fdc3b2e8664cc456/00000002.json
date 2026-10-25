@@ -1,0 +1,18 @@
+{
+  "event_id": "d1f784e11c0e3b1d76fe95f60c669b234f730e30081a5699da8066b1478e3655",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "recheck-original-register-attribution",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Pinned4E131B XOR EAX supplies the entry comparison and vehicle/base/cursor zero stores at4E1327/4E132C/4E1331. Pinned4E1323 XOR ESI initializes the loop counter after the state store. Thus the original task intent/rationale mislabeled the zero; retain that historical decision together with this correction.",
+      "Staged-state, count-only reorder and reset-assignment chain all failed to improve current exactness. Baseline source, mappings and claims are unchanged. Keep the current original-behavior implementation and defer further same-context spellings; cached reports retain raw evidence."
+    ]
+  },
+  "previous_event": "c005f263d321cb125b2bba1426f95188c976658610cbdfcd69fc7fae7170d54a",
+  "request_id": "reject-counter-attribution",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:console-state-order-oct25ay"
+}
