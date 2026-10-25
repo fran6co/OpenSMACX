@@ -3572,7 +3572,7 @@ Status: Coverage transcription - unclaimed body
 */
 void __cdecl send_session2_packet(int slot_id, int target) {
     NetWinSessionBlockPacket packet;
-    memcpy(&packet.session_, &NetWinSessionData, sizeof(packet.session_));
+    packet.session_ = NetWinSessionData;
     if (target < 0) {
         packet.opcode_ = 0x4F03;
         NetDaemonNet.Net::send(&packet, sizeof(packet), 0, 1);

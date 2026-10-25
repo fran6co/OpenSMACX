@@ -1,0 +1,20 @@
+{
+  "event_id": "9f42645a6157b3c6482f20607c0c124e7425fffdafc59f233bc74a412dd9292a",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_netwin_typed_packet_senders_oct10.py"
+    ],
+    "evidence": [
+      "Retarget the raw memcpy-size damage control to corrupt the final byte after the actual typed session assignment; retain positive full-payload memcmp and all other compiled mutants.",
+      "The prior host run is retained: four failures were fixture compile/mutation anchors; no passing behavior control is removed or accepted without rerunning."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "actual-source-fixture-adaptation",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:easy-netwin-oct25n"
+}

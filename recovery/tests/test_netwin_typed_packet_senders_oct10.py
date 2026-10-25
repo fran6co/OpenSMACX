@@ -188,7 +188,9 @@ MUTATIONS = (
     (1, "faction_id > 0", "faction_id >= 0"),
     (1, "sizeof(packet.row_)", "sizeof(packet.row_) - 1"),
     (2, "if (target != 0)", "if (target == 0)"),
-    (3, "sizeof(packet.session_)", "sizeof(packet.session_) - 1"),
+    (3, "packet.session_ = NetWinSessionData;",
+     "packet.session_ = NetWinSessionData; "
+     "packet.session_.scenario_text_wire_tail_[0x143] ^= 1;"),
 )
 
 

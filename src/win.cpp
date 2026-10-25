@@ -10321,8 +10321,9 @@ void Win::pass_dialog_focus() {
 
     parent = win_parent_;
     if (parent != 0 && (int)parent->list_.count_ > 1) {
-        WinPendingFocus = (parent->list_.head_ != 0)
+        obj = (parent->list_.head_ != 0)
             ? parent->list_.current_->focus_owner_ : 0;
+        WinPendingFocus = obj;
         parent = win_parent_;
         if (parent->list_.head_ != 0) {
             parent->list_.current_ = parent->list_.current_->next_;

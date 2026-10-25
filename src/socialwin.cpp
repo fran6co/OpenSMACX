@@ -1448,7 +1448,7 @@ static int social_effect_value(const SocialEffect &effect, int index) {
  *          effects, recomputes energy, then refreshes the pending player row.
  *          The faction index selects the player rows; both calculation flags
  *          remain zero.
-// ORIGINAL: 0x004AEBF0 ?UNK1@SocialWin@@QAEXHH@Z 0x004AEBF0-0x004AECD2 FILE
+// ORIGINAL: 0x004AEBF0 ?UNK1@SocialWin@@QAEXHH@Z 0x004AEBF0-0x004AECD2 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"reason":"Recompute the selected faction's pending social model through its existing PlayerData members. Keep each row lookup at the original call site and retain global rereads after energy_compute. The final social_calc call has five arguments, not an omitted stack-residue argument.","evidence":["source:PlayersData begins at 0x0096C9E0 with PlayerData stride 0x20CC; pending category/effect members +0x228/+0x24C resolve to original 0x0096CC08/0x0096CC2C","pinned:0x004AEC65 addresses the pending effect row;0x004AECB6/0x004AECBC address pending effect/category after energy_compute","pinned:third social_calc arguments are pushed at 0x004AEC86,0x004AECA2,0x004AECA9,0x004AECC2 and0x004AECC3; both trailing flags are zero;0x004AECC9 cleans the complete deferred 0x44-byte call-argument area"]}
 // size      226 bytes
 // prototype void (__thiscall ?UNK1@SocialWin@@QAEXHH@Z)(SocialWin* this, int, int)
@@ -1459,7 +1459,7 @@ static int social_effect_value(const SocialEffect &effect, int index) {
 */
 void SocialWin::UNK1(int soc_category, int soc_model) {
     field_A1C_ = 0xFFFFFFFFU;
-    set_social_category_value(socCategory_, soc_category, soc_model);
+    socCategory_.models_[soc_category] = soc_model;
     draw_social(soc_category);
 
     // Snapshot the eleven-word working effect block as the undo copy.
