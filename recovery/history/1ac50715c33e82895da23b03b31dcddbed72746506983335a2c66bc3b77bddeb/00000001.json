@@ -1,0 +1,24 @@
+{
+  "event_id": "9103f7584655aa43ceec5a7f39865f3eca587567d55f337018369f2c31fa806a",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Native initial outsideFAIL exposes drone_riot0x4F4FB0-0x4F5CD6. Independent full COFF review:3152-byte body has exactly4changed bytes exchanging movesi,[ebp-2c] and movedi,[ebp-18], no calls/flags/address arithmetic changes; all164relocation sites/targets and source unchanged. This is incidental compiler scheduling, not inlining or a source correction; precise trigger/original pair correspondence remains unknown.",
+      "Manual coordinator scope review permits these two independent local loads to reorder while retaining all prior claims and evidence. Initial outsideFAIL is retained; enlarged-scope outside pass cannot prove drone_riot fidelity, linked preservation or game acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5197744,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "expose-drone-riot-codegen",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:base-first-fidelity-oct25at"
+}

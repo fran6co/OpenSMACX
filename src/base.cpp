@@ -7377,9 +7377,9 @@ Status: Complete
 void __cdecl base_first(int base_id) {
     int priority = -1;
     uint32_t proto_id = BSC_SCOUT_PATROL;
-    uint32_t faction_id = Bases[base_id].faction_id_current;
+    Bases[base_id].queue_production_id[0] = proto_id;
     for (int i = 0; i < MaxVehProtoNum; i++) {
-        if (veh_avail(i, faction_id, base_id)) {
+        if (veh_avail(i, Bases[base_id].faction_id_current, base_id)) {
             if (i < MaxVehProtoFactionNum || VehPrototypes[i].flags & PROTO_TYPED_COMPLETE) {
                 int compare = get_proto_defense_rating(i) * 32;
                 uint32_t plan = VehPrototypes[i].plan;
