@@ -1,0 +1,20 @@
+{
+  "event_id": "9ba11d4113959f00cc2934aa3a2edabbd8d35618a754a497cfda7ba39858450e",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_alphamenu_behavior.py"
+    ],
+    "evidence": [
+      "Extend only existing actual-source adjust/compute harness to observe updated Spot state at redraw plus resize/move/compute/redraw order; preserve geometry and other tests.",
+      "Old actual source fails at redrawobservesprecompute state, four other controls pass; baseline log/XML retained in ignored owner-fidelity-batch-oct25ao/alphamenu."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "authorize-observable-menu-callback-control-oct25ao",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:alphamenu-callback-order-oct25ao"
+}

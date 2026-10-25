@@ -76,10 +76,13 @@ int WinScreenWidth = 1280;
 int WinScreenHeight = 768;
 struct Sprite { int w, h; int width() const { return w; } int height() const { return h; } };
 struct MenuEntry { unsigned char flags; };
+char callback_order[16] = {};
+int callback_count = 0;
+void record_callback(char value) { callback_order[callback_count++] = value; }
 struct Spot {
   struct Row { int index, left, top, right, bottom; } rows[8];
   int used = 0;
-  void init(int) { used = 0; }
+  void init(int) { record_callback('C'); used = 0; }
   int add(int index, int, int left, int top, int length, int height) {
     rows[used++] = {index, left, top, left + length, top + height};
     return 0;
@@ -87,11 +90,17 @@ struct Spot {
 };
 class Win {
  public:
-  void resize(int w, int h, int mode) { resized_w = w; resized_h = h; resize_mode = mode; }
-  void move(int x, int y) { moved_x = x; moved_y = y; }
-  void redraw() { ++redraws; }
+  void resize(int w, int h, int mode) { record_callback('S'); resized_w = w; resized_h = h; resize_mode = mode; }
+  void move(int x, int y) { record_callback('M'); moved_x = x; moved_y = y; }
+  void redraw() {
+    record_callback('R');
+    if (spot_used_source) spot_used_at_redraw = *spot_used_source;
+    ++redraws;
+  }
   int resized_w = -1, resized_h = -1, resize_mode = -1;
   int moved_x = -1, moved_y = -1, redraws = 0;
+  int *spot_used_source = nullptr;
+  int spot_used_at_redraw = -999;
 };
 class GraphicWin : public Win {};
 class AlphaMenu : public GraphicWin {
@@ -107,17 +116,29 @@ class AlphaMenu : public GraphicWin {
 """ + adjust + "\n" + compute + r"""
 int main() {
   AlphaMenu menu;
+  menu.spot_used_source = &menu.spot_.used;
+  menu.spot_.used = 7;  // redraw must observe compute's replacement, not this sentinel.
   menu.adjust();
   assert(menu.resized_w == 31 && menu.resized_h == 41 && menu.resize_mode == 0);
   assert(menu.moved_x == 128 && menu.moved_y == 719);
   assert(menu.redraws == 1 && menu.spot_.used == 3);
+  assert(menu.spot_used_at_redraw == 3);
+  assert(callback_count == 4 && callback_order[0] == 'S'
+      && callback_order[1] == 'M' && callback_order[2] == 'C'
+      && callback_order[3] == 'R');
   assert(menu.spot_.rows[0].index == 0 && menu.spot_.rows[0].top == 5 && menu.spot_.rows[0].bottom == 17);
   assert(menu.spot_.rows[1].index == 1 && menu.spot_.rows[1].top == 29 && menu.spot_.rows[1].bottom == 41);
   assert(menu.spot_.rows[2].index == 2 && menu.spot_.rows[2].top == 17 && menu.spot_.rows[2].bottom == 29);
 
   WinScreenWidth = 800;
+  callback_count = 0;
+  menu.spot_.used = 9;
   menu.adjust();
   assert(menu.moved_x == 0);
+  assert(menu.spot_used_at_redraw == 3);
+  assert(callback_count == 4 && callback_order[0] == 'S'
+      && callback_order[1] == 'M' && callback_order[2] == 'C'
+      && callback_order[3] == 'R');
 }
 """
     compile_and_run(tmp_path, harness)
