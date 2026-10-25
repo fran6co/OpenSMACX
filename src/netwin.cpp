@@ -523,12 +523,11 @@ Status: Coverage transcription; the historical claim now lives on this owner,
         not on a duplicate scaffold. Current exactness remains unproved.
 */
 void NetWin::UNK3() {
-    Buffer *buffer = static_cast<Buffer *>(this);
-    buffer->box_sprite(&setup_rects_[45],
+    Buffer::box_sprite(&setup_rects_[45],
                        &InterfaceBoxStyles[3]);
-    buffer->box_sprite(&setup_rects_[44],
+    Buffer::box_sprite(&setup_rects_[44],
                        &InterfaceBoxStyles[0]);
-    buffer->box_sprite(&setup_rects_[43],
+    Buffer::box_sprite(&setup_rects_[43],
                        &InterfaceBoxStyles[0]);
 }
 
