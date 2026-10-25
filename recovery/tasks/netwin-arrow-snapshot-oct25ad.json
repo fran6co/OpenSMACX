@@ -1,0 +1,26 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "b6c571aa1fe2beee2137290711165342adc00d33",
+  "editable_files": [
+    "src/netwin.cpp",
+    "recovery/tests/test_netwin_counted_loops_oct15.py",
+    "recovery/tests/test_netwin_faction_record_owner_closure_oct9.py",
+    "recovery/tests/test_netwin_session_assets_owner_oct9.py"
+  ],
+  "evidence": [
+    "Pin0x4801F7..0x48021D snapshots the current row rectangle after box drawing and the mode-prefix skip, before player-ID helpers. The arrow uses that captured rectangle; later text layout and spot registration reload the row live. Existing source delays all arrow reads until after helpers.",
+    "One ordinary const RECT snapshot candidate, preserving every loop bound, mode/prefix exit, helper/callback order, argument, ownership and unsafe path. Original source spelling unknown. Full pin/source independent review, actual production-replica control and complete-TU exact/outside checks precede publication.",
+    "At most3candidate compiles in unchanged context; retain identities/spans/symbols/historical claims. Root publishes code/Git. Fresh compile/link, actual callback-state host controls and strict reference/claim checks precede coordinator-reviewed integration; no flags, wrappers or demotions."
+  ],
+  "intent": "Recover original NetWin difficulty-arrow rectangle snapshot timing while retaining later live layout reads.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4718976,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "netwin-arrow-snapshot-oct25ad"
+}
