@@ -126,7 +126,7 @@ retry argument and live window-handle reload after callbacks.
 The existing amovie_project caller now dispatches this member on a real
 AlphaMovie local, so member and base lifetime follow the declared structure.
 */
-// ORIGINAL: 0x00404070 ?exec@AlphaMovie@@QAEHPAD@Z 0x00404070-0x004041BF
+// ORIGINAL: 0x00404070 ?exec@AlphaMovie@@QAEHPAD@Z 0x00404070-0x004041BF BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00404070.cpp", "source:src/alphamovie.h:AlphaMovie", "Pinned 4040EF..404126 clears only the first stack retry byte, appends prefix6827AC and name into StringTemp9B86A0 without clearing it, then passes the separate empty stack buffer to MCIVideo::load.", "Pinned404199 reloads the live window handle after stop and global palette callbacks. The 0x100 local buffer is consistent with the observed 0x104 frame and live width word at EBP-4; this is not an independent original array-capacity claim."], "reason": "Own AlphaMovie playback on its real GraphicWin receiver and embedded MCIVideo, preserving the original separate shared-string append and empty stack retry rather than repairing the original behavior."}
 int AlphaMovie::exec(char *movie_name) {
     if (movie_name == 0) {

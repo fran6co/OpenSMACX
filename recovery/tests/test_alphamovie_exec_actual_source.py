@@ -101,9 +101,15 @@ static int modal_calls, flush_calls, non_input_calls;
 static std::vector<std::string> events;
 static std::vector<std::string> load_paths;
 static void event(const char *name) { events.push_back(name); }
-static int read_height() { ++screen_height_reads; event("height"); return screen_height_value; }
-static int read_width() { ++screen_width_reads; event("width"); return screen_width_value; }
+static int read_height() { ++screen_height_reads; return screen_height_value; }
+static int read_width() { ++screen_width_reads; return screen_width_value; }
+// Ordinary global loads have no host-observable relative ordering. Native
+// byte/reference checks verify VC6's actual physical load sequence. These
+// probes retain snapshot values/counts and their boundary before init/callbacks.
 static std::string event_trace() {
+    if (init_calls != 0) {
+        assert(screen_height_reads == 1 && screen_width_reads == 1);
+    }
     std::string out;
     for (size_t i = 0; i < events.size(); ++i) {
         if (i != 0) out += ',';
@@ -140,6 +146,7 @@ struct GraphicWin : Win {
              Win *parent, void *menu, void *border) {
         assert(x == 0 && y == 0 && title == 0 && flags == 0x404000);
         assert(parent == &MainInterfaceGlobal && menu == 0 && border == 0);
+        assert(screen_height_reads == 1 && screen_width_reads == 1);
         event("init"); ++init_calls; init_width = width; init_height = height; return 0;
     }
     void fill(int color) { assert(color == 0); event("fill"); ++fill_calls; }
@@ -198,11 +205,11 @@ static void reset_state() {
 }
 static void assert_playback_trace() {
     assert(event_trace() ==
-        "width,height,init,fill,show,pump,load1,move,device_palette,play,flush,modal,stop,active_palette,window_hide,hide,pump");
+        "init,fill,show,pump,load1,move,device_palette,play,flush,modal,stop,active_palette,window_hide,hide,pump");
 }
 static void assert_retry_playback_trace() {
     assert(event_trace() ==
-        "width,height,init,fill,show,pump,load1,load2,move,device_palette,play,flush,modal,stop,active_palette,window_hide,hide,pump");
+        "init,fill,show,pump,load1,load2,move,device_palette,play,flush,modal,stop,active_palette,window_hide,hide,pump");
 }
 int main() {
     reset_state();
@@ -210,6 +217,7 @@ int main() {
         active_movie_window = static_cast<Win *>(&movie);
     strcpy(StringTemp, "stale");
     assert(movie.exec(0) == 0x10);
+    assert(screen_height_reads == 0 && screen_width_reads == 0);
     assert(event_trace().empty() && load_calls == 0 && strcmp(StringTemp, "stale") == 0);
 
     reset_state();
@@ -244,7 +252,7 @@ int main() {
     load_results[0] = 5;
     load_results[1] = 7;
     assert(movie.exec(const_cast<char *>("retry.smk")) == 7);
-    assert(event_trace() == "width,height,init,fill,show,pump,load1,load2");
+    assert(event_trace() == "init,fill,show,pump,load1,load2");
     assert(load_calls == 2 && load_paths[0] == "retry.smk" && load_paths[1].empty());
     assert(strcmp(StringTemp, "not-cleared/k:\\game\\retry.smk") == 0);
     assert(move_calls == 0 && show_window_calls == 0 && modal_calls == 0 && flush_calls == 0);
