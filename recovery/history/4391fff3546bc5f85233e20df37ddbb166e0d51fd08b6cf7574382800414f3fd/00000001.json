@@ -1,0 +1,21 @@
+{
+  "event_id": "edc2c8e65a21c8ed933c44ebd2e320c606a4c5fcfce71238eb98afd0a8a319c7",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_tutwin_map_snapshot_actual_source.py",
+      "src/tutwin.cpp"
+    ],
+    "evidence": [
+      "Independent full pin review found original entry guard/store uses fourth formal pixel_x atEBP+14, not forwarded_6 atEBP+1C. First conversion writes semantic pixelX into y_coord home and pixelY into pixel_x home, then forwards those converted values after offsets. Retain all four global receiver reloads, original input y captured before conversion, arrow_x checks/conversion and final GraphicWin owner.",
+      "Second candidate may express conversion in place on the two parameter values; this is ordinary C++ dataflow, not stack-home/padding manipulation. Distinct locals can be semantically equivalent when outputs are fully written, so do not claim physical parameter homes alone prove a semantic bug. The guard discrepancy is definite. No header/type/symbol/ABI or original marker change."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "coordinator-tutorial-picture-and-output-closure-oct26en",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:tutwin-map-oct26en"
+}
