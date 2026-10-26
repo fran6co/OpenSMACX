@@ -12,15 +12,14 @@ import subprocess
 import pytest
 
 from match_recovery.source import read_text
+from owner_transfer_test_support import current_record_by_address
 
 
 ROOT = Path(__file__).resolve().parents[2]
-GENERAL = ROOT / "src" / "general.cpp"
-GENERAL_HEADER = ROOT / "src" / "general.h"
 STRINGSTRUCT = ROOT / "src" / "stringstruct.cpp"
 BASELINE = "c7a89397488f209346cc3bbc5329d7489b5a0e81"
 SORT_SIGNATURE = "void __cdecl sub_4d5f70(int *parallel, int *values, int count)"
-SWAP_SIGNATURE = "MEASURED inline void __cdecl swap(int *var1, int *var2)"
+SWAP_SIGNATURE = "void __cdecl swap(int *var1, int *var2)"
 
 
 def extract_function(source, signature):
@@ -72,13 +71,12 @@ def extract_function(source, signature):
 
 
 def actual_definitions():
-    source = GENERAL.read_text(encoding="utf-8")
-    helper_header = GENERAL_HEADER.read_text(encoding="utf-8")
-    body = extract_function(source, SORT_SIGNATURE)
-    helper = extract_function(helper_header, SWAP_SIGNATURE)
+    sort_record = current_record_by_address(ROOT, 0x004D5F70)
+    swap_record = current_record_by_address(ROOT, 0x00628A50)
+    body = extract_function(sort_record.path.read_text(encoding="utf-8"), SORT_SIGNATURE)
+    helper = extract_function(swap_record.path.read_text(encoding="utf-8"), SWAP_SIGNATURE)
     # The fixture adds trace instrumentation at the real helper entry; the
     # helper's three original XOR writes remain verbatim and ordered.
-    helper = helper.replace("MEASURED inline ", "inline ", 1)
     assert "*var1 ^= *var2;\n    *var2 ^= *var1;\n    *var1 ^= *var2;" in helper
     helper = helper.replace(
         "{\n    *var1 ^= *var2;",
@@ -303,39 +301,28 @@ def compile_and_run(tmp_path, compiler, mutation=None):
                           timeout=5)
 
 
-def test_sort_identity_moves_to_general_without_losing_source_history():
+def test_sort_identity_preserves_original_span_and_history():
     previous_struct = subprocess.run(
         ["git", "show", f"{BASELINE}:src/stringstruct.cpp"], cwd=ROOT,
-        check=True, text=True, capture_output=True, timeout=30,
-    ).stdout
-    previous_general = subprocess.run(
-        ["git", "show", f"{BASELINE}:src/general.cpp"], cwd=ROOT,
         check=True, text=True, capture_output=True, timeout=30,
     ).stdout
     old_rows = [row for row in read_text(previous_struct, STRINGSTRUCT)
                 if row.address == 0x004D5F70]
     assert len(old_rows) == 1
-    assert not [row for row in read_text(previous_general, GENERAL)
-                if row.address == 0x004D5F70]
-    current_string_rows = [row for row in read_text(
-        STRINGSTRUCT.read_text(encoding="utf-8"), STRINGSTRUCT)
-        if row.address == 0x004D5F70]
-    current_general_rows = [row for row in read_text(
-        GENERAL.read_text(encoding="utf-8"), GENERAL)
-        if row.address == 0x004D5F70]
-    assert current_string_rows == []
-    assert len(current_general_rows) == 1
     old = old_rows[0]
-    current = current_general_rows[0]
+    current = current_record_by_address(ROOT, 0x004D5F70)
     # The parser's enclosing region and line are source-location-derived; all
-    # load-bearing identity, claim, symbol and historical fields stay exact.
+    # original history and identity stay intact. Native recording may add a
+    # claim, but it may not withdraw a claim carried by the baseline.
     for field in fields(old):
         if field.name in ("path", "line", "region"):
             continue
+        if field.name in ("byte_exact", "semantic"):
+            if getattr(old, field.name):
+                assert getattr(current, field.name), field.name
+            continue
         assert getattr(old, field.name) == getattr(current, field.name), field.name
     assert old.symbol == current.symbol == "_sub_4d5f70"
-    assert Path(old.path).as_posix().endswith("/src/stringstruct.cpp")
-    assert Path(current.path).as_posix().endswith("/src/general.cpp")
     assert old.image_spans == current.image_spans
     assert old.address == current.address == 0x004D5F70
 

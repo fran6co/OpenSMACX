@@ -8,6 +8,7 @@ identity or allocation extent beyond the eleven observed words.
 from __future__ import annotations
 
 from pathlib import Path
+import re
 import shutil
 import subprocess
 
@@ -18,8 +19,11 @@ ROOT = Path(__file__).resolve().parents[2]
 HEADER = ROOT / "src/scroll.h"
 SCROLL = ROOT / "src/scroll.cpp"
 POPUP = ROOT / "src/popup.cpp"
+BASEPOP_DEFAULTS = ROOT / "src/basepop_defaults.h"
 RECORD = "struct ScrollCloseStaticDefaultsData {"
 GLOBAL = "ScrollCloseStaticDefaultsData ScrollCloseStaticDefaults = {"
+BUTTON_STYLE = "struct BasePopButtonStyle {"
+BUTTON_STYLE_GLOBAL = "BasePopButtonStyle BasePopButtonDefaults = {"
 POPUPS = "void __cdecl popups_normal()"
 
 
@@ -49,12 +53,32 @@ def _global_definition(scroll: str) -> str:
     return scroll[start:end]
 
 
+def _button_style_record(header: str) -> str:
+    start = header.index(BUTTON_STYLE)
+    end = header.index("\n};", start) + 3
+    return header[start:end]
+
+
+def _button_style_definition(basepop: str) -> str:
+    start = basepop.index(BUTTON_STYLE_GLOBAL)
+    end = basepop.index(";", start) + 1
+    return basepop[start:end]
+
+
 def _producer_statements(popup: str) -> list[str]:
     body = _block(popup, POPUPS)
     return [
         " ".join(line.strip().split())
         for line in body.splitlines()
         if "ScrollCloseStaticDefaults." in line
+    ]
+
+
+def _button_style_producer_statements(popup: str) -> list[str]:
+    body = _block(popup, POPUPS)
+    return [
+        " ".join(statement.split())
+        for statement in re.findall(r"BasePopButtonDefaults\.[^;]+;", body, re.S)
     ]
 
 
@@ -77,6 +101,29 @@ static_assert(offsetof(ScrollCloseStaticDefaultsData, bevel_thickness) == 32, "t
 static_assert(offsetof(ScrollCloseStaticDefaultsData, bevel_upper) == 36, "upper offset");
 static_assert(offsetof(ScrollCloseStaticDefaultsData, bevel_lower) == 40, "lower offset");
 {definition}
+int main() {{
+{body}
+}}
+'''
+
+
+def _button_style_program(record: str, definition: str, body: str) -> str:
+    return f'''#include <cassert>
+#include <cstddef>
+#include <cstdint>
+using uint8_t = std::uint8_t;
+using uint32_t = std::uint32_t;
+{record}
+static_assert(sizeof(BasePopButtonStyle) == 16, "button style row size");
+static_assert(offsetof(BasePopButtonStyle, button_color) == 0, "button color offset");
+static_assert(offsetof(BasePopButtonStyle, unresolved_31A1_) == 1, "unresolved byte offset");
+static_assert(offsetof(BasePopButtonStyle, bevel_upper) == 4, "upper bevel offset");
+static_assert(offsetof(BasePopButtonStyle, bevel_lower) == 8, "lower bevel offset");
+static_assert(offsetof(BasePopButtonStyle, bevel_thickness) == 12, "bevel thickness offset");
+{definition}
+int PopupThemeSurfaceColor;
+int PopupThemeBevelUpper;
+int PopupThemeBevelLower;
 int main() {{
 {body}
 }}
@@ -158,6 +205,53 @@ def test_actual_popup_producer_targets_and_order_are_executable(
   assert(ScrollCloseStaticDefaults.bevel_lower == 311);
 """
     ran = _compile_run(compiler, _program(record, definition, body), tmp_path, "scroll_popup_defaults")
+    assert ran.returncode == 0, ran.stdout + ran.stderr
+
+
+@pytest.mark.parametrize("compiler_name", ["g++", "clang++"])
+def test_actual_popup_button_style_default_and_byte_stores(
+    compiler_name: str, tmp_path: Path
+) -> None:
+    compiler = shutil.which(compiler_name)
+    if compiler is None:
+        pytest.skip(f"{compiler_name} unavailable")
+    basepop_defaults_h = BASEPOP_DEFAULTS.read_text(encoding="utf-8")
+    basepop_cpp = (ROOT / "src/basepop.cpp").read_text(encoding="utf-8")
+    popup = POPUP.read_text(encoding="utf-8")
+    record = _button_style_record(basepop_defaults_h)
+    definition = _button_style_definition(basepop_cpp)
+    producer = _button_style_producer_statements(popup)
+
+
+    body = """
+  assert(BasePopButtonDefaults.button_color == 247);
+  assert(BasePopButtonDefaults.unresolved_31A1_[0] == 0);
+  assert(BasePopButtonDefaults.unresolved_31A1_[1] == 0);
+  assert(BasePopButtonDefaults.unresolved_31A1_[2] == 0);
+  assert(BasePopButtonDefaults.bevel_upper == 7);
+  assert(BasePopButtonDefaults.bevel_lower == 248);
+  assert(BasePopButtonDefaults.bevel_thickness == 2);
+  BasePopButtonDefaults.unresolved_31A1_[0] = 0xa1;
+  BasePopButtonDefaults.unresolved_31A1_[1] = 0xb2;
+  BasePopButtonDefaults.unresolved_31A1_[2] = 0xc3;
+  PopupThemeSurfaceColor = 0x12345689;
+  PopupThemeBevelUpper = 0x1234;
+  PopupThemeBevelLower = 0x5678;
+""" + "\n".join("  " + statement for statement in producer) + """
+  assert(BasePopButtonDefaults.button_color == 0x89);
+  assert(BasePopButtonDefaults.unresolved_31A1_[0] == 0xa1);
+  assert(BasePopButtonDefaults.unresolved_31A1_[1] == 0xb2);
+  assert(BasePopButtonDefaults.unresolved_31A1_[2] == 0xc3);
+  assert(BasePopButtonDefaults.bevel_upper == 0x1234);
+  assert(BasePopButtonDefaults.bevel_lower == 0x5678);
+  assert(BasePopButtonDefaults.bevel_thickness == 2);
+"""
+    ran = _compile_run(
+        compiler,
+        _button_style_program(record, definition, body),
+        tmp_path,
+        "popup_button_style_defaults",
+    )
     assert ran.returncode == 0, ran.stdout + ran.stderr
 
 

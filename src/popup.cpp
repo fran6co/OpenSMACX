@@ -25,6 +25,7 @@
 #include <mmsystem.h>
 #include <cstring>
 #include "popup.h"
+#include "basepop_defaults.h"
 #include "popup_fonts.h"
 #include "buffer.h"
 #include "diplopop.h"
@@ -203,8 +204,8 @@ void __cdecl popups_normal() {
     WinStaticDefaults[2] = 0;
     WinStaticDefaults[3] = 1;
     WinStaticDefaults[4] = 1;
-    BasePopDefaultField31A0[0] = (BasePopDefaultField31A0[0] & 0xFFFFFF00)
-        | static_cast<uint8_t>(PopupThemeSurfaceColor);
+    BasePopButtonDefaults.button_color =
+        static_cast<uint8_t>(PopupThemeSurfaceColor);
     BasePop::set_def_button_color(0, -1, 1, 1);
     BasePop::set_def_button_color2(0, -1, 1, 1);
     BasePop::set_def_button_color3(0, -1, 1, 1);
@@ -219,8 +220,8 @@ void __cdecl popups_normal() {
     WinStaticDefaults[6] = InterfaceBottomBorderThickness;
     WinStaticDefaults[1] = InterfaceCaptionHeight;
     BasePopDefaultField3104[2] = 0;
-    BasePopDefaultField31A0[1] = PopupThemeBevelUpper;
-    BasePopDefaultField31A0[2] = PopupThemeBevelLower;
+    BasePopButtonDefaults.bevel_upper = PopupThemeBevelUpper;
+    BasePopButtonDefaults.bevel_lower = PopupThemeBevelLower;
     BasePopDefaultField31B0[0] = 0;
     MenuDefaultColor1 = MenuDefaultColor2 = 0;
     WinStaticDefaults[5] = InterfaceBorderThickness;

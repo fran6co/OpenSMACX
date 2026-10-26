@@ -1,0 +1,35 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "5a4d9c18bb812b5bfcd49a15ffbbf5f253c4fa17",
+  "editable_files": [
+    "src/basepop.h",
+    "src/basepop.cpp",
+    "src/popup.cpp"
+  ],
+  "evidence": [
+    "Original object696F54..696F64 retains exact initial16bytes and unresolved bytes. No behavior fixes. Type discovery covers all3known consumers.",
+    "Native function mapping/claim history remains unchanged; object v2 replaces v1 at identical original storage address with actual compiler-confirmed symbol.",
+    "Header consumers and generated entries require broad fresh compilation/preservation; historical claims retain obligations. Manual coordinator-reviewed checkpoint only; no full-game acceptance."
+  ],
+  "intent": "Recover the original byte-plus-three-dword Popup default storage and all typed accesses, preserving behavior and original object identity.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5801056,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6293600,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6295296,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "popup-style-defaults-oct26fi"
+}
