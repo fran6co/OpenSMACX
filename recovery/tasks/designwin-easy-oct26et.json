@@ -1,0 +1,43 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "02c6b6b0049807d61f876f23f303079172dca827",
+  "editable_files": [
+    "src/designwin.cpp"
+  ],
+  "evidence": [
+    "Coordinator authorizes isolated exploratory ordinary-C++ body probes only, maximum3 candidates/function/unchanged context. No source or claim publication.",
+    "Source, pin, physical COFF and prior-context transition evidence retained in .opensmacx/recovery/easy-large-next-oct26es/group-*.json. No existing identity was in the prior1048 selected short/medium/large rows. Check recorded history before additional attempts.",
+    "Task baseline is the actual qualified02c6 revision. Current master9cdffa differs only by a downward audit ceiling; compiler/source/build inputs are identical. No baseline or report revision is relabelled.",
+    "Preserve original quirks, identity/spans/claims, compiler policy and all outside-task bodies. Complete candidates are tested independently, not banked. Scope expansion and publication require a separate coordinator decision.",
+    "DesignWin::select_chassis 0x00439F20 proposal SHA256c5a0fc4bcff4328c77d388b75018df32ff53e3775999d48e865c0aec8f28746f",
+    "DesignWin::select_weapon 0x0043A300 proposal SHA2565ff3d3dcffd8cf3102ee7d9231a82dac4914f28d99656f320e405a9211537cf6",
+    "DesignWin::select_armor 0x0043A760 proposal SHA25628e5b02d025effcab6ea2845a0787bbabe9d36a603132dea7097bff25abb37db",
+    "DesignWin::select_reactor 0x0043AA00 proposal SHA25610f9c22030a5addb3d1abf61533446eef86d4d7889289f7f67c9646746bbf06c"
+  ],
+  "intent": "Bounded owner C++ source-form and faithful argument/storage probes; preserve all evidence and obligations.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4431648,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4432640,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4433760,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4434432,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "designwin-easy-oct26et"
+}
