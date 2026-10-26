@@ -1535,10 +1535,8 @@ def test_actual_alternating_row_color_key_raster(tmp_path, main_body, observer):
     ("if (texel != static_cast<unsigned char>(TextureRasterLightThreshold))\n"
      "                        *out = (TextureRasterDither & 1) != 0 ? texel : alternate;",
      "*out = (TextureRasterDither & 1) != 0 ? texel : alternate;"),
-    ("*reinterpret_cast<unsigned char *>(&TextureRasterScratch494) =\n"
-     "        static_cast<unsigned char>(color);",
-     "*reinterpret_cast<unsigned char *>(&TextureRasterScratch494) =\n"
-     "        static_cast<unsigned char>(color >> 8);"),
+    ("TextureRasterScratch494 = static_cast<unsigned char>(color);",
+     "TextureRasterScratch494 = static_cast<unsigned char>(color >> 8);"),
 ])
 def test_compiling_alternating_mutations_are_rejected(tmp_path, before, after):
     actual = alternating_bodies()

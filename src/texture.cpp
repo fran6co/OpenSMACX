@@ -833,7 +833,7 @@ static TextureRasterRelocatedRowCell TextureRasterAlternateRowNext =
 // RECOVERY_OBJECT: v1 0x009BB490 _TextureRasterEdgeVerticesA
 static Vert *TextureRasterEdgeVerticesA;
 // RECOVERY_OBJECT: v1 0x009BB494 _TextureRasterScratch494
-static int TextureRasterScratch494;
+static unsigned char TextureRasterScratch494;
 // RECOVERY_OBJECT: v1 0x009BB498 _TextureRasterScratch498
 static int TextureRasterScratch498;
 // RECOVERY_OBJECT: v1 0x009BB49C _TextureRasterBufferStride
@@ -936,7 +936,7 @@ static uintptr_t TextureRasterShadeCursor;
 // RECOVERY_OBJECT: v1 0x009BB55C _TextureRasterScratch55C
 static int TextureRasterScratch55C;
 // RECOVERY_OBJECT: v1 0x009BB560 _TextureRasterScratch560
-static int TextureRasterScratch560;
+static unsigned char TextureRasterScratch560;
 // RECOVERY_OBJECT: v1 0x009BB564 _TextureRasterPalette
 static unsigned char *TextureRasterPalette;
 
@@ -2764,8 +2764,7 @@ void Texture::draw(Buffer *buffer, Vert *vertices, int *zvals, int count,
     unsigned char *destination = static_cast<unsigned char *>(buffer->get_data());
     TextureRasterPixelBase = destination;
     TextureRasterLightThreshold = texture_raster_key_signed_bits();
-    *reinterpret_cast<unsigned char *>(&(TextureRasterScratch494)) =
-        static_cast<unsigned char>(fill_color);
+    TextureRasterScratch494 = static_cast<unsigned char>(fill_color);
     texture_reset_fpu();
     TextureRasterEdgeVerticesB = vertices;
     TextureRasterEdgeVerticesA = edge_vertices;
@@ -2879,8 +2878,7 @@ void Texture::draw(Buffer *buffer, Vert *vertices, int *zvals, int count,
                     const unsigned int pixel_count =
                         texture_span_pixels(texture_difference(end, x));
                     if ((parity & 1) == 0) {
-                        const unsigned char color =
-                            *reinterpret_cast<unsigned char *>(&(TextureRasterScratch494));
+                        const unsigned char color = TextureRasterScratch494;
                         for (unsigned int pixel = 0; pixel < pixel_count; ++pixel)
                             out[pixel] = color;
                     } else {
@@ -2937,7 +2935,7 @@ void Texture::draw_coast(Buffer * a1, Vert * a2, int * a3, Texture * a4, unsigne
     if (pixels_ != 0 && a3 != 0 && a5 != 0) {
         TextureRasterPixelBase = a1->get_data();
         texture_reset_fpu();
-        *reinterpret_cast<char *>(&(TextureRasterScratch494)) = static_cast<char>(a8);
+        TextureRasterScratch494 = static_cast<unsigned char>(a8);
         TextureRasterEdgeVerticesB = a2;
         TextureRasterZValues = reinterpret_cast<int *>(a3);
         TextureRasterScratch550 = a5;
@@ -3125,7 +3123,7 @@ void Texture::draw_coast(Buffer * a1, Vert * a2, int * a3, Texture * a4, unsigne
                                                 static_cast<const unsigned char *>(TextureRasterScratch550),
                                                 TextureRasterTextureWidth, TextureRasterUAccumulator.dword, TextureRasterVAccumulator.dword,
                                                 TextureRasterScratch4E4.dword, TextureRasterScratch4C8.dword,
-                                                static_cast<unsigned char>(TextureRasterScratch494), pixel_count,
+                                                TextureRasterScratch494, pixel_count,
                                                 &span_result);
                                         } else {
                                             texture_draw_coast_span(
@@ -3396,7 +3394,7 @@ int Texture::draw_trans_3(Buffer *a1, Vert *a2, int *a3, int a4, Vert *a5, int a
     TextureRasterPixelBase = a1->get_data();
     TextureRasterLightThreshold = texture_raster_key_signed_bits();
     texture_reset_fpu();
-    *reinterpret_cast<unsigned char *>(&(TextureRasterScratch494)) = static_cast<unsigned char>(a6);
+    TextureRasterScratch494 = static_cast<unsigned char>(a6);
     TextureRasterVertexCount = a4;
     TextureRasterEdgeVerticesB = a2;
     TextureRasterEdgeVerticesA = a5;
@@ -3555,7 +3553,7 @@ int Texture::draw_trans_3(Buffer *a1, Vert *a2, int *a3, int a4, Vert *a5, int a
                                         texture_draw_keyed_fill_span(destination,
                                             static_cast<const unsigned char *>(TextureRasterScratch544), width,
                                             u, v, du, dv, pixels, key,
-                                            static_cast<unsigned char>(TextureRasterScratch494));
+                                            TextureRasterScratch494);
                                     }
                                 }
                                 if (done) break;
@@ -4089,8 +4087,7 @@ void Texture::sub_61df60(Buffer *buffer, Vert *vertices, int *zvals,
         unsigned char *destination = static_cast<unsigned char *>(buffer->get_data());
         TextureRasterPixelBase = destination;
         texture_reset_fpu();
-        *reinterpret_cast<unsigned char *>(&(TextureRasterScratch560)) =
-            static_cast<unsigned char>(threshold);
+        TextureRasterScratch560 = static_cast<unsigned char>(threshold);
         TextureRasterPalette = palette;
         TextureRasterEdgeVerticesB = vertices;
         TextureRasterZValues = reinterpret_cast<int *>(zvals);
@@ -4335,8 +4332,7 @@ void Texture::sub_61df60(Buffer *buffer, Vert *vertices, int *zvals,
                                 static_cast<unsigned int>(base_texel) + shade);
                             if (static_cast<signed char>(shade) <
                                 static_cast<signed char>(
-                                    *reinterpret_cast<const unsigned char *>(
-                                        &TextureRasterScratch560))) {
+                                    TextureRasterScratch560)) {
                                 const unsigned int table_index =
                                     (static_cast<unsigned int>(shade) << 8) | out[0];
                                 value = palette[table_index];
@@ -8522,8 +8518,7 @@ void Texture::draw_color_key(Buffer *buffer, Vert *vertices, int count, Vert *uv
     }
     TextureRasterPixelBase = buffer->get_data();
     texture_reset_fpu();
-    *reinterpret_cast<unsigned char *>(&TextureRasterScratch494) =
-        static_cast<unsigned char>(color);
+    TextureRasterScratch494 = static_cast<unsigned char>(color);
     TextureRasterEdgeVerticesB = vertices;
     TextureRasterScratch544 = pixels_;
     TextureRowPitchScratch = static_cast<int>(iWidth_);
@@ -8643,7 +8638,7 @@ void Texture::draw_color_key(Buffer *buffer, Vert *vertices, int count, Vert *uv
                 unsigned char alternate = 0;
                 if ((TextureRasterDither & 1) == 0) {
                     alternate =
-                        *reinterpret_cast<unsigned char *>(&TextureRasterScratch494);
+                        TextureRasterScratch494;
                 }
                 unsigned char texel = source_reads[source];
                 for (unsigned int written = 0; written < remaining; ++written) {
@@ -8986,8 +8981,7 @@ void Texture::draw2(Buffer *buffer, Vert *vertices, int *zvals, int count,
 
     unsigned char *destination = static_cast<unsigned char *>(buffer->get_data());
     texture_reset_fpu();
-    *reinterpret_cast<unsigned char *>(&TextureRasterScratch494) =
-        static_cast<unsigned char>(fillColor);
+    TextureRasterScratch494 = static_cast<unsigned char>(fillColor);
     const unsigned char *pixels = pixels_;
     const int stride = static_cast<int>(buffer->stride_);
     const int width = iWidth_;
@@ -9056,8 +9050,7 @@ void Texture::draw2(Buffer *buffer, Vert *vertices, int *zvals, int count,
                     unsigned char texel = source_reads[source];
                     if ((y & 1) == 0) {
                         const unsigned char fill =
-                            *reinterpret_cast<unsigned char *>(
-                                &TextureRasterScratch494);
+                            TextureRasterScratch494;
                         for (unsigned int written = 0; written < remaining; ++written)
                             out[written] = fill;
                     } else {

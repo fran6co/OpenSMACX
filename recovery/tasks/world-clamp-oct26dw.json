@@ -1,0 +1,23 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "7202941d7acffc89900ea4cbd813882334010f45",
+  "editable_files": [
+    "src/world.cpp"
+  ],
+  "evidence": [
+    "Current root baseline 7202941d7acffc89900ea4cbd813882334010f45, independent pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf. Native compiler recipes from the qualified complete current application; no task baseline or claim demotion. All selected functions have new included-declaration context and previous inspected attempts remain capped.",
+    "Coordinator owns source publication/Git; worker tests may edit only authorized files. Preserve every discovery and original error path. Candidate-only diagnostics are not linked/runtime/game or automatic acceptance.",
+    "Reviewed immutable proposal /home/fran6co/code/OpenSMACX/.opensmacx/recovery/easy-small-final-oct26dv/group-06-proposals/world_UNK1.cpp SHA256 025077baa005e4caeaea33ad95e4e30cf8d4bb8afe95ce5d592bf9fb26d262b1"
+  ],
+  "intent": "One bounded original branch-shape candidate for rainfall clamp; no changed types, guards, compiler flags or original quirks.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6046736,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "world-clamp-oct26dw"
+}

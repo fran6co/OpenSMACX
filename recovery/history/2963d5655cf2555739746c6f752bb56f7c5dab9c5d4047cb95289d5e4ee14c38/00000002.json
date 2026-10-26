@@ -1,0 +1,19 @@
+{
+  "event_id": "699cc0e96935f5b89102bb48922e218f09560cb7798203dbc55f722befa892c2",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/veh.cpp"
+    ],
+    "evidence": [
+      "Authorize candidate2/3 in the same context: retain the existing initial-coordinate snapshot source and change only focus call arguments to live Vehs[veh_id] fields. This ordinary simpler C++ preserves the proven callback-read correction while avoiding unnecessary new local/reference declarations; investigate whether unrelated compiler churn disappears. Correct published source and first proposal remain preserved; do not restore stale coordinates or add flags/dummy operations. No extended spelling sweep."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "c42f78210a1c224e62181505b396ee852ebc984cff26160f5b54f1664ea6db84",
+  "request_id": "one-minimal-live-field-expression-control",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:vehicle-gate-oct26dw"
+}

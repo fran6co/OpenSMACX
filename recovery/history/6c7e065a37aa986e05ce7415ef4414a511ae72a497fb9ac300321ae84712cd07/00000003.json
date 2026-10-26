@@ -1,0 +1,20 @@
+{
+  "event_id": "aa4b5732c36df99601e6f9df3da32b3411b98faffbc2ffe66452d4733bca402b",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_texture_direct_storage_oct13ao.py"
+    ],
+    "evidence": [
+      "The remaining historical53-alias projection test freezes all live Texture C++ tokens, comments and exact source-record set against f146196, even after independently committed constructor/raster migrations and added current claims. Its original alias migration is historical in54f51003c; this is not a valid ongoing requirement that current source equal that intermediate spelling. This assertion is not a configured native gate/proof command, and original task/baseline/history/claims remain intact.",
+      "Coordinator authorizes removal of only the obsolete historical snapshot assertion and its now-unused BASE/TaskStore/reverse-projection utilities/imports in this test file. Preserve every current compiled storage, callback, bit representation and damage test. No test skips/xfails, broad source normalizers, changed expectations, task baseline reset or native gate weakening. Current native complete-object equality/zero-omission proof, explicit source identity/claim continuity and198 semantic controls remain the relevant checks."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "4646e282b7ad3737a97afc4e75ecb635381400687cbc3a04296b8fa2490c1d7a",
+  "request_id": "retire-obsolete-one-time-live-source-projection",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:texture-byte-fields-oct26dw"
+}

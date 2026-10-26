@@ -29,7 +29,7 @@ static_assert(sizeof(EdgeScan) == 0x3c, "native EdgeScan width");
 // TEXTURE_DIRECT_STORAGE_PRELUDE
 
 static void *&pixel_base = TextureRasterPixelBase;
-static int &slot494 = TextureRasterScratch494;
+static unsigned char &slot494 = TextureRasterScratch494;
 static Vert *&edge_uvs_a = TextureRasterEdgeVerticesA;
 static int &slot498 = TextureRasterScratch498;
 static int &buffer_stride = TextureRasterBufferStride;
