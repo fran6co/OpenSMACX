@@ -51,7 +51,7 @@
 #include "palette.h"
 #include "general.h"
 #include "faction.h"
-
+// RECOVERY_IMPORT: v1 __imp__ShellExecuteA@24 SHELL32.dll name:ShellExecuteA
 // Borrowed FontTable entries selected by application popup policy.
 // config_popups publishes these pointers; they own no Font lifetime.
 // RECOVERY_OBJECT: v1 0x009403D8 ?PopupMainFont@@3PAVFont@@A

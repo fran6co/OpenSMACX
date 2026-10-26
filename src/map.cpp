@@ -2885,10 +2885,10 @@ BOOL __cdecl has_temple(int faction_id) {
     return false;
 }
 
-// The climate gate's wider contract remains unresolved; timer_daemon reads
-// this original dword before dispatching the climate update.
+// timer_daemon reads this climate gate before dispatch; its wider contract remains unresolved.
 // RECOVERY_OBJECT: v1 0x0068F21C ?WorldClimateSkipTerrainClear@@3IA
 uint32_t WorldClimateSkipTerrainClear = 1;  // 0x0068F21C
+// RECOVERY_OBJECT: v1 0x009B22EC ?WorldClimateSkipTerritoryReset@@3IA
 uint32_t WorldClimateSkipTerritoryReset;  // 0x009B22EC
 // The map-refresh request the regeneration steps honour. world_build raises
 // it alongside WorldClimateSkipTerritoryReset while it is regenerating the
