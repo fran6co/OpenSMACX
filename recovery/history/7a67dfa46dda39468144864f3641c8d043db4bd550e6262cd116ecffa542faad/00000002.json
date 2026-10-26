@@ -1,0 +1,21 @@
+{
+  "event_id": "fa90dff13c260dbb98d92acc60befb15b319b2ba747daf7ba0f0e858ea68b904",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_alphanet_ledger_lifetime.py",
+      "recovery/tests/test_alphanet_record_owner_oct20.py"
+    ],
+    "evidence": [
+      "Direct-new reviewed against pinnedcallerorder and partialconstructioncoldpaths; extendexistingrealbodyfailure controls ratherthan inventstacklocals.",
+      "Old test_alphanet_record_owner_oct20 locksctorphysicalfilename anddefaultprofileinstead of recoverysemantics. Existing native source/mapping/claim checks plus29identity/body/history union cover these identities; retire obsolete location-policy tests while retaining all behavior/lifetime controls."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "4bcd6ceb30a2f101115fa3f86d97f762ab8ae641b444af576aff0a9d1c73e7b7",
+  "request_id": "caller-new-and-live-lifetime-controls",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:alpha-cleanup-oct26fp"
+}

@@ -63,7 +63,11 @@ struct AlphaNetLedgerEntry : public virtual StringAllocationBase {
 };
 class AlphaNetStringStruct : public virtual StringAllocationBase {
  public:
+  // The pinned constructor installs this virtual allocation-base view,
+  // the primary table, and the adjacent two-word vbtable {-4, +0x18}.
+  // RECOVERY_GENERATED: v1 vtable 0x00669404 0x00669408 ??_7AlphaNetStringStruct@@6BStringAllocationBase@@@ 0x00401C80
   // RECOVERY_GENERATED: v1 vtable 0x00669408 0x00669410 ??_7AlphaNetStringStruct@@6B0@@ 0x004E2490
+  // RECOVERY_GENERATED: v1 vbtable 0x00669410 0x00669418 ??_8AlphaNetStringStruct@@7B@ 0x00401C80
   virtual int on_insert(NetAllocationNode *payload);
   virtual void on_remove(NetAllocationNode *payload);
 
@@ -71,23 +75,7 @@ class AlphaNetStringStruct : public virtual StringAllocationBase {
   typedef NetAllocationNode Payload;
   int add(int id);
   void sort_sessions();
-  void remove_all() {
-    if (head_ != 0) {
-      for (int removed = 0; removed < entry_count_; ++removed) {
-        current_ = head_->next_;
-        Payload *payload = head_->payload_;
-        on_remove(payload);
-        delete payload;
-        // Preserve the post-callback/post-destruction member reloads.
-        head_->payload_ = 0;
-        delete head_;
-        head_ = current_;
-      }
-      head_ = 0;
-      current_position_ = 0;
-      entry_count_ = 0;
-    }
-  }
+  void remove_all();
   int seek_pos(int position);
   NetAllocationNode *next_entry();
   AlphaNetLedgerEntry *head_;     // +0x08 - the five the constructor zeroes
