@@ -1,0 +1,22 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "e29920dd5a5df96089a35b2ec4e70573fb793ac7",
+  "editable_files": [
+    "src/netdaemon.cpp"
+  ],
+  "evidence": [
+    "Source semantics/callback/order preserved; proposal .opensmacx/recovery/easy-fresh-oct26fx/nextqueue/proposals/0052e050-hang-up-common-close.cpp SHA256 61ae7ad77fdec489b2c5ab85ec4d6a43dac23cda98c237f5666cb98e7ad706df",
+    "Advisorylocalvariant only, no sourcepublication or claimgrant; cap3 candidates per unchanged context."
+  ],
+  "intent": "Bounded first-attempt ordinaryC++ source-form screen with independent replica/damagecontrols.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5431376,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "hang-up-easy-oct26fx"
+}
