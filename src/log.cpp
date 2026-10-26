@@ -228,33 +228,6 @@ void __cdecl log_say(LPCSTR str1, int num1, int num2, int num3) {
     Logging.say(str1, NULL, num1, num2, num3);
 }
 
-/*
-Purpose: Build one log line for the say-buffer: decimal the number,
-         strcat it into a fresh buffer, then the space token and the
-         caller's text, and hand the result to log_say_hex's four-argument
-         form with two zero tails.
-
-// ORIGINAL: 0x0051E6F0 sub_51e6f0 0x0051E6F0-0x0051E75A BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["pinned image 0x0051E6F0 full span", "original separator slot 0x00682820 is the existing BufferJoinSpace object; log_say_hex is source-owned in log.cpp"], "reason": "Home the original decimal/space/text concatenation and four-argument logger call without changing its call order or unsafe buffers."}
-// size      106 bytes
-// prototype
-// callers   0   call targets   3
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x006263F0 0x00645470 0x0064FC88
-Return Value: n/a
-Status: Coverage transcription - claim pending re-measurement
-*/
-extern "C" void __cdecl sub_51e6f0(const char *text, int value) {
-    char line[0x100];
-    char digits[0x50];
-    line[0] = 0;
-    _itoa(value, digits, 10);
-    strcat(line, digits);
-    strcat(line, BufferJoinSpace);
-    strcat(line, text);
-    log_say_hex(line, value, 0, 0);
-}
 
 
 
