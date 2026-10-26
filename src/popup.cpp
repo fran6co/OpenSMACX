@@ -25,6 +25,7 @@
 #include <mmsystem.h>
 #include <cstring>
 #include "popup.h"
+#include "basepop_defaults.h"
 #include "popup_fonts.h"
 #include "buffer.h"
 #include "diplopop.h"

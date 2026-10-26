@@ -19,6 +19,7 @@ ROOT = Path(__file__).resolve().parents[2]
 HEADER = ROOT / "src/scroll.h"
 SCROLL = ROOT / "src/scroll.cpp"
 POPUP = ROOT / "src/popup.cpp"
+BASEPOP_DEFAULTS = ROOT / "src/basepop_defaults.h"
 RECORD = "struct ScrollCloseStaticDefaultsData {"
 GLOBAL = "ScrollCloseStaticDefaultsData ScrollCloseStaticDefaults = {"
 BUTTON_STYLE = "struct BasePopButtonStyle {"
@@ -214,10 +215,10 @@ def test_actual_popup_button_style_default_and_byte_stores(
     compiler = shutil.which(compiler_name)
     if compiler is None:
         pytest.skip(f"{compiler_name} unavailable")
-    basepop_h = (ROOT / "src/basepop.h").read_text(encoding="utf-8")
+    basepop_defaults_h = BASEPOP_DEFAULTS.read_text(encoding="utf-8")
     basepop_cpp = (ROOT / "src/basepop.cpp").read_text(encoding="utf-8")
     popup = POPUP.read_text(encoding="utf-8")
-    record = _button_style_record(basepop_h)
+    record = _button_style_record(basepop_defaults_h)
     definition = _button_style_definition(basepop_cpp)
     producer = _button_style_producer_statements(popup)
 

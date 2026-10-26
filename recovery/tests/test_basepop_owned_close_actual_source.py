@@ -107,6 +107,7 @@ BASEPOP_MEMBERS = (
 
 def production_parts():
     basepop_h = (ROOT / "src/basepop.h").read_text(encoding="utf-8")
+    basepop_defaults_h = (ROOT / "src/basepop_defaults.h").read_text(encoding="utf-8")
     basepop_cpp = (ROOT / "src/basepop.cpp").read_text(encoding="utf-8")
     heap_h = (ROOT / "src/heap.h").read_text(encoding="utf-8")
     heap_cpp = (ROOT / "src/heap.cpp").read_text(encoding="utf-8")
@@ -128,7 +129,7 @@ def production_parts():
     text_block_match = re.search(r"(?ms)^struct\s+BasePopTextBlock\s*\{.*?^};", basepop_h)
     assert text_block_match
     button_style_match = re.search(
-        r"(?ms)^struct\s+BasePopButtonStyle\s*\{.*?^};", basepop_h
+        r"(?ms)^struct\s+BasePopButtonStyle\s*\{.*?^};", basepop_defaults_h
     )
     assert button_style_match
 
@@ -671,10 +672,11 @@ def test_actual_body_declarations_order_and_lifetime_contract():
 
 
 def test_typed_default_constructor_copy_order_and_slot_identity():
+    defaults_header = (ROOT / "src/basepop_defaults.h").read_text(encoding="utf-8")
     header = (ROOT / "src/basepop.h").read_text(encoding="utf-8")
     source = (ROOT / "src/basepop.cpp").read_text(encoding="utf-8")
     constructor = extract_body(source, "BasePop::BasePop()")
-    assert "extern BasePopButtonStyle BasePopButtonDefaults;" in header
+    assert "extern BasePopButtonStyle BasePopButtonDefaults;" in defaults_header
     assert "BasePopButtonStyle BasePopButtonDefaults =" in source
     assert "Sprite *BasePopDefaultField2148[2];" in source
     assert "extern Sprite *BasePopDefaultField2148[2];" in header

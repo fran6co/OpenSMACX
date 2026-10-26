@@ -1,0 +1,20 @@
+{
+  "event_id": "b096d3ae1d08b51dd5e2457e776303c98e1ca5fbf37179a3fa7ce7cf6440ad1c",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/basepop_defaults.h"
+    ],
+    "evidence": [
+      "Full197TU application candidate shows12unrelated owners change register scheduling after newpublictype declaration inbasepop.h; local/strict exact counts unchanged. The typed defaults are used onlybybasepop.cpp andpopup.cpp, so keep their implementation-only interface in a private shared header rather than expose it through public class header.",
+      "Keep exactrow16bytes, originalobjectidentity, allfunctionbindings, allsourcebodies. VC6globalaggregateallocationadds4paddingbytes; preserve actualobservation as restorationobligation, noforcedpacking or fabricatednativepass."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "d86635ff61008ed4c768070ce62b6d37ed3581d2530ba2efb8f6fe8d5cf79583",
+  "request_id": "private-default-style-interface",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:popup-style-defaults-oct26fi"
+}

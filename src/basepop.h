@@ -777,26 +777,6 @@ extern Font *BasePopDefaultButtonFonts[3];  // 0x009B8DA8
 extern Sprite *BasePopDefaultBlock31B8[27];
 extern uint32_t BasePopDefaultField21C0[2];
 extern uint32_t BasePopDefaultField3104[3];
-struct BasePopButtonStyle {
-  uint8_t button_color;
-  uint8_t unresolved_31A1_[3];
-  uint32_t bevel_upper;
-  uint32_t bevel_lower;
-  uint32_t bevel_thickness;
-};
-static_assert(sizeof(BasePopButtonStyle) == 0x10,
-              "BasePop button-style defaults size");
-static_assert(offsetof(BasePopButtonStyle, button_color) == 0x00,
-              "BasePop button color offset");
-static_assert(offsetof(BasePopButtonStyle, unresolved_31A1_) == 0x01,
-              "BasePop unresolved bytes offset");
-static_assert(offsetof(BasePopButtonStyle, bevel_upper) == 0x04,
-              "BasePop upper bevel offset");
-static_assert(offsetof(BasePopButtonStyle, bevel_lower) == 0x08,
-              "BasePop lower bevel offset");
-static_assert(offsetof(BasePopButtonStyle, bevel_thickness) == 0x0C,
-              "BasePop bevel thickness offset");
-extern BasePopButtonStyle BasePopButtonDefaults;
 extern uint32_t BasePopDefaultField21B0[4];
 extern uint32_t BasePopDefaultField31B0[2];
 extern Sprite *BasePopDefaultField2148[2];

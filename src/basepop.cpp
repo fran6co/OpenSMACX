@@ -21,6 +21,7 @@
 // kind      game
 #include "stdafx.h"
 #include "basepop.h"
+#include "basepop_defaults.h"
 #include "dialogs.h"
 #include "general.h"  // mem_get in init_class
 #include "filewin.h"
