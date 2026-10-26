@@ -852,7 +852,7 @@ Status: Complete
 // the companion spans are data belonging to this dispatch.
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x00613180 0x006131F8 0x00613210 0x00613191
 // RECOVERY_ASSOCIATED: v1 switch_selector 0x00613180 0x00613210 0x00613220 0x0061318B
-// ORIGINAL: 0x00613180 ?pass_dialog_focus@Dialogs@@QAEXXZ 0x00613180-0x006131F5
+// ORIGINAL: 0x00613180 ?pass_dialog_focus@Dialogs@@QAEXXZ 0x00613180-0x006131F5 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"reason":"Recover the complete body in its genuine C++ owner, with real embedded members, shared virtual bases, lifecycle and parent operations. Compiler-generated overrides/adjustors replace executable-address or vbtable stand-ins; no current matching claim is granted.","evidence":["git:de91fffe:src/recovered/units/00613180.cpp","image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","recovery/tasks/ui-eight-owner-coverage.json","Original entry 0x00613180; physical VC6 COFF emitted symbol ?pass_dialog_focus@Dialogs@@UAEXXZ."]}
 // symbol    ?pass_dialog_focus@Dialogs@@UAEXXZ
 void Dialogs::pass_dialog_focus() {
