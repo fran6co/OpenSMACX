@@ -1225,12 +1225,12 @@ Purpose: Keep the session alive and reap the players that have gone quiet:
 // flags     sp_ready;purged_ok
 // calls     0x0062F8A0 0x00632350
 // indirect  0x006320FA 0x00632138 0x006321A1 0x006321BF 0x006321F8 0x0063221A 0x00632244 0x0063226E
-// LEVER: the keep-alive half is a chain of four guard-and-return steps, and
-//        the reap half is one `if (voice_flags_D8_ & 0x40000)` whose three
-//        staleness arms each end in `*NetReapBusy = 0` - the shared clear
-//        block at 0x632280 is the outer if's own fall-through, which is why
-//        four different returns land on it while the sixteen-slot loop's tail
-//        writes its own copy inline.
+// LEVER: preserve the original busy-flag effects: neither-host scan exits
+//        at 0x632242/0x632254 jump directly to 0x63228A, bypassing the
+//        shared clear at 0x632280. A zero or fresh stamp therefore leaves
+//        NetReapBusy set on these two returns. Other cleanup paths remain
+//        separate; do not extend their clear to these original early exits.
+//        Keep this asymmetry when spelling the reap control flow.
 // Historical spelling below crosses NetPlayer subobjects; the row-owner
 // correction supersedes it, but its compiler observations remain obligations.
 // LEVER: branch 3 walks `stamps[checked * 0x16]` from `&players_->stamp_10_`,
