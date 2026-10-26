@@ -1,0 +1,24 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "b7830438a529b74d229a80589dcc6c36ae8afb95",
+  "editable_files": [
+    "src/map.cpp",
+    "recovery/tests/test_encrypt_read_actual_source.py"
+  ],
+  "evidence": [
+    "Fresh qualified native root baseline b7830438a529b74d229a80589dcc6c36ae8afb95 and pinned original 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf. Coordinator alone publishes source/Git; tests may edit only explicit authorized paths. No claim demotion, baseline reset, safety fix or copied acceptance report.",
+    "Independent review .opensmacx/recovery/easy-medium-followup-oct26ef/next-candidate-review.json supports InfoWin and original encrypted-read quirks, rejects busy-flag cleanup as a bug fix. Preserve original quirks, all identities/spans, claims and useful discoveries.",
+    "One candidate per function for this epoch; native unchanged-owner control, full-owner scores and outside-selected preservation precede combined build/link. Build continuity does not prove full linked selection, structure/runtime or game acceptance."
+  ],
+  "intent": "Restore the pinned original-total test for paired decode output, including the padded final-byte write for odd totals greater than one. Preserve original allocation/read/failure/free behavior; replace unnecessary void-pointer reinterpret casts with valid static casts.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5924784,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "encrypt-tail-oct26eh"
+}

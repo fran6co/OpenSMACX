@@ -1,0 +1,20 @@
+{
+  "event_id": "9dc200fe2b5772dbed917d55de616c1257db94cc48b8b5f49fec4cefc54c29ac",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_net_polling_player_id_oct11.py"
+    ],
+    "evidence": [
+      "The completed Oct11 whole-file migration assertion fails on unchanged masterb7830438 before this comment correction: its reverse GUID-copy patch no longer matches evolved create_session source. Baseline and candidate failure logs are retained in faithful-owner-batch-oct26eh. It does not report a missing current identity, claim or polling behavior.",
+      "Retire only the obsolete live whole-file historical snapshot test and dead imports/BASE. Retain all pinned polling-ID/timeout instruction witnesses, actual-source/drop/error-path controls and mutants. Preserve migration/restore helpers still imported by other historical modules, original task/base in Git and all native source/mapping/claim gates. No skip/xfail, baseline reset or behavior/gate relaxation."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "coordinator-retire-completed-net-snapshot-oct26ek",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:net-poll-note-oct26eh"
+}

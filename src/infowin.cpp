@@ -739,7 +739,9 @@ void InfoWin::timer_proc(int a1) {
         MainInterfaceGlobal.get_mouse_pos(&mouse_x, &mouse_y);
         if (in_box(mouse_x, mouse_y, &bounds_) != 0 ||
             field_A8_ != 0 || field_94_ != 0) {
-            visible_characters_[pane] = length + 0x28;
+            const int current_pane = active_pane_;
+            visible_characters_[current_pane] =
+                text_lengths_[current_pane] + 0x28;
             field_94_ = field_94_ == 0 ? 1 : 0;
             draw_text(-1);
             return;
