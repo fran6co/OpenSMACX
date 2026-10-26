@@ -1,0 +1,36 @@
+{
+  "event_id": "288438837bd7b1db8da0938be3321fa6ccf326aca8dd615fabb99c1f298facea",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_prodpicker_behavior.py"
+    ],
+    "evidence": [
+      "The sole ordinary indexed-read proposal measures helper493AF0 local29/29 with no exactloss. Initial native outsideFAIL retains a removed/added calculate section, reference changes in exec/on_right_click and debugline metadata. Coordinator expands ownership review to the affected inlined calculate body and both callers, preserving original baselines and every claim; independent full relocation/instruction review is required, not a waiver.",
+      "Authorize direct category controls and threshold/bit damage mutants in existing actual-source ProdPicker harness, using valid ids63..65 only. Preserve all current calculate expectations and original invalid-index behavior; no guards or new types/layout. Publication may format the same guard as a two-line early return without adding instructions, flags or another semantic candidate. Only native record can bank the measured exact claim."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4796320,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4802304,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4800160,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "review-inline-calculate-and-callers-and-category-regressions",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:prodpicker-record-oct26ds"
+}

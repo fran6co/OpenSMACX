@@ -1,0 +1,20 @@
+{
+  "event_id": "adc62f410d2a701ece2787912310ac0ab339f3f3c9f896fbc1265a36faba1396",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/prodpicker.cpp"
+    ],
+    "evidence": [
+      "Fresh strict helper check exposes candidate128/code90 boundaryFAIL, not a verified reference pass. Pinned493B23 subtract3;493B26 cmp8;493B29 JA default proves exactly nine selector values0..8 before indirect jump493B2B indexing DWORD table493B4C. Nine original HIGHLOW cells occupy493B4C..493B70; code ends493B4A, with8BFF gap and next independently mapped edbc_fac493B70. This is original guard/relocation/target evidence, not an extent inferred from current COFF length.",
+      "Authorize native associated_writer source binding switch_targets for existing493AF0 owner and original jump493B2B, keeping ORIGINAL90-byte body identity/claim intact. Strict associated comparator must verify all tabletargets, code/data envelope, original relocations and gap; annotation is evidence input, never a waiver. Keep original narrowFAIL and the initial fresh strictFAIL reports; rerun fresh full checks."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "288438837bd7b1db8da0938be3321fa6ccf326aca8dd615fabb99c1f298facea",
+  "request_id": "bind-independent-original-switch-table-extent",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:prodpicker-record-oct26ds"
+}

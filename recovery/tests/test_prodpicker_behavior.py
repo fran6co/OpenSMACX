@@ -382,11 +382,33 @@ int main() {
     assert(picker.prod_c_.text[1] == "EFFECT");
     assert(picker.prod_a_.flags[1] == 0x10);
     assert(!StringTable.saw_entry_address);
+
+    // Exercise the actual unit-category helper at the base/custom boundary.
+    // Negative/out-of-range IDs are not run: the native source indexes the
+    // prototype table without a bounds guard.
+    const int plans[] = {3, 7, 8, 9, 10, 11, 2, 14};
+    const int categories[] = {0, 0, 0, 2, 2, 1, 3, 3};
+    for (unsigned int i = 0; i < sizeof(plans) / sizeof(plans[0]); ++i) {
+        VehPrototypes[63].plan = plans[i];
+        VehPrototypes[63].flags = 0;
+        assert(picker.edbc_unit(63) == categories[i]);
+        VehPrototypes[64].plan = plans[i];
+        VehPrototypes[64].flags = 4;
+        assert(picker.edbc_unit(64) == categories[i]);
+    }
+    VehPrototypes[64].flags = 0x20; // bit 4 clear: custom prototype shortcut
+    VehPrototypes[64].plan = 3;
+    assert(picker.edbc_unit(64) == 1);
+    VehPrototypes[64].plan = 9;
+    assert(picker.edbc_unit(64) == 1);
+    VehPrototypes[65].flags = 0;
+    VehPrototypes[65].plan = 3;
+    assert(picker.edbc_unit(65) == 1);
 }
 '''
 
 
-def calculate_source(*, broken_label=False):
+def calculate_source(*, broken_label=False, unit_damage=None):
     source = UNIT.read_text()
     body = extract_function(source, "void ProdPicker::calculate()")
     # Keep the complete production list-building prefix but stop before its
@@ -402,14 +424,18 @@ def calculate_source(*, broken_label=False):
         body = body.replace(correct,
                             "StringTable.get(reinterpret_cast<intptr_t>(Labels.strings_ptr + 0xC4))",
                             1)
-    categories = "\n".join(
-        extract_function(source, signature).replace("reinterpret_cast<int>(", "reinterpret_cast<intptr_t>(")
-        for signature in (
-            "int ProdPicker::edbc_fac(int facility_id)",
-            "int ProdPicker::edbc_unit(int prototype_id)",
-        )
-    )
-    return (CALCULATE_FIXTURE.replace("UNIT_CATEGORY_BODIES", categories)
+    categories = []
+    for signature in (
+        "int ProdPicker::edbc_fac(int facility_id)",
+        "int ProdPicker::edbc_unit(int prototype_id)",
+    ):
+        category = extract_function(source, signature)
+        if signature == "int ProdPicker::edbc_unit(int prototype_id)" and unit_damage:
+            old, new = unit_damage
+            assert category.count(old) == 1
+            category = category.replace(old, new, 1)
+        categories.append(category.replace("reinterpret_cast<int>(", "reinterpret_cast<intptr_t>("))
+    return (CALCULATE_FIXTURE.replace("UNIT_CATEGORY_BODIES", "\n".join(categories))
             .replace("CALCULATE_BODY", body))
 
 
@@ -434,6 +460,30 @@ def test_calculate_damage_control_catches_label_table_pointer_as_entry_id(tmp_pa
     source = tmp_path / "prodpicker-calculate-damaged.cpp"
     executable = tmp_path / "prodpicker-calculate-damaged"
     source.write_text(calculate_source(broken_label=True))
+    subprocess.run([compiler, "-std=c++17", "-Wall", "-Wextra", "-Werror",
+                    str(source), "-o", str(executable)], check=True,
+                   capture_output=True, text=True)
+    result = subprocess.run([str(executable)], capture_output=True, text=True)
+    assert result.returncode != 0
+
+
+@pytest.mark.parametrize(
+    "old,new",
+    [
+        ("prototype_id >= 0x40", "prototype_id > 0x40"),
+        ("VehPrototypes[prototype_id].flags & 4",
+         "VehPrototypes[prototype_id].flags & 8"),
+    ],
+    ids=["custom-id-threshold", "prototype-flag-bit-4"],
+)
+def test_unit_category_damage_controls_preserve_custom_threshold_and_flag_bit(
+        tmp_path, old, new):
+    compiler = shutil.which("g++")
+    if not compiler:
+        pytest.skip("host g++ compiler unavailable")
+    source = tmp_path / "prodpicker-category-damaged.cpp"
+    executable = tmp_path / "prodpicker-category-damaged"
+    source.write_text(calculate_source(unit_damage=(old, new)))
     subprocess.run([compiler, "-std=c++17", "-Wall", "-Wextra", "-Werror",
                     str(source), "-o", str(executable)], check=True,
                    capture_output=True, text=True)

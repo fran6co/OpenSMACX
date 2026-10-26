@@ -1,0 +1,22 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "fd5302d64ef97cd814dae5df8fedec7782d86c33",
+  "editable_files": [
+    "src/prodpicker.cpp"
+  ],
+  "evidence": [
+    "Proposal SHA256 37588699fe73df2b48f0e999834babf4a345120e0843a0c24e5344701d79ee93; immutable source/native/pin evidence in easy-small-tail-oct26dq. Old seam declaration context is proven; this selected function has zero compiler candidates in it. Current qualified Game/General changes do not edit this TU or its headers; baseline advances only to fresh current master receipt, no task baseline or retry history is reset.",
+    "One candidate only; unchanged physical production replica and all-owner exact-loss/preservation controls required. Only coordinator may publish a reviewed winner; no claim typed by hand and no native/full-game acceptance implied."
+  ],
+  "intent": "One bounded ordinary C++ source-visibility/reference spelling probe from the alphabetic easy pass. Preserve existing types, valid/unsafe branches, callbacks, source mappings and historical restoration obligations.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4799216,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "prodpicker-record-oct26ds"
+}
