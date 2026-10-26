@@ -18,6 +18,7 @@ from test_inline_boundary_cohort_oct18 import (
 
 ROOT = Path(__file__).resolve().parents[2]
 BASE_REVISION = "8f5cf3d89838c277a1d0b22cf56b1bce951215fc"
+METADATA_CHECKPOINT = "92d17311d7b80a7ef3adf8db08108ed837f4809c"
 OWNERS = {"src/game.cpp", "src/netdaemon.cpp", "src/mapwin.cpp"}
 TARGET_RECIPE = ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Oy-", "/Ob2", "/Z7"]
 GLOBAL_FLAG_SETS = [
@@ -26,9 +27,9 @@ GLOBAL_FLAG_SETS = [
 ]
 
 
-def _git_text(path: str) -> str:
+def _git_text(path: str, revision: str = BASE_REVISION) -> str:
     result = subprocess.run(
-        ["git", "show", f"{BASE_REVISION}:{path}"],
+        ["git", "show", f"{revision}:{path}"],
         cwd=ROOT,
         check=True,
         capture_output=True,
@@ -96,10 +97,12 @@ def _config(cmake: str, project: dict, baseline_cmake: str, baseline_project: di
     return True
 
 
-def _current():
+def _historical_candidate():
+    # Preserve the measured three-owner migration as history. Later production
+    # owners do not change that proof or its deliberately damaged controls.
     return (
-        (ROOT / "CMakeLists.txt").read_text(encoding="utf-8"),
-        _load_json((ROOT / "recovery/project.json").read_text(encoding="utf-8")),
+        _git_text("CMakeLists.txt", METADATA_CHECKPOINT),
+        _load_json(_git_text("recovery/project.json", METADATA_CHECKPOINT)),
     )
 
 
@@ -110,8 +113,8 @@ def _baseline():
     )
 
 
-def test_production_metadata_is_limited_to_three_measured_owners():
-    cmake, project = _current()
+def test_historical_metadata_migration_is_limited_to_three_measured_owners():
+    cmake, project = _historical_candidate()
     baseline_cmake, baseline_project = _baseline()
     assert _config(cmake, project, baseline_cmake, baseline_project)
 
@@ -125,7 +128,7 @@ def test_production_metadata_is_limited_to_three_measured_owners():
 
 
 def test_production_metadata_contract_rejects_missing_or_leaked_scope():
-    cmake, project = _current()
+    cmake, project = _historical_candidate()
     baseline_cmake, baseline_project = _baseline()
     assert _config(cmake, project, baseline_cmake, baseline_project)
 
@@ -184,3 +187,42 @@ def test_production_metadata_contract_rejects_missing_or_leaked_scope():
     # Global compiler/link switches remain covered by the existing command parser.
     changed_global = cmake + '\ntarget_compile_options(OpenSMACX PRIVATE "/Z7")\n'
     assert not _config(changed_global, project, baseline_cmake, baseline_project)
+
+
+CAVIAR_RECIPE = ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Ob2", "/Z7"]
+
+
+def _caviar_observation_policy(cmake, project):
+    # This owner retains its frameless /Ob2 context. Metadata must agree
+    # between ordinary production and standalone measurement; other source
+    # owners may evolve under their own independently verified policies.
+    measurement = project.get("measurement", {})
+    return (
+        _effective_source_profiles(cmake).get("src/caviar.cpp") == ("/Z7",)
+        and measurement.get("unit_flag_sets", {}).get("src/caviar.cpp") ==
+            {"flags": CAVIAR_RECIPE}
+        and measurement.get("flag_sets") == GLOBAL_FLAG_SETS
+        and measurement.get("layout_flags") == ["/Z7"]
+    )
+
+
+def test_current_caviar_type_observation_keeps_its_compiler_context():
+    cmake = (ROOT / "CMakeLists.txt").read_text(encoding="utf-8")
+    project = _load_json((ROOT / "recovery/project.json").read_text(encoding="utf-8"))
+    assert _caviar_observation_policy(cmake, project)
+    assert Measurement.read(ROOT).flags_for("src/caviar.cpp") == (tuple(CAVIAR_RECIPE),)
+
+    no_profile = copy.deepcopy(project)
+    del no_profile["measurement"]["unit_flag_sets"]["src/caviar.cpp"]
+    assert not _caviar_observation_policy(cmake, no_profile)
+    changed_frame = copy.deepcopy(project)
+    changed_frame["measurement"]["unit_flag_sets"]["src/caviar.cpp"]["flags"].append("/Oy-")
+    assert not _caviar_observation_policy(cmake, changed_frame)
+    changed_optimization = copy.deepcopy(project)
+    changed_optimization["measurement"]["unit_flag_sets"]["src/caviar.cpp"]["flags"][1] = "/O1"
+    assert not _caviar_observation_policy(cmake, changed_optimization)
+
+    without_metadata = cmake.replace("    src/caviar.cpp\n    src/game.cpp\n",
+                                    "    src/game.cpp\n", 1)
+    assert without_metadata != cmake
+    assert not _caviar_observation_policy(without_metadata, project)

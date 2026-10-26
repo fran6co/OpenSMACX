@@ -1,0 +1,22 @@
+{
+  "event_id": "78639c68542c99c5bc957b07336411cf66872a320e6e1e1bd6a4735d2d270ca8",
+  "payload": {
+    "affects": [
+      "entity-0df83e53e514174bb0d037c3083524fc63491c557f385b614edb7e5b8f83574d",
+      "entity-c56fa21a57e77e7e2b2177af81cc7fcbc04a00a433354803c8e49f397ac1d0ba"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "console-right-left-cleanup-owner-correction",
+    "evidence": [
+      "Right: EBP-5398 +Popup.scroll3230 +Scroll.right15F8 =EBP-B70; producer4DFEB8 and FuncInfo state14→12 select65C001.",
+      "Left: EBP-5398 +Popup.scroll3230 +Scroll.leftAAC =EBP-16BC; producer4DFEF1 and state15→11 select65C009. These are saved-pointer slots, not layout changes or generated-code equality. Clarify both adjacent in-scope rationales while preserving FILE state and spans."
+    ],
+    "hypothesis": "Pinned state14 action65C001 owns the right Scroll FlatButton, while state15 action65C009 owns the left; the existing65C001 source evidence incorrectly borrows the left producer.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "console-right-left-cleanup-owner-correction",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:caviar-console-evidence-oct26bq"
+}

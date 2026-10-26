@@ -87,7 +87,7 @@ def test_build_lists_application_caviar_object_owner_before_engine():
     assert cmake.index("    src/caviar_objects.cpp") < cmake.index(
         "    src/caviar.cpp")
     assert "    src/caviar_data.cpp\n" in cmake
-    assert '"src/caviar.cpp"' not in project
+    # The renderer's observation recipe is checked by the metadata-policy tests.
     assert '"src/caviar_objects.cpp": {' in project
     assert (cmake.index("    src/caviar_objects.cpp")
             < cmake.index("    src/texture_objects.cpp")
