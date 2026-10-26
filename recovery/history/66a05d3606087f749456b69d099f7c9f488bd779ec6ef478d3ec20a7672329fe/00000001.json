@@ -1,0 +1,20 @@
+{
+  "event_id": "22f9ee810e6da12cfc4f6eba2bd61c90e6d410847a36a0fea351a17aa3c504bd",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/WORKFLOW.md"
+    ],
+    "evidence": [
+      "Coordinator authorizes publication of the sole validated AlphaMovie::exec body proposal: width snapshot before height snapshot, preserving all values, original paths, signatures, complete identity/spans and historical obligations. Private real-production probe measures116/116 with outside-scopePASS and no exactlosses. Only fresh native record may grant the new claim. Full build/link and independentreview required before manual integration.",
+      "Two rejected group-c/group-g proposals demonstrate a specific review hazard: COFFsymbol+addend+displacement can change cursor anchors without changing memory writes; helper output-local stack homes can change together with later loads. Add short active workflow guidance requiring symbolic normalization before alleged type/field/value fixes; all rejected proposals remain ignored evidence, no source behavior changed."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "authorize-measured-source-and-value-flow-guidance",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:near-header-alphamovie-oct26de"
+}

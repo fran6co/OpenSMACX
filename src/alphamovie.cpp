@@ -133,8 +133,8 @@ int AlphaMovie::exec(char *movie_name) {
         return 0x10;
     }
 
-    const int screen_height = WinScreenHeight;
     const int screen_width = WinScreenWidth;
+    const int screen_height = WinScreenHeight;
     init(0, 0, screen_width, screen_height, 0, 0x00404000,
          &MainInterfaceGlobal, 0, 0);
     fill(0);

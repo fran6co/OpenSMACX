@@ -1,0 +1,19 @@
+{
+  "event_id": "0fd8c10dff6cc24e99ff1776d07c86c9c15d2cea94243d1a2f75b8d0477465be",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_alphamovie_exec_actual_source.py"
+    ],
+    "evidence": [
+      "Pinned first two global snapshots and the qualified COFF relocation targets independently establish widthbeforeheight. Existing host probe incorrectly expects heightbeforewidth based on the superseded source. Correct its two complete playback traces to the pinned order; keep all initialization values, readcounts, retries, paths, callback/order, palette, handle reload, null/error and cleanup assertions unchanged. Verify unchanged parent fails corrected order while new actual source passes."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "22f9ee810e6da12cfc4f6eba2bd61c90e6d410847a36a0fea351a17aa3c504bd",
+  "request_id": "restore-original-dimension-read-oracle",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:near-header-alphamovie-oct26de"
+}

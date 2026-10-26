@@ -145,6 +145,15 @@ structural discoveries, and advance rather than repeatedly polishing a plateau.
 Generated proposals, measurements and dependency fingerprints belong in ignored
 run artifacts, not source comments or a second versioned recovery ledger.
 
+Before interpreting an operand difference as a type, field or value defect,
+normalize the COFF symbol binding, relocation addend and signed instruction
+displacement against the real object/member offset. Different cursor anchors
+can express the same stores. For stack locals, trace each helper output into
+its subsequent uses: the compiler can change physical homes together with the
+corresponding loads. Establish the effective value flow before changing output
+arguments, stored constants or class layouts. Keep the complete original error
+and alias behavior while testing ordinary C++ spelling or lifetime hypotheses.
+
 Requeue an inspected function only when new evidence changes its affected body,
 caller/callee, type, member/layout, included declaration or compiler context.
 Recompute that dependency closure conservatively; uncertain header/type impacts
