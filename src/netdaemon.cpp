@@ -807,12 +807,9 @@ void NetDaemon::close_channel() {
 // dwords, 0x1B7C is lock_state_[1].dword_[5] and the four dwords at 0x1B80
 // are lock_state_[1].dword_[6..9] - one per faction.
 void NetDaemon::hang_up() {
-    if (primary_state_.flags_ != 0) {
-        return;
-    }
-    if (IsMultiplayerNet == 0) {
-        return;
-    }
+    if (primary_state_.flags_ != 0) goto L145;
+    if (IsMultiplayerNet == 0) goto L145;
+
     primary_state_.flags_ = 1;
     if (GameDataStateStorage.fields_.net_turn_flags_ & 0x10) {
         if (ConsoleControlTurnActive == 0) {
