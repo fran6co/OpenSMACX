@@ -1,0 +1,24 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "d4c88183d2bc471f43fc84b4baef1380cf9cb0eb",
+  "editable_files": [
+    "src/netdaemon.cpp"
+  ],
+  "evidence": [
+    "Actual previous compile receipt includes original_seam.h; current physical receipt excludes its removed147-line unused OriginalObject/template declarations. This establishes a changed included-declaration context for a bounded new easy pass, not a reset of historical claims or task baselines.",
+    "Native pinned original and fresh qualified production COFF contexts are retained in .opensmacx/recovery/easy-header-context-oct26dd/group-*.json. Read-only eight-agent49-function review generated fixed proposals; each candidate below independently overlays only one existing body on the frozen baseline.",
+    "Maximum3 candidate compiler attempts/function in this new context; current deck has one per selected function. Original quirks/bugs, identities/spans/claims, all other bodies and compiler flags are preserved. No forced emission, raw addresses, assembly, or scope changes. Scope expansion and actual publication require separate coordinator decisions.",
+    "Proposal NetDaemon::end_of_event original0x005328C0 SHA256899143478f10616a0733ab01a9b9e2f4ae47d83f1658da22ebfedd859527d544: Equivalent ordinary C++ order candidate only: capture the unchanged by-value faction argument immediately before the one existing ConsoleGlobal.faction_id_ snapshot. The pin loads its argument before reading the global; the current compiler listing loads the global first. This preserves the single global read, primary-state gate, channel accesses, logging/message_data order and return value while offering the compiler the pin's argument-before-global source order. It does not claim a semantic defect or byte gain."
+  ],
+  "intent": "Private bounded ordinary-C++ spelling/lifetime probes in a proven new header-declaration context; no source/mapping/claim publication, retain all evidence and original behavior.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5449920,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "near-header-netdaemon-oct26de"
+}
