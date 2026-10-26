@@ -70,8 +70,8 @@ def test_save_game_actual_product_body_and_mutant_controls(tmp_path):
                         False)
 
         missing_sentinel = body.replace(
-            "state[2].trailing_words_[6] = 0xFF;",
-            "state[2].trailing_words_[6] = 0;", 1)
+            "network.channels_[1].trailing_words_[6] = 0xFF;",
+            "network.channels_[1].trailing_words_[6] = 0;", 1)
         assert missing_sentinel != body
         compile_and_run(
             compiler, fixture, missing_sentinel, tmp_path,

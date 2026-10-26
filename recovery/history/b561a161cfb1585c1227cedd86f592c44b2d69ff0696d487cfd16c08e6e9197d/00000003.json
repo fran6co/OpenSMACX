@@ -1,0 +1,19 @@
+{
+  "event_id": "0aeb8cc6421816c1a0c647b455b040e48a4f4eda03ae1fa8dc629e7bb486762f",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/fixtures/game_save_load/save_game_host_fixture.cpp"
+    ],
+    "evidence": [
+      "Initial fixture rename revealed stale flattened lock_state_[24] model, not a product behavior failure. Coordinator authorizes this existing fixture file to model the canonical PrimaryLockStateTail and two LockStateEntry channels from src/netdaemon.h, preserving their exact fields and test-only service APIs. Initialize those actual model fields to the same sentinel pattern, migrate sentinel witnesses from old flattened slot2 to channels_[1] and keep all error/branch/mutant assertions. No product changes or native ABI/layout claims follow from the host fixture."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "1434b6c99350681e65555da45f0aea5abfa3d9883d3325812b8d80fd3a6e2d31",
+  "request_id": "align-save-fixture-with-typed-primary-and-channel-owners",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:game-shutdown-owner-oct26dn"
+}

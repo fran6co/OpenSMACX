@@ -1,0 +1,19 @@
+{
+  "event_id": "ddf30c74e84759fd5cd6f970773b73e6a4fcae81bad9a24a66f21ba7c13bc448",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_save_game_actual_source.py"
+    ],
+    "evidence": [
+      "Authorize the actual-source test to target the current canonical network.channels_[1].trailing_words_[6] sentinel store instead of removed flat state[2], preserving the same 0xFF-to-zero damage and all expectations. Additional stale extraction anchors within this test may be aligned to unchanged current semantics; do not delete controls, weaken assertions, treat non-running mutants as failures, or change product behavior. Complete relevant save-game controls after the fixture migration."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "0aeb8cc6421816c1a0c647b455b040e48a4f4eda03ae1fa8dc629e7bb486762f",
+  "request_id": "update-save-control-mutation-anchor-for-current-channel-owner",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:game-shutdown-owner-oct26dn"
+}

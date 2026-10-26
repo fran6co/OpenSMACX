@@ -1,0 +1,29 @@
+{
+  "event_id": "1d136bc47234b295cf42cd88a4f43e9f7c6f7d1b99cb79cf7169fc7b7d80ca1a",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Initial native compiler residual FAIL is retained, not waived: two code sections save_game/end_of_game change after the source delete expressions. Coordinator expands review scope to both physical functions and historical obligations; independent review must establish complete instruction/relocation valueflow changes before integration. No permission to alter either source body, flags, baselines or claims.",
+      "The old system_close comment asserted show/non-deletion contrary to the pinned vslot0 flags1 calls and heap allocation evidence. Replace it with truthful four-line lifetime evidence; source reader must preserve original identities/spans and all historical obligations. Debug line-number shifts are distinct from changed code and never justify masking an actual behavior regression."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5392496,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5938864,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "inspect-nonlocal-compiler-scheduling-residuals",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:game-shutdown-owner-oct26dn"
+}
