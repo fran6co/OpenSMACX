@@ -1,0 +1,19 @@
+{
+  "event_id": "f190c82928c4c7408d7098230fe2cee180141e03efd7770ca94e20a389b3c16d",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_media_output_buffers_oct11.py"
+    ],
+    "evidence": [
+      "Update only three frame-source mutation anchors to the reviewed current descriptor spelling; retain the original behavior oracles and already-red historical continuity assertion."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "preserve-existing-frame-damage-controls",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:media-owner-oct26ct"
+}
