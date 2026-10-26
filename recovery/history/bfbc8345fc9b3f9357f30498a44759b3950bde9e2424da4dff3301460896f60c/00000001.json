@@ -1,0 +1,19 @@
+{
+  "event_id": "3606bf01042f4a54626a2a82aeef6a9cae5633dd7cda67902f8abbcc0cbb7579",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_netwin_editor_auth_actual_source_oct12.py"
+    ],
+    "evidence": [
+      "Coordinator authorizes direct checksum literal-vector controls in the existing actual-source coupled NetWin authentication harness. Reuse current test extraction rather than create a duplicate standalone scaffold. Do not add artificial ordinary-read sequencing callbacks, safe-input guards or claim host tests establish native/game behavior."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "reuse-coupled-auth-regression-harness",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:general-checksum-forward-oct26dl"
+}
