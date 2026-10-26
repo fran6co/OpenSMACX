@@ -140,7 +140,7 @@ int main() {
 
 @pytest.mark.parametrize("compiler", COMPILERS)
 def test_sub51e6f0_keeps_decimal_space_text_call_order_and_logger_tails(tmp_path, compiler):
-    path = owner_path("log.cpp")
+    path = owner_path("game.cpp")
     body = source_body(path, "sub_51e6f0")
     harness = r'''
 #include <cstdio>
@@ -226,7 +226,7 @@ def test_owner_transfer_preserves_original_mappings_and_lessons_from_history():
               "ruled_out", "unrecoverable", "deferred", "kind")
     destinations = {
         0x51E000: ("game.cpp", "read_tamper"),
-        0x51E6F0: ("log.cpp", "sub_51e6f0"),
+        0x51E6F0: ("game.cpp", "sub_51e6f0"),
         0x5BE530: ("technology.cpp", "tech_advance"),
     }
     old_rows = {r.address: r for r in read_text(history, "src/leaf_recoveries.cpp")
