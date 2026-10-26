@@ -1,0 +1,24 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "87396ef64ef29ef056c45cf2ea314a32578f8347",
+  "editable_files": [
+    "src/alphamenu.cpp",
+    "recovery/tests/test_alphamenu_animation_snapshot_actual_source.py"
+  ],
+  "evidence": [
+    "Original4036E0..4036FF reads/stores animation x before later clipping/guard; current source computes it inside the guard after set_clip. Independent read-only pin review corroborates this, rather than adding a redundant receiver alias.",
+    "Task baseline is the actual qualified root build87396ef64ef29ef056c45cf2ea314a32578f8347. Assignment source is currentmasterf1f78d5b4; only a separate Texture host fixture/journal changed since qualification, and the live native Build input fingerprint remains equal. Do not relabel the old qualification revision or reset the baseline.",
+    "Coordinator owns source/Git publication; worker tests only explicit file. Historical claims preserved. No full retained-link, runtime, automatic or game acceptance."
+  ],
+  "intent": "Restore AlphaMenu::show original unconditional screen-width snapshot after client_to_screen and before y/step/clip and animation guard. Preserve all callbacks, quirks, original identity and historical obligations; one bounded native candidate.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4208256,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "alphamenu-frame-oct26ea"
+}
