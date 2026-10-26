@@ -1,0 +1,20 @@
+{
+  "event_id": "ef3887e6d70ec03bf16fc320e789ece7e5ceb25758982038f921fb8f6287b77a",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_editgroup_dimensions_rewind_actual_source.py"
+    ],
+    "evidence": [
+      "Coordinator authorizes actual-source host controls and fixture adaptation for the admitted same-owner faithful source correction after terminal native probes. No binding/claim/compiler-policy changes or source publication by workers.",
+      "DesignWin: client-rectangle caller operands match pin; callee ignores coordinates, so no visible placement claim. Console terrain: shared StringTemp storage and fresh read-only name lookups. EditGroup: existing seek_pos(-1) helper preserves negative-count cursor behavior and original null paths."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "editgroup-easy-oct26et-actual-source-controls",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:editgroup-easy-oct26et"
+}

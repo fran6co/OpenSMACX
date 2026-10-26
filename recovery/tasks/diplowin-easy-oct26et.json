@@ -1,0 +1,31 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "02c6b6b0049807d61f876f23f303079172dca827",
+  "editable_files": [
+    "src/diplowin.cpp"
+  ],
+  "evidence": [
+    "Coordinator authorizes isolated exploratory ordinary-C++ body probes only, maximum3 candidates/function/unchanged context. No source or claim publication.",
+    "Source, pin, physical COFF and prior-context transition evidence retained in .opensmacx/recovery/easy-large-next-oct26es/group-*.json. No existing identity was in the prior1048 selected short/medium/large rows. Check recorded history before additional attempts.",
+    "Task baseline is the actual qualified02c6 revision. Current master9cdffa differs only by a downward audit ceiling; compiler/source/build inputs are identical. No baseline or report revision is relabelled.",
+    "Preserve original quirks, identity/spans/claims, compiler policy and all outside-task bodies. Complete candidates are tested independently, not banked. Scope expansion and publication require a separate coordinator decision.",
+    "DiploWin::draw_who 0x00442A10 proposal SHA2569c942944a1b7deb94c154a422c713330102c1840324713d7b4e8e9ba2fc0082e",
+    "DiploWin::draw_whom 0x00442DC0 proposal SHA2568ab4e7c0d2419fc42a88d69c4b5e6005a64126e6bba7a3f439c42091de01cc2a"
+  ],
+  "intent": "Bounded owner C++ source-form and faithful argument/storage probes; preserve all evidence and obligations.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4467216,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4468160,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "diplowin-easy-oct26et"
+}
