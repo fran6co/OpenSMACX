@@ -75,12 +75,12 @@ int ProdPicker::edbc_fac(int facility_id) {
 
 // The original 0x009AB892/+0x009AB898 reads are plan and flags members of
 // the 0x34-byte VehPrototypes entries, not independent address constants.
-// ORIGINAL: 0x00493AF0 ?edbc_unit@ProdPicker@@QAEHH@Z 0x00493AF0-0x00493B4A FILE
+// ORIGINAL: 0x00493AF0 ?edbc_unit@ProdPicker@@QAEHH@Z 0x00493AF0-0x00493B4A FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:9a9fb225:src/unrecovered/00493af0.cpp", "source:src/veh.h:VehPrototype"], "reason": "Recover prototype category selection through the source-owned prototype array and its named plan/flags members."}
 int ProdPicker::edbc_unit(int prototype_id) {
-    const VehPrototype &prototype = VehPrototypes[prototype_id];
-    if (prototype_id >= 0x40 && (prototype.flags & 4) == 0) return 1;
-    switch (prototype.plan) {
+    if (prototype_id >= 0x40 && (VehPrototypes[prototype_id].flags & 4) == 0)
+        return 1;
+    switch (VehPrototypes[prototype_id].plan) {
     case 3: case 7: case 8:
         return 0;
     case 9: case 10:
