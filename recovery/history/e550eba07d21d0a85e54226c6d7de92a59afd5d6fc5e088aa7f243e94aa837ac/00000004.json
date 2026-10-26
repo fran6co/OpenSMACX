@@ -1,0 +1,21 @@
+{
+  "event_id": "499e21a9f59bff784a853902d5b1c15c954e0f193996478366cb5301d9fb2c9f",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/alphanet_ledger_harness.cpp",
+      "recovery/tests/stringlist_hooks_harness.cpp"
+    ],
+    "evidence": [
+      "Leased affected run39pass4fail: outdatedtableproducerlocation, outofline NetAllocationNodeoperator delegation underlegacyprofile, duplicate handwrittenBase destructor infixtures afterliveheaderinsertion, isolatedimagepath. Fixfixtures toconsumeactualdefinition andcurrentproviders; preserve fulltablehooks/operatorcleanup/null-owner controls.",
+      "No C++ recovery reversal or measurementpolicy change; fresh402310strictpositiveanddamagedreference nativecontrols retained. Existing separateplacementcleanup sourcebehaviorcontrols remainmandatory."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "2337a5aa0edd196af10f473d1c8d28898c26b4fee4cad9170013401dcea5f77f",
+  "request_id": "fixture-native-visibility-and-placement-provider",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:base-allocation-lifetime-oct26fw"
+}

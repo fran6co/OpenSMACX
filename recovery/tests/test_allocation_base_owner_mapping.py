@@ -1,5 +1,6 @@
 """Source identity continuity; native/lifetime proof is checked separately."""
 from pathlib import Path
+import os
 
 from match_recovery.source_integrity import check_annotation_text
 from match_recovery.source.model import Mode
@@ -35,7 +36,7 @@ def test_allocation_publication_identity_belongs_to_genuine_base_destructor():
 
 def test_real_allocation_base_destructor_matches_its_table_and_heap_targets(objects):
     pin = image_pin(ROOT)
-    image = PeImage((ROOT / ".opensmacx/game/terranx_original.exe").read_bytes(), pin)
+    image = PeImage(Path(os.environ.get("OPENSMACX_IMAGE", ROOT / ".opensmacx/game/terranx_original.exe")).read_bytes(), pin)
     record = current_record_by_address(ROOT, 0x402310)
     physical_unit = record.context
     binding = FunctionBinding(Origin(pin, "pe:va", record.address),

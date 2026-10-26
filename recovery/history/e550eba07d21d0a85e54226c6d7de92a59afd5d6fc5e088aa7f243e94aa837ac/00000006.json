@@ -1,0 +1,20 @@
+{
+  "event_id": "21eaeac30ac96c25ba5e4e365684946a8a22bdc46037475bed8c488aff1eed53",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_application_link_recovery.py"
+    ],
+    "evidence": [
+      "43affected tests pass. Addedledgerhookfixture exposes pre-existing ctor location assumption frompriorAlpha migration: resolve401C80liveannotation andextractactualdefinition only; preserveitsrealconstructorbody andunchanged allocation/hook oracles.",
+      "No C++ body change; no waivedtests. NativeBase body/reference damagecontrol andclass-specificoperator/cleanup controls passedbothconfiguredprofiles."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "f4d5dc77a05f38e4cd2ed86ec5e64a70e8459e0f9a49adcfbfb706020a715034",
+  "request_id": "ledger-hook-fixture-live-constructor-provider",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:base-allocation-lifetime-oct26fw"
+}

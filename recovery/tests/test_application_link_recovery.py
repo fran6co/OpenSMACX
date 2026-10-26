@@ -23,6 +23,7 @@ from match_recovery.pe_coff import Coff
 from match_recovery.source.reader import read_file
 from match_recovery.source.model import State
 from match_recovery.processes import run_bounded
+from owner_transfer_test_support import current_record_by_address
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -467,6 +468,7 @@ def test_session_ledger_payload_fields_and_virtual_hooks(compiled):
 
 
 def test_session_ledger_hooks_copy_and_release_by_allocator_ownership(tmp_path, monkeypatch):
+    constructor_unit = current_record_by_address(ROOT, 0x401C80).path.relative_to(ROOT).as_posix()
     run_recovered_harness(tmp_path, monkeypatch, "alphanet_ledger_harness.cpp", [
         ("// LIVE_INSERT", "src/alphanet_records.cpp", 0x5D4890),
         ("// LIVE_REMOVE", "src/alphanet_records.cpp", 0x5D4990)], declarations=[
@@ -475,8 +477,8 @@ def test_session_ledger_hooks_copy_and_release_by_allocator_ownership(tmp_path, 
         ("// LIVE_PAYLOAD", "src/net_class.h", "class NetAllocationNode :", "static_assert(sizeof(NetAllocationNode)"),
         ("// LIVE_LEDGER_BASE", "src/alphanet.h", "class AlphaNetStringStruct;\nstruct AlphaNetLedgerEntry :", "static_assert(sizeof(AlphaNetStringStruct)"),
         ("// LIVE_DERIVED_DECLARATION", "src/alphanet.h", "class AlphaNetLedger :", "static_assert(sizeof(AlphaNetLedger)"),
-        ("// LIVE_LEDGER_CONSTRUCTOR", "src/alphanet_records.cpp", "AlphaNetStringStruct::AlphaNetStringStruct() {",
-         "// The base table's defaults are shared leaves"),
+        ("// LIVE_LEDGER_CONSTRUCTOR", constructor_unit, "AlphaNetStringStruct::AlphaNetStringStruct() {",
+         "__DEFINITION__"),
         ("// LIVE_NODE_CLEANUP", "src/net_class.cpp", "void cleanup_failed_net_construction(void *memory) {",
          "// ORIGINAL: 0x0062F8A0"),
         ("// LIVE_NODE_DELETE", "src/net_class.cpp", "void NetAllocationNode::operator delete(void *memory) {",
