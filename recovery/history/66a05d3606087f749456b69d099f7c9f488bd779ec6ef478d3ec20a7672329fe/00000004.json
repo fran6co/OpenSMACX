@@ -1,0 +1,20 @@
+{
+  "event_id": "88bc7fbce70fd7ae5c94c2ab500cd57e22795dc04947154f0e9e7b801b11d1a0",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/win.cpp"
+    ],
+    "evidence": [
+      "Independent pinned PE import-directory lookup uniquely identifies USER32.dll!MoveWindow; IAT address is derived by the verifier, never taken from an operand under comparison. Pinned VC6 WINUSER.H WINAPI six32bitarguments and current two ordinary undefined COFF import symbols establish __imp__MoveWindow@24. Add one source-owned native import declaration beside Win platform support; no platform DLL implementation or version is claimed.",
+      "Actual fresh AlphaMovie strict result remains UNKNOWN for a separate DOS path literal. This import declaration closes only the independently identified imported-pointer identity. Do not guess a literal address from compared operands or promote full target/runtime/game acceptance. All previous scopes, original source baseline and claim obligations remain."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "48966fd9191d9a6fdb667f7c171afdb3db3a976d807d1c0f2870eb07dcd6ff86",
+  "request_id": "close-independent-movewindow-import-identity",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:near-header-alphamovie-oct26de"
+}

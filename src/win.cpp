@@ -12788,3 +12788,8 @@ extern "C" LRESULT __stdcall PrevWndFunc(HWND window, UINT message,
                            (HWND)window, (UINT)message, (WPARAM)wparam,
                            (LPARAM)lparam);
 }
+
+// Original DLL/export identity is independently read from the pinned import
+// directory; the verifier derives the IAT slot. This does not select or prove
+// a particular platform DLL implementation/version.
+// RECOVERY_IMPORT: v1 __imp__MoveWindow@24 USER32.dll name:MoveWindow

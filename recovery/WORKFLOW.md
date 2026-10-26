@@ -153,6 +153,9 @@ its subsequent uses: the compiler can change physical homes together with the
 corresponding loads. Establish the effective value flow before changing output
 arguments, stored constants or class layouts. Keep the complete original error
 and alias behavior while testing ordinary C++ spelling or lifetime hypotheses.
+Host doubles that turn plain loads into calls can add artificial sequencing.
+Retain value/count and callback-boundary checks, and use native code/reference
+observations to verify the compiler's physical scheduling.
 
 Requeue an inspected function only when new evidence changes its affected body,
 caller/callee, type, member/layout, included declaration or compiler context.
