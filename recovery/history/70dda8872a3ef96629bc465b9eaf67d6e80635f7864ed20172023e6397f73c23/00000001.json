@@ -1,0 +1,21 @@
+{
+  "event_id": "89b8b6142c2ba86078a579c7e45bf40dad348b0baa37881a34c01cb59aa4d2f3",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/pickwin_owner_host_control.cpp",
+      "recovery/tests/test_pickwin_owner_behavior.py"
+    ],
+    "evidence": [
+      "Coordinator authorizes actual implicit destructor removal and native BODY-to-FILE migration following private309/309 primary+cold measurement, independent physical review and natural global lifetime proof. Recorder alone may grant a new historical byte claim after fresh actual-source measurement. Preserve unresolved strict references, including Sprite callbacks; test extraction must follow implicit lifetime and retain member/base destruction behavior checks.",
+      "Header affects newgame.cpp; full build and matching/reference checks required before manual integration. Original baseline is unchanged."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "authorize-measured-natural-lifetime-publication",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:pickwin-implicit-lifetime-oct26cy"
+}
