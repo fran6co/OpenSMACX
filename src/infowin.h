@@ -17,7 +17,6 @@
  */
 #pragma once
 
-#include "original_seam.h"
 #include "time.h"
 #include "font.h"
 #include "pushbutton.h"

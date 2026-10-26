@@ -16,7 +16,6 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
-#include "original_seam.h"
 #include "heap.h"
 #include "graphicwin.h"
 #include "dialog.h"

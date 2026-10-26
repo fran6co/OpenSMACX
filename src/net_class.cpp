@@ -85,7 +85,6 @@
 #include <cstring>
 #include "net_class.h"
 #include "alphanet.h"
-#include "original_seam.h"
 #include "popup.h"    // pop_caption / pop_caption_value_title, drop_player's asks
 #include "stringstruct.h"
 #include "wave.h"

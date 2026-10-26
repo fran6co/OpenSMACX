@@ -17,7 +17,6 @@
  */
 #include "stdafx.h"
 #include "game.h"  // shared state-window owner
-#include "original_seam.h"
 #include "lock.h"
 
 // 0x009A64E8, the faction human/alive status dword

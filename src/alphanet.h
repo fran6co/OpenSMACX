@@ -10,7 +10,6 @@
 #pragma once
 
 #include "net_class.h"
-#include "original_seam.h"
 #include "heap.h"          // heap_ at 0x148C
 #include "stringstruct.h"  // the ledger's virtual base
 

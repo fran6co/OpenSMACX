@@ -46,7 +46,6 @@ class PickWin : public GraphicWin {
   int on_dialog_item_back_draw(GraphicWin *window, int unused, int index,
                                RECT *area) override;
   // Typed members own the native reverse-destruction sequence.
-  ~PickWin();
   void on_button_passover(int a1, int a2) override;
   // Small picker actions homed from their historical seeds. Button actions
   // dispatch through Win's virtual on_button_clicked interface.

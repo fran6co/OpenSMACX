@@ -77,7 +77,6 @@
 // symbol    _$E51
 #include "stdafx.h"
 #include <mmsystem.h>
-#include "original_seam.h"
 #include "general.h"
 #include "wave.h"
 #include "voice.h"

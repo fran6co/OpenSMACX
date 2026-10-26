@@ -20,7 +20,6 @@
 // symbol    ??_GBasePop@@UAEPAXI@Z
 // kind      game
 #include "stdafx.h"
-#include "original_seam.h"
 #include "basepop.h"
 #include "dialogs.h"
 #include "general.h"  // mem_get in init_class

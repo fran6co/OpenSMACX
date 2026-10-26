@@ -66,8 +66,9 @@ provisional layouts in genuine owner headers or increase function coverage.
 The deleting/delegation adapter collections and pending-body collection are
 retired. Their identities and remaining obligations live with the actual owners;
 retiring a collection does not qualify every body previously stored there.
-The retirement inventory also includes `original_seam.h`'s original-address
-method machinery. The transitional `temp.*` files are retired: real Buffer,
+The unused `original_seam.h` original-address method machinery is retired.
+The separate SoundX provider boundary retains only its pinned partial foreign ABI
+in `soundx_device_abi.h`; it does not expose original-executable address helpers. The transitional `temp.*` files are retired: real Buffer,
 General, Win and Game storage and Time/application declarations live with
 their existing owners; uncalled developer diagnostics are removed.
 The retired `spying_recovery.h` fixed-address view is now represented by named

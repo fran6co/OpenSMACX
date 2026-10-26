@@ -28,7 +28,6 @@
 // RECOVERY_BINDING: v1 {"evidence": ["Complete pinned exclusive span 0x60d0c0..0x60d0df; CRT slot 0x682698 selects startup and its registered cleanup. The corresponding original receiver is separately bound to one offset-zero placed Sprite, with no inferred enclosing allocation.", "Original cleanup reads its independently bound shared byte, tests/sets its own bit BEFORE direct Sprite::close5E3820. Native physical COFF identifies current object ?g_RADIOBUTTON_SPRITE_2@@3U?$RadioButtonSpriteLifetime@$01@@A, guard ?RadioButtonSpritesCleanupGuard@@3EA, startup _$E26 and cleanup _$E24. Actual Sprite destruction is solely close; explicit qualified destruction ends the placed lifetime without duplicate implicit cleanup.", "Chosen lifetime representation, not a recovered original class name. Existing runtime close order and static default-pointer cells remain distinct from guarded registered shutdown. Generated startup can be split among compiler helpers; closure semantics do not establish original startup/unwind bytes, complete cross-TU ordering, retained selection or runtime/game acceptance. Binding banks no claim."], "reason": "Bind original fini to the genuine source-owned guarded Sprite global lifetime."}
 // symbol    _$E11
 #include "stdafx.h"
-#include "original_seam.h"
 #include "radiobutton.h"
 #include "win.h"  // WinCallbackWindow
 

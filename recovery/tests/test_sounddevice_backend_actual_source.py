@@ -1,10 +1,12 @@
 """Observed Wave-In extension calls, without a fabricated provider class."""
 from pathlib import Path
 import shutil
+import re
 import subprocess
 
 import pytest
 from match_recovery.source import read_file
+from match_recovery.includes import COMMENTS_OR_STRINGS
 from match_recovery.source.model import SourceRole
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -42,12 +44,20 @@ def test_extension_records_keep_partial_external_contract_obligations():
 
 def test_external_boundary_has_only_observed_operations_not_prefix_methods():
     abi = (ROOT / "src/soundx_device_abi.h").read_text()
-    for expression in ("vtable_method<InitMethod>(device, 0x0C)",
-                       "vtable_slot<ReleaseMethod>(device, 0x10)",
-                       "vtable_method<CodecMethod>(device, 0x60)",
-                       "vtable_method<KeyMethod>(device, 0x64)"):
+    for expression in ("Detail::slot_reference<InitMethod>(device, 0x0C)",
+                       "Detail::slot_reference<ReleaseMethod>(device, 0x10)",
+                       "Detail::slot_reference<CodecMethod>(device, 0x60)",
+                       "Detail::slot_reference<KeyMethod>(device, 0x64)"):
         assert expression in abi
-    assert "virtual " not in abi and "ordinal_placeholder" not in abi
+    code = COMMENTS_OR_STRINGS.sub("", abi)
+    assert not re.search(r"\bvirtual\b", code) and "ordinal_placeholder" not in code
+    for helper, offset in (("enable_device", "0x54"), ("disable_device", "0x58"),
+                           ("is_disabled", "0x5C"), ("start_recording", "0x58"),
+                           ("stop_recording", "0x5C")):
+        body = definition(abi, ("int " if helper == "is_disabled" else "void ") + helper + "(")
+        assert "Detail::query(device, " + offset + ")" in body
+    assert "slot_reference<QueryMethod>(device, offset)(device)" in code
+    assert "ac272e244b3f1339d9ce63bc2e7acf76605c6ac2695bba3230e72ea59039a3f5" in abi
     assert "Partial external SoundX ABI" in abi
 
 

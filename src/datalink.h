@@ -24,7 +24,6 @@
 #include "caviar.h"
 #include "flic.h"
 
-#include "original_seam.h"
 #include "graphicwin.h"
 #include "subinterface.h"
 

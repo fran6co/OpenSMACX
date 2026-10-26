@@ -54,7 +54,6 @@
 // kind      game
 #include "stdafx.h"
 #include "sound.h"
-#include "original_seam.h"
 #include "listbox.h"
 #include "scroll.h"
 #include "spritebox.h"

@@ -232,7 +232,6 @@ struct PopupMember {
 
 struct PickWin : GraphicWin {
   PickWin();
-  ~PickWin();
   void init(void (__cdecl *callback)(int), int mode, int faction);
   void on_redraw();
   void on_group_clicked(int source, int unused, int mode);

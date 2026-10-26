@@ -93,7 +93,6 @@ def extract_pickwin_sources() -> tuple[str, str, str]:
         (r"^int PickWin::on_dialog_item_back_draw\s*\(", "PickWin::on_dialog_item_back_draw"),
         (r"^void PickWin::on_redraw\s*\(", "PickWin::on_redraw"),
         (r"^PickWin::PickWin\s*\(", "PickWin::PickWin"),
-        (r"^PickWin::~PickWin\s*\(", "PickWin::~PickWin"),
     )
     bodies = [extract_braced(cpp, pattern, label) for pattern, label in signatures]
     list_method = extract_braced(header,

@@ -16,7 +16,6 @@
  * with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
-#include "original_seam.h"
 #include "midi.h"
 // The guarded creation/release hooks and their guard dword - the same
 // seams the Wave loader and the Sound destructor dispatch through. The

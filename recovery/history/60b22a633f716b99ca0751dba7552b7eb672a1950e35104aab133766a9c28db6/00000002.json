@@ -1,0 +1,19 @@
+{
+  "event_id": "385a3903114bc87461eb91c0b488af498e875c3c8c66115f08d1390cbc691116",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/WORKFLOW.md"
+    ],
+    "evidence": [
+      "Retiring the unused generic header and all live dependencies requires updating the active retirement inventory. Existing seed LEVER/TRIED history remains historical evidence, not a live dependency. Coordinator-reviewed integration carries raw native residual FAILs and unchanged matches, not native automatic acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "f6e40f1ee0b9658eb9358203510fc3252fbb319ba33406774142236c76df2379",
+  "request_id": "retired-seam-workflow-status",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:source-seam-retirement-oct26cx"
+}

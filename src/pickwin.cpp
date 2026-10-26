@@ -672,14 +672,13 @@ void PickWin::on_redraw() {
 
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x0048A8E0 ??1PickWin@@QAE@XZ 0x0048A8E0-0x0048AC09;0x00657C70-0x00657E2F
+// ORIGINAL: 0x0048A8E0 ??1PickWin@@QAE@XZ 0x0048A8E0-0x0048AC09;0x00657C70-0x00657E2F FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0048a8e0.cpp"], "reason": "Recover genuine typed PickWin owner behavior and automatic subobject lifetime from pinned native flow and preserved seed; historical identity and restoration obligations retained, no exactness claim."}
 // symbol    ??1PickWin@@UAE@XZ
-PickWin::~PickWin() {
-  // Popup, all controls, ListBox, sprites, ButtonGroup and GraphicWin are
-  // real subobjects. Native destructor instructions confirm reverse order.
-  // Their exact existing owners provide each close/destroy stage.
-}
+// The implicit destructor owns reverse member/base teardown, including array
+// cleanup and exception unwinding. The real PickWinGlobal lifetime and virtual
+// deleting destructor emit this body; an explicit empty destructor additionally
+// rewrites derived vptrs before member teardown, unlike the original.
 
 
 // CRT startup/atexit establish a live

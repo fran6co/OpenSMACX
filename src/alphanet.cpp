@@ -37,7 +37,6 @@
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/004e31e0.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "Existing actual LobbyAppGuid689218 and provider selection/setup state."}
 // symbol    ?setup@AlphaNet@@QAEHH@Z
 #include "stdafx.h"
-#include "original_seam.h"
 #include "alphanet.h"
 #include "spritebox.h"
 #include "net_class.h"

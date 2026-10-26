@@ -19,7 +19,6 @@
 #include "spot.h"
 #include "stringstruct.h"
 #include "buffer.h"
-#include "original_seam.h"
 #include "graphicwin.h"
 class StringList;
 class Popup;

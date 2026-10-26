@@ -24,7 +24,6 @@
 #include "stdafx.h"
 #include "interface_fonts.h"
 #include "interface_palette.h"
-#include "original_seam.h"
 #include "infowin.h"
 #include "basewin.h"
 #include "tutwin.h"

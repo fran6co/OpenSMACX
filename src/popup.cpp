@@ -24,7 +24,6 @@
 #include <shellapi.h>
 #include <mmsystem.h>
 #include <cstring>
-#include "original_seam.h"
 #include "popup.h"
 #include "popup_fonts.h"
 #include "buffer.h"

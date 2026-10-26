@@ -27,7 +27,6 @@
 #include "spot.h"
 #include "scroll.h"
 
-#include "original_seam.h"
 #include "graphicwin.h"
 #include "maininterface.h"  // MainInterfaceGlobal and shared interface storage
 #include "subinterface.h"
@@ -663,37 +662,3 @@ class BaseWin : public GraphicWin, public SubInterface {
   // constructed global, so this is the last member and BaseWin ends here.
   Scroll scroll3_;  // 0x456EC, size == sizeof(Scroll)
 };
-
-
-// BaseWin embeds an interface subobject at 0xA14; these four are reached
-// through its vtable, so their `this` points there and is adjusted back to
-// the BaseWin before dispatching to iface_click, which is not recovered.
-// The first two carry the same names the catalogue's own prototype line gives
-// the seven forwarders that call them (xCoord/yCoord); `button` and
-// `is_double` come from the forwarders' four distinct call-site literals.
-typedef void (OriginalObject::*func_base_win_iface_click)(int xCoord, int yCoord, int button, int is_double);
-
-// draw_supported is not recovered. Its one int has no name evidence: the only
-// caller reaches it with the literal 1, and nothing else reads it.
-typedef void (OriginalObject::*func_base_win_draw_supported)(int a1);
-
-// The shared click handler these three forward to is not recovered. Unlike
-// the iface_click family, these carry no this-adjustment. xCoord/yCoord as
-// above.
-typedef void (OriginalObject::*func_base_win_click)(int xCoord, int yCoord, int button, int is_double);
-
-
-// draw_facilities and garrison_click are declared on the class because the
-// recovered on_scrolled and UNK2 reach them with a direct `call rel32`, but
-// neither body is recovered - 1788 and 3768 bytes respectively - so the DLL
-// has nothing to link the calls against. Both stand in with a forward to the
-// original image until the bodies land.
-//   ?draw_facilities@BaseWin@@QAEXH@Z    0x0040FCC0  public __thiscall void(int)
-//   ?garrison_click@BaseWin@@QAEXHHHH@Z  0x0040B140  public __thiscall
-//                                                    void(int, int, int, int)
-// draw_facilities is not recovered; its one int has no name evidence - the
-// only caller reaches it with the literal 1.
-typedef void (OriginalObject::*func_base_win_draw_facilities)(int a1);
-
-typedef void (OriginalObject::*func_base_win_garrison_click)(int vehID, int a2,
-                                                             int a3, int a4);

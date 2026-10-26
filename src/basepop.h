@@ -17,7 +17,6 @@
  */
 #pragma once
 
-#include "original_seam.h"
 #include "graphicwin.h"
 #include "dialogs.h"
 #include "checkbox.h"

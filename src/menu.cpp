@@ -34,7 +34,6 @@
 #include "stdafx.h"
 #include "sound.h"
 #include "wave.h"
-#include "original_seam.h"
 #include "menu.h"
 #include "pulldown.h"
 #include "filewin.h"

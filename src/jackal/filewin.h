@@ -18,7 +18,6 @@
 #pragma once
 // Generic Jackal file-selection owner, independent of concrete application classes.
 
-#include "original_seam.h"
 #include "flatbutton.h"
 #include "editbox.h"
 #include "listbox.h"

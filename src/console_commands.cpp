@@ -25,7 +25,6 @@
 #include "interlude.h"
 #include "text.h"
 #include "alphamovie.h"
-#include "original_seam.h"
 #include "console.h"
 #include "reportif.h"
 #include "datalink.h"

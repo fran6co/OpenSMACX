@@ -67,7 +67,6 @@
 // PlanWin constructor-installed Win branch: capture4, resize13, mouse17, update63.
 // Table start is observed in the original constructor; full extent remains unknown.
 // RECOVERY_GENERATED: v1 vtable 0x0066D2AC ? ??_7PlanWin@@6BWin@@@ 0x0048BCD0
-#include "original_seam.h"
 #include "planwin.h"
 #include "faction.h"
 #include "console.h"

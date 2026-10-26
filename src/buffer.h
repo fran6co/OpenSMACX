@@ -18,7 +18,6 @@
 #pragma once
 
 #include "jackal/color_table.h"
-#include "original_seam.h"
 #include "font.h"
 #include "spot.h"
 #include "sprite.h"

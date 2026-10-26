@@ -1,0 +1,20 @@
+{
+  "event_id": "f6e40f1ee0b9658eb9358203510fc3252fbb319ba33406774142236c76df2379",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_original_seam_owner_closure.py"
+    ],
+    "evidence": [
+      "Independent test audit found three positive presence assertions requiring already-removed legacy dispatch spellings; preserve typed owner/lifecycle controls and assert the existing real provider calls instead.",
+      "All three affected production objects already reproduce baseline signatures exactly."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "retire-obsolete-positive-seam-assertions",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:source-seam-retirement-oct26cx"
+}

@@ -50,7 +50,6 @@
 // Console constructor-installed Win branch: capture4, resize13, mouse17, update63.
 // Table start is observed in the original constructor; full extent remains unknown.
 // RECOVERY_GENERATED: v1 vtable 0x0066EC18 ? ??_7Console@@6BWin@@@ 0x0050F460
-#include "original_seam.h"
 #include "console.h"
 #include "console_commands.h"
 #include "reportif.h"
