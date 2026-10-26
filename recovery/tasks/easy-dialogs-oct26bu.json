@@ -1,0 +1,23 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "9a734bec0b72d9abbb21a55f812a06647513987f",
+  "editable_files": [
+    "src/dialogs.cpp"
+  ],
+  "evidence": [
+    "User-authorized coordinator-reviewed manual recovery. Five minute inspection and at most three candidates per unchanged function context; this task authorizes one fixed proposal initially.",
+    "Compiler trials run in private source replicas against the actual qualified Release object; no compiler policy, signature, marker, claim or layout change. Score all mapped TU functions and retain outside-scope differences.",
+    "Only independently reviewed source gains may be materialized; fresh full build/link and relevant source/reference/claim regression checks required before integration. No automatic/full-game acceptance claimed."
+  ],
+  "intent": "Bounded ordinary C++ matching trial for Dialogs::pass_dialog_focus; preserve original behavior and source-owned obligations.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6369664,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "easy-dialogs-oct26bu"
+}
