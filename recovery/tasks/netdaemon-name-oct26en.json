@@ -1,0 +1,23 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "168c6cb5aa814466767c747e1365e33fb9ae4a9b",
+  "editable_files": [
+    "src/netdaemon.cpp"
+  ],
+  "evidence": [
+    "Corrected pinned tail math includes52E8CF add ecx,eax:16i+i=17i, then3*=51i, then i+2*51i=103i, times4=0x19C. PID scan uses process_slots base76C +pid offset20 and19C stride; name indexing uses base76C plus19C stride, with index8 landing at ledger144C. The initial184 audit was erroneous and explicitly withdrawn.",
+    "Real AlphaNetProcessSlot declarations own name_[0x20], pid_+20, status+28, size19C; AlphaNet slots[8] begin76C and ledger follows144C. No ninth valid player or guessed type is introduced. The unchecked source reproduces the original out-of-bounds access on the target compiler; abstract C++ UB and unverified runtime effects remain obligations.",
+    "One quality candidate, ordinary array expression, no new test for a behavior-equivalent reversible cleanup. Existing source/native controls plus direct compiled tail inspection must confirm the original unchecked pointer calculation. Preserve all markers, claims and history; no safety normalization or full-game/automatic acceptance claim."
+  ],
+  "intent": "Replace the artificial guarded ledger-cast fallback with the original unchecked process-slot name indexing. Preserve the original eight-slot PID scan, unchecked missing-host result, logging, callbacks, row-eight neighbor effects and all other player deletion behavior.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5432176,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "netdaemon-name-oct26en"
+}
