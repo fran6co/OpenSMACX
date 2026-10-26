@@ -1,0 +1,28 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "fd1d91252a099c3d6a60ee76c5c995a47b502296",
+  "editable_files": [
+    "src/popup.cpp",
+    "src/scroll.cpp"
+  ],
+  "evidence": [
+    "Pinned Popup constructor4048A0 stores6695C8 atthis and6695C0 atthis+444; Scroll constructor6051D0 stores669D58/669D50 at the same two views. Native owner COFF independently identifies these exact generated symbols as isolated readonly COMDATs.",
+    "CW/pickwin-reference-opportunity.json and pickwin-vtable-binding-probe.py/json: same native candidate and support context, only four in-memory bindings added. PickWin reference UNKNOWN→PASS; every unbounded table content remains UNKNOWN. No hypothetical result is replayed as actual-source acceptance."
+  ],
+  "intent": "Bind the original Popup/Scroll Win and Buffer addresspoints to genuine compiler-generated owner tables, using constructor evidence; preserve unknown original extents/content, all code, identities and claims.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4212896,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6312400,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "popup-scroll-vtable-owners-oct26db"
+}
