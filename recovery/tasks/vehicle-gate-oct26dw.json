@@ -1,0 +1,24 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "7202941d7acffc89900ea4cbd813882334010f45",
+  "editable_files": [
+    "src/veh.cpp",
+    "recovery/tests/test_vehicle_action_gate_actual_source.py"
+  ],
+  "evidence": [
+    "Current root baseline 7202941d7acffc89900ea4cbd813882334010f45, independent pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf. Native compiler recipes from the qualified complete current application; no task baseline or claim demotion. All selected functions have new included-declaration context and previous inspected attempts remain capped.",
+    "Coordinator owns source publication/Git; worker tests may edit only authorized files. Preserve every discovery and original error path. Candidate-only diagnostics are not linked/runtime/game or automatic acceptance.",
+    "Reviewed immutable proposal /home/fran6co/code/OpenSMACX/.opensmacx/recovery/easy-small-final-oct26dv/proposals/action-gate-live-vehicle-fields.cpp SHA256 9cdbae63133c84f5fc288d70a986c1f62ca265f8bb1882cca3c08d6c5a53c993"
+  ],
+  "intent": "Restore pinned post-callback vehicle field rereads before focusing; preserve entry coordinates for initial lookup, all gate flags/lift/drop/draw order and selection guard.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5043072,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "vehicle-gate-oct26dw"
+}
