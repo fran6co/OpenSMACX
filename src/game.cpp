@@ -7695,6 +7695,7 @@ Purpose: Build one log line for the say-buffer: decimal the number,
 
 // ORIGINAL: 0x0051E6F0 sub_51e6f0 0x0051E6F0-0x0051E75A BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["pinned image 0x0051E6F0 full span", "original separator slot 0x00682820 is the existing BufferJoinSpace object; log_say_hex is source-owned in log.cpp"], "reason": "Home the original decimal/space/text concatenation and four-argument logger call without changing its call order or unsafe buffers."}
+// symbol    _sub_51e6f0
 // size      106 bytes
 // prototype
 // callers   0   call targets   3
