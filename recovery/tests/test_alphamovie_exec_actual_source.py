@@ -198,11 +198,11 @@ static void reset_state() {
 }
 static void assert_playback_trace() {
     assert(event_trace() ==
-        "height,width,init,fill,show,pump,load1,move,device_palette,play,flush,modal,stop,active_palette,window_hide,hide,pump");
+        "width,height,init,fill,show,pump,load1,move,device_palette,play,flush,modal,stop,active_palette,window_hide,hide,pump");
 }
 static void assert_retry_playback_trace() {
     assert(event_trace() ==
-        "height,width,init,fill,show,pump,load1,load2,move,device_palette,play,flush,modal,stop,active_palette,window_hide,hide,pump");
+        "width,height,init,fill,show,pump,load1,load2,move,device_palette,play,flush,modal,stop,active_palette,window_hide,hide,pump");
 }
 int main() {
     reset_state();
@@ -244,7 +244,7 @@ int main() {
     load_results[0] = 5;
     load_results[1] = 7;
     assert(movie.exec(const_cast<char *>("retry.smk")) == 7);
-    assert(event_trace() == "height,width,init,fill,show,pump,load1,load2");
+    assert(event_trace() == "width,height,init,fill,show,pump,load1,load2");
     assert(load_calls == 2 && load_paths[0] == "retry.smk" && load_paths[1].empty());
     assert(strcmp(StringTemp, "not-cleared/k:\\game\\retry.smk") == 0);
     assert(move_calls == 0 && show_window_calls == 0 && modal_calls == 0 && flush_calls == 0);
