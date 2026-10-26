@@ -561,6 +561,7 @@ set_source_files_properties(src/scenario_undo.cpp PROPERTIES COMPILE_OPTIONS "/O
 set_property(SOURCE
     src/alpha.cpp
     src/buffer.cpp
+    src/caviar.cpp
     src/game.cpp
     src/interface_palette.cpp
     src/maininterface.cpp

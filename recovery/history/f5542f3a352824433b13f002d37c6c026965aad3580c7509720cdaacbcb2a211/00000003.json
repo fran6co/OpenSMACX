@@ -1,0 +1,20 @@
+{
+  "event_id": "f8bf7a66d17e323127223988e5d17969b4389441c0b58d5d5eacaffe1cfb84da",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_production_type_metadata.py"
+    ],
+    "evidence": [
+      "Before this change master already fails both old production-type tests: their exact three-owner migration assertion reads live CMake, which has eight observed owners from later verified migrations. Preserve those exact old damage controls against their immutable actually measured three-owner checkpoint92d17311d7b80a7ef3adf8db08108ed837f4809c; retain current checks for its three unchanged native recipes. Do not rewrite historical baselines or loosen its scoped contract.",
+      "Add a live Caviar-only production/measurement policy check with deliberate missing metadata/frame/optimization/missing-profile damage. Other future owners are not frozen by this test. The unrelated pre-existing application-source ordering failure (map.cpp immediately world.cpp versus current territory.cpp) is retained as a separate baseline limitation, not silently weakened or attributed to this recovery."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "59128e3c303e71b54f9c0904f4ec03f21d9040364871b006c4393e3a2a69019f",
+  "request_id": "refresh-historical-metadata-control-and-caviar-live-policy",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:caviar-console-evidence-oct26bq"
+}

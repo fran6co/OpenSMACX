@@ -1,0 +1,17 @@
+{
+  "event_id": "59128e3c303e71b54f9c0904f4ec03f21d9040364871b006c4393e3a2a69019f",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "console-right-left-cleanup-owner-correction",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/console_commands.cpp native binding_source.render now records65C001/right state14 and65C009/left state15 with distinct pointer producers and typed nested owners. Original marker facts, spans, FILE states, all C++ bodies and source line counts are unchanged. No matching or runtime acceptance is claimed."
+    ]
+  },
+  "previous_event": "78639c68542c99c5bc957b07336411cf66872a320e6e1e1bd6a4735d2d270ca8",
+  "request_id": "incorporated-console-cleanup-owner-correction",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:caviar-console-evidence-oct26bq"
+}

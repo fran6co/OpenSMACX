@@ -1,0 +1,19 @@
+{
+  "event_id": "6950e2ba57a9551ffafcb4b067a89f065d846f1734cfbf051514bd5be61751ea",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_caviar_data_owner_oct14gr.py"
+    ],
+    "evidence": [
+      "The candidate Caviar data-owner test fails only because it asserts src/caviar.cpp must never appear in measurement unit_flag_sets. That was a former source-split condition, not an ownership or compiler-behavior guarantee; the new independently verified metadata profile intentionally supplies it. Remove only that obsolete absence assertion, retaining all real definition/order/span/claim checks. Dedicated current Caviar metadata policy tests now enforce the precise compiler context and missing/frame/optimization/profile damage controls."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "f8bf7a66d17e323127223988e5d17969b4389441c0b58d5d5eacaffe1cfb84da",
+  "request_id": "remove-superseded-renderer-profile-absence-assertion",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:caviar-console-evidence-oct26bq"
+}
