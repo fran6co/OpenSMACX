@@ -1,0 +1,38 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "7202941d7acffc89900ea4cbd813882334010f45",
+  "editable_files": [
+    "src/map.cpp",
+    "src/popup.cpp"
+  ],
+  "evidence": [
+    "Current root baseline 7202941d7acffc89900ea4cbd813882334010f45, independent pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf. Native compiler recipes from the qualified complete current application; no task baseline or claim demotion. All selected functions have new included-declaration context and previous inspected attempts remain capped.",
+    "Coordinator owns source publication/Git; worker tests may edit only authorized files. Preserve every discovery and original error path. Candidate-only diagnostics are not linked/runtime/game or automatic acceptance."
+  ],
+  "intent": "Bind independently corroborated WorldClimateSkipTerritoryReset start and unique SDK ShellExecuteA import identity. Preserve original code, all metadata/claims and unresolved string/lifetime/link-selection facts; no PopupLink address assertions.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5837456,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6052400,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6063840,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4214944,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "independent-bindings-oct26dw"
+}
