@@ -906,6 +906,7 @@ Purpose: As 004471F0, with the MAmbience vtable and one more field.
 Return Value: `this`
 Status: Complete
 */
+// RECOVERY_GENERATED: v1 vtable 0x0066BE28 0x0066BF90 ??_7MAmbience@@6B@ 0x00447310
 MAmbience::MAmbience() {
     // Historical construct-method notes above do not describe this real ctor.
     field_70_ = 0;
@@ -933,6 +934,7 @@ Purpose: As 004471F0, with the SAmbience vtable and two more fields.
 Return Value: `this`
 Status: Complete
 */
+// RECOVERY_GENERATED: v1 vtable 0x0066BB58 ? ??_7SAmbience@@6B@ 0x00447850
 SAmbience::SAmbience() {
     // Historical construct-method notes above do not describe this real ctor.
     field_70_ = 0;
@@ -961,6 +963,7 @@ Purpose: As 004471F0, with the GAmbience vtable and one more field.
 Return Value: `this`
 Status: Complete
 */
+// RECOVERY_GENERATED: v1 vtable 0x0066BF90 0x0066C0F8 ??_7GAmbience@@6B@ 0x00447B90
 GAmbience::GAmbience() {
     // Historical construct-method notes above do not describe this real ctor.
     field_70_ = 0;
