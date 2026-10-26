@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import re
+import os
+from hashlib import sha256
 from pathlib import Path
 
 from capstone import Cs, CS_ARCH_X86, CS_MODE_32
@@ -127,8 +129,11 @@ def test_actual_terraform_owner_calls_the_recovered_window_members():
 
 def test_pinned_callers_use_the_same_typed_owner_receivers():
     assert image_pin(ROOT) == PIN
-    image = PeImage((ROOT / ".opensmacx/game/terranx_original.exe").read_bytes(),
-                    image_pin(ROOT))
+    path = Path(os.environ.get("OPENSMACX_IMAGE",
+                               ROOT / ".opensmacx/game/terranx_original.exe"))
+    data = path.read_bytes()
+    assert sha256(data).hexdigest() == PIN, "wrong pinned tutorial image"
+    image = PeImage(data, PIN)
 
     # Both BaseWin calls load the real singleton receiver before the direct
     # target call; the map tutorial call loads TutorialWindow's object address.

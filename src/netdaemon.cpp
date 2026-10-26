@@ -436,9 +436,9 @@ void NetDaemon::on_player_deleted(char *, unsigned long id) {
            process_slots_[server_slot].pid_ != host_player_id()) {
         ++server_slot;
     }
-    const char *server_name = server_slot < 8
-        ? process_slots_[server_slot].name_
-        : reinterpret_cast<const char *>(&ledger_);
+    const char *server_name =
+        process_slots_[server_slot].name_;
+
     log_say(server_name, "is now the Server.", 0, 0, 0);
     primary_state_.leading_words_[2] = 0;
 }
