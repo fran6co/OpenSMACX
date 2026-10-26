@@ -236,7 +236,6 @@ typedef int BOOL;
 @STRINGS@
 #undef static_assert
 Heap *StringAllocationHeap = 0;
-StringAllocationBase::~StringAllocationBase() {}
 int StringStruct::on_insert(void *) { return 0; }
 void StringStruct::on_remove(void *) {}
 int StringList::on_insert(void *) { return 0; }

@@ -1,0 +1,24 @@
+{
+  "event_id": "caa0344fe5517d177fb87c2790cb27ceae4653e85c56b37a3e81a9a619aacee5",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/receiver_cleanup_harness.cpp",
+      "recovery/tests/test_application_link_recovery.py",
+      "recovery/tests/test_buffer_line_layout_fidelity_oct12.py",
+      "recovery/tests/test_net_transport_queue_closure_oct12.py",
+      "recovery/tests/test_voice_clear_owner_oct23b.py"
+    ],
+    "evidence": [
+      "Textloadhostcontrols exposedduplicate handwrittendtor againstliveinlineStringAllocationBaseheader. rgfinds2additionalembeddedduplicatesand2old outofline-extractiontuples. Removejustobsoletecopies/locators, keepactualheaderbody andallbehavior/damageoracles.",
+      "Retire historicaltest reconstructing fullTextfiles fromoneGitmigration; native claim/source checks preserveidentityandhistory, pinnedstartup/destructorcontrols andfreshphysicalgraph/damagechecks remain. Addfocusedcurrentnatural-dtor positiveanddamagedtarget check, notexactfilenamepolicy."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "631b09d96c46fbd343d07a2b919b95c2e57c10895649edcfbaa8663e9a3ef19c",
+  "request_id": "shared-base-fixture-visibility-cleanup",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:text-producer-oct27gd"
+}

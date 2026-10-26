@@ -836,8 +836,6 @@ def test_receiver_cleanup_respects_payload_and_allocation_ownership(tmp_path, mo
          "__DEFINITION__"),
         ("// LIVE_ALLOCATION_BASE", "src/stringstruct.h", "class StringAllocationBase {",
          "// REAL VIRTUAL INHERITANCE, like StringStructPayload"),
-        ("// LIVE_OWNER_PUBLICATION", "src/stringstruct.cpp", "StringAllocationBase::~StringAllocationBase() {",
-         "// ORIGINAL: 0x00401000 ??0StringStruct@@QAE@H@Z"),
         ("// LIVE_VOICE_RX_ALLOCATION", "src/net_class.h",
          "class VoiceRxAllocation :", "static_assert(sizeof(VoiceRxAllocation)"),
         ("// LIVE_RECEIVER_DECLARATIONS", "src/net_class.h", "struct VoiceReceiverEntry :",

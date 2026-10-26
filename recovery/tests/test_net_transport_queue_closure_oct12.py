@@ -246,7 +246,6 @@ int get_sound_version() { return sound_version; }
 static Sound *sound_device(Sound *p) {
     return p;
 }
-StringAllocationBase::~StringAllocationBase() { StringAllocationHeap = allocation_owner_; }
 SoundFadeState::SoundFadeState() {}
 Sound::Sound() { device_ = 0; }
 Sound::~Sound() {}

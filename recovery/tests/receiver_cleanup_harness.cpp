@@ -38,7 +38,6 @@ class VoiceRx : public Sound {
 #define free observe_complete_release
 // LIVE_ALLOCATION_BASE
 #undef free
-// LIVE_OWNER_PUBLICATION
 // LIVE_VOICE_RX_ALLOCATION
 #define private public
 // LIVE_RECEIVER_DECLARATIONS
