@@ -1,0 +1,20 @@
+{
+  "event_id": "4bcd6ceb30a2f101115fa3f86d97f762ab8ae641b444af576aff0a9d1c73e7b7",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/alphanet.cpp"
+    ],
+    "evidence": [
+      "Two actualproducerexperiments showtheout-of-line helper matches115byteStringStruct COMDAT underexistingAlphaNet.cpp framecontext, but moving it onlytoRecords hidesbodyfromthe4normal/derivedlifecycleemitters. Testclasslifetime definitions inexistingAlphaNet.cpp where4lifecyclesalreadyemit, keepingrecordoperations/defaultprofile2exactcontrols unchanged.",
+      "No newTU/providerclaim, noforcedinline/export or signature/layout change. Preserve bodies/mappings/history; onlyupdateproducercontextmetadata afterphysicalevidence. Threecandidatecap forsamefunction/pass; direct-newadd bodyisaseparateEHlifetimechange."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "lifetime-producer-visibility",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:alpha-cleanup-oct26fp"
+}

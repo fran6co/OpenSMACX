@@ -19,12 +19,9 @@ int __stdcall compare_session_guid(const GUID *left, const GUID *right);
 
 // Source-owned records and lifecycle mappings; this TU retains default /O2.
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00401C80 SessionStruct::SessionStruct 0x00401C80-0x00401CD8 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00401c80.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "Session base tables669408/669404 and five cleared circular-list fields."}
-// symbol    ??0AlphaNetStringStruct@@QAE@XZ
-// Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00402B40 SessionStruct::dt 0x00402B40-0x00402BA6 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00402b40.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "Receiver-1C, stages session-base669408/669404, clear402970, owner publication then bit1/free."}
+// compile_context src/alphanet.cpp
 // symbol    ??_GAlphaNetStringStruct@@UAEPAXI@Z
 // ORIGINAL: 0x004E3300 sub_4e3300 0x004E3300-0x004E334B FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/004e3300.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed.", "Genuine declared C++ destructor emits the independently named generated COFF body; original receiver/table/lifetime interpretation and current emitted ABI remain separate from the historical byte obligation.", "Pinned original picker0x633010/0x663730 and ledger0x4E3350/0x65C7F0 preserve separate ledger and base cleanup roles."], "reason": "Receiver-38 then calls4E3350; publishes ledger owner and conditionally frees complete object on bit1. Superseded scaffold retired after observing this independently emitted generated body; historical claims and findings transfer without a new matching or linked-preservation claim. Original picker and ledger normal/cold paths retain distinct derived/base cleanup stages. Class-defined unchanged destructors expose that nested lifetime; the callback-sensitive walker remains inline. The canonical records owner retains this identity; the named compilation context physically emits the body. Definition visibility and emission do not establish original TU, helper identity or linked selection."}
@@ -45,13 +42,6 @@ namespace {
 // Source-only typed algorithms shared by genuine list owners. They own no
 // executable identity. Each instantiated body/reference requires measurement;
 // sharing source does not prove the original compiler folded any particular pair.
-template<class List, class Node> inline Node *allocate_owned_node(List *list, Node *) {
-    Heap *const explicit_owner = list->allocator_;
-    if (explicit_owner != 0) return new(explicit_owner) Node;
-    return new(list) Node;
-}
-
-
 template<class List> inline typename List::Payload *next_owned_list(List *list) {
     if (list->head_ == 0) return 0;
     typename List::Entry *next = list->current_->next_;
@@ -68,13 +58,6 @@ template<class List> inline typename List::Payload *next_owned_list(List *list) 
 
 // The ledger's five list fields, zeroed; the rest of the construction (the
 // vtable staging and the owner capture) belongs to the compiler.
-AlphaNetStringStruct::AlphaNetStringStruct() {
-    head_ = 0;
-    current_ = 0;
-    entry_count_ = 0;
-    current_position_ = 0;
-    allocator_ = 0;
-}
 
 // The base table's defaults are shared leaves, independently checked;
 // the unrelated AlphaMovie catalogue identities remain unchanged.
@@ -181,25 +164,41 @@ Status: Coverage transcription - unclaimed body; the two list hooks link
         instruction-#5 SEH-frame divergence stands.
 */
 int AlphaNetStringStruct::add(int id) {
+    // The cold actions at 0x006504E0 unwind a partially constructed heap
+    // payload, including its virtual allocation base at +0x58. Keep typed
+    // new expressions here so construction-failure cleanup belongs to this
+    // caller; the seed history's stack-local hypothesis is superseded.
     if (entry_count_ == 0) {
-        head_ = allocate_owned_node(this, static_cast<AlphaNetLedgerEntry *>(0));
+        Heap *const entry_owner = allocator_;
+        head_ = entry_owner != 0
+            ? new(entry_owner) AlphaNetLedgerEntry
+            : new(this) AlphaNetLedgerEntry;
         if (head_ == 0) return 4;
         head_->id_ = id;
         head_->next_ = head_;
         head_->previous_ = head_;
-        head_->payload_ = allocate_owned_node(this, static_cast<NetAllocationNode *>(0));
+        Heap *const payload_owner = allocator_;
+        head_->payload_ = payload_owner != 0
+            ? new(payload_owner) NetAllocationNode
+            : new(this) NetAllocationNode;
         if (head_->payload_ == 0) return 4;
         on_insert(head_->payload_);
         current_ = head_;
     } else {
-        head_->previous_->next_ = allocate_owned_node(this, static_cast<AlphaNetLedgerEntry *>(0));
+        Heap *const entry_owner = allocator_;
+        head_->previous_->next_ = entry_owner != 0
+            ? new(entry_owner) AlphaNetLedgerEntry
+            : new(this) AlphaNetLedgerEntry;
         if (head_->previous_->next_ == 0) return 4;
         head_->previous_->next_->previous_ = head_->previous_;
         head_->previous_->next_->next_ = head_;
         head_->previous_ = head_->previous_->next_;
         current_ = head_->previous_;
         current_->id_ = id;
-        current_->payload_ = allocate_owned_node(this, static_cast<NetAllocationNode *>(0));
+        Heap *const payload_owner = allocator_;
+        current_->payload_ = payload_owner != 0
+            ? new(payload_owner) NetAllocationNode
+            : new(this) NetAllocationNode;
         if (current_->payload_ == 0) return 4;
         on_insert(current_->payload_);
     }

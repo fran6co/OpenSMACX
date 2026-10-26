@@ -64,6 +64,37 @@
 #include "heap.h"
 #include <cstdlib>
 #include <cstring>
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x00401C80 SessionStruct::SessionStruct 0x00401C80-0x00401CD8 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00401c80.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "Session base tables669408/669404 and five cleared circular-list fields."}
+// symbol    ??0AlphaNetStringStruct@@QAE@XZ
+
+AlphaNetStringStruct::AlphaNetStringStruct() {
+    head_ = 0;
+    current_ = 0;
+    entry_count_ = 0;
+    current_position_ = 0;
+    allocator_ = 0;
+}
+
+void AlphaNetStringStruct::remove_all() {
+    if (head_ != 0) {
+      for (int removed = 0; removed < entry_count_; ++removed) {
+        current_ = head_->next_;
+        Payload *payload = head_->payload_;
+        on_remove(payload);
+        delete payload;
+        // Preserve the post-callback/post-destruction member reloads.
+        head_->payload_ = 0;
+        delete head_;
+        head_ = current_;
+      }
+      head_ = 0;
+      current_position_ = 0;
+      entry_count_ = 0;
+    }
+  }
+
 /*
 Purpose: Convert a multiplayer process ID to its one-based player index.
 // ORIGINAL: 0x004E25E0 ?pid_2_idx@AlphaNet@@QAEHK@Z 0x004E25E0-0x004E2607 BYTE_EXACT

@@ -102,8 +102,10 @@ public:
         if (mutation == 2) head_ = replacement;
         if (mutation == 3) current_ = replacement;
     }
-    ALPHA_METHOD
+    void remove_all();
 };
+
+ALPHA_REMOVE_ALL_DEFINITION
 
 static void discard(NetTextListEntry *entry) {
     if (!entry) return;
@@ -285,12 +287,35 @@ def source_methods():
     net_source = (ROOT / "src/net_class.cpp").read_text()
     alpha_source = (ROOT / "src/alphanet_records.cpp").read_text()
     net_method = class_method(net_header, "NetTextListBase", "void remove_all()")
-    alpha_method = class_method(alpha_header, "AlphaNetStringStruct", "void remove_all()")
+    alpha_class_start = alpha_header.index("class AlphaNetStringStruct :")
+    alpha_class = alpha_header[alpha_class_start:]
+    alpha_class_body = braced(alpha_class, 0)
+    alpha_member = alpha_class_body.index("void remove_all()")
+    alpha_brace = alpha_class_body.find("{", alpha_member)
+    alpha_semicolon = alpha_class_body.find(";", alpha_member)
+    inline = alpha_brace >= 0 and (alpha_semicolon < 0 or alpha_brace < alpha_semicolon)
+    alpha_sources = [
+        alpha_header,
+        (ROOT / "src/alphanet.cpp").read_text(),
+        alpha_source,
+    ]
+    alpha_definitions = []
+    if inline:
+        inline_method = "void remove_all() {" + braced(
+            alpha_class_body, alpha_brace - 1
+        ) + "}"
+        alpha_definitions.append(inline_method.replace(
+            "void remove_all()", "void AlphaNetStringStruct::remove_all()", 1))
+    for source in alpha_sources[1:]:
+        signature = "void AlphaNetStringStruct::remove_all()"
+        if signature in source:
+            alpha_definitions.append(function_body(source, signature))
+    assert len(alpha_definitions) == 1, "expected one current AlphaNet remove_all definition"
+    alpha_method = alpha_definitions[0]
 
     assert "while (index < entry_count_)" in net_method
     assert "for (int removed = 0; removed < entry_count_; ++removed)" in alpha_method
     assert "NetTextListBase::remove_all" not in net_source
-    assert "AlphaNetStringStruct::remove_all" not in alpha_source
     destructors = [function_body(net_source, "NetTextListBase::~NetTextListBase()")]
     for name in ("AlphaNetStringStruct", "AlphaNetLedger"):
         assert f"{name}::~{name}()" not in alpha_source
@@ -303,7 +328,8 @@ def source_methods():
 
 
 def fixture(net_method: str, alpha_method: str) -> str:
-    return HARNESS.replace("NET_METHOD", net_method).replace("ALPHA_METHOD", alpha_method)
+    return (HARNESS.replace("NET_METHOD", net_method)
+            .replace("ALPHA_REMOVE_ALL_DEFINITION", alpha_method))
 
 
 def host_compilers():
@@ -311,7 +337,7 @@ def host_compilers():
 
 
 @pytest.mark.parametrize("compiler", host_compilers())
-def test_inline_walks_preserve_reload_guards_and_delete_order(tmp_path, compiler):
+def test_actual_walks_preserve_reload_guards_and_delete_order(tmp_path, compiler):
     net_method, alpha_method = source_methods()
     result = compile_and_run(tmp_path, fixture(net_method, alpha_method), compiler)
     assert result.returncode == 0, result.stderr

@@ -13,6 +13,7 @@ import subprocess
 import pytest
 
 from test_game_logic_seed_batch_behavior import _masked_cpp
+from owner_transfer_test_support import current_record_by_address
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -51,16 +52,35 @@ def _braced(source: str, masked: str, opening: int) -> str:
     raise AssertionError("unterminated C++ body")
 
 
+def _signature_body_opening(masked: str, start: int):
+    paren = masked.find("(", start)
+    if paren < 0:
+        return -1
+    depth = 0
+    close = -1
+    for index in range(paren, len(masked)):
+        if masked[index] == "(":
+            depth += 1
+        elif masked[index] == ")":
+            depth -= 1
+            if depth == 0:
+                close = index
+                break
+    if close < 0:
+        return -1
+    index = close + 1
+    while index < len(masked) and masked[index].isspace():
+        index += 1
+    return index if index < len(masked) and masked[index] == "{" else -1
+
+
 def _inline_method(class_text: str, pattern: str):
     masked = _masked_cpp(class_text)
     matches = list(re.finditer(pattern, masked))
     bodies = []
     for match in matches:
-        paren = masked.find(")", match.end())
-        assert paren >= 0
-        brace = masked.find("{", paren + 1)
-        semi = masked.find(";", paren + 1)
-        if brace >= 0 and (semi < 0 or brace < semi):
+        brace = _signature_body_opening(masked, match.start())
+        if brace >= 0:
             bodies.append(_braced(class_text, masked, brace))
     return bodies
 
@@ -70,12 +90,8 @@ def _qualified_definitions(sources, pattern: str):
     for source in sources:
         masked = _masked_cpp(source)
         for match in re.finditer(pattern, masked):
-            paren = masked.find(")", match.end())
-            if paren < 0:
-                continue
-            brace = masked.find("{", paren + 1)
-            semi = masked.find(";", paren + 1)
-            if brace >= 0 and (semi < 0 or brace < semi):
+            brace = _signature_body_opening(masked, match.start())
+            if brace >= 0:
                 found.append(source[match.start():brace].rstrip() + " "
                              + _braced(source, masked, brace))
     return found
@@ -95,11 +111,13 @@ def _one_definition(class_text: str, inline_pattern: str,
 
 def actual_fragments():
     header_path = ROOT / "src/alphanet.h"
+    alpha_path = ROOT / "src/alphanet.cpp"
     records_path = ROOT / "src/alphanet_records.cpp"
     string_header_path = ROOT / "src/stringstruct.h"
     string_source_path = ROOT / "src/stringstruct.cpp"
     net_source_path = ROOT / "src/net_class.cpp"
     header = header_path.read_text(encoding="utf-8")
+    alpha = alpha_path.read_text(encoding="utf-8")
     records = records_path.read_text(encoding="utf-8")
     string_header = string_header_path.read_text(encoding="utf-8")
     string_source = string_source_path.read_text(encoding="utf-8")
@@ -111,7 +129,7 @@ def actual_fragments():
     entry = _class_declaration(header, "AlphaNetLedgerEntry")
 
     remove_all_inline, remove_all = _one_definition(
-        base, r"\bvoid\s+remove_all\s*\(", [records_path],
+        base, r"\bvoid\s+remove_all\s*\(", [alpha_path, records_path],
         r"(?:void\s+)?AlphaNetStringStruct::remove_all\s*\(")
     base_dtor_inline, base_dtor = _one_definition(
         base, r"~AlphaNetStringStruct\s*\(", [records_path],
@@ -128,9 +146,14 @@ def actual_fragments():
     derived_hook = _qualified_definitions(
         [records], r"void\s+AlphaNetLedger::on_remove\s*\(")
     base_ctor = _qualified_definitions(
-        [records], r"AlphaNetStringStruct::AlphaNetStringStruct\s*\(")
+        [alpha, records], r"AlphaNetStringStruct::AlphaNetStringStruct\s*\(")
+    add_record = current_record_by_address(ROOT, 0x00401D80)
+    add_definition = _qualified_definitions(
+        [add_record.path.read_text(encoding="utf-8")],
+        r"int\s+AlphaNetStringStruct::add\s*\(\s*int\s+id\s*\)",
+    )
     assert (len(base_insert) == len(derived_insert) == len(base_hook)
-            == len(derived_hook) == len(base_ctor) == 1)
+            == len(derived_hook) == len(base_ctor) == len(add_definition) == 1)
 
     alloc_ctor = _inline_method(
         allocation_base, r"\bStringAllocationBase\s*\(")
@@ -161,6 +184,7 @@ def actual_fragments():
         "base_insert": base_insert[0],
         "derived_insert": derived_insert[0],
         "base_ctor": base_ctor[0],
+        "add": add_definition[0],
         "alloc_ctor": alloc_ctor[0],
         "alloc_dtor": alloc_dtor[0],
         "entry_delete": entry_delete[0],
@@ -426,6 +450,304 @@ def _compile_and_run(tmp_path: Path, compiler: str, source: str, name: str):
                           timeout=10, check=False)
 
 
+ADD_ALLOCATION_FIXTURE = r'''#include <cassert>
+#include <cstddef>
+#include <cstdlib>
+
+struct Heap;
+struct AlphaNetLedgerEntry;
+class NetAllocationNode;
+class AlphaNetStringStruct;
+
+enum { EntryType = 1, PayloadType = 2, HeapRoute = 1, ListRoute = 2,
+       AllocationEvent = 1, ConstructorEvent = 2, PlacementDeleteEvent = 3,
+       CallbackEvent = 4 };
+struct Event {
+    int action, type, route;
+    const void *context;
+    const void *owner;
+};
+static Event events[64];
+static int event_count;
+static int allocation_count;
+static int fail_allocation_at;
+static int throw_constructor_type;
+static int pending_type, pending_route;
+static const void *pending_context;
+static const void *pending_owner;
+static void *live_blocks[16];
+
+static void record_event(int action, int type, int route,
+                         const void *context, const void *owner) {
+    assert(event_count < 64);
+    events[event_count++] = Event{action, type, route, context, owner};
+}
+static void *request_storage(size_t size) {
+    record_event(AllocationEvent, pending_type, pending_route,
+                 pending_context, pending_owner);
+    if (++allocation_count == fail_allocation_at) return 0;
+    void *memory = std::malloc(size);
+    assert(memory != 0);
+    int index = 0;
+    while (index < 16 && live_blocks[index] != 0) ++index;
+    assert(index < 16);
+    live_blocks[index] = memory;
+    return memory;
+}
+static void release_storage(void *memory, int type, int route,
+                            const void *context, const void *owner) {
+    record_event(PlacementDeleteEvent, type, route, context, owner);
+    for (int index = 0; index < 16; ++index) {
+        if (live_blocks[index] == memory) {
+            live_blocks[index] = 0;
+            std::free(memory);
+            return;
+        }
+    }
+    assert(!"placement delete received untracked storage");
+}
+static void release_test_storage() {
+    for (int index = 0; index < 16; ++index) {
+        if (live_blocks[index] != 0) {
+            std::free(live_blocks[index]);
+            live_blocks[index] = 0;
+        }
+    }
+}
+
+struct Heap {
+    void *get(size_t size);
+};
+static void *mem_get(size_t size);
+
+class AlphaNetStringStruct {
+public:
+    typedef AlphaNetLedgerEntry Entry;
+    typedef NetAllocationNode Payload;
+    AlphaNetLedgerEntry *head_;
+    AlphaNetLedgerEntry *current_;
+    int entry_count_;
+    int current_position_;
+    Heap *allocator_;
+    Heap *allocation_owner_;
+    int callbacks_;
+    AlphaNetStringStruct()
+        : head_(0), current_(0), entry_count_(0), current_position_(0),
+          allocator_(0), allocation_owner_(0), callbacks_(0) {}
+    virtual int on_insert(NetAllocationNode *payload);
+    int add(int id);
+};
+
+struct AlphaNetLedgerEntry {
+    int id_;
+    NetAllocationNode *payload_;
+    AlphaNetLedgerEntry *next_;
+    AlphaNetLedgerEntry *previous_;
+    AlphaNetLedgerEntry() : id_(0), payload_(0), next_(0), previous_(0) {
+        record_event(ConstructorEvent, EntryType, 0, 0, 0);
+        if (throw_constructor_type == EntryType) throw 71;
+    }
+    static void *operator new(size_t size, Heap *owner) throw();
+    static void *operator new(size_t size, AlphaNetStringStruct *list) throw();
+    static void operator delete(void *memory, Heap *owner);
+    static void operator delete(void *memory, AlphaNetStringStruct *list);
+};
+
+class NetAllocationNode {
+public:
+    int marker_;
+    NetAllocationNode() : marker_(0x5455) {
+        record_event(ConstructorEvent, PayloadType, 0, 0, 0);
+        if (throw_constructor_type == PayloadType) throw 72;
+    }
+    static void *operator new(size_t size, Heap *owner) throw();
+    static void *operator new(size_t size, AlphaNetStringStruct *list) throw();
+    static void operator delete(void *memory, Heap *owner);
+    static void operator delete(void *memory, AlphaNetStringStruct *list);
+};
+
+static void select_allocation(int type, int route, const void *context,
+                              const void *owner) {
+    pending_type = type;
+    pending_route = route;
+    pending_context = context;
+    pending_owner = owner;
+}
+void *Heap::get(size_t size) { return request_storage(size); }
+static void *mem_get(size_t size) { return request_storage(size); }
+
+void *AlphaNetLedgerEntry::operator new(size_t size, Heap *owner) throw() {
+    select_allocation(EntryType, HeapRoute, owner, owner);
+    return owner->get(size);
+}
+void *AlphaNetLedgerEntry::operator new(size_t size, AlphaNetStringStruct *list) throw() {
+    select_allocation(EntryType, ListRoute, list, list->allocation_owner_);
+    return list->allocation_owner_ ? list->allocation_owner_->get(size) : mem_get(size);
+}
+void AlphaNetLedgerEntry::operator delete(void *memory, Heap *owner) {
+    release_storage(memory, EntryType, HeapRoute, owner, owner);
+}
+void AlphaNetLedgerEntry::operator delete(void *memory, AlphaNetStringStruct *list) {
+    release_storage(memory, EntryType, ListRoute, list, list->allocation_owner_);
+}
+void *NetAllocationNode::operator new(size_t size, Heap *owner) throw() {
+    select_allocation(PayloadType, HeapRoute, owner, owner);
+    return owner->get(size);
+}
+void *NetAllocationNode::operator new(size_t size, AlphaNetStringStruct *list) throw() {
+    select_allocation(PayloadType, ListRoute, list, list->allocation_owner_);
+    return list->allocation_owner_ ? list->allocation_owner_->get(size) : mem_get(size);
+}
+void NetAllocationNode::operator delete(void *memory, Heap *owner) {
+    release_storage(memory, PayloadType, HeapRoute, owner, owner);
+}
+void NetAllocationNode::operator delete(void *memory, AlphaNetStringStruct *list) {
+    release_storage(memory, PayloadType, ListRoute, list, list->allocation_owner_);
+}
+
+int AlphaNetStringStruct::on_insert(NetAllocationNode *) { return 0; }
+
+class AlphaNetLedger : public AlphaNetStringStruct {
+public:
+    int on_insert(NetAllocationNode *payload) {
+        record_event(CallbackEvent, PayloadType, 0, payload, 0);
+        ++callbacks_;
+        return 23; // The product caller deliberately ignores this result.
+    }
+};
+
+ADD_BODY
+
+static void expect_event(int index, int action, int type, int route,
+                         const void *context, const void *owner) {
+    assert(index < event_count);
+    const Event &event = events[index];
+    assert(event.action == action && event.type == type && event.route == route);
+    assert(event.context == context && event.owner == owner);
+}
+
+static void run_add_case(int nonempty, int scenario, int heap_route) {
+    throw_constructor_type = 0;
+    Heap explicit_owner, list_owner;
+    AlphaNetLedger list;
+    AlphaNetLedgerEntry old_head, old_tail, sentinel;
+    list.allocator_ = heap_route ? &explicit_owner : 0;
+    list.allocation_owner_ = &list_owner;
+    if (nonempty) {
+        old_head.next_ = &old_tail; old_head.previous_ = &old_tail;
+        old_tail.next_ = &old_head; old_tail.previous_ = &old_head;
+        list.head_ = &old_head; list.current_ = &old_head;
+        list.entry_count_ = 2; list.current_position_ = 7;
+    } else {
+        list.current_ = &sentinel; list.current_position_ = 9;
+    }
+    event_count = allocation_count = 0;
+    fail_allocation_at = 0;
+    throw_constructor_type = 0;
+    if (scenario == 1) fail_allocation_at = 1;
+    if (scenario == 2) fail_allocation_at = 2;
+    if (scenario == 3) throw_constructor_type = EntryType;
+    if (scenario == 4) throw_constructor_type = PayloadType;
+
+    const int route = heap_route ? HeapRoute : ListRoute;
+    const void *context = heap_route ? static_cast<const void *>(&explicit_owner)
+                                     : static_cast<const void *>(&list);
+    const void *owner = heap_route ? static_cast<const void *>(&explicit_owner)
+                                   : static_cast<const void *>(&list_owner);
+    int result = -1;
+    bool caught = false;
+    try {
+        result = list.add(42);
+    } catch (int value) {
+        caught = true;
+        assert(value == (throw_constructor_type == EntryType ? 71 : 72));
+    }
+
+    const bool throwing = scenario == 3 || scenario == 4;
+    const bool failed = scenario != 0;
+    if (throwing) {
+        assert(caught && result == -1);
+        assert(event_count == (scenario == 3 ? 3 : 5));
+        expect_event(0, AllocationEvent, EntryType, route, context, owner);
+        expect_event(1, ConstructorEvent, EntryType, 0, 0, 0);
+        if (scenario == 3) {
+            expect_event(2, PlacementDeleteEvent, EntryType, route, context, owner);
+        } else {
+            expect_event(2, AllocationEvent, PayloadType, route, context, owner);
+            expect_event(3, ConstructorEvent, PayloadType, 0, 0, 0);
+            expect_event(4, PlacementDeleteEvent, PayloadType, route, context, owner);
+        }
+    } else if (failed) {
+        assert(!caught && result == 4);
+        assert(event_count == (scenario == 1 ? 1 : 3));
+        expect_event(0, AllocationEvent, EntryType, route, context, owner);
+        if (scenario == 2) {
+            expect_event(1, ConstructorEvent, EntryType, 0, 0, 0);
+            expect_event(2, AllocationEvent, PayloadType, route, context, owner);
+        }
+    } else {
+        assert(!caught && result == 0 && event_count == 5);
+        expect_event(0, AllocationEvent, EntryType, route, context, owner);
+        expect_event(1, ConstructorEvent, EntryType, 0, 0, 0);
+        expect_event(2, AllocationEvent, PayloadType, route, context, owner);
+        expect_event(3, ConstructorEvent, PayloadType, 0, 0, 0);
+        const void *callback_payload = nonempty
+            ? static_cast<const void *>(old_tail.next_->payload_)
+            : static_cast<const void *>(list.head_->payload_);
+        expect_event(4, CallbackEvent, PayloadType, 0, callback_payload, 0);
+        assert(list.callbacks_ == 1);
+    }
+
+    if (!nonempty) {
+        if (scenario == 0) {
+            assert(list.head_ != 0 && list.head_->id_ == 42);
+            assert(list.head_->next_ == list.head_ && list.head_->previous_ == list.head_);
+            assert(list.head_->payload_ != 0 && list.current_ == list.head_);
+            assert(list.entry_count_ == 1 && list.current_position_ == 0);
+        } else if (scenario == 1 || scenario == 3) {
+            assert(list.head_ == 0 && list.current_ == &sentinel);
+            assert(list.entry_count_ == 0 && list.current_position_ == 9);
+        } else {
+            assert(list.head_ != 0 && list.head_->id_ == 42);
+            assert(list.head_->next_ == list.head_ && list.head_->previous_ == list.head_);
+            if (scenario == 2) assert(list.head_->payload_ == 0);
+            assert(list.current_ == &sentinel);
+            assert(list.entry_count_ == 0 && list.current_position_ == 9);
+        }
+    } else {
+        if (scenario == 1) assert(old_tail.next_ == 0);
+        else if (scenario == 3) assert(old_tail.next_ == &old_head);
+        else assert(old_tail.next_ != &old_head);
+        assert(list.head_ == &old_head);
+        if (scenario == 0 || scenario == 2 || scenario == 4) {
+            assert(old_tail.next_ != &old_head);
+            AlphaNetLedgerEntry *added = old_tail.next_;
+            assert(added->previous_ == &old_tail && added->next_ == &old_head);
+            assert(old_head.previous_ == added && added->id_ == 42);
+            assert(list.current_ == added);
+            if (scenario == 0) {
+                assert(added->payload_ != 0 && list.entry_count_ == 3);
+                assert(list.current_position_ == 2);
+            } else {
+                if (scenario == 2) assert(added->payload_ == 0);
+                assert(list.entry_count_ == 2 && list.current_position_ == 7);
+            }
+        } else {
+            assert(list.current_ == &old_head && list.current_position_ == 7);
+        }
+    }
+    release_test_storage(); // Test-only raw cleanup; do not repair product links.
+}
+
+int main() {
+    for (int heap_route = 0; heap_route < 2; ++heap_route)
+        for (int nonempty = 0; nonempty < 2; ++nonempty)
+            for (int scenario = 0; scenario < 5; ++scenario)
+                run_add_case(nonempty, scenario, heap_route);
+}
+'''
+
+
 def _omit_dtor_cleanup_once(destructor: str) -> str:
     mutated, count = re.subn(
         r"\bremove_all\s*\(\s*\)\s*;\s*current_position_\s*=\s*0\s*;",
@@ -484,3 +806,13 @@ def test_lifetime_controls_reject_compilable_omission_and_owner_mutants(
     result = _compile_and_run(tmp_path, compiler, _harness(fragments),
                               "ledger_mutant_" + damage)
     assert result.returncode != 0, damage + " mutant escaped lifetime controls"
+
+
+@pytest.mark.parametrize("compiler_name", ("g++", "clang++"))
+def test_actual_add_allocation_failures_and_constructor_unwind(compiler_name, tmp_path):
+    compiler = shutil.which(compiler_name)
+    if compiler is None:
+        pytest.skip(f"{compiler_name} is unavailable")
+    source = ADD_ALLOCATION_FIXTURE.replace("ADD_BODY", actual_fragments()["add"])
+    result = _compile_and_run(tmp_path, compiler, source, "ledger_add_allocations")
+    assert result.returncode == 0, result.stdout + result.stderr
