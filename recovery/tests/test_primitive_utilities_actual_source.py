@@ -7,7 +7,7 @@ import subprocess
 
 import pytest
 from match_recovery import source
-from owner_transfer_test_support import assert_current_owner, assert_leaf_collection_retired
+from owner_transfer_test_support import current_record_by_address, assert_leaf_collection_retired
 
 ROOT = None
 for parent in Path(__file__).resolve().parents:
@@ -132,15 +132,12 @@ def compile_and_run(tmp_path: Path, definitions: str) -> subprocess.CompletedPro
 def test_migrated_source_has_complete_historical_identity_and_comment_continuity() -> None:
     assert GENERAL.is_file()
     assert_leaf_collection_retired(ROOT)
-    current_text = GENERAL.read_text(encoding="utf-8")
     old_text = baseline_source()
     old_rows = {row.address: row for row in source.read_text(old_text, LEAF)
                 if row.address in SIGNATURES}
-    current_rows = {row.address: row for row in source.read(GENERAL)
-                    if row.address in SIGNATURES}
+    current_rows = {address: current_record_by_address(ROOT, address)
+                    for address in SIGNATURES}
     assert set(old_rows) == set(SIGNATURES) == set(current_rows)
-    for address in SIGNATURES:
-        assert_current_owner(ROOT, address, "src/general.cpp")
     continuity_fields = ("name", "state", "mode", "image_spans", "kind",
                          "byte_exact", "semantic", "exclusion", "levers",
                          "ruled_out", "unrecoverable", "deferred")
@@ -149,7 +146,7 @@ def test_migrated_source_has_complete_historical_identity_and_comment_continuity
         for field in continuity_fields:
             assert getattr(current, field) == getattr(old, field), (hex(address), field)
         assert current.source_role is not source.SourceRole.SCAFFOLD
-        assert current.path == GENERAL
+        current_text = current.path.read_text(encoding="utf-8")
         old_symbol = old.symbol
         assert f"// historical scaffold emitted-symbol hint: {old_symbol}" in current_text
         assert actual_archived_envelope(current_text, address) == expected_archived_envelope(
@@ -161,27 +158,27 @@ def test_migrated_source_has_complete_historical_identity_and_comment_continuity
         assert "build/recovery/" not in current_rows[address].region
 
 
+def actual_bodies() -> str:
+    return "\n\n".join(
+        definition(current_record_by_address(ROOT, address).path.read_text(encoding="utf-8"),
+                   signature)
+        for address, signature in SIGNATURES.items())
+
+
 def test_actual_root_source_behavior(tmp_path: Path) -> None:
-    actual = GENERAL.read_text(encoding="utf-8")
-    bodies = "\n\n".join(definition(actual, signature)
-                          for signature in SIGNATURES.values())
-    result = compile_and_run(tmp_path, bodies)
+    result = compile_and_run(tmp_path, actual_bodies())
     assert result.returncode == 0, result.stderr.decode(errors="replace")
 
 
 def test_mutant_quotient_increment_condition_is_rejected(tmp_path: Path) -> None:
-    actual = GENERAL.read_text(encoding="utf-8")
-    bodies = "\n\n".join(definition(actual, signature)
-                          for signature in SIGNATURES.values())
+    bodies = actual_bodies()
     mutant, count = bodies.replace("if (remainder != 0)", "if (remainder > 0)", 1), bodies.count("if (remainder != 0)")
     assert count == 1
     assert compile_and_run(tmp_path, mutant).returncode != 0
 
 
 def test_mutant_remainder_quotient_write_order_is_rejected(tmp_path: Path) -> None:
-    actual = GENERAL.read_text(encoding="utf-8")
-    bodies = "\n\n".join(definition(actual, signature)
-                          for signature in SIGNATURES.values())
+    bodies = actual_bodies()
     before = ("    *remainder_out = remainder;\n"
               "    if (remainder != 0) {\n"
               "        ++quotient;\n"
@@ -198,9 +195,7 @@ def test_mutant_remainder_quotient_write_order_is_rejected(tmp_path: Path) -> No
 
 
 def test_mutant_exclusive_left_edge_is_rejected(tmp_path: Path) -> None:
-    actual = GENERAL.read_text(encoding="utf-8")
-    bodies = "\n\n".join(definition(actual, signature)
-                          for signature in SIGNATURES.values())
+    bodies = actual_bodies()
     mutant, count = bodies.replace("if (x < left", "if (x <= left", 1), bodies.count("if (x < left")
     assert count == 1
     assert compile_and_run(tmp_path, mutant).returncode != 0

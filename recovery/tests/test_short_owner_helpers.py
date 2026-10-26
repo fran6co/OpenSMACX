@@ -4,6 +4,7 @@ import shutil
 import subprocess
 import pytest
 from match_recovery.source import read_file
+from owner_transfer_test_support import current_record_by_address
 from test_game_logic_seed_batch_behavior import _definition
 
 ROOT=Path(__file__).resolve().parents[2]
@@ -11,12 +12,17 @@ ROWS=(('statuswin',0x50f630,'void __stdcall sub_50f630('),
       ('diplopop',0x539970,'void __cdecl sub_539970('),
       ('netdaemon',0x593370,'void __cdecl sub_593370('),
       ('netdaemon',0x593480,'void __cdecl sub_593480('),
-      ('general',0x584d30,'char *__cdecl sub_584d30('))
+      (0x584d30,'char *__cdecl sub_584d30('))
 
 def actual_bodies():
     bodies=[]
-    for owner,address,signature in ROWS:
-        record=next(r for r in read_file(ROOT/('src/'+owner+'.cpp')) if r.address==address)
+    for item in ROWS:
+        if len(item) == 3:
+            owner,address,signature = item
+            record=next(r for r in read_file(ROOT/('src/'+owner+'.cpp')) if r.address==address)
+        else:
+            address,signature = item
+            record=current_record_by_address(ROOT,address)
         assert record.region and 'BODY GOES HERE.' not in record.region
         bodies.append(_definition(record.region,signature))
     return '\n'.join(bodies)

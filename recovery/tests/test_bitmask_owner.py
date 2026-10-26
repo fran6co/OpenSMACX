@@ -9,6 +9,7 @@ import subprocess
 import pytest
 
 from match_recovery.source import read_file
+from owner_transfer_test_support import current_record_by_address
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -30,7 +31,8 @@ def _definition(text: str, signature: str) -> str:
 
 def test_bitmask_owner_and_two_argument_facility_predicate_are_direct():
     header = (ROOT / "src/general.h").read_text(encoding="utf-8")
-    owner = (ROOT / "src/general.cpp").read_text(encoding="utf-8")
+    mapped = current_record_by_address(ROOT, 0x0050BA00)
+    owner = mapped.path.read_text(encoding="utf-8")
     base_header = (ROOT / "src/base.h").read_text(encoding="utf-8")
     base_source = (ROOT / "src/base.cpp").read_text(encoding="utf-8")
     sources = [
@@ -67,11 +69,8 @@ def test_bitmask_owner_and_two_argument_facility_predicate_are_direct():
     assert "return (Bases[base_id].facilities_built[offset] & mask) != 0;" in two_arg
     assert "bitmask(facility_id, &offset, &mask);" in two_arg
 
-    mapped, = [row for row in read_file(ROOT / "src/general.cpp")
-               if row.address == 0x0050BA00]
     assert mapped.image_spans == ((0x0050BA00, 0x0050BA27),)
     assert mapped.extract_error == ""
-    assert mapped.path == ROOT / "src/general.cpp"
     assert BITMASK_SIGNATURE in mapped.region
 
     build = _definition(base_source, "int __cdecl base_build(")
@@ -103,7 +102,8 @@ def test_actual_bitmask_and_facility_predicate_alias_contract(compiler_name, tmp
     compiler = shutil.which(compiler_name)
     if compiler is None:
         pytest.skip(f"{compiler_name} is unavailable")
-    owner = (ROOT / "src/general.cpp").read_text(encoding="utf-8")
+    mapped = current_record_by_address(ROOT, 0x0050BA00)
+    owner = mapped.path.read_text(encoding="utf-8")
     base_header = (ROOT / "src/base.h").read_text(encoding="utf-8")
     base_source = (ROOT / "src/base.cpp").read_text(encoding="utf-8")
     bitmask = _definition(owner, BITMASK_SIGNATURE)
@@ -192,8 +192,7 @@ def test_pinned_bitmask_owner_and_direct_caller():
     image = PeImage(image_path.read_bytes(), image_pin(ROOT))
     decoder = Cs(CS_ARCH_X86, CS_MODE_32)
     decoder.detail = True
-    mapped, = [row for row in read_file(ROOT / "src/general.cpp")
-               if row.address == 0x0050BA00]
+    mapped = current_record_by_address(ROOT, 0x0050BA00)
     low, high = mapped.image_spans[0]
     instructions = list(decoder.disasm(image.read(Span(low, high)), low))
     cursor = low

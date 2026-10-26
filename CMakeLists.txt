@@ -166,6 +166,8 @@ set(OPENSMACX_SOURCES
     src/interface_fonts.cpp
     src/game.cpp
     src/newgame.cpp
+    src/application_math.cpp
+    src/application_text.cpp
     src/general.cpp
     src/number_parsing.cpp
     src/scenario_undo.cpp
@@ -588,6 +590,10 @@ set_source_files_properties(src/time.cpp
 # Preserve the measured frame-based contexts of the shared stream wrappers.
 # General's unrelated helpers retain their independently measured default recipe.
 set_source_files_properties(src/header_io.cpp src/crt_random.cpp
+    PROPERTIES COMPILE_OPTIONS "/Oy-")
+# Application arithmetic and text utilities use the established frame profile.
+# The remaining General helpers retain their existing source recipe.
+set_source_files_properties(src/application_math.cpp src/application_text.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Only the CPU register probe uses the explicitly registered intrinsic frontend.
 # The rest of Caviar and the application continue to use their VC6 recipes.
