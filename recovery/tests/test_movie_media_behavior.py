@@ -267,6 +267,21 @@ def test_current_actual_media_bodies() -> None:
     assert result.returncode == 0, result.stdout + result.stderr
 
 
+def test_setup_sound_device_rejects_cached_entry_descriptor_mutant() -> None:
+    edits = (
+        (
+            "MediaDescriptor *current_descriptor = descriptor;",
+            "MediaDescriptor *current_descriptor = entry_descriptor;",
+        ),
+        ("current_descriptor = descriptor;",
+         "current_descriptor = entry_descriptor;"),
+        ("current_descriptor = descriptor;",
+         "current_descriptor = entry_descriptor;"),
+    )
+    result = build_and_run(edits)
+    assert result.returncode != 0, result.stdout + result.stderr
+
+
 @pytest.mark.parametrize(
     "old,new",
     [

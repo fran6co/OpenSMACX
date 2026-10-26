@@ -1,0 +1,28 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "9a734bec0b72d9abbb21a55f812a06647513987f",
+  "editable_files": [
+    "src/movie_media.cpp"
+  ],
+  "evidence": [
+    "Independent pinned-code/qualified-COFF/source review supplies one fixed candidate per selected original function. At most three per unchanged context; preserve interfaces, layouts, original annotations/claims and unsafe/error behavior.",
+    "Actual original descriptor reload/callback-width evidence is recovery fidelity, not permission for unrelated safer behavior. Structural findings must persist and scopes expand before edits.",
+    "Native positive replica and all-TU/outside checks precede materialization; genuine fidelity fixes continue even when still non-exact. Relevant behavior/damage controls, full build/link and independent review required before manual integration. No automatic/full-game acceptance."
+  ],
+  "intent": "Measure bounded faithful media recovery, including pinned callback-owner reloads and original callback-width behavior where explicitly supported.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6087488,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6077152,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "media-live-owner-oct26ch"
+}
