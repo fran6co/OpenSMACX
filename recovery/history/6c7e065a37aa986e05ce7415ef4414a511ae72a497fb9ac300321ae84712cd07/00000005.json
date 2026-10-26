@@ -1,0 +1,19 @@
+{
+  "event_id": "431544d8ba0ee652e138c0cd582e89097d3d4f5583878459dbed5612b0ea8810",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/fixtures/texture_sub61f0d0_actual_host.cpp"
+    ],
+    "evidence": [
+      "Expanded root callback/raster test cohort exposed 26 host compilation failures: this shared transparency fixture still declares static int &cell_slot_494 against the now-evidenced unsigned byte global. Authorize only the alias type update to unsigned char&, preserving all actual-source, member/clip/remap and damage controls. No application source, compiler policy, historical identities, task baseline or acceptance prerequisite changes."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "c5f5c8d389cd8ac9b7a96350d81d9f91afafb41fef327ab71e0b37c3e68ec69b",
+  "request_id": "coordinator-trans-host-byte-alias-oct26dy",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:texture-byte-fields-oct26dw"
+}
