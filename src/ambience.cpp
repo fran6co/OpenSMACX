@@ -386,6 +386,7 @@ UAmbience::UAmbience() {}
 // RECOVERY_BINDING: v1 {"evidence": ["git:f7bbce35:src/recovered/units/004478d0.cpp", "src/ambience.h", "src/midi.h", "git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/004478d0.cpp"], "reason": "Original audio event tables and compiler-call contracts identify this genuine owner operation; compatible historical seeds and matching obligations remain retained, not an acceptance verdict. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
 // kind      game
 // symbol    ??0BAmbience@@QAE@XZ
+// RECOVERY_GENERATED: v1 vtable 0x0066B9F0 0x0066BB58 ??_7BAmbience@@6B@ 0x004478D0
 BAmbience::BAmbience() {
     field_70_ = 1;
     field_74_ = 0;
@@ -870,6 +871,7 @@ Purpose: Run the shared Ambience constructor, publish this variant's vtable,
 Return Value: `this`
 Status: Complete
 */
+// RECOVERY_GENERATED: v1 vtable 0x0066C0F8 0x0066C260 ??_7FactionAmbience@@6B@ 0x004471F0
 FactionAmbience::FactionAmbience() {
     // The LEVER/construct-method notes above describe the retired spelling;
     // the compiler now owns base construction, table staging and unwinding.
