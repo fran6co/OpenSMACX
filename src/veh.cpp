@@ -9855,7 +9855,7 @@ void __cdecl action_gate(int veh_id, int base_id) {
     draw_tile(Bases[base_id].x, Bases[base_id].y, 2);
 
     if (veh_id == ConsoleGlobal.selected_vehicle_) {
-        ConsoleGlobal.focus(veh_x, veh_y, Vehs[veh_id].faction_id);
+        ConsoleGlobal.focus(Vehs[veh_id].x, Vehs[veh_id].y, Vehs[veh_id].faction_id);
     }
 }
 
