@@ -857,16 +857,16 @@ Status: Complete
 // symbol    ?pass_dialog_focus@Dialogs@@UAEXXZ
 void Dialogs::pass_dialog_focus() {
     switch (kind_) {
-    case 1:
+    case 16:
         GraphicWin::pass_dialog_focus();
         break;
     case 2:
         GraphicWin::pass_dialog_focus();
         break;
-    case 8:
+    case 1:
         GraphicWin::pass_dialog_focus();
         break;
-    case 16:
+    case 8:
         GraphicWin::pass_dialog_focus();
         break;
     case 4:
