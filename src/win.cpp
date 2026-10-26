@@ -188,6 +188,7 @@ Status: Complete
 // `list_`'s own implicit construction (vfptr first, then its four fields)
 // and 0x005EB402 installs Win's vfptr - both emitted by the declarations,
 // which is why neither appears below.
+// RECOVERY_GENERATED: v1 vtable 0x0066FF30 ? ??_7WinNodeList@@6B@ 0x005EB3D0
 Win::Win() {
     const uint32_t *const fixed = WinStaticDefaults;
     const WinDynamicDefaultsTable *const dynamic = &WinDynamicDefaults;

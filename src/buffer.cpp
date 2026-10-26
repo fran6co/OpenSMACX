@@ -821,6 +821,7 @@ unsigned char *Buffer::get_data(int x, int y) {
     return 0;
 }
 
+// RECOVERY_GENERATED: v1 vtable 0x0066FDBC ? ??_7Buffer@@6B@ 0x005D7210
 Buffer::Buffer() {
     // `spot_` is constructed ahead of this body by declaration order, and
     // the vtable store the image makes here is the compiler's, not source.
