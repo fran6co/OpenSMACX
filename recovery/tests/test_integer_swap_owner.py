@@ -8,6 +8,7 @@ import subprocess
 import pytest
 
 from match_recovery.source import read_file
+from owner_transfer_test_support import current_record_by_address
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -74,12 +75,12 @@ def test_integer_swap_is_owned_out_of_line_and_adapters_are_gone():
     assert "body      src/general.cpp" in mapped.region
     assert SWAP_SIGNATURE in mapped.region
 
+    for address in (0x005A58E0, 0x00422F00):
+        record = current_record_by_address(ROOT, address)
+        assert record.address == address
+        assert record.body == "src/general.h"
+        assert record.image_spans
     source_facts = (ROOT / "src/general.cpp").read_text(encoding="utf-8")
-    for address in ("0x005A58E0", "0x00422F00"):
-        start = source_facts.index("// ORIGINAL: " + address)
-        next_record = source_facts.find("// ORIGINAL: ", start + 1)
-        record = source_facts[start: next_record if next_record >= 0 else len(source_facts)]
-        assert "// body      src/general.h" in record
     assert "// BODY IN general.h" in source_facts
 
 

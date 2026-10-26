@@ -86,112 +86,9 @@ int GenderDefault;       // 0x009BBFEC
 // RECOVERY_OBJECT: v2 0x009BBFF0 0x009BBFF4 ?PluralityDefault@@3HA 0x0055D190
 BOOL PluralityDefault;   // 0x009BBFF0
 
-/*
-Purpose: Divide, rounding the quotient AWAY from zero when there is a
-         remainder, and report both.
-
-             mov eax,ecx / cdq / idiv esi / mov edx,eax / imul edx,esi
-             sub ecx,edx / mov [edx],ecx / je zero / inc eax / mov [ecx],eax
-             ret 0x10   zero: mov [edx],eax / ret 0x10
-
-         The `je` is three instructions after the `sub` that sets it, with two
-         `mov`s and a `pop` in between - none of which touch flags. It tests
-         whether the REMAINDER was zero, not anything nearer to it.
-
-         `idiv` truncates toward zero, so the +1 rounds away from zero rather
-         than up: -7 by 2 gives a remainder of -1 and a quotient of -3, which
-         becomes -2. Both traps of the original are kept, because both
-         spellings go through one division: a zero divisor and INT_MIN / -1.
-
-// HISTORICAL scaffold role: SCAFFOLD Transitional leaf collection, not completed genuine owner recovery; preserve body evidence during owner migration.
-// ORIGINAL: 0x00532A50 sub_532a50 0x00532A50-0x00532A81 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned terranx_original.exe SHA-256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf at 0x00532A50: decoded complete span accesses only explicit stack arguments, without an ECX receiver or object storage.", "Source-owned general utility implementation; current source family placement does not establish the original translation unit.", "Whole file-backed PE examination found no HIGHLOW operand or raw E8-relative target for this entry; indirect calls and non-relocated references remain unresolved."], "reason": "Own the primitive-only operation as a complete source-level general utility. No class, global, object layout, or original source-TU identity is claimed."}
-// symbol    ?divide_and_increment_quotient_if_remainder@@YGHHPAH0H@Z
-// historical original marker: 0x00532A50 sub_532a50 0x00532A50-0x00532A81 BYTE_EXACT
-// historical scaffold emitted-symbol hint: ?leaf_00532a50_redirect@@YGHHPAH0H@Z
-// size      49 bytes
-// prototype
-// callers   0   call targets   0
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: the quotient that was stored
-Status: Complete
-*/
-// HISTORICAL correction: the former prose called this away-from-zero; that label was inaccurate.
-// Preserve the exact operation below: truncating IDIV quotient, remainder store, then quotient increment on any nonzero remainder.
 
 
-int __stdcall divide_and_increment_quotient_if_remainder(int value, int *quotient_out,
-                                     int *remainder_out, int divisor) {
-    // Increment the quotient IN PLACE. A `rounded` temp - whether built by a
-    // ternary or by an `if` - keeps one more value live, and VC6 then stops
-    // spilling the divisor to esi, which is the `push` at index 3.
-    int quotient = value / divisor;
-    const int remainder = value - quotient * divisor;
-    *remainder_out = remainder;
-    if (remainder != 0) {
-        ++quotient;
-    }
-    *quotient_out = quotient;
-    return quotient;
-}
 
-/*
-Purpose: Is a point inside an inclusive rectangle?
-
-             mov eax,[ebp+8] / mov ecx,[ebp+0x10] / cmp eax,ecx / jl no
-             cmp eax,[ebp+0x18] / jg no / mov eax,[ebp+0xc]
-             mov ecx,[ebp+0x14] / cmp eax,ecx / jl no / cmp eax,[ebp+0x1c]
-             jg no / mov eax,1 / ret     no: xor eax,eax / ret
-
-         Six arguments in the order x, y, left, top, right, bottom - the two
-         coordinates first and the bounds interleaved after, which is not the
-         (left, top, right, bottom, x, y) an eye expects.
-
-         `jl` and `jg` are SIGNED, and both bounds are INCLUSIVE: a point
-         exactly on an edge is inside.
-
-// HISTORICAL scaffold role: SCAFFOLD Transitional leaf collection, not completed genuine owner recovery; preserve body evidence during owner migration.
-// ORIGINAL: 0x00592DB0 sub_592db0 0x00592DB0-0x00592DDC BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned terranx_original.exe SHA-256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf at 0x00592DB0: decoded complete span accesses only explicit stack arguments, without an ECX receiver or object storage.", "Source-owned general utility implementation; current source family placement does not establish the original translation unit.", "Whole file-backed PE examination found no HIGHLOW operand or raw E8-relative target for this entry; indirect calls and non-relocated references remain unresolved."], "reason": "Own the primitive-only operation as a complete source-level general utility. No class, global, object layout, or original source-TU identity is claimed."}
-// symbol    ?point_in_inclusive_rect@@YAHHHHHHH@Z
-// historical original marker: 0x00592DB0 sub_592db0 0x00592DB0-0x00592DDC BYTE_EXACT
-// historical scaffold emitted-symbol hint: ?leaf_00592db0_redirect@@YAHHHHHHH@Z
-// size      44 bytes
-// prototype
-// callers   0   call targets   0
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: 1 when inside, 0 otherwise
-Status: Complete
-*/
-
-int __cdecl point_in_inclusive_rect(int x, int y, int left, int top,
-                                   int right, int bottom) {
-    if (x < left || x > right) {
-        return 0;
-    }
-    if (y < top || y > bottom) {
-        return 0;
-    }
-    return 1;
-}
-
-
-// Read a script section into the shared substitution buffer. The text
-// reader owns TextBufferGetPtr; parse_string supplies the substitutions.
-// Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x0048C060 ?parse_it@@YAXPADPBD@Z 0x0048C060-0x0048C099 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned48C060..48C099 clears StringTemp9B86A0, calls X_text_open5BECA0, then text_get5FD570 and parse_string625880(TextBufferGetPtr9B7D00,StringTemp) on success.", "src/recovered/units/0048c060.cpp retains this same original identity, complete57-byte span and historical BYTE_EXACT claim; Quayle redraw4956D0 passes Holobook filename and BOOKTITLE/BOOKINTRO/BOOKLIST section names."], "reason": "Recover the filename/section wrapper using the real shared text and substitution owners; the existing seed retains its historical matching obligation."}
-void __cdecl parse_it(char *file_name, const char *section) {
-    StringTemp[0] = 0;
-    if (X_text_open(file_name, section) == 0) {
-        text_get();
-        parse_string(TextBufferGetPtr, StringTemp);
-    }
-}
 
 /*
 Purpose: Trim the trailing spaces in-line from the end of the string.
@@ -369,23 +266,6 @@ void __cdecl add_lf(LPSTR str) {
     *end = '\0';
 }
 
-/*
-Purpose: Use the min and max parameters to bound the input.
-// ORIGINAL: 0x00422F00 ?range@@YAHHHH@Z 0x00422F00-0x00422F1E BYTE_EXACT
-// body      src/general.h
-// size      30 bytes
-// prototype int (__cdecl ?range@@YAHHHH@Z)(int input, int min, int max)
-// callers   10   call targets   0
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: Bounded input
-Status: Complete
-*/
-// BODY IN general.h, as `MEASURED inline`: the image writes it out at
-// some call sites and calls it at others, and a .cpp definition is only ever
-// one of those. The marker stays here because that is where the catalogue
-// reads it.
 MEASURED void __cdecl swap(uint8_t *var1, uint8_t *var2) {
     *var1 ^= *var2;
     *var2 ^= *var1;
@@ -450,25 +330,6 @@ FILE *__cdecl env_open(LPCSTR source, LPCSTR mode) {
     fopen_s(&file_out, src_check, mode);
     return file_out;
 }
-
-/*
-Purpose: Set the global gender and plurality variables used by various parse functions.
-// ORIGINAL: 0x005A58E0 ?parse_set@@YAXHH@Z 0x005A58E0-0x005A58F6 BYTE_EXACT
-// body      src/general.h
-// size      22 bytes
-// prototype 
-// callers   1   call targets   0
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-// BODY IN general.h, as `MEASURED inline`: the image writes it out at
-// some call sites and calls it at others, and a .cpp definition is only ever
-// one of those. The marker stays here because that is where the catalogue
-// reads it.
-
 
 /*
 Purpose: Copies the value into a number global message buffer using id.
@@ -1491,28 +1352,6 @@ int __cdecl quick_root(int input) {
     return sq_root;
 }
 
-/*
-Purpose: Calculate the offset and bitmask for the specified input.
-// ORIGINAL: 0x0050BA00 ?bitmask@@YAXHPAHPAH@Z 0x0050BA00-0x0050BA27 BYTE_EXACT
-// symbol    ?bitmask@@YAXHPAH0@Z
-// size      39 bytes
-// prototype void (__cdecl ?bitmask@@YAXHPAHPAH@Z)(int input, int* offset, int* mask)
-// callers   103   call targets   0
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-// Pinned 0x50BA00..0x50BA27 performs signed /8, then writes offset before
-// the mask. The by-value input preserves callers that alias an out slot.
-// Original mapped callers use this shared utility; the older header-inline
-// policy was not supported by positive inline evidence.
-void __cdecl bitmask(int input, int *offset, int *mask) {
-    const int shift = input & 7;
-    *offset = input / 8;
-    *mask = 1 << shift;
-}
 
 
 /*
@@ -4437,14 +4276,6 @@ void __cdecl enemy_turn(int faction_id) {
     PlayersData[faction_id].flags &= ~PFLAG_UNK_10000;
 }
 
-// ORIGINAL: 0x00584D30 sub_584d30 0x00584D30-0x00584D52 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:5167ec56aaa9031de73f42c05fbc3bdd0bad0201:src/recovered/00584d30.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x584d30 complete original body; independent source-owner review.", "source:src/general.cpp and corresponding header own real receiver/dependencies; count-zero copy underflow is intentionally unchanged."], "reason": "Complete typed application helper; retain original call ordering, argument contract and historical obligation."}
-// symbol    ?sub_584d30@@YAPADPAD0I@Z
-char *__cdecl sub_584d30(char *dest, char *src, unsigned int count) {
-    char *result = strncpy(dest, src, count);
-    dest[count - 1] = 0;
-    return result;
-}
 
 // ORIGINAL: 0x005391A0 sub_5391a0 0x005391A0-0x005391C0 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:f178e8db:src/recovered/005391a0.cpp complete original identity/spans and historical claims/findings.", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x5391a0 full native body review.", "source:src/general.cpp existing real state owners; no executable-address alias or synthetic receiver."], "reason": "Recover the complete short helper through established source-owned diplomacy, vehicle, text or window state; preserve signed sentinel behavior, original receiver/argument order and conditional callbacks."}

@@ -4,11 +4,11 @@ import shutil
 import subprocess
 
 import pytest
+from owner_transfer_test_support import current_record_by_address
 
 
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "src/quaylewin.cpp"
-GENERAL = ROOT / "src/general.cpp"
 
 
 def extract_function(source: str, signature: str) -> str:
@@ -132,7 +132,8 @@ def test_parse_it_dispatches_filename_section_and_clears_destination(tmp_path):
     compiler = shutil.which("g++")
     if not compiler:
         pytest.skip("host C++ compiler unavailable")
-    production = extract_function(GENERAL.read_text(), "void __cdecl parse_it(char *file_name")
+    record = current_record_by_address(ROOT, 0x0048C060)
+    production = extract_function(record.region, "void __cdecl parse_it(char *file_name")
     harness = r"""
 #include <cassert>
 #include <cstring>

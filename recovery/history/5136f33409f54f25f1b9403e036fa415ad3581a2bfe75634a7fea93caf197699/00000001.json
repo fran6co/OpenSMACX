@@ -1,0 +1,68 @@
+{
+  "event_id": "83ec5b048b6286de0000244e102b66f3491de6eced0302ed9134a7d4cb393085",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "CMakeLists.txt",
+      "recovery/project.json",
+      "recovery/tests/owner_transfer_test_support.py",
+      "recovery/tests/test_bitmask_owner.py",
+      "recovery/tests/test_integer_swap_owner.py",
+      "recovery/tests/test_primitive_utilities_actual_source.py",
+      "recovery/tests/test_quaylewin_behavior.py",
+      "recovery/tests/test_short_owner_helpers.py",
+      "src/application_math.cpp",
+      "src/application_text.cpp"
+    ],
+    "evidence": [
+      "Coordinator authorizes coherent arithmetic and application-text source ownership using the existing General public interface, with unchanged function bodies, signatures, shared storage and general.h. Four arithmetic identities move to application_math.cpp; three text identities move to application_text.cpp. Complete source records and useful history travel with them.",
+      "Whole-owner advisory compiler evidence gives seven local restorations under the established frame profile and twenty-three losses if applied indiscriminately. Restrict the frame recipe to the two new application units and preserve general.cpp and all unrelated compiler/linker policies. New-TU actual measurements remain required.",
+      "This is current reconstruction organization, not proof of historical filenames, translation-unit boundaries, library archive membership, retained selection or full-game acceptance. Existing MEASURED/header emission debt is not waived and no new forcing is authorized.",
+      "Original task baseline remains02c6b6b0049807d61f876f23f303079172dca827; current integration targeta363753a009020fe0e1ac38581a5dfb5bcd2f355 is retained separately. General source, interface and compiler context were unchanged across that unrelated integrated batch.",
+      "Adapt only listed actual-source host controls to unique native source identity lookup. The historical General whole-file inverse already fails four controls on parent; preserve its failure evidence and do not grow a new source-spelling mirror or relax its assertions in this step."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5450320,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5844400,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4337408,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5290496,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4767840,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5920992,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5786928,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "general-application-utility-owners",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:general-easy-oct26ex"
+}
