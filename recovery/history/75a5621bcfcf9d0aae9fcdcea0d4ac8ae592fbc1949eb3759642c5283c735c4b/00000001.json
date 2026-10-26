@@ -1,0 +1,24 @@
+{
+  "event_id": "e2d9c8ee8e688054b81db9f5e1c76a5448be4a6ed00f5678fd683ccbdb715c71",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "New short-MISMATCH context independently proves removed original_seam.h C++ declarations from the prior input receipt; pinned current original and fresh physical COFF are in easy-small-context-oct26df/group-*.json. One complete ordinary candidate Buffer::wrap_height_flying original0x005DDDA0 SHA256a2b3fdc15e08ac9cb8fbcccbdca7ff16317178ad63ce5daeec53bc9398c84d7b.",
+      "Private body overlay only, no actual source/mapping/claim publication or compiler policy changes. Maximum3 compiler attempts/function/context, currently one candidate. Preserve original initialization/alias/overflow/error and floating operand effects; only a fully exact appropriate native result and actual-source review can support later publication. Every outside exact and scope obligation remains."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6151584,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "authorize-short-wrap-height-context",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:near-header-buffer-oct26de"
+}
