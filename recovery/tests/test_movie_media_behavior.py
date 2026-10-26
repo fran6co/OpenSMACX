@@ -302,8 +302,8 @@ def test_setup_sound_device_rejects_cached_entry_descriptor_mutant() -> None:
             "format.nSamplesPerSec = 44100;",
         ),
         (
-            "d.play_buffer->SetFrequency(playback_frequency);",
-            "d.play_buffer->SetVolume(d.volume_argument);",
+            "descriptor->play_buffer->SetFrequency(playback_frequency);",
+            "descriptor->play_buffer->SetVolume(descriptor->volume_argument);",
         ),
     ],
 )

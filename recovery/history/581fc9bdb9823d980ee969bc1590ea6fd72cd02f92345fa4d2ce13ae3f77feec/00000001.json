@@ -1,0 +1,21 @@
+{
+  "event_id": "881e9f57922f0e31cecae8b68cb7a8e55f2482a2d605640208eb7e854b316bf5",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_media_create_playback_descriptor_reload.py",
+      "recovery/tests/test_media_live_poll_oct26.py",
+      "recovery/tests/test_media_live_producer_oct26.py"
+    ],
+    "evidence": [
+      "Add actual-source host controls that expose pin-observed receiver read boundaries; callbacks are controls, not mutation claims."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "source-owner-callback-controls",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:media-owner-oct26cn"
+}
