@@ -369,23 +369,30 @@ void ProdPicker::on_scrolled(int, int position) {
     if (newPosition < oldPosition) {
         set_clip(&rect2_);
         copy(this, 0x15, 4, 0x15, row_height_ + 4,
-             cell_width_ * pageSize + 4,
+             cell_width_ * column_count_ + 4,
              (static_cast<int>(field_A814_) - 1) * row_height_
                  + 4 + row_height_ - (row_height_ + 4));
 
-        int first = static_cast<int>(field_A77C_);
-        const int end = column_count_ + field_A77C_;
-        while (first < end) draw_item(first++, 0);
+        int item = static_cast<int>(field_A77C_);
+        while (item < static_cast<int>(field_A77C_
+                                      + static_cast<uint32_t>(column_count_))) {
+            draw_item(item, 0);
+            ++item;
+        }
     } else if (newPosition != oldPosition) {
         set_clip(&rect2_);
         copy(this, 0x15, row_height_ + 4, 0x15, 4,
-             cell_width_ * pageSize + 4,
+             cell_width_ * column_count_ + 4,
              (static_cast<int>(field_A814_) - 1) * row_height_);
 
-        const int first = (static_cast<int>(field_A814_) - 1) * pageSize
+        const int first = (static_cast<int>(field_A814_) - 1) * column_count_
             + static_cast<int>(field_A77C_);
-        const int end = first + column_count_;
-        for (int item = first; item < end; ++item) draw_item(item, 0);
+        int item = first;
+        while (item < static_cast<int>(static_cast<uint32_t>(first)
+                                      + static_cast<uint32_t>(column_count_))) {
+            draw_item(item, 0);
+            ++item;
+        }
     }
     soft_update();
 }
