@@ -72,7 +72,7 @@ int ProdPicker::edbc_fac(int facility_id) {
         return 2;
     }
 }
-
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00493AF0 0x00493B4C 0x00493B70 0x00493B2B
 // The original 0x009AB892/+0x009AB898 reads are plan and flags members of
 // the 0x34-byte VehPrototypes entries, not independent address constants.
 // ORIGINAL: 0x00493AF0 ?edbc_unit@ProdPicker@@QAEHH@Z 0x00493AF0-0x00493B4A FILE BYTE_EXACT
