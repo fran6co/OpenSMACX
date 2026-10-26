@@ -1,0 +1,24 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "168c6cb5aa814466767c747e1365e33fb9ae4a9b",
+  "editable_files": [
+    "src/tutwin.cpp",
+    "recovery/tests/test_tutwin_map_snapshot_actual_source.py"
+  ],
+  "evidence": [
+    "Pinned4BE68F loads focus receiver;4BE6A4 reloads after focus;4BE6B1 reloads after the first tile conversion;4BE765 reloads after optional arrow conversion. Proposal preserves the last loaded pointer for offsets/bounds/owner, without inventing runtime pointer replacement evidence.",
+    "Current native root baseline 168c6cb5aa814466767c747e1365e33fb9ae4a9b with image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf. One new semantic candidate; no repeat of historical initializer spelling experiments. Source line count retained through ordinary call/return wrapping, with no padding or compiler/gate change.",
+    "Coordinator owns source/Git publication. Only authorized test may be edited by worker. Preserve all source identities, spans, historical claims and original quirks. Build/scoped comparisons and manual review do not prove full linked selection, runtime or game acceptance."
+  ],
+  "intent": "Restore TutWin tutorial-map receiver reloads across focus and tile conversions. Preserve original coordinate snapshots, arrow wrapping checks using adjusted coordinates but conversion using original arrow_x, unchecked global dereferences and last-reloaded GraphicWin owner.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4974160,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "tutwin-map-oct26en"
+}
