@@ -1,0 +1,25 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "9a734bec0b72d9abbb21a55f812a06647513987f",
+  "editable_files": [
+    "src/game.cpp",
+    "src/log.cpp"
+  ],
+  "evidence": [
+    "Pinned 51E74D calls independently mapped log_say_hex6263F0; current same-TU visibility inlines that logger body into the application formatter. The formatter uses the application BufferJoinSpace API and existing game message owner declarations.",
+    "Move the entire existing original mapping/comment envelope and unchanged function body from log.cpp beside display_player_messages in game.cpp. Existing includes/publicdecls close the scope. This is supported semantic source ownership, not proof of historical TU boundaries.",
+    "Preserve all identities/spans/claims/discoveries, unsafe strcat/fixed-buffer behavior, original publicnames and source objects. No headers/CMake/compiler/linker policy/noinline changes. The existing production recipes differ naturally; quantify both objects and all affected localverdicts.",
+    "One immutable source migration with fresh native positive controls, full outside-scope code/data comparison and independent review. Full build/link, claim/source/mapping/reference continuity and destinationrecheck required before manualintegration; no automatic/fullgame acceptance."
+  ],
+  "intent": "Restore the original callable boundary between the application message formatter and reusable Log API without compiler directives or behavior changes.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5367536,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "app-log-boundary-oct26cc"
+}
