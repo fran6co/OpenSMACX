@@ -686,17 +686,16 @@ class BasePop : public GraphicWin {
   uint32_t button_color_d_;   // 0x3194 = ButtonColors[3][0]
   uint32_t button_color_2d_;  // 0x3198 = ButtonColors[3][1]
   uint32_t button_color_3d_;  // 0x319c = ButtonColors[3][2]
-  // THE 0x31A0 ROW, from BasePopDefaultField31A0 = {247, 7, 248, 2} at
-  // 0x00696F54: the first dword's low byte lands at 0x31a0 and the other
-  // three dwords at 0x31a4/0x31a8/0x31ac. The three bytes 0x31a1..0x31a3 are
-  // never written, so they stay zero from the ctor.
-  uint8_t field_31A0_;   // 0x31a0 = (uint8_t)Field31A0[0] = 247
+  // THE 0x31A0 ROW, from BasePopButtonDefaults at 0x00696F54: one byte
+  // button color followed by the three dword bevel defaults. The three
+  // bytes 0x31a1..0x31a3 are not accessed by the pinned code.
+  uint8_t field_31A0_;   // 0x31a0 = button_color = 247
   uint8_t field_31A1_;   // 0x31a1
   uint8_t field_31A2_;   // 0x31a2
   uint8_t field_31A3_;   // 0x31a3
-  uint32_t field_31A4_;  // 0x31a4 = Field31A0[1] = 7
-  uint32_t field_31A8_;  // 0x31a8 = Field31A0[2] = 248
-  uint32_t field_31AC_;  // 0x31ac = Field31A0[3] = 2
+  uint32_t field_31A4_;  // 0x31a4 = bevel_upper = 7
+  uint32_t field_31A8_;  // 0x31a8 = bevel_lower = 248
+  uint32_t field_31AC_;  // 0x31ac = bevel_thickness = 2
   uint32_t field_31B0_;  // 0x31b0 = BasePopDefaultField31B0[0]
   uint32_t field_31B4_;  // 0x31b4 = BasePopDefaultField31B0[1]
   // Nine groups of three borrowed Sprite pointers. Constructor/close copy
@@ -778,7 +777,26 @@ extern Font *BasePopDefaultButtonFonts[3];  // 0x009B8DA8
 extern Sprite *BasePopDefaultBlock31B8[27];
 extern uint32_t BasePopDefaultField21C0[2];
 extern uint32_t BasePopDefaultField3104[3];
-extern uint32_t BasePopDefaultField31A0[4];
+struct BasePopButtonStyle {
+  uint8_t button_color;
+  uint8_t unresolved_31A1_[3];
+  uint32_t bevel_upper;
+  uint32_t bevel_lower;
+  uint32_t bevel_thickness;
+};
+static_assert(sizeof(BasePopButtonStyle) == 0x10,
+              "BasePop button-style defaults size");
+static_assert(offsetof(BasePopButtonStyle, button_color) == 0x00,
+              "BasePop button color offset");
+static_assert(offsetof(BasePopButtonStyle, unresolved_31A1_) == 0x01,
+              "BasePop unresolved bytes offset");
+static_assert(offsetof(BasePopButtonStyle, bevel_upper) == 0x04,
+              "BasePop upper bevel offset");
+static_assert(offsetof(BasePopButtonStyle, bevel_lower) == 0x08,
+              "BasePop lower bevel offset");
+static_assert(offsetof(BasePopButtonStyle, bevel_thickness) == 0x0C,
+              "BasePop bevel thickness offset");
+extern BasePopButtonStyle BasePopButtonDefaults;
 extern uint32_t BasePopDefaultField21B0[4];
 extern uint32_t BasePopDefaultField31B0[2];
 extern Sprite *BasePopDefaultField2148[2];

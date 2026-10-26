@@ -127,6 +127,10 @@ def production_parts():
     )
     text_block_match = re.search(r"(?ms)^struct\s+BasePopTextBlock\s*\{.*?^};", basepop_h)
     assert text_block_match
+    button_style_match = re.search(
+        r"(?ms)^struct\s+BasePopButtonStyle\s*\{.*?^};", basepop_h
+    )
+    assert button_style_match
 
     close = extract_body(basepop_cpp, "void BasePop::close()")
     close = re.sub(r"(?<![\w:])free\(", "tracked_free(", close)
@@ -161,6 +165,7 @@ def production_parts():
         "heap_fields": heap_fields,
         "dialog_fields": dialog_fields,
         "text_block": text_block_match.group(0),
+        "button_style": button_style_match.group(0),
         "close": close,
         "default_window_setter": default_window_setter,
         "heap_reset": heap_reset,
@@ -188,6 +193,7 @@ struct Font {};
 struct Sprite;
 struct GraphicWin;
 struct Dialog;
+BUTTON_STYLE
 struct StringStructEntry {};
 struct BasePopTextBlock;
 typedef void (*BasePopConfigCallback)(BasePopTextBlock *, int);
@@ -305,7 +311,7 @@ static uint32_t BasePopDefaultBlock2F7C[70];
 static Sprite *BasePopDefaultBlock31B8[27];
 static uint32_t BasePopDefaultField21C0[2];
 static uint32_t BasePopDefaultField3104[3];
-static uint32_t BasePopDefaultField31A0[4];
+static BasePopButtonStyle BasePopButtonDefaults;
 static uint32_t BasePopDefaultField21B0[4];
 static uint32_t BasePopDefaultField31B0[2];
 static Sprite *BasePopDefaultField2148[2];
@@ -343,6 +349,7 @@ def projection(parts, close=None):
         "HEAP_DESTRUCTOR": parts["heap_destructor"],
         "HEAP_RESET": parts["heap_reset"],
         "HEAP_INIT": parts["heap_init"],
+        "BUTTON_STYLE": parts["button_style"],
         "BASEPOP_FIELDS": parts["basepop_fields"],
         "BASEPOP_CLOSE": close or parts["close"],
     }
@@ -376,11 +383,14 @@ static void initialize_defaults() {
     BasePopDefaultBlock31B8[i] = &block_sprites[i];
   for (int i=0; i<4; ++i) {
     BasePopDefaultField21B0[i] = 0x2100u + (uint32_t)i;
-    BasePopDefaultField31A0[i] = 0x3100u + (uint32_t)i;
     BasePopDefaultStringFonts[i] = &default_fonts[i];
     for (int j=0; j<4; ++j)
       BasePopDefaultStringColors[i][j] = 0x4000u + (uint32_t)(i*16+j);
   }
+  BasePopButtonDefaults.button_color = 0x30;
+  BasePopButtonDefaults.bevel_upper = 0x3101u;
+  BasePopButtonDefaults.bevel_lower = 0x3102u;
+  BasePopButtonDefaults.bevel_thickness = 0x3103u;
   BasePopDefaultField21C0[0] = 0x21C0;
   BasePopDefaultField21C0[1] = 0x21C1;
   BasePopDefaultField3104[0] = 0x310400;
@@ -499,10 +509,10 @@ static void verify_first_close(BasePop &pop, const void *ok, const void *cancel,
   assert(pop.field_317B_ == 0x7D); // source leaves the spare byte untouched
   assert(pop.button_color_b_ == BasePopDefaultButtonColors[1][0]);
   assert(pop.button_color_3d_ == BasePopDefaultButtonColors[3][2]);
-  assert(pop.field_31A0_ == (uint8_t)BasePopDefaultField31A0[0]);
-  assert(pop.field_31A4_ == BasePopDefaultField31A0[1]);
-  assert(pop.field_31A8_ == BasePopDefaultField31A0[2]);
-  assert(pop.field_31AC_ == BasePopDefaultField31A0[3]);
+  assert(pop.field_31A0_ == BasePopButtonDefaults.button_color);
+  assert(pop.field_31A4_ == BasePopButtonDefaults.bevel_upper);
+  assert(pop.field_31A8_ == BasePopButtonDefaults.bevel_lower);
+  assert(pop.field_31AC_ == BasePopButtonDefaults.bevel_thickness);
   assert(pop.field_31B0_ == BasePopDefaultField31B0[0]);
   assert(pop.field_31B4_ == BasePopDefaultField31B0[1]);
   assert(pop.field_2148_ == BasePopDefaultField2148[0]);
@@ -664,12 +674,20 @@ def test_typed_default_constructor_copy_order_and_slot_identity():
     header = (ROOT / "src/basepop.h").read_text(encoding="utf-8")
     source = (ROOT / "src/basepop.cpp").read_text(encoding="utf-8")
     constructor = extract_body(source, "BasePop::BasePop()")
+    assert "extern BasePopButtonStyle BasePopButtonDefaults;" in header
+    assert "BasePopButtonStyle BasePopButtonDefaults =" in source
     assert "Sprite *BasePopDefaultField2148[2];" in source
     assert "extern Sprite *BasePopDefaultField2148[2];" in header
     assert "reinterpret_cast<Sprite *>(BasePopDefaultField2148" not in source
     assert "BasePopDefaultWindowLayout BasePopDefaultLayout;" in source
     assert "GraphicWin *external_window;" in source
     assert "uint32_t loc_x;" in source and "uint32_t loc_y;" in source
+    style_reads = (
+        "field_31A0_ = BasePopButtonDefaults.button_color;",
+        "field_31A4_ = BasePopButtonDefaults.bevel_upper;",
+        "field_31A8_ = BasePopButtonDefaults.bevel_lower;",
+        "field_31AC_ = BasePopButtonDefaults.bevel_thickness;",
+    )
     expected = (
         "field_214C_ = BasePopDefaultField2148[1];",
         "field_2148_ = BasePopDefaultField2148[0];",
@@ -677,7 +695,9 @@ def test_typed_default_constructor_copy_order_and_slot_identity():
         "default_loc_a_ = BasePopDefaultLayout.loc_x;",
         "default_loc_b_ = BasePopDefaultLayout.loc_y;",
     )
+    style_positions = [constructor.index(item) for item in style_reads]
     positions = [constructor.index(item) for item in expected]
+    assert style_positions == sorted(style_positions)
     assert positions == sorted(positions)
 
 

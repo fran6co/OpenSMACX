@@ -1867,10 +1867,11 @@ uint32_t BasePopDefaultField21C0[2] = {10, 4};  // 0x00696ED0
 // RECOVERY_OBJECT: v1 0x00696ED8 ?BasePopDefaultField3104@@3PAIA
 uint32_t BasePopDefaultField3104[3] = {1, 1, 255};  // 0x00696ED8
 
-// Copied to +0x31a0 (its low byte)/+0x31a4/+0x31a8/+0x31ac. popups_normal
-// rewrites the first byte; the shipped byte is 0xf7.
-// RECOVERY_OBJECT: v1 0x00696F54 ?BasePopDefaultField31A0@@3PAIA
-uint32_t BasePopDefaultField31A0[4] = {247, 7, 248, 2};  // 0x00696F54
+// Original object at 0x00696F54: button color byte, unresolved bytes, then
+// upper/lower bevel and bevel-thickness dwords. popups_normal rewrites only
+// the button color; the shipped value is 0xf7.
+// RECOVERY_OBJECT: v2 0x00696F54 0x00696F64 ?BasePopButtonDefaults@@3UBasePopButtonStyle@@A 0x00600860
+BasePopButtonStyle BasePopButtonDefaults = {247, {0, 0, 0}, 7, 248, 2};
 
 // The two 0x118-byte default blocks the ctor copies to +0x2e64 and +0x2f7c,
 // into text_block_a_ / text_block_b_. All zero until popups_normal and the
@@ -2113,10 +2114,10 @@ BasePop::BasePop() {
     button_color_3b_ = static_cast<int>(BasePopDefaultButtonColors[1][2]);
     button_color_3c_ = static_cast<int>(BasePopDefaultButtonColors[2][2]);
     button_color_3d_ = static_cast<int>(BasePopDefaultButtonColors[3][2]);
-    field_31A0_ = static_cast<uint8_t>(BasePopDefaultField31A0[0]);
-    field_31A4_ = BasePopDefaultField31A0[1];
-    field_31A8_ = BasePopDefaultField31A0[2];
-    field_31AC_ = BasePopDefaultField31A0[3];
+    field_31A0_ = BasePopButtonDefaults.button_color;
+    field_31A4_ = BasePopButtonDefaults.bevel_upper;
+    field_31A8_ = BasePopButtonDefaults.bevel_lower;
+    field_31AC_ = BasePopButtonDefaults.bevel_thickness;
     field_31B0_ = BasePopDefaultField31B0[0];
     field_31B4_ = BasePopDefaultField31B0[1];
     fallback_parent_window_ = 0;
@@ -2324,15 +2325,15 @@ void BasePop::close() {
     button_color_3b_ = BasePopDefaultButtonColors[1][2];
     button_color_3c_ = BasePopDefaultButtonColors[2][2];
     button_color_3d_ = BasePopDefaultButtonColors[3][2];
-    field_31A4_ = BasePopDefaultField31A0[1];
-    field_31A8_ = BasePopDefaultField31A0[2];
-    field_31AC_ = BasePopDefaultField31A0[3];
+    field_31A4_ = BasePopButtonDefaults.bevel_upper;
+    field_31A8_ = BasePopButtonDefaults.bevel_lower;
+    field_31AC_ = BasePopButtonDefaults.bevel_thickness;
     field_31B0_ = BasePopDefaultField31B0[0];
     field_31B4_ = BasePopDefaultField31B0[1];
     field_214C_ = BasePopDefaultField2148[1];
     field_2148_ = BasePopDefaultField2148[0];
     fallback_parent_window_ = BasePopDefaultField322C;
-    field_31A0_ = (uint8_t)BasePopDefaultField31A0[0];
+    field_31A0_ = BasePopButtonDefaults.button_color;
 
     external_window_ = BasePopDefaultLayout.external_window;
     default_loc_a_ = BasePopDefaultLayout.loc_x;
