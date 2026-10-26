@@ -1,0 +1,24 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "b7830438a529b74d229a80589dcc6c36ae8afb95",
+  "editable_files": [
+    "src/prodpicker.cpp",
+    "recovery/tests/test_prodpicker_scroll_actual_source.py"
+  ],
+  "evidence": [
+    "Current exact native baseline b7830438a529b74d229a80589dcc6c36ae8afb95 and pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf. Source header field_A77C_ and column_count_ are int32_t; field_A814_ is uint32_t. Proposal uses explicit unsigned arithmetic only to preserve original wrapped loop-bound sums with signed comparisons, not to retype members or assert original complete type semantics.",
+    "Independent full pin review in faithful-owner-batch-oct26eh/prodpicker-independent-review.json confirms cached/fresh boundaries. Recovered edbc_unit493AF0 and all other historical claims must remain intact; one candidate in this unchanged context.",
+    "Coordinator owns source/Git publication; worker edits only authorized test. No safety fixes, baseline resets, demotions or fabricated full-link/runtime/game acceptance."
+  ],
+  "intent": "Restore ProdPicker scroll member rereads across clip/blit/draw operations. Retain the entry column snapshot for position/distance, fresh blit columns, fresh post-copy first item and post-draw loop bounds with original signed/wrapped comparisons. Preserve all existing geometry, dispatch, redraw and soft-update behavior.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4799664,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "prodpicker-scroll-oct26ej"
+}
