@@ -1,0 +1,20 @@
+{
+  "event_id": "3b5b850a56b99f0636fa5d0c7f93f2162bce3130e0ca64f1857f947011830515",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_paired_sort_actual_source_oct14de.py"
+    ],
+    "evidence": [
+      "Actual producer probe shows helper move adds frame instructions to628A50 and both callers still lack frames. Preserve existing shared helper inGeneral and move unchanged complete3sorting algorithms to current frame-profile arithmetic owner; no flags/body/header/baseline changes.",
+      "Paired sort actual-source host control must resolve live sort/helper records and preserve alias/swap-order behavior, with history continuity independent of filename."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "sorting-family-owner-context",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:swap-boundary-oct26fk"
+}
