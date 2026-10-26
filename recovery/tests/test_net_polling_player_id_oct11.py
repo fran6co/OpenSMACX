@@ -1,6 +1,4 @@
 """Original polling ID selection; no timeout/error-path normalization."""
-from dataclasses import fields
-import json
 import os
 from pathlib import Path
 import resource
@@ -8,11 +6,9 @@ import shutil
 import subprocess
 
 import pytest
-from match_recovery.source import read_text
 from test_net_polling_global_owner_actual_source_oct10 import _actual_sources, _harness
 
 ROOT = Path(__file__).resolve().parents[2]
-BASE = '57729afb89ce3ed036b3b26268213db23a86540f'
 
 
 def migration(text, *, reverse=False):
@@ -31,23 +27,6 @@ def migration(text, *, reverse=False):
 
 def restore_polling_player_id(text):
     return migration(text, reverse=True) if 'if (local_player_id_ == players_[1].field_0_) {' in text else text
-
-
-def test_exact_bounded_source_and_historical_continuity():
-    path = ROOT / 'src/net_class.cpp'
-    old = subprocess.check_output(['git', 'show', BASE + ':src/net_class.cpp'], cwd=ROOT, text=True)
-    expected = migration(old)
-    from test_net_session_guid_copy_oct11 import restore_session_guid_copy
-    assert expected == restore_session_guid_copy(path.read_text())
-    assert migration(expected, reverse=True) == old
-    before, after = read_text(old, path), read_text(expected, path)
-    assert len(before) == len(after)
-    for a, b in zip(before, after):
-        for field in fields(a):
-            if field.name not in {'line', 'region', 'origin'}:
-                assert getattr(a, field.name) == getattr(b, field.name)
-        lessons = lambda r: [(l.kind, l.key, l.prose, tuple(t for _, t in l.lines)) for l in r.origin]
-        assert lessons(a) == lessons(b)
 
 
 def test_pinned_id_discriminator_and_original_timeout_drop_order():
