@@ -36,7 +36,6 @@ Heap *StringAllocationHeap;
 void *mem_get(size_t size) { return allocate(size); }
 // LIVE_ALLOCATION_BASE
 // LIVE_PAYLOAD_BASE
-StringAllocationBase::~StringAllocationBase() { StringAllocationHeap = allocation_owner_; }
 // LIVE_PAYLOAD
 struct SpriteStruct;
 // LIVE_ENTRY

@@ -33,7 +33,6 @@ Heap *StringAllocationHeap;
 void *mem_get(size_t size) { return allocate(size); }
 struct NetUnk72C { unsigned char opaque[0x2C]; };
 // LIVE_ALLOCATION_BASE
-StringAllocationBase::~StringAllocationBase() { StringAllocationHeap = allocation_owner_; }
 class AlphaNetStringStruct;
 // LIVE_PAYLOAD
 // Constructor/destructor collaborators are doubles for this hook-only test.
@@ -44,9 +43,9 @@ NetAllocationNode::~NetAllocationNode() {}
 // LIVE_LEDGER_CONSTRUCTOR
 int AlphaNetStringStruct::on_insert(NetAllocationNode *) { return 0; }
 void AlphaNetStringStruct::on_remove(NetAllocationNode *) {}
-// List lifetime collaborators are explicit doubles; these tests exercise hooks.
-AlphaNetStringStruct::~AlphaNetStringStruct() {}
-AlphaNetLedger::~AlphaNetLedger() {}
+// The live inline destructors call this explicit empty-list collaborator.
+// Hook cases never link entries; populated-list lifetime proof is separate.
+void AlphaNetStringStruct::remove_all() { assert(head_ == 0); }
 #define free release
 // Extract the real class delete/cleanup path; no allocation-lifetime proof.
 // LIVE_NODE_CLEANUP

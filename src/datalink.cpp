@@ -194,7 +194,7 @@ Datalink::Datalink() {
 
 // Reverse-order member/base destruction belongs to the compiler. In particular,
 // Caviar::~Caviar owns close(); this body must not close the renderer twice.
-// ORIGINAL: 0x00432290 ??1Datalink@@QAE@XZ 0x00432290-0x004325AA;0x006531D0-0x006533A2
+// ORIGINAL: 0x00432290 ??1Datalink@@QAE@XZ 0x00432290-0x004325AA;0x006531D0-0x006533A2 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:6201d294:src/recovered/units/00432290.cpp"], "reason": "Original construction and reverse teardown establish real Flic/Caviar, an eighteen-element FlatButton array and eleven Font members. The owner performs its scalar initialization/reset; genuine member/base lifetimes replace manual vtables and original-address teardown."}
 // symbol    ??1Datalink@@UAE@XZ
 Datalink::~Datalink() {

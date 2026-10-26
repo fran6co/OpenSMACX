@@ -10,7 +10,7 @@
 #include "stdafx.h"
 #include "multiwin.h"  // MultiWindow.draw requires its complete owner declaration.
 
-// ORIGINAL: 0x00402C20 ??_GStringStructEntry@@UAEPAXI@Z 0x00402C20-0x00402C62 FILE
+// ORIGINAL: 0x00402C20 ??_GStringStructEntry@@UAEPAXI@Z 0x00402C20-0x00402C62 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original table installed by 401100 construction dispatches deletion through StringStructEntry allocation base at +0x14. This original body publishes saved Heap owner, conditionally frees the complete allocation and clears owner on deleting paths. Same-span seed retired; the complete original identity and spans remain on this compiled owner.", "Original construction at 401100 and typed deletion at 402970 establish the owning node lifecycle. The canonical source host is stringstruct.cpp; the compiler owns the virtual-base adjustment and deleting-flag entry.", "git:293937ab6f3be75999e0c0a4c9c110c02930624c:src/recovered/units/00402c20.cpp", "Historical seed spelling sub_402c20; current source mapping ??_GStringStructEntry@@UAEPAXI@Z; emitted symbol ??_GStringStructEntry@@UAEPAXI@Z."], "reason": "Map the compiler-generated scalar deleting destructor emitted by actual list-node construction, not a handwritten wrapper. Superseded seed retired after owner review; original spans, existing claims and useful seed findings remain in source. This cleanup grants no new match or acceptance claim."}
 // ORIGINAL: 0x00402C70 ??_GStringStructPayload@@UAEPAXI@Z 0x00402C70-0x00402CB2 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["Original table installed by 401100 construction dispatches deletion through StringStructPayload allocation base at +0x10. This original body publishes saved Heap owner, conditionally frees the complete allocation and clears owner on deleting paths. Same-span seed retired; the complete original identity and spans remain on this compiled owner.", "Original construction at 401100 and typed deletion at 402970 establish the owning node lifecycle. The canonical source host is stringstruct.cpp; the compiler owns the virtual-base adjustment and deleting-flag entry.", "git:293937ab6f3be75999e0c0a4c9c110c02930624c:src/recovered/units/00402c70.cpp", "Historical seed spelling sub_402c70; current source mapping ??_GStringStructPayload@@UAEPAXI@Z; emitted symbol ??_GStringStructPayload@@UAEPAXI@Z."], "reason": "Map the compiler-generated scalar deleting destructor emitted by actual list-node construction, not a handwritten wrapper. Superseded seed retired after owner review; original spans, existing claims and useful seed findings remain in source. This cleanup grants no new match or acceptance claim."}
@@ -42,7 +42,7 @@
 // entry. The compiler supplies its flag handling and class-specific delete;
 // the original identity is retained from the retired handwritten wrapper.
 /*
-// ORIGINAL: 0x00401520 sub_401520 0x00401520-0x0040155E FILE
+// ORIGINAL: 0x00401520 sub_401520 0x00401520-0x0040155E FILE BYTE_EXACT
 // symbol    ??_GStringAllocationBase@@UAEPAXI@Z
 // size      62 bytes
 // prototype
@@ -52,19 +52,17 @@
 // calls     0x00644EF2
 */
 
-// Republish the saved owner for the deallocation decision (0x401520, the
-// image's deleting destructor, and StringList's complete tail are this destructor as
-// compiled - the [esi] = 0x6693AC vptr re-stage on top of it is the
-// compiler's own destructor machinery). Out of line: OUT OF LINE is the
-// point. A header-inline empty destructor is provably nothrow, and VC6 then
-// sheds the /GX unwind states from the construction chain that
-// StringBox::StringBox's frame carries.
-// ORIGINAL: 0x00402310 sub_402310 0x00402310-0x0040231F BYTE_EXACT
+// Keep this original identity in its canonical mapping host while the real
+// virtual allocation-base destructor lives in the class declaration. Its body
+// republishes the captured owner; the compiler supplies the destructor-table
+// stage and virtual-base adjustments at each actual lifetime site. The
+// compile_context below records a current physical emitting TU, not original
+// translation-unit ownership.
+// ORIGINAL: 0x00402310 sub_402310 0x00402310-0x0040231F FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["task:allocation-base-destructor-owner", "Original 0x00402310..0x0040231F reads the captured Heap at this+4, stages allocation-base table 0x006693AC and publishes owner 0x009B3374; StringAllocationBase and StringAllocationHeap own these relationships.", "historical seed:src/recovered/00402310.cpp"], "reason": "The retained synthetic owner-publication seed is the existing genuine allocation-base destructor. Real member/global and compiler-owned destructor table stage replace fixed executable addresses; retain original identity and historical exact obligation."}
+// compile_context src/alphanet.cpp
+// body src/stringstruct.h
 // symbol    ??1StringAllocationBase@@UAE@XZ
-StringAllocationBase::~StringAllocationBase() {
-    StringAllocationHeap = allocation_owner_;
-}
 
 // ORIGINAL: 0x00401000 ??0StringStruct@@QAE@H@Z 0x00401000-0x00401058 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["task:stringstruct-lifecycle-coverage", "Pinned original0x401000", "historical seed:src/recovered/00401000.cpp", "Real virtual-base construction and physical compiler-generated lifecycle symbols."], "reason": "Original constructor initializes five list fields after genuine virtual-base owner capture and table staging. The seed explicit integer is the compiler-supplied most-derived flag, not a source parameter. Real out-of-line constructor owns this entry; retain historical matching obligation."}

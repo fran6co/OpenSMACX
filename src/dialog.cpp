@@ -32,7 +32,7 @@ void Dialog::attach_at_stored_position(GraphicWin *window, int flags) {
 Purpose: Compiler-generated complete StringList destructor. Dialog owns a
          real StringList member, so its normal and unwind lifetimes emit this
          entry without a handwritten wrapper or measurement-only export.
-// ORIGINAL: 0x00406820 sub_406820 0x00406820-0x0040683B FILE
+// ORIGINAL: 0x00406820 sub_406820 0x00406820-0x0040683B FILE BYTE_EXACT
 // TRIED: THE SECOND PARAMETER WAS INVENTED, so it is gone rather than worked
 //   around. 0x00406820 sets only ECX (`mov ecx, esi; call 0x4066c0`) and never
 //   EDX, and 0x004066C0's body reads only ECX - the `_redirect` name is this

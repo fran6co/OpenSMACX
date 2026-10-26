@@ -1,0 +1,24 @@
+{
+  "event_id": "ea94900f0b96264d2d1050bdfbf74f6ea4179406a2afb5587d93b52bda79f8dc",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_allocation_base_owner_mapping.py",
+      "recovery/tests/test_alphanet_ledger_lifetime.py",
+      "recovery/tests/test_stringlist_recovery.py",
+      "recovery/tests/test_stringlist_teardown_visibility.py",
+      "recovery/tests/test_stringstruct_lifecycle_coverage.py"
+    ],
+    "evidence": [
+      "Coordinator authorizes native annotation-writer BODY-to-FILE migration of 402310, retaining identity/span/claim/history: inline source lives in stringstruct.h and measured symbol is emitted by alphanet.cpp and net_class.cpp, matching pinned original15bytes with trailing1byte padding. No claim grant or retained-selection conclusion.",
+      "Reviewed six actual production-unit probe:213 mapped controls, six new exact bodies; no existing physical body loss once402310 is bound to measured provider. Test fixtures must consume live inline source and preserve owner/null/free behavior; placement failure402320 remains separate."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "base-lifetime-test-and-provider-review",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:base-allocation-lifetime-oct26fw"
+}

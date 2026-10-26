@@ -78,10 +78,12 @@ struct VoiceReceiverEntry : public virtual StringAllocationBase {
   // handoff. The inherited destructor owns publication; this deallocator
   // owns the storage decision. Never free an individual Heap-owned block.
   static void operator delete(void *memory) {
-    if (StringAllocationHeap == 0) {
-      ::operator delete(memory);
+    if (memory != 0) {
+      if (StringAllocationHeap == 0) {
+        ::operator delete(memory);
+      }
+      StringAllocationHeap = 0;
     }
-    StringAllocationHeap = 0;
   }
 };
 

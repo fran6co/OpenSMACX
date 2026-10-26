@@ -112,16 +112,20 @@ class StringAllocationBase {
   // base its own one-slot vftable (0x006693AC), and without the virtual the
   // vbtables that name this base do not exist - VC6 drops the vbptr and the
   // StringStruct layout loses its 0x04 slot.
-  virtual ~StringAllocationBase();
+  virtual ~StringAllocationBase() {
+    StringAllocationHeap = allocation_owner_;
+  }
   // Scalar deleting entries 401520/4029F0/406670 and the Net-family
   // entries share this policy. Their compiler-generated adjustments supply
   // the complete allocation; the destructor publishes its captured owner.
   // Ordinary (non-deleting) destruction must leave that handoff intact.
   static void operator delete(void *memory) {
-    if (StringAllocationHeap == 0) {
-      free(memory);
+    if (memory != 0) {
+      if (StringAllocationHeap == 0) {
+        free(memory);
+      }
+      StringAllocationHeap = 0;
     }
-    StringAllocationHeap = 0;
   }
   Heap *allocation_owner_;
 };
@@ -159,10 +163,12 @@ struct StringStructEntry : public virtual StringAllocationBase {
   // not the virtual-base address at +0x14. The compiler owns that adjustment;
   // the base destructor publishes ownership before this deallocator runs.
   static void operator delete(void *memory) {
-    if (StringAllocationHeap == 0) {
-      free(memory);
+    if (memory != 0) {
+      if (StringAllocationHeap == 0) {
+        free(memory);
+      }
+      StringAllocationHeap = 0;
     }
-    StringAllocationHeap = 0;
   }
 };
 
@@ -194,10 +200,12 @@ class StringStructPayload : public ListPayloadBase {
   // 0x00402C70 has the same ownership rule for the payload's virtual base
   // at +0x10. Heap-backed blocks belong to the Heap, not individual nodes.
   static void operator delete(void *memory) {
-    if (StringAllocationHeap == 0) {
-      free(memory);
+    if (memory != 0) {
+      if (StringAllocationHeap == 0) {
+        free(memory);
+      }
+      StringAllocationHeap = 0;
     }
-    StringAllocationHeap = 0;
   }
 };
 

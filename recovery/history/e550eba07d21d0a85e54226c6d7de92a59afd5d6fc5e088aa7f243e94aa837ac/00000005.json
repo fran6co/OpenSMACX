@@ -1,0 +1,32 @@
+{
+  "event_id": "f4d5dc77a05f38e4cd2ed86ec5e64a70e8459e0f9a49adcfbfb706020a715034",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/datalink.cpp",
+      "src/messagewin.cpp"
+    ],
+    "evidence": [
+      "Full197TU/211object linkedapplication candidate gains9localexact bodies withzero localexactloss. AdditionalDatalink432290 andMessageWin472020 dtor recoveries followsharedBaseinlining; actualCppbodiesunchanged. Scopegrants nativeannotationrecording onlyinthesehosts.",
+      "No strictcompile_contextsupport assumed:402310 aggregateunknown retained; focused nativebody/reference anddamagedglobal controls required. Raw57changedTU residualfailures remainnotwaived."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4399760,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4661280,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "499e21a9f59bff784a853902d5b1c15c954e0f193996478366cb5301d9fb2c9f",
+  "request_id": "observed-additional-destructor-restorations",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:base-allocation-lifetime-oct26fw"
+}
