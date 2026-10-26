@@ -27,7 +27,6 @@
 // RECOVERY_GENERATED: v1 vtable 0x00669458 ? ??_7AlphaMovie@@6BWin@@@ 0x00404010
 // The pinned constructor also stores 0x00669450 at 0x0040404F; its COFF relocation at +0x45 names this Buffer table.
 // RECOVERY_GENERATED: v1 vtable 0x00669450 ? ??_7AlphaMovie@@6BBuffer@@@ 0x00404010
-#include "original_seam.h"
 #include "alphamovie.h"
 #include "alpha.h"  // prefs_get
 #include "general.h"  // filefind_get

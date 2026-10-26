@@ -1164,7 +1164,6 @@
 // symbol    _$E947
 
 #include "stdafx.h"
-#include "original_seam.h"
 #include "sprite.h"
 
 // Canonical mapping for the inline destructor emitted by these object lifetimes.

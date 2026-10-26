@@ -30,7 +30,6 @@
 #include "stdafx.h"
 #include "interface_fonts.h"
 #include "game.h"  // shared state-window owner
-#include "original_seam.h"
 #include "datalink.h"
 // Datalink::show and Datalink::hide reach the SubInterface subobject the
 // original places at +0xA14 by casting a hand-computed address, so the type

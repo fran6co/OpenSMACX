@@ -16,7 +16,6 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
-#include "original_seam.h"
 #include "popmenu.h"
 #include "dialog.h"
 #include "sounddevice.h"

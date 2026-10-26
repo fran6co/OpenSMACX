@@ -16,7 +16,6 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
-#include "original_seam.h"
 // ORIGINAL: 0x004C5C80 ??__Eg_MIDI_DEVICE@@YAXXZ 0x004C5C80-0x004C5C96 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: lifecycle helper direct receiver/constructor/destructor/atexit instructions", "docs/recovery/derived-prototypes.csv historical dynamic initializer/destructor identity; fresh native sounddevice.cpp COFF confirms object and lifecycle relocation targets"], "reason": "MIDI construction and atexit registration at original receiver 0x0090D950; emitted by ordinary source-owned global lifetime, not a handwritten wrapper; terminal alignment NOPs excluded"}
 // symbol    _$E6
@@ -496,18 +495,9 @@ int Wave_In_Device::get_rate() {
 
 
 
-namespace {
-// Midi_Device wraps its device at 0x14, the same offset Wave_Device uses, and
-// drives it through the device's own vtable.
-// A PLAIN THISCALL-SHAPED FUNCTION POINTER, not an ORIGINAL()
-// seam. sound.cpp proved this form compiles byte-identical, and
-// unfactoring the helpers into five bodies through the SEAM would
-// have multiplied `ORIGINAL() named-pointer seam` 96 -> 99. A
-// recovery does not get to raise a ceiling to pay for itself.
-typedef int(__fastcall *device_query_fn)(void *);
-typedef void (OriginalObject::*midi_device_vfn)();
+// DLL-owned provider dispatch is contained in SoundXDeviceAbi; the game
+// wrappers below keep their original null guards and result handling.
 
-}  // namespace
 
 // Disassembly at 0x004C4D70 enters with ECX as the receiver, has no stack
 // argument reads, and returns ESI in EAX. The original class name is absent;
@@ -544,7 +534,7 @@ Status: Complete
 int Midi_Device::enable() {
     void *device = device_14_;
     if (device) {
-        vtable_slot<device_query_fn>(device, 0x54)(device);
+        SoundXDeviceAbi::enable_device(device);
     }
     // RETURNS 0, WHICH IS WHY THE IMAGE CANNOT TAIL-JUMP: it `call`s the
     // slot and then `xor eax, eax`, discarding the callee's answer. Declared
@@ -569,7 +559,7 @@ Status: Complete
 int Midi_Device::disable() {
     void *device = device_14_;
     if (device) {
-        vtable_slot<device_query_fn>(device, 0x58)(device);
+        SoundXDeviceAbi::disable_device(device);
     }
     // RETURNS 0, WHICH IS WHY THE IMAGE CANNOT TAIL-JUMP: it `call`s the
     // slot and then `xor eax, eax`, discarding the callee's answer. Declared
@@ -579,10 +569,6 @@ int Midi_Device::disable() {
 
 
 
-namespace {
-typedef int (OriginalObject::*device_query_vfn)();
-
-}  // namespace
 
 /*
 Purpose: Ask the wrapped device whether it is disabled, through vtable slot
@@ -603,7 +589,7 @@ int Midi_Device::is_disabled() {
     // what a guard clause writes: the image does `je` FORWARD to the
     // `mov eax, 1` and falls through into the call.
     if (device) {
-        return vtable_slot<device_query_fn>(device, 0x5C)(device);
+        return SoundXDeviceAbi::is_disabled(device);
     }
     return 1;
 }
@@ -681,7 +667,7 @@ Status: Complete
 int Wave_In_Device::start_record() {
     void *device = device_14_;
     if (device) {
-        vtable_slot<device_query_fn>(device, 0x58)(device);
+        SoundXDeviceAbi::start_recording(device);
     }
     return 0;
 }
@@ -703,7 +689,7 @@ Status: Complete
 int Wave_In_Device::end_record() {
     void *device = device_14_;
     if (device) {
-        vtable_slot<device_query_fn>(device, 0x5C)(device);
+        SoundXDeviceAbi::stop_recording(device);
     }
     return 0;
 }

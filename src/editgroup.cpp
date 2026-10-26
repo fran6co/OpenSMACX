@@ -30,7 +30,6 @@
 // symbol    ??_GEditGroup@@UAEPAXI@Z
 
 #include "stdafx.h"
-#include "original_seam.h"
 #include "editgroup.h"
 #include "editbox.h"
 #include "general.h"  // mem_get, for the two coverage bodies below

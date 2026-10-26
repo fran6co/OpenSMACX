@@ -17,7 +17,6 @@
  */
 #pragma once
 #include "stdafx.h"
-#include "original_seam.h"
 #include "jackal/color_table.h"
 
 class Buffer;  // forward declaration

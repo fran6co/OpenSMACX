@@ -34,7 +34,6 @@
 #include "stdafx.h"
 #include "interface_fonts.h"
 #include "wave.h"
-#include "original_seam.h"
 #include "basewin.h"
 #include "win.h"
 #include "subinterface.h"

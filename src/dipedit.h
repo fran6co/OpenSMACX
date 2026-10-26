@@ -17,7 +17,6 @@
  */
 #pragma once
 
-#include "original_seam.h"
 #include "checkbox.h"
 #include "flatbutton.h"
 #include "font.h"

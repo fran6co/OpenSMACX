@@ -12,8 +12,8 @@ def test_sound_internal_slots_use_real_virtual_methods_and_keep_external_slots()
     assert "if (set_fade_in(a1) == 0)" in source
     assert "            attach();" in source
     assert "    detach();" in source
-    assert "vtable_method<device_load_fn>(device_, 0x10)" in source
-    assert "original_slot<device_loop_fn>" in source
+    assert "sound_device(device_)->load(resolved)" in source
+    assert "sound_device(device_)->is_looping()" in source
     header = (ROOT / "src/sound.h").read_text()
     for signature in (
         "virtual int set_fade(unsigned long fade)",
@@ -33,7 +33,7 @@ def test_wave_device_uses_owned_slots_but_keeps_external_device_dispatch():
     assert "device_14_" in body
     assert "original_slot<device_init_fn>" not in body
     assert "delete_device();" in body
-    assert "original_slot<device_init_fn>" in source or "device_init_fn" in source
+    assert "static_cast<WaveDeviceProviderCallView *>(device)->init(group_id, flags)" in body
     header = (ROOT / "src/wave_device.h").read_text()
     assert "virtual int create_device(unsigned long a1);   // slot 0" in header
     assert "virtual int delete_device();                   // slot 1" in header

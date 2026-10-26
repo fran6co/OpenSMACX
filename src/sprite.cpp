@@ -16,7 +16,6 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
-#include "original_seam.h"
 #include "sprite.h"
 #include "buffer.h"
 #include "graphicwin.h"

@@ -17,7 +17,6 @@
  */
 #include "stdafx.h"
 #include "win_callbacks.h"
-#include "original_seam.h"
 #include "dialog.h"
 #include "win.h"
 #include "stringstruct.h"

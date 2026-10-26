@@ -21,7 +21,6 @@
 // Shared popup/action result at original 0x009BC070, owned by console.cpp.
 extern int ConsoleGroupAction;
 
-#include "original_seam.h"
 #include "mapwin.h"
 #include "menu.h"     // menu_
 #include "sprite.h"   // sprite_a_/sprite_b_

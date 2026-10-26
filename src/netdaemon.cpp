@@ -23,7 +23,6 @@
 // symbol    _$E6
 #include "stdafx.h"
 #include <mmsystem.h>
-#include "original_seam.h"
 #include "netdaemon.h"
 #include "net_checksum_report.h"
 #include "log.h"  // log_say, source-owned at 0x006262F0

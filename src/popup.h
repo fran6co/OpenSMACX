@@ -17,7 +17,6 @@
  */
 #pragma once
 
-#include "original_seam.h"
 #include "basepop.h"
 #include "graphicwin.h"
 #include "scroll.h"
@@ -185,7 +184,6 @@ class FX;
 // forty-five entry popup wave bank with its last-played index beside it,
 // the owner whose virtual at 0x138 fires after wave 0x19, and the FX bank
 // that plays effect 0x38 after wave 0x10.
-typedef int (OriginalObject::*func_popup_wave_query)();
 
 // The four dependencies that are REAL OBJECTS in this binary are reached by
 // their own names: the flag word is `GamePreferences` (game.cpp,

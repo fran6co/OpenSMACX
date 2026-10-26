@@ -19,7 +19,6 @@
 
 #include "basewin.h"
 #include "designwin.h"
-#include "original_seam.h"
 #include "popup.h"
 #include "socialwin.h"
 #include "win.h"
@@ -195,6 +194,3 @@ extern int DesignTutorState;        // 0x0073396C
 extern TutWin TutorialWindow;
 
 
-// The shared tail of the four do_* helpers: 0x004BDFE0, still original.
-typedef int (OriginalObject::*func_tut_win_show)(void *window, const char *text, int x, int y, void *sprite, int flag, int a7, int a8);
-extern func_tut_win_show TutWinOriginalShow;

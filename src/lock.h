@@ -17,7 +17,6 @@
  */
 #pragma once
 
-#include "original_seam.h"
 #include "playerlock.h"  // records_ are real PlayerLocks
 #include "squarelock.h"
 #include "map.h"  // shared Map allocation and byte view

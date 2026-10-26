@@ -17,7 +17,6 @@
  */
 #pragma once
 
-#include "original_seam.h"
 #include "graphicwin.h"
 #include "texture.h"    // TextureStore textures_a_/textures_b_/texture_store_
 #include "font.h"       // font_a_/font_b_/font_c_

@@ -20,7 +20,6 @@
 // symbol    ??_GStringBox@@UAEPAXI@Z
 // kind      game
 #include "stdafx.h"
-#include "original_seam.h"
 #include "stringbox.h"
 #include "stringstruct.h"
 #include <cstring>

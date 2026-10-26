@@ -17,7 +17,6 @@
  */
 #pragma once
 
-#include "original_seam.h"
 #include "dialog_defaults.h"
 #include "font.h"
 #include "heap.h"

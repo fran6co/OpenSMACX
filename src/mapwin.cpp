@@ -74,7 +74,6 @@
 // MapWin constructor-installed Win branch: capture4, resize13, mouse17, update63.
 // Table start is observed in the original constructor; full extent remains unknown.
 // RECOVERY_GENERATED: v1 vtable 0x0066A57C ? ??_7MapWin@@6BWin@@@ 0x004626E0
-#include "original_seam.h"
 #include "mapwin.h"
 #include "lock.h"      // map_tile_bytes() - terrain_fixup walks its records
 #include "console.h"

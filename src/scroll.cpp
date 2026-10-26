@@ -17,7 +17,6 @@
  */
 #include "stdafx.h"
 #include "sound.h"
-#include "original_seam.h"
 #include "scroll.h"
 #include "worldwin.h"
 #include "dialog.h"

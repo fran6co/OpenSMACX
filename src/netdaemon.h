@@ -17,7 +17,6 @@
  */
 #pragma once
 
-#include "original_seam.h"
 #include "alphanet.h"
 #include "deletionlist.h"
 #include "lock.h"        // locks_ - the whole network-lock block

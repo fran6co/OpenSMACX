@@ -17,7 +17,6 @@
  */
 #pragma once
 #include "jackal/color_table.h"
-#include "original_seam.h"
 #include "autosound.h"
 #include "buffer.h"
 #include "palette.h"

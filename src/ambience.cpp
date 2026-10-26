@@ -23,7 +23,6 @@
 // symbol    _$E6
 #include "stdafx.h"
 #include <mmsystem.h>
-#include "original_seam.h"
 #include "ambience.h"
 #include "sound.h"   // Sound::set_type, reached by cast
 #include "fx.h"
