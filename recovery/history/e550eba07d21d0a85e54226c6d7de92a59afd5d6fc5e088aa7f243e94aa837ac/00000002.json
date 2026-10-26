@@ -1,0 +1,21 @@
+{
+  "event_id": "0cfc320f8f9c04f4ffc105f8e0f8b3853b64ce68cdda5f07cb040cfc06fad6bc",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/net_class.h",
+      "src/spritebox.h"
+    ],
+    "evidence": [
+      "Pinned402C20/402C70 guard completepointer before conditionalrelease/handoffclear. SpriteStruct andVoiceReceiverEntry constructor table6693C4 dispatches same402C20; retain eachfree/operator-delete spelling and placementfailure402320 separately.",
+      "Thirdbounded productioncandidate adds four specificguards atop inlineBase:402C20 newlyexact, no losses in213controls;402310 remains measuredexact usingfreshbodylocator/provider. No newexactclaim exceptnative recorder, no retainedselection/runtime claim."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "ea94900f0b96264d2d1050bdfbf74f6ea4179406a2afb5587d93b52bda79f8dc",
+  "request_id": "typed-node-deallocation-contract",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:base-allocation-lifetime-oct26fw"
+}

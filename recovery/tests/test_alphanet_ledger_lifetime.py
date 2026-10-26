@@ -156,9 +156,12 @@ def actual_fragments():
             == len(derived_hook) == len(base_ctor) == len(add_definition) == 1)
 
     alloc_ctor = _inline_method(
-        allocation_base, r"\bStringAllocationBase\s*\(")
-    alloc_dtor = _qualified_definitions(
+        allocation_base, r"(?<!~)\bStringAllocationBase\s*\(")
+    alloc_dtor_inline = _inline_method(
+        allocation_base, r"\bvirtual\s+~StringAllocationBase\s*\(")
+    alloc_dtor_out_of_line = _qualified_definitions(
         [string_source], r"StringAllocationBase::~StringAllocationBase\s*\(")
+    assert len(alloc_dtor_inline) + len(alloc_dtor_out_of_line) == 1
     entry_delete = _qualified_definitions(
         [records], r"void\s+AlphaNetLedgerEntry::operator\s+delete\s*\(\s*void\s*\*")
     entry_delete = [definition for definition in entry_delete
@@ -166,7 +169,7 @@ def actual_fragments():
                                  definition)]
     cleanup = _qualified_definitions(
         [net_source], r"void\s+cleanup_failed_net_construction\s*\(\s*void\s*\*")
-    assert len(alloc_ctor) == len(alloc_dtor) == len(entry_delete) == len(cleanup) == 1
+    assert len(alloc_ctor) == len(entry_delete) == len(cleanup) == 1
 
     return {
         "base": base,
@@ -186,7 +189,8 @@ def actual_fragments():
         "base_ctor": base_ctor[0],
         "add": add_definition[0],
         "alloc_ctor": alloc_ctor[0],
-        "alloc_dtor": alloc_dtor[0],
+        "alloc_dtor": ("" if alloc_dtor_inline else alloc_dtor_out_of_line[0]),
+        "alloc_dtor_inline": bool(alloc_dtor_inline),
         "entry_delete": entry_delete[0],
         "cleanup": cleanup[0],
     }
@@ -421,7 +425,8 @@ def _harness(fragments):
             .replace("BASE_DECL", fragments["base"])
             .replace("DERIVED_DECL", fragments["derived"])
             .replace("CLEANUP", fragments["cleanup"])
-            .replace("ALLOCATION_BASE_DTOR", fragments["alloc_dtor"])
+            .replace("ALLOCATION_BASE_DTOR", "" if fragments["alloc_dtor_inline"]
+                    else fragments["alloc_dtor"])
             .replace("BASE_CTOR", fragments["base_ctor"])
             .replace("BASE_INSERT", fragments["base_insert"])
             .replace("DERIVED_INSERT", fragments["derived_insert"])
@@ -800,8 +805,9 @@ def test_lifetime_controls_reject_compilable_omission_and_owner_mutants(
         fragments[target] = method.replace(old, new, 1)
     else:
         old = "StringAllocationHeap = allocation_owner_;"
-        assert old in fragments["alloc_dtor"]
-        fragments["alloc_dtor"] = fragments["alloc_dtor"].replace(
+        target = "allocation_base" if fragments["alloc_dtor_inline"] else "alloc_dtor"
+        assert old in fragments[target]
+        fragments[target] = fragments[target].replace(
             old, "StringAllocationHeap = 0;", 1)
     result = _compile_and_run(tmp_path, compiler, _harness(fragments),
                               "ledger_mutant_" + damage)

@@ -36,8 +36,10 @@ struct SpriteStruct : public ListPayloadBase {
   uint32_t field_10_;
   uint32_t field_14_;
   static void operator delete(void *memory) {
-    if (StringAllocationHeap == 0) free(memory);
-    StringAllocationHeap = 0;
+    if (memory != 0) {
+      if (StringAllocationHeap == 0) free(memory);
+      StringAllocationHeap = 0;
+    }
   }
 };
 static_assert(sizeof(SpriteStruct) == 0x20,

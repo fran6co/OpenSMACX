@@ -3,6 +3,7 @@
 from match_recovery.source import read_file
 from match_recovery.source.model import Mode
 from test_pact_ascent import ROOT, definition
+from owner_transfer_test_support import current_record_by_address
 
 
 def test_shared_header_owns_real_walk_and_both_destructor_stages():
@@ -38,18 +39,23 @@ def test_shared_header_owns_real_walk_and_both_destructor_stages():
 
 
 def test_mapped_teardown_entries_and_inline_walk_identity_are_retained():
-    base_rows = read_file(ROOT / "src/stringstruct.cpp")
     derived_rows = read_file(ROOT / "src/stringlist.cpp")
+    base_rows = read_file(ROOT / "src/stringstruct.cpp")
     base_dtor, = (row for row in base_rows if row.address == 0x00401060)
     derived_dtor, = (row for row in derived_rows if row.address == 0x004066C0)
     remove_all, = (row for row in base_rows if row.address == 0x00402970)
-    allocation_dtor, = (row for row in base_rows if row.address == 0x00402310)
+    allocation_dtor = current_record_by_address(ROOT, 0x00402310)
     assert base_dtor.mode is Mode.FILE and derived_dtor.mode is Mode.FILE
     assert remove_all.mode is Mode.FILE and remove_all.byte_exact
     for row in (base_dtor, derived_dtor, remove_all):
         assert "// body      src/stringstruct.h" in row.region
-    assert allocation_dtor.mode is Mode.BODY and allocation_dtor.byte_exact
-    assert "StringAllocationHeap = allocation_owner_;" in allocation_dtor.region
+    assert allocation_dtor.mode is Mode.FILE and allocation_dtor.byte_exact
+    assert allocation_dtor.body == "src/stringstruct.h"
+    assert allocation_dtor.context == "src/alphanet.cpp"
+    base_header = (ROOT / "src/stringstruct.h").read_text(encoding="utf-8")
+    allocation_body = definition(
+        base_header, r"virtual\s+~StringAllocationBase\s*\(\)")
+    assert "StringAllocationHeap = allocation_owner_;" in allocation_body
 
     header = (ROOT / "src/stringstruct.h").read_text(encoding="utf-8")
     assert "void remove_all() {" in header

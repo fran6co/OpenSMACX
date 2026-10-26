@@ -1,0 +1,20 @@
+{
+  "event_id": "2337a5aa0edd196af10f473d1c8d28898c26b4fee4cad9170013401dcea5f77f",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/dialog.cpp"
+    ],
+    "evidence": [
+      "Coordinator-directed native recorder banked measured406820 in its canonical src/dialog.cpp host; this scope covers the native annotation-only grant, no Dialog body edit. Recorder exits0 on406820 plus401520/402C20. The213 initial subjects already include406820.",
+      "Host/source controls23pass; final typed-family independent review and actual six-unit thirdcandidate controls show7newexact entries and zero prior exact loss. Aggregate candidate still requires fullapplication compile/link/mapping/claim/reference checks."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "0cfc320f8f9c04f4ffc105f8e0f8b3853b64ce68cdda5f07cb040cfc06fad6bc",
+  "request_id": "native-recorder-dialog-claim",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:base-allocation-lifetime-oct26fw"
+}

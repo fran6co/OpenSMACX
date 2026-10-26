@@ -21,9 +21,7 @@ def test_actual_stringstruct_construction_and_deletion(tmp_path, compiler_name):
         ('class StringStruct :', 'static_assert(sizeof(StringStruct)')):
         begin = header.index(start)
         declarations.append(header[begin:header.index(end, begin)])
-    source = (ROOT / 'src/stringstruct.cpp').read_text()
     constructor = definition(header, r'StringStruct::StringStruct\(\)')
-    publication = definition(source, r'StringAllocationBase::~StringAllocationBase\(\)')
     prefix = '''#include <cassert>
 #include <cstdlib>
 #include <cstddef>
@@ -49,6 +47,14 @@ int StringStruct::on_insert(void *) { return 0; }
 void StringStruct::on_remove(void *) {}
 int main() {
   Heap heap;
+  // This is an explicit call to the actual static deallocator body, not a
+  // delete-null expression or a destructor call on a null receiver.
+  StringAllocationHeap = &heap;
+  StringAllocationBase::operator delete(0);
+  assert(releases == 0 && StringAllocationHeap == &heap);
+  StringAllocationHeap = 0;
+  StringAllocationBase::operator delete(0);
+  assert(releases == 0 && !StringAllocationHeap);
   for (int owned=0; owned!=2; ++owned) {
     StringAllocationHeap = owned ? &heap : 0;
     void *storage=std::malloc(sizeof(StringStruct)); assert(storage);
@@ -73,7 +79,7 @@ int main() {
         mutations['wrong_' + field] = constructor.replace(store, field + ' = ' + value + ';')
     for name, body in mutations.items():
         cpp, binary = tmp_path / (name + '.cpp'), tmp_path / name
-        cpp.write_text(prefix + '\n'.join(declarations) + suffix.replace('@@BODIES@@', '\n'.join((body, publication))))
+        cpp.write_text(prefix + '\n'.join(declarations) + suffix.replace('@@BODIES@@', body))
         build = subprocess.run([compiler, '-std=c++98', '-fsanitize=undefined', '-fno-sanitize-recover=all', str(cpp), '-o', str(binary)], capture_output=True, text=True, timeout=45)
         assert build.returncode == 0, build.stderr
         run = subprocess.run([str(binary)], capture_output=True, text=True, timeout=10)
