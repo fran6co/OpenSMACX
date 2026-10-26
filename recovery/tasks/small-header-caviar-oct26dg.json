@@ -1,0 +1,22 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "d4c88183d2bc471f43fc84b4baef1380cf9cb0eb",
+  "editable_files": [
+    "src/caviar.cpp"
+  ],
+  "evidence": [
+    "New short-MISMATCH context independently proves removed original_seam.h C++ declarations from the prior input receipt; pinned current original and fresh physical COFF are in easy-small-context-oct26df/group-*.json. One complete ordinary candidate vox_cross_product original0x00628290 SHA256ac6b60d02ba321948674d6d68d2620192647f848387f6202bf9b02c39a96f3cc.",
+    "Private body overlay only, no actual source/mapping/claim publication or compiler policy changes. Maximum3 compiler attempts/function/context, currently one candidate. Preserve original initialization/alias/overflow/error and floating operand effects; only a fully exact appropriate native result and actual-source review can support later publication. Every outside exact and scope obligation remains."
+  ],
+  "intent": "Bounded private short-function compiler spelling probe in independently changed header context; preserve every original behavior and obligation.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6455952,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "small-header-caviar-oct26dg"
+}
