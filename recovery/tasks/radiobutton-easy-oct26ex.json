@@ -1,0 +1,25 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "02c6b6b0049807d61f876f23f303079172dca827",
+  "editable_files": [
+    "src/jackal/radiobutton.cpp"
+  ],
+  "evidence": [
+    "Coordinator authorizes isolated exploratory ordinary-C++ body probes only, maximum3 candidates/function/unchanged context. No source or claim publication.",
+    "Source, pin, physical COFF and prior-context transition evidence retained in .opensmacx/recovery/easy-large-tail-oct26eu/group-*.json. No existing identity was in the prior1121 selected short/medium/large rows. Check recorded history before additional attempts.",
+    "Task baseline is the actual qualified02c6 revision. Current master a363753 includes the prior reviewed batch. This owner source and all headers/compiler/build policies remain identical to the qualified baseline; native unchanged-object reproduction is mandatory. No baseline or report revision is relabelled.",
+    "Preserve original quirks, identity/spans/claims, compiler policy and all outside-task bodies. Complete candidates are tested independently, not banked. Scope expansion and publication require a separate coordinator decision.",
+    "RadioButton::on_left_down 0x0060DE10 proposal SHA256d300a0eb23a6f3f9751f9281d31933ef4b68265383971056bfd0100e01e0217f"
+  ],
+  "intent": "Bounded owner C++ source-form and faithful argument/storage probes; preserve all evidence and obligations.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6348304,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "radiobutton-easy-oct26ex"
+}
