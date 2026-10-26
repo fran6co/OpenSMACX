@@ -6111,14 +6111,15 @@ if (IsMultiplayerNet != 0) {
     const int selected_vehicle_id = selected_vehicle_;
     if (map_cursor_mode == 1 && selected_map_slot >= 0 &&
         selected_vehicle_id >= 0 && ConsoleGlobal.cursor_active_ != 0) {
-        MapWin &selected_map = *MapWinTable[selected_map_slot];
         if (normalized_character == 'j') {
-            selected_map.field_1DD84_ =
-                selected_map.field_1DD84_ == 0 ? 1u : 0u;
+            MapWin *const toggle_map = MapWinTable[selected_map_slot];
+            toggle_map->field_1DD84_ =
+                toggle_map->field_1DD84_ == 0 ? 1u : 0u;
             int mouse_x = 0;
             int mouse_y = 0;
-            selected_map.get_mouse_pos(&mouse_x, &mouse_y);
-            selected_map.on_mouse_move(mouse_x, mouse_y);
+            MapWinTable[selected_map_slot]->get_mouse_pos(&mouse_x, &mouse_y);
+            MapWin *const j_after_mouse_map = MapWinTable[selected_map_slot];
+            j_after_mouse_map->on_mouse_move(mouse_x, mouse_y);
             goto native_done;
         }
         if (normalized_character == 'g' || a1 == 0x20) {
@@ -6142,10 +6143,11 @@ if (IsMultiplayerNet != 0) {
             }
             int mouse_x = 0;
             int mouse_y = 0;
-            selected_map.get_mouse_pos(&mouse_x, &mouse_y);
-            selected_map.feedback_hover_y_ = -1;
-            selected_map.field_1DE0C_ = static_cast<uint32_t>(-1);
-            selected_map.on_mouse_move(mouse_x, mouse_y);
+            MapWinTable[selected_map_slot]->get_mouse_pos(&mouse_x, &mouse_y);
+            MapWin *const g_after_mouse_map = MapWinTable[selected_map_slot];
+            g_after_mouse_map->feedback_hover_y_ = -1;
+            g_after_mouse_map->field_1DE0C_ = static_cast<uint32_t>(-1);
+            g_after_mouse_map->on_mouse_move(mouse_x, mouse_y);
             goto native_done;
         }
 
@@ -6167,12 +6169,12 @@ if (IsMultiplayerNet != 0) {
         } else {
             ++selected_vehicle.waypoint_count;
         }
-        MapWin &primary_map = *MapWinTable[0];
         int mouse_x = 0;
         int mouse_y = 0;
-        primary_map.get_mouse_pos(&mouse_x, &mouse_y);
-        primary_map.field_1DE0C_ = static_cast<uint32_t>(-1);
-        primary_map.on_mouse_move(mouse_x, mouse_y);
+        MapWinTable[0]->get_mouse_pos(&mouse_x, &mouse_y);
+        MapWin *const mode8_after_mouse_map = MapWinTable[0];
+        mode8_after_mouse_map->field_1DE0C_ = static_cast<uint32_t>(-1);
+        MapWinTable[0]->on_mouse_move(mouse_x, mouse_y);
         goto native_done;
     }
 
@@ -6214,9 +6216,11 @@ if (IsMultiplayerNet != 0) {
             window->cursor_resource_id_ = 0x7F00;
             window->cursor_sprite_ = 0;
         }
-        if ((window->field_1DD70_ & 0x00C40000u) != 0) {
-            window->field_1DD70_ &= ~0x00C40000u;
-            window->draw_map(1);
+        MapWin *const cursor_flags_window = MapWinTable[cursor_window_slot];
+        if ((cursor_flags_window->field_1DD70_ & 0x00C40000u) != 0) {
+            cursor_flags_window->field_1DD70_ &= ~0x00C40000u;
+            MapWin *const cursor_redraw_window = MapWinTable[cursor_window_slot];
+            cursor_redraw_window->draw_map(1);
         }
         do_non_input();
     }

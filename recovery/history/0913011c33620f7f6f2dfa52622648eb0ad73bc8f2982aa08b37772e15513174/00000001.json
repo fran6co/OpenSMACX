@@ -1,0 +1,19 @@
+{
+  "event_id": "17d2398b166f80ca7bffb04114db883f7e6691f34a21bd621e830ff47bd81d77",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_console_map_owner_reload_oct26.py"
+    ],
+    "evidence": [
+      "Execute four extracted source blocks under owner-swapping callbacks; compiled stale-receiver controls prove oracle sensitivity, not real API mutation."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "map-owner-callback-controls",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:console-owner-oct26cp"
+}
