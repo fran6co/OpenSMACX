@@ -1,0 +1,27 @@
+{
+  "event_id": "023e74953785a39e1c267989720fb1e88d4c090e1f4f65d5f51e69fd34163444",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_game_log_technology_owner_actual_source.py"
+    ],
+    "evidence": [
+      "Fresh two-unit production replicas equal the qualified baseline. The unchanged formatter restores BYTE_EXACT at51E6F0 and no prior exact is lost. Log residual passes. Game residual exposes exactly four runtime byte changes in unedited net_upkeep5290A0: two independent EBP-relative MOV reloads exchange order, ending in the same register state. Expand actual emitted scope for independent instruction review; preserve its original matching obligations.",
+      "Remaining raw residuals include CodeView type/debug/line auxiliaries and display_player_messages function auxiliary linkage; retain raw FAIL and inspect rather than claiming automatic preservation.",
+      "Update only the existing formatter behavior fixture and identity-continuity expected owner from log.cpp to game.cpp, preserving all assertions, history baseline and mutants. No behavior-test weakening or task-baseline reset."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5410976,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "review-emitted-net-upkeep-and-follow-formatter-owner",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:app-log-boundary-oct26cc"
+}
