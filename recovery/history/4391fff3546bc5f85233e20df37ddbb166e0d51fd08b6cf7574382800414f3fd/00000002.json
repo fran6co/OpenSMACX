@@ -1,0 +1,20 @@
+{
+  "event_id": "e0a13fe0f7e175696bff99fba2ce7353c8687c2b53ebcf7d3964c3e389a7ee13",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_veh_tutorial_owner_actual_source_oct7.py"
+    ],
+    "evidence": [
+      "Current combined host cohort passes15 tests but its existing pinned caller witness fails solely because it hardcodes worktree-local .opensmacx/game despite absolute OPENSMACX_IMAGE. The same witness passes unchanged from the root with the shared pinned image.",
+      "Honor the explicit absolute image environment with the existing local default and verify actual file SHA256 before PeImage parsing. Retain every original call-target/receiver assertion and source owner checks; no source, compiler, task-baseline or gate weakening. This test-only follow-up occurs after frozen application qualification and must retain its true build revision."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "edc2c8e65a21c8ed933c44ebd2e320c606a4c5fcfce71238eb98afd0a8a319c7",
+  "request_id": "coordinator-portable-tutorial-pin-control-oct26ep",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:tutwin-map-oct26en"
+}
