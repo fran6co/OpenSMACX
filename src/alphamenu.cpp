@@ -713,12 +713,12 @@ void AlphaMenu::show() {
 
   RECT screen_rect = *buffer_working_rect();
   client_to_screen(&screen_rect);
+  const int frame_x = animation_frame_x();
   int y = screen_rect.bottom - sprite1_.height();
   const int step = (screen_rect.bottom - screen_rect.top) / 5;
   ScreenBufferOwner.buffer().set_clip(&screen_rect);
 
   if ((GameDataStateStorage.fields_.game_preferences_ & 0x8000000) != 0 && IsMultiplayerNet == 0) {
-    const int frame_x = animation_frame_x();
     WinFlipClipped = 1;
     for (int frame = 0; frame != 6; ++frame) {
       const DWORD started = timeGetTime();
@@ -760,20 +760,25 @@ void AlphaMenu::hide() {
   const int width = pixel_width();
   const int height = pixel_height();
   buffer_.init(width, height, 0, 0);
+  const int console_copy_height = pixel_height();
+  const int console_copy_width = pixel_width();
   static_cast<Buffer *>(&ConsoleGlobal)->copy(
-      &buffer_, console_rect.left, console_rect.top, 0, 0, width, height);
+      &buffer_, console_rect.left, console_rect.top, 0, 0,
+      console_copy_width, console_copy_height);
 
+  const int frame_x = animation_frame_x();
   int y = screen_rect.top;
-  const int target_y = screen_rect.bottom - sprite1_.height();
   const int step = (screen_rect.bottom - screen_rect.top) / 5;
   ScreenBufferOwner.buffer().set_clip(&screen_rect);
+  const int target_y = screen_rect.bottom - sprite1_.height();
   if ((GameDataStateStorage.fields_.game_preferences_ & 0x8000000) != 0 && IsMultiplayerNet == 0) {
-    const int frame_x = animation_frame_x();
     WinFlipClipped = 1;
     for (int frame = 0; frame != 6; ++frame) {
       const DWORD started = timeGetTime();
+      const int frame_copy_height = pixel_height();
+      const int frame_copy_width = pixel_width();
       buffer_.copy(&ScreenBufferOwner.buffer(), 0, 0, screen_rect.left, screen_rect.top,
-                   width, height);
+                   frame_copy_width, frame_copy_height);
       static_cast<Buffer *>(this)->draw(&ScreenBufferOwner.buffer(), 9, frame_x, y, 1, 1);
       flip(&screen_rect);
       y += step;
@@ -782,8 +787,10 @@ void AlphaMenu::hide() {
       wait_for_animation_frame(started);
     }
     if (y < target_y) {
+      const int final_copy_height = pixel_height();
+      const int final_copy_width = pixel_width();
       buffer_.copy(&ScreenBufferOwner.buffer(), 0, 0, screen_rect.left, screen_rect.top,
-                   width, height);
+                   final_copy_width, final_copy_height);
       static_cast<Buffer *>(this)->draw(&ScreenBufferOwner.buffer(), 9,
                                         screen_rect.left, target_y, 1, 1);
       flip(&screen_rect);

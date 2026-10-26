@@ -2,6 +2,7 @@
 
 from pathlib import Path
 import os
+import resource
 import shutil
 import subprocess
 
@@ -61,6 +62,28 @@ def compile_and_run(tmp_path: Path, source: str) -> None:
         text=True,
     )
     subprocess.run([str(binary)], check=True, timeout=10)
+
+
+def compile_and_expect_failure(tmp_path: Path, source: str) -> None:
+    compiler = shutil.which("g++") or shutil.which("clang++")
+    if compiler is None:
+        pytest.skip("host C++ compiler unavailable")
+    cpp = tmp_path / "alphamenu-stale-snapshot.cpp"
+    binary = tmp_path / "alphamenu-stale-snapshot"
+    cpp.write_text(source)
+    subprocess.run(
+        [compiler, "-std=c++17", "-Wall", "-Wextra", "-Werror", str(cpp), "-o", str(binary)],
+        check=True,
+        timeout=30,
+        capture_output=True,
+        text=True,
+    )
+    def no_core():
+        resource.setrlimit(resource.RLIMIT_CORE, (0, 0))
+    result = subprocess.run([str(binary)], timeout=10, capture_output=True, text=True,
+                            cwd=tmp_path, preexec_fn=no_core,
+                            env=dict(os.environ, OPENSMACX_DISABLE_CORES="1"))
+    assert result.returncode != 0, "stale-dimension snapshot mutant passed callback-mutation witnesses"
 
 
 def test_adjust_uses_real_sprite_dimensions_and_owned_maininterface_bounds(tmp_path):
@@ -322,24 +345,28 @@ void do_sound() { ++sounds; }
 struct DrawRecord;
 class Buffer;
 struct DrawRecord { Buffer *source; Buffer *destination; int index, x, y; };
+struct CopyRecord { Buffer *source; Buffer *destination; int sx, sy, dx, dy, width, height; };
 std::vector<DrawRecord> draws;
+std::vector<CopyRecord> copies;
 class Buffer {
  public:
-  void init(int w, int h, int, int) { width = w; height = h; initialized = true; }
+  void init(int w, int h, int, int);
   void close() { closed = true; }
   int pixel_width() const { return width; }
   int pixel_height() const { return height; }
   int copy(Buffer *destination, int sx, int sy, int dx, int dy, int w, int h) {
     copy_source = this; copy_destination = destination;
     copy_args[0] = sx; copy_args[1] = sy; copy_args[2] = dx; copy_args[3] = dy;
-    copy_args[4] = w; copy_args[5] = h; ++copy_count; return 0;
+    copy_args[4] = w; copy_args[5] = h; ++copy_count;
+    copies.push_back({this, destination, sx, sy, dx, dy, w, h});
+    return 0;
   }
   int draw(Buffer *destination, int index, int x, int y, int, int) {
     draws.push_back({this, destination, index, x, y}); return 0;
   }
-  void set_clip(const RECT *r) { clip = *r; ++clip_count; }
+  void set_clip(const RECT *r);
   void restore_clip() { set_clip(&rect2_); }
-  int width = 100, height = 100;
+  int width = 100, height = 100, init_width = -1, init_height = -1;
   bool initialized = false, closed = false;
   int copy_count = 0, copy_args[6] = {};
   Buffer *copy_source = nullptr, *copy_destination = nullptr;
@@ -347,6 +374,26 @@ class Buffer {
   RECT clip = {};
   RECT rect2_ = {0, 0, 800, 600};
 };
+Buffer *init_mutation_target = nullptr;
+Buffer *clip_mutation_target = nullptr;
+Buffer *flip_mutation_target = nullptr;
+int *sprite_height_target = nullptr;
+int sprite_height_after_clip = 10;
+void Buffer::init(int w, int h, int, int) {
+  width = w; height = h; init_width = w; init_height = h; initialized = true;
+  if (init_mutation_target) {
+    init_mutation_target->width = 90;
+    init_mutation_target->height = 80;
+  }
+}
+void Buffer::set_clip(const RECT *r) {
+  clip = *r; ++clip_count;
+  if (clip_mutation_target) {
+    clip_mutation_target->width = 70;
+    clip_mutation_target->height = 60;
+  }
+  if (sprite_height_target) *sprite_height_target = sprite_height_after_clip;
+}
 // Borrower control only: real placement construction/guarded destruction
 // is verified separately by the actual production lifetime controls.
 struct ScreenBufferFixtureOwner {
@@ -358,7 +405,13 @@ class Win {
  public:
   int is_visible() const { return visible; }
   void client_to_screen(RECT *r) { r->left += 10; r->right += 10; r->top += 20; r->bottom += 20; }
-  void flip(RECT *) { ++flips; }
+  void flip(RECT *) {
+    ++flips;
+    if (flip_mutation_target) {
+      ++flip_mutation_target->width;
+      ++flip_mutation_target->height;
+    }
+  }
   void hide() { visible = false; ++hides; }
   bool visible = true;
   int flips = 0, hides = 0;
@@ -395,7 +448,9 @@ int main() {
   assert(MainInterfaceGlobal.field_216E8_ == 0);
   assert(g_ALPHAMENU_WAVE.plays == 1);
   assert(menu.buffer_.initialized && menu.buffer_.closed);
+  assert(menu.buffer_.init_width == 100 && menu.buffer_.init_height == 100);
   assert(menu.buffer_.width == 100 && menu.buffer_.height == 100);
+  assert(static_cast<Buffer *>(&menu)->width == 100 && static_cast<Buffer *>(&menu)->height == 100);
   assert(menu.buffer_.copy_count == 6);
   assert(menu.buffer_.copy_source == &menu.buffer_);
   assert(menu.buffer_.copy_destination == &ScreenBufferOwner.buffer());
@@ -407,6 +462,15 @@ int main() {
   assert(ConsoleGlobal.copy_destination == &menu.buffer_);
   assert(ConsoleGlobal.copy_args[0] == -40 && ConsoleGlobal.copy_args[1] == -40);
   assert(ConsoleGlobal.copy_args[5] == 100);
+  assert(copies.size() == 7);
+  assert(copies[0].source == static_cast<Buffer *>(&ConsoleGlobal));
+  assert(copies[0].destination == &menu.buffer_ && copies[0].width == 100
+      && copies[0].height == 100);
+  for (int i = 0; i != 6; ++i) {
+    assert(copies[i + 1].source == &menu.buffer_);
+    assert(copies[i + 1].destination == &ScreenBufferOwner.buffer());
+    assert(copies[i + 1].width == 100 && copies[i + 1].height == 100);
+  }
   assert(draws.size() == 6);
   for (int i = 0; i != 6; ++i) {
     assert(draws[i].source == static_cast<Buffer *>(&menu));
@@ -438,9 +502,77 @@ int main() {
   assert(ScreenBufferOwner.buffer().clip.left == 10 && ScreenBufferOwner.buffer().clip.top == 20);
   assert(WinFlipClipped == 7);
   assert(!networked.visible && networked.hides == 1 && networked.buffer_.closed);
+
+  // These callbacks mutate the inherited GraphicWin Buffer that the accessors
+  // read. The embedded buffer_ remains the copy destination and retains the
+  // dimensions passed to init.
+  AlphaMenu changed;
+  Buffer *changed_graphic = static_cast<Buffer *>(&changed);
+  init_mutation_target = clip_mutation_target = flip_mutation_target = changed_graphic;
+  sprite_height_target = &changed.sprite1_.h;
+  sprite_height_after_clip = 6;
+  GameDataStateStorage.fields_.game_preferences_ = 0x8000400;
+  IsMultiplayerNet = 0;
+  WinFlipClipped = 0;
+  const size_t changed_copy_start = copies.size();
+  const size_t changed_draw_start = draws.size();
+  changed.hide();
+  assert(changed.buffer_.init_width == 100 && changed.buffer_.init_height == 100);
+  assert(changed.buffer_.width == 100 && changed.buffer_.height == 100);
+  assert(changed_graphic->width == 70 && changed_graphic->height == 60);
+  assert(copies.size() == changed_copy_start + 7);
+  assert(copies[changed_copy_start].destination == &changed.buffer_);
+  assert(copies[changed_copy_start].width == 90 && copies[changed_copy_start].height == 80);
+  for (int i = 0; i != 6; ++i) {
+    assert(copies[changed_copy_start + i + 1].width == 70 + i);
+    assert(copies[changed_copy_start + i + 1].height == 60 + i);
+  }
+  assert(draws.size() == changed_draw_start + 6);
+  assert(draws[changed_draw_start + 5].y == 114);
+
+  // A short rectangle leaves the original tail branch reachable (step is 0).
+  // Its copy site must read the dimensions after six flip callbacks as well.
+  AlphaMenu tail;
+  tail.working = {0, 0, 100, 4};
+  Buffer *tail_graphic = static_cast<Buffer *>(&tail);
+  init_mutation_target = clip_mutation_target = flip_mutation_target = tail_graphic;
+  sprite_height_target = &tail.sprite1_.h;
+  sprite_height_after_clip = 0;
+  const size_t copy_start = copies.size();
+  const size_t draw_start = draws.size();
+  tail.hide();
+  assert(tail.buffer_.init_width == 100 && tail.buffer_.init_height == 100);
+  assert(tail.buffer_.width == 100 && tail.buffer_.height == 100);
+  assert(tail_graphic->width == 70 && tail_graphic->height == 60);
+  assert(copies.size() == copy_start + 8);
+  assert(copies[copy_start].width == 90 && copies[copy_start].height == 80);
+  for (int i = 0; i != 6; ++i) {
+    assert(copies[copy_start + i + 1].width == 70 + i);
+    assert(copies[copy_start + i + 1].height == 60 + i);
+  }
+  assert(copies[copy_start + 7].width == 76 && copies[copy_start + 7].height == 66);
+  assert(draws.size() == draw_start + 7);
+  assert(draws[draw_start + 6].y == 24);
 }
 """
     compile_and_run(tmp_path, harness)
+
+    stale = hide
+    for name, accessor in (
+        ("console_copy_height", "height"),
+        ("console_copy_width", "width"),
+        ("frame_copy_height", "height"),
+        ("frame_copy_width", "width"),
+        ("final_copy_height", "height"),
+        ("final_copy_width", "width"),
+    ):
+        stale = stale.replace(
+            f"const int {name} = pixel_{'height' if 'height' in name else 'width'}();",
+            f"const int {name} = {accessor};",
+        )
+    assert stale != hide
+    assert harness.count(hide) == 1
+    compile_and_expect_failure(tmp_path, harness.replace(hide, stale, 1))
 
 
 def test_alpha_menu_show_callers_use_the_zero_argument_override(tmp_path):
