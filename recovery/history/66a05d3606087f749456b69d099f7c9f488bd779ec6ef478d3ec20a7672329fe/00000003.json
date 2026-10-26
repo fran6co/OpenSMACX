@@ -1,0 +1,20 @@
+{
+  "event_id": "48966fd9191d9a6fdb667f7c171afdb3db3a976d807d1c0f2870eb07dcd6ff86",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_alphamovie_exec_actual_source.py"
+    ],
+    "evidence": [
+      "Correct the factual premise of restore-original-dimension-read-oracle: independent pinned404093/404099 reads HEIGHT(9B7B20) thenWIDTH(9B7B1C). The successful C++ candidate declares widththenheight but VC6 emits heightthenwidth; the previous statement that the pin reads widthfirst is withdrawn. Existing file-edit authorization persists; no behavior fix or changed byte claims is authorized.",
+      "The host macros turn ordinary nonvolatile global loads into observable calls, so relative mock-call order does not model target behavior. Keep exact once-only width/height snapshots and init argument values BEFORE init/callbacks, null-input no-read behavior, all later retry/error/device/palette/handle/callback ordering. Native original/COFF comparison independently owns physical load-order verification. Updated host oracle must pass both legitimate source spellings; earlier old-source rejection only tested artificial mock-order and is not behavioral evidence."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "0fd8c10dff6cc24e99ff1776d07c86c9c15d2cea94243d1a2f75b8d0477465be",
+  "request_id": "correct-ordinary-load-oracle-rationale",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:near-header-alphamovie-oct26de"
+}

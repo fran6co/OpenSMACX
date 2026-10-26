@@ -1,0 +1,22 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "d4c88183d2bc471f43fc84b4baef1380cf9cb0eb",
+  "editable_files": [
+    "src/basewin.cpp"
+  ],
+  "evidence": [
+    "The verified changed original_seam.h declaration input provides a new bounded context. Pinned BaseWin::check_loc open-codes the two-input metric while current CPP invokes external vector_dist. Proposed ordinary local expression retains both abs passes, signed shifts, visibility/coordinate/threshold/refresh order.",
+    "Candidate SHA256f9ef6f9f33d8ff4a4c294993c679ef82cbcdbc18208f6933255f55e9e6540923; vector-dist-visibility-discovery.json proves mixed original call/inlining:21direct edges across5callers, original lexical/header ownership unproved. Do not move or force inline the shared helper, change any other owner, or infer structural acceptance from this diagnostic. Maximum1candidate here; native recorder alone may bank any later reviewed winner."
+  ],
+  "intent": "One private caller-local vector metric expansion probe; preserve shared helper and21 independently observed direct-call edges. No header visibility assumption, source publication, flags or claims changed.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4302816,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "small-header-basewin-oct26dg"
+}

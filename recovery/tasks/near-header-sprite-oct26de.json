@@ -1,0 +1,30 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "d4c88183d2bc471f43fc84b4baef1380cf9cb0eb",
+  "editable_files": [
+    "src/sprite.cpp"
+  ],
+  "evidence": [
+    "Actual previous compile receipt includes original_seam.h; current physical receipt excludes its removed147-line unused OriginalObject/template declarations. This establishes a changed included-declaration context for a bounded new easy pass, not a reset of historical claims or task baselines.",
+    "Native pinned original and fresh qualified production COFF contexts are retained in .opensmacx/recovery/easy-header-context-oct26dd/group-*.json. Read-only eight-agent49-function review generated fixed proposals; each candidate below independently overlays only one existing body on the frozen baseline.",
+    "Maximum3 candidate compiler attempts/function in this new context; current deck has one per selected function. Original quirks/bugs, identities/spans/claims, all other bodies and compiler flags are preserved. No forced emission, raw addresses, assembly, or scope changes. Scope expansion and actual publication require separate coordinator decisions.",
+    "Proposal Sprite::get_clipped_x_table_shrink original0x005EAC6F SHA256f43461fd63e36c51d643a6ef60264d75b3fc7447c820eee521a92ecae14a0e57: The complete pin uses a cursor for each scaling table/output walk; this ordinary pointer-cursor spelling preserves the zero-extent no-write return, signed loop bounds, per-item read→store→sum order, aliases visible through output pointers, and source/output indexing from the post-prefix cursor. It is a new body hypothesis in the recorded header-input context, not a measured result.",
+    "Proposal Sprite::get_clipped_y_table_shrink original0x005EACFF SHA2566f923b94390f64a5013c6e91570a9a27395af06b3d03cf2677c1afe6dfe92537: The complete pin uses a cursor for each scaling table/output walk; this ordinary pointer-cursor spelling preserves the zero-extent no-write return, signed loop bounds, per-item read→store→sum order, aliases visible through output pointers, and source/output indexing from the post-prefix cursor. It is a new body hypothesis in the recorded header-input context, not a measured result."
+  ],
+  "intent": "Private bounded ordinary-C++ spelling/lifetime probes in a proven new header-declaration context; no source/mapping/claim publication, retain all evidence and original behavior.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6204527,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6204671,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "near-header-sprite-oct26de"
+}
