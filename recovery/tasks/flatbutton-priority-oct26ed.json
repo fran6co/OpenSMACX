@@ -1,0 +1,24 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "87396ef64ef29ef056c45cf2ea314a32578f8347",
+  "editable_files": [
+    "src/flatbutton.cpp",
+    "recovery/tests/test_flatbutton_move_actual_source.py"
+  ],
+  "evidence": [
+    "Pinned608500 loads Owner1, conditionally falls back to Owner2, then compares that selected owner to this; current source incorrectly ORs both matches. Win::get_mouse_window, BaseButton movement and FlatButton leave corroborate the priority rule.",
+    "Baseline is actual native root qualification87396ef64ef29ef056c45cf2ea314a32578f8347. Current assignmentmasterf1f78d5b4 differs only in unrelated host fixture/journal and has identical live native build inputs. No baseline reset or copied acceptance report.",
+    "One independently proposed ordinary C++ candidate. Preserve all original source identities, spans, claims and findings. Coordinator alone publishes source/Git; test worker edits only its authorized file. No runtime, full-link or automatic acceptance inferred."
+  ],
+  "intent": "Recover the original first-owner priority in FlatButton mouse movement. The second pointer is consulted only when the first pointer is null; preserve the complete original hover, timer, bubble, parent and redraw behavior.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6325504,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "flatbutton-priority-oct26ed"
+}
