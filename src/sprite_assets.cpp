@@ -227,11 +227,12 @@ extern "C" void __cdecl sub_450f30(Sprite *sprite, int x, int y,
 extern "C" int __cdecl sub_450f90(Texture *texture, int x, int y) {
     return texture->extract(&g_PCX_PARSE_TEMP_BUFFER1, x, y, 0x38, 0x38, 0);
 }
-// ORIGINAL: 0x00454D10 ?load_misc@@YAXXZ 0x00454D10-0x00454FB6
+// ORIGINAL: 0x00454D10 ?load_misc@@YAXXZ 0x00454D10-0x00454FB6 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["historical seed:src/recovered/units/00454d10.cpp", "task:asset-startup-loader-owner", "Native229 init receivers:89 tech,70 facility,64 project and6 battle Sprites;44-byte element stride; facility34..64 x prefix and >64 index-31; native files/dimensions/order. Existing Sprite storage is constructed in this owner, not original-address aliases."], "reason": "Recover the complete asset loader through source-owned C++ objects, arrays and normal lifecycle while retaining original mappings and historical findings; no asset/runtime acceptance claimed."}
 void __cdecl load_misc() {
     int index;
     char number[80];
+    char second_number[80];
 
     for (index = 0; index < 89; ++index) {
         StringTemp[0] = '\0';
@@ -258,10 +259,11 @@ void __cdecl load_misc() {
         }
         if (index > 64) {
             _itoa(index - 0x1F, number, 10);
+            strcat(StringTemp, number);
         } else {
-            _itoa(index, number, 10);
+            _itoa(index, second_number, 10);
+            strcat(StringTemp, second_number);
         }
-        strcat(StringTemp, number);
         g_FACILITY_ICON_SPRITES[index].init(StringTemp, 0, 0);
         g_FACILITY_ICON_SPRITES[index].iWidth_ = 0xD7;
         g_FACILITY_ICON_SPRITES[index].iHeight_ = 0xD7;
@@ -273,8 +275,8 @@ void __cdecl load_misc() {
         if (index < 10) {
             strcat(StringTemp, "0");
         }
-        _itoa(index, number, 10);
-        strcat(StringTemp, number);
+        _itoa(index, second_number, 10);
+        strcat(StringTemp, second_number);
         g_SECRET_PROJECT_ICON_SPRITES[index].init(StringTemp, 0, 0);
         g_SECRET_PROJECT_ICON_SPRITES[index].iWidth_ = 0xD7;
         g_SECRET_PROJECT_ICON_SPRITES[index].iHeight_ = 0xD7;
