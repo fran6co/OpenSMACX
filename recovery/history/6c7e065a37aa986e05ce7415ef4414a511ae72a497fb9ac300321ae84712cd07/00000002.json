@@ -1,0 +1,19 @@
+{
+  "event_id": "4646e282b7ad3737a97afc4e75ecb635381400687cbc3a04296b8fa2490c1d7a",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_texture_draw_coast_wide_actual_source.py"
+    ],
+    "evidence": [
+      "Focused host run passes190 cases; eight wide-coast controls fail to compile because their fixture still binds int& to the now source-proven byte cell, and one mutation anchor names the removed redundant cast. Authorize only fixture byte-reference and current direct-access anchors while retaining all raster, sentinel, callback and damage assertions. No product signature/type/algorithm changes beyond the already whole-object-identical byte cell cleanup."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "4ea9a3d610be5df8f33f342fbd221140231886951669ed834f3dea2a250625ba",
+  "request_id": "align-wide-coast-fixture-with-byte-cell",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:texture-byte-fields-oct26dw"
+}

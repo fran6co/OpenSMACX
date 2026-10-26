@@ -1,0 +1,19 @@
+{
+  "event_id": "c5f5c8d389cd8ac9b7a96350d81d9f91afafb41fef327ab71e0b37c3e68ec69b",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/fixtures/texture_draw_coast_wide_host.cpp"
+    ],
+    "evidence": [
+      "Coordinator reviewed the accompanying wide-coast fixture edit: exactly int& slot494 becomes unsigned char& to bind the observed byte cell; every other fixture declaration/behavior is unchanged. Include the shared fixture path explicitly in the task before integration; the earlier grant named the test module but did not list this companion file. No product code, original ABI, padding or extent claim follows from host fixture alignment."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "aa4b5732c36df99601e6f9df3da32b3411b98faffbc2ffe66452d4733bca402b",
+  "request_id": "review-wide-coast-shared-fixture-byte-reference",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:texture-byte-fields-oct26dw"
+}

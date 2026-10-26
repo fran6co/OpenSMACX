@@ -66,13 +66,13 @@ public:
   }
   void *get_data() {
     ++get_calls;
-    acquired_byte = *reinterpret_cast<unsigned char *>(&TextureRasterScratch494);
+    acquired_byte = TextureRasterScratch494;
     return storage;
   }
   void free_data(int value) {
     assert(value == 1);
     ++free_calls;
-    released_byte = *reinterpret_cast<unsigned char *>(&TextureRasterScratch494);
+    released_byte = TextureRasterScratch494;
   }
 };
 class Texture {
@@ -104,8 +104,7 @@ static int texture_advance_gouraud_edge(EdgeScan &, const Vert *, const Vert *,
                                         const int *, int, int) {
   ++edge_advance_calls;
   if (mutation_enabled && edge_advance_calls == mutate_scratch494_at_call)
-    *reinterpret_cast<unsigned char *>(&TextureRasterScratch494) =
-        scratch494_mutation;
+    TextureRasterScratch494 = scratch494_mutation;
   return edge_advance_calls <= 4;
 }
 /* ACTUAL_BODIES */
@@ -156,8 +155,7 @@ def live_translation_unit() -> str:
 static int observe_setup_edge(EdgeScan *edge, int index) {
   ++setup_edge_calls;
   if (mutation_enabled && setup_edge_calls == mutate_scratch494_at_setup)
-    *reinterpret_cast<unsigned char *>(&TextureRasterScratch494) =
-        scratch494_mutation;
+    TextureRasterScratch494 = scratch494_mutation;
   return Texture::setup_edge(edge, index);
 }
 '''
@@ -177,10 +175,10 @@ static int fixed_div(int numerator, int denominator) {
 
 MAIN = r'''
 static unsigned char scratch_byte() {
-  return *reinterpret_cast<unsigned char *>(&TextureRasterScratch494);
+  return TextureRasterScratch494;
 }
 static void reset_case() {
-  TextureRasterScratch494 = 0x44332211;
+  TextureRasterScratch494 = 0x11;
   TextureRasterKey = 0xFF;
   reset_calls = edge_advance_calls = setup_edge_calls = forward_calls = 0;
   mutate_scratch494_at_call = 5;
@@ -214,8 +212,6 @@ static void test_color_key_scratch_rows() {
   assert(buffer.get_calls == 1 && buffer.free_calls == 1);
   assert(buffer.acquired_byte == 0x11 && buffer.released_byte == 0xB6);
   assert(scratch_byte() == 0xB6);
-  assert((static_cast<unsigned int>(TextureRasterScratch494) & 0xFFFFFF00u)
-         == 0x44332200u);
   assert(buffer.storage[0] == 0xEE);
   assert(buffer.storage[1] == 0xA5 && buffer.storage[2] == 0xA5);
   assert(buffer.storage[16] == 0xEE);
@@ -238,8 +234,6 @@ static void test_draw2_scratch_rows() {
   assert(buffer.get_calls == 1 && buffer.free_calls == 1);
   assert(buffer.acquired_byte == 0x11 && buffer.released_byte == 0xB6);
   assert(scratch_byte() == 0xB6);
-  assert((static_cast<unsigned int>(TextureRasterScratch494) & 0xFFFFFF00u)
-         == 0x44332200u);
   assert(buffer.storage[0] == 0xA5 && buffer.storage[1] == 0xA5);
   assert(buffer.storage[16] == 25);
   assert(buffer.storage[32] == 0xB6 && buffer.storage[33] == 0xB6);
@@ -258,7 +252,7 @@ static void test_sentinel_paths_do_not_store_or_acquire() {
   assert(forward_calls == 2);
   assert(buffer.get_calls == 0 && buffer.free_calls == 0);
   assert(reset_calls == reset_before);
-  assert(static_cast<unsigned int>(TextureRasterScratch494) == 0x44332211u);
+  assert(TextureRasterScratch494 == 0x11);
 }
 int main() {
   test_color_key_scratch_rows();
@@ -290,9 +284,9 @@ def test_actual_scratch_consumers(compiler_name: str, tmp_path: Path) -> None:
 
 
 @pytest.mark.parametrize(("old", "new"), [
-    ("alternate =\n                        *reinterpret_cast<unsigned char *>(&TextureRasterScratch494);",
+    ("alternate =\n                        TextureRasterScratch494;",
      "alternate = static_cast<unsigned char>(color);"),
-    ("const unsigned char fill =\n                            *reinterpret_cast<unsigned char *>(\n                                &TextureRasterScratch494);",
+    ("const unsigned char fill =\n                            TextureRasterScratch494;",
      "const unsigned char fill = static_cast<unsigned char>(fillColor);"),
 ])
 def test_argument_snapshot_mutants_fail(old: str, new: str,
