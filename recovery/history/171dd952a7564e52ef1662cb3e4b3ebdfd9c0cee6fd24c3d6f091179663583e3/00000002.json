@@ -1,0 +1,20 @@
+{
+  "event_id": "36a062f2e0d121b9375268c3a34cfbf33ddc35f8d0098da787400245679c04f4",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_alphamenu_behavior.py",
+      "recovery/tests/test_alphamenu_show_animation_actual_source.py"
+    ],
+    "evidence": [
+      "Existing show host control substitutes a spy animation_frame_x and asserts its old post-clip event position. Authorize updating that expected call order to pinned pre-clip snapshot without weakening its six-frame damage control. Existing actual-source hide behavior harness must retain dimensions, clip, rendering and ordinary mode checks as live dimensions are recovered across callbacks. New snapshot/pin controls remain authorized separately; do not create unnecessary duplicate controls."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "aaa76a758b9acfacd9cc1ec66156e9f895ce114f5b3f4c62797dfe9f2f9baee3",
+  "request_id": "coordinator-animation-regression-fixtures-oct26ea",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:alphamenu-frame-oct26ea"
+}
