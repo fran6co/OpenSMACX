@@ -1,0 +1,22 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "6b334d3cc56ba13c946095850b27105075975772",
+  "editable_files": [
+    "src/mci_video.cpp"
+  ],
+  "evidence": [
+    "Immutable next short-pass deck and complete pin/COFF source evidence in easy-small-followup-oct26dl; proposal SHA256 78727edc7193dd84e147b968a84bdaeca8524ac47de833a741fae1282fc6eb35. Original image is independently pinned. Prior outside/global binding obligations remain.",
+    "One candidate only in the proven changed header context; require unchanged actual-production replica, all-TU local exact-loss comparison and native outside-scope comparison. Coordinator publishes only reviewed coherent source with build/link and relevant regression checks; no full-game acceptance inferred."
+  ],
+  "intent": "One bounded switch branch-form probe preserving separate original key and mouse message arms, all call arguments/results and active-player state; no provider/global/type invention.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6291136,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "mci-window-branch-oct26dn"
+}
