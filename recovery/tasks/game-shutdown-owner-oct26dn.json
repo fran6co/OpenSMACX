@@ -1,0 +1,23 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "6b334d3cc56ba13c946095850b27105075975772",
+  "editable_files": [
+    "src/game.cpp",
+    "recovery/tests/test_system_close_actual_source.py"
+  ],
+  "evidence": [
+    "Immutable next short-pass deck and complete pin/COFF source evidence in easy-small-followup-oct26dl; proposal SHA256 799c08815b06100aeb820d4f540bb99245500fd1162dc8ce09ca2db79af1b608. Original image is independently pinned. Prior outside/global binding obligations remain.",
+    "One candidate only in the proven changed header context; require unchanged actual-production replica, all-TU local exact-loss comparison and native outside-scope comparison. Coordinator publishes only reviewed coherent source with build/link and relevant regression checks; no full-game acceptance inferred."
+  ],
+  "intent": "Recover original virtual deleting-destructor effects in system_close for OpeningWindow and MapWinTable slots1..7. Pinned vtable slot0 flag1, real new allocations and existing GraphicWin/MapWin destruction identify ordinary delete expressions; preserve callback-sensitive slot clear order and all other cleanup.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5829200,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "game-shutdown-owner-oct26dn"
+}
