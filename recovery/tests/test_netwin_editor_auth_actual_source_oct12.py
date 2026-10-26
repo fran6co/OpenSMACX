@@ -252,6 +252,23 @@ static void items(std::initializer_list<const char*> texts) {
 int main() {
     (void)&owner_access;
     static_assert(sizeof(NetWinLobbyRow)==0x17c && sizeof(NetWinFactionRecord)==0x190 && sizeof(Player)==0x59c,"actual passive widths");
+    // Direct checksum controls cover count/seed/byte semantics. XOR is the
+    // independent oracle; visitation direction of ordinary bytes is not
+    // observable from this API.
+    char zero_probe[] = {1, 0};
+    assert(checksum(zero_probe, 0, 0xA5) == 0xA5);
+    char one_high_byte[] = {static_cast<char>(0x80), 0};
+    assert(checksum(one_high_byte, 1, 0x7F) == 0xFF);
+    char mixed_bytes[] = {0, static_cast<char>(0x80), static_cast<char>(0xFF), 0x35};
+    assert(checksum(mixed_bytes, 4, 0x5A) == 0x10);
+    char length_probe[] = {0x11, 0x22, 0x44, static_cast<char>(0x88)};
+    assert(checksum(length_probe, 3, 0xA7) == 0xD0);
+    assert(checksum(length_probe, 4, 0xA7) == 0x58);
+    assert(events.empty());
+    assert(checksum_password("") == 0);
+    assert(events.empty()); // empty password exits before CharUpper
+    assert(checksum_password("aZ") == 0x1C); // 0x41 ^ 0x5A, then +1
+    assert(!events.empty() && events.back() == "upper");
     NetWin w;
     // Complete player branches and the constructor-before-mode early path.
     for(int mode : {2,3}) { reset(w); NetWinSessionData.mode_=mode; w.pick_player(); lifetime(1); assert(!identity_calls && !sends); }

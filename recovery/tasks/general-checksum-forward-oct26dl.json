@@ -1,0 +1,28 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "6b334d3cc56ba13c946095850b27105075975772",
+  "editable_files": [
+    "src/general.cpp",
+    "recovery/tests/test_general_checksum_actual_source.py"
+  ],
+  "evidence": [
+    "Pinned539090..5390B4 uses forward LODSB and ECX LOOP; current backward index exists solely for positional matching. Password5390C0 inlines the helper; both bodies are scope. No historical exact claim on either; preserve all other claims and identities.",
+    "Proposal SHA256 2067ecf4f7604d3fe8d0dd9191ba33366f0c7eb6d559e81e64c36cae411ce4f2; group-f-findings.json records original/current listings and source/object hashes. uint32_t count preserves signed int parameter bits. No guards, asm, flags, signature changes or original identity edits. Native independent function/object preservation plus full compile/link required before reviewed integration."
+  ],
+  "intent": "Restore pinned forward byte traversal in checksum and its inlined password caller using ordinary C++; preserve zero/count bit-pattern and original unsafe paths. One bounded compiler proposal, not an extended byte spelling search.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5476496,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5476544,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "general-checksum-forward-oct26dl"
+}
