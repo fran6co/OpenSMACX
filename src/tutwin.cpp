@@ -262,24 +262,21 @@ int TutWin::tut_map(const char *text, int x_coord, int y_coord, int pixel_x,
     int arrow_pixel_x = -1;
     int arrow_pixel_y = -1;
     const int original_y_coord = y_coord;
-    int tutorial_pixel_x = pixel_x;
-    int tutorial_pixel_y = forwarded_6;
 
-    if (forwarded_6 < 0) {
+    if (pixel_x < 0) {
         if (sprite == 0) {
             field_537C_ = x_coord;
             field_5380_ = y_coord;
         }
     } else {
-        field_53AC_ = forwarded_6;
+        field_53AC_ = pixel_x;
     }
 
-    MapWin *const map_window = MapWinTable[0];
-    map_window->focus(x_coord, y_coord);
-    map_window->tile_to_pixel(x_coord, original_y_coord, &tutorial_pixel_x,
-                              &tutorial_pixel_y);
-    tutorial_pixel_x += map_window->field_1DDBC_;
-    tutorial_pixel_y += map_window->field_1DDC0_;
+    MapWinTable[0]->focus(x_coord, y_coord);
+    MapWinTable[0]->tile_to_pixel(x_coord, original_y_coord, &y_coord, &pixel_x);
+    MapWin *map_window = MapWinTable[0];
+    y_coord += map_window->field_1DDBC_;
+    pixel_x += map_window->field_1DDC0_;
 
     if (arrow_x >= 0 &&
         arrow_y >= map_window->field_1DDA8_ &&
@@ -299,17 +296,17 @@ int TutWin::tut_map(const char *text, int x_coord, int y_coord, int pixel_x,
             adjusted_arrow_x < map_window->field_1DDD4_ +
                                   map_window->field_1DDCC_ +
                                   map_window->field_1DDA4_) {
-            map_window->tile_to_pixel(arrow_x, arrow_y, &arrow_pixel_x,
-                                      &arrow_pixel_y);
+            MapWinTable[0]->tile_to_pixel(arrow_x, arrow_y, &arrow_pixel_x,
+                                          &arrow_pixel_y);
+            map_window = MapWinTable[0];
             arrow_pixel_x += map_window->field_1DDBC_;
             arrow_pixel_y += map_window->field_1DDC0_;
         }
     }
 
     GraphicWin *const owner = static_cast<GraphicWin *>(map_window);
-    return tut_win(owner, text, tutorial_pixel_x, tutorial_pixel_y, sprite,
-                   forwarded_6,
-                   arrow_pixel_x, arrow_pixel_y);
+    return tut_win(owner, text, y_coord, pixel_x, sprite,
+                   forwarded_6, arrow_pixel_x, arrow_pixel_y);
 }
 
 // The old callout helpers all transform a panel rectangle into screen
