@@ -1,0 +1,20 @@
+{
+  "event_id": "487942d69ff1b46bc8e8e95f803a238cd521e6f80ae771c3dc27a3fd14f9ba0e",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_netdaemon_hang_up_actual_source.py"
+    ],
+    "evidence": [
+      "Independent pinned CFG confirms both initial guards reach original52E14F/NetMsgPrimary.close, not return. Callback and cleanup paths preserved. Native onecandidate screen remains MISMATCH; noexactclaim.",
+      "Add actualsource host controls for both guards, normalclose, callback reloading global state, matching/nonmatching lock owner, masks and exact callback order. This is recovery of original behavior, not a safetyfix."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "common-close-actual-source-controls",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:hang-up-easy-oct26fx"
+}
