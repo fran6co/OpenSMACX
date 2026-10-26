@@ -7,7 +7,6 @@ import subprocess
 
 import pytest
 
-from match_recovery.source import read_file
 from owner_transfer_test_support import current_record_by_address
 
 
@@ -29,7 +28,9 @@ def _definition(text: str, signature: str) -> str:
 
 def test_integer_swap_is_owned_out_of_line_and_adapters_are_gone():
     header = (ROOT / "src/general.h").read_text(encoding="utf-8")
-    owner = (ROOT / "src/general.cpp").read_text(encoding="utf-8")
+    byte_owner = (ROOT / "src/general.cpp").read_text(encoding="utf-8")
+    integer_record = current_record_by_address(ROOT, 0x00628A50)
+    integer_owner = integer_record.path.read_text(encoding="utf-8")
     base = (ROOT / "src/base.cpp").read_text(encoding="utf-8")
     scroll = (ROOT / "src/scroll.cpp").read_text(encoding="utf-8")
     console = (ROOT / "src/console_commands.cpp").read_text(encoding="utf-8")
@@ -38,14 +39,17 @@ def test_integer_swap_is_owned_out_of_line_and_adapters_are_gone():
     assert "MEASURED inline void __cdecl swap(int *var1" not in header
     assert "MEASURED void __cdecl swap(uint8_t *var1, uint8_t *var2);" in header
     assert "MEASURED inline void __cdecl swap(uint8_t *var1" not in header
-    assert "MEASURED void __cdecl swap(uint8_t *var1, uint8_t *var2) {" in owner
-    assert "MEASURED inline void __cdecl swap(uint8_t *var1" not in owner
-    byte_body = _definition(owner, BYTE_SWAP_SIGNATURE)
-    assert owner.count(BYTE_SWAP_SIGNATURE + " {") == 1
+    assert "MEASURED void __cdecl swap(uint8_t *var1, uint8_t *var2) {" in byte_owner
+    assert "MEASURED inline void __cdecl swap(uint8_t *var1" not in byte_owner
+    byte_body = _definition(byte_owner, BYTE_SWAP_SIGNATURE)
+    assert byte_owner.count(BYTE_SWAP_SIGNATURE + " {") == 1
     assert byte_body.count("^=") == 3
     assert "if (" not in byte_body and "std::swap" not in byte_body
-    body = _definition(owner, SWAP_SIGNATURE)
-    assert owner.count(SWAP_SIGNATURE + " {") == 1
+    body = _definition(integer_owner, SWAP_SIGNATURE)
+    assert integer_record.image_spans == ((0x00628A50, 0x00628A73),)
+    assert integer_record.extract_error == ""
+    assert SWAP_SIGNATURE in integer_record.region
+    assert integer_owner.count(SWAP_SIGNATURE + " {") == 1
     assert body.count("^=") == 3
     assert "if (" not in body and "std::swap" not in body
     assert "static void __cdecl swap_call(" not in base
@@ -68,13 +72,6 @@ def test_integer_swap_is_owned_out_of_line_and_adapters_are_gone():
     assert "_stricmp(Bases[ids[j]].name_string" in numeric
     assert "swap(&ids[j], &ids[j + 1]);" in numeric
 
-    mapped, = [row for row in read_file(ROOT / "src/general.cpp")
-               if row.address == 0x00628A50]
-    assert mapped.image_spans == ((0x00628A50, 0x00628A73),)
-    assert mapped.extract_error == ""
-    assert "body      src/general.cpp" in mapped.region
-    assert SWAP_SIGNATURE in mapped.region
-
     for address in (0x005A58E0, 0x00422F00):
         record = current_record_by_address(ROOT, address)
         assert record.address == address
@@ -89,9 +86,11 @@ def test_actual_swap_bodies_and_xor_alias_contract(compiler_name, tmp_path):
     compiler = shutil.which(compiler_name)
     if compiler is None:
         pytest.skip(f"{compiler_name} is unavailable")
-    owner = (ROOT / "src/general.cpp").read_text(encoding="utf-8")
-    body = _definition(owner, SWAP_SIGNATURE)
-    byte_body = _definition(owner, BYTE_SWAP_SIGNATURE)
+    integer_record = current_record_by_address(ROOT, 0x00628A50)
+    integer_owner = integer_record.path.read_text(encoding="utf-8")
+    byte_owner = (ROOT / "src/general.cpp").read_text(encoding="utf-8")
+    body = _definition(integer_owner, SWAP_SIGNATURE)
+    byte_body = _definition(byte_owner, BYTE_SWAP_SIGNATURE)
     program = r'''#include <cassert>
 #include <climits>
 #include <cstdint>
@@ -214,8 +213,7 @@ def test_pinned_integer_swap_body_and_original_direct_call_sites():
     decoder = Cs(CS_ARCH_X86, CS_MODE_32)
     decoder.detail = True
 
-    owner, = [row for row in read_file(ROOT / "src/general.cpp")
-              if row.address == 0x00628A50]
+    owner = current_record_by_address(ROOT, 0x00628A50)
     low, high = owner.image_spans[0]
     instructions = list(decoder.disasm(image.read(Span(low, high)), low))
     cursor = low

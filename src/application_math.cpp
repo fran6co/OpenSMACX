@@ -148,3 +148,120 @@ Status: Complete
 // some call sites and calls it at others, and a .cpp definition is only ever
 // one of those. The marker stays here because that is where the catalogue
 // reads it.
+
+// Current structural interpretation supersedes the seed-history binding's
+// integer parallel-base rationale: pinned 4D5F92 loads arg0 as the parallel
+// cursor and 4D5F95 loads arg1 as the sorted values. The body advances both by
+// four bytes and passes adjacent int cells to swap(int *, int *).
+// This sorting family is homed beside application numeric primitives; this does
+// not assert an original translation-unit boundary or identify either array's
+// application-level owner. No direct native caller establishes such a domain.
+// The original integer address arithmetic's invalid-pointer/address-wrap
+// domain and 32-bit count-1 overflow behavior are not resolved by this typed
+// source contract. This is not an exactness or bug-fix claim.
+/*
+Purpose: Bubble-sort one int array descending while applying the identical
+         exchanges to a parallel array addressed relative to it.
+// ORIGINAL: 0x004D5F70 sub_4d5f70 0x004D5F70-0x004D5FE6 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Original4D5F70..4D5FE6; retired seed git:b18d3ac8:src/unrecovered/004d5f70.cpp records the same identity and spans.", "The pinned body calls integer swap at 0x628A50; the typed declaration and implementation are owned by general.h/general.cpp.", "The parallel array is reached by the same base-plus-index arithmetic the seed measured."], "reason": "Coverage transcription of the paired bubble sort with the source-owned integer swap; the parallel-array base stays an int because no owning array is named anywhere in the tree."}
+// symbol    _sub_4d5f70
+Status: Coverage transcription - unclaimed body
+*/
+extern "C" void __cdecl sub_4d5f70(int *parallel, int *values, int count) {
+    int limit = count - 1;
+    int swapped;
+    do {
+        swapped = 0;
+        if (limit < 1) {
+            return;
+        }
+        int *cursor = parallel;
+        int *value = values;
+        int remaining = limit;
+        do {
+            int *next = value + 1;
+            if (*value < *next) {
+                swapped = 1;
+                swap(value, next);
+                swap(cursor, cursor + 1);
+            }
+            cursor = cursor + 1;
+            remaining = remaining - 1;
+            value = next;
+        } while (remaining != 0);
+    } while (swapped != 0);
+}
+
+/*
+Purpose: For the count, sort both id and value arrays by the least to greatest value (ascending).
+// ORIGINAL: 0x005B5690 ?sort@@YAXHPAHPAH@Z 0x005B5690-0x005B56F5
+// TRIED (2026-09-03): dropping this body's `int bounds = count - 1` local
+//   and writing `i < count - 1` inline, because the image reloads `count`
+//   from its argument slot at the top of every pass iteration
+//   (`mov ecx, [ebp+8]` at 0x005B56A9, then `dec ecx`) and so cannot have a
+//   `bounds` variable. Measured 5/47 before and after - the compiler keeps
+//   `count - 1` in a register either way - so the inline spelling is kept
+//   only because it stops declaring a local the image has not got; the
+//   unreproduced shape is the memory-homed `i` (`push ecx` slot at [ebp-4],
+//   written and re-read around the swap) plus the running pointers
+//   `esi`/`edi`/`ebx`, which is a strength-reduction choice, not a source
+//   one. Left at the plateau.
+// TRIED: byte-match plateau at 5/47 across every flag set tried,
+//            before and after the `goto`/bug fix below - the image
+//            interleaves a SEARCH for the first out-of-order pair with the
+//            swap in one tight loop; any C form with the swap reachable
+//            from inside the scanning `for`/`while` gets restructured by
+//            VC6 into two separate loops (scan-only, then a single swap),
+//            which this address's plateau predates the bug fix and is
+//            unaffected by it. Tried: `break` after the swap, `goto` to a
+//            label after the loop, `goto` back to a `restart:` before the
+//            loop (best of the four, but still 5/47), and a `while`
+//            re-entering at i=0. Not a source-form lever found here.
+// symbol    ?sort@@YAXHPAH0@Z
+// size      101 bytes
+// prototype void (__cdecl ?sort@@YAXHPAHPAH@Z)(int count, int* id, int* value)
+// callers   2   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00628A50
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl sort(int count, int *id, int *value) {
+    // BUG IN THE ORIGINAL (reproduced): `test eax,eax` right after every
+    // swap jumps straight back to the function's own top (0x5b5697) the
+    // moment a swap happens, abandoning the rest of this pass instead of
+    // finishing it. A correct bubble sort would keep scanning to the end of
+    // the pass; this one restarts from i=0 after its FIRST swap each pass,
+    // which is why there is no `has_swapped` flag left to track here - the
+    // loop completing on its own IS the "nothing left to swap" signal.
+restart:
+    for (int i = 0; i < count - 1; i++) {
+        if (value[i] > value[i + 1]) {
+            swap(&value[i], &value[i + 1]);
+            swap(&id[i], &id[i + 1]);
+            goto restart;
+        }
+    }
+}
+
+/*
+Purpose: For the count, sort both id and value arrays by the greatest to least value (descending).
+Original Offset: n/a
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl sort_descending(uint32_t count, int *id, int *value) {
+    int bounds = count - 1;
+    BOOL has_swapped;
+    do {
+        has_swapped = false;
+        for (int i = 0; i < bounds; i++) {
+            if (value[i] < value[i + 1]) {
+                has_swapped = true;
+                swap(&value[i], &value[i + 1]);
+                swap(&id[i], &id[i + 1]);
+            }
+        }
+    } while (has_swapped);
+}
