@@ -49,10 +49,16 @@ struct SaveNameDefaultStorage {
     char unassigned_2_[3];
     char save_equal_default_[1];
 };
+struct PrimaryLockStateTail {
+    uint32_t leading_words_[3];
+    uint32_t flags_;
+    int session_phase_;
+    uint32_t trailing_words_[9];
+};
 struct LockStateEntry {
-    unsigned leading_words_[4];
-    union Payload { unsigned flags; int *vehicle_selection_follow; } payload_;
-    unsigned trailing_words_[10];
+    uint32_t leading_words_[4];
+    union Payload { uint32_t flags; int *vehicle_selection_follow; } payload_;
+    uint32_t trailing_words_[10];
 };
 struct ConsoleMock {
     int visible;
@@ -61,8 +67,9 @@ struct ConsoleMock {
 };
 struct LockMock { int clear_count; void clear() { ++clear_count; } };
 struct AlphaNet { int close_count; void close() { ++close_count; } };
-struct NetMock : AlphaNet {
-    LockStateEntry lock_state_[24];
+struct NetDaemon : AlphaNet {
+    PrimaryLockStateTail primary_state_;
+    LockStateEntry channels_[2];
     LockMock locks_;
     int hang_up_count;
     void hang_up() { ++hang_up_count; }
@@ -88,7 +95,7 @@ static ConsoleMock ConsoleGlobal = {0, 0};
 static int WorldClimateSkipTerrainClear;
 static Player Players[MaxPlayerNum];
 static PlayerData PlayersData[MaxPlayerNum];
-static NetMock NetDaemonNet;
+static NetDaemon NetDaemonNet;
 static char StringTemp[1032];
 static char ScenarioSaveNameBuffer[256];
 static SaveNameDefaultStorage SaveNameDefaultStorageGlobal;
@@ -207,15 +214,18 @@ int main() {
     save_status = 0;
     GameDataStateStorage.fields_.game_rules_ = RULES_IRONMAN;
     IsMultiplayerNet = 1;
-    std::memset(NetDaemonNet.lock_state_, 0x78,
-                sizeof NetDaemonNet.lock_state_);
+    std::memset(&NetDaemonNet.primary_state_, 0x78,
+                sizeof NetDaemonNet.primary_state_);
+    std::memset(NetDaemonNet.channels_, 0x78,
+                sizeof NetDaemonNet.channels_);
     assert(save_game(0) == 0);
     assert(autosave_count == 1 && ironman_count == 1);
     assert(NetDaemonNet.hang_up_count == 1);
     assert(NetDaemonNet.locks_.clear_count == 1);
     assert(NetDaemonNet.close_count == 1 && IsMultiplayerNet == 0);
-    assert(NetDaemonNet.lock_state_[2].trailing_words_[6] == 0xFF);
-    assert(NetDaemonNet.lock_state_[2].trailing_words_[9] == 0x78787878);
+    assert(NetDaemonNet.channels_[1].trailing_words_[6] == 0xFF);
+    assert(NetDaemonNet.channels_[1].trailing_words_[9] == 0x78787878);
+    assert(NetDaemonNet.primary_state_.trailing_words_[8] == 0x78787878);
 
     initialize();
     FileBox::box_selection = 0;

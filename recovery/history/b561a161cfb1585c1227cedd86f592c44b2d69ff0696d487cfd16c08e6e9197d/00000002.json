@@ -1,0 +1,19 @@
+{
+  "event_id": "1434b6c99350681e65555da45f0aea5abfa3d9883d3325812b8d80fd3a6e2d31",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/fixtures/game_save_load/save_game_host_fixture.cpp"
+    ],
+    "evidence": [
+      "Relevant save_game actual-source control fails before execution because its fixture still declares NetMock while unchanged product body now uses canonical NetDaemon. Authorize only the two fixture type/global-name substitutions, preserving every field/API/value and assertion. No product normalization or regression waiver. End-of-game controls already pass; rerun save control and its compiled mutants after repair."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "1d136bc47234b295cf42cd88a4f43e9f7c6f7d1b99cb79cf7169fc7b7d80ca1a",
+  "request_id": "repair-actual-source-save-fixture-type-drift",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:game-shutdown-owner-oct26dn"
+}
