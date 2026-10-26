@@ -323,7 +323,11 @@ Status: Complete
 // RECOVERY_BINDING: v1 {"reason":"Recover the complete body in its genuine C++ owner, with real embedded members, shared virtual bases, lifecycle and parent operations. Compiler-generated overrides/adjustors replace executable-address or vbtable stand-ins; no current matching claim is granted.","evidence":["git:de91fffe:src/recovered/units/00608500.cpp","image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","recovery/tasks/ui-eight-owner-coverage.json","Original entry 0x00608500; physical VC6 COFF emitted symbol ?on_mouse_move@FlatButton@@UAEXHH@Z."]}
 // symbol    ?on_mouse_move@FlatButton@@UAEXHH@Z
 void FlatButton::on_mouse_move(int x, int y) {
-    if (WinPointerOwner1 == this || WinPointerOwner2 == this) {
+    Win *active = WinPointerOwner1;
+    if (active == nullptr) {
+        active = WinPointerOwner2;
+    }
+    if (active == this) {
         BaseButton::on_mouse_move(x, y);
         return;
     }

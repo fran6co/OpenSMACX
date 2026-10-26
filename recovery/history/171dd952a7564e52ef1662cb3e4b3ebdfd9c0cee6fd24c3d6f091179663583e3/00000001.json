@@ -1,0 +1,26 @@
+{
+  "event_id": "aaa76a758b9acfacd9cc1ec66156e9f895ce114f5b3f4c62797dfe9f2f9baee3",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_alphamenu_animation_snapshot_actual_source.py",
+      "src/alphamenu.cpp"
+    ],
+    "evidence": [
+      "Independent sibling audit confirms hide snapshots screen width403922 after buffer copy40391D but before set_clip403964 and guard403979. Its init4038EE consumes initial dimensions, then original reloads receiver dimensions4038F3/F9 for copy40391D; source reused earlier locals. Original sprite height for target_y40396C/977 follows clip call, whereas source snapshots it before clip. Expand complete ownership closure for original read timing, not behavior fixes. Preserve helper math, all existing branches/callbacks/quirks and prior claims; no assertion that production callbacks actually mutate these fields."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4208688,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "coordinator-hide-snapshot-closure-oct26ea",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:alphamenu-frame-oct26ea"
+}
