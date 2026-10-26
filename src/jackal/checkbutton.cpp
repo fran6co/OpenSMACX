@@ -54,6 +54,8 @@ Purpose: Construct the GraphicWin base, then install CheckButton's own
 Return Value: n/a
 Status: Complete
 */
+// RECOVERY_GENERATED: v1 vtable 0x0066DC0C 0x0066DC14 ??_7CheckButton@@6BBuffer@@@ 0x00633750
+// RECOVERY_GENERATED: v1 vtable 0x0066DC14 0x0066DD7C ??_7CheckButton@@6BWin@@@ 0x00633750
 CheckButton::CheckButton() {
     checked_ = 0;
     toggle_argument_ = 0;

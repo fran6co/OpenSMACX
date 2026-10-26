@@ -43,6 +43,7 @@ Purpose: Construct an AutoSound by installing its virtual table and copying
 // notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
+// RECOVERY_GENERATED: v1 vtable 0x0066FF34 ? ??_7AutoSound@@6B@ 0x0062BA80
 AutoSound::AutoSound() {
     // Keep the original global-slot permutation: offsets 0,4,8,12,16 map
     // to object fields 4,12,16,8,20 respectively.
