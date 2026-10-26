@@ -2011,3 +2011,11 @@ Status: Complete
 extern "C" void __cdecl sub_6051c0() {
     ScrollDefaultThickness = GetSystemMetrics(3);
 }
+
+// The original Scroll constructor at 0x006051D0 installs its Win view at
+// 0x00605214 (0x00669D58) and Buffer view at 0x0060521A (0x00669D50,
+// this+0x444). The real GraphicWin-derived owner emits these two tables.
+// These are addresspoint bindings only; original table extents and contents
+// remain unverified. Current compiler table sizes do not establish them.
+// RECOVERY_GENERATED: v1 vtable 0x00669D58 ? ??_7Scroll@@6BWin@@@ 0x006051D0
+// RECOVERY_GENERATED: v1 vtable 0x00669D50 ? ??_7Scroll@@6BBuffer@@@ 0x006051D0
