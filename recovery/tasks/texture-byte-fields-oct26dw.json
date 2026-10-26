@@ -1,0 +1,52 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "7202941d7acffc89900ea4cbd813882334010f45",
+  "editable_files": [
+    "src/texture.cpp",
+    "recovery/tests/test_texture_scratch_494_actual_source.py",
+    "recovery/tests/test_texture_keyed_stacked_actual_source.py",
+    "recovery/tests/test_texture_polygon_fill_actual_source.py"
+  ],
+  "evidence": [
+    "Current root baseline 7202941d7acffc89900ea4cbd813882334010f45, independent pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf. Native compiler recipes from the qualified complete current application; no task baseline or claim demotion. All selected functions have new included-declaration context and previous inspected attempts remain capped.",
+    "Coordinator owns source publication/Git; worker tests may edit only authorized files. Preserve every discovery and original error path. Candidate-only diagnostics are not linked/runtime/game or automatic acceptance.",
+    "Reviewed immutable proposal /home/fran6co/code/OpenSMACX/.opensmacx/recovery/texture-scratch-types-oct26dv/texture-byte-fields.cpp SHA256 f12013d0df5ef9722a24a947c56dc7cccccadf91a2746accd673bc503222852e",
+    "All observed pinned494/560 accesses are bytes; same-named draw_coast overloads61EAD0 and623F80 are distinct, correctly mapped. No signature correction is authorized. Data offsets/neighbor allocation and all Texture local exacts must be examined; unproven original full scalar extents remain unclaimed."
+  ],
+  "intent": "Recover observed byte-valued private raster cells and replace byte punning with typed accesses. No complete original extent/lifetime claim; retain all storage-neighbor and historical code obligations; only one full-TU proposal, native layout/data/all-function checks before publication.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6414176,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6434224,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6435776,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6437344,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6438784,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6440560,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "texture-byte-fields-oct26dw"
+}

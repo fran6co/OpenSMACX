@@ -277,9 +277,9 @@ def test_actual_installed_owner_executes_clipped_two_row_keyed_coast(
 @pytest.mark.parametrize(
     "old,new",
     (
-        ("static_cast<unsigned char>(TextureRasterScratch494), pixel_count,\n"
+        ("TextureRasterScratch494, pixel_count,\n"
          "                                                &span_result)",
-         "static_cast<unsigned char>(TextureRasterScratch494 + 1), pixel_count,\n"
+         "TextureRasterScratch494 + 1, pixel_count,\n"
          "                                                &span_result)"),
         ("TextureRasterScratch4E4.dword, TextureRasterScratch4C8.dword, row_light,",
          "TextureRasterScratch4E4.dword, TextureRasterScratch4C8.dword, row_light + 0x10000,"),

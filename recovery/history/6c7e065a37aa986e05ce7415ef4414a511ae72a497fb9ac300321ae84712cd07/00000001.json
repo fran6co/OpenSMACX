@@ -1,0 +1,24 @@
+{
+  "event_id": "4ea9a3d610be5df8f33f342fbd221140231886951669ed834f3dea2a250625ba",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_texture_direct_storage_oct13ao.py",
+      "recovery/tests/test_texture_draw_coast_actual_source.py",
+      "recovery/tests/test_texture_span_prefetch_owner_oct10.py",
+      "recovery/tests/test_texture_sub61df60_actual_source.py",
+      "recovery/tests/test_texture_vertices.py"
+    ],
+    "evidence": [
+      "The single whole-TU byte-type proposal reproduces the complete qualified Texture object exactly: native object signature equal, zero-omission residualPASS, allglobal offsets/types inCOFF unchanged, no local exactgain/loss. This supports source typing/access cleanup without a machine change; original complete scalar extents/lifetimes remain unknown.",
+      "Authorize existing actual-source Texture controls to use the actual byte declarations and direct-access mutation anchors. Preserve low-byte values, truncation, sentinel no-store, signed-threshold, callback/snapshot and raster ordering expectations. The former upper24-bit integer-object assertions were not original extent evidence; replace their dependency on guessed int storage without disabling any proven byte/callback behavior. No new padding/union/guard or product signature changes."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "align-existing-byte-field-controls-with-observed-width",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:texture-byte-fields-oct26dw"
+}

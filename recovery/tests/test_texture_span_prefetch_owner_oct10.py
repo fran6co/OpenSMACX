@@ -140,8 +140,7 @@ def _loop_kernel(method: str, kind: str) -> str:
     if kind == "alternate_draw_color_key_alt":
         # This projection starts inside the body, after the real entry store.
         setup += (
-            "    *reinterpret_cast<unsigned char *>(&TextureRasterScratch494) = "
-            "scratch_value;\n"
+            "    TextureRasterScratch494 = scratch_value;\n"
         )
     return f"static void kernel_{kind}({params}) {{\n{setup}{snippet}\n}}"
 
@@ -174,8 +173,7 @@ def _draw2_row_block(method: str) -> str:
         "static void kernel_draw2_row(unsigned char *pixels, unsigned char *out, "
         "int y, int width, int u, int v, int du, int dv, int z, unsigned short dz, "
         "int cutoff, int fillColor, unsigned int remaining) {\n"
-        "    *reinterpret_cast<unsigned char *>(&TextureRasterScratch494) = "
-        "static_cast<unsigned char>(fillColor);\n"
+        "    TextureRasterScratch494 = static_cast<unsigned char>(fillColor);\n"
         + block + "\n}"
     )
 
@@ -188,7 +186,7 @@ def _translation_unit(source: str, main: str, mutations: dict[str, str] | None =
     assert fixture.count(MAIN_INSERTION) == 1
     helpers = {name: _definition(source, name) for name in HELPERS}
     scratch = re.search(
-        r"^static int TextureRasterScratch494;\s*$", source, re.MULTILINE
+        r"^static unsigned char TextureRasterScratch494;\s*$", source, re.MULTILINE
     )
     assert scratch is not None
     kernels = []

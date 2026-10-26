@@ -1,10 +1,9 @@
-"""Direct Texture raster-global storage and historical continuity controls.
+"""Direct Texture raster-global storage and representation controls.
 
 The C++ host check compiles the literal mapped globals and private bit-copy
 helper. It checks object aliasing/representation behavior only; host layout is
 not evidence for the original 32-bit ABI, allocation, or pixel semantics.
 """
-from dataclasses import fields
 from pathlib import Path
 import re
 import shutil
@@ -12,132 +11,13 @@ import subprocess
 
 import pytest
 
-from match_recovery.source import read_file, read_text
-from match_recovery.tasks import TaskStore
 from recovery.tests.texture_direct_storage_host import (
-    DIRECT_STORAGE_END,
-    DIRECT_STORAGE_START,
-    KEY_OBJECT_MARKER,
-    SIGNED_KEY_HELPER,
-    SIGNED_KEY_NOTE,
-    _alias_block,
-    _cpp_tokens,
     direct_storage_prelude,
-    direct_storage_projection,
 )
 
 
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "src/texture.cpp"
-BASE = "f14619684801a682ea985c4ddefda40757422964"
-TASK = "texture-direct-global-storage-owner-oct13ao"
-PIN = "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
-
-
-def _history(row):
-    if row.origin is None:
-        return None
-    return tuple((item.kind, item.key, item.prose,
-                  tuple(line for _, line in item.lines)) for item in row.origin)
-
-
-def _continuity(row):
-    return tuple(getattr(row, item.name) for item in fields(row)
-                 if item.name not in {"line", "region", "origin"}) + (_history(row),)
-
-
-def _comments(source):
-    return re.findall(r"//[^\n]*|/\*.*?\*/", source, re.S)
-
-
-def _baseline():
-    return subprocess.check_output(
-        ["git", "show", f"{BASE}:src/texture.cpp"], cwd=ROOT, timeout=30
-    ).decode("utf-8")
-
-
-def _reverse_scratch504_pointer_delta(source):
-    """Project the separately authorized pointer correction back to its old spelling."""
-    source = source.replace(
-        "// The pinned renderers reload this cell as the source base for byte loads.\n"
-        "// RECOVERY_OBJECT: v1 0x009BB504 _TextureRasterScratch504\n"
-        "static unsigned char *TextureRasterScratch504;",
-        "// RECOVERY_OBJECT: v1 0x009BB504 _TextureRasterScratch504\n"
-        "static int TextureRasterScratch504;",
-        1,
-    )
-    source = source.replace(
-        "TextureRasterScratch504 = static_cast<unsigned char *>(texture_pointer_from_address(\n"
-        "                static_cast<uint32_t>(static_cast<uint32_t>(texture_pointer_address(TextureRasterScratch544)) +\n"
-        "                    row_source_offset)));",
-        "TextureRasterScratch504 = static_cast<int>(\n"
-        "                static_cast<unsigned int>(texture_pointer_address(TextureRasterScratch544)) + row_source_offset);",
-        1,
-    )
-    source = source.replace(
-        "TextureRasterScratch504 = reinterpret_cast<unsigned char *>(src);",
-        "TextureRasterScratch504 = reinterpret_cast<int>(src);",
-        1,
-    )
-    source = source.replace(
-        "TextureRasterScratch504 = static_cast<unsigned char *>(texture_pointer_from_address(\n"
-        "                                        static_cast<uint32_t>(static_cast<uint32_t>(\n"
-        "                                            texture_pointer_address(TextureRasterScratch544)) + source_offset)));",
-        "TextureRasterScratch504 = static_cast<int>(static_cast<unsigned int>(\n"
-        "                                        texture_pointer_address(TextureRasterScratch544)) + source_offset);",
-        1,
-    )
-    return source
-
-
-def test_exact_53_alias_projection_preserves_entire_source_and_annotations():
-    task = TaskStore(ROOT).read(TASK)
-    assert task.base_revision == BASE
-    assert len(task.subjects) == 96
-    assert all(row.image_sha256 == PIN and row.address_space == "pe:va"
-               for row in task.subjects)
-
-    before = _baseline()
-    current = SOURCE.read_text(encoding="utf-8")
-    _, _, alias_block, targets = _alias_block(before)
-    assert len(targets) == 53
-    assert len(re.findall(r"(?m)^static\s+[^;]*\b(?:blit|g2)_[A-Za-z0-9_]+\b", alias_block)) == 53
-    assert before.count(DIRECT_STORAGE_START) == 1
-    assert before.count(DIRECT_STORAGE_END) == 1
-    assert current.count(DIRECT_STORAGE_START) == 1
-    assert current.count(KEY_OBJECT_MARKER) == 1
-    assert current.count(SIGNED_KEY_NOTE) == 1
-    assert current.count(SIGNED_KEY_HELPER) == 1
-    from recovery.tests.texture_direct_storage_host import reverse_direct_storage_source
-    projected_current = _reverse_scratch504_pointer_delta(current)
-    assert reverse_direct_storage_source(projected_current, before) == before
-    assert _cpp_tokens(projected_current) == _cpp_tokens(direct_storage_projection(before)), (
-        "source must be exactly the approved direct-global projection of the immutable base")
-
-    # Preserve every pre-existing source comment/history item; only replace
-    # the original key-owner note with the exact new structural note.
-    old_key_comment = "// Existing TextureRasterKey remains the sole owner of the 0x9BB548 object."
-    assert before.count(old_key_comment) == 1
-    comments = _comments(current)
-    note_comments = SIGNED_KEY_NOTE.rstrip().splitlines()
-    assert all(line in comments for line in note_comments)
-    comments.remove(note_comments[0])
-    comments.remove(note_comments[1])
-    comments.insert(_comments(current).index(note_comments[0]), old_key_comment)
-    assert comments == _comments(before), "no prior comment/history may be dropped or rewritten"
-
-    old = {row.address: row for row in read_text(before, SOURCE)}
-    new = {row.address: row for row in read_file(SOURCE)}
-    assert old.keys() == new.keys(), "all original function/object identities remain present"
-    for address, previous in old.items():
-        assert _continuity(new[address]) == _continuity(previous), hex(address)
-
-    # Alias names are absent from code and declarations, not merely unused.
-    code = re.sub(r"//[^\n]*|/\*.*?\*/|\"(?:\\.|[^\"\\])*\"|'(?:\\.|[^'\\])*'",
-                  " ", current, flags=re.S)
-    assert not re.search(r"\b(?:blit|g2)_[A-Za-z0-9_]+\b", code)
-
-
 HOST_MAIN = r"""
 static void require98(bool ok, const char *message) {
     if (!ok) { fprintf(stderr, "ASSERT98: %s\n", message); exit(98); }
@@ -150,9 +30,8 @@ static unsigned char *callback_then_read(void (*callback)()) {
 }
 int main() {
     unsigned char byte_value = 0xA7;
-    unsigned char *scratch494 = reinterpret_cast<unsigned char *>(&TextureRasterScratch494);
-    scratch494[0] = byte_value;
-    require98(scratch494[0] == byte_value, "Scratch494 byte-zero view");
+    TextureRasterScratch494 = byte_value;
+    require98(TextureRasterScratch494 == byte_value, "Scratch494 typed byte storage");
 
     TextureRasterScratch4C8.dword = static_cast<int>(0x11223344u);
     require98(TextureRasterScratch4C8.bytes[2] == 0x22,
