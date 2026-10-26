@@ -1,0 +1,35 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "d8da065ce45eb5184d148995efdd778663001619",
+  "editable_files": [
+    "src/movie_media.cpp",
+    "recovery/tests/test_media_surface_setup_owner_oct26.py",
+    "recovery/tests/test_media_frame_owner_oct26.py",
+    "recovery/tests/test_media_audio_pump_owner_oct26.py"
+  ],
+  "evidence": [
+    "Current physical baseline owner-fidelity-integrated-oct26cr-native-candidate/integrated-qualified.json",
+    "Saved native source/pin/COFF ownership evidence in owner-fidelity-oct26cm; compiler candidates capped at3/function/context."
+  ],
+  "intent": "Recover original descriptor and surface receivers across DirectDraw/DirectSound callbacks without altering error/loop/arithmetic behavior.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6078000,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6080832,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6086560,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "media-owner-oct26ct"
+}

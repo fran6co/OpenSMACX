@@ -675,7 +675,6 @@ extern "C" void __fastcall sub_5cc940(MediaRuntime *runtime,
   // explicit 3/6/12-byte short-run paths and >12-byte dispatch below.
   // 5D35B0 is implemented in movie_media_decoder.cpp through the frame,
   // Huffman and IDCT owners. Matching and playback remain verification debt.
-  MediaDescriptor &d = *runtime->descriptor;
   BYTE *packet = record->payload;
   const DWORD record_kind = record->field_0c;
   runtime->selected_record_kind_39c = record_kind;
@@ -685,13 +684,13 @@ extern "C" void __fastcall sub_5cc940(MediaRuntime *runtime,
     sub_5cd750(runtime, packet);
     break;
   case 3:
-    d.output_width_64 = (DWORD)(LONG)media_read_signed_word(packet + 0);
-    d.output_height_60 = (DWORD)(LONG)media_read_signed_word(packet + 2);
+    runtime->descriptor->output_width_64 = (DWORD)(LONG)media_read_signed_word(packet + 0);
+    runtime->descriptor->output_height_60 = (DWORD)(LONG)media_read_signed_word(packet + 2);
     runtime->record_scale_byte_048 = packet[4];
     break;
   case 4:
-    d.output_width_64 = (DWORD)(LONG)media_read_signed_word(packet + 0);
-    d.output_height_60 = (DWORD)(LONG)media_read_signed_word(packet + 2);
+    runtime->descriptor->output_width_64 = (DWORD)(LONG)media_read_signed_word(packet + 0);
+    runtime->descriptor->output_height_60 = (DWORD)(LONG)media_read_signed_word(packet + 2);
     runtime->record_scale_byte_048 = packet[4];
     runtime->record_option_040 = packet[7] & 2;
     runtime->record_option_044 = packet[7] & 1;
@@ -699,33 +698,33 @@ extern "C" void __fastcall sub_5cc940(MediaRuntime *runtime,
   case 5:
   case 6:
   case 7:
-    d.output_width_64 = (DWORD)(LONG)media_read_signed_word(packet + 8);
-    d.output_height_60 = (DWORD)(LONG)media_read_signed_word(packet + 10);
+    runtime->descriptor->output_width_64 = (DWORD)(LONG)media_read_signed_word(packet + 8);
+    runtime->descriptor->output_height_60 = (DWORD)(LONG)media_read_signed_word(packet + 10);
     break;
   }
 
   runtime->output_rect_left_14 = 0;
   runtime->output_rect_top_18 = 0;
-  runtime->output_rect_extent_0c = d.output_width_64;
-  runtime->output_rect_height_10 = d.output_height_60;
-  if ((d.flags & 0x40) != 0) runtime->output_rect_extent_0c <<= 1;
-  if ((d.flags & 0x30) != 0)
+  runtime->output_rect_extent_0c = runtime->descriptor->output_width_64;
+  runtime->output_rect_height_10 = runtime->descriptor->output_height_60;
+  if ((runtime->descriptor->flags & 0x40) != 0) runtime->output_rect_extent_0c <<= 1;
+  if ((runtime->descriptor->flags & 0x30) != 0)
     runtime->output_rect_height_10 <<= 1;
-  if ((d.flags & 0x04) != 0)
+  if ((runtime->descriptor->flags & 0x04) != 0)
     runtime->output_rect_left_14 =
         (int)(runtime->surface_width_004 - runtime->output_rect_extent_0c) >> 1;
-  if ((d.flags & 0x08) != 0)
+  if ((runtime->descriptor->flags & 0x08) != 0)
     runtime->output_rect_top_18 =
         (int)(runtime->surface_height_008 -
               runtime->output_rect_height_10) >> 1;
-  if ((d.flags & 0x01) != 0)
-    runtime->output_rect_left_14 += d.geometry_offset_x_68;
-  if ((d.flags & 0x02) != 0)
-    runtime->output_rect_top_18 += d.geometry_offset_y_6c;
-  if ((d.flags & 0x80) != 0)
-    runtime->output_rect_extent_0c = d.geometry_width_override_70;
-  if ((d.flags & 0x100) != 0)
-    runtime->output_rect_height_10 = d.geometry_height_override_74;
+  if ((runtime->descriptor->flags & 0x01) != 0)
+    runtime->output_rect_left_14 += runtime->descriptor->geometry_offset_x_68;
+  if ((runtime->descriptor->flags & 0x02) != 0)
+    runtime->output_rect_top_18 += runtime->descriptor->geometry_offset_y_6c;
+  if ((runtime->descriptor->flags & 0x80) != 0)
+    runtime->output_rect_extent_0c = runtime->descriptor->geometry_width_override_70;
+  if ((runtime->descriptor->flags & 0x100) != 0)
+    runtime->output_rect_height_10 = runtime->descriptor->geometry_height_override_74;
 
   BYTE *surface_source = 0;
   BYTE *unused_output = 0;
@@ -734,50 +733,50 @@ extern "C" void __fastcall sub_5cc940(MediaRuntime *runtime,
   memset(&locked, 0, 0x6c);
   locked.dwSize = 0x6c;
 
-  if ((d.flags & 0x800) != 0) {
-    surface_source = d.provided_output_base_4c;
-    unused_output = d.provided_output_alternate_50;
-    output_pitch = d.output_width_64 << 1;
-    if ((d.flags & 0x40) != 0) output_pitch <<= 1;
-  } else if ((d.flags & 0x400) != 0) {
-    if (d.surface_1c == 0) {
+  if ((runtime->descriptor->flags & 0x800) != 0) {
+    surface_source = runtime->descriptor->provided_output_base_4c;
+    unused_output = runtime->descriptor->provided_output_alternate_50;
+    output_pitch = runtime->descriptor->output_width_64 << 1;
+    if ((runtime->descriptor->flags & 0x40) != 0) output_pitch <<= 1;
+  } else if ((runtime->descriptor->flags & 0x400) != 0) {
+    if (runtime->descriptor->surface_1c == 0) {
       DDSURFACEDESC surface_description;
       memset(&surface_description, 0, 0x6c);
       surface_description.dwSize = 0x6c;
       surface_description.dwFlags = 7;
-      surface_description.dwWidth = d.output_width_64;
-      surface_description.dwHeight = d.output_height_60;
-      if ((d.flags & 0x180) != 0) surface_description.ddsCaps.dwCaps = 0x840;
+      surface_description.dwWidth = runtime->descriptor->output_width_64;
+      surface_description.dwHeight = runtime->descriptor->output_height_60;
+      if ((runtime->descriptor->flags & 0x180) != 0) surface_description.ddsCaps.dwCaps = 0x840;
       else surface_description.ddsCaps.dwCaps = 0x40;
-      if ((d.flags & 0x40) != 0) surface_description.dwWidth *= 2;
+      if ((runtime->descriptor->flags & 0x40) != 0) surface_description.dwWidth *= 2;
 
       IDirectDrawSurface *created = 0;
-      if (d.draw_device_10->CreateSurface(&surface_description, &created, 0) == DD_OK) {
+      if (runtime->descriptor->draw_device_10->CreateSurface(&surface_description, &created, 0) == DD_OK) {
         created->QueryInterface(IID_IDirectDrawSurface2,
-                                (void **)&d.surface_1c);
-        if (d.draw_device_10->CreateSurface(&surface_description, &created, 0) == DD_OK)
+                                (void **)&runtime->descriptor->surface_1c);
+        if (runtime->descriptor->draw_device_10->CreateSurface(&surface_description, &created, 0) == DD_OK)
           created->QueryInterface(IID_IDirectDrawSurface2,
-                                  (void **)&d.surface_20);
+                                  (void **)&runtime->descriptor->surface_20);
       }
     }
-  } else if (runtime->queue_record_kind != 1 && d.surface_1c == 0) {
+  } else if (runtime->queue_record_kind != 1 && runtime->descriptor->surface_1c == 0) {
     DWORD fourcc_count = 0x40;
     DWORD fourcc_codes[64];
     memset(fourcc_codes, 0, sizeof(fourcc_codes));
-    if (d.draw_device_10->GetFourCCCodes(&fourcc_count, fourcc_codes) == DD_OK) {
+    if (runtime->descriptor->draw_device_10->GetFourCCCodes(&fourcc_count, fourcc_codes) == DD_OK) {
       if (runtime->queue_record_kind == 4) {
-        if (sub_5cdad0(d.draw_device_10,
-                       &d.surface_1c,
-                       (int)d.output_width_64, (int)d.output_height_60,
+        if (sub_5cdad0(runtime->descriptor->draw_device_10,
+                       &runtime->descriptor->surface_1c,
+                       (int)runtime->descriptor->output_width_64, (int)runtime->descriptor->output_height_60,
                        0x32595559) != 0)
           runtime->queue_record_kind = 1;
-      } else if (sub_5cc860(d.draw_device_10, &d.surface_1c,
-                            (int)d.output_width_64,
-                            (int)d.output_height_60, 0x32595559) != 0) {
+      } else if (sub_5cc860(runtime->descriptor->draw_device_10, &runtime->descriptor->surface_1c,
+                            (int)runtime->descriptor->output_width_64,
+                            (int)runtime->descriptor->output_height_60, 0x32595559) != 0) {
         runtime->queue_record_kind = 1;
       } else {
         runtime->owned_heap_638 = (BYTE *)malloc(
-            d.output_width_64 * d.output_height_60 * 2);
+            runtime->descriptor->output_width_64 * runtime->descriptor->output_height_60 * 2);
         RECT fill_rectangle;
         fill_rectangle.left = runtime->output_rect_left_14;
         fill_rectangle.top = runtime->output_rect_top_18;
@@ -788,7 +787,7 @@ extern "C" void __fastcall sub_5cc940(MediaRuntime *runtime,
         memset(&fill_effects, 0, 0x64);
         fill_effects.dwSize = 0x64;
         fill_effects.dwFillColor = 0;
-        d.surface_14->Blt(&fill_rectangle, 0, 0, 0x01000400, &fill_effects);
+        runtime->descriptor->surface_14->Blt(&fill_rectangle, 0, 0, 0x01000400, &fill_effects);
         runtime->output_handle_candidate = 1;
       }
     } else {
@@ -796,16 +795,25 @@ extern "C" void __fastcall sub_5cc940(MediaRuntime *runtime,
     }
   }
 
-  if ((d.flags & 0x800) == 0) {
-    IDirectDrawSurface2 *cooperative_surfaces[4] = {
-        d.surface_14, d.surface_18, d.surface_1c, d.surface_20};
-    const DWORD restore_flags[4] = {0x02000000, 0x08000000, 0, 0};
+  if ((runtime->descriptor->flags & 0x800) == 0) {
+    const DWORD restore_flags[2] = {0x02000000, 0x08000000};
     for (int i = 0; i != 4; ++i) {
-      IDirectDrawSurface2 *surface = cooperative_surfaces[i];
+      IDirectDrawSurface2 *surface;
+      if (i == 0) surface = runtime->descriptor->surface_14;
+      else if (i == 1) surface = runtime->descriptor->surface_18;
+      else if (i == 2) surface = runtime->descriptor->surface_1c;
+      else surface = runtime->descriptor->surface_20;
       if (surface == 0) continue;
-      if (i < 2 && (d.flags & restore_flags[i]) == 0) continue;
+      if (i < 2 &&
+          (runtime->descriptor->flags & restore_flags[i]) == 0)
+        continue;
       if (surface->IsLost() == DDERR_SURFACELOST) {
-        if (surface->Restore() != DD_OK) return;
+        IDirectDrawSurface2 *restore_surface;
+        if (i == 0) restore_surface = runtime->descriptor->surface_14;
+        else if (i == 1) restore_surface = runtime->descriptor->surface_18;
+        else if (i == 2) restore_surface = runtime->descriptor->surface_1c;
+        else restore_surface = runtime->descriptor->surface_20;
+        if (restore_surface->Restore() != DD_OK) return;
         if (i == 2) {
           runtime->queue_record_kind = 2;
           runtime->output_handle_candidate = 1;
@@ -815,17 +823,17 @@ extern "C" void __fastcall sub_5cc940(MediaRuntime *runtime,
 
     if (runtime->queue_record_kind == 1) {
       IDirectDrawSurface2 *lock_target;
-      if ((d.flags & 0x400) == 0) lock_target = d.surface_1c;
-      else if ((d.flags & 0x08000000) == 0) lock_target = d.surface_14;
-      else lock_target = d.surface_18;
+      if ((runtime->descriptor->flags & 0x400) == 0) lock_target = runtime->descriptor->surface_1c;
+      else if ((runtime->descriptor->flags & 0x08000000) == 0) lock_target = runtime->descriptor->surface_14;
+      else lock_target = runtime->descriptor->surface_18;
       if (lock_target->Lock(0, &locked, DDLOCK_WAIT, 0) != DD_OK) return;
       surface_source = (BYTE *)locked.lpSurface;
       output_pitch = (DWORD)locked.lPitch;
     } else if (runtime->queue_record_kind == 2) {
       surface_source = runtime->owned_heap_638;
-      output_pitch = d.output_width_64 << 1;
+      output_pitch = runtime->descriptor->output_width_64 << 1;
     } else if (runtime->queue_record_kind == 4) {
-      if (d.surface_1c->Lock(0, &locked, DDLOCK_WAIT, 0) != DD_OK) return;
+      if (runtime->descriptor->surface_1c->Lock(0, &locked, DDLOCK_WAIT, 0) != DD_OK) return;
       surface_source = (BYTE *)locked.lpSurface;
       output_pitch = (DWORD)locked.lPitch;
     }
@@ -837,7 +845,7 @@ extern "C" void __fastcall sub_5cc940(MediaRuntime *runtime,
   switch (runtime->selected_record_kind_39c) {
   case 1:
     sub_5d3df0(runtime, pixel_payload);
-    if (d.pixel_format.total_component_bits != 8)
+    if (runtime->descriptor->pixel_format.total_component_bits != 8)
       sub_5d3f50(runtime);
     sub_5d4020(runtime, surface_source, unused_output,
                (int)output_pitch);
@@ -849,16 +857,16 @@ extern "C" void __fastcall sub_5cc940(MediaRuntime *runtime,
     break;
   case 3: {
     media_build_runtime_block_scale_table((int)runtime->record_scale_byte_048);
-    const bool four_byte_pixels = (d.flags & 0x40) != 0;
+    const bool four_byte_pixels = (runtime->descriptor->flags & 0x40) != 0;
     const unsigned int block_step = four_byte_pixels ? 0x40 : 0x20;
     DWORD block_pitch = output_pitch;
     BYTE *output_row = surface_source +
         runtime->output_rect_top_18 * output_pitch +
         runtime->output_rect_left_14 * (four_byte_pixels ? 4 : 2);
-    if ((d.flags & 0x30) != 0) block_pitch <<= 1;
-    for (DWORD block_y = 0; block_y < d.output_height_60; block_y += 16) {
+    if ((runtime->descriptor->flags & 0x30) != 0) block_pitch <<= 1;
+    for (DWORD block_y = 0; block_y < runtime->descriptor->output_height_60; block_y += 16) {
       BYTE *output_block = output_row;
-      for (DWORD block_x = 0; block_x < d.output_width_64; block_x += 16) {
+      for (DWORD block_x = 0; block_x < runtime->descriptor->output_width_64; block_x += 16) {
         const unsigned int run_bytes = *compressed++;
         if (run_bytes > 12) {
           if (four_byte_pixels)
@@ -912,9 +920,9 @@ extern "C" void __fastcall sub_5cc940(MediaRuntime *runtime,
     sub_5cd2d0(runtime->decoder_context_3f8.block_transform_weights,
                (int)runtime->record_scale_byte_048);
     if (runtime->queue_record_kind == 1) {
-      if ((d.flags & 0x40) == 0 && d.pixel_format.total_component_bits < 0x11) {
+      if ((runtime->descriptor->flags & 0x40) == 0 && runtime->descriptor->pixel_format.total_component_bits < 0x11) {
         DWORD pitch = output_pitch;
-        if ((d.flags & 0x30) != 0) pitch *= 2;
+        if ((runtime->descriptor->flags & 0x30) != 0) pitch *= 2;
         BYTE *destination = surface_source +
             runtime->output_rect_top_18 * output_pitch +
             runtime->output_rect_left_14 * 2;
@@ -922,7 +930,7 @@ extern "C" void __fastcall sub_5cc940(MediaRuntime *runtime,
                    unused_output, pitch);
       } else {
         DWORD pitch = output_pitch;
-        if ((d.flags & 0x30) != 0) pitch *= 2;
+        if ((runtime->descriptor->flags & 0x30) != 0) pitch *= 2;
         BYTE *destination = surface_source +
             runtime->output_rect_top_18 * output_pitch +
             runtime->output_rect_left_14 * 4;
@@ -940,21 +948,21 @@ extern "C" void __fastcall sub_5cc940(MediaRuntime *runtime,
     BYTE *destination = surface_source +
         runtime->output_rect_top_18 * output_pitch +
         runtime->output_rect_left_14 *
-            (((d.flags & 0x40) == 0 &&
-              d.pixel_format.total_component_bits <= 0x10) ? 2 : 4);
+            (((runtime->descriptor->flags & 0x40) == 0 &&
+              runtime->descriptor->pixel_format.total_component_bits <= 0x10) ? 2 : 4);
     sub_5d35b0(runtime, compressed, destination, output_pitch,
                runtime->selected_record_kind_39c);
     break;
   }
   }
 
-  if ((d.flags & 0x800) == 0) {
+  if ((runtime->descriptor->flags & 0x800) == 0) {
     if (runtime->queue_record_kind == 1) {
-      const DWORD unlock_flags = d.flags;
+      const DWORD unlock_flags = runtime->descriptor->flags;
       IDirectDrawSurface2 *unlock_target;
-      if ((unlock_flags & 0x400) == 0) unlock_target = d.surface_1c;
-      else if ((unlock_flags & 0x08000000) == 0) unlock_target = d.surface_14;
-      else unlock_target = d.surface_18;
+      if ((unlock_flags & 0x400) == 0) unlock_target = runtime->descriptor->surface_1c;
+      else if ((unlock_flags & 0x08000000) == 0) unlock_target = runtime->descriptor->surface_14;
+      else unlock_target = runtime->descriptor->surface_18;
       if (unlock_target->Unlock(0) != DD_OK) {
         if ((unlock_flags & 0x400) == 0) ++runtime->surface_loss_counter_038;
         else if ((unlock_flags & 0x08000000) == 0) ++runtime->surface_loss_counter_02c;
@@ -962,7 +970,7 @@ extern "C" void __fastcall sub_5cc940(MediaRuntime *runtime,
         return;
       }
     } else if (runtime->queue_record_kind == 4 &&
-               d.surface_1c->Unlock(0) != DD_OK) {
+               runtime->descriptor->surface_1c->Unlock(0) != DD_OK) {
       ++runtime->surface_loss_counter_038;
       return;
     }
@@ -1010,55 +1018,61 @@ int __fastcall media_component_mask_bits_31(uint32_t value) {
 // kind      game
 // TRIED: MISMATCH #9 lea/push - thiscall member with local array frame layout differs from the original's; register/stack allocation for the two 91-int DDCAPS scratch buffers does not reproduce the original's `sub esp, 0x364` + rep-stosd shape byte-for-byte.
 void MediaRuntime::sub_5cbe30() {
-  MediaDescriptor &d = *descriptor;
-  if (d.stream_gate_80 != 0) return;
+  MediaDescriptor *d = descriptor;
+  if (d->stream_gate_80 != 0) return;
 
-  if (d.draw_device_10 == 0 && d.draw_query_interface_0c != 0) {
+  if (d->draw_device_10 == 0 && d->draw_query_interface_0c != 0) {
     release_interface_10 = 1;
-    d.draw_query_interface_0c->QueryInterface(
-        IID_IDirectDraw2, (void **)&d.draw_device_10);
+    d->draw_query_interface_0c->QueryInterface(
+        IID_IDirectDraw2, (void **)&d->draw_device_10);
   }
 
+  d = descriptor;
+
   int result_kind = 1;
-  if ((d.flags & 0x00000200) != 0) {
+  if ((d->flags & 0x00000200) != 0) {
     DDCAPS caps_a;
     DDCAPS caps_b;
     memset(&caps_a, 0, sizeof(caps_a));
     memset(&caps_b, 0, sizeof(caps_b));
     caps_a.dwSize = 0x16c;
     caps_b.dwSize = 0x16c;
-    if (d.draw_device_10->GetCaps(&caps_a, &caps_b) == DD_OK) {
-      if ((d.capability_options_08 & 2) != 0 &&
+    int caps_result = d->draw_device_10->GetCaps(&caps_a, &caps_b);
+    d = descriptor;
+    if (caps_result == DD_OK) {
+      if ((d->capability_options_08 & 2) != 0 &&
           (caps_a.dwCaps & 0x2000) != 0 && (caps_a.dwCaps & 0x4000) != 0) {
         result_kind = 2;
-      } else if ((d.capability_options_08 & 4) != 0 &&
+      } else if ((d->capability_options_08 & 4) != 0 &&
                  (caps_a.dwCaps & 0x100) != 0 &&
                  (caps_a.dwCaps & 0x200) != 0) {
         result_kind = 4;
       }
     }
   }
+  d = descriptor;
   queue_record_kind = result_kind;
-  d.surface_1c = 0;
-  d.surface_20 = 0;
+  d->surface_1c = 0;
+  d->surface_20 = 0;
 
-  if ((d.flags & 0x00000800) == 0) {
+  if ((d->flags & 0x00000800) == 0) {
     DDSURFACEDESC surface_description;
     memset(&surface_description, 0, sizeof(surface_description));
     surface_description.dwSize = sizeof(surface_description);
-    if (d.surface_14->GetSurfaceDesc(&surface_description) == DD_OK) {
+    if (d->surface_14->GetSurfaceDesc(&surface_description) == DD_OK) {
       surface_width_004 = surface_description.dwWidth;
       surface_height_008 = surface_description.dwHeight;
     }
 
-    if (d.surface_14 != 0) {
+    d = descriptor;
+    if (d->surface_14 != 0) {
       DDPIXELFORMAT pixel_format;
       memset(&pixel_format, 0, sizeof(pixel_format));
       pixel_format.dwSize = sizeof(pixel_format);
-      d.surface_14->GetPixelFormat(&pixel_format);
+      d->surface_14->GetPixelFormat(&pixel_format);
 
       if (pixel_format.dwRGBBitCount == 8) {
-        d.pixel_format.total_component_bits = 8;
+        d->pixel_format.total_component_bits = 8;
       } else {
         int red_bits = 0;
         int green_bits = 0;
@@ -1066,9 +1080,9 @@ void MediaRuntime::sub_5cbe30() {
           if ((pixel_format.dwRBitMask & (1U << bit)) != 0) ++red_bits;
           if ((pixel_format.dwGBitMask & (1U << bit)) != 0) ++green_bits;
         }
-        d.pixel_format.red_bits = red_bits;
-        d.pixel_format.green_bits = green_bits;
-        d.pixel_format.blue_bits =
+        d->pixel_format.red_bits = red_bits;
+        d->pixel_format.green_bits = green_bits;
+        d->pixel_format.blue_bits =
             (DWORD)media_component_mask_bits_31(pixel_format.dwBBitMask);
 
         int red_shift = 0;
@@ -1077,7 +1091,7 @@ void MediaRuntime::sub_5cbe30() {
           red_mask >>= 1;
           ++red_shift;
         }
-        d.pixel_format.red_shift = red_shift;
+        d->pixel_format.red_shift = red_shift;
 
         int green_shift = 0;
         DWORD green_mask = pixel_format.dwGBitMask;
@@ -1085,7 +1099,7 @@ void MediaRuntime::sub_5cbe30() {
           green_mask >>= 1;
           ++green_shift;
         }
-        d.pixel_format.green_shift = green_shift;
+        d->pixel_format.green_shift = green_shift;
 
         int blue_shift = 0;
         DWORD blue_mask = pixel_format.dwBBitMask;
@@ -1093,41 +1107,48 @@ void MediaRuntime::sub_5cbe30() {
           blue_mask >>= 1;
           ++blue_shift;
         }
-        d.pixel_format.blue_shift = blue_shift;
+        d->pixel_format.blue_shift = blue_shift;
 
-        d.pixel_format.total_component_bits =
-            d.pixel_format.red_bits + d.pixel_format.blue_bits +
-            d.pixel_format.green_bits;
-        d.pixel_format.combined_component_mask =
+        d->pixel_format.total_component_bits =
+            d->pixel_format.red_bits + d->pixel_format.blue_bits +
+            d->pixel_format.green_bits;
+        d->pixel_format.combined_component_mask =
             pixel_format.dwRBitMask | pixel_format.dwGBitMask |
             pixel_format.dwBBitMask;
       }
     }
 
-    if (d.pixel_format.total_component_bits == 8 &&
-        (d.flags & 0x04000000) == 0) {
-      d.palette_entries_28 = (BYTE *)malloc(0x400);
-      d.draw_device_10->CreatePalette(
-          0x44, (LPPALETTEENTRY)d.palette_entries_28, &d.palette_24, 0);
-      memset(d.palette_entries_28, 0, 0x400);
-      d.surface_14->SetPalette(d.palette_24);
+    d = descriptor;
+    if (d->pixel_format.total_component_bits == 8 &&
+        (d->flags & 0x04000000) == 0) {
+      d->palette_entries_28 = (BYTE *)malloc(0x400);
+      d = descriptor;
+      d->draw_device_10->CreatePalette(
+          0x44, (LPPALETTEENTRY)d->palette_entries_28, &d->palette_24, 0);
+      d = descriptor;
+      memset(d->palette_entries_28, 0, 0x400);
+      d = descriptor;
+      d->surface_14->SetPalette(d->palette_24);
     }
   }
 
-  if ((d.flags & 0x00100000) == 0) d.setup_value_78 = 100;
+  d = descriptor;
+  if ((d->flags & 0x00100000) == 0) d->setup_value_78 = 100;
 
-  if (d.pixel_format.total_component_bits == 0x10 ||
-      d.pixel_format.total_component_bits == 0x0f) {
-    sub_5cc150(0xff, (int)d.pixel_format.red_bits,
-               (int)d.pixel_format.green_bits,
-               (int)d.pixel_format.blue_bits,
-               (int)d.pixel_format.red_shift,
-               (int)d.pixel_format.green_shift,
-               (int)d.pixel_format.blue_shift);
+  d = descriptor;
+  if (d->pixel_format.total_component_bits == 0x10 ||
+      d->pixel_format.total_component_bits == 0x0f) {
+    sub_5cc150(0xff, (int)d->pixel_format.red_bits,
+               (int)d->pixel_format.green_bits,
+               (int)d->pixel_format.blue_bits,
+               (int)d->pixel_format.red_shift,
+               (int)d->pixel_format.green_shift,
+               (int)d->pixel_format.blue_shift);
   } else {
     sub_5cc2b0(0xff);
   }
-  d.pixel_format.sub_5cc450();
+  d = descriptor;
+  d->pixel_format.sub_5cc450();
 
   for (int input = -0x200; input < 0x200; ++input) {
     int clamped = input;
@@ -1178,7 +1199,6 @@ int MediaRuntime::sub_5ce2f0() {
 // TRIED: the brief's parameterless contract - disasm reads one cdecl stack arg at entry+4 (matches IDA's void*) and never touches ecx, so this takes a void* param, not zero args. COM slots 4/11/19/20 on the interface at *(*self+0x5c) are exactly IDirectSoundBuffer::GetCurrentPosition/Lock/Unlock/Restore; ignored Ghidra's InterlockedExchange/Increment/Decrement names for the four 0x6690xx/0x669100 calls - those are wrong guesses at an unresolved fixed address, not real symbols.
 extern "C" void __cdecl sub_5cdfa0(void *argument) {
   MediaRuntime *r = (MediaRuntime *)argument;
-  MediaDescriptor &d = *r->descriptor;
   Sleep(10);
   if (InterlockedExchange(&r->sync_word_3b0, 1) != 0) {
     do {
@@ -1191,7 +1211,7 @@ extern "C" void __cdecl sub_5cdfa0(void *argument) {
           write_position = r->synthetic_playback_cursor;
         } else {
           DWORD play_position, safe_write_position;
-          d.play_buffer->GetCurrentPosition(&play_position,
+          r->descriptor->play_buffer->GetCurrentPosition(&play_position,
                                             &safe_write_position);
           write_position = play_position;
         }
@@ -1209,19 +1229,19 @@ extern "C" void __cdecl sub_5cdfa0(void *argument) {
             if (r->synthetic_cursor_mode == 0) {
               LPVOID first, second;
               DWORD first_bytes, second_bytes;
-              HRESULT result = d.play_buffer->Lock(
+              HRESULT result = r->descriptor->play_buffer->Lock(
                   r->playback_cursor, record.field_04, &first, &first_bytes,
                   &second, &second_bytes, 0);
               while (result != DS_OK) {
-                d.play_buffer->Restore();
-                result = d.play_buffer->Lock(
+                r->descriptor->play_buffer->Restore();
+                result = r->descriptor->play_buffer->Lock(
                     r->playback_cursor, record.field_04, &first, &first_bytes,
                     &second, &second_bytes, 0);
               }
               memcpy(first, record.payload, first_bytes);
               if (second_bytes != 0)
                 memcpy(second, record.payload + first_bytes, second_bytes);
-              d.play_buffer->Unlock(first, first_bytes, second, second_bytes);
+              r->descriptor->play_buffer->Unlock(first, first_bytes, second, second_bytes);
             }
             r->playback_cursor =
                 (r->playback_cursor + record.field_04) %
@@ -1234,12 +1254,12 @@ extern "C" void __cdecl sub_5cdfa0(void *argument) {
           } else if (r->synthetic_cursor_mode == 0) {
             LPVOID first, second;
             DWORD first_bytes, second_bytes;
-            if (d.play_buffer->Lock(r->playback_cursor, (DWORD)available,
+            if (r->descriptor->play_buffer->Lock(r->playback_cursor, (DWORD)available,
                                     &first, &first_bytes, &second,
                                     &second_bytes, 0) == DS_OK) {
               memset(first, 0, first_bytes);
               if (second_bytes != 0) memset(second, 0, second_bytes);
-              d.play_buffer->Unlock(first, first_bytes, second, second_bytes);
+              r->descriptor->play_buffer->Unlock(first, first_bytes, second, second_bytes);
             }
             r->playback_cursor =
                 (r->playback_cursor + (DWORD)available) %

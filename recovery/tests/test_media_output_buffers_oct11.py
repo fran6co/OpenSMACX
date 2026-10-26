@@ -294,9 +294,9 @@ def test_actual_complete_output_path(tmp_path, compiler_name, damage):
     swap=definition((ROOT/'src/movie_media.cpp').read_text(),'void MediaRuntime::sub_5cbbc0()')
     projection=HARNESS.replace('ACTUAL_BODY',body).replace('ACTUAL_SWAP',swap)
     changes={
-        'wrong_pitch': ('output_pitch = d.output_width_64 << 1;', 'output_pitch = 123;'),
-        'wrong_unused': ('unused_output = d.provided_output_alternate_50;', 'unused_output = d.provided_output_base_4c;'),
-        'missing_bypass': ('if ((d.flags & 0x800) == 0) {','if (true) {'),
+        'wrong_pitch': ('output_pitch = runtime->descriptor->output_width_64 << 1;', 'output_pitch = 123;'),
+        'wrong_unused': ('unused_output = runtime->descriptor->provided_output_alternate_50;', 'unused_output = runtime->descriptor->provided_output_base_4c;'),
+        'missing_bypass': ('if ((runtime->descriptor->flags & 0x800) == 0) {','if (true) {'),
         'extra_loss_query': ('if (unlock_target->Unlock(0) != DD_OK)', '(void)unlock_target->IsLost();\n      if (unlock_target->Unlock(0) != DD_OK)'),
         'wrong_counter': ('if ((unlock_flags & 0x400) == 0) ++runtime->surface_loss_counter_038;', 'if ((unlock_flags & 0x400) == 0) ++runtime->surface_loss_counter_02c;'),
         'missing_swap': ('view->provided_output_base_4c = previous_alternate;', '(void)previous_alternate;'),
