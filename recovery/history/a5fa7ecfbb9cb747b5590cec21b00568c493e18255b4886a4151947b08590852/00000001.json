@@ -1,0 +1,21 @@
+{
+  "event_id": "ffadb849c56a688e182e14771324778f53789e6848738b8f0a376851e03e11a0",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/fixtures/movie_media_host.cpp",
+      "recovery/tests/test_movie_media_behavior.py"
+    ],
+    "evidence": [
+      "Initial fixed private-replica trial improves setup_sound_device51CE340 from11/90 to20/90 matched instructions with native outsidePASS and no exactloss. Independent pin evidence shows live descriptor re-reads after callback boundaries; current source reference caches its entry owner. This is a faithful recovery correction even before exact codegen.",
+      "Add bounded actual-source host controls that replace runtime.descriptor during DirectSound callbacks and verify original captured-entry outputs versus post-callback current-owner reads. Existing wrong-owner/callback/store-order assertions remain. Prove the old body fails and the recovered body passes; do not initialize or guard originalunsafe/error behavior."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "verify-pinned-owner-reloads-across-directsound-callbacks",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:media-live-owner-oct26ch"
+}

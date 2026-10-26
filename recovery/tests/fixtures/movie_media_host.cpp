@@ -122,6 +122,10 @@ struct MediaHResultText { HRESULT result; const char *text; };
 static BYTE mmio_bytes[0xc000];
 static LONG mmio_result_override = -2;
 static int mmio_close_calls;
+static MediaRuntime *direct_sound_create_runtime;
+static MediaDescriptor *direct_sound_descriptor_after_create;
+static MediaDescriptor *direct_sound_descriptor_expected_before_create;
+static int direct_sound_create_calls;
 static LONG mmioRead(HMMIO, HPSTR output, LONG count) {
   if (mmio_result_override != -2) return mmio_result_override;
   memcpy(output, mmio_bytes, count);
@@ -131,7 +135,15 @@ static LONG mmioClose(HMMIO, UINT) { ++mmio_close_calls; return 0; }
 static IDirectSound *direct_sound_result;
 static HRESULT direct_sound_create_result;
 static HRESULT DirectSoundCreate(void *, IDirectSound **out, void *) {
+  ++direct_sound_create_calls;
+  if (direct_sound_create_runtime != 0 &&
+      direct_sound_descriptor_expected_before_create != 0)
+    assert(direct_sound_create_runtime->descriptor ==
+           direct_sound_descriptor_expected_before_create);
   if (direct_sound_create_result == DS_OK) *out = direct_sound_result;
+  if (direct_sound_create_runtime != 0 &&
+      direct_sound_descriptor_after_create != 0)
+    direct_sound_create_runtime->descriptor = direct_sound_descriptor_after_create;
   return direct_sound_create_result;
 }
 
@@ -203,13 +215,14 @@ struct MockBuffer : IDirectSoundBuffer {
   HRESULT caps_result, play_result, frequency_result, volume_result;
   DWORD actual_bytes, frequency;
   LONG volume;
-  int releases;
+  int releases, caps_calls;
   MockBuffer()
       : caps_result(DS_OK), play_result(DS_OK), frequency_result(DS_OK),
         volume_result(DS_OK), actual_bytes(0x4000), frequency(0), volume(0),
-        releases(0) {}
+        releases(0), caps_calls(0) {}
   HRESULT GetCaps(DSBCAPS *caps) {
     sound_event('b');
+    ++caps_calls;
     caps->dwBufferBytes = actual_bytes;
     return caps_result;
   }
@@ -228,23 +241,50 @@ struct MockSound : IDirectSound {
   MockBuffer *buffer;
   MediaRuntime *frequency_owner;
   DWORD frequency_after_create;
+  MediaRuntime *descriptor_runtime;
+  MediaDescriptor *descriptor_after_cooperative;
+  MediaDescriptor *descriptor_after_caps;
+  MediaDescriptor *descriptor_expected_before_cooperative;
+  MediaDescriptor *descriptor_expected_before_caps;
+  int cooperative_calls, caps_calls;
+  HWND cooperative_window;
+  DWORD cooperative_level;
   int releases;
   DSBUFFERDESC observed_description;
   WAVEFORMATEX observed_format;
   MockSound()
       : cooperative_result(DS_OK), caps_result(DS_OK), create_result(DS_OK),
         cap_flags(DSCAPS_EMULDRIVER), buffer(0), frequency_owner(0),
-        frequency_after_create(0), releases(0),
+        frequency_after_create(0), descriptor_runtime(0),
+        descriptor_after_cooperative(0), descriptor_after_caps(0),
+        descriptor_expected_before_cooperative(0),
+        descriptor_expected_before_caps(0),
+        cooperative_calls(0), caps_calls(0), cooperative_window(0),
+        cooperative_level(0), releases(0),
         observed_description(), observed_format() {}
-  HRESULT SetCooperativeLevel(HWND, DWORD level) {
+  HRESULT SetCooperativeLevel(HWND window, DWORD level) {
     sound_event('c');
+    ++cooperative_calls;
+    cooperative_window = window;
+    cooperative_level = level;
     assert(level == DSSCL_PRIORITY);
+    if (descriptor_runtime != 0 &&
+        descriptor_expected_before_cooperative != 0)
+      assert(descriptor_runtime->descriptor ==
+             descriptor_expected_before_cooperative);
+    if (descriptor_runtime != 0 && descriptor_after_cooperative != 0)
+      descriptor_runtime->descriptor = descriptor_after_cooperative;
     return cooperative_result;
   }
   unsigned long Release() { sound_event('R'); ++releases; return releases; }
   HRESULT GetCaps(DSCAPS *caps) {
     sound_event('g');
+    ++caps_calls;
     caps->dwFlags = cap_flags;
+    if (descriptor_runtime != 0 && descriptor_expected_before_caps != 0)
+      assert(descriptor_runtime->descriptor == descriptor_expected_before_caps);
+    if (descriptor_runtime != 0 && descriptor_after_caps != 0)
+      descriptor_runtime->descriptor = descriptor_after_caps;
     return caps_result;
   }
   HRESULT CreateSoundBuffer(DSBUFFERDESC *desc, IDirectSoundBuffer **out,
@@ -515,6 +555,117 @@ static void test_directsound_create_failure_falls_back() {
   assert(runtime.buffer_setup_finished == 1);
 }
 
+static void test_setup_sound_device_reloads_descriptor_after_callbacks() {
+  MockSound created_sound, caps_sound;
+  MockBuffer entry_buffer, current_buffer;
+  MediaDescriptor entry_descriptor = {}, after_create = {},
+                  after_cooperative = {}, after_caps = {};
+  entry_descriptor.flags = 0x00800000;
+  entry_descriptor.window = &entry_descriptor;
+  entry_descriptor.source_buffer_58 = &entry_buffer;
+  after_create.flags = 0;
+  after_cooperative.flags = 0;
+  after_cooperative.sound_device = &caps_sound;
+  after_cooperative.source_buffer_58 = &entry_buffer;
+  after_caps.flags = 0x00400000;
+  after_caps.source_buffer_58 = &current_buffer;
+  current_buffer.actual_bytes = 0x3456;
+
+  MediaRuntime runtime = {};
+  runtime.descriptor = &entry_descriptor;
+  direct_sound_result = &created_sound;
+  direct_sound_create_result = DS_OK;
+  direct_sound_create_runtime = &runtime;
+  direct_sound_descriptor_after_create = &after_create;
+  direct_sound_descriptor_expected_before_create = &entry_descriptor;
+  created_sound.descriptor_runtime = &runtime;
+  created_sound.descriptor_after_cooperative = &after_cooperative;
+  created_sound.descriptor_after_caps = &after_caps;
+  created_sound.descriptor_expected_before_cooperative = &after_create;
+  caps_sound.cap_flags = DSCAPS_EMULDRIVER;
+  caps_sound.descriptor_runtime = &runtime;
+  caps_sound.descriptor_after_caps = &after_caps;
+  caps_sound.descriptor_expected_before_caps = &after_cooperative;
+  const int create_calls_before = direct_sound_create_calls;
+  reset_sound_events();
+
+  assert(runtime.setup_sound_device() == 0);
+  assert(direct_sound_create_calls == create_calls_before + 1);
+  assert(runtime.descriptor == &after_caps);
+  assert(entry_descriptor.sound_device == &created_sound);
+  assert(created_sound.cooperative_calls == 1);
+  assert(created_sound.cooperative_window == &entry_descriptor);
+  assert(created_sound.cooperative_level == DSSCL_PRIORITY);
+  assert(created_sound.caps_calls == 0);
+  assert(caps_sound.caps_calls == 1);
+  assert(entry_buffer.caps_calls == 0 && current_buffer.caps_calls == 1);
+  assert(current_buffer.actual_bytes == 0x3456);
+  assert(runtime.emulated_device == 1);
+  assert(runtime.source_buffer_bytes == 0x3456);
+  assert(entry_buffer.releases == 0 && current_buffer.releases == 0);
+  assert(sound_event_count == 3 && sound_events[0] == 'c' &&
+         sound_events[1] == 'g' && sound_events[2] == 'b');
+
+  direct_sound_create_runtime = 0;
+  direct_sound_descriptor_after_create = 0;
+  direct_sound_descriptor_expected_before_create = 0;
+  direct_sound_result = 0;
+}
+
+static void test_setup_sound_device_cooperative_failure_keeps_captured_cleanup() {
+  MockSound failed_sound, current_sound;
+  MockBuffer entry_buffer, current_buffer;
+  MediaDescriptor entry_descriptor = {}, after_create = {},
+                  after_cooperative = {}, after_caps = {};
+  entry_descriptor.flags = 0x00800000;
+  entry_descriptor.window = &entry_descriptor;
+  entry_descriptor.source_buffer_58 = &entry_buffer;
+  after_create.flags = 0;
+  after_cooperative.flags = 0;
+  after_cooperative.sound_device = &current_sound;
+  after_cooperative.source_buffer_58 = &entry_buffer;
+  after_caps.flags = 0x00400000;
+  after_caps.source_buffer_58 = &current_buffer;
+  current_buffer.actual_bytes = 0x4567;
+
+  MediaRuntime runtime = {};
+  runtime.descriptor = &entry_descriptor;
+  direct_sound_result = &failed_sound;
+  direct_sound_create_result = DS_OK;
+  direct_sound_create_runtime = &runtime;
+  direct_sound_descriptor_after_create = &after_create;
+  direct_sound_descriptor_expected_before_create = &entry_descriptor;
+  failed_sound.cooperative_result = -1;
+  failed_sound.descriptor_runtime = &runtime;
+  failed_sound.descriptor_after_cooperative = &after_cooperative;
+  failed_sound.descriptor_expected_before_cooperative = &after_create;
+  current_sound.cap_flags = DSCAPS_EMULDRIVER;
+  current_sound.descriptor_runtime = &runtime;
+  current_sound.descriptor_after_caps = &after_caps;
+  current_sound.descriptor_expected_before_caps = &after_cooperative;
+  reset_sound_events();
+
+  assert(runtime.setup_sound_device() == 0);
+  assert(entry_descriptor.sound_device == 0);
+  assert(entry_descriptor.source_buffer_58 == &entry_buffer);
+  assert(failed_sound.cooperative_calls == 1);
+  assert(failed_sound.cooperative_window == &entry_descriptor);
+  assert(failed_sound.releases == 1);
+  assert(current_sound.releases == 0 && current_sound.caps_calls == 1);
+  assert(runtime.descriptor == &after_caps);
+  assert(entry_buffer.caps_calls == 0 && current_buffer.caps_calls == 1);
+  assert(runtime.emulated_device == 1);
+  assert(runtime.source_buffer_bytes == 0x4567);
+  assert(sound_event_count == 4 && sound_events[0] == 'c' &&
+         sound_events[1] == 'R' && sound_events[2] == 'g' &&
+         sound_events[3] == 'b');
+
+  direct_sound_create_runtime = 0;
+  direct_sound_descriptor_after_create = 0;
+  direct_sound_descriptor_expected_before_create = 0;
+  direct_sound_result = 0;
+}
+
 static void test_optional_source_buffer_is_not_playback_rate() {
   MockSound sound;
   MockBuffer source, playback;
@@ -559,6 +710,8 @@ int main() {
   test_ring_cleanup();
   test_directsound_setup_create_release_order();
   test_directsound_create_failure_falls_back();
+  test_setup_sound_device_reloads_descriptor_after_callbacks();
+  test_setup_sound_device_cooperative_failure_keeps_captured_cleanup();
   test_optional_source_buffer_is_not_playback_rate();
   std::puts("movie media actual-source host controls passed");
   return 0;

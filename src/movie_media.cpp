@@ -25,11 +25,11 @@ int __fastcall MediaRuntime::update_overlay(int show) {
   memset(&effects, 0, sizeof(effects));
   effects.dwSize = sizeof(effects);
   DWORD flags;
-  if (show == 0) {
-    flags = DDOVER_HIDE;
-  } else {
+  if (show != 0) {
     flags = DDOVER_SHOW | DDOVER_DDFX;
     effects.dwDDFX = DDOVERFX_ARITHSTRETCHY;
+  } else {
+    flags = DDOVER_HIDE;
   }
 
   RECT source_rectangle;
@@ -1748,35 +1748,40 @@ extern "C" int __fastcall sub_5ca970(MediaRuntime *runtime, void *) {
 // the DSOUND.dll DirectSoundCreate import. The old 0x00669018 identification
 // was wrong. Preserve that seed history, but use the actual SDK interface.
 int MediaRuntime::setup_sound_device() {
-  MediaDescriptor &d = *descriptor;
-  if ((d.flags & 0x00800000) == 0) return 0;
+  MediaDescriptor *entry_descriptor = descriptor;
+  if ((entry_descriptor->flags & 0x00800000) == 0) return 0;
 
-  if (d.sound_device == 0) {
-    release_sound_device = 1; // set before DirectSoundCreate attempt
-    if (DirectSoundCreate(0, &d.sound_device, 0) != DS_OK) {
-      d.sound_device = 0;
-    } else if (d.sound_device->SetCooperativeLevel(
-                   d.window, DSSCL_PRIORITY) != DS_OK) {
-      d.sound_device->Release();
-      d.sound_device = 0;
+  if (entry_descriptor->sound_device == 0) {
+    release_sound_device = 1;
+    if (DirectSoundCreate(0, &entry_descriptor->sound_device, 0) != DS_OK) {
+      entry_descriptor->sound_device = 0;
+    } else if (entry_descriptor->sound_device->SetCooperativeLevel(
+                   entry_descriptor->window, DSSCL_PRIORITY) != DS_OK) {
+      entry_descriptor->sound_device->Release();
+      entry_descriptor->sound_device = 0;
     }
   }
-  if (d.sound_device == 0) {
-    d.source_buffer_58 = 0;
+
+  MediaDescriptor *current_descriptor = descriptor;
+  if (current_descriptor->sound_device == 0) {
+    current_descriptor->source_buffer_58 = 0;
     return 0;
   }
 
   DSCAPS device_caps;
   memset(&device_caps, 0, 0x60);
   device_caps.dwSize = 0x60;
-  d.sound_device->GetCaps(&device_caps); // result ignored by native body
+  current_descriptor = descriptor;
+  current_descriptor->sound_device->GetCaps(&device_caps);
   emulated_device = (device_caps.dwFlags & DSCAPS_EMULDRIVER) != 0;
-  IDirectSoundBuffer *source_buffer = d.source_buffer_58;
-  if ((d.flags & 0x00400000) != 0 && source_buffer != 0) {
+
+  current_descriptor = descriptor;
+  IDirectSoundBuffer *source_buffer = current_descriptor->source_buffer_58;
+  if ((current_descriptor->flags & 0x00400000) != 0 && source_buffer != 0) {
     DSBCAPS source_caps;
     memset(&source_caps, 0, 0x14);
     source_caps.dwSize = 0x14;
-    source_buffer->GetCaps(&source_caps); // result ignored
+    source_buffer->GetCaps(&source_caps);
     source_buffer_bytes = source_caps.dwBufferBytes;
   } else {
     source_buffer_bytes = 0x8000;

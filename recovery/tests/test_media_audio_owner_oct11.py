@@ -184,7 +184,7 @@ def test_native_distinct_receivers_and_frequency_producer():
     ("format.nSamplesPerSec = playback_frequency;", "format.nSamplesPerSec = 0;"),
     ("format.nAvgBytesPerSec = playback_frequency << 2;", "format.nAvgBytesPerSec = playback_frequency;"),
     ("d.play_buffer->SetFrequency(playback_frequency);", "d.play_buffer->SetFrequency(format.nSamplesPerSec);"),
-    ("source_buffer->GetCaps(&source_caps);", "d.play_buffer->GetCaps(&source_caps);"),
+    ("source_buffer->GetCaps(&source_caps);", "current_descriptor->play_buffer->GetCaps(&source_caps);"),
     ("source_buffer->Release();", "source_owner->play_buffer->Release();"),
 ))
 def test_actual_source_rejects_owner_and_reload_regressions(old, new):

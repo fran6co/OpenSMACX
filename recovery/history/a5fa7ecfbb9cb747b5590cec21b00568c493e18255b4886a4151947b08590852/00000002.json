@@ -1,0 +1,20 @@
+{
+  "event_id": "dc53d3ba97c4b7988ab692f95a46d711d97408c181fb0118fe565bdebb2b43d0",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_media_audio_owner_oct11.py"
+    ],
+    "evidence": [
+      "Full relevanttest run exposes a negativecontrol using removed local alias d in its deliberately wrong GetCaps receiver. Update only that mutant spelling to current_descriptor->play_buffer so it still compiles and must fail behaviorally for the same wrong-buffer operation. Keep the assertion and all other controls.",
+      "Two separate native/history assertion failures are being checked on untouched master before attribution. Do not weaken or bypass them or reset historical baselines."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "ffadb849c56a688e182e14771324778f53789e6848738b8f0a376851e03e11a0",
+  "request_id": "retain-valid-wrong-buffer-mutation-after-owner-recovery",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:media-live-owner-oct26ch"
+}
