@@ -1517,17 +1517,10 @@ void __cdecl bitmask(int input, int *offset, int *mask) {
 
 /*
 Purpose: Calculate a basic XOR checksum for the data buffer.
-// HAND-WRITTEN ASSEMBLY IN THE ORIGINAL, so byte-exactness is NOT reachable
-// from C++ and the honest ceiling here is semantic equivalence. The shipped
-// bytes use the `loop` instruction, which VC6 never emits - it counts down
-// with `dec`/`jne` - and it uses `lodsb` bare, which the compiler
-// only emits under a `rep` prefix. Found by
-// `tools/handwritten_asm.py`, which scans every unclaimed body for opcodes
-// this compiler does not generate; there are seven in the game code.
-//
-// Do NOT grind spellings here, and do NOT write `__asm`: a semantic C++ body
-// is worth more than a byte-exact assembly one. `Buffer::vline` reached 0.925
-// similar before this was noticed.
+// The pinned body uses forward LODSB and a 32-bit ECX LOOP counter.
+// Investigated VC6 C++ recipes emit a different loop; matching remains open.
+// Preserve the original traversal/count semantics in ordinary C++, without
+// inline assembly or source changes made solely to imitate instruction length.
 // ORIGINAL: 0x00539090 ?checksum@@YAEPADHE@Z 0x00539090-0x005390B4
 // size      36 bytes
 // prototype
@@ -1541,31 +1534,21 @@ Return Value: the XOR checksum of the buffer, seeded
 Status: Complete
 */
 uint8_t __cdecl checksum(char *buffer, int size, uint8_t seed) {
-    // Walked BACKWARDS with the length decremented in place. The forward
-    // pointer walk needs one more value live, and VC6 then saves no
-    // callee-saved register at all, diverging at instruction #0; this form
-    // matches the original's byte length exactly and diverges at #3, where
-    // the original saves esi unconditionally BEFORE the zero test and this
-    // does it inside the taken branch.
-    while (size) {
-        seed ^= buffer[--size];
+    uint32_t remaining = static_cast<uint32_t>(size);
+    while (remaining != 0) {
+        seed ^= *buffer;
+        ++buffer;
+        --remaining;
     }
     return seed;
 }
 
 /*
 Purpose: Calculate a basic XOR checksum for a password string.
-// HAND-WRITTEN ASSEMBLY IN THE ORIGINAL, so byte-exactness is NOT reachable
-// from C++ and the honest ceiling here is semantic equivalence. The shipped
-// bytes use the `loop` instruction, which VC6 never emits - it counts down
-// with `dec`/`jne` - and it uses `lodsb` bare, which the compiler
-// only emits under a `rep` prefix. Found by
-// `tools/handwritten_asm.py`, which scans every unclaimed body for opcodes
-// this compiler does not generate; there are seven in the game code.
-//
-// Do NOT grind spellings here, and do NOT write `__asm`: a semantic C++ body
-// is worth more than a byte-exact assembly one. `Buffer::vline` reached 0.925
-// similar before this was noticed.
+// The pinned body uses forward LODSB and a 32-bit ECX LOOP counter.
+// Investigated VC6 C++ recipes emit a different loop; matching remains open.
+// Preserve the original traversal/count semantics in ordinary C++, without
+// inline assembly or source changes made solely to imitate instruction length.
 // ORIGINAL: 0x005390C0 ?checksum_password@@YAHPAD@Z 0x005390C0-0x00539157
 // symbol    ?checksum_password@@YAIPBD@Z
 // size      151 bytes
