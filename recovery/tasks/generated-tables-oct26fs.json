@@ -1,0 +1,45 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "e29920dd5a5df96089a35b2ec4e70573fb793ac7",
+  "editable_files": [
+    "src/jackal/checkbutton.cpp",
+    "src/autosound.cpp",
+    "src/ambience.cpp"
+  ],
+  "evidence": [
+    "Four table ends are independently bounded by originalrelocations and adjacent constructor-installed views; actualCOFFextents corroborate but do notdefineOriginalextent. AutoSoundupperendunproved, leave?.",
+    "Annotationsonly: no CPPtokens, ORIGINALmarkers, claims, hierarchy or addressesinsourceoperationschanged. Source identity/tableaddresses load-bearing, generatedreportsignored.",
+    "Actualnative generated-data/strict-reference checks mustkeepweakfallback ordefaultspriteunknowns; no guessedfunction/tablealias orfalsesharedselection. Manualreviewedcheckpoint, fullruntime/retention acceptanceunfinished."
+  ],
+  "intent": "Bind five natural compiler-generated tables to independently established original constructor views, preserving code and incomplete extent evidence.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6502224,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6470272,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6260288,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4485616,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4487376,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "generated-tables-oct26fs"
+}
