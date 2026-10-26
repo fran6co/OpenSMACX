@@ -3544,7 +3544,7 @@ int __cdecl encrypt_read(void *data, unsigned int size, unsigned int count,
     if (allocSize & 1) {
         allocSize = allocSize + 1;
     }
-    unsigned char *buf = reinterpret_cast<unsigned char *>(mem_get(allocSize));
+    unsigned char *buf = static_cast<unsigned char *>(mem_get(allocSize));
     if (buf == 0) {
         return 0;
     }
@@ -3556,8 +3556,8 @@ int __cdecl encrypt_read(void *data, unsigned int size, unsigned int count,
     unsigned char prevA = 0x80;
     unsigned char prevB = 0x80;
     unsigned char *src = buf;
-    unsigned char *dst = reinterpret_cast<unsigned char *>(data);
-    unsigned int remaining = total;
+    unsigned char *dst = static_cast<unsigned char *>(data);
+
     for (unsigned int pairs = allocSize >> 1; pairs != 0; --pairs) {
         ++prevB;
         unsigned char b1 = src[1];
@@ -3572,11 +3572,11 @@ int __cdecl encrypt_read(void *data, unsigned int size, unsigned int count,
         }
         *dst = b1;
         unsigned char *next = dst + 1;
-        if (remaining > 1) {
+        if (total > 1) {
             *next = b0;
             next = dst + 2;
         }
-        remaining -= 2;
+
         dst = next;
     }
     free(buf);
