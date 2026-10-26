@@ -1,0 +1,20 @@
+{
+  "event_id": "789d670f91560424c8ee727055c4ae7f09b19897868e361c08d3cc56af62c315",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_design_picker_redraw_order_oct22x.py"
+    ],
+    "evidence": [
+      "Coordinator authorizes actual-source host controls and fixture adaptation for the admitted same-owner faithful source correction after terminal native probes. No binding/claim/compiler-policy changes or source publication by workers.",
+      "DesignWin: client-rectangle caller operands match pin; callee ignores coordinates, so no visible placement claim. Console terrain: shared StringTemp storage and fresh read-only name lookups. EditGroup: existing seek_pos(-1) helper preserves negative-count cursor behavior and original null paths."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "designwin-easy-oct26et-actual-source-controls",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:designwin-easy-oct26et"
+}

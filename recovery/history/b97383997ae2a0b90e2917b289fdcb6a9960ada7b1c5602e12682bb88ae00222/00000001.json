@@ -1,0 +1,26 @@
+{
+  "event_id": "d6c6729f3f2aad674a92442cd88242ff9ae591bf5e7b380da178cb704ca7bcd1",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Coordinator explicitly admits observed compiler collateral in unchanged propose_attack after independent complete affected-block and live-register review. No source edit to that function and no reset of the task baseline.",
+      "make_treaty uses the pinned 80-byte number buffer and evaluates random before _itoa. Candidate2 is locally exact 242/242. The initial native one-function outside FAIL is retained unchanged.",
+      "Only six bytes in propose_attack differ: ESI/EDI allocation for the same FlatButton Win/Buffer vtable relocations and matching stores. Both registers are redefined before later uses. All other bytes, relocations, symbols and associations are unchanged; no historical exact losses.",
+      "Independent review .opensmacx/recovery/easy-large-next-oct26es/faction-collateral-independent-review.json SHA256 0e35500af401a96e171bb58797a4bd6493924f209fd13309998a8d20cc992d0b. This admission is bounded coordinator review, not linked preservation or automatic/game acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5529216,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "faction-observed-compiler-collateral",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:faction-easy-oct26et"
+}

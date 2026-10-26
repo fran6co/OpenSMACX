@@ -68,26 +68,36 @@ static int dtor_modal_state = -999;
 static int item_count = 0;
 static int item_ids[8];
 static std::string item_text[8];
+static char *item_text_buffers[8];
 static int selected_value = -999;
 static int start_count = 0;
 static int exec_count = 0;
 static int paint_count = 0;
+static int string_get_count[4];
 
 char PopupStartCaption[] = "POPUP";
+char StringTemp[1032];
+typedef char string_temp_capacity_must_match[(sizeof(StringTemp) == 1032) ? 1 : -1];
 const int MaxTerrainNum = 4;
 struct TerrainData { int bit; int name; int name_sea; };
 TerrainData Terraforming[4];
 char TerrainNames[4][16];
 struct Table {
-  char *get(int id) { assert(id >= 0 && id < 4); return TerrainNames[id]; }
+  char *get(int id) {
+    assert(id >= 0 && id < 4);
+    ++string_get_count[id];
+    return TerrainNames[id];
+  }
 } StringTable;
 
 struct Dialogs {
   void item(char *text, int id) {
     assert(PopupModalState == 6);
     assert(item_count < 8);
+    assert(text == StringTemp);
     item_ids[item_count] = id;
     item_text[item_count] = text;
+    item_text_buffers[item_count] = text;
     ++item_count;
     events.push_back("item");
   }
@@ -140,6 +150,9 @@ static void reset_fixture() {
   item_count = 0;
   selected_value = -999;
   start_count = exec_count = paint_count = 0;
+  std::memset(string_get_count, 0, sizeof(string_get_count));
+  for (int i = 0; i != 8; ++i) item_text_buffers[i] = 0;
+  std::strcpy(StringTemp, "stale buffer contents");
   std::strcpy(TerrainNames[0], "Land");
   std::strcpy(TerrainNames[1], "Sea");
   std::strcpy(TerrainNames[2], "Same");
@@ -163,6 +176,12 @@ int main() {
   assert(item_ids[0] == 0 && item_text[0] == "Land/Sea");
   assert(item_ids[1] == 2 && item_text[1] == "Same");
   assert(item_ids[2] == 3 && item_text[2] == "Unused/Same");
+  for (int i = 0; i != 3; ++i) assert(item_text_buffers[i] == StringTemp);
+  // Per-name totals avoid assuming an order for the two strcmp arguments.
+  // Each valid terrain fetches both names for comparison and fetches the sea
+  // name again only when the slash form is appended.
+  assert(string_get_count[0] == 2 && string_get_count[1] == 2);
+  assert(string_get_count[2] == 5 && string_get_count[3] == 2);
   assert(selected_value == 2); // index == MapEditorPaintId - 6
   assert(paint_value == 10);   // popup result + 6
   assert(PopupModalState == 0 && dtor_modal_state == 0);
@@ -216,6 +235,24 @@ def test_compiling_missing_and_premature_reset_mutants_fail(tmp_path: Path) -> N
     assert result.returncode != 0
 
 
+def _local_buffer_mutant(definition: str) -> str:
+    clear = "        StringTemp[0] = 0;\n"
+    assert definition.count(clear) == 1
+    mutant = definition.replace(clear, "        char text[256];\n        text[0] = 0;\n", 1)
+    mutant = mutant.replace("StringTemp", "text")
+    assert "char text[256];" in mutant and "StringTemp" not in mutant
+    return mutant
+
+
+def test_compiling_local_buffer_regression_is_rejected_by_identity_assertion(
+    tmp_path: Path,
+) -> None:
+    definition = _definition(console_method_source(SIGNATURE))
+    result = _compile_run(tmp_path / "local-buffer", _local_buffer_mutant(definition))
+    assert result.returncode != 0, "local text buffer unexpectedly passed item identity control"
+    assert "text == StringTemp" in result.stderr, result.stdout + result.stderr
+
+
 def test_native_source_reader_preserves_original_identity_claims_lessons_and_binding() -> None:
     prior_text = subprocess.check_output(
         ["git", "show", f"{BASELINE}:{SOURCE_RELATIVE}"],
@@ -228,10 +265,11 @@ def test_native_source_reader_preserves_original_identity_claims_lessons_and_bin
     prior, = (row for row in prior_rows if row.address == 0x004E0B00)
     current, = (row for row in current_rows if row.address == 0x004E0B00)
 
-    # These are source-reader facts; `region` is expected to change with the
-    # corrected body, while identity, mapping, mode, and all prior history stay.
+    # These are source-reader facts; `region` and `line` are navigation
+    # metadata expected to move as unrelated source is inserted. Preserve the
+    # original identity, mapping, mode, claims, and all prior history.
     for field in (
-        "address", "mode", "state", "path", "line", "name", "image_spans",
+        "address", "mode", "state", "path", "name", "image_spans",
         "symbol", "body", "context", "kind", "exclusion", "recipe",
         "levers", "ruled_out", "unrecoverable", "deferred", "origin",
     ):

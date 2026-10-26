@@ -68,6 +68,10 @@ def source_parts(kind, mutation=''):
         body = body.replace(f'{own_draw}(0);', f'{own_draw}(1);', 1)
     elif mutation == 'bypass_virtual_update':
         body = body.replace('    on_update();', '    DesignWin::on_update();', 1)
+    elif mutation == 'wrong_picker_rectangle':
+        expected = 'client_rect_.left, client_rect_.top'
+        assert body.count(expected) == 1
+        body = body.replace(expected, 'outer_rect_.left, outer_rect_.top', 1)
     elif mutation:
         raise AssertionError(mutation)
     return helpers, redraw_helper, body
@@ -75,6 +79,8 @@ def source_parts(kind, mutation=''):
 
 HARNESS = r'''
 #include <cassert>
+#include <cstdio>
+#include <cstdlib>
 #include <cstring>
 
 struct ArmorRecord { int preq_tech; int defense_rating; };
@@ -110,7 +116,13 @@ struct SelectPartWin {
     int exec(int x, int y, int faction, int kind, int selected,
              int chassis, int weapon, int armor, int abilities, int reactor,
              unsigned char *palette) {
-        assert(x == 111 && y == 222 && faction == 3);
+        if (x != 111 || y != 222) {
+            std::fprintf(stderr,
+                         "picker origin regression: got (%d,%d), expected client_rect (111,222)\n",
+                         x, y);
+            std::abort();
+        }
+        assert(faction == 3);
         assert(chassis == 17 && weapon == 1 && armor == 1);
         assert(abilities == 0x40000 && reactor == 1);
         assert(palette == SpotlightColorTable);
@@ -123,15 +135,17 @@ struct SelectPartWin {
 };
 
 struct DesignWin {
-    struct Rect { int left, top; } outer_rect_;
+    struct Rect { int left, top; } outer_rect_, client_rect_;
     int factionID_;
     int protoChassisType_, protoWeaponType_, protoArmorType_;
     int protoAbilityFlags_, protoReactorType_;
-    DesignWin() : outer_rect_(), factionID_(3), protoChassisType_(17),
+    DesignWin() : outer_rect_(), client_rect_(), factionID_(3), protoChassisType_(17),
         protoWeaponType_(1), protoArmorType_(1), protoAbilityFlags_(0x40000),
         protoReactorType_(1) {
-        outer_rect_.left = 111;
-        outer_rect_.top = 222;
+        outer_rect_.left = 333;
+        outer_rect_.top = 444;
+        client_rect_.left = 111;
+        client_rect_.top = 222;
     }
     void suggest_abil(int bits) { record("suggest_abil", bits); }
     void check_abil() { record("check_abil"); }
@@ -225,6 +239,8 @@ def test_actual_armor_and_reactor_source_order_with_virtual_update(tmp_path,
     ('armor', 'reorder_own_common'),
     ('reactor', 'nonzero_draw_argument'),
     ('reactor', 'bypass_virtual_update'),
+    ('armor', 'wrong_picker_rectangle'),
+    ('reactor', 'wrong_picker_rectangle'),
 ])
 def test_redraw_order_controls_reject_compiling_mutants(tmp_path, compiler_name,
                                                         kind, mutation):

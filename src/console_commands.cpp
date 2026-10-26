@@ -2803,16 +2803,14 @@ void Console::editor_terrain() {
         if (Terraforming[index].bit == 0) {
             continue;
         }
-        char text[256];
-        text[0] = 0;
-        char *land_name = StringTable.get(Terraforming[index].name);
-        char *sea_name = StringTable.get(Terraforming[index].name_sea);
-        strcat(text, land_name);
-        if (strcmp(land_name, sea_name) != 0) {
-            strcat(text, "/");
-            strcat(text, sea_name);
+        StringTemp[0] = 0;
+        strcat(StringTemp, StringTable.get(Terraforming[index].name));
+        if (strcmp(StringTable.get(Terraforming[index].name),
+                   StringTable.get(Terraforming[index].name_sea)) != 0) {
+            strcat(StringTemp, "/");
+            strcat(StringTemp, StringTable.get(Terraforming[index].name_sea));
         }
-        popup.dialogs().item(text, index);
+        popup.dialogs().item(StringTemp, index);
         if (index == MapEditorPaintId - 6) {
             popup.set_value(index);
         }

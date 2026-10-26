@@ -5068,7 +5068,7 @@ void DesignWin::select_chassis() {
     const int row = picker_row_before(protoChassisType_, Chassis,
                                       DesignSelectableChassisCount);
     const int selected_row = picker.exec(
-        outer_rect_.left, outer_rect_.top, factionID_, 0, row,
+        client_rect_.left, client_rect_.top, factionID_, 0, row,
         protoChassisType_, protoWeaponType_, protoArmorType_,
         protoAbilityFlags_, protoReactorType_, SpotlightColorTable);
     const int previous_kind = Chassis[protoChassisType_].triad;
@@ -5130,7 +5130,7 @@ void DesignWin::select_weapon() {
     SelectPartWin picker;
     const int row = picker_row_before(protoWeaponType_, Weapon, MaxWeaponNum);
     const int selected_row = picker.exec(
-        outer_rect_.left, outer_rect_.top, factionID_, 1, row,
+        client_rect_.left, client_rect_.top, factionID_, 1, row,
         protoChassisType_, protoWeaponType_, protoArmorType_,
         protoAbilityFlags_, protoReactorType_, SpotlightColorTable);
     const int previous_weapon = protoWeaponType_;
@@ -5188,7 +5188,7 @@ void DesignWin::select_armor() {
     SelectPartWin picker;
     const int row = picker_row_before(protoArmorType_, Armor, MaxArmorNum);
     const int selected_row = picker.exec(
-        outer_rect_.left, outer_rect_.top, factionID_, 2, row,
+        client_rect_.left, client_rect_.top, factionID_, 2, row,
         protoChassisType_, protoWeaponType_, protoArmorType_,
         protoAbilityFlags_, protoReactorType_, SpotlightColorTable);
     protoArmorType_ = picker_record_at(selected_row, Armor, MaxArmorNum);
@@ -5213,7 +5213,7 @@ void DesignWin::select_reactor() {
     const int row = picker_row_before(protoReactorType_, Reactor,
                                       MaxReactorNum);
     const int selected_row = picker.exec(
-        outer_rect_.left, outer_rect_.top, factionID_, 3, row,
+        client_rect_.left, client_rect_.top, factionID_, 3, row,
         protoChassisType_, protoWeaponType_, protoArmorType_,
         protoAbilityFlags_, protoReactorType_, SpotlightColorTable);
     protoReactorType_ = picker_record_at(selected_row, Reactor,

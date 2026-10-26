@@ -450,18 +450,7 @@ int EditGroup::calculate_dimensions() {
     if (dialog.row_count_ > dialog.field_50_) {
         dialog.row_count_ = dialog.field_50_;
     }
-    dialog.item_list_.current_ = dialog.item_list_.head_;
-    if (dialog.item_list_.entry_count_ > 0) {
-        int step = abs(-1);
-        if (step <= dialog.item_list_.entry_count_) {
-            step = abs(-1);
-            while (step > 0) {
-                --step;
-                dialog.item_list_.current_ = dialog.item_list_.current_->previous;
-            }
-            dialog.item_list_.current_position_ = dialog.item_list_.entry_count_ - 1;
-        }
-    }
+    dialog.item_list_.seek_pos(-1);
 
     label_width_ = 0;
     edit_width_ = 0;

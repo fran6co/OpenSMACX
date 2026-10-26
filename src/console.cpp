@@ -155,12 +155,12 @@ void Console::set_move(int force_update) {
         }
     }
 
-    bool did_reset = false;
+    int did_reset = 0;
     if (ConsoleGlobal.cursor_active_ == 0 || force_update != 0) {
         cursor_active_ = 0;
         field_23BF8_ = 0;
         field_23BFC_ = 1;
-        did_reset = true;
+        did_reset = 1;
 
         if (survey_mode_ != 0) {
             survey_mode_ = 0;
@@ -173,7 +173,7 @@ void Console::set_move(int force_update) {
 
     if (veh_selectable(selected_vehicle_) == 0) {
         ready();
-        did_reset = false;
+        did_reset = 0;
     } else {
         ambience_veh(selected_vehicle_);
     }

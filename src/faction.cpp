@@ -8103,7 +8103,7 @@ void __cdecl pact_of_brotherhood(int faction_id, int faction_id_with) {
     }
 }
 
-// ORIGINAL: 0x0053CE10 ?make_treaty@@YAXHH@Z 0x0053CE10-0x0053D158
+// ORIGINAL: 0x0053CE10 ?make_treaty@@YAXHH@Z 0x0053CE10-0x0053D158 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"reason":"The complete original diplomacy producer uses the existing faction, prototype, parser and network owners; the global cdecl interface and bounded span retain the seed identity.","evidence":["original:0x53ce10","git:46625ff3:src/recovered/units/0053ce10.cpp"]}
 // kind      game
 void __cdecl make_treaty(int faction_id, int faction_id_with) {
@@ -8150,8 +8150,9 @@ void __cdecl make_treaty(int faction_id, int faction_id_with) {
 
     StringTemp[0] = 0;
     strcat(StringTemp, "MAKETREATY");
-    char number[16];
-    _itoa(static_cast<int>(random(0, 2)), number, 10);
+    char number[80];
+    const int choice = static_cast<int>(random(0, 2));
+    _itoa(choice, number, 10);
     strcat(StringTemp, number);
     X_pops(StringTemp, 0x100000,
                  FactionDiplomacyPortraits[faction_id_with], pop_wait);

@@ -30,7 +30,7 @@
         "word_state.cpp markers": 3,
         "span_math.cpp markers": 1,
         "table_storage.cpp markers": 1,
-        "stringstruct.cpp markers": 28
+        "stringstruct.cpp markers": 26
       },
       "counters": [
         {
