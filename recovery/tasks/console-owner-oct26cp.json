@@ -1,0 +1,22 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "ee1d5c3c0df2b1001caaf44f11ca127ec1bc6407",
+  "editable_files": [
+    "src/console.cpp"
+  ],
+  "evidence": [
+    "Pinned original and fresh physical baseline .opensmacx/recovery/parallel-match-oct21zc/media-live-owner-integrated-oct26cl-native-candidate/integrated-qualified.json",
+    "Reviewed complete source proposals and pin evidence in ignored owner-fidelity-oct26cm; no runtime mutation assertion from loads alone."
+  ],
+  "intent": "Recover original owner reload frontiers across the complete mapped function; preserve original branch ordering, unsafe paths and historical claims.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5339328,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "console-owner-oct26cp"
+}

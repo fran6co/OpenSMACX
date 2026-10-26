@@ -451,19 +451,20 @@ int base_yield_wrap_x(int x, int map_width) {
 // Historical scaffold-era TRIED note follows; it records the earlier offset-transliteration attempt, not this typed owner body.
 // TRIED: void return confirmed - the function's only exit is the fall- through after `call base_psych` (itself void, ?base_psych@@YAXXZ) with no eax write in between, so it is a real `ret`, not a status. The 6/40/80/99999 constants the audit flagged are all clamp bounds (min/max against a computed value that is then stored into a per-base or per-faction field) or array strides, never delivered to the caller. Body is a direct, offset-checked transcription of the Ghidra decompilation with DAT_ globals replaced by explicit fixed-address casts (BASE macro re-reads [0x90ea30] at each use rather than caching it, matching the repeated `mov eax,[0x90ea30]` in the disassembly) and callee names resolved to the scaffold's declared black_market/ base_rank/best_specialist/has_tech/bitmask/base_psych. Compiles and preserves every branch, loop and goto (LAB_004ebbde, LAB_004ec1f6, LAB_004ebddd); did not chase the early-prologue register-scheduling divergence given the size already spent.
 void __cdecl base_energy() {
-    Base &base = *BaseCurrent;
-    const int faction = base.faction_id_current;
+    const int faction = BaseCurrent->faction_id_current;
     // Deliberately assigned only by a successful treaty/base-rank path below.
     // The original later reads this stack local even when no path assigned it.
     int base_energy_alien_receipt_subtotal;
     // The independent ordinal is set only when the scan encounters BaseCurrent;
     // retain the native local's unset no-match path.
     int base_energy_selected_ordinal;
-    base.intake_2[RSC_ENERGY] += BaseCurrentConvoyTo[RSC_ENERGY];
-    base.energy_consumption = BaseCurrentConvoyFrom[2];
-    int available = base.intake_2[RSC_ENERGY] - base.energy_consumption;
-    base.energy_inefficiency = black_market(available);
-    base.energy_surplus = available - base.energy_inefficiency;
+    BaseCurrent->intake_2[RSC_ENERGY] += BaseCurrentConvoyTo[RSC_ENERGY];
+    BaseCurrent->energy_consumption = BaseCurrentConvoyFrom[2];
+    int available = BaseCurrent->intake_2[RSC_ENERGY] - BaseCurrent->energy_consumption;
+    const int first_inefficiency = black_market(available);
+    BaseCurrent->energy_inefficiency = first_inefficiency;
+    BaseCurrent->energy_surplus = BaseCurrent->intake_2[RSC_ENERGY] -
+        BaseCurrent->energy_consumption - BaseCurrent->energy_inefficiency;
 
     // Rank the selected base among its own faction by pre-commerce energy.
     // base_rank sorts that same signed key in descending order and returns a
@@ -473,7 +474,7 @@ void __cdecl base_energy() {
         const Base &candidate = Bases[base_id];
         if (candidate.faction_id_current == faction) {
             if (&candidate == BaseCurrent) base_energy_selected_ordinal = base_id;
-            if (base.intake_1[RSC_ENERGY] * 512 + BaseIDCurrentSelected <
+            if (BaseCurrent->intake_1[RSC_ENERGY] * 512 + BaseIDCurrentSelected <
                 candidate.intake_1[RSC_ENERGY] * 512 + base_id) ++commerce_rank;
         }
     }
@@ -490,7 +491,7 @@ void __cdecl base_energy() {
         const int partner_base = base_rank(partner, commerce_rank);
         if (partner_base < 0) continue;
         int commerce_base = (Bases[partner_base].intake_1[RSC_ENERGY] + 7 +
-                             base.intake_1[RSC_ENERGY]) / 8;
+                             BaseCurrent->intake_1[RSC_ENERGY]) / 8;
         if (GameDataStateStorage.fields_.council_resolution_count_[PROP_REPEAL_GLOBAL_TRADE_PACT] <
             GameDataStateStorage.fields_.council_resolution_count_[PROP_GLOBAL_TRADE_PACT]) commerce_base *= 2;
         const int divisor = TechCommerceCount + 1;
@@ -514,11 +515,11 @@ void __cdecl base_energy() {
         BaseCommerceReceipts[slot] = receipt;
         BaseCommercePartnerReceipts[slot] = partner_receipt;
         base_energy_alien_receipt_subtotal = receipt;
-        base.intake_2[RSC_ENERGY] += receipt;
+        BaseCurrent->intake_2[RSC_ENERGY] += receipt;
     }
     if (ExpansionEnabled != 0 && (Players[faction].rule_flags & RFLAG_ALIEN) != 0) {
         for (int facility = 0; facility < 0x46; ++facility) {
-            if ((base.facilities_built[facility >> 3] & (1u << (facility & 7))) != 0)
+            if ((BaseCurrent->facilities_built[facility >> 3] & (1u << (facility & 7))) != 0)
                 ++base_energy_alien_receipt_subtotal;
         }
         for (int project = 0; project < 64; ++project) {
@@ -527,18 +528,20 @@ void __cdecl base_energy() {
         }
         base_energy_alien_receipt_subtotal /= 2;
         if (PlayersData[faction].sanction_turns != 0) base_energy_alien_receipt_subtotal = 0;
-        base.intake_2[RSC_ENERGY] += base_energy_alien_receipt_subtotal;
+        BaseCurrent->intake_2[RSC_ENERGY] += base_energy_alien_receipt_subtotal;
     }
     if (BaseUpkeepStage == 1) {
-        int reserve_credit = base.energy_surplus;
+        int reserve_credit = BaseCurrent->energy_surplus;
         if (reserve_credit < 0) reserve_credit = 0;
         else if (reserve_credit > 99999) reserve_credit = 99999;
         PlayersData[faction].unk_13 += reserve_credit;
     }
-    available = base.intake_2[RSC_ENERGY] - base.energy_consumption;
-    base.energy_inefficiency = black_market(available);
-    base.energy_surplus = available - base.energy_inefficiency;
-    int distributed = base.energy_surplus;
+    available = BaseCurrent->intake_2[RSC_ENERGY] - BaseCurrent->energy_consumption;
+    const int second_inefficiency = black_market(available);
+    BaseCurrent->energy_inefficiency = second_inefficiency;
+    BaseCurrent->energy_surplus = BaseCurrent->intake_2[RSC_ENERGY] -
+        BaseCurrent->energy_consumption - BaseCurrent->energy_inefficiency;
+    int distributed = BaseCurrent->energy_surplus;
     if (distributed < 0) distributed = 0;
     if (distributed > 9999) distributed = 9999;
 
@@ -550,19 +553,19 @@ void __cdecl base_energy() {
     int economy = ((10 - labs_share - psych_share) * distributed + 4) / 10;
     if (economy < 0) economy = 0;
     if (economy > distributed - psych) economy = distributed - psych;
-    base.psych_total = psych;
-    base.economy_total = economy;
-    base.labs_total = distributed - psych - economy;
+    BaseCurrent->psych_total = psych;
+    BaseCurrent->economy_total = economy;
+    BaseCurrent->labs_total = distributed - psych - economy;
 
     // The extra allocation is retained separately by the original pass.
     int research_allocation = ((9 - labs_share - psych_share) * distributed + 4) / 10;
     if (research_allocation < 0) research_allocation = 0;
     if (research_allocation > distributed - psych) research_allocation = distributed - psych;
-    base.unk_10 = research_allocation;
+    BaseCurrent->unk_10 = research_allocation;
 
-    for (int citizen = 0; citizen < base.specialist_total; ++citizen) {
+    for (int citizen = 0; citizen < BaseCurrent->specialist_total; ++citizen) {
         int specialist = citizen < 16
-            ? (base.spec[citizen >> 3] >> ((citizen & 7) * 4)) & 15
+            ? (BaseCurrent->spec[citizen >> 3] >> ((citizen & 7) * 4)) & 15
             : static_cast<int>(best_specialist());
         if (specialist < 0) specialist = 0;
         if (specialist > 6) specialist = 6;
@@ -576,20 +579,20 @@ void __cdecl base_energy() {
                     specialist = candidate;
                     if (citizen < 16) {
                         const int shift = (citizen & 7) * 4;
-                        base.spec[citizen >> 3] &= ~(0xFu << shift);
-                        base.spec[citizen >> 3] |= specialist << shift;
+                        BaseCurrent->spec[citizen >> 3] &= ~(0xFu << shift);
+                        BaseCurrent->spec[citizen >> 3] |= specialist << shift;
                     }
                     break;
                 }
             }
         }
-        base.economy_total += Citizen[specialist].ops_bonus;
-        base.psych_total += Citizen[specialist].psych_bonus;
-        base.labs_total += Citizen[specialist].research_bonus;
+        BaseCurrent->economy_total += Citizen[specialist].ops_bonus;
+        BaseCurrent->psych_total += Citizen[specialist].psych_bonus;
+        BaseCurrent->labs_total += Citizen[specialist].research_bonus;
     }
 
-    base.labs_total += Players[faction].rule_research;
-    if (has_fac(FAC_BIOLOGY_LAB, BaseIDCurrentSelected, 0)) base.labs_total += 2;
+    BaseCurrent->labs_total += Players[faction].rule_research;
+    if (has_fac(FAC_BIOLOGY_LAB, BaseIDCurrentSelected, 0)) BaseCurrent->labs_total += 2;
 
     int psych_multiplier = 4;
     if (has_fac(FAC_HOLOGRAM_THEATRE, BaseIDCurrentSelected, 0)) psych_multiplier = 6;
@@ -621,35 +624,35 @@ void __cdecl base_energy() {
         economy_multiplier += 2;
         labs_multiplier += 2;
     }
-    base.psych_total = (base.psych_total * psych_multiplier + 3) / 4;
-    base.labs_total = (base.labs_total * labs_multiplier + 3) / 4;
-    base.economy_total = (base.economy_total * economy_multiplier + 3) / 4;
-    base.unk_10 = (base.unk_10 * economy_multiplier + 3) / 4;
+    BaseCurrent->psych_total = (BaseCurrent->psych_total * psych_multiplier + 3) / 4;
+    BaseCurrent->labs_total = (BaseCurrent->labs_total * labs_multiplier + 3) / 4;
+    BaseCurrent->economy_total = (BaseCurrent->economy_total * economy_multiplier + 3) / 4;
+    BaseCurrent->unk_10 = (BaseCurrent->unk_10 * economy_multiplier + 3) / 4;
 
     if (GameDataStateStorage.fields_.secret_project_[SP_SUPERCOLLIDER] == BaseIDCurrentSelected)
-        base.labs_total *= 2;
+        BaseCurrent->labs_total *= 2;
     if (GameDataStateStorage.fields_.secret_project_[SP_THEORY_OF_EVERYTHING] == BaseIDCurrentSelected)
-        base.labs_total *= 2;
+        BaseCurrent->labs_total *= 2;
     if (GameDataStateStorage.fields_.secret_project_[SP_SPACE_ELEVATOR] == BaseIDCurrentSelected)
-        base.economy_total *= 2;
+        BaseCurrent->economy_total *= 2;
     if (GameDataStateStorage.fields_.secret_project_[SP_LONGEVITY_VACCINE] == BaseIDCurrentSelected
         && PlayersData[faction].soc_category_pending.models_[SocialCategory::ECONOMICS] == 1)
-        base.economy_total += base.economy_total / 2;
+        BaseCurrent->economy_total += BaseCurrent->economy_total / 2;
 
     if (GameDataStateStorage.fields_.secret_project_[SP_NETWORK_BACKBONE] == BaseIDCurrentSelected) {
         for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; ++base_id) {
             if ((Bases[base_id].facilities_built[FAC_NETWORK_NODE >> 3]
                  & (1u << (FAC_NETWORK_NODE & 7))) != 0)
-                ++base.labs_total;
+                ++BaseCurrent->labs_total;
         }
         if ((Players[faction].rule_flags & RFLAG_ALIEN) != 0)
-            base.labs_total += base_energy_alien_receipt_subtotal;
+            BaseCurrent->labs_total += base_energy_alien_receipt_subtotal;
         if (PlayersData[faction].sanction_turns == 0) {
             for (int partner = 1; partner < MaxPlayerNum; ++partner) {
                 if (PlayersData[partner].sanction_turns == 0
                     && (Players[partner].rule_flags & RFLAG_ALIEN) == 0
                     && (Players[faction].rule_flags & RFLAG_ALIEN) == 0)
-                    base.labs_total += BaseCommerceReceipts[partner - 1];
+                    BaseCurrent->labs_total += BaseCommerceReceipts[partner - 1];
             }
         }
     }
@@ -671,29 +674,29 @@ void __cdecl base_energy() {
             penalty = raw_penalty;
             if (penalty < 0) penalty = 0;
             else if (penalty > 40) penalty = 40;
-            base.labs_total = ((100 - penalty) * base.labs_total + 50) / 100;
+            BaseCurrent->labs_total = ((100 - penalty) * BaseCurrent->labs_total + 50) / 100;
             penalty = base_yield_add(raw_penalty, raw_penalty);
             if (penalty < 0) penalty = 0;
             else if (penalty > 80) penalty = 80;
-            base.economy_total = ((100 - penalty) * base.economy_total + 50) / 100;
+            BaseCurrent->economy_total = ((100 - penalty) * BaseCurrent->economy_total + 50) / 100;
         } else {
             penalty = base_yield_add(raw_penalty, raw_penalty);
             if (penalty < 0) penalty = 0;
             else if (penalty > 80) penalty = 80;
-            base.labs_total = ((100 - penalty) * base.labs_total + 50) / 100;
+            BaseCurrent->labs_total = ((100 - penalty) * BaseCurrent->labs_total + 50) / 100;
             penalty = raw_penalty;
             if (penalty < 0) penalty = 0;
             else if (penalty > 40) penalty = 40;
-            base.economy_total = ((100 - penalty) * base.economy_total + 50) / 100;
+            BaseCurrent->economy_total = ((100 - penalty) * BaseCurrent->economy_total + 50) / 100;
         }
     }
-    if (base.queue_production_id[0] == -0x45 && base.mineral_surplus > 0
-        && base.production_id_last == -0x45) {
-        int special_energy = (base.mineral_surplus + 1) / 2;
+    if (BaseCurrent->queue_production_id[0] == -0x45 && BaseCurrent->mineral_surplus > 0
+        && BaseCurrent->production_id_last == -0x45) {
+        int special_energy = (BaseCurrent->mineral_surplus + 1) / 2;
         const int grid_base = GameDataStateStorage.fields_.secret_project_[SP_PLANETARY_ENERGY_GRID];
         if (grid_base >= 0 && Bases[grid_base].faction_id_current == faction)
             special_energy = (special_energy * 5 + 3) / 4;
-        base.economy_total += special_energy;
+        BaseCurrent->economy_total += special_energy;
     }
     base_psych();
 }

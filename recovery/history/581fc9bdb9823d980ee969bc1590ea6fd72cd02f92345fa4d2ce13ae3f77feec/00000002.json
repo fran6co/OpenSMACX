@@ -1,0 +1,20 @@
+{
+  "event_id": "e4dae8301a3bbe9cac71b112d57e3ee7639aafc95a0e746d2acb9231c6dba67c",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_media_audio_owner_oct11.py",
+      "recovery/tests/test_movie_media_behavior.py"
+    ],
+    "evidence": [
+      "Refresh only two SetFrequency damage-control spellings for live descriptor source; keep behavior oracles and existing red historical/native assertions unchanged."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "881e9f57922f0e31cecae8b68cb7a8e55f2482a2d605640208eb7e854b316bf5",
+  "request_id": "refresh-existing-causal-mutant-anchors",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:media-owner-oct26cn"
+}

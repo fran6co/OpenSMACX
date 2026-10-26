@@ -1612,11 +1612,16 @@ extern "C" void __cdecl sub_5cdd10(int count, int *cursor,
 // TRIED: __fastcall(ecx,edx) two-arg signature + large local buffer for __alloca_probe reaches MISMATCH #3 (prologue); several output scratch locals (sub_5cdd10/5cdb90/5ce6e3 args) use fresh locals rather than the exact original stack slot, since those callees are opaque and their slot placement doesn't affect this body.
 extern "C" int __fastcall sub_5ca310(MediaRuntime *r, int byte_count) {
   BYTE input[0xc008];
-  MediaDescriptor &d = *r->descriptor;
   int output_bytes;
-  if (r->output_counter == 0 && (d.flags & 0x00008000) != 0)
-    r->channel_seek_position = mmioSeek(d.stream, 0, SEEK_CUR) - 8;
-  LONG read = mmioRead(d.stream, (HPSTR)(input + 0x14), byte_count);
+  if (r->output_counter == 0) {
+    MediaDescriptor *seek_descriptor = r->descriptor;
+    if ((seek_descriptor->flags & 0x00008000) != 0)
+      r->channel_seek_position =
+          mmioSeek(seek_descriptor->stream, 0, SEEK_CUR) - 8;
+  }
+  MediaDescriptor *read_descriptor = r->descriptor;
+  LONG read = mmioRead(read_descriptor->stream,
+                       (HPSTR)(input + 0x14), byte_count);
   if (read == 0) { r->stream_eof = 1; return -1; }
   if (read == -1) return -2;
 
@@ -1675,8 +1680,9 @@ extern "C" int __fastcall sub_5ca310(MediaRuntime *r, int byte_count) {
     byte_count = *(int *)(input + 0x14);
   }
 
-  if (r->channel_state == 2) d.stream_gate_80 = 1;
-  if (d.stream_gate_80 != 0) InterlockedIncrement(&r->read_counter);
+  if (r->channel_state == 2) r->descriptor->stream_gate_80 = 1;
+  if (r->descriptor->stream_gate_80 != 0)
+    InterlockedIncrement(&r->read_counter);
   int slot = r->output_producer_cursor % 24;
   r->output_records[slot].payload = r->decoded_ring_current;
   r->output_records[slot].field_04 = (DWORD)byte_count;
@@ -1698,7 +1704,7 @@ extern "C" int __fastcall sub_5ca970(MediaRuntime *runtime, void *) {
   if (handle == -1) {
     if ((d.flags & 0x00008000) != 0) {
       Sleep(0);
-      mmioSeek(d.stream, runtime->channel_seek_position, SEEK_SET);
+      mmioSeek(runtime->descriptor->stream, runtime->channel_seek_position, SEEK_SET);
       handle = sub_5c9ec0(runtime, 0);
     } else {
       handle = -1;
@@ -1714,9 +1720,9 @@ extern "C" int __fastcall sub_5ca970(MediaRuntime *runtime, void *) {
   int result = sub_5c9ec0(runtime, 0);
   runtime->channel_poll_result = result;
   if (result == -1) {
-    if ((d.flags & 0x00008000) != 0) {
+    if ((runtime->descriptor->flags & 0x00008000) != 0) {
       Sleep(0);
-      mmioSeek(d.stream, runtime->channel_seek_position, SEEK_SET);
+      mmioSeek(runtime->descriptor->stream, runtime->channel_seek_position, SEEK_SET);
       runtime->channel_state = sub_5c9ec0(runtime, 0);
     } else {
       runtime->channel_state = -1;
@@ -1725,15 +1731,15 @@ extern "C" int __fastcall sub_5ca970(MediaRuntime *runtime, void *) {
   }
 
   if (result == 1) {
-    if (d.stream_gate_7c != 0) {
+    if (runtime->descriptor->stream_gate_7c != 0) {
       runtime->channel_state = sub_5c9ec0(runtime, 0);
-      if (runtime->channel_state == 1) d.stream_gate_7c = 0;
+      if (runtime->channel_state == 1) runtime->descriptor->stream_gate_7c = 0;
     }
     return 0;
   }
 
   if (result == 2 &&
-      (d.stream_gate_80 == 0 || runtime->pending_output_records < 0x16))
+      (runtime->descriptor->stream_gate_80 == 0 || runtime->pending_output_records < 0x16))
     runtime->channel_state = sub_5c9ec0(runtime, 0);
   return 0;
 }
@@ -1794,8 +1800,7 @@ int MediaRuntime::setup_sound_device() {
 // kind      game
 // TRIED: `ecx` does real work with no stack access at entry (reads `[ecx]` before any `[ebp+..]`), so this is a __thiscall member - written as `ClassX::sub_5ce4b0()`, same precedent as 0x004E3300's ClassX::sub_4e3300. The six indirect calls are DirectDraw-COM-shaped (self pushed explicitly alongside the args, not via ECX), spelled with `__stdcall` function-pointer typedefs per call site rather than a shared VCall shim, since two calls land on offset 0xc through DIFFERENT vtables (one via `[this+0x54]`, two via `this->[0]->0x5c`) with different arities (4 args vs 2). Local DDSURFACEDESC/DDPIXELFORMAT-like scratch structs are modelled as plain structs, not the overlapping/self-referential stack layout the original build (a nested pointer field pointing back into the same frame) - not chased further. 0.83 mnemonic similarity; first divergence at #3 is the prologue register-save order, which follows from local-variable layout this body does not reproduce.
 int MediaRuntime::create_playback_buffer() {
-  MediaDescriptor &d = *descriptor;
-  if (d.sound_device != 0) {
+  if (descriptor->sound_device != 0) {
     WAVEFORMATEX format;
     memset(&format, 0, sizeof(format));
     format.wFormatTag = WAVE_FORMAT_PCM;
@@ -1812,26 +1817,26 @@ int MediaRuntime::create_playback_buffer() {
     buffer_desc.dwBufferBytes = source_buffer_bytes;
     buffer_desc.dwReserved = 0;
     buffer_desc.lpwfxFormat = &format;
-    if (d.sound_device->CreateSoundBuffer(&buffer_desc, &d.play_buffer, 0) == DS_OK) {
-      d.play_buffer->SetFrequency(playback_frequency);
-      if ((d.flags & 0x2000) != 0) d.play_buffer->SetVolume(d.volume_argument);
+    if (descriptor->sound_device->CreateSoundBuffer(&buffer_desc, &descriptor->play_buffer, 0) == DS_OK) {
+      descriptor->play_buffer->SetFrequency(playback_frequency);
+      if ((descriptor->flags & 0x2000) != 0) descriptor->play_buffer->SetVolume(descriptor->volume_argument);
 
       DSBCAPS created_caps;
       memset(&created_caps, 0, 0x14);
       created_caps.dwSize = 0x14;
-      if (d.play_buffer->GetCaps(&created_caps) == DS_OK) {
+      if (descriptor->play_buffer->GetCaps(&created_caps) == DS_OK) {
         synthetic_cursor_mode = 0;
         playback_buffer_bytes = created_caps.dwBufferBytes;
         playback_cursor = 0;
-        if (d.play_buffer->Play(0, 0, DSBPLAY_LOOPING) == DS_OK) {
+        if (descriptor->play_buffer->Play(0, 0, DSBPLAY_LOOPING) == DS_OK) {
           buffer_setup_finished = 1;
           return 0;
         }
       }
-      d.play_buffer->Release();
+      descriptor->play_buffer->Release();
     }
   }
-  d.play_buffer = 0;
+  descriptor->play_buffer = 0;
   synthetic_cursor_mode = 1;
   synthetic_playback_cursor = 0;
   playback_buffer_bytes = 0x8000;

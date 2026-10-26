@@ -1,0 +1,26 @@
+{
+  "event_id": "99df5b9d68677d0fd406cc10a110fc3418dd1b031fad551029c797c95821ebae",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_base_energy_live_owner_oct26.py"
+    ],
+    "evidence": [
+      "Private production compile exposes only two swapped independent stack loads in drone_riot; retain raw outside FAIL and inspect full branch/reference closure.",
+      "Independent physical review owner-fidelity-oct26cm/base-energy-residual-review.json"
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5197744,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "drone-code-emission-closure",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:base-energy-owner-oct26co"
+}
