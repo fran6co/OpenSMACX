@@ -1,0 +1,20 @@
+{
+  "event_id": "d86635ff61008ed4c768070ce62b6d37ed3581d2530ba2efb8f6fe8d5cf79583",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_basepop_owned_close_actual_source.py",
+      "recovery/tests/test_scroll_static_default_fields_oct15.py"
+    ],
+    "evidence": [
+      "Typed global fixture must compile the same actual BasePop close body; actual Popup producer control should protect byte truncation/reserved bytes and existing defaults without changing scroll checks."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "typed-defaults-test-closure",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:popup-style-defaults-oct26fi"
+}
