@@ -1,0 +1,24 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "d4c88183d2bc471f43fc84b4baef1380cf9cb0eb",
+  "editable_files": [
+    "src/mapwin.cpp"
+  ],
+  "evidence": [
+    "Actual previous compile receipt includes original_seam.h; current physical receipt excludes its removed147-line unused OriginalObject/template declarations. This establishes a changed included-declaration context for a bounded new easy pass, not a reset of historical claims or task baselines.",
+    "Native pinned original and fresh qualified production COFF contexts are retained in .opensmacx/recovery/easy-header-context-oct26dd/group-*.json. Read-only eight-agent49-function review generated fixed proposals; each candidate below independently overlays only one existing body on the frozen baseline.",
+    "Maximum3 candidate compiler attempts/function in this new context; current deck has one per selected function. Original quirks/bugs, identities/spans/claims, all other bodies and compiler flags are preserved. No forced emission, raw addresses, assembly, or scope changes. Scope expansion and actual publication require separate coordinator decisions.",
+    "Proposal MapWin::on_nc_left_down original0x0046F700 SHA2563dd80e850a7619507a8264ae0418b449fe1066553734ce8b292fee1958c13837: The original reads Win::client_rect_ right and left once to form the horizontal origin, then performs four ordered in_box tests and calls the virtual on_button_clicked slots 3, 2, 1, 0 with early returns after the first three. The current accessor is an inline reference to that same inherited member. The proposed direct inherited-field expression preserves the same reads, arithmetic order and callback sequence while testing a natural member spelling in the new declaration context. Pin and COFF diverge only in intermediate register/address formation before the same tests/calls; this is a matching candidate, not a claimed semantic correction."
+  ],
+  "intent": "Private bounded ordinary-C++ spelling/lifetime probes in a proven new header-declaration context; no source/mapping/claim publication, retain all evidence and original behavior.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4650752,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "near-header-mapwin-oct26de"
+}
