@@ -2816,7 +2816,7 @@ Purpose: List the social engineering categories and, under each, the four
          The header line carries the category's own id - 120000 upward - and
          the four lines under it carry the choice ids. Rows are 0xD4 apart and
          the four choices are the first four dwords of the row.
-// ORIGINAL: 0x0042B630 ?set_cat_social@Datalink@@QAEXXZ 0x0042B630-0x0042B7DC FILE
+// ORIGINAL: 0x0042B630 ?set_cat_social@Datalink@@QAEXXZ 0x0042B630-0x0042B7DC FILE BYTE_EXACT
 // MISMATCH 130/137, first divergence at 12 - the loop tail reloads `category` before `row` here and the image the other way round. TRIED: the increment reordered `row += 53, category += 5` to swap them - 123/137 against 130/137, so the source order is already the image's.
 // size      421 bytes
 // prototype void (__thiscall ?set_cat_social@Datalink@@QAEXXZ)(Datalink* this)
@@ -2828,15 +2828,16 @@ Return Value: n/a
 Status: Complete
 */
 void Datalink::set_cat_social() {
+    LPSTR *name_cursor = SocialCategories[0].name;
     int category = 120001;
-    const RulesSocialCategory *row = SocialCategories;
     do {
-        listBox_.item(StringTable.get(row->type), category - 1);
+        listBox_.item(StringTable.get(name_cursor[-5]), category - 1);
 
-        for (int choice = 0; choice < 4; ++choice) {
+        LPSTR *choice_cursor = name_cursor;
+        for (int choice = 0; choice < 4; ++choice_cursor, ++choice) {
             int id = category + choice;
             StringTemp[0] = '\0';
-            strcat(StringTemp, StringTable.get(row->name[choice]));
+            strcat(StringTemp, StringTable.get(*choice_cursor));
             if ((GameDataStateStorage.fields_.game_state_ & 0x1000) != 0) {
                 strcat(StringTemp, DatalinkSocialIdSeparator);
                 char digits[80];
@@ -2846,7 +2847,7 @@ void Datalink::set_cat_social() {
             listBox_.item(StringTemp, id);
         }
         category += 5;
-        ++row;
+        name_cursor += sizeof(RulesSocialCategory) / sizeof(LPSTR);
     } while (category < 120021);
 
     RECT rect = category_rect_;

@@ -6549,7 +6549,7 @@ int Buffer::wrap_height_flying(char *a1, int a2) {
     return wrap_height_flying(text);
 }
 
-// ORIGINAL: 0x005DDC90 ?wrap_right@Buffer@@QAEHPADH@Z 0x005DDC90-0x005DDD91 FILE
+// ORIGINAL: 0x005DDC90 ?wrap_right@Buffer@@QAEHPADH@Z 0x005DDC90-0x005DDD91 FILE BYTE_EXACT
 // Earlier source inferred `int` from the imported `PADH` catalogue spelling;
 // that spelling is not authentic type evidence. The pinned body reads the
 // argument's left/top/right dwords as a rectangle, matching the RECT overloads.
@@ -6611,18 +6611,18 @@ int Buffer::wrap_right(char *text, RECT *area) {
             }
             Font *f = fonts_[0];
             int heightAdd;
-            if (f->unk_1_ < 0) {
-                heightAdd = f->line_height_;
-            } else {
+            if (f->unk_1_ >= 0) {
                 heightAdd = f->height_ + f->unk_1_;
+            } else {
+                heightAdd = f->line_height_;
             }
             total = total + heightAdd;
+            cur = found;
             int oldField14 = field_14_;
             if (oldField14 != 0) {
                 field_14_ = 0;
                 width = width - oldField14;
             }
-            cur = found;
         } while (found != 0);
         return total;
     }

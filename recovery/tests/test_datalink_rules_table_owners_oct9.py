@@ -81,7 +81,10 @@ struct SocialEffect { int values_[11]; };
 struct RulesSocialEffect { char set1[24], set2[24], padding[56]; };
 const int MaxSocialEffectNum = 11;
 struct RulesSocialCategory {
-    LPSTR type; int preq_tech[4]; LPSTR name[4]; SocialEffect model_effect[4];
+    // Adapt the image's 32-bit pointer-sized prerequisite slots to the host
+    // pointer width so the production LPSTR cursor lands on the same fields.
+    // This is a host fixture model, not native ABI or layout proof.
+    LPSTR type; std::intptr_t preq_tech[4]; LPSTR name[4]; SocialEffect model_effect[4];
 };
 const int MaxSocialCatNum = 4;
 RulesSocialCategory SocialCategories[MaxSocialCatNum] = {};

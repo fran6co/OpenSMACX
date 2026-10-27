@@ -2138,7 +2138,7 @@ void __cdecl message_lock(int opcode, int target, int payload_10,
     NetBusyCount--;
 }
 
-// ORIGINAL: 0x00593110 ?message_landmark@@YAXHHPADHHHH@Z 0x00593110-0x00593190
+// ORIGINAL: 0x00593110 ?message_landmark@@YAXHHPADHHHH@Z 0x00593110-0x00593190 BYTE_EXACT
 // size      128 bytes
 // prototype void (__cdecl ?message_landmark@@YAXHHPADHHHH@Z)(int, int, char *, int, int, int, int)
 // callers   1   call targets   2
@@ -2155,11 +2155,11 @@ void __cdecl message_landmark(int opcode, int target, char *text,
     message.opcode_ = static_cast<int16_t>(opcode);
     message.faction_ = ConsoleGlobal.faction_id_;
     message.timestamp_ = timeGetTime();
-    message.payload_10_ = payload_10;
-    message.payload_1C_ = payload_1C;
     message.sequence_ = NetDaemonNet.deletion_list_.sequence_bits();
+    message.payload_10_ = payload_10;
     message.payload_14_ = payload_14;
     message.payload_18_ = payload_18;
+    message.payload_1C_ = payload_1C;
     if (text) {
         strcpy(message.text_, text);
     }

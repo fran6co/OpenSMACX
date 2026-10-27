@@ -128,7 +128,9 @@ struct RulesTechnology {
 const int MaxTechnologyNum=89; RulesTechnology Technology[MaxTechnologyNum];
 struct SocialEffect { int values_[11]; };
 struct RulesSocialCategory {
-  char *type; int preq_tech[4]; char *name[4]; SocialEffect model_effect[4];
+  // Match pointer-slot cursor arithmetic on a 64-bit host. The production
+  // image has 32-bit slots; this adaptation is not native ABI proof.
+  char *type; std::intptr_t preq_tech[4]; char *name[4]; SocialEffect model_effect[4];
 };
 const int MaxSocialCatNum=4; RulesSocialCategory SocialCategories[MaxSocialCatNum];
 struct RulesSocialEffect { char set1[24], set2[24], padding[56]; };
@@ -208,7 +210,10 @@ static void reset() {
   std::memset(SocialCategories,0,sizeof(SocialCategories));
   std::memset(SocialEffects,0,sizeof(SocialEffects));
   std::memset(Terraforming,0,sizeof(Terraforming));
-  for(int i=0;i<MaxTerrainNum;++i) Terraforming[i].preq_tech_sea=-2;
+  for(int i=0;i<MaxTerrainNum;++i) {
+    Terraforming[i].preq_tech=-2;
+    Terraforming[i].preq_tech_sea=-2;
+  }
   std::memset(Order,0,sizeof(Order));
   std::memset(VehPrototypes,0,sizeof(VehPrototypes));
   std::memset(Players,0,sizeof(Players));

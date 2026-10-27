@@ -594,7 +594,10 @@ DISPLAY_FIXTURE = r'''
 #include <vector>
 #include "dialog_defaults.h"
 
-struct RECT { int left, top, right, bottom; };
+// The extracted source's const long geometry locals feed the platform RECT
+// coordinate type; model those host-facing values as long to avoid introducing
+// LP64-only narrowing diagnostics into this behavior fixture.
+struct RECT { long left, top, right, bottom; };
 struct Style { int index; };
 struct Event { std::string name; int a, b; const void *p; };
 std::vector<Event> events;

@@ -1,0 +1,19 @@
+{
+  "event_id": "9086cc339050cf86a4805eb76209e9d2618907836cce2dcf3b46dda8b17aedcb",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_prefwin_behavior.py"
+    ],
+    "evidence": [
+      "Host test RECT uses int whereas native RECT uses LONG; new exact body captures coordinates as long. Adapt fixture to its real API type to preserve existing behavioral controls under LP64 host without changing C++ source or disabling narrowing diagnostics."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "5ef65a61ca5b9e584d80399d766797a90170c0cd64c9dc787472ed4a2c57e237",
+  "request_id": "prefwin-host-long-coordinate-control",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:exact-winners-oct27mb"
+}

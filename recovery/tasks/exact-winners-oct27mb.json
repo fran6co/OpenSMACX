@@ -1,0 +1,46 @@
+{
+  "author": "coordinator",
+  "base_revision": "c2c0aed62e9e813d5e03d7c4b7152e84b9c8177b",
+  "editable_files": [
+    "src/prefwin.cpp",
+    "src/netdaemon.cpp",
+    "src/datalink.cpp",
+    "src/buffer.cpp",
+    "src/stringbox.cpp"
+  ],
+  "evidence": [
+    "Coordinator-reviewed manual integration authorized by user. Fresh recording, build/link, reference and outside-scope verification required; no full-game acceptance claim.",
+    "Datalink uses layout-dependent typed traversal of original social records; verify actual compiler effects and targets. Imperfect C++ is permitted by user, but no original behavior fixes or weakened byte/reference verification."
+  ],
+  "intent": "Integrate five independently produced exact candidates; prioritize fidelity and new byte-exact functions; retain quality debt for subsequent cleanup.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4790288,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5845264,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4372016,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6151312,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6461616,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "exact-winners-oct27mb"
+}
