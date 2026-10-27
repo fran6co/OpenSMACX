@@ -2525,6 +2525,7 @@ extern "C" void __fastcall sub_5cd750(MediaRuntime *runtime,
 }
 
 // ORIGINAL: 0x005CD8D0 sub_5cd8d0 0x005CD8D0-0x005CD97B
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned 0x5cd8d0 reloads runtime descriptor after each block helper before the width bound and after each row before the height bound; runtime +0x40 is reread for every block.", "The destination flows to packed byte/pixel writers without a disjointness contract. Output can therefore replace the runtime descriptor pointer or format option; no in-tree deliberate alias is asserted.", "Preserve the original helper branches, unchecked accesses, predictor/input initialization, sixteen-pixel steps and this format's distinct block/row byte strides."], "reason": "Retain live descriptor bounds and per-block format selection across caller-owned pixel output, matching the original sibling decoder loop rather than freezing the owner."}
 // TRIED: the given `__stdcall(int,int,int)` head - disasm reads edx with no prior init (a real 2nd register param) and `push ecx` at entry is pure stack reservation, not `this` preservation; rewrote as `__fastcall(int*,int,int,int,uint)` matching Ghidra's 5-param read, with differently-named cdecl externs for the two nullary-scaffolded callees. MISMATCH #4 push/mov, prologue register shape only.
 // symbol    @sub_5cd8d0@20
 // kind      game
@@ -2534,7 +2535,6 @@ extern "C" void __fastcall sub_5cd8d0(MediaRuntime *runtime,
   // The second fastcall argument arrives in EDX and is retained in +5F8.
   // The unused fourth logical argument remains present for the native stack
   // cleanup and is deliberately not repurposed.
-  MediaDescriptor &descriptor = *runtime->descriptor;
   runtime->decoder_context_3f8.predictor_500 = 0;
   runtime->decoder_context_3f8.predictor_4fc = 0;
   runtime->decoder_context_3f8.predictor_4f8 = 0;
@@ -2544,10 +2544,10 @@ extern "C" void __fastcall sub_5cd8d0(MediaRuntime *runtime,
   DWORD block_y = 0;
   DWORD row_step = (pitch >> 1) << 5;
   BYTE *row_destination = destination;
-  while (block_y < descriptor.output_height_60) {
+  while (block_y < runtime->descriptor->output_height_60) {
     DWORD block_x = 0;
     BYTE *block_destination = row_destination;
-    while (block_x < descriptor.output_width_64) {
+    while (block_x < runtime->descriptor->output_width_64) {
       if (runtime->record_option_040 != 0) {
         sub_5d1466(block_destination, (int)pitch,
                    &runtime->decoder_context_3f8);
@@ -2564,12 +2564,12 @@ extern "C" void __fastcall sub_5cd8d0(MediaRuntime *runtime,
 }
 
 // ORIGINAL: 0x005CD980 sub_5cd980 0x005CD980-0x005CDA2C
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned 0x5cd980 reloads runtime descriptor after each block helper before the width bound and after each row before the height bound; runtime +0x40 is reread for every block.", "The destination flows to packed byte/pixel writers without a disjointness contract. Output can therefore replace the runtime descriptor pointer or format option; no in-tree deliberate alias is asserted.", "Preserve the original helper branches, unchecked accesses, predictor/input initialization, sixteen-pixel steps and this format's distinct block/row byte strides."], "reason": "Retain live descriptor bounds and per-block format selection across caller-owned pixel output, matching the original sibling decoder loop rather than freezing the owner."}
 // symbol    @sub_5cd980@20
 // kind      game
 extern "C" void __fastcall sub_5cd980(MediaRuntime *runtime,
                                       BYTE *compressed, BYTE *destination,
                                       BYTE *unused, unsigned int pitch) {
-  MediaDescriptor &descriptor = *runtime->descriptor;
   runtime->decoder_context_3f8.predictor_500 = 0;
   runtime->decoder_context_3f8.predictor_4fc = 0;
   runtime->decoder_context_3f8.predictor_4f8 = 0;
@@ -2579,10 +2579,10 @@ extern "C" void __fastcall sub_5cd980(MediaRuntime *runtime,
   DWORD block_y = 0;
   DWORD row_step = (pitch >> 2) << 6;
   BYTE *row_destination = destination;
-  while (block_y < descriptor.output_height_60) {
+  while (block_y < runtime->descriptor->output_height_60) {
     DWORD block_x = 0;
     BYTE *block_destination = row_destination;
-    while (block_x < descriptor.output_width_64) {
+    while (block_x < runtime->descriptor->output_width_64) {
       if (runtime->record_option_040 != 0) {
         sub_5d1654(block_destination, (int)pitch,
                    &runtime->decoder_context_3f8);
