@@ -1,0 +1,24 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "106ef42916daecf8d7890e6e19a1c057f6dcff6a",
+  "editable_files": [
+    "src/buffer.cpp",
+    "src/buffer.h"
+  ],
+  "evidence": [
+    "User identified fall-through from non-void function on guard/no-mask paths. Original PE has no COFF symbols/debugdirectory; annotatedQAEH is hypothesis, retained generatedKuna header declaresvoid. PostcallEAXresidue doesnotestablish returntype.",
+    ".opensmacx/recovery/buffer-box-sprite-callers-oct27is.json",
+    "One private native wholeheader/source probe; original callsite return-value evidence review required before adoption. Do not insert return0, fakeuninitializedreturn, assembly or change Originalidentity/claims. Existing actualsourcecallsignorevalue; everyheaderconsumerremains preservationcontrol."
+  ],
+  "intent": "Investigate unsupported Buffer::box_sprite int return hypothesis using ordinary void source while preserving original draw/guard behavior and mappings.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6172115,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "buffer-box-return-oct27iu"
+}
