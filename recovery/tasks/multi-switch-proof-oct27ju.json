@@ -1,0 +1,25 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "f2c2657d805ef8454db93fcd4dc2a3a1db9853f6",
+  "editable_files": [
+    "packages/match-recovery/src/match_recovery/associated_binary.py",
+    "packages/match-recovery/tests/test_associated_binary.py"
+  ],
+  "evidence": [
+    "The completed ordinary C++ helper has a 0x33B code span plus four following guarded target/selector pairs. The final physical COMDAT matches the original diagnostic envelope after relocation masking, but no claim is banked.",
+    "Do not change original code spans, source linkage, compiler flags or gate thresholds. Preserve every byte and actual relocation target in the associated envelope; missing/ambiguous evidence refuses.",
+    "The existing v1 association anchors and adjacency plus independently proved dispatch flow can identify unambiguous pairs. Do not store redundant group IDs unless a concrete ambiguity requires a separately reviewed source-model change.",
+    "No project-specific knowledge belongs in package APIs. Use configured root/source/compile context; all project identities stay in source. Coordinator alone mutates Git and runs actual VC6/Wine recovery measurements."
+  ],
+  "intent": "Prove multiple independently guarded switch target/selector groups using the existing explicit source associations, retaining full envelope, reference and padding checks.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6495136,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "multi-switch-proof-oct27ju"
+}

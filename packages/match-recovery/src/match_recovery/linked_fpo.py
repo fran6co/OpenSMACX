@@ -10,7 +10,7 @@ import struct
 
 from .model import Span
 from .pdb_fixups import BoundFixups
-from .pe_coff import Symbol, weak_external
+from .pe_coff import Coff, Symbol, weak_external
 
 
 def _root_reference(obj, target, root):
@@ -34,30 +34,28 @@ def _root_reference(obj, target, root):
             raise ValueError("FPO root declaration has a conflicting definition or alias")
 
 
-def validate_fpo_source(obj, number, root, image, address, fixups):
-    """Validate an emitted leaf frame and linked extent, not PDB correspondence.
+def validate_fpo_object(obj, number, root):
+    """Validate one exact object-local FPO child and its root code extent.
 
-    The caller establishes native object selection and the root's linked entry;
-    no byte search, section placement or owner inference happens here.
-    The image-bound sidecar must be valid, but this helper does not select or
-    consume any FPO record. Its canonical result cannot prove that a matching
-    record exists, is unique, or accounts for all folded members.
+    This proves only physical COFF metadata and ownership. In particular, the
+    discardable section characteristic does not prove that a linker selected
+    or removed the child. The complete FPO bytes remain in the returned
+    witness for callers to retain and compare.
     """
-    if (type(number) is not int or not 1 <= number <= len(obj.sections)
+    if (type(obj) is not Coff or type(number) is not int
+            or not 1 <= number <= len(obj.sections)
             or not isinstance(root, Symbol) or obj.symbols.get(root.index) != root
-            or obj.function(root.name) != root or root.section in obj.associations
-            or type(address) is not int or not isinstance(fixups, BoundFixups)
-            or not isinstance(image.data, bytes)
-            or fixups.image_sha256 != hashlib.sha256(image.data).hexdigest()):
-        raise ValueError("FPO evidence lacks exact selected root and image binding")
+            or obj.function(root.name) != root or root.section in obj.associations):
+        raise ValueError("FPO object evidence lacks an exact independent function root")
     section = obj.sections[number - 1]
+    direct_children = [child for child, parent in obj.associations.items()
+                       if parent == root.section]
     if (section.name != ".debug$F" or section.flags != 0x42101048
             or len(section.data) != 16 or obj.section_sizes[number - 1] != 16
             or len(section.relocations) != 1
             or obj.associations.get(number) != root.section
             or number in obj.associations.values()
-            or sum(parent == root.section and obj.sections[child - 1].name == ".debug$F"
-                   for child, parent in obj.associations.items()) != 1):
+            or direct_children != [number]):
         raise ValueError("unsupported associated FPO child")
     offset, target, kind = section.relocations[0]
     if offset != 0 or kind != 7 or target not in obj.symbols:
@@ -89,6 +87,40 @@ def validate_fpo_source(obj, number, root, image, address, fixups):
     if (len(root_section.data) != code_size + (-code_size % root_section.alignment)
             or any(byte not in (0x90, 0xCC) for byte in root_section.data[code_size:])):
         raise ValueError("FPO code extent leaves non-alignment root bytes")
+    return {
+        "format": "fpo_data",
+        "data": section.data[4:].hex(),
+        "code_size": code_size,
+        "section": number,
+        "section_name": section.name,
+        "section_flags": section.flags,
+        "section_bytes": section.data.hex(),
+        "section_auxiliary": auxiliary.hex(),
+        "association_parent": root.section,
+        "relocations": [{"offset": offset, "target_symbol": target,
+                         "target_name": obj.symbols[target].name, "kind": kind,
+                         "addend": addend}],
+    }
+
+
+def validate_fpo_source(obj, number, root, image, address, fixups):
+    """Validate an emitted leaf frame and linked extent, not PDB correspondence.
+
+    The caller establishes native object selection and the root's linked entry;
+    no byte search, section placement or owner inference happens here. The
+    image-bound sidecar must be valid, but this helper does not select or
+    consume any FPO record. Its canonical result cannot prove that a matching
+    record exists, is unique, or accounts for all folded members.
+    """
+    if (type(number) is not int or not 1 <= number <= len(obj.sections)
+            or not isinstance(root, Symbol) or obj.symbols.get(root.index) != root
+            or obj.function(root.name) != root or root.section in obj.associations
+            or type(address) is not int or not isinstance(fixups, BoundFixups)
+            or not isinstance(image.data, bytes)
+            or fixups.image_sha256 != hashlib.sha256(image.data).hexdigest()):
+        raise ValueError("FPO evidence lacks exact selected root and image binding")
+    object_frame = validate_fpo_object(obj, number, root)
+    code_size = object_frame["code_size"]
     if address < image.base or address + code_size > 0x100000000:
         raise ValueError("invalid linked FPO root extent")
     span = Span(address, address + code_size)
@@ -97,7 +129,7 @@ def validate_fpo_source(obj, number, root, image, address, fixups):
               if region.start <= span.start and span.end <= region.end]
     if len(owners) != 1 or not owners[0] & 0x20 or not owners[0] & 0x20000000:
         raise ValueError("FPO root is not inside linked executable code")
-    return {"format": "fpo_data", "data": section.data[4:].hex(), "code_size": code_size}
+    return {key: object_frame[key] for key in ("format", "data", "code_size")}
 
 
 def verify_fpo(obj, number, root, image, address, fixups):

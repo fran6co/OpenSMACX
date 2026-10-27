@@ -19,6 +19,7 @@ from capstone import (
 from .associated_source import AssociatedDataBinding, validate_associated
 from .binary import AbsoluteConstant, BoundedTarget, CompilerArtifact, Relocation, RelocationKind, compare_bound_code
 from .components import relative_path
+from .linked_fpo import validate_fpo_object
 from .model import Origin, Result, Span
 from .pe_coff import Coff, PeImage, Symbol
 
@@ -88,6 +89,20 @@ def _is_canonical_lea_identity_padding(code: bytes) -> bool:
             and memory.scale == 1
             and memory.disp == 0
             and memory.segment == 0)
+
+
+def _is_canonical_hotpatch_padding(code: bytes) -> bool:
+    """Recognize only the pinned two-byte MOV EDI,EDI alignment spelling."""
+    return type(code) is bytes and code == b"\x8b\xff"
+
+
+def _is_intergroup_hotpatch_gap(original: bytes, candidate: bytes, left: int, right: int,
+                                selector_ends: set[int], table_starts: set[int]) -> bool:
+    """Accept the exact hotpatch pair only between an adjacent map and table."""
+    return (_is_canonical_hotpatch_padding(original)
+            and candidate == original
+            and left in selector_ends and right in table_starts
+            and left % 4 == 2 and right % 4 == 0)
 
 
 def _symbol_target(obj: Coff, section_number: int, section_data: bytes, offset: int):
@@ -454,8 +469,31 @@ def compare_associated_code(obj: Coff, subject: Symbol, span: Span, image: PeIma
     section = obj.sections[section_number - 1]
     if not (section.flags & 0x20 and section.flags & 0x1000):
         raise ValueError("associated proof requires a root code COMDAT")
-    if section_number in obj.associations or any(parent == section_number for parent in obj.associations.values()):
-        raise ValueError("associated proof refuses associative COMDAT children, including EH/data companions")
+    if section_number in obj.associations:
+        raise ValueError("associated proof refuses an associative root COMDAT")
+    associated_children = [child for child, parent in obj.associations.items()
+                           if parent == section_number]
+    fpo_named_sections = {
+        number for number, child in enumerate(obj.sections, 1)
+        if number != section_number and (
+            child.name == ".debug$F"
+            or any(symbol.section == number and symbol.name == ".debug$F"
+                   for symbol in obj.symbols.values()))
+    }
+    fpo_references = set()
+    for number in fpo_named_sections:
+        child = obj.sections[number - 1]
+        if any(target in obj.symbols and
+               (target == subject.index or obj.symbols[target].name == subject.name)
+               for _, target, kind in child.relocations if kind != 0):
+            fpo_references.add(number)
+    if fpo_references != set(associated_children):
+        raise ValueError("root-referencing FPO metadata lacks one exact associative child")
+    fpo_witness = None
+    if associated_children:
+        if len(associated_children) != 1:
+            raise ValueError("associated proof supports only one exact FPO metadata child")
+        fpo_witness = validate_fpo_object(obj, associated_children[0], subject)
     entries = [symbol for symbol in obj.symbols.values()
                if symbol.section == section_number and symbol.type & 0x20 and symbol.storage in (2, 3)]
     if len(entries) != 1 or entries[0] != subject:
@@ -569,6 +607,8 @@ def compare_associated_code(obj: Coff, subject: Symbol, span: Span, image: PeIma
                 raise ValueError("original switch target is not a decoded parent instruction boundary")
             indirect_targets.add(target_address)
     envelope = Span(span.start, max([span.end, *(item.end for item in ordered)]))
+    if fpo_witness is not None and fpo_witness["code_size"] != envelope.end - envelope.start:
+        raise ValueError("FPO metadata extent differs from the full declared code/data envelope")
     original = image.read(envelope)
     containing_sections = [(index, region, size) for index, (region, _, size) in enumerate(image.sections)
                            if region.start <= envelope.start and envelope.end <= region.start + size]
@@ -594,8 +634,12 @@ def compare_associated_code(obj: Coff, subject: Symbol, span: Span, image: PeIma
         candidate_gap = candidate[candidate_offset:candidate_offset + (gap.end - gap.start)]
         first_table = min(row[0].span.start for row in table_rows)
         switch_alignment = (left == span.end and right == first_table
-                            and original_gap == b"\x8b\xff" and len(original_gap) == 2
+                            and _is_canonical_hotpatch_padding(original_gap)
                             and span.end % 4 == 2 and first_table % 4 == 0)
+        intergroup_switch_alignment = _is_intergroup_hotpatch_gap(
+            original_gap, candidate_gap, left, right,
+            {row[0].span.end for row in selector_rows},
+            {row[0].span.start for row in table_rows})
         lea_identity_alignment = (
             left == span.end and right == first_table
             and len(original_gap) == 3
@@ -619,14 +663,16 @@ def compare_associated_code(obj: Coff, subject: Symbol, span: Span, image: PeIma
             and bool(original_gap) and all(byte in _FILL for byte in original_gap)
         )
         if (not original_gap or (any(byte not in _FILL for byte in original_gap)
-                                 and not switch_alignment and not lea_identity_alignment)
+                                 and not switch_alignment and not intergroup_switch_alignment
+                                 and not lea_identity_alignment)
                 or (not ordinary_alignment and not intergroup_alignment and not switch_alignment
+                    and not intergroup_switch_alignment
                     and not lea_identity_alignment)
                 ):
             raise ValueError("unaccounted code/data gap is not a supported alignment form")
         if candidate_gap and (candidate_gap != original_gap
                               or (any(byte not in _FILL for byte in candidate_gap)
-                                  and not switch_alignment
+                                  and not switch_alignment and not intergroup_switch_alignment
                                   and not lea_identity_alignment)):
             # The strict whole-envelope comparison reports this candidate
             # mutation as a byte mismatch; do not reinterpret it as a gap.
@@ -713,6 +759,8 @@ def compare_associated_code(obj: Coff, subject: Symbol, span: Span, image: PeIma
         "source_body_span": {"start": span.start, "end": span.end},
         "associated_data": witnesses,
         "comparison_span": {"start": envelope.start, "end": envelope.end},
+        "associated_metadata": fpo_witness,
+        "original_metadata": Result.UNKNOWN,
         "linked_selection": Result.UNKNOWN,
         "runtime": Result.UNKNOWN,
         "limitations": ["proves bounded object bytes/references only; not final linked selection or runtime behavior"],

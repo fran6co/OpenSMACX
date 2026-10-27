@@ -1,0 +1,20 @@
+{
+  "event_id": "df3516ee3c603ae167fd21b8efe2b0dae5ec018ba29c72588b68d3c333942364",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "packages/match-recovery/src/match_recovery/linked_fpo.py",
+      "packages/match-recovery/tests/test_linked_fpo.py"
+    ],
+    "evidence": [
+      "A fresh actual matching-profile Net compile has the same precise .debug$F child as the independently qualified linked build. Preserve and validate this non-code metadata with the existing native FPO object checks, without inferring linker discard or changing source/flags, and retain linked/original-metadata uncertainty."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "qualify-associated-fpo-metadata",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:multi-switch-proof-oct27ju"
+}
