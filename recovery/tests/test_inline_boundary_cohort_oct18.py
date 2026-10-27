@@ -371,8 +371,8 @@ def _queue_harness(queue_source: str, video_header: str, mutation: str | None = 
             "unsigned char *VideoFrameQueue::peek("].replace(
                 old, "*next_frame_id = head_->frame_id;", 1)
     elif mutation == "limit_without_clear":
-        old = "void VideoFrameQueue::set_limit(int limit) { clear(); limit_ = limit; }"
-        assert old in queue_source
+        assert "head_" in bodies["void VideoFrameQueue::set_limit(int limit)"]
+        assert "limit_ = limit;" in bodies["void VideoFrameQueue::set_limit(int limit)"]
         bodies["void VideoFrameQueue::set_limit(int limit)"] = " limit_ = limit; "
     elif mutation == "zero_byte_initialization":
         body = bodies["int VideoFrameQueue::allocate("]
