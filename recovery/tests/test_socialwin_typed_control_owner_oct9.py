@@ -40,8 +40,10 @@ def selected_source():
     assert "reinterpret_cast<Buffer *>(self + 0x444)" not in init
     assert "reinterpret_cast<char *>(button) + 0x444" not in init
     assert "FlatButton *flat_button = &flatButtons_[\n                    17 + offset / static_cast<int>(sizeof(FlatButton))];" in init
-    assert "static_cast<BaseButton *>(&flatButtons_[27])" in init
-    assert "static_cast<BaseButton *>(&flatButtons_[28])" in init
+    assert "FlatButton *button = &flatButtons_[27];" in init
+    assert "FlatButton *button = &flatButtons_[28];" in init
+    assert "base_button->init(StringTemp, 0x1B," in init
+    assert "base_button->init(StringTemp, 0x1C," in init
     assert "FlatButton elements 29..34" in init
     assert "toggle_offsets" not in init and "toggle_links" not in init
     assert "if (toggle_index == 1)" not in init

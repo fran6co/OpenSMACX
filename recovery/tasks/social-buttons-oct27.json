@@ -1,0 +1,26 @@
+{
+  "author": "coordinator",
+  "base_revision": "063f1af4a0212d12710be17989ed8697a5c815a6",
+  "editable_files": [
+    "src/socialwin.cpp",
+    "recovery/tests/test_socialwin_typed_control_owner_oct9.py",
+    "recovery/tests/test_socialwin_missing_buttons_actual_source.py"
+  ],
+  "evidence": [
+    "Independent original CFG and qualified COFF review establish missing BaseButton::init calls4B3738/4B37E7 for genuine flatButtons_[27]/[28], IDs1B/1C and tutRect12_/tutRect13_ geometry. Both occur after button16 and before energy-lock setup. All classes/members/APIs already exist. No fabricated wrappers, offsets or header changes.",
+    "Button27 caption comes from Labels[4F4/4], uppercased through StringTemp, then init/hide/Buffer::set_font(&font2_,0,0,0)/redraw and bubble Labels[D34/4]. Button28 caption Labels[194/4], same initialization/lifecycle sequence with no bubble assignment in this function. Current two bubble-only statements misassign these label roles. Verify full original branch/argument order before editing; preserve original language/unsafe behavior rather than inventing guards.",
+    "Add actual-source contiguous-block host controls for both real receivers, IDs, geometry/parent arguments, caption and bubble roles, font pointer and ordered lifecycle calls. Mutants with missing initialization or wrong label/receiver must compile then failbehavior. Keep unrelated existing typed-toggle checks and all historical annotations/claims. No matching-spelling campaign, header/compiler/build-policy changes or worker Git.",
+    "Coordinator handles isolated compiler leases, native measurement/reference observation, build/link, outside-owner review and integration/destination recheck. Manual recovery only; no full linked-selection/runtime/game acceptance."
+  ],
+  "intent": "Recover the two missing SocialWin button initialization sequences and original caption/bubble roles.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4925248,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "social-buttons-oct27"
+}
