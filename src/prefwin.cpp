@@ -785,12 +785,14 @@ void PrefWin::on_button_clicked(int button_id) {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00491810 ?redraw_option@PrefWin@@QAEXXZ 0x00491810-0x00491857 FILE
+// ORIGINAL: 0x00491810 ?redraw_option@PrefWin@@QAEXXZ 0x00491810-0x00491857 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00491810.cpp", "recovery/tasks/prefwin-owner-coverage-wave.json", "Original control parent 8578D8; ctor/destructor member order, 800-pixel branch, checkbox text-context and callback order independently reviewed."], "reason": "Recover the complete PrefWin ownership group through a genuine GraphicWin base and compiler-owned embedded control lifetimes; preserve seed identity, original spans and unresolved discoveries without granting byte claims."}
 void PrefWin::redraw_option() {
-  RECT rect = {PrefWinGeometryValue_85789C, PrefWinGeometryValue_857898,
-      PrefWinGeometryValue_8578A8 + PrefWinGeometryValue_85789C,
-      PrefWinGeometryValue_8578A4 + PrefWinGeometryValue_857898};
+  const long top = PrefWinGeometryValue_857898;
+  const long left = PrefWinGeometryValue_85789C;
+  RECT rect = {left, top,
+      PrefWinGeometryValue_8578A8 + left,
+      PrefWinGeometryValue_8578A4 + top};
   Buffer::box_sprite(&rect, &InterfaceBoxStyles[18]);
 }
 
@@ -912,7 +914,7 @@ void PrefWin::change_volume_button_state(int button_id) {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00491C00 ?on_redraw@PrefWin@@QAEXXZ 0x00491C00-0x00491DEE FILE
+// ORIGINAL: 0x00491C00 ?on_redraw@PrefWin@@QAEXXZ 0x00491C00-0x00491DEE FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00491c00.cpp", "recovery/tasks/prefwin-owner-coverage-wave.json", "Original control parent 8578D8; ctor/destructor member order, 800-pixel branch, checkbox text-context and callback order independently reviewed."], "reason": "Recover the complete PrefWin ownership group through a genuine GraphicWin base and compiler-owned embedded control lifetimes; preserve seed identity, original spans and unresolved discoveries without granting byte claims."}
 // symbol    ?on_redraw@PrefWin@@UAEXXZ
 void PrefWin::on_redraw() {

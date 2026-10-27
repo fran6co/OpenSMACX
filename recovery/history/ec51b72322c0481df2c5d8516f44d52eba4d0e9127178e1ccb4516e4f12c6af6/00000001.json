@@ -1,0 +1,23 @@
+{
+  "event_id": "5ef65a61ca5b9e584d80399d766797a90170c0cd64c9dc787472ed4a2c57e237",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_datalink_category_rows_oct15.py",
+      "recovery/tests/test_datalink_rules_table_owners_oct9.py",
+      "recovery/tests/test_datalink_source_text_owner_oct9.py",
+      "recovery/tests/test_owner_stringbox_faithful_oct20w.py",
+      "recovery/tests/test_stringbox_removal_lifetimes_oct24a.py"
+    ],
+    "evidence": [
+      "Keep existing behavioral controls and deliberate damage tests valid under the recovered loop shape. Host LPSTR width differs from pinned 32-bit application; fixture layout must explicitly model pointer-slot traversal without falsely claiming host ABI equivalence. No new source changes or relaxed behavioral assertions."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "adapt-existing-controls-to-matching-spellings",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:exact-winners-oct27mb"
+}

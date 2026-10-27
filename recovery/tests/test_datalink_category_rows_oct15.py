@@ -35,6 +35,7 @@ def run_host(tmp_path: Path, tech: str, social: str):
         pytest.skip("host g++ required")
     program = r'''
 #include <cassert>
+#include <cstdint>
 #include <cstdio>
 #include <cstring>
 #include <string>
@@ -43,7 +44,12 @@ typedef char *LPSTR;
 typedef unsigned int uint32_t;
 struct RECT { int left, top, right, bottom; };
 struct RulesTechnology { int preq_tech_1, preq_tech_2; LPSTR name; };
-struct RulesSocialCategory { LPSTR type; int preq_tech[4]; LPSTR name[4]; };
+// The production row uses 32-bit pointer-sized slots.  On this 64-bit host,
+// intptr_t keeps the source's LPSTR cursor arithmetic internally consistent;
+// this fixture adapts that walk and does not prove the native ABI layout.
+struct RulesSocialCategory {
+  LPSTR type; std::intptr_t preq_tech[4]; LPSTR name[4]; int model_effect[4][11];
+};
 struct GameFields { uint32_t game_state_; };
 struct { GameFields fields_; } GameDataStateStorage = {{0x1000u}};
 static char StringTemp[256];
@@ -161,10 +167,10 @@ def test_social_five_id_stride_mutant_is_rejected(tmp_path):
 
 def test_social_cached_name_before_header_callback_is_rejected(tmp_path):
     tech, social = owners()
-    anchor = "listBox_.item(StringTable.get(row->type), category - 1);"
+    anchor = "listBox_.item(StringTable.get(name_cursor[-5]), category - 1);"
     assert social.count(anchor) == 1
-    cached = social.replace(anchor, "LPSTR cached_name = row->name[0];\n        " + anchor)
-    cached = cached.replace("StringTable.get(row->name[choice])",
+    cached = social.replace(anchor, "LPSTR cached_name = name_cursor[0];\n        " + anchor)
+    cached = cached.replace("StringTable.get(*choice_cursor)",
                             "StringTable.get(cached_name)")
     result = run_host(tmp_path, tech, cached)
     assert result.returncode != 0

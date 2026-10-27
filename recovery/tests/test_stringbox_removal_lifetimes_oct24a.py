@@ -64,42 +64,57 @@ def test_stringbox_removal_order_and_fixup_services_from_actual_bodies(
     assert _run(tmp_path, compiler, fixture, "actual_source") == 0
 
     unk1 = _definition(source, "void StringBox::UNK1(")
-    unlink_prefix = (
-        "            list.current_->next->previous = list.current_->previous;\n"
-        "            list.current_->previous->next = list.current_->next;\n"
-        "            StringStructEntry *const entry = list.current_;"
+    removal_sequence = (
+        "                    list.current_->next->previous = list.current_->previous;\n"
+        "                    list.current_->previous->next = list.current_->next;\n"
+        "                    StringStructEntry *const entry = list.current_;\n"
+        "                    if (entry == list.head_) {\n"
+        "                        list.head_ = entry->next;\n"
+        "                    }\n"
+        "                    list.current_ = entry->next;\n"
+        "                    StringStructPayload *const payload = entry->string_payload();\n"
+        "                    list.on_remove(payload);"
     )
-    callback_first_prefix = (
-        "            StringStructEntry *const entry = list.current_;\n"
-        "            StringStructPayload *const payload = entry->string_payload();\n"
-        "            list.on_remove(payload);\n"
-        "            list.current_->next->previous = list.current_->previous;\n"
-        "            list.current_->previous->next = list.current_->next;"
+    callback_before_unlink_sequence = (
+        "                    StringStructEntry *const entry = list.current_;\n"
+        "                    StringStructPayload *const payload = entry->string_payload();\n"
+        "                    list.on_remove(payload);\n"
+        "                    list.current_->next->previous = list.current_->previous;\n"
+        "                    list.current_->previous->next = list.current_->next;\n"
+        "                    if (entry == list.head_) {\n"
+        "                        list.head_ = entry->next;\n"
+        "                    }\n"
+        "                    list.current_ = entry->next;"
     )
-    before_unlink = unk1.replace(unlink_prefix, callback_first_prefix, 1).replace(
-        "            StringStructPayload *const payload = entry->string_payload();\n"
-        "            list.on_remove(payload);\n            delete payload;",
-        "            delete payload;",
-        1,
-    )
+    before_unlink = unk1.replace(removal_sequence, callback_before_unlink_sequence, 1)
     assert before_unlink != unk1
     mutant = source.replace(unk1, before_unlink)
     assert _run(tmp_path, compiler, _fixture(mutant), "callback_before_unlink") != 0
 
     clear_before_delete = unk1.replace(
-        "            delete payload;\n            entry->payload = 0;",
-        "            entry->payload = 0;\n            delete payload;",
+        "                    delete payload;\n                    entry->payload = 0;",
+        "                    entry->payload = 0;\n                    delete payload;",
         1,
     )
     assert clear_before_delete != unk1
     mutant = source.replace(unk1, clear_before_delete)
     assert _run(tmp_path, compiler, _fixture(mutant), "payload_clear_before_delete") != 0
 
-    decrement_before_callback = unk1.replace(
-        "            list.on_remove(payload);\n            delete payload;",
-        "            --list.entry_count_;\n            list.on_remove(payload);\n            delete payload;",
-        1,
-    ).replace("            --list.entry_count_;\n        }", "        }", 1)
+    removal_and_count = (
+        "                    list.on_remove(payload);\n"
+        "                    delete payload;\n"
+        "                    entry->payload = 0;\n"
+        "                    delete entry;\n"
+        "                    --list.entry_count_;"
+    )
+    count_before_callback = (
+        "                    --list.entry_count_;\n"
+        "                    list.on_remove(payload);\n"
+        "                    delete payload;\n"
+        "                    entry->payload = 0;\n"
+        "                    delete entry;"
+    )
+    decrement_before_callback = unk1.replace(removal_and_count, count_before_callback, 1)
     assert decrement_before_callback != unk1
     mutant = source.replace(unk1, decrement_before_callback)
     assert _run(tmp_path, compiler, _fixture(mutant), "count_decrement_before_callback") != 0

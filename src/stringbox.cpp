@@ -293,39 +293,35 @@ void StringBox::on_redraw() {
 // Remove the first list entry with this ID, retaining the original cursor
 // position side effect and then re-fitting the visible rows.
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x006298B0 ?UNK1@StringBox@@QAEXH@Z 0x006298B0-0x0062997B
+// ORIGINAL: 0x006298B0 ?UNK1@StringBox@@QAEXH@Z 0x006298B0-0x0062997B BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:93d09e9c95484465004f450350b6cffe1e09f40e:src/unrecovered/006298b0.cpp", "src/stringbox.h", "src/stringstruct.h", "src/recovered/units/00629490.cpp"], "reason": "Remove the first StringList entry with the requested ID, preserve its cursor effects, and re-fit visible rows."}
 void StringBox::UNK1(int id) {
     StringList &list = stringList_;
     if (list.head_ != 0) {
         const int count = list.entry_count_;
         int visited = 0;
-        bool found = false;
         if (count > 0) {
-            do {
+            while (visited < count) {
                 if (list.current_->id == id) {
-                    found = true;
+                    list.current_->next->previous = list.current_->previous;
+                    list.current_->previous->next = list.current_->next;
+                    StringStructEntry *const entry = list.current_;
+                    if (entry == list.head_) {
+                        list.head_ = entry->next;
+                    }
+                    list.current_ = entry->next;
+                    StringStructPayload *const payload = entry->string_payload();
+                    list.on_remove(payload);
+                    delete payload;
+                    entry->payload = 0;
+                    delete entry;
+                    --list.entry_count_;
                     break;
                 }
                 StringStructEntry *const next_entry = list.current_->next;
                 ++visited;
                 list.current_ = next_entry;
-            } while (visited < count);
-        }
-        if (found) {
-            list.current_->next->previous = list.current_->previous;
-            list.current_->previous->next = list.current_->next;
-            StringStructEntry *const entry = list.current_;
-            if (entry == list.head_) {
-                list.head_ = entry->next;
             }
-            list.current_ = entry->next;
-            StringStructPayload *const payload = entry->string_payload();
-            list.on_remove(payload);
-            delete payload;
-            entry->payload = 0;
-            delete entry;
-            --list.entry_count_;
         }
         if (list.entry_count_ == 0) {
             list.head_ = 0;

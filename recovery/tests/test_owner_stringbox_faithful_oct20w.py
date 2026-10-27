@@ -178,8 +178,8 @@ def test_stringbox_actual_unk1_and_clip_ids_bodies(tmp_path, compiler_name):
 
     unk1 = _definition(source, "void StringBox::UNK1(")
     skipped_removal = unk1.replace(
-        "if (found) {\n            list.current_->next->previous = list.current_->previous;",
-        "if (false && found) {\n            list.current_->next->previous = list.current_->previous;",
+        "if (list.current_->id == id) {",
+        "if (false && list.current_->id == id) {",
     )
     assert skipped_removal != unk1
     skipped_removal_source = source.replace(unk1, skipped_removal)
