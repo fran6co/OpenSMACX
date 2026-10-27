@@ -77,23 +77,6 @@ AlphaNetStringStruct::AlphaNetStringStruct() {
     allocator_ = 0;
 }
 
-void AlphaNetStringStruct::remove_all() {
-    if (head_ != 0) {
-      for (int removed = 0; removed < entry_count_; ++removed) {
-        current_ = head_->next_;
-        Payload *payload = head_->payload_;
-        on_remove(payload);
-        delete payload;
-        // Preserve the post-callback/post-destruction member reloads.
-        head_->payload_ = 0;
-        delete head_;
-        head_ = current_;
-      }
-      head_ = 0;
-      current_position_ = 0;
-      entry_count_ = 0;
-    }
-  }
 
 /*
 Purpose: Convert a multiplayer process ID to its one-based player index.
