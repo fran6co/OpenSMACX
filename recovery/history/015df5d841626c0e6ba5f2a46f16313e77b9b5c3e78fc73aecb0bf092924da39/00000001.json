@@ -1,0 +1,19 @@
+{
+  "event_id": "3aad811c870c9d7ba24d39b715129f3e513fcf01c386160678a9ca0ea32f41fe",
+  "payload": {
+    "author": "recovery-coordinator",
+    "editable_files": [
+      "recovery/tests/test_infowin_panel_actual_source.py"
+    ],
+    "evidence": [
+      "Independent review finds this existing actual-source control needs a fixture/API or mutation-anchor update to exercise current genuine C++ source. Preserve independent runtime assertions, thresholds, event and geometry controls; wrong mutations must still compile and fail at runtime. This does not waive the current mismatch or broaden product C++ editing scope."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "coordinator-current-actual-source-fixture",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:easy-next-info-oct27kb"
+}

@@ -577,7 +577,7 @@ void BaseWin::draw_flash(int redraw_mode) {
     area.right = queue_outer_rect_.right - 5;
     area.bottom = queue_outer_rect_.bottom + 5;
     canvas.box_sprite(&area, &style);
-    IntersectRect(&area, &flash_rect_a_, &flash_rect_b_);
+    UnionRect(&area, &flash_rect_a_, &flash_rect_b_);
     area.left -= 3; area.top -= 3; area.right += 3; area.bottom += 3;
     scratch.create_blank(6, 6, WinFillColour);
     style = InterfaceBoxStyles[3];

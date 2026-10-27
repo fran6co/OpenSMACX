@@ -61,17 +61,20 @@ def test_actual_spritebox_input_and_list_bodies(tmp_path, compiler_name):
         "void SpriteBox::on_right_click(int x_coord, int y_coord)",
         "void SpriteBox::on_right_up(int x_coord, int y_coord)",
         "void SpriteBox::on_right_double_click(int x_coord, int y_coord)",
+        "void SpriteBox::on_left_click(int x, int y)",
     )
-    bodies = "\n".join(_body(source, signature) for signature in signatures)
+    body_list = [_body(source, signature) for signature in signatures]
+    bodies = "\n".join(body_list)
     harness = r'''
 #include <cassert>
 #include <cstdint>
 
 enum { WM_KEYDOWN = 0x100, VK_RETURN = 0x0d };
 static int HandleMain = 77;
-static int events[8], event_count, posted;
+static int events[8], event_count, posted, sent;
 static int expected_x, expected_y, output_y, check_result;
 static int callback_result, callback_argument, callback_calls;
+static int drawn[2], draw_count, update_calls;
 
 static void event(int value) { events[event_count++] = value; }
 
@@ -109,11 +112,22 @@ static int PostMessageA(int window, int message, int key, int extra) {
     ++posted;
     return 1;
 }
+int SendMessageA(int window, int message, int key, int extra) {
+    assert(window == HandleMain && message == WM_KEYDOWN);
+    assert(key == VK_RETURN && extra == 0);
+    event(6);
+    ++sent;
+    return 1;
+}
+
+struct Dialog { static int selected_position_; };
+int Dialog::selected_position_;
 
 struct SpriteBox {
     typedef int (*ClickCallback)(int);
     SpriteList list_;
     Spot spots_;
+    ClickCallback field_68_;
     ClickCallback right_click_callback_;
     ClickCallback right_down_callback_;
     ClickCallback right_up_callback_;
@@ -123,10 +137,17 @@ struct SpriteBox {
     void on_right_click(int x_coord, int y_coord);
     void on_right_up(int x_coord, int y_coord);
     void on_right_double_click(int x_coord, int y_coord);
+    void on_left_click(int x, int y);
+    void draw_item(int position) {
+        assert(draw_count < 2);
+        drawn[draw_count++] = position;
+        event(4);
+    }
+    void on_update() { ++update_calls; event(5); }
 };
 ''' + bodies + r'''
 static void reset_input(int result, int response) {
-    event_count = posted = callback_calls = 0;
+    event_count = posted = sent = callback_calls = draw_count = update_calls = 0;
     callback_argument = -999;
     check_result = result;
     callback_result = response;
@@ -170,6 +191,34 @@ int main() {
     box.on_right_click(expected_x, expected_y);
     assert_no_dispatch();
 
+    StringStructEntry selected = {0, 41, 0, 0, 0};
+    box.field_68_ = callback;
+    box.list_ = {&selected, &selected, 1, 9};
+    Dialog::selected_position_ = 7;
+    reset_input(0, 1);
+    box.on_left_click(expected_x, expected_y);
+    assert(callback_calls == 1 && callback_argument == output_y);
+    assert(Dialog::selected_position_ == 0);
+    assert(draw_count == 2 && drawn[0] == 7 && drawn[1] == 0);
+    assert(update_calls == 1 && posted == 1 && sent == 0);
+    assert(event_count == 6);
+    assert(events[0] == 1 && events[1] == 2 && events[2] == 4 &&
+           events[3] == 4 && events[4] == 5 && events[5] == 3);
+
+    Dialog::selected_position_ = 7;
+    reset_input(0, 0);
+    box.on_left_click(expected_x, expected_y);
+    assert(callback_calls == 1 && posted == 0 && sent == 0);
+    assert(Dialog::selected_position_ == 0 && draw_count == 2);
+    assert(update_calls == 1 && event_count == 5 && events[4] == 5);
+
+    Dialog::selected_position_ = 7;
+    reset_input(-1, 1);
+    box.on_left_click(expected_x, expected_y);
+    assert(callback_calls == 0 && posted == 0 && sent == 0);
+    assert(Dialog::selected_position_ == 7 && draw_count == 0 && update_calls == 0);
+    assert(event_count == 1 && events[0] == 1);
+
     StringStructEntry a = {0, 10, 0, 0, 0};
     StringStructEntry b = {0, 20, 0, 0, 0};
     StringStructEntry c = {0, 30, 0, 0, 0};
@@ -208,10 +257,15 @@ int main() {
     run_environment["ASAN_OPTIONS"] = "detect_leaks=0"
     subprocess.run([str(binary)], check=True, env=run_environment)
 
+    left_click_mutant = body_list[-1].replace(
+        "PostMessageA(HandleMain, WM_KEYDOWN, VK_RETURN, 0);",
+        "SendMessageA(HandleMain, WM_KEYDOWN, VK_RETURN, 0);", 1,
+    )
     mutants = (
         bodies.replace("if (list_.head_ == 0)", "if (list_.head_ != 0)", 1),
         bodies.replace("handler(y_coord) != 0", "handler(y_coord) == 0", 1),
         bodies.replace("handler(y_coord)", "handler(x_coord)", 1),
+        "\n".join(body_list[:-1] + [left_click_mutant]),
     )
     for index, mutant in enumerate(mutants):
         mutant_path = tmp_path / f"spritebox_mutant_{index}.cpp"
