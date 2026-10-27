@@ -1,0 +1,27 @@
+{
+  "author": "coordinator",
+  "base_revision": "865a2bc8e8b829917bda0f314c4a9223d2cd6b76",
+  "editable_files": [
+    "src/game.cpp",
+    "recovery/tests/test_ambience_colortables_source.py",
+    "recovery/tests/test_ambience_colortables_behavior.py",
+    "recovery/tests/test_faction_tint_cache_load_oct14bf.py"
+  ],
+  "evidence": [
+    "Independent pinned callsite42332C queries GetFileSize on Filemap handle at receiver+4 after successful Filemap::open; compare fresh result withC100. Open itself queried/stored size at62863B/641. Current cached get_size is not equivalent across intervening file-size changes; preserve the original second query and failure/sentinel comparison behavior.",
+    "Use existing Filemap::get_handle accessor and ordinary GetFileSize(handle,0); no header/layout/ABI or compile-policy changes, no error normalization. Retain nonnull open gate, unsigned original threshold, reads/write/update branches and all annotations/claims. Review actual PE imports and qualifiedCOFF first.",
+    "Update three existing source/host harness controls to distinguish cached vs fresh size, count/query ordering and no query on open failure. Include divergent cached/fresh sizes and original GetFileSize failure sentinel treatment; mutant cached-read must compile and failbehavior. Do not weaken unrelated source/member/store/call checks.",
+    "Coordinator-owned isolated Git/compiler/build; no worker compiles except host tests. Require fresh scoped measurement and refs, build/link, outside-owner preservation, independent source review and destination verification before manual integration. No full-game acceptance claim."
+  ],
+  "intent": "Restore original fresh handle-size query when loading the faction color-table cache.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4337664,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "faction-cache-query-oct27"
+}

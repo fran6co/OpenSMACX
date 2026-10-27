@@ -49,6 +49,7 @@ HARNESS = r"""
 
 #define __cdecl
 using DWORD = uint32_t;
+using HANDLE = void *;
 struct PALETTEENTRY { uint8_t peRed, peGreen, peBlue, peFlags; };
 struct HSV { int h, s, v; };
 struct Player { char filename[32]; };
@@ -171,8 +172,28 @@ uint8_t value_bytes[0x80], table_bytes[0xC100];
 bool open_values=false, open_short_table=false;
 int values_create_failures=0, table_create_failures=0;
 uint32_t opened_size=0;
+uint32_t cached_table_size=16;
+DWORD live_table_size=0xC100;
+int get_file_size_calls=0;
+int operation_sequence=0, table_open_sequence=0, size_query_sequence=0;
+void *last_open_file_handle=nullptr;
 int clock_value=0;
 DWORD timeGetTime() { calls.push_back("clock"); clock_value+=100; return (DWORD)clock_value; }
+DWORD GetFileSize(HANDLE handle, DWORD *high_part) {
+  assert(handle == last_open_file_handle);
+  assert(high_part == nullptr);
+  ++get_file_size_calls;
+  size_query_sequence = ++operation_sequence;
+  calls.push_back("GetFileSize");
+  return live_table_size;
+}
+static void reset_file_size_observations() {
+  get_file_size_calls = 0;
+  operation_sequence = 0;
+  table_open_sequence = 0;
+  size_query_sequence = 0;
+  last_open_file_handle = nullptr;
+}
 struct Filemap {
   Filemap() { calls.push_back("Filemap-ctor"); }
   ~Filemap() { calls.push_back("Filemap-dtor"); }
@@ -180,7 +201,14 @@ struct Filemap {
   void *open(char *path, int) {
     name=path; calls.push_back(std::string("open:")+path);
     if (name.find("vals.tmp")!=std::string::npos && open_values) { size=12; return value_bytes; }
-    if (name.find(".tmp")!=std::string::npos && open_short_table) { size=16; return table_bytes; }
+    if (name.find(".tmp")!=std::string::npos) {
+      table_open_sequence = ++operation_sequence;
+      if (open_short_table) {
+        size = cached_table_size;
+        last_open_file_handle = this;
+        return table_bytes;
+      }
+    }
     return nullptr;
   }
   void *create(char *path, unsigned long extent, int) {
@@ -197,6 +225,7 @@ struct Filemap {
     assert(end==value_bytes+12 || end==table_bytes+12);
     opened_size=12; calls.push_back("values-truncate:12");
   }
+  HANDLE get_handle() { return this; }
   uint32_t get_size() const { return size; }
 };
 
@@ -249,6 +278,8 @@ static void test_art_fallback_and_extractions() {
 static void test_colortable_native_control() {
   calls.clear(); clock_value=0; compare_result=0; open_values=false;
   open_short_table=false; values_create_failures=0; table_create_failures=0;
+  cached_table_size=16; live_table_size=0xC100;
+  reset_file_size_observations();
   g_PALETTE1.create_calls=0; g_PALETTE1.nearest_calls=0;
   sample_calls.clear();
   colortables_real(0);
@@ -264,6 +295,7 @@ static void test_colortable_native_control() {
   assert(g_PALETTE1.last_bg==2 && g_PALETTE1.last_fg==98);
   assert(g_PALETTE1.nearest_calls==24*256);
   assert(opened_size==12);
+  assert(get_file_size_calls==0);  // output creation path never opened a cache
   assert(palette_ctor<filemap_ctor && filemap_ctor<buffer_ctor);
   assert(buffer_ctor<std::find(calls.begin(),calls.end(),"compare-palettes"));
   auto buffer_dtor=std::find(calls.begin(),calls.end(),"Buffer-dtor");
@@ -275,14 +307,46 @@ static void test_colortable_native_control() {
   assert(open!=calls.end() && clock!=calls.end() && open<clock);
   assert(TerritoryColorTables[0][200]==(200^200));
 
-  // A non-null short .tmp mapping is invalid and must still be recreated.
+  // Threshold decisions use the fresh handle query, even when Filemap's
+  // cached size differs from the value returned for the same handle.
   calls.clear(); sample_calls.clear();
   const uint32_t key[3]={98,200,77};
   std::memcpy(value_bytes,key,sizeof(key));
   open_values=true; open_short_table=true; compare_result=0;
+  cached_table_size=16; live_table_size=0xC100;
+  reset_file_size_observations();
   colortables_real(0);
   assert(opened_size==12);
+  auto table_open=std::find(calls.begin(),calls.end(),"open:f0.tmp");
+  auto size_query=std::find(calls.begin(),calls.end(),"GetFileSize");
+  assert(table_open!=calls.end() && size_query!=calls.end() && table_open<size_query);
+  assert(table_open_sequence < size_query_sequence);
+  assert(get_file_size_calls==1);
+  assert(std::find(calls.begin(),calls.end(),"create:f0.tmp:49408")==calls.end());
+
+  // Conversely, a fresh short result rejects a mapping whose cached size was
+  // large enough. A failed open skips the query, while INVALID_FILE_SIZE is
+  // still compared as the original unsigned DWORD and passes the threshold.
+  calls.clear(); sample_calls.clear();
+  cached_table_size=0xC100; live_table_size=16;
+  reset_file_size_observations();
+  colortables_real(0);
+  assert(get_file_size_calls==1);
   assert(std::find(calls.begin(),calls.end(),"create:f0.tmp:49408")!=calls.end());
+
+  calls.clear(); sample_calls.clear();
+  open_short_table=false; cached_table_size=0xC100; live_table_size=0xC100;
+  reset_file_size_observations();
+  colortables_real(0);
+  assert(get_file_size_calls==0);
+  assert(table_open_sequence!=0 && size_query_sequence==0);
+
+  calls.clear(); sample_calls.clear();
+  open_short_table=true; cached_table_size=16; live_table_size=0xFFFFFFFFu;
+  reset_file_size_observations();
+  colortables_real(0);
+  assert(get_file_size_calls==1);
+  assert(std::find(calls.begin(),calls.end(),"create:f0.tmp:49408")==calls.end());
 
   // A failed output create loops back through the original shared filename
   // buffer, creates/truncates the same .tmp path as a 0x80-byte map, and then
@@ -328,6 +392,8 @@ def test_extracted_cpp_bodies_execute_under_native_behavior_controls():
              "g_FX.effect(previous_effect).stop()"),
             (tables, "cache_file.close(saved + 12)",
              "cache_file.close(saved + 8)"),
+            (tables, "GetFileSize(cache_file.get_handle(), 0)",
+             "cache_file.get_size()"),
             (tables, "values_view = cache_file.create(StringTemp, 0x80, 1);",
              "values_view = cache_file.create(StringTemp, 0x100, 1);"),
             (extract("void __cdecl load_faction_art(int faction_id)"),
