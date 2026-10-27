@@ -99,8 +99,8 @@ Purpose: The interface-mode entry point: put the battle up, or take it down.
 // councwin.cpp declares and forwards them, and the definitions are
 // external-linkage so this TU links against those.
 void BattleWin::on_status(int mode) {
-    Buffer &interface_buffer = static_cast<Buffer &>(MainInterfaceGlobal);
     if (mode != 0) {
+        Buffer &interface_buffer = static_cast<Buffer &>(MainInterfaceGlobal);
         interface_buffer.set_clip(
             0, 0, MainInterfaceGlobal.right_frame_rect().left,
             -interface_buffer.dib_.bmiHeader.biHeight);

@@ -671,7 +671,7 @@ void SpriteBox::on_left_click(int x, int y) {
     draw_item(Dialog::selected_position_);
     on_update();
     if (callback_result != 0) {
-        SendMessageA(HandleMain, WM_KEYDOWN, VK_RETURN, 0);
+        PostMessageA(HandleMain, WM_KEYDOWN, VK_RETURN, 0);
     }
 }
 

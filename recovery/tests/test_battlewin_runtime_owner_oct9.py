@@ -60,6 +60,8 @@ struct Button {
 };
 struct MainInterface : GraphicWin, SubInterface {
   Button flat_button_[8];
+  RECT right_frame_rect_;
+  const RECT &right_frame_rect() const { return right_frame_rect_; }
   void restore_back(int) { event(2); }
   void set_alert(int value) { event(value ? 8 : 50); }
   void set_date(int) { event(9); }
@@ -83,7 +85,6 @@ void slide_hide(GraphicWin *, int);
 
 HOST_CONTROL = r"""
 MainInterface MainInterfaceGlobal;
-RECT interface_screen_rect;
 void slide_show(GraphicWin *, int) { event(7); }
 void slide_hide(GraphicWin *, int) { event(51); }
 
@@ -108,7 +109,7 @@ int main() {
 
   // The shared canvas is MainInterface's real Buffer base at +0x444.
   reset_calls();
-  interface_screen_rect.left = 321;
+  MainInterfaceGlobal.right_frame_rect_.left = 321;
   MainInterfaceGlobal.dib_.bmiHeader.biHeight = -480;
   battle.on_status(1);
   const int show_events[] = {1, 2, 33, 34, 36, 37, 7, 8, 9, 10};
@@ -160,7 +161,7 @@ def test_actual_battlewin_runtime_owner_bodies(compiler, tmp_path):
     group = extract_method(source_text, "void BattleWin::on_iface_group_clicked(")
     translation_unit = (
         HOST_TYPES
-        + "\n#define InterfaceScreenRect (&interface_screen_rect)\n"
+        + "\n"
         + status
         + "\n"
         + group

@@ -655,12 +655,12 @@ RECT InfoPanelBounds;
 void InfoWin::configure_panel_bounds() {
     int panel_width;
     int panel_height;
-    if (WinScreenWidth < 1000) {
-        panel_width = 200;
-        panel_height = 180;
-    } else {
+    if (WinScreenWidth >= 1000) {
         panel_width = 250;
         panel_height = 212;
+    } else {
+        panel_width = 200;
+        panel_height = 180;
     }
     InfoPanelBounds.left = 0;
     InfoPanelBounds.right = panel_width;

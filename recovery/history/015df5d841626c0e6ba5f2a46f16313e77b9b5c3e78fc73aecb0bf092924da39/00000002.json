@@ -1,0 +1,23 @@
+{
+  "event_id": "3713bd4c0754e52dcdaeb4962ca95d4dc123a1c4db10e8fcda6595a4a2bde29c",
+  "payload": {
+    "author": "recovery-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Native fullbuild residual identifies InfoWin::init as the only changed outside program function. Independent physical review shows identical368-byte extent and21 relocations; only5 bytes differ in the inlined signed width branch and placement of the same200/180 and250/212 dimensions. All later stores and calls are identical; init source did not change. Expand the affected original closure explicitly and retain initial208/209FAIL report. No claim, source baseline, verification rule or original behavior is weakened."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4559520,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "3aad811c870c9d7ba24d39b715129f3e513fcf01c386160678a9ca0ea32f41fe",
+  "request_id": "coordinator-observed-inline-parent",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:easy-next-info-oct27kb"
+}

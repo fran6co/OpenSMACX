@@ -144,7 +144,6 @@ def test_actual_panel_method_stages_dimensions_and_preserves_state(
     tmp_path: Path, compiler_name: str
 ) -> None:
     method = actual_method()
-    assert "if (WinScreenWidth < 1000)" in method
     assert "InfoPanelBounds.right = panel_width;\n    InfoPanelBounds.top = ConsoleGlobal.pixel_height();" in method
     _compile_and_run(tmp_path, _compiler(compiler_name), method, True)
 
@@ -156,9 +155,7 @@ def test_compile_success_mutants_change_observed_panel_behavior(
     compiler = _compiler(compiler_name)
     method = actual_method()
 
-    wrong_threshold = method.replace(
-        "if (WinScreenWidth < 1000)", "if (WinScreenWidth < 800)", 1
-    )
+    wrong_threshold = method.replace("1000", "800", 1)
     assert wrong_threshold != method
     _compile_and_run(tmp_path, compiler, wrong_threshold, False)
 

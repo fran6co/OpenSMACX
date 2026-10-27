@@ -1,0 +1,19 @@
+{
+  "event_id": "6b8d429d11020fa20504ad42b1cd3c4c1f2ef797014a06e3de71b99c698cdd1b",
+  "payload": {
+    "author": "recovery-coordinator",
+    "editable_files": [
+      "recovery/tests/test_battlewin_runtime_owner_oct9.py"
+    ],
+    "evidence": [
+      "Independent review finds this existing actual-source control needs a fixture/API or mutation-anchor update to exercise current genuine C++ source. Preserve independent runtime assertions, thresholds, event and geometry controls; wrong mutations must still compile and fail at runtime. This does not waive the current mismatch or broaden product C++ editing scope."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "coordinator-current-actual-source-fixture",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:easy-next-battle-oct27kb"
+}
