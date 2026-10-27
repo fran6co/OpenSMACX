@@ -7,10 +7,13 @@ from pathlib import Path
 
 import pytest
 
-from match_recovery.application_binary import check_compiled, verify_task
+from match_recovery.application_binary import check_compiled, verify_records, verify_task
 from match_recovery.bound_objects import FunctionBinding, check_objects
 from match_recovery.model import Result
 from match_recovery.source_integrity import check_annotation_text
+from match_recovery.source import read_file
+from match_recovery.source.asm import compare_unit
+from match_recovery.source.model import Tier
 from match_recovery.tasks import Task, TaskStore
 from match_recovery.variants import _require_associated_unchanged, measure_variants
 from test_associated_binary import fixture
@@ -107,6 +110,165 @@ def test_native_task_checks_each_recipe_with_its_own_associated_evidence(tmp_pat
     assert len(row["variants"]) == 2
     assert all(trial["result"] == Result.PASS for trial in row["variants"])
     assert not report["ready_for_collection"]
+
+
+def test_native_record_verifier_accepts_only_current_records_and_explicit_trials(tmp_path):
+    root, _task, raw = project(tmp_path)
+    records = read_file(root / "code/unit.cc")
+    calls = []
+
+    def compile(source, arguments, flags):
+        calls.append((source.name, flags))
+        return raw
+
+    report = verify_records(root, records, root / "image.exe", flag_sets=(("first",), ("second",)),
+                            compiler=compile, command_for=lambda _path: ())
+    assert report["result"] == Result.PASS, report
+    assert calls == [("unit.cc", ("first",)), ("unit.cc", ("second",))]
+    assert report["task_id"] is None
+    assert report["functions"][0]["result"] == Result.PASS
+    stale = replace(records[0], symbol="_stale")
+    with pytest.raises(ValueError, match="current configured source annotation"):
+        verify_records(root, [stale], root / "image.exe", flag_sets=(("first",),), compiler=compile)
+
+
+@pytest.mark.parametrize("damage", ["guard", "table", "reference"])
+def test_native_record_verifier_does_not_promote_associated_damage(tmp_path, damage):
+    root, _task, raw = project(tmp_path)
+    records = read_file(root / "code/unit.cc")
+    if damage == "guard":
+        changed = bytearray(raw)
+        changed[60] ^= 1
+        candidate = bytes(changed)
+    elif damage == "table":
+        candidate = fixture(selector_byte=1)[0].raw_data
+    else:
+        candidate = fixture(cell_addend=1)[0].raw_data
+    report = verify_records(root, records, root / "image.exe", flag_sets=(("first",),),
+                            compiler=lambda *_: candidate, command_for=lambda _path: ())
+    assert report["result"] != Result.PASS, report
+    assert report["functions"][0]["result"] != Result.PASS
+
+
+def test_compare_unit_routes_associated_owners_strictly_and_requires_root_context(tmp_path):
+    root, _task, raw = project(tmp_path)
+    records = read_file(root / "code/unit.cc")
+    calls = []
+
+    def compile(source, arguments, flags):
+        calls.append((source, arguments, flags))
+        return raw
+
+    compare = compare_unit(records, root / "image.exe", root / "code/unit.cc", (),
+                           ("first",), compiler=compile,
+                           root=root, strict_command_for=lambda _path: ())
+    assert compare.results[0][1].verdict is Tier.BYTE_EXACT
+    assert compare.compile_attempts == 1 and compare.reused_attempts == 0
+    assert len(calls) == 1 and calls[0][2] == ("first",)
+
+    _, _, _, associated = context()
+    with pytest.raises(ValueError, match="root context is required"):
+        compare_unit(records, root / "image.exe", root / "code/unit.cc", (),
+                     (("first",),), compiler=lambda *_: raw,
+                     associated_bindings=associated)
+    with pytest.raises(ValueError, match="root context is required"):
+        compare_unit(records, root / "image.exe", root / "code/unit.cc", (),
+                     (("first",),), compiler=lambda *_: raw)
+
+
+def test_mixed_unit_reuses_associated_compile_for_ordinary_owner(tmp_path):
+    root, _task, raw = project(tmp_path)
+    binding, _objects, original, _associated = context()
+    image_bytes = bytearray(original.data)
+    body_size = binding.spans[0].end - binding.spans[0].start
+    second_rva = 0x1080
+    second_raw = 512 + second_rva - 0x1000
+    image_bytes[second_raw:second_raw + body_size] = image_bytes[512:512 + body_size]
+    image_path = root / "image.exe"
+    image_path.write_bytes(image_bytes)
+    pin = hashlib.sha256(image_bytes).hexdigest()
+    (root / "code/PIN").write_text("sha256 " + pin + "\n")
+    source = root / "code/unit.cc"
+    source.write_text(source.read_text()
+                      + "\n// ORIGINAL: 0x401080 _missing 0x401080-0x401096\n")
+    associated, ordinary = read_file(source)
+    calls = []
+
+    def compile(source, arguments, flags):
+        calls.append((source, arguments, flags))
+        return raw
+
+    compare = compare_unit((associated, ordinary), image_path,
+                           source, (), ("first",), compiler=compile,
+                           root=root, strict_command_for=lambda _path: ())
+    assert compare.results[0][1].verdict is Tier.BYTE_EXACT
+    assert isinstance(compare.results[1][1], str) and "_missing" in compare.results[1][1]
+    assert compare.compile_attempts == 1 and compare.reused_attempts == 1
+    assert len(calls) == 1 and calls[0][2] == ("first",)
+
+
+@pytest.mark.parametrize("overall", [Result.FAIL, Result.UNKNOWN])
+def test_associated_compare_requires_whole_native_selection_to_pass(tmp_path, monkeypatch, overall):
+    from match_recovery import application_binary
+
+    root, _task, raw = project(tmp_path)
+    records = read_file(root / "code/unit.cc")
+
+    def strict_pass_row(*_args, **_kwargs):
+        return {"result": overall,
+                "functions": [{"address": f"{records[0].address:08X}",
+                               "result": Result.PASS}]}
+
+    monkeypatch.setattr(application_binary, "verify_records", strict_pass_row)
+    compare = compare_unit(records, root / "image.exe", root / "code/unit.cc", (),
+                           (("first",),), compiler=lambda *_: raw,
+                           root=root, strict_command_for=lambda _path: ())
+    assert compare.results[0][1].verdict is (
+        Tier.MISMATCH if overall == Result.FAIL else Tier.REFUSED)
+
+
+def test_ordinary_rooted_comparison_does_not_scan_other_source_files(tmp_path):
+    root, _task, raw = project(tmp_path)
+    source = root / "code/unit.cc"
+    source.write_text(source.read_text().replace(comments(
+        tuple(replace(row, unit="code/unit.cc") for row in context()[3])), ""))
+    (root / "code/unrelated.cc").write_text(
+        "// RECOVERY_ASSOCIATED: malformed annotation in an unrelated unit\n")
+    records = read_file(source)
+    compare = compare_unit(records, root / "image.exe", source, (),
+                           (("first",),), compiler=lambda *_: raw, root=root)
+    assert compare.compile_attempts == 1
+
+
+def test_recording_unit_reuses_its_invocation_compiler_for_strict_associated_owner(tmp_path, monkeypatch):
+    from match_recovery import recording
+
+    root, _task, raw = project(tmp_path)
+    records = read_file(root / "code/unit.cc")
+    calls = []
+
+    def compile(source, arguments, flags):
+        calls.append((source.name, arguments, flags))
+        return raw
+
+    monkeypatch.setattr(recording, "Compiler", lambda *_args, **_kwargs: compile)
+    unit = recording._unit((root, "synthetic", root / "code/unit.cc", records,
+                            root / "image.exe", (), (("first",),), frozenset()))
+    assert unit.results[0][1].verdict is Tier.BYTE_EXACT
+    assert calls == [("unit.cc", (), ("first",))]
+
+
+def test_native_record_verifier_observes_changed_association_mapping(tmp_path):
+    root, _task, raw = project(tmp_path)
+    records = read_file(root / "code/unit.cc")
+    path = root / "code/unit.cc"
+    original = path.read_text()
+    assert "0x401018 0x40101C" in original
+    path.write_text(original.replace("0x401018 0x40101C", "0x401020 0x401024", 1))
+    report = verify_records(root, records, root / "image.exe", flag_sets=(("first",),),
+                            compiler=lambda *_: raw, command_for=lambda _path: ())
+    assert report["result"] != Result.PASS, report
+    assert report["functions"][0]["result"] != Result.PASS
 
 
 @pytest.mark.parametrize("damage", ["byte", "compile"])

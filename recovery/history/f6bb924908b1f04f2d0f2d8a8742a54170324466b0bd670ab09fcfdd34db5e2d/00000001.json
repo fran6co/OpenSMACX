@@ -1,0 +1,19 @@
+{
+  "event_id": "ad802f83687b090ccedd88a50bb73838a4d40fd21d3bd5be0af4590b363e4900",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "packages/match-recovery/src/match_recovery/local_variants.py"
+    ],
+    "evidence": [
+      "Explicit source-associated owners require fresh native source context; local body overlays must refuse instead of falling through legacy external-tail comparison. Preserve this necessary extra-file implementation for independent review."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "refuse-associated-variant-overlays",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:associated-recording-oct27jv"
+}

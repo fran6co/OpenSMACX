@@ -23,6 +23,7 @@ from pathlib import Path
 
 from capstone import CS_ARCH_X86, CS_MODE_32, CS_GRP_CALL, CS_GRP_JUMP, Cs, x86
 
+from ..model import Result
 from ..pe_coff import Coff, PeImage
 from .eh_regions import bind_eh_regions, eh_action_semantic_difference
 from .model import DecompilationState, Mode, Tier
@@ -1448,7 +1449,8 @@ class UnitComparison:
 def compare_unit(records, exe: Path | str, source: Path | str,
                  command: list[str], flags: tuple | str,
                  shared: frozenset = frozenset(), *, compiler,
-                 retry_compile=None, fragment_pairs=()) -> UnitComparison:
+                 retry_compile=None, fragment_pairs=(), root: Path | None = None,
+                 strict_command_for=None, associated_bindings=None) -> UnitComparison:
     """Measure one TU's selected mappings with one compile per flag trial.
 
     Use the same per-function selection, span refusals, missing-symbol retries
@@ -1506,6 +1508,86 @@ def compare_unit(records, exe: Path | str, source: Path | str,
 
     def key(record):
         return record.path.resolve(), record.address, record.line
+
+    # Associated code/data tails cannot use the legacy section-tail matcher:
+    # it may borrow unrelated bytes after the ordinary source function. Route
+    # only explicitly associated owners through the shared strict verifier.
+    associated_results = {}
+    marker = b"RECOVERY_ASSOCIATED:"
+    selected_source_has_associations = marker in inputs[next(iter(records)).path]
+    if root is None:
+        if selected_source_has_associations:
+            raise ValueError("root context is required to verify selected associated owners")
+        if associated_bindings is not None:
+            if any(binding.owner.address == record.address
+                   for binding in associated_bindings for record in records):
+                raise ValueError("root context is required to verify selected associated owners")
+    if root is not None and selected_source_has_associations:
+        from ..associated_source import parse_associated
+        from ..application_binary import verify_records
+        from ..source_inventory import image_pin
+        root = Path(root).resolve()
+        pin = image_pin(root)
+        from ..measurement import Measurement
+        settings = Measurement.read(root)
+        owner_path = next(iter(records)).path.resolve()
+        relative = owner_path.relative_to(root).as_posix()
+        current_associated = parse_associated(
+            inputs[next(iter(records)).path].decode("utf-8"), relative, pin,
+            address_space=settings.source.address_space)
+        if (associated_bindings is not None
+                and tuple(binding for binding in associated_bindings if binding.unit == relative)
+                != current_associated):
+            raise ValueError("associated bindings differ from current configured source")
+        associated_bindings = current_associated
+        relative_by_record = {
+            key(record): record.path.resolve().relative_to(root).as_posix()
+            for record in records
+        }
+        associated_keys = {
+            key(record) for record in records
+            if any(binding.owner.address == record.address
+                   and binding.owner.image_sha256 == pin
+                   and binding.unit == relative_by_record[key(record)]
+                   for binding in associated_bindings)
+        }
+        if associated_keys:
+            selected_associated = [record for record in records if key(record) in associated_keys]
+            if strict_command_for is None:
+                strict_command_for = lambda path: tuple(command) if Path(path).resolve() == source.resolve() else ()
+            strict_attempts = []
+            for attempt in attempts:
+                if isinstance(attempt, str):
+                    strict_attempts.append(tuple(shlex.split(attempt)))
+                elif (isinstance(attempt, (tuple, list))
+                      and all(isinstance(word, str) and "\0" not in word for word in attempt)):
+                    strict_attempts.append(tuple(attempt))
+                else:
+                    raise ValueError("compiler flag trial must be a string or an array of argument tokens")
+            strict = verify_records(
+                root, selected_associated, Path(exe), compiler=shared_compile,
+                command_for=strict_command_for,
+                flag_sets=tuple(strict_attempts),
+            )
+            for record in selected_associated:
+                row = next((candidate for candidate in strict.get("functions", [])
+                            if int(candidate.get("address", "0"), 16) == record.address), None)
+                result = row.get("result") if row else None
+                if result == Result.PASS and strict.get("result") == Result.PASS:
+                    observed = AsmComparison(verdict=Tier.BYTE_EXACT)
+                elif result == Result.FAIL or strict.get("result") == Result.FAIL:
+                    observed = AsmComparison(
+                        verdict=Tier.MISMATCH,
+                        diagnostic=(row.get("diagnostic") if row else
+                                    "strict associated owner or dependency check failed"),
+                    )
+                else:
+                    observed = AsmComparison(
+                        verdict=Tier.REFUSED,
+                        diagnostic=(row.get("diagnostic") if row else
+                                    "strict associated owner verification is unknown or refused"),
+                    )
+                associated_results[key(record)] = observed
 
     selected_by_key = {key(record): record for record in records}
     selected = set(selected_by_key)
@@ -1674,6 +1756,8 @@ def compare_unit(records, exe: Path | str, source: Path | str,
             result = pair_results.get(record_key, "fragment has no resolved same-TU parent support")
         elif record_key in parent_to_pair:
             result = pair_results[record_key]
+        elif record_key in associated_results:
+            result = associated_results[record_key]
         else:
             try:
                 result = compare_source(record, exe, source, command, attempts, shared,
