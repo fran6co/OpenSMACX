@@ -2820,11 +2820,38 @@ void SocialWin::init(int faction_id) {
         button->redraw();
     }
 
-    static_cast<BaseButton *>(&flatButtons_[27])->set_bubble_text(
-        StringTable.get(Labels.strings_ptr[0x4F4 / 4]));
+    // Initialize SocialWin flat buttons 27 and 28 from their separate labels.
+    {
+        StringTemp[0] = 0;
+        strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x4F4 / 4]));
+        CharUpperA(StringTemp);
+        FlatButton *button = &flatButtons_[27];
+        BaseButton *base_button = static_cast<BaseButton *>(button);
+        base_button->init(StringTemp, 0x1B,
+            tutRect12_.left, tutRect12_.top,
+            tutRect12_.right - tutRect12_.left,
+            tutRect12_.bottom - tutRect12_.top, this, 0);
+        base_button->hide();
+        static_cast<Buffer *>(button)->set_font(&font2_, 0, 0, 0);
+        base_button->redraw();
+        base_button->set_bubble_text(
+            StringTable.get(Labels.strings_ptr[0xD34 / 4]));
+    }
 
-    static_cast<BaseButton *>(&flatButtons_[28])->set_bubble_text(
-        StringTable.get(Labels.strings_ptr[0xD34 / 4]));
+    {
+        StringTemp[0] = 0;
+        strcat(StringTemp, StringTable.get(Labels.strings_ptr[0x194 / 4]));
+        CharUpperA(StringTemp);
+        FlatButton *button = &flatButtons_[28];
+        BaseButton *base_button = static_cast<BaseButton *>(button);
+        base_button->init(StringTemp, 0x1C,
+            tutRect13_.left, tutRect13_.top,
+            tutRect13_.right - tutRect13_.left,
+            tutRect13_.bottom - tutRect13_.top, this, 0);
+        base_button->hide();
+        static_cast<Buffer *>(button)->set_font(&font2_, 0, 0, 0);
+        base_button->redraw();
+    }
 
     {
         CheckButton *lock0 = &energyLockButtons_[0];
