@@ -76,7 +76,7 @@ def run_device(tmp_path, monkeypatch):
         ("// LIVE_DEVICE_BASE_DECLARATION", "src/sounddevice.h", "class SoundDeviceBase {", "class Midi_Device :"),
         ("// LIVE_GROUP_TYPES", "src/wave_device.h", "struct WaveGroupNode {", " /*\n  * Wave_Device class"),
         ("// LIVE_DEVICE_DECLARATION", "src/wave_device.h", "class Wave_Device : public SoundDeviceBase {", "// THE OBJECT, at 0x0090D978"),
-        ("// LIVE_BASE_CONSTRUCTOR", "src/sounddevice.cpp", "SoundDeviceBase::SoundDeviceBase() {", "/*\nPurpose: Enable the wrapped device"),
+        ("// LIVE_BASE_CONSTRUCTOR", "src/sounddevice.cpp", "SoundDeviceBase::SoundDeviceBase() {", "__DEFINITION__"),
         ("// LIVE_BASE_DESTRUCTOR", "src/sounddevice.h", "inline SoundDeviceBase::~SoundDeviceBase() {", "// SoundX ordinals 7..10 provide opaque MIDI and Wave-In provider callbacks;"),
         ("// LIVE_GROUP_CONSTRUCTOR", "src/sounddevice.cpp", "WaveControlGroup::WaveControlGroup() {", "WaveControlGroup::~WaveControlGroup()"),
         ("// LIVE_GROUP_DESTRUCTOR", "src/sounddevice.cpp", "WaveControlGroup::~WaveControlGroup() {", "Wave_Device::Wave_Device()"),

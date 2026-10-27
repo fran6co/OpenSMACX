@@ -48,6 +48,44 @@ int Wave_Device::select(unsigned long) { assert(false); return 0; }
 Wave_Device::~Wave_Device() {}
 void Wave_Device::unk_slot2() { assert(false); }
 
+// Trap-only definitions close the candidate's complete Wave_Device vtable
+// while this harness tests loader and lifecycle behavior. They are never
+// called here and do not claim production bodies or virtual-slot coverage.
+void Wave_Device::set_volume(unsigned int) { assert(false); }
+int Wave_Device::get_volume() { assert(false); return 0; }
+void Wave_Device::set_pan(int) { assert(false); }
+int Wave_Device::fade(uint32_t) { assert(false); return 0; }
+int Wave_Device::stop() { assert(false); return 0; }
+void Wave_Device::update_sound() { assert(false); }
+void Wave_Device::set_rate(unsigned int) { assert(false); }
+int Wave_Device::get_rate() { assert(false); return 0; }
+void Wave_Device::unknown_operation16(int) { assert(false); }
+int Wave_Device::unknown_query17() { assert(false); return 0; }
+void Wave_Device::suspend() { assert(false); }
+void Wave_Device::restart() { assert(false); }
+int Wave_Device::start_raw_dump(char *) { assert(false); return 0; }
+int Wave_Device::stop_raw_dump() { assert(false); return 0; }
+int Wave_Device::get_hw_mem_size() { assert(false); return 0; }
+void Wave_Device::unknown_operation23() { assert(false); }
+int Wave_Device::enable() { assert(false); return 0; }
+int Wave_Device::disable() { assert(false); return 0; }
+int Wave_Device::is_disabled() { assert(false); return 0; }
+int Wave_Device::set_hwnd(void *) { assert(false); return 0; }
+IDirectSound *Wave_Device::get_ds() { assert(false); return 0; }
+bool Wave_Device::is_eax() { assert(false); return false; }
+int Wave_Device::set_eax(unsigned long) { assert(false); return 0; }
+int Wave_Device::set_eax(EAX_REVERB_PROPERTIES *) { assert(false); return 0; }
+int Wave_Device::set_eax_mix(float) { assert(false); return 0; }
+bool Wave_Device::is_3d() { assert(false); return false; }
+int Wave_Device::set_listener_position(float, float, float) { assert(false); return 0; }
+int Wave_Device::get_listener_position(float *, float *, float *) { assert(false); return 0; }
+int Wave_Device::set_listener_xpos(float) { assert(false); return 0; }
+int Wave_Device::get_listener_xpos(float *) { assert(false); return 0; }
+int Wave_Device::set_listener_ypos(float) { assert(false); return 0; }
+int Wave_Device::get_listener_ypos(float *) { assert(false); return 0; }
+int Wave_Device::set_listener_zpos(float) { assert(false); return 0; }
+int Wave_Device::get_listener_zpos(float *) { assert(false); return 0; }
+
 struct WaveDeviceProbe : Wave_Device {
     void *provider() const { return device_14_; }
     void provider(void *value) { device_14_ = value; }

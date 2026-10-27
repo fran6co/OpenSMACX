@@ -830,32 +830,32 @@ Wave_In_Device::~Wave_In_Device() {
 
 // Constructor-proven no-op/zero virtual entries. Shared spans preserve the
 // original folded bodies without assigning AlphaMovie/StringStruct owners.
-// RECOVERY_SHARED: v1 0x00404280 0x00404281 ?unk_slot2@Midi_Device@@UAEXXZ 0x0066E190
+// RECOVERY_SHARED: v1 0x00404280 0x00404281 ?unk_slot2@Midi_Device@@UAEXXZ 0x004C5740
 void Midi_Device::unk_slot2() {}
-// RECOVERY_SHARED: v1 0x00404280 0x00404281 ?unk_slot2@Wave_In_Device@@UAEXXZ 0x0066E1F0
+// RECOVERY_SHARED: v1 0x00404280 0x00404281 ?unk_slot2@Wave_In_Device@@UAEXXZ 0x004C5940
 void Wave_In_Device::unk_slot2() {}
-// RECOVERY_SHARED: v1 0x00404270 0x00404273 ?unknown_operation16@Midi_Device@@UAEXH@Z 0x0066E190
+// RECOVERY_SHARED: v1 0x00404270 0x00404273 ?unknown_operation16@Midi_Device@@UAEXH@Z 0x004C5740
 void Midi_Device::unknown_operation16(int) {}
-// RECOVERY_SHARED: v1 0x00406B30 0x00406B33 ?unknown_query17@Midi_Device@@UAEHXZ 0x0066E190
+// RECOVERY_SHARED: v1 0x00406B30 0x00406B33 ?unknown_query17@Midi_Device@@UAEHXZ 0x004C5740
 int Midi_Device::unknown_query17() { return 0; }
-// RECOVERY_SHARED: v1 0x00404280 0x00404281 ?unknown_operation20@Midi_Device@@UAEXXZ 0x0066E190
+// RECOVERY_SHARED: v1 0x00404280 0x00404281 ?unknown_operation20@Midi_Device@@UAEXXZ 0x004C5740
 void Midi_Device::unknown_operation20() {}
 // Wave-In table slots 8-11 reuse the first four common control ABIs.
 // Their nominal names follow the matching Midi/Wave_Device slots; bodies are
 // the original folded no-op / zero-return implementations.
-// RECOVERY_SHARED: v1 0x00404270 0x00404273 ?set_volume@Wave_In_Device@@UAEXI@Z 0x0066E1F0
+// RECOVERY_SHARED: v1 0x00404270 0x00404273 ?set_volume@Wave_In_Device@@UAEXI@Z 0x004C5940
 void Wave_In_Device::set_volume(unsigned int) {}
-// RECOVERY_SHARED: v1 0x00406B30 0x00406B33 ?get_volume@Wave_In_Device@@UAEHXZ 0x0066E1F0
+// RECOVERY_SHARED: v1 0x00406B30 0x00406B33 ?get_volume@Wave_In_Device@@UAEHXZ 0x004C5940
 int Wave_In_Device::get_volume() { return 0; }
-// RECOVERY_SHARED: v1 0x00404270 0x00404273 ?set_pan@Wave_In_Device@@UAEXH@Z 0x0066E1F0
+// RECOVERY_SHARED: v1 0x00404270 0x00404273 ?set_pan@Wave_In_Device@@UAEXH@Z 0x004C5940
 void Wave_In_Device::set_pan(int) {}
-// RECOVERY_SHARED: v1 0x00404250 0x00404255 ?fade@Wave_In_Device@@UAEHI@Z 0x0066E1F0
+// RECOVERY_SHARED: v1 0x00404250 0x00404255 ?fade@Wave_In_Device@@UAEHI@Z 0x004C5940
 int Wave_In_Device::fade(unsigned int) { return 0; }
-// RECOVERY_SHARED: v1 0x00404270 0x00404273 ?unknown_operation16@Wave_In_Device@@UAEXH@Z 0x0066E1F0
+// RECOVERY_SHARED: v1 0x00404270 0x00404273 ?unknown_operation16@Wave_In_Device@@UAEXH@Z 0x004C5940
 void Wave_In_Device::unknown_operation16(int) {}
-// RECOVERY_SHARED: v1 0x00406B30 0x00406B33 ?unknown_query17@Wave_In_Device@@UAEHXZ 0x0066E1F0
+// RECOVERY_SHARED: v1 0x00406B30 0x00406B33 ?unknown_query17@Wave_In_Device@@UAEHXZ 0x004C5940
 int Wave_In_Device::unknown_query17() { return 0; }
-// RECOVERY_SHARED: v1 0x00404280 0x00404281 ?unknown_operation21@Wave_In_Device@@UAEXXZ 0x0066E1F0
+// RECOVERY_SHARED: v1 0x00404280 0x00404281 ?unknown_operation21@Wave_In_Device@@UAEXXZ 0x004C5940
 void Wave_In_Device::unknown_operation21() {}
 
 // HOMED from src/recovered/004c56d0.cpp, 004c5710.cpp, units/004c57f0.cpp
@@ -951,7 +951,7 @@ int Wave_In_Device::release() {
 }
 
 
-// ---- Source transferred from src/wave_device.cpp in this TU hypothesis ----
+// ---- Wave device and control-group implementations ----
 /*
  * OpenSMACX - an open source clone of Sid Meier's Alpha Centauri.
  * Copyright (C) 2013-2021 Brendan Casey
@@ -2443,12 +2443,12 @@ Wave_Device::~Wave_Device() {
 
 // ABI-only operations occupying constructor-proven Wave_Device slots 16/17 and 23.
 // Their aliases are code-folded targets; the provisional names are not original debug names.
-// RECOVERY_SHARED: v1 0x00404270 0x00404273 ?unknown_operation16@Wave_Device@@UAEXH@Z 0x0066E0E8
+// RECOVERY_SHARED: v1 0x00404270 0x00404273 ?unknown_operation16@Wave_Device@@UAEXH@Z 0x004C4DD0
 void Wave_Device::unknown_operation16(int) {}
-// RECOVERY_SHARED: v1 0x00406B30 0x00406B33 ?unknown_query17@Wave_Device@@UAEHXZ 0x0066E0E8
+// RECOVERY_SHARED: v1 0x00406B30 0x00406B33 ?unknown_query17@Wave_Device@@UAEHXZ 0x004C4DD0
 int Wave_Device::unknown_query17() { return 0; }
-// RECOVERY_SHARED: v1 0x00404280 0x00404281 ?unknown_operation23@Wave_Device@@UAEXXZ 0x0066E0E8
+// RECOVERY_SHARED: v1 0x00404280 0x00404281 ?unknown_operation23@Wave_Device@@UAEXXZ 0x004C4DD0
 void Wave_Device::unknown_operation23() {}
 
-// RECOVERY_SHARED: v1 0x00404280 0x00404281 ?unk_slot2@Wave_Device@@UAEXXZ 0x0066E0E8
+// RECOVERY_SHARED: v1 0x00404280 0x00404281 ?unk_slot2@Wave_Device@@UAEXXZ 0x004C4DD0
 void Wave_Device::unk_slot2() {}

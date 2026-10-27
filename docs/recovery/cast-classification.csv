@@ -238,9 +238,9 @@ src/wave.cpp,1263,0x004C6C20,,NO_COMPILE,this,0x58,uint8_t **,vtable-slot,,,,,,p
 src/wave.cpp,1426,0x004C69B0,,NO_COMPILE,this,0x70,uint8_t **,vtable-slot,,,,,,proved,"indexes the vtable, not the object; the offset is a slot"
 src/wave.cpp,1432,0x004C69B0,,NO_COMPILE,this,0x7c,uint8_t **,vtable-slot,,,,,,proved,"indexes the vtable, not the object; the offset is a slot"
 src/wave.cpp,1448,0x004C69B0,,NO_COMPILE,this,0x48,uint8_t **,vtable-slot,,,,,,proved,"indexes the vtable, not the object; the offset is a slot"
-src/wave_device.cpp,531,0x004C5000,Wave_Device,NO_COMPILE,this,0x28,uint8_t *,inside-declared-member,groups_,0x24,384,0x24,,derived,
-src/wave_device.cpp,1478,0x004C4F40,,NO_COMPILE,this,0x0,uint8_t **,vtable-load,,,,,,proved,loads the vtable pointer at offset 0; the original installs its own vtables by hand
-src/wave_device.cpp,1487,0x004C4F40,,NO_COMPILE,this,0x4,uint8_t **,vtable-slot,,,,,,proved,"indexes the vtable, not the object; the offset is a slot"
+git:5f3c0d59da6a6a4aa5ec3dd60005b692288f0624:src/wave_device.cpp,531,0x004C5000,Wave_Device,NO_COMPILE,this,0x28,uint8_t *,inside-declared-member,groups_,0x24,384,0x24,,derived,
+git:5f3c0d59da6a6a4aa5ec3dd60005b692288f0624:src/wave_device.cpp,1478,0x004C4F40,,NO_COMPILE,this,0x0,uint8_t **,vtable-load,,,,,,proved,loads the vtable pointer at offset 0; the original installs its own vtables by hand
+git:5f3c0d59da6a6a4aa5ec3dd60005b692288f0624:src/wave_device.cpp,1487,0x004C4F40,,NO_COMPILE,this,0x4,uint8_t **,vtable-slot,,,,,,proved,"indexes the vtable, not the object; the offset is a slot"
 src/win.cpp,47,0x005EB3D0,Win,NO_COMPILE,this,,volatile uint32_t *,whole-object-cast,,,,,,proved,"reinterprets the whole object, no displacement - a base or sub-object view, not a member access"
 src/win.cpp,58,0x005EB3D0,Win,NO_COMPILE,this,,uintptr_t,whole-object-cast,,,,,,proved,"reinterprets the whole object, no displacement - a base or sub-object view, not a member access"
 src/win.cpp,563,0x005F2CA0,Win,NO_COMPILE,this,,uintptr_t,whole-object-cast,,,,,,proved,"reinterprets the whole object, no displacement - a base or sub-object view, not a member access"

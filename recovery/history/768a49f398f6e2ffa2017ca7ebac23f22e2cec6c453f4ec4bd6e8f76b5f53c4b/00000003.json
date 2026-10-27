@@ -1,0 +1,19 @@
+{
+  "event_id": "783083323f534dbce2992b7db1751a45d5ced72b5e7e0797601ee16774456e8f",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/wave_device_exports_harness.cpp"
+    ],
+    "evidence": [
+      "The real complete42-slot virtual interface needs link definitions for unused concrete entries even in the bounded lifecycle harness. Explicit test-only assert(false) traps close these unused references and fail if exercised; all production-extracted lifecycle bodies and callback/failure/ordering assertions remain unchanged. This is not product implementation/coverage or a native table proof."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "dc5cb7c4b8b7560aebdf26a7b068f9c115078c87c76d307b7e7c504f79a4f6ac",
+  "request_id": "audio-lifecycle-harness-virtual-traps-oct27hu",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:audio-interface-owner-oct27hr"
+}
