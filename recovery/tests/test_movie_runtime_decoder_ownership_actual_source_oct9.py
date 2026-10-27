@@ -379,7 +379,10 @@ def test_actual_caller_case_one_two_dispatch_passes_typed_runtime_and_buffers(
 typedef unsigned int DWORD;
 struct MediaPixelFormat { DWORD total_component_bits; };
 struct MediaDescriptor { MediaPixelFormat pixel_format; };
-struct MediaRuntime { DWORD selected_record_kind_39c; };
+struct MediaRuntime {
+  MediaDescriptor *descriptor;
+  DWORD selected_record_kind_39c;
+};
 static int calls[8], call_count;
 static MediaRuntime *seen_runtime;
 static BYTE *seen_packet, *seen_surface;
@@ -389,27 +392,28 @@ static void sub_5d4020(MediaRuntime *r, BYTE *d, BYTE *u, int pitch) {
   calls[call_count++]=3; seen_runtime=r; seen_surface=d; assert(u == seen_packet+8); assert(pitch == 64);
 }
 static void sub_5d3980(MediaRuntime *r, BYTE *p) { calls[call_count++]=4; seen_runtime=r; seen_packet=p; }
-static void dispatch_actual(MediaRuntime *runtime, MediaDescriptor &d,
-                            BYTE *pixel_payload, BYTE *surface_source,
+static void dispatch_actual(MediaRuntime *runtime, BYTE *pixel_payload,
+                            BYTE *surface_source,
                             DWORD output_pitch) {
   BYTE *unused_output=pixel_payload+8;
 ''' + dispatch + r'''
 }
 int main() {
   MediaRuntime runtime = {}; MediaDescriptor d = {};
+  runtime.descriptor = &d;
   BYTE packet[16] = {}, surface[128] = {};
   runtime.selected_record_kind_39c = 1;
   d.pixel_format.total_component_bits = 16;
-  dispatch_actual(&runtime, d, packet, surface, 64);
+  dispatch_actual(&runtime, packet, surface, 64);
   assert(call_count == 3 && calls[0] == 1 && calls[1] == 2 && calls[2] == 3);
   assert(seen_runtime == &runtime && seen_packet == packet && seen_surface == surface);
   call_count = 0; runtime.selected_record_kind_39c = 1;
   d.pixel_format.total_component_bits = 8;
   seen_packet=packet;
-  dispatch_actual(&runtime, d, packet, surface, 64);
+  dispatch_actual(&runtime, packet, surface, 64);
   assert(call_count == 2 && calls[0] == 1 && calls[1] == 3);
   call_count = 0; runtime.selected_record_kind_39c = 2;
-  dispatch_actual(&runtime, d, packet, surface, 64);
+  dispatch_actual(&runtime, packet, surface, 64);
   assert(call_count == 2 && calls[0] == 4 && calls[1] == 3);
   assert(seen_runtime == &runtime && seen_packet == packet && seen_surface == surface);
 }
