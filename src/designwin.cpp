@@ -2754,7 +2754,7 @@ void DesignWin::select_special_2() {
 Purpose: Close the design window: dismiss all 25 palette buttons, release the
          spot list, stop the clock, release the buffer, reset the prototype
          selection, and close the three fonts.
-// ORIGINAL: 0x0043C1A0 ?close@DesignWin@@QAEXXZ 0x0043C1A0-0x0043C261
+// ORIGINAL: 0x0043C1A0 ?close@DesignWin@@QAEXXZ 0x0043C1A0-0x0043C261 BYTE_EXACT
 // size      193 bytes
 // prototype void (__thiscall ?close@DesignWin@@QAEXXZ)(DesignWin* this)
 // callers   6   call targets   4

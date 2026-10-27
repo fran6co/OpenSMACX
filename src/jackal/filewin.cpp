@@ -138,17 +138,19 @@ have_name:
     return 0;
 }
 
-// ORIGINAL: 0x00614B90 ?on_button_clicked@FileWin@@QAEXH@Z 0x00614B90-0x00614C40
+// ORIGINAL: 0x00614B90 ?on_button_clicked@FileWin@@QAEXH@Z 0x00614B90-0x00614C40 BYTE_EXACT
 // Historical seed evidence: a nested -2/-1/3 decision, with the -1 arm
 // rewinding the modal WinNodeList before UNK4. Compiler branch ordering in
 // the old standalone scaffold was inconclusive and is not a structural rule.
 void FileWin::on_button_clicked(int button_id) {
-    if (button_id == -2) {
-        field_638_ = 0x12C;
-        modal_window_->release_modal();
-        return;
-    }
-    if (button_id == -1) {
+    if (button_id != -2) {
+        if (button_id != -1) {
+            if (button_id == 3) {
+                SetCurrentDirectoryA("..");
+                populate_directory(".");
+            }
+            return;
+        }
         if (WinPendingFocus == static_cast<Win *>(&edit_box_)) {
             WinNodeList &focus = modal_window_->list_;
             if (focus.head_ != 0) {
@@ -167,10 +169,8 @@ void FileWin::on_button_clicked(int button_id) {
         UNK4();
         return;
     }
-    if (button_id == 3) {
-        SetCurrentDirectoryA("..");
-        populate_directory(".");
-    }
+    field_638_ = 0x12C;
+    modal_window_->release_modal();
 }
 
 // Confirmation builds the full selected path and its basename in FileWin

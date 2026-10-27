@@ -26,6 +26,7 @@ def definition(text: str, signature: str) -> str:
 
 def actual_methods(source: str) -> str:
     signatures = (
+        "void Spot::shutdown()",
         "Spot::Spot()",
         "void Spot::init(int count)",
         "void Spot::replace(",
