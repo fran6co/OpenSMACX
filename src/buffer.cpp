@@ -4665,9 +4665,10 @@ Purpose: Draw one framed panel: four corner sprites, four tiled edge strips
          and a tiled centre, every element optionally masked through the
          params' pattern buffer.
 // ORIGINAL: 0x005E2DD3 ?box_sprite@Buffer@@QAEHPAURECT@@PAUBoxSpriteParams@@@Z 0x005E2DD3-0x005E3188
-// symbol    ?box_sprite@Buffer@@QAEHPAUtagRECT@@PAUBoxSpriteParams@@@Z
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned 0x5E2DD3..0x5E3188 guards skip to the same epilogue without setting EAX; the final tile call also naturally leaves incidental EAX for a void operation.", "The stripped original has no COFF symbols or debug directory; the QAEH catalog spelling does not prove int. The retained generated Kuna header declares void.", "All 380 mapped direct call sites across 127 callers, including both successors of 12 conditional barriers, show no EAX result reads before clobber or call. Indirect/unmapped caller completeness and the original nominal type remain unknown.", "The genuine BoxSpriteParams and Buffer owners retain their fields, every corner/edge/mask operation and original spans."], "reason": "Model the panel drawer as a void operation: its original guard/no-mask paths establish no defined result, and no covered original direct caller consumes its EAX. Preserve all drawing and unchecked parameter behavior; the historical int-decorated identity is an analysis hypothesis, not an original PE symbol."}
+// symbol    ?box_sprite@Buffer@@QAEXPAUtagRECT@@PAUBoxSpriteParams@@@Z
 // size      949 bytes
-// prototype int (__thiscall ?box_sprite@Buffer@@QAEHPAURECT@@PAUBoxSpriteParams@@@Z)(Buffer* this, RECT*, BoxSpriteParams*)
+// Historical analysis type hypothesis: int (__thiscall ?box_sprite@Buffer@@QAEHPAURECT@@PAUBoxSpriteParams@@@Z)(Buffer* this, RECT*, BoxSpriteParams*)
 // callers   127   call targets   4
 // kind      game
 // flags     hidden;sp_ready;purged_ok
@@ -4682,6 +4683,8 @@ Purpose: Draw one framed panel: four corner sprites, four tiled edge strips
 //        expression keeps it in a register. That one change was worth 24
 //        agreeing instructions and the whole frame shape (409 -> 406, which
 //        is the image's own count).
+// Historical int-return experiment below; retained as seed history only.
+// The current void binding above supersedes its return-type inference.
 // LEVER: the whole body sits inside one `if (rect != 0 && params != 0)`
 //        rather than returning early from two guards. A `return 0` guard
 //        makes VC6 emit a second epilogue with `xor eax,eax`; the image has
@@ -4702,7 +4705,7 @@ Purpose: Draw one framed panel: four corner sprites, four tiled edge strips
 Status: SHAPE_EXACT 402/406 - the instruction count matches at 406, and the
         four that disagree are the corner1/corner2 spill-slot choice above.
 */
-int Buffer::box_sprite(RECT *rect, BoxSpriteParams *params) {
+void Buffer::box_sprite(RECT *rect, BoxSpriteParams *params) {
     if (rect != 0 && params != 0) {
         int x;
         int y;
@@ -4835,8 +4838,7 @@ int Buffer::box_sprite(RECT *rect, BoxSpriteParams *params) {
 
         // The centre, tiled from the mask buffer itself and inset by all four
         // edges. The image re-tests mask_ here rather than reusing the last
-        // edge's test, and its return value is this tile's: the guards at the
-        // top leave eax alone, so this is the only `return` the body needs.
+        // edge's test. Its EAX residue does not establish a return contract.
         if (params->mask_ != 0) {
             int cx = rect->left;
             int cy = rect->top;
@@ -4856,7 +4858,7 @@ int Buffer::box_sprite(RECT *rect, BoxSpriteParams *params) {
             if (params->edge1_ != 0) {
                 h -= params->edge1_->iHeight_;
             }
-            return tile(params->mask_, cx, cy, cx, cy, w, h);
+            tile(params->mask_, cx, cy, cx, cy, w, h);
         }
     }
 }

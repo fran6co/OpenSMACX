@@ -1,0 +1,92 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "106ef42916daecf8d7890e6e19a1c057f6dcff6a",
+  "editable_files": [
+    "src/win.h",
+    "src/graphicwin.h",
+    "packages/match-recovery/src/match_recovery/shared_source.py",
+    "packages/match-recovery/tests/test_shared_symbol_writer.py"
+  ],
+  "evidence": [
+    "Native alias validation checked3492physical definitions/93vtable relocations across197hash-qualified objects. Preserve body text, original identities and existing claims. Two mixed frame/frameless pointer-return variants remain excluded. Full linked selection remains unproved.",
+    ".opensmacx/recovery/win-default-inline-oct27il/revalidation-106ef429.json",
+    ".opensmacx/recovery/win-generated-bindings-oct27in/boundary-and-package-proposal.json",
+    "Win primary66FDD0..66FF30 positively bounded by constructor member table; GraphicWin Buffer66FC48..66FC50 bounded by primary view start; GraphicWin primary66FC50 start-only. No emitted-size extent inference. Add only pure native shared-marker formatter needed for typed source publication, preserving existing writer safety; no CLI, compiler or provider changes."
+  ],
+  "intent": "Bind existing genuine Win/GraphicWin inline callback bodies and constructor-selected tables to original source evidence without adding implementations or linker aliases.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4211232,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4211264,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4211280,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4211296,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4211312,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4211328,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4211360,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4220992,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4221728,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6114544,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6206416,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6749256,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6749264,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6749648,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "win-default-bindings-oct27it"
+}

@@ -1,0 +1,19 @@
+{
+  "event_id": "132966f374dad18ab52829796a18859904280bd20ec9cb0699824033e19c1278",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_buffer_box_sprite_return_oct27.py"
+    ],
+    "evidence": [
+      "Original directcaller/valueflow audit found no resultconsumer in380mapped sites, including twelvebranchbarriers. Nativevoidbody remains402/406 with no lostpasses. Addactualbody drawing/guard controls and reject missingreturn int mutant; fullheaderconsumer build/link and claims/source/reference checks required."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "box-return-actual-source-control-oct27iu",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:buffer-box-return-oct27iu"
+}

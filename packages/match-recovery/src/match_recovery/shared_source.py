@@ -95,6 +95,23 @@ def read_shared(root: Path, pin: str, *, contents=None):
     return tuple(bindings)
 
 
+def _validate_shared_symbol(symbol: str) -> None:
+    if (not isinstance(symbol, str) or not symbol or not symbol.isascii()
+            or any(c.isspace() or ord(c) < 32 or ord(c) == 127 for c in symbol)
+            or any(token in symbol for token in ("/*", "*/", "//", "\\", "??/"))):
+        raise ValueError("shared symbol must be one annotation-safe ASCII token")
+
+
+def format_shared(binding: SharedFunctionBinding) -> str:
+    """Format one shared-body marker without publishing or changing its source."""
+    if not isinstance(binding, SharedFunctionBinding):
+        raise TypeError("shared formatter requires a SharedFunctionBinding")
+    _validate_shared_symbol(binding.symbol)
+    return (f"{PREFIX} v1 0x{binding.origin.address:08X} "
+            f"0x{binding.span.end:08X} {binding.symbol} "
+            f"0x{binding.evidence.address:08X}")
+
+
 def write_shared_symbol(raw: bytes, *, expected, binding: SharedFunctionBinding,
                         symbol: str) -> bytes:
     """Rename one emitted shared view, preserving original identity/evidence.
@@ -108,10 +125,7 @@ def write_shared_symbol(raw: bytes, *, expected, binding: SharedFunctionBinding,
 
     if not isinstance(raw, bytes):
         raise ValueError("shared symbol rewriting requires source bytes")
-    if (not isinstance(symbol, str) or not symbol or not symbol.isascii()
-            or any(c.isspace() or ord(c) < 32 or ord(c) == 127 for c in symbol)
-            or any(token in symbol for token in ("/*", "*/", "//", "\\", "??/"))):
-        raise ValueError("shared symbol must be one annotation-safe ASCII token")
+    _validate_shared_symbol(symbol)
     text = raw.decode("utf-8")
     if raw.startswith(b"\xef\xbb\xbf") or re.search(r"[\v\f\x1c-\x1e\x85\u2028\u2029]", text):
         raise ValueError("unsupported shared source encoding or separator")
