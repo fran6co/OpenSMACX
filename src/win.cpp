@@ -1658,9 +1658,10 @@ void Win::on_size_nc(unsigned int, int, int) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x005F6A40 ?on_sys_command@Win@@QAEHIHH@Z 0x005F6A40-0x005F6A43 BYTE_EXACT
-// symbol    ?on_sys_command@Win@@UAEHIHH@Z
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned Win table cell 0x66FF28 selects 0x5F6A40, whose full body is RET 12 without setting EAX.", "Original window_proc 0x5F0650..0x5F0E27 never calls this slot; no mapped direct callers or current derived overrides establish a result consumer. Indirect/unmapped caller completeness and original nominal type remain unknown.", "The PE is stripped. The retained generated Kuna header declares void but omits arguments; it corroborates the no-result model without proving its original source declaration."], "reason": "Model this empty virtual default as a no-result operation rather than falling off an unsupported int API. Preserve original slot 86 and twelve-byte argument cleanup; the historical decorated identity remains a type hypothesis, not original symbol evidence."}
+// symbol    ?on_sys_command@Win@@UAEXIHH@Z
 // size      3 bytes
-// prototype int (__thiscall ?on_sys_command@Win@@QAEHIHH@Z)(Win* this, unsigned int, int, int)
+// Historical analysis type hypothesis: int (__thiscall ?on_sys_command@Win@@QAEHIHH@Z)(Win* this, unsigned int, int, int)
 // callers   0   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
@@ -1668,14 +1669,8 @@ Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 Return Value: n/a
 Status: Complete
 */
-#pragma warning(push)
-#pragma warning(disable : 4716)
-// The mangled name says `int`; the original is `ret 0xc` at 0x005F6A40
-// and never sets EAX. `return 0;` would emit `xor eax, eax` and add two
-// bytes, so falling off the end IS the behaviour.
-int Win::on_sys_command(unsigned int, int, int) {
+void Win::on_sys_command(unsigned int, int, int) {
 }
-#pragma warning(pop)
 
 
 // The active palette lives at a fixed address; the same seam basebutton.cpp

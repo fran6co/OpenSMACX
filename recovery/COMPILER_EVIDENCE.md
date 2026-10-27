@@ -8,6 +8,16 @@ policy is in `WORKFLOW.md`; no spelling trick overrides that policy.
 
 ## Structural questions first
 
+- Catalogue return decorations need provenance too. The stripped executable's
+  `Buffer::box_sprite` entry leaves incidental EAX on guard and no-mask paths;
+  no result use was observed across 380 mapped direct call sites. A void model
+  emits the same code as the former int form without a missing-return defect.
+  Win's slot-86 default at 0x005F6A40 is only `ret 12`, and its catalogued int
+  decoration likewise does not establish a result contract. Preserve original
+  identities and claims, verify emitted symbols, slots and callers, and retain
+  nominal-type/indirect-call uncertainty. Neither instruction equality nor
+  an analysis database's guessed prototype recovers an original declaration.
+
 - Imported disassembler names and `library` flags are not dependency or class
   identities. Tiny bodies can collide with library signatures: the IDA9 export
   calls `0x004042B0` an `Iostream_init` constructor, while the original table

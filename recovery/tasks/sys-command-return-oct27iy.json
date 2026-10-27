@@ -1,0 +1,26 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "206ca413a9ac4fbba3c10ab805939e17081591b4",
+  "editable_files": [
+    "src/win.cpp",
+    "src/win.h",
+    "docs/DECOMP_MAP.md",
+    "recovery/COMPILER_EVIDENCE.md"
+  ],
+  "evidence": [
+    "Original Win table cell66FF28(slot86) selects5F6A40, exactly RET12 with no EAX definition. The stripped original has no COFF/debug symbols; catalogueQAEH is a type hypothesis, not original provenance.",
+    "Read-only original window_proc5F0650..5F0E27 and current source contain no direct or slot86 call; no derived source overrides. GeneratedKuna header also saysvoid but omits arguments, so it is corroboration only. Nominal original return type and indirect callers remain uncertain.",
+    "One private native void candidate preserving actual compiled body, all mapped identities/claims, slot position and cleanup. Recheck all header consumers at full application build/link; do not insert return0 or weaken exact/restoration obligations."
+  ],
+  "intent": "Recover the no-result Win system-command default with ordinary void C++, retaining its original virtual slot and historical exact claim.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6253120,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "sys-command-return-oct27iy"
+}
