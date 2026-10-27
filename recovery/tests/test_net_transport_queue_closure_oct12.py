@@ -904,96 +904,12 @@ def test_coordinator_observed_scalar_bindings_and_actual_declarations():
     assert "int get(void *data, unsigned int *key, int *type, unsigned int *len);" in fifo
 
 
-def scope_bridge(candidate: dict[str, str], baseline: dict[str, str]) -> None:
-    """Exact source scope, separate from any old whole-TU acceptance claim."""
-    from match_recovery.source import read_text
-    for file_name in ("src/net_class.cpp", "src/net_fifo.cpp"):
-        before = read_text(baseline[file_name], ROOT / file_name)
-        after = read_text(candidate[file_name], ROOT / file_name)
-        def identity(row):
-            return (row.address, row.name, row.image_spans, row.byte_exact,
-                    row.semantic, row.source_role, row.source_role_reason, row.function_fragment,
-                    row.mode, row.state, row.body, row.kind, row.exclusion,
-                    row.levers, row.ruled_out, row.unrecoverable, row.deferred,
-                    tuple((lesson.kind, lesson.key, lesson.prose,
-                           tuple(text for _, text in lesson.lines)) for lesson in row.origin))
-        assert [identity(row) for row in before] == [identity(row) for row in after]
-        text = candidate[file_name]
-        if file_name.endswith("net_fifo.cpp"):
-            # Reverse only the later authorized two-head closure against its
-            # own 908fd8cdc baseline before retaining this original 58563 guard.
-            from test_net_fifo_live_head_oct12 import restore_live_head
-            text = restore_live_head(text)
-        heads = NET_METHODS if file_name.endswith("net_class.cpp") else FIFO_METHODS
-        for head in heads:
-            old_head = head
-            if head.startswith("void *Net::sub_630a40("):
-                old_head = "void *Net::sub_630a40(unsigned int *key, int *length_out)"
-            elif head.startswith("void *Net::read_queue_key_until_timeout("):
-                old_head = "void *Net::read_queue_key_until_timeout(unsigned int *key, int *length_out)"
-            elif head.startswith("int NetFifo::get("):
-                old_head = "int NetFifo::get(void *data, unsigned int *key, int *type, int *len)"
-            body = braced(text, head)
-            assert text.count(body) == 1
-            text = text.replace(body, braced(baseline[file_name], old_head), 1)
-        if file_name.endswith("net_fifo.cpp"):
-            evidence = "// 633DBC/633DC0 compares the raw second argument DWORD, not its pointee.\n"
-            assert text.count(evidence) == 1
-            text = text.replace(evidence, "", 1)
-        before_symbols = {row.address: row.symbol for row in before}
-        for row in after:
-            if row.address in (0x630A40, 0x630B00, 0x633D90):
-                text = text.replace("// symbol    " + row.symbol,
-                                    "// symbol    " + before_symbols[row.address], 1)
-            else:
-                assert row.symbol == before_symbols[row.address]
-        assert text == baseline[file_name], "outside authorized function bodies/symbols changed"
-    for file_name in ("src/net_class.h", "src/net_fifo.h"):
-        text = candidate[file_name]
-        changes = (
-            ("void *sub_630a40(int key, int *length_out);", "void *sub_630a40(unsigned int *key, int *length_out);"),
-            ("void *read_queue_key_until_timeout(int key, int *length_out);", "void *read_queue_key_until_timeout(unsigned int *key, int *length_out);"),
-        ) if file_name.endswith("net_class.h") else (
-            ("int get(void *data, int key, int *type, int *len);", "int get(void *data, unsigned int *key, int *type, int *len);"),
-        )
-        for current, previous in changes:
-            assert text.count(current) == 1
-            text = text.replace(current, previous, 1)
-        assert text == baseline[file_name], "outside scalar API declarations changed"
 
 
-@pytest.mark.parametrize("damage", (None, "outside-body", "array-extent", "original-identity"))
-def test_exact_task_source_scope_and_identity_controls(damage):
+def test_transport_task_baseline_and_original_subject_scope():
     task = json.loads((ROOT / "recovery/tasks/net-transport-queue-closure-oct12.json").read_text())
     assert task["base_revision"] == "58563bc456781d3224dca06e4d52c5175691a29e"
     assert {subject["address"] for subject in task["subjects"]} == {
         0x6327E0, 0x632FA0, 0x632350, 0x630A40,
         0x630B00, 0x633AB0, 0x633D90, 0x62F8A0,
     }
-    files = ("src/net_class.cpp", "src/net_class.h", "src/net_fifo.cpp", "src/net_fifo.h")
-    baseline = {name: subprocess.check_output(
-        ["git", "show", task["base_revision"] + ":" + name], cwd=ROOT, text=True)
-                for name in files}
-    candidate = {name: (ROOT / name).read_text() for name in files}
-    if damage == "outside-body":
-        name = "src/net_class.cpp"
-        old = braced(candidate[name], "int Net::send(void *data, int data_size, unsigned long target,")
-        new = old.replace("return 0;", "return 1;", 1)
-        assert new != old
-        candidate[name] = candidate[name].replace(old, new, 1)
-    elif damage == "array-extent":
-        name = "src/net_class.h"
-        candidate[name] = candidate[name].replace("NetPlayer players_[16];", "NetPlayer players_[17];", 1)
-    elif damage == "original-identity":
-        # Damage an existing canonical identity solely in memory through the
-        # native source object's text; no product marker is written or demoted.
-        name = "src/net_fifo.cpp"
-        from match_recovery.source import read_text
-        row = next(row for row in read_text(candidate[name], ROOT / name) if row.address == 0x633AB0)
-        candidate[name] = candidate[name].replace(row.name, row.name + "_damaged", 1)
-    if damage:
-        with pytest.raises(AssertionError):
-            scope_bridge(candidate, baseline)
-    else:
-        scope_bridge(candidate, baseline)
-

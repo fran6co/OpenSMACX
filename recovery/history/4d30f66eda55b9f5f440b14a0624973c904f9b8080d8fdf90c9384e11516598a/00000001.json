@@ -1,0 +1,26 @@
+{
+  "event_id": "574743aa169d502892681657db91da82b6b19fd9e9809f3e5e76d67ffc3fbc2f",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/voice.cpp"
+    ],
+    "evidence": [
+      "Fullnativegeneratedaudit610physicalrows hasoneFAIL: VoiceRxsourceend66E8C0excludesits38thslot. IndependentlypinnedRxCtorHIGHLOWstore66E82C,38HIGHLOWdwords,lastslot66E8C0->4C9390, andTxCtorHIGHLOWstore66E8C4 establishcorrecthalfopen[66E82C,66E8C4).",
+      "CppSound33slots+5VoiceRxextensions and152bytecurrentCofftable corroborate, notdefineoriginalboundary. Correctoneannotationendpointonly; preserveallC++code/Originalidentities/claims andunprovedweakfallbackcontent. ThisdoesnotwaiveaGatefailure: itcorrectstheproveninputbound."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5015904,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "pinned-voicerx-full-table-extent",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:generated-next-oct27ge"
+}
