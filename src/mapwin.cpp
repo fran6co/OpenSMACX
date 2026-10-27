@@ -857,12 +857,14 @@ void MapWin::close() {
 // Shutdown closes only populated secondary windows, then the separately
 // constructed farm window, whose owned buffer is released by MapWin::close.
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x004710E0 ?mapwin_system_shutdown@@YAXXZ 0x004710E0-0x0047115F
+// ORIGINAL: 0x004710E0 ?mapwin_system_shutdown@@YAXXZ 0x004710E0-0x0047115F BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/004710e0.cpp retains the original loop over MapWinTable at 0x007D3C3C..0x007D3C5C and the final receiver at 0x007D4060", "src/mapwin.cpp binds those receivers as MapWinTable and FarmMapWindow; MapWin::close releases owned_ before GraphicWin::close"], "reason": "Replace the executable forwarder with typed shutdown of active secondary map windows and the independent farm window; preserve the seed for restoration measurement."}
 void __cdecl mapwin_system_shutdown() {
-    for (size_t slot = 1; slot < MapWinTableSlots; ++slot) {
+    for (size_t slot = 0; slot < MapWinTableSlots; ++slot) {
         MapWin *window = MapWinTable[slot];
-        if (window != nullptr && window->view_active_ != 0) {
+        if (window == nullptr) continue;
+        if (slot == 0) continue;
+        if (window->view_active_ != 0) {
             window->close();
         }
     }
