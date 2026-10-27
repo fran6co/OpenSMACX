@@ -644,7 +644,8 @@ BOOL __cdecl text_open(LPCSTR src_id, LPCSTR section_id) {
 // ---------------------------------------------------------------------------
 
 /*
-// ORIGINAL: 0x00608C00 ??1Text@@QAE@XZ 0x00608C00-0x00608C05 BYTE_EXACT
+// ORIGINAL: 0x00608C00 ??1Text@@QAE@XZ 0x00608C00-0x00608C05 FILE BYTE_EXACT
+// compile_context src/stringlist.cpp
 // body      src/text.h
 // size      5 bytes
 // prototype void (__thiscall ??1Text@@QAE@XZ)(_Text* this)
@@ -652,5 +653,5 @@ BOOL __cdecl text_open(LPCSTR src_id, LPCSTR section_id) {
 // kind      thunk
 // flags     hidden;thunk;sp_ready;purged_ok
 // calls     (none)
-// notes     Staged hybrid export redirect calls the source-owned destructor
+// notes     Natural inline destruction delegates to Text::shutdown; compile_context records the current emitting owner.
 */

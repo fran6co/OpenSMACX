@@ -1,0 +1,22 @@
+{
+  "event_id": "631b09d96c46fbd343d07a2b919b95c2e57c10895649edcfbaa8663e9a3ef19c",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_text_generated_lifetime_oct11.py",
+      "recovery/tests/test_text_load_link_contracts_oct12.py"
+    ],
+    "evidence": [
+      "Native6production-unit probe215mappedcontrols restores608C00withzerolocalexactloss; onlyremainingphysicalprovider stringlist.cpp, fromrealTextlocal/EHcleanup, exactlyJMPText::shutdown. Artificialalphatextandothers copiesdropwithoutforcedexport.",
+      "Coordinator authorizesnativewriterFILE+bodyheader/currentcompile_context StringList oncanonicaltext.cppmapping, preservingidentity/span/historicalclaim. Thisiscurrentprovider evidence nothistoricalTUproof.",
+      "Adaptonlyfixturelocators/source-history assumptions that dependedonMEASURED oroldphysicalproducer; preserve actualText shutdown/load/parse order, TxtCRTroot/atexit exactclaims and focused body/reference checks. No flag/nothrow/body changes."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "natural-emission-source-and-test-review",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:text-producer-oct27gd"
+}

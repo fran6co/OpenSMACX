@@ -1,4 +1,4 @@
-// RECOVERY_GENERATED: v1 vtable 0x66e82c 0x66e8c0 ??_7VoiceRx@@6B@ 0x4c8960
+// RECOVERY_GENERATED: v1 vtable 0x66e82c 0x66e8c4 ??_7VoiceRx@@6B@ 0x4c8960
 // RECOVERY_GENERATED: v1 vtable 0x66e8c4 0x66e95c ??_7VoiceTx@@6B@ 0x4c8cc0
 // Slot2 is compiler weak _E with library-search mode2 and physical _G fallback;
 // that observation does not establish final linked table selection.

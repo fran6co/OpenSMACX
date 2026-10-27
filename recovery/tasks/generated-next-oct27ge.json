@@ -1,0 +1,45 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "2d1b33d5fc9ee8baafd1a318901eb2a314c669e8",
+  "editable_files": [
+    "src/ambience.cpp",
+    "src/buffer.cpp",
+    "src/win.cpp"
+  ],
+  "evidence": [
+    "IndependentpinnedHIGHLOW constructorstoresandcurrentCoffzero-addendrelocations bind5table starts. MAmbience/GAmbience90slotextents independentlyboundedbyadjacent constructorviews; other3endsstayunknown.",
+    "CppbytesandOriginalmarkeridentity/span/claims preserved; metadataonly. BuffersecondslotandWinNodeListtrailingwords remainunresolved. Do notinferalias/linkerretention fromsamebodies.",
+    "Native tabledefinition/content and strictfunctionreference checks mustretainunknownweakfallback/missingextent. FinalcombinedC++candidatebuild beforemanualintegration; no wholeimage/runtime proof."
+  ],
+  "intent": "Bind next original constructor-owned generated tables while preserving unknown extent and contents.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4485904,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4488080,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4487248,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6124048,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6206416,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "generated-next-oct27ge"
+}

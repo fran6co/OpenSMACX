@@ -1,0 +1,20 @@
+{
+  "event_id": "32643c8af7353884fb6b0c23fe8eadb6b1d2ddd78081b782a26b90b2af866755",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_net_transport_queue_closure_oct12.py"
+    ],
+    "evidence": [
+      "Sharedfixture rerun74pass/1fail. FailureisoldOct12wholefile restoration comparinglaterlegitimateServiceStructnativeclaimandadditionalNetfunctionsagainstimmutablehistoricaltaskbaseline; thisdoesnotdescribecurrentTexttransaction. No productnetCppfiles changedbyTextwork.",
+      "Retire completed-task wholeTU source-restoration gate andprivate-only helperchain; retainitsimmutable baseline+8subjects authorizationcheck, allactualtransport behavior/damage controls,pinnedbodies, scalarAPI/ABI sourcechecks. Package native gates/claimcontinuity/preservation refusal remainunchanged; no acceptance waiver or taskbaseline reset."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "caa0344fe5517d177fb87c2790cb27ceae4653e85c56b37a3e81a9a619aacee5",
+  "request_id": "retire-completed-task-wholefile-snapshot-gate",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:text-producer-oct27gd"
+}

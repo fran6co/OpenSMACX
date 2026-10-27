@@ -273,7 +273,6 @@ class Heap {public:void *get(size_t size) {return mem_get(size);}};
 @STRINGS@
 #undef static_assert
 Heap *StringAllocationHeap=0;
-StringAllocationBase::~StringAllocationBase() {}
 @STRING_HELPER@
 @STRING_BASE_HOOKS@
 @STRING_CTOR@
@@ -608,7 +607,9 @@ def actual_source(instrument=True):
             r'char file_name_\[80\]', r'char file_path_\[256\]', r'LPSTR current_pos_',
             r'FILE \*text_file_', r'LPSTR buffer_get_', r'LPSTR buffer_item_')),
         "TEXT_CTOR": ctor,
-        "TEXT_DTOR": body(th, "MEASURED ~Text() OPENSMACX_NOEXCEPT_FALSE"),
+        # Locate the actual natural inline destructor regardless of the old
+        # MEASURED export spelling; the body and shutdown call stay under test.
+        "TEXT_DTOR": body(th, "~Text() OPENSMACX_NOEXCEPT_FALSE"),
         "TEXT_APIS": '\n'.join(one(th, p) for p in (
             r'^  (BOOL open\([^\n]+;)', r'^  (LPSTR get\(\);)',
             r'^  (void close\(\);)', r'^  (void shutdown\(\);)')),

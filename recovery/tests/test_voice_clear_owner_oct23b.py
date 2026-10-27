@@ -175,8 +175,6 @@ def _source_with_actual_bodies():
         ("// LIVE_CLEAR_BODY", "src/net_class.cpp", "void JackalVoiceRx::clear() {", "__DEFINITION__"),
         ("// LIVE_ALLOCATION_BASE", "src/stringstruct.h", "class StringAllocationBase {",
          "// REAL VIRTUAL INHERITANCE, like StringStructPayload"),
-        ("// LIVE_OWNER_PUBLICATION", "src/stringstruct.cpp", "StringAllocationBase::~StringAllocationBase() {",
-         "// ORIGINAL: 0x00401000 ??0StringStruct@@QAE@H@Z"),
         ("// LIVE_VOICE_RX_ALLOCATION", "src/net_class.h", "class VoiceRxAllocation :",
          "static_assert(sizeof(VoiceRxAllocation)"),
         ("// LIVE_RECEIVER_DECLARATIONS", "src/net_class.h", "struct VoiceReceiverEntry :",

@@ -62,7 +62,7 @@ class Text {
   // 0x005FD460 - the atexit thunk the compiler pairs with `??__ETxt` - runs
   // the destructor INLINE, doing the fclose and the frees itself with no
   // `call ??1Text@@QAE@XZ` anywhere in it.
-  MEASURED ~Text() OPENSMACX_NOEXCEPT_FALSE { shutdown(); }   // 00608C00
+  ~Text() OPENSMACX_NOEXCEPT_FALSE { shutdown(); }   // 00608C00
 
   int init(size_t size);
   void shutdown();
