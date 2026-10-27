@@ -1,0 +1,22 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "d3790339ca69114206a26758b9095163cea60b01",
+  "editable_files": [
+    "src/mapwin.cpp"
+  ],
+  "evidence": [
+    "Source semantics/callback/order preserved; proposal .opensmacx/recovery/easy-structure-oct27gj/mapwin/proposal/src/mapwin.cpp SHA256 5eb584b56aa3e62953efa8853cda79fca4077356331950747ec8fb98a5cf1b10",
+    "Advisorylocalvariant only, no sourcepublication or claimgrant; cap3 candidates per unchanged context."
+  ],
+  "intent": "Bounded first-attempt ordinaryC++ source-form screen with independent replica/damagecontrols.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4657376,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "mapwin-shutdown-easy-oct27gl"
+}
