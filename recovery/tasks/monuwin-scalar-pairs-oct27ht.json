@@ -1,0 +1,89 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "5f3c0d59da6a6a4aa5ec3dd60005b692288f0624",
+  "editable_files": [
+    "src/monuwin.h",
+    "src/monuwin.cpp"
+  ],
+  "evidence": [
+    "Pinned independent calls/EH states show FlatButtons+A58/+15A4, Buffers+20FC/+2684, final Sprites+3614/+3640 are separate members; the five larger Sprite arrays use real iterator helpers. Existing pairs wrongly use array helpers and9EHstates instead of12 constructor states. No blanket all-array rewriting.",
+    "/home/fran6co/code/OpenSMACX/.opensmacx/recovery/easy-structure-oct27gj/monuwin-member-shape-audit.json",
+    "Scope includes receipt-proven header consumer mappings as preservation controls. Only owner/header source edits authorized; tests/other callers need explicit coordinator expansion. Preserve every Original mapping/claim/history, no bug fixes or byte-regression demotions."
+  ],
+  "intent": "Restore three separately constructed MonuWin member pairs while preserving the five real Sprite arrays, original behavior, layout and claims.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4661760,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4661792,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4661808,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4667104,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4679520,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4679552,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4679760,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4680112,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4680192,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4680272,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4684560,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4684928,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4685264,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4685312,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "monuwin-scalar-pairs-oct27ht"
+}
