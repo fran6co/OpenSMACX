@@ -47,13 +47,23 @@ def actual_source():
     headers = "\n".join((ROOT / ("src/" + name + ".h")).read_text()
                         for name in ("sprite", "buffer", "newtechwin", "win", "game"))
     objects = "\n".join((ROOT / ("src/" + name + ".cpp")).read_text()
-                        for name in ("sprite", "buffer", "newtechwin"))
+                        for name in ("sprite_objects", "sprite", "buffer", "newtechwin"))
     definitions = []
     for name in SPRITES:
         definition, = re.findall(r"^Sprite " + name + r"(?:\[\d+\])?;", objects, re.M)
         definitions.append(definition)
     for name in ("g_PCX_PARSE_TEMP_BUFFER1", "g_IFACE_BOX_SPRITE_BUFFERS", "g_IFACE_STD_POPUPS_MIDDLE_BUFFER"):
         definition, = re.findall(r"^Buffer " + name + r"(?:\[\d+\])?;", objects, re.M)
+        definitions.append(definition)
+    newtech_header = (ROOT / "src/newtechwin.h").read_text()
+    owner_types = "\n".join(
+        braced(newtech_header, signature) + ";"
+        for signature in ("struct NewTechSpriteArray {",
+                          "union NewTechSpriteStorage {",
+                          "struct NewTechSpriteLifetime {"))
+    for declaration in ("uint8_t NewTechSpritesCleanupGuard;",
+                        "NewTechSpriteLifetime NewTechSpritesOwner;"):
+        definition, = re.findall(r"^" + re.escape(declaration), objects, re.M)
         definitions.append(definition)
     colour, = re.findall(r"^const unsigned char WinFillColour = \d+;", (ROOT / "src/win.cpp").read_text(), re.M)
     definitions.append(colour)
@@ -79,6 +89,7 @@ def actual_source():
     return {
         "INTERFACES": "struct Sprite {" + extract + "};\nstruct Buffer {" + "\n".join(methods) + "};",
         "PARAMS": braced(bh, "struct BoxSpriteParams {") + ";",
+        "OWNER_TYPES": "extern uint8_t NewTechSpritesCleanupGuard;\n" + owner_types,
         "PUBLIC_DECLARATIONS": "\n".join(externs + [style_extern, loader_declaration]),
         "OBJECTS": "\n".join(definitions),
         "STYLES": style,
@@ -94,11 +105,16 @@ HARNESS = r'''
 #include <vector>
 #include <map>
 #include <utility>
+#include <cstdint>
+#include <new>
+using std::uint8_t;
+using std::uint32_t;
 #define __cdecl
 #define MEASURED
 struct Palette;struct TexHeap;struct ExtDirectDraw;struct Buffer;
 INTERFACES
 PARAMS
+OWNER_TYPES
 PUBLIC_DECLARATIONS
 OBJECTS
 STYLES
@@ -161,7 +177,7 @@ void prepare(){
     for(int n=0;n<2;++n)identities[&g_IFACE_LOCK_SPRITES[n]]={1,n};
     identities[&g_IFACE_GREEN_RIGHT_ARROW_SPRITE[0]]={2,0};
     for(int n=0;n<3;++n){identities[&g_IFACE_MP_COMBO_ARROW_SPRITES[n]]={3,n};identities[&g_IFACE_TECH_TREE_ARROW_SPRITES[n]]={4,n};}
-    for(int n=0;n<6;++n)identities[&g_NEWTECHWIN_SPRITES[n]]={5,n};
+    for(int n=0;n<6;++n)identities[&NewTechSpritesOwner.at(n)]={5,n};
     for(int n=0;n<8;++n)identities[popups[n]]={6,n};
     expected_event('L',{10,236});
     expected_event('E',{1,0,247,71,15,19,WinFillColour});expected_event('E',{1,1,263,71,15,19,WinFillColour});

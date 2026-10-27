@@ -440,8 +440,8 @@ class Win : public AutoSound {
   void set_vert_paging(int paging);
   void set_horz_paging(int paging);
 
-  // ?on_sys_command@Win@@QAEHIHH@Z returns H. The body is empty either way
-  // - VC6 emits the same `ret 0xc` - so only the decorated name moves.
+  // The system-command default models no result. Its historical int-decorated
+  // catalogue identity is not original symbol evidence; see the source binding.
 
   // Three base handlers the derived windows reach with a direct `call rel32`,
   // never through a vtable slot - PullDown::hide, DiploPop::hide,
@@ -831,7 +831,7 @@ class Win : public AutoSound {
   virtual void on_r_button_down(long flags, int x, int y, unsigned int keys, int dbl);  // slot 83  0x005F6710
   virtual void on_r_button_up(int x, int y, unsigned int keys, int dbl);  // slot 84  0x005F6880
   virtual int on_set_cursor(void *cursor, unsigned int hit, unsigned int msg);  // slot 85  0x005F6A30
-  virtual int on_sys_command(unsigned int command, int x, int y);  // slot 86  0x005F6A40
+  virtual void on_sys_command(unsigned int command, int x, int y);  // slot 86  0x005F6A40
   virtual long on_activate(unsigned int state, void *other, long minimized);  // slot 87  0x005F5C00
 
  public:

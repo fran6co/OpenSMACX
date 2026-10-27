@@ -2525,6 +2525,7 @@ extern "C" void __fastcall sub_5cd750(MediaRuntime *runtime,
 }
 
 // ORIGINAL: 0x005CD8D0 sub_5cd8d0 0x005CD8D0-0x005CD97B
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned 0x5cd8d0 reloads runtime descriptor after each block helper before the width bound and after each row before the height bound; runtime +0x40 is reread for every block.", "The destination flows to packed byte/pixel writers without a disjointness contract. Output can therefore replace the runtime descriptor pointer or format option; no in-tree deliberate alias is asserted.", "Preserve the original helper branches, unchecked accesses, predictor/input initialization, sixteen-pixel steps and this format's distinct block/row byte strides."], "reason": "Retain live descriptor bounds and per-block format selection across caller-owned pixel output, matching the original sibling decoder loop rather than freezing the owner."}
 // TRIED: the given `__stdcall(int,int,int)` head - disasm reads edx with no prior init (a real 2nd register param) and `push ecx` at entry is pure stack reservation, not `this` preservation; rewrote as `__fastcall(int*,int,int,int,uint)` matching Ghidra's 5-param read, with differently-named cdecl externs for the two nullary-scaffolded callees. MISMATCH #4 push/mov, prologue register shape only.
 // symbol    @sub_5cd8d0@20
 // kind      game
@@ -2534,7 +2535,6 @@ extern "C" void __fastcall sub_5cd8d0(MediaRuntime *runtime,
   // The second fastcall argument arrives in EDX and is retained in +5F8.
   // The unused fourth logical argument remains present for the native stack
   // cleanup and is deliberately not repurposed.
-  MediaDescriptor &descriptor = *runtime->descriptor;
   runtime->decoder_context_3f8.predictor_500 = 0;
   runtime->decoder_context_3f8.predictor_4fc = 0;
   runtime->decoder_context_3f8.predictor_4f8 = 0;
@@ -2544,10 +2544,10 @@ extern "C" void __fastcall sub_5cd8d0(MediaRuntime *runtime,
   DWORD block_y = 0;
   DWORD row_step = (pitch >> 1) << 5;
   BYTE *row_destination = destination;
-  while (block_y < descriptor.output_height_60) {
+  while (block_y < runtime->descriptor->output_height_60) {
     DWORD block_x = 0;
     BYTE *block_destination = row_destination;
-    while (block_x < descriptor.output_width_64) {
+    while (block_x < runtime->descriptor->output_width_64) {
       if (runtime->record_option_040 != 0) {
         sub_5d1466(block_destination, (int)pitch,
                    &runtime->decoder_context_3f8);
@@ -2564,12 +2564,12 @@ extern "C" void __fastcall sub_5cd8d0(MediaRuntime *runtime,
 }
 
 // ORIGINAL: 0x005CD980 sub_5cd980 0x005CD980-0x005CDA2C
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned 0x5cd980 reloads runtime descriptor after each block helper before the width bound and after each row before the height bound; runtime +0x40 is reread for every block.", "The destination flows to packed byte/pixel writers without a disjointness contract. Output can therefore replace the runtime descriptor pointer or format option; no in-tree deliberate alias is asserted.", "Preserve the original helper branches, unchecked accesses, predictor/input initialization, sixteen-pixel steps and this format's distinct block/row byte strides."], "reason": "Retain live descriptor bounds and per-block format selection across caller-owned pixel output, matching the original sibling decoder loop rather than freezing the owner."}
 // symbol    @sub_5cd980@20
 // kind      game
 extern "C" void __fastcall sub_5cd980(MediaRuntime *runtime,
                                       BYTE *compressed, BYTE *destination,
                                       BYTE *unused, unsigned int pitch) {
-  MediaDescriptor &descriptor = *runtime->descriptor;
   runtime->decoder_context_3f8.predictor_500 = 0;
   runtime->decoder_context_3f8.predictor_4fc = 0;
   runtime->decoder_context_3f8.predictor_4f8 = 0;
@@ -2579,10 +2579,10 @@ extern "C" void __fastcall sub_5cd980(MediaRuntime *runtime,
   DWORD block_y = 0;
   DWORD row_step = (pitch >> 2) << 6;
   BYTE *row_destination = destination;
-  while (block_y < descriptor.output_height_60) {
+  while (block_y < runtime->descriptor->output_height_60) {
     DWORD block_x = 0;
     BYTE *block_destination = row_destination;
-    while (block_x < descriptor.output_width_64) {
+    while (block_x < runtime->descriptor->output_width_64) {
       if (runtime->record_option_040 != 0) {
         sub_5d1654(block_destination, (int)pitch,
                    &runtime->decoder_context_3f8);
@@ -2599,13 +2599,13 @@ extern "C" void __fastcall sub_5cd980(MediaRuntime *runtime,
 }
 
 // ORIGINAL: 0x005CDA30 sub_5cda30 0x005CDA30-0x005CDAC4
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned 0x5CDA30 reloads runtime descriptor after each 0x5D1278 call before the width test and after the inner loop before the height test.", "The packed-output helper 0x5D2536 writes through the supplied byte destination using memcpy. The flags 0x800 path in 0x5CC940 takes caller-owned provided_output_base_4c without a no-alias contract, so output can alter descriptor storage or the runtime descriptor pointer.", "No in-tree caller is shown deliberately creating that alias; preserve its defined source effects without asserting that normal playback exercises it. Context initialization, pitch/block increments and unchecked dereferences remain unchanged."], "reason": "Retain live descriptor bounds around each pixel-block decode instead of caching a descriptor reference across output stores. This preserves the original permitted alias effects and unchecked loop behavior."}
 // TRIED: nothing forced the `push ecx`-as-spill-slot / `pop ecx` prologue trick the original uses for one local; plain locals compile 6 bytes shorter (142 vs 148), diverging early
 // symbol    @sub_5cda30@20
 // kind      game
 extern "C" void __fastcall sub_5cda30(MediaRuntime *runtime,
                                       BYTE *compressed, BYTE *destination,
                                       BYTE *unused, unsigned int pitch) {
-  MediaDescriptor &descriptor = *runtime->descriptor;
   runtime->decoder_context_3f8.compressed_input_200 = compressed;
   runtime->decoder_context_3f8.bit_position_204 = 0;
   runtime->decoder_context_3f8.predictor_500 = 0;
@@ -2615,10 +2615,10 @@ extern "C" void __fastcall sub_5cda30(MediaRuntime *runtime,
   DWORD block_y = 0;
   DWORD row_step = (pitch >> 1) << 5;
   BYTE *row_destination = destination;
-  while (block_y < descriptor.output_height_60) {
+  while (block_y < runtime->descriptor->output_height_60) {
     DWORD block_x = 0;
     BYTE *block_destination = row_destination;
-    while (block_x < descriptor.output_width_64) {
+    while (block_x < runtime->descriptor->output_width_64) {
       sub_5d1278(block_destination, (int)pitch,
                  &runtime->decoder_context_3f8);
       block_x += 0x10;

@@ -13,6 +13,15 @@ or a requirement to persist every reproducible observation. C++ declarations own
 the current source structure; explicit binding rationale preserves non-derivable
 evidence beside the original mapping.
 
+A catalogue's decorated C++ name is a retained analysis identity, not automatic
+proof of an original declaration. The pinned executable is stripped; establish
+symbol provenance separately through an actual export, matching debug artifact,
+or verified dependency. For example, a catalogued `H` return decoration does not
+prove `int`, and EAX left by a final call does not prove a returned value.
+Inspect caller use, table relationships and complete control paths. Keep the
+historical identity intact, record a corrected current emitted symbol through
+the native writer, and state remaining nominal-type uncertainty in the binding.
+
 Reader/writer: `match_recovery.source`, installed with `match-recovery`.
 Portable tests: `uv run pytest packages/match-recovery/tests`; whole-source and
 build controls: `uv run pytest recovery/tests`. `recover check` owns the configured

@@ -1,0 +1,30 @@
+{
+  "event_id": "135bef9d64dbb838b12980c849ee8cfebfead5132f929e5cdf9724891240a467",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Raw pinned5CD8D0 and5CD980 have the same post-block and post-row descriptor reloads; they reread runtime+40 option every block. Their packed-output descendants accept caller destinations without disjointness constraints.",
+      "Correct all three sibling block loops together. Preserve20/40 blockbyte strides and distinct(pitch>>1)<<5 /(pitch>>2)<<6 rowstrides, liveoptionbranches, contextinitialization, allclaims andcallerclosure.",
+      ".opensmacx/recovery/net-long-name-oct27iq/finished-movie-block-descriptor-oct27ir-cache/wrapper-alias-family-review.json"
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6084816,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6084992,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "sibling-live-bounds-oct27iz",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:movie-live-descriptor-oct27iz"
+}
