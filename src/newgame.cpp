@@ -1594,9 +1594,9 @@ void __cdecl crash_landing(int faction_id) {
     const float initial_x = static_cast<float>(screen_width - 0x15f);
     const float initial_y = static_cast<float>(screen_height - 0x197);
     const float target_x = static_cast<float>(
-        static_cast<int>(map_window.field_1DDB4_) / 2 + tile_pixel_x - 0xa8);
+        map_window.tile_pixel_width_ / 2 + tile_pixel_x - 0xa8);
     const float target_y = static_cast<float>(
-        static_cast<int>(map_window.field_1DDB8_) / 2 + tile_pixel_y - 0xc0);
+        map_window.tile_pixel_height_ / 2 + tile_pixel_y - 0xc0);
     const float x_start = fungus ? 0.0f : initial_x;
     const float x_step = (target_x - x_start) * (1.0f / 30.0f);
     const float y_step = (target_y - initial_y) * (1.0f / 30.0f);

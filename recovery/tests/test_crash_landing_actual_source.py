@@ -74,9 +74,9 @@ struct GraphicWin : Buffer {
 };
 struct MapWin : GraphicWin {
   unsigned int field_1DD70_;
-  unsigned int field_1DDB4_;
-  unsigned int field_1DDB8_;
-  MapWin() : field_1DD70_(~0u), field_1DDB4_(640), field_1DDB8_(480) {}
+  int tile_pixel_width_;
+  int tile_pixel_height_;
+  MapWin() : field_1DD70_(~0u), tile_pixel_width_(640), tile_pixel_height_(480) {}
   void set_center(int, int, int) {}
   void draw_map(int) { ++g_map_draw; }
   void tile_to_pixel(int x, int y, int *px, int *py) { *px=x*4; *py=y*4; }
@@ -107,6 +107,14 @@ struct Base { short x, y; unsigned char faction_id_current; char name_string[25]
 struct Veh { short x, y; unsigned char faction_id; };
 struct Player { char filename[24]; int rule_flags; };
 struct Console { int faction_id_; int update_data(int) { return 1; } };
+struct CrashFields {
+  int base_current_count_;
+  int vehicle_current_count_;
+  int turn_current_num_;
+  int game_preferences_;
+};
+struct CrashGameData { CrashFields fields_; };
+static CrashGameData GameDataStateStorage;
 struct Char256 { char str[256]; };
 static Base Bases[32];
 static Veh Vehs[32];
@@ -118,8 +126,8 @@ static Console ConsoleGlobal;
 static Wave g_CRASH_LANDING_WAVE;
 static char StringTemp[1032];
 static char PopupStartCaption[256];
-static int BaseCurrentCount, VehCurrentCount, TurnCurrentNum;
-static int IsMultiplayerNet, GamePreferences;
+static int BaseCurrentCount, VehCurrentCount;
+static int IsMultiplayerNet;
 static int SpriteScaleNumerator, SpriteScaleDenominator;
 static int ConsoleNoMapOverrideLatch;
 static void do_all_draws() { ++g_draw_all; }
@@ -153,12 +161,15 @@ int main(int argc, char **argv) {
   std::strcpy(ParseStrBuffer[0].str, "NEW NAME");
   BaseCurrentCount = 0;
   VehCurrentCount = 1;
+  GameDataStateStorage.fields_.base_current_count_ = BaseCurrentCount;
+  GameDataStateStorage.fields_.vehicle_current_count_ = VehCurrentCount;
   Vehs[0].faction_id = 7;
   Vehs[0].x = 12;
   Vehs[0].y = 9;
   crash_landing(7);
   if (fungboy) {
-    if (TurnCurrentNum != 5 || g_decodes != 0 || g_draw_all != 0) return 31;
+    if (GameDataStateStorage.fields_.turn_current_num_ != 5 ||
+        g_decodes != 0 || g_draw_all != 0) return 31;
     if (g_map_draw != 1 || g_flush != 2 || g_smoke_draw != 0) return 32;
     if (g_popup_destructors != 1 || g_flic_destructors != 2) return 33;
     return 0;
@@ -189,6 +200,7 @@ int main(int argc, char **argv) {
 
   g_draw = 0;
   BaseCurrentCount = 1;
+  GameDataStateStorage.fields_.base_current_count_ = BaseCurrentCount;
   Bases[0].faction_id_current = 8;
   Bases[0].x = 4;
   Bases[0].y = 5;
@@ -200,6 +212,7 @@ int main(int argc, char **argv) {
   if (std::strcmp(Bases[0].name_string, "NEW NAME") != 0) return 8;
   const int map_draws_before_no_match = g_map_draw;
   VehCurrentCount = 0;
+  GameDataStateStorage.fields_.vehicle_current_count_ = VehCurrentCount;
   crash_landing(9);
   if (g_map_draw != map_draws_before_no_match || g_popup_destructors != 3) return 15;
   if (g_flic_destructors != 6 || g_explicit_flic_close != 0) return 16;

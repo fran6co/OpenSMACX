@@ -129,7 +129,8 @@ struct MapWin : Buffer {
     int field_1DDA4_ = 0, field_1DDA8_ = 0;
     int field_1DDD4_ = 0, field_1DDD8_ = 0;
     int field_1DDCC_ = 100, field_1DDD0_ = 100;
-    uint32_t field_1DDB4_ = 12, field_1DDB8_ = 12, field_1DDC0_ = 2;
+    int tile_pixel_width_ = 12, tile_pixel_height_ = 12;
+    uint32_t field_1DDC0_ = 2;
     int zoom_offset_ = 7;
     int tile_to_pixel(int x, int y, int *px, int *py) {
         event("tile", {view_id,x,y}); *px=x*6; *py=y*6+2;

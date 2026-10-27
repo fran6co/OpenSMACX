@@ -1,0 +1,69 @@
+{
+  "author": "coordinator",
+  "base_revision": "128d94f4557a6675de6aa7e5ee1557542878085a",
+  "editable_files": [
+    "src/mapwin.h",
+    "src/mapwin.cpp",
+    "src/newgame.cpp",
+    "src/veh.cpp",
+    "recovery/tests/test_artillery_action.py",
+    "recovery/tests/test_crash_landing_actual_source.py",
+    "recovery/tests/test_mapwin_geometry_actual_source.py",
+    "recovery/tests/test_mapwin_mouse_feedback.py",
+    "recovery/tests/test_mapwin_routes.py",
+    "recovery/tests/test_vehicle_scoot.py"
+  ],
+  "evidence": [
+    "Pinned pixel_to_tile463040 performs three signed IDIV operations; actual qualified current mapwin.cpp emits unsigned DIV because fields1DDB4/1DDB8 are declared uint32_t. calculate_dimensions462980 produces width8*T and height4*T, halfwidth4*T with T>=1; adjusted pixelx=0 reaches negative second numerator(-4*T), so unsigned conversion is not equivalent on an ordinary accepted left-half tile.",
+    "Authorize evidence-backed signed int members tile_pixel_width_ at1DDB4 and tile_pixel_height_ at1DDB8, source-owned RECOVERY_MEMBER bindings and concise stable producer/consumer evidence. Rename their uses consistently across mapwin/newgame/veh and the six existing host fixtures; remove redundant signed casts on only these members. Preserve widths/offsets/class size and every existing ORIGINAL marker, claim, extent, caller, branch and operation order. Do not change any neighboring field type, image/compiler/build policy or invent compatibility aliases.",
+    "Independent pin and actual-object review must confirm member interpretation and calculate_dimensions consumers before implementation. All eight affected original functions are in scope; structural migration is reviewed across this closure, not abandoned on a local match regression. Preserve historical exact obligations and inspect every unexpected affected compiled body before integration; do not silently weaken or omit other scope.",
+    "Extend existing actual-source geometry host controls with a reachable negative second numerator and an unsigned-member damage mutant which must fail behavior. Preserve existing geometry/caller tests; use actual member declarations. No guard, unsigned fallback, rounding normalization or original-game bug fix. Exceptional overflow/divide inputs remain compiler-effects obligations unless verified.",
+    "Coordinator owns Git, isolated compiler lease/preparation, official measurement/recording, full fresh application build/link and native outside/destination verification. Worker source changes limited to named fields/consumers and relevant existing controls; manual review authorization is not automatic/game acceptance."
+  ],
+  "intent": "Recover signed tile pixel dimension members and their genuine typed consumer closure.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4648960,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4622560,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4626208,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4598144,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4599872,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5955872,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5611856,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5261984,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "mapwin-tile-dimensions-oct27"
+}

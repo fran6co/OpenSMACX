@@ -60,11 +60,13 @@ def actual_parts():
 
     field_names = set(re.findall(r"\bfield_[A-Za-z0-9_]+\b", calculate + pixel))
     field_names.update(("zoom_offset_", "center_x_", "center_y_",
+                        "tile_pixel_width_", "tile_pixel_height_",
                         "owned_", "font_a_", "font_b_", "font_c_"))
     declarations = [member_declaration(map_header, name) for name in sorted(field_names)]
     initializers = [name + " = 0;" for name in sorted(field_names)
                     if name.startswith("field_") or name in
-                    ("zoom_offset_", "center_x_", "center_y_")]
+                    ("zoom_offset_", "center_x_", "center_y_",
+                     "tile_pixel_width_", "tile_pixel_height_")]
     initializers.append("owned_ = 0;")
 
     dib = braced(buffer_header, "struct Dib : BITMAPINFO") + ";"
@@ -156,7 +158,7 @@ static void init_pixel(MapWin &w, int longitude, int flat) {
     w.dib_.bmiHeader.biHeight = -80;
     w.field_1DDAC_ = 0; w.field_1DDB0_ = 0;
     w.field_1DDA4_ = 0; w.field_1DDA8_ = 0;
-    w.field_1DDB4_ = 20; w.field_1DDB8_ = 20;
+    w.tile_pixel_width_ = 20; w.tile_pixel_height_ = 20;
     w.field_1DDBC_ = 10; w.field_1DDC0_ = 10;
     MapLongitudeBounds = longitude; MapLatitudeBounds = 100; MapIsFlat = flat;
     alt_arguments.clear();
@@ -183,6 +185,14 @@ int main() {
     assert(map.pixel_to_tile(50, 20, &tile_x, &tile_y) == 0);
     assert(tile_x == 5 && tile_y == 1);
     assert((alt_arguments == std::vector<int>{6, 2, 1, 6, 2, 2}));
+
+    // x=0 reaches the second half-tile numerator at -10. The signed source
+    // division truncates that quotient toward zero and preserves this edge.
+    init_pixel(map, 100, 1);
+    tile_x = 777; tile_y = 888;
+    assert(map.pixel_to_tile(0, 20, &tile_x, &tile_y) == 0);
+    assert(tile_x == 1 && tile_y == 1);
+    assert((alt_arguments == std::vector<int>{2, 2, 1, 2, 2, 2}));
 
     // Cylindrical seam: a negative candidate coordinate wraps once to the
     // final tile; all arithmetic remains small and representable.
@@ -241,7 +251,7 @@ int main() {
     smaller.field_1EEF0_ = 5; smaller.field_1EF48_ = 5; smaller.field_1EF1C_ = 6;
     font_calls.clear(); mutate_default_font = 0;
     smaller.calculate_dimensions();
-    assert(smaller.field_1DDC8_ == 4 && smaller.field_1DDB8_ == 16);
+    assert(smaller.field_1DDC8_ == 4 && smaller.tile_pixel_height_ == 16);
     assert(smaller.field_1DDCC_ == 4 && smaller.field_1DDD4_ == 4);
     assert(smaller.field_1DDD0_ == 2 && smaller.field_1DDD8_ == 2);
     assert(font_calls.empty());
@@ -249,8 +259,7 @@ int main() {
 '''
 
 
-@pytest.mark.parametrize("compiler_name", ["g++", "clang++"])
-def test_complete_actual_geometry_methods_with_real_dib_owner(tmp_path, compiler_name):
+def geometry_source(*, unsigned_tile_dimensions=False):
     p = actual_parts()
     text = (HARNESS.replace("CACHE_POD", p["cache"])
             .replace("DIB_POD", p["dib"])
@@ -261,8 +270,13 @@ def test_complete_actual_geometry_methods_with_real_dib_owner(tmp_path, compiler
             .replace("INITIALIZERS", p["initializers"])
             .replace("CALCULATE_BODY", p["calculate"])
             .replace("PIXEL_BODY", p["pixel"]))
-    compiler = shutil.which(compiler_name)
-    assert compiler, "host C++ compiler required for the actual-source control"
+    if unsigned_tile_dimensions:
+        text = text.replace("int tile_pixel_width_;", "uint32_t tile_pixel_width_;")
+        text = text.replace("int tile_pixel_height_;", "uint32_t tile_pixel_height_;")
+    return text
+
+
+def compile_and_run(tmp_path, compiler, text):
     cpp, exe = tmp_path / "mapwin-geometry.cpp", tmp_path / "mapwin-geometry"
     cpp.write_text(text)
     build = subprocess.run(
@@ -276,7 +290,29 @@ def test_complete_actual_geometry_methods_with_real_dib_owner(tmp_path, compiler
          "-fno-sanitize-recover=all", str(cpp), "-o", str(exe)],
         text=True, capture_output=True, timeout=60,
     )
+    run = None
+    if build.returncode == 0:
+        run = subprocess.run([str(exe)], text=True, capture_output=True, timeout=15,
+                             env=dict(os.environ, ASAN_OPTIONS="detect_leaks=0"))
+    return build, run
+
+
+@pytest.mark.parametrize("compiler_name", ["g++", "clang++"])
+def test_complete_actual_geometry_methods_with_real_dib_owner(tmp_path, compiler_name):
+    compiler = shutil.which(compiler_name)
+    assert compiler, "host C++ compiler required for the actual-source control"
+    build, run = compile_and_run(tmp_path, compiler, geometry_source())
     assert build.returncode == 0, build.stderr
-    run = subprocess.run([str(exe)], text=True, capture_output=True, timeout=15,
-                         env=dict(os.environ, ASAN_OPTIONS="detect_leaks=0"))
-    assert run.returncode == 0, run.stderr
+    assert run is not None and run.returncode == 0, run.stderr if run else "no executable"
+
+
+@pytest.mark.parametrize("compiler_name", ["g++", "clang++"])
+def test_unsigned_tile_dimension_member_mutant_fails_negative_second_numerator(
+        tmp_path, compiler_name):
+    compiler = shutil.which(compiler_name)
+    assert compiler, "host C++ compiler required for the actual-source control"
+    build, run = compile_and_run(
+        tmp_path, compiler, geometry_source(unsigned_tile_dimensions=True))
+    assert build.returncode == 0, build.stderr
+    assert run is not None and run.returncode != 0
+    assert "tile_x == 1 && tile_y == 1" in run.stderr

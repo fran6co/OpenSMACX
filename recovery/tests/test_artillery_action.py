@@ -139,6 +139,8 @@ struct Buffer {
     bool map_window_buffer;
     int width, height;
     Buffer() : id(++next_buffer_id), map_window_buffer(false), width(0), height(0) {}
+    int pixel_width() const { return width; }
+    int pixel_height() const { return height; }
     int init(int w, int h, int, void *) {
         width = w; height = h; inits.push_back(InitCall{this,w,h}); return 0;
     }
@@ -183,7 +185,7 @@ struct GraphicWin : Buffer {
 struct MapWin : GraphicWin {
     int view_active_, field_1DDA8_, field_1DDD8_, field_1DDD0_;
     int field_1DDA4_, field_1DDD4_, field_1DDCC_;
-    int field_1DDB4_, field_1DDB8_, zoom_offset_;
+    int tile_pixel_width_, tile_pixel_height_, zoom_offset_;
     void draw_tile(int, int, int) { ++tile_draw_calls; }
 };
 MapWin *MapWinTable[8];
@@ -224,7 +226,7 @@ void reset_case() {
     window.view_active_=1; window.field_1DDA8_=0;
     window.field_1DDD8_=20; window.field_1DDD0_=0;
     window.field_1DDA4_=0; window.field_1DDD4_=20; window.field_1DDCC_=0;
-    window.field_1DDB4_=0; window.field_1DDB8_=0; window.zoom_offset_=0;
+    window.tile_pixel_width_=0; window.tile_pixel_height_=0; window.zoom_offset_=0;
     for (int i=0;i<8;++i) { Vehs[i]=Veh{0,4,5,0}; }
     for (int i=0;i<32;++i) VehPrototypes[i]=VehPrototype{0,0,0};
     Vehs[0].proto_id=0; Vehs[1].proto_id=1;
@@ -251,11 +253,11 @@ int main() {
     assert(capture>=0 && restore>=0);
     const CopyCall &c=copies[capture];
     assert(c.sx==50 && c.sy==10 && c.dx==0 && c.dy==0);
-    assert(c.width==100 && c.height==-40); // half-width centering, full-width rect
+    assert(c.width==100 && c.height==40); // half-width centering, full-width rect
     const CopyCall &r=copies[restore];
     assert(!r.source->map_window_buffer && r.destination->map_window_buffer);
     assert(r.sx==0 && r.sy==0 && r.dx==50 && r.dy==10);
-    assert(r.width==100 && r.height==-40); // six-int copy source/destination order
+    assert(r.width==100 && r.height==40); // six-int copy source/destination order
 
     reset_case(); Vehs[0].proto_id=8;
     assert(boom(4,5,2)==1);

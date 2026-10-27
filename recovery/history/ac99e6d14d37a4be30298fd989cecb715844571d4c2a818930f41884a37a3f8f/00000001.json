@@ -1,0 +1,22 @@
+{
+  "event_id": "6e30215b659e8f170d338549db7677a28120ae7c06708db7959d3dd6c4dcc814",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_artillery_action.py",
+      "recovery/tests/test_crash_landing_actual_source.py",
+      "recovery/tests/test_mapwin_mouse_feedback.py"
+    ],
+    "evidence": [
+      "Pre-candidate fixture controls fail independently: boom mock lacks current pixel_width/pixel_height API, crash fixture lacks current GameDataStateStorage members, and mouse extraction incorrectly expects former extern bounds instead of current map.h macros. Restore the current fixture contracts only, preserving actual extracted product statements and all substantive behavior assertions.",
+      "The old boom copy height=-40 assertions contradict the pin:505095 initializes the snapshot from positive bottom-top;5050D0 receives its negated stored biHeight as positive visible height. Actual Buffer::init stores biHeight=-height and pixel_height returns-biHeight. Independent original trace and baseline/candidate diagnostic copies both establish width100,height40 for capture and restore. Correct those two expectations to positive40, retain complete copy-source/destination/coordinates checks. No production boom change or bug fix is authorized."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "restore-current-host-fixtures",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:mapwin-tile-dimensions-oct27"
+}

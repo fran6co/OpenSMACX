@@ -376,8 +376,12 @@ class MapWin : public virtual GraphicWin {
   int field_1DDA8_;
   uint32_t field_1DDAC_;  // 0x1DDAC
   uint32_t field_1DDB0_;  // 0x1DDB0
-  uint32_t field_1DDB4_;  // 0x1DDB4
-  uint32_t field_1DDB8_;  // 0x1DDB8
+  // calculate_dimensions stores signed tile-pixel dimensions here; pixel_to_tile
+  // consumes both through signed IDIV when converting adjusted pixel inputs.
+  // RECOVERY_MEMBER: v1 MapWin tile_pixel_width_ 0x1DDB4 0x00463040
+  int tile_pixel_width_;
+  // RECOVERY_MEMBER: v1 MapWin tile_pixel_height_ 0x1DDB8 0x00463040
+  int tile_pixel_height_;
   uint32_t field_1DDBC_;  // 0x1DDBC
   uint32_t field_1DDC0_;  // 0x1DDC0
   uint32_t field_1DDC4_;  // 0x1DDC4
