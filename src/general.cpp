@@ -3749,7 +3749,8 @@ void __cdecl sub_5d1b88(unsigned int *packed_output, int *data_row,
 }
 
 // ORIGINAL: 0x005D2536 sub_5d2536 0x005D2536-0x005D271D FILE
-// symbol    ?sub_5d2536@@YAXPAH00@Z
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned 0x5D2536 reads ESI/EDI coefficient and selector words and stores through EBP at byte offsets 0,4,...,0x1C.", "Current sole caller 0x5D1278 owns DWORD[512]; its coefficient rows are word offsets row*16 and selector pairs are 256+(row/2)*8. Output is BYTE base plus row*byte pitch, without an int-array/alignment contract.", "The normalized source retains the target VC6 thirty-two-bit word-to-int conversion before the existing wrapping address calculation, with no mask, clamp or added initialization."], "reason": "Use the actual caller-owned raw-word scratch and byte-pitched output for the normalized packed-row interface. Preserve the four volatile input reads, their signed index interpretation, unchecked lookup arithmetic and eight packed stores; this does not establish the original hidden-register ABI or nominal parameter types."}
+// symbol    ?sub_5d2536@@YAXPAK0PAE@Z
 // TRIED: homed into general.cpp (its real TU) 2026-09-03 and reverted for one reason:
 // its fixed-address bindings have no naming evidence. image_data.py reads
 // 1 of them and every one is zero at load - runtime-filled lookup tables
@@ -3765,20 +3766,6 @@ void __cdecl sub_5d1b88(unsigned int *packed_output, int *data_row,
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
 
-// GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: sub_5d2536  at 0x005D2536  (487 bytes)
-//
-// A VERIFICATION ARTIFACT, not product source: classes are opaque and
-// globals are bound to fixed addresses, because both are byte-visible
-// and both differ from the style src/ is written in.
-//
-// The VC6 dialect limits and the source-form rules used to live here.
-// They are knowledge, not scaffolding, so they now live in the agent
-// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
-// where they can be edited without regenerating anything and are in
-// context from the first token rather than behind a file read. This
-// emitter computes declarations; it does not carry lessons.
-
 static DWORD movie_coefficient_pack_word(int index) {
     // Pinned 5D2536 indexes DWORDs at 9C672C + index*8: this is word 512
     // in the source-owned remap/lookup window at 9C5F2C.
@@ -3793,10 +3780,10 @@ static DWORD movie_coefficient_pack_word(int index) {
 
 // ESI supplies 16 coefficient indices; EDI supplies 8 lower and 8 upper
 // selector indices at offsets 0 and 64; EBP receives eight packed DWORDs.
-void __cdecl sub_5d2536(int *coefficient_row, int *selector_pair,
-                        int *packed_output) {
-    const volatile int *const coefficient_indices = coefficient_row;
-    const volatile int *const selector_indices = selector_pair;
+void __cdecl sub_5d2536(DWORD *coefficient_row, DWORD *selector_pair,
+                        BYTE *packed_output) {
+    const volatile DWORD *const coefficient_indices = coefficient_row;
+    const volatile DWORD *const selector_indices = selector_pair;
     for (int index = 0; index != 8; ++index) {
         // The image loads all four indices before its LUT reads, whose order
         // remains significant on unchecked invalid inputs.
@@ -3811,7 +3798,7 @@ void __cdecl sub_5d2536(int *coefficient_row, int *selector_pair,
         const DWORD upper = (upper_selector << 8) | upper_coefficient;
         const DWORD lower = (lower_selector << 8) | lower_coefficient;
         const DWORD result = (upper << 16) | lower;
-        memcpy(&packed_output[index], &result, sizeof(result));
+        memcpy(packed_output + index * sizeof(result), &result, sizeof(result));
     }
 }
 

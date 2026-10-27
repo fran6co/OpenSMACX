@@ -17,7 +17,7 @@ def test_pinned_outer_wrappers_capture_and_publish_bitstream_state_once() -> Non
     from capstone import Cs, CS_ARCH_X86, CS_MODE_32
     from capstone.x86 import (
         X86_OP_IMM, X86_OP_MEM, X86_OP_REG,
-        X86_REG_EBP, X86_REG_EDI, X86_REG_ESI, X86_REG_ESP,
+        X86_REG_EBP, X86_REG_EDI, X86_REG_EDX, X86_REG_ESI, X86_REG_ESP,
     )
     from match_recovery.model import Span
     from match_recovery.pe_coff import PeImage
@@ -83,6 +83,42 @@ def test_pinned_outer_wrappers_capture_and_publish_bitstream_state_once() -> Non
             if item.mnemonic == "call" and item.address != decode_call.address
         )
 
+    # 5D1278 allocates S..S+0x7ff and CALLs 5D0AAB without argument pushes.
+    # The call return word makes producer-entry ESP=S-4. Normalize each LEA
+    # against that slot before treating the address as a DWORD index.
+    caller = decoded(0x5D1278, 0x5D1466)
+    allocation = caller[0x5D127E]
+    assert allocation.mnemonic == "sub"
+    assert reg_operand(allocation, 0, X86_REG_ESP)
+    assert allocation.operands[1].type == X86_OP_IMM
+    assert allocation.operands[1].imm == 0x800
+    producer_call = caller[0x5D1297]
+    assert producer_call.mnemonic == "call"
+    assert producer_call.operands[0].type == X86_OP_IMM
+    assert producer_call.operands[0].imm == 0x5D0AAB
+
+    producer = decoded(0x5D0AAB, 0x5D0D82)
+    producer_leas = (
+        (0x5D0B1A, 0x004), (0x5D0B92, 0x024),
+        (0x5D0C0A, 0x204), (0x5D0C85, 0x224),
+        (0x5D0D00, 0x404), (0x5D0D7B, 0x504),
+    )
+    destination_words = []
+    for address, displacement in producer_leas:
+        insn = producer[address]
+        assert insn.mnemonic == "lea" and reg_operand(insn, 0, X86_REG_EDX)
+        assert mem_operand(insn, 1, X86_REG_ESP, displacement)
+        frame_displacement = displacement - 4  # discard producer CALL slot
+        assert frame_displacement >= 0 and frame_displacement % 4 == 0
+        destination_words.append(frame_displacement // 4)
+    assert destination_words == [0, 8, 128, 136, 256, 320]
+    for address in (0x5D0B1E, 0x5D0B96, 0x5D0C11, 0x5D0C8C, 0x5D0D07):
+        call = producer[address]
+        assert call.mnemonic == "call" and call.operands[0].type == X86_OP_IMM
+        assert call.operands[0].imm == 0x5D0D82
+    final_destination = producer[0x5D0D7B]
+    assert final_destination.address + final_destination.size == 0x5D0D82
+
     # The outlined bitstream body consumes EBP/EDI register snapshots. It
     # updates predictor members per block but does not publish either captured
     # input or cursor through context+0x200/+0x204.
@@ -127,6 +163,27 @@ def _function(source: str, signature: str) -> str:
     raise AssertionError(f"unterminated function {signature}")
 
 
+def _prototype(source: str, signature: str) -> str:
+    start = source.index(signature)
+    end = source.index(";", start)
+    return source[start:end + 1]
+
+
+def _unnamed_stub_from_prototype(source: str, signature: str,
+                                 body: str) -> str:
+    declaration = _prototype(source, signature)
+    opening = declaration.index("(")
+    closing = declaration.rindex(")")
+    parameters = [item.strip() for item in
+                  declaration[opening + 1:closing].replace("\n", " ").split(",")]
+    types = []
+    for parameter in parameters:
+        match = re.fullmatch(r"(.+?[\s*])[A-Za-z_]\w*", parameter)
+        assert match is not None, (signature, parameter)
+        types.append(match.group(1).strip())
+    return declaration[:opening] + "(" + ", ".join(types) + ") { " + body + " }"
+
+
 @pytest.mark.parametrize("compiler_name", ("g++", "clang++"))
 def test_actual_six_step_predictor_and_dct_bodies(
         tmp_path: Path, compiler_name: str) -> None:
@@ -135,6 +192,7 @@ def test_actual_six_step_predictor_and_dct_bodies(
         pytest.skip(f"{compiler_name} unavailable")
     source_text = (SRC / "movie_media_decoder.cpp").read_text()
     owner_header = (SRC / "movie_decoder_owner.h").read_text()
+    general_header = (SRC / "movie_media.h").read_text()
     byte_view = _function(owner_header, "struct MediaCoefficientPredictorViewLayout") + ";\n"
     byte_accessors = "\n".join(
         _function(owner_header, signature)
@@ -251,7 +309,7 @@ static void observe_conversion() {
   ++converter_calls;
 }
 void __cdecl sub_5d2037(int *, int *, unsigned int *) { observe_conversion(); }
-void __cdecl sub_5d2536(int *, int *, int *) { observe_conversion(); }
+__ROW_STUB__
 void __cdecl sub_5d1b88(unsigned int *, int *, int *) { observe_conversion(); }
 void __cdecl OutputPixelRow16(short *, unsigned int *, unsigned int *) {
   observe_conversion();
@@ -317,7 +375,7 @@ int main() {
   assert(runtime.predictor_500 == 6);
   assert(completed_position == 18);
   assert(runtime.bit_position_204 == 0);
-  const int starts[6] = {1, 9, 129, 137, 257, 321};
+  const int starts[6] = {0, 8, 128, 136, 256, 320};
   const int fills[6] = {8, 7, 6, 5, 4, 6};
   for (int block = 0; block != 6; ++block) {
     const int pitch_words = block < 4 ? 16 : 8;
@@ -343,12 +401,13 @@ int main() {
   movie_media_coefficient_tables.words[228] = 0x00000101u;
   movie_media_coefficient_tables.words[212] = 0x00004100u;
   movie_media_coefficient_tables.words[68] = 3;
+  ac_runtime.block_transform_weights[0] = 0x20000;
   ac_runtime.block_transform_weights[3] = 0x20000;
   BYTE output[8 * 64];
   std::memset(output, 0xa5, sizeof(output));
   ac_runtime.bit_position_204 = 77;
   const DWORD block_position = sub_5d0d82(
-      &ac_runtime, 0, ac_runtime.compressed_input_200, output, 64,
+      &ac_runtime, 3, ac_runtime.compressed_input_200, output, 64,
       0);
   assert(block_position == 1);
   if (transform_pointer_mismatches != 0) {
@@ -357,7 +416,7 @@ int main() {
   }
   assert(ac_runtime.bit_position_204 == 77);
   assert(row_calls == 8 && column_calls == 8);
-  assert(first_row_value == 0);
+  assert(first_row_value == 0x60000);
   assert(first_row_coefficient_three == -0x20000);
 
   MediaDecoderContext wrapper_runtime = {};
@@ -518,6 +577,10 @@ int main() {
   }
 }
 '''
+    row_stub = _unnamed_stub_from_prototype(
+        general_header, "void __cdecl sub_5d2536(", "observe_conversion();")
+    assert unit_source.count("__ROW_STUB__") == 1
+    unit_source = unit_source.replace("__ROW_STUB__", row_stub, 1)
     unit = tmp_path / "movie_decoder_six_blocks.cpp"
     unit.write_text(unit_source)
     binary = tmp_path / "movie_decoder_six_blocks"
@@ -561,10 +624,32 @@ int main() {
         assert rejected.returncode == 97
         assert rejected.stderr == "FAIL: transform scratch pointer offset mismatch\n"
 
+    # Recreate the old one-based producer and require the first real output
+    # witness to reject it. This also proves that the pinned zero-based
+    # starts in the host expectation are active, rather than a mirrored note.
+    offset_pattern = r"const DWORD output_offsets\[6\]\s*=\s*\{([^}]+)\};"
+    offset_matches = list(re.finditer(offset_pattern, unit_source))
+    assert len(offset_matches) == 1
+    actual_starts = tuple(int(value.strip(), 0)
+                          for value in offset_matches[0].group(1).split(","))
+    assert actual_starts == (0, 8, 128, 136, 256, 320)
+    old_offset_mutant = re.sub(
+        offset_pattern,
+        "const DWORD output_offsets[6] = {1, 9, 129, 137, 257, 321};",
+        unit_source, count=1)
+    mutant_unit = tmp_path / "movie_decoder_one_based_output_offsets.cpp"
+    mutant_unit.write_text(old_offset_mutant)
+    mutant_binary = tmp_path / "movie_decoder_one_based_output_offsets"
+    subprocess.run(
+        [compiler, "-std=c++17", "-Wall", "-Wextra", "-Werror",
+         "-pedantic", str(mutant_unit), "-o", str(mutant_binary)], check=True)
+    rejected = subprocess.run([str(mutant_binary)], capture_output=True, text=True)
+    assert rejected.returncode == 2
+    assert "block 0 row 0 column 0 got 1515870810 expected 8" in rejected.stderr
+
     mutants = (
         ("words[6 + run_position]", "words[7 + run_position]"),
         ("block < 4 ? 0x40 : 0x20", "block < 4 ? 0x20 : 0x20"),
-        ("{1, 9, 129, 137, 257, 321}", "{2, 9, 129, 137, 257, 321}"),
         ("197 + (code >> 1)", "198 + (code >> 1)"),
         ("  if (run_position == 0x3f) {",
          "  context->bit_position_204 = bit_position;\n"

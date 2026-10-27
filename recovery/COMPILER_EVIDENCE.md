@@ -163,6 +163,24 @@ authority to switch compilers, and is not an exclusion for other source/recipe
 cohorts. Both experiments retain the installed linker, headers and libraries;
 neither establishes a complete historical SP3 build environment.
 
+## Shared frames and private helper boundaries
+
+Normalize addresses against the owning caller's frame before translating a
+register-only helper into a typed interface. An x86 `CALL` pushes a four-byte
+return address: with no callee stack adjustment, callee `ESP+4` is caller `ESP`,
+not caller scratch word one. The movie producer at `0x005D0AAB` uses this shared
+frame; its six destinations are caller DWORD offsets 0, 8, 128, 136, 256 and
+320. Trace both the original stores and their consumer loads before classifying
+a source scratch read as original uninitialized behavior. The existing local DC
+coefficient product/store is a separate operation and needs no new initialization.
+
+A private-linkage compiler experiment proves a callable ABI only if the emitted
+object retains that call boundary. In the bounded VC6 transform control, the
+private helpers disappeared into their callers while the external helpers kept
+ordinary calls. This is inconclusive about the original movie helpers' register
+contracts. Neither register-only entry patterns nor a current analysis-generated
+symbol establish original C++ parameter types, linkage or compiler provenance.
+
 ## Operational lessons retained
 
 Global initialization/atexit dependencies matter alongside entry-point reachability.

@@ -367,3 +367,8 @@ extern "C" MediaDescriptor *__cdecl sub_5cae80(
 extern "C" int __cdecl sub_5cb610(MediaDescriptor *descriptor);
 extern "C" int __cdecl sub_5cb660(MediaDescriptor *descriptor);
 extern "C" void __cdecl sub_5caab0(void *descriptor);
+
+// Normalized packed-row interface: caller-owned DWORD scratch and byte output.
+// The original helper uses private registers; this declaration is not its ABI.
+void __cdecl sub_5d2536(DWORD *coefficient_row, DWORD *selector_pair,
+                        BYTE *packed_output);
