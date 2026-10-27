@@ -1,0 +1,25 @@
+{
+  "author": "coordinator",
+  "base_revision": "865a2bc8e8b829917bda0f314c4a9223d2cd6b76",
+  "editable_files": [
+    "src/movie_media.cpp",
+    "recovery/tests/test_movie_output_worker_actual_source.py"
+  ],
+  "evidence": [
+    "Pinned original no-pending record branch5CE1C5 joins5CE247 after both synthetic/physical paths (including failed Lock), advances playback cursor then calls InterlockedIncrement on receiver+390 at5CE263. Current source instead exchanges this same named LONG field to zero in each no-pending arm. Correct both operations to increment, without moving them into pending-record or setup/space-skipped branches.",
+    "Pending-record original path exchanges record.field_08 into+390 at5CE19F and jumps5CE269 after clearing its record; it must NOT acquire an additional increment. Setup-incomplete and insufficient-space also skip the+390 update. Common worker_wakeup_counter+3AC increments separately at5CE270.",
+    "Coordinator decoded the pinned tail independently; original imports must be verified from actual PE bindings, not stale historical TRIED guesses. Add actual-source host behavior controls for pending/nonpending, synthetic/physical, insufficient-space/setup-incomplete and Lock-failure paths, plus mutants reset-to-zero and unconditional increment. Preserve original unsafe/error semantics, all source identities/claims and current layout. No header/build/compiler/mapping edits, no matching variants beyond original-fidelity correction.",
+    "Fresh compile/link, scoped original/reference observation, outside-owner preservation, independent review and destination recheck required. No automatic/full-game acceptance claim."
+  ],
+  "intent": "Restore original audio output worker no-pending-record atomic counter update, preserving pending-record and skipped-work branches.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6086560,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "movie-output-counter-oct27"
+}
