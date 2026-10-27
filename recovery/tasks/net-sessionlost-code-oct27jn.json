@@ -1,0 +1,24 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "a964df04e8c250a68802cdb2568d0edf0889a55a",
+  "editable_files": [
+    "src/net_class.cpp",
+    "recovery/tests/test_net_hresult_error_actual_source_oct27.py"
+  ],
+  "evidence": [
+    "Pinned 0x631E1A compares HRESULT0x88770136; matching0x631E25 pushes697DAC, whose string is DPERR_SESSIONLOST. Current source incorrectly matches0x88770132.",
+    "Preserve all other token mappings, default behavior, dismissal and cd_check result. This repairs translation, not an original behavior bug. No ABI, calling convention or compiler-profile changes.",
+    ".opensmacx/recovery/net-error-helper-audit-oct27iw/findings.json"
+  ],
+  "intent": "Correct the DirectPlay session-lost HRESULT dispatch to the pinned value without changing the remaining error/popup/cd_check behavior.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6495136,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "net-sessionlost-code-oct27jn"
+}
