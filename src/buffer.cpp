@@ -4668,7 +4668,7 @@ Purpose: Draw one framed panel: four corner sprites, four tiled edge strips
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned 0x5E2DD3..0x5E3188 guards skip to the same epilogue without setting EAX; the final tile call also naturally leaves incidental EAX for a void operation.", "The stripped original has no COFF symbols or debug directory; the QAEH catalog spelling does not prove int. The retained generated Kuna header declares void.", "All 380 mapped direct call sites across 127 callers, including both successors of 12 conditional barriers, show no EAX result reads before clobber or call. Indirect/unmapped caller completeness and the original nominal type remain unknown.", "The genuine BoxSpriteParams and Buffer owners retain their fields, every corner/edge/mask operation and original spans."], "reason": "Model the panel drawer as a void operation: its original guard/no-mask paths establish no defined result, and no covered original direct caller consumes its EAX. Preserve all drawing and unchecked parameter behavior; the historical int-decorated identity is an analysis hypothesis, not an original PE symbol."}
 // symbol    ?box_sprite@Buffer@@QAEXPAUtagRECT@@PAUBoxSpriteParams@@@Z
 // size      949 bytes
-// prototype int (__thiscall ?box_sprite@Buffer@@QAEHPAURECT@@PAUBoxSpriteParams@@@Z)(Buffer* this, RECT*, BoxSpriteParams*)
+// Historical analysis type hypothesis: int (__thiscall ?box_sprite@Buffer@@QAEHPAURECT@@PAUBoxSpriteParams@@@Z)(Buffer* this, RECT*, BoxSpriteParams*)
 // callers   127   call targets   4
 // kind      game
 // flags     hidden;sp_ready;purged_ok
