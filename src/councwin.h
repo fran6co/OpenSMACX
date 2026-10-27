@@ -26,23 +26,20 @@
  /*
   * CouncWin class
   *
-  * Derives from GraphicWin by ordinary single inheritance - its constructor calls
-  * GraphicWin's on an unadjusted `this` - so it is written as the original wrote
-  * it and needs no ABI workaround. GraphicWin is pinned here, so the base region
-  * is exact; CouncWin's own extent is not established and nothing pins its
-  * sizeof.
+  * The primary GraphicWin base receives unadjusted `this`; its Win and Buffer
+  * views are at +0 and +0x444. The separate SubInterface base is at +0xA14.
+  * Constructor-selected tables establish these views; CouncWin's complete
+  * allocation extent remains unresolved.
   *
   * Voting, proposal rendering and modal interactions use the genuine window
   * owner. Byte matching and complete lifetime verification remain separate.
   */
 // RECOVERY_BASE: v1 CouncWin SubInterface 0xA14 0x00428620
 // Constructor installs this original interface table at the declared base.
-// Its nineteen observed slots do not independently establish its end bound.
-// RECOVERY_GENERATED: v1 vtable 0x0066AA94 ? ??_7CouncWin@@6B@ 0x00428620
+// The next constructor-selected Buffer table at 0x66AAE0 bounds its nineteen slots.
+// RECOVERY_GENERATED: v1 vtable 0x0066AA94 0x0066AAE0 ??_7CouncWin@@6B@ 0x00428620
 class CouncWin : public GraphicWin, public SubInterface {
  public:
-  // 0x00427150 is catalogued as hide, but its tail jump queries visibility;
-  // council_visible preserves that binding without changing Win::hide.
   // draw_all_leaders and on_mouse_leave reach draw_leader directly.
   void draw_leader(int factionID);
   void show(int visible);
@@ -50,8 +47,8 @@ class CouncWin : public GraphicWin, public SubInterface {
   void arrived(int faction_id);
   void draw_all_leaders();
   int make_resolution(int option);
-  // Original427150 is a visibility-query tail jump, not Win::hide.
-  int council_visible();
+  // Original slot 2 targets this five-byte jump to Win::is_visible, not Win::hide.
+  void hide() override;
   void set_vote(int faction_id, int vote);
   void on_left_click(int x, int y) override;
   int on_key_click(int key, int flags) override;
@@ -198,3 +195,5 @@ extern CouncWin CouncilWindow;
 // ?draw_leader@CouncWin@@QAEXH@Z at 0x00425DB0 - public, __thiscall,
 // void(int) - 1705-byte owner method. draw_all_leaders and on_mouse_leave
 // both reach it with direct calls; its implementation lives in councwin.cpp.
+// RECOVERY_GENERATED: v1 vtable 0x0066AAE0 0x0066AAE8 ??_7CouncWin@@6BBuffer@@@ 0x00428620
+// RECOVERY_GENERATED: v1 vtable 0x0066AAE8 0x0066AC50 ??_7CouncWin@@6BWin@@@ 0x00428620

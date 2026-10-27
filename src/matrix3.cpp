@@ -415,8 +415,11 @@ Matrix3 Matrix3::scaled(float scale) {
         0.0f, 1.0f, 0.0f,
         0.0f, 0.0f, 1.0f
     }};
-    for (int i = 0; i < 9; ++i) {
-        result.cells[i] = scale * cells[i];
+    for (int row = 0; row < 3; ++row) {
+        for (int column = 0; column < 3; ++column) {
+            const int index = row * 3 + column;
+            result.cells[index] = scale * cells[index];
+        }
     }
     return result;
 }

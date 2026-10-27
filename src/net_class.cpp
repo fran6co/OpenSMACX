@@ -107,6 +107,11 @@
 #pragma comment(lib, "dplayx.lib")
 #endif
 
+// Original Net API zeroing sites call the CRT rather than intrinsic stores.
+#if defined(_MSC_VER) && _MSC_VER <= 1200
+#pragma function(memset)
+#endif
+
 // 0x697548 - the application GUID the lobby session registers under, read out
 // four dwords at a time into session.guidInstance. It holds the same
 // {02D1B480-D680-11D0-821E-44454F5454} that control_game passes in as `guid`
@@ -418,9 +423,22 @@ int Net::enumerate_sessions(AlphaNetLedger *ledger, const char *password) {
     SessionEnumTarget = 0;
     ledger->sort_sessions();
     if (result != 0) return 1;
-    // Native inline seek(-1) does not change the cursor index of an empty
-    // list: head is published into current before the abs/count failure.
-    ledger->seek_pos(-1);
+
+    const int position = -1;
+    if (position <= ledger->entry_count_ - 1) {
+        ledger->current_ = ledger->head_;
+        if (position < 0) {
+            const int entry_count = ledger->entry_count_;
+            if (abs(position) <= entry_count) {
+                int remaining = abs(position);
+                while (remaining > 0) {
+                    --remaining;
+                    ledger->current_ = ledger->current_->previous_;
+                }
+                ledger->current_position_ = ledger->entry_count_ + position;
+            }
+        }
+    }
     return 0;
 }
 
@@ -1429,14 +1447,13 @@ static int __stdcall net_group_player_callback(unsigned long player_id,
 // ORIGINAL: 0x0062ED40 ?create_group@Net@@QAEHPAD@Z 0x0062ED40-0x0062EDA2
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned62ED40..62EDA2; git:b0d788d3e0ebc4d5b4c20acb834cd37455e53c67:src/leaf_recoveries.cpp supplies the former facade mapping and unchanged SDK call contract."], "reason": "Rehome the DirectPlay group constructor from its raw receiver facade to the genuine Net method and SDK IDirectPlay2 interface."}
 int Net::create_group(char *group_name) {
-    IDirectPlay2 *const direct_play = NetDirectPlay;
-    if (direct_play == 0) return 0;
+    if (NetDirectPlay == 0) return 0;
     DPNAME name;
-    DPID group = 0;
+    DPID group;
     memset(&name, 0, sizeof(name));
     name.dwSize = sizeof(name);
     name.lpszShortNameA = group_name;
-    const HRESULT result = direct_play->CreateGroup(&group, &name, 0, 0, 0);
+    const HRESULT result = NetDirectPlay->CreateGroup(&group, &name, 0, 0, 0);
     return result == 0 ? static_cast<int>(group) : 0;
 }
 

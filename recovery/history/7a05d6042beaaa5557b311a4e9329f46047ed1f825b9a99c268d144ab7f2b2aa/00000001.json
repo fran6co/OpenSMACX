@@ -1,0 +1,19 @@
+{
+  "event_id": "a974c0c3fdcace3a08a19eda4ed7c3c509c5aa0f125ef369f8286410cb04fba9",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/COMPILER_EVIDENCE.md"
+    ],
+    "evidence": [
+      "Preserve durable original table/call-boundary lessons behind the reviewed AlphaSave/CouncWin override and Net CRT-zeroing recovery, without current score/run logs, changing source obligations or inferring original TU membership."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "original-dispatch-and-zeroing-evidence-oct27if",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:natural-call-boundaries-oct27ia"
+}
