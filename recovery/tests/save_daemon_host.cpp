@@ -51,6 +51,8 @@ static int tick_write_result;
 static int serializer_result;
 static DWORD tick_value;
 static DWORD captured_tick;
+static int winmm_tick_calls;
+static int kernel_tick_calls;
 static DWORD written_tick;
 static bool change_tick_during_serializer;
 static int fwrite_calls;
@@ -74,14 +76,22 @@ static void reset_fixture() {
     serializer_result = 0;
     tick_value = 0xFEDCBA98u;
     captured_tick = written_tick = 0;
+    winmm_tick_calls = kernel_tick_calls = 0;
     change_tick_during_serializer = false;
     fwrite_calls = 0;
     seed_calls = seed_value = game_data_calls = close_calls = remove_calls = 0;
     opened_path.clear(); removed_path.clear(); calls.clear();
 }
 
-static DWORD GetTickCount() {
-    calls += "T"; captured_tick = tick_value; return tick_value;
+DWORD timeGetTime() {
+    ++winmm_tick_calls; calls += "M"; captured_tick = tick_value; return tick_value;
+}
+DWORD GetTickCount() {
+    ++kernel_tick_calls; calls += "X"; return 0x13579BDFu;
+}
+static void assert_clock_api() {
+    assert(winmm_tick_calls == 1);
+    assert(kernel_tick_calls == 0);
 }
 static void my_srand(int value) { ++seed_calls; seed_value = value; calls += "S"; }
 static FILE *env_open(const char *path, const char *mode) {
@@ -133,12 +143,13 @@ static void test_filename_and_success_path() {
                     sizeof(AlphaNetProcessSlotHost));
     }
     assert(save_daemon(const_cast<char *>("autosave")) == 0);
+    assert_clock_api();
     assert(opened_path == "autosave.SAV");
     assert(GameDataPlayerCountSnapshot == 4);
     assert(GameDataStateStorage.fields_.game_state_ == 0x10000000u && seed_calls == 0);
     assert(std::memcmp(NetDaemonNet.process_slots_, NetDaemonNet.saved_process_slots_,
                        sizeof NetDaemonNet.process_slots_) == 0);
-    assert(calls == "TOHVGKC");
+    assert(calls == "MOHVGKC");
     assert(close_calls == 1 && remove_calls == 0);
 }
 
@@ -146,26 +157,30 @@ static void test_open_failure_keeps_prior_side_effects_and_skips_cleanup() {
     reset_fixture(); open_succeeds = false;
     GameDataStateStorage.fields_.game_rules_ = RULES_IRONMAN; IsMultiplayerPBEM = 1;
     assert(save_daemon(const_cast<char *>("autosave")) == 1);
+    assert_clock_api();
     assert(TamperState93A9B4 == 1 && GameDataStateStorage.fields_.net_turn_flags_ == 0x20);
     assert(GameDataStateStorage.fields_.game_state_ == 0x10000000u && GameDataPlayerCountSnapshot == 0);
     assert(seed_calls == 1 && seed_value == static_cast<int>(tick_value));
-    assert(close_calls == 0 && remove_calls == 0 && calls == "TSO");
+    assert(close_calls == 0 && remove_calls == 0 && calls == "MSO");
 }
 
 static void test_any_dot_suppresses_extension_and_postopen_failures_remove() {
     reset_fixture();
     version_write_result = 0;
     assert(save_daemon(const_cast<char *>("dir.with.dot/name")) == 2);
+    assert_clock_api();
     assert(opened_path == "dir.with.dot/name");
     assert(close_calls == 1 && remove_calls == 1 && removed_path == opened_path);
-    assert(calls == "TOHVCR");
+    assert(calls == "MOHVCR");
 
     reset_fixture(); serializer_result = 1;
     assert(save_daemon(const_cast<char *>("bad")) == 3);
+    assert_clock_api();
     assert(game_data_calls == 1 && close_calls == 1 && remove_calls == 1);
 
     reset_fixture(); tick_write_result = 0;
     assert(save_daemon(const_cast<char *>("bad")) == 3);
+    assert_clock_api();
     assert(game_data_calls == 1 && close_calls == 1 && remove_calls == 1);
 }
 
@@ -178,8 +193,9 @@ static void test_tick_bits_survive_serializer_callbacks() {
             tick_value = values[i];
             change_tick_during_serializer = change != 0;
             assert(save_daemon(const_cast<char *>("tick")) == 0);
+            assert_clock_api();
             assert(written_tick == values[i]);
-            assert(calls == "TOHVGKC" && fwrite_calls == 2);
+            assert(calls == "MOHVGKC" && fwrite_calls == 2);
         }
     }
 }

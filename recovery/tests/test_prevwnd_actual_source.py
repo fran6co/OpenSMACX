@@ -150,12 +150,19 @@ def test_wrong_prevwindow_method_or_word_extension_is_rejected(tmp_path, compile
     if compiler is None:
         pytest.skip(compiler_name + " unavailable")
     _, body = _actual_definition()
+    signed_high_word = re.compile(
+        r"static_cast<short>\(\s*(?:lparam|static_cast<unsigned int>\(\s*lparam\s*\))\s*>>\s*16\s*\)"
+    )
+    wrong_high_word, replacements = signed_high_word.subn(
+        "static_cast<unsigned short>(static_cast<unsigned int>(lparam) >> 16)",
+        body, count=1,
+    )
+    assert replacements == 1, "expected one WM_SIZE high-word extraction in actual source"
     mutants = (
         body.replace("owner->on_size(", "owner->on_set_cursor(", 1),
         body.replace("static_cast<short>(lparam)",
                      "static_cast<unsigned short>(lparam)", 1),
-        body.replace("static_cast<short>(lparam >> 16)",
-                     "static_cast<unsigned short>(lparam >> 16)", 1),
+        wrong_high_word,
         body.replace("return owner->on_set_cursor(",
                      "return 0 && owner->on_set_cursor(", 1),
     )

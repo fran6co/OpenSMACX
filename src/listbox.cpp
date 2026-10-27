@@ -1609,8 +1609,8 @@ void ListBox::on_left_down(int x, int y) {
 
     const int previous = Dialog::selected_position_;
     if (field_4_ != 0 && position != previous) {
-        const bool control = (GetKeyState(VK_CONTROL) & 0x8000) != 0;
-        const bool shift = (GetKeyState(VK_SHIFT) & 0x8000) != 0;
+        const bool control = (GetAsyncKeyState(VK_CONTROL) & 0x8000) != 0;
+        const bool shift = (GetAsyncKeyState(VK_SHIFT) & 0x8000) != 0;
         const bool wrapped_initial_shift = shift && previous < 0;
         const int anchor = previous < 0 ? position : previous;
         const int low = (anchor < position) ? anchor : position;

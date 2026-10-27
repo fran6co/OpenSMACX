@@ -261,7 +261,7 @@ int Video::advance_frame() {
 // symbol    ?read_frame@Video@@QAEHXZ
 // TRIED: original pushes an extra callee-saved register (ecx-slot, ebx, esi, edi - 4 total) this body's control flow only needed 3 of (no ebx); not chased further. `sub_63e6e0` is called here as the scaffold's plain __stdcall(int,int,int,int), dropping the `lea ecx,[esi+0xa5c]` receiver the disassembly sets right before the call - Ghidra's own decompile drops the same thing (`the decompiler drops the this pointer on __thiscall functions`), so it reads as a genuine 5th (thiscall) param this body does not reproduce.
 int Video::read_frame() {
-  unsigned char *position = 0;
+  unsigned char *position;
   int result;
   if (child_chunk_.cksize == 0) {
     result = frame_queue_.allocate(&position, 0,

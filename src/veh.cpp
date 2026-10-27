@@ -9340,14 +9340,12 @@ Return Value: n/a
 Status: MISMATCH.
 */
 void __cdecl promote(int veh_id) {
-    const int proto_id = Vehs[veh_id].proto_id;
-
-    if (Chassis[VehPrototypes[proto_id].chassis_id].missile != 0) {
+    if (Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].missile != 0) {
         return;
     }
 
-    if (!(VehPrototypes[proto_id].plan < 8 ||
-          Armor[VehPrototypes[proto_id].armor_id].defense_rating > 1)) {
+    if (!(VehPrototypes[Vehs[veh_id].proto_id].plan < 8 ||
+          Armor[VehPrototypes[Vehs[veh_id].proto_id].armor_id].defense_rating > 1)) {
         return;
     }
     if (morale_veh(veh_id, 1, 0) >= 6) {
@@ -9375,10 +9373,10 @@ void __cdecl promote(int veh_id) {
         return;
     }
 
-    parse_says(1, VehPrototypes[proto_id].veh_name, -1, -1);
+    parse_says(1, VehPrototypes[Vehs[veh_id].proto_id].veh_name, -1, -1);
 
-    if (proto_id < 0x40) {
-        if (Weapon[VehPrototypes[proto_id].weapon_id].offense_rating < 0) {
+    if (Vehs[veh_id].proto_id < 0x40) {
+        if (Weapon[VehPrototypes[Vehs[veh_id].proto_id].weapon_id].offense_rating < 0) {
             parse_say(0, Morale[morale_veh(veh_id, 1, 0)].name, -1, -1);
             NetMsgPrimary.pop(VehLabelMORALE2, 0xffffec78, 0,
                              VehIconBATWON2_SM_PCX);
@@ -19338,7 +19336,7 @@ static OrderVeh5976d6Path order_veh_5976d6_terrain_delay(
     }
 
     if (action_faction == ConsoleGlobal.faction_id_ && vehicle.order == ORDER_NONE &&
-        (::GetKeyState(VK_SHIFT) & 0xff00) == 0 &&
+        (::GetAsyncKeyState(VK_SHIFT) & 0xff00) == 0 &&
         (NetDaemonNet.channels_[0].leading_words_[3] & 1U) != 0 &&
         (vehicle.state & 0x0200U) == 0 &&
         (GameDataStateStorage.fields_.game_more_preferences_ & 0x80U) == 0) {

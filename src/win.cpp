@@ -30,6 +30,7 @@
 #include "stdafx.h"
 #include "win_callbacks.h"
 
+// RECOVERY_IMPORT: v1 __imp__CallWindowProcA@20 USER32.dll name:CallWindowProcA
 // SDK dependency used by the keyboard/mouse pumps; the pinned PE supplies
 // its IAT slot. This is not an application-function recovery identity.
 // RECOVERY_IMPORT: v1 __imp__PeekMessageA@20 USER32.dll name:PeekMessageA
@@ -12752,23 +12753,19 @@ int __cdecl Win::display_action(int action) {
 /*
 Purpose: Pre-filter the owner window's messages before the shared window
          procedure sees them.
-// ORIGINAL: 0x005D5C50 PrevWndFunc 0x005D5C50-0x005D5CEA FILE
+// ORIGINAL: 0x005D5C50 PrevWndFunc 0x005D5C50-0x005D5CEA FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Historical seed git:117282ee:src/unrecovered/005d5c50.cpp retains original identity/spans.", "Pinned 5D5C50..5D5CEA handles WM_SIZE at Win virtual slot71 with signed low/high16-bit dimensions; WM_SETCURSOR uses slot85 with zero-extended words and returns its result.", "Win::on_size(unsigned int,int,int) and on_set_cursor(void*,unsigned int,unsigned int) are existing source-owned virtual slots71/85; Dialog::UNK2 calls this free WNDPROC through CallWindowProcA.", "GWL_USERDATA is the same genuine Win view used by the typed message adapters in win.cpp. Keep message-specific userdata lookup, null returns, the four-slot 32-bit stdcall WNDPROC boundary, and Win::window_proc fallback."], "reason": "Recover the window pre-filter as a genuine free Win-owned Windows callback, using existing virtual methods instead of fabricated slot receiver types. Preserve original payload transforms, guards and result/fallback behavior; no new match claim."}
 // symbol    _PrevWndFunc@16
 Status: Coverage transcription - unclaimed body
 */
 extern "C" LRESULT __stdcall PrevWndFunc(HWND window, UINT message,
                                          WPARAM wparam, LPARAM lparam) {
-    if (message == 5) {
-        Win *const owner = reinterpret_cast<Win *>(
-            GetWindowLongA((HWND)window, GWL_USERDATA));
-        if (owner != 0) {
-            owner->on_size(static_cast<unsigned int>(wparam),
-                           static_cast<short>(lparam),
-                           static_cast<short>(lparam >> 16));
+    if (message != 5) {
+        if (message != 0x20) {
+            return CallWindowProcA(&Win::window_proc,
+                                   (HWND)window, (UINT)message, (WPARAM)wparam,
+                                   (LPARAM)lparam);
         }
-        return 0;
-    } else if (message == 0x20) {  // WM_SETCURSOR
         Win *const owner = reinterpret_cast<Win *>(
             GetWindowLongA((HWND)window, GWL_USERDATA));
         if (owner != 0) {
@@ -12780,9 +12777,14 @@ extern "C" LRESULT __stdcall PrevWndFunc(HWND window, UINT message,
         }
         return 0;
     }
-    return CallWindowProcA(&Win::window_proc,
-                           (HWND)window, (UINT)message, (WPARAM)wparam,
-                           (LPARAM)lparam);
+    Win *const owner = reinterpret_cast<Win *>(
+        GetWindowLongA((HWND)window, GWL_USERDATA));
+    if (owner != 0) {
+        owner->on_size(static_cast<unsigned int>(wparam),
+                       static_cast<short>(lparam),
+                       static_cast<short>(static_cast<unsigned int>(lparam) >> 16));
+    }
+    return 0;
 }
 
 // Original DLL/export identity is independently read from the pinned import

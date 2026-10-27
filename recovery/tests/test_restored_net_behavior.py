@@ -40,6 +40,8 @@ def test_player_index16_skips_initialization_then_keeps_shared_effects():
     body = extract(source, "int Net::sub_632cc0(char *text, int id, unsigned char flag)")
     assert "if (index == 16)" not in body
     assert "return 4;" not in body
+    assert "const uint32_t row_id = players_[index].field_0_;" in body
+    assert "return static_cast<int>(row_id);" in body
     init_start = body.index("if (index < 16)")
     init_open = body.index("{", init_start)
     depth = 0
@@ -62,10 +64,13 @@ def test_player_index16_skips_initialization_then_keeps_shared_effects():
     assert "++field_6DC_;" in tail
     assert "broadcast_player_table();" in tail
     assert tail.index("broadcast_player_table();") < tail.index("on_player_added(")
-    assert "reinterpret_cast<char *>(&guid_6E8_) + 1" in tail
-    assert "field_6D4_" in tail
-    assert tail.index("on_player_added(") < tail.index("jackal_voice_rx_.add_player(")
-    assert "index < 16 ? players_[index].field_0_ : field_6D4_" in tail
+    assert "on_player_added(players_[index].name_and_tail_, players_[index].field_0_)" in tail
+    assert "index < 16 ?" not in tail
+    assert "reinterpret_cast<char *>(&guid_6E8_) + 1" not in tail
+    assert tail.index("on_player_added(") < tail.index("receivers.add_player(")
+    assert "JackalVoiceRx &receivers = jackal_voice_rx_;" in tail
+    assert "receivers.add_player(static_cast<int>(players_[index].field_0_));" in tail
+    assert "else {\n        voice = 0;" in tail
 
 
 def test_pinned_player_index16_branch_and_callback_reread():

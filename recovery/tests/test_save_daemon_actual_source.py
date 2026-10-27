@@ -89,7 +89,7 @@ def test_actual_product_body_and_storage_under_cpp98(tmp_path):
         subprocess.run([str(binary)], check=True, timeout=30)
 
 
-@pytest.mark.parametrize("mutation", ["wrong_word", "recapture", "clear_high_bit"])
+@pytest.mark.parametrize("mutation", ["wrong_word", "wrong_api", "recapture", "clear_high_bit"])
 @pytest.mark.parametrize("compiler", ["g++", "clang++"])
 def test_tick_storage_compile_success_mutations_fail(tmp_path, mutation, compiler):
     executable = shutil.which(compiler)
@@ -103,11 +103,15 @@ def test_tick_storage_compile_success_mutations_fail(tmp_path, mutation, compile
     if mutation == "wrong_word":
         body = body.replace(anchor, "fwrite(&GameDataPlayerCountSnapshot, 4, 1, file)")
     elif mutation == "recapture":
-        body = body.replace(anchor, "(save_tick = GetTickCount(), " + anchor + ")")
-    else:
-        original = "DWORD save_tick = GetTickCount();"
+        body = body.replace(anchor, "(save_tick = timeGetTime(), " + anchor + ")")
+    elif mutation == "wrong_api":
+        original = "DWORD save_tick = timeGetTime();"
         assert body.count(original) == 1
-        body = body.replace(original, "DWORD save_tick = GetTickCount() & 0x7FFFFFFFu;")
+        body = body.replace(original, "DWORD save_tick = GetTickCount();")
+    else:
+        original = "DWORD save_tick = timeGetTime();"
+        assert body.count(original) == 1
+        body = body.replace(original, "DWORD save_tick = timeGetTime() & 0x7FFFFFFFu;")
     source = FIXTURE.read_text().replace("// ACTUAL_STORAGE_DECLARATIONS",
                                          actual_storage_declarations())
     source = source.replace("/* ACTUAL_GAME_DATA_STATE_HEADER */",

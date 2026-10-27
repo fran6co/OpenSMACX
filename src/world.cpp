@@ -2947,12 +2947,14 @@ void __cdecl world_rocky() {
 //    near miss from a wrong body.
 void __cdecl world_UNK1(int x, int y) {
     int rainfall = ((map_loc(x, y)->climate >> 3) & 3) + 1;
-    if (rainfall < 0) {
-        rainfall = 0;
-    } else if (rainfall > 2) {
-        rainfall = 2;
+    if (rainfall >= 0) {
+        if (rainfall > 2) {
+            rainfall = 2;
+        }
+        climate_set(x, y, rainfall);
+    } else {
+        climate_set(x, y, 0);
     }
-    climate_set(x, y, rainfall);
 }
 
 /*

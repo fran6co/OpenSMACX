@@ -1,0 +1,20 @@
+{
+  "event_id": "88553832fa5581094885248eb9dc3f46db6b1cd4136141088eb60c63f51a92d8",
+  "payload": {
+    "author": "recovery-coordinator",
+    "editable_files": [
+      "recovery/tests/fixtures/config_game_api.cpp",
+      "recovery/tests/save_daemon_host.cpp"
+    ],
+    "evidence": [
+      "Coordinator review includes the existing actual-source host fixtures used by authorized timer tests. Distinct kernel/WinMM observers are necessary to test the API correction. Config fixture receives already-existing Dialog coordinates needed to compile its actual current body; no product scope expansion or acceptance relaxation."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "coordinator-host-fixture-closure",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:easy-timing-oct27ka"
+}
