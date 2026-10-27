@@ -256,10 +256,12 @@ struct MediaRuntime {
   LONG release_sound_device;                      // +3cc
   LONG protocol_gate;                             // +3d0; not thread-mode
   LONG release_interface_10;                      // +3d4; gates +10 Release
-  DWORD decoder_state_3d8;                       // +3d8; decoder read/write
-  DWORD decoder_state_3dc;                       // +3dc; decoder read/write
-  DWORD decoder_state_3e0;                       // +3e0; decoder read/write
-  DWORD decoder_state_3e4;                       // +3e4; decoder read/write
+  // Pinned 5CA310 sign-extends four signed packet words into these states;
+  // both decoder helpers read and update them as signed ints.
+  int decoder_state_3d8;                         // +3d8; decoder read/write
+  int decoder_state_3dc;                         // +3dc; decoder read/write
+  int decoder_state_3e0;                         // +3e0; decoder read/write
+  int decoder_state_3e4;                         // +3e4; decoder read/write
   // Native5CA3CE/5CA3D4 pass these two words directly to5CE6E3.
   // Each packs signed 16-bit left/right state; adjacent words are untouched.
   int decoder_state_3e8;                         // +3e8; packed predictors
