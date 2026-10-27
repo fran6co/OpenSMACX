@@ -1,29 +1,12 @@
 """Actual-source rounding and pinned instruction controls, not full codec proof."""
 from pathlib import Path
-import subprocess
 
 import pytest
 
 from test_movie_media_behavior import build_and_run, definition
 
 ROOT = Path(__file__).resolve().parents[2]
-BASE = "03ad13280"
 SIGNATURE = "static int media_scale_signed_component("
-
-
-def test_only_private_scaling_body_changes_and_mappings_survive():
-    from match_recovery.source import read_text
-    from test_texture_raster_actual_source import _continuity_fields
-    path = ROOT / "src/movie_media.cpp"
-    old = subprocess.check_output(["git", "show", BASE + ":src/movie_media.cpp"],
-                                  cwd=ROOT, text=True)
-    new = path.read_text()
-    from test_media_motion_storage_oct11 import restore_motion_storage
-    new = restore_motion_storage(new, 'src/movie_media.cpp')
-    assert old.replace(definition(old, SIGNATURE), "REVIEWED_SCALING") == new.replace(
-        definition(new, SIGNATURE), "REVIEWED_SCALING")
-    assert [(_continuity_fields(r), r.symbol, r.function_fragment) for r in read_text(old, path)] == [
-        (_continuity_fields(r), r.symbol, r.function_fragment) for r in read_text(new, path)]
 
 
 @pytest.mark.parametrize("replacement", [

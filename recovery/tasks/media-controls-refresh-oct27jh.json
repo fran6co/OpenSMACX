@@ -1,0 +1,44 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "a964df04e8c250a68802cdb2568d0edf0889a55a",
+  "editable_files": [
+    "recovery/tests/test_movie_decoder_integration.py",
+    "recovery/tests/movie_decoder_host.cpp",
+    "recovery/tests/test_movie_runtime_decoder_ownership_actual_source_oct9.py",
+    "recovery/tests/test_movie_media_case3_dispatch_source.py",
+    "recovery/tests/test_movie_idct_pointer_owner_oct13ae.py",
+    "recovery/tests/test_media_component_rounding_oct11.py"
+  ],
+  "evidence": [
+    "All five stale test failures were reproduced on unchanged a964 predecessor327, independently of the shared-frame correction.",
+    "Runtime fixtures must follow the source-owned live descriptor pointer and test callback-time replacement; preserve original dispatch, pitch, output and negative controls.",
+    "The combined decoder control must compile the actual void blender and keep its frame/Huffman/IDCT/output/allocation checks.",
+    "Retire only the obsolete whole-file token/comment and single-migration snapshot assertions. Existing actual-source pointer/rounding, pinned instruction and native source/claim continuity controls remain active. Production source and build/compiler settings must remain byte-for-byte unchanged."
+  ],
+  "intent": "Restore host decoder fixtures to current genuine interfaces and retire one-time whole-file migration snapshots without dropping behavior or pinned controls.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6080832,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6104929,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6090800,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6083936,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "media-controls-refresh-oct27jh"
+}
