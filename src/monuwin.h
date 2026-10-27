@@ -39,9 +39,11 @@ class MonuWin : public GraphicWin {
   int selection_pending_;        // +0xA4C
   int preview_faction_or_page_;  // +0xA50
   int selected_monument_type_;   // +0xA54
-  FlatButton buttons_[2];
+  FlatButton button_first_;
+  FlatButton button_second_;
   Spot spot_;
-  Buffer buffers_[2];
+  Buffer buffer_first_;
+  Buffer buffer_second_;
   Sprite sprites_2C0C_[15];
   Sprite sprites_2EA0_[15];
   RECT rects_3134_[17];
@@ -49,7 +51,8 @@ class MonuWin : public GraphicWin {
   RECT icon_rects_[6];
   Sprite sprites_33AC_[7];
   Sprite sprites_34E0_[7];
-  Sprite sprites_3614_[2];
+  Sprite sprite_first_;
+  Sprite sprite_second_;
   RECT rects_366C_[7];
 };
 
