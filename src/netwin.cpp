@@ -3538,7 +3538,7 @@ Status: Coverage transcription - claim pending re-measurement
 */
 void __cdecl send_session_packet(int slot_id, int target) {
     NetWinSessionOptionsPacket packet;
-    memcpy(&packet.options_, &NetWinSessionOptions, sizeof(packet.options_));
+    packet.options_ = NetWinSessionOptions;
     if (target < 0) {
         packet.opcode_ = 0x4F02;
         NetDaemonNet.Net::send(&packet, sizeof(packet), 0, 1);

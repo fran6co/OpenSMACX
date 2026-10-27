@@ -1,0 +1,32 @@
+{
+  "event_id": "d7a88a333ab632cfe819c6998c3296d1411e4cbed6aa8986db136172fe921147",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/netwin.cpp",
+      "src/spritebox.cpp"
+    ],
+    "evidence": [
+      "Native actual-application candidates match original packet copy and sprite/list insertion. Typed aggregate copies the full24-byte options with no padding and preserves untouched reserved packet bytes. Local aliases retain real embedded list ownership and callback ordering.",
+      "Collect only the exact functions, leaving unrelated failed trials and discoveries in worker trees. Require strict application reference/boundary checks, build/link and209-object outside preservation."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4698720,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6359264,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "eca87e8bc1c0f4410ceb7c4f3593186413aabdd7850d72f88eef863d21e9da9e",
+  "request_id": "collect-session-packet-and-sprite-exacts",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:exact-winners-oct27md"
+}

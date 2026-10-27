@@ -1,0 +1,22 @@
+{
+  "author": "coordinator",
+  "base_revision": "775eee2f0ef0db36c99280c7808e727d7fc9e4c2",
+  "editable_files": [
+    "src/basewin.cpp"
+  ],
+  "evidence": [
+    "Coordinator-reviewed manual integration authorized. Preserve original bugs, mappings and claims. Official recorder banks matches; full application build/link, scoped strict references and outside preservation required before merge. No full-game acceptance claim.",
+    "Expand scope for additional exact winners or verified inlining consumers without resetting original baseline. Preserve failed variants and structural discoveries in isolated workers."
+  ],
+  "intent": "Integrate actual-application byte-exact gains from parallel recovery; defer polish with no matching benefit.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4228112,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "exact-winners-oct27md"
+}

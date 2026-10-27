@@ -1068,18 +1068,22 @@ void ReportIf::close_ops() {
 
     FlatButton *button = &ReportWinGlobal.flatButton4_;
     button->reset_field_A9C_if_ungrouped();
-    button->hide();
+    button->Win::hide();
     button = &ReportWinGlobal.flatButton5_;
     button->reset_field_A9C_if_ungrouped();
-    button->hide();
+    button->Win::hide();
     button = &ReportWinGlobal.flatButton6_;
     button->reset_field_A9C_if_ungrouped();
-    button->hide();
+    button->Win::hide();
 
     if (field_8_ != 4 && field_8_ != 5) {
         WorldClimateWorldWin.hide_all();
-        MainInterfaceGlobal.flat_button_[6].hide();
-        MainInterfaceGlobal.flat_button_[7].hide();
+        FlatButton *button = &MainInterfaceGlobal.flat_button_[6];
+        FlatButton *const last = &MainInterfaceGlobal.flat_button_[7];
+        while (reinterpret_cast<int>(button) <= reinterpret_cast<int>(last)) {
+            button->hide();
+            ++button;
+        }
     }
 }
 

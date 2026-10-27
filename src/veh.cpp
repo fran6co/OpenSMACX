@@ -9718,17 +9718,16 @@ Return Value: n/a
 Status: BYTE_EXACT.
 */
 void __cdecl veh_move_end(int veh_id) {
-    Veh &vehicle = Vehs[veh_id];
-    if ((vehicle.state & 0x2000200) == 0x2000200 &&
-        vehicle.patrol_current_point < vehicle.waypoint_count) {
-        vehicle.state &= 0xfdfffdff;
+    if ((Vehs[veh_id].state & 0x2000200) == 0x2000200 &&
+        Vehs[veh_id].patrol_current_point < Vehs[veh_id].waypoint_count) {
+        Vehs[veh_id].state &= 0xfdfffdff;
     }
-    if ((vehicle.state & 0x1000200) == 0x1000200) {
-        vehicle.state &= 0xfefffdff;
+    if ((Vehs[veh_id].state & 0x1000200) == 0x1000200) {
+        Vehs[veh_id].state &= 0xfefffdff;
     }
-    vehicle.state &= 0xffffbfff;
-    if (vehicle.order == 0x18) {
-        vehicle.order = 0;
+    Vehs[veh_id].state &= 0xffffbfff;
+    if (Vehs[veh_id].order == 0x18) {
+        Vehs[veh_id].order = 0;
     }
 }
 

@@ -1,0 +1,26 @@
+{
+  "event_id": "44ba10e45637071cf33611cd58a368f6a542db7ed4ad3ba857e1486813eb49f9",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/reportif.cpp"
+    ],
+    "evidence": [
+      "Original first9 ReportIf controls retain virtual hide dispatch. Original next3 ReportWin buttons reset the ungrouped state and directly call Win::hide; restore qualified base calls instead of derived dispatch. Original0x87E114 is ReportWinGlobal876478 plus flatButton4_ offset7C9C, not the later WorldClimate object.",
+      "Last two MainInterface controls retain their original signed pointer-loop comparison. reinterpret_cast<int> is explicitly VC6/IA32-targeted quality debt, accepted under user exactness-first priority; no portable64bit source claim. Native application-profile report is exact65/65; full strict references/build/preservation still required."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4890512,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "d7a88a333ab632cfe819c6998c3296d1411e4cbed6aa8986db136172fe921147",
+  "request_id": "collect-report-close-direct-base-dispatch",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:exact-winners-oct27md"
+}
