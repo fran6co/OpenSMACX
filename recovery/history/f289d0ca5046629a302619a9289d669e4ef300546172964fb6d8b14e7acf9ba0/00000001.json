@@ -1,0 +1,21 @@
+{
+  "event_id": "6d419a3070aa248460eaa7d78b79ffa1c461be0345d0e44dacbb918c0f3137f0",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/WORKFLOW.md",
+      "recovery/project.json"
+    ],
+    "evidence": [
+      "The failed native recording used the inherited /O2 pair without explicit /Ob2; the actual qualified application and unchanged-replica probe use /Ob2 and /Oy-. Assign this complete47function owner its already observed production recipe, retaining the failure and original baseline; no production compiler flags are changed.",
+      "The parallel source-form screen rediscovered prior measured Matrix3/Sprite/Console variants absent from local TRIED comments. Require historical test/task/Git evidence screening before claiming a fresh candidate; derived attempt outcomes remain ignored caches and existing task decisions."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "sounddevice-production-recipe-and-history-screen",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:sounddevice-init-calls-oct27hn"
+}
