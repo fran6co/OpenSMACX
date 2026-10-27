@@ -660,7 +660,7 @@ MEASURED inline int __cdecl veh_who(int x, int y) {
 MEASURED inline int __cdecl x_dist(int x_point_a, int x_point_b) {
     int dist = abs(x_point_a - x_point_b);
     if (!(MapIsFlat & 1) && dist > (int)MapLongitude) {
-        dist = MapLongitudeBounds - dist;
+        return MapLongitudeBounds - dist;
     }
     return dist;
 }

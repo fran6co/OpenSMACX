@@ -84,3 +84,68 @@ def test_actual_owner_and_consumer_keep_signed_comparison(tmp_path, damage, expe
                             str(source), "-o", str(binary)], capture_output=True, timeout=60)
     assert built.returncode == 0, built.stderr.decode(errors="replace")
     assert subprocess.run([str(binary)], timeout=15).returncode == expected
+
+
+def _extract_x_dist(header):
+    signature = "MEASURED inline int __cdecl x_dist("
+    start = header.index(signature)
+    body_start = header.index("{", start)
+    depth = 0
+    for index in range(body_start, len(header)):
+        if header[index] == "{":
+            depth += 1
+        elif header[index] == "}":
+            depth -= 1
+            if depth == 0:
+                return header[start:index + 1]
+    raise AssertionError("unterminated x_dist definition")
+
+
+def test_actual_x_dist_ring_flat_flags_and_original_signed_wrap(tmp_path):
+    compiler = shutil.which("g++") or shutil.which("clang++")
+    if compiler is None:
+        pytest.skip("host C++ compiler unavailable")
+    helper = _extract_x_dist((ROOT / "src/map.h").read_text())
+    source = tmp_path / "x_dist.cpp"
+    source.write_text(
+        "#include <cstdlib>\n"
+        "#include <cstdio>\n"
+        "#define MEASURED\n"
+        "#define __cdecl\n"
+        "static int fixture_flat;\n"
+        "static int fixture_longitude;\n"
+        "static int fixture_bounds;\n"
+        "#define MapIsFlat fixture_flat\n"
+        "#define MapLongitude fixture_longitude\n"
+        "#define MapLongitudeBounds fixture_bounds\n"
+        + helper + "\n"
+        "static void check(int a, int b, int flat, int longitude, int bounds, int expected) {\n"
+        "  fixture_flat = flat; fixture_longitude = longitude; fixture_bounds = bounds;\n"
+        "  const int actual = x_dist(a, b);\n"
+        "  if (actual != expected) { std::fprintf(stderr, \"x_dist(%d,%d; flat=%d, half=%d, bounds=%d): %d != %d\\n\", a, b, flat, longitude, bounds, actual, expected); std::abort(); }\n"
+        "}\n"
+        "int main() {\n"
+        "  // Hand-checked shortest distance on a 16-column wrapped ring.\n"
+        "  check(0, 0, 0, 8, 16, 0); check(0, 3, 0, 8, 16, 3);\n"
+        "  check(0, 7, 0, 8, 16, 7); check(0, 8, 0, 8, 16, 8);\n"
+        "  check(0, 9, 0, 8, 16, 7); check(0, 12, 0, 8, 16, 4);\n"
+        "  check(2, 14, 0, 8, 16, 4); check(15, 1, 0, 8, 16, 2);\n"
+        "  // Only bit zero selects flat behavior; other bits do not.\n"
+        "  check(0, 12, 1, 8, 16, 12); check(0, 12, 3, 8, 16, 12);\n"
+        "  check(0, 12, 2, 8, 16, 4); check(0, 12, 0x100, 8, 16, 4);\n"
+        "  // Preserve original off-range subtraction, including negative result.\n"
+        "  check(0, 20, 0, 8, 16, -4);\n"
+        "  // A negative signed half-width compares signed and triggers wrapping.\n"
+        "  check(0, 6, 0, -8, 16, 10);\n"
+        "  return 0;\n"
+        "}\n"
+    )
+    binary = tmp_path / "x_dist"
+    built = subprocess.run(
+        [compiler, "-std=c++11", "-Wall", "-Wextra", "-Werror", str(source), "-o", str(binary)],
+        capture_output=True,
+        timeout=60,
+    )
+    assert built.returncode == 0, built.stderr.decode(errors="replace")
+    ran = subprocess.run([str(binary)], capture_output=True, timeout=15)
+    assert ran.returncode == 0, ran.stderr.decode(errors="replace")

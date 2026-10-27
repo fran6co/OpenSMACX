@@ -406,7 +406,7 @@ int __cdecl vector_dist(int x_distance, int y_distance) {
 /*
 Purpose: Take two points and calculate how far out they radiate. This is mainly used to determine
          proximity or how far away the two points are from each other in a rough circle shape.
-// ORIGINAL: 0x005A5910 ?vector_dist@@YAHHHHH@Z 0x005A5910-0x005A5987
+// ORIGINAL: 0x005A5910 ?vector_dist@@YAHHHHH@Z 0x005A5910-0x005A5987 BYTE_EXACT
 // Historical LEVER: inlining the two-argument overload here removed the
 //        original function call from this body. The overload now has an
 //        ordinary map.cpp definition above; same-translation-unit visibility
