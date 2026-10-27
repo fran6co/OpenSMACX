@@ -1675,9 +1675,9 @@ extern "C" int __fastcall sub_5ca310(MediaRuntime *r, int byte_count) {
       if (r->decoded_ring_current + output_bytes >= r->decoded_ring_base + 0x493e0)
         r->decoded_ring_current = r->decoded_ring_base;
       output = (unsigned int)r->decoded_ring_current;
-      sub_5cdd10(count, &cursor, (int *)&r->decoder_state_3d8,
-                 (int *)&r->decoder_state_3e0, (int *)&r->decoder_state_3dc,
-                 (int *)&r->decoder_state_3e4, (int)(input + 0x24), &output);
+      sub_5cdd10(count, &cursor, &r->decoder_state_3d8,
+                 &r->decoder_state_3e0, &r->decoder_state_3dc,
+                 &r->decoder_state_3e4, (int)(input + 0x24), &output);
       byte_count = output_bytes;
     } else {
       int count = encoded / 15;
@@ -1685,8 +1685,8 @@ extern "C" int __fastcall sub_5ca310(MediaRuntime *r, int byte_count) {
       if (r->decoded_ring_current + output_bytes >= r->decoded_ring_base + 0x493e0)
         r->decoded_ring_current = r->decoded_ring_base;
       output = (unsigned int)r->decoded_ring_current;
-      sub_5cdb90(count, &cursor, (int *)&r->decoder_state_3d8,
-                 (int *)&r->decoder_state_3e0, (int)(input + 0x24), &output);
+      sub_5cdb90(count, &cursor, &r->decoder_state_3d8,
+                 &r->decoder_state_3e0, (int)(input + 0x24), &output);
       byte_count = output_bytes;
     }
   } else if (r->format_dispatch_60 == 0x0a) {

@@ -1,0 +1,34 @@
+{
+  "author": "coordinator",
+  "base_revision": "132033e25ac50a7ab2bc20b4bb7cbcc8dc16e5bf",
+  "editable_files": [
+    "src/movie_media.h",
+    "src/movie_media.cpp"
+  ],
+  "evidence": [
+    "Pinned sub_5ca310 sign-extends four short packet inputs into MediaRuntime offsets3D8/3DC/3E0/3E4; both decoder APIs consume/update their addresses as signed int pointers. Current declarations are DWORD, requiring six incompatible pointer casts across four fields. Entry-rooted original and qualified object review retained under easy-owner-wave-oct27ka/D/media-5ca310-review.json.",
+    "Authorize only these four same-width DWORD-to-int declarations, concise stable signed-predictor evidence, and removal of six int-pointer casts on these fields. Preserve packet parsing, all neighboring fields, offsets, class size, helper signatures, branch/operation order, unsafe/error behavior, original mappings and historical claims. Source names are unchanged; no guessed common packet struct or new codec attribution.",
+    "Worker may edit only the two listed files and inspect existing controls. Coordinator owns Git, compiler lease and measurement, fullbuild/link and independent source/CodeView/reference review. Do not hand-edit ORIGINAL markers or claims. No automatic acceptance, no manufactured exactness, and retain all collateral compiler-output review obligations."
+  ],
+  "intent": "Recover the signed types of four decoder predictor state members and remove their incompatible pointer casts.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6071056,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6085520,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6085904,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "media-predictor-types-oct27"
+}
