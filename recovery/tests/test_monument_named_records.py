@@ -25,7 +25,7 @@ def test_named_milestone_native_flow(tmp_path, compiler_name, function, index, m
     header = (ROOT / "src/game.h").read_text()
     layout = header[header.index("struct MonumentRecord {"):
                     header.index("extern MonumentFaction FactionMonuments")]
-    implementation = body("src/game.cpp", f"void __cdecl {function}(int faction_id, char *base_name) {{")
+    implementation = body("src/faction_monuments.cpp", f"void __cdecl {function}(int faction_id, char *base_name) {{")
     harness = r'''
 #include <cassert>
 #include <cstdint>

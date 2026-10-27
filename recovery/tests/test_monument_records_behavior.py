@@ -158,10 +158,10 @@ def test_shared_monument_records_and_native_milestone_flow(tmp_path):
     header = (ROOT / "src/game.h").read_text()
     layout = header[header.index("struct MonumentRecord {"):
                     header.index("extern MonumentFaction FactionMonuments")]
-    bodies = [body("src/game.cpp", "void __cdecl mon_secrets_of_tech(int faction_id) {")]
-    bodies += [body("src/game.cpp", f"void __cdecl {name}(int faction_id, int counterpart) {{")
+    bodies = [body("src/faction_monuments.cpp", "void __cdecl mon_secrets_of_tech(int faction_id) {")]
+    bodies += [body("src/faction_monuments.cpp", f"void __cdecl {name}(int faction_id, int counterpart) {{")
                for name in ("mon_winning_unify", "mon_winning_trans", "mon_killed_faction")]
-    bodies += [body("src/game.cpp", f"void __cdecl {name}(int faction_id) {{")
+    bodies += [body("src/faction_monuments.cpp", f"void __cdecl {name}(int faction_id) {{")
                for name in ("mon_prototype_built", "mon_naval_unit_built", "mon_air_unit_built",
                             "mon_native_life_bred", "mon_first_in_space")]
     source = tmp_path / "monuments.cpp"

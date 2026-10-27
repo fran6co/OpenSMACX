@@ -1,0 +1,21 @@
+{
+  "event_id": "4574b9365506182e0d6b156699334ceaa510418bf35acba201e6c3266ac85ae4",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_colony_foundation_owner.py",
+      "recovery/tests/test_monument_enemy_owner_behavior.py",
+      "recovery/tests/test_monument_owner_history_oct6.py"
+    ],
+    "evidence": [
+      "The seventeen producer mappings moved unchanged to faction_monuments.cpp. Independent test overlay review confirms these three additional callers only change body lookup location and preserve all behavioral/damage assertions. Existing setup test keeps game.cpp default for unmoved functions."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "monument-owner-test-lookup-closure",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:faction-monuments-owner-oct27hg"
+}

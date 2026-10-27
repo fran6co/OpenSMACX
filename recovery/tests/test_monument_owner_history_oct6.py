@@ -33,7 +33,7 @@ def prior_source():
 @pytest.mark.parametrize("address,name,parameters", SPECS)
 def test_monument_transfer_retains_body_identity_and_seed_history(address, name, parameters):
     before = {r.address: r for r in read_text(prior_source(), ROOT / "src/leaf_recoveries.cpp")}
-    rows = [r for r in read_file(ROOT / "src/game.cpp") if r.address == address]
+    rows = [r for r in read_file(ROOT / "src/faction_monuments.cpp") if r.address == address]
     assert len(rows) == 1
     current, = rows
     assert current.mode is Mode.BODY

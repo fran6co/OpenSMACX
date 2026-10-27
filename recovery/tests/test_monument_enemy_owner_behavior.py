@@ -9,7 +9,7 @@ from test_popup_animation_owner_behavior import run_control
 ROOT = Path(__file__).resolve().parents[2]
 
 def projected(damage=None):
-    row = next(r for r in read_file(ROOT / 'src/game.cpp') if r.address == 0x477210)
+    row = next(r for r in read_file(ROOT / 'src/faction_monuments.cpp') if r.address == 0x477210)
     body = _definition(row.region, 'void __cdecl mon_enemy_destroyed(')
     if damage is not None:
         old, new = damage
