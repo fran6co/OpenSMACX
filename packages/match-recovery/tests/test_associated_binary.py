@@ -129,6 +129,188 @@ def fixture(*, cell_addend=0, selector_byte=0, extra_relocation=False,
     return obj, subject, source_span, image, bindings, {}
 
 
+MULTI_BODY = bytes.fromhex(
+    "83 f9 00 77 10 31 d2 0f b6 91 00 00 00 00 ff 24 95 00 00 00 00 "
+    "83 fe 00 77 10 31 db 0f b6 9e 00 00 00 00 ff 24 9d 00 00 00 00 c3"
+)
+
+
+def multi_fixture(*, groups=2, original_change=None, candidate_change=None,
+                  candidate_gap2=None, candidate_selector2=0, target1=None,
+                  default2=None, omit=(), duplicate_evidence=False,
+                  retarget_candidate=False, wrong_selector_anchor=False,
+                  candidate_cell_targets=None, candidate_selector_values=None,
+                  extra_tail=b"", extra_relocation=False,
+                  unknown_indirect=False):
+    """Build two or more independently guarded selector/table groups."""
+    if groups not in (2, 4):
+        raise ValueError("synthetic multi-dispatch fixture supports two or four groups")
+    guard_codes = (1, 6, 7, 5)   # ecx, esi, edi, ebp
+    index_codes = (2, 3, 0, 1)   # edx, ebx, eax, ecx
+    code = bytearray()
+    selector_fields, table_fields, selector_evidence, table_evidence = [], [], [], []
+    for group, (guard, index) in enumerate(zip(guard_codes[:groups], index_codes[:groups])):
+        start = len(code)
+        code.extend((0x83, 0xF8 | guard, 0, 0x77, 0x10,
+                     0x31, (index << 3) | index,
+                     0x0F, 0xB6, 0x80 | (index << 3) | guard))
+        selector_fields.append(start + 10)
+        code.extend(bytes(4))
+        code.extend((0xFF, 0x24, 0x85 | (index << 3)))
+        table_fields.append(start + 17)
+        code.extend(bytes(4))
+        selector_evidence.append(start + 7)
+        table_evidence.append(start + 14)
+    if unknown_indirect:
+        code.extend(b"\xff\xe0")
+    else:
+        code.append(0xC3)
+    table_offsets, selector_offsets, gaps = [], [], []
+    cursor = len(code)
+    first_table = (cursor + 3) & ~3
+    gaps.append(b"\x90" * (first_table - cursor))
+    cursor = first_table
+    for group in range(groups):
+        table_offsets.append(cursor)
+        selector_offsets.append(cursor + 4)
+        cursor += 5
+        if group + 1 < groups:
+            next_table = (cursor + 3) & ~3
+            gap = b"\x90" * (next_table - cursor)
+            if group == 0 and candidate_gap2 is not None:
+                # Candidate gap spelling is a same-length mutation of this
+                # first inter-group gap; original source data stays pinned.
+                if len(candidate_gap2) != len(gap):
+                    raise ValueError("candidate_gap2 must preserve the fixture extent")
+            gaps.append(gap)
+            cursor = next_table
+
+    # Absolute original operand values; these offsets deliberately preserve
+    # the historical two-group fixture's code anchors at 7/14 and 28/35.
+    for field, target in zip(selector_fields, selector_offsets):
+        struct.pack_into("<I", code, field, BASE + target)
+    for field, target in zip(table_fields, table_offsets):
+        struct.pack_into("<I", code, field, BASE + target)
+    if original_change is not None:
+        offset, value = original_change
+        code[offset] = value
+
+    first_target = BASE + 21 if target1 is None else target1
+    table_targets = [BASE + ((group + 1) * 21) for group in range(groups)]
+    table_targets[0] = first_target
+    if groups > 1 and default2 is not None:
+        table_targets[1] = default2
+    envelope_tail = bytearray(gaps[0])
+    for group in range(groups):
+        envelope_tail.extend(struct.pack("<I", table_targets[group]))
+        envelope_tail.append(0)
+        if group + 1 < groups:
+            envelope_tail.extend(gaps[group + 1])
+    envelope = bytes(code) + bytes(envelope_tail)
+
+    raw = bytearray(1024)
+    raw[:2] = b"MZ"
+    struct.pack_into("<I", raw, 0x3C, 0x80)
+    raw[0x80:0x84] = b"PE\0\0"
+    struct.pack_into("<HHIIIHH", raw, 0x84, 0x14C, 1, 0, 0, 0, 224, 0)
+    struct.pack_into("<H", raw, 0x98, 0x10B)
+    struct.pack_into("<I", raw, 0x98 + 28, 0x400000)
+    struct.pack_into("<I", raw, 0x98 + 92, 16)
+    raw[0x178:0x180] = b".text\0\0\0"
+    struct.pack_into("<IIII", raw, 0x180, 512, 0x1000, 512, 512)
+    struct.pack_into("<I", raw, 0x178 + 36, 0x60000020)
+    raw[512:512 + len(envelope)] = envelope
+    fixups = (*selector_fields, *table_fields, *table_offsets)
+    entries = [0x3000 + offset for offset in fixups]
+    block_size = 8 + 2 * len(entries)
+    struct.pack_into("<II", raw, 0x98 + 96 + 5 * 8, 0x1100, block_size)
+    struct.pack_into("<II", raw, 768, 0x1000, block_size)
+    for index, entry in enumerate(entries):
+        struct.pack_into("<H", raw, 776 + index * 2, entry)
+
+    candidate_code = bytearray(code)
+    for field in (*selector_fields, *table_fields):
+        candidate_code[field:field + 4] = bytes(4)
+    if candidate_change is not None:
+        offset, value = candidate_change
+        candidate_code[offset] = value
+    selectors = dict(candidate_selector_values or {})
+    if groups > 1:
+        selectors.setdefault(1, candidate_selector2)
+    candidate_tail = bytearray(gaps[0])
+    for group in range(groups):
+        candidate_tail.extend(bytes(4))
+        candidate_tail.append(selectors.get(group, 0))
+        if group + 1 < groups:
+            candidate_gap = gaps[group + 1]
+            if group == 0 and candidate_gap2 is not None:
+                candidate_gap = candidate_gap2
+            candidate_tail.extend(candidate_gap)
+    candidate_tail.extend(extra_tail)
+    data = candidate_code + candidate_tail
+    data += b"\x90" * (-len(data) % 16)
+
+    symbol_indices = {}
+    symbols = bytearray()
+    symbols += b"_f\0\0\0\0\0\0" + struct.pack("<IhHBB", 0, 1, 0x20, 2, 0)
+    symbols += b".text\0\0\0" + struct.pack("<IhHBB", 0, 1, 0, 3, 1)
+    symbols += struct.pack("<IHHIHB", len(data), len(fixups) + int(extra_relocation),
+                           0, 0, 0, 2) + bytes(3)
+    for group in range(groups):
+        for role, value in (("tbl", table_offsets[group]),
+                            ("sel", selector_offsets[group]),
+                            ("def", (group + 1) * 21)):
+            name = f"{role}{group}"
+            symbol_indices[name] = 3 + group * 3 + (0 if role == "tbl" else 1 if role == "sel" else 2)
+            symbols += name.encode().ljust(8, b"\0") + struct.pack("<IhHBB", value, 1, 0, 6, 0)
+
+    cell_targets = dict(candidate_cell_targets or {})
+    if retarget_candidate:
+        cell_targets[0] = min(1, groups - 1)
+    relocations = []
+    for group, field in enumerate(selector_fields):
+        target_group = 1 if wrong_selector_anchor and group == 0 else group
+        relocations.append((field, symbol_indices[f"sel{target_group}"], 6))
+    for group, field in enumerate(table_fields):
+        relocations.append((field, symbol_indices[f"tbl{group}"], 6))
+    original_target_groups = {BASE + ((group + 1) * 21): group
+                              for group in range(groups)}
+    for group, table_offset in enumerate(table_offsets):
+        original_target_group = original_target_groups.get(table_targets[group], group)
+        target_group = cell_targets.get(group, original_target_group)
+        relocations.append((table_offset, symbol_indices[f"def{target_group}"], 6))
+    if extra_relocation:
+        relocations.append((len(envelope) + 3, symbol_indices["def0"], 6))
+    relocation_blob = b"".join(struct.pack("<IIH", *row) for row in relocations)
+    data_at = 60
+    relocation_at = data_at + len(data)
+    symbol_at = relocation_at + len(relocation_blob)
+    symbol_count = 3 + groups * 3
+    header = struct.pack("<HHIIIHH", 0x14C, 1, 0, symbol_at, symbol_count, 0, 0)
+    flags = 0x60501020
+    section = (b".text\0\0\0" + struct.pack("<IIIIIIHHI", 0, 0, len(data), data_at,
+                                                relocation_at, 0, len(relocations), 0, flags))
+    obj = Coff(header + section + data + relocation_blob + symbols + struct.pack("<I", 4))
+    pin = hashlib.sha256(raw).hexdigest()
+    image = PeImage(bytes(raw), pin)
+    owner = Origin(pin, "pe:va", BASE)
+    rows = []
+    for group in range(groups):
+        rows.append(AssociatedDataBinding(
+            owner, Span(BASE + table_offsets[group], BASE + table_offsets[group] + 4),
+            "switch_targets", Origin(pin, "pe:va", BASE + table_evidence[group]),
+            "fixture.cpp", group * 2 + 1))
+        rows.append(AssociatedDataBinding(
+            owner, Span(BASE + selector_offsets[group], BASE + selector_offsets[group] + 1),
+            "switch_selector", Origin(pin, "pe:va", BASE + selector_evidence[group]),
+            "fixture.cpp", group * 2 + 2))
+    if duplicate_evidence:
+        rows[-1] = AssociatedDataBinding(owner, rows[-1].span, rows[-1].kind,
+                                         rows[1].evidence, rows[-1].unit, rows[-1].line)
+    rows = [row for index, row in enumerate(rows) if index not in omit]
+    return obj, obj.function("_f"), Span(BASE, BASE + len(code)), image, tuple(rows), {}
+
+
 def test_explicit_same_comdat_table_and_selector_compare_exactly():
     obj, subject, span, image, bindings, targets = fixture()
     report = compare_associated_code(obj, subject, span, image, bindings, targets)
@@ -405,3 +587,119 @@ def test_four_byte_nonfill_gap_remains_outside_the_supported_alignment_domain(mo
         candidate_gap=bytes.fromhex("8d 49 00 90"))
     with pytest.raises(ValueError, match="supported alignment"):
         compare_associated_code(obj, subject, span, image, bindings, targets)
+
+
+def test_two_adjacent_pairs_require_and_prove_each_dispatch_independently():
+    obj, subject, span, image, bindings, targets = multi_fixture()
+    report = compare_associated_code(obj, subject, span, image, bindings, targets)
+    assert report["result"] == Result.PASS, (report.get("bytes"), report.get("references"),
+                                               report.get("reason"))
+    assert len(report["dispatch_extents"]) == 2
+    assert [row["mode"] for row in report["dispatch_extents"]] == ["mapped-index"] * 2
+    assert [row["target_count"] for row in report["dispatch_extents"]] == [1, 1]
+    assert report["comparison_span"] == {"start": BASE, "end": BASE + 57}
+    assert [row.span.start - BASE for row in bindings if row.kind == "switch_targets"] == [44, 52]
+
+
+def test_two_group_default2_parameter_does_not_move_historical_data_offsets():
+    obj, subject, span, image, bindings, targets = multi_fixture(default2=BASE + 21)
+    report = compare_associated_code(obj, subject, span, image, bindings, targets)
+    assert report["result"] == Result.PASS
+    assert [row.span.start - BASE for row in bindings if row.kind == "switch_targets"] == [44, 52]
+
+
+def test_four_adjacent_pairs_compare_one_complete_envelope():
+    obj, subject, span, image, bindings, targets = multi_fixture(groups=4)
+    report = compare_associated_code(obj, subject, span, image, bindings, targets)
+    assert report["result"] == Result.PASS, (report.get("bytes"), report.get("references"),
+                                               report.get("reason"))
+    assert len(report["dispatch_extents"]) == 4
+    assert [row["target_count"] for row in report["dispatch_extents"]] == [1, 1, 1, 1]
+    assert report["comparison_span"] == {"start": BASE, "end": BASE + 117}
+    assert [row.span.start - BASE for row in bindings if row.kind == "switch_targets"] == [88, 96, 104, 112]
+
+
+@pytest.mark.parametrize("omit", [(2, 3), (6, 7)])
+def test_four_group_middle_and_last_group_omission_refuses(omit):
+    obj, subject, span, image, bindings, targets = multi_fixture(groups=4, omit=omit)
+    with pytest.raises(ValueError, match="cover every indexed"):
+        compare_associated_code(obj, subject, span, image, bindings, targets)
+
+
+@pytest.mark.parametrize("selector_row", [1, 3, 5, 7])
+def test_four_group_selector_omission_refuses_for_each_group(selector_row):
+    obj, subject, span, image, bindings, targets = multi_fixture(groups=4, omit=(selector_row,))
+    with pytest.raises(ValueError, match="require one adjacent selector"):
+        compare_associated_code(obj, subject, span, image, bindings, targets)
+
+
+@pytest.mark.parametrize("group", [0, 1, 2, 3])
+def test_four_group_cell_or_selector_damage_is_checked_per_group(group):
+    obj, subject, span, image, bindings, targets = multi_fixture(
+        groups=4, candidate_cell_targets={group: (group + 1) % 4})
+    cell_report = compare_associated_code(obj, subject, span, image, bindings, targets)
+    assert cell_report["result"] != Result.PASS
+    obj, subject, span, image, bindings, targets = multi_fixture(
+        groups=4, candidate_selector_values={group: 1})
+    selector_report = compare_associated_code(obj, subject, span, image, bindings, targets)
+    assert selector_report["result"] != Result.PASS
+
+
+@pytest.mark.parametrize("omit", [(2, 3), (2,), (3,)])
+def test_missing_group_or_selector_never_proves_the_remaining_dispatches(omit):
+    obj, subject, span, image, bindings, targets = multi_fixture(omit=omit)
+    with pytest.raises(ValueError, match="cover every indexed|require one adjacent|orphan"):
+        compare_associated_code(obj, subject, span, image, bindings, targets)
+
+
+def test_ambiguous_selector_evidence_is_rejected():
+    obj, subject, span, image, bindings, targets = multi_fixture(duplicate_evidence=True)
+    with pytest.raises(ValueError, match="evidence is ambiguous"):
+        compare_associated_code(obj, subject, span, image, bindings, targets)
+
+
+@pytest.mark.parametrize("original_change,reason", [
+    ((3, 0x76), "guard"),       # signed JBE does not establish unsigned extent
+    ((9, 0x96), "selector"),    # selector uses ESI rather than guarded ECX
+    ((10, 0x31), "data start"), # selector absolute operand points elsewhere
+    ((24, 0x76), "guard"),      # damage only the second group's guard
+])
+def test_each_group_requires_its_own_guard_register_and_anchor(original_change, reason):
+    obj, subject, span, image, bindings, targets = multi_fixture(original_change=original_change)
+    with pytest.raises(ValueError, match=reason):
+        compare_associated_code(obj, subject, span, image, bindings, targets)
+
+
+def test_target_cell_must_land_on_original_instruction_boundary():
+    obj, subject, span, image, bindings, targets = multi_fixture(target1=BASE + 22)
+    with pytest.raises(ValueError, match="instruction boundary"):
+        compare_associated_code(obj, subject, span, image, bindings, targets)
+
+
+@pytest.mark.parametrize("target", [BASE + 28, BASE + 35])
+def test_indirect_table_edge_cannot_bypass_another_groups_guard(target):
+    obj, subject, span, image, bindings, targets = multi_fixture(target1=target)
+    with pytest.raises(ValueError, match="unambiguous unsigned dominating guard"):
+        compare_associated_code(obj, subject, span, image, bindings, targets)
+
+
+def test_unmodeled_register_indirect_jump_refuses_the_complete_cfg():
+    obj, subject, span, image, bindings, targets = multi_fixture(unknown_indirect=True)
+    with pytest.raises(ValueError, match="unmodeled indirect JMP"):
+        compare_associated_code(obj, subject, span, image, bindings, targets)
+
+
+@pytest.mark.parametrize("kwargs", [
+    {"retarget_candidate": True},
+    {"wrong_selector_anchor": True},
+    {"candidate_selector2": 1},
+    {"candidate_change": (3, 0x76)},
+    {"candidate_change": (9, 0x96)},
+    {"candidate_gap2": b"\x90\x90\xcc"},
+    {"extra_tail": b"\xc3"},
+    {"extra_relocation": True},
+])
+def test_all_groups_and_envelope_remain_strict_under_candidate_damage(kwargs):
+    obj, subject, span, image, bindings, targets = multi_fixture(**kwargs)
+    report = compare_associated_code(obj, subject, span, image, bindings, targets)
+    assert report["result"] != Result.PASS, (kwargs, report)

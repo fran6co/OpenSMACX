@@ -161,12 +161,17 @@ def _corridor_control_transfer(instruction) -> bool:
                    for group in (CS_GRP_CALL, CS_GRP_RET, CS_GRP_INT, CS_GRP_IRET)))
 
 
-def _guard_for_dispatch(instructions, dispatch, span: Span):
+def _guard_for_dispatch(instructions, dispatch, span: Span, *,
+                        indirect_targets: frozenset[int] | None = None):
     """Prove one straight-line unsigned guard reaches this indexed jump.
 
     The supported envelope is intentionally narrow: `cmp reg,imm`, a direct
     JA/JAE to the default arm, no flag-writing/control-transfer instruction
     before that branch, and no alternate branch into the fallthrough corridor.
+    With no indirect-edge witness, retain the conservative legacy rule and
+    reject every other indirect JMP. The associated-code caller may supply
+    the complete table-derived target set only after independently validating
+    every cell and proving that every indirect JMP has a declared table.
     """
     choices = []
     for branch in instructions:
@@ -201,6 +206,10 @@ def _guard_for_dispatch(instructions, dispatch, span: Span):
                     and guard_corridor_start <= _branch_target(other) <= branch.address)
                    for other in instructions):
                 continue
+            if (indirect_targets is not None
+                    and any(guard_corridor_start <= target <= branch.address
+                            for target in indirect_targets)):
+                continue
             path = instructions[branch_index + 1:instructions.index(dispatch)]
             if any(_corridor_control_transfer(item) for item in path):
                 continue
@@ -211,8 +220,14 @@ def _guard_for_dispatch(instructions, dispatch, span: Span):
                     and corridor_start <= _branch_target(other) <= dispatch.address)
                    for other in instructions):
                 continue
-            if any(other is not dispatch and other.group(x86.X86_GRP_JUMP)
-                   and _branch_target(other) is None for other in instructions):
+            if indirect_targets is None:
+                # Preserve the original helper contract for callers that do
+                # not supply a complete, independently proven edge set.
+                if any(other is not dispatch and other.group(x86.X86_GRP_JUMP)
+                       and _branch_target(other) is None for other in instructions):
+                    continue
+            elif any(corridor_start <= target <= dispatch.address
+                     for target in indirect_targets):
                 continue
             max_value = right.imm - (1 if branch.id == x86.X86_INS_JAE else 0)
             count = max_value + 1
@@ -232,14 +247,16 @@ def _prove_dispatch_extent(instructions, body: Span, image: PeImage,
                            table_binding: AssociatedDataBinding,
                            table_instruction, table_operand,
                            selector_binding: AssociatedDataBinding | None,
-                           selector_instruction, selector_operand) -> dict:
-    """Derive table/map lengths from a narrow guard and preserved index flow."""
+                           selector_instruction, selector_operand, *,
+                           indirect_targets: frozenset[int] | None = None) -> dict:
+    """Derive one table/map extent from its guard and preserved index flow."""
     index_register = table_operand.mem.index
     if not index_register:
         raise ValueError("switch target dispatch lacks an index register")
     index_family = _family(table_instruction, index_register)
     compare, branch, guard_family, count, default_target = _guard_for_dispatch(
-        instructions, table_instruction, body)
+        instructions, table_instruction, body,
+        indirect_targets=indirect_targets)
     table_count = (table_binding.span.end - table_binding.span.start) // 4
     branch_pos = instructions.index(branch)
     dispatch_pos = instructions.index(table_instruction)
@@ -355,6 +372,25 @@ def _memory_operand(instruction, kind: str):
     return operand
 
 
+def _indexed_jump_tables(instructions):
+    """Return every original absolute indexed-dword JMP that needs evidence.
+
+    This deliberately recognizes only the same narrow operand shape accepted
+    by ``_memory_operand``. It prevents a caller from omitting a whole group
+    while still proving the groups that remain in the annotation population.
+    """
+    found = set()
+    for instruction in instructions:
+        if instruction.id != x86.X86_INS_JMP or len(instruction.operands) != 1:
+            continue
+        operand = instruction.operands[0]
+        if (operand.type == x86.X86_OP_MEM and operand.size == 4
+                and not operand.mem.base and operand.mem.index
+                and operand.mem.scale == 4 and instruction.disp_size == 4):
+            found.add(instruction.address)
+    return found
+
+
 def _anchor_field(image: PeImage, instruction, operand, data_start: int) -> int:
     if operand.mem.disp != data_start or instruction.disp_size != 4:
         raise ValueError("original evidence operand does not point to its declared data start")
@@ -431,6 +467,7 @@ def compare_associated_code(obj: Coff, subject: Symbol, span: Span, image: PeIma
     owner = None
     unit = None
     normalized = []
+    evidence_addresses = set()
     for binding in bindings:
         if type(binding) is not AssociatedDataBinding:
             raise ValueError("associated records must use the exact native binding type")
@@ -446,6 +483,9 @@ def compare_associated_code(obj: Coff, subject: Symbol, span: Span, image: PeIma
         if (binding.evidence.image_sha256 != pin or binding.evidence.address_space != "pe:va"
                 or not span.start <= binding.evidence.address < span.end):
             raise ValueError("associated evidence is outside the pinned parent body")
+        if binding.evidence.address in evidence_addresses:
+            raise ValueError("associated dispatch evidence is ambiguous or duplicated")
+        evidence_addresses.add(binding.evidence.address)
         if binding.kind not in ("switch_targets", "switch_selector"):
             raise ValueError("unsupported associated-data kind")
         if binding.kind == "switch_targets" and (binding.span.end - binding.span.start) % 4:
@@ -470,14 +510,64 @@ def compare_associated_code(obj: Coff, subject: Symbol, span: Span, image: PeIma
         raise ValueError("associated data spans overlap")
     selector_rows = [row for row in normalized if row[0].kind == "switch_selector"]
     table_rows = [row for row in normalized if row[0].kind == "switch_targets"]
-    if len(selector_rows) > 1 or len(table_rows) != 1:
-        raise ValueError("associated dispatch requires one target table and at most one selector map")
-    table_binding = table_rows[0][0]
-    selector_binding = selector_rows[0][0] if selector_rows else None
-    if table_binding.span.start < span.end or table_binding.span.start % 4:
-        raise ValueError("switch target table must begin after the body at a DWORD-aligned address")
-    if selector_binding is not None and selector_binding.span.start != table_binding.span.end:
-        raise ValueError("switch selector map must immediately follow its target table")
+    if not table_rows:
+        raise ValueError("associated dispatch requires at least one target table")
+    if len({row[0].span for row in normalized}) != len(normalized):
+        raise ValueError("associated dispatch data span is ambiguous or duplicated")
+
+    # Existing v1 records carry no group identifier. The only safe pairing
+    # derivable from that grammar is a unique selector span immediately after
+    # each target table. Keep the established target-only singleton form.
+    # A multi-table owner must pair every table and selector; adjacency is
+    # only a pairing hypothesis, verified below by each instruction anchor
+    # and its own guard/register dataflow.
+    dispatch_rows = []
+    unused_selectors = list(selector_rows)
+    for table_row in sorted(table_rows, key=lambda row: row[0].span.start):
+        table_binding = table_row[0]
+        matches = [row for row in unused_selectors
+                   if row[0].span.start == table_binding.span.end]
+        if len(matches) > 1:
+            raise ValueError("switch target table has ambiguous adjacent selector maps")
+        selector_row = matches[0] if matches else None
+        if selector_row is not None:
+            unused_selectors.remove(selector_row)
+        dispatch_rows.append((table_row, selector_row))
+    if unused_selectors:
+        raise ValueError("orphan switch selector map has no immediately preceding target table")
+    if len(table_rows) > 1 and any(selector is None for _, selector in dispatch_rows):
+        raise ValueError("multiple associated target tables require one adjacent selector map each")
+    table_evidence = {row[0][0].evidence.address for row in dispatch_rows}
+    if _indexed_jump_tables(body_instructions) != table_evidence:
+        raise ValueError("associated target tables do not cover every indexed indirect jump")
+    indirect_jumps = {instruction.address for instruction in body_instructions
+                       if instruction.group(x86.X86_GRP_JUMP)
+                       and _branch_target(instruction) is None}
+    if indirect_jumps != table_evidence:
+        raise ValueError("parent body contains an unmodeled indirect JMP")
+    for table_row, _selector_row in dispatch_rows:
+        table_binding = table_row[0]
+        if table_binding.span.start < span.end or table_binding.span.start % 4:
+            raise ValueError("switch target table must begin after the body at a DWORD-aligned address")
+    # Establish the complete indirect-edge set from every declared table
+    # before considering any guard. All destinations must be relocated,
+    # bounded by the mapped body and decoded instruction starts.
+    body_instruction_addresses = {instruction.address for instruction in body_instructions}
+    indirect_targets = set()
+    for table_row, _selector_row in dispatch_rows:
+        table_binding = table_row[0]
+        target_count = (table_binding.span.end - table_binding.span.start) // 4
+        for index in range(target_count):
+            cell = table_binding.span.start + index * 4
+            cell_span = Span(cell, cell + 4)
+            if image.absolute_sites(cell_span) != frozenset({0}):
+                raise ValueError("switch target cell lacks exactly one original PE HIGHLOW relocation")
+            target_address = struct.unpack("<I", image.read(cell_span))[0]
+            if not span.start <= target_address < span.end:
+                raise ValueError("original switch target escapes the independently bounded parent code")
+            if target_address not in body_instruction_addresses:
+                raise ValueError("original switch target is not a decoded parent instruction boundary")
+            indirect_targets.add(target_address)
     envelope = Span(span.start, max([span.end, *(item.end for item in ordered)]))
     original = image.read(envelope)
     containing_sections = [(index, region, size) for index, (region, _, size) in enumerate(image.sections)
@@ -502,14 +592,15 @@ def compare_associated_code(obj: Coff, subject: Symbol, span: Span, image: PeIma
         original_gap = image.read(gap)
         candidate_offset = gap.start - section_base
         candidate_gap = candidate[candidate_offset:candidate_offset + (gap.end - gap.start)]
-        switch_alignment = (left == span.end and right == table_binding.span.start
+        first_table = min(row[0].span.start for row in table_rows)
+        switch_alignment = (left == span.end and right == first_table
                             and original_gap == b"\x8b\xff" and len(original_gap) == 2
-                            and span.end % 4 == 2 and table_binding.span.start % 4 == 0)
+                            and span.end % 4 == 2 and first_table % 4 == 0)
         lea_identity_alignment = (
-            left == span.end and right == table_binding.span.start
+            left == span.end and right == first_table
             and len(original_gap) == 3
             and (span.end + len(original_gap)) % 4 == 0
-            and table_binding.span.start % 4 == 0
+            and first_table % 4 == 0
             and _is_canonical_lea_identity_padding(original_gap)
         )
         if candidate_gap == original_gap and lea_identity_alignment:
@@ -518,13 +609,18 @@ def compare_associated_code(obj: Coff, subject: Symbol, span: Span, image: PeIma
             # gap bounded here and let the strict envelope comparison report
             # the candidate byte mismatch below.
             lea_identity_alignment = _is_canonical_lea_identity_padding(candidate_gap)
-        ordinary_alignment = (left == span.end and right == table_binding.span.start
+        ordinary_alignment = (left == span.end and right == first_table
                               and len(original_gap) <= 3
                               and (span.end + len(original_gap)) % 4 == 0
-                              and table_binding.span.start % 4 == 0)
+                              and first_table % 4 == 0)
+        intergroup_alignment = (
+            left >= span.end and right > left and right - left <= 3
+            and left != span.end and right % 4 == 0
+            and bool(original_gap) and all(byte in _FILL for byte in original_gap)
+        )
         if (not original_gap or (any(byte not in _FILL for byte in original_gap)
                                  and not switch_alignment and not lea_identity_alignment)
-                or (not ordinary_alignment and not switch_alignment
+                or (not ordinary_alignment and not intergroup_alignment and not switch_alignment
                     and not lea_identity_alignment)
                 ):
             raise ValueError("unaccounted code/data gap is not a supported alignment form")
@@ -555,10 +651,14 @@ def compare_associated_code(obj: Coff, subject: Symbol, span: Span, image: PeIma
         resolved_targets[key] = address
 
     section_relocations = obj.sections[section_number - 1].relocations
-    dispatch_witness = _prove_dispatch_extent(
-        body_instructions, span, image,
-        table_rows[0][0], table_rows[0][1], table_rows[0][2],
-        *(selector_rows[0] if selector_rows else (None, None, None)))
+    dispatch_witnesses = []
+    for table_row, selector_row in dispatch_rows:
+        witness = _prove_dispatch_extent(
+            body_instructions, span, image,
+            table_row[0], table_row[1], table_row[2],
+            *(selector_row if selector_row is not None else (None, None, None)),
+            indirect_targets=frozenset(indirect_targets))
+        dispatch_witnesses.append(witness)
     for binding, original_instruction, original_operand in normalized:
         # A missing/changed candidate instruction or operand is a body
         # mismatch. When it still has the original shape, verify the actual
@@ -608,13 +708,17 @@ def compare_associated_code(obj: Coff, subject: Symbol, span: Span, image: PeIma
                                original_absolute_sites=image.absolute_sites(envelope),
                                alignment=alignment)
     witnesses = [_binding_witness(binding) for binding, _, _ in normalized]
-    return {
+    result = {
         **proof,
         "source_body_span": {"start": span.start, "end": span.end},
         "associated_data": witnesses,
         "comparison_span": {"start": envelope.start, "end": envelope.end},
-        "dispatch_extent": dispatch_witness,
         "linked_selection": Result.UNKNOWN,
         "runtime": Result.UNKNOWN,
         "limitations": ["proves bounded object bytes/references only; not final linked selection or runtime behavior"],
     }
+    result["dispatch_extents"] = dispatch_witnesses
+    # Retain the singular report field for consumers of the original v1 API.
+    if len(dispatch_witnesses) == 1:
+        result["dispatch_extent"] = dispatch_witnesses[0]
+    return result
