@@ -1,0 +1,20 @@
+{
+  "event_id": "72d9304100dd5dd714bf7a638466aa0aefe89c5a2e24335ead5a1dcd47583ce5",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/graphicwin.cpp"
+    ],
+    "evidence": [
+      "Read_generated rejects duplicate start/symbol: existing Win/GraphicWin table bindings live in cpp owners, notheaders. Preserve those homes; only independently bound existingGraphicWinBuffer66FC48..66FC50. No newtableidentity, no generatedduplicate. Native validation refused prematureheader proposals; noinvalidsource wascommitted.",
+      "Originalconstructor5D4D2B/31 selects adjacent primary66FC50 andBuffer66FC48; primaryextent remainsunknown."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "existing-vtable-owner-oct27it",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:win-default-bindings-oct27it"
+}

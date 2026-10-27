@@ -621,6 +621,7 @@ class Win : public AutoSound {
   virtual void on_lose_mouse_capture() {}
   // SocialWin/CouncWin tables override slot5; FlatButton supplies its
   // GraphicWin view, borrowed text and button ID, not integer encodings.
+// RECOVERY_SHARED: v1 0x00404220 0x00404225 ?on_button_text_draw@Win@@UAEHPAVGraphicWin@@PADH@Z 0x005D4CF0
   virtual int on_button_text_draw(GraphicWin *, char *, int) { return 0; }
   // Win::init asks slot 6 for an external Scroll before allocating its
   // own fallback. The default original body returns null.
@@ -636,7 +637,9 @@ class Win : public AutoSound {
   // ListBox and Dialogs forward Scroll replacement through this parent slot.
   virtual Scroll *on_listbox_scroll_delete(Scroll *value = 0) { return value; }  // slot 9
   // Parent background hooks: pinned derived tables override slots 10/11.
+// RECOVERY_SHARED: v1 0x00404250 0x00404255 ?on_dialog_back_draw@Win@@UAEHPAVGraphicWin@@@Z 0x005D4CF0
   virtual int on_dialog_back_draw(GraphicWin *) { return 0; }  // slot 10
+// RECOVERY_SHARED: v1 0x00404240 0x00404245 ?on_dialog_item_back_draw@Win@@UAEHPAVGraphicWin@@HHPAUtagRECT@@@Z 0x005D4CF0
   virtual int on_dialog_item_back_draw(GraphicWin *, int, int, RECT *) { return 0; }  // slot 11
   // Slot 12 paints the contents; redraw() at slot 62 drives this callback.
   // Constructor 5EB3D0 installs table66FDD0, selecting the shared empty body.
@@ -650,7 +653,9 @@ class Win : public AutoSound {
   // MapWin supplies a genuine override; this is not MainInterface's slot13.
   // RECOVERY_SHARED: v1 0x00404260 0x00404263 ?on_resize@Win@@UAEXHH@Z 0x005EB3D0
   virtual void on_resize(int, int) {}
+// RECOVERY_SHARED: v1 0x00404280 0x00404281 ?on_sys_close@Win@@UAEXXZ 0x005D4CF0
   virtual void on_sys_close() {}  // 0x00404280
+// RECOVERY_SHARED: v1 0x00404270 0x00404273 ?on_mousewheel@Win@@UAEXH@Z 0x005D4CF0
   virtual void on_mousewheel(int = 0) {}  // 0x00404270
   // The native tables require the router in slot 16 and the two-argument
   // callback in slot 17. VC6 reverses declaration order within this overload
@@ -659,13 +664,18 @@ class Win : public AutoSound {
   virtual void on_mouse_move(int, int) {}
   // The router ignores the callback's EAX result.
   virtual void on_mouse_move(int x, int y, unsigned int keys, int from_parent);  // slot 16  0x005F6320
+// RECOVERY_SHARED: v1 0x00404260 0x00404263 ?on_mouse_leave@Win@@UAEXHH@Z 0x005D4CF0
   virtual void on_mouse_leave(int = 0, int = 0) {}  // 0x00404260
   // Slot 19 is the completed left-click callback: on_l_button_up dispatches
   // it after release, and MonuWin's original table66C880 points it at476780.
   // Keep this two-argument callback distinct from the slot20 press callback.
+// RECOVERY_SHARED: v1 0x00404260 0x00404263 ?on_left_click@Win@@UAEXHH@Z 0x005D4CF0
   virtual void on_left_click(int = 0, int = 0) {}  // 0x00404260
+// RECOVERY_SHARED: v1 0x00404260 0x00404263 ?on_left_down@Win@@UAEXHH@Z 0x005D4CF0
   virtual void on_left_down(int = 0, int = 0) {}  // slot 20
+// RECOVERY_SHARED: v1 0x00404260 0x00404263 ?on_left_up@Win@@UAEXHH@Z 0x005D4CF0
   virtual void on_left_up(int = 0, int = 0) {}  // slot 21
+// RECOVERY_SHARED: v1 0x00404260 0x00404263 ?on_right_click@Win@@UAEXHH@Z 0x005D4CF0
   virtual void on_right_click(int = 0, int = 0) {}  // 0x00404260
   // Receiver distinction: Win table66FDD0 slot23 consumes (x,y), with
   // shared default404260 ret8. The nullary/tested-EAX calls in5EE750 and
@@ -674,30 +684,50 @@ class Win : public AutoSound {
   // adding default coordinates to Sound calls would incorrectly emit pushes.
   // Win's primary slot 23 consumes two coordinates (the byte-backed target
   // at 0x00404260 is ret 8); Sound has a separate nullary slot 23 contract.
+// RECOVERY_SHARED: v1 0x00404260 0x00404263 ?on_right_down@Win@@UAEXHH@Z 0x005D4CF0
   virtual void on_right_down(int x, int y) { (void)x; (void)y; }
+// RECOVERY_SHARED: v1 0x00404260 0x00404263 ?on_right_up@Win@@UAEXHH@Z 0x005D4CF0
   virtual void on_right_up(int = 0, int = 0) {}  // 0x00404260
   // Existing slot 25: keyboard input dispatched by key_click_event.
   virtual int on_key_click(int = 0, int = 0);  // slot 25
+// RECOVERY_SHARED: v1 0x00404250 0x00404255 ?on_key_down@Win@@UAEHH@Z 0x005D4CF0
   virtual int on_key_down(int = 0) { return 0; }  // 0x00404250
+// RECOVERY_SHARED: v1 0x00404250 0x00404255 ?on_key_up@Win@@UAEHH@Z 0x005D4CF0
   virtual int on_key_up(int = 0) { return 0; }  // 0x00404250
   // Slot 28: Win dispatches left double-clicks here (0x005EE570).
   // RadioButton's table at 0x00669A6C selects its receiver adjustor
   // 0x00407040 at +0x70, reaching the override at 0x0060E1E0.
+// RECOVERY_SHARED: v1 0x00404260 0x00404263 ?on_left_double_click@Win@@UAEXHH@Z 0x005D4CF0
   virtual void on_left_double_click(int = 0, int = 0) {}  // 0x00404260
+// RECOVERY_SHARED: v1 0x00404260 0x00404263 ?on_right_double_click@Win@@UAEXHH@Z 0x005D4CF0
   virtual void on_right_double_click(int = 0, int = 0) {}  // 0x00404260
+// RECOVERY_SHARED: v1 0x00404270 0x00404273 ?vslot_30@Win@@UAEXH@Z 0x005D4CF0
   virtual void vslot_30(int = 0) {}  // 0x00404270
+// RECOVERY_SHARED: v1 0x00404260 0x00404263 ?on_nc_mouse_move@Win@@UAEXHH@Z 0x005D4CF0
   virtual void on_nc_mouse_move(int = 0, int = 0) {}  // 0x00404260
+// RECOVERY_SHARED: v1 0x00404260 0x00404263 ?vslot_32@Win@@UAEXHH@Z 0x005D4CF0
   virtual void vslot_32(int = 0, int = 0) {}  // 0x00404260
+// RECOVERY_SHARED: v1 0x00404260 0x00404263 ?on_nc_left_down@Win@@UAEXHH@Z 0x005D4CF0
   virtual void on_nc_left_down(int = 0, int = 0) {}  // slot 33, 0x00404260
+// RECOVERY_SHARED: v1 0x00404260 0x00404263 ?on_nc_left_up@Win@@UAEXHH@Z 0x005D4CF0
   virtual void on_nc_left_up(int = 0, int = 0) {}  // 0x00404260
+// RECOVERY_SHARED: v1 0x00404260 0x00404263 ?vslot_35@Win@@UAEXHH@Z 0x005D4CF0
   virtual void vslot_35(int = 0, int = 0) {}  // 0x00404260
+// RECOVERY_SHARED: v1 0x00404260 0x00404263 ?vslot_36@Win@@UAEXHH@Z 0x005D4CF0
   virtual void vslot_36(int = 0, int = 0) {}  // 0x00404260
+// RECOVERY_SHARED: v1 0x00404260 0x00404263 ?vslot_37@Win@@UAEXHH@Z 0x005D4CF0
   virtual void vslot_37(int = 0, int = 0) {}  // 0x00404260
+// RECOVERY_SHARED: v1 0x00404260 0x00404263 ?vslot_38@Win@@UAEXHH@Z 0x005D4CF0
   virtual void vslot_38(int = 0, int = 0) {}  // 0x00404260
+// RECOVERY_SHARED: v1 0x00404260 0x00404263 ?vslot_39@Win@@UAEXHH@Z 0x005D4CF0
   virtual void vslot_39(int = 0, int = 0) {}  // 0x00404260
+// RECOVERY_SHARED: v1 0x00404260 0x00404263 ?on_button_passover@Win@@UAEXHH@Z 0x005D4CF0
   virtual void on_button_passover(int = 0, int = 0) {}  // 0x00404260
+// RECOVERY_SHARED: v1 0x00404250 0x00404255 ?on_button_pressed@Win@@UAEHH@Z 0x005D4CF0
   virtual int on_button_pressed(int = 0) { return 0; }  // 0x00404250
+// RECOVERY_SHARED: v1 0x00404270 0x00404273 ?vslot_42@Win@@UAEXH@Z 0x005D4CF0
   virtual void vslot_42(int = 0) {}  // 0x00404270
+// RECOVERY_SHARED: v1 0x00404270 0x00404273 ?vslot_43@Win@@UAEXH@Z 0x005D4CF0
   virtual void vslot_43(int = 0) {}  // 0x00404270
   // SLOTS 44 AND 45 HAVE NAMES. BaseWin's front table holds 0x0041D500 and
   // 0x0041B4E0 at 0x66A4BC/0x66A4C0 and MainInterface's holds 0x0045C800 and
@@ -709,35 +739,51 @@ class Win : public AutoSound {
   // button-clicked and button-toggled events both step the receiver back to
   // the front window and dispatch these two. `vslot_13` on the interface is
   // this one plus a name.
+// RECOVERY_SHARED: v1 0x00404270 0x00404273 ?on_button_clicked@Win@@UAEXH@Z 0x005D4CF0
   virtual void on_button_clicked(int = 0) {}       // slot 44  0x00404270
+// RECOVERY_SHARED: v1 0x00404260 0x00404263 ?on_button_toggled@Win@@UAEXHH@Z 0x005D4CF0
   virtual void on_button_toggled(int = 0, int = 0) {}  // slot 45  0x00404260
   // VC6 reverses declarations within this overload group. Physical tables
   // require the three-argument callback in slot46 and two-argument in slot47.
+// RECOVERY_SHARED: v1 0x00404260 0x00404263 ?on_group_clicked@Win@@UAEXHH@Z 0x005D4CF0
   virtual void on_group_clicked(int, int) {}  // slot 47
+// RECOVERY_SHARED: v1 0x00406B20 0x00406B23 ?on_group_clicked@Win@@UAEXHHH@Z 0x005D4CF0
   virtual void on_group_clicked(int, int, int) {}  // slot 46
+// RECOVERY_SHARED: v1 0x00404260 0x00404263 ?on_scrolled@Win@@UAEXHH@Z 0x005D4CF0
   virtual void on_scrolled(int = 0, int = 0) {}  // 0x00404260
+// RECOVERY_SHARED: v1 0x00404260 0x00404263 ?on_scrolling@Win@@UAEXHH@Z 0x005D4CF0
   virtual void on_scrolling(int = 0, int = 0) {}  // 0x00404260
+// RECOVERY_SHARED: v1 0x00404270 0x00404273 ?vslot_50@Win@@UAEXH@Z 0x005D4CF0
   virtual void vslot_50(int = 0) {}  // 0x00404270
+// RECOVERY_SHARED: v1 0x00404270 0x00404273 ?on_dialog_focus@Win@@UAEXH@Z 0x005D4CF0
   virtual void on_dialog_focus(int = 0) {}  // 0x00404270
+// RECOVERY_SHARED: v1 0x00404280 0x00404281 ?vslot_52@Win@@UAEXXZ 0x005D4CF0
   virtual void vslot_52() {}  // 0x00404280
   // VC6 reverses this overload group: two arguments occupy slot53,
   // one argument slot54. ListBox dispatches each notification separately.
+// RECOVERY_SHARED: v1 0x00404270 0x00404273 ?on_selected@Win@@UAEXH@Z 0x005D4CF0
   virtual void on_selected(int) {}  // slot54, original0x00404270
+// RECOVERY_SHARED: v1 0x00404260 0x00404263 ?on_selected@Win@@UAEXHH@Z 0x005D4CF0
   virtual void on_selected(int, int) {}  // slot53, original0x00404260
   // As with selection, VC6 places the two-argument overload first in the
   // table. AlphaSave's constructor-selected slot56 forwards to its FileWin.
+// RECOVERY_SHARED: v1 0x00404270 0x00404273 ?on_double_clicked@Win@@UAEXH@Z 0x005D4CF0
   virtual void on_double_clicked(int) {}  // slot56, original0x00404270
+// RECOVERY_SHARED: v1 0x00404260 0x00404263 ?on_double_clicked@Win@@UAEXHH@Z 0x005D4CF0
   virtual void on_double_clicked(int, int) {}  // slot55, original0x00404260
   virtual int set_modal(int flag, int (*poll)(), Win *owner);  // slot 57  0x005EE190
   virtual void release_modal();  // slot 58  0x005EE280
   // The modal loop calls slot 59 (+0xEC) and tests the full EAX result.
   // BasePop and AlphaMovie provide the original continuation policies.
+// RECOVERY_SHARED: v1 0x00406840 0x00406846 ?on_modal@Win@@UAEHXZ 0x005D4CF0
   virtual int on_modal() { return 1; }  // 0x00406840
   // Border-paint notification receives the source Buffer and quadrant.
+// RECOVERY_SHARED: v1 0x00404260 0x00404263 ?on_post_redraw_nc_buffer@Win@@UAEXPAVBuffer@@H@Z 0x005D4CF0
   virtual void on_post_redraw_nc_buffer(Buffer * = 0, int = 0) {}  // 0x00404260
   // Slot 61 (0xF4): ordinary windows have no GraphicWin surface.
   virtual GraphicWin *get_graphic_win();  // original shared no-op target
   // Slot 62: plain Win has no surface; GraphicWin supplies the redraw.
+// RECOVERY_SHARED: v1 0x00404280 0x00404281 ?redraw@Win@@UAEXXZ 0x005EB3D0
   virtual void redraw() {}  // 0x00404280
   // Slot 63: no surface in plain Win; GraphicWin supplies the update.
   // The same constructor-installed Win table selects the shared empty body.
