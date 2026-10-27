@@ -2599,13 +2599,13 @@ extern "C" void __fastcall sub_5cd980(MediaRuntime *runtime,
 }
 
 // ORIGINAL: 0x005CDA30 sub_5cda30 0x005CDA30-0x005CDAC4
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned 0x5CDA30 reloads runtime descriptor after each 0x5D1278 call before the width test and after the inner loop before the height test.", "The packed-output helper 0x5D2536 writes through the supplied byte destination using memcpy. The flags 0x800 path in 0x5CC940 takes caller-owned provided_output_base_4c without a no-alias contract, so output can alter descriptor storage or the runtime descriptor pointer.", "No in-tree caller is shown deliberately creating that alias; preserve its defined source effects without asserting that normal playback exercises it. Context initialization, pitch/block increments and unchecked dereferences remain unchanged."], "reason": "Retain live descriptor bounds around each pixel-block decode instead of caching a descriptor reference across output stores. This preserves the original permitted alias effects and unchecked loop behavior."}
 // TRIED: nothing forced the `push ecx`-as-spill-slot / `pop ecx` prologue trick the original uses for one local; plain locals compile 6 bytes shorter (142 vs 148), diverging early
 // symbol    @sub_5cda30@20
 // kind      game
 extern "C" void __fastcall sub_5cda30(MediaRuntime *runtime,
                                       BYTE *compressed, BYTE *destination,
                                       BYTE *unused, unsigned int pitch) {
-  MediaDescriptor &descriptor = *runtime->descriptor;
   runtime->decoder_context_3f8.compressed_input_200 = compressed;
   runtime->decoder_context_3f8.bit_position_204 = 0;
   runtime->decoder_context_3f8.predictor_500 = 0;
@@ -2615,10 +2615,10 @@ extern "C" void __fastcall sub_5cda30(MediaRuntime *runtime,
   DWORD block_y = 0;
   DWORD row_step = (pitch >> 1) << 5;
   BYTE *row_destination = destination;
-  while (block_y < descriptor.output_height_60) {
+  while (block_y < runtime->descriptor->output_height_60) {
     DWORD block_x = 0;
     BYTE *block_destination = row_destination;
-    while (block_x < descriptor.output_width_64) {
+    while (block_x < runtime->descriptor->output_width_64) {
       sub_5d1278(block_destination, (int)pitch,
                  &runtime->decoder_context_3f8);
       block_x += 0x10;
