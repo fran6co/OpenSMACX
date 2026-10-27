@@ -1418,7 +1418,7 @@ int __fastcall MediaRuntime::parse_initial_format(int byte_count) {
 // ended at 0x005CA22C. Preserve this historical extent discrepancy
 // rather than silently treating either as fresh boundary proof.
 extern "C" int __fastcall sub_5c9ec0(MediaRuntime *runtime, void *) {
-  BYTE header_and_payload[0xc000];
+  BYTE header_and_payload[0xc00c];
   LONG read = mmioRead(runtime->descriptor->stream,
                        (HPSTR)header_and_payload, 8);
   if (read == 0) {
@@ -1466,12 +1466,16 @@ extern "C" int __fastcall sub_5c9ec0(MediaRuntime *runtime, void *) {
   case 0x5343486c:
     return runtime->parse_initial_format((int)payload_bytes);
   case 0x43444e53:
-  case 0x534e4443:
-  case 0x644e5331:
-  case 0x5343446c:
-  case 0x6c444353:
+  case 0x534e4443: {
     if (runtime->descriptor->stream_gate_7c == 0) return -2;
     return sub_5ca310(runtime, (int)payload_bytes);
+  }
+  case 0x644e5331:
+  case 0x5343446c:
+  case 0x6c444353: {
+    if (runtime->descriptor->stream_gate_7c == 0) return -2;
+    return sub_5ca310(runtime, (int)payload_bytes);
+  }
   case 0x44414553: {
     read = mmioRead(runtime->descriptor->stream,
                     (HPSTR)(header_and_payload + 0x18),
@@ -1720,48 +1724,51 @@ extern "C" int __fastcall sub_5ca310(MediaRuntime *r, int byte_count) {
 // kind      game
 extern "C" int __fastcall sub_5ca970(MediaRuntime *runtime, void *) {
   MediaDescriptor &d = *runtime->descriptor;
-  LONG handle = runtime->channel_state;
-  if (handle == -1) {
+  LONG no_handle = -1;
+  if (runtime->channel_state == no_handle) {
     if ((d.flags & 0x00008000) != 0) {
       Sleep(0);
       mmioSeek(runtime->descriptor->stream, runtime->channel_seek_position, SEEK_SET);
-      handle = sub_5c9ec0(runtime, 0);
+      runtime->channel_state = sub_5c9ec0(runtime, 0);
     } else {
-      handle = -1;
+      runtime->channel_state = no_handle;
     }
-    runtime->channel_state = handle;
   }
 
-  if (handle == -1) return 0;
+  if (runtime->channel_state == no_handle) return 0;
   if (runtime->pending_output_records >= 0x16 ||
       runtime->pending_read_records >= 0x16)
     return 0;
 
   int result = sub_5c9ec0(runtime, 0);
   runtime->channel_poll_result = result;
-  if (result == -1) {
+  switch (result) {
+  case -1:
     if ((runtime->descriptor->flags & 0x00008000) != 0) {
       Sleep(0);
       mmioSeek(runtime->descriptor->stream, runtime->channel_seek_position, SEEK_SET);
       runtime->channel_state = sub_5c9ec0(runtime, 0);
     } else {
-      runtime->channel_state = -1;
+      runtime->channel_state = no_handle;
     }
     return 0;
-  }
 
-  if (result == 1) {
+  case 1:
     if (runtime->descriptor->stream_gate_7c != 0) {
       runtime->channel_state = sub_5c9ec0(runtime, 0);
       if (runtime->channel_state == 1) runtime->descriptor->stream_gate_7c = 0;
     }
     return 0;
-  }
 
-  if (result == 2 &&
-      (runtime->descriptor->stream_gate_80 == 0 || runtime->pending_output_records < 0x16))
-    runtime->channel_state = sub_5c9ec0(runtime, 0);
-  return 0;
+  case 2:
+    if (runtime->descriptor->stream_gate_80 == 0 ||
+        runtime->pending_output_records < 0x16)
+      runtime->channel_state = sub_5c9ec0(runtime, 0);
+    return 0;
+
+  default:
+    return 0;
+  }
 }
 
 // ORIGINAL: 0x005CE340 sub_5ce340 0x005CE340-0x005CE44B

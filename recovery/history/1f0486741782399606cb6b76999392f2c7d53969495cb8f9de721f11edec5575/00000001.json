@@ -1,0 +1,36 @@
+{
+  "event_id": "19ddae1d62614d647c034610711b79f837932e138a476317ff8774eb5d6bd50e",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/movie_media.cpp",
+      "src/movie_media.h"
+    ],
+    "evidence": [
+      "Independent original caller/callee analysis confirms sub_5c9ec0 and sub_5ca970 receive only ECX; EDX overwritten before use. Remove the artificial unused second fastcall parameters and update every caller/current symbol binding together. Keep the real EDX payload of sub_5ca310. D7/movie-abi-independent-review.json; original calls include5CA9F3,5CABAC. This is a new ABI context after body-only cap, not a repeated spelling or reset task baseline."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6074448,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6074912,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6073008,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "one-register-fastcall-closure",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:exact-movie-switch-oct28mh"
+}
