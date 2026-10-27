@@ -5,7 +5,7 @@ import struct
 
 import pytest
 
-from match_recovery.linked_fpo import validate_fpo_source, verify_fpo
+from match_recovery.linked_fpo import validate_fpo_object, validate_fpo_source, verify_fpo
 from match_recovery.pdb_fixups import bound_fixups
 from match_recovery.pe_coff import Coff, PeImage
 from test_msf import small_msf
@@ -50,6 +50,11 @@ def check(raw=None, records=None):
     obj = Coff(object_bytes() if raw is None else raw)
     image, fixups = evidence(records)
     return verify_fpo(obj, 2, obj.function("_f"), image, 0x401000, fixups)
+
+
+def check_object(raw=None):
+    obj = Coff(object_bytes() if raw is None else raw)
+    return validate_fpo_object(obj, 2, obj.function("_f"))
 
 
 def declared_root_object(*, name=b"_f", value=0, section=0, kind=32, storage=2,
@@ -130,6 +135,73 @@ def test_nonzero_frame_data_matches_complete_image_bound_metadata():
     proof = check()
     assert proof == {"format": "fpo_data", "data": struct.pack("<IIHH", 16, 3, 2, 0x0201).hex(), "code_size": 16}
     assert not any(key in proof for key in ("discarded", "runtime", "placement", "owner"))
+
+
+def test_object_validator_returns_complete_associated_child_witness_without_link_claims():
+    witness = check_object()
+    obj = Coff(object_bytes())
+    child = obj.sections[1]
+    assert witness["format"] == "fpo_data"
+    assert witness["code_size"] == 16
+    assert witness["section"] == 2 and witness["section_name"] == ".debug$F"
+    assert witness["section_flags"] == child.flags == 0x42101048
+    assert witness["section_bytes"] == child.data.hex()
+    assert witness["section_auxiliary"] == obj.auxiliary[3].hex()
+    assert witness["association_parent"] == 1
+    assert witness["relocations"] == [{"offset": 0, "target_symbol": 2,
+                                       "target_name": "_f", "kind": 7,
+                                       "addend": 0}]
+    assert not any(key in witness for key in ("discarded", "linked_selection", "runtime"))
+
+
+@pytest.mark.parametrize("damage", [
+    "flags", "reserved", "association", "auxiliary", "relocation", "extent",
+    "extra_root_bytes", "incoming_child_reference", "weak_child_alias", "extra_child",
+])
+def test_object_validator_rejects_malformed_fpo_child_and_root_metadata(damage):
+    raw = bytearray(object_bytes())
+    if damage == "flags":
+        struct.pack_into("<I", raw, 96, 0x42101848)  # adds IMAGE_SCN_LNK_REMOVE
+    elif damage == "reserved":
+        struct.pack_into("<H", raw, 116 + 14, 0x2201)
+    elif damage == "association":
+        struct.pack_into("<h", raw, 142 + 4 * 18 + 12, 2)
+    elif damage == "auxiliary":
+        struct.pack_into("<B", raw, 142 + 4 * 18 + 14, 2)
+    elif damage == "relocation":
+        struct.pack_into("<H", raw, 140, 6)
+    elif damage == "extent":
+        struct.pack_into("<I", raw, 116 + 4, 17)
+    elif damage == "extra_root_bytes":
+        payload = struct.pack("<IIIHH", 0, 14, 3, 2, 0x0201)
+        raw = bytearray(object_bytes(payload, code=b"\x90" * 13 + b"\xc3\x00\x00"))
+    elif damage == "incoming_child_reference":
+        struct.pack_into("<I", raw, 20 + 24, len(raw))
+        struct.pack_into("<H", raw, 20 + 32, 1)
+        struct.pack_into("<I", raw, 142 + 18 + 4, 1)
+        raw.extend(struct.pack("<IIH", 0, 3, 6))
+    elif damage == "weak_child_alias":
+        auxiliary = struct.pack("<II10x", 3, 3)
+        alias = b"_alias\0\0" + struct.pack("<IhHBB", 0, 0, 0, 105, 1) + auxiliary
+        raw[-4:] = alias + raw[-4:]
+        struct.pack_into("<I", raw, 12, 7)
+    elif damage == "extra_child":
+        original = bytearray(raw)
+        sections = bytearray(original[20:100])
+        for start in (0, 40):
+            for field in (20, 24):
+                pointer, = struct.unpack_from("<I", sections, start + field)
+                if pointer:
+                    struct.pack_into("<I", sections, start + field, pointer + 40)
+        third = sections[40:80]
+        header = bytearray(original[:20])
+        struct.pack_into("<H", header, 2, 3)
+        struct.pack_into("<II", header, 8, 182, 7)
+        extra = (b".debug$F" + struct.pack("<IhHBB", 0, 3, 0, 3, 1)
+                 + struct.pack("<IHHIHB3x", 16, 1, 0, 0, 1, 5))
+        raw = bytearray(header + sections + third + original[100:-4] + extra + original[-4:])
+    with pytest.raises(ValueError):
+        check_object(bytes(raw))
 
 
 def test_alignment_padding_is_not_misrepresented_as_function_code():

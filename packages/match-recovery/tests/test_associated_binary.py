@@ -8,6 +8,7 @@ import pytest
 from match_recovery.associated_binary import compare_associated_code
 from match_recovery.associated_binary import (
     _ENGINE, _guard_for_dispatch, _is_canonical_lea_identity_padding,
+    _is_intergroup_hotpatch_gap,
     _memory_operand, _prove_dispatch_extent,
 )
 from match_recovery.associated_source import AssociatedDataBinding
@@ -127,6 +128,47 @@ def fixture(*, cell_addend=0, selector_byte=0, extra_relocation=False,
                               Origin(pin, "pe:va", BASE + 7), "fixture.cpp", 1),
     )
     return obj, subject, source_span, image, bindings, {}
+
+
+def _with_fpo_child(raw, *, code_size=None):
+    """Add one exact associative FPO child to the synthetic root COMDAT."""
+    header = bytearray(raw[:20])
+    section_header = raw[20:60]
+    raw_pointer, = struct.unpack_from("<I", section_header, 20)
+    relocation_pointer, = struct.unpack_from("<I", section_header, 24)
+    root_size, = struct.unpack_from("<I", section_header, 16)
+    relocation_count, = struct.unpack_from("<H", section_header, 32)
+    symbol_pointer, symbol_count = struct.unpack_from("<II", raw, 8)
+    root_data = raw[raw_pointer:raw_pointer + root_size]
+    root_relocations = raw[relocation_pointer:relocation_pointer + relocation_count * 10]
+    symbol_records = raw[symbol_pointer:symbol_pointer + symbol_count * 18]
+    string_table = raw[symbol_pointer + symbol_count * 18:]
+    if len(string_table) != 4:
+        raise AssertionError("fixture expected an empty COFF string table")
+
+    code_size = len(BODY) + len(GAP) + 5 if code_size is None else code_size
+    payload = struct.pack("<IIIHH", 0, code_size, 0, 0, 0)
+    child_relocation = struct.pack("<IIH", 0, 0, 7)
+    child_symbol = b".debug$F" + struct.pack("<IhHBB", 0, 2, 0, 3, 1)
+    child_auxiliary = struct.pack("<IHHIHB3x", len(payload), 1, 0, 0, 1, 5)
+
+    new_header_end = 20 + 2 * 40
+    root_data_at = new_header_end
+    root_relocations_at = root_data_at + root_size
+    child_data_at = root_relocations_at + len(root_relocations)
+    child_relocations_at = child_data_at + len(payload)
+    symbols_at = child_relocations_at + len(child_relocation)
+    struct.pack_into("<H", header, 2, 2)
+    struct.pack_into("<II", header, 8, symbols_at, symbol_count + 2)
+
+    root_header = bytearray(section_header)
+    struct.pack_into("<I", root_header, 20, root_data_at)
+    struct.pack_into("<I", root_header, 24, root_relocations_at)
+    child_header = (b".debug$F" + struct.pack("<IIIIIIHHI", 0, 0, len(payload),
+        child_data_at, child_relocations_at, 0, 1, 0, 0x42101048))
+    return bytes(header + root_header + child_header + root_data + root_relocations
+                 + payload + child_relocation + symbol_records + child_symbol
+                 + child_auxiliary + string_table)
 
 
 MULTI_BODY = bytes.fromhex(
@@ -319,6 +361,45 @@ def test_explicit_same_comdat_table_and_selector_compare_exactly():
     assert report["source_body_span"] == {"start": BASE, "end": BASE + len(BODY)}
     assert report["comparison_span"] == {"start": BASE, "end": BASE + 29}
     assert report["linked_selection"] == report["runtime"] == Result.UNKNOWN
+
+
+def test_one_exact_associated_fpo_child_is_retained_as_unknown_metadata():
+    obj, subject, span, image, bindings, targets = fixture()
+    obj = Coff(_with_fpo_child(obj.raw_data))
+    report = compare_associated_code(obj, obj.function(subject.name), span, image, bindings, targets)
+    assert report["result"] == Result.PASS
+    witness = report["associated_metadata"]
+    assert witness["format"] == "fpo_data"
+    assert witness["code_size"] == report["comparison_span"]["end"] - span.start
+    assert witness["section"] == 2 and witness["association_parent"] == 1
+    assert witness["section_bytes"] == struct.pack(
+        "<IIIHH", 0, witness["code_size"], 0, 0, 0).hex()
+    assert report["original_metadata"] == report["linked_selection"] == Result.UNKNOWN
+
+
+def test_fpo_child_must_describe_the_full_declared_code_and_table_envelope():
+    obj, subject, span, image, bindings, targets = fixture()
+    candidate = Coff(_with_fpo_child(obj.raw_data, code_size=30))
+    with pytest.raises(ValueError, match="FPO metadata extent"):
+        compare_associated_code(candidate, candidate.function(subject.name), span,
+                                image, bindings, targets)
+
+
+@pytest.mark.parametrize("damage", ["wrong_name", "wrong_flags", "wrong_relocation"])
+def test_associated_proof_rejects_non_fpo_or_malformed_debug_children(damage):
+    obj, subject, span, image, bindings, targets = fixture()
+    raw = bytearray(_with_fpo_child(obj.raw_data))
+    if damage == "wrong_name":
+        raw[60:68] = b".xdata$x"
+    elif damage == "wrong_flags":
+        struct.pack_into("<I", raw, 60 + 36, 0x62501040)
+    else:
+        child_relocation, = struct.unpack_from("<I", raw, 60 + 24)
+        struct.pack_into("<H", raw, child_relocation + 8, 6)
+    with pytest.raises(ValueError):
+        candidate = Coff(bytes(raw))
+        compare_associated_code(candidate, candidate.function(subject.name), span,
+                                image, bindings, targets)
 
 
 @pytest.mark.parametrize("kwargs", [
@@ -617,6 +698,21 @@ def test_four_adjacent_pairs_compare_one_complete_envelope():
     assert [row["target_count"] for row in report["dispatch_extents"]] == [1, 1, 1, 1]
     assert report["comparison_span"] == {"start": BASE, "end": BASE + 117}
     assert [row.span.start - BASE for row in bindings if row.kind == "switch_targets"] == [88, 96, 104, 112]
+
+
+def test_intergroup_hotpatch_gap_requires_exact_position_bytes_and_alignment():
+    assert _is_intergroup_hotpatch_gap(b"\x8b\xff", b"\x8b\xff",
+                                       0x1002, 0x1004, {0x1002}, {0x1004})
+    damage = [
+        (b"\x8b\xfe", b"\x8b\xfe", 0x1002, 0x1004, {0x1002}, {0x1004}),  # wrong register
+        (b"\x66\x90", b"\x66\x90", 0x1002, 0x1004, {0x1002}, {0x1004}),  # prefixed NOP
+        (b"\x8b\xff", b"\x89\xff", 0x1002, 0x1004, {0x1002}, {0x1004}),  # candidate byte
+        (b"\x8b\xff", b"\x8b\xff", 0x1002, 0x1004, {0x1000}, {0x1004}),  # wrong location
+        (b"\x8b\xff", b"\x8b\xff", 0x1003, 0x1005, {0x1003}, {0x1005}),  # bad alignment
+    ]
+    for original, candidate, left, right, selectors, tables in damage:
+        assert not _is_intergroup_hotpatch_gap(original, candidate, left, right,
+                                               selectors, tables)
 
 
 @pytest.mark.parametrize("omit", [(2, 3), (6, 7)])
