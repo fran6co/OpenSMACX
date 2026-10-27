@@ -128,15 +128,25 @@ remaining obligations. No current coverage count, historical claim ledger or
 bounded host test proves this milestone. Once independently verified, preserve a
 Git checkpoint of the faithful source before implementing fixes or improvements.
 
-## Bounded alphabetical easy-matching pass
+## Evidence-led recovery queue and bounded matching pass
 
-Use fresh compiled-artifact measurements to select non-exact mapped functions,
-ordered by source-relative filename, then emitted symbol (case-insensitive),
-then original address. Work through batches of 24, grouping independent source
-owners for parallel inspection and isolated compiler resources. This ordering
-is a scheduling policy, not evidence of historical translation-unit boundaries.
+Use one fresh qualified application build to triage independent ownership groups.
+First investigate concrete missing behavior, original import/reference identity,
+member/type, hierarchy and lifetime discrepancies. Compare the original callsite,
+arguments and control flow with the actual emitted binding; an import-count or
+call-ordinal difference alone is not a defect. Reuse that build for read-only
+mapping, reference and instruction observations instead of compiling a new probe
+for each question. Those observations remain bound to its source/compiler inputs.
 
-Cap inspection at five minutes per assigned group and candidate compiler attempts
+Next select small matching misses with a specific pin-backed source hypothesis.
+An early prologue divergence or high mnemonic similarity alone does not justify
+another register-allocation experiment. Alphabetical filename, emitted symbol
+and original address are tie-breakers among equally actionable candidates, not
+a reason to allocate workers to an unexplained plateau. Work through triage
+packets of at most24 functions within disjoint real owners; a larger ownership
+reservation must be split into explicit packets rather than treated as one audit.
+
+Cap initial triage at five minutes per assigned packet and candidate compiler attempts
 at three per function per unchanged source/compiler context. Candidate compile
 failures consume the cap; unchanged baseline, object-replica and deliberate damage
 controls are reported separately. Use fewer attempts when no evidence-backed,
@@ -144,6 +154,12 @@ ordinary C++ candidate is apparent. Record explicit skip/defer reasons, preserve
 structural discoveries, and advance rather than repeatedly polishing a plateau.
 Generated proposals, measurements and dependency fingerprints belong in ignored
 run artifacts, not source comments or a second versioned recovery ledger.
+
+Assignment, measurement, triage and complete semantic tracing are different
+outcomes. Identify the exact functions fully traced and changed; label the rest
+measurement-only, triaged or uninspected. Uninspected work is not exhausted
+matching context. A failed, evidence-backed hypothesis is resumable with new
+evidence; it does not become an exclusion or erase structural discoveries.
 
 Before proposing a source variant, inspect the function's Git history, task
 decisions and retained compiler evidence, including test-only checkpoints that
@@ -1005,6 +1021,24 @@ or independently justified structural recoveries proceed to the full checks.
 Keep pending compilations within the provisioned compiler leases, independent
 of the number of triage workers. Report landed function gains and observed
 compile attempts separately from candidates inspected or workers launched.
+
+Freeze a review handoff around the final source and test hashes, task scope,
+measurement inputs/trials, actual COFF observations and test exits/skips. Clearly
+separate candidate attempts, unchanged baselines, positive controls and recording.
+Older findings do not describe a later source snapshot. A declaration-order or
+spelling variant with no benefit can remain in the ignored experiment cache;
+retain the simplest supported source form and all useful structural discoveries.
+If recording later changes annotations, keep that guarded publication separate
+from the earlier body observation and verify the final integrated source again.
+
+Fill newly available workers with independent evidence-backed owner work while
+the coordinator reviews and verifies the previous batch. Combine ready disjoint
+owners at a frozen build/link checkpoint; do not build the whole game for each
+speculative spelling or tiny partial score gain. Run cheap actual-source controls
+before the final native observation when practical. Refresh global matching and
+reference-quality counts from the qualified build, retaining the full known
+denominator and every refusal. Historical claim counts, assignments and local
+instruction gains are not overall completion or recovery throughput.
 
 When an extent failure hides the useful instruction differences, add
 `--compiled-diagnostics` to the same native variant command. It reuses that run's
