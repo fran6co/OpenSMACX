@@ -36,7 +36,8 @@ def _unit(job):
     root, profile, path, records, image, flags, shared, fragment_pairs = job
     return compare_unit(records, image, path, (), flags, shared,
                         compiler=Compiler(root, profile=profile),
-                        fragment_pairs=fragment_pairs)
+                        fragment_pairs=fragment_pairs, root=root,
+                        strict_command_for=lambda _path: ())
 
 
 def _key(record):

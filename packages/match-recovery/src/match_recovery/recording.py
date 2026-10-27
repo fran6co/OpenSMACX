@@ -28,7 +28,8 @@ from .source_selection import select_records, compilation_context
 def _unit(job):
     root, profile, path, records, image, arguments, flags, shared = job
     return compare_unit(records, image, path, arguments, flags, shared,
-                        compiler=Compiler(root, profile=profile))
+                        compiler=Compiler(root, profile=profile), root=root,
+                        strict_command_for=lambda _path: arguments)
 
 
 def record(root: Path, targets, *, image: Path, in_file: str | None = None,

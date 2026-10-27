@@ -6,6 +6,7 @@ This is a scoped diagnostic, not the full build/ownership/runtime admission gate
 
 from collections import Counter, defaultdict
 from dataclasses import replace
+import hashlib
 from pathlib import Path
 from typing import Callable
 
@@ -21,10 +22,12 @@ from .associated_source import read_associated
 from .literal_data import check_literals
 from match_recovery.pe_coff import Coff, PeImage
 from match_recovery.tasks import TaskStore
+from match_recovery.source import read_file
 from match_recovery.ownership_source import project_view
 from match_recovery.generated_binary import check_generated, generated_coverage
 from .compiler import Compiler
 from .measurement import Measurement
+from .source_inventory import image_pin
 from .import_source import read_imports, import_targets
 from .shared_source import read_shared, referenced_shared_units, validate_shared
 from .shared_binary import check_shared
@@ -448,9 +451,10 @@ def _compiled_evidence(bindings, object_bindings, generated_bindings, objects, i
     return (rows, checked_objects, checked_generated, checked_imports, checked_shared, checked_literals), targets, imports
 
 
-def verify_task(root: Path, task_name: str, image_path: Path, *,
-                compiler: Callable | None = None, command_for: Callable | None = None,
-                debug_types: bool = False, retained_diagnostics: bool = False) -> dict:
+def _verify_selection(root: Path, selected: frozenset[str], image_path: Path, *,
+                      compiler: Callable | None = None, command_for: Callable | None = None,
+                      flag_sets=None, debug_types: bool = False, retained_diagnostics: bool = False,
+                      selection_guard=None, selection_label=None, expected_image_sha256=None) -> dict:
     # Joint layout checks need configured debug flags. This is a measured configuration,
     # never an assumption that debug and non-debug objects are interchangeable.
     if type(debug_types) is not bool:
@@ -459,26 +463,31 @@ def verify_task(root: Path, task_name: str, image_path: Path, *,
         raise ValueError("retained_diagnostics must be a boolean")
     root = root.resolve()
     settings = Measurement.read(root)
-    flag_sets = tuple(flags + (settings.layout_flags if debug_types else ()) for flags in settings.flag_sets)
-    store = TaskStore(root)
-    task = store.read(task_name)
-    decisions = store.decisions(task_name)
-    selected, _ = store._scope(task, decisions)
+    explicit_flag_sets = flag_sets is not None
+    if flag_sets is None:
+        flag_sets = settings.flag_sets
+    else:
+        if (not isinstance(flag_sets, (tuple, list)) or not flag_sets
+                or any(not isinstance(flags, (tuple, list))
+                       or any(not isinstance(arg, str) or "\0" in arg for arg in flags)
+                       for flags in flag_sets)):
+            raise ValueError("explicit native flag sets must be a nonempty array of string arrays")
+        flag_sets = tuple(tuple(flags) for flags in flag_sets)
+    flag_sets = tuple(flags + (settings.layout_flags if debug_types else ()) for flags in flag_sets)
     if not selected:
-        raise ValueError("refusing an empty task measurement")
+        raise ValueError("refusing an empty native selection")
     measurement_options = {"debug_types": debug_types,
                            **({"retained_diagnostics": True} if retained_diagnostics else {})}
     before = settings.snapshot(root, measurement_options)
     view, snapshot = project_view(root)
-    if any(subject.image_sha256 != snapshot["image_sha256"] or subject.address_space != "pe:va"
-           for subject in task.subjects):
-        raise ValueError("task refers to a different original image/address space")
+    if expected_image_sha256 is not None and expected_image_sha256 != snapshot["image_sha256"]:
+        raise ValueError("records refer to a different configured original image")
     image_data = image_path.read_bytes()
     image = PeImage(image_data, snapshot["image_sha256"])
     object_bindings = read_objects(root, snapshot["image_sha256"])
     literal_bindings = read_literals(root, snapshot["image_sha256"])
     associated_bindings = read_associated(root, snapshot["image_sha256"])
-    if any(item.span is not None for item in object_bindings):
+    if any(item.span is not None for item in object_bindings) and not explicit_flag_sets:
         flag_sets = tuple(flags + settings.layout_flags for flags in settings.flag_sets)
     generated_bindings = read_generated(root, snapshot["image_sha256"])
     import_bindings = read_imports(root)
@@ -698,9 +707,10 @@ def verify_task(root: Path, task_name: str, image_path: Path, *,
                   if Result.UNKNOWN in results else Result.FAIL)
         rows.append({**{name: candidates[0][name] for name in ("entity_id", "address", "symbol", "unit")},
                      "result": result, "variants": candidates})
-    if (settings.snapshot(root, measurement_options) != before or image_path.read_bytes() != image_data
-            or store.read(task_name) != task or store.decisions(task_name) != decisions):
-        raise ValueError("source, build inputs or task decisions changed during measurement; retry")
+    if (settings.snapshot(root, measurement_options) != before or image_path.read_bytes() != image_data):
+        raise ValueError("source, build inputs or image changed during measurement; retry")
+    if selection_guard is not None:
+        selection_guard()
     counts = Counter(row["result"] for row in rows)
     overall = (Result.UNKNOWN if counts[Result.UNKNOWN] else Result.FAIL if counts[Result.FAIL] else Result.PASS)
     table_results = ({item["content"] for item in generated_checks}
@@ -711,7 +721,7 @@ def verify_task(root: Path, task_name: str, image_path: Path, *,
         overall = Result.UNKNOWN
     elif Result.FAIL in table_results and overall != Result.UNKNOWN:
         overall = Result.FAIL
-    return {"task_id": task_name, "check": "scoped_binary_references", "result": overall,
+    return {"task_id": selection_label, "check": "scoped_binary_references", "result": overall,
             "input_fingerprint": digest(before), "functions": rows, "counts": dict(sorted(counts.items())),
             "compile_attempts": attempts, "selected_entities": len(selected), "translation_units": sorted(generated_units),
             "flag_sets": [list(flags) for flags in flag_sets],
@@ -746,8 +756,100 @@ def verify_task(root: Path, task_name: str, image_path: Path, *,
             "scope_complete": False, "ready_for_collection": False, "persisted": False,
             "build_verification": Result.UNKNOWN, "structure_verification": Result.UNKNOWN,
             "runtime_verification": Result.UNKNOWN,
-            "limitations": ["task subjects only; dependent callers require a wider admission gate",
+            "limitations": ["selected subjects only; dependent callers require a wider admission gate",
                             "unbounded object starts prove no initial data; bounded data needs standalone debug types and source extents",
                             "import slot identities require source DLL/export bindings; candidate DLL selection, ABI and delay imports remain unproved",
                             "no layout, lifetime, full link or independent review proof",
                             "fresh diagnostic only; fingerprint is not a reusable measurement cache key"]}
+
+
+def _current_source_records(root: Path, settings: Measurement):
+    records = []
+    for path in settings.source.files(root):
+        records.extend(read_file(path))
+    return records
+
+
+def verify_records(root: Path, records, image_path: Path, *, flag_sets,
+                   compiler: Callable | None = None, command_for: Callable | None = None,
+                   retained_diagnostics: bool = False) -> dict:
+    """Strictly verify current source records without creating a task or ledger.
+
+    The caller supplies the actual invocation's flag trials. Every selected
+    record must equal a freshly parsed annotation from a configured source
+    file, and the image must match the configured pin. This is the shared
+    native path used for source-associated code tails.
+    """
+    root = root.resolve()
+    settings = Measurement.read(root)
+    if settings.source.address_space != "pe:va":
+        raise ValueError("record verification requires the configured PE virtual-address space")
+    pin = image_pin(root, settings.source)
+    image_path = image_path if image_path.is_absolute() else root / image_path
+    image_path = image_path.resolve()
+    actual = hashlib.sha256(image_path.read_bytes()).hexdigest()
+    if actual != pin:
+        raise ValueError("record verification requires the configured pinned original image")
+    selected_records = tuple(records)
+    if not selected_records:
+        raise ValueError("record verification requires an explicit nonempty selection")
+
+    def fresh_records():
+        current = _current_source_records(root, settings)
+        by_key = defaultdict(list)
+        for row in current:
+            by_key[(row.path.resolve(), row.address, row.line)].append(row)
+        selected_ids = []
+        for record in selected_records:
+            try:
+                relative = record.path.resolve().relative_to(root).as_posix()
+                key = (record.path.resolve(), record.address, record.line)
+            except (AttributeError, OSError, ValueError) as error:
+                raise ValueError("selected record is not a configured current source annotation") from error
+            if (relative not in {path.relative_to(root).as_posix() for path in settings.source.files(root)}
+                    or len(by_key.get(key, ())) != 1 or by_key[key][0] != record):
+                raise ValueError("selected record differs from the current configured source annotation")
+            selected_ids.append(Origin(pin, settings.source.address_space, record.address).entity_id)
+        if len(set(selected_ids)) != len(selected_ids):
+            raise ValueError("record verification selection contains duplicate original identities")
+        return frozenset(selected_ids)
+
+    selected = fresh_records()
+
+    def guard():
+        if fresh_records() != selected or image_pin(root, settings.source) != pin:
+            raise ValueError("source records or configured image pin changed during verification; retry")
+
+    return _verify_selection(root, selected, image_path, compiler=compiler,
+                              command_for=command_for, flag_sets=flag_sets,
+                              retained_diagnostics=retained_diagnostics,
+                              selection_guard=guard, selection_label=None,
+                              expected_image_sha256=pin)
+
+
+def verify_task(root: Path, task_name: str, image_path: Path, *,
+                compiler: Callable | None = None, command_for: Callable | None = None,
+                debug_types: bool = False, retained_diagnostics: bool = False) -> dict:
+    """Verify task-scoped native selection, retaining task freshness guards."""
+    root = root.resolve()
+    settings = Measurement.read(root)
+    pin = image_pin(root, settings.source)
+    store = TaskStore(root)
+    task = store.read(task_name)
+    decisions = store.decisions(task_name)
+    selected, _ = store._scope(task, decisions)
+    if not selected:
+        raise ValueError("refusing an empty task measurement")
+    if any(subject.image_sha256 != pin or subject.address_space != "pe:va"
+           for subject in task.subjects):
+        raise ValueError("task refers to a different original image/address space")
+
+    def guard():
+        if store.read(task_name) != task or store.decisions(task_name) != decisions:
+            raise ValueError("task scope or decisions changed during measurement; retry")
+
+    return _verify_selection(root, selected, image_path, compiler=compiler,
+                              command_for=command_for, debug_types=debug_types,
+                              retained_diagnostics=retained_diagnostics,
+                              selection_guard=guard, selection_label=task_name,
+                              expected_image_sha256=pin)

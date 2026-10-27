@@ -11,6 +11,7 @@ import re
 import time
 
 from .application_binary import select_bindings
+from .associated_source import read_associated
 from .coff_replica import function_signature, object_signature
 from .compiler import Compiler
 from .components import local_path
@@ -313,6 +314,7 @@ def measure_local_variants(root: Path, task_name: str, image_path: Path, deck: d
 
     view, view_snapshot = project_view(root)
     pin = view_snapshot["image_sha256"]
+    associated_bindings = read_associated(root, pin)
     if image_pin(root, settings.source) != pin:
         raise ValueError("local task binding uses another pinned image")
     if any(subject.image_sha256 != pin or subject.address_space != settings.source.address_space
@@ -491,7 +493,8 @@ def measure_local_variants(root: Path, task_name: str, image_path: Path, deck: d
             try:
                 Coff(raw).function(target.symbol)
                 measured = compare_unit(records, image_path, source, (), (flags,), shared,
-                                        compiler=lambda *_args: raw)
+                                        compiler=lambda *_args: raw,
+                                        associated_bindings=associated_bindings)
                 return {"results": _comparison_rows(measured),
                         "compile_attempts": 0, "reused_compiled_object": True}
             except (OSError, ValueError) as failure:
