@@ -1244,8 +1244,8 @@ extern "C" void __cdecl sub_5cdfa0(void *argument) {
               r->descriptor->play_buffer->Unlock(first, first_bytes, second, second_bytes);
             }
             r->playback_cursor =
-                (r->playback_cursor + record.field_04) %
-                r->playback_buffer_bytes;
+                (LONG)(r->playback_cursor + record.field_04) %
+                (LONG)r->playback_buffer_bytes;
             InterlockedIncrement(&r->output_consumer_cursor);
             InterlockedExchange(&r->output_lock_word, (LONG)record.field_08);
             InterlockedDecrement(&r->pending_output_records);
@@ -1262,13 +1262,13 @@ extern "C" void __cdecl sub_5cdfa0(void *argument) {
               r->descriptor->play_buffer->Unlock(first, first_bytes, second, second_bytes);
             }
             r->playback_cursor =
-                (r->playback_cursor + (DWORD)available) %
-                r->playback_buffer_bytes;
+                (LONG)(r->playback_cursor + (DWORD)available) %
+                (LONG)r->playback_buffer_bytes;
             InterlockedIncrement(&r->output_lock_word);
           } else {
             r->playback_cursor =
-                (r->playback_cursor + (DWORD)available) %
-                r->playback_buffer_bytes;
+                (LONG)(r->playback_cursor + (DWORD)available) %
+                (LONG)r->playback_buffer_bytes;
             InterlockedIncrement(&r->output_lock_word);
           }
         }

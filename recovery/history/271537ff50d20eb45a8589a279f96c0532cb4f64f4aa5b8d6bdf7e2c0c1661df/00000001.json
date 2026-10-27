@@ -1,0 +1,19 @@
+{
+  "event_id": "7917a944ca42fd9e9b9f1f38da1d5904009ff39ea8cbec0d8d4947b01a119ab4",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/caviar.cpp"
+    ],
+    "evidence": [
+      "Independent review found the obsolete derived size prose349/127 contradicts the independently corrected345/123-byte Caviar extents. Remove only these two stale size lines; preserve every prototype, finding, claim and marker. Source spans are authoritative; do not duplicate a recomputable length."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "remove-derived-size-prose",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:owner-boundaries-oct27"
+}
