@@ -940,12 +940,12 @@ void CouncWin::init(int proposal, int faction_id) {
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // Historical seed observations (not fresh measurements or acceptance):
-// LEVER: tail call, this reinterpreted as Win* to call is_visible() directly
+// LEVER: the original five-byte entry tail-jumps directly to Win::is_visible.
 // ORIGINAL: 0x00427150 ?hide@CouncWin@@QAEHXZ 0x00427150-0x00427155 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00427150.cpp", "image:terranx_original.exe:0x00427150", "Council interface/window declarations identify embedded fonts/buttons, voting arrays and existing MainInterface/Console owners; original instructions determine call and state order."], "reason": "Original427150 is the Win visibility-query tail jump, not a hide override. Name this ordinary derived visibility query without changing base hide semantics."}
-// symbol    ?council_visible@CouncWin@@QAEHXZ
-int CouncWin::council_visible() {
-    return Win::is_visible();
+// RECOVERY_BINDING: v1 {"evidence": ["pin:terranx_original.exe sha256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; 0x00427150 is E9 3B 0D 1D 00, a five-byte jmp to 0x005F7E90 (Win::is_visible)", "pin:0x0066AAF0 is the CouncWin primary Win-view slot 2 word, equal to 0x00427150 and backed by a HIGHLOW relocation; the native generated check confirms the current candidate incorrectly points it at Win::hide", "src/win.h declares virtual void Win::hide() in slot 2 and int Win::is_visible(); src/councwin.h declares CouncWin as a Win-derived GraphicWin; void hide() override is the typed slot contract while preserving the original query body", "src/councwin.cpp has no callers of council_visible; on_status uses this->Win::hide() explicitly, which remains a base-qualified call after adding the override", "The mapped 0x00427150 ORIGINAL name/span/BYTE_EXACT claim remain unchanged; only current emitted symbol and typed owner declaration are corrected"], "reason": "Recover original CouncWin slot-2 behavior: the pinned entry at 0x00427150 tail-jumps to Win::is_visible instead of running Win::hide; the table cell at 0x0066AA9C selects this entry."}
+// symbol    ?hide@CouncWin@@UAEXXZ
+void CouncWin::hide() {
+    Win::is_visible();
 }
 
 
