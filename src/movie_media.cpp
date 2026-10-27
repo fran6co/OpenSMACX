@@ -1884,10 +1884,11 @@ int MediaRuntime::release_session_interfaces() {
       // This load follows the optional-buffer Release and therefore observes
       // any descriptor replacement performed by that call.
       MediaDescriptor *device_owner = descriptor;
-      if (device_owner->sound_device != 0) {
-        IDirectSound *sound_device = device_owner->sound_device;
+      IDirectSound **sound_device_slot = &device_owner->sound_device;
+      if (*sound_device_slot != 0) {
+        IDirectSound *sound_device = *sound_device_slot;
         sound_device->Release();
-        device_owner->sound_device = 0;
+        *sound_device_slot = 0;
       }
     }
   }

@@ -1,0 +1,30 @@
+{
+  "event_id": "9120b1807b56c41cfbdca87eb14b1de998531c5f2df9362eeb40d7c5eb94a52f",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_graphicwin_update_boundary_oct20e.py",
+      "recovery/tests/test_media_audio_owner_oct11.py",
+      "recovery/tests/test_movie_media_behavior.py",
+      "recovery/tests/test_movie_runtime_descriptor_rereads_oct15.py",
+      "recovery/tests/test_rectangle_overload_cohort_oct18.py",
+      "src/movie_media.cpp"
+    ],
+    "evidence": [
+      "Frozen native actual-profile candidate release_session_interfaces retains descriptor reload after buffer Release and same device owner clear after device Release. Include existing behavioral controls; update only stale source mutation anchors without relaxing assertions."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6087760,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "collect-media-interface-exact",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:exact-winners-oct27mc"
+}

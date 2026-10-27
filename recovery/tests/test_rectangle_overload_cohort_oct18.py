@@ -233,7 +233,10 @@ def test_complete_six_actual_overloads(tmp_path,name):
 def test_compiling_boundary_damage_controls(tmp_path,damage,witness):
     bodies=actual()
     if damage=="graphic_wrong_null_bounds":i,good,bad=0,"area = &rect2_","area = &client_rect_"
-    elif damage=="graphic_swapped_extents":i,good,bad=0,"update(left, top, width, height, source)","update(left, top, height, width, source)"
+    elif damage=="graphic_swapped_extents":
+        i=0
+        good="update(area->left, area->top, area->right - area->left,\n           area->bottom - area->top, source)"
+        bad="update(area->left, area->top, area->bottom - area->top,\n           area->right - area->left, source)"
     elif damage=="point_value_copies":
         bodies[2]='''void Win::nonclient_to_screen(int * x, int * y) {
             int xx=*x,yy=*y;client_to_screen(&xx,&yy);

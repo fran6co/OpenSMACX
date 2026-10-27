@@ -299,7 +299,7 @@ def test_actual_bodies_preserve_pinned_descriptor_reload_boundaries(tmp_path):
 @pytest.mark.parametrize("mutant", [
     ("session", "descriptor->source_buffer_58 = 0;", "source_owner->source_buffer_58 = 0;"),
     ("playback", "descriptor->play_buffer = 0;", "playback_owner->play_buffer = 0;"),
-    ("session", "device_owner->sound_device = 0;", "descriptor->sound_device = 0;"),
+    ("session", "*sound_device_slot = 0;", "descriptor->sound_device = 0;"),
     ("cleanup", "MediaDescriptor *output_owner = descriptor;",
      "MediaDescriptor *output_owner = stream_owner;"),
 ])
