@@ -1,0 +1,46 @@
+{
+  "event_id": "6087e421b2cb19b965af40065eb377eadb40dcb9063f4619d035d9fbf31e41f0",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_media_output_buffers_oct11.py"
+    ],
+    "evidence": [
+      "The historical whole-file equality assertion fails already on unchanged206 master after separately reviewed imports/owner/type migrations. A frozenOct11source dump is not current per-change preservation. Replace only that obsolete assertion with originalidentity/span and monotoneclaim continuity for its five originally selected outputfunctions.",
+      "Keep all actual output-path host controls, pinned instruction/Unlock checks, historical projection helpers still imported by other legacy tests, and their self-control. Native check-claims and fresh task compiled-preservation remain the project guards; do not change source, claims or gates."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6077376,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6080832,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6084816,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6084992,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6085168,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "replace-obsolete-output-file-golden-oct27ix",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:interface-styles-fixture-oct27ix"
+}
