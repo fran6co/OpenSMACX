@@ -31,6 +31,7 @@ from .source_inventory import image_pin
 from .import_source import read_imports, import_targets
 from .shared_source import read_shared, referenced_shared_units, validate_shared
 from .shared_binary import check_shared
+from .selected_evidence import select_evidence
 
 
 def _has_unbound_candidate(entity: dict) -> bool:
@@ -409,10 +410,15 @@ def check_compiled(bindings, object_bindings, generated_bindings, objects, image
 
 def _compiled_evidence(bindings, object_bindings, generated_bindings, objects, image, externals, *, errors=None,
                        import_bindings=(), shared_bindings=(), literal_bindings=(), fragments=(),
-                       associated_bindings=()):
+                       associated_bindings=(), selected_object_targets=None,
+                       selected_object_contents=None):
     """Resolve targets from product objects, never from a retention probe."""
-    data_targets, checked_objects = object_targets(object_bindings, objects)
-    local_data_targets, checked_local_objects = local_object_targets(object_bindings, objects)
+    target_bindings = (object_bindings if selected_object_targets is None
+                       else selected_object_targets)
+    content_bindings = (object_bindings if selected_object_contents is None
+                        else selected_object_contents)
+    data_targets, checked_objects = object_targets(target_bindings, objects)
+    local_data_targets, checked_local_objects = local_object_targets(target_bindings, objects)
     local_reports = {(row["unit"], row["symbol"]): row for row in checked_local_objects
                      if row["definition"] == "pass"}
     checked_objects = [local_reports.get((row["unit"], row["symbol"]), row) for row in checked_objects]
@@ -436,7 +442,7 @@ def _compiled_evidence(bindings, object_bindings, generated_bindings, objects, i
     if shared_bindings:
         generated_targets, checked_generated = check_generated(generated_bindings, objects, image, {**externals, **data_targets})
     from .object_data import check_initial_data
-    bounded = [item for item in object_bindings if item.span is not None
+    bounded = [item for item in content_bindings if item.span is not None
                and (item.unit in objects or item.unit in (errors or {}))]
     initial = check_initial_data(bounded, objects, image, {**externals, **data_targets, **generated_targets, **imports},
                                  literal_targets=literal_targets, errors=errors)
@@ -454,13 +460,16 @@ def _compiled_evidence(bindings, object_bindings, generated_bindings, objects, i
 def _verify_selection(root: Path, selected: frozenset[str], image_path: Path, *,
                       compiler: Callable | None = None, command_for: Callable | None = None,
                       flag_sets=None, debug_types: bool = False, retained_diagnostics: bool = False,
-                      selection_guard=None, selection_label=None, expected_image_sha256=None) -> dict:
+                      selection_guard=None, selection_label=None, expected_image_sha256=None,
+                      record_evidence: bool = False) -> dict:
     # Joint layout checks need configured debug flags. This is a measured configuration,
     # never an assumption that debug and non-debug objects are interchangeable.
     if type(debug_types) is not bool:
         raise ValueError("debug_types must be a boolean")
     if type(retained_diagnostics) is not bool:
         raise ValueError("retained_diagnostics must be a boolean")
+    if type(record_evidence) is not bool:
+        raise ValueError("record_evidence must be a boolean")
     root = root.resolve()
     settings = Measurement.read(root)
     explicit_flag_sets = flag_sets is not None
@@ -504,6 +513,16 @@ def _verify_selection(root: Path, selected: frozenset[str], image_path: Path, *,
     bindings, fragment_bindings, support_entities, fragment_refused = select_fragment_bindings(
         view, selected, bindings)
     refused.extend(fragment_refused)
+    if record_evidence:
+        source_extract_errors = {row["entity_id"]: row["extract_error"] for row in snapshot["records"]
+                                 if row["entity_id"] in selected and row.get("extract_error")}
+        unextractable = [item for item in bindings if item.origin.entity_id in source_extract_errors]
+        refused.extend({"entity_id": item.origin.entity_id, "result": Result.UNKNOWN,
+                        "symbol": item.symbol,
+                        "reason": "source definition could not be extracted: "
+                                  + source_extract_errors[item.origin.entity_id]}
+                       for item in unextractable)
+        bindings = [item for item in bindings if item not in unextractable]
     # Build-only definitions are deliberately unfinished. Their emitted RET
     # may match an empty original, but cannot establish task completion until
     # the source body-slot sentinel is deliberately removed. Keep reference
@@ -536,11 +555,19 @@ def _verify_selection(root: Path, selected: frozenset[str], image_path: Path, *,
     if {item.symbol for item in generated_bindings} & (set(externals) | {item.symbol for item in bindings} | object_symbols):
         raise ValueError("generated symbol also has a function/object binding")
     command_for = command_for if command_for is not None else lambda path: ()
-    required_data = [item for item in object_bindings if item.evidence is not None and item.evidence.entity_id in selected]
-    required_shared = [item for item in shared_bindings if item.evidence.entity_id in selected]
-    required_literals = [item for item in literal_bindings if item.evidence.entity_id in selected]
-    units = sorted({item.unit for item in bindings} | {item.unit for item in required_data}
-                   | {item.unit for item in required_shared} | {item.unit for item in required_literals})
+    initial_evidence = (select_evidence(bindings, selected, {}, object_bindings,
+                                        generated_bindings, import_bindings,
+                                        shared_bindings, literal_bindings,
+                                        unit_extensions=settings.unit_extensions)
+                       if record_evidence else None)
+    if record_evidence:
+        units = sorted(initial_evidence.units)
+    else:
+        required_data = [item for item in object_bindings if item.evidence is not None and item.evidence.entity_id in selected]
+        required_shared = [item for item in shared_bindings if item.evidence.entity_id in selected]
+        required_literals = [item for item in literal_bindings if item.evidence.entity_id in selected]
+        units = sorted({item.unit for item in bindings} | {item.unit for item in required_data}
+                       | {item.unit for item in required_shared} | {item.unit for item in required_literals})
     commands, command_errors = {}, {}
     for unit in units:
         try:
@@ -552,6 +579,8 @@ def _verify_selection(root: Path, selected: frozenset[str], image_path: Path, *,
     attempts, variants, object_checks = 0, defaultdict(list), []
     generated_checks, dependencies, import_checks, shared_checks = [], [], [], []
     literal_checks = []
+    evidence_checks = []
+    selection_trials = []
     generated_observations = []
     retained_observations = []
     generated_units = set(units)
@@ -598,51 +627,151 @@ def _verify_selection(root: Path, selected: frozenset[str], image_path: Path, *,
                     record_graph_trial(unit, unit_flags, flags, "compiled")
             except (OSError, ValueError) as error:
                 errors[unit] = str(error)
-        # A real global may live in a TU without any mapped task function.
-        # Follow source-declared ownership, never resolve it from the original
-        # operand or reuse an object compiled under another flag trial.
         dependency_units = set()
-        while pending := (referenced_object_units(object_bindings, objects)
-                          | referenced_shared_units(shared_bindings, objects)) - objects.keys() - errors.keys():
-            dependency_units.update(pending)
-            for unit in sorted(pending):
-                try:
-                    if Path(unit).suffix not in settings.unit_extensions:
-                        raise ValueError("object owner is not a configured translation unit")
-                    unit_flags = effective(unit, flags)
-                    command = tuple(command_for(root / unit))
-                    effective_by_unit[unit] = list(unit_flags)
-                    observed_grid.setdefault(unit, [])
-                    if list(unit_flags) not in observed_grid[unit]:
-                        observed_grid[unit].append(list(unit_flags))
-                    cache_key = (unit, command, unit_flags)
-                    if cache_key not in object_cache:
-                        attempts += 1
-                        if compiler is None:
-                            compiler = Compiler(root, profile=settings.compiler_profile)
-                        try:
-                            object_cache[cache_key] = (Coff(compiler(root / unit, command, unit_flags)), None)
-                        except (OSError, ValueError) as error:
-                            object_cache[cache_key] = (None, str(error))
-                    obj, error = object_cache[cache_key]
-                    if error is not None:
-                        errors[unit] = error
-                        record_graph_trial(unit, unit_flags, flags, "failed")
-                    else:
-                        objects[unit] = obj
-                        record_graph_trial(unit, unit_flags, flags, "compiled")
-                except (OSError, ValueError) as error:
-                    errors[unit] = str(error)
+        if record_evidence:
+            # Record verification follows only dependencies named by the
+            # selected COFF bodies, associated data and explicitly selected
+            # evidence. Task verification below retains the full application
+            # object/shared graph.
+            evidence = select_evidence(bindings, selected, objects, object_bindings,
+                                       generated_bindings, import_bindings,
+                                       shared_bindings, literal_bindings,
+                                       unit_extensions=settings.unit_extensions)
+            while pending := evidence.units - objects.keys() - errors.keys():
+                dependency_units.update(pending)
+                for unit in sorted(pending):
+                    try:
+                        if Path(unit).suffix not in settings.unit_extensions:
+                            raise ValueError("selected evidence owner is not a configured translation unit")
+                        unit_flags = effective(unit, flags)
+                        command = commands.get(unit)
+                        if command is None:
+                            command = tuple(command_for(root / unit))
+                            commands[unit] = command
+                        effective_by_unit[unit] = list(unit_flags)
+                        observed_grid.setdefault(unit, [])
+                        if list(unit_flags) not in observed_grid[unit]:
+                            observed_grid[unit].append(list(unit_flags))
+                        cache_key = (unit, command, unit_flags)
+                        if cache_key not in object_cache:
+                            attempts += 1
+                            if compiler is None:
+                                compiler = Compiler(root, profile=settings.compiler_profile)
+                            try:
+                                object_cache[cache_key] = (Coff(compiler(root / unit, command, unit_flags)), None)
+                            except (OSError, ValueError) as error:
+                                object_cache[cache_key] = (None, str(error))
+                        obj, error = object_cache[cache_key]
+                        if error is not None:
+                            errors[unit] = error
+                            record_graph_trial(unit, unit_flags, flags, "failed")
+                        else:
+                            objects[unit] = obj
+                            record_graph_trial(unit, unit_flags, flags, "compiled")
+                    except (OSError, ValueError) as error:
+                        errors[unit] = str(error)
+                evidence = select_evidence(bindings, selected, objects, object_bindings,
+                                           generated_bindings, import_bindings,
+                                           shared_bindings, literal_bindings,
+                                           unit_extensions=settings.unit_extensions)
+        else:
+            # Full task-scoped behavior: follow every declared object/shared
+            # relocation in the selected application object graph.
+            while pending := (referenced_object_units(object_bindings, objects)
+                              | referenced_shared_units(shared_bindings, objects)) - objects.keys() - errors.keys():
+                dependency_units.update(pending)
+                for unit in sorted(pending):
+                    try:
+                        if Path(unit).suffix not in settings.unit_extensions:
+                            raise ValueError("object owner is not a configured translation unit")
+                        unit_flags = effective(unit, flags)
+                        command = tuple(command_for(root / unit))
+                        effective_by_unit[unit] = list(unit_flags)
+                        observed_grid.setdefault(unit, [])
+                        if list(unit_flags) not in observed_grid[unit]:
+                            observed_grid[unit].append(list(unit_flags))
+                        cache_key = (unit, command, unit_flags)
+                        if cache_key not in object_cache:
+                            attempts += 1
+                            if compiler is None:
+                                compiler = Compiler(root, profile=settings.compiler_profile)
+                            try:
+                                object_cache[cache_key] = (Coff(compiler(root / unit, command, unit_flags)), None)
+                            except (OSError, ValueError) as error:
+                                object_cache[cache_key] = (None, str(error))
+                        obj, error = object_cache[cache_key]
+                        if error is not None:
+                            errors[unit] = error
+                            record_graph_trial(unit, unit_flags, flags, "failed")
+                        else:
+                            objects[unit] = obj
+                            record_graph_trial(unit, unit_flags, flags, "compiled")
+                    except (OSError, ValueError) as error:
+                        errors[unit] = str(error)
         dependencies.append({"flags": list(flags), "units": sorted(dependency_units),
                              "unit_flag_sets": {unit: effective_by_unit[unit] for unit in sorted(effective_by_unit)},
                              "errors": {unit: errors[unit] for unit in sorted(dependency_units) if unit in errors}})
         generated_units.update(dependency_units)
-        active_shared = [item for item in shared_bindings if item.unit in objects or item.unit in errors]
+        active_objects = evidence if record_evidence else None
+        active_generated = active_objects.generated if active_objects is not None else generated_bindings
+        active_imports = active_objects.imports if active_objects is not None else import_bindings
+        active_shared = (list(active_objects.shared) if active_objects is not None
+                         else [item for item in shared_bindings if item.unit in objects or item.unit in errors])
+        active_literals = active_objects.literals if active_objects is not None else literal_bindings
         checked, product_targets, product_imports = _compiled_evidence(
-            bindings, object_bindings, generated_bindings, objects, image, externals, errors=errors,
-            import_bindings=import_bindings, shared_bindings=active_shared, literal_bindings=literal_bindings,
-            fragments=fragment_bindings, associated_bindings=associated_bindings)
+            bindings, object_bindings, active_generated, objects, image, externals, errors=errors,
+            import_bindings=active_imports, shared_bindings=active_shared, literal_bindings=active_literals,
+            fragments=fragment_bindings, associated_bindings=associated_bindings,
+            selected_object_targets=(active_objects.object_targets if active_objects is not None else None),
+            selected_object_contents=(active_objects.object_contents if active_objects is not None else None))
         checked_functions, checked_objects, checked_generated, checked_imports, checked_shared, checked_literals = checked
+        if active_objects is not None:
+            evidence_checks.extend({**row, "flags": list(flags), "graph_flags": list(flags)}
+                                   for row in active_objects.unknown)
+            function_results = [row.get("result", Result.UNKNOWN) for row in checked_functions
+                                if row.get("entity_id") in selected
+                                and row.get("entity_id") not in support_entities]
+            refused_selected = [row for row in refused if row.get("entity_id") in selected]
+            function_rows_by_id = Counter(
+                row.get("entity_id") for row in checked_functions
+                if row.get("entity_id") in selected and row.get("entity_id") not in support_entities)
+            refused_rows_by_id = Counter(row.get("entity_id") for row in refused_selected)
+            coverage_unknown = []
+            for entity_id in sorted(selected):
+                count = function_rows_by_id[entity_id] + refused_rows_by_id[entity_id]
+                if count != 1:
+                    coverage_unknown.append({
+                        "result": Result.UNKNOWN, "entity_id": entity_id,
+                        "reason": ("selected source identity has no checked or refused result"
+                                   if count == 0 else
+                                   "selected source identity has multiple checked/refused results"),
+                    })
+            refused_results = [Result.UNKNOWN for _row in refused_selected]
+            evidence_results = [row.get("definition", Result.UNKNOWN) for row in checked_objects]
+            evidence_results.extend(row.get("content", Result.UNKNOWN) for row in checked_objects
+                                    if "content" in row)
+            evidence_results.extend(row.get("content", Result.UNKNOWN) for row in checked_generated)
+            evidence_results.extend(Result.PASS if row.get("identity") == "pass" else Result.UNKNOWN
+                                    for row in checked_imports)
+            evidence_results.extend(row.get("result", Result.UNKNOWN) for row in checked_shared)
+            evidence_results.extend(row.get("content", Result.UNKNOWN) for row in checked_literals)
+            evidence_results.extend(row.get("result", Result.UNKNOWN) for row in active_objects.unknown)
+            evidence_results.extend(refused_results)
+            evidence_results.extend(row["result"] for row in coverage_unknown)
+            evidence_checks.extend({**row, "flags": list(flags), "graph_flags": list(flags)}
+                                   for row in coverage_unknown)
+            evidence_checks.extend({**row, "result": Result.UNKNOWN,
+                                    "flags": list(flags), "graph_flags": list(flags)}
+                                   for row in refused_selected)
+            trial_values = [*function_results, *evidence_results]
+            trial_result = (Result.UNKNOWN if Result.UNKNOWN in trial_values else
+                            Result.FAIL if Result.FAIL in trial_values else Result.PASS)
+            selection_trials.append({"flags": list(flags), "result": trial_result,
+                                     "function_results": function_results,
+                                     "evidence_results": evidence_results,
+                                     "unknown": [*active_objects.unknown, *coverage_unknown,
+                                                 *({**row, "result": Result.UNKNOWN}
+                                                   for row in refused_selected)]})
         if retained_diagnostics:
             from .function_witness import retained_definition
             for binding in bindings:
@@ -692,7 +821,7 @@ def _verify_selection(root: Path, selected: frozenset[str], image_path: Path, *,
         import_checks.extend(stamped(item) for item in checked_imports)
         generated_checks.extend(stamped(item) for item in checked_generated)
         generated_observations.extend({**item, "flags": list(effective(item["unit"], flags)), "graph_flags": list(flags)}
-                                      for item in generated_coverage(generated_bindings, objects))
+                                      for item in generated_coverage(active_generated, objects))
         for row in checked_functions:
             if row["entity_id"] in support_entities:
                 continue
@@ -712,15 +841,20 @@ def _verify_selection(root: Path, selected: frozenset[str], image_path: Path, *,
     if selection_guard is not None:
         selection_guard()
     counts = Counter(row["result"] for row in rows)
-    overall = (Result.UNKNOWN if counts[Result.UNKNOWN] else Result.FAIL if counts[Result.FAIL] else Result.PASS)
-    table_results = ({item["content"] for item in generated_checks}
-                     | {item["content"] for item in object_checks if "content" in item}
-                     | {item["content"] for item in literal_checks}
-                     | {item["result"] for item in shared_checks})
-    if Result.UNKNOWN in table_results:
-        overall = Result.UNKNOWN
-    elif Result.FAIL in table_results and overall != Result.UNKNOWN:
-        overall = Result.FAIL
+    if record_evidence:
+        trial_results = {item["result"] for item in selection_trials}
+        overall = (Result.PASS if Result.PASS in trial_results else
+                   Result.UNKNOWN if Result.UNKNOWN in trial_results else Result.FAIL)
+    else:
+        overall = (Result.UNKNOWN if counts[Result.UNKNOWN] else Result.FAIL if counts[Result.FAIL] else Result.PASS)
+        table_results = ({item["content"] for item in generated_checks}
+                         | {item["content"] for item in object_checks if "content" in item}
+                         | {item["content"] for item in literal_checks}
+                         | {item["result"] for item in shared_checks})
+        if Result.UNKNOWN in table_results:
+            overall = Result.UNKNOWN
+        elif Result.FAIL in table_results and overall != Result.UNKNOWN:
+            overall = Result.FAIL
     return {"task_id": selection_label, "check": "scoped_binary_references", "result": overall,
             "input_fingerprint": digest(before), "functions": rows, "counts": dict(sorted(counts.items())),
             "compile_attempts": attempts, "selected_entities": len(selected), "translation_units": sorted(generated_units),
@@ -745,6 +879,9 @@ def _verify_selection(root: Path, selected: frozenset[str], image_path: Path, *,
             "shared_owners": [{"interpretation_id": item.interpretation_id, "unit": item.unit} for item in shared_bindings],
             "generated_tables": generated_checks,
             "generated_coverage": generated_observations,
+            **({"selected_evidence": {"checks": evidence_checks,
+                                      "trials": selection_trials}}
+               if record_evidence else {}),
             **({"retained_definitions": retained_observations,
                 "retained_definition_policy": "advisory_only; never product emission, restoration or acceptance"}
                if retained_diagnostics else {}),
@@ -824,7 +961,7 @@ def verify_records(root: Path, records, image_path: Path, *, flag_sets,
                               command_for=command_for, flag_sets=flag_sets,
                               retained_diagnostics=retained_diagnostics,
                               selection_guard=guard, selection_label=None,
-                              expected_image_sha256=pin)
+                              expected_image_sha256=pin, record_evidence=True)
 
 
 def verify_task(root: Path, task_name: str, image_path: Path, *,

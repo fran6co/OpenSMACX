@@ -1,0 +1,20 @@
+{
+  "event_id": "5bb2f8c1ff002b7efbd01d98c6b96998092f99a69b4121d1e2ae5f40dd6ee888",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "packages/match-recovery/src/match_recovery/selected_evidence.py",
+      "packages/match-recovery/tests/test_selected_evidence.py"
+    ],
+    "evidence": [
+      "Actual native Net measurement made150 compile calls and refused on unrelated whole-TU data dependencies. Implement native record-specific evidence closure rooted at selected function/associated data relocations while retaining complete task mode, namespace reservations, all relevant typed dependency checks and unknown/refusal handling."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "ad802f83687b090ccedd88a50bb73838a4d40fd21d3bd5be0af4590b363e4900",
+  "request_id": "selected-native-evidence-closure",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:associated-recording-oct27jv"
+}

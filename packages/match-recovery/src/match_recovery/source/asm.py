@@ -23,8 +23,12 @@ from pathlib import Path
 
 from capstone import CS_ARCH_X86, CS_MODE_32, CS_GRP_CALL, CS_GRP_JUMP, Cs, x86
 
+from ..application_binary import verify_records
+from ..associated_source import parse_associated
+from ..measurement import Measurement
 from ..model import Result
 from ..pe_coff import Coff, PeImage
+from ..source_inventory import image_pin
 from .eh_regions import bind_eh_regions, eh_action_semantic_difference
 from .model import DecompilationState, Mode, Tier
 
@@ -1523,12 +1527,8 @@ def compare_unit(records, exe: Path | str, source: Path | str,
                    for binding in associated_bindings for record in records):
                 raise ValueError("root context is required to verify selected associated owners")
     if root is not None and selected_source_has_associations:
-        from ..associated_source import parse_associated
-        from ..application_binary import verify_records
-        from ..source_inventory import image_pin
         root = Path(root).resolve()
         pin = image_pin(root)
-        from ..measurement import Measurement
         settings = Measurement.read(root)
         owner_path = next(iter(records)).path.resolve()
         relative = owner_path.relative_to(root).as_posix()
@@ -1573,19 +1573,33 @@ def compare_unit(records, exe: Path | str, source: Path | str,
                 row = next((candidate for candidate in strict.get("functions", [])
                             if int(candidate.get("address", "0"), 16) == record.address), None)
                 result = row.get("result") if row else None
+                diagnostic = row.get("reason") if row else None
+                if not diagnostic:
+                    checks = strict.get("selected_evidence", {}).get("checks", [])
+                    diagnostic = next((item.get("reason") for item in checks
+                                       if item.get("reason")), None)
+                if not diagnostic and row:
+                    reference_report = row.get("diagnostic")
+                    if isinstance(reference_report, dict):
+                        unresolved = [item.get("symbol") for item in reference_report.get("emitted_references", [])
+                                      if item.get("binding_address") is None]
+                        if unresolved:
+                            diagnostic = "selected code has unresolved references: " + ", ".join(unresolved)
+                    elif isinstance(reference_report, str):
+                        diagnostic = reference_report
+                if not diagnostic and strict.get("result") != Result.PASS:
+                    diagnostic = f"strict selected evidence result: {strict.get('result', Result.UNKNOWN)}"
                 if result == Result.PASS and strict.get("result") == Result.PASS:
                     observed = AsmComparison(verdict=Tier.BYTE_EXACT)
                 elif result == Result.FAIL or strict.get("result") == Result.FAIL:
                     observed = AsmComparison(
                         verdict=Tier.MISMATCH,
-                        diagnostic=(row.get("diagnostic") if row else
-                                    "strict associated owner or dependency check failed"),
+                        diagnostic=diagnostic or "strict associated owner or selected dependency check failed",
                     )
                 else:
                     observed = AsmComparison(
                         verdict=Tier.REFUSED,
-                        diagnostic=(row.get("diagnostic") if row else
-                                    "strict associated owner verification is unknown or refused"),
+                        diagnostic=diagnostic or "strict associated owner or selected dependency is unknown or refused",
                     )
                 associated_results[key(record)] = observed
 

@@ -209,7 +209,7 @@ def test_mixed_unit_reuses_associated_compile_for_ordinary_owner(tmp_path):
 
 @pytest.mark.parametrize("overall", [Result.FAIL, Result.UNKNOWN])
 def test_associated_compare_requires_whole_native_selection_to_pass(tmp_path, monkeypatch, overall):
-    from match_recovery import application_binary
+    from match_recovery.source import asm
 
     root, _task, raw = project(tmp_path)
     records = read_file(root / "code/unit.cc")
@@ -219,12 +219,34 @@ def test_associated_compare_requires_whole_native_selection_to_pass(tmp_path, mo
                 "functions": [{"address": f"{records[0].address:08X}",
                                "result": Result.PASS}]}
 
-    monkeypatch.setattr(application_binary, "verify_records", strict_pass_row)
+    monkeypatch.setattr(asm, "verify_records", strict_pass_row)
     compare = compare_unit(records, root / "image.exe", root / "code/unit.cc", (),
                            (("first",),), compiler=lambda *_: raw,
                            root=root, strict_command_for=lambda _path: ())
     assert compare.results[0][1].verdict is (
         Tier.MISMATCH if overall == Result.FAIL else Tier.REFUSED)
+
+
+def test_associated_refusal_keeps_selected_dependency_reason(tmp_path, monkeypatch):
+    from match_recovery.source import asm
+
+    root, _task, raw = project(tmp_path)
+    records = read_file(root / "code/unit.cc")
+
+    def unknown_dependency(*_args, **_kwargs):
+        return {"result": Result.UNKNOWN,
+                "functions": [{"address": f"{records[0].address:08X}",
+                               "result": Result.PASS}],
+                "selected_evidence": {"checks": [{"result": Result.UNKNOWN,
+                                                   "reason": "transitive object _g has no bound extent"}]}}
+
+    monkeypatch.setattr(asm, "verify_records", unknown_dependency)
+    compare = compare_unit(records, root / "image.exe", root / "code/unit.cc", (),
+                           (("first",),), compiler=lambda *_: raw,
+                           root=root, strict_command_for=lambda _path: ())
+    observed = compare.results[0][1]
+    assert observed.verdict is Tier.REFUSED
+    assert observed.diagnostic == "transitive object _g has no bound extent"
 
 
 def test_ordinary_rooted_comparison_does_not_scan_other_source_files(tmp_path):
