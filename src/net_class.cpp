@@ -28,7 +28,7 @@
 // TRIED: goto-preserving transcription of the Ghidra decompile (3-tier Heap::get/mem_get fallback, twice per node-type A/B, VCall slot0 insert callback); diverges at insn #7 in the prologue/local register allocation, not in the control-flow shape
 // symbol    ?add@ServiceProviderList@@QAEHH@Z
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00402350 sub_402350 0x00402350-0x0040239B FILE
+// ORIGINAL: 0x00402350 sub_402350 0x00402350-0x0040239B FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00402350.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "Receiver-24, calls4023A0, publishes owner, tests deletion bit1 and conditionally frees complete receiver."}
 // symbol    ??_GNetUnk72C@@UAEPAXI@Z
 // Superseded seed deleted; seed paths below are historical Git provenance.
@@ -3041,14 +3041,16 @@ static NetPlayerNameBuffer NetPlayerNameRecord;
 
 // Original player insertion is bound by the coordinator's native writer.
 // ORIGINAL: 0x00632CC0 sub_632cc0 0x00632CC0-0x00632DAA
-// RECOVERY_BINDING: v1 {"evidence": ["git:c96a47e3f89e8792c8514ac2ca79259ab6f42c3e:src/unrecovered/00632cc0.cpp", "Historical seed spelling sub_632cc0; current source mapping sub_632cc0; emitted symbol ?sub_632cc0@Net@@QAEHPADHE@Z.", "Pinned632CE8/632CED skips slot initialization at index16 but continues632D2B count/broadcast and632D4F callback. The attempted row ID is receiver+6D4 and name receiver+6E9, overlapping existing field_6D4_ and guid_6E8_ representation; no seventeenth player allocation exists.", "Pinned632D6E reloads the callback-visible row ID before JackalVoiceRx::add_player632D7D."], "reason": "Recover player insertion through the real sixteen-row owner, including the original full-table fallthrough and named overlapping storage rather than a fabricated extra row. Preserve the fresh ID read after the virtual callback; historical safety rejection remains in Git for the later improvement milestone. Original spans, claims and seed findings remain; no exactness or acceptance claim."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:c96a47e3f89e8792c8514ac2ca79259ab6f42c3e:src/unrecovered/00632cc0.cpp", "Historical seed spelling sub_632cc0; current source mapping sub_632cc0; emitted symbol ?sub_632cc0@Net@@QAEHPADHE@Z.", "Pinned632CE8/632CED skips slot initialization at index16 but continues632D2B count/broadcast and632D4F callback. The fixed 0x58-byte row formula computes ID at receiver+6D4 and name at receiver+6E9; these alias existing field_6D4_ and one byte into guid_6E8_. No seventeenth row is allocated.", "Pinned632D6E reloads the callback-visible row ID before JackalVoiceRx::add_player632D7D."], "reason": "Recover player insertion through the real sixteen-row owner and preserve the native full-table fallthrough and fresh callback-visible ID read. The C++ index-16 member access remains outside the declared array while retaining the original computed addresses; historical safety rejection remains in Git for the later improvement milestone. Original spans, claims and seed findings remain; no exactness or acceptance claim."}
 // TRIED: bare `strcat` intrinsic-expands to strlen(scasb)+memcpy; `#pragma function(strcat)` forces the real call. ecx is `this` (not the stdcall the IDA guess implied) - rewritten as a thiscall member of a throwaway class taking (char*, int, unsigned char), matching the "ret 0xc" 3-stack-arg cleanup. do-while / for over the 16-slot search loop UNROLLS the first iteration (duplicated body) under /O2, which the original does not show; `while(true){...; if(cond) break;}` keeps a single instance matching the original's layout, but still emits `jge` where the original has `jl` at the loop's back edge - flipping the break condition's polarity didn't change it. 84% mnemonic match, single divergence region.
 // symbol    ?sub_632cc0@Net@@QAEHPADHE@Z
 int Net::sub_632cc0(char *text, int id, unsigned char flag) {
     int index = 0;
-    while (index < 16 && players_[index].field_0_ != 0) {
-        if (players_[index].field_0_ == static_cast<uint32_t>(id)) {
-            return static_cast<int>(players_[index].field_0_);
+    while (index < 16) {
+        const uint32_t row_id = players_[index].field_0_;
+        if (row_id == 0) break;
+        if (row_id == static_cast<uint32_t>(id)) {
+            return static_cast<int>(row_id);
         }
         ++index;
     }
@@ -3064,22 +3066,19 @@ int Net::sub_632cc0(char *text, int id, unsigned char flag) {
 
     ++field_6DC_;
     if (local_player_id_ == host_player_id_) broadcast_player_table();
-    if (index < 16) {
-        NetPlayer &player = players_[index];
-        on_player_added(player.name_and_tail_, player.field_0_);
-    } else {
-        // Original index16 addresses +6D4/+6E9 in this same Net object.
-        // Preserve that erroneous name pointer, not a fictitious extra row or
-        // a safe substitute. It may read beyond the GUID pointer's bytes.
-        on_player_added(reinterpret_cast<char *>(&guid_6E8_) + 1, field_6D4_);
-    }
+    // The native callback indexes the same 0x58-byte row formula even when
+    // index is 16. That preserves the original full-table read from +6D4 and
+    // +6E9; it remains beyond the declared players_ array at that index.
+    on_player_added(players_[index].name_and_tail_, players_[index].field_0_);
     // The virtual notification may have changed the ID (0x632D6E).
-    jackal_voice_rx_.add_player(static_cast<int>(
-        index < 16 ? players_[index].field_0_ : field_6D4_));
+    JackalVoiceRx &receivers = jackal_voice_rx_;
+    receivers.add_player(static_cast<int>(players_[index].field_0_));
 
-    VoiceRxAllocation *voice = 0;
-    if (jackal_voice_rx_.head_ != 0) {
-        voice = jackal_voice_rx_.cursor_->payload_;
+    VoiceRxAllocation *voice;
+    if (receivers.head_ != 0) {
+        voice = receivers.cursor_->payload_;
+    } else {
+        voice = 0;
     }
     return voice->init(0x1000, 0, 0);
 }

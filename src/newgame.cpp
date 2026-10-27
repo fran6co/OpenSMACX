@@ -1491,7 +1491,7 @@ time_controls:
     }
     if (IsMultiplayerPBEM) {
         clear_tamper();
-        unsigned int ticks = GetTickCount();
+        unsigned int ticks = timeGetTime();
         TamperState93A9AC = ticks + MapRandSeed;
         SYSTEMTIME date;
         GetSystemTime(&date);

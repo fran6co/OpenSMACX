@@ -129,7 +129,8 @@ void WorldWin::click(int x, int y, int button, int is_double) {
         right_menu(x, y);
         return;
     }
-    const bool detail_click = (GetKeyState(VK_SHIFT) & 0x8000) != 0 || is_double != 0;
+    const bool shift_down = (GetAsyncKeyState(VK_SHIFT) & 0xFF00) != 0;
+    const bool detail_click = shift_down || is_double != 0;
     int tile_x;
     int tile_y;
     if (pixel_to_tile(x, y, &tile_x, &tile_y) != 0 ||
@@ -140,8 +141,8 @@ void WorldWin::click(int x, int y, int button, int is_double) {
     if (detail_click) {
         MapWinTable[1]->set_center(MapWinTable[0]->center_x_,
                                    MapWinTable[0]->center_y_, 1);
-        MainInterfaceGlobal.button_group(1).set(1007, 0);
         detail_map_selected_ = 1;
+        MainInterfaceGlobal.button_group(1).set(1007, 0);
         MapWinTable[1]->show(0);
         WorldClimateWorldWin.Win::hide();
     } else {

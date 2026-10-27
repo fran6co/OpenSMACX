@@ -6123,7 +6123,7 @@ int __cdecl load_map_daemon(char *path) {
 int __cdecl save_daemon(char *save_path) {
     if (IsMultiplayerPBEM != 0) ++TamperState93A9B4;
 
-    DWORD save_tick = GetTickCount();
+    DWORD save_tick = timeGetTime();
     if ((GameDataStateStorage.fields_.game_rules_ & RULES_IRONMAN) != 0 && IsMultiplayerNet == 0) {
         my_srand(static_cast<int>(save_tick));
     }

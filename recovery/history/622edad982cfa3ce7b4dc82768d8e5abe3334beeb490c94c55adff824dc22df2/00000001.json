@@ -1,0 +1,19 @@
+{
+  "event_id": "aa5b59a4dc428db412a2122e63293afecbad7458f39798daa23e9d77e410484b",
+  "payload": {
+    "author": "recovery-coordinator",
+    "editable_files": [
+      "recovery/tests/test_worldwin_click_actual_source.py"
+    ],
+    "evidence": [
+      "Actual-source regression control must distinguish GetKeyState vsGetAsyncKeyState, all high-byte values, and detail flag visibility at button callback, independently of code spelling."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "actual-click-provider-and-order-control",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:easy-worldwin-oct27ka"
+}

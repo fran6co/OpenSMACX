@@ -1,0 +1,25 @@
+{
+  "author": "recovery-coordinator",
+  "base_revision": "b3da6e9fb4e28235de6214e7b84851b58613d3cc",
+  "editable_files": [
+    "src/listbox.cpp",
+    "recovery/tests/test_listbox_remaining_behavior.py"
+  ],
+  "evidence": [
+    "PE import directory independently identifies DLL/export; the qualified COFF and original CFG establish a specific wrong API, not merely different call ordinals. See ignored keyboard-import-audit.json and timing-import-audit.json in the current run.",
+    "Change only evidenced API choices and necessary host controls; no bug fixes, unsafe-path normalization, asm, machine-code copying, original-executable calls, marker/claim edits or worker Git mutations.",
+    "Use the assigned verified prefix under native resource lease, prepare before measuring, never regenerate during an epoch. Every Wine tool invocation needs the approved require_escalated execution route. Coordinator owns publication/banking/integration.",
+    "Preserve discoveries and existing claims; ask before changing other source files, headers or original identities. Native/scoped diagnostics are not full linked/runtime/game acceptance."
+  ],
+  "intent": "Correct independently established original Windows import identities through the genuine C++ owner, preserving original control flow and data effects.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6335072,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "easy-listbox-oct27ka"
+}

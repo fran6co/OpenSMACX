@@ -1,0 +1,19 @@
+{
+  "event_id": "bca8fc233480f325dd967f4ce8b71be45e9a0c1bcdadd3d21e1bb44e94b6e597",
+  "payload": {
+    "author": "recovery-coordinator",
+    "editable_files": [
+      "recovery/tests/test_prevwnd_actual_source.py"
+    ],
+    "evidence": [
+      "The positive source-host controls pass, but the existing high-word damage mutation matches only the old signed-shift spelling. Keep independent runtime high-bit assertions while making the mutation exercise the new explicit unsigned extraction."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "preserve-signed-word-damage-control",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:easy-win-oct27ka"
+}

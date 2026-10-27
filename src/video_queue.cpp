@@ -126,17 +126,20 @@ void VideoFrameQueue::discard_head() {
     }
 }
 
-// ORIGINAL: 0x0063E590 sub_63e590 0x0063E590-0x0063E5DF FILE
+// ORIGINAL: 0x0063E590 sub_63e590 0x0063E590-0x0063E5DF FILE BYTE_EXACT
 // symbol    ?clear@VideoFrameQueue@@QAEXXZ
 void VideoFrameQueue::clear() {
     while (head_ != 0) {
-        VideoFrameNode *const node = head_;
-        VideoFrameNode *const next = node->next;
-        if (node->bytes != 0) {
-            free(node->bytes);
-            node->bytes = 0;
+        VideoFrameNode *const next = head_->next;
+        if (head_->bytes != 0) {
+            free(head_->bytes);
+            head_->bytes = 0;
         }
-        free(node);
+        // Native reloads head_ after freeing bytes and keeps its redundant
+        // null test instead of freeing the cached node pointer directly.
+        if (head_ != 0) {
+            free(head_);
+        }
         head_ = next;
     }
     tail_ = 0;

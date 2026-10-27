@@ -1,61 +1,68 @@
 {
- "schema_version": 1,
- "slots": [
-  {
-   "name": "worker-23",
-   "directory": "{env:OPENSMACX_COMPILER_POOL}/worker-23",
-   "environment": {
-    "VC6_PREFIX": "{resource}"
-   }
-  },
-  {
-   "name": "worker-24",
-   "directory": "{env:OPENSMACX_COMPILER_POOL}/worker-24",
-   "environment": {
-    "VC6_PREFIX": "{resource}"
-   }
-  },
-  {
-   "name": "worker-25",
-   "environment": {
-    "VC6_PREFIX": "{resource}"
-   },
-   "directory": "{env:OPENSMACX_COMPILER_POOL}/worker-25"
-  },
-  {
-   "name": "worker-18",
-   "environment": {
-    "VC6_PREFIX": "{resource}"
-   },
-   "directory": "{env:OPENSMACX_COMPILER_POOL}/worker-18"
-  },
-  {
-   "name": "worker-19",
-   "directory": "{env:OPENSMACX_COMPILER_POOL}/worker-19",
-   "environment": {
-    "VC6_PREFIX": "{resource}"
-   }
-  },
-  {
-   "name": "worker-20",
-   "directory": "{env:OPENSMACX_COMPILER_POOL}/worker-20",
-   "environment": {
-    "VC6_PREFIX": "{resource}"
-   }
-  },
-  {
-   "name": "worker-21",
-   "directory": "{env:OPENSMACX_COMPILER_POOL}/worker-21",
-   "environment": {
-    "VC6_PREFIX": "{resource}"
-   }
-  },
-  {
-   "name": "worker-22",
-   "directory": "{env:OPENSMACX_COMPILER_POOL}/worker-22",
-   "environment": {
-    "VC6_PREFIX": "{resource}"
-   }
-  }
- ]
+  "schema_version": 1,
+  "slots": [
+    {
+      "name": "worker-21",
+      "directory": "{env:OPENSMACX_COMPILER_POOL}/worker-21",
+      "environment": {
+        "VC6_PREFIX": "{resource}"
+      }
+    },
+    {
+      "name": "worker-26",
+      "directory": "{env:OPENSMACX_COMPILER_POOL}/worker-26",
+      "environment": {
+        "VC6_PREFIX": "{resource}"
+      }
+    },
+    {
+      "name": "worker-27",
+      "directory": "{env:OPENSMACX_COMPILER_POOL}/worker-27",
+      "environment": {
+        "VC6_PREFIX": "{resource}"
+      }
+    },
+    {
+      "name": "worker-28",
+      "directory": "{env:OPENSMACX_COMPILER_POOL}/worker-28",
+      "environment": {
+        "VC6_PREFIX": "{resource}"
+      }
+    },
+    {
+      "name": "worker-29",
+      "directory": "{env:OPENSMACX_COMPILER_POOL}/worker-29",
+      "environment": {
+        "VC6_PREFIX": "{resource}"
+      }
+    },
+    {
+      "name": "worker-30",
+      "directory": "{env:OPENSMACX_COMPILER_POOL}/worker-30",
+      "environment": {
+        "VC6_PREFIX": "{resource}"
+      }
+    },
+    {
+      "name": "worker-31",
+      "directory": "{env:OPENSMACX_COMPILER_POOL}/worker-31",
+      "environment": {
+        "VC6_PREFIX": "{resource}"
+      }
+    },
+    {
+      "name": "worker-32",
+      "directory": "{env:OPENSMACX_COMPILER_POOL}/worker-32",
+      "environment": {
+        "VC6_PREFIX": "{resource}"
+      }
+    },
+    {
+      "name": "worker-33",
+      "directory": "{env:OPENSMACX_COMPILER_POOL}/worker-33",
+      "environment": {
+        "VC6_PREFIX": "{resource}"
+      }
+    }
+  ]
 }

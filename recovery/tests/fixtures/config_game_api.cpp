@@ -48,6 +48,7 @@ class Dialog {
 public:
     int field_24_, field_28_;
     int selected;
+    int window_x_, window_y_;
     int get_selected_id() { return selected; }
 };
 class ListBox : public Dialog {
@@ -250,6 +251,10 @@ int GenderDefault, PluralityDefault, TamperState93A9AC, TamperState93A9B0, Tampe
 int text_row;
 std::string text_section;
 bool fail_multi;
+unsigned long winmm_tick_value;
+unsigned long kernel_tick_value;
+int winmm_tick_calls;
+int kernel_tick_calls;
 int BasePop::exec(int, int (*)()) {
     if (this == &ConfigFactionPreview) { event("preview.exec"); return 0; }
     int r = answer(section);
@@ -307,8 +312,11 @@ void scenario_setup() { event("scenario_setup"); }
 void alien_start() { event("alien_start"); }
 void planetfall(int) { event("planetfall"); }
 void clear_tamper() { event("tamper.clear"); }
-unsigned long GetTickCount() { return 123; }
-void GetSystemTime(SYSTEMTIME *t) { t->wYear = 2026; t->wMonth = 10; t->wDay = 6; }
+unsigned long timeGetTime() { ++winmm_tick_calls; event("clock.winmm"); return winmm_tick_value; }
+unsigned long GetTickCount() { ++kernel_tick_calls; event("clock.kernel"); return kernel_tick_value; }
+void GetSystemTime(SYSTEMTIME *t) {
+    event("clock.system"); t->wYear = 2026; t->wMonth = 10; t->wDay = 6;
+}
 
 // @@ACTUAL_CONFIG_GAME@@
 
@@ -318,6 +326,10 @@ bool seen(const std::string &s) {
 }
 int occurrences(const std::string &s) {
     int count = 0; for (size_t i = 0; i < events.size(); ++i) if (events[i] == s) ++count; return count;
+}
+int event_index(const std::string &s) {
+    for (size_t i = 0; i < events.size(); ++i) if (events[i] == s) return (int)i;
+    return -1;
 }
 void reset() {
     events.clear(); replies.clear(); reply_index = 0; randoms.clear(); random_index = 0;
@@ -341,6 +353,8 @@ void reset() {
     ConsoleGlobal.faction_id_ = 2; MapSetupStatus = 1; LockEnableMask = 0xDEADFF00u;
     VehCurrentCount = 10; MapRandSeed = 10; ConfigFactionDetailMode = 0;
     ConsoleGroupAction = 0; PopupModalActive = 0; fail_multi = false;
+    winmm_tick_value = 123; kernel_tick_value = 0x13579BDFu;
+    winmm_tick_calls = kernel_tick_calls = 0;
 }
 void done() {
     assert(reply_index == replies.size());
@@ -385,6 +399,9 @@ int main() {
     assert((LockEnableMask & 0xFFFFFF00u) == 0xDEADFF00u);
     assert(seen("multi.open") && seen("parse.string") && seen("tamper.clear"));
     assert(TamperState93A9AC == 133 && TamperState93A9B4 == 0);
+    assert(winmm_tick_calls == 1 && kernel_tick_calls == 0);
+    assert(event_index("tamper.clear") < event_index("clock.winmm"));
+    assert(event_index("clock.winmm") < event_index("clock.system"));
 
     reset(); menu_start(2); replies.push_back(Reply("RULES", 0));
     replies.push_back(Reply("PICKER", 4)); replies.push_back(Reply("NAME", 0));
