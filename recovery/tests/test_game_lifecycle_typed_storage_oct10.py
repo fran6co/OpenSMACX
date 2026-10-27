@@ -70,11 +70,15 @@ int main() {
 '''
 
 
-def lifecycle_harness(desktop_close: str, game_reload: str) -> str:
+def lifecycle_harness(desktop_close: str, game_reload: str,
+                      mapwin_shutdown: str) -> str:
     return r'''#include <cstdint>
+#include <cstddef>
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #define __cdecl
+using std::size_t;
 static char events[128];
 static unsigned event_count;
 static void note(char value) { events[event_count++] = value; events[event_count] = 0; }
@@ -92,18 +96,49 @@ struct ClimateWindow : GraphicWin {} WorldClimateWorldWin;
 struct Win { void hide() { note('H'); } };
 struct MainInterface : Win {} MainInterfaceGlobal;
 Window TutWinDesWindow('A'), TutWinBaseWindow('B'), ConsoleStatusWin('C');
-void mapwin_system_shutdown() { note('S'); }
-void stop_timers_call() { note('T'); }
-void labels_shutdown_call() { note('L'); }
+struct MapWin {
+    char event;
+    uint32_t view_active_;
+    int close_calls;
+    MapWin(char value, uint32_t active)
+        : event(value), view_active_(active), close_calls(0) {}
+    void close() { ++close_calls; note(event); }
+};
+MapWin slot_zero('0', 1), slot_one('1', 1), slot_two('2', 0), slot_four('4', 2);
+MapWin FarmMapWindow('F', 0);
+typedef MapWin *MapWinSlots[8];
+MapWinSlots MapWinTable = {};
+static const std::size_t MapWinTableSlots = 8;
+static void require_map_slots() {
+    if (MapWinTable[0] != &slot_zero || MapWinTable[1] != &slot_one ||
+        MapWinTable[2] != &slot_two || MapWinTable[3] != 0 ||
+        MapWinTable[4] != &slot_four || MapWinTable[5] != 0 ||
+        MapWinTable[6] != 0 || MapWinTable[7] != 0 ||
+        slot_zero.close_calls != 0 || slot_two.close_calls != 0 ||
+        slot_one.close_calls != slot_four.close_calls ||
+        FarmMapWindow.close_calls != slot_one.close_calls) {
+        std::fprintf(stderr, "FAIL: map shutdown slot/pointer state\n");
+        std::exit(91);
+    }
+}
+void stop_timers() { note('T'); }
+void labels_shutdown() { note('L'); }
 struct Strings { void shutdown() { note('X'); } } StringTable;
 static int init_result;
 int game_init(int, int) { note('I'); return init_result; }
 void desktop_init(int) { note('U'); }
 uint32_t WorldClimateSkipTerrainClear = 1;
-''' + desktop_close + "\n" + game_reload + r'''
+''' + mapwin_shutdown + "\n" + desktop_close + "\n" + game_reload + r'''
 int main() {
+    MapWinTable[0] = &slot_zero;
+    MapWinTable[1] = &slot_one;
+    MapWinTable[2] = &slot_two;
+    MapWinTable[3] = 0;
+    MapWinTable[4] = &slot_four;
+
     desktop_close();
-    if (std::strcmp(events, "ABSCGGH") != 0) {
+    require_map_slots();
+    if (std::strcmp(events, "AB14FCGGH") != 0) {
         std::fprintf(stderr, "FAIL: desktop close order: %s\n", events);
         return 1;
     }
@@ -116,18 +151,20 @@ int main() {
     }
 
     reset(); init_result = 0; WorldClimateSkipTerrainClear = 1;
-    if (game_reload(1, 9) != 0 || std::strcmp(events, "ABSCGGHTLXIU") != 0 ||
+    if (game_reload(1, 9) != 0 || std::strcmp(events, "AB14FCGGHTLXIU") != 0 ||
         WorldClimateSkipTerrainClear != 0) {
         std::fprintf(stderr, "FAIL: mode-one reload order/result: %s\n", events);
         return 3;
     }
+    require_map_slots();
 
     reset(); init_result = 1; WorldClimateSkipTerrainClear = 0x1234;
-    if (game_reload(1, 3) != 1 || std::strcmp(events, "ABSCGGHTLXI") != 0 ||
+    if (game_reload(1, 3) != 1 || std::strcmp(events, "AB14FCGGHTLXI") != 0 ||
         WorldClimateSkipTerrainClear != 0x1234) {
         std::fprintf(stderr, "FAIL: failed reload path: %s\n", events);
         return 4;
     }
+    require_map_slots();
     return 0;
 }
 '''
@@ -191,12 +228,15 @@ def test_actual_lifecycle_close_calls_and_reload_paths(compiler_name: str,
     if compiler is None:
         pytest.skip(f"{compiler_name} is not installed")
     source = (ROOT / "src/game.cpp").read_text()
+    mapwin_source = (ROOT / "src/mapwin.cpp").read_text()
     close_body = extract_definition(source, "void __cdecl desktop_close()")
     reload_body = extract_definition(source, "int __cdecl game_reload(int mode, int reload)")
+    shutdown_body = extract_definition(mapwin_source, "void __cdecl mapwin_system_shutdown()")
     assert close_body.count("MultiWindow.GraphicWin::close();") == 1
     assert reload_body.count("MultiWindow.GraphicWin::close();") == 1
     assert "reinterpret_cast<GraphicWin *>(&MultiWindow)" not in close_body + reload_body
-    ran = compile_and_run(compiler, lifecycle_harness(close_body, reload_body),
+    ran = compile_and_run(compiler, lifecycle_harness(close_body, reload_body,
+                                                        shutdown_body),
                           tmp_path, f"lifecycle_{compiler_name}")
     assert ran.returncode == 0, ran.stdout + ran.stderr
 
@@ -208,12 +248,15 @@ def test_compiling_unqualified_multiwin_close_mutant_is_caught(
     if compiler is None:
         pytest.skip(f"{compiler_name} is not installed")
     source = (ROOT / "src/game.cpp").read_text()
+    mapwin_source = (ROOT / "src/mapwin.cpp").read_text()
     close_body = extract_definition(source, "void __cdecl desktop_close()")
     reload_body = extract_definition(source, "int __cdecl game_reload(int mode, int reload)")
+    shutdown_body = extract_definition(mapwin_source, "void __cdecl mapwin_system_shutdown()")
     mutant = close_body.replace(
         "MultiWindow.GraphicWin::close();", "MultiWindow.close();", 1)
     assert mutant != close_body
-    ran = compile_and_run(compiler, lifecycle_harness(mutant, reload_body),
+    ran = compile_and_run(compiler, lifecycle_harness(mutant, reload_body,
+                                                        shutdown_body),
                           tmp_path, f"lifecycle_mutant_{compiler_name}")
     assert ran.returncode == 1
     assert "FAIL: desktop close order" in ran.stderr

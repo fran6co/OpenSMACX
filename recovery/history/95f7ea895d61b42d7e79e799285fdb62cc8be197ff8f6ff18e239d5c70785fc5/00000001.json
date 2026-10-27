@@ -1,0 +1,20 @@
+{
+  "event_id": "07245342e7b02f5da9b75c675c4719ba9a1cdf67d6b003f7afcb363836741111",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_map_scalar_signed_owners.py"
+    ],
+    "evidence": [
+      "Separate-return C++headerform restoresinlinedvector_dist5A5910;376controls across4actualproducer/callerTUs noloss. x_distitselfnotclaimednewexact.",
+      "Addactualhelper geometry controls withvalidringdistances,flatbitvsotherflags,andoriginaloff-range negativewrap/signed-global cases. No overflownormalization or unsignedMapLongitudechange; keeppriorproducer/consumer typeproof."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "actual-map-distance-signed-wrap-controls",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:xdist-return-easy-oct27gm"
+}

@@ -1,0 +1,20 @@
+{
+  "event_id": "0950be95e60cd67b71cbd52b6121a67e5a362fcd0c1bfb39c5610d397f464b21",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/project.json"
+    ],
+    "evidence": [
+      "FreshcurrentCMakeapplication alreadyusesmap.cpp/O2/Ob2/Oy-/Z7. Legacyrecordingconfig omittedOb2 andmissed4/50 oncaller5A5910; actualproductionprobe is50/50 with376whole4TUcontrols. Thisupdatesonlymeasurementrecipe, notCMake/compilerpolicy/sourceflags.",
+      "IndependentreviewrecommendeddurableperTUoverride, preservinglegacyfailedreport andallhistoricalclaims. ReprepareandfreshnativeRecord mandatory; laterwholeprojectqualifiedproductioncomparisonmustnotresetbaselineorhideclaimsnotexactunderproduction."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "07245342e7b02f5da9b75c675c4719ba9a1cdf67d6b003f7afcb363836741111",
+  "request_id": "align-map-measurement-with-existing-production",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:xdist-return-easy-oct27gm"
+}

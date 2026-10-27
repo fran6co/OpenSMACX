@@ -1,0 +1,20 @@
+{
+  "event_id": "1991aea847de30542bcbe05d28b168615dd29e0d0291e18f75593542790b2017",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_game_lifecycle_typed_storage_oct10.py"
+    ],
+    "evidence": [
+      "Independentreviewfirstcandidate38/38exact; expandexistinglifecycleactualsourceharness todispatchrealmapwin_system_shutdown, notoneeventstub. Preserveloadedpointer/null/slot0/activechecks,ascendingcloseorder,Farmtail, publishedpointers andpostcallback behavior.",
+      "No productMapWin::close change; existingactualowned-free/baseclosecontrolsretained. No state/bugfix normalization."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "actual-mapwin-shutdown-behavior-controls",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:mapwin-shutdown-easy-oct27gl"
+}

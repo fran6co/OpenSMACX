@@ -73,7 +73,7 @@
 
 // MapWin constructor-installed Win branch: capture4, resize13, mouse17, update63.
 // Table start is observed in the original constructor; full extent remains unknown.
-// RECOVERY_GENERATED: v1 vtable 0x0066A57C ? ??_7MapWin@@6BWin@@@ 0x004626E0
+// RECOVERY_GENERATED: v1 vtable 0x0066A57C 0x0066A6E4 ??_7MapWin@@6BWin@@@ 0x004626E0
 #include "mapwin.h"
 #include "lock.h"      // map_tile_bytes() - terrain_fixup walks its records
 #include "console.h"
@@ -842,14 +842,8 @@ void MapWin::close() {
         free(owned_);
         owned_ = nullptr;
     }
-    // THE IDIOMATIC SPELLING, BY DIRECTION (2026-09-01): call the base's
-    // close, no cast. This body's claim was demoted for it - and that is
-    // the point. The compiled form of this line disagrees with the image's
-    // 15-instruction dispatch, which means THIS TREE IS MISSING A
-    // RELATIONSHIP the original's declarations had (candidate hypotheses on
-    // the marker below). The hand vbtable walk the old body spelled went
-    // byte-exact, but it was bad C++ that masked the gap; the mismatch is
-    // the signal to explore, not a wall to transcribe.
+    // The qualified base call follows this object's virtual-base relationship;
+    // the compiler obtains its GraphicWin receiver through the vbtable.
     GraphicWin::close();
 }
 
@@ -857,12 +851,14 @@ void MapWin::close() {
 // Shutdown closes only populated secondary windows, then the separately
 // constructed farm window, whose owned buffer is released by MapWin::close.
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x004710E0 ?mapwin_system_shutdown@@YAXXZ 0x004710E0-0x0047115F
+// ORIGINAL: 0x004710E0 ?mapwin_system_shutdown@@YAXXZ 0x004710E0-0x0047115F BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/004710e0.cpp retains the original loop over MapWinTable at 0x007D3C3C..0x007D3C5C and the final receiver at 0x007D4060", "src/mapwin.cpp binds those receivers as MapWinTable and FarmMapWindow; MapWin::close releases owned_ before GraphicWin::close"], "reason": "Replace the executable forwarder with typed shutdown of active secondary map windows and the independent farm window; preserve the seed for restoration measurement."}
 void __cdecl mapwin_system_shutdown() {
-    for (size_t slot = 1; slot < MapWinTableSlots; ++slot) {
+    for (size_t slot = 0; slot < MapWinTableSlots; ++slot) {
         MapWin *window = MapWinTable[slot];
-        if (window != nullptr && window->view_active_ != 0) {
+        if (window == nullptr) continue;
+        if (slot == 0) continue;
+        if (window->view_active_ != 0) {
             window->close();
         }
     }
