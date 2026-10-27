@@ -2290,57 +2290,53 @@ int Net::choose_service() {
 }
 
 // ORIGINAL: 0x00631BA0 sub_631ba0 0x00631BA0-0x00631EDB
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned 0x00631BA0 has 39 DPERR token arms feeding parse_says and the common DPLAYERROR popup.", "Pinned 0x00631E1A compares EAX with 0x88770136. Its matching branch starts at 0x00631E25 and pushes DPERR_SESSIONLOST at 0x00631E29 through literal 0x00697DAC. The former source 0x88770132 was a translation error.", "The other 38 HRESULT/token pairs agree with the pinned direct branches and four jump-index/target tables. Unknown inputs still bypass parse_says and enter the same popup.", "Pinned final branches return zero on dismissal and otherwise call source-owned cd_check at 0x00628F30. Preserve the seed switch-layout finding; no byte claim or original nominal signature is granted."], "reason": "Recover the HRESULT interpreter used by Net::join_service with the original DirectPlay error values, token dispatch and popup/CD-check return behavior."}
+// RECOVERY_BINDING: v1 {"evidence": ["The 39 DPERR identifiers are defined by the already included dplay.h and Win32 HRESULT aliases. Their configured SDK values were checked against every original case value; use those signed HRESULT constants instead of narrowing unsigned literals.", "Pinned recognized arms prepare parse_says arguments and join the common call; unknown values skip it. Current general.h takes LPCSTR, so token literals need no mutable-pointer casts.", "HRESULT is signed LONG. Original signed branches at body offsets A,1B,2B,34,1AD,266,26F support switching directly on error rather than converting it to unsigned.", "Pinned 0x00631E1A compares with 0x88770136, the SDK DPERR_SESSIONLOST value. Its matching branch starts at 0x00631E25 and pushes the token at 0x00631E29 through literal 0x00697DAC. The former source 0x88770132 was a translation error; the other 38 mappings agree with the original.", "The body ends at 0x00631EDB. Four compiler-owned target/selector pairs follow at 631EDC/631EF0,631F0C/631F34,631FA4/631FCC,632028/63203C; they are data outside that function-code span, not neighboring functions to borrow.", "Dismissal returns zero; otherwise cd_check at 0x00628F30 supplies the result. Preserve the seed switch-layout finding and original identity/span; no historical byte claim or original nominal linkage proof is granted."], "reason": "Recover the signed DirectPlay HRESULT switch and case-local parse_says operations using the existing SDK error names, preserving original dispatch and popup/CD-check behavior."}
 // symbol    ?sub_631ba0@@YGHJ@Z
 // TRIED: a single flat switch over the 38 DPERR_* case values with a `default: goto tail;` matches through instr #16 (the top-level binary-search split) but the compiler's chosen jump-table boundaries at #17 diverge from the original's nested-if split
 static int __stdcall sub_631ba0(HRESULT error) {
-    const char *message = 0;
-    switch (static_cast<unsigned int>(error)) {
-    case 0x88770005UL: message = "DPERR_ALREADYINITIALIZED"; break;
-    case 0x8877000AUL: message = "DPERR_ACCESSDENIED"; break;
-    case 0x88770014UL: message = "DPERR_ACTIVEPLAYERS"; break;
-    case 0x8877001EUL: message = "DPERR_BUFFERTOOSMALL"; break;
-    case 0x88770028UL: message = "DPERR_CANTADDPLAYER"; break;
-    case 0x88770032UL: message = "DPERR_CANTCREATEGROUP"; break;
-    case 0x8877003CUL: message = "DPERR_CANTCREATEPLAYER"; break;
-    case 0x88770046UL: message = "DPERR_CANTCREATESESSION"; break;
-    case 0x88770050UL: message = "DPERR_CAPSNOTAVAILABLEYET"; break;
-    case 0x8877005AUL: message = "DPERR_EXCEPTION"; break;
-    case 0x80004005UL: message = "DPERR_GENERIC"; break;
-    case 0x88770078UL: message = "DPERR_INVALIDFLAGS"; break;
-    case 0x88770082UL: message = "DPERR_INVALIDOBJECT"; break;
-    case 0x80070057UL: message = "DPERR_INVALIDPARAM"; break;
-    case 0x88770096UL: message = "DPERR_INVALIDPLAYER"; break;
-    case 0x887700A0UL: message = "DPERR_NOCAPS"; break;
-    case 0x887700AAUL: message = "DPERR_NOCONNECTION"; break;
-    case 0x8007000EUL: message = "DPERR_NOMEMORY"; break;
-    case 0x887700BEUL: message = "DPERR_NOMESSAGES"; break;
-    case 0x887700C8UL: message = "DPERR_NONAMESERVERFOUND"; break;
-    case 0x887700D2UL: message = "DPERR_NOPLAYERS"; break;
-    case 0x887700DCUL: message = "DPERR_NOSESSIONS"; break;
-    case 0x887700E6UL: message = "DPERR_SENDTOOBIG"; break;
-    case 0x887700F0UL: message = "DPERR_TIMEOUT"; break;
-    case 0x887700FAUL: message = "DPERR_UNAVAILABLE"; break;
-    case 0x80004001UL: message = "DPERR_UNSUPPORTED"; break;
-    case 0x80004002UL: message = "DPERR_NOINTERFACE"; break;
-    case 0x8877010EUL: message = "DPERR_BUSY"; break;
-    case 0x88770118UL: message = "DPERR_USERCANCEL"; break;
-    case 0x88770122UL: message = "DPERR_CANNOTCREATESERVER"; break;
-    case 0x8877012CUL: message = "DPERR_PLAYERLOST"; break;
-    case 0x88770136UL: message = "DPERR_SESSIONLOST"; break;
-    case 0x887703E8UL: message = "DPERR_BUFFERTOOLARGE"; break;
-    case 0x887703F2UL: message = "DPERR_CANTCREATEPROCESS"; break;
-    case 0x887703FCUL: message = "DPERR_APPNOTSTARTED"; break;
-    case 0x88770406UL: message = "DPERR_INVALIDINTERFACE"; break;
-    case 0x88770410UL: message = "DPERR_NOSERVICEPROVIDER"; break;
-    case 0x8877041AUL: message = "DPERR_UNKNOWNAPPLICATION"; break;
-    case 0x8877042EUL: message = "DPERR_NOTLOBBIED"; break;
+    switch (error) {
+    case DPERR_ALREADYINITIALIZED: parse_says(0, "DPERR_ALREADYINITIALIZED", -1, -1); break;
+    case DPERR_ACCESSDENIED: parse_says(0, "DPERR_ACCESSDENIED", -1, -1); break;
+    case DPERR_ACTIVEPLAYERS: parse_says(0, "DPERR_ACTIVEPLAYERS", -1, -1); break;
+    case DPERR_BUFFERTOOSMALL: parse_says(0, "DPERR_BUFFERTOOSMALL", -1, -1); break;
+    case DPERR_CANTADDPLAYER: parse_says(0, "DPERR_CANTADDPLAYER", -1, -1); break;
+    case DPERR_CANTCREATEGROUP: parse_says(0, "DPERR_CANTCREATEGROUP", -1, -1); break;
+    case DPERR_CANTCREATEPLAYER: parse_says(0, "DPERR_CANTCREATEPLAYER", -1, -1); break;
+    case DPERR_CANTCREATESESSION: parse_says(0, "DPERR_CANTCREATESESSION", -1, -1); break;
+    case DPERR_CAPSNOTAVAILABLEYET: parse_says(0, "DPERR_CAPSNOTAVAILABLEYET", -1, -1); break;
+    case DPERR_EXCEPTION: parse_says(0, "DPERR_EXCEPTION", -1, -1); break;
+    case DPERR_GENERIC: parse_says(0, "DPERR_GENERIC", -1, -1); break;
+    case DPERR_INVALIDFLAGS: parse_says(0, "DPERR_INVALIDFLAGS", -1, -1); break;
+    case DPERR_INVALIDOBJECT: parse_says(0, "DPERR_INVALIDOBJECT", -1, -1); break;
+    case DPERR_INVALIDPARAM: parse_says(0, "DPERR_INVALIDPARAM", -1, -1); break;
+    case DPERR_INVALIDPLAYER: parse_says(0, "DPERR_INVALIDPLAYER", -1, -1); break;
+    case DPERR_NOCAPS: parse_says(0, "DPERR_NOCAPS", -1, -1); break;
+    case DPERR_NOCONNECTION: parse_says(0, "DPERR_NOCONNECTION", -1, -1); break;
+    case DPERR_NOMEMORY: parse_says(0, "DPERR_NOMEMORY", -1, -1); break;
+    case DPERR_NOMESSAGES: parse_says(0, "DPERR_NOMESSAGES", -1, -1); break;
+    case DPERR_NONAMESERVERFOUND: parse_says(0, "DPERR_NONAMESERVERFOUND", -1, -1); break;
+    case DPERR_NOPLAYERS: parse_says(0, "DPERR_NOPLAYERS", -1, -1); break;
+    case DPERR_NOSESSIONS: parse_says(0, "DPERR_NOSESSIONS", -1, -1); break;
+    case DPERR_SENDTOOBIG: parse_says(0, "DPERR_SENDTOOBIG", -1, -1); break;
+    case DPERR_TIMEOUT: parse_says(0, "DPERR_TIMEOUT", -1, -1); break;
+    case DPERR_UNAVAILABLE: parse_says(0, "DPERR_UNAVAILABLE", -1, -1); break;
+    case DPERR_UNSUPPORTED: parse_says(0, "DPERR_UNSUPPORTED", -1, -1); break;
+    case DPERR_NOINTERFACE: parse_says(0, "DPERR_NOINTERFACE", -1, -1); break;
+    case DPERR_BUSY: parse_says(0, "DPERR_BUSY", -1, -1); break;
+    case DPERR_USERCANCEL: parse_says(0, "DPERR_USERCANCEL", -1, -1); break;
+    case DPERR_CANNOTCREATESERVER: parse_says(0, "DPERR_CANNOTCREATESERVER", -1, -1); break;
+    case DPERR_PLAYERLOST: parse_says(0, "DPERR_PLAYERLOST", -1, -1); break;
+    case DPERR_SESSIONLOST: parse_says(0, "DPERR_SESSIONLOST", -1, -1); break;
+    case DPERR_BUFFERTOOLARGE: parse_says(0, "DPERR_BUFFERTOOLARGE", -1, -1); break;
+    case DPERR_CANTCREATEPROCESS: parse_says(0, "DPERR_CANTCREATEPROCESS", -1, -1); break;
+    case DPERR_APPNOTSTARTED: parse_says(0, "DPERR_APPNOTSTARTED", -1, -1); break;
+    case DPERR_INVALIDINTERFACE: parse_says(0, "DPERR_INVALIDINTERFACE", -1, -1); break;
+    case DPERR_NOSERVICEPROVIDER: parse_says(0, "DPERR_NOSERVICEPROVIDER", -1, -1); break;
+    case DPERR_UNKNOWNAPPLICATION: parse_says(0, "DPERR_UNKNOWNAPPLICATION", -1, -1); break;
+    case DPERR_NOTLOBBIED: parse_says(0, "DPERR_NOTLOBBIED", -1, -1); break;
     default: break;
     }
 
-    if (message != 0) {
-        parse_says(0, const_cast<char *>(message), -1, -1);
-    }
     if (pop_caption_title(const_cast<char *>("jackal"),
                           const_cast<char *>("DPLAYERROR"), 0x10040, 0) == -1) {
         return 0;
