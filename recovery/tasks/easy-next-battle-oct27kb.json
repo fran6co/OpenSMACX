@@ -1,0 +1,24 @@
+{
+  "author": "recovery-coordinator",
+  "base_revision": "d924c798402cc68347340484df673e45938a0489",
+  "editable_files": [
+    "src/battlewin.cpp"
+  ],
+  "evidence": [
+    "Current scope is only the listed owner function and source file. Inspect actual pin/current COFF, Git history and all retained attempts first. A scheduling note or stale source comment is not evidence of a new untried context.",
+    "At most three source-candidate compile attempts per function and unchanged context, five minute first inspection cap. Preserve original unsafe/error paths, callback rereads, claims and structural discoveries. No original marker/token edits, asm, machine code, old-EXE calls or worker Git operations. Ask coordinator before other file/type/scope edits.",
+    "Coordinator supplied a positively tested isolated compiler prefix. Native helper initialize owns fresh preparation/control; do not measure until READY. Use native helper measure with unique stamps and approved require_escalated for Wine. Do not allocate another prefix or change preparation mid-measurement.",
+    "Keep source discoveries even on regressions; no automatic acceptance/game claim. Retain full proposals/observations in ignored current run."
+  ],
+  "intent": "Recover faithful genuine C++ and cheap exact matches for independently queued short owner functions.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4336832,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "easy-next-battle-oct27kb"
+}
