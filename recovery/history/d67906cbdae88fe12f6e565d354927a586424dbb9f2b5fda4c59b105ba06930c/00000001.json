@@ -1,0 +1,25 @@
+{
+  "event_id": "3525af47aba4f28058450ae85405bb1ba75d018b7ebce027175709dd5e2afec2",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/designwin.cpp"
+    ],
+    "evidence": [
+      "Full actual-application object comparison found an emitted-only load-order swap in unchanged design_workshop after the select_name flag-width edit. Include that body in current/baseline matching and semantic review; no source edit or claim demotion authorized. Preserve the original native outside FAIL and unqualified linker/runtime boundary."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5783088,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "observe-workshop-scheduling",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:exact-select-name-oct28mh"
+}
