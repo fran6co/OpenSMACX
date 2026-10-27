@@ -9,8 +9,8 @@ import pytest
 ROOT = Path(__file__).resolve().parents[2]
 
 
-def source_function(signature: str) -> str:
-    source = (ROOT / "src/game.cpp").read_text()
+def source_function(signature: str, relative: str = "src/game.cpp") -> str:
+    source = (ROOT / relative).read_text()
     start = source.index(signature)
     opening = source.index("{", start)
     depth = 0
@@ -174,7 +174,7 @@ def test_setup_reset_helpers_actual_typed_storage_and_order(tmp_path):
     harness = harness.replace("BODY_OFFER_LAYOUT", offer)
     harness = harness.replace(
         "BODY_MONUMENT",
-        source_function("void __cdecl clear_monuments() {"),
+        source_function("void __cdecl clear_monuments() {", "src/faction_monuments.cpp"),
     )
     harness = harness.replace(
         "BODY_OFFERS",

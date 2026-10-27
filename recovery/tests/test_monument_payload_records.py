@@ -25,7 +25,7 @@ def test_milestone_producer(tmp_path, compiler_name, function, index, payload):
     layout = header[header.index("struct MonumentRecord {"):
                     header.index("extern MonumentFaction FactionMonuments")]
     parameters = "int faction_id" + (f", int {payload}" if payload else "")
-    implementation = body("src/game.cpp", f"void __cdecl {function}({parameters}) {{")
+    implementation = body("src/faction_monuments.cpp", f"void __cdecl {function}({parameters}) {{")
     harness = r'''
 #include <cassert>
 #include <cstdint>

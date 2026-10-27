@@ -165,6 +165,7 @@ set(OPENSMACX_SOURCES
     src/font_queue.cpp
     src/interface_fonts.cpp
     src/game.cpp
+    src/faction_monuments.cpp
     src/newgame.cpp
     src/application_math.cpp
     src/application_text.cpp
@@ -448,6 +449,7 @@ set_source_files_properties(
 # source profile; this does not assert the original translation-unit boundary.
 set_source_files_properties(
     src/game.cpp
+    src/faction_monuments.cpp
     src/newgame.cpp
     src/reportwin.cpp
     src/netwin.cpp
@@ -565,6 +567,7 @@ set_property(SOURCE
     src/buffer.cpp
     src/caviar.cpp
     src/game.cpp
+    src/faction_monuments.cpp
     src/interface_palette.cpp
     src/maininterface.cpp
     src/map.cpp

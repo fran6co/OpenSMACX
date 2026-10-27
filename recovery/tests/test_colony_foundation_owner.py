@@ -41,7 +41,7 @@ def test_colony_foundation_native_flow_and_name_storage(tmp_path):
     header = (ROOT / "src/game.h").read_text()
     layout = header[header.index("struct MonumentRecord {"):
                     header.index("extern MonumentFaction FactionMonuments")]
-    implementation = body("src/game.cpp", "void __cdecl mon_colony_founded(int faction_id, char *base_name) {")
+    implementation = body("src/faction_monuments.cpp", "void __cdecl mon_colony_founded(int faction_id, char *base_name) {")
     harness = r'''
 #include <cassert>
 #include <cstdint>
