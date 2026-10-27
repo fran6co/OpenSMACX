@@ -1,0 +1,38 @@
+{
+  "event_id": "eca87e8bc1c0f4410ceb7c4f3593186413aabdd7850d72f88eef863d21e9da9e",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_vehicle_move_end_members_oct10.py",
+      "src/quaylewin.cpp",
+      "src/veh.cpp"
+    ],
+    "evidence": [
+      "Frozen native actual-application candidates: vehicle direct-index member spelling, Quayle button and key callbacks match original increment-and-test. Keep VC6-specific signed-overflow quality debt at INT_MAX explicit; preserve original compiler effects rather than claiming portable C++ semantics.",
+      "Update existing vehicle damage-control source anchors only, retaining pinned-byte oracle and all assertions. Official recording, full application bytes/references, build/link and outside preservation required before integration."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5987856,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4810080,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4810176,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "collect-vehicle-and-quayle-exacts",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:exact-winners-oct27md"
+}

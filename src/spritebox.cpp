@@ -1352,7 +1352,7 @@ void SpriteList::close() {
 // TRIED: spelling the body AS `list->close_with_tables(0x0066943C, 0x00669438)` on the StringStruct at `this - 0x28`, which is the idiom dialog.cpp uses. It compiles to 5 instructions against the image's 63 - the inline folds to almost nothing at this offset - so the walk stays written out here.
 SpriteList::~SpriteList() {}
 
-// ORIGINAL: 0x006108E0 ?sprite@SpriteBox@@QAEHPAUSprite@@PADH@Z 0x006108E0-0x00610965 FILE
+// ORIGINAL: 0x006108E0 ?sprite@SpriteBox@@QAEHPAUSprite@@PADH@Z 0x006108E0-0x00610965 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:bfba7856bfc5f41b1118cfb67d83a35108f698d9:src/leaf_recoveries.cpp", "pinned:SpriteList tables6708A0/6708A4;6116E0 calls611730 with virtual-baseview+28", "pinned:SpriteListBase tables66943C/669438 and ring fields +8..+18; StringStruct independently uses 6693A4/6693A0", "source:src/spritebox.h;source:src/stringstruct.h", "source:recovery/tests/test_sprite_list_producer_actual_source.py"], "reason": "Recover SpriteBox::sprite through the SpriteList sibling ring owner and distinct polymorphic string/sprite payload siblings, with compiler-owned virtual allocation-base lifetime. Combined constructor/destructor evidence supports the separate SpriteListBase owner model; transient constructor-stage elision remains possible. Historical identities, spans, claims and seed discoveries remain obligations. Producer partial-state behavior and null/error returns remain unchanged."}
 // symbol    ?sprite@SpriteBox@@QAEHPAVSprite@@PADH@Z
 // Historical seed finding: popup pops() invokes the original by name via rel32
@@ -1363,15 +1363,17 @@ SpriteList::~SpriteList() {}
 // TRIED: popup.cpp's `pops()` calls it BY NAME so it emits the image's `call rel32`. The sprite-list insertion (0x00402550, SpriteStruct::add) is unhomed, so the call goes through the original's address; its receiver is the sprite list this class embeds at 0x24, which is why the member has to be real for the receiver to exist at all.
 int SpriteBox::sprite(Sprite *row_sprite, char *text, int id) {
     if (row_sprite == 0) return 3;
-    list_.pending_sprite_ = row_sprite;
-    list_.pending_label_ = 0;
-    list_.field_24_ = 0;
-    if (list_.add(id) != 0) return 4;
+    SpriteList *const list = &list_;
+    list->pending_sprite_ = row_sprite;
+    list->pending_label_ = 0;
+    list->field_24_ = 0;
+    if (list->add(id) != 0) return 4;
     if (text != 0) {
-        Dialog::item_list_.pending_text_ = text;
-        Dialog::item_list_.field_20_ = 0;
-        Dialog::item_list_.field_24_ = 0;
-        if (Dialog::item_list_.add(id) != 0) return 4;
+        StringList &items = Dialog::item_list_;
+        items.pending_text_ = text;
+        items.field_20_ = 0;
+        items.field_24_ = 0;
+        if (items.add(id) != 0) return 4;
     }
     return 0;
 }

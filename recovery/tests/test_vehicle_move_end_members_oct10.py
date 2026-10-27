@@ -79,12 +79,12 @@ int main() {
 
 @pytest.mark.parametrize("compiler", ("g++", "clang++"))
 @pytest.mark.parametrize("damage", (None,
-    ("vehicle.patrol_current_point < vehicle.waypoint_count",
-     "vehicle.year_end_lurking < vehicle.faction_id"),
-    ("vehicle.patrol_current_point < vehicle.waypoint_count",
-     "int8_t(vehicle.patrol_current_point) < int8_t(vehicle.waypoint_count)"),
-    ("vehicle.order == 0x18", "(vehicle.unk_1 >> 8) == 0x18"),
-    ("vehicle.order = 0;", "vehicle.faction_id = 0;"),
-    ("vehicle.state &= 0xffffbfff;", "vehicle.state &= 0xffffffff;")))
+    ("Vehs[veh_id].patrol_current_point < Vehs[veh_id].waypoint_count",
+     "Vehs[veh_id].year_end_lurking < Vehs[veh_id].faction_id"),
+    ("Vehs[veh_id].patrol_current_point < Vehs[veh_id].waypoint_count",
+     "int8_t(Vehs[veh_id].patrol_current_point) < int8_t(Vehs[veh_id].waypoint_count)"),
+    ("Vehs[veh_id].order == 0x18", "(Vehs[veh_id].unk_1 >> 8) == 0x18"),
+    ("Vehs[veh_id].order = 0;", "Vehs[veh_id].faction_id = 0;"),
+    ("Vehs[veh_id].state &= 0xffffbfff;", "Vehs[veh_id].state &= 0xffffffff;")))
 def test_actual_move_end_members(tmp_path, compiler, damage):
     run_control(tmp_path, compiler, control(), damage)
