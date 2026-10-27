@@ -1955,6 +1955,7 @@ Purpose: The compiler-generated scalar deleting destructor: run the complete
          destructor and, when bit 0 of the mode asks, free the storage to the
          game heap.
 // ORIGINAL: 0x00406F20 ??_GScroll@@UAEPAXI@Z 0x00406F20-0x00406F41 FILE BYTE_EXACT
+// compile_context src/alphasave.cpp
 // symbol    ??_GScroll@@UAEPAXI@Z
 // size      33 bytes
 // prototype 

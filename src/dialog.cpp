@@ -977,7 +977,8 @@ void Dialog::UNK2(int window, int message, int wparam, int lparam) {
 // Compiler-generated StringList deletion; no handwritten adjustor.
 /*
 // ORIGINAL: 0x00406670 sub_406670 0x00406670-0x004066BB FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:360abf0bcf225dda7b384e46e5c26fb7bd2a3bda:src/recovered/00406670.cpp", "pinned:terranx_original:0x406670", "source:src/dialog.cpp"], "reason": "Original receives the complete StringList virtual allocation-base view at+28, runs complete StringList teardown, restores allocation owner and conditionally releases complete storage for flag bit0. Real StringList hierarchy emits this scalar deleting entry in this TU; linked selection remains unverified. Preserve all original spans, names, claims and seed discoveries; no new byte grant."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:360abf0bcf225dda7b384e46e5c26fb7bd2a3bda:src/recovered/00406670.cpp", "pinned:terranx_original:0x406670", "source:src/dialog.cpp"], "reason": "Original receives the complete StringList virtual allocation-base view at+28, runs complete StringList teardown, restores allocation owner and conditionally releases complete storage for flag bit0. Real StringList hierarchy supplies this scalar deleting entry; compile_context identifies its current natural application provider; linked selection remains unverified. Preserve all original spans, names, claims and seed discoveries; no new byte grant."}
+// compile_context src/alphanet.cpp
 // symbol    ??_GStringList@@UAEPAXI@Z
 */
 
