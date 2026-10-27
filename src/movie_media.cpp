@@ -1264,12 +1264,12 @@ extern "C" void __cdecl sub_5cdfa0(void *argument) {
             r->playback_cursor =
                 (r->playback_cursor + (DWORD)available) %
                 r->playback_buffer_bytes;
-            InterlockedExchange(&r->output_lock_word, 0);
+            InterlockedIncrement(&r->output_lock_word);
           } else {
             r->playback_cursor =
                 (r->playback_cursor + (DWORD)available) %
                 r->playback_buffer_bytes;
-            InterlockedExchange(&r->output_lock_word, 0);
+            InterlockedIncrement(&r->output_lock_word);
           }
         }
       }
