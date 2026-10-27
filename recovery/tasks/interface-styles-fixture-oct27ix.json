@@ -1,0 +1,23 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "206ca413a9ac4fbba3c10ab805939e17081591b4",
+  "editable_files": [
+    "recovery/tests/test_interface_styles.py"
+  ],
+  "evidence": [
+    "Baseline and integrated master both fail the same missing Sprite definition extraction before any of 43 behavior/damage cases can execute. The actual definitions now live in src/sprite_objects.cpp; test still searches only sprite/buffer/newtechwin cpp.",
+    ".opensmacx/recovery/interface-styles-fixture-diagnosis/evidence.json",
+    "Change only fixture source collection, preserving actual-source loader, helper, declarations and all existing damage cases. No C++/compiler/claim changes."
+  ],
+  "intent": "Restore all interface-style loader behavior/damage controls after real Sprite storage moved to its owning TU.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4536944,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "interface-styles-fixture-oct27ix"
+}
