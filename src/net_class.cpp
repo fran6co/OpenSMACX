@@ -2290,7 +2290,7 @@ int Net::choose_service() {
 }
 
 // ORIGINAL: 0x00631BA0 sub_631ba0 0x00631BA0-0x00631EDB
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned 0x00631BA0 has 39 DPERR token arms feeding parse_says and the common DPLAYERROR popup.", "Pinned final branches return zero on dismissal and otherwise call source-owned cd_check at 0x00628F30.", "Transfer the seed TRIED switch-layout finding unchanged; no byte claim is transferred or granted."], "reason": "Recover the HRESULT interpreter as the existing DirectPlay error helper called by Net::join_service."}
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned 0x00631BA0 has 39 DPERR token arms feeding parse_says and the common DPLAYERROR popup.", "Pinned 0x00631E1A compares EAX with 0x88770136. Its matching branch starts at 0x00631E25 and pushes DPERR_SESSIONLOST at 0x00631E29 through literal 0x00697DAC. The former source 0x88770132 was a translation error.", "The other 38 HRESULT/token pairs agree with the pinned direct branches and four jump-index/target tables. Unknown inputs still bypass parse_says and enter the same popup.", "Pinned final branches return zero on dismissal and otherwise call source-owned cd_check at 0x00628F30. Preserve the seed switch-layout finding; no byte claim or original nominal signature is granted."], "reason": "Recover the HRESULT interpreter used by Net::join_service with the original DirectPlay error values, token dispatch and popup/CD-check return behavior."}
 // symbol    ?sub_631ba0@@YGHJ@Z
 // TRIED: a single flat switch over the 38 DPERR_* case values with a `default: goto tail;` matches through instr #16 (the top-level binary-search split) but the compiler's chosen jump-table boundaries at #17 diverge from the original's nested-if split
 static int __stdcall sub_631ba0(HRESULT error) {
@@ -2327,7 +2327,7 @@ static int __stdcall sub_631ba0(HRESULT error) {
     case 0x88770118UL: message = "DPERR_USERCANCEL"; break;
     case 0x88770122UL: message = "DPERR_CANNOTCREATESERVER"; break;
     case 0x8877012CUL: message = "DPERR_PLAYERLOST"; break;
-    case 0x88770132UL: message = "DPERR_SESSIONLOST"; break;
+    case 0x88770136UL: message = "DPERR_SESSIONLOST"; break;
     case 0x887703E8UL: message = "DPERR_BUFFERTOOLARGE"; break;
     case 0x887703F2UL: message = "DPERR_CANTCREATEPROCESS"; break;
     case 0x887703FCUL: message = "DPERR_APPNOTSTARTED"; break;
