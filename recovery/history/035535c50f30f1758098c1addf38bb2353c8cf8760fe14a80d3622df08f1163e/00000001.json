@@ -1,0 +1,20 @@
+{
+  "event_id": "907c8cef57d4df8072d13af58c1d86d6d13c3a68b984b9b1bc72842453059d61",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_inline_boundary_cohort_oct18.py",
+      "recovery/tests/test_owner_video_queue_faithful_oct20w.py"
+    ],
+    "evidence": [
+      "Native typed local cleanup is exact35/35 with outside-function residualPASS. Keep set-limit no-cleanup mutants but replace the obsolete clear()-spelling anchor with deliberate assignment-only mutated implementation; existing execution/effect assertions unchanged. Does not grant target exactness or acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "queue-cleanup-damage-controls-oct27hw",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:natural-short-owners-oct27hw"
+}
