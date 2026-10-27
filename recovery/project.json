@@ -167,6 +167,9 @@
       "src/game.cpp": {
         "flags": ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Oy-", "/Ob2", "/Z7"]
       },
+      "src/faction_monuments.cpp": {
+        "flags": ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Oy-", "/Ob2", "/Z7"]
+      },
       "src/netdaemon.cpp": {
         "flags": ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Oy-", "/Ob2", "/Z7"]
       },
