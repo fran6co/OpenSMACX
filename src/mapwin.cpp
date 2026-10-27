@@ -7372,9 +7372,23 @@ void MapWin::clear_alt(int x, int y, int radius) {
 
 // The original invalidates brightness around the cache origin, then resets
 // altitude data around the requested tile. UNK6 owns the first typed walk.
-// ORIGINAL: 0x0046FD20 ?UNK8@MapWin@@QAEXHHH@Z 0x0046FD20-0x0046FD83 FILE
+// ORIGINAL: 0x0046FD20 ?UNK8@MapWin@@QAEXHHH@Z 0x0046FD20-0x0046FD83 FILE BYTE_EXACT
 void MapWin::UNK8(int x, int y, int radius) {
-    UNK6(x, y, radius);
+    if (owned_ != 0) {
+        int i = 0;
+        const int count = RadiusRange[radius + 1];
+        if (count > 0) {
+            do {
+                const int index =
+                    RadiusOffsetY[i] * (MapLongitudeBounds >> 1) +
+                    (RadiusOffsetX[i] >> 1);
+                TerrainCacheEntry *entry = owned_ + index;
+                ++i;
+                const uint32_t invalid = 0xFFFFFFFFu;
+                memcpy(entry->brightness, &invalid, sizeof(invalid));
+            } while (i < count);
+        }
+    }
     clear_alt(x, y, radius);
 }
 

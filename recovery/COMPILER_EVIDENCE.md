@@ -50,6 +50,26 @@ policy is in `WORKFLOW.md`; no spelling trick overrides that policy.
   names, types, raw offsets and incorrect ownership. Names come from behavior and
   callers; a mangled rename must be reconciled with the actual emitted symbol.
 
+## Constructor tables and intrinsic call boundaries
+
+Catalogue Q/U decorations are interpretations, not a virtualness verdict.
+AlphaSave's primary table at 0x00669EC8 selects its own show/hide bodies in
+slots 1/2, even though the imported names use Q. Renaming those methods into
+nonvirtual helpers preserved their local bytes while leaving the inherited
+Win implementations in the table. Constructor-selected table words and actual
+callers must settle overrides together with their emitted-symbol bindings.
+CouncWin's primary slot 2 at 0x0066AAF0 selects 0x00427150, a jump to
+Win::is_visible. Preserve that query-only hide override; its surprising effect
+is not permission to replace it with Win::hide or move it outside the interface.
+
+Net's ten source zeroing sites in seven methods call the verified CRT memset
+at 0x006465F0 in the pin. Intrinsic stores erase those call boundaries and can
+also hide required global reloads. The owner TU uses a narrow function(memset)
+policy; this does not justify disabling all intrinsics across the application.
+An uninitialized SDK output slot must also remain uninitialized until its
+callee writes it when that is the original path. These are source/compiler
+meaning observations, not matching claims or proof of complete original TUs.
+
 ## Source-form experiments after structure
 
 OpenSMACX currently selects two release comparison flag sets in its local
