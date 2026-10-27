@@ -341,6 +341,13 @@ relocation, the corresponding candidate operand and local COFF relocation, every
 jump-table target or selector byte, and the complete comparison envelope including
 alignment gaps. A recognized unsigned guarded-dispatch path must establish the
 complete table domain; a single operand reference is insufficient extent evidence.
+Multiple target/selector pairs are supported when each selector uniquely follows
+its target table and each original dispatch independently proves its complete
+domain. Every indirect jump must belong to a declared table, and all original
+table destinations participate in every guard's incoming-edge checks. Adjacency
+alone does not prove a pair. Missing groups, cross-group guard bypasses and
+unmodeled indirect jumps refuse verification. Intergroup padding is restricted
+to one to three NOP/INT3 bytes before a DWORD-aligned target table.
 The narrow i386 alignment domain admits NOP/INT3 fill and exactly an identical
 two-byte `MOV EDI,EDI` or the unprefixed three-byte default-width
 `LEA r32,[same_r32+disp8(0)]` (no index, segment override or REX prefix) between
@@ -381,6 +388,10 @@ uses the address only for references in its owning TU. Current i386 support requ
 an independent literal COMDAT with its own complete extent; ordinary/static or
 ambiguous storage remains unknown. Embedded-NUL and wide data use the full section,
 not a first-terminator guess. Bindings do not prove linker selection or lifetime.
+Use the pure `literal_writer.write_literal_bytes` for reviewed additions against
+the complete parsed source snapshot. It preserves existing source bytes and
+bindings and refuses unsafe insertion anchors; the coordinator still owns
+freshness, independent correspondence review and guarded on-disk publication.
 Removing, moving or rebinding a declaration retains its historical obligations;
 variant decks cannot change it. No instruction operand under test or repeated-content
 search may establish this source correspondence.

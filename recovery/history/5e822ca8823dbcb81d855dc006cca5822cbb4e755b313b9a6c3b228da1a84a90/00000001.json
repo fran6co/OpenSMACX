@@ -1,0 +1,22 @@
+{
+  "event_id": "936749ca5d8184f85c9b35765557a20d01504c1fb816240f5b0a78dd69aec74e",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "packages/match-recovery/src/match_recovery/associated_writer.py",
+      "packages/match-recovery/src/match_recovery/source/annotation_writer.py",
+      "packages/match-recovery/tests/test_annotation_writer.py",
+      "packages/match-recovery/tests/test_associated_source.py"
+    ],
+    "evidence": [
+      "A native literal writer is needed to publish reviewed original literal identities without hand-editing source metadata. Reuse the existing associated writer physical-source guards through one neutral insertion helper rather than adding a second copy. Preserve original/claim bytes and existing supported-source refusals."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "reuse-guarded-annotation-insertion",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:native-associated-integration-oct27jw"
+}

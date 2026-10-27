@@ -248,13 +248,21 @@ to its owning TU, independently of global objects. Task checks, variants and
 historical obligations retain rebinding/removal decisions. See the package README and
 `docs/DECOMP_MAP.md` for the grammar and supported compiler domain. Keep literals inline
 in C++, do not infer their original addresses from the operand under test, and do not
-reuse another TU's same-named literal. No game literal binding is introduced by this
-framework extension. Exception metadata remains a separate unsupported case.
+reuse another TU's same-named literal. Reviewed Net error-helper bindings identify
+the original recognized-case tokens and common popup strings; their source
+annotations are interpretations, not current measured claims. Exception metadata
+remains a separate unsupported case.
 
 Source-owned `RECOVERY_ASSOCIATED: v1` interpretations can account for trailing
 compiler switch data without changing a function's original code span or historical
 claims. Native strict task checks and source trials compare the complete declared
 code/data envelope and its original/candidate relocations; no table is discarded.
+Official measurement, recording and match checks route explicitly associated
+owners through the same strict verifier using current project context and the
+requested compiler trials. Missing context or unknown dependencies cannot bank
+a claim. Multiple independently guarded target/selector pairs are supported;
+all table-derived incoming edges must preserve every guard. Body-only local
+variant overlays remain unsupported for these owners and refuse explicitly.
 The supported domain is an independent same-layout i386 root COMDAT with verified
 original indexing instructions, a guard-derived complete dispatch domain, local
 target cells and exact selector bytes. A reference alone does not prove table

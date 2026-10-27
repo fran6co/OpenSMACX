@@ -7,13 +7,11 @@ write files, grant claims, authorize interpretations or publish changes.
 from __future__ import annotations
 
 from dataclasses import asdict
-import re
 from typing import Sequence
 
 from match_recovery.components import relative_path
 from match_recovery.model import require_digest, require_text
-from match_recovery.source.reader import _block_state_after
-from match_recovery.source.writer import _SYMBOL_SOURCE_TOKENS
+from match_recovery.source.annotation_writer import insert_annotation_lines
 from .associated_source import (AssociatedDataBinding, parse_associated,
                                 validate_associated)
 
@@ -68,20 +66,7 @@ def write_associated_bytes(raw: bytes, *,
     require_text(address_space, "address space")
 
     text = raw.decode("utf-8", errors="surrogateescape")
-    if re.search(r"[\v\f\x1c-\x1e\x85\u2028\u2029]", text):
-        raise ValueError("unsupported source line separator")
-    normalized = text.replace("\r\n", "\n").replace("\r", "\n")
-    splice = re.search(r"(?:\\|\?\?/)[ \t]*\n", normalized)
-    first_splice_line = (normalized.count("\n", 0, splice.start()) + 1
-                         if splice else None)
-    if raw.startswith(b"\xef\xbb\xbf"):
-        raise ValueError("associated writer does not support BOM-prefixed source")
-    if any(re.fullmatch(r'(?:u8|u|U|L)?R"', token.group())
-           for token in _SYMBOL_SOURCE_TOKENS.finditer(normalized)):
-        raise ValueError("associated writer does not support raw-string source")
-
-    lines = raw.splitlines(keepends=True)
-    line_count = len(lines)
+    line_count = len(raw.splitlines(keepends=True))
     parsed = parse_associated(text, path, pin, address_space=address_space)
     if tuple(asdict(row) for row in parsed) != tuple(asdict(row) for row in expected):
         raise ValueError("associated update requires a current complete source snapshot")
@@ -92,46 +77,15 @@ def write_associated_bytes(raw: bytes, *,
     for row in additions:
         _record(row, path=path, pin=pin, address_space=address_space,
                 line_limit=line_count + 1)
-        if first_splice_line is not None and row.line >= first_splice_line:
-            raise ValueError("associated writer does not support insertion in line-spliced source")
-
     all_rows = validate_associated((*expected, *additions))
     existing_ids = {_identity(row) for row in expected}
     addition_ids = {_identity(row) for row in additions}
     if len(addition_ids) != len(additions) or existing_ids & addition_ids:
         raise ValueError("new associated annotation conflicts with an existing identity")
 
-    block = False
-    boundaries = []
-    for line in text.splitlines():
-        boundaries.append(block)
-        block = _block_state_after(line, block)
-    boundaries.append(block)
-    for row in additions:
-        if boundaries[row.line - 1]:
-            raise ValueError("associated insertion anchor is inside a block comment")
-        if (row.line <= line_count
-                and lines[row.line - 1].lstrip().startswith(
-                    b"// RECOVERY_ASSOCIATED:")):
-            raise ValueError("associated insertion would shadow an existing annotation")
-
-    newline = next((line[len(line.rstrip(b"\r\n")):] for line in lines
-                    if line.endswith((b"\r\n", b"\n", b"\r"))), b"\n")
-    if newline not in (b"\n", b"\r", b"\r\n"):
-        raise ValueError("unsupported source newline")
-    inserted: dict[int, list[bytes]] = {}
-    for row in additions:
-        inserted.setdefault(row.line, []).append(_marker(row) + newline)
-
-    output = []
-    for line_number in range(1, line_count + 2):
-        if (line_number == line_count + 1 and inserted.get(line_number)
-                and raw and not raw.endswith((b"\r", b"\n"))):
-            output.append(newline)
-        output.extend(inserted.get(line_number, ()))
-        if line_number <= line_count:
-            output.append(lines[line_number - 1])
-    result = b"".join(output)
+    result = insert_annotation_lines(
+        raw, insertions=tuple((row.line, _marker(row)) for row in additions),
+        marker_prefix=b"// RECOVERY_ASSOCIATED:", label="associated")
 
     reread = parse_associated(result.decode("utf-8", errors="surrogateescape"),
                               path, pin, address_space=address_space)

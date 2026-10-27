@@ -3912,6 +3912,14 @@ compiler/reuse counts. Duplicate selections, mixed hosts and changed candidate
 or marker files are refused. The caller still owns whole-project/header/compiler
 freshness and publication; this is neither a persistent cache nor acceptance.
 
+For explicitly source-associated owners, pass `root=<project>` to this API.
+Those owners use the shared native `application_binary.verify_records` selection
+engine with the invocation's actual compiler trials and strict code/data/reference
+checks. It requires current configured annotations and the pinned image without
+creating a task or a second ledger. Unknown required evidence cannot produce an
+exact result. Ordinary owners retain their historical masked-byte comparison.
+Body-only local overlays cannot verify associated owners and refuse explicitly.
+
 `source.recording.record_claims` supplies the guarded historical publication
 path. It invokes the supplied measurement callback after capturing selected
 source, requires one unchanged record/result per selection, and calls the
@@ -3940,7 +3948,9 @@ image span and refuses a trimmed body exceeding that span, never borrowing
 adjacent original bytes. Plain/shared sections, additional associated code, ambiguous names,
 missing metadata and invalid relocation fields refuse measurement. Local names
 never select another TU's object or receive underscore/name guesses. Ordinary
-associated data is not measured by this body comparison. Keep real C++ lifetime
+associated data is not measured by this body comparison. Explicit source-owned
+switch associations instead use the native complete-envelope verifier described
+above; their code spans are never extended to absorb data. Keep real C++ lifetime
 and hierarchy declarations rather than substituting handwritten generated-code
 wrappers. These are historical masked-byte claims, not proof of CRT ordering,
 references, exception behavior, retained selection or complete object lifetime.
