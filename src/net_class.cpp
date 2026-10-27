@@ -28,7 +28,7 @@
 // TRIED: goto-preserving transcription of the Ghidra decompile (3-tier Heap::get/mem_get fallback, twice per node-type A/B, VCall slot0 insert callback); diverges at insn #7 in the prologue/local register allocation, not in the control-flow shape
 // symbol    ?add@ServiceProviderList@@QAEHH@Z
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00402350 sub_402350 0x00402350-0x0040239B FILE
+// ORIGINAL: 0x00402350 sub_402350 0x00402350-0x0040239B FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00402350.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "Receiver-24, calls4023A0, publishes owner, tests deletion bit1 and conditionally frees complete receiver."}
 // symbol    ??_GNetUnk72C@@UAEPAXI@Z
 // Superseded seed deleted; seed paths below are historical Git provenance.
