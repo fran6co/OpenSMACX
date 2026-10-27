@@ -1,0 +1,39 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "206ca413a9ac4fbba3c10ab805939e17081591b4",
+  "editable_files": [
+    "src/movie_media.cpp",
+    "recovery/tests/test_movie_block_descriptor_alias_oct27.py"
+  ],
+  "evidence": [
+    "Original5CDA30 reloads descriptor after each5D1278 decode before width test and after inner loop before height test. Byte output stores in5D2536 use memcpy; provided_output_base_4c has no disjointness contract. Writes may alter runtime descriptor pointer or dimensions. Preserve unchecked original reads, loop increments and context initialization.",
+    ".opensmacx/recovery/net-long-name-oct27iq/finished-movie-block-descriptor-oct27ir-cache/semantic-alias-review.json",
+    "Prior explicit-pointer candidate measured55vs53 originalinstructions with no lost exactpasses; its altered5CC940 body is inliningselection. Baseline movie objecthash05334f8a282c39930bf36cf2af65d971a63a4fab4e2f34c8a152c5ac5c038790 is unchanged between original106 and current206 qualifications. Do not discard semanticcorrection because scoreworsens. One simpler directcondition candidate before adoption; retain historicalclaims andallaffectedcaller obligations."
+  ],
+  "intent": "Preserve original live descriptor reads around movie block decoding, including permitted output-buffer alias effects, rather than preserving a stale snapshot for similarity.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6085168,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6080832,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6074912,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6073008,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "movie-live-descriptor-oct27iz"
+}
