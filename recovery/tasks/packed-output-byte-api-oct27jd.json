@@ -1,0 +1,32 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "327e1c1c113686d8e2257d68b7c08cb078d95fec",
+  "editable_files": [
+    "src/general.cpp",
+    "src/general.h",
+    "src/movie_media_decoder.cpp",
+    "recovery/tests/test_general_media_row_packers_actual_source.py",
+    "recovery/tests/test_movie_decoder_six_block_math_source.py"
+  ],
+  "evidence": [
+    "Pinned5D2536 writes eight sequential DWORDs to output0..1C. Solecaller5D1278 computes destination from BYTE*base+row*bytepitch; no int-array/alignment contract is established.",
+    "Change outputdefinition/declaration/caller together; preserve inputtypes, LUTread/storeorder, unchecked arithmetic and spans/claims/history. Currentemittedsymbol mustfollowactualcompiler, not oldint-pointer spelling.",
+    ".opensmacx/recovery/net-long-name-oct27iq/finished-movie-block-descriptor-oct27ir-cache/sub5d2536-byte-output-review.json"
+  ],
+  "intent": "Recover the packed pixel output as the byte-buffer contract established by its caller, retaining original stores and all historical obligations.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6104374,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6099576,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "packed-output-byte-api-oct27jd"
+}
