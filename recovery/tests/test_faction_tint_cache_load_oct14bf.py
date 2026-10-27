@@ -32,6 +32,7 @@ HARNESS = r"""
 
 #define __cdecl
 using DWORD = uint32_t;
+using HANDLE = void *;
 
 struct Player { char filename[32]; };
 Player Players[8] = {{"fac0"}, {"fac1"}, {"fac2"}, {"fac3"},
@@ -57,6 +58,14 @@ static int time_calls;
 static int values_close_calls;
 static int final_close_calls;
 static int cache_open_calls;
+static int get_file_size_calls;
+static int operation_sequence;
+static int table_open_sequence;
+static int size_query_sequence;
+static bool table_open_succeeds = true;
+static uint32_t cached_table_size = 0xC100;
+static DWORD live_table_size = 0xC100;
+static void *expected_file_handle;
 
 struct Buffer {
   int load_pcx(const char *, Palette *, int, int) { return 0; }
@@ -69,18 +78,27 @@ struct Buffer {
 };
 
 struct Filemap {
+  uint32_t size = 0;
   void *open(char *path, int) {
     ++cache_open_calls;
+    ++operation_sequence;
     if (std::strstr(path, "vals.tmp") != nullptr) {
       return values_cache;
     }
+    table_open_sequence = operation_sequence;
+    if (!table_open_succeeds) {
+      return nullptr;
+    }
+    size = cached_table_size;
+    expected_file_handle = this;
     return table_cache;
   }
   void *create(char *, unsigned long, int) {
     ++create_calls;
     return table_cache;
   }
-  uint32_t get_size() const { return 0xC100; }
+  HANDLE get_handle() { return this; }
+  uint32_t get_size() const { return size; }
   void close(unsigned char *end) {
     assert(end == values_cache + 12);
     ++values_close_calls;
@@ -113,6 +131,13 @@ CaviarData g_VBP_CAVIARDATA;
 
 int compare_palettes() { return 0; }
 DWORD timeGetTime() { ++time_calls; return 100; }
+DWORD GetFileSize(HANDLE handle, DWORD *high_part) {
+  assert(handle == expected_file_handle);
+  assert(high_part == nullptr);
+  ++get_file_size_calls;
+  size_query_sequence = ++operation_sequence;
+  return live_table_size;
+}
 void RGB_to_HSV(const PALETTEENTRY *, HSV *) { ++rgb_to_hsv_calls; }
 
 static void *guarded_memcpy(void *destination, const void *source,
@@ -175,10 +200,49 @@ int main() {
   assert(values_close_calls == 8);
   assert(final_close_calls == 8);
   assert(time_calls == 8);
+  assert(get_file_size_calls == 8);
   assert(create_calls == 0);
   assert(create_table_calls == 0);
   assert(nearest_palette_calls == 0);
   assert(rgb_to_hsv_calls == 0);
+
+  // The caller must use the fresh handle result rather than Filemap's cached
+  // size: exercise both disagreement directions and the unsigned failure
+  // sentinel without changing the original direct comparison behavior.
+  cache_open_calls = values_close_calls = final_close_calls = 0;
+  create_calls = time_calls = get_file_size_calls = operation_sequence = 0;
+  table_open_sequence = size_query_sequence = 0;
+  table_open_succeeds = true;
+  cached_table_size = 16;
+  live_table_size = 0xC100;
+  expected_file_handle = nullptr;
+  colortables_init_faction(0);
+  assert(get_file_size_calls == 1 && create_calls == 0);
+  assert(table_open_sequence != 0 && size_query_sequence > table_open_sequence);
+
+  cache_open_calls = values_close_calls = final_close_calls = 0;
+  create_calls = time_calls = get_file_size_calls = operation_sequence = 0;
+  table_open_sequence = size_query_sequence = 0;
+  cached_table_size = 0xC100;
+  live_table_size = 16;
+  colortables_init_faction(0);
+  assert(get_file_size_calls == 1 && create_calls == 1);
+
+  cache_open_calls = values_close_calls = final_close_calls = 0;
+  create_calls = time_calls = get_file_size_calls = operation_sequence = 0;
+  table_open_sequence = size_query_sequence = 0;
+  table_open_succeeds = false;
+  colortables_init_faction(0);
+  assert(table_open_sequence != 0 && get_file_size_calls == 0);
+
+  cache_open_calls = values_close_calls = final_close_calls = 0;
+  create_calls = time_calls = get_file_size_calls = operation_sequence = 0;
+  table_open_sequence = size_query_sequence = 0;
+  table_open_succeeds = true;
+  cached_table_size = 0;
+  live_table_size = 0xFFFFFFFFu;
+  colortables_init_faction(0);
+  assert(get_file_size_calls == 1 && create_calls == 0);
   return 0;
 }
 """

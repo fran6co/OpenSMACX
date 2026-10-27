@@ -68,7 +68,7 @@ def test_real_color_cache_has_exact_native_extents_and_owned_palette():
         "memcpy(TerritoryColorTables[faction_id], table_view, 0x100)",
         "memcpy(BodyTintColorTables[faction_id],\n                   static_cast<unsigned char *>(table_view) + 0x100,\n                   0x100)",
         "g_VBP_CAVIARDATA.record()->palette_ + 0x302",
-        "if (table_view != nullptr && cache_file.get_size() >= 0xC100)",
+        "if (table_view != nullptr &&\n            GetFileSize(cache_file.get_handle(), 0) >= 0xC100)",
         "values_view = cache_file.create(StringTemp, 0x80, 1)",
         "DWORD now = start_time", "now = timeGetTime()",
         "for (int row = 0; row < 24; ++row)",
@@ -77,6 +77,12 @@ def test_real_color_cache_has_exact_native_extents_and_owned_palette():
         assert fragment in tables, fragment
     assert "reinterpret_cast" not in tables
     assert "0x0078E970" not in tables
+    table_open = tables.index("table_view = cache_file.open(StringTemp, 1);")
+    size_check = tables.index(
+        "if (table_view != nullptr &&\n"
+        "            GetFileSize(cache_file.get_handle(), 0) >= 0xC100)")
+    assert table_open < size_check
+    assert "cache_file.get_size() >= 0xC100" not in tables
     assert tables.index("get_pixel(0xA1, 0x2EB)") < tables.index(
         "get_pixel(0xA1, 0x2F5)") < tables.index("get_pixel(0x1B3, 0x2E9)")
     assert "if (territory_sample == WinFillColour)" not in tables

@@ -838,7 +838,8 @@ void __cdecl colortables_init_faction(int faction_id) {
     bool tables_loaded = false;
     if (!refresh_tables) {
         table_view = cache_file.open(StringTemp, 1);
-        if (table_view != nullptr && cache_file.get_size() >= 0xC100) {
+        if (table_view != nullptr &&
+            GetFileSize(cache_file.get_handle(), 0) >= 0xC100) {
             memcpy(TerritoryColorTables[faction_id], table_view, 0x100);
             memcpy(BodyTintColorTables[faction_id],
                    static_cast<unsigned char *>(table_view) + 0x100,
