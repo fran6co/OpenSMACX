@@ -62,8 +62,8 @@ int __fastcall MediaRuntime::update_overlay(int show) {
 }
 
 // Typed dispatcher/waiter contracts owned by this translation unit.
-extern "C" int __fastcall sub_5c9ec0(MediaRuntime *runtime, void *unused);
-extern "C" int __fastcall sub_5ca970(MediaRuntime *runtime, void *unused);
+extern "C" int __fastcall sub_5c9ec0(MediaRuntime *runtime);
+extern "C" int __fastcall sub_5ca970(MediaRuntime *runtime);
 extern "C" int __fastcall sub_5ca310(MediaRuntime *runtime, int payload_bytes);
 // Product-owned declarations below use the actual owner headers so C++
 // linkage is not accidentally changed to C by this draft.
@@ -1330,12 +1330,12 @@ int __fastcall MediaRuntime::initialize_stream(LPSTR filename,
   r.channel_state = 4;
 
   if (r.descriptor->stream_gate_7c == 0) {
-    while (r.pending_read_records < 0x14 && sub_5c9ec0(runtime, 0) != -1) {
+    while (r.pending_read_records < 0x14 && sub_5c9ec0(runtime) != -1) {
     }
   } else {
     while (r.pending_output_records < 0x15 &&
-           sub_5c9ec0(runtime, 0) != -1 &&
-           sub_5c9ec0(runtime, 0) != -1) {
+           sub_5c9ec0(runtime) != -1 &&
+           sub_5c9ec0(runtime) != -1) {
     }
   }
   r.descriptor->stream_gate_80 = (r.read_counter == 0);
@@ -1410,14 +1410,14 @@ int __fastcall MediaRuntime::parse_initial_format(int byte_count) {
 // candidate only; FourCC values and record-kind values stay numeric because
 // no codec/library attribution is established by these branches.
 // ORIGINAL: 0x005C9EC0 sub_5c9ec0 0x005C9EC0-0x005CA230
-// symbol    @sub_5c9ec0@8
+// symbol    @sub_5c9ec0@4
 // kind      game
 // TRIED: sub_5ca230/5ca310/5ca6c0 are __thiscall members of the object this function receives in ecx (mov ecx,esi before each direct call); the three `// indirect` sites are all the same cached mmioRead(HMMIO,HPSTR,LONG) stdcall pointer loaded from g_0066936c once and called through a register.
 // TRIED: transcribed the fourcc/cch big-endian header decode as explicit byte shifts (buf[0..3], buf[4..7]) and the branch tree as goto-labelled ifs mirroring Ghidra 1:1; compiles and is structurally faithful but only 0.44 mnemonic similarity (996 vs 876 bytes) - did not reverse-engineer the exact esp-relative overlapping-load pattern the original uses to build the two big-endian dwords, nor match the alloca'd buffer's exact size.
 // The retained continuity mapping reaches 0x005CA230; the old seed
 // ended at 0x005CA22C. Preserve this historical extent discrepancy
 // rather than silently treating either as fresh boundary proof.
-extern "C" int __fastcall sub_5c9ec0(MediaRuntime *runtime, void *) {
+extern "C" int __fastcall sub_5c9ec0(MediaRuntime *runtime) {
   BYTE header_and_payload[0xc00c];
   LONG read = mmioRead(runtime->descriptor->stream,
                        (HPSTR)header_and_payload, 8);
@@ -1720,16 +1720,16 @@ extern "C" int __fastcall sub_5ca310(MediaRuntime *r, int byte_count) {
 }
 
 // ORIGINAL: 0x005CA970 sub_5ca970 0x005CA970-0x005CAAA1
-// symbol    @sub_5ca970@8
+// symbol    @sub_5ca970@4
 // kind      game
-extern "C" int __fastcall sub_5ca970(MediaRuntime *runtime, void *) {
+extern "C" int __fastcall sub_5ca970(MediaRuntime *runtime) {
   MediaDescriptor &d = *runtime->descriptor;
   LONG no_handle = -1;
   if (runtime->channel_state == no_handle) {
     if ((d.flags & 0x00008000) != 0) {
       Sleep(0);
       mmioSeek(runtime->descriptor->stream, runtime->channel_seek_position, SEEK_SET);
-      runtime->channel_state = sub_5c9ec0(runtime, 0);
+      runtime->channel_state = sub_5c9ec0(runtime);
     } else {
       runtime->channel_state = no_handle;
     }
@@ -1740,14 +1740,14 @@ extern "C" int __fastcall sub_5ca970(MediaRuntime *runtime, void *) {
       runtime->pending_read_records >= 0x16)
     return 0;
 
-  int result = sub_5c9ec0(runtime, 0);
+  int result = sub_5c9ec0(runtime);
   runtime->channel_poll_result = result;
   switch (result) {
   case -1:
     if ((runtime->descriptor->flags & 0x00008000) != 0) {
       Sleep(0);
       mmioSeek(runtime->descriptor->stream, runtime->channel_seek_position, SEEK_SET);
-      runtime->channel_state = sub_5c9ec0(runtime, 0);
+      runtime->channel_state = sub_5c9ec0(runtime);
     } else {
       runtime->channel_state = no_handle;
     }
@@ -1755,7 +1755,7 @@ extern "C" int __fastcall sub_5ca970(MediaRuntime *runtime, void *) {
 
   case 1:
     if (runtime->descriptor->stream_gate_7c != 0) {
-      runtime->channel_state = sub_5c9ec0(runtime, 0);
+      runtime->channel_state = sub_5c9ec0(runtime);
       if (runtime->channel_state == 1) runtime->descriptor->stream_gate_7c = 0;
     }
     return 0;
@@ -1763,7 +1763,7 @@ extern "C" int __fastcall sub_5ca970(MediaRuntime *runtime, void *) {
   case 2:
     if (runtime->descriptor->stream_gate_80 == 0 ||
         runtime->pending_output_records < 0x16)
-      runtime->channel_state = sub_5c9ec0(runtime, 0);
+      runtime->channel_state = sub_5c9ec0(runtime);
     return 0;
 
   default:
@@ -2209,13 +2209,13 @@ worker_loop:
     } else {
       Sleep(0);
       mmioSeek(stream, r->channel_seek_position, SEEK_SET);
-      r->channel_state = sub_5c9ec0(r, 0);
+      r->channel_state = sub_5c9ec0(r);
     }
     if (r->channel_state != -1) goto process_stream;
   } else {
 process_stream:
     if (r->pending_output_records < 0x16 && r->pending_read_records < 0x16) {
-      int result = sub_5c9ec0(r, 0);
+      int result = sub_5c9ec0(r);
       r->channel_poll_result = result;
       if (result == -1) {
         if ((flags & 0x00008000) == 0) {
@@ -2223,16 +2223,16 @@ process_stream:
         } else {
           Sleep(0);
           mmioSeek(stream, r->channel_seek_position, SEEK_SET);
-          r->channel_state = sub_5c9ec0(r, 0);
+          r->channel_state = sub_5c9ec0(r);
         }
       } else if (result == 1) {
         if (stream_gate_7c != 0) {
-          r->channel_state = sub_5c9ec0(r, 0);
+          r->channel_state = sub_5c9ec0(r);
           if (r->channel_state == 1) stream_gate_7c = 0;
         }
       } else if (result == 2 &&
                  (stream_gate_80 == 0 || r->pending_output_records < 0x16)) {
-        r->channel_state = sub_5c9ec0(r, 0);
+        r->channel_state = sub_5c9ec0(r);
       }
     }
   }
@@ -2412,7 +2412,7 @@ thread_loop:
     }
 
     Sleep(0);
-    sub_5ca970(r, 0);
+    sub_5ca970(r);
     if (r->buffer_setup_finished == 0 && d->stream_gate_7c != 0) {
       r->create_playback_buffer();
       r->output_lock_word = 0;
