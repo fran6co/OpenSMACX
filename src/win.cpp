@@ -54,7 +54,7 @@
 
 // Win constructor-installed Win branch: capture4, resize13, mouse17, update63.
 // Table start is observed in the original constructor; full extent remains unknown.
-// RECOVERY_GENERATED: v1 vtable 0x0066FDD0 ? ??_7Win@@6B@ 0x005EB3D0
+// RECOVERY_GENERATED: v1 vtable 0x0066FDD0 0x0066FF30 ??_7Win@@6B@ 0x005EB3D0
 #include "net_class.h"
 #include "multidebug.h"
 

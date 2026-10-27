@@ -1,0 +1,83 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "d3790339ca69114206a26758b9095163cea60b01",
+  "editable_files": [
+    "src/alphamovie.cpp",
+    "src/basebutton.cpp",
+    "src/flatbutton.cpp",
+    "src/mapwin.cpp",
+    "src/popup.cpp",
+    "src/prodpicker.cpp",
+    "src/setupwin.h",
+    "src/sound.cpp",
+    "src/stringbox.cpp",
+    "src/win.cpp"
+  ],
+  "evidence": [
+    "Tenunknownends areboundedbyindependentlyobserved adjacentCtorvptrstores andcontinuouspinnedHIGHLOW/code-pointerruns. Twoindependent5rowreviews validate; Coffsizescorroborateonly. No estimatesacrossunknownintermediatetables/padding.",
+    "Onlygenerated-spanfactschange; preserveCtorEvidence/tableidentity/kind/symbol/Originalfunctionspans/claims. Tablecontentweakfallbacks/unmappedtargetsremainUNKNOWN, notpromoted.",
+    "MapWin::close typedGraphicWinbase path alreadyexact15/15; replaceobsoleteinbodyrunproseallegingdemotion/missingrelationshipwithitsactualvbtablerelationship. No C++operation, ABI/layout/flag changes.",
+    "Fullcontextnativegenerated-data/source/reference/claimchecks, thenbuild/link andcoordinatorreview beforemanualintegration; no fullretainedselection/runtime acceptance."
+  ],
+  "intent": "Recover ten independently pinned generated-table extents and clarify existing typed MapWin lifetime evidence.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4210704,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4212896,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4597472,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4657008,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4793376,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4905088,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5005600,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6206416,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6319920,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6323440,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6459664,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "generated-extents-oct27gk"
+}
