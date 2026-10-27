@@ -60,6 +60,47 @@ static DWORD blend(DWORD sum) {
          MovieBlendTableLow[sum & 0x1ffu];
 }
 
+static DWORD coefficient_pack_lookup(DWORD raw_index) {
+  // The source converts the volatile DWORD word to the helper's signed index.
+  // -1 is intentional: index*8 reaches backed LUT word 510 before word 512.
+  const int index = static_cast<int32_t>(raw_index);
+  const int word = 512 + index * 2;
+  return movie_media_conversion_tables.remap_or_lookup_storage.words[word];
+}
+
+static DWORD expected_packed_row_word(const DWORD *coefficient_row,
+                                      const DWORD *selector_pair,
+                                      int index) {
+  const DWORD upper_selector =
+      coefficient_pack_lookup(selector_pair[0x40 + index]);
+  const DWORD lower_selector = coefficient_pack_lookup(selector_pair[index]);
+  const DWORD even_coefficient =
+      coefficient_pack_lookup(coefficient_row[2 * index]);
+  const DWORD odd_coefficient =
+      coefficient_pack_lookup(coefficient_row[2 * index + 1]);
+  const DWORD upper = (upper_selector << 8) | odd_coefficient;
+  const DWORD lower = (lower_selector << 8) | even_coefficient;
+  return (upper << 16) | lower;
+}
+
+static void assert_packed_output(const BYTE *storage, int output_offset,
+                                 int storage_size,
+                                 const DWORD *coefficient_row,
+                                 const DWORD *selector_pair) {
+  for (int index = 0; index != 8; ++index) {
+    DWORD observed = 0;
+    std::memcpy(&observed,
+                storage + output_offset + index * sizeof(DWORD),
+                sizeof(observed));
+    assert(observed == expected_packed_row_word(
+                           coefficient_row, selector_pair, index));
+  }
+  for (int i = 0; i != output_offset; ++i) assert(storage[i] == 0xa5);
+  for (int i = output_offset + 8 * (int)sizeof(DWORD); i != storage_size; ++i) {
+    assert(storage[i] == 0xa5);
+  }
+}
+
 int main() {
   for (DWORD i = 0; i != 512; ++i) {
     MovieBlendTableHi[i] = i << 23;
@@ -119,34 +160,34 @@ int main() {
   for (DWORD i = 0; i != 256; ++i) {
     movie_media_conversion_tables.remap_or_lookup_storage.words[128+2*i] = 0xeeu;
   }
+  movie_media_conversion_tables.remap_or_lookup_storage.words[126] = 0x19u;
   for (DWORD i = 0; i != 256; ++i) {
     movie_media_conversion_tables.remap_or_lookup_storage.words[512+2*i] =
         7u + (i * 13u) % 241u;
   }
-  for (int i = 0; i != 16; ++i) data[i] = 80 + i;
+  // The real caller provides DWORD[512] scratch storage. Keep the four input
+  // words as DWORDs here too; the body performs its four volatile reads in
+  // upper selector, lower selector, even coefficient, odd coefficient order.
+  DWORD packed_data[512] = {};
+  DWORD selector_pair[512] = {};
   for (int i = 0; i != 8; ++i) {
-    selectors[i] = 10 + i;
-    selectors[64+i] = 30 + i;
+    packed_data[2*i] = 80u + (DWORD)i;
+    packed_data[2*i+1] = 96u + (DWORD)i;
+    selector_pair[i] = 10u + (DWORD)i;
+    selector_pair[64+i] = 30u + (DWORD)i;
   }
-  int packed_guard[10];
-  for (int i = 0; i != 10; ++i) packed_guard[i] = (int)0x12345678u;
-  sub_5d2536(data, selectors, packed_guard + 1);
-  assert((DWORD)packed_guard[0] == 0x12345678u);
-  assert((DWORD)packed_guard[9] == 0x12345678u);
-  for (DWORD i = 0; i != 8; ++i) {
-    const DWORD upper =
-        (movie_media_conversion_tables.remap_or_lookup_storage.words[
-             512 + 2*(DWORD)selectors[64+i]] << 8) |
-        movie_media_conversion_tables.remap_or_lookup_storage.words[
-             512 + 2*(DWORD)data[2*i+1]];
-    const DWORD lower =
-        (movie_media_conversion_tables.remap_or_lookup_storage.words[
-             512 + 2*(DWORD)selectors[i]] << 8) |
-        movie_media_conversion_tables.remap_or_lookup_storage.words[
-             512 + 2*(DWORD)data[2*i]];
-    const DWORD expected = (upper << 16) | lower;
-    assert((DWORD)packed_guard[1+i] == expected);
-  }
+  // A high-bit DWORD input is read as signed -1 and safely selects word 510.
+  packed_data[0] = static_cast<DWORD>(static_cast<int32_t>(-1));
+  movie_media_conversion_tables.remap_or_lookup_storage.words[510] = 0x5au;
+
+  BYTE packed_storage[72];
+  for (int i = 0; i != 72; ++i) packed_storage[i] = 0xa5;
+  sub_5d2536(packed_data, selector_pair, packed_storage + 1);
+  assert_packed_output(packed_storage, 1, 72, packed_data, selector_pair);
+
+  for (int i = 0; i != 72; ++i) packed_storage[i] = 0xa5;
+  sub_5d2536(packed_data, selector_pair, packed_storage + 3);
+  assert_packed_output(packed_storage, 3, 72, packed_data, selector_pair);
   return 0;
 }
 """
@@ -189,12 +230,14 @@ def test_installed_helpers_match_typed_input_output_contracts(compiler_name: str
 @pytest.mark.parametrize("compiler_name", ["g++", "clang++"])
 @pytest.mark.parametrize("old,new", [
     ("remap_or_lookup_storage.words[512]", "remap_or_lookup_storage.words[128]"),
-    ("upper_selector_index = selector_indices[0x40 + index]",
-     "upper_selector_index = coefficient_indices[0x40 + index]"),
+    ("const int upper_selector_index = selector_indices[0x40 + index];",
+     "const int upper_selector_index = coefficient_indices[0x40 + index];"),
     ("const DWORD even_sum = selector_0 + data_even + selector_1;",
      "const DWORD even_sum = (int)selector_0 + (int)data_even + (int)selector_1;"),
+    ("memcpy(packed_output + index * sizeof(result), &result, sizeof(result));",
+     "memcpy(packed_output + index * sizeof(result) * 2, &result, sizeof(result));"),
 ])
-def test_wrong_lookup_operands_and_signed_overflow_are_rejected(
+def test_wrong_lookup_operands_overflow_and_stride_are_rejected(
         compiler_name: str, old: str, new: str, tmp_path: Path) -> None:
     compiler = shutil.which(compiler_name)
     if compiler is None:
@@ -204,6 +247,9 @@ def test_wrong_lookup_operands_and_signed_overflow_are_rejected(
     generated = harness(source.replace(old, new, 1))
     # Keep the wrong-operand mutant within its fixture arrays, so rejection
     # establishes differing output rather than relying on an invalid read.
+    # The new packed_data fixture mirrors the actual caller's 512-DWORD scratch
+    # input, so the mutant's coefficient_indices[0x40 + index] reads are also
+    # within that backed input extent.
     generated = generated.replace("int data[16] = {};", "int data[128] = {};")
     # Cross INT_MAX rather than unsigned zero: this traps signed-overflow
     # normalization even when an optimizing host happens to produce wrap.

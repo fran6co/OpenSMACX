@@ -1,0 +1,54 @@
+{
+  "event_id": "27ca9aa5b187c72f9cbe3855656b18819f265c46d43de0e7887ddf393cf9b1d6",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/COMPILER_EVIDENCE.md",
+      "src/movie_media.h"
+    ],
+    "evidence": [
+      "Independent rawpin traces07/coherent agreeCALL pushesreturnaddress: producerESP=S-4, so LEA ESP+4 addresses callerS. Correct all six output starts from1,9,129,137,257,321 to0,8,128,136,256,320. ExistinglocalDCstore alreadycorrect; do notinitializeanythingextra.",
+      ".opensmacx/recovery/movie-scratch-word0-oct27ik/trace.json",
+      "Normalize5D2536 inputviews to actualcallerDWORD[512], preserving volatileloadorder and32bitindexbits beforeunchangedlookup math. This is current sourceownership evidence, not originalnominaltype proof. Keepcapacity512, otherconsumerinterfaces andalluncheckedbehavior.",
+      "Movie header already owns SDKDWORD/BYTE andsharedtypes; move this one byte/word API declaration there rather than adding Windowsdependency to general.h. Preserve Originalidentity/spans/claims/history and actual emittedCurrentSymbol."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6097579,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6098306,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6100070,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6100564,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6101058,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6101552,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "correct-caller-frame-and-input-views-oct27jd",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:packed-output-byte-api-oct27jd"
+}

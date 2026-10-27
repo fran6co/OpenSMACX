@@ -827,7 +827,7 @@ DWORD __cdecl sub_5d0d82(
 // destination offsets and row pitches are direct translations of the five
 // ECX/EDX setup pairs plus the final fallthrough setup in the pinned image.
 // ORIGINAL: 0x005D0AAB sub_5d0aab 0x005D0AAB-0x005D0D82
-// RECOVERY_BINDING: v1 {"evidence": ["recovery/tasks/movie-decoder-owner-oct5.json", "pinned caller/body and shared-storage review; fresh VC6 public symbol", "Normalize the shared ESI/EDI/EBP/EAX state into the proven MediaRuntime and caller-owned 0x800-byte scratch. Perform six delta/predictor steps and invoke the typed 5D0D82 block body for each; preserve the sixth native fallthrough as an explicit source call edge."], "reason": "Faithful semantic media decoder owner recovery with normalized custom-register helper interfaces. Original identities, spans and historical findings retained; no matching, runtime or game acceptance granted."}
+// RECOVERY_BINDING: v1 {"evidence": ["recovery/tasks/movie-decoder-owner-oct5.json", "Caller 0x5D127E reserves 0x800 bytes at S, then CALL 0x5D0AAB at 0x5D1297 pushes its return address. The producer has no stack prologue, so its ESP is S-4.", "Producer LEAs ESP+4,+0x24,+0x204,+0x224,+0x404,+0x504 address caller word offsets 0,8,128,136,256,320. Its first four row pitches are 0x40 bytes and the last two are 0x20 bytes.", "Consumer 0x5D12A9 starts at S and 0x5D253E reads its first word. Original transform/fill paths write that word; the former source +1 displacement was a frame-translation error, not original uninitialized behavior. Existing local DC product/store and scratch extent remain unchanged."], "reason": "Normalize the six output destinations against the caller-owned scratch frame, accounting for the CALL return address. Retain predictor updates, captured input/cursor and the sixth original fallthrough as an explicit normalized source call."}
 // symbol    ?sub_5d0aab@@YAKPAUMediaDecoderContext@@PAKPBEK@Z
 // TRIED: no prologue/epilogue in the original (falls into 0x5D0D82, no ret) - edi/esi/ebp are register-passed by one caller sharing its frame; no standalone C parameter list can receive that, so byte-exactness is not reachable here. Modelled as static globals a companion routine would set instead.
 DWORD __cdecl sub_5d0aab(
@@ -837,7 +837,7 @@ DWORD __cdecl sub_5d0aab(
       movie_media_coefficient_tables.words) + 0x394;
   const BYTE *const lookup_b = reinterpret_cast<const BYTE *>(
       movie_media_coefficient_tables.words) + 0x414;
-  const DWORD output_offsets[6] = {1, 9, 129, 137, 257, 321};
+  const DWORD output_offsets[6] = {0, 8, 128, 136, 256, 320};
 
   for (int block = 0; block != 6; ++block) {
     DWORD *predictor;
@@ -960,7 +960,7 @@ void __cdecl sub_5d1a30(BYTE *base, int stride, MediaDecoderContext *context) {
 }
 
 // ORIGINAL: 0x005D1278 sub_5d1278 0x005D1278-0x005D1466
-// RECOVERY_BINDING: v1 {"evidence": ["recovery/tasks/movie-decoder-owner-oct5.json", "pinned caller/body and shared-storage review; fresh VC6 public symbol", "Receive the exact runtime+0x3F8 MediaDecoderContext, run the shared six-block 5D0AAB/5D0D82 decode, publish its advanced context+0x204 cursor, then execute sixteen mapped 5D2536 rows."], "reason": "Faithful semantic media decoder owner recovery with normalized custom-register helper interfaces. Original identities, spans and historical findings retained; no matching, runtime or game acceptance granted."}
+// RECOVERY_BINDING: v1 {"evidence": ["recovery/tasks/movie-decoder-owner-oct5.json", "Pinned input is the runtime+0x3F8 decoder context. Capture input/cursor once, decode the six blocks, publish context+0x204, then emit sixteen rows through 0x5D2536.", "The source DWORD scratch rows at offsets row*16 and 256+(row/2)*8 reproduce the existing byte offsets without cross-type pointer casts. Retain 512 words and original byte pitch; the source interface is not a recovered private register ABI."], "reason": "Use direct raw-word rows and a byte destination for the existing packed-row helper while preserving bitstream capture/commit and the original sixteen-row conversion sequence."}
 // symbol    ?sub_5d1278@@YAXPAEHPAUMediaDecoderContext@@@Z
 // TRIED: sub_5d2536/sub_5d0aab take no C-expressible params (register- implicit edi/esi/ebp with no prologue); the esi/edi/ebp setup before each bare call cannot be threaded through a normal argument list without __asm, so the calls below are faithful in COUNT and ORDER, not operands.
 void __cdecl sub_5d1278(BYTE *base, int stride, MediaDecoderContext *context) {
@@ -971,12 +971,9 @@ void __cdecl sub_5d1278(BYTE *base, int stride, MediaDecoderContext *context) {
       context, scratch_words, input, initial_bit_position);
   context->bit_position_204 = bit_position;
   for (int row = 0; row != 16; ++row) {
-    int *const source = reinterpret_cast<int *>(
-        reinterpret_cast<BYTE *>(scratch_words) + row * 0x40);
-    int *const tables = reinterpret_cast<int *>(
-        reinterpret_cast<BYTE *>(scratch_words) + 0x400 + (row / 2) * 0x20);
-    sub_5d2536(source, tables,
-               reinterpret_cast<int *>(base + row * stride));
+    DWORD *const source = scratch_words + row * 0x10;
+    DWORD *const tables = scratch_words + 0x100 + (row / 2) * 8;
+    sub_5d2536(source, tables, base + row * stride);
   }
 }
 
