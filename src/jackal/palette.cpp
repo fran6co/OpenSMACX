@@ -1354,14 +1354,14 @@ void __cdecl Palette::timer_callback(int key, void *context) {
     }
 
     unsigned int iStartIndex = self->internal_[idx].first;
-    unsigned int cEntries = self->internal_[idx].count;
+    int cEntries = self->internal_[idx].count;
 
     PALETTEENTRY *entries = &self->entries_[iStartIndex];
     unsigned char lastBlue = entries[0].peBlue;
     unsigned char lastGreen = entries[0].peGreen;
     unsigned char lastRed = entries[0].peRed;
 
-    unsigned int i;
+    int i;
     for (i = 0; i < cEntries - 1; i++) {
         entries[i].peRed = entries[i + 1].peRed;
         entries[i].peGreen = entries[i + 1].peGreen;
