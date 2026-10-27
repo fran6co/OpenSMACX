@@ -1,0 +1,57 @@
+{
+  "event_id": "5c10b8be55b1d05ba1847a7a88779102c1cfbb675cf5d7073451d475fd39e9fd",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/basepop.cpp",
+      "src/dialog.cpp",
+      "src/flatbutton.cpp",
+      "src/net_class.cpp",
+      "src/scroll.cpp",
+      "src/stringbox.cpp"
+    ],
+    "evidence": [
+      "Six existinghistoricalscalar-deletingclaims reverifiedBYTE_EXACT inunchangedactualapplicationframeprofiles atcandidateHEADd81af925; originalclass/sourceidentities unchanged.",
+      "LINKMAPidentifiesalphanet/alphasave/maininterface naturalproviders; linkedPEhaspinnedinstructionshape. Currentcompile_contextisnot originalTU orfullretainedselection/ICFproof. No compilerflags, classABI orC++bodychanges authorizedbythisexpansion.",
+      "Coordinatorauthorizesnativewrite_context-only corrections andStringList bindingreason correctiontoavoidold false this-TU assertion. Canonicalsourcehosts andallhistory/spans/claimsretained. Nativefreshrecordingandfullcombinedchecks requiredbeforeintegration; strictcontextguard remainsunwaived."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4221760,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4221152,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4222752,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4401008,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4220528,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5126288,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "natural-generated-application-providers",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:alpha-cleanup-next-oct27gs"
+}
