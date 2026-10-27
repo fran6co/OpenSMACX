@@ -1,0 +1,20 @@
+{
+  "event_id": "4aa44465a93327979100b5af17c60ad1315bf1603d5d08d8f7c7279dd6c70d52",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_matrix3_consolidated_actual_source.py",
+      "recovery/tests/test_matrix3_value_results_oct12b.py"
+    ],
+    "evidence": [
+      "Only the scaled multiplication-to-addition fault anchor follows the actual loop variable rename; both host controls and every mutation assertion remain. Native nested loop matches original control/arithmetic/copy flow but retains unexplained four-byte-frame mismatch; no new claim or class/owner qualification."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "matrix-nested-loop-mutation-control-oct27if",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:matrix-scaled-value-oct27hz"
+}

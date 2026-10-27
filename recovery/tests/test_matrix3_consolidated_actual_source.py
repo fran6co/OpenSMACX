@@ -298,7 +298,7 @@ MUTANTS = (
     ("multiply", "++depth;", "depth += 2;"),
     ("multiply", "result.cells[row * 3 + column] = sum;", "result.cells[row * 3 + column] = 0.0f;"),
     ("transform", "m[1] * in[1]", "m[0] * in[1]"),
-    ("scaled", "scale * cells[i]", "scale + cells[i]"),
+    ("scaled", "scale * cells[index]", "scale + cells[index]"),
 )
 
 
