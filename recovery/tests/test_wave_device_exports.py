@@ -21,14 +21,14 @@ ADDRESSES = (0x4C4ED0, 0x4C4F10, 0x4C4F80)
 @pytest.fixture(scope="module")
 def device_exports(export_storage):
     compiler, settings, trials, image, exports = export_storage
-    objects = [{**trial, "src/wave_device.cpp": Coff(compiler(
-        ROOT / "src/wave_device.cpp", (), flags + settings.layout_flags))}
+    objects = [{**trial, "src/sounddevice.cpp": Coff(compiler(
+        ROOT / "src/sounddevice.cpp", (), flags + settings.layout_flags))}
         for trial, flags in zip(trials, settings.flag_sets)]
     from match_recovery.model import Span
     bindings = [FunctionBinding(Origin(image_pin(ROOT), "pe:va", r.address),
                                tuple(Span(a, b) for a, b in r.image_spans),
-                               r.symbol or r.name, "src/wave_device.cpp")
-                for r in read_file(ROOT / "src/wave_device.cpp") if r.address in ADDRESSES]
+                               r.symbol or r.name, "src/sounddevice.cpp")
+                for r in read_file(ROOT / "src/sounddevice.cpp") if r.address in ADDRESSES]
     assert len(bindings) == len(ADDRESSES)
     return compiler, settings, objects, image, exports, bindings
 
@@ -45,7 +45,7 @@ def test_lifecycle_bodies_match_with_loader_owned_targets(device_exports):
                 passes[binding.origin.address] = True
         # No standalone pointer definitions may shadow the loader's slots.
         assert not any(s.name.startswith(("?WaveDeviceFactoryHook@@", "?WaveDeviceDestroyHook@@"))
-                       for s in objects["src/wave_device.cpp"].symbols.values())
+                       for s in objects["src/sounddevice.cpp"].symbols.values())
     assert all(passes.values()), passes
 
 
@@ -56,34 +56,34 @@ def test_lifecycle_bodies_match_with_loader_owned_targets(device_exports):
 ])
 def test_native_comparison_rejects_a_wrong_export_entry(device_exports, before, after, address):
     compiler, settings, trials, image, exports, bindings = device_exports
-    source = (ROOT / "src/wave_device.cpp").read_bytes()
+    source = (ROOT / "src/sounddevice.cpp").read_bytes()
     for flags, objects in zip(settings.flag_sets, trials):
-        changed = Coff(compiler.overlay(ROOT / "src/wave_device.cpp", {
-            "src/wave_device.cpp": source.replace(before.encode(), after.encode())
+        changed = Coff(compiler.overlay(ROOT / "src/sounddevice.cpp", {
+            "src/sounddevice.cpp": source.replace(before.encode(), after.encode())
         }, (), flags + settings.layout_flags))
         targets, _ = object_targets([exports], objects)
         binding, = (b for b in bindings if b.origin.address == address)
-        row, = check_objects([binding], {**objects, "src/wave_device.cpp": changed}, image, external_targets=targets)
+        row, = check_objects([binding], {**objects, "src/sounddevice.cpp": changed}, image, external_targets=targets)
         assert row["references"] == "fail", row
 
 
 def run_device(tmp_path, monkeypatch):
     run_recovered_harness(tmp_path, monkeypatch, "wave_device_exports_harness.cpp", [
-        ("// LIVE_CREATE", "src/wave_device.cpp", 0x4C4ED0),
-        ("// LIVE_DELETE", "src/wave_device.cpp", 0x4C4F10),
-        ("// LIVE_RELEASE", "src/wave_device.cpp", 0x4C4F80)], declarations=[
+        ("// LIVE_CREATE", "src/sounddevice.cpp", 0x4C4ED0),
+        ("// LIVE_DELETE", "src/sounddevice.cpp", 0x4C4F10),
+        ("// LIVE_RELEASE", "src/sounddevice.cpp", 0x4C4F80)], declarations=[
         ("// LIVE_LOADER", "src/sound_loader.cpp", "int __cdecl load_sound_dll()", "// ORIGINAL: 0x004C5F70"),
         ("// LIVE_DEVICE_BASE_DECLARATION", "src/sounddevice.h", "class SoundDeviceBase {", "class Midi_Device :"),
         ("// LIVE_GROUP_TYPES", "src/wave_device.h", "struct WaveGroupNode {", " /*\n  * Wave_Device class"),
         ("// LIVE_DEVICE_DECLARATION", "src/wave_device.h", "class Wave_Device : public SoundDeviceBase {", "// THE OBJECT, at 0x0090D978"),
         ("// LIVE_BASE_CONSTRUCTOR", "src/sounddevice.cpp", "SoundDeviceBase::SoundDeviceBase() {", "/*\nPurpose: Enable the wrapped device"),
         ("// LIVE_BASE_DESTRUCTOR", "src/sounddevice.h", "inline SoundDeviceBase::~SoundDeviceBase() {", "// SoundX ordinals 7..10 provide opaque MIDI and Wave-In provider callbacks;"),
-        ("// LIVE_GROUP_CONSTRUCTOR", "src/wave_device.cpp", "WaveControlGroup::WaveControlGroup() {", "WaveControlGroup::~WaveControlGroup()"),
-        ("// LIVE_GROUP_DESTRUCTOR", "src/wave_device.cpp", "WaveControlGroup::~WaveControlGroup() {", "Wave_Device::Wave_Device()"),
-        ("// LIVE_WAVE_CONSTRUCTOR", "src/wave_device.cpp", "Wave_Device::Wave_Device() {", "Wave_Device::~Wave_Device()"),
-        ("// LIVE_GET_NDEVICES", "src/wave_device.cpp", "int Wave_Device::get_ndevices() {", "/*\nPurpose: Ask the wrapped device for its hardware memory size"),
-        ("// LIVE_GET_DESCRIPTION", "src/wave_device.cpp", "int Wave_Device::get_description(unsigned long a1, char *a2, unsigned long a3) {", "/*\nPurpose: Forward start_raw_dump"),
-        ("// LIVE_INIT", "src/wave_device.cpp", "int Wave_Device::init(void *group_id, unsigned long flags) {", "/*\nPurpose: Release the wrapped device"),
+        ("// LIVE_GROUP_CONSTRUCTOR", "src/sounddevice.cpp", "WaveControlGroup::WaveControlGroup() {", "WaveControlGroup::~WaveControlGroup()"),
+        ("// LIVE_GROUP_DESTRUCTOR", "src/sounddevice.cpp", "WaveControlGroup::~WaveControlGroup() {", "Wave_Device::Wave_Device()"),
+        ("// LIVE_WAVE_CONSTRUCTOR", "src/sounddevice.cpp", "Wave_Device::Wave_Device() {", "Wave_Device::~Wave_Device()"),
+        ("// LIVE_GET_NDEVICES", "src/sounddevice.cpp", "int Wave_Device::get_ndevices() {", "/*\nPurpose: Ask the wrapped device for its hardware memory size"),
+        ("// LIVE_GET_DESCRIPTION", "src/sounddevice.cpp", "int Wave_Device::get_description(unsigned long a1, char *a2, unsigned long a3) {", "/*\nPurpose: Forward start_raw_dump"),
+        ("// LIVE_INIT", "src/sounddevice.cpp", "int Wave_Device::init(void *group_id, unsigned long flags) {", "/*\nPurpose: Release the wrapped device"),
         ("// LIVE_ROLE_TYPES", "src/sound.h", "typedef int (__cdecl *SoundXCreateSoundProc)", "inline SoundXCreateSoundProc SoundXOrdinal1CreateSound()"),
         ("// LIVE_SLOT_DISPATCH", "src/soundx_wave_device_abi.h", "class WaveDeviceProviderCallView {", "};"),
         ("// LIVE_EXPORT_TYPE", "src/sound.h", "typedef void *SoundDllProcsTable[11];", "// Pinned soundx.dll exports ordinals 1..11 form one fixed callable contract."),
@@ -103,7 +103,7 @@ def test_actual_lifecycle_observes_loading_rebinding_and_callback_changes(tmp_pa
 ])
 def test_runtime_contract_rejects_bad_targets_or_lifecycle_guards(tmp_path, monkeypatch, before, after):
     original_read = Path.read_text
-    target = ROOT / "src/wave_device.cpp"
+    target = ROOT / "src/sounddevice.cpp"
     assert before in original_read(target)
     def damaged_read(path, *args, **kwargs):
         text = original_read(path, *args, **kwargs)

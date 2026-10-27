@@ -13,7 +13,7 @@ def test_actual_wave_group_stores_and_teardown(tmp_path, compiler_name):
         pytest.skip(compiler_name + " unavailable")
     header = (ROOT / "src/wave_device.h").read_text()
     declarations = header[header.index("struct WaveGroupNode {"):header.index(" /*\n  * Wave_Device")]
-    source = (ROOT / "src/wave_device.cpp").read_text()
+    source = (ROOT / "src/sounddevice.cpp").read_text()
     pieces = [definition(source, r"WaveControlGroup::WaveControlGroup\(\)"),
               definition(source, r"WaveControlGroup::~WaveControlGroup\(\)")]
     mutations = {

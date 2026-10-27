@@ -18,15 +18,15 @@ from test_sound_virtual_surface import family, observations
 
 def test_typed_switch_matches_complete_original_body_and_chain_target(chain):
     compiler, settings, trials, image, storage, _ = chain
-    path = ROOT / "src/wave_device.cpp"
+    path = ROOT / "src/sounddevice.cpp"
     row, = (r for r in read_file(path) if r.address == 0x4C5030)
     binding = FunctionBinding(Origin(image_pin(ROOT), "pe:va", row.address),
                               tuple(Span(a, b) for a, b in row.image_spans),
-                              row.symbol or row.name, "src/wave_device.cpp")
+                              row.symbol or row.name, "src/sounddevice.cpp")
     passed = []
     reports = []
     for flags, owners in zip(settings.flag_sets, trials):
-        objects = {**owners, "src/wave_device.cpp": Coff(compiler(path, (), flags + settings.layout_flags))}
+        objects = {**owners, "src/sounddevice.cpp": Coff(compiler(path, (), flags + settings.layout_flags))}
         targets, _ = object_targets(storage, objects)
         assert targets == {HEAD: 0x90DB20, TAIL: 0x90DB1C}
         result, = check_objects([binding], objects, image, external_targets=targets)
@@ -70,9 +70,9 @@ def test_reverting_attribute_query_to_nonvirtual_breaks_table_contract(family):
 def run_switch(tmp_path, monkeypatch):
     run_recovered_harness(tmp_path, monkeypatch, "wave_device_sound_chain_harness.cpp",
         [*CHAIN_HANDLERS,
-         ("// LIVE_GROUP_CONSTRUCTOR", "src/wave_device.cpp", 0x4C5490),
-         ("// LIVE_GROUP_DESTRUCTOR", "src/wave_device.cpp", 0x4C5B80),
-         ("// LIVE_SELECT", "src/wave_device.cpp", 0x4C5030)], declarations=[
+         ("// LIVE_GROUP_CONSTRUCTOR", "src/sounddevice.cpp", 0x4C5490),
+         ("// LIVE_GROUP_DESTRUCTOR", "src/sounddevice.cpp", 0x4C5B80),
+         ("// LIVE_SELECT", "src/sounddevice.cpp", 0x4C5030)], declarations=[
             *CHAIN_DECLARATIONS,
             *SOUNDX_EXPORT_DECLARATIONS,
             ("// LIVE_DEVICE_BASE_DECL", "src/sounddevice.h", "class SoundDeviceBase {", "static_assert(sizeof(SoundDeviceBase)"),
@@ -99,7 +99,7 @@ def test_actual_switch_rethreads_mixed_sound_types_and_observes_callbacks(tmp_pa
 ])
 def test_actual_switch_rejects_wrong_call_order_or_resume_links(tmp_path, monkeypatch, before, after):
     original = Path.read_text
-    path = ROOT / "src/wave_device.cpp"
+    path = ROOT / "src/sounddevice.cpp"
     assert before in original(path)
     def damaged(p, *args, **kwargs):
         text = original(p, *args, **kwargs)

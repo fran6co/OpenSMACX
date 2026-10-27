@@ -12,33 +12,41 @@ def test_bounded_pointer_contract_and_original_claim_continuity():
     from match_recovery.source import read_text
     from test_texture_raster_actual_source import _continuity_fields
     from test_wave_device_provider_owner_oct9 import definition
-    for name in ("wave_device.cpp", "wave_device.h", "soundx_wave_device_abi.h", "uv2player.cpp"):
-        path = ROOT / "src" / name
-        before = subprocess.check_output(["git", "show", BASE + ":src/" + name], cwd=ROOT, text=True)
-        after = path.read_text()
-        if name == "wave_device.cpp":
-            expected = before.replace("int Wave_Device::get_ds()", "IDirectSound *Wave_Device::get_ds()")
-            # Only authored binding/symbol facts are added; native body and
-            # historical marker/lessons remain unchanged apart from the type.
-            projected = "\n".join(line for line in after.split("\n") if not (
-                line.startswith("// RECOVERY_BINDING: v1") and "borrowed DirectSound" in line
-                or line == "// symbol    ?get_ds@Wave_Device@@QAEPAUIDirectSound@@XZ"))
-            assert expected == projected
-            assert definition(before, "int Wave_Device::get_ds()").replace("int Wave_Device::get_ds()", "IDirectSound *Wave_Device::get_ds()") == definition(after, "IDirectSound *Wave_Device::get_ds()")
-        elif name == "wave_device.h":
-            expected = before.replace("struct EAX_REVERB_PROPERTIES;", "struct EAX_REVERB_PROPERTIES;\nstruct IDirectSound;").replace("  int get_ds();", "  IDirectSound *get_ds();")
-            assert expected == after
-        elif name == "soundx_wave_device_abi.h":
-            expected = before.replace("#pragma once", "#pragma once\nstruct IDirectSound;").replace("virtual int get_ds() = 0;", "virtual IDirectSound *get_ds() = 0;")
-            assert expected == after
-        else:
-            expected = before.replace("media_.sound_device =\n        reinterpret_cast<IDirectSound *>(WaveDeviceGlobal.get_ds());", "media_.sound_device = WaveDeviceGlobal.get_ds();")
-            assert expected == after
-        old, new = read_text(before, path), read_text(after, path)
-        assert [_continuity_fields(r) for r in old] == [_continuity_fields(r) for r in new]
-        assert [(r.address, r.symbol) for r in old if r.address != 0x4C5190] == [(r.address, r.symbol) for r in new if r.address != 0x4C5190]
-    row, = (r for r in read_text((ROOT / "src/wave_device.cpp").read_text(), ROOT / "src/wave_device.cpp") if r.address == 0x4C5190)
-    assert row.symbol == "?get_ds@Wave_Device@@QAEPAUIDirectSound@@XZ" and row.byte_exact
+
+    # Compare only the recovered operation, not the former translation unit:
+    # its owner, virtual symbol, and neighboring interface bodies may evolve.
+    old_source = subprocess.check_output(
+        ["git", "show", BASE + ":src/wave_device.cpp"], cwd=ROOT, text=True)
+    current_source = (ROOT / "src/sounddevice.cpp").read_text()
+    old_body = definition(old_source, "int Wave_Device::get_ds()")
+    current_body = definition(current_source, "IDirectSound *Wave_Device::get_ds()")
+    expected_body = old_body.replace(
+        "int Wave_Device::get_ds()", "IDirectSound *Wave_Device::get_ds()")
+    assert current_body == expected_body
+    assert "if (device_14_)" in current_body
+    assert "return static_cast<WaveDeviceProviderCallView *>(device_14_)->get_ds();" in current_body
+    assert "return 0;" in current_body
+
+    # The original identity, image span, claim, and authored lesson history
+    # remain attached to 0x4C5190. The source owner and emitted virtual symbol
+    # are allowed to change with the interface migration.
+    old_rows = {row.address: row for row in read_text(old_source, ROOT / "src/wave_device.cpp")}
+    current_rows = {row.address: row for row in read_text(current_source, ROOT / "src/sounddevice.cpp")}
+    assert 0x4C5190 in old_rows and 0x4C5190 in current_rows
+    assert _continuity_fields(old_rows[0x4C5190]) == _continuity_fields(current_rows[0x4C5190])
+
+    # The wrapper exposes the pointer as a virtual operation, and its opaque
+    # provider boundary uses the matching pointer-return slot declaration.
+    wave_header = (ROOT / "src/wave_device.h").read_text()
+    assert "virtual IDirectSound *get_ds();" in wave_header
+    assert "struct IDirectSound;" in wave_header
+    provider_header = (ROOT / "src/soundx_wave_device_abi.h").read_text()
+    assert "virtual IDirectSound *get_ds() = 0;" in provider_header
+
+    # UV2Player stores the borrowed pointer directly in MediaDescriptor; this
+    # query itself neither adds a reference nor changes provider ownership.
+    consumer = (ROOT / "src/uv2player.cpp").read_text()
+    assert "media_.sound_device = WaveDeviceGlobal.get_ds();" in consumer
 
 
 def test_original_provider_slot_and_directsound_consumer():

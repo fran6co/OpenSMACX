@@ -214,7 +214,7 @@ EXPECTED_FLAG_SETS = [
 ]
 EXPECTED_CMAKE_PROFILES = {
     tuple(sorted(("src/map_altitude.cpp", "src/wave.cpp"))): ("/Oy-",),
-    tuple(sorted(("src/voice.cpp", "src/wave_device.cpp"))): ("/Oy-",),
+    tuple(sorted(("src/voice.cpp",))): ("/Oy-",),
     tuple(sorted(("src/midi.cpp", "src/sounddevice.cpp", "src/sound_loader.cpp"))): ("/Oy-",),
     tuple(sorted(("src/datalink.cpp", "src/maininterface.cpp", "src/console.cpp"))): ("/Oy-",),
     tuple(sorted(("src/mapwin.cpp", "src/basewin.cpp"))): ("/Oy-",),

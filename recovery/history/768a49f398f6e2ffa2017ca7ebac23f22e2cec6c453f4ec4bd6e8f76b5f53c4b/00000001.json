@@ -1,0 +1,35 @@
+{
+  "event_id": "aa699ff747275aa1641ba603e6eec4ca6d0f436c96180dd7cfffcf10e934da1f",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_application_compiler_profiles.py",
+      "recovery/tests/test_original_seam_owner_closure.py",
+      "recovery/tests/test_pending_bodies_retirement_oct6.py",
+      "recovery/tests/test_sound_owner_query_fields_actual_source.py",
+      "recovery/tests/test_sounddevice_interface_actual_source.py",
+      "recovery/tests/test_sounddevice_owner_actual_source.py",
+      "recovery/tests/test_sounddevice_release_owners_actual_source.py",
+      "recovery/tests/test_wave_control_group_lifetime.py",
+      "recovery/tests/test_wave_control_group_lifetime_actual_source.py",
+      "recovery/tests/test_wave_device_exports.py",
+      "recovery/tests/test_wave_device_group_calls_actual_source.py",
+      "recovery/tests/test_wave_device_group_members_actual_source.py",
+      "recovery/tests/test_wave_device_provider_owner_oct9.py",
+      "recovery/tests/test_wave_device_sound_chain.py",
+      "recovery/tests/test_wave_directsound_return_oct11.py",
+      "recovery/tests/test_wave_group_list_boundary_actual_source.py",
+      "recovery/tests/test_wave_group_list_member_oct15.py"
+    ],
+    "evidence": [
+      "Move source lookups and production profile expectations with the verified complete audio owner TU. Focused borrowed DirectSound operation, claims, provider and consumer checks replace the obsolete whole-TU historical freeze; independent review: /home/fran6co/code/OpenSMACX/.opensmacx/recovery/audio-device-interface-oct27/test-overlay-review.json"
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "audio-owner-tests-oct27hs",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:audio-interface-owner-oct27hr"
+}

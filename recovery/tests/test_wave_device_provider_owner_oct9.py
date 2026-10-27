@@ -34,8 +34,8 @@ METHODS = (
     "int Wave_Device::get_hw_mem_size()", "int Wave_Device::get_rate()",
     "IDirectSound *Wave_Device::get_ds()", "bool Wave_Device::is_eax()",
     "int Wave_Device::is_disabled()", "int Wave_Device::stop_raw_dump()",
-    "bool Wave_Device::is_3d()", "void Wave_Device::set_rate(unsigned long rate)",
-    "void Wave_Device::set_volume(unsigned long volume)",
+    "bool Wave_Device::is_3d()", "void Wave_Device::set_rate(unsigned int rate)",
+    "void Wave_Device::set_volume(unsigned int volume)",
     "int Wave_Device::set_hwnd(void *hwnd)",
     "int Wave_Device::get_description(unsigned long a1, char *a2, unsigned long a3)",
     "int Wave_Device::start_raw_dump(char *path)",
@@ -62,7 +62,7 @@ def test_actual_provider_call_bodies_preserve_guards_arguments_and_order(tmp_pat
     compiler = shutil.which(compiler_name)
     if compiler is None:
         pytest.skip(f"{compiler_name} unavailable")
-    source = (ROOT / "src/wave_device.cpp").read_text()
+    source = (ROOT / "src/sounddevice.cpp").read_text()
     header = (ROOT / "src/soundx_wave_device_abi.h").read_text()
     sound_header = (ROOT / "src/sound.h").read_text()
     assert "virtual ~WaveDeviceProviderCallView" not in header
@@ -160,7 +160,7 @@ struct Wave_Device {
   int enable(); int disable(); void suspend(); void restart();
   void update_sound(); int get_ndevices(); int get_hw_mem_size(); int get_rate();
   IDirectSound *get_ds(); bool is_eax(); int is_disabled(); int stop_raw_dump(); bool is_3d();
-  void set_rate(unsigned long); void set_volume(unsigned long); int set_hwnd(void *);
+  void set_rate(unsigned int); void set_volume(unsigned int); int set_hwnd(void *);
   int get_description(unsigned long, char *, unsigned long); int start_raw_dump(char *);
   int set_eax(EAX_REVERB_PROPERTIES *); int set_eax(unsigned long); int set_eax_mix(float);
   int set_listener_position(float, float, float); int get_listener_position(float *, float *, float *);

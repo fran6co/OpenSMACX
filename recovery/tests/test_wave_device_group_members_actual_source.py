@@ -25,7 +25,7 @@ def body(source: str, signature: str) -> str:
 
 
 def source_bodies() -> dict[str, str]:
-    device = (CANDIDATE / "src/wave_device.cpp").read_text()
+    device = (CANDIDATE / "src/sounddevice.cpp").read_text()
     wave = (CANDIDATE / "src/wave.cpp").read_text()
     result = {
         "get": body(device, "int Wave_Device::get_group_volume("),
@@ -172,7 +172,7 @@ def test_actual_bodies_preserve_group_semantics() -> None:
         "// ORIGINAL: 0x004C5280 ?pull_from_group@Wave_Device@@QAEHPAUWave@@@Z",
         "// ORIGINAL: 0x004C7130 ?set_volume@Wave@@QAEXH@Z",
     ):
-        assert marker in (CANDIDATE / "src/wave_device.cpp").read_text() + (CANDIDATE / "src/wave.cpp").read_text()
+        assert marker in (CANDIDATE / "src/sounddevice.cpp").read_text() + (CANDIDATE / "src/wave.cpp").read_text()
     compilers = [p for p in (shutil.which("g++"), shutil.which("clang++")) if p]
     assert compilers
     for compiler in compilers:

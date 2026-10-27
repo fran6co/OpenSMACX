@@ -30,8 +30,8 @@ WAVE_METHODS = (
     ("int Wave_Device::is_disabled()", "int is_disabled();"),
     ("int Wave_Device::stop_raw_dump()", "int stop_raw_dump();"),
     ("bool Wave_Device::is_3d()", "bool is_3d();"),
-    ("void Wave_Device::set_rate(unsigned long rate)", "void set_rate(unsigned long);"),
-    ("void Wave_Device::set_volume(unsigned long volume)", "void set_volume(unsigned long);"),
+    ("void Wave_Device::set_rate(unsigned int rate)", "void set_rate(unsigned int);"),
+    ("void Wave_Device::set_volume(unsigned int volume)", "void set_volume(unsigned int);"),
     ("int Wave_Device::set_hwnd(void *hwnd)", "int set_hwnd(void *);"),
 )
 
@@ -190,7 +190,7 @@ def test_actual_owner_field_input_and_external_dispatch_behavior(
     if compiler is None:
         pytest.skip(f"{compiler_name} is not installed")
     sound_cpp = (ROOT / "src/sound.cpp").read_text()
-    wave_cpp = (ROOT / "src/wave_device.cpp").read_text()
+    wave_cpp = (ROOT / "src/sounddevice.cpp").read_text()
     sound_h = (ROOT / "src/sound.h").read_text()
     device_h = (ROOT / "src/sounddevice.h").read_text()
     assert "Sound *device_;" in sound_h and "void *device_14_;" in device_h

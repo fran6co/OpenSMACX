@@ -14,7 +14,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 def test_group_list_is_typed_at_the_original_receiver_offset(tmp_path: Path) -> None:
     header = (ROOT / "src/wave_device.h").read_text()
-    source = (ROOT / "src/wave_device.cpp").read_text()
+    source = (ROOT / "src/sounddevice.cpp").read_text()
     group_types = header[header.index("struct WaveGroupNode {"):
                          header.index(" /*\n  * Wave_Device class")]
     assert "RECOVERY_MEMBER: v3 WaveGroupList head WaveGroupNode* 0x0" in group_types

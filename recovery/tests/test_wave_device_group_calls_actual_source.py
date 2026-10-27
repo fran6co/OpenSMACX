@@ -30,7 +30,7 @@ def body(source: str, signature: str) -> str:
 
 
 def extracted_bodies(root: Path) -> dict[str, str]:
-    source = (root / "src/wave_device.cpp").read_text()
+    source = (root / "src/sounddevice.cpp").read_text()
     signatures = {
         "set_group_volume": "int Wave_Device::set_group_volume(",
         "enable_group": "int Wave_Device::enable_group(",

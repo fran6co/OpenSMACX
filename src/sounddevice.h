@@ -39,14 +39,28 @@
   */
 class SoundDeviceBase {
  public:
-  virtual int create_device(unsigned long) = 0;
-  virtual int delete_device() = 0;
-  virtual void unk_slot2() = 0;
-  virtual int init(void *, unsigned long) = 0;
-  virtual int release() = 0;
-  virtual int get_ndevices() = 0;
-  virtual int select(unsigned long) = 0;
-  virtual int get_description(unsigned long, char *, unsigned long) = 0;
+  virtual int create_device(unsigned long) = 0;                         // 0
+  virtual int delete_device() = 0;                                      // 1
+  virtual void unk_slot2() = 0;                                        // 2
+  virtual int init(void *, unsigned long) = 0;                          // 3
+  virtual int release() = 0;                                            // 4
+  virtual int get_ndevices() = 0;                                       // 5
+  virtual int select(unsigned long) = 0;                                // 6
+  virtual int get_description(unsigned long, char *, unsigned long) = 0;// 7
+  virtual void set_volume(unsigned int) = 0;                            // 8
+  virtual int get_volume() = 0;                                         // 9
+  virtual void set_pan(int) = 0;                                        // 10
+  virtual int fade(unsigned int) = 0;                                    // 11
+  virtual int stop() = 0;                                               // 12
+  virtual void update_sound() = 0;                                      // 13
+  virtual void set_rate(unsigned int) = 0;                              // 14
+  virtual int get_rate() = 0;                                           // 15
+  // ABI-only provisional names. Pinned shared targets establish thiscall
+  // cleanup/return shapes, not nominal source names or signedness.
+  virtual void unknown_operation16(int) = 0;                             // 16: ret 4
+  virtual int unknown_query17() = 0;                                     // 17: zero, no stack args
+  virtual void suspend() = 0;                                           // 18
+  virtual void restart() = 0;                                           // 19
   SoundDeviceBase();
  protected:
   ~SoundDeviceBase();
@@ -65,73 +79,67 @@ static_assert(sizeof(SoundDeviceBase) == 0x20,
 
 class Midi_Device : public SoundDeviceBase {
  public:
-  // THE VIRTUAL SET, in the image's own vftable slot order (0x0066E190).
-  // The base-interface table (0x0066E098) is all-pure: the original compiled
-  // Midi_Device's base as abstract.
-  virtual int create_device(unsigned long a1);      // slot 0 (0x4C56D0)
-  virtual int delete_device();                      // slot 1 (0x4C5710)
-  virtual void unk_slot2();                         // slot 2 (0x404280 `ret` stub)
-  virtual int init(void *window, unsigned long backends);  // slot 3
-  virtual int release();                            // slot 4 (0x4C57F0)
-  virtual int get_ndevices();                       // slot 5 (0x4C5830)
-  virtual int select(unsigned long a1);              // slot 6 (0x4C5840)
-  virtual int get_description(unsigned long a1, char *a2, unsigned long a3);  // slot 7
-  // Base construction initializes the observed fields; compiler-generated
-  // base/derived vptr transitions belong to the ordinary C++ lifetime.
+  virtual int create_device(unsigned long a1);
+  virtual int delete_device();
+  virtual void unk_slot2();
+  virtual int init(void *window, unsigned long backends);
+  virtual int release();
+  virtual int get_ndevices();
+  virtual int select(unsigned long a1);
+  virtual int get_description(unsigned long a1, char *a2, unsigned long a3);
+  virtual void set_volume(unsigned int volume);
+  virtual int get_volume();
+  virtual void set_pan(int pan);
+  virtual int fade(unsigned int a1);
+  virtual int stop();
+  virtual void update_sound();
+  virtual void set_rate(unsigned int rate);
+  virtual int get_rate();
+  virtual void unknown_operation16(int);
+  virtual int unknown_query17();
+  virtual void suspend();
+  virtual void restart();
   Midi_Device();
-  // Base destruction releases the opaque provider through its observed ABI.
   ~Midi_Device();
-  void update_sound();
-  void suspend();
-  void restart();
-
-  void set_volume(unsigned int volume);
-  void set_pan(int pan);
-  int fade(unsigned int a1);
-  void set_rate(unsigned int rate);
-  int get_volume();
-  int stop();
-  int get_rate();
-  int enable();
-  int disable();
-  int is_disabled();
-};  // vptr at 0x00 replaces the retired vtable_storage_
-
+  virtual void unknown_operation20();
+  virtual int enable();
+  virtual int disable();
+  virtual int is_disabled();
+};
 static_assert(sizeof(Midi_Device) == 0x20,
               "observed Midi_Device prefix; original full extent unresolved");
 
 class Wave_In_Device : public SoundDeviceBase {
  public:
-  // THE VIRTUAL SET, in the image's own vftable slot order (0x0066E1F0).
-  virtual int create_device(unsigned long a1);      // slot 0 (0x4C59A0)
-  virtual int delete_device();                      // slot 1 (0x4C59E0)
-  virtual void unk_slot2();                         // slot 2 (0x404280 `ret` stub)
-  virtual int init(void *window, unsigned long backends);  // slot 3
-  virtual int release();                            // slot 4 (0x4C5A50)
-  virtual int get_ndevices();                       // slot 5 (0x4C5AC0)
-  virtual int select(unsigned long a1);              // slot 6 (0x4C5AD0)
-  virtual int get_description(unsigned long a1, char *a2, unsigned long a3);  // slot 7
-  // Ordinary base construction, as for Midi_Device.
+  virtual int create_device(unsigned long a1);
+  virtual int delete_device();
+  virtual void unk_slot2();
+  virtual int init(void *window, unsigned long backends);
+  virtual int release();
+  virtual int get_ndevices();
+  virtual int select(unsigned long a1);
+  virtual int get_description(unsigned long a1, char *a2, unsigned long a3);
+  virtual void set_volume(unsigned int);
+  virtual int get_volume();
+  virtual void set_pan(int);
+  virtual int fade(unsigned int);
+  virtual int stop();
+  virtual void update_sound();
+  virtual void set_rate(unsigned int);
+  virtual int get_rate();
+  virtual void unknown_operation16(int);
+  virtual int unknown_query17();
+  virtual void suspend();
+  virtual void restart();
   Wave_In_Device();
-  // Ordinary base destruction, as for Midi_Device.
   ~Wave_In_Device();
-  void update_sound();
-  void suspend();
-  void restart();
-
-  int get_caps(unsigned int a1);
-  void set_rate(unsigned int rate);
-  int stop();
-  int get_rate();
-  int start_record();
-  int end_record();
-
-  // Observed external operations; no placeholder provider class or invented
-  // earlier virtual signatures. Complete provider API remains unverified.
-  int set_codec(unsigned long codec);
-  int set_vxw_key(signed char *key);
-};  // vptr at 0x00 replaces the retired vtable_storage_
-
+  virtual int get_caps(unsigned int a1);
+  virtual void unknown_operation21();
+  virtual int start_record();
+  virtual int end_record();
+  virtual int set_codec(unsigned long codec);
+  virtual int set_vxw_key(signed char *key);
+};
 static_assert(sizeof(Wave_In_Device) == 0x20,
               "observed Wave_In_Device prefix; original full extent unresolved");
 
@@ -150,3 +158,6 @@ inline SoundDeviceBase::~SoundDeviceBase() {
 
 // SoundX ordinals 7..10 provide opaque MIDI and Wave-In provider callbacks;
 // their callable contracts are centralized beside the shared table in sound.h.
+// RECOVERY_GENERATED: v1 vtable 0x0066E098 0x0066E0E8 ??_7SoundDeviceBase@@6B@ 0x004C4D70
+// RECOVERY_GENERATED: v1 vtable 0x0066E190 0x0066E1F0 ??_7Midi_Device@@6B@ 0x004C5740
+// RECOVERY_GENERATED: v1 vtable 0x0066E1F0 0x0066E258 ??_7Wave_In_Device@@6B@ 0x004C5940
