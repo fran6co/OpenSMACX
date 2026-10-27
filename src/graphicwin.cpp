@@ -25,7 +25,7 @@
 // Table start is observed in the original constructor; full extent remains unknown.
 // RECOVERY_GENERATED: v1 vtable 0x0066FC50 ? ??_7GraphicWin@@6BWin@@@ 0x005D4CF0
 // The pinned constructor also stores 0x0066FC48 at 0x005D4D31; its COFF relocation at +0x43 names this Buffer table.
-// RECOVERY_GENERATED: v1 vtable 0x0066FC48 ? ??_7GraphicWin@@6BBuffer@@@ 0x005D4CF0
+// RECOVERY_GENERATED: v1 vtable 0x0066FC48 0x0066FC50 ??_7GraphicWin@@6BBuffer@@@ 0x005D4CF0
 #include "graphicwin.h"
 #include "general.h"  // bit_count_signed, used by the resize policy
 #include "buffer.h"

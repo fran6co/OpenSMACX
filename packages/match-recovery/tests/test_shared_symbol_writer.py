@@ -3,7 +3,9 @@ from dataclasses import replace
 
 import pytest
 
-from match_recovery.shared_source import parse_shared, write_shared_symbol
+from match_recovery.model import Origin, Span
+from match_recovery.shared_source import (SharedFunctionBinding, format_shared,
+                                        parse_shared, write_shared_symbol)
 
 PIN = "a" * 64
 PATH = "src/views.h"
@@ -18,6 +20,26 @@ def apply(raw, expected=None, binding=None, symbol=NEW):
     rows = parse_shared(raw.decode(), PATH, PIN, address_space="pe:va")
     return write_shared_symbol(raw, expected=rows if expected is None else expected,
                                binding=rows[0] if binding is None else binding, symbol=symbol)
+
+
+def test_shared_formatter_roundtrips_real_cpp_body():
+    origin = Origin(PIN, "pe:va", 0x00401000)
+    binding = SharedFunctionBinding(
+        origin, Span(0x00401000, 0x00401003), "?old@View@@UAEPAXXZ",
+        Origin(PIN, "pe:va", 0x00402000), PATH, 2)
+    source = ("struct View {\n" + format_shared(binding) + "\n"
+              "  virtual void *old() { return 0; }\n};\n")
+    parsed, = parse_shared(source, PATH, PIN, address_space="pe:va")
+    assert parsed == binding
+    assert parsed.body_error is None
+
+
+@pytest.mark.parametrize("symbol", ("a b", "bad\nmarker", "x/*y", "x*/y", "x//y",
+                                     "x\\y", "x??/y", "é", "x\x00y", "x\x7fy"))
+def test_shared_formatter_rejects_unsafe_symbols(symbol):
+    binding = parse_shared(SOURCE, PATH, PIN, address_space="pe:va")[0]
+    with pytest.raises(ValueError, match="annotation-safe"):
+        format_shared(replace(binding, symbol=symbol))
 
 
 @pytest.mark.parametrize("newline", ("\n", "\r\n", "\r"))

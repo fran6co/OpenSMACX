@@ -146,7 +146,9 @@ class GraphicWin : public Win, public Buffer {
   // ordinary left-down delivery. StringBox432720 forwards the same hook.
   // Slot89 is invoked at5D6591 after the caption callback, with live text
   // and canvas pointers. All observed original derived tables inherit it.
+// RECOVERY_SHARED: v1 0x004042A0 0x004042A8 ?on_link_clicked@GraphicWin@@UAEHHPAD@Z 0x005D4CF0
   virtual int on_link_clicked(int, char *) { return 1; }  // slot88,4042A0
+// RECOVERY_SHARED: v1 0x00404260 0x00404263 ?on_draw_caption@GraphicWin@@UAEXPADPAVBuffer@@@Z 0x005D4CF0
   virtual void on_draw_caption(char *, Buffer *) {}       // slot89,404260
   // Original GraphicWin vtable slot 67 overrides Win's non-client painter.
   virtual void on_redraw_nc(RECT *area, int flags);
