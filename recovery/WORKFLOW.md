@@ -145,6 +145,12 @@ structural discoveries, and advance rather than repeatedly polishing a plateau.
 Generated proposals, measurements and dependency fingerprints belong in ignored
 run artifacts, not source comments or a second versioned recovery ledger.
 
+Before proposing a source variant, inspect the function's Git history, task
+decisions and retained compiler evidence, including test-only checkpoints that
+kept controls after rejecting a source experiment. A missing local TRIED comment
+is not evidence of an untried body. Match the prior source/compiler/dependency
+context before requeueing; do not compile the same loop under a new task name.
+
 Before interpreting an operand difference as a type, field or value defect,
 normalize the COFF symbol binding, relocation addend and signed instruction
 displacement against the real object/member offset. Different cursor anchors

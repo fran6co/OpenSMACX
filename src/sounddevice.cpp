@@ -33,6 +33,11 @@
 #include "soundx_device_abi.h"
 #include "dialog.h"
 
+// The sound-device constructor family calls the CRT even for its four-byte clear.
+#if defined(_MSC_VER) && _MSC_VER <= 1200
+#pragma function(memset)
+#endif
+
 // Original startup helpers 4C5C80/4C5CB0 construct these receivers and register
 // destructor callbacks 4C5CA0/4C5CD0. Use ordinary C++ static lifetime, not an
 // executable-address alias or manual initialization. The touched 0x20 prefixes
@@ -714,8 +719,8 @@ int Wave_In_Device::end_record() {
 // ---------------------------------------------------------------------------
 
 /*
-// ORIGINAL: 0x004C5740 ??0Midi_Device@@QAE@XZ 0x004C5740-0x004C577C
-// body      src/sounddevice.h
+// ORIGINAL: 0x004C5740 ??0Midi_Device@@QAE@XZ 0x004C5740-0x004C577C BYTE_EXACT
+// body      src/sounddevice.cpp
 // size      60 bytes
 // prototype void (__thiscall ??0Midi_Device@@QAE@XZ)(Midi_Device* this)
 // callers   1   call targets   1
@@ -728,8 +733,8 @@ Midi_Device::Midi_Device() {
 }
 
 /*
-// ORIGINAL: 0x004C5940 ??0Wave_In_Device@@QAE@XZ 0x004C5940-0x004C597C
-// body      src/sounddevice.h
+// ORIGINAL: 0x004C5940 ??0Wave_In_Device@@QAE@XZ 0x004C5940-0x004C597C BYTE_EXACT
+// body      src/sounddevice.cpp
 // size      60 bytes
 // prototype void (__thiscall ??0Wave_In_Device@@QAE@XZ)(Wave_In_Device* this)
 // callers   1   call targets   1
