@@ -82,7 +82,7 @@ def damage(methods, kind):
         assert methods.count("canvas->restore_clip();") == 2
         return methods.replace("canvas->restore_clip();", "canvas->set_clip(const_cast<RECT *>(&canvas->current_clip()));")
     if kind == "selected_button":
-        return replace_once(methods, "    buttons_[1].show(0);", "    buttons_[1].hide();")
+        return replace_once(methods, "    button_second_.show(0);", "    button_second_.hide();")
     if kind == "sort_hole":
         return replace_once(methods, "if (order[j] == -1) {", "if (order[j] == -1 || order[i - 1] == -1) {")
     if kind == "sparse_victory":

@@ -215,11 +215,11 @@ void reset(MonuWin &window) {
     window.preview_faction_or_page_=3; window.selected_monument_type_=4;
     window.rect1_={3,4,99,109}; window.rect2_={0,0,800,600};
     ids[&window]=0; ids[static_cast<Buffer *>(&window)]=1; ids[&window.spot_]=2;
-    for (int i=0;i<2;++i) { ids[&window.buttons_[i]]=10+i; ids[&window.buffers_[i]]=20+i; }
+    ids[&window.button_first_]=10; ids[&window.button_second_]=11; ids[&window.buffer_first_]=20; ids[&window.buffer_second_]=21;
     auto sprites=[](Sprite *p,int count,int base) { for(int i=0;i<count;++i) ids[p+i]=base+i; };
     sprites(window.sprites_2C0C_,15,100); sprites(window.sprites_2EA0_,15,200);
     sprites(window.sprites_3244_,6,300); sprites(window.sprites_33AC_,7,400);
-    sprites(window.sprites_34E0_,7,500); sprites(window.sprites_3614_,2,600);
+    sprites(window.sprites_34E0_,7,500); ids[&window.sprite_first_]=600; ids[&window.sprite_second_]=601;
     auto rects=[](RECT *p,int count) { for(int i=0;i<count;++i) p[i]={10+i*3,20+i*4,54+i*3,62+i*4}; };
     rects(window.rects_3134_,17); rects(window.icon_rects_,6); rects(window.rects_366C_,7);
 }
