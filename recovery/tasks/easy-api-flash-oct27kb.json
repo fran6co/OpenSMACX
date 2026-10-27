@@ -1,0 +1,25 @@
+{
+  "author": "recovery-coordinator",
+  "base_revision": "05273d8df50dd915ccc41710941d4e06c9417620",
+  "editable_files": [
+    "src/basewin.cpp",
+    "recovery/tests/test_basewin_flash_rectangle_actual_source.py"
+  ],
+  "evidence": [
+    "Independent read-only qualified-object and pinned IAT audit at .opensmacx/recovery/easy-owner-wave-oct27ka/D/general-import-audit.json identifies the source, actual owning COFF relocation, original call and exact imported DLL/export. Verify the specific source call and original arguments/control flow before editing; no blanket substitutions.",
+    "Only the named API correction and necessary actual-source host control are authorized. No fixes/normalization of original unsafe paths, unrelated C++ edits, marker/token/claim edits or worker Git. Ask coordinator before scope changes. Keep discoveries.",
+    "Native helper initialize is coordinator-owned and must report READY/positive control before measurement; use isolated prefix lease only and require_escalated for Wine, no manual compiler recipes or preparation. At most3 source candidates; one evidenced substitution should suffice. Full EH refusal is unknown, not pass; fresh compile_units can verify import site without asserting full matching.",
+    "Use existing host controls where practical, separate API spies should fail a compiled wrong-API mutation. Do not build an enormous artificial full-function harness merely for a one-token API correction; selected native call/argument proof is primary. Retain findings/proposals in ignored run."
+  ],
+  "intent": "Restore an independently proven original USER32 API identity through the genuine owner, preserving all other behavior.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4248144,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "easy-api-flash-oct27kb"
+}
