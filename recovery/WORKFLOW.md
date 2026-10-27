@@ -1025,8 +1025,12 @@ compile attempts separately from candidates inspected or workers launched.
 Freeze a review handoff around the final source and test hashes, task scope,
 measurement inputs/trials, actual COFF observations and test exits/skips. Clearly
 separate candidate attempts, unchanged baselines, positive controls and recording.
-Older findings do not describe a later source snapshot. A declaration-order or
-spelling variant with no benefit can remain in the ignored experiment cache;
+Older findings do not describe a later source snapshot. A proposed source defect
+must include a bounded current-source excerpt and location;
+check that literal evidence independently before authorizing an edit. In particular,
+do not explain an allegedly absent operation as optimizer removal without first
+proving that the operation exists in the source and then observing the compiler.
+A declaration-order or spelling variant with no benefit can remain in the ignored experiment cache;
 retain the simplest supported source form and all useful structural discoveries.
 If recording later changes annotations, keep that guarded publication separate
 from the earlier body observation and verify the final integrated source again.
