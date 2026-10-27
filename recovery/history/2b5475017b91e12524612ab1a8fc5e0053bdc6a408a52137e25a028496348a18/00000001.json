@@ -1,0 +1,19 @@
+{
+  "event_id": "210ebdc14d3acf72496650989e28ae9d5a6a42b7e7e884a88686c75469fa826f",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_net_fifo_live_head_oct12.py"
+    ],
+    "evidence": [
+      "Observed historical Oct12 exact-source guard freezes erroneous get extent and derived size/caller facts. Authorize narrowly guarded reverse view for this reviewed mapping change only, plus positive/damage controls. Preserve baseline and all unrelated identity/body/claim checks."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "historical-span-tests",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:net-fifo-boundary-oct27"
+}

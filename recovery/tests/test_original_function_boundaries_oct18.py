@@ -1,4 +1,4 @@
-"""Entry-rooted source-boundary controls for three pinned original entries.
+"""Entry-rooted source-boundary controls for pinned original entries.
 
 These checks establish source mapping identity, original PE control flow, and
 preservation of neighboring identities/data. They do not establish compiler,
@@ -48,6 +48,14 @@ TARGETS = {
             "name": "Video_unk1",
             "symbol": "?close@Video@@QAEXXZ",
             "span": (0x006365B0, 0x00636732),
+        },
+    },
+    "src/net_fifo.cpp": {
+        0x00633F70: {
+            "name": "?get@NetFifo@@QAEHPAXPAIPAHPAI@Z",
+            "symbol": "?get@NetFifo@@QAEHPAXPAIPAH1@Z",
+            "span": (0x00633F70, 0x0063401D),
+            "mode": Mode.BODY,
         },
     },
 }
@@ -115,7 +123,20 @@ def _assert_target_record(relative: str, rows) -> None:
         assert row.name == expected["name"]
         assert row.symbol == expected["symbol"]
         assert row.image_spans == (expected["span"],)
-        assert row.mode is (Mode.BODY if relative == "src/midi.cpp" else Mode.FILE)
+        expected_mode = expected.get(
+            "mode", Mode.BODY if relative == "src/midi.cpp" else Mode.FILE)
+        assert row.mode is expected_mode
+
+
+def _assert_fifo_boundary_records(rows) -> None:
+    _assert_target_record("src/net_fifo.cpp", rows)
+    sibling = rows[0x00634020]
+    assert (sibling.name, sibling.symbol, sibling.image_spans) == (
+        "sub_634020", "?peek_key_caller@NetFifo@@QAEHPAXIHPAI@Z",
+        ((0x00634020, 0x006340B5),))
+    fifo = rows[0x00633F70]
+    assert not (fifo.image_spans[0][0] < sibling.image_spans[0][1]
+                and sibling.image_spans[0][0] < fifo.image_spans[0][1])
 
 
 def _identity_projection(rows, addresses):
@@ -182,7 +203,7 @@ def _entry_flow(image: PeImage, start: int, end: int,
     return instructions, tuple(exits), tuple(escaped)
 
 
-def test_current_mappings_keep_the_three_corrected_identities_and_flags():
+def test_current_mappings_keep_the_corrected_identities_and_flags():
     for relative in TARGETS:
         rows = _by_address(relative)
         _assert_target_record(relative, rows)
@@ -213,6 +234,27 @@ def test_pinned_entry_rooted_flows_end_inside_their_own_extents():
     assert (midi[0x004C8067].mnemonic, midi[0x004C8067].op_str) == ("ret", "4")
     video, _, _ = _entry_flow(image, 0x006365B0, 0x00636732)
     assert (video[0x00636731].mnemonic, video[0x00636731].op_str) == ("ret", "")
+
+    fifo, fifo_exits, fifo_escaped = _entry_flow(
+        image, 0x00633F70, 0x0063401D)
+    assert len(fifo) == 72 and fifo_escaped == ()
+    assert {(address, kind, destination)
+            for address, kind, destination in fifo_exits} == {
+        (0x00633F91, "return", 0x00633F94),
+        (0x0063401A, "return", 0x0063401D),
+    }
+    assert (fifo[0x00633F70].mnemonic, fifo[0x00633F70].op_str) == (
+        "push", "ebp")
+
+    # This separately mapped sibling begins after the alignment bytes and has
+    # its own complete entry-rooted flow, rather than being a tail of get.
+    peek, peek_exits, peek_escaped = _entry_flow(
+        image, 0x00634020, 0x006340B5)
+    assert len(peek) == 62 and peek_escaped == ()
+    assert len(peek_exits) == 4
+    assert (peek[0x00634020].mnemonic, peek[0x00634020].op_str) == (
+        "push", "esi")
+    assert image.read(Span(0x0063401D, 0x00634020)) == b"\x90\x90\x90"
 
 
 def test_play_type_null_path_does_not_reach_padding_or_write_eax():
@@ -256,6 +298,7 @@ def test_historical_overhang_is_padding_other_entries_or_associated_data():
         (0x006371C2, 0x006371D0),
         (0x006372F7, 0x00637300),
         (0x00637308, 0x00637310),
+        (0x0063401D, 0x00634020),
     )
     for start, end in raw_nops:
         assert image.read(Span(start, end)) == b"\x90" * (end - start)
@@ -328,6 +371,7 @@ def test_native_boundary_rewrites_reject_old_ends_and_preserve_neighbors():
             "src/diplopop.cpp": 0x00440707,
             "src/midi.cpp": 0x004C8072,
             "src/video.cpp": 0x00637310,
+            "src/net_fifo.cpp": 0x00634067,
         }[relative]
 
         other_addresses = set(rows) - {target_address}
@@ -365,6 +409,7 @@ def test_corrected_code_spans_do_not_overlap_other_native_function_mappings():
         0x004406F0: Span(0x004406F0, 0x004406F5),
         0x004C8050: Span(0x004C8050, 0x004C806A),
         0x006365B0: Span(0x006365B0, 0x00636732),
+        0x00633F70: Span(0x00633F70, 0x0063401D),
     }
     for owner, span in corrected.items():
         for row in mappings:
@@ -373,3 +418,41 @@ def test_corrected_code_spans_do_not_overlap_other_native_function_mappings():
             for low, high in row.image_spans:
                 assert not (low < span.end and span.start < high), (
                     hex(owner), hex(row.address), hex(low), hex(high))
+
+
+@pytest.mark.parametrize("bad_end", [0x0063401E, 0x00634067])
+def test_fifo_pop_extent_rejects_padding_and_neighbor_overhang(bad_end):
+    image = _original()
+    with pytest.raises(AssertionError):
+        _entry_flow(image, 0x00633F70, bad_end)
+
+    rows = _by_address("src/net_fifo.cpp")
+    fifo = rows[0x00633F70]
+    sibling = rows[0x00634020]
+    _assert_fifo_boundary_records(rows)
+
+
+def test_fifo_boundary_writer_damage_preserves_sibling_identity():
+    relative = "src/net_fifo.cpp"
+    raw = (ROOT / relative).read_bytes()
+    rows = _by_address(relative, raw)
+    fifo = rows[0x00633F70]
+    sibling_before = rows[0x00634020]
+
+    bad = write_bytes(raw, [replace(
+        fifo, image_spans=((0x00633F70, 0x00634067),))])
+    bad_rows = _by_address(relative, bad)
+    with pytest.raises(AssertionError):
+        _assert_fifo_boundary_records(bad_rows)
+    assert bad_rows[0x00634020] == sibling_before
+
+    corrected = write_bytes(raw, [replace(
+        fifo, image_spans=((0x00633F70, 0x0063401D),))])
+    corrected_rows = _by_address(relative, corrected)
+    _assert_fifo_boundary_records(corrected_rows)
+    assert corrected_rows[0x00634020] == sibling_before
+
+    bad_sibling = write_bytes(raw, [replace(
+        sibling_before, image_spans=((0x00634020, 0x006340B4),))])
+    with pytest.raises(AssertionError):
+        _assert_fifo_boundary_records(_by_address(relative, bad_sibling))
