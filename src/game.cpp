@@ -9533,7 +9533,7 @@ void __cdecl diplo(int faction_id, int faction_id_with) {
 }
 
 
-// ORIGINAL: 0x00589B60 ?init_opening@@YAHPBD@Z 0x00589B60-0x00589D29;0x0066026A-0x0066028A
+// ORIGINAL: 0x00589B60 ?init_opening@@YAHPBD@Z 0x00589B60-0x00589D29;0x0066026A-0x0066028A BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["task:opening-window-lifetime-owner", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:589B60..589D29;66026A..66028A", "source:src/unrecovered/00589b60.cpp complete original identity/spans and seed lessons retained; Buffer::pixel_height already negates the top-down DIB height."], "reason": "Recover opening-window construction, loading, presentation and popup-parent publication through genuine GraphicWin and Buffer lifetimes. Each callback-sensitive shared-slot reload is independent; no added null guard or failure-path behavior change."}
 int __cdecl init_opening(const char *filename) {
     if (OpeningWindow == 0) {
@@ -9563,8 +9563,7 @@ int __cdecl init_opening(const char *filename) {
             // following metrics reads are unconditional in the original.
             GraphicWin *const copy_window = OpeningWindow;
             Buffer *const destination =
-                copy_window == 0 ? 0
-                                       : static_cast<Buffer *>(copy_window);
+                copy_window != 0 ? static_cast<Buffer *>(copy_window) : 0;
             const int target_width = copy_window->pixel_width();
             const int target_height = copy_window->pixel_height();
             local_buffer.copy(destination, 0, 0, local_buffer.pixel_width(),
