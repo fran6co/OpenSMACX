@@ -625,10 +625,10 @@ Status: Coverage transcription - unclaimed body
 // kind game
 void __cdecl mon_winning_unify(int faction_id, int counterpart) {
     const int year = static_cast<int>(game_year(GameDataStateStorage.fields_.turn_current_num_));
+    MonumentRecord &record = FactionMonuments[faction_id].records_[13];
     if ((Players[faction_id].rule_flags & 0x80) != 0) {
         return;
     }
-    MonumentRecord &record = FactionMonuments[faction_id].records_[13];
     if (record.achieved_ != 0) {
         return;
     }
@@ -663,10 +663,10 @@ Status: Coverage transcription - unclaimed body
 // kind game
 void __cdecl mon_winning_trans(int faction_id, int counterpart) {
     const int year = static_cast<int>(game_year(GameDataStateStorage.fields_.turn_current_num_));
+    MonumentRecord &record = FactionMonuments[faction_id].records_[14];
     if ((Players[faction_id].rule_flags & 0x80) != 0) {
         return;
     }
-    MonumentRecord &record = FactionMonuments[faction_id].records_[14];
     if (record.achieved_ != 0) {
         return;
     }
