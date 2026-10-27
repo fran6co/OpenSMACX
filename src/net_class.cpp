@@ -1444,7 +1444,7 @@ static int __stdcall net_group_player_callback(unsigned long player_id,
     return 1;
 }
 
-// ORIGINAL: 0x0062ED40 ?create_group@Net@@QAEHPAD@Z 0x0062ED40-0x0062EDA2
+// ORIGINAL: 0x0062ED40 ?create_group@Net@@QAEHPAD@Z 0x0062ED40-0x0062EDA2 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned62ED40..62EDA2; git:b0d788d3e0ebc4d5b4c20acb834cd37455e53c67:src/leaf_recoveries.cpp supplies the former facade mapping and unchanged SDK call contract."], "reason": "Rehome the DirectPlay group constructor from its raw receiver facade to the genuine Net method and SDK IDirectPlay2 interface."}
 int Net::create_group(char *group_name) {
     if (NetDirectPlay == 0) return 0;
@@ -1452,7 +1452,7 @@ int Net::create_group(char *group_name) {
     DPID group;
     memset(&name, 0, sizeof(name));
     name.dwSize = sizeof(name);
-    name.lpszShortNameA = group_name;
+    name.lpszLongNameA = group_name;
     const HRESULT result = NetDirectPlay->CreateGroup(&group, &name, 0, 0, 0);
     return result == 0 ? static_cast<int>(group) : 0;
 }
