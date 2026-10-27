@@ -1,0 +1,22 @@
+{
+  "author": "coordinator",
+  "base_revision": "b8d1b81b535506c209c6fa253f02fcb6c2c56b07",
+  "editable_files": [
+    "src/graphicwin.cpp"
+  ],
+  "evidence": [
+    "Coordinator-reviewed manual integration authorized; official recorder, actual application matching/reference checks, build/link and outside-scope verification required. No full-game acceptance assertion.",
+    "Collect only frozen exact source proposals; expand scope explicitly for additional winners and actual inlined/structural consumers, preserving original task baseline."
+  ],
+  "intent": "Integrate verified exact gains from parallel application-profile matching; preserve behavior and defer nonessential polish.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6116912,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "exact-winners-oct27mc"
+}

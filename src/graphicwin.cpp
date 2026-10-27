@@ -676,16 +676,13 @@ void GraphicWin::update(GraphicWin *) {
     }
 }
 
-// ORIGINAL: 0x005D5630 ?update@GraphicWin@@QAEXPAURECT@@PAUGraphicWin@@@Z 0x005D5630-0x005D56AA
+// ORIGINAL: 0x005D5630 ?update@GraphicWin@@QAEXPAURECT@@PAUGraphicWin@@@Z 0x005D5630-0x005D56AA BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x005D5630-0x005D56AA"], "reason": "Rectangle update through real Buffer/Win bases; original returns zero and ignores its second explicit argument."}
 // symbol    ?update@GraphicWin@@QAEHPAUtagRECT@@PAV1@@Z
 int GraphicWin::update(RECT *area, GraphicWin *source) {
     if (!area) area = &rect2_;
-    int top = area->top;
-    int left = area->left;
-    int height = area->bottom - top;
-    int width = area->right - left;
-    update(left, top, width, height, source);
+    update(area->left, area->top, area->right - area->left,
+           area->bottom - area->top, source);
     return 0;
 }
 

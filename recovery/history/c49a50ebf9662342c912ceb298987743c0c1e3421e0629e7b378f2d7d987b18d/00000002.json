@@ -1,0 +1,26 @@
+{
+  "event_id": "900abe19cbce0db7e02feb1bcde8b407d452a40174f842c94b6f818a1a59720b",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_mapwin_relative_alt_native.py",
+      "src/mapwin.cpp"
+    ],
+    "evidence": [
+      "User prioritizes byte-exact recovery with imperfect C++ and cleanup later. Pinned native expression uses variable IA32 shift-count masking; exact candidate restores same machine effects, but introduces standard-C++ undefined shifts for counts>=32. Prior val is integer-promoted: counts16..31 were defined. Accept only as explicitly documented VC6/IA32 quality debt after actual native runtime controls and full object byte/reference verification; no portable-language claim, no silent original bug fix. Keep host UBSan controls unchanged and report their portability failures rather than disabling them, weakening gates or relabeling full acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4652544,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "9120b1807b56c41cfbdca87eb14b1de998531c5f2df9362eeb40d7c5eb94a52f",
+  "request_id": "collect-native-map-shift-match",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:exact-winners-oct27mc"
+}

@@ -7437,7 +7437,7 @@ int MapWin::get_relative_alt(int x, int y, int detail) {
     memcpy(&row, &row_bits, sizeof(row));
     const unsigned short val = owned_[row].altitude_detail;
     const unsigned int shift =
-        ((static_cast<uint32_t>(detail) - 1U) * 4U) & 31U;
+        (static_cast<uint32_t>(detail) + 0x3fffU) << 2;
     return (val >> shift) & 0xf;
 }
 
