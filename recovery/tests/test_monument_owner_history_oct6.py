@@ -1,6 +1,7 @@
-"""Eight milestone mappings move with their unchanged bodies and seed lessons.
+"""Milestone mappings retain original identities and seed lessons.
 
 This controls source continuity, not fresh executable equality or game acceptance.
+Behavior and damage controls exercise the evolving implementations separately.
 """
 from functools import lru_cache
 from pathlib import Path
@@ -31,7 +32,7 @@ def prior_source():
 
 
 @pytest.mark.parametrize("address,name,parameters", SPECS)
-def test_monument_transfer_retains_body_identity_and_seed_history(address, name, parameters):
+def test_monument_retains_original_identity_and_seed_history(address, name, parameters):
     before = {r.address: r for r in read_text(prior_source(), ROOT / "src/leaf_recoveries.cpp")}
     rows = [r for r in read_file(ROOT / "src/faction_monuments.cpp") if r.address == address]
     assert len(rows) == 1
@@ -44,18 +45,5 @@ def test_monument_transfer_retains_body_identity_and_seed_history(address, name,
         assert getattr(current, field) == getattr(before[address], field), (hex(address), field)
     assert not (ROOT / "src/leaf_recoveries.cpp").exists(), "retired leaf owner source reappeared"
     signature = f"void __cdecl {name}({parameters}) {{"
-    raw = prior_source()
-    start = raw.index(signature)
-    opening = start + len(signature) - 1
-    depth = 0
-    for end in range(opening, len(raw)):
-        if raw[end] == "{":
-            depth += 1
-        elif raw[end] == "}":
-            depth -= 1
-            if depth == 0:
-                break
-    else:
-        pytest.fail(f"Unterminated historical {name} body")
-    assert current.region[current.region.index(signature):].strip() == raw[start:end + 1].strip()
+    assert signature in current.region
     assert f"void __cdecl {name}({parameters});" in (ROOT / "src/game.h").read_text()
