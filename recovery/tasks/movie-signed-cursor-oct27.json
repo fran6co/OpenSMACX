@@ -1,0 +1,25 @@
+{
+  "author": "coordinator",
+  "base_revision": "7de9c46a11b2d202c59ef723bd86f7260eb7fa58",
+  "editable_files": [
+    "src/movie_media.cpp",
+    "recovery/tests/test_movie_output_worker_actual_source.py"
+  ],
+  "evidence": [
+    "Original5CE178/5CE24D wrappingADD thenCDQ/IDIV at5CE17B/5CE250 stores signed remainder bits to playback_cursor. Actual qualified current COFF uses unsignedDIV in each of three source arms. Independent pin and physical COFF evidence in ignored movie-cursor-signedness-discovery report supports operation correction, not a global field-type migration.",
+    "Preserve DWORD storage/DirectSound API and queued record declarations. Compute wrapping unsigned32-bit sum first, then explicit LONG dividend and LONG divisor for remainder; assignment back to DWORD preserves remainder bits. Do not introduce signed-overflow addition, guards, zero fallback or divide-error normalization. Retain callback, pending/nonpending, cursor-mode and availability gates; no branch factoring or byte spelling campaign.",
+    "Extend existing actual-source host controls with high-bit/wrapping dividends and divisor cases that distinguish signed from unsigned modulo, alongside ordinary cases. Wrong unsigned mutant must compile and fail behavior. Retain previous counter/callback controls. Verify actual VC6 emits CDQ/IDIV and original divide exceptional behavior remains an explicit compiler-effects obligation; do not claim portable defined behavior for signed division overflow/zero.",
+    "No marker/header/compiler/build-policy edits. Coordinator Git/leases/build/integration; fresh native measurement and outside-owner evidence, source identities/claims, independent review and destination tests required. Manual recovery only, not full game/linked/runtime acceptance."
+  ],
+  "intent": "Restore original signed remainder semantics after wrapping32-bit cursor addition.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6086560,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "movie-signed-cursor-oct27"
+}

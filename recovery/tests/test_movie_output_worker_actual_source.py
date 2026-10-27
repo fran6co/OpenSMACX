@@ -200,10 +200,53 @@ static void test_empty_queue_increment_paths() {
   assert(position_calls==1 && lock_calls==1 && unlock_calls==0);
   assert(output_lock_increment_calls==1 && output_lock_exchange_calls==0);
 }
+static void test_signed_cursor_remainders() {
+  // All three pin paths perform a DWORD wrapping addition, then signed IDIV.
+  // Zero divisors and LONG_MIN/-1 remain untested compiler-effects obligations:
+  // the pin uses signed division, but host C++ does not define these cases.
+  // 0x80000330 + 64 is negative as LONG; divisor 0xC0000000 is also negative,
+  // so signed remainder is 0xC0000370. Unsigned modulo retains 0x80000370.
+  setup_case(1,1,1,0x80000330u,0x7FFFFFFEu,0,0xC0000000u,64,2,DS_OK);
+  run_worker();
+  assert(runtime.synthetic_playback_cursor==0x80000370u);
+  assert(runtime.playback_cursor==0xC0000370u);
+  assert(runtime.output_lock_word==7 && output_lock_exchange_calls==1);
+  assert(output_lock_increment_calls==0);
+
+  setup_case(1,0,0,0x80000330u,0,0x80000370u,0xC0000000u,4,3,DS_OK);
+  expected_cursor_at_output_increment=0xC0000370u; run_worker();
+  assert(runtime.playback_cursor==0xC0000370u && runtime.output_lock_word==4);
+  assert(output_lock_increment_calls==1);
+
+  setup_case(1,1,0,0x80000330u,0x7FFFFFFEu,0,0xC0000000u,4,5,DS_OK);
+  expected_cursor_at_output_increment=0xC0000370u; run_worker();
+  assert(runtime.synthetic_playback_cursor==0x80000370u);
+  assert(runtime.playback_cursor==0xC0000370u && runtime.output_lock_word==6);
+  assert(output_lock_increment_calls==1);
+
+  // The addition itself wraps as DWORD before the signed remainder. These
+  // sums become zero in pending, physical no-pending, and synthetic arms.
+  setup_case(1,1,1,0xFFFFFF00u,0xFFFFFD8Eu,0,0xFFFFFF00u,0x100u,2,DS_OK);
+  run_worker();
+  assert(runtime.synthetic_playback_cursor==0x100u && runtime.playback_cursor==0);
+  assert(runtime.output_lock_word==7 && output_lock_exchange_calls==1);
+
+  setup_case(1,0,0,0xFFFFFF00u,0,0x100u,0xFFFFFF00u,4,3,DS_OK);
+  expected_lock_bytes=0x100u;
+  expected_cursor_at_output_increment=0; run_worker();
+  assert(runtime.playback_cursor==0 && runtime.output_lock_word==4);
+  assert(output_lock_increment_calls==1);
+
+  setup_case(1,1,0,0xFFFFFF00u,0xFFFFFD8Eu,0,0xFFFFFF00u,4,5,DS_OK);
+  expected_cursor_at_output_increment=0; run_worker();
+  assert(runtime.synthetic_playback_cursor==0x100u && runtime.playback_cursor==0);
+  assert(runtime.output_lock_word==6 && output_lock_increment_calls==1);
+}
 int main() {
   test_setup_and_space_guards();
   test_pending_record_paths();
   test_empty_queue_increment_paths();
+  test_signed_cursor_remainders();
   return 0;
 }
 '''
@@ -259,3 +302,14 @@ def test_actual_worker_output_lock_counter_and_mutants(tmp_path, compiler_name):
         "      InterlockedIncrement(&r->worker_wakeup_counter);", 1)
     assert unconditional != current
     compile_and_run(tmp_path / "unconditional-mutant", compiler, unconditional, expected=False)
+    unsigned = current.replace(
+        "(LONG)(r->playback_cursor + record.field_04) %\n                (LONG)r->playback_buffer_bytes",
+        "(r->playback_cursor + record.field_04) %\n                r->playback_buffer_bytes",
+    )
+    assert unsigned.count("(LONG)(r->playback_cursor + record.field_04)") == 0
+    unsigned = unsigned.replace(
+        "(LONG)(r->playback_cursor + (DWORD)available) %\n                (LONG)r->playback_buffer_bytes",
+        "(r->playback_cursor + (DWORD)available) %\n                r->playback_buffer_bytes",
+    )
+    assert unsigned.count("(LONG)(r->playback_cursor + (DWORD)available)") == 0
+    compile_and_run(tmp_path / "unsigned-remainder-mutant", compiler, unsigned, expected=False)
