@@ -1,0 +1,20 @@
+{
+  "event_id": "c7feb198254d40700bc9c9a23f485d2125d3f50f8a4b480662053d1bb55b4941",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/monuwin_host_fixture.inc",
+      "recovery/tests/test_monuwin_behavior.py"
+    ],
+    "evidence": [
+      "Preserve existing host IDs10/11,20/21,600/601 with new named scalar members and rename only the selected-button mutation anchor. All16 damage variants and assertions retained; native probe confirms ctor144/144, original12ctor/14dtor cleanup topology, offsets and0x36DC sizeassert. See ignored probe-review.json."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "monuwin-scalar-pair-controls-oct27ht",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:monuwin-scalar-pairs-oct27ht"
+}

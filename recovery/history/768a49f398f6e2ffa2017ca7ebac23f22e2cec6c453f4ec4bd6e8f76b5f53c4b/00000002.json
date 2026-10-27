@@ -1,0 +1,20 @@
+{
+  "event_id": "dc5cb7c4b8b7560aebdf26a7b068f9c115078c87c76d307b7e7c504f79a4f6ac",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "docs/recovery/cast-classification.csv"
+    ],
+    "evidence": [
+      "Native census refused shared table-address evidence because the shared format requires an existing original FUNCTION identity. Constructor stores independently select each table, so anchor the16 shared views to the actual mapped concrete ctor; preserve original origin/span/symbol/body and class uncertainty. Bounded table markers separately own table starts/ends.",
+      "Keep three pre-migration cast observations at their immutable Git source path; do not pretend old line/cast classifications describe new typed source. Fix combined constructor test extraction using existing exact-definition selector; initial failure report retained."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "aa699ff747275aa1641ba603e6eec4ca6d0f436c96180dd7cfffcf10e934da1f",
+  "request_id": "audio-shared-anchor-and-reference-cleanup-oct27hu",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:audio-interface-owner-oct27hr"
+}

@@ -36,7 +36,7 @@ def test_wave_control_group_actual_member_lifetime(compiler_name: str, tmp_path:
     header = (ROOT / "src/wave_device.h").read_text(encoding="utf-8")
     declarations = header[header.index("struct WaveGroupNode {"):
                          header.index(" /*\n  * Wave_Device class")]
-    owner = (ROOT / "src/wave_device.cpp").read_text(encoding="utf-8")
+    owner = (ROOT / "src/sounddevice.cpp").read_text(encoding="utf-8")
     ctor = extract_function(owner, "WaveControlGroup::WaveControlGroup()")
     dtor = extract_function(owner, "WaveControlGroup::~WaveControlGroup()")
     harness = tmp_path / "wave_group.cpp"

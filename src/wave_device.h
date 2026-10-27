@@ -94,65 +94,68 @@ struct WaveControlGroup {
 class Wave_Device : public SoundDeviceBase {
   friend class Wave;
  public:
-  // THE VIRTUAL SET, in the image's own vftable slot order (0x0066E0E8).
-
- public:
   Wave_Device();
   ~Wave_Device();
-  void set_pan(int);
-  int fade(uint32_t);
-  int enable();
-  int disable();
-  int get_volume();
-  int stop();
-  void suspend();
-  void restart();
-  void update_sound();
-  int get_ndevices();
-  int get_hw_mem_size();
-  int get_rate();
-  IDirectSound *get_ds();
-  bool is_eax();
-  int is_disabled();
-  int stop_raw_dump();
-  bool is_3d();
-  void set_rate(unsigned long rate);
-  void set_volume(unsigned long volume);
-  int set_hwnd(void *hwnd);
+  virtual int create_device(unsigned long a1);                         // 0
+  virtual int delete_device();                                         // 1
+  virtual void unk_slot2();                                            // 2
+  virtual int init(void *group_id, unsigned long flags);               // 3
+  virtual int release();                                               // 4
+  virtual int get_ndevices();                                          // 5
+  virtual int select(unsigned long a1);                                // 6
+  virtual int get_description(unsigned long a1, char *a2, unsigned long a3); // 7
+  virtual void set_volume(unsigned int volume);                        // 8; 32-bit ABI, nominal type varies in old identities
+  virtual int get_volume();                                            // 9
+  virtual void set_pan(int);                                           // 10
+  virtual int fade(uint32_t);                                          // 11
+  virtual int stop();                                                  // 12
+  virtual void update_sound();                                         // 13
+  virtual void set_rate(unsigned int rate);                            // 14
+  virtual int get_rate();                                              // 15
+  virtual void unknown_operation16(int);                                // 16: ABI-only provisional name
+  virtual int unknown_query17();                                        // 17: ABI-only provisional name
+  virtual void suspend();                                              // 18
+  virtual void restart();                                               // 19
+  virtual int start_raw_dump(char *path);                              // 20
+  virtual int stop_raw_dump();                                          // 21
+  virtual int get_hw_mem_size();                                        // 22
+  // Pinned 0x404280 bare-ret entry; neutral provisional operation name.
+  virtual void unknown_operation23();                                   // 23
+  virtual int enable();                                                 // 24
+  virtual int disable();                                                // 25
+  virtual int is_disabled();                                            // 26
+  virtual int set_hwnd(void *hwnd);                                     // 27
+  virtual IDirectSound *get_ds();                                       // 28
+  virtual bool is_eax();                                                // 29
+  // VC6 emits this overload group in reverse declaration order: declaring
+  // the pointer form first yields the pinned value form at slot 30 and
+  // properties form at slot 31.
+  virtual int set_eax(EAX_REVERB_PROPERTIES *properties);               // 31
+  virtual int set_eax(unsigned long eax);                               // 30
+  virtual int set_eax_mix(float mix);                                   // 32
+  virtual bool is_3d();                                                 // 33
+  virtual int set_listener_position(float x, float y, float z);         // 34
+  virtual int get_listener_position(float *x, float *y, float *z);      // 35
+  virtual int set_listener_xpos(float x);                               // 36
+  virtual int get_listener_xpos(float *x);                              // 37
+  virtual int set_listener_ypos(float y);                               // 38
+  virtual int get_listener_ypos(float *y);                              // 39
+  virtual int set_listener_zpos(float z);                               // 40
+  virtual int get_listener_zpos(float *z);                              // 41
+
   int get_group_volume(unsigned int group);
   int add_to_group(unsigned int group, Wave *wave);
   int pull_from_group(Wave *wave);
   bool is_group_disabled(unsigned int group);
-  int select(unsigned long a1);
-  virtual int create_device(unsigned long a1);   // slot 0 (0x4C4ED0)
-  virtual int delete_device();                   // slot 1 (0x4C4F10)
-  virtual void unk_slot2();                      // slot 2 (0x404280 `ret` stub)
-  // slot 3: init — already declared below
-  int init(void *group_id, unsigned long flags);
-  int release();
   int set_group_volume(unsigned int group, unsigned int volume);
   int enable_group(unsigned int group);
   int disable_group(unsigned int group);
-  int get_description(unsigned long a1, char *a2, unsigned long a3);
-  int start_raw_dump(char *path);
-  int set_eax(EAX_REVERB_PROPERTIES *properties);
-  int set_eax(unsigned long eax);
-  int set_eax_mix(float mix);
-  int set_listener_position(float x, float y, float z);
-  int get_listener_position(float *x, float *y, float *z);
-  int set_listener_xpos(float x);
-  int get_listener_xpos(float *x);
-  int set_listener_ypos(float y);
-  int get_listener_ypos(float *y);
-  int set_listener_zpos(float z);
-  int get_listener_zpos(float *z);
-
  private:
-  uint32_t field_20_;        // 0x20, zeroed at construction
+  uint32_t field_20_;
   // Original4C4DD0 passes this+24, stride24 and count16 to the CRT
   // constructor iterator. Extent is independent of today's C++ sizeof.
   // RECOVERY_MEMBER: v4 Wave_Device groups_ WaveControlGroup[16] 0x24 0x180 0x004C4DD0
-  WaveControlGroup groups_[16];  // 0x24..0x1A3
+  WaveControlGroup groups_[16];
 };
 
 // THE OBJECT, at 0x0090D978 in the shipped image. Consumers (wave.cpp,
@@ -170,3 +173,4 @@ static_assert(sizeof(WaveControlGroup) == 0x18, "group records stride 24 bytes")
 // The 0x004C5490 / 0x004C5B80 lifecycle is owned directly by
 // WaveControlGroup; Wave_Device's typed member array supplies compiler
 // construction, reverse destruction, and constructed-prefix unwind.
+// RECOVERY_GENERATED: v1 vtable 0x0066E0E8 0x0066E190 ??_7Wave_Device@@6B@ 0x004C4DD0

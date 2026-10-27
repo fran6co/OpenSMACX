@@ -50,7 +50,7 @@ def test_pending_translation_unit_is_retired_only_after_owners_are_present():
     assert netwin[0x00402EE0].symbol == "??_H@YGXPAXIHP6EX0@Z@Z"
     assert netwin[0x00402EE0].byte_exact
 
-    group_rows = {row.address: row for row in read_file(ROOT / "src/wave_device.cpp")}
+    group_rows = {row.address: row for row in read_file(ROOT / "src/sounddevice.cpp")}
     for address, span in ((0x004C5490, (0x004C5490, 0x004C54AB)),
                          (0x004C5B80, (0x004C5B80, 0x004C5BEF))):
         row = group_rows[address]
@@ -99,7 +99,7 @@ def test_pending_translation_unit_is_retired_only_after_owners_are_present():
     assert row.image_spans == ((0x00614E30, 0x00614E4D),)
     assert row.byte_exact and not row.semantic and row.kind == "game"
 
-    for rel in ("src/wave.cpp", "src/sound.cpp", "src/wave_device.cpp"):
+    for rel in ("src/wave.cpp", "src/sound.cpp", "src/sounddevice.cpp"):
         text = (ROOT / rel).read_text()
         assert "WaveOperatorNew" not in text
         assert "operator new(" in text

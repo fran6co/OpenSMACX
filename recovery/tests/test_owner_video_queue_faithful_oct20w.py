@@ -130,7 +130,9 @@ def _source_fixture(mutation: str | None = None) -> str:
         methods[key] = methods[key].replace(old, "*next_frame_id = head_->frame_id;", 1)
     elif mutation == "set_limit_does_not_clear":
         key = "void VideoFrameQueue::set_limit(int limit)"
-        methods[key] = re.sub(r"\bclear\(\);", "/* damaged: retained nodes */", methods[key], count=1)
+        # Remove the cleanup effects, independent of helper versus local-loop spelling.
+        assert "head_" in methods[key] and "limit_ = limit;" in methods[key]
+        methods[key] = "void VideoFrameQueue::set_limit(int limit) { limit_ = limit; }"
     elif mutation == "non_equality_limit_gate":
         for key in ("int VideoFrameQueue::allocate(", "int VideoFrameQueue::append("):
             old = "if (count_ == limit_) return 0x14;"

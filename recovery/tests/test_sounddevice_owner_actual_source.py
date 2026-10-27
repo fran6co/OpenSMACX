@@ -12,7 +12,7 @@ def test_sound_device_source_retains_original_constructor_and_destructor_records
     header = (ROOT / "src/sounddevice.h").read_text()
     source = (ROOT / "src/sounddevice.cpp").read_text()
     wave_header = (ROOT / "src/wave_device.h").read_text()
-    wave_source = (ROOT / "src/wave_device.cpp").read_text()
+    wave_source = (ROOT / "src/sounddevice.cpp").read_text()
     assert "class Midi_Device : public SoundDeviceBase" in header
     assert "class Wave_In_Device : public SoundDeviceBase" in header
     assert "class Wave_Device : public SoundDeviceBase" in wave_header

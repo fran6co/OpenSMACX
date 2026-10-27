@@ -9,9 +9,24 @@
 // ORIGINAL: 0x0063E520 sub_63e520 0x0063E520-0x0063E534 BYTE_EXACT
 // symbol    ??0VideoFrameQueue@@QAE@XZ
 VideoFrameQueue::VideoFrameQueue() : head_(0), tail_(0), count_(0), limit_(-1) {}
-// ORIGINAL: 0x0063E540 sub_63e540 0x0063E540-0x0063E58F FILE
+// ORIGINAL: 0x0063E540 sub_63e540 0x0063E540-0x0063E58F FILE BYTE_EXACT
 // symbol    ?set_limit@VideoFrameQueue@@QAEXH@Z
-void VideoFrameQueue::set_limit(int limit) { clear(); limit_ = limit; }
+void VideoFrameQueue::set_limit(int limit) {
+    while (head_ != 0) {
+        VideoFrameNode *const next = head_->next;
+        if (head_->bytes != 0) {
+            free(head_->bytes);
+            head_->bytes = 0;
+        }
+        if (head_ != 0) {
+            free(head_);
+        }
+        head_ = next;
+    }
+    tail_ = 0;
+    count_ = 0;
+    limit_ = limit;
+}
 
 // ORIGINAL: 0x0063E6E0 sub_63e6e0 0x0063E6E0-0x0063E7EE FILE
 // symbol    ?allocate@VideoFrameQueue@@QAEHPAPAEHHI@Z

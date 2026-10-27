@@ -249,7 +249,6 @@ set(OPENSMACX_SOURCES
     src/dipedit.cpp
     src/sound.cpp
     src/sound_loader.cpp
-    src/wave_device.cpp
     src/wave_group_list.cpp
     src/spritebox.cpp
     src/listbox.cpp
@@ -372,7 +371,6 @@ set_source_files_properties(
 # translation-unit profile without changing application-wide compiler flags.
 set_source_files_properties(
     src/voice.cpp
-    src/wave_device.cpp
     src/wave_group_list.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")
 # The Midi, device-wrapper and sound-loader bodies also retain frame-based

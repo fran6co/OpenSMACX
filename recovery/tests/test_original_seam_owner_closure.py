@@ -26,7 +26,7 @@ def test_sound_internal_slots_use_real_virtual_methods_and_keep_external_slots()
 
 
 def test_wave_device_uses_owned_slots_but_keeps_external_device_dispatch():
-    source = (ROOT / "src/wave_device.cpp").read_text()
+    source = (ROOT / "src/sounddevice.cpp").read_text()
     body = source.split("int Wave_Device::init(void *group_id, unsigned long flags) {", 1)[1]
     body = body.split("\n}\n", 1)[0]
     assert "const int staged = create_device(flags);" in body
@@ -35,8 +35,8 @@ def test_wave_device_uses_owned_slots_but_keeps_external_device_dispatch():
     assert "delete_device();" in body
     assert "static_cast<WaveDeviceProviderCallView *>(device)->init(group_id, flags)" in body
     header = (ROOT / "src/wave_device.h").read_text()
-    assert "virtual int create_device(unsigned long a1);   // slot 0" in header
-    assert "virtual int delete_device();                   // slot 1" in header
+    assert "virtual int create_device(unsigned long a1);" in header
+    assert "virtual int delete_device();" in header
 
 
 def test_netwin_calls_typed_owner_methods_at_the_original_sites():
@@ -81,7 +81,7 @@ def test_original_mapping_comments_survive_the_caller_closure():
         ("sound.cpp", "// ORIGINAL: 0x004C6280 ?load@Sound@@QAEHPBD@Z"),
         ("sound.cpp", "// ORIGINAL: 0x004C6660 ?fade_in@Sound@@QAEXI@Z"),
         ("sound.cpp", "// ORIGINAL: 0x004C6440 ?unload@Sound@@QAEHXZ"),
-        ("wave_device.cpp", "// ORIGINAL: 0x004C4F40 ?init@Wave_Device@@QAEHPAXK@Z"),
+        ("sounddevice.cpp", "// ORIGINAL: 0x004C4F40 ?init@Wave_Device@@QAEHPAXK@Z"),
         ("netwin.cpp", "// ORIGINAL: 0x00480370 ?draw_player_names@NetWin@@QAEXXZ"),
         ("netwin.cpp", "// ORIGINAL: 0x0047F960 ?draw_custom_rules@NetWin@@QAEXXZ"),
         ("diplowin.cpp", "// ORIGINAL: 0x004413F0 ?kill_offer@DiploWin@@QAEXHH@Z"),

@@ -42,7 +42,7 @@
 // order. These are genuine typed members, so C++ performs exactly that
 // lifetime sequence; the explicit native calls are the compiler's expansion
 // of these default constructions, not a second user body to duplicate.
-// ORIGINAL: 0x00477C80 ??0MonuWin@@QAE@XZ 0x00477C80-0x00477DC7;0x00656080-0x0065615E
+// ORIGINAL: 0x00477C80 ??0MonuWin@@QAE@XZ 0x00477C80-0x00477DC7;0x00656080-0x0065615E BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x00477C80; retired seed provenance git:670a036f:src/recovered/units/00477c80.cpp; original spans and historical lessons retained.", "image:477C80/477B10 member order and36DC extent; primary66C880 slots12/17/19/25/44.", "image:476A50 binds singleton7F9F58 and independent count7FD634; Player59C and MonumentFaction4F4 strides.", "image:4737EE..475E58 localized owner/grammar cases; 472230/4736E0 resource, clipping, sprite and Spot accesses."], "reason": "Genuine GraphicWin-derived MonuWin owner with actual FlatButton/Spot/Buffer/Sprite members, real callback slots and automatic lifetimes; localized parser owner and grammar inputs follow the original branches rather than current-faction stand-ins."}
 // symbol    ??0MonuWin@@QAE@XZ
 MonuWin::MonuWin() : GraphicWin() {}
@@ -148,7 +148,7 @@ void MonuWin::on_mouse_move(int x, int y) {
 
   Sprite *sprite;
   if (type == 0xD) {
-    sprite = &sprites_3614_[0];
+    sprite = &sprite_first_;
   } else if (type < 0xF) {
     sprite = &sprites_2EA0_[type];
   } else {
@@ -200,12 +200,12 @@ int MonuWin::init() {
                      0x1000000, 0, 0, 0);
   }
   frame_or_page_ = ReportIfGlobal.field_1E184_->line_advance();
-  buffers_[0].init(0x400, 0x300, 0, 0);
+  buffer_first_.init(0x400, 0x300, 0, 0);
 
   // The animation and PCX resources are short-lived decode sources.  Their
   // embedded Buffer/Palette and the temporary Buffer are ordinary C++
   // subobjects and release through their destructors on every return path.
-  if (animation.init(&buffers_[0], const_cast<char *>("monument.flc"),
+  if (animation.init(&buffer_first_, const_cast<char *>("monument.flc"),
                      0, 0, 0) != 0) {
     return 1;
   }
@@ -215,7 +215,7 @@ int MonuWin::init() {
   for (int frame = 0; frame < frame_count; ++frame) {
     animation.decode_stored_frame();
   }
-  if (buffers_[1].load_pcx(monument < 5 ? "monzoom1.pcx" : "monzoom2.pcx",
+  if (buffer_second_.load_pcx(monument < 5 ? "monzoom1.pcx" : "monzoom2.pcx",
                            0, 0xA, 0xEC) != 0) {
     return 1;
   }
@@ -274,13 +274,13 @@ int MonuWin::init() {
     }
     const int transparent = WinFillColour;
     if (player == ConsoleGlobal.faction_id_) {
-      sprites_3614_[0].extract(&temporary, transparent, 0xA4, 0xB,
+      sprite_first_.extract(&temporary, transparent, 0xA4, 0xB,
                                0xA0, 0x61, 0);
       if (monument == 0xE) {
-        sprites_3614_[1].extract(&temporary, transparent, 0xA, 0xB,
+        sprite_second_.extract(&temporary, transparent, 0xA, 0xB,
                                  0x8E, 0x65, 0);
       } else {
-        sprites_3614_[1].extract(&temporary, transparent, 0xA, 0x71,
+        sprite_second_.extract(&temporary, transparent, 0xA, 0x71,
                                  0x47, 0x40, 0);
       }
     }
@@ -360,7 +360,7 @@ int MonuWin::init() {
       field_A3C_ = 0x320;
       field_A40_ = 0x258;
     }
-    FlatButton &button = buttons_[i];
+    FlatButton &button = i == 0 ? button_first_ : button_second_;
     button.init(StringTemp, 0x3E7, field_A34_, field_A38_,
                 field_A3C_ - field_A34_, field_A40_ - field_A38_, this, 0);
     button.set_border_styles(&InterfaceBoxStyles[47],
@@ -372,8 +372,8 @@ int MonuWin::init() {
     button.hide();
   }
 
-  // Remaining extracted art, faction portraits and the two action buttons
-  // are kept in their typed arrays below; the switch cases in on_redraw
+  // Remaining extracted art and faction portraits stay in typed arrays;
+  // the two action buttons are separate members. The switch cases in on_redraw
   // populate the live Spot list.  This pass also establishes the initial
   // preview/selection state after all resources have loaded.
   fill(0);
@@ -400,9 +400,9 @@ void MonuWin::on_redraw() {
   if (selection_pending_ != 0) {
     Buffer panel;
     if (field_A48_ != 0) {
-      buffers_[1].copy(canvas, 0, 0, 0, 0, 0x400, 0x300);
+      buffer_second_.copy(canvas, 0, 0, 0, 0, 0x400, 0x300);
     } else {
-      buffers_[1].copy(canvas, 0x70, 0x54, 0, 0, 0x320, 0x258);
+      buffer_second_.copy(canvas, 0x70, 0x54, 0, 0, 0x320, 0x258);
     }
     // Native path begins with the selected record's localized description.
     // Keep the complete native parser setup and case routing explicit rather
@@ -996,8 +996,8 @@ void MonuWin::on_redraw() {
         panel.copy(canvas, 0, 0, rects_3134_[2].left,
                    rects_3134_[2].top, 0x258, 0x168);
     }
-    buttons_[0].hide();
-    buttons_[1].show(0);
+    button_first_.hide();
+    button_second_.show(0);
   } else {
     // Clear transient hit regions, paint the owned decoded animation onto
     // the inherited canvas, and order the first fifteen monument records
@@ -1005,10 +1005,10 @@ void MonuWin::on_redraw() {
     spot_.kill_type(0);
     const bool fullscreen = field_A48_ != 0;
     if (fullscreen) {
-      buffers_[0].copy(static_cast<Buffer *>(this), 0, 0, 0, 0,
+      buffer_first_.copy(static_cast<Buffer *>(this), 0, 0, 0, 0,
                        0x400, 0x300);
     } else {
-      buffers_[0].copy(static_cast<Buffer *>(this), 0x70, 0x54, 0, 0,
+      buffer_first_.copy(static_cast<Buffer *>(this), 0x70, 0x54, 0, 0,
                        0x320, 0x258);
     }
 
@@ -1065,7 +1065,7 @@ void MonuWin::on_redraw() {
 
     Sprite *selected_sprite;
     if (selected_monument_type_ == 0xD) {
-      selected_sprite = &sprites_3614_[0];
+      selected_sprite = &sprite_first_;
     } else if (selected_monument_type_ < 0xF) {
       selected_sprite = &sprites_2EA0_[selected_monument_type_];
     } else {
@@ -1135,12 +1135,12 @@ void MonuWin::on_redraw() {
 
     // Native final art is Sprite at +0x3640 and uses the left/top words of
     // the seventh independent hit rectangle at +0x36CC/+0x36D0.
-    sprites_3614_[1].draw(static_cast<Buffer *>(this),
-                          sprites_3614_[1].transparent_index(),
+    sprite_second_.draw(static_cast<Buffer *>(this),
+                        sprite_second_.transparent_index(),
                           rects_366C_[6].left,
                           rects_366C_[6].top);
-    buttons_[1].hide();
-    buttons_[0].show(0);
+    button_second_.hide();
+    button_first_.show(0);
   }
 }
 
