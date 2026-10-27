@@ -8,8 +8,8 @@
 
 using namespace movie_decoder_frame;
 
-extern int sub_5d2761(unsigned int *source, unsigned int *destination,
-                      int count);
+extern void sub_5d2761(unsigned int *source, unsigned int *destination,
+                       int count);
 
 struct CombinedContext {
   std::uint32_t primary[512];

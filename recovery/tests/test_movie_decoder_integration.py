@@ -11,13 +11,22 @@ SRC = PRODUCT / "src"
 
 def _extract_mapped_blender() -> str:
     source = (SRC / "general.cpp").read_text()
-    start = source.index("int __cdecl sub_5d2761(")
-    end_marker = "\n}\n\n// Fixed-slot bindings carried from 005d2834.cpp"
-    end = source.index(end_marker, start) + 2
-    body = source[start:end]
+    signature = "void __cdecl sub_5d2761("
+    start = source.index(signature)
+    opening = source.index("{", start)
+    depth = 0
+    for end in range(opening, len(source)):
+        if source[end] == "{":
+            depth += 1
+        elif source[end] == "}":
+            depth -= 1
+            if depth == 0:
+                body = source[start : end + 1]
+                break
+    else:
+        raise AssertionError("unterminated live sub_5d2761 definition")
     assert "MovieColourTableByte1" in body
     assert "MovieBlendTableHi" in body
-    assert "return 0;" in body
     return body
 
 
