@@ -392,12 +392,12 @@ void draw_dest_unk1(Buffer *, int, int, int, int, unsigned char *);
   // replacing every pixel already holding the mask colour.
   int copy_mask(Buffer *mask, int src_x, int src_y, int x, int y, int w, int h,
                 int color);
-  // ?box_sprite@Buffer@@QAEHPAURECT@@PAUBoxSpriteParams@@@Z (0x005E2DD3),
+  // Original panel-drawing entry 0x005E2DD3 (historical int signature unproved),
   // the image's universal panel drawer. The second argument is one of the
   // image's own `BoxSpriteParams` blocks in .data - DipEdit's frame and title
   // pass 0x0078D690 and 0x0078D528, ReplayWin::on_redraw passes 0x0078D690
   // and 0x0078D618.
-  int box_sprite(RECT *rect, BoxSpriteParams *params);
+  void box_sprite(RECT *rect, BoxSpriteParams *params);
   // THE ADAPTER THE RAW-ADDRESS CALLERS STILL NEED. `DipEdit::init` passes
   int write_l(LPSTR text, int x_coord, int y_coord, int len);
   int write_l(LPSTR text, RECT *rect, int len);
