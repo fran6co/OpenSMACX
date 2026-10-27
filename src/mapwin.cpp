@@ -73,7 +73,7 @@
 
 // MapWin constructor-installed Win branch: capture4, resize13, mouse17, update63.
 // Table start is observed in the original constructor; full extent remains unknown.
-// RECOVERY_GENERATED: v1 vtable 0x0066A57C ? ??_7MapWin@@6BWin@@@ 0x004626E0
+// RECOVERY_GENERATED: v1 vtable 0x0066A57C 0x0066A6E4 ??_7MapWin@@6BWin@@@ 0x004626E0
 #include "mapwin.h"
 #include "lock.h"      // map_tile_bytes() - terrain_fixup walks its records
 #include "console.h"
@@ -842,14 +842,8 @@ void MapWin::close() {
         free(owned_);
         owned_ = nullptr;
     }
-    // THE IDIOMATIC SPELLING, BY DIRECTION (2026-09-01): call the base's
-    // close, no cast. This body's claim was demoted for it - and that is
-    // the point. The compiled form of this line disagrees with the image's
-    // 15-instruction dispatch, which means THIS TREE IS MISSING A
-    // RELATIONSHIP the original's declarations had (candidate hypotheses on
-    // the marker below). The hand vbtable walk the old body spelled went
-    // byte-exact, but it was bad C++ that masked the gap; the mismatch is
-    // the signal to explore, not a wall to transcribe.
+    // The qualified base call follows this object's virtual-base relationship;
+    // the compiler obtains its GraphicWin receiver through the vbtable.
     GraphicWin::close();
 }
 

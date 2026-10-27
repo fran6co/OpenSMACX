@@ -171,7 +171,7 @@ Status: Complete
 
 /*
 // ORIGINAL: 0x00607CF0 ??0FlatButton@@QAE@XZ 0x00607CF0-0x00607D96
-// RECOVERY_GENERATED: v1 vtable 0x00669754 ? ??_7FlatButton@@6BWin@@@ 0x00607CF0
+// RECOVERY_GENERATED: v1 vtable 0x00669754 0x006698C0 ??_7FlatButton@@6BWin@@@ 0x00607CF0
 // RECOVERY_GENERATED: v1 vtable 0x0066974C ? ??_7FlatButton@@6BBuffer@@@ 0x00607CF0
 // Pinned constructor stores the Win view at this+0 and Buffer at this+0x444.
 // FlatButton -> BaseButton -> GraphicWin, with GraphicWin's Win then Buffer

@@ -433,7 +433,7 @@ int Sound::UNK1(int) {
 // Sound destruction publishes this table at original 0x004C6140. Its
 // inherited overload positions are independently consumed by derived tables;
 // unfinished placeholder slots still prevent complete-table verification.
-// RECOVERY_GENERATED: v1 vtable 0x0066E3C0 ? ??_7Sound@@6B@ 0x004C6120
+// RECOVERY_GENERATED: v1 vtable 0x0066E3C0 0x0066E444 ??_7Sound@@6B@ 0x004C6120
 
 /*
 Purpose: Fade the sound out. The work is done by two of the object's own
