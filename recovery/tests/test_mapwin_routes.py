@@ -406,7 +406,7 @@ struct Buffer {
   assert(width==24&&height==18&&n==1);assert(s==StringTemp);xs[calls]=x;ys[calls]=y;digits[calls++]=s[0]-'0';
   if(mutate_cursor_after_first&&calls==1)ConsoleGlobal.cursor_history_index_=1;}
 };
-struct MapWin:Buffer {int field_1DDB8_=18,field_1DDB4_=24;void draw_legend();
+struct MapWin:Buffer {int tile_pixel_height_=18,tile_pixel_width_=24;void draw_legend();
  void tile_to_pixel(int x,int y,int*px,int*py){*px=x;*py=y;}};
 BODY
 int main(){MapWin w;ConsoleGlobal.cursor_history_x_[0]=40;ConsoleGlobal.cursor_history_y_[0]=50;

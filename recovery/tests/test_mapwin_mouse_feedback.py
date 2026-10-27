@@ -48,7 +48,7 @@ def actual_source():
     parts["STRUCTURES"] = "\n".join(structures)
     parts["DIB"] = braced(h["buffer"], "struct Dib : BITMAPINFO") + ";"
     members = []
-    for name in ("map_view_index_", "field_1DD80_", "field_1DD84_", "field_1DD8C_", "field_1DDB8_",
+    for name in ("map_view_index_", "field_1DD80_", "field_1DD84_", "field_1DD8C_", "tile_pixel_height_",
                  "feedback_x_", "feedback_y_", "field_1DE0C_", "feedback_hover_y_", "feedback_proto_",
                  "feedback_triad_", "feedback_repeat_", "feedback_segment_count_", "field_1DE24_",
                  "cursor_sprite_", "cursor_resource_id_"):
@@ -75,7 +75,12 @@ def actual_source():
                         ("console", ("ConsoleControlTurnActive",)), ("base", ("UnkGlobal0093A934",)),
                         ("map", ("MapLongitudeBounds", "MapLatitudeBounds")), ("strings", ("StringTemp",))):
         for name in names:
-            declaration, = re.findall(r"^extern (?:int|uint32_t|char) " + name + r"(?:\[\d+\])?;", h[unit], re.M)
+            if unit == "map" and name in ("MapLongitudeBounds", "MapLatitudeBounds"):
+                # The actual header exposes these controlled metadata words as
+                # macros, not extern declarations; the host fixture owns them.
+                declaration = "extern int " + name + ";"
+            else:
+                declaration, = re.findall(r"^extern (?:int|uint32_t|char) " + name + r"(?:\[\d+\])?;", h[unit], re.M)
             declarations.append(declaration.removeprefix("extern "))
     for unit, name in (("interface_fonts", "find_font"), ("veh", "say_loc"), ("alpha", "label_get")):
         declaration, = re.findall(r"^(?:Font \*|void |LPSTR )__cdecl " + name + r"\([^;{}]*\);", h[unit], re.M)
@@ -176,7 +181,7 @@ Font *find_font(int size,int style){note('Q',{size,style});return &font;}
 int Buffer::set_font(Font *a,Font *b,Font *c,Font *d){require(this==static_cast<Buffer*>(&CoverWindow)&&a==&font&&!b&&!c&&!d);note('B');
     if(scenario==13)ConsoleGlobal.dib_.bmiHeader.biWidth=200;return -5;}
 int Buffer::text_width(LPSTR text){require(this==static_cast<Buffer*>(&CoverWindow)&&text==StringTemp);note('T',{},text);
-    if(scenario==13){ConsoleGlobal.dib_.bmiHeader.biWidth=400;ConsoleGlobal.field_1DDB8_=70;}
+    if(scenario==13){ConsoleGlobal.dib_.bmiHeader.biWidth=400;ConsoleGlobal.tile_pixel_height_=70;}
     if(scenario==14)StringTemp[0]=0;
     return text_width_result;}
 int Buffer::write_l(LPSTR text,int x,int y,int length){require(this==static_cast<Buffer*>(&CoverWindow)&&text==StringTemp);note('W',{x,y,length},text);
@@ -195,7 +200,7 @@ void reset(){
     window.cursor_sprite_=nullptr;window.cursor_resource_id_=0x7f00;
     for(int i=0;i<5;++i){window.feedback_x_[i]=101+i;window.feedback_y_[i]=201+i;}
     ConsoleGlobal.selected_vehicle_=1;ConsoleGlobal.field_23D10_=0;ConsoleGlobal.faction_id_=3;
-    ConsoleGlobal.field_1DDB8_=10;ConsoleGlobal.dib_.bmiHeader.biWidth=100;
+    ConsoleGlobal.tile_pixel_height_=10;ConsoleGlobal.dib_.bmiHeader.biWidth=100;
     std::memset(Vehs,0,sizeof(Vehs));std::memset(VehPrototypes,0,sizeof(VehPrototypes));
     Vehs[1].x=2;Vehs[1].y=4;Vehs[1].proto_id=3;Vehs[1].waypoint_count=0;
     Vehs[2].x=-2;Vehs[2].y=-4;Vehs[2].proto_id=4;Vehs[2].waypoint_x[0]=55;Vehs[2].waypoint_y[0]=56;
@@ -280,7 +285,7 @@ void text_controls(){
         require(written==std::string("MOVE (12,14): COST = ")+fractions[i]);}
     reset();scenario=13;window.on_mouse_move(25,30);require(write_x==23&&write_y==100);
     reset();scenario=14;window.on_mouse_move(25,30);require(written.empty()&&write_length==0&&events('W').size()==1);
-    reset();ConsoleGlobal.field_1DDB8_=0x7fffffffU;text_width_result=100000;window.on_mouse_move(100000,30);
+    reset();ConsoleGlobal.tile_pixel_height_=0x7fffffffU;text_width_result=100000;window.on_mouse_move(100000,30);
     // Low32(100000*100000)=1410065408; signed divide by100 truncates.
     require(write_x==-14000654&&write_y==(-2147483647-1)+29);
     reset();text_width_result=100000;window.on_mouse_move(30000,30);require(write_x==12979672);
@@ -351,7 +356,7 @@ MUTATIONS = [
     ("fraction_numerator", "BODY", "_itoa(MapDestinationCost % mouse_feedback_signed(Rules.move_rate_roads), number, 10)", "_itoa(0, number, 10)"),
     ("fixed_road_rate", "BODY", "mouse_feedback_signed(Rules.move_rate_roads)", "3"),
     ("width_reloaded_after_measure", "BODY", "mouse_feedback_mul(text_width, pixel_x) / width", "mouse_feedback_mul(text_width, pixel_x) / ConsoleGlobal.dib_.bmiHeader.biWidth"),
-    ("missing_vertical_offset", "BODY", "mouse_feedback_signed(ConsoleGlobal.field_1DDB8_), pixel_y", "0, pixel_y"),
+    ("missing_vertical_offset", "BODY", "mouse_feedback_signed(ConsoleGlobal.tile_pixel_height_), pixel_y", "0, pixel_y"),
     ("skip_empty_write", "BODY", "CoverWindow.write_l(StringTemp,", "if (StringTemp[0]) CoverWindow.write_l(StringTemp,"),
     ("missing_soft_update", "BODY", "CoverWindow.soft_update();", ";"),
 ]

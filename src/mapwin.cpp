@@ -2209,7 +2209,7 @@ void MapWin::on_mouse_move(int pixel_x, int pixel_y) {
     const int text_x = mouse_feedback_sub(pixel_x,
         mouse_feedback_mul(text_width, pixel_x) / width);
     const int text_y = mouse_feedback_add(
-        mouse_feedback_signed(ConsoleGlobal.field_1DDB8_), pixel_y);
+        mouse_feedback_signed(ConsoleGlobal.tile_pixel_height_), pixel_y);
     // 46F5DD tests StringTemp's ADDRESS, not its first character. It is
     // always nonnull for owned storage; empty strings still reach write_l.
     CoverWindow.write_l(StringTemp, text_x, text_y, static_cast<int>(strlen(StringTemp)));
@@ -5304,8 +5304,8 @@ void MapWin::gen_overlays(int x, int y) {
     RECT text_area;
     text_area.left = pixel_x;
     text_area.top = pixel_y;
-    text_area.right = pixel_x + static_cast<int>(field_1DDB4_);
-    text_area.bottom = pixel_y + static_cast<int>(field_1DDB8_);
+    text_area.right = pixel_x + tile_pixel_width_;
+    text_area.bottom = pixel_y + tile_pixel_height_;
 
     const bool omniscient =
         (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) != 0;
@@ -6046,7 +6046,7 @@ void MapWin::right_menu(int tile_x, int tile_y, int screen_x, int screen_y) {
 void MapWin::draw_legend() {
     Font legend_font;
     legend_font.init(DefaultFontFace,
-                     (static_cast<int>(field_1DDB8_) * 2) / 3, 1);
+                     (tile_pixel_height_ * 2) / 3, 1);
     Buffer *const canvas = static_cast<Buffer *>(this);
     // The image's 0x90-byte local frame holds this 0x50-byte conversion
     // buffer immediately before its 0x28-byte Font object (0x469746/0x46976d).
@@ -6079,8 +6079,8 @@ void MapWin::draw_legend() {
         strcat(StringTemp, direction_text);
         canvas->set_text_color(0xFF, 0, 1, 1);
         canvas->write_cent_l(&legend_font, StringTemp, pixel_x, pixel_y,
-                             static_cast<int>(field_1DDB4_),
-                             static_cast<int>(field_1DDB8_),
+                             tile_pixel_width_,
+                             tile_pixel_height_,
                              static_cast<int>(strlen(StringTemp)));
     }
 }
@@ -7830,8 +7830,8 @@ void MapWin::calculate_dimensions() {
     int32_t c8 = c2 * 4;
     field_1DDBC_ = c4a;
     field_1DDC0_ = c2;
-    field_1DDB4_ = c8;
-    field_1DDB8_ = T * 4;
+    tile_pixel_width_ = c8;
+    tile_pixel_height_ = T * 4;
 
     field_1DDCC_ = (pixel_width() + c8 - 1) / c8;
     field_1DDD0_ = ((T * 4 - dib_.bmiHeader.biHeight) + c2 - 1) / (T * 4);
@@ -7860,14 +7860,14 @@ void MapWin::calculate_dimensions() {
     int32_t halfW = MapLongitudeBounds / 2;
     if (field_1DDCC_ > halfW) {
         field_1DDCC_ = halfW;
-        int32_t tileProduct = field_1DDCC_ * field_1DDB4_;
+        int32_t tileProduct = field_1DDCC_ * tile_pixel_width_;
         field_1DDD4_ = halfW + 1;
         field_1DDAC_ = (pixel_width() - tileProduct) / 2;
     }
     int32_t halfH = MapLatitudeBounds / 2;
     if (field_1DDD0_ > halfH) {
         field_1DDD0_ = halfH;
-        int32_t tileProduct2 = field_1DDD0_ * field_1DDB8_;
+        int32_t tileProduct2 = field_1DDD0_ * tile_pixel_height_;
         field_1DDD8_ = halfH + 1;
         field_1DDB0_ = -((dib_.bmiHeader.biHeight + tileProduct2) / 2);
     }
@@ -7999,7 +7999,7 @@ void MapWin::calculate_dimensions() {
         }
         field_1EEC0_ = zoom_offset_;
 
-        int32_t fs1 = (field_1DDB8_ * 5) / 16;
+        int32_t fs1 = (tile_pixel_height_ * 5) / 16;
         if (fs1 > 0xc) {
             fs1 = 0xc;
         }
@@ -8007,7 +8007,7 @@ void MapWin::calculate_dimensions() {
             field_1EEF0_ = fs1;
             font_a_.init(DefaultFontFace, fs1, 0);
         }
-        int32_t fs2 = (field_1DDB8_ * 5) / 16;
+        int32_t fs2 = (tile_pixel_height_ * 5) / 16;
         if (fs2 > 0xc) {
             fs2 = 0xc;
         }
@@ -8015,7 +8015,7 @@ void MapWin::calculate_dimensions() {
             field_1EF48_ = fs2;
             font_c_.init(DefaultFontFace, fs2, 2);
         }
-        int32_t fs3 = (field_1DDB8_ * 2) / 5;
+        int32_t fs3 = (tile_pixel_height_ * 2) / 5;
         if (fs3 > 0xc) {
             fs3 = 0xc;
         }
@@ -8061,7 +8061,7 @@ int MapWin::pixel_to_tile(int x_pixel, int y_pixel, int *out_tile_x,
             int local_8;
 
             iVar5 = field_1DDA4_;
-            iVar3 = iVar5 + 1 + (x_pixel / field_1DDB4_) * 2;
+            iVar3 = iVar5 + 1 + (x_pixel / tile_pixel_width_) * 2;
             uVar6 = MapIsFlat & 1;
             if (uVar6 == 0) {
                 if (iVar3 < 0) {
@@ -8071,7 +8071,7 @@ int MapWin::pixel_to_tile(int x_pixel, int y_pixel, int *out_tile_x,
                 }
             }
             iVar1 = field_1DDBC_;
-            iVar2 = iVar5 + 1 + ((x_pixel - iVar1) / field_1DDB4_) * 2;
+            iVar2 = iVar5 + 1 + ((x_pixel - iVar1) / tile_pixel_width_) * 2;
             if (uVar6 == 0) {
                 if (iVar2 < 0) {
                     iVar2 = iVar2 + MapLongitudeBounds;
@@ -8103,7 +8103,7 @@ int MapWin::pixel_to_tile(int x_pixel, int y_pixel, int *out_tile_x,
                     iVar3 = iVar3 - MapLongitudeBounds;
                 }
             }
-            iVar2 = field_1DDA8_ + (y_pixel / field_1DDB8_) * 2;
+            iVar2 = field_1DDA8_ + (y_pixel / tile_pixel_height_) * 2;
             do {
                 iVar8 = iVar2;
                 bVar9 = (bVar9 == false);

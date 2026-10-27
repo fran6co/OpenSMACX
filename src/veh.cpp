@@ -1042,14 +1042,14 @@ void __cdecl veh_scoot(int veh_id, int tile_x, int tile_y, int direction, int fl
         window = MapWinTable[i];
         area[i].left = start_x[i] < end_x[i] ? start_x[i] : end_x[i];
         area[i].top = start_y[i] < end_y[i] ? start_y[i] : end_y[i];
-        area[i].right = (start_x[i] > end_x[i] ? start_x[i] : end_x[i]) + window->field_1DDB4_;
+        area[i].right = (start_x[i] > end_x[i] ? start_x[i] : end_x[i]) + window->tile_pixel_width_;
         area[i].bottom = (start_y[i] > end_y[i] ? start_y[i] : end_y[i]) +
-                         window->field_1DDB8_ + window->field_1DDC0_;
+                         window->tile_pixel_height_ + window->field_1DDC0_;
         if (immediate) {
             RECT origin;
             origin.left = start_x[i]; origin.top = start_y[i];
-            origin.right = start_x[i] + window->field_1DDB4_;
-            origin.bottom = start_y[i] + window->field_1DDB8_ + window->field_1DDC0_;
+            origin.right = start_x[i] + window->tile_pixel_width_;
+            origin.bottom = start_y[i] + window->tile_pixel_height_ + window->field_1DDC0_;
             UnionRect(&area[i], &origin, &area[i]);
         }
         RECT end_clip, start_clip;
@@ -1696,8 +1696,8 @@ int __cdecl boom(int x, int y, int flags) {
         int pixel_x;
         int pixel_y;
         ConsoleGlobal.tile_to_pixel(x, y, &pixel_x, &pixel_y);
-        pixel_x += static_cast<int>(window->field_1DDB4_) / 2;
-        pixel_y += static_cast<int>(window->field_1DDB8_);
+        pixel_x += window->tile_pixel_width_ / 2;
+        pixel_y += window->tile_pixel_height_;
 
         const int zoom = window->zoom_offset_ + 0x10;
         if (!flic_mode) {

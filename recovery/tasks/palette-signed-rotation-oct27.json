@@ -1,0 +1,25 @@
+{
+  "author": "coordinator",
+  "base_revision": "128d94f4557a6675de6aa7e5ee1557542878085a",
+  "editable_files": [
+    "src/jackal/palette.cpp",
+    "recovery/tests/test_palette_callback_rotation_actual_source.py"
+  ],
+  "evidence": [
+    "Pin5FEB4C uses signed JLE after count-minus-one; the qualified current source emits unsigned JBE and enters the rotation loop for zero. count is a stored uint8_t, so positive1..255 agree, but zero makes the unsigned subtraction wrap. The original zero-count path skips rotation and still stores saved RGB into the preceding palette entry, calls AnimatePalette with count0 and updates seed cache. Preserve that original quirk; do not add a count guard or normalize the tail.",
+    "Change only timer_callback local cEntries and loop i to signed int; keep byte storage and unsigned API start index, callback signature, key/sentinel search including its existing bounds behavior, RGB-only rotation, flag preservation and final call/seed sequencing. No other body/header/marker/claim/recipe edits. Original declaration spelling is unproved; signed arithmetic is directly observed.",
+    "Add meaningful actual-source callback controls for count0 at first>0 (preceding entry within the real 256-entry array), count1 and ordinary rotations, untouched flag/outside bytes, null/context/system-colour/key guards and AnimatePalette arguments/seed order. A compiled unsigned-counter mutant must fail. Do not fabricate safe behavior for first0/count0 or exhaustively claim invalid-state/runtime equivalence. Current init_cycle accepts a zero count on successful zero-sized allocation; exact historical allocator/shipped-data reachability remains unverified and is not required to reproduce the callback operation itself.",
+    "Coordinator retains Git/native compiler resources/prepare/measure/capture and independent review, full fresh build/link, scoped preservation and destination checks. Manual recovery authorization is not native acceptance or full-game proof. Preserve all historical identity/claims and discoveries."
+  ],
+  "intent": "Restore original signed palette-rotation count and zero-count callback behavior.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6286032,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "palette-signed-rotation-oct27"
+}
