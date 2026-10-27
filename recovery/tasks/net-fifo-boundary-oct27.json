@@ -1,0 +1,30 @@
+{
+  "author": "coordinator",
+  "base_revision": "964fbfe0ec588728f32071cb9e8e5300c54b8fc5",
+  "editable_files": [
+    "src/net_fifo.cpp",
+    "recovery/tests/test_original_function_boundaries_oct18.py"
+  ],
+  "evidence": [
+    "IDA export docs/recovery/ida9-functions.csv and independently pinned Ghidra export docs/recovery/ghidra-functions.csv both give 633F70..63401D, 173 bytes. Entry-rooted original CFG covers all 72 instructions, returns at 633F91 and 63401A, no escaping branches. This bound does not derive from candidate size or a match score.",
+    "Authorize guarded native source.write_bytes correction of only the 633F70 image span; preserve original name, address, symbol, mode, claims, body and all neighboring records. This new evidence supersedes the Oct12 tasks historical no-narrowing instruction for this specific extent only. Git retains the former overlapping interpretation.",
+    "Account for old overhang: 63401D..634020 is three NOP alignment bytes; 634020..634067 is already inside independently mapped peek_key_caller634020..6340B5. No original function identity is removed; padding is not new implementation coverage.",
+    "Remove stale derived size/caller-count annotation for this record; keep its source-owned signature and structural evidence. No body/header/compiler/build-policy changes. Require pinned CFG/padding/neighbor damage controls, source/claims checks, fresh compile/link with zero-omission object preservation, independent review and destination recheck. This is a mapping correction, not new implementation or full-game acceptance."
+  ],
+  "intent": "Correct the NetFifo pop-head original extent using independent original-image boundaries; preserve the neighboring function and all claims.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6504304,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6504480,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "net-fifo-boundary-oct27"
+}

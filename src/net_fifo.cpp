@@ -195,11 +195,9 @@ int NetFifo::get(void *data, int key, int *type, int *len) {
   return result;
 }
 
-// ORIGINAL: 0x00633F70 ?get@NetFifo@@QAEHPAXPAIPAHPAI@Z 0x00633F70-0x00634067
+// ORIGINAL: 0x00633F70 ?get@NetFifo@@QAEHPAXPAIPAHPAI@Z 0x00633F70-0x0063401D
 // symbol    ?get@NetFifo@@QAEHPAXPAIPAH1@Z
-// size      248 bytes
 // prototype int (__thiscall ?get@NetFifo@@QAEHPAXPAIPAHPAI@Z)(NetFifo* this, void*, unsigned int*, int*, unsigned int*)
-// callers   1   call targets   2
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // The unsigned-int length pointer repeats the key type (backref 1); the

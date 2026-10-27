@@ -5,12 +5,15 @@ buffers. A native DWORD pointer is a host-sized real pointer here; no truncated
 pointer, raw object offset, fabricated callback inside memcpy, or native fault
 is asserted. Native instructions independently establish each later reload,
 including those after scalar writes that cannot portably replace a host pointer.
-The historical overlapping get span remains an obligation, not a corrected span.
+The old live-head task baseline predates the reviewed function-boundary
+correction; its source comparison projects only that known historical
+extent/fact change back.
 """
 from __future__ import annotations
 
 import os
 import json
+from dataclasses import fields, replace
 from pathlib import Path
 import resource
 import shutil
@@ -20,6 +23,7 @@ import pytest
 
 from test_net_fifo_actual_source import _class_declaration, _code_without_comments
 from test_netwin_owner_behavior import extract_function
+from match_recovery.source.writer import write_bytes
 
 ROOT = Path(__file__).resolve().parents[2]
 SOURCE = ROOT / "src/net_fifo.cpp"
@@ -267,6 +271,7 @@ def restore_live_head(source: str) -> str:
         historical_core_claim_view, historical_netfifo_structure_view)
     source = historical_core_claim_view(source, "src/net_fifo.cpp")
     source = historical_netfifo_structure_view(source, "src/net_fifo.cpp")
+    source = historical_netfifo_head_boundary_view(source)
     task = json.loads((ROOT / "recovery/tasks/net-fifo-live-head-oct12.json").read_text())
     assert task["base_revision"] == "908fd8cdcd7db78475f500bb03c4f143560bdb98"
     assert {subject["address"] for subject in task["subjects"]} == {0x633F70, 0x634200}
@@ -289,6 +294,65 @@ def restore_live_head(source: str) -> str:
         restored = restored.replace(current, extract_function(baseline, signature), 1)
     assert restored == baseline, "outside the two authorized head-reader bodies changed"
     return restored
+
+
+def historical_netfifo_head_boundary_view(source: str) -> str:
+    """Reverse only the reviewed 0x633F70 extent/annotation correction.
+
+    Keep the Oct12 commit as the historical oracle. The package writer
+    projects the parsed record's span back to that baseline; the two removed
+    stale prose facts are restored by exact, marker-bounded insertions. All
+    current identities, claims, lessons and source outside those facts remain
+    strict comparison obligations.
+    """
+    from match_recovery.source import read_text
+
+    task = json.loads((ROOT / "recovery/tasks/net-fifo-live-head-oct12.json").read_text())
+    baseline = subprocess.check_output(
+        ["git", "show", task["base_revision"] + ":src/net_fifo.cpp"],
+        cwd=ROOT, text=True)
+    current_rows = read_text(source, SOURCE)
+    old_rows = read_text(baseline, SOURCE)
+    current_matches = [row for row in current_rows if row.address == 0x633F70]
+    old_matches = [row for row in old_rows if row.address == 0x633F70]
+    assert len(current_matches) == len(old_matches) == 1
+    current, old = current_matches[0], old_matches[0]
+    assert current.image_spans == ((0x633F70, 0x63401D),)
+    assert old.image_spans == ((0x633F70, 0x634067),)
+    allowed_differences = {"image_spans", "body", "region", "path", "line", "origin"}
+    for field in fields(current):
+        if field.name not in allowed_differences:
+            assert getattr(current, field.name) == getattr(old, field.name), field.name
+
+    projected = write_bytes(source.encode(), [replace(current, image_spans=old.image_spans)])
+    projected_text = projected.decode("utf-8", errors="surrogateescape")
+    baseline_lines = baseline.splitlines()
+    size_line = next(line for line in baseline_lines if line == "// size      248 bytes")
+    callers_line = next(line for line in baseline_lines
+                        if line == "// callers   1   call targets   2")
+    marker = "// ORIGINAL: 0x00633F70 ?get@NetFifo@@QAEHPAXPAIPAHPAI@Z "
+    assert projected_text.count(GET) == 1, "head-reader signature changed"
+    marker_at = projected_text.index(marker)
+    method_at = projected_text.index(GET, marker_at)
+    marker_block = projected_text[marker_at:method_at]
+    assert marker_block.count(size_line) == 0
+    assert marker_block.count(callers_line) == 0
+    symbol_line = "// symbol    ?get@NetFifo@@QAEHPAXPAIPAH1@Z\n"
+    prototype_line = "// prototype int (__thiscall ?get@NetFifo@@QAEHPAXPAIPAHPAI@Z)(NetFifo* this, void*, unsigned int*, int*, unsigned int*)\n"
+    assert marker_block.count(symbol_line) == 1
+    assert marker_block.count(prototype_line) == 1
+    marker_block = marker_block.replace(
+        symbol_line, symbol_line + size_line + "\n", 1)
+    marker_block = marker_block.replace(
+        prototype_line, prototype_line + callers_line + "\n", 1)
+    projected_text = (projected_text[:marker_at] + marker_block +
+                      projected_text[method_at:])
+
+    projected_row, = [row for row in read_text(projected_text, SOURCE)
+                      if row.address == 0x633F70]
+    assert projected_row.image_spans == old.image_spans
+    assert projected_row.name == old.name and projected_row.symbol == old.symbol
+    return projected_text
 
 
 @pytest.mark.parametrize("mutant", [None, "outside-body", "original-identity", "failed-restoration"])
@@ -486,5 +550,10 @@ def test_pinned_full_head_reader_control_and_live_reads():
     for address, instruction in expected.items():
         assert instructions[address] == instruction, hex(address)
     source = SOURCE.read_text()
-    assert "0x00633F70-0x00634067" in source
+    assert "0x00633F70-0x0063401D" in source
+    assert "0x00633F70-0x00634067" not in source
+    fifo_marker = source.index("// ORIGINAL: 0x00633F70")
+    fifo_body = source.index(GET, fifo_marker)
+    assert "// size      248 bytes" not in source[fifo_marker:fifo_body]
+    assert "// callers   1   call targets   2" not in source[fifo_marker:fifo_body]
     assert "0x00634200-0x0063427E" in source
