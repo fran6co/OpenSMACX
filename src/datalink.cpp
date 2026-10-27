@@ -2647,7 +2647,7 @@ Purpose: List the technologies, ids 140000 upward.
          The technology record the tree materialises is eleven dwords wide and
          the walk reads its two preq words at -1 and 0 from the pointer it
          holds, which is why both are tested before the name at -9 is fetched.
-// ORIGINAL: 0x0042B190 ?set_cat_tech@Datalink@@QAEXXZ 0x0042B190-0x0042B2FA FILE
+// ORIGINAL: 0x0042B190 ?set_cat_tech@Datalink@@QAEXXZ 0x0042B190-0x0042B2F3 FILE
 // MISMATCH 31/116, first divergence at 6. LEVER: `char digits[0x54]` not [80] - the image's frame is 0x64 and the 80-byte buffer gives 0x60. TRIED: the record walk as `record[-1] >= -1 && record[0] >= -1` against a hoisted `TechRowBase`, which is the image's own shape (base in esi, stepped 11 dwords); the residual divergence is the image taking `this` into edi and ours into ebx.
 // size      355 bytes
 // prototype void (__thiscall ?set_cat_tech@Datalink@@QAEXXZ)(Datalink* this)

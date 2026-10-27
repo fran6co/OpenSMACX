@@ -2896,9 +2896,8 @@ int Caviar::add_object(CaviarData *definition, uint8_t *object,
 Purpose: Append one .cvr definition's parts to the instance table in full -
          colour, vector, matrix - the whole record the instance comes from
          being the caller's first argument.
-// ORIGINAL: 0x00617F20 ?add_object@Caviar@@QAEHPAUCaviarData@@H@Z 0x00617F20-0x0061807D
+// ORIGINAL: 0x00617F20 ?add_object@Caviar@@QAEHPAUCaviarData@@H@Z 0x00617F20-0x00618079
 // symbol    ?add_object@Caviar@@QAEHPAUCaviarData@@H@Z
-// size      349 bytes
 // prototype int (__thiscall ?add_object@Caviar@@QAEHPAUCaviarData@@H@Z)(Caviar* this, CaviarData*, int)
 // callers   0   call targets   0
 // kind      game
@@ -5398,9 +5397,8 @@ Purpose: Set the shadow direction from an elevation and an azimuth:
          {cos(azimuth)*sin(elevation),
          sin(azimuth)*sin(elevation), cos(elevation)}, the vector a shadow
          falls along for a light at those angles.
-// ORIGINAL: 0x006181D0 ?set_shadow_vector@Caviar@@QAEXMM@Z 0x006181D0-0x0061824F FILE
+// ORIGINAL: 0x006181D0 ?set_shadow_vector@Caviar@@QAEXMM@Z 0x006181D0-0x0061824B FILE
 // symbol    ?set_shadow_vector@Caviar@@QAEXMM@Z
-// size      127 bytes
 // prototype void (__thiscall ?set_shadow_vector@Caviar@@QAEXMM@Z)(Caviar* this, float, float)
 // callers   1   call targets   0
 // kind      game

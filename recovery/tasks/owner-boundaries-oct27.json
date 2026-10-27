@@ -1,0 +1,51 @@
+{
+  "author": "coordinator",
+  "base_revision": "7de9c46a11b2d202c59ef723bd86f7260eb7fa58",
+  "editable_files": [
+    "src/caviar.cpp",
+    "src/datalink.cpp",
+    "recovery/tests/test_owner_function_boundaries_oct27.py"
+  ],
+  "evidence": [
+    "IDA and independently pinned Ghidra exports agree on617F20..618079,6181D0..61824B and42B190..42B2F3. Full original entry-rooted CFG verifies all bytes reachable exactly once, all returns and no escaping branches/indirect jumps; counts111/44/116 instructions. Ends are original-derived, never chosen to match candidate size.",
+    "Current spans include4/4/7 bytes of unreachable alignment NOPs. Entire gaps to independently mapped neighbors618080/618250/42B300 are7/5/13 NOPs. Keep those bytes classified as padding, not newly implemented code or silently removed functions. Preserve all neighbor identities/spans/claims and all other bindings.",
+    "Authorize native source.writer.write_bytes with guarded source.publication for exactly these three image_spans, maintaining names/symbols/modes/state/all historical claims and lessons. Do not hand-edit ORIGINAL markers or change C++ bodies/headers/compiler policy. Existing prior tasks did not correct these tails; no weak-score trimming or broader bounds normalization.",
+    "Add pinned full-CFG/independent-export/source-identity and neighbor preservation controls, including old-padding-span and truncated-neighbor mutants. Run appropriate existing Caviar/Datalink owner controls. Fresh compiler measurement, zero-omission build/link reproduction, independent review, source/claim continuity and destination recheck required. Only installed recorder may bank newly proved exact results; correction is not new implementation coverage."
+  ],
+  "intent": "Correct three independently established original function ends that include alignment padding.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6389536,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6389888,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6390224,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6390352,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4370832,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4371200,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "owner-boundaries-oct27"
+}
