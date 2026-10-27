@@ -1,0 +1,23 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "106ef42916daecf8d7890e6e19a1c057f6dcff6a",
+  "editable_files": [
+    "src/net_class.cpp",
+    "recovery/tests/test_net_create_group_name_oct27.py"
+  ],
+  "evidence": [
+    "Pinned62ED6E stores group_name at DPNAME base+0xC after delayed memset stack cleanup; VC6 DPLAY.H proves long-name union, not short-name +8. Restore original field only; preserve null short name, uninitialized DPID until SDK output, global reload, zero arguments and HRESULT==0 semantics.",
+    "Independent full-stack/API review by coherent_batch_review_oct26dy and medium_group03_oct26dz confirmed the field; diagnostic .opensmacx/recovery/net-create-group-manual-diagnostic-oct27ij.txt. One native attempt against fresh106ef429 baseline, all other owner functions preservation controls."
+  ],
+  "intent": "Restore original Net::create_group behavior and load boundaries without normalizing original quirks.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6483264,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "net-long-name-oct27iq"
+}
