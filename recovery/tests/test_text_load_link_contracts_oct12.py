@@ -616,7 +616,8 @@ def actual_source(instrument=True):
         "LOAD": body(sl, LOAD),
         "SPOT": (ROOT / "src/spot.h").read_text().replace('#pragma once',''),
         "SPOT_METHODS": '\n'.join(body(sp, s) for s in (
-            "Spot::Spot()", "Spot::~Spot()", "void Spot::init(int count)",
+            "void Spot::shutdown()", "Spot::Spot()", "Spot::~Spot()",
+            "void Spot::init(int count)",
             "int Spot::add(int position, int type, int left, int top, int length, int width)")),
         "FONT_FIELDS": '\n'.join(one(fh, r'^  (' + p + r';)') for p in (
             r'int unk_1_', r'int height_', r'int line_height_')),

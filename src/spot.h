@@ -32,16 +32,9 @@ class Spot {
     add_count_ = 0;
     spots_ = nullptr;
   }
-  // IN-CLASS so `~Spot` can inline it, which is what the image does: the
-  // destructor is the whole cleanup, not a call to it. The null goes
-  // INSIDE the guard as well as in `clear`.
-  MEASURED void shutdown() {     // 005FA830
-    if (spots_) {
-      free(spots_);
-      spots_ = nullptr;
-    }
-    clear();
-  }
+  // External owners call the original shutdown entry directly. Keep its
+  // definition in spot.cpp, where init and destruction can expand it.
+  MEASURED void shutdown();      // 005FA830
   void init(int count);
   // Report renderers rewind only the append cursor, retaining allocation.
   void reset_count() { add_count_ = 0; }

@@ -95,24 +95,24 @@ char *FileBox::save() {
 
 /*
 Purpose: Show the common open dialog using FileBox's saved filter and defaults.
-// ORIGINAL: 0x00634CF0 ?load@FileBox@@QAEXXZ 0x00634CF0-0x00634DAE FILE
+// ORIGINAL: 0x00634CF0 ?load@FileBox@@QAEXXZ 0x00634CF0-0x00634DAE FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"reason":"The open dialog reads and writes the same inline FileBox buffers as the save dialog, with open-specific flags and default extension.","evidence":["Original 0x00634CF0-0x00634DAE calls strcat and GetOpenFileNameA with FileBox offsets +0, +0x104, +0x30c, +0x414 and +0x418.","The prior compiling redirect and its observations are preserved at git:06248782:src/leaf_recoveries.cpp."]}
 // symbol    ?load@FileBox@@QAEPADXZ
 */
 char *FileBox::load() {
     char *const file = file_;
+    OPENFILENAMEA ofn;
+    ofn.lStructSize = 0x4C;
+    ofn.lpstrFilter = filter_;
+    ofn.hwndOwner = 0;
+    ofn.hInstance = 0;
+    ofn.lpstrCustomFilter = 0;
+    ofn.nMaxCustFilter = 0;
     char *const title = def_name_;
     if (*title != 0) {
         *file = 0;
         strcat(file, title);
     }
-    OPENFILENAMEA ofn;
-    ofn.lStructSize = 0x4C;
-    ofn.hwndOwner = 0;
-    ofn.hInstance = 0;
-    ofn.lpstrCustomFilter = 0;
-    ofn.nMaxCustFilter = 0;
-    ofn.lpstrFilter = filter_;
     ofn.nMaxFile = 0x104;
     ofn.nMaxFileTitle = 0x104;
     ofn.lpstrFile = file;

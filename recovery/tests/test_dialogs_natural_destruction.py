@@ -202,7 +202,9 @@ def test_actual_dialogs_dtor_body_runs_real_reverse_base_lifetime(compiler):
     assert "SpriteBox::~SpriteBox()" in sprite_cpp
     assert "SpriteListBase::~SpriteListBase()" in sprite_cpp
     spot_h = text("src/spot.h")
-    assert "void shutdown()" in spot_h and "free(spots_)" in spot_h
+    assert "void shutdown();" in spot_h
+    shutdown = extract_definition(text("src/spot.cpp"), "void Spot::shutdown()")
+    assert "free(spots_)" in shutdown
     body = extract_definition(dialogs_cpp, "Dialogs::~Dialogs()")
     listbox_dtor = extract_definition(text("src/listbox.cpp"), "ListBox::~ListBox()")
 

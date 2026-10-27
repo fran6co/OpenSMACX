@@ -1,0 +1,35 @@
+{
+  "event_id": "f6476dca4042515548a029adb49621305b3a2f2b3d43a178a4dbbf38e95925b7",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_dialogs_natural_destruction.py",
+      "recovery/tests/test_spot_signed_counts.py",
+      "recovery/tests/test_text_load_link_contracts_oct12.py",
+      "src/filebox.cpp",
+      "src/jackal/filewin.cpp"
+    ],
+    "evidence": [
+      "Frozen FileWin branch topology gives58/58 actual-application instructions; FileBox early OPENFILENAME setup gives57/57. Scope permits only those winner definitions, preserving other worker attempts. Independent source review and official recorder/reference/full build checks required.",
+      "Spot shutdown relocates unchanged body into its genuine owner; all12 previously exact owner entries retained and NetWin close/key and DesignWin close now match. Existing host fixtures must extract the newly out-of-line real shutdown definition rather than assert or depend on its former header location. Retain all behavioral and damage assertions."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6376336,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6507760,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "collect-file-dialog-exacts-and-shutdown-test-closure",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:spot-boundary-oct27mf"
+}

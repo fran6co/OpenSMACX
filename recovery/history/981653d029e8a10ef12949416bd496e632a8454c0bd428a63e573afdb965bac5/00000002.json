@@ -1,0 +1,24 @@
+{
+  "event_id": "a4c0b09423353562e4648a1d98c2b8157dba5ffffd2962ff2f6a2fc5ef39a210",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Fresh actual designwin object changes two operand bytes in draw_chassis despite unchanged source; explicit compiler-affected scope does not prove equivalence. Require full valueflow review and current byte/reference verdict, preserving all historical obligations.",
+      "Moving the mapped shutdown definition removes duplicate emitted shutdown COMDATs/export directives from other TUs. Full build must confirm no other unmapped effects, compare complete linked export names/ordinals, and manually review all raw native residual differences without labelling them native passes."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4410304,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "f6476dca4042515548a029adb49621305b3a2f2b3d43a178a4dbbf38e95925b7",
+  "request_id": "track-secondary-compiler-and-duplicate-emission-effects",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:spot-boundary-oct27mf"
+}

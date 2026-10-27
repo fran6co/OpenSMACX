@@ -22,7 +22,7 @@
 /*
 Purpose: Shutdown the class instance.
 // ORIGINAL: 0x005FA830 ?shutdown@Spot@@QAEXXZ 0x005FA830-0x005FA85E BYTE_EXACT
-// body      src/spot.h
+// body      src/spot.cpp
 // size      46 bytes
 // prototype void (__thiscall ?shutdown@Spot@@QAEXXZ)(Spot* this)
 // callers   9   call targets   1
@@ -32,7 +32,16 @@ Purpose: Shutdown the class instance.
 Return Value: n/a
 Status: Complete
 */
-
+// The original external callers use a direct shutdown call; the owner-local
+// init and destructor expand this same cleanup. Defining it before those
+// callers permits that split without exposing the body in every owner TU.
+void Spot::shutdown() {
+    if (spots_) {
+        free(spots_);
+        spots_ = nullptr;
+    }
+    clear();
+}
 
 /*
 Purpose: Initialize the class instance with count.
