@@ -347,7 +347,14 @@ domain. Every indirect jump must belong to a declared table, and all original
 table destinations participate in every guard's incoming-edge checks. Adjacency
 alone does not prove a pair. Missing groups, cross-group guard bypasses and
 unmodeled indirect jumps refuse verification. Intergroup padding is restricted
-to one to three NOP/INT3 bytes before a DWORD-aligned target table.
+to one to three NOP/INT3 bytes before a DWORD-aligned target table, or exactly
+the original/candidate-identical two-byte `MOV EDI,EDI` between a declared
+selector's end and the next aligned target table. Relocations in gaps refuse.
+One exact `.debug$F` FPO child is supported only after native section, symbol,
+association, relocation, alias and incoming-reference validation. Its full
+metadata witness is retained, and its extent must equal the declared code/data
+envelope. This does not prove original FPO correspondence or linker removal;
+other metadata, EH, data and executable children remain unsupported.
 The narrow i386 alignment domain admits NOP/INT3 fill and exactly an identical
 two-byte `MOV EDI,EDI` or the unprefixed three-byte default-width
 `LEA r32,[same_r32+disp8(0)]` (no index, segment override or REX prefix) between

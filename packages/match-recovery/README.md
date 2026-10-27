@@ -3919,6 +3919,16 @@ checks. It requires current configured annotations and the pinned image without
 creating a task or a second ledger. Unknown required evidence cannot produce an
 exact result. Ordinary owners retain their historical masked-byte comparison.
 Body-only local overlays cannot verify associated owners and refuse explicitly.
+Record verification follows only actual selected code/data relocations and
+explicit evidence roots through their typed object, shared, generated, import
+and literal owners. Every selected identity and its required evidence must pass
+in one complete compiler trial; unknown or refused subjects cannot disappear
+from aggregation. The task verifier retains its broader application graph.
+Missing bounds, definitions, ambiguous targets and unsupported references refuse;
+unrelated functions in the same TU do not add data compilation dependencies.
+An exact validated FPO child can be retained as object metadata beside a full
+code/table envelope; that observation proves neither original FPO equality nor
+linked retention or removal.
 
 `source.recording.record_claims` supplies the guarded historical publication
 path. It invokes the supplied measurement callback after capturing selected

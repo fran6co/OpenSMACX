@@ -263,6 +263,12 @@ requested compiler trials. Missing context or unknown dependencies cannot bank
 a claim. Multiple independently guarded target/selector pairs are supported;
 all table-derived incoming edges must preserve every guard. Body-only local
 variant overlays remain unsupported for these owners and refuse explicitly.
+Record checks follow selected physical references and their typed data
+dependencies, rather than references from unrelated functions in the same TU.
+Every selected identity must have a checked outcome and a complete passing
+compiler trial. Task checks retain their existing broader evidence graph.
+Exact FPO object metadata is retained and validated without claiming that its
+original correspondence, link selection or removal is proved.
 The supported domain is an independent same-layout i386 root COMDAT with verified
 original indexing instructions, a guard-derived complete dispatch domain, local
 target cells and exact selector bytes. A reference alone does not prove table
