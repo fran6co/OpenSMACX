@@ -304,11 +304,12 @@ Scroll *AlphaSave::on_listbox_scroll_create() {
 }
 
 // ORIGINAL: 0x00407BE0 ?show@AlphaSave@@QAEXH@Z 0x00407BE0-0x00407C57 BYTE_EXACT
-// symbol    ?show_save_window@AlphaSave@@QAEXH@Z
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned AlphaSave constructor at 0x00407350 installs primary vftable VA 0x00669EC8.", "Pinned table word at 0x00669ECC has an absolute HIGHLOW relocation resolving to 0x00407BE0, this ORIGINAL body; the same slot in qualified AlphaSave COFF previously resolved to Win::show at 0x005ED9D0.", "Win declares virtual void show(int) at inherited slot 1 (src/win.h); AlphaSave has no other source call sites for the former show_save_window helper.", "The body still calls Win::show explicitly in the same branches and order; only the member identity changes to the inherited virtual override."], "reason": "The original AlphaSave primary vftable at 0x00669EC8 selects the mapped show operation in inherited Win slot 1. Restoring the genuine override name makes the compiler emit the class entry; the existing body and its explicit Win::show call remain unchanged."}
+// symbol    ?show@AlphaSave@@UAEXH@Z
 // The exact standalone unit was retired after this source body was recorded.
 // This routine does not read its argument: the choice is whether the main
 // Console is already visible, not the caller's requested display mode.
-void AlphaSave::show_save_window(int) {
+void AlphaSave::show(int) {
     if (Win::is_visible()) {
         return;
     }
@@ -325,9 +326,10 @@ void AlphaSave::show_save_window(int) {
 }
 
 // ORIGINAL: 0x00407C60 ?hide@AlphaSave@@QAEXXZ 0x00407C60-0x00407CC4 BYTE_EXACT
-// symbol    ?hide_save_window@AlphaSave@@QAEXXZ
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned AlphaSave constructor at 0x00407350 installs primary vftable VA 0x00669EC8.", "Pinned table word at 0x00669ED0 has an absolute HIGHLOW relocation resolving to 0x00407C60, this ORIGINAL body; the same slot in qualified AlphaSave COFF previously resolved to Win::hide at 0x005EDCD0.", "Win declares virtual void hide() at inherited slot 2 (src/win.h); AlphaSave has no other source call sites for the former hide_save_window helper.", "The body still calls Win::hide explicitly in the same final position; only the member identity changes to the inherited virtual override."], "reason": "The original AlphaSave primary vftable at 0x00669EC8 selects the mapped hide operation in inherited Win slot 2. Restoring the genuine override name makes the compiler emit the class entry; the existing body and its explicit Win::hide call remain unchanged."}
+// symbol    ?hide@AlphaSave@@UAEXXZ
 // The exact standalone unit was retired after this typed path was recorded.
-void AlphaSave::hide_save_window() {
+void AlphaSave::hide() {
     if (!Win::is_visible()) {
         return;
     }

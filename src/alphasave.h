@@ -34,10 +34,10 @@ class AlphaSave : public GraphicWin {
   int on_key_click(int key, int flags) override;
   void on_scrolled(int code, int pos);
   void on_scrolling(int code, int pos);
-  // The image's Q-spelled functions are nonvirtual; Win::show/hide are
-  // virtual, so these cannot use those names without changing the vtable.
-  void show_save_window(int mode);
-  void hide_save_window();
+  // The original primary table at 0x669EC8 selects these overrides in Win
+  // slots 1/2. Their bodies call the base operations explicitly.
+  void show(int mode) override;
+  void hide() override;
   void on_selected(int selection_id) override;
   char *save();
   char *load();
@@ -65,3 +65,5 @@ void __cdecl alpha_save_filebox_draw(GraphicWin *window, int item_kind,
 
 static_assert(sizeof(AlphaSave) == 0x6058,
               "AlphaSave ownership layout must match the image");
+// RECOVERY_GENERATED: v1 vtable 0x00669EC0 0x00669EC8 ??_7AlphaSave@@6BBuffer@@@ 0x00407350
+// RECOVERY_GENERATED: v1 vtable 0x00669EC8 ? ??_7AlphaSave@@6BWin@@@ 0x00407350
