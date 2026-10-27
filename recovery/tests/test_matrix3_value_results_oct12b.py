@@ -340,7 +340,7 @@ def test_actual_source_value_results_and_alias_assignments(tmp_path, compiler_na
     ("multiply", "other->cells[depth * 3 + column]", "other->cells[column * 3 + depth]"),
     ("multiply", "result.cells[row * 3 + column] = sum;",
      "result.cells[row * 3 + column] = 0.0f;"),
-    ("scaled", "scale * cells[i]", "scale + cells[i]"),
+    ("scaled", "scale * cells[index]", "scale + cells[index]"),
 ))
 def test_value_result_source_mutants_fail_host_controls(
     tmp_path, compiler_name, method, before, after

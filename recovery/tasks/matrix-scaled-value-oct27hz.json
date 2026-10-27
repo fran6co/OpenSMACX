@@ -1,0 +1,77 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "d231122d72ca15b11f7f16106b5c7999b2c3716c",
+  "editable_files": [
+    "src/matrix3.cpp"
+  ],
+  "evidence": [
+    "Pinned634AD0 contains separate3x3 loops, stack identity matrix and hidden-result copy. CurrentrealMatrix3-by-value declaration preserves return ABI but source hasflat9loop. Prior nestedloops belonged to differentexplicitoutputparam form; exactsamecurrenttyped-returnform notpreviouslymeasured. One boundednativeattempt, preservehistoricalclaims and all original quirks; no fakeoperations/assembly/return-headchange.",
+    "/home/fran6co/code/OpenSMACX/.opensmacx/recovery/easy-next-oct27gu/group-next96/group-04/group-04-proposals/manifest.json"
+  ],
+  "intent": "Recover the pinned nested Matrix3 value-return scale loop without changing result ABI, identity initialization, types or original mappings.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6506176,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6506224,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6506272,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6506432,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6506480,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6506688,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6506736,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6507376,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6506880,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6506784,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6507088,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6507216,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "matrix-scaled-value-oct27hz"
+}
