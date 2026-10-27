@@ -1,0 +1,28 @@
+{
+  "event_id": "6943d60f2b135ca645200a711f4bd4a63771d993dae7cf6a86f81028e7f10a9f",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Fresh full application objects show redraw_option inlining changes on_redraw and display. Include those original identities in affected comparison and independent effect review; no source edits or matching waiver. Preserve original task baseline."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4791296,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4782592,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "9086cc339050cf86a4805eb76209e9d2618907836cce2dcf3b46dda8b17aedcb",
+  "request_id": "include-observed-prefwin-inline-callers",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:exact-winners-oct27mb"
+}

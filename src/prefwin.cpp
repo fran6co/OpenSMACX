@@ -914,7 +914,7 @@ void PrefWin::change_volume_button_state(int button_id) {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00491C00 ?on_redraw@PrefWin@@QAEXXZ 0x00491C00-0x00491DEE FILE
+// ORIGINAL: 0x00491C00 ?on_redraw@PrefWin@@QAEXXZ 0x00491C00-0x00491DEE FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00491c00.cpp", "recovery/tasks/prefwin-owner-coverage-wave.json", "Original control parent 8578D8; ctor/destructor member order, 800-pixel branch, checkbox text-context and callback order independently reviewed."], "reason": "Recover the complete PrefWin ownership group through a genuine GraphicWin base and compiler-owned embedded control lifetimes; preserve seed identity, original spans and unresolved discoveries without granting byte claims."}
 // symbol    ?on_redraw@PrefWin@@UAEXXZ
 void PrefWin::on_redraw() {
