@@ -1,0 +1,25 @@
+{
+  "author": "root",
+  "base_revision": "8ac09ef952694d54a1edef98c256d8b5e2174741",
+  "editable_files": [
+    "src/enemy.cpp",
+    "recovery/tests/test_enemy_move_product_source.py",
+    "recovery/tests/fixtures/enemy_move_full_body.cpp"
+  ],
+  "evidence": [
+    "Evidence: .opensmacx/recovery/fast-pass-oct28nl/enemy-move-owner-plan.json. Original one708byteframe includes two distinct64entryarrays; currentfourreferenceviews materialize117pointers/468bytes. Removefourprivateviewstructs/locals, change13privatehelperparameters to existingEnemyMoveFullFrame&, map every alias directly to proven field. Preserve one frame, current field order/types/extraactorword, botharrays, helpercall topology, reachingstores, uninitializedslots, allbranches/callbacks/unsafequirks. No zeroing/reordering/newfields/accessormethods/asm/flags.",
+    "Strategic faction_mask unsignedref currentlyaliaseslocal_68 and allconsumers truncateunsignedchar; direct static_cast<unsigned char>(local_68) preservesobservedlowbyte withoutreinterpretstorage. Review allaliases/address-taking calls and actualsourcehostcontrols; preserveexistingcursor/selectionmutationchecks. No other annotatedfunction edits.",
+    "Wait coordinator READY after positivecontrol+unchangedwholeTUreplica. Onecandidateinitial; no nativecompiler/Gitmutations byworker. Existingreadonlytools allowed. EveryPython UV_NO_SYNC=1 UV_PROJECT_ENVIRONMENT=/home/fran6co/code/OpenSMACX/.venv UV_CACHE_DIR=/tmp/opensmacx-uv-cache uv run --no-sync."
+  ],
+  "intent": "Remove physically materialized reference-view aggregates while retaining one shared path-dependent frame and every owner effect",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5682608,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "Enemy movement shared frame",
+  "task_id": "easy-enemy-frame-oct28nl"
+}
