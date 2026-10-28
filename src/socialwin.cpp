@@ -1645,7 +1645,7 @@ int SocialWin::immune(int soc_category, int soc_model, int effect_id) {
  *          row is the category, the column the model, and when no maximize is
  *          armed and nothing is pending the group deselects and the panels
  *          redraw.
-// ORIGINAL: 0x004B1CE0 ?on_group_clicked@SocialWin@@QAEXHH@Z 0x004B1CE0-0x004B1D64 FILE
+// ORIGINAL: 0x004B1CE0 ?on_group_clicked@SocialWin@@QAEXHH@Z 0x004B1CE0-0x004B1D64 FILE BYTE_EXACT
 // symbol    ?on_group_clicked@SocialWin@@UAEXHH@Z
 // size      132 bytes
 // prototype void (__thiscall ?on_group_clicked@SocialWin@@QAEXHH@Z)(SocialWin* this, int, int)
@@ -1657,11 +1657,11 @@ int SocialWin::immune(int soc_category, int soc_model, int effect_id) {
 */
 void SocialWin::on_group_clicked(int a1, int a2) {
     if (a2 >= 0x11 && a2 < 0x1b) {
-        int effect = a2 - 0x11;
-        if (effect >= 3) {
-            ++effect;
+        a2 -= 0x11;
+        if (a2 >= 3) {
+            ++a2;
         }
-        maximize_effect(effect);
+        maximize_effect(a2);
         return;
     }
     if (a2 >= 0 && a2 < 0x10) {
