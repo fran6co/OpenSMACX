@@ -3940,6 +3940,14 @@ in one complete compiler trial; unknown or refused subjects cannot disappear
 from aggregation. The task verifier retains its broader application graph.
 Missing bounds, definitions, ambiguous targets and unsupported references refuse;
 unrelated functions in the same TU do not add data compilation dependencies.
+An associated CodeView procedure child beside a code/table envelope is admitted
+only after complete record framing, section ownership and every relocation pair
+verify. The bounded local-address form supports unnamed, untyped `S_LDATA32_ST`
+records and ordinary named `S_LABEL32_ST` records, with zero relocation addends
+and unique local symbols inside the same root procedure. Unknown child kinds,
+unmatched relocations, aliases, escaping targets and unsupported records refuse.
+This object-local proof does not establish original debug metadata or linked PDB
+correspondence; the linked procedure comparator still refuses local addresses.
 An exact validated FPO child can be retained as object metadata beside a full
 code/table envelope; that observation proves neither original FPO equality nor
 linked retention or removal.

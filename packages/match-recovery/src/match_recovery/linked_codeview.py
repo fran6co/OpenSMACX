@@ -5,10 +5,12 @@ information, retained storage, hierarchy, or outside-scope preservation.
 Executable relocation decoding remains deliberately separate from SECREL/SECTION.
 """
 
+from collections import Counter
 from dataclasses import asdict
 import struct
 
-from .codeview_procedures import decode_procedure, S_GPROC32_ST, S_LPROC32_ST, S_END
+from .codeview_procedures import (decode_procedure, S_GPROC32_ST, S_LPROC32_ST, S_END,
+                                  S_LDATA32_ST, S_LABEL32_ST)
 from .linked_fixups import check_image, check_selected
 from .model import Result, Span
 from .msf import SmallMsf
@@ -16,9 +18,15 @@ from .pdb_contributions import bound_contributions
 from .pe_coff import weak_external
 
 
-def source_procedure(obj, number, root):
-    """Validate complete COFF ownership and its exact typed relocation pair."""
-    if (type(number) is not int or not 1 <= number <= len(obj.sections)
+def source_procedure(obj, number, root, *, local_addresses=False):
+    """Validate complete COFF ownership and exact typed relocation pairs.
+
+    Optional local addresses admit only unnamed untyped data and ordinary
+    named labels, each bound to one unique local symbol in this root. This
+    proves object-local coordinates, not original types or PDB correspondence.
+    """
+    if (type(local_addresses) is not bool
+            or type(number) is not int or not 1 <= number <= len(obj.sections)
             or obj.symbols.get(root.index) != root or obj.function(root.name) != root
             or root.value != 0 or root.section in obj.associations):
         raise ValueError("CodeView child requires an exact independent function root")
@@ -28,7 +36,7 @@ def source_procedure(obj, number, root):
             or obj.associations.get(number) != root.section or number in obj.associations.values()
             or sum(parent == root.section and obj.sections[child - 1].name == ".debug$S"
                    for child, parent in obj.associations.items()) != 1
-            or section.relocations != ((32, root.index, 11), (36, root.index, 10))):
+            or (not local_addresses and section.relocations != ((32, root.index, 11), (36, root.index, 10)))):
         raise ValueError("unsupported associated CodeView ownership or relocation pair")
     symbols = [symbol for symbol in obj.symbols.values() if symbol.section == number]
     if len(symbols) != 1:
@@ -39,7 +47,7 @@ def source_procedure(obj, number, root):
             or definition.value or len(auxiliary) != 18):
         raise ValueError("CodeView child lacks an exact section definition")
     size, count, lines, _, parent, selection = struct.unpack_from("<IHHIHB", auxiliary)
-    if (size != len(section.data) or count != 2 or lines or parent != root.section
+    if (size != len(section.data) or count != len(section.relocations) or lines or parent != root.section
             or selection != 5 or any(auxiliary[15:])):
         raise ValueError("CodeView child has contradictory section metadata")
     if any(target == definition.index for item in obj.sections for _, target, _ in item.relocations):
@@ -47,7 +55,7 @@ def source_procedure(obj, number, root):
     if any(symbol.storage == 105 and weak_external(obj, symbol)[0].index == definition.index
            for symbol in obj.symbols.values()):
         raise ValueError("CodeView child has a weak address alias")
-    procedure = decode_procedure(section.data)
+    procedure = decode_procedure(section.data, local_addresses=local_addresses)
     if (procedure.parent or procedure.end or procedure.next or procedure.offset or procedure.section
             or procedure.kind != (S_GPROC32_ST if root.storage == 2 else S_LPROC32_ST)):
         raise ValueError("CodeView source procedure has unsupported links, binding addends or visibility")
@@ -56,6 +64,41 @@ def source_procedure(obj, number, root):
             or len(code.data) != procedure.length + (-procedure.length % code.alignment)
             or any(byte not in (0x90, 0xCC) for byte in code.data[procedure.length:])):
         raise ValueError("CodeView procedure extent leaves non-alignment function bytes")
+    expected = [(32, root.index, 11), (36, root.index, 10)]
+    by_offset = {offset: (offset, index, kind) for offset, index, kind in section.relocations}
+    if len(by_offset) != len(section.relocations):
+        raise ValueError("CodeView child has duplicate relocation offsets")
+    label_counts = Counter(symbol.value for symbol in obj.symbols.values()
+                           if symbol.section == root.section and symbol.storage == 6)
+    used = set()
+    for address in procedure.addresses:
+        if address.offset or address.section:
+            raise ValueError("CodeView local address has nonzero relocation addends")
+        if address.kind == S_LDATA32_ST:
+            if address.type_index != 0 or address.name:
+                raise ValueError("only unnamed untyped procedure-local data is supported")
+            at = address.record_offset + 8
+        elif address.kind == S_LABEL32_ST:
+            if address.flags or not address.name:
+                raise ValueError("unsupported procedure-local label flags or name")
+            at = address.record_offset + 4
+        else:
+            raise ValueError("unsupported procedure-local address record")
+        pairs = [by_offset.get(at), by_offset.get(at + 4)]
+        if (any(pair is None for pair in pairs) or pairs[0][2] != 11
+                or pairs[1] != (at + 4, pairs[0][1], 10)):
+            raise ValueError("CodeView local address lacks an exact SECREL/SECTION pair")
+        target = obj.symbols.get(pairs[0][1])
+        if (target is None or target.section != root.section or target.storage != 6
+                or target.type or not 0 <= target.value < procedure.length
+                or target.index in used
+                or label_counts[target.value] != 1
+                or (address.kind == S_LABEL32_ST and address.name != target.name)):
+            raise ValueError("CodeView local address lacks a unique owned root label")
+        used.add(target.index)
+        expected.extend(pairs)
+    if tuple(expected) != section.relocations:
+        raise ValueError("CodeView child has unexplained or reordered relocations")
     return procedure
 
 
@@ -102,6 +145,8 @@ def module_procedures(data):
 
 def procedure_correspondence(source, target, source_types, target_types):
     """Compare complete decoded procedure contents; caller owns provenance."""
+    if source.addresses or target.addresses:
+        raise ValueError("linked procedure-local address correspondence is not supported")
     from .codeview_type_graph import compare_type_roots
 
     fields = ("kind", "length", "debug_start", "debug_end", "flags", "name")

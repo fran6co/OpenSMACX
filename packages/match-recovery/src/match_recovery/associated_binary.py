@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import struct
+from dataclasses import asdict
 from typing import Mapping, Sequence
 
 from capstone import (
@@ -473,6 +474,22 @@ def compare_associated_code(obj: Coff, subject: Symbol, span: Span, image: PeIma
         raise ValueError("associated proof refuses an associative root COMDAT")
     associated_children = [child for child, parent in obj.associations.items()
                            if parent == section_number]
+    debug_witnesses = []
+    fpo_children = []
+    for child in associated_children:
+        name = obj.sections[child - 1].name
+        if name == ".debug$F":
+            fpo_children.append(child)
+        elif name == ".debug$S":
+            from .linked_codeview import source_procedure
+            procedure = source_procedure(obj, child, subject, local_addresses=True)
+            debug_procedure = asdict(procedure)
+            for record in debug_procedure["records"]:
+                record["padding"] = record["padding"].hex()
+            debug_witnesses.append({"section": child, "association_parent": section_number,
+                                    "format": "codeview5_procedure", "procedure": debug_procedure})
+        else:
+            raise ValueError("associated proof refuses an unclassified child section")
     fpo_named_sections = {
         number for number, child in enumerate(obj.sections, 1)
         if number != section_number and (
@@ -487,13 +504,13 @@ def compare_associated_code(obj: Coff, subject: Symbol, span: Span, image: PeIma
                (target == subject.index or obj.symbols[target].name == subject.name)
                for _, target, kind in child.relocations if kind != 0):
             fpo_references.add(number)
-    if fpo_references != set(associated_children):
+    if fpo_references != set(fpo_children):
         raise ValueError("root-referencing FPO metadata lacks one exact associative child")
     fpo_witness = None
-    if associated_children:
-        if len(associated_children) != 1:
+    if fpo_children:
+        if len(fpo_children) != 1:
             raise ValueError("associated proof supports only one exact FPO metadata child")
-        fpo_witness = validate_fpo_object(obj, associated_children[0], subject)
+        fpo_witness = validate_fpo_object(obj, fpo_children[0], subject, source_codeview=True)
     entries = [symbol for symbol in obj.symbols.values()
                if symbol.section == section_number and symbol.type & 0x20 and symbol.storage in (2, 3)]
     if len(entries) != 1 or entries[0] != subject:
@@ -760,6 +777,7 @@ def compare_associated_code(obj: Coff, subject: Symbol, span: Span, image: PeIma
         "associated_data": witnesses,
         "comparison_span": {"start": envelope.start, "end": envelope.end},
         "associated_metadata": fpo_witness,
+        "source_debug_metadata": debug_witnesses,
         "original_metadata": Result.UNKNOWN,
         "linked_selection": Result.UNKNOWN,
         "runtime": Result.UNKNOWN,

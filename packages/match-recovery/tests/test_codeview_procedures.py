@@ -44,6 +44,7 @@ def test_complete_unpadded_coff_procedure_preserves_every_field_and_local():
         "offset": 0, "section": 0, "flags": 1, "name": "Owner::add",
         "locals": ({"kind": S_REGISTER_ST, "type_index": 0x1001, "name": "this", "register": 18, "frame_offset": None},
                    {"kind": S_BPREL32_ST, "type_index": 0x74, "name": "input", "register": None, "frame_offset": 8}),
+        "addresses": (),
         "records": ({"offset": 0, "size": 50, "kind": S_GPROC32_ST, "padding": b""},
                     {"offset": 50, "size": 15, "kind": S_REGISTER_ST, "padding": b""},
                     {"offset": 65, "size": 18, "kind": S_BPREL32_ST, "padding": b""},
