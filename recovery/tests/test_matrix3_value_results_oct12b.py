@@ -23,8 +23,9 @@ SCAFFOLD_REASON = (
     "structural obligation."
 )
 
-# Source-reader facts captured from the committed ba13b343 baseline. Only the
-# three symbols listed separately below are expected to change in this task.
+# Source-reader facts captured from the committed ba13b343 baseline. The three
+# returned-reference symbols and the existing value-result symbols are listed
+# separately as current source hypotheses.
 BASELINE_IDENTITIES = (
     (0x006346C0, "sub_6346c0", ((0x006346C0, 0x006346E4),), "game", True, False,
      "?identity@Matrix3@@QAEPAU1@XZ", "body"),
@@ -53,9 +54,13 @@ BASELINE_IDENTITIES = (
 )
 CURRENT_SYMBOLS = {
     0x00634720: "?add@Matrix3@@QAE?AU1@PBU1@@Z",
+    0x006347C0: "?add_assign@Matrix3@@QAEAAU1@PBU1@@Z",
+    0x006348C0: "?scale_assign@Matrix3@@QAEAAU1@M@Z",
+    0x006348F0: "?subtract_assign@Matrix3@@QAEAAU1@PBU1@@Z",
     0x00634980: "?multiply@Matrix3@@QAE?AU1@PBU1@@Z",
     0x00634AD0: "?scaled@Matrix3@@QAE?AU1@M@Z",
 }
+BOUND_VALUE_ADDRESSES = {0x00634720, 0x00634980, 0x00634AD0}
 EXPECTED_LEVERS = {
     0x00634920: (("lever", "two", "indexed reads, not a hoisted difference. The image keeps `this`"),),
 }
@@ -80,6 +85,7 @@ int main() {
     const float a[9] = {1,2,3,4,5,6,7,8,9};
     const float descending[9] = {9,8,7,6,5,4,3,2,1};
     const float sum[9] = {10,10,10,10,10,10,10,10,10};
+    const float difference[9] = {-8,-6,-4,-2,0,2,4,6,8};
     const float product[9] = {30,24,18,84,69,54,138,114,90};
     const float scaled[9] = {2,4,6,8,10,12,14,16,18};
     for (i = 0; i < 9; ++i) {
@@ -110,6 +116,20 @@ int main() {
     const float doubled[9] = {2,4,6,8,10,12,14,16,18};
     right = left.add(&right); // assignment target aliases the operand
     if (!same(right, doubled)) return 7;
+
+    for (i = 0; i < 9; ++i) {
+        left.cells[i] = a[i];
+        right.cells[i] = descending[i];
+    }
+    if (&left.add_assign(&right) != &left || !same(left, sum)) return 8;
+    for (i = 0; i < 9; ++i) left.cells[i] = a[i];
+    if (&left.scale_assign(2.0f) != &left || !same(left, scaled)) return 9;
+    for (i = 0; i < 9; ++i) {
+        left.cells[i] = a[i];
+        right.cells[i] = descending[i];
+    }
+    if (&left.subtract_assign(&right) != &left ||
+        !same(left, difference)) return 10;
     return 0;
 }
 """
@@ -213,10 +233,10 @@ def test_value_signatures_and_non_target_declarations_match_baseline():
         "Matrix3 *identity();",
         "void reset_identity();",
         "Matrix3 add(const Matrix3 *other);",
-        "void add_assign(const Matrix3 *other);",
+        "Matrix3 &add_assign(const Matrix3 *other);",
         "void multiply_assign(const Matrix3 *other);",
-        "void scale_assign(float scale);",
-        "void subtract_assign(const Matrix3 *other);",
+        "Matrix3 &scale_assign(float scale);",
+        "Matrix3 &subtract_assign(const Matrix3 *other);",
         "bool equals(const float *other);",
         "Matrix3 multiply(const Matrix3 *other);",
         "void transform(float *out, const float *in);",
@@ -228,6 +248,12 @@ def test_value_signatures_and_non_target_declarations_match_baseline():
         if "(" in line and ";" in line
     )
     assert declarations == expected
+    for signature in (
+        "Matrix3 &add_assign(const Matrix3 *other);",
+        "Matrix3 &scale_assign(float scale);",
+        "Matrix3 &subtract_assign(const Matrix3 *other);",
+    ):
+        assert current_header.count(signature) == 1
     for signature in (
         "Matrix3 add(const Matrix3 *other);",
         "Matrix3 multiply(const Matrix3 *other);",
@@ -276,8 +302,11 @@ def _identity_snapshot(text: str):
 def test_original_claims_symbols_roles_and_levers_match_ba13_baseline():
     current = SOURCE.read_text()
     rows = _identity_snapshot(current)
-    assert set(CURRENT_SYMBOLS) == {0x00634720, 0x00634980, 0x00634AD0}
-    for address in CURRENT_SYMBOLS:
+    assert set(CURRENT_SYMBOLS) == {
+        0x00634720, 0x006347C0, 0x006348C0,
+        0x006348F0, 0x00634980, 0x00634AD0,
+    }
+    for address in BOUND_VALUE_ADDRESSES:
         row = rows[address]
         assert row.byte_exact is False
         assert row.source_role is SourceRole.SCAFFOLD
@@ -306,7 +335,7 @@ def test_binding_rationale_is_adjacent_and_keeps_structural_uncertainty():
     rows = read_text(text, SOURCE.resolve())
     by_address = {row.address: row for row in rows}
     parsed = binding_source.parse(text, rows)
-    for address in CURRENT_SYMBOLS:
+    for address in BOUND_VALUE_ADDRESSES:
         row = by_address[address]
         rationale = parsed[row.line]
         assert "first stack slot" in rationale["reason"]

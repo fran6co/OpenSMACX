@@ -61,18 +61,20 @@ int main() {
   y.value = x.value.add(&y.value);
   if (!same(&y.value, sum) || !same(&x.value, a)) return 24;
   fill(&x.value, 1.0f); fill(&y.value, 9.0f);
-  x.value.add_assign(&y.value);
+  if (&x.value.add_assign(&y.value) != &x.value) return 29;
   if (!same(&x.value, sum)) return 6;
   fill(&x.value, 1.0f);
-  x.value.add_assign(&x.value);
+  if (&x.value.add_assign(&x.value) != &x.value) return 30;
   if (!same(&x.value, doubled)) return 7;
   fill(&x.value, 1.0f);
   for (int i = 0; i < 9; ++i) y.value.cells[i] = 9.0f - (float)i;
-  x.value.subtract_assign(&y.value);
+  if (&x.value.subtract_assign(&y.value) != &x.value) return 31;
   if (!same(&x.value, diff)) return 8;
-  fill(&x.value, 1.0f); x.value.subtract_assign(&x.value);
+  fill(&x.value, 1.0f);
+  if (&x.value.subtract_assign(&x.value) != &x.value) return 32;
   if (!same(&x.value, zero)) return 9;
-  fill(&x.value, 1.0f); x.value.scale_assign(2.0f);
+  fill(&x.value, 1.0f);
+  if (&x.value.scale_assign(2.0f) != &x.value) return 33;
   if (!same(&x.value, doubled)) return 10;
   fill(&x.value, 1.0f);
   if (!x.value.equals(a)) return 11;
@@ -288,8 +290,8 @@ MUTANTS = (
      "other->cells[row * 3 + column] -"),
     ("multiply_assign", "other->cells[depth * 3 + column]",
      "other->cells[column * 3 + depth]"),
-    ("scale_assign", "scale * cells[row * 3 + column]",
-     "scale + cells[row * 3 + column]"),
+    ("scale_assign", "cells[row * 3 + column] = scale * cells[row * 3 + column];",
+     "cells[row * 3 + column] = scale + cells[row * 3 + column];"),
     ("subtract_assign", "cells[row * 3 + column] -",
      "cells[row * 3 + column] +"),
     ("equals", "mine[row * 3 + col] != other[row * 3 + col]",
