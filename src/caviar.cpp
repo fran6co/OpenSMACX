@@ -253,11 +253,11 @@ void vox_engine_close();
 
 namespace {
 
-// /O2 implies /Oi, and /Oi expands `memset` into the `rep stosd` form at
-// every site. render_mono's image CALLS it (`push 0x1800 / push <byte> /
-// push 0x9b9c38 / call 0x6465f0`), so the expansion is routed through a real
-// function - path.cpp's `memset_call` idiom, kept file-local here because
-// path.cpp already owns the external name.
+// Historical: /O2 expands direct `memset` into `rep stosd`; render_mono used
+// this helper when the intrinsic expansion differed from the pinned call.
+// The selected body now scopes VC6 `#pragma function(memset)` around its
+// direct call. This helper remains as an unused legacy form until its
+// ownership and removal are reviewed.
 void *__cdecl caviar_memset_call(void *dst, int value, unsigned count) {
     return memset(dst, value, count);
 }
@@ -2536,28 +2536,29 @@ Purpose: Render with the engine's flat monochrome table: fill the shared
          0x1800-byte colour source with one byte repeated, raise field_4_'s
          bit 3 so the draw reads its colours from that source, call render,
          and drop the bit again.
-// ORIGINAL: 0x00617620 ?render_mono@Caviar@@QAEXPAUBuffer@@HHHH@Z 0x00617620-0x0061766F
-// symbol    ?render_mono@Caviar@@QAEXPAVBuffer@@HHHH@Z
-//           (this tree spells Buffer a `class` and the image's own name spells
-//           it `U`, a struct - so the emitted name carries V. Same rule as
-//           render_with_colour_table above, whose symbol fact does the same
-//           thing. Fixing it tree-wide means re-keying `class Buffer` in
-//           buffer.h and every PAVBuffer fact with it, which is not this
-//           file's edit to make.)
+// ORIGINAL: 0x00617620 ?render_mono@Caviar@@QAEXPAUBuffer@@HHHH@Z 0x00617620-0x0061766F BYTE_EXACT
+// symbol    ?render_mono@Caviar@@QAEHPAVBuffer@@HHHH@Z
+//           The catalogued input spelling uses struct Buffer (`U`), while
+//           this tree declares class Buffer and emits `PAVBuffer`. The pinned
+//           PE has no symbol record to establish original spelling; retain
+//           the original label as historical mapping metadata. Changing the
+//           Buffer key would re-key other owners, outside this function's
+//           scope.
 // size      79 bytes
-// prototype void (__thiscall ?render_mono@Caviar@@QAEXPAUBuffer@@HHHH@Z)(Caviar* this, Buffer*, int, int, int, int)
+// prototype int (__thiscall ?render_mono@Caviar@@QAEHPAVBuffer@@HHHH@Z)(Caviar* this, Buffer*, int, int, int, int)
 // callers   0   call targets   2
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x006465F0 0x00617230
 //
+// Return type is inferred from the preserved render result in EAX; the pinned PE has no symbol/debug record for this method. The original decorated label above remains a catalogued identity, not return-type proof.
 // The colour source it fills is this file's CaviarColourSource (0x009B9C38),
 // the same 0x1800 bytes init_class hands vox_create_record as the record's
 // colour table - so the "monochrome" draw is the ordinary draw with every
 // palette entry forced to one value.
-// LEVER: caviar_memset_call, not memset - /Oi expanded the intrinsic into
-//        `rep stosd` (32 instructions against the image's 27) and burned EDI
-//        with it. Same lever as path.cpp's memset_call.
+// LEVER: scoped VC6 `#pragma function(memset)` keeps the direct call; forwarding
+//        render's int result keeps EAX live through the dword clear in ECX.
+//        The earlier helper expanded to `rep stosd` and produced 32 instructions.
 // TRIED: the last divergence is the bit clear's width. The image's set is a
 //        byte `or al, 8` and its clear a dword `and ecx, 0xfffffff7`; this
 //        tree reproduces the byte or and gives the clear as a byte
@@ -2572,16 +2573,23 @@ Purpose: Render with the engine's flat monochrome table: fill the shared
 //        the move left it byte-for-byte where it was - one differing run of
 //        three, the mask width above - while taking the tier up to
 //        MNEMONIC_ONLY on the re-measure.
-Return Value: n/a
+Return Value: the result returned by Caviar::render.
 Status: Complete
 */
-void Caviar::render_mono(Buffer *buffer, int centre_x, int centre_y,
+#if defined(_MSC_VER) && _MSC_VER <= 1200
+#pragma function(memset)
+#endif
+int Caviar::render_mono(Buffer *buffer, int centre_x, int centre_y,
                          int colour, int flags) {
-    caviar_memset_call(CaviarColourSource, colour & 0xff, 0x1800);
+    memset(CaviarColourSource, colour & 0xff, 0x1800);
     field_4_ |= 8;
-    render(buffer, centre_x, centre_y, flags);
+    int result = render(buffer, centre_x, centre_y, flags);
     field_4_ &= ~0x08;
+    return result;
 }
+#if defined(_MSC_VER) && _MSC_VER <= 1200
+#pragma intrinsic(memset)
+#endif
 
 /*
 Purpose: Append every part of one loaded .cvr definition to the renderer's
