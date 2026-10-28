@@ -653,7 +653,7 @@ void __cdecl load_voxels() {
     }
 }
 
-// ORIGINAL: 0x0058F250 ?system_close@@YAXXZ 0x0058F250-0x0058F2E6
+// ORIGINAL: 0x0058F250 ?system_close@@YAXXZ 0x0058F250-0x0058F2E6 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:bb3b3233842b050fb0840e1cc6c226e8f30f7055:src/unrecovered/0058f250.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tasks/game-logic-seed-owner-coverage.json", "Pinned58F27B..58F281 and58F2C4..58F2D9: virtual slot0 with deleting flag1, followed by clearing the respective global slot.", "init_opening and system_init allocate GraphicWin and secondary MapWin owners with new; Win/GraphicWin/MapWin virtual destructors and the separate close_opening path establish typed destruction/free semantics.", "recovery/tasks/game-shutdown-owner-oct26dn.json", "recovery/tests/test_system_close_actual_source.py"], "reason": "Recover system shutdown through real heap-owned GraphicWin and MapWin lifetimes: delete the opening window and secondary MapWin slots1..7, preserving each null guard and shared-slot visibility until destruction/free returns. Keep primary slot0 and the original sound, parent, window, Paths and map cleanup order. This replaces the prior mistaken show(1) translation; source recovery alone does not establish current byte exactness or game acceptance."}
 void __cdecl system_close() {
     release_sound();
@@ -661,11 +661,12 @@ void __cdecl system_close() {
     // Original vtable slot zero and deletion flag 1 destroy heap-owned
     // windows before clearing their shared slots. MapWin slot zero is the
     // primary window and is excluded from this teardown loop.
-    BasePopDefaultField322C = static_cast<Win *>(&ConsoleGlobal);
-    GraphicWin *opening = opening_window();
+    Win *console_window = static_cast<Win *>(&ConsoleGlobal);
+    BasePopDefaultField322C = console_window;
+    GraphicWin *opening = OpeningWindow;
     if (opening != 0) {
         delete opening;
-        opening_window() = 0;
+        OpeningWindow = 0;
     }
 
     TutWinDesWindow.close();
@@ -674,10 +675,9 @@ void __cdecl system_close() {
     Paths.shutdown();
     map_shutdown();
 
-    for (size_t slot = 1; slot < MapWinTableSlots; ++slot) {
-        MapWin *window = MapWinTable[slot];
-        if (window != 0) {
-            delete window;
+    for (int slot = 1; slot < 8; ++slot) {
+        if (MapWinTable[slot] != 0) {
+            delete MapWinTable[slot];
             MapWinTable[slot] = 0;
         }
     }
@@ -4843,7 +4843,7 @@ Return Value: PronounBuffer
 Status: Coverage transcription - unclaimed body
 */
 char *__cdecl get_him_her(int faction_id, int sentence_form) {
-    const int code = 0xC7 + (Players[faction_id].is_leader_female != 0);
+    int code = 0; if (Players[faction_id].is_leader_female != 0) { code = 1; } code += 0xC7;
     LPSTR *labels = Labels.strings_ptr;
     strcpy(PronounBuffer, StringTable.get(labels[code]));
     if (sentence_form != 0) {
