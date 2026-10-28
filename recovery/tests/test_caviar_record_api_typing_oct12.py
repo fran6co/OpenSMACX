@@ -33,9 +33,15 @@ SYMBOL_TRANSITIONS = {
     0x618560: ("?fill_clip_rect@Caviar@@QAEXH@Z", "?fill_clip_rect@Caviar@@QAEXPAI@Z"),
     0x63AE20: ("?sub_63ae20@@YAXPAE@Z", "?sub_63ae20@@YAXPAUVoxRenderRecord@@@Z"),
     0x6171A0: ("?render_multi_table_dest@Caviar@@QAEXPAVBuffer@@HHHPAEH@Z",
-               "?render_multi_table_dest@Caviar@@QAEXPAVBuffer@@HHHPAY0BAA@EH@Z"),
+               "?render_multi_table_dest@Caviar@@QAEHPAVBuffer@@HHHPAY0BAA@EH@Z"),
+    0x617620: ("?render_mono@Caviar@@QAEXPAVBuffer@@HHHH@Z",
+               "?render_mono@Caviar@@QAEHPAVBuffer@@HHHH@Z"),
     0x63F000: ("?vox_draw_shadow@@YAXPAUVoxRenderRecord@@PBUCvrShape@@PBUVOX_Vect@@PAUVOX_Matrix@@PBX@Z",
                "?vox_draw_shadow@@YAXPAUVoxRenderRecord@@PBUCvrShape@@PBUVOX_Vect@@PAUVOX_Matrix@@H@Z"),
+}
+HISTORICAL_SPAN_CORRECTIONS = {
+    0x617F20: ((0x617F20, 0x61807D), (0x617F20, 0x618079)),
+    0x6181D0: ((0x6181D0, 0x61824F), (0x6181D0, 0x61824B)),
 }
 
 
@@ -123,6 +129,10 @@ def test_historical_api_migration_and_current_owner_continuity():
     for original in before:
         expected = expected_recorded_tail(expected_extended_record(original))
         current = current_by_address[original.address]
+        if original.address in HISTORICAL_SPAN_CORRECTIONS:
+            old_span, corrected_span = HISTORICAL_SPAN_CORRECTIONS[original.address]
+            assert expected.image_spans == (old_span,)
+            expected = replace(expected, image_spans=(corrected_span,))
         assert_caviar_record_continuity(expected, current)
         assert_api_symbol_transition(original.address, original.symbol, current.symbol, current)
         if original.address in (0x63AEE0, 0x63AF00, 0x63AF20, 0x63AF40):
@@ -168,6 +178,18 @@ def assert_caviar_record_continuity(before, current):
             current_history[new_correction] -= 1
             before_history += Counter()
             current_history += Counter()
+        if before.address == 0x617620 and field == "levers":
+            old_rows = [row for row in before_history if row[0] == "caviar_memset_call,"]
+            new_rows = [row for row in current_history if row[0] == "scoped"]
+            assert len(old_rows) == len(new_rows) == 1
+            old_correction, new_correction = old_rows[0], new_rows[0]
+            assert "rep stosd" in old_correction[1]
+            assert "#pragma function(memset)" in new_correction[1]
+            assert "forwarding render's int result" in new_correction[1]
+            before_history[old_correction] -= 1
+            current_history[new_correction] -= 1
+            before_history += Counter()
+            current_history += Counter()
         assert before_history <= current_history
 
     before_lessons = _lesson_signatures(before)
@@ -179,6 +201,19 @@ def assert_caviar_record_continuity(before, current):
         old_correction, new_correction = old_rows[0], new_rows[0]
         assert "FOLDED into the implicit array construction" in old_correction[2]
         assert "VoxInstance" in new_correction[2]
+        before_lessons[old_correction] -= 1
+        current_lessons[new_correction] -= 1
+        before_lessons += Counter()
+        current_lessons += Counter()
+    if before.address == 0x617620:
+        old_rows = [row for row in before_lessons
+                    if row[0:2] == ("lever", "caviar_memset_call,")]
+        new_rows = [row for row in current_lessons if row[0:2] == ("lever", "scoped")]
+        assert len(old_rows) == len(new_rows) == 1
+        old_correction, new_correction = old_rows[0], new_rows[0]
+        assert "rep stosd" in old_correction[2]
+        assert "#pragma function(memset)" in new_correction[2]
+        assert "forwarding render's int result" in new_correction[2]
         before_lessons[old_correction] -= 1
         current_lessons[new_correction] -= 1
         before_lessons += Counter()
@@ -226,6 +261,31 @@ def test_caviar_owner_continuity_rejects_missing_identity_span_claim_or_history(
                                     replace(current, semantic=False, byte_exact=True))
     with pytest.raises(AssertionError):
         assert_caviar_record_continuity(expected, replace(current, origin=()))
+
+    memset_original = next(record for record in before if record.address == 0x617620)
+    memset_expected = expected_recorded_tail(expected_extended_record(memset_original))
+    memset_current = rows[memset_original.address]
+    with pytest.raises(AssertionError):
+        assert_caviar_record_continuity(
+            replace(memset_expected, levers=memset_expected.levers + (
+                ("unrelated", "synthetic negative-control lever"),)),
+            memset_current)
+
+
+def test_render_mono_history_transition_is_bounded_to_its_replaced_lever():
+    before = read_text(old_cpp(), ROOT / "src/caviar.cpp")
+    original = next(record for record in before if record.address == 0x617620)
+    expected = expected_recorded_tail(expected_extended_record(original))
+    current_rows = read(ROOT / "src")
+    current = unique_original_records(current_rows, {original.address})[original.address]
+    assert_caviar_record_continuity(expected, current)
+
+    unrelated_loss = replace(
+        current,
+        levers=tuple(item for item in current.levers if item[0] != "scoped"),
+    )
+    with pytest.raises(AssertionError):
+        assert_caviar_record_continuity(expected, unrelated_loss)
 
     assert_caviar_record_continuity(
         expected, replace(current, origin=current.origin + current.origin[:1]))

@@ -3054,12 +3054,12 @@ Purpose: Render a scene and blit it into the renderer's own surface as a
          monochrome table, blits the 0x100-deep box centred on the caller's
          coordinates into surface A, frees the draw's surface lock, fills
          surface A 9 again and clears the buffers the caller asks for.
-// ORIGINAL: 0x006171A0 ?render_multi_table_dest@Caviar@@QAEXPAUBuffer@@HHHPAEH@Z 0x006171A0-0x00617226
-// symbol    ?render_multi_table_dest@Caviar@@QAEXPAVBuffer@@HHHPAY0BAA@EH@Z
+// ORIGINAL: 0x006171A0 ?render_multi_table_dest@Caviar@@QAEXPAUBuffer@@HHHPAEH@Z 0x006171A0-0x00617226 BYTE_EXACT
+// symbol    ?render_multi_table_dest@Caviar@@QAEHPAVBuffer@@HHHPAY0BAA@EH@Z
 //           (this tree spells Buffer a `class` and the image's own name spells
 //           it `U`, a struct - see the note on render_mono above.)
 // size      134 bytes
-// prototype void (__thiscall ?render_multi_table_dest@Caviar@@QAEXPAUBuffer@@HHHPAEH@Z)(Caviar* this, Buffer*, int, int, int, uint8*, int)
+// prototype int (__thiscall ?render_multi_table_dest@Caviar@@QAEHPAVBuffer@@HHHPAY0BAA@EH@Z)(Caviar* this, Buffer*, int, int, int, ColorTable*, int)
 // callers   0   call targets   6
 // kind      game
 // flags     hidden;sp_ready;purged_ok
@@ -3081,20 +3081,23 @@ Purpose: Render a scene and blit it into the renderer's own surface as a
 //        before and after: no claim regressed anywhere in buffer.cpp,
 //        sprite.cpp or texture.cpp, whose free_data call sites re-inlined
 //        nothing they had not already inlined.
-Return Value: n/a
+Inferred return contract: the original exits with the renderer's nonzero
+status on failure and explicitly clears EAX after success. This C++ return type
+follows that observed dataflow; it is not a pinned source declaration.
+Return Value: render status on failure; zero on success
 Status: Complete
 */
-void Caviar::render_multi_table_dest(Buffer *buffer, int centre_x, int centre_y,
-                                     int fill, ColorTable *bits, int flags) {
+int Caviar::render_multi_table_dest(Buffer *buffer, int centre_x, int centre_y,
+                                    int fill, ColorTable *bits, int flags) {
     CaviarSceneBufferA.buffer().fill(fill);
-    if (render(buffer, centre_x, centre_y, flags | 8) != 0) {
-        return;
-    }
+    int result = render(buffer, centre_x, centre_y, flags | 8);
+    if (result != 0) return result;
     CaviarSceneBufferA.buffer().draw_multi_table_dest(buffer, fill, centre_x - 0x80,
                                              centre_y - 0x80, 1, 1, bits);
     buffer->free_data(1);
     CaviarSceneBufferA.buffer().fill(9);
     clear_buffers(flags & 1);
+    return 0;
 }
 
 void __cdecl vox_release_record(VoxRenderRecord *record);
@@ -4702,7 +4705,7 @@ Purpose: Draw the scene. Resets the six channel bounds to their defaults,
          with this renderer published as the callback's object, then unions the
          clip rectangle the draw produced into the viewport and clears the
          buffers the caller asks for.
-// ORIGINAL: 0x00617080 ?UNK1@Caviar@@QAEHHH@Z 0x00617080-0x0061719E
+// ORIGINAL: 0x00617080 ?UNK1@Caviar@@QAEHHH@Z 0x00617080-0x0061719E BYTE_EXACT
 // symbol    ?render_scene@Caviar@@QAEHPAVBuffer@@H@Z
 //           (renamed from the catalogue's UNK1: the body is the renderer's
 //           own top-level draw. The catalogued first argument is `int`, but it
@@ -4745,7 +4748,8 @@ int Caviar::render_scene(Buffer *buffer, int flags) {
     scene_context_.projection_offset_x_ = 0;
     scene_context_.projection_offset_y_ = 0;
     scene_context_.projection_offset_z_ = 0;
-    scene_context_.shadow_enabled_ = (flags & 2) != 0 ? 0 : 1;
+    if (flags & 2) scene_context_.shadow_enabled_ = 0;
+    else scene_context_.shadow_enabled_ = 1;
     CaviarScene.renderer_ = this;
     vox_draw_scene(CaviarScene.created_, &scene_context_, &camera_view_, 0);
     CaviarScene.renderer_ = 0;
