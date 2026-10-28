@@ -1,0 +1,21 @@
+{
+  "event_id": "03e930524218dc9267614717c7747ddf6f4f75ad4f079d8946745bbe1f10a4cd",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/jackal/checkbutton.cpp"
+    ],
+    "evidence": [
+      "Authorize scoped inline_depth(0) and frame-pointer pragmas around the genuine CheckButton destructor, restoring defaults after its definition. This extends the initial frame-only compiler-setting scope; body, headers and command-line profiles remain unchanged.",
+      "Pinned original 004B3EC0 calls close at006337A0 then GraphicWin destructor005D4DD0; qualified fd1985992 owner instead expands close. Existing two frame-only experiments did not test call-boundary control. Preserve exact constructor and close and verify complete owner residual.",
+      "Three requests maximum in this new call-boundary context. Source changes require fresh native measurement, strict references and independently reviewed complete build/link before integration."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "checkbutton-dtor-inline-depth",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:exact-checkbutton-call-boundary-oct28mj"
+}
