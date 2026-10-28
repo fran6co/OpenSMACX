@@ -1,0 +1,19 @@
+{
+  "event_id": "1f7fb0bdf6ec98ea8590645c729a6102235ab6af29b2c9f65a1dac39ea3f69ad",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/veh.cpp"
+    ],
+    "evidence": [
+      "One additional request after complete actual-build diagnosis: uintptr_t cursor restores17/17 but causes outside TU codegen ripple in unmapped old-format copy helper and already-nonexact goody_box. Try an ordinary unsigned-char byte view of the complete BungList faction row anchored at offsetof weapon_id; same five owner-derived store offsets, stride and bounds. This avoids a pointer-to-integer escape and reduces casts. Preserve exact integer candidate in Git and snapshots; retain it if this measured type improvement misses. Two total candidate requests, no source/flag/scope substitution or baseline reset."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "bounded-byte-view-followup-01",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:easy-bung-cursor-oct28na"
+}
