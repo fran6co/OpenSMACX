@@ -570,28 +570,28 @@ void DiploPop::on_iface_button_toggled(int, int) {
 // kind      game
 // symbol    ?on_status@DiploPop@@UAEXH@Z
 void DiploPop::on_status(int mode) {
-    GraphicWin *window = static_cast<GraphicWin *>(this);
+
     if (mode) {
-        MainInterfaceGlobal.on_redraw();
+        on_redraw();
         for (int i = 0; i < 3; ++i) flatButtons_[i].show(0);
-        slide_show(window, 2);
-        show(3);
+        slide_show(static_cast<GraphicWin *>(this), 2);
+        Win::show(3);
         time1_.start();
         time2_.start();
         MainInterfaceGlobal.flat_button(6).show(0);
         MainInterfaceGlobal.flat_button(7).show(0);
         MainInterfaceGlobal.button_group(1).set(-1, 1);
         flatButtons_[2].set(1);
-        MainInterfaceGlobal.redraw();
+        redraw();
     } else {
         time1_.stop();
         time2_.stop();
         flic2_.rewind();
-        slide_hide(window, 2);
+        slide_hide(static_cast<GraphicWin *>(this), 2);
         for (int i = 0; i < 3; ++i) flatButtons_[i].hide();
         MainInterfaceGlobal.flat_button(6).hide();
         MainInterfaceGlobal.flat_button(7).hide();
-        hide();
+        Win::hide();
     }
 }
 
