@@ -25,7 +25,7 @@ def test_actual_wave_group_stores_and_teardown(tmp_path, compiler_name):
         "missing_enabled": (0, "this->enabled = 1;", "(void)this->enabled;"),
         "wrong_enabled": (0, "this->enabled = 1;", "this->enabled = 0;"),
         "clears_cursor": (2, "this->count -= 1;", "this->count -= 1; this->cursor = 0;"),
-        "ignores_null_wave": (1, "while (this->list_.remove_head())", "for (; this->list_.head; this->list_.remove_head())"),
+        "ignores_null_wave": (1, "if (this->list_.remove_head()) {\n        while (this->list_.remove_head()) {\n        }\n    }", "while (this->list_.head) { this->list_.remove_head(); }"),
         "bad_next_backlink": (2, "next->prev = 0;", "(void)next->prev;"),
         "wrong_count_direction": (2, "this->count -= 1;", "this->count += 1;"),
         "deletes_wave": (2, "operator delete(node);", "operator delete(wave);"),
