@@ -1,0 +1,20 @@
+{
+  "event_id": "091c47960119e077cb0bf6727b7c13c4ead04f4c5064291db1209f55625413d7",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/matrix3.cpp"
+    ],
+    "evidence": [
+      "Three original candidates remain exhausted and preserved. Authorize exactly one additional distinct source proposal: direct nonvolatile scratch-cell initialization and accumulation instead of a scalar sum or volatile zero-slot workaround. Original writes each scratch zero then loads it before depth accumulation; original delayed nine-word copy preserves self-multiply. New hypothesis reviewed in .opensmacx/recovery/exact-first-oct28mz/matrix-lvalue-triage.json.",
+      "Retained Matrix3 reference-return draft was rebased onto current master without resetting original task baseline. Compiler must first reproduce the retained unchanged draft object and positive control. Preserve all historical claims, layout/owner/x87 uncertainty, expression operand order and other Matrix3 methods. No further retry or global flag changes."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "one-direct-scratch-lvalue-candidate",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:exact-matrix-multiply-return-oct28mw"
+}
