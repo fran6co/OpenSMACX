@@ -2715,24 +2715,26 @@ Return Value: n/a
 Status: Complete
 */
 void Datalink::set_cat_concept() {
-    if (text_open(DatalinkConceptSection, DatalinkConceptFile) == 0) {
-        text_get();
-        for (int index = 0; TextBufferGetPtr != 0
-                            && strlen(TextBufferGetPtr) != 0;
-             ++index) {
-            StringTemp[0] = '\0';
-            strcat(StringTemp, TextBufferGetPtr);
-            if ((GameDataStateStorage.fields_.game_state_ & 0x1000) != 0) {
-                strcat(StringTemp, DatalinkConceptIdSeparator);
-                char digits[80];
-                _itoa(index, digits, 10);
-                strcat(StringTemp, digits);
-            }
-            listBox_.item(StringTemp, index);
-            text_get();
-        }
-        text_close();
+    if (text_open(DatalinkConceptSection, DatalinkConceptFile) != 0) {
+        return;
     }
+
+    text_get();
+    for (int index = 0; TextBufferGetPtr != 0
+                        && strlen(TextBufferGetPtr) != 0;
+         ++index) {
+        StringTemp[0] = '\0';
+        strcat(StringTemp, TextBufferGetPtr);
+        if ((GameDataStateStorage.fields_.game_state_ & 0x1000) != 0) {
+            strcat(StringTemp, DatalinkConceptIdSeparator);
+            char digits[80];
+            _itoa(index, digits, 10);
+            strcat(StringTemp, digits);
+        }
+        listBox_.item(StringTemp, index);
+        text_get();
+    }
+    text_close();
 
     RECT rect = category_rect_;
     box_sprite(&rect, &InterfaceBoxStyles[6]);

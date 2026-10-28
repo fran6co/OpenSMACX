@@ -1,0 +1,36 @@
+{
+  "event_id": "5b1c4d814b4e9bf91c67eb2214514532516c427cda79d60cd26b926aa8dfb4fc",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_datalink_concept_open_failure_oct28ne.py"
+    ],
+    "evidence": [
+      "Coordinator independently hashes and disassembles full pinned42B300..42B48C. text_open5FD550 returns nonzero then JNE at42B31D jumps to42B482 popEDI/movESP/ret, skipping entire reader/close/UI body. Current master guards only reader andclose but stilldraws on failure. Body early return is faithful recovery, not deliberatebehaviorfix.",
+      "Authorize named actual-source hostcontrol for failed text_open proving zero textclose/list/draw/update calls, plus successfulread/end handling so correction doesnot remove success effects. Include negativecontrol restoring prior UI-on-failure shape ifmeaningful. Preserve original strlen, data strings, sideeffect ordering andunsafequirks; no other annotations/flags/header edits. Retain provedcorrectionevenifbyte miss; subsequent manual integration requires fullbuild/link andscoped/outsidechecks, not nativeautomaticacceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4367040,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4371200,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4371600,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "concept-failure-host-control-oct28ne",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:easy-datalink-oct28ne"
+}
