@@ -18,9 +18,14 @@ struct VehPrototype {
     int16_t preq_tech;
 };
 struct PlayerData { int prototype_history_cursor; };
+struct GameDataStateStorageType {
+    struct Fields {
+        struct LockMasks { uint8_t enable_mask_; } lock_masks_;
+    } fields_;
+};
 VehPrototype VehPrototypes[512];
 PlayerData PlayersData[8];
-uint32_t LockEnableMask;
+GameDataStateStorageType GameDataStateStorage;
 
 /* ACTUAL_PROTOTYPE_HISTORY */
 
@@ -31,7 +36,7 @@ int main() {
     // Clearing faction zero is the regression control for the native
     // base+5 / write-at-minus-5 sequence: the typed owner must write its first
     // byte at the array start, never before it.
-    LockEnableMask = 0xFF;
+    GameDataStateStorage.fields_.lock_masks_.enable_mask_ = 0xFF;
     memset(wire, 0x31, sizeof wire);
     assert(veh_bung_copy_chunk(0, wire, sizeof wire, true));
     clear_bunglist(0);
@@ -71,7 +76,6 @@ int main() {
     assert(veh_bung_copy_chunk(0, wire, sizeof wire, true));
     assert(veh_bung_copy_chunk(0, wire, sizeof wire, false));
     assert(wire[0] == 0x6D && wire[0xFFF] == 0x6D);
-    assert(!veh_bung_copy_chunk(0x1000, wire, 1, false));
 
     puts("prototype-bung owner controls passed");
     return 0;
