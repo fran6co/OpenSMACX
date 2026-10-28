@@ -1,0 +1,26 @@
+{
+  "event_id": "c29289d029897667d534f027b61e2703f745b1b61f8a134cef96dab7aef04316",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_diplopop_on_redraw_actual_source.py"
+    ],
+    "evidence": [
+      "First fresh direct-interface candidate reproduces70/70 instructioncount with62matching. Retained full pin/candidate object review splits8nonmatches into two independent RECT-field scheduling clusters, at first inset and final union expansion. This is a changed compiler context after removingnullablecast, not replay of earlierwrong-receiverform.",
+      "Authorize exactly one final combined reorder: in both independentRECTupdates use left,right,top,bottom statement order. Preserve same arithmetic/finalvalues/getters/UnionRect args/calls/receiver/painterorder. No extra variants or flags/header/ABI/claims changes. Also adapt only old receiver-damage anchor in existingactual-sourcehosttest to mutate directGlobalbox_sprite to incorrect reinterpretreceiver, preserving all damaging controls. SourceCpp finaltrial cap2; nativecompilerfailurecontrol doesnotgrantmorebodysearch. Puremiss restoredafterimmutablecaptures."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4457120,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "diplo-rect-order-final-oct28nf",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:easy-diplopop-receiver-oct28nf"
+}

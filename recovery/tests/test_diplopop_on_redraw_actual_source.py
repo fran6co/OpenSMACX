@@ -234,8 +234,8 @@ def test_actual_on_redraw_owner_trace_and_damage_mutants(compiler_name, tmp_path
     assert _compile_and_run(compiler, body, tmp_path) == 0
 
     mutants = (
-        body.replace("static_cast<Buffer &>(MainInterfaceGlobal)",
-                     "reinterpret_cast<Buffer &>(MainInterfaceGlobal)", 1),
+        body.replace("MainInterfaceGlobal.box_sprite(",
+                     "reinterpret_cast<Buffer &>(MainInterfaceGlobal).box_sprite(", 1),
         body.replace("rc.right -= 4;", "rc.right += 4;", 1),
         body.replace("    draw_bioscan();", "    draw_hq();", 1),
         body.replace(
