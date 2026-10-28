@@ -1,0 +1,24 @@
+{
+  "event_id": "6e817cdf5d18373f52a88fc27f9a36a604c96f6f209b84ec7c8a0b578f739991",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [],
+    "evidence": [
+      "The now-exact multiply_assign confirms the original scratch-cell nonvolatile accumulation pattern. Authorize one corresponding untried candidate for by-value multiply: replace scalar sum with direct result-cell accumulation only, preserve identity initializer, self-times-other operand order, loops, hidden value-return ABI and delayed output copy.",
+      "Full pinned/current comparison and prior trial inspection: .opensmacx/recovery/exact-first-oct28mz/matrix-sibling-triage.json. No other Matrix methods/header changes or retries; retain all historical claims/ownership/x87 caveats."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6506880,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "091c47960119e077cb0bf6727b7c13c4ead04f4c5064291db1209f55625413d7",
+  "request_id": "one-sibling-value-product-candidate",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:exact-matrix-multiply-return-oct28mw"
+}

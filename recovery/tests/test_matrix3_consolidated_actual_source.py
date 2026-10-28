@@ -130,10 +130,9 @@ int main() {
   if (!same(&y.value, ab) || !same(&x.value, a)) return 25;
   fill(&x.value, 1.0f); fill(&y.value, 9.0f);
   for (int i = 0; i < 9; ++i) y.value.cells[i] = 9.0f - (float)i;
-  x.value.multiply_assign(&y.value);
-  if (!same(&x.value, ab)) return 15;
-  fill(&x.value, 1.0f); x.value.multiply_assign(&x.value);
-  if (!same(&x.value, square)) return 16;
+  if (&x.value.multiply_assign(&y.value) != &x.value || !same(&x.value, ab)) return 15;
+  fill(&x.value, 1.0f);
+  if (&x.value.multiply_assign(&x.value) != &x.value || !same(&x.value, square)) return 16;
 
   fill(&x.value, 1.0f);
   const float input[3] = {2,3,5};

@@ -158,32 +158,33 @@ Purpose: Replace this 3x3 matrix with its product with another: a
 // Structural debt: observed cells[0..8] only; original class, complete extent,
 // containing owner, lifecycle, callers, TU, and x87 precision remain unknown.
 // RECOVERY_ROLE: SCAFFOLD Bounded numerical receiver view only; shared original object ownership, containing class, full extent, callers and lifetime remain unproved. Source consolidation and complete arithmetic bodies do not resolve this structural obligation.
-// ORIGINAL: 0x006347F0 sub_6347f0 0x006347F0-0x006348BC FILE
-// symbol   ?multiply_assign@Matrix3@@QAEXPBU1@@Z
+// ORIGINAL: 0x006347F0 sub_6347f0 0x006347F0-0x006348BC FILE BYTE_EXACT
+// symbol    ?multiply_assign@Matrix3@@QAEAAU1@PBU1@@Z
 // size      204 bytes
 // prototype
 // callers   0   call targets   0
 // kind      game
 // flags     sp_ready;purged_ok
 // calls     (none)
-Return Value: n/a
+Return Value: this matrix (inferred from the pinned receiver remaining in EAX)
 Status: Complete
 */
-void Matrix3::multiply_assign(const Matrix3 *other) {
+Matrix3 &Matrix3::multiply_assign(const Matrix3 *other) {
     float scratch[9] = {1.0f, 0.0f, 0.0f,
                         0.0f, 1.0f, 0.0f,
                         0.0f, 0.0f, 1.0f};
     for (int row = 0; row < 3; ++row) {
         for (int column = 0; column < 3; ++column) {
-            float sum = 0.0f;
+            scratch[row * 3 + column] = 0.0f;
             for (int depth = 0; depth < 3; ++depth) {
-                sum = other->cells[depth * 3 + column] *
-                      cells[row * 3 + depth] + sum;
+                scratch[row * 3 + column] =
+                    other->cells[depth * 3 + column] *
+                    cells[row * 3 + depth] + scratch[row * 3 + column];
             }
-            scratch[row * 3 + column] = sum;
         }
     }
     std::memcpy(cells, scratch, sizeof(scratch));
+    return *this;
 }
 
 /*
