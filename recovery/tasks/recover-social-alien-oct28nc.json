@@ -1,0 +1,23 @@
+{
+  "author": "coordinator",
+  "base_revision": "51df22062b0c185aa6d2ae13ef97a081a9261c6d",
+  "editable_files": [
+    "src/faction.cpp",
+    "recovery/tests/test_social_calc_alien_flag_actual_oct28nc.py"
+  ],
+  "evidence": [
+    "Pin5B43FB..441D tests raw rule_flags80 after successful has_temple and positivePLANET; no ExpansionEnabled read there. Replace only is_alien_faction usage in social_calc with raw typedruleflag predicate. Preserve helperandallothercalls/loops/effects. Prove behavior with actual-sourcehostcontrols including ExpansionEnabledfalse/alienflagset; retain proved faithful fix evenifmatchingmiss. No behaviorimprovements.",
+    "Workers prepare C++ and meaningful actual-source host controls ONLY after coordinator READY; then freeze and report. Coordinator alone launches native compiler measurements with approved execution permissions, records, Git, fullbuild, review and integration. One sourceproposal perselectedaddress, one batchedTU candidate request. No asm/bytes/ORIGINAL/claims/flags/signature/header changes; scope discoveries returned tocoordinator. Do not revert pin-proved behavioral corrections merely for a local match miss; preserve all obligations and tests."
+  ],
+  "intent": "Recover pinned owner behavior and matching structure: social-alien",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5980688,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "recover-social-alien-oct28nc"
+}

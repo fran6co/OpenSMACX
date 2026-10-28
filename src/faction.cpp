@@ -2979,7 +2979,7 @@ void __cdecl social_calc(SocialCategory *category, SocialEffect *effect, int fac
         }
         if (has_temple(faction_id)) {
             effect->values_[SocialEffect::PLANET]++;
-            if (is_alien_faction(faction_id)) {
+            if (Players[faction_id].rule_flags & RFLAG_ALIEN) {
                 effect->values_[SocialEffect::RESEARCH]++; // bonus documented in conceptsx.txt but not manual
             }
         }

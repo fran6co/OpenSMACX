@@ -1273,22 +1273,26 @@ extern "C" int __cdecl sub_4e7e50(int radius_index) {
         BaseCurrent->state |= 0x8000;
     }
     int sum = 0;
-    const uint8_t owner = base->faction_id_current;
     for (int pass = 0; pass < 4; ++pass) {
+        const uint8_t owner = BaseCurrent->faction_id_current;
+        const int selected_base_id = BaseIDCurrentSelected;
         int value;
         switch (pass) {
         case 0:
-            value = crop_yield(owner, BaseIDCurrentSelected, x, y, 0);
+            value = crop_yield(owner, selected_base_id, x, y, 0);
             break;
         case 1:
-            value = mine_yield(owner, BaseIDCurrentSelected, x, y, 0);
+            value = mine_yield(owner, selected_base_id, x, y, 0);
             break;
         case 2:
-            value = energy_yield(owner, BaseIDCurrentSelected, x, y, 0);
+            value = energy_yield(owner, selected_base_id, x, y, 0);
+            break;
+        case 3:
+            value = 0;
+            TileYieldRestricted = 0;
             break;
         default:
             value = 0;
-            TileYieldRestricted = 0;
             break;
         }
         // The image selects C0/C4/C8/CC and reloads BaseCurrent each pass.
@@ -1336,22 +1340,26 @@ extern "C" int __cdecl sub_4e7f80(int radius_index) {
         BaseCurrent->state |= 0x8000;
     }
     int sum = 0;
-    const uint8_t owner = base->faction_id_current;
     for (int pass = 0; pass < 4; ++pass) {
+        const uint8_t owner = BaseCurrent->faction_id_current;
+        const int selected_base_id = BaseIDCurrentSelected;
         int value;
         switch (pass) {
         case 0:
-            value = crop_yield(owner, BaseIDCurrentSelected, x, y, 0);
+            value = crop_yield(owner, selected_base_id, x, y, 0);
             break;
         case 1:
-            value = mine_yield(owner, BaseIDCurrentSelected, x, y, 0);
+            value = mine_yield(owner, selected_base_id, x, y, 0);
             break;
         case 2:
-            value = energy_yield(owner, BaseIDCurrentSelected, x, y, 0);
+            value = energy_yield(owner, selected_base_id, x, y, 0);
+            break;
+        case 3:
+            value = 0;
+            TileYieldRestricted = 0;
             break;
         default:
             value = 0;
-            TileYieldRestricted = 0;
             break;
         }
         base = BaseCurrent;
