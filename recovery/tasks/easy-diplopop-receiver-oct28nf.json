@@ -1,0 +1,23 @@
+{
+  "author": "coordinator",
+  "base_revision": "5f69b7ce7812fffbbc321d7b81ce075201cd3ce2",
+  "editable_files": [
+    "src/diplopop.cpp"
+  ],
+  "evidence": [
+    "Apply proven BattleWin422CC0 receiver lever only to MainInterfaceGlobal Buffer-reference alias in selectedbody: direct inherited calls/member reads eliminate the original-absent nullable base-adjust mask. Preserve all original origin-object calls, other Buffer receivers/casts, argument identity, order, locals/lifetime/quirks. Inspect actual callee declarations before any explicit qualification; do not change virtual dispatch or resolve overloads by altering signatures. Existing next-interface-receiver-family report gives pinned/current evidence.",
+    "One source proposal perselectedbody, one actualprofile TUcompile bycoordinator; no edits before READY afterprefix+wholeTUunchangedreproduction. No flags/header/ABI/ORIGINAL/claims/asm/bytes/absoluteaddresses or fabricatedtypes. Preserve all historic obligations. A crossscope structural discovery mustreturnforimmediate centralexpansion, notdiscarded. Pure spelling miss restored after immutable snapshot; exacts bankonlynative recorder.",
+    "Use only UV_PROJECT_ENVIRONMENT=/home/fran6co/code/OpenSMACX/.venv UV_CACHE_DIR=/tmp/opensmacx-uv-cache UV_NO_SYNC=1 uv run --no-sync for all Python; no uv sync/autosync. Root owns nativecompiler/preparation/Git/record/integration. Run existing meaningful hostcontrols ifavailable, no mirror tests. Freeze/hash/report changedaddresses and residualfindings."
+  ],
+  "intent": "Exploit verified shared matching lever: diplopop-receiver",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4457120,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "easy-diplopop-receiver-oct28nf"
+}
