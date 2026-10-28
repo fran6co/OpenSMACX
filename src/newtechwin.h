@@ -85,54 +85,21 @@ class NewTechWin : public GraphicWin {
   uint32_t field_A18_;  // 0xA18
   uint32_t field_A1C_;  // 0xA1C
   uint32_t field_A20_;  // 0xA20
-  uint32_t field_A24_;  // 0xA24
-  uint32_t field_A28_;  // 0xA28
-  uint32_t field_A2C_;  // 0xA2C
-  uint32_t field_A30_;  // 0xA30
-  uint32_t field_A34_;  // 0xA34
-  uint32_t field_A38_;  // 0xA38
-  uint32_t field_A3C_;  // 0xA3C
-  uint32_t field_A40_;  // 0xA40
-  uint32_t field_A44_;  // 0xA44
-  uint32_t field_A48_;  // 0xA48
-  uint32_t field_A4C_;  // 0xA4C
-  uint32_t field_A50_;  // 0xA50
-  uint32_t field_A54_;  // 0xA54
-  uint32_t field_A58_;  // 0xA58
-  uint32_t field_A5C_;  // 0xA5C
-  uint32_t field_A60_;  // 0xA60
-  uint32_t field_A64_;  // 0xA64
-  uint32_t field_A68_;  // 0xA68
-  uint32_t field_A6C_;  // 0xA6C
-  uint32_t field_A70_;  // 0xA70
-  uint32_t field_A74_;  // 0xA74
-  uint32_t field_A78_;  // 0xA78
-  uint32_t field_A7C_;  // 0xA7C
-  uint32_t field_A80_;  // 0xA80
-  uint32_t field_A84_;  // 0xA84
-  uint32_t field_A88_;  // 0xA88
-  uint32_t field_A8C_;  // 0xA8C
-  uint32_t field_A90_;  // 0xA90
-  uint32_t field_A94_;  // 0xA94
-  uint32_t field_A98_;  // 0xA98
-  uint32_t field_A9C_;  // 0xA9C
-  uint32_t field_AA0_;  // 0xAA0
-  uint32_t field_AA4_;  // 0xAA4
-  uint32_t field_AA8_;  // 0xAA8
-  uint32_t field_AAC_;  // 0xAAC
-  uint32_t field_AB0_;  // 0xAB0
-  uint32_t field_AB4_;  // 0xAB4
-  uint32_t field_AB8_;  // 0xAB8
-  uint32_t field_ABC_;  // 0xABC
-  uint32_t field_AC0_;  // 0xAC0
-  uint32_t field_AC4_;  // 0xAC4
-  uint32_t field_AC8_;  // 0xAC8
-  uint32_t field_ACC_;  // 0xACC
-  uint32_t field_AD0_;  // 0xAD0
-  uint32_t field_AD4_;  // 0xAD4
-  uint32_t field_AD8_;  // 0xAD8
-  uint32_t field_ADC_;  // 0xADC
-  uint32_t field_AE0_;  // 0xAE0
+  // Each mapped redraw call passes the address of this four-word object
+  // directly as RECT*. The observed address/extent does not establish the
+  // original source member spelling.
+  // RECOVERY_MEMBER: v2 NewTechWin main_rect_ tagRECT 0xA24 0x004839A3
+  RECT main_rect_;  // 0xA24
+  // RECOVERY_MEMBER: v2 NewTechWin title_rect_ tagRECT 0xA34 0x00483A17
+  RECT title_rect_;  // 0xA34
+  // RECOVERY_MEMBER: v2 NewTechWin category_rect_ tagRECT 0xA44 0x00483CA9
+  RECT category_rect_;  // 0xA44
+  // RECOVERY_MEMBER: v4 NewTechWin row_rects_ tagRECT[4] 0xA54 0x40 0x00483C5D
+  RECT row_rects_[4];  // 0xA54
+  // RECOVERY_MEMBER: v4 NewTechWin label_rects_ tagRECT[4] 0xA94 0x40 0x00483AAE
+  RECT label_rects_[4];  // 0xA94
+  // RECOVERY_MEMBER: v2 NewTechWin bottom_rect_ tagRECT 0xAD4 0x00483E73
+  RECT bottom_rect_;  // 0xAD4
   uint32_t field_AE4_;  // 0xAE4
   uint32_t field_AE8_;  // 0xAE8
   uint32_t field_AEC_;  // 0xAEC
