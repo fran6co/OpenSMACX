@@ -21,8 +21,14 @@
 // symbol    ??_GStringBox@@UAEPAXI@Z
 // kind      game
 #include "stdafx.h"
-#include "stringbox.h"
+#include "graphicwin.h"
+#include "scroll.h"
 #include "stringstruct.h"
+// Dependencies retain their ordinary compiler context. Parse only StringBox
+// with frame pointers to reproduce its generated deleting entry in this TU.
+#pragma optimize("y", off)
+#include "stringbox.h"
+#pragma optimize("", on)
 #include <cstring>
 
 // The getter is only an admission predicate. Reload the actual parent after
@@ -30,6 +36,7 @@
 // ORIGINAL: 0x00432720 ?on_link_clicked@StringBox@@QAEXHPAD@Z 0x00432720-0x00432761 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Full original432720..432761 returns1 on parent/getter refusal and forwards parent slot88 result otherwise; table66ADC8 selects the same override. The seed void+assembly return is an incorrect signature.", "Reload win_parent_ after virtual get_graphic_win. Its returned GraphicWin pointer is predicate-only; current parent is the callback receiver."], "reason": "Recover original GraphicWin link-hook overrides through the genuine slot88 hierarchy, preserving seed identity and historical obligations."}
 // symbol    ?on_link_clicked@StringBox@@UAEHHPAD@Z
+#pragma optimize("y", off)
 int StringBox::on_link_clicked(int id, char *link) {
     Win *parent = win_parent_;
     if (parent == 0 || parent->get_graphic_win() == 0) {
@@ -37,6 +44,7 @@ int StringBox::on_link_clicked(int id, char *link) {
     }
     return static_cast<GraphicWin *>(win_parent_)->on_link_clicked(id, link);
 }
+#pragma optimize("", on)
 
 // The StringBox scroll-in-progress hook is Win slot 48. Use the real
 // inherited virtual member; the two values are the original event code and
