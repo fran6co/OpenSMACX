@@ -2127,8 +2127,11 @@ static void *memcpy_call(void *dst, const void *src, unsigned len) {
     return memcpy(dst, src, len);
 }
 
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma function(memcpy)
+#endif
 Palette &Palette::copy_from(Palette *src) {
-    memcpy_call(entries_, src->entries_, sizeof(entries_));
+    memcpy(entries_, src->entries_, sizeof(entries_));
 
     seed_ = 0;
     while (seed_ == 0) {
@@ -2137,3 +2140,6 @@ Palette &Palette::copy_from(Palette *src) {
 
     return *this;
 }
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma intrinsic(memcpy)
+#endif

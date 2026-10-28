@@ -87,10 +87,8 @@ struct GraphicWin : Win, Buffer {
 };
 struct MapWin : virtual GraphicWin { virtual ~MapWin() {} };
 typedef MapWin *MapWinSlots[8];
-static const std::size_t MapWinTableSlots = 8;
 static MapWinSlots MapWinTable = {};
 
-static GraphicWin *&opening_window() { return OpeningWindow; }
 
 struct Opening : GraphicWin {
     ~Opening() {
@@ -238,7 +236,7 @@ def test_actual_system_close_destroys_owned_windows_in_pinned_order(tmp_path, na
 
 @pytest.mark.parametrize("name,old,new", (
     ("opening_show", "delete opening;", "opening->show(1);"),
-    ("map_show", "delete window;", "window->show(1);"),
+    ("map_show", "delete MapWinTable[slot];", "MapWinTable[slot]->show(1);"),
 ))
 def test_compiled_show_instead_of_delete_damages_lifecycle(tmp_path, name, old, new):
     compiler = shutil.which("g++")

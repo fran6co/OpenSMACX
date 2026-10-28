@@ -1,0 +1,28 @@
+{
+  "event_id": "6717a57f7990b11fe95826e0fb426bdf0220eada2268bea4ed4dd9eef214f6c2",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_mci_device_word_storage_oct13j.py",
+      "recovery/tests/test_system_close_actual_source.py"
+    ],
+    "evidence": [
+      "Full candidate c5ab465ced6e8802215b848315668def774cef6c build links. Native outside-body comparison found end_of_game changes at section offsets0x4ec,0x4f2,0x500,0x503: two scalar global operand loads exchange ECX/EDX assignment; add and pushed result exchange consistently. Endgame source is unchanged. This is an explicit additional compiler-affected function, not a waived residual.",
+      "Measure original/baseline/candidate end_of_game and independently review commutative sum semantics before manual integration. Preserve its original mapping and matching obligations. Do not edit its C++ or reset the original task baseline.",
+      "Host fixtures add Windows WORD alias and retarget existing deletion damage check after source-local spelling changes; keep oracle and behavior assertions intact."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5392496,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "include-measured-endgame-operand-scheduling-oct28",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:exact-game-short-shapes-oct28mq"
+}

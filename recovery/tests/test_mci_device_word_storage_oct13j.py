@@ -104,6 +104,7 @@ HOST = r'''#include <assert.h>
 #include <new>
 #include <vector>
 
+typedef uint16_t WORD;
 typedef uint32_t DWORD;
 typedef uintptr_t DWORD_PTR;
 typedef uintptr_t UINT_PTR;
