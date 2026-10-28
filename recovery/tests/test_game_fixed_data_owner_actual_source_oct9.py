@@ -23,7 +23,7 @@ IDENTITIES = {
         0x0058F700,
         "void __cdecl say_fac_special(char *a1, char *a2, int a3) {",
     ),
-    "sub_52db40": (0x0052DB40, "void sub_52db40() {"),
+    "reset_saved_process_slot_state": (0x0052DB40, "void reset_saved_process_slot_state() {"),
 }
 
 
@@ -89,7 +89,7 @@ def actual_body(name: str) -> str:
     address, signature = IDENTITIES[name]
     rows = [row for row in read_file(SOURCE) if row.address == address]
     assert len(rows) == 1, f"expected one mapped identity at {address:#x}"
-    expected_mode = Mode.BODY if name == "sub_52db40" else Mode.FILE
+    expected_mode = Mode.BODY if name == "reset_saved_process_slot_state" else Mode.FILE
     assert rows[0].mode is expected_mode
     body = braced_definition(SOURCE.read_text(encoding="utf-8"), signature)
     assert rows[0].region.find(signature) >= 0
@@ -223,13 +223,13 @@ def test_actual_mapped_identities_and_token_address_evidence() -> None:
     source = SOURCE.read_text(encoding="utf-8")
     for name, (address, _) in IDENTITIES.items():
         rows = [row for row in read_file(SOURCE) if row.address == address]
-        expected_mode = Mode.BODY if name == "sub_52db40" else Mode.FILE
+        expected_mode = Mode.BODY if name == "reset_saved_process_slot_state" else Mode.FILE
         assert len(rows) == 1 and rows[0].mode is expected_mode, name
         assert f"// ORIGINAL: 0x{address:08X}" in rows[0].region
     assert "0x0068FA70..8C" in source
     assert "0x0068FAB0..CC" in source
     assert "0x009AB898" not in actual_body("sub_52a980")
-    assert "0x0093E99E" not in actual_body("sub_52db40")
+    assert "0x0093E99E" not in actual_body("reset_saved_process_slot_state")
     assert "0x0068FA70" not in actual_token_source("ordinary")
     assert "0x0068FAB0" not in actual_token_source("faction")
     assert "no shared original allocation/pooling is established" in source
@@ -244,13 +244,13 @@ def test_actual_mapped_identities_and_token_address_evidence() -> None:
         reset_body.index("base_current_count_ = 0"),
     ]
     assert ordered_prototype_writes == sorted(ordered_prototype_writes)
-    save_body = actual_body("sub_52db40")
+    save_body = actual_body("reset_saved_process_slot_state")
     ordered_save_writes = [
-        save_body.index("record->identity_ = -1"),
-        save_body.index("record->field_25_ = 0"),
-        save_body.index("record->field_26_ = 0"),
-        save_body.index("record->field_27_ = -1"),
-        save_body.index("record->status_bytes_[0] = 2"),
+        save_body.index("offsetof(NetDaemonSaveProcessSlot, identity_))) = -1"),
+        save_body.index("*reinterpret_cast<uint8_t *>(cursor - 1) = 0"),
+        save_body.index("*reinterpret_cast<uint8_t *>(cursor) = 0"),
+        save_body.index("*reinterpret_cast<int8_t *>(cursor + 1) = -1"),
+        save_body.index("*reinterpret_cast<uint8_t *>(cursor + 2) = 2"),
     ]
     assert ordered_save_writes == sorted(ordered_save_writes)
 
@@ -286,7 +286,7 @@ int main() {
 
 @pytest.mark.parametrize("compiler", ["g++", "clang++"])
 def test_actual_save_initializer_touches_only_snapshot_prefix(compiler, tmp_path):
-    reset = actual_body("sub_52db40")
+    reset = actual_body("reset_saved_process_slot_state")
     program = HARNESS + reset + r'''
 int main() {
     std::memset(&NetDaemonNet, 0x5A, sizeof(NetDaemonNet));
@@ -299,7 +299,7 @@ int main() {
         NetDaemonNet.process_slots_[i].identity_ = static_cast<int8_t>(0x70 + i);
     }
     NetDaemon before = NetDaemonNet;
-    sub_52db40();
+    reset_saved_process_slot_state();
     for (int i = 0; i < 8; ++i) {
         const NetDaemonSaveProcessSlot &before_row = before.saved_process_slots_[i];
         const NetDaemonSaveProcessSlot &after_row = NetDaemonNet.saved_process_slots_[i];
@@ -417,17 +417,17 @@ int main() {
     std::memset(&NetDaemonNet, 0x5A, sizeof(NetDaemonNet));
     NetDaemonNet.saved_process_slots_[0].identity_ = 12;
     NetDaemonNet.process_slots_[0].identity_ = 13;
-    sub_52db40();
+    reset_saved_process_slot_state();
     assert(NetDaemonNet.saved_process_slots_[0].identity_ == -1);
     assert(NetDaemonNet.process_slots_[0].identity_ == 13);
 }
 '''
-    owner_mutant = actual_body("sub_52db40").replace(
-        "NetDaemonNet.saved_process_slots_;",
-        "NetDaemonNet.process_slots_;",
+    owner_mutant = actual_body("reset_saved_process_slot_state").replace(
+        "NetDaemonNet.saved_process_slots_)",
+        "NetDaemonNet.process_slots_)",
         1,
     )
-    assert owner_mutant != actual_body("sub_52db40")
+    assert owner_mutant != actual_body("reset_saved_process_slot_state")
     require_mutant_rejected(compiler, HARNESS + owner_mutant + snapshot_test, tmp_path)
 
     changed_tokens = tokens.replace('SayTokTwo[] = "2"', 'SayTokTwo[] = "X"', 1)
@@ -442,13 +442,13 @@ int main() {
 '''
     require_mutant_rejected(compiler, HARNESS + changed_tokens + phrase + markup_test, tmp_path)
 
-    save_body = actual_body("sub_52db40")
-    save_field_mutant = save_body.replace("record->field_25_ = 0", "record->field_25_ = 1", 1)
+    save_body = actual_body("reset_saved_process_slot_state")
+    save_field_mutant = save_body.replace("*reinterpret_cast<uint8_t *>(cursor - 1) = 0", "*reinterpret_cast<uint8_t *>(cursor - 1) = 1", 1)
     assert save_field_mutant != save_body
     save_field_test = r'''
 int main() {
     std::memset(&NetDaemonNet, 0x5A, sizeof(NetDaemonNet));
-    sub_52db40();
+    reset_saved_process_slot_state();
     assert(NetDaemonNet.saved_process_slots_[0].field_25_ == 0);
 }
 '''

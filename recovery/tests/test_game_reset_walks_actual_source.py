@@ -105,7 +105,7 @@ struct NetDaemonProbe {{ {saved_slots_member} }};
 NetDaemonProbe NetDaemonNet;
 """
     return (wrapper_types, _function_body(game, "sub_52a980"),
-            _function_body(game, "sub_52db40"))
+            _function_body(game, "reset_saved_process_slot_state"))
 
 
 SUPPORT = r'''
@@ -147,7 +147,7 @@ int check_resets() {
     memset(&NetDaemonNet.saved_process_slots_[i], 0x30 + i,
            sizeof(NetDaemonSaveProcessSlot));
   memcpy(saved_before, NetDaemonNet.saved_process_slots_, sizeof(saved_before));
-  sub_52db40();
+  reset_saved_process_slot_state();
   for (int i = 0; i < 8; ++i) {
     const unsigned char *before = saved_before + i * sizeof(NetDaemonSaveProcessSlot);
     const unsigned char *after = (const unsigned char *)&NetDaemonNet.saved_process_slots_[i];
@@ -218,7 +218,7 @@ def test_actual_typed_reset_walks_and_damage_controls(compiler_name, tmp_path):
         ("vehicle_skip_last_record", vehicle_body.replace(
             "prototype_id < MaxVehProtoNum", "prototype_id < MaxVehProtoNum - 1", 1), save_body),
         ("save_wrong_signed_byte", vehicle_body, save_body.replace(
-            "record->field_27_ = -1;", "record->field_27_ = 0;", 1)),
+            "*reinterpret_cast<int8_t *>(cursor + 1) = -1;", "*reinterpret_cast<int8_t *>(cursor + 1) = 0;", 1)),
         ("save_skip_last_record", vehicle_body, save_body.replace(
             "} while (--remaining);", "} while (--remaining > 1);", 1)),
     ]
