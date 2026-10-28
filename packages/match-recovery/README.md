@@ -3846,12 +3846,17 @@ branches into the transfer or outside the action, and additional relocations
 refuse. This recognizes compiler cleanup code without assigning the frame slot
 a source-level name or proving virtual-base layout. Original and COFF unwind
 ownership, destructor targets, complete bytes and resource limits remain checked.
-The separately typed array action has exactly eight
+The separately typed array action has seven or eight
 instructions: an absolute destructor-callback push, positive count and stride
-pushes, `mov eax,[ebp+disp8/disp32]`, an immediate EAX base adjustment,
+pushes, `mov eax,[ebp+disp8/disp32]`, an optional immediate EAX base adjustment,
 `push eax`, a relative call to the vector destructor iterator, and `ret`.
-Both immediate-push widths and the supported EAX-add encodings are decoded;
+The adjustment admits the existing EAX-add encodings or accumulator
+`sub eax,imm32`; omission means zero adjustment. Decoded offsets use signed
+32-bit wrapping arithmetic. Both immediate-push widths are decoded;
 count, stride, frame displacement and adjustment remain compared code bytes.
+Equal net adjustments do not turn different opcodes or omitted instructions
+into byte equality. Callback/helper relocation roles, complete action boundaries
+and resource limits remain unchanged.
 This frame-relative pointer load does not identify `this` or prove class layout.
 An array action owns two independent operands: a callback DIR32 and a helper
 REL32. The original callback requires its own exact PE HIGHLOW site; neither
