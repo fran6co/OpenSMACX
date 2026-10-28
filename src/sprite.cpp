@@ -194,18 +194,40 @@ int Sprite::change_color(int old_color, int new_color) {
     return 0;
 }
 
-// ORIGINAL: 0x005EAE4F ?copy@Sprite@@QAEHPAUSprite@@@Z 0x005EAE4F-0x005EAF34
+// ORIGINAL: 0x005EAE4F ?copy@Sprite@@QAEHPAUSprite@@@Z 0x005EAE4F-0x005EAF34 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["5EAE57 checks source bits before touching destination.5EAE6C..5EAEC4 performs the same owned/borrowed cleanup and field clearing as Sprite::close, preserving the transparent key.5EAEC7 captures wrapped32bit stride*height only after cleanup; allocation pointer publishes before null failure4.", "5EAEEA rereads source bits after allocation;5EAEF5..5EAF29 reads metadata after memcpy, writes dimensions/offsets/key, clears borrowed status and copies stride last. Original has no pixel-allocation increment to SpriteMemoryUsed and no self/null destination guard. Valid pixel allocations and ordinary C++ memcpy domains remain required; no behavioral repair is invented."], "reason": "Recover source.copy(destination) through Sprite ownership and close semantics, retaining original allocation failure and metadata observation order."}
 // symbol    ?copy@Sprite@@QAEHPAV1@@Z
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma function(memcpy)
+#endif
 int Sprite::copy(Sprite *destination) {
     if (pcBits_ == 0) {
         return 7;
     }
-    // Original 5EAE6C..5EAEC4 inlines this cleanup. In particular it does
-    // not free borrowed pixels or clear the destination's transparent key.
-    destination->close();
-    const unsigned int size = static_cast<unsigned int>(iSpriteHeight_)
-                           * static_cast<unsigned int>(iSpriteWidth2_);
+    if (destination->fObj1Exists_ == 0 && destination->pcBits_ != 0) {
+        SpriteMemoryUsed = static_cast<int>(
+            static_cast<uint32_t>(SpriteMemoryUsed)
+            - static_cast<uint32_t>(destination->iSpriteHeight_)
+                  * static_cast<uint32_t>(destination->iSpriteWidth_));
+        if (destination->pcBits_ != 0) {
+            free(destination->pcBits_);
+        }
+        destination->pcBits_ = 0;
+    }
+    if (destination->ppszFileName_ != 0) {
+        free(destination->ppszFileName_);
+        destination->ppszFileName_ = 0;
+    }
+    destination->iSpriteWidth2_ = 0;
+    destination->iSpriteWidth_ = 0;
+    destination->iSpriteHeight_ = 0;
+    destination->iWidth_ = 0;
+    destination->iHeight_ = 0;
+    destination->iLeftOffset_ = 0;
+    destination->iTopOffset_ = 0;
+    destination->fObj1Exists_ = 0;
+    unsigned int size = static_cast<unsigned int>(iSpriteWidth2_);
+    size *= static_cast<unsigned int>(iSpriteHeight_);
     unsigned char *pixels = static_cast<unsigned char *>(mem_get(size));
     destination->pcBits_ = pixels;
     if (pixels == 0) {
@@ -225,6 +247,9 @@ int Sprite::copy(Sprite *destination) {
     destination->iSpriteWidth2_ = iSpriteWidth2_;
     return 0;
 }
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma intrinsic(memcpy)
+#endif
 
 // OBJECTS, NOT POINTERS: the image addresses 0x00696D18 and 0x00696D1C
 // directly - `mov esi, dword ptr [0x696d18]` - where a pointer variable

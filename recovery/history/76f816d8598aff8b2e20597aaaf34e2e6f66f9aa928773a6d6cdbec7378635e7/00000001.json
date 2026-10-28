@@ -1,0 +1,19 @@
+{
+  "event_id": "f0f26abfd9854dc0bfb6438fdd6a5cbaac05c9d23c45952e30f3eda39caed8bf",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_sprite_asset_copy.py"
+    ],
+    "evidence": [
+      "Native actual-profile copy now89/89 instructions with only2 operand mismatches, balanced memcpy pragma and explicit original cleanup. Existing mutant anchors require updating from obsolete close-call spelling; retain damage coverage for cleanup, size, and existing change_color behavior."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "sprite-inline-cleanup-controls-oct28nh",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:easy-sprite-copy-oct28nh"
+}
