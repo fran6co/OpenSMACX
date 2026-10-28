@@ -40,11 +40,11 @@ def test_actual_history_owner(compiler, damage, tmp_path):
         pytest.skip("host compiler unavailable")
     actual = actual_source()
     if damage == "underwrite":
-        old = "ProtoBung *entry = &BungList[faction_id][0];"
-        assert actual.count(old) == 2  # lookup and clear
+        old = "&BungList[faction_id][0].weapon_id"
+        assert actual.count(old) == 1
         start = actual.index("void __cdecl clear_bunglist(")
         actual = actual[:start] + actual[start:].replace(
-            old, "ProtoBung *entry = &BungList[faction_id - 1][0];", 1)
+            old, "&BungList[faction_id][0].ability_flags", 1)
     elif damage == "cursor":
         old = "cursor = (slot + 1) % 64;"
         assert actual.count(old) == 1
