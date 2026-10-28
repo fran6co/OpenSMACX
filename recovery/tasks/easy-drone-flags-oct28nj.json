@@ -1,0 +1,24 @@
+{
+  "author": "root",
+  "base_revision": "285876c2d70ebaec5e7eb1c37e1669c6d6730bcc",
+  "editable_files": [
+    "src/base.cpp"
+  ],
+  "evidence": [
+    "Change ONLY five is_alien_faction uses within drone_riot to directPlayers ruleflags, preserving negations and full original unsafe/error behavior, call/effect order. No edits to other basefunctions, helper or layouts. Review every pinned flag site, not a global substitution. No new trivial mirror tests; native proof and existing relevant controls first.",
+    "alien-predicate-levers.json: complete4F4FB0..4F5CD6 pin has five rawalienreads at4F501D/5063/5345/53E6/569C and noExpansionEnabled. Source andqualifiedCOFF have fiveaddedgates.",
+    "Read recovery/WORKFLOW.md. Workers remain read-only until coordinator exactpositive andunchangedactualTUreproductionPASS. Only coordinator nativecompiler/prep/Git/record/integration. One actual-profile candidate, no extendedspellingsearch. Preserve alloriginalquirks/claims and returncrossowner discoveries.",
+    "EveryPython UV_NO_SYNC=1 UV_PROJECT_ENVIRONMENT=/home/fran6co/code/OpenSMACX/.venv UV_CACHE_DIR=/tmp/opensmacx-uv-cache uv run --no-sync. Existing native tests must be excluded from host-only runs; no worker nativepreprocessing. Prefix26/28/29 quarantined."
+  ],
+  "intent": "Restore drone riot original raw alien rule flag predicates",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5197744,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "drone-flags original behavior",
+  "task_id": "easy-drone-flags-oct28nj"
+}
