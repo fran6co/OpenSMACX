@@ -100,16 +100,22 @@ int ProdPicker::edbc_unit(int prototype_id) {
 // Current virtual override emits UAE; retain the catalogued QAE identity above.
 // kind      game
 void ProdPicker::on_mousewheel(int delta) {
-    // x86 NEG leaves INT_MIN negative; the original's positive-count test
-    // therefore sends no steps for that otherwise overflowing input.
-    if (delta == (-2147483647 - 1)) return;
-    while (delta < 0) {
-        scroll_.on_mousewheel_down(1);
-        ++delta;
-    }
-    while (delta > 0) {
-        scroll_.on_mousewheel_up(1);
-        --delta;
+    if (delta < 0) {
+        const int count = static_cast<int>(
+            0U - static_cast<unsigned int>(delta));
+        if (count > 0) {
+            Scroll *const scroll = &scroll_;
+            int remaining = count;
+            do {
+                scroll->on_mousewheel_down(1);
+            } while (--remaining != 0);
+        }
+    } else if (delta > 0) {
+        Scroll *const scroll = &scroll_;
+        int remaining = delta;
+        do {
+            scroll->on_mousewheel_up(1);
+        } while (--remaining != 0);
     }
 }
 
