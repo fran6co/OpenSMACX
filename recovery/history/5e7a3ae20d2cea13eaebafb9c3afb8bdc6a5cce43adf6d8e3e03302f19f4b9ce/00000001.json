@@ -1,0 +1,24 @@
+{
+  "event_id": "090d459a0fd522f30dee4678a797371d9a24af941583cb5a6c1451b7a4389814",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Expand measurement/review obligations to unchanged-source drone_riot after fresh combined full build reports a native outside-body failure. Do not reset baseline or rewrite prior report. Only physical code difference is independent valid stack-slot loads swapped at section offsets2A4/2A7: mov esi,[ebp-2C] and mov edi,[ebp-18]. Both3152 bytes/1013 instructions; references/symbols/associations unchanged. Native original comparison remains MISMATCH,13matching before/after. No source or claim edits to drone_riot authorized by this decision.",
+      "Coordinator manually admits this bounded emitted-order difference under standing user authorization for reviewed recovery integration, preserving the native residual FAIL (208PASS/1FAIL) and strict unknowns. Actual-source host controls4PASS; source/claims/mappings/references checks0; complete application compiles/links. No automatic or full-game acceptance is claimed. Full build artifacts and independent pin review retained under fast-pass-oct28nc and fidelity-nc-candidate-build. Restore further byte matching in later pass; do not weaken comparators or omit the failed report."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5197744,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "review-drone-output-order-oct28nc",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:recover-base-reads-oct28nc"
+}
