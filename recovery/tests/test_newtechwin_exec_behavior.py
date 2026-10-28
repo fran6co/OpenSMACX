@@ -134,13 +134,9 @@ struct Wave {
 struct WaveDevice { int get_group_volume(unsigned int) { return 73; } } WaveDeviceGlobal;
 int modal_event_pending = 0;
 struct NewTechWin {
-    uint32_t field_A14_,field_A18_,field_A1C_,field_A20_,field_A24_,field_A28_,field_A2C_,field_A30_;
-    uint32_t field_A34_,field_A38_,field_A3C_,field_A40_,field_A44_,field_A48_,field_A4C_,field_A50_;
-    uint32_t field_A54_,field_A58_,field_A5C_,field_A60_,field_A64_,field_A68_,field_A6C_,field_A70_;
-    uint32_t field_A74_,field_A78_,field_A7C_,field_A80_,field_A84_,field_A88_,field_A8C_,field_A90_;
-    uint32_t field_A94_,field_A98_,field_A9C_,field_AA0_,field_AA4_,field_AA8_,field_AAC_,field_AB0_;
-    uint32_t field_AB4_,field_AB8_,field_ABC_,field_AC0_,field_AC4_,field_AC8_,field_ACC_,field_AD0_;
-    uint32_t field_AD4_,field_AD8_,field_ADC_,field_AE0_,field_AE4_,field_AE8_,field_AEC_,field_AF0_;
+    uint32_t field_A14_,field_A18_,field_A1C_,field_A20_;
+    RECT main_rect_,title_rect_,category_rect_,row_rects_[4],label_rects_[4],bottom_rect_;
+    uint32_t field_AE4_,field_AE8_,field_AEC_,field_AF0_;
     uint32_t field_AF4_,field_AF8_,field_AFC_,field_B00_,field_B04_,field_B08_,field_B0C_,field_B10_;
     uint32_t field_B14_,field_B18_,field_B1C_,field_B20_,field_B24_,field_B28_,field_16C_;
     FlatButton flatButtons_[3]; ButtonGroup buttonGroup_; StringBox stringBoxes_[4]; StringBox stringBox2_;
@@ -195,8 +191,8 @@ int main() {
         assert(actual.bottom==expected_box_rects[i].bottom);
     }
     assert(NewTechWindow.field_B24_==37 && NewTechWindow.field_B28_==5);
-    assert(NewTechWindow.field_A5C_==273 && NewTechWindow.field_A64_==276);
-    assert(NewTechWindow.field_AC4_==276 && NewTechWindow.field_A84_==15);
+    assert(NewTechWindow.row_rects_[0].right==273 && NewTechWindow.row_rects_[1].left==276);
+    assert(NewTechWindow.label_rects_[3].left==276 && NewTechWindow.row_rects_[3].left==15);
     assert(NewTechWindow.stringBoxes_[0].fonts[0]->id==56);
     assert(NewTechWindow.stringBoxes_[0].fonts[3]->id==59);
     assert(NewTechWindow.stringBoxes_[1].fonts[3]->id==58);

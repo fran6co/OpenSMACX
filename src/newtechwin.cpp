@@ -156,125 +156,91 @@ void NewTechWin::on_redraw() {
     const int faction_snapshot = ConsoleGlobal.faction_id_;
     this->clear_links();
 
-    RECT working = *buffer_working_rect();
-    this->box_sprite(&working, &InterfaceStandardPopupBoxStyle);
+    RECT scratch = *buffer_working_rect();
+    this->box_sprite(&scratch, &InterfaceStandardPopupBoxStyle);
 
-    RECT main_area = {
-        static_cast<LONG>(field_A24_), static_cast<LONG>(field_A28_),
-        static_cast<LONG>(field_A2C_), static_cast<LONG>(field_A30_)
-    };
-    this->box_sprite(&main_area, &InterfaceBoxStyles[3]);
+    this->box_sprite(&main_rect_, &InterfaceBoxStyles[3]);
 
-    RECT inset_area = {
-        static_cast<LONG>(field_AF4_), static_cast<LONG>(field_AF8_),
-        static_cast<LONG>(field_AFC_), static_cast<LONG>(field_B00_)
-    };
-    inset_area.left -= 3;
-    inset_area.top -= 3;
-    inset_area.right += 3;
-    inset_area.bottom += 3;
-    this->box_sprite(&inset_area, &InterfaceBoxStyles[3]);
+    scratch.left = static_cast<LONG>(field_AF4_);
+    scratch.top = static_cast<LONG>(field_AF8_);
+    scratch.right = static_cast<LONG>(field_AFC_);
+    scratch.bottom = static_cast<LONG>(field_B00_);
+    scratch.left -= 3;
+    scratch.top -= 3;
+    scratch.right += 3;
+    scratch.bottom += 3;
+    this->box_sprite(&scratch, &InterfaceBoxStyles[3]);
 
     this->set_font(find_font(0x10, 1), 0, 0, 0);
     this->set_text_color(0xE1, -1, 1, 1);
 
-    RECT title_area = {
-        static_cast<LONG>(field_A34_), static_cast<LONG>(field_A38_),
-        static_cast<LONG>(field_A3C_), static_cast<LONG>(field_A40_)
-    };
-    this->box_sprite(&title_area, &InterfaceBoxStyles[0]);
+    this->box_sprite(&title_rect_, &InterfaceBoxStyles[0]);
 
     StringTemp[0] = '\0';
     strcat(StringTemp, label_get(static_cast<int>(field_B28_) > 0 ? 542 : 541));
     CharUpperA(StringTemp);
     if (StringTemp != 0) {
-        this->write_cent_l(StringTemp, &title_area,
+        this->write_cent_l(StringTemp, &title_rect_,
                              static_cast<unsigned int>(strlen(StringTemp)));
     }
 
-    const int title_offsets[4] = {0x110 / 4, 0x130 / 4, 0xEF0 / 4, 0xEF4 / 4};
-    const int title_rect_offsets[4] = {0xA94, 0xAA4, 0xAB4, 0xAC4};
-    int i;
-    for (i = 0; i != 4; ++i) {
-        RECT text_area;
-        switch (title_rect_offsets[i]) {
-        case 0xA94:
-            text_area.left = static_cast<LONG>(field_A94_);
-            text_area.top = static_cast<LONG>(field_A98_);
-            text_area.right = static_cast<LONG>(field_A9C_);
-            text_area.bottom = static_cast<LONG>(field_AA0_);
-            break;
-        case 0xAA4:
-            text_area.left = static_cast<LONG>(field_AA4_);
-            text_area.top = static_cast<LONG>(field_AA8_);
-            text_area.right = static_cast<LONG>(field_AAC_);
-            text_area.bottom = static_cast<LONG>(field_AB0_);
-            break;
-        case 0xAB4:
-            text_area.left = static_cast<LONG>(field_AB4_);
-            text_area.top = static_cast<LONG>(field_AB8_);
-            text_area.right = static_cast<LONG>(field_ABC_);
-            text_area.bottom = static_cast<LONG>(field_AC0_);
-            break;
-        default:
-            text_area.left = static_cast<LONG>(field_AC4_);
-            text_area.top = static_cast<LONG>(field_AC8_);
-            text_area.right = static_cast<LONG>(field_ACC_);
-            text_area.bottom = static_cast<LONG>(field_AD0_);
-            break;
-        }
-        this->box_sprite(&text_area, &InterfaceBoxStyles[6]);
-        StringTemp[0] = '\0';
-        strcat(StringTemp, label_get(title_offsets[i]));
-        CharUpperA(StringTemp);
-        if (StringTemp != 0) {
-            this->write_cent_l(StringTemp, &text_area,
-                                 static_cast<unsigned int>(strlen(StringTemp)));
-        }
+    this->box_sprite(&label_rects_[0], &InterfaceBoxStyles[6]);
+    StringTemp[0] = '\0';
+    strcat(StringTemp, label_get(0x110 / 4));
+    CharUpperA(StringTemp);
+    if (StringTemp != 0) {
+        this->write_cent_l(StringTemp, &label_rects_[0],
+                             static_cast<unsigned int>(strlen(StringTemp)));
     }
 
-    RECT row_rects[4];
-    row_rects[0].left = static_cast<LONG>(field_A54_);
-    row_rects[0].top = static_cast<LONG>(field_A58_);
-    row_rects[0].right = static_cast<LONG>(field_A5C_);
-    row_rects[0].bottom = static_cast<LONG>(field_A60_);
-    row_rects[1].left = static_cast<LONG>(field_A64_);
-    row_rects[1].top = static_cast<LONG>(field_A68_);
-    row_rects[1].right = static_cast<LONG>(field_A6C_);
-    row_rects[1].bottom = static_cast<LONG>(field_A70_);
-    row_rects[2].left = static_cast<LONG>(field_A74_);
-    row_rects[2].top = static_cast<LONG>(field_A78_);
-    row_rects[2].right = static_cast<LONG>(field_A7C_);
-    row_rects[2].bottom = static_cast<LONG>(field_A80_);
-    row_rects[3].left = static_cast<LONG>(field_A84_);
-    row_rects[3].top = static_cast<LONG>(field_A88_);
-    row_rects[3].right = static_cast<LONG>(field_A8C_);
-    row_rects[3].bottom = static_cast<LONG>(field_A90_);
-    for (i = 0; i != 4; ++i) {
-        this->box_sprite(&row_rects[i], &InterfaceBoxStyles[0]);
+    this->box_sprite(&label_rects_[1], &InterfaceBoxStyles[6]);
+    StringTemp[0] = '\0';
+    strcat(StringTemp, label_get(0x130 / 4));
+    CharUpperA(StringTemp);
+    if (StringTemp != 0) {
+        this->write_cent_l(StringTemp, &label_rects_[1],
+                             static_cast<unsigned int>(strlen(StringTemp)));
     }
 
-    RECT category_area = {
-        static_cast<LONG>(field_A44_), static_cast<LONG>(field_A48_),
-        static_cast<LONG>(field_A4C_), static_cast<LONG>(field_A50_)
-    };
-    this->box_sprite(&category_area, &InterfaceBoxStyles[0]);
+    this->box_sprite(&label_rects_[2], &InterfaceBoxStyles[6]);
+    StringTemp[0] = '\0';
+    strcat(StringTemp, label_get(0xEF0 / 4));
+    CharUpperA(StringTemp);
+    if (StringTemp != 0) {
+        this->write_cent_l(StringTemp, &label_rects_[2],
+                             static_cast<unsigned int>(strlen(StringTemp)));
+    }
 
-    const int technology_id = static_cast<int>(field_B24_);
-    const int category = tech_category(technology_id);
+    this->box_sprite(&label_rects_[3], &InterfaceBoxStyles[6]);
+    StringTemp[0] = '\0';
+    strcat(StringTemp, label_get(0xEF4 / 4));
+    CharUpperA(StringTemp);
+    if (StringTemp != 0) {
+        this->write_cent_l(StringTemp, &label_rects_[3],
+                             static_cast<unsigned int>(strlen(StringTemp)));
+    }
+
+    this->box_sprite(&row_rects_[0], &InterfaceBoxStyles[0]);
+    this->box_sprite(&row_rects_[1], &InterfaceBoxStyles[0]);
+    this->box_sprite(&row_rects_[2], &InterfaceBoxStyles[0]);
+    this->box_sprite(&row_rects_[3], &InterfaceBoxStyles[0]);
+
+    this->box_sprite(&category_rect_, &InterfaceBoxStyles[0]);
+
     this->set_font(find_font(0x28, 0), 0, 0, 0);
+    const int category = tech_category(static_cast<int>(field_B24_));
     this->set_text_color(mandate_color(category), -1, 1, 1);
 
-    RECT category_label = category_area;
-    category_label.left += 3;
-    category_label.top += 3;
-    category_label.right -= 3;
-    category_label.bottom -= 3;
-    category_label.bottom = this->text_line_height() + category_label.top;
+    scratch = category_rect_;
+    scratch.left += 3;
+    scratch.top += 3;
+    scratch.right -= 3;
+    scratch.bottom -= 3;
+    scratch.bottom = this->text_line_height() + scratch.top;
 
     StringTemp[0] = '\0';
-    say_tech(StringTemp, technology_id, 0);
-    if (technology_id == TECH_CENTEMP) {
+    say_tech(StringTemp, static_cast<int>(field_B24_), 0);
+    if (static_cast<int>(field_B24_) == TECH_CENTEMP) {
         // PlayersData+0x368 is theory_of_everything; the neutral member name
         // and exact offset are already independently established in
         // faction.h and consumed by picktech/faction/reportif.
@@ -285,26 +251,25 @@ void NewTechWin::on_redraw() {
         strcat(StringTemp, number);
     }
     if (StringTemp != 0) {
-        this->write_cent_l(StringTemp, &category_label,
+        this->write_cent_l(StringTemp, &scratch,
                              static_cast<unsigned int>(strlen(StringTemp)));
     }
 
+    scratch = category_rect_;
     const int line_height = this->text_line_height();
-    const int image_top = category_area.top + line_height + 3;
-    const int image_bottom = category_area.bottom - 3;
+    const int image_top = scratch.top + line_height + 3;
+    const int image_bottom = scratch.bottom - 3;
     const int image_height = image_bottom - image_top;
-    const int image_width = category_area.right - category_area.left;
-    Sprite *icon = &g_TECH_ICON_SPRITES[technology_id];
+    const int image_width = scratch.right - scratch.left;
+    const int icon_color = mandate_color(
+        tech_category(static_cast<int>(field_B24_)));
+    Sprite *icon = &g_TECH_ICON_SPRITES[static_cast<int>(field_B24_)];
     const int icon_y = image_top + (image_height - 0xA0) / 2;
-    const int icon_x = category_area.left + (image_width - 0xA0) / 2;
+    const int icon_x = scratch.left + (image_width - 0xA0) / 2;
     icon->draw_mono(static_cast<Buffer *>(this), icon->transparent_index(), icon_x, icon_y,
-                    mandate_color(category), 0xA0, 0xD7);
+                    icon_color, 0xA0, 0xD7);
 
-    RECT bottom_area = {
-        static_cast<LONG>(field_AD4_), static_cast<LONG>(field_AD8_),
-        static_cast<LONG>(field_ADC_), static_cast<LONG>(field_AE0_)
-    };
-    this->box_sprite(&bottom_area, &InterfaceBoxStyles[0]);
+    this->box_sprite(&bottom_rect_, &InterfaceBoxStyles[0]);
 }
 
 // ORIGINAL: 0x00483F90 ?exec@NewTechWin@@QAEXHH@Z 0x00483F90-0x0048480F
@@ -332,103 +297,103 @@ void NewTechWin::exec(int technology_id, int other_faction_id) {
     field_B00_ = static_cast<uint32_t>(base_bottom);
     int row_bottom = base_bottom - 0x14 - 7;
 
-    field_A24_ = static_cast<uint32_t>(left);
-    field_A28_ = static_cast<uint32_t>(top);
-    field_A2C_ = static_cast<uint32_t>(right);
-    field_A30_ = static_cast<uint32_t>(row_bottom);
-    field_A34_ = static_cast<uint32_t>(row_top);
-    field_A38_ = static_cast<uint32_t>(top + 3);
-    field_A3C_ = static_cast<uint32_t>(right - 3);
-    field_A40_ = static_cast<uint32_t>(row_bottom - 3);
+    main_rect_.left = static_cast<uint32_t>(left);
+    main_rect_.top = static_cast<uint32_t>(top);
+    main_rect_.right = static_cast<uint32_t>(right);
+    main_rect_.bottom = static_cast<uint32_t>(row_bottom);
+    title_rect_.left = static_cast<uint32_t>(row_top);
+    title_rect_.top = static_cast<uint32_t>(top + 3);
+    title_rect_.right = static_cast<uint32_t>(right - 3);
+    title_rect_.bottom = static_cast<uint32_t>(row_bottom - 3);
 
-    int y = static_cast<int>(field_A38_) + 0x17;
-    field_A40_ = static_cast<uint32_t>(y);
-    field_A44_ = static_cast<uint32_t>(row_top);
-    field_A48_ = static_cast<uint32_t>(field_A38_);
-    field_A4C_ = static_cast<uint32_t>(field_A3C_);
-    field_A50_ = static_cast<uint32_t>(row_bottom - 3);
-    y = static_cast<int>(field_A40_) + 3;
-    field_A48_ = static_cast<uint32_t>(y);
+    int y = static_cast<int>(title_rect_.top) + 0x17;
+    title_rect_.bottom = static_cast<uint32_t>(y);
+    category_rect_.left = static_cast<uint32_t>(row_top);
+    category_rect_.top = static_cast<uint32_t>(title_rect_.top);
+    category_rect_.right = static_cast<uint32_t>(title_rect_.right);
+    category_rect_.bottom = static_cast<uint32_t>(row_bottom - 3);
+    y = static_cast<int>(title_rect_.bottom) + 3;
+    category_rect_.top = static_cast<uint32_t>(y);
     y += 0xd9;
-    field_A50_ = static_cast<uint32_t>(y);
-    field_A94_ = static_cast<uint32_t>(row_top);
+    category_rect_.bottom = static_cast<uint32_t>(y);
+    label_rects_[0].left = static_cast<uint32_t>(row_top);
     y += 3;
-    field_A98_ = static_cast<uint32_t>(y);
-    field_A9C_ = static_cast<uint32_t>(field_A3C_);
-    field_AA0_ = static_cast<uint32_t>(field_A40_);
-    y = static_cast<int>(field_A98_) + 0x14;
-    field_A54_ = static_cast<uint32_t>(row_top);
-    field_AA0_ = static_cast<uint32_t>(y);
+    label_rects_[0].top = static_cast<uint32_t>(y);
+    label_rects_[0].right = static_cast<uint32_t>(title_rect_.right);
+    label_rects_[0].bottom = static_cast<uint32_t>(title_rect_.bottom);
+    y = static_cast<int>(label_rects_[0].top) + 0x14;
+    row_rects_[0].left = static_cast<uint32_t>(row_top);
+    label_rects_[0].bottom = static_cast<uint32_t>(y);
     y += 3;
-    field_A58_ = static_cast<uint32_t>(y);
-    field_A5C_ = static_cast<uint32_t>(field_A3C_);
-    field_A60_ = static_cast<uint32_t>(field_A40_);
-    y = static_cast<int>(field_A58_) + 0x4c;
-    field_A60_ = static_cast<uint32_t>(y);
+    row_rects_[0].top = static_cast<uint32_t>(y);
+    row_rects_[0].right = static_cast<uint32_t>(title_rect_.right);
+    row_rects_[0].bottom = static_cast<uint32_t>(title_rect_.bottom);
+    y = static_cast<int>(row_rects_[0].top) + 0x4c;
+    row_rects_[0].bottom = static_cast<uint32_t>(y);
     y += 3;
-    field_AB4_ = static_cast<uint32_t>(row_top);
-    field_AB8_ = static_cast<uint32_t>(y);
-    field_ABC_ = static_cast<uint32_t>(field_A3C_);
-    field_AC0_ = static_cast<uint32_t>(field_A40_);
-    y = static_cast<int>(field_AB8_) + 0x14;
-    field_A74_ = static_cast<uint32_t>(row_top);
-    field_AC0_ = static_cast<uint32_t>(y);
+    label_rects_[2].left = static_cast<uint32_t>(row_top);
+    label_rects_[2].top = static_cast<uint32_t>(y);
+    label_rects_[2].right = static_cast<uint32_t>(title_rect_.right);
+    label_rects_[2].bottom = static_cast<uint32_t>(title_rect_.bottom);
+    y = static_cast<int>(label_rects_[2].top) + 0x14;
+    row_rects_[2].left = static_cast<uint32_t>(row_top);
+    label_rects_[2].bottom = static_cast<uint32_t>(y);
     y += 3;
-    field_A78_ = static_cast<uint32_t>(y);
-    field_A7C_ = static_cast<uint32_t>(field_A3C_);
-    field_A80_ = static_cast<uint32_t>(field_A40_);
-    y = static_cast<int>(field_A78_) + 0x4c;
-    field_A80_ = static_cast<uint32_t>(y);
+    row_rects_[2].top = static_cast<uint32_t>(y);
+    row_rects_[2].right = static_cast<uint32_t>(title_rect_.right);
+    row_rects_[2].bottom = static_cast<uint32_t>(title_rect_.bottom);
+    y = static_cast<int>(row_rects_[2].top) + 0x4c;
+    row_rects_[2].bottom = static_cast<uint32_t>(y);
     y += 3;
-    field_AD4_ = static_cast<uint32_t>(row_top);
-    field_AD8_ = static_cast<uint32_t>(y);
-    field_ADC_ = static_cast<uint32_t>(field_A3C_);
-    field_AE0_ = static_cast<uint32_t>(row_bottom - 3);
-    field_AE0_ = static_cast<uint32_t>(static_cast<int>(field_A30_) - 3);
+    bottom_rect_.left = static_cast<uint32_t>(row_top);
+    bottom_rect_.top = static_cast<uint32_t>(y);
+    bottom_rect_.right = static_cast<uint32_t>(title_rect_.right);
+    bottom_rect_.bottom = static_cast<uint32_t>(row_bottom - 3);
+    bottom_rect_.bottom = static_cast<uint32_t>(static_cast<int>(main_rect_.bottom) - 3);
 
-    field_AA4_ = field_A94_;
-    field_AA8_ = field_A98_;
-    field_AAC_ = field_A9C_;
-    field_AB0_ = field_AA0_;
-    int width = static_cast<int>(field_A9C_) - static_cast<int>(field_A94_);
+    label_rects_[1].left = label_rects_[0].left;
+    label_rects_[1].top = label_rects_[0].top;
+    label_rects_[1].right = label_rects_[0].right;
+    label_rects_[1].bottom = label_rects_[0].bottom;
+    int width = static_cast<int>(label_rects_[0].right) - static_cast<int>(label_rects_[0].left);
     width += 3;
     width >>= 1;
-    width = width + static_cast<int>(field_A94_) - 3;
-    field_A9C_ = static_cast<uint32_t>(width);
+    width = width + static_cast<int>(label_rects_[0].left) - 3;
+    label_rects_[0].right = static_cast<uint32_t>(width);
     technology_id = width;
-    field_AA4_ = static_cast<uint32_t>(width + 3);
+    label_rects_[1].left = static_cast<uint32_t>(width + 3);
 
-    field_A64_ = field_A54_;
-    field_A68_ = field_A58_;
-    field_A6C_ = field_A5C_;
-    field_A70_ = field_A60_;
-    field_A64_ = static_cast<uint32_t>(width + 3);
-    field_A5C_ = static_cast<uint32_t>(width);
-    field_AC4_ = field_AB4_;
-    field_AC8_ = field_AB8_;
-    field_ACC_ = field_ABC_;
-    field_AD0_ = field_AC0_;
-    field_ABC_ = static_cast<uint32_t>(width);
-    field_AC4_ = static_cast<uint32_t>(width + 3);
+    row_rects_[1].left = row_rects_[0].left;
+    row_rects_[1].top = row_rects_[0].top;
+    row_rects_[1].right = row_rects_[0].right;
+    row_rects_[1].bottom = row_rects_[0].bottom;
+    row_rects_[1].left = static_cast<uint32_t>(width + 3);
+    row_rects_[0].right = static_cast<uint32_t>(width);
+    label_rects_[3].left = label_rects_[2].left;
+    label_rects_[3].top = label_rects_[2].top;
+    label_rects_[3].right = label_rects_[2].right;
+    label_rects_[3].bottom = label_rects_[2].bottom;
+    label_rects_[2].right = static_cast<uint32_t>(width);
+    label_rects_[3].left = static_cast<uint32_t>(width + 3);
 
-    field_A84_ = field_A74_;
-    field_A88_ = field_A78_;
-    field_A8C_ = field_A7C_;
-    field_A7C_ = static_cast<uint32_t>(technology_id);
-    field_A90_ = field_A80_;
+    row_rects_[3].left = row_rects_[2].left;
+    row_rects_[3].top = row_rects_[2].top;
+    row_rects_[3].right = row_rects_[2].right;
+    row_rects_[2].right = static_cast<uint32_t>(technology_id);
+    row_rects_[3].bottom = row_rects_[2].bottom;
 
-    field_B14_ = static_cast<uint32_t>(static_cast<int>(field_A2C_) - 6 - 0x1c);
-    field_B18_ = static_cast<uint32_t>(static_cast<int>(field_A30_) - 6 - 0x22);
-    field_B1C_ = static_cast<uint32_t>(static_cast<int>(field_A2C_) - 6);
-    field_B20_ = static_cast<uint32_t>(static_cast<int>(field_A30_) - 6);
+    field_B14_ = static_cast<uint32_t>(static_cast<int>(main_rect_.right) - 6 - 0x1c);
+    field_B18_ = static_cast<uint32_t>(static_cast<int>(main_rect_.bottom) - 6 - 0x22);
+    field_B1C_ = static_cast<uint32_t>(static_cast<int>(main_rect_.right) - 6);
+    field_B20_ = static_cast<uint32_t>(static_cast<int>(main_rect_.bottom) - 6);
     field_B04_ = static_cast<uint32_t>(static_cast<int>(field_B14_) - 0x1f);
     field_B08_ = field_B18_;
     field_B0C_ = static_cast<uint32_t>(static_cast<int>(field_B1C_) - 0x1f);
     field_B10_ = field_B20_;
-    field_AE4_ = field_AD4_;
-    field_AE8_ = field_AD8_;
-    field_AEC_ = field_ADC_;
-    field_AF0_ = field_AE0_;
+    field_AE4_ = bottom_rect_.left;
+    field_AE8_ = bottom_rect_.top;
+    field_AEC_ = bottom_rect_.right;
+    field_AF0_ = bottom_rect_.bottom;
     field_AEC_ = static_cast<uint32_t>(static_cast<int>(field_B04_) - 4);
 
     RECT bounds;
@@ -442,22 +407,22 @@ void NewTechWin::exec(int technology_id, int other_faction_id) {
     center();
 
     RECT local_rects[4];
-    local_rects[0].left = static_cast<LONG>(field_AA4_);
-    local_rects[0].top = static_cast<LONG>(field_AA8_);
-    local_rects[0].right = static_cast<LONG>(field_AAC_);
-    local_rects[0].bottom = static_cast<LONG>(field_AB0_);
-    local_rects[1].left = static_cast<LONG>(field_A64_);
-    local_rects[1].top = static_cast<LONG>(field_A68_);
-    local_rects[1].right = static_cast<LONG>(field_A6C_);
-    local_rects[1].bottom = static_cast<LONG>(field_A70_);
-    local_rects[2].left = static_cast<LONG>(field_AD4_);
-    local_rects[2].top = static_cast<LONG>(field_AD8_);
-    local_rects[2].right = static_cast<LONG>(field_ADC_);
-    local_rects[2].bottom = static_cast<LONG>(field_AE0_);
-    local_rects[3].left = static_cast<LONG>(field_A84_);
-    local_rects[3].top = static_cast<LONG>(field_A88_);
-    local_rects[3].right = static_cast<LONG>(field_A8C_);
-    local_rects[3].bottom = static_cast<LONG>(field_A90_);
+    local_rects[0].left = static_cast<LONG>(label_rects_[1].left);
+    local_rects[0].top = static_cast<LONG>(label_rects_[1].top);
+    local_rects[0].right = static_cast<LONG>(label_rects_[1].right);
+    local_rects[0].bottom = static_cast<LONG>(label_rects_[1].bottom);
+    local_rects[1].left = static_cast<LONG>(row_rects_[1].left);
+    local_rects[1].top = static_cast<LONG>(row_rects_[1].top);
+    local_rects[1].right = static_cast<LONG>(row_rects_[1].right);
+    local_rects[1].bottom = static_cast<LONG>(row_rects_[1].bottom);
+    local_rects[2].left = static_cast<LONG>(bottom_rect_.left);
+    local_rects[2].top = static_cast<LONG>(bottom_rect_.top);
+    local_rects[2].right = static_cast<LONG>(bottom_rect_.right);
+    local_rects[2].bottom = static_cast<LONG>(bottom_rect_.bottom);
+    local_rects[3].left = static_cast<LONG>(row_rects_[3].left);
+    local_rects[3].top = static_cast<LONG>(row_rects_[3].top);
+    local_rects[3].right = static_cast<LONG>(row_rects_[3].right);
+    local_rects[3].bottom = static_cast<LONG>(row_rects_[3].bottom);
 
     for (int box_index = 0; box_index < 4; ++box_index) {
         StringBox &box = stringBoxes_[box_index];

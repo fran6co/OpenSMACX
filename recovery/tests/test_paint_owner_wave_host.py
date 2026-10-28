@@ -81,7 +81,7 @@ def _source(spec, body=None):
     return fixture.replace(marker, _owner_body(spec) if body is None else body)
 
 
-def _compile_and_run(tmp_path, spec, body=None):
+def _compile_and_run(tmp_path, spec, body=None, args=()):
     compiler = shutil.which("clang++") or shutil.which("g++")
     if compiler is None:
         pytest.skip("host C++ compiler unavailable")
@@ -99,7 +99,7 @@ def _compile_and_run(tmp_path, spec, body=None):
     assert built.returncode == 0, built.stdout + built.stderr
     env = dict(os.environ, ASAN_OPTIONS="detect_leaks=0",
                UBSAN_OPTIONS="halt_on_error=1")
-    return subprocess.run([str(binary)], capture_output=True, text=True,
+    return subprocess.run([str(binary), *args], capture_output=True, text=True,
                           timeout=15, env=env)
 
 
@@ -151,7 +151,7 @@ def test_newtech_technology_and_interface_producer_closure_is_retained():
     header = (ROOT / "src/newtechwin.h").read_text(encoding="utf-8")
     source = _owner_body(SPECS["newtech"])
     assert "void on_redraw();" in header
-    assert "g_TECH_ICON_SPRITES[technology_id]" in source
+    assert "g_TECH_ICON_SPRITES[static_cast<int>(field_B24_)]" in source
     assert "theory_of_everything" in source
     owner_file = (ROOT / "src/newtechwin.cpp").read_text(encoding="utf-8")
     assert "previous unit's NO_COMPILE finding" in owner_file
@@ -194,10 +194,79 @@ def test_newtech_mutants_are_rejected(tmp_path):
         body.replace("field_B28_) > 0 ? 542 : 541",
                      "field_B28_) > 0 ? 541 : 542", 1),
         body.replace("strcat(StringTemp, NewTechCentempSuffix);", "", 1),
+        body.replace(
+            "this->box_sprite(&main_rect_, &InterfaceBoxStyles[3]);",
+            "RECT copied_main = main_rect_;\n"
+            "    this->box_sprite(&copied_main, &InterfaceBoxStyles[3]);", 1),
+        body.replace(
+            "this->box_sprite(&scratch, &InterfaceBoxStyles[3]);",
+            "RECT copied_inset = scratch;\n"
+            "    this->box_sprite(&copied_inset, &InterfaceBoxStyles[3]);", 1),
+        body.replace(
+            "    this->box_sprite(&label_rects_[2], &InterfaceBoxStyles[6]);\n",
+            "", 1),
+        body.replace(
+            "    this->box_sprite(&row_rects_[2], &InterfaceBoxStyles[0]);\n",
+            "", 1),
+        body.replace(
+            "this->box_sprite(&label_rects_[0], &InterfaceBoxStyles[6]);",
+            "RECT copied_label = label_rects_[0];\n"
+            "    this->box_sprite(&copied_label, &InterfaceBoxStyles[6]);", 1),
     )
     for mutant in mutants:
         assert mutant != body
         assert _compile_and_run(tmp_path, spec, mutant).returncode != 0
+
+
+def test_newtech_live_technology_reloads_survive_callback_mutations(tmp_path):
+    spec = SPECS["newtech"]
+    body = _owner_body(spec)
+    result = _compile_and_run(tmp_path, spec, args=("reload",))
+    assert result.returncode == 0, (result.stdout, result.stderr)
+
+    snapshot = body.replace(
+        "    this->set_font(find_font(0x28, 0), 0, 0, 0);\n"
+        "    const int category = tech_category(static_cast<int>(field_B24_));",
+        "    const int technology_id = static_cast<int>(field_B24_);\n"
+        "    const int category = tech_category(technology_id);\n"
+        "    this->set_font(find_font(0x28, 0), 0, 0, 0);", 1)
+    snapshot = snapshot.replace(
+        "say_tech(StringTemp, static_cast<int>(field_B24_), 0);",
+        "say_tech(StringTemp, technology_id, 0);", 1)
+    snapshot = snapshot.replace(
+        "if (static_cast<int>(field_B24_) == TECH_CENTEMP)",
+        "if (technology_id == TECH_CENTEMP)", 1)
+    snapshot = snapshot.replace(
+        "const int icon_color = mandate_color(\n"
+        "        tech_category(static_cast<int>(field_B24_)));",
+        "const int icon_color = mandate_color(category);", 1)
+    snapshot = snapshot.replace(
+        "g_TECH_ICON_SPRITES[static_cast<int>(field_B24_)]",
+        "g_TECH_ICON_SPRITES[technology_id]", 1)
+    assert snapshot != body and "technology_id" in snapshot
+    stale = _compile_and_run(tmp_path, spec, snapshot, args=("reload",))
+    assert stale.returncode != 0
+
+
+def test_newtech_rectangle_member_layout_declarations_are_retained():
+    header = (ROOT / "src/newtechwin.h").read_text(encoding="utf-8")
+    assert "RECT main_rect_;  // 0xA24" in header
+    assert "RECT title_rect_;  // 0xA34" in header
+    assert "RECT category_rect_;  // 0xA44" in header
+    assert "RECT row_rects_[4];  // 0xA54" in header
+    assert "RECT label_rects_[4];  // 0xA94" in header
+    assert "RECT bottom_rect_;  // 0xAD4" in header
+    for offset, member, evidence in (
+        ("0xA24", "main_rect_", "0x004839A3"),
+        ("0xA34", "title_rect_", "0x00483A17"),
+        ("0xA44", "category_rect_", "0x00483CA9"),
+        ("0xAD4", "bottom_rect_", "0x00483E73"),
+    ):
+        assert f"RECOVERY_MEMBER: v2 NewTechWin {member} " in header
+        assert f"{offset} {evidence}" in header
+    assert "RECOVERY_MEMBER: v4 NewTechWin row_rects_ tagRECT[4] 0xA54 0x40 0x00483C5D" in header
+    assert "RECOVERY_MEMBER: v4 NewTechWin label_rects_ tagRECT[4] 0xA94 0x40 0x00483AAE" in header
+    assert "static_assert(sizeof(NewTechWin) == 0x107C4" in header
 
 
 def test_pushbutton_sprite_branch_mutant_is_rejected(tmp_path):

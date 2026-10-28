@@ -1,0 +1,25 @@
+{
+  "event_id": "4a2fc4869f3a6fd8def1b2e9e7dd52e3e63b5e5c9eaeb16b104742cb112cd434",
+  "payload": {
+    "author": "root",
+    "editable_files": [
+      "recovery/tests/newtechwin_paint_owner_control.cpp",
+      "recovery/tests/test_newtechwin_exec_behavior.py",
+      "recovery/tests/test_paint_owner_wave_host.py",
+      "src/newtechwin.cpp",
+      "src/newtechwin.h"
+    ],
+    "evidence": [
+      "Candidate01 proves typed member migration compiles; redraw frame0x94 vs pin0x68, current328 vs original399instructions. Source retains two offsetarrays/switch/loops absent in pinned unrolled blocks. This follow-on is direct original control/call sequence recovery, not frame/register flag guessing.",
+      "Original full483950..483E7F has four statically distinct label draws/writes at A94/AA4/AB4/AC4 with constants68,76,956,957 and four distinct row calls A54/A64/A74/A84. Verify fullpin before authoring; replace only corresponding loops/offset arrays/switch with explicit ordinary calls, retaining all existing order, StringTemp initializations, perlabelupper/strlen/write and pointeridentities. Do not addhelpercalls/macros/pragmas or change exec.",
+      "Two total candidate compiles authorized (one additional) for newly evidenced call sequence; preserve baseline, claims, header and independent tests. Update only broken loop-specific mutation anchors to meaningful same omittedcall/label regressions."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "newtech-original-explicit-label-sequence-nl",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:easy-newtech-rects-oct28nl"
+}
