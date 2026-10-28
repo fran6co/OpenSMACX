@@ -7,6 +7,9 @@ COFF associated blocks have no stream signature or record padding; the supported
 PDB form has zero-padded four-byte records. Type indices and scope links remain
 literal values: this decoder neither remaps types nor proves object ownership,
 linked placement, discarded storage, or equivalence of two procedure blocks.
+Opt-in decoding also retains S_LDATA32_ST and S_LABEL32_ST coordinates;
+their relocation ownership must be proven separately. Default linked decoding
+continues to refuse these address-bearing records.
 """
 
 from dataclasses import dataclass
@@ -19,6 +22,8 @@ S_REGISTER_ST = 0x1001
 S_BPREL32_ST = 0x1006
 S_LPROC32_ST = 0x100A
 S_GPROC32_ST = 0x100B
+S_LDATA32_ST = 0x1007
+S_LABEL32_ST = 0x0209
 MAX_PROCEDURE_BYTES = 16 * 1024 * 1024
 MAX_PROCEDURE_RECORDS = 100000
 
@@ -43,6 +48,17 @@ class Local:
 
 
 @dataclass(frozen=True)
+class LocalAddress:
+    kind: int
+    record_offset: int
+    offset: int
+    section: int
+    name: str
+    type_index: int | None = None
+    flags: int | None = None
+
+
+@dataclass(frozen=True)
 class Procedure:
     kind: int
     parent: int
@@ -58,6 +74,7 @@ class Procedure:
     name: str
     locals: tuple[Local, ...]
     records: tuple[Record, ...]
+    addresses: tuple[LocalAddress, ...] = ()
 
     @property
     def end_record_offset(self):
@@ -69,7 +86,7 @@ class Procedure:
         return last.offset + last.size
 
 
-def decode_procedure(data: bytes, *, alignment=1, base_offset=0) -> Procedure:
+def decode_procedure(data: bytes, *, alignment=1, base_offset=0, local_addresses=False) -> Procedure:
     """Decode exactly one procedure, its ordered locals and terminal S_END.
 
     ``alignment=1`` is the unpadded COFF form. ``alignment=4`` requires exact
@@ -78,15 +95,19 @@ def decode_procedure(data: bytes, *, alignment=1, base_offset=0) -> Procedure:
     caller must verify parent/end/next links against that complete stream and
     bind procedure types and coordinates independently. Unsupported records,
     nested procedures, absent ends and trailing bytes always refuse.
+    ``local_addresses`` only enables complete syntactic decoding of local data
+    and label records; it does not bind their coordinates or establish types.
     """
     if type(data) is not bytes or not 0 < len(data) <= MAX_PROCEDURE_BYTES:
         raise ValueError("CodeView procedure requires bounded immutable bytes")
     if type(alignment) is not int or alignment not in (1, 4):
         raise ValueError("unsupported CodeView procedure record alignment")
+    if type(local_addresses) is not bool:
+        raise ValueError("local address decoding requires an explicit boolean")
     if (type(base_offset) is not int or not 0 <= base_offset <= 0xFFFFFFFF
             or base_offset + len(data) > 0x100000000 or base_offset % alignment):
         raise ValueError("invalid CodeView procedure stream offset")
-    stream, records, locals_ = Cursor(data), [], []
+    stream, records, locals_, addresses = Cursor(data), [], [], []
     fields = None
     ended = False
     while stream.at < len(data):
@@ -116,6 +137,14 @@ def decode_procedure(data: bytes, *, alignment=1, base_offset=0) -> Procedure:
         elif kind == S_BPREL32_ST:
             offset, index, name = record.number("<i"), record.number("<I"), record.name()
             locals_.append(Local(kind, index, name, frame_offset=offset))
+        elif local_addresses and kind == S_LDATA32_ST:
+            index, offset, section = record.number("<I"), record.number("<I"), record.number("<H")
+            addresses.append(LocalAddress(kind, base_offset + at, offset, section,
+                                          record.name(), type_index=index))
+        elif local_addresses and kind == S_LABEL32_ST:
+            offset, section, flags = record.number("<I"), record.number("<H"), record.number("<B")
+            addresses.append(LocalAddress(kind, base_offset + at, offset, section,
+                                          record.name(), flags=flags))
         elif kind == S_END:
             ended = True
         else:
@@ -133,4 +162,4 @@ def decode_procedure(data: bytes, *, alignment=1, base_offset=0) -> Procedure:
             break
     if not ended:
         raise ValueError("CodeView procedure lacks a terminal S_END")
-    return Procedure(**fields, locals=tuple(locals_), records=tuple(records))
+    return Procedure(**fields, locals=tuple(locals_), records=tuple(records), addresses=tuple(addresses))

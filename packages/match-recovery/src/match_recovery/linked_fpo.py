@@ -34,15 +34,18 @@ def _root_reference(obj, target, root):
             raise ValueError("FPO root declaration has a conflicting definition or alias")
 
 
-def validate_fpo_object(obj, number, root):
+def validate_fpo_object(obj, number, root, *, source_codeview=False):
     """Validate one exact object-local FPO child and its root code extent.
 
     This proves only physical COFF metadata and ownership. In particular, the
     discardable section characteristic does not prove that a linker selected
     or removed the child. The complete FPO bytes remain in the returned
     witness for callers to retain and compare.
+    ``source_codeview`` permits siblings only after the complete native
+    source-procedure validator proves their CodeView ownership. The default
+    linked path retains its existing single-child restriction.
     """
-    if (type(obj) is not Coff or type(number) is not int
+    if (type(source_codeview) is not bool or type(obj) is not Coff or type(number) is not int
             or not 1 <= number <= len(obj.sections)
             or not isinstance(root, Symbol) or obj.symbols.get(root.index) != root
             or obj.function(root.name) != root or root.section in obj.associations):
@@ -55,8 +58,13 @@ def validate_fpo_object(obj, number, root):
             or len(section.relocations) != 1
             or obj.associations.get(number) != root.section
             or number in obj.associations.values()
-            or direct_children != [number]):
+            or (not source_codeview and direct_children != [number])):
         raise ValueError("unsupported associated FPO child")
+    if source_codeview:
+        from .linked_codeview import source_procedure
+        for child in direct_children:
+            if child != number:
+                source_procedure(obj, child, root, local_addresses=True)
     offset, target, kind = section.relocations[0]
     if offset != 0 or kind != 7 or target not in obj.symbols:
         raise ValueError("unsupported associated FPO root relocation")
