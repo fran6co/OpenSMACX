@@ -243,6 +243,11 @@ static const GUID KeptServiceProviderGuid = {
 // voice payloads. The three virtual calls below are respectively a receiver
 // hook, Sound-family destruction, and entry virtual-base destruction.
 // This does not complete Net/AlphaNet/NetDaemon lifetime recovery.
+// These list/lifetime definitions retain frame-based original code while the
+// protocol and callback definitions in this recovered TU omit the frame. The
+// local settings reproduce that distinction without asserting original TU
+// boundaries; each empty-option restore returns to command-line optimization.
+#pragma optimize("y", off)
 void JackalVoiceRx::clear() {
     if (head_) {
         for (int removed = 0; removed < count_; ++removed) {
@@ -259,6 +264,8 @@ void JackalVoiceRx::clear() {
         count_ = 0;
     }
 }
+#pragma optimize("", on)
+
 
 int JackalVoiceRx::on_insert(void *) { return 0; }
 void JackalVoiceRx::on_remove(void *) { }
@@ -3452,6 +3459,7 @@ Purpose: Construct the node's list block through its real C++ owner.
 // size      88 bytes
 Constructor implemented through the declared C++ base/member lifecycle; matching remains independently measurable.
 */
+#pragma optimize("y", off)
 NetTextListBase::NetTextListBase() {
     head_ = 0;
     current_ = 0;
@@ -3459,6 +3467,8 @@ NetTextListBase::NetTextListBase() {
     current_position_ = 0;
     allocator_ = 0;
 }
+#pragma optimize("", on)
+
 
 
 /*
@@ -3505,10 +3515,13 @@ class SubBase401be0 { public:
     virtual void slot1(int);   // vtable[4]: notifies `self` a node is going
 };
 
+#pragma optimize("y", off)
 NetTextListBase::~NetTextListBase() {
     remove_all();
     current_position_ = 0; // also when empty; current_ is NOT cleared
 }
+#pragma optimize("", on)
+
 
 
 NetAllocationNode::NetAllocationNode() {
@@ -3518,11 +3531,14 @@ NetAllocationNode::NetAllocationNode() {
 }
 
 
+#pragma optimize("y", off)
 NetUnk72C::~NetUnk72C() {
     remove_all();
     current_position_ = 0;
     // Natural base destruction supplies the distinct second list stage.
 }
+#pragma optimize("", on)
+
 
 
 /*
@@ -3803,6 +3819,7 @@ void ServiceListEntry::operator delete(void *memory, Heap *) { cleanup_failed_ne
 void ServiceListEntry::operator delete(void *memory, ServiceProviderList *) { cleanup_failed_net_construction(memory); }
 void ServiceListEntry::operator delete(void *memory) { cleanup_failed_net_construction(memory); }
 
+#pragma optimize("y", off)
 ServiceProviderList::ServiceProviderList() {
     head_ = 0;
     current_ = 0;
@@ -3810,6 +3827,8 @@ ServiceProviderList::ServiceProviderList() {
     current_position_ = 0;
     allocator_ = 0;
 }
+#pragma optimize("", on)
+
 
 int ServiceProviderList::on_insert(ServiceStruct *) { return 0; }
 
@@ -3858,10 +3877,13 @@ int ServiceProviderList::add(int id) {
     return 0;
 }
 
+#pragma optimize("y", off)
 ServiceProviderList::~ServiceProviderList() {
     remove_all();
     current_position_ = 0;
 }
+#pragma optimize("", on)
+
 
 void ServiceList::on_remove(ServiceStruct *payload) {
     if (allocator_ == 0 && payload->name_ != 0) {
@@ -3870,10 +3892,13 @@ void ServiceList::on_remove(ServiceStruct *payload) {
     }
 }
 
+#pragma optimize("y", off)
 ServiceList::~ServiceList() {
     remove_all();
     current_position_ = 0;
 }
+#pragma optimize("", on)
+
 
 BOOL __stdcall enumerate_session_callback(LPCDPSESSIONDESC2 descriptor,
                                           LPDWORD, DWORD, LPVOID) {
@@ -3900,15 +3925,18 @@ BOOL __stdcall enumerate_session_callback(LPCDPSESSIONDESC2 descriptor,
 Purpose: Construct the derived node list through its real base lifecycle.
          The inherited list constructor clears its five words; the derived
          source-text and field_20_ words remain uninitialized.
-// ORIGINAL: 0x00402D10 sub_402d10 0x00402D10-0x00402D7C FILE
+// ORIGINAL: 0x00402D10 sub_402d10 0x00402D10-0x00402D7C FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:2f89503ec251ffc8b9ff894998c01944c173a4fb:src/recovered/units/00402d10.cpp"], "reason": "Retain the genuine source constructor, including natural inherited and virtual-base lifetime; superseded assembly scaffold is historical evidence, not another implementation."}
 // symbol    ??0NetUnk72C@@QAE@XZ
 // size      108 bytes
 Constructor implemented through the declared C++ base/member lifecycle; matching remains independently measurable.
 */
+#pragma optimize("y", off)
 NetUnk72C::NetUnk72C() {
     // Source text and field_20_ remain uninitialized, as in 402D10.
 }
+#pragma optimize("", on)
+
 
 int NetTextListBase::on_insert(Payload *) { return 0; }
 
@@ -3992,11 +4020,14 @@ Status: Coverage transcription - unclaimed body; the remove_all step now
         0x00402970), and the SEH-frame divergence the seed documents
         stands.
 */
+#pragma optimize("y", off)
 NetAllocationNode::~NetAllocationNode() {
     // Genuine empty user body: entries_, then own virtual allocation base,
     // destroy naturally. Session strings are handled by the ledger hook,
     // not this destructor; adding frees here would duplicate ownership.
 }
+#pragma optimize("", on)
+
 
 void *allocate_net_node(size_t size, Heap *owner) {
     void *memory;
@@ -4019,6 +4050,7 @@ void *allocate_net_node(size_t size, Heap *owner) {
 // RECOVERY_BINDING: v1 {"evidence": ["git:360abf0bcf225dda7b384e46e5c26fb7bd2a3bda:src/recovered/00402320.cpp", "pinned:terranx_original:0x402320", "source:src/net_class.cpp"], "reason": "Original cleanup preserves StringAllocationHeap on null input; otherwise free only when owner is null, then clear handoff. Real Net/AlphaNet placement-delete callers discard its result. Indirect return consumers remain unverified. Preserve all original spans, names, claims and seed discoveries; no new byte grant."}
 // symbol    ?cleanup_failed_net_construction@@YAXPAX@Z
 */
+#pragma optimize("y", off)
 void cleanup_failed_net_construction(void *memory) {
     if (memory != 0) {
         if (StringAllocationHeap == 0) free(memory);
@@ -4026,6 +4058,8 @@ void cleanup_failed_net_construction(void *memory) {
     }
     // Native 402320 leaves the handoff untouched when memory is null.
 }
+#pragma optimize("", on)
+
 
 // ORIGINAL: 0x0062F8A0 ?send_packet_type@Net@@QAEHPAXHKHH@Z 0x0062F8A0-0x0063007F
 // RECOVERY_BINDING: v1 {"evidence": ["task:net-transport-owner", "pinned:terranx_original.exe:0062F8A0 complete direct/reliable targeted/broadcast control flow", "source:src/net_class.h:NetPlayer acknowledgement +8 and RTT +C; existing FIFO and thread event owners", "historical seed:src/unrecovered/0062f8a0.cpp"], "reason": "Recover the complete sender through genuine Net peer state, queues, event handles, SDK DirectPlay and allocator ownership; preserve native timeout error behavior and all original seed obligations without a new byte claim."}
