@@ -360,8 +360,8 @@ typedef char media_record_extent_check[
     sizeof(MediaQueueRecord) == 0x10 ? 1 : -1];
 
 // Existing product-owned mapped callees implemented in movie_media.cpp.
-extern "C" int __fastcall sub_5c9ec0(MediaRuntime *runtime, void *unused);
-extern "C" int __fastcall sub_5ca970(MediaRuntime *runtime, void *unused);
+extern "C" int __fastcall sub_5c9ec0(MediaRuntime *runtime);
+extern "C" void __fastcall sub_5ca970(MediaRuntime *runtime);
 
 // ORIGINAL 0x005CAE80: returns the same embedded descriptor passed at arg 3.
 extern "C" MediaDescriptor *__cdecl sub_5cae80(
