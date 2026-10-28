@@ -101,24 +101,11 @@ class AlphaNetStringStruct : public virtual StringAllocationBase {
   // RECOVERY_MEMBER: v3 AlphaNetStringStruct allocator_ Heap* 0x18 0x005D4890
   Heap *allocator_;
 
-  AlphaNetStringStruct();
+  inline AlphaNetStringStruct();
   ~AlphaNetStringStruct() { remove_all(); current_position_ = 0; }
 };
 static_assert(sizeof(AlphaNetStringStruct) == 0x24, "session ledger base and virtual allocation owner");
 
-// The picker at 0x0063BB20 constructs this base inline without a later
-// throwing helper call; keep the same ordinary C++ lifetime visible here.
-// The standalone 0x00401C80 entry retains its argument frame even when this
-// visible definition is emitted by a caller TU that otherwise omits frames.
-#pragma optimize("y", off)
-inline AlphaNetStringStruct::AlphaNetStringStruct() {
-    head_ = 0;
-    current_ = 0;
-    entry_count_ = 0;
-    current_position_ = 0;
-    allocator_ = 0;
-}
-#pragma optimize("", on)
 
 inline int AlphaNetStringStruct::seek_pos(int position) {
     AbsFnT abs_fn = &abs;

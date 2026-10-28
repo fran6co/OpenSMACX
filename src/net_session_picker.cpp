@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "net_session_picker.h"
+#include "alphanet_inline.h"
 
 #include <cstdlib>
 #include <cstring>
