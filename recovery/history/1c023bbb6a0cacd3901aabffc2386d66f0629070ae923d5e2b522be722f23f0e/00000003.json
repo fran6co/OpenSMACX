@@ -1,0 +1,19 @@
+{
+  "event_id": "a244e5de35b66a17b8f4be3e0f7f9cea4624c9a081729dd780cdce8ab662019d",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_console_scenario_behavior.py"
+    ],
+    "evidence": [
+      "Expanded original6argPopupcall family requires existing editor_natural hostdouble to accept explicit nullowner. Authorize only adding compatible sixargument overload or optionalowner parameter with nullassertion in that fixture, preserving all selected-feature, radius, ordering and cancellation controls; no unrelated fixture changes."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "583df57cc1a8c4cba7dffbfd0fea040fbe32599d7225783c30144cc275ef4328",
+  "request_id": "verify-natural-editor-null-owner",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:exact-editor-terrain-start-oct28my"
+}
