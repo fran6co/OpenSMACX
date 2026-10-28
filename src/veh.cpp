@@ -7283,10 +7283,10 @@ BOOL __cdecl has_abil(int proto_id, int ability_id) {
     // A prior pass added a guard clause (with a log_say call) that is NOT in the image;
     // call_diff flagged the extra call, and the disassembly at 0x005BF1F0 confirms the
     // first instructions compute proto_id*sizeof(VehPrototype) directly, no branch first.
+    int faction_id = proto_id / MaxVehProtoFactionNum;
     if (VehPrototypes[proto_id].ability_flags & ability_id) {
         return true;
     }
-    uint32_t faction_id = proto_id / MaxVehProtoFactionNum;
     if (!faction_id) {
         return false; // skip basic prototypes from #UNITS
     }
@@ -7295,9 +7295,9 @@ BOOL __cdecl has_abil(int proto_id, int ability_id) {
     }
     for (int i = 0; i < Players[faction_id].faction_bonus_count; i++) {
         if (Players[faction_id].faction_bonus_id[i] == RULE_FREEABIL) {
-            int abil_bonus_id = Players[faction_id].faction_bonus_val1[i];
-            if (has_tech(Ability[abil_bonus_id].preq_tech, faction_id) &&
-                (ability_id & (1 << abil_bonus_id))) {
+            // Original 0x5BF298 rereads the bonus value after has_tech returns.
+            if (has_tech(Ability[Players[faction_id].faction_bonus_val1[i]].preq_tech, faction_id) &&
+                (ability_id & (1 << Players[faction_id].faction_bonus_val1[i]))) {
                 // Pirates > "Marine Detachment" ability for combat sea units with Adaptive Doctrine
                 return true;
             }

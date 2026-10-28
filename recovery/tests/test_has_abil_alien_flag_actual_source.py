@@ -64,11 +64,19 @@ static PlayerInfo Players[8];
 static int ExpansionEnabled;
 static int TechResult;
 static int ProjectResult;
+static int ChangeBonusOnTech;
+static int BonusAfterTech;
 static const int MaxVehProtoFactionNum = 64;
 static BOOL is_alien_faction(uint32_t faction_id) {
     return ExpansionEnabled && (Players[faction_id].rule_flags & RFLAG_ALIEN);
 }
-static int has_tech(int, int) { return TechResult; }
+static int has_tech(int, int faction_id) {
+    if (ChangeBonusOnTech) {
+        Players[faction_id].faction_bonus_val1[0] = BonusAfterTech;
+        ChangeBonusOnTech = 0;
+    }
+    return TechResult;
+}
 static int has_project(int project, int faction_id) {
     return project == SP_NETHACK_TERMINUS && faction_id == 1 && ProjectResult;
 }
@@ -107,10 +115,19 @@ int main() {
     TechResult = 0;
     if (has_abil(128, 1 << 3)) return 6;
 
+    // The pin reloads faction_bonus_val1 after has_tech; model a callback mutation.
+    Players[2].faction_bonus_val1[0] = 3;
+    Ability[3].preq_tech = 9;
+    Ability[4].preq_tech = 10;
+    TechResult = 1;
+    BonusAfterTech = 4;
+    ChangeBonusOnTech = 1;
+    if (!has_abil(128, 1 << 4)) return 7;
+
     // Probe-team algorithm enhancement remains available through the project fallback.
     VehPrototypes[64].weapon_id = WPN_PROBE_TEAM;
     ProjectResult = 1;
-    if (!has_abil(64, ABL_ALGO_ENHANCEMENT)) return 7;
+    if (!has_abil(64, ABL_ALGO_ENHANCEMENT)) return 8;
     return 0;
 }
 '''
@@ -149,3 +166,16 @@ def test_old_expansion_gated_helper_mutant_is_rejected(tmp_path: Path) -> None:
     mutant = definition.replace(direct_test, "is_alien_faction(faction_id)", 1)
     result = _compile_and_run(_program(mutant), tmp_path)
     assert result.returncode != 0, "the old ExpansionEnabled-gated helper mutant passed"
+
+
+def test_cached_bonus_index_mutant_is_rejected(tmp_path: Path) -> None:
+    definition = _function(SOURCE.read_text(encoding="utf-8"))
+    live_read = """if (has_tech(Ability[Players[faction_id].faction_bonus_val1[i]].preq_tech, faction_id) &&
+                (ability_id & (1 << Players[faction_id].faction_bonus_val1[i]))) {"""
+    cached = """int abil_bonus_id = Players[faction_id].faction_bonus_val1[i];
+            if (has_tech(Ability[abil_bonus_id].preq_tech, faction_id) &&
+                (ability_id & (1 << abil_bonus_id))) {"""
+    assert definition.count(live_read) == 1
+    mutant = definition.replace(live_read, cached, 1)
+    result = _compile_and_run(_program(mutant), tmp_path)
+    assert result.returncode != 0, "the cached pre-call bonus index mutant passed"
