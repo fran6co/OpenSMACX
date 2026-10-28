@@ -1,0 +1,19 @@
+{
+  "event_id": "0ad407b20825e13d1079de1d2ed7c8e19334f49e455d26aa75c0189e78d4f7cd",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_net_player_member_access_closure_oct9.py"
+    ],
+    "evidence": [
+      "Authorize actual-source player initialization tests for the proposed field_4_ anchor. Preserve all success/failure and untouched-byte assertions and full-dword stamp damage controls. Adapt only syntax-specific direct-member anchors to the candidate named offsetof/member expressions; no weakened effects or raw fixed layout literals."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "verify-player-cursor-footprint",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:exact-net-player-anchor-oct28my"
+}
