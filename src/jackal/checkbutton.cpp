@@ -41,6 +41,21 @@ Sprite *const CheckButtonDefaultA28 =
     reinterpret_cast<Sprite *>(g_CHECKBOX_SPRITE_2.storage_.bytes);
 
 /*
+Purpose: Tear down CheckButton and its GraphicWin base through ordinary C++
+         destruction, preserving the compiler's exception-cleanup path.
+// ORIGINAL: 0x004B3EC0 ??1CheckButton@@QAE@XZ 0x004B3EC0-0x004B3F18;0x00659880-0x00659892 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence":["source:src/recovered/units/004b3ec0.cpp","original:0x004B3EC0-0x004B3F18","source:src/jackal/checkbutton.h:CheckButton"],"reason":"Let C++ emit the base teardown and exception cleanup instead of patching vtable addresses and manually invoking a base destructor."}
+// symbol    ??1CheckButton@@UAE@XZ
+*/
+#pragma optimize("y", off)
+#pragma inline_depth(0)
+CheckButton::~CheckButton() {
+    close();
+}
+#pragma inline_depth(8)
+#pragma optimize("y", on)
+
+/*
 Purpose: Construct the GraphicWin base, then install CheckButton's own
          vtables and the trailing toggle-state fields.
 // ORIGINAL: 0x00633750 ??0CheckButton@@QAE@XZ 0x00633750-0x0063379D BYTE_EXACT
@@ -80,21 +95,6 @@ void CheckButton::close() {
     unchecked_sprite_ = CheckButtonDefaultA24;
     GraphicWin::close();
 }
-
-/*
-Purpose: Tear down CheckButton and its GraphicWin base through ordinary C++
-         destruction, preserving the compiler's exception-cleanup path.
-// ORIGINAL: 0x004B3EC0 ??1CheckButton@@QAE@XZ 0x004B3EC0-0x004B3F18;0x00659880-0x00659892 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence":["source:src/recovered/units/004b3ec0.cpp","original:0x004B3EC0-0x004B3F18","source:src/jackal/checkbutton.h:CheckButton"],"reason":"Let C++ emit the base teardown and exception cleanup instead of patching vtable addresses and manually invoking a base destructor."}
-// symbol    ??1CheckButton@@UAE@XZ
-*/
-#pragma optimize("y", off)
-#pragma inline_depth(0)
-CheckButton::~CheckButton() {
-    close();
-}
-#pragma inline_depth(8)
-#pragma optimize("y", on)
 
 /*
 Purpose: Copy the button's surface into its parent and draw the selected
