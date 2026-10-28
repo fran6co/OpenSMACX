@@ -5410,7 +5410,10 @@ uint32_t BaseCurrentForcesMaintCount;  // 0x0090EA08
  * for each of the three resources, and resource_yield zeroes it for RSC_PSI.
  * The executable's two clear paths identify this start; purpose comes from callers.
  */
-// RECOVERY_OBJECT: v1 0x0090E998 ?TileYieldRestricted@@3HA
+// Independent crop_yield accesses at 0x004E72C2/0x004E72D0 read/write a DWORD;
+// farm_compute uses separate DWORD storage at 0x0090E99C. This bounds the slot,
+// without establishing the original signedness or source-level identifier.
+// RECOVERY_OBJECT: v2 0x0090E998 0x0090E99C ?TileYieldRestricted@@3HA 0x004E6E50
 int TileYieldRestricted;  // 0x0090E998
 // farm_compute publishes 25 status words, including four excluded outer
 // positions. The separate mask covers only the first 21 workable positions.
