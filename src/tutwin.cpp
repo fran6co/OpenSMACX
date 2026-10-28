@@ -1083,59 +1083,105 @@ tour_cleanup:
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x004BAF20 ?tour7@TutWin@@QAEXXZ 0x004BAF20-0x004BB373 FILE
+// ORIGINAL: 0x004BAF20 ?tour7@TutWin@@QAEXXZ 0x004BAF20-0x004BB373 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["seed:src/recovered/units/004baf20.cpp", "image:0x004baf20; original call/rectangle/lifetime review"], "reason": "Restore the original ownership-group implementation through real tutorial/editor windows, declared members and normal C++ lifecycle; retained seed extents include the associated exception cleanup where present."}
 void TutWin::tour7() {
     const int was_visible = TutWinDesWindow.is_visible();
-    int x;
-    int y;
 
     if (!was_visible) {
         TutWinDesWindow.exec(ConsoleGlobal.faction_id_, -2);
     }
 
 
-    des_rect(&TutWinDesWindow.component_panel_rects_[
-        DesignWin::component_panel_chassis], &x, &y);
-    if (tut_win(MapWinTable[0],
-    "DESTOURCHAS", x, y, 0, 2, -1, -1) == 0) goto tour7_cleanup;
-    des_rect(&TutWinDesWindow.component_panel_rects_[
-        DesignWin::component_panel_weapon], &x, &y);
-    if (tut_win(MapWinTable[0],
-    "DESTOURWEAP", x, y, 0, 2, -1, -1) == 0) goto tour7_cleanup;
-    des_rect(&TutWinDesWindow.component_panel_rects_[
-        DesignWin::component_panel_armor], &x, &y);
-    if (tut_win(MapWinTable[0],
-    "DESTOURARM", x, y, 0, 2, -1, -1) == 0) goto tour7_cleanup;
-    des_rect(&TutWinDesWindow.component_panel_rects_[
-        DesignWin::component_panel_reactor], &x, &y);
-    if (tut_win(MapWinTable[0],
-    "DESTOURREACTOR", x, y, 0, 2, -1, -1) == 0) goto tour7_cleanup;
-    des_rect(&TutWinDesWindow.component_panel_rects_[
-        DesignWin::component_panel_special_one], &x, &y);
-    if (tut_win(MapWinTable[0],
-    "DESTOURABILITY", x, y, 0, 2, -1, -1) == 0) goto tour7_cleanup;
-    des_rect(&TutWinDesWindow.field_B2C_rect_, &x, &y);
-    if (tut_win(MapWinTable[0],
-    "DESTOURCOST", x, y, 0, 2, -1, -1) == 0) goto tour7_cleanup;
-    des_rect(&TutWinDesWindow.stats_rect_, &x, &y);
-    if (tut_win(MapWinTable[0],
-    "DESTOURSTATS", x, y, 0, 2, -1, -1) == 0) goto tour7_cleanup;
-    iface_rect(&TutWinDesWindow.field_B0C_rect_, &x, &y);
-    if (tut_win(MapWinTable[0],
-    "DESTOURBAR", x, y, 0, 2, -1, -1) == 0) goto tour7_cleanup;
-    iface_rect(&TutWinDesWindow.field_CBC_rect_, &x, &y);
-    if (tut_win(MapWinTable[0],
-    "DESTOURARROWS", x, y, 0, 2, -1, -1) == 0) goto tour7_cleanup;
-    iface_rect(&TutWinDesWindow.caption_rect_, &x, &y);
-    if (tut_win(MapWinTable[0],
-    "DESTOURPRESETS", x, y, 0, 2, -1, -1) == 0) goto tour7_cleanup;
-    des_rect(&TutWinDesWindow.lower_panel_rows_[DesignWin::lower_panel_done], &x, &y);
-    if (tut_win(MapWinTable[0],
-    "DESTOURDONE", x, y, 0, 2, -1, -1) == 0) goto tour7_cleanup;
-    des_rect(&TutWinDesWindow.field_B5C_rect_, &x, &y);
-    if (tut_win(MapWinTable[0],
-    "DESTOURAPPLY", x, y, 0, 2, -1, -1) == 0) goto tour7_cleanup;
+    {
+        int x;
+        int y;
+        des_rect(&TutWinDesWindow.component_panel_rects_[
+            DesignWin::component_panel_chassis], &x, &y);
+        if (tut_win(MapWinTable[0],
+        "DESTOURCHAS", x, y, 0, 2, -1, -1) == 0) goto tour7_cleanup;
+    }
+    {
+        int y;
+        int x;
+        des_rect(&TutWinDesWindow.component_panel_rects_[
+            DesignWin::component_panel_weapon], &x, &y);
+        if (tut_win(MapWinTable[0],
+        "DESTOURWEAP", x, y, 0, 2, -1, -1) == 0) goto tour7_cleanup;
+    }
+    {
+        int y;
+        int x;
+        des_rect(&TutWinDesWindow.component_panel_rects_[
+            DesignWin::component_panel_armor], &x, &y);
+        if (tut_win(MapWinTable[0],
+        "DESTOURARM", x, y, 0, 2, -1, -1) == 0) goto tour7_cleanup;
+    }
+    {
+        int y;
+        int x;
+        des_rect(&TutWinDesWindow.component_panel_rects_[
+            DesignWin::component_panel_reactor], &x, &y);
+        if (tut_win(MapWinTable[0],
+        "DESTOURREACTOR", x, y, 0, 2, -1, -1) == 0) goto tour7_cleanup;
+    }
+    {
+        int y;
+        int x;
+        des_rect(&TutWinDesWindow.component_panel_rects_[
+            DesignWin::component_panel_special_one], &x, &y);
+        if (tut_win(MapWinTable[0],
+        "DESTOURABILITY", x, y, 0, 2, -1, -1) == 0) goto tour7_cleanup;
+    }
+    {
+        int y;
+        int x;
+        des_rect(&TutWinDesWindow.field_B2C_rect_, &x, &y);
+        if (tut_win(MapWinTable[0],
+        "DESTOURCOST", x, y, 0, 2, -1, -1) == 0) goto tour7_cleanup;
+    }
+    {
+        int y;
+        int x;
+        des_rect(&TutWinDesWindow.stats_rect_, &x, &y);
+        if (tut_win(MapWinTable[0],
+        "DESTOURSTATS", x, y, 0, 2, -1, -1) == 0) goto tour7_cleanup;
+    }
+    {
+        int y;
+        int x;
+        iface_rect(&TutWinDesWindow.field_B0C_rect_, &x, &y);
+        if (tut_win(MapWinTable[0],
+        "DESTOURBAR", x, y, 0, 2, -1, -1) == 0) goto tour7_cleanup;
+    }
+    {
+        int y;
+        int x;
+        iface_rect(&TutWinDesWindow.field_CBC_rect_, &x, &y);
+        if (tut_win(MapWinTable[0],
+        "DESTOURARROWS", x, y, 0, 2, -1, -1) == 0) goto tour7_cleanup;
+    }
+    {
+        int y;
+        int x;
+        iface_rect(&TutWinDesWindow.caption_rect_, &x, &y);
+        if (tut_win(MapWinTable[0],
+        "DESTOURPRESETS", x, y, 0, 2, -1, -1) == 0) goto tour7_cleanup;
+    }
+    {
+        int y;
+        int x;
+        des_rect(&TutWinDesWindow.lower_panel_rows_[DesignWin::lower_panel_done], &x, &y);
+        if (tut_win(MapWinTable[0],
+        "DESTOURDONE", x, y, 0, 2, -1, -1) == 0) goto tour7_cleanup;
+    }
+    {
+        int y;
+        int x;
+        des_rect(&TutWinDesWindow.field_B5C_rect_, &x, &y);
+        if (tut_win(MapWinTable[0],
+        "DESTOURAPPLY", x, y, 0, 2, -1, -1) == 0) goto tour7_cleanup;
+    }
     if (!do_des(&TutWinDesWindow.lower_panel_rows_[DesignWin::lower_panel_rename],
                 "DESTOURRENAME", 2))
         goto tour7_cleanup;
