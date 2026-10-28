@@ -1,0 +1,26 @@
+{
+  "author": "root",
+  "base_revision": "8ac09ef952694d54a1edef98c256d8b5e2174741",
+  "editable_files": [
+    "src/jackal/checkbox.cpp",
+    "recovery/tests/test_checkbox_state_traversal_oct15.py",
+    "recovery/tests/test_checkbox_selected_state_oct23za.py",
+    "recovery/tests/test_checkbox_raw_shift_actual_source.py"
+  ],
+  "evidence": [
+    "Evidence: NL/jackal-small-triage.json verifies original0x0060EC22 loads StringStruct head+8, not count+10; independently verify fullpin. Change only get_state_id outer predicate count!=0 to head!=0; update contradicted seed prose, keep all meaningful history and markers/historical claims. No loop/shift/header/flag changes.",
+    "Existing tests encode the old wrong guard. Correct assertions using original head/non-null and signedcount combinations and add old-count-guard mutant rejection; preserve all independent mutation controls. Do not weaken tests to pass. Native originalfullspan is authority, not old assertion snapshots.",
+    "Wait coordinator READY after nativepositive+wholeTU replica; candidatebudget1. Coordinator alone compiler/prep/record/Gitmutations. Read-only tools allowed. EveryPython UV_NO_SYNC=1 UV_PROJECT_ENVIRONMENT=/home/fran6co/code/OpenSMACX/.venv UV_CACHE_DIR=/tmp/opensmacx-uv-cache uv run --no-sync."
+  ],
+  "intent": "Recover original head-pointer guard without changing traversal or state-mask semantics",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6351888,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "CheckBox state getter list guard",
+  "task_id": "easy-checkbox-head-oct28nl"
+}
