@@ -24,6 +24,7 @@ ADDRESSES = {
 }
 
 HARNESS = r'''#include <cassert>
+#include <cstddef>
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
@@ -212,8 +213,14 @@ def test_actual_source_controls_reject_player_member_mutants(tmp_path: Path) -> 
     if compiler is None:
         pytest.skip("g++ unavailable")
     actual = HARNESS + _actual_definitions() + MAIN
+    stamp_write = (
+        "*reinterpret_cast<uint32_t *>(\n"
+        "            player_cursor - offsetof(NetPlayer, field_4_)\n"
+        "                + offsetof(NetPlayer, stamp_10_)) = 0;"
+    )
     mutations = (
-        ("player->stamp_10_ = 0;", "player->stamp_10_ &= 0xFF000000u;"),
+        (stamp_write,
+         stamp_write.replace(" = 0;", " &= 0xFF000000u;")),
         ("return players_[index].name_and_tail_;", "return players_[0].name_and_tail_;"),
         ("player->field_C_ = 100;", "player->field_C_ = latency;"),
     )
@@ -229,8 +236,12 @@ def test_raw_player_strides_and_stale_stamp_comment_are_gone() -> None:
     join = _actual_definitions().split("int Net::join_service(", 1)[1].split("\n}", 1)[0]
     lookup = _actual_definitions().split("char *Net::get_player_name(", 1)[1].split("\n}", 1)[0]
     assert "BUG IN THE ORIGINAL: only the FIRST byte of stamp_10_" not in source
-    assert "player->stamp_10_ = 0;" in init
-    assert "player->flags_14_ = 0;" in init
+    assert "&players_[0].field_4_" in init
+    for field in ("field_0_", "field_4_", "field_8_", "flags_14_", "stamp_10_"):
+        assert f"offsetof(NetPlayer, {field})" in init
+    assert "reinterpret_cast<uint32_t *>" in init
+    assert "reinterpret_cast<uint8_t *>" in init
+    assert "player_cursor += sizeof(NetPlayer);" in init
     assert "player->field_C_ = latency;" in join
     assert "player->field_C_ = 100;" in join
     assert "players_[index].field_0_ == key" in lookup

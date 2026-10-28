@@ -1797,15 +1797,24 @@ int Net::init(_GUID *guid, int option_a, int option_b) {
     // Preserve the pinned store sequence for every 0x58-byte record:
     // dwords +0/+4/+8, byte +0x14 (flags), then dword +0x10 (stamp).
     // field_C_ and all name bytes are untouched by this initialization.
-    NetPlayer *player = players_;
+    uintptr_t player_cursor = reinterpret_cast<uintptr_t>(
+        &players_[0].field_4_);
     int count = 0x10;
     do {
-        player->field_0_ = 0;
-        player->field_4_ = 0;
-        player->field_8_ = 0;
-        player->flags_14_ = 0;
-        player->stamp_10_ = 0;
-        ++player;
+        *reinterpret_cast<uint32_t *>(
+            player_cursor - offsetof(NetPlayer, field_4_)
+                + offsetof(NetPlayer, field_0_)) = 0;
+        *reinterpret_cast<uint32_t *>(player_cursor) = 0;
+        *reinterpret_cast<uint32_t *>(
+            player_cursor - offsetof(NetPlayer, field_4_)
+                + offsetof(NetPlayer, field_8_)) = 0;
+        *reinterpret_cast<uint8_t *>(
+            player_cursor - offsetof(NetPlayer, field_4_)
+                + offsetof(NetPlayer, flags_14_)) = 0;
+        *reinterpret_cast<uint32_t *>(
+            player_cursor - offsetof(NetPlayer, field_4_)
+                + offsetof(NetPlayer, stamp_10_)) = 0;
+        player_cursor += sizeof(NetPlayer);
         --count;
     } while (count != 0);
     thread_info_.owner_ = this;
