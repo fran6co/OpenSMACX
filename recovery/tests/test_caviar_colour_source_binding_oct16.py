@@ -58,6 +58,7 @@ static uint8_t CaviarColourSource[0x1800];
 static uint8_t decoy_colour_source[0x1800];
 static uint8_t expected_colour;
 static int render_calls;
+static int render_result;
 
 void * __cdecl caviar_memset_call(void *dst, int value, unsigned count) {
     return memset(dst, value, count);
@@ -66,8 +67,8 @@ void * __cdecl caviar_memset_call(void *dst, int value, unsigned count) {
 struct Caviar {
     uint32_t field_4_;
     uint8_t *instance_palettes_[2];
-    void render(Buffer *, int, int, int);
-    void render_mono(Buffer *, int, int, int, int);
+    int render(Buffer *, int, int, int);
+    int render_mono(Buffer *, int, int, int, int);
     static void __cdecl object_start(VOX_ScnRenderHnd *, long, VOX_Vect *,
                                      VOX_Matrix *, int32_t *, VOX_Vect *);
 };
@@ -78,12 +79,13 @@ struct Scene {
 };
 static Scene CaviarScene;
 
-void Caviar::render(Buffer *, int, int, int) {
+int Caviar::render(Buffer *, int, int, int) {
     assert((field_4_ & 8) != 0);
     assert((field_4_ & 0x10) == 0);
     for (unsigned i = 0; i != 0x1800; ++i)
         assert(CaviarColourSource[i] == expected_colour);
     ++render_calls;
+    return render_result;
 }
 
 ACTUAL_RENDER_MONO
@@ -100,9 +102,11 @@ int main() {
     CaviarScene.renderer_ = &renderer;
     Buffer buffer;
     expected_colour = 0xB9;
+    render_result = 0x37;
     memset(CaviarColourSource, 0xA5, sizeof(CaviarColourSource));
     renderer.field_4_ = 0x24;
-    renderer.render_mono(&buffer, 2, 3, 0x123456B9, 0x40);
+    int mono_result = renderer.render_mono(&buffer, 2, 3, 0x123456B9, 0x40);
+    assert(mono_result == render_result);
     assert(render_calls == 1);
     assert(renderer.field_4_ == 0x24);
     require_table(CaviarColourSource, expected_colour);
@@ -221,9 +225,9 @@ def test_executable_control_rejects_semantic_damage(tmp_path, damage):
         render_body = render_body.replace("colour & 0xff, 0x1800",
                                           "colour & 0xff, 0x17ff", 1)
     elif damage == "wrong_fill_source":
-        assert "caviar_memset_call(CaviarColourSource," in render_body
-        render_body = render_body.replace("caviar_memset_call(CaviarColourSource,",
-                                          "caviar_memset_call(decoy_colour_source,", 1)
+        assert "memset(CaviarColourSource," in render_body
+        render_body = render_body.replace("memset(CaviarColourSource,",
+                                          "memset(decoy_colour_source,", 1)
     elif damage == "wrong_render_flag":
         assert "field_4_ |= 8;" in render_body
         render_body = render_body.replace("field_4_ |= 8;", "field_4_ |= 0x10;", 1)

@@ -129,24 +129,25 @@ Purpose: Add another 3x3 float matrix into this one, element by element.
 // Structural debt: observed cells[0..8] only; original class, complete extent,
 // containing owner, lifecycle, callers, TU, and x87 precision remain unknown.
 // RECOVERY_ROLE: SCAFFOLD Bounded numerical receiver view only; shared original object ownership, containing class, full extent, callers and lifetime remain unproved. Source consolidation and complete arithmetic bodies do not resolve this structural obligation.
-// ORIGINAL: 0x006347C0 sub_6347c0 0x006347C0-0x006347F0
-// symbol    ?add_assign@Matrix3@@QAEXPBU1@@Z
+// ORIGINAL: 0x006347C0 sub_6347c0 0x006347C0-0x006347F0 BYTE_EXACT
+// symbol    ?add_assign@Matrix3@@QAEAAU1@PBU1@@Z
 // size      48 bytes
 // prototype
 // callers   0   call targets   0
 // kind      game
 // flags     sp_ready;purged_ok
 // calls     (none)
-Return Value: n/a
+Return Value: this matrix (inferred from the pinned receiver remaining in EAX)
 Status: Complete
 */
-void Matrix3::add_assign(const Matrix3 *other) {
+Matrix3 &Matrix3::add_assign(const Matrix3 *other) {
     for (int row = 0; row < 3; ++row) {
         for (int column = 0; column < 3; ++column) {
             cells[row * 3 + column] = other->cells[row * 3 + column] +
                                      cells[row * 3 + column];
         }
     }
+    return *this;
 }
 
 /*
@@ -199,23 +200,24 @@ Purpose: Scale a 3x3 float matrix by a scalar.
 // Structural debt: observed cells[0..8] only; original class, complete extent,
 // containing owner, lifecycle, callers, TU, and x87 precision remain unknown.
 // RECOVERY_ROLE: SCAFFOLD Bounded numerical receiver view only; shared original object ownership, containing class, full extent, callers and lifetime remain unproved. Source consolidation and complete arithmetic bodies do not resolve this structural obligation.
-// ORIGINAL: 0x006348C0 sub_6348c0 0x006348C0-0x006348E7
-// symbol    ?scale_assign@Matrix3@@QAEXM@Z
+// ORIGINAL: 0x006348C0 sub_6348c0 0x006348C0-0x006348E7 BYTE_EXACT
+// symbol    ?scale_assign@Matrix3@@QAEAAU1@M@Z
 // size      39 bytes
 // prototype
 // callers   0   call targets   0
 // kind      game
 // flags     sp_ready;purged_ok
 // calls     (none)
-Return Value: n/a
+Return Value: this matrix (inferred from the pinned receiver remaining in EAX)
 Status: Complete
 */
-void Matrix3::scale_assign(float scale) {
+Matrix3 &Matrix3::scale_assign(float scale) {
     for (int row = 0; row < 3; ++row) {
         for (int column = 0; column < 3; ++column) {
             cells[row * 3 + column] = scale * cells[row * 3 + column];
         }
     }
+    return *this;
 }
 
 /*
@@ -229,24 +231,25 @@ Purpose: Subtract another 3x3 float matrix from this one.
 // Structural debt: observed cells[0..8] only; original class, complete extent,
 // containing owner, lifecycle, callers, TU, and x87 precision remain unknown.
 // RECOVERY_ROLE: SCAFFOLD Bounded numerical receiver view only; shared original object ownership, containing class, full extent, callers and lifetime remain unproved. Source consolidation and complete arithmetic bodies do not resolve this structural obligation.
-// ORIGINAL: 0x006348F0 sub_6348f0 0x006348F0-0x00634920
-// symbol    ?subtract_assign@Matrix3@@QAEXPBU1@@Z
+// ORIGINAL: 0x006348F0 sub_6348f0 0x006348F0-0x00634920 BYTE_EXACT
+// symbol    ?subtract_assign@Matrix3@@QAEAAU1@PBU1@@Z
 // size      48 bytes
 // prototype
 // callers   0   call targets   0
 // kind      game
 // flags     sp_ready;purged_ok
 // calls     (none)
-Return Value: n/a
+Return Value: this matrix (inferred from the pinned receiver remaining in EAX)
 Status: Complete
 */
-void Matrix3::subtract_assign(const Matrix3 *other) {
+Matrix3 &Matrix3::subtract_assign(const Matrix3 *other) {
     for (int row = 0; row < 3; ++row) {
         for (int column = 0; column < 3; ++column) {
             cells[row * 3 + column] = cells[row * 3 + column] -
                                       other->cells[row * 3 + column];
         }
     }
+    return *this;
 }
 
 /*

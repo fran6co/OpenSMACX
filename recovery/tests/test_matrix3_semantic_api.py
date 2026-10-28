@@ -52,12 +52,15 @@ int main() {
     if (!same(&x, added)) return 6;
     fill(&x, 1); descending(&y); y = x.add(&y);
     if (!same(&y, added) || !same(&x, a)) return 23;
-    fill(&x, 1); descending(&y); x.add_assign(&y);
+    fill(&x, 1); descending(&y);
+    if (&x.add_assign(&y) != &x) return 29;
     if (!same(&x, added)) return 7;
 
-    fill(&x, 1); descending(&y); x.subtract_assign(&y);
+    fill(&x, 1); descending(&y);
+    if (&x.subtract_assign(&y) != &x) return 30;
     if (!same(&x, diff)) return 8;
-    fill(&x, 1); x.subtract_assign(&x);
+    fill(&x, 1);
+    if (&x.subtract_assign(&x) != &x) return 31;
     const float zero[9] = {0,0,0,0,0,0,0,0,0};
     if (!same(&x, zero)) return 9;
 
@@ -76,7 +79,8 @@ int main() {
     const float square[9] = {30,36,42,66,81,96,102,126,150};
     if (!same(&x, square)) return 12;
 
-    fill(&x, 1); x.scale_assign(2.0f);
+    fill(&x, 1);
+    if (&x.scale_assign(2.0f) != &x) return 32;
     const float doubled[9] = {2,4,6,8,10,12,14,16,18};
     if (!same(&x, doubled)) return 13;
     fill(&x, 1);
