@@ -1478,7 +1478,7 @@ extern "C" int __fastcall sub_5c9ec0(MediaRuntime *runtime) {
   }
   case 0x44414553: {
     read = mmioRead(runtime->descriptor->stream,
-                    (HPSTR)(header_and_payload + 0x18),
+                    (HPSTR)(header_and_payload + 0x0c),
                     (LONG)payload_bytes);
     if (read == 0) {
       runtime->stream_eof = 1;
@@ -1496,7 +1496,7 @@ extern "C" int __fastcall sub_5c9ec0(MediaRuntime *runtime) {
   case 0x5343436c:
   case 0x53434c6c: {
     (void)mmioRead(runtime->descriptor->stream,
-                   (HPSTR)(header_and_payload + 0x18),
+                   (HPSTR)(header_and_payload + 0x0c),
                    (LONG)payload_bytes);
     return 4;
   }
