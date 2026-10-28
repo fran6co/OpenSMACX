@@ -109,12 +109,18 @@ struct Popup {
     dtor_modal_state = PopupModalState;
     events.push_back("popup-dtor");
   }
-  void start(char *file, const char *label, int value, char *override_text, int flags) {
+  int start(char *file, const char *label, int value, char *override_text, int flags,
+            void *owner) {
     assert(PopupModalState == 6);
     assert(file == PopupStartCaption && std::strcmp(label, "EDITORTERRAIN") == 0);
     assert(value == -1 && override_text == 0 && flags == 0);
+    assert(owner == 0);
     ++start_count;
     events.push_back("start");
+    return 0;
+  }
+  void start(char *file, const char *label, int value, char *override_text, int flags) {
+    (void)start(file, label, value, override_text, flags, 0);
   }
   Dialogs &dialogs() { return list; }
   void set_value(int value) {
