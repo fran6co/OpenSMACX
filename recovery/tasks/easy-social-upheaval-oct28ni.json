@@ -1,0 +1,31 @@
+{
+  "author": "root",
+  "base_revision": "534a124aebf70d4cb5a099b71731b0921b28376c",
+  "editable_files": [
+    "src/faction.cpp",
+    "recovery/tests/test_faction_helper_boundaries_oct21v.py",
+    "recovery/tests/test_social_upheaval_signed_cost_oct20.py"
+  ],
+  "evidence": [
+    "Read recovery/WORKFLOW.md. Native/compiler/Git/record/integration belong solely to coordinator. Source worker edits only selected social_upheaval body and scoped existing meaningful host controls; social_ai is measurement scope for its inline copies, not a license for unrelated edits.",
+    "Pin-proved discovery: fast-pass-oct28nh/broad-game-levers.json. Original5B45DE..45E6 directly tests Players rule_flags RFLAG_ALIEN; is_alien_faction adds ExpansionEnabled. Compile one bounded actual-profile batch after exact positive and unchanged-TU reproduction; no cosmetic search.",
+    "Both actual faction.cpp social_upheaval calls occur in social_ai5B4790. Source-level external SocialWin callers retain direct function binding. Preserve signed arithmetic and division quirks. Expand scope only through coordinator for any new finding.",
+    "Update existing actual-source controls with distinct ExpansionEnabled=0 +alienbit state; oldhelper mutant must fail executed cost/signed-caller assertions. Keep existing meaningful damage controls. All Python UV_NO_SYNC=1 UV_PROJECT_ENVIRONMENT=/home/fran6co/code/OpenSMACX/.venv UV_CACHE_DIR=/tmp/opensmacx-uv-cache uv run --no-sync. Prefix26/28/29 quarantined."
+  ],
+  "intent": "Restore original direct alien rule-flag test without the extra expansion gate; retain signed cost, original quirks and historical claims.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5981520,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5982096,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "Social upheaval and inlined AI callers",
+  "task_id": "easy-social-upheaval-oct28ni"
+}

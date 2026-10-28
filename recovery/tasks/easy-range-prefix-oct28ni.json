@@ -1,0 +1,24 @@
+{
+  "author": "root",
+  "base_revision": "534a124aebf70d4cb5a099b71731b0921b28376c",
+  "editable_files": [
+    "src/time.cpp"
+  ],
+  "evidence": [
+    "Read recovery/WORKFLOW.md. Source edits only around selected constructor: balanced local guarded pragma function(memset) / intrinsic(memset), body unchanged. No new owner/class/runtime claim; existing provisional limits remain.",
+    "Pinned4C811B calls6465F0 memset forfourbytes then clears+0/+8/+C. See fast-pass-oct28nh/broad-library-levers.json; olderinstructioncounts14vs9must be refreshed againstcurrentqualifiedrecipe.",
+    "One bounded actual-profile candidate after exactpositive andunchangedTUreproduction. Preserve allhistoricalclaims; native record only ifexact. No source/Git/nativecompiler whilecoordinatorbaselinecontrolsrun. Coordinator owns Git/preparation/compiler/record/integration.",
+    "Existing meaningful host controls recovery/tests/test_time_range_views_actual_source.py should still pass. Return pragma leakage and outsideowner findings rather than expanding source scope. Every Python command UV_NO_SYNC=1 UV_PROJECT_ENVIRONMENT=/home/fran6co/code/OpenSMACX/.venv UV_CACHE_DIR=/tmp/opensmacx-uv-cache uv run --no-sync."
+  ],
+  "intent": "Restore original four-byte memset call boundary without changing the provisional receiver ownership or historical claims.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5013776,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "RangePrefixInitializationView original CRT call",
+  "task_id": "easy-range-prefix-oct28ni"
+}

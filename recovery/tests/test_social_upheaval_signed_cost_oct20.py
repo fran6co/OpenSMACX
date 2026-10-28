@@ -12,6 +12,7 @@ import subprocess
 import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
+HEADER = ROOT / "src/faction.h"
 
 
 def function_body(path, name):
@@ -34,6 +35,26 @@ def function_body(path, name):
     raise AssertionError((path, name, "unterminated function"))
 
 
+def actual_alien_helper():
+    text = HEADER.read_text()
+    matches = list(re.finditer(
+        r"(?m)^inline BOOL __cdecl is_alien_faction\s*\([^\n]*\)\s*\{",
+        text,
+    ))
+    assert len(matches) == 1, len(matches)
+    start = matches[0].start()
+    opening = text.find("{", matches[0].end() - 1)
+    depth = 0
+    for index in range(opening, len(text)):
+        if text[index] == "{":
+            depth += 1
+        elif text[index] == "}":
+            depth -= 1
+            if depth == 0:
+                return text[start:index + 1]
+    raise AssertionError("unterminated is_alien_faction")
+
+
 def actual_penalty_expression():
     text = (ROOT / "src/faction.cpp").read_text()
     matches = re.findall(
@@ -49,15 +70,17 @@ PREAMBLE = r"""
 #include <cstdlib>
 #define MEASURED
 #define __cdecl
+#define BOOL int
 typedef unsigned int uint32_t;
-enum { MaxSocialCatNum = 4, DLVL_LIBRARIAN = 3 };
+enum { MaxSocialCatNum = 4, DLVL_LIBRARIAN = 3, RFLAG_ALIEN = 0x80 };
 struct SocialCategory { int models_[MaxSocialCatNum]; };
 struct PlayerData { SocialCategory soc_category_active; int diff_level; };
 PlayerData PlayersData[1];
+struct Player { uint32_t rule_flags; };
+Player Players[1];
 int Human[1];
-int Alien[1];
+int ExpansionEnabled;
 int is_human(uint32_t faction_id) { return Human[faction_id]; }
-int is_alien_faction(uint32_t faction_id) { return Alien[faction_id]; }
 """
 
 MAIN = r"""
@@ -72,7 +95,8 @@ int score_with_actual_caller(int faction_id, SocialCategory &soc_cat) {
 void setup(int diff, int human, int alien) {
     PlayersData[0].diff_level = diff;
     Human[0] = human;
-    Alien[0] = alien;
+    Players[0].rule_flags = alien ? RFLAG_ALIEN : 0;
+    ExpansionEnabled = 1;
     for (int i = 0; i < MaxSocialCatNum; ++i) {
         PlayersData[0].soc_category_active.models_[i] = 0;
     }
@@ -87,12 +111,17 @@ int main() {
     require(score_with_actual_caller(0, category) == -13,
             "positive human cost uses signed division by -3");
 
-    Alien[0] = 1;
+    Players[0].rule_flags = RFLAG_ALIEN;
     for (int i = 1; i < MaxSocialCatNum; ++i) category.models_[i] = 1;
     require(social_upheaval(0, &category) == 937,
             "four changes and human-alien half retain signed-cost result");
     require(score_with_actual_caller(0, category) == -312,
             "maximum ordinary cost retains signed penalty");
+    ExpansionEnabled = 0;
+    require(social_upheaval(0, &category) == 937,
+            "alien flag surcharge ignores ExpansionEnabled");
+    require(score_with_actual_caller(0, category) == -312,
+            "alien flag surcharge reaches signed caller when expansion is disabled");
 
     setup(0, 0, 1);
     require(social_upheaval(0, &category) == 562,
@@ -113,21 +142,28 @@ int main() {
 
 def compile_and_run(tmp_path, compiler, helper, damage=None):
     expression = actual_penalty_expression()
-    source = PREAMBLE + helper + MAIN.replace(
+    source = PREAMBLE + actual_alien_helper() + helper + MAIN.replace(
         "// ACTUAL_PENALTY_EXPRESSION", expression
     )
     if damage == "logical-half":
         old = "cost += cost / 2;"
         assert helper.count(old) == 1
         helper = helper.replace(old, "cost += static_cast<uint32_t>(cost) / 2;")
-        source = PREAMBLE + helper + MAIN.replace(
+        source = PREAMBLE + actual_alien_helper() + helper + MAIN.replace(
             "// ACTUAL_PENALTY_EXPRESSION", expression
         )
     elif damage == "unsigned-return":
         old = "MEASURED int __cdecl social_upheaval"
         assert helper.count(old) == 1
         helper = helper.replace(old, "MEASURED uint32_t __cdecl social_upheaval")
-        source = PREAMBLE + helper + MAIN.replace(
+        source = PREAMBLE + actual_alien_helper() + helper + MAIN.replace(
+            "// ACTUAL_PENALTY_EXPRESSION", expression
+        )
+    elif damage == "alien-helper":
+        old = "if (Players[faction_id].rule_flags & RFLAG_ALIEN) {"
+        assert helper.count(old) == 1
+        helper = helper.replace(old, "if (is_alien_faction(faction_id)) {", 1)
+        source = PREAMBLE + actual_alien_helper() + helper + MAIN.replace(
             "// ACTUAL_PENALTY_EXPRESSION", expression
         )
 
@@ -153,12 +189,16 @@ def test_actual_helper_and_actual_social_ai_penalty_expression(tmp_path, compile
 
 
 @pytest.mark.parametrize("compiler", ["g++", "clang++"])
-@pytest.mark.parametrize("damage", ["unsigned-return", "logical-half"])
+@pytest.mark.parametrize("damage", ["unsigned-return", "logical-half", "alien-helper"])
 def test_source_mutants_are_rejected(tmp_path, compiler, damage):
     if not shutil.which(compiler):
         pytest.skip(compiler + " unavailable")
     helper = function_body("src/faction.cpp", "social_upheaval")
     result = compile_and_run(tmp_path, compiler, helper, damage)
     assert result.returncode == 43, result.stderr
-    expected = "positive human cost" if damage == "unsigned-return" else "negative cost uses signed truncating alien half"
+    expected = {
+        "unsigned-return": "positive human cost",
+        "logical-half": "negative cost uses signed truncating alien half",
+        "alien-helper": "alien flag surcharge ignores ExpansionEnabled",
+    }[damage]
     assert "WITNESS: " + expected in result.stderr
