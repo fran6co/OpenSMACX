@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "net_session_picker.h"
 // ORIGINAL: 0x00401C80 SessionStruct::SessionStruct 0x00401C80-0x00401CD8 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00401c80.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "Session base tables669408/669404 and five cleared circular-list fields."}
+// RECOVERY_BINDING: v1 {"evidence": ["Retired seed: src/recovered/units/00401c80.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "Session base tables669408/669404 and five cleared circular-list fields."}
 // body src/alphanet_inline.h
 // symbol    ??0AlphaNetStringStruct@@QAE@XZ
 #include "alphanet_inline.h"
