@@ -10559,7 +10559,7 @@ int Buffer::wrap_cent_flying(char *text) {
     strcat(BufferFlyingText, text);
     return BufferFlyingY;
 }
-
+#pragma optimize("y", off)
 // ORIGINAL: 0x0047A720 ?UNK4@MultiWin@@QAEHPADPAURECT@@@Z 0x0047A720-0x0047A752 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["task:rectangle-owner-overloads", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x47a720", "seed:src/recovered/units/0047a720.cpp all identity/spans/claims and parsed discoveries retained; seed retirement requires fresh verification.", "source:src/multiwin.h caller receiver evidence and existing genuine Spot/Buffer interfaces."], "reason": "Recover genuine existing-owner rectangle convenience method. Original catalog MultiWin attribution is contradicted by unchanged receiver forwarding and typed Spot/Buffer callee evidence; original identity and historical obligations are retained, not renamed or newly banked."}
 // symbol    ?write_cent_l@Buffer@@QAEHPADPAUtagRECT@@@Z
@@ -10569,7 +10569,7 @@ int Buffer::write_cent_l(LPSTR text, RECT *rect) {
     }
     return write_cent_l(text, rect, static_cast<int>(strlen(text)));
 }
-
+#pragma optimize("", on)
 // ORIGINAL: 0x005D7AE0 sub_5d7ae0 0x005D7AE0-0x005D7B1D BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["task:graphicwin-buffer-input-owner", "pinned:5D54A0/5D54D0 adjust GraphicWin receiver to Buffer at +444; 5D7AE0 forwards unchanged receiver to load_pcx.", "pinned:5D5590 virtual Win resize slot3, failure return, then move and Buffer palette synchronization in that order.", "pinned:5D7AE0 input fields +C/+10 only; PcxInputView is an accessed-prefix description, not a proven complete allocation or original name.", "historical seed:src/recovered/005d7ae0.cpp; original mappings and parsed findings preserved."], "reason": "Rehome the original operation into genuine GraphicWin/Buffer inheritance and methods, preserving historical identity, spans, claims and findings."}
 // symbol    ?load_pcx_from_source@Buffer@@QAEHPAUPcxInputView@@PAVPalette@@HH@Z
