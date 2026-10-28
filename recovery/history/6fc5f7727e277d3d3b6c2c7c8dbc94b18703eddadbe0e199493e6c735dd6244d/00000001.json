@@ -1,0 +1,19 @@
+{
+  "event_id": "b777850b7dee431e7213baaae3920e3b1986953a354e8845885269813a55fdda",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/alpha.cpp"
+    ],
+    "evidence": [
+      "Fresh retained current application context audit: unchanged text_get_number header body is18/18 BYTE_EXACT in alpha.cpp and game.cpp actual app recipes, while canonical text.cpp library recipe inlines both wrappers and emits67. Native pin585120 calls wrappers5FD570/5FD740; adjacent585170 read_basic_rules and nearby app helpers support choosing current alpha.cpp owner, not proof of historical TU. Rehome complete annotation to alpha.cpp and retain body src/text.h/history/claims. No C++ body/signature/flags/header changes. Pure native marker writer must reproduce unchanged ORIGINAL bytes; verify full mapping continuity and whole-object preservation."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "text-application-owner-evidence-01",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:easy-text-wrapper-oct28na"
+}

@@ -9509,15 +9509,15 @@ Historical byte claim remains a restoration obligation. The typed owner fixes
 the former reference-target error; a masked-byte match did not detect it.
 */
 void __cdecl clear_bunglist(int faction_id) {
-    ProtoBung *entry = &BungList[faction_id][0];
+    uintptr_t cursor = reinterpret_cast<uintptr_t>(&BungList[faction_id][0].weapon_id);
     int count = 0x40;
     do {
-        entry->ability_flags = 0xffffffffu;
-        entry->chassis_id = 0xff;
-        entry->weapon_id = 0xff;
-        entry->armor_id = 0xff;
-        entry->reactor_id = 0xff;
-        ++entry;
+        *reinterpret_cast<uint32_t *>(cursor - (offsetof(ProtoBung, weapon_id) - offsetof(ProtoBung, ability_flags))) = 0xffffffffu;
+        *reinterpret_cast<uint8_t *>(cursor - (offsetof(ProtoBung, weapon_id) - offsetof(ProtoBung, chassis_id))) = 0xff;
+        *reinterpret_cast<uint8_t *>(cursor) = 0xff;
+        *reinterpret_cast<uint8_t *>(cursor + (offsetof(ProtoBung, armor_id) - offsetof(ProtoBung, weapon_id))) = 0xff;
+        *reinterpret_cast<uint8_t *>(cursor + (offsetof(ProtoBung, reactor_id) - offsetof(ProtoBung, weapon_id))) = 0xff;
+        cursor += sizeof(ProtoBung);
     } while (--count);
 }
 

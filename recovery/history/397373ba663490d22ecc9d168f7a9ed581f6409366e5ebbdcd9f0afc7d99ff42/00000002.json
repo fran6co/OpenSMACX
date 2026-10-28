@@ -1,0 +1,28 @@
+{
+  "event_id": "3c3ce01e58dcb1aa49a0b20b4591d92a9238e8bc50cfbe061740e596791abfea",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/veh.cpp"
+    ],
+    "evidence": [
+      "Coordinator explicitly tracks and permits a temporary compiler-output matching regression in already-nonexact goody_box57A660 for this manual checkpoint, without changing its source or any historical claim. Full actual build shows3340→3339 instructions and matching32→18; ordinary common section changes broadly and native outside report stays FAIL. All162 mapped veh functions were rescored: all50 previous exact bodies remain exact; onlyclear_bunglist becomes17/17 exact and goody_box remainsMISMATCH. Independent call/global/string relocation symbol-kind-addend order is unchanged; complete binary equivalence of goody_box is not proved. This scope extension is preservation/restoration review only, not permission to edit goody source or weaken native verifiers.",
+      "The unmapped project helper veh_game_data_bunglist inlines the changed64-row clear under format<6 for8factions; independent full decode verifies same stores/stride/order, while format>=6 transfer is unchanged. Its native outside body difference stays visible. Existing source game-data format controls pass.",
+      "Keep the integer-address winner: second byte-pointer trial also17/17 exact but adds a new outside action_tectonic change, so its source was restored from the preserved winning commit. Its precise snapshot/object/report remain cached. No flags, owner storage, baseline reset, claim demotion or behavior fix. Bounded local BungList strict reference remains UNKNOWN; independent source+COFF+pin review sees unique local _BungList with addend5 agreeing94B55D but does not relabel native result PASS.",
+      "Coordinator-reviewed manual integration only; no automatic/full-game/linked preservation claim. Build/link,24hosttests, native source/claim/mapping/reference checks pass at combined compiled source; final destination will be rebuilt and compared without body omissions."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5744224,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "1f7fb0bdf6ec98ea8590645c729a6102235ab6af29b2c9f65a1dac39ea3f69ad",
+  "request_id": "inline-and-codegen-ripple-checkpoint-01",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:easy-bung-cursor-oct28na"
+}

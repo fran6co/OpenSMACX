@@ -1,0 +1,23 @@
+{
+  "author": "coordinator",
+  "base_revision": "421b46dbe7554a0d0e2223d877466180b23e1e44",
+  "editable_files": [
+    "src/veh.cpp",
+    "recovery/tests/test_prototype_history_owner.py",
+    "recovery/tests/prototype_history_owner_harness.cpp"
+  ],
+  "evidence": [
+    "One candidate anchors cursor at existing ProtoBung::weapon_id offset5, expressing original ability_flags/chassis/weapon/armor/reactor stores through offsetof-derived deltas, not a fixed executable address. Native pin57DF00 shifts faction9, adds BungList+5 then writes dword[-5] and bytes[-1..+2], stride8,64 rows. Preserve genuine BungList base94B558 and all64 complete record writes. No other body/layout/claim changes. Coordinator alone records/builds/Git/integrates; one measured candidate."
+  ],
+  "intent": "Restore original prototype history clear cursor while retaining genuine storage",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5758720,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "easy-bung-cursor-oct28na"
+}
