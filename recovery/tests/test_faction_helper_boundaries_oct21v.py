@@ -40,14 +40,36 @@ def function_body(text: str, result_type: str, name: str) -> str:
     raise AssertionError((name, "unterminated definition"))
 
 
+def actual_alien_helper() -> str:
+    text = HEADER.read_text(encoding="utf-8")
+    matches = list(re.finditer(
+        r"(?m)^inline BOOL __cdecl is_alien_faction\s*\([^\n]*\)\s*\{",
+        text,
+    ))
+    assert len(matches) == 1, len(matches)
+    start = matches[0].start()
+    opening = text.find("{", matches[0].end() - 1)
+    depth = 0
+    for index in range(opening, len(text)):
+        if text[index] == "{":
+            depth += 1
+        elif text[index] == "}":
+            depth -= 1
+            if depth == 0:
+                return text[start:index + 1]
+    raise AssertionError("unterminated is_alien_faction")
+
+
 PREAMBLE = r"""
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #define MEASURED
 #define __cdecl
+#define BOOL int
 typedef char *LPSTR;
-enum { MaxSocialCatNum = 4, DLVL_LIBRARIAN = 3 };
+typedef unsigned int uint32_t;
+enum { MaxSocialCatNum = 4, DLVL_LIBRARIAN = 3, RFLAG_ALIEN = 0x80 };
 struct SocialCategory { int models_[MaxSocialCatNum]; };
 struct PlayerData {
     int diplo_treaties[8];
@@ -55,15 +77,15 @@ struct PlayerData {
     int diff_level;
 };
 struct Player {
+    uint32_t rule_flags;
     char *adj_name_faction;
     char *adj_name_other;
 };
 PlayerData PlayersData[8];
 Player Players[8];
 int Human[8];
-int Alien[8];
+int ExpansionEnabled;
 int is_human(unsigned int faction_id) { return Human[faction_id]; }
-int is_alien_faction(unsigned int faction_id) { return Alien[faction_id]; }
 
 void require(bool ok, const char *what) {
     if (!ok) {
@@ -77,7 +99,8 @@ MAIN = r"""
 void reset_social(int diff, int human, int alien) {
     PlayersData[1].diff_level = diff;
     Human[1] = human;
-    Alien[1] = alien;
+    Players[1].rule_flags = alien ? RFLAG_ALIEN : 0;
+    ExpansionEnabled = 1;
     for (int i = 0; i < MaxSocialCatNum; ++i) {
         PlayersData[1].soc_category_active.models_[i] = 0;
     }
@@ -108,10 +131,13 @@ int main() {
     require(social_upheaval(1, &category) == 40,
             "human social cost keeps cubic count and difficulty");
 
-    Alien[1] = 1;
+    Players[1].rule_flags = RFLAG_ALIEN;
     for (int i = 1; i < MaxSocialCatNum; ++i) category.models_[i] = 1;
     require(social_upheaval(1, &category) == 937,
             "human alien cost keeps the one-half surcharge");
+    ExpansionEnabled = 0;
+    require(social_upheaval(1, &category) == 937,
+            "alien flag surcharge ignores ExpansionEnabled");
 
     reset_social(0, 0, 1);
     require(social_upheaval(1, &category) == 562,
@@ -134,7 +160,7 @@ def actual_definitions():
 
 
 def program(definitions):
-    return PREAMBLE + "\n" + "\n".join(
+    return PREAMBLE + "\n" + actual_alien_helper() + "\n" + "\n".join(
         definitions[name] for name in FUNCTIONS
     ) + "\n" + MAIN
 
@@ -206,3 +232,19 @@ def test_compile_success_semantic_mutants_are_caught(
     result = compile_and_run(compiler, tmp_path, definitions)
     assert result.returncode == 43, result.stderr
     assert "WITNESS: " + witness in result.stderr
+
+
+@pytest.mark.parametrize("compiler_name", ("g++", "clang++"))
+def test_expansion_gated_alien_helper_mutant_is_caught(tmp_path, compiler_name):
+    compiler = shutil.which(compiler_name)
+    if compiler is None:
+        pytest.skip("host compiler unavailable")
+    definitions = actual_definitions()
+    old = "if (Players[faction_id].rule_flags & RFLAG_ALIEN) {"
+    assert definitions["social_upheaval"].count(old) == 1
+    definitions["social_upheaval"] = definitions["social_upheaval"].replace(
+        old, "if (is_alien_faction(faction_id)) {", 1
+    )
+    result = compile_and_run(compiler, tmp_path, definitions)
+    assert result.returncode == 43, result.stderr
+    assert "WITNESS: alien flag surcharge ignores ExpansionEnabled" in result.stderr

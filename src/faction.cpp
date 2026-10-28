@@ -3060,7 +3060,7 @@ MEASURED int __cdecl social_upheaval(int faction_id, SocialCategory *category_ne
     change_count++;
     int diff_lvl = is_human(faction_id) ? PlayersData[faction_id].diff_level : DLVL_LIBRARIAN;
     int cost = change_count * change_count * change_count * diff_lvl;
-    if (is_alien_faction(faction_id)) {
+    if (Players[faction_id].rule_flags & RFLAG_ALIEN) {
         cost += cost / 2;
     }
     return cost;
