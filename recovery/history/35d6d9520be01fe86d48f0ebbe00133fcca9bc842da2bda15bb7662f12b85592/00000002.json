@@ -1,0 +1,25 @@
+{
+  "event_id": "068b5c27f18a18d79a0edc32b83bc5fe5ba44e876b0374cd49ff0db8fc11542f",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/net_class.cpp"
+    ],
+    "evidence": [
+      "Pinned401760 stores6693C4 atServiceListEntryvirtualbase+14; table firstslot402C20 proves shared original deleting entry with canonicalStringStructEntry. Independent review matches full66byte body and four reference targets. Declare additional generated source-owned alias beside its actual construction site; canonicaloriginalmarker/claimunchanged. Include this physical generated contribution in manual scope; no linked preservation claimed."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4205600,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "d12d609c03e86a617eeb2c15cf48d61a3c1c1228704da3f60bb1ef0f479f7995",
+  "request_id": "net-list-entry-shared-deletion-oct28",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:exact-net-frame-boundary-oct28mh"
+}
