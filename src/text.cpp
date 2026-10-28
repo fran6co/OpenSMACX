@@ -594,18 +594,18 @@ Status: Complete
 // historical Return Value: text_open's result for the section
 // historical Status: Measured BYTE_EXACT here in place (wave 7 record-then-retire); the
 // LEVER: string-routines-are-calls "Original keeps a `push ebp; mov ebp, esp` frame this source form never reproduces (register-pressure shape, not yet found)" was the note here, and the shape has now been found: the scaffold inlined a string routine the image calls, the expansion needs esi and edi, and VC6 answered by changing what it saved on entry. The prologue was downstream of the intrinsic. The `g_00691b0c`/`g_00691b20` reading stands - they are PTR_s_ globals holding a `char*`, one dereference more than the address of the string itself.
+#pragma optimize("y", off)
+#pragma inline_depth(0)
 int __cdecl X_text_open(char *src_file_id, const char *section_id) {
-    if (strcmp(src_file_id, ScriptPopupFile) != 0) {
-        return text_open(src_file_id, section_id);
-    }
+    if (strcmp(src_file_id, ScriptPopupFile) != 0) { return text_open(src_file_id, section_id); }
     const int faction_id = ConsoleGlobal.faction_id_;
     if ((Players[faction_id].rule_flags & RFLAG_ALIEN) != 0 && ExpansionEnabled != 0) {
-        if (text_open(PopupStartAltFile1, section_id) == 0) {
-            return 0;
-        }
+        if (text_open(PopupStartAltFile1, section_id) == 0) { return 0; }
     }
     return text_open(src_file_id, section_id);
 }
+#pragma inline_depth(8)
+#pragma optimize("y", on)
 // ORIGINAL: 0x005FD550 ?text_open@@YAHPADPAD@Z 0x005FD550-0x005FD565 BYTE_EXACT
 // symbol    ?text_open@@YAHPBD0@Z
 // size      21 bytes
