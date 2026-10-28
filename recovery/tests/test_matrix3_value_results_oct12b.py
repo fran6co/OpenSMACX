@@ -282,7 +282,8 @@ def _identity_snapshot(text: str):
         assert row.name == baseline[1]
         assert row.image_spans == baseline[2]
         assert row.kind == baseline[3]
-        assert row.byte_exact is baseline[4]
+        # Historical exact claims must survive; new measured claims may be added.
+        assert not baseline[4] or row.byte_exact
         assert row.semantic is baseline[5]
         assert row.source_role is SourceRole.SCAFFOLD
         assert row.source_role_reason == SCAFFOLD_REASON
@@ -299,7 +300,7 @@ def _identity_snapshot(text: str):
     return snapshot
 
 
-def test_original_claims_symbols_roles_and_levers_match_ba13_baseline():
+def test_original_claims_symbols_roles_and_levers_preserve_ba13_baseline():
     current = SOURCE.read_text()
     rows = _identity_snapshot(current)
     assert set(CURRENT_SYMBOLS) == {
@@ -308,7 +309,6 @@ def test_original_claims_symbols_roles_and_levers_match_ba13_baseline():
     }
     for address in BOUND_VALUE_ADDRESSES:
         row = rows[address]
-        assert row.byte_exact is False
         assert row.source_role is SourceRole.SCAFFOLD
     for historical in ("Historical explicit-pointer binding: v1", "// TRIED:", "// LEVER:"):
         assert historical in current
@@ -320,6 +320,9 @@ def test_removed_original_marker_and_wrong_symbol_are_rejected():
     role = "// RECOVERY_ROLE: SCAFFOLD " + SCAFFOLD_REASON
     with pytest.raises(AssertionError):
         _identity_snapshot(current.replace(role + "\n" + marker + "\n", "", 1))
+
+    with pytest.raises(AssertionError):
+        _identity_snapshot(current.replace(marker, marker.removesuffix(" BYTE_EXACT"), 1))
 
     wrong_symbol = current.replace(
         "// symbol    ?identity@Matrix3@@QAEPAU1@XZ",
