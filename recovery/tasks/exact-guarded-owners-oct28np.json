@@ -1,0 +1,48 @@
+{
+  "author": "root",
+  "base_revision": "e0a7e9c1968b18982673e2b247bb5228c8fb21a6",
+  "editable_files": [
+    "src/editgroup.cpp",
+    "src/jackal/checkbox.cpp",
+    "src/jackal/radiobutton.cpp",
+    "src/listbox.cpp",
+    "src/mapwin.cpp"
+  ],
+  "evidence": [
+    "NP/guarded-refused-rescan.json: five existing primary/cold bodies compare BYTE_EXACT after generic guarded-frame decoder support. This is expanded complete-code verification, not five newly implemented C++ bodies.",
+    "NP/eh-guard-review.json plus synthetic and real compiler/linker controls qualify exact bit-0 saved-frame guard. Every action boundary, relocation, topology and resource cap remains enforced.",
+    "Only native recorder may publish claim changes; four existing historical claims stay intact, EditGroup has SEMANTIC status eligible for measured promotion. No body, class, signature, table or original mapping edits.",
+    "NP/guarded-five-references.json retains strict UNKNOWN for existing vtable/vbtable evidence. No guessed binding or game acceptance is authorized. Fresh full builds must preserve all application objects without function omissions."
+  ],
+  "intent": "Fresh native complete-span recording after qualified bit-guarded EH grammar support; no C++ behavior changes",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4597472,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6331824,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6344928,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6350448,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6363456,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "Complete existing guarded owner constructor measurements",
+  "task_id": "exact-guarded-owners-oct28np"
+}
