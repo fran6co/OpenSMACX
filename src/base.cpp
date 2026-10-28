@@ -14626,7 +14626,7 @@ void __cdecl drone_riot() {
         base = BaseCurrent;
         if ((base->governor & 0x40u) != 0 &&
             (base->governor & 0x80000000u) != 0) {
-            if (!is_alien_faction(faction_id)) {
+            if (!(Players[faction_id].rule_flags & RFLAG_ALIEN)) {
                 popb("DRONERIOTS2", 0, 0x11, "drone_sm.pcx", 0);
             } else {
                 popb("DRONERIOTS2", 0, 0x11, "ALdrone_sm.pcx", 0);
@@ -14639,7 +14639,7 @@ void __cdecl drone_riot() {
         const bool governor_allows = unrest_flag_was_clear &&
             (base->governor & 0x40u) != 0 &&
             (base->governor & 0x80000000u) != 0;
-        if (is_alien_faction(faction_id)) {
+        if (Players[faction_id].rule_flags & RFLAG_ALIEN) {
             popb("DRONERIOTS", governor_allows ? 0 : 8, 0x11,
                  "ALdrone_sm.pcx", 0);
         } else {
@@ -14707,7 +14707,7 @@ after_popup:
                             base->facilities_built[offset] &=
                                 static_cast<uint8_t>(~mask);
                             parse_say(1, Facility[spec_type].name, -1, -1);
-                            if (!is_alien_faction(faction_id)) {
+                            if (!(Players[faction_id].rule_flags & RFLAG_ALIEN)) {
                                 popb("DRONERIOT", 8, -1,
                                      "drone_sm.pcx", 0);
                             } else {
@@ -14729,7 +14729,7 @@ after_popup:
             const bool has_pressure = (base->facilities_built[offset] & mask) != 0;
             const int severity = PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::POLICE] +
                                  (has_pressure ? 2 : 0);
-            if (severity < -2 && !is_alien_faction(faction_id) &&
+            if (severity < -2 && !(Players[faction_id].rule_flags & RFLAG_ALIEN) &&
                 (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & faction_bit(faction_id)) != 0) {
                 int best_faction = -1;
                 const int former_faction = static_cast<int8_t>(
@@ -14818,7 +14818,7 @@ after_popup:
                         static_cast<unsigned char>(GameDataStateStorage.fields_.lock_masks_.enable_mask_);
                     if ((human_mask & faction_bit(faction_id)) == 0 ||
                         (human_mask & faction_bit(best_faction)) == 0 ||
-                        is_alien_faction(best_faction)) return;
+                        (Players[best_faction].rule_flags & RFLAG_ALIEN)) return;
 
                     const int old_x = BaseCurrent->x;
                     const int old_y = BaseCurrent->y;
