@@ -48,10 +48,10 @@
 // kind      game
 // symbol    ?timer_daemon@NetMsg@@CAXH@Z
 void __cdecl NetMsg::timer_daemon(int token) {
-    if (token == 0x46) {
-        NetMsgPrimary.close();
-    } else {
+    if ((static_cast<unsigned int>(token) - 0x46U) != 0) {
         NetMsgSecondary.close();
+    } else {
+        NetMsgPrimary.close();
     }
 }
 
