@@ -1,0 +1,24 @@
+{
+  "author": "root",
+  "base_revision": "285876c2d70ebaec5e7eb1c37e1669c6d6730bcc",
+  "editable_files": [
+    "src/video.cpp"
+  ],
+  "evidence": [
+    "Paired guardedVC6 function(memset)/intrinsic pragmas around ONLY Video::Video, body/memberorder unchanged. Keepfullmain/EHspans andclaims. Do notchangeclasslayout/declarations/otherfns/globalflags. A refused EHmapping mustremainrefused; no claimfrompartialbody. Existing meaningfulhostcontrols ifpresent, no worker nativepreprocessing.",
+    "NJ/memset-boundary-candidates.json: fiveoriginaldirect6465F0 calls withsamefieldaddresses/sizes asfiveCppcalls, qualifiedobject hasnone. EarlierREFUSED isnotexactproof. Oneactualprofiletrial.",
+    "Read recovery/WORKFLOW.md. ReadonlyuntilcoordinatorREADY afterexactpositiveandunchangedwholeTUreplica. CoordinatorownsGit/prep/nativecompiler/record/integration. Onecandidateonly, preservealloriginalquirks/historicalclaims; no manualmarker/tokenediting, no outsideauthorizedfiles. Returndiscoveriesforscopeexpansion.",
+    "AllPython UV_NO_SYNC=1 UV_PROJECT_ENVIRONMENT=/home/fran6co/code/OpenSMACX/.venv UV_CACHE_DIR=/tmp/opensmacx-uv-cache uv run --no-sync. Existingreadonlyrecovercommandsallowed; do notcreatepublicCLI orrunworkercompilation/nativepreprocessing. Prefix26/28/29quarantined."
+  ],
+  "intent": "Preserve original Video constructor CRT clear calls",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6513664,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "video-clears ownership group",
+  "task_id": "easy-video-clears-oct28nk"
+}
