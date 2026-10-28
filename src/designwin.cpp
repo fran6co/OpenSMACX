@@ -1811,7 +1811,7 @@ void DesignWin::setup_veh(int proto_id, int automatic) {
     field_14210_ = 0;
 }
 
-// ORIGINAL: 0x0043BE30 ?select_name@DesignWin@@QAEXXZ 0x0043BE30-0x0043BF4C
+// ORIGINAL: 0x0043BE30 ?select_name@DesignWin@@QAEXXZ 0x0043BE30-0x0043BF4C BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:3f6ab06bdf3b791aa23454e19f71b4e8b5935caf:src/recovered/units/0043be30.cpp;ParseStrBuffer in src/general.h;image:0x6838F4 DESIGNNAME;typed32-byte prototype name"], "reason": "Prompt for the prototype name through the shared popup helper, preserve cancellation and unchanged-name paths, update its custom-name flag and redraw through the genuine virtual update slot."}
 void DesignWin::select_name() {
     char name[80];
@@ -1819,14 +1819,14 @@ void DesignWin::select_name() {
     if (strlen(name) == 0) {
         name_proto(name, protoID_, factionID_, protoChassisType_, protoWeaponType_,
                    protoArmorType_, protoAbilityFlags_, protoReactorType_);
-        VehPrototypes[protoID_].flags &= ~2;
+        reinterpret_cast<unsigned char &>(VehPrototypes[protoID_].flags) &= 0xFD;
     }
     name[31] = 0;
     // The original prompt token at 0x006838F4 is DESIGNNAME.
     if (X_pop_ask("DESIGNNAME", 31, name, 0, 0) == 0) {
         if (strlen(ParseStrBuffer[0].str) == 0) {
             prototype_name_[0] = 0;
-            VehPrototypes[protoID_].flags &= ~2;
+            reinterpret_cast<unsigned char &>(VehPrototypes[protoID_].flags) &= 0xFD;
         } else if (strcmp(name, ParseStrBuffer[0].str) != 0) {
             strncpy(prototype_name_, ParseStrBuffer[0].str, sizeof(prototype_name_));
             prototype_name_[31] = 0;
