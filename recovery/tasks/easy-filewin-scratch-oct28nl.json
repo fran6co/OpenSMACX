@@ -1,0 +1,26 @@
+{
+  "author": "root",
+  "base_revision": "8ac09ef952694d54a1edef98c256d8b5e2174741",
+  "editable_files": [
+    "src/jackal/filewin.cpp",
+    "recovery/tests/test_filewin_populate_directory_behavior.py",
+    "recovery/tests/filewin_populate_directory_host_control.cpp"
+  ],
+  "evidence": [
+    "Use currententry[260] forbothDlgDirList patterns andsubsequentLB_GETTEXT output, asoriginalESP+20 proves; entry[0]=0+strcat(dot) beforeeachDlgDirList, removeonlyduplicatepattern[260]/initializer/strcpy. Preservealllist/error/find/finalization order, originaluninitializedFindFirstFile failure consumption, existingquirks. No newguard/cleanup/flags/header changes. Extend existingactualbodyfixture pointeridentity+dot witness; oldseparatearraymutantmustfail.",
+    "NK/next-string-boundary-plan.json fullpin/sharedstack/qualifiedCOFFreview. Freshpin/currentbothFPO, oldseedEBPwordingstale; doNOTaddframepragma. Onecandidatebeforefurtherdiscoveries.",
+    "Read recovery/WORKFLOW.md. RemainreadonlyuntilcoordinatorREADY afterexactpositiveandunchangedactualTUreplica. Onlycoordinator Gitmutations/nativecompiler/prep/record/integration. Oneactualprofilecandidate; preservemarkers/claims/sourcefindings, no asm/rawaddresses/new publicCLI. Returncrossownerscopefindingsbeforeediting.",
+    "EveryPython UV_NO_SYNC=1 UV_PROJECT_ENVIRONMENT=/home/fran6co/code/OpenSMACX/.venv UV_CACHE_DIR=/tmp/opensmacx-uv-cache uv run --no-sync. Exclude nativecasesfromworkerhostruns; existingreadonlyGit/recoverinspectallowed. Prefix26/28/29quarantined."
+  ],
+  "intent": "Recover original FileWin shared scratch-buffer lifetime",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6374240,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "filewin-scratch ownership group",
+  "task_id": "easy-filewin-scratch-oct28nl"
+}
