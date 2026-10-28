@@ -47,7 +47,7 @@ Purpose: Construct the shared GraphicWin and Dialog virtual bases, initialize
          The compiler owns the hidden most-derived flag, vbtables and vtordisp;
          catalogue H is not a source parameter. Historical experiments below
          predate this genuine hierarchy and do not establish current matching.
-// ORIGINAL: 0x00611940 ??0EditGroup@@QAE@H@Z 0x00611940-0x00611A15;0x00663020-0x00663047 SEMANTIC
+// ORIGINAL: 0x00611940 ??0EditGroup@@QAE@H@Z 0x00611940-0x00611A15;0x00663020-0x00663047 BYTE_EXACT
 // symbol    ??0EditGroup@@QAE@XZ
 // size      252 bytes
 // prototype void (__thiscall ??0EditGroup@@QAE@H@Z)(EditGroup* this, int)
