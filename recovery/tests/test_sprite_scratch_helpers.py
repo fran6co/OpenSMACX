@@ -14,7 +14,7 @@ ADDRESSES = (0x404860, 0x450DE0, 0x450E30, 0x450E80, 0x450ED0, 0x450F30, 0x450F9
 NAMES = ("sprite_draw_func", "sub_450de0", "sub_450e30", "sub_450e80",
          "sub_450ed0", "sub_450f30", "sub_450f90")
 SOURCE_PATHS = {
-    0x404860: "src/sprite.cpp",
+    0x404860: "src/popup.cpp",
     0x450DE0: "src/sprite_assets.cpp",
     0x450E30: "src/sprite_assets.cpp",
     0x450E80: "src/sprite_assets.cpp",
