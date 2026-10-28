@@ -1,0 +1,23 @@
+{
+  "author": "coordinator",
+  "base_revision": "ad273dbe50ca7111751d2349e6fdf73728f8fd8d",
+  "editable_files": [
+    "src/game.cpp",
+    "recovery/tests/test_game_fixed_data_owner_actual_source_oct9.py",
+    "recovery/tests/test_game_reset_walks_actual_source.py"
+  ],
+  "evidence": [
+    "User explicitly requests meaningful naming. Permit only current C++ name/symbol facts, live references and corresponding existing test anchors; preserve ORIGINAL identity/address/spans/claims, body operations and historical seed notes. Proposed name reset_saved_process_slot_state describes the five control bytes reset in each of eight saved records; names, PIDs and all other bytes stay untouched. Native byte remeasurement and relevant checks required."
+  ],
+  "intent": "Rename recovered saved-process control-state initializer to an evidence-backed C++ name.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5430080,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "rename-saved-slots-oct28"
+}
