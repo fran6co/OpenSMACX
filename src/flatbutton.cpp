@@ -332,7 +332,8 @@ void FlatButton::on_mouse_move(int x, int y) {
         BaseButton::on_mouse_move(x, y);
         return;
     }
-    const RECT &buffer_rect = this->Buffer::rect1_;
+    // Hit testing uses Buffer's working rect2_; rect1_ is the clip rectangle.
+    const RECT &buffer_rect = this->Buffer::rect2_;
     const RECT hit_rect = {
         0, 0,
         buffer_rect.right - buffer_rect.left,

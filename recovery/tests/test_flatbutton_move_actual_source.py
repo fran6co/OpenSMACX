@@ -92,6 +92,10 @@ HOST = r'''
 struct RECT { int left, top, right, bottom; };
 static std::vector<int> events;
 static int hit_result;
+static RECT last_hit_rect;
+static int last_hit_x;
+static int last_hit_y;
+static int hit_calls;
 static int clear_count;
 static int hover_hook_count;
 class Win;
@@ -127,12 +131,19 @@ public:
 class Buffer {
 public:
     RECT rect1_;
+    RECT rect2_;
 };
 class FlatButton : public BaseButton, public Buffer {
 public:
     void on_mouse_move(int, int);
 };
-int in_box(int, int, const RECT *) { return hit_result; }
+int in_box(int x, int y, const RECT *rect) {
+    last_hit_x = x;
+    last_hit_y = y;
+    last_hit_rect = *rect;
+    ++hit_calls;
+    return hit_result;
+}
 void base_button_timer_callback(int, void *) { events.push_back(99); }
 void Time::stop() { events.push_back(20 + id); }
 void Time::init(void (*)(int, void *), int, void *, unsigned int, unsigned int) {
@@ -146,6 +157,9 @@ static void hover_hook() { ++hover_hook_count; events.push_back(80); }
 
 static void reset(FlatButton &button, Win &parent) {
     events.clear();
+    hit_calls = 0;
+    last_hit_x = last_hit_y = 0;
+    last_hit_rect = RECT{0, 0, 0, 0};
     clear_count = hover_hook_count = 0;
     button.time1_.id = 1;
     button.field_A74_ = 0;
@@ -153,6 +167,7 @@ static void reset(FlatButton &button, Win &parent) {
     button.bubble_text_ = 0;
     button.win_parent_ = &parent;
     button.rect1_ = RECT{4, 6, 24, 36};
+    button.rect2_ = RECT{100, 200, 140, 260};
     WinPointerOwner1 = 0;
     WinPointerOwner2 = 0;
     WinButtonHoverHook = &hover_hook;
@@ -173,6 +188,9 @@ int main() {
     button.on_mouse_move(8, 9);
     assert((events == std::vector<int>{80, 30, 51, 61, 40}));
     assert(button.field_A74_ == 1 && clear_count == 0);
+    assert(hit_calls == 1 && last_hit_x == 8 && last_hit_y == 9);
+    assert(last_hit_rect.left == 0 && last_hit_rect.top == 0 &&
+           last_hit_rect.right == 40 && last_hit_rect.bottom == 60);
 
     // Matching primary owner takes the base-button forwarding path even when
     // the secondary owner is different.
@@ -250,4 +268,20 @@ def test_old_or_guard_fails_the_primary_owner_priority_witness(tmp_path, compile
     assert result.returncode != 0, "the old OR guard unexpectedly passed the priority witness"
     assert "assert" in result.stderr.lower() and "events" in result.stderr.lower(), (
         "the mutant must fail the priority witness, not crash for an unrelated reason:\n"
+        + result.stdout + result.stderr)
+
+
+@pytest.mark.parametrize("compiler", COMPILERS or [None])
+def test_clip_rect_member_fails_the_working_rect_witness(tmp_path, compiler):
+    if compiler is None:
+        pytest.skip("no GCC or Clang host compiler available")
+    body = _actual_method()
+    mutant, replacements = body.replace(
+        "this->Buffer::rect2_", "this->Buffer::rect1_", 1), body.count(
+            "this->Buffer::rect2_")
+    assert replacements == 1, "actual owner must use the working rect2_ member"
+    result = _compile_run(tmp_path, compiler, mutant)
+    assert result.returncode != 0, "the old clip rect1_ member unexpectedly passed"
+    assert "last_hit_rect.right" in result.stderr, (
+        "the rect1_ mutant must fail the working-rectangle dimensions witness, not crash for an unrelated reason:\n"
         + result.stdout + result.stderr)
