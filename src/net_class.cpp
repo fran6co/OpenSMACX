@@ -2603,12 +2603,12 @@ NetAllocationNode *Net::create_session(char *name, int max_players, char *passwo
     allocation_node_.session_name_ =
         static_cast<char *>(mem_get(strlen(name) + 1));
     *allocation_node_.session_name_ = 0;
-    strcpy(allocation_node_.session_name_, name);
+    strcat(allocation_node_.session_name_, name);
     if (password != 0 && *password != 0) {
         allocation_node_.password_ =
             static_cast<char *>(mem_get(strlen(password) + 1));
         *allocation_node_.password_ = 0;
-        strcpy(allocation_node_.password_, password);
+        strcat(allocation_node_.password_, password);
     }
 
     allocation_node_.instance_guid_ = live->guidInstance;
