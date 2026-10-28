@@ -32,6 +32,15 @@ class EHTransferFact:
 
 
 @dataclass(frozen=True)
+class EHFrameGuardFact:
+    """A frame-word bit test that returns without running the cleanup."""
+
+    frame_displacement: int
+    mask: int
+    scratch_register: str
+
+
+@dataclass(frozen=True)
 class EHActionFact:
     """Decoded action boundary and the operands needed for physical binding."""
 
@@ -44,6 +53,7 @@ class EHActionFact:
     frame_displacement: int | None = None
     base_adjustment: int | None = None
     scratch_register: str | None = None
+    guard: EHFrameGuardFact | None = None
 
 
 def resolve_transfer(action: EHActionFact, *, role: EHTransferRole,

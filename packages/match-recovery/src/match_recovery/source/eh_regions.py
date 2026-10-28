@@ -18,7 +18,7 @@ from capstone import CS_ARCH_X86, CS_GRP_CALL, CS_GRP_JUMP, CS_MODE_32, Cs, x86
 from ..binary import Relocation, RelocationKind
 from ..model import Span
 from ..pe_coff import Coff, PeImage, Symbol
-from .eh_actions import (EHActionFact, EHActionKind, EHTransferFact,
+from .eh_actions import (EHActionFact, EHActionKind, EHFrameGuardFact, EHTransferFact,
                          EHTransferRole, resolve_transfer)
 
 
@@ -90,6 +90,8 @@ def eh_action_semantic_difference(original: EHActionFact,
     """Shared bounded semantic check used by both EH comparison paths."""
     if original.kind is not compiled.kind:
         return "ordinary", f"valid EH action kind differs at index {index}"
+    if original.guard != compiled.guard:
+        return "ordinary", f"valid EH frame guard differs at index {index}"
     if original.kind is EHActionKind.ARRAY_DESTRUCTOR:
         original_facts = (original.element_count, original.element_size,
                           original.frame_displacement, original.base_adjustment,
@@ -329,6 +331,42 @@ def _cleanup_action(instructions, *, code_base: int = 0) -> EHActionFact:
         raise ValueError("EH action is empty")
     start = instructions[0].address - code_base
     end = instructions[-1].address + instructions[-1].size - code_base
+
+    # VC6 can condition virtual-base cleanup on a saved construction flag.
+    # Admit only an exact bit-0 test, a zero branch to this action's final
+    # plain RET, and an otherwise independently decoded frame tail transfer.
+    if len(instructions) in (7, 8):
+        load, mask, test, skip = instructions[:4]
+        ret = instructions[-1]
+        guarded = (
+            load.size == 3 and load.bytes[:2] == b"\x8b\x45"
+            and len(load.operands) == 2
+            and _is_reg(load.operands[0], x86.X86_REG_EAX)
+            and load.operands[1].type == x86.X86_OP_MEM
+            and load.operands[1].size == 4
+            and load.operands[1].mem.base == x86.X86_REG_EBP
+            and load.operands[1].mem.index == 0
+            and load.operands[1].mem.segment == 0
+            and load.encoding.disp_size == 1
+            and load.operands[1].mem.disp != 0
+            and load.operands[1].mem.disp % 4 == 0
+            and mask.bytes == b"\x83\xe0\x01"
+            and test.bytes == b"\x85\xc0"
+            and skip.mnemonic == "je" and len(skip.operands) == 1
+            and skip.operands[0].type == x86.X86_OP_IMM
+            and ((skip.size == 2 and skip.bytes[:1] == b"\x74"
+                  and skip.encoding.imm_offset == 1 and skip.encoding.imm_size == 1)
+                 or (skip.size == 6 and skip.bytes[:2] == b"\x0f\x84"
+                     and skip.encoding.imm_offset == 2 and skip.encoding.imm_size == 4))
+            and skip.operands[0].imm == ret.address
+            and ret.bytes == b"\xc3"
+        )
+        if guarded:
+            transfer = _cleanup_action(instructions[4:-1], code_base=code_base)
+            if transfer.kind is not EHActionKind.FRAME_TRANSFER or transfer.guard is not None:
+                raise ValueError("guarded EH action lacks an ordinary frame tail transfer")
+            return replace(transfer, start=start, end=end,
+                           guard=EHFrameGuardFact(load.operands[1].mem.disp, 1, "eax"))
 
     if len(instructions) == 8:
         callback, count_push, size_push, frame_load, adjustment, base_push, call, ret = instructions
@@ -987,7 +1025,7 @@ def _cold_layout(code: bytes) -> tuple[int, tuple[EHActionFact, ...], int, int, 
                 if parsed is not None and parsed.kind is EHActionKind.ARRAY_DESTRUCTOR:
                     action, consumed = parsed, 8
         else:
-            for length in (2, 3, 5):
+            for length in (2, 3, 5, 7, 8):
                 if index + length > len(instructions):
                     continue
                 try:

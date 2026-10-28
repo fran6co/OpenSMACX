@@ -3837,6 +3837,15 @@ The signed frame displacement and net ECX adjustment are decoded facts;
 valid differences force `MISMATCH` while retaining the complete raw-region
 comparison and its byte/instruction diagnostics. Equal net adjustments do not
 normalize different opcodes or instruction encodings into equality.
+A frame transfer may also have a bounded saved-flag guard: exactly
+`mov eax,[ebp+disp8]; and eax,1; test eax,eax; je <final-ret>`, followed
+by one supported frame transfer and a plain `ret`. The nonzero, aligned flag
+slot and bit mask are typed facts compared independently on both sides.
+The zero branch must reach that same action's final return; reversed conditions,
+branches into the transfer or outside the action, and additional relocations
+refuse. This recognizes compiler cleanup code without assigning the frame slot
+a source-level name or proving virtual-base layout. Original and COFF unwind
+ownership, destructor targets, complete bytes and resource limits remain checked.
 The separately typed array action has exactly eight
 instructions: an absolute destructor-callback push, positive count and stride
 pushes, `mov eax,[ebp+disp8/disp32]`, an immediate EAX base adjustment,
