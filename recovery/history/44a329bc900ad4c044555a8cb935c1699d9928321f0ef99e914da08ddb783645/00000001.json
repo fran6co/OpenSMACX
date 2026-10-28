@@ -1,0 +1,46 @@
+{
+  "event_id": "2e39458d66293fdad25eae358ba5f8b733b6e4baf998168a0fa03a372e8af2c7",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_buffer_table_draw_actual_oct28ne.py"
+    ],
+    "evidence": [
+      "Both selected wrapper proposals5D8B20/5D94B0 now measure BYTE_EXACT80/80 under the fresh actual application compiler profile. Three selected tile bodies unchanged and remainmisses. Existing Buffer host suite has API-mismatch failures in other functions and doesnot exercise these two changed wrappers.",
+      "Authorize focused actual-source wrapper host controls using true selected function bodies and minimal stable ABI mocks, preserving sourceCpp unchanged. Cover ordinary null-source-surface preparation for bits present/absent, counter positive/zero resulting clamp/cleanup, source-surface-present preparation skip, original Sprite arguments/results and postcall pcBits clear. Do not invent callback getters or alternate scalar types to make pure readsobservable, do not claim runtime/game equivalence fromstubs. Existing behavior-preserving oldbody maypass asitshould; meaningful damagingmutants optionalifneeded, no mirroredspellingtests. Nativebank/root alone maychange claimannotation aftercontrols, no manuallytypedclaim."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6130464,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6132912,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6137536,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6137952,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6138352,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "buffer-winning-wrapper-controls-oct28ne",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:easy-buffer-oct28ne"
+}
