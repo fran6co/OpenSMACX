@@ -1453,7 +1453,7 @@ void MapWin::on_redraw() {
         draw_map(1);
     }
 }
-
+#pragma optimize("y", on)
 /*
 // ORIGINAL: 0x0046FA00 ?on_resize@MapWin@@QAEXHH@Z 0x0046FA00-0x0046FA1A BYTE_EXACT
 // symbol    ?on_resize@MapWin@@UAEXHH@Z
@@ -1465,12 +1465,12 @@ void MapWin::on_redraw() {
 // calls     0x0046FB80
 Status: Complete
 */
+#pragma inline_depth(0)
 void MapWin::on_resize(int, int) {
-    if ((field_1DD70_ & 0x80000000) == 0) {
-        do_image_buttons();
-    }
+    if ((field_1DD70_ & 0x80000000) == 0) do_image_buttons();
 }
-
+#pragma inline_depth(8)
+#pragma optimize("", on)
 // Scroll the retained image, then regenerate the exposed tile regions.
 // Tile damage uses inclusive Y and possibly wrapped X, unlike pixel RECTs.
 // The original's meaningful domain has live window/buffer objects and map
