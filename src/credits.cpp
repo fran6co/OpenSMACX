@@ -88,9 +88,9 @@ void Credits::load() {
       if (stored != 0) {
         ++line_count_;
         strcpy(stored, TextBufferGetPtr);
-        const int width = font_.width(stored);
-        if (static_cast<int>(field_1230_) <= width) {
-          field_1230_ = width;
+        // The original calls width again when publishing a new maximum.
+        if (static_cast<int>(field_1230_) <= font_.width(stored)) {
+          field_1230_ = font_.width(stored);
         }
       }
     }

@@ -1,0 +1,26 @@
+{
+  "event_id": "567dc144f83239a8b5808e7a332dbb1af0bb0546f78917da785e2ebd87f7f019",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_flatbutton_move_actual_source.py"
+    ],
+    "evidence": [
+      "Coordinator independently verifies full pinned608500..608657: LEA608532 selects this+474 then reads fourRECTdwords. Currentq reads464..470. Existingactual Bufferbase444 + rect2member30 gives474, rect1member20 gives464. GraphicWinworkingrect accessor andBaseButton607850 peer independentlysupportrect2. This is wrong-member fidelity correction, not behavioralimprovement.",
+      "Authorize sourcebodyrect1->rect2 and essential working-vs-clip comment, plus existing actual-source test fixture with both rectangles seeded differently so oldmembercode fails executedcontrol. Preserve ownerpriority,parent/timer/hovercallbackordering and on_mouse_leave forwarder behavior; BaseButtonalreadyrect2, no peer/header/layout changesneeded. Negativecontrol restoringrect1 mustfail meaningful geometry input/runtime check; retain allpreviousdamagecontrols. Retain pin-proved correctionevenifmatchingmiss; no newbankswithoutmeasurement/build/link/preservation/review."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6325504,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "flatbutton-working-rect-controls-oct28nh",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:easy-flatbutton-oct28nh"
+}

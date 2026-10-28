@@ -1,0 +1,24 @@
+{
+  "author": "coordinator",
+  "base_revision": "8cc8d55835c7d442ad869485e4b6b00ac8cb922c",
+  "editable_files": [
+    "src/sprite.cpp"
+  ],
+  "evidence": [
+    "Implement the unmeasured concrete call-boundary candidate from fast-pass-oct28nc/sprite-deep-triage: inline only the exact owned/borrowed close effects into Sprite::copy in original free/account/clear order, preserving key and borrowed pointer. Make memcpy direct CRT call using a narrow balanced #pragma function(memcpy) before this definition and #pragma intrinsic(memcpy) immediately after; no unrelated intrinsic/flag change. Preserve allocation size/order/publish-before-failure, fresh postcopy source reads, self-copy/unsafe quirks and no memory-used charge. Source::close standalone/body remains untouched. Full outside-TU check must establish pragma restoration, not assumed.",
+    "Read-only until READY after prefixpositive and unchanged wholeTU reproduction. Scope only selected function bodies (Sprite balanced local pragma pair explicitlyallowed); no header/class/signature/ABI/ORIGINAL/claim edits, no asm/bytes/absoluteaddresses/fabricatedlayout. Preserve actual constructors and real member lifetimes; return outside-scope requirements.",
+    "Exactly one proposal perbody, one batchedactual-profile TU compile bycoordinator. Source worker uses existing meaningfulhostcontrols ifavailable; no mirror tests. Freeze/hash/report. Root owns all nativecompiler/preparation/Git/record/integration. Pure miss restoredafterimmutablecapture; proven fidelity/structure corrections retained forreview evenifmiss. No auto acceptance claims.",
+    "All Python UV_NO_SYNC=1 UV_PROJECT_ENVIRONMENT=/home/fran6co/code/OpenSMACX/.venv UV_CACHE_DIR=/tmp/opensmacx-uv-cache uv run --no-sync; never autosync the shared editable binding. Compilerprefixes26/28/29quarantined, not reclaimed."
+  ],
+  "intent": "Bounded owner matching and fidelity pass: sprite-copy",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6205007,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "easy-sprite-copy-oct28nh"
+}

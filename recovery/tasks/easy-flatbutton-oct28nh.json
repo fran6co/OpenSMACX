@@ -1,0 +1,24 @@
+{
+  "author": "coordinator",
+  "base_revision": "8cc8d55835c7d442ad869485e4b6b00ac8cb922c",
+  "editable_files": [
+    "src/flatbutton.cpp"
+  ],
+  "evidence": [
+    "Inspect full pinned/current qualified COFF and existing source/trials, then one grounded fresh ordinary-C++ source proposal perselectedbody. Source form can matter without a semantic defect; avoid exactly repeated failed forms. Preserve bounds/quirks/callback/lifetime/read ordering, source-owned globals and original arithmetic. New evidence-backed structure discoveries must return to coordinator immediately for affected-scope expansion, never ignored.",
+    "Read-only until READY after prefixpositive and unchanged wholeTU reproduction. Scope only selected function bodies (Sprite balanced local pragma pair explicitlyallowed); no header/class/signature/ABI/ORIGINAL/claim edits, no asm/bytes/absoluteaddresses/fabricatedlayout. Preserve actual constructors and real member lifetimes; return outside-scope requirements.",
+    "Exactly one proposal perbody, one batchedactual-profile TU compile bycoordinator. Source worker uses existing meaningfulhostcontrols ifavailable; no mirror tests. Freeze/hash/report. Root owns all nativecompiler/preparation/Git/record/integration. Pure miss restoredafterimmutablecapture; proven fidelity/structure corrections retained forreview evenifmiss. No auto acceptance claims.",
+    "All Python UV_NO_SYNC=1 UV_PROJECT_ENVIRONMENT=/home/fran6co/code/OpenSMACX/.venv UV_CACHE_DIR=/tmp/opensmacx-uv-cache uv run --no-sync; never autosync the shared editable binding. Compilerprefixes26/28/29quarantined, not reclaimed."
+  ],
+  "intent": "Bounded owner matching and fidelity pass: flatbutton",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6325504,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "easy-flatbutton-oct28nh"
+}
