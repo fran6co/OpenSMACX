@@ -653,8 +653,8 @@ class Caviar {
   void clear_buffers(int fill);
   // 0x006171A0. Renders and blits the result into surface A as a multi-table
   // destination; the table rows are the blit's source remap table.
-  void render_multi_table_dest(Buffer *buffer, int centre_x, int centre_y,
-                               int fill, ColorTable *bits, int flags);
+  int render_multi_table_dest(Buffer *buffer, int centre_x, int centre_y,
+                              int fill, ColorTable *bits, int flags);
   int render_mono(Buffer *buffer, int centre_x, int centre_y, int colour,
                   int flags);
   int UNK4(int a1, int a2, int a3, int a4);
