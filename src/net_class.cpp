@@ -189,7 +189,7 @@ template<class List> inline typename List::Payload *next_owned_list(List *list) 
 /*
 Purpose: Build a Net - its embedded VoiceTx, three NetFifo message queues,
          and the JackalVoiceRx-shaped container at +0xB0.
-// ORIGINAL: 0x0062D6A0 ??0Net@@QAE@XZ 0x0062D6A0-0x0062D8DC;0x006634A0-0x006634DF
+// ORIGINAL: 0x0062D6A0 ??0Net@@QAE@XZ 0x0062D6A0-0x0062D8DC;0x006634A0-0x006634DF BYTE_EXACT
 // size      635 bytes
 // prototype void (__thiscall ??0Net@@QAE@XZ)(Net* this)
 // callers   1   call targets   2
@@ -486,9 +486,11 @@ Net::Net() {
     thread_info_.buffer_ = 0;
     thread_info_.direct_play_ = 0;
     thread_info_.thread_id_ = 0;
-    for (int event = 0; event != 5; ++event) {
-        thread_info_.events_[event] = 0;
-    }
+    thread_info_.events_[0] = 0;
+    thread_info_.events_[1] = 0;
+    thread_info_.events_[2] = 0;
+    thread_info_.events_[3] = 0;
+    thread_info_.events_[4] = 0;
     thread_info_.lock_initialized_ = 0;
 }
 

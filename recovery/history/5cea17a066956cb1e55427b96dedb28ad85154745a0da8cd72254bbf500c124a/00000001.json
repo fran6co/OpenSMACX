@@ -1,0 +1,19 @@
+{
+  "event_id": "f6f4937fe8e4772b281d443459f1ea50eedb81d410999711a68ca9d0e08467ca",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_net_constructor_state_oct9.py"
+    ],
+    "evidence": [
+      "Existing extracted actual-constructor test checks players and unrelated untouched words but does not assert the five event handles changed in this matching pass. Authorize only adding their zero-state and subsequent lock_initialized assertions; no change to C++ semantics, mappings or task baseline."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "verify-event-initialization-footprint",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:exact-network-capture-order-oct28mx"
+}

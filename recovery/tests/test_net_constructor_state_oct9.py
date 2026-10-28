@@ -91,6 +91,10 @@ MAIN = r'''int main() {
   memset(storage, 0xA5, sizeof(storage));
   Net *net = new (storage) Net;
   assert(ActiveNet == net && NetDirectPlay == 0);
+  for (int event = 0; event != 5; ++event) {
+    assert(net->thread_info_.events_[event] == 0);
+  }
+  assert(net->thread_info_.lock_initialized_ == 0);
   assert(net->poll_time_DC_ == 0 && net->poll_timeout_E0_ == 0x4E20);
   assert(net->field_6DC_ == 0 && net->voice_flags_D8_ == 0 && net->field_E4_ == 1);
   assert(net->local_player_id_ == 0 && net->host_player_id_ == 0);
