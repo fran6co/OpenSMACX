@@ -220,7 +220,7 @@ int MCIVideo::load(char *moviePath, Win *targetWindow, int x, int y) {
     return 0;
 }
 
-// ORIGINAL: 0x006001E0 ?play@MCIVideo@@QAEXXZ 0x006001E0-0x00600270 FILE
+// ORIGINAL: 0x006001E0 ?play@MCIVideo@@QAEXXZ 0x006001E0-0x00600270 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["The original member accesses the active-player slot at 0x009B8190, invokes Palette::set on its embedded palette at +0x10, and sends MCI_WINDOW followed by MCI_PLAY through the WINMM import.", "MCIVideo::blit_frame uses +0x8 as the HWND passed to GetDC and ReleaseDC; the play body loads that field's low word into MCI_PLAY_PARMS::dwCallback. This unusual truncation is preserved as observed; the MCI device id occupies the low word at +0x4.", "MCIVideo::load stores its Win* argument at +0x468 and blit_frame tests it before blitting; the separate close path clears this window pointer."], "reason": "Move the existing play identity into MCIVideo's owning translation unit and express the receiver, palette, window handle and MCI parameter blocks as typed members."}
 // symbol    ?play@MCIVideo@@QAEHXZ
 int MCIVideo::play() {
@@ -235,9 +235,9 @@ int MCIVideo::play() {
         return 1;
     }
 
-    MCI_PLAY_PARMS playParams = {0};
-    playParams.dwCallback = static_cast<DWORD>(
-        reinterpret_cast<UINT_PTR>(window_handle_) & 0xffff);
+    MCI_PLAY_PARMS playParams; playParams.dwTo = 0; playParams.dwFrom = 0;
+    const WORD callbackWindow = static_cast<WORD>(reinterpret_cast<UINT_PTR>(window_handle_));
+    playParams.dwCallback = callbackWindow;
     if (mciSendCommandA(mciId_, MCI_PLAY,
                         MCI_NOTIFY, reinterpret_cast<DWORD_PTR>(&playParams)) != 0) {
         return 1;
