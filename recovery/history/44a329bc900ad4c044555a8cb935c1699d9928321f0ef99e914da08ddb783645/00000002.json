@@ -1,0 +1,45 @@
+{
+  "event_id": "7f0bc698afb5fd83098f7e29e35bbc0c25740122e9e7761468f52b6fe5cad720",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Fresh combined app compiles/links with211 physicalobjects; selected BattleWin68/68 and Buffer80/80 each pass strict byte/reference comparison. Original native outside-body result is208PASS/1FAIL in buffer.cpp; preserve report unchanged. Failing object has no changed residual code/data sections or associations. Only .bf/.ef storage101 debug-symbol auxiliary fingerprints differ.",
+      "Root matches332outside debug records byowner/function/name/offset;96auxrecords change ONLYbytes4/5, the16-bit source-line-number field. All other auxiliarybytes, symbolpositions, names/types, outside code/data remain equal. The two selected source edits remove four lines. Evidence fast-pass-oct28ne/buffer-debug-symbol-review.json andbuffer-debug-aux-line-validation.json plus fullqualifiedobjects.",
+      "Under standing user permission, coordinator manually admits this source-line-debug difference for this bounded recovery checkpoint, retaining nativeFAIL and full linked/game acceptance unknown. Do not modify comparator/gates/claims or convert reporttoPASS. Neworiginalbyteclaims require onlynative recorder(alreadydone); destinationverification stillrequiredafterintegration. Datalink set_cat_concept remainsnonexact with its pinned early-return fix and pending distinct-string dataidentityfinding retained."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6130464,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6132912,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6137536,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6137952,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6138352,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "2e39458d66293fdad25eae358ba5f8b733b6e4baf998168a0fa03a372e8af2c7",
+  "request_id": "manual-debug-line-residual-review-oct28ne",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:easy-buffer-oct28ne"
+}

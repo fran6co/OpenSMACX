@@ -1,0 +1,21 @@
+{
+  "event_id": "35f68728d53b107b50254485336dbc14952689c3bf0f277c69a21fb524966b15",
+  "payload": {
+    "affects": [
+      "entity-8c5fab66269517ad71704ec7d825962c05c83ae536a52d771ffe5a570e4035f4"
+    ],
+    "author": "coordinator",
+    "discovery_id": "advanced-concept-section-identity-oct28ne",
+    "evidence": [
+      "Independent root full-pin read confirms42B490 prefix PUSH0x68331C before text_open; original bytes683300..68330A and68331C..683326 are bothCONCEPTSX NUL. Current datalink.cpp RECOVERY_OBJECT v2 binds DatalinkConceptSection only683300..68330A and set_cat_adv_concept reuses it.",
+      "No data binding, header or affected body changed in this step. No claim of strict-reference acceptance; exact compiler body comparison and reference identity remain distinct. ReportWinGlobal suspectednullreceiver was independently disproved: DIR32 relocations at set_cat+3B/+46 target correctly source-bound876478."
+    ],
+    "hypothesis": "Advanced-concept original section argument is a distinct same-content object at0x68331C, while current source reuses DatalinkConceptSection bound0x683300. Preserve this pending strict-reference/data identity obligation; this observation is not an established original C++ variable name or permission to change source bindings.",
+    "kind": "discovery"
+  },
+  "previous_event": "5b1c4d814b4e9bf91c67eb2214514532516c427cda79d60cd26b926aa8dfb4fc",
+  "request_id": "advanced-concept-section-identity-oct28ne",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:easy-datalink-oct28ne"
+}

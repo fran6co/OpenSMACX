@@ -7747,7 +7747,7 @@ tail:
     }
 }
 
-// ORIGINAL: 0x005D8B20 ?draw_dest@Buffer@@QAEHPAVBuffer@@HHHHHPAE@Z 0x005D8B20-0x005D8C18 FILE
+// ORIGINAL: 0x005D8B20 ?draw_dest@Buffer@@QAEHPAVBuffer@@HHHHHPAE@Z 0x005D8B20-0x005D8C18 FILE BYTE_EXACT
 // TRIED: the archive's transcription read the TRANSPARENT INDEX out of the
 //        first parameter (`(int)a1`) where the image loads `[esp+0xc]`, the
 //        int AFTER the `Buffer *` - the five-argument form, which is byte
@@ -7800,16 +7800,14 @@ int Buffer::draw_dest(Buffer * a1, int a2, int a3, int a4, int a5, int a6, unsig
 
         IDirectDrawSurface *surface = surface_;
         if (surface == 0) {
-            int count = static_cast<int>(surface_lock_count_) - 1;
-            surface_lock_count_ = count;
-            if (count > 0) {
+            surface_lock_count_ = surface_lock_count_ - 1;
+            if (surface_lock_count_ > 0) {
                 goto forward;
             }
         } else {
-            int count = static_cast<int>(surface_lock_count_) - 1;
-            surface_lock_count_ = count;
+            surface_lock_count_ = surface_lock_count_ - 1;
             LPVOID const cachedBits = locked_bits_;
-            if (cachedBits == nullptr || count > 0) {
+            if (cachedBits == nullptr || surface_lock_count_ > 0) {
                 goto forward;
             }
             surface->Unlock(cachedBits);
@@ -7826,7 +7824,7 @@ forward:
     }
 }
 
-// ORIGINAL: 0x005D94B0 ?draw_multi_table_dest@Buffer@@QAEHPAVBuffer@@HHHHHPAE@Z 0x005D94B0-0x005D95A8 FILE
+// ORIGINAL: 0x005D94B0 ?draw_multi_table_dest@Buffer@@QAEHPAVBuffer@@HHHHHPAE@Z 0x005D94B0-0x005D95A8 FILE BYTE_EXACT
 // TRIED: the same two corrections as draw_dest above (second parameter is
 //        the transparent index; WinFillColour read as the object it is),
 //        26/80 -> 35/80, still MISMATCH on the same four-byte block-size
@@ -7872,16 +7870,14 @@ int Buffer::draw_multi_table_dest(Buffer * a1, int a2, int a3, int a4, int a5, i
 
         IDirectDrawSurface *surface = surface_;
         if (surface == 0) {
-            int count = static_cast<int>(surface_lock_count_) - 1;
-            surface_lock_count_ = count;
-            if (count > 0) {
+            surface_lock_count_ = surface_lock_count_ - 1;
+            if (surface_lock_count_ > 0) {
                 goto forward;
             }
         } else {
-            int count = static_cast<int>(surface_lock_count_) - 1;
-            surface_lock_count_ = count;
+            surface_lock_count_ = surface_lock_count_ - 1;
             LPVOID const cachedBits = locked_bits_;
-            if (cachedBits == nullptr || count > 0) {
+            if (cachedBits == nullptr || surface_lock_count_ > 0) {
                 goto forward;
             }
             surface->Unlock(cachedBits);

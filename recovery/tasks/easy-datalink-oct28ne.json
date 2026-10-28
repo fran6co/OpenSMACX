@@ -1,0 +1,33 @@
+{
+  "author": "coordinator",
+  "base_revision": "dc94d77da9fe710375e8640baf9594562f02c880",
+  "editable_files": [
+    "src/datalink.cpp"
+  ],
+  "evidence": [
+    "One ordinary-C++ source proposal per selected body; batch all proposed bodies in one actual-application-profile TU compilation. Read complete pinned body, normalize qualified COFF relocations, verify current source and exact declared callee types. Source form can matter even when semantics agree: grounded branch shape, call/inlining boundary, signedness, lifetime and allocation expressions are legitimate. Avoid repeating exactly measured failed forms; do not dismiss all matching work as allocation-only without proposing a distinct grounded form.",
+    "No source edits before coordinator READY after prefix and unchanged full-TU reproduction. Scope only selected function bodies, no other functions, headers, ABI, compiler flags, original annotations or claims. Preserve original quirks, failures, callback/global-read and lifecycle effects; no behavior fixes, asm/machinebytes/absoluteaddresses/fabricatedlayout. Cross-function structural discoveries go to coordinator immediately for expanded scope, not discarded.",
+    "Source worker runs available meaningful host controls, not mirrored implementation tests; no forced new tests for pure spelling. Freeze/hash/report proposed addresses. Coordinator owns every native compiler invocation, preparation, Git, record and integration. Exactly one proposal perbody in this authorization; any physical compiler failure/correction must be recorded. Bank only native-recorded exacts; pure matching misses retained as snapshots and source restored. No automatic/full-game acceptance claim."
+  ],
+  "intent": "Bounded matching pass for datalink ownership group",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4367040,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4371200,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4371600,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "easy-datalink-oct28ne"
+}
