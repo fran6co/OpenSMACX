@@ -441,14 +441,17 @@ char *FileWin::load() {
 // Native finalization attaches on a missing DIB and refreshes an existing one;
 // successful finalization clears markup state and hides the list.
 int FileWin::populate_directory(char *directory) {
+    int return_value = 1;
     if (directory == 0) {
         return 0;
     }
 
     GetCurrentDirectoryA(260, previous_directory_);
-    if (!SetCurrentDirectoryA(directory) &&
-        !SetCurrentDirectoryA(previous_directory_)) {
-        return 0;
+    if (!SetCurrentDirectoryA(directory)) {
+        return_value = 0;
+        if (!SetCurrentDirectoryA(previous_directory_)) {
+            return 0;
+        }
     }
 
     Dialog &dialog = list_box_;
@@ -458,19 +461,19 @@ int FileWin::populate_directory(char *directory) {
     list_box_.field_20_ = 0;
 
     char entry[260];
-    char pattern[260] = ".";
     // The original consumes this record even if FindFirstFileA fails. Keep
     // that error-path behavior pending a separately authorized bug fix.
     WIN32_FIND_DATAA found;
-    const HWND list_handle = directory_list_handle_;
-    if (!DlgDirListA(HandleMain, pattern, 1, 0, 0x8010)) {
+    entry[0] = 0;
+    strcat(entry, ".");
+    if (!DlgDirListA(HandleMain, entry, 1, 0, 0x8010)) {
         GetLastError();
         return 1;
     }
     const int directory_count = static_cast<int>(
-        SendMessageA(list_handle, LB_GETCOUNT, 0, 0));
+        SendMessageA(directory_list_handle_, LB_GETCOUNT, 0, 0));
     for (int i = 0; i < directory_count; ++i) {
-        SendMessageA(list_handle, LB_GETTEXT, i,
+        SendMessageA(directory_list_handle_, LB_GETTEXT, i,
                      reinterpret_cast<LPARAM>(entry));
         if (strcmp(entry, "[..]") == 0) {
             list_box_.item("..", 2);
@@ -483,17 +486,18 @@ int FileWin::populate_directory(char *directory) {
         }
     }
 
-    strcpy(pattern, ".");
-    if (!DlgDirListA(HandleMain, pattern, 1, 0, 0x20)) {
+    entry[0] = 0;
+    strcat(entry, ".");
+    if (!DlgDirListA(HandleMain, entry, 1, 0, 0x20)) {
         GetLastError();
         return 1;
     }
     const int file_count = static_cast<int>(
-        SendMessageA(list_handle, LB_GETCOUNT, 0, 0));
+        SendMessageA(directory_list_handle_, LB_GETCOUNT, 0, 0));
     for (int file_index = 0; file_index < file_count; ++file_index) {
-        SendMessageA(list_handle, LB_GETTEXT, file_index,
+        SendMessageA(directory_list_handle_, LB_GETTEXT, file_index,
                      reinterpret_cast<LPARAM>(entry));
-        const char *suffix = strrchr(entry, '.');
+        const char *suffix = memrchr(entry, entry + strlen(entry), '.');
         if (suffix == 0) {
             continue;
         }
@@ -509,7 +513,7 @@ int FileWin::populate_directory(char *directory) {
 
     const int attach_or_refresh_result = list_box_.has_dib_bits()
         ? list_box_.update_changes()
-        : dialog.attach(
+        : list_box_.ListBox::attach(
               modal_window_,
               dialog.window_x_, dialog.window_y_,
               FileWinInitSharedParameters.field_00_ != 0
@@ -521,7 +525,7 @@ int FileWin::populate_directory(char *directory) {
 
     list_box_.set_markup_enabled(0);
     list_box_.show(0);
-    return directory_count;
+    return return_value;
 }
 
 // The default file-name suffix appended to field_531_ at construction - REAL
