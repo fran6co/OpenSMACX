@@ -1,0 +1,59 @@
+{
+  "event_id": "583df57cc1a8c4cba7dffbfd0fea040fbe32599d7225783c30144cc275ef4328",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Expand to eight additional measured-mismatch Console functions from the physical source/callee audit. Permit only adding the explicit null-owner argument at each listed Popup::start expression; preserve all other body/call/label/flag/lifetime/return behavior.",
+      "Audit: .opensmacx/recovery/exact-first-oct28my/popup-overload-calls.json validates pinned direct406380 calls and nullowner. Genuine original43EF70 callsites and REFUSED functions remain out of scope. One compiler trial per newly selected body; editor_terrain cap already consumed."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5085904,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5101296,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5112464,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5113312,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5097568,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5108976,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5117136,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5099952,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "af8aca7fef0f201a4eb2f6eae6c36bd740f8e265de1b4c9b7b2bb5ba205c7718",
+  "request_id": "recover-direct-popup-call-family",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:exact-editor-terrain-start-oct28my"
+}
