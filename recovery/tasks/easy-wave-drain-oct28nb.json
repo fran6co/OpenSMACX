@@ -1,0 +1,25 @@
+{
+  "author": "coordinator",
+  "base_revision": "6073d43a604d3834ab42016dd1e788b7e33bb27a",
+  "editable_files": [
+    "src/sounddevice.cpp",
+    "recovery/tests/test_wave_control_group_lifetime_actual_source.py",
+    "recovery/tests/test_wave_control_group_lifetime.py",
+    "recovery/tests/test_wave_group_list_boundary_actual_source.py"
+  ],
+  "evidence": [
+    "Original49-instruction drain has first removal stage followed by repeated removal. Preserve empty head, null-payload early stop, delete node notWave, backlink/head/tail/count order and untouched cursor. One candidate if(remove_head()) while(remove_head()) with actualsource controls; no header/type/lifetime or pragma changes.",
+    "Worker may edit only selected body and necessary existing test anchors after unchanged fullobject replica passes. Native one compilercandidate cap; no original markers/claims/codebytes/flags/otherbodies/Git/recording. Coordinator handles preparation/publication/integration and review; preserve all source discoveries."
+  ],
+  "intent": "Bounded faithful matching recovery: wave-drain",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5004160,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "easy-wave-drain-oct28nb"
+}
