@@ -206,13 +206,23 @@ static void test_getter_traversal(CheckBox &box) {
     assert(box.get_state_id(99) == 16);
     assert(items.current_position_ == 4 && items.current_ == 0);
 
-    // Count zero takes the early path and preserves a stale, in-range cursor.
-    items.entry_count_ = 0;
+    // A null head preserves a stale cursor, including with a positive count.
+    items.head_ = 0;
+    items.entry_count_ = 4;
     items.current_position_ = 2;
     items.current_ = &n1;
     box.selected_position_ = 4;
     assert(box.get_state_id(20) == 4);
     assert(items.current_position_ == 2 && items.current_ == &n1);
+
+    // A nonnull head resets the cursor even when the count is zero.
+    items.entry_count_ = 0;
+    items.head_ = &n0;
+    items.current_position_ = 2;
+    items.current_ = &n1;
+    box.selected_position_ = 1;
+    assert(box.get_state_id(20) == 1);
+    assert(items.current_position_ == 0 && items.current_ == &n0);
 }
 
 static void test_item_publication(CheckBox &box) {

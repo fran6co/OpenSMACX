@@ -1,0 +1,25 @@
+{
+  "event_id": "9c63637a106d15b5993d33fc94be6872f70074548a0b07488a22d0f5ce96efa4",
+  "payload": {
+    "author": "root",
+    "editable_files": [
+      "recovery/tests/newtechwin_paint_owner_control.cpp",
+      "recovery/tests/test_newtechwin_exec_behavior.py",
+      "recovery/tests/test_paint_owner_wave_host.py",
+      "src/newtechwin.cpp",
+      "src/newtechwin.h"
+    ],
+    "evidence": [
+      "Original full-span decode proves live field_B24_ rereads after drawing callbacks, not one cached technology/category. Correct recovery behavior immediately; initial loop/lifetime-only restriction is superseded for this same on_redraw scope. Preserve original baseline, class layout and all historical claims.",
+      "483CB8 find_font/483CC3 set_font run BEFORE483CC8 reads technology for483CD5 tech_category/483CDB mandate_color.483D29 rereads for say_tech;483D3F rereads after say_tech forCENTEMP branch;483DFF rereads for483E06 tech_category/483E0C mandate_color;483E11 rereads again AFTERcolorcalls forSpritearrayreceiver. Source caches technology_id/category beforefont andacrosscallbacks, a genuine observation-order defect.",
+      "Remove those long-lived snapshots. Use directfield reads at each proven callsite; color mustbe computed before the independent spriteindexread, preserving current geometryscratch copyBEFOREtext_line_height. Do not reorder unrelatedcalls/geometry. Addactualbody callbackmutation witnesses andoldcachedid/category mutant controls. One further candidate authorized,totalcap3; noflags/spellinglottery/execchanges."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "4a2fc4869f3a6fd8def1b2e9e7dd52e3e63b5e5c9eaeb16b104742cb112cd434",
+  "request_id": "newtech-live-technology-reloads-nl",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:easy-newtech-rects-oct28nl"
+}

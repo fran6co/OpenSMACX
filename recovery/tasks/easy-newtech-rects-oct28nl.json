@@ -1,0 +1,32 @@
+{
+  "author": "root",
+  "base_revision": "8ac09ef952694d54a1edef98c256d8b5e2174741",
+  "editable_files": [
+    "src/newtechwin.cpp",
+    "src/newtechwin.h",
+    "recovery/tests/newtechwin_paint_owner_control.cpp",
+    "recovery/tests/test_newtechwin_exec_behavior.py",
+    "recovery/tests/test_paint_owner_wave_host.py"
+  ],
+  "evidence": [
+    "Evidence: .opensmacx/recovery/fast-pass-oct28nl/newtechwin-owner-plan.json; independently verify full pinned calls before editing. Twelve16bytegroups A24..AE0 become true RECT members; migrate every production consumer in exec and redraw together. Preserve source identities, historical claims, exact constructor/lifetime obligations and all original arithmetic/error quirks. Do not change unproven scalar groups, union/overlay raw addresses or compiler flags.",
+    "on_redraw passes direct object member addresses as pin; reuse one ordinary RECT scratch for working/inset/category-label/category-geometry, keeping80byte _itoa scratch separate. Full owner tests must distinguish wrong pointer identity from equalvalues. Verify actual configured target layout; host LONG can differ.",
+    "Wait coordinator READY before editing, after baseline actualTU reproduction and native exactpositive. Candidate budget1 for initial structural form; further attempts require new concrete evidence. Coordinator alone prep/compiler/record/Git mutations. No new publictools or packagechanges. Read-only tools allowed. EveryPython UV_NO_SYNC=1 UV_PROJECT_ENVIRONMENT=/home/fran6co/code/OpenSMACX/.venv UV_CACHE_DIR=/tmp/opensmacx-uv-cache uv run --no-sync."
+  ],
+  "intent": "Recover original object-backed rectangle arguments and shared scratch lifetime with unchanged class extent",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4733264,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4734864,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "NewTechWin rectangle ownership",
+  "task_id": "easy-newtech-rects-oct28nl"
+}

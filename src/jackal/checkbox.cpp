@@ -904,7 +904,7 @@ Purpose: Read the shared state bit of the control with `id`: walk the item list
          nonzero when the box with this id is checked. set_state_id's read-side
          twin, and DipEdit::read_check's per-bit test.
 // ORIGINAL: 0x0060EC10 ?get_state_id@CheckBox@@QAEHH@Z 0x0060EC10-0x0060EC79 BYTE_EXACT
-// LEVER: PROMOTED Historical source promoted from src/unrecovered/0060ec10.cpp was an artifact with a hand-walked Dialog/vbtable receiver, not the product source model. The pinned getter is count-gated, unlike the head gate in seek_id; its zero-count early exit leaves the cursor untouched. This recovered body keeps its own typed traversal and full mask return. Historical note: the counted-for loop spelling was retained after the do-while variant emitted an extra cmp;jge ahead of the back-edge in 11 trials; that compiler experiment is not source-structure evidence.
+// LEVER: PROMOTED Historical source promoted from src/unrecovered/0060ec10.cpp was an artifact with a hand-walked Dialog/vbtable receiver, not the product source model. The pinned getter tests the list head: a null head leaves the cursor untouched, while a nonnull head resets it before the signed count controls traversal. This recovered body keeps its own typed traversal and full mask return. Historical note: the counted-for loop spelling was retained after the do-while variant emitted an extra cmp;jge ahead of the back-edge in 11 trials; that compiler experiment is not source-structure evidence.
 // size      105 bytes
 // prototype int (__thiscall ?get_state_id@CheckBox@@QAEHH@Z)(CheckBox* this, int)
 // callers   6   call targets   0
@@ -916,7 +916,7 @@ Status: Complete
 */
 int CheckBox::get_state_id(int id) {
     StringStruct &items = Dialog::item_list_;
-    if (items.entry_count_ != 0) {
+    if (items.head_ != 0) {
         items.current_position_ = 0;
         items.current_ = items.head_;
         for (int traversed = 0; traversed < items.entry_count_; ++traversed) {
