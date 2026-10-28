@@ -308,21 +308,27 @@ def _frame_array_load(instruction) -> int | None:
     return None
 
 
-def _array_add(instruction) -> int | None:
-    if (instruction.mnemonic != "add" or len(instruction.operands) != 2
+def _array_adjustment(instruction) -> int | None:
+    if (len(instruction.operands) != 2
             or not _is_reg(instruction.operands[0], x86.X86_REG_EAX)
             or instruction.operands[1].type != x86.X86_OP_IMM):
         return None
-    if (instruction.size == 3 and instruction.bytes[:2] == b"\x83\xc0"
-            and instruction.encoding.imm_size == 1):
-        return instruction.operands[1].imm
-    if (instruction.size == 6 and instruction.bytes[:2] == b"\x81\xc0"
-            and instruction.encoding.imm_size == 4):
-        return instruction.operands[1].imm
-    if (instruction.size == 5 and instruction.bytes[:1] == b"\x05"
-            and instruction.encoding.imm_size == 4):
-        return instruction.operands[1].imm
-    return None
+    add = instruction.mnemonic == "add" and (
+        (instruction.size == 3 and instruction.bytes[:2] == b"\x83\xc0"
+         and instruction.encoding.imm_offset == 2 and instruction.encoding.imm_size == 1)
+        or (instruction.size == 6 and instruction.bytes[:2] == b"\x81\xc0"
+            and instruction.encoding.imm_offset == 2 and instruction.encoding.imm_size == 4)
+        or (instruction.size == 5 and instruction.bytes[:1] == b"\x05"
+            and instruction.encoding.imm_offset == 1 and instruction.encoding.imm_size == 4))
+    subtract = (instruction.mnemonic == "sub" and instruction.size == 5
+                and instruction.bytes[:1] == b"\x2d"
+                and instruction.encoding.imm_offset == 1 and instruction.encoding.imm_size == 4)
+    if not (add or subtract):
+        return None
+    value = instruction.operands[1].imm * (-1 if subtract else 1)
+    # EAX arithmetic wraps at 32 bits, including accumulator immediates that
+    # the disassembler renders unsigned. Keep one signed net-offset fact.
+    return ((value + 2**31) % 2**32) - 2**31
 
 
 def _cleanup_action(instructions, *, code_base: int = 0) -> EHActionFact:
@@ -368,12 +374,14 @@ def _cleanup_action(instructions, *, code_base: int = 0) -> EHActionFact:
             return replace(transfer, start=start, end=end,
                            guard=EHFrameGuardFact(load.operands[1].mem.disp, 1, "eax"))
 
-    if len(instructions) == 8:
-        callback, count_push, size_push, frame_load, adjustment, base_push, call, ret = instructions
+    if len(instructions) in (7, 8):
+        callback, count_push, size_push, frame_load = instructions[:4]
+        base_push, call, ret = instructions[-3:]
         count = _is_imm_push(count_push)
         element_size = _is_imm_push(size_push)
         displacement = _frame_array_load(frame_load)
-        base_adjustment = _array_add(adjustment)
+        base_adjustment = (_array_adjustment(instructions[4])
+                           if len(instructions) == 8 else 0)
         if (callback.mnemonic == "push" and callback.bytes[:1] == b"\x68"
                 and len(callback.operands) == 1
                 and callback.operands[0].type == x86.X86_OP_IMM
@@ -1016,14 +1024,18 @@ def _cold_layout(code: bytes) -> tuple[int, tuple[EHActionFact, ...], int, int, 
         action = None
         consumed = 0
         if instruction.bytes[:1] == b"\x68":
-            if index + 8 <= len(instructions):
-                candidate = instructions[index:index + 8]
+            for length in (7, 8):
+                if index + length > len(instructions):
+                    continue
+                candidate = instructions[index:index + length]
                 try:
                     parsed = _cleanup_action(candidate, code_base=0)
                 except ValueError:
                     parsed = None
                 if parsed is not None and parsed.kind is EHActionKind.ARRAY_DESTRUCTOR:
-                    action, consumed = parsed, 8
+                    if action is not None:
+                        raise ValueError("COFF EH array action has ambiguous bounded decoding")
+                    action, consumed = parsed, length
         else:
             for length in (2, 3, 5, 7, 8):
                 if index + length > len(instructions):

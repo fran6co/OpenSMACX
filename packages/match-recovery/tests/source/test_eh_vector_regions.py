@@ -49,14 +49,21 @@ def _array_action(*, count=3, stride=12, frame_disp=-16, base_adjust=0x234,
         code.extend(b"\x8B\x85" + struct.pack("<i", frame_disp))
     else:
         raise ValueError("frame displacement width must be 1 or 4")
-    if add_width == 1:
+    if add_form == "none":
+        if base_adjust != 0:
+            raise ValueError("an unadjusted fixture must have zero base adjustment")
+    elif add_form == "subtract":
+        if add_width != 4:
+            raise ValueError("the subtraction fixture uses an accumulator imm32")
+        code.extend(b"\x2D" + struct.pack("<I", base_adjust & 0xFFFFFFFF))
+    elif add_width == 1:
         if not -128 <= base_adjust <= 127:
             raise ValueError("imm8 fixture adjustment is out of range")
         code.extend((0x83, 0xC0, base_adjust & 0xFF))
     elif add_width == 4 and add_form == "accumulator":
-        code.extend(b"\x05" + struct.pack("<I", base_adjust))
+        code.extend(b"\x05" + struct.pack("<I", base_adjust & 0xFFFFFFFF))
     elif add_width == 4 and add_form == "group":
-        code.extend(b"\x81\xC0" + struct.pack("<I", base_adjust))
+        code.extend(b"\x81\xC0" + struct.pack("<I", base_adjust & 0xFFFFFFFF))
     else:
         raise ValueError("base adjustment width must be 1 or 4")
     code.append(0x50)  # push eax
