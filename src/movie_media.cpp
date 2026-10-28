@@ -63,7 +63,7 @@ int __fastcall MediaRuntime::update_overlay(int show) {
 
 // Typed dispatcher/waiter contracts owned by this translation unit.
 extern "C" int __fastcall sub_5c9ec0(MediaRuntime *runtime);
-extern "C" int __fastcall sub_5ca970(MediaRuntime *runtime);
+extern "C" void __fastcall sub_5ca970(MediaRuntime *runtime);
 extern "C" int __fastcall sub_5ca310(MediaRuntime *runtime, int payload_bytes);
 // Product-owned declarations below use the actual owner headers so C++
 // linkage is not accidentally changed to C by this draft.
@@ -1722,7 +1722,7 @@ extern "C" int __fastcall sub_5ca310(MediaRuntime *r, int byte_count) {
 // ORIGINAL: 0x005CA970 sub_5ca970 0x005CA970-0x005CAAA1
 // symbol    @sub_5ca970@4
 // kind      game
-extern "C" int __fastcall sub_5ca970(MediaRuntime *runtime) {
+extern "C" void __fastcall sub_5ca970(MediaRuntime *runtime) {
   MediaDescriptor &d = *runtime->descriptor;
   LONG no_handle = -1;
   if (runtime->channel_state == no_handle) {
@@ -1735,10 +1735,13 @@ extern "C" int __fastcall sub_5ca970(MediaRuntime *runtime) {
     }
   }
 
-  if (runtime->channel_state == no_handle) return 0;
-  if (runtime->pending_output_records >= 0x16 ||
-      runtime->pending_read_records >= 0x16)
-    return 0;
+  if (runtime->channel_state == no_handle) return;
+  LONG pending_output_count = *reinterpret_cast<volatile LONG *>(
+      &runtime->pending_output_records);
+  if (pending_output_count >= 0x16) return;
+  LONG pending_read_count = *reinterpret_cast<volatile LONG *>(
+      &runtime->pending_read_records);
+  if (pending_read_count >= 0x16) return;
 
   int result = sub_5c9ec0(runtime);
   runtime->channel_poll_result = result;
@@ -1751,23 +1754,23 @@ extern "C" int __fastcall sub_5ca970(MediaRuntime *runtime) {
     } else {
       runtime->channel_state = no_handle;
     }
-    return 0;
+    return;
 
   case 1:
     if (runtime->descriptor->stream_gate_7c != 0) {
       runtime->channel_state = sub_5c9ec0(runtime);
       if (runtime->channel_state == 1) runtime->descriptor->stream_gate_7c = 0;
     }
-    return 0;
+    return;
 
   case 2:
     if (runtime->descriptor->stream_gate_80 == 0 ||
         runtime->pending_output_records < 0x16)
       runtime->channel_state = sub_5c9ec0(runtime);
-    return 0;
+    return;
 
   default:
-    return 0;
+    return;
   }
 }
 
