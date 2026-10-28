@@ -151,18 +151,26 @@ int main() {
     assert(items.current_position_ == 3);
     assert(items.current_ == 0);
 
-    // Empty lists preserve the stale cursor and its position; hardware SHL
-    // count wrapping is expressed as a defined low-five-bit mask.
-    items.entry_count_ = 0;
+    // A null head preserves the stale cursor, even with a positive count;
+    // hardware SHL count wrapping is a defined low-five-bit mask here.
+    items.head_ = 0;
+    items.entry_count_ = 1;
     items.current_ = &short_entries[2];
     items.current_position_ = -1;
     dialog.selected_position_ = static_cast<int>(0x80000000U);
     assert(static_cast<uint32_t>(box.get_state_id(123)) == 0x80000000U);
     assert(items.current_position_ == -1);
     assert(items.current_ == &short_entries[2]);
-    items.current_position_ = -33;
-    assert(static_cast<uint32_t>(box.get_state_id(123)) == 0x80000000U);
-    assert(items.current_position_ == -33);
+
+    // A nonnull head resets the cursor even when the signed count is zero.
+    items.entry_count_ = 0;
+    items.head_ = &short_entries[0];
+    items.current_ = &short_entries[2];
+    items.current_position_ = 2;
+    dialog.selected_position_ = static_cast<int>(0x80000000U);
+    assert(box.get_state_id(123) == 0);
+    assert(items.current_position_ == 0);
+    assert(items.current_ == &short_entries[0]);
 
     // Large but valid lists exercise x86's wrapped shift count at 32 and 63.
     Entry many_entries[64];

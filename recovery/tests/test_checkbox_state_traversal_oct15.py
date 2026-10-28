@@ -114,9 +114,8 @@ int main() {
     assert(box.selected_position_ == (1u << 0));
     assert(box.item_list_.current_ == 0 && box.item_list_.current_position_ == 32);
 
-    // The setter's head guard leaves a stale cursor when head is null; its
-    // bit update still uses the stale position. Getter instead exits on a
-    // zero count without touching that cursor.
+    // The setter and getter both leave a stale cursor when head is null;
+    // their bit operations still use the stale position.
     box.item_list_.head_ = 0;
     box.item_list_.current_ = &nodes[2];
     box.item_list_.current_position_ = 2;
@@ -129,8 +128,8 @@ int main() {
     assert(box.get_state_id(999) == (1 << 2));
     assert(box.item_list_.current_ == &nodes[2] && box.item_list_.current_position_ == 2);
 
-    // With a non-null head and zero count, setter/flip reset to position 0;
-    // getter's count-zero path preserves a separately seeded position.
+    // With a non-null head and zero count, all three methods reset to the
+    // head and position 0 before their signed traversal-count check.
     box.item_list_.head_ = nodes;
     box.item_list_.current_ = &nodes[4];
     box.item_list_.current_position_ = 4;
@@ -141,20 +140,20 @@ int main() {
     box.item_list_.current_ = &nodes[4];
     box.item_list_.current_position_ = 4;
     box.selected_position_ = 1u << 4;
-    assert(box.get_state_id(999) == (1 << 4));
-    assert(box.item_list_.current_ == &nodes[4] && box.item_list_.current_position_ == 4);
+    assert(box.get_state_id(999) == 0);
+    assert(box.item_list_.current_ == nodes && box.item_list_.current_position_ == 0);
     box.selected_position_ = 1u;
     box.flip_state_id(999);
     assert(box.selected_position_ == 0u);
     assert(box.item_list_.current_ == nodes && box.item_list_.current_position_ == 0);
 
-    // Negative counts preserve the distinct guards too: set skips when the
-    // head is null, while get resets on any nonzero count before its signed
-    // loop test. Flip's two head-gated passes leave the seeded cursor alone.
+    // With a null head, getter also preserves its cursor for a positive
+    // count. The old count guard would instead set current_ to null and
+    // dereference it. Flip's two head-gated passes leave the cursor alone.
     box.item_list_.head_ = 0;
     box.item_list_.current_ = &nodes[5];
     box.item_list_.current_position_ = 5;
-    box.item_list_.entry_count_ = -1;
+    box.item_list_.entry_count_ = 1;
     box.selected_position_ = 0;
     box.set_state_id(999, 1);
     assert(box.selected_position_ == (1u << 5));
@@ -162,8 +161,16 @@ int main() {
     box.item_list_.current_ = &nodes[6];
     box.item_list_.current_position_ = 6;
     box.selected_position_ = 1u;
+    assert(box.get_state_id(999) == 0);
+    assert(box.item_list_.current_ == &nodes[6] && box.item_list_.current_position_ == 6);
+    box.item_list_.entry_count_ = -1;
+    box.item_list_.head_ = nodes;
+    box.item_list_.current_ = &nodes[7];
+    box.item_list_.current_position_ = 7;
+    box.selected_position_ = 1u;
     assert(box.get_state_id(999) == 1);
-    assert(box.item_list_.current_ == 0 && box.item_list_.current_position_ == 0);
+    assert(box.item_list_.current_ == nodes && box.item_list_.current_position_ == 0);
+    box.item_list_.head_ = 0;
     box.item_list_.current_ = &nodes[5];
     box.item_list_.current_position_ = 5;
     box.selected_position_ = 1u << 5;
@@ -202,8 +209,9 @@ int main() {
 
     # Deliberate source regressions: each must be caught by the actual-state
     # controls, not merely by checking the spelling of the production body.
-    wrong_get_guard = methods.replace(
-        "if (items.entry_count_ != 0)", "if (items.head_ != 0)", 1)
+    wrong_getter = getter.replace(
+        "if (items.head_ != 0)", "if (items.entry_count_ != 0)", 1)
+    wrong_get_guard = "\n\n".join((setter, flip, wrong_getter))
     assert wrong_get_guard != methods
     compile_and_run("mutant-getter-head-guard", wrong_get_guard, False)
 
