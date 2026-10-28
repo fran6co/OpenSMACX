@@ -1,0 +1,29 @@
+{
+  "author": "root",
+  "base_revision": "e1b1fceb2453bc0f334a013f8867758b9d91c0e7",
+  "editable_files": [
+    "src/socialwin.cpp"
+  ],
+  "evidence": [
+    "Actual-profile sweep NM/actual-profile-sweep.json and full pinned/current listing: group51/52 differs only sub17/add-17; button24/25 differs only default JA selecting one of two byte-identical epilogues. Neither is asserted a semantic bug.",
+    "Group candidate: inside existing17<=a2<27 guard, use a2-=17 then if(a2>=3)++a2 then maximize_effect(a2), replacing local effect only; parameter is by value and unused after the immediate return. Bounded history NM/two-near-history-check (stored under NL/NM) found this form distinct from measured local-effect variants.",
+    "Button candidate: add an explicit default:return and make exit-case group return explicitly; preserve reset/exit call grouping, every key and TutorialWindow.reset order. No case value, symbol, signature, class/header/layout/global/flag changes.",
+    "One actual compiler request per target in one shared TU batch; stop on misses and preserve full source/objects. Coordinator owns prep/compiler/recorder/Git. Wait READY after positive and actual unchanged-TU control. Only native recorder may bank wins. Existing claims/findings unchanged; root independently reviews source/branch equivalence. Every Python uses UV_NO_SYNC=1 UV_PROJECT_ENVIRONMENT=/home/fran6co/code/OpenSMACX/.venv UV_CACHE_DIR=/tmp/opensmacx-uv-cache uv run --no-sync."
+  ],
+  "intent": "Test two bounded ordinary C++ source forms against verified single-instruction differences",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4922592,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4922880,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "Social panel near-match callbacks",
+  "task_id": "easy-social-near-oct28nm"
+}
