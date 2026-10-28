@@ -2365,7 +2365,6 @@ WaveControlGroup::WaveControlGroup() {
     this->volume = 0x7f;
     this->enabled = 1;
 }
-
 /*
 Purpose: Destroy one control group by draining its node list from the head:
          each node's follower loses its back link and becomes the head (the
@@ -2373,7 +2372,7 @@ Purpose: Destroy one control group by draining its node list from the head:
          and the count drops - but a node carrying a NULL wave stops the
          drain right after it is freed, leaving the rest of the list in
          place. The cursor is never touched.
-// ORIGINAL: 0x004C5B80 ??1WaveControlGroup@@QAE@XZ 0x004C5B80-0x004C5BEF
+// ORIGINAL: 0x004C5B80 ??1WaveControlGroup@@QAE@XZ 0x004C5B80-0x004C5BEF BYTE_EXACT
 // Historical project redirect symbol: ?wave_control_group_dtor_redirect@@YIXPAUWaveControlGroup@@PAX@Z
 // No candidate emitted symbol is asserted before fresh object inspection.
 // size      111 bytes
@@ -2386,10 +2385,11 @@ Return Value: n/a
 Status: Complete
 */
 WaveControlGroup::~WaveControlGroup() {
-    while (this->list_.remove_head()) {
+    if (this->list_.remove_head()) {
+        while (this->list_.remove_head()) {
+        }
     }
 }
-
 /*
 Purpose: Build the device singleton in two vtable stages: the base's vtable
          (0x0066E098) up first while the scalar fields settle - full master
