@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "task_id": "easy-session-strings-oct28nl",
+  "target": "session-strings ownership group",
+  "author": "root",
+  "intent": "Recover original Net session string append boundaries",
+  "base_revision": "8ac09ef952694d54a1edef98c256d8b5e2174741",
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 6482592
+    }
+  ],
+  "editable_files": [
+    "src/net_class.cpp"
+  ],
+  "evidence": [
+    "Onlyreplace two session/password strcpy calls withdirectstrcat, retainingeachdest[0]=0 andallallocation/API/error/cleanup/order/flags. No signature/header/declaration/ABI changes. ExistingactualsourceNet sessionhostcontrols; no testeditsyet, requestscopeifneeded. Wholebodymatchingnotpredicted; oneboundedattemptonly.",
+    "NJ/string-crt-shortlist-verified.json and NK/next-string-boundary-plan.json verify the original two CRT strcat calls using the actual pinned contribution and qualified named relocations. Independently verify targets. Known 35-instruction and frame-size differences remain; no separate assembly kernel has been proven.",
+    "Read recovery/WORKFLOW.md. RemainreadonlyuntilcoordinatorREADY afterexactpositiveandunchangedactualTUreplica. Onlycoordinator Gitmutations/nativecompiler/prep/record/integration. Oneactualprofilecandidate; preservemarkers/claims/sourcefindings, no asm/rawaddresses/new publicCLI. Returncrossownerscopefindingsbeforeediting.",
+    "EveryPython UV_NO_SYNC=1 UV_PROJECT_ENVIRONMENT=/home/fran6co/code/OpenSMACX/.venv UV_CACHE_DIR=/tmp/opensmacx-uv-cache uv run --no-sync. Exclude nativecasesfromworkerhostruns; existingreadonlyGit/recoverinspectallowed. Prefix26/28/29quarantined."
+  ]
+}
