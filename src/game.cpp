@@ -4025,15 +4025,18 @@ void __cdecl say_fac_special(char *a1, char *a2, int a3) {
 
 
 void sub_52db40() {
-    NetDaemonSaveProcessSlot *record = NetDaemonNet.saved_process_slots_;
+    uintptr_t cursor = reinterpret_cast<uintptr_t>(NetDaemonNet.saved_process_slots_)
+                     + offsetof(NetDaemonSaveProcessSlot, field_26_);
     int remaining = 8;
     do {
-        record->identity_ = -1;
-        record->field_25_ = 0;
-        record->field_26_ = 0;
-        record->field_27_ = -1;
-        record->status_bytes_[0] = 2;
-        ++record;
+        *reinterpret_cast<int8_t *>(cursor -
+            (offsetof(NetDaemonSaveProcessSlot, field_26_)
+             - offsetof(NetDaemonSaveProcessSlot, identity_))) = -1;
+        *reinterpret_cast<uint8_t *>(cursor - 1) = 0;
+        *reinterpret_cast<uint8_t *>(cursor) = 0;
+        *reinterpret_cast<int8_t *>(cursor + 1) = -1;
+        *reinterpret_cast<uint8_t *>(cursor + 2) = 2;
+        cursor += sizeof(NetDaemonSaveProcessSlot);
     } while (--remaining);
 }
 

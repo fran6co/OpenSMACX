@@ -1,0 +1,19 @@
+{
+  "event_id": "b02dbfb87c88478710098d6408794b8ab280865714d46350eecfd6412e827525",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_net_provider_guid_oct9.py"
+    ],
+    "evidence": [
+      "Existing related host suite fails to compile its Net::close fixture because it omits voice_key_D4_, which current real Net already declares and close resets before this task. Permit only matching that existing uint32_t declaration in the host double. Preserve actual C++ code and all GUID/queue teardown assertions."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "f6f4937fe8e4772b281d443459f1ea50eedb81d410999711a68ca9d0e08467ca",
+  "request_id": "refresh-net-close-host-fixture-member",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:exact-network-capture-order-oct28mx"
+}
