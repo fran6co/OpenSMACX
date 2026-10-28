@@ -159,17 +159,17 @@ Purpose: Replace this 3x3 matrix with its product with another: a
 // containing owner, lifecycle, callers, TU, and x87 precision remain unknown.
 // RECOVERY_ROLE: SCAFFOLD Bounded numerical receiver view only; shared original object ownership, containing class, full extent, callers and lifetime remain unproved. Source consolidation and complete arithmetic bodies do not resolve this structural obligation.
 // ORIGINAL: 0x006347F0 sub_6347f0 0x006347F0-0x006348BC FILE
-// symbol   ?multiply_assign@Matrix3@@QAEXPBU1@@Z
+// symbol    ?multiply_assign@Matrix3@@QAEAAU1@PBU1@@Z
 // size      204 bytes
 // prototype
 // callers   0   call targets   0
 // kind      game
 // flags     sp_ready;purged_ok
 // calls     (none)
-Return Value: n/a
+Return Value: this matrix (inferred from the pinned receiver remaining in EAX)
 Status: Complete
 */
-void Matrix3::multiply_assign(const Matrix3 *other) {
+Matrix3 &Matrix3::multiply_assign(const Matrix3 *other) {
     float scratch[9] = {1.0f, 0.0f, 0.0f,
                         0.0f, 1.0f, 0.0f,
                         0.0f, 0.0f, 1.0f};
@@ -184,6 +184,7 @@ void Matrix3::multiply_assign(const Matrix3 *other) {
         }
     }
     std::memcpy(cells, scratch, sizeof(scratch));
+    return *this;
 }
 
 /*

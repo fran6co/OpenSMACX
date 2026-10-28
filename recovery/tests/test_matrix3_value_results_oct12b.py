@@ -36,7 +36,7 @@ BASELINE_IDENTITIES = (
     (0x006347C0, "sub_6347c0", ((0x006347C0, 0x006347F0),), "game", False, False,
      "?add_assign@Matrix3@@QAEXPBU1@@Z", "body"),
     (0x006347F0, "sub_6347f0", ((0x006347F0, 0x006348BC),), "game", False, False,
-     "?multiply_assign@Matrix3@@QAEXPBU1@@Z", "file"),
+     "?multiply_assign@Matrix3@@QAEAAU1@PBU1@@Z", "file"),
     (0x006348C0, "sub_6348c0", ((0x006348C0, 0x006348E7),), "game", False, False,
      "?scale_assign@Matrix3@@QAEXM@Z", "body"),
     (0x006348F0, "sub_6348f0", ((0x006348F0, 0x00634920),), "game", False, False,
@@ -55,6 +55,7 @@ BASELINE_IDENTITIES = (
 CURRENT_SYMBOLS = {
     0x00634720: "?add@Matrix3@@QAE?AU1@PBU1@@Z",
     0x006347C0: "?add_assign@Matrix3@@QAEAAU1@PBU1@@Z",
+    0x006347F0: "?multiply_assign@Matrix3@@QAEAAU1@PBU1@@Z",
     0x006348C0: "?scale_assign@Matrix3@@QAEAAU1@M@Z",
     0x006348F0: "?subtract_assign@Matrix3@@QAEAAU1@PBU1@@Z",
     0x00634980: "?multiply@Matrix3@@QAE?AU1@PBU1@@Z",
@@ -128,6 +129,10 @@ int main() {
         left.cells[i] = a[i];
         right.cells[i] = descending[i];
     }
+    if (&left.multiply_assign(&right) != &left) return 11;
+    for (i = 0; i < 9; ++i) left.cells[i] = a[i];
+    if (&left.multiply_assign(&left) != &left) return 12;
+    for (i = 0; i < 9; ++i) left.cells[i] = a[i];
     if (&left.subtract_assign(&right) != &left ||
         !same(left, difference)) return 10;
     return 0;
@@ -234,7 +239,7 @@ def test_value_signatures_and_non_target_declarations_match_baseline():
         "void reset_identity();",
         "Matrix3 add(const Matrix3 *other);",
         "Matrix3 &add_assign(const Matrix3 *other);",
-        "void multiply_assign(const Matrix3 *other);",
+        "Matrix3 &multiply_assign(const Matrix3 *other);",
         "Matrix3 &scale_assign(float scale);",
         "Matrix3 &subtract_assign(const Matrix3 *other);",
         "bool equals(const float *other);",
@@ -250,6 +255,7 @@ def test_value_signatures_and_non_target_declarations_match_baseline():
     assert declarations == expected
     for signature in (
         "Matrix3 &add_assign(const Matrix3 *other);",
+        "Matrix3 &multiply_assign(const Matrix3 *other);",
         "Matrix3 &scale_assign(float scale);",
         "Matrix3 &subtract_assign(const Matrix3 *other);",
     ):
@@ -305,7 +311,7 @@ def test_original_claims_symbols_roles_and_levers_preserve_ba13_baseline():
     rows = _identity_snapshot(current)
     assert set(CURRENT_SYMBOLS) == {
         0x00634720, 0x006347C0, 0x006348C0,
-        0x006348F0, 0x00634980, 0x00634AD0,
+        0x006347F0, 0x006348F0, 0x00634980, 0x00634AD0,
     }
     for address in BOUND_VALUE_ADDRESSES:
         row = rows[address]

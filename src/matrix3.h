@@ -11,7 +11,7 @@ struct Matrix3 {
   void reset_identity();
   Matrix3 add(const Matrix3 *other);
   Matrix3 &add_assign(const Matrix3 *other);
-  void multiply_assign(const Matrix3 *other);
+  Matrix3 &multiply_assign(const Matrix3 *other);
   Matrix3 &scale_assign(float scale);
   Matrix3 &subtract_assign(const Matrix3 *other);
   bool equals(const float *other);

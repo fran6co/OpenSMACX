@@ -73,9 +73,8 @@ int main() {
     fill(&x, 1); descending(&y);
     y = x.multiply(&y);
     if (!same(&y, product) || !same(&x, a)) return 25;
-    fill(&x, 1); descending(&y); x.multiply_assign(&y);
-    if (!same(&x, product)) return 11;
-    fill(&x, 1); x.multiply_assign(&x);
+    fill(&x, 1); descending(&y); if (&x.multiply_assign(&y) != &x || !same(&x, product)) return 11;
+    fill(&x, 1); if (&x.multiply_assign(&x) != &x) return 26;
     const float square[9] = {30,36,42,66,81,96,102,126,150};
     if (!same(&x, square)) return 12;
 
