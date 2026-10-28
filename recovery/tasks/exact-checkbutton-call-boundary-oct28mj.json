@@ -1,0 +1,39 @@
+{
+  "author": "coordinator",
+  "base_revision": "fd19859928eec6d510232778c0d9d9d23d596e85",
+  "editable_files": [
+    "src/jackal/checkbutton.cpp"
+  ],
+  "evidence": [
+    "Only assigned function bodies/files; preserve original bugs, load-bearing mappings and claims. No asm, copied bytes, executable forwarding or claim edits. Coordinator authorizes narrowly scoped frame-pointer compiler pragmas in the evidenced lifecycle/helper definitions, including genuine constructors that emit associated generated entries; command-line profile remains unchanged. Preserve all prior exact protocol/callback bodies; compare the complete TU.",
+    "Inspect original/current dataflow, prior Git/task/trial context before new source candidate. At most3 candidate compiler requests per function; do not repeat exhausted unchanged context. Failed spellings retained in ignored snapshots, substantive structural findings retained for coordinator expansion.",
+    "Native supplied helper and assigned prefix only after unchanged profile reproduction. Only coordinator Git/prepare/record/integration. Stop editing exact winners and report frozen snapshot.",
+    "Manual review still requires complete compiling/linking closure, references, historical continuity, outside preservation and destination verification. No game acceptance inferred."
+  ],
+  "intent": "Recover additional current byte-exact functions from fresh evidence-backed source hypotheses, with bounded trials.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4931360,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6502224,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6502304,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4931264,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "exact-checkbutton-call-boundary-oct28mj"
+}
