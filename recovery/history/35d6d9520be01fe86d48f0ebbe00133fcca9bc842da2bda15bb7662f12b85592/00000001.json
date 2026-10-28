@@ -1,0 +1,19 @@
+{
+  "event_id": "d12d609c03e86a617eeb2c15cf48d61a3c1c1228704da3f60bb1ef0f479f7995",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/net_class.cpp"
+    ],
+    "evidence": [
+      "Qualified full-build COFF suggests real NetAllocationNode constructor and ServiceProviderList::add emission sites control generated 402CC0/402D80 frame profiles. Authorize local frame pragmas at those natural definitions only, preserving original task baseline and first-trial history, all17scope subjects and all6integrated matches. No body, header, layout or binding changes."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "generated-construction-frame-followup-oct28",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:exact-net-frame-boundary-oct28mh"
+}

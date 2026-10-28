@@ -44,11 +44,11 @@
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00402ad0.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "Receiver-1C, stages nested-base6693F4/6693F0, clear402970, owner publication then bit1/free."}
 // symbol    ??_GNetTextListBase@@UAEPAXI@Z
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00402CC0 sub_402cc0 0x00402CC0-0x00402D0B FILE
+// ORIGINAL: 0x00402CC0 sub_402cc0 0x00402CC0-0x00402D0B FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00402cc0.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "Receiver-58 then calls402DD0; node owner publication then bit1/free. This anchors402DD0 to outer NetAllocationNode, not nested NetUnk72C."}
 // symbol    ??_GNetAllocationNode@@UAEPAXI@Z
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00402D80 sub_402d80 0x00402D80-0x00402DC2 FILE
+// ORIGINAL: 0x00402D80 sub_402d80 0x00402D80-0x00402DC2 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00402d80.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "Provider add401760 installs payload table6693E4, whose scalar slot points402D80; receiver-18 and saved-owner publication/free. Not unseen NetTextPayload nominal proof."}
 // symbol    ??_GServiceStruct@@UAEPAXI@Z
 // ORIGINAL: 0x004E3660 sub_4e3660 0x004E3660-0x004E370C FILE
@@ -3524,11 +3524,14 @@ NetTextListBase::~NetTextListBase() {
 
 
 
+#pragma optimize("y", off)
 NetAllocationNode::NetAllocationNode() {
     // No scalar field stores exist in either inline original construction.
     // Its own allocation base captures the pending Heap BEFORE entries_'s
     // independent virtual base consumes the now-cleared handoff.
 }
+#pragma optimize("", on)
+
 
 
 #pragma optimize("y", off)
@@ -3840,6 +3843,12 @@ int ServiceProviderList::seek_pos(int position) { return seek_owned_list(this, p
 
 ServiceStruct *ServiceProviderList::next_entry() { return next_owned_list(this); }
 
+// Original401760 installs6693C4 at each entry's allocation base (+0x14).
+// Its deleting slot targets402C20, shared with StringStructEntry. The real
+// constructions below emit this additional deleting entry; the canonical
+// ORIGINAL and historical claim remain in stringstruct.cpp.
+// RECOVERY_SHARED: v1 0x00402C20 0x00402C62 ??_GServiceListEntry@@UAEPAXI@Z 0x00401760
+#pragma optimize("y", off)
 int ServiceProviderList::add(int id) {
     // The original captures the explicit allocator before testing the count;
     // payload allocation reloads it after entry construction and ring updates.
@@ -3876,6 +3885,8 @@ int ServiceProviderList::add(int id) {
     ++entry_count_;
     return 0;
 }
+#pragma optimize("", on)
+
 
 #pragma optimize("y", off)
 ServiceProviderList::~ServiceProviderList() {

@@ -38,17 +38,23 @@ extern Wave g_CREDITS_WAVE;
 
 // ORIGINAL: 0x00428780 ??0Credits@@QAE@XZ 0x00428780-0x00428830;0x00653110-0x0065315A FILE
 // RECOVERY_BINDING: v1 {"evidence": ["retired seed git:024b38ed:src/unrecovered/00428780.cpp records the member construction order and zero-filled line array", "Credits embeds real GraphicWin, Font, Buffer, FlatButton and Time members of the original sizes"], "reason": "Use genuine C++ base and member construction instead of fixed vtable stores and placement-new at raw offsets."}
+// Preserve the original frame-based lifetime/callback emission locally;
+// each restore below returns unrelated definitions to the TU defaults.
+#pragma optimize("y", off)
 Credits::Credits() : frame_count_(0), line_count_(0) {
   memset(lines_, 0, sizeof(lines_));
 }
+#pragma optimize("", on)
 
-// ORIGINAL: 0x00428E90 ??1Credits@@QAE@XZ 0x00428E90-0x00428F72;0x00653170-0x006531D0 FILE
+// ORIGINAL: 0x00428E90 ??1Credits@@QAE@XZ 0x00428E90-0x00428F72;0x00653170-0x006531D0 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["retired seed git:024b38ed:src/recovered/units/00428e90.cpp records close followed by reverse member/base teardown", "The class declares the original typed owned subobjects"], "reason": "Let VC6 destroy the real C++ members and base after the image's explicit close phase."}
 // symbol    ??1Credits@@UAE@XZ
 // GraphicWin's inherited virtual destructor makes this destructor virtual.
+#pragma optimize("y", off)
 Credits::~Credits() {
   close();
 }
+#pragma optimize("", on)
 
 // Credits' list is populated with owned C-heap strings by load(); unload()
 // releases every slot and clears both count fields before releasing audio.
@@ -148,6 +154,7 @@ void Credits::timer_callback_daemon() {
 
 // ORIGINAL: 0x00428DD0 ?timer_callback_daemon@Credits@@QAAXH@Z 0x00428DD0-0x00428DE7 BYTE_EXACT
 // symbol    ?timer_callback_daemon@Credits@@SAXH@Z
+#pragma optimize("y", off)
 void __cdecl Credits::timer_callback_daemon(int a1) {
   Credits *credits = reinterpret_cast<Credits *>(a1);
   if (credits != 0) {
@@ -155,6 +162,7 @@ void __cdecl Credits::timer_callback_daemon(int a1) {
     credits->draw_credits();
   }
 }
+#pragma optimize("", on)
 
 // ORIGINAL: 0x00428C00 ?draw_credits@Credits@@QAEXXZ 0x00428C00-0x00428D5C
 void Credits::draw_credits() {

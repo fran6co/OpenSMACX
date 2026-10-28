@@ -52,7 +52,11 @@ The following NOP, close at 0x00612960 and attach at 0x00612970 are not
 constructor instructions. The separately mapped cold EH region is unchanged;
 its complete compiler correspondence remains unqualified.
 */
+// Keep framed lifetime emission local to these real definitions; the
+// remaining Dialogs callbacks retain their command-line optimization.
+#pragma optimize("y", off)
 Dialogs::Dialogs() { }
+#pragma optimize("", on)
 
 // ORIGINAL: 0x00612960 ?close@Dialogs@@QAEXXZ 0x00612960-0x00612961 BYTE_EXACT
 // kind      game
@@ -555,9 +559,11 @@ void Dialogs::on_mousewheel(int a) {
 // symbol    ??1Dialogs@@UAE@XZ
 // kind      game
 // HISTORICAL TRIED (superseded by recovered Dialogs/SpriteBox ownership): same SEH-frame symptom as `Dialog::~Dialog()` (this file's sibling class in dialog.cpp) and FlatButton's own constructor/destructor pair. Not attempted: the comment above claims the frame is "unreachable, omitted per policy", which is UNVERIFIED here (flagged, not trusted - see the note on Dialog::~Dialog for why). This body is the most complex of the three (six member teardowns across five classes chained together); reproducing the frame plus whatever member-destruction reordering it would take is out of scope for this pass's budget.
+#pragma optimize("y", off)
 Dialogs::~Dialogs() {
     close();
 }
+#pragma optimize("", on)
 
 
 
