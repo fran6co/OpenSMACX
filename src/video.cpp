@@ -33,8 +33,11 @@ char VideoAudioBufferLogContext[1];
 // LEVER: tail call to the unnamed sub via a plain extern "C" declaration
 
 
-// ORIGINAL: 0x00636400 ??0Video@@QAE@XZ 0x00636400-0x0063652E;0x00663890-0x006638C9 FILE
+// ORIGINAL: 0x00636400 ??0Video@@QAE@XZ 0x00636400-0x0063652E;0x00663890-0x006638C9 FILE BYTE_EXACT
 // symbol    ??0Video@@QAE@XZ
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma function(memset)
+#endif
 Video::Video()
     : sound_state_(), palette_(), frame_queue_(), output_buffer_() {
   // Preserve constructor clear boundaries and order after subobject creation.
@@ -64,6 +67,9 @@ Video::Video()
   last_tick_ = 0;
   memset(&source_rect_, 0, sizeof source_rect_);
 }
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma intrinsic(memset)
+#endif
 
 // ORIGINAL: 0x00636530 ??1Video@@QAE@XZ 0x00636530-0x006365A6;0x006638C9-0x00663902 FILE
 // symbol    ??1Video@@QAE@XZ
