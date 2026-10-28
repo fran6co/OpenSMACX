@@ -1174,6 +1174,7 @@ static int tech_last_faction;
 static int draw_calls;
 static int popup_calls;
 static char popup_label[32];
+static char popup_picture[32];
 static int popup_reselect_base;
 static int draw_reselect_base;
 static int replay_reselect_base;
@@ -1236,10 +1237,12 @@ BOOL __cdecl has_tech(int tech_id, int faction_id) {
 }
 void __cdecl parse_say(int, const char *, int, int) { ++parse_text_calls; }
 void __cdecl parse_says(int, LPCSTR, int, int) { ++parse_text_calls; }
-int __cdecl popb(LPCSTR label, int, int, LPCSTR, Sprite *) {
+int __cdecl popb(LPCSTR label, int, int, LPCSTR picture, Sprite *) {
     ++popup_calls;
     strncpy(popup_label, label, sizeof(popup_label) - 1);
     popup_label[sizeof(popup_label) - 1] = 0;
+    strncpy(popup_picture, picture, sizeof(popup_picture) - 1);
+    popup_picture[sizeof(popup_picture) - 1] = 0;
     if (popup_reselect_base >= 0) {
         BaseIDCurrentSelected = popup_reselect_base;
         BaseCurrent = &Bases[popup_reselect_base];
@@ -1306,6 +1309,7 @@ static void reset_fixture() {
     memset(using_x, 0, sizeof(using_x));
     memset(using_y, 0, sizeof(using_y));
     memset(popup_label, 0, sizeof(popup_label));
+    memset(popup_picture, 0, sizeof(popup_picture));
     BaseCurrent = &Bases[0];
     BaseIDCurrentSelected = 0;
     memset(&GameDataStateStorage, 0, sizeof(GameDataStateStorage));
@@ -1511,10 +1515,15 @@ static void test_draw_and_popup_selection_reloads() {
     Bases[0].state = 0;
     Bases[0].governor = 0;
     Bases[1].governor = 0x80000040u;
+    Players[1].rule_flags = RFLAG_ALIEN;
+    // The original alien popup predicate is a raw rule flag check and does
+    // not depend on the expansion-enabled global.
+    ExpansionEnabled = 0;
     draw_reselect_base = 1;
     drone_riot();
     assert(draw_calls == 1);
     assert(strcmp(popup_label, "DRONERIOTS2") == 0);
+    assert(strcmp(popup_picture, "ALdrone_sm.pcx") == 0);
     assert(BaseCurrent == &Bases[1] && BaseIDCurrentSelected == 1);
     assert(nutrient_calls == 0 && replay_calls == 0);
 

@@ -1,0 +1,26 @@
+{
+  "author": "root",
+  "base_revision": "285876c2d70ebaec5e7eb1c37e1669c6d6730bcc",
+  "editable_files": [
+    "src/popup.cpp",
+    "src/sprite.cpp",
+    "recovery/tests/test_sprite_scratch_helpers.py"
+  ],
+  "evidence": [
+    "Move COMPLETE callbackannotation+body unchanged fromSprite.cpp intoPopup.cpp BEFORE calculate_dimensions. KeepglobalexternsymbolandexistingSprite.hdeclaration fornow; NOnewpragmas/flags/helpers/wrapperbodychanges/headercleanup. Sourcecodebody/signature/binding/claimmustremainidentical; readnativeSource before/aftertoassertoneorigin/samespans/claims/symbol/lessons. UpdateonlyexistingSOURCE_PATHS callbacktestmapping; runitsfullhostcontrolsandPopupdimensionscontrols.",
+    "NJ/NJ/popup-callback-home-investigation.json: solePopupregistration, SpriteBoxindirectdispatch, originalcallbackadjacentPopupctor, naturalPopupOy-frame/opaqueSpritewrapper fits originaldirectcall. OriginalTUidentityunproven. SameTUreorderalreadyclosed39vs24. CrossTUresidualnormalizationcannotclaimnativegreen; coordinator separatelyreviewscallerreftransition. Onecandidate, preservework/discoveries.",
+    "Read recovery/WORKFLOW.md. ReadonlyuntilcoordinatorREADY afterexactpositiveandunchangedwholeTUreplica. CoordinatorownsGit/prep/nativecompiler/record/integration. Onecandidateonly, preservealloriginalquirks/historicalclaims; no manualmarker/tokenediting, no outsideauthorizedfiles. Returndiscoveriesforscopeexpansion.",
+    "AllPython UV_NO_SYNC=1 UV_PROJECT_ENVIRONMENT=/home/fran6co/code/OpenSMACX/.venv UV_CACHE_DIR=/tmp/opensmacx-uv-cache uv run --no-sync. Existingreadonlyrecovercommandsallowed; do notcreatepublicCLI orrunworkercompilation/nativepreprocessing. Prefix26/28/29quarantined."
+  ],
+  "intent": "Test the evidenced Popup default callback source home",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4212832,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "popup-callback ownership group",
+  "task_id": "easy-popup-callback-oct28nk"
+}

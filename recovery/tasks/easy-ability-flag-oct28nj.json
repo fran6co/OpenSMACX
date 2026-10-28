@@ -1,0 +1,25 @@
+{
+  "author": "root",
+  "base_revision": "285876c2d70ebaec5e7eb1c37e1669c6d6730bcc",
+  "editable_files": [
+    "src/veh.cpp",
+    "recovery/tests/test_has_abil_alien_flag_actual_source.py"
+  ],
+  "evidence": [
+    "Change only has_abil local is_alien_faction predicate to Players ruleflag test. Preserve all negative prototype/index and shift quirks; no new guards or other has_abil logic. Add meaningful actual full-function host controls distinguishing ExpansionEnabled=0 with alienflag and original fallback behavior; old real helper mutant must fail. No tests mirroring only the changed expression.",
+    "alien-predicate-levers.json: original5BF240 directlytests0x80 and completebody lacksExpansionEnabled read. Existing same-TU callers afterdefinition mayinline; identify/return affectedowners before broadening source.",
+    "Read recovery/WORKFLOW.md. Workers remain read-only until coordinator exactpositive andunchangedactualTUreproductionPASS. Only coordinator nativecompiler/prep/Git/record/integration. One actual-profile candidate, no extendedspellingsearch. Preserve alloriginalquirks/claims and returncrossowner discoveries.",
+    "EveryPython UV_NO_SYNC=1 UV_PROJECT_ENVIRONMENT=/home/fran6co/code/OpenSMACX/.venv UV_CACHE_DIR=/tmp/opensmacx-uv-cache uv run --no-sync. Existing native tests must be excluded from host-only runs; no worker nativepreprocessing. Prefix26/28/29 quarantined."
+  ],
+  "intent": "Restore has_abil original raw alien rule flag without expansion gate",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6025712,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "ability-flag original behavior",
+  "task_id": "easy-ability-flag-oct28nj"
+}

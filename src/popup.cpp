@@ -2089,6 +2089,19 @@ void __cdecl popup_set_write_check_bit(int bit_index, int enabled) {
     }
 }
 
+// ORIGINAL: 0x00404860 ?sprite_draw_func@@YAXPAUSprite@@PAUGraphicWin@@HHH@Z 0x00404860-0x00404896 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:3f2df6224d8701da7e923701c56365402e6901cf:src/recovered/units/00404860.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x404860 complete native body and call ordering.", "source:src/buffer.cpp:g_PCX_PARSE_TEMP_BUFFER1 binds original storage 0x00798668; source:src/graphicwin.h:public Buffer secondary base supplies the original +0x444 draw receiver adjustment."], "reason": "Draw callback using the real GraphicWin Buffer secondary base, Sprite transparency and native coordinate offsets."}
+// symbol    ?sprite_draw_func@@YAXPAVSprite@@PAVGraphicWin@@HHH@Z
+void __cdecl sprite_draw_func(Sprite *sprite, GraphicWin *owner,
+                              int unused, int x, int y) {
+    (void)unused;
+    x -= 5;
+    y -= 6;
+    Buffer *buffer = owner ? static_cast<Buffer *>(owner) : 0;
+    const unsigned char transparent = sprite->transparent_index();
+    sprite->draw(buffer, transparent, x, y, 1, 1);
+}
+
 // ORIGINAL: 0x00404B10 ?calculate_dimensions@Popup@@QAEHXZ 0x00404B10-0x00404EEF
 // RECOVERY_BINDING: v1 {"evidence": ["task:popup-dimensions-background-owner", "Native primary tables6695C8/6698D4 slots90..96 and pinned original body", "historical seed:src/unrecovered/00404b10.cpp"], "reason": "Recover a complete typed Popup override of the native BasePop callback hierarchy, using actual shared Dialog/GraphicWin bases and source-owned global objects. Preserve original identity, spans and seed discoveries; no new matching or acceptance claim."}
 // symbol    ?calculate_dimensions@Popup@@UAEHXZ

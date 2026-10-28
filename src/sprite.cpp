@@ -3303,20 +3303,6 @@ int Sprite::init(char *filename, int width, int height) {
     return 0;
 }
 
-// ORIGINAL: 0x00404860 ?sprite_draw_func@@YAXPAUSprite@@PAUGraphicWin@@HHH@Z 0x00404860-0x00404896 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:3f2df6224d8701da7e923701c56365402e6901cf:src/recovered/units/00404860.cpp", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x404860 complete native body and call ordering.", "source:src/buffer.cpp:g_PCX_PARSE_TEMP_BUFFER1 binds original storage 0x00798668; source:src/graphicwin.h:public Buffer secondary base supplies the original +0x444 draw receiver adjustment."], "reason": "Draw callback using the real GraphicWin Buffer secondary base, Sprite transparency and native coordinate offsets."}
-// symbol    ?sprite_draw_func@@YAXPAVSprite@@PAVGraphicWin@@HHH@Z
-void __cdecl sprite_draw_func(Sprite *sprite, GraphicWin *owner,
-                              int unused, int x, int y) {
-    (void)unused;
-    x -= 5;
-    y -= 6;
-    Buffer *buffer = owner ? static_cast<Buffer *>(owner) : 0;
-    const unsigned char transparent = sprite->transparent_index();
-    sprite->draw(buffer, transparent, x, y, 1, 1);
-}
-
-
 // Heap metadata borrows the arena. Freeing its storage ends that lifetime;
 // invoking Heap::~Heap here would incorrectly free each interior region.
 void TexHeap::release_allocations() {

@@ -1,0 +1,20 @@
+{
+  "event_id": "f85b995e397c74d075396dbe1758538a9e47543867b2e7764c2510849d8d0cab",
+  "payload": {
+    "author": "root",
+    "editable_files": [
+      "recovery/tests/test_turn_production_chain_behavior.py"
+    ],
+    "evidence": [
+      "Coordinator reviewed existing actual-drone-body fixture enhancement capturing popup picture. It distinguishes expansion-off alien popup original behavior and preserves existing draw-reselection assertions.",
+      "Worker made this eleven-line test change before requesting scope expansion; this fresh coordinator authorization admits its reviewed result before native measurement, and does not claim it had prior authorization."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "drone-popup-actual-control-oct28nj",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:easy-drone-flags-oct28nj"
+}
