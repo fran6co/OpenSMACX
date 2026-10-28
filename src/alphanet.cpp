@@ -67,15 +67,10 @@
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00401C80 SessionStruct::SessionStruct 0x00401C80-0x00401CD8 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00401c80.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "Session base tables669408/669404 and five cleared circular-list fields."}
+// compile_context src/net_session_picker.cpp
+// body src/alphanet.h
 // symbol    ??0AlphaNetStringStruct@@QAE@XZ
 
-AlphaNetStringStruct::AlphaNetStringStruct() {
-    head_ = 0;
-    current_ = 0;
-    entry_count_ = 0;
-    current_position_ = 0;
-    allocator_ = 0;
-}
 
 
 /*
