@@ -1,0 +1,19 @@
+{
+  "event_id": "0524c2ff65046d89e168dd192fc26ad964b329f417ae920f1d937cd7de07bfbe",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_media_live_poll_oct26.py"
+    ],
+    "evidence": [
+      "Pinned 5CA970 has no result contract and 5C9EC0 has one ECX input; host live-descriptor behavior controls must call the corrected signatures without asserting an invented zero result."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "19ddae1d62614d647c034610711b79f837932e138a476317ff8774eb5d6bd50e",
+  "request_id": "movie-live-poll-abi-test-oct28",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:exact-movie-switch-oct28mh"
+}

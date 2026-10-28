@@ -72,7 +72,7 @@ static LONG mmioSeek(HMMIO stream, LONG offset, LONG) {
   sought_offset = offset;
   return 0;
 }
-extern "C" int __fastcall sub_5c9ec0(MediaRuntime *runtime, void *) {
+extern "C" int __fastcall sub_5c9ec0(MediaRuntime *runtime) {
   int index = helper_calls++;
   if (helper_replacement[index]) runtime->descriptor = helper_replacement[index];
   if (index == 0 && pending_after_poll >= 0)
@@ -111,7 +111,7 @@ static void test_entry_flags_are_captured_but_seek_stream_is_reloaded() {
   helper_results[0] = 9;  // Initial channel-state acquisition.
   helper_results[1] = 0;  // Poll result.
 
-  assert(sub_5ca970(&runtime, 0) == 0);
+  sub_5ca970(&runtime);
   assert(sleep_calls == 1);
   assert(seek_calls == 1);
   assert(sought_stream == after_sleep.stream);
@@ -138,7 +138,7 @@ static void test_poll_result_uses_current_stream_flag_and_stream() {
   helper_results[1] = 6;
   sleep_replacement = &after_sleep;
 
-  assert(sub_5ca970(&runtime, 0) == 0);
+  sub_5ca970(&runtime);
   assert(runtime.channel_poll_result == -1);
   assert(sleep_calls == 1);
   assert(seek_calls == 1);
@@ -162,7 +162,7 @@ static void test_poll_gate_decision_and_clear_reload_owner() {
   helper_replacement[1] = &after_second_helper;
   helper_results[1] = 1;
 
-  assert(sub_5ca970(&runtime, 0) == 0);
+  sub_5ca970(&runtime);
   assert(helper_calls == 2);
   assert(runtime.channel_state == 1);
   assert(entry.stream_gate_7c == 0);
@@ -182,7 +182,7 @@ static void test_result_two_observes_current_gate_after_poll() {
   helper_results[0] = 2;
   // The helper changes the queue after the entry limit check.
   pending_after_poll = 0x16;
-  assert(sub_5ca970(&runtime, 0) == 0);
+  sub_5ca970(&runtime);
   assert(helper_calls == 1);
   assert(runtime.channel_state == 7 && runtime.channel_poll_result == 2);
   assert(entry.stream_gate_80 == 0 && after_poll.stream_gate_80 == 1);
@@ -206,7 +206,7 @@ int main(int argc, char **argv) {
 
 
 def projected_source(damaged=False) -> str:
-    body = definition(SOURCE.read_text(), 'extern "C" int __fastcall sub_5ca970(')
+    body = definition(SOURCE.read_text(), 'extern "C" void __fastcall sub_5ca970(')
     if damaged:
         # Cache only the later reads, retaining the actual entry flags alias.
         assert body.count("runtime->descriptor->") == 6
