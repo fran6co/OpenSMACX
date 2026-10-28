@@ -1,0 +1,35 @@
+{
+  "author": "coordinator",
+  "base_revision": "51df22062b0c185aa6d2ae13ef97a081a9261c6d",
+  "editable_files": [
+    "src/base.cpp",
+    "recovery/tests/test_radius_base_owner.py",
+    "recovery/tests/test_base_veh_owner_actual_source_oct6.py",
+    "recovery/tests/test_base_radius_live_owner_oct28nc.py"
+  ],
+  "evidence": [
+    "Root independent decode4E7EE2..EF5 reloads BaseCurrent and selectedBaseID then owner byte on EVERY loop pass, whereas currenttwo sibling bodies capture owner beforeloop. Restore those live reads in both; switch case3 resetsTileYieldRestricted and defaultonlyvalue0 per pin4E7F2E/37. Preserve geometry/bounds/state/two sum signs and all original quirks. Retain this proved source-fidelity fix evenifnotexact. Garrison560B30 two original direct treaty low-byte tests mask30/20 can use real typed diplo_treaties elements directly rather than calls, preserving directions/order. Avoid new charalias casts without need. Garrison purelycallboundary form retainedonlyifexact.",
+    "Workers prepare C++ and meaningful actual-source host controls ONLY after coordinator READY; then freeze and report. Coordinator alone launches native compiler measurements with approved execution permissions, records, Git, fullbuild, review and integration. One sourceproposal perselectedaddress, one batchedTU candidate request. No asm/bytes/ORIGINAL/claims/flags/signature/header changes; scope discoveries returned tocoordinator. Do not revert pin-proved behavioral corrections merely for a local match miss; preserve all obligations and tests."
+  ],
+  "intent": "Recover pinned owner behavior and matching structure: base-reads",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5144144,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5144448,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5638960,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "recover-base-reads-oct28nc"
+}
