@@ -385,7 +385,7 @@ int AlphaNet::join() {
             X_pop("jackal", "NETCONNECT_SESSION_NOT_FOUND", 0);
             if (ConsoleGroupAction != 1) return 0;
         }
-        popup.start("jackal", "NETCONNECT_SESSIONS", -1, 0, 0x42);
+        popup.start("jackal", "NETCONNECT_SESSIONS", -1, 0, 0x42, nullptr);
         ledger_.seek_pos(-1);
         for (int row = 0; row < ledger_.entry_count_; ++row) {
             ledger_.next_entry();

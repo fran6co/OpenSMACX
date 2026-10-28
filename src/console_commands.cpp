@@ -2495,7 +2495,7 @@ void Console::editor_set_brush() {
 int Console::editor_who(int default_faction, int first_faction) {
     Popup popup;
     PopupModalState = 6;
-    popup.start(PopupStartCaption, ConsoleStrEditorWhoListTitle, -1, 0, 0x40);
+    popup.start(PopupStartCaption, ConsoleStrEditorWhoListTitle, -1, 0, 0x40, nullptr);
 
     for (int faction = first_faction < 0 ? 0 : first_faction;
          faction < MaxPlayerNum; ++faction) {
@@ -2709,7 +2709,7 @@ void Console::editor_rules() {
 void Console::editor_diff() {
     Popup popup;
     auto_undo();
-    popup.start(PopupStartCaption, "EDITORDIFF", -1, nullptr, 0x40);
+    popup.start(PopupStartCaption, "EDITORDIFF", -1, nullptr, 0x40, nullptr);
     for (int i = 0; i < MaxDiffNum; ++i) {
         popup.dialogs().item(StringTable.get(Difficulty[i]), i);
     }
@@ -2729,7 +2729,7 @@ void Console::editor_diff() {
 void Console::editor_reload() {
     Popup popup;
     PopupModalState = 6;
-    popup.start(PopupStartCaption, "EDITORWHO", -1, nullptr, 0x40);
+    popup.start(PopupStartCaption, "EDITORWHO", -1, nullptr, 0x40, nullptr);
     for (int faction_entry = 1; faction_entry < MaxPlayerNum; ++faction_entry) {
         Player &row = Players[faction_entry];
         const int plurality = row.is_noun_plural;
@@ -2760,7 +2760,7 @@ void Console::editor_eliminate() {
     Popup popup;
     auto_undo();
     PopupModalState = 6;
-    popup.start(PopupStartCaption, "EDITORWHO", -1, nullptr, 0x40);
+    popup.start(PopupStartCaption, "EDITORWHO", -1, nullptr, 0x40, nullptr);
     for (int faction_entry = 1; faction_entry < MaxPlayerNum; ++faction_entry) {
         Player &row = Players[faction_entry];
         const int plurality = row.is_noun_plural;
@@ -2798,7 +2798,7 @@ void Console::editor_eliminate() {
 void Console::editor_terrain() {
     Popup popup;
     PopupModalState = 6;
-    popup.start(PopupStartCaption, "EDITORTERRAIN", -1, nullptr, 0);
+    popup.start(PopupStartCaption, "EDITORTERRAIN", -1, nullptr, 0, nullptr);
     for (int index = 0; index < MaxTerrainNum; ++index) {
         if (Terraforming[index].bit == 0) {
             continue;
@@ -2918,7 +2918,7 @@ void Console::editor_scen_victory() {
     if (accepted & 0x1000u) GameDataStateStorage.fields_.game_state_ |= 0x00080000u;
 
     if (GameDataStateStorage.fields_.game_state_ & 0x04000000u) {
-        popup.start(PopupStartCaption, "FACOBJ", -1, nullptr, 0);
+        popup.start(PopupStartCaption, "FACOBJ", -1, nullptr, 0, nullptr);
         for (int facility = 1; facility <= 64; ++facility) {
             popup.dialogs().item(
                 StringTable.get(Facility[facility].name),
@@ -2934,7 +2934,7 @@ void Console::editor_scen_victory() {
 void Console::editor_view() {
     Popup popup;
     PopupModalState = 6;
-    popup.start(PopupStartCaption, "EDITORWHO", -1, nullptr, 0x40);
+    popup.start(PopupStartCaption, "EDITORWHO", -1, nullptr, 0x40, nullptr);
     for (int faction = 1; faction < MaxPlayerNum; ++faction) {
         if ((GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & (1u << faction)) == 0) {
             continue;
@@ -3010,7 +3010,7 @@ void Console::editor_natural(int place) {
     Popup popup;
     auto_undo();
     popup.start(PopupStartCaption, place != 0 ? "NATPLACE" : "NATUNPLACE",
-                -1, nullptr, 0x40);
+                -1, nullptr, 0x40, nullptr);
     for (int natural = 0; natural < MaxNaturalNum; ++natural) {
         popup.dialogs().item(
             StringTable.get(Natural[natural].name), natural);
@@ -3665,7 +3665,7 @@ void Console::custom_my_faction() {
             Popup popup2;
             PopupModalState = 6;
             popup2.start(PopupStartCaption, ConsoleStrEditorWhoListTitle,
-                         -1, nullptr, 0x40);
+                         -1, nullptr, 0x40, nullptr);
             // The who list walks factions 1..7 by noun record: each item's
             // text is the faction's noun, with its gender/plurality feeding
             // the parser defaults.

@@ -360,7 +360,7 @@ template<class T,class S> T fake_cast(S value) {
 struct Dialogs { void item(char*,int) { events.push_back("item"); } };
 struct Popup {
   Dialogs list; Popup(){events.push_back("construct");} ~Popup(){events.push_back("destroy");}
-  int start(char*,const char*,int,char*,int){events.push_back("start");return 0;}
+  int start(char*,const char*,int,char*,int,void* owner){assert(owner==nullptr);events.push_back("start");return 0;}
   Dialogs& dialogs(){return list;}
   int exec(int,void*){events.push_back("exec");return selected_result;}
   static int selected_result;

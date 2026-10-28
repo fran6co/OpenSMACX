@@ -1,0 +1,19 @@
+{
+  "event_id": "af8aca7fef0f201a4eb2f6eae6c36bd740f8e265de1b4c9b7b2bb5ba205c7718",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_console_terrain_modal_state_oct22y.py"
+    ],
+    "evidence": [
+      "Authorize existing actual-source terrain fixture to expose six-argument Popup::start with explicit null-owner assertion, preserving modal-state, exception, buffer identity and mutation controls. Five-argument original wrapper supplies the same null owner; no product ABI/header changes."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "verify-explicit-null-popup-owner",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:exact-editor-terrain-start-oct28my"
+}
