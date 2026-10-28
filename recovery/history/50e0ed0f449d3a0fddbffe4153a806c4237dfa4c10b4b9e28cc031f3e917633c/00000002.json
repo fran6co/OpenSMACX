@@ -1,0 +1,26 @@
+{
+  "event_id": "f4ddaefa232b11c236597b986ca46456d0a9a9d45fb47c6035fd72e974961459",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/net_class.cpp"
+    ],
+    "evidence": [
+      "Actual full-object residual finds choose_service text-byte change after init loop spelling, with no reference/symbol/association change. Expand only to inspect/reverify this source-unchanged compiler collateral; no gate waiver or claim demotion.",
+      "Bind SDK import __imp__CreateEventA@16 to KERNEL32.dll export CreateEventA using native source import grammar. Pinned PE has exactly one such slot at66916C and actual Net init COFF references the ordinary undefined imported pointer. Slot address remains derived; no system-library implementation/header added."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6491504,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "0ad407b20825e13d1079de1d2ed7c8e19334f49e455d26aa75c0189e78d4f7cd",
+  "request_id": "verify-chooser-collateral-and-event-import",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:exact-net-player-anchor-oct28my"
+}
