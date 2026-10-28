@@ -1,19 +1,19 @@
-/*
- * OpenSMACX - an open source clone of Sid Meier's Alpha Centauri.
+/* OpenSMACX - an open source clone of Sid Meier's Alpha Centauri.
  * Copyright (C) 2013-2021 Brendan Casey
  *
- * OpenSMACX is free software: you can redistribute it and / or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * OpenSMACX is free software: you can redistribute it and / or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
  */
 #include "stdafx.h"
-#include "dialogs.h"
-#include "listbox.h"
-#include "spritebox.h"    // the SpriteBox handlers this dispatches to
+#include "sprite.h"
+#include "dialog.h"
+#include "graphicwin.h"
+#include <new>
+#include <stddef.h>
+#pragma optimize("y", off)
 #include "radiobutton.h"  // RadioButton::close (source-owned)
+#pragma optimize("", on)
+#include "dialogs.h"
 #include "worldwin.h"
-#include "spritebox.h"
 #include "net_class.h"
 #include "scroll.h"
 #include <cstring>
