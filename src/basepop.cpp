@@ -635,21 +635,6 @@ int BasePop::exec() {
     return exec(0, nullptr);
 }
 
-/*
-Purpose: Run the popup modally with a completion callback.
-// ORIGINAL: 0x00558FC0 ?exec@BasePop@@QAEHP6AHXZ@Z 0x00558FC0-0x00558FD2 BYTE_EXACT
-// size      18 bytes
-// prototype int (__thiscall ?exec@BasePop@@QAEHP6AHXZ@Z)(BasePop* this, int (__cdecl *)())
-// callers   1   call targets   1
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x00602600
-Return Value: the exec result
-Status: Complete
-*/
-int BasePop::exec(int (__cdecl *callback)()) {
-    return exec(0, callback);
-}
 
 
 /*
@@ -1264,29 +1249,6 @@ int BasePop::on_key_up(int) {
 }
 
 
-/*
-Purpose: Fetch one item's text from the embedded Dialogs at 0x21D0.
-
-             mov eax,[ebp+0xC] / mov edx,[ebp+8] / push eax / push edx
-             add ecx,0x21D0 / call Dialogs::item / ret 8
-
-         A plain delegation: `add ecx, 0x21D0` selects the subobject and the
-         two arguments are forwarded unchanged. The real Dialogs object is
-         the BasePop member `dialogs_`; its item member performs the original
-         delegation and returns the callee's result.
-// ORIGINAL: 0x00558FE0 ?item@BasePop@@QAEHPADH@Z 0x00558FE0-0x00558FFA BYTE_EXACT
-// size      26 bytes
-// prototype int (__thiscall ?item@BasePop@@QAEHPADH@Z)(BasePop* this, int8* lpString, int position)
-// callers   2   call targets   1
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x00612A70
-Return Value: whatever Dialogs::item returns
-Status: Complete
-*/
-int BasePop::item(char *text, int index) {
-    return dialogs_.Dialogs::item(text, index);
-}
 
 
 /*
@@ -4180,3 +4142,45 @@ Status: Complete
 int BasePop::add_asterisk_item() {
     return dialogs_.Dialogs::item(BasePopItemMarkerText, -2);
 }
+/*
+Purpose: Run the popup modally with a completion callback.
+// ORIGINAL: 0x00558FC0 ?exec@BasePop@@QAEHP6AHXZ@Z 0x00558FC0-0x00558FD2 BYTE_EXACT
+// size      18 bytes
+// prototype int (__thiscall ?exec@BasePop@@QAEHP6AHXZ@Z)(BasePop* this, int (__cdecl *)())
+// callers   1   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00602600
+Return Value: the exec result
+Status: Complete
+*/
+#pragma optimize("y", off)
+int BasePop::exec(int (__cdecl *callback)()) {
+    return exec(0, callback);
+}
+#pragma optimize("", on)
+/*
+Purpose: Fetch one item's text from the embedded Dialogs at 0x21D0.
+
+             mov eax,[ebp+0xC] / mov edx,[ebp+8] / push eax / push edx
+             add ecx,0x21D0 / call Dialogs::item / ret 8
+
+         A plain delegation: `add ecx, 0x21D0` selects the subobject and the
+         two arguments are forwarded unchanged. The real Dialogs object is
+         the BasePop member `dialogs_`; its item member performs the original
+         delegation and returns the callee's result.
+// ORIGINAL: 0x00558FE0 ?item@BasePop@@QAEHPADH@Z 0x00558FE0-0x00558FFA BYTE_EXACT
+// size      26 bytes
+// prototype int (__thiscall ?item@BasePop@@QAEHPADH@Z)(BasePop* this, int8* lpString, int position)
+// callers   2   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00612A70
+Return Value: whatever Dialogs::item returns
+Status: Complete
+*/
+#pragma optimize("y", off)
+int BasePop::item(char *text, int index) {
+    return dialogs_.Dialogs::item(text, index);
+}
+#pragma optimize("", on)
