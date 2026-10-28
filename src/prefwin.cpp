@@ -502,16 +502,16 @@ void PrefWin::display(int page) {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x0048FDD0 ?destroy@PrefWin@@QAEXXZ 0x0048FDD0-0x0048FF51 FILE
+// ORIGINAL: 0x0048FDD0 ?destroy@PrefWin@@QAEXXZ 0x0048FDD0-0x0048FF51 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0048fdd0.cpp", "recovery/tasks/prefwin-owner-coverage-wave.json", "Original control parent 8578D8; ctor/destructor member order, 800-pixel branch, checkbox text-context and callback order independently reviewed."], "reason": "Recover the complete PrefWin ownership group through a genuine GraphicWin base and compiler-owned embedded control lifetimes; preserve seed identity, original spans and unresolved discoveries without granting byte claims."}
 void PrefWin::destroy() {
   if (field_A5C_) {
     set_preferences();
+    warningsFinal_ |= warningsPending_;
     prefsFinal_ |= prefsBasicPending_ | prefsAdvPending_ | prefsAutoPending_ |
                   prefsAVPending_ | prefsMapPending_;
     morePrefsFinal_ |= morePrefsBasicPending_ | morePrefsAdvPending_ |
                       morePrefsAutoPending_ | morePrefsAVPending_ | morePrefsMapPending_;
-    warningsFinal_ |= warningsPending_;
     AlphaIniPrefs.preferences = prefsFinal_;
     AlphaIniPrefs.more_preferences = morePrefsFinal_;
     AlphaIniPrefs.announce = warningsFinal_;
