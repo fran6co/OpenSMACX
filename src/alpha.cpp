@@ -2596,3 +2596,16 @@ bool commit_staged_rules(int opcode, const unsigned char *staging) {
 }
 
 } // namespace NetDaemonSyncRules
+
+// ORIGINAL: 0x00585120 ?text_get_number@@YAHHH@Z 0x00585120-0x00585150 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned585120 calls5FD570 then5FD740 and uses an EBP frame; adjacent585170 is read_basic_rules.", "Fresh complete application COFF at421b46dbe: alpha.cpp emitted header helper matches18/18; library text.cpp emits67.", "Canonical identity, full spans, historical claim and lessons moved intact from src/text.cpp; definition remains src/text.h."], "reason": "Current application rules-parser ownership; the header definition remains shared. Library-TU emission inlines both wrappers and is not this original body. No original TU or linked selection claim."}
+// body      src/text.h
+// LEVER: BYTE_EXACT 18/18, from 2/18 and 71 compiled instructions against the image's 18. The body went through `text_get_number_source(&Txt, ...)`, so both parses were written out INLINE; the image CALLS the zero-arg wrappers, `call 0x005FD570` then `call 0x005FD740`, and open-codes only the range() clamp. call_diff said exactly that - 1 call against the image's 2. Rewritten in text.h as `text_get(); return range(text_item_number(), min, max);`, which is the same two-statement shape alpha.cpp's LEVER already spells out at its own 83 call sites. Nothing else calls text_get_number(), so no caller moved.
+// size      48 bytes
+// prototype int (__cdecl ?text_get_number@@YAHHH@Z)(int min, int max)
+// callers   0   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005FD570 0x005FD740
+// notes     Staged hybrid export redirect calls the source-owned wrapper
+
