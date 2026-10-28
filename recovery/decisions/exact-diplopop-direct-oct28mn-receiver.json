@@ -1,0 +1,16 @@
+{
+  "task": "exact-diplopop-direct-oct28mn",
+  "kind": "coordinator_structural_correction",
+  "prior_candidate_requests": 3,
+  "decision": "Correct independently verified second wrong-window receiver before application build validation; no further register spelling search.",
+  "evidence": [
+    "Pinned 0x44042D mov eax,[edi]; 0x44042F mov ecx,edi; 0x440431 call [eax+0xF8], EDI=SubInterface this-0xA14",
+    "Primary slot at0x66B570 targets GraphicWin::redraw5D5A70",
+    "Independent review diplopop-independent-review.json identifies current MainInterfaceGlobal receiver mismatch"
+  ],
+  "change": "on_status: MainInterfaceGlobal.redraw() -> virtual redraw() on this DiploPop",
+  "limits": [
+    "Historical claim retained; current exactness not yet remeasured",
+    "Fourth source candidate is a concrete original receiver correction, not an unchanged-context spelling retry"
+  ]
+}
