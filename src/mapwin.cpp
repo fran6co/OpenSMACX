@@ -6905,7 +6905,7 @@ void MapWin::gen_map(int a1, int a2) {
     }
 }
 
-// ORIGINAL: 0x0046A4A0 ?draw_tile@MapWin@@QAEXHHH@Z 0x0046A4A0-0x0046A52F FILE
+// ORIGINAL: 0x0046A4A0 ?draw_tile@MapWin@@QAEXHHH@Z 0x0046A4A0-0x0046A52F FILE BYTE_EXACT
 // working copy - scaffold materialised by --work
 // size      143 bytes
 // prototype void (__thiscall ?draw_tile@MapWin@@QAEXHHH@Z)(MapWin* this, int xCoord, int yCoord, int)
@@ -6916,24 +6916,24 @@ void MapWin::gen_map(int a1, int a2) {
 
 void MapWin::draw_tile(int a1, int a2, int a3) {
     int rowStart = field_1DDA8_;
-    if (a2 >= rowStart &&
-        a2 < field_1DDD8_ + field_1DDD0_ + rowStart) {
-        int col = a1;
-        if ((MapIsFlat & 1) == 0) {
-            int colStart = field_1DDA4_;
-            if (a1 < colStart) {
-                col = MapLongitudeBounds + a1;
-            }
-            if (field_1DDD4_ + field_1DDCC_ + colStart <= col) {
-                col = col - MapLongitudeBounds;
-            }
+    int col = a1; int row = a2;
+    if (row < rowStart) { return; }
+    if (row >= field_1DDD8_ + field_1DDD0_ + rowStart) { return; }
+    if ((MapIsFlat & 1) == 0) {
+        int colStart = field_1DDA4_;
+        if (col < colStart) {
+            col = MapLongitudeBounds + col;
         }
-        int colStart2 = field_1DDA4_;
-        if (col >= colStart2 &&
-            col < field_1DDD4_ + field_1DDCC_ + colStart2) {
-            draw_radius(a1, a2, 0, a3);
+        if (col >= field_1DDD4_ + field_1DDCC_ + colStart) {
+            col = col - MapLongitudeBounds;
         }
     }
+    int colStart2 = field_1DDA4_;
+    if (col < colStart2) { return; }
+    if (col >= field_1DDD4_ + field_1DDCC_ + colStart2) {
+        return;
+    }
+    draw_radius(a1, row, 0, a3);
 }
 
 // ORIGINAL: 0x00470ED0 ?init_dummy@MapWin@@QAEXXZ 0x00470ED0-0x00470F68 FILE
