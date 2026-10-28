@@ -1,0 +1,23 @@
+{
+  "author": "root",
+  "base_revision": "4d04fb722352c81fcac9aa492c02930f0e993aa3",
+  "editable_files": [
+    "src/picktech.cpp"
+  ],
+  "evidence": [
+    "NM/picktech-parameter-review.json: current 77/78, sole SUB29 versus ADD-29 mismatch. Earlier local, split and unsigned forms exhausted; by-value parameter mutation is a distinct source form.",
+    "Replace const local_y initialization with y -= 0x1D, and local_y uses with y, only in on_mouse_move. Preserve all guards, calls, overflow behavior, members and signatures. One candidate attempt; stop on miss and retain complete evidence.",
+    "Coordinator owns compiler/Git/recorder. Wait READY after unchanged actual-profile reproduction. Worker edits only authorized body, no marker changes."
+  ],
+  "intent": "Test dead by-value parameter normalization after the verified SocialWin SUB/ADD compiler observation",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4743104,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "PickTech mouse parameter normalization",
+  "task_id": "easy-picktech-param-oct28nm"
+}
