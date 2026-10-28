@@ -113,15 +113,19 @@ LRESULT __cdecl sub_5ffe80(HWND, int double_click, int x, int y,
                           static_cast<LPARAM>(packed));
 }
 
-// ORIGINAL: 0x005FFEC0 sub_5ffec0 0x005FFEC0-0x005FFF8B
+// ORIGINAL: 0x005FFEC0 sub_5ffec0 0x005FFEC0-0x005FFF8B BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["The pinned 0x005FFEC0 body forwards WM_KEYDOWN and WM_LBUTTONDOWN through DefWindowProcA using the HWND stored by MCIVideo::load at 0x009B8194; its 0x3B9 case clears the active MCIVideo flag, and remaining messages call the saved WNDPROC at MCIVideo+0x464 or fall back to DefWindowProcA.", "The MCI video owner stores its active receiver at 0x009B8190; MCIVideo::play is the source-owned writer of that storage and close/stop clear it."], "reason": "Move the MCI window hook into its owning source file and route through the typed active MCIVideo fields and SDK window-procedure APIs."}
 // symbol    ?MciVideoWindowProc@@YGJPAUHWND__@@IIJ@Z
 LRESULT CALLBACK MciVideoWindowProc(HWND window, UINT message,
                                     WPARAM wparam, LPARAM lparam) {
     switch (message) {
     case WM_KEYDOWN:
+        DefWindowProcA(MciVideoCallbackWindow, WM_KEYDOWN, wparam,
+                       MAKELPARAM(LOWORD(lparam), HIWORD(lparam)));
+        return 0;
     case WM_LBUTTONDOWN:
-        DefWindowProcA(MciVideoCallbackWindow, message, wparam, lparam);
+        DefWindowProcA(MciVideoCallbackWindow, WM_LBUTTONDOWN, wparam,
+                       MAKELPARAM(LOWORD(lparam), HIWORD(lparam)));
         return 0;
     case 0x3b9:
         if (ActiveVideoPlayer != 0) {
