@@ -83,15 +83,15 @@ PickTech::~PickTech() {
     // C++ performs the Font and GraphicWin destructor sequence automatically.
 }
 
-// ORIGINAL: 0x00485FC0 ?on_mouse_move@PickTech@@QAEXHH@Z 0x00485FC0-0x004860A6
+// ORIGINAL: 0x00485FC0 ?on_mouse_move@PickTech@@QAEXHH@Z 0x00485FC0-0x004860A6 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x00485FC0; retired seed git:6e445109:src/unrecovered/00485fc0.cpp; constructor484AC0/destructor488690 establish native C5C ownership.", "image:66CFCC callbackslots17/19/22/25; native rule-bank and UI call sites retain owner and evaluation order.", "source:src/stringstruct.cpp historical484B80 transcription; the canonical caption owns Font line-advance and Buffer wrap semantics."], "reason": "Genuine GraphicWin-derived PickTech owner with four automatic Font members, source-owned rule/global references, real callback dispatch and lexical popup/list lifetimes."}
 // symbol    ?on_mouse_move@PickTech@@UAEXHH@Z
 // TRIED: flipping `field*(field+1) <= a1` to `a1 >= field*(field+1)` fixed two jge/jle polarity flips, reaching 0.987 mnemonic similarity; the one remaining `a2 - 0x1d` compiles to `add eax,-0x1d` no matter how the subtraction is spelled (single temp, split statement, reordered operands all tried).
 void PickTech::on_mouse_move(int x, int y) {
-    const int local_y = y - 0x1D;
-    if (x < 0 || local_y < 0 ||
+    y -= 0x1D;
+    if (x < 0 || y < 0 ||
         x >= column_count_ * (cell_width_ + 1) ||
-        local_y >= row_count_ * (cell_height_ + 1)) {
+        y >= row_count_ * (cell_height_ + 1)) {
         const int current = selected_index_;
         if (current >= 0) {
             draw_item(current, 0);
@@ -100,7 +100,7 @@ void PickTech::on_mouse_move(int x, int y) {
         selection_active_ = 0;
         selected_index_ = -1;
     } else {
-        const int index = (local_y / (cell_height_ + 1)) * column_count_
+        const int index = (y / (cell_height_ + 1)) * column_count_
                         + x / (cell_width_ + 1);
         if (index != selected_index_ || selection_active_ == 0) {
             const int active = draw_item(index, 1);
