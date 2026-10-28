@@ -1,0 +1,22 @@
+{
+  "author": "coordinator",
+  "base_revision": "421b46dbe7554a0d0e2223d877466180b23e1e44",
+  "editable_files": [
+    "src/text.cpp",
+    "src/text.h"
+  ],
+  "evidence": [
+    "One candidate uses local const typed function pointers to text_get and text_item_number inside existing inline text_get_number. This TU currently inlines both wrappers (67instructions); pinned585120 calls5FD570 then5FD740 and inlines only range clamp (18instructions). Existing native wrapper text_item_hex already uses same localpointer idiom to prevent accidental inlining. Preserve header placement, signatures, range behavior, all mappings/claims. If exact, audit every emitted header copy and all other functions; no flags, pragmas or global noinline. Coordinator alone records/builds/Git/integrates."
+  ],
+  "intent": "Restore text_get_number wrapper call boundaries under actual application inlining",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5787936,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "easy-text-wrapper-oct28na"
+}
