@@ -1,0 +1,26 @@
+{
+  "event_id": "438b928e0ef008319510d4896207de83751e6e890df41c105193cd68d01abd9d",
+  "payload": {
+    "author": "root",
+    "editable_files": [
+      "recovery/tests/filewin_populate_directory_host_control.cpp",
+      "recovery/tests/test_filewin_populate_directory_behavior.py",
+      "src/jackal/filewin.cpp"
+    ],
+    "evidence": [
+      "Coordinator extends the same function ownership to correct four independently pinned fidelity defects; this supersedes the initial scratch-only edit restriction, not the original baseline or proof obligations.",
+      "614377 initializes return flag1;6143AA clears it after the first SetCurrentDirectory failure;614683 returns it. Current directory_count return is incorrect.",
+      "61443A/614458/61451C/614540 reload this+33C0 for SendMessage; remove cached HWND to preserve callback-visible changes.",
+      "61455B calls strlen,61456D calls genuine memrchr628AF0 with end=entry+strlen(entry) and value dot; use existing general.h declaration.",
+      "614635 directly calls ListBox::attach60A670; use explicitly qualified list_box_.ListBox::attach, preserving Dialog coordinates and arguments.",
+      "Retain shared scratch and original failed-FindFirst record consumption; update actual-body tests to catch old return/handle/callboundary defects. No StringStruct/globalheader/flag changes. One additional native candidate authorized after these new concrete discoveries; totalcap2."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "filewin-full-pin-fidelity-nl",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:easy-filewin-scratch-oct28nl"
+}

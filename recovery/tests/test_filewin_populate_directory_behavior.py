@@ -31,8 +31,8 @@ def test_extracted_full_method_with_gcc_and_clang():
     body = extract_method(SOURCE.read_text())
     assert "list_box_.has_dib_bits()" in body
     assert "FileWinInitSharedParameters.field_00_" in body
-    assert "dialog.attach(" in body
     assert "dialog.attach_at_stored_position(" not in body
+    assert "list_box_.ListBox::attach(" in body
     assert "dialog.window_x_" in body and "dialog.window_y_" in body
     assert "FindClose(handle);" in body
     assert "list_box_.show(0);" in body
