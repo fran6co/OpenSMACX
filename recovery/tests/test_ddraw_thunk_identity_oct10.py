@@ -47,7 +47,7 @@ def live():
     declarations = read_imports(ROOT)
     imported, = [d for d in declarations if d.symbol == binding.import_symbol]
     assert (imported.path, imported.module, imported.name, imported.ordinal) == (
-        "src/general.cpp", "DDRAW.dll", "DirectDrawCreate", None)
+        "src/directdraw.cpp", "DDRAW.dll", "DirectDrawCreate", None)
     config = read_json(ROOT / "recovery/project.json")
     archive = Path(config["components"]["system_import_archives"][COMPONENT])
     assert archive.is_absolute()
