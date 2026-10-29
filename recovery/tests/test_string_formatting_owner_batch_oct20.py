@@ -251,7 +251,11 @@ def projected_program(source: str, mutation: str | None = None) -> str:
             "LPSTR label = label_table[0xA3];", 1)
     elif mutation is not None:
         raise AssertionError(f"unknown mutation: {mutation}")
-    return PRELUDE + "\n".join(bodies[address] for address, _ in TARGETS) + MAIN
+    owner = (ROOT / "src/socialwin.cpp").read_text()
+    separator = next(line for line in owner.splitlines()
+                     if line.startswith("char SocialWinColonSpaceText[] ="))
+    return PRELUDE + separator + "\n" + "\n".join(
+        bodies[address] for address, _ in TARGETS) + MAIN
 
 
 COMPILERS = [compiler for compiler in ("g++", "clang++") if shutil.which(compiler)]

@@ -24,6 +24,9 @@
 #include "base.h"
 #include "faction.h"
 
+// Shared original punctuation storage, defined in socialwin.cpp.
+extern char SocialWinColonSpaceText[];
+
 // Keep these application formatters separate from Strings::get's definition so
 // VC6's same-TU /Ob2 inliner cannot absorb the original get calls. Their shared
 // storage and Strings implementation remain owned by strings.cpp.
@@ -53,19 +56,22 @@ void __cdecl says(const char *text) {
 // scratch buffer, and rules records as the neighboring say_* functions.
 // Their optional suffixes deliberately append a label to StringTemp before
 // continuing the destination; that side effect is present in the original.
-// ORIGINAL: 0x00590510 ?say_reactor@@YAXPAXHH@Z 0x00590510-0x005905B5
+// ORIGINAL: 0x00590510 ?say_reactor@@YAXPAXHH@Z 0x00590510-0x005905B5 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["original:0x00590510-0x005905B5;seed:src/unrecovered/00590510.cpp;source:src/veh.h:Reactor;source:src/strings.h:StringTable"], "reason": "This free formatter reads the real Reactor record and shared Strings and Labels objects, matching the original name, call ABI, and bounded body."}
 // symbol    ?say_reactor@@YAXPADHH@Z
 // TRIED: MISMATCH #4 push/mov, local buffer layout differs
 // TRIED: _itoa needs a real signature -> declared as itoa_impl (own name), since the scaffold's nullary _itoa can't be redeclared (C2733)
 void __cdecl say_reactor(char *text, int reactor_id, int with_detail) {
-    strcat(text, StringTable.get(Reactor[reactor_id].name));
+    Strings *strings = &StringTable;
+    LPSTR name = Reactor[reactor_id].name;
+    strcat(text, strings->get(name));
     if (with_detail != 0) {
         strcat(text, BufferJoinSpace);
         strcat(text, "(");
-        strcat(StringTemp, StringTable.get(
-            Labels.strings_ptr[0x13C / 4]));
-        strcat(text, ": ");
+        LPSTR label = Labels.strings_ptr[0x13C / 4];
+        LPSTR detail = strings->get(label);
+        strcat(StringTemp, detail);
+        strcat(text, SocialWinColonSpaceText);
         char number[80];
         _itoa(reactor_id + 1, number, 10);
         strcat(text, number);
