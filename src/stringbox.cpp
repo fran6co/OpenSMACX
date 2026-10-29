@@ -220,8 +220,11 @@ void StringBox::add_fixup() {
 // RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/00629780.cpp; image:0x00629780-0x006298A4; source:src/stringbox.h:StringBox; source:src/leaf_recoveries.cpp:sub_441100", "git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/00629780.cpp"], "reason": "Replace the old link-only shim with the real StringBox method: original code selects the borrowed or embedded StringList, destroys its entries, hides the Scroll, zeros the top line, and redraws if visible. Typed ownership expresses those effects without raw self offsets. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
 // kind      game
 void StringBox::clear() {
-    StringList &list = list_override_ != 0 ? *list_override_ : stringList_;
-    list.remove_all();
+    if (list_override_ != 0) {
+        list_override_->remove_all();
+    } else {
+        stringList_.remove_all();
+    }
     scroll_.hide();
     top_line_ = 0;
     if (is_visible() != 0) {
