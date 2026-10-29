@@ -884,6 +884,9 @@ fail:
 // ORIGINAL: 0x00637530 Video_unk13 0x00637530-0x00637865 FILE
 // symbol    ?configure_codec@Video@@QAEHXZ
 // TRIED: __thiscall Video member with plain if/else transcription of the Ghidra decomp; matches through instr #31, diverges at the byte-shuffle loop / trailing 0x34-byte ICSendMessage struct, whose exact field layout is not recovered
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma function(memcpy)
+#endif
 int Video::configure_codec() {
   if (media_file_ == 0) return 7;
   if (codec_ != 0) {
@@ -966,3 +969,6 @@ int Video::configure_codec() {
   return ICSendMessage(codec_, ICM_DECOMPRESSEX_BEGIN,
            reinterpret_cast<DWORD>(&begin), sizeof begin) != 0;
 }
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma intrinsic(memcpy)
+#endif
