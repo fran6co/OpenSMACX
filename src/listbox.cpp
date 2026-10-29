@@ -1492,7 +1492,7 @@ int ListBox::update_changes() {
         set_selected_pos((old_selected == -1) ? -1 : 0, 1);
         ::ReleaseCapture();
         if (was_visible != 0) {
-            window->show(0);
+            window->Win::show(0);
         }
     }
 

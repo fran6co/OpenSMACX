@@ -86,10 +86,9 @@ void StringBox::close() {
     scroll_.close();
 }
 
-// Reinitialization closes the GraphicWin and clears the owned list before
-// installing a new surface. The embedded Scroll is reinitialized only after
-// GraphicWin initialization succeeds; on failure its prior state is retained.
-// An optional caller list is borrowed, not copied.
+// Reinitialization closes GraphicWin, clears the owned list and closes Scroll.
+// The Scroll is initialized again only after GraphicWin initialization succeeds;
+// failure leaves it closed/reset. An optional caller list is borrowed, not copied.
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x006292D0 ?init@StringBox@@QAEXHHHHPAUWin@@PAUStringList@@H@Z 0x006292D0-0x00629486
 // RECOVERY_BINDING: v1 {"evidence": ["original:0x006292D0-0x00629486;seed:src/recovered/units/006292d0.cpp;source:src/stringbox.h;source:src/stringstruct.h;source:src/scroll.h"], "reason": "Reinitialize GraphicWin, StringList and embedded Scroll through their real owned subobjects."}
@@ -104,6 +103,7 @@ int StringBox::init(int x, int y, int width, int height, Win *parent,
     StringList &owned_list = stringList_;
     owned_list.remove_all();
     owned_list.current_position_ = 0;
+    scroll_.close();
     if (flags == -1) {
         flags = 0x1000120;
     }

@@ -32,7 +32,9 @@ def test_actual_load_returns_full_path_or_null(compiler, tmp_path):
         pytest.skip(f"host compiler unavailable: {compiler}")
     filewin = (ROOT / "src/jackal/filewin.cpp").read_text()
     alpha = (ROOT / "src/alphasave.cpp").read_text()
+    general = (ROOT / "src/general.cpp").read_text()
     bodies = "\n".join([
+        definition(general, "const char *__cdecl memrchr("),
         definition(filewin, "char *FileWin::load()"),
         definition(filewin, "int FileWin::set_def_name(char *name)"),
         definition(alpha, "char *AlphaSave::load()"),
@@ -40,18 +42,26 @@ def test_actual_load_returns_full_path_or_null(compiler, tmp_path):
     harness = r'''
 #include <assert.h>
 #include <string.h>
+typedef const char *LPCSTR;
+#define __cdecl
 typedef void *HANDLE;
 static const HANDLE INVALID_HANDLE_VALUE = (HANDLE)-1;
 struct WIN32_FIND_DATAA { char cFileName[260]; };
 struct RECT { int left, top, right, bottom; };
 static int cwd_reads, cwd_restored, modal_calls, hidden_calls;
+static int find_calls;
+static char last_find_name[260];
 static void GetCurrentDirectoryA(int n, char *out) {
   assert(n==260); ++cwd_reads; strcpy(out,"C:\\maps");
 }
 static void SetCurrentDirectoryA(char *out) {
   assert(strcmp(out,"C:\\maps")==0); ++cwd_restored;
 }
-static HANDLE FindFirstFileA(char *, WIN32_FIND_DATAA *) { return INVALID_HANDLE_VALUE; }
+static HANDLE FindFirstFileA(char *name, WIN32_FIND_DATAA *) {
+  ++find_calls;
+  strcpy(last_find_name, name);
+  return INVALID_HANDLE_VALUE;
+}
 static void FindClose(HANDLE) { assert(false); }
 static int _strcmpi(const char *a,const char *b) { return strcmp(a,b); }
 struct ListBox {
@@ -123,6 +133,30 @@ int main() {
   assert(modal_calls==2 && hidden_calls==2 && cwd_restored==2);
   assert(NetDaemonNet.voice_hotkey_48_==0xDC && NetDaemonNet.voice_hotkey_4c_==0x100DC);
   assert(ActiveAlphaSave==&dialog && ActiveFileWin==&f);
+
+  // The pinned memrchr excludes start. A leading-only dot is therefore
+  // treated as a missing suffix and receives the default extension.
+  strcpy(f.file_name_, ".SC");
+  strcpy(f.extension_filters_[0], ".SC"); f.extension_count_=1;
+  modal.result=0xC8;
+  find_calls=0;
+  f.load();
+  assert(strcmp(f.file_name_, ".SC.SC")==0);
+  assert(find_calls==1 && strcmp(last_find_name, ".SC.SC")==0);
+
+  // An interior suffix is found and passed through unchanged.
+  strcpy(f.file_name_, "map.SC");
+  modal.result=0xC8;
+  f.load();
+  assert(strcmp(f.file_name_, "map.SC")==0);
+  assert(strcmp(last_find_name, "map.SC")==0);
+
+  // The end pointer is tested first; a trailing period is still a suffix.
+  strcpy(f.file_name_, "map.");
+  modal.result=0xC8;
+  f.load();
+  assert(f.file_name_[0]=='\0');
+  assert(last_find_name[0]=='\0');
   return 0;
 }
 '''

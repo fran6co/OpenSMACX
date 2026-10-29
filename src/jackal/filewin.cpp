@@ -331,7 +331,9 @@ char *FileWin::save() {
     populate_directory(directory_);
 
     if (file_name_[0] != 0) {
-        char *suffix = strrchr(file_name_, '.');
+        // The original suffix scan excludes a period at the first character.
+        const char *suffix = memrchr(
+            file_name_, file_name_ + strlen(file_name_), '.');
         if (suffix == 0) {
             strcat(file_name_, extension_filters_[0]);
         } else {
@@ -392,7 +394,9 @@ char *FileWin::load() {
     populate_directory(directory_);
 
     if (file_name_[0] != 0) {
-        char *suffix = strrchr(file_name_, '.');
+        // The original suffix scan excludes a period at the first character.
+        const char *suffix = memrchr(
+            file_name_, file_name_ + strlen(file_name_), '.');
         if (suffix == 0) {
             strcat(file_name_, extension_filters_[0]);
         } else {
