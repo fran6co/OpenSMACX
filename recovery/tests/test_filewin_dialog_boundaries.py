@@ -29,9 +29,11 @@ def test_actual_filewin_save_and_load_bodies(compiler, tmp_path):
         pytest.skip(f"host compiler unavailable: {compiler}")
     source = (ROOT / "src/jackal/filewin.cpp").read_text()
     header = (ROOT / "src/jackal/filewin.h").read_text()
+    general = (ROOT / "src/general.cpp").read_text()
     save = definition(source, "char *FileWin::save()")
     load = definition(source, "char *FileWin::load()")
     setter = definition(source, "int FileWin::set_def_name(char *name)")
+    memrchr = definition(general, "const char *__cdecl memrchr(")
     assert "run_file_dialog" not in source + header
     assert "// ORIGINAL: 0x00613D50 ?save@FileWin@@QAEXXZ 0x00613D50-0x00613F5C" in source
     assert "// ORIGINAL: 0x00613F60 ?load@FileWin@@QAEXXZ 0x00613F60-0x00614133" in source
@@ -40,10 +42,12 @@ def test_actual_filewin_save_and_load_bodies(compiler, tmp_path):
     assert "edit_box_.set_text(file_name_)" in save
     assert "edit_box_.set_text(file_name_)" not in load
 
-    bodies = "\n".join((save, load, setter))
+    bodies = "\n".join((memrchr, save, load, setter))
     harness = r'''
 #include <assert.h>
 #include <string.h>
+typedef const char *LPCSTR;
+#define __cdecl
 typedef void *HANDLE;
 static const HANDLE INVALID_HANDLE_VALUE = (HANDLE)-1;
 struct WIN32_FIND_DATAA { char cFileName[260]; };
@@ -142,6 +146,33 @@ int main() {
   assert(get_cwd_calls == 1 && set_cwd_calls == 1);
   assert(strcmp(current_directory, "C:\\original") == 0);
   assert(strcmp(f.selected_path_, "stale-selected-path") == 0);
+
+  // Save uses the same start-exclusive mapped scan. A leading-only period
+  // takes the existing default-extension append path.
+  reset_counters(); initialize(f, modal);
+  strcpy(f.file_name_, ".SC"); strcpy(f.extension_filters_[0], ".SC");
+  f.extension_count_ = 1;
+  assert(f.save() == 0);
+  assert(strcmp(searched_name, ".SC.SC") == 0);
+  assert(strcmp(f.file_name_, ".SC.SC") == 0);
+  assert(edit_set_calls == 1 && strcmp(f.edit_box_.text, ".SC.SC") == 0);
+
+  // An interior period yields the matching configured suffix unchanged.
+  reset_counters(); initialize(f, modal);
+  strcpy(f.file_name_, "map.SC"); strcpy(f.extension_filters_[0], ".SC");
+  f.extension_count_ = 1;
+  assert(f.save() == 0);
+  assert(strcmp(searched_name, "map.SC") == 0);
+  assert(strcmp(f.file_name_, "map.SC") == 0);
+
+  // The end byte is tested first; a trailing period is found, then the
+  // existing unmatched-suffix path clears the filename before lookup.
+  reset_counters(); initialize(f, modal);
+  strcpy(f.file_name_, "map."); strcpy(f.extension_filters_[0], ".SC");
+  f.extension_count_ = 1;
+  assert(f.save() == 0);
+  assert(f.file_name_[0] == 0 && searched_name[0] == 0);
+  assert(edit_set_calls == 1 && f.edit_box_.text[0] == 0);
 
   // Load clears the filename after the first mismatch, but continues using
   // the suffix pointer: a later matching filter breaks with an empty name.
