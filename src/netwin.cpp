@@ -2813,15 +2813,16 @@ int __cdecl NetWin::modal_callback_daemon() {
             do {
             } while (NetDaemonNet.receive() != 0);
         }
-        NetWinDialog.on_redraw();
+        GraphicWin &dialog = NetWinDialog;
+        dialog.on_redraw();
     }
     if (NetWinDialog.field_7614_ != 0) {
         return 0;
     }
-    NetWinDialog.field_7618_ = 1;
     int count = NetDaemonNet.player_count_;
+    int all_used = 1;
+    NetWinDialog.field_7618_ = all_used;
     if (count >= 1) {
-        int all_used = 1;
         NetWinLobbyRow *record = &NetWinLobbyRows[1];
         do {
             if (record->ready_or_occupied_ == 0) {
