@@ -25,7 +25,7 @@ def _pinned_image():
 # Current proposal homes; coordinator may adjust these with actual integration.
 OWNERS = {
     0x00454D10: ("src/sprite_assets.cpp", "void __cdecl load_misc()"),
-    0x00455EB0: ("src/game.cpp", "void __cdecl load_sprites()"),
+    0x00455EB0: ("src/sprite_assets.cpp", "void __cdecl load_sprites()"),
     0x00451A10: ("src/interface_palette.cpp", "void __cdecl load_palette()"),
 }
 
@@ -152,7 +152,7 @@ def test_native_loader_objects_references_and_layout():
         sprites = targets(0x455EB0,'?load_sprites@@YAXXZ')
         for name in ('load_vehicles','load_terrain','load_icons','load_cursors','FactionsArt','FactionBaseSprites'):
             assert any(s.startswith('?'+name+'@@') for s in sprites), (name,sprites)
-        assert class_layout(objects['src/game.cpp'],'FactionArt')['size'] == 0x65C
+        assert class_layout(objects[OWNERS[0x00455EB0][0]],'FactionArt')['size'] == 0x65C
         palette = targets(0x451A10,'?load_palette@@YAXXZ')
         for name in ('g_PALETTE1','g_PALETTE2','PrefWinGammaCorrection','prefs_get'):
             assert any(s.startswith('?'+name+'@@') for s in palette), (name,palette)
