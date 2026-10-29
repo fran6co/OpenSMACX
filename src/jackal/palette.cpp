@@ -235,6 +235,9 @@ naming/allocation on the `PaletteInternal` fields (`slot.time`/`.first`/
 `.count`/`.colours`), all at the CORRECT struct-relative offsets already -
 not chased further given the size of the function.
 */
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma function(memcpy)
+#endif
 void Palette::remove_animation(int key) {
     // get_pos INLINED - the image never calls it here (`osmx calls` lists
     // no reference to it), it repeats the search loop directly.
@@ -282,6 +285,9 @@ void Palette::remove_animation(int key) {
         internal_[later].colours = internal_[later + 1].colours;
     }
 }
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma intrinsic(memcpy)
+#endif
 
 /*
 Purpose: Find the palette entry nearest the given colour.
@@ -1061,6 +1067,9 @@ int Palette::set_rgbquad(const RGBQUAD *src, int start, int count) {
 //   chased further.
 
 
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma function(memcpy)
+#endif
 int Palette::make_blend_table(const Palette *other, uint8_t *table, int start,
                               int count, int self_weight, int other_weight) {
     if (other == 0) {
@@ -1119,6 +1128,9 @@ int Palette::make_blend_table(const Palette *other, uint8_t *table, int start,
 
     return 0;
 }
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma intrinsic(memcpy)
+#endif
 
 // ORIGINAL: 0x005FEFF0 ?create_table_from_color@Palette@@QAEHHPAEHHHH@Z 0x005FEFF0-0x005FF19E
 // TRIED: MISMATCH #3 test/push - Palette has no named per-field layout (all generic field_XX_), so `this` is treated as a raw unsigned char* (the 256-entry colour table, then the 5-record "special colours" table at +0x40c) rather than named members.
@@ -1400,6 +1412,9 @@ void __cdecl Palette::timer_callback(int key, void *context) {
 
 
 
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma function(memcpy)
+#endif
 int Palette::fade_to(Palette *other, int start, int count, int steps,
                      int min_frame_ms) {
   if (PaletteUsesSystemColours != 0) {
@@ -1469,6 +1484,9 @@ int Palette::fade_to(Palette *other, int start, int count, int steps,
 
   return 0;
 }
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma intrinsic(memcpy)
+#endif
 
 // ORIGINAL: 0x005FE700 ?init_cycle@Palette@@QAEHHHHK@Z 0x005FE700-0x005FE8AC;0x00662D60-0x00662D75 FILE
 // TRIED: plain 'new Time()'/'operator delete'/'free' expressions relying on VC6's own SEH codegen instead of hand-written __try/__finally; diverges at #1, prologue register order
@@ -1579,6 +1597,9 @@ int Palette::init_cycle(int key, int first, int count, unsigned long interval) {
 //   `get_nearest_palette_index` above - not re-derived here.
 // indirect  0x005FFB82 0x005FFBCC 0x005FFC18 0x005FFD05 0x005FFD0B 0x005FFD1A
 
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma function(memcpy)
+#endif
 int Palette::fade_to_entry(int colour_index, int start, int count, int steps,
                            int min_frame_ms) {
     if (PaletteInitialized == nullptr) {
@@ -1650,6 +1671,9 @@ int Palette::fade_to_entry(int colour_index, int start, int count, int steps,
 
     return 0;
 }
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma intrinsic(memcpy)
+#endif
 
 // ORIGINAL: 0x00628DB0 ?RGB_to_HSV@@YAXPAUPALETTEENTRY@@PAUHSV@@@Z 0x00628DB0-0x00628F27 FILE
 // symbol    ?RGB_to_HSV@@YAXPBUtagPALETTEENTRY@@PAUHSV@@@Z
