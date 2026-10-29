@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def body():
-    text = (ROOT / "src/socialwin.cpp").read_text()
+    text = (ROOT / "src/social.cpp").read_text()
     start = text.index("void __cdecl social_select(int faction_id) {")
     opening = text.index("{", start)
     depth = 0
@@ -28,7 +28,14 @@ HARNESS = r"""
 #include <vector>
 #define __cdecl
 enum { STATE_SCENARIO_EDITOR=0x40, STATE_OMNISCIENT_VIEW=0x80 };
-uint32_t GameState, NetTurnFlags;
+struct GameDataStateWindowFields {
+    uint32_t game_state_, net_turn_flags_;
+};
+struct GameDataStateWindow {
+    GameDataStateWindowFields fields_;
+} GameDataStateStorage;
+uint32_t &GameState = GameDataStateStorage.fields_.game_state_;
+uint32_t &NetTurnFlags = GameDataStateStorage.fields_.net_turn_flags_;
 int IsMultiplayerNet;
 std::vector<int> events;
 int chosen_faction, editor_result, editor_calls, sync_multiplayer=-1;

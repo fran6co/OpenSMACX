@@ -3030,7 +3030,7 @@ void __cdecl social_upkeep(int faction_id) {
 
 /*
 Purpose: Calculate the cost of the social upheaval for the specified faction.
-// ORIGINAL: 0x005B4550 ?social_upheaval@@YAHHPAH@Z 0x005B4550-0x005B45F8
+// ORIGINAL: 0x005B4550 ?social_upheaval@@YAHHPAH@Z 0x005B4550-0x005B45F8 BYTE_EXACT
 // body      src/faction.cpp
 // symbol    ?social_upheaval@@YAHHPAUSocialCategory@@@Z
 // size      168 bytes
@@ -3049,10 +3049,8 @@ Status: Complete
 MEASURED int __cdecl social_upheaval(int faction_id, SocialCategory *category_new) {
     int change_count = 0;
     for (int i = 0; i < MaxSocialCatNum; i++) {
-        if (category_new->models_[i] !=
-            PlayersData[faction_id].soc_category_active.models_[i]) {
-            change_count++;
-        }
+        change_count += category_new->models_[i] !=
+            PlayersData[faction_id].soc_category_active.models_[i];
     }
     if (!change_count) {
         return 0;

@@ -191,6 +191,7 @@ set(OPENSMACX_SOURCES
     src/datalink.cpp
     src/netwin.cpp
     src/socialwin.cpp
+    src/social.cpp
     src/designwin.cpp
     src/worldwin.cpp
     src/diplowin.cpp
@@ -226,6 +227,7 @@ set(OPENSMACX_SOURCES
     src/tutwin_callouts.cpp
     src/popmenu.cpp
     src/popup.cpp
+    src/popup_wrappers.cpp
     src/popup_api.cpp
     src/netmsg.cpp
     src/editbox.cpp
@@ -469,7 +471,10 @@ set_source_files_properties(
     PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Keep the application Popup on its measured frame-based profile while the
 # generic modal API remains on the default frameless profile.
-set_source_files_properties(src/popup.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")
+set_source_files_properties(
+    src/popup.cpp
+    src/popup_wrappers.cpp
+    PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Preserve the measured frame-based contexts for the PopMenu and SquareLock
 # owners without changing their other compiler options.
 set_source_files_properties(
@@ -532,6 +537,7 @@ set_source_files_properties(
     src/base.cpp
     src/multiwin.cpp
     src/socialwin.cpp
+    src/social.cpp
     src/technology.cpp
     src/technology_queries.cpp
     src/uv2player.cpp
