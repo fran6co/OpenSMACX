@@ -214,7 +214,7 @@ Purpose: Create a new file or overwrite an existing one with the specified size 
 //        image's 148, and the expansion is also what burned EDI, so the
 //        zero register at the `if (!map_view_addr_)` test came out as
 //        `mov edi, eax / cmp edi, ebx` where the image has `cmp eax, ebx`.
-//        The image's one real `call 0x006465F0` is at 0x00628767. Same
+//        The image's one real `call 0x006465F0` is at 0x006287A2. Same
 //        lever as path.cpp's memset_call.
 // symbol    ?create@Filemap@@QAEPAXPBDIH@Z
 // size      355 bytes
@@ -227,15 +227,11 @@ Purpose: Create a new file or overwrite an existing one with the specified size 
 Return Value: Pointer to the mapped file or NULL on error
 Status: Complete
 */
-// /Oi turns `memset` into the `rep stosd`/`rep stosb` form at every site;
-// the image CALLS it here (0x00628767 -> 0x006465F0) the way it does across
-// the rest of the binary, so the expansion is routed through a real
-// function. __cdecl, like memset itself, so the three arguments reach it as
-// pushes the image's call site also pays. Static, because path.cpp already
-// defines the external `memset_call` for its own callers.
-static void *__cdecl filemap_memset_call(void *dst, int val, unsigned len) {
-    return memset(dst, val, len);
-}
+// The original calls CRT memset at 0x006287A2, rather than an intrinsic
+// expansion or a reconstruction-only forwarder.
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma function(memset)
+#endif
 
 LPVOID Filemap::create(LPCSTR file_name, uint32_t size, BOOL is_sequential) {
     // THE SAME FLAGS SHAPE AS open_read/open, computed first before close().
@@ -275,9 +271,12 @@ LPVOID Filemap::create(LPCSTR file_name, uint32_t size, BOOL is_sequential) {
         close_impl();
         return NULL;
     }
-    filemap_memset_call(map_view_addr_, 0, size);
+    memset(map_view_addr_, 0, size);
     return map_view_addr_;
 }
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma intrinsic(memset)
+#endif
 
 
 /*
