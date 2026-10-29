@@ -213,9 +213,6 @@ static void *mem_get(unsigned size) {
     std::memset(memory, 0xCC, size);
     return memory;
 }
-static void memcpy_call(void *dst, const void *src, unsigned size) {
-    std::memcpy(dst, src, size);
-}
 struct Buffer {
     int load_pcx(char *, int, int, int) { return 0; }
     int get_pixel(int, int) { return 0xA7; }

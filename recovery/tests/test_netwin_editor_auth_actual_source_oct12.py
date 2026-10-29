@@ -82,7 +82,7 @@ static uint32_t &owner_access(NetWinLobbyRow &row) {
     if(observe_owner)++owner_accesses;
     return row.owner_;
 }
-static void *memcpy_call(void *dst,const void *src,unsigned size) {
+static void *tracked_memcpy(void *dst,const void *src,unsigned size) {
     assert(size==0x17c); ++copies; std::memcpy(dst,src,size); event("copy"); return dst;
 }
 struct Payload { char *text; };
@@ -403,6 +403,14 @@ def compile_run(tmp_path,compiler,bodies=None,instrument=False):
     bodies=dict(bodies or real)
     if instrument:
         bodies["pass"]=bodies["pass"].replace("row.owner_","owner_access(row)")
+    for name, snapshot in (
+        ("faction", "memcpy(&updated, &NetWinLobbyRows[slot], 0x17C);"),
+        ("pass", "memcpy(&updated, &row, 0x17C);"),
+    ):
+        assert bodies[name].count(snapshot) == 1, (name, snapshot)
+        bodies[name] = bodies[name].replace(
+            snapshot, snapshot.replace("memcpy(", "tracked_memcpy(")
+        )
     text=HARNESS
     for name,value in (("RECORDS",records),("MENU",menu),("ACCESSOR",accessor),
                        ("MENU METHODS",owners),("HELPERS",helpers),("CHECKSUM",checksum),
@@ -432,7 +440,7 @@ MUTANTS=(
     ("live_record_count","faction","faction < count;","faction < static_cast<NetWinFactionRecord *>(faction_records_)[0].record_count_;"),
     ("negative_count_normalized","faction","already_selected = player_count < 0;","already_selected = false;"),
     ("missing_player_reload","faction","            player_count = NetDaemonNet.player_count_;",""),
-    ("no_faction_snapshot_slot_zero","faction","memcpy_call(&updated, &NetWinLobbyRows[slot], 0x17C);","if(slot>=1) memcpy_call(&updated, &NetWinLobbyRows[slot], 0x17C);"),
+    ("no_faction_snapshot_slot_zero","faction","memcpy(&updated, &NetWinLobbyRows[slot], 0x17C);","if(slot>=1) memcpy(&updated, &NetWinLobbyRows[slot], 0x17C);"),
     ("no_restore_faction","faction","NetWinLobbyRows[slot].faction_or_color_ = previous;","(void)previous;"),
     ("invalid_selection_normalized","faction","const int chosen_faction = pop_menu.get_selected_id() - 1;",
      "const int selected_id=pop_menu.get_selected_id(); const int chosen_faction=selected_id<0 ? -1 : selected_id-1;"),
@@ -441,7 +449,7 @@ MUTANTS=(
     ("eager_row_owner","pass","        if (expected_hash == 0 || expected_hash == row.owner_)","        const uint32_t stored_hash = row.owner_;\n        if (expected_hash == 0 || expected_hash == stored_hash)"),
     ("verify_return_checked","pass","        X_pop_ask(\"VERIFYPASSWORD\", 0x50,\n                  &NetWinPasswordVerifyInitialText, nullptr, 0x800000);",
      "        if(X_pop_ask(\"VERIFYPASSWORD\", 0x50,\n                  &NetWinPasswordVerifyInitialText, nullptr, 0x800000)==-1)return 0;"),
-    ("no_password_snapshot_slot_zero","pass","memcpy_call(&updated, &row, 0x17C);","if(slot>=1) memcpy_call(&updated, &row, 0x17C);"),
+    ("no_password_snapshot_slot_zero","pass","memcpy(&updated, &row, 0x17C);","if(slot>=1) memcpy(&updated, &row, 0x17C);"),
     ("mode_before_identity","pass","    const int slot = NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id());\n    const bool faction_mode = NetWinSessionData.mode_ == 2 ||\n                              NetWinSessionData.mode_ == 3;",
      "    const bool faction_mode = NetWinSessionData.mode_ == 2 ||\n                              NetWinSessionData.mode_ == 3;\n    const int slot = NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id());"),
     ("negative_result_normalized","pass","nullptr, 0x800040) == -1)","nullptr, 0x800040) < 0)"),
