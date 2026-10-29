@@ -421,19 +421,7 @@ void PlanWin::draw_line_base(int base_id1, int base_id2, int color) {
          4, 4, PlanLineCounter);
 }
 
-// ORIGINAL: 0x0054B140 ?battle_routine@@YAXH@Z 0x0054B140-0x0054B1B6 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x0054B140:0054B140-0054B1B6", "source:src/planwin.h:PlanWin and genuine MapWin/GraphicWin interfaces", "source:src/faction.h:PlayerData, battle faction state and label declarations", "recovery/tasks/planwin-battle-owner-coverage.json"], "reason": "Use the pinned native body with the real typed owner and preserve the seed's original identity and history."}
-void __cdecl battle_routine(int base_id) {
-    const int first_attack = attack_from(base_id, PlanBattleFactionA);
-    const int second_attack = attack_from(base_id, PlanBattleFactionB);
 
-    PlanWindow.clear_lines();
-    PlanWindow.add_line(first_attack, base_id,
-                        InfoFactionTextColors[PlanBattleFactionA]);
-    PlanWindow.add_line(second_attack, base_id,
-                        InfoFactionTextColors[PlanBattleFactionB]);
-    PlanWindow.on_redraw();
-}
 
 // ORIGINAL: 0x0054DC90 sub_54dc90 0x0054DC90-0x0054DCE4 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x0054DC90:0054DC90-0054DCE4", "source:src/planwin.h:PlanWin and genuine MapWin/GraphicWin interfaces", "source:src/faction.h:PlayerData, battle faction state and label declarations", "recovery/tasks/planwin-battle-owner-coverage.json"], "reason": "Use the pinned native body with the real typed owner and preserve the seed's original identity and history."}

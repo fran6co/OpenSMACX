@@ -1,9 +1,9 @@
 """Private pytest proposal for the PlanWin + battle-plans body packet.
 
-This proposal intentionally reads only tracked product source. After the
-coordinator installs four recovered definitions in src/planwin.cpp and the
-typed battle_plans body in src/faction.cpp, it extracts those definitions and
-compiles them against narrow typed behavioral fixtures. It has no dependency
+This proposal intentionally reads only tracked product source. It extracts the
+recovered PlanWin definitions from src/planwin.cpp, battle_routine from its
+current owner in src/base.cpp, and the typed battle_plans body from
+src/faction.cpp, then compiles them against narrow typed behavioral fixtures. It has no dependency
 on ignored candidate fragments or saved binaries. Missing declarations or
 owned data are named below as source-prerequisite witnesses, not fabricated
 inside either fixture.
@@ -24,6 +24,7 @@ from match_recovery.binding_source import parse as parse_source_bindings
 
 ROOT = Path(__file__).resolve().parents[2]
 PLANWIN_CPP = ROOT / "src/planwin.cpp"
+BASE_CPP = ROOT / "src/base.cpp"
 PLANWIN_H = ROOT / "src/planwin.h"
 MAPWIN_H = ROOT / "src/mapwin.h"
 WIN_H = ROOT / "src/win.h"
@@ -123,11 +124,12 @@ def _definition(source: str, start: str) -> str:
 
 def _production_definitions() -> tuple[str, str, str, str, str]:
     source = PLANWIN_CPP.read_text(encoding="utf-8")
+    base_source = BASE_CPP.read_text(encoding="utf-8")
     known_base = _definition(source, "static bool planwin_base_known_to_faction(")
     known_tile = _definition(source, "static bool planwin_tile_has_known_base(")
     return (
         _definition(source, "void PlanWin::draw_line_base("),
-        _definition(source, "void __cdecl battle_routine("),
+        _definition(base_source, "void __cdecl battle_routine("),
         _definition(source, 'extern "C" void __cdecl sub_54dc90('),
         known_base,
         known_tile + "\n" + _definition(source, "void PlanWin::on_redraw()"),
@@ -278,7 +280,7 @@ def test_source_has_typed_planwin_override_and_current_definitions() -> None:
     expected_mappings = {
         0x0048BAB0: ("src/planwin.cpp", "?draw_line_base@PlanWin@@QAEXHHH@Z", False,
                     ((0x0048BAB0, 0x0048BB72),)),
-        0x0054B140: ("src/planwin.cpp", "?battle_routine@@YAXH@Z", True,
+        0x0054B140: ("src/base.cpp", "?battle_routine@@YAXH@Z", True,
                     ((0x0054B140, 0x0054B1B6),)),
         0x0054DC90: ("src/planwin.cpp", "sub_54dc90", True,
                     ((0x0054DC90, 0x0054DCE4),)),
@@ -288,7 +290,7 @@ def test_source_has_typed_planwin_override_and_current_definitions() -> None:
                     ((0x0054B1C0, 0x0054BEBE), (0x65F662, 0x65F8FC))),
     }
     parsed = []
-    for owner_path in ("src/planwin.cpp", "src/faction.cpp"):
+    for owner_path in ("src/planwin.cpp", "src/base.cpp", "src/faction.cpp"):
         owner_text = (ROOT / owner_path).read_text(encoding="utf-8")
         rows = read_source_records(owner_text, ROOT / owner_path)
         parsed.extend((owner_path, owner_text, row) for row in rows)
@@ -296,6 +298,7 @@ def test_source_has_typed_planwin_override_and_current_definitions() -> None:
         owner_path: parse_source_bindings(
             owner_text, [row for path, owner_text, row in parsed if path == owner_path])
         for owner_path, owner_text in (("src/planwin.cpp", PLANWIN_CPP.read_text(encoding="utf-8")),
+                                       ("src/base.cpp", BASE_CPP.read_text(encoding="utf-8")),
                                        ("src/faction.cpp", FACTION_CPP.read_text(encoding="utf-8")))
     }
     for address, (owner, name, byte_exact, spans) in expected_mappings.items():
