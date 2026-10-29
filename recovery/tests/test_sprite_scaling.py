@@ -317,7 +317,8 @@ def test_actual_scaling_bodies(tmp_path):
 @pytest.mark.parametrize("method,old,new", [
     ("fill_scaling_table", "static_cast<uint32_t>(larger));", "static_cast<uint32_t>(smaller));"),
     ("fill_scaling_table", "if (error > 0)", "if (error >= 0)"),
-    ("fill_scaling_table", "i < SpriteScalingTableCount", "i < SpriteScalingTableCount - 1"),
+    ("fill_scaling_table", "i < SpriteScalingTableCount; ++i) {\n            SpriteScalingSteps[i]", "i < SpriteScalingTableCount - 1; ++i) {\n            SpriteScalingSteps[i]"),
+    ("fill_scaling_table", "i < SpriteScalingTableCount; ++i) {\n            error =", "i < SpriteScalingTableCount - 1; ++i) {\n            error ="),
     ("get_clipped_x_table_expand", "--index;", "index -= 0;"),
     ("get_clipped_x_table_expand", "if (extent < 0) output[-1] += extent;", "if (extent < 0) output[-1] -= extent;"),
     ("get_clipped_x_table_shrink", "*source_skip += SpriteScalingSteps[index];", "*source_skip += 1;"),
