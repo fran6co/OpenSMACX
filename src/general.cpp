@@ -503,6 +503,9 @@ Status: WIP
 // local-variable layout, which is out of scope for this pass. Left as
 // MISMATCH with the call graph corrected rather than attempting a full
 // rewrite blind.
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma function(memcpy)
+#endif
 int __cdecl parse_string(LPSTR input, LPSTR output) {
     if (!input || !output) { // EBX || ESI
         return 3;
@@ -783,6 +786,9 @@ int __cdecl parse_string(LPSTR input, LPSTR output) {
 
     return false;
 }
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma intrinsic(memcpy)
+#endif
 
 /*
 Purpose: Get the drive letter of the CD path.
