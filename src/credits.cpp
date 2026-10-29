@@ -117,7 +117,7 @@ void Credits::exec() {
 
   StringTemp[0] = 0;
   strcat(StringTemp, WinScreenWidth == 800 ? "credits.pcx" : "credits2.pcx");
-  Buffer::load_pcx(StringTemp, 0, 10, 0xEC);
+  GraphicWin::load_pcx(StringTemp, 0, 10, 0xEC);
 
   graphicWin2_.init(30, WinScreenWidth == 800 ? 100 : 200,
                     400, 400, 0, 0x1000020, this, 0, 0);
