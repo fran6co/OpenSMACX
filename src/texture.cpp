@@ -592,6 +592,9 @@ Purpose: Cut a width x height rectangle at (x, y) out of a locked buffer into
 //   texture.h) and the tail's field writes in the image's own order.
 Status: Promoted from src/unrecovered/00619710.cpp.
 */
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma function(memcpy)
+#endif
 int Texture::extract(Buffer *buffer, int x, int y, int width, int height,
                      TexHeap *heap) {
     if (buffer == 0) {
@@ -691,6 +694,9 @@ int Texture::extract(Buffer *buffer, int x, int y, int width, int height,
     cornersAndMids_[7].y = heightHalfMinus1;
     return 0;
 }
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma intrinsic(memcpy)
+#endif
 
 // Rectangle form of extract; ECX remains the same Texture receiver at the
 // call to the six-argument overload. Both original exits pop three stack slots,
