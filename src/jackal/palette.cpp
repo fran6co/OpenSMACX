@@ -1510,6 +1510,9 @@ int Palette::fade_to(Palette *other, int start, int count, int steps,
 // The third argument is the colour count (5FE73E, 5FE7FF, 5FE805);
 // the fourth is only the timer interval (5FE87C). They are independent:
 // a slow timer must not allocate or copy more palette entries.
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma function(memcpy)
+#endif
 int Palette::init_cycle(int key, int first, int count, unsigned long interval) {
     unsigned int first_index = (unsigned char)first;
 
@@ -1575,6 +1578,9 @@ int Palette::init_cycle(int key, int first, int count, unsigned long interval) {
             static_cast<uint32_t>(interval), 5);
     return 0;
 }
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma intrinsic(memcpy)
+#endif
 
 // ORIGINAL: 0x005FFB10 ?UNK9@Palette@@QAEHHHHHH@Z 0x005FFB10-0x005FFD7F FILE
 // symbol    ?fade_to_entry@Palette@@QAEHHHHHH@Z

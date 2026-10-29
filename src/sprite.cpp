@@ -2314,6 +2314,9 @@ The bounds come off `dib_.bmiHeader`, whose `biHeight` is NEGATIVE for a
 top-down DIB - so the bottom bound really is `-biHeight`, and the
 two-coordinate `get_data` rejects the same way.
 */
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma function(memcpy)
+#endif
 int Sprite::extract(Buffer *buffer, int transparent, int left, int top,
                     int width, int height, TexHeap *heap) {
     int stride;
@@ -2504,6 +2507,9 @@ int Sprite::extract(Buffer *buffer, int transparent, int left, int top,
     }
     return 3;
 }
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma intrinsic(memcpy)
+#endif
 
 
 
@@ -2590,6 +2596,9 @@ static_assert(sizeof(SpriteFileHeader) == 0x1D, "packed Sprite file header");
 // every early return runs its destructor without an explicit close.
 // Calls 0x00628380 (ctor) 0x00628650 (create) 0x006287C0 (close)
 // 0x006283E0 (dtor) 0x00645930 (memcpy).
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma function(memcpy)
+#endif
 int Sprite::save(const char *filename) {
     Filemap fm;
     if (pcBits_ == 0) {
@@ -2671,6 +2680,9 @@ int Sprite::load(const char *filename) {
     fm.close();
     return 0;
 }
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma intrinsic(memcpy)
+#endif
 
 // ===== MANAGED GLOBALS - real objects, homed to their domain =====
 // In the shipped image these live at fixed data addresses and are
