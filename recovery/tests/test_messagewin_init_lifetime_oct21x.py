@@ -37,6 +37,7 @@ static int throw_from_font = 0;
 static void record(char event) { events += event; }
 
 struct RECT { long left, top, right, bottom; };
+struct Heap {};
 struct MainInterface { RECT message_bounds_; };
 static MainInterface MainInterfaceGlobal = {{11, 12, 111, 212}};
 static int MessageWinMessageCount = 99;
@@ -56,8 +57,18 @@ struct Font {
 };
 struct Dialog {
     int field_38_, field_3C_, field_6C_, field_4C_, field_48_, field_34_, field_B4_;
+    int rect_size_init_calls_;
+    int rect_heap_init_calls_;
+    Heap *rect_heap_argument_;
+    Dialog() : rect_size_init_calls_(0), rect_heap_init_calls_(0),
+        rect_heap_argument_(0) {}
     void close() { record('L'); }
-    void init(RECT *, int) { record('I'); }
+    void init(RECT *, int) { ++rect_size_init_calls_; record('I'); }
+    void init(RECT *, Heap *heap) {
+        ++rect_heap_init_calls_;
+        rect_heap_argument_ = heap;
+        record('H');
+    }
     void set_dialog_font(Font *, Font *, Font *) { record('P'); }
     void set_dialog_text_color(int, int, int, int) { record('1'); }
     void set_dialog_text_color2(int, int, int, int) { record('2'); }
@@ -88,7 +99,10 @@ int main() {
     MessageWin window;
     events.clear();
     window.init();
-    assert(events == "BFCLIPS123KAD");
+    assert(events == "BFCLHPS123KAD");
+    assert(window.listBox_.rect_heap_init_calls_ == 1);
+    assert(window.listBox_.rect_heap_argument_ == 0);
+    assert(window.listBox_.rect_size_init_calls_ == 0);
     assert(window.bounds_.left == 11 && window.bounds_.top == 12);
     assert(window.bounds_.right == 111 && window.bounds_.bottom == 212);
     assert(MessageWinMessageCount == 0);
@@ -152,3 +166,17 @@ def test_declaration_after_font_init_mutant_is_rejected(compiler_name, tmp_path)
     assert mutant != body
     result = compile_and_run(compiler, tmp_path, fixture(mutant))
     assert result.returncode != 0, "post-font Buffer construction unexpectedly passed"
+
+
+@pytest.mark.parametrize("compiler_name", ("g++", "clang++"))
+def test_integer_zero_overload_mutant_is_rejected(compiler_name, tmp_path):
+    compiler = shutil.which(compiler_name)
+    if compiler is None:
+        pytest.skip(f"{compiler_name} is unavailable")
+    source = (ROOT / "src/messagewin.cpp").read_text(encoding="utf-8")
+    body = definition(source)
+    correct = "dialog.init(&bounds_, static_cast<Heap *>(0));"
+    mutant = body.replace(correct, "dialog.init(&bounds_, 0);", 1)
+    assert mutant != body
+    result = compile_and_run(compiler, tmp_path, fixture(mutant))
+    assert result.returncode != 0, "integer-zero overload mutant unexpectedly passed"
