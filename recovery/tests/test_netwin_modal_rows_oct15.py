@@ -67,14 +67,19 @@ struct NetDaemon {
     }
 } NetDaemonNet;
 
-class NetWin {
+class GraphicWin {
+public:
+    virtual ~GraphicWin() {}
+    virtual void on_redraw() { Events.push_back(530); }
+};
+class NetWin : public GraphicWin {
 public:
     int field_7614_;
     int field_7618_;
     int id_;
     int modal_callback();
     static int __cdecl modal_callback_daemon();
-    void on_redraw() { Events.push_back(id_ == 1 ? InstanceRedraw : DaemonRedraw); }
+    virtual void on_redraw() { Events.push_back(id_ == 1 ? InstanceRedraw : DaemonRedraw); }
 };
 NetWin NetWinDialog;
 
@@ -290,7 +295,7 @@ def test_actual_netwin_modal_callbacks_counts_ready_bytes_and_receive_order(comp
         ),
         (
             "omit_daemon_redraw",
-            lambda source: source.replace("NetWinDialog.on_redraw();", "(void)NetWinDialog;", 1),
+            lambda source: source.replace("dialog.on_redraw();", "(void)dialog;", 1),
         ),
     ),
 )
