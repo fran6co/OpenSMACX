@@ -1643,8 +1643,8 @@ void ListBox::on_left_down(int x, int y) {
 
 // The retained 0x0060CBC0 seed derives a hovered list position from the same
 // row metrics as the click handler, then updates Dialog::field_F0_ and redraws
-// the changed hover state. The source-owned position helper keeps the cursor
-// and row payload access on StringList's declared API.
+// the changed hover state. Its live list traversal also updates the cursor
+// when the eventual hovered position is outside the list.
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0060CBC0 ?on_mouse_move@ListBox@@QAEXHH@Z 0x0060CBC0-0x0060CE0B
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0060cbc0.cpp"], "reason": "Rehome seed catalogue identity and original extents into compiled owning class; native-emitted symbol is separate and no new byte claim granted."}
@@ -1708,6 +1708,8 @@ void ListBox::on_mouse_move(int x, int y) {
                 StringStructEntry *const entry = items.current_;
                 int span = 0;
                 if (entry != 0) {
+                    // The original retains a null payload read when a cursor
+                    // survives after the list head has been cleared.
                     StringStructPayload *const payload = head != 0
                         ? entry->string_payload() : 0;
                     span = static_cast<int>(payload->field_C_);
