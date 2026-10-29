@@ -9967,8 +9967,8 @@ void __cdecl commlink_attempt(int target_faction) {
         GenderDefault = Players[local_faction].is_leader_female;
         PluralityDefault = 0;
         parse_says(3, Players[local_faction].name_leader, -1, -1);
-        x_pops_minimal("ALIENHATRED2", FactionDiplomacyPortraits[target_faction],
-                       pop_wait);
+        X_pops("ALIENHATRED2", 0x100000,
+               FactionDiplomacyPortraits[target_faction], pop_wait);
         return;
     }
 
@@ -10084,8 +10084,8 @@ void __cdecl renounce_pact(int faction_id, int faction_id_with) {
         PluralityDefault = 0;
         parse_says(2, Players[faction_id].name_leader, -1, -1);
 
-        x_pops_minimal("BROKEPACT", FactionDiplomacyPortraits[faction_id_with],
-                       pop_wait);
+        X_pops("BROKEPACT", 0x100000,
+               FactionDiplomacyPortraits[faction_id_with], pop_wait);
     }
 
     if (IsMultiplayerNet == 0) {
