@@ -34,7 +34,7 @@ def test_input_pump_dependency_identities_are_source_owned() -> None:
 
 
 def flush_body() -> str:
-    source = (ROOT / "src/win.cpp").read_text(encoding="utf-8")
+    source = (ROOT / "src/win_input.cpp").read_text(encoding="utf-8")
     signature = "void __cdecl flush_input()"
     assert source.count(signature) == 1
     start = source.index(signature)
@@ -233,7 +233,7 @@ def compilers() -> list[str]:
 
 def test_actual_input_flush_drains_and_polls_in_order() -> None:
     body = flush_body()
-    source = (ROOT / "src/win.cpp").read_text(encoding="utf-8")
+    source = (ROOT / "src/win_input.cpp").read_text(encoding="utf-8")
     win_header = (ROOT / "src/win.h").read_text(encoding="utf-8")
     console_header = (ROOT / "src/console.h").read_text(encoding="utf-8")
     assert source.count("// ORIGINAL: 0x005FD120 ?flush_input@@YAXXZ") == 1
