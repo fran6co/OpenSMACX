@@ -180,6 +180,7 @@ set(OPENSMACX_SOURCES
     src/log.cpp
     src/maininterface.cpp
     src/map.cpp
+    src/map_sites.cpp
     src/territory.cpp
     src/world.cpp
     src/map_altitude.cpp
@@ -427,6 +428,7 @@ set_source_files_properties(src/sound.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")
 # this does not establish the historical translation-unit boundary.
 set_source_files_properties(
     src/map.cpp
+    src/map_sites.cpp
     src/territory.cpp
     src/world.cpp
     src/faction.cpp
@@ -575,6 +577,7 @@ set_property(SOURCE
     src/interface_palette.cpp
     src/maininterface.cpp
     src/map.cpp
+    src/map_sites.cpp
     src/mapwin.cpp
     src/netdaemon.cpp
     APPEND PROPERTY COMPILE_OPTIONS "/Z7")
