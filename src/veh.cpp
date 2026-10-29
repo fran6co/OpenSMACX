@@ -6756,10 +6756,10 @@ Purpose: Refresh and fix the stack. Used by DirectPlay multiplayer only.
 // TRIED: frame pointer - the image keeps ebp (a `push ecx` local-space idiom) and duplicate non-merged epilogues; no flag set in the harness reproduces both at once here - /Oy- restores ebp but the two early returns cross-jump to one shared tail instead of duplicating, unlike the image. Plateau at 0.758 (/O2 /Gy /GR- /GX).
 // TRIED: is called at only 2 real sites in the image (see its own comment on veh_top); here it is inlined, matching veh_at above.
 // TRIED: combined `if (a || b || c) return veh_id;` compiled to one merged block; the image duplicates the epilogue three times (three separate early returns, each its own `jge`). Splitting into three sequential `if`s took similarity 0.627 -> 0.758 (best flag set has 0 raw agree but is the closest shape - see BUG note below for the loop, which is the bulk of the remaining gap).
-// BUG IN THE ORIGINAL: the promote/sort loop compares `Vehs[veh_id]`'s own
-//        x/y against themselves, not the loop iterator `Vehs[i]`'s - always
-//        true, so `veh_promote(i)`/`stack_sort(veh_id)` fire on EVERY
-//        iteration. Reproduced deliberately; do not "fix" to `Vehs[i]`.
+// BUG IN THE ORIGINAL: the loop compares the subject Vehs[veh_id]'s current
+//        x/y to copies captured at loop entry, rather than checking iterator
+//        Vehs[i]. Preserve that wrong-subject comparison; it can become false
+//        after a callback changes the subject's coordinates.
 // size      201 bytes
 // prototype int (__cdecl ?stack_fix@@YAHH@Z)(int vehID)
 // callers   26   call targets   2
@@ -6779,11 +6779,12 @@ int __cdecl stack_fix(int veh_id) {
     if (Vehs[veh_id].next_veh_id_stack < 0 && Vehs[veh_id].prev_veh_id_stack < 0) {
         return veh_id; // no stack
     }
+    const int entry_x = Vehs[veh_id].x;
+    const int entry_y = Vehs[veh_id].y;
     for (int i = 0; i < GameDataStateStorage.fields_.vehicle_current_count_; i++) {
-        // BUG IN THE ORIGINAL: compares veh_id's own coordinates against
-        // themselves, not the iterator's - always true, so veh_promote(i)/
-        // stack_sort(veh_id) run on every iteration of this loop.
-        if (Vehs[veh_id].x == Vehs[veh_id].x && Vehs[veh_id].y == Vehs[veh_id].y) {
+        // Re-read the subject and compare to loop-entry values (not Vehs[i]);
+        // a preceding callback may have changed the subject's coordinates.
+        if (Vehs[veh_id].x == entry_x && Vehs[veh_id].y == entry_y) {
             veh_promote(i);
             stack_sort(veh_id);
         }
