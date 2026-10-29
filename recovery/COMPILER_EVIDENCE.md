@@ -163,6 +163,28 @@ authority to switch compilers, and is not an exclusion for other source/recipe
 cohorts. Both experiments retain the installed linker, headers and libraries;
 neither establishes a complete historical SP3 build environment.
 
+Later retained evidence covers additional domains. The Oct25 physical SP3
+application build at `b4dcea86699cf23d6ce8afe91f81634b49f318be` contains
+193 application objects, including Caviar and NetFifo, with compiler product
+11/build8447 witnesses. Its classification delta lists no Caviar or NetFifo
+verdict change. These are older source inputs, not current-source qualification
+or an assignment of those original TUs to SP3. Do not describe either owner as
+never compiled with the retained SP3 backend.
+
+The `cpu-caviar-cohort-oct26ck` experiment at
+`f4e244b6e2978129685651d4a8943a6600a3387b` tested all116 Caviar mappings with
+the default processor policy and `/G5`, `/G6`, and `/GB`, including
+`vox_cross_product` and `vox_normalise_vector`. Replica and target-damage
+controls passed. `/G5` and `/GB` supplied no exact gains or losses; `/G6`
+supplied no gains and lost11 exact matches in that source context. Cross product
+remained22 instructions against25, and normalization35 against37. A later
+unchanged-source `/G6` diagnostic retained those two count gaps. Extra x87
+`FXCH` instructions therefore do not establish an untested CPU-target fix.
+Compare the target body, dependencies, recipe and compiler identity with these
+retained trials before requeueing; a changed aggregate TU hash alone is not
+evidence of a new hypothesis. None of these diagnostics changes production
+compiler policy or grants a byte claim.
+
 ## Shared frames and private helper boundaries
 
 Normalize addresses against the owning caller's frame before translating a
