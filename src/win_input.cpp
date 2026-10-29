@@ -24,6 +24,43 @@
 #include "scroll.h"
 
 /*
+Purpose: Drain the keyboard queue, clear the two pointer-owner slots and let
+         the network layer poll, then do the same for the mouse queue - each
+         PeekMessage loop PEELED, one check outside before the do-while, as
+         the image has it.
+// ORIGINAL: 0x005FD120 ?flush_input@@YAXXZ 0x005FD120-0x005FD1BA BYTE_EXACT
+// size      154 bytes
+// prototype void (__cdecl ?flush_input@@YAXXZ)()
+// callers   17   call targets   1
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x0062D5D0
+// indirect  0x005FD13F 0x005FD157 0x005FD180 0x005FD198
+Return Value: n/a
+Status: Complete
+*/
+void __cdecl flush_input() {
+    MSG msg;
+    if (PeekMessage(&msg, NULL, WM_KEYFIRST, WM_KEYLAST, PM_REMOVE)) {
+        do {
+        } while (PeekMessage(&msg, NULL, WM_KEYFIRST, WM_KEYLAST, PM_REMOVE));
+    }
+    WinPointerOwner1 = nullptr;
+    WinPointerOwner2 = nullptr;
+    check_net();
+    if (PeekMessage(&msg, NULL, WM_MOUSEFIRST, WM_MOUSELAST, PM_REMOVE)) {
+        do {
+        } while (PeekMessage(&msg, NULL, WM_MOUSEFIRST, WM_MOUSELAST,
+                             PM_REMOVE));
+    }
+    WinPointerOwner1 = nullptr;
+    WinPointerOwner2 = nullptr;
+    check_net();
+    check_net();
+}
+
+
+/*
 Purpose: The window class's WM_SYSKEYDOWN/WM_SYSCHAR router. It resolves
          which window is active - the modal focus if one is set, else the
          focus window, else the input focus, else the default - records that

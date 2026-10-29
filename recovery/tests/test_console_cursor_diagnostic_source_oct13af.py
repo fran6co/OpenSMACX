@@ -194,6 +194,7 @@ def test_actual_console_cursor_diagnostic_source_and_immutable_base_tokens(tmp_p
 
     current_sources = {"src/console.h": header, "src/console.cpp": cpp,
                        "src/win.cpp": (ROOT / "src/win.cpp").read_text(encoding="utf-8")}
+    current_win_input = (ROOT / "src/win_input.cpp").read_text(encoding="utf-8")
     baseline_sources = {
         path: _git_at(CHANGE_BASE, path) for path in current_sources
     }
@@ -202,16 +203,22 @@ def test_actual_console_cursor_diagnostic_source_and_immutable_base_tokens(tmp_p
         current_rows = _source_rows(path, current_sources[path])
         if path == "src/console.cpp":
             # One historical Console call target, flush_input, now lives in
-            # its independently recovered Win owner.
+            # the independently recovered Win input owner.
             base_rows.update(_source_rows("src/win.cpp", baseline_sources["src/win.cpp"]))
             current_rows.update(_source_rows("src/win.cpp", current_sources["src/win.cpp"]))
+            current_rows.update(_source_rows("src/win_input.cpp", current_win_input))
         assert set(current_rows) == set(base_rows), (path, "task-base mapping identities")
         for address, base_row in base_rows.items():
             current_row = current_rows[address]
             for field in base_row.__dataclass_fields__:
-                if field not in {"line", "region"}:
+                if field not in {"line", "region"} and not (
+                    address == 0x005FD120 and field == "path"
+                ):
                     assert getattr(current_row, field) == getattr(base_row, field), (
                         path, address, field, "task-base mapping continuity")
+        if path == "src/console.cpp":
+            assert current_rows[0x005FD120].path.name == "win_input.cpp"
+            assert base_rows[0x005FD120].path.name == "win.cpp"
 
     for path, historical_source in (("src/console.h", old_header),
                                     ("src/console.cpp", old_cpp)):
@@ -219,6 +226,7 @@ def test_actual_console_cursor_diagnostic_source_and_immutable_base_tokens(tmp_p
         current_rows = _source_rows(path, current_sources[path])
         if path == "src/console.cpp":
             current_rows.update(_source_rows("src/win.cpp", current_sources["src/win.cpp"]))
+            current_rows.update(_source_rows("src/win_input.cpp", current_win_input))
         assert set(historical_rows) <= set(current_rows), (
             path, "historical function identities retained")
         for address, historical in historical_rows.items():

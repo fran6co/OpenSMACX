@@ -6540,6 +6540,8 @@ case 'v':
             const int cursor = ConsoleGlobal.cursor_history_index_;
             focus(ConsoleGlobal.cursor_history_x_[cursor],
                   ConsoleGlobal.cursor_history_y_[cursor], faction_id_);
+            // The pinned key branch drains input again after focus's own conditional flush.
+            flush_input();
         }
     }
     goto native_shared_after_key;
