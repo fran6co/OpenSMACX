@@ -191,6 +191,7 @@ set(OPENSMACX_SOURCES
     src/datalink.cpp
     src/netwin.cpp
     src/socialwin.cpp
+    src/social.cpp
     src/designwin.cpp
     src/worldwin.cpp
     src/diplowin.cpp
@@ -536,6 +537,7 @@ set_source_files_properties(
     src/base.cpp
     src/multiwin.cpp
     src/socialwin.cpp
+    src/social.cpp
     src/technology.cpp
     src/technology_queries.cpp
     src/uv2player.cpp

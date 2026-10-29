@@ -2941,30 +2941,6 @@ int SocialWin::on_iface_dialog_item_back_draw(GraphicWin *, int, int, RECT *) {
     return 0;
 }
 
-// ORIGINAL: 0x005B5620 ?social_select@@YAXH@Z 0x005B5620-0x005B5688 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/005b5620.cpp retained original identity/extent; pinned instructions5B5620..5B5688 establish flags, typed receivers and ordered calls; recovery/tests/test_social_select_behavior.py actual-source controls", "git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/005b5620.cpp"], "reason": "SocialWin owner opens the real shared window, synchronizes choices and applies them offline, preserving native entry-state guards and editor selection. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
-// kind      game
-// TRIED: homed into general.cpp 2026-09-03 - does not compile: the body calls
-void __cdecl social_select(int faction_id) {
-    const uint8_t state = static_cast<uint8_t>(GameDataStateStorage.fields_.game_state_);
-    if ((state & (STATE_SCENARIO_EDITOR | STATE_OMNISCIENT_VIEW)) == 0 &&
-        (GameDataStateStorage.fields_.net_turn_flags_ & 8u) != 0)
-        return;
-
-    int selected_faction = faction_id;
-    if ((state & STATE_OMNISCIENT_VIEW) != 0) {
-        selected_faction = ConsoleGlobal.editor_who(faction_id, 1);
-        if (selected_faction < 0)
-            return;
-    }
-
-    TutWinSocWindow.init(selected_faction);
-    TutWinSocWindow.close();
-    synch_soc(selected_faction);
-    if (IsMultiplayerNet == 0)
-        social_set(selected_faction);
-}
-
 // C++ owns member/base teardown after these explicit close/reset operations.
 // ORIGINAL: 0x004B3C80 ??1SocialWin@@QAE@XZ 0x004B3C80-0x004B3EB7;0x00659700-0x00659878
 // RECOVERY_BINDING: v1 {"evidence": ["historical seed:src/recovered/units/004b3c80.cpp", "task:socialwin-lifetime-owner", "Pinned4B3C80:35 virtual FlatButton closes; four ButtonGroup closes then standalone close; resets+A2C,+A30,+2C28,+2C24.", "Automatic reverse teardown: nine Fonts, standalone group, ButtonGroup[4], FlatButton[35], Buffer[6], Sprite[6/2/90/10], CheckButton[3], Spot, GraphicWin. Constructor4AE9E0 and destructor agree CheckButton starts+D6C, strideA2C; no complete layout or runtime acceptance claim."], "reason": "Recover complete SocialWin destruction through actual embedded members and bases, not an executable-address forwarder or explicit destructor cascade."}
