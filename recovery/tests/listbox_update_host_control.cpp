@@ -18,7 +18,8 @@ enum Event {
     EVENT_HORZ_PAGE,
     EVENT_CALLBACK,
     EVENT_PARENT_NOTIFY,
-    EVENT_REDRAW
+    EVENT_REDRAW,
+    EVENT_DERIVED_SHOW
 };
 
 static std::vector<int> events;
@@ -55,7 +56,7 @@ struct Win {
         vslot_calls_(0), vslot_id_(-1), parent_value_count_(0),
         parent_reads_(0), child_(0) {}
     bool is_visible() { events.push_back(EVENT_VISIBLE); return visible_ != 0; }
-    void show(int value) { assert(value == 0); events.push_back(EVENT_SHOW); }
+    virtual void show(int value) { assert(value == 0); events.push_back(EVENT_SHOW); }
     void set_vert_range(int a, int b) {
         vert_min_ = a; vert_max_ = b; events.push_back(EVENT_VERT_RANGE);
     }
@@ -150,10 +151,16 @@ struct ListBox : virtual GraphicWin, virtual Dialog {
 
 struct DerivedListBox : ListBox {
     int derived_attach_calls_;
-    DerivedListBox() : derived_attach_calls_(0) {}
+    int derived_show_calls_;
+    DerivedListBox() : derived_attach_calls_(0), derived_show_calls_(0) {}
     int attach(GraphicWin *, int, int, int) {
         ++derived_attach_calls_;
         return 88;
+    }
+    void show(int value) {
+        assert(value == 0);
+        ++derived_show_calls_;
+        events.push_back(EVENT_DERIVED_SHOW);
     }
 };
 
@@ -229,7 +236,7 @@ static void test_changed_count_attach_failure_stops_tail() {
 }
 
 static void test_changed_count_success_saved_minus_one_and_visible_redraw() {
-    ListBox box;
+    DerivedListBox box;
     GraphicWin parent;
     box.set_parent(&parent, &parent, &parent);
     box.visible_ = 1;
@@ -245,6 +252,7 @@ static void test_changed_count_success_saved_minus_one_and_visible_redraw() {
     assert(box.selected_notify_after_set_ == 1);
     assert(release_calls == 1);
     assert(box.redraw_calls_ == 1);
+    assert(box.derived_show_calls_ == 0); // explicit Win::show bypasses overrides
     assert(box.parent_reads_ == 3);
     assert(box.selected_id_calls_ == 3);
     assert(callback_calls == 1 && callback_value == 102);

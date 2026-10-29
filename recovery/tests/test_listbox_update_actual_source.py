@@ -59,6 +59,10 @@ def actual_fixture(mutant: str | None = None) -> str:
         assert method.count(old) == 2
         prefix, suffix = method.rsplit(old, 1)
         method = prefix + "Win *target = 0;" + suffix
+    elif mutant == "virtual-show":
+        old = "window->Win::show(0);"
+        assert method.count(old) == 1
+        method = method.replace(old, "window->show(0);", 1)
     fixture = FIXTURE.read_text(encoding="utf-8")
     assert fixture.count(INSERTION) == 1
     # The host model predates the recovered Sound view. Keep its existing
@@ -108,6 +112,7 @@ def test_actual_update_guard_counts_callbacks_ranges_and_redraw(compiler_name: s
     assert "static_cast<GraphicWin *>(this)" in method
     assert "static_cast<Dialog *>(this)" in method
     assert "this->ListBox::attach(" in method
+    assert "window->Win::show(0);" in method
     assert "legacy_sound_36()" in method
     assert "reinterpret_cast<Sound" not in method
     assert "vbt[" not in method and "dlg_base" not in method
@@ -119,6 +124,7 @@ def test_actual_update_guard_counts_callbacks_ranges_and_redraw(compiler_name: s
 @pytest.mark.parametrize("compiler_name", ("g++", "clang++"))
 @pytest.mark.parametrize("mutant", (
     "virtual-attach", "minus-one", "vertical-precedence", "skip-parent-reload",
+    "virtual-show",
 ))
 def test_damage_controls_reject_lost_dispatch_or_branch_contract(
         compiler_name: str, mutant: str) -> None:
