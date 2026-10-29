@@ -678,6 +678,98 @@ def test_candidate_full_function_is_lexically_balanced():
     assert _selected(proposal, "int Console::on_key_click(int a1, int a2)").endswith("}")
 
 
+def _focus_then_flush_harness(branch: str) -> str:
+    return r'''
+#include <assert.h>
+#include <vector>
+enum { AMBIENCE, DRAW_CURSOR, INFO_CHANGE, STATUS_REDRAW, CAPTION,
+       ALPHA_CHECK, FOCUS, FLUSH, SHARED_AFTER_KEY };
+static std::vector<int> events;
+static int focus_result, flush_calls;
+struct ConsoleState {
+    int cursor_active_, cursor_history_index_, cursor_history_x_[2], cursor_history_y_[2];
+} ConsoleGlobal = {1, 0, {17, 0}, {23, 0}};
+struct MapWindow {
+    void draw_map(int) {}
+    void main_caption() { events.push_back(CAPTION); }
+};
+static MapWindow map_window;
+static MapWindow *MapWinTable[1] = {&map_window};
+struct InfoWindow { void change(int) { events.push_back(INFO_CHANGE); } } ConsoleInfoWin;
+struct StatusWindow { void redraw() { events.push_back(STATUS_REDRAW); } } ConsoleStatusWin;
+struct AlphaMenu { void check(int) { events.push_back(ALPHA_CHECK); } };
+static void ambience(int) { events.push_back(AMBIENCE); }
+static void draw_cursor() { events.push_back(DRAW_CURSOR); }
+static void flush_input() { events.push_back(FLUSH); ++flush_calls; }
+
+class Console {
+public:
+    int faction_id_, selected_vehicle_, survey_mode_, cursor_active_;
+    int field_23BF8_, field_23BFC_;
+    AlphaMenu alpha_menu_;
+    Console() : faction_id_(3), selected_vehicle_(4), survey_mode_(0),
+        cursor_active_(1), field_23BF8_(0), field_23BFC_(0) {}
+    void set_move(int) {}
+    int focus(int, int, int) {
+        events.push_back(FOCUS);
+        if (focus_result != 0) flush_input(); // focus's conditional drain
+        return focus_result;
+    }
+    void route() {
+        int native_editor_lock = 0;
+        switch ('v') {
+BRANCH
+        default: break;
+        }
+native_shared_after_key:
+        events.push_back(SHARED_AFTER_KEY);
+    }
+};
+
+static int find_event(int value, int start = 0) {
+    for (int i = start; i < static_cast<int>(events.size()); ++i)
+        if (events[i] == value) return i;
+    return -1;
+}
+static bool exercise() {
+    Console console;
+    events.clear(); flush_calls = 0; focus_result = 0;
+    console.route();
+    const int focus_at = find_event(FOCUS);
+    const int explicit_flush_at = find_event(FLUSH);
+    if (focus_at < 0 || explicit_flush_at <= focus_at || flush_calls != 1 ||
+        find_event(SHARED_AFTER_KEY) <= explicit_flush_at) return false;
+
+    events.clear(); flush_calls = 0; focus_result = 1;
+    console.route();
+    const int focus_again = find_event(FOCUS);
+    const int first_flush = find_event(FLUSH, focus_again + 1);
+    const int second_flush = find_event(FLUSH, first_flush + 1);
+    return focus_again >= 0 && first_flush > focus_again &&
+           second_flush > first_flush && flush_calls == 2 &&
+           find_event(SHARED_AFTER_KEY) > second_flush;
+}
+int main() { assert(exercise()); return 0; }
+'''.replace("BRANCH", branch)
+
+
+def test_actual_key_branch_flushes_after_focus_even_when_focus_does_not_flush(tmp_path):
+    proposal = actual_source()
+    branch = _selected(proposal, "case 'v':")
+    assert "focus(ConsoleGlobal.cursor_history_x_[cursor]," in branch
+    assert branch.index("focus(ConsoleGlobal.cursor_history_x_[cursor],") < branch.index("flush_input();")
+    assert _compile_and_run(tmp_path, _focus_then_flush_harness(branch), "focus-flush") == 0
+
+    # If Console::focus returns false, its own conditional drain is skipped;
+    # removing the key branch's separate native drain must then fail the oracle.
+    assert branch.count("flush_input();") == 1
+    damaged = branch.replace("            flush_input();\n", "", 1)
+    assert damaged != branch
+    assert _compile_and_run(
+        tmp_path, _focus_then_flush_harness(damaged), "focus-flush-mutant"
+    ) != 0
+
+
 def test_netmsg_active_field_native_header_offset_witness():
     netmsg_header = (ROOT / "src/netmsg.h").read_text()
     popup_header = (ROOT / "src/popup.h").read_text()

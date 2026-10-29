@@ -59,12 +59,13 @@ def test_formatter_api_uses_character_destinations() -> None:
 def test_datalink_callback_keeps_typed_output_through_dispatch() -> None:
     header = code_only((ROOT / "src/datalink.h").read_text())
     source = (ROOT / "src/datalink.cpp").read_text()
+    selection_source = (ROOT / "src/datalink_selection.cpp").read_text()
     assert "typedef void (__cdecl *DatalinkTextCallback)(char *, int, int);" in header
     assert "void invoke_text(char *output, int value, int extra) const;" in header
-    selection = function_body(source, "void DatalinkSelectionEntry::append_text(char *output, int extra) const")
+    selection = function_body(selection_source, "void DatalinkSelectionEntry::append_text(char *output, int extra) const")
     dispatch = function_body(source, "void DatalinkEntryCallbacks::invoke_text(char *output, int value, int extra) const")
     assert "callbacks.append_text(output, value, extra);" in selection
     assert "append_text(output, value, extra);" in dispatch
-    queue_dispatch = function_body(source, "void DatalinkSelectionQueue::dispatch_matching(int entry_id)")
+    queue_dispatch = function_body(selection_source, "void DatalinkSelectionQueue::dispatch_matching(int entry_id)")
     assert "entry.append_text(StringTemp, 1);" in queue_dispatch
 

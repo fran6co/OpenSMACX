@@ -4365,42 +4365,6 @@ void __cdecl do_all_mouse() {
     do_net();
 }
 
-/*
-Purpose: Drain the keyboard queue, clear the two pointer-owner slots and let
-         the network layer poll, then do the same for the mouse queue - each
-         PeekMessage loop PEELED, one check outside before the do-while, as
-         the image has it.
-// ORIGINAL: 0x005FD120 ?flush_input@@YAXXZ 0x005FD120-0x005FD1BA BYTE_EXACT
-// size      154 bytes
-// prototype void (__cdecl ?flush_input@@YAXXZ)()
-// callers   17   call targets   1
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     0x0062D5D0
-// indirect  0x005FD13F 0x005FD157 0x005FD180 0x005FD198
-Return Value: n/a
-Status: Complete
-*/
-void __cdecl flush_input() {
-    MSG msg;
-    if (PeekMessage(&msg, NULL, WM_KEYFIRST, WM_KEYLAST, PM_REMOVE)) {
-        do {
-        } while (PeekMessage(&msg, NULL, WM_KEYFIRST, WM_KEYLAST, PM_REMOVE));
-    }
-    WinPointerOwner1 = nullptr;
-    WinPointerOwner2 = nullptr;
-    check_net();
-    if (PeekMessage(&msg, NULL, WM_MOUSEFIRST, WM_MOUSELAST, PM_REMOVE)) {
-        do {
-        } while (PeekMessage(&msg, NULL, WM_MOUSEFIRST, WM_MOUSELAST,
-                             PM_REMOVE));
-    }
-    WinPointerOwner1 = nullptr;
-    WinPointerOwner2 = nullptr;
-    check_net();
-    check_net();
-}
-
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x005FD1C0 ?flush_keyboard@@YAXXZ 0x005FD1C0-0x005FD21A BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/005fd1c0.cpp", "image:terranx_original.exe:0x005FD1C0"], "reason": "Win input-pump owner uses SDK message dispatch and real pointer-owner storage; original control flow and seed establish this entry and extent."}
@@ -7632,14 +7596,13 @@ int Win::set_modal(int flags, int (__cdecl *callback)(), Win * owner) {
 
     int result = 0;
     if (WinFocusWindow == this) {
-        for (;;) {
-            int r = this->on_modal();
-            if (r == 0) {
+        int (__cdecl *const modal_callback)() = callback;
+        do {
+            if (this->on_modal() == 0) {
                 break;
             }
-            if (callback != 0) {
-                int rr = callback();
-                if (rr == 0) {
+            if (modal_callback != 0) {
+                if (modal_callback() == 0) {
                     Win *cur = WinFocusWindow;
                     if (cur != 0) {
                         cur->release_modal();
@@ -7649,10 +7612,7 @@ int Win::set_modal(int flags, int (__cdecl *callback)(), Win * owner) {
                 }
             }
             wait_task();
-            if (WinFocusWindow != this) {
-                return 0;
-            }
-        }
+        } while (WinFocusWindow == this);
     }
     return result;
 }
@@ -11079,14 +11039,11 @@ void __cdecl add_ancestor_origin(int *x, int *y, Win *window) {
 }
 
 // ===== homed from src/unrecovered/006357d0.cpp =====
-// /O2 implies /Oi, and /Oi expands a memset of a plain local into the
-// `rep stosd` form. This body's image CALLS it (0x006465F0), so the clear is
-// routed through a real function - path.cpp's `memset_call` idiom, kept
-// file-local because path.cpp owns the external name.
-static void *__cdecl win_memset_call(void *dst, int value, unsigned count) {
-    return memset(dst, value, count);
-}
-
+// The original calls CRT memset here; keep that target rather than a
+// reconstruction-only wrapper or an intrinsic expansion.
+#if defined(_MSC_VER)
+#pragma function(memset)
+#endif
 // ORIGINAL: 0x006357D0 sub_6357d0 0x006357D0-0x00635835 FILE BYTE_EXACT
 // symbol    ?lock_surface@DDInit@@QAEPAXXZ
 // size      101 bytes
@@ -11118,7 +11075,7 @@ LPVOID DDInit::lock_surface() {
         return locked_bits_;
     }
     DDSURFACEDESC description;
-    win_memset_call(&description, 0, sizeof(description));
+    memset(&description, 0, sizeof(description));
     description.dwSize = sizeof(description);
     if (locked_surface_->Lock(nullptr, &description, 0x21, nullptr) != 0) {
         return nullptr;
@@ -11127,6 +11084,10 @@ LPVOID DDInit::lock_surface() {
     locked_bits_ = description.lpSurface;
     return locked_bits_;
 }
+#if defined(_MSC_VER)
+#pragma intrinsic(memset)
+#endif
+
 
 // ===== homed from src/unrecovered/005fcec0.cpp =====
 // The three USER32 entry points this pump caches, at the signatures the VC6

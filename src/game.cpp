@@ -10648,32 +10648,6 @@ after_state_switch:
     }
 }
 
-// ORIGINAL: 0x00455EB0 ?load_sprites@@YAXXZ 0x00455EB0-0x00455F0E BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["historical seed:src/recovered/units/00455eb0.cpp", "task:asset-startup-loader-owner", "Native vehicles/terrain then192 borrowed pointers to existing FactionsArt[8].base[2][4][3], then icons/cursors. FactionArt stride65C/Sprite2C and pointer order are independent evidence. Preserve unresolved artwork/consumer-lifetime discoveries in task journals7f55ff69/92,e77bebe/6,2192f473/153; startup coverage alone does not close them."], "reason": "Recover the complete asset loader through source-owned C++ objects, arrays and normal lifecycle while retaining original mappings and historical findings; no asset/runtime acceptance claimed."}
-void __cdecl load_sprites() {
-    int faction;
-    int terrain;
-    int size;
-    int defense;
-
-    load_vehicles();
-    load_terrain();
-
-    for (faction = 0; faction < MaxPlayerNum; ++faction) {
-        for (terrain = 0; terrain < 2; ++terrain) {
-            for (size = 0; size < 4; ++size) {
-                for (defense = 0; defense < 3; ++defense) {
-                    FactionBaseSprites[faction][terrain][size][defense] =
-                        &FactionsArt[faction].base[terrain][size][defense];
-                }
-            }
-        }
-    }
-
-    load_icons();
-    load_cursors();
-}
-
 // Native game/turn lifecycle owners. Their historical TU boundary is not
 // established; these bodies live with the current game/turn source owner.
 void __cdecl show_replay();
