@@ -145,8 +145,11 @@ def actual_fragments():
         [records], r"void\s+AlphaNetStringStruct::on_remove\s*\(")
     derived_hook = _qualified_definitions(
         [records], r"void\s+AlphaNetLedger::on_remove\s*\(")
+    ctor_record = current_record_by_address(ROOT, 0x00401C80)
+    ctor_path = ROOT / ctor_record.body if ctor_record.body else ctor_record.path
     base_ctor = _qualified_definitions(
-        [alpha, records], r"AlphaNetStringStruct::AlphaNetStringStruct\s*\(")
+        [ctor_path.read_text(encoding="utf-8")],
+        r"AlphaNetStringStruct::AlphaNetStringStruct\s*\(")
     add_record = current_record_by_address(ROOT, 0x00401D80)
     add_definition = _qualified_definitions(
         [add_record.path.read_text(encoding="utf-8")],
