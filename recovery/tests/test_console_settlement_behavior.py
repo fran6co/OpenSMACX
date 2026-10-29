@@ -192,7 +192,7 @@ def test_tutorial_popup_captures_result_before_restoring_normal_configuration(tm
     compiler = shutil.which("g++")
     if compiler is None:
         pytest.skip("host g++ required")
-    source = (ROOT / "src/popup.cpp").read_text()
+    source = (ROOT / "src/popup_wrappers.cpp").read_text()
     start = source.index("int __cdecl popt(")
     end = source.index("\n}", start) + 2
     body = source[start:end]
