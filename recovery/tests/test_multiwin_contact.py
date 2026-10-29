@@ -190,7 +190,10 @@ int message_calls, message_ops[4], message_args[4][5];
 int treaty_off_calls, treaty_off_args[3], pact_ends_calls, pact_ends_args[2];
 int communicate_calls, diplo_calls, treaty_on_calls, call_council_calls;
 int demand_calls, report_calls, parse_calls[4], parse_gender[4];
-int check_calls, xpop_calls, xpops_calls, diplomacy_check_calls, diplomacy_caption_calls;
+int check_calls, xpop_calls, xpops_calls, xpop_value, diplomacy_check_calls, diplomacy_caption_calls;
+const char *xpop_label;
+Sprite *xpop_sprite;
+int (*xpop_callback)();
 int log_calls, parse_num_value, time_tick_index, time_tick_count;
 uint32_t time_ticks[30010];
 int alive_mask_for_ui;
@@ -216,6 +219,12 @@ int has_tech(int tech, int) { return tech==0x4E ? has_tech_4e : has_tech_4; }
 int X_pop(const char *, int (*)()) { return timeout_pop_result; }
 int x_pops_minimal(const char *, Sprite *, int (*)()) {
     ++xpops_calls;
+    if (popup_mutate_network_to>=0) IsMultiplayerNet=popup_mutate_network_to;
+    return 0;
+}
+int X_pops(const char *label, int value, Sprite *sprite, int (*callback)()) {
+    ++xpop_calls; xpop_label=label; xpop_value=value;
+    xpop_sprite=sprite; xpop_callback=callback;
     if (popup_mutate_network_to>=0) IsMultiplayerNet=popup_mutate_network_to;
     return 0;
 }
@@ -308,7 +317,8 @@ static void reset_all() {
     has_tech_4e=has_tech_4=0; message_calls=treaty_off_calls=pact_ends_calls=0;
     communicate_calls=diplo_calls=treaty_on_calls=call_council_calls=demand_calls=report_calls=0;
     demand_args[0]=demand_args[1]=-1;
-    check_calls=xpop_calls=xpops_calls=diplomacy_check_calls=diplomacy_caption_calls=log_calls=0;
+    check_calls=xpop_calls=xpops_calls=xpop_value=diplomacy_check_calls=diplomacy_caption_calls=log_calls=0;
+    xpop_label=0; xpop_sprite=0; xpop_callback=0;
     time_tick_index=0; time_tick_count=1; time_ticks[0]=100;
     parser_mutates_actor=0; popup_mutate_network_to=-1; parse_num_value=0; alive_mask_for_ui=0;
     std::memset(parse_calls,0,sizeof(parse_calls)); std::memset(parse_gender,0,sizeof(parse_gender));
@@ -388,6 +398,13 @@ int main() {
     reset_all(); ConsoleGlobal.faction_id_=2;
     GameDataStateStorage.fields_.lock_masks_.enable_mask_ = 1u<<11;
     commlink_attempt(3); assert(NetMsgPrimary.calls==0);
+    reset_all(); ConsoleGlobal.faction_id_=2; Players[2].rule_flags=RFLAG_ALIEN;
+    Players[3].rule_flags=RFLAG_ALIEN;
+    Sprite alien_portrait; FactionDiplomacyPortraits[3]=&alien_portrait;
+    GameDataStateStorage.fields_.lock_masks_.enable_mask_ = 1u<<11;
+    commlink_attempt(3);
+    assert(xpop_calls==1&&xpops_calls==0&&xpop_value==0x100000);
+    assert(std::strcmp(xpop_label,"ALIENHATRED2")==0&&xpop_sprite==&alien_portrait&&xpop_callback==pop_wait);
     reset_all(); ConsoleGlobal.faction_id_=2;
     GameDataStateStorage.fields_.lock_masks_.enable_mask_ = 1u<<3;
     commlink_attempt(3);
@@ -418,7 +435,9 @@ int main() {
     NetDaemonNet.add_stop_after=0; parser_mutates_actor=1; popup_mutate_network_to=1;
     renounce_pact(2,3);
     assert(message_calls==2&&message_ops[0]==0x2442&&message_ops[1]==0x244D&&pact_ends_calls==0);
-    assert(diplomacy_check_calls==1&&xpops_calls==1&&PlayersData[2].integrity_blemishes==1);
+    assert(diplomacy_check_calls==1&&xpop_calls==1&&xpops_calls==0&&xpop_value==0x100000);
+    assert(std::strcmp(xpop_label,"BROKEPACT")==0&&xpop_sprite==FactionDiplomacyPortraits[3]&&xpop_callback==pop_wait);
+    assert(PlayersData[2].integrity_blemishes==1);
     return 0;
 }
 '''
@@ -475,6 +494,13 @@ def test_five_actual_owners_and_native_dispatch_damage(compiler_name):
         damaged = list(actual)
         damaged[index] = _replace_once(damaged[index], old, new)
         variants.append(damaged)
+    damaged = list(actual)
+    damaged[3] = _replace_once(
+        damaged[3],
+        'X_pops("ALIENHATRED2", 0x100000,\n               FactionDiplomacyPortraits[target_faction], pop_wait);',
+        'x_pops_minimal("ALIENHATRED2", FactionDiplomacyPortraits[target_faction],\n                       pop_wait);',
+    )
+    variants.append(damaged)
     with tempfile.TemporaryDirectory(prefix="osmx-multiwin-contact-") as temporary:
         source, binary = Path(temporary) / "control.cpp", Path(temporary) / "control"
         for variant_index, bodies in enumerate(variants):

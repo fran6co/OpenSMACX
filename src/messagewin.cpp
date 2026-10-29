@@ -188,29 +188,48 @@ void MessageWin::add_message(char *text, int item_id) {
     listBox_.item(text, item_id | 0x10000000);
     listBox_.set_selected_pos(-1, 1);
 
-    while (MessageWinMessageCount > 100 && items.head_ != 0) {
+    while (MessageWinMessageCount > 100) {
         --MessageWinMessageCount;
-        StringStructEntry *oldest = items.head_;
-        StringStructPayload *payload = oldest->string_payload();
-        if (payload != 0) {
-            listBox_.field_20_ -= payload->field_C_;
-        }
-        if (items.entry_count_ == 1) {
-            items.head_ = 0;
-            items.current_ = 0;
-        } else {
-            oldest->previous->next = oldest->next;
-            oldest->next->previous = oldest->previous;
-            items.head_ = oldest->next;
+
+        const int first_id = dialog.pos_to_id(0);
+        if (items.head_ != 0) {
+            const int entry_count = items.entry_count_;
+            items.current_position_ = 0;
             items.current_ = items.head_;
+            if (entry_count > 0) {
+                int index = 0;
+                while (index < entry_count && items.current_->id != first_id) {
+                    ++items.current_position_;
+                    ++index;
+                    items.current_ = items.current_->next;
+                }
+            }
         }
-        items.on_remove(payload);
-        delete payload;
-        oldest->payload = 0;
-        delete oldest;
-        --items.entry_count_;
-        if (items.current_position_ >= items.entry_count_) {
-            items.current_position_ = items.entry_count_ - 1;
+
+        if (items.head_ != 0) {
+            listBox_.field_20_ -= items.current_->string_payload()->field_C_;
+
+            StringStructEntry *entry = items.current_;
+            StringStructPayload *payload = entry->string_payload();
+            entry->previous->next = entry->next;
+            entry->next->previous = entry->previous;
+            if (entry == items.head_) {
+                items.head_ = entry->next;
+            }
+            items.current_ = entry->next; // Original singleton removal leaves this dangling.
+            items.on_remove(payload);
+            if (payload != 0) {
+                delete payload;
+            }
+            entry->payload = 0;
+            delete entry;
+            --items.entry_count_;
+            if (items.entry_count_ == 0) {
+                items.head_ = 0;
+            }
+            if (items.current_position_ >= items.entry_count_) {
+                items.current_position_ = items.entry_count_ - 1;
+            }
         }
     }
     listBox_.update_changes();
@@ -431,7 +450,7 @@ void MessageWin::init() {
 
     listBox_.close();
     Dialog &dialog = listBox_;
-    dialog.init(&bounds_, 0);
+    dialog.init(&bounds_, static_cast<Heap *>(0));
     dialog.field_38_ = 3;
     dialog.field_3C_ = 3;
     dialog.field_6C_ = 0;

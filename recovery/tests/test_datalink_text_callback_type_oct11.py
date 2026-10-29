@@ -1,5 +1,6 @@
 """Pointer callback identity/ABI evidence, not caller or runtime completeness."""
 import json
+import os
 from pathlib import Path
 import subprocess
 
@@ -50,7 +51,9 @@ def test_pinned_pointer_arguments_and_post_callback_reload():
     from match_recovery.pe_coff import PeImage
     from match_recovery.model import Span
     from match_recovery.source_inventory import image_pin
-    image = PeImage((ROOT / ".opensmacx/game/terranx_original.exe").read_bytes(), image_pin(ROOT))
+    image_path = Path(os.environ.get(
+        "OPENSMACX_IMAGE", str(ROOT / ".opensmacx/game/terranx_original.exe")))
+    image = PeImage(image_path.read_bytes(), image_pin(ROOT))
     instructions = {i.address: (i.mnemonic, i.op_str) for i in
                     Cs(CS_ARCH_X86, CS_MODE_32).disasm(image.read(Span(0x44B340, 0x44B37B)), 0x44B340)}
     assert instructions[0x44B359] == ("push", "0x684638")

@@ -1147,7 +1147,32 @@ void Datalink::draw_entry() {
     case 11: draw_project(); break;
     case 12: draw_social(); break;
     case 13: draw_effect(); break;
-    case 14: draw_tech(); break;
+    case 14:
+        // The pinned draw_entry has its own expanded technology arm. Keep
+        // its report-store order and inline blurb setup here; draw_tech and
+        // UNK7 remain separate mapped bodies with their own standalone spans.
+        set_font(&font1_, 0, 0, 0);
+        set_text_color(0xE0, -1, 1, 1);
+        StringTemp[0] = 0;
+        strcat(StringTemp, StringTable.get(Technology[history_[0]].name));
+        CharUpperA(StringTemp);
+        write_cent_l(StringTemp, &title_rect_, strlen(StringTemp));
+        ReportWinGlobal.reset();
+        ReportIfGlobal.field_8_ = 2;
+        ReportWinGlobal.shared_research_focus() = history_[0];
+        ReportWinGlobal.draw_labs();
+        StringTemp[0] = 0;
+        strcat(StringTemp, "TECH");
+        char number[80];
+        _itoa(history_[0], number, 10);
+        strcat(StringTemp, number);
+        if (MainInterfaceTileFlag) {
+            blurb_box_.clear();
+            blurb_box_.strings().load(DatalinkBlurbFile, StringTemp, 1, 0);
+            blurb_box_.add_fixup();
+            blurb_box_.show(0);
+        }
+        break;
     case 15: draw_faction(); break;
     }
     soft_update(&entry_update_rect_);

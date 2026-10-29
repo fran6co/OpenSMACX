@@ -1,8 +1,8 @@
-"""Host witnesses for DesignWin's original negative-only special-ID guard.
+"""Actual-source controls for the pinned special-ability drawing sequence.
 
-The enlarged Ability fixture makes the nonnegative-over-Max sample a defined
-host access. It witnesses that the body does not reject it; it says nothing
-about the game's adjacent memory or whether such an ID is normally reachable.
+The native bodies test only ability_id < 0. The extended fixture supplies
+valid records above MaxAbilityNum so that this historical unchecked path can
+be exercised without host out-of-bounds behavior.
 """
 import os
 from pathlib import Path
@@ -24,7 +24,7 @@ CASES = (
 )
 
 
-def actual_body(address, signature, *, restore_upper_guard=False):
+def actual_body(address, signature):
     rows = read_file(SOURCE)
     row, = [item for item in rows if item.address == address]
     assert Path(row.path).resolve() == SOURCE.resolve()
@@ -36,156 +36,219 @@ def actual_body(address, signature, *, restore_upper_guard=False):
     for end in range(opening, len(text)):
         depth += (text[end] == "{") - (text[end] == "}")
         if depth == 0:
-            body = text[start:end + 1]
-            break
-    else:
-        raise AssertionError("unterminated actual DesignWin special draw body")
-    if restore_upper_guard:
-        old = "if (ability < 0) {"
-        new = "if (ability < 0 || ability >= MaxAbilityNum) {"
-        assert body.count(old) == 1
-        body = body.replace(old, new, 1)
-    return body
+            return text[start:end + 1]
+    raise AssertionError("unterminated DesignWin special draw body")
 
 
 HARNESS = r'''#include <cassert>
 #include <cstring>
-typedef unsigned int uint32_t;
+#include <string>
+#include <vector>
 struct RECT { int left, top, right, bottom; };
-static char empty_label[] = "empty";
-static char caption_label[] = "caption";
-static int empty_writes, name_writes, description_writes;
 struct Font {
-  int unk_1_;
-  int line_height() const { return 10; }
-  int pixel_height() const { return 9; }
+  int unk_1_, line_height_, height_;
+  int line_height() const { return line_height_; }
+  int pixel_height() const { return height_; }
 };
 struct RulesAbility { int name, description; };
+static const int MaxAbilityNum = 29;
+static RulesAbility Ability[MaxAbilityNum + 4];
+static char StringTemp[2048];
+static char stored_name[] = "name";
+static char stored_description[] = "description";
+static char empty_label[] = "none";
+static char title_label[] = "ability";
+struct Trace {
+  std::vector<std::string> events;
+  RECT title_rect;
+  RECT body_rect;
+  int width;
+  int height;
+} trace;
+struct Strings {
+  char *get(int id) { return id == 1 ? stored_name : stored_description; }
+} StringTable;
+static char *label_get(int id) {
+  return id == 0x228 / 4 ? title_label : empty_label;
+}
+static char *CharUpperA(char *text) {
+  for (char *p = text; *p; ++p)
+    if (*p >= 'a' && *p <= 'z') *p = static_cast<char>(*p - 'a' + 'A');
+  return text;
+}
 struct Buffer {
-  void set_clip(RECT *) {}
-  void copy(Buffer *, RECT *) {}
-  void set_text_color(int, int, int, int) {}
-  void write_cent_l(Font *, char *text, RECT *, int) {
-    if (text == empty_label) ++empty_writes;
-    else if (text[0] == 'n') ++name_writes;
-    else if (text[0] == 'd') ++description_writes;
+  static void set_clip(RECT *) { trace.events.push_back("clip"); }
+  void copy(Buffer *, RECT *) { trace.events.push_back("copy"); }
+  static void set_text_color(int, int, int, int) {
+    trace.events.push_back("color");
   }
-  int wrap_cent(Font *, char *text, RECT *) {
-    if (text[0] == 'n') ++name_writes;
-    else if (text[0] == 'd') ++description_writes;
-    return 13;
+  static void set_font(Font *, int, int, int) {
+    trace.events.push_back("font1");
+  }
+  static int wrap_cent(Font *, char *text, RECT *rect) {
+    trace.events.push_back(std::string("title:") + text);
+    trace.title_rect = *rect;
+    return 0;
+  }
+  static int wrap_height(char *text, int width) {
+    trace.events.push_back(std::string("height:") + text);
+    trace.width = width;
+    return trace.height;
+  }
+  static int wrap_cent(char *text, RECT *rect) {
+    trace.events.push_back(std::string("wrap:") + text);
+    trace.body_rect = *rect;
+    return 0;
+  }
+  static void write_cent_l(char *text, RECT *rect, int length) {
+    assert(length == static_cast<int>(std::strlen(text)));
+    trace.events.push_back(std::string("write:") + text);
+    trace.body_rect = *rect;
   }
 };
-static const int MaxAbilityNum = 29;
-enum { component_panel_special_one = 0, component_panel_special_two = 1 };
-static RulesAbility Ability[MaxAbilityNum + 4];
-struct StringStore {
-  char name[8];
-  char description[8];
-  char *get(int id) { return id == 1 ? name : description; }
-} StringTable;
-static char *label_get(int id) { return id == 0x64 / 4 ? empty_label : caption_label; }
-class DesignWin : public Buffer {
-public:
-  Buffer buffer_;
-  Font font1_, font2_;
+enum { component_panel_special_one, component_panel_special_two };
+struct DesignWin : Buffer {
   RECT component_panel_rects_[2];
+  Font font1_, font2_;
+  Buffer buffer_;
   int protoAbilityID1_, protoAbilityID2_;
-  DesignWin() : protoAbilityID1_(-1), protoAbilityID2_(-1) {
-    component_panel_rects_[0].left = component_panel_rects_[1].left = 0;
-    component_panel_rects_[0].top = component_panel_rects_[1].top = 0;
-    component_panel_rects_[0].right = component_panel_rects_[1].right = 20;
-    component_panel_rects_[0].bottom = component_panel_rects_[1].bottom = 30;
-    font1_.unk_1_ = font2_.unk_1_ = 0;
+  DesignWin() {
+    component_panel_rects_[0] = RECT{10, 20, 210, 100};
+    component_panel_rects_[1] = RECT{30, 40, 230, 120};
+    font1_ = Font{-1, 9, 10};
+    font2_ = Font{-1, 12, 11};
+    protoAbilityID1_ = protoAbilityID2_ = -1;
   }
   void draw_special_1(int redraw);
   void draw_special_2(int redraw);
 };
-static void reset_fixture() {
-  empty_writes = name_writes = description_writes = 0;
-  std::strcpy(StringTable.name, "name");
-  std::strcpy(StringTable.description, "desc");
-  for (int i = 0; i < MaxAbilityNum + 4; ++i) {
-    Ability[i].name = 1;
-    Ability[i].description = 2;
-  }
-}
 /* ACTUAL_DRAW_BODY */
+static void reset_fixture() {
+  trace.events.clear();
+  trace.width = trace.height = 0;
+  for (int i = 0; i < MaxAbilityNum + 4; ++i)
+    Ability[i] = RulesAbility{1, 2};
+  StringTemp[0] = 0;
+}
+static int event(const char *wanted) {
+  for (int i = 0; i < static_cast<int>(trace.events.size()); ++i)
+    if (trace.events[i] == wanted) return i;
+  return -1;
+}
+static void check_negative(DesignWin &win, bool second) {
+  reset_fixture();
+  if (second) win.draw_special_2(0); else win.draw_special_1(0);
+  assert(event("clip") == 0 && event("copy") == 1);
+  assert(trace.events[3] == (second ? "title:ABILITY 2" : "title:ABILITY 1"));
+  assert(trace.title_rect.left == (second ? 35 : 15));
+  assert(trace.title_rect.top == (second ? 42 : 22));
+  assert(trace.title_rect.right == (second ? 225 : 205));
+  assert(trace.title_rect.bottom == (second ? 52 : 32));
+  assert(event("font1") > 2);
+  assert(event("write:none") > event("font1"));
+  assert(trace.body_rect.left == (second ? 30 : 10));
+  assert(trace.body_rect.top == (second ? 40 : 20));
+  assert(trace.body_rect.right == (second ? 230 : 210));
+  assert(trace.body_rect.bottom == (second ? 120 : 100));
+  int colors = 0;
+  for (std::size_t i = 0; i < trace.events.size(); ++i)
+    colors += trace.events[i] == "color";
+  assert(colors == 2);
+}
+static void check_positive(DesignWin &win, bool second, int ability) {
+  reset_fixture();
+  if (second) win.protoAbilityID2_ = ability;
+  else win.protoAbilityID1_ = ability;
+  trace.height = 17;
+  if (second) win.draw_special_2(0); else win.draw_special_1(0);
+  const char *title = second ? "title:ABILITY 2" : "title:ABILITY 1";
+  assert(event(title) >= 0);
+  const char *body = "{name:  }description";
+  const std::string height_event = std::string("height:") + body;
+  const std::string wrap_event = std::string("wrap:") + body;
+  assert(event(height_event.c_str()) > event("font1"));
+  assert(event(wrap_event.c_str()) > event(height_event.c_str()));
+  assert(trace.width == (second ? 200 : 200));
+  assert(trace.body_rect.left == (second ? 30 : 10));
+  assert(trace.body_rect.right == (second ? 230 : 210));
+  assert(trace.body_rect.top == (second ? 103 : 83));
+  assert(trace.body_rect.bottom == (second ? 120 : 100));
+  int colors = 0;
+  for (std::size_t i = 0; i < trace.events.size(); ++i)
+    colors += trace.events[i] == "color";
+  assert(colors == 3);
+}
 int main() {
-  reset_fixture();
-  DesignWin negative;
-  if (DRAW_SECOND) negative.protoAbilityID2_ = -1;
-  else negative.protoAbilityID1_ = -1;
-  if (DRAW_SECOND) negative.draw_special_2(0);
-  else negative.draw_special_1(0);
-  assert(empty_writes == 1);
-  assert(name_writes == 0);
-
-  reset_fixture();
-  DesignWin normal;
-  if (DRAW_SECOND) normal.protoAbilityID2_ = 2;
-  else normal.protoAbilityID1_ = 2;
-  if (DRAW_SECOND) normal.draw_special_2(0);
-  else normal.draw_special_1(0);
-  assert(name_writes == 1);
-  assert(description_writes == 1);
-
-  // The array deliberately has four valid extra rows. This checks the
-  // source-level branch only; no out-of-bounds or production-layout claim.
-  reset_fixture();
-  DesignWin extended;
-  const int beyond_declared_max = MaxAbilityNum + 1;
-  if (DRAW_SECOND) extended.protoAbilityID2_ = beyond_declared_max;
-  else extended.protoAbilityID1_ = beyond_declared_max;
-  if (DRAW_SECOND) extended.draw_special_2(0);
-  else extended.draw_special_1(0);
-  assert(name_writes == 1);
-  assert(description_writes == 1);
-  assert(empty_writes == 0);
+  DesignWin first, second;
+  check_negative(first, false);
+  check_negative(second, true);
+  check_positive(first, false, 2);
+  check_positive(second, true, 2);
+  // The host fixture deliberately includes these rows. This checks the
+  // original negative-only branch without reading outside the fixture.
+  check_positive(first, false, MaxAbilityNum + 1);
+  check_positive(second, true, MaxAbilityNum + 1);
+  return 0;
 }
 '''
 
 
-@pytest.mark.parametrize("address,signature,_member", CASES)
-@pytest.mark.parametrize("compiler", ("g++", "clang++"))
-def test_negative_only_guard_and_safe_extended_fixture(
-        tmp_path, compiler, address, signature, _member):
-    executable = shutil.which(compiler)
-    if not executable:
-        pytest.skip(compiler + " unavailable")
-    second = "draw_special_2" in signature
-    code = HARNESS.replace("/* ACTUAL_DRAW_BODY */",
-                           actual_body(address, signature)).replace(
-                               "DRAW_SECOND", "1" if second else "0")
-    source = tmp_path / ("special-" + hex(address) + ".cpp")
-    binary = tmp_path / ("special-" + hex(address))
-    source.write_text(code)
+def compile_and_run(compiler, tmp_path, bodies):
+    code = HARNESS.replace("/* ACTUAL_DRAW_BODY */", bodies)
+    source = tmp_path / "actual_special_draw.cpp"
+    binary = tmp_path / "actual_special_draw"
+    source.write_text(code, encoding="utf-8")
     built = subprocess.run(
-        [executable, "-std=c++03", "-O1", "-Wall", "-Wextra", "-Werror",
+        [compiler, "-std=c++11", "-O1", "-Wall", "-Wextra", "-Werror",
          "-Wno-unused-parameter", str(source), "-o", str(binary)],
         capture_output=True, text=True, timeout=60)
     assert built.returncode == 0, built.stdout + built.stderr
-    run = subprocess.run([str(binary)], capture_output=True, text=True, timeout=30)
-    assert run.returncode == 0, run.stdout + run.stderr
+    return subprocess.run([str(binary)], capture_output=True, text=True,
+                          timeout=30)
 
 
 @pytest.mark.parametrize("address,signature,_member", CASES)
-def test_reinstated_upper_guard_mutant_is_rejected(tmp_path, address, signature, _member):
+@pytest.mark.parametrize("compiler_name", ("g++", "clang++"))
+def test_special_draw_preserves_negative_only_guard_and_mapped_render_flow(
+        tmp_path, compiler_name, address, signature, _member):
+    compiler = shutil.which(compiler_name)
+    if not compiler:
+        pytest.skip(compiler_name + " unavailable")
+    bodies = "\n".join(actual_body(a, s) for a, s, _ in CASES)
+    result = compile_and_run(compiler, tmp_path, bodies)
+    assert result.returncode == 0, result.stdout + result.stderr
+
+
+@pytest.mark.parametrize("address,signature,_member", CASES)
+@pytest.mark.parametrize("compiler_name", ("g++", "clang++"))
+def test_added_upper_guard_mutant_is_rejected_safely(
+        tmp_path, compiler_name, address, signature, _member):
+    compiler = shutil.which(compiler_name)
+    if not compiler:
+        pytest.skip(compiler_name + " unavailable")
+    bodies = [actual_body(a, s) for a, s, _ in CASES]
+    body_index = next(i for i, (a, _, _) in enumerate(CASES) if a == address)
+    body = bodies[body_index]
+    old = "if (ability < 0) {"
+    new = "if (ability < 0 || ability >= MaxAbilityNum) {"
+    assert body.count(old) == 1
+    bodies[body_index] = body.replace(old, new, 1)
+    result = compile_and_run(compiler, tmp_path, "\n".join(bodies))
+    assert result.returncode != 0, "added upper-bound guard survived"
+
+
+@pytest.mark.parametrize("address,signature,_member", CASES)
+def test_missing_persistent_font_state_mutant_is_rejected(
+        tmp_path, address, signature, _member):
     compiler = shutil.which("g++") or shutil.which("clang++")
     if not compiler:
         pytest.skip("no host C++ compiler")
-    second = "draw_special_2" in signature
-    code = HARNESS.replace(
-        "/* ACTUAL_DRAW_BODY */",
-        actual_body(address, signature, restore_upper_guard=True),
-    ).replace("DRAW_SECOND", "1" if second else "0")
-    source = tmp_path / ("upper-mutant-" + hex(address) + ".cpp")
-    binary = tmp_path / ("upper-mutant-" + hex(address))
-    source.write_text(code)
-    built = subprocess.run(
-        [compiler, "-std=c++03", "-O1", "-Wall", "-Wextra", "-Werror",
-         "-Wno-unused-parameter", str(source), "-o", str(binary)],
-        capture_output=True, text=True, timeout=60)
-    assert built.returncode == 0, built.stdout + built.stderr
-    run = subprocess.run([str(binary)], capture_output=True, text=True, timeout=30)
-    assert run.returncode != 0, "upper-bound guard mutant survived"
+    bodies = [actual_body(a, s) for a, s, _ in CASES]
+    body_index = next(i for i, (a, _, _) in enumerate(CASES) if a == address)
+    body = bodies[body_index]
+    # The former override-based shape did not persist font1 into Buffer state.
+    # Removing the persistent write must fail the call-order control.
+    assert "Buffer::set_font(&font1_, 0, 0, 0);" in body
+    bodies[body_index] = body.replace("Buffer::set_font(&font1_, 0, 0, 0);", "", 1)
+    result = compile_and_run(compiler, tmp_path, "\n".join(bodies))
+    assert result.returncode != 0, "persistent-font removal survived"
