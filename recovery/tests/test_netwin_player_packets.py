@@ -170,8 +170,6 @@ static int pick_answer(NetWin &, PopMenu &menu) {
     return g_answer;
 }
 
-@@ACTUAL_HELPERS@@
-
 @@ACTUAL_METHODS@@
 
 static void reset_observations() {
@@ -330,10 +328,7 @@ int main() {
 
 
 def fixture_source(methods: dict[str, str]) -> str:
-    source = NETWIN_CPP.read_text(encoding="utf-8")
-    helpers = extract_braced(source, "static void *memcpy_call(")
     return (HARNESS.replace("@@ACTUAL_TYPES@@", actual_declarations())
-            .replace("@@ACTUAL_HELPERS@@", helpers)
             .replace("@@ACTUAL_METHODS@@", "\n\n".join(methods.values())))
 
 
