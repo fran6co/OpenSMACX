@@ -195,14 +195,10 @@ static char NetWinDefaultPcx[] = "faction.pcx";
 // loader. AlphaxFileID in alpha.cpp owns it; this TU does not own an alias
 // into the old executable's storage.
 
-// Both copies setup_faction_data makes are REAL calls in the image
-// (0x00645930), and their size is not a compile-time constant, but /O2
-// implies /Oi and VC6 expanded mine to `shr ecx,2 / rep movsd`. This is the
-// palette.cpp / path.cpp `memcpy_call` idiom: an out-of-line forwarder the
-// compiler will not fold.
-static void *memcpy_call(void *dst, const void *src, unsigned len) {
-    return memcpy(dst, src, len);
-}
+// Historical call-boundary attempt: ordinary /O2 /Oi memcpy expanded to
+// rep movsd; the former memcpy_call wrapper's measured result is retained in
+// setup_faction_data's LEVER note. The mapped bodies now use narrow direct
+// CRT-call pragmas instead of a file-local forwarding helper.
 
 // ---- fixed bindings the dialog bodies reach -------------------------------
 
@@ -250,6 +246,9 @@ static void *memcpy_call(void *dst, const void *src, unsigned len) {
 //        recorded rather than ground on.
 Status: Homed 2026-09-04, MISMATCH 51 of 323 instructions
 */
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma function(memcpy)
+#endif
 void NetWin::setup_faction_data(MessageFactionData *message_faction_data) {
     Buffer buffer;
 
@@ -275,7 +274,7 @@ void NetWin::setup_faction_data(MessageFactionData *message_faction_data) {
                 : static_cast<int>(message_faction_data->record_count_);
         int size = count * 399 + 0x194;
         faction_records_ = static_cast<NetWinFactionRecord *>(mem_get(size));
-        memcpy_call(faction_records_, &message_faction_data->record_type_, size);
+        memcpy(faction_records_, &message_faction_data->record_type_, size);
         return;
     }
 
@@ -429,8 +428,11 @@ void NetWin::setup_faction_data(MessageFactionData *message_faction_data) {
     }
 
     text_close();
-    memcpy_call(faction_records_copy_, faction_records_, record_size);
+    memcpy(faction_records_copy_, faction_records_, record_size);
 }
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma intrinsic(memcpy)
+#endif
 
 /*
 Purpose: Resolve the colour byte a faction list draws its player rows with:
@@ -1940,6 +1942,9 @@ void NetWin::pick_player() {
 
 // ORIGINAL: 0x0047C530 ?pick_faction@NetWin@@QAEXH@Z 0x0047C530-0x0047C965;0x006568F9-0x006569C4
 // RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/recovered/units/0047c530.cpp:NetWin::pick_faction", "src/netwin.h:NetWinFactionRecord and NetWinLobbyRow", "src/netwin.cpp:NetWin::pick_pass and NetWinLobbySinglePacket", "Pinned47C819 clears EAX;47C854 stores it to [EBP-1A4], packet+8 relative to sent [EBP-1AC] at47C88A/47C89D. Opcode word/slot/row+10 are written; +2..3/+C..F remain untouched."], "reason": "Recover faction selection through the typed faction records, lobby rows, popup dialog and single-row packet."}
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma function(memcpy)
+#endif
 void NetWin::pick_faction(int slot) {
     PopMenu pop_menu;
     pop_menu.init();
@@ -1991,7 +1996,7 @@ void NetWin::pick_faction(int slot) {
 
     // Native 47C811 snapshots the restored live row before the signed guard.
     NetWinLobbyRow updated;
-    memcpy_call(&updated, &NetWinLobbyRows[slot], 0x17C);
+    memcpy(&updated, &NetWinLobbyRows[slot], 0x17C);
     updated.faction_or_color_ = static_cast<int8_t>(chosen_faction);
     if (slot >= 1) {
         NetWinLobbySinglePacket packet;
@@ -1999,10 +2004,13 @@ void NetWin::pick_faction(int slot) {
         packet.header_.flags_ = 0x2F;
         packet.header_.slot_ = slot;
         packet.header_.field_8_ = 0;
-        packet.row_ = updated;
+        memcpy(&packet.row_, &updated, sizeof(packet.row_));
         NetDaemonNet.Net::send(&packet, sizeof(packet), NetDaemonNet.host_player_id(), 1);
     }
 }
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma intrinsic(memcpy)
+#endif
 
 // ORIGINAL: 0x0047CF40 ?pick_diff@NetWin@@QAEXH@Z 0x0047CF40-0x0047D2F4;0x00656AED-0x00656BC5
 // RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/recovered/units/0047cf40.cpp:NetWin::pick_diff", "src/netwin.cpp:pick_global_diff and sibling pickers", "src/netwin.cpp:NetWinLobbySinglePacket and NetWin::on_button_clicked", "Pinned47D0C7/47D0D0/47D0D6: opcode word, slot dword and +8 zero; copied row+10 and send18C. +2..3/+C..F are untouched."], "reason": "Recover the per-slot difficulty picker using the established popup objects, difficulty text table, typed lobby row and typed single-row packet."}
@@ -2971,6 +2979,9 @@ Status: Compiler-generated CheckBox complete-object destructor, emitted from
 // ORIGINAL: 0x0047C970 ?pick_pass@NetWin@@QAEHH@Z 0x0047C970-0x0047CF32;0x006569C4-0x00656AED
 // RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/0047c970.cpp", "recovery/tasks/netwin-owner-coverage.json", "Pinned47CEB9/47CED2/47CEDB..47CF03: slot dword, opcode word, explicit +8 zero, row at +10 of size17C; send18C. The opcode does not write +2..3 and +C..F is untouched."], "reason": "Recover full password dialog using genuine Popup lifecycle, input override text and shared parse output, faction validation and native sixteen-byte-header/full-row wire layout. No exactness or game acceptance claim."}
 // TRIED: MISMATCH #10 'push' vs 'mov' (framed build). SEH-frame password dialog: local `Popup popup;` is a real automatic object (BasePop fully laid out in the scaffold: embedded FlatButton x2 and Sprite, plus Popup's own `Scroll scroll_` which itself embeds two more FlatButtons at offsets 0xAAC/0x15F8 - matches the trailer thunks in the disassembly exactly), so ctor/dtor calls are emitted by the language rather than hand-modelled. Explicit popup.close()/ popup.scroll_.close() only where the disassembly names them, not at every scope exit. Did not attempt to reproduce the compiler's own SEH funclet layout - accepted as an "omitted as unreachable" divergence per the precedent in dialog.cpp/graphicwin.cpp.
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma function(memcpy)
+#endif
 int NetWin::pick_pass(int payload) {
     Popup popup;
     const int slot = NetDaemonNet.pid_2_idx(NetDaemonNet.local_player_id());
@@ -3050,7 +3061,7 @@ int NetWin::pick_pass(int payload) {
     row.owner_ = entered_hash;
     // Native 47CE7B copies before checking whether the slot may be sent.
     NetWinLobbyRow updated;
-    memcpy_call(&updated, &row, 0x17C);
+    memcpy(&updated, &row, 0x17C);
     if (slot >= 1) {
         NetWinLobbySinglePacket packet;
         packet.header_.opcode_ = 0x04;
@@ -3062,6 +3073,9 @@ int NetWin::pick_pass(int payload) {
     }
     return 1;
 }
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma intrinsic(memcpy)
+#endif
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.

@@ -92,8 +92,7 @@ def test_netwin_method_body(compiler_name, kind, signature, flags, tmp_path):
         # Reuse the actual shared packet declarations, not a fixture-only layout.
         body = "\n".join(
             (installed_packet_declarations(("NetWinLobbyPacketHeader",
-                                            "NetWinLobbySinglePacket")),
-             extract_function(source, "static void *memcpy_call("), body)
+                                            "NetWinLobbySinglePacket")), body)
         )
     fixture = FIXTURE.read_text()
     marker = "/* NETWIN_BODY_INSERTION */"
