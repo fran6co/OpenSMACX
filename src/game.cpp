@@ -35,7 +35,7 @@
 // RECOVERY_OBJECT: v1 0x0090D91C ?UnkBitfield1@@3IA
 uint32_t UnkBitfield1;  // 0x0090D91C
 #include <shellapi.h>
-#include <ctype.h> // yearmotize uses the original unsigned-char CRT classification.
+#include <ctype.h> // yearmotize preserves the original signed-byte CRT arguments.
 #include <stddef.h>
 #include <mmsystem.h>
 #include "win.h"
@@ -7319,12 +7319,12 @@ void __cdecl yearmotize(char *text) {
         if (strlen(run) < 4) {
             return;
         }
-        if (isdigit(static_cast<unsigned char>(run[0])) &&
-            isdigit(static_cast<unsigned char>(run[1])) &&
-            isdigit(static_cast<unsigned char>(run[2])) &&
-            isdigit(static_cast<unsigned char>(run[3])) &&
-            !isdigit(static_cast<unsigned char>(run[4])) &&
-            (run == text || !isdigit(static_cast<unsigned char>(run[-1])))) {
+        if (isdigit(run[0]) &&
+            isdigit(run[1]) &&
+            isdigit(run[2]) &&
+            isdigit(run[3]) &&
+            !isdigit(run[4]) &&
+            (run == text || !isdigit(run[-1]))) {
             char buf[80];
             char year_str[80];
             buf[0] = 0;

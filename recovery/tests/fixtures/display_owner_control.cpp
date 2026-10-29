@@ -98,7 +98,12 @@ IDirectDraw2 *BufferDirectDraw;
 IDirectDrawSurface2 *DirectDrawSurface, *DirectDrawBackBuffer;
 IDirectDrawPalette *DirectDrawPalette;
 RECT DirectDrawClipRect;
-Buffer ScreenBuffer;
+struct ScreenBufferLifetime {
+    Buffer storage;
+    Buffer &buffer() { return storage; }
+};
+ScreenBufferLifetime ScreenBufferOwner;
+Buffer &ScreenBuffer = ScreenBufferOwner.buffer();
 Palette *PaletteActive;
 HWND HandleMain;
 GUID IID_IDirectDraw2, IID_IDirectDrawSurface2;

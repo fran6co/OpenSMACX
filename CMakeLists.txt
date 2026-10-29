@@ -170,6 +170,7 @@ set(OPENSMACX_SOURCES
     src/application_math.cpp
     src/application_text.cpp
     src/general.cpp
+    src/directdraw.cpp
     src/number_parsing.cpp
     src/scenario_undo.cpp
     src/header_io.cpp

@@ -26,7 +26,7 @@ def definition(text, signature):
 
 
 def test_actual_display_owner_bodies():
-    source = (ROOT / "src/general.cpp").read_text()
+    source = (ROOT / "src/directdraw.cpp").read_text()
     signatures = (
         "BOOL CALLBACK direct_draw_device_callback(",
         "GUID *__cdecl select_direct_draw_device(",
