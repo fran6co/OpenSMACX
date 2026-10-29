@@ -87,6 +87,9 @@ void NetFifo::close() {
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x0050BA30
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma function(memcpy)
+#endif
 int NetFifo::add(void *data, unsigned long size, unsigned long key, int type,
                  unsigned long extra) {
   EnterCriticalSection(&lock_);
@@ -135,6 +138,9 @@ int NetFifo::add(void *data, unsigned long size, unsigned long key, int type,
   LeaveCriticalSection(&lock_);
   return 0;
 }
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma intrinsic(memcpy)
+#endif
 
 // ORIGINAL: 0x00633D90 ?get@NetFifo@@QAEHPAXPAIPAH1@Z 0x00633D90-0x00633E75
 // symbol    ?get@NetFifo@@QAEHPAXHPAH1@Z
@@ -146,6 +152,9 @@ int NetFifo::add(void *data, unsigned long size, unsigned long key, int type,
 // The queue is walked from the head for a matching key, so this is the
 // remove-by-key form; the 0x633F70 overload below pops the head instead.
 // 633DBC/633DC0 compares the raw second argument DWORD, not its pointee.
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma function(memcpy)
+#endif
 int NetFifo::get(void *data, int key, int *type, int *len) {
   EnterCriticalSection(&lock_);
 
@@ -194,6 +203,9 @@ int NetFifo::get(void *data, int key, int *type, int *len) {
   LeaveCriticalSection(&lock_);
   return result;
 }
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma intrinsic(memcpy)
+#endif
 
 // ORIGINAL: 0x00633F70 ?get@NetFifo@@QAEHPAXPAIPAHPAI@Z 0x00633F70-0x0063401D
 // symbol    ?get@NetFifo@@QAEHPAXPAIPAH1@Z
@@ -205,6 +217,9 @@ int NetFifo::get(void *data, int key, int *type, int *len) {
 // catalogue names as hints, distinct from these emitted-symbol bindings.
 // The pop-the-head form: whatever is at the front of the queue goes back, and
 // the key comes out with it.
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma function(memcpy)
+#endif
 int NetFifo::get(void *data, unsigned int *key, int *type,
                  unsigned int *len) {
   EnterCriticalSection(&lock_);
@@ -240,6 +255,9 @@ int NetFifo::get(void *data, unsigned int *key, int *type,
   LeaveCriticalSection(&lock_);
   return result;
 }
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma intrinsic(memcpy)
+#endif
 
 // Additional original operations on the same typed FIFO state.
 /*
@@ -261,6 +279,9 @@ Purpose: Enqueue one entry on this NetFifo: allocate the 0x18-byte node,
 Return Value: 0 on success, 4 when an allocation fails
 Status: Complete
 */
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma function(memcpy)
+#endif
 int NetFifo::add_head(const void *data, unsigned int size, unsigned int key, int caller_value, int result) {
     EnterCriticalSection(&this->lock_);
 
@@ -306,6 +327,9 @@ int NetFifo::add_head(const void *data, unsigned int size, unsigned int key, int
     LeaveCriticalSection(&this->lock_);
     return 0;
 }
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma intrinsic(memcpy)
+#endif
 
 
 /*
@@ -327,6 +351,9 @@ Purpose: Remove one entry from this NetFifo by its key/caller-value pair:
 Return Value: the entry's result word, or 0 when no entry matches
 Status: Complete
 */
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma function(memcpy)
+#endif
 int NetFifo::remove_key_caller(void *payload_buffer, unsigned int key, int caller_value, unsigned int *size_out) {
     EnterCriticalSection(&this->lock_);
     NetFifo::NetFifoNode *node = this->head_;
@@ -366,6 +393,9 @@ int NetFifo::remove_key_caller(void *payload_buffer, unsigned int key, int calle
     LeaveCriticalSection(&this->lock_);
     return result;
 }
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma intrinsic(memcpy)
+#endif
 
 
 /*
@@ -387,6 +417,9 @@ Purpose: Remove one entry from this NetFifo by its caller value: hand the
 Return Value: the entry's result word, or 0 when no entry matches
 Status: Complete
 */
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma function(memcpy)
+#endif
 int NetFifo::remove_caller(void *payload_buffer, unsigned int *key_out, int caller_value, unsigned int *size_out) {
     EnterCriticalSection(&this->lock_);
 
@@ -431,6 +464,9 @@ int NetFifo::remove_caller(void *payload_buffer, unsigned int *key_out, int call
     LeaveCriticalSection(&this->lock_);
     return result;
 }
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma intrinsic(memcpy)
+#endif
 
 
 /*
@@ -546,6 +582,9 @@ Purpose: The keyed queue reader: under the queue lock, find the entry whose
 // indirect  0x006340C8 0x006340F3 0x00634134 0x0063414C
 Status: Complete C++ owner body; original span and prior source lessons retained.
 */
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma function(memcpy)
+#endif
 int NetFifo::peek_key(void *data, unsigned int key, int *caller_value_out, int *size_out) {
     EnterCriticalSection(&lock_);
     NetFifoNode *node = head_;
@@ -573,6 +612,9 @@ int NetFifo::peek_key(void *data, unsigned int key, int *caller_value_out, int *
     LeaveCriticalSection(&lock_);
     return result;
 }
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma intrinsic(memcpy)
+#endif
 
 
 /*
@@ -580,7 +622,7 @@ Purpose: The head-of-queue reader: under the queue lock, copy the front
          entry's payload out and hand back its key, caller value, result word
          and size, again without unlinking it.
 
-// ORIGINAL: 0x00634200 sub_634200 0x00634200-0x0063427E
+// ORIGINAL: 0x00634200 sub_634200 0x00634200-0x0063427E BYTE_EXACT
 // symbol    ?peek_head@NetFifo@@QAEHPAXPAIPAH2@Z
 // TRIED: a ?sub_634200@@YGEHPAXHHH@Z-shaped thunk in the seed's reading. Its receiver is the queue at Net+0x10C, which is why the member has to be real for the caller's `add ecx, 0x10c` to exist at all. The two lock slots are the process import table's EnterCriticalSection/LeaveCriticalSection pair.
 // size      126 bytes
@@ -591,6 +633,9 @@ Purpose: The head-of-queue reader: under the queue lock, copy the front
 // indirect  0x00634208 0x00634215 0x00634246 0x00634271
 Status: Complete C++ owner body; original span and prior source lessons retained.
 */
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma function(memcpy)
+#endif
 int NetFifo::peek_head(void *data, unsigned int *key_out, int *caller_value_out, int *size_out) {
     EnterCriticalSection(&lock_);
     NetFifoNode *node = head_;
@@ -616,3 +661,6 @@ int NetFifo::peek_head(void *data, unsigned int *key_out, int *caller_value_out,
     LeaveCriticalSection(&lock_);
     return result;
 }
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma intrinsic(memcpy)
+#endif
