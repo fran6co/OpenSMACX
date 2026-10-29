@@ -109,13 +109,12 @@ int main() {
 
     fill(&x, 1);
     const float input[3] = {2,3,5};
-    float transformed[3] = {-1,-1,-1};
-    x.transform(transformed, input);
-    if (transformed[0] != 23 || transformed[1] != 53 || transformed[2] != 83) return 20;
-    float aliased[3] = {2,3,5}; x.transform(aliased, aliased);
-    if (aliased[0] != 23 || aliased[1] != 53 || aliased[2] != 83) return 21;
-    fill(&x, 1); x.transform(x.cells, input);
-    if (x.cells[0] != 23 || x.cells[1] != 53 || x.cells[2] != 83) return 28;
+    Matrix3TransformResult transformed = x.transform(input);
+    if (transformed.x_ != 23 || transformed.y_ != 53 || transformed.z_ != 83) return 20;
+    fill(&x, 1);
+    Matrix3TransformResult matrix_alias = x.transform(x.cells);
+    if (matrix_alias.x_ != 14 || matrix_alias.y_ != 32 || matrix_alias.z_ != 50) return 21;
+    if (!same(&x, a)) return 28;
 
     // Exercise finite edge behavior without promising a particular rounding mode.
     fill(&x, 0.0f); x.cells[0] = std::numeric_limits<float>::max();

@@ -1,4 +1,4 @@
-"""Focused host controls for Matrix3 transform overlap and result staging.
+"""Focused host controls for Matrix3 transform input alias and result staging.
 
 Compile the installed implementation itself. These cases cover bounded
 float-array behavior only; they do not prove original ownership, extent,
@@ -23,20 +23,31 @@ struct GuardedMatrix {
     Matrix3 value;
     unsigned after;
 };
+struct GuardedResult {
+    unsigned before;
+    Matrix3TransformResult value;
+    unsigned after;
+};
 
 int main() {
     const unsigned before = 0x12345678U;
     const unsigned after = 0x87654321U;
     GuardedMatrix guarded = {before, {{1,2,3,4,5,6,7,8,9}}, after};
 
-    // The two ranges are valid parts of the same float array and overlap by
-    // two elements. Every input and matrix read must precede output stores.
-    guarded.value.transform(guarded.value.cells + 4,
-                           guarded.value.cells + 3);
-    if (guarded.value.cells[4] != 32.0f ||
-        guarded.value.cells[5] != 77.0f ||
-        guarded.value.cells[6] != 122.0f) return 1;
-    if (guarded.before != before || guarded.after != after) return 2;
+    // The input aliases the matrix storage. The returned value has separate
+    // storage, and the receiver must remain unchanged.
+    GuardedResult transformed;
+    transformed.before = 0x0badc0deU;
+    transformed.after = 0xfeedfaceU;
+    transformed.value = guarded.value.transform(guarded.value.cells);
+    if (transformed.value.x_ != 14.0f ||
+        transformed.value.y_ != 32.0f ||
+        transformed.value.z_ != 50.0f) return 1;
+    for (int i = 0; i < 9; ++i)
+        if (guarded.value.cells[i] != (float)(i + 1)) return 2;
+    if (transformed.before != 0x0badc0deU ||
+        transformed.after != 0xfeedfaceU) return 3;
+    if (guarded.before != before || guarded.after != after) return 4;
 
     // All three original row groupings cancel the large pair before adding
     // the unit term. Reassociation loses that final one on float hosts.
@@ -51,11 +62,13 @@ int main() {
     guarded.value.cells[7] = huge;
     guarded.value.cells[8] = 1.0f;
     const float ones[3] = {1.0f, 1.0f, 1.0f};
-    float output[5] = {-7.0f, -7.0f, -7.0f, -7.0f, -7.0f};
-    guarded.value.transform(output + 1, ones);
-    if (output[0] != -7.0f || output[1] != 1.0f ||
-        output[2] != 1.0f || output[3] != 1.0f || output[4] != -7.0f) return 3;
-    if (guarded.before != before || guarded.after != after) return 4;
+    transformed.value = guarded.value.transform(ones);
+    if (transformed.value.x_ != 1.0f ||
+        transformed.value.y_ != 1.0f ||
+        transformed.value.z_ != 1.0f) return 5;
+    if (transformed.before != 0x0badc0deU ||
+        transformed.after != 0xfeedfaceU) return 6;
+    if (guarded.before != before || guarded.after != after) return 7;
 
     // Assignment from a value-returning operation must stage the complete
     // product before replacing its aliased receiver.
@@ -84,25 +97,24 @@ def _compiler(name: str) -> str:
 def _source_with_mutant(source: str, label: str) -> str:
     mutations = {
         "reassociate_row0": (
-            "result[0] = m[1] * in[1] + m[2] * in[2] + m[0] * in[0];",
-            "result[0] = m[1] * in[1] + (m[2] * in[2] + m[0] * in[0]);",
+            "result.x_ = m[1] * in[1] + m[2] * in[2] + m[0] * in[0];",
+            "result.x_ = m[1] * in[1] + (m[2] * in[2] + m[0] * in[0]);",
         ),
         "reassociate_row1": (
-            "result[1] = m[4] * in[1] + m[3] * in[0] + m[5] * in[2];",
-            "result[1] = m[4] * in[1] + (m[3] * in[0] + m[5] * in[2]);",
+            "result.y_ = m[4] * in[1] + m[3] * in[0] + m[5] * in[2];",
+            "result.y_ = m[4] * in[1] + (m[3] * in[0] + m[5] * in[2]);",
         ),
         "reassociate_row2": (
-            "result[2] = m[7] * in[1] + m[6] * in[0] + m[8] * in[2];",
-            "result[2] = m[7] * in[1] + (m[6] * in[0] + m[8] * in[2]);",
+            "result.z_ = m[7] * in[1] + m[6] * in[0] + m[8] * in[2];",
+            "result.z_ = m[7] * in[1] + (m[6] * in[0] + m[8] * in[2]);",
         ),
-        "store_before_reads": (
-            "    result[1] = m[4] * in[1] + m[3] * in[0] + m[5] * in[2];",
-            "    out[0] = result[0];\n"
-            "    result[1] = m[4] * in[1] + m[3] * in[0] + m[5] * in[2];",
+        "zero_result_y": (
+            "result.y_ = m[4] * in[1] + m[3] * in[0] + m[5] * in[2];",
+            "result.y_ = 0.0f;",
         ),
-        "skip_row2": (
-            "    out[2] = result[2];",
-            "    out[2] = 0.0f;",
+        "zero_result_z": (
+            "result.z_ = m[7] * in[1] + m[6] * in[0] + m[8] * in[2];",
+            "result.z_ = 0.0f;",
         ),
     }
     before, after = mutations[label]
@@ -136,7 +148,7 @@ def test_matrix3_loop_cohort_actual_source(compiler_name: str, tmp_path: Path) -
 @pytest.mark.parametrize(
     "mutant", (
         "reassociate_row0", "reassociate_row1", "reassociate_row2",
-        "store_before_reads", "skip_row2",
+        "zero_result_y", "zero_result_z",
     ),
 )
 def test_matrix3_loop_cohort_rejects_compiled_mutants(
