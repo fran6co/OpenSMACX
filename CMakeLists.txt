@@ -190,6 +190,7 @@ set(OPENSMACX_SOURCES
     src/video_queue.cpp
     src/video_sound.cpp
     src/datalink.cpp
+    src/datalink_selection.cpp
     src/netwin.cpp
     src/socialwin.cpp
     src/social.cpp
@@ -387,6 +388,7 @@ set_source_files_properties(
 # keeping Win and the application-wide compiler defaults unchanged.
 set_source_files_properties(
     src/datalink.cpp
+    src/datalink_selection.cpp
     src/maininterface.cpp
     src/console.cpp
     src/console_commands.cpp
