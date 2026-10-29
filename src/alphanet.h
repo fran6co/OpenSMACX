@@ -101,10 +101,11 @@ class AlphaNetStringStruct : public virtual StringAllocationBase {
   // RECOVERY_MEMBER: v3 AlphaNetStringStruct allocator_ Heap* 0x18 0x005D4890
   Heap *allocator_;
 
-  AlphaNetStringStruct();
+  inline AlphaNetStringStruct();
   ~AlphaNetStringStruct() { remove_all(); current_position_ = 0; }
 };
 static_assert(sizeof(AlphaNetStringStruct) == 0x24, "session ledger base and virtual allocation owner");
+
 
 inline int AlphaNetStringStruct::seek_pos(int position) {
     AbsFnT abs_fn = &abs;

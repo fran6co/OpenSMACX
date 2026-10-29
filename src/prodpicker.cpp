@@ -95,21 +95,27 @@ int ProdPicker::edbc_unit(int prototype_id) {
 // The constructor owns a Scroll at +0x7120, currently explicit storage to
 // preserve construction order. Wheel events are delivered to that object.
 // ORIGINAL: 0x00493C20 ?on_mousewheel@ProdPicker@@QAEXH@Z 0x00493C20-0x00493C68 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/00493c20.cpp", "source:src/prodpicker.h", "source:src/scroll.h"], "reason": "Dispatch each wheel step to ProdPicker's real embedded Scroll rather than a raw receiver offset or vtable shim. The source form currently mismatches; retain the seed's historical exact claim as a restoration obligation, without demotion. Superseded scaffold retired at user request; historical claims and seed findings are transferred, not freshly granted. Current matching/restoration and any documented unfinished stages remain obligations."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:b20012dad66f767e0e5f05b7aea45b88bd63a09d:src/recovered/units/00493c20.cpp", "source:src/prodpicker.h", "source:src/scroll.h"], "reason": "Dispatch each wheel step through the real embedded Scroll. Preserve the original wrapped negative count and its nonpositive INT_MIN no-step path; retain the original identity, spans, historical claim and virtual member ABI."}
 // symbol    ?on_mousewheel@ProdPicker@@UAEXH@Z
 // Current virtual override emits UAE; retain the catalogued QAE identity above.
 // kind      game
 void ProdPicker::on_mousewheel(int delta) {
-    // x86 NEG leaves INT_MIN negative; the original's positive-count test
-    // therefore sends no steps for that otherwise overflowing input.
-    if (delta == (-2147483647 - 1)) return;
-    while (delta < 0) {
-        scroll_.on_mousewheel_down(1);
-        ++delta;
-    }
-    while (delta > 0) {
-        scroll_.on_mousewheel_up(1);
-        --delta;
+    if (delta < 0) {
+        const int count = static_cast<int>(
+            0U - static_cast<unsigned int>(delta));
+        if (count > 0) {
+            Scroll *const scroll = &scroll_;
+            int remaining = count;
+            do {
+                scroll->on_mousewheel_down(1);
+            } while (--remaining != 0);
+        }
+    } else if (delta > 0) {
+        Scroll *const scroll = &scroll_;
+        int remaining = delta;
+        do {
+            scroll->on_mousewheel_up(1);
+        } while (--remaining != 0);
     }
 }
 
