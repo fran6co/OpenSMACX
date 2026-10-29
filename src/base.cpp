@@ -18,6 +18,7 @@
 #include "stdafx.h"
 #include "popup.h"
 #include "base.h"
+#include "planwin.h"
 #include "council.h"
 #include "alpha.h"
 #include "faction.h"
@@ -9624,6 +9625,20 @@ int __cdecl attack_from(int base_id_to_atk, int faction_id) {
         }
     }
     return base_id_atk_from;
+}
+
+// ORIGINAL: 0x0054B140 ?battle_routine@@YAXH@Z 0x0054B140-0x0054B1B6 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x0054B140:0054B140-0054B1B6", "source:src/planwin.h:PlanWin and genuine MapWin/GraphicWin interfaces", "source:src/faction.h:PlayerData, battle faction state and label declarations", "recovery/tasks/planwin-battle-owner-coverage.json"], "reason": "Use the pinned native body with the real typed owner and preserve the seed's original identity and history."}
+void __cdecl battle_routine(int base_id) {
+    const int first_attack = attack_from(base_id, PlanBattleFactionA);
+    const int second_attack = attack_from(base_id, PlanBattleFactionB);
+
+    PlanWindow.clear_lines();
+    PlanWindow.add_line(first_attack, base_id,
+                        InfoFactionTextColors[PlanBattleFactionA]);
+    PlanWindow.add_line(second_attack, base_id,
+                        InfoFactionTextColors[PlanBattleFactionB]);
+    PlanWindow.on_redraw();
 }
 
 /*
