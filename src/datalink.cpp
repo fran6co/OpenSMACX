@@ -1584,11 +1584,29 @@ void Datalink::close() {
 }
 
 
+// ORIGINAL: 0x0044CB30 ?help_any@@YAXXZ 0x0044CB30-0x0044CB3F BYTE_EXACT
+// size      15 bytes
+// prototype
+// callers   5   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00429180
+// 0x0044CB30  ?help_any@@YAXXZ  ->  ?help_any@@YAXXZ
+//
+// HOMING NOTE: the tree names the singleton, so the body spells it the way
+// datalink.h already declares it - `DatalinkMain`, the object at 0x00703EA0 -
+// rather than binding the address again under an anonymous name.
+
+void __cdecl help_any() {
+    DatalinkMain.exec(0, 0);
+}
+
+
 /*
 Purpose: Show the technology help topic for the given id.
 // ORIGINAL: 0x0044C880 ?help_tech@@YAXH@Z 0x0044C880-0x0044C895 BYTE_EXACT
 // size      21 bytes
-// prototype 
+// prototype
 // callers   0   call targets   1
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
@@ -1605,7 +1623,7 @@ Purpose: Show the weapon help topic for the given id.
 // ORIGINAL: 0x0044C910 ?help_weapon@@YAXH@Z 0x0044C910-0x0044C925 BYTE_EXACT
 // body      src/datalink.h
 // size      21 bytes
-// prototype 
+// prototype
 // callers   0   call targets   1
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
@@ -1624,7 +1642,7 @@ Purpose: Show the armor help topic for the given id.
 // ORIGINAL: 0x0044C940 ?help_armor@@YAXH@Z 0x0044C940-0x0044C955 BYTE_EXACT
 // body      src/datalink.h
 // size      21 bytes
-// prototype 
+// prototype
 // callers   0   call targets   1
 // kind      game
 // flags     frame;sp_ready;purged_ok
@@ -1643,7 +1661,7 @@ Purpose: Show the chassis help topic for the given id.
 // ORIGINAL: 0x0044C980 ?help_chassis@@YAXH@Z 0x0044C980-0x0044C995 BYTE_EXACT
 // body      src/datalink.h
 // size      21 bytes
-// prototype 
+// prototype
 // callers   0   call targets   1
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
@@ -1662,7 +1680,7 @@ Purpose: Show the facility help topic for the given id.
 // ORIGINAL: 0x0044C9B0 ?help_facility@@YAXH@Z 0x0044C9B0-0x0044C9C5 BYTE_EXACT
 // body      src/datalink.h
 // size      21 bytes
-// prototype 
+// prototype
 // callers   0   call targets   1
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
@@ -1681,7 +1699,7 @@ Purpose: Show the secret project/ability help topic for the given id.
 // ORIGINAL: 0x0044CA10 ?help_abil@@YAXH@Z 0x0044CA10-0x0044CA25 BYTE_EXACT
 // body      src/datalink.h
 // size      21 bytes
-// prototype 
+// prototype
 // callers   0   call targets   1
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
@@ -1700,7 +1718,7 @@ Purpose: Show the social engineering help topic for the given id.
 // ORIGINAL: 0x0044CA40 ?help_social@@YAXH@Z 0x0044CA40-0x0044CA55 BYTE_EXACT
 // body      src/datalink.h
 // size      21 bytes
-// prototype 
+// prototype
 // callers   0   call targets   1
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
@@ -1719,7 +1737,7 @@ Purpose: Show the faction help topic for the given id.
 // ORIGINAL: 0x0044CA70 ?help_faction@@YAXH@Z 0x0044CA70-0x0044CA85 BYTE_EXACT
 // body      src/datalink.h
 // size      21 bytes
-// prototype 
+// prototype
 // callers   0   call targets   1
 // kind      game
 // flags     frame;sp_ready;purged_ok
@@ -1738,7 +1756,7 @@ Purpose: Show the vehicle help topic for the given id.
 // ORIGINAL: 0x0044CAD0 ?help_veh@@YAXH@Z 0x0044CAD0-0x0044CAE5 BYTE_EXACT
 // body      src/datalink.h
 // size      21 bytes
-// prototype 
+// prototype
 // callers   0   call targets   1
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok

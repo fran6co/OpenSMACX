@@ -1010,17 +1010,14 @@ int InfoWin::state_valid(int state) {
 // `jge`) on the sign test after masking; VC6 emitted a fresh compare rather
 // than reusing the AND flags. The seed's other two divergences were fixed by
 // emitting the a2==0 ternary arms else-first.
-// ORIGINAL: 0x00458F10 ?set_state@InfoWin@@QAEXHH@Z 0x00458F10-0x00458FEA FILE
+// ORIGINAL: 0x00458F10 ?set_state@InfoWin@@QAEXHH@Z 0x00458F10-0x00458FEA FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00458f10.cpp", "source:src/infowin.h", "source:src/infowin.cpp:state_valid"], "reason": "Replace the offset-based seed with the InfoWin's active-pane and presentation-state members and its existing eligibility method."}
 void InfoWin::set_state(int state, int a2) {
+    const int pane = active_pane_;
     if (state < 0) state = 0;
-    int &pane_state = pane_states_[active_pane_];
-    pane_state = state;
-    while (!state_valid(pane_state)) {
-        int next = pane_state + 1;
-        next &= 0x80000007;
-        if (next < 0) next = ((next - 1) | 0xFFFFFFF8) + 1;
-        pane_state = next;
+    pane_states_[pane] = state;
+    while (!state_valid(pane_states_[pane])) {
+        pane_states_[pane] = (pane_states_[pane] + 1) % 8;
     }
     field_94_ = 0;
     visible_characters_[0] = a2 != 0 ? 0 : text_lengths_[0] + 1;
@@ -1028,10 +1025,11 @@ void InfoWin::set_state(int state, int a2) {
     field_A8_ = 0;
     MainInterfaceGlobal.box_sprite(&pane_rects_[active_pane_],
                                    &InterfaceBoxStyles[18]);
-    // The original tests the address of the pane-state array, which is always
-    // non-null for a valid object, then clears both values it just assigned.
-    visible_characters_[0] = 0;
-    visible_characters_[1] = 0;
+    // The original tests the pane-state array address, not its contents.
+    if (pane_states_ != 0) {
+        visible_characters_[0] = 0;
+        visible_characters_[1] = 0;
+    }
     setup_text();
     draw_text(active_pane_);
 }
@@ -1112,39 +1110,48 @@ void InfoWin::on_right_click(int a, int b) {
 // ORIGINAL: 0x004589C0 ?right_menu@InfoWin@@QAEXHH@Z 0x004589C0-0x00458D3A;0x00655280-0x00655295
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x004589C0-0x00458D3A", "image:0x00655280-0x00655295", "git:e3121de9:src/recovered/units/004589c0.cpp", "source:src/pulldown.h:get_selected_id"], "reason": "Home the information-pane context menu with the real PullDown item-ID API, source-owned label table, pane state and MainInterface renderer; retain the original secondary EH span as a restoration obligation."}
 void InfoWin::right_menu(int x, int y) {
-    MainInterfaceGlobal.client_to_screen(&x, &y);
     PullDown menu;
+    MainInterfaceGlobal.client_to_screen(&x, &y);
     menu.init(0);
-    static const int label_slots[8] = {
-        0x92C / 4, 0x930 / 4, 0x934 / 4, 0x938 / 4,
-        0x948 / 4, 0x94C / 4, 0x950 / 4, 0x954 / 4
-    };
-    for (int state = 0; state != 8; ++state) {
-        if (state_valid(state)) menu.add_item(state, label_get(label_slots[state]));
-    }
+    if (state_valid(0)) menu.add_item(0, label_get(0x92C / 4));
+    if (state_valid(1)) menu.add_item(1, label_get(0x930 / 4));
+    if (state_valid(2)) menu.add_item(2, label_get(0x934 / 4));
+    if (state_valid(3)) menu.add_item(3, label_get(0x938 / 4));
+    if (state_valid(4)) menu.add_item(4, label_get(0x948 / 4));
+    if (state_valid(5)) menu.add_item(5, label_get(0x94C / 4));
+    if (state_valid(6)) menu.add_item(6, label_get(0x950 / 4));
+    if (state_valid(7)) menu.add_item(7, label_get(0x954 / 4));
     menu.add_separator(99);
     menu.add_item(20, label_get(0x8FC / 4));
     menu.show(x, y, pop_expire);
 
     if ((GameDataStateStorage.fields_.game_state_ & STATE_UNK_800) != 0) return;
-    const int selection = menu.get_selected_id();
-    if (selection >= 0 && selection <= 16 && state_valid(selection)) {
-        pane_states_[active_pane_] = selection;
-        while (!state_valid(pane_states_[active_pane_])) {
-            pane_states_[active_pane_] = (pane_states_[active_pane_] + 1) % 8;
+    const int selected_index = menu.get_selected();
+    // The pinned caller checks only the signed upper bound before indexing.
+    if (selected_index < 64) {
+        const int selection = menu.item_id(selected_index);
+        if (selection >= 0 && selection <= 16 && state_valid(selection)) {
+            const int pane = active_pane_;
+            pane_states_[pane] = selection;
+            while (!state_valid(pane_states_[pane])) {
+                pane_states_[pane] = (pane_states_[pane] + 1) % 8;
+            }
+            field_94_ = 0;
+            visible_characters_[0] = text_lengths_[0] + 1;
+            visible_characters_[1] = text_lengths_[1] + 1;
+            field_A8_ = 0;
+            MainInterfaceGlobal.box_sprite(&pane_rects_[active_pane_],
+                                           &InterfaceBoxStyles[18]);
+            // The original tests the pane-state array address, not contents.
+            if (pane_states_ != 0) {
+                visible_characters_[0] = 0;
+                visible_characters_[1] = 0;
+            }
+            setup_text();
+            draw_text(active_pane_);
+        } else if (selection == 20) {
+            help_any();
         }
-        field_94_ = 0;
-        visible_characters_[0] = text_lengths_[0] + 1;
-        visible_characters_[1] = text_lengths_[1] + 1;
-        field_A8_ = 0;
-        MainInterfaceGlobal.box_sprite(&pane_rects_[active_pane_],
-                                       &InterfaceBoxStyles[18]);
-        visible_characters_[0] = 0;
-        visible_characters_[1] = 0;
-        setup_text();
-        draw_text(active_pane_);
-    } else if (selection == 20) {
-        help_any();
     }
 }
 #pragma auto_inline(on)
@@ -1225,21 +1232,4 @@ void InfoWin::UNK5(int, int, int, int, int) {
     Font font_a;
     Font font_b;
     Font font_c;
-}
-
-// ORIGINAL: 0x0044CB30 ?help_any@@YAXXZ 0x0044CB30-0x0044CB3F BYTE_EXACT
-// size      15 bytes
-// prototype 
-// callers   5   call targets   1
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x00429180
-// 0x0044CB30  ?help_any@@YAXXZ  ->  ?help_any@@YAXXZ
-//
-// HOMING NOTE: the tree names the singleton, so the body spells it the way
-// datalink.h already declares it - `DatalinkMain`, the object at 0x00703EA0 -
-// rather than binding the address again under an anonymous name.
-
-void __cdecl help_any() {
-    DatalinkMain.exec(0, 0);
 }
