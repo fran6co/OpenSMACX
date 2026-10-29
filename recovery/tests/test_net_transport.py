@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 
 from recovery.tests.test_pact_ascent import ROOT, definition
+from recovery.tests.test_netdaemon_group_host import extract_type
 
 
 FIXTURE = Path(__file__).with_name("net_transport_control.cpp").read_text()
@@ -14,12 +15,13 @@ FIXTURE = Path(__file__).with_name("net_transport_control.cpp").read_text()
 
 def actual_bodies():
     source = (ROOT / "src/net_class.cpp").read_text()
-    return {
+    bodies = {
         "// @@NET_PACKET_TYPE_BODY@@": definition(
             source, r"int\s+Net::send_packet_type\s*\([^)]*\)"),
         "// @@NET_SEND_BODY@@": definition(
             source, r"int\s+Net::send\s*\([^)]*\)"),
     }
+    return bodies, extract_type(source, "NetPacketEnvelope")
 
 
 @pytest.mark.parametrize("compiler_name", ["g++", "clang++"])
@@ -27,7 +29,7 @@ def test_actual_sender_peer_state_wire_types_and_callback_order(compiler_name):
     compiler = shutil.which(compiler_name)
     if compiler is None:
         pytest.skip(compiler_name + " unavailable")
-    bodies = actual_bodies()
+    bodies, envelope = actual_bodies()
     for body in bodies.values():
         assert "PENDING_BODY" not in body and "BODY GOES HERE" not in body
         assert body.count("? 0 : players_[name_index].name_and_tail_") == 2
@@ -51,7 +53,9 @@ def test_actual_sender_peer_state_wire_types_and_callback_order(compiler_name):
 
     with tempfile.TemporaryDirectory(prefix="net-transport-actual-") as temp:
         directory = Path(temp)
-        run(directory, "actual", bodies, True)
+        replacements = dict(bodies)
+        replacements["// @@NET_PACKET_ENVELOPE@@"] = envelope
+        run(directory, "actual", replacements, True)
         token = "// @@NET_SEND_BODY@@"
         body = bodies[token]
         mutants = {
@@ -65,4 +69,6 @@ def test_actual_sender_peer_state_wire_types_and_callback_order(compiler_name):
         }
         for name, mutant in mutants.items():
             assert mutant != body, name
-            run(directory, name, dict(bodies, **{token: mutant}), False)
+            damaged = dict(replacements)
+            damaged[token] = mutant
+            run(directory, name, damaged, False)

@@ -4101,6 +4101,9 @@ void cleanup_failed_net_construction(void *memory) {
 // ORIGINAL: 0x0062F8A0 ?send_packet_type@Net@@QAEHPAXHKHH@Z 0x0062F8A0-0x0063007F
 // RECOVERY_BINDING: v1 {"evidence": ["task:net-transport-owner", "pinned:terranx_original.exe:0062F8A0 complete direct/reliable targeted/broadcast control flow", "source:src/net_class.h:NetPlayer acknowledgement +8 and RTT +C; existing FIFO and thread event owners", "historical seed:src/unrecovered/0062f8a0.cpp"], "reason": "Recover the complete sender through genuine Net peer state, queues, event handles, SDK DirectPlay and allocator ownership; preserve native timeout error behavior and all original seed obligations without a new byte claim."}
 // TRIED: MISMATCH #0 'sub' vs 'push' (prologue diverges; best sim 0.44). Net::send_packet_type - reliable-UDP-style send with per-peer RTT tracking, retry, and a "who's stalling" prompt on timeout. Used the scaffold's own COM-style dispatch hint for slot 26 (the DirectPlay Send call pushes the interface as an explicit arg rather than passing it in ecx) - declared a local function- pointer typedef under a name that does NOT collide with the scaffold's own nullary `ComSlot026`, since redeclaring that symbol with a different signature is a hard conflict, not an override. Hoisted `buf`, `allocSize` and `ackFlag` to function scope: MSVC 6 (C2362) refuses a `goto` that skips a later local's initializer even when the type is POD, and this control flow's early special-case return has to jump past the buffer-allocation block entirely.
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma function(memcpy)
+#endif
 int Net::send_packet_type(void *data, int data_size, unsigned long target,
                           int packet_type, int flags) {
     int index;
@@ -4139,13 +4142,15 @@ int Net::send_packet_type(void *data, int data_size, unsigned long target,
         static_cast<unsigned char *>(mem_get(allocation_size));
     if (packet == 0) return 0;
 
+    NetPacketEnvelope *const header =
+        reinterpret_cast<NetPacketEnvelope *>(packet);
     const unsigned int reliable = ack_requested & 1U;
     const uint32_t sequence = reliable != 0 ? ++field_E4_ : 0;
-    memcpy(packet + 4, &sequence, sizeof(sequence));
+    header->sequence_4_ = sequence;
     if (data != 0) memcpy(packet + 8, data, static_cast<size_t>(data_size));
 
     if (reliable == 0 || (voice_flags_D8_ & 0x10000000U) != 0) {
-        memcpy(packet, &type, sizeof(type));
+        header->type_flags_ = type;
         if (NetDirectPlay == 0 ||
             NetDirectPlay->Send(local_player_id_, static_cast<DPID>(target),
                                 reliable, packet,
@@ -4158,7 +4163,7 @@ int Net::send_packet_type(void *data, int data_size, unsigned long target,
     }
 
     const uint16_t reliable_type = static_cast<uint16_t>(type | 4U);
-    memcpy(packet, &reliable_type, sizeof(reliable_type));
+    header->type_flags_ = reliable_type;
 
     if (target == 0) {
         int waiting[16];
@@ -4389,11 +4394,17 @@ int Net::send_packet_type(void *data, int data_size, unsigned long target,
         }
     }
 }
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma intrinsic(memcpy)
+#endif
 
 
 // ORIGINAL: 0x00630080 ?send@Net@@QAEHPAXHKH@Z 0x00630080-0x00630978
 // RECOVERY_BINDING: v1 {"evidence": ["task:net-transport-owner", "pinned:terranx_original.exe:00630080 complete direct/reliable targeted/broadcast control flow", "source:src/net_class.h:NetPlayer acknowledgement +8 and RTT +C; existing FIFO and thread event owners", "historical seed:src/unrecovered/00630080.cpp"], "reason": "Recover the complete sender through genuine Net peer state, queues, event handles, SDK DirectPlay and allocator ownership; preserve native timeout error behavior and all original seed obligations without a new byte claim."}
 // TRIED: Ghidra-structure translation with the parameter mapping re-derived from raw ESP tracking (Ghidra's param_2..5 are thiscall's stack args a1..a4, one off from its own printed __thiscall param_1), COM-style vtable slot 26 dispatch retyped to 6 args per the scaffold's ComSlot026 note, and Net::close/check_polling/handle_sys_msg and NetFifo::add receivers fixed (Ghidra flattened those away too); compiles, MISMATCH #3 (early - likely the this->ebp store-back-for-stashed-handles at the very top).
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma function(memcpy)
+#endif
 int Net::send(void *data, int data_size, unsigned long target, int flags) {
     int index;
     // Native snapshots the wait array at function entry.
@@ -4429,14 +4440,16 @@ int Net::send(void *data, int data_size, unsigned long target, int flags) {
     unsigned char *const packet =
         static_cast<unsigned char *>(mem_get(allocation_size));
     if (packet == 0) return 0;
+    NetPacketEnvelope *const header =
+        reinterpret_cast<NetPacketEnvelope *>(packet);
     const unsigned int reliable = static_cast<unsigned int>(flags) & 1U;
     const uint32_t sequence = reliable != 0 ? ++field_E4_ : 0;
-    memcpy(packet + 4, &sequence, sizeof(sequence));
+    header->sequence_4_ = sequence;
     memcpy(packet + 8, data, static_cast<size_t>(data_size));
 
     if (reliable == 0 || (voice_flags_D8_ & 0x10000000U) != 0) {
         const uint16_t packet_type = 1;
-        memcpy(packet, &packet_type, sizeof(packet_type));
+        header->type_flags_ = packet_type;
         if (NetDirectPlay == 0) {
             free(packet);
             return 0;
@@ -4454,7 +4467,7 @@ int Net::send(void *data, int data_size, unsigned long target, int flags) {
     }
 
     const uint16_t packet_type = 4;
-    memcpy(packet, &packet_type, sizeof(packet_type));
+    header->type_flags_ = packet_type;
 
     if (target == 0) {
         int active[16];
@@ -4687,3 +4700,6 @@ int Net::send(void *data, int data_size, unsigned long target, int flags) {
         }
     }
 }
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma intrinsic(memcpy)
+#endif

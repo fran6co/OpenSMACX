@@ -7,12 +7,15 @@
 #define __cdecl
 typedef uint32_t DWORD;
 typedef uint32_t DPID;
+typedef uint16_t WORD;
 typedef void *HANDLE;
 typedef int BOOL;
 #define DP_OK 0
 #define FALSE 0
 #define WAIT_OBJECT_0 0
 #define WAIT_TIMEOUT 258U
+
+// @@NET_PACKET_ENVELOPE@@
 
 static int g_queue_adds;
 static int g_allocations;
@@ -48,6 +51,11 @@ static int g_send_failure;
 static int g_directplay_send_count;
 static DPID g_send_targets[64];
 static uint16_t g_wire_types[64];
+static DWORD g_wire_sequences[64];
+static uint16_t g_wire_field_2[64];
+static unsigned char g_wire_payloads[64];
+static DWORD g_wire_sizes[64];
+static unsigned char g_wire_tails[64];
 static DWORD g_wait_timeouts[64];
 static HANDLE g_wait_handles[64][2];
 static HANDLE g_reset_handles[128];
@@ -59,11 +67,19 @@ static int ExitTurnLoop;
 static char StringTemp[2048];
 
 struct DirectPlayStub {
-    int Send(DPID, DPID target, DWORD, void *packet, DWORD) {
+    int Send(DPID, DPID target, DWORD, void *packet, DWORD size) {
         if (g_directplay_send_count < 64) {
             g_send_targets[g_directplay_send_count] = target;
-            memcpy(&g_wire_types[g_directplay_send_count], packet,
-                   sizeof(g_wire_types[0]));
+            const NetPacketEnvelope *const header =
+                static_cast<const NetPacketEnvelope *>(packet);
+            g_wire_types[g_directplay_send_count] = header->type_flags_;
+            g_wire_sequences[g_directplay_send_count] = header->sequence_4_;
+            g_wire_field_2[g_directplay_send_count] = header->field_2_;
+            g_wire_sizes[g_directplay_send_count] = size;
+            g_wire_payloads[g_directplay_send_count] =
+                static_cast<const unsigned char *>(packet)[8];
+            g_wire_tails[g_directplay_send_count] =
+                static_cast<const unsigned char *>(packet)[size - 1];
         }
         ++g_directplay_send_count;
         return g_send_failure ? 1 : DP_OK;
@@ -106,7 +122,9 @@ static Net *g_active_net;
 
 static void *mem_get(int size) {
     ++g_allocations;
-    return malloc(static_cast<size_t>(size));
+    void *const memory = malloc(static_cast<size_t>(size));
+    if (memory != 0) memset(memory, 0xA5, static_cast<size_t>(size));
+    return memory;
 }
 static void tracked_free(void *memory) {
     if (memory != 0) ++g_frees;
@@ -201,6 +219,11 @@ static void reset_observers() {
     ExitTurnLoop = 0;
     memset(g_send_targets, 0, sizeof(g_send_targets));
     memset(g_wire_types, 0, sizeof(g_wire_types));
+    memset(g_wire_sequences, 0, sizeof(g_wire_sequences));
+    memset(g_wire_field_2, 0, sizeof(g_wire_field_2));
+    memset(g_wire_payloads, 0, sizeof(g_wire_payloads));
+    memset(g_wire_sizes, 0, sizeof(g_wire_sizes));
+    memset(g_wire_tails, 0, sizeof(g_wire_tails));
     memset(g_wait_timeouts, 0, sizeof(g_wait_timeouts));
     memset(g_wait_handles, 0, sizeof(g_wait_handles));
     memset(g_reset_handles, 0, sizeof(g_reset_handles));
@@ -279,6 +302,10 @@ static void test_packet_type_broadcast_lists_all_pending_peers() {
     assert(g_last_parse_count == 1);
     assert(strcmp(g_last_parse, "AlphaBeta,  Gamma,  .") == 0);
     assert(g_directplay_send_count == 1);
+    assert(g_wire_types[0] == 5U);
+    assert(g_wire_sequences[0] == 1U && g_wire_field_2[0] == 0xA5A5U);
+    assert(g_wire_sizes[0] == 13U && g_wire_payloads[0] == 0x3CU &&
+           g_wire_tails[0] == 0xA5U);
     assert(ExitTurnLoop == 1);
 }
 
@@ -308,6 +335,10 @@ static void test_packet_type_target_timeout_names_selected_peer() {
     assert(g_last_parse_count == 1);
     assert(strcmp(g_last_parse, "Beta.") == 0);
     assert(g_directplay_send_count == 1);
+    assert(g_wire_types[0] == 5U);
+    assert(g_wire_sequences[0] == 1U && g_wire_field_2[0] == 0xA5A5U);
+    assert(g_wire_sizes[0] == 13U && g_wire_payloads[0] == 0x3CU &&
+           g_wire_tails[0] == 0xA5U);
     assert(ExitTurnLoop == 1);
 }
 
@@ -371,12 +402,18 @@ static void test_direct_send_failure_dialogs_are_distinct() {
     assert(net.send(&payload, 1, 10, 0) == 0);
     assert(g_message_boxes == 1);
     assert(g_wire_types[0] == 1U);
+    assert(g_wire_sequences[0] == 0U && g_wire_field_2[0] == 0xA5A5U);
+    assert(g_wire_sizes[0] == 13U && g_wire_payloads[0] == 0xA5U &&
+           g_wire_tails[0] == 0xA5U);
 
     reset_observers();
     g_send_failure = 1;
     assert(net.send_packet_type(&payload, 1, 10, 1, 0) == 0);
     assert(g_message_boxes == 0);
     assert(g_wire_types[0] == 1U);
+    assert(g_wire_sequences[0] == 0U && g_wire_field_2[0] == 0xA5A5U);
+    assert(g_wire_sizes[0] == 13U && g_wire_payloads[0] == 0xA5U &&
+           g_wire_tails[0] == 0xA5U);
 }
 
 static void test_signed_size_and_player_count_comparisons() {
@@ -416,15 +453,24 @@ static void test_send_packet_word_for_voice_and_protocol_paths() {
     assert(net.send(&payload, 1, 10, 0) == 0);
     assert(g_send_failure == 0);
     assert(g_wire_types[0] == 1U);
+    assert(g_wire_sequences[0] == 0U && g_wire_field_2[0] == 0xA5A5U);
+    assert(g_wire_sizes[0] == 13U && g_wire_payloads[0] == 0x44U &&
+           g_wire_tails[0] == 0xA5U);
 
     reset_observers();
     net.voice_flags_D8_ = 0x10000000U;
     assert(net.send(&payload, 1, 10, 1) == 1);
     assert(g_wire_types[0] == 1U);
+    assert(g_wire_sequences[0] == 1U && g_wire_field_2[0] == 0xA5A5U);
+    assert(g_wire_sizes[0] == 13U && g_wire_payloads[0] == 0x44U &&
+           g_wire_tails[0] == 0xA5U);
 
     reset_observers();
     assert(net.send_packet_type(&payload, 1, 10, 0x1234, 0) == 1);
     assert(g_wire_types[0] == 0x1234U);
+    assert(g_wire_sequences[0] == 0U && g_wire_field_2[0] == 0xA5A5U);
+    assert(g_wire_sizes[0] == 13U && g_wire_payloads[0] == 0x44U &&
+           g_wire_tails[0] == 0xA5U);
 }
 
 int main() {
