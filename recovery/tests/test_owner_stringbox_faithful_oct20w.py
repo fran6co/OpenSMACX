@@ -196,11 +196,11 @@ def test_stringbox_actual_unk1_and_clip_ids_bodies(tmp_path, compiler_name):
     assert _compile_and_run(tmp_path, compiler, _harness(no_rebase_source), "no_rebase_mutant") != 0
 
     signed_clip = clip.replace(
-        "if (id <= count) {",
-        "if (list.current_->id <= static_cast<int>(count)) {",
+        "if (id > count) {",
+        "if (list.current_->id > static_cast<int>(count)) {",
     )
     assert signed_clip != clip
-    assert "if (list.current_->id <= static_cast<int>(count)) {" in signed_clip
+    assert "if (list.current_->id > static_cast<int>(count)) {" in signed_clip
     signed_clip_source = source.replace(clip, signed_clip)
     assert _compile_and_run(tmp_path, compiler, _harness(signed_clip_source), "signed_clip_mutant") != 0
 
