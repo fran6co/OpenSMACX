@@ -5849,6 +5849,9 @@ int Buffer::wrap_flying_flush() {
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005DC410 0x005DC7C0 0x005DCAE0 0x006453E0 0x00645470 0x00645930
 
+#if _MSC_VER == 1200
+#pragma function(memcpy)
+#endif
 int Buffer::wrap_flying(char * a1) {
     
     if (BufferFlyingWidth == 0) {
@@ -5932,6 +5935,9 @@ int Buffer::wrap_flying(char * a1) {
     strcat(buf, cur);
     return BufferFlyingY;
 }
+#if _MSC_VER == 1200
+#pragma intrinsic(memcpy)
+#endif
 
 // ORIGINAL: 0x005DB580 ?write_l@Buffer@@QAEHPAVFont@@PADHHH@Z 0x005DB580-0x005DB65F FILE BYTE_EXACT
 // working copy - scaffold materialised by --work
@@ -10520,6 +10526,9 @@ Status: Coverage transcription - unclaimed body
 // 0x00696CE0, measured " " in the pinned image; the census in buffer.cpp
 // records its one-space neighbours 0x00696CD8/0x00696CDC. socialwin.cpp's
 // SpaceText names the other space string this family joins with.
+#if _MSC_VER == 1200
+#pragma function(memcpy)
+#endif
 int Buffer::wrap_cent_flying(char *text) {
     if (BufferFlyingWidth == 0) return 0;
     if (text == 0 || *text == 0) return BufferFlyingY;
@@ -10559,6 +10568,9 @@ int Buffer::wrap_cent_flying(char *text) {
     strcat(BufferFlyingText, text);
     return BufferFlyingY;
 }
+#if _MSC_VER == 1200
+#pragma intrinsic(memcpy)
+#endif
 #pragma optimize("y", off)
 // ORIGINAL: 0x0047A720 ?UNK4@MultiWin@@QAEHPADPAURECT@@@Z 0x0047A720-0x0047A752 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["task:rectangle-owner-overloads", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x47a720", "seed:src/recovered/units/0047a720.cpp all identity/spans/claims and parsed discoveries retained; seed retirement requires fresh verification.", "source:src/multiwin.h caller receiver evidence and existing genuine Spot/Buffer interfaces."], "reason": "Recover genuine existing-owner rectangle convenience method. Original catalog MultiWin attribution is contradicted by unchanged receiver forwarding and typed Spot/Buffer callee evidence; original identity and historical obligations are retained, not renamed or newly banked."}
