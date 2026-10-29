@@ -324,7 +324,7 @@ union SpriteRasterRemapPointer {
 // RECOVERY_OBJECT: v1 0x009B3AC0 ?SpriteRasterRemapTable@@3TSpriteRasterRemapPointer@@A
 SpriteRasterRemapPointer SpriteRasterRemapTable;
 
-// ORIGINAL: 0x005EB20F ?fill_scaling_table@Sprite@@QAEXXZ 0x005EB20F-0x005EB294
+// ORIGINAL: 0x005EB20F ?fill_scaling_table@Sprite@@QAEXXZ 0x005EB20F-0x005EB294 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned5EB20F..5EB294 divides larger by smaller scale operands, biases error by quotient parity, and fills9B3AD8 until9B4758. Integer error operations wrap32bits before signed branches; cache publication belongs to callers.", "Existing seed identity and extent retained against the pinned original; catalogue class/return spellings are provenance, not a substitute for emitted symbol facts or fresh measurements."], "reason": "Recover the shared800-entry scale-step table generator with its original quotient-parity phase."}
 void Sprite::fill_scaling_table() {
     const int larger = SpriteScaleNumerator > SpriteScaleDenominator
@@ -340,16 +340,19 @@ void Sprite::fill_scaling_table() {
                                  static_cast<uint32_t>(twice_divisor));
     } else {
         quotient = larger;
-        twice_remainder = twice_divisor = error = 0;
+        error = twice_divisor = twice_remainder = 0;
     }
     // Original integer error accumulation wraps at 32 bits before its signed
     // branch. Positive scale operands alone do not guarantee no overflow.
     if (quotient & 1)
         error = static_cast<int>(static_cast<uint32_t>(error) + static_cast<uint32_t>(larger));
-    for (int i = 0; i < SpriteScalingTableCount; ++i) {
-        if (smaller == 1) {
+    int i = 0;
+    if (smaller == 1) {
+        for (i = 0; i < SpriteScalingTableCount; ++i) {
             SpriteScalingSteps[i] = quotient;
-        } else {
+        }
+    } else {
+        for (i = 0; i < SpriteScalingTableCount; ++i) {
             error = static_cast<int>(static_cast<uint32_t>(error) + static_cast<uint32_t>(twice_remainder));
             SpriteScalingSteps[i] = quotient;
             if (error > 0) {
