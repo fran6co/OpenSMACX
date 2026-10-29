@@ -167,6 +167,9 @@
       "src/datalink.cpp": {
         "flags": ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Oy-", "/Ob2"]
       },
+      "src/datalink_selection.cpp": {
+        "flags": ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Oy-", "/Ob2"]
+      },
       "src/game.cpp": {
         "flags": ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Oy-", "/Ob2", "/Z7"]
       },

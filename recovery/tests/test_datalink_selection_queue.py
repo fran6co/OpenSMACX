@@ -15,6 +15,7 @@ def test_actual_queue_callbacks_and_mutations(tmp_path, compiler_name):
         pytest.skip(compiler_name + " unavailable")
     header = (ROOT / "src/datalink.h").read_text()
     declarations = header[header.index("struct DatalinkSelectionEntry {"):]
+    selection_source = (ROOT / "src/datalink_selection.cpp").read_text()
     source = (ROOT / "src/datalink.cpp").read_text()
     patterns = [
         r"void DatalinkSelectionEntry::append_text\([^)]*\) const",
@@ -24,7 +25,9 @@ def test_actual_queue_callbacks_and_mutations(tmp_path, compiler_name):
         r"void DatalinkSelectionQueue::dispatch_matching\([^)]*\)",
         r"DatalinkEntryCallbackTable::DatalinkEntryCallbackTable\(\)",
     ]
-    bodies = "\n".join(definition(source, pattern) for pattern in patterns)
+    bodies = "\n".join(
+        definition(selection_source, pattern) for pattern in patterns[:-1]
+    ) + "\n" + definition(source, patterns[-1])
     fixture = Path(__file__).with_name("datalink_selection_queue_control.cpp").read_text()
     actual = fixture.replace("// @@DECLARATIONS@@", declarations).replace("// @@BODIES@@", bodies)
     mutations = {
