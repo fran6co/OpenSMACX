@@ -3526,7 +3526,7 @@ int BasePop::start(char *text_file, const char *text_label, int value,
             token = tok + 5 + ((tok[1] == '2') ? 1 : 0);
             purge_spaces(token);
             purge_leading(token);
-            if (isdigit(static_cast<unsigned char>(*token))) {
+            if (isdigit(*token)) { // Preserve the original signed-byte argument.
                 block.field_104_ = atoi(token);
             }
             block.text[0] = '\0';
