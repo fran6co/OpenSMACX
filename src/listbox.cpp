@@ -1650,8 +1650,80 @@ void ListBox::on_left_down(int x, int y) {
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0060cbc0.cpp"], "reason": "Rehome seed catalogue identity and original extents into compiled owning class; native-emitted symbol is separate and no new byte claim granted."}
 // symbol    ?on_mouse_move@ListBox@@UAEXHH@Z
 void ListBox::on_mouse_move(int x, int y) {
-    const int position = listbox_hit_position(
-        this, x, y, static_cast<int>(field_18_));
+    Dialog &dialog = *this;
+    StringList &items = dialog.item_list_;
+    const int top = static_cast<int>(field_18_);
+    const int y_offset = y - static_cast<int>(dialog.field_38_);
+    int position = -1;
+    if (items.entry_count_ > 0 && y_offset >= 0) {
+        if (dialog.column_count_ != 1) {
+            const int x_offset = x - dialog.field_40_;
+            const int column = x_offset
+                / (dialog.field_64_ + static_cast<int>(dialog.field_44_));
+            const int row = y_offset
+                / (dialog.field_68_ + static_cast<int>(dialog.field_44_));
+            const int candidate = top + column * dialog.row_count_ + row;
+            if (candidate < items.entry_count_) {
+                position = candidate;
+            }
+        } else {
+            int scroll = top - 1;
+            if (scroll <= items.entry_count_ - 1) {
+                items.current_ = items.head_;
+                if (scroll < 0) {
+                    if (abs(scroll) <= items.entry_count_) {
+                        int steps = abs(scroll);
+                        while (steps > 0) {
+                            --steps;
+                            items.current_ = items.current_->previous;
+                        }
+                        scroll += items.entry_count_;
+                        items.current_position_ = scroll;
+                    }
+                } else {
+                    int steps = scroll;
+                    while (steps > 0) {
+                        --steps;
+                        items.current_ = items.current_->next;
+                    }
+                    items.current_position_ = scroll;
+                }
+            }
+
+            int remaining = y_offset;
+            int rows_remaining = items.entry_count_;
+            int traversed = 0;
+            while (rows_remaining > 0 && remaining >= 0) {
+                ++traversed;
+                StringStructEntry *const head = items.head_;
+                if (head != 0) {
+                    items.current_ = items.current_->next;
+                    int current_position = items.current_position_ + 1;
+                    items.current_position_ = current_position;
+                    if (current_position == items.entry_count_) {
+                        items.current_position_ = 0;
+                    }
+                }
+
+                StringStructEntry *const entry = items.current_;
+                int span = 0;
+                if (entry != 0) {
+                    StringStructPayload *const payload = head != 0
+                        ? entry->string_payload() : 0;
+                    span = static_cast<int>(payload->field_C_);
+                }
+                remaining -= (dialog.field_68_
+                              + static_cast<int>(dialog.field_44_)) * span;
+                --rows_remaining;
+            }
+            if (traversed != 0) {
+                const int candidate = top + traversed - 1;
+                if (candidate < items.entry_count_) {
+                    position = candidate;
+                }
+            }
+        }
+    }
     if (position < 0) {
         return;
     }
