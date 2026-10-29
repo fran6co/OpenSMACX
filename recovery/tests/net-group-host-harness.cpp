@@ -1,5 +1,6 @@
 // Proposed bounded harness for actual Net group-send source bodies.
 #include <cassert>
+#include <cstddef>
 #include <stdint.h>
 #include <cstdio>
 #include <cstdlib>
@@ -10,7 +11,8 @@
 #define WAIT_OBJECT_0 0
 struct StopAtFirstWait {};
 typedef void *HANDLE;
-typedef unsigned long DWORD;
+typedef uint32_t DWORD;
+typedef uint16_t WORD;
 typedef unsigned long HRESULT;
 typedef unsigned long DPID;
 struct DPNAME {
@@ -24,7 +26,7 @@ typedef int (__stdcall *DPCallback)(unsigned long, unsigned long,
 struct FakeDirectPlay {
     unsigned long create_group_result;
     int CreateGroup(unsigned long *, DPNAME *, void *, DWORD, DWORD);
-    int GetPlayerData(unsigned long, void *, unsigned long *, unsigned long);
+    int GetPlayerData(unsigned long, void *, DWORD *, DWORD);
     int Send(unsigned long, unsigned long, unsigned long, void *, unsigned long);
     int EnumGroupPlayers(unsigned long, const GUID *, DPCallback, void *,
                          unsigned long);
@@ -64,6 +66,11 @@ struct Net {
     void close() { ++close_count; }
 };
 
+@@NET_PACKET_ENVELOPE@@
+typedef char net_packet_envelope_extent[(sizeof(NetPacketEnvelope) == 8) ? 1 : -1];
+typedef char net_packet_envelope_field_2_offset[(offsetof(NetPacketEnvelope, field_2_) == 2) ? 1 : -1];
+typedef char net_packet_envelope_sequence_offset[(offsetof(NetPacketEnvelope, sequence_4_) == 4) ? 1 : -1];
+
 NetPlayer *NetPlayerTable = 0;
 unsigned int NetPlayerWriteIndex = 0;
 Net *ActiveNet = 0;
@@ -75,16 +82,28 @@ static int g_send_calls, g_enum_calls, g_wait_calls;
 static DWORD g_wait_timeout;
 static int g_enum_saw_published_table, g_enum_saw_null_guid;
 static uint16_t g_last_packet_type;
+static uint16_t g_last_packet_field_2;
+static uint32_t g_last_packet_sequence;
+static unsigned char g_last_packet_payload[12];
+static int g_last_packet_size;
+static unsigned char g_last_packet_tail_byte;
 static int g_last_reliable;
 static int (__stdcall *g_enum_callback)(unsigned long, unsigned long,
                                         const DPNAME *, unsigned long, void *);
 static NetPlayer *g_callback_table;
 static unsigned int g_callback_index;
 static unsigned long g_flags_written;
-static unsigned long g_capacity_seen, g_getplayerdata_flags, g_getplayerdata_id;
+static DWORD g_capacity_seen, g_getplayerdata_flags;
+static unsigned long g_getplayerdata_id;
 static int g_mutate_selection_in_getplayerdata;
 
-void *mem_get(int n) { return std::malloc(static_cast<size_t>(n)); }
+void *mem_get(int n) {
+    void *const allocation = std::malloc(static_cast<size_t>(n));
+    // Seed packet allocation only so tests can observe fields the source leaves untouched.
+    if (allocation != 0)
+        std::memset(allocation, 0xA5, static_cast<size_t>(n));
+    return allocation;
+}
 void parse_says(int, char *, int, int) {}
 int pop_caption(char *, char *, int (*)()) { return 0; }
 void MessageBoxA(void *, const char *, const char *, unsigned int) {}
@@ -97,9 +116,23 @@ DWORD WaitForMultipleObjects(DWORD, const HANDLE *, int, DWORD timeout) {
 DWORD timeGetTime() { return 100; }
 
 int __stdcall group_send_stub(void *, unsigned long, long, int reliable,
-                              void *packet, int) {
+                              void *packet, int size) {
     ++g_send_calls;
-    std::memcpy(&g_last_packet_type, packet, sizeof(g_last_packet_type));
+    const NetPacketEnvelope *const header =
+        static_cast<const NetPacketEnvelope *>(packet);
+    g_last_packet_type = header->type_flags_;
+    g_last_packet_field_2 = header->field_2_;
+    g_last_packet_sequence = header->sequence_4_;
+    g_last_packet_size = size;
+    const int payload_size = size > 8 ? size - 8 : 0;
+    const int copied_payload = payload_size < static_cast<int>(sizeof(g_last_packet_payload))
+        ? payload_size : static_cast<int>(sizeof(g_last_packet_payload));
+    if (copied_payload != 0)
+        std::memcpy(g_last_packet_payload,
+                    static_cast<const unsigned char *>(packet) + 8,
+                    static_cast<size_t>(copied_payload));
+    g_last_packet_tail_byte = size > 0
+        ? static_cast<const unsigned char *>(packet)[size - 1] : 0;
     g_last_reliable = reliable;
     return 0;
 }
@@ -124,7 +157,7 @@ int FakeDirectPlay::CreateGroup(unsigned long *out, DPNAME *, void *, DWORD,
     return 0;
 }
 int FakeDirectPlay::GetPlayerData(unsigned long id, void *data,
-                                  unsigned long *capacity, unsigned long flags) {
+                                  DWORD *capacity, DWORD flags) {
     g_getplayerdata_id = id;
     g_capacity_seen = *capacity;
     g_getplayerdata_flags = flags;
@@ -177,6 +210,9 @@ int main() {
     // Ordinary unreliable send finishes before any acknowledgement state.
     assert(net.send_group(payload, 5, 0x99, 0) == 0);
     assert(g_send_calls == 1 && g_last_packet_type == 1 && g_last_reliable == 0);
+    assert(g_last_packet_field_2 == 0xA5A5 && g_last_packet_sequence == 0);
+    assert(g_last_packet_size == 17 && g_last_packet_payload[0] == 'h' &&
+           g_last_packet_payload[4] == 'o' && g_last_packet_tail_byte == 0xA5);
 
     // First DPID has no ACK flag; second DPID is ACK-selected. Original
     // first-DPID selection must pass delay 7 to the first wait.
@@ -196,6 +232,9 @@ int main() {
     assert(g_enum_calls == 1 && g_enum_saw_published_table && g_enum_saw_null_guid);
     assert(net.players_[0].field_8_ == 0 && net.players_[1].field_8_ == 1);
     assert(g_send_calls == 2 && g_last_packet_type == 4 && g_last_reliable == 0);
+    assert(g_last_packet_field_2 == 0xA5A5 && g_last_packet_sequence == 1);
+    assert(g_last_packet_size == 17 && g_last_packet_payload[0] == 'h' &&
+           g_last_packet_payload[4] == 'o' && g_last_packet_tail_byte == 0xA5);
     assert(g_wait_calls == 1 && g_wait_timeout == 7);
 
     // Callback contract controls execute after the bounded stop.

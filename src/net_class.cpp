@@ -829,6 +829,9 @@ static int __stdcall net_group_player_callback(unsigned long player_id, unsigned
 // ORIGINAL: 0x0062F390 sub_62f390 0x0062F390-0x0062F89D
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original 0x00631A60 callsite passes (buffer, size, voice_key, 0x100, 0).", "Pinned 0x0062F390 body uses the shared NetPlayerTable, Net FIFO, DirectPlay send interface, events and timeout UI.", "No byte claim is transferred or granted; preserve the native indeterminate pending/retry stack reads."], "reason": "Recover the group sender as a real Net member; pinned process_voice passes data, byte count, destination, packet type and flags in that order."}
 // symbol    ?send_group_flagged@Net@@QAEHPAXHJGI@Z
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma function(memcpy)
+#endif
 int Net::send_group_flagged(void *data, int size, long target,
                             unsigned short type, unsigned int flags) {
     HANDLE wait_handles[2];
@@ -1039,6 +1042,9 @@ uint32_t NetHostChangeSlot;
 // RECOVERY_OBJECT: v2 0x009BE60C 0x009BE610 ?NetReapBusy@@3IA 0x006320E0
 uint32_t NetReapBusy;
 // RECOVERY_OBJECT: v2 0x009BE610 0x009BE614 ?NetKeepAliveBusy@@3IA 0x006320E0
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma intrinsic(memcpy)
+#endif
 uint32_t NetKeepAliveBusy;
 
 /*
@@ -1472,6 +1478,9 @@ int Net::create_group(char *group_name) {
 // stride/16-slot extent is independently established by Net and player APIs.
 // ORIGINAL: 0x0062EEA0 ?send_group@Net@@QAEHPAXHJH@Z 0x0062EEA0-0x0062F38C
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned62EEA0..62F38C; retained git:b0d788d3e0ebc4d5b4c20acb834cd37455e53c67:src/unrecovered/0062eea0.cpp; genuine NetPlayer/FIFO/DirectPlay owners.", "Native62F038..62F044 selects the first nonzero player DPID, not the group callback acknowledgement flag. Native62F06E..62F080 writes only that pending/retry slot;62F14A..62F199 later reads all sixteen entries. Native62F0A2..62F0B9 initializes every base-time slot from one tick."], "reason": "Recover the original group send and retry operation through genuine Net state and the SDK, preserving its untouched pending/retry stack entries and separate full base-time initialization. The deterministic all-peer repair remains in Git history for the later improvement milestone."}
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma function(memcpy)
+#endif
 int Net::send_group(void *data, int size, long group_id, int flags) {
     int index;
     HANDLE wait_handles[2];
@@ -1510,12 +1519,14 @@ int Net::send_group(void *data, int size, long group_id, int flags) {
         field_E4_ += 1;
         packet_sequence = field_E4_;
     }
-    memcpy(packet + 4, &packet_sequence, sizeof packet_sequence);
+    NetPacketEnvelope *const header =
+        reinterpret_cast<NetPacketEnvelope *>(packet);
+    header->sequence_4_ = packet_sequence;
     if (data != 0) memcpy(packet + 8, data, static_cast<size_t>(size));
 
     if (reliable == 0 || (voice_flags_D8_ & 0x10000000U) != 0) {
         const uint16_t packet_type = 1;
-        memcpy(packet, &packet_type, sizeof packet_type);
+        header->type_flags_ = packet_type;
         const HRESULT sent = NetDirectPlay->Send(
             local_player_id_, static_cast<DPID>(group_id), reliable, packet,
             static_cast<DWORD>(allocation_size));
@@ -1527,7 +1538,7 @@ int Net::send_group(void *data, int size, long group_id, int flags) {
     // NetPlayer flags include bit 1. NetPlayerTable is shared callback context
     // and remains published exactly as native; it is not a local scratch copy.
     const uint16_t packet_type = 4;
-    memcpy(packet, &packet_type, sizeof packet_type);
+    header->type_flags_ = packet_type;
     for (index = 0; index < 16; ++index) {
         players_[index].field_8_ = 0;
     }
@@ -1671,6 +1682,9 @@ int Net::send_group(void *data, int size, long group_id, int flags) {
         return 0;
     }
 }
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma intrinsic(memcpy)
+#endif
 
 /*
 Purpose: Poll the embedded NetFifo for a message, when net play is enabled
