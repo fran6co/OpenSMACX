@@ -2156,6 +2156,7 @@ int Buffer::load_pcx(const char *filename, Palette *palette, int tgl, int height
 // ORIGINAL: 0x005E2480 ?get_pcx_dimensions@Buffer@@QAAHPBDPAHPAH@Z 0x005E2480-0x005E2690;0x00662C11-0x00662C26
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/005e2480.cpp", "pinned-image:0x00696BF8,0x00696CFC,0x00696D04,0x00696D0C"], "reason": "Home PCX header dimension decoding in Buffer using its Filemap lifecycle and source-owned format literals"}
 // symbol    ?get_pcx_dimensions@Buffer@@SAHPBDPAH1@Z
+#pragma function(memcpy)
 int Buffer::get_pcx_dimensions(const char *filename, int *width, int *height) {
     Filemap map;
     if (filename == nullptr || width == nullptr || height == nullptr) {
@@ -2201,6 +2202,7 @@ int Buffer::get_pcx_dimensions(const char *filename, int *width, int *height) {
 
     return 3;
 }
+#pragma intrinsic(memcpy)
 
 
 /*
@@ -8295,6 +8297,7 @@ int Buffer::change_color(RECT *area, int find_color, int replace_color) {
 // entries as the RGB triplets the DIB stores BGRX. `.pcx` is appended when the
 // caller's name carries no extension, and 4 reports a file that would not
 // open. The `Filemap` local is what carries the EH frame, as in load_pcx.
+#pragma function(memcpy)
 int Buffer::write_pcx(char *filename) {
     Filemap map;
 
@@ -8397,6 +8400,7 @@ int Buffer::write_pcx(char *filename) {
     free_data(1);
     return 4;
 }
+#pragma intrinsic(memcpy)
 
 // ORIGINAL: 0x005DF910 ?write_bmp@Buffer@@QAEHPAD@Z 0x005DF910-0x005DFB3F
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned write_bmp epilogue ends with RET4 at5DFB3C..5DFB3F;5DFB3F is alignment NOP. The independent5DFB40..5DFB48 body is MOV EAX,8;RET16, corroborated by both IDA catalogues. It is not writer padding or a writer cold block.", "Historical unclaimed seed extent5DF910..5DFB48 is retained here as provenance. The separate5DFB40 entry has no established C++ owner or signature; do not count it implemented by this writer, create an adapter, or infer ownership merely from adjacency. No byte claim was attached to the combined extent."], "reason": "Bind the BMP writer only to its reachable original body; the old seed extent swallowed a separate still-unowned constant-return entry."}

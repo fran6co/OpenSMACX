@@ -62,18 +62,20 @@ def extract_braced(text: str, signature: str) -> str:
 def product_bodies(source: str):
     callback = extract_braced(source,
                               "static int __stdcall net_group_player_callback(")
+    envelope = extract_type(source, "NetPacketEnvelope")
     create = extract_braced(source, "int Net::create_group(")
     send = extract_braced(source, "int Net::send_group(")
     enum_players = extract_braced(source, "int Net::enum_players(")
     owner = "\n".join((callback, create, send)).replace("IDirectPlay2", "FakeDirectPlay")
-    return owner, enum_players, send
+    return owner, enum_players, send, envelope
 
 
 def compile_and_run(source: str, enum_source: str, compiler: str):
-    owner, _, _ = product_bodies(source)
+    owner, _, _, envelope = product_bodies(source)
     enum_players = extract_braced(enum_source, "int Net::enum_players(")
     template = HARNESS.read_text()
-    harness = (template.replace("@@PRODUCT_CALLBACK_CREATE_SEND@@", owner)
+    harness = (template.replace("@@NET_PACKET_ENVELOPE@@", envelope)
+               .replace("@@PRODUCT_CALLBACK_CREATE_SEND@@", owner)
                .replace("@@PRODUCT_ENUM_PLAYERS@@", enum_players))
     with tempfile.TemporaryDirectory(prefix="net-group-faithful-") as scratch:
         cpp = Path(scratch) / "harness.cpp"
@@ -104,7 +106,7 @@ def test_extractor_skips_forward_declaration():
 
 def test_send_group_defined_prefix_actual_source():
     source = (ROOT / "src/net_class.cpp").read_text()
-    _, _, send = product_bodies(source)
+    _, _, send, _ = product_bodies(source)
     assert "if (players_[index].field_0_ != 0) break;" in send
     assert send.count("pending[index] = 1;") == 1
     assert send.count("retry_delay[index] = players_[index].field_C_;") == 1
@@ -118,6 +120,21 @@ def test_send_group_defined_prefix_actual_source():
         run = compile_and_run(source, source, compiler)
         assert run.returncode == 0, run.stdout + run.stderr
         assert "bounded actual-source Net group controls passed" in run.stdout
+
+
+def extract_type(source: str, type_name: str) -> str:
+    start = source.index("struct " + type_name)
+    brace = source.index("{", start)
+    depth = 0
+    for pos in range(brace, len(source)):
+        if source[pos] == "{":
+            depth += 1
+        elif source[pos] == "}":
+            depth -= 1
+            if depth == 0:
+                end = source.index(";", pos) + 1
+                return source[start:end]
+    raise AssertionError("unterminated source type: " + type_name)
 
 
 def test_pinned_initialization_and_base_time_witness():

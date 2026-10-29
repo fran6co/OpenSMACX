@@ -25,11 +25,22 @@ struct NetWinLobbyRow {
     uint8_t tail_[3];
     uint32_t owner_;
 };
+static NetWinLobbyRow NetWinLobbyRows[8];
+static int sent_live_rows_match = 1;
+static int sent_header_untouched = 1;
 /* NETWIN_SESSION_BLOCK_INSERTION */
 /* NETWIN_FACTION_RECORD_INSERTION */
 struct NetWinLobbyFullPacket {
     NetWinLobbyPacketHeader header_;
     NetWinLobbyRow rows_[7];
+    NetWinLobbyFullPacket() {
+        header_.field_2_ = 0xBEEF;
+        header_.field_C_ = 0xC001D00Du;
+        unsigned char *row_bytes = reinterpret_cast<unsigned char *>(rows_);
+        for (std::size_t index = 0; index < sizeof(rows_); ++index) {
+            row_bytes[index] = 0xCC;
+        }
+    }
 };
 struct NetWinLobbyLeavePacket {
     NetWinLobbyPacketHeader header_;
@@ -60,6 +71,17 @@ struct Net {
     uint8_t payloads[8][0xA74] = {};
     void send(void *data, unsigned size, int, int) {
         assert(sends < 8 && size <= sizeof(payloads[0]));
+        if (size == 0xA74) {
+            const uint8_t *bytes = static_cast<const uint8_t *>(data);
+            uint16_t untouched_word;
+            uint32_t untouched_dword;
+            std::memcpy(&untouched_word, bytes + 2, sizeof(untouched_word));
+            std::memcpy(&untouched_dword, bytes + 0xC, sizeof(untouched_dword));
+            sent_header_untouched = untouched_word == 0xBEEF &&
+                                    untouched_dword == 0xC001D00Du;
+            sent_live_rows_match =
+                std::memcmp(bytes + 0x10, &NetWinLobbyRows[1], 0xA64) == 0;
+        }
         sizes[sends] = size;
         std::memcpy(payloads[sends], data, size);
         ++sends;
@@ -128,7 +150,6 @@ static DefaultPreferences DefaultPrefs;
 static AlphaIniPreference AlphaIniPrefs = {0, 0, 0, 0xA5A55A5Au, 0};
 static NetWinSessionOptionsState NetWinSessionOptions;
 static NetWinSessionBlock NetWinSessionData;
-static NetWinLobbyRow NetWinLobbyRows[8];
 static NetDaemon NetDaemonNet;
 static Player Players[8];
 static PlayerData PlayersData[8];
@@ -145,6 +166,22 @@ static void send_faction_data(int) { ++faction_sends; }
         return 98; \
     } \
 } while (0)
+static int local_rows_normalized_before_snapshot;
+static void tracked_lobby_snapshot(void *destination, const void *source,
+                                   unsigned size) {
+    assert(size == 0xA64);
+    const NetWinLobbyRow *rows = static_cast<const NetWinLobbyRow *>(destination);
+    local_rows_normalized_before_snapshot = 1;
+    for (int index = 0; index < 7; ++index) {
+        const NetWinLobbyRow &row = rows[index];
+        if (row.owner_ != 0 || row.prefix_ != 0xFF ||
+            row.ready_or_occupied_ != 0 || row.field_2_ != 0 ||
+            row.faction_or_color_ != -1 || row.field_4_ != 2) {
+            local_rows_normalized_before_snapshot = 0;
+        }
+    }
+    std::memcpy(destination, source, size);
+}
 
 /* NETWIN_PICK_MAP_BODY_INSERTION */
 
@@ -152,6 +189,8 @@ static void reset_case() {
     scripted_choice = -1;
     map_result = game_result = 0;
     map_loads = game_loads = pops = parses = faction_sends = 0;
+    local_rows_normalized_before_snapshot = 0;
+    sent_live_rows_match = sent_header_untouched = 1;
     last_game_host = -1;
     parse_value = -1;
     NetDaemonNet.sends = NetDaemonNet.pid_calls = 0;
@@ -287,7 +326,18 @@ int main() {
             row.tail_[1] = static_cast<uint8_t>(0x60 + slot);
             row.tail_[2] = static_cast<uint8_t>(0x70 + slot);
         }
+        uint8_t live_rows_before[0xA64];
+        std::memcpy(live_rows_before, &NetWinLobbyRows[1], sizeof(live_rows_before));
         win.pick_map();
+        CONTROL_REQUIRE(local_rows_normalized_before_snapshot,
+                        "local row normalization precedes late full lobby snapshot");
+        CONTROL_REQUIRE(sent_live_rows_match,
+                        "full A64 payload equals live rows at send");
+        CONTROL_REQUIRE(sent_header_untouched,
+                        "partial packet header bytes remain untouched at send");
+        CONTROL_REQUIRE(std::memcmp(live_rows_before, &NetWinLobbyRows[1],
+                                    sizeof(live_rows_before)) == 0,
+                        "full lobby snapshot leaves global rows unchanged");
         CONTROL_REQUIRE(std::strcmp(scenario_records[1].leader_name_,
                                     "RosterLeader") == 0,
                         "server roster preserves leader name");
@@ -319,17 +369,17 @@ int main() {
         const NetWinLobbyFullPacket &lobby_packet =
             *reinterpret_cast<const NetWinLobbyFullPacket *>(
                 NetDaemonNet.payloads[1]);
+        CONTROL_REQUIRE(lobby_packet.header_.field_2_ == 0xBEEF &&
+                        lobby_packet.header_.field_C_ == 0xC001D00Du,
+                        "partial packet header bytes remain untouched");
+        CONTROL_REQUIRE(std::memcmp(lobby_packet.rows_, &NetWinLobbyRows[1],
+                                    0xA64) == 0,
+                        "late A64 snapshot overwrites local row normalization");
         for (int packet_row = 0; packet_row < 7; ++packet_row) {
             const NetWinLobbyRow &sent = lobby_packet.rows_[packet_row];
             const NetWinLobbyRow &global = NetWinLobbyRows[packet_row + 1];
-            CONTROL_REQUIRE(sent.owner_ == 0,
-                            "packet-local row owner reset");
-            CONTROL_REQUIRE(sent.prefix_ == 0xFF &&
-                            sent.ready_or_occupied_ == 0 &&
-                            sent.field_2_ == 0 &&
-                            sent.faction_or_color_ == -1 &&
-                            sent.field_4_ == 2,
-                            "packet-local lobby field resets");
+            CONTROL_REQUIRE(std::memcmp(&sent, &global, sizeof(sent)) == 0,
+                            "late A64 snapshot retains every live row byte");
             CONTROL_REQUIRE(sent.leader_name_[0] == 'B' + packet_row &&
                             sent.leader_name_[1] == 0 &&
                             sent.tail_[0] == 0x51 + packet_row &&
@@ -343,7 +393,7 @@ int main() {
                             global.field_2_ == 0x30 + packet_row + 1 &&
                             global.faction_or_color_ == packet_row + 1 &&
                             global.field_4_ == 0x40 + packet_row + 1,
-                            "local packet normalization does not reset global row");
+                            "original local normalization leaves global row unchanged");
         }
     }
     {

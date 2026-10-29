@@ -52,6 +52,7 @@ def prefix_harness(source):
     prefix = send_group_flagged_prefix(source)
     template = HARNESS.read_text()
     template = template[:template.index("int main() {")]
+    template = template.replace("@@NET_PACKET_ENVELOPE@@", envelope, 1)
     declaration = "int send_group(void *, int, long, int);"
     assert template.count(declaration) == 1
     template = template.replace(
@@ -79,8 +80,7 @@ def prefix_harness(source):
     }"""
     assert template.count(old_enumeration) == 1
     template = template.replace(old_enumeration, controlled_enumeration, 1)
-    template = template.replace("typedef unsigned long DWORD;", "typedef unsigned long DWORD;\ntypedef unsigned short WORD;", 1)
-    template = template.replace("@@PRODUCT_CALLBACK_CREATE_SEND@@", callback + "\n" + envelope + "\n" + prefix, 1)
+    template = template.replace("@@PRODUCT_CALLBACK_CREATE_SEND@@", callback + "\n" + prefix, 1)
     template = template.replace("@@PRODUCT_ENUM_PLAYERS@@", "", 1)
     return template + r"""
 static int run_case(int first_index, unsigned long first_timeout,

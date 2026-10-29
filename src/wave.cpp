@@ -1393,6 +1393,9 @@ Purpose: Initialise the wave from a filename and a mode mask. Streaming waves
 Return Value: n/a
 Status: Complete
 */
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma function(memset)
+#endif
 void Wave::init(char *group_id, unsigned long flags) {
     const uint32_t streaming = flags & 4;
     if (streaming && (flags & 0x10)) {
@@ -1410,7 +1413,8 @@ void Wave::init(char *group_id, unsigned long flags) {
     }
     fname_ = static_cast<char *>(operator new(strlen(resolved) + 1));
     strcpy(fname_, resolved);
-    // The original's `memset(this + 0x54, 0, 4)` at 0x004C6A1A. This used to be
+    // The original's `memset(this + 0x54, 0, 4)` call is at 0x004C6A22
+    // (its argument setup starts at 0x004C6A1A). This used to be
     // a byte loop, the only way to spell a four-byte clear while the header
     // declared a byte and three pad bytes at 0x54.
     // `memset(&flags_54_, 0, 4)`, not a store. The image clears it that
@@ -1453,6 +1457,9 @@ void Wave::init(char *group_id, unsigned long flags) {
         flags_54_ |= 0x20;
     }
 }
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma intrinsic(memset)
+#endif
 
 
 

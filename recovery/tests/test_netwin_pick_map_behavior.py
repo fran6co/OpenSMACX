@@ -105,6 +105,13 @@ def test_netwin_pick_map_actual_body(compiler_name, tmp_path):
     ) + ";"
 
     def generate(candidate_body: str) -> str:
+        snapshot = "memcpy(assigned_packet.rows_, &NetWinLobbyRows[1], 0xA64);"
+        assert candidate_body.count(snapshot) == 1, "single live-row snapshot must remain"
+        candidate_body = candidate_body.replace(
+            snapshot,
+            "tracked_lobby_snapshot(assigned_packet.rows_, &NetWinLobbyRows[1], 0xA64);",
+            1,
+        )
         return (fixture.replace(LOCK_MASK_MARKER, lock_bytes + "\n" + lock_view)
                 .replace(RECORD_MARKER, record)
                  .replace(SESSION_BLOCK_MARKER, session_block)
@@ -127,6 +134,38 @@ def test_netwin_pick_map_actual_body(compiler_name, tmp_path):
         [str(executable)], capture_output=True, text=True, timeout=30, check=False
     )
     assert ran.returncode == 0, ran.stdout + ran.stderr
+
+    # This old ordering copies before the row-field normalization loop. The
+    # pinned body copies afterward, overwriting those local stores; keep a
+    # compiled damage control so the actual-source witness rejects the old
+    # ordering rather than merely matching the same final field names.
+    snapshot = "        memcpy(assigned_packet.rows_, &NetWinLobbyRows[1], 0xA64);\n"
+    assert body.count(snapshot) == 1, "late A64 snapshot anchor must be unique"
+    old_order_body = body.replace(snapshot, "", 1)
+    packet_declaration = "    NetWinLobbyFullPacket assigned_packet;\n"
+    assert old_order_body.count(packet_declaration) == 1
+    old_order_body = old_order_body.replace(
+        packet_declaration, packet_declaration + snapshot, 1
+    )
+    old_order_path = tmp_path / "netwin_pick_map_copy_before_normalize.cpp"
+    old_order_path.write_text(generate(old_order_body))
+    old_order_executable = tmp_path / f"netwin-pick-map-old-copy-order-{compiler_name}"
+    old_order_build = subprocess.run(
+        [
+            compiler, "-std=c++11", "-Wall", "-Wextra", "-Werror",
+            str(old_order_path), "-o", str(old_order_executable),
+        ],
+        capture_output=True, text=True, timeout=60, check=False,
+    )
+    assert old_order_build.returncode == 0, old_order_build.stdout + old_order_build.stderr
+    old_order_run = subprocess.run(
+        [str(old_order_executable)], capture_output=True, text=True,
+        timeout=30, check=False,
+    )
+    assert old_order_run.returncode == 98, old_order_run.stdout + old_order_run.stderr
+    assert "CONTROL FAILURE: local row normalization precedes late full lobby snapshot" in (
+        old_order_run.stdout + old_order_run.stderr
+    )
 
     damaged_body = body.replace(
         "record.adjective_faction_", "record.leader_title_", 1
@@ -169,7 +208,7 @@ def test_netwin_pick_map_actual_body(compiler_name, tmp_path):
         timeout=30, check=False,
     )
     assert missing_owner_run.returncode == 98, missing_owner_run.stdout + missing_owner_run.stderr
-    assert "CONTROL FAILURE: packet-local row owner reset" in missing_owner_run.stderr
+    assert "CONTROL FAILURE: local row normalization precedes late full lobby snapshot" in missing_owner_run.stderr
 
     alive_as_human = body.replace(
         "bytes_.alive_mask_", "bytes_.human_mask_"

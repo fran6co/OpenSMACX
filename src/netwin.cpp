@@ -2014,6 +2014,9 @@ void NetWin::pick_faction(int slot) {
 
 // ORIGINAL: 0x0047CF40 ?pick_diff@NetWin@@QAEXH@Z 0x0047CF40-0x0047D2F4;0x00656AED-0x00656BC5
 // RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/recovered/units/0047cf40.cpp:NetWin::pick_diff", "src/netwin.cpp:pick_global_diff and sibling pickers", "src/netwin.cpp:NetWinLobbySinglePacket and NetWin::on_button_clicked", "Pinned47D0C7/47D0D0/47D0D6: opcode word, slot dword and +8 zero; copied row+10 and send18C. +2..3/+C..F are untouched."], "reason": "Recover the per-slot difficulty picker using the established popup objects, difficulty text table, typed lobby row and typed single-row packet."}
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma function(memcpy)
+#endif
 void NetWin::pick_diff(int slot) {
     PopMenu pop_menu;
     pop_menu.init();
@@ -2023,7 +2026,8 @@ void NetWin::pick_diff(int slot) {
     }
 
     const int answer = pick_answer(*this, pop_menu);
-    NetWinLobbyRow row = NetWinLobbyRows[slot];
+    NetWinLobbyRow row;
+    memcpy(&row, &NetWinLobbyRows[slot], sizeof(row));
     if (answer >= 0) {
         row.field_2_ = static_cast<uint8_t>(answer);
     }
@@ -2034,7 +2038,7 @@ void NetWin::pick_diff(int slot) {
         packet.header_.flags_ = 0x2F;
         packet.header_.slot_ = slot;
         packet.header_.field_8_ = 0;
-        packet.row_ = row;
+        memcpy(&packet.row_, &row, sizeof(packet.row_));
         NetDaemonNet.Net::send(&packet, sizeof(packet), NetDaemonNet.host_player_id(), 1);
     }
 }
@@ -2049,6 +2053,9 @@ void NetWin::pick_diff(int slot) {
 // Current source evidence: this body populates and sends NetWinSessionData in
 // session_packet below (original 0x0047DC99 onward), and represents the original
 // full-lobby packet's local row normalization at 0x0047DBF1..0x0047DC1E below.
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma function(memcpy)
+#endif
 void NetWin::pick_map() {
     PopMenu menu;
     Buffer faction_art;
@@ -2221,9 +2228,6 @@ void NetWin::pick_map() {
     }
 
     NetWinLobbyFullPacket assigned_packet;
-    for (int packet_row = 0; packet_row < 7; ++packet_row) {
-        assigned_packet.rows_[packet_row] = NetWinLobbyRows[packet_row + 1];
-    }
     for (int normalized_row = 0; normalized_row < 7; ++normalized_row) {
         NetWinLobbyRow &row = assigned_packet.rows_[normalized_row];
         row.owner_ = 0;
@@ -2235,9 +2239,13 @@ void NetWin::pick_map() {
     }
     if (NetDaemonNet.primary_state_.leading_words_[0] != 0) {
         assigned_packet.header_.opcode_ = 0x04;
-        assigned_packet.header_.flags_ = 0x4F;
+        assigned_packet.header_.flags_ = 0x0F;
         assigned_packet.header_.slot_ = -1;
         assigned_packet.header_.field_8_ = 0;
+        // Native 47DC27..47DC55 copies all seven live rows after the local
+        // normalization loop, overwriting those row-field writes on this path.
+        memcpy(assigned_packet.rows_, &NetWinLobbyRows[1], 0xA64);
+        assigned_packet.header_.flags_ |= 0x40;
         NetDaemonNet.Net::send(&assigned_packet, sizeof(assigned_packet), 0, 1);
     }
 
@@ -2259,6 +2267,9 @@ void NetWin::pick_map() {
     }
 }
 
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma intrinsic(memcpy)
+#endif
 /*
 Purpose: The cloud-cover picker: a popup titled from the string table with
          the two cloud options, the answer stored in the ninth slot's cloud
@@ -2431,6 +2442,9 @@ static void netwin_set_rect(RECT *rect, int left, int top, int right, int bottom
 // ORIGINAL: 0x00482490 ?exec@NetWin@@QAEHXZ 0x00482490-0x00482D84
 // RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00482490.cpp; original identity and primary482490..482D84 span retained", "Pinned original 0x004824C2 pushes callback 0x00483820, count 7, stride 0x17C and the stack array at EBP-0xAB0 before calling 0x00402EE0; originally the helper calls the callback with each element as ECX. Current source uses a seven-element array of constructed payload wrappers; VC6 supplies its non-EH ??_H iterator and the wrapper constructor returns the receiver, matching the original 0x483820 ABI. 0x00483820 writes offsets 0, 1, 2, 3, 4 and 0x178, matching the constructed row payload. Global wire rows remain passive; this composition does not assert an original class hierarchy.", "recovery/tasks/netwin-owner-coverage.json; revisions1-3 authorize coupled ownership and consumer changes; no matching or runtime acceptance implied."], "reason": "Recover the complete lobby window lifecycle with typed setup rectangles, existing controls, stack-local lobby rows and real receiver-free callbacks."}
 // TRIED: full transcription treating `self` as `int *` (matches the original's word-indexed field layout exactly); vtable slot057 retyped to (int,int,int) in this file's VCall, verified against raw disasm; UnionRect/CharUpperA reached via the IAT slot pattern. Reaches MISMATCH #6 'xor' vs 'mov' (register allocation), not chased further given size (2292 bytes).
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma function(memcpy)
+#endif
 int NetWin::exec() {
     if (ExitTurnLoop != 0) {
         return 0;
@@ -2645,6 +2659,9 @@ int NetWin::exec() {
     return field_7614_;
 }
 
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma intrinsic(memcpy)
+#endif
 /*
 Purpose: The player-count picker: entries numbered max(2, lobby count) to 7,
          the entry itself the answer; the ninth slot's player byte stores
@@ -3373,7 +3390,8 @@ void NetWin::on_button_clicked(int clicked_id) {
         memcpy(packet.rows_, &NetWinLobbyRows[1], sizeof(packet.rows_));
         NetDaemonNet.Net::send(&packet, sizeof(packet), 0, 1);
     } else {
-        NetWinLobbyRow row = NetWinLobbyRows[local_slot];
+        NetWinLobbyRow row;
+        memcpy(&row, &NetWinLobbyRows[local_slot], sizeof(row));
         row.ready_or_occupied_ = row.ready_or_occupied_ == 0 ? 1 : 0;
         if (local_slot >= 1) {
             NetWinLobbySinglePacket packet;
@@ -3381,7 +3399,7 @@ void NetWin::on_button_clicked(int clicked_id) {
             packet.header_.flags_ = 0x2F;
             packet.header_.slot_ = local_slot;
             packet.header_.field_8_ = 0;
-            packet.row_ = row;
+            memcpy(&packet.row_, &row, sizeof(packet.row_));
             NetDaemonNet.Net::send(&packet, sizeof(packet),
                                    NetDaemonNet.host_player_id(), 1);
         }
