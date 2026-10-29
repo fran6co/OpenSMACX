@@ -1603,6 +1603,9 @@ static_assert(sizeof(DDSURFACEDESC) == 0x6C,
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned terranx_original.exe SHA01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:62C860..62D38E", "62CE7F incoming ESP+90 after net ESP-8C proves bit_depth argument, not uninitialized EDI", "62CD70/62D118 and62D0D6 write ScreenBuffer+58/+5C; these are members, not DDCached globals", "SDK DDRAW.H Draw2/Surface2 IIDs and genuine slot signatures;62D297/62D2A9 are Clipper::SetClipList/Surface2::SetClipper", "Original selector cold lifetime span663340..663494 retained through real automatic BasePop", "62D160/62D1A0 use separate HDC9BC48C but shared WinHdcRefCount9B3AB0;62D2C0 retains final HRESULT"], "reason": "Recover shared DirectDraw selection/init/DC/clip lifetime as a complete typed owner in general.cpp, reuse actual Buffer/Win/Palette storage, and retain all original claims, spans and historical seed findings. Gamma adjacency routing is not ownership proof. No byte, linked-preservation or runtime acceptance is claimed."}
 // symbol    ?direct_draw_device_callback@@YGHPAU_GUID@@PAD1PAX@Z
 // kind game
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma function(memcpy)
+#endif
 BOOL CALLBACK direct_draw_device_callback(GUID *guid, LPSTR description,
                                          LPSTR /*driver_name*/, LPVOID context) {
     BasePop *popup = static_cast<BasePop *>(context);
@@ -1620,6 +1623,9 @@ BOOL CALLBACK direct_draw_device_callback(GUID *guid, LPSTR description,
     }
     return 1;
 }
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma intrinsic(memcpy)
+#endif
 
 // ORIGINAL: 0x0062C8E0 sub_62c8e0 0x0062C8E0-0x0062CD02;0x00663340-0x00663494
 // symbol    ?select_direct_draw_device@@YAPAU_GUID@@XZ
