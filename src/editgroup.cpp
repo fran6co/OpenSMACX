@@ -354,7 +354,7 @@ Purpose: Add one labelled edit field to the group: the group keeps ten boxes,
          list's insertion hook, the entry is appended under the field's
          ordinal, and the character limit lands in the group's limit array.
 
-// ORIGINAL: 0x00611F80 ?edit@EditGroup@@QAEHPADPADH@Z 0x00611F80-0x00612040 FILE
+// ORIGINAL: 0x00611F80 ?edit@EditGroup@@QAEHPADPADH@Z 0x00611F80-0x00612040 FILE BYTE_EXACT
 // symbol    ?edit@EditGroup@@QAEHPAD0H@Z
 // size      192 bytes
 // prototype int (__thiscall ?edit@EditGroup@@QAEHPADPADH@Z)(EditGroup* this, int8*, int8*, int)
@@ -384,10 +384,11 @@ int EditGroup::edit(char *label_text, char *initial_text, int limit_value) {
         text_buffers_[index][0] = 0;
         strcat(text_buffers_[index], initial_text);
     }
-    item_list_.pending_text_ = label_text;
-    item_list_.field_20_ = 0;
-    item_list_.field_24_ = 0;
-    if (item_list_.add(index) != 0) {
+    StringList &items = item_list_;
+    items.pending_text_ = label_text;
+    items.field_20_ = 0;
+    items.field_24_ = 0;
+    if (items.add(index) != 0) {
         return 4;
     }
     limits_[index] = limit_value;

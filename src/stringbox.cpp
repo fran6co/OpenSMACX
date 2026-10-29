@@ -384,18 +384,21 @@ void StringBox::UNK2(int first_bound, int second_bound) {
 // Drop IDs at or below count; higher IDs are rebased by count. Only a
 // removal changes the scrollbar fit, matching the original operation.
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00629A70 ?clip_ids@StringBox@@QAEXK@Z 0x00629A70-0x00629B69
+// ORIGINAL: 0x00629A70 ?clip_ids@StringBox@@QAEXK@Z 0x00629A70-0x00629B69 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:93d09e9c95484465004f450350b6cffe1e09f40e:src/unrecovered/00629a70.cpp", "src/stringbox.h", "src/stringstruct.h", "src/recovered/units/00629490.cpp"], "reason": "Remove list IDs at or below the clipping count and rebase larger IDs while preserving list cursor and fit behavior."}
 void StringBox::clip_ids(unsigned long count) {
     StringList &list = stringList_;
     if (list.head_ != 0) {
-        bool removed = false;
+        int removed = 0;
         int visited = 0;
         if (list.entry_count_ > 0) {
             do {
                 const uint32_t id = static_cast<uint32_t>(list.current_->id);
-                if (id <= count) {
-                    removed = true;
+                if (id > count) {
+                    list.current_->id = static_cast<int>(id - count);
+                    list.current_ = list.current_->next;
+                } else {
+                    removed = 1;
                     list.current_->next->previous = list.current_->previous;
                     list.current_->previous->next = list.current_->next;
                     StringStructEntry *const entry = list.current_;
@@ -409,9 +412,6 @@ void StringBox::clip_ids(unsigned long count) {
                     entry->payload = 0;
                     delete entry;
                     --list.entry_count_;
-                } else {
-                    list.current_->id = static_cast<int>(id - count);
-                    list.current_ = list.current_->next;
                 }
                 ++visited;
             } while (visited < list.entry_count_);
