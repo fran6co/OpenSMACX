@@ -119,6 +119,7 @@ struct Scroll {
     int position_, paging_, field_A30_;
     int left_button_state_, right_button_state_;
     int left_button_close_calls, right_button_close_calls;
+    int first_close_parent_init_calls;
     int close_parent_init_calls;
     int *parent_init_calls;
     Scroll() : close_calls(0), init_calls(0), hide_calls(0), x(0), y(0),
@@ -126,10 +127,14 @@ struct Scroll {
                range_maximum_(9), position_(0), paging_(0), field_A30_(0),
                left_button_state_(0), right_button_state_(0),
                left_button_close_calls(0), right_button_close_calls(0),
-               close_parent_init_calls(-1), parent_init_calls(0) {}
+               first_close_parent_init_calls(-1), close_parent_init_calls(-1),
+               parent_init_calls(0) {}
     void close() {
         ++close_calls;
         close_parent_init_calls = parent_init_calls ? *parent_init_calls : -1;
+        if (close_calls == 1) {
+            first_close_parent_init_calls = close_parent_init_calls;
+        }
         position_ = 0;
         paging_ = 0;
         field_A30_ = 0;
@@ -223,9 +228,11 @@ int main() {
     if (box.scroll_.init_calls != 1 || box.scroll_.x != 89 || box.scroll_.y != 0
         || box.scroll_.length != 37 || box.scroll_.parent != &box
         || box.scroll_.setting != 0 || box.scroll_.hide_calls != 1
-        || box.scroll_.close_calls != 1 || box.scroll_.close_parent_init_calls != 1
-        || box.scroll_.left_button_close_calls != 1
-        || box.scroll_.right_button_close_calls != 1
+        || box.scroll_.close_calls != 2
+        || box.scroll_.first_close_parent_init_calls != 0
+        || box.scroll_.close_parent_init_calls != 1
+        || box.scroll_.left_button_close_calls != 2
+        || box.scroll_.right_button_close_calls != 2
         || box.scroll_.range_minimum_ != 0 || box.scroll_.range_maximum_ != 0)
         return 6;
 
@@ -238,7 +245,8 @@ int main() {
         || callback_mutated.stringList_.allocator_ != 42
         || callback_mutated.stringList_.remove_calls != 1
         || callback_mutated.list_override_ != &borrowed
-        || callback_mutated.scroll_.close_calls != 1
+        || callback_mutated.scroll_.close_calls != 2
+        || callback_mutated.scroll_.first_close_parent_init_calls != 0
         || callback_mutated.scroll_.close_parent_init_calls != 1) return 8;
 
     StringBox embedded;
@@ -250,7 +258,8 @@ int main() {
         || embedded.scroll_.x != 71 || embedded.scroll_.length != 31
         || embedded.stringList_.current_position_ != 0
         || embedded.stringList_.allocator_ != 0
-        || embedded.scroll_.close_calls != 1
+        || embedded.scroll_.close_calls != 2
+        || embedded.scroll_.first_close_parent_init_calls != 0
         || embedded.scroll_.close_parent_init_calls != 1)
         return 10;
 
@@ -269,15 +278,14 @@ int main() {
     if (failed.close_calls != 1 || failed.init_calls != 1
         || failed.init_flags != 0x1000120 || failed.list_override_ != 0
         || failed.stringList_.remove_calls != 1) return 12;
-    if (failed.scroll_.close_calls != 0 || failed.scroll_.init_calls != 0
-        || failed.scroll_.hide_calls != 0 || failed.scroll_.range_minimum_ != 111
-        || failed.scroll_.range_maximum_ != 222
-        || failed.scroll_.position_ != 333 || failed.scroll_.paging_ != 444
-        || failed.scroll_.field_A30_ != 555
-        || failed.scroll_.left_button_state_ != 666
-        || failed.scroll_.right_button_state_ != 777
-        || failed.scroll_.left_button_close_calls != 0
-        || failed.scroll_.right_button_close_calls != 0) return 13;
+    if (failed.scroll_.close_calls != 1 || failed.scroll_.init_calls != 0
+        || failed.scroll_.hide_calls != 0 || failed.scroll_.range_minimum_ != 0
+        || failed.scroll_.range_maximum_ != 0 || failed.scroll_.position_ != 0
+        || failed.scroll_.paging_ != 0 || failed.scroll_.field_A30_ != 0
+        || failed.scroll_.left_button_state_ != 0
+        || failed.scroll_.right_button_state_ != 0
+        || failed.scroll_.left_button_close_calls != 1
+        || failed.scroll_.right_button_close_calls != 1) return 13;
 
     StringBox failed_negative;
     failed_negative.init_result = -13;
@@ -291,18 +299,18 @@ int main() {
     if (failed_negative.init(2, 3, 61, 19, &parent, 0, 0) != -13)
         return 14;
     if (failed_negative.close_calls != 1 || failed_negative.init_calls != 1
-        || failed_negative.scroll_.close_calls != 0
+        || failed_negative.scroll_.close_calls != 1
         || failed_negative.scroll_.init_calls != 0
         || failed_negative.scroll_.hide_calls != 0
-        || failed_negative.scroll_.range_minimum_ != 121
-        || failed_negative.scroll_.range_maximum_ != 232
-        || failed_negative.scroll_.position_ != 343
-        || failed_negative.scroll_.paging_ != 454
-        || failed_negative.scroll_.field_A30_ != 565
-        || failed_negative.scroll_.left_button_state_ != 676
-        || failed_negative.scroll_.right_button_state_ != 787
-        || failed_negative.scroll_.left_button_close_calls != 0
-        || failed_negative.scroll_.right_button_close_calls != 0)
+        || failed_negative.scroll_.range_minimum_ != 0
+        || failed_negative.scroll_.range_maximum_ != 0
+        || failed_negative.scroll_.position_ != 0
+        || failed_negative.scroll_.paging_ != 0
+        || failed_negative.scroll_.field_A30_ != 0
+        || failed_negative.scroll_.left_button_state_ != 0
+        || failed_negative.scroll_.right_button_state_ != 0
+        || failed_negative.scroll_.left_button_close_calls != 1
+        || failed_negative.scroll_.right_button_close_calls != 1)
         return 15;
     return 0;
 }
@@ -432,6 +440,14 @@ def test_stringbox_init_uses_width_for_vertical_scroll_x_and_preserves_paths(
     assert _compile_and_run(
         tmp_path, compiler, _init_harness(borrowed_clear_source),
         "init_unconditional_clear_mutant",
+    ) != 0
+
+    missing_scroll_close_mutant = init_method.replace("    scroll_.close();\n", "")
+    assert missing_scroll_close_mutant != init_method
+    missing_scroll_close_source = source.replace(init_method, missing_scroll_close_mutant)
+    assert _compile_and_run(
+        tmp_path, compiler, _init_harness(missing_scroll_close_source),
+        "init_missing_pinned_scroll_close_mutant",
     ) != 0
 
 
