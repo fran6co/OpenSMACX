@@ -59,6 +59,7 @@ CURRENT_SYMBOLS = {
     0x006348C0: "?scale_assign@Matrix3@@QAEAAU1@M@Z",
     0x006348F0: "?subtract_assign@Matrix3@@QAEAAU1@PBU1@@Z",
     0x00634980: "?multiply@Matrix3@@QAE?AU1@PBU1@@Z",
+    0x00634A50: "?transform@Matrix3@@QAE?AUMatrix3TransformResult@@PBM@Z",
     0x00634AD0: "?scaled@Matrix3@@QAE?AU1@M@Z",
 }
 BOUND_VALUE_ADDRESSES = {0x00634720, 0x00634980, 0x00634AD0}
@@ -244,7 +245,7 @@ def test_value_signatures_and_non_target_declarations_match_baseline():
         "Matrix3 &subtract_assign(const Matrix3 *other);",
         "bool equals(const float *other);",
         "Matrix3 multiply(const Matrix3 *other);",
-        "void transform(float *out, const float *in);",
+        "Matrix3TransformResult transform(const float *in);",
         "Matrix3 scaled(float scale);",
         "Matrix3 *write_identity();",
     )
@@ -311,7 +312,7 @@ def test_original_claims_symbols_roles_and_levers_preserve_ba13_baseline():
     rows = _identity_snapshot(current)
     assert set(CURRENT_SYMBOLS) == {
         0x00634720, 0x006347C0, 0x006348C0,
-        0x006347F0, 0x006348F0, 0x00634980, 0x00634AD0,
+        0x006347F0, 0x006348F0, 0x00634980, 0x00634A50, 0x00634AD0,
     }
     for address in BOUND_VALUE_ADDRESSES:
         row = rows[address]

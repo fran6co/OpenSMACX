@@ -373,8 +373,9 @@ bool Matrix3::equals(const float *other) {
 // full extent, lifetime, or x87 equivalence asserted.
 // RECOVERY_ROLE: SCAFFOLD Bounded numerical receiver view only; shared original object ownership, containing class, full extent, callers and lifetime remain unproved. Source consolidation and complete arithmetic bodies do not resolve this structural obligation.
 // ORIGINAL: 0x00634A50 sub_634a50 0x00634A50-0x00634AC9 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned0x00634A50..0x00634AC9 stages three float results then copies them to the first stack argument, retains that pointer in EAX and ends ret8; the second stack argument supplies the three input floats.", "Matched Vector::operator+0x006343E0 independently establishes the same hidden-result pointer/copy/EAX convention. This does not establish that transform returns the existing Vector class or its destructor lifetime.", "No in-tree source callers require migration; preserve original sub_634a50 identity and full121-byte span."], "reason": "Model the observed three-float hidden class result instead of an explicit output parameter. Matrix3TransformResult is a bounded mathematical value view; original type name, complete receiver ownership, construction/lifetime details and native x87 matching remain unresolved."}
 // Historical source symbol hypothesis: ?transform@Matrix3@@QAEXPAMPBM@Z
-// symbol    ?transform@Matrix3@@QAEXPAMPBM@Z
+// symbol    ?transform@Matrix3@@QAE?AUMatrix3TransformResult@@PBM@Z
 // size      121 bytes
 // callers   0   call targets   0
 // kind      game
@@ -383,15 +384,15 @@ bool Matrix3::equals(const float *other) {
 Return Value: n/a
 Status: Complete
 */
-void Matrix3::transform(float *out, const float *in) {
+// The pin supports a hidden three-float value result, not this type's
+// historical name or ownership.
+Matrix3TransformResult Matrix3::transform(const float *in) {
     const float *m = cells;
-    float result[3];
-    result[0] = m[1] * in[1] + m[2] * in[2] + m[0] * in[0];
-    result[1] = m[4] * in[1] + m[3] * in[0] + m[5] * in[2];
-    result[2] = m[7] * in[1] + m[6] * in[0] + m[8] * in[2];
-    out[0] = result[0];
-    out[1] = result[1];
-    out[2] = result[2];
+    Matrix3TransformResult result;
+    result.x_ = m[1] * in[1] + m[2] * in[2] + m[0] * in[0];
+    result.y_ = m[4] * in[1] + m[3] * in[0] + m[5] * in[2];
+    result.z_ = m[7] * in[1] + m[6] * in[0] + m[8] * in[2];
+    return result;
 }
 
 /*
