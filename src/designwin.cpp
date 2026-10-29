@@ -706,7 +706,7 @@ int SelectPartWin::draw_chassis(int a1, RECT *a2, int a3) {
     vehdraw_construct_chassis(faction_id_, slot,
                               0, 0, reactor_id_,
                               &caviar_);
-    caviar_.set_scaling_bits(0x3D75C28F);
+    caviar_.set_scaling(0.06f);
 
     Buffer *const buf = static_cast<Buffer *>(this);
     const int x_avg = (a2->right + a2->left) / 2;
@@ -4320,42 +4320,44 @@ void DesignWin::draw_special_1(int redraw) {
     Buffer::set_clip(&area);
     buffer_.copy(this, &area);
 
-    const int title_height = font2_.unk_1_ < 0
-        ? font2_.line_height() : font2_.pixel_height() + font2_.unk_1_;
-    RECT title = area;
-    title.bottom = title.top + title_height;
+    RECT title;
+    title.left = area.left + 5;
+    title.top = area.top + 2;
+    title.right = area.right - 5;
+    title.bottom = area.top + (font2_.unk_1_ < 0
+        ? font2_.line_height() : font2_.pixel_height() + font2_.unk_1_);
     Buffer::set_text_color(0xE0, -1, 1, 1);
-    char *caption = label_get(0x228 / 4);
-    if (caption != 0) {
-        Buffer::write_cent_l(&font2_, caption, &title,
-                             static_cast<int>(strlen(caption)));
-    }
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(0x228 / 4));
+    strcat(StringTemp, " ");
+// RECOVERY_LITERAL: v1 0x00683554 0x00683556 ??_C@_01FBAH@1?$AA@ 0x00435B30
+    strcat(StringTemp, "1"); // Original first special-ability title numeral.
+    CharUpperA(StringTemp);
+    Buffer::wrap_cent(&font2_, StringTemp, &title);
+    Buffer::set_font(&font1_, 0, 0, 0);
+    Buffer::set_text_color(0xE0, -1, 1, 1);
 
-    RECT text = area;
-    text.left += 5;
-    text.right -= 5;
-    text.top += title_height + 2;
     const int ability = protoAbilityID1_;
     if (ability < 0) {
-        char *empty = label_get(0x64 / 4);
-        if (empty != 0) {
-            Buffer::write_cent_l(&font1_, empty, &text,
-                                 static_cast<int>(strlen(empty)));
-        }
+        StringTemp[0] = 0;
+        strcat(StringTemp, label_get(0x64 / 4));
+        Buffer::write_cent_l(StringTemp, &area,
+                             static_cast<int>(strlen(StringTemp)));
         return;
     }
 
-    const RulesAbility &record = Ability[ability];
-    char *name = StringTable.get(record.name);
-    char *description = StringTable.get(record.description);
-    if (name != 0) {
-        Buffer::set_text_color(0xE0, -1, 1, 1);
-        text.top = Buffer::wrap_cent(&font2_, name, &text);
-    }
-    if (description != 0) {
-        Buffer::set_text_color(0xE0, -1, 1, 1);
-        Buffer::wrap_cent(&font1_, description, &text);
-    }
+    Buffer::set_text_color(0xE0, -1, 1, 1);
+    StringTemp[0] = 0;
+    strcat(StringTemp, "{");
+    strcat(StringTemp, StringTable.get(Ability[ability].name));
+    strcat(StringTemp, ": ");
+    strcat(StringTemp, " ");
+    strcat(StringTemp, "}");
+    strcat(StringTemp, StringTable.get(Ability[ability].description));
+    const int height = Buffer::wrap_height(
+        StringTemp, area.right - area.left);
+    area.top = area.bottom - height;
+    Buffer::wrap_cent(StringTemp, &area);
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
@@ -4367,42 +4369,44 @@ void DesignWin::draw_special_2(int redraw) {
     Buffer::set_clip(&area);
     buffer_.copy(this, &area);
 
-    const int title_height = font2_.unk_1_ < 0
-        ? font2_.line_height() : font2_.pixel_height() + font2_.unk_1_;
-    RECT title = area;
-    title.bottom = title.top + title_height;
+    RECT title;
+    title.left = area.left + 5;
+    title.top = area.top + 2;
+    title.right = area.right - 5;
+    title.bottom = area.top + (font2_.unk_1_ < 0
+        ? font2_.line_height() : font2_.pixel_height() + font2_.unk_1_);
     Buffer::set_text_color(0xE0, -1, 1, 1);
-    char *caption = label_get(0x228 / 4);
-    if (caption != 0) {
-        Buffer::write_cent_l(&font2_, caption, &title,
-                             static_cast<int>(strlen(caption)));
-    }
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(0x228 / 4));
+    strcat(StringTemp, " ");
+// RECOVERY_LITERAL: v1 0x00683560 0x00683562 ??_C@_01KOLO@2?$AA@ 0x00435DE0
+    strcat(StringTemp, "2"); // Original second special-ability title numeral.
+    CharUpperA(StringTemp);
+    Buffer::wrap_cent(&font2_, StringTemp, &title);
+    Buffer::set_font(&font1_, 0, 0, 0);
+    Buffer::set_text_color(0xE0, -1, 1, 1);
 
-    RECT text = area;
-    text.left += 5;
-    text.right -= 5;
-    text.top += title_height + 2;
     const int ability = protoAbilityID2_;
     if (ability < 0) {
-        char *empty = label_get(0x64 / 4);
-        if (empty != 0) {
-            Buffer::write_cent_l(&font1_, empty, &text,
-                                 static_cast<int>(strlen(empty)));
-        }
+        StringTemp[0] = 0;
+        strcat(StringTemp, label_get(0x64 / 4));
+        Buffer::write_cent_l(StringTemp, &area,
+                             static_cast<int>(strlen(StringTemp)));
         return;
     }
 
-    const RulesAbility &record = Ability[ability];
-    char *name = StringTable.get(record.name);
-    char *description = StringTable.get(record.description);
-    if (name != 0) {
-        Buffer::set_text_color(0xE0, -1, 1, 1);
-        text.top = Buffer::wrap_cent(&font2_, name, &text);
-    }
-    if (description != 0) {
-        Buffer::set_text_color(0xE0, -1, 1, 1);
-        Buffer::wrap_cent(&font1_, description, &text);
-    }
+    Buffer::set_text_color(0xE0, -1, 1, 1);
+    StringTemp[0] = 0;
+    strcat(StringTemp, "{");
+    strcat(StringTemp, StringTable.get(Ability[ability].name));
+    strcat(StringTemp, ": ");
+    strcat(StringTemp, " ");
+    strcat(StringTemp, "}");
+    strcat(StringTemp, StringTable.get(Ability[ability].description));
+    const int height = Buffer::wrap_height(
+        StringTemp, area.right - area.left);
+    area.top = area.bottom - height;
+    Buffer::wrap_cent(StringTemp, &area);
 }
 
 // ORIGINAL: 0x00436090 ?draw_vehicle@DesignWin@@QAEXH@Z 0x00436090-0x00437999 FILE
