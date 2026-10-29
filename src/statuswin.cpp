@@ -1793,7 +1793,7 @@ void StatusWin::UNK3() {
 // annotations or historical claims.
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x004B89C0 ?arrow_left@StatusWin@@QAEXXZ 0x004B89C0-0x004B8BC5
+// ORIGINAL: 0x004B89C0 ?arrow_left@StatusWin@@QAEXXZ 0x004B89C0-0x004B8BC5 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004b89c0.cpp", "Pinned original01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tests/test_statuswin_remaining_behavior.py"], "reason": "Home the complete typed StatusWin arrow_left operation. Retain the original seed and historical obligations; this product has no new measured claim."}
 void StatusWin::arrow_left() {
     if (iUnitIndex_ == -1) {
@@ -1803,6 +1803,27 @@ void StatusWin::arrow_left() {
     const int previous = Vehs[iUnitIndex_].prev_veh_id_stack;
     if (previous >= 0) {
         iUnitIndex_ = previous;
+
+        const int font_height = WinScreenWidth == 0x320 ? 10 : 12;
+        if (font_height != font_size_) {
+            font_size_ = font_height;
+            font1_.init(DefaultFontFace, font_height, 0);
+            font2_.init(DefaultFontFace, font_height, 2);
+            font3_.init(DefaultFontFace, font_height, 1);
+        }
+        if (WinScreenWidth != 0x320) {
+            font1_.unk_1_ = 4;
+            font2_.unk_1_ = 4;
+            font3_.unk_1_ = 4;
+        }
+
+        draw_status(-1, -1, -1, -1, 0);
+        RECT rect;
+        UnionRect(&rect, &MainInterfaceGlobal.status_hit_rect(),
+                  &MainInterfaceGlobal.status_right_rect());
+        UnionRect(&rect, &rect, &MainInterfaceGlobal.status_left_rect());
+        MainInterfaceGlobal.soft_update(&rect);
+        return;
     } else {
         const int base_id = base_at(iTileX_, iTileY_);
         if (base_id < 0) {
@@ -1810,71 +1831,87 @@ void StatusWin::arrow_left() {
         }
         iCityIndex_ = base_id;
         iUnitIndex_ = -1;
-    }
 
-    const int font_height = WinScreenWidth == 0x320 ? 10 : 12;
-    if (font_height != font_size_) {
-        font_size_ = font_height;
-        font1_.init(DefaultFontFace, font_height, 0);
-        font2_.init(DefaultFontFace, font_height, 2);
-        font3_.init(DefaultFontFace, font_height, 1);
-    }
-    if (WinScreenWidth != 0x320) {
-        font1_.unk_1_ = 4;
-        font2_.unk_1_ = 4;
-        font3_.unk_1_ = 4;
-    }
+        const int font_height = WinScreenWidth == 0x320 ? 10 : 12;
+        if (font_height != font_size_) {
+            font_size_ = font_height;
+            font1_.init(DefaultFontFace, font_height, 0);
+            font2_.init(DefaultFontFace, font_height, 2);
+            font3_.init(DefaultFontFace, font_height, 1);
+        }
+        if (WinScreenWidth != 0x320) {
+            font1_.unk_1_ = 4;
+            font2_.unk_1_ = 4;
+            font3_.unk_1_ = 4;
+        }
 
-    draw_status(-1, -1, -1, -1, 0);
-    RECT rect;
-    UnionRect(&rect, &MainInterfaceGlobal.status_hit_rect(),
-              &MainInterfaceGlobal.status_right_rect());
-    UnionRect(&rect, &rect, &MainInterfaceGlobal.status_left_rect());
-    MainInterfaceGlobal.soft_update(&rect);
+        draw_status(-1, -1, -1, -1, 0);
+        RECT rect;
+        UnionRect(&rect, &MainInterfaceGlobal.status_hit_rect(),
+                  &MainInterfaceGlobal.status_right_rect());
+        UnionRect(&rect, &rect, &MainInterfaceGlobal.status_left_rect());
+        MainInterfaceGlobal.soft_update(&rect);
+    }
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004B8BD0 ?arrow_right@StatusWin@@QAEXXZ 0x004B8BD0-0x004B8DF0 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004b8bd0.cpp", "Pinned original01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "recovery/tests/test_statuswin_remaining_behavior.py"], "reason": "Home the complete typed StatusWin arrow_right operation. Retain the original seed and historical obligations; this product has no new measured claim. Historical seed obligation is carried by this product; current restoration is outstanding."}
 void StatusWin::arrow_right() {
-    bool changed = false;
     if (iCityIndex_ >= 0) {
         const int vehicle_id = veh_at(iTileX_, iTileY_);
         if (field_15DC_ != 0 && vehicle_id >= 0) {
             iCityIndex_ = -1;
             iUnitIndex_ = vehicle_id;
-            changed = true;
+
+            const int font_height = WinScreenWidth == 0x320 ? 10 : 12;
+            if (font_height != font_size_) {
+                font_size_ = font_height;
+                font1_.init(DefaultFontFace, font_height, 0);
+                font2_.init(DefaultFontFace, font_height, 2);
+                font3_.init(DefaultFontFace, font_height, 1);
+            }
+            if (WinScreenWidth != 0x320) {
+                font1_.unk_1_ = 4;
+                font2_.unk_1_ = 4;
+                font3_.unk_1_ = 4;
+            }
+
+            draw_status(-1, -1, -1, -1, 0);
+            RECT rect;
+            UnionRect(&rect, &MainInterfaceGlobal.status_hit_rect(),
+                      &MainInterfaceGlobal.status_right_rect());
+            UnionRect(&rect, &rect, &MainInterfaceGlobal.status_left_rect());
+            MainInterfaceGlobal.soft_update(&rect);
+            return;
         }
     } else if (iUnitIndex_ >= 0) {
         const int next = Vehs[iUnitIndex_].next_veh_id_stack;
         if (next >= 0) {
             iUnitIndex_ = next;
-            changed = true;
+
+            const int font_height = WinScreenWidth == 0x320 ? 10 : 12;
+            if (font_height != font_size_) {
+                font_size_ = font_height;
+                font1_.init(DefaultFontFace, font_height, 0);
+                font2_.init(DefaultFontFace, font_height, 2);
+                font3_.init(DefaultFontFace, font_height, 1);
+            }
+            if (WinScreenWidth != 0x320) {
+                font1_.unk_1_ = 4;
+                font2_.unk_1_ = 4;
+                font3_.unk_1_ = 4;
+            }
+
+            draw_status(-1, -1, -1, -1, 0);
+            RECT rect;
+            UnionRect(&rect, &MainInterfaceGlobal.status_hit_rect(),
+                      &MainInterfaceGlobal.status_right_rect());
+            UnionRect(&rect, &rect, &MainInterfaceGlobal.status_left_rect());
+            MainInterfaceGlobal.soft_update(&rect);
+            return;
         }
     }
-    if (!changed) {
-        return;
-    }
-
-    const int font_height = WinScreenWidth == 0x320 ? 10 : 12;
-    if (font_height != font_size_) {
-        font_size_ = font_height;
-        font1_.init(DefaultFontFace, font_height, 0);
-        font2_.init(DefaultFontFace, font_height, 2);
-        font3_.init(DefaultFontFace, font_height, 1);
-    }
-    if (WinScreenWidth != 0x320) {
-        font1_.unk_1_ = 4;
-        font2_.unk_1_ = 4;
-        font3_.unk_1_ = 4;
-    }
-
-    draw_status(-1, -1, -1, -1, 0);
-    RECT rect;
-    UnionRect(&rect, &MainInterfaceGlobal.status_hit_rect(),
-              &MainInterfaceGlobal.status_right_rect());
-    UnionRect(&rect, &rect, &MainInterfaceGlobal.status_left_rect());
-    MainInterfaceGlobal.soft_update(&rect);
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
