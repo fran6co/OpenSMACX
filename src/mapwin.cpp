@@ -8714,3 +8714,8 @@ extern "C" int __cdecl sub_4468f0(int a1) {
     }
     return 1;
 }
+// ORIGINAL: 0x004210D0 sub_4210d0 0x004210D0-0x004210E7 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x004210D0..0x004210E6 adjusts ECX by +0x21A6C, calls MapWin destructor 0x00420F90, calls GraphicWin destructor 0x005D4DD0, then returns", "pinned BaseWin and replay cleanup continuations pass the complete embedded MapWin address in ECX before tail-jumping to 0x004210D0; helper uses its own receiver and does not read caller-frame state", "src/mapwin.h declares MapWin publicly virtually derives from GraphicWin; its pinned vbtable 0x0066C870 supplies the +0x21A6C virtual-base offset"], "reason": "Bind the pinned generated MapWin virtual-base teardown entry to the real MapWin object and its GraphicWin virtual base while retaining the canonical MapWin marker home."}
+// compile_context src/basewin.cpp
+// kind game
+// symbol    ??_DMapWin@@QAEXXZ

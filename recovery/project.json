@@ -153,139 +153,573 @@
     "compiler_profile": "application",
     "unit_flag_sets": {
       "src/sound_loader.cpp": {
-        "flags": ["/nologo", "/TP", "/Zm200", "/GX", "/O2", "/Ob2", "-MT", "/W4", "/Oy-", "-c"]
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W4",
+          "/Oy-",
+          "-c"
+        ]
       },
       "src/listbox.cpp": {
-        "flags": ["/nologo", "/TP", "/Zm200", "/GX", "/O2", "/Ob2", "-MT", "/W4", "-c"]
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W4",
+          "-c"
+        ]
       },
       "src/jackal/checkbox.cpp": {
-        "flags": ["/nologo", "/TP", "/Zm200", "/GX", "/O2", "/Ob2", "-MT", "/W4", "-c"]
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W4",
+          "-c"
+        ]
       },
       "src/sounddevice.cpp": {
-        "flags": ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Oy-", "/Ob2"]
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W4",
+          "/Oy-",
+          "-c"
+        ]
       },
       "src/application_math.cpp": {
-        "flags": ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Oy-", "/Ob2"]
+        "flags": [
+          "/c",
+          "/O2",
+          "/Gy",
+          "/GR-",
+          "/GX",
+          "/Oy-",
+          "/Ob2"
+        ]
       },
       "src/application_text.cpp": {
-        "flags": ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Oy-", "/Ob2"]
+        "flags": [
+          "/c",
+          "/O2",
+          "/Gy",
+          "/GR-",
+          "/GX",
+          "/Oy-",
+          "/Ob2"
+        ]
       },
       "src/prefwin.cpp": {
-        "flags": ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Oy-", "/Ob2", "/Z7"]
+        "flags": [
+          "/c",
+          "/O2",
+          "/Gy",
+          "/GR-",
+          "/GX",
+          "/Oy-",
+          "/Ob2",
+          "/Z7"
+        ]
       },
       "src/caviar.cpp": {
-        "flags": ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Ob2", "/Z7"]
+        "flags": [
+          "/c",
+          "/O2",
+          "/Gy",
+          "/GR-",
+          "/GX",
+          "/Ob2",
+          "/Z7"
+        ]
       },
       "src/datalink.cpp": {
-        "flags": ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Oy-", "/Ob2"]
+        "flags": [
+          "/c",
+          "/O2",
+          "/Gy",
+          "/GR-",
+          "/GX",
+          "/Oy-",
+          "/Ob2"
+        ]
       },
       "src/datalink_selection.cpp": {
-        "flags": ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Oy-", "/Ob2"]
+        "flags": [
+          "/c",
+          "/O2",
+          "/Gy",
+          "/GR-",
+          "/GX",
+          "/Oy-",
+          "/Ob2"
+        ]
       },
       "src/game.cpp": {
-        "flags": ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Oy-", "/Ob2", "/Z7"]
+        "flags": [
+          "/c",
+          "/O2",
+          "/Gy",
+          "/GR-",
+          "/GX",
+          "/Oy-",
+          "/Ob2",
+          "/Z7"
+        ]
       },
       "src/faction_monuments.cpp": {
-        "flags": ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Oy-", "/Ob2", "/Z7"]
+        "flags": [
+          "/c",
+          "/O2",
+          "/Gy",
+          "/GR-",
+          "/GX",
+          "/Oy-",
+          "/Ob2",
+          "/Z7"
+        ]
       },
       "src/netdaemon.cpp": {
-        "flags": ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Oy-", "/Ob2", "/Z7"]
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W4",
+          "/Oy-",
+          "/Z7",
+          "-c"
+        ]
       },
       "src/mapwin.cpp": {
-        "flags": ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Oy-", "/Ob2", "/Z7"]
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W4",
+          "/Oy-",
+          "/Z7",
+          "-c"
+        ]
       },
       "src/video.cpp": {
-        "flags": ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Ob2"]
+        "flags": [
+          "/c",
+          "/O2",
+          "/Gy",
+          "/GR-",
+          "/GX",
+          "/Ob2"
+        ]
       },
       "src/video_queue.cpp": {
-        "flags": ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Ob2"]
+        "flags": [
+          "/c",
+          "/O2",
+          "/Gy",
+          "/GR-",
+          "/GX",
+          "/Ob2"
+        ]
       },
       "src/pulldown.cpp": {
-        "flags": ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Ob1"]
+        "flags": [
+          "/c",
+          "/O2",
+          "/Gy",
+          "/GR-",
+          "/GX",
+          "/Ob1"
+        ]
       },
       "src/alphamovie.cpp": {
-        "flags": ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Oy-", "/Ob2"]
+        "flags": [
+          "/c",
+          "/O2",
+          "/Gy",
+          "/GR-",
+          "/GX",
+          "/Oy-",
+          "/Ob2"
+        ]
       },
       "src/gamma.cpp": {
-        "flags": ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Oy-", "/Ob2"]
+        "flags": [
+          "/c",
+          "/O2",
+          "/Gy",
+          "/GR-",
+          "/GX",
+          "/Oy-",
+          "/Ob2"
+        ]
       },
       "src/pushbutton.cpp": {
-        "flags": ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Ob2"]
+        "flags": [
+          "/c",
+          "/O2",
+          "/Gy",
+          "/GR-",
+          "/GX",
+          "/Ob2"
+        ]
       },
       "src/mci_video.cpp": {
-        "flags": ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Ob2"]
+        "flags": [
+          "/c",
+          "/O2",
+          "/Gy",
+          "/GR-",
+          "/GX",
+          "/Ob2"
+        ]
       },
       "src/dipedit.cpp": {
-        "flags": ["/c", "/O2", "/Gy", "/GR-", "/Oy-", "/GX", "/Ob1"]
+        "flags": [
+          "/c",
+          "/O2",
+          "/Gy",
+          "/GR-",
+          "/Oy-",
+          "/GX",
+          "/Ob1"
+        ]
       },
       "src/prefwin_geometry.cpp": {
-        "flags": ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Ob2"]
+        "flags": [
+          "/c",
+          "/O2",
+          "/Gy",
+          "/GR-",
+          "/GX",
+          "/Ob2"
+        ]
       },
       "src/popmenu.cpp": {
-        "flags": ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Oy-", "/Ob2"]
+        "flags": [
+          "/c",
+          "/O2",
+          "/Gy",
+          "/GR-",
+          "/GX",
+          "/Oy-",
+          "/Ob2"
+        ]
       },
       "src/popup.cpp": {
-        "flags": ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Oy-", "/Ob2"]
+        "flags": [
+          "/c",
+          "/O2",
+          "/Gy",
+          "/GR-",
+          "/GX",
+          "/Oy-",
+          "/Ob2"
+        ]
       },
       "src/popup_api.cpp": {
-        "flags": ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Ob2"]
+        "flags": [
+          "/c",
+          "/O2",
+          "/Gy",
+          "/GR-",
+          "/GX",
+          "/Ob2"
+        ]
       },
       "src/technology_queries.cpp": {
-        "flags": ["/c", "/O2", "/Gy", "/GR-", "/Oy-", "/GX", "/Ob2"]
+        "flags": [
+          "/c",
+          "/O2",
+          "/Gy",
+          "/GR-",
+          "/Oy-",
+          "/GX",
+          "/Ob2"
+        ]
       },
       "src/map_altitude.cpp": {
-        "flags": ["/c", "/O2", "/Gy", "/GR-", "/Oy-", "/GX", "/Ob2"]
+        "flags": [
+          "/c",
+          "/O2",
+          "/Gy",
+          "/GR-",
+          "/Oy-",
+          "/GX",
+          "/Ob2"
+        ]
       },
       "src/labels.cpp": {
-        "flags": ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Ob2"]
+        "flags": [
+          "/c",
+          "/O2",
+          "/Gy",
+          "/GR-",
+          "/GX",
+          "/Ob2"
+        ]
       },
       "src/sound.cpp": {
-        "flags": ["/nologo", "/TP", "/Zm200", "/GX", "/O2", "/Ob2", "-MT", "/W4", "/Oy-", "-c"]
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W4",
+          "/Oy-",
+          "-c"
+        ]
       },
       "src/spying.cpp": {
-        "flags": ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Oy-", "/Ob2"]
+        "flags": [
+          "/c",
+          "/O2",
+          "/Gy",
+          "/GR-",
+          "/GX",
+          "/Oy-",
+          "/Ob2"
+        ]
       },
       "src/squarelock.cpp": {
-        "flags": ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Oy-", "/Ob2"]
+        "flags": [
+          "/c",
+          "/O2",
+          "/Gy",
+          "/GR-",
+          "/GX",
+          "/Oy-",
+          "/Ob2"
+        ]
       },
       "src/wave.cpp": {
-        "flags": ["/c", "/O2", "/Gy", "/GR-", "/Oy-", "/GX", "/Ob2"]
+        "flags": [
+          "/c",
+          "/O2",
+          "/Gy",
+          "/GR-",
+          "/Oy-",
+          "/GX",
+          "/Ob2"
+        ]
       },
       "src/texture_objects.cpp": {
-        "flags": ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Ob2"]
+        "flags": [
+          "/c",
+          "/O2",
+          "/Gy",
+          "/GR-",
+          "/GX",
+          "/Ob2"
+        ]
       },
       "src/caviar_renderer_objects.cpp": {
-        "flags": ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Ob2"]
+        "flags": [
+          "/c",
+          "/O2",
+          "/Gy",
+          "/GR-",
+          "/GX",
+          "/Ob2"
+        ]
       },
       "src/caviar_objects.cpp": {
-        "flags": ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Ob2"]
+        "flags": [
+          "/c",
+          "/O2",
+          "/Gy",
+          "/GR-",
+          "/GX",
+          "/Ob2"
+        ]
       },
       "src/sprite_objects.cpp": {
-        "flags": ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Ob2"]
+        "flags": [
+          "/c",
+          "/O2",
+          "/Gy",
+          "/GR-",
+          "/GX",
+          "/Ob2"
+        ]
       },
       "src/sprite_assets.cpp": {
-        "flags": ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Oy-", "/Ob2"]
+        "flags": [
+          "/c",
+          "/O2",
+          "/Gy",
+          "/GR-",
+          "/GX",
+          "/Oy-",
+          "/Ob2"
+        ]
       },
       "src/jackal/time.cpp": {
-        "flags": ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Ob2"]
+        "flags": [
+          "/c",
+          "/O2",
+          "/Gy",
+          "/GR-",
+          "/GX",
+          "/Ob2"
+        ]
       },
       "src/time.cpp": {
-        "flags": ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Oy-", "/Ob2"]
+        "flags": [
+          "/c",
+          "/O2",
+          "/Gy",
+          "/GR-",
+          "/GX",
+          "/Oy-",
+          "/Ob2"
+        ]
       },
       "src/jackal/time_lifecycle.cpp": {
-        "flags": ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Ob2"]
+        "flags": [
+          "/c",
+          "/O2",
+          "/Gy",
+          "/GR-",
+          "/GX",
+          "/Ob2"
+        ]
       },
       "src/map.cpp": {
-        "flags": ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Oy-", "/Ob2", "/Z7"]
+        "flags": [
+          "/c",
+          "/O2",
+          "/Gy",
+          "/GR-",
+          "/GX",
+          "/Oy-",
+          "/Ob2",
+          "/Z7"
+        ]
       },
       "src/map_sites.cpp": {
-        "flags": ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Oy-", "/Ob2", "/Z7"]
+        "flags": [
+          "/c",
+          "/O2",
+          "/Gy",
+          "/GR-",
+          "/GX",
+          "/Oy-",
+          "/Ob2",
+          "/Z7"
+        ]
       },
-      "src/jackal/jackal.cpp": [0],
-      "src/jackal/palette.cpp": [0],
-      "src/jackal/font.cpp": [0],
-      "src/interface_palette.cpp": [1],
-      "src/interface_fonts.cpp": [1]
+      "src/jackal/jackal.cpp": [
+        0
+      ],
+      "src/jackal/palette.cpp": [
+        0
+      ],
+      "src/jackal/font.cpp": [
+        0
+      ],
+      "src/interface_palette.cpp": [
+        1
+      ],
+      "src/interface_fonts.cpp": [
+        1
+      ],
+      "src/spritebox.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W4",
+          "-c"
+        ]
+      },
+      "src/basewin.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W4",
+          "/Oy-",
+          "-c"
+        ]
+      },
+      "src/replaywin.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W4",
+          "/Oy-",
+          "-c"
+        ]
+      },
+      "src/net_class.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W4",
+          "-c"
+        ]
+      },
+      "src/alphanet.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W4",
+          "/Oy-",
+          "-c"
+        ]
+      }
     },
     "flag_sets": [
       [

@@ -548,7 +548,7 @@ void __cdecl sub_593480(int value) {
 /*
 Purpose: Tear down a network daemon through its lock members and the
          AlphaNet/Net destructor chain.
-// ORIGINAL: 0x00538D10 ??1NetDaemon@@QAE@XZ 0x00538D10-0x00538EBE;0x004E3710-0x004E372B;0x0065E010-0x0065E0A5
+// ORIGINAL: 0x00538D10 ??1NetDaemon@@QAE@XZ 0x00538D10-0x00538EBE;0x0065E010-0x0065E0A5
 // TRIED: 15/97 with 62 compiled instructions, and the gap is the class, not
 //   the spelling. TWO things measured 2026-08-22. (1) call_diff says MORE: this
 //   tree makes 13 direct calls where the image makes 12, and the extra one is

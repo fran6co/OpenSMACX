@@ -67,7 +67,7 @@ Purpose: Construct the GraphicWin and Dialog virtual bases when most-derived,
          this control's state and buffer defaults. VC6 supplies table setup,
          exception cleanup and the hidden most-derived flag; the catalogue's
          int parameter is not a source parameter.
-// ORIGINAL: 0x0060FF00 ??0SpriteBox@@QAE@H@Z 0x0060FF00-0x0061011B;0x006116C0-0x006116DB;0x00662FA0-0x00662FFA
+// ORIGINAL: 0x0060FF00 ??0SpriteBox@@QAE@H@Z 0x0060FF00-0x0061011B;0x00662FA0-0x00662FFA
 // symbol    ??0SpriteBox@@QAE@XZ
 // size      656 bytes
 // prototype void (__thiscall ??0SpriteBox@@QAE@H@Z)(SpriteBox* this, int)
@@ -124,7 +124,7 @@ SpriteBox::SpriteBox() {
 /*
 Purpose: Close the control, then let the compiler destroy its owned list and
          Spot, and its virtual bases through the appropriate destructor entry.
-// ORIGINAL: 0x00610120 ??1SpriteBox@@QAE@XZ 0x00610120-0x00610274;0x006116C0-0x006116DB;0x00662FFA-0x0066301A
+// ORIGINAL: 0x00610120 ??1SpriteBox@@QAE@XZ 0x00610120-0x00610274;0x00662FFA-0x0066301A
 // symbol    ??1SpriteBox@@UAE@XZ
 // TRIED: 35 compiled instructions against the image's 99, and the image opens
 //   an SEH frame (`push -1 / push 0x663010 / mov eax, fs:[0] / push eax /
@@ -1489,3 +1489,7 @@ void SpriteBox::on_left_double_click(int x_coord, int y_coord) {
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: SpriteBox constructor span contains the store of table 0x00670738; the pinned dword at 0x006707AC is 0x006118D0.", "The original 8-byte receiver thunk at 0x006118D0 tail-jumps to 0x00611330, mapped as ?on_right_double_click@SpriteBox@@QAEXHH@Z in this class owner.", "The actual class owner is src/spritebox.cpp; its current owner object vftable relocation at byte offset 0x74 names the generated thunk, whose terminal relocation targets ?on_right_double_click@SpriteBox@@UAEXHH@Z.", "The source identity retains its exact historical kind fact `game`; its full original spans, claims, lessons, and findings are checked unchanged by the writer readback."], "reason": "The pinned SpriteBox constructor at 0x0060FF00 installs its Win view at 0x00670738; the original slot cell at +0x74 selects this full identity. The real SpriteBox virtual member and owner-TU vftable are already source-owned; current owner COFF evidence binds this FILE identity to the compiler-emitted receiver adjustor tailing to ?on_right_double_click@SpriteBox@@UAEXHH@Z."}
 // kind      game
 // symbol    ?on_right_double_click@SpriteBox@@$4PPPPPPPM@A@AEXHH@Z
+// ORIGINAL: 0x006116C0 sub_6116c0 0x006116C0-0x006116DB FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x006116C0..0x006116DA receives SpriteList in ECX, adjusts to its +0x28 virtual base, calls 0x00611730, restores vptr 0x006693AC and allocator owner 0x009B3374, then returns; trailing NOP at 0x006116DB is outside the mapped span", "pinned cleanup actions at 0x00662FE5 and 0x00663005 load the SpriteList member receiver into ECX and tail-jump to 0x006116C0; helper body does not read the caller frame", "src/spritebox.h declares SpriteBox::list_ as SpriteList at +0x24; SpriteList derives from SpriteListBase, which virtually derives from StringAllocationBase, whose base stage is at +0x28"], "reason": "Bind the pinned generated SpriteList virtual-base cleanup entry to the real SpriteList member and StringAllocationBase stage."}
+// kind game
+// symbol    ??_DSpriteList@@QAEXXZ
