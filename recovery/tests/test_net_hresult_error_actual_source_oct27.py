@@ -160,6 +160,10 @@ int cd_check() {
 }
 
 // SDK_HRESULT_CONSTANTS
+class Net {
+public:
+    int report_directplay_error(HRESULT error);
+};
 // ACTUAL_NET_ERROR_BODY
 
 int main(int argc, char **argv) {
@@ -167,7 +171,8 @@ int main(int argc, char **argv) {
     const uint32_t bits = static_cast<uint32_t>(strtoul(argv[1], 0, 0));
     popup_result = atoi(argv[2]);
     cd_result = atoi(argv[3]);
-    const int result = sub_631ba0(static_cast<HRESULT>(bits));
+    Net net;
+    const int result = net.report_directplay_error(static_cast<HRESULT>(bits));
     printf("%d|%s|%d|%d|%d\n", parse_count,
            observed_message ? observed_message : "-", popup_count, cd_count,
            result);
@@ -228,7 +233,7 @@ def run(binary: Path, error: str, popup: int, cd: int) -> str:
 @pytest.mark.parametrize("compiler_name", ("g++", "clang++"))
 def test_actual_helper_vectors_and_popup_paths(tmp_path: Path, compiler_name: str) -> None:
     source = SOURCE.read_text(encoding="utf-8")
-    body = definition(source, "static int __stdcall sub_631ba0(HRESULT error)")
+    body = definition(source, "int Net::report_directplay_error(HRESULT error)")
     constants, _, _ = sdk_hresult_environment(body)
     binary = compile_body(tmp_path, body, constants, compiler_name)
     assert run(binary, "0x88770136", -1, 73) == "1|DPERR_SESSIONLOST|1|0|0"
@@ -242,7 +247,7 @@ def test_actual_helper_vectors_and_popup_paths(tmp_path: Path, compiler_name: st
 @pytest.mark.parametrize("compiler_name", ("g++", "clang++"))
 def test_wrong_value_mutant_fails_expected_session_lost_output(tmp_path: Path, compiler_name: str) -> None:
     source = SOURCE.read_text(encoding="utf-8")
-    body = definition(source, "static int __stdcall sub_631ba0(HRESULT error)")
+    body = definition(source, "int Net::report_directplay_error(HRESULT error)")
     constants, _, fac_dp = sdk_hresult_environment(body)
     expected_case = "case DPERR_SESSIONLOST:"
     assert body.count(expected_case) == 1

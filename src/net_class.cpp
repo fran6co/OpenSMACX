@@ -2377,9 +2377,12 @@ int Net::choose_service() {
 // RECOVERY_ASSOCIATED: v1 switch_selector 0x00631BA0 0x0063203C 0x00632065 0x00631E6F
 // ORIGINAL: 0x00631BA0 sub_631ba0 0x00631BA0-0x00631EDB BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["The 39 DPERR identifiers are defined by the already included dplay.h and Win32 HRESULT aliases. Their configured SDK values were checked against every original case value; use those signed HRESULT constants instead of narrowing unsigned literals.", "Pinned recognized arms prepare parse_says arguments and join the common call; unknown values skip it. Current general.h takes LPCSTR, so token literals need no mutable-pointer casts.", "HRESULT is signed LONG. Original signed branches at body offsets A,1B,2B,34,1AD,266,26F support switching directly on error rather than converting it to unsigned.", "Pinned 0x00631E1A compares with 0x88770136, the SDK DPERR_SESSIONLOST value. Its matching branch starts at 0x00631E25 and pushes the token at 0x00631E29 through literal 0x00697DAC. The former source 0x88770132 was a translation error; the other 38 mappings agree with the original.", "The body ends at 0x00631EDB. Four compiler-owned target/selector pairs follow at 631EDC/631EF0,631F0C/631F34,631FA4/631FCC,632028/63203C; they are data outside that function-code span, not neighboring functions to borrow.", "Dismissal returns zero; otherwise cd_check at 0x00628F30 supplies the result. Preserve the seed switch-layout finding and original identity/span; no historical byte claim or original nominal linkage proof is granted."], "reason": "Recover the signed DirectPlay HRESULT switch and case-local parse_says operations using the existing SDK error names, preserving original dispatch and popup/CD-check behavior."}
-// symbol    ?sub_631ba0@@YGHJ@Z
+// symbol    ?report_directplay_error@Net@@AAEHJ@Z
 // TRIED: a single flat switch over the 38 DPERR_* case values with a `default: goto tail;` matches through instr #16 (the top-level binary-search split) but the compiler's chosen jump-table boundaries at #17 diverge from the original's nested-if split
-static int __stdcall sub_631ba0(HRESULT error) {
+// Both original calls (0x0062E31B, 0x0062E361) pass the Net receiver in ECX;
+// ESI preserves that receiver from 0x0062E2A8. The callee never reads it.
+// report_directplay_error is descriptive; the original spelling is unknown.
+int Net::report_directplay_error(HRESULT error) {
     switch (error) {
     case DPERR_ALREADYINITIALIZED: parse_says(0, "DPERR_ALREADYINITIALIZED", -1, -1); break;
     case DPERR_ACCESSDENIED: parse_says(0, "DPERR_ACCESSDENIED", -1, -1); break;
@@ -2439,7 +2442,7 @@ Purpose: Join one enumerated service provider: copy the provider GUID into
          0x9BE600 word every other entry point tests), reads the provider's
          latency, and seeds all sixteen player slots with it - 100 ms when
          the provider does not say.
-// ORIGINAL: 0x0062E2A0 ?join_service@Net@@QAEHPAUServiceStruct@@@Z 0x0062E2A0-0x0062E41C FILE
+// ORIGINAL: 0x0062E2A0 ?join_service@Net@@QAEHPAUServiceStruct@@@Z 0x0062E2A0-0x0062E41C FILE BYTE_EXACT
 // size      380 bytes
 // prototype int (__thiscall ?join_service@Net@@QAEHPAUServiceStruct@@@Z)(Net* this, ServiceStruct*)
 // callers   2   call targets   4
@@ -2450,7 +2453,7 @@ Purpose: Join one enumerated service provider: copy the provider GUID into
 // Homed from src/unrecovered/0062e2a0.cpp.
 Return Value: 0x10 with no service record, 1 after any reported failure, 1
          when the launcher exited below 21, 0x16 when it did not, else 0
-Status: Coverage transcription - unclaimed body
+Status: Complete
 */
 int Net::join_service(ServiceStruct *service) {
     if (service == 0) {
@@ -2474,7 +2477,7 @@ int Net::join_service(ServiceStruct *service) {
     // filled through the out parameter the caller owns.
     HRESULT result = DirectPlayCreate(provider, &direct_play, 0);
     if (result != 0) {
-        sub_631ba0(result);
+        report_directplay_error(result);
         return 1;
     }
 
@@ -2486,7 +2489,7 @@ int Net::join_service(ServiceStruct *service) {
     if (result != 0) {
         direct_play->Release();
         direct_play = 0;
-        sub_631ba0(result);
+        report_directplay_error(result);
         return 1;
     }
     direct_play->Release();
@@ -2503,17 +2506,18 @@ int Net::join_service(ServiceStruct *service) {
     // The provider's latency estimate (0 when it would not say - the image
     // stores the whole dword, and a zero means the 100 default) lands in
     // every player slot's third word and in the 0x6D4 default beside them.
-    unsigned long latency = NetServiceCaps.dwLatency;
-    NetPlayer *player = players_;
-    int count = 0x10;
-    if (latency != 0) {
+    if (NetServiceCaps.dwLatency != 0) {
+        NetPlayer *player = players_;
+        int count = 16;
         do {
-            player->field_C_ = latency;
+            player->field_C_ = NetServiceCaps.dwLatency;
             ++player;
             --count;
         } while (count != 0);
-        field_6D4_ = latency;
+        field_6D4_ = NetServiceCaps.dwLatency;
     } else {
+        NetPlayer *player = players_;
+        int count = 16;
         do {
             player->field_C_ = 100;
             ++player;

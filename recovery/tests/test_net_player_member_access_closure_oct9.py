@@ -66,8 +66,6 @@ static HANDLE CreateEventA(void *, int, int, const char *) {
 }
 static void InitializeCriticalSection(void *) {}
 static unsigned int WinExec(const char *, unsigned int) { return 33; }
-static void sub_631ba0(HRESULT);
-
 struct NetPlayer {
   uint32_t field_0_, field_4_, field_8_, field_C_, stamp_10_;
   uint8_t flags_14_;
@@ -96,6 +94,7 @@ class Net {
   char *get_player_name(unsigned long);
   int init(_GUID *, int, int);
   int join_service(ServiceStruct *);
+  int report_directplay_error(HRESULT);
 };
 
 static IDirectPlay2 *created_provider;
@@ -132,12 +131,13 @@ static HRESULT DirectPlayCreate(LPGUID guid, LPDIRECTPLAY *out, void *) {
   *out = &provider;
   return 0;
 }
-static void sub_631ba0(HRESULT) {
+int Net::report_directplay_error(HRESULT) {
   ++provider_error_count;
   if (inspect_directplay_output_on_error) {
     assert(directplay_out_slot != 0 && *directplay_out_slot == 0);
     assert(provider_releases == 1);
   }
+  return 1;
 }
 
 '''
@@ -261,7 +261,8 @@ def test_actual_source_controls_reject_player_member_mutants(tmp_path: Path) -> 
         (stamp_write,
          stamp_write.replace(" = 0;", " &= 0xFF000000u;")),
         ("return players_[index].name_and_tail_;", "return players_[0].name_and_tail_;"),
-        ("player->field_C_ = 100;", "player->field_C_ = latency;"),
+        ("player->field_C_ = 100;",
+         "player->field_C_ = NetServiceCaps.dwLatency;"),
     )
     for index, (old, new) in enumerate(mutations):
         mutant = actual.replace(old, new, 1)
@@ -281,7 +282,6 @@ def test_raw_player_strides_and_stale_stamp_comment_are_gone() -> None:
     assert "reinterpret_cast<uint32_t *>" in init
     assert "reinterpret_cast<uint8_t *>" in init
     assert "player_cursor += sizeof(NetPlayer);" in init
-    assert "player->field_C_ = latency;" in join
     assert "player->field_C_ = 100;" in join
     assert "players_[index].field_0_ == key" in lookup
     assert "players_[index].name_and_tail_" in lookup
