@@ -56,6 +56,9 @@
 // RECOVERY_BINDING: v1 {"evidence": ["git:293937ab6f3be75999e0c0a4c9c110c02930624c:src/unrecovered/004e3660.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the transferred historical seed findings and complete original spans.", "git:293937ab6f3be75999e0c0a4c9c110c02930624c:src/unrecovered/004e3660.cpp", "Historical seed spelling sub_4e3660; current source mapping sub_4e3660; emitted symbol ??_DJackalVoiceRx@@QAEXXZ."], "reason": "Complete receiver stages66EAFC/66EAF8, walk then allocation-owner publication, no delete flag/free. Already genuine Voice-associated class behavior. Superseded seed retired after owner review; original spans, existing claims and useful seed findings remain in source. This cleanup grants no new match or acceptance claim."}
 // TRIED: [ecx+N] reads with no stack args -> a thiscall receiver (Obj4e3660), not the given nullary __cdecl. 0.91 mnemonic sim; remaining diff is the prologue's `push ecx` stack-slot local vs a register-kept loop counter, and one lea/add adjustor-call addressing mode (same shape as 0x0051E480's) - not chased.
 // symbol    ??_DJackalVoiceRx@@QAEXXZ
+// ORIGINAL: 0x004E38E0 sub_4e38e0 0x004E38E0-0x004E38FB FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:0x004E38E0-0x004E38FB is a complete 27-byte entry ending in RET; it adjusts to the ServiceList virtual base, calls the mapped destructor, and restores the saved allocation owner", "pinned:0x006634FF and 0x0065C630 caller-specific EH paths tail-jump to 0x004E38E0; normal paths call 0x004E3730 and restore the owner's saved virtual-base field", "COFF:src/net_class.cpp.obj and src/alphanet.cpp.obj both emit ??_DServiceList@@QAEXXZ with destructor, StringAllocationBase vftable and StringAllocationHeap relocations", "source:src/net_class.h:ServiceList/ServiceProviderList virtual StringAllocationBase hierarchy; original name remains address-derived sub_4e38e0"], "reason": "Map the complete original ServiceList cleanup entry to the actual generated COFF helper while keeping each caller's distinct EH cleanup in its parent mapping."}
+// symbol    ??_DServiceList@@QAEXXZ
 // ORIGINAL: 0x004E3730 sub_4e3730 0x004E3730-0x004E3888;0x0065C880-0x0065C895 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["git:293937ab6f3be75999e0c0a4c9c110c02930624c:src/unrecovered/004e3730.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the transferred historical seed findings and complete original spans.", "git:293937ab6f3be75999e0c0a4c9c110c02930624c:src/unrecovered/004e3730.cpp", "Historical seed spelling sub_4e3730; current source mapping sub_4e3730; emitted symbol ??1ServiceList@@UAE@XZ."], "reason": "Receiver-24 stages provider-derived66EB20/66EB1C, walk then provider base; retained65C880 EH span. Superseded seed retired after owner review; original spans, existing claims and useful seed findings remain in source. This cleanup grants no new match or acceptance claim."}
 // TRIED: same shape as 0x004E3350's `ClassX::sub_4e3350` (own-stage list teardown at vtable 0x66eb20/0x66eb1c, then the same 0x6693d4/0x6693d0 pair the real `?close@ServiceStruct@@QAEXXZ` (0x004016c0, referenced from this function's unwind funclet at 0x0065C880) uses, on the member at `this-0x24`) - no SEH frame modelled, same precedent as 0x004C86D0/0x00538D10 and this function's sibling at 0x004E3350. 0.496 mnemonic similarity, first divergence at #2 (dropped SEH prologue).
@@ -2258,20 +2261,12 @@ static DPCAPS NetServiceCaps;  // 0x009BE4C0
 // RECOVERY_OBJECT: v2 0x00697578 0x00697585 _NetZoneLauncher 0x0062E2A0
 static char NetZoneLauncher[] = "mplaynow.exe";
 
-// ORIGINAL: 0x00630D70 sub_630d70 0x00630D70-0x00631044;0x004E38E0-0x004E38FB;0x006634FF-0x00663528
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned 0x00630D70 reads Net provider storage at +0x6E0/+0x6E8 and enumerates into the source-owned ServiceList callback target.", "Pinned 0x004E38E0 adjusts to ServiceList at receiver+0x24, calls its real destructor, then restores the saved StringAllocationHeap owner.", "Pinned 0x006634FF..0x00663528 is retained as the original EH cleanup span of this identity.", "The 0x004E38E0..0x004E38FB shared cleanup remains mapped in both Net and AlphaNet::pick_service pending native attribution; both current owners use real ServiceList RAII.", "Popup allocation uses the BasePop-owned PopupAllocHook declaration, reached through popup.h; dialog item insertion uses BasePop::dialogs() public accessor."], "reason": "Recover the provider chooser on the real Net owner using ServiceList, the StringAllocationHeap handoff, BasePop, Dialogs and join_service."}
+// ORIGINAL: 0x00630D70 sub_630d70 0x00630D70-0x00631044;0x006634FF-0x00663528
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned 0x00630D70 reads Net provider storage at +0x6E0/+0x6E8 and enumerates into the source-owned ServiceList callback target.", "Pinned 0x004E38E0 adjusts to ServiceList at receiver+0x24, calls its real destructor, then restores the saved StringAllocationHeap owner.", "Pinned 0x006634FF..0x00663528 is retained as the original EH cleanup span of this identity.", "The complete 0x004E38E0..0x004E38FB entry is separately mapped as address-derived sub_4e38e0 to the current generated ??_DServiceList symbol; this caller's EH tail remains in the parent mapping.", "Popup allocation uses the BasePop-owned PopupAllocHook declaration, reached through popup.h; dialog item insertion uses BasePop::dialogs() public accessor."], "reason": "Recover the provider chooser on the real Net owner using ServiceList, the StringAllocationHeap handoff, BasePop, Dialogs and join_service."}
 // symbol    ?choose_service@Net@@QAEHXZ
 int Net::choose_service() {
-    struct AllocationHandoffScope {
-        Heap *saved;
-        AllocationHandoffScope() : saved(StringAllocationHeap) {
-            StringAllocationHeap = 0;
-        }
-        ~AllocationHandoffScope() { StringAllocationHeap = saved; }
-    } allocation_handoff;
-
-    // The original constructs its provider-list object before checking the
-    // Net buffer, and the handoff remains cleared through list destruction.
+    // The real virtual allocation base captures and clears the incoming heap;
+    // ServiceList destruction restores it after provider cleanup.
     ServiceList providers;
     if (buffer_6E0_ == 0) return 7;
 
