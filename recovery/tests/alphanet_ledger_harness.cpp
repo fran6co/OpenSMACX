@@ -43,13 +43,12 @@ NetAllocationNode::~NetAllocationNode() {}
 // LIVE_LEDGER_CONSTRUCTOR
 int AlphaNetStringStruct::on_insert(NetAllocationNode *) { return 0; }
 void AlphaNetStringStruct::on_remove(NetAllocationNode *) {}
-// The live inline destructors call this explicit empty-list collaborator.
-// Hook cases never link entries; populated-list lifetime proof is separate.
-void AlphaNetStringStruct::remove_all() { assert(head_ == 0); }
+// The real inline remove_all owns cleanup; hook cases never link entries.
 #define free release
 // Extract the real class delete/cleanup path; no allocation-lifetime proof.
 // LIVE_NODE_CLEANUP
 // LIVE_NODE_DELETE
+// LIVE_ENTRY_DELETE
 // LIVE_INSERT
 // LIVE_REMOVE
 #undef free

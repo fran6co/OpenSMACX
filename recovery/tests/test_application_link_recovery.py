@@ -468,7 +468,10 @@ def test_session_ledger_payload_fields_and_virtual_hooks(compiled):
 
 
 def test_session_ledger_hooks_copy_and_release_by_allocator_ownership(tmp_path, monkeypatch):
-    constructor_unit = current_record_by_address(ROOT, 0x401C80).path.relative_to(ROOT).as_posix()
+    constructor_record = current_record_by_address(ROOT, 0x401C80)
+    constructor_source = (ROOT / constructor_record.body
+                          if constructor_record.body else constructor_record.path)
+    constructor_unit = constructor_source.relative_to(ROOT).as_posix()
     run_recovered_harness(tmp_path, monkeypatch, "alphanet_ledger_harness.cpp", [
         ("// LIVE_INSERT", "src/alphanet_records.cpp", 0x5D4890),
         ("// LIVE_REMOVE", "src/alphanet_records.cpp", 0x5D4990)], declarations=[
@@ -482,7 +485,9 @@ def test_session_ledger_hooks_copy_and_release_by_allocator_ownership(tmp_path, 
         ("// LIVE_NODE_CLEANUP", "src/net_class.cpp", "void cleanup_failed_net_construction(void *memory) {",
          "// ORIGINAL: 0x0062F8A0"),
         ("// LIVE_NODE_DELETE", "src/net_class.cpp", "void NetAllocationNode::operator delete(void *memory) {",
-         "void *ServiceStruct::operator new(size_t size, Heap *owner) throw() {")])
+         "void *ServiceStruct::operator new(size_t size, Heap *owner) throw() {"),
+        ("// LIVE_ENTRY_DELETE", "src/alphanet_records.cpp",
+         "void AlphaNetLedgerEntry::operator delete(void *memory) {", "__DEFINITION__")])
 
 
 def test_menu_candidates_use_typed_source_definitions(compiled):
