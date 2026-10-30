@@ -27,7 +27,7 @@ Win *WinPointerOwner3, *WinPointerOwner4;
 struct Buffer {
     struct { struct { int biWidth, biHeight; } bmiHeader; } dib_;
     RECT rect2_;
-    int color_val_1_;
+    uint32_t text_parameters_[4][4];
     int text_width(char *, int count) { assert(++widths < 64); return count * 8; }
     int text_width(char *text) { return text_width(text, strlen(text)); }
     int text_line_height() { return 8; }
@@ -55,7 +55,7 @@ void MessageBeep(int value) { assert(value == 0); ++beeps; }
 static void __fastcall stop_edit_timer(Time *timer) { timer->stop(); }
 // LIVE_EDITBOX_DECL
 EditBox::EditBox() {}
-EditBox::~EditBox() {}
+void EditBox::close() {}
 // LIVE_FOCUS
 // LIVE_DOWN
 // LIVE_UP
@@ -81,7 +81,7 @@ void reset(EditBox &edit, const char *text, int mark, int cursor) {
     edit.dib_.bmiHeader.biHeight = -20;
     edit.rect2_.left = edit.rect2_.top = 0;
     edit.rect2_.right = 100; edit.rect2_.bottom = 20;
-    edit.color_val_1_ = 20;
+    edit.text_parameters_[0][0] = 20;
     edit.win_parent_ = 0;
     WinPointerOwner3 = WinPointerOwner4 = passed = 0;
     redraws = releases = beeps = starts = stops = shift = widths = fills = lines = colors = 0;

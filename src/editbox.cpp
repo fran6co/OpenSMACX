@@ -103,7 +103,7 @@ void EditBox::on_mouse_move(int x, int) {
 
 // 616140. Qualified base calls are required: ordinary virtual calls recurse.
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00616140 ?pass_dialog_focus@EditBox@@QAEXXZ 0x00616140-0x00616196
+// ORIGINAL: 0x00616140 ?pass_dialog_focus@EditBox@@QAEXXZ 0x00616140-0x00616196 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00616140.cpp", "Pinned original EditBox table66A038 and direct call/branch evidence"], "reason": "EditBox owns this table override or its direct text helper: pinned primary table66A038 slots12,17,20,21,25,26,51,64 and original direct-call receivers establish ownership. Use existing Win slot signatures without changing their order; text_position returns the EAX index consumed by callers despite the catalogue void label."}
 // symbol    ?pass_dialog_focus@EditBox@@UAEXXZ
 void EditBox::pass_dialog_focus() {
@@ -111,7 +111,7 @@ void EditBox::pass_dialog_focus() {
     if (parent == 0) return;
     if ((field_B3C_ & 1) != 0 &&
         parent->list_.tail_ == parent->list_.count_ - 1) {
-        if (parent->list_.count_ - 1 >= 0) {
+        if (win_parent_->list_.count_ - 1 >= 0) {
             parent->list_.tail_ = 0;
             parent->list_.current_ = parent->list_.head_;
         }
