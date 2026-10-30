@@ -3218,10 +3218,12 @@ void Console::editor_tech() {
     Popup popup;
     auto_undo();
     int faction = ScenarioTechFaction;
-    if (faction < 0) faction = ConsoleGlobal.faction_id_;
+    if (faction < 0) {
+        faction = ConsoleGlobal.faction_id_;
+        ScenarioTechFaction = faction;
+    }
 
     for (;;) {
-        ScenarioTechFaction = faction;
         PopupModalState = 6;
         GenderDefault = Players[faction].noun_gender;
         PluralityDefault = Players[faction].is_noun_plural;
@@ -3238,8 +3240,8 @@ void Console::editor_tech() {
             StringTemp[0] = 0;
             say_tech(StringTemp, tech_id, 0);
             strcat(StringTemp, "|");
-            const int status = has_tech(tech_id, faction) ? 246 :
-                tech_avail(tech_id, faction) ? 247 : 248;
+            const int status = has_tech(tech_id, ScenarioTechFaction) ? 246 :
+                tech_avail(tech_id, ScenarioTechFaction) ? 247 : 248;
             strcat(StringTemp, label_get(status));
             popup.dialogs().item(StringTemp, tech_id);
         }
@@ -3255,36 +3257,53 @@ void Console::editor_tech() {
             return;
         }
         if (popup.input_poll_state() == 1) {
-            Popup who;
-            who.start(PopupStartCaption, "EDITORWHO", -1, nullptr, 0x40);
-            for (int player = 1; player < MaxPlayerNum; ++player) {
-                GenderDefault = Players[player].noun_gender;
-                PluralityDefault = Players[player].is_noun_plural;
-                who.dialogs().item(Players[player].noun_faction, player);
+            const int who_faction = ScenarioTechFaction;
+            int chosen;
+            {
+                Popup who;
+                who.start(PopupStartCaption, "EDITORWHO", -1, nullptr, 0x40);
+                for (int player = 1; player < MaxPlayerNum; ++player) {
+                    GenderDefault = Players[player].noun_gender;
+                    PluralityDefault = Players[player].is_noun_plural;
+                    who.dialogs().item(Players[player].noun_faction, player);
+                }
+                if (who_faction >= 0) who.set_value(who_faction);
+                PopupModalState = 6;
+                chosen = who.exec(0, nullptr);
+                PopupModalState = 0;
             }
-            if (faction >= 0) who.set_value(faction);
-            PopupModalState = 6;
-            const int chosen = who.exec(0, nullptr);
-            PopupModalState = 0;
-            if (chosen > 0) faction = chosen;
+            if (chosen > 0) {
+                ScenarioTechFaction = chosen;
+                faction = chosen;
+            } else {
+                faction = ScenarioTechFaction;
+            }
             continue;
         }
 
-        if (has_tech(selected, faction)) {
-            int ignored_a = 0;
-            int ignored_b = 0;
+        if (has_tech(selected, ScenarioTechFaction)) {
+            int ignored_a;
+            int ignored_b;
             bitmask(selected, &ignored_a, &ignored_b);
+            faction = ScenarioTechFaction;
             GameDataStateStorage.fields_.game_tech_achieved_[selected] = static_cast<uint8_t>(
                 GameDataStateStorage.fields_.game_tech_achieved_[selected] & ~(1u << faction));
+            // The pin carries this post-bitmask faction value into ranking setup.
         } else {
-            tech_achieved(faction, selected, 0, 0);
+            tech_achieved(ScenarioTechFaction, selected, 0, 0);
+            faction = ScenarioTechFaction;
         }
         ScenarioTechSelection = selected;
         PlayersData[faction].tech_ranking = 0;
+        int lookup_faction = faction;
         for (int owned_tech = 0; owned_tech < MaxTechnologyNum; ++owned_tech) {
-            if (has_tech(owned_tech, faction)) PlayersData[faction].tech_ranking += 2;
+            const int is_owned = has_tech(owned_tech, lookup_faction);
+            const int ranking_faction = ScenarioTechFaction;
+            if (is_owned) PlayersData[ranking_faction].tech_ranking += 2;
+            lookup_faction = ranking_faction;
         }
         TutWinBaseWindow.redraw();
+        faction = ScenarioTechFaction;
     }
 }
 
