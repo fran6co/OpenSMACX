@@ -194,7 +194,7 @@ extern "C" void __cdecl sub_4d5f70(int *parallel, int *values, int count) {
 
 /*
 Purpose: For the count, sort both id and value arrays by the least to greatest value (ascending).
-// ORIGINAL: 0x005B5690 ?sort@@YAXHPAHPAH@Z 0x005B5690-0x005B56F5
+// ORIGINAL: 0x005B5690 ?sort@@YAXHPAHPAH@Z 0x005B5690-0x005B56F5 BYTE_EXACT
 // TRIED (2026-09-03): dropping this body's `int bounds = count - 1` local
 //   and writing `i < count - 1` inline, because the image reloads `count`
 //   from its argument slot at the top of every pass iteration
@@ -206,17 +206,8 @@ Purpose: For the count, sort both id and value arrays by the least to greatest v
 //   written and re-read around the swap) plus the running pointers
 //   `esi`/`edi`/`ebx`, which is a strength-reduction choice, not a source
 //   one. Left at the plateau.
-// TRIED: byte-match plateau at 5/47 across every flag set tried,
-//            before and after the `goto`/bug fix below - the image
-//            interleaves a SEARCH for the first out-of-order pair with the
-//            swap in one tight loop; any C form with the swap reachable
-//            from inside the scanning `for`/`while` gets restructured by
-//            VC6 into two separate loops (scan-only, then a single swap),
-//            which this address's plateau predates the bug fix and is
-//            unaffected by it. Tried: `break` after the swap, `goto` to a
-//            label after the loop, `goto` back to a `restart:` before the
-//            loop (best of the four, but still 5/47), and a `while`
-//            re-entering at i=0. Not a source-form lever found here.
+// The pinned original resets a pass flag at its head, sets it after both
+// swaps, and restarts immediately after the first swap in the pass.
 // symbol    ?sort@@YAXHPAH0@Z
 // size      101 bytes
 // prototype void (__cdecl ?sort@@YAXHPAHPAH@Z)(int count, int* id, int* value)
@@ -228,21 +219,17 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl sort(int count, int *id, int *value) {
-    // BUG IN THE ORIGINAL (reproduced): `test eax,eax` right after every
-    // swap jumps straight back to the function's own top (0x5b5697) the
-    // moment a swap happens, abandoning the rest of this pass instead of
-    // finishing it. A correct bubble sort would keep scanning to the end of
-    // the pass; this one restarts from i=0 after its FIRST swap each pass,
-    // which is why there is no `has_swapped` flag left to track here - the
-    // loop completing on its own IS the "nothing left to swap" signal.
-restart:
-    for (int i = 0; i < count - 1; i++) {
-        if (value[i] > value[i + 1]) {
-            swap(&value[i], &value[i + 1]);
-            swap(&id[i], &id[i + 1]);
-            goto restart;
+    int swapped;
+    do {
+        swapped = 0;
+        for (int i = 0; !swapped && i < count - 1; ++i) {
+            if (value[i] > value[i + 1]) {
+                swap(&value[i], &value[i + 1]);
+                swap(&id[i], &id[i + 1]);
+                swapped = 1;
+            }
         }
-    }
+    } while (swapped != 0);
 }
 
 /*
