@@ -534,31 +534,38 @@ void PrefWin::destroy() {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x0048FCD0 ?on_key_click@PrefWin@@QAEHHH@Z 0x0048FCD0-0x0048FD98 FILE
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x0048FCD0 0x0048FD98 0x0048FDAC 0x0048FCEA
+// RECOVERY_ASSOCIATED: v1 switch_selector 0x0048FCD0 0x0048FDAC 0x0048FDC8 0x0048FCE4
+// ORIGINAL: 0x0048FCD0 ?on_key_click@PrefWin@@QAEHHH@Z 0x0048FCD0-0x0048FD98 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0048fcd0.cpp", "recovery/tasks/prefwin-owner-coverage-wave.json", "Original control parent 8578D8; ctor/destructor member order, 800-pixel branch, checkbox text-context and callback order independently reviewed."], "reason": "Recover the complete PrefWin ownership group through a genuine GraphicWin base and compiler-owned embedded control lifetimes; preserve seed identity, original spans and unresolved discoveries without granting byte claims."}
 // symbol    ?on_key_click@PrefWin@@UAEHHH@Z
 int PrefWin::on_key_click(int repeat, int key) {
   (void)repeat;
-  if (key == VK_RETURN) {
+  switch (key) {
+  case VK_RETURN:
     field_A5C_ = 1;
+    // Enter confirms the preferences before taking the Escape close path.
+  case VK_ESCAPE:
     destroy();
     return 1;
-  }
-  if (key == VK_ESCAPE) {
-    destroy();
-    return 1;
-  }
-  if (key == VK_UP || key == VK_DOWN) {
-    int next;
-    if (key == VK_UP)
-      next = field_A14_ < 1 ? 5 : field_A14_ - 1;
-    else
-      next = field_A14_ < 5 ? field_A14_ + 1 : 0;
+  case VK_UP:
     field_A18_ = field_A14_;
-    field_A14_ = next;
+    if (field_A14_ <= 0)
+      field_A14_ = 5;
+    else
+      --field_A14_;
     field_A1C_ = 1;
-    PrefWinButtonGroup.button_click(next);
+    PrefWinButtonGroup.button_click(field_A14_);
     return 1;
+  case VK_DOWN:
+    field_A18_ = field_A14_;
+    if (field_A14_ >= 5)
+      field_A14_ = 0;
+    else
+      ++field_A14_;
+    field_A1C_ = 1;
+    PrefWinButtonGroup.button_click(field_A14_);
+    break;
   }
   return 1;
 }
