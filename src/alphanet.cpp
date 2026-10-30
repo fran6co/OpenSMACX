@@ -265,20 +265,13 @@ void reset_net_lobby_rows() {
     }
 }
 
-// ORIGINAL: 0x004E26E0 ?pick_service@AlphaNet@@QAEHPAH@Z 0x004E26E0-0x004E29DF;0x004E38E0-0x004E38FB;0x0065C630-0x0065C664
+// ORIGINAL: 0x004E26E0 ?pick_service@AlphaNet@@QAEHPAH@Z 0x004E26E0-0x004E29DF;0x0065C630-0x0065C664
 // kind      game
+// Historical TRIED record predates separating the complete ServiceList cleanup helper below.
 // TRIED: full transcription (guard/save-global, ServiceStruct local, BasePop::start/exec, Dialogs::item list build, join_service) compiles but this address is catalogued SHARED_TAIL - one of its spans is COMDAT-folded with another function, so no body, not even a one-line stub, gets a MISMATCH/BYTE_EXACT verdict
 int AlphaNet::pick_service(int *allow_pbem) {
-    // The original saves and clears the allocation handoff before creating
-    // the local list, then restores it after list destruction (0x004E26E0).
-    // An outer pending Heap must not become this list's allocation owner.
-    struct AllocationHandoffScope {
-        Heap *saved;
-        AllocationHandoffScope() : saved(StringAllocationHeap) {
-            StringAllocationHeap = 0;
-        }
-        ~AllocationHandoffScope() { StringAllocationHeap = saved; }
-    } allocation_handoff;
+    // The real virtual allocation base captures and clears the incoming heap;
+    // ServiceList destruction restores it after provider cleanup.
     ServiceList providers;
     if (allow_pbem != 0) *allow_pbem = 0;
     if (buffer_6E0_ == 0) return 7;

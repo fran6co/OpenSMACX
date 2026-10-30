@@ -13,6 +13,7 @@ Heap *StringAllocationHeap = 0;
 static int provider_system_allocations = 0;
 static int provider_heap_allocations = 0;
 static int provider_destructions = 0;
+static Heap *expected_restored_owner = &outer_heap;
 
 struct ServiceList {
   ServiceEntry *head_;
@@ -22,13 +23,15 @@ struct ServiceList {
   Heap *allocation_owner_;
   ServiceList() : head_(0), current_(0), entry_count_(0), cursor_(-1),
                   allocation_owner_(StringAllocationHeap) {
+    // This models the real StringAllocationBase virtual-base constructor:
+    // the list captures the incoming owner before clearing the global slot.
     StringAllocationHeap = 0;
-    assert(allocation_owner_ == 0);
   }
   ~ServiceList() {
-    // Restoration must follow, not precede, the automatic list cleanup.
+    // Model list cleanup first, then the real allocation virtual-base dtor.
     assert(StringAllocationHeap == 0);
     ++provider_destructions;
+    StringAllocationHeap = allocation_owner_;
   }
   int seek_pos(int position) {
     if (position > entry_count_ - 1) return 0;
@@ -144,9 +147,10 @@ struct AlphaNet : Net {
 
 // @@PICK_SERVICE_BODY@@
 
-static void reset_fixture() {
-  if (provider_destructions != 0) assert(StringAllocationHeap == &outer_heap);
-  StringAllocationHeap = &outer_heap;
+static void reset_fixture(Heap *incoming_owner = &outer_heap) {
+  if (provider_destructions != 0) assert(StringAllocationHeap == expected_restored_owner);
+  StringAllocationHeap = incoming_owner;
+  expected_restored_owner = incoming_owner;
   provider_system_allocations = 0;
   provider_heap_allocations = 0;
   provider_destructions = 0;
@@ -193,7 +197,18 @@ int main() {
   assert(net.pick_service(&allow_pbem) == 1);
   assert(allow_pbem == 0 && fixture_poll_calls == 1);
   assert(BasePop::destroyed == 1 && fixture_join_calls == 0);
+  assert(provider_system_allocations == 0 && provider_heap_allocations == 1);
+  assert(StringAllocationHeap == &outer_heap);
+
+  // The null incoming-owner case still uses the original system-allocation
+  // fallback and leaves the global null after the list's virtual-base dtor.
+  reset_fixture(0);
+  fixture_poll_result = 2;
+  allow_pbem = 9;
+  assert(net.pick_service(&allow_pbem) == 1);
+  assert(allow_pbem == 0 && fixture_poll_calls == 1);
   assert(provider_system_allocations == 1 && provider_heap_allocations == 0);
+  assert(provider_destructions == 1 && StringAllocationHeap == 0);
 
   reset_fixture();
   fixture_count = 2;
@@ -236,7 +251,7 @@ int main() {
   assert(net.pick_service(0) == 0);
   assert(fixture_join_calls == 0 && BasePop::destroyed == 1);
 
-  assert(provider_destructions == 1 && StringAllocationHeap == &outer_heap);
+  assert(provider_destructions == 1 && StringAllocationHeap == expected_restored_owner);
 
   for (int bad_row = 0; bad_row < 2; ++bad_row) {
     reset_fixture();
@@ -245,13 +260,13 @@ int main() {
     fixture_join_result = 17;
     assert(net.pick_service(0) == 17);
     assert(last_join_payload == &service_a);
-    assert(provider_destructions == 1 && StringAllocationHeap == &outer_heap);
+    assert(provider_destructions == 1 && StringAllocationHeap == expected_restored_owner);
   }
   reset_fixture();
   fixture_selection = 0;
   assert(net.pick_service(0) == 0);
   assert(fixture_join_calls == 1 && last_join_payload == 0);
-  assert(provider_destructions == 1 && StringAllocationHeap == &outer_heap);
+  assert(provider_destructions == 1 && StringAllocationHeap == expected_restored_owner);
 
   return 0;
 }

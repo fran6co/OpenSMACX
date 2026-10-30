@@ -19,9 +19,22 @@ PICK_ADDRESS = 0x004E26E0
 PICK_NAME = "?pick_service@AlphaNet@@QAEHPAH@Z"
 PICK_SPANS = (
     (0x004E26E0, 0x004E29DF),
-    (0x004E38E0, 0x004E38FB),
     (0x0065C630, 0x0065C664),
 )
+PICK_OLD_SPANS = PICK_SPANS[:1] + ((0x004E38E0, 0x004E38FB),) + PICK_SPANS[1:]
+SERVICE_LIST_HELPER_SPANS = ((0x004E38E0, 0x004E38FB),)
+NET_CHOOSE_ADDRESS = 0x00630D70
+NET_CHOOSE_SPANS = (
+    (0x00630D70, 0x00631044),
+    (0x006634FF, 0x00663528),
+)
+NET_CHOOSE_OLD_SPANS = (
+    (0x00630D70, 0x00631044),
+    (0x004E38E0, 0x004E38FB),
+    (0x006634FF, 0x00663528),
+)
+SERVICE_LIST_HELPER_NAME = "sub_4e38e0"
+SERVICE_LIST_HELPER_SYMBOL = "??_DServiceList@@QAEXXZ"
 JOIN_ADDRESS = 0x0062E540
 JOIN_NAME = "?join_session@Net@@QAEHPAUSessionStruct@@PADPAD@Z"
 JOIN_SYMBOL = "?join_session@Net@@QAEHPAVNetAllocationNode@@PAD1@Z"
@@ -51,6 +64,24 @@ def test_transferred_original_identities_have_real_source_owners():
     assert pick.image_spans == PICK_SPANS
     assert pick.kind == "game"
     assert pick.symbol in ("", PICK_NAME)  # Same current and original symbol.
+
+    net_choose = mapped_owner(NET_CHOOSE_ADDRESS, NET_SOURCE)
+    assert net_choose.name == "sub_630d70"
+    assert net_choose.image_spans == NET_CHOOSE_SPANS
+    assert net_choose.byte_exact is False and net_choose.semantic is False
+
+    helper = mapped_owner(0x004E38E0, NET_SOURCE)
+    assert helper.name == SERVICE_LIST_HELPER_NAME
+    assert helper.symbol == SERVICE_LIST_HELPER_SYMBOL
+    assert helper.mode is Mode.FILE
+    assert helper.image_spans == SERVICE_LIST_HELPER_SPANS
+    # The recorder may bank a byte claim after the ownership migration.
+    assert helper.semantic is False
+
+    # The split moves the shared callable span out of both callers exactly once.
+    assert set(pick.image_spans) | set(net_choose.image_spans) | set(helper.image_spans) == (
+        set(PICK_OLD_SPANS) | set(NET_CHOOSE_OLD_SPANS)
+    )
 
     join = mapped_owner(JOIN_ADDRESS, NET_SOURCE)
     assert join.name == JOIN_NAME
@@ -118,15 +149,19 @@ def test_actual_pick_service_body_and_mutants(compiler_name):
         mutant = build_and_run(compiler, lost_pbem_sentinel, directory, "wrong-pbem")
         assert mutant.returncode != 0
 
-        inherited_heap = body.replace("StringAllocationHeap = 0;", "", 1)
-        assert inherited_heap != body
-        mutant = build_and_run(compiler, inherited_heap, directory, "inherited-heap")
-        assert mutant.returncode != 0
-
-        lost_restore = body.replace("StringAllocationHeap = saved;", "", 1)
-        assert lost_restore != body
-        mutant = build_and_run(compiler, lost_restore, directory, "lost-restore")
-        assert mutant.returncode != 0
+        old_guard = (
+            "    struct AllocationHandoffScope {\n"
+            "        Heap *saved;\n"
+            "        AllocationHandoffScope() : saved(StringAllocationHeap) {\n"
+            "            StringAllocationHeap = 0;\n"
+            "        }\n"
+            "        ~AllocationHandoffScope() { StringAllocationHeap = saved; }\n"
+            "    } allocation_handoff;\n"
+        )
+        guarded_body = body.replace("    ServiceList providers;", old_guard + "    ServiceList providers;", 1)
+        assert guarded_body != body
+        mutant = build_and_run(compiler, guarded_body, directory, "old-guard-owner-loss")
+        assert mutant.returncode != 0  # The old guard makes the list use the wrong allocator origin.
 
         stale_cursor = body.replace(
             "if (providers.seek_pos(selected) == 0) providers.seek_pos(0);",
