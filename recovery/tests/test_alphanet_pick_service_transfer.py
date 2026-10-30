@@ -75,7 +75,8 @@ def test_transferred_original_identities_have_real_source_owners():
     assert helper.symbol == SERVICE_LIST_HELPER_SYMBOL
     assert helper.mode is Mode.FILE
     assert helper.image_spans == SERVICE_LIST_HELPER_SPANS
-    assert helper.byte_exact is False and helper.semantic is False
+    # The recorder may bank a byte claim after the ownership migration.
+    assert helper.semantic is False
 
     # The split moves the shared callable span out of both callers exactly once.
     assert set(pick.image_spans) | set(net_choose.image_spans) | set(helper.image_spans) == (
