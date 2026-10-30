@@ -263,3 +263,8 @@ central seed binding but stopped with preserved, unaccepted discoveries.
   dependencies, not application-function recovery targets.
 - Measure with existing facilities first. Remove replaced tools, prompts and
   stale instructions together; retain useful lessons, not obsolete workflows.
+- Inspect qualified objects through read-only APIs such as `match_recovery.pe_coff.Coff`
+  or `llvm-objdump`. Never run `objcopy`/`llvm-objcopy` on qualified inputs:
+  even `--dump-section` rewrites its input when no output object is supplied.
+  Transform only disposable copies with a distinct explicit output, and rehash
+  qualified inputs after inspection. Changed artifacts require fresh verification.
