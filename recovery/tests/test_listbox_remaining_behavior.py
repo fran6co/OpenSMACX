@@ -56,8 +56,35 @@ def test_actual_listbox_remaining_handlers(tmp_path):
                       (old_index_mutant, low_byte_mutant,
                        stale_selection_mutant, zero_count_mutant)]
     wrong_import_methods = methods.replace(click_method, wrong_import_click_method, 1)
+
+    def replace_fixture_once(fixture, old, new):
+        assert fixture.count(old) == 1, old
+        return fixture.replace(old, new, 1)
+
     prefix = '#include <cassert>\n#include <cctype>\n#include <cstdint>\n#include <cstring>\n#include <stdlib.h>\n#include <vector>\ntypedef unsigned int UINT;\ntypedef unsigned char BYTE;\ntypedef unsigned int uint32_t;\n#define VK_CONTROL 0x11\n#define VK_SHIFT 0x10\nstruct RECT { int left, top, right, bottom; };\nstatic int key_state_control, key_state_shift;\nstatic int async_key_state_control, async_key_state_shift;\nstatic int get_key_state_calls, async_key_state_calls, async_key_args[8];\nstatic UINT mapped_character;\nshort GetKeyState(int key) { ++get_key_state_calls; return key == 0x11 ? key_state_control : key_state_shift; }\nshort GetAsyncKeyState(int key) { assert(async_key_state_calls < 8); async_key_args[async_key_state_calls++] = key; return key == 0x11 ? async_key_state_control : async_key_state_shift; }\nstatic UINT MapVirtualKeyA(UINT, UINT mode) { assert(mode == 2); return mapped_character; }\nclass Win;\nclass GraphicWin;\nstatic Win *WinCallbackWindow;\nstatic int ListBoxDrawOffset;\nstruct StringStructPayload { unsigned int field_C_; unsigned int field_8_; char *text; };\nclass StringList {\npublic:\n    int entry_count_; void *head_; std::vector<StringStructPayload> values; int cursor;\n    StringList() : entry_count_(0), head_(0), cursor(-1) {}\n    bool seek_pos(int p) { cursor = p; return p >= 0 && p < entry_count_; }\n    StringStructPayload *current_entry() { return cursor >= 0 && cursor < entry_count_ ? &values[cursor] : 0; }\n};\nclass Win {\npublic:\n    Win *parent_; int event_log[128]; int event_count;\n    Win() : parent_(0), event_count(0) {}\n    Win *parent_window() { return parent_; }\n    virtual int on_dialog_back_draw(GraphicWin *) { event_log[event_count++] = 11; return 0; }\n    virtual void on_button_clicked(int) { event_log[event_count++] = 12; }\n};\nclass Buffer {\npublic:\n    int copy_source_x, copy_source_y, copy_dest_x, copy_dest_y, copy_width, copy_height;\n    Buffer() : copy_source_x(0), copy_source_y(0), copy_dest_x(0), copy_dest_y(0), copy_width(0), copy_height(0) {}\n    void restore_clip() {}\n    int pixel_width() const { return 640; }\n    int pixel_height() const { return 480; }\n    int copy(Buffer *, int sx, int sy, int dx, int dy, int w, int h) {\n        copy_source_x=sx; copy_source_y=sy; copy_dest_x=dx; copy_dest_y=dy; copy_width=w; copy_height=h; return 0;\n    }\n    int box(RECT *, int, int) { return 0; }\n};\nclass GraphicWin : public Win, public Buffer {\npublic:\n    RECT work; int fills, updates, draws[32], draw_count;\n    GraphicWin() : fills(0), updates(0), draw_count(0) { work.left=2; work.top=3; work.right=102; work.bottom=83; }\n    RECT *buffer_working_rect() { return &work; }\n    void fill(int) { ++fills; }\n    void soft_update() { ++updates; }\n};\nclass Dialog : public GraphicWin {\npublic:\n    StringList item_list_; int selected_position_; uint32_t field_F0_;\n    int column_count_, field_40_, field_38_, row_count_, field_64_, field_44_, field_68_, field_20_, field_6C_, field_24_, field_28_;\n    Dialog() : selected_position_(-1), field_F0_(0xFFFFFFFFu), column_count_(1), field_40_(0), field_38_(0), row_count_(1), field_64_(10), field_44_(0), field_68_(10), field_20_(0), field_6C_(0), field_24_(0), field_28_(0) {}\n};\ntypedef int (*FillCallback)(GraphicWin *, int, int, void *);\nclass ListBox : public Dialog {\npublic:\n    unsigned int field_4_, field_18_, iFlags_; FillCallback fill_callback_;\n    ListBox() : field_4_(1), field_18_(0), iFlags_(0), fill_callback_(0) {}\n    void set_selected_pos(int p, int) { selected_position_ = p; event_log[event_count++] = 100+p; }\n    void draw_item(int p) { draws[draw_count++] = p; event_log[event_count++] = 200+p; }\n    void on_left_down(int, int);\n    void on_mouse_move(int, int);\n    void on_key_down(int);\n    void UNK1(int);\n    void on_redraw();\n};\n'
     prefix = prefix.replace("field_24_", "window_x_").replace("field_28_", "window_y_")
+    prefix = replace_fixture_once(prefix,
+        '    void draw_item(int p) { draws[draw_count++] = p; event_log[event_count++] = 200+p; }',
+        '    void (*draw_mutator)(ListBox *, int); int mutate_once;\n'
+        '    void draw_item(int p) { draws[draw_count++] = p; event_log[event_count++] = 200+p; if (draw_mutator != 0) draw_mutator(this, p); }')
+    prefix = replace_fixture_once(prefix,
+        'ListBox() : field_4_(1), field_18_(0), iFlags_(0), fill_callback_(0) {}',
+        'ListBox() : field_4_(1), field_18_(0), iFlags_(0), fill_callback_(0), draw_mutator(0), mutate_once(0) {}')
+    prefix = replace_fixture_once(prefix,'static Win *WinCallbackWindow;',
+                            'static Win *WinCallbackWindow;\nstatic Win *fill_reparent_target;\nstatic int *box_mutation_target;\nstatic int box_mutation_value;')
+    prefix = replace_fixture_once(prefix,'Win *parent_window() { return parent_; }',
+                            'Win *parent_window() { return parent_; }\n    void set_parent(Win *parent) { parent_ = parent; }')
+    prefix = replace_fixture_once(prefix,
+        'int copy_source_x, copy_source_y, copy_dest_x, copy_dest_y, copy_width, copy_height;',
+        'int copy_source_x, copy_source_y, copy_dest_x, copy_dest_y, copy_width, copy_height, copy_calls, restore_calls, box_calls;')
+    prefix = replace_fixture_once(prefix,
+        'Buffer() : copy_source_x(0), copy_source_y(0), copy_dest_x(0), copy_dest_y(0), copy_width(0), copy_height(0) {}',
+        'Buffer() : copy_source_x(0), copy_source_y(0), copy_dest_x(0), copy_dest_y(0), copy_width(0), copy_height(0), copy_calls(0), restore_calls(0), box_calls(0) {}')
+    prefix = replace_fixture_once(prefix,'void restore_clip() {}', 'void restore_clip() { ++restore_calls; }')
+    prefix = replace_fixture_once(prefix,'copy_source_x=sx; copy_source_y=sy; copy_dest_x=dx;',
+                            '++copy_calls; copy_source_x=sx; copy_source_y=sy; copy_dest_x=dx;')
+    prefix = replace_fixture_once(prefix,'int box(RECT *, int, int) { return 0; }',
+                            'int box(RECT *, int, int) { ++box_calls; if (box_mutation_target != 0) { *box_mutation_target = box_mutation_value; box_mutation_target = 0; } return 0; }')
     old_list = 'struct StringStructPayload { unsigned int field_C_; unsigned int field_8_; char *text; };\nclass StringList {\npublic:\n    int entry_count_; void *head_; std::vector<StringStructPayload> values; int cursor;\n    StringList() : entry_count_(0), head_(0), cursor(-1) {}\n    bool seek_pos(int p) { cursor = p; return p >= 0 && p < entry_count_; }\n    StringStructPayload *current_entry() { return cursor >= 0 && cursor < entry_count_ ? &values[cursor] : 0; }\n};'
     linked_list = 'struct StringStructPayload { unsigned int field_C_; unsigned int field_8_; char *text; };\nstruct StringStructEntry { StringStructPayload *payload; StringStructEntry *next, *previous; StringStructPayload *string_payload() { return payload; } };\nclass StringList {\npublic:\n    int entry_count_; StringStructEntry *head_, *current_; int current_position_; std::vector<StringStructPayload> values; std::vector<StringStructEntry> entries; int cursor;\n    StringList() : entry_count_(0), head_(0), current_(0), current_position_(0), cursor(-1) {}\n    void link_items() { entries.resize(values.size()); entry_count_ = static_cast<int>(values.size()); for (int i=0;i<entry_count_;++i) { entries[i].payload=&values[i]; entries[i].next=&entries[(i+1)%entry_count_]; entries[i].previous=&entries[(i+entry_count_-1)%entry_count_]; } head_ = entry_count_ ? &entries[0] : 0; current_=head_; current_position_=0; cursor=entry_count_ ? 0 : -1; }\n    bool seek_pos(int p) { if (p > entry_count_-1) return false; current_=head_; if (p < 0) { if (abs(p) > entry_count_) return false; int i=abs(p); while (i-- > 0) current_=current_->previous; current_position_=p+entry_count_; } else { int i=p; while (i-- > 0) current_=current_->next; current_position_=p; } cursor=current_position_; return true; }\n    StringStructPayload *current_entry() { return current_ ? current_->payload : 0; }\n};'
     assert old_list in prefix
@@ -70,6 +97,134 @@ def test_actual_listbox_remaining_handlers(tmp_path):
                                 'box.item_list_.entry_count_ = 5;')
     controls = controls.replace('box.item_list_.values.resize(5);',
                                 'box.item_list_.values.resize(5); box.item_list_.link_items(); box.item_list_.head_ = &box.item_list_.entries[0];')
+    controls = replace_fixture_once(controls,
+        'static int fill_noop(GraphicWin *, int, int, void *) { return 0; }\nint main() {',
+        'static int fill_noop(GraphicWin *, int, int, void *) { return 0; }\n'
+        'static int fill_reparent(GraphicWin *window, int, int, void *) { window->set_parent(fill_reparent_target); return 0; }\n'
+        'int main() {')
+    controls = replace_fixture_once(controls,
+        '    box.item_list_.head_=0; box.draw_count=0; box.on_redraw(); assert(box.draw_count == 0);',
+        '''    // The entry guard is the Win parent. A nonempty list with no parent
+    // returns before clipping or painting.
+    box.item_list_.head_=&box.item_list_.entries[0]; box.item_list_.entry_count_=5;
+    box.parent_=0; int clips_before_null_parent=box.restore_calls;
+    int fills_before_null_parent=box.fills; Win *previous_callback_window=WinCallbackWindow;
+    box.draw_count=0; box.on_redraw();
+    assert(box.restore_calls == clips_before_null_parent && box.fills == fills_before_null_parent
+           && box.draw_count == 0 && WinCallbackWindow == previous_callback_window);
+
+    // An empty list with a parent still paints the background and border,
+    // then returns before changing the previous draw offset.
+    box.parent_=&parent; box.item_list_.head_=0; box.item_list_.entry_count_=0;
+    box.column_count_=2; box.row_count_=2; box.field_18_=0;
+    box.field_6C_=2; ListBoxDrawOffset=42;
+    int clips_before_empty_list=box.restore_calls; int fills_before_empty_list=box.fills;
+    int boxes_before_empty_list=box.box_calls;
+    box.draw_count=0; box.on_redraw();
+    assert(box.restore_calls == clips_before_empty_list+1 && box.fills == fills_before_empty_list+1);
+    assert(box.box_calls == boxes_before_empty_list+2 && box.draw_count == 0);
+    assert(ListBoxDrawOffset == 42);
+
+    // The pin reloads field_6C_ after each Buffer::box call.
+    box.item_list_.entry_count_=1; box.item_list_.head_=&box.item_list_.entries[0];
+    box.column_count_=1; box.row_count_=1; box.field_18_=0; box.field_6C_=3;
+    box.box_calls=0; box_mutation_target=&box.field_6C_;
+    box_mutation_value=1; box.on_redraw();
+    assert(box.box_calls == 1 && box.field_6C_ == 1 && box_mutation_target == 0);
+
+    // A valid negative seek wraps to the final node. An above-end seek fails
+    // before changing the cursor and does not abort the grid loop.
+    box.item_list_.head_=&box.item_list_.entries[0]; box.item_list_.entry_count_=5;
+    box.column_count_=1; box.row_count_=1; box.field_18_=0;
+    box.item_list_.current_=&box.item_list_.entries[1]; box.item_list_.current_position_=1;
+    box.draw_count=0; box.on_redraw();
+    assert(box.item_list_.current_ == &box.item_list_.entries[4]
+           && box.item_list_.current_position_ == 4);
+    box.field_18_=99; box.item_list_.current_=&box.item_list_.entries[2];
+    box.item_list_.current_position_=2; box.draw_count=0; box.on_redraw();
+    assert(box.draw_count == 1 && box.draws[0] == 99
+           && box.item_list_.current_ == &box.item_list_.entries[2]
+           && box.item_list_.current_position_ == 2);
+    box.field_18_=static_cast<unsigned int>(-99);
+    box.item_list_.current_=&box.item_list_.entries[2];
+    box.item_list_.current_position_=2; box.draw_count=0; box.on_redraw();
+    assert(box.draw_count == 1 && box.draws[0] == -99
+           && box.item_list_.current_ == &box.item_list_.entries[0]
+           && box.item_list_.current_position_ == 2);
+
+    // The initial parent snapshot is used for on_dialog_back_draw even when
+    // fill_callback reparents the ListBox. The fallback copy reloads parent.
+    GraphicWin original_parent, replacement_parent;
+    box.parent_=&original_parent; box.item_list_.head_=&box.item_list_.entries[0];
+    box.item_list_.entry_count_=1; box.column_count_=1; box.row_count_=1;
+    box.field_18_=0; box.iFlags_=0x80000; box.fill_callback_=fill_reparent;
+    fill_reparent_target=&replacement_parent;
+    original_parent.event_count=0; original_parent.copy_calls=0;
+    replacement_parent.copy_calls=0; box.draw_count=0; box.on_redraw();
+    assert(original_parent.event_count == 1 && WinCallbackWindow == &original_parent);
+    assert(box.parent_ == &replacement_parent && original_parent.copy_calls == 0
+           && replacement_parent.copy_calls == 1);
+
+    // If that callback reparents to null, the old parent still receives the
+    // callback but the refreshed copy path falls back to fill.
+    box.parent_=&original_parent; fill_reparent_target=0;
+    original_parent.event_count=0; original_parent.copy_calls=0;
+    replacement_parent.copy_calls=0; int fills_before_reparent_null=box.fills;
+    box.draw_count=0; box.on_redraw();
+    assert(original_parent.event_count == 1 && WinCallbackWindow == &original_parent);
+    assert(box.parent_ == 0 && original_parent.copy_calls == 0
+           && replacement_parent.copy_calls == 0 && box.fills == fills_before_reparent_null+1);
+
+    box.parent_=&parent; box.fill_callback_=fill_noop; box.iFlags_=0;
+    box.item_list_.head_=0; box.item_list_.entry_count_=0;
+    box.draw_count=0; box.on_redraw(); assert(box.draw_count == 0);''')
+    controls = replace_fixture_once(controls,
+        '    // The entry guard is the Win parent. A nonempty list with no parent\n    // returns before clipping or painting.',
+        '''    // Callback changes scroll. Pin's equality check breaks only the inner
+    // loop, so the next outer pass continues beyond the remaining entries.
+    box.item_list_.head_=&box.item_list_.entries[0];
+    box.item_list_.entry_count_=5; box.column_count_=2; box.row_count_=2;
+    box.field_18_=0; box.draw_count=0; box.mutate_once=1;
+    box.draw_mutator = [](ListBox *item, int) {
+        if (item->mutate_once) {
+            item->mutate_once=0;
+            item->field_18_=1;
+            item->item_list_.entry_count_=3;
+        }
+    };
+    box.on_redraw();
+    assert(box.draw_count == 4 && box.draws[0] == 0 && box.draws[1] == 2
+           && box.draws[2] == 3 && box.draws[3] == 4);
+    assert(ListBoxDrawOffset == 4);
+
+    // Callback changes both the global offset and scroll. The pin increments
+    // the live global and forms the next item index from the refreshed scroll.
+    box.item_list_.entry_count_=8; box.column_count_=2; box.row_count_=2;
+    box.field_18_=0; box.draw_count=0;
+    box.draw_mutator = [](ListBox *item, int) {
+        if (item->draw_count == 1) { ListBoxDrawOffset=4; item->field_18_=1; }
+    };
+    box.on_redraw();
+    assert(box.draw_count == 3 && box.draws[0] == 0 && box.draws[1] == 6
+           && box.draws[2] == 7);
+    assert(ListBoxDrawOffset == 7);
+
+    // Bounds are live too: changing both in draw_item ends after one call.
+    box.item_list_.entry_count_=6; box.column_count_=2; box.row_count_=2;
+    box.field_18_=0; box.draw_count=0;
+    box.draw_mutator = [](ListBox *item, int) {
+        if (item->draw_count == 1) { item->row_count_=1; item->column_count_=1; }
+    };
+    box.on_redraw(); assert(box.draw_count == 1 && box.draws[0] == 0);
+
+    box.draw_mutator=0;
+    box.column_count_=0; box.row_count_=2; box.draw_count=0;
+    box.on_redraw(); assert(box.draw_count == 0 && ListBoxDrawOffset == 0);
+    box.column_count_=2; box.row_count_=-1;
+    box.on_redraw(); assert(box.draw_count == 0 && ListBoxDrawOffset == 0);
+
+    // The entry guard is the Win parent. A nonempty list with no parent
+    // returns before clipping or painting.''')
     controls = controls.replace("box.item_list_.values[3].text=(char*)\"A\"; box.selected_position_=0;\n    mapped_character='A'; box.on_key_down('A'); assert(box.selected_position_ == 3);",
                                 "box.item_list_.values[3].text=(char*)\"A\"; box.selected_position_=0;\n    mapped_character='A'; box.on_key_down('A'); assert(box.selected_position_ == 3);\n    // Above-last selected ordinal skips cursor setup: continue from this\n    // non-head node and wrap its deliberately independent ordinal.\n    box.item_list_.values[2].text=(char*)\"A\"; box.selected_position_=99;\n    box.item_list_.current_=&box.item_list_.entries[1]; box.item_list_.current_position_=4;\n    mapped_character='A'; assert(box.on_key_down('A') == 1 && box.selected_position_ == 0);")
     controls = controls.replace(

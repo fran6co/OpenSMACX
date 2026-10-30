@@ -165,14 +165,6 @@ static int listbox_frame_edge_count(uint32_t stored_count) {
     return static_cast<int>(stored_count);
 }
 
-static int listbox_visible_draw_count(int columns, int rows, int first,
-                                     int item_count) {
-    if (columns <= 0 || rows <= 0 || first >= item_count) return 0;
-    const int slots = columns * rows;
-    const int available = item_count - first;
-    return slots < available ? slots : available;
-}
-
 struct ListBoxScrollCopy {
     int source_x;
     int source_y;
@@ -1861,63 +1853,88 @@ void ListBox::UNK1(int direction) {
                  copy.width, copy.height);
 }
 
-// The Dialog virtual entry at 0x0060C350 first rejects an empty StringList,
+// The original virtual entry first rejects a null Win parent
+// (the adjusted Win +0xC4 member), stores that parent for the callback path,
 // then clips, honors optional list/parent paint callbacks, copies or fills the
-// backing surface, draws nested border edges, and paints visible entries.
+// backing surface, draws nested border edges, and paints the nested grid.
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0060C350 ?on_redraw@ListBox@@QAEXXZ 0x0060C350-0x0060C5C4
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0060c350.cpp"], "reason": "Rehome seed catalogue identity and original extents into compiled owning class; native-emitted symbol is separate and no new byte claim granted."}
 // symbol    ?on_redraw@ListBox@@UAEXXZ
 void ListBox::on_redraw() {
-    if (Dialog::item_list_.head_ == 0) return;
-    GraphicWin *window = this;
-    Win *parent = window->parent_window();
+    GraphicWin &window = *this;
+    Win *parent = window.parent_window();
+    if (parent == 0) return;
     WinCallbackWindow = parent;
-    Buffer *buffer = window;
+    Buffer *buffer = &window;
     buffer->restore_clip();
 
     bool handled = false;
-    if (fill_callback_ != 0 && fill_callback_(window, 0, 0, 0) != 0) {
+    if (fill_callback_ != 0 && fill_callback_(&window, 0, 0, 0) != 0) {
         handled = true;
     }
     if (!handled && parent != 0 &&
-        parent->on_dialog_back_draw(window)
+        parent->on_dialog_back_draw(&window)
             != 0) {
         handled = true;
     }
     if (!handled) {
-        if ((iFlags_ & 0x80000u) != 0 && parent != 0) {
-            GraphicWin *parent_graphic = static_cast<GraphicWin *>(parent);
-            parent_graphic->copy(buffer,
-                Dialog::window_x_, Dialog::window_y_, 0, 0,
-                window->pixel_width(), -window->pixel_height());
+        if ((iFlags_ & 0x80000u) != 0) {
+            parent = window.parent_window();
+            if (parent != 0) {
+                GraphicWin *parent_graphic = static_cast<GraphicWin *>(parent);
+                parent_graphic->copy(buffer,
+                    Dialog::window_x_, Dialog::window_y_, 0, 0,
+                    window.pixel_width(), -window.pixel_height());
+            } else {
+                window.fill(Dialog::window_x_);
+            }
         } else {
-            window->fill(Dialog::window_x_);
+            window.fill(Dialog::window_x_);
         }
     }
 
-    RECT border = *window->buffer_working_rect();
-    const int border_count = listbox_frame_edge_count(Dialog::field_6C_);
-    for (int edge = 0; edge < border_count; ++edge) {
-        buffer->box(&border, static_cast<int>(Dialog::field_64_),
-                    static_cast<int>(Dialog::field_68_));
-        ++border.left;
-        ++border.top;
-        --border.right;
-        --border.bottom;
+    RECT border = *window.buffer_working_rect();
+    int edge = 0;
+    if (listbox_frame_edge_count(Dialog::field_6C_) > 0) {
+        do {
+            buffer->box(&border, static_cast<int>(Dialog::field_64_),
+                        static_cast<int>(Dialog::field_68_));
+            ++border.left;
+            ++border.top;
+            --border.right;
+            --border.bottom;
+            ++edge;
+        } while (edge < listbox_frame_edge_count(Dialog::field_6C_));
     }
 
-    const int count = Dialog::item_list_.entry_count_;
-    const int first = static_cast<int>(field_18_);
-    const int visible_count = listbox_visible_draw_count(
-        Dialog::column_count_,
-        Dialog::row_count_, first, count);
+    if (Dialog::item_list_.entry_count_ == 0) return;
+    Dialog::item_list_.seek_pos(static_cast<int>(field_18_) - 1);
+
     ListBoxDrawOffset = 0;
-    for (int offset = 0; offset < visible_count; ++offset) {
-        ListBoxDrawOffset = offset;
-        draw_item(first + offset);
+    int column = 0;
+    if (Dialog::column_count_ > 0) {
+        do {
+            int rows = Dialog::row_count_;
+            int row = 0;
+            if (rows > 0) {
+                do {
+                    draw_item(static_cast<int>(field_18_) + ListBoxDrawOffset);
+                    ++ListBoxDrawOffset;
+
+                    const int remaining = Dialog::item_list_.entry_count_
+                        - static_cast<int>(field_18_);
+                    if (ListBoxDrawOffset == remaining) {
+                        break;
+                    }
+
+                    rows = Dialog::row_count_;
+                    ++row;
+                } while (row < rows);
+            }
+            ++column;
+        } while (column < Dialog::column_count_);
     }
-    ListBoxDrawOffset = visible_count;
 }
 
 // ORIGINAL: 0x0060CF60 ?on_mousewheel@thunk1_ListBox@@QAEXH@Z 0x0060CF60-0x0060CF68 FILE BYTE_EXACT
