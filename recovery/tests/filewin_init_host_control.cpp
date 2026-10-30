@@ -71,6 +71,9 @@ struct EditBox : Win {
     return edit_result;
   }
 };
+static void sentinel_draw(void *, int, int, int, int, int) {}
+static int sentinel_write(void *, int, int, RECT *, char *) { return 0; }
+static int sentinel_fill(void *, int, int, RECT *) { return 0; }
 struct FlatButton {
   int result;
   int init(char *, int id, int x, int y, int width, int height, Win *, int) {
@@ -83,11 +86,27 @@ struct FlatButton {
   }
 };
 struct ListBox : Dialog {
+  typedef void (*DrawCallback)(void *, int, int, int, int, int);
+  typedef int (*WriteCallback)(void *, int, int, RECT *, char *);
+  typedef int (*FillCallback)(void *, int, int, RECT *);
+  DrawCallback draw_callback_;
+  WriteCallback write_callback_;
+  FillCallback fill_callback_;
   int field_8_;
+  ListBox() : draw_callback_(sentinel_draw),
+              write_callback_(sentinel_write),
+              fill_callback_(sentinel_fill), field_8_(0) {}
   void close() { event(39); }
-  void set_callbacks(void (*draw)(void *, int, int, int, int, int),
-                     void *, void *) {
-    assert(draw != 0); event(50);
+  void set_callbacks(DrawCallback draw, WriteCallback write,
+                     FillCallback fill) {
+    draw_callback_ = draw;
+    write_callback_ = write;
+    fill_callback_ = fill;
+    event(50);
+  }
+  void set_draw_callback(DrawCallback draw) {
+    draw_callback_ = draw;
+    event(50);
   }
 };
 struct FileWin {
@@ -198,6 +217,9 @@ int main() {
   reset_controls();
   assert(win.init(0, &parent, &args) == 0);
   assert(win.list_box_.field_8_ == 1);
+  assert(win.list_box_.draw_callback_ == filebox_draw);
+  assert(win.list_box_.write_callback_ == sentinel_write);
+  assert(win.list_box_.fill_callback_ == sentinel_fill);
   assert(args.field_44_ == 0x76543210);
   assert(win.list_box_.field_34_ == 13);
   assert(dialog_rect[0] == 11 && dialog_rect[1] == 12

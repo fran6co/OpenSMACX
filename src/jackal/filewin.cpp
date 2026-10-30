@@ -654,7 +654,7 @@ int FileWin::init(char *, GraphicWin *parent, FileWinConstruct *parameters) {
   list_box_.field_8_ = 1;
   static_cast<Dialog &>(list_box_).field_34_ =
       (FileWinSprite0Owner.sprite().width() * 3) / 2;
-  list_box_.set_callbacks(&filebox_draw, 0, 0);
+  list_box_.set_draw_callback(&filebox_draw);
 
   directory_list_handle_ = CreateWindowExA(
       0, "LISTBOX", FileWinListWindowTitle, 0x40000040,
