@@ -103,6 +103,14 @@ class AlphaNetStringStruct : public virtual StringAllocationBase {
 
   inline AlphaNetStringStruct();
   ~AlphaNetStringStruct() { remove_all(); current_position_ = 0; }
+
+ private:
+  // At original 0x005D4AB8, sort_sessions sets ECX from its saved ESI
+  // receiver at 0x005D4AB6 and passes both GUID pointers on the stack. The
+  // comparator reads those stack arguments and does not use incoming ECX.
+  // This private member expresses the observed call shape; original nominal
+  // ownership and the source-level name remain unknown.
+  int compare_session_guid(const GUID *left, const GUID *right);
 };
 static_assert(sizeof(AlphaNetStringStruct) == 0x24, "session ledger base and virtual allocation owner");
 
