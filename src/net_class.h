@@ -541,6 +541,10 @@ class Net {
   char *get_player_name(unsigned long key);
 
  private:
+  // The calls at 0x0062E31B and 0x0062E361 pass this Net receiver in ECX
+  // before calling 0x00631BA0; the callee does not otherwise read the receiver.
+  int report_directplay_error(HRESULT error);
+
   // init() fills the next six: the thread that owns the session, five events
   // it creates, and the DirectPlay interface copied out of 0x009BE600.
   // RECOVERY_MEMBER: v2 Net thread_info_ NetThreadInfo 0x4 0x0062D8E0
