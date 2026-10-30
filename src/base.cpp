@@ -9929,7 +9929,7 @@ int __cdecl vulnerable(int faction_id, int x, int y) {
 
 /*
 Purpose: Determine whether the specified base is considered an objective.
-// ORIGINAL: 0x005AC060 ?is_objective@@YAHH@Z 0x005AC060-0x005AC10B
+// ORIGINAL: 0x005AC060 ?is_objective@@YAHH@Z 0x005AC060-0x005AC10B BYTE_EXACT
 // TRIED: the image still boolifies the `facilities_built[offset] & mask` test with a `neg/sbb/neg` 0-or-1 materialization into the old base_id stack slot before the final `je`, where this tree emits a plain `test`; hoisting `has_fac_built_call(...)` into its own named `BOOL` local before the `if` did not reproduce it (same 43/64, 0.927) - VC6 still proves the value is only used for one branch and drops the materialization.
 // TRIED: `GameRules & X || Bases[base_id].event & Y` into two separate `if` statements (matching the image's two separate short-circuit branches instead of one `||`) moved 0.586 -> 0.762 similar. CORRECTION to the note this replaces: `calls agrees at exactly 1 (0x0050BA00, bitmask)` was wrong - the one call this tree made was to has_fac (out-of-line), not bitmask; the image inlines has_fac itself (its `cmp eax,0x41/jge` IS has_fac's own FacilityRepStart guard) and keeps ONLY the bitmask call inside that. Open-coding has_fac(ScnVictFacilityObj, base_id, 0) as its own `< FacilityRepStart` guard + has_fac_built() at the site removed the out-of-line has_fac call and moved best similarity 0.762 -> 0.783. `ScnVictFacilityObj` is a runtime facility id (read from a global, not a compile-time constant), so the folded `MEASURED inline bitmask` cannot constant-fold it away - routing it through `has_fac_built_call` (the real `bitmask()` call, same lever as cost_factor/pop_goal/num_objectives) reaches the call the image makes; call_diff agreed at 0/1 before, 1/1 after. Casting the `(int)ScnVictFacilityObj < FacilityRepStart` guard fixed a jge/jae signed-vs-unsigned split (ScnVictFacilityObj is uint32_t, compared unsigned without the cast). Moved 2/64 -> 43/64 agreeing, 0.586 -> 0.927 similar.
 // TRIED: rewriting base_project()'s loop as an explicit pointer walk (`for (int *p = &SecretProject.human_genome_project; p < ... + MaxSecretProjectNum; p++)`) - the image's `cmp eax,0x9a6614/jl` reads like one, but the explicit walk makes VC6 test the pointer UNSIGNED (`jb`, 42/64) while the INDEX loop keeps the signed `jl` through strength reduction and test replacement (43/64, agreeing on `jl` exactly). Open-coding the bitmask call at block scope (int mask; int offset; bitmask_call(...); Bases[..].facilities_built[offset] & mask) instead of via `has_fac_built_call` also loses the whole shape - `push ecx` becomes `sub esp,0xc` and the image's `neg/sbb/neg` boolification never appears. Residual (listing_diff, 2 runs): the image materializes the `& mask` test 0-or-1 into base_id's own dead argument slot ([ebp+8]) with offset at [ebp-4]; this tree's inline has_fac_built assigns offset->[ebp-4] and mask->[ebp+8], the mirror image, and no source form tried at this call site flips it.
@@ -9950,8 +9950,9 @@ BOOL __cdecl is_objective(int base_id) {
         return true;
     }
     if (GameDataStateStorage.fields_.game_rules_ & RULES_SCN_VICT_SP_COUNT_OBJ) {
+        const int *projects = GameDataStateStorage.fields_.secret_project_.project_base;
         for (int i = 0; i < MaxSecretProjectNum; i++) {
-            if (base_project(i) == base_id) {
+            if (projects[i] == base_id) {
                 return true;
             }
         }
@@ -9962,9 +9963,17 @@ BOOL __cdecl is_objective(int base_id) {
         // followed by has_fac_built(), and the image inlines exactly that
         // (its `cmp eax, 0x41 / jge` IS has_fac's `facility_id >=
         // FacilityRepStart` guard) rather than calling has_fac out of line.
-        if ((int)GameDataStateStorage.fields_.scenario_victory_facility_ < FacilityRepStart
-            && has_fac_built(GameDataStateStorage.fields_.scenario_victory_facility_, base_id)) {
-            return true;
+        if ((int)GameDataStateStorage.fields_.scenario_victory_facility_ < FacilityRepStart) {
+            // Retain the Base before the helper replaces the consumed base_id
+            // argument with its byte offset, then its normalized result.
+            Base *base = &Bases[base_id];
+            int mask;
+            bitmask(GameDataStateStorage.fields_.scenario_victory_facility_,
+                    &base_id, &mask);
+            base_id = (base->facilities_built[base_id] & mask) != 0;
+            if (base_id) {
+                return true;
+            }
         }
     }
     return false;
