@@ -12,7 +12,7 @@
 #pragma function(memset, strcpy)
 #endif
 
-// ORIGINAL: 0x004C8960 ??0VoiceRx@@QAE@XZ 0x004C8960-0x004C8A43;0x004C8450-0x004C8457;0x00659F8A-0x00659FA4 FILE
+// ORIGINAL: 0x004C8960 ??0VoiceRx@@QAE@XZ 0x004C8960-0x004C8A43;0x00659F8A-0x00659FA4 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original 4C8960/4C8CC0 constructors, 4C8A50/4C8DB0 destructors and 66E82C/66E8C4 tables; native VC6 emits Sound base at0, Rx extent54, Tx extent58 and own flag54.", "631A60 consumes record18/20 and returns the same record; soundx.dll kind7 slots34/35 allocate MMIOINFO48 and enforce pointer identity. Shared cleanup/EH spans remain historical obligations."], "reason": "Voice Rx and Tx genuinely derive from Sound; natural lifecycle stages and typed DLL device contracts replace raw wrappers. Tx returns and consumes the exact borrowed SDK MMIOINFO pointer, not an integer handle."}
 // symbol    ??0VoiceRx@@QAE@XZ
 VoiceRx::VoiceRx() {
@@ -22,7 +22,7 @@ VoiceRx::VoiceRx() {
     strcpy(fname_, name);
 }
 
-// ORIGINAL: 0x004C8A50 ??1VoiceRx@@QAE@XZ 0x004C8A50-0x004C8B35;0x004C8450-0x004C8457;0x00659FA4-0x00659FBE FILE
+// ORIGINAL: 0x004C8A50 ??1VoiceRx@@QAE@XZ 0x004C8A50-0x004C8B35;0x00659FA4-0x00659FBE FILE BYTE_EXACT
 // symbol    ??1VoiceRx@@UAE@XZ
 VoiceRx::~VoiceRx() {
     if (device_ != 0) {
@@ -213,7 +213,7 @@ int VoiceRx::get_nbuffers() {
 Purpose: Build a VoiceTx: full volume, centred pan, cleared regions, a
          1000ms default fade, the "Voice Tx" name on the CRT heap, and
          type 7 published through the device slot.
-// ORIGINAL: 0x004C8CC0 ??0VoiceTx@@QAE@XZ 0x004C8CC0-0x004C8DAF;0x004C8450-0x004C8457;0x00659FBE-0x00659FD8
+// ORIGINAL: 0x004C8CC0 ??0VoiceTx@@QAE@XZ 0x004C8CC0-0x004C8DAF;0x00659FBE-0x00659FD8
 // symbol    ??0VoiceTx@@QAE@XZ
 // size      239 bytes
 // prototype void (__thiscall ??0VoiceTx@@QAE@XZ)(VoiceTx* this)
@@ -236,7 +236,7 @@ VoiceTx::VoiceTx() {
     Sound::set_type(7);
 }
 
-// ORIGINAL: 0x004C8DB0 ??1VoiceTx@@QAE@XZ 0x004C8DB0-0x004C8EA0;0x004C8450-0x004C8457;0x00659FD8-0x00659FF2 FILE
+// ORIGINAL: 0x004C8DB0 ??1VoiceTx@@QAE@XZ 0x004C8DB0-0x004C8EA0;0x00659FD8-0x00659FF2 FILE BYTE_EXACT
 // symbol    ??1VoiceTx@@UAE@XZ
 VoiceTx::~VoiceTx() {
     if (device_ != 0 && WaveDeviceReleaseGuard != 0) {

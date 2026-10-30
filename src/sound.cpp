@@ -63,8 +63,9 @@ SoundFadeState::SoundFadeState() {
 // RECOVERY_GENERATED: v1 vtable 0x0066E444 ? ??_7SoundFadeState@@6B@ 0x004C6080
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // Historical seed observations (not fresh measurements or acceptance):
+// Historical SHARED_TAIL observation below predates the independent source identity for 0x004C8450; retain it as prior trial context, not a current span classification.
 // TRIED: no tier is reachable for ANY body - SHARED_TAIL, the helper at 0x004C8450 (mov [ecx],0x66e444; ret) is COMDAT-folded with another catalogued function, same wall as VoiceRx::VoiceRx() at 0x004C8960. Straight-line field reconstruction below, no attempt at the SEH try/catch unwind frame (bare try/catch with rethrow produced no fs:[0] frame at all under this compiler's flags; the scaffold gives Sound no base class to hang the automatic base/derived vtable-swap unwind on, same as the already-tried ~UV2Player shape).
-// ORIGINAL: 0x004C6080 ??0Sound@@QAE@XZ 0x004C6080-0x004C611A;0x004C8450-0x004C8457;0x00659ED0-0x00659EE2
+// ORIGINAL: 0x004C6080 ??0Sound@@QAE@XZ 0x004C6080-0x004C611A;0x00659ED0-0x00659EE2 BYTE_EXACT
 Sound::Sound() {
     chain_prev_ = 0;
     chain_next_ = 0;
@@ -84,7 +85,8 @@ Purpose: Destroy the sound. This is exactly the body ~Wave inlines as its
          the sound chain, and publish the ultimate base's vtable on the way
          out through its real SoundFadeState base. The compiler owns the
          exception cleanup; remaining external hooks are not lifetime proof.
-// ORIGINAL: 0x004C6120 ??1Sound@@QAE@XZ 0x004C6120-0x004C61D4;0x004C8450-0x004C8457;0x00659EE2-0x00659EF4 FILE BYTE_EXACT
+// ORIGINAL: 0x004C6120 ??1Sound@@QAE@XZ 0x004C6120-0x004C61D4;0x00659EE2-0x00659EF4 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:Sound destructor at 0x004C6120 has main body 0x004C6120..0x004C61D3, base-stage helper 0x004C8450..0x004C8456, and EH continuation 0x00659EE2..0x00659EF3", "the original Sound destructor marker retains BYTE_EXACT; removing the helper span from this mapping does not withdraw or grant that claim", "the helper now has its own original source identity at 0x004C8450 as sub_4c8450"], "reason": "Preserve the historical complete Sound destructor byte claim as a restoration obligation: its former compound span included the independent SoundFadeState unwind entry, now mapped separately."}
 // symbol    ??1Sound@@UAE@XZ
 // body      src/sound.h
 // size      205 bytes
@@ -105,7 +107,7 @@ Purpose: Build the inherited Sound/Fade state once, then initialize Wave's
          is a direct base-method call in the original. The compiler owns
          construction tables and exception cleanup; the historical spelling
          experiments below predate recovery of the fade base.
-// ORIGINAL: 0x004C66E0 ??0Wave@@QAE@XZ 0x004C66E0-0x004C67B6;0x004C8450-0x004C8457;0x00659EF4-0x00659F06
+// ORIGINAL: 0x004C66E0 ??0Wave@@QAE@XZ 0x004C66E0-0x004C67B6;0x00659EF4-0x00659F06
 // TRIED: 3/73 - the image carries an SEH unwind frame here (`push -1 /
 //            push 0x659efc / mov eax,fs:[0] / ...`), the same symptom as
 //            FlatButton::FlatButton() (flatbutton.cpp) and
@@ -174,7 +176,7 @@ Purpose: Destroy the wave. The original is a three-stage teardown of an
          Sound base performs that stage once, with Sound virtual dispatch
          already active. The compiler owns the exception cleanup and final
          SoundFadeState destruction; do not duplicate those stages here.
-// ORIGINAL: 0x004C67C0 ??1Wave@@QAE@XZ 0x004C67C0-0x004C68EC;0x004C8450-0x004C8457;0x00659F06-0x00659F20
+// ORIGINAL: 0x004C67C0 ??1Wave@@QAE@XZ 0x004C67C0-0x004C68EC;0x00659F06-0x00659F20 BYTE_EXACT
 // symbol    ??1Wave@@UAE@XZ
 // LEVER: plain member access, not the `Wave volatile *const self` view. The
 //        view predates the real `Sound` base: once the SEH frame is in the
@@ -258,9 +260,10 @@ Wave::~Wave() {
 // span at 0x4c8450/0x659f20/0x659f28 that is PART of this same function
 // (the "spans" list is multi-range). The SEH frame is not modeled here -
 // see TRIED.
-// ORIGINAL: 0x004C75B0 sub_4c75b0 0x004C75B0-0x004C766D;0x004C8450-0x004C8457;0x00659F20-0x00659F32 FILE
+// ORIGINAL: 0x004C75B0 sub_4c75b0 0x004C75B0-0x004C766D;0x00659F20-0x00659F32 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["git:f7bbce35:src/unrecovered/004c75b0.cpp", "src/midi.h", "src/ambience.h"], "reason": "Original Sound-to-Midi constructor staging and byte54 state identify the genuine Midi owner. Historical seed mapping includes the already shared unwind helper; its overlap remains a restoration limitation, not a newly inferred independent function extent."}
 // symbol    ??0Midi@@QAE@XZ
+// Historical SHARED_TAIL observation below predates the independent source identity for 0x004C8450; retain it as prior trial context, not a current span classification.
 // TRIED: SHARED_TAIL - the 0x4c8450/0x659f20 unwind-handler span is COMDAT-folded with another function's handler, so no tier is reachable regardless of body. Left as a plain field-write transcription (no SEH frame modeled) for the next pass.
 Midi::Midi() {
     memset(&field_54_, 0, 1);
@@ -278,7 +281,7 @@ Purpose: Destroy an ambience. Its own stage frees the remembered filename
          unlinks from the global sound chain when the chained bit is set -
          the image carries that Sound stage INLINED, which is why the old
          transcription duplicated it by hand.
-// ORIGINAL: 0x004C7670 ??1Ambience@@QAE@XZ 0x004C7670-0x004C7760;0x004C8450-0x004C8457;0x00659F32-0x00659F4C
+// ORIGINAL: 0x004C7670 ??1Ambience@@QAE@XZ 0x004C7670-0x004C7760;0x00659F32-0x00659F4C BYTE_EXACT
 // symbol    ??1Midi@@UAE@XZ
 // size      273 bytes
 // prototype void (__thiscall ??1Ambience@@QAE@XZ)(Ambience* this)
@@ -328,7 +331,7 @@ Purpose: Build the ambience. The original constructs in four vtable stages -
          clear is four bytes wide, this one is a single byte, so 0x55..0x57
          keep whatever the storage held - and nothing at or above 0x58 is
          written at all, which is what pins the shared base's extent there.
-// ORIGINAL: 0x004C8460 ??0Ambience@@QAE@XZ 0x004C8460-0x004C852D;0x004C8450-0x004C8457;0x00659F4C-0x00659F5E
+// ORIGINAL: 0x004C8460 ??0Ambience@@QAE@XZ 0x004C8460-0x004C852D;0x00659F4C-0x00659F5E
 // TRIED: dropping `volatile` off `object`/`bytes` measured 0/72
 //   agreeing both ways (the function diverges at instruction 0, the
 //   omitted SEH prologue, before reaching these stores), but it shrank
@@ -1378,3 +1381,6 @@ int __cdecl unload_active_sound_chain() {
     }
     return 0x0B;
 }
+// ORIGINAL: 0x004C8450 sub_4c8450 0x004C8450-0x004C8457 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x004C8450..0x004C8456 stores root table 0x0066E444 through ECX and returns; the next NOP at 0x004C8457 is outside the mapped span", "pinned constructor EH continuations load saved receiver into ECX and tail-jump to 0x004C8450; the helper has its own entry and RET", "src/sound.h declares the genuine protected nonvirtual SoundFadeState destructor; SoundFadeState root table 0x0066E444 is staged by its real constructor", "historical Sound destructor mapping at 0x004C6120 included 0x004C8450..0x004C8457 and retains its BYTE_EXACT token as an obligation after this span is independently mapped"], "reason": "Bind the pinned independent ECX SoundFadeState base-stage unwind entry to the genuine protected nonvirtual SoundFadeState destructor; keep the full historical Sound destructor claim as a restoration obligation after separating this generated entry."}
+// symbol    ??1SoundFadeState@@IAE@XZ

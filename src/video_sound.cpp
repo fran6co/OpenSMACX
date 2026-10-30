@@ -4,7 +4,7 @@
 // Do not add an outer virtual deleter: that thunk calls prefix 0x4C86D0 only.
 #include "video.h"
 
-// ORIGINAL: 0x004C8620 sub_4c8620 0x004C8620-0x004C86C9;0x004C8450-0x004C8457;0x00659F5E-0x00659F70 FILE
+// ORIGINAL: 0x004C8620 sub_4c8620 0x004C8620-0x004C86C9;0x00659F5E-0x00659F70 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf native636400/636530 member construction/destruction;66E790 prefix table and4C9360->4C86D0.", "native636960 full loader jump table636F9C;637530 SDK and Indeo packet calls.", "Native spans and all historical claims/lessons retained; close6365B0 broad-span and4C8910 truncated-span debts remain explicit."], "reason": "Video owns composed Sound prefix, real Palette/queue/Buffer members, SDK media resources and native observed source globals; scalar deletion belongs only to the prefix."}
 // symbol    ??0VideoSoundState@@QAE@XZ
 // TRIED: byte-exact - the SEH frame prologue (push -1/handler; mov fs:[0]) has no C++ source form to reproduce without a real try/catch that this Sound-constructor body doesn't need (documented wall). Landed as a __thiscall ctor-shaped member returning `this`, with the progressive vtable_storage_ reassignment (0x66e444 -> 0x66e3c0 -> 0x66e790) and the self-clobbering dead `if (device_ != 0)` check (device_ is zeroed immediately before the read) transcribed as-is.
@@ -14,8 +14,9 @@ VideoSoundState::VideoSoundState() : Sound() {
   Sound::set_type(4);
 }
 
-// ORIGINAL: 0x004C86D0 sub_4c86d0 0x004C86D0-0x004C87A2;0x004C8450-0x004C8457;0x00659F70-0x00659F8A FILE
+// ORIGINAL: 0x004C86D0 sub_4c86d0 0x004C86D0-0x004C87A2;0x00659F70-0x00659F8A FILE BYTE_EXACT
 // symbol    ??1VideoSoundState@@UAE@XZ
+// Historical SHARED_TAIL observation below predates the independent source identity for 0x004C8450; retain it as prior trial context, not a current span classification.
 // TRIED: literal `call 0x64557f`/SEH __try/__finally reproduction - the span at 0x004C8450-0x004C8457 is COMDAT-folded with src/wave.cpp's Wave::~Wave and src/ambience.cpp's Ambience::~Ambience (both list it in their own spans too), so classify_body reports SHARED_TAIL for this address regardless of body content - no per-function verdict is well defined here, confirmed by running the bare verifier against the empty placeholder before writing anything.
 VideoSoundState::~VideoSoundState() {
   VideoSoundDevice *const device =
