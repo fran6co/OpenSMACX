@@ -3116,7 +3116,7 @@ Purpose: Construct BaseWin's large aggregate of sub-windows: a ProdPicker, a
          second GraphicWin, several Sprite runs, a FlatButton, a Buffer, a
          FlatButton[22], a Time, a Caviar, a MapWin, a Font, two Spots, a
          second Buffer and three Scrolls.
-// ORIGINAL: 0x00408490 ??0BaseWin@@QAE@XZ 0x00408490-0x0040870D;0x004210D0-0x004210E7;0x00651380-0x00651567
+// ORIGINAL: 0x00408490 ??0BaseWin@@QAE@XZ 0x00408490-0x0040870D;0x00651380-0x00651567 BYTE_EXACT
 // LEVER: real, correctly-offset, correctly-typed members (already modelled
 //        in basewin.h) constructed IMPLICITLY, in declaration order, took
 //        this from a SHARED_TAIL isolated-scaffold measurement straight to
@@ -7321,7 +7321,7 @@ int BaseWin::on_key_click(int repeat, int key) {
 
 // 00420A70..00420F8E plus original cleanup/virtual-base teardown regions.
 // All member/base destructors execute implicitly in reverse declaration order.
-// ORIGINAL: 0x00420A70 ??1BaseWin@@QAE@XZ 0x00420A70-0x00420F8E;0x004210D0-0x004210E7;0x00650E20-0x00651184
+// ORIGINAL: 0x00420A70 ??1BaseWin@@QAE@XZ 0x00420A70-0x00420F8E;0x00650E20-0x00651184
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x00420A70; retired seed provenance git:1432fed4:src/unrecovered/00420a70.cpp; all original spans and historical obligations retained.", "image:41E8D0 initializes existing Font/FlatButton/Sprite/RECT and Caviar camera members; 420A70 tears down the same declaration order.", "image:41AF5B supplies ConsoleGlobal GraphicWin virtual-base receiver939444; qualified Console callback leaves the result intact.", "image:40B8F8 borrows the vehicle-ID pointer in NetDaemon row1 payload; normal menu cancel-1 reads inherited GraphicWinA0C. Undefined icon-spacing/invalid-index/modal-borrow inputs remain explicit."], "reason": "Genuine BaseWin owner with actual members, automatic base/member lifetimes and native callback receivers, not fixed executable-address forwarding or raw self-offset access."}
 // symbol    ??1BaseWin@@UAE@XZ
 BaseWin::~BaseWin() {}

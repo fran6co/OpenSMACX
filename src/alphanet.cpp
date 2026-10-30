@@ -201,7 +201,7 @@ AlphaNet::AlphaNet() {
 // The original closes transport before destroying Heap, ledger, then Net.
 // The members/base own those lifetimes; NetDaemon must not repeat them.
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00538B60 ??1AlphaNet@@QAE@XZ 0x00538B60-0x00538D0E;0x004E3710-0x004E372B;0x0065DF70-0x0065E005
+// ORIGINAL: 0x00538B60 ??1AlphaNet@@QAE@XZ 0x00538B60-0x00538D0E;0x0065DF70-0x0065E005
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00538b60.cpp: existing identity and complete recorded spans", "Original AlphaNet destruction closes transport, then destroys Heap at +0x148C and ledger at +0x144C before Net; normal members now own this chain."], "reason": "Adopt the retained destructor seed identity for the real AlphaNet owner. Existing shared cleanup spans are preserved, not newly inferred or claimed exact; the native one-entry/new-binding route deliberately does not infer overlapping ownership."}
 AlphaNet::~AlphaNet() {
     close();

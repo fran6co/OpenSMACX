@@ -2398,7 +2398,7 @@ Purpose: Build the device singleton in two vtable stages: the base's vtable
          constructor iterator (their destructor rides along for the
          unreachable unwind path), the device's own vtable (0x0066E0E8)
          publishes, and the trailing dword clears. The SEH frame is omitted.
-// ORIGINAL: 0x004C4DD0 ??0Wave_Device@@QAE@XZ 0x004C4DD0-0x004C4E5E;0x004C4DB0-0x004C4DC3;0x00659EA0-0x00659EB2
+// ORIGINAL: 0x004C4DD0 ??0Wave_Device@@QAE@XZ 0x004C4DD0-0x004C4E5E;0x00659EA0-0x00659EB2
 // size      179 bytes
 // prototype void (__thiscall ??0Wave_Device@@QAE@XZ)(Wave_Device* this)
 // callers   1   call targets   2
@@ -2420,7 +2420,7 @@ Purpose: Tear the device singleton down: its own vtable republishes, the
          SoundDeviceBase. A wrapped device is wound down through its slot
          0x10 - kept in the field, since the object is dying anyway. The
          compiler owns array iteration and destructor-failure unwinding.
-// ORIGINAL: 0x004C4E60 ??1Wave_Device@@QAE@XZ 0x004C4E60-0x004C4EC6;0x004C4DB0-0x004C4DC3;0x00659EB2-0x00659EC4
+// ORIGINAL: 0x004C4E60 ??1Wave_Device@@QAE@XZ 0x004C4E60-0x004C4EC6;0x00659EB2-0x00659EC4 BYTE_EXACT
 // size      139 bytes
 // prototype void (__thiscall ??1Wave_Device@@QAE@XZ)(Wave_Device* this)
 // callers   0   call targets   1
@@ -2452,3 +2452,7 @@ void Wave_Device::unknown_operation23() {}
 
 // RECOVERY_SHARED: v1 0x00404280 0x00404281 ?unk_slot2@Wave_Device@@UAEXXZ 0x004C4DD0
 void Wave_Device::unk_slot2() {}
+// ORIGINAL: 0x004C4DB0 sub_4c4db0 0x004C4DB0-0x004C4DC3 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x004C4DB0..0x004C4DC2 installs base vptr 0x0066E098, tests device_14_, calls virtual release slot +0x10 when nonnull, and returns; the span has no parent-frame accesses", "pinned Wave_Device cleanup actions at 0x00659EA0 and 0x00659EB2 load the saved base receiver into ECX and tail-jump to 0x004C4DB0", "src/sounddevice.h declares SoundDeviceBase’s protected nonvirtual destructor and device_14_; src/wave_device.h declares Wave_Device derives from SoundDeviceBase"], "reason": "Bind the pinned generated SoundDeviceBase destructor entry to Wave_Device’s real protected nonvirtual base-destructor stage."}
+// kind game
+// symbol    ??1SoundDeviceBase@@IAE@XZ
