@@ -15,6 +15,7 @@ from match_recovery.shared_source import read_shared
 from match_recovery.source import read_file
 from match_recovery.source_inventory import image_pin
 from test_application_link_recovery import ROOT, references, run_recovered_harness
+from test_spritelist_base_lifetime import extract_definition
 from test_sound_virtual_surface import family
 
 
@@ -108,12 +109,11 @@ def run_constructor(tmp_path, monkeypatch):
         ("// LIVE_NEXT", "src/sound.cpp", 0x448310),
         ("// LIVE_PREV", "src/sound.cpp", 0x448320),
         ("// LIVE_TYPE", "src/sound.cpp", 0x448330),
-        ("// LIVE_SET_TYPE", "src/sound.cpp", 0x4C61E0),
-        ("// LIVE_VOICE_CONSTRUCTOR", "src/voice.cpp", 0x4C8CC0)], declarations=[
+        ("// LIVE_SET_TYPE", "src/sound_loader.cpp", 0x4C61E0),
+        ("// LIVE_VOICE_CONSTRUCTOR", "src/sound.cpp", 0x4C8CC0)], declarations=[
         ("// LIVE_FADE_DECLARATION", "src/sound.h", "class SoundFadeState {", "// RECOVERY_MEMBER: v1 SoundFadeState volume_"),
         ("// LIVE_SOUND_DECLARATION", "src/sound.h", "class Sound : public SoundFadeState {", "// Two independent sources agree on 0x54"),
         ("// LIVE_VOICE_DECLARATION", "src/voice.h", "class VoiceTx : public Sound {", "// The actual 32-bit product"),
-        ("// LIVE_DEVICE_VIEW", "src/sound.cpp", "__forceinline Sound *sound_device(Sound *device)", "}  // namespace\n\n/*\nPurpose: Ask the wrapped device whether it is playing"),
         ("// LIVE_ROOT_FADE", "src/sound.cpp", "int SoundFadeState::set_fade(", "// Purpose: Return the next Sound")])
 
 
@@ -121,36 +121,33 @@ def test_actual_constructor_sets_owned_state_and_leaves_uninitialized_delay_unto
     run_constructor(tmp_path, monkeypatch)
 
 
-@pytest.mark.parametrize("unit,before,after", [
-    ("src/sound.cpp", "volume_ = 0x7F;", "volume_ = 0x7E;"),
-    ("src/sound.cpp", "sizeof(state_C_)", "sizeof(state_C_) - 4"),
-    ("src/sound.cpp", "loop_flag_30_ = 0;", "loop_flag_30_ = 1;"),
-    ("src/sound.cpp", "Sound::set_fade(1000);", "Sound::set_fade(999);"),
-    ("src/sound.cpp", "Sound::set_fade(1000);", "Sound::set_fade(1000); delay_ = 0;"),
-    ("src/sound.cpp", "device_ = 0;", "device_ = reinterpret_cast<Sound *>(1);"),
-    ("src/voice.cpp", "memset(&flags_54_, 0, sizeof(flags_54_));", "/* missing own-state clear */"),
+@pytest.mark.parametrize("unit,constructor,before,after", [
+    ("src/sound.cpp", "SoundFadeState::SoundFadeState()", "volume_ = 0x7F;", "volume_ = 0x7E;"),
+    ("src/sound.cpp", "SoundFadeState::SoundFadeState()", "sizeof(state_C_)", "sizeof(state_C_) - 4"),
+    ("src/sound.cpp", "SoundFadeState::SoundFadeState()", "loop_flag_30_ = 0;", "loop_flag_30_ = 1;"),
+    ("src/sound.cpp", "Sound::Sound()", "Sound::set_fade(1000);", "Sound::set_fade(999);"),
+    ("src/sound.cpp", "Sound::Sound()", "Sound::set_fade(1000);", "Sound::set_fade(1000); delay_ = 0;"),
+    ("src/sound.cpp", "Sound::Sound()", "device_ = 0;", "device_ = reinterpret_cast<Sound *>(1);"),
+    ("src/sound.cpp", "VoiceTx::VoiceTx()", "memset(&flags_54_, 0, sizeof(flags_54_));", "/* missing own-state clear */"),
 ])
-def test_actual_constructor_contract_rejects_damaged_initialization(tmp_path, monkeypatch, unit, before, after):
+def test_actual_constructor_contract_rejects_damaged_initialization(
+        tmp_path, monkeypatch, unit, constructor, before, after):
     original_read = Path.read_text
     target = ROOT / unit
-    assert original_read(target).count(before) == 1
+    def mutate_constructor(text):
+        assert text.count(constructor) == 1
+        definition = extract_definition(text, constructor)
+        assert definition.count(before) == 1
+        changed = definition.replace(before, after, 1)
+        assert text.count(definition) == 1
+        return text.replace(definition, changed, 1)
+
+    assert extract_definition(original_read(target), constructor).count(before) == 1
     def damaged_read(path, *args, **kwargs):
         text = original_read(path, *args, **kwargs)
         if path != target:
             return text
-        text = text.replace(before, after)
-        if unit == "src/sound.cpp" and before == "device_ = 0;":
-            # Reject this mutant before dispatch through its fabricated pointer.
-            # The unmodified constructor and its positive control are unchanged.
-            dispatch = "if (device_) {\n        sound_device(device_)->set_fade(fade);"
-            assert text.count(dispatch) == 1
-            text = text.replace(
-                dispatch,
-                "if (device_) {\n        assert(device_ == 0);\n"
-                "        sound_device(device_)->set_fade(fade);",
-                1,
-            )
-        return text
+        return mutate_constructor(text)
     monkeypatch.setattr(Path, "read_text", damaged_read)
     with pytest.raises(AssertionError):
         run_constructor(tmp_path, monkeypatch)

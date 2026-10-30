@@ -20,7 +20,7 @@ METHOD_START = "// ORIGINAL: 0x004C8620 sub_4c8620 "
 QUEUE_START = "// ORIGINAL: 0x0063E520 sub_63e520 "
 DELETE_START = "// ORIGINAL: 0x004C9360 ??_GVideo@@UAEPAXI@Z "
 GET_TIME_OLD = "src/video.cpp owns the actual int VideoSoundState::get_time() method body"
-GET_TIME_NEW = "src/video_sound.cpp owns the actual int VideoSoundState::get_time() method body"
+GET_TIME_NEW = "src/sound.cpp owns the actual int VideoSoundState::get_time() method body"
 METHODS = (
     "VideoSoundState::VideoSoundState()",
     "VideoSoundState::~VideoSoundState()",
@@ -63,38 +63,30 @@ def _base_video_sound_block() -> tuple[str, str, str]:
 
 
 def project_video_sound_split(video_source: str, sound_source: str) -> str:
-    """Validate only the VideoSoundState transfer, not the changing Video TU.
-
-    The shared video.cpp now has other legitimate owner moves. Compare the
-    migrated VideoSound block itself against its immutable source bytes and
-    retain the old binding sentence normalization, without inversing all of
-    video.cpp or asserting queue methods still live there.
-    """
+    """Validate the byte-preserving move from video.cpp into the audio TU."""
     old_heading, expected_block, delete_record = _base_video_sound_block()
 
     assert video_source.startswith(VIDEO_INCLUDE), "video.cpp header moved or rewritten"
-    assert sound_source.startswith(old_heading + VIDEO_INCLUDE), (
-        "vtable/class-owner header or shared video.h include changed"
+    assert sound_source.count(old_heading) == 1, "moved VideoSound section heading changed or duplicated"
+    section_start = sound_source.index(old_heading)
+    voice_start = sound_source.find(
+        "// RECOVERY_GENERATED: v1 vtable 0x66e82c 0x66e8c4 ??_7VoiceRx@@6B@",
+        section_start,
     )
-    assert sound_source.count(METHOD_START) == 1
-    assert sound_source.count(DELETE_START) == 1
-    assert sound_source.endswith(delete_record), (
-        "scalar deleting-destructor identity/span/claim changed or was displaced"
-    )
+    assert voice_start >= 0, "merged video section is not followed by the retained voice section"
+    moved_section = sound_source[section_start:voice_start]
+    expected_section = old_heading + VIDEO_INCLUDE + "\n" + expected_block + delete_record
 
-    sound_method_start = sound_source.index(METHOD_START)
-    assert sound_source[:sound_method_start] == old_heading + VIDEO_INCLUDE + "\n", (
-        "unadmitted code or annotation before the moved implementation block"
+    assert moved_section.count(METHOD_START) == 1
+    assert moved_section.count(DELETE_START) == 1
+    assert moved_section.count(GET_TIME_NEW) == 1
+    normalized_section = moved_section.replace(GET_TIME_NEW, GET_TIME_OLD, 1)
+    assert normalized_section == expected_section, (
+        "VideoSound section prologue, implementation, deletion mapping or footer changed"
     )
-    sound_delete_at = sound_source.rindex(DELETE_START)
-    sound_delete_separator_at = sound_source.rfind("\n\n", 0, sound_delete_at)
-    assert sound_delete_separator_at == sound_delete_at - 2
-    assert sound_source[sound_delete_separator_at:] == delete_record
-    sound_delete_start = sound_delete_at
-    moved_block = sound_source[sound_method_start:sound_delete_start]
-    assert moved_block.count(GET_TIME_NEW) == 1
+    moved_block = moved_section[len(old_heading + VIDEO_INCLUDE + "\n"):]
+    moved_block = moved_block[:moved_block.index(DELETE_START)].rstrip()
     moved_block = moved_block.replace(GET_TIME_NEW, GET_TIME_OLD, 1)
-
     assert moved_block == expected_block, "VideoSound implementation/annotation transfer changed"
     return moved_block
 
@@ -108,8 +100,8 @@ def _assert_full_split(video_source: str, sound_source: str) -> str:
     old = _git_source("src/video.cpp")
     old_rows = read_text(old, ROOT / "src/video.cpp")
     migrated_rows = read_text(old_heading + VIDEO_INCLUDE + "\n" + projected,
-                              ROOT / "src/video_sound.cpp")
-    sound_rows = read_text(sound_source, ROOT / "src/video_sound.cpp")
+                              ROOT / "src/sound.cpp")
+    sound_rows = read_text(sound_source, ROOT / "src/sound.cpp")
     old_sound_rows = [row for row in old_rows if row.address in {
         record.address for record in migrated_rows
     }]
@@ -125,7 +117,7 @@ def _assert_full_split(video_source: str, sound_source: str) -> str:
     assert sound_source.count("// ORIGINAL: 0x004C9360 ??_GVideo@@UAEPAXI@Z") == 1
     assert "??_GVideoSoundState@@UAEPAXI@Z" in sound_source
     assert "??_GVideoSoundState@@UAEPAXI@Z" not in video_source
-    assert sound_source.count("RECOVERY_SHARED:") == 4
+    assert projected.count("RECOVERY_SHARED:") == 4
 
     for signature in METHODS:
         assert len(re.findall(r"(?m)^" + re.escape(signature), sound_source)) == 1, signature
@@ -141,7 +133,7 @@ def _assert_full_split(video_source: str, sound_source: str) -> str:
 
 def test_video_sound_owner_is_complete_unique_and_matches_migrated_block():
     video_source = (ROOT / "src/video.cpp").read_text()
-    sound_source = (ROOT / "src/video_sound.cpp").read_text()
+    sound_source = (ROOT / "src/sound.cpp").read_text()
     _assert_full_split(video_source, sound_source)
 
 
@@ -156,7 +148,7 @@ def test_video_sound_owner_is_complete_unique_and_matches_migrated_block():
 ))
 def test_split_projection_rejects_moved_record_damage(damage):
     video_source = (ROOT / "src/video.cpp").read_text()
-    sound_source = (ROOT / "src/video_sound.cpp").read_text()
+    sound_source = (ROOT / "src/sound.cpp").read_text()
     if damage == "drop_shared_unload":
         marker = "// RECOVERY_SHARED: v1 0x406b30 0x406b33 ?unload@VideoSoundState@@UAEHXZ 0x4c8620\n"
         assert sound_source.count(marker) == 1
@@ -182,9 +174,9 @@ def test_split_projection_rejects_moved_record_damage(damage):
         assert sound_source.count(marker) == 1
         sound_source = sound_source.replace(marker, "int VideoSoundState::changed_time()", 1)
     elif damage == "unadmitted_prologue":
-        assert sound_source.count(VIDEO_INCLUDE) == 1
+        assert sound_source.count(METHOD_START) == 1
         sound_source = sound_source.replace(
-            VIDEO_INCLUDE, VIDEO_INCLUDE + "int unintended_product_storage;\n", 1)
+            METHOD_START, "int unintended_product_storage;\n" + METHOD_START, 1)
     else:
         raise AssertionError(damage)
 

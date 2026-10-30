@@ -105,7 +105,7 @@ def test_actual_net_join_worker_and_voice_level():
     import tempfile
     root = Path(__file__).resolve().parents[2] / 'src'
     net_source = (root / 'net_class.cpp').read_text()
-    voice_source = (root / 'voice.cpp').read_text()
+    voice_source = (root / 'sound.cpp').read_text()
     
     def function(source, signature):
         start = source.index(signature)

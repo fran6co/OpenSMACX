@@ -93,7 +93,7 @@ def test_actual_filename_setters(tmp_path, compiler, owner, damage):
 
 
 def voice_control():
-    source = (ROOT / "src/voice.cpp").read_text()
+    source = (ROOT / "src/sound.cpp").read_text()
     bodies = "\n".join(extract(source, name + "::" + name + "()")
                        for name in ("VoiceRx", "VoiceTx"))
     return r'''

@@ -284,7 +284,7 @@ def test_remaining_owner_profile_policy_rejects_bounded_damage():
     assert profile_match is not None
     profile_text = profile_match.group(0)
 
-    wrong_owner_text = re.sub(r"src/pulldown\.cpp", "src/video_sound.cpp", profile_text, count=1)
+    wrong_owner_text = re.sub(r"src/pulldown\.cpp", "src/video.cpp", profile_text, count=1)
     wrong_owner = cmake.replace(profile_text, wrong_owner_text, 1)
     default_recipe = cmake.replace(profile_text, profile_text.replace("/Ob1", "/Ob2"), 1)
     frame_recipe = cmake.replace(
@@ -306,7 +306,7 @@ def test_remaining_owner_profile_policy_rejects_bounded_damage():
     wrong_measure_owner = copy.deepcopy(project)
     unit_flags = wrong_measure_owner["measurement"]["unit_flag_sets"]
     del unit_flags["src/pulldown.cpp"]
-    unit_flags["src/video_sound.cpp"] = {"flags": MEASURED_PULLDOWN_PROFILE}
+    unit_flags["src/video.cpp"] = {"flags": MEASURED_PULLDOWN_PROFILE}
     assert not _measurement_contract(wrong_measure_owner, baseline[1])
 
     wrong_default = copy.deepcopy(project)

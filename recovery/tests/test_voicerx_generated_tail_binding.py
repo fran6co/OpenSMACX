@@ -29,7 +29,7 @@ def test_installed_tail_retains_original_identity_and_restoration_obligation():
     assert not (ROOT / "src/unrecovered/00633720.cpp").exists()
     caller, = [record for record in records if record.address == 0x6336D0]
     assert caller.symbol == "??_GVoiceRxAllocation@@UAEPAXI@Z"
-    target, = [record for record in read_file(ROOT / "src/voice.cpp")
+    target, = [record for record in read_file(ROOT / "src/sound.cpp")
                if record.address == 0x4C8A50]
     assert target.symbol == "??1VoiceRx@@UAE@XZ"
 

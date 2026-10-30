@@ -189,7 +189,6 @@ set(OPENSMACX_SOURCES
     src/basewin.cpp
     src/video.cpp
     src/video_queue.cpp
-    src/video_sound.cpp
     src/datalink.cpp
     src/datalink_selection.cpp
     src/netwin.cpp
@@ -261,7 +260,6 @@ set(OPENSMACX_SOURCES
     src/net_fifo.cpp
     src/net_session_picker.cpp
     src/node.cpp
-    src/voice.cpp
     src/squarelock.cpp
     src/deletionlist.cpp
     src/lock.cpp
@@ -372,10 +370,9 @@ set_source_files_properties(
     src/map_altitude.cpp
     src/wave.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")
-# Keep the frame-based Voice and Wave_Device bodies on their measured
+# Keep the frame-based Wave_Device body on its measured
 # translation-unit profile without changing application-wide compiler flags.
 set_source_files_properties(
-    src/voice.cpp
     src/wave_group_list.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")
 # The Midi, device-wrapper and sound-loader bodies also retain frame-based
@@ -554,10 +551,6 @@ set_property(SOURCE
     src/pulldown.cpp
     src/dipedit.cpp
     APPEND PROPERTY COMPILE_OPTIONS "/Ob1")
-# Preserve the measured frame-based context of the Sound-derived video owner.
-# This remains separate from Video's automatic-inlining policy above.
-set_source_files_properties(src/video_sound.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")
-
 # Preserve the original frame-based AlphaMovie owner context without changing
 # its independently measured /Ob2 inlining policy.
 set_source_files_properties(src/alphamovie.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")

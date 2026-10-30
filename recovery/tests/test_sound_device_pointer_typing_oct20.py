@@ -28,7 +28,7 @@ def test_sound_cell_and_ordinal_one_output_use_common_sound_owner():
 def test_all_ordinal_one_callers_write_through_the_typed_sound_cell():
     owners = (
         "sound.cpp", "wave.cpp", "midi.cpp", "ambience.cpp",
-        "video_sound.cpp", "voice.cpp", "sound_loader.cpp",
+        "sound_loader.cpp",
     )
     calls = 0
     for owner in owners:

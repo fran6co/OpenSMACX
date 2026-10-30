@@ -16,7 +16,12 @@ struct _MMIOINFO;
 #undef private
 #undef protected
 
-// LIVE_DEVICE_VIEW
+// Construction and these fade checks start with no owned SDK device.
+// Observe that boundary before any dispatch; this fixture does not test provider ABI.
+__forceinline Sound *sound_device(Sound *device) {
+    assert(!"unexpected SDK device dispatch in zero-owned construction control");
+    return device;
+}
 // LIVE_FADE_CONSTRUCTOR
 // LIVE_FADE_INTERVAL
 // LIVE_ROOT_FADE

@@ -24,7 +24,7 @@ def test_native_publication_preserves_complete_source(relative):
                            if relative == "src/flic.cpp" else candidate)
     if relative == "src/video.cpp":
         candidate_projected = project_video_sound_split(
-            candidate, (ROOT / "src/video_sound.cpp").read_text())
+            candidate, (ROOT / "src/sound.cpp").read_text())
     after = read_text(candidate_projected, path)
     promoted = [replace(row, byte_exact=True, semantic=False)
                 for row in before if row.address in SELECTED]
