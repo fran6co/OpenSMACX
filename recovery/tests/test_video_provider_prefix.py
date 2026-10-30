@@ -50,7 +50,7 @@ def test_source_uses_shared_prefix_and_keeps_video_extension_slots():
     assert not (ROOT / "src/soundx_sound_abi.h").exists()
     assert "destroy_device" not in header and "can_release" not in header
     assert "class VideoSoundDevice : public Sound" in header
-    source = (ROOT / "src/video_sound.cpp").read_text()
+    source = (ROOT / "src/sound.cpp").read_text()
     destructor = body(source, "VideoSoundState::~VideoSoundState()")
     release = body(source, "int VideoSoundState::release()")
     assert destructor.index("delete device;") < destructor.index("device_ = 0;")
@@ -238,7 +238,7 @@ def test_actual_video_provider_bodies_preserve_reentry_lifetime_and_wrappers(tmp
     compiler = shutil.which(compiler_name)
     if compiler is None:
         pytest.skip(f"{compiler_name} unavailable")
-    source = (ROOT / "src/video_sound.cpp").read_text()
+    source = (ROOT / "src/sound.cpp").read_text()
     harness = tmp_path / "video_provider.cpp"
     binary = tmp_path / "video_provider"
     harness.write_text(host_harness(source))
@@ -251,7 +251,7 @@ def test_actual_video_provider_body_controls_reject_lifetime_damage(tmp_path, mu
     compiler = shutil.which("g++") or shutil.which("clang++")
     if compiler is None:
         pytest.skip("g++ and clang++ are unavailable")
-    source = (ROOT / "src/video_sound.cpp").read_text()
+    source = (ROOT / "src/sound.cpp").read_text()
     harness = tmp_path / f"video_provider_{mutation}.cpp"
     binary = tmp_path / f"video_provider_{mutation}"
     harness.write_text(host_harness(source, mutation))
@@ -286,7 +286,7 @@ def test_opt_in_vc6_probe_maps_inherited_and_video_extension_slots():
 
     if not (VC6_ROOT / "BIN/CL.EXE").is_file() or not shutil.which("wine32"):
         pytest.skip("VC6 and Wine32 are required for the native provider-slot control")
-    path = ROOT / "src/video_sound.cpp"
+    path = ROOT / "src/sound.cpp"
     original = path.read_bytes()
     probes = [
         f'extern "C" int video_provider_slot_{slot:02d}(VideoSoundDevice *p) '
@@ -299,7 +299,7 @@ def test_opt_in_vc6_probe_maps_inherited_and_video_extension_slots():
     decoder = Cs(CS_ARCH_X86, CS_MODE_32)
     decoder.detail = True
     for flags in settings.flag_sets:
-        raw = compiler.overlay(path, {"src/video_sound.cpp": overlay.encode("utf-8")}, (), flags + settings.layout_flags)
+        raw = compiler.overlay(path, {"src/sound.cpp": overlay.encode("utf-8")}, (), flags + settings.layout_flags)
         obj = Coff(raw)
         for slot, _ in VC6_PROBES:
             function = obj.function(f"_video_provider_slot_{slot:02d}")

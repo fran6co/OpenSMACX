@@ -63,8 +63,9 @@ SoundFadeState::SoundFadeState() {
 // RECOVERY_GENERATED: v1 vtable 0x0066E444 ? ??_7SoundFadeState@@6B@ 0x004C6080
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // Historical seed observations (not fresh measurements or acceptance):
+// Historical SHARED_TAIL observation below predates the independent source identity for 0x004C8450; retain it as prior trial context, not a current span classification.
 // TRIED: no tier is reachable for ANY body - SHARED_TAIL, the helper at 0x004C8450 (mov [ecx],0x66e444; ret) is COMDAT-folded with another catalogued function, same wall as VoiceRx::VoiceRx() at 0x004C8960. Straight-line field reconstruction below, no attempt at the SEH try/catch unwind frame (bare try/catch with rethrow produced no fs:[0] frame at all under this compiler's flags; the scaffold gives Sound no base class to hang the automatic base/derived vtable-swap unwind on, same as the already-tried ~UV2Player shape).
-// ORIGINAL: 0x004C6080 ??0Sound@@QAE@XZ 0x004C6080-0x004C611A;0x004C8450-0x004C8457;0x00659ED0-0x00659EE2
+// ORIGINAL: 0x004C6080 ??0Sound@@QAE@XZ 0x004C6080-0x004C611A;0x00659ED0-0x00659EE2 BYTE_EXACT
 Sound::Sound() {
     chain_prev_ = 0;
     chain_next_ = 0;
@@ -84,7 +85,8 @@ Purpose: Destroy the sound. This is exactly the body ~Wave inlines as its
          the sound chain, and publish the ultimate base's vtable on the way
          out through its real SoundFadeState base. The compiler owns the
          exception cleanup; remaining external hooks are not lifetime proof.
-// ORIGINAL: 0x004C6120 ??1Sound@@QAE@XZ 0x004C6120-0x004C61D4;0x004C8450-0x004C8457;0x00659EE2-0x00659EF4 FILE BYTE_EXACT
+// ORIGINAL: 0x004C6120 ??1Sound@@QAE@XZ 0x004C6120-0x004C61D4;0x00659EE2-0x00659EF4 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:Sound destructor at 0x004C6120 has main body 0x004C6120..0x004C61D3, base-stage helper 0x004C8450..0x004C8456, and EH continuation 0x00659EE2..0x00659EF3", "the original Sound destructor marker retains BYTE_EXACT; removing the helper span from this mapping does not withdraw or grant that claim", "the helper now has its own original source identity at 0x004C8450 as sub_4c8450"], "reason": "Preserve the historical complete Sound destructor byte claim as a restoration obligation: its former compound span included the independent SoundFadeState unwind entry, now mapped separately."}
 // symbol    ??1Sound@@UAE@XZ
 // body      src/sound.h
 // size      205 bytes
@@ -105,7 +107,7 @@ Purpose: Build the inherited Sound/Fade state once, then initialize Wave's
          is a direct base-method call in the original. The compiler owns
          construction tables and exception cleanup; the historical spelling
          experiments below predate recovery of the fade base.
-// ORIGINAL: 0x004C66E0 ??0Wave@@QAE@XZ 0x004C66E0-0x004C67B6;0x004C8450-0x004C8457;0x00659EF4-0x00659F06
+// ORIGINAL: 0x004C66E0 ??0Wave@@QAE@XZ 0x004C66E0-0x004C67B6;0x00659EF4-0x00659F06
 // TRIED: 3/73 - the image carries an SEH unwind frame here (`push -1 /
 //            push 0x659efc / mov eax,fs:[0] / ...`), the same symptom as
 //            FlatButton::FlatButton() (flatbutton.cpp) and
@@ -174,7 +176,7 @@ Purpose: Destroy the wave. The original is a three-stage teardown of an
          Sound base performs that stage once, with Sound virtual dispatch
          already active. The compiler owns the exception cleanup and final
          SoundFadeState destruction; do not duplicate those stages here.
-// ORIGINAL: 0x004C67C0 ??1Wave@@QAE@XZ 0x004C67C0-0x004C68EC;0x004C8450-0x004C8457;0x00659F06-0x00659F20
+// ORIGINAL: 0x004C67C0 ??1Wave@@QAE@XZ 0x004C67C0-0x004C68EC;0x00659F06-0x00659F20 BYTE_EXACT
 // symbol    ??1Wave@@UAE@XZ
 // LEVER: plain member access, not the `Wave volatile *const self` view. The
 //        view predates the real `Sound` base: once the SEH frame is in the
@@ -258,9 +260,10 @@ Wave::~Wave() {
 // span at 0x4c8450/0x659f20/0x659f28 that is PART of this same function
 // (the "spans" list is multi-range). The SEH frame is not modeled here -
 // see TRIED.
-// ORIGINAL: 0x004C75B0 sub_4c75b0 0x004C75B0-0x004C766D;0x004C8450-0x004C8457;0x00659F20-0x00659F32 FILE
+// ORIGINAL: 0x004C75B0 sub_4c75b0 0x004C75B0-0x004C766D;0x00659F20-0x00659F32 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["git:f7bbce35:src/unrecovered/004c75b0.cpp", "src/midi.h", "src/ambience.h"], "reason": "Original Sound-to-Midi constructor staging and byte54 state identify the genuine Midi owner. Historical seed mapping includes the already shared unwind helper; its overlap remains a restoration limitation, not a newly inferred independent function extent."}
 // symbol    ??0Midi@@QAE@XZ
+// Historical SHARED_TAIL observation below predates the independent source identity for 0x004C8450; retain it as prior trial context, not a current span classification.
 // TRIED: SHARED_TAIL - the 0x4c8450/0x659f20 unwind-handler span is COMDAT-folded with another function's handler, so no tier is reachable regardless of body. Left as a plain field-write transcription (no SEH frame modeled) for the next pass.
 Midi::Midi() {
     memset(&field_54_, 0, 1);
@@ -278,7 +281,7 @@ Purpose: Destroy an ambience. Its own stage frees the remembered filename
          unlinks from the global sound chain when the chained bit is set -
          the image carries that Sound stage INLINED, which is why the old
          transcription duplicated it by hand.
-// ORIGINAL: 0x004C7670 ??1Ambience@@QAE@XZ 0x004C7670-0x004C7760;0x004C8450-0x004C8457;0x00659F32-0x00659F4C
+// ORIGINAL: 0x004C7670 ??1Ambience@@QAE@XZ 0x004C7670-0x004C7760;0x00659F32-0x00659F4C BYTE_EXACT
 // symbol    ??1Midi@@UAE@XZ
 // size      273 bytes
 // prototype void (__thiscall ??1Ambience@@QAE@XZ)(Ambience* this)
@@ -328,7 +331,7 @@ Purpose: Build the ambience. The original constructs in four vtable stages -
          clear is four bytes wide, this one is a single byte, so 0x55..0x57
          keep whatever the storage held - and nothing at or above 0x58 is
          written at all, which is what pins the shared base's extent there.
-// ORIGINAL: 0x004C8460 ??0Ambience@@QAE@XZ 0x004C8460-0x004C852D;0x004C8450-0x004C8457;0x00659F4C-0x00659F5E
+// ORIGINAL: 0x004C8460 ??0Ambience@@QAE@XZ 0x004C8460-0x004C852D;0x00659F4C-0x00659F5E
 // TRIED: dropping `volatile` off `object`/`bytes` measured 0/72
 //   agreeing both ways (the function diverges at instruction 0, the
 //   omitted SEH prologue, before reaching these stores), but it shrank
@@ -775,75 +778,6 @@ void Sound::ramp(int a1, int a2, unsigned int a3) {
     }
     sound_device(device_)->ramp(a1, a2, a3);
 }
-
-
-
-
-// RECOVERY_ASSOCIATED: v1 switch_targets 0x004C61E0 0x004C6260 0x004C627C 0x004C61EE
-/*
-Purpose: Record the sound's type. Types 1..7 - except 3, which the original's
-         jump table routes to the invalid arm - store the type at 0x50 and OR
-         a per-type class bit into the flag dword at 0x40: 1 -> 4, 2 -> 8,
-         4 -> 0x10, 5 -> 0x28, 6 -> 0x100, 7 -> 0x80. Anything else stores
-         type 0 and leaves the flags alone.
-// ORIGINAL: 0x004C61E0 ?set_type@Sound@@QAEXI@Z 0x004C61E0-0x004C6260 BYTE_EXACT
-// symbol    ?set_type@Sound@@UAEXI@Z
-// size      128 bytes
-// prototype void (__thiscall ?set_type@Sound@@QAEXI@Z)(Sound* this, SOUNDTYPE)
-// callers   5   call targets   0
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     (none)
-// LEVER, two parts. (1) each `case` inlines its own `type_ = a1;
-//        flags_40_ |= N; return;` rather than sharing a `class_bit` local
-//        and a common tail - the image duplicates the four-instruction
-//        block per arm with no merged epilogue. (2) the CATALOGUED mapping
-//        1->4 / 4->0x10 is backwards: the jump table's own byte order says
-//        1->0x10 and 4->4 - `constant #9/#21 or` swapped is what measure
-//        named it, and swapping the two immediates is what closed it.
-Return Value: n/a
-Status: Complete
-*/
-// The historical LEVER above mistook instruction order for selector order.
-// The original seven-entry switch table at 4C6260..4C627C lies outside the
-// recorded instruction span: its type-1 entry reaches 4C6215 (OR 4), and
-// its type-4 entry reaches 4C61F5 (OR 0x10). Keep that dispatch as well as
-// the original arm order; matching the instructions alone misses this error.
-void Sound::set_type(unsigned int type) {
-    // EACH ARM INLINE, not a shared `type_ = type; flags_40_ |= class_bit;`
-    // tail: the image duplicates the store-and-OR in every case block and
-    // returns from each directly, rather than merging them.
-    switch (type) {
-    case 4:
-        flags_40_ |= 0x10;
-        type_ = type;
-        return;
-    case 2:
-        flags_40_ |= 8;
-        type_ = type;
-        return;
-    case 1:
-        flags_40_ |= 4;
-        type_ = type;
-        return;
-    case 5:
-        flags_40_ |= 0x28;
-        type_ = type;
-        return;
-    case 6:
-        flags_40_ |= 0x100;
-        type_ = type;
-        return;
-    case 7:
-        flags_40_ |= 0x80;
-        type_ = type;
-        return;
-    default:
-        type_ = 0;
-        return;
-    }
-}
-
 
 /*
 Purpose: Load the sound from a filename. The name resolves through the
@@ -1378,3 +1312,676 @@ int __cdecl unload_active_sound_chain() {
     }
     return 0x0B;
 }
+// ORIGINAL: 0x004C8450 sub_4c8450 0x004C8450-0x004C8457 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x004C8450..0x004C8456 stores root table 0x0066E444 through ECX and returns; the next NOP at 0x004C8457 is outside the mapped span", "pinned constructor EH continuations load saved receiver into ECX and tail-jump to 0x004C8450; the helper has its own entry and RET", "src/sound.h declares the genuine protected nonvirtual SoundFadeState destructor; SoundFadeState root table 0x0066E444 is staged by its real constructor", "historical Sound destructor mapping at 0x004C6120 included 0x004C8450..0x004C8457 and retains its BYTE_EXACT token as an obligation after this span is independently mapped"], "reason": "Bind the pinned independent ECX SoundFadeState base-stage unwind entry to the genuine protected nonvirtual SoundFadeState destructor; keep the full historical Sound destructor claim as a restoration obligation after separating this generated entry."}
+// symbol    ??1SoundFadeState@@IAE@XZ
+
+// RECOVERY_GENERATED: v1 vtable 0x66e790 0x66e82c ??_7VideoSoundState@@6B@ 0x004c8620
+// Video playback, composed resources and Sound-derived audio ownership.
+// The Sound prefix owns table 0x66E790 and its own deleting thunk 0x4C9360.
+// Do not add an outer virtual deleter: that thunk calls prefix 0x4C86D0 only.
+#include "video.h"
+
+// ORIGINAL: 0x004C8620 sub_4c8620 0x004C8620-0x004C86C9;0x00659F5E-0x00659F70 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf native636400/636530 member construction/destruction;66E790 prefix table and4C9360->4C86D0.", "native636960 full loader jump table636F9C;637530 SDK and Indeo packet calls.", "Native spans and all historical claims/lessons retained; close6365B0 broad-span and4C8910 truncated-span debts remain explicit."], "reason": "Video owns composed Sound prefix, real Palette/queue/Buffer members, SDK media resources and native observed source globals; scalar deletion belongs only to the prefix."}
+// symbol    ??0VideoSoundState@@QAE@XZ
+// TRIED: byte-exact - the SEH frame prologue (push -1/handler; mov fs:[0]) has no C++ source form to reproduce without a real try/catch that this Sound-constructor body doesn't need (documented wall). Landed as a __thiscall ctor-shaped member returning `this`, with the progressive vtable_storage_ reassignment (0x66e444 -> 0x66e3c0 -> 0x66e790) and the self-clobbering dead `if (device_ != 0)` check (device_ is zeroed immediately before the read) transcribed as-is.
+VideoSoundState::VideoSoundState() : Sound() {
+  // Native 0x4C86AB installs the derived table before 0x4C86B1 calls
+  // Sound::set_type(4). Compiler-owned construction supplies these table stages.
+  Sound::set_type(4);
+}
+
+// ORIGINAL: 0x004C86D0 sub_4c86d0 0x004C86D0-0x004C87A2;0x00659F70-0x00659F8A FILE BYTE_EXACT
+// symbol    ??1VideoSoundState@@UAE@XZ
+// Historical SHARED_TAIL observation below predates the independent source identity for 0x004C8450; retain it as prior trial context, not a current span classification.
+// TRIED: literal `call 0x64557f`/SEH __try/__finally reproduction - the span at 0x004C8450-0x004C8457 is COMDAT-folded with src/wave.cpp's Wave::~Wave and src/ambience.cpp's Ambience::~Ambience (both list it in their own spans too), so classify_body reports SHARED_TAIL for this address regardless of body content - no per-function verdict is well defined here, confirmed by running the bare verifier against the empty placeholder before writing anything.
+VideoSoundState::~VideoSoundState() {
+  VideoSoundDevice *const device =
+      static_cast<VideoSoundDevice *>(device_);
+  if (device != 0) {
+    delete device;
+    device_ = 0;
+  }
+  // Sound::~Sound then owns filename/device-release/chain teardown and the
+  // compiler emits base/root vtable descent. Do not duplicate Sound cleanup.
+}
+
+// RECOVERY_SHARED: v1 0x406b30 0x406b33 ?unload@VideoSoundState@@UAEHXZ 0x4c8620
+int VideoSoundState::unload() {
+  return 0;
+}
+
+// ORIGINAL: 0x004C88B0 sub_4c88b0 0x004C88B0-0x004C88BF BYTE_EXACT
+// symbol    ?stop@VideoSoundState@@UAEHXZ
+int VideoSoundState::stop() {
+  VideoSoundDevice *const device =
+      static_cast<VideoSoundDevice *>(device_);
+  if (device != 0) {
+    device->stop();
+  }
+  return 0;
+}
+
+// ORIGINAL: 0x004C8840 sub_4c8840 0x004C8840-0x004C8888 FILE BYTE_EXACT
+// symbol    ?release@VideoSoundState@@UAEHXZ
+// LEVER: the g_0090db28 function pointer is __cdecl, not __stdcall - the original has `add esp,4` after that call; __stdcall dropped it and cost a MISMATCH at the trailing `add`/`jmp`.
+int VideoSoundState::release() {
+  if (device_ != 0) {
+    if (static_cast<VideoSoundDevice *>(device_)->is_playing() == 0) {
+      if (WaveDeviceReleaseGuard) {
+        (SoundXOrdinal2DeleteSound())(device_);
+      }
+    } else {
+      // The query can call back into the owner. Native 4C886B re-reads
+      // the field; do not retain the pre-query device across that callback.
+      static_cast<VideoSoundDevice *>(device_)->release();
+    }
+    device_ = 0;
+  }
+  detach();
+  return 0;
+}
+
+// RECOVERY_SHARED: v1 0x406b30 0x406b33 ?get_game_hwnd@VideoSoundState@@UAEHXZ 0x4c8620
+int VideoSoundState::get_game_hwnd() {
+  return 0;
+}
+
+// RECOVERY_SHARED: v1 0x4c93e0 0x4c93e8 ?set_attrib@VideoSoundState@@UAEHK@Z 0x4c8620
+int VideoSoundState::set_attrib(unsigned long) {
+  return 0x0B;
+}
+
+// RECOVERY_SHARED: v1 0x406b30 0x406b33 ?get_attrib@VideoSoundState@@UAEHXZ 0x4c8620
+int VideoSoundState::get_attrib() {
+  return 0;
+}
+
+// ORIGINAL: 0x004C8950 sub_4c8950 0x004C8950-0x004C8953 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned image SHA-256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; VideoSoundState primary table 0x0066E790 slot 29 at 0x0066E804 relocates to 0x004C8950", "the pre-proposal src/video.cpp RECOVERY_SHARED record already bound this exact span to VideoSoundState::get_time; this replaces that one shared record with the canonical identity", "src/sound.cpp owns the actual int VideoSoundState::get_time() method body returning zero; no Time class or global timer ownership is inferred", "historical catalog facts retained: sub_4c8950 is a three-byte zero-return leaf; its name, span and claim state are carried from the parsed source record by the native writer", "retired source symbol retained as historical evidence: ?nullsub_004c8950_redirect@@YIHPAX0@Z"], "reason": "Promote the existing VideoSoundState::get_time shared-body mapping to the unique canonical identity. Keep its real typed method and avoid a duplicate annotation or adapter."}
+// symbol    ?get_time@VideoSoundState@@UAEHXZ
+// kind      game
+int VideoSoundState::get_time() {
+  return 0;
+}
+
+// ORIGINAL: 0x004C87B0 sub_4c87b0 0x004C87B0-0x004C8839 FILE
+// symbol    ?configure_streams@VideoSoundState@@UAEHPBX00H@Z
+int VideoSoundState::configure_streams(const void *audio_stream,
+                                       const void *video_stream,
+                                       const void *audio_format,
+                                       int flags) {
+  VideoSoundDevice *device =
+      static_cast<VideoSoundDevice *>(device_);
+  int result = 0;
+  if (device == 0) {
+    if (!WaveDeviceReleaseGuard) {
+      return 1;
+    }
+    result = (SoundXOrdinal1CreateSound())(&device_, 0, 4);
+    if (result != 0) {
+      return result;
+    }
+    device = static_cast<VideoSoundDevice *>(device_);
+  }
+
+  // Native 0x4C87E9..0x4C87ED allows success without a device object.
+  if (device == 0) return result;
+
+  result = device->configure_streams(audio_stream, video_stream,
+                                     audio_format, flags);
+  if (result != 0) {
+    if (WaveDeviceReleaseGuard) {
+      (SoundXOrdinal2DeleteSound())(device_);
+    }
+    device_ = 0;
+  }
+
+  attach();
+  return result;
+}
+
+// ORIGINAL: 0x004C8890 sub_4c8890 0x004C8890-0x004C88AC FILE BYTE_EXACT
+// symbol    ?set_target_frame@VideoSoundState@@UAEHH@Z
+int VideoSoundState::set_target_frame(int frame) {
+  VideoSoundDevice *const device =
+      static_cast<VideoSoundDevice *>(device_);
+  if (device != 0) {
+    device->set_target_frame(frame);
+  }
+  // Native wrapper 0x4C8890 discards the device result and returns zero.
+  return 0;
+}
+
+// ORIGINAL: 0x004C88C0 sub_4c88c0 0x004C88C0-0x004C88E0 BYTE_EXACT
+// symbol    ?acquire_audio_buffer@VideoSoundState@@UAEPAXH@Z
+void *VideoSoundState::acquire_audio_buffer(int bytes) {
+  VideoSoundDevice *const device =
+      static_cast<VideoSoundDevice *>(device_);
+  if (device != 0) {
+    return device->acquire_audio_buffer(bytes);
+  }
+  return 0;
+}
+
+// ORIGINAL: 0x004C88E0 sub_4c88e0 0x004C88E0-0x004C8903 FILE BYTE_EXACT
+// symbol    ?submit_audio_buffer@VideoSoundState@@UAEHPAX@Z
+int VideoSoundState::submit_audio_buffer(void *record) {
+  VideoSoundDevice *const device =
+      static_cast<VideoSoundDevice *>(device_);
+  if (device != 0) {
+    return device->submit_audio_buffer(record);
+  }
+  return 0x13;
+}
+
+// ORIGINAL: 0x004C8910 sub_4c8910 0x004C8910-0x004C8923 FILE
+// symbol    ?current_frame@VideoSoundState@@UAEHXZ
+// TRIED: the tail-called vtable slot37 matches exactly (mov/test/je/mov/jmp, 5/5 mnemonics), so the divergence is entirely the null branch: the original's `return -1` JUMPS OUT of this function into a shared tail block at 0x4C891F, four bytes past its own 15, and no C++ spelling reaches another function's interior. This body inlines `or eax,-1; ret` instead and is 4 bytes long. Not a lever - it names why the remainder cannot close from here.
+// Original4C8915's null branch selects4C891F..4C8923 directly. That
+// four-byte return tail belongs to this complete source behavior; the IDA
+// underflow label does not establish another function. The historical TRIED
+// interpretation above is retained, not a current boundary proof.
+int VideoSoundState::current_frame() {
+  VideoSoundDevice *const device =
+      static_cast<VideoSoundDevice *>(device_);
+  if (device != 0) {
+    return device->current_frame();
+  }
+  // Native4C891F..22: no device is a -1 frame, not zero.
+  return -1;
+}
+
+// ORIGINAL: 0x004C8930 sub_4c8930 0x004C8930-0x004C8942 BYTE_EXACT
+// symbol    ?frame_status@VideoSoundState@@UAEHXZ
+int VideoSoundState::frame_status() {
+  VideoSoundDevice *const device =
+      static_cast<VideoSoundDevice *>(device_);
+  if (device != 0) {
+    return device->frame_status();
+  }
+  return 0;
+}
+
+// ORIGINAL: 0x004C9360 ??_GVideo@@UAEPAXI@Z 0x004C9360-0x004C9381 FILE BYTE_EXACT
+// symbol    ??_GVideoSoundState@@UAEPAXI@Z
+// Compiler-owned prefix scalar destructor mapping anchor.
+
+// RECOVERY_GENERATED: v1 vtable 0x66e82c 0x66e8c4 ??_7VoiceRx@@6B@ 0x4c8960
+// RECOVERY_GENERATED: v1 vtable 0x66e8c4 0x66e95c ??_7VoiceTx@@6B@ 0x4c8cc0
+// Slot2 is compiler weak _E with library-search mode2 and physical _G fallback;
+// that observation does not establish final linked table selection.
+#include "stdafx.h"
+#include <cstring>
+#include <new>
+#include "voice.h"
+#include "wave.h"
+#include "sounddevice.h"
+#if defined(_MSC_VER) && _MSC_VER <= 1200
+#pragma function(memset, strcpy)
+#endif
+
+// ORIGINAL: 0x004C8960 ??0VoiceRx@@QAE@XZ 0x004C8960-0x004C8A43;0x00659F8A-0x00659FA4 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original 4C8960/4C8CC0 constructors, 4C8A50/4C8DB0 destructors and 66E82C/66E8C4 tables; native VC6 emits Sound base at0, Rx extent54, Tx extent58 and own flag54.", "631A60 consumes record18/20 and returns the same record; soundx.dll kind7 slots34/35 allocate MMIOINFO48 and enforce pointer identity. Shared cleanup/EH spans remain historical obligations."], "reason": "Voice Rx and Tx genuinely derive from Sound; natural lifecycle stages and typed DLL device contracts replace raw wrappers. Tx returns and consumes the exact borrowed SDK MMIOINFO pointer, not an integer handle."}
+// symbol    ??0VoiceRx@@QAE@XZ
+VoiceRx::VoiceRx() {
+    char name[] = "Voice Rx";
+    Sound::set_type(6);
+    fname_ = static_cast<char *>(::operator new(0xA));
+    strcpy(fname_, name);
+}
+
+// ORIGINAL: 0x004C8A50 ??1VoiceRx@@QAE@XZ 0x004C8A50-0x004C8B35;0x00659FA4-0x00659FBE FILE BYTE_EXACT
+// symbol    ??1VoiceRx@@UAE@XZ
+VoiceRx::~VoiceRx() {
+    if (device_ != 0) {
+        delete static_cast<VoiceRxDeviceInterface *>(device_);
+        device_ = 0;
+    }
+    if (fname_ != 0) {
+        ::operator delete(fname_);
+        fname_ = 0;
+    }
+}
+
+// ORIGINAL: 0x004C8B40 ?init@VoiceRx@@QAEHKPAXK@Z 0x004C8B40-0x004C8BC5 FILE BYTE_EXACT
+// symbol    ?init@VoiceRx@@UAEHKPAXK@Z
+// TRIED: explicit __thiscall on a plain function-pointer typedef (C4234); a member-function-pointer/union shim compiles. MISMATCH #4 'mov' vs 'push' remains open.
+int VoiceRx::init(unsigned long size, void *context, unsigned long flags) {
+    int result = 0;
+    if (device_ == 0) {
+        if (WaveDeviceReleaseGuard == 0) {
+            return 1;
+        }
+        result = SoundXOrdinal1CreateSound()(&device_, 0, 6);
+        if (result != 0) {
+            return result;
+        }
+    }
+    VoiceRxDeviceInterface *const provider =
+        static_cast<VoiceRxDeviceInterface *>(device_);
+    if (provider == 0) {
+        return result;
+    }
+    result = provider->init(size, context, flags);
+    if (result != 0) {
+        if (WaveDeviceReleaseGuard != 0) {
+            SoundXOrdinal2DeleteSound()(device_);
+        }
+        device_ = 0;
+    }
+    // Original attaches after a device-init attempt even when that attempt
+    // failed and cleared the device. Do not add a device-presence guard.
+    attach();
+    return result;
+}
+
+// ORIGINAL: 0x004C8BD0 ?release@VoiceRx@@QAEHXZ 0x004C8BD0-0x004C8C18 FILE BYTE_EXACT
+// symbol    ?release@VoiceRx@@UAEHXZ
+int VoiceRx::release() {
+    if (device_ != 0) {
+        if (static_cast<VoiceRxDeviceInterface *>(device_)->is_playing() == 0) {
+            if (WaveDeviceReleaseGuard != 0) {
+                SoundXOrdinal2DeleteSound()(device_);
+            }
+        } else {
+            static_cast<VoiceRxDeviceInterface *>(device_)->release();
+        }
+        device_ = 0;
+    }
+    detach();
+    return 0;
+}
+
+/*
+Purpose: ?start@VoiceRx@@QAEHXZ - dispatch to slot 0x88 of the object at
+         0x3c when it is present, and answer 0x0 either way: both
+         paths land on the same zeroing, so the delegate's own result
+         never reaches the caller.
+// ORIGINAL: 0x004C8C20 ?start@VoiceRx@@QAEHXZ 0x004C8C20-0x004C8C32 BYTE_EXACT
+// symbol    ?start@VoiceRx@@UAEHXZ
+// size      18 bytes
+// prototype int (__thiscall ?start@VoiceRx@@QAEHXZ)(VoiceRx* this)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x004C8C29
+Return Value: 0x0, whether the delegate ran or not
+Status: Complete
+*/
+int VoiceRx::start() {
+    if (device_ != 0) {
+        static_cast<VoiceRxDeviceInterface *>(device_)->start();
+    }
+    return 0;
+}
+
+/*
+Purpose: ?stop@VoiceRx@@QAEHXZ - dispatch to slot 0x20 of the object at
+         0x3c when it is present, and answer 0x0 either way: both
+         paths land on the same zeroing, so the delegate's own result
+         never reaches the caller.
+// ORIGINAL: 0x004C8C40 ?stop@VoiceRx@@QAEHXZ 0x004C8C40-0x004C8C4F BYTE_EXACT
+// symbol    ?stop@VoiceRx@@UAEHXZ
+// size      15 bytes
+// prototype int (__thiscall ?stop@VoiceRx@@QAEHXZ)(VoiceRx* this)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x004C8C49
+Return Value: 0x0, whether the delegate ran or not
+Status: Complete
+*/
+int VoiceRx::stop() {
+    if (device_ != 0) {
+        static_cast<VoiceRxDeviceInterface *>(device_)->stop();
+    }
+    return 0;
+}
+
+/*
+Purpose: ?unload@VoiceRx@@QAEHXZ - forward 0 argument(s) to slot 0x14 of the
+         object at +0x3c, answering 0x13 when that object is absent.
+// ORIGINAL: 0x004C8C50 ?unload@VoiceRx@@QAEHXZ 0x004C8C50-0x004C8C62 BYTE_EXACT
+// symbol    ?unload@VoiceRx@@UAEHXZ
+// size      18 bytes
+// prototype int (__thiscall ?unload@VoiceRx@@QAEHXZ)(VoiceRx* this)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: the delegate's, or 0x13 when the member is null
+Status: Complete
+*/
+int VoiceRx::unload() {
+    if (device_ != 0) {
+        return static_cast<VoiceRxDeviceInterface *>(device_)->unload();
+    }
+    return 0x13;
+}
+
+/*
+Purpose: ?add_buffer@VoiceRx@@QAEHPAU_MMIOINFO@@@Z - forward 1 argument(s) to slot 0x8c of the
+         object at +0x3c, answering 0x13 when that object is absent.
+// ORIGINAL: 0x004C8C70 ?add_buffer@VoiceRx@@QAEHPAU_MMIOINFO@@@Z 0x004C8C70-0x004C8C93 BYTE_EXACT
+// symbol    ?add_buffer@VoiceRx@@UAEHPAU_MMIOINFO@@@Z
+// size      35 bytes
+// prototype int (__thiscall ?add_buffer@VoiceRx@@QAEHPAU_MMIOINFO@@@Z)(VoiceRx* this, _MMIOINFO*)
+// callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x004C8C80
+Return Value: the delegate's, or 0x13 when the member is null
+Status: Complete
+*/
+int VoiceRx::add_buffer(_MMIOINFO *buffer) {
+    if (device_ != 0) {
+        return static_cast<VoiceRxDeviceInterface *>(device_)->add_buffer(buffer);
+    }
+    return 0x13;
+}
+
+/*
+Purpose: ?get_buffer_size@VoiceRx@@QAEHXZ - forward 0 argument(s) to slot 0x90 of the
+         object at +0x3c, answering 0x0 when that object is absent.
+// ORIGINAL: 0x004C8CA0 ?get_buffer_size@VoiceRx@@QAEHXZ 0x004C8CA0-0x004C8CB2 BYTE_EXACT
+// symbol    ?get_buffer_size@VoiceRx@@UAEHXZ
+// size      18 bytes
+// prototype int (__thiscall ?get_buffer_size@VoiceRx@@QAEHXZ)(VoiceRx* this)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: the delegate's, or 0x0 when the member is null
+Status: Complete
+*/
+int VoiceRx::get_buffer_size() {
+    if (device_ != 0) {
+        return static_cast<VoiceRxDeviceInterface *>(device_)->get_buffer_size();
+    }
+    return 0;
+}
+
+// It forwards the device's slot 37 result verbatim, or zero when no device
+// exists; this is the operation Net's receive worker uses as its level.
+// Superseded seed deleted; seed paths below are historical Git provenance.
+// ORIGINAL: 0x004C9390 sub_4c9390 0x004C9390-0x004C93A2 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/004c9390.cpp"], "reason": "Rehome seed catalogue identity and original extents into compiled owning class; native-emitted symbol is separate and no new byte claim granted."}
+// symbol    ?get_nbuffers@VoiceRx@@UAEHXZ
+int VoiceRx::get_nbuffers() {
+    if (device_ != 0) {
+        return static_cast<VoiceRxDeviceInterface *>(device_)->get_nbuffers();
+    }
+    return 0;
+}
+
+/*
+Purpose: Build a VoiceTx: full volume, centred pan, cleared regions, a
+         1000ms default fade, the "Voice Tx" name on the CRT heap, and
+         type 7 published through the device slot.
+// ORIGINAL: 0x004C8CC0 ??0VoiceTx@@QAE@XZ 0x004C8CC0-0x004C8DAF;0x00659FBE-0x00659FD8
+// symbol    ??0VoiceTx@@QAE@XZ
+// size      239 bytes
+// prototype void (__thiscall ??0VoiceTx@@QAE@XZ)(VoiceTx* this)
+// callers   1   call targets   4
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004C61E0 0x00645460 0x0064558A 0x006465F0
+// PROMOTED from src/recovered/units/004c8cc0.cpp. With VoiceTx : public Sound
+// the three vtable stages (0x66E444 -> 0x66E3C0 -> 0x66E8C4) are the
+// compiler's own base-construction sequence. Sound owns the inherited
+// initialization and default fade setup; VoiceTx clears its own flags at
+// original 0x004C8D49..0x004C8D5D before allocating the display name.
+Return Value: n/a
+Status: Complete
+*/
+VoiceTx::VoiceTx() {
+    memset(&flags_54_, 0, sizeof(flags_54_));
+    fname_ = static_cast<char *>(::operator new(0xA));
+    strcpy(fname_, "Voice Tx");
+    Sound::set_type(7);
+}
+
+// ORIGINAL: 0x004C8DB0 ??1VoiceTx@@QAE@XZ 0x004C8DB0-0x004C8EA0;0x00659FD8-0x00659FF2 FILE BYTE_EXACT
+// symbol    ??1VoiceTx@@UAE@XZ
+VoiceTx::~VoiceTx() {
+    if (device_ != 0 && WaveDeviceReleaseGuard != 0) {
+        SoundXOrdinal2DeleteSound()(device_);
+    }
+    device_ = 0;
+    if (fname_ != 0) {
+        ::operator delete(fname_);
+        fname_ = 0;
+    }
+}
+
+/*
+Purpose: Drop the Sound-level device (vtable slot 0x38) and forget it, so a
+         later init re-wraps; the answer is discarded - release always
+         answers 0.
+// ORIGINAL: 0x004C8EA0 ?release@VoiceTx@@QAEXXZ 0x004C8EA0-0x004C8EAF BYTE_EXACT
+// symbol    ?release@VoiceTx@@UAEHXZ
+// size      15 bytes
+// prototype int (__thiscall ?release@VoiceTx@@QAEXXZ)(VoiceTx* this)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x004C8EA9
+// LEVER: the catalogue spells this `QAEXXZ` (void) - withdrawn here. Both
+//        epilogues are `xor eax, eax; ret`, the shape that CORRECTED unload's
+//        catalogue name to int. The dispatch differs from Sound::release only
+//        in the default: the base returns 0x14 when no device is wrapped,
+//        this returns 0. The ?voice_tx_release_redirect@@YIHPAX0@Z spelling
+//        that held these bytes first was retired with the delegation_thunks
+//        block when this member superseded it.
+Return Value: 0, always
+*/
+int VoiceTx::release() {
+    if (device_ != 0) {
+        static_cast<VoiceTxDeviceInterface *>(device_)->release();
+    }
+    return 0;
+}
+
+/*
+Purpose: Begin voice capture: disable the wave device, start the wave-in
+         device, arm the Sound-level device through its own vtable slot 0x90,
+         and only then light the started bit at 0x54.
+// ORIGINAL: 0x004C8EB0 ?start@VoiceTx@@QAEHXZ 0x004C8EB0-0x004C8EF4 BYTE_EXACT
+// symbol    ?start@VoiceTx@@UAEHXZ
+// size      68 bytes
+// prototype int (__thiscall ?start@VoiceTx@@QAEHXZ)(VoiceTx* this)
+// callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x004C51D0 0x004C5B60
+// indirect  0x004C8EDE
+// LEVER: PROMOTED out of src/recovered/004c8eb0.cpp, which reached the
+//        fields as `reinterpret_cast<char *>(this) + 0x54/0x3c` and the
+//        device dispatch through a 37-slot local shim. The named-member
+//        spelling reproduces the same bytes: flags_54_ is the dword at 0x54
+//        (bit 0, and the image TESTS it as a byte and ORs bit 0 as a byte
+//        inside a dword store), device_ is Sound's at 0x3C, and the armed
+//        dispatch is slot 36 of the device's live vtable - 0x90, the slot
+//        this class's own start occupies in VoiceTx's table 0x0066E8C4.
+Return Value: 0, or the first failing stage's answer
+*/
+int VoiceTx::start() {
+    if ((flags_54_ & 1) == 0) {
+        int result = WaveDeviceGlobal.disable();
+        if (result != 0) return result;
+        result = g_WAVE_IN_DEVICE.start_record();
+        if (result != 0) return result;
+        if (device_ != 0) {
+            result = static_cast<VoiceTxDeviceInterface *>(device_)->start();
+            if (result != 0) return result;
+        }
+        flags_54_ |= 1;
+    }
+    return 0;
+}
+
+/*
+Purpose: Stop voice capture in the reverse order of start, and tear the
+         started bit down first.
+// ORIGINAL: 0x004C8F00 ?stop@VoiceTx@@QAEHXZ 0x004C8F00-0x004C8F3C BYTE_EXACT
+// symbol    ?stop@VoiceTx@@UAEHXZ
+// size      60 bytes
+// prototype int (__thiscall ?stop@VoiceTx@@QAEHXZ)(VoiceTx* this)
+// callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x004C51C0 0x004C5B70
+// indirect  0x004C8F33
+// LEVER: PROMOTED out of src/recovered/004c8f00.cpp the same way as start
+//        above. The started-bit clear is a full DWORD and-cycle
+//        (`and ecx, 0xfffffffe`) while start's set is a byte `or al, 1`
+//        inside a dword read-modify-write - both fall out of the one
+//        `flags_54_` dword with plain `&=` / `|=`.
+Return Value: 0, or the failing stage's answer
+*/
+int VoiceTx::stop() {
+    if ((flags_54_ & 1) != 0) {
+        int result = g_WAVE_IN_DEVICE.end_record();
+        if (result != 0) return result;
+        flags_54_ &= ~1u;
+        WaveDeviceGlobal.enable();
+        if (device_ != 0) {
+            return static_cast<VoiceTxDeviceInterface *>(device_)->stop();
+        }
+    }
+    return 0;
+}
+
+/*
+Purpose: Detach from the Sound-level device, stopping voice first, and hand
+         the device to the release hook while the guard dword says the hook
+         is live - the same hook and guard ~Sound consults.
+// ORIGINAL: 0x004C8F40 ?unload@VoiceTx@@QAEHXZ 0x004C8F40-0x004C8F70 BYTE_EXACT
+// symbol    ?unload@VoiceTx@@UAEHXZ
+// size      48 bytes
+// prototype int (__thiscall ?unload@VoiceTx@@QAEHXZ)(VoiceTx* this)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x004C8F45 0x004C8F4C 0x004C8F5C
+// LEVER: PROMOTED out of src/recovered/004c8f40.cpp. The first two
+//        dispatches are VIRTUAL SELF-CALLS of slots 8 and 14 - spelled
+//        `stop(); release();`, which is why the class model matters here:
+//        the shim spelling could not see that they are this class's own
+//        stop and release.
+Return Value: 0, always
+*/
+int VoiceTx::unload() {
+    stop();
+    release();
+    if (WaveDeviceReleaseGuard != 0) {
+        SoundXOrdinal2DeleteSound()(device_);
+    }
+    device_ = 0;
+    return 0;
+}
+
+// ORIGINAL: 0x004C8F70 ?init@VoiceTx@@QAEHKPAXK@Z 0x004C8F70-0x004C9007 FILE
+// symbol    ?init@VoiceTx@@UAEHKPAXK@Z
+int VoiceTx::init(unsigned long size, void *context, unsigned long flags) {
+    int result = 0;
+    unload();
+    if (device_ == 0) {
+        if (WaveDeviceReleaseGuard == 0) {
+            return 1;
+        }
+        result = SoundXOrdinal1CreateSound()(&device_, 0, 7);
+        if (result != 0) return result;
+    }
+    if (device_ != 0) {
+        result = static_cast<VoiceTxDeviceInterface *>(device_)->init(size, context, flags);
+        if (result != 0 && result != 0x10) {
+            if (WaveDeviceReleaseGuard != 0) {
+                SoundXOrdinal2DeleteSound()(device_);
+            }
+            device_ = 0;
+        }
+        if (device_ != 0) {
+            attach();
+        }
+    }
+    return result;
+}
+
+/*
+Purpose: ?get_nbuffers@VoiceTx@@QAEHXZ - forward 0 argument(s) to slot 0x94 of the
+         object at +0x3c, answering 0x0 when that object is absent.
+// ORIGINAL: 0x004C9010 ?get_nbuffers@VoiceTx@@QAEHXZ 0x004C9010-0x004C9022 BYTE_EXACT
+// symbol    ?get_nbuffers@VoiceTx@@UAEHXZ
+// size      18 bytes
+// prototype int (__thiscall ?get_nbuffers@VoiceTx@@QAEHXZ)(VoiceTx* this)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: the delegate's, or 0x0 when the member is null
+Status: Complete
+*/
+int VoiceTx::get_nbuffers() {
+    if (device_ != 0) {
+        return static_cast<VoiceTxDeviceInterface *>(device_)->get_nbuffers();
+    }
+    return 0;
+}
+
+/*
+Purpose: ?get_next_buffer@VoiceTx@@QAEHXZ - forward 0 argument(s) to slot 0x88 of the
+         object at +0x3c, answering 0x0 when that object is absent.
+// ORIGINAL: 0x004C9030 ?get_next_buffer@VoiceTx@@QAEHXZ 0x004C9030-0x004C9042 BYTE_EXACT
+// symbol    ?get_next_buffer@VoiceTx@@UAEPAU_MMIOINFO@@XZ
+// size      18 bytes
+// prototype int (__thiscall ?get_next_buffer@VoiceTx@@QAEHXZ)(VoiceTx* this)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: the delegate's, or 0x0 when the member is null
+Status: Complete
+*/
+_MMIOINFO *VoiceTx::get_next_buffer() {
+    if (device_ != 0) {
+        return static_cast<VoiceTxDeviceInterface *>(device_)->get_next_buffer();
+    }
+    return 0;
+}
+
+/*
+Purpose: ?return_buffer@VoiceTx@@QAEHPAU_MMIOINFO@@@Z - forward 1 argument(s) to slot 0x8c of the
+         object at +0x3c, answering 0x13 when that object is absent.
+// ORIGINAL: 0x004C9050 ?return_buffer@VoiceTx@@QAEHPAU_MMIOINFO@@@Z 0x004C9050-0x004C9073 BYTE_EXACT
+// symbol    ?return_buffer@VoiceTx@@UAEHPAU_MMIOINFO@@@Z
+// size      35 bytes
+// prototype int (__thiscall ?return_buffer@VoiceTx@@QAEHPAU_MMIOINFO@@@Z)(VoiceTx* this, _MMIOINFO*)
+// callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x004C9060
+Return Value: the delegate's, or 0x13 when the member is null
+Status: Complete
+*/
+int VoiceTx::return_buffer(_MMIOINFO *buffer) {
+    if (device_ != 0) {
+        return static_cast<VoiceTxDeviceInterface *>(device_)->return_buffer(buffer);
+    }
+    return 0x13;
+}
+
+// ORIGINAL: 0x004C93B0 ??_GVoiceRx@@UAEPAXI@Z 0x004C93B0-0x004C93D1 FILE BYTE_EXACT
+// symbol    ??_GVoiceRx@@UAEPAXI@Z
+// Compiler-owned VoiceRx scalar deletion mapping.
+// ORIGINAL: 0x004C93F0 ??_GVoiceTx@@UAEPAXI@Z 0x004C93F0-0x004C9411 FILE BYTE_EXACT
+// symbol    ??_GVoiceTx@@UAEPAXI@Z
+// Compiler-owned VoiceTx scalar deletion mapping.

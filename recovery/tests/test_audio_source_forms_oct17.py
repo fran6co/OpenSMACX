@@ -223,7 +223,7 @@ int main() {
 
 
 def source_body() -> str:
-    return extract_function((ROOT / "src/voice.cpp").read_text(encoding="utf-8"))
+    return extract_function((ROOT / "src/sound.cpp").read_text(encoding="utf-8"))
 
 
 def compile_and_run(compiler: str, body: str, tmp_path: Path, label: str) -> subprocess.CompletedProcess[str]:

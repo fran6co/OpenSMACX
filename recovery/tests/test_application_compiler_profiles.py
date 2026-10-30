@@ -214,7 +214,6 @@ EXPECTED_FLAG_SETS = [
 ]
 EXPECTED_CMAKE_PROFILES = {
     tuple(sorted(("src/map_altitude.cpp", "src/wave.cpp"))): ("/Oy-",),
-    tuple(sorted(("src/voice.cpp",))): ("/Oy-",),
     tuple(sorted(("src/midi.cpp", "src/sounddevice.cpp", "src/sound_loader.cpp"))): ("/Oy-",),
     tuple(sorted(("src/datalink.cpp", "src/maininterface.cpp", "src/console.cpp"))): ("/Oy-",),
     tuple(sorted(("src/mapwin.cpp", "src/basewin.cpp"))): ("/Oy-",),
@@ -225,7 +224,6 @@ EXPECTED_CMAKE_PROFILES = {
     tuple(sorted(NEW_OWNERS)): ("/Oy-",),
     tuple(sorted(REMAINING_OWNERS)): ("/Oy-",),
     ("src/alpha.cpp",): ("/Oy-",),
-    ("src/video_sound.cpp",): ("/Oy-",),
     ("src/scenario_undo.cpp",): ("/Oy-",),
     ("src/crt_random.cpp", "src/header_io.cpp"): ("/Oy-",),
     ("src/vehicle_cost.cpp", "src/vehicle_orders.cpp"): ("/Oy-",),
@@ -635,7 +633,9 @@ def test_application_profiles_match_immutable_baseline_plus_core_cohort():
     assert "src/mci_video.cpp" in application_sources
     assert source_rows[source_rows.index("src/video.cpp") + 1] == "src/video_queue.cpp"
     assert source_rows[source_rows.index("src/alphamovie.cpp") + 1] == "src/mci_video.cpp"
-    assert "src/video_sound.cpp" in application_sources
+    assert "src/video_sound.cpp" not in application_sources
+    assert "src/voice.cpp" not in application_sources
+    assert "src/sound.cpp" in application_sources
     assert "src/scenario_undo.cpp" in application_sources
     assert "src/header_io.cpp" in application_sources
     assert "src/crt_random.cpp" in application_sources
@@ -658,7 +658,7 @@ def test_application_profiles_match_immutable_baseline_plus_core_cohort():
     assert actual_profiles["src/alphanet.cpp"] == ("/Oy-",)
     assert "src/alphanet_records.cpp" not in profiled_sources
     assert all(owner in profiled_sources for owner in REMAINING_OWNERS)
-    assert actual_profiles["src/video_sound.cpp"] == ("/Oy-",)
+    assert actual_profiles["src/sound.cpp"] == ("/Oy-",)
     assert actual_profiles["src/scenario_undo.cpp"] == ("/Oy-",)
     assert actual_profiles["src/crt_random.cpp"] == ("/Oy-",)
     assert actual_profiles["src/header_io.cpp"] == ("/Oy-",)
@@ -706,7 +706,7 @@ def test_application_profiles_match_immutable_baseline_plus_core_cohort():
     for owner in NEW_OWNERS + tuple(
         owner for owner in REMAINING_OWNERS if owner != "src/technology_queries.cpp"
     ) + tuple(denied_owners) + (
-        "src/win.cpp", "src/alpha.cpp", "src/video_sound.cpp",
+        "src/win.cpp", "src/alpha.cpp",
         "src/scenario_undo.cpp",
         "src/header_io.cpp", "src/crt_random.cpp",
         "src/vehicle_cost.cpp", "src/vehicle_orders.cpp",

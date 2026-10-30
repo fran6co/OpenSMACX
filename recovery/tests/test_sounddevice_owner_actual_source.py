@@ -60,7 +60,7 @@ def test_real_device_singletons_have_source_storage_and_current_owner_calls():
     header = (ROOT / "src/sounddevice.h").read_text()
     owner = (ROOT / "src/sounddevice.cpp").read_text()
     sound = (ROOT / "src/sound.cpp").read_text()
-    voice = (ROOT / "src/voice.cpp").read_text()
+    voice = (ROOT / "src/sound.cpp").read_text()
     loader = (ROOT / "src/sound_loader.cpp").read_text()
 
     assert "extern Midi_Device g_MIDI_DEVICE;" in header

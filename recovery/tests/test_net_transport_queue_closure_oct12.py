@@ -372,7 +372,7 @@ DEVICE_DEFAULTS
         definitions += "\n" + braced(fifo, head)
     for head in ("int VoiceRx::start()", "int VoiceRx::stop()", "int VoiceRx::get_nbuffers()",
                  "int VoiceRx::add_buffer(_MMIOINFO *buffer)"):
-        definitions += "\n" + braced((ROOT / "src/voice.cpp").read_text(), head)
+        definitions += "\n" + braced((ROOT / "src/sound.cpp").read_text(), head)
     definitions += "\n" + braced((ROOT / "src/sound.cpp").read_text(), "int Sound::is_playing()")
     if damage:
         old, new = DAMAGES[damage]
