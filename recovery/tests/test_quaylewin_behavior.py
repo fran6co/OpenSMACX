@@ -171,9 +171,12 @@ int main() {
     assert result.returncode == 0, result.stderr.decode()
 
 
+# This host fixture copies the allocation-base lifetime bodies and stubs list
+# storage/removal; it checks owner restoration, not the production ABI or runtime.
 REDRAW_HARNESS = r"""
 #include <cassert>
 #include <cstring>
+#include <stdexcept>
 #include <string>
 #include <vector>
 #define __cdecl
@@ -181,6 +184,28 @@ typedef int BOOL;
 struct RECT { long left, top, right, bottom; };
 struct Heap {} owner_heap;
 Heap *StringAllocationHeap;
+int allocation_base_constructions, allocation_base_destructions, string_list_removals;
+struct StringAllocationBase {
+  Heap *allocation_owner_;
+  StringAllocationBase() {
+    allocation_owner_ = StringAllocationHeap;
+    StringAllocationHeap = 0;
+    ++allocation_base_constructions;
+  }
+  virtual ~StringAllocationBase() {
+    StringAllocationHeap = allocation_owner_;
+    ++allocation_base_destructions;
+  }
+};
+struct StringStruct : virtual StringAllocationBase {
+  int current_position_;
+  StringStruct() : current_position_(0) {}
+  virtual ~StringStruct() { remove_all(); current_position_ = 0; }
+  void remove_all() { ++string_list_removals; }
+};
+struct StringList : StringStruct {
+  ~StringList() { remove_all(); current_position_ = 0; }
+};
 char StringTemp[512];
 int GenderDefault, PluralityDefault, Language;
 struct Font { int id; explicit Font(int value = 0) : id(value) {} };
@@ -191,12 +216,12 @@ struct { Font *field_1E1AC_, *field_1E1B0_, *field_1E1A8_, *field_1E1B8_; } Repo
 struct { int faction_id_; } ConsoleGlobal;
 struct { int unk_107; } PlayersData[8];
 struct Player { int is_leader_female; char title_leader[32]; char name_leader[32]; } Players[8];
-struct StringStruct { void remove_all() {} };
 std::vector<std::string> sections, speech_inputs, list_items, events, wrapped_texts;
 std::vector<int> speech_ids, speech_gender, speech_plural;
 std::vector<int> spot_pages, spot_tops, wrap_fonts, wrapped_pages;
 int parse_file_count, rating_score, rating_book, list_close_count, list_attach_flags;
 int list_report_color, list_selected, list_show_calls, spot_kills, clip_calls;
+bool throw_during_parse;
 int copies, art_loads, art_draws, write_lines, centered_lines, centered_wraps;
 RECT last_dialog_rect, last_write_rect, last_center_rect;
 std::string last_written, last_centered, art_filename;
@@ -212,6 +237,8 @@ void parse_says(int id, const char *input, int, int) {
   speech_gender.push_back(GenderDefault); speech_plural.push_back(PluralityDefault);
 }
 void parse_it(char *, const char *section) {
+  assert(StringAllocationHeap == 0);
+  if (throw_during_parse) throw std::runtime_error("host redraw unwind control");
   sections.push_back(section); ++parse_file_count;
   if (!std::strcmp(section, "BOOKTITLE")) std::strcpy(StringTemp, "Title");
   else if (!std::strcmp(section, "BOOKINTRO")) std::strcpy(StringTemp, "Intro");
@@ -281,6 +308,9 @@ void reset_observations() {
   list_report_color = list_selected = list_show_calls = spot_kills = clip_calls = 0;
   copies = art_loads = art_draws = write_lines = centered_lines = centered_wraps = 0;
   last_written.clear(); last_centered.clear(); art_filename.clear();
+  throw_during_parse = false;
+  allocation_base_constructions = allocation_base_destructions = 0;
+  string_list_removals = 0;
 }
 void initialize(QuayleWin &win, int chapter, int language) {
   reset_observations();
@@ -303,6 +333,8 @@ void assert_heap_restored() { assert(StringAllocationHeap == &owner_heap); }
 void test_english_list() {
   QuayleWin win; initialize(win, -1, 0); win.on_redraw();
   assert_heap_restored();
+  assert(allocation_base_constructions == 1 && allocation_base_destructions == 1);
+  assert(string_list_removals == 3); // explicit body, StringList dtor, StringStruct dtor
   assert((sections == std::vector<std::string>{"BOOKTITLE", "BOOKINTRO", "BOOKLIST0", "BOOKLIST1", "BOOKLIST2"}));
   assert(spot_kills == 1 && (spot_pages == std::vector<int>{0, 1, 2}));
   assert((spot_tops == std::vector<int>{238, 220, 202}));
@@ -351,11 +383,39 @@ void test_chapter(int chapter, Font *expected_font, RECT expected, int expected_
   assert(win.pages_button_.shows == 1 && win.chapter_button_.shows == 0);
   assert(win.illustration_rect_.left == 100);
 }
+void test_owner_restored_on_unwind() {
+  QuayleWin win; initialize(win, -1, 0);
+  throw_during_parse = true;
+  bool caught = false;
+  try { win.on_redraw(); }
+  catch (const std::runtime_error &) { caught = true; }
+  assert(caught);
+  assert(allocation_base_constructions == 1 && allocation_base_destructions == 1);
+  assert(string_list_removals == 2); // both list destructors run during unwind
+  assert_heap_restored();
+}
+void legacy_manual_owner_exchange_unwind() {
+  Heap *saved_string_owner = StringAllocationHeap;
+  StringAllocationHeap = 0;
+  StringStruct strings;
+  throw std::runtime_error("legacy manual restore is skipped during unwind");
+  strings.remove_all();
+  StringAllocationHeap = saved_string_owner;
+}
+void test_legacy_manual_restore_damage_control() {
+  StringAllocationHeap = &owner_heap;
+  try { legacy_manual_owner_exchange_unwind(); }
+  catch (const std::runtime_error &) {}
+  assert(StringAllocationHeap == 0);
+  StringAllocationHeap = &owner_heap;
+}
 int main() {
   test_english_list(); test_multilingual_list();
   test_chapter(1, &title_font, RECT{0x15B, 0x1F6, 0x2E2, 0x21C}, 0x45, false);
   test_chapter(2, &heading_font, RECT{0x136, 0x1A5, 0x301, 0x1D7}, 0x45, false);
   test_chapter(8, &heading_font, RECT{0x13C, 0x1DF, 0x2FD, 0x233}, 0x5E, true);
+  test_owner_restored_on_unwind();
+  test_legacy_manual_restore_damage_control();
 }
 """
 

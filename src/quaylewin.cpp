@@ -204,9 +204,9 @@ int QuayleWin::on_key_click(int, int) {
 // TRIED: local StringStruct/Buffer objects reproduce the ctor/dtor calls but MSVC did not regenerate the original's SEH/EH unwind frame (push -1; push handler; fs:[0] chain) from source-level RAII alone here; body is a faithful, compiling transcription (MISMATCH #0, prologue only) - see call order, field offsets and vtable-adjustor reads below for the parts that are semantically verified against raw disassembly.
 // symbol    ?on_redraw@QuayleWin@@UAEXXZ
 void QuayleWin::on_redraw() {
-  Heap *saved_string_owner = StringAllocationHeap;
-  StringAllocationHeap = 0;
-  StringStruct strings;
+  // The pinned 0x4956F3 allocator exchange belongs to StringList's virtual
+  // StringAllocationBase lifetime; keep the explicit remove_all below.
+  StringList strings;
   const int book = ConsoleGlobal.faction_id_;
   const int chapter = field_2144_;
   char temporary[0x100];
@@ -401,7 +401,6 @@ void QuayleWin::on_redraw() {
   }
   }
   strings.remove_all();
-  StringAllocationHeap = saved_string_owner;
 }
 
 // Promoted historical seed; its superseded source path is Git provenance only.
