@@ -1399,28 +1399,6 @@ void __cdecl code_set(int x, int y, int code) {
 }
 
 /*
-Purpose: Synchronize the actual tile bit with the faction visible bit.
-// ORIGINAL: 0x00591E50 ?synch_bit@@YAXHHH@Z 0x00591E50-0x00591E82 BYTE_EXACT
-// body      src/map.h
-// LEVER: `Map *tile = map_loc(x, y);` shared between the read of `tile->bit`
-//        and the write to `tile->bit_visible[...]`, instead of two separate
-//        `map_loc()`/`bit_at()` calls, so the address is computed once.
-// size      50 bytes
-// prototype void (__cdecl ?synch_bit@@YAXHHH@Z)(int xCoord, int yCoord, int factionID)
-// callers   24   call targets   0
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-// BODY IN map.h, as `MEASURED inline`: the image writes it out at
-// some call sites and calls it at others, and a .cpp definition is only ever
-// one of those. The marker stays here because that is where the catalogue
-// reads it.
-
-
-/*
 Purpose: Name the faction working a tile that this faction may enter by treaty.
 // ORIGINAL: 0x00591E90 sub_591e90 0x00591E90-0x00591EF9 FILE BYTE_EXACT
 // symbol    ?treaty_using_faction@@YAHHHH@Z
@@ -4498,4 +4476,27 @@ int __cdecl action_build(int veh_id, char *base_name) {
 
     veh_skip(veh_id);
     return base_id;
+}
+
+/*
+Purpose: Synchronize the actual tile bit with the faction visible bit.
+// ORIGINAL: 0x00591E50 ?synch_bit@@YAXHHH@Z 0x00591E50-0x00591E82 BYTE_EXACT
+// LEVER: `Map *tile = map_loc(x, y);` shared between the read of `tile->bit`
+//        and the write to `tile->bit_visible[...]`, instead of two separate
+//        `map_loc()`/`bit_at()` calls, so the address is computed once.
+// size      50 bytes
+// prototype void (__cdecl ?synch_bit@@YAXHHH@Z)(int xCoord, int yCoord, int factionID)
+// callers   24   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+// Defined after this unit's callers; their public declaration is in map.h.
+void __cdecl synch_bit(int x, int y, int faction_id) {
+    if (faction_id) {
+        Map *tile = map_loc(x, y);
+        tile->bit_visible[faction_id - 1] = tile->bit;
+    }
 }

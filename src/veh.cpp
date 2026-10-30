@@ -6162,13 +6162,13 @@ int __cdecl get_plan(int faction_id, int plan) {
 Purpose: Reveal the specified tile to the specified faction and keep the
          faction's remembered copy of the tile's terrain bits in step with it.
 // ORIGINAL: 0x005B5700 sub_5b5700 0x005B5700-0x005B57CA BYTE_EXACT
-// LEVER: synch_bit_call, not synch_bit - see the wrapper below. The image
+// LEVER: Historical synch_bit_call spelling retained a real call. The image
 //        CALLS 0x591E50 as this body's one genuine call, and at plain /O2 the
 //        optimiser open-coded the `MEASURED inline` from map.h into the tail
 //        (3/66 at /O2 /Oy- before the switch), which is also where the extra register
 //        pressure came from. on_map() and map_loc() stay written out: the
 //        image folds both in here.
-// LEVER: FEWER (0 calls vs image's 1: synch_bit) at every flag set that kept a standalone symbol. /Ob0 forces the WHOLE function real, including on_map()/map_loc(), which the image folds in here; without /Ob0 the compiler inlines synch_bit() too, since it is small and `MEASURED inline` in map.h. Writing on_map()/map_loc() as bare expressions (not calls) removes them from the optimiser's inline/no-inline choice entirely, so /Ob0 only has synch_bit() left to force real.
+// LEVER: FEWER (0 calls vs image's 1: synch_bit) at every flag set that kept a standalone symbol. /Ob0 forces the WHOLE function real, including on_map()/map_loc(), which the image folds in here; without /Ob0 the compiler inlines synch_bit() too, because the former map.h definition was `MEASURED inline`. Writing on_map()/map_loc() as bare expressions (not calls) removes them from the optimiser's inline/no-inline choice entirely, so /Ob0 only has synch_bit() left to force real.
 // symbol    ?spot_tile@@YAXHHH@Z
 // size      202 bytes
 // prototype
@@ -6193,24 +6193,12 @@ which between them mean it is the interactive map's repaint hint rather than
 game state. `bit2 |= 0x400000` and `UnkBitfield1 |= 1` are the same pair
 climate_set() sets at 00591A80 and carry the same unidentified meaning.
 */
-// LEVER (0x005B5700 spot_tile / 0x005B57D0 spot_base): synch_bit() has to
-//        reach the image's real `call 0x591e50` at plain /O2, where the
-//        optimiser otherwise open-codes the whole `MEASURED inline` body from
-//        map.h into the caller and costs it the frame's spare registers
-//        (spot_base was 5/78, spot_tile 3/66; both BYTE_EXACT through this
-//        wrapper). VC6 declines to auto-inline a wrapper whose own body is the
-//        expansion of another inline, so it stays a genuine call - the
-//        same-TU counterpart of technology.h's has_tech_call, which needed a
-//        different TU.
-static void __cdecl synch_bit_call(int x, int y, int faction_id) {
-    synch_bit(x, y, faction_id);
-}
 
 void __cdecl spot_tile(int x, int y, int faction_id) {
     // on_map() and map_loc() are written out here rather than called: the
     // image folds both of them in, and writing the expressions removes the
     // optimiser's inline/no-inline choice instead of hoping for it.
-    // synch_bit_call() rather than synch_bit(): see the wrapper above.
+    // Keep the real synch_bit API call boundary.
     if (!(y >= 0 && y < (int)MapLatitudeBounds
           && x >= 0 && x < (int)MapLongitudeBounds)) {
         return;
@@ -6223,14 +6211,14 @@ void __cdecl spot_tile(int x, int y, int faction_id) {
         UnkBitfield1 |= 1; // TODO: identify global + value
     }
     tile->visibility |= (uint8_t)(1 << faction_id);
-    synch_bit_call(x, y, faction_id);
+    synch_bit(x, y, faction_id);
 }
 
 /*
 Purpose: Reveal the specified base, and the tile it stands on, to the specified
          faction.
 // ORIGINAL: 0x005B57D0 ?spot_base@@YAXHH@Z 0x005B57D0-0x005B58D2 BYTE_EXACT
-// LEVER: synch_bit_call, not synch_bit - see the wrapper above. The
+// LEVER: Historical synch_bit_call spelling retained a real call. The
 //        image CALLS 0x591E50 as this body's one genuine call, and open-coding
 //        the `MEASURED inline` from map.h here cost the frame its spare
 //        registers (5/78 at /O2 /Oy- before the switch). The hand-inlined spot_tile
@@ -6260,8 +6248,7 @@ void __cdecl spot_base(int base_id, int faction_id) {
     int y = Bases[base_id].y;
     // spot_tile(), hand-inlined in spot_tile's OWN shape - guard clause first,
     // the synch_bit call last - so the hand-inline reads exactly like the body
-    // it duplicates. synch_bit_call() rather than synch_bit(): see the wrapper
-    // above spot_tile.
+    // it duplicates, with the real synch_bit API call at the end.
     if (!(y >= 0 && y < (int)MapLatitudeBounds
           && x >= 0 && x < (int)MapLongitudeBounds)) {
         return;
@@ -6274,7 +6261,7 @@ void __cdecl spot_base(int base_id, int faction_id) {
         UnkBitfield1 |= 1; // TODO: identify global + value
     }
     tile->visibility |= (uint8_t)(1 << faction_id);
-    synch_bit_call(x, y, faction_id);
+    synch_bit(x, y, faction_id);
 }
 
 /*

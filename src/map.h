@@ -636,12 +636,7 @@ MEASURED inline int __cdecl bit_at(int x, int y) {
     return map_loc(x, y)->bit;
 }
 
-MEASURED inline void __cdecl synch_bit(int x, int y, int faction_id) {
-    if (faction_id) {
-        Map *tile = map_loc(x, y);
-        tile->bit_visible[faction_id - 1] = tile->bit;
-    }
-}
+void __cdecl synch_bit(int x, int y, int faction_id);
 
 MEASURED inline int __cdecl veh_who(int x, int y) {
     Map *tile = map_loc(x, y);
