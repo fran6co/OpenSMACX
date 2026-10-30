@@ -117,6 +117,7 @@ struct FakeDirectPlay : IDirectPlay2 {
   ULONG AddRef() { return 1; }
   ULONG Release() { ++provider_releases; return 1; }
   HRESULT GetCaps(DPCAPS *caps, DWORD flags) {
+    assert(directplay_out_slot != 0 && *directplay_out_slot == 0);
     assert(flags == 1 && caps->dwSize == 0x28);
     caps->dwLatency = provider_latency;
     return caps_result;

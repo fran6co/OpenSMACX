@@ -2490,6 +2490,7 @@ int Net::join_service(ServiceStruct *service) {
         return 1;
     }
     direct_play->Release();
+    direct_play = 0;
 
     memset(&NetServiceCaps, 0, 0x28);
     NetServiceCaps.dwSize = 0x28;
