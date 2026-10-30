@@ -962,9 +962,11 @@ Return Value: n/a
 Status: Coverage transcription - unclaimed body
 */
 void NetWin::draw_session_info() {
+    // Its allocation base captures/restores the heap handoff; construct it
+    // before the pinned spot cleanup.
+    StringList list;
     spot_.kill_type(0);
     Buffer *buffer = static_cast<Buffer *>(this);
-    StringStruct list;
 
     buffer->box_sprite(&setup_rects_[3],
                        &InterfaceBoxStyles[3]);
