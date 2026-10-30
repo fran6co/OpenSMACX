@@ -534,10 +534,10 @@ extern "C" int __fastcall sub_5cc860(IDirectDraw2 *provider,
   description.ddpfPixelFormat.dwFlags = DDPF_FOURCC;
   description.ddpfPixelFormat.dwFourCC = (DWORD)fourcc;
 
-  IDirectDrawSurface *created = 0;
+  IDirectDrawSurface2 *queried;
+  IDirectDrawSurface *created;
   if (provider->CreateSurface(&description, &created, 0) != DD_OK) return 1;
 
-  IDirectDrawSurface2 *queried = 0;
   if (created->QueryInterface(IID_IDirectDrawSurface2,
                               (void **)&queried) != DD_OK) {
     created->Release();
@@ -2882,7 +2882,7 @@ Purpose: Create the codec's draw/audio surface through COM: QueryInterface
 
 // Typed owner implementation; native ABI/output, original reference targets
 // and exceptional behavior remain restoration obligations, not owner stubs.
-// ORIGINAL: 0x005CDAD0 sub_5cdad0 0x005CDAD0-0x005CDB83
+// ORIGINAL: 0x005CDAD0 sub_5cdad0 0x005CDAD0-0x005CDB83 BYTE_EXACT
 // symbol    ?sub_5cdad0@@YIHPAUIDirectDraw2@@PAPAUIDirectDrawSurface2@@HHH@Z
 // size      179 bytes
 // prototype int (__fastcall sub_5cdad0)(int *, int *, int, int, int)
@@ -2891,8 +2891,6 @@ Purpose: Create the codec's draw/audio surface through COM: QueryInterface
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
 // indirect  0x005CDB3E 0x005CDB56 0x005CDB73
-Status: Coverage transcription - unclaimed body (prologue register-save order
-        diverges at instruction 3; seed TRIED).
 */
 int __fastcall sub_5cdad0(IDirectDraw2 *provider,
                           IDirectDrawSurface2 **out_slot,
@@ -2901,16 +2899,16 @@ int __fastcall sub_5cdad0(IDirectDraw2 *provider,
   memset(&description, 0, 0x6c);
   description.dwSize = 0x6c;
   description.dwFlags = 0x1007;
-  description.dwHeight = static_cast<DWORD>(height);
   description.dwWidth = static_cast<DWORD>(width);
+  description.dwHeight = static_cast<DWORD>(height);
+  description.ddsCaps.dwCaps = 0x4040;
   description.ddpfPixelFormat.dwSize = 0x20;
   description.ddpfPixelFormat.dwFlags = DDPF_FOURCC;
   description.ddpfPixelFormat.dwFourCC = static_cast<DWORD>(format_tail);
-  description.ddsCaps.dwCaps = 0x4040;
 
-  IDirectDrawSurface *created = 0;
+  IDirectDrawSurface2 *queried;
+  IDirectDrawSurface *created;
   if (provider->CreateSurface(&description, &created, 0) == DD_OK) {
-    IDirectDrawSurface2 *queried = 0;
     if (created->QueryInterface(IID_IDirectDrawSurface2,
                                 reinterpret_cast<void **>(&queried)) == DD_OK) {
       *out_slot = queried;
