@@ -232,7 +232,7 @@ namespace {
 /*
 Purpose: Fetch one item's text, from whichever widget this kind of dialog
          keeps its items in.
-// ORIGINAL: 0x00612A70 ?item@Dialogs@@QAEHPADH@Z 0x00612A70-0x00612ABF
+// ORIGINAL: 0x00612A70 ?item@Dialogs@@QAEHPADH@Z 0x00612A70-0x00612ABF BYTE_EXACT
 // LEVER: `case 2` moved AHEAD of the `case 1/4/8/16` group - source case
 //        order changed which block VC6 places (and schedules) first; moved
 //        12/26 -> 20/26 and removed a spurious internal `call`+`ret 8` the
@@ -261,7 +261,7 @@ int Dialogs::item(char *text, int index) {
         case 4:
         case 8:
         case 16:
-            return static_cast<Dialog &>(*this).Dialog::item(text, index);
+            return Dialog::item(text, index);
         default:
             return 0;
     }
