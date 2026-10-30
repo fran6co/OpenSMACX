@@ -152,6 +152,12 @@
     "backend": "pe-coff-i386",
     "compiler_profile": "application",
     "unit_flag_sets": {
+      "src/listbox.cpp": {
+        "flags": ["/nologo", "/TP", "/Zm200", "/GX", "/O2", "/Ob2", "-MT", "/W4", "-c"]
+      },
+      "src/jackal/checkbox.cpp": {
+        "flags": ["/nologo", "/TP", "/Zm200", "/GX", "/O2", "/Ob2", "-MT", "/W4", "-c"]
+      },
       "src/sounddevice.cpp": {
         "flags": ["/c", "/O2", "/Gy", "/GR-", "/GX", "/Oy-", "/Ob2"]
       },
