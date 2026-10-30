@@ -224,7 +224,7 @@ int Font::init(LPCSTR font_name, int height, int style) {
     int leading = tm.tmInternalLeading;
     line_height_ = tm.tmHeight + tm.tmExternalLeading;
     ascent_ = tm.tmAscent;
-    height_ = tm.tmHeight - leading;
+    height_ = ascent_ - leading;
     internal_leading_ = leading;
     descent_ = tm.tmDescent;
     SelectObject(FontHDC, GetStockObject(SYSTEM_FONT));

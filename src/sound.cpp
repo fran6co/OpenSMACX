@@ -1723,7 +1723,7 @@ int VoiceRx::get_nbuffers() {
 Purpose: Build a VoiceTx: full volume, centred pan, cleared regions, a
          1000ms default fade, the "Voice Tx" name on the CRT heap, and
          type 7 published through the device slot.
-// ORIGINAL: 0x004C8CC0 ??0VoiceTx@@QAE@XZ 0x004C8CC0-0x004C8DAF;0x00659FBE-0x00659FD8
+// ORIGINAL: 0x004C8CC0 ??0VoiceTx@@QAE@XZ 0x004C8CC0-0x004C8DAF;0x00659FBE-0x00659FD8 BYTE_EXACT
 // symbol    ??0VoiceTx@@QAE@XZ
 // size      239 bytes
 // prototype void (__thiscall ??0VoiceTx@@QAE@XZ)(VoiceTx* this)
@@ -1741,8 +1741,9 @@ Status: Complete
 */
 VoiceTx::VoiceTx() {
     memset(&flags_54_, 0, sizeof(flags_54_));
+    char name[] = "Voice Tx";
     fname_ = static_cast<char *>(::operator new(0xA));
-    strcpy(fname_, "Voice Tx");
+    strcpy(fname_, name);
     Sound::set_type(7);
 }
 
