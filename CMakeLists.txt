@@ -583,6 +583,7 @@ set_property(SOURCE
     src/map_sites.cpp
     src/mapwin.cpp
     src/netdaemon.cpp
+    src/prefwin.cpp
     APPEND PROPERTY COMPILE_OPTIONS "/Z7")
 # Keep these measured frame-based helper owners on their explicit source profile.
 set_source_files_properties(
