@@ -2469,13 +2469,10 @@ int Net::join_service(ServiceStruct *service) {
         return started < 0x15 ? 1 : 0x16;
     }
 
-    void *direct_play = 0;
+    LPDIRECTPLAY direct_play;
     // The DX1 create signature - the image's one DirectPlayCreate import,
     // filled through the out parameter the caller owns.
-    HRESULT result = DirectPlayCreate(provider,
-                                      reinterpret_cast<LPDIRECTPLAY *>(
-                                          &direct_play),
-                                      0);
+    HRESULT result = DirectPlayCreate(provider, &direct_play, 0);
     if (result != 0) {
         sub_631ba0(result);
         return 1;
@@ -2483,16 +2480,16 @@ int Net::join_service(ServiceStruct *service) {
 
     // QueryInterface for the Ansi IDirectPlay2 the rest of Net dispatches
     // through, publish it, and release the creator either way.
-    result = static_cast<IDirectPlay2 *>(direct_play)->QueryInterface(
-        IID_IDirectPlay2A,
-        reinterpret_cast<void **>(&NetDirectPlay));
+    result = direct_play->QueryInterface(
+        IID_IDirectPlay2A, reinterpret_cast<void **>(&NetDirectPlay));
     thread_info_.direct_play_ = NetDirectPlay;
     if (result != 0) {
-        static_cast<IDirectPlay2 *>(direct_play)->Release();
+        direct_play->Release();
+        direct_play = 0;
         sub_631ba0(result);
         return 1;
     }
-    static_cast<IDirectPlay2 *>(direct_play)->Release();
+    direct_play->Release();
 
     memset(&NetServiceCaps, 0, 0x28);
     NetServiceCaps.dwSize = 0x28;
