@@ -3590,9 +3590,10 @@ int __cdecl enemy_veh(int veh_id) {
     // `unit_id * sizeof(Veh)` live in edi, which is what the array spelling
     // compiles to and what a pointer local does not.
     const int unit_id = veh_id;
+    const uint8_t unit_faction = Vehs[unit_id].faction_id;
 
     bool is_local_turn;
-    if (Vehs[unit_id].faction_id == ConsoleGlobal.faction_id_ && IsMultiplayerNet != 0) {
+    if (unit_faction == ConsoleGlobal.faction_id_ && IsMultiplayerNet != 0) {
         is_local_turn = true;
     } else {
         is_local_turn = false;
@@ -3614,7 +3615,7 @@ int __cdecl enemy_veh(int veh_id) {
             && VehPrototypes[Vehs[unit_id].proto_id].plan != 7
             && !(Vehs[unit_id].state & VSTATE_EXPLORE)) {
         if (zoc_any(Vehs[unit_id].x, Vehs[unit_id].y,
-                    Vehs[unit_id].faction_id)
+                    unit_faction)
             == 0) {
             goto after_move;  // blocked by a zone of control
         }
