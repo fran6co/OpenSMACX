@@ -590,6 +590,7 @@ def _bind(*, object_damage=None, image_damage=None, spans=SPANS,
 def _linear_fixture(original_widths, object_widths=None, *, original_damage=None,
                     object_damage=None, truncate_original=False,
                     original_predecessors=None, object_predecessors=None,
+                    original_action_order=None, object_action_order=None,
                     return_artifacts=False):
     """Build complete independent PE/COFF unwind maps with supported actions."""
     if object_widths is None:
@@ -602,6 +603,13 @@ def _linear_fixture(original_widths, object_widths=None, *, original_damage=None
         object_predecessors = tuple(
             0xFFFFFFFF if index == 0 else index - 1
             for index in range(len(object_widths)))
+    if original_action_order is None:
+        original_action_order = tuple(range(len(original_widths)))
+    if object_action_order is None:
+        object_action_order = tuple(range(len(object_widths)))
+    if (sorted(original_action_order) != list(range(len(original_widths)))
+            or sorted(object_action_order) != list(range(len(object_widths)))):
+        raise ValueError("fixture action orders must be permutations of physical actions")
 
     def action_bytes(width, target=None, pc=0):
         result = bytearray(b"\x8b\x4d\xf0")
@@ -648,7 +656,12 @@ def _linear_fixture(original_widths, object_widths=None, *, original_damage=None
     info = bytearray(32 + 8 * len(original_widths))
     struct.pack_into("<8I", info, 0, 0x19930520, len(original_widths), info_address + 32,
                      0, 0, 0, 0, 0)
-    for index, start in enumerate(orig_starts):
+    original_map_starts = [orig_starts[index] for index in original_action_order]
+    if original_damage == "duplicate_action_pointer":
+        original_map_starts[-1] = original_map_starts[0]
+    elif original_damage == "out_of_range_action_pointer":
+        original_map_starts[-1] = orig_handler
+    for index, start in enumerate(original_map_starts):
         struct.pack_into("<II", info, 32 + 8 * index,
                          original_predecessors[index],
                          orig_cold + start)
@@ -757,8 +770,10 @@ def _linear_fixture(original_widths, object_widths=None, *, original_damage=None
     if object_damage == "extra_root_child_edge":
         add("other_child", "$Lotherchild", 0, 2, 0, 6)
     for i, start in enumerate(obj_starts):
-        add(("cleanup", i), f"$Lcleanup{i}",
-            start + (1 if object_damage == "map_target" and i == len(obj_starts) - 1 else 0),
+        value = start + (1 if object_damage == "map_target" and i == len(obj_starts) - 1 else 0)
+        if object_damage == "duplicate_action_pointer" and i == len(obj_starts) - 1:
+            value = obj_starts[0]
+        add(("cleanup", i), f"$Lcleanup{i}", value,
             2, 0, 6)
     add("info", "$Tinfo", 0, 3, 0, 3)
     add("unwind", "$Tunwind", 32, 3, 0, 6)
@@ -770,7 +785,8 @@ def _linear_fixture(original_widths, object_widths=None, *, original_damage=None
     child_relocs = [(offset, ("dtor", i), 20) for i, offset in enumerate(obj_branches)]
     child_relocs.extend([(obj_handler + 1, "info", 6), (obj_handler + 6, "runtime", 20)])
     info_relocs = [(8, "unwind", 6)] + [
-        (36 + 8 * i, ("cleanup", i), 6) for i in range(len(obj_starts))]
+        (36 + 8 * i, ("cleanup", action_index), 6)
+        for i, action_index in enumerate(object_action_order)]
     if object_damage == "extra_reloc":
         child_relocs.append((1, ("dtor", 0), 20))
     if object_damage == "extra_root_child_edge":
@@ -934,6 +950,54 @@ def test_original_and_compiled_linear_action_inventories_are_independent():
     assert len(cold.code) == 24
     assert root.ownership.original_predecessors == (0xFFFFFFFF, 0, 1)
     assert root.ownership.compiled_predecessors == (0xFFFFFFFF,)
+
+
+def test_binds_reordered_original_and_compiled_action_pointers_in_state_order():
+    root, cold = _linear_fixture(
+        (8, 11, 14), (11, 14, 8),
+        original_action_order=(2, 0, 1),
+        object_action_order=(1, 2, 0))
+    assert root.ownership.original_cleanups == (
+        BASE + 0x1100 + 19, BASE + 0x1100, BASE + 0x1100 + 8)
+    assert root.ownership.cleanup_offsets == (11, 25, 0)
+    assert tuple(action.base_adjustment for action in root.ownership.original_actions) == (
+        0x144C, 0, 4)
+    assert tuple(action.base_adjustment for action in root.ownership.compiled_actions) == (
+        0x144C, 0, 4)
+    assert root.ownership.original_predecessors == (0xFFFFFFFF, 0, 1)
+    assert root.ownership.compiled_predecessors == (0xFFFFFFFF, 0, 1)
+    assert cold.ownership.original_cleanups == root.ownership.original_cleanups
+
+
+def test_reordered_map_keeps_wrong_state_action_association_visible():
+    root, _cold = _linear_fixture(
+        (8, 11, 14), (8, 11, 14),
+        original_action_order=(0, 1, 2),
+        object_action_order=(0, 2, 1))
+    assert tuple(action.base_adjustment for action in root.ownership.original_actions) == (
+        0, 4, 0x144C)
+    assert tuple(action.base_adjustment for action in root.ownership.compiled_actions) == (
+        0, 0x144C, 4)
+
+
+@pytest.mark.parametrize("damage", ["duplicate_action_pointer", "out_of_range_action_pointer"])
+def test_rejects_invalid_original_action_pointer_permutations(damage):
+    with pytest.raises(ValueError):
+        _linear_fixture((8, 11, 14), original_action_order=(2, 0, 1),
+                        original_damage=damage)
+
+
+@pytest.mark.parametrize("damage", ["duplicate_action_pointer", "map_target"])
+def test_rejects_invalid_compiled_action_pointer_permutations(damage):
+    with pytest.raises(ValueError):
+        _linear_fixture((8, 11, 14), object_widths=(11, 14, 8),
+                        object_action_order=(1, 2, 0), object_damage=damage)
+
+
+def test_rejects_truncated_physical_action_after_reordered_map():
+    with pytest.raises(ValueError):
+        _linear_fixture((8, 11, 14), original_action_order=(2, 0, 1),
+                        truncate_original=True)
 
 
 def test_binds_backward_branched_predecessor_graphs_independently():

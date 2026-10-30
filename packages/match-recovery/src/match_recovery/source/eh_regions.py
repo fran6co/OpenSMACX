@@ -555,7 +555,12 @@ def _handler_stub(code: bytes, base: int) -> tuple[int, int, int]:
 
 def _unwind_map(data: bytes, count: int, *, base: int,
                 first_action: int) -> tuple[tuple[int, ...], tuple[int, ...]]:
-    """Validate a bounded backward-only unwind graph and its action starts."""
+    """Validate a bounded backward-only unwind graph and its action starts.
+
+    FuncInfo row order is state order, not code-address order. Keep the action
+    pointers in that order for predecessor validation and comparison; callers
+    that need byte extents sort a separate view of the pointers.
+    """
     if not 1 <= count <= _MAX_CLEANUP_ACTIONS:
         raise ValueError("EH cleanup action count exceeds the bounded resource cap")
     if len(data) != count * 8:
@@ -566,24 +571,29 @@ def _unwind_map(data: bytes, count: int, *, base: int,
         predecessor, action = entries[index * 2:index * 2 + 2]
         if predecessor != 0xFFFFFFFF and predecessor >= index:
             raise ValueError("EH unwind predecessor is not a sentinel or earlier state")
-        if (action < base or (index == 0 and action != first_action)
-                or (actions and action <= actions[-1])):
-            raise ValueError("EH unwind actions are not strictly ordered from the first cleanup")
+        if action < base:
+            raise ValueError("EH unwind action lies before the bounded cleanup region")
         predecessors.append(predecessor)
         actions.append(action)
+    if len(set(actions)) != count:
+        raise ValueError("EH unwind action starts are duplicated")
+    if min(actions) != first_action:
+        raise ValueError("EH unwind actions do not begin at the bounded first cleanup")
     return tuple(actions), tuple(predecessors)
 
 
 def _action_targets(code: bytes, base: int, starts: tuple[int, ...],
                     handler_offset: int) -> tuple[tuple[int, ...], tuple[EHActionFact, ...]]:
-    if not starts or len(starts) > _MAX_CLEANUP_ACTIONS or starts[0] != 0:
+    if not starts or len(starts) > _MAX_CLEANUP_ACTIONS:
         raise ValueError("EH cleanup action starts exceed bounds or omit the first action")
-    if any(start < 0 or start >= handler_offset for start in starts):
+    if len(set(starts)) != len(starts):
+        raise ValueError("EH cleanup action starts are duplicated")
+    physical_starts = tuple(sorted(starts))
+    if (physical_starts[0] != 0
+            or any(start < 0 or start >= handler_offset for start in physical_starts)):
         raise ValueError("EH cleanup action start lies outside the cold action region")
-    if any(left >= right for left, right in zip(starts, starts[1:])):
-        raise ValueError("EH cleanup action starts are duplicate or unordered")
-    boundaries = (*starts, handler_offset)
-    targets, actions = [], []
+    boundaries = (*physical_starts, handler_offset)
+    by_start = {}
     for start, end in zip(boundaries, boundaries[1:]):
         instructions = _decoded(code[start:end], base + start)
         action = _cleanup_action(instructions, code_base=base)
@@ -598,10 +608,11 @@ def _action_targets(code: bytes, base: int, starts: tuple[int, ...],
                                   if item.role is EHTransferRole.HELPER), None))
         if primary_transfer is None or not isinstance(primary_transfer.target, int):
             raise ValueError("original EH action lacks its decoded control target")
-        target = primary_transfer.target
-        targets.append(target)
-        actions.append(action)
-    return tuple(targets), tuple(actions)
+        by_start[start] = (primary_transfer.target, action)
+    # Return state order, while each action's byte boundary came from the
+    # independently sorted physical layout above.
+    return (tuple(by_start[start][0] for start in starts),
+            tuple(by_start[start][1] for start in starts))
 
 
 def _original_eh(image: PeImage, primary: Span, cold: Span):
@@ -1099,7 +1110,7 @@ def _object_child_and_info(obj: Coff, root: Symbol, child: int, *,
     if (len(actual_relocations) != len(expected_relocations)
             or set(actual_relocations) != set(expected_relocations.items())):
         raise ValueError("COFF EH child has missing or unaccounted relocations")
-    compiled_actions = []
+    compiled_actions_by_start = {}
     for action_index, action in enumerate(action_shapes):
         resolved = action
         for transfer in action.transfers:
@@ -1167,7 +1178,7 @@ def _object_child_and_info(obj: Coff, root: Symbol, child: int, *,
                 resolved = resolve_transfer(
                     resolved, role=transfer.role, relocation_kind="REL32",
                     target=symbol.name, addend=raw_addend)
-        compiled_actions.append(resolved)
+        compiled_actions_by_start[action.start] = resolved
     func_info_symbol = _reloc_at(obj, child, info_offset, RelocationKind.ABSOLUTE32)
     if struct.unpack_from("<I", child_code, info_offset)[0] != 0:
         raise ValueError("COFF handler FuncInfo pointer has a nonzero addend")
@@ -1244,14 +1255,18 @@ def _object_child_and_info(obj: Coff, root: Symbol, child: int, *,
     }
     if {(offset, kind) for offset, _index, kind in all_data_relocs} != expected_data_relocs:
         raise ValueError("COFF FuncInfo contains missing or unsupported relocations")
+    cleanup_offsets = tuple(symbol.value for symbol in cleanup_symbols)
     if (unwind_symbol.section != data_section_number
             or unwind_symbol.value != _FUNCINFO_HEADER_SIZE
-            or any(symbol.section != child or symbol.value != action_starts[index]
-                   for index, symbol in enumerate(cleanup_symbols))):
-        raise ValueError("COFF unwind map does not own exactly the child cleanup entry")
+            or len(set(cleanup_offsets)) != action_count
+            or set(cleanup_offsets) != set(action_starts)
+            or any(symbol.section != child for symbol in cleanup_symbols)
+            or min(cleanup_offsets) != action_starts[0]):
+        raise ValueError("COFF unwind map does not own exactly the child cleanup entries")
     return (child_section, child_code, child_relocs, child_alignment,
             data_section_number, runtime.name, handler_offset,
-            tuple(compiled_actions), action_starts, tuple(compiled_predecessors))
+            tuple(compiled_actions_by_start[offset] for offset in cleanup_offsets),
+            cleanup_offsets, tuple(compiled_predecessors))
 
 
 def bind_eh_regions(raw_object: bytes, emitted_symbol: str, original_image: PeImage,
