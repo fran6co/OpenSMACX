@@ -1,0 +1,22 @@
+{
+  "author": "recovery-coordinator",
+  "base_revision": "895651261a0eb62b48de6a0ddef0c930a8eb45ce",
+  "editable_files": [
+    "src/listbox.cpp",
+    "recovery/project.json"
+  ],
+  "evidence": [
+    "History-first original and actual COFF trace /home/fran6co/code/OpenSMACX/.opensmacx/recovery/fast-pass-oct30ol/text-controls-frontier-oct31au.json"
+  ],
+  "intent": "Restore original ListBox negative-width height selection without normalizing original branch behavior; preserve all claims.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6342944,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "owner-listbox-negative-width-oct31au"
+}
