@@ -1,0 +1,113 @@
+{
+  "author": "coordinator",
+  "base_revision": "e7bb93e77c6cd3597eefd1b0fddcdc3243f07145",
+  "editable_files": [
+    "src/map.h",
+    "src/map.cpp",
+    "src/base.cpp",
+    "recovery/tests/test_bonus_provider_nov01co.py"
+  ],
+  "evidence": [
+    "Boundary-verified original33 direct calls in17 owners match33 current C++expressions inthose same17 functions. Actual physical current code retains1call and68 forced-export header definitions; originalexports andHIGHLOWpointerrefs0. Debug relocations are not calls.",
+    "Coordinator authorizes one genuine unchanged-algorithm map.cpp definition at its existing sourceidentity and ordinary headerdeclaration; use guarded native remove_body to retire its external header bodyfact, preserving identity/spans/claims/lessons. Remove only bonus_at MEASUREDinline forcedexport; no compiler flags, noinline attributes, forwarding functions, copied bytes or artificialretention.",
+    "Preserve canonicalsourceorder first; two same-TU Map callers require fresh physical call checks, not a forced sourceorder or inlining waiver. An unnamed historical seven-inline-body claim remains unverified and does not override this current direct-call closure.",
+    "Base yield trio has pinned postbonus tile-base/stride reloads, whilebit/climate/code/has_base prefixsnapshots survive. Include only independently proven postcall map-address corrections, with originallaterpointer phases reviewed; do not broadlyrecacheallfields or normalizeinvalid/errorpaths.",
+    "68actualmap.h-dependentcontexts and all their historicalbyte/referenceobligations must be measured. Preserve justifiedstructure and all priorclaims on anyregression; investigate/restore collateral ratherthan silentlydemote orrevert. Fresh application build/link, sourcegates, callclosure, canonicalMAP/EATprovider and independentreview required before manualintegration; no automatic/fullgameacceptance asserted."
+  ],
+  "intent": "Recover the genuine bonus resource provider and original caller-visible map snapshot phases without forced exports or wrappers.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4600528,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4941168,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4966112,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5140048,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5141264,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5142352,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5164016,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5315504,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5370592,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5656240,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5656928,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5657376,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5682608,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5744224,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5840944,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5885088,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6037536,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6049744,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "bonus-provider-nov01co"
+}
