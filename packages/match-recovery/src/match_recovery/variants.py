@@ -24,7 +24,8 @@ from .pe_coff import Coff, PeImage
 from .source.reader import read_text
 from .source.model import Mode
 from .tasks import TaskStore
-from .shared_source import read_shared, parse_shared, referenced_shared_units, validate_shared
+from .shared_source import (read_shared, referenced_shared_units,
+                            resolve_shared_contexts, validate_shared)
 
 
 def _require_associated_unchanged(originals, replacements, pin, address_space):
@@ -305,7 +306,7 @@ def measure_variants(root: Path, task_name: str, image_path: Path, deck: dict, *
     data_bindings, generated = read_objects(root, pin), read_generated(root, pin)
     literal_bindings = read_literals(root, pin)
     associated_bindings = read_associated(root, pin)
-    shared = read_shared(root, pin)
+    shared = resolve_shared_contexts(root, read_shared(root, pin), settings=settings)
     validate_shared(shared, view)
     # Compile every mapped task TU together, not just the primary target. This
     # catches coupled header/body changes and includes out-of-scope neighbors in
@@ -315,7 +316,8 @@ def measure_variants(root: Path, task_name: str, image_path: Path, deck: dict, *
                    | {name for name in originals if Path(name).suffix in settings.unit_extensions}
                    | {item.unit for item in data_bindings if item.evidence is not None and item.evidence.entity_id in selected}
                    | {item.unit for item in literal_bindings if item.evidence.entity_id in selected}
-                   | {item.unit for item in shared if item.evidence.entity_id in selected})
+                   | {item.object_unit for item in shared if item.evidence.entity_id in selected
+                      and item.object_unit is not None})
     if any(Path(unit).suffix not in settings.unit_extensions for unit in units):
         raise ValueError("required data owner is not a configured translation unit")
     unit_bindings = [item for item in bindings if item.unit in units]
@@ -395,11 +397,8 @@ def measure_variants(root: Path, task_name: str, image_path: Path, deck: dict, *
         trial_bindings, _, trial_externals, changes = (
             (bindings, all_refused, externals, []) if contents is None else candidate_bindings[name])
         support_controls, support_attempts = [], 0
-        trial_shared = shared
-        if contents is not None:
-            trial_shared = tuple(item for item in shared if item.unit not in contents) + tuple(
-                item for unit, raw in contents.items()
-                for item in parse_shared(raw.decode("utf-8"), unit, pin, address_space=settings.source.address_space))
+        trial_shared = (shared if contents is None else resolve_shared_contexts(
+            root, read_shared(root, pin, contents=contents), settings=settings, contents=contents))
         while pending := (referenced_object_units(data_bindings, objects)
                           | referenced_shared_units(trial_shared, objects)) - objects.keys() - errors.keys():
             for unit in sorted(pending):
@@ -436,7 +435,9 @@ def measure_variants(root: Path, task_name: str, image_path: Path, deck: dict, *
                     control["reason"] = str(error)
                 support_controls.append(control)
         measured = [item for item in trial_bindings if item.unit in objects or item.unit in units]
-        active_shared = [item for item in trial_shared if item.unit in objects or item.unit in errors]
+        active_shared = [item for item in trial_shared
+                         if item.object_unit in objects or item.object_unit in errors
+                         or item.context_error is not None]
         rows, data_rows, generated_rows, import_rows, shared_rows, literal_rows = check_compiled(
             measured, data_bindings, generated, objects, image, trial_externals, errors=errors,
             import_bindings=imports, shared_bindings=active_shared, literal_bindings=literal_bindings,

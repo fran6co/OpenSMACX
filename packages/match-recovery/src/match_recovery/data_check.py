@@ -17,7 +17,8 @@ from .literal_source import read_literals
 from .literal_data import check_literals
 from .ownership_source import project_view
 from .pe_coff import Coff, PeImage
-from .shared_source import read_shared, referenced_shared_units, validate_shared
+from .shared_source import (read_shared, referenced_shared_units,
+                            resolve_shared_contexts, validate_shared)
 from .shared_binary import check_shared
 
 
@@ -43,7 +44,7 @@ def check_data(root: Path, image_path: Path, *, symbols=None, compiler=None):
     if not selection or symbols is not None and {b.symbol for b in selection} != set(symbols):
         raise ValueError("data selection needs source-owned historical object IDs or literal symbols; missing or empty coverage")
     generated, imports = read_generated(root, pin), read_imports(root)
-    shared = read_shared(root, pin)
+    shared = resolve_shared_contexts(root, read_shared(root, pin), settings=settings)
     validate_shared(shared, view)
     _, _, functions = select_bindings(view, frozenset())
     object_symbols = require_disjoint_object_symbols(
@@ -94,8 +95,8 @@ def check_data(root: Path, image_path: Path, *, symbols=None, compiler=None):
                     errors[unit] = str(error)
             pending = (referenced_initial_object_units(selected, bindings, objects)
                        | referenced_shared_units(shared, objects)
-                       | referenced_object_units(bindings, {item.unit: objects[item.unit]
-                           for item in shared if item.unit in objects})) - objects.keys() - errors.keys()
+                       | referenced_object_units(bindings, {item.object_unit: objects[item.object_unit]
+                           for item in shared if item.object_unit in objects})) - objects.keys() - errors.keys()
         targets, _ = object_targets(bindings, objects)
         active_literals = [b for b in literals if b.unit in objects or b.unit in errors]
         local_targets, checked_literals = check_literals(active_literals, objects, image, errors=errors)
@@ -104,7 +105,8 @@ def check_data(root: Path, image_path: Path, *, symbols=None, compiler=None):
                             for row in checked_literals if row["interpretation_id"] in wanted_literals)
         imported, _ = import_targets(imports, objects, image)
         tables, _ = check_generated(generated, objects, image, {**functions, **targets})
-        active_shared = [item for item in shared if item.unit in objects or item.unit in errors]
+        active_shared = [item for item in shared if item.object_unit in objects
+                         or item.object_unit in errors or item.context_error is not None]
         shared_targets, checked_shared = check_shared(active_shared, objects, image,
             {**functions, **targets, **tables}, import_targets=imported, literal_targets=local_targets, errors=errors)
         shared_checks.extend({**row, "flags": list(effective(row["unit"], flags)), "graph_flags": list(flags)}

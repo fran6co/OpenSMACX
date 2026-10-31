@@ -4,11 +4,12 @@ The original record remains unique. These are evidence-backed interpretations,
 not aliases inferred from equal bytes, a new claim ledger, or linker directives.
 """
 
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
 import re
 
 from .bound_objects import FunctionBinding
+from .components import relative_path
 from .model import Origin, Span, digest
 from .object_source import referenced_symbol_units
 from .source_config import SourceConfiguration
@@ -27,9 +28,18 @@ class SharedFunctionBinding:
     unit: str
     line: int
     body_error: str | None = None
+    # Derived from the mapped evidence function's compiler context. This is
+    # intentionally excluded from interpretation identity: source annotations
+    # and original evidence remain stable when build-context facts are rebuilt.
+    compiler_unit: str | None = field(default=None, compare=False)
+    context_error: str | None = field(default=None, compare=False)
 
     def __post_init__(self):
         FunctionBinding(self.origin, (self.span,), self.symbol, self.unit)
+        if self.compiler_unit is not None:
+            relative_path(self.compiler_unit)
+        if self.context_error is not None and (not isinstance(self.context_error, str) or not self.context_error):
+            raise ValueError("invalid shared compiler-context diagnostic")
         if (self.evidence.image_sha256, self.evidence.address_space) != (self.origin.image_sha256, self.origin.address_space):
             raise ValueError("shared body evidence belongs to another original")
         if type(self.line) is not int or self.line < 1:
@@ -44,6 +54,17 @@ class SharedFunctionBinding:
     @property
     def interpretation_id(self):
         return digest({"entity_id": self.evidence.entity_id, "value": self.interpretation})
+
+    @property
+    def object_unit(self):
+        """Resolved compiler carrier, or the legacy annotation unit for raw parsers."""
+        if self.context_error:
+            return None
+        if self.compiler_unit:
+            return self.compiler_unit
+        # Raw library callers historically supplied a translation-unit path
+        # directly. An unqualified header path never proves its own carrier.
+        return self.unit if Path(self.unit).suffix.lower() in {".c", ".cc", ".cpp", ".cxx"} else None
 
 
 def parse_shared(text, path, pin, *, address_space):
@@ -79,7 +100,7 @@ def parse_shared(text, path, pin, *, address_space):
 
 
 def read_shared(root: Path, pin: str, *, contents=None):
-    """Read product definitions, including private candidate-overlay body state."""
+    """Read shared annotations and body state without deriving compiler contexts."""
     root = root.resolve()
     configuration = SourceConfiguration.read(root)
     bindings = []
@@ -93,6 +114,64 @@ def read_shared(root: Path, pin: str, *, contents=None):
     if len({item.symbol for item in bindings}) != len(bindings):
         raise ValueError("duplicate shared function symbol binding")
     return tuple(bindings)
+
+
+def resolve_shared_contexts(root: Path, bindings, *, settings, contents=None, source_records=None):
+    """Derive each shared definition's compiler TU from its mapped evidence.
+
+    `unit` remains the source annotation/body path. In particular, a header
+    definition is never relabeled as a translation unit. Evidence must resolve
+    through exactly one set of validated mapped compiler contexts; missing or
+    conflicting witnesses stay attached as explicit unknowns.
+    """
+    from dataclasses import replace
+    from .source.reader import read_text
+    from .source_selection import compilation_context
+
+    root = Path(root).resolve()
+    configuration = SourceConfiguration.read(root)
+    if not hasattr(settings, "unit_extensions") or not hasattr(settings, "source"):
+        raise TypeError("shared compiler-context resolution requires project measurement settings")
+    needs_witnesses = any(Path(binding.unit).suffix in configuration.interface_extensions
+                          for binding in bindings)
+    if source_records is None and needs_witnesses:
+        source_records = []
+        for path in configuration.files(root):
+            relative = path.relative_to(root).as_posix()
+            if configuration.is_seed(relative):
+                continue
+            raw = (contents or {}).get(relative)
+            text = path.read_text(encoding="utf-8") if raw is None else raw.decode("utf-8")
+            source_records.extend(read_text(text, path))
+    source_records = source_records or ()
+    resolved = []
+    for binding in bindings:
+        if Path(binding.unit).suffix not in configuration.interface_extensions:
+            resolved.append(replace(binding, compiler_unit=binding.unit, context_error=None))
+            continue
+        witnesses = [record for record in source_records
+                     if record.address == binding.evidence.address]
+        contexts, failures = set(), []
+        for record in witnesses:
+            try:
+                context = compilation_context(root, record, settings)
+                if (context.suffix not in settings.unit_extensions
+                        or context.suffix in configuration.interface_extensions):
+                    raise ValueError(f"shared evidence context is not a configured translation unit: {context}")
+                contexts.add(context.relative_to(root).as_posix())
+            except (ValueError, OSError) as error:
+                failures.append(str(error))
+        if len(contexts) == 1 and not failures:
+            resolved.append(replace(binding, compiler_unit=next(iter(contexts)), context_error=None))
+        elif len(contexts) > 1 or contexts and failures:
+            resolved.append(replace(binding, compiler_unit=None,
+                context_error="shared evidence has ambiguous compiler context"))
+        elif failures:
+            resolved.append(replace(binding, compiler_unit=None, context_error=failures[0]))
+        else:
+            resolved.append(replace(binding, compiler_unit=None,
+                context_error="shared evidence has no mapped product compiler context"))
+    return tuple(resolved)
 
 
 def _validate_shared_symbol(symbol: str) -> None:
@@ -189,5 +268,8 @@ def referenced_shared_units(bindings, objects):
     for binding in bindings:
         if binding.symbol in owners:
             raise ValueError("duplicate shared function symbol binding")
-        owners[binding.symbol] = binding.unit
+        # Raw parse_shared() users retain the historical same-file context.
+        # Product readers always attach a derived context or explicit refusal.
+        if binding.object_unit is not None:
+            owners[binding.symbol] = binding.object_unit
     return referenced_symbol_units(owners, objects)

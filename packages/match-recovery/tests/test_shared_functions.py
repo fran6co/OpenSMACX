@@ -14,7 +14,9 @@ from match_recovery.ownership_source import project_view
 from match_recovery.pe_coff import Coff, PeImage
 from match_recovery.shared_binary import check_shared
 from match_recovery.shared_source import (SharedFunctionBinding, parse_shared, read_shared,
-                                          referenced_shared_units, validate_shared)
+                                          referenced_shared_units, resolve_shared_contexts,
+                                          validate_shared, write_shared_symbol)
+from match_recovery.measurement import Measurement
 from match_recovery.tasks import Task, TaskStore
 from test_binary import coff_fixture, pe_fixture
 
@@ -64,6 +66,21 @@ def test_one_bad_or_missing_sibling_cannot_borrow_a_pass(code, expected):
     assert [row["result"] for row in rows] == ["pass", expected]
 
 
+def test_every_observed_external_copy_of_a_shared_header_definition_is_proved():
+    bindings, objects, image = fixture()
+    binding = replace(bindings[0], symbol="_f", unit="code/methods.h",
+                      compiler_unit="code/z-carrier.cc")
+    objects[binding.compiler_unit] = Coff(code_object({"_f": b"\xc3"}))
+    objects["code/other.cc"] = Coff(code_object({"_f": b"\x90"}))
+    targets, rows = check_shared([binding], objects, image, {})
+    assert not targets
+    assert len(rows) == 1 and rows[0]["result"] == "fail"
+    assert [(row["unit"], row["result"]) for row in rows[0]["copies"]] == [
+        ("code/other.cc", "fail"), ("code/z-carrier.cc", "pass")]
+    assert rows[0]["source"]["path"] == "code/methods.h"
+    assert rows[0]["compiler_context"] == "code/z-carrier.cc"
+
+
 @pytest.mark.parametrize("error", ["unfinished shared source placeholder", "shared source binding has no body region"])
 def test_source_unfinished_state_cannot_be_overridden_by_an_exact_ret(error):
     bindings, objects, image = fixture()
@@ -108,6 +125,13 @@ def test_conflicting_or_duplicate_symbol_bindings_are_refused():
         check_compiled([], (), (), objects, image, {"_a": 0x401000}, shared_bindings=bindings)
 
 
+@pytest.mark.parametrize("unit", ["../outside.cc", "/tmp/outside.cc", "bad\\path.cc", ""])
+def test_derived_shared_compiler_unit_must_be_project_relative(unit):
+    bindings, _, _ = fixture()
+    with pytest.raises(ValueError):
+        replace(bindings[0], compiler_unit=unit)
+
+
 def test_source_body_state_is_derived_without_merging_shared_markers():
     source = ("// RECOVERY_SHARED: v1 0x10 0x11 _a 0x20\nvoid a() {}\n"
               "// RECOVERY_SHARED: v1 0x10 0x11 _b 0x20\nvoid b() {\n// BODY GOES HERE.\n}\n")
@@ -117,6 +141,89 @@ def test_source_body_state_is_derived_without_merging_shared_markers():
     assert a.interpretation_id != b.interpretation_id
     missing, = parse_shared(source.split("void a()")[0], "code/methods.cc", "a" * 64, address_space="custom:offset")
     assert "no body region" in missing.body_error
+
+
+def test_header_annotation_keeps_source_identity_and_resolves_its_evidence_carrier(project):
+    path = project / "code/methods.cc"
+    source = path.read_text()
+    canonical, shared = source.split("// RECOVERY_SHARED:", 1)
+    shared = "// RECOVERY_SHARED:" + shared
+    path.write_text(canonical)
+    header = project / "code/methods.h"
+    header.write_text("// RECOVERY_SHARED:" + shared.split("// RECOVERY_SHARED:", 1)[1])
+    pin = hashlib.sha256((project / "image.exe").read_bytes()).hexdigest()
+    bindings = resolve_shared_contexts(project, read_shared(project, pin), settings=Measurement.read(project))
+    assert all(item.unit == "code/methods.h" for item in bindings)
+    assert all(item.compiler_unit == "code/methods.cc" and item.context_error is None for item in bindings)
+    assert all(item.object_unit == "code/methods.cc" for item in bindings)
+    assert all("compiler_unit" not in item.interpretation for item in bindings)
+    assert all(item.interpretation_id == parse_shared(header.read_text(), "code/methods.h", pin,
+               address_space="pe:va")[i].interpretation_id for i, item in enumerate(bindings))
+    raw = header.read_bytes()
+    renamed = write_shared_symbol(raw, expected=bindings, binding=bindings[0], symbol="_renamed")
+    assert b"_renamed" in renamed and raw != renamed
+
+
+def test_missing_or_ambiguous_shared_evidence_context_stays_unknown(project):
+    path = project / "code/methods.cc"
+    source = path.read_text()
+    canonical, shared = source.split("// RECOVERY_SHARED:", 1)
+    path.write_text(canonical)
+    header = project / "code/methods.h"
+    header.write_text("// RECOVERY_SHARED:" + shared)
+    header.write_text(header.read_text().replace("0x00401020\nvoid g", "0x00401040\nvoid g"))
+    pin = hashlib.sha256((project / "image.exe").read_bytes()).hexdigest()
+    bindings = resolve_shared_contexts(project, read_shared(project, pin), settings=Measurement.read(project))
+    assert bindings[0].object_unit is None and "no mapped" in bindings[0].context_error
+    _, rows = check_shared([bindings[0]], {"code/methods.cc": Coff(code_object({"_g": b"\xc3"}))},
+                           PeImage((project / "image.exe").read_bytes(), pin), {})
+    assert rows[0]["result"] == "unknown"
+
+    header.write_text(header.read_text().replace("0x00401040\nvoid g", "0x00401020\nvoid g"))
+    (project / "code/other.cc").write_text(
+        "// ORIGINAL: 0x00401020 _other 0x00401020-0x00401021\nvoid other() {}\n")
+    bindings = resolve_shared_contexts(project, read_shared(project, pin), settings=Measurement.read(project))
+    assert bindings[0].object_unit is None
+    assert bindings[0].context_error == "shared evidence has ambiguous compiler context"
+
+
+def test_annotation_read_needs_no_compiler_configuration(project):
+    config_path = project / "recovery/project.json"
+    config = json.loads(config_path.read_text())
+    del config["measurement"]
+    config_path.write_text(json.dumps(config))
+    bindings = read_shared(project, hashlib.sha256((project / "image.exe").read_bytes()).hexdigest())
+    assert bindings and bindings[0].unit == "code/methods.cc"
+    assert bindings[0].compiler_unit is None and bindings[0].context_error is None
+
+
+def test_header_candidate_overlay_preserves_carrier_and_placeholder_refusal(project):
+    path = project / "code/methods.cc"
+    canonical, shared = path.read_text().split("// RECOVERY_SHARED:", 1)
+    path.write_text(canonical)
+    header = project / "code/methods.h"
+    header.write_text("// RECOVERY_SHARED:" + shared)
+    pin = hashlib.sha256((project / "image.exe").read_bytes()).hexdigest()
+    changed = header.read_bytes().replace(b"void g() {}", b"void g() {\n// BODY GOES HERE.\n}")
+    contents = {"code/methods.h": changed}
+    bindings = resolve_shared_contexts(project, read_shared(project, pin, contents=contents),
+                                       settings=Measurement.read(project), contents=contents)
+    assert bindings[0].unit == "code/methods.h"
+    assert bindings[0].compiler_unit == "code/methods.cc"
+    assert "placeholder" in bindings[0].body_error
+    raw = (project / "image.exe").read_bytes()
+    _, rows = check_shared([bindings[0]], {"code/methods.cc": Coff(code_object({"_g": b"\xc3"}))},
+                           PeImage(raw, pin), {})
+    assert rows[0]["result"] == "unknown" and rows[0]["copies"][0]["result"] == "pass"
+
+
+def test_nonheader_shared_body_keeps_its_own_tu_when_evidence_is_elsewhere(project):
+    (project / "code/other.cc").write_text(
+        "// ORIGINAL: 0x00401020 _other 0x00401020-0x00401021\nvoid other() {}\n")
+    pin = hashlib.sha256((project / "image.exe").read_bytes()).hexdigest()
+    bindings = resolve_shared_contexts(project, read_shared(project, pin), settings=Measurement.read(project))
+    assert bindings[0].compiler_unit == "code/methods.cc"
+    assert bindings[0].object_unit == "code/methods.cc" and bindings[0].context_error is None
 
 
 def test_shared_region_uses_real_comment_context_not_prose_braces():
@@ -151,8 +258,8 @@ def project(tmp_path):
     (tmp_path / "image.exe").write_bytes(raw)
     (tmp_path / "code/PIN").write_text("sha256 " + pin)
     (tmp_path / "code/caller.cc").write_text("// ORIGINAL: 0x00401000 _f 0x00401000-0x00401006\nvoid f() {}\n")
-    (tmp_path / "code/catalogue.cc").write_text("// ORIGINAL: 0x00401020 _canonical 0x00401020-0x00401021\nvoid canonical() {}\n")
-    (tmp_path / "code/methods.cc").write_text("// RECOVERY_SHARED: v1 0x00401020 0x00401021 _g 0x00401020\nvoid g() {}\n"
+    (tmp_path / "code/methods.cc").write_text("// ORIGINAL: 0x00401020 _canonical 0x00401020-0x00401021\nvoid canonical() {}\n"
+                                           "// RECOVERY_SHARED: v1 0x00401020 0x00401021 _g 0x00401020\nvoid g() {}\n"
                                            "// RECOVERY_SHARED: v1 0x00401020 0x00401021 _h 0x00401020\nvoid h() {}\n")
     configuration = {"schema_version": 1, "source": {"image_pin": "code/PIN", "address_space": "pe:va", "roots": ["code"], "include_paths": ["code"]},
         "measurement": {"backend": "pe-coff-i386", "compiler_profile": "synthetic", "flag_sets": [["first"], ["second"]],
@@ -175,6 +282,20 @@ def test_task_follows_shared_owner_and_keeps_all_siblings_and_trials(project):
     assert len(report["functions"]) == 1 and len(report["shared_functions"]) == 4
     assert all(row["units"] == ["code/methods.cc"] for row in report["object_dependencies"])
     assert TaskStore(project).scope("owner")[1] == frozenset({"code/caller.cc"})
+
+
+def test_task_graph_schedules_header_body_from_unselected_evidence_tu(project):
+    path = project / "code/methods.cc"
+    canonical, shared = path.read_text().split("// RECOVERY_SHARED:", 1)
+    path.write_text(canonical)
+    (project / "code/methods.h").write_text("// RECOVERY_SHARED:" + shared)
+    report = verify_task(project, "owner", project / "image.exe", compiler=compiler)
+    assert report["result"] == "pass"
+    assert report["translation_units"] == ["code/caller.cc", "code/methods.cc"]
+    assert len(report["shared_functions"]) == 4
+    assert all(row["result"] == "pass" and row["source"]["path"] == "code/methods.h"
+               and row["compiler_context"] == "code/methods.cc"
+               for row in report["shared_functions"])
 
 
 @pytest.mark.parametrize("damage", ["body", "missing", "compile", "placeholder"])
@@ -221,9 +342,12 @@ def test_shared_bindings_cannot_invent_originals_or_override_existing_symbols(pr
 
 def test_evidence_anchor_requires_owner_even_after_caller_loses_its_reference(project):
     path = project / "code/methods.cc"
-    path.write_text(path.read_text().replace("_g 0x00401020", "_g 0x00401000"))
+    path.write_text(path.read_text().replace("_g 0x00401020", "_g 0x00401000")
+                    .replace("_h 0x00401020", "_h 0x00401000"))
     def no_reference(path, command, flags):
-        return coff_fixture(b"\x90" * 5 + b"\xc3") if path.name == "caller.cc" else compiler(path, command, flags)
+        if path.name == "caller.cc":
+            return code_object({"_f": b"\x90" * 5 + b"\xc3", "_g": b"\xc3", "_h": b"\xc3"})
+        return compiler(path, command, flags)
     report = verify_task(project, "owner", project / "image.exe", compiler=no_reference)
     assert report["translation_units"] == ["code/caller.cc", "code/methods.cc"]
     assert len(report["shared_functions"]) == 4
@@ -285,8 +409,8 @@ def test_shared_preservation_uses_evidence_scope_without_collapsing_siblings(pro
     anchor = Origin(pin, "pe:va", 0x401020).entity_id
     rows = _bindings(project, files, configuration, pin)
     allowed, outside = _unit_scope(rows, frozenset({anchor}), "code/methods.cc")
-    assert set(allowed) == {"_g", "_h"} and len(set(allowed.values())) == 2 and not outside
-    assert _unit_scope(rows, frozenset(), "code/methods.cc") == ({}, {"_g", "_h"})
+    assert {"_g", "_h"} <= set(allowed) and len(set(allowed.values())) == 3 and not outside
+    assert _unit_scope(rows, frozenset(), "code/methods.cc") == ({}, {"_canonical", "_g", "_h"})
     assert len(_outside_annotations(files, configuration, pin, frozenset())) == 2
     assert not _outside_annotations(files, configuration, pin, frozenset({anchor}))
 

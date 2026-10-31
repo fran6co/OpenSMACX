@@ -29,7 +29,8 @@ from .compiler import Compiler
 from .measurement import Measurement
 from .source_inventory import image_pin
 from .import_source import read_imports, import_targets
-from .shared_source import read_shared, referenced_shared_units, validate_shared
+from .shared_source import (read_shared, referenced_shared_units,
+                            resolve_shared_contexts, validate_shared)
 from .shared_binary import check_shared
 from .selected_evidence import select_evidence
 
@@ -500,7 +501,8 @@ def _verify_selection(root: Path, selected: frozenset[str], image_path: Path, *,
         flag_sets = tuple(flags + settings.layout_flags for flags in settings.flag_sets)
     generated_bindings = read_generated(root, snapshot["image_sha256"])
     import_bindings = read_imports(root)
-    shared_bindings = read_shared(root, snapshot["image_sha256"])
+    shared_bindings = resolve_shared_contexts(
+        root, read_shared(root, snapshot["image_sha256"]), settings=settings)
     object_symbols = set(emitted_object_symbols(object_bindings))
     validate_shared(shared_bindings, view, reserved=[*object_symbols,
         *[item.symbol for item in (*generated_bindings, *import_bindings)]])
@@ -567,7 +569,8 @@ def _verify_selection(root: Path, selected: frozenset[str], image_path: Path, *,
         required_shared = [item for item in shared_bindings if item.evidence.entity_id in selected]
         required_literals = [item for item in literal_bindings if item.evidence.entity_id in selected]
         units = sorted({item.unit for item in bindings} | {item.unit for item in required_data}
-                       | {item.unit for item in required_shared} | {item.unit for item in required_literals})
+                       | {item.object_unit for item in required_shared if item.object_unit is not None}
+                       | {item.unit for item in required_literals})
     commands, command_errors = {}, {}
     for unit in units:
         try:
@@ -716,7 +719,9 @@ def _verify_selection(root: Path, selected: frozenset[str], image_path: Path, *,
         active_generated = active_objects.generated if active_objects is not None else generated_bindings
         active_imports = active_objects.imports if active_objects is not None else import_bindings
         active_shared = (list(active_objects.shared) if active_objects is not None
-                         else [item for item in shared_bindings if item.unit in objects or item.unit in errors])
+                         else [item for item in shared_bindings
+                               if item.object_unit in objects or item.object_unit in errors
+                               or item.context_error is not None])
         active_literals = active_objects.literals if active_objects is not None else literal_bindings
         checked, product_targets, product_imports = _compiled_evidence(
             bindings, object_bindings, active_generated, objects, image, externals, errors=errors,
@@ -876,7 +881,9 @@ def _verify_selection(root: Path, selected: frozenset[str], image_path: Path, *,
                               for item in object_bindings if item.span is not None],
             "object_dependencies": dependencies,
             "shared_functions": shared_checks,
-            "shared_owners": [{"interpretation_id": item.interpretation_id, "unit": item.unit} for item in shared_bindings],
+            "shared_owners": [{"interpretation_id": item.interpretation_id,
+                               "unit": item.object_unit or item.unit}
+                              for item in shared_bindings],
             "generated_tables": generated_checks,
             "generated_coverage": generated_observations,
             **({"selected_evidence": {"checks": evidence_checks,

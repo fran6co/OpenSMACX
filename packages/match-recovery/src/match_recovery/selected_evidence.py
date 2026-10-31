@@ -213,21 +213,30 @@ def select_evidence(functions, selected, objects, object_bindings, generated_bin
             for item in all_shared:
                 if storage == 2 and item.symbol == symbol:
                     shared[item.symbol] = item
-                    key = (item.unit, item.symbol)
-                    obj = objects.get(item.unit)
-                    if key not in scanned_shared and obj is not None:
+                    unit = item.object_unit
+                    if unit is None:
+                        diagnostics.append({"result": Result.UNKNOWN, "unit": item.unit,
+                                            "symbol": item.symbol,
+                                            "reason": item.context_error or "shared definition has no resolved compiler context"})
+                        continue
+                    for copy_unit, obj in objects.items():
+                        definitions = [row for row in obj.symbols.values()
+                                       if row.name == item.symbol and row.storage == 2 and row.section > 0]
+                        key = (copy_unit, item.symbol)
+                        if not definitions or key in scanned_shared:
+                            continue
                         scanned_shared.add(key)
                         try:
                             subject = obj.function(item.symbol)
                             for ref_unit, ref_symbol, ref_storage in _relocation_names(
-                                    item.unit, obj, obj.code_sections(subject)):
+                                    copy_unit, obj, obj.code_sections(subject)):
                                 found = (ref_unit, ref_symbol, ref_storage)
                                 if found not in refs:
                                     add_ref(ref_unit, ref_symbol, ref_storage,
-                                            f"shared:{item.unit}:{item.symbol}")
+                                            f"shared:{copy_unit}:{item.symbol}")
                                     pending_refs.append(found)
                         except ValueError as error:
-                            diagnostics.append({"result": Result.UNKNOWN, "unit": item.unit,
+                            diagnostics.append({"result": Result.UNKNOWN, "unit": copy_unit,
                                                 "symbol": item.symbol,
                                                 "reason": f"selected shared references could not be bounded: {error}"})
             for item in all_literals:
@@ -254,7 +263,12 @@ def select_evidence(functions, selected, objects, object_bindings, generated_bin
     for item in all_shared:
         if item.evidence.entity_id in selected:
             shared[item.symbol] = item
-            found = (item.unit, item.symbol, 2)
+            if item.object_unit is None:
+                diagnostics.append({"result": Result.UNKNOWN, "unit": item.unit,
+                                    "symbol": item.symbol,
+                                    "reason": item.context_error or "shared definition has no resolved compiler context"})
+                continue
+            found = (item.object_unit, item.symbol, 2)
             if found not in refs:
                 refs.add(found)
                 pending_refs.append(found)
@@ -284,7 +298,7 @@ def select_evidence(functions, selected, objects, object_bindings, generated_bin
     units.update(item.unit for item in content_objects.values())
     units.update(item.path for item in generated.values()
                  if unit_extensions is None or Path(item.path).suffix in unit_extensions)
-    units.update(item.unit for item in shared.values())
+    units.update(item.object_unit for item in shared.values() if item.object_unit is not None)
     units.update(unit for unit, _symbol in literals)
     # Include target support units for a selected member/parent layout group.
     units.update(item.unit for item in target_objects.values())
