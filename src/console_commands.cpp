@@ -1365,7 +1365,7 @@ void Console::hold(int veh_id, int waypoint_y) {
             owner = -1;
         }
     }
-    if (static_cast<uint8_t>(owner) == Vehs[veh_id].faction_id) {
+    if (owner == Vehs[veh_id].faction_id) {
         NetDaemonNet.order_veh(veh_id, -1, 0);
     }
 }
