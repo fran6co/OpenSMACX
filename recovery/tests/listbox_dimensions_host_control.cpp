@@ -203,7 +203,7 @@ int main(int argc, char **) {
     assert(x.field_20_==static_cast<uint32_t>(old_total));
     assert(x.wrap_calls==0 && x.item_list_.pending_text_==0);
 
-    // Nonpositive available width skips wrap_height and contributes one row.
+    // Zero available width skips wrap_height and contributes one row.
     setup(x,a,b,&pa,&pb);
     static_cast<Dialog &>(x).field_2C_=ScrollDefaultThickness;
     x.field_20_=0xFFFFFFFEu;
@@ -228,6 +228,15 @@ int main(int argc, char **) {
     assert(x.item_list_.field_20_==0 && x.item_list_.field_24_==3);
     assert(x.item_list_.added_id==88);
     assert(x.field_18_==99); // Insertion does not change ListBox scroll state.
+
+    // A subsequent negative width skips measuring but retains the prior
+    // Buffer height. The original's second test is nonzero, not positive.
+    static_cast<Dialog &>(x).field_2C_=ScrollDefaultThickness-1;
+    x.item_list_.add_result=29;
+    assert(x.item(one,99)==29);
+    assert(x.wrap_calls==1 && x.field_20_==4);
+    assert(x.item_list_.pending_text_==one && x.item_list_.added_id==99);
+    assert(x.item_list_.field_20_==0 && x.item_list_.field_24_==3);
 
     // Invalid negative geometry still uses the pinned signed division; do
     // not silently reinterpret the shared thickness or column count unsigned.

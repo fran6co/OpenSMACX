@@ -1,0 +1,20 @@
+{
+  "event_id": "c778834b2e3c9b45dba62c368e3b11d9d6aa1d8270ba2a41ab61f32c77983172",
+  "payload": {
+    "author": "recovery-coordinator",
+    "editable_files": [
+      "recovery/tests/listbox_dimensions_host_control.cpp",
+      "recovery/tests/test_listbox_dimensions_actual_source.py"
+    ],
+    "evidence": [
+      "Independently traced original register widths and branch flow; exercise actual product body and distinguish old translation. Preserve unsafe original paths; no bounds checks."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "actual-source-value-flow-controls-oct31au",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:owner-listbox-negative-width-oct31au"
+}
