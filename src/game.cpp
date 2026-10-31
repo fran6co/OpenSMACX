@@ -6356,7 +6356,7 @@ void __cdecl save_map() {
     filter[0] = 0;
     strcat(filter, MapFileFilterPattern);
     strcat(filter, MapFileExtension);
-    box.add_filter(filter, label_get(0x678 / 4));
+    box.add_filter(filter, StringTable.get(Labels.strings_ptr[0x678 / 4]));
 
     char *const selection = box.save();
     do_all_draws();
