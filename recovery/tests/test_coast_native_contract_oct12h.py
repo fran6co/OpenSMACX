@@ -16,13 +16,13 @@ from match_recovery.source import read_file, read_text
 
 
 ROOT = Path(__file__).resolve().parents[2]
-SOURCE = ROOT / "src/map.cpp"
+SOURCE = ROOT / "src/movement_queries.cpp"
 BASE = "53d435132dd96d4691dcbf4fc21665dbfb83407c"
 ORIGINAL = "// ORIGINAL: 0x0056B480 ?coast_or_border@@YAHHHHHH@Z 0x0056B480-0x0056B5A9"
 
 
 def current_body():
-    source = (ROOT / "src/map.cpp").read_text()
+    source = SOURCE.read_text()
     start = source.index("int __cdecl coast_or_border(")
     brace = source.index("{", start)
     depth = 0
@@ -41,7 +41,7 @@ def test_source_keeps_original_identity_history_and_int_contract():
         ["git", "show", BASE + ":src/map.cpp"], cwd=ROOT,
         capture_output=True, text=True, check=True,
     ).stdout
-    current = (ROOT / "src/map.cpp").read_text()
+    current = SOURCE.read_text()
     header = (ROOT / "src/map.h").read_text()
     assert ORIGINAL in baseline and ORIGINAL in current
     tried_start = baseline.index("// TRIED:", baseline.index(ORIGINAL))
@@ -53,9 +53,12 @@ def test_source_keeps_original_identity_history_and_int_contract():
     old_rows = {row.address: row for row in read_text(baseline, SOURCE)}
     new_rows = {row.address: row for row in read_file(SOURCE)}
     old, new = old_rows[0x56B480], new_rows[0x56B480]
-    for field in ("address", "name", "symbol", "image_spans", "byte_exact",
+    for field in ("address", "name", "symbol", "image_spans",
                   "levers", "ruled_out", "deferred", "unrecoverable"):
         assert getattr(new, field) == getattr(old, field), field
+    # The source claim was subsequently banked; transport must retain it.
+    assert new.byte_exact
+    assert not old.byte_exact or new.byte_exact
 
 
 PRELUDE = r'''#include <cassert>

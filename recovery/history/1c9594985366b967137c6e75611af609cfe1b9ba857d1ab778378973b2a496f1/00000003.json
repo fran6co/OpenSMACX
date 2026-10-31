@@ -1,0 +1,21 @@
+{
+  "event_id": "74573b056b6dbeb4afc3b35611ea1040f61666c4701079d3c10e63bbbdb4ce32",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "CMakeLists.txt",
+      "src/movement_queries.cpp"
+    ],
+    "evidence": [
+      "Original adjacent get_there/coast query pair has explicit7call and global-reference graph; separate from coastal implementation to prevent unsupported inlining.",
+      "Carry existing Map whole-source /Oy-/Z7 policy into genuine query TU rather than changing existing Enemy profile, which changes55othersections and network call sites. Historical original.obj boundary remains unknown."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "c37ae8a635e4e8a7bc546fa3adbca682e57e2c15dde40e7e391d3dcc2596faca",
+  "request_id": "coordinator-query-source-boundary-oct31ce",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:enemy-map-structure-oct31ce"
+}

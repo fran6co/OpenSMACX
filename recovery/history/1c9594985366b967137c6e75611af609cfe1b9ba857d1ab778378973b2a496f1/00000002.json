@@ -1,0 +1,19 @@
+{
+  "event_id": "c37ae8a635e4e8a7bc546fa3adbca682e57e2c15dde40e7e391d3dcc2596faca",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/fixtures/enemy_move_full_body.cpp"
+    ],
+    "evidence": [
+      "Bring RulesTerraforming mock prerequisite_tech[2] field in line with unchanged current source; no product substitutions or weakened Enemy oracles."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "35f30d730ae6bb6fc689bc49d37e0ac6bf021302ef317d78734538b89bc37b69",
+  "request_id": "coordinator-genuine-host-api-enemy-map-structure-oct31ce",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:enemy-map-structure-oct31ce"
+}

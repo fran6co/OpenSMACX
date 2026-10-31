@@ -105,7 +105,7 @@ struct RulesBasicHost {
 struct RulesChassis { char pad0[0x48]; uint8_t speed,triad,range; char pad1[1]; uint8_t missile; };
 struct VehPrototype { char name[32]; union { uint32_t abilities; uint32_t ability_flags; }; uint8_t chassis_id,weapon_id,armor_id,reactor_id,carry_capacity,cost,plan; int8_t unk_1; };
 struct RulesWeapon { char pad[8]; int8_t offense_rating; int8_t icon; uint8_t mode,cost; };
-struct RulesTerraforming { int preq_tech; int preq_tech_sea; };
+struct RulesTerraforming { int prerequisite_tech[2]; };
 enum { TERRA_FARM = 0, TERRA_MINE = 2, TERRA_SOLAR_TIDAL = 3,
        TERRA_ROAD = 5, TERRA_MAGTUBE = 6, TERRA_REMOVE_FUNGUS = 10,
        DTREATY_VENDETTA = 0x10 };
