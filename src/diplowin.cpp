@@ -615,8 +615,8 @@ int DiploWin::on_iface_dialog_item_back_draw(GraphicWin *window, int, int item,
 // kind      game
 // symbol ?on_status@DiploWin@@UAEXH@Z
 void DiploWin::on_status(int mode) {
-  GraphicWin *const front = static_cast<GraphicWin *>(this);
   if (mode != 0) {
+    GraphicWin *const front = static_cast<GraphicWin *>(this);
     front->on_redraw();
     for (int i = 0; i != 13; ++i) {
       flatButtons_[i].show(0);
@@ -634,6 +634,7 @@ void DiploWin::on_status(int mode) {
   stringBox_.hide();
   editBox_.time_.stop();
   editBox_.hide();
+  GraphicWin *const front = static_cast<GraphicWin *>(this);
   slide_hide(front, 2);
   front->Win::hide();
   for (int i = 0; i != 13; ++i) {
@@ -978,7 +979,7 @@ void DiploWin::done_deal() {
 }
 
 // Historical TRIED entries below describe the scaffolded seed, not this typed member body.
-// ORIGINAL: 0x00442590 ?on_key_click@DiploWin@@QAEHHH@Z 0x00442590-0x004426ED
+// ORIGINAL: 0x00442590 ?on_key_click@DiploWin@@QAEHHH@Z 0x00442590-0x004426ED BYTE_EXACT
 // symbol    ?on_key_click@DiploWin@@UAEHHH@Z
 // TRIED: Seed provenance: 0.74 mnemonic similarity - the edit box's slot-25 vtable call needed a shim in the scaffold; the tree's own Win::vslot_25 declares the same two-int signature, and Win slot 58 is release_modal, so both dispatch through the real declarations here. The private DiploWin state stays raw-offset (0xAB8, the 0xE490 edit text, stringBox_, editBox_).
 // TRIED: DAT_00946a50/DAT_00946a84 are per-faction record fields (stride 1436 = 0x59C) whose address itself is indexed - declared as extern arrays instead of the auto-scaffold's plain const-pointer globals (which would fold the stride multiply away), per the same lever as 0x00423000's g_faction_table. slot 25 on the edit_box_ sub-object takes two ints (a1,a2) - the auto-emitted VCall shim is nullary, so a second small vtable-shim class (VCall25) declares only the 26 ordinals needed with the right signature on the last one; a bare __thiscall function-pointer cast is C4234 on VC6. Landed at 0.74 mnemonic similarity.
@@ -988,9 +989,11 @@ int DiploWin::on_key_click(int repeat, int key) {
         return 1;
     }
     if (key == 0x0D) {
-        if (strlen(editBox_.text_) != 0) {
+        char *const text = editBox_.text_;
+        if (text != 0 && strlen(text) != 0) {
+            message_chat(0x1E00, faction_id_with_, text);
+            // 4425F5 reads the live faction after the chat callback.
             const int faction = ConsoleGlobal.faction_id_;
-            message_chat(0x1E00, faction_id_with_, editBox_.text_);
 
             char line[256];
             line[0] = 0;

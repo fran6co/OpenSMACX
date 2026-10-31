@@ -114,62 +114,7 @@ extern uint32_t EditBoxDefaultB28;
 extern uint32_t EditBoxDefaultB2C;
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00588AA0 ?config_popups@@YAXXZ 0x00588AA0-0x00588F8E
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00588aa0.cpp: retained original spans and seed history", "source:recovery/tasks/popup-font-configuration-owner-closure.json: coordinator-authorized ownership scope", "manual: independent frozen C++ review of original callback, font style order, palette, geometry and sprite assignments", "compiler:build/recovery/popup-font-physical-emission.json;build/recovery/interface-producer-physical.json: actual emitted symbols in both historical flag sets"], "reason": "Original-backed real font/default producer and consumer closure through source-owned storage and C++ classes; preserves seed extents and historical matching obligations without granting a new claim."}
-// symbol    ?config_popups@@YAXXZ
-void __cdecl config_popups() {
-    IfaceScreenWidth = WinScreenWidth;
-    IfaceScreenHeight = WinScreenHeight;
-    StringTemp[0] = 0;
-    strcat(StringTemp, ScriptPopupFile);
-    strcat(StringTemp, ".txt");
-    BasePop::set_def_file(StringTemp);
-    int main_size = prefs_get("MainFontSize", 16, FALSE);
-    int interlude_size = prefs_get("InterludeFontSize", 16, FALSE);
-    FastUnitAnim = prefs_get("FastUnitAnim", 0, FALSE);
-    prefs_put("FastUnitAnim", FastUnitAnim, FALSE);
-    if (!FastUnitAnim && prefs_get("SmoothUnitAnim", 0, FALSE)) FastUnitAnim = -1;
-    prefs_put("SmoothUnitAnim", FastUnitAnim < 0, FALSE);
-    prefs_put("MainFontSize", main_size, FALSE);
-    prefs_put("InterludeFontSize", interlude_size, FALSE);
-    if (WinScreenWidth == 800) { main_size -= 2; interlude_size -= 2; }
-    for (int size = 0; size < 12; ++size) {
-        for (int style = 0; style < 4; ++style) {
-            const int height = FontSizeTable[size];
-            FontTable[size * 4 + style].init(height > 12 ? DefaultLargeFontFace : DefaultFontFace,
-                height, (height > 12 ? 1 : 0) | FontStyleTable[style]);
-        }
-    }
-    // The nearest-size searches are repeated inline in the image. find_font
-    // has the same strict tie rule and 9999 threshold, and returns these
-    // same owned FontTable elements rather than creating another font run.
-    PopupMainFont = find_font(main_size, 0);
-    PopupMainItalicFont = find_font(main_size, 2);
-    PopupMainBoldFont = find_font(main_size, 1);
-    InterludeNormalFont = find_font(interlude_size, 0);
-    InterludeThirdFont = find_font(interlude_size, 2);
-    InterludeSecondFont = find_font(interlude_size, 1);
-    PopupMediumFont = find_font(16, 0);
-    PopupMediumItalicFont = find_font(16, 2);
-    PopupMediumBoldFont = find_font(16, 1);
-    PopupLargeFont = find_font(16, 0);
-    PopupLargeItalicFont = find_font(16, 2);
-    PopupLargeBoldFont = find_font(16, 1);
-    const int menu_size = WinScreenWidth == 800 ? 12 : 16;
-    PopupMenuFont = find_font(menu_size, 0);
-    PopupMenuItalicFont = find_font(menu_size, 2);
-    PopupMenuBoldFont = find_font(menu_size, 1);
-    PopupSmallFont = find_font(12, 0);
-    PopupSmallItalicFont = find_font(12, 2);
-    PopupSmallBoldFont = find_font(12, 1);
-    WinBubbleFont = PopupSmallFont;
-    PopupDefaultWindowFont = find_font(12, 1);
-    PopupMapLabelFont = find_font(10, 1);
-    Menu::set_def_font(PopupMenuFont);
-    PullDownDefaultFont = PopupMenuFont;
-    WinDynamicDefaults.default_font_ = PopupDefaultWindowFont;
-    popups_normal();
-}
+
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00588460 ?popups_normal@@YAXXZ 0x00588460-0x005887F2

@@ -3760,19 +3760,20 @@ void __cdecl Console::goto_routine(int base_id) {
         PlanWindow.on_redraw();
         return;
     }
-    const int x = Bases[base_id].x;
-    const int y = Bases[base_id].y;
-    if (!GoToPreviewActive) {
-        PlanWindow.monocenter(x, y, 0);
-        PlanWindow.add_line(x, y, x, y,
-                            InfoFactionTextColors[ConsoleGlobal.faction_id_]);
+    if (GoToPreviewActive) {
+        PlanWindow.opticenter(GoToSourceX, GoToSourceY,
+                             Bases[base_id].x, Bases[base_id].y, 0);
+        if (base_id < GameDataStateStorage.fields_.base_current_count_)
+            PlanWindow.add_line(GoToSourceX, GoToSourceY,
+                                Bases[base_id].x, Bases[base_id].y,
+                                InfoFactionTextColors[ConsoleGlobal.faction_id_]);
         PlanWindow.on_redraw();
         return;
     }
-    PlanWindow.opticenter(GoToSourceX, GoToSourceY, x, y, 0);
-    if (base_id < GameDataStateStorage.fields_.base_current_count_)
-        PlanWindow.add_line(GoToSourceX, GoToSourceY, x, y,
-                            InfoFactionTextColors[ConsoleGlobal.faction_id_]);
+    PlanWindow.monocenter(Bases[base_id].x, Bases[base_id].y, 0);
+    PlanWindow.add_line(Bases[base_id].x, Bases[base_id].y,
+                        Bases[base_id].x, Bases[base_id].y,
+                        InfoFactionTextColors[ConsoleGlobal.faction_id_]);
     PlanWindow.on_redraw();
 }
 
@@ -3803,16 +3804,20 @@ void Console::arty(int vehicle) {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x004D9970 ?editor_on@Console@@QAEXXZ 0x004D9970-0x004D9AC5
+// ORIGINAL: 0x004D9970 ?editor_on@Console@@QAEXXZ 0x004D9970-0x004D9AC5 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004d9970.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold."}
+// RECOVERY_LITERAL: v1 0x00688F3C 0x00688F46 ??_C@_09HDAC@EDITORNET?$AA@ 0x004D999D
+// RECOVERY_LITERAL: v1 0x00688F48 0x00688F53 ??_C@_0L@KPKF@SCENEDITOR?$AA@ 0x004D99B4
+// RECOVERY_LITERAL: v1 0x00688F54 0x00688F5D ??_C@_08FDNL@EDITORON?$AA@ 0x004D99F9
+// RECOVERY_LITERAL: v1 0x00688F60 0x00688F6A ??_C@_09OGLF@EDITOROFF?$AA@ 0x004D9A11
 void Console::editor_on() {
-    const unsigned int flags = GameDataStateStorage.fields_.game_state_;
     if ((IsMultiplayerNet || IsMultiplayerPBEM) &&
-        !(flags & 0x61) && !(flags & 0x1000)) {
+        !(GameDataStateStorage.fields_.game_state_ & 0x61) &&
+        !(GameDataStateStorage.fields_.game_state_ & 0x1000)) {
         NetMsgPrimary.pop("EDITORNET", 5000, 0, nullptr);
         return;
     }
-    if (!(flags & 0x60) && !X_pop("SCENEDITOR", nullptr)) return;
+    if (!(GameDataStateStorage.fields_.game_state_ & 0x60) && !X_pop("SCENEDITOR", nullptr)) return;
     GameDataStateStorage.fields_.game_state_ = (GameDataStateStorage.fields_.game_state_ ^ 0x40) | 0x20;
     if (GameDataStateStorage.fields_.game_rules_ & 0x400) auto_save();
     if (GameDataStateStorage.fields_.game_state_ & 0x40) {
@@ -3822,11 +3827,17 @@ void Console::editor_on() {
         NetMsgPrimary.pop("EDITOROFF", 5000, 0, nullptr);
         GameDataStateStorage.fields_.game_state_ &= ~0x80u;
     }
-    if ((GameDataStateStorage.fields_.game_state_ & 0xc0) == 0xc0 && !IfaceIdToSlotStorage[ActiveIfaceIdStorage])
+    if (((GameDataStateStorage.fields_.game_state_ & 0x80) != 0 &&
+         (GameDataStateStorage.fields_.game_state_ & 0x40) != 0) && !IfaceIdToSlotStorage[ActiveIfaceIdStorage])
         MainInterfaceGlobal.flat_button(2).show(0);
     else MainInterfaceGlobal.flat_button(2).hide();
     alpha_menu_.check(selected_vehicle_);
-    MainInterfaceGlobal.button_group(0).set((GameDataStateStorage.fields_.game_state_ & 0xc0) == 0xc0 ? 1002 : 1001, 1);
+    if ((GameDataStateStorage.fields_.game_state_ & 0x40) != 0 &&
+        (GameDataStateStorage.fields_.game_state_ & 0x80) != 0) {
+        MainInterfaceGlobal.button_group(0).set(1002, 1);
+    } else {
+        MainInterfaceGlobal.button_group(0).set(1001, 1);
+    }
     set_dirty();
     ::draw_map(1);
     WorldClimateWorldWin.GraphicWin::redraw();

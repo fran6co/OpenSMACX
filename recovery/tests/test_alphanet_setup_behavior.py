@@ -1,5 +1,7 @@
 """Exercise the source setup body; host doubles do not establish target ABI."""
 from pathlib import Path
+import os
+import re
 import shutil
 import subprocess
 
@@ -8,8 +10,8 @@ from match_recovery.local_variants import _function_body_bytes
 
 
 @pytest.mark.parametrize("compiler_name", ("g++", "clang++"))
-@pytest.mark.parametrize("old_return", (False, True))
-def test_setup_picker_exit_matches_original(compiler_name, old_return, tmp_path):
+@pytest.mark.parametrize("zero_normalization", (False, True))
+def test_setup_picker_exit_matches_original(compiler_name, zero_normalization, tmp_path):
     compiler = shutil.which(compiler_name)
     if compiler is None:
         pytest.skip(f"{compiler_name} unavailable")
@@ -17,9 +19,17 @@ def test_setup_picker_exit_matches_original(compiler_name, old_return, tmp_path)
     source = (root / "src/alphanet.cpp").read_bytes()
     lo, hi = _function_body_bytes(source.decode(), "AlphaNet::setup")
     body = source[lo:hi].decode()
-    if old_return:
-        assert "if (picked != 0) return 0;" in body
-        body = body.replace("if (picked != 0) return 0;", "if (picked != 0) return picked;", 1)
+    if zero_normalization:
+        anchor = "if (picked != 0) return picked;"
+        assert body.count(anchor) == 1
+        damaged = body.replace(anchor, "if (picked != 0) return 0;", 1)
+        assert damaged != body
+        body = damaged
+    scripts = "\n".join(re.findall(
+        r'^char AlphaNet\w+Script\[7\] = "jackal";$', source.decode(), re.MULTILINE))
+    needs_script = "AlphaNetConnectScript" in body
+    if needs_script:
+        assert len(scripts.splitlines()) == 8
     program = r'''
 #include <cassert>
 struct GUID { int identity; };
@@ -59,7 +69,7 @@ void initial_state(const AlphaNet &n) {
 int main() {
   AlphaNet n; const int errors[]={1,4,7,-9};
   for(int i=0;i<4;++i) {
-    reset(n); pick_result=errors[i]; assert(n.setup(0)==0);
+    reset(n); pick_result=errors[i]; assert(n.setup(0)==errors[i]);
     initial_state(n); assert(closes==1 && inits==1 && picks==1);
     assert(popups==0 && joins==0 && creates==0);
     assert(n.voice_hotkey_48_==-1 && n.voice_hotkey_4c_==-1);
@@ -80,10 +90,43 @@ int main() {
   assert(n.voice_hotkey_48_==0xDC && n.voice_hotkey_4c_==0x100DC);
 }
 '''.replace("BODY", body)
+    if needs_script:
+        program = program.replace("#include <cassert>", "#include <cassert>\n" + scripts, 1)
+        anchor = "assert(flags == 0x50 && zero == 0);"
+        assert program.count(anchor) == 1
+        program = program.replace(anchor,
+            "assert(script == AlphaNetConnectScript); " + anchor, 1)
+        program = program.replace("int x_pop_caption_flags(const char *, const char *,",
+                                  "int x_pop_caption_flags(const char *script, const char *,", 1)
     cpp = tmp_path / "setup.cpp"
     cpp.write_text(program)
     executable = tmp_path / "setup"
     built = subprocess.run([compiler, "-std=c++98", str(cpp), "-o", str(executable)], capture_output=True, text=True, timeout=30)
     assert built.returncode == 0, built.stdout + built.stderr
     ran = subprocess.run([str(executable)], capture_output=True, text=True, timeout=30)
-    assert (ran.returncode != 0) if old_return else (ran.returncode == 0), ran.stdout + ran.stderr
+    assert (ran.returncode != 0) if zero_normalization else (ran.returncode == 0), ran.stdout + ran.stderr
+
+
+def test_pinned_picker_error_skips_zero_return_instruction():
+    """The original nonzero picker edge reaches a bare return with EAX intact."""
+    from capstone import Cs, CS_ARCH_X86, CS_MODE_32
+    from match_recovery.model import Span
+    from match_recovery.pe_coff import PeImage
+
+    root = Path(__file__).resolve().parents[2]
+    path = Path(os.environ.get("OPENSMACX_IMAGE", root / ".opensmacx/game/terranx_original.exe"))
+    if not path.is_file():
+        pytest.skip("pinned original unavailable")
+    image = PeImage(path.read_bytes(), "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf")
+    decoder = Cs(CS_ARCH_X86, CS_MODE_32)
+    picker = [(i.address, i.mnemonic, i.op_str)
+              for i in decoder.disasm(image.read(Span(0x4E3238, 0x4E3241)), 0x4E3238)]
+    assert picker == [(0x4E3238, "call", "0x4e26e0"),
+                      (0x4E323D, "test", "eax, eax"),
+                      (0x4E323F, "jne", "0x4e32b5")]
+    epilogue = [(i.address, i.mnemonic, i.op_str)
+                for i in decoder.disasm(image.read(Span(0x4E32B3, 0x4E32BA)), 0x4E32B3)]
+    assert epilogue == [(0x4E32B3, "xor", "eax, eax"),
+                        (0x4E32B5, "pop", "esi"),
+                        (0x4E32B6, "pop", "ebp"),
+                        (0x4E32B7, "ret", "4")]

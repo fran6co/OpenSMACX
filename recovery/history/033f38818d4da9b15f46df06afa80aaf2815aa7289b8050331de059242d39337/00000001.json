@@ -1,0 +1,19 @@
+{
+  "event_id": "4364ad8d12e87bc6346441ca6205ccbbb495e4f0fd5d2668e55d5a1e13f69996",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_diplowin_chat_actual_source_oct31ca.py"
+    ],
+    "evidence": [
+      "Pinned on_key_click callback then live faction read and original text-address guard need independent actual-source callback/damage controls; no behavior fixes or header changes."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "evidence-led-scope-oct31ca",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:easy-diplowin-oct31ca"
+}

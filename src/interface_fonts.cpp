@@ -1,11 +1,20 @@
 // ORIGINAL: 0x005882A0 _$E19 0x005882A0-0x005882C4 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["Original CRT slot0x00682648 selects initializer0x005882A0-0x005882C4 and its registration names fini0x005882D0-0x005882E4; complete instruction decode fixes both ends.", "Original operations identify storage0x0093FC58; 48 Font objects, stride0x28, constructor/destructor618EA0/618EE0 through vector helpers6457C2/6456E4. Source object binding names ?FontTable@@3PAVFont@@A.", "Fresh owner COFF selects _$E19 via .CRT$XCU and registers _$E17, both naming the same global. Fresh linked callback order is singleton, FontQueue VAL2/VAL1, FontTable, agreeing with their original slots.", "Current compiler-local names are emission interpretations, not original debug names or historical TU proof. The selected relative order does not establish complete CRT order, strict reference/linked preservation, dependency equivalence or runtime acceptance."], "reason": "Bind the original startup function to the genuine compiler-generated lifetime of source-owned FontTable; declarations and construction order, not authored callbacks, provide the implementation."}
-// symbol    _$E6
+// symbol    _$E8
 // ORIGINAL: 0x005882D0 _$E17 0x005882D0-0x005882E4 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original CRT slot0x00682648 selects initializer0x005882A0-0x005882C4 and its registration names fini0x005882D0-0x005882E4; complete instruction decode fixes both ends.", "Original operations identify storage0x0093FC58; 48 Font objects, stride0x28, constructor/destructor618EA0/618EE0 through vector helpers6457C2/6456E4. Source object binding names ?FontTable@@3PAVFont@@A.", "Fresh owner COFF selects _$E19 via .CRT$XCU and registers _$E17, both naming the same global. Fresh linked callback order is singleton, FontQueue VAL2/VAL1, FontTable, agreeing with their original slots.", "Current compiler-local names are emission interpretations, not original debug names or historical TU proof. The selected relative order does not establish complete CRT order, strict reference/linked preservation, dependency equivalence or runtime acceptance."], "reason": "Bind the original exit function to the genuine compiler-generated lifetime of source-owned FontTable; declarations and construction order, not authored callbacks, provide the implementation."}
-// symbol    _$E4
+// symbol    _$E6
 #include "stdafx.h"
 #include "interface_fonts.h"
+#include "popup.h"
+#include "popup_fonts.h"
+#include "menu.h"
+#include "pulldown.h"
+#include "game.h"
+#include "veh.h"
+#include "strings.h"
+#include "alpha.h"
+
 
 // Application fonts, selected and initialized by config_popups and WinMain.
 // FontTable stays with find_font; the entrypoint's singleton is in main.cpp.
@@ -49,6 +58,70 @@ Font *__cdecl find_font(int size, int style) {
     }
     // Each size occupies four consecutive style slots in the table.
     return FontTable + (style + best_index * 4);
+}
+
+// ORIGINAL: 0x00588AA0 ?config_popups@@YAXXZ 0x00588AA0-0x00588F8E
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00588aa0.cpp: retained original spans and seed history", "source:recovery/tasks/popup-font-configuration-owner-closure.json: coordinator-authorized ownership scope", "manual: independent frozen C++ review of original callback, font style order, palette, geometry and sprite assignments", "compiler:build/recovery/popup-font-physical-emission.json;build/recovery/interface-producer-physical.json: actual emitted symbols in both historical flag sets"], "reason": "Original-backed real font/default producer and consumer closure through source-owned storage and C++ classes; preserves seed extents and historical matching obligations without granting a new claim."}
+// symbol    ?config_popups@@YAXXZ
+// Current reconstructed ownership keeps this ordinary body beside find_font.
+// Shared visibility is a compiler-context hypothesis, not historical TU proof.
+void __cdecl config_popups() {
+    IfaceScreenWidth = WinScreenWidth;
+    IfaceScreenHeight = WinScreenHeight;
+    StringTemp[0] = 0;
+    strcat(StringTemp, ScriptPopupFile);
+    strcat(StringTemp, ".txt");
+    BasePop::set_def_file(StringTemp);
+    int main_size = prefs_get("MainFontSize", 16, FALSE);
+    int interlude_size = prefs_get("InterludeFontSize", 16, FALSE);
+    FastUnitAnim = prefs_get("FastUnitAnim", 0, FALSE);
+    prefs_put("FastUnitAnim", FastUnitAnim, FALSE);
+    if (!FastUnitAnim && prefs_get("SmoothUnitAnim", 0, FALSE)) FastUnitAnim = -1;
+    prefs_put("SmoothUnitAnim", FastUnitAnim < 0, FALSE);
+    prefs_put("MainFontSize", main_size, FALSE);
+    prefs_put("InterludeFontSize", interlude_size, FALSE);
+    if (WinScreenWidth == 800) { main_size -= 2; interlude_size -= 2; }
+    for (int size = 0; size < 12; ++size) {
+        for (int style = 0; style < 4; ++style) {
+            const int height = FontSizeTable[size];
+            FontTable[size * 4 + style].init(height > 12 ? DefaultLargeFontFace : DefaultFontFace,
+                height, (height > 12 ? 1 : 0) | FontStyleTable[style]);
+        }
+    }
+    // The nearest-size searches are repeated inline in the image. find_font
+    // has the same strict tie rule and 9999 threshold, and returns these
+    // same owned FontTable elements rather than creating another font run.
+    PopupMainFont = find_font(main_size, 0);
+    PopupMainItalicFont = find_font(main_size, 2);
+    PopupMainBoldFont = find_font(main_size, 1);
+    InterludeNormalFont = find_font(interlude_size, 0);
+    InterludeThirdFont = find_font(interlude_size, 2);
+    InterludeSecondFont = find_font(interlude_size, 1);
+    PopupMediumFont = find_font(16, 0);
+    PopupMediumItalicFont = find_font(16, 2);
+    PopupMediumBoldFont = find_font(16, 1);
+    PopupLargeFont = find_font(16, 0);
+    PopupLargeItalicFont = find_font(16, 2);
+    PopupLargeBoldFont = find_font(16, 1);
+    if (WinScreenWidth == 800) {
+        PopupMenuFont = find_font(12, 0);
+        PopupMenuItalicFont = find_font(12, 2);
+        PopupMenuBoldFont = find_font(12, 1);
+    } else {
+        PopupMenuFont = find_font(16, 0);
+        PopupMenuItalicFont = find_font(16, 2);
+        PopupMenuBoldFont = find_font(16, 1);
+    }
+    PopupSmallFont = find_font(12, 0);
+    PopupSmallItalicFont = find_font(12, 2);
+    PopupSmallBoldFont = find_font(12, 1);
+    WinBubbleFont = PopupSmallFont;
+    PopupDefaultWindowFont = find_font(12, 1);
+    PopupMapLabelFont = find_font(10, 1);
+    Menu::set_def_font(PopupMenuFont);
+    PullDownDefaultFont = PopupMenuFont;
+    WinDynamicDefaults.default_font_ = PopupDefaultWindowFont;
+    popups_normal();
 }
 
 // ===== MANAGED GLOBALS - real objects, homed to their domain =====

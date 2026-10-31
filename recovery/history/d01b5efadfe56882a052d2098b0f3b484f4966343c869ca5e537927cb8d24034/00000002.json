@@ -1,0 +1,25 @@
+{
+  "event_id": "dccd894605785ee05a283c4185ea825e09b43f0765ce9817ab873b49ea31d3c3",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/game.cpp"
+    ],
+    "evidence": [
+      "Existing source-owned const GUID LobbyAppGuid in game.cpp and original AlphaNet call4E3225 target689218 are independently identified; authorize native object binding only after full16original/current COFF bytes, typed symbol/storage and extent proof. No C++ body/initializer/claims edits or compile policy changes. Related jackal pooled literal may gain precise native literal binding in already granted alphanet.cpp only after full payload/use-site/collision proof."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6853144,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "92bc7c392475cc0378c17394ef67ff411556a94bc87dd05c4fd263bb7027307f",
+  "request_id": "real-lobby-guid-object-closure-oct31ca",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:easy-alphanet-oct31ca"
+}

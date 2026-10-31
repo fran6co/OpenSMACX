@@ -1,0 +1,58 @@
+{
+  "event_id": "0ffba488dce2a3f5f8febfb30360278ba2be46e4de6093564ed2e1d9f42c5c58",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Independent original call operands identify eight distinct complete7-byte readonly jackal strings versus one pooled current artifact. A single original-target grant is invalid. Authorize one bounded genuine C++ data-ownership experiment: real independently stored const char arrays for proven original objects/use edges, no flags/attrs/asm/address tricks. Names provisional, no claim they were original named globals. Native initial-data/ref proof and all18function measurements required; preserve pre-experiment exact source if compiler/layout support fails."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6853176,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6853212,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6853272,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6853304,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6853336,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6853400,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6853452,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6853480,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "dccd894605785ee05a283c4185ea825e09b43f0765ce9817ab873b49ea31d3c3",
+  "request_id": "independent-provider-string-storage-oct31ca",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:easy-alphanet-oct31ca"
+}

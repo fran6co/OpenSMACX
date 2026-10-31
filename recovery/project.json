@@ -686,9 +686,20 @@
       "src/interface_palette.cpp": [
         1
       ],
-      "src/interface_fonts.cpp": [
-        1
-      ],
+      "src/interface_fonts.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W4",
+          "/Oy-",
+          "-c"
+        ]
+      },
       "src/spritebox.cpp": {
         "flags": [
           "/nologo",
@@ -1281,6 +1292,20 @@
         ]
       },
       "src/technology.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W4",
+          "/Oy-",
+          "-c"
+        ]
+      },
+      "src/tutwin_callouts.cpp": {
         "flags": [
           "/nologo",
           "/TP",

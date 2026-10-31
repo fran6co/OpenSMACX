@@ -1,0 +1,19 @@
+{
+  "event_id": "92bc7c392475cc0378c17394ef67ff411556a94bc87dd05c4fd263bb7027307f",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_alphanet_setup_behavior.py"
+    ],
+    "evidence": [
+      "Pinned picker4E3238 tests EAX and branches directly to bare return epilogue4E32B5; source must retain raw picker error, not normalize0. Authorize independent expected-behavior/damage oracle correction, preserving all other unsafe/error paths."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "actual-source-fixture-closure-oct31ca",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:easy-alphanet-oct31ca"
+}
