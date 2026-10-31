@@ -1566,17 +1566,18 @@ void __cdecl report_score(int) {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x004ACBD0 ?report_intel@@YAXH@Z 0x004ACBD0-0x004ACC29
+// ORIGINAL: 0x004ACBD0 ?report_intel@@YAXH@Z 0x004ACBD0-0x004ACC29 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004acbd0.cpp", "source:src/reportif.cpp", "source:src/reportif.h", "source:src/reportwin.h"], "reason": "The retained report_intel seed identifies this free report command and its original extent. Category 0 selects the existing ReportIf state; the original modal call resolves to ReportWinGlobal set_modal and the direct branch to ReportIf report."}
 void __cdecl report_intel(int selection) {
     int active_iface = ActiveIfaceIdStorage;
     ReportIfGlobal.field_8_ = 0;
     ReportIfGlobal.set_report_selection(selection);
-    if (IfaceIdToSlotStorage[active_iface] == 5) {
+    if (IfaceIdToSlotStorage[active_iface] != 5) {
+        Win &modal_window = ReportWinGlobal;
+        modal_window.set_modal(0, pop_wait, &MainInterfaceGlobal);
+    } else {
         ReportIfGlobal.report(0, ReportIfGlobal.report_faction_id(), selection);
-        return;
     }
-    ReportWinGlobal.set_modal(0, pop_wait, &MainInterfaceGlobal);
 }
 
 /*
