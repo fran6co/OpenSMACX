@@ -130,6 +130,10 @@ Git checkpoint of the faithful source before implementing fixes or improvements.
 
 ## Evidence-led recovery queue and bounded matching pass
 
+For Caviar/CVR work, read [CAVIAR_EVIDENCE.md](CAVIAR_EVIDENCE.md) first.
+It correlates external research with loader ownership and records known
+format-table contradictions before they turn into source layout assumptions.
+
 ### Continuous parallel matching campaign
 
 For a matching campaign, workers own the complete bounded source-search loop:

@@ -1,0 +1,48 @@
+{
+  "author": "coordinator",
+  "base_revision": "c1c6533a98ca7fddbc164be3d729dc1355263634",
+  "editable_files": [
+    "recovery/CAVIAR_EVIDENCE.md"
+  ],
+  "evidence": [
+    "User supplied https://alphacentauri2.info/wiki/Caviar; canonical .html revision7011 consulted2026-10-31.",
+    "Read recovery/CAVIAR_EVIDENCE.md before loader/renderer matching; bounded local sample trees corroborate chunk hierarchy and frame payloads. Recompute detailed reports in ignored caches.",
+    "No C++ edits or claims authorized by this evidence-only task. Expand to affected loaders/members/callers after pinned evidence; do not rename coordinate axes blindly, import wiki table errors, remove original paths absent from wiki, or change bugs."
+  ],
+  "intent": "Incorporate user-supplied CVR specification as structured recovery seed evidence; preserve conflicts and acquire original consumer scope before semantic renames or algorithm changes.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6522656,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6523072,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6523600,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6524096,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6524384,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6525072,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "Caviar CVR format correlations",
+  "task_id": "caviar-format-evidence-oct31bj"
+}
