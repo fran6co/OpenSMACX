@@ -254,6 +254,7 @@ Scroll *AlphaSave::on_listbox_scroll_delete(Scroll *scroll) {
     return 0;
 }
 
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00407D10 0x00407D64 0x00407D84 0x00407D1F
 // ORIGINAL: 0x00407D10 ?on_key_click@AlphaSave@@QAEXHH@Z 0x00407D10-0x00407D62 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00407d10.cpp and original symbol", "image:constructor4073F2 installs669EC8; slot25 selects407D10", "image:407D37/407D57 last calls and407D3E/407D5F returns preserve EAX from Win key_down_event/key_click_event"], "reason": "Recover the real AlphaSave key override through typed FileWin subobjects and forward the actual last-call result. The catalogue void spelling is retained as original identity, not the virtual return contract; no arbitrary constant or extra callback slot."}
 // Deleted seed provenance: git:8ca8dfc2805ade42b1dc4a8885fcfaaf955e75c7:src/recovered/units/00407d10.cpp

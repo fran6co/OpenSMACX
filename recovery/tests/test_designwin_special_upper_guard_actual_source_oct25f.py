@@ -19,8 +19,8 @@ _DEFAULT_ROOT = next(parent for parent in _HERE.parents
 ROOT = Path(os.environ.get("OPENSMACX_SOURCE_ROOT", _DEFAULT_ROOT))
 SOURCE = ROOT / "src/designwin.cpp"
 CASES = (
-    (0x00435B30, "void DesignWin::draw_special_1(int redraw)", "protoAbilityID1_"),
-    (0x00435DE0, "void DesignWin::draw_special_2(int redraw)", "protoAbilityID2_"),
+    (0x00435B30, "void DesignWin::draw_special_1(int redraw)", "protoAbilityIDs_[0]"),
+    (0x00435DE0, "void DesignWin::draw_special_2(int redraw)", "protoAbilityIDs_[1]"),
 )
 
 
@@ -111,13 +111,13 @@ struct DesignWin : Buffer {
   RECT component_panel_rects_[2];
   Font font1_, font2_;
   Buffer buffer_;
-  int protoAbilityID1_, protoAbilityID2_;
+  int protoAbilityIDs_[2];
   DesignWin() {
     component_panel_rects_[0] = RECT{10, 20, 210, 100};
     component_panel_rects_[1] = RECT{30, 40, 230, 120};
     font1_ = Font{-1, 9, 10};
     font2_ = Font{-1, 12, 11};
-    protoAbilityID1_ = protoAbilityID2_ = -1;
+    protoAbilityIDs_[0] = protoAbilityIDs_[1] = -1;
   }
   void draw_special_1(int redraw);
   void draw_special_2(int redraw);
@@ -157,8 +157,8 @@ static void check_negative(DesignWin &win, bool second) {
 }
 static void check_positive(DesignWin &win, bool second, int ability) {
   reset_fixture();
-  if (second) win.protoAbilityID2_ = ability;
-  else win.protoAbilityID1_ = ability;
+  if (second) win.protoAbilityIDs_[1] = ability;
+  else win.protoAbilityIDs_[0] = ability;
   trace.height = 17;
   if (second) win.draw_special_2(0); else win.draw_special_1(0);
   const char *title = second ? "title:ABILITY 2" : "title:ABILITY 1";

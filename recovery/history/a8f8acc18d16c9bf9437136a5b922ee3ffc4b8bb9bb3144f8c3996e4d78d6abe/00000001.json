@@ -1,0 +1,19 @@
+{
+  "event_id": "0b2333bfa6ba51d2ac85ed80e8b352d1ce18b89e12c606037ab94ef14ffc7132",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_maininterface_typed_owners.py"
+    ],
+    "evidence": [
+      "Adapt actual-source global-versus-this mutation anchor to genuine Buffer reference, preserving all behavior/damage assertions; fixture spelling cannot block correct original receiver recovery."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "maininterface-fixture-closure-oct31bp",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:easy-maininterface-oct31bp"
+}

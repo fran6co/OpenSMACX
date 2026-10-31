@@ -1,0 +1,19 @@
+{
+  "event_id": "dade90679fca724da0c8e0d18e59769d7403eec550dc6d650952f2379f0ef958",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_infowin_panel_actual_source.py"
+    ],
+    "evidence": [
+      "Actual corrected helper uses pinned cached IfaceScreenWidth; existing actual-source fixture declares only live WinScreenWidth and cannot compile it. Update this fixture to model distinct globals and retain every original state/call-order damage control."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "infowin-existing-width-fixture-oct31bp",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:easy-infowin-oct31bp"
+}

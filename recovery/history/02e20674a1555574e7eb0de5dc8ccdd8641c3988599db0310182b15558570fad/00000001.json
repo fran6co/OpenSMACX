@@ -1,0 +1,19 @@
+{
+  "event_id": "e0a372142792b9645730e28ec01b62df97005122822008a09b8655713e3dbde2",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_key_event_hierarchy.py"
+    ],
+    "evidence": [
+      "Actual pinned key handler reads existing game_state_ member and has a distinct PBEM-complete return; expose existing member in fixture and align Button close interface with product declaration, preserving original event/callback controls."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "councwin-fixture-closure-oct31bp",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:easy-councwin-oct31bp"
+}

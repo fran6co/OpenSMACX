@@ -1,0 +1,28 @@
+{
+  "event_id": "b2a667fdda87ac9bb44411b0762e8e3e9690c66d9d96ec4630d717b7ff9d8cda",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/design_panels_control.cpp",
+      "recovery/tests/designwin_button_harness.cpp",
+      "recovery/tests/fixtures/designwin_scratch_storage_host.hpp",
+      "recovery/tests/test_designwin_ability_signed_owner_actual_source.py",
+      "recovery/tests/test_designwin_special_popup_owner_oct10.py",
+      "recovery/tests/test_designwin_special_upper_guard_actual_source_oct25f.py",
+      "recovery/tests/test_designwin_suggest_abil_call_order_oct25f.py",
+      "recovery/tests/test_owner_designwin_faithful_oct20y.py",
+      "src/designwin.h"
+    ],
+    "evidence": [
+      "Worker pinned delete_abil439EB0 walks two indexed int ability IDs at receiver+14218; current declaration fabricates two independent scalars at14218/1421C. Authorize evidence-backed array migration and all actual-source fixture uses, preserving layout, reset/store sequencing and all original quirks.",
+      "Repository reference census finds all product references in designwin.cpp and designwin.h only. Broader header inclusion/generated-code closure remains a coordinator integration measurement obligation; workers cannot waive regressions."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "designwin-ability-array-oct31bp",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:easy-designwin-oct31bp"
+}

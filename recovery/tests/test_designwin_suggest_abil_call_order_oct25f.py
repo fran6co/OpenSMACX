@@ -103,7 +103,7 @@ static int abil_index(int value) {
 class DesignWin {
 public:
   uint32_t protoAbilityFlags_;
-  int protoAbilityID1_, protoAbilityID2_;
+  int protoAbilityIDs_[2];
   int factionID_, protoChassisType_, protoWeaponType_, protoArmorType_;
   void check_abil() { events.push_back(Event(0)); }
   void suggest_abil(int ability);
@@ -112,8 +112,8 @@ public:
 int main() {
   DesignWin win;
   win.protoAbilityFlags_ = 1u << 2;
-  win.protoAbilityID1_ = 2;
-  win.protoAbilityID2_ = -1;
+  win.protoAbilityIDs_[0] = 2;
+  win.protoAbilityIDs_[1] = -1;
   win.factionID_ = 4;
   win.protoArmorType_ = 1;
   win.protoWeaponType_ = 2;
@@ -140,7 +140,7 @@ int main() {
   assert(events.size() == sizeof(expected) / sizeof(expected[0]));
   for (unsigned int i = 0; i < events.size(); ++i) assert(events[i] == expected[i]);
   assert(win.protoAbilityFlags_ == (1u << 2));
-  assert(win.protoAbilityID1_ == 2 && win.protoAbilityID2_ == -1);
+  assert(win.protoAbilityIDs_[0] == 2 && win.protoAbilityIDs_[1] == -1);
   return 0;
 }
 '''

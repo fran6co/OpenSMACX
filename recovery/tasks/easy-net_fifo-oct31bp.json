@@ -1,0 +1,86 @@
+{
+  "author": "coordinator",
+  "base_revision": "d0dc80bfc23f77944ede809fbe44a9b43a2a7983",
+  "editable_files": [
+    "src/net_fifo.cpp",
+    "recovery/tests/test_net_fifo_actual_source_oct31bp.py",
+    "recovery/project.json"
+  ],
+  "evidence": [
+    "Owner packet: Test the retained uncompiled narrower-lifetime node proposal: declare the fresh node only in the nonempty allocation arm and preserve live head/tail reloads in the common publication block. Target the79/88 register-role residue without changing queue state or allocation failure behavior.",
+    "Up to24functions per packet,3explained spellings/function and6native TU compiles total. Batch independent candidates, protect prior exacts and retain structural discoveries.",
+    "Coordinator alone owns configuration/Git/preparation/recording/integration. Worker edits only assigned C++ and meaningful fixtures. No silent bug fixes, claim demotion or old-address stand-ins.",
+    "Read retained history in BO/next-wave-triage.json; conditional proposals need original evidence before editing. Uninspected functions are not exhausted."
+  ],
+  "intent": "Bounded bug-for-bug full-owner matching and evidence-backed structural recovery.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6502880,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6502848,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6502992,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6503088,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6503824,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6504304,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6503328,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6503568,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6504064,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6504480,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6504800,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6504640,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6504960,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "recovery/driver.json",
+  "task_id": "easy-net_fifo-oct31bp"
+}

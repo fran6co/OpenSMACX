@@ -524,18 +524,19 @@ void SelectPartWin::on_mouse_move(int x, int y) {
 // symbol    ?on_left_up@SelectPartWin@@UAEXHH@Z
 void SelectPartWin::on_left_up(int x, int y) {
     on_mouse_move(x, y);
-    if (field_4648_ == 0) {
+    if (field_4648_ != 0) {
+        if (WinPointerOwner3 == this) {
+            WinPointerOwner3 = 0;
+            on_lose_mouse_capture();
+        }
+        if (WinPointerOwner4 == this) WinPointerOwner4 = 0;
+    } else {
         field_2B80_ = -1;
         if (WinPointerOwner3 == this) {
             WinPointerOwner3 = 0;
             on_lose_mouse_capture();
         }
-    } else if (WinPointerOwner3 == this) {
-        WinPointerOwner3 = 0;
-        on_lose_mouse_capture();
-    }
-    if (WinPointerOwner4 == this) {
-        WinPointerOwner4 = 0;
+        if (WinPointerOwner4 == this) WinPointerOwner4 = 0;
     }
     release_modal();
 }
@@ -1723,11 +1724,11 @@ void DesignWin::setup_veh(int proto_id, int automatic) {
         protoArmorType_ = prototype.armor_id;
         protoAbilityFlags_ = prototype.ability_flags;
         protoReactorType_ = prototype.reactor_id;
-        protoAbilityID1_ = protoAbilityID2_ = -1;
+        protoAbilityIDs_[0] = protoAbilityIDs_[1] = -1;
         for (int ability = 0; ability < 29; ++ability) {
             if (protoAbilityFlags_ & (1u << ability)) {
-                if (protoAbilityID1_ < 0) protoAbilityID1_ = ability;
-                else if (protoAbilityID2_ < 0) protoAbilityID2_ = ability;
+                if (protoAbilityIDs_[0] < 0) protoAbilityIDs_[0] = ability;
+                else if (protoAbilityIDs_[1] < 0) protoAbilityIDs_[1] = ability;
             }
         }
         if ((prototype.flags & 2) && static_cast<int>(protoID_) >= 64) {
@@ -1752,7 +1753,7 @@ void DesignWin::setup_veh(int proto_id, int automatic) {
     if (automatic == 0) {
         protoChassisType_ = protoAbilityFlags_ = 0;
         protoReactorType_ = 1;
-        protoAbilityID1_ = protoAbilityID2_ = -1;
+        protoAbilityIDs_[0] = protoAbilityIDs_[1] = -1;
         field_14210_ = 0;
         return;
     }
@@ -1799,11 +1800,11 @@ void DesignWin::setup_veh(int proto_id, int automatic) {
     protoArmorType_ = DesignConsiderArmor;
     protoChassisType_ = DesignConsiderChassis;
     protoAbilityFlags_ = DesignConsiderAbilities;
-    protoAbilityID1_ = protoAbilityID2_ = -1;
+    protoAbilityIDs_[0] = protoAbilityIDs_[1] = -1;
     for (int bit = 0; bit < 29; ++bit) {
         if (protoAbilityFlags_ & (1u << bit)) {
-            if (protoAbilityID1_ < 0) protoAbilityID1_ = bit;
-            else if (protoAbilityID2_ < 0) protoAbilityID2_ = bit;
+            if (protoAbilityIDs_[0] < 0) protoAbilityIDs_[0] = bit;
+            else if (protoAbilityIDs_[1] < 0) protoAbilityIDs_[1] = bit;
         }
     }
     DesignConsiderOverride = 0;
@@ -2430,16 +2431,16 @@ void DesignWin::on_button_clicked(int button_id) {
     protoAbilityFlags_ = DesignConsiderAbilities;
     protoChassisType_ = static_cast<uint32_t>(DesignConsiderChassis);
     protoReactorType_ = static_cast<uint32_t>(DesignConsiderReactor);
-    protoAbilityID1_ = -1;
-    protoAbilityID2_ = -1;
+    protoAbilityIDs_[0] = -1;
+    protoAbilityIDs_[1] = -1;
     for (int ability = 0; ability < MaxAbilityNum; ++ability) {
         if ((protoAbilityFlags_ & (1u << ability)) == 0) {
             continue;
         }
-        if (protoAbilityID1_ < 0) {
-            protoAbilityID1_ = ability;
-        } else if (protoAbilityID2_ < 0) {
-            protoAbilityID2_ = ability;
+        if (protoAbilityIDs_[0] < 0) {
+            protoAbilityIDs_[0] = ability;
+        } else if (protoAbilityIDs_[1] < 0) {
+            protoAbilityIDs_[1] = ability;
         }
     }
 
@@ -2986,21 +2987,20 @@ void DesignWin::bubble_me_elmo2(char *a1, int a2, int a3) {
 
 void DesignWin::delete_abil(int a1) {
     if ((static_cast<uint32_t>(a1) & protoAbilityFlags_) != 0) {
-        // Keep the UI slots in named object state; the old seed's
-        // register-allocation observation does not apply to this body.
         protoAbilityFlags_ &= ~static_cast<uint32_t>(a1);
-        protoAbilityID1_ = -1;
-        protoAbilityID2_ = -1;
+        int *ability_ids = protoAbilityIDs_;
+        for (int reset = 0; reset < 2; ++reset) ability_ids[reset] = -1;
         int i = 0;
         do {
             if ((protoAbilityFlags_ & (1u << i)) != 0) {
-                if (protoAbilityID1_ < 0) {
-                    protoAbilityID1_ = i;
-                } else if (protoAbilityID2_ < 0) {
-                    protoAbilityID2_ = i;
+                for (int slot = 0; slot < 2; ++slot) {
+                    if (ability_ids[slot] < 0) {
+                        protoAbilityIDs_[slot] = i;
+                        break;
+                    }
                 }
             }
-            i++;
+            ++i;
         } while (i < 0x1d);
     }
 }
@@ -3442,8 +3442,8 @@ int DesignWin::exec(int faction_id, int prototype_id) {
     enemy_capabilities(normalized_faction);
     mineralCostFactor_ = static_cast<uint32_t>(
         cost_factor(static_cast<int>(factionID_), 1, -1));
-    protoAbilityID1_ = -1;
-    protoAbilityID2_ = -1;
+    protoAbilityIDs_[0] = -1;
+    protoAbilityIDs_[1] = -1;
     setup_veh(prototype_id, 1);
     proto_sort_2(static_cast<int>(factionID_));
 
@@ -3466,12 +3466,12 @@ int DesignWin::exec(int faction_id, int prototype_id) {
     if (!has_tech(Rules.tech_two_spec_abilities,
                   static_cast<int>(factionID_))) {
         int selected_abilities = 0;
-        if (protoAbilityID1_ >= 0) {
+        if (protoAbilityIDs_[0] >= 0) {
             ++selected_abilities;
         }
-        if (protoAbilityID2_ >= 0 &&
+        if (protoAbilityIDs_[1] >= 0 &&
             ++selected_abilities > 1) {
-            protoAbilityID2_ = -1;
+            protoAbilityIDs_[1] = -1;
         }
     }
 
@@ -3718,39 +3718,8 @@ void DesignWin::on_left_click(int xCoord, int yCoord) {
 // argument forwards 6 or 7 the same way. Always answers 1.
 int DesignWin::on_key_click(int a1, int a2) {
     TutorialWindow.reset();
+    int moved;
     switch (a2) {
-    case 0x0D:
-        on_button_clicked(4);
-        break;
-    case 0x1B:
-        on_button_clicked(8);
-        break;
-    case 0x21:
-    case 0x69: {
-        int moved = (prototype_stack_start_ + ProtoSortCount - 9) % ProtoSortCount;
-        prototype_stack_start_ = (moved < 0) ? 0 : moved;
-        draw_stack();
-        break;
-    }
-    case 0x22:
-    case 0x63: {
-        int moved = (prototype_stack_start_ + ProtoSortCount + 9) % ProtoSortCount;
-        prototype_stack_start_ = (moved < 0) ? 0 : moved;
-        draw_stack();
-        break;
-    }
-    case 0x23:
-    case 0x61: {
-        int bottom = ProtoSortCount - 10;
-        prototype_stack_start_ = (bottom < 0) ? 0 : bottom;
-        draw_stack();
-        break;
-    }
-    case 0x24:
-    case 0x67:
-        prototype_stack_start_ = 0;
-        draw_stack();
-        break;
     case 0x25:
     case 0x64:
         on_button_clicked(0x17);
@@ -3759,17 +3728,49 @@ int DesignWin::on_key_click(int a1, int a2) {
     case 0x66:
         on_button_clicked(0x18);
         break;
+    case 0x21:
+    case 0x69: {
+        moved = (prototype_stack_start_ + ProtoSortCount - 9) % ProtoSortCount;
+        prototype_stack_start_ = (moved < 0) ? 0 : moved;
+        draw_stack();
+        break;
+    }
+    case 0x22:
+    case 0x63: {
+        moved = (prototype_stack_start_ + ProtoSortCount + 9) % ProtoSortCount;
+        prototype_stack_start_ = (moved < 0) ? 0 : moved;
+        draw_stack();
+        break;
+    }
+    case 0x24:
+    case 0x67:
+        prototype_stack_start_ = 0;
+        draw_stack();
+        break;
+    case 0x23:
+    case 0x61: {
+        moved = ProtoSortCount - 10;
+        prototype_stack_start_ = (moved < 0) ? 0 : moved;
+        draw_stack();
+        break;
+    }
+    case 0x0D:
+        on_button_clicked(4);
+        break;
+    case 0x1B:
+        on_button_clicked(8);
+        break;
     }
     switch (a1) {
+    case 0x55:
+    case 0x75:
+        on_button_clicked(7);
+        break;
     case 0x4D:
     case 0x4F:
     case 0x6D:
     case 0x6F:
         on_button_clicked(6);
-        break;
-    case 0x55:
-    case 0x75:
-        on_button_clicked(7);
         break;
     }
     return 1;
@@ -3861,8 +3862,8 @@ static void redraw_design_picker_changes(DesignWin *window) {
 void DesignWin::check_abil() {
     if (Chassis[protoChassisType_].missile != 0) {
         protoAbilityFlags_ = 0;
-        protoAbilityID1_ = -1;
-        protoAbilityID2_ = -1;
+        protoAbilityIDs_[0] = -1;
+        protoAbilityIDs_[1] = -1;
         return;
     }
 
@@ -3881,16 +3882,16 @@ void DesignWin::check_abil() {
                     || !has_tech(Rules.tech_two_spec_abilities,
                                  static_cast<int>(factionID_))))) {
             protoAbilityFlags_ &= ~bit;
-            protoAbilityID1_ = -1;
-            protoAbilityID2_ = -1;
+            protoAbilityIDs_[0] = -1;
+            protoAbilityIDs_[1] = -1;
             for (int candidate = 0; candidate < 0x1D; ++candidate) {
                 if ((protoAbilityFlags_ & (1u << candidate)) == 0) {
                     continue;
                 }
-                if (protoAbilityID1_ < 0) {
-                    protoAbilityID1_ = candidate;
-                } else if (protoAbilityID2_ < 0) {
-                    protoAbilityID2_ = candidate;
+                if (protoAbilityIDs_[0] < 0) {
+                    protoAbilityIDs_[0] = candidate;
+                } else if (protoAbilityIDs_[1] < 0) {
+                    protoAbilityIDs_[1] = candidate;
                 }
             }
         }
@@ -3936,14 +3937,14 @@ void DesignWin::suggest_abil(int ability) {
     }
 
     protoAbilityFlags_ |= static_cast<uint32_t>(ability);
-    protoAbilityID1_ = -1;
-    protoAbilityID2_ = -1;
+    protoAbilityIDs_[0] = -1;
+    protoAbilityIDs_[1] = -1;
     for (int id = 0; id < 0x1D; ++id) {
         if ((protoAbilityFlags_ & (1u << id)) == 0) continue;
-        if (protoAbilityID1_ < 0) {
-            protoAbilityID1_ = id;
-        } else if (protoAbilityID2_ < 0) {
-            protoAbilityID2_ = id;
+        if (protoAbilityIDs_[0] < 0) {
+            protoAbilityIDs_[0] = id;
+        } else if (protoAbilityIDs_[1] < 0) {
+            protoAbilityIDs_[1] = id;
         }
     }
 }
@@ -4337,7 +4338,7 @@ void DesignWin::draw_special_1(int redraw) {
     Buffer::set_font(&font1_, 0, 0, 0);
     Buffer::set_text_color(0xE0, -1, 1, 1);
 
-    const int ability = protoAbilityID1_;
+    const int ability = protoAbilityIDs_[0];
     if (ability < 0) {
         StringTemp[0] = 0;
         strcat(StringTemp, label_get(0x64 / 4));
@@ -4386,7 +4387,7 @@ void DesignWin::draw_special_2(int redraw) {
     Buffer::set_font(&font1_, 0, 0, 0);
     Buffer::set_text_color(0xE0, -1, 1, 1);
 
-    const int ability = protoAbilityID2_;
+    const int ability = protoAbilityIDs_[1];
     if (ability < 0) {
         StringTemp[0] = 0;
         strcat(StringTemp, label_get(0x64 / 4));
@@ -4869,11 +4870,11 @@ void DesignWin::draw_vehicle(int redraw) {
     strcat(StringTemp, preset_names_[12]);
     strcat(StringTemp, "}");
     strcat(StringTemp, " ");
-    if (protoAbilityID1_ < 0) {
+    if (protoAbilityIDs_[0] < 0) {
         strcat(StringTemp, "-");
     } else {
         ability_names[0] = 0;
-        strcat(ability_names, StringTable.get(Ability[protoAbilityID1_].name));
+        strcat(ability_names, StringTable.get(Ability[protoAbilityIDs_[0]].name));
         strcat(StringTemp, ability_names);
         StringTemp[6] = 0;
         char *sp2 = strchr(ability_names, 0x20);
@@ -4892,11 +4893,11 @@ void DesignWin::draw_vehicle(int redraw) {
     strcat(StringTemp, preset_names_[13]);
     strcat(StringTemp, "}");
     strcat(StringTemp, " ");
-    if (protoAbilityID2_ < 0) {
+    if (protoAbilityIDs_[1] < 0) {
         strcat(StringTemp, "-");
     } else {
         ability_names[0] = 0;
-        strcat(ability_names, StringTable.get(Ability[protoAbilityID2_].name));
+        strcat(ability_names, StringTable.get(Ability[protoAbilityIDs_[1]].name));
         strcat(StringTemp, ability_names);
         StringTemp[6] = 0;
         char *sp3 = strchr(ability_names, 0x20);
@@ -5113,14 +5114,14 @@ void DesignWin::select_chassis() {
             }
         } else if ((protoAbilityFlags_ & 2) != 0) {
             protoAbilityFlags_ &= ~2U;
-            protoAbilityID1_ = -1;
-            protoAbilityID2_ = -1;
+            protoAbilityIDs_[0] = -1;
+            protoAbilityIDs_[1] = -1;
             for (int bit = 0; bit < 0x1d; ++bit) {
                 if ((protoAbilityFlags_ & (1U << bit)) == 0) continue;
-                if (protoAbilityID1_ < 0) {
-                    protoAbilityID1_ = bit;
-                } else if (protoAbilityID2_ < 0) {
-                    protoAbilityID2_ = bit;
+                if (protoAbilityIDs_[0] < 0) {
+                    protoAbilityIDs_[0] = bit;
+                } else if (protoAbilityIDs_[1] < 0) {
+                    protoAbilityIDs_[1] = bit;
                 }
             }
         }
@@ -5168,8 +5169,8 @@ void DesignWin::select_weapon() {
 
     if (static_cast<unsigned char>(
             Weapon[protoWeaponType_].offense_rating) > 'b') {
-        protoAbilityID1_ = -1;
-        protoAbilityID2_ = -1;
+        protoAbilityIDs_[0] = -1;
+        protoAbilityIDs_[1] = -1;
         protoAbilityFlags_ = 0;
     }
     if (protoAbilityFlags_ == 0 && protoWeaponType_ != previous_weapon) {
@@ -5968,7 +5969,7 @@ void DesignWin::select_special(int which) {
         }
         int already_selected = 0;
         for (int slot = 0; slot < 2; ++slot) {
-            const int selected = slot == 0 ? protoAbilityID1_ : protoAbilityID2_;
+            const int selected = slot == 0 ? protoAbilityIDs_[0] : protoAbilityIDs_[1];
             if (slot != which && selected == ability) {
                 already_selected = 1;
             }
@@ -6121,15 +6122,15 @@ void DesignWin::select_special(int which) {
         picked = -1;
     }
     if (which == 0) {
-        protoAbilityID1_ = picked;
+        protoAbilityIDs_[0] = picked;
     } else {
-        protoAbilityID2_ = picked;
+        protoAbilityIDs_[1] = picked;
     }
     protoAbilityFlags_ = 0;
     {
         uint32_t bits = 0;
         for (int slot = 0; slot < 2; ++slot) {
-            const int value = slot == 0 ? protoAbilityID1_ : protoAbilityID2_;
+            const int value = slot == 0 ? protoAbilityIDs_[0] : protoAbilityIDs_[1];
             if (value >= 0) {
                 bits |= 1u << static_cast<unsigned>(value);
             }

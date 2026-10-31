@@ -625,6 +625,8 @@ Scroll *Dialogs::on_scroll_delete(Scroll *scroll) {
     return scroll;
 }
 
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00612E80 0x00612EB0 0x00612EBC 0x00612E91
+// RECOVERY_ASSOCIATED: v1 switch_selector 0x00612E80 0x00612EBC 0x00612ECC 0x00612E8B
 /*
 Purpose: Forward a left click to the embedded SpriteBox only for kind 8;
          other kinds and out-of-range selectors are no-ops.

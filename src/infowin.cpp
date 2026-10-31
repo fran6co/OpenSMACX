@@ -646,16 +646,16 @@ void InfoWin::setup_text() {
 // RECOVERY_OBJECT: v2 0x00939EF8 0x00939F08 ?InfoPanelBounds@@3UtagRECT@@A 0x00458D60
 RECT InfoPanelBounds;
 
-// The original's `ConsoleGlobal + vbtable[1] + 0x4C8` is the GraphicWin
-// virtual base's Buffer DIB height. `pixel_height()` handles its top-down
-// sign convention through the real base subobject.
+// The original compares the cached interface width at 0x00939E5C, not the
+// live Win screen width, and reads the GraphicWin virtual base's DIB height
+// through ConsoleGlobal. `pixel_height()` handles its top-down sign.
 // ORIGINAL: 0x00458D60 ?UNK4@InfoWin@@QAEXXZ 0x00458D60-0x00458DBB
-// RECOVERY_BINDING: v1 {"evidence": ["image:0x00458D60-0x00458DBB", "git:3a14c197:src/recovered/units/00458d60.cpp", "source:src/console.h:GraphicWin virtual base", "source:src/buffer.h:Dib"], "reason": "The original stores one RECT at 0x00939EF8, sizing it from the screen-width copy and the Console GraphicWin Buffer DIB height; the source name describes the observed behavior, not the catalog placeholder UNK4."}
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x00458D60-0x00458DBB compares the cached interface-width object at 0x00939E5C", "git:3a14c197:src/recovered/units/00458d60.cpp", "source:src/game.h:IfaceScreenWidth", "source:src/console.h:GraphicWin virtual base", "source:src/buffer.h:Dib"], "reason": "The original stores one RECT at 0x00939EF8, selecting its extent from IfaceScreenWidth and the Console GraphicWin Buffer DIB height; the source name describes the observed behavior, not the catalog placeholder UNK4."}
 // symbol    ?configure_panel_bounds@InfoWin@@QAEXXZ
 void InfoWin::configure_panel_bounds() {
     int panel_width;
     int panel_height;
-    if (WinScreenWidth >= 1000) {
+    if (IfaceScreenWidth >= 1000) {
         panel_width = 250;
         panel_height = 212;
     } else {

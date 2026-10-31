@@ -142,15 +142,15 @@ Status: MISMATCH.
 int __cdecl is_bunged(int faction_id, int chassis_id, int weapon_id,
                        int armor_id, int ability_flags, int reactor_id) {
     if ((1u << faction_id) & (uint8_t)GameDataStateStorage.fields_.lock_masks_.enable_mask_) {
-        const ProtoBung *entry = &BungList[faction_id][0];
-        for (int i = 0; i < 0x40; ++i) {
-            if (entry->chassis_id == chassis_id && entry->weapon_id == weapon_id &&
-                entry->armor_id == armor_id &&
-                entry->ability_flags == (uint32_t)ability_flags &&
-                entry->reactor_id == reactor_id) {
+        int i = 0;
+        for (; i < 0x40; ++i) {
+            const ProtoBung &entry = BungList[faction_id][i];
+            if (entry.chassis_id == chassis_id && entry.weapon_id == weapon_id &&
+                entry.armor_id == armor_id &&
+                entry.ability_flags == (uint32_t)ability_flags &&
+                entry.reactor_id == reactor_id) {
                 return true;
             }
-            ++entry;
         }
     }
     return false;

@@ -368,7 +368,7 @@ def test_actual_mapped_bodies_and_compile_success_damage(compiler_name):
     compile_and_run(compiler)
     mutants = [
         (GROUP.replace("if (group == 0)", "if (group == 1)", 1), RIGHT_DOWN),
-        (GROUP.replace("index <= tool", "index < tool", 1), RIGHT_DOWN),
+        (GROUP.replace("tool >= index", "tool > index", 1), RIGHT_DOWN),
         (GROUP.replace("MainInterfaceGlobal.draw_edit_pane()",
                        "draw_edit_pane()", 1), RIGHT_DOWN),
         (GROUP, RIGHT_DOWN.replace("0x313", "0x312", 1)),

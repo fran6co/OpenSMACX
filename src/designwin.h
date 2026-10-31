@@ -462,8 +462,11 @@ class DesignWin : public GraphicWin, public SubInterface {
 
   uint32_t field_14210_;  // 0x14210
   uint32_t mineralCostFactor_;  // 0x14214
-  int protoAbilityID1_;  // 0x14218
-  int protoAbilityID2_;  // 0x1421C
+  // delete_abil 0x00439EF3..0x00439F05 walks two signed IDs with a
+  // four-byte stride, then writes the indexed member at 0x14218.
+  // Former scalar names protoAbilityID1_/protoAbilityID2_ denote [0]/[1].
+// RECOVERY_MEMBER: v1 DesignWin protoAbilityIDs_ 0x14218 0x00439EF3
+  int protoAbilityIDs_[2];  // 0x14218
   // setup_veh copies a prototype's 32-byte name here; select_name bounds
   // its copy to 32 and terminates byte 0x1423F. close clears the first byte.
   char prototype_name_[32];  // 0x14220

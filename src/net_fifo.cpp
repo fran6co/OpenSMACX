@@ -96,24 +96,22 @@ int NetFifo::add(void *data, unsigned long size, unsigned long key, int type,
 
   // The empty/nonempty choice precedes allocation. Subsequent stores use
   // the live tail again, including after payload allocation/copy.
-  NetFifoNode *node;
   if (head_ == 0) {
-    node = static_cast<NetFifoNode *>(mem_get(0x18));
-    head_ = node;
-    if (node == 0) {
+    head_ = static_cast<NetFifoNode *>(mem_get(0x18));
+    if (head_ == 0) {
       LeaveCriticalSection(&lock_);
       return 4;
     }
+    tail_ = head_;
   } else {
-    node = static_cast<NetFifoNode *>(mem_get(0x18));
-    tail_->next_ = node;
-    node = tail_->next_;
-    if (node == 0) {
+    NetFifoNode *const allocated = static_cast<NetFifoNode *>(mem_get(0x18));
+    tail_->next_ = allocated;
+    if (tail_->next_ == 0) {
       LeaveCriticalSection(&lock_);
       return 4;
     }
+    tail_ = tail_->next_;
   }
-  tail_ = node;
   tail_->next_ = 0;
 
   tail_->key_ = key;
@@ -158,22 +156,27 @@ int NetFifo::add(void *data, unsigned long size, unsigned long key, int type,
 int NetFifo::get(void *data, int key, int *type, int *len) {
   EnterCriticalSection(&lock_);
 
+  if (head_ == 0) {
+    LeaveCriticalSection(&lock_);
+    return 0;
+  }
   NetFifoNode *cur = head_;
+
+  NetFifoNode *prev = 0;
+  while (cur != 0) {
+    if (cur->key_ == static_cast<uint32_t>(key)) break;
+    prev = cur;
+    cur = cur->next_;
+    if (cur == 0) {
+      LeaveCriticalSection(&lock_);
+      return 0;
+    }
+  }
   if (cur == 0) {
     LeaveCriticalSection(&lock_);
     return 0;
   }
 
-  NetFifoNode *prev = 0;
-  while (cur->key_ != static_cast<uint32_t>(key)) {
-    NetFifoNode *next = cur->next_;
-    prev = cur;
-    if (next == 0) {
-      LeaveCriticalSection(&lock_);
-      return 0;
-    }
-    cur = next;
-  }
 
   if (len != 0) {
     *len = static_cast<int>(cur->data_size_);
@@ -198,7 +201,9 @@ int NetFifo::get(void *data, int key, int *type, int *len) {
     *type = cur->caller_value_;
   }
   int result = cur->result_;
-  free(cur);
+  if (cur != 0) {
+    free(cur);
+  }
   --count_;
   LeaveCriticalSection(&lock_);
   return result;
@@ -224,11 +229,11 @@ int NetFifo::get(void *data, unsigned int *key, int *type,
                  unsigned int *len) {
   EnterCriticalSection(&lock_);
 
-  NetFifoNode *node = head_;
-  if (node == 0) {
+  if (head_ == 0) {
     LeaveCriticalSection(&lock_);
     return 0;
   }
+  NetFifoNode *node = head_;
 
   if (len != 0) {
     *len = node->data_size_;
@@ -250,7 +255,9 @@ int NetFifo::get(void *data, unsigned int *key, int *type,
     *type = node->caller_value_;
   }
   int result = node->result_;
-  free(node);
+  if (node != 0) {
+    free(node);
+  }
   --count_;
   LeaveCriticalSection(&lock_);
   return result;
@@ -357,20 +364,26 @@ Status: Complete
 #endif
 int NetFifo::remove_key_caller(void *payload_buffer, unsigned int key, int caller_value, unsigned int *size_out) {
     EnterCriticalSection(&this->lock_);
-    NetFifo::NetFifoNode *node = this->head_;
-    if (node == 0) {
+    if (head_ == 0) {
         LeaveCriticalSection(&this->lock_);
         return 0;
     }
+    NetFifo::NetFifoNode *node = this->head_;
     NetFifo::NetFifoNode *previous = 0;
-    while (node->key_ != key || node->caller_value_ != caller_value) {
+    while (node != 0) {
+      if (node->key_ == key && node->caller_value_ == caller_value) break;
         previous = node;
         node = node->next_;
-        if (node == 0) {
-            LeaveCriticalSection(&this->lock_);
-            return 0;
-        }
+      if (node == 0) {
+        LeaveCriticalSection(&lock_);
+        return 0;
+      }
     }
+    if (node == 0) {
+      LeaveCriticalSection(&lock_);
+      return 0;
+    }
+
     if (size_out != 0) {
         *size_out = node->data_size_;
     }
@@ -389,7 +402,9 @@ int NetFifo::remove_key_caller(void *payload_buffer, unsigned int key, int calle
     } else {
         previous->next_ = node->next_;
     }
+    if (node != 0) {
     free(node);
+  }
     this->count_ -= 1;
     LeaveCriticalSection(&this->lock_);
     return result;
@@ -424,20 +439,26 @@ Status: Complete
 int NetFifo::remove_caller(void *payload_buffer, unsigned int *key_out, int caller_value, unsigned int *size_out) {
     EnterCriticalSection(&this->lock_);
 
-    NetFifo::NetFifoNode *node = this->head_;
-    if (node == 0) {
+    if (head_ == 0) {
         LeaveCriticalSection(&this->lock_);
         return 0;
     }
+    NetFifo::NetFifoNode *node = this->head_;
     NetFifo::NetFifoNode *previous = 0;
-    while (node->caller_value_ != caller_value) {
+    while (node != 0) {
+      if (node->caller_value_ == caller_value) break;
         previous = node;
         node = node->next_;
-        if (node == 0) {
-            LeaveCriticalSection(&this->lock_);
-            return 0;
-        }
+      if (node == 0) {
+        LeaveCriticalSection(&lock_);
+        return 0;
+      }
     }
+    if (node == 0) {
+      LeaveCriticalSection(&lock_);
+      return 0;
+    }
+
 
     if (size_out != 0) {
         *size_out = node->data_size_;
@@ -460,7 +481,9 @@ int NetFifo::remove_caller(void *payload_buffer, unsigned int *key_out, int call
         *key_out = node->key_;
     }
     const int result = node->result_;
+    if (node != 0) {
     free(node);
+  }
     this->count_ -= 1;
     LeaveCriticalSection(&this->lock_);
     return result;
@@ -488,6 +511,10 @@ Purpose: Peek one entry of this NetFifo by its key/caller-value pair: copy
 Return Value: the entry's result word, or 0 when no entry matches
 Status: Complete
 */
+// Native copied payloads call CRT memcpy; the original source policy is unknown.
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma function(memcpy)
+#endif
 int NetFifo::peek_key_caller(void *payload_buffer, unsigned int key, int caller_value, unsigned int *size_out) {
     EnterCriticalSection(&this->lock_);
 
@@ -496,13 +523,19 @@ int NetFifo::peek_key_caller(void *payload_buffer, unsigned int key, int caller_
         LeaveCriticalSection(&this->lock_);
         return 0;
     }
-    while (node->key_ != key || node->caller_value_ != caller_value) {
+    while (node != 0) {
+      if (node->key_ == key && node->caller_value_ == caller_value) break;
         node = node->next_;
-        if (node == 0) {
-            LeaveCriticalSection(&this->lock_);
-            return 0;
-        }
+      if (node == 0) {
+        LeaveCriticalSection(&lock_);
+        return 0;
+      }
     }
+    if (node == 0) {
+      LeaveCriticalSection(&lock_);
+      return 0;
+    }
+
     if (size_out != 0) {
         *size_out = node->data_size_;
     }
@@ -513,6 +546,10 @@ int NetFifo::peek_key_caller(void *payload_buffer, unsigned int key, int caller_
     LeaveCriticalSection(&this->lock_);
     return result;
 }
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma intrinsic(memcpy)
+#endif
+
 
 
 /*
@@ -533,6 +570,10 @@ Purpose: Peek one entry of this NetFifo by its caller value alone, handing
 Return Value: the entry's result word, or 0 when no entry matches
 Status: Complete
 */
+// Native copied payloads call CRT memcpy; the original source policy is unknown.
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma function(memcpy)
+#endif
 int NetFifo::peek_caller(void *payload_buffer, unsigned int *key_out, int caller_value, unsigned int *size_out) {
     EnterCriticalSection(&this->lock_);
 
@@ -541,13 +582,15 @@ int NetFifo::peek_caller(void *payload_buffer, unsigned int *key_out, int caller
         LeaveCriticalSection(&this->lock_);
         return 0;
     }
-    while (node->caller_value_ != caller_value) {
+    while (node != 0) {
+      if (node->caller_value_ == caller_value) break;
         node = node->next_;
-        if (node == 0) {
-            LeaveCriticalSection(&this->lock_);
-            return 0;
-        }
+      if (node == 0) {
+        LeaveCriticalSection(&lock_);
+        return 0;
+      }
     }
+
     if (node == 0) {
         LeaveCriticalSection(&this->lock_);
         return 0;
@@ -565,6 +608,10 @@ int NetFifo::peek_caller(void *payload_buffer, unsigned int *key_out, int caller
     LeaveCriticalSection(&this->lock_);
     return result;
 }
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma intrinsic(memcpy)
+#endif
+
 
 
 /*
@@ -593,13 +640,19 @@ int NetFifo::peek_key(void *data, unsigned int key, int *caller_value_out, int *
         LeaveCriticalSection(&lock_);
         return 0;
     }
-    while (node->key_ != static_cast<unsigned int>(key)) {
+    while (node != 0) {
+      if (node->key_ == static_cast<unsigned int>(key)) break;
         node = node->next_;
-        if (node == 0) {
-            LeaveCriticalSection(&lock_);
-            return 0;
-        }
+      if (node == 0) {
+        LeaveCriticalSection(&lock_);
+        return 0;
+      }
     }
+    if (node == 0) {
+      LeaveCriticalSection(&lock_);
+      return 0;
+    }
+
     if (size_out != 0) {
         *size_out = static_cast<int>(node->data_size_);
     }

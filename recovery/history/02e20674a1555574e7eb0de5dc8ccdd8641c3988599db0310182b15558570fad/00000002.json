@@ -1,0 +1,19 @@
+{
+  "event_id": "161ade5b99b50cf7def648a33b72e06aa09945d30ccafcdd3fa7fd1aefd42d42",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/councwin_owner_control_fixture.py"
+    ],
+    "evidence": [
+      "Retained actual-source fixture must expose existing game_state_ and Button.close to exercise pinned key handler without dropping its previous behavior controls."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "e0a372142792b9645730e28ec01b62df97005122822008a09b8655713e3dbde2",
+  "request_id": "councwin-retained-fixture-oct31bp",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:easy-councwin-oct31bp"
+}

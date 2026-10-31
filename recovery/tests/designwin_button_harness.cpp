@@ -110,12 +110,10 @@ public:
     uint32_t protoArmorType_;
     uint32_t protoAbilityFlags_;
     uint32_t protoReactorType_;
-    uint32_t protoAbilityID1_;
-    uint32_t protoAbilityID2_;
+    int protoAbilityIDs_[2];
     DesignWin() : field_CDC_(0), prototype_stack_start_(0), factionID_(0), protoID_(0),
         protoChassisType_(0), protoWeaponType_(0), protoArmorType_(0),
-        protoAbilityFlags_(0), protoReactorType_(0), protoAbilityID1_(0),
-        protoAbilityID2_(0) {}
+        protoAbilityFlags_(0), protoReactorType_(0) { protoAbilityIDs_[0] = protoAbilityIDs_[1] = 0; }
     int design_it() { event("design-it"); return 1; }
     void setup_veh(int, int) { event("setup-veh"); }
     void release_modal() { event("release"); }

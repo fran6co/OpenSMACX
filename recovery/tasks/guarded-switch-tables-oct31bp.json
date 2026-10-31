@@ -1,0 +1,79 @@
+{
+  "author": "coordinator",
+  "base_revision": "d0dc80bfc23f77944ede809fbe44a9b43a2a7983",
+  "editable_files": [
+    "src/dialogs.cpp",
+    "src/socialwin.cpp",
+    "src/alphasave.cpp",
+    "src/reportwin.cpp",
+    "src/setupwin.cpp",
+    "src/base.cpp",
+    "src/mapwin.cpp",
+    "src/prefwin.cpp"
+  ],
+  "evidence": [
+    "Native guard/dataflow proof, complete HIGHLOW cells and exactly decoded owner targets independently justify the source spans. See ignored switch-table-audit/report.json for reproducible observations.",
+    "These bindings establish original code/data associations only. No claims, candidate table equality, provider ownership, full executable discovery or linked/runtime acceptance are granted."
+  ],
+  "intent": "Separate independently guard-bounded switch target/selector data from mapped instructions without changing bodies or historical identities.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6368896,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4922880,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4226320,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4817280,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4817408,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4908000,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4812032,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5144144,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5144448,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4654112,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4790464,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "recovery/driver.json",
+  "task_id": "guarded-switch-tables-oct31bp"
+}

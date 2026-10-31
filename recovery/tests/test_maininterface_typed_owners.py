@@ -168,7 +168,8 @@ def test_actual_source_and_binding_damage(compiler_name):
         pytest.skip("host compiler unavailable")
     compile_and_run(compiler)
     mutants = [
-        (RESTORE.replace("&MainInterfaceGlobal", "this"), ALERT),
+        (RESTORE.replace("Buffer &canvas = MainInterfaceGlobal;",
+                         "Buffer &canvas = *this;"), ALERT),
         (RESTORE.replace("lower_animation_bounds_", "lower_frame_rect_", 1), ALERT),
         (RESTORE.replace("restore_clip()", "set_clip(&current_clip())"), ALERT),
         (RESTORE, ALERT.replace("alert_ = 0;", "alert_ = 1;")),

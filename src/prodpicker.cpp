@@ -311,6 +311,7 @@ void ProdPicker::on_left_double_click(int x, int y) {
 // ORIGINAL: 0x004945D0 ?on_button_clicked@ProdPicker@@QAEXH@Z 0x004945D0-0x004946A1
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004945d0.cpp"], "reason": "Recover product-selection button routing against ProdPicker selection and action members, then release modality and hide when the cancel action closes a modal picker."}
 // symbol    ?on_button_clicked@ProdPicker@@UAEXH@Z
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x004945D0 0x004946A4 0x004946CC 0x004945E5
 void ProdPicker::on_button_clicked(int button_id) {
     switch (button_id) {
     case 0:
@@ -361,11 +362,19 @@ void ProdPicker::on_button_clicked(int button_id) {
 void ProdPicker::on_scrolled(int, int position) {
     const int pageSize = column_count_;
     const int oldPosition = static_cast<int>(field_A77C_);
-    const int newPosition = pageSize * position;
-    field_A77C_ = static_cast<uint32_t>(newPosition);
+    // Native IMUL/SUB/JNS/reverse-SUB keeps the low word. In particular,
+    // an INT_MIN distance remains negative rather than becoming positive.
+    const uint32_t newPositionBits = static_cast<uint32_t>(pageSize)
+        * static_cast<uint32_t>(position);
+    const int newPosition = static_cast<int32_t>(newPositionBits);
+    field_A77C_ = newPosition;
 
-    int distance = newPosition - oldPosition;
-    if (distance < 0) distance = -distance;
+    int distance = static_cast<int32_t>(newPositionBits
+        - static_cast<uint32_t>(oldPosition));
+    if (distance < 0) {
+        distance = static_cast<int32_t>(static_cast<uint32_t>(oldPosition)
+            - newPositionBits);
+    }
     if (distance > pageSize) {
         redraw();
         soft_update();

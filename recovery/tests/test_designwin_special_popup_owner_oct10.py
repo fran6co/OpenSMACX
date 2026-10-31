@@ -69,7 +69,7 @@ static void popp(const char *script,const char *section,int zero,const char *pic
 }
 struct DesignWin {
  uint32_t factionID_,protoChassisType_,protoWeaponType_,protoArmorType_;
- uint32_t protoAbilityID1_,protoAbilityID2_,protoAbilityFlags_;
+ int protoAbilityIDs_[2]; uint32_t protoAbilityFlags_;
  void select_special(int which);
  void draw_special_2(int a){assert(a==0);repaints.push_back(2);}
  void draw_special_1(int a){assert(a==0);repaints.push_back(1);}
@@ -94,12 +94,12 @@ int main(){
   std::vector<int> expected{29};
   for(int ability=0;ability<29;++ability)if(ability!=(which==0?7:4))expected.push_back(ability);
   assert(options==expected && execs==1 && live==0 && closes==1);
-  if(pick<0){assert(d.protoAbilityID1_==4 && d.protoAbilityID2_==7 && d.protoAbilityFlags_==0x90 && repaints.empty());}
+  if(pick<0){assert(d.protoAbilityIDs_[0]==4 && d.protoAbilityIDs_[1]==7 && d.protoAbilityFlags_==0x90 && repaints.empty());}
   else {
    unsigned selected=pick>=29?~0u:unsigned(pick);
-   assert((which==0?d.protoAbilityID1_:d.protoAbilityID2_)==selected);
+   assert((which==0?d.protoAbilityIDs_[0]:d.protoAbilityIDs_[1])==selected);
    unsigned other=which==0?7:4;
-   assert((which==0?d.protoAbilityID2_:d.protoAbilityID1_)==other);
+   assert((which==0?d.protoAbilityIDs_[1]:d.protoAbilityIDs_[0])==other);
    assert(d.protoAbilityFlags_==((selected==~0u?0u:1u<<selected)|(1u<<other)));
    assert((repaints==std::vector<int>{2,1,3,4,5,6}));
   }

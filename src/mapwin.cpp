@@ -7674,6 +7674,7 @@ int MapWin::get_brighting(int x, int y, int corner) {
     return result;
 }
 
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00470420 0x00470538 0x00470548 0x00470483
 // ORIGINAL: 0x00470420 ?compute_lighting_table@MapWin@@QAEXXZ 0x00470420-0x00470536
 // RECOVERY_BINDING: v1 {"evidence":["The original 0x00470420..0x00470536 body fills four 49-byte tables using quick_root; its retired transcription remains in Git history","src/mapwin.cpp: MapLightingTable bounds 0x007F6688..0x007F674C and corner_light_value/get_brighting consumers","src/general.h: quick_root(int)","Pinned470420..470536 never consumes incoming ECX: first ECX access at470460 is MOV ECX,-3 before all quadrant dispatch; startup471033 makes the direct call without setting a receiver. The initializer is static and writes the shared lighting tables."],"reason":"Build the four 7-by-7 signed corner-light tables in their source-owned storage using the existing integer-root routine."}
 // symbol    ?compute_lighting_table@MapWin@@SAXXZ

@@ -147,6 +147,8 @@ int SocialWin::on_key_click(int, int key) {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x004B1E00 0x004B1E4C 0x004B1E5C 0x004B1E23
+// RECOVERY_ASSOCIATED: v1 switch_selector 0x004B1E00 0x004B1E5C 0x004B1E7B 0x004B1E1D
 // ORIGINAL: 0x004B1E00 ?on_button_clicked@SocialWin@@QAEXH@Z 0x004B1E00-0x004B1E49
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004b1e00.cpp", "image:terranx_original.exe:0x004B1E00", "Original instructions establish owner, bounded body and callback/state order; SocialWin reloads faction after social_upheaval and every later stateful call. GraphicWin dispatches through the real Buffer base.", "recovery/tasks/interface-contract-report-closure.json; bounded UI-five scope preserves original baseline"], "reason": "Recover the original in its genuine UI owner using actual members, globals and base/virtual calls. Retain seed evidence and historical obligations; this binding does not grant a current matching or runtime claim."}
 // symbol    ?on_button_clicked@SocialWin@@UAEXH@Z

@@ -195,16 +195,15 @@ struct DesignWin : Buffer {
     Caviar caviar_;
     uint32_t factionID_, protoID_, protoChassisType_, protoWeaponType_;
     uint32_t protoArmorType_, protoAbilityFlags_, protoReactorType_;
-    uint32_t protoAbilityID1_, protoAbilityID2_, field_CE8_;
+    int protoAbilityIDs_[2]; uint32_t field_CE8_;
     float scene_rotation_;
     char prototype_name_[32];
     RECT field_B2C_rect_;
     RECT stats_rect_;
     DesignWin() : factionID_(0), protoID_(0), protoChassisType_(0),
         protoWeaponType_(0), protoArmorType_(0), protoAbilityFlags_(0),
-        protoReactorType_(0), protoAbilityID1_(0xffffffffu),
-        protoAbilityID2_(0xffffffffu), field_CE8_(0), scene_rotation_(0.0f),
-        stats_rect_() { prototype_name_[0] = '\0'; }
+        protoReactorType_(0), field_CE8_(0), scene_rotation_(0.0f),
+        stats_rect_() { protoAbilityIDs_[0] = protoAbilityIDs_[1] = -1; prototype_name_[0] = '\0'; }
     void draw_weapon(int); void draw_armor(int); void draw_reactor(int); void draw_vehicle(int);
 };
 
@@ -307,7 +306,7 @@ static void initialize(DesignWin &window) {
     window.factionID_ = 2; window.protoID_ = 3; window.protoChassisType_ = 4;
     window.protoWeaponType_ = 2; window.protoArmorType_ = 5;
     window.protoAbilityFlags_ = 0x8000; window.protoReactorType_ = 2;
-    window.protoAbilityID1_ = 4; window.protoAbilityID2_ = 8;
+    window.protoAbilityIDs_[0] = 4; window.protoAbilityIDs_[1] = 8;
     window.prototype_name_[0] = '\0';
     Weapon[0].name = "unarmed";
     Weapon[2].name = "laser"; Weapon[2].offense_rating = 4; Weapon[2].mode = 1; Weapon[2].cost = 6;

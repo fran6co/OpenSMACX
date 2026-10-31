@@ -1234,6 +1234,7 @@ void __cdecl bases_reset(int region_id, int faction_id, int skip_occupied) {
     }
 }
 
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x004E7E50 0x004E7F64 0x004E7F74 0x004E7EF7
 /*
 Purpose: Sum one base's terrain yields into the selected Base's intake_2
          slots: walk the base's centre plus its radius offsets, wrap the x
@@ -1304,6 +1305,7 @@ extern "C" int __cdecl sub_4e7e50(int radius_index) {
     return sum;
 }
 
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x004E7F80 0x004E8094 0x004E80A4 0x004E8027
 /*
 Purpose: The sibling pass of sub_4e7e50: identical walk and tile gating,
          but each pass's yield is SUBTRACTED from the matching intake_2

@@ -1911,14 +1911,30 @@ int CouncWin::on_key_click(int, int key) {
 
     const int local_faction = ConsoleGlobal.faction_id_;
     const uint8_t human_factions = GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_;
+    const uint8_t local_bit = static_cast<uint8_t>(1u << (local_faction & 0x1f));
+    // Original 425BD4 tests GameState at the existing window's +0x30.
     const bool can_close =
-        (human_factions & (1u << (local_faction & 0x1f))) == 0 ||
-        ((GameDataStateStorage.fields_.game_more_preferences_ & 0x40) != 0 &&
-         (GameDataStateStorage.fields_.game_more_preferences_ & 0x1000) != 0 && !IsMultiplayerPBEM) ||
-        field_A24_ != 0 ||
-        (IsMultiplayerPBEM && CouncilPbemGate != 0 &&
-         leader_label_kind_[local_faction] != 0);
+        (human_factions & local_bit) == 0 ||
+        ((GameDataStateStorage.fields_.game_state_ & 0x40) != 0 &&
+         (GameDataStateStorage.fields_.game_state_ & 0x1000) != 0 && !IsMultiplayerPBEM) ||
+        field_A24_ != 0;
     if (!can_close) {
+        // Original 425C1F..425C98 completes the PBEM vote without the
+        // council_action test reached by the other close paths.
+        if (IsMultiplayerPBEM && CouncilPbemGate != 0 &&
+            leader_label_kind_[local_faction] != 0) {
+            release_modal();
+            TurnRedrawPending = 0;
+            CouncilDialogActive = 0;
+            for (int button = 0; button < 6; ++button) buttons_[button].close();
+            font1_.close();
+            font2_.close();
+            font3_.close();
+            font4_.close();
+            font5_.close();
+            do_all_draws();
+            return 1;
+        }
         for (int faction = 0; faction < MaxPlayerNum; ++faction) {
             const uint8_t current_humans = GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_;
             if (leader_label_kind_[faction] == 0 &&

@@ -98,7 +98,7 @@ struct DesignWin : Buffer {
     RECT vehicle_panel_rect_{11, 23, 118, 177};
     int field_CE8_ = 0, factionID_ = 0, protoID_ = 1;
     int protoChassisType_ = 3, protoWeaponType_ = 5, protoArmorType_ = 7;
-    int protoReactorType_ = 2, protoAbilityID1_ = -1, protoAbilityID2_ = -1;
+    int protoReactorType_ = 2; int protoAbilityIDs_[2] = {-1, -1};
     uint32_t protoAbilityFlags_ = 0x20;
     float scene_rotation_ = 0.0f, mineralCostFactor_ = 1.0f;
     char prototype_name_[128] = "";

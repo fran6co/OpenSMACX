@@ -70,7 +70,8 @@ def extract_definition(source: str, signature: str) -> str:
     raise AssertionError(f"unterminated body: {signature}")
 
 
-def test_council_keyboard_override_dispatches_through_base(tmp_path):
+@pytest.mark.parametrize("damage", [None, "wrong_state_owner", "pbem_action_fallthrough"])
+def test_council_keyboard_override_dispatches_through_base(tmp_path, damage):
     compiler = shutil.which("g++")
     if compiler is None:
         pytest.skip("host compiler unavailable")
@@ -82,6 +83,17 @@ def test_council_keyboard_override_dispatches_through_base(tmp_path):
     assert len(derived_decl) == 1 and "override" in derived_decl[0]
     source = (ROOT / "src/councwin.cpp").read_text(encoding="utf-8")
     body = extract_definition(source, "int CouncWin::on_key_click(int, int key)")
+    if damage == "wrong_state_owner":
+        assert "GameDataStateStorage.fields_.game_state_" in body
+        body = body.replace("GameDataStateStorage.fields_.game_state_",
+                            "GameDataStateStorage.fields_.game_more_preferences_")
+    elif damage == "pbem_action_fallthrough":
+        old = "            do_all_draws();\n            return 1;"
+        assert body.count(old) == 1
+        body = body.replace(old, "            do_all_draws();\n"
+                            "            if (!IsMultiplayerNet && field_A24_ == 1)\n"
+                            "                council_action(static_cast<int>(field_A1C_), static_cast<int>(field_A20_));\n"
+                            "            return 1;", 1)
     mask_header = (ROOT / "src/game_data_state_window.h").read_text(encoding="utf-8")
     mask_types = (extract_definition(mask_header, "struct GameDataLockMaskBytes") + ";\n" +
                   extract_definition(mask_header, "union GameDataLockMaskView") + ";\n")
@@ -93,10 +105,11 @@ const int MaxPlayerNum=8;
 std::vector<int> Events;
 struct { int faction_id_=1; } ConsoleGlobal;
 // MASK_TYPES
-struct FixtureGameFields { GameDataLockMaskView lock_masks_; uint32_t game_more_preferences_; };
+struct FixtureGameFields { GameDataLockMaskView lock_masks_; uint32_t game_more_preferences_, game_state_; };
 struct FixtureGameState { FixtureGameFields fields_; } GameDataStateStorage;
 uint32_t &LockEnableMask = GameDataStateStorage.fields_.lock_masks_.enable_mask_;
 uint32_t &GameMorePreferences = GameDataStateStorage.fields_.game_more_preferences_;
+uint32_t &GameState = GameDataStateStorage.fields_.game_state_;
 int IsMultiplayerPBEM, IsMultiplayerNet, CouncilPbemGate;
 int TurnRedrawPending=1, CouncilDialogActive=1, Votes;
 int council_get_vote(int faction,int proposal,int target) {
@@ -104,9 +117,10 @@ int council_get_vote(int faction,int proposal,int target) {
     if(faction==0)LockEnableMask|=1u<<2;
     return faction+10;
 }
-void do_all_draws(){Events.push_back(20);}
+void (*after_draw_hook)() = nullptr;
+void do_all_draws(){Events.push_back(20);if(after_draw_hook)after_draw_hook();}
 void council_action(int proposal,int target){assert(proposal==3&&target==2);Events.push_back(21);}
-struct Button{void hide(){Events.push_back(2);}};
+struct Button{void close(){Events.push_back(2);}};
 struct Font{void close(){Events.push_back(3);}};
 struct Win {
  virtual ~Win() {}
@@ -120,6 +134,8 @@ struct CouncWin:Win {
  void release_modal(){Events.push_back(1);}
 };
 // BODY
+static CouncWin *draw_window;
+static void mutate_after_draw(){draw_window->field_A24_=1;}
 int main(){
  CouncWin window; Win *base=&window;
  assert(base->key_click_event(0,65)==1 && Events.empty());
@@ -132,13 +148,33 @@ int main(){
  assert(Events.front()==1&&Events[7]==3&&Events[12]==20&&Events[13]==21);
  Events.clear(); IsMultiplayerNet=1;
  base->key_click_event(0,13); assert(Events.size()==13&&Events.back()==20);
+
+ // Original 425BD4 reads GameState, independently of GameMorePreferences.
+ Events.clear(); Votes=0; IsMultiplayerNet=0; IsMultiplayerPBEM=0;
+ window.field_A24_=0;
+ for(int i=0;i<8;++i)window.leader_label_kind_[i]=0;
+ LockEnableMask=1u<<1;
+ GameMorePreferences=0x1040; GameState=0;
+ base->key_click_event(0,13); assert(Events.empty()&&Votes==6);
+ Events.clear(); Votes=0; GameMorePreferences=0; GameState=0x1040;
+ draw_window=&window; after_draw_hook=mutate_after_draw;
+ base->key_click_event(0,13);
+ assert(Votes==0&&Events.size()==14&&Events.back()==21);
+
+ // Original PBEM-complete path returns before council_action, including
+ // when a draw callback changes the result state to one.
+ Events.clear(); Votes=0; window.field_A24_=0; GameState=0;
+ IsMultiplayerPBEM=1; CouncilPbemGate=1; window.leader_label_kind_[1]=1;
+ base->key_click_event(0,13);
+ assert(window.field_A24_==1&&Votes==0&&Events.size()==13&&Events.back()==20);
 }
 '''.replace("// MASK_TYPES", mask_types).replace("// DERIVED", derived_decl[0]).replace("// BODY", body)
     source_path = tmp_path / "key_click_hierarchy.cpp"
     binary = tmp_path / "key_click_hierarchy"
     source_path.write_text(fixture, encoding="utf-8")
     subprocess.run([compiler, "-std=c++11", "-Wall", "-Wextra", "-Werror", str(source_path), "-o", str(binary)], check=True)
-    subprocess.run([str(binary)], check=True)
+    result = subprocess.run([str(binary)], capture_output=True, text=True)
+    assert (result.returncode == 0) == (damage is None), result.stdout + result.stderr
 
 
 def test_dialogs_mouse_overrides_dispatch_through_shared_virtual_bases(tmp_path):

@@ -570,6 +570,8 @@ SetupWin::~SetupWin() {
     close();
 }
 
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x004AE3E0 0x004AE4A0 0x004AE4B4 0x004AE3FE
+// RECOVERY_ASSOCIATED: v1 switch_selector 0x004AE3E0 0x004AE4B4 0x004AE4D0 0x004AE3F8
 // ORIGINAL: 0x004AE3E0 ?on_key_click@SetupWin@@QAEHHH@Z 0x004AE3E0-0x004AE49D
 // RECOVERY_BINDING: v1 {"reason":"Recover the complete body in its genuine C++ owner, with real embedded members, shared virtual bases, lifecycle and parent operations. Compiler-generated overrides/adjustors replace executable-address or vbtable stand-ins; no current matching claim is granted.","evidence":["git:de91fffe:src/unrecovered/004ae3e0.cpp","image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","recovery/tasks/ui-eight-owner-coverage.json","Original entry 0x004ae3e0; physical VC6 COFF emitted symbol ?on_key_click@SetupWin@@UAEHHH@Z."]}
 // symbol    ?on_key_click@SetupWin@@UAEHHH@Z

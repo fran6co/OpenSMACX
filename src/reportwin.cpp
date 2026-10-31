@@ -84,6 +84,7 @@ void __cdecl diplo_unlock();
 // 7 security; 8 score. The retired explicit-receiver helper shifted these
 // categories and forwarded to original addresses. This is Win's genuine
 // slot-12 override, with the owned Buffer and ReportIf's category state.
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00496D00 0x00496DE4 0x00496E08 0x00496D35
 /*
 Purpose: Repaint the report window's selected page inside the topic panel.
 // ORIGINAL: 0x00496D00 ?on_redraw@ReportWin@@QAEXXZ 0x00496D00-0x00496DE4 FILE
@@ -1083,6 +1084,7 @@ void ReportWin::on_left_double_click(int x, int y) {
     }
 }
 
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00498180 0x004981D8 0x004981FC 0x00498199
 // ORIGINAL: 0x00498180 ?on_scrolled@ReportWin@@QAEXHH@Z 0x00498180-0x004981D8
 // RECOVERY_BINDING: v1 {"reason":"Home the ReportWin scrollbar callback using its declared position member and inherited redraw virtual.","evidence":["src/recovered/units/00498180.cpp records the original 0x00498180-0x004981D8 handler and page dispatch.","src/reportwin.h places field_C0FC_ at 0xC0FC; src/graphicwin.h identifies redraw as Win slot 62."]}
 // symbol    ?on_scrolled@ReportWin@@UAEXHH@Z
@@ -1112,6 +1114,7 @@ void ReportWin::on_scrolled(int, int pos) {
     }
 }
 
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00498200 0x00498258 0x0049827C 0x00498219
 // ORIGINAL: 0x00498200 ?on_scrolling@ReportWin@@QAEXHH@Z 0x00498200-0x00498258
 // RECOVERY_BINDING: v1 {"reason":"Home the ReportWin scroll-in-progress callback using the same source-owned position and redraw behavior.","evidence":["src/recovered/units/00498200.cpp records the original 0x00498200-0x00498258 handler and page dispatch.","src/reportwin.h places field_C0FC_ at 0xC0FC; src/graphicwin.h identifies redraw as Win slot 62."]}
 // symbol    ?on_scrolling@ReportWin@@UAEXHH@Z

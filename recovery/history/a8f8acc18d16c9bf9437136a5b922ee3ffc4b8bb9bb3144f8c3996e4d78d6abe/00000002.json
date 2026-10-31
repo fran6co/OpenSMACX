@@ -1,0 +1,24 @@
+{
+  "event_id": "5ee9b2a9b94ab65dd349bc4bd00b09966538366d05e63a339c3a924ded6acd9f",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_maininterface_buffer_adjustor_owner_oct10.py",
+      "recovery/tests/test_maininterface_call_order_oct22.py",
+      "recovery/tests/test_maininterface_click_symbols_oct10.py",
+      "recovery/tests/test_maininterface_map_metadata.py",
+      "recovery/tests/test_maininterface_redraw_complete.py",
+      "recovery/tests/test_maininterface_typed_owners.py"
+    ],
+    "evidence": [
+      "Authorize adaptation of existing owner actual-source fixtures to current equivalent source spellings, including inclusive-bound mutation tool>=index to tool>index. Preserve all behavioral oracles, original-path coverage and meaningful negative-control rejection; do not weaken tests to accept a regression."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "0b2333bfa6ba51d2ac85ed80e8b352d1ce18b89e12c606037ab94ef14ffc7132",
+  "request_id": "maininterface-existing-controls-oct31bp",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:easy-maininterface-oct31bp"
+}

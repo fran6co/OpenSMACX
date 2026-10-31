@@ -95,7 +95,7 @@ void register_iface_mode(int slot, SubInterface *interface_entry) {
 // TRIED: the 30-way switch is transcribed from the actual jump table (0x0045BBF8) and case table (0x0045BC24) read out of the image with pefile, not hand-decoded, so the VALUES it produces should be right even though the emitted `cmp`/`jmp` shape won't match a real jump table; find_font's three call sites each push one more dword than the declared 2-int signature consumes (`add esp,8` after three pushes) - the extra value is dropped rather than guessed at.
 void MainInterface::draw_edit_pane() {
     if (WinScreenWidth < 1024 || MainInterfaceGlobal.button_group_[0].field_84_ != 1002) return;
-    Buffer &canvas = *static_cast<Buffer *>(&MainInterfaceGlobal);
+    Buffer &canvas = MainInterfaceGlobal;
     RECT rect = editor_text_rect_;
     canvas.set_text_color(TextColourTable[22], TextColourTable[23], 1, 1);
     Font *style_one = find_font(10, 1);
@@ -175,10 +175,11 @@ void MainInterface::draw_edit_pane() {
 void MainInterface::redraw_complete() {
     if (IfaceIdToSlotStorage[ActiveIfaceIdStorage] != 0
         && MainInterfaceGlobal.field_4_ != 10) return;
-    Buffer &canvas = *static_cast<Buffer *>(&MainInterfaceGlobal);
-    char text[256] = "";
+    Buffer &canvas = MainInterfaceGlobal;
+    char text[256];
     RECT button_rect;
     canvas.set_text_color(0x65, -1, 1, 1);
+    text[0] = 0;
     strcat(text, label_get(0x68 / 4));
     CharUpperA(text);
     spot_.get_rect(5, 0, &button_rect);
@@ -196,7 +197,7 @@ void MainInterface::redraw_complete() {
     }
     const uint32_t label_ready = NetDaemonNet.primary_state_.trailing_words_[6];
     const int label = !IsMultiplayerNet || !(GameDataStateStorage.fields_.game_state_ & 2) || (GameDataStateStorage.fields_.net_turn_flags_ & 0x10)
-        || label_ready == 0xFF || !(label_ready & (1u << (ConsoleGlobal.faction_id_ & 31)))
+        || label_ready == 0xFF || !(label_ready & (1u << ConsoleGlobal.faction_id_))
         ? 0x68 / 4 : 0x3FC / 4;
     text[0] = 0;
     strcat(text, label_get(label));
@@ -509,7 +510,7 @@ void MainInterface::on_redraw() {
         restore_back(1);
         RECT rect = info_panel_frame_;
         const int state = button_group_[0].field_84_;
-        Buffer &canvas = *static_cast<Buffer *>(this);
+        Buffer &canvas = *this;
         switch (state) {
         case 1000:
         case 1001: {
@@ -642,14 +643,14 @@ void MainInterface::set_date(char *) {
     const int mode = IfaceIdToSlotStorage[ActiveIfaceIdStorage];
     if (mode != 0 && mode != 10
         && !(mode == 5 && (ReportIfGlobal.field_8_ == 4 || ReportIfGlobal.field_8_ == 5))) return;
-    Buffer &canvas = *static_cast<Buffer *>(this);
+    Buffer &canvas = *this;
     canvas.set_font(&font2_, 0, 0, 0);
     canvas.set_text_color(MessageWinTextColor, MessageWinTextBackground, 1, 1);
     RECT outline;
     UnionRect(&outline, &date_rect_, &rect3_);
     outline.left -= 3; outline.top -= 3;
     outline.right += 3; outline.bottom += 3;
-    Buffer &global_canvas = *static_cast<Buffer *>(&MainInterfaceGlobal);
+    Buffer &global_canvas = MainInterfaceGlobal;
     global_canvas.box_sprite(&outline, &InterfaceBoxStyles[21]);
     global_canvas.box_sprite(&date_rect_, &InterfaceBoxStyles[18]);
     const int x = date_rect_.left + 3;
@@ -1007,23 +1008,23 @@ void MainInterface::on_iface_right_click(int x, int y) {
 // symbol    ?on_iface_group_clicked@MainInterface@@UAEXHHH@Z
 void MainInterface::on_iface_group_clicked(int group, int, int selected) {
     if (IfaceIdToSlotStorage[ActiveIfaceIdStorage] != 0 || selected < 0) return;
-    const int value = selected - 1000;
+    selected -= 1000;
     if (group == 0) { on_redraw(); return; }
     if (group == 2) {
-        if (value >= 17) {
-            int tool = value - 17;
+        if (selected >= 17) {
+            int tool = selected - 17;
             for (int index = 0; index < MaxTerrainNum; ++index)
-                if (!Terraforming[index].bit && index <= tool) ++tool;
+                if (!Terraforming[index].bit && tool >= index) ++tool;
             ConsoleGlobal.editor_paints(tool + 6);
-        } else ConsoleGlobal.editor_paints(value - 11);
+        } else ConsoleGlobal.editor_paints(selected - 11);
         return;
     }
     if (group == 3) {
-        MapEditorBrushId = value - 36;
+        MapEditorBrushId = selected - 36;
         MainInterfaceGlobal.draw_edit_pane();
         return;
     }
-    if (value == 6) WorldClimateWorldWin.set_world_map();
+    if (selected == 6) WorldClimateWorldWin.set_world_map();
     else WorldClimateWorldWin.set_detail_map();
 }
 
@@ -1179,8 +1180,9 @@ int MainInterfaceTileFlag;
 // calls     0x005D8000 0x005DA860
 
 void MainInterface::restore_back(int a1) {
+    Buffer &canvas = MainInterfaceGlobal;
     if (a1 != 0) {
-        static_cast<Buffer *>(&MainInterfaceGlobal)->restore_clip();
+        canvas.restore_clip();
     }
 
     {
@@ -1189,7 +1191,7 @@ void MainInterface::restore_back(int a1) {
         int y = static_cast<int32_t>(static_cast<uint32_t>(r.top) + 1u);
         int w = static_cast<int32_t>(static_cast<uint32_t>(r.right) - 1u - static_cast<uint32_t>(x));
         int h = static_cast<int32_t>(static_cast<uint32_t>(r.bottom) - 1u - static_cast<uint32_t>(y));
-        static_cast<Buffer *>(&MainInterfaceGlobal)->tile(InterfaceBoxStyles[9].mask_, x, y, x, y, w, h);
+        canvas.tile(InterfaceBoxStyles[9].mask_, x, y, x, y, w, h);
     }
 
     {
@@ -1200,7 +1202,7 @@ void MainInterface::restore_back(int a1) {
         int y = static_cast<int32_t>(static_cast<uint32_t>(r.top) + 1u);
         int w = static_cast<int32_t>(static_cast<uint32_t>(r.right) - 1u - static_cast<uint32_t>(x));
         int h = static_cast<int32_t>(static_cast<uint32_t>(r.bottom) - 1u - static_cast<uint32_t>(y));
-        static_cast<Buffer *>(&MainInterfaceGlobal)->tile(InterfaceBoxStyles[9].mask_, x, y, x, y, w, h);
+        canvas.tile(InterfaceBoxStyles[9].mask_, x, y, x, y, w, h);
     }
 
     {
@@ -1211,7 +1213,7 @@ void MainInterface::restore_back(int a1) {
         int y = static_cast<int32_t>(static_cast<uint32_t>(r.top) + 1u);
         int w = static_cast<int32_t>(static_cast<uint32_t>(r.right) - 1u - static_cast<uint32_t>(x));
         int h = static_cast<int32_t>(static_cast<uint32_t>(r.bottom) - 1u - static_cast<uint32_t>(y));
-        static_cast<Buffer *>(&MainInterfaceGlobal)->tile(InterfaceBoxStyles[9].mask_, x, y, x, y, w, h);
+        canvas.tile(InterfaceBoxStyles[9].mask_, x, y, x, y, w, h);
     }
 
     {
@@ -1220,7 +1222,7 @@ void MainInterface::restore_back(int a1) {
         int y = static_cast<int32_t>(static_cast<uint32_t>(r.top) + 1u);
         int w = static_cast<int32_t>(static_cast<uint32_t>(r.right) - 1u - static_cast<uint32_t>(x));
         int h = static_cast<int32_t>(static_cast<uint32_t>(r.bottom) - 1u - static_cast<uint32_t>(y));
-        static_cast<Buffer *>(&MainInterfaceGlobal)->tile(InterfaceBoxStyles[9].mask_, x, y, x, y, w, h);
+        canvas.tile(InterfaceBoxStyles[9].mask_, x, y, x, y, w, h);
     }
 }
 

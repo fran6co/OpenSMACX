@@ -36,6 +36,7 @@ def adapt_body(body: str) -> str:
         .replace("GameDataStateStorage.fields_.governor_faction_", "GovernorFaction")
         .replace("GameDataStateStorage.fields_.turn_current_num_", "TurnCurrentNum")
         .replace("GameDataStateStorage.fields_.game_more_preferences_", "GameMorePreferences")
+        .replace("GameDataStateStorage.fields_.game_state_", "GameState")
         .replace("GameDataStateStorage.fields_.council_last_resolution_turn_[proposal]", "CouncilLastResolutionTurn[proposal]"))
 
 
@@ -249,7 +250,7 @@ KEY_HARNESS = r"""
 #include <vector>
 const int MaxPlayerNum = 8;
 uint32_t LockEnableMask = 0;
-uint32_t GameMorePreferences = 0;
+uint32_t GameMorePreferences = 0, GameState = 0;
 int IsMultiplayerPBEM = 0, IsMultiplayerNet = 0;
 int TurnRedrawPending = 1, CouncilDialogActive = 1, CouncilPbemGate = 0;
 struct { int faction_id_; } ConsoleGlobal;
@@ -266,7 +267,7 @@ void council_action(int proposal, int faction) {
 }
 void do_all_draws() { events.push_back("draws"); }
 struct Font { int id; void close() { events.push_back("font:" + std::to_string(id)); } };
-struct Button { int id; void hide() { events.push_back("button:" + std::to_string(id)); } };
+struct Button { int id; void close() { events.push_back("button:" + std::to_string(id)); } };
 struct CouncWin {
   uint32_t field_A1C_ = 3, field_A20_ = 5, field_A24_ = 0;
   uint32_t leader_label_kind_[8]{};

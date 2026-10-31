@@ -105,17 +105,16 @@ def _actual_parts():
     cpp = (root / "src/designwin.cpp").read_text(encoding="utf-8")
     header = (root / "src/designwin.h").read_text(encoding="utf-8")
     fields = {}
-    for name in ("protoAbilityFlags_", "protoAbilityID1_", "protoAbilityID2_"):
-        found = re.findall(rf"(?m)^\s*(?:uint32_t|int)\s+{name};\s*//\s*(0x[0-9A-Fa-f]+)\s*$", header)
+    for name, suffix in (("protoAbilityFlags_", ""), ("protoAbilityIDs_", r"\[2\]")):
+        pattern = rf"(?m)^\s*(?:uint32_t|int)\s+{name}{suffix};\s*//\s*(0x[0-9A-Fa-f]+)\s*$"
+        found = list(re.finditer(pattern, header))
         assert len(found) == 1, f"missing/duplicate actual field declaration: {name}"
-        line = re.search(rf"(?m)^\s*(?:uint32_t|int)\s+{name};\s*//\s*0x[0-9A-Fa-f]+\s*$", header)
-        assert line
-        fields[name] = (line.group(0).strip(), found[0])
+        fields[name] = (found[0].group(0).strip(), found[0].group(1))
 
     vehicle = _definition(cpp, "void DesignWin::draw_vehicle(int redraw)")
     branches = {
         name: _if_else(vehicle, f"if ({name} < 0)")
-        for name in ("protoAbilityID1_", "protoAbilityID2_")
+        for name in ("protoAbilityIDs_[0]", "protoAbilityIDs_[1]")
     }
     delete = _definition(cpp, "void DesignWin::delete_abil(int a1)")
     assert "BODY GOES HERE." not in delete
@@ -123,17 +122,13 @@ def _actual_parts():
 
 
 def _fixture(fields, branches, delete, *, unsigned_mutant=False) -> str:
-    field_lines = [fields[name][0] for name in (
-        "protoAbilityFlags_", "protoAbilityID1_", "protoAbilityID2_")]
+    field_lines = [fields[name][0] for name in ("protoAbilityFlags_", "protoAbilityIDs_")]
     assert fields["protoAbilityFlags_"][0].startswith("uint32_t ")
-    assert fields["protoAbilityID1_"][0].startswith("int ")
-    assert fields["protoAbilityID2_"][0].startswith("int ")
+    assert fields["protoAbilityIDs_"][0].startswith("int protoAbilityIDs_[2]")
     if unsigned_mutant:
-        field_lines = [
-            line.replace("int protoAbilityID1_", "uint32_t protoAbilityID1_")
-                 .replace("int protoAbilityID2_", "uint32_t protoAbilityID2_")
-            for line in field_lines
-        ]
+        field_lines = [line.replace("int protoAbilityIDs_", "uint32_t protoAbilityIDs_")
+                       for line in field_lines]
+        delete = delete.replace("int *ability_ids", "uint32_t *ability_ids")
 
     return r'''#include <cassert>
 #include <cstdint>
@@ -162,7 +157,7 @@ struct DesignWin {
   void render_slot_two();
 };
 
-''' + delete + "\nvoid DesignWin::render_slot_one() {\n  char ability_names[128] = {0};\n  StringTemp[0] = 0;\n  strcat(StringTemp, \"{ONE} \");\n" + branches["protoAbilityID1_"] + "\n}\n" + "void DesignWin::render_slot_two() {\n  char ability_names[128] = {0};\n  StringTemp[0] = 0;\n  strcat(StringTemp, \"{TWO} \");\n" + branches["protoAbilityID2_"] + r'''
+''' + delete + "\nvoid DesignWin::render_slot_one() {\n  char ability_names[128] = {0};\n  StringTemp[0] = 0;\n  strcat(StringTemp, \"{ONE} \");\n" + branches["protoAbilityIDs_[0]"] + "\n}\n" + "void DesignWin::render_slot_two() {\n  char ability_names[128] = {0};\n  StringTemp[0] = 0;\n  strcat(StringTemp, \"{TWO} \");\n" + branches["protoAbilityIDs_[1]"] + r'''
 }
 
 int main(int argc, char **argv) {
@@ -170,45 +165,45 @@ int main(int argc, char **argv) {
   assert(argc == 2);
   if (strcmp(argv[1], "delete") == 0) {
   win.protoAbilityFlags_ = 0x5;
-  win.protoAbilityID1_ = -1;
-  win.protoAbilityID2_ = -1;
+  win.protoAbilityIDs_[0] = -1;
+  win.protoAbilityIDs_[1] = -1;
   win.delete_abil(0x2);
   assert(win.protoAbilityFlags_ == 0x5);  // disjoint input is a no-op
-  assert(win.protoAbilityID1_ == -1 && win.protoAbilityID2_ == -1);
+  assert(win.protoAbilityIDs_[0] == -1 && win.protoAbilityIDs_[1] == -1);
 
   win.protoAbilityFlags_ = 0x25;  // bits 0, 2, and 5 survive
-  win.protoAbilityID1_ = 8;
-  win.protoAbilityID2_ = 9;
+  win.protoAbilityIDs_[0] = 8;
+  win.protoAbilityIDs_[1] = 9;
   win.delete_abil(0x4);            // clear bit 2, then pick lowest two
   assert(win.protoAbilityFlags_ == 0x21);
-  assert(win.protoAbilityID1_ == 0 && win.protoAbilityID2_ == 5);
+  assert(win.protoAbilityIDs_[0] == 0 && win.protoAbilityIDs_[1] == 5);
 
   win.protoAbilityFlags_ = 0x80000001u; // bit 31 remains, but is not a slot
   win.delete_abil(0x1);
   assert(win.protoAbilityFlags_ == 0x80000000u);
-  assert(win.protoAbilityID1_ == -1 && win.protoAbilityID2_ == -1);
+  assert(win.protoAbilityIDs_[0] == -1 && win.protoAbilityIDs_[1] == -1);
     return 0;
   }
 
   Ability.count = 0;
   if (strcmp(argv[1], "render-one") == 0) {
-    win.protoAbilityID1_ = -1;
-    win.protoAbilityID2_ = 4;
+    win.protoAbilityIDs_[0] = -1;
+    win.protoAbilityIDs_[1] = 4;
     win.render_slot_one();
     assert(strcmp(StringTemp, "{ONE} -") == 0);
     assert(Ability.count == 0); // this empty slot must not index Ability
-    win.protoAbilityID1_ = 3;
+    win.protoAbilityIDs_[0] = 3;
     win.render_slot_one();
     assert(Ability.count == 1 && Ability.reads[0] == 3);
     return 0;
   }
   if (strcmp(argv[1], "render-two") == 0) {
-    win.protoAbilityID1_ = 3;
-    win.protoAbilityID2_ = -1;
+    win.protoAbilityIDs_[0] = 3;
+    win.protoAbilityIDs_[1] = -1;
     win.render_slot_two();
     assert(strcmp(StringTemp, "{TWO} -") == 0);
     assert(Ability.count == 0); // this empty slot must not index Ability
-    win.protoAbilityID2_ = 4;
+    win.protoAbilityIDs_[1] = 4;
     win.render_slot_two();
     assert(Ability.count == 1 && Ability.reads[0] == 4);
     return 0;
@@ -252,9 +247,9 @@ def _compilers() -> list[str]:
 def test_actual_signed_fields_preserve_delete_behavior(tmp_path):
     fields, branches, delete = _actual_parts()
     assert fields["protoAbilityFlags_"][1] == "0x14208"
-    assert fields["protoAbilityID1_"][1] == "0x14218"
-    assert fields["protoAbilityID2_"][1] == "0x1421C"
-    assert "protoAbilityID1_ = -1" in delete or "protoAbilityID1_ = static_cast<uint32_t>(-1)" in delete
+    assert fields["protoAbilityIDs_"][1] == "0x14218"
+    assert "reset < 2" in delete
+    assert "slot < 2" in delete
     assert "i < 0x1d" in delete
 
     for compiler in _compilers():
