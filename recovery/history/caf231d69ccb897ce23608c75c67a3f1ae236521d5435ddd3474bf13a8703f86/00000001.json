@@ -1,0 +1,19 @@
+{
+  "event_id": "6278ac58dd8c564de64ba4710e4d07b5064587f351c53787783931abac2cf046",
+  "payload": {
+    "author": "recovery-coordinator",
+    "editable_files": [
+      "recovery/tests/test_basewin_focus_comparison_actual_source.py"
+    ],
+    "evidence": [
+      "Independently traced original register widths and branch flow; exercise actual product body and distinguish old translation. Preserve unsafe original paths; no bounds checks."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "actual-source-value-flow-controls-oct31au",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:owner-basewin-focused-id-oct31au"
+}

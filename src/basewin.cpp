@@ -3102,10 +3102,11 @@ void BaseWin::check_veh(int veh_id) {
         return;
     }
 
+    const uint32_t base_id = focusedBaseID_;
     const Veh &vehicle = Vehs[veh_id];
-    const Base &base = Bases[focusedBaseID_];
+    const Base &base = Bases[base_id];
     if ((vehicle.x == base.x && vehicle.y == base.y) ||
-        vehicle.home_base_id == static_cast<int16_t>(focusedBaseID_)) {
+        vehicle.home_base_id == base_id) {
         base_compute(1);
         redraw();
     }
