@@ -1,0 +1,24 @@
+{
+  "author": "coordinator",
+  "base_revision": "ca09faba634e840aca1d67d77b481ffb9228dc69",
+  "editable_files": [
+    "src/game.cpp",
+    "recovery/tests/test_net_turn_owner.py",
+    "recovery/tests/net_turn_harness.cpp"
+  ],
+  "evidence": [
+    "Original default checksum dispatch 5297E6..5297EF branches directly to529B0F; EDI remains local checksum cursor based93A008, whereas current source reads peer-row-zero93A510. Preserve original callback/order/read timing and all mappings/claims; no bug fixes or compiler-policy changes.",
+    "Coordinator reviews actual pin/COFF evidence before applying one replacement. Distinct local/peer-zero/peer-faction host witnesses plus deliberate wrong-object damage must discriminate. Require application compile/link and all prior owner exacts/references and outside-scope physical preservation; manual integration is not full automatic/game acceptance."
+  ],
+  "intent": "Recover original checksum storage references; independently qualify object extents only where original producers and access domains justify them.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5410976,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "object-boundaries-oct31ck"
+}
