@@ -2322,7 +2322,7 @@ void __cdecl prefs_use() {
 
 /*
 Purpose: Get the label string and concatenate it to the stringTemp buffer.
-// ORIGINAL: 0x005A5880 ?say_label@@YAXH@Z 0x005A5880-0x005A58AA SEMANTIC
+// ORIGINAL: 0x005A5880 ?say_label@@YAXH@Z 0x005A5880-0x005A58AA BYTE_EXACT
 // LEVER: `strcat_s` was calling the CRT's inlined byte-copy loop (29
 //        instructions) instead of the image's plain `call strcat`; `strcat`
 //        drops it to 10/14 MNEMONIC_ONLY.
@@ -2345,7 +2345,8 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl say_label(int label_offset) {
-    strcat(StringTemp, label_get(label_offset));
+    LPSTR label_value = Labels.strings_ptr[label_offset];
+    strcat(StringTemp, StringTable.get(label_value));
 }
 
 /*
