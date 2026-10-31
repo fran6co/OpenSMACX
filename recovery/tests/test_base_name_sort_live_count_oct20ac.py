@@ -10,6 +10,8 @@ from pathlib import Path
 import shutil
 import subprocess
 import tempfile
+import os
+from test_mapwin_cache import braced
 
 from match_recovery.source import Mode, read_file
 
@@ -95,14 +97,16 @@ def _actual_owner():
                 break
     else:
         raise AssertionError("source-reader owner has no balanced function body")
-    assert "GameDataStateStorage.fields_.base_current_count_ - 1" in body
-    assert "const int count" in body
-    assert "count - 1" in body  # entry/outer-pass guard remains intact
     assert "_stricmp" in body and "swap(cursor, cursor + 1)" in body
-    return body
+    source = (ROOT / "src/base.cpp").read_text()
+    helpers = "\n".join(braced(source, head) for head in (
+        "int base_yield_signed_bits(uint32_t value)", "int base_yield_sub(int left, int right)"))
+    return helpers + "\n" + body
 
 
 _FIXTURE = r'''#include <cassert>
+#include <stdint.h>
+#include <limits.h>
 #include <cctype>
 #include <cstring>
 #define __cdecl
@@ -188,10 +192,22 @@ static void test_count_reload_after_comparison() {
     assert(ids[0] == 0 && ids[1] == 1 && ids[2] == 2 && ids[3] == 3);
 }
 
+void test_wrapped_decrement_keeps_native_unsafe_entry() {
+    Bases[0].name_string = "a"; Bases[1].name_string = "b";
+    reset_controls(INT_MIN);
+    mutate_on_call = 1; count_after_mutation = 0;
+    int ids[] = {0, 1};
+    sub_4d5ff0(ids);
+    // Native DEC wraps INT_MIN to INT_MAX before its signed JLE. The
+    // controlled comparator shrinks the latch count before an unsafe walk.
+    assert(comparator_calls == 1);
+}
+
 int main() {
     test_stable_caseblind_order_and_multiple_passes();
     test_nonpositive_and_singleton_counts_do_not_read_nodes();
     test_count_reload_after_comparison();
+    test_wrapped_decrement_keeps_native_unsafe_entry();
     return 0;
 }
 '''
@@ -229,12 +245,29 @@ def test_base_name_sort_stale_bound_mutant_is_detected():
                  if shutil.which(compiler)]
     assert compilers, "neither GCC nor Clang is available"
     body = _actual_owner()
-    live_bound = "index < GameDataStateStorage.fields_.base_current_count_ - 1"
-    assert body.count(live_bound) == 1
-    stale_body = body.replace(live_bound, "index < count - 1", 1)
+    # Freeze only the final live-count read, independent of loop spelling.
+    field = "GameDataStateStorage.fields_.base_current_count_"
+    latch = body.rfind(field)
+    assert latch > body.index(SIGNATURE)
+    stale_body = body[:latch] + "cached_count" + body[latch + len(field):]
+    opening = stale_body.index("{", stale_body.index(SIGNATURE)) + 1
+    stale_body = stale_body[:opening] + "\n    const int cached_count = " + field + ";\n" + stale_body[opening:]
     with tempfile.TemporaryDirectory(prefix="osmx-base-sort-mutants-") as temp:
         for compiler in compilers:
             result = _compile_run(Path(temp), stale_body, compiler)
             assert result.returncode != 0, (
                 f"{compiler} did not detect the stale-bound mutant"
             )
+
+
+def test_pinned_wrapping_entry_and_live_sort_latch():
+    from capstone import Cs, CS_ARCH_X86, CS_MODE_32
+    from match_recovery.model import Span
+    from match_recovery.pe_coff import PeImage
+    image=PeImage(Path(os.environ['OPENSMACX_IMAGE']).read_bytes(),'01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf')
+    rows={i.address:(i.mnemonic,i.op_str)for i in Cs(CS_ARCH_X86,CS_MODE_32).disasm(image.read(Span(0x4D5FF0,0x4D606E)),0x4D5FF0)}
+    assert rows[0x4D5FFE]==('dec','eax')
+    assert rows[0x4D6004]==('jle','0x4d6067')
+    assert rows[0x4D6050]==('mov','eax, dword ptr [0x9a64cc]')
+    assert rows[0x4D6059]==('lea','ecx, [eax - 1]')
+    assert rows[0x4D605E]==('jl','0x4d6009')

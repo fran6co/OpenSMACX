@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdint.h>
 #define nullptr 0
 
 static const char *DefaultFontFace = "fixture";
@@ -21,6 +22,7 @@ static char written[32][256];
 struct Font {
     int init(const char *, int, int) { return 0; }
     int line_advance() const { return 14; }
+    int pixel_height() const { return 9; }
 };
 
 struct Buffer {

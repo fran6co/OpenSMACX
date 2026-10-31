@@ -1,0 +1,20 @@
+{
+  "event_id": "90e8fb2b79d407e276ed1881b86822b5dec6be452e83b605173cffde2c8eef47",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_base_veh_owner_actual_source_oct6.py"
+    ],
+    "evidence": [
+      "Initial combined current-root hostrun49PASS/1FAIL preserves known obsolete seed equality failure. Independent actual8seedrecord+pinnedimage+retainedCOFF reviewd338e2e4fcb0d2c7a922299cb617a0475f6bc66923d3868b5f57e1f3ad1767f7 proves one seedcodeendpoint omitted RET4E7F63; current4E7F64 is correct. Two separate4entry associatedtables are newly required, not falsely described as oldseedrange. Three blank oldsymbols now select observed ordinaryexternC symbols explicitly. All other historicalfields/lessonsequal.",
+      "Coordinator authorizes exactclosed migration checks and14negative owned-data bindingcontrols inexistingfixture. Preserve complete code+table evidence, originaltarget/guardownership, all other source/history/runtime assertions. This supersedes carrying knownbaselinefailure; no blanket field/symbol waiver or productannotationchange. Initial failurelog retained forreview."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "25ac358aeb1141cab81a5e2ee528e66b93a0bda2beae465a36ff2d936d43f66b",
+  "request_id": "reconcile-verified-historical-span-and-symbol-migrations",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:diplomacy-callchain-oct31cj"
+}

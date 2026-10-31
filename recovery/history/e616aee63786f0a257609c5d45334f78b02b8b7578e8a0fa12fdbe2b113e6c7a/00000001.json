@@ -1,0 +1,21 @@
+{
+  "event_id": "647be3a7f1a6a53dd9883f4965b6fb268e37fba78acb0ae7dd36ab53b7d6694d",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_diplomacy_map_callchain_oct31cj.py",
+      "src/faction.cpp"
+    ],
+    "evidence": [
+      "Both authorized native overlay hypotheses are terminal; two-call experiment cap exhausted. Primary retained66coreexacts but opaquepropose_trade_maps call mismatchesoriginalnet_maps boundary. Inlinehint removed historicalcanonicalsymbol and stillmissedboundary. Preserve both failed proposals; neither enters production and no claim is demoted.",
+      "Apply only pinned54F574 repeated PopupDialogFactionID assignment at entry to existing case7, after proposal_menu callback, keeping expandedmapbody/canonical/net_maps unchanged. Add actual-source callbackmutation/damage control that fails without this originalstatewrite. Fullproduction build/nativechecks are subsequentverification, not newexperimental calls. No originalhelperabstraction or TUboundary asserted."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "recover-independent-postmenu-state-write",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:diplomacy-callchain-oct31cj"
+}
