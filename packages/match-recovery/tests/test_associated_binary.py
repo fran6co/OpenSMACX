@@ -183,7 +183,7 @@ def multi_fixture(*, groups=2, original_change=None, candidate_change=None,
                   retarget_candidate=False, wrong_selector_anchor=False,
                   candidate_cell_targets=None, candidate_selector_values=None,
                   extra_tail=b"", extra_relocation=False,
-                  unknown_indirect=False):
+                  unknown_indirect=False, call_target=None):
     """Build two or more independently guarded selector/table groups."""
     if groups not in (2, 4):
         raise ValueError("synthetic multi-dispatch fixture supports two or four groups")
@@ -206,6 +206,8 @@ def multi_fixture(*, groups=2, original_change=None, candidate_change=None,
     if unknown_indirect:
         code.extend(b"\xff\xe0")
     else:
+        if call_target is not None:
+            code.extend(b"\xe8" + struct.pack("<i", call_target - (len(code) + 5)))
         code.append(0xC3)
     table_offsets, selector_offsets, gaps = [], [], []
     cursor = len(code)
@@ -799,3 +801,422 @@ def test_all_groups_and_envelope_remain_strict_under_candidate_damage(kwargs):
     obj, subject, span, image, bindings, targets = multi_fixture(**kwargs)
     report = compare_associated_code(obj, subject, span, image, bindings, targets)
     assert report["result"] != Result.PASS, (kwargs, report)
+
+
+def direct_multi_fixture(*, groups=2, omit=(), original_change=None,
+                         candidate_change=None, target_override=None,
+                         missing_highlow=None, cell_damage=None, cell_group=0,
+                         candidate_shift=0, truncate=False,
+                         clobber_group=None, unknown_indirect=False):
+    """Independent four-cell direct dispatches, with no selector-map bytes."""
+    assert groups in (1, 2, 4)
+    registers = (2, 0, 3, 1)  # EDX, EAX, EBX, ECX
+    body = bytearray()
+    starts, jumps, fields = [], [], []
+    for group, register in enumerate(registers[:groups]):
+        starts.append(len(body))
+        body.extend((0x83, 0xF8 | register, 3, 0x77, 0))
+        if group == clobber_group:
+            body.append(0x40 | register)  # INC guarded/index register
+        jumps.append(len(body))
+        body.extend((0xFF, 0x24, 0x85 | (register << 3)))
+        fields.append(len(body))
+        body.extend(bytes(4))
+    if unknown_indirect:
+        body.extend(b"\xff\xe0")
+    cases = []
+    for value in range(4):
+        cases.append(len(body))
+        body.extend(b"\xb8" + struct.pack("<I", value) + b"\xc3")
+    for start in starts:
+        body[start + 4] = cases[-1] - (start + 5)
+    body_size = len(body)
+    gap = b"\x90" * (-body_size % 4)
+    table_start = body_size + len(gap)
+    table_offsets = [table_start + group * 16 for group in range(groups)]
+    for field, offset in zip(fields, table_offsets):
+        struct.pack_into("<I", body, field, BASE + offset)
+    if original_change is not None:
+        offset, value = original_change
+        if isinstance(value, bytes):
+            body[offset:offset + len(value)] = value
+        else:
+            body[offset] = value
+    destinations = []
+    for group in range(groups):
+        # Reenter another group at its CMP, never after its range check.
+        values = [starts[group + 1] if group + 1 < groups else cases[0],
+                  cases[1], cases[2], cases[2]]
+        if target_override is not None and group == 0:
+            values[0] = target_override
+        destinations.append(values)
+    original = bytes(body) + gap + b"".join(
+        struct.pack("<I", BASE + value) for values in destinations for value in values)
+    fixups = [*fields, *(offset + cell * 4 for offset in table_offsets for cell in range(4))]
+    if missing_highlow is not None:
+        fixups.remove(missing_highlow)
+    pe = bytearray(1024)
+    pe[:2] = b"MZ"
+    struct.pack_into("<I", pe, 0x3C, 0x80)
+    pe[0x80:0x84] = b"PE\0\0"
+    struct.pack_into("<HHIIIHH", pe, 0x84, 0x14C, 1, 0, 0, 0, 224, 0)
+    struct.pack_into("<H", pe, 0x98, 0x10B)
+    struct.pack_into("<I", pe, 0x98 + 28, 0x400000)
+    struct.pack_into("<I", pe, 0x98 + 92, 16)
+    pe[0x178:0x180] = b".text\0\0\0"
+    struct.pack_into("<IIII", pe, 0x180, 512, 0x1000, 512, 512)
+    struct.pack_into("<I", pe, 0x178 + 36, 0x60000020)
+    pe[512:512 + len(original)] = original
+    struct.pack_into("<II", pe, 0x98 + 96 + 5 * 8, 0x1100, 8 + 2 * len(fixups))
+    struct.pack_into("<II", pe, 768, 0x1000, 8 + 2 * len(fixups))
+    for index, offset in enumerate(fixups):
+        struct.pack_into("<H", pe, 776 + 2 * index, 0x3000 + offset)
+    image_raw = bytes(pe)
+    pin = hashlib.sha256(image_raw).hexdigest()
+    image = PeImage(image_raw, pin)
+
+    data = bytearray(body)
+    for field in fields:
+        data[field:field + 4] = bytes(4)
+    if candidate_change is not None:
+        data[candidate_change[0]] = candidate_change[1]
+    data.extend(gap + b"\x90" * candidate_shift + bytes(16 * groups))
+    shifted_tables = [offset + candidate_shift for offset in table_offsets]
+    data.extend(b"\x90" * (-len(data) % 16))
+    if truncate:
+        data = data[:len(original) - 1]
+    locals_ = [(f"tbl{group}", offset) for group, offset in enumerate(shifted_tables)]
+    locals_ += [(f"dst{offset}", offset) for offset in sorted(set(sum(destinations, [])))]
+    indices = {name: index + 3 for index, (name, _) in enumerate(locals_)}
+    relocations = [(field, indices[f"tbl{group}"], 6) for group, field in enumerate(fields)]
+    for group, offset in enumerate(shifted_tables):
+        for cell, destination in enumerate(destinations[group]):
+            relocations.append((offset + cell * 4, indices[f"dst{destination}"], 6))
+    cell_at = len(fields) + cell_group * 4
+    if cell_damage == "missing":
+        del relocations[cell_at]
+    elif cell_damage == "duplicate":
+        relocations.append(relocations[cell_at])
+    elif cell_damage == "relative":
+        offset, index, _ = relocations[cell_at]
+        relocations[cell_at] = (offset, index, 20)
+    elif cell_damage == "nonlocal":
+        offset, _, kind = relocations[cell_at]
+        relocations[cell_at] = (offset, 0, kind)
+    elif cell_damage == "retarget":
+        offset, _, kind = relocations[cell_at]
+        relocations[cell_at] = (offset, indices[f"dst{cases[1]}"], kind)
+    symbols = bytearray(b"_f\0\0\0\0\0\0" + struct.pack("<IhHBB", 0, 1, 0x20, 2, 0))
+    symbols.extend(b".text\0\0\0" + struct.pack("<IhHBB", 0, 1, 0, 3, 1))
+    symbols.extend(struct.pack("<IHHIHB3x", len(data), len(relocations), 0, 0, 0, 2))
+    for name, offset in locals_:
+        symbols.extend(name.encode().ljust(8, b"\0") + struct.pack("<IhHBB", offset, 1, 0, 6, 0))
+    relocation_blob = b"".join(struct.pack("<IIH", *row) for row in relocations)
+    relocation_at = 60 + len(data)
+    symbol_at = relocation_at + len(relocation_blob)
+    header = struct.pack("<HHIIIHH", 0x14C, 1, 0, symbol_at, 3 + len(locals_), 0, 0)
+    section = b".text\0\0\0" + struct.pack("<IIIIIIHHI", 0, 0, len(data), 60,
+        relocation_at, 0, len(relocations), 0, 0x60501020)
+    obj = Coff(header + section + data + relocation_blob + symbols + struct.pack("<I", 4))
+    owner = Origin(pin, "pe:va", BASE)
+    bindings = tuple(AssociatedDataBinding(owner, Span(BASE + offset, BASE + offset + 16),
+        "switch_targets", Origin(pin, "pe:va", BASE + jumps[group]), "fixture.cpp", group + 1)
+        for group, offset in enumerate(table_offsets) if group not in omit)
+    return obj, obj.function("_f"), Span(BASE, BASE + body_size), image, bindings, {}
+
+
+@pytest.mark.parametrize("groups", [2, 4])
+def test_multiple_independent_direct_tables_prove_all_guards_and_cells(groups):
+    obj, subject, span, image, bindings, targets = direct_multi_fixture(groups=groups)
+    report = compare_associated_code(obj, subject, span, image, bindings, targets)
+    assert report["result"] == Result.PASS, report
+    assert report["source_body_span"] == {"start": span.start, "end": span.end}
+    assert report["comparison_span"]["end"] == bindings[-1].span.end
+    assert len(report["dispatch_extents"]) == groups
+    assert all(row["mode"] == "direct-index" and row["target_count"] == 4
+               and row["selector_count"] == 0 for row in report["dispatch_extents"])
+    assert report["linked_selection"] == report["runtime"] == Result.UNKNOWN
+
+
+@pytest.mark.parametrize("group", range(4))
+def test_direct_group_omission_cannot_borrow_another_groups_proof(group):
+    obj, subject, span, image, bindings, targets = direct_multi_fixture(groups=4, omit=(group,))
+    with pytest.raises(ValueError, match="cover every indexed"):
+        compare_associated_code(obj, subject, span, image, bindings, targets)
+
+
+@pytest.mark.parametrize("group", range(4))
+@pytest.mark.parametrize("damage", ["signed", "bound", "clobber", "missing"])
+def test_each_direct_group_requires_its_own_unsigned_unchanged_index(group, damage):
+    change = (None if damage == "clobber" else
+              (group * 12, b"\x90" * 3) if damage == "missing" else
+              (group * 12 + (3 if damage == "signed" else 2),
+               0x7F if damage == "signed" else 2))
+    obj, subject, span, image, bindings, targets = direct_multi_fixture(
+        groups=4, original_change=change, clobber_group=group if damage == "clobber" else None)
+    with pytest.raises(ValueError, match="guard|index"):
+        compare_associated_code(obj, subject, span, image, bindings, targets)
+
+
+@pytest.mark.parametrize("target", [15, 17])  # second guard's branch / indexed jump
+def test_direct_table_edge_cannot_bypass_another_groups_range_check(target):
+    obj, subject, span, image, bindings, targets = direct_multi_fixture(target_override=target)
+    with pytest.raises(ValueError, match="unambiguous unsigned dominating guard"):
+        compare_associated_code(obj, subject, span, image, bindings, targets)
+
+
+@pytest.mark.parametrize("site", [8, 20, *range(48, 80, 4)])
+def test_direct_anchor_and_every_original_cell_require_highlow(site):
+    obj, subject, span, image, bindings, targets = direct_multi_fixture(missing_highlow=site)
+    with pytest.raises(ValueError, match="HIGHLOW"):
+        compare_associated_code(obj, subject, span, image, bindings, targets)
+
+
+@pytest.mark.parametrize("target,reason", [(25, "instruction boundary"), (1000, "escapes")])
+def test_direct_cell_targets_are_bounded_instruction_entries(target, reason):
+    obj, subject, span, image, bindings, targets = direct_multi_fixture(target_override=target)
+    with pytest.raises(ValueError, match=reason):
+        compare_associated_code(obj, subject, span, image, bindings, targets)
+
+
+@pytest.mark.parametrize("damage", ["missing", "duplicate", "relative", "nonlocal"])
+@pytest.mark.parametrize("group", range(4))
+def test_direct_candidate_cell_evidence_is_mandatory_for_pass(damage, group):
+    obj, subject, span, image, bindings, targets = direct_multi_fixture(
+        groups=4, cell_damage=damage, cell_group=group)
+    reason = {"missing": "COFF relocation", "duplicate": "overlapping",
+              "relative": "ABS32", "nonlocal": "same-section"}[damage]
+    with pytest.raises(ValueError, match=reason):
+        compare_associated_code(obj, subject, span, image, bindings, targets)
+
+
+@pytest.mark.parametrize("kwargs", [{"candidate_change": (25, 9)}, {"cell_damage": "retarget"}])
+def test_direct_candidate_code_or_cell_damage_is_measured_fail(kwargs):
+    obj, subject, span, image, bindings, targets = direct_multi_fixture(**kwargs)
+    report = compare_associated_code(obj, subject, span, image, bindings, targets)
+    assert report["result"] == Result.FAIL
+
+
+@pytest.mark.parametrize("groups", [2, 4])
+def test_complete_shifted_direct_tables_are_boundary_fail_not_new_layout(groups):
+    obj, subject, span, image, bindings, targets = direct_multi_fixture(
+        groups=groups, candidate_shift=4)
+    report = compare_associated_code(obj, subject, span, image, bindings, targets)
+    assert report["result"] == report["boundary"] == Result.FAIL
+    assert report["bytes"] == report["references"] == Result.UNKNOWN
+    assert report["candidate_relocations_outside_original"]
+    assert report["comparison_span"]["end"] == bindings[-1].span.end
+    assert any("layout remains unproved" in text for text in report["limitations"])
+
+
+@pytest.mark.parametrize("kwargs", [{"truncate": True},
+    {"candidate_shift": 4, "cell_damage": "duplicate"}])
+def test_direct_boundary_failure_does_not_hide_short_or_malformed_candidates(kwargs):
+    obj, subject, span, image, bindings, targets = direct_multi_fixture(**kwargs)
+    with pytest.raises(ValueError, match="ABS32|out-of-bound relocation"):
+        compare_associated_code(obj, subject, span, image, bindings, targets)
+
+
+@pytest.mark.parametrize("kwargs", [{"original_change": (3, 0x7F)},
+    {"target_override": 15}, {"missing_highlow": 48}, {"omit": (1,)}])
+def test_shifted_direct_candidate_never_bypasses_original_proofs(kwargs):
+    obj, subject, span, image, bindings, targets = direct_multi_fixture(candidate_shift=4, **kwargs)
+    with pytest.raises(ValueError):
+        compare_associated_code(obj, subject, span, image, bindings, targets)
+
+
+def test_direct_population_still_refuses_unmodeled_indirect_jumps():
+    obj, subject, span, image, bindings, targets = direct_multi_fixture(unknown_indirect=True)
+    with pytest.raises(ValueError, match="unmodeled indirect JMP"):
+        compare_associated_code(obj, subject, span, image, bindings, targets)
+
+
+def test_partial_selector_population_does_not_become_a_mixed_direct_population():
+    obj, subject, span, image, bindings, targets = multi_fixture(omit=(1,))
+    with pytest.raises(ValueError, match="require one adjacent selector"):
+        compare_associated_code(obj, subject, span, image, bindings, targets)
+
+
+def test_omitting_every_selector_does_not_turn_mapped_indices_into_direct_indices():
+    obj, subject, span, image, bindings, targets = multi_fixture(omit=(1, 3))
+    with pytest.raises(ValueError):
+        compare_associated_code(obj, subject, span, image, bindings, targets)
+
+
+def anchor_fixture(mode):
+    if mode == "mapped-single":
+        return fixture()
+    if mode == "mapped-multi":
+        return multi_fixture()
+    return direct_multi_fixture(groups=1 if mode == "direct-single" else 2)
+
+
+def changed_anchor(obj, subject, binding, damage):
+    """Mutate disposable synthetic COFF metadata, never qualified inputs."""
+    raw = bytearray(obj.raw_data)
+    section_header = 20 + (subject.section - 1) * 40
+    data_at, relocation_at = struct.unpack_from("<II", raw, section_header + 20)
+    symbol_at, = struct.unpack_from("<I", raw, 8)
+    offset = binding.evidence.address - binding.owner.address
+    instruction = next(_ENGINE.disasm(obj.sections[subject.section - 1].data[offset:], offset))
+    field = offset + instruction.disp_offset
+    relocations = obj.sections[subject.section - 1].relocations
+    position, (_, target, _) = next((n, row) for n, row in enumerate(relocations) if row[0] == field)
+    symbol = obj.symbols[target]
+    if damage == "storage":
+        raw[symbol_at + target * 18 + 16] = 2  # external, not a compiler-local label
+    elif damage == "section":
+        struct.pack_into("<h", raw, symbol_at + target * 18 + 12, 0)
+    elif damage == "index":
+        struct.pack_into("<I", raw, relocation_at + position * 10 + 4, subject.index)
+        struct.pack_into("<I", raw, data_at + field, symbol.value)
+    elif damage == "missing":
+        struct.pack_into("<H", raw, relocation_at + position * 10 + 8, 0)
+    elif damage == "duplicate":
+        copied = raw[relocation_at + position * 10:relocation_at + (position + 1) * 10]
+        raw[symbol_at:symbol_at] = copied
+        struct.pack_into("<I", raw, 8, symbol_at + 10)
+        struct.pack_into("<H", raw, section_header + 32, len(relocations) + 1)
+        # These fixtures place the root section definition's auxiliary record at2.
+        struct.pack_into("<H", raw, symbol_at + 10 + 2 * 18 + 4, len(relocations) + 1)
+    elif damage == "local-addend":
+        struct.pack_into("<I", raw, symbol_at + target * 18 + 8, symbol.value - 4)
+        struct.pack_into("<I", raw, data_at + field, 4)
+        raw[symbol_at + target * 18:symbol_at + target * 18 + 8] = b"variant\0"
+    else:
+        raise AssertionError(damage)
+    return Coff(bytes(raw))
+
+
+@pytest.mark.parametrize("mode", ["direct-single", "direct-multi", "mapped-single", "mapped-multi"])
+@pytest.mark.parametrize("damage", ["storage", "section", "index", "missing", "duplicate"])
+def test_unsupported_candidate_anchors_never_borrow_equal_address_proof(mode, damage):
+    obj, subject, span, image, bindings, targets = anchor_fixture(mode)
+    obj = changed_anchor(obj, subject, bindings[0], damage)
+    if damage in ("storage", "index"):
+        # These changes preserve every resolved operand byte. They used to
+        # pass solely because the physical anchor's exception was discarded.
+        with pytest.raises(ValueError, match="anchor proof is unsupported"):
+            compare_associated_code(obj, obj.function(subject.name), span, image, bindings, targets)
+    else:
+        try:
+            report = compare_associated_code(obj, obj.function(subject.name), span, image, bindings, targets)
+        except ValueError:
+            return
+        assert report["result"] != Result.PASS
+        assert report["candidate_anchors"] == Result.UNKNOWN
+        assert report["unsupported_candidate_anchors"]
+
+
+@pytest.mark.parametrize("mode", ["direct-single", "direct-multi", "mapped-single", "mapped-multi"])
+def test_legitimate_local_anchor_names_and_addends_still_pass(mode):
+    obj, subject, span, image, bindings, targets = anchor_fixture(mode)
+    obj = changed_anchor(obj, subject, bindings[0], "local-addend")
+    report = compare_associated_code(obj, obj.function(subject.name), span, image, bindings, targets)
+    assert report["result"] == Result.PASS
+
+
+def test_known_code_mismatch_retains_fail_and_unsupported_anchor_dimension():
+    obj, subject, span, image, bindings, targets = direct_multi_fixture(candidate_change=(25, 9))
+    obj = changed_anchor(obj, subject, bindings[0], "storage")
+    report = compare_associated_code(obj, obj.function(subject.name), span, image, bindings, targets)
+    assert report["result"] == report["bytes"] == Result.FAIL
+    assert report["candidate_anchors"] == report["references"] == Result.UNKNOWN
+    assert "local same-section" in report["unsupported_candidate_anchors"][0]["reason"]
+
+
+@pytest.mark.parametrize("groups", [1, 2, 4])
+@pytest.mark.parametrize("entry", ["branch", "dispatch"])
+def test_direct_call_cannot_enter_after_another_dispatchs_range_check(groups, entry):
+    guard = 12 if groups > 1 else 0
+    target = guard + (3 if entry == "branch" else 5)
+    call = groups * 12 + 6
+    obj, subject, span, image, bindings, targets = direct_multi_fixture(
+        groups=groups, original_change=(call, b"\xe8" + struct.pack("<i", target - (call + 5))))
+    with pytest.raises(ValueError, match="dominating guard"):
+        compare_associated_code(obj, subject, span, image, bindings, targets)
+
+
+@pytest.mark.parametrize("groups", [1, 2, 4])
+@pytest.mark.parametrize("entry", ["compare", "ordinary-case"])
+def test_direct_call_to_range_check_or_ordinary_code_does_not_blanket_refuse(groups, entry):
+    guard = 12 if groups > 1 else 0
+    target = guard if entry == "compare" else groups * 12 + 12
+    call = groups * 12 + 6
+    obj, subject, span, image, bindings, targets = direct_multi_fixture(
+        groups=groups, original_change=(call, b"\xe8" + struct.pack("<i", target - (call + 5))))
+    assert compare_associated_code(obj, subject, span, image, bindings, targets)["result"] == Result.PASS
+
+
+@pytest.mark.parametrize("target", [24, 35])  # second JA / indexed JMP
+@pytest.mark.parametrize("groups", [2, 4])
+def test_selector_paired_dispatch_also_refuses_direct_call_guard_bypass(groups, target):
+    obj, subject, span, image, bindings, targets = multi_fixture(groups=groups, call_target=target)
+    with pytest.raises(ValueError, match="dominating guard"):
+        compare_associated_code(obj, subject, span, image, bindings, targets)
+
+
+@pytest.mark.parametrize("groups", [2, 4])
+@pytest.mark.parametrize("entry", ["compare", "ordinary-return"])
+def test_selector_pairs_allow_direct_calls_to_guard_or_ordinary_return(groups, entry):
+    target = 21 if entry == "compare" else groups * 21 + 5
+    obj, subject, span, image, bindings, targets = multi_fixture(groups=groups, call_target=target)
+    assert compare_associated_code(obj, subject, span, image, bindings, targets)["result"] == Result.PASS
+
+
+@pytest.mark.parametrize("opcode", [0xE0, 0xE1, 0xE2])  # LOOPNE/LOOPE/LOOP
+@pytest.mark.parametrize("entry", [15, 17])  # second JA / indexed JMP
+@pytest.mark.parametrize("groups", [2, 4])
+def test_loop_family_cannot_enter_another_dispatch_after_its_guard(opcode, entry, groups):
+    source = groups * 12 + 6
+    code = bytes((opcode, (entry - (source + 2)) & 255, 0x90, 0x90, 0x90))
+    obj, subject, span, image, bindings, targets = direct_multi_fixture(
+        groups=groups, original_change=(source, code))
+    with pytest.raises(ValueError, match="dominating guard"):
+        compare_associated_code(obj, subject, span, image, bindings, targets)
+
+
+@pytest.mark.parametrize("opcode", [0xE0, 0xE1, 0xE2])
+@pytest.mark.parametrize("position", ["before", "after"])
+def test_loop_family_is_a_control_transfer_in_each_guard_corridor(opcode, position):
+    dispatch = bytes.fromhex("ff 24 85 00 00 00 00")
+    loop = bytes((opcode, 0))
+    if position == "before":
+        code = bytes.fromhex("83 f8 00") + loop + bytes((0x77, len(dispatch))) + dispatch + b"\xc3"
+    else:
+        code = bytes.fromhex("83 f8 00") + bytes((0x77, len(loop) + len(dispatch))) + loop + dispatch + b"\xc3"
+    instructions = list(_ENGINE.disasm(code, BASE))
+    table_jump = next(item for item in instructions if item.mnemonic == "jmp")
+    with pytest.raises(ValueError, match="guard"):
+        _guard_for_dispatch(instructions, table_jump, Span(BASE, BASE + len(code)))
+
+
+@pytest.mark.parametrize("target", [13, 14, 16, 18, 23])
+@pytest.mark.parametrize("opcode", [0xE8, 0xE9])  # near CALL / JMP
+def test_incoming_direct_control_cannot_create_an_overlapping_guard_stream(target, opcode):
+    obj, subject, span, image, bindings, targets = direct_multi_fixture(
+        original_change=(30, bytes((opcode,)) + struct.pack("<i", target - 35)))
+    with pytest.raises(ValueError, match="instruction boundary"):
+        compare_associated_code(obj, subject, span, image, bindings, targets)
+
+
+def test_ordinary_direct_call_outside_parent_body_retains_supported_proof():
+    obj, subject, span, image, bindings, targets = direct_multi_fixture(
+        original_change=(30, b"\xe8" + struct.pack("<i", 0x2000 - 35)))
+    assert compare_associated_code(obj, subject, span, image, bindings, targets)["result"] == Result.PASS
+
+
+def test_far_direct_call_requires_segment_context_not_guessed_linear_entry():
+    code = (bytes.fromhex("83 f8 00 77 07 ff 24 85 00 00 00 00 c3")
+            + b"\x9a" + struct.pack("<IH", BASE + 5, 0x23))
+    instructions = list(_ENGINE.disasm(code, BASE))
+    dispatch = next(item for item in instructions if item.mnemonic == "jmp")
+    with pytest.raises(ValueError, match="segment-context"):
+        _guard_for_dispatch(instructions, dispatch, Span(BASE, BASE + len(code)),
+                            indirect_targets=frozenset())
+
+
+def test_ordinary_indirect_callback_outside_guard_corridors_is_not_blanket_refused():
+    obj, subject, span, image, bindings, targets = direct_multi_fixture(
+        original_change=(30, bytes.fromhex("ff d0 90 90 90")))
+    assert compare_associated_code(obj, subject, span, image, bindings, targets)["result"] == Result.PASS
