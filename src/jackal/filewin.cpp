@@ -540,6 +540,8 @@ int FileWin::populate_directory(char *directory) {
 // at the image's mapped-in data; the array carries the bytes instead. strcat
 // reads up to the first NUL either way, and the `push offset` folds to the
 // same instruction, the displacement relocated.
+// Original 0x6138B2 selects this object start, 0x697118; allocation bounds remain unproved.
+// RECOVERY_OBJECT: v1 0x00697118 _FileWinTextTableDefault
 static const char FileWinTextTableDefault[4] = {'.', 0, 0, 0};  // 0x00697118
 
 // The table's NEXT entry (0x0069711C), also "." in the shipped image:
@@ -550,6 +552,8 @@ static const char FileWinTextTableDefaultNext[4] = {'.', 0, 0, 0};  // 0x0069711
 
 // Original .data at 0x00697128 contains "jackal.pcx"; the filename is an
 // ordinary source literal, not a pointer into the shipped executable.
+// Original 0x613BCE selects this object start, 0x697128; allocation bounds remain unproved.
+// RECOVERY_OBJECT: v1 0x00697128 _FileWinSpriteSheet
 static const char FileWinSpriteSheet[] = "jackal.pcx";
 
 // Three independently owned dialog sprites. init's width read at 0x613B1C
