@@ -1,0 +1,23 @@
+{
+  "event_id": "2f89a8fea24795f28a96263eaac09f6f3bc5635809f870b7d61e9d8ffeca761c",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Pinned promote506413 accesses95232C and506456 accesses952328; existing veh.cpp owns Morale array and RulesMorale has name0/name_lifecycle4. Admit native add-only unbounded base binding and corrected member access; no extent or initializer claim."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 9773864,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "morale-source-base-binding-scope-oct31bi",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:bulk-veh-oct31bi"
+}

@@ -1,4 +1,4 @@
-"""Actual-source PCX format-view controls; not native ABI or game proof."""
+"""Actual-source PCX/BMP format and call-boundary controls; not game proof."""
 
 import re
 import shutil
@@ -53,13 +53,20 @@ struct BitmapInfo { BitmapInfoHeader bmiHeader; RGBQUAD bmiColors[256]; };
 static unsigned char output_bytes[4096];
 static unsigned char pixels[16] = { 1, 2, 0x41, 4, 5, 6, 7, 8 };
 static int close_calls;
+static void (*create_callback)();
+static void (*header_copy_callback)();
+static uint32_t created_size;
 static char *memrchr(char *first, char *last, int value) {
   while (last != first) { --last; if ((unsigned char)*last == value) return last; }
   return 0;
 }
 class Filemap {
  public:
-  unsigned char *create(const char *, uint32_t, int) { return output_bytes; }
+  unsigned char *create(const char *, uint32_t size, int) {
+    created_size = size;
+    if (create_callback) create_callback();
+    return output_bytes;
+  }
   void close(unsigned char *) { ++close_calls; }
 };
 class Buffer {
@@ -71,8 +78,17 @@ class Buffer {
   void free_data(int) {}
   int write_pcx(char *filename);
 };
+// This hook observes the existing header-copy call in the extracted body.
+// It does not replace product loads with service calls.
+static void *copy_pcx_header(void *to, const void *from, size_t size) {
+  void *result = memcpy(to, from, size);
+  if (header_copy_callback) header_copy_callback();
+  return result;
+}
 // @@PCX_HEADER_VIEW@@
+#define memcpy copy_pcx_header
 // @@PCX_WRITER_BODY@@
+#undef memcpy
 static int fail(const char *message) { fprintf(stderr, "%s\n", message); return 1; }
 int main() {
   Buffer b;
@@ -141,6 +157,132 @@ def _writer_code(view, writer):
     return (WRITER_FIXTURE
             .replace("// @@PCX_HEADER_VIEW@@", view)
             .replace("// @@PCX_WRITER_BODY@@", seeded))
+
+
+WRITER_CALLBACK_MAIN = r'''static Buffer *active_buffer;
+static unsigned char alternate_pixels[16] = { 9, 10, 11, 12 };
+static void after_create() {
+  active_buffer->dib_.bmiHeader.biWidth = 5;
+  active_buffer->dib_.bmiHeader.biHeight = -3;
+  active_buffer->stride_ = 2;
+  active_buffer->locked_bits_ = alternate_pixels;
+}
+static void after_header_copy() {
+  active_buffer->dib_.bmiHeader.biHeight = -1;
+}
+int main() {
+  Buffer b;
+  active_buffer = &b;
+  create_callback = after_create;
+  header_copy_callback = after_header_copy;
+  b.dib_.bmiHeader.biWidth = 4;
+  b.dib_.bmiHeader.biHeight = -2;
+  b.stride_ = 4;
+  b.locked_bits_ = pixels;
+  memset(b.dib_.bmiColors, 0, sizeof(b.dib_.bmiColors));
+  if (b.write_pcx((char *)"fixture") != 0 || close_calls != 1)
+    return fail("PCX writer lifecycle changed");
+  if (created_size != 144 || output_bytes[8] != 4 || output_bytes[10] != 2 ||
+      output_bytes[0x42] != 2)
+    return fail("PCX create-size/header dimension snapshots changed");
+  if (output_bytes[128] != 1 || output_bytes[129] != 2 || output_bytes[130] != 12)
+    return fail("PCX saved pixel pointer or post-copy row count changed");
+  return 0;
+}
+'''
+
+
+def _writer_callback_code(view, writer):
+    code = _writer_code(view, writer)
+    assert code.count("int main() {") == 1
+    return code[:code.index("int main() {")] + WRITER_CALLBACK_MAIN
+
+
+BMP_CALLBACK_FIXTURE = r'''#include <stddef.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
+#define BI_RGB 0
+typedef uint32_t DWORD;
+struct RGBQUAD { uint8_t rgbBlue, rgbGreen, rgbRed, rgbReserved; };
+struct BITMAPFILEHEADER {
+  unsigned short bfType;
+  unsigned int bfSize;
+  unsigned short bfReserved1, bfReserved2;
+  unsigned int bfOffBits;
+};
+struct BITMAPINFOHEADER {
+  unsigned int biSize;
+  int biWidth, biHeight;
+  unsigned short biPlanes, biBitCount;
+  unsigned int biCompression, biSizeImage;
+  int biXPelsPerMeter, biYPelsPerMeter;
+  unsigned int biClrUsed, biClrImportant;
+};
+struct BitmapInfo { BITMAPINFOHEADER bmiHeader; RGBQUAD bmiColors[256]; };
+static int write_calls, close_calls, free_calls;
+static unsigned char pixels[64];
+class Buffer {
+ public:
+  BitmapInfo dib_;
+  int stride_;
+  void *locked_bits_;
+  int get_data() { return 1; }
+  void free_data(int) { ++free_calls; }
+  int write_bmp(char *);
+};
+static Buffer *active_buffer;
+static int header_width, header_height;
+static size_t row_sizes[2];
+static const void *row_pointers[2];
+static FILE *env_open(const char *, const char *) {
+  return reinterpret_cast<FILE *>(1);
+}
+static int observed_fclose(FILE *) { ++close_calls; return 0; }
+static size_t observed_fwrite(const void *data, size_t size, size_t count, FILE *) {
+  ++write_calls;
+  if (write_calls == 2) {
+    const BITMAPINFOHEADER *header = static_cast<const BITMAPINFOHEADER *>(data);
+    header_width = header->biWidth;
+    header_height = header->biHeight;
+  } else if (write_calls == 3) {
+    active_buffer->dib_.bmiHeader.biHeight = -2;
+    active_buffer->dib_.bmiHeader.biWidth = 3;
+    active_buffer->stride_ = 4;
+    active_buffer->locked_bits_ = pixels + 8;
+  } else if (write_calls > 3) {
+    int row = write_calls - 4;
+    if (row < 2) { row_sizes[row] = size; row_pointers[row] = data; }
+    active_buffer->dib_.bmiHeader.biWidth = 2;
+    active_buffer->dib_.bmiHeader.biHeight = -9;
+    active_buffer->stride_ = 5;
+  }
+  return count;
+}
+#define fwrite observed_fwrite
+#define fclose observed_fclose
+// @@BMP_WRITER_BODY@@
+#undef fwrite
+#undef fclose
+int main() {
+  Buffer b;
+  active_buffer = &b;
+  b.dib_.bmiHeader.biWidth = 6;
+  b.dib_.bmiHeader.biHeight = -1;
+  b.stride_ = 8;
+  b.locked_bits_ = pixels + 16;
+  if (b.write_bmp((char *)"fixture") != 0 || close_calls != 1 ||
+      free_calls != 1 || write_calls != 5) return 1;
+  if (header_width != 6 || header_height != 1) return 2;
+  if (row_sizes[0] != 3 || row_sizes[1] != 2 ||
+      row_pointers[0] != pixels + 12 || row_pointers[1] != pixels + 7) return 3;
+  return 0;
+}
+'''
+
+
+def _bmp_callback_code(writer):
+    return BMP_CALLBACK_FIXTURE.replace("// @@BMP_WRITER_BODY@@", writer)
 
 
 MEMORY_FIXTURE = r'''#include <stddef.h>
@@ -342,8 +484,8 @@ def test_writer_actual_fields_unwritten_bytes_and_damage_controls():
             _compile_run(code, compiler, directory)
 
             for old, new in (
-                ("header.x_max = static_cast<short>(width) - 1;",
-                 "header.x_min = static_cast<short>(width) - 1;"),
+                ("header.x_max = static_cast<short>(dib_.bmiHeader.biWidth) - 1;",
+                 "header.x_min = static_cast<short>(dib_.bmiHeader.biWidth) - 1;"),
                 ("header.bytes_per_line = static_cast<short>(stride_);",
                  "header.palette_type = static_cast<short>(stride_);"),
             ):
@@ -359,6 +501,83 @@ def test_writer_actual_fields_unwritten_bytes_and_damage_controls():
     assert not re.search(r"PcxHeaderView\s+header\s*;", zeroed), \
         "zero-initialization damage must violate the actual uninitialized-local invariant"
     assert "ORIGINAL: 0x005DF590" in source
+
+
+def test_pcx_writer_preserves_original_call_boundary_snapshots():
+    _source, view, _prefix, writer, _memory, _dimensions = _source_parts()
+    compilers = [shutil.which(name) for name in ("g++", "clang++")]
+    compilers = [compiler for compiler in compilers if compiler]
+    assert compilers, "GCC or Clang is required for actual-source writer controls"
+
+    # Pin5DF6BE captures pixels before create5DF6DD;5DF740..75B reads
+    # header dimensions afterward;5DF7BC reads height after memcpy5DF7B7.
+    damage = []
+    for old, new in (
+        ("static_cast<short>(dib_.bmiHeader.biWidth) - 1;",
+         "static_cast<short>(width) - 1;"),
+        ("-1 - static_cast<short>(dib_.bmiHeader.biHeight);",
+         "-1 - static_cast<short>(height);"),
+        ("int rows_left = -dib_.bmiHeader.biHeight;",
+         "int rows_left = -height;"),
+    ):
+        assert writer.count(old) == 1
+        damage.append(writer.replace(old, new, 1))
+
+    saved_pixels = "const uint8_t *bits = static_cast<const uint8_t *>(locked_bits_);"
+    assert writer.count(saved_pixels) == 1
+    assert writer.count("unsigned char *out = view + 0x80;") == 1
+    late_pixels = writer.replace(saved_pixels, "", 1).replace(
+        "unsigned char *out = view + 0x80;",
+        saved_pixels + "\n        unsigned char *out = view + 0x80;", 1)
+    damage.append(late_pixels)
+
+    rows = "int rows_left = -dib_.bmiHeader.biHeight;"
+    assert writer.count("if (view != 0) {") == 1
+    early_rows = writer.replace(rows, "", 1).replace(
+        "if (view != 0) {", "if (view != 0) {\n        " + rows, 1)
+    damage.append(early_rows)
+
+    for compiler in compilers:
+        with tempfile.TemporaryDirectory(prefix="pcx-writer-snapshot-") as temp:
+            directory = Path(temp)
+            _compile_run(_writer_callback_code(view, writer), compiler, directory)
+            for damaged in damage:
+                _compile_run(_writer_callback_code(view, damaged), compiler,
+                             directory, expect_success=False)
+
+
+def test_bmp_writer_reloads_row_dimensions_after_writes():
+    source = (ROOT / "src/buffer.cpp").read_text()
+    writer = definition(source, r"int\s+Buffer::write_bmp\s*\(")
+    compilers = [shutil.which(name) for name in ("g++", "clang++")]
+    compilers = [compiler for compiler in compilers if compiler]
+    assert compilers, "GCC or Clang is required for actual-source writer controls"
+
+    # Pin5DFAA5 reloads height after three writes;5DFAC7 reloads width
+    # per row. Row count stays captured while5DFAD7 reloads stride.
+    damage = []
+    for old, new in (
+        ("const int current_height = dib_.bmiHeader.biHeight;",
+         "const int current_height = height;"),
+        ("fwrite(row, dib_.bmiHeader.biWidth, 1, file);",
+         "fwrite(row, width, 1, file);"),
+    ):
+        assert writer.count(old) == 1
+        damage.append(writer.replace(old, new, 1))
+    assert writer.count("int rows = -current_height;") == 1
+    assert writer.count("row -= stride_;") == 1
+    fixed_stride = writer.replace(
+        "int rows = -current_height;",
+        "int rows = -current_height;\n    const int row_stride = stride_;", 1)
+    damage.append(fixed_stride.replace("row -= stride_;", "row -= row_stride;", 1))
+
+    for compiler in compilers:
+        with tempfile.TemporaryDirectory(prefix="bmp-writer-snapshot-") as temp:
+            directory = Path(temp)
+            _compile_run(_bmp_callback_code(writer), compiler, directory)
+            for damaged in damage:
+                _compile_run(_bmp_callback_code(damaged), compiler, directory,
+                             expect_success=False)
 
 
 def test_readers_actual_predicates_prefix_and_word_dimensions():

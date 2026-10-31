@@ -544,6 +544,7 @@ RulesReactor Reactor[MaxReactorNum];  // 0x009527F8
 // the original indexes these existing rules with a 0x1C-byte stride.
 // RECOVERY_OBJECT: v1 0x009AB538 ?Ability@@3PAURulesAbility@@A
 RulesAbility Ability[MaxAbilityNum];  // 0x009AB538
+// RECOVERY_OBJECT: v1 0x00952328 ?Morale@@3PAURulesMorale@@A
 RulesMorale Morale[MaxMoraleNum];  // 0x00952328
 RulesCombatMode DefenseModes[MaxDefenseModeNum];  // 0x00946A00
 RulesCombatMode OffenseModes[MaxOffenseModeNum];  // 0x00946178
@@ -9062,7 +9063,7 @@ Status: MISMATCH #9 - the veh_id * 0x34 multiply lowers through a different
 int __cdecl veh_ready(int veh_id) {
     if (veh_id >= 0 && Vehs[veh_id].y >= 0 && Vehs[veh_id].y < MapLatitudeBounds &&
         Vehs[veh_id].x >= 0 && Vehs[veh_id].x < MapLongitudeBounds &&
-        Vehs[veh_id].faction_id == (uint8_t)ConsoleGlobal.faction_id_ &&
+        Vehs[veh_id].faction_id == ConsoleGlobal.faction_id_ &&
         ((Vehs[veh_id].flags & 0x40) == 0 || (Vehs[veh_id].flags & 0x400) == 0) &&
         veh_jail(veh_id) == 0 &&
         ((Vehs[veh_id].state & 0x4200) != 0 || Vehs[veh_id].order < 1 ||
@@ -9099,7 +9100,7 @@ int __cdecl veh_selectable(int veh_id) {
         Vehs[veh_id].x < 0 || Vehs[veh_id].x >= MapLongitudeBounds) {
         return 0;
     }
-    if (Vehs[veh_id].faction_id != (uint8_t)ConsoleGlobal.faction_id_) {
+    if (Vehs[veh_id].faction_id != ConsoleGlobal.faction_id_) {
         return 0;
     }
     if ((Vehs[veh_id].flags & 0x40) != 0 && (Vehs[veh_id].flags & 0x400) != 0) {
@@ -9124,7 +9125,7 @@ Status: MISMATCH.
 int __cdecl veh_unmoved(int veh_id) {
     if (veh_id < 0 || Vehs[veh_id].y < 0 || Vehs[veh_id].y >= MapLatitudeBounds ||
         Vehs[veh_id].x < 0 || Vehs[veh_id].x >= MapLongitudeBounds ||
-        Vehs[veh_id].faction_id != (uint8_t)ConsoleGlobal.faction_id_ ||
+        Vehs[veh_id].faction_id != ConsoleGlobal.faction_id_ ||
         ((Vehs[veh_id].flags & 0x40) != 0 && (Vehs[veh_id].flags & 0x400) != 0) ||
         veh_jail(veh_id) != 0) {
         return 0;
@@ -9253,7 +9254,7 @@ void __cdecl veh_site_scan(int x, int y) {
 int __cdecl morale_veh_call(int veh_id, int check_drone_riot, int faction_id);
 /*
 Purpose: Bump a vehicle up a morale step, and say so.
-// ORIGINAL: 0x005062B0 ?promote@@YAXH@Z 0x005062B0-0x0050648B
+// ORIGINAL: 0x005062B0 ?promote@@YAXH@Z 0x005062B0-0x0050648B BYTE_EXACT
 // size      475 bytes
 // prototype void (__cdecl ?promote@@YAXH@Z)(int vehID)
 // callers   1   call targets   5
@@ -9291,7 +9292,7 @@ void __cdecl promote(int veh_id) {
 
     const int morale_before = morale_veh(veh_id, 1, 0);
     ++Vehs[veh_id].morale;
-    if (Vehs[veh_id].faction_id != (uint8_t)ConsoleGlobal.faction_id_) {
+    if (Vehs[veh_id].faction_id != ConsoleGlobal.faction_id_) {
         return;
     }
     if (!((1 << Vehs[veh_id].faction_id) & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_)) {
@@ -9305,7 +9306,7 @@ void __cdecl promote(int veh_id) {
 
     if (Vehs[veh_id].proto_id < 0x40) {
         if (Weapon[VehPrototypes[Vehs[veh_id].proto_id].weapon_id].offense_rating < 0) {
-            parse_say(0, Morale[morale_veh(veh_id, 1, 0)].name, -1, -1);
+            parse_say(0, Morale[morale_veh(veh_id, 1, 0)].name_lifecycle, -1, -1);
             NetMsgPrimary.pop(VehLabelMORALE2, 0xffffec78, 0,
                              VehIconBATWON2_SM_PCX);
             return;

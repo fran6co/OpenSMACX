@@ -47,10 +47,11 @@ static_assert(sizeof(Midi) == 0x58, "Midi adds its single mode byte to Sound");
 static_assert(sizeof(Ambience) == 0x58, "Ambience adds behavior, not storage");
 
 
+// RECOVERY_GENERATED_MEMBER: v1 complete_destructor 0x004483C0 0x004483C5 ??1FactionAmbience@@UAE@XZ 0x004471F0
+// RECOVERY_GENERATED_MEMBER: v1 deleting_destructor 0x00448390 0x004483B1 ??_GFactionAmbience@@UAEPAXI@Z 0x004471F0
 class FactionAmbience : public Ambience {
  public:
   FactionAmbience();
-  ~FactionAmbience() {}
   // Events75..89, original tables66C0F8/66BB58/66BE28/66BF90/66BCC0.
   virtual void begin();
   virtual void tech();
@@ -88,6 +89,8 @@ class AAmbience : public FactionAmbience {
 };
 static_assert(sizeof(AAmbience) == 0x70, "AAmbience has no added storage");
 
+// RECOVERY_GENERATED_MEMBER: v1 complete_destructor 0x004483C0 0x004483C5 ??1BAmbience@@UAE@XZ 0x004478D0
+// RECOVERY_GENERATED_MEMBER: v1 deleting_destructor 0x00448390 0x004483B1 ??_GBAmbience@@UAEPAXI@Z 0x004478D0
 class BAmbience : public FactionAmbience {
  public:
   // 0x004478D0 initializes the B-specific counters after FactionAmbience.
@@ -134,7 +137,6 @@ class UAmbience : public FactionAmbience {
 
  public:
   UAmbience();
-  ~UAmbience() { ; }
   void tech();
   void popup1();
   void eot();
@@ -153,6 +155,8 @@ class UAmbience : public FactionAmbience {
 // recovered method, so these fields and nothing beyond them are what the image
 // establishes - the same rule the file header sets out, applied to two more
 // variants rather than relaxed for them.
+// RECOVERY_GENERATED_MEMBER: v1 complete_destructor 0x004483C0 0x004483C5 ??1MAmbience@@UAE@XZ 0x00447310
+// RECOVERY_GENERATED_MEMBER: v1 deleting_destructor 0x00448390 0x004483B1 ??_GMAmbience@@UAEPAXI@Z 0x00447310
 class MAmbience : public FactionAmbience {
  public:
   // homed from 004474e0.cpp
@@ -180,7 +184,6 @@ class MAmbience : public FactionAmbience {
 
  public:
   MAmbience();
-  ~MAmbience() { ; }
 
  private:
   // SIGNED: MAmbience::general compares it against 0x1f4 with `jle`
@@ -192,6 +195,8 @@ class MAmbience : public FactionAmbience {
 static_assert(sizeof(MAmbience) == 0x74,
               "MAmbience layout must match the original executable");
 
+// RECOVERY_GENERATED_MEMBER: v1 complete_destructor 0x004483C0 0x004483C5 ??1SAmbience@@UAE@XZ 0x00447850
+// RECOVERY_GENERATED_MEMBER: v1 deleting_destructor 0x00448390 0x004483B1 ??_GSAmbience@@UAEPAXI@Z 0x00447850
 class SAmbience : public FactionAmbience {
  public:
   void tech();
@@ -216,7 +221,6 @@ class SAmbience : public FactionAmbience {
 
  public:
   SAmbience();
-  ~SAmbience() { ; }
 
  private:
   // SIGNED, and not by style: SAmbience::hostility compares both against a
@@ -230,6 +234,8 @@ class SAmbience : public FactionAmbience {
 static_assert(sizeof(SAmbience) == 0x78,
               "SAmbience layout must match the original executable");
 
+// RECOVERY_GENERATED_MEMBER: v1 complete_destructor 0x004483C0 0x004483C5 ??1GAmbience@@UAE@XZ 0x00447B90
+// RECOVERY_GENERATED_MEMBER: v1 deleting_destructor 0x00448390 0x004483B1 ??_GGAmbience@@UAEPAXI@Z 0x00447B90
 class GAmbience : public FactionAmbience {
  public:
   // homed from 00447cd0.cpp
@@ -249,7 +255,6 @@ class GAmbience : public FactionAmbience {
 
  public:
   GAmbience();
-  ~GAmbience() { ; }
   void tech();
   void production();
   void popup1();

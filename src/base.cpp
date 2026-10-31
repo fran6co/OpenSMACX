@@ -11024,7 +11024,7 @@ void __cdecl capture_base(int base_id, int faction_id, int mode) {
     log_say("Capture Base", Bases[base_id].name_string, base_id, faction_id, 0);
     local_8 = (unsigned int)(unsigned char)Bases[base_id].faction_id_current;
     local_1c = (int)Bases[base_id].y;
-    local_3c = (unsigned int)(Bases[base_id].faction_id_former == (unsigned char)faction_id);
+    local_3c = (unsigned int)(Bases[base_id].faction_id_former == faction_id);
     local_28 = (int)Bases[base_id].x;
     local_44 = (unsigned int)MapTiles[(MapLongitude) * local_1c + (local_28 >> 1)].region;
     local_4c = (unsigned int)faction_id * 2099u;
@@ -11242,7 +11242,7 @@ void __cdecl capture_base(int base_id, int faction_id, int mode) {
             if (PlayersData[f].base_id_atk_target == base_id) PlayersData[f].base_id_atk_target = -1;
         }
         Bases[base_id].nerve_staple_turns_left = 0;
-        if (Bases[base_id].faction_id_former == (unsigned char)faction_id) {
+        if (Bases[base_id].faction_id_former == faction_id) {
             Bases[base_id].assimilation_turns_left = 0;
         } else {
             Bases[base_id].faction_id_former = (unsigned char)uVar14;
@@ -11583,7 +11583,7 @@ void __cdecl capture_base(int base_id, int faction_id, int mode) {
         if (GameDataStateStorage.fields_.base_current_count_ > 0) {
             bestBase = -1;
             for (iVar15 = 0; iVar15 < GameDataStateStorage.fields_.base_current_count_; iVar15++) {
-                if (Bases[iVar15].faction_id_current == (unsigned char)faction_id && iVar15 != base_id) {
+                if (Bases[iVar15].faction_id_current == faction_id && iVar15 != base_id) {
                     bitmask(1, &idxTmp, &maskTmp);
                     if ((Bases[iVar15].facilities_built[idxTmp] & maskTmp) != 0) {
                         parse_says(2, Bases[iVar15].name_string, -1, -1);

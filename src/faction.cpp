@@ -2116,7 +2116,7 @@ int __cdecl territory(int faction_id, int faction_id_with, int flags, int *base_
     for (int veh_id = 0; veh_id < GameDataStateStorage.fields_.vehicle_current_count_; veh_id++) {
         Veh &veh = Vehs[veh_id];
         veh.state &= ~VSTATE_UNK_400;
-        if (veh.faction_id != (uint8_t)faction_id_with) {
+        if (veh.faction_id != faction_id_with) {
             continue;
         }
         uint32_t plan = VehPrototypes[veh.proto_id].plan;
@@ -2739,7 +2739,7 @@ void __cdecl rankings(int apply_ranks) {
             const int *projects = GameDataStateStorage.fields_.secret_project_.project_base;
             for (int i = 0; i < MaxSecretProjectNum; i++) {
                 if (projects[i] >= 0
-                    && Bases[projects[i]].faction_id_current == (uint8_t)faction_id) {
+                    && Bases[projects[i]].faction_id_current == faction_id) {
                     score += 10;
                 }
             }

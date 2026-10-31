@@ -36,6 +36,7 @@
 #include "random.h"
 #include "strings.h"
 #include "technology.h"
+#include "terraforming.h"
 #include "veh.h"
 #include "log.h"
 #include "lock.h"     // map_tile_bytes() - site_at/set_dirty walk its records
@@ -4202,17 +4203,11 @@ void __cdecl delete_landmark(int x, int y) {
         }
     }
 }
-// PeImage: the only words read from rows 5/6 are both initially zero.
-// RECOVERY_OBJECT: v1 0x00691930 ?MapTerrainBonusYieldRow5FirstWord@@3HB
-extern const int MapTerrainBonusYieldRow5FirstWord = 0;
-// RECOVERY_OBJECT: v1 0x00691950 ?MapTerrainBonusYieldRow6FirstWord@@3HB
-extern const int MapTerrainBonusYieldRow6FirstWord = 0;
 
 /*
-Purpose: One tile's nutrient-bonus rows for the worker placement display:
-         select the 32-byte bonus row by the tile bit's row-4 flag, add the
-         rainy-tile bonus, the rocky-and-raised double bonus, and the
-         special-resource double, and top it off with the rocky bits.
+Purpose: Select the live road or magtube terraforming rate from tile mask 0x4,
+         then add the contributions selected by the tile flags, climate
+         and upper val3 bits. The final gameplay purpose remains unresolved.
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x004C99D0 sub_4c99d0 0x004C99D0-0x004C9A43 FILE
@@ -4223,15 +4218,14 @@ Purpose: One tile's nutrient-bonus rows for the worker placement display:
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     (none)
-Return Value: the tile's bonus nutrient count
+Return Value: the selected terraforming rate plus tile-derived contributions
 Status: Coverage transcription - unclaimed body
 */
 extern "C" int __cdecl sub_4c99d0(int x_coord, int y_coord) {
     const Map *tile = map_tiles() + MapLongitude * y_coord + (x_coord >> 1);
     const uint32_t bits = tile->bit;
-    int result = (bits & 4) != 0
-        ? MapTerrainBonusYieldRow6FirstWord
-        : MapTerrainBonusYieldRow5FirstWord;
+    const int selected = TERRA_ROAD + ((bits & 4) != 0);
+    int result = Terraforming[selected].rate;
     if ((bits & 0x80) != 0) {
         result++;
     }
