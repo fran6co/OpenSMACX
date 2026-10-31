@@ -230,14 +230,17 @@
       },
       "src/prefwin.cpp": {
         "flags": [
-          "/c",
-          "/O2",
-          "/Gy",
-          "/GR-",
+          "/nologo",
+          "/TP",
+          "/Zm200",
           "/GX",
-          "/Oy-",
+          "/O2",
           "/Ob2",
-          "/Z7"
+          "-MT",
+          "/W4",
+          "/Oy-",
+          "/Z7",
+          "-c"
         ]
       },
       "src/caviar.cpp": {
