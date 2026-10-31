@@ -1,0 +1,27 @@
+{
+  "event_id": "3024d37a5a731e8b46a483fcfb3c0d1f37923614dc247bf8023441d00d00c2de",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/uv2player_postplay_harness.cpp",
+      "src/graphicwin.cpp"
+    ],
+    "evidence": [
+      "GraphicWin inherits Buffer.surface_ and currentlycasts it toSurface2; correctfieldtypingallowsdirectSDKcall. Preserve original operation/ABI.",
+      "Postplay harness models sameExtDirectDrawbridge andneedsrealSurface2 type. No unrelatedbehavior/fields changes."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6118640,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "3c6fd950a9f06506c6a95b849394ef9956f07b0bf9730cc4e684447ba3acc938",
+  "request_id": "surface2-graphicwin-postplay-scope-oct31bj",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:buffer-intrinsic-policy-oct31bj"
+}

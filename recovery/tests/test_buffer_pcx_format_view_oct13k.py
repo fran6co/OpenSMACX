@@ -295,7 +295,7 @@ typedef void *HDC;
 static const size_t PcxHeaderSize = 0x80;
 struct RGBQUAD { uint8_t rgbBlue, rgbGreen, rgbRed, rgbReserved; };
 struct DIB { RGBQUAD bmiColors[256]; };
-class IDirectDrawSurface {
+class IDirectDrawSurface2 {
  public:
   int GetDC(HDC *) { return 0; }
   int ReleaseDC(HDC) { return 0; }
@@ -322,7 +322,7 @@ static void word(unsigned char *p, unsigned offset, unsigned value) {
 }
 class Buffer {
  public:
-  IDirectDrawSurface *surface_;
+  IDirectDrawSurface2 *surface_;
   DIB dib_;
   unsigned int stride_;
   void *locked_bits_;

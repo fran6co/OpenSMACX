@@ -1,0 +1,21 @@
+{
+  "event_id": "02ca5f57c48673b5d21700fbf6595ad98adadbcab6226c1ee33301480be1e15a",
+  "payload": {
+    "affects": [
+      "entity-af2917fe0c95de7db1aac8560b1156b3d9624549a1acbca1c1d22ddf6a0d398b"
+    ],
+    "author": "coordinator",
+    "discovery_id": "buffer-surface2-interface-discovery-oct31bj",
+    "evidence": [
+      "PinnedGUID66FC28=57805885-6eec-11cf-9441-a82303c10e27 (Surface2); candidate_IID_IDirectDrawSurface fromdxguid:guid4.obj is6c14db81-a733-11ce-a521-0020af0be560 (Surface1).",
+      "src/directdraw.cpp publishes Surface2 backbuffer throughreinterpretcast;src/uv2player.cpp borrows Surface2 throughExtDirectDraw Surface1cast. Preserve CreateSurface temporary Surface1 result beforeQueryInterface."
+    ],
+    "hypothesis": "Buffer init selects wrong COM IID and Buffer/ExtDirectDraw currently pretend Surface2 providers are Surface1 via casts. OriginalQueryInterfaceGUID66FC28 and typedDirectDraw/UV2Player producers require coherent Surface2 field and borrowed-bridge ownership.",
+    "kind": "discovery"
+  },
+  "previous_event": "7110c1473848230700b10f9cc94a1f28caa453dc14d8d97a75ced889023da1aa",
+  "request_id": "buffer-surface2-interface-discovery-oct31bj",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:buffer-intrinsic-policy-oct31bj"
+}

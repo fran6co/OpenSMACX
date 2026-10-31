@@ -1386,7 +1386,7 @@ int Buffer::load_pcx(BYTE *data, DWORD size, Palette *palette,
         if (locked_bits_ != 0) {
             get_graphic_win();
         }
-        IDirectDrawSurface *const surface = surface_;
+        IDirectDrawSurface2 *const surface = surface_;
         HDC acquired;
         if (surface == nullptr) {
             hdc2_ = hdc_;
@@ -1486,7 +1486,7 @@ int Buffer::copy(Buffer *buffer, RECT *rect) {
 Purpose: Give the buffer a size and the storage behind it - a DirectDraw
          surface when the process has DirectDraw, a DIB section otherwise -
          and leave a device context selected onto it.
-// ORIGINAL: 0x005D7670 ?init@Buffer@@QAEHHHHPAUExtDirectDraw@@@Z 0x005D7670-0x005D79BF
+// ORIGINAL: 0x005D7670 ?init@Buffer@@QAEHHHHPAUExtDirectDraw@@@Z 0x005D7670-0x005D79BF BYTE_EXACT
 // size      847 bytes
 // prototype int (__thiscall ?init@Buffer@@QAEHHHHPAUExtDirectDraw@@@Z)(Buffer* this, int, int, int, ExtDirectDraw*)
 // callers   40   call targets   5
@@ -1503,39 +1503,8 @@ Purpose: Give the buffer a size and the storage behind it - a DirectDraw
 // surface or its clipper could not be created) and 0 (done, and also the
 // early-out).
 //
-// THE `memset` IS A REAL CALL IN THE IMAGE - `push 0x6c; push 0; push edx;
-// call _memset; add esp, 0xc` at 0x005D77C3 - and `/O2` implies `/Oi`,
-// which expands ours to `rep stosd`. `#pragma function(memset)` is the only
-// lever VC6 offers for that, and it is deliberately NOT used here.
-//
-// TRIED: the last six instructions, and they are NOT source-shaped.
-// Under `/O2 /Oi- /Gy /GR- /GX` this is 280/286 with every instruction from
-// 0x005D7930 to the epilogue identical and the two listings the SAME LENGTH.
-// The whole divergence is one six-instruction window at 0x005D7924, where the
-// image loads the counter into eax, loads hdc2_ through edi, increments, and
-// stores the counter AFTER both pushes; we load into ecx and store BEFORE the
-// hdc2_ load. Same instructions, different schedule and register.
-//
-// Seven spellings measured, all 280/286 to the instruction: `hdc_lock_count_++`,
-// `+= 1`, `= hdc_lock_count_ + 1`, a read-modify-write through `int *const`,
-// the HDC cached in a local before the increment, and the statements swapped
-// (that one is WORSE, 276). The interesting hypothesis was aliasing - the
-// image's order is the CONSERVATIVE one, which VC6 picks when the pointer has
-// escaped - so `HDC *const dc = &hdc2_` was threaded through the real
-// `GetDC(dc)` call so it genuinely escapes, both with and without the other
-// uses rewritten as `*dc`. VC6 emits byte-identical code for all of them.
-//
-// `osmx.py semantic` REFUSES this, correctly: "instruction 220: mov against
-// push" - the reorder means it is not allocation-only. Do not re-derive any of
-// the above; the next lever, if there is one, is not in this statement.
-//
-// Measured both ways, because the pragma was here and had to earn its
-// place: with it, similarity 0.859 and 69 instructions in position; without
-// it, 0.705 and 80. NEITHER IS BYTE-EXACT, so what the pragma bought was a
-// metric and not a claim - and it bought that by changing the intrinsic for
-// every body below it in this file. `DDSURFACEDESC description = { 0 };`
-// and `ZeroMemory` were both tried; VC6 inlines those too, identically.
-Status: WIP
+// Original5D77C3 calls memset(&description, 0, 0x6C). Buffer's TU
+// intrinsic policy preserves the CRT call without local copy pragmas.
 */
 int Buffer::init(int width, int height, int tgl, ExtDirectDraw *direct_draw) {
     // DECLARED HERE, not beside its use, and that is what the frame size
@@ -1617,7 +1586,7 @@ int Buffer::init(int width, int height, int tgl, ExtDirectDraw *direct_draw) {
         if (BufferDirectDraw->CreateClipper(0, &clipper_, nullptr) != 0) {
             return 0x12;
         }
-        created->QueryInterface(IID_IDirectDrawSurface,
+        created->QueryInterface(IID_IDirectDrawSurface2,
                                 reinterpret_cast<void **>(&surface_));
     }
     if (borrowed != 0) {
@@ -1656,19 +1625,9 @@ int Buffer::init(int width, int height, int tgl, ExtDirectDraw *direct_draw) {
         fonts_[3] = nullptr;
     }
 
-    if (locked_bits_ != 0) {
-        get_graphic_win();
-    }
-
-    if (surface_ == nullptr) {
-        hdc2_ = hdc_;
-    } else if (hdc2_ == nullptr) {
-        if (surface_->GetDC(&hdc2_) != 0) {
-            get_graphic_win();
-        }
-    }
-
-    ++hdc_lock_count_;
+    // Original5D7924..7930 consumes hdc2_ after acquisition, independently
+    // of the helper's return value.
+    get_hdc();
     SetBkMode(hdc2_, TRANSPARENT);
     // TA_BASELINE (0x18), not the three zero-valued flags. `TA_LEFT`,
     // `TA_TOP` and `TA_NOUPDATECP` are all 0, so that spelling passes 0 and
@@ -2019,19 +1978,9 @@ int Buffer::fill(RECT *area, int color) {
     BufferFillRowGap = stride_ - width;
 
     const uint8_t value = static_cast<uint8_t>(color);
-    const uint32_t quad = (static_cast<uint32_t>(value) << 24)
-        | (static_cast<uint32_t>(value) << 16)
-        | (static_cast<uint32_t>(value) << 8) | value;
     do {
         uint8_t *tail = reinterpret_cast<uint8_t *>(destination);
-        uint32_t count;
-        for (count = width >> 2; count > 0; --count) {
-            // x86 permits unaligned REP STOSD; a typed uint32_t store does
-            // not. Copy the representation into byte-addressed pixel storage.
-            memcpy(tail, &quad, sizeof(quad));
-            tail += sizeof(quad);
-        }
-        for (count = width & 3; count > 0; --count) {
+        for (uint32_t count = width; count > 0; --count) {
             *tail++ = value;
         }
         // REP STOSD/STOSB advance through the row before the original
@@ -2156,7 +2105,7 @@ int Buffer::load_pcx(const char *filename, Palette *palette, int tgl, int height
 // ORIGINAL: 0x005E2480 ?get_pcx_dimensions@Buffer@@QAAHPBDPAHPAH@Z 0x005E2480-0x005E2690;0x00662C11-0x00662C26
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/005e2480.cpp", "pinned-image:0x00696BF8,0x00696CFC,0x00696D04,0x00696D0C"], "reason": "Home PCX header dimension decoding in Buffer using its Filemap lifecycle and source-owned format literals"}
 // symbol    ?get_pcx_dimensions@Buffer@@SAHPBDPAH1@Z
-#pragma function(memcpy)
+
 int Buffer::get_pcx_dimensions(const char *filename, int *width, int *height) {
     Filemap map;
     if (filename == nullptr || width == nullptr || height == nullptr) {
@@ -2202,7 +2151,7 @@ int Buffer::get_pcx_dimensions(const char *filename, int *width, int *height) {
 
     return 3;
 }
-#pragma intrinsic(memcpy)
+
 
 
 /*
@@ -2865,7 +2814,7 @@ Purpose: The Buffer wide-line filler that sits between the blitter and the
          the lock when this body holds the last one.
 
 // ORIGINAL: 0x005E07A0 sub_5e07a0 0x005E07A0-0x005E09CB FILE
-// RECOVERY_BINDING: v1 {"evidence": ["pinned:0x005E07A0-0x005E09CB uses ECX as receiver and reads the Buffer pixel, surface, clip, lock-count and stride fields", "source:src/buffer.h declares those members and IDirectDrawSurface* surface_ at the observed offsets", "pinned:0x005E07F5 Lock, 0x005E09B3 Unlock, and the saved 0x14-byte thiscall cleanup"], "reason": "Bind the original wide-line raster routine to Buffer's named pixel, clip, pitch and DirectDraw members."}
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:0x005E07A0-0x005E09CB uses ECX as receiver and reads the Buffer pixel, surface, clip, lock-count and stride fields", "source:src/buffer.h declares those members and IDirectDrawSurface2* surface_ at the observed offsets", "pinned:0x005E07F5 Lock, 0x005E09B3 Unlock, and the saved 0x14-byte thiscall cleanup"], "reason": "Bind the original wide-line raster routine to Buffer's named pixel, clip, pitch and DirectDraw members."}
 // symbol    ?fill_line@Buffer@@QAEHHHHHD@Z
 // size      555 bytes
 // Deleted seed provenance: git:1ed59304110fc2098fb1dd11457fa5b0074169bd:src/unrecovered/005e07a0.cpp
@@ -2879,14 +2828,14 @@ Status: Coverage transcription of the retained seed (src/unrecovered/005e07a0.cp
         buffer.h's own polygon family uses. The offset reads are spelled
         raw beside their field names; promoting this into a real member is
         the coordinator's buffer.h scope, not a body rewrite. The two COM
-        calls are IDirectDrawSurface slots 25 (Lock) and 32 (Unlock) on the
+        calls are IDirectDrawSurface2 slots 25 (Lock) and 32 (Unlock) on the
         surface the buffer keeps at 0x58.
 */
 
 
 
 int Buffer::fill_line(int x1, int y1, int x2, int y2, char fill_colour) {
-    IDirectDrawSurface *const surface = surface_;
+    IDirectDrawSurface2 *const surface = surface_;
     unsigned char *locked;
 
     if (surface == 0) {
@@ -2990,7 +2939,7 @@ int Buffer::fill_line(int x1, int y1, int x2, int y2, char fill_colour) {
         }
     }
 
-    IDirectDrawSurface *const surface_at_end = surface_;
+    IDirectDrawSurface2 *const surface_at_end = surface_;
     if (surface_at_end == 0) {
         int holders = surface_lock_count_ - 1;
         surface_lock_count_ = holders;
@@ -3153,22 +3102,19 @@ void Buffer::line(int x1, int y1, int x2, int y2, int color) {
 namespace {
 
 // RECT edges wrap as raw 32-bit values, exactly as the original's inc/dec
-// instructions do; the bit-cast round trip keeps the arithmetic out of
-// signed-overflow territory.
+// instructions do. Unsigned arithmetic keeps the wrap defined; the final
+// signed conversion follows the pinned VC6 32-bit integer representation.
 uint32_t edge_bits(LONG value) {
-    uint32_t bits;
-    static_assert(sizeof(bits) == sizeof(value),
+    static_assert(sizeof(uint32_t) == sizeof(value),
                   "Buffer geometry requires 32-bit RECT fields");
-    memcpy(&bits, &value, sizeof(bits));
-    return bits;
+    return static_cast<uint32_t>(value);
 }
 
 int edge_int(uint32_t bits) {
-    int value;
-    static_assert(sizeof(value) == sizeof(bits),
+    static_assert(sizeof(int) == sizeof(bits),
                   "Buffer geometry requires 32-bit int");
-    memcpy(&value, &bits, sizeof(value));
-    return value;
+    // VC6's pinned 32-bit signed conversion preserves the low word's bits.
+    return static_cast<int>(bits);
 }
 
 }  // namespace
@@ -5917,9 +5863,6 @@ int Buffer::wrap_flying_flush() {
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005DC410 0x005DC7C0 0x005DCAE0 0x006453E0 0x00645470 0x00645930
 
-#if _MSC_VER == 1200
-#pragma function(memcpy)
-#endif
 int Buffer::wrap_flying(char * a1) {
     
     if (BufferFlyingWidth == 0) {
@@ -6003,9 +5946,6 @@ int Buffer::wrap_flying(char * a1) {
     strcat(buf, cur);
     return BufferFlyingY;
 }
-#if _MSC_VER == 1200
-#pragma intrinsic(memcpy)
-#endif
 
 // ORIGINAL: 0x005DB580 ?write_l@Buffer@@QAEHPAVFont@@PADHHH@Z 0x005DB580-0x005DB65F FILE BYTE_EXACT
 // working copy - scaffold materialised by --work
@@ -6743,7 +6683,7 @@ int Buffer::wrap_flying(char *a1, int a2, int a3, int a4) {
 // calls     (none)
 // indirect  0x005E23C3 0x005E243F
 // The TRIED raw-vtable/descriptor spelling above is historical seed evidence.
-// The live SDK declares IDirectDrawSurface::Lock/Unlock and DDSURFACEDESC.
+// The live SDK declares IDirectDrawSurface2::Lock/Unlock and DDSURFACEDESC.
 // Initialize only dwSize, and preserve the cleanup decrement on Lock failure;
 // an ignored HRESULT from Unlock is not permission to change those paths.
 
@@ -6751,7 +6691,7 @@ int Buffer::put_pixel(int a1, int a2, int a3) {
   char *local_48;
   int result;
   DDSURFACEDESC description;
-  IDirectDrawSurface *surface;
+  IDirectDrawSurface2 *surface;
 
   void *cur = dib_bits_;
   if (cur == 0 && surface_ == 0) {
@@ -7186,7 +7126,7 @@ int Buffer::change_color(int a1, int a2) {
     }
 
     char *pixel_base;
-    IDirectDrawSurface *const surface = surface_;
+    IDirectDrawSurface2 *const surface = surface_;
     if (!surface) {
         char *const storage = static_cast<char *>(dib_bits_);
         locked_bits_ = storage;
@@ -7232,7 +7172,7 @@ int Buffer::change_color(int a1, int a2) {
                 p += stride_remainder;
             }
 
-            IDirectDrawSurface *const surface2 = surface_;
+            IDirectDrawSurface2 *const surface2 = surface_;
             const int32_t remaining = static_cast<int32_t>(
                 static_cast<uint32_t>(surface_lock_count_) - 1u);
             surface_lock_count_ = remaining;
@@ -7874,7 +7814,7 @@ int Buffer::draw_dest(Buffer * a1, int a2, int a3, int a4, int a5, int a6, unsig
         BufferSpriteOwner.sprite().cTransparentIndex_ = static_cast<char>(transparentIndex);
         BufferSpriteOwner.sprite().fObj1Exists_ = 0;
 
-        IDirectDrawSurface *surface = surface_;
+        IDirectDrawSurface2 *surface = surface_;
         if (surface == 0) {
             surface_lock_count_ = surface_lock_count_ - 1;
             if (surface_lock_count_ > 0) {
@@ -7944,7 +7884,7 @@ int Buffer::draw_multi_table_dest(Buffer * a1, int a2, int a3, int a4, int a5, i
         BufferSpriteOwner.sprite().cTransparentIndex_ = static_cast<char>(transparentIndex);
         BufferSpriteOwner.sprite().fObj1Exists_ = 0;
 
-        IDirectDrawSurface *surface = surface_;
+        IDirectDrawSurface2 *surface = surface_;
         if (surface == 0) {
             surface_lock_count_ = surface_lock_count_ - 1;
             if (surface_lock_count_ > 0) {
@@ -8371,7 +8311,7 @@ int Buffer::change_color(RECT *area, int find_color, int replace_color) {
 // entries as the RGB triplets the DIB stores BGRX. `.pcx` is appended when the
 // caller's name carries no extension, and 4 reports a file that would not
 // open. The `Filemap` local is what carries the EH frame, as in load_pcx.
-#pragma function(memcpy)
+
 int Buffer::write_pcx(char *filename) {
     Filemap map;
 
@@ -8477,7 +8417,7 @@ int Buffer::write_pcx(char *filename) {
     free_data(1);
     return 4;
 }
-#pragma intrinsic(memcpy)
+
 
 // ORIGINAL: 0x005DF910 ?write_bmp@Buffer@@QAEHPAD@Z 0x005DF910-0x005DFB3F
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned write_bmp epilogue ends with RET4 at5DFB3C..5DFB3F;5DFB3F is alignment NOP. The independent5DFB40..5DFB48 body is MOV EAX,8;RET16, corroborated by both IDA catalogues. It is not writer padding or a writer cold block.", "Historical unclaimed seed extent5DF910..5DFB48 is retained here as provenance. The separate5DFB40 entry has no established C++ owner or signature; do not count it implemented by this writer, create an adapter, or infer ownership merely from adjacency. No byte claim was attached to the combined extent."], "reason": "Bind the BMP writer only to its reachable original body; the old seed extent swallowed a separate still-unowned constant-return entry."}
@@ -10600,9 +10540,6 @@ Status: Coverage transcription - unclaimed body
 // 0x00696CE0, measured " " in the pinned image; the census in buffer.cpp
 // records its one-space neighbours 0x00696CD8/0x00696CDC. socialwin.cpp's
 // SpaceText names the other space string this family joins with.
-#if _MSC_VER == 1200
-#pragma function(memcpy)
-#endif
 int Buffer::wrap_cent_flying(char *text) {
     if (BufferFlyingWidth == 0) return 0;
     if (text == 0 || *text == 0) return BufferFlyingY;
@@ -10642,9 +10579,6 @@ int Buffer::wrap_cent_flying(char *text) {
     strcat(BufferFlyingText, text);
     return BufferFlyingY;
 }
-#if _MSC_VER == 1200
-#pragma intrinsic(memcpy)
-#endif
 #pragma optimize("y", off)
 // ORIGINAL: 0x0047A720 ?UNK4@MultiWin@@QAEHPADPAURECT@@@Z 0x0047A720-0x0047A752 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["task:rectangle-owner-overloads", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x47a720", "seed:src/recovered/units/0047a720.cpp all identity/spans/claims and parsed discoveries retained; seed retirement requires fresh verification.", "source:src/multiwin.h caller receiver evidence and existing genuine Spot/Buffer interfaces."], "reason": "Recover genuine existing-owner rectangle convenience method. Original catalog MultiWin attribution is contradicted by unchanged receiver forwarding and typed Spot/Buffer callee evidence; original identity and historical obligations are retained, not renamed or newly banked."}

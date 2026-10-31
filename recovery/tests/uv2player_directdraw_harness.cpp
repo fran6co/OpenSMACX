@@ -210,7 +210,11 @@ static int WinScreenWidth;
 struct ScreenBufferType {
     void fill(int color) { assert(color == 0); ++screen_fill_count; note("screen-fill"); }
 };
-static ScreenBufferType ScreenBuffer;
+struct ScreenBufferOwnerDouble {
+    ScreenBufferType storage;
+    ScreenBufferType &buffer() { return storage; }
+};
+static ScreenBufferOwnerDouble ScreenBufferOwner;
 struct Win {
     static void flip(RECT *area) { assert(area == 0); ++screen_flip_count; note("screen-flip"); }
     static int set_display_mode(int w, int h, int depth, int toggle) {
