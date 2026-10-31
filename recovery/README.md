@@ -6,6 +6,27 @@ verification run in the library; the former application operation bridge is
 removed. Local compiler scripts remain in `environment/`. See
 [the portable package](../packages/match-recovery/README.md) for starting an unrelated project.
 
+Generate a fresh source-linked assembly diff for a mapped function:
+
+```sh
+uv run recover diff 0x005DF590 --in src/buffer.cpp --image .opensmacx/game/terranx_original.exe
+xdg-open build/recovery/diffs/0x005DF590/diff.html
+```
+
+An exact emitted symbol can replace the address. Rerun after editing; the command
+recompiles instead of reusing a saved snapshot. It writes an offline HTML viewer
+with source-line selection, side-by-side original/compiled instructions,
+difference navigation and cold/EH regions when their ownership is supported.
+`--output` selects another Git-ignored HTML path; `--flag-set` selects a configured
+TU trial. Use `--resources recovery/resources.json` with the provisioned absolute
+`OPENSMACX_COMPILER_POOL` when sharing the compiler pool. Unsupported source/span
+or listing evidence refuses rather than guessing attribution. Listing options
+live in `recovery/diff.json`; the package owns the CLI, parser and renderer.
+The two compiler calls check whole-object equivalence before using listing lines.
+Opcode alignment is a navigation aid, and optimized source attribution can move
+or combine lines. This diagnostic command never records claims or establishes
+reference, build, structure or runtime acceptance.
+
 The first user milestone is complete byte-exact source recovery, bug for bug
 with the original; intentional bug fixes and improvements follow afterward.
 Compiling coverage is intermediate progress, not that milestone. The controlling
