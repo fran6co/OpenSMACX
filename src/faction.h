@@ -883,10 +883,6 @@ BOOL __cdecl great_satan(int faction_id, BOOL is_aggressive);
 int __cdecl aah_ooga(int faction_id, int pact_faction_id);
 BOOL __cdecl climactic_battle();
 BOOL __cdecl at_climax(int faction_id);
-// Non-inline forwarder to base.h's `MEASURED inline` ascending, defined in
-// faction.cpp: at_climax is one of the image's four real callers of
-// 0x005AC680 and needs the `call`, where base.h folds it for facility_avail.
-BOOL __cdecl ascending_call(int faction_id);
 void __cdecl cause_friction(int faction_id, int faction_id_with, int friction);
 int __cdecl get_mood(int friction);
 int __cdecl reputation(int faction_id, int faction_id_with);

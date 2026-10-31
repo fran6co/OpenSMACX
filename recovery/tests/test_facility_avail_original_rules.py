@@ -37,7 +37,11 @@ enum { SP_CITIZENS_DEFENSE_FORCE = 10, SP_VIRTUAL_WORLD = 11,
 struct FacilityRecord { int preq_tech; };
 struct Player { char filename[24]; uint32_t rule_flags; };
 struct Base { int x, y; };
-struct Fields { int diff_level_current_; uint32_t game_rules_; };
+struct Fields {
+    int diff_level_current_;
+    uint32_t game_rules_;
+    int secret_project_[128];
+};
 struct GameState { Fields fields_; };
 FacilityRecord Facility[128];
 Player Players[8];
@@ -47,7 +51,6 @@ int ExpansionEnabled;
 char StringTemp[1032];
 bool built[128];
 int queue_ids[10];
-int project_owner[128];
 std::vector<std::string> calls;
 
 void reset_state() {
@@ -58,7 +61,7 @@ void reset_state() {
     std::memset(StringTemp, 0, sizeof(StringTemp));
     std::memset(built, 0, sizeof(built));
     for (int i = 0; i < 10; ++i) queue_ids[i] = 0;
-    for (int i = 0; i < 128; ++i) project_owner[i] = SP_Unbuilt;
+    for (int i = 0; i < 128; ++i) GameDataStateStorage.fields_.secret_project_[i] = SP_Unbuilt;
     ExpansionEnabled = 1;
     GameDataStateStorage.fields_.diff_level_current_ = 3;
     std::strcpy(Players[0].filename, "GAIANS");
@@ -76,14 +79,10 @@ char *trace_upper(char *text) {
     return text;
 }
 int has_tech(int, int) { calls.push_back("has_tech"); return 1; }
-int ascending(int faction) {
-    (void)faction;
-    calls.push_back("ascending"); return project_owner[SP_VOICE_OF_PLANET] != SP_Unbuilt;
-}
 int base_project(int project) {
-    calls.push_back("base_project"); return project_owner[project];
+    calls.push_back("base_project"); return GameDataStateStorage.fields_.secret_project_[project];
 }
-int has_project(int project, int) { return project_owner[project] != SP_Unbuilt; }
+int has_project(int project, int) { return GameDataStateStorage.fields_.secret_project_[project] != SP_Unbuilt; }
 int has_fac(int facility, int, int queue_count) {
     if (built[facility]) return 1;
     for (int i = 0; i < queue_count; ++i) if (queue_ids[i] == -facility) return 1;
@@ -108,15 +107,15 @@ int test_garden() {
 }
 int test_ascent() {
     reset_state();
-    project_owner[SP_VOICE_OF_PLANET] = 0;
+    GameDataStateStorage.fields_.secret_project_[SP_VOICE_OF_PLANET] = 0;
     GameDataStateStorage.fields_.game_rules_ = RULES_VICTORY_TRANSCENDENCE;
     std::strcpy(Players[0].filename, "CARETAKE");
     if (!facility_avail(FAC_ASCENT_TO_TRANSCENDENCE, 0, 0, 0)) return 1;
-    if (calls.size() != 1 || calls[0] != "ascending") return 2;
+    if (calls.size() != 1 || calls[0] != "base_project") return 2;
     reset_state();
     GameDataStateStorage.fields_.game_rules_ = RULES_VICTORY_TRANSCENDENCE;
     if (facility_avail(FAC_ASCENT_TO_TRANSCENDENCE, 0, 0, 0)) return 3;
-    reset_state(); project_owner[SP_VOICE_OF_PLANET] = 0;
+    reset_state(); GameDataStateStorage.fields_.secret_project_[SP_VOICE_OF_PLANET] = 0;
     if (facility_avail(FAC_ASCENT_TO_TRANSCENDENCE, 0, 0, 0)) return 4;
     return 0;
 }
@@ -187,10 +186,11 @@ def mutated_function(mutation=None):
             "        return !has_fac(FAC_PUNISHMENT_SPHERE, base_id, queue_count);\n"
             "      case FAC_PUNISHMENT_SPHERE:", 1)
     elif mutation == "ascent_caretaker":
-        anchor = "return ascending(faction_id) && GameDataStateStorage.fields_.game_rules_ & RULES_VICTORY_TRANSCENDENCE;"
+        anchor = ("return base_project(SP_VOICE_OF_PLANET) != SP_Unbuilt\n"
+                  "            && GameDataStateStorage.fields_.game_rules_ & RULES_VICTORY_TRANSCENDENCE;")
         assert body.count(anchor) == 1
         body = body.replace(anchor,
-            "return ascending(faction_id) && GameDataStateStorage.fields_.game_rules_ & RULES_VICTORY_TRANSCENDENCE && trace_strcmp(Players[faction_id].filename, \"CARETAKE\");", 1)
+            anchor[:-1] + " && trace_strcmp(Players[faction_id].filename, \"CARETAKE\");", 1)
     elif mutation == "missing_clear":
         assert body.count("    StringTemp[0] = 0;\n") == 1
         body = body.replace("    StringTemp[0] = 0;\n", "", 1)

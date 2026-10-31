@@ -1,0 +1,22 @@
+{
+  "event_id": "4cc0465b83a43556b5d1ff910b2a5b7a0bbdb71a805ca94b8df06fd003342d00",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/faction.h",
+      "src/technology_queries.cpp"
+    ],
+    "evidence": [
+      "Actual facility_avail owner is technology_queries.cpp, not the stale Base comment. Preserve original direct Voice-slot test there while declaration-only ascending header restores canonical external calls.",
+      "Use existing typed base_project API and SP_VOICE_OF_PLANET/SP_Unbuilt constants; no artificial aliases or noinline policy. Remove obsolete unmapped ascending_call declaration/comment in faction.h with its forwarding implementation.",
+      "Budget remains6compilerinvocations:1complete4TUclosure plus up to2targeted followups. Alloriginalexactness/structure/callers andclaims remain obligations."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "ascending-technology-caller-oct31bm",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:ascending-visibility-oct31bm"
+}
