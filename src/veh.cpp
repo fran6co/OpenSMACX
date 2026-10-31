@@ -544,6 +544,7 @@ RulesReactor Reactor[MaxReactorNum];  // 0x009527F8
 // the original indexes these existing rules with a 0x1C-byte stride.
 // RECOVERY_OBJECT: v1 0x009AB538 ?Ability@@3PAURulesAbility@@A
 RulesAbility Ability[MaxAbilityNum];  // 0x009AB538
+// RECOVERY_OBJECT: v1 0x00952328 ?Morale@@3PAURulesMorale@@A
 RulesMorale Morale[MaxMoraleNum];  // 0x00952328
 RulesCombatMode DefenseModes[MaxDefenseModeNum];  // 0x00946A00
 RulesCombatMode OffenseModes[MaxOffenseModeNum];  // 0x00946178
@@ -9305,7 +9306,7 @@ void __cdecl promote(int veh_id) {
 
     if (Vehs[veh_id].proto_id < 0x40) {
         if (Weapon[VehPrototypes[Vehs[veh_id].proto_id].weapon_id].offense_rating < 0) {
-            parse_say(0, Morale[morale_veh(veh_id, 1, 0)].name, -1, -1);
+            parse_say(0, Morale[morale_veh(veh_id, 1, 0)].name_lifecycle, -1, -1);
             NetMsgPrimary.pop(VehLabelMORALE2, 0xffffec78, 0,
                              VehIconBATWON2_SM_PCX);
             return;
