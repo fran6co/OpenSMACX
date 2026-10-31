@@ -143,7 +143,6 @@ def register(commands):
     diff.add_argument("--in", dest="in_file", help="Exact annotation host")
     diff.add_argument("--output", type=Path, help="Ignored HTML destination; default build/recovery/diffs/<address>/diff.html")
     diff.add_argument("--flag-set", type=int, default=0, help="Configured TU trial index, default 0")
-    diff.add_argument("--resources", type=Path, help="Lease configured compiler resources for both invocations")
     grouping = commands.add_parser("partition", help="Derive provisional ownership units, not historical TU claims")
     grouping.add_argument("--root", type=Path, default=Path.cwd())
     grouping.add_argument("--group", help="A source-derived class or component group identity")
@@ -330,7 +329,7 @@ def invoke_project(root: Path, arguments: dict) -> tuple[int, object]:
         from .source_diff import generate_diff
         output = generate_diff(root, arguments["target"], image=arguments["image"],
                                in_file=arguments.get("in_file"), output=arguments.get("output"),
-                               flag_set=arguments.get("flag_set", 0), resources=arguments.get("resources"))
+                               flag_set=arguments.get("flag_set", 0))
         return 0, output
     if arguments.get("command") == "measure":
         from .source_measure import measure_source

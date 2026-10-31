@@ -1,6 +1,5 @@
 """Fresh, source-linked diagnostic views; never grants recovery claims."""
 
-from contextlib import nullcontext
 from dataclasses import asdict
 from hashlib import sha256
 from pathlib import Path
@@ -14,7 +13,6 @@ from .coff_preservation import compare_outside_functions
 from .measurement import Measurement
 from .model import Span
 from .pe_coff import Coff, PeImage
-from .records import read_json
 from .source import Mode, State
 from .source.asm import compare_unit, shared_spans
 from .source.eh_regions import bind_eh_regions
@@ -23,7 +21,7 @@ from .source_selection import (compilation_context, select_records,
                                selected_source_records, snapshot_mappings)
 
 
-def listing_lines(text: str, symbol: str, code: bytes) -> dict[int, int]:
+def listing_lines(text: str, symbol: str, code: bytes) -> dict[int, int | None]:
     """Read MSVC /FAcs source anchors, checking each listed byte against COFF.
 
     Wrapped byte lines continue the preceding instruction. Unsupported listings
@@ -35,14 +33,24 @@ def listing_lines(text: str, symbol: str, code: bytes) -> dict[int, int]:
     seen = bytearray(len(code))
     cursor = None
     found = 0
+    segment = None
+    root_segment = None
     for row in text.splitlines():
+        section = re.match(r"(\S+)\s+SEGMENT\b", row)
+        if section:
+            segment = section[1]
+        if re.match(r"\S+\s+ENDS\b", row):
+            segment = None
         if re.match(re.escape(symbol) + r"\s+PROC\b", row):
             active = True
             found += 1
+            root_segment = segment
             continue
         if active and re.match(re.escape(symbol) + r"\s+ENDP\b", row):
             active = False
         if not active:
+            continue
+        if segment != root_segment:
             continue
         anchor = re.match(r";\s*(\d+)\s*:", row)
         if anchor:
@@ -66,8 +74,17 @@ def listing_lines(text: str, symbol: str, code: bytes) -> dict[int, int]:
             raise ValueError("compiler listing bytes do not match the fresh object")
         seen[cursor:cursor + len(data)] = b"\1" * len(data)
         cursor += len(data)
-    if found != 1 or not result or not all(seen):
+    covered = next((i for i, value in enumerate(seen) if not value), len(seen))
+    # VC6 omits the section's terminal alignment bytes from /FAcs. Keep these
+    # bytes visible in the assembly, with no fabricated C++ line attribution.
+    padding = code[covered:]
+    valid_tail = (covered > 0 and len(padding) <= 15
+                  and all(value in (0x90, 0xCC) for value in padding)
+                  and not any(seen[covered:]))
+    if found != 1 or not result or (not all(seen) and not valid_tail):
         raise ValueError("listing does not completely cover one selected function")
+    if padding:
+        result[covered] = None
     return result
 
 
@@ -94,17 +111,40 @@ def _instructions(code, base, relocations=(), coff=None, lines=None):
     return rows
 
 
+def listing_source(text, symbol, files, anchors):
+    """Bind quoted compiler source lines to one actual file, including headers.
+
+    A FILE annotation may describe a function emitted from an inline header.
+    Attributing that header's line numbers to its .cpp host would be misleading.
+    """
+    active = False
+    quotes = {}
+    for row in text.splitlines():
+        if re.match(re.escape(symbol) + r"\s+PROC\b", row):
+            active = True
+        elif re.match(re.escape(symbol) + r"\s+ENDP\b", row):
+            active = False
+        elif active:
+            match = re.match(r";\s*(\d+)\s*:(.*)", row)
+            if match and int(match[1]) in anchors and match[2].strip():
+                quotes[int(match[1])] = match[2].strip()
+    matches = []
+    for path in files:
+        source = path.read_text()
+        rows = source.splitlines()
+        if quotes and all(1 <= n <= len(rows) and rows[n - 1].strip() == quote
+                          for n, quote in quotes.items()):
+            matches.append((path, source))
+    if len(matches) != 1:
+        raise ValueError("compiler source lines do not identify one current source file")
+    return matches[0]
+
+
 def generate_diff(root: Path, target: str, *, image: Path, in_file=None,
-                  output=None, flag_set=0, resources=None):
+                  output=None, flag_set=0):
     root = root.resolve()
-    if resources is not None:
-        from .resources import resource_environment
-        lease = resource_environment(read_json(root / resources), [root])
-    else:
-        lease = nullcontext()
-    with lease:
-        return _generate(root, target, image=image, in_file=in_file,
-                         output=output, flag_set=flag_set)
+    return _generate(root, target, image=image, in_file=in_file,
+                     output=output, flag_set=flag_set)
 
 
 def _generate(root, target, *, image, in_file, output, flag_set):
@@ -164,7 +204,9 @@ def _generate(root, target, *, image, in_file, output, flag_set):
         function = obj.function(symbol)
         code, relocations, _ = obj.subject(function)
         lines = listing_lines(listing, symbol, code)
-        if any(n < 1 or n > len(source_text.splitlines()) for n in lines.values()):
+        source_path, source_text = listing_source(listing, symbol, settings.source.files(root),
+                                                  set(lines.values()) - {None})
+        if any(n < 1 or n > len(source_text.splitlines()) for n in lines.values() if n is not None):
             raise ValueError("compiler source anchors lie outside the selected source file")
         spans = tuple(record.image_spans)
         regions = []
@@ -191,14 +233,15 @@ def _generate(root, target, *, image, in_file, output, flag_set):
         comparison = measured.results[0][1]
         if isinstance(comparison, str):
             raise ValueError(comparison)
-        first, last = min(lines.values()), max(lines.values())
-        payload = {"title": symbol, "source_path": record.path.relative_to(root).as_posix(),
+        source_numbers = [n for n in lines.values() if n is not None]
+        first, last = min(source_numbers), max(source_numbers)
+        payload = {"title": symbol, "source_path": source_path.relative_to(root).as_posix(),
                    "source_lines": [{"number": n, "text": text} for n, text in enumerate(source_text.splitlines(), 1)
                                     if first <= n <= last], "regions": regions}
         document = render_diff(payload)
         if (settings.snapshot(root, {"operation": "diff", "target": target}) != before
                 or config_path.read_bytes() != config_bytes or image.read_bytes() != original_bytes
-                or record.path.read_text() != source_text):
+                or source_path.read_text() != source_text):
             raise ValueError("diff inputs changed during compilation; no viewer published")
         temporary = directory / "diff.html"
         temporary.write_text(document)

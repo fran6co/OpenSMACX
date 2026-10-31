@@ -60,6 +60,9 @@ def test_render_diff_retains_all_rows_and_aligns_operand_and_extra_instructions(
     assert "navigation aid, not matching proof" in page
     assert "Previous difference" in page and "Changes only" in page
     assert "cold regions" in page
+    assert '"C++:"+instr.source_line' in page
+    assert "let activeRow=null" in page and "activeRow=null;let s=" in page
+    assert "no compiler source-line mapping" in page
 
 
 def test_render_diff_escapes_untrusted_markup_and_needs_no_network():

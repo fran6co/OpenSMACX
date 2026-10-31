@@ -2,7 +2,7 @@ import pytest
 import json
 from pathlib import Path
 
-from match_recovery.source_diff import listing_lines, generate_diff
+from match_recovery.source_diff import listing_lines, listing_source, generate_diff
 from test_recording import project, compiler, calls
 from source.test_local_asm import local_coff
 
@@ -74,3 +74,32 @@ def test_listing_rejects_duplicate_symbol_and_missing_source_anchors():
         listing_lines(fragment * 2, "x", b"\xc3")
     with pytest.raises(ValueError, match="completely cover"):
         listing_lines(fragment.replace('; 1 : x\n', ''), "x", b"\xc3")
+
+
+def test_associated_cold_section_offsets_do_not_overwrite_root_source_anchors():
+    text = '''_TEXT SEGMENT
+x PROC NEAR
+; 12 : source
+  00000\tc3\t ret
+_TEXT ENDS
+text$x SEGMENT
+  00000\tcc\t int 3
+text$x ENDS
+x ENDP
+'''
+    assert listing_lines(text, 'x', b'\xc3') == {0: 12}
+    assert listing_lines(text, 'x', b'\xc3\x90\xcc') == {0: 12, 1: None}
+    with pytest.raises(ValueError, match='completely cover'):
+        listing_lines(text, 'x', b'\xc3\x01')
+
+
+def test_header_lines_are_not_attributed_to_cpp_host_and_ambiguity_refuses(tmp_path):
+    header = tmp_path / 'owner.hpp'
+    host = tmp_path / 'owner.cpp'
+    header.write_text('inline int f() {return 1;}\n')
+    host.write_text('#include "owner.hpp"\n')
+    text = '_f PROC NEAR\n; 1 : inline int f() {return 1;}\n_f ENDP\n'
+    assert listing_source(text, '_f', [header, host], {1}) == (header, header.read_text())
+    host.write_text(header.read_text())
+    with pytest.raises(ValueError, match='identify one'):
+        listing_source(text, '_f', [header, host], {1})
