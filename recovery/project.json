@@ -655,9 +655,19 @@
       "src/jackal/jackal.cpp": [
         0
       ],
-      "src/jackal/palette.cpp": [
-        0
-      ],
+      "src/jackal/palette.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W4",
+          "-c"
+        ]
+      },
       "src/jackal/font.cpp": [
         0
       ],
@@ -1036,6 +1046,20 @@
           "/Ob2",
           "-MT",
           "/W4",
+          "-c"
+        ]
+      },
+      "src/console.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W4",
+          "/Oy-",
           "-c"
         ]
       }
