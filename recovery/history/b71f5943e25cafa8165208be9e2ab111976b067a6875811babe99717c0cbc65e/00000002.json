@@ -1,0 +1,23 @@
+{
+  "event_id": "363cea7b677e3ba2ba1ce2f39059b6dc0f5ab19f6fe6749e07bcb4386fa4f259",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Add the canonical ascending identity to the completed owner review dependency closure. Its source edits were separately authorized by ascending-visibility-oct31bm; this grants no new Base editing scope and changes no original baseline."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5949056,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "84b217b3c40a184391507bdd8e8575b6e40197aab2a81098dc480c08405d2d78",
+  "request_id": "ascending-reviewed-dependency-oct31bm",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:easy-faction-oct31bl"
+}

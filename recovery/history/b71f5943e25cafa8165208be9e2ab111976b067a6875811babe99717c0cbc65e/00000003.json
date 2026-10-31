@@ -1,0 +1,18 @@
+{
+  "event_id": "4dbf3243aebecc0fb3a6096f7760216f926042240ce84532403532d525d4884f",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "ascending-cross-tu-visibility-oct31bl",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/base.cpp canonical15byte definition precedes Base callers; src/base.h declaration only; src/faction.cpp original two canonical calls, no artificial wrapper; src/technology_queries.cpp direct original Voice-slot check.",
+      "Destination200TU214object build/link and71hosttests pass;212zero-omission candidate/destination comparisons pass. Original canonical source/COFF calls restored; linkedselection and absent ascent MAP entry are separate unfinished obligations, not waived."
+    ]
+  },
+  "previous_event": "363cea7b677e3ba2ba1ce2f39059b6dc0f5ab19f6fe6749e07bcb4386fa4f259",
+  "request_id": "ascending-source-incorporated-oct31bm",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:easy-faction-oct31bl"
+}

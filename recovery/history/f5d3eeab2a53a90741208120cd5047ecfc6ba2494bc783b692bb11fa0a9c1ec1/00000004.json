@@ -1,0 +1,21 @@
+{
+  "event_id": "24504fb1ae8aa9eaa2f474e9a13ff5e7d51e0a1ef0d6109b6e4e406eb2761ea6",
+  "payload": {
+    "affects": [
+      "entity-6594aca231a46ecab36a09c8b16578388e9dd1f433345453cbd4a8369bac05e0"
+    ],
+    "author": "coordinator",
+    "discovery_id": "ascent-retained-selection-oct31bm",
+    "evidence": [
+      "src/game.cpp ascent original523B50..523C58; nativeRecorder and fresh final/destination function/strict observations.",
+      "Fresh final-candidate-residual-review documents absent MAP entry while preserving four canonical ascending COFF call sites and unsupported linked allocation/selection proof."
+    ],
+    "hypothesis": "The current qualified application has a freshly exact standalone ascent COFF body but no ascent MAP entry. Recover and verify original direct/indirect consumers and retained selection before claiming this body is present in the linked application; keep the source identity, exact claim and actual compiled implementation. Do not add forced exports or change link flags without evidence.",
+    "kind": "discovery"
+  },
+  "previous_event": "a28960ee294c6fe6e3e7445dfaea31924c4c2b7be9f5a88045926c1be4ec9260",
+  "request_id": "ascent-retained-selection-oct31bm",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:ascending-visibility-oct31bm"
+}
