@@ -140,12 +140,23 @@ struct SubInterface {
   void delete_iface_mode() { DiploControlEvents.add(29); }
 };
 struct Spot { void init(int value) { if (value == 100) DiploControlEvents.add(0); } };
+typedef void (*StringBoxAddHook)();
+extern StringBoxAddHook StringBoxAddAfterInsert;
+
 struct StringBox : GraphicWin {
   StringList list;
   StringList &strings() { return list; }
   void init(int, int, int, int, Win *, void *, int) { DiploControlEvents.add(4); }
   void clear() { list.clear(); DiploControlEvents.add(5); }
-  void add(char *text, int id, int) { list.pending_text_ = text; list.add(id); }
+  void add(char *text, int id, int) {
+    list.pending_text_ = text;
+    list.add(id);
+    if (StringBoxAddAfterInsert != 0) {
+      StringBoxAddHook hook = StringBoxAddAfterInsert;
+      StringBoxAddAfterInsert = 0;
+      hook();
+    }
+  }
 };
 struct EditBox : GraphicWin {
   uint32_t field_B14_, field_B1C_, field_B20_, field_B24_, field_B30_;
