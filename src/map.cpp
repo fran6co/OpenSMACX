@@ -496,7 +496,7 @@ int __cdecl sea_coasts(int region_src) {
 Purpose: Check to see whether base is within a one tile radius of a sea tile with specified region.
          If you pass a land region (<63) as the 2nd parameter, it is possible to get collision
          behavior due to region bounding. TODO: Revisit in the future to see whether to remove them.
-// ORIGINAL: 0x0050DE50 ?base_on_sea@@YAHHH@Z 0x0050DE50-0x0050DF28
+// ORIGINAL: 0x0050DE50 ?base_on_sea@@YAHHH@Z 0x0050DE50-0x0050DF28 BYTE_EXACT
 // TRIED: --all-flags's winner (23/81, the default set) already beats every other set;
 //            first divergence is the prologue's two globals (MapIsFlat at 0x94988c,
 //            MapLongitudeBounds at 0x949870) loading into ebx/edi in the opposite order
@@ -539,7 +539,7 @@ Purpose: Determine the ocean region for coastal bases. There is an issue if a ba
          positioned, the AI might make assumptions not to prioritize building naval units. Also,
          the Continents compare logic isn't used by anything. This might be the root cause of
          outlined bug. TODO: Revisit in the future once more is known about Continent structure.
-// ORIGINAL: 0x0050DF30 ?base_coast@@YAHH@Z 0x0050DF30-0x0050E021
+// ORIGINAL: 0x0050DF30 ?base_coast@@YAHH@Z 0x0050DF30-0x0050E021 BYTE_EXACT
 // TRIED: 42/81 plateau, same xrange/on_map-loop family as base_on_sea
 //            (0x0050DE50). First divergence is inside the inlined `xrange`:
 //            the image loads MapLongitudeBounds ONCE and reuses that
@@ -586,7 +586,7 @@ int __cdecl base_coast(int base_id) {
 
 /*
 Purpose: Check to see if a port base shares a common body of water with destination coastal region.
-// ORIGINAL: 0x0050E030 ?port_to_coast@@YAHHH@Z 0x0050E030-0x0050E15A
+// ORIGINAL: 0x0050E030 ?port_to_coast@@YAHHH@Z 0x0050E030-0x0050E15A BYTE_EXACT
 // size      298 bytes
 // prototype int (__cdecl ?port_to_coast@@YAHHH@Z)(int baseID, int region)
 // callers   2   call targets   1
@@ -608,7 +608,7 @@ Status: Complete
 BOOL __cdecl port_to_coast(int base_id, int region) {
     int x = Bases[base_id].x;
     int y = Bases[base_id].y;
-    if (region_at(x, y) == region) {
+    if (region == region_at(x, y)) {
         return true;
     }
     for (int i = 0; i < 8; i++) { // is_coast()
@@ -670,7 +670,7 @@ Status: Complete
 /*
 Purpose: Determine if a base has access to ports or more than one coastal region. This helps
          prioritize whether naval transports should be built.
-// ORIGINAL: 0x0050E310 ?transport_base@@YAHH@Z 0x0050E310-0x0050E3BD
+// ORIGINAL: 0x0050E310 ?transport_base@@YAHH@Z 0x0050E310-0x0050E3BD BYTE_EXACT
 // LEVER: catalogue lists `sea_coasts` as callers=1, and this wasn't it - the
 //        image hand-inlines `sea_coasts`'s whole loop at this call site
 //        (same shape as `sea_coasts`'s own comment about `sea_coast()`)
@@ -701,7 +701,7 @@ BOOL __cdecl transport_base(int base_id) {
     // is hand-inlined here: the image writes its whole loop body out at this
     // call site (bitmask() is the only call it keeps), rather than calling
     // 0x0050DE00.
-    uint32_t sea_coast_count = 0;
+    int sea_coast_count = 0;
     for (int i = 1; i < RegionBounds; i++) {
         int offset;
         int mask;
@@ -863,7 +863,7 @@ BOOL __cdecl get_there(int veh_id, int x_dst, int y_dst) {
 Purpose: Return the first neighboring tile index that satisfies the coast/border checks, or 0.
          Earlier recovery prose treated the point-B comparison and integer result as unnecessary;
          the pinned function reads both regions and returns the successful neighbor index.
-// ORIGINAL: 0x0056B480 ?coast_or_border@@YAHHHHHH@Z 0x0056B480-0x0056B5A9
+// ORIGINAL: 0x0056B480 ?coast_or_border@@YAHHHHHH@Z 0x0056B480-0x0056B5A9 BYTE_EXACT
 // size      297 bytes
 // prototype int (__cdecl ?coast_or_border@@YAHHHHHH@Z)(int xCoordPtA, int yCoordPtA, int xCoordPtB, int yCoordPtB, int factionID)
 // callers   1   call targets   1
@@ -886,11 +886,11 @@ Status: Complete
 //            rest of this file otherwise. Not chased further.
 int __cdecl coast_or_border(int x_point_a, int y_point_a, int x_point_b,
                             int y_point_b, int faction_id) {
-    if ((int)faction_id != whose_territory(faction_id, x_point_a, y_point_a, NULL, false)) {
+    if (whose_territory(faction_id, x_point_a, y_point_a, NULL, false) != (int)faction_id) {
         return 0; // faction doesn't control point A
     }
     uint32_t region_b = region_at(x_point_b, y_point_b);
-    for (int i = 1; i <= 8; i++) {
+    for (int i = 1; i < 9; i++) {
         int x_radius = xrange(x_point_a + RadiusOffsetX[i]);
         int y_radius = y_point_a + RadiusOffsetY[i];
         if (on_map(x_radius, y_radius) && (is_ocean(x_radius, y_radius)
@@ -1905,16 +1905,8 @@ int __cdecl is_coast(int x, int y, BOOL is_base_radius) {
     if (i >= radius) {
         return 0;
     }
-    int is_flat = MapIsFlat & 1;
     for (; i < radius; i++) {
-        int x_radius = x + RadiusOffsetX[i];
-        if (!is_flat) {
-            if (x_radius < 0) {
-                x_radius += MapLongitudeBounds;
-            } else if (x_radius >= (int)MapLongitudeBounds) {
-                x_radius -= MapLongitudeBounds;
-            }
-        }
+        int x_radius = xrange(x + RadiusOffsetX[i]);
         int y_radius = y + RadiusOffsetY[i];
         if (on_map(x_radius, y_radius) && is_ocean(x_radius, y_radius)) {
             return i;
@@ -1925,7 +1917,7 @@ int __cdecl is_coast(int x, int y, BOOL is_base_radius) {
 
 /*
 Purpose: Check whether the specified tile is part of an ocean.
-// ORIGINAL: 0x005001E0 ?is_ocean@@YAHHH@Z 0x005001E0-0x00500211
+// ORIGINAL: 0x005001E0 ?is_ocean@@YAHHH@Z 0x005001E0-0x00500211 BYTE_EXACT
 // body      src/map.h
 // TRIED: same root plateau as `alt_at` (image schedules `xor ecx,ecx`
 //            before loading the map_tiles() pointer; this tree loads the
@@ -1965,7 +1957,7 @@ Status: Complete
 
 /*
 Purpose: Rebuild the Map's unit related values.
-// ORIGINAL: 0x00532A90 ?rebuild_vehicle_bits@@YAXXZ 0x00532A90-0x00532B63
+// ORIGINAL: 0x00532A90 ?rebuild_vehicle_bits@@YAXXZ 0x00532A90-0x00532B63 BYTE_EXACT
 // TRIED: bit_set/bit_at/owner_set with (x,y) never spilled a 3rd stack
 //            slot (image is `sub esp, 0xc`) - a raw `Map *tile` walked by
 //            sizeof(Map), re-reading tile->bit at each of its three sites
@@ -1995,7 +1987,8 @@ void __cdecl rebuild_vehicle_bits() {
                 if (Vehs[veh_id].x == x && Vehs[veh_id].y == y) {
                     tile->bit |= BIT_VEH_IN_TILE;
                     if (!(tile->bit & BIT_BASE_IN_TILE)) {
-                        tile->val2 = (tile->val2 & 0xF0) | (Vehs[veh_id].faction_id & 0xF);
+                        tile->val2 &= 0xF0;
+                        tile->val2 |= Vehs[veh_id].faction_id & 0xF;
                     }
                     break;
                 }
@@ -2006,7 +1999,7 @@ void __cdecl rebuild_vehicle_bits() {
 
 /*
 Purpose: Rebuild the Map's base related values.
-// ORIGINAL: 0x00532B70 ?rebuild_base_bits@@YAXXZ 0x00532B70-0x00532C2B
+// ORIGINAL: 0x00532B70 ?rebuild_base_bits@@YAXXZ 0x00532B70-0x00532C2B BYTE_EXACT
 // TRIED: bit_set/owner_set called with (x,y) recomputed map_loc each time
 //            and never reduced to the image's single walking pointer (0/66
 //            agreeing). A raw `Map *tile` incremented by `sizeof(Map)` once
@@ -2035,7 +2028,8 @@ void __cdecl rebuild_base_bits() {
             for (int base_id = 0; base_id < GameDataStateStorage.fields_.base_current_count_; base_id++) {
                 if (Bases[base_id].x == x && Bases[base_id].y == y) {
                     tile->bit |= BIT_BASE_IN_TILE;
-                    tile->val2 = (tile->val2 & 0xF0) | (Bases[base_id].faction_id_current & 0xF);
+                    tile->val2 &= 0xF0;
+                    tile->val2 |= Bases[base_id].faction_id_current & 0xF;
                     break;
                 }
             }
@@ -2549,7 +2543,7 @@ int __cdecl radius_move(int x_radius_off, int y_radius_off, int range) {
 
 /*
 Purpose: Determine if the specified two tiles are within the range radius of each other.
-// ORIGINAL: 0x005A65D0 ?radius_move@@YAHHHHHH@Z 0x005A65D0-0x005A662C
+// ORIGINAL: 0x005A65D0 ?radius_move@@YAHHHHHH@Z 0x005A65D0-0x005A662C BYTE_EXACT
 // size      92 bytes
 // prototype int (__cdecl ?radius_move@@YAHHHHHH@Z)(int xCoordSrc, int yCoordSrc, int xCoordDst, int yCoordDst, int range)
 // callers   4   call targets   0
@@ -2578,7 +2572,6 @@ Return Value: Range radius, otherwise -1 if not within range
 Status: Complete
 */
 int __cdecl radius_move(int x_src, int y_src, int x_dst, int y_dst, int range) {
-    int y_radius_off = y_dst - y_src;
     int x_radius_off = x_dst - x_src;
     if (x_radius_off < -((int)MapLongitudeBounds / 2)) {
         x_radius_off += MapLongitudeBounds;
@@ -2586,6 +2579,7 @@ int __cdecl radius_move(int x_src, int y_src, int x_dst, int y_dst, int range) {
     if (x_radius_off > ((int)MapLongitudeBounds / 2)) {
         x_radius_off -= MapLongitudeBounds;
     }
+    int y_radius_off = y_dst - y_src;
     return radius_move(x_radius_off, y_radius_off, range);
 }
 
@@ -3516,6 +3510,7 @@ int __cdecl encrypt_read(void *data, unsigned int size, unsigned int count,
     unsigned char prevB = 0x80;
     unsigned char *src = buf;
     unsigned char *dst = static_cast<unsigned char *>(data);
+    unsigned int remaining = total;
 
     for (unsigned int pairs = allocSize >> 1; pairs != 0; --pairs) {
         ++prevB;
@@ -3531,11 +3526,12 @@ int __cdecl encrypt_read(void *data, unsigned int size, unsigned int count,
         }
         *dst = b1;
         unsigned char *next = dst + 1;
-        if (total > 1) {
+        if (remaining > 1) {
             *next = b0;
             next = dst + 2;
         }
 
+        remaining -= 2;
         dst = next;
     }
     free(buf);
