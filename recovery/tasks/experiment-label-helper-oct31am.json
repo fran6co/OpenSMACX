@@ -1,0 +1,38 @@
+{
+  "author": "recovery-coordinator",
+  "base_revision": "5a8f5d57ae4a0731594b0b0864d662114d512523",
+  "editable_files": [
+    "src/alpha.h",
+    "recovery/project.json"
+  ],
+  "evidence": [
+    "New caller-local direct-intermediate matches and header impact hints: /home/fran6co/code/OpenSMACX/.opensmacx/recovery/fast-pass-oct30ol/label-helper-impact-oct31al.json",
+    "Inventory caller ownership is provisional pending native lexical containment; do not treat182as proved."
+  ],
+  "intent": "Exploratory shared helper spelling, four measured sample functions only. Header impact is wider and not yet resolved; no publication or integration allowed without conservative full impact expansion/preservation. Maximum three distinct forms; keep all historical claims.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5829360,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5946256,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5835152,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5835280,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "experiment-label-helper-oct31am"
+}
