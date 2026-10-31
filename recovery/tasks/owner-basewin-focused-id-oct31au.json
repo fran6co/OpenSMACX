@@ -1,0 +1,22 @@
+{
+  "author": "recovery-coordinator",
+  "base_revision": "895651261a0eb62b48de6a0ddef0c930a8eb45ce",
+  "editable_files": [
+    "src/basewin.cpp",
+    "recovery/project.json"
+  ],
+  "evidence": [
+    "History-first source/pinned/actual COFF evidence: /home/fran6co/code/OpenSMACX/.opensmacx/recovery/fast-pass-oct30ol/base-vehicle-frontier-oct31au.json"
+  ],
+  "intent": "Capture the uint32_t focused ID once and compare the signed home id by normal integer promotion, matching the pin value width and reuse. This also preserves the full value for the Base array index; no bounds check or fallback is added.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4303024,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "owner-basewin-focused-id-oct31au"
+}
