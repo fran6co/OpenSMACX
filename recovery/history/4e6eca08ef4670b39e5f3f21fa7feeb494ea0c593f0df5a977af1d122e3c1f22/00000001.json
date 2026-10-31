@@ -1,0 +1,20 @@
+{
+  "event_id": "94cbc5fe331c9592c459d2446fc9864c3c06a0bb3880ddfabd43a7a813727e19",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_buffer_pcx_format_view_oct13k.py"
+    ],
+    "evidence": [
+      "PinnedPCX/BMP writer callback-boundary reads are corrected within assignedBuffer owner; existing regression damage control anchors the old cached-width spelling.",
+      "Authorize meaningful actual-source callback-mutation and damage controls, preserving original error paths, filename capacity and ABI; no framework changes/full-suite expansion."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "buffer-writer-callback-test-scope-oct31bi",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:bulk-buffer-oct31bi"
+}
