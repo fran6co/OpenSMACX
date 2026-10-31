@@ -1991,6 +1991,7 @@ Purpose: Refill one hot-seat chat view: order the two record indices, clear
 
 // ORIGINAL: 0x00441100 sub_441100 0x00441100-0x004411EC FILE
 // RECOVERY_BINDING: v1 {"evidence": ["diplowin.cpp owns the direct DiploWin::exec caller, the shared DiploWindow StringBox/EditBox and the typed DiplomacyTranscriptLists array.", "The original implementation clears both shared controls, normalizes the pair, then reads the last three entries from the selected list in its existing order."], "reason": "Move the complete externally named callback from the catch-all leaf TU into the owning diplomacy TU; retain normalization, clear order, loop bounds and typed list/control behavior."}
+// symbol    _sub_441100
 // TRIED: signature had no params in the fallback head (IDA guessed 2 stack ints, confirmed by [ebp+8]/[ebp+0xc] reads before any push, and no meaningful eax at ret so void not int - both changed). Landed at MISMATCH (90% mnemonic similarity, 11 edits).
 // size      236 bytes
 // prototype
