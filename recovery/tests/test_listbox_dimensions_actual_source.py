@@ -216,3 +216,17 @@ def test_actual_item_source_controls_measurement_and_insertion(compiler_name, tm
                    capture_output=True, text=True, timeout=30)
     subprocess.run([str(binary)], check=True, capture_output=True,
                    text=True, timeout=30)
+
+
+@pytest.mark.parametrize("compiler_name", ("g++", "clang++"))
+def test_item_rejects_old_negative_width_height(compiler_name, tmp_path):
+    compiler = shutil.which(compiler_name)
+    if not compiler:
+        pytest.skip(f"{compiler_name} unavailable")
+    source = (ROOT / "src/listbox.cpp").read_text(encoding="utf-8")
+    dimensions = extract_definition(source)
+    item = extract_definition(source, ITEM_SIGNATURE)
+    assert item.count("if (count != 0)") == 1
+    old_item = item.replace("if (count != 0)", "if (count > 0)")
+    result = run_body(tmp_path, dimensions, compiler, "old-negative-height", old_item)
+    assert result.returncode != 0, "negative-width control admitted the old height selection"

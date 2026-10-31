@@ -1427,7 +1427,7 @@ int ListBox::item(char *text, int id) {
     }
 
     int height;
-    if (count > 0) {
+    if (count != 0) {
         height = static_cast<int32_t>(Buffer::field_18_);
     } else {
         height = 1;
