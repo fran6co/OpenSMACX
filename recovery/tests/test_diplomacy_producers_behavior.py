@@ -92,7 +92,7 @@ int PluralityDefault, GenderDefault;
 char *PopupStartCaption = popup_start_caption;
 char *TutorialPopupCaption = TutorialPopupCaptionText;
 const char *DiploLabelSendingTECH = "SENDINGTECH";
-const char *DiploLabelSendingTREATYON = "SENDINGTREATYON";
+char DiploLabelSendingTREATYON[] = "Sending TREATY ON";
 const char *DiploLabelSendingTRADEMAPS = "SENDINGMAPS";
 const char *DiploLabelPROTO = "PROTO";
 const char *DiploLabelPACT = "PACT";

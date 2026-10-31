@@ -1811,7 +1811,7 @@ void __cdecl kill_landmark(int x, int y) {
 /*
 Purpose: Check if coordinates are considered near or on coast. Radius (excludes actual coordinates)
          can either be all the squares directly around the coordinates or same as Base '+' radius.
-// ORIGINAL: 0x004E49D0 ?is_coast@@YAHHHH@Z 0x004E49D0-0x004E4A91
+// ORIGINAL: 0x004E49D0 ?is_coast@@YAHHHH@Z 0x004E49D0-0x004E4A91 BYTE_EXACT
 // TRIED: 9/76, 0.84 similar plateau across every flag set. The image
 //            uses TWO induction variables for the loop (an unscaled count
 //            in [ebp-4] and a byte offset in edi, incremented in lockstep)

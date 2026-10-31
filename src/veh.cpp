@@ -6555,7 +6555,7 @@ void __cdecl wake_stack(int veh_id) {
 
 /*
 Purpose: Move a stack of units in the same stack as the specified unit to a destination.
-// ORIGINAL: 0x005B8AF0 ?stack_put@@YAXHHH@Z 0x005B8AF0-0x005B8B5D
+// ORIGINAL: 0x005B8AF0 ?stack_put@@YAXHHH@Z 0x005B8AF0-0x005B8B5D BYTE_EXACT
 // size      109 bytes
 // prototype void (__cdecl ?stack_put@@YAXHHH@Z)(int vehID, int xCoord, int yCoord)
 // callers   5   call targets   2
@@ -6578,7 +6578,7 @@ void __cdecl stack_put(int veh_id, int x, int y) {
         top_veh_id = -1;
     } else {
         top_veh_id = veh_id;
-        for (int j = Vehs[top_veh_id].prev_veh_id_stack; j >= 0; j = Vehs[j].prev_veh_id_stack) {
+        for (int16_t j = Vehs[top_veh_id].prev_veh_id_stack; j >= 0; j = Vehs[j].prev_veh_id_stack) {
             top_veh_id = j;
         }
     }
@@ -6587,11 +6587,10 @@ void __cdecl stack_put(int veh_id, int x, int y) {
         do {
             veh_id_loop = Vehs[top_veh_id].next_veh_id_stack;
             // veh_put(), hand-inlined: the image calls veh_lift and veh_drop
-            // directly here, discarding veh_lift's return (it always returns
-            // its own veh_id argument unchanged) rather than threading it
-            // through to veh_drop's first parameter.
-            veh_lift(top_veh_id);
-            veh_drop(top_veh_id, x, y);
+            // Historical source discarded veh_lift's result because that
+            // callee returns its argument. Original5B8B49 instead pushes EAX:
+            // retain the call-result binding and the pre-lift x/y arguments.
+            veh_drop(veh_lift(top_veh_id), x, y);
             top_veh_id = veh_id_loop;
         } while (veh_id_loop >= 0);
     }

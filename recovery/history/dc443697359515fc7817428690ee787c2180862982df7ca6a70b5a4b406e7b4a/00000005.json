@@ -1,0 +1,20 @@
+{
+  "event_id": "1772db16f5138850212fed66229833776ef7bb58b6a56d05889e686f3fece5e9",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_diplomacy_actions_coverage.py",
+      "recovery/tests/test_diplomacy_producers_behavior.py"
+    ],
+    "evidence": [
+      "Existing producer mock has wrong pointer/text sentinel SENDINGTREATYON; actual source owns char[] initialized Sending TREATY ON. Existing selected action harnesses omit the two newly referenced real arrays. Match those real APIs/initial contents without changing any event/order/damage oracle or product behavior."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "a885aad521019332ca6f427d08bea8595b70bb5061be2e0f2b4f1db106bac97f",
+  "request_id": "coordinator-label-host-api-continuity-oct31ch",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:structural-cohort-oct31ch"
+}

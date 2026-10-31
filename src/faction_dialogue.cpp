@@ -387,7 +387,7 @@ communicate_getout_result = X_pops(
 // 0x005503E9..0x00550497. The result and dialogue_flags are function-scope
 // locals set by the immediately preceding/earlier native sections.
 if (communicate_getout_result == 0) {
-    log_say("Getting DIPLOMATIC LOCK", 0, 0, 0);
+    log_say(DiploLabelGettingDIPLOMATICLOCK, 0, 0, 0);
     (void)timeGetTime();
     while (ExitTurnLoop == 0) {
         if (NetDaemonNet.add_global() == 0) {
@@ -454,7 +454,7 @@ communicate_contact_entry_exit_alt: // native 0x00550529
 // 0x005504A5..0x00550519. The native intentionally performs two distinct
 // withdrawal request/owner passes with opposite faction argument order.
 communicate_getout_result_one_lock_path:
-log_say("Getting DIPLOMATIC LOCK", 0, 0, 0);
+log_say(DiploLabelGettingDIPLOMATICLOCK, 0, 0, 0);
 (void)timeGetTime();
 while (ExitTurnLoop == 0) {
     if (NetDaemonNet.add_global() == 0) {
@@ -500,7 +500,7 @@ goto communicate_main_dialogue_path; // native 0x00550A8B
 // Private native translation for the result-other diplomatic-lock and
 // double-cross action at 0x005506B8..0x0055075E.
 communicate_getout_result_other_lock_path: // native 0x005506B8
-log_say("Getting DIPLOMATIC LOCK", 0, 0, 0);
+log_say(DiploLabelGettingDIPLOMATICLOCK, 0, 0, 0);
 (void)timeGetTime();
 while (ExitTurnLoop == 0) {
     if (NetDaemonNet.add_global() == 0) {
@@ -828,7 +828,7 @@ communicate_plea_result = X_pops(
 if (communicate_plea_result == 0) {
     goto communicate_protective_treaty_dispatch; // native 0x00551123 -> 0x00551336
 }
-log_say("Getting DIPLOMATIC LOCK", 0, 0, 0);
+log_say(DiploLabelGettingDIPLOMATICLOCK, 0, 0, 0);
 (void)timeGetTime();
 while (ExitTurnLoop == 0) {
     if (NetDaemonNet.add_global() == 0) {
@@ -925,7 +925,7 @@ goto communicate_after_proposal_menu; // native 0x005516FB -> 0x0055362D
 // subsequent callbacks are retained as distinct paths.
 communicate_protective_treaty_dispatch: // native 0x00551336
 if (IsMultiplayerNet) {
-    log_say("Sending TREATY ON", faction_id, peer_id, 0x00800000);
+    log_say(DiploLabelSendingTREATYON, faction_id, peer_id, 0x00800000);
     message_data(0x2441, 0, faction_id, peer_id, 0x00800000, 0);
 } else {
     treaty_on(faction_id, peer_id, 0x00800000);
@@ -1017,7 +1017,7 @@ DiploScratchFA8C = DiploScratchF7E8;
 // and return-to-topic flow separate from the nonzero double-cross edge.
 communicate_treaty_topic_zero_result: // native 0x005516FB
 if (IsMultiplayerNet) {
-    log_say("Sending TREATY ON", faction_id, peer_id, 0x00800000);
+    log_say(DiploLabelSendingTREATYON, faction_id, peer_id, 0x00800000);
     message_data(0x2441, 0, faction_id, peer_id, 0x00800000, 0);
 } else {
     treaty_on(faction_id, peer_id, 0x00800000);
@@ -1176,7 +1176,7 @@ if ((PlayersData[peer_id].diplo_treaties[faction_id] & 1u) != 0) {
     DiploScratchFA60 = 1;
 }
 if (IsMultiplayerNet) {
-    log_say("Sending TREATY ON", faction_id, peer_id, 0x00800000);
+    log_say(DiploLabelSendingTREATYON, faction_id, peer_id, 0x00800000);
     message_data(0x2441, 0, faction_id, peer_id, 0x00800000, 0);
 } else {
     treaty_on(faction_id, peer_id, 0x00800000);
@@ -1198,7 +1198,7 @@ goto communicate_menu_continuation; // native 0x00553464
 communicate_demand_topic_nonzero_result: // native 0x00551D71
 (void)diplo_lock(0);
 if (IsMultiplayerNet) {
-    log_say("Sending TREATY ON", faction_id, peer_id, 0x01000000);
+    log_say(DiploLabelSendingTREATYON, faction_id, peer_id, 0x01000000);
     message_data(0x2441, 0, faction_id, peer_id, 0x01000000, 0);
 } else {
     treaty_on(faction_id, peer_id, 0x01000000);
@@ -1315,7 +1315,7 @@ if ((Players[DiploScratchF7E8].rule_flags & RFLAG_ALIEN) != 0 &&
 // INCOMPLETE PRIVATE BODY SECTION: native 0x00552168..0x00552331.
 // Continues only after the INTRODUCEENEMYALIEN popup returned nonzero.
 communicate_introduction_after_popup: // native 0x00552168
-log_say("Getting DIPLOMATIC LOCK", 0, 0, 0);
+log_say(DiploLabelGettingDIPLOMATICLOCK, 0, 0, 0);
 timeGetTime();
 while (ExitTurnLoop == 0 && NetDaemonNet.add_global() != 0) {
     check_spock();
@@ -1352,7 +1352,7 @@ if (X_pops("INTRODUCEENEMY", 0x00100000,
                  FactionDiplomacyPortraits[peer_id], pop_wait) == 0) {
     goto communicate_menu_continuation; // native JE at 0x552369
 }
-log_say("Getting DIPLOMATIC LOCK", 0, 0, 0);
+log_say(DiploLabelGettingDIPLOMATICLOCK, 0, 0, 0);
 timeGetTime();
 if (ExitTurnLoop == 0) {
     while (NetDaemonNet.add_global() != 0) {
@@ -1373,7 +1373,7 @@ if (IsMultiplayerNet != 0) {
 }
 pact_of_brotherhood(faction_id, peer_id);
 if (IsMultiplayerNet != 0) {
-    log_say("Sending TREATY ON", faction_id, peer_id, 0x01000000);
+    log_say(DiploLabelSendingTREATYON, faction_id, peer_id, 0x01000000);
     message_data(0x2441, 0, faction_id, peer_id, 0x01000000, 0);
 } else {
     treaty_on(faction_id, peer_id, 0x01000000);

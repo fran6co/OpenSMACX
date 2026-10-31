@@ -1,0 +1,25 @@
+{
+  "event_id": "a885aad521019332ca6f427d08bea8595b70bb5061be2e0f2b4f1db106bac97f",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/map.cpp"
+    ],
+    "evidence": [
+      "The already integrated is_coast body is measured exact with strict references; native recorder may bank its historical claim alongside stack_put before the combined fresh build. No is_coast body edits or manual claim tokens."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5130704,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "c5f1dcbab2c2103e21d93a85af4157c3dd5a2d001609550cabc0d1415dcbe747",
+  "request_id": "coordinator-bank-retained-is-coast-match-oct31ch",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:structural-cohort-oct31ch"
+}

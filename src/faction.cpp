@@ -6306,7 +6306,7 @@ void __cdecl call_off_vendetta(int faction_id, int faction_id_with) {
     X_pops("CALLEDOFF", 0x100000,
                  FactionDiplomacyPortraits[faction_id_with], nullptr);
     if (IsMultiplayerNet != 0) {
-        log_say("Sending TREATY ON", faction_id_with, chosen, 2);
+        log_say(DiploLabelSendingTREATYON, faction_id_with, chosen, 2);
         message_data(0x2441, 0, faction_id_with, chosen, 2, 0);
         NetDaemonNet.await_diplo(0x441);
     } else {
@@ -8032,7 +8032,7 @@ void __cdecl mention_prototypes(int faction_id, int faction_id_with) {
 void __cdecl pact_of_brotherhood(int faction_id, int faction_id_with) {
     PopupDialogFactionID = faction_id_with;
     if (IsMultiplayerNet != 0) {
-        log_say("Sending TREATY ON", faction_id_with, faction_id,
+        log_say(DiploLabelSendingTREATYON, faction_id_with, faction_id,
                 0x01000001);
         message_data(0x2441, 0, faction_id_with, faction_id,
                      0x01000001, 0);
@@ -8099,7 +8099,7 @@ void __cdecl pact_of_brotherhood(int faction_id, int faction_id_with) {
 void __cdecl make_treaty(int faction_id, int faction_id_with) {
     PopupDialogFactionID = faction_id_with;
     if (IsMultiplayerNet != 0) {
-        log_say("Sending TREATY ON", faction_id_with, faction_id,
+        log_say(DiploLabelSendingTREATYON, faction_id_with, faction_id,
                 0x01000202);
         message_data(0x2441, 0, faction_id_with, faction_id,
                      0x01000202, 0);
@@ -8172,7 +8172,7 @@ void __cdecl pledge_truce(int faction_id, int faction_id_with,
                           int show_dialogue) {
     PopupDialogFactionID = faction_id_with;
     if (IsMultiplayerNet != 0) {
-        log_say("Sending TREATY ON", faction_id_with, faction_id, 0x204);
+        log_say(DiploLabelSendingTREATYON, faction_id_with, faction_id, 0x204);
         message_data(0x2441, 0, faction_id_with, faction_id, 0x204, 0);
     } else {
         treaty_on(faction_id_with, faction_id, 0x204);
@@ -9101,7 +9101,7 @@ void __cdecl make_gift(int giver, int receiver) {
         if (strcmp(Players[giver].filename, "BELIEVE") == 0)
             favored = 1;
 
-        log_say("Getting DIPLOMATIC LOCK", 0, 0, 0);
+        log_say(DiploLabelGettingDIPLOMATICLOCK, 0, 0, 0);
         timeGetTime();
         if (ExitTurnLoop == 0) {
             for (;;) {
@@ -9240,7 +9240,7 @@ home_swap:
                                FactionDiplomacyPortraits[faction_id_req], pop_wait) == 0)
                         return 1;
 
-                    log_say("Getting DIPLOMATIC LOCK", 0, 0, 0);
+                    log_say(DiploLabelGettingDIPLOMATICLOCK, 0, 0, 0);
                     timeGetTime();
                     if (ExitTurnLoop == 0) {
                         for (;;) {
@@ -9319,7 +9319,7 @@ home_swap:
                        FactionDiplomacyPortraits[faction_id_req], pop_wait) == 0)
                 return 1;
 
-            log_say("Getting DIPLOMATIC LOCK", 0, 0, 0);
+            log_say(DiploLabelGettingDIPLOMATICLOCK, 0, 0, 0);
             timeGetTime();
             if (ExitTurnLoop == 0) {
                 for (;;) {
@@ -9362,7 +9362,7 @@ home_swap:
         const int chance_a = random(0, 100);
         const int chance_b = random(0, 100);
         if (diplo_add(chance_a, offered_value) < diplo_add(chance_b, requested_value)) {
-            log_say("Getting DIPLOMATIC LOCK", 0, 0, 0);
+            log_say(DiploLabelGettingDIPLOMATICLOCK, 0, 0, 0);
             timeGetTime();
             if (ExitTurnLoop == 0) {
                 for (;;) {
@@ -9891,7 +9891,7 @@ consider_gift:
                 return 1;
             }
 
-            log_say("Getting DIPLOMATIC LOCK", 0, 0, 0);
+            log_say(DiploLabelGettingDIPLOMATICLOCK, 0, 0, 0);
             {
                 DWORD (WINAPI *const read_clock)() = timeGetTime;
                 read_clock();
@@ -11175,7 +11175,7 @@ int __cdecl demand_withdrawal(int faction_id, int against_id) {
          (DiploFriction > (DiploScratchFA68 != 0 ? 5 : 15) &&
           DiploScratchFA98 == 0))) {
         if (IsMultiplayerNet != 0) {
-            log_say("Sending TREATY ON", against_id, faction_id, 0x10);
+            log_say(DiploLabelSendingTREATYON, against_id, faction_id, 0x10);
             message_data(0x2441, 0, against_id, faction_id, 0x10, 0);
             NetDaemonNet.await_diplo(0x441);
         } else {
@@ -12098,7 +12098,7 @@ void __cdecl threaten(int faction_id, int other_faction_id) {
         if (single_player) {
             treaty_on(other_faction_id, faction_id, 0x10);
         } else {
-            log_say("Sending TREATY ON", other_faction_id, faction_id, 0x10);
+            log_say(DiploLabelSendingTREATYON, other_faction_id, faction_id, 0x10);
             message_data(0x2441, 0, other_faction_id, faction_id, 0x10, 0);
             NetDaemonNet.await_diplo(0x441);
         }
@@ -12404,7 +12404,7 @@ after_action:
         const int base_value = value_of_base(DiploScratchFA7C, other_faction_id,
             faction_id, DiploScratchFA98, has_contact);
         if (base_value > 0 && base_value < diplo_mul(DiploScratchFA98, 0x19)) {
-            log_say("Getting DIPLOMATIC LOCK", 0, 0, 0);
+            log_say(DiploLabelGettingDIPLOMATICLOCK, 0, 0, 0);
             timeGetTime();
             while (ExitTurnLoop == 0 && NetDaemonNet.add_global() != 0) {
                 check_spock();
@@ -12457,7 +12457,7 @@ after_action:
                     parse_says(2, get_pact(faction_id), -1, -1);
                     X_pops("ENDPACT", 0x100000,
                                  FactionDiplomacyPortraits[other_faction_id], pop_wait);
-                    log_say("Getting DIPLOMATIC LOCK", 0, 0, 0);
+                    log_say(DiploLabelGettingDIPLOMATICLOCK, 0, 0, 0);
                     timeGetTime();
                     while (ExitTurnLoop == 0 && NetDaemonNet.add_global() != 0) {
                         check_spock();
@@ -12498,7 +12498,7 @@ after_action:
                 if (IsMultiplayerNet == 0) {
                     treaty_on(faction_id, other_faction_id, 0x10);
                 } else {
-                    log_say("Sending TREATY ON", faction_id, other_faction_id, 0x10);
+                    log_say(DiploLabelSendingTREATYON, faction_id, other_faction_id, 0x10);
                     message_data(0x2441, 0, faction_id, other_faction_id,
                                  0x10, 0);
                     NetDaemonNet.await_diplo(0x441);
@@ -12544,7 +12544,7 @@ tail:
         treaty_on(other_faction_id, faction_id, 4);
         return;
     }
-    log_say("Sending TREATY ON", other_faction_id, faction_id, 4);
+    log_say(DiploLabelSendingTREATYON, other_faction_id, faction_id, 4);
     message_data(0x2441, 0, other_faction_id, faction_id, 4, 0);
     NetDaemonNet.await_diplo(0x441);
 }
@@ -13282,7 +13282,7 @@ if ((attack_cached_other_actor_treaty & DTREATY_PACT) != 0 &&
     (attack_cached_other_actor_treaty & DTREATY_HAVE_SURRENDERED) != 0 &&
     (attack_cached_mode == 3 || attack_cached_mode == 1)) {
 attack_retry:
-    log_say("Getting DIPLOMATIC LOCK", 0, 0, 0);
+    log_say(DiploLabelGettingDIPLOMATICLOCK, 0, 0, 0);
     timeGetTime();
     while (ExitTurnLoop == 0 && NetDaemonNet.add_global() != 0) {
         check_spock();
@@ -13290,7 +13290,7 @@ attack_retry:
     }
 
     if (IsMultiplayerNet != 0) {
-        log_say("Sending TREATY ON", other, target, 0x80000018);
+        log_say(DiploLabelSendingTREATYON, other, target, 0x80000018);
         message_data(0x2441, 0, other, target, 0x80000018, 0);
         // The native network edge skips the offline treaty_on call at 547397.
         goto attack_accept_treaty_network;
@@ -14392,7 +14392,7 @@ static TechTradeTailEntry tech_trade_commit_dialog_state(
 
     if (request_mode != 0) {
         if (IsMultiplayerNet != 0) {
-            log_say("Sending TREATY ON", partner, actor, 0x1000000);
+            log_say(DiploLabelSendingTREATYON, partner, actor, 0x1000000);
             message_data(0x2441, 0, partner, actor, 0x1000000, 0);
         } else {
             treaty_on(partner, actor, 0x1000000);
