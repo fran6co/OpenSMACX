@@ -74,7 +74,6 @@ struct AlphaNetProcessSlot {
 struct AlphaNetLedger {
     uint8_t leading_[0x24];
     uint32_t session_flags_;
-    uint8_t tail_[0x20];
     uint32_t max_players_;
 };
 struct Net {
@@ -118,6 +117,9 @@ struct NetDaemon : public AlphaNet {
     void on_player_deleted(char *name, unsigned long id);
 };
 
+NetDaemon NetDaemonNet;
+static NetDaemon *identity_callback_owner;
+
 struct Popup {
     void pop(const char *text, int duration, int mode, const char *) {
         note(std::string("popup:") + text);
@@ -160,6 +162,7 @@ int NetPlayerDropped;
 char labels_for_call[2][16];
 int label_calls;
 int message_calls;
+static bool clear_control_on_8301;
 int send_order[8];
 int send_count;
 int last_message_id;
@@ -180,6 +183,11 @@ static void parse_says(int, char *text, int, int) {
 }
 static void message_data(int id, int, int a2, int, int, int) {
     ++message_calls; last_message_id = id; last_message_arg = a2;
+    if (id == 0x8301 && clear_control_on_8301) ConsoleControlTurnActive = 0;
+    if (id == 0x1206 && identity_callback_owner) {
+        identity_callback_owner->process_slots_[2].identity_ = 4;
+        GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ = 0x18;
+    }
     char buffer[32]; sprintf(buffer, "message:%x", id); note(buffer);
 }
 static void log_say(const char *, const char *text, int, int, int) {
@@ -214,6 +222,9 @@ int Net::send(void *, int, unsigned long, int) { note("net-send"); return 0; }
 
 static void reset_daemon(NetDaemon &daemon) {
     memset(&daemon, 0, sizeof(daemon));
+    memset(&NetDaemonNet, 0, sizeof(NetDaemonNet));
+    identity_callback_owner = 0;
+    clear_control_on_8301 = false;
     memset(NetWinLobbyRows, 0, sizeof(NetWinLobbyRows));
     memset(&NetWinSessionData, 0, sizeof(NetWinSessionData));
     memset(&NetWinSessionOptions, 0, sizeof(NetWinSessionOptions));
@@ -238,9 +249,14 @@ static void setup_two_player_delete(NetDaemon &daemon, int lock_phase) {
     daemon.local_player_id_ = 10;
     daemon.host_player_id_ = 10;
     daemon.primary_state_.session_phase_ = lock_phase;
+    NetDaemonNet.primary_state_.session_phase_ = lock_phase;
     daemon.primary_state_.trailing_words_[3] = 1u << 2;
     daemon.channels_[0].trailing_words_[0] = 0xFF;
     daemon.channels_[0].trailing_words_[3] = 0x8;
+    daemon.channels_[1].payload_.flags = 0xABCDEF77;
+    daemon.channels_[1].trailing_words_[1] = 0x13579BDF;
+    NetDaemonNet.channels_[1].payload_.flags = 0x2468ACEF;
+    NetDaemonNet.channels_[1].trailing_words_[1] = 0x3579BDF7;
     NetWinLobbyRows[2].prefix_ = 0x55;
     strcpy(NetWinLobbyRows[2].leader_name_, "old-leader");
     strcpy(NetWinLobbyRows[2].noun_faction_, "old-noun");
@@ -315,6 +331,10 @@ int main(int argc, char **argv) {
         clear_trace();
         daemon.on_player_deleted(0, 20);
         assert(daemon.player_count_ == 1);
+        assert(daemon.channels_[1].trailing_words_[1] == (0x13579BDFu & ~(1u << 2)));
+        assert(daemon.channels_[1].payload_.flags == 0xABCDEF77);
+        assert(NetDaemonNet.channels_[1].trailing_words_[1] == 0x3579BDF7);
+        assert(NetDaemonNet.channels_[1].payload_.flags == 0x2468ACEF);
         assert(NetWinLobbyRows[2].prefix_ == 0xFF);
         assert(strcmp(NetWinLobbyRows[2].leader_name_, "label1") == 0);
         assert(strcmp(NetWinLobbyRows[2].noun_faction_, "label2") == 0);
@@ -333,6 +353,7 @@ int main(int argc, char **argv) {
         daemon.primary_state_.leading_words_[0] = 0;
         GameDataStateStorage.fields_.lock_masks_.enable_mask_ = 0x0808; // alive and human faction 3
         daemon.locks_.records_[3].entries_[0].flag = 0;
+        NetDaemonNet.primary_state_.leading_words_[0] = 1;
         clear_trace();
         daemon.on_player_deleted(0, 20);
         assert(daemon.locks_.records_[3].active_ == 0);
@@ -346,12 +367,80 @@ int main(int argc, char **argv) {
         daemon.primary_state_.leading_words_[0] = 0;
         GameDataStateStorage.fields_.lock_masks_.enable_mask_ = 0x0808;
         daemon.locks_.records_[3].entries_[0].flag = 1;
+        NetDaemonNet.primary_state_.leading_words_[0] = 1;
         clear_trace();
         daemon.on_player_deleted(0, 20);
         assert(daemon.locks_.records_[3].active_ == 4);
         assert(daemon.primary_state_.session_phase_ == 2);
         assert(NetWinLobbyRows[2].prefix_ == 0x55);
         assert(message_calls == 0);
+    } else if (strcmp(scenario, "delete_predicate_table") == 0) {
+        // Independent native branch walk: 52E537..52E585. All 32 states,
+        // with this intentionally differing from the global phase and host.
+        for (int bits = 0; bits < 32; ++bits) {
+            setup_two_player_delete(daemon, 1);
+            bool turn = (bits & 1) != 0, control = (bits & 2) != 0;
+            bool equal = (bits & 4) != 0, host = (bits & 8) != 0;
+            bool phase2 = (bits & 16) != 0;
+            GameDataStateStorage.fields_.net_turn_flags_ = turn ? 0x10 : 0;
+            ConsoleControlTurnActive = control;
+            GameDataStateStorage.fields_.net_turn_faction_ = equal ? 1 : 7;
+            NetDaemonNet.primary_state_.leading_words_[0] = host;
+            NetDaemonNet.primary_state_.session_phase_ = phase2 ? 2 : 1;
+            daemon.primary_state_.leading_words_[0] = !host;
+            daemon.primary_state_.session_phase_ = phase2 ? 1 : 2;
+            GameDataStateStorage.fields_.lock_masks_.enable_mask_ = 0x0808;
+            daemon.locks_.records_[3].entries_[0].flag = 1;
+            bool native_notify;
+            if (turn) {
+                if (!control) native_notify = equal;
+                else native_notify = host;
+            } else native_notify = host;
+            daemon.on_player_deleted(0, 20);
+            assert(daemon.locks_.records_[3].active_ == (native_notify && phase2 ? 4 : 0));
+            assert(message_calls == (!native_notify && phase2 && control ? 1 : 0));
+            if (message_calls) assert(last_message_id == 0x2303);
+        }
+    } else if (strcmp(scenario, "delete_global_turn_mask") == 0) {
+        for (int mutate = 0; mutate < 2; ++mutate) {
+            setup_two_player_delete(daemon, 1);
+            NetDaemonNet.primary_state_.session_phase_ = 2;
+            NetDaemonNet.primary_state_.trailing_words_[6] = 1u << 1;
+            daemon.primary_state_.trailing_words_[6] = 0;
+            ConsoleControlTurnActive = 1;
+            clear_control_on_8301 = mutate != 0;
+            daemon.on_player_deleted(0, 20);
+            assert(message_calls == (mutate ? 1 : 2));
+            assert(last_message_id == (mutate ? 0x8301 : 0x2303));
+        }
+    } else if (strcmp(scenario, "delete_server_left_receiver") == 0) {
+        for (int server_left = 0; server_left < 2; ++server_left) {
+            setup_two_player_delete(daemon, 1);
+            NetHostChangeSlot = server_left ? 20 : 999;
+            daemon.channels_[1].trailing_words_[6] = 0x13579BDF;
+            NetDaemonNet.channels_[1].trailing_words_[6] = 0x369CF012;
+            daemon.channels_[1].trailing_words_[9] = 0x456789AB;
+            NetDaemonNet.channels_[1].trailing_words_[9] = 0x2468ACE0;
+            daemon.on_player_deleted(0, 20);
+            assert(daemon.channels_[1].trailing_words_[6] == 0x13579BDF);
+            assert(NetDaemonNet.channels_[1].trailing_words_[6] == 0x369CF012);
+            assert(daemon.channels_[1].trailing_words_[9] == 0x456789AB);
+            assert(NetDaemonNet.channels_[1].trailing_words_[9] ==
+                   (server_left ? 1u : 0x2468ACE0u));
+        }
+    } else if (strcmp(scenario, "delete_identity_callback") == 0) {
+        setup_two_player_delete(daemon, 2);
+        NetDaemonNet.primary_state_.leading_words_[0] = 1;
+        GameDataStateStorage.fields_.lock_masks_.enable_mask_ = 0x1808;
+        daemon.locks_.records_[3].entries_[0].flag = 1;
+        daemon.locks_.records_[4].entries_[0].flag = 1;
+        daemon.locks_.records_[3].active_ = 8;
+        daemon.locks_.records_[4].active_ = 24;
+        identity_callback_owner = &daemon;
+        clear_trace();
+        daemon.on_player_deleted(0, 20);
+        assert(message_calls == 1 && last_message_id == 0x1206);
+        assert(daemon.locks_.records_[4].active_ == 24);
     } else if (strcmp(scenario, "delete_slot8_miss") == 0) {
         reset_daemon(daemon);
         daemon.player_count_ = 7;

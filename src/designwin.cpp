@@ -498,9 +498,8 @@ void SelectPartWin::on_mouse_move(int x, int y) {
     if (x >= 4 && y >= 4 &&
         x < field_2B6C_ * 108 + 4 && y < field_2B70_ * 94 + 4) {
         int next = (y - 4) / 94 * field_2B6C_ + (x - 4) / 108 + field_2B60_;
-        if (next == field_2B80_) {
-            return;
-        }
+        const int previous = field_2B80_;
+        if (next == previous) return;
         if (next < field_2B74_) {
             field_4648_ = draw_part(next, 1);
             if (field_2B80_ >= 0) {
@@ -510,9 +509,9 @@ void SelectPartWin::on_mouse_move(int x, int y) {
             on_update();
             return;
         }
-    }
-    if (field_2B80_ >= 0) {
-        draw_part(field_2B80_, 0);
+        if (previous >= 0) draw_part(previous, 0);
+    } else {
+        if (field_2B80_ >= 0) draw_part(field_2B80_, 0);
     }
     field_4648_ = 0;
     field_2B80_ = -1;
@@ -1637,6 +1636,79 @@ void DesignWin::init() {
     flatButtons_[24].set_field_A44(100);
 }
 
+// ORIGINAL: 0x00439670 ?bubble_me_elmo2@DesignWin@@QAEXPADHH@Z 0x00439670-0x004396B0 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/designwin.cpp:DesignWin::bubble_me_elmo2", "Win::client_to_screen and Win::set_bubble_text"], "reason": "Convert the pointer anchor from client to screen coordinates and raise the named bubble through the real Win base interface."}
+// size      64 bytes
+// prototype void (__thiscall ?bubble_me_elmo2@DesignWin@@QAEXPADHH@Z)(DesignWin* this, LPCSTR, int, int)
+// callers   0   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005ED240 0x005F83D0
+// PRESERVED UNIT - measured MISMATCH.
+//
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
+//
+// address        0x00439670
+// measured tier  MISMATCH
+// divergence     12
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/00439670/unit.cpp
+// and score it with tools/agent_brief.py.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ?bubble_me_elmo2@DesignWin@@QAEXPADHH@Z  at 0x00439670  (64 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// VC6 DIALECT - this must compile under cl 12.00.8168, which is the
+// only compiler this project builds with. Avoid: auto, nullptr, constexpr,
+// static_assert, enum class, range-for, lambdas, long long, <cstdint>,
+// and declaring `int i` twice in one function (VC6 leaks for-scope).
+// static_cast/reinterpret_cast are fine and are the right spelling.
+//
+// SOURCE-FORM RULES, each one learned by a fan-out agent that lost
+// attempts to it. They are here rather than in a prompt so the next
+// agent does not rediscover them:
+//
+//  * A ternary is not an if. `x ? a : b` lowers to `jne` with the arms
+//    swapped; `if (x) {...}` gives `je`.
+//  * VC6 NEVER hoists a same-polarity guard's body out of line. To get
+//    two special cases branching FAR away, write them negated and
+//    NESTED - `if (a != X) { if (a != Y) { return D; } ...; }` - not as
+//    sequential guard clauses, which inline each body instead.
+//  * VC6 rejects `__thiscall` on a free function pointer (C4234). For
+//    an indirect virtual call use the generated VCall shim below; for a
+//    thiscall function POINTER, take a member-function pointer of a
+//    dummy class instead of spelling the convention.
+//  * Loop form is visible: while / do-while / for lower differently,
+//    and so does counting up versus down.
+//  * If the original dedicates a callee-saved register to a constant
+//    across the whole body (an extra `push ebx`/`push edi` in the
+//    prologue), it had enough register pressure to do so. That is a
+//    hard case - the tool reports a similarity ratio so you can tell a
+//    near miss from a wrong body.
+
+
+void DesignWin::bubble_me_elmo2(char *a1, int a2, int a3) {
+    client_to_screen(&a2, &a3);
+    RECT anchor;
+    anchor.left = a2;
+    anchor.top = a3;
+    anchor.right = a2;
+    anchor.bottom = a3;
+    set_bubble_text(a1, &anchor);
+}
+
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x00439700 0x00439948 0x00439960 0x00439745
 // ORIGINAL: 0x00439700 ?on_right_click@DesignWin@@QAEXHH@Z 0x00439700-0x00439948
 // RECOVERY_BINDING: v1 {"evidence": ["git:3f6ab06bdf3b791aa23454e19f71b4e8b5935caf:src/recovered/units/00439700.cpp"], "reason": "Spot palette categories select localized help labels; the two ability categories share a label."}
@@ -1645,15 +1717,27 @@ void DesignWin::on_right_click(int x, int y) {
     TutorialWindow.reset();
     int position;
     int category;
-    if (spot2_.check(x, y, &position, &category) == -1 ||
-        static_cast<unsigned int>(category) > 5) return;
-    // Both special-ability spots (4 and 5) use the same help label.
-    int label = 0xCD4 / 4 + (category == 5 ? 4 : category);
-    char *text = StringTable.get(
-        Labels.strings_ptr[label]);
-    client_to_screen(&x, &y);
-    RECT rect = {x, y, x, y};
-    set_bubble_text(text, &rect);
+    if (spot2_.check(x, y, &position, &category) == -1) return;
+    switch (category) {
+    case 0:
+        bubble_me_elmo2(StringTable.get(Labels.strings_ptr[0xCD4 / 4]), x, y);
+        return;
+    case 1:
+        bubble_me_elmo2(StringTable.get(Labels.strings_ptr[0xCD8 / 4]), x, y);
+        return;
+    case 2:
+        bubble_me_elmo2(StringTable.get(Labels.strings_ptr[0xCDC / 4]), x, y);
+        return;
+    case 3:
+        bubble_me_elmo2(StringTable.get(Labels.strings_ptr[0xCE0 / 4]), x, y);
+        return;
+    case 4:
+        bubble_me_elmo2(StringTable.get(Labels.strings_ptr[0xCE4 / 4]), x, y);
+        return;
+    case 5:
+        bubble_me_elmo2(StringTable.get(Labels.strings_ptr[0xCE4 / 4]), x, y);
+        break;
+    }
 }
 
 // ORIGINAL: 0x004379A0 ?on_redraw@DesignWin@@QAEXXZ 0x004379A0-0x00437B95
@@ -2852,79 +2936,6 @@ Wave g_DESIGNWIN_WAVE;  // 0x0071F240
 // Here the same recovered constructors run through this build's own
 // startup, and the matching destructors close them at exit.
 
-// ORIGINAL: 0x00439670 ?bubble_me_elmo2@DesignWin@@QAEXPADHH@Z 0x00439670-0x004396B0 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["src/designwin.cpp:DesignWin::bubble_me_elmo2", "Win::client_to_screen and Win::set_bubble_text"], "reason": "Convert the pointer anchor from client to screen coordinates and raise the named bubble through the real Win base interface."}
-// size      64 bytes
-// prototype void (__thiscall ?bubble_me_elmo2@DesignWin@@QAEXPADHH@Z)(DesignWin* this, LPCSTR, int, int)
-// callers   0   call targets   2
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x005ED240 0x005F83D0
-// PRESERVED UNIT - measured MISMATCH.
-//
-// Kept for COVERAGE. This directory IS on the ratchet: every file here
-// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
-// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
-// quarter of the project's total. It is still in no build; the earlier
-// header said "on no ratchet", which stopped being true when the map
-// moved into src/ and was still being written into new files.
-//
-// address        0x00439670
-// measured tier  MISMATCH
-// divergence     12
-//
-// The WHOLE unit as measured, scaffolding included: for the units
-// that are byte-exact yet refuse extraction, the agent tuned the
-// emitted scaffolding and the body alone will not reproduce the
-// verdict. To resume, copy everything below back over
-//   build/byte-match/00439670/unit.cpp
-// and score it with tools/agent_brief.py.
-// GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: ?bubble_me_elmo2@DesignWin@@QAEXPADHH@Z  at 0x00439670  (64 bytes)
-//
-// A VERIFICATION ARTIFACT, not product source: classes are opaque and
-// globals are bound to fixed addresses, because both are byte-visible
-// and both differ from the style src/ is written in.
-//
-// VC6 DIALECT - this must compile under cl 12.00.8168, which is the
-// only compiler this project builds with. Avoid: auto, nullptr, constexpr,
-// static_assert, enum class, range-for, lambdas, long long, <cstdint>,
-// and declaring `int i` twice in one function (VC6 leaks for-scope).
-// static_cast/reinterpret_cast are fine and are the right spelling.
-//
-// SOURCE-FORM RULES, each one learned by a fan-out agent that lost
-// attempts to it. They are here rather than in a prompt so the next
-// agent does not rediscover them:
-//
-//  * A ternary is not an if. `x ? a : b` lowers to `jne` with the arms
-//    swapped; `if (x) {...}` gives `je`.
-//  * VC6 NEVER hoists a same-polarity guard's body out of line. To get
-//    two special cases branching FAR away, write them negated and
-//    NESTED - `if (a != X) { if (a != Y) { return D; } ...; }` - not as
-//    sequential guard clauses, which inline each body instead.
-//  * VC6 rejects `__thiscall` on a free function pointer (C4234). For
-//    an indirect virtual call use the generated VCall shim below; for a
-//    thiscall function POINTER, take a member-function pointer of a
-//    dummy class instead of spelling the convention.
-//  * Loop form is visible: while / do-while / for lower differently,
-//    and so does counting up versus down.
-//  * If the original dedicates a callee-saved register to a constant
-//    across the whole body (an extra `push ebx`/`push edi` in the
-//    prologue), it had enough register pressure to do so. That is a
-//    hard case - the tool reports a similarity ratio so you can tell a
-//    near miss from a wrong body.
-
-
-void DesignWin::bubble_me_elmo2(char *a1, int a2, int a3) {
-    client_to_screen(&a2, &a3);
-    RECT anchor;
-    anchor.left = a2;
-    anchor.top = a3;
-    anchor.right = a2;
-    anchor.bottom = a3;
-    set_bubble_text(a1, &anchor);
-}
-
 // ORIGINAL: 0x00439EB0 ?delete_abil@DesignWin@@QAEXH@Z 0x00439EB0-0x00439F18 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/designwin.h:protoAbilityFlags_ at 0x14208", "src/designwin.h:protoAbilityID1_ and protoAbilityID2_ at 0x14218/0x1421C"], "reason": "Remove one selected ability flag and rebuild the two displayed ability identifiers from the remaining flags."}
 // size      104 bytes
@@ -3790,30 +3801,19 @@ int DesignWin::on_key_click(int a1, int a2) {
 // find proto_id in the ranked list and move the stack window's anchor
 // (prototype_stack_start_) so that entry sits five rows from the top.
 void DesignWin::center_stack(int proto_id, int redraw) {
-    // Re-rank through the source-owned map helper and its shared sort state.
     proto_sort_2(factionID_);
-
-    int count = ProtoSortCount;
-    int start = prototype_stack_start_;
-    bool found = false;
-    int rem = 0;
-    if (start < start + count) {
-        int scan = start;
-        do {
-            rem = scan % count;
-            if (proto_id == ProtoSortIds[rem]) {
-                found = true;
-                break;
+    const int count = ProtoSortCount;
+    for (int scan = prototype_stack_start_;
+         scan < prototype_stack_start_ + count; ++scan) {
+        const int rem = scan % count;
+        if (proto_id == ProtoSortIds[rem]) {
+            const int old = prototype_stack_start_;
+            const int centred = (rem + count - 5) % count;
+            prototype_stack_start_ = centred;
+            if (redraw != 0 && centred != old) {
+                draw_stack();
             }
-            ++scan;
-        } while (scan < prototype_stack_start_ + count);
-    }
-    if (found) {
-        int old = prototype_stack_start_;
-        int centred = (rem + count - 5) % count;
-        prototype_stack_start_ = centred;
-        if (redraw != 0 && centred != old) {
-            draw_stack();
+            return;
         }
     }
 }

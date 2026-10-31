@@ -9015,8 +9015,8 @@ int Win::update_window(RECT * area) {
     if (area == 0) {
         return update_screen(0, this);
     }
-    int y = client_rect_.top + outer_rect_.top;
     int x = client_rect_.left + outer_rect_.left;
+    int y = client_rect_.top + outer_rect_.top;
     if ((iFlags_ & 0x20) != 0 &&
         win_parent_ != 0) {
         win_parent_->client_to_screen(&x, &y);
@@ -9025,11 +9025,11 @@ int Win::update_window(RECT * area) {
             y -= win_parent_->outer_rect_.top;
         }
     }
-    RECT r;
-    r.left = area->left + x;
-    r.top = area->top + y;
-    r.right = area->right + x;
-    r.bottom = area->bottom + y;
+    RECT r = *area;
+    r.left += x;
+    r.right += x;
+    r.top += y;
+    r.bottom += y;
     return update_screen(&r, this);
 }
 

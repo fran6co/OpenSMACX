@@ -2120,31 +2120,31 @@ int Buffer::get_pcx_dimensions(const char *filename, int *width, int *height) {
         --scan;
     }
     if (scan == path) {
-        const char *extension;
         switch (Language) {
-            case 1: extension = ".pcf"; break;
-            case 2: extension = ".pcg"; break;
-            default: extension = ".pcx"; break;
+            case 1: strcat(path, ".pcf"); break;
+            case 2: strcat(path, ".pcg"); break;
+            default: strcat(path, ".pcx"); break;
         }
-        strcat(path, extension);
     }
 
     if (map.open_read(path, TRUE) == nullptr) {
         return 6;
     }
+    const char *content = static_cast<const char *>(map.get_view());
     GetFileSize(map.get_handle(), nullptr);
 
-    const char *content = static_cast<const char *>(map.get_view());
-    const size_t prefix_length = strlen(PcxAssetPrefix);
-    if (strncmp(content, PcxAssetPrefix, prefix_length) == 0) {
-        content += prefix_length + 1;
+    if (strncmp(content, PcxAssetPrefix, strlen(PcxAssetPrefix)) == 0) {
+        content += strlen(PcxAssetPrefix) + 1;
+        (void)strlen(PcxAssetPrefix);
     }
 
     PcxHeaderView header;
     memcpy(&header, content, sizeof(header));
     if (header.manufacturer == '\n' && header.encoding == 1) {
-        *width = header.x_max - header.x_min + 1;
-        *height = header.y_max - header.y_min + 1;
+        const int decoded_width = header.x_max - header.x_min + 1;
+        const int decoded_height = header.y_max - header.y_min + 1;
+        *width = decoded_width;
+        *height = decoded_height;
         map.close();
         return 0;
     }
@@ -6582,7 +6582,6 @@ int Buffer::wrap(Font *font_override, char *text, RECT *area) {
 
 
 int Buffer::wrap_height_flying(char *a1, int a2) {
-        register char *text = a1;
     int value = field_10_;
     field_18_ = 0;
     field_14_ = value;
@@ -6590,7 +6589,7 @@ int Buffer::wrap_height_flying(char *a1, int a2) {
     BufferFlyingY = 0;
     BufferStrHeight = 0;
     BufferFlyingWidth = a2;
-    return wrap_height_flying(text);
+    return wrap_height_flying(a1);
 }
 
 // ORIGINAL: 0x005DDC90 ?wrap_right@Buffer@@QAEHPADH@Z 0x005DDC90-0x005DDD91 FILE BYTE_EXACT

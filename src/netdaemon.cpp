@@ -186,19 +186,19 @@ void NetDaemon::on_player_added(char *name, unsigned long id) {
     primary_state_.leading_words_[0] = same_host ? 1 : 0;
 
     if (player_count_ < 7 && primary_state_.session_phase_ < 2) {
-        const int slot = ++player_count_;
-        AlphaNetProcessSlot &player = process_slots_[slot];
-        player.pid_ = static_cast<uint32_t>(id);
-        strcpy(player.name_, get_player_name(id));
+        ++player_count_;
+        process_slots_[player_count_].pid_ = static_cast<uint32_t>(id);
+        // Both calls can expose the owner: native reloads the count after each.
+        char *player_name = get_player_name(id);
+        strcpy(process_slots_[player_count_].name_, player_name);
 
-        NetWinLobbyRow &row = NetWinLobbyRows[slot];
-        row.field_2_ = NetWinSessionOptions.difficulty_;
-        row.prefix_ = static_cast<uint8_t>(slot);
-        player.identity_ = static_cast<int8_t>(slot);
+        NetWinLobbyRows[player_count_].field_2_ = NetWinSessionOptions.difficulty_;
+        NetWinLobbyRows[player_count_].prefix_ = static_cast<uint8_t>(player_count_);
+        process_slots_[player_count_].identity_ = static_cast<int8_t>(player_count_);
 
-        if (slot > 1) {
+        if (player_count_ > 1) {
             bool duplicate_host = false;
-            for (int prior = 1; prior < slot; ++prior) {
+            for (int prior = 1; prior < player_count_; ++prior) {
                 if (process_slots_[prior].pid_ == local_player_id()) {
                     duplicate_host = true;
                 }
@@ -210,6 +210,9 @@ void NetDaemon::on_player_added(char *name, unsigned long id) {
         }
 
         if (primary_state_.leading_words_[0] != 0) {
+            // The notification callbacks precede this native slot snapshot.
+            const int slot = player_count_;
+            NetWinLobbyRow &row = NetWinLobbyRows[slot];
             row.owner_ = 0;
             row.prefix_ = 0xFF;
             row.ready_or_occupied_ = 0;
@@ -245,7 +248,7 @@ void NetDaemon::on_player_deleted(char *, unsigned long id) {
 
     const bool server_left = (NetHostChangeSlot == static_cast<uint32_t>(id));
     if (server_left) {
-        channels_[1].trailing_words_[6] = 1;
+        NetDaemonNet.channels_[1].trailing_words_[9] = 1;
     }
 
     int slot = 1;
@@ -267,15 +270,15 @@ void NetDaemon::on_player_deleted(char *, unsigned long id) {
         parse_says(0, player.name_, -1, -1);
         const int player_id = player.identity_;
 
-        if (primary_state_.session_phase_ == 2) {
+        if (NetDaemonNet.primary_state_.session_phase_ == 2) {
             GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ =
                 static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_ &
                 ~static_cast<uint8_t>(1u << (player_id & 31)));
         }
-        channels_[1].payload_.flags &= ~(1u << (player_id & 31));
+        channels_[1].trailing_words_[1] &= ~(1u << (player_id & 31));
 
         const bool turn_handoff = (GameDataStateStorage.fields_.net_turn_flags_ & 0x10) != 0;
-        if (turn_handoff && primary_state_.leading_words_[0] != 0 &&
+        if (turn_handoff && NetDaemonNet.primary_state_.leading_words_[0] != 0 &&
             GameDataStateStorage.fields_.net_turn_faction_ == player_id) {
             const uint8_t alive =
                 GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_;
@@ -299,7 +302,7 @@ void NetDaemon::on_player_deleted(char *, unsigned long id) {
     // With seven players a miss yields slot 8: the next identity byte is the
     // low byte of AlphaNetLedger::session_flags_ at +0x1470, not an array
     // member. This typed branch preserves that exact byte without OOB access.
-    const int player_id = slot < 8
+    int player_id = slot < 8
         ? static_cast<int>(process_slots_[slot].identity_)
         : static_cast<int>(static_cast<int8_t>(
               static_cast<uint8_t>(ledger_.session_flags_ & 0xFF)));
@@ -307,6 +310,10 @@ void NetDaemon::on_player_deleted(char *, unsigned long id) {
     // Native uses this signed identity as an index without checking its
     // range. The missing-player ledger byte has no proven valid domain.
     locks_.records_[player_id].clear();
+    player_id = slot < 8
+        ? static_cast<int>(process_slots_[slot].identity_)
+        : static_cast<int>(static_cast<int8_t>(
+              static_cast<uint8_t>(ledger_.session_flags_ & 0xFF)));
     uint32_t &faction_lock_mask = channels_[0].trailing_words_[0];
     const uint32_t player_lock_mask =
         channels_[0].trailing_words_[1 + player_id];
@@ -317,13 +324,18 @@ void NetDaemon::on_player_deleted(char *, unsigned long id) {
     }
 
     const uint8_t turn_bit = static_cast<uint8_t>(GameDataStateStorage.fields_.net_turn_flags_ & 0x10);
-    const bool skip_lock_notify =
+    const bool notify_locks =
         (turn_bit != 0 && ConsoleControlTurnActive == 0 &&
          GameDataStateStorage.fields_.net_turn_faction_ == ConsoleGlobal.faction_id_) ||
-        (turn_bit == 0 && primary_state_.leading_words_[0] != 0);
+        ((turn_bit == 0 || ConsoleControlTurnActive != 0) &&
+         NetDaemonNet.primary_state_.leading_words_[0] != 0);
 
-    if (!skip_lock_notify && primary_state_.session_phase_ == 2) {
+    if (notify_locks && NetDaemonNet.primary_state_.session_phase_ == 2) {
         for (int faction = 1; faction < 8; ++faction) {
+            player_id = slot < 8
+                ? static_cast<int>(process_slots_[slot].identity_)
+                : static_cast<int>(static_cast<int8_t>(
+                      static_cast<uint8_t>(ledger_.session_flags_ & 0xFF)));
             const uint8_t bit = static_cast<uint8_t>(1u << (faction & 31));
             PlayerLock &candidate = locks_.records_[faction];
             if ((GameDataStateStorage.fields_.lock_masks_.bytes_.alive_mask_ & bit) == 0 ||
@@ -363,7 +375,7 @@ void NetDaemon::on_player_deleted(char *, unsigned long id) {
     }
 
     if (slot == 8) {
-        if (primary_state_.session_phase_ < 2) {
+        if (NetDaemonNet.primary_state_.session_phase_ < 2) {
             NetWinSessionData.write_row8_prefix(0xFF);
         }
         strcpy(NetWinSessionData.row8_leader_name(), label_get(0xFE4 / 4));
@@ -371,7 +383,7 @@ void NetDaemon::on_player_deleted(char *, unsigned long id) {
         strcpy(NetWinSessionData.row8_noun_faction(), label_get(0xFE4 / 4));
     } else {
         NetWinLobbyRow &removed_row = NetWinLobbyRows[slot];
-        if (primary_state_.session_phase_ < 2) {
+        if (NetDaemonNet.primary_state_.session_phase_ < 2) {
             removed_row.prefix_ = 0xFF;
         }
         strcpy(removed_row.leader_name_, label_get(0xFE4 / 4));
@@ -393,11 +405,11 @@ void NetDaemon::on_player_deleted(char *, unsigned long id) {
         (post_turn_bit == 0 || ConsoleControlTurnActive != 0 ||
          GameDataStateStorage.fields_.net_turn_faction_ != ConsoleGlobal.faction_id_) &&
         ((post_turn_bit != 0 && ConsoleControlTurnActive == 0) ||
-         primary_state_.leading_words_[0] == 0);
+         NetDaemonNet.primary_state_.leading_words_[0] == 0);
 
-    if (skip_after_delete && primary_state_.session_phase_ == 2) {
+    if (skip_after_delete && NetDaemonNet.primary_state_.session_phase_ == 2) {
         if (post_turn_bit == 0 &&
-            (primary_state_.trailing_words_[6] &
+            (NetDaemonNet.primary_state_.trailing_words_[6] &
              (1u << (ConsoleGlobal.faction_id_ & 31))) != 0) {
             message_data(0x8301, 0, 0, 0, 0, 0);
         }

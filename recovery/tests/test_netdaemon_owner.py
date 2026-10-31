@@ -155,7 +155,7 @@ def run(tmp_path, product, scenario, flags=()):
 
 @pytest.mark.parametrize("scenario", [
     "added", "added_negative_phase", "delete_found", "delete_inactive_lock", "delete_active_lock",
-    "delete_slot8_miss",
+    "delete_slot8_miss", "delete_predicate_table", "delete_identity_callback", "delete_global_turn_mask", "delete_server_left_receiver",
 ])
 def test_actual_netdaemon_and_storage_source(tmp_path, scenario):
     result = run(tmp_path, product_source(), scenario)
@@ -165,8 +165,8 @@ def test_actual_netdaemon_and_storage_source(tmp_path, scenario):
 # The slot-8 case seeds the ledger low byte with 3. These controls do not prove
 # arbitrary ledger bytes are valid indices for locks_.records_[player_id].
 @pytest.mark.parametrize("old,new,scenario", [
-    ("if (primary_state_.session_phase_ < 2) {\n            removed_row.prefix_",
-     "if (primary_state_.session_phase_ <= 2) {\n            removed_row.prefix_", "delete_inactive_lock"),
+    ("if (NetDaemonNet.primary_state_.session_phase_ < 2) {\n            removed_row.prefix_",
+     "if (NetDaemonNet.primary_state_.session_phase_ <= 2) {\n            removed_row.prefix_", "delete_inactive_lock"),
     ("if (player_count_ < 7 && primary_state_.session_phase_ < 2) {",
      "if (player_count_ < 7 && static_cast<uint32_t>(primary_state_.session_phase_) < 2u) {", "added_negative_phase"),
     ("candidate.active() == 0", "false", "delete_inactive_lock"),
@@ -182,3 +182,46 @@ def test_native_control_damage_is_detected(tmp_path, old, new, scenario):
     assert old in tail
     result = run(tmp_path, head + marker + tail.replace(old, new, 1), scenario)
     assert result.returncode != 0, "deliberate NetDaemon damage escaped fixture"
+
+
+def test_notification_polarity_damage(tmp_path):
+    source = product_source()
+    old = "if (notify_locks && NetDaemonNet.primary_state_.session_phase_ == 2)"
+    assert old in source
+    damaged = source.replace(old, "if (!notify_locks && NetDaemonNet.primary_state_.session_phase_ == 2)", 1)
+    assert run(tmp_path, damaged, "delete_predicate_table").returncode != 0
+
+
+def test_notification_identity_snapshot_damage(tmp_path):
+    source = product_source()
+    start = source.index("for (int faction = 1; faction < 8; ++faction)")
+    end = source.index("const uint8_t bit", start)
+    assignment = source[start:end]
+    assert "player_id = slot < 8" in assignment
+    damaged = source[:start] + "for (int faction = 1; faction < 8; ++faction) {\n" + source[end:]
+    assert run(tmp_path, damaged, "delete_identity_callback").returncode != 0
+
+
+def test_server_left_receiver_damage(tmp_path):
+    source = product_source()
+    old = "NetDaemonNet.channels_[1].trailing_words_[9] = 1;"
+    assert old in source
+    damaged = source.replace(old, "channels_[1].trailing_words_[9] = 1;", 1)
+    assert run(tmp_path, damaged, "delete_server_left_receiver").returncode != 0
+
+
+def test_server_left_index_damage(tmp_path):
+    source = product_source()
+    old = "NetDaemonNet.channels_[1].trailing_words_[9] = 1;"
+    assert old in source
+    damaged = source.replace(old, "NetDaemonNet.channels_[1].trailing_words_[6] = 1;", 1)
+    assert run(tmp_path, damaged, "delete_server_left_receiver").returncode != 0
+
+
+@pytest.mark.parametrize("wrong", ["channels_[1].payload_.flags", "NetDaemonNet.channels_[1].trailing_words_[1]"])
+def test_departed_mask_identity_damage(tmp_path, wrong):
+    source = product_source()
+    old = "channels_[1].trailing_words_[1] &= ~(1u << (player_id & 31));"
+    assert old in source
+    damaged = source.replace(old, wrong + " &= ~(1u << (player_id & 31));", 1)
+    assert run(tmp_path, damaged, "delete_found").returncode != 0

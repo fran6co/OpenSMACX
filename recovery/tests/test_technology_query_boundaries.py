@@ -88,10 +88,10 @@ def test_query_mappings_and_wrapper_calls_have_the_canonical_owner():
         code = strip_comments((ROOT / "src" / filename).read_text())
         assert not re.search(r"\bhas_tech_call\s*\(", code), filename
 
-    # The separate tech_name header body is not part of this ownership move.
+    # The two-argument tech_name now has its ordinary body in technology.cpp.
     tech_records = read_file(ROOT / "src/technology.cpp")
     tech_name = [record for record in tech_records if record.address == 0x005B9EF0]
-    assert len(tech_name) == 1 and tech_name[0].body == "src/technology.h"
+    assert len(tech_name) == 1 and tech_name[0].body == ""
 
 
 @pytest.mark.parametrize("compiler_name", ["g++", "clang++"])

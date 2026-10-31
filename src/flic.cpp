@@ -558,9 +558,9 @@ Return Value: 0
 Status: Complete
 */
 int Flic::advance_to_frame(int target_frame) {
-    int target = target_frame % header_.frames_;
+    target_frame %= header_.frames_;
 
-    if (target < static_cast<int>(frame_) && (decoder_flags_ & 1)) {
+    if (target_frame < static_cast<int>(frame_) && (decoder_flags_ & 1)) {
         fseek(file_, header_.first_frame_, SEEK_SET);
         frame_ = 0;
     }
@@ -581,18 +581,18 @@ int Flic::advance_to_frame(int target_frame) {
     // the scan guard (lea at 0x0062A379) and reuses the register.
     FlicFrameChunk *chunks = &chunk_;
 
-    if (static_cast<int>(frame_) <= target) {
+    if (static_cast<int>(frame_) <= target_frame) {
         do {
             frame_pos = ftell(file_);
             fread(chunks, 0x10, 1, file_);
-            long next_pos = chunk_.header_.size_ + frame_pos;
-            int subchunks = chunk_.header_.count_;
+            long next_pos = chunks->header_.size_ + frame_pos;
+            int subchunks = chunks->header_.count_;
 
             int decodable = 0;
             for (int i = 0; i < subchunks; i++) {
-                FlicFrameChunk sub;
+                DataChunk sub;
                 fread(&sub, 6, 1, file_);
-                if (sub.header_.type_ == 7 || sub.header_.type_ == 0xc) {
+                if (sub.type_ == 7 || sub.type_ == 0xc) {
                     decodable = 1;
                     break;
                 }
@@ -604,7 +604,7 @@ int Flic::advance_to_frame(int target_frame) {
 
             fseek(file_, next_pos, SEEK_SET);
             frame_++;
-        } while (static_cast<int>(frame_) <= target);
+        } while (static_cast<int>(frame_) <= target_frame);
     }
 
     if (static_cast<int>(pending_frame) >= static_cast<int>(frame_)) {
@@ -615,7 +615,7 @@ int Flic::advance_to_frame(int target_frame) {
     frame_ = pending_frame;
     fseek(file_, pending_pos, SEEK_SET);
 
-    if (static_cast<int>(frame_) < target) {
+    if (static_cast<int>(frame_) < target_frame) {
         do {
             // x/y captured before the guards and stored back once both
             // pass: the call may mutate *this, so the image carries the
@@ -635,7 +635,7 @@ int Flic::advance_to_frame(int target_frame) {
                     frame_++;
                 }
             }
-        } while (static_cast<int>(frame_) < target);
+        } while (static_cast<int>(frame_) < target_frame);
     }
 
     return 0;

@@ -1,0 +1,19 @@
+{
+  "event_id": "e498fb7bbb62a362555186afb4f5eeac12341e8563590f6f21b086c428e52424",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_flic_chunk_prefix_actual_source_oct14et.py"
+    ],
+    "evidence": [
+      "Pinned advance_to_frame complete stack allocation, four saved registers, scan address and both stack cleanups support existing8-byte DataChunk local; measured residual97/166 stays a mismatch. Authorize actual-source fixture migration and independent full stack witness while preserving six-byte read, uninitialized tail, recursive8/frame16 layout and damage controls."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "flic-native-fixture-closure-oct31bx",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:easy-flic-oct31bx"
+}
