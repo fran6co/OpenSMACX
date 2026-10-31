@@ -108,6 +108,65 @@ def test_local_screen_reuses_each_full_tu_object_and_never_accepts(project):
         b"// ORIGINAL: 0x00401000 _f 0x00401000-0x00401001\nint _f() { return 0; }\n")
 
 
+def test_local_screen_keeps_root_context_for_associated_owner(tmp_path):
+    from test_associated_application import project as associated_project
+
+    root, task, raw = associated_project(tmp_path)
+    source = root / "code/unit.cc"
+    original = source.read_text()
+    assert "RECOVERY_ASSOCIATED:" in original
+    assert "void f()" in original
+    original = original.replace("void f()", "void _f()")
+    source.write_text(original)
+    anchor = "/* baseline */"
+    deck = {
+        "schema_version": 2,
+        "source": "code/unit.cc",
+        "entity_id": task.subjects[0].entity_id,
+        "files": {"code/unit.cc": {
+            "source_sha256": hashlib.sha256(source.read_bytes()).hexdigest(),
+            "before": anchor,
+            "control": "for (;;) {}",
+            "entity_id": task.subjects[0].entity_id,
+        }},
+        "candidates": {
+            "same": {"code/unit.cc": anchor},
+            "different": {"code/unit.cc": "return 42;"},
+        },
+    }
+
+    class AssociatedCompiler:
+        def snapshot(self):
+            return "associated synthetic compiler snapshot"
+
+        def __call__(self, *_args):
+            return raw
+
+        def overlay(self, _source, replacements, _arguments, _flags):
+            contents = replacements["code/unit.cc"]
+            if b"for (;;) {}" in contents or b"return 42;" in contents:
+                changed = raw.replace(b"\xc3", b"\x90", 1)
+                assert changed != raw
+                return changed
+            return raw
+
+    report = measure_local_variants(root, task.task_id, root / "image.exe", deck,
+                                    compiler=AssociatedCompiler())
+
+    assert report["status"] == "scored", report
+    assert len(report["flag_trials"]) == 2
+    for trial in report["flag_trials"]:
+        assert trial["controls"]["unchanged_replica"]["result"] == "pass"
+        assert trial["controls"]["damage"]["result"] == "pass"
+        assert trial["baseline"][0]["result"] == "pass"
+        assert trial["candidates"]["same"]["measurements"][0]["result"] == "pass"
+        assert trial["candidates"]["different"]["measurements"][0]["result"] == "fail"
+    assert report["strict_references"] == "unknown"
+    assert report["strict_reference_result"] == "unknown"
+    assert not report["scope_complete"] and not report["ready_for_collection"]
+    assert not report["persisted"] and report["acceptance"] == "not_evaluated"
+
+
 @pytest.mark.parametrize("newline", ["\n", "\r\n", "\r"])
 def test_local_screen_allows_unchanged_trailing_spliced_macros(project, newline):
     root, _task, deck = project
