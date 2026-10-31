@@ -9062,7 +9062,7 @@ Status: MISMATCH #9 - the veh_id * 0x34 multiply lowers through a different
 int __cdecl veh_ready(int veh_id) {
     if (veh_id >= 0 && Vehs[veh_id].y >= 0 && Vehs[veh_id].y < MapLatitudeBounds &&
         Vehs[veh_id].x >= 0 && Vehs[veh_id].x < MapLongitudeBounds &&
-        Vehs[veh_id].faction_id == (uint8_t)ConsoleGlobal.faction_id_ &&
+        Vehs[veh_id].faction_id == ConsoleGlobal.faction_id_ &&
         ((Vehs[veh_id].flags & 0x40) == 0 || (Vehs[veh_id].flags & 0x400) == 0) &&
         veh_jail(veh_id) == 0 &&
         ((Vehs[veh_id].state & 0x4200) != 0 || Vehs[veh_id].order < 1 ||
@@ -9099,7 +9099,7 @@ int __cdecl veh_selectable(int veh_id) {
         Vehs[veh_id].x < 0 || Vehs[veh_id].x >= MapLongitudeBounds) {
         return 0;
     }
-    if (Vehs[veh_id].faction_id != (uint8_t)ConsoleGlobal.faction_id_) {
+    if (Vehs[veh_id].faction_id != ConsoleGlobal.faction_id_) {
         return 0;
     }
     if ((Vehs[veh_id].flags & 0x40) != 0 && (Vehs[veh_id].flags & 0x400) != 0) {
@@ -9124,7 +9124,7 @@ Status: MISMATCH.
 int __cdecl veh_unmoved(int veh_id) {
     if (veh_id < 0 || Vehs[veh_id].y < 0 || Vehs[veh_id].y >= MapLatitudeBounds ||
         Vehs[veh_id].x < 0 || Vehs[veh_id].x >= MapLongitudeBounds ||
-        Vehs[veh_id].faction_id != (uint8_t)ConsoleGlobal.faction_id_ ||
+        Vehs[veh_id].faction_id != ConsoleGlobal.faction_id_ ||
         ((Vehs[veh_id].flags & 0x40) != 0 && (Vehs[veh_id].flags & 0x400) != 0) ||
         veh_jail(veh_id) != 0) {
         return 0;
@@ -9253,7 +9253,7 @@ void __cdecl veh_site_scan(int x, int y) {
 int __cdecl morale_veh_call(int veh_id, int check_drone_riot, int faction_id);
 /*
 Purpose: Bump a vehicle up a morale step, and say so.
-// ORIGINAL: 0x005062B0 ?promote@@YAXH@Z 0x005062B0-0x0050648B
+// ORIGINAL: 0x005062B0 ?promote@@YAXH@Z 0x005062B0-0x0050648B BYTE_EXACT
 // size      475 bytes
 // prototype void (__cdecl ?promote@@YAXH@Z)(int vehID)
 // callers   1   call targets   5
@@ -9291,7 +9291,7 @@ void __cdecl promote(int veh_id) {
 
     const int morale_before = morale_veh(veh_id, 1, 0);
     ++Vehs[veh_id].morale;
-    if (Vehs[veh_id].faction_id != (uint8_t)ConsoleGlobal.faction_id_) {
+    if (Vehs[veh_id].faction_id != ConsoleGlobal.faction_id_) {
         return;
     }
     if (!((1 << Vehs[veh_id].faction_id) & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_)) {

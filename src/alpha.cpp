@@ -141,6 +141,10 @@ RulesTechnology Technology[MaxTechnologyNum];       // 0x0094F358
 // RECOVERY_OBJECT: v2 0x0094B4A0 0x0094B4C0 ?Mandate@@3PAURulesMandate@@A 0x005873C0
 RulesMandate Mandate[MaxMandateNum];                // 0x0094B4A0
 // RECOVERY_OBJECT: v2 0x00691878 0x00691AF8 ?Terraforming@@3PAURulesTerraforming@@A 0x005873C0
+// The historical map word identities are live rates in this mutable array.
+// 0x00691890 + row * 32 selects rate (+0x18), including road and magtube.
+// RECOVERY_OBJECT: v3 0x00691930 ?MapTerrainBonusYieldRow5FirstWord@@3HB member ?Terraforming@@3PAURulesTerraforming@@A [5].rate
+// RECOVERY_OBJECT: v3 0x00691950 ?MapTerrainBonusYieldRow6FirstWord@@3HB member ?Terraforming@@3PAURulesTerraforming@@A [6].rate
 RulesTerraforming Terraforming[MaxTerrainNum] = {
     { 0, 0, 0, 0, BIT_FARM,          BIT_FOREST, 0, 0 },
     { 0, 0, 0, 0, BIT_SOIL_ENRICHER, BIT_FOREST, 0, 0 },

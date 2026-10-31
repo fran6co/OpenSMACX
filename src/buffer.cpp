@@ -8388,6 +8388,9 @@ int Buffer::write_pcx(char *filename) {
 
     const int width = dib_.bmiHeader.biWidth;
     const int height = dib_.bmiHeader.biHeight;
+    // Original5DF6BE saves the pixels before create; header fields below
+    // are read again after create, rather than sharing its size snapshot.
+    const uint8_t *bits = static_cast<const uint8_t *>(locked_bits_);
     unsigned char *view = static_cast<unsigned char *>(map.create(
         name, static_cast<uint32_t>(width * height * -2 + 0x80), 1));
     if (view != 0) {
@@ -8398,8 +8401,8 @@ int Buffer::write_pcx(char *filename) {
         header.bits_per_pixel = 8; // eight bits per plane
         header.x_min = 0;
         header.y_min = 0;
-        header.x_max = static_cast<short>(width) - 1;
-        header.y_max = -1 - static_cast<short>(height);
+        header.x_max = static_cast<short>(dib_.bmiHeader.biWidth) - 1;
+        header.y_max = -1 - static_cast<short>(dib_.bmiHeader.biHeight);
         header.h_res = 0;
         header.v_res = 0;
         header.reserved_40 = 0;
@@ -8410,10 +8413,10 @@ int Buffer::write_pcx(char *filename) {
         header.screen_height = 0;
         memcpy(view, &header, sizeof(header));
 
-        const uint8_t *bits = static_cast<const uint8_t *>(locked_bits_);
         unsigned char *out = view + 0x80;
-        int rows_left = -height;
-        if (height != 0 && rows_left >= 0) {
+        // Original5DF7BC reads the row count after the header-copy call.
+        int rows_left = -dib_.bmiHeader.biHeight;
+        if (rows_left > 0) {
             do {
                 unsigned int col = 0;
                 const int row_width = stride_;
@@ -8534,12 +8537,15 @@ int Buffer::write_bmp(char *filename) {
 
     // The LAST row first: `height` is negative, so the start sits
     // (rows - 1) rows into the pixel block and walks backwards.
+    // Original5DFAA5 reloads height after all three header/table writes;
+    // original5DFAC7 reloads width for every row write.
+    const int current_height = dib_.bmiHeader.biHeight;
     uint8_t *row = static_cast<uint8_t *>(locked_bits_)
-        - (height + 1) * static_cast<int>(stride_);
-    int rows = -height;
-    if (height != 0 && rows > -1) {
+        - (current_height + 1) * static_cast<int>(stride_);
+    int rows = -current_height;
+    if (rows > 0) {
         do {
-            fwrite(row, width, 1, file);
+            fwrite(row, dib_.bmiHeader.biWidth, 1, file);
             row -= stride_;
             rows--;
         } while (rows != 0);
