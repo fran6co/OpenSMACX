@@ -893,7 +893,7 @@ void BaseButton::on_mouse_move(int x, int y) {
             win_parent_->vslot_43(static_cast<int>(field_A78_));
             redraw();
         } else if (get_lbutton_state() != 0) {
-            Win::on_mouse_move(x, y, 0, 0);
+            on_left_down(x, y); // Original0x607970: live vtable offset0x50.
         }
     }
 }
