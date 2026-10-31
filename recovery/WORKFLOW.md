@@ -130,6 +130,56 @@ Git checkpoint of the faithful source before implementing fixes or improvements.
 
 ## Evidence-led recovery queue and bounded matching pass
 
+### Continuous parallel matching campaign
+
+For a matching campaign, workers own the complete bounded source-search loop:
+inspect the original and retained attempts, edit their isolated source, compile,
+measure, and return measured source changes with their evidence. Read-only triage
+is a separate assignment; it is not the default recovery worker role. Only the
+coordinator mutates Git, prepares or refreshes recipes, integrates, or cleans up.
+Workers may compile only under their assigned resource lease, never on another
+worker's prefix or the reserved integration prefix. Child compiler commands
+inherit the lease and must not allocate it again.
+
+Keep up to eight disjoint ownership groups active and reserve one compiler slot
+for integration. Split each owner's queue into packets of at most24 functions.
+After the initial five-minute screen, measure one concrete, faithful source
+candidate per promising function; spend the remaining three-attempt allowance
+only on an explained residual. Combine independent changes in the same TU into
+one candidate compilation and measure every changed function together. Preserve
+existing exact functions and structural discoveries. Missing evidence and an
+uninspected function are not exhausted search contexts.
+
+Workers hand off measured patches, original/reference evidence, actual compiler
+reports, and source/dependency fingerprints. Failed attempts belong in ignored
+cache files, with their proposed source and compiler context; never repeat a
+candidate solely because it has a new task name. An index entry with incomplete
+context is only a history hint, not permission to suppress a fresh investigation.
+Use the package's measurement and candidate-deck APIs/CLI; do not introduce a
+project CLI or a second claim ledger.
+
+The coordinator collects disjoint ready changes into a multi-TU integration
+checkpoint while workers continue the next packet in their own checkouts. Run
+full build/link and the relevant preservation checks for the combined checkpoint,
+then recheck the destination. Do not run a full application build for each failed
+spelling candidate or repeat the Python suite for C++-only recovery. A checkpoint
+must be bounded: do not hold a useful verified recovery indefinitely waiting for
+a target number of winners. Git operations and integration remain serial; source
+search and compilation in independent worktrees do not.
+
+Freeze framework, compiler policy, and common task baselines during the campaign.
+A demonstrated blocker can justify a separate framework change after affected
+measurements stop. Centralize discoveries needing shared headers or expanded
+ownership, then remeasure the conservative dependency closure; do not discard a
+justified structural correction to avoid a matching regression.
+
+Report new unique original functions made exact per elapsed hour, candidate and
+control compiler calls separately, measured functions per compilation, repeated
+unchanged attempts, and worker/integration occupancy. Report semantic corrections
+and additional interpretations separately from new exact original functions.
+Worker count, source placement, alias count, and successful build output are not
+recovery throughput or acceptance.
+
 Use one fresh qualified application build to triage independent ownership groups.
 First investigate concrete missing behavior, original import/reference identity,
 member/type, hierarchy and lifetime discrepancies. Compare the original callsite,
