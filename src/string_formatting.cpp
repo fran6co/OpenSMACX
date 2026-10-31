@@ -309,7 +309,7 @@ void __cdecl say_society(char *text, int society_id, int with_model) {
 
 /*
 Purpose: Write a secret project's name, and its cost bracket when asked.
-// ORIGINAL: 0x00590990 ?say_project@@YAXPAXHH@Z 0x00590990-0x00590A0E FILE
+// ORIGINAL: 0x00590990 ?say_project@@YAXPAXHH@Z 0x00590990-0x00590A0E FILE BYTE_EXACT
 // size      126 bytes
 // prototype void (__cdecl ?say_project@@YAXPAXHH@Z)(void*, int, int)
 // callers   0   call targets   2
@@ -339,11 +339,14 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl say_project(char *output, int project_id, int with_cost) {
-    strcat(output, StringTable.get(Facility[FacilitySPStart + project_id].name));
+    Strings &string_table = StringTable;
+    LPSTR project_name = Facility[FacilitySPStart + project_id].name;
+    strcat(output, string_table.get(project_name));
     if (with_cost != 0) {
         strcat(output, BufferJoinSpace);
         strcat(output, "(");
-        strcat(StringTemp, label_get(179));
+        LPSTR cost_label = Labels.strings_ptr[179];
+        strcat(StringTemp, StringTable.get(cost_label));
         strcat(output, ")");
     }
 }
