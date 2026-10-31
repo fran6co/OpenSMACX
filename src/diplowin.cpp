@@ -2009,21 +2009,22 @@ Status: The body now lives beside the real DiploWindow StringBox/EditBox
 extern "C" void __cdecl sub_441100(int faction_id, int faction_id_with) {
   if (faction_id > faction_id_with)
     swap(&faction_id, &faction_id_with);
-
   DiploWindow.shared_string_box().clear();
   DiploWindow.shared_edit_box().set_text(0);
-
   StringList &saved =
       DiplomacyTranscriptLists[faction_id][faction_id_with];
   const int saved_count = saved.entry_count_;
   for (int index = saved_count - 3; index < saved_count; ++index) {
-    if (index < 0)
-      continue;
-    if (index <= saved.entry_count_ - 1) {
+    if (index < 0) continue;
+    if (index <= saved.entry_count_ - 1)
       saved.seek_pos(index);
-      StringStructPayload *const payload = saved.current_entry();
-      DiploWindow.shared_string_box().add(payload != 0 ? payload->text : 0,
-                                          saved.current_id(), 1);
+    int id = 0;
+    char *text = 0;
+    if (saved.head_ != 0) {
+      StringStructEntry *const current = saved.current_;
+      id = current->id;
+      text = current->string_payload()->text;
     }
+    DiploWindow.shared_string_box().add(text, id, 1);
   }
 }

@@ -1,0 +1,19 @@
+{
+  "event_id": "ef5eeede0c77b19f6456a7c21cfea826c8ca1ede9605fef1dc2dbf3e38a4ddce",
+  "payload": {
+    "author": "recovery-coordinator",
+    "editable_files": [
+      "recovery/tests/diplowin_exec_host_types.h"
+    ],
+    "evidence": [
+      "Actual-source host fixture already models typed cursor nodes. Add one-shot StringBox add callback to exercise pinned live-count reload; retain original stable-empty tests."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "typed-host-cursor-add-hook-oct31at",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:owner-transcript-display-oct31at"
+}

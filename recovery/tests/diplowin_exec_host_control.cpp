@@ -40,6 +40,11 @@ extern "C" int rand(void) {
   return 0;
 }
 
+StringBoxAddHook StringBoxAddAfterInsert = 0;
+static void shrink_selected_transcript_after_first_add() {
+  DiplomacyTranscriptLists[0][7].clear();
+}
+
 /* DIPLOWIN_EXEC_FUNCTIONS */
 /* DIPLOWIN_TRANSCRIPT_FUNCTION */
 
@@ -229,5 +234,43 @@ int main() {
   assert(DiploWindow.stringBox_.last_text_color[1] == 88);
   assert(DiploWindow.stringBox_.last_text_color[2] == 1);
   assert(DiploWindow.stringBox_.last_text_color[3] == 1);
+  {
+StringList &saved = DiplomacyTranscriptLists[0][7];
+StringList &visible = DiploWindow.stringBox_.strings();
+char labels[4][8] = {"row0", "row1", "row2", "row3"};
+for (int count = 0; count <= 4; ++count) {
+  saved.clear();
+  visible.clear();
+  for (int i = 0; i < count; ++i) {
+    saved.pending_text_ = labels[i];
+    saved.add(100 + i);
+  }
+  sub_441100(7, 0);
+  const int expected = count < 3 ? count : 3;
+  assert(visible.entry_count_ == expected);
+  const int first = count - expected;
+  for (int i = 0; i < expected; ++i) {
+    assert(visible.seek_pos(i));
+    assert(visible.current_id() == 100 + first + i);
+    assert(strcmp(visible.current_text(), labels[first + i]) == 0);
+  }
+}
+saved.clear();
+visible.clear();
+for (int i = 0; i < 4; ++i) {
+  saved.pending_text_ = labels[i];
+  saved.add(200 + i);
+}
+StringBoxAddAfterInsert = &shrink_selected_transcript_after_first_add;
+sub_441100(7, 0);
+assert(saved.entry_count_ == 0 && saved.head_ == 0);
+assert(visible.entry_count_ == 3);
+assert(visible.seek_pos(0) && visible.current_id() == 201);
+assert(strcmp(visible.current_text(), "row1") == 0);
+assert(visible.seek_pos(1) && visible.current_id() == 0);
+assert(visible.current_text() == 0);
+assert(visible.seek_pos(2) && visible.current_id() == 0);
+assert(visible.current_text() == 0);
+  }
   return 0;
 }
