@@ -616,7 +616,7 @@ void NetWin::fill_player(NetWinLobbyRowView lobby_row, int slot) {
     if (slot == -1) {
         lobby_row.noun_faction()[0] = 0;
         strcat(lobby_row.noun_faction(),
-               label_get(0xFE4 / 4));
+               StringTable.get(Labels.strings_ptr[0xFE4 / 4]));
         return;
     }
     strcpy(lobby_row.leader_name(), faction_records_[slot].leader_name_);

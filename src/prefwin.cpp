@@ -627,7 +627,7 @@ void PrefWin::update_pref_buttons() {
     case 2: {
       warnPrefCheckBox_.show(0);
       FlatButton &more_button = moreButton_;
-      more_button.set_name(label_get(label_index(0x1100)));
+      more_button.set_name(StringTable.get(Labels.strings_ptr[label_index(0x1100)]));
       more_button.show(0);
       break;
     }
