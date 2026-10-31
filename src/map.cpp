@@ -2487,7 +2487,7 @@ void __cdecl quick_zoc(int x_src, int y_src, int faction_id, int x_dst, int y_ds
             int owner = veh_who(x_radius, y_radius);
             if (owner >= 0 && owner != faction_id
                 && is_ocean(x_radius, y_radius) == is_src_ocean
-                && !has_treaty(faction_id, owner, DTREATY_PACT)) {
+                && !(PlayersData[faction_id].diplo_treaties[owner] & DTREATY_PACT)) {
                 // image inlines BOTH vector_dist(x,y,x,y) and vector_dist(x,y) at this
                 // one call site (4 direct `abs()` calls, no call to either helper), while
                 // both keep real callers elsewhere - so the body is duplicated here rather
@@ -2879,7 +2879,7 @@ WorldWin WorldClimateWorldWin;
 
 /*
 Purpose: Check for any type of zone of control conflicts (base and/or unit).
-// ORIGINAL: 0x005C89F0 ?zoc_any@@YAHHHH@Z 0x005C89F0-0x005C8AC0
+// ORIGINAL: 0x005C89F0 ?zoc_any@@YAHHHH@Z 0x005C89F0-0x005C8AC0 BYTE_EXACT
 // LEVER (2026-09-03): anything_at (0x005798E0) written out inline - the image
 //            makes ZERO calls here and `call_diff` flagged the real call as
 //            MORE-by-one; 3/82 -> 12/82 and call_diff is now clean. The
@@ -2915,7 +2915,7 @@ int __cdecl zoc_any(int x, int y, int faction_id) {
                 int owner = tile->val2 & 0xF;
                 if (owner < MaxPlayerNum
                     && owner >= 0 && (uint32_t)owner != faction_id
-                    && !has_treaty(faction_id, owner, DTREATY_PACT)) {
+                    && !(PlayersData[faction_id].diplo_treaties[owner] & DTREATY_PACT)) {
                     return owner + 1;
                 }
             }
@@ -2926,7 +2926,7 @@ int __cdecl zoc_any(int x, int y, int faction_id) {
 
 /*
 Purpose: Check for unit related zone of control conflicts.
-// ORIGINAL: 0x005C8AC0 ?zoc_veh@@YAHHHH@Z 0x005C8AC0-0x005C8B97
+// ORIGINAL: 0x005C8AC0 ?zoc_veh@@YAHHHH@Z 0x005C8AC0-0x005C8B97 BYTE_EXACT
 // TRIED: 13/80, 0.969 similar - best of every flag set. Same
 //            xrange/on_map-loop family ceiling as base_on_sea (0x0050DE50):
 //            the image caches MapIsFlat/MapLongitudeBounds into registers
@@ -2949,7 +2949,7 @@ int __cdecl zoc_veh(int x, int y, int faction_id) {
         if (on_map(x_radius, y_radius)) {
             int owner = veh_who(x_radius, y_radius);
             if (owner >= 0 && owner != faction_id
-                && !has_treaty(faction_id, owner, DTREATY_PACT)) {
+                && !(PlayersData[faction_id].diplo_treaties[owner] & DTREATY_PACT)) {
                 owner++;
                 if (ret <= owner) {
                     ret = owner; // any point in continuing after 1st instance of ZOC is found?
@@ -2986,7 +2986,7 @@ int __cdecl zoc_sea(int x, int y, int faction_id) {
             int owner = veh_who(x_radius, y_radius);
             if (owner >= 0 && (uint32_t)owner != faction_id
                 && is_ocean(x_radius, y_radius) == is_ocean_tile
-                && !has_treaty(faction_id, owner, DTREATY_PACT)) {
+                && !(PlayersData[faction_id].diplo_treaties[owner] & DTREATY_PACT)) {
                 for (int veh_id = veh_at(x_radius, y_radius); veh_id >= 0;
                     veh_id = Vehs[veh_id].next_veh_id_stack) {
                     if (Vehs[veh_id].faction_id != faction_id

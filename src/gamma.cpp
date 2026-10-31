@@ -26,10 +26,14 @@
 #include "win.h"
 #include <math.h>
 
+// These pinned sites call the ordinary CRT pow entry with double arguments.
+#ifdef _MSC_VER
+#pragma function(pow)
+#endif
+
 namespace {
 const double GammaPositionScale = 0.01;
 const double GammaComponentScale = 1.0 / 235.0;
-const double GammaByteScale = 235.99;
 const float GammaSliderScale = 100.0f;
 }
 
@@ -50,16 +54,18 @@ double Gamma::exec(Palette *target, float initial_gamma, int apply_only) {
         return initial_gamma;
     }
 
+    const int screen_height = WinScreenHeight;
+    const int screen_width = WinScreenWidth;
     rect1_.left = 0;
     rect1_.top = 0;
     rect1_.right = 236;
     rect1_.bottom = 32;
     const int horizontal_offset =
-        (WinScreenWidth - rect1_.right + rect1_.left) / 2;
+        (screen_width - rect1_.right + rect1_.left) / 2;
     rect1_.left += horizontal_offset;
     rect1_.right += horizontal_offset;
     const int vertical_offset =
-        (WinScreenHeight - rect1_.bottom + rect1_.top) / 2;
+        (screen_height - rect1_.bottom + rect1_.top) / 2;
     rect1_.top += vertical_offset;
     rect1_.bottom += vertical_offset;
 
@@ -85,7 +91,7 @@ double Gamma::exec(Palette *target, float initial_gamma, int apply_only) {
     rect5_.right += second_button_offset;
 
     font_.init("Arial", 14, 1);
-    GraphicWin::init(0, 0, WinScreenWidth, WinScreenHeight, 0, 0,
+    GraphicWin::init(0, 0, screen_width, screen_height, 0, 0,
                      0, 0, 0);
     GraphicWin::fill(0xF8);
 
@@ -160,18 +166,19 @@ double Gamma::exec(Palette *target, float initial_gamma, int apply_only) {
 // symbol    ?adjust_palette@Gamma@@QAEXXZ
 void Gamma::adjust_palette() {
     gamma_ = static_cast<double>(scroll_.position()) * GammaPositionScale;
-    for (int i = 0; i < 236; ++i) {
+    PALETTEENTRY *entry = &palette_.entries_[10];
+    int i = 0;
+    do {
         double value = pow(static_cast<double>(i) * GammaComponentScale,
                            1.0 / gamma_);
         if (value < 0.0) value = 0.0;
         else if (value > 1.0) value = 1.0;
         const unsigned char shade = static_cast<unsigned char>(
-            static_cast<int>(value * GammaByteScale));
-        PALETTEENTRY &entry = palette_.entries_[i + 10];
-        entry.peRed = shade;
-        entry.peGreen = shade;
-        entry.peBlue = shade;
-    }
+            static_cast<int>(value * 235.99));
+        entry->peBlue = entry->peGreen = entry->peRed = shade;
+        ++i;
+        ++entry;
+    } while (i < 236);
     palette_.reseed();
     palette_.set();
     on_redraw();
@@ -200,6 +207,7 @@ void Gamma::on_redraw() {
     Buffer::set_text_color(0, -1, 1, 1);
 
     char value_text[80];
+    value_text[0] = 0;
     sprintf(value_text, "%f", gamma_);
     Buffer::write_cent_l(value_text, &label_area, strlen(value_text));
     GraphicWin::soft_update();
@@ -224,15 +232,17 @@ void Gamma::close() {
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/005c95e0.cpp walks the target Palette from entry 10 through 245", "src/recovered/units/005c8e60.cpp stores the Palette* argument at Gamma+0xA64", "src/jackal/palette.h places PALETTEENTRY records at the start of Palette and exposes reseed/set"], "reason": "Apply gamma to the target palette's RGB entries as typed palette data, then publish its new seed and colours."}
 // symbol    ?adjust_pal@Gamma@@QAEXN@Z
 void Gamma::adjust_pal(double gamma) {
-    Palette *const target = target_palette_;
-    if (target == 0) return;
+    if (target_palette_ == 0) return;
 
     const double inverse_gamma = 1.0 / gamma;
-    for (int index = 10; index < 246; ++index) {
-        PALETTEENTRY &entry = target->entries_[index];
-        double red = pow(entry.peRed * GammaComponentScale, inverse_gamma);
-        double green = pow(entry.peGreen * GammaComponentScale, inverse_gamma);
-        double blue = pow(entry.peBlue * GammaComponentScale, inverse_gamma);
+    for (int index = 0; index < 236; ++index) {
+        const PALETTEENTRY &entry = target_palette_->entries_[index + 10];
+        double red = entry.peRed * GammaComponentScale;
+        double green = entry.peGreen * GammaComponentScale;
+        double blue = entry.peBlue * GammaComponentScale;
+        red = pow(red, inverse_gamma);
+        green = pow(green, inverse_gamma);
+        blue = pow(blue, inverse_gamma);
 
         if (red < 0.0) red = 0.0;
         else if (red > 1.0) red = 1.0;
@@ -241,15 +251,18 @@ void Gamma::adjust_pal(double gamma) {
         if (blue < 0.0) blue = 0.0;
         else if (blue > 1.0) blue = 1.0;
 
-        entry.peRed = static_cast<unsigned char>(
-            static_cast<int>(red * GammaByteScale));
-        entry.peGreen = static_cast<unsigned char>(
-            static_cast<int>(green * GammaByteScale));
-        entry.peBlue = static_cast<unsigned char>(
-            static_cast<int>(blue * GammaByteScale));
+        const unsigned char red_byte = static_cast<unsigned char>(
+            static_cast<int>(red * 235.99));
+        const unsigned char green_byte = static_cast<unsigned char>(
+            static_cast<int>(green * 235.99));
+        const unsigned char blue_byte = static_cast<unsigned char>(
+            static_cast<int>(blue * 235.99));
+        target_palette_->entries_[index + 10].peRed = red_byte;
+        target_palette_->entries_[index + 10].peGreen = green_byte;
+        target_palette_->entries_[index + 10].peBlue = blue_byte;
     }
-    target->reseed();
-    target->set();
+    target_palette_->reseed();
+    target_palette_->set();
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.

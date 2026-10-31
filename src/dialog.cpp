@@ -1001,8 +1001,7 @@ void Dialog::UNK2(int window, int message, int wparam, int lparam) {
 int Dialog::init() {
     StringList *const list = &item_list_;
     Heap *const heap = &heap_;
-    const int32_t requested = static_cast<int32_t>(field_1C_);
-    if (requested < 0) {
+    if (static_cast<int32_t>(field_1C_) < 0) {
         return 1;
     }
 
@@ -1019,7 +1018,7 @@ int Dialog::init() {
                 if (payload != 0) {
                     delete payload;
                 }
-                entry->payload = 0;
+                list->head_->payload = 0;
                 StringStructEntry *const head = list->head_;
                 if (head != 0) {
                     delete head;
@@ -1034,6 +1033,7 @@ int Dialog::init() {
     }
     list->current_position_ = 0;
 
+    const int32_t requested = static_cast<int32_t>(field_1C_);
     if (requested == 0) {
         if (list->head_ != 0) {
             int index = 0;
@@ -1046,7 +1046,7 @@ int Dialog::init() {
                     if (payload != 0) {
                         delete payload;
                     }
-                    entry->payload = 0;
+                    list->head_->payload = 0;
                     StringStructEntry *const head = list->head_;
                     if (head != 0) {
                         delete head;
@@ -1079,7 +1079,7 @@ int Dialog::init() {
                 if (payload != 0) {
                     delete payload;
                 }
-                entry->payload = 0;
+                list->head_->payload = 0;
                 StringStructEntry *const head = list->head_;
                 if (head != 0) {
                     delete head;
@@ -1160,7 +1160,7 @@ Purpose: Dialog's Heap* init: reset the live dialog through close(), park
          pointer, and hand that same Heap to the embedded item list as its
          allocator after the entry teardown.
 
-// ORIGINAL: 0x006098D0 ?init@Dialog@@QAEHPAUHeap@@@Z 0x006098D0-0x0060996F FILE
+// ORIGINAL: 0x006098D0 ?init@Dialog@@QAEHPAUHeap@@@Z 0x006098D0-0x0060996F FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence":["src/dialog.h declares this original Dialog overload; dialog.cpp owns the sibling init/close methods.","The embedded list, heap pointer and allocator are existing Dialog members; SpriteBox's documented forwarder targets this overload."],"reason":"Move the existing typed overload to Dialog's owner without changing heap assignment, teardown order or return behavior."}
 // symbol    ?init@Dialog@@QAEHPAVHeap@@@Z
 // TRIED: SpriteBox::init(Heap*) tail-forwards here through the embedded Dialog base.
@@ -1177,31 +1177,32 @@ int Dialog::init(Heap *heap) {
     close();
     field_1C_ = 0xFFFFFFFF;
     heap_ptr_ = heap;
-    if (item_list_.head_ != 0) {
+    StringList &list = item_list_;
+    if (list.head_ != 0) {
         int index = 0;
-        if (0 < item_list_.entry_count_) {
+        if (0 < list.entry_count_) {
             do {
-                item_list_.current_ = item_list_.head_->next;
-                StringStructPayload *const payload = item_list_.head_->string_payload();
-                item_list_.on_remove(payload);
+                list.current_ = list.head_->next;
+                StringStructPayload *const payload = list.head_->string_payload();
+                list.on_remove(payload);
                 if (payload != 0) {
                     delete payload;
                 }
-                item_list_.head_->payload = 0;
-                StringStructEntry *const head = item_list_.head_;
+                list.head_->payload = 0;
+                StringStructEntry *const head = list.head_;
                 if (head != 0) {
                     delete head;
                 }
                 ++index;
-                item_list_.head_ = item_list_.current_;
-            } while (index < item_list_.entry_count_);
+                list.head_ = list.current_;
+            } while (index < list.entry_count_);
         }
-        item_list_.head_ = 0;
-        item_list_.current_position_ = 0;
-        item_list_.entry_count_ = 0;
+        list.head_ = 0;
+        list.current_position_ = 0;
+        list.entry_count_ = 0;
     }
-    item_list_.current_position_ = 0;
-    item_list_.allocator_ = heap;
+    list.current_position_ = 0;
+    list.allocator_ = heap;
     return 0;
 }
 
@@ -1237,31 +1238,32 @@ int Dialog::init(int left, int top, int right, int bottom, Heap *heap) {
     field_2C_ = right;
     field_30_ = bottom;
     heap_ptr_ = heap;
-    if (item_list_.head_ != 0) {
+    StringList &list = item_list_;
+    if (list.head_ != 0) {
         int index = 0;
-        if (0 < item_list_.entry_count_) {
+        if (0 < list.entry_count_) {
             do {
-                item_list_.current_ = item_list_.head_->next;
-                StringStructPayload *const payload = item_list_.head_->string_payload();
-                item_list_.on_remove(payload);
+                list.current_ = list.head_->next;
+                StringStructPayload *const payload = list.head_->string_payload();
+                list.on_remove(payload);
                 if (payload != 0) {
                     delete payload;
                 }
-                item_list_.head_->payload = 0;
-                StringStructEntry *const head = item_list_.head_;
+                list.head_->payload = 0;
+                StringStructEntry *const head = list.head_;
                 if (head != 0) {
                     delete head;
                 }
                 ++index;
-                item_list_.head_ = item_list_.current_;
-            } while (index < item_list_.entry_count_);
+                list.head_ = list.current_;
+            } while (index < list.entry_count_);
         }
-        item_list_.head_ = 0;
-        item_list_.current_position_ = 0;
-        item_list_.entry_count_ = 0;
+        list.head_ = 0;
+        list.current_position_ = 0;
+        list.entry_count_ = 0;
     }
-    item_list_.current_position_ = 0;
-    item_list_.allocator_ = heap;
+    list.current_position_ = 0;
+    list.allocator_ = heap;
     return 0;
 }
 // RECOVERY_GENERATED: v1 vtable 0x006703FC ? ??_7Dialog@@6B@ 0x00608C10
