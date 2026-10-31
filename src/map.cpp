@@ -634,7 +634,6 @@ BOOL __cdecl port_to_coast(int base_id, int region) {
 /*
 Purpose: Check to see if two port bases share a common body of water determined by region.
 // ORIGINAL: 0x0050E160 ?port_to_port@@YAHHH@Z 0x0050E160-0x0050E306
-// body      src/map.h
 // LEVER: call_diff showed this tree calling base_on_sea where the image makes
 //        no calls at all - the image inlines base_on_sea's whole body into
 //        the loop instead. Manually inlining it (guard clause on
@@ -662,10 +661,37 @@ Purpose: Check to see if two port bases share a common body of water determined 
 Return Value: Are both ports accessible by water to each other? true/false
 Status: Complete
 */
-// BODY IN map.h, as `MEASURED inline`: the image writes it out at
-// some call sites and calls it at others, and a .cpp definition is only ever
-// one of those. The marker stays here because that is where the catalogue
-// reads it.
+BOOL __cdecl port_to_port(int base_id_src, int base_id_dst) {
+    int x = Bases[base_id_src].x;
+    int y = Bases[base_id_src].y;
+    int last_region = -1;
+    for (uint32_t i = 0; i < 8; i++) { // is_coast()
+        int x_radius = xrange(x + VehMoveDeltaX[i]);
+        int y_radius = y + VehMoveDeltaY[i];
+        if (on_map(x_radius, y_radius) && is_ocean(x_radius, y_radius)) {
+            int region_src = region_at(x_radius, y_radius);
+            if (region_src != last_region) { // reduce redundant checks especially sea bases
+                last_region = region_src;
+                // Inlined base_on_sea(base_id_dst, region_src): the image
+                // writes this out here rather than calling it.
+                int region_sea = region_src & RegionBounds;
+                if (region_sea < RegionBounds) {
+                    int x_dst = Bases[base_id_dst].x;
+                    int y_dst = Bases[base_id_dst].y;
+                    for (uint32_t j = 0; j < 8; j++) {
+                        int x_radius_dst = xrange(x_dst + VehMoveDeltaX[j]);
+                        int y_radius_dst = y_dst + VehMoveDeltaY[j];
+                        if (on_map(x_radius_dst, y_radius_dst) && is_ocean(x_radius_dst, y_radius_dst)
+                            && (region_at(x_radius_dst, y_radius_dst) & RegionBounds) == region_sea) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return false;
+}
 
 /*
 Purpose: Determine if a base has access to ports or more than one coastal region. This helps
@@ -1477,6 +1503,11 @@ Purpose: Determine the tile's mineral count that translates to rockiness.
 Return Value: 0 (Flat), 1 (Rolling), 2 (Rocky)
 Status: Complete
 */
+// The guarded dispatches at591FA3 and591FE9 each select four absolute
+// code targets. Both companion tables are generated from the nested switches;
+// their data is outside the preserved original code extent.
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00591F00 0x00592008 0x00592018 0x00591FA3
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00591F00 0x00592018 0x00592028 0x00591FE9
 int __cdecl minerals_at(int x, int y) {
     if (!y || y == (MapLatitudeBounds - 1)) {
         return 2; // poles
@@ -1484,10 +1515,13 @@ int __cdecl minerals_at(int x, int y) {
     int origX = x;
     int avg = (x + y) / 2;
     x -= avg;
-    int val1 = (x / 2) + MapRandSeed + (x - (x % 2)) + (avg - (avg % 2));
+    int val1 = (x / 2) + MapRandSeed + 2 * (x / 2) + 2 * (avg / 2);
     int val2 = (val1 - 2 * (x & 1) - (avg & 1)) & 3;
     int alt = alt_at(origX, y);
-    int type = abs(alt - ALT_SHORE_LINE);
+    int type = alt - ALT_SHORE_LINE;
+    if (type < 0) {
+        type = ALT_SHORE_LINE - alt;
+    }
     if (alt < ALT_SHORE_LINE) {
         type--;
     }
@@ -1900,8 +1934,8 @@ Status: Complete
 */
 // Current restored contract: return the qualifying neighbor's index (1..8 or 1..20), or 0.
 int __cdecl is_coast(int x, int y, BOOL is_base_radius) {
-    int radius = is_base_radius ? 21 : 9;
     int i = 1;
+    int radius = is_base_radius ? 21 : 9;
     if (i >= radius) {
         return 0;
     }

@@ -773,6 +773,7 @@ MEASURED inline int __cdecl base_who(int x, int y) {
 // Defined by the world-generation owner in world.cpp.
 BOOL __cdecl near_landmark(int x, int y);
 
+// Historical header-placement evidence follows; standalone ownership is in map.cpp.
 // MEASURED inline: naval_base (0x0050E3C0) and convoy (0x0050E5C0) call_diff MORE
 // by exactly this - the image inlines port_to_port's whole 422-byte body at both,
 // despite it having its own real callers elsewhere (get_there, veh.cpp's
@@ -784,37 +785,7 @@ BOOL __cdecl near_landmark(int x, int y);
 // Left this way because naval_base/convoy's fix is unconditionally right (the
 // image really does inline it there) and per-call-site selectivity is not
 // something a header-scope `inline` keyword can express.
-MEASURED inline BOOL __cdecl port_to_port(int base_id_src, int base_id_dst) {
-    int x = Bases[base_id_src].x;
-    int y = Bases[base_id_src].y;
-    int last_region = -1;
-    for (uint32_t i = 0; i < 8; i++) { // is_coast()
-        int x_radius = xrange(x + VehMoveDeltaX[i]);
-        int y_radius = y + VehMoveDeltaY[i];
-        if (on_map(x_radius, y_radius) && is_ocean(x_radius, y_radius)) {
-            int region_src = region_at(x_radius, y_radius);
-            if (region_src != last_region) { // reduce redundant checks especially sea bases
-                last_region = region_src;
-                // Inlined base_on_sea(base_id_dst, region_src): the image
-                // writes this out here rather than calling it.
-                int region_sea = region_src & RegionBounds;
-                if (region_sea < RegionBounds) {
-                    int x_dst = Bases[base_id_dst].x;
-                    int y_dst = Bases[base_id_dst].y;
-                    for (uint32_t j = 0; j < 8; j++) {
-                        int x_radius_dst = xrange(x_dst + VehMoveDeltaX[j]);
-                        int y_radius_dst = y_dst + VehMoveDeltaY[j];
-                        if (on_map(x_radius_dst, y_radius_dst) && is_ocean(x_radius_dst, y_radius_dst)
-                            && (region_at(x_radius_dst, y_radius_dst) & RegionBounds) == region_sea) {
-                            return true;
-                        }
-                    }
-                }
-            }
-        }
-    }
-    return false;
-}
+BOOL __cdecl port_to_port(int base_id_src, int base_id_dst);
 
 // MEASURED inline: `callers 0` in the image - lock_map (0x00591C90), its only
 // source-level caller, call_diff'd MORE by exactly one call on this.

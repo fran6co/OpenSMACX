@@ -1318,6 +1318,19 @@
           "/Oy-",
           "-c"
         ]
+      },
+      "src/enemy.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W4",
+          "-c"
+        ]
       }
     },
     "flag_sets": [
