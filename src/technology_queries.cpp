@@ -125,7 +125,9 @@ BOOL __cdecl facility_avail(int facility_id, int faction_id, int base_id,
         return false; // Skunkworks removed if there are no prototype costs
     }
     if (facility_id == FAC_ASCENT_TO_TRANSCENDENCE) { // at top since anyone can build it
-        return ascending(faction_id) && GameDataStateStorage.fields_.game_rules_ & RULES_VICTORY_TRANSCENDENCE;
+        // This owner tests the Voice slot directly in the original early branch.
+        return base_project(SP_VOICE_OF_PLANET) != SP_Unbuilt
+            && GameDataStateStorage.fields_.game_rules_ & RULES_VICTORY_TRANSCENDENCE;
     }
     if (!has_tech(Facility[facility_id].preq_tech, faction_id)) { // Check tech for facility + SP
         return false;

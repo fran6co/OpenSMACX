@@ -8523,6 +8523,24 @@ void __cdecl base_nutrient() {
 }
 
 /*
+Purpose: Check if Voice of Planet has been built that starts the Ascent to Transcendence sequence.
+// ORIGINAL: 0x005AC680 ?ascending@@YAHH@Z 0x005AC680-0x005AC68F BYTE_EXACT
+// body      src/base.cpp
+// size      15 bytes
+// prototype int (__cdecl ?ascending@@YAHH@Z)(int factionID)
+// callers   4   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: Has Voice of Planet been built? true/false
+Status: Complete
+*/
+BOOL __cdecl ascending(int UNUSED(faction_id) faction_id) {
+    return base_project(SP_VOICE_OF_PLANET) != SP_Unbuilt;
+}
+
+
+/*
 Purpose: Calculate minerals and ecological damage for the current base.
 // ORIGINAL: 0x004E9CB0 ?base_minerals@@YAXXZ 0x004E9CB0-0x004EA1EF
 // LEVER: the image calls has_fac(facility,base,0) - not has_fac_built - for
@@ -10173,21 +10191,6 @@ BOOL __cdecl transcending(int faction_id) {
     return false;
 }
 
-/*
-Purpose: Check if Voice of Planet has been built that starts the Ascent to Transcendence sequence.
-// ORIGINAL: 0x005AC680 ?ascending@@YAHH@Z 0x005AC680-0x005AC68F BYTE_EXACT
-// body      src/base.h
-// size      15 bytes
-// prototype int (__cdecl ?ascending@@YAHH@Z)(int factionID)
-// callers   4   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: Has Voice of Planet been built? true/false
-Status: Complete
-*/
-// BODY IN base.h, as `MEASURED inline`: facility_avail (base.cpp) needs it
-// folded in place - the image never calls 0x005AC680 there.
 
 /*
 Purpose: Determine if the facility is redundant due to a Secret Project counting as that facility.

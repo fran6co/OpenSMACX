@@ -804,10 +804,6 @@ int __cdecl has_fac_built(int facility_id);
 // The adapter above was a recovery source spelling, not an original identity.
 MEASURED int __cdecl breed_mod(int base_id, int faction_id);
 
-// BODY IN base.h, as `MEASURED inline` (marker stays in base.cpp, where it
-// is already recorded BYTE_EXACT as a standalone function): facility_avail
-// (base.cpp) is the caller that needs it folded in place instead of calling
-// out to 0x005AC680.
 void __cdecl compute_score(int faction, int *total, int *items, int recursive);
 // Existing score storage in base.cpp, also transferred by game sync.
 extern int TranscendenceScoreBonus;
@@ -818,9 +814,7 @@ void __cdecl base_terraform(int force);
 void __cdecl bases_reset(int region_id, int faction_id, int skip_occupied);
 int __cdecl base_connect(int priority);
 
-MEASURED inline BOOL __cdecl ascending(int UNUSED(faction_id) faction_id) {
-    return base_project(SP_VOICE_OF_PLANET) != SP_Unbuilt;
-}
+BOOL __cdecl ascending(int faction_id);
 
 void __cdecl base_check_support();
 void __cdecl base_research();

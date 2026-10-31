@@ -1076,15 +1076,6 @@ BOOL __cdecl climactic_battle() {
     return false;
 }
 
-// Non-inline forwarder to base.h's `MEASURED inline` ascending: at_climax
-// below is one of the image's four real callers of 0x005AC680 (see that
-// marker's `calls` line), where facility_avail (base.cpp) folds it in place
-// instead. Same idiom as technology.h's has_tech_call - the E8 target is a
-// relocation on both sides, so this symbol's own name costs nothing.
-BOOL __cdecl ascending_call(int faction_id) {
-    return ascending(faction_id);
-}
-
 /*
 Purpose: Determine if the specified AI faction is at the game climax based on certain conditions.
 // ORIGINAL: 0x00539EF0 ?at_climax@@YAHH@Z 0x00539EF0-0x0053A022
@@ -1152,10 +1143,8 @@ BOOL __cdecl at_climax(int faction_id) {
     }
     for (i = 1; i < MaxPlayerNum; i++) {
         if (i != faction_id) {
-            // ascending_call, not ascending: the image CALLS 0x005AC680 at
-            // both of these sites (see the calls line), where base.h's
-            // MEASURED inline would fold base_project in place.
-            if (ascending_call(i) && !ascending_call(faction_id)) { // both return same so irrelevant check
+            // Both original calls remain observable across translation units.
+            if (ascending(i) && !ascending(faction_id)) {
                 return true;
             }
         }
