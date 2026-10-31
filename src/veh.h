@@ -20,7 +20,13 @@
 #include <stddef.h>
 #include "time.h"  // battle_init resets the timer family's shared hold flag.
 
-// Bounded network access to the genuine prototype-history owner in veh.cpp.
+// Prototype history is privately owned by prototype_history.cpp. Its genuine
+// integer predicate return matches the original full-EAX caller protocol.
+int __cdecl is_bunged(int faction_id, int chassis_id, int weapon_id,
+                       int armor_id, int ability_flags, int reactor_id);
+void __cdecl clear_bunglist(int faction_id);
+void __cdecl proto_bung_put(int faction_id, int proto_id);
+// Bounded network access to the genuine prototype-history owner.
 bool veh_bung_copy_chunk(size_t offset, unsigned char *packet, size_t count,
                          bool packet_to_owner);
 int __cdecl veh_game_data_bunglist(FILE *file, int format_version);

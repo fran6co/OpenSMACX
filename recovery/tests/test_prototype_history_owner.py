@@ -13,18 +13,18 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def actual_source():
-    path = ROOT / "src/veh.cpp"
+    path = ROOT / "src/prototype_history.cpp"
     source = path.read_text()
     records = read_file(path)
     for address in (0x57DF00, 0x57DF30, 0x57DFC0):
         assert len([r for r in records if r.address == address]) == 1
     start = source.index("struct ProtoBung {")
-    end = source.index("// The battle-resolution messages.", start)
+    end = source.index("/*\nPurpose: Empty one faction", start)
     storage = re.sub(r"static_assert\(.*?\);", "", source[start:end], flags=re.S)
     bodies = [
         _definition(source, name, signature)
         for name, signature in (
-            ("is_bunged", r"bool\s+__cdecl\s+is_bunged\s*\([^;]*?\)"),
+            ("is_bunged", r"int\s+__cdecl\s+is_bunged\s*\([^;]*?\)"),
             ("clear_bunglist", r"void\s+__cdecl\s+clear_bunglist\s*\([^;]*?\)"),
             ("proto_bung_put", r"void\s+__cdecl\s+proto_bung_put\s*\([^;]*?\)"),
         )
@@ -46,9 +46,10 @@ def test_actual_history_owner(compiler, damage, tmp_path):
         actual = actual[:start] + actual[start:].replace(
             old, "&BungList[faction_id][0].ability_flags", 1)
     elif damage == "cursor":
-        old = "cursor = (slot + 1) % 64;"
+        old = "PlayersData[faction_id].prototype_history_cursor = (slot + 1) % 64;"
         assert actual.count(old) == 1
-        actual = actual.replace(old, "cursor = (slot + 2) % 64;")
+        actual = actual.replace(old,
+            "PlayersData[faction_id].prototype_history_cursor = (slot + 2) % 64;")
     harness = Path(__file__).with_name("prototype_history_owner_harness.cpp").read_text()
     assert harness.count("/* ACTUAL_PROTOTYPE_HISTORY */") == 1
     cpp = tmp_path / "history.cpp"

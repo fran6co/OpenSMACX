@@ -168,9 +168,9 @@ int NetDaemon::lock_base(int base_id, int target, int payload_1C, int payload_20
     if (primary_state_.leading_words_[2]) {
         return 1;
     }
-    Base &base = Bases[base_id];
-    log_say("LockBase Needs Lock", base_id, base.x, base.y);
-    return lock(target | 4, base.x, base.y, 0, payload_1C, payload_20);
+    log_say("LockBase Needs Lock", base_id, Bases[base_id].x, Bases[base_id].y);
+    return lock(target | 4, Bases[base_id].x, Bases[base_id].y,
+                0, payload_1C, payload_20);
 }
 
 // MapLongitude is the source-owned half-width tile-row stride, already
@@ -807,8 +807,9 @@ void NetDaemon::close_channel() {
 // dwords, 0x1B7C is lock_state_[1].dword_[5] and the four dwords at 0x1B80
 // are lock_state_[1].dword_[6..9] - one per faction.
 void NetDaemon::hang_up() {
-    if (primary_state_.flags_ != 0) goto L145;
-    if (IsMultiplayerNet == 0) goto L145;
+    // Native 0x52E05B/0x52E068 skip popup cleanup on these two guards.
+    if (primary_state_.flags_ != 0) return;
+    if (IsMultiplayerNet == 0) return;
 
     primary_state_.flags_ = 1;
     if (GameDataStateStorage.fields_.net_turn_flags_ & 0x10) {
@@ -2305,51 +2306,50 @@ void __cdecl message_chat(int opcode, int target, char *text) {
 // compare in the opposite order, and `target = target;` was folded away
 // entirely. Measured, and the three sites are spelled the same way for it.
 int NetDaemon::send_message(char *message, unsigned long length, int target) {
-    const int multiplayer = IsMultiplayerNet;
-    if (!multiplayer) {
-        return multiplayer;
-    }
+    int result = IsMultiplayerNet;
+    if (result) {
+        const unsigned short flags = *reinterpret_cast<unsigned short *>(message);
+        if (flags & 0x4000) {
+            *reinterpret_cast<uint32_t *>(message + 8) = timeGetTime();
+            return Net::send(message, length, 0, 1);
+        }
+        if (flags & 0x8000) {
+            int value;
+            if (NetDaemonNet.primary_state_.session_phase_ == 1) {
+                value = target;
+            } else {
+                value = host_player_id();
+            }
+            target = value;
+            return Net::send(message, length, target, 1);
+        }
+        if (flags & 0xA000) {
+            const int counter = NetDaemonNet.primary_state_.session_phase_;
+            if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10) && ConsoleControlTurnActive == 0 &&
+                GameDataStateStorage.fields_.net_turn_faction_ > 0 && counter > 1) {
+                return Net::send(message, length,
+                                 AlphaNet::who_2_pid(GameDataStateStorage.fields_.net_turn_faction_), 1);
+            }
+            int value;
+            if (counter == 1) {
+                value = target;
+            } else {
+                value = host_player_id();
+            }
+            target = value;
+            return Net::send(message, length, target, 1);
+        }
 
-    const unsigned short flags = *reinterpret_cast<unsigned short *>(message);
-    if (flags & 0x4000) {
-        *reinterpret_cast<uint32_t *>(message + 8) = timeGetTime();
-        return Net::send(message, length, 0, 1);
-    }
-    if (flags & 0x8000) {
         int value;
         if (NetDaemonNet.primary_state_.session_phase_ == 1) {
             value = target;
         } else {
-            value = host_player_id();
+            value = AlphaNet::who_2_pid(target);
         }
         target = value;
-        return Net::send(message, length, target, 1);
+        result = Net::send(message, length, target, 1);
     }
-    if (flags & 0xA000) {
-        const int counter = NetDaemonNet.primary_state_.session_phase_;
-        if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10) && ConsoleControlTurnActive == 0 &&
-            GameDataStateStorage.fields_.net_turn_faction_ > 0 && counter > 1) {
-            return Net::send(message, length,
-                             AlphaNet::who_2_pid(GameDataStateStorage.fields_.net_turn_faction_), 1);
-        }
-        int value;
-        if (counter == 1) {
-            value = target;
-        } else {
-            value = host_player_id();
-        }
-        target = value;
-        return Net::send(message, length, target, 1);
-    }
-
-    int value;
-    if (NetDaemonNet.primary_state_.session_phase_ == 1) {
-        value = target;
-    } else {
-        value = AlphaNet::who_2_pid(target);
-    }
-    target = value;
-    return Net::send(message, length, target, 1);
+    return result;
 }
 
 
@@ -2415,14 +2415,15 @@ int NetDaemon::automated_lock(int *veh_id, int target) {
     // This is the daemon's existing state entry at this+0x1BB4, not
     // separate storage or an executable-address flag.
     channels_[1].payload_.flags = 1;
-    bool awaiting_orders = false;
+    // Native 0x5311BC and 0x531209 use a full dword warning flag.
+    int awaiting_orders = 0;
     if (ExitTurnLoop == 0) {
         do {
             if (lock_veh(veh_id, target, -1, -1, 0) == 0) break;
             // The warning uses the initial time; retry pacing uses its own
             // moving timestamp. Resetting both prevents the native warning.
             if (!awaiting_orders && ticks() - initial_time > 500U) {
-                awaiting_orders = true;
+                awaiting_orders = 1;
                 NetMsgPrimary.pop("AWAITORDERS", 0, 2, 0);
             } else {
                 log_say("(Auto lock delay)", *veh_id, 0, 0);
@@ -2531,7 +2532,8 @@ int NetDaemon::wait(char * message, uint32_t * state, int value, int timeout) {
     int saved = NetDaemonNet.channels_[0].leading_words_[3];
     ++NetBusyCount;
     DWORD startTime = timeGetTime();
-    bool triggeredTimeout = false;
+    // Native 0x5303DE/0x5303F5 retains a full integer timeout flag.
+    int triggeredTimeout = 0;
     while (*state == static_cast<uint32_t>(value)) {
         if (ExitTurnLoop != 0) {
             break;
@@ -2541,7 +2543,7 @@ int NetDaemon::wait(char * message, uint32_t * state, int value, int timeout) {
             // Original530405 SUB /530407 CMP /530409 JBE compares DWORD
             // bit patterns unsigned, including tick wrap and negative timeout.
             if (static_cast<DWORD>(now - startTime) > static_cast<DWORD>(timeout)) {
-                triggeredTimeout = true;
+                triggeredTimeout = 1;
                 NetMsgPrimary.pop(message, 0, 2, 0);
             }
         }
@@ -7953,6 +7955,8 @@ int __cdecl netdaemon_deflate_buffer(unsigned char *next_out,
     stream.next_out = next_out;
     stream.avail_out = static_cast<uInt>(*out_size);
     stream.zalloc = Z_NULL; stream.zfree = Z_NULL;
+    // Native 0x6342B5..0x6342C5 clears zalloc, zfree and opaque.
+    stream.opaque = Z_NULL;
     const int init_status = deflateInit_(&stream, -1, ZLIB_VERSION,
                                        static_cast<int>(sizeof(z_stream)));
     if (init_status != 0) return init_status;

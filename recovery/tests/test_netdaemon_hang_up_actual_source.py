@@ -1,9 +1,11 @@
-"""Actual-source controls for pinned common cleanup and callback ordering."""
+"""Actual-source controls for pinned early returns and callback cleanup ordering."""
 from pathlib import Path
 import json
 import shutil
 import subprocess
 import tempfile
+
+import pytest
 
 
 def repository_root():
@@ -139,8 +141,8 @@ int main() {
 '''
 
 
-def run_variant(method: str):
-    compiler = shutil.which("g++") or shutil.which("clang++")
+def run_variant(method: str, compiler_name="g++"):
+    compiler = shutil.which(compiler_name)
     assert compiler, "host C++ compiler unavailable"
     source = HARNESS.replace("METHOD", method)
     with tempfile.TemporaryDirectory(prefix="opensmacx-hangup-host-") as tmp:
@@ -156,13 +158,27 @@ def run_variant(method: str):
     return rows
 
 
-def test_pinned_common_close_and_tail_order():
-    proposed = run_variant(extract_method(ACTUAL.read_text()))
-    assert proposed["flags"] == (["close"], 1, 2, 77, 255)
-    assert proposed["offline"] == (["close"], 0, 2, 77, 255)
+@pytest.mark.parametrize("compiler_name", ("g++", "clang++"))
+def test_pinned_early_returns_and_tail_order(compiler_name):
+    proposed = run_variant(extract_method(ACTUAL.read_text()), compiler_name)
+    assert proposed["flags"] == ([], 1, 2, 77, 255)
+    assert proposed["offline"] == ([], 0, 2, 77, 255)
     assert proposed["active_close"] == (["close"], 1, 2, 77, 255)
     assert proposed["callback_refresh"] == (
         ["message:33537", "lock.clear", "message:19200", "close"], 1, 0, 0, 251)
     assert proposed["owner_mismatch"] == (
         ["lock.clear", "message:19200", "close"], 1, 9, 77, 251)
     assert proposed["control_turn_no_session"] == (["close"], 1, 2, 77, 255)
+
+
+@pytest.mark.parametrize("compiler_name", ("g++", "clang++"))
+def test_popup_close_on_early_return_damage_is_detected(compiler_name):
+    method = extract_method(ACTUAL.read_text())
+    for guard, scenario, flags in (
+        ("if (primary_state_.flags_ != 0) return;", "flags", 1),
+        ("if (IsMultiplayerNet == 0) return;", "offline", 0),
+    ):
+        assert method.count(guard) == 1
+        damaged = method.replace(guard, guard.replace("return;", "goto L145;"), 1)
+        observed = run_variant(damaged, compiler_name)
+        assert observed[scenario] != ([], flags, 2, 77, 255)

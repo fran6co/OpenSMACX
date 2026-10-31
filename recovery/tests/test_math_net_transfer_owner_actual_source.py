@@ -182,7 +182,7 @@ def test_real_call_paths_use_both_recovered_transfer_operations():
     assert "process_file_transfer_message(message, message_size, sender_id," in dispatch
 
 
-def _compile_and_run(source: str) -> None:
+def _compile_and_run(source: str, *, expect_success=True) -> None:
     compilers = [name for name in ("g++", "clang++") if shutil.which(name)]
     if not compilers:
         pytest.skip("no host GCC or Clang available")
@@ -198,7 +198,7 @@ def _compile_and_run(source: str) -> None:
             )
             assert built.returncode == 0, built.stdout + built.stderr
             ran = subprocess.run([str(executable)], text=True, capture_output=True)
-            assert ran.returncode == 0, ran.stdout + ran.stderr
+            assert (ran.returncode == 0) == expect_success, ran.stdout + ran.stderr
 
 
 def test_actual_owner_definitions_preserve_wrap_scale_and_zlib_paths():
@@ -212,7 +212,7 @@ def test_actual_owner_definitions_preserve_wrap_scale_and_zlib_paths():
     deflate_body = _function_body(
         "src/netdaemon.cpp", "netdaemon_deflate_buffer"
     )
-    assert "stream.opaque" not in deflate_body
+    assert deflate_body.count("stream.opaque = Z_NULL;") == 1
 
     source = r'''#include <cassert>
 #include <stdint.h>
@@ -244,18 +244,18 @@ static int init_level, deflate_init_level;
 static Bytef *expected_in, *expected_out;
 static uInt expected_avail_in, expected_avail_out;
 static uLong produced;
-static int opaque_untouched;
+static int opaque_checked;
 int deflateInit_(z_stream *s, int level, const char *version, int size) {
   assert(strcmp(version, ZLIB_VERSION) == 0);
   assert(size == static_cast<int>(sizeof(z_stream)));
-  assert(s->opaque.writes == 0 && s->opaque.value == reinterpret_cast<void *>(0xC0FFEE));
-  opaque_untouched = 1; ++init_calls; init_level = level; return init_result;
+  assert(s->opaque.writes == 1 && s->opaque.value == 0);
+  opaque_checked = 1; ++init_calls; init_level = level; return init_result;
 }
 int inflateInit_(z_stream *s, const char *version, int size) {
   assert(strcmp(version, ZLIB_VERSION) == 0);
   assert(size == static_cast<int>(sizeof(z_stream)));
   assert(s->opaque.writes == 0 && s->opaque.value == reinterpret_cast<void *>(0xC0FFEE));
-  opaque_untouched = 1; ++init_calls; return init_result;
+  opaque_checked = 1; ++init_calls; return init_result;
 }
 int deflate(z_stream *s, int flush) {
   assert(flush == Z_FINISH); ++operation_calls;
@@ -303,13 +303,13 @@ int main() {
   unsigned long capacity = 19;
   expected_in = src; expected_out = dst;
   expected_avail_in = 11; expected_avail_out = 19;
-  init_result = -4; end_calls = operation_calls = init_calls = opaque_untouched = 0;
+  init_result = -4; end_calls = operation_calls = init_calls = opaque_checked = 0;
   assert(netdaemon_deflate_buffer(dst, &capacity, src, 11) == -4);
   assert(end_calls == 0 && operation_calls == 0 && capacity == 19);
   init_result = 0; operation_result = 0; end_result = 8;
-  end_calls = operation_calls = init_calls = opaque_untouched = 0;
+  end_calls = operation_calls = init_calls = opaque_checked = 0;
   assert(netdaemon_deflate_buffer(dst, &capacity, src, 11) == Z_BUF_ERROR);
-  assert(opaque_untouched && init_calls == 1 && init_level == -1);
+  assert(opaque_checked && init_calls == 1 && init_level == -1);
   assert(end_calls == 1 && operation_calls == 1 && capacity == 19);
   operation_result = Z_DATA_ERROR; end_calls = operation_calls = 0;
   assert(netdaemon_deflate_buffer(dst, &capacity, src, 11) == Z_DATA_ERROR);
@@ -320,6 +320,10 @@ int main() {
 }
 '''
     _compile_and_run(source)
+    # Missing the pinned stream+0x28 store must fail before compression.
+    assert source.count("stream.opaque = Z_NULL;") == 1
+    _compile_and_run(source.replace("stream.opaque = Z_NULL;", "", 1),
+                     expect_success=False)
 
 
 def test_installed_definitions_retain_reviewed_semantic_choices():

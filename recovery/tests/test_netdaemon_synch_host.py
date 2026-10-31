@@ -222,7 +222,7 @@ def _core_extract(net):
 
 
 def _owner_copy_extract(net):
-    veh = VEH.read_text()
+    history = (ROOT / "src/prototype_history.cpp").read_text()
     funcs = [
         _templated_function(net, r"static\s+uint32_t\s+native_word", "native word"),
         _plain_definition(net, r"static\s+uint32_t\s+sign_extended_char", "signed byte"),
@@ -235,7 +235,7 @@ def _owner_copy_extract(net):
         "\n#undef memcpy\n#undef memmove\n",
         _definition(net, r"bool\s+copy_nonrule_chunk", "nonrule owner router"),
     ]
-    veh_copy = _definition(veh, r"bool\s+veh_bung_copy_chunk", "Veh BungList owner copy")
+    veh_copy = _definition(history, r"bool\s+veh_bung_copy_chunk", "Veh BungList owner copy")
     global_api = "bool veh_bung_copy_chunk(size_t, unsigned char *, size_t, bool);\n"
     return (global_api + "namespace NetDaemonSyncWire {\n" +
             "\n\n".join(funcs) + "\n}\n" + veh_copy + "\n")

@@ -1,0 +1,19 @@
+{
+  "event_id": "f34d5fb9e01be502820ea5605504a90ced711f49086626389c99cefdc2de5638",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_netdaemon_synch_host.py"
+    ],
+    "evidence": [
+      "Existing host fixture extracts veh_bung_copy_chunk from veh.cpp. Genuine ownership migration moves helper with private BungList to prototype_history.cpp; update extraction location while preserving the network copy behavior oracle."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "fdde82352763c1e3bc6084dd3d0d070beeeba8bd204899d87f74f5795d363921",
+  "request_id": "veh-history-copy-extractor-oct31bn",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:easy-veh_abi-oct31bn"
+}

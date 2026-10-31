@@ -1,0 +1,20 @@
+{
+  "event_id": "0b3bfa513ea7cfedd60512617bb9f3d85601e7d919140826de5023a0ec2c3a46",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_math_net_transfer_owner_actual_source.py",
+      "recovery/tests/test_netdaemon_hang_up_actual_source.py"
+    ],
+    "evidence": [
+      "Coordinator reviewed fixture anchors and worker pinned executable evidence. Preserve independent behavior/damage assertions; repair obsolete spelling/unclaimed assumptions. MapWin static lighting correction requires verified no-this caller/callee evidence and current symbol binding, preserving ORIGINAL identity. No permission to weaken reference, historical claim, or full acceptance checks."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "netdaemon-reviewed-fixture-scope-oct31bn",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:easy-netdaemon-oct31bn"
+}

@@ -1,0 +1,23 @@
+{
+  "event_id": "fdde82352763c1e3bc6084dd3d0d070beeeba8bd204899d87f74f5795d363921",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_game_data_format_state.py",
+      "recovery/tests/test_prototype_history_owner.py",
+      "recovery/tests/test_vehicle_special_actions.py",
+      "src/prototype_history.cpp",
+      "src/veh.h"
+    ],
+    "evidence": [
+      "Pinned is_bunged full-EAX return and original separate call persist despite textual reordering. Group private ProtoBung/BungList with its copy, clear, put, query and serialization owners in prototype_history.cpp; preserve all mappings, spans, claims and useful findings. Original TU name remains unproven. Coordinator owns CMake/project recipe updates. Do not edit reserved Buffer work or unrelated owners."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "159c7c8a181885191cb28d0086c4d1e7379dd087d9a1ab50c648a20e56d94007",
+  "request_id": "veh_abi-structural-closure-oct31bn",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:easy-veh_abi-oct31bn"
+}

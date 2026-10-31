@@ -739,6 +739,8 @@ int WinTrackingY;          // 0x009B7AB4
 Buffer *WinBackBuffer;         // 0x009B7A68
 // RECOVERY_OBJECT: v1 0x009B8D7C ?WinModalFocus@@3PAVWin@@A
 Win *WinModalFocus;         // 0x009B8D7C
+// Native pass_dialog_focus publishes this focus pointer at 0x005ECD51.
+// RECOVERY_OBJECT: v1 0x009B7B38 ?WinPendingFocus@@3PAVWin@@A
 Win *WinPendingFocus;       // 0x009B7B38
 // Shared current receiver for window callbacks and redraw, not a pointer
 // through which to overwrite the previous receiver's object storage.
@@ -4239,6 +4241,8 @@ void __cdecl wait_task() {
 // TRIED: could not reproduce the original's frameless, purely
 void __cdecl do_all_tasks() {
     MSG message;
+    // Native paint dispatch has its own MSG, separate from the ordinary queue.
+    MSG paint_message;
     for (;;) {
         for (;;) {
             MsgStatus = 0;
@@ -4250,11 +4254,11 @@ void __cdecl do_all_tasks() {
                 do_video();
                 check_net();
                 do_net();
-                if (!PeekMessageA(&message, 0, WM_PAINT, WM_PAINT, PM_REMOVE)) {
+                if (!PeekMessageA(&paint_message, 0, WM_PAINT, WM_PAINT, PM_REMOVE)) {
                     break;
                 }
-                TranslateMessage(&message);
-                DispatchMessageA(&message);
+                TranslateMessage(&paint_message);
+                DispatchMessageA(&paint_message);
             }
             MsgStatus = 0;
             if (!PeekMessageA(&message, 0, 0, WM_USER, PM_REMOVE)) {
@@ -4574,10 +4578,12 @@ void Win::remove_parent_dialog() {
             do {
                 WinDialogNode *node = parent->list_.current_;
                 if (node->focus_owner_ == this) {
-                    WinDialogNode *prev = node->next_;
-                    WinDialogNode *next = node->previous_;
-                    prev->previous_ = next;
-                    next->next_ = prev;
+                    // Link stores can alias the next live list/node reads.
+                    parent->list_.current_->next_->previous_ =
+                        parent->list_.current_->previous_;
+                    parent->list_.current_->previous_->next_ =
+                        parent->list_.current_->next_;
+                    node = parent->list_.current_;
                     if (node == parent->list_.head_) {
                         parent->list_.head_ = node->next_;
                     }
@@ -6559,8 +6565,8 @@ void Win::set_parent_dialog(Win *dialog) {
             goto tail_common;
         }
         node->previous_ = tail2;
-        tail2->next_->next_ = dialog->list_.head_;
-        dialog->list_.head_->previous_ = tail2->next_;
+        dialog->list_.head_->previous_->next_->next_ = dialog->list_.head_;
+        dialog->list_.head_->previous_ = dialog->list_.head_->previous_->next_;
         WinDialogNode *nn = dialog->list_.head_->previous_;
         dialog->list_.current_ = nn;
         nn->focus_owner_ = this;
@@ -7701,7 +7707,8 @@ int Win::key_up_event(int key) {
         } else {
             recvThis = 0;
         }
-        if (recvThis->key_up_event(key) != 0) {
+        result = recvThis->key_up_event(key);
+        if (result != 0) {
             return 1;
         }
     }
@@ -9701,7 +9708,7 @@ void Win::client_to_nonclient(RECT * rect) {
             long bottom = rect->bottom;
             rect->bottom = bottom + adj;
             if (bottom_border_thickness_ != -1) {
-                rect->bottom = (bottom_border_thickness_ - border_thickness_) + bottom + adj;
+                rect->bottom = (bottom_border_thickness_ - border_thickness_) + rect->bottom;
             }
         }
         if ((iFlags_ & 0x10) != 0) {
@@ -10230,16 +10237,18 @@ void Win::pass_dialog_focus() {
             ? parent->list_.current_->focus_owner_ : 0;
         WinPendingFocus = obj;
         parent = win_parent_;
-        if (parent->list_.head_ != 0) {
-            parent->list_.current_ = parent->list_.current_->next_;
-            if (++parent->list_.tail_ == parent->list_.count_) {
-                parent->list_.tail_ = 0;
+        WinNodeList &list = parent->list_;
+        if (list.head_ != 0) {
+            list.current_ = list.current_->next_;
+            if (++list.tail_ == list.count_) {
+                list.tail_ = 0;
             }
         }
         this->on_dialog_focus(0);
         parent = win_parent_;
-        if (parent->list_.head_ != 0) {
-            obj = parent->list_.current_->focus_owner_;
+        WinNodeList &next_list = parent->list_;
+        if (next_list.head_ != 0) {
+            obj = next_list.current_->focus_owner_;
             if (obj != 0) {
                 obj->on_dialog_focus(1);
             }
@@ -10902,7 +10911,7 @@ void __cdecl Win::OnActivate(void *hwnd, unsigned int state, void *other,
         WinPointerOwner1 = nullptr;
         WinPointerOwner2 = nullptr;
     }
-    DefWindowProcA(reinterpret_cast<HWND__ *>(hwnd), 6, (static_cast<unsigned int>(minimized) << 16) | (state & 0xffff),reinterpret_cast<long>(other));
+    DefWindowProcA(reinterpret_cast<HWND__ *>(hwnd), 6, ((static_cast<unsigned int>(minimized) & 0xffff) * 0x10000) | (state & 0xffff),reinterpret_cast<long>(other));
 }
 
 // ===== homed from src/unrecovered/005ecf20.cpp =====
@@ -12055,7 +12064,8 @@ void Win::fill_palette_color_rect(int x, int y, int width, int height,
     rect.top = y;
     rect.right = x + width;
     rect.bottom = y + height;
-    FillRect(hdc, &rect, brush);
+    // Palette and brush callbacks precede the native reload of the shared HDC.
+    FillRect(WinSharedHdc, &rect, brush);
     DeleteObject(brush);
     Win::release_hdc();
 }

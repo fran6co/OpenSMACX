@@ -31,7 +31,7 @@ def actual_fragment():
     trailing, = re.findall(r'static signed char MapLightingTrailingReadWindow\[4\];', source)
     pod = braced(header, 'struct TerrainCacheEntry {') + ';'
     declarations = '\n'.join(
-        re.search(r'\b(?:int|void) ' + name + r'\([^;{}]*\);', header).group()
+        re.search(r'\b(?:static\s+)?(?:int|void) ' + name + r'\([^;{}]*\);', header).group()
         for name in ('get_alt', 'compute_lighting_table', 'get_brighting'))
     return '\n'.join((
         pod, ocean, table, alt_light, leading, trailing,
@@ -83,12 +83,12 @@ int main() {
     for(int i=0;i<196;++i) assert(MapLightingTable[i]==42);
     assert(cache[5].brightness[1]==static_cast<unsigned char>(value+128));
 
-    w.compute_lighting_table();
+    MapWin::compute_lighting_table();
     assert(RootCalls==196 && MapLightingTable[58]!=before);
     cache[5].brightness[1]=0xff;
     value=w.get_brighting(2,1,1);
     assert(value==static_cast<int>(MapLightingTable[58]) && RootCalls==196);
-    w.compute_lighting_table(); // explicit calls are not suppressed by a flag
+    MapWin::compute_lighting_table(); // explicit calls are not suppressed by a flag
     assert(RootCalls==392);
 }
 '''

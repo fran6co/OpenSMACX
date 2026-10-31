@@ -1965,7 +1965,7 @@ int DesignConsiderOverride, DesignConsiderPrototype, DesignConsiderWeapon,
     DesignConsiderChassis, DesignConsiderArmor, DesignConsiderReactor;
 uint32_t DesignConsiderAbilities; int ExpansionEnabled, IsMultiplayerNet;
 int FirstProposedPrototype=-1;
-bool is_bunged(int,int,int,int,int,int) { return false; }
+int is_bunged(int,int,int,int,int,int) { return 0; }
 bool has_tech(int,int) { return true; }
 int psi_factor(int value,int,BOOL,BOOL) { return value; }
 void make_proto(int,int,int,int,int,int) {}

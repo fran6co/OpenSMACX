@@ -1,0 +1,21 @@
+{
+  "event_id": "5857a134d55de3381e5b169c06b7437121a60059f1eea3dc9bafec86697676eb",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_map_all_altitude_owner_oct10.py",
+      "recovery/tests/test_mapwin_lighting_initialization.py",
+      "src/mapwin.h"
+    ],
+    "evidence": [
+      "Coordinator reviewed fixture anchors and worker pinned executable evidence. Preserve independent behavior/damage assertions; repair obsolete spelling/unclaimed assumptions. MapWin static lighting correction requires verified no-this caller/callee evidence and current symbol binding, preserving ORIGINAL identity. No permission to weaken reference, historical claim, or full acceptance checks."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "mapwin-reviewed-fixture-scope-oct31bn",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:easy-mapwin-oct31bn"
+}

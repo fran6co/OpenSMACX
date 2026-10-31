@@ -69,8 +69,10 @@ def actual_parts():
 
     assert body.index("faction->se_alloc_labs = 5") < body.index("compute_faction_modifiers")
     assert body.index("faction->se_alloc_psych = 0") < body.index("compute_faction_modifiers")
-    assert body.index("compute_faction_modifiers") < body.index("*active_model = 0")
-    assert body.index("*active_model = 0") < body.index("*pending_model = 0")
+    active_clear = "faction->soc_category_active.models_[i] = 0"
+    pending_clear = "faction->soc_category_pending.models_[i] = 0"
+    assert body.index("compute_faction_modifiers") < body.index(active_clear)
+    assert body.index(active_clear) < body.index(pending_clear)
     assert body.index("social_upkeep") < body.index("int count = GameDataStateStorage.fields_.base_current_count_")
     assert body.index("faction->major_atrocities = 0") < body.index("faction->atrocities = 0")
     assert body.index("vehicle->order = 0") < body.index("vehicle->state &= 0xfcffbdff")

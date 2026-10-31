@@ -5,7 +5,7 @@ VC6 object layout, 32-bit ABI, native instruction match, or whole-game behavior.
 """
 from __future__ import annotations
 
-from dataclasses import fields
+from dataclasses import fields, replace
 from pathlib import Path
 import shutil
 import subprocess
@@ -259,10 +259,50 @@ def test_mapped_identity_claims_and_history_remain_monotonic():
         ["git", "show", f"{BASE_REVISION}:src/win.cpp"], cwd=ROOT,
         text=True, timeout=30)
     base = {row.address: row for row in read_text(base_text, SOURCE)}
-    assert set(current) == set(base)
+    # These original identities moved to genuine owners after BASE_REVISION.
+    # Verify their current mappings and history rather than dropping them from
+    # the baseline continuity check or requiring obsolete Win duplicates.
+    relocated_owners = {
+        0x005ED240: "src/win_point_coordinates.cpp",
+        0x005ED2D0: "src/win_point_coordinates.cpp",
+        0x005ED3F0: "src/win_point_coordinates.cpp",
+        0x005FA7A0: "src/win_coordinates.cpp",
+        0x005FA7E0: "src/win_coordinates.cpp",
+        0x005FD120: "src/win_input.cpp",
+    }
+    assert set(base) - set(current) == set(relocated_owners)
+    assert set(current) <= set(base)
+    owners = {
+        name: read_text((ROOT / name).read_text(encoding="utf-8"), ROOT / name)
+        for name in set(relocated_owners.values())
+    }
+    # A prior ABI recovery corrected this empty virtual callback to void;
+    # retain its original catalogue identity while checking the exact emitted
+    # symbol transition, rather than freezing the old return-type hypothesis.
+    corrected_symbols = {
+        0x005F6A40: ("?on_sys_command@Win@@UAEHIHH@Z",
+                     "?on_sys_command@Win@@UAEXIHH@Z"),
+    }
+    assert "void Win::on_sys_command(unsigned int, int, int)" in current_text
     for address, old in base.items():
-        now = current[address]
-        assert _metadata(now) == _metadata(old)
+        expected = old
+        if address in corrected_symbols:
+            before, after = corrected_symbols[address]
+            assert old.symbol == before
+            expected = replace(old, symbol=after)
+        if address in relocated_owners:
+            owner = ROOT / relocated_owners[address]
+            candidates = [row for row in owners[relocated_owners[address]]
+                          if row.address == address]
+            assert len(candidates) == 1
+            now, = candidates
+            assert now.path == owner
+            # The proven move changes the host path, preserving all other
+            # original mapping metadata, claims and recorded source lessons.
+            assert _metadata(replace(now, path=old.path)) == _metadata(expected)
+        else:
+            now = current[address]
+            assert _metadata(now) == _metadata(expected)
         assert _history(now) == _history(old)
         if old.byte_exact:
             assert now.byte_exact

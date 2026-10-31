@@ -7,8 +7,13 @@ import shutil
 import subprocess
 from pathlib import Path
 
+import pytest
+
 ROOT = Path(__file__).resolve().parents[2]
 from console_sources import console_method_source
+
+FLAGS_BYTE_ACCESS = "reinterpret_cast<unsigned char *>(&prototype.flags)"
+FLAGS_BYTE_DECLARATION = "unsigned char &flags_low = *" + FLAGS_BYTE_ACCESS + ";"
 
 
 def _block(text: str, start: int) -> str:
@@ -39,9 +44,14 @@ def _installed() -> tuple[str, str, str, str]:
     source = console_method_source("void Console::editor_reset_tech()")
     marker = "void Console::editor_reset_tech()"
     body = _block(source, source.index(marker))
+    # The pinned 0x004DBC91 instruction clears one byte of the real flags
+    # member. Permit only that named object's unsigned-char representation
+    # access; executable-address and self-offset casts remain rejected.
+    assert body.count(FLAGS_BYTE_DECLARATION) == 1
+    checked_body = body.replace(FLAGS_BYTE_DECLARATION, "flags_member_byte_access;", 1)
     for forbidden in ("reinterpret_cast", "0x96ee08", "0x9a6670", "0x9ab898",
                       "0x9b2098", "0x952832", "0x97d08c", "0x9a64c8", "0x9a64cc"):
-        assert forbidden.lower() not in body.lower(), f"still has raw binding: {forbidden}"
+        assert forbidden.lower() not in checked_body.lower(), f"still has raw binding: {forbidden}"
     for required in ("PlayersData", "tech_ranking", "game_tech_achieved_", "VehPrototypes",
                      "obsolete_factions", "selected_vehicle_", "Vehs", "proto_id",
                      "base_current_count_", "queue_size", "queue_production_id", "draw_map(1)"):
@@ -73,7 +83,7 @@ static bool mutate_base_count_in_kill = false;
 static int base_count_after_kill = -1;
 static std::vector<int> events;
 static std::vector<int> killed;
-static const char StrResetAllTech[] = "RESETALLTECH";
+static const char ConsoleStrResetAllTech[] = "RESETALLTECH";
 
 struct PlayerData {
     uint8_t prefix[0x35c];
@@ -118,7 +128,7 @@ static_assert(offsetof(Console, selected_vehicle_) == 0x23bdc, "Console selectio
 Console ConsoleGlobal{};
 
 int X_pop(const char *label, int (*)()) {
-    assert(label == StrResetAllTech);
+    assert(label == ConsoleStrResetAllTech);
     ++popup_calls;
     events.push_back(1);
     return dialog_result;
@@ -207,8 +217,8 @@ static void test_accepted_reset_and_signed_vehicle_quirk() {
     assert(GameDataStateStorage.fields_.vehicle_current_count_ == 4);
     assert(ConsoleGlobal.selected_vehicle_ == -2); // veh_kill clears it; caller then decrements live member
     assert(Vehs[0].proto_id == 63 && Vehs[1].proto_id == -1 && Vehs[2].proto_id == 64 && Vehs[3].proto_id == 63);
-    assert(Bases[0].queue_size == 0xFFFFFFBBu && Bases[1].queue_size == 0u);
-    assert(Bases[2].queue_size == 0xFFFFFFBBu && Bases[3].queue_size == 0x103u);
+    assert(static_cast<uint32_t>(Bases[0].queue_size) == 0xFFFFFFBBu && Bases[1].queue_size == 0u);
+    assert(static_cast<uint32_t>(Bases[2].queue_size) == 0xFFFFFFBBu && Bases[3].queue_size == 0x103u);
     assert(Bases[0].queue_production_id[0] == 64 && Bases[1].queue_production_id[0] == 63);
     assert(draw_calls == 1 && draw_argument == 1);
 }
@@ -270,3 +280,36 @@ def _exercise(method: str, veh: str, proto: str, base: str, tmp_path: Path) -> N
 def test_installed_actual_source_and_signedness_mutant(tmp_path: Path) -> None:
     veh, proto, base, method = _installed()
     _exercise(method, veh, proto, base, tmp_path)
+
+
+def test_original_prototype_flags_operation_has_byte_width() -> None:
+    from capstone import Cs, CS_ARCH_X86, CS_MODE_32
+    from capstone.x86_const import X86_OP_MEM, X86_OP_IMM, X86_REG_EAX
+    from match_recovery.model import Span
+    from match_recovery.pe_coff import PeImage
+
+    path = Path(os.environ.get("OPENSMACX_IMAGE", ROOT / ".opensmacx/game/terranx_original.exe"))
+    if not path.is_file():
+        pytest.skip("pinned original executable unavailable")
+    image = PeImage(path.read_bytes(), "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf")
+    decoder = Cs(CS_ARCH_X86, CS_MODE_32)
+    decoder.detail = True
+    instruction, = decoder.disasm(image.read(Span(0x004DBC91, 0x004DBC94)), 0x004DBC91)
+    assert instruction.mnemonic == "and"
+    destination, mask = instruction.operands
+    assert destination.type == X86_OP_MEM and destination.size == 1
+    assert destination.mem.base == X86_REG_EAX and destination.mem.index == 0
+    assert destination.mem.disp == 0
+    assert mask.type == X86_OP_IMM and mask.imm & 0xff == 0xfe
+
+
+@pytest.mark.parametrize("extra", [
+    "reinterpret_cast<unsigned char *>(0x9ab898)",
+    "reinterpret_cast<unsigned char *>(&prototype) + 0x30",
+])
+def test_named_flags_byte_exception_rejects_raw_casts(monkeypatch, extra) -> None:
+    source = console_method_source("void Console::editor_reset_tech()")
+    source = source.replace("flags_low &= 0xfe;", "flags_low &= 0xfe;\n                (void)(" + extra + ");", 1)
+    monkeypatch.setitem(_installed.__globals__, "console_method_source", lambda _: source)
+    with pytest.raises(AssertionError, match="still has raw binding"):
+        _installed()

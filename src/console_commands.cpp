@@ -300,10 +300,11 @@ void Console::disband(int x_coord, int y_coord) {
     const int base = base_at(x_coord, y_coord);
     if (base < 0) return;
     parse_says(0, Bases[base].name_string, -1, -1);
-    const bool alien = (Players[Bases[base].faction_id_current].rule_flags & 0x80) != 0;
-    if (!popp(ScriptPopupFile,
-              "DISBAND", 0,
-              alien ? "al_col_sm.pcx" : "colfoun_sm.pcx", nullptr)) return;
+    if (Players[Bases[base].faction_id_current].rule_flags & 0x80) {
+        if (!popp(ScriptPopupFile, "DISBAND", 0, "al_col_sm.pcx", nullptr)) return;
+    } else {
+        if (!popp(ScriptPopupFile, "DISBAND", 0, "colfoun_sm.pcx", nullptr)) return;
+    }
     const int faction = Bases[base].faction_id_current;
     base_kill(base);
     ::draw_map(1);
@@ -1455,16 +1456,10 @@ void Console::editor_reset_faction() {
             faction->se_alloc_psych = 0;
             compute_faction_modifiers(factionId);
 
-            uint32_t *pending_model = faction->soc_category_pending.models_;
-            uint32_t *active_model = faction->soc_category_active.models_;
-            int i = 4;
-            do {
-                *active_model = 0;
-                *pending_model = 0;
-                ++active_model;
-                ++pending_model;
-                --i;
-            } while (i != 0);
+            for (int i = 0; i < 4; ++i) {
+                faction->soc_category_active.models_[i] = 0;
+                faction->soc_category_pending.models_[i] = 0;
+            }
 
             social_upkeep(factionId);
             int count = GameDataStateStorage.fields_.base_current_count_;
@@ -1475,28 +1470,26 @@ void Console::editor_reset_faction() {
 
             if (count > 0) {
                 Base *base = Bases;
-                int n = count;
                 do {
                     if (base->faction_id_current == factionId) {
                         base->governor &= 0x7fffffff;
                         base->queue_size = 0;
                     }
                     ++base;
-                    --n;
-                } while (n != 0);
+                    --count;
+                } while (count != 0);
             }
             int vehicle_count = GameDataStateStorage.fields_.vehicle_current_count_;
             if (vehicle_count > 0) {
                 Veh *vehicle = Vehs;
-                int n = vehicle_count;
                 do {
                     if (vehicle->faction_id == factionId) {
                         vehicle->order = 0;
                         vehicle->state &= 0xfcffbdff;
                     }
                     ++vehicle;
-                    --n;
-                } while (n != 0);
+                    --vehicle_count;
+                } while (vehicle_count != 0);
             }
             ++factionId;
             ++rules_flag;
@@ -1602,7 +1595,8 @@ void Console::editor_reset_tech() {
             VehPrototype &prototype = VehPrototypes[prototype_id];
             prototype.obsolete_factions = 0;
             if (prototype_id >= MaxVehProtoFactionNum) {
-                prototype.flags &= static_cast<uint16_t>(~uint16_t(1));
+                unsigned char &flags_low = *reinterpret_cast<unsigned char *>(&prototype.flags);
+                flags_low &= 0xfe;
             }
         }
 
@@ -1894,7 +1888,7 @@ void Console::editor_clear_random() {
                 uint32_t *dst = tile->bit_visible;
                 int count = 7;
                 do {
-                    *dst = v;
+                    *dst = tile->bit;
                     dst++;
                     count--;
                 } while (count != 0);
@@ -3443,30 +3437,25 @@ Purpose: Send one vehicle home: lock it, find the base it stands on, hand it
 */
 void Console::go_home(int veh_id) {
     if (NetDaemonNet.lock_veh(&veh_id, 0, -1, -1, 0) == 0) {
-        const int x = Vehs[veh_id].x;
-        const int y = Vehs[veh_id].y;
-        const int base_id = base_at(x, y);
-        bool matched = false;
+        const int base_id = base_at(Vehs[veh_id].x, Vehs[veh_id].y);
         if (base_id >= 0) {
-            // A base counts as home when its current owner is ours.
-            matched = Bases[base_id].faction_id_current == Vehs[veh_id].faction_id;
+            if (Bases[base_id].faction_id_current == Vehs[veh_id].faction_id) {
+                const int old_base = Vehs[veh_id].home_base_id;
+                Vehs[veh_id].home_base_id = static_cast<int16_t>(base_id);
+                synch_veh(veh_id);
+                NetDaemonNet.await_synch();
+                NetDaemonNet.unlock_veh();
+                if (old_base >= 0) {
+                    TutWinBaseWindow.check_base(old_base);
+                }
+                TutWinBaseWindow.check_base(base_id);
+                update_data(0);
+                return;
+            }
         } else {
             action_home(veh_id, 0);
             synch_veh(veh_id);
             NetDaemonNet.await_synch();
-        }
-        if (matched) {
-            const int16_t old_base = Vehs[veh_id].home_base_id;
-            Vehs[veh_id].home_base_id = static_cast<int16_t>(base_id);
-            synch_veh(veh_id);
-            NetDaemonNet.await_synch();
-            NetDaemonNet.unlock_veh();
-            if (old_base >= 0) {
-                TutWinBaseWindow.check_base(old_base);
-            }
-            TutWinBaseWindow.check_base(base_id);
-            update_data(0);
-            return;
         }
         NetDaemonNet.unlock_veh();
     }

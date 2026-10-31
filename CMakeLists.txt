@@ -295,6 +295,7 @@ set(OPENSMACX_SOURCES
     src/timer_messages.cpp
     src/enemy.cpp
     src/veh.cpp
+    src/prototype_history.cpp
     src/vehicle_strategy.cpp
     src/vehicle_stats.cpp
     src/vehicle_orders.cpp
@@ -435,6 +436,7 @@ set_source_files_properties(
     src/faction_dialogue.cpp
     src/faction_network.cpp
     src/veh.cpp
+    src/prototype_history.cpp
     PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Preserve the mapped frame-based vehicle owners after their source split.
 # Their original translation-unit names are unknown; other veh.cpp code stays

@@ -110,6 +110,11 @@ static RECT window_rect = {0, 0, 640, 480};
 static int release_count;
 static int get_calls;
 static int failed_get_call;
+static HDC WinSharedHdc;
+static HDC sync_hdc_replacement;
+static HDC brush_hdc_replacement;
+static HDC last_fill_hdc;
+static int hdc_lease_count;
 static HWND HandleMain = reinterpret_cast<HWND>(0x1234);
 
 static int IsRectEmpty(const RECT *r) {
@@ -165,10 +170,19 @@ class Win {
     events.push_back("get");
     ++get_calls;
     if (get_calls == failed_get_call) return 0;
-    return reinterpret_cast<HDC>(0x11);
+    if (hdc_lease_count == 0) WinSharedHdc = reinterpret_cast<HDC>(0x11);
+    ++hdc_lease_count;
+    return WinSharedHdc;
   }
-  static void release_hdc() { events.push_back("release"); ++release_count; }
-  void sync_palette() { events.push_back("sync"); }
+  static void release_hdc() {
+    events.push_back("release"); ++release_count;
+    assert(hdc_lease_count > 0);
+    if (--hdc_lease_count == 0) WinSharedHdc = 0;
+  }
+  void sync_palette() {
+    events.push_back("sync");
+    if (sync_hdc_replacement != 0) WinSharedHdc = sync_hdc_replacement;
+  }
   virtual GraphicWin *get_graphic_win() { return graphic_; }
   void draw_rect_edges(RECT *, HGDIOBJ, HGDIOBJ, int);
   void fill_palette_color_rect(int, int, int, int, int, int);
@@ -198,10 +212,12 @@ static int LineTo(HDC, int x, int y) {
   return 1;
 }
 static HBRUSH CreateSolidBrush(COLORREF color) {
-  events.push_back("brush"); last_color = color; return brush_result;
+  events.push_back("brush"); last_color = color;
+  if (brush_hdc_replacement != 0) WinSharedHdc = brush_hdc_replacement;
+  return brush_result;
 }
-static int FillRect(HDC, const RECT *r, HBRUSH) {
-  events.push_back("fill"); last_fill = *r; return 1;
+static int FillRect(HDC hdc, const RECT *r, HBRUSH) {
+  events.push_back("fill"); last_fill_hdc = hdc; last_fill = *r; return 1;
 }
 static int DeleteObject(HGDIOBJ) { events.push_back("delete"); return 1; }
 '''
@@ -495,3 +511,31 @@ int main() {
     _compile_and_run(bodies, border_getter_control)
     _compile_and_run(bad_border_bodies, border_getter_control,
                      expect_success=False)
+
+
+def test_palette_fill_reloads_shared_hdc_after_callbacks():
+    bodies = _product_bodies()
+    main = r'''
+int main() {
+  Win win;
+  sync_hdc_replacement = reinterpret_cast<HDC>(0x22);
+  brush_hdc_replacement = reinterpret_cast<HDC>(0x33);
+  win.fill_palette_color_rect(4, 5, 6, 7, 7, 0);
+  assert(last_fill_hdc == reinterpret_cast<HDC>(0x33));
+  assert(hdc_lease_count == 0 && WinSharedHdc == 0 && release_count == 1);
+  // A palette callback alone also publishes the handle used for drawing.
+  brush_hdc_replacement = 0;
+  sync_hdc_replacement = reinterpret_cast<HDC>(0x55);
+  win.fill_palette_color_rect(4, 5, 6, 7, 7, 0);
+  assert(last_fill_hdc == reinterpret_cast<HDC>(0x55));
+  assert(hdc_lease_count == 0 && WinSharedHdc == 0 && release_count == 2);
+}
+'''
+    _compile_and_run(bodies, main)
+    stale_hdc = dict(bodies)
+    stale_hdc[0x5EFBA0] = _mutate_once(
+        stale_hdc[0x5EFBA0],
+        "FillRect(WinSharedHdc, &rect, brush);",
+        "FillRect(hdc, &rect, brush);",
+    )
+    _compile_and_run(stale_hdc, main, expect_success=False)

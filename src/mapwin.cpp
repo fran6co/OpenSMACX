@@ -867,22 +867,25 @@ void __cdecl mapwin_system_shutdown() {
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00471030 ?mapwin_system_init@@YAXH@Z 0x00471030-0x004710DF
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned original 0x00471030-0x004710DF fills 0x007D3C60..0x007D4060, calls compute_lighting_table, clears/reinitializes eight MapWinTable slots, then initializes the FarmMapWindow cache", "src/unrecovered/00471030.cpp retains the seed; src/mapwin.cpp owns the table, FarmMapWindow and each called method"], "reason": "Recover map-window system startup with typed slot and storage ownership; leave the startup-word table's wider meaning open until consumers are identified."}
+// RECOVERY_BINDING: v1 {"evidence":["Pinned original 0x00471030-0x004710DF fills 0x007D3C60..0x007D4060, calls compute_lighting_table, clears/reinitializes eight MapWinTable slots, then initializes the FarmMapWindow cache","src/unrecovered/00471030.cpp retains the seed; src/mapwin.cpp owns the table, FarmMapWindow and each called method","Pinned47107F reloads MapWinTable[slot] after clear;4710AA and4710BB reload active/init receivers. Preserve unchecked replacement and null behavior rather than retaining the pre-clear pointer."],"reason":"Recover map-window system startup with typed slot and storage ownership; leave the startup-word table's wider meaning open until consumers are identified."}
 void __cdecl mapwin_system_init(int reset_windows) {
-    FarmMapWindow.compute_lighting_table();
+    MapWin::compute_lighting_table();
     for (size_t word = 0; word < 256; ++word) {
-        MapWinStartupWords[word] = word >= 10 && word <= 65 ? 1 : 0;
+        if (word >= 10 && word <= 65) {
+            MapWinStartupWords[word] = 1;
+        } else {
+            MapWinStartupWords[word] = 0;
+        }
     }
-    for (size_t slot = 0; slot < MapWinTableSlots; ++slot) {
-        MapWin *window = MapWinTable[slot];
-        if (window == nullptr) continue;
+    for (int slot = 0; slot < static_cast<int>(MapWinTableSlots); ++slot) {
+        if (MapWinTable[slot] == nullptr) continue;
         if (reset_windows != 0) {
-            window->clear(static_cast<int>(slot));
-            window->view_active_ = slot == 0;
+            MapWinTable[slot]->clear(static_cast<int>(slot));
+            MapWinTable[slot]->view_active_ = slot == 0;
             if (slot == 1) MapWinTable[1]->view_active_ = 1;
         }
-        if (slot == 0 || window->view_active_ != 0) {
-            window->init(0, 0);
+        if (slot == 0 || MapWinTable[slot]->view_active_ != 0) {
+            MapWinTable[slot]->init(0, 0);
         }
     }
     FarmMapWindow.init_dummy();
@@ -6960,11 +6963,11 @@ void MapWin::init_dummy() {
     if (count > 0) {
         i = 0;
         do {
-            for (j = 1; j <= 4; j++) {
-                owned_[i].brightness[j - 1] = 0xFF;
+            for (j = 0; j < 4; j++) {
+                owned_[i].brightness[j] = 0xFF;
             }
-            for (j = 1; j <= 5; j++) {
-                owned_[i].altitude[j - 1] = static_cast<signed char>(0xFF);
+            for (j = 0; j < 5; j++) {
+                reinterpret_cast<unsigned char *>(owned_[i].altitude)[j] = 0xFF;
             }
             owned_[i].terrain_bits = 0;
             owned_[i].terrain_bits |= map_tiles()[0].climate & 0xD0;
@@ -7245,16 +7248,13 @@ void __cdecl terrain_fixup(MapWin * window) {
         window->owned_ = static_cast<TerrainCacheEntry *>(mem_get(MapArea * sizeof(*window->owned_)));
         if (MapArea > 0) {
             do {
-                int j = 0;
-                do {
-                    j = j + 1;
-                    window->owned_[count2].brightness[j - 1] = 0xff;
-                } while (j < 4);
-                j = 0;
-                do {
-                    j = j + 1;
-                    window->owned_[count2].altitude[j - 1] = static_cast<signed char>(0xff);
-                } while (j < 5);
+                int j;
+                for (j = 0; j < 4; j++) {
+                    window->owned_[count2].brightness[j] = 0xFF;
+                }
+                for (j = 0; j < 5; j++) {
+                    reinterpret_cast<unsigned char *>(window->owned_[count2].altitude)[j] = 0xFF;
+                }
                 window->owned_[count2].terrain_bits = 0;
                 const unsigned char first_climate = map_tiles()[0].climate;
                 window->owned_[count2].terrain_bits |= first_climate & 0xd0;
@@ -7275,7 +7275,7 @@ void MapWin::clear_all_altitude() {
     if (owned_ != 0) {
         for (int tile = 0; tile < MapArea; ++tile) {
             for (int sample = 0; sample < 5; ++sample) {
-                owned_[tile].altitude[sample] = -1;
+                reinterpret_cast<unsigned char *>(owned_[tile].altitude)[sample] = 0xFF;
             }
         }
     }
@@ -7675,7 +7675,8 @@ int MapWin::get_brighting(int x, int y, int corner) {
 }
 
 // ORIGINAL: 0x00470420 ?compute_lighting_table@MapWin@@QAEXXZ 0x00470420-0x00470536
-// RECOVERY_BINDING: v1 {"evidence": ["The original 0x00470420..0x00470536 body fills four 49-byte tables using quick_root; its retired transcription remains in Git history", "src/mapwin.cpp: MapLightingTable bounds 0x007F6688..0x007F674C and corner_light_value/get_brighting consumers", "src/general.h: quick_root(int)"], "reason": "Build the four 7-by-7 signed corner-light tables in their source-owned storage using the existing integer-root routine."}
+// RECOVERY_BINDING: v1 {"evidence":["The original 0x00470420..0x00470536 body fills four 49-byte tables using quick_root; its retired transcription remains in Git history","src/mapwin.cpp: MapLightingTable bounds 0x007F6688..0x007F674C and corner_light_value/get_brighting consumers","src/general.h: quick_root(int)","Pinned470420..470536 never consumes incoming ECX: first ECX access at470460 is MOV ECX,-3 before all quadrant dispatch; startup471033 makes the direct call without setting a receiver. The initializer is static and writes the shared lighting tables."],"reason":"Build the four 7-by-7 signed corner-light tables in their source-owned storage using the existing integer-root routine."}
+// symbol    ?compute_lighting_table@MapWin@@SAXXZ
 void MapWin::compute_lighting_table() {
     for (int quadrant = 0; quadrant < 4; ++quadrant) {
         int index = 0;

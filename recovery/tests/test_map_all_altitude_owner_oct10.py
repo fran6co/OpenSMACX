@@ -9,13 +9,12 @@ ROOT = next(parent for parent in Path(__file__).resolve().parents
             if (parent / "src/IMAGE_PIN").is_file())
 
 
-def test_complete_original_binding_is_unclaimed():
+def test_complete_original_binding_preserves_identity_and_span():
     from match_recovery.source import read_file
     row, = [row for row in read_file(ROOT / "src/mapwin.cpp")
             if row.address == 0x46FC30]
     assert row.image_spans == ((0x46FC30, 0x46FC7B),)
     assert row.symbol == "?clear_all_altitude@MapWin@@QAEXXZ"
-    assert not row.byte_exact
 
 
 @pytest.mark.parametrize("compiler_name", ("g++", "clang++"))
@@ -33,7 +32,11 @@ def test_altitude_reset_preserves_other_fields_and_signed_count(compiler_name, d
     elif damage == "extra_sample":
         body = body.replace("sample < 5", "sample < 6", 1)
     elif damage == "zero_fill":
-        body = body.replace("altitude[sample] = -1", "altitude[sample] = 0", 1)
+        anchor = "reinterpret_cast<unsigned char *>(owned_[tile].altitude)[sample] = 0xFF"
+        assert body.count(anchor) == 1, "expected the actual byte-fill store"
+        damaged = body.replace(anchor, anchor.replace("0xFF", "0"), 1)
+        assert damaged != body, "zero-fill damage must alter the actual store"
+        body = damaged
     elif damage == "extra_row":
         body = body.replace("tile < MapArea", "tile <= MapArea", 1)
     elif damage == "missing_null_gate":

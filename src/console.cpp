@@ -1934,8 +1934,8 @@ searchDone:
 // calls     0x005EC740 0x005FCA30
 
 void Console::cursor_on(int cursor_shape, int veh_id) {
-    field_23D14_ = veh_id;
     field_23D10_ = static_cast<uint32_t>(cursor_shape);
+    field_23D14_ = veh_id;
     for (int slot = 0; slot < static_cast<int>(MapWinTableSlots); ++slot) {
         MapWin *const window = MapWinTable[slot];
         if (window != nullptr && (slot == 0 || window->view_active_ != 0)) {
@@ -2852,25 +2852,19 @@ void Console::end_of_turn() {
     field_23BE4_ = 1;
     const int saved_group_count = GameDataStateStorage.fields_.vehicle_current_count_;
 
-    if (ConsoleGlobal.cursor_active_ == 0) {
-        for (;;) {
-            if (field_23BE4_ == 0) break;
-            if (field_23BE8_ == 0) break;
-            if (ExitTurnLoop != 0) break;
+    while (ConsoleGlobal.cursor_active_ == 0 && field_23BE4_ != 0 &&
+           field_23BE8_ != 0 && ExitTurnLoop == 0) {
+        if (end_of_game(0) != 0) break;
+        if (saved_group_count != GameDataStateStorage.fields_.vehicle_current_count_) break;
 
-            if (end_of_game(0) != 0) break;
-            if (saved_group_count != GameDataStateStorage.fields_.vehicle_current_count_) break;
+        if (IsMultiplayerNet != 0) {
+            if ((GameDataStateStorage.fields_.game_state_ & 0x800) != 0) break;
+        }
 
-            if (IsMultiplayerNet != 0) {
-                if ((GameDataStateStorage.fields_.game_state_ & 0x800) != 0) break;
-            }
-
-            wait_loop();
-            if (TutWinTourPending != 0) {
-                TutWinTourPending = 0;
-                TutorialWindow.tour();
-            }
-            if (ConsoleGlobal.cursor_active_ != 0) break;
+        wait_loop();
+        if (TutWinTourPending != 0) {
+            TutWinTourPending = 0;
+            TutorialWindow.tour();
         }
     }
 
@@ -3490,13 +3484,16 @@ inline void console_close_network(unsigned int final_channel_mask) {
 // ORIGINAL: 0x00514990 ?quit_game@Console@@QAEXXZ 0x00514990-0x00514B2C
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00514990.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold."}
 void Console::quit_game() {
-    const char *prompt = "REALLYQUIT";
+    const char *prompt;
     if ((IsMultiplayerNet || IsMultiplayerPBEM) &&
         bit_count(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 255) > 1) prompt = "REALLYWIMPOUT";
+    else prompt = "REALLYQUIT";
     if (!X_pop(prompt, nullptr)) return;
     if (IsMultiplayerPBEM) {
         // The original modifies only the human-faction byte of this word.
-        GameDataStateStorage.fields_.lock_masks_.enable_mask_ &= ~(static_cast<unsigned char>(1u << ConsoleGlobal.faction_id_));
+        unsigned char &human_mask = reinterpret_cast<unsigned char &>(
+            GameDataStateStorage.fields_.lock_masks_.enable_mask_);
+        human_mask &= static_cast<unsigned char>(~(1u << ConsoleGlobal.faction_id_));
         save_game(0);
     }
     if ((GameDataStateStorage.fields_.game_rules_ & 0x400) && !IsMultiplayerPBEM) auto_save();
@@ -3510,12 +3507,15 @@ void Console::quit_game() {
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00514d30.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold."}
 void Console::new_game() {
     if (IsMultiplayerNet) return;
-    const char *prompt = "REALLYQUIT";
+    const char *prompt;
     if (IsMultiplayerPBEM && bit_count(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 255) > 1)
         prompt = "REALLYWIMPOUT";
+    else prompt = "REALLYQUIT";
     if (X_pop(prompt, nullptr)) {
         if (IsMultiplayerPBEM) {
-            GameDataStateStorage.fields_.lock_masks_.enable_mask_ &= ~(static_cast<unsigned char>(1u << ConsoleGlobal.faction_id_));
+            unsigned char &human_mask = reinterpret_cast<unsigned char &>(
+                GameDataStateStorage.fields_.lock_masks_.enable_mask_);
+            human_mask &= static_cast<unsigned char>(~(1u << ConsoleGlobal.faction_id_));
             save_game(0);
         }
         if ((GameDataStateStorage.fields_.game_rules_ & 0x400) && !IsMultiplayerPBEM) auto_save();
@@ -3674,6 +3674,7 @@ void __cdecl action_gate(int vehicle_id, int base_id);
 // ORIGINAL: 0x00514B30 ?retire_game@Console@@QAEXXZ 0x00514B30-0x00514D2B
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original 00514B30; retained seed src/recovered/units/00514b30.cpp", "Native514B55..64 passes the low-byte greater-than-one boolean into bit_count. Native514D10 writes closed-network==0 to93A948 GameRestartQueued,514D16 sets9B2068 ExitTurnLoop. Existing typed close-network helper reproduces lock clear/transport close; scenario, PBEM, ironman and replay branches remain distinct.", "recovery/tasks/console-scenario-owner-wave.json; native scope decisions preserve the original baseline"], "reason": "Recover the complete Console command in its genuine owner, retaining original spans and seed evidence. Typed state and lifecycle/network APIs replace seed address arithmetic; this source binding is not byte, reference, structure or runtime acceptance."}
 void Console::retire_game() { // 0x00514B30
+    int closed_network = 0;
     if (GameDataStateStorage.fields_.game_rules_ & RULES_IRONMAN) {
         auto_save();
     }
@@ -3688,14 +3689,15 @@ void Console::retire_game() { // 0x00514B30
     }
 
     if (IsMultiplayerPBEM) {
-        GameDataStateStorage.fields_.lock_masks_.enable_mask_ &= ~static_cast<uint8_t>(1u << ConsoleGlobal.faction_id_);
+        unsigned char &human_mask = reinterpret_cast<unsigned char &>(
+            GameDataStateStorage.fields_.lock_masks_.enable_mask_);
+        human_mask &= static_cast<unsigned char>(~(1u << ConsoleGlobal.faction_id_));
         save_game(0);
     }
 
-    bool closed_network = false;
     if (IsMultiplayerNet) {
         console_close_network(0xFF);
-        closed_network = true;
+        closed_network = 1;
     }
 
     if (GameDataStateStorage.fields_.game_rules_ & RULES_IRONMAN) {

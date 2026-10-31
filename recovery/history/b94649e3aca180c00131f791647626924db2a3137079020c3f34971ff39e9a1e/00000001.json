@@ -1,0 +1,20 @@
+{
+  "event_id": "ad8b1e759f5184ceeced842d389fb65a2eb8e9c4b2b4069aaa4fb59157eebe5a",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_win_composition_actual_source.py",
+      "recovery/tests/test_win_remove_child_cursor_oct22y.py"
+    ],
+    "evidence": [
+      "Pinned fill palette callback sequence reloads source-owned WinSharedHdc. Model that global in host harness and exercise callback mutation. Replace stale whole-TU mapping census with original identity continuity checks across current owners, not a weakened absence check. Existing src/win.cpp permits binding WinPendingFocus after confirming its stored pointer address against pin; no invented extent."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "win-structural-closure-oct31bn",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:easy-win-oct31bn"
+}

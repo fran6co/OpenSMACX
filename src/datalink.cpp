@@ -2068,9 +2068,9 @@ void Datalink::pop_history() {
 
     const int topic = history_[--field_2A34_];
     const int category = topic / 10000;
-    const int facility = topic - category * 10000;
 
     set_cat(static_cast<unsigned int>(category), 0);
+    const int facility = topic - category * 10000;
     history_[0] = facility;
     listBox_.set_selected_id(field_29DC_ * 10000 + facility);
     repaint_slot();
@@ -2762,10 +2762,10 @@ void Datalink::set_cat_concept() {
         return;
     }
 
+    int index = 0;
     text_get();
-    for (int index = 0; TextBufferGetPtr != 0
-                        && strlen(TextBufferGetPtr) != 0;
-         ++index) {
+    for (; TextBufferGetPtr != 0
+                        && strlen(TextBufferGetPtr) != 0;) {
         StringTemp[0] = '\0';
         strcat(StringTemp, TextBufferGetPtr);
         if ((GameDataStateStorage.fields_.game_state_ & 0x1000) != 0) {
@@ -2774,7 +2774,7 @@ void Datalink::set_cat_concept() {
             _itoa(index, digits, 10);
             strcat(StringTemp, digits);
         }
-        listBox_.item(StringTemp, index);
+        listBox_.item(StringTemp, index++);
         text_get();
     }
     text_close();

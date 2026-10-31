@@ -5613,6 +5613,9 @@ int BaseSquareEnergy;  // 0x0090E914
  * ConsoleControlTurnActive (0x0093A938) and near IsMultiplayerPBEM (0x0093A95C).
  * TODO: identify global - its writer was not located, so it is not named.
  */
+// Pinned NetDaemon::lock_base reads this source-owned int at 0x0093A934;
+// start-only binding, not an allocation extent or recovered writer.
+// RECOVERY_OBJECT: v1 0x0093A934 ?UnkGlobal0093A934@@3HA
 int UnkGlobal0093A934;  // 0x0093A934
 
 /*
