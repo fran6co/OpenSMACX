@@ -98,6 +98,7 @@ endif()
 # compiler will parse.
 add_library(zlib STATIC
     src/vendor/zlib-1.0.2/adler32.c
+    src/vendor/zlib-1.0.2/compress.c
     src/vendor/zlib-1.0.2/deflate.c
     src/vendor/zlib-1.0.2/infblock.c
     src/vendor/zlib-1.0.2/infcodes.c

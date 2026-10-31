@@ -609,6 +609,32 @@ Purpose: Inflate compressed input into next_out with *out_size as the
 Status: Coverage transcription - unclaimed body
 */
 
+/*
+Purpose: Deflate one buffer in a single shot: build the z_stream over the
+         caller's in/out pointers, deflate at the default level to the finish
+         mark, and hand the produced size back through the out-size slot. A
+         dry deflate answers Z_BUF_ERROR; any other non-stream-end answer
+         comes back as itself.
+
+// ORIGINAL: 0x00634280 sub_634280 0x00634280-0x00634326 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["git:c96a47e3f89e8792c8514ac2ca79259ab6f42c3e:src/unrecovered/00634280.cpp", "Historical seed spelling sub_634280; current source mapping sub_634280; emitted symbol ?sub_634280@@YAHPAEPAK0I@Z."], "reason": "Retain the original function mapping on its compiled C++ owner. Superseded seed retired after owner review; original spans, existing claims and useful seed findings remain in source. This cleanup grants no new match or acceptance claim."}
+// TRIED: `if (dr == 1) { ...; return deflateEnd(); } else {...}` flipped je/jne against the original (0.78 sim); the `if (dr != 1) cleanup ... success falls through` polarity matched (0.95 sim); the remaining diff was the duplicated epilogue the compiler did not share between the two returns.
+// TRIED: `if (dr == 1) { ...; return deflateEnd_real(); } else {...}` flipped je/jne against the original (0.78 sim). `if (dr != 1) {cleanup path} ...; success path falls through` matches polarity (0.95 sim); the remaining diff is a duplicated epilogue the compiler didn't share between the two returns.
+// symbol    _compress
+// size      166 bytes
+// callers   1   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0063CF00 0x0063D1A0 0x0063D4D0
+Status: Coverage transcription - unclaimed body
+*/
+
+// Native 0x6342B5..0x6342C5 clears zalloc, zfree and opaque.
+// The retired C++ body is replaced by the unmodified upstream C provider.
+
+// Original-image bindings for this dependency.
+// These are verification obligations, not claims of current matching.
+// Dependency inputs are unmodified; this companion owns its recovery metadata.
 // RECOVERY_COMPONENT_BEGIN v1
 // {
 //   "archive_sha256": "517f7df278536bf9b91bb14104fcb4b13ce7b3c791d174195fec1618621b24e6",
@@ -647,7 +673,8 @@ Status: Coverage transcription - unclaimed body
 //     "infutil.c",
 //     "trees.c",
 //     "uncompr.c",
-//     "zutil.c"
+//     "zutil.c",
+//     "compress.c"
 //   ],
 //   "image": {
 //     "sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
@@ -673,7 +700,8 @@ Status: Coverage transcription - unclaimed body
 //     {"archive_member": "zlib-1.0.2/zconf.h", "path": "zconf.h"},
 //     {"archive_member": "zlib-1.0.2/zlib.h", "path": "zlib.h"},
 //     {"archive_member": "zlib-1.0.2/zutil.c", "path": "zutil.c"},
-//     {"archive_member": "zlib-1.0.2/zutil.h", "path": "zutil.h"}
+//     {"archive_member": "zlib-1.0.2/zutil.h", "path": "zutil.h"},
+//     {"archive_member": "zlib-1.0.2/compress.c", "path": "compress.c"}
 //   ],
 //   "bindings": [
 //     {"evidence": "src/vendor/zlib-1.0.2/adler32.c source definition and pinned upstream zlib 1.0.2 provenance; physical COFF build/recovery/builds/build-gyzprt2j/CMakeFiles/zlib.dir/src/vendor/zlib-1.0.2/adler32.c.obj defines _adler32 at section 2 (.text); installed strict comparator: COFF bytes/boundary/references pass for 0x00640A80-0x00640BAE; final-link selection remains unknown.", "origin": "0x00640A80", "spans": ["0x00640A80-0x00640BAE"], "symbol": "_adler32", "unit": "adler32.c"},
@@ -734,7 +762,8 @@ Status: Coverage transcription - unclaimed body
 //     {"evidence": "Unmodified zlib1.0.2 deflate.c local deflate_stored; pinned deflate63D320..328 selects the level-zero configuration table pointer at698CF8. Independent complete native decode and IDA extent end at RET63D6EE, exclusive63D6EF; the alignment NOP at6EF is not body. Calls fill_window63D6F0, __tr_flush_block641280 and flush_pending63D450; existing physical dependency COFF corroborates the static symbol and TU. This binds dependency correspondence only: current exactness/references, linked selection and runtime equivalence remain obligations.", "origin": "0x0063D600", "spans": ["0x0063D600-0x0063D6EF"], "symbol": "_deflate_stored", "unit": "deflate.c"},
 //     {"evidence": "Pinned zlib1.0.2 zutil.c definition and original640A70..640A7C: free(ptr) through already bound runtime free644EF2; callbacks selected at63CF8A and63E034. IDA extent, complete native decode and locally compiled unmodified upstream COFF corroborate source correspondence, not original archive selection; no independent Ghidra row. This is not a current byte claim; dependency retained selection and runtime equivalence remain unproved.", "origin": "0x00640A70", "spans": ["0x00640A70-0x00640A7C"], "symbol": "_zcfree", "unit": "zutil.c"},
 //     {"evidence": "Pinned zlib1.0.2 inftrees.c static allocator; original inflate_trees_fixed installs its pointer at64400C. Native6440E0..6440F8 decrements the opaque count then forms fixed_mem-relative storage. IDA extent, complete native decode and locally compiled static COFF symbol corroborate source correspondence, not original archive selection; no independent Ghidra row. The fixed_mem original allocation/extent and reference remain unknown; do not infer a data binding from the LEA immediate. This is not a current byte claim; dependency retained selection and runtime equivalence remain unproved.", "origin": "0x006440E0", "spans": ["0x006440E0-0x006440F8"], "symbol": "_falloc", "unit": "inftrees.c"},
-//     {"evidence": "Pinned zlib 1.0.2 source correspondence: uncompr.c implements the identified uncompress sequence. The historical body/source correspondence and object relocation ordering were observed, but application archive-member selection and complete data-target ownership remain unproved; the shared version literal is not separately bound.", "origin": "0x00634330", "spans": ["0x00634330-0x006343BD"], "symbol": "_uncompress", "unit": "uncompr.c"}
+//     {"evidence": "Pinned zlib 1.0.2 source correspondence: uncompr.c implements the identified uncompress sequence. The historical body/source correspondence and object relocation ordering were observed, but application archive-member selection and complete data-target ownership remain unproved; the shared version literal is not separately bound.", "origin": "0x00634330", "spans": ["0x00634330-0x006343BD"], "symbol": "_uncompress", "unit": "uncompr.c"},
+//     {"evidence": "Unmodified zlib 1.0.2 compress.c from the pinned archive implements the original 0x00634280-0x00634326 sequence: a 56-byte z_stream, zero allocator callbacks and opaque, default compression level -1, Z_FINISH, and the observed cleanup/error/total_out order. Existing provider bindings identify callees 0x0063CF00, 0x0063D1A0 and 0x0063D4D0. Ownership of the shared version literal at 0x00697F28 remains unqualified. The complete historical mapping, claims and lessons are retained from netdaemon.cpp; _compress is the upstream C symbol. Dependency correspondence is not a new application recovery or historical byte claim, nor proof of original provider selection, linked retention or runtime equivalence.", "origin": "0x00634280", "spans": ["0x00634280-0x00634326"], "symbol": "_compress", "unit": "compress.c"}
 //   ]
 // }
 // RECOVERY_COMPONENT_END

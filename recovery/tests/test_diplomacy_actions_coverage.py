@@ -357,6 +357,8 @@ def test_actual_threaten(tmp_path, compiler_name):
 #include <cstdio>
 #include <cstring>
 #define __cdecl
+char DiploLabelGettingDIPLOMATICLOCK[] = "Getting DIPLOMATIC LOCK";
+char DiploLabelSendingTREATYON[] = "Sending TREATY ON";
 typedef unsigned int uint32_t; typedef unsigned char uint8_t;
 struct Sprite {} portraits[8]; Sprite *FactionDiplomacyPortraits[8];
 struct Player { int is_leader_female,noun_gender,is_noun_plural;
@@ -1653,6 +1655,7 @@ def test_actual_propose_attack(tmp_path, compiler_name):
     #include <cstring>
     #include <stdint.h>
     #define __cdecl
+char DiploLabelGettingDIPLOMATICLOCK[] = "Getting DIPLOMATIC LOCK";
     typedef unsigned char uint8_t;
     struct Sprite {} portraits[8]; Sprite *FactionDiplomacyPortraits[8];
     struct Player {
@@ -1679,7 +1682,7 @@ def test_actual_propose_attack(tmp_path, compiler_name):
     int TurnCurrentNum,DiplomacyProposalMode,IsMultiplayerNet,ExitTurnLoop;
     int GenderDefault,PluralityDefault,PopupDialogFactionID,LockEnableMask;
     char StringTemp[256],PopupStartCaption[64];
-    const char *DiploLabelSendingTREATYON="Sending TREATY ON";
+    char DiploLabelSendingTREATYON[] = "Sending TREATY ON";
     const char *DiploLabelReleasingDIPLOMATICLOCK="Releasing DIPLOMATIC LOCK";
     int contiguous_result=1, short_response, tech_offer_response, random_result;
     int energy_popup_answer, tech_values[128], tech_value_calls, tech_transfer_count;
@@ -2000,6 +2003,8 @@ def test_actual_make_gift(tmp_path, compiler_name):
 #include <cstdio>
 #include <cstring>
 #define __cdecl
+char DiploLabelGettingDIPLOMATICLOCK[] = "Getting DIPLOMATIC LOCK";
+char DiploLabelSendingTREATYON[] = "Sending TREATY ON";
 typedef unsigned int uint32_t;
 struct Sprite {} portraits[8]; Sprite *FactionDiplomacyPortraits[8];
 struct Player { int is_leader_female,noun_gender,is_noun_plural;
@@ -2121,6 +2126,8 @@ def test_actual_base_swap(tmp_path, compiler_name):
 #include <cassert>
 #include <cstring>
 #define __cdecl
+char DiploLabelGettingDIPLOMATICLOCK[] = "Getting DIPLOMATIC LOCK";
+char DiploLabelSendingTREATYON[] = "Sending TREATY ON";
 typedef unsigned int uint32_t;
 const int MaxTechnologyNum=89;
 struct Sprite {} portraits[8]; Sprite *FactionDiplomacyPortraits[8];
@@ -2258,6 +2265,8 @@ def test_actual_call_off_vendetta(tmp_path, compiler_name):
 #include <cassert>
 #include <cstring>
 #define __cdecl
+char DiploLabelGettingDIPLOMATICLOCK[] = "Getting DIPLOMATIC LOCK";
+char DiploLabelSendingTREATYON[] = "Sending TREATY ON";
 const int MaxPlayerNum=8;
 struct Sprite {} portraits[8]; Sprite *FactionDiplomacyPortraits[8];
 struct Player { int is_leader_female,noun_gender,is_noun_plural;
