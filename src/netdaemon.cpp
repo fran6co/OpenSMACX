@@ -149,7 +149,7 @@ extern int BaseAtDebugPopupFlag;  // 0x0093A94C, defined in base.cpp
 // window hierarchy just for this scalar declaration.
 extern int ConsoleControlTurnActive;
 
-// ORIGINAL: 0x00530D50 ?lock_base@NetDaemon@@QAEHHHHH@Z 0x00530D50-0x00530E48
+// ORIGINAL: 0x00530D50 ?lock_base@NetDaemon@@QAEHHHHH@Z 0x00530D50-0x00530E48 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x00530D50-0x00530E48"], "reason": "Recover the base-menu network guard through real Base records, shared turn state and NetDaemon lock-state members; original calls establish argument forwarding and log strings."}
 int NetDaemon::lock_base(int base_id, int target, int payload_1C, int payload_20) {
     log_say("LockBase", UnkGlobal0093A934, ConsoleControlTurnActive,
@@ -2517,7 +2517,7 @@ int NetDaemon::init(int option) {
 
 // Fixed-slot bindings carried from 005303b0.cpp
 
-// ORIGINAL: 0x005303B0 ?wait@NetDaemon@@QAEHPADPAHHH@Z 0x005303B0-0x00530493 FILE
+// ORIGINAL: 0x005303B0 ?wait@NetDaemon@@QAEHPADPAHHH@Z 0x005303B0-0x00530493 FILE BYTE_EXACT
 // symbol    ?wait@NetDaemon@@QAEHPADPAIHH@Z
 // working copy - scaffold materialised by --work
 // size      227 bytes

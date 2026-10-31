@@ -1,0 +1,20 @@
+{
+  "event_id": "73c106974e15352695fea571ca5bc1349ce6d5d711d9f98f84c6b6be7571ef11",
+  "payload": {
+    "affects": [
+      "entity-23237c9b32077075ad757016016442da83fb13c46040946889ff9753643e239b"
+    ],
+    "author": "coordinator",
+    "discovery_id": "win-retained-provider-discovery-oct31bn",
+    "evidence": [
+      "Pinned one-byte object696D14 initially09; same-TU const definition folds loads while original set_rects reads storage. First mapped Buffer reader does not prove storage ownership. Preserve const object and all users; investigate genuine provider before moving it."
+    ],
+    "hypothesis": "Shared WinFillColour visibility prevents original memory loads in set_rects; original TU owner remains unresolved.",
+    "kind": "discovery"
+  },
+  "previous_event": "ad8b1e759f5184ceeced842d389fb65a2eb8e9c4b2b4069aaa4fb59157eebe5a",
+  "request_id": "win-retained-provider-discovery-oct31bn",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:easy-win-oct31bn"
+}

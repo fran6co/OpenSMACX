@@ -1924,7 +1924,7 @@ searchDone:
 
 // Fixed-slot bindings carried from 00510490.cpp
 
-// ORIGINAL: 0x00510490 ?cursor_on@Console@@QAEXHH@Z 0x00510490-0x0051051D FILE
+// ORIGINAL: 0x00510490 ?cursor_on@Console@@QAEXHH@Z 0x00510490-0x0051051D FILE BYTE_EXACT
 // working copy - scaffold materialised by --work
 // size      141 bytes
 // prototype void (__thiscall ?cursor_on@Console@@QAEXHH@Z)(Console* this, int, int)
@@ -2840,7 +2840,7 @@ void Console::load_proc(int save_slot, int faction_id) {
 Purpose: Play out the turn boundary until the game says to stop: drive
          end_of_game, wait out the loop's queued work, and launch the tutorial
          when it was requested.
-// ORIGINAL: 0x00513FC0 ?end_of_turn@Console@@QAEXXZ 0x00513FC0-0x0051404E FILE
+// ORIGINAL: 0x00513FC0 ?end_of_turn@Console@@QAEXXZ 0x00513FC0-0x0051404E FILE BYTE_EXACT
 // size      142 bytes
 // prototype void (__thiscall ?end_of_turn@Console@@QAEXXZ)(Console* this)
 // callers   0   call targets   3
@@ -3481,7 +3481,7 @@ inline void console_close_network(unsigned int final_channel_mask) {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00514990 ?quit_game@Console@@QAEXXZ 0x00514990-0x00514B2C
+// ORIGINAL: 0x00514990 ?quit_game@Console@@QAEXXZ 0x00514990-0x00514B2C BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00514990.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold."}
 void Console::quit_game() {
     const char *prompt;
@@ -3503,7 +3503,7 @@ void Console::quit_game() {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00514D30 ?new_game@Console@@QAEXXZ 0x00514D30-0x00514EE2
+// ORIGINAL: 0x00514D30 ?new_game@Console@@QAEXXZ 0x00514D30-0x00514EE2 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00514d30.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold."}
 void Console::new_game() {
     if (IsMultiplayerNet) return;
@@ -3671,7 +3671,7 @@ void __cdecl action_gate(int vehicle_id, int base_id);
 
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00514B30 ?retire_game@Console@@QAEXXZ 0x00514B30-0x00514D2B
+// ORIGINAL: 0x00514B30 ?retire_game@Console@@QAEXXZ 0x00514B30-0x00514D2B BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original 00514B30; retained seed src/recovered/units/00514b30.cpp", "Native514B55..64 passes the low-byte greater-than-one boolean into bit_count. Native514D10 writes closed-network==0 to93A948 GameRestartQueued,514D16 sets9B2068 ExitTurnLoop. Existing typed close-network helper reproduces lock clear/transport close; scenario, PBEM, ironman and replay branches remain distinct.", "recovery/tasks/console-scenario-owner-wave.json; native scope decisions preserve the original baseline"], "reason": "Recover the complete Console command in its genuine owner, retaining original spans and seed evidence. Typed state and lifecycle/network APIs replace seed address arithmetic; this source binding is not byte, reference, structure or runtime acceptance."}
 void Console::retire_game() { // 0x00514B30
     int closed_network = 0;

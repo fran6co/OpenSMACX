@@ -1,0 +1,20 @@
+{
+  "event_id": "f9719b07378b56b554cede53b75b0f68e42a0ebc207a7a7a963f4955190fa07c",
+  "payload": {
+    "affects": [
+      "entity-86942507eaa3cee229390cc88059cc35c57875bf0e57bb46e0396bc21e986906"
+    ],
+    "author": "coordinator",
+    "discovery_id": "datalink-retained-provider-discovery-oct31bn",
+    "evidence": [
+      "Worker ledger retains original null-address guard and existing out-of-line overload; read-only follow-up assigned. No Buffer edit granted, and user-reserved write_pcx body remains excluded."
+    ],
+    "hypothesis": "Buffer two-argument write_cent_l inline/provider boundary may explain draw_tech residual; geometry grouping remains a separate hypothesis.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "datalink-retained-provider-discovery-oct31bn",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:easy-datalink-oct31bn"
+}

@@ -2046,7 +2046,7 @@ Purpose: Pop the back-history ring and re-show the topic it held.
          into its category and facility halves the way parse_id does, then
          walks the chain set_cat / set_selected_id / slot 62 / draw_entry that
          UNK3 runs in the forward direction.
-// ORIGINAL: 0x0042BE00 ?UNK5@Datalink@@QAEXXZ 0x0042BE00-0x0042BE9D FILE
+// ORIGINAL: 0x0042BE00 ?UNK5@Datalink@@QAEXXZ 0x0042BE00-0x0042BE9D FILE BYTE_EXACT
 // MISMATCH 8/49, first divergence at 4 - the receiver-spill order again: the image takes `this` into esi after saving ebx/edi, ours before. TRIED: `history_[--field_2A34_]` for the pop, `topic - category*10000` for the remainder instead of `%`, and a hoisted `&listBox_` base.
 //            The image's catalogue name is ours to spell from behaviour:
 //            the catalogue calls this ?UNK5@Datalink@@QAEXXZ.
@@ -2746,7 +2746,7 @@ Purpose: List the concept encyclopedia entries straight out of CONCEPTS.TXT.
          The walk is the text reader's own: get a line, file it, get the next,
          until the reader hands back an empty one. ids run 0 upward, which is
          why this is the one category whose ids are not five-digit.
-// ORIGINAL: 0x0042B300 ?set_cat_concept@Datalink@@QAEXXZ 0x0042B300-0x0042B48C FILE
+// ORIGINAL: 0x0042B300 ?set_cat_concept@Datalink@@QAEXXZ 0x0042B300-0x0042B48C FILE BYTE_EXACT
 // MISMATCH 36/125, first divergence at 3 - register pressure, not frame size: the frame matches at 0x60 but the image saves only edi where ours saves ebx/esi/edi, because the reader loop keeps the line pointer live across the text_get call here.
 // size      391 bytes
 // prototype void (__thiscall ?set_cat_concept@Datalink@@QAEXXZ)(Datalink* this)

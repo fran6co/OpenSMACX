@@ -866,7 +866,7 @@ void __cdecl mapwin_system_shutdown() {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00471030 ?mapwin_system_init@@YAXH@Z 0x00471030-0x004710DF
+// ORIGINAL: 0x00471030 ?mapwin_system_init@@YAXH@Z 0x00471030-0x004710DF BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence":["Pinned original 0x00471030-0x004710DF fills 0x007D3C60..0x007D4060, calls compute_lighting_table, clears/reinitializes eight MapWinTable slots, then initializes the FarmMapWindow cache","src/unrecovered/00471030.cpp retains the seed; src/mapwin.cpp owns the table, FarmMapWindow and each called method","Pinned47107F reloads MapWinTable[slot] after clear;4710AA and4710BB reload active/init receivers. Preserve unchecked replacement and null behavior rather than retaining the pre-clear pointer."],"reason":"Recover map-window system startup with typed slot and storage ownership; leave the startup-word table's wider meaning open until consumers are identified."}
 void __cdecl mapwin_system_init(int reset_windows) {
     MapWin::compute_lighting_table();
@@ -6939,7 +6939,7 @@ void MapWin::draw_tile(int a1, int a2, int a3) {
     draw_radius(a1, row, 0, a3);
 }
 
-// ORIGINAL: 0x00470ED0 ?init_dummy@MapWin@@QAEXXZ 0x00470ED0-0x00470F68 FILE
+// ORIGINAL: 0x00470ED0 ?init_dummy@MapWin@@QAEXXZ 0x00470ED0-0x00470F68 FILE BYTE_EXACT
 // working copy - scaffold materialised by --work
 // size      152 bytes
 // prototype void (__thiscall ?init_dummy@MapWin@@QAEXXZ)(MapWin* this)
@@ -7226,7 +7226,7 @@ void MapWin::tile_to_pixel(int tile_x, int tile_y, int *pixel_x, int *pixel_y) {
                field_1DDB0_ - (altitude >> 2);
 }
 
-// ORIGINAL: 0x004711A0 ?terrain_fixup@@YAXPAUMapWin@@@Z 0x004711A0-0x0047123B FILE
+// ORIGINAL: 0x004711A0 ?terrain_fixup@@YAXPAUMapWin@@@Z 0x004711A0-0x0047123B FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"reason":"Initialize the existing twelve-byte terrain cache through its named fields; preserve signed area tests and the first-tile climate source.","evidence":["Pinned4711F5/471206 write offsets0..3/4..8;47120F..471229 clears then masks first MapTiles climate into offset9; offsets10..11 are untouched.","Pinned4711E1..4711E3 uses signed JLE;47122B..471234 reloads MapArea and uses signed JL. Allocation remains unchecked."]}
 // symbol    ?terrain_fixup@@YAXPAVMapWin@@@Z
 // MapWin is a class here and a struct in the image, so the tag differs.
@@ -7268,7 +7268,7 @@ void __cdecl terrain_fixup(MapWin * window) {
 // detail. MapArea is tested as signed and re-read after each complete row.
 // The existing cache receiver/storage model supports this source home;
 // original invocation and method spelling remain unresolved.
-// ORIGINAL: 0x0046FC30 sub_46fc30 0x0046FC30-0x0046FC7B
+// ORIGINAL: 0x0046FC30 sub_46fc30 0x0046FC30-0x0046FC7B BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf full75-byte span46FC30..46FC7B independently decodes to receiver+4 null gate, signed MapArea949884 count/reload, fiveFF byte writes at4..8 and12-byte row advance; terminatingRET fixes exclusive bound. Ghidra candidate is discovery provenance, not original-name evidence.", "MapWin owned_ TerrainCacheEntry* is source-bound at+4; real cache allocation uses MapArea*12. Existing clear_terrain46FD90 and clear_alt46FB90 access identical storage/domain; TerrainCacheEntry altitude[5] owns offsets4..8. No new allocation/type or fixed-address view is introduced.", "Bounded original direct/absolute-pointer/caller search found no reference. Negative search does not prove unused; exact original receiver class spelling and invocation remain obligations, not inferred from adjacency. recovery/tasks/map-cache-all-altitude-owner-oct10.json authorizes reviewed source home. No new historical byte claim."], "reason": "Recover the complete altitude-only terrain-cache reset through existing MapWin storage. Source role/name is descriptive; original invocation and nominal method name remain unresolved."}
 // symbol    ?clear_all_altitude@MapWin@@QAEXXZ
 void MapWin::clear_all_altitude() {

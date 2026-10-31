@@ -1,0 +1,17 @@
+{
+  "event_id": "dce645a13d818e21cbe1968223a955bb6c684bfde49cf399ec087d2187c9b609",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "datalink-retained-provider-discovery-oct31bn",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Metadata correction only: initial pending discovery used a representative owner subject rather than the actual draw_tech original identity. The hypothesis remains pending under the corrected discovery; no source work or evidence is rejected."
+    ]
+  },
+  "previous_event": "f9719b07378b56b554cede53b75b0f68e42a0ebc207a7a7a963f4955190fa07c",
+  "request_id": "datalink-correct-discovery-identity-oct31bn",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:easy-datalink-oct31bn"
+}

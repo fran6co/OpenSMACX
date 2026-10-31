@@ -7689,7 +7689,7 @@ void Win::draw_rect_border(int x1, int y1, int x2, int y2, HGDIOBJ pen1, HGDIOBJ
     }
 }
 
-// ORIGINAL: 0x005EEDC0 ?key_up_event@Win@@QAEHH@Z 0x005EEDC0-0x005EEE67 FILE
+// ORIGINAL: 0x005EEDC0 ?key_up_event@Win@@QAEHH@Z 0x005EEDC0-0x005EEE67 FILE BYTE_EXACT
 // kind game
 // TRIED: `int result = 0;` declared after the recursion block (0.944 sim, edi push/xor split from the prologue) vs hoisted to the top before the flags check (0.96 sim, matches original's push-edi-then-xor ordering more closely, one push/xor pair still swapped). Landed the hoisted form. Recursive call's `this` is a COMPUTED pointer (field_D0->field_4, or 0), not the same `this` - matches the disassembly's explicit ecx reload, which ghidra's decompilation silently dropped.
 // ===== homed from src/unrecovered/005eedc0.cpp =====
@@ -9686,7 +9686,7 @@ void __cdecl Win::OnSysCommand(HWND hwnd, unsigned int command, int x,
     }
 }
 
-// ORIGINAL: 0x005EF050 ?client_to_nonclient@Win@@QAEXPAURECT@@@Z 0x005EF050-0x005EF10D FILE
+// ORIGINAL: 0x005EF050 ?client_to_nonclient@Win@@QAEXPAURECT@@@Z 0x005EF050-0x005EF10D FILE BYTE_EXACT
 // symbol    ?client_to_nonclient@Win@@QAEXPAUtagRECT@@@Z
 // kind game
 // TRIED: __thiscall fn-ptr typedef for slot 91 (C4234); own VCall2 class (91 void slots + int slot091) reaches #24 sub-vs-mov, deep in the border-adjust arithmetic
@@ -10222,7 +10222,7 @@ void Win::paint_tiled(Buffer *tile, int x_origin, int y_origin, int clip_left,
     }
 }
 
-// ORIGINAL: 0x005ECD20 ?pass_dialog_focus@Win@@QAEXXZ 0x005ECD20-0x005ECDBA FILE
+// ORIGINAL: 0x005ECD20 ?pass_dialog_focus@Win@@QAEXXZ 0x005ECD20-0x005ECDBA FILE BYTE_EXACT
 // kind game
 // symbol    ?pass_dialog_focus@Win@@UAEXXZ
 // ===== homed from src/unrecovered/005ecd20.cpp =====
@@ -10858,7 +10858,7 @@ void Win::set_dialog_focus(Win * window) {
     }
 }
 
-// ORIGINAL: 0x005F1480 ?OnActivate@Win@@QAAJPAXIPAXJ@Z 0x005F1480-0x005F15B6 FILE
+// ORIGINAL: 0x005F1480 ?OnActivate@Win@@QAAJPAXIPAXJ@Z 0x005F1480-0x005F15B6 FILE BYTE_EXACT
 // kind game
 // symbol    ?OnActivate@Win@@SAXPAXI0J@Z
 // WINDOWSX.H declares Cls_OnActivate void and its message macro returns zero
@@ -12039,7 +12039,7 @@ void Win::draw_rect_edges(RECT *rect, HGDIOBJ light_pen, HGDIOBJ dark_pen,
 }
 
 // Superseded seed removed; complete operation now belongs to Win.
-// ORIGINAL: 0x005EFBA0 sub_5efba0 0x005EFBA0-0x005EFCF5 FILE
+// ORIGINAL: 0x005EFBA0 sub_5efba0 0x005EFBA0-0x005EFCF5 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:f2a0fa1952cef53f4a2c6a5e60a8bea9bff9c3aa:src/unrecovered/005efba0.cpp", "pinned:terranx_original:0x5efba0", "source:src/win.h", "source:src/graphicwin.h"], "reason": "Native Win receiver and six popped arguments, palette RGB fill and preserved HDC lease leak when brush creation fails. Source names are descriptive, not recovered historical spellings. Preserve all original spans and historical findings; no new matching or full acceptance claim."}
 // symbol    ?fill_palette_color_rect@Win@@QAEXHHHHHH@Z
 // TRIED: `ecx` used as `this` before any stack read proves __thiscall, not the IDA-guessed __stdcall(int x6); modelled as a member of a local class per the 0x004C8290 idiom. The two indirect calls through DAT_009BC498's vtable pass the interface object as an EXPLICIT stack arg (not via ecx), so they are __stdcall function pointers, not VCall thiscall slots. First divergence #5 je/jne.

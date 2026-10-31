@@ -3425,7 +3425,7 @@ void Console::set_bombing_run(int veh_id, int x_coord, int y_coord) {
 /*
 Purpose: Send one vehicle home: lock it, find the base it stands on, hand it
          to that base (or its transport) and resync.
-// ORIGINAL: 0x004D7DE0 ?go_home@Console@@QAEXH@Z 0x004D7DE0-0x004D7EDA FILE
+// ORIGINAL: 0x004D7DE0 ?go_home@Console@@QAEXH@Z 0x004D7DE0-0x004D7EDA FILE BYTE_EXACT
 // TRIED (seed history): structure (lock_veh via &veh_id, base_at, owner-byte
 //        compare against the veh table, synch/await/unlock NetDaemon calls,
 //        BaseWin::check_base x2, Console::update_data) all match in order;
