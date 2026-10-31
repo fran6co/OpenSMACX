@@ -11045,7 +11045,7 @@ void __cdecl social_set(int faction_id) {
     }
 }
 // ORIGINAL: 0x00545D60 ?propose_trade_maps@@YAXHH@Z 0x00545D60-0x00545E80 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence":["Pinned native instructions at 0x00545D60..0x00545E80 distinguish actor treaty lookup, target patience-byte update and local/network map-transfer paths.","source:src/faction.h PlayerData treaty/patience arrays and typed diplomacy/map APIs."],"reason":"Recover the trade-map proposal in faction.cpp using the actor treaty row, target-owned patience and existing transfer APIs; preserve original role orientation and source-owned string literal behavior."}
+// RECOVERY_BINDING: v1 {"evidence":["Pinned native instructions at 0x00545D60..0x00545E80 distinguish actor treaty lookup, target patience-byte update and local/network map-transfer paths.","source:src/faction.h PlayerData treaty/patience arrays and typed diplomacy/map APIs.","Pinned 0x00545DAB supplies Players base 0x00946A50 plus member offset 0x304 to parse_says: Player::adj_name_faction, not noun_faction at 0x2E4."],"reason":"Recover the trade-map proposal using the actor treaty row, target-owned patience, original adjective-name member and existing transfer APIs; preserve original role orientation and source-owned string literal behavior."}
 void __cdecl propose_trade_maps(int faction_id, int faction_id_with) {
     PopupDialogFactionID = faction_id_with;
 
@@ -11053,7 +11053,7 @@ void __cdecl propose_trade_maps(int faction_id, int faction_id_with) {
         (PlayersData[faction_id].diplo_treaties[faction_id_with] & 1) != 0;
     if ((!has_prior_map_trade && DiploFriction > 0) ||
         DiploFriction > 4) {
-        parse_says(0, Players[faction_id_with].noun_faction, -1, -1);
+        parse_says(0, Players[faction_id_with].adj_name_faction, -1, -1);
         X_pops("REJMAPS", 0x100000,
                      FactionDiplomacyPortraits[faction_id_with], pop_wait);
         return;
