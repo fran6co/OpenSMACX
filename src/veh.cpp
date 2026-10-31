@@ -7289,7 +7289,7 @@ int __cdecl veh_lift(int veh_id) {
 
 /*
 Purpose: Move the specified unit to the provided coordinates.
-// ORIGINAL: 0x005C0080 ?veh_drop@@YAXHHH@Z 0x005C0080-0x005C019C
+// ORIGINAL: 0x005C0080 ?veh_drop@@YAXHHH@Z 0x005C0080-0x005C019C BYTE_EXACT
 // TRIED: the last `mov ecx,[ebp+8]; mov eax,ecx` before the final `ret` - the image loads straight into eax there (ecx is dead, clobbered by the `bit_set` call just before), but this tree's register allocator prefers ecx as veh_id's home register for the whole function and copies to eax at the return. No source reshuffle around the final `return veh_id;` moved it; plateau.
 // TRIED: (veh_id_dest < 0) {...} else {...}` had the arms backwards - the image falls through the `>= 0` write first and jumps to the `< 0` block, so the source needs `if (veh_id_dest >= 0) {...} else {...}` to get that polarity. Also the flags ternary `(A && B) ? X|Y : Y` compiled an extra `mov` before the compare the image folds into a direct `cmp byte ptr [...], 2`; splitting it into `flags = 0/BIT_SUPPLY_REMOVE; flags |= BIT_VEH_IN_TILE;` (the image ORs BIT_VEH_IN_TILE in unconditionally at a shared tail) dropped that mov. 39/95 -> 80/95 (0.880 -> 0.973 similar).
 // symbol    ?veh_drop@@YAHHHH@Z
@@ -7328,13 +7328,14 @@ int __cdecl veh_drop(int veh_id, int x, int y) {
         }
         flags |= BIT_VEH_IN_TILE;
         bit_set(x, y, flags, true);
+        return veh_id;
     }
     return veh_id;
 }
 
 /*
 Purpose: Move the specified unit to the bottom of the stack.
-// ORIGINAL: 0x005C01D0 ?veh_demote@@YAXH@Z 0x005C01D0-0x005C0256
+// ORIGINAL: 0x005C01D0 ?veh_demote@@YAXH@Z 0x005C01D0-0x005C0256 BYTE_EXACT
 // TRIED: byte-exactness. Best is 0.916 similar (4/40 in position) at
 // `/c /O2 /Gy /GR- /Oy- /GX`, and every remaining edit is register
 // allocation - `esi`/`edi`/`ebx` permuted against the image's fixed
@@ -7362,7 +7363,7 @@ void __cdecl veh_demote(int veh_id) {
     if (next_veh_id < 0) {
         return;
     }
-    int16_t last_veh_id;
+    int last_veh_id;
     do {
         last_veh_id = next_veh_id;
         next_veh_id = Vehs[last_veh_id].next_veh_id_stack;
@@ -9460,7 +9461,7 @@ int __cdecl veh_game_data_bunglist(FILE *file, int format_version) {
 
 /*
 Purpose: Record a prototype design in the faction's run.
-// ORIGINAL: 0x0057DF30 sub_57df30 0x0057DF30-0x0057DFB2
+// ORIGINAL: 0x0057DF30 sub_57df30 0x0057DF30-0x0057DFB2 BYTE_EXACT
 // size      130 bytes
 // prototype void (__cdecl sub_57df30)(int factionID, int protoID)
 // symbol    ?proto_bung_put@@YAXHH@Z
@@ -9478,16 +9479,13 @@ Return Value: n/a
 Status: MISMATCH.
 */
 void __cdecl proto_bung_put(int faction_id, int proto_id) {
-    int &cursor = PlayersData[faction_id].prototype_history_cursor;
-    const int slot = cursor;
-    cursor = (slot + 1) % 64;
-    const VehPrototype &proto = VehPrototypes[proto_id];
-    ProtoBung &entry = BungList[faction_id][slot];
-    entry.ability_flags = proto.ability_flags;
-    entry.chassis_id = proto.chassis_id;
-    entry.weapon_id = proto.weapon_id;
-    entry.armor_id = proto.armor_id;
-    entry.reactor_id = proto.reactor_id;
+    const int slot = PlayersData[faction_id].prototype_history_cursor;
+    PlayersData[faction_id].prototype_history_cursor = (slot + 1) % 64;
+    BungList[faction_id][slot].ability_flags = VehPrototypes[proto_id].ability_flags;
+    BungList[faction_id][slot].chassis_id = VehPrototypes[proto_id].chassis_id;
+    BungList[faction_id][slot].weapon_id = VehPrototypes[proto_id].weapon_id;
+    BungList[faction_id][slot].armor_id = VehPrototypes[proto_id].armor_id;
+    BungList[faction_id][slot].reactor_id = VehPrototypes[proto_id].reactor_id;
 }
 
 /*
