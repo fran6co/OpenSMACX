@@ -1909,7 +1909,7 @@ void SocialWin::reset() {
  *          so a later category's hit wins. The faction-power rectangle maps
  *          the hover to -2, anything else to the grid index or -1, and a
  *          changed hover repaints the mouseover panel.
-// ORIGINAL: 0x004B1EC0 ?on_mouse_move@SocialWin@@QAEXHH@Z 0x004B1EC0-0x004B1FB2 FILE
+// ORIGINAL: 0x004B1EC0 ?on_mouse_move@SocialWin@@QAEXHH@Z 0x004B1EC0-0x004B1FB2 FILE BYTE_EXACT
 // symbol    ?on_mouse_move@SocialWin@@UAEXHH@Z
 // size      242 bytes
 // prototype void (__thiscall ?on_mouse_move@SocialWin@@QAEXHH@Z)(SocialWin* this, int, int)

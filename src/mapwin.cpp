@@ -899,7 +899,7 @@ void __cdecl mapwin_system_init(int reset_windows) {
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // Historical seed observations (not fresh measurements or acceptance):
 // TRIED: for(;;){...if(p>=end)return;} vs do/while(p<end) vs goto-found form - all three land the same `jae + jmp` where the original has a single `jl` (140B vs 141B, one instruction over)
-// ORIGINAL: 0x00470FA0 sub_470fa0 0x00470FA0-0x0047102D
+// ORIGINAL: 0x00470FA0 sub_470fa0 0x00470FA0-0x0047102D BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original 0x00470FA0-0x0047102D scans MapWinTable slots 1..7 for a nonnull receiver with field_1DD74_ clear, calls clear and init, writes its 0x1DD9C/0x1DDA0 center, then invokes Win virtual slot 1 with zero", "src/unrecovered/00470fa0.cpp retains the two-argument seed and its compiler trials; src/win.h identifies virtual slot 1 as show(int)"], "reason": "Recover activation of a free secondary map view using its real MapWin receiver and inherited virtual show operation, not an invented vtable class."}
 // symbol    ?mapwin_activate_free_slot@@YAXHH@Z
 void __cdecl mapwin_activate_free_slot(int tile_x, int tile_y) {
@@ -7284,7 +7284,7 @@ void MapWin::clear_all_altitude() {
     }
 }
 
-// ORIGINAL: 0x0046FC80 ?UNK6@MapWin@@QAEXHHH@Z 0x0046FC80-0x0046FCD3 FILE
+// ORIGINAL: 0x0046FC80 ?UNK6@MapWin@@QAEXHHH@Z 0x0046FC80-0x0046FCD3 FILE BYTE_EXACT
 // TRIED: naming the three tables `static int *const` - /O2 then folds the
 //   0x66F440-0x66EFBC pair into one walking pointer with an `add`, which the
 //   image never does: it keeps each table as its own SIB-indexed base. Spelled

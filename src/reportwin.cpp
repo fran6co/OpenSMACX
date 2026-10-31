@@ -1142,7 +1142,7 @@ void ReportWin::on_scrolling(int, int pos) {
     }
 }
 
-// ORIGINAL: 0x00498110 ?UNK1@ReportWin@@QAEXHHHH@Z 0x00498110-0x00498174
+// ORIGINAL: 0x00498110 ?UNK1@ReportWin@@QAEXHHHH@Z 0x00498110-0x00498174 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"reason":"Home ReportWin's range callback and type its embedded Scroll storage while preserving the constructor's explicit placement order.","evidence":["src/recovered/units/00498110.cpp records the original 0x00498110-0x00498174 method and its position/range/paging updates.","src/reportwin.h places Scroll at 0xC10C; src/scroll.h places paging_ at Scroll+0xA40, which is the seed's 0xCB4C write."]}
 // Deleted seed provenance: git:c2e28f62c941b2012636504516275bc26988ee80:src/recovered/units/00498110.cpp
 /*

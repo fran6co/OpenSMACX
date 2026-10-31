@@ -599,7 +599,7 @@ void PrefWin::on_group_clicked(int group, int previous, int selected) {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x0048FFB0 ?hide_option_buttons@PrefWin@@QAEXXZ 0x0048FFB0-0x00490123 FILE
+// ORIGINAL: 0x0048FFB0 ?hide_option_buttons@PrefWin@@QAEXXZ 0x0048FFB0-0x00490123 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0048ffb0.cpp", "recovery/tasks/prefwin-owner-coverage-wave.json", "Original control parent 8578D8; ctor/destructor member order, 800-pixel branch, checkbox text-context and callback order independently reviewed."], "reason": "Recover the complete PrefWin ownership group through a genuine GraphicWin base and compiler-owned embedded control lifetimes; preserve seed identity, original spans and unresolved discoveries without granting byte claims."}
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x0048FFB0 0x00490124 0x00490140 0x0048FFC2
 void PrefWin::hide_option_buttons() {
