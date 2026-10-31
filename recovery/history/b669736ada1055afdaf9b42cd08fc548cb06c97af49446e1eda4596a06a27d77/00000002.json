@@ -1,0 +1,22 @@
+{
+  "event_id": "2405af8674578859249681da22dce97dc8dce1f35061f7ac3711eacc00363c99",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_diplomacy_actions_coverage.py",
+      "recovery/tests/test_diplomacy_producers_behavior.py",
+      "src/faction.cpp"
+    ],
+    "evidence": [
+      "Independent helper-review322efc7821330e1f09c6a88ee4684184c88a8721b42b3cf6885cead146974d4a proves current source/COFF tech_trade541100 callclosure owns all4 pending helper literal sites:3SendingTECH and1SendingAGENDAON. Original declared541100 spans contain singleton-target HIGHLOW operands68D4F0 and68D480; no ordinal pairing or original helper/TU boundary assertion. Add these4 token replacements to88batch, preserve stage evidence and leave4distinct council resource sites untouched.",
+      "If necessary, reanchor only exact literal-to-named-array mutation-selector tokens in two already-scoped fixtures; every mutation effect, assertion and source-extraction oracle remains unchanged. Preserve initial failures. This authorizes fixture continuity, not weakening a test."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "3d6c11c8d9bc0b386713e705d176b3647e4555f88b275eb629e66eedb93e9ffe",
+  "request_id": "include-qualified-tech-trade-helper-sites",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:reference-cohort-oct31ci"
+}

@@ -479,7 +479,7 @@ void __cdecl buy_council_vote(int faction, int other, int proposal, int choice) 
                             PlayersData[other].energy_reserves, votes);
                     ConsoleGlobal.update_data(1);
                 } else {
-                    log_say("Sending ENERGY", faction, other, delta);
+                    log_say(DiploLabelSendingENERGY, faction, other, delta);
                     message_data(0x2447, 0, faction, delta, other, votes);
                     NetDaemonNet.await_diplo(0x447);
                 }
@@ -492,7 +492,7 @@ void __cdecl buy_council_vote(int faction, int other, int proposal, int choice) 
                     if (IsMultiplayerNet == 0) {
                         tech_achieved(other, tech_id, faction, 0);
                     } else {
-                        log_say("Sending TECH", other, tech_id, faction);
+                        log_say(DiploLabelSendingTECH, other, tech_id, faction);
                         message_data(0x244b, 0, other, tech_id, faction, 0);
                         NetDaemonNet.await_diplo(0x44b);
                     }
@@ -6287,13 +6287,13 @@ void __cdecl call_off_vendetta(int faction_id, int faction_id_with) {
     }
 
     if (IsMultiplayerNet != 0) {
-        log_say("Sending SET TREATY", faction_id_with, chosen, 0x4000000);
+        log_say(DiploLabelSendingSETTREATY, faction_id_with, chosen, 0x4000000);
         message_data(0x2443, 0, faction_id_with, chosen, 0x4000000, 1);
     } else {
         set_treaty(faction_id_with, chosen, 0x4000000, 1);
     }
     if (IsMultiplayerNet != 0) {
-        log_say("Sending SET TREATY", faction_id_with, chosen, 0x40);
+        log_say(DiploLabelSendingSETTREATY, faction_id_with, chosen, 0x40);
         message_data(0x2443, 0, faction_id_with, chosen, 0x40, 0);
     } else {
         set_treaty(faction_id_with, chosen, 0x40, 0);
@@ -7241,7 +7241,7 @@ void __cdecl enemies_war(int faction_id, int faction_id_with) {
         parse_says(2, get_noun(faction_id), -1, -1);
         parse_says(3, get_he_she(faction_id, 0), -1, -1);
         parse_says(4, get_noun(faction_id), -1, -1);
-        NetMsgPrimary.pop("PACTATTACKS", 5000, 0, nullptr);
+        NetMsgPrimary.pop(DiploLabelPACTATTACKS, 5000, 0, nullptr);
     } else if ((PlayersData[local_faction_id].diplo_treaties[faction_id_with]
                 & DTREATY_PACT) != 0) {
         GenderDefault = Players[faction_id_with].is_leader_female;
@@ -7253,7 +7253,7 @@ void __cdecl enemies_war(int faction_id, int faction_id_with) {
         parse_says(2, get_noun(faction_id_with), -1, -1);
         parse_says(3, get_he_she(faction_id_with, 0), -1, -1);
         parse_says(4, get_noun(faction_id), -1, -1);
-        NetMsgPrimary.pop("PACTATTACKS", 5000, 0, nullptr);
+        NetMsgPrimary.pop(DiploLabelPACTATTACKS, 5000, 0, nullptr);
     } else {
         const uint32_t protected_diplomacy_bits = 0x00001000u;
         bool notify =
@@ -7566,7 +7566,7 @@ void __cdecl enemies_treaty(int faction_id, int faction_id_with,
                 GenderDefault = Players[faction_id].is_leader_female;
                 parse_says(5, Players[faction_id].name_leader, -1, -1);
                 parse_says(6, get_noun(faction_id), -1, -1);
-                NetMsgPrimary.pop("PACTTRUCE", 5000, 0, nullptr);
+                NetMsgPrimary.pop(DiploLabelPACTTRUCE, 5000, 0, nullptr);
                 treaty_on(faction_id, faction_id_with, DTREATY_TRUCE);
                 return;
             }
@@ -7607,7 +7607,7 @@ void __cdecl enemies_treaty(int faction_id, int faction_id_with,
         GenderDefault = Players[faction_id_with].is_leader_female;
         parse_says(5, Players[faction_id_with].name_leader, -1, -1);
         parse_says(6, get_noun(faction_id), -1, -1);
-        NetMsgPrimary.pop("PACTTRUCE", 5000, 0, nullptr);
+        NetMsgPrimary.pop(DiploLabelPACTTRUCE, 5000, 0, nullptr);
         treaty_on(faction_id, faction_id_with, DTREATY_TRUCE);
         return;
     }
@@ -7995,7 +7995,7 @@ void __cdecl mention_prototypes(int faction_id, int faction_id_with) {
                 tech_achieved(faction_id_with, faction_proto_code,
                               faction_id, 0);
             } else {
-                log_say("Sending TECH", faction_id_with,
+                log_say(DiploLabelSendingTECH, faction_id_with,
                         faction_proto_code, faction_id);
                 message_data(0x244B, 0, faction_id_with,
                              faction_proto_code, faction_id, 0);
@@ -8012,7 +8012,7 @@ void __cdecl mention_prototypes(int faction_id, int faction_id_with) {
                 tech_achieved(faction_id, other_proto_code,
                               faction_id_with, 0);
             } else {
-                log_say("Sending TECH", faction_id,
+                log_say(DiploLabelSendingTECH, faction_id,
                         other_proto_code, faction_id_with);
                 message_data(0x244B, 0, faction_id,
                              other_proto_code, faction_id_with, 0);
@@ -8064,7 +8064,7 @@ void __cdecl pact_of_brotherhood(int faction_id, int faction_id_with) {
     X_pops("MAKEPACT", 0x100000,
                  FactionDiplomacyPortraits[faction_id_with], pop_wait);
     if (IsMultiplayerNet != 0) {
-        log_say("Sending TRADE MAPS", faction_id, faction_id_with, 0);
+        log_say(DiploLabelSendingTRADEMAPS, faction_id, faction_id_with, 0);
         message_data(0x2448, 0, faction_id, faction_id_with, 0, 0);
         NetDaemonNet.await_diplo(0x448);
     } else {
@@ -8863,7 +8863,7 @@ void __cdecl make_gift(int giver, int receiver) {
                 if (has_tech(tech, giver) && !has_tech(tech, receiver)) {
                     gift_value = diplo_add(gift_value, tech_val(tech, receiver, 1));
                     if (IsMultiplayerNet != 0) {
-                        log_say("Sending TECH", receiver, tech, giver);
+                        log_say(DiploLabelSendingTECH, receiver, tech, giver);
                         message_data(0x244b, 0, receiver, tech, giver, 0);
                         NetDaemonNet.await_diplo(0x44b);
                     } else {
@@ -8894,7 +8894,7 @@ void __cdecl make_gift(int giver, int receiver) {
                                                   : DiploScratchFA18;
             gift_value = tech_val(selected, receiver, 1);
             if (IsMultiplayerNet != 0) {
-                log_say("Sending TECH", receiver, selected, giver);
+                log_say(DiploLabelSendingTECH, receiver, selected, giver);
                 message_data(0x244b, 0, receiver, selected, giver, 0);
                 NetDaemonNet.await_diplo(0x44b);
             } else {
@@ -8927,7 +8927,7 @@ void __cdecl make_gift(int giver, int receiver) {
                 strcat(popup_label, "1");
 
             if (IsMultiplayerNet != 0) {
-                log_say("Sending TREATY OFF", receiver, giver, 0x60);
+                log_say(DiploLabelSendingTREATYOFF, receiver, giver, 0x60);
                 message_data(0x2442, 0, receiver, giver, 0x60, 0);
                 NetDaemonNet.await_diplo(0x442);
             } else {
@@ -8995,7 +8995,7 @@ void __cdecl make_gift(int giver, int receiver) {
             amount >= giver_energy / 6 && amount >= GameDataStateStorage.fields_.turn_current_num_;
 
         if (IsMultiplayerNet != 0) {
-            log_say("Sending ENERGY", giver, receiver, diplo_sub(0, selection));
+            log_say(DiploLabelSendingENERGY, giver, receiver, diplo_sub(0, selection));
             message_data(0x2447, 0, giver, diplo_sub(0, selection), receiver, selection);
             NetDaemonNet.await_diplo(0x447);
         } else {
@@ -9036,7 +9036,7 @@ void __cdecl make_gift(int giver, int receiver) {
             const int is_great_satan = treaty60 == 0 ? great_satan(giver, 0) : 1;
             strcat(StringTemp, treaty60 == 0 && is_great_satan == 0 ? "1" : "2");
             if (IsMultiplayerNet != 0) {
-                log_say("Sending TREATY OFF", giver, receiver, 0x60);
+                log_say(DiploLabelSendingTREATYOFF, giver, receiver, 0x60);
                 message_data(0x2442, 0, giver, receiver, 0x60, 0);
                 NetDaemonNet.await_diplo(0x442);
             } else {
@@ -9126,7 +9126,7 @@ void __cdecl make_gift(int giver, int receiver) {
             strcat(gift_result_key, suffix);
 
             if (IsMultiplayerNet != 0) {
-                log_say("Sending TREATY OFF", giver, receiver, 0x60);
+                log_say(DiploLabelSendingTREATYOFF, giver, receiver, 0x60);
                 message_data(0x2442, 0, giver, receiver, 0x60, 0);
             } else {
                 treaty_off(giver, receiver, 0x60);
@@ -9147,14 +9147,14 @@ void __cdecl make_gift(int giver, int receiver) {
         parse_says(0, Players[giver].title_leader, -1, -1);
 
         if (IsMultiplayerNet != 0) {
-            log_say("Sending CEDE BASE", DiploScratchFA30, receiver, 0);
+            log_say(DiploLabelSendingCEDEBASE, DiploScratchFA30, receiver, 0);
             message_data(0x2449, 0, DiploScratchFA30, receiver, 0, 0);
             NetDaemonNet.await_diplo(0x449);
         } else {
             give_a_base(DiploScratchFA30, receiver);
         }
 
-        log_say("Releasing DIPLOMATIC LOCK", 0, 0, 0);
+        log_say(DiploLabelReleasingDIPLOMATICLOCK, 0, 0, 0);
         NetDaemonNet.unlock();
         char &patience = PlayersData[receiver].diplo_patience[giver];
         patience = static_cast<char>(static_cast<unsigned char>(patience) + 0xFE - favored);
@@ -9259,7 +9259,7 @@ home_swap:
                             PlayersData[faction_id_req].energy_reserves, amount);
                         ConsoleGlobal.update_data(1);
                     } else {
-                        log_say("Sending ENERGY", faction_id_res,
+                        log_say(DiploLabelSendingENERGY, faction_id_res,
                                 faction_id_req, diplo_sub(0, amount));
                         message_data(0x2447, 0, faction_id_res, diplo_sub(0, amount),
                                      faction_id_req, amount);
@@ -9267,13 +9267,13 @@ home_swap:
                     if (IsMultiplayerNet == 0) {
                         give_a_base(DiploScratchFA7C, faction_id_res);
                     } else {
-                    log_say("Sending CEDE BASE", DiploScratchFA7C,
+                    log_say(DiploLabelSendingCEDEBASE, DiploScratchFA7C,
                                 faction_id_res, 0);
                         message_data(0x2449, 0, DiploScratchFA7C,
                                      faction_id_res, 0, 0);
                         NetDaemonNet.await_diplo(0x449);
                     }
-                    log_say("Releasing DIPLOMATIC LOCK", 0, 0, 0);
+                    log_say(DiploLabelReleasingDIPLOMATICLOCK, 0, 0, 0);
                     NetDaemonNet.unlock();
                     X_pops("BASEOK", 0x100000,
                            FactionDiplomacyPortraits[faction_id_req], pop_wait);
@@ -9335,7 +9335,7 @@ home_swap:
                     if (IsMultiplayerNet == 0)
                         tech_achieved(faction_id_req, tech_id, faction_id_res, 0);
                     else {
-                        log_say("Sending TECH", faction_id_req,
+                        log_say(DiploLabelSendingTECH, faction_id_req,
                                 tech_id, faction_id_res);
                         message_data(0x244b, 0, faction_id_req, tech_id,
                                      faction_id_res, 0);
@@ -9346,13 +9346,13 @@ home_swap:
             if (IsMultiplayerNet == 0) {
                 give_a_base(DiploScratchFA7C, faction_id_res);
             } else {
-                log_say("Sending CEDE BASE", selected_base,
+                log_say(DiploLabelSendingCEDEBASE, selected_base,
                         faction_id_res, 0);
                 message_data(0x2449, 0, selected_base,
                              faction_id_res, 0, 0);
                 NetDaemonNet.await_diplo(0x449);
             }
-            log_say("Releasing DIPLOMATIC LOCK", 0, 0, 0);
+            log_say(DiploLabelReleasingDIPLOMATICLOCK, 0, 0, 0);
             NetDaemonNet.unlock();
             X_pops("BASEOK", 0x100000,
                    FactionDiplomacyPortraits[faction_id_req], pop_wait);
@@ -9375,7 +9375,7 @@ home_swap:
             if (IsMultiplayerNet == 0) {
                 give_a_base(DiploScratchFA7C, faction_id_res);
             } else {
-                log_say("Sending CEDE BASE", DiploScratchFA7C,
+                log_say(DiploLabelSendingCEDEBASE, DiploScratchFA7C,
                         faction_id_res, 0);
                 message_data(0x2449, 0, DiploScratchFA7C, faction_id_res, 0, 0);
                 NetDaemonNet.await_diplo(0x449);
@@ -9383,12 +9383,12 @@ home_swap:
             if (IsMultiplayerNet == 0) {
                 give_a_base(DiploScratchFA30, faction_id_req);
             } else {
-                log_say("Sending CEDE BASE", DiploScratchFA30,
+                log_say(DiploLabelSendingCEDEBASE, DiploScratchFA30,
                         faction_id_req, 0);
                 message_data(0x2449, 0, DiploScratchFA30, faction_id_req, 0, 0);
                 NetDaemonNet.await_diplo(0x449);
             }
-            log_say("Releasing DIPLOMATIC LOCK", 0, 0, 0);
+            log_say(DiploLabelReleasingDIPLOMATICLOCK, 0, 0, 0);
             NetDaemonNet.unlock();
             X_pops("YESBASESWAP", 0x100000,
                    FactionDiplomacyPortraits[faction_id_req], pop_wait);
@@ -9570,7 +9570,7 @@ int __cdecl propose_pact(int myFac, int otherFac) {
     if (DiplomacyProposalMode == 3) {
         if (DiploScratchFA24 != 0) {
             if (IsMultiplayerNet != 0) {
-                log_say("Sending SET TREATY", otherFac, myFac, 0x2000000);
+                log_say(DiploLabelSendingSETTREATY, otherFac, myFac, 0x2000000);
                 message_data(0x2443, 0, otherFac, myFac, 0x2000000, 1);
             } else {
                 set_treaty(otherFac, myFac, 0x2000000, 1);
@@ -9743,7 +9743,7 @@ consider_gift:
                     // Native snapshots FAA8 before logging or applying it.
                     const int acceptedTech = DiploScratchFAA8;
                     if (IsMultiplayerNet != 0) {
-                        log_say("Sending TECH", otherFac, acceptedTech, myFac);
+                        log_say(DiploLabelSendingTECH, otherFac, acceptedTech, myFac);
                         message_data(0x244b, 0, otherFac, acceptedTech, myFac, 0);
                         NetDaemonNet.await_diplo(0x44b);
                     } else {
@@ -9752,7 +9752,7 @@ consider_gift:
                     if (DiploScratchFA18 >= 0) {
                         int t2 = DiploScratchFA18;
                         if (IsMultiplayerNet != 0) {
-                            log_say("Sending TECH", otherFac, t2, myFac);
+                            log_say(DiploLabelSendingTECH, otherFac, t2, myFac);
                             message_data(0x244b, 0, otherFac, t2, myFac, 0);
                             NetDaemonNet.await_diplo(0x44b);
                         } else {
@@ -9816,7 +9816,7 @@ consider_gift:
             if (result != 0) {
                 acceptedOffer = true;
                 if (IsMultiplayerNet != 0) {
-                    log_say("Sending ENERGY", myFac, otherFac, -cap);
+                    log_say(DiploLabelSendingENERGY, myFac, otherFac, -cap);
                     message_data(0x2447, 0, myFac, diplo_sub(0, cap), otherFac, cap);
                     NetDaemonNet.await_diplo(0x447);
                 } else {
@@ -9902,25 +9902,25 @@ consider_gift:
             }
 
             if (IsMultiplayerNet != 0) {
-                log_say("Sending DOUBLE CROSS", myFac, threshold, otherFac);
+                log_say(DiploLabelSendingDOUBLECROSS, myFac, threshold, otherFac);
                 message_data(0x2440, 0, myFac, threshold, otherFac, 0);
             } else {
                 double_cross(myFac, threshold, otherFac);
             }
             if (IsMultiplayerNet != 0) {
-                log_say("Sending TREATY OFF", myFac, otherFac, 0x800000);
+                log_say(DiploLabelSendingTREATYOFF, myFac, otherFac, 0x800000);
                 message_data(0x2442, 0, myFac, otherFac, 0x800000, 0);
             } else {
                 treaty_off(myFac, otherFac, 0x800000);
             }
             if (IsMultiplayerNet != 0) {
-                log_say("Sending SET TREATY", otherFac, threshold, 0x40);
+                log_say(DiploLabelSendingSETTREATY, otherFac, threshold, 0x40);
                 message_data(0x2443, 0, otherFac, threshold, 0x40, 1);
                 NetDaemonNet.await_diplo(0x443);
             } else {
                 set_treaty(otherFac, threshold, 0x40, 1);
             }
-            log_say("Releasing DIPLOMATIC LOCK", 0, 0, 0);
+            log_say(DiploLabelReleasingDIPLOMATICLOCK, 0, 0, 0);
             NetDaemonNet.unlock();
             DiploScratchF7E8 = 0;
             DiploScratchFA4C = 0;
@@ -11058,7 +11058,7 @@ void __cdecl propose_trade_maps(int faction_id, int faction_id_with) {
             PlayersData[faction_id_with].diplo_patience[faction_id]) + 2u);
 
     if (IsMultiplayerNet != 0) {
-        log_say("Sending TRADE MAPS", faction_id, faction_id_with, 0);
+        log_say(DiploLabelSendingTRADEMAPS, faction_id, faction_id_with, 0);
         message_data(0x2448, 0, faction_id, faction_id_with, 0, 0);
         NetDaemonNet.await_diplo(0x448);
         DiplomacyMapTransferChanged = 1;
@@ -11204,7 +11204,7 @@ int __cdecl demand_withdrawal(int faction_id, int against_id) {
         const int withdrawal_target = dont_withdrawal(faction_id, against_id);
         if (withdrawal_target != 0 && (response_flags & 2u) != 0) {
             if (IsMultiplayerNet != 0) {
-                log_say("Sending DOUBLE CROSS", against_id, faction_id, -1);
+                log_say(DiploLabelSendingDOUBLECROSS, against_id, faction_id, -1);
                 message_data(0x2440, 0, against_id, faction_id, -1, 0);
                 NetDaemonNet.await_diplo(0x440);
             } else {
@@ -11273,7 +11273,7 @@ int __cdecl demand_withdrawal(int faction_id, int against_id) {
                                               pop_wait);
             if (accepted != 0) {
                 if (IsMultiplayerNet != 0) {
-                    log_say("Sending WITHDRAWAL", against_id, faction_id, 0);
+                    log_say(DiploLabelSendingWITHDRAWAL, against_id, faction_id, 0);
                     message_data(0x244a, 0, against_id, faction_id, 0, 0);
                 } else {
                     do_withdrawal(against_id, faction_id);
@@ -11284,7 +11284,7 @@ int __cdecl demand_withdrawal(int faction_id, int against_id) {
 
     int result;
     if (IsMultiplayerNet != 0) {
-        log_say("Sending WITHDRAWAL", faction_id, against_id, 0);
+        log_say(DiploLabelSendingWITHDRAWAL, faction_id, against_id, 0);
         message_data(0x244a, 0, faction_id, against_id, 0, 0);
         NetDaemonNet.await_diplo(0x44a);
         result = 1;
@@ -11414,7 +11414,7 @@ int __cdecl buy_tech(int faction_id, int other_faction_id, int action,
 
     const int debit = diplo_sub(0, cost);
     if (IsMultiplayerNet != 0) {
-        log_say("Sending ENERGY", faction_id, other_faction_id, debit);
+        log_say(DiploLabelSendingENERGY, faction_id, other_faction_id, debit);
         message_data(0x2447, 0, faction_id, debit, other_faction_id, cost);
     } else {
         if (faction_id != 0) {
@@ -11429,7 +11429,7 @@ int __cdecl buy_tech(int faction_id, int other_faction_id, int action,
     }
     const int purchased_tech = DiploScratchF800;
     if (IsMultiplayerNet != 0) {
-        log_say("Sending TECH", faction_id, purchased_tech, other_faction_id);
+        log_say(DiploLabelSendingTECH, faction_id, purchased_tech, other_faction_id);
         message_data(0x244B, 0, faction_id, purchased_tech, other_faction_id, 0);
         NetDaemonNet.await_diplo(0x44B);
     } else {
@@ -11471,7 +11471,7 @@ int __cdecl energy_trade(int faction, int other) {
             amount = PlayersData[other].energy_reserves;
         const int debit = diplo_sub(0, amount);
         if (IsMultiplayerNet) {
-            log_say("Sending ENERGY", other, faction, debit);
+            log_say(DiploLabelSendingENERGY, other, faction, debit);
             message_data(0x2447, 0, other, debit, faction, amount);
             NetDaemonNet.await_diplo(0x447);
         } else {
@@ -11561,14 +11561,14 @@ int __cdecl energy_trade(int faction, int other) {
             tech = DiploScratchFA18;
         } else tech = DiploScratchFAA8;
         if (IsMultiplayerNet) {
-            log_say("Sending TECH", other, tech, faction);
+            log_say(DiploLabelSendingTECH, other, tech, faction);
             message_data(0x244B, 0, other, tech, faction, 0);
         } else tech_achieved(other, tech, faction, 0);
         if (answer != 2) DiploScratchFAA8 = DiploScratchFA18;
         DiploScratchFA18 = -1;
         const int debit = diplo_sub(0, amount);
         if (IsMultiplayerNet) {
-            log_say("Sending ENERGY", other, faction, debit);
+            log_say(DiploLabelSendingENERGY, other, faction, debit);
             message_data(0x2447, 0, other, debit, faction, amount);
             NetDaemonNet.await_diplo(0x447);
         } else {
@@ -11630,7 +11630,7 @@ int __cdecl energy_trade(int faction, int other) {
             if (!X_pops(StringTemp, 0x100000, FactionDiplomacyPortraits[other], pop_wait))
                 return 0;
             if (IsMultiplayerNet) {
-                log_say("Sending LOAN", faction, other, balance);
+                log_say(DiploLabelSendingLOAN, faction, other, balance);
                 message_data(0x244E, 0, faction, other, balance, periods);
             } else {
                 PlayersData[faction].loan_balance[other] = balance;
@@ -11640,7 +11640,7 @@ int __cdecl energy_trade(int faction, int other) {
             }
             const int debit = diplo_sub(0, principal);
             if (IsMultiplayerNet) {
-                log_say("Sending ENERGY", other, faction, debit);
+                log_say(DiploLabelSendingENERGY, other, faction, debit);
                 message_data(0x2447, 0, other, debit, faction, principal);
                 NetDaemonNet.await_diplo(0x447);
             } else {
@@ -11927,7 +11927,7 @@ int __cdecl propose_treaty(int actor, int other)
             offer_energy_temporary = 1;
             const int energy_debit = diplo_sub(0, treaty_score);
             if (IsMultiplayerNet != 0) {
-                log_say("Sending ENERGY", actor, other, energy_debit);
+                log_say(DiploLabelSendingENERGY, actor, other, energy_debit);
                 message_data(0x2447, 0, actor, energy_debit, other, treaty_score);
                 NetDaemonNet.await_diplo(0x447);
             } else {
@@ -12240,7 +12240,7 @@ void __cdecl threaten(int faction_id, int other_faction_id) {
                 if (IsMultiplayerNet == 0) {
                     double_cross(other_faction_id, allied_faction, faction_id);
                 } else {
-                    log_say("Sending DOUBLE CROSS", other_faction_id,
+                    log_say(DiploLabelSendingDOUBLECROSS, other_faction_id,
                             allied_faction, faction_id);
                     message_data(0x2440, 0, other_faction_id, allied_faction,
                                  faction_id, 0);
@@ -12277,7 +12277,7 @@ void __cdecl threaten(int faction_id, int other_faction_id) {
                 if (IsMultiplayerNet == 0) {
                     double_cross(other_faction_id, allied_faction, faction_id);
                 } else {
-                    log_say("Sending DOUBLE CROSS", other_faction_id,
+                    log_say(DiploLabelSendingDOUBLECROSS, other_faction_id,
                             allied_faction, faction_id);
                     message_data(0x2440, 0, other_faction_id, allied_faction,
                                  faction_id, 0);
@@ -12308,7 +12308,7 @@ after_action:
                     PlayersData[other_faction_id].energy_reserves, demand);
             ConsoleGlobal.update_data(1);
         } else {
-            log_say("Sending ENERGY", faction_id, other_faction_id, demand);
+            log_say(DiploLabelSendingENERGY, faction_id, other_faction_id, demand);
             message_data(0x2447, 0, faction_id, demand, other_faction_id, diplo_sub(0, demand));
             NetDaemonNet.await_diplo(0x447);
         }
@@ -12325,7 +12325,7 @@ after_action:
         if (IsMultiplayerNet == 0) {
             tech_achieved(faction_id, technology, other_faction_id, 0);
         } else {
-            log_say("Sending TECH", faction_id, technology, other_faction_id);
+            log_say(DiploLabelSendingTECH, faction_id, technology, other_faction_id);
             message_data(0x244b, 0, faction_id, technology, other_faction_id, 0);
             NetDaemonNet.await_diplo(0x44b);
         }
@@ -12345,7 +12345,7 @@ after_action:
         if (IsMultiplayerNet == 0) {
             tech_achieved(faction_id, technology, other_faction_id, 0);
         } else {
-            log_say("Sending TECH", faction_id, technology, other_faction_id);
+            log_say(DiploLabelSendingTECH, faction_id, technology, other_faction_id);
             message_data(0x244b, 0, faction_id, technology, other_faction_id, 0);
             NetDaemonNet.await_diplo(0x44b);
         }
@@ -12393,7 +12393,7 @@ after_action:
             if (IsMultiplayerNet == 0) {
                 agenda_on(faction_id, other_faction_id, 0x1000);
             } else {
-                log_say("Sending AGENDA ON", faction_id, other_faction_id, 0x1000);
+                log_say(DiploLabelSendingAGENDAON, faction_id, other_faction_id, 0x1000);
                 message_data(0x2444, 0, faction_id, other_faction_id, 0x1000, 0);
                 NetDaemonNet.await_diplo(0x444);
             }
@@ -12414,7 +12414,7 @@ after_action:
             if (IsMultiplayerNet == 0) {
                 give_a_base(DiploScratchFA7C, faction_id);
             } else {
-                log_say("Sending CEDE BASE", DiploScratchFA7C, faction_id, 0);
+                log_say(DiploLabelSendingCEDEBASE, DiploScratchFA7C, faction_id, 0);
                 message_data(0x2449, 0, DiploScratchFA7C, faction_id, 0, 0);
                 NetDaemonNet.await_diplo(0x449);
             }
@@ -12425,13 +12425,13 @@ after_action:
                 if (IsMultiplayerNet == 0) {
                     set_treaty(other_faction_id, faction_id, 0x20, 1);
                 } else {
-                    log_say("Sending SET TREATY", other_faction_id,
+                    log_say(DiploLabelSendingSETTREATY, other_faction_id,
                             faction_id, 0x20);
                     message_data(0x2443, 0, other_faction_id, faction_id, 0x20, 1);
                     NetDaemonNet.await_diplo(0x443);
                 }
             }
-            log_say("Releasing DIPLOMATIC LOCK", 0, 0, 0);
+            log_say(DiploLabelReleasingDIPLOMATICLOCK, 0, 0, 0);
             NetDaemonNet.unlock();
             goto tail;
         }
@@ -12466,13 +12466,13 @@ after_action:
                     if (IsMultiplayerNet == 0) {
                         pact_ends(faction_id, other_faction_id);
                     } else {
-                        log_say("Sending PACT ENDS", faction_id,
+                        log_say(DiploLabelSendingPACTENDS, faction_id,
                                 other_faction_id, 0);
                         message_data(0x244d, 0, faction_id, other_faction_id,
                                      0, 0);
                         NetDaemonNet.await_diplo(0x44d);
                     }
-                    log_say("Releasing DIPLOMATIC LOCK", 0, 0, 0);
+                    log_say(DiploLabelReleasingDIPLOMATICLOCK, 0, 0, 0);
                     NetDaemonNet.unlock();
                 }
             }
@@ -13253,7 +13253,7 @@ if (proposal_attack_must_double_cross) {
     X_pops("WARPACT", 0x100000,
                  FactionDiplomacyPortraits[other_faction_id], pop_wait);
     if (IsMultiplayerNet != 0) {
-        log_say("Sending DOUBLE CROSS", actor_faction_id,
+        log_say(DiploLabelSendingDOUBLECROSS, actor_faction_id,
                 selected_target_faction_id, other_faction_id);
         message_data(0x2440, 0, other_faction_id,
                      selected_target_faction_id, actor_faction_id, 0);
@@ -13461,7 +13461,7 @@ attack_trade_offer:
                     : selection == 2 ? DiploScratchFA18 : DiploScratchFAA8;
                 if (selection != 3 && tech < 0) continue;
                 if (IsMultiplayerNet != 0) {
-                    log_say("Sending TECH", other, tech, actor);
+                    log_say(DiploLabelSendingTECH, other, tech, actor);
                     message_data(0x244b, 0, other, tech, actor, 0);
                     NetDaemonNet.await_diplo(0x44b);
                 } else {
@@ -13496,7 +13496,7 @@ attack_trade_offer:
         if (popup.exec(0, pop_wait) > 0) {
             const int amount = diplo_sub(0, price);
             if (IsMultiplayerNet != 0) {
-                log_say("Sending ENERGY", actor, other, amount);
+                log_say(DiploLabelSendingENERGY, actor, other, amount);
                 message_data(0x2447, 0, actor, amount, other, price);
                 NetDaemonNet.await_diplo(0x447);
             } else {
@@ -14207,7 +14207,7 @@ enum TechTradeTailEntry {
 static void tech_trade_dispatch_technology(int recipient, int technology,
                                            int source) {
     if (IsMultiplayerNet != 0) {
-        log_say("Sending TECH", recipient, technology, source);
+        log_say(DiploLabelSendingTECH, recipient, technology, source);
         message_data(0x244B, 0, recipient, technology, source, 0);
         NetDaemonNet.await_diplo(0x44B);
     } else {
@@ -14399,7 +14399,7 @@ static TechTradeTailEntry tech_trade_commit_dialog_state(
         }
     }
     if (IsMultiplayerNet != 0) {
-        log_say("Sending AGENDA ON", partner, actor, 0x180);
+        log_say(DiploLabelSendingAGENDAON, partner, actor, 0x180);
         message_data(0x2444, 0, partner, actor, 0x180, 0);
     } else {
         agenda_on(partner, actor, 0x180);
@@ -14408,7 +14408,7 @@ static TechTradeTailEntry tech_trade_commit_dialog_state(
     if (DiploScratchF800 < 0) DiploScratchF800 = 0x270F;
     int selected = DiploScratchFAA8;
     if (IsMultiplayerNet != 0) {
-        log_say("Sending TECH", partner, selected, actor);
+        log_say(DiploLabelSendingTECH, partner, selected, actor);
         message_data(0x244B, 0, partner, selected, actor, 0);
         NetDaemonNet.await_diplo(0x44B);
     } else {
@@ -14417,7 +14417,7 @@ static TechTradeTailEntry tech_trade_commit_dialog_state(
 
     selected = DiploScratchF800;
     if (IsMultiplayerNet != 0) {
-        log_say("Sending TECH", actor, selected, partner);
+        log_say(DiploLabelSendingTECH, actor, selected, partner);
         message_data(0x244B, 0, actor, selected, partner, 0);
         NetDaemonNet.await_diplo(0x44B);
     } else {
@@ -14839,7 +14839,7 @@ void __cdecl make_a_proposal(int faction_id, int other_faction_id,
 
         const int amount = PlayersData[faction_id].loan_balance[other_faction_id];
         if (IsMultiplayerNet != 0) {
-            log_say("Sending ENERGY", faction_id, other_faction_id,
+            log_say(DiploLabelSendingENERGY, faction_id, other_faction_id,
                     diplo_sub(0, amount));
             message_data(0x2447, 0, faction_id, diplo_sub(0, amount), other_faction_id,
                          amount);
@@ -14857,7 +14857,7 @@ void __cdecl make_a_proposal(int faction_id, int other_faction_id,
         }
 
         if (IsMultiplayerNet != 0) {
-            log_say("Sending LOAN", faction_id, other_faction_id, 0);
+            log_say(DiploLabelSendingLOAN, faction_id, other_faction_id, 0);
             message_data(0x244e, 0, faction_id, other_faction_id, 0, 0);
         } else {
             PlayersData[faction_id].loan_balance[other_faction_id] = 0;

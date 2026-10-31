@@ -397,13 +397,13 @@ if (communicate_getout_result == 0) {
         (void)timeGetTime();
     }
     if (IsMultiplayerNet != 0) {
-        log_say("Sending WITHDRAWAL", peer_id, faction_id, 0);
+        log_say(DiploLabelSendingWITHDRAWAL, peer_id, faction_id, 0);
         message_data(0x244A, 0, peer_id, faction_id, 0, 0);
         NetDaemonNet.await_diplo(0x44A);
     } else {
         do_withdrawal(peer_id, faction_id);
     }
-    log_say("Releasing DIPLOMATIC LOCK", 0, 0, 0);
+    log_say(DiploLabelReleasingDIPLOMATICLOCK, 0, 0, 0);
     NetDaemonNet.unlock();
     if ((dialogue_flags & 3) == 0) {
         goto communicate_cleanup; // native 0x005587C8
@@ -464,20 +464,20 @@ while (ExitTurnLoop == 0) {
     (void)timeGetTime();
 }
 if (IsMultiplayerNet != 0) {
-    log_say("Sending WITHDRAWAL", peer_id, faction_id, 0);
+    log_say(DiploLabelSendingWITHDRAWAL, peer_id, faction_id, 0);
     message_data(0x244A, 0, peer_id, faction_id, 0, 0);
     NetDaemonNet.await_diplo(0x44A);
 } else {
     do_withdrawal(peer_id, faction_id);
 }
 if (IsMultiplayerNet != 0) {
-    log_say("Sending WITHDRAWAL", faction_id, peer_id, 0);
+    log_say(DiploLabelSendingWITHDRAWAL, faction_id, peer_id, 0);
     message_data(0x244A, 0, faction_id, peer_id, 0, 0);
     NetDaemonNet.await_diplo(0x44A);
 } else {
     do_withdrawal(faction_id, peer_id);
 }
-log_say("Releasing DIPLOMATIC LOCK", 0, 0, 0);
+log_say(DiploLabelReleasingDIPLOMATICLOCK, 0, 0, 0);
 NetDaemonNet.unlock();
 X_pops("BOTHOUT", 0x00100000,
              FactionDiplomacyPortraits[peer_id], pop_wait);
@@ -510,13 +510,13 @@ while (ExitTurnLoop == 0) {
     (void)timeGetTime();
 }
 if (IsMultiplayerNet != 0) {
-    log_say("Sending DOUBLE CROSS", faction_id, peer_id, -1);
+    log_say(DiploLabelSendingDOUBLECROSS, faction_id, peer_id, -1);
     message_data(0x2440, 0, faction_id, peer_id, -1, 0);
     NetDaemonNet.await_diplo(0x440);
 } else {
     double_cross(faction_id, peer_id, -1);
 }
-log_say("Releasing DIPLOMATIC LOCK", 0, 0, 0);
+log_say(DiploLabelReleasingDIPLOMATICLOCK, 0, 0, 0);
 NetDaemonNet.unlock();
 // The subsequent parser/string path begins at native 0x0055075E; slot 3's
 // native source type remains separately under review.
@@ -554,7 +554,7 @@ if ((dialogue_flags & 8) != 0) {
     territory(peer_id, faction_id, 0, &communicate_territory_base_id, 0);
     if ((dialogue_flags & 0x10) != 0) {
         if (IsMultiplayerNet != 0) {
-            log_say("Sending SET TREATY", faction_id, peer_id, 0x400);
+            log_say(DiploLabelSendingSETTREATY, faction_id, peer_id, 0x400);
             message_data(0x2443, 0, faction_id, peer_id, 0x400, 1);
             NetDaemonNet.await_diplo(0x443);
         } else {
@@ -614,14 +614,14 @@ if (contact_flags != 0) {
 PlayersData[faction_id].diplo_spoke[peer_id] = GameDataStateStorage.fields_.turn_current_num_;
 PlayersData[peer_id].diplo_patience[faction_id] = 0;
 if (IsMultiplayerNet) {
-    log_say("Sending TREATY OFF", faction_id, peer_id, 0x04000000);
+    log_say(DiploLabelSendingTREATYOFF, faction_id, peer_id, 0x04000000);
     message_data(0x2442, 0, faction_id, peer_id, 0x04000000, 0);
     NetDaemonNet.await_diplo(0x442);
 } else {
     treaty_off(peer_id, faction_id, 0x04000000);
 }
 if (IsMultiplayerNet) {
-    log_say("Sending AGENDA OFF", faction_id, peer_id, 0x100);
+    log_say(DiploLabelSendingAGENDAOFF, faction_id, peer_id, 0x100);
     message_data(0x2445, 0, faction_id, peer_id, 0x100, 0);
     NetDaemonNet.await_diplo(0x445);
 } else {
@@ -632,7 +632,7 @@ if ((PlayersData[peer_id].diplo_treaties[faction_id] & 0x00010000u) != 0 ||
     goto communicate_after_intro; // native 0x00550E18
 }
 if (IsMultiplayerNet) {
-    log_say("Sending TREATY OFF", faction_id, peer_id, 4);
+    log_say(DiploLabelSendingTREATYOFF, faction_id, peer_id, 4);
     message_data(0x2442, 0, faction_id, peer_id, 4, 0);
     NetDaemonNet.await_diplo(0x442);
 } else {
@@ -649,7 +649,7 @@ communicate_contact_flags_path: // native 0x00550BBC
 if ((PlayersData[faction_id].diplo_treaties[peer_id] & 0x00002000u) != 0) {
     PlayersData[peer_id].diplo_patience[faction_id] = 0;
     if (IsMultiplayerNet) {
-        log_say("Sending TREATY OFF", faction_id, peer_id, 0x04000000);
+        log_say(DiploLabelSendingTREATYOFF, faction_id, peer_id, 0x04000000);
         message_data(0x2442, 0, faction_id, peer_id, 0x04000000, 0);
         NetDaemonNet.await_diplo(0x442);
     } else {
@@ -854,7 +854,7 @@ goto communicate_after_trade; // native 0x005571E7
 communicate_no_pact_pact_branch: // native 0x00551168
 pact_of_brotherhood(faction_id, peer_id);
 if (IsMultiplayerNet != 0) {
-    log_say("Sending TREATY OFF", faction_id, peer_id, 0x60);
+    log_say(DiploLabelSendingTREATYOFF, faction_id, peer_id, 0x60);
     message_data(0x2442, 0, faction_id, peer_id, 0x60, 0);
 } else {
     treaty_off(faction_id, peer_id, 0x60);
@@ -931,7 +931,7 @@ if (IsMultiplayerNet) {
     treaty_on(faction_id, peer_id, 0x00800000);
 }
 if (IsMultiplayerNet) {
-    log_say("Sending TREATY OFF", faction_id, peer_id, 0x01000000);
+    log_say(DiploLabelSendingTREATYOFF, faction_id, peer_id, 0x01000000);
     message_data(0x2442, 0, faction_id, peer_id, 0x01000000, 0);
 } else {
     treaty_off(faction_id, peer_id, 0x01000000);
@@ -995,13 +995,13 @@ if (communicate_treaty_topic_result != 0) {
     (void)diplo_lock(0);
     pact_of_brotherhood(faction_id, peer_id);
     if (IsMultiplayerNet) {
-        log_say("Sending TREATY OFF", faction_id, peer_id, 0x60);
+        log_say(DiploLabelSendingTREATYOFF, faction_id, peer_id, 0x60);
         message_data(0x2442, 0, faction_id, peer_id, 0x60, 0);
     } else {
         treaty_off(faction_id, peer_id, 0x60);
     }
     if (IsMultiplayerNet) {
-        log_say("Sending DOUBLE CROSS", faction_id, DiploScratchF7E8, peer_id);
+        log_say(DiploLabelSendingDOUBLECROSS, faction_id, DiploScratchF7E8, peer_id);
         message_data(0x2440, 0, faction_id, DiploScratchF7E8, peer_id, 0);
         NetDaemonNet.await_diplo(0x440);
     } else {
@@ -1023,7 +1023,7 @@ if (IsMultiplayerNet) {
     treaty_on(faction_id, peer_id, 0x00800000);
 }
 if (IsMultiplayerNet) {
-    log_say("Sending TREATY OFF", faction_id, peer_id, 0x01000000);
+    log_say(DiploLabelSendingTREATYOFF, faction_id, peer_id, 0x01000000);
     message_data(0x2442, 0, faction_id, peer_id, 0x01000000, 0);
 } else {
     treaty_off(faction_id, peer_id, 0x01000000);
@@ -1182,7 +1182,7 @@ if (IsMultiplayerNet) {
     treaty_on(faction_id, peer_id, 0x00800000);
 }
 if (IsMultiplayerNet) {
-    log_say("Sending TREATY OFF", faction_id, peer_id, 0x01000000);
+    log_say(DiploLabelSendingTREATYOFF, faction_id, peer_id, 0x01000000);
     message_data(0x2442, 0, faction_id, peer_id, 0x01000000, 0);
 } else {
     treaty_off(faction_id, peer_id, 0x01000000);
@@ -1204,13 +1204,13 @@ if (IsMultiplayerNet) {
     treaty_on(faction_id, peer_id, 0x01000000);
 }
 if (IsMultiplayerNet) {
-    log_say("Sending TREATY OFF", faction_id, peer_id, 0x00800000);
+    log_say(DiploLabelSendingTREATYOFF, faction_id, peer_id, 0x00800000);
     message_data(0x2442, 0, faction_id, peer_id, 0x00800000, 0);
 } else {
     treaty_off(faction_id, peer_id, 0x00800000);
 }
 if (IsMultiplayerNet) {
-    log_say("Sending DOUBLE CROSS", faction_id, DiploScratchF7E8, peer_id);
+    log_say(DiploLabelSendingDOUBLECROSS, faction_id, DiploScratchF7E8, peer_id);
     message_data(0x2440, 0, faction_id, DiploScratchF7E8, peer_id, 0);
     NetDaemonNet.await_diplo(0x440);
 } else {
@@ -1327,7 +1327,7 @@ net_treaty_on(faction_id, peer_id, 0x01000000, 0);
 net_treaty_off(faction_id, peer_id, 0x00800000, 0);
 net_double_cross(faction_id, DiploScratchF7D4, peer_id, 1);
 net_treaty_on(faction_id, DiploScratchF7D4, 0x08000008, 0);
-log_say("Releasing DIPLOMATIC LOCK", 0, 0, 0);
+log_say(DiploLabelReleasingDIPLOMATICLOCK, 0, 0, 0);
 NetDaemonNet.unlock();
 // Native reloads the current target only after callbacks and lock release.
 DiploScratchFA8C = DiploScratchF7D4;
@@ -1364,7 +1364,7 @@ if (ExitTurnLoop == 0) {
     }
 }
 if (IsMultiplayerNet != 0) {
-    log_say("Sending SET TREATY", faction_id, DiploScratchF7D4,
+    log_say(DiploLabelSendingSETTREATY, faction_id, DiploScratchF7D4,
             0x10000000);
     message_data(0x2443, 0, faction_id, DiploScratchF7D4,
                  0x10000000, 1);
@@ -1379,13 +1379,13 @@ if (IsMultiplayerNet != 0) {
     treaty_on(faction_id, peer_id, 0x01000000);
 }
 if (IsMultiplayerNet != 0) {
-    log_say("Sending TREATY OFF", faction_id, peer_id, 0x00800000);
+    log_say(DiploLabelSendingTREATYOFF, faction_id, peer_id, 0x00800000);
     message_data(0x2442, 0, faction_id, peer_id, 0x00800000, 0);
 } else {
     treaty_off(faction_id, peer_id, 0x00800000);
 }
 if (IsMultiplayerNet != 0) {
-    log_say("Sending DOUBLE CROSS", faction_id, DiploScratchF7D4,
+    log_say(DiploLabelSendingDOUBLECROSS, faction_id, DiploScratchF7D4,
             faction_id);
     message_data(0x2440, 0, faction_id, DiploScratchF7D4, peer_id, 0);
     NetDaemonNet.await_diplo(0x440);
