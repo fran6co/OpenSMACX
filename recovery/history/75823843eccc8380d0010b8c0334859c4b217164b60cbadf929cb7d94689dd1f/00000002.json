@@ -1,0 +1,20 @@
+{
+  "event_id": "98f39882d8fd31cf249c4e64346092cfb4e9de5e5eb69a930717593d20d869f1",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_encrypt_read_actual_source.py"
+    ],
+    "evidence": [
+      "Pinned encrypt_read5A685C..5A6866 decrements remaining each pair; source correctly restored this, but prior hostoracle enforces superseded unchanged-total interpretation and treats the original decrement as damage.",
+      "Correct hostoracle and damage control to reproduce actual original per-pair remaining behavior including odd/single/zero-wrap/error paths. Do not change recovered C++ or disable tests."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "0ad029daceb04413fd64ce0a0e077485653b82508c94710d381305324d2d2d6c",
+  "request_id": "map-host-correctness-oct31bm",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:easy-map-oct31bl"
+}
