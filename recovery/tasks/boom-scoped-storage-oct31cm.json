@@ -1,0 +1,25 @@
+{
+  "author": "coordinator",
+  "base_revision": "bfa8918f264cc63f95f7aaf3b2c1f50399490c1a",
+  "editable_files": [
+    "src/veh.cpp",
+    "recovery/tests/test_boom_live_window_reload_oct21.py",
+    "recovery/tests/test_boom_scale_storage_oct31cm.py"
+  ],
+  "evidence": [
+    "Pinned initializers504B94..504C06 identify eight colour words and contiguous eight scale words;504C5D/64 read scales at level+3/level-1 relative to scale start. Results captured504C6B/6E precede8DWORDactiveflags overwriting the span window. Currentint[28] merges separate later-live colour and early scale storage.",
+    "Producer500B60 and directcaller508F96 do not establish level1..4: nonzero reactor byte may exceed4 and producer can select0 after focus. Faction505953 is unchecked byte0..255. Candidate must retain unchecked indices/uninitialized/invalid paths as unresolved restoration obligations, no clamps, holes initialized, padding, manual frame union or forced aliasing. No complete original capacity is granted by initializer count.",
+    "Authorize one initial ordinary C++ candidate: live colour8 initialized words plus a scoped early8word scale group, scalar capture before laterflags. Actual full source/compiler snapshots, all current veh owner exacts and generated wrappers must be preserved; no source publication until review/build/scoped native checks. No automatic reverting justified structure solely on a byte regression. Coordinator owns Git/preparation/leases."
+  ],
+  "intent": "Recover distinct BOOM colour/scale object windows and temporary lifetimes without normalizing unchecked inputs.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5261984,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "boom-scoped-storage-oct31cm"
+}
