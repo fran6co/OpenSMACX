@@ -2416,7 +2416,7 @@ int BasePop::on_key_down(int key) {
                 // force the second walk - VC6 emits its adjustor's null guard
                 // for a base-subobject reference (test/je/lea/jmp/xor), 10 of
                 // 33. Same wall as the dialogs() accessor note in basepop.h.
-                selected_id_ = dialogs_.Dialog::selected_position_;
+                selected_id_ = dialogs_.CheckBox::state_word();
                 return 1;
             }
             selected_id_ = dialogs_.Dialog::get_selected_id();
@@ -2456,9 +2456,9 @@ void __cdecl BasePop::double_click(int button_id) {
         if (tab != 1) {
             if (tab != -1) {
                 if (pop->dialogs_.Dialog::item_list_.entry_count_ != 0) {
-                    if (tab == 1) {
+                    if (pop->dialogs_.kind_ == 1) {
                         pop->selected_id_ =
-                            pop->dialogs_.Dialog::selected_position_;
+                            pop->dialogs_.CheckBox::state_word();
                     } else {
                         pop->selected_id_ =
                             pop->dialogs_.Dialog::get_selected_id();
@@ -2749,26 +2749,30 @@ void BasePop::on_button_clicked(int button_id) {
     selected_id_ = 0;
     if (dialogs_.get_num_items() != 0) {
         if (dialogs_.kind_ == 1) {
-            selected_id_ = dialogs_.Dialog::selected_position_;
+            selected_id_ = dialogs_.CheckBox::state_word();
         } else {
             selected_id_ = dialogs_.Dialog::get_selected_id();
         }
     }
-    if (button_id == -2) {
+    switch (button_id) {
+    case -2:
         if ((field_30A8_ & 0x40) != 0) {
             selected_id_ = -1;
         }
+        // Both close commands end the modal pump.
+        // fall through
+    case -1:
         field_3100_ = 0;
-    } else if (button_id != -1) {
+        break;
+    default:
         field_3100_ = button_id;
-    } else {
-        field_3100_ = 0;
+        break;
     }
     if ((field_30A8_ & 0x100) == 0) {
-        if (external_window_ == 0) {
-            release_modal();
-        } else {
+        if (external_window_ != 0) {
             external_window_->release_modal();
+        } else {
+            release_modal();
         }
     }
     if ((field_30A8_ & 0x4000) != 0) {
@@ -3160,15 +3164,10 @@ int BasePop::UNK2() {
 
     // Keep the nonnegative-count gate, then use StringStruct's existing inline
     // seek_pos body for the original -1 selection and its two abs calls.
-    if (item_ids_.entry_count_ - 1 >= -1) {
-        item_ids_.seek_pos(-1);
-    }
+    item_ids_.seek_pos(-1);
 
     for (int i = 0; i < item_ids_.entry_count_; ++i) {
-        if (item_ids_.head_ != 0) {
-            // Reuse the existing inline next_entry state transition.
-            item_ids_.next_entry();
-        }
+        item_ids_.next_entry();
 
         // Preserve the pin's null-payload dereference when current_ exists but
         // the list head is absent; current_entry owns the observed head check.

@@ -2487,7 +2487,7 @@ void __cdecl quick_zoc(int x_src, int y_src, int faction_id, int x_dst, int y_ds
             int owner = veh_who(x_radius, y_radius);
             if (owner >= 0 && owner != faction_id
                 && is_ocean(x_radius, y_radius) == is_src_ocean
-                && !has_treaty(faction_id, owner, DTREATY_PACT)) {
+                && !(PlayersData[faction_id].diplo_treaties[owner] & DTREATY_PACT)) {
                 // image inlines BOTH vector_dist(x,y,x,y) and vector_dist(x,y) at this
                 // one call site (4 direct `abs()` calls, no call to either helper), while
                 // both keep real callers elsewhere - so the body is duplicated here rather
@@ -2915,7 +2915,7 @@ int __cdecl zoc_any(int x, int y, int faction_id) {
                 int owner = tile->val2 & 0xF;
                 if (owner < MaxPlayerNum
                     && owner >= 0 && (uint32_t)owner != faction_id
-                    && !has_treaty(faction_id, owner, DTREATY_PACT)) {
+                    && !(PlayersData[faction_id].diplo_treaties[owner] & DTREATY_PACT)) {
                     return owner + 1;
                 }
             }
@@ -2949,7 +2949,7 @@ int __cdecl zoc_veh(int x, int y, int faction_id) {
         if (on_map(x_radius, y_radius)) {
             int owner = veh_who(x_radius, y_radius);
             if (owner >= 0 && owner != faction_id
-                && !has_treaty(faction_id, owner, DTREATY_PACT)) {
+                && !(PlayersData[faction_id].diplo_treaties[owner] & DTREATY_PACT)) {
                 owner++;
                 if (ret <= owner) {
                     ret = owner; // any point in continuing after 1st instance of ZOC is found?
@@ -2986,7 +2986,7 @@ int __cdecl zoc_sea(int x, int y, int faction_id) {
             int owner = veh_who(x_radius, y_radius);
             if (owner >= 0 && (uint32_t)owner != faction_id
                 && is_ocean(x_radius, y_radius) == is_ocean_tile
-                && !has_treaty(faction_id, owner, DTREATY_PACT)) {
+                && !(PlayersData[faction_id].diplo_treaties[owner] & DTREATY_PACT)) {
                 for (int veh_id = veh_at(x_radius, y_radius); veh_id >= 0;
                     veh_id = Vehs[veh_id].next_veh_id_stack) {
                     if (Vehs[veh_id].faction_id != faction_id

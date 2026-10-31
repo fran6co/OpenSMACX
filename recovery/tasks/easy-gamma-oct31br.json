@@ -1,0 +1,88 @@
+{
+  "author": "coordinator",
+  "base_revision": "aebdd84ed5798a6342ba1fb4cb44e1e3d86c4097",
+  "editable_files": [
+    "src/gamma.cpp",
+    "recovery/tests/test_gamma_actual_source_oct31br.py",
+    "recovery/project.json",
+    "recovery/tests/test_win_callback_contracts_actual_source_oct6.py",
+    "recovery/tests/test_gamma_return.py",
+    "recovery/tests/test_gamma_inline_lifetime.py"
+  ],
+  "evidence": [
+    "Advisory short-function near misses seed the queue; actual qualified application baseline, current source and retained history must be checked before each hypothesis. Newly source-bound switch data is original evidence only, not free matching progress.",
+    "Full-owner packets up to24functions, maximum3explained new forms per function and6candidate TU compiles. Batch independent edits; inspect all owner mappings per compile. Do not requeue exhausted same-context spellings because annotations/task names changed.",
+    "Preserve original unsafe/error paths, all identities/spans/claims and structural discoveries. Coordinator owns Git/config/preparation/recording/integration; headers and shared fixtures need scope expansion. No assembly, machine-code copies, old-address stand-ins, forced volatile/noinline or claim demotion."
+  ],
+  "intent": "Bounded parallel easy matching pass and immediate evidence-backed structural recovery.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4547200,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6065760,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6067488,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6067232,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6066992,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6067680,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4546832,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6067136,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6067216,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6067088,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6065568,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4547248,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6067104,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "recovery/driver.json",
+  "task_id": "easy-gamma-oct31br"
+}

@@ -2200,7 +2200,7 @@ only reaches here when a caller passed a heap at all.
 void *TexHeap::get_mem(int size) {
     if (base_ != 0) {
         int index = 0;
-        int count = static_cast<int>(count_) + 1;
+        int count = static_cast<int>(count_ + 1u);
         if (count > 0) {
             Heap **blocks = blocks_;
             while (index < count) {
@@ -2240,7 +2240,7 @@ Status: Promoted from src/recovered/units/00635370.cpp.
 void *TexHeap::get_tex_mem(int size) {
     if (base_ != 0) {
         int index = 0;
-        int count = static_cast<int>(count_) + 1;
+        int count = static_cast<int>(count_ + 1u);
         if (count > 0) {
             Heap **blocks = blocks_;
             for (; index < count; ++index) {
@@ -2735,7 +2735,7 @@ void TexHeap::shutdown() {
     if (blocks_ != 0) {
         // The image re-reads count_ for the loop test at every iteration, so
         // the bound stays an expression over the field rather than a local.
-        for (int index = 0; index < static_cast<int>(count_) + 1; ++index) {
+        for (int index = 0; index < static_cast<int>(count_ + 1u); ++index) {
             Heap *block = blocks_[index];
             if (block != 0) {
                 free(block);
@@ -3307,7 +3307,10 @@ int Sprite::init(char *filename, int width, int height) {
         return 0x10;
     }
     if (fObj1Exists_ == 0 && pcBits_ != 0) {
-        SpriteMemoryUsed -= iSpriteHeight_ * iSpriteWidth_;
+        SpriteMemoryUsed = static_cast<int>(
+            static_cast<uint32_t>(SpriteMemoryUsed)
+            - static_cast<uint32_t>(iSpriteHeight_)
+                  * static_cast<uint32_t>(iSpriteWidth_));
         if (pcBits_ != 0) {
             free(pcBits_);
         }
@@ -3350,7 +3353,7 @@ void TexHeap::release_allocations() {
     if (blocks_ != 0) {
         // The image re-reads count_ for the loop test at every iteration, so
         // the bound stays an expression over the field rather than a local.
-        for (int index = 0; index < static_cast<int>(count_) + 1; ++index) {
+        for (int index = 0; index < static_cast<int>(count_ + 1u); ++index) {
             Heap *block = blocks_[index];
             if (block != 0) {
                 free(block);

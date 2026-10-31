@@ -70,7 +70,11 @@ struct Dialog {
   int get_selected_id() { return selected_id_; }
 };
 
-struct Dialogs : Dialog {
+struct CheckBox : virtual Dialog {
+  unsigned int state_word() const { return Dialog::selected_position_; }
+};
+
+struct Dialogs : CheckBox {
   int kind_;
   Dialogs() : kind_(-1) {}
   int get_num_items() { return item_list_.entry_count_; }

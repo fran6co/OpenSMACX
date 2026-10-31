@@ -382,13 +382,16 @@
       },
       "src/gamma.cpp": {
         "flags": [
-          "/c",
-          "/O2",
-          "/Gy",
-          "/GR-",
+          "/nologo",
+          "/TP",
+          "/Zm200",
           "/GX",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W4",
           "/Oy-",
-          "/Ob2"
+          "-c"
         ]
       },
       "src/pushbutton.cpp": {
@@ -1190,6 +1193,19 @@
           "-MT",
           "/W4",
           "/Oy-",
+          "-c"
+        ]
+      },
+      "src/basepop.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W4",
           "-c"
         ]
       }

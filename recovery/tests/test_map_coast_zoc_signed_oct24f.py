@@ -115,6 +115,24 @@ static int MapIsFlat, MapLongitudeBounds, MapLatitudeBounds;
 static int mutate_mask_on_call;
 static bool pact_for_owner[16];
 
+// Observe the actual source-owned treaty lvalue, including both indices.
+struct TreatyRow {
+    int faction;
+    uint32_t operator[](int owner) const {
+        assert(faction >= 0 && faction < 8 && owner >= 0 && owner < 8);
+        treaty_owners.push_back(owner);
+        events.push_back("treaty:" + std::to_string(faction) + ":" +
+                         std::to_string(owner));
+        // Other treaty bits must not make a non-pact owner exempt from ZOC.
+        return 0x20 | (pact_for_owner[owner] ? DTREATY_PACT : 0);
+    }
+};
+struct Player { TreatyRow diplo_treaties; };
+struct PlayerTable {
+    Player operator[](int faction) const { return Player{TreatyRow{faction}}; }
+};
+static PlayerTable PlayersData;
+
 static void event(const char *name, int x = 0, int y = 0) {
     events.push_back(std::string(name) + ":" + std::to_string(x) + ":" +
                      std::to_string(y));
@@ -162,9 +180,7 @@ static void bitmask(int input, int *offset, int *mask) {
 }
 static BOOL has_treaty(int faction, int owner, int treaty) {
     assert(treaty == DTREATY_PACT);
-    treaty_owners.push_back(owner);
-    event("treaty", faction, owner);
-    return pact_for_owner[owner];
+    return PlayersData[faction].diplo_treaties[owner] & treaty;
 }
 
 // The extracted actual inline helper preserves the typed nibble/bounds path.
@@ -274,6 +290,11 @@ static void test_zoc_veh_owner_domain_treaties_and_maximum() {
     pact_for_owner[7] = true;
     assert(zoc_veh(x, y, faction) == 7); // max eligible owner + one (owner 6)
     assert((treaty_owners == std::vector<int>{2, 7, 4, 0, 6}));
+    assert(std::count(events.begin(), events.end(), "treaty:1:2") == 1);
+    assert(std::count(events.begin(), events.end(), "treaty:1:7") == 1);
+    assert(std::count(events.begin(), events.end(), "treaty:1:4") == 1);
+    assert(std::count(events.begin(), events.end(), "treaty:1:0") == 1);
+    assert(std::count(events.begin(), events.end(), "treaty:1:6") == 1);
     assert(ocean_x.empty());
 }
 
@@ -341,11 +362,21 @@ def test_map_signed_candidate_behavior_and_causal_controls(compiler_name: str, t
     assert first_zoc['zoc'].count(old_max) == 1
     first_zoc['zoc'] = first_zoc['zoc'].replace(old_max, new_max, 1)
 
+    wrong_treaty = dict(bodies)
+    assert wrong_treaty['zoc'].count('& DTREATY_PACT') == 1
+    wrong_treaty['zoc'] = wrong_treaty['zoc'].replace('& DTREATY_PACT', '& 0x20', 1)
+
+    wrong_faction = dict(bodies)
+    assert wrong_faction['zoc'].count('PlayersData[faction_id]') == 1
+    wrong_faction['zoc'] = wrong_faction['zoc'].replace('PlayersData[faction_id]', 'PlayersData[0]', 1)
+
     for label, mutant in (
         ('sentinel_load', sentinel_mutant),
         ('coast_skip', skip_base),
         ('port_skip', skip_port),
         ('zoc_first_owner', first_zoc),
+        ('zoc_wrong_treaty', wrong_treaty),
+        ('zoc_wrong_faction', wrong_faction),
     ):
         result = _compile_run(compiler, _harness(mutant), tmp_path, label)
         assert result.returncode != 0, f'{label} mutant escaped the behavioral oracle'
