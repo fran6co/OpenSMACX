@@ -1,0 +1,22 @@
+{
+  "author": "recovery-coordinator",
+  "base_revision": "6734684d0cf93fb50ff6d35fa2b506bcb3edd926",
+  "editable_files": [
+    "src/newtechwin.cpp",
+    "recovery/project.json"
+  ],
+  "evidence": [
+    "Pinned inspect/current actual application disassembly; history-first audit retained under ignored /home/fran6co/code/OpenSMACX/.opensmacx/recovery/fast-pass-oct30ol/easy-newtech-branch-load-oct31as"
+  ],
+  "intent": "Bounded original value-flow spelling test; preserve all claims and original quirks; no acceptance grant.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4734640,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "easy-newtech-branch-load-oct31as"
+}
