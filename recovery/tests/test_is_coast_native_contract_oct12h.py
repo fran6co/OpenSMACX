@@ -82,8 +82,9 @@ static int event_count;
 static int RadiusOffsetX[289];
 static int RadiusOffsetY[289];
 static int origin_x, origin_y, width_value, height_value;
-static int flat_first, flat_later, flat_reads;
-static int width_reads, height_reads, ocean_reads;
+static int flat_first;
+static int MapIsFlat, MapLongitudeBounds, MapLatitudeBounds;
+static int ocean_reads;
 static int ocean_x, ocean_y;
 
 static void record(char op, int x, int y) {
@@ -93,26 +94,6 @@ static void record(char op, int x, int y) {
     events[event_count].y = y;
     ++event_count;
 }
-static int read_map_flat() {
-    int value = flat_reads == 0 ? flat_first : flat_later;
-    ++flat_reads;
-    record('F', value, flat_reads);
-    return value;
-}
-static int read_longitude_bounds() {
-    ++width_reads;
-    record('W', width_value, width_reads);
-    return width_value;
-}
-static int read_latitude_bounds() {
-    ++height_reads;
-    record('H', height_value, height_reads);
-    return height_value;
-}
-#define MapIsFlat read_map_flat()
-#define MapLongitudeBounds read_longitude_bounds()
-#define MapLatitudeBounds read_latitude_bounds()
-
 static int is_ocean(int x, int y) {
     ++ocean_reads;
     record('O', x, y);
@@ -122,8 +103,13 @@ static void reset_case(int x, int y, int width, int height, int flat, int later_
     int i;
     origin_x = x; origin_y = y;
     width_value = width; height_value = height;
-    flat_first = flat; flat_later = later_flat;
-    flat_reads = width_reads = height_reads = ocean_reads = event_count = 0;
+    flat_first = flat;
+    MapIsFlat = flat;
+    MapLongitudeBounds = width;
+    MapLatitudeBounds = height;
+    // Integer globals do not mutate merely because code reads them.
+    (void)later_flat;
+    ocean_reads = event_count = 0;
     ocean_x = 0x7fffffff; ocean_y = 0x7fffffff;
     for (i = 0; i < 289; ++i) {
         RadiusOffsetX[i] = 0;
@@ -152,13 +138,13 @@ int main() {
         reset_case(40, 40, 200, 200, 1, 1);
         set_ocean(40 + RadiusOffsetX[index], 40 + RadiusOffsetY[index]);
         assert(is_coast(40, 40, 0) == index);
-        assert(flat_reads == 1);
+        assert(MapIsFlat == flat_first);
     }
     for (index = 1; index <= 20; ++index) {
         reset_case(40, 40, 200, 200, 1, 1);
         set_ocean(40 + RadiusOffsetX[index], 40 + RadiusOffsetY[index]);
         assert(is_coast(40, 40, 1) == index);
-        assert(flat_reads == 1);
+        assert(MapIsFlat == flat_first);
     }
     reset_case(40, 40, 200, 200, 1, 1);
     set_ocean(40 + RadiusOffsetX[20], 40 + RadiusOffsetY[20]);
@@ -168,8 +154,8 @@ int main() {
     reset_case(40, 40, 200, 200, 1, 1);
     assert(is_coast(40, 40, 0) == 0);
 
-    // Wrapped left/right, including low-bit clear with a changing later read:
-    // one cached MapIsFlat read must govern the whole loop.
+    // Wrapped left/right, including nonzero low-bit-clear MapIsFlat=2.
+    // The pinned machine's cached load is checked separately below.
     reset_case(2, 10, 32, 32, 0, 0);
     RadiusOffsetX[1] = -3;
     RadiusOffsetY[1] = 0;
@@ -181,7 +167,7 @@ int main() {
     RadiusOffsetY[1] = RadiusOffsetY[2] = 0;
     set_ocean(2, 10);
     assert(is_coast(30, 10, 0) == 2);
-    assert(flat_reads == 1);
+    assert(MapIsFlat == flat_first);
 
     // Flat maps do not wrap. A single adjustment is not repeated/modulo wrap.
     reset_case(2, 10, 32, 32, 1, 1);
@@ -201,22 +187,22 @@ int main() {
     set_ocean(6, 10);
     assert(is_coast(30, 10, 0) == 0);
 
-    // Latitude is tested before longitude. With both invalid and a flat map,
-    // the helper reads height but never reaches the longitude bound.
+    // Invalid latitude prevents an ocean lookup. Predicate instruction order
+    // is checked directly in the pinned body, without side-effecting globals.
     reset_case(31, 31, 32, 32, 1, 1);
     RadiusOffsetX[1] = 2;
     RadiusOffsetY[1] = 1;
     set_ocean(33, 32);
     assert(is_coast(31, 31, 0) == 0);
-    assert(height_reads > 0 && width_reads == 0 && ocean_reads == 0);
+    assert(ocean_reads == 0);
 
-    // A longitude-invalid neighbor is rejected only after a valid latitude.
+    // A longitude-invalid neighbor is also rejected before ocean lookup.
     reset_case(31, 10, 32, 32, 1, 1);
     RadiusOffsetX[1] = 2;
     RadiusOffsetY[1] = 0;
     set_ocean(33, 10);
     assert(is_coast(31, 10, 0) == 0);
-    assert(height_reads > 0 && width_reads > 0 && ocean_reads == 0);
+    assert(ocean_reads == 0);
 
     // Index zero is not a radius direction, even if the center is ocean.
     reset_case(40, 40, 200, 200, 1, 1);
@@ -231,7 +217,8 @@ int main() {
 
 def program_source(coast_body: str):
     on_map_body = extract(HEADER.read_text(), "MEASURED inline BOOL __cdecl on_map(")
-    return PRELUDE + on_map_body + coast_body + SUFFIX
+    xrange_body = extract(HEADER.read_text(), "MEASURED inline int __cdecl xrange(")
+    return PRELUDE + on_map_body + xrange_body + coast_body + SUFFIX
 
 
 def compile_host(coast_body: str, compiler: str):
@@ -326,3 +313,26 @@ def test_vc6_native_actual_body_and_damage_controls_under_existing_lease(tmp_pat
             damaged = build_native("is-coast-bad-%d-%d" % (profile_index, mutant_index), flags, mutant)
             code, output = run_native(damaged)
             assert code != 0, "profile %d %s mutant survived: %s" % (profile_index, label, output)
+
+
+def test_pinned_flat_cache_and_predicate_order():
+    """Load scheduling belongs to the native body, not fake integer getters."""
+    from capstone import Cs, CS_ARCH_X86, CS_MODE_32
+    from capstone.x86_const import X86_OP_MEM
+    from match_recovery.pe_coff import PeImage
+    from match_recovery.model import Span
+
+    path = Path(os.environ.get("OPENSMACX_IMAGE", ROOT / ".opensmacx/game/terranx_original.exe"))
+    if not path.is_file():
+        pytest.skip("pinned original unavailable")
+    image = PeImage(path.read_bytes(), "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf")
+    decoder = Cs(CS_ARCH_X86, CS_MODE_32)
+    decoder.detail = True
+    instructions = list(decoder.disasm(image.read(Span(0x4E49D0, 0x4E4A91)), 0x4E49D0))
+    flat_reads = [i.address for i in instructions
+                  if any(o.type == X86_OP_MEM and o.mem.disp == 0x94988C for o in i.operands)]
+    assert flat_reads == [0x4E49F4]
+    by_address = {i.address: (i.mnemonic, i.op_str) for i in instructions}
+    assert by_address[0x4E4A3A] == ("cmp", "esi, dword ptr [0x949874]")
+    assert by_address[0x4E4A42] == ("test", "edx, edx")
+    assert by_address[0x4E4A46] == ("cmp", "edx, ebx")

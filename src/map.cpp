@@ -634,7 +634,6 @@ BOOL __cdecl port_to_coast(int base_id, int region) {
 /*
 Purpose: Check to see if two port bases share a common body of water determined by region.
 // ORIGINAL: 0x0050E160 ?port_to_port@@YAHHH@Z 0x0050E160-0x0050E306
-// body      src/map.h
 // LEVER: call_diff showed this tree calling base_on_sea where the image makes
 //        no calls at all - the image inlines base_on_sea's whole body into
 //        the loop instead. Manually inlining it (guard clause on
@@ -662,10 +661,37 @@ Purpose: Check to see if two port bases share a common body of water determined 
 Return Value: Are both ports accessible by water to each other? true/false
 Status: Complete
 */
-// BODY IN map.h, as `MEASURED inline`: the image writes it out at
-// some call sites and calls it at others, and a .cpp definition is only ever
-// one of those. The marker stays here because that is where the catalogue
-// reads it.
+BOOL __cdecl port_to_port(int base_id_src, int base_id_dst) {
+    int x = Bases[base_id_src].x;
+    int y = Bases[base_id_src].y;
+    int last_region = -1;
+    for (uint32_t i = 0; i < 8; i++) { // is_coast()
+        int x_radius = xrange(x + VehMoveDeltaX[i]);
+        int y_radius = y + VehMoveDeltaY[i];
+        if (on_map(x_radius, y_radius) && is_ocean(x_radius, y_radius)) {
+            int region_src = region_at(x_radius, y_radius);
+            if (region_src != last_region) { // reduce redundant checks especially sea bases
+                last_region = region_src;
+                // Inlined base_on_sea(base_id_dst, region_src): the image
+                // writes this out here rather than calling it.
+                int region_sea = region_src & RegionBounds;
+                if (region_sea < RegionBounds) {
+                    int x_dst = Bases[base_id_dst].x;
+                    int y_dst = Bases[base_id_dst].y;
+                    for (uint32_t j = 0; j < 8; j++) {
+                        int x_radius_dst = xrange(x_dst + VehMoveDeltaX[j]);
+                        int y_radius_dst = y_dst + VehMoveDeltaY[j];
+                        if (on_map(x_radius_dst, y_radius_dst) && is_ocean(x_radius_dst, y_radius_dst)
+                            && (region_at(x_radius_dst, y_radius_dst) & RegionBounds) == region_sea) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return false;
+}
 
 /*
 Purpose: Determine if a base has access to ports or more than one coastal region. This helps
@@ -801,106 +827,6 @@ Status: Complete
 // some call sites and calls it at others, and a .cpp definition is only ever
 // one of those. The marker stays here because that is where the catalogue
 // reads it.
-
-
-/*
-Purpose: Determine whether specified unit can physically reach the destination coordinates.
-// ORIGINAL: 0x0056B320 ?get_there@@YAHHHH@Z 0x0056B320-0x0056B47D
-// size      349 bytes
-// prototype int (__cdecl ?get_there@@YAHHHH@Z)(int vehID, int xCoord, int yCoord)
-// callers   1   call targets   5
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x004E3A50 0x0050DDC0 0x0050DE50 0x0050E030 0x0050E160
-// TRIED: best 17/147, 0.062 similar (best flag set /O2 /Gy /GR- /Oy-
-//            /GX) - `call_diff` shows this tree making 6 calls against the
-//            image's 7, missing exactly `port_to_port` (0x0050E160). Its
-//            marker (0x0050E160, map.h) already notes the image keeps a REAL
-//            call to port_to_port here (and in veh.cpp's valid_patrol) while
-//            inlining it whole at naval_base/convoy - a genuine per-call-site
-//            split the image itself makes. `port_to_port` is `MEASURED
-//            inline` in map.h because THAT lever is what fixed naval_base and
-//            convoy; at get_there's call site VC6 chooses to inline it too
-//            (confirmed by dumping this tree's own compiled listing - no
-//            `call` opcode for it, and the prologue reserves `sub esp, 0x10`
-//            where the image's is a single `push ecx`, consistent with the
-//            inlined body's extra locals). VC6 6.0 has no
-//            `__declspec(noinline)` to force the split per call site, and
-//            reverting port_to_port to non-inline would regress the
-//            already-recorded naval_base/convoy fixes - out of this batch's
-//            reach without touching shared map.h behavior other claims
-//            depend on. Not chased further.
-Return Value: Can unit reach tile? true/false
-Status: Complete
-*/
-BOOL __cdecl get_there(int veh_id, int x_dst, int y_dst) {
-    uint32_t triad = get_triad(veh_id);
-    if (triad == TRIAD_AIR) {
-        return true;
-    }
-    int x_src = Vehs[veh_id].x; 
-    int y_src = Vehs[veh_id].y;
-    uint32_t region_src = region_at(x_src, y_src);
-    uint32_t region_dst = region_at(x_dst, y_dst);
-    if (!triad) { // TRIAD_LAND
-        return (region_src == region_dst);
-    }
-    int base_id_src = base_at(x_src, y_src);
-    int base_id_dst = base_at(x_dst, y_dst);
-    if (base_id_dst >= 0) {
-        return (base_id_src < 0) ? base_on_sea(base_id_dst, region_src)
-            : port_to_port(base_id_src, base_id_dst);
-    }
-    if (is_ocean(x_dst, y_dst)) {
-        return (base_id_src < 0) ? (region_src == region_dst) 
-            : base_on_sea(base_id_src, region_dst);
-    }
-    return (base_id_src < 0) ? sea_coast(region_dst, region_src)
-        : port_to_coast(base_id_src, region_dst);
-}
-
-/*
-Purpose: Return the first neighboring tile index that satisfies the coast/border checks, or 0.
-         Earlier recovery prose treated the point-B comparison and integer result as unnecessary;
-         the pinned function reads both regions and returns the successful neighbor index.
-// ORIGINAL: 0x0056B480 ?coast_or_border@@YAHHHHHH@Z 0x0056B480-0x0056B5A9 BYTE_EXACT
-// size      297 bytes
-// prototype int (__cdecl ?coast_or_border@@YAHHHHHH@Z)(int xCoordPtA, int yCoordPtA, int xCoordPtB, int yCoordPtB, int factionID)
-// callers   1   call targets   1
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     0x004E3EF0
-Return Value: First qualifying neighbor index (1..8), or zero if none qualifies.
-Status: Complete
-*/
-// Historical TRIED hypothesis below is contradicted by the pinned assembly: it checks ownership
-// before rereading point A's region.
-// TRIED: best 7/110, 0.826 similar (best flag set /O2 /Gy /GR- /GX; call
-//            count already matches the image at 2, both to whose_territory).
-//            The remaining gap looks like the `region_a != region_b` OR-term
-//            being evaluated ahead of the `whose_territory(...)` call in the
-//            image (a cheap loop-invariant compare scheduled before an
-//            expensive call) - swapping the source's OR order to match
-//            scored WORSE (0.780), so that is not the lever. Same
-//            xrange/on_map/is_ocean-loop register-scheduling plateau as the
-//            rest of this file otherwise. Not chased further.
-int __cdecl coast_or_border(int x_point_a, int y_point_a, int x_point_b,
-                            int y_point_b, int faction_id) {
-    if (whose_territory(faction_id, x_point_a, y_point_a, NULL, false) != (int)faction_id) {
-        return 0; // faction doesn't control point A
-    }
-    uint32_t region_b = region_at(x_point_b, y_point_b);
-    for (int i = 1; i < 9; i++) {
-        int x_radius = xrange(x_point_a + RadiusOffsetX[i]);
-        int y_radius = y_point_a + RadiusOffsetY[i];
-        if (on_map(x_radius, y_radius) && (is_ocean(x_radius, y_radius)
-                || whose_territory(faction_id, x_radius, y_radius, NULL, false) != (int)faction_id
-                || region_at(x_point_a, y_point_a) != region_b)) {
-            return i;
-        }
-    }
-    return 0;
-}
 
 
 /*
@@ -1477,6 +1403,11 @@ Purpose: Determine the tile's mineral count that translates to rockiness.
 Return Value: 0 (Flat), 1 (Rolling), 2 (Rocky)
 Status: Complete
 */
+// The guarded dispatches at591FA3 and591FE9 each select four absolute
+// code targets. Both companion tables are generated from the nested switches;
+// their data is outside the preserved original code extent.
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00591F00 0x00592008 0x00592018 0x00591FA3
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00591F00 0x00592018 0x00592028 0x00591FE9
 int __cdecl minerals_at(int x, int y) {
     if (!y || y == (MapLatitudeBounds - 1)) {
         return 2; // poles
@@ -1484,10 +1415,13 @@ int __cdecl minerals_at(int x, int y) {
     int origX = x;
     int avg = (x + y) / 2;
     x -= avg;
-    int val1 = (x / 2) + MapRandSeed + (x - (x % 2)) + (avg - (avg % 2));
+    int val1 = (x / 2) + MapRandSeed + 2 * (x / 2) + 2 * (avg / 2);
     int val2 = (val1 - 2 * (x & 1) - (avg & 1)) & 3;
     int alt = alt_at(origX, y);
-    int type = abs(alt - ALT_SHORE_LINE);
+    int type = alt - ALT_SHORE_LINE;
+    if (type < 0) {
+        type = ALT_SHORE_LINE - alt;
+    }
     if (alt < ALT_SHORE_LINE) {
         type--;
     }
@@ -1900,8 +1834,8 @@ Status: Complete
 */
 // Current restored contract: return the qualifying neighbor's index (1..8 or 1..20), or 0.
 int __cdecl is_coast(int x, int y, BOOL is_base_radius) {
-    int radius = is_base_radius ? 21 : 9;
     int i = 1;
+    int radius = is_base_radius ? 21 : 9;
     if (i >= radius) {
         return 0;
     }

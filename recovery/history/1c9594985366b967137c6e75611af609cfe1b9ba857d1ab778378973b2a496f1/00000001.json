@@ -1,0 +1,22 @@
+{
+  "event_id": "35f30d730ae6bb6fc689bc49d37e0ac6bf021302ef317d78734538b89bc37b69",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_coast_native_contract_oct12h.py",
+      "recovery/tests/test_enemy_move_product_source.py",
+      "recovery/tests/test_is_coast_native_contract_oct12h.py"
+    ],
+    "evidence": [
+      "Moving unchanged helper definitions requires native record/body extraction to follow their genuine owner; retain all independent oracles and mutants.",
+      "Transport frozen CC is_coast fixture verbatim, SHA256 fb5d81135364aa30994205ee2b484bc1844ec6b7e597f379205d4f41cb337916; seeded source/header already contain its original prerequisites."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "coordinator-structural-fixture-locations-oct31ce",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:enemy-map-structure-oct31ce"
+}

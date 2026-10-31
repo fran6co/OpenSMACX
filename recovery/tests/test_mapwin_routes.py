@@ -68,8 +68,9 @@ def actual_source():
             globals_.append(decl.removeprefix("extern "))
     parts["GLOBALS"] = "\n".join(globals_)
     parts["CALLEES"] = "\n".join(re.findall(r"^(?:int|BOOL) __cdecl (?:base_at|base_on_sea|compass_move|hex_cost|speed_proto)\([^;{}]*\);", "\n".join(headers.values()), re.M))
-    # port_to_port is an existing inline implementation; isolate it as a service.
-    parts["CALLEES"] += "\n" + re.search(r"BOOL __cdecl port_to_port\([^{}]*\)", headers["map"]).group() + ";"
+    # The ordinary canonical implementation is a separate service here.
+    port_decl, = re.findall(r"^BOOL __cdecl port_to_port\([^;{}]*\);$", headers["map"], re.M)
+    parts["CALLEES"] += "\n" + port_decl
     parts["MAP_LOC"] = braced(headers["map"], "inline Map *__cdecl map_loc(")
     veh = (ROOT / "src/veh.cpp").read_text()
     parts["DIRECTIONS"] = "\n".join(re.findall(r"^int VehMoveDelta[XY]\[9\] = \{[^}]+\};", veh, re.M))

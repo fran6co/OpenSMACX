@@ -1,0 +1,19 @@
+{
+  "event_id": "17d32c76fea4a619d416ba047efdb72546df65ee88e5a3fa361e7fda31baaab4",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_mapwin_routes.py"
+    ],
+    "evidence": [
+      "Current canonical port_to_port declaration makes old greedy regex absorb following lock_set definition and fail33hostcontrols with unknownMEASURED. Transport frozenCC reviewed exact declaration-only extractor; keep all route/damage oracles unchanged."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "74573b056b6dbeb4afc3b35611ea1040f61666c4701079d3c10e63bbbdb4ce32",
+  "request_id": "coordinator-mapwin-canonical-port-extractor-oct31cg",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:enemy-map-structure-oct31ce"
+}
