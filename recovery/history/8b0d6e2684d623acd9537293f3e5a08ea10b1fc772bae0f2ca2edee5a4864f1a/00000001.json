@@ -1,0 +1,19 @@
+{
+  "event_id": "5039e1d7f734d0cfd233aba570ac4145186a3e5b8f80f01fe048504e459b286d",
+  "payload": {
+    "author": "recovery-coordinator",
+    "editable_files": [
+      "src/ambience.cpp"
+    ],
+    "evidence": [
+      "Fresh source-owned constructor carrier sound.cpp emits ??_GAmbience, proven14/14exact against448390. D/easy-ambience-implicit-dtor-oct31bb/2-constructor-carrier/{objects.json,deleting-body-existing-artifact-measurement.json}; unchanged header overlay reproduces full baseline sound object. Preserve canonical original identity/claims; set onlyactual emitting-TU fact."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "actual-implicit-deleting-carrier",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:easy-ambience-implicit-dtor-oct31bb"
+}
