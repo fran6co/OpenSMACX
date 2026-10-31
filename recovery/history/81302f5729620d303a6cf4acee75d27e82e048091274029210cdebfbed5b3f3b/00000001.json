@@ -1,0 +1,19 @@
+{
+  "event_id": "168f43ea659650551c374b6d6ab4b5ba5f3f92e6494e4db8d054cfcdf56adbb8",
+  "payload": {
+    "author": "recovery-coordinator",
+    "editable_files": [
+      "recovery/tests/test_planwin_battle_owner_behavior.py"
+    ],
+    "evidence": [
+      "The original54DC90 identity and actual body move intact to diplomacy owner faction.cpp; existing actual-source fixture must extract that same body from its current home, preserve semantic assertions and original identity/extent/claim checks."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "adapt-actual-source-controls-to-home",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:owner-diplomacy-preview-oct31as"
+}

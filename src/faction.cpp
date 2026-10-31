@@ -15000,3 +15000,13 @@ Status: Complete
 int communicate_round_down_multiple(int value, int step) {
     return value / step * step;
 }
+
+
+// ORIGINAL: 0x0054DC90 sub_54dc90 0x0054DC90-0x0054DCE4 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x0054DC90:0054DC90-0054DCE4", "source:src/planwin.h:PlanWin and genuine MapWin/GraphicWin interfaces", "source:src/faction.h:PlayerData, battle faction state and label declarations", "recovery/tasks/planwin-battle-owner-coverage.json"], "reason": "Use the pinned native body with the real typed owner and preserve the seed's original identity and history."}
+extern "C" void __cdecl sub_54dc90(int base_id) {
+    PlanWindow.clear_lines();
+    PlanWindow.monocenter(Bases[base_id].x, Bases[base_id].y, 0);
+    PlanWindow.add_line(base_id, base_id, 0);
+    PlanWindow.on_redraw();
+}
