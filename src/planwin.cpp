@@ -423,15 +423,7 @@ void PlanWin::draw_line_base(int base_id1, int base_id2, int color) {
 
 
 
-// ORIGINAL: 0x0054DC90 sub_54dc90 0x0054DC90-0x0054DCE4 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x0054DC90:0054DC90-0054DCE4", "source:src/planwin.h:PlanWin and genuine MapWin/GraphicWin interfaces", "source:src/faction.h:PlayerData, battle faction state and label declarations", "recovery/tasks/planwin-battle-owner-coverage.json"], "reason": "Use the pinned native body with the real typed owner and preserve the seed's original identity and history."}
-extern "C" void __cdecl sub_54dc90(int base_id) {
-    const Base &base = Bases[base_id];
-    PlanWindow.clear_lines();
-    PlanWindow.monocenter(base.x, base.y, 0);
-    PlanWindow.add_line(base_id, base_id, 0);
-    PlanWindow.on_redraw();
-}
+
 
 static bool planwin_base_known_to_faction(const Base &base, int faction) {
     if (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) return true;

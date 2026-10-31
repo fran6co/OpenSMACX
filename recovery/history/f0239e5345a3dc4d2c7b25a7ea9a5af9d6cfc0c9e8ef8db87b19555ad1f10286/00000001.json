@@ -1,0 +1,32 @@
+{
+  "event_id": "fb980518a98d46098db860d9af3641bd1ba7e649a6beccbb63aa4bd9d1fb3f6a",
+  "payload": {
+    "author": "recovery-coordinator",
+    "editable_files": [
+      "recovery/tests/test_ui_owner_behavior.py"
+    ],
+    "evidence": [
+      "Fresh full strict check: original absolute operands at offsets24 and110 select distinct TECH allocations686970 and686968. Current literal pooling is wrong despite masked66/66. Introduce two independently source-owned constant arrays and preserve both byte ranges; keep techlongs separately bound at686978.",
+      "Existing host controls must compile the actual two source initializers, preserving TECH42 and valid/default-path assertions.",
+      "The added TECH literal fact from unintegrated b5d684317 is superseded by distinct source objects; the source writer is add-only, so remove only that guarded new fact after typed parse/round-trip and preserve every original marker/claim."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6842728,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6842736,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "distinct-original-section-prefix-storage",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:easy-newtech-branch-load-oct31as"
+}

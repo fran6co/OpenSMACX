@@ -1,0 +1,24 @@
+{
+  "author": "recovery-coordinator",
+  "base_revision": "6734684d0cf93fb50ff6d35fa2b506bcb3edd926",
+  "editable_files": [
+    "src/faction.cpp",
+    "src/planwin.cpp",
+    "recovery/project.json"
+  ],
+  "evidence": [
+    "Pinned54DC90 invokes four PlanWin API bodies; same proposal base-preview behavior lives in faction.cpp. Current artificial PlanWin TU home expands its private definitions. Preserve all identities/spans/claims, no flags/type/bug changes.",
+    "Ignored planwin-base-preview-oct31as.json and planwin-preview-oct31as-inspect.json; bounded mapped caller scan incomplete, no caller absence proof."
+  ],
+  "intent": "Restore diplomacy base-preview source/API call boundaries through semantic owner homing, preserving the complete raw original mapping and all history. This is a diagnostic, not original-TU proof or automatic acceptance.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5561488,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "owner-diplomacy-preview-oct31as"
+}
