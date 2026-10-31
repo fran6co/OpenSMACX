@@ -1,0 +1,25 @@
+{
+  "author": "recovery-coordinator",
+  "base_revision": "3217d0964dd6968d6edb06d9e0bc75d3fde7aa54",
+  "editable_files": [
+    "src/diplowin.cpp",
+    "recovery/project.json",
+    "recovery/tests/test_diplowin_exec_behavior.py",
+    "recovery/tests/diplowin_exec_host_control.cpp",
+    "recovery/tests/test_diplowin_offer_state_array_oct17.py"
+  ],
+  "evidence": [
+    "Independent pin and actual qualified COFF audit: /home/fran6co/code/OpenSMACX/.opensmacx/recovery/fast-pass-oct30ol/transcript-display-corrected-oct31at.json"
+  ],
+  "intent": "Restore pinned transcript live-count and typed cursor semantics, preserving original faults and all claims.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4460800,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "owner-transcript-display-oct31at"
+}
