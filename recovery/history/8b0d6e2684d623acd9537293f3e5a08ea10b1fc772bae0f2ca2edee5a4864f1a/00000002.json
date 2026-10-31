@@ -1,0 +1,19 @@
+{
+  "event_id": "7536fd1a5b65b76b51aa258476053be35a96544e8d1f77e05d0eb81f02d8be22",
+  "payload": {
+    "author": "recovery-coordinator",
+    "editable_files": [
+      "src/sound.cpp"
+    ],
+    "evidence": [
+      "Fresh qualified linked PE/MAP/PDB and actual COFF verify deleting448390 selected fromsound.cpp.obj withAmbienceconstructor/vtable. Move canonicalmapping tothiscurrentemissionowner, preservingoriginalidentity/span/claim; nooriginalTUinference. Independent source-homing-judgment-oct31bb.json supportsmigration. Complete4483C0 remainsselectedambience.cppstub."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "5039e1d7f734d0cfd233aba570ac4145186a3e5b8f80f01fe048504e459b286d",
+  "request_id": "home-generated-deleting-entry-with-constructor",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:easy-ambience-implicit-dtor-oct31bb"
+}

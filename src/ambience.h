@@ -40,7 +40,6 @@ void __cdecl ambience_veh(int vehicle_id);
 class Ambience : public Midi {
  public:
   Ambience();
-  ~Ambience() {}
   int load(const char *filename);
   int unload();
 };
