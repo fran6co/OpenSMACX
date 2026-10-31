@@ -184,11 +184,12 @@ def test_generated_aliases_reuse_shared_copy_aggregation_and_require_carrier():
         ("code/other.cc", "fail"), ("code/widget.cc", "pass")]
 
 
-def test_high_level_source_resolution_uses_mapped_same_class_constructor(project):
+@pytest.mark.parametrize("anchor", ("code/widget.h", "code/widget.cc"))
+def test_high_level_source_resolution_uses_mapped_same_class_constructor(project, anchor):
     source = project / "code/methods.cc"
     source.write_text("// ORIGINAL: 0x00401020 ??0Widget@@QAE@XZ 0x00401020-0x00401021\n"
                       "Widget::Widget() {}\n")
-    header = project / "code/widget.h"
+    header = project / anchor
     header.write_text("#pragma once\n#ifndef WIDGET_H\n#define WIDGET_H\n" +
                       class_source(annotation(end="0x00401006")) + "#endif\n")
     pin = hashlib.sha256((project / "image.exe").read_bytes()).hexdigest()

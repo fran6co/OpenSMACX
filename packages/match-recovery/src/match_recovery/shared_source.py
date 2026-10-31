@@ -205,7 +205,8 @@ def resolve_shared_contexts(root: Path, bindings, *, settings, contents=None, so
                 resolved.append(replace(binding, compiler_unit=None,
                     context_error="generated member evidence constructor is not an implemented source body"))
                 continue
-        if Path(binding.unit).suffix not in configuration.interface_extensions:
+        if (not isinstance(binding, GeneratedMemberBinding)
+                and Path(binding.unit).suffix not in configuration.interface_extensions):
             resolved.append(replace(binding, compiler_unit=binding.unit, context_error=None))
             continue
         witnesses = [record for record in source_records
