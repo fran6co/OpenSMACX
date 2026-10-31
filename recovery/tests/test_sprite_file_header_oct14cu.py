@@ -172,13 +172,6 @@ static int save_success() {
             offsetof(SpriteFileHeader, stride) == 0x19,
             "packed Sprite header layout changed");
     {
-        const SpriteFileHeader *h = (const SpriteFileHeader *)mapped_file;
-        if (h->sprite_width != 3 || h->sprite_height != 2 || h->width != 7 ||
-            h->height != 8 || h->left_offset != -2 || h->top_offset != 4 ||
-            h->transparent_index != 9 || h->stride != 5)
-            fail("saved Sprite metadata order changed");
-    }
-    {
         const int expected[6] = { 3, 2, 7, 8, -2, 4 };
         int raw;
         int offset;
@@ -190,6 +183,13 @@ static int save_success() {
         if (mapped_file[0x18] != 9) fail("raw transparency offset changed");
         memcpy(&raw, mapped_file + 0x19, 4);
         if (raw != 5) fail("raw unaligned stride offset changed");
+    }
+    {
+        const SpriteFileHeader *h = (const SpriteFileHeader *)mapped_file;
+        if (h->sprite_width != 3 || h->sprite_height != 2 || h->width != 7 ||
+            h->height != 8 || h->left_offset != -2 || h->top_offset != 4 ||
+            h->transparent_index != 9 || h->stride != 5)
+            fail("saved Sprite metadata order changed");
     }
     if (memcmp(mapped_file + 0x1D, pixels, 10) != 0)
         fail("save pixel payload extent changed");
@@ -374,11 +374,10 @@ def test_reordered_metadata_mutant_fails_raw_offset_witness(tmp_path, compiler_n
     if compiler is None:
         pytest.skip(compiler_name + " unavailable")
     header, save_body, load_body = actual_sources()
-    before = "    int width;\n    int height;"
-    after = "    int height;\n    int width;"
-    assert before in header
-    reordered = header.replace(before, after, 1)
-    result = run_host(tmp_path, compiler, (header, save_body, load_body), header=reordered)
+    before = "    cursor++->value = iWidth_;\n    cursor++->value = iHeight_;"
+    after = "    cursor++->value = iHeight_;\n    cursor++->value = iWidth_;"
+    result = run_host(tmp_path, compiler, (header, save_body, load_body),
+                      mutation=("save", before, after))
     assert result.returncode == 97, (result.returncode, result.stdout, result.stderr)
     assert "SEMANTIC97: raw Sprite header offsets changed" in result.stderr
 

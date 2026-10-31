@@ -2583,6 +2583,10 @@ int Sprite::create_blank(int width, int height, int depth) {
 // File-format view, not a recovered runtime class. Original persistence
 // places stride immediately after the transparency byte, without padding.
 #pragma pack(push, 1)
+// File scalar access must retain byte alignment, including the stride at 0x19.
+struct SpriteFileInt {
+    int value;
+};
 struct SpriteFileHeader {
     int sprite_width;
     int sprite_height;
@@ -2622,17 +2626,17 @@ int Sprite::save(const char *filename) {
     if (header == 0) {
         return 4;
     }
-    int *cursor = reinterpret_cast<int *>(header);
-    *cursor++ = iSpriteWidth_;
-    *cursor++ = iSpriteHeight_;
-    *cursor++ = iWidth_;
-    *cursor++ = iHeight_;
-    *cursor++ = iLeftOffset_;
-    *cursor++ = iTopOffset_;
+    SpriteFileInt *cursor = reinterpret_cast<SpriteFileInt *>(header);
+    cursor++->value = iSpriteWidth_;
+    cursor++->value = iSpriteHeight_;
+    cursor++->value = iWidth_;
+    cursor++->value = iHeight_;
+    cursor++->value = iLeftOffset_;
+    cursor++->value = iTopOffset_;
     unsigned char *byte_cursor = reinterpret_cast<unsigned char *>(cursor);
     *byte_cursor++ = static_cast<unsigned char>(cTransparentIndex_);
-    cursor = reinterpret_cast<int *>(byte_cursor);
-    *cursor++ = iSpriteWidth2_;
+    cursor = reinterpret_cast<SpriteFileInt *>(byte_cursor);
+    cursor++->value = iSpriteWidth2_;
     memcpy(cursor, pcBits_,
            static_cast<uint32_t>(iSpriteHeight_) * iSpriteWidth2_);
     fm.close();
@@ -2681,17 +2685,17 @@ int Sprite::load(const char *filename) {
     if (header == 0) {
         return 6;
     }
-    const int *cursor = reinterpret_cast<const int *>(header);
-    iSpriteWidth_ = *cursor++;
-    iSpriteHeight_ = *cursor++;
-    iWidth_ = *cursor++;
-    iHeight_ = *cursor++;
-    iLeftOffset_ = *cursor++;
-    iTopOffset_ = *cursor++;
+    const SpriteFileInt *cursor = reinterpret_cast<const SpriteFileInt *>(header);
+    iSpriteWidth_ = cursor++->value;
+    iSpriteHeight_ = cursor++->value;
+    iWidth_ = cursor++->value;
+    iHeight_ = cursor++->value;
+    iLeftOffset_ = cursor++->value;
+    iTopOffset_ = cursor++->value;
     const unsigned char *byte_cursor = reinterpret_cast<const unsigned char *>(cursor);
     cTransparentIndex_ = *byte_cursor++;
-    cursor = reinterpret_cast<const int *>(byte_cursor);
-    iSpriteWidth2_ = *cursor++;
+    cursor = reinterpret_cast<const SpriteFileInt *>(byte_cursor);
+    iSpriteWidth2_ = cursor++->value;
     memcpy(pcBits_, cursor,
            static_cast<uint32_t>(iSpriteWidth2_) * iSpriteHeight_);
     fm.close();
