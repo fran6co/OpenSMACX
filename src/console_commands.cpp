@@ -3804,7 +3804,7 @@ void Console::arty(int vehicle) {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x004D9970 ?editor_on@Console@@QAEXXZ 0x004D9970-0x004D9AC5
+// ORIGINAL: 0x004D9970 ?editor_on@Console@@QAEXXZ 0x004D9970-0x004D9AC5 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004d9970.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold."}
 // RECOVERY_LITERAL: v1 0x00688F3C 0x00688F46 ??_C@_09HDAC@EDITORNET?$AA@ 0x004D999D
 // RECOVERY_LITERAL: v1 0x00688F48 0x00688F53 ??_C@_0L@KPKF@SCENEDITOR?$AA@ 0x004D99B4
