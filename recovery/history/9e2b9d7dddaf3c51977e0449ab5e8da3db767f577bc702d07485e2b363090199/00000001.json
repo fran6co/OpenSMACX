@@ -1,0 +1,19 @@
+{
+  "event_id": "76ccfd832e948944108ccb7544c32587a0a17b77da07ef3d818346e2d3a7ec37",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_bonus_yield_reload_nov01co.py"
+    ],
+    "evidence": [
+      "Authorize focused actual-source controls for the three already scoped Base postbonus pointer versions; preserve each entry scalar snapshot and verify later primary members use the postcall map address. Synthetic opaque-callee mutations discriminate source-read boundaries only, not a claimed mutation by the actual pure bonus algorithm."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "bonus-yield-control-nov01co",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:bonus-provider-nov01co"
+}

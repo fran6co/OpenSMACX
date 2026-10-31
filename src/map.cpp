@@ -1463,7 +1463,6 @@ int __cdecl minerals_at(int x, int y) {
 Purpose: Determine if the tile has a resource bonus. While the last parameter is unused, it's set to
          1 by two calls inside world_site(). Otherwise, all other calls have it set to 0.
 // ORIGINAL: 0x00592030 ?bonus_at@@YAHHHH@Z 0x00592030-0x00592135
-// body      src/map.h
 // TRIED (body is in map.h): the image reads the climate byte (alt_at) before the bit
 //            dword (bit_at) at the shared `site_tile`-style address, while map.h's body
 //            declares `bit` before `alt`. Swapping the declaration order to match the
@@ -1489,9 +1488,8 @@ Purpose: Determine if the tile has a resource bonus. While the last parameter is
 Return Value: 0 (no bonus), 1 (nutrient), 2 (mineral), 3 (energy)
 Status: Complete
 */
-// BODY IN map.h, as `MEASURED inline`: seven bodies call it where the
-// image calls nothing - `call_diff` names it - and 0x00592030 is a real
-// body of its own, so a .cpp definition is only one of the two.
+// This source owner provides the resource-bonus query. Its callers retain
+// the original external-call boundary rather than header-exported copies.
 // TRIED: a non-inline `bonus_at_call` forwarder, routed through from
 //            crop_yield/mine_yield/energy_yield (base.cpp) so bonus_at(x,y,0)
 //            would emit `call 0x592030` there - measured NO improvement to
@@ -1500,6 +1498,33 @@ Status: Complete
 //            0.388, energy_yield 0.137), because their winning flag set is
 //            /Ob0-based and bonus_at's body already does not get folded in
 //            there regardless of the forwarder. Not added.
+
+int __cdecl bonus_at(int x, int y, int UNUSED(unk_val)) {
+    uint32_t bit = bit_at(x, y);
+    int alt = alt_at(x, y);
+    BOOL has_rsc_bonus = bit & BIT_RSC_BONUS;
+    if (!has_rsc_bonus && (!MapRandSeed
+        || (alt >= ALT_SHORE_LINE && !(GameDataStateStorage.fields_.game_rules_ & RULES_NO_UNITY_SCATTERING)))) {
+        return 0;
+    }
+    uint32_t avg = (x + y) >> 1;
+    x -= avg;
+    int chk = (avg & 3) + 4 * (x & 3);
+    if (!has_rsc_bonus && chk != ((MapRandSeed + (-5 * (avg >> 2)) - 3 * (x >> 2)) & 0xF)) {
+        return 0;
+    }
+    if (alt < ALT_OCEAN_SHELF) {
+        return 0;
+    }
+    int ret = (alt < ALT_SHORE_LINE) ? chk % 3 + 1 : (chk % 5) & 3;
+    if (!ret || bit & BIT_NUTRIENT_RSC) {
+        if (bit & BIT_ENERGY_RSC) {
+            return 3; // energy
+        }
+        return ((bit & BIT_MINERAL_RSC) != 0) + 1; // nutrient or mineral
+    }
+    return ret;
+}
 
 /*
 Purpose: Return 1 immediately for a unity-bonus tile. Otherwise select the

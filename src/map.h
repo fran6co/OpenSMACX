@@ -27,7 +27,7 @@ extern int ProtoSortIds[128];
 void __cdecl proto_sort(int faction_id);
 void __cdecl proto_sort_2(int faction_id);
 
-#include "game.h"      // GameRules and its flags, which bonus_at inlines
+#include "game.h"
 #include "faction.h"   // MaxPlayerNum, which base_who inlines
 #include "base.h"      // Bases[], which port_to_port inlines
 
@@ -731,32 +731,8 @@ MEASURED inline BOOL __cdecl is_ocean(int x, int y) {
     return (map_loc(x, y)->climate & ~0x1F) < ALT_BIT_SHORE_LINE;
 }
 
-MEASURED inline int __cdecl bonus_at(int x, int y, int UNUSED(unk_val)) {
-    uint32_t bit = bit_at(x, y);
-    int alt = alt_at(x, y);
-    BOOL has_rsc_bonus = bit & BIT_RSC_BONUS;
-    if (!has_rsc_bonus && (!MapRandSeed
-        || (alt >= ALT_SHORE_LINE && !(GameDataStateStorage.fields_.game_rules_ & RULES_NO_UNITY_SCATTERING)))) {
-        return 0;
-    }
-    uint32_t avg = (x + y) >> 1;
-    x -= avg;
-    int chk = (avg & 3) + 4 * (x & 3);
-    if (!has_rsc_bonus && chk != ((MapRandSeed + (-5 * (avg >> 2)) - 3 * (x >> 2)) & 0xF)) {
-        return 0;
-    }
-    if (alt < ALT_OCEAN_SHELF) {
-        return 0;
-    }
-    int ret = (alt < ALT_SHORE_LINE) ? chk % 3 + 1 : (chk % 5) & 3;
-    if (!ret || bit & BIT_NUTRIENT_RSC) {
-        if (bit & BIT_ENERGY_RSC) {
-            return 3; // energy
-        }
-        return ((bit & BIT_MINERAL_RSC) != 0) + 1; // nutrient or mineral
-    }
-    return ret;
-}
+// Resource bonus queries use the canonical provider in map.cpp.
+int __cdecl bonus_at(int x, int y, int unk_val);
 
 MEASURED inline int __cdecl base_who(int x, int y) {
     Map *tile = map_loc(x, y);
