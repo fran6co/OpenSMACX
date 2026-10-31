@@ -319,7 +319,37 @@ void air_range_accepts_valid_base_and_range_zero_disables_air_gate() {
     expect_prefix(range_zero, 6);
 }
 
+// Sentinel width control; faction 255 is a malformed-state test, not a
+// reachability assertion. All records used here are within the host tables.
+void artifact_owner_comparison_keeps_full_width() {
+    const int owners[] = {3, 3, 8, 15, 8};
+    const int factions[] = {3, 4, 255, 255, 255};
+    for (int i = 0; i < 5; ++i) {
+        reset_state();
+        const bool after_await = i == 4;
+        lock_update_to = 1;
+        await_update_to = after_await ? 2 : -1;
+        Vehs[1].x = 9; Vehs[1].y = 10; Vehs[1].proto_id = 1;
+        VehPrototypes[1].chassis_id = 1;
+        Chassis[1].triad = TRIAD_SEA;
+        const int selected = after_await ? 2 : 1;
+        Vehs[selected].proto_id = selected;
+        Vehs[selected].faction_id = static_cast<uint8_t>(factions[i]);
+        VehPrototypes[selected].plan = PLAN_ALIEN_ARTIFACT;
+        Tiles[16 * 10 + (9 >> 1)].bit = 1;
+        Tiles[16 * 10 + (9 >> 1)].val2 = static_cast<uint8_t>(owners[i]);
+        const int expected[] = {EV_LOCK, EV_SYNCH, EV_AWAIT, EV_UNLOCK,
+                                EV_CHECK, EV_DRAW, EV_ARTIFACT_ORDER};
+        hold(0, 55);
+        expect_prefix(expected, i == 0 ? 7 : 6);
+        assert(synch_id == 1 && check_id == selected);
+        assert(draw_x == 9 && draw_y == 10);
+        assert(ordered_id == (i == 0 ? selected : -99));
+    }
+}
+
 int main() {
+    artifact_owner_comparison_keeps_full_width();
     lock_failure_is_early();
     unchanged_selection_uses_expected_order();
     lock_update_selects_live_vehicle_and_snapshots_coordinates();
@@ -376,6 +406,21 @@ def test_actual_hold_old_terrain_inequality_compiles_then_fails(tmp_path, compil
         pytest.skip(compiler_name + " unavailable")
     mutant = _old_terrain_inequality_mutant(_actual_hold())
     built, exe = _compile_run(tmp_path, compiler, _harness(mutant), "old_terrain_inequality")
+    assert built.returncode == 0, built.stderr
+    ran = subprocess.run((str(exe),), capture_output=True, text=True, timeout=10)
+    assert ran.returncode != 0
+
+
+@pytest.mark.parametrize("compiler_name", ("g++", "clang++"))
+def test_actual_hold_old_narrowed_owner_compiles_then_fails(tmp_path, compiler_name):
+    compiler = shutil.which(compiler_name)
+    if compiler is None:
+        pytest.skip(compiler_name + " unavailable")
+    body = _actual_hold()
+    original = "if (owner == Vehs[veh_id].faction_id)"
+    assert body.count(original) == 1
+    mutant = body.replace(original, "if (static_cast<uint8_t>(owner) == Vehs[veh_id].faction_id)", 1)
+    built, exe = _compile_run(tmp_path, compiler, _harness(mutant), "old_narrowed_owner")
     assert built.returncode == 0, built.stderr
     ran = subprocess.run((str(exe),), capture_output=True, text=True, timeout=10)
     assert ran.returncode != 0

@@ -1,0 +1,19 @@
+{
+  "event_id": "b6660f5c76414437d73f9efa74c5064579315c5f4b6e16feddb3ae223a2ea161",
+  "payload": {
+    "author": "recovery-coordinator",
+    "editable_files": [
+      "recovery/tests/test_console_hold_selection_follow_oct23z.py"
+    ],
+    "evidence": [
+      "Original4D2673 zeroextendsfaction byte then4D267Bcompares full32bits against signedowner; preserve -1!=255. Existing actual-source harness missed finalsentinelbranch; adddirect andafterawait controls."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "owner-sentinel-actual-source-controls-oct31av",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:owner-console-hold-width-oct31av"
+}
