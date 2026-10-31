@@ -1663,6 +1663,10 @@ int __cdecl boom(int x, int y, int flags) {
         frame_span = faction_color_group[level + 11];
     }
 
+    // Original X/Y are distinct eight-DWORD windows at EBP-0x74/-0x54;
+    // RECTs at EBP-0x144 advance 16 bytes. Draw/copy use X/Y, update a RECT.
+    int pixel_x_by_slot[8];
+    int pixel_y_by_slot[8];
     RECT saved_rectangles[8];
     // Original 0x00504DF5/0x00504EB8 store DWORD flags; the slot cursor
     // advances four bytes over eight entries (0x005054C2/0x005054CB).
@@ -1696,9 +1700,13 @@ int __cdecl boom(int x, int y, int flags) {
             continue;
         }
 
-        int pixel_x;
-        int pixel_y;
-        ConsoleGlobal.tile_to_pixel(x, y, &pixel_x, &pixel_y);
+        int &pixel_x = pixel_x_by_slot[slot];
+        int &pixel_y = pixel_y_by_slot[slot];
+        // Original 0x00504EC5 uses this slot; 0x00504ECA..0x00504ECD
+        // reloads the slot after the call.
+        window->tile_to_pixel(x, y, &pixel_x_by_slot[slot],
+                              &pixel_y_by_slot[slot]);
+        window = MapWinTable[slot];
         pixel_x += window->tile_pixel_width_ / 2;
         pixel_y += window->tile_pixel_height_;
 
@@ -1792,8 +1800,8 @@ int __cdecl boom(int x, int y, int flags) {
             window = MapWinTable[slot];
             window_buffer =
                 static_cast<Buffer *>(static_cast<GraphicWin *>(window));
-            window_buffer->copy(&original_screen_snapshots[slot], area.left,
-                                area.top, 0, 0,
+            window_buffer->copy(&original_screen_snapshots[slot], pixel_x_by_slot[slot],
+                                pixel_y_by_slot[slot], 0, 0,
                                 original_screen_snapshots[slot].pixel_width(),
                                 original_screen_snapshots[slot].pixel_height());
         }
@@ -1816,14 +1824,14 @@ int __cdecl boom(int x, int y, int flags) {
         window = MapWinTable[slot];
         window_buffer =
             static_cast<Buffer *>(static_cast<GraphicWin *>(window));
-        window_buffer->copy(&redrawn_map_snapshots[slot], area.left, area.top,
+        window_buffer->copy(&redrawn_map_snapshots[slot], pixel_x_by_slot[slot], pixel_y_by_slot[slot],
                             0, 0, redrawn_map_snapshots[slot].pixel_width(),
                             redrawn_map_snapshots[slot].pixel_height());
         window = MapWinTable[slot];
         window_buffer =
             static_cast<Buffer *>(static_cast<GraphicWin *>(window));
         original_screen_snapshots[slot].copy(window_buffer, 0, 0,
-                                             area.left, area.top,
+                                             pixel_x_by_slot[slot], pixel_y_by_slot[slot],
                                              original_screen_snapshots[slot].pixel_width(),
                                              original_screen_snapshots[slot].pixel_height());
     }
@@ -1899,8 +1907,8 @@ int __cdecl boom(int x, int y, int flags) {
                     draw_type = window->zoom_offset_ + 0x10;
                     const int faction = Vehs[saved_selection].faction_id;
                     working_buffer.draw_multi_table_dest(
-                        destination, 0xff, saved_rectangles[slot].left,
-                        saved_rectangles[slot].top,
+                        destination, 0xff, pixel_x_by_slot[slot],
+                        pixel_y_by_slot[slot],
                         draw_type * animation_height, frame_span << 4,
                         ExplosionColorTables[faction_color_group[faction]]);
                 } else {
@@ -1916,8 +1924,8 @@ int __cdecl boom(int x, int y, int flags) {
                         ? palette_row : ((flags & 0x100) != 0 ? 6 : 0);
                     sprite.draw_multi_table_dest(
                         destination, sprite.transparent_index(),
-                        saved_rectangles[slot].left,
-                        saved_rectangles[slot].top,
+                        pixel_x_by_slot[slot],
+                        pixel_y_by_slot[slot],
                         ExplosionColorTables[table_row]);
                 }
                 window = MapWinTable[slot];
@@ -1949,8 +1957,8 @@ int __cdecl boom(int x, int y, int flags) {
                     ? redrawn_map_snapshots[restore_slot]
                     : original_screen_snapshots[restore_slot];
                 snapshot.copy(destination, 0, 0,
-                              saved_rectangles[restore_slot].left,
-                              saved_rectangles[restore_slot].top,
+                              pixel_x_by_slot[restore_slot],
+                              pixel_y_by_slot[restore_slot],
                               snapshot.pixel_width(), snapshot.pixel_height());
                 if (IsMultiplayerNet) break;
             }

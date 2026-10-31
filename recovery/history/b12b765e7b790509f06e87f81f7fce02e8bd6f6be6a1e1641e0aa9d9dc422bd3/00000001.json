@@ -1,0 +1,23 @@
+{
+  "event_id": "66c20f07b15af4765953c7a5d6b3c50841992c234999694ef397a01196a00f1c",
+  "payload": {
+    "affects": [
+      "entity-246f6cb71b6a283b36dc563c7530f89355b470b3762f358fdf850e192e3845a4"
+    ],
+    "author": "coordinator",
+    "discovery_id": "boom-coordinate-objects-oct31cm",
+    "evidence": [
+      "Pinned 0x00504EAD/0x00504EB1 form Y/X element pointers in eight-DWORD windows EBP-0x54/-0x74. The slot cursor advances four bytes and is bounded at 0x20; the separate RECT cursor starts at EBP-0x144 and advances sixteen bytes.",
+      "ECX loaded from MapWinTable at 0x00504DFB reaches tile_to_pixel call 0x00504EC5 unchanged. Instructions 0x00504ECA/0x00504ECD reload that slot before width/height/zoom. The source global Console receiver and retained pre-call window are incorrect.",
+      "Nine pinned coordinate operand pairs cover initial/redrawn captures, setup restoration, Flic/XI/XF drawing and both frame restore branches. RECT fields supply dimensions and RECT pointers supply update/set_clip instead. GraphicWin::update copies its input into local storage; no reachable caller-RECT mutation bug is claimed.",
+      "Coordinator authorizes one coordinate-only candidate within this existing BOOM subject and src/veh.cpp scope. Leave the unresolved colour/scale storage and unchecked index domains unchanged; preserve all historical mappings and claims."
+    ],
+    "hypothesis": "BOOM owns separate per-slot X/Y arrays and RECTs; tile_to_pixel uses the eligible slot MapWin and the next geometry reads use a fresh slot lookup.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "boom-coordinate-objects-oct31cm",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:boom-scoped-storage-oct31cm"
+}

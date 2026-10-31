@@ -1,0 +1,19 @@
+{
+  "event_id": "5aaa2332779dda227db5bbf6a191bb711ee522e38cc97a8d5343fe01ac89eedc",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "boom-coordinate-objects-oct31cm",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/veh.cpp BOOM now owns pixel_x_by_slot[8] and pixel_y_by_slot[8] separately from saved_rectangles[8], with source comments recording the distinct pinned windows.",
+      "The slot-window tile_to_pixel call is followed by a fresh MapWinTable[slot] load. All snapshot/draw/restore positional operands use the coordinate arrays; RECT dimensions and update/set_clip pointers remain separate.",
+      "This resolves the bounded storage/reference discovery, not BOOM byte matching, colour/scale lifetime interpretation, final linked selection, runtime or game acceptance."
+    ]
+  },
+  "previous_event": "66c20f07b15af4765953c7a5d6b3c50841992c234999694ef397a01196a00f1c",
+  "request_id": "boom-coordinate-objects-incorporated-oct31cm",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:boom-scoped-storage-oct31cm"
+}
