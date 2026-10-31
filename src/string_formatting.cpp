@@ -22,10 +22,12 @@
 #include "technology.h"
 #include "veh.h"
 #include "base.h"
+#include "map.h"
 #include "faction.h"
 
 // Shared original punctuation storage, defined in socialwin.cpp.
 extern char SocialWinColonSpaceText[];
+extern char SocialWinCommaSpaceText[];
 
 // Keep these application formatters separate from Strings::get's definition so
 // VC6's same-TU /Ob2 inliner cannot absorb the original get calls. Their shared
@@ -420,5 +422,96 @@ void __cdecl say_vehicles(char *text, int chassis_id, int with_height) {
         LPSTR label = Labels.strings_ptr[0x314 / 4];
         strcat(StringTemp, StringTable.get(label));
         strcat(text, ")");
+    }
+}
+
+
+// ORIGINAL: 0x00592250 ?say_loc@@YAXPADHHHHH@Z 0x00592250-0x005923FD FILE
+// RECOVERY_BINDING: v1 {"reason": "Group the free location formatter with the other say_* formatters and their independently evidenced punctuation; share the existing source-owned space and comma-space storage. This is a current semantic home, not proof of the original translation unit.", "evidence": ["src/veh.h:say_loc;src/map.h:map_loc", "src/string_formatting.cpp:independently corroborated parenthesis RECOVERY_LITERAL bindings", "src/buffer.cpp:BufferJoinSpace;src/socialwin.cpp:SocialWinCommaSpaceText", "image:0x00592250-0x005923FD uses 0x00682820,0x00682E90,0x00682E9C,0x00682E98"]}
+// size      429 bytes
+// prototype void (__cdecl ?say_loc@@YAXPADHHHHH@Z)(int8*, int xCoord, int yCoord, int, int, int)
+// callers   4   call targets   5
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004E3A50 0x004E3D50 0x006169A0 0x00645470 0x0064FC88
+// PRESERVED UNIT - measured MISMATCH.
+//
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
+//
+// address        0x00592250
+// measured tier  MISMATCH
+// divergence     3
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/00592250/unit.cpp
+// and score it with tools/agent_brief.py.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ?say_loc@@YAXPADHHHHH@Z  at 0x00592250  (429 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// The VC6 dialect limits and the source-form rules used to live here.
+// They are knowledge, not scaffolding, so they now live in the agent
+// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
+// where they can be edited without regenerating anything and are in
+// context from the first token rather than behind a file read. This
+// emitter computes declarations; it does not carry lessons.
+void __cdecl say_loc(char *text, int x, int y, int want_name, int trailer_mode,
+                     int want_coords) {
+    char number[80];
+    int base_id = base_at(x, y);
+    if (want_name != 0) {
+        if (base_id < 0) {
+            want_coords = 0;
+            base_id = base_find(x, y, -1, -1, -1, ConsoleGlobal.faction_id_);
+            if (base_id < 0) {
+                goto trailer;
+            }
+            strcat(text, label_get(0xf8 / 4));
+            strcat(text, BufferJoinSpace);
+        } else {
+            goto skip_first_check;
+        }
+    }
+    if (base_id < 0) {
+        goto trailer;
+    }
+skip_first_check:
+    if (want_coords != 0) {
+        strcat(text, label_get(0x20 / 4));
+        strcat(text, BufferJoinSpace);
+    }
+    strcat(text, Bases[base_id].name_string);
+    if (trailer_mode != 0) {
+        strcat(text, BufferJoinSpace);
+    }
+
+trailer:
+    if (trailer_mode == 1 || (trailer_mode == 2 && base_id < 0)) {
+        strcat(text, "(");
+        _itoa(x, number, 10);
+        strcat(text, number);
+        strcat(text, SocialWinCommaSpaceText);
+        _itoa(y, number, 10);
+        strcat(text, number);
+        strcat(text, ")");
+
+        int flags = GameDataStateStorage.fields_.game_state_;
+        if ((flags & 0x40) != 0 && (flags & 0x1000) != 0) {
+            strcat(StringTemp, BufferJoinSpace);
+            Map *tile = map_loc(x, y);
+            _itoa(tile->region, number, 10);
+            strcat(StringTemp, number);
+        }
     }
 }

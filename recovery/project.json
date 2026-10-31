@@ -621,14 +621,17 @@
       },
       "src/map.cpp": {
         "flags": [
-          "/c",
-          "/O2",
-          "/Gy",
-          "/GR-",
+          "/nologo",
+          "/TP",
+          "/Zm200",
           "/GX",
-          "/Oy-",
+          "/O2",
           "/Ob2",
-          "/Z7"
+          "-MT",
+          "/W4",
+          "/Oy-",
+          "/Z7",
+          "-c"
         ]
       },
       "src/map_sites.cpp": {
@@ -822,6 +825,20 @@
         ]
       },
       "src/netwin.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W4",
+          "/Oy-",
+          "-c"
+        ]
+      },
+      "src/base.cpp": {
         "flags": [
           "/nologo",
           "/TP",
