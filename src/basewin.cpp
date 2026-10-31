@@ -467,7 +467,7 @@ int BaseWin::facilities_click(int facility, int, int, int) {
             (Players[faction].rule_flags & 0x80) ? "alfacblt_sm.pcx" : "facblt_sm.pcx", 0);
         return 0;
     }
-    if (facility == 26 && (map_tiles()[BaseCurrent->y * MapLongitude + (BaseCurrent->x >> 1)].contour & 0xE0) < 0x60) {
+    if (facility == 26 && (map_tiles()[BaseCurrent->y * MapLongitude + (BaseCurrent->x >> 1)].climate & 0xE0) < 0x60) {
         popp(ScriptPopupFile, "PRESSURERECYCLE", 0,
             (Players[faction].rule_flags & 0x80) ? "alfacblt_sm.pcx" : "facblt_sm.pcx", 0);
         return 0;
@@ -490,7 +490,7 @@ int BaseWin::facilities_click(int facility, int, int, int) {
         int possessed = 0;
         for (int base = 0; base < GameDataStateStorage.fields_.base_current_count_; ++base) {
             if (Bases[base].faction_id_current != faction) continue;
-            if (facility == 26 && (map_tiles()[Bases[base].y * MapLongitude + (Bases[base].x >> 1)].contour & 0xE0) < 0x60) continue;
+            if (facility == 26 && (map_tiles()[Bases[base].y * MapLongitude + (Bases[base].x >> 1)].climate & 0xE0) < 0x60) continue;
             bitmask(facility, &offset, &mask);
             if (Bases[base].facilities_built[offset] & (uint8_t)mask) {
                 ++possessed;
@@ -523,7 +523,7 @@ int BaseWin::facilities_click(int facility, int, int, int) {
     if (selection == 3) {
         for (int base = 0; base < GameDataStateStorage.fields_.base_current_count_; ++base) {
             if (Bases[base].faction_id_current != faction) continue;
-            if (facility == 26 && (map_tiles()[Bases[base].y * MapLongitude + (Bases[base].x >> 1)].contour & 0xE0) < 0x60) continue;
+            if (facility == 26 && (map_tiles()[Bases[base].y * MapLongitude + (Bases[base].x >> 1)].climate & 0xE0) < 0x60) continue;
             Bases[base].state |= BSTATE_FACILITY_SCRAPPED;
             set_fac(facility, base, 0);
             if (base != BaseIDCurrentSelected) synch_base(base);
