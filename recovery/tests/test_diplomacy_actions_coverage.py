@@ -55,11 +55,18 @@ def _strip_old_storage_declarations(source: str) -> str:
     return "".join(output)
 
 
+_CI_DIPLO_LABEL_ARRAYS = {'DiploLabelSendingTREATYOFF': 'Sending TREATY OFF', 'DiploLabelSendingTECH': 'Sending TECH', 'DiploLabelSendingENERGY': 'Sending ENERGY', 'DiploLabelReleasingDIPLOMATICLOCK': 'Releasing DIPLOMATIC LOCK', 'DiploLabelSendingDOUBLECROSS': 'Sending DOUBLE CROSS', 'DiploLabelSendingSETTREATY': 'Sending SET TREATY', 'DiploLabelSendingCEDEBASE': 'Sending CEDE BASE', 'DiploLabelSendingWITHDRAWAL': 'Sending WITHDRAWAL', 'DiploLabelPACTATTACKS': 'PACTATTACKS', 'DiploLabelPACTTRUCE': 'PACTTRUCE', 'DiploLabelSendingLOAN': 'Sending LOAN', 'DiploLabelSendingTRADEMAPS': 'Sending TRADE MAPS', 'DiploLabelSendingAGENDAON': 'Sending AGENDA ON', 'DiploLabelSendingAGENDAOFF': 'Sending AGENDA OFF', 'DiploLabelSendingPACTENDS': 'Sending PACT ENDS'}
+
 def host_fixture(source: str) -> str:
     """Add a narrow typed owner and rewrite fixture setup to the owner fields."""
     if re.search(r"\bGameDataStateWindow\s+GameDataStateStorage\b", source) or "struct GameDataStateWindowFields" in source:
         raise RuntimeError("fixture already has a game-data owner; review manually")
     source = _strip_old_storage_declarations(source)
+    # Actual source now uses the existing mutable diplomacy label objects.
+    for name, text in _CI_DIPLO_LABEL_ARRAYS.items():
+        if not re.search(r"\bchar\s+" + name + r"\s*\[\]\s*=", source):
+            source = 'char ' + name + '[] = "' + text + '";\n' + source
+
     source, project_count = re.subn(
         r"struct Projects\s*\{int empath_guild_;.*?\}\s*SecretProject;", "", source,
         flags=re.S,
@@ -512,9 +519,9 @@ int DiploScratchFAA8,DiploScratchFA18,DiploScratchFA4C;
 int DiploFriction,TurnCurrentNum,GenderDefault,PluralityDefault,IsMultiplayerNet,ExitTurnLoop;
 unsigned DiploFrictionFactionID,DiploFrictionFactionIDWith,FactionRankings[8];
 char StringTemp[128],notice[128];
-const char *DiploLabelSendingTECH="tech",*DiploLabelGettingDIPLOMATICLOCK="lock";
-const char *DiploLabelSendingTREATYOFF="off",*DiploLabelSendingDOUBLECROSS="cross";
-const char *DiploLabelReleasingDIPLOMATICLOCK="unlock";
+char DiploLabelSendingTECH[] = "Sending TECH";const char *DiploLabelGettingDIPLOMATICLOCK="lock";
+char DiploLabelSendingTREATYOFF[] = "Sending TREATY OFF";char DiploLabelSendingDOUBLECROSS[] = "Sending DOUBLE CROSS";
+char DiploLabelReleasingDIPLOMATICLOCK[] = "Releasing DIPLOMATIC LOCK";
 int response,help_response,help_once,helps,technology_calls,money_packets,tech_packets;
 int money_amount,awaits,last_await,settlements,offs,crosses,locks,unlocks,redraws;
 int pop_wait() { return 0; }
@@ -765,7 +772,7 @@ int GenderDefault, PluralityDefault, IsMultiplayerNet, DiploFriction;
 int GameState, GameRules, DiplomacyMapTransferChanged;
 int BaseCurrentCount, LockEnableMask;
 char StringTemp[256], PopupStartCaption[64];
-const char *DiploLabelSendingENERGY = "energy";
+char DiploLabelSendingENERGY[] = "Sending ENERGY";
 int proposal_menu_result, menu_calls, popup_constructs, popup_destroys;
 int pact_calls, treaty_calls, attack_calls, energy_calls, tech_calls, threat_calls;
 int gift_calls, swap_calls, vote_calls, map_calls, map_order, modal_order;
@@ -980,8 +987,8 @@ def _run_make_proposal_controls():
     assert "proposal_menu" in body and "buy_council_vote" in body
     mutations = {
         "network_timing": body.replace(
-            'if (IsMultiplayerNet != 0) {\n            log_say("Sending LOAN"',
-            'if (IsMultiplayerNet != 0 || awaits != 0) {\n            log_say("Sending LOAN"'),
+            'if (IsMultiplayerNet != 0) {\n            log_say(DiploLabelSendingLOAN',
+            'if (IsMultiplayerNet != 0 || awaits != 0) {\n            log_say(DiploLabelSendingLOAN'),
         "missing_repayment_modal": body.replace(
             'X_pops("REPAIDLOAN", 0x100000,\n'
             '                     FactionDiplomacyPortraits[other_faction_id], pop_wait);',
@@ -1070,9 +1077,9 @@ int transferred_receiver[8], mutate_f800_on_first_transfer;
 int agenda_count, agenda_actor[4], agenda_partner[4], agenda_mask[4];
 int treaty_count, treaty_actor[4], treaty_partner[4], treaty_mask[4];
 
-const char *DiploLabelSendingTECH = "Sending TECH";
+char DiploLabelSendingTECH[] = "Sending TECH";
 const char *DiploLabelSendingTREATYON = "Sending TREATYON";
-const char *DiploLabelSendingAGENDAON = "Sending AGENDAON";
+char DiploLabelSendingAGENDAON[] = "Sending AGENDA ON";
 
 int diplo_add(int left, int right) {
     return static_cast<int>(static_cast<uint32_t>(left) +
@@ -1683,7 +1690,7 @@ char DiploLabelGettingDIPLOMATICLOCK[] = "Getting DIPLOMATIC LOCK";
     int GenderDefault,PluralityDefault,PopupDialogFactionID,LockEnableMask;
     char StringTemp[256],PopupStartCaption[64];
     char DiploLabelSendingTREATYON[] = "Sending TREATY ON";
-    const char *DiploLabelReleasingDIPLOMATICLOCK="Releasing DIPLOMATIC LOCK";
+    char DiploLabelReleasingDIPLOMATICLOCK[] = "Releasing DIPLOMATIC LOCK";
     int contiguous_result=1, short_response, tech_offer_response, random_result;
     int energy_popup_answer, tech_values[128], tech_value_calls, tech_transfer_count;
     int transferred_tech[8],transfer_to[8],transfer_from[8],mutate_live_ids;

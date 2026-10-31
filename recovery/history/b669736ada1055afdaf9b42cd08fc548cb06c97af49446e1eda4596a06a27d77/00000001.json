@@ -1,0 +1,19 @@
+{
+  "event_id": "3d6c11c8d9bc0b386713e705d176b3647e4555f88b275eb629e66eedb93e9ffe",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_diplomacy_actions_coverage.py"
+    ],
+    "evidence": [
+      "Coordinator authorizes reanchoring exactly two network_timing damage mutation string tokens from the replaced Sending LOAN literal to DiploLabelSendingLOAN. Keep the existing timing mutation, source extraction and all assertions unchanged; preserve terminal original failure and rerun controls. This supplements initial mock-declaration authorization and does not waive a failure."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "preserve-loan-timing-damage-anchor",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:reference-cohort-oct31ci"
+}
