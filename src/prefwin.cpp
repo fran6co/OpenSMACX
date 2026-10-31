@@ -617,7 +617,7 @@ void PrefWin::hide_option_buttons() {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00490140 ?update_pref_buttons@PrefWin@@QAEXXZ 0x00490140-0x00490326 FILE
+// ORIGINAL: 0x00490140 ?update_pref_buttons@PrefWin@@QAEXXZ 0x00490140-0x00490326 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00490140.cpp", "recovery/tasks/prefwin-owner-coverage-wave.json", "Original control parent 8578D8; ctor/destructor member order, 800-pixel branch, checkbox text-context and callback order independently reviewed."], "reason": "Recover the complete PrefWin ownership group through a genuine GraphicWin base and compiler-owned embedded control lifetimes; preserve seed identity, original spans and unresolved discoveries without granting byte claims."}
 void PrefWin::update_pref_buttons() {
   switch (field_A14_) {
@@ -630,13 +630,15 @@ void PrefWin::update_pref_buttons() {
       more_button.show(0);
       break;
     }
-    case 6:
+    case 6: {
       warnContPrefCheckBox_.show(0);
       StringTemp[0] = '\0';
-      strcat(StringTemp, label_get(label_index(0xA60)));
+      LPSTR label_value = Labels.strings_ptr[label_index(0xA60)];
+      strcat(StringTemp, StringTable.get(label_value));
       moreButton_.set_name(StringTemp);
       moreButton_.show(0);
       break;
+    }
     case 3: autoPrefCheckBox_.show(0); break;
     case 4:
       audioVisPrefCheckBox_.show(0);
