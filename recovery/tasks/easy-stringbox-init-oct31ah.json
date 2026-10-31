@@ -1,0 +1,23 @@
+{
+  "author": "recovery-coordinator",
+  "base_revision": "675e6797f085092357bc417ac26ff37b6e7ed1fe",
+  "editable_files": [
+    "src/stringbox.cpp",
+    "recovery/project.json"
+  ],
+  "evidence": [
+    "Current committed source, pinned original and qualified actual CMake TU recipe provide the source and compiler context. No application build policy change.",
+    "Isolated native body-only overlays require unchanged-replica and compiled damage controls; no providers, baseline reset, automatic integration or claim demotion."
+  ],
+  "intent": "Native bounded easy matching deck, maximum three ordinary body variants per primary function. Preserve source bindings, historical claims, bugs and evaluation/state order; experiments do not publish source or acceptance.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6460112,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "easy-stringbox-init-oct31ah"
+}
