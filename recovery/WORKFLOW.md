@@ -1063,6 +1063,22 @@ defect, a small matching miss, or an exhausted spelling experiment. Consult the
 existing findings and tried variants before allocating compiler time. A high
 similarity score alone does not make a candidate cheap or structurally sound.
 
+Before spending spelling attempts on an indexed switch, check that its original
+target table and any selector map have source-owned associated bindings. Derive
+their bounds from the guarded index flow, check every target cell's relocation
+and decoded instruction boundary, and publish reviewed bindings with the native
+guarded writer. Keep the original function spans and claims intact. An absent
+binding can make data appear as instructions; do not optimize against that
+misleading listing. A binding is original evidence, not proof that the current
+compiler table or its targets match. Retain native unknown/refused dimensions.
+
+Prepare the owner's existing actual-source fixture dependencies with its editing
+scope, including shared harness storage affected by member migrations. Reserve a
+shared fixture to one worker or coordinate its changes centrally. When equivalent
+source spelling invalidates a mutation anchor, update the anchor while preserving
+the behavioral oracle and proving that the changed mutant still fails. Do not
+weaken historical snapshot assertions to conceal unrelated baseline failures.
+
 For small body-only matching misses, screen at most three evidence-backed
 spellings in one local variant deck before reconsidering the hypothesis. Do not
 add volatile accesses, raw casts, fixed addresses or fake dispatch solely to

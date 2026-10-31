@@ -80,7 +80,7 @@ void NetFifo::close() {
   LeaveCriticalSection(&lock_);
 }
 
-// ORIGINAL: 0x00633AB0 ?add@NetFifo@@QAEHPAXKKHK@Z 0x00633AB0-0x00633B9A
+// ORIGINAL: 0x00633AB0 ?add@NetFifo@@QAEHPAXKKHK@Z 0x00633AB0-0x00633B9A BYTE_EXACT
 // size      235 bytes
 // prototype int (__thiscall ?add@NetFifo@@QAEHPAXKKHK@Z)(NetFifo* this, void*, unsigned long, unsigned long, int, unsigned long)
 // callers   2   call targets   2
@@ -140,7 +140,7 @@ int NetFifo::add(void *data, unsigned long size, unsigned long key, int type,
 #pragma intrinsic(memcpy)
 #endif
 
-// ORIGINAL: 0x00633D90 ?get@NetFifo@@QAEHPAXPAIPAH1@Z 0x00633D90-0x00633E75
+// ORIGINAL: 0x00633D90 ?get@NetFifo@@QAEHPAXPAIPAH1@Z 0x00633D90-0x00633E75 BYTE_EXACT
 // symbol    ?get@NetFifo@@QAEHPAXHPAH1@Z
 // size      229 bytes
 // prototype int (__thiscall ?get@NetFifo@@QAEHPAXPAIPAH1@Z)(NetFifo* this, void*, unsigned int*, int*, int*)
@@ -212,7 +212,7 @@ int NetFifo::get(void *data, int key, int *type, int *len) {
 #pragma intrinsic(memcpy)
 #endif
 
-// ORIGINAL: 0x00633F70 ?get@NetFifo@@QAEHPAXPAIPAHPAI@Z 0x00633F70-0x0063401D
+// ORIGINAL: 0x00633F70 ?get@NetFifo@@QAEHPAXPAIPAHPAI@Z 0x00633F70-0x0063401D BYTE_EXACT
 // symbol    ?get@NetFifo@@QAEHPAXPAIPAH1@Z
 // prototype int (__thiscall ?get@NetFifo@@QAEHPAXPAIPAHPAI@Z)(NetFifo* this, void*, unsigned int*, int*, unsigned int*)
 // kind      game
@@ -345,7 +345,7 @@ Purpose: Remove one entry from this NetFifo by its key/caller-value pair:
          copy the payload out when a buffer is supplied, free the node's
          payload block, unlink and free the node.
 
-// ORIGINAL: 0x00633C90 sub_633c90 0x00633C90-0x00633D81
+// ORIGINAL: 0x00633C90 sub_633c90 0x00633C90-0x00633D81 BYTE_EXACT
 // symbol    ?remove_key_caller@NetFifo@@QAEHPAXIHPAI@Z
 // TRIED: nothing yet - MISMATCH #1 push/mov; the PROPOSAL makes the receiver a __thiscall member over the queue.
 // Historical seed emitted-symbol fact: @sub_633c90@24
@@ -419,7 +419,7 @@ Purpose: Remove one entry from this NetFifo by its caller value: hand the
          key back through the second argument when supplied, copy and free
          the payload, unlink and free the node.
 
-// ORIGINAL: 0x00633E80 sub_633e80 0x00633E80-0x00633F65
+// ORIGINAL: 0x00633E80 sub_633e80 0x00633E80-0x00633F65 BYTE_EXACT
 // symbol    ?remove_caller@NetFifo@@QAEHPAXPAIH1@Z
 // TRIED: same head question as sub_633ba0 - the receiver is the queue.
 // Historical seed emitted-symbol fact: @sub_633e80@24
@@ -498,7 +498,7 @@ Purpose: Peek one entry of this NetFifo by its key/caller-value pair: copy
          the payload out when a buffer is supplied, without unlinking or
          freeing anything.
 
-// ORIGINAL: 0x00634020 sub_634020 0x00634020-0x006340B5
+// ORIGINAL: 0x00634020 sub_634020 0x00634020-0x006340B5 BYTE_EXACT
 // symbol    ?peek_key_caller@NetFifo@@QAEHPAXIHPAI@Z
 // Historical seed emitted-symbol fact: @sub_634020@24
 // size      149 bytes
@@ -556,7 +556,7 @@ int NetFifo::peek_key_caller(void *payload_buffer, unsigned int key, int caller_
 Purpose: Peek one entry of this NetFifo by its caller value alone, handing
          the key back through the second argument when supplied.
 
-// ORIGINAL: 0x00634160 sub_634160 0x00634160-0x006341F9
+// ORIGINAL: 0x00634160 sub_634160 0x00634160-0x006341F9 BYTE_EXACT
 // symbol    ?peek_caller@NetFifo@@QAEHPAXPAIH1@Z
 // TRIED: MISMATCH #0 push/mov, prologue differs; same queue receiver.
 // Historical seed emitted-symbol fact: @sub_634160@24
@@ -619,7 +619,7 @@ Purpose: The keyed queue reader: under the queue lock, find the entry whose
          key matches, copy its payload out, and hand back its caller value,
          result word and size without unlinking the entry.
 
-// ORIGINAL: 0x006340C0 sub_6340c0 0x006340C0-0x00634159
+// ORIGINAL: 0x006340C0 sub_6340c0 0x006340C0-0x00634159 BYTE_EXACT
 // symbol    ?peek_key@NetFifo@@QAEHPAXIPAH1@Z
 // TRIED: the second reader on the queue at Net+0x10C. The two lock slots are the process import table's EnterCriticalSection (0x66917c) and LeaveCriticalSection (0x669174), the same pair the homed NetFifo::get calls by name.
 // size      153 bytes

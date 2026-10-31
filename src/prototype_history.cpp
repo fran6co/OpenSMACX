@@ -127,7 +127,7 @@ void __cdecl proto_bung_put(int faction_id, int proto_id) {
 
 /*
 Purpose: Was this exact prototype design already recorded for this faction?
-// ORIGINAL: 0x0057DFC0 ?is_bunged@@YA_NHHHHHH@Z 0x0057DFC0-0x0057E037
+// ORIGINAL: 0x0057DFC0 ?is_bunged@@YA_NHHHHHH@Z 0x0057DFC0-0x0057E037 BYTE_EXACT
 // symbol    ?is_bunged@@YAHHHHHHH@Z
 // size      119 bytes
 // prototype bool (__cdecl ?is_bunged@@YA_NHHHHHH@Z)(int factionID, int chassisID, int weaponID, int armorID, int abilityFlags, int reactorID)

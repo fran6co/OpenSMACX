@@ -2922,7 +2922,7 @@ void DesignWin::bubble_me_elmo2(char *a1, int a2, int a3) {
     set_bubble_text(a1, &anchor);
 }
 
-// ORIGINAL: 0x00439EB0 ?delete_abil@DesignWin@@QAEXH@Z 0x00439EB0-0x00439F18
+// ORIGINAL: 0x00439EB0 ?delete_abil@DesignWin@@QAEXH@Z 0x00439EB0-0x00439F18 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/designwin.h:protoAbilityFlags_ at 0x14208", "src/designwin.h:protoAbilityID1_ and protoAbilityID2_ at 0x14218/0x1421C"], "reason": "Remove one selected ability flag and rebuild the two displayed ability identifiers from the remaining flags."}
 // size      104 bytes
 // prototype void (__thiscall ?delete_abil@DesignWin@@QAEXH@Z)(DesignWin* this, int)
