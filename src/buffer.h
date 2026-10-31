@@ -42,7 +42,8 @@ struct Vert;
 // DirectDraw surface handle passed to `init`. No definition is known - the
 // original forwards it straight into the DirectDraw create call - so a forward
 // declaration is all `init`'s signature needs to compile.
-// `Buffer` holds an `IDirectDrawSurface *` and calls `GetDC`, `ReleaseDC`,
+// `Buffer` holds the Surface2 interface selected by init's original
+// IID at0x66FC28 and calls `GetDC`, `ReleaseDC`,
 // `Lock` and `Unlock` on it - from `get_hdc` and `release_hdc`, whose bodies
 // have to live in this header to be inlined the way the image inlines them
 // into `set_clip`. So the full interface is needed here, not forward
@@ -52,7 +53,7 @@ struct Vert;
 // 0x005D7852: `Buffer::init` takes the caller's surface from +0 and its
 // clipper from +4 when the `tgl & 4` flag says the storage is borrowed.
 struct ExtDirectDraw {
-  IDirectDrawSurface *surface;
+  IDirectDrawSurface2 *surface;
   IDirectDrawClipper *clipper;
 };
 
@@ -339,7 +340,7 @@ void draw_dest_unk1(Buffer *, int, int, int, int, unsigned char *);
       if (locked_bits_ != 0) {
           get_graphic_win();
       }
-      IDirectDrawSurface *const surface = surface_;
+      IDirectDrawSurface2 *const surface = surface_;
       // Without a surface the buffer owns its context directly, so acquiring is
       // just publishing the stored handle and counting the reference.
       if (!surface) {
@@ -627,11 +628,11 @@ void draw_dest_unk1(Buffer *, int, int, int, int, unsigned char *);
   LPVOID dib_bits_;
   // 0x58 and 0x5C. The DirectDraw pair `Buffer::init` creates: slot 4 of
   // IDirectDraw is CreateClipper and stores into 0x5C, and the surface it
-  // creates is QueryInterface'd into 0x58. `Buffer::get_hdc` then calls
-  // slot 0x44 - IDirectDrawSurface::GetDC - on 0x58 and had to cast it back
+  // creates is QueryInterface'd with IID_IDirectDrawSurface2 into 0x58. `Buffer::get_hdc` then calls
+  // slot 0x44 - IDirectDrawSurface2::GetDC - on 0x58 and had to cast it back
   // out of a `uint32_t` to do it.
-  // RECOVERY_MEMBER: v3 Buffer surface_ IDirectDrawSurface* 0x58 0x0062CD50
-  IDirectDrawSurface *surface_;
+  // RECOVERY_MEMBER: v3 Buffer surface_ IDirectDrawSurface2* 0x58 0x0062CD50
+  IDirectDrawSurface2 *surface_;
   // RECOVERY_MEMBER: v3 Buffer clipper_ IDirectDrawClipper* 0x5C 0x0062CD50
   IDirectDrawClipper *clipper_;
   HDC hdc2_;

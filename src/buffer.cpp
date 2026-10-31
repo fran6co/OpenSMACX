@@ -1386,7 +1386,7 @@ int Buffer::load_pcx(BYTE *data, DWORD size, Palette *palette,
         if (locked_bits_ != 0) {
             get_graphic_win();
         }
-        IDirectDrawSurface *const surface = surface_;
+        IDirectDrawSurface2 *const surface = surface_;
         HDC acquired;
         if (surface == nullptr) {
             hdc2_ = hdc_;
@@ -1586,7 +1586,7 @@ int Buffer::init(int width, int height, int tgl, ExtDirectDraw *direct_draw) {
         if (BufferDirectDraw->CreateClipper(0, &clipper_, nullptr) != 0) {
             return 0x12;
         }
-        created->QueryInterface(IID_IDirectDrawSurface,
+        created->QueryInterface(IID_IDirectDrawSurface2,
                                 reinterpret_cast<void **>(&surface_));
     }
     if (borrowed != 0) {
@@ -2814,7 +2814,7 @@ Purpose: The Buffer wide-line filler that sits between the blitter and the
          the lock when this body holds the last one.
 
 // ORIGINAL: 0x005E07A0 sub_5e07a0 0x005E07A0-0x005E09CB FILE
-// RECOVERY_BINDING: v1 {"evidence": ["pinned:0x005E07A0-0x005E09CB uses ECX as receiver and reads the Buffer pixel, surface, clip, lock-count and stride fields", "source:src/buffer.h declares those members and IDirectDrawSurface* surface_ at the observed offsets", "pinned:0x005E07F5 Lock, 0x005E09B3 Unlock, and the saved 0x14-byte thiscall cleanup"], "reason": "Bind the original wide-line raster routine to Buffer's named pixel, clip, pitch and DirectDraw members."}
+// RECOVERY_BINDING: v1 {"evidence": ["pinned:0x005E07A0-0x005E09CB uses ECX as receiver and reads the Buffer pixel, surface, clip, lock-count and stride fields", "source:src/buffer.h declares those members and IDirectDrawSurface2* surface_ at the observed offsets", "pinned:0x005E07F5 Lock, 0x005E09B3 Unlock, and the saved 0x14-byte thiscall cleanup"], "reason": "Bind the original wide-line raster routine to Buffer's named pixel, clip, pitch and DirectDraw members."}
 // symbol    ?fill_line@Buffer@@QAEHHHHHD@Z
 // size      555 bytes
 // Deleted seed provenance: git:1ed59304110fc2098fb1dd11457fa5b0074169bd:src/unrecovered/005e07a0.cpp
@@ -2828,14 +2828,14 @@ Status: Coverage transcription of the retained seed (src/unrecovered/005e07a0.cp
         buffer.h's own polygon family uses. The offset reads are spelled
         raw beside their field names; promoting this into a real member is
         the coordinator's buffer.h scope, not a body rewrite. The two COM
-        calls are IDirectDrawSurface slots 25 (Lock) and 32 (Unlock) on the
+        calls are IDirectDrawSurface2 slots 25 (Lock) and 32 (Unlock) on the
         surface the buffer keeps at 0x58.
 */
 
 
 
 int Buffer::fill_line(int x1, int y1, int x2, int y2, char fill_colour) {
-    IDirectDrawSurface *const surface = surface_;
+    IDirectDrawSurface2 *const surface = surface_;
     unsigned char *locked;
 
     if (surface == 0) {
@@ -2939,7 +2939,7 @@ int Buffer::fill_line(int x1, int y1, int x2, int y2, char fill_colour) {
         }
     }
 
-    IDirectDrawSurface *const surface_at_end = surface_;
+    IDirectDrawSurface2 *const surface_at_end = surface_;
     if (surface_at_end == 0) {
         int holders = surface_lock_count_ - 1;
         surface_lock_count_ = holders;
@@ -6683,7 +6683,7 @@ int Buffer::wrap_flying(char *a1, int a2, int a3, int a4) {
 // calls     (none)
 // indirect  0x005E23C3 0x005E243F
 // The TRIED raw-vtable/descriptor spelling above is historical seed evidence.
-// The live SDK declares IDirectDrawSurface::Lock/Unlock and DDSURFACEDESC.
+// The live SDK declares IDirectDrawSurface2::Lock/Unlock and DDSURFACEDESC.
 // Initialize only dwSize, and preserve the cleanup decrement on Lock failure;
 // an ignored HRESULT from Unlock is not permission to change those paths.
 
@@ -6691,7 +6691,7 @@ int Buffer::put_pixel(int a1, int a2, int a3) {
   char *local_48;
   int result;
   DDSURFACEDESC description;
-  IDirectDrawSurface *surface;
+  IDirectDrawSurface2 *surface;
 
   void *cur = dib_bits_;
   if (cur == 0 && surface_ == 0) {
@@ -7126,7 +7126,7 @@ int Buffer::change_color(int a1, int a2) {
     }
 
     char *pixel_base;
-    IDirectDrawSurface *const surface = surface_;
+    IDirectDrawSurface2 *const surface = surface_;
     if (!surface) {
         char *const storage = static_cast<char *>(dib_bits_);
         locked_bits_ = storage;
@@ -7172,7 +7172,7 @@ int Buffer::change_color(int a1, int a2) {
                 p += stride_remainder;
             }
 
-            IDirectDrawSurface *const surface2 = surface_;
+            IDirectDrawSurface2 *const surface2 = surface_;
             const int32_t remaining = static_cast<int32_t>(
                 static_cast<uint32_t>(surface_lock_count_) - 1u);
             surface_lock_count_ = remaining;
@@ -7814,7 +7814,7 @@ int Buffer::draw_dest(Buffer * a1, int a2, int a3, int a4, int a5, int a6, unsig
         BufferSpriteOwner.sprite().cTransparentIndex_ = static_cast<char>(transparentIndex);
         BufferSpriteOwner.sprite().fObj1Exists_ = 0;
 
-        IDirectDrawSurface *surface = surface_;
+        IDirectDrawSurface2 *surface = surface_;
         if (surface == 0) {
             surface_lock_count_ = surface_lock_count_ - 1;
             if (surface_lock_count_ > 0) {
@@ -7884,7 +7884,7 @@ int Buffer::draw_multi_table_dest(Buffer * a1, int a2, int a3, int a4, int a5, i
         BufferSpriteOwner.sprite().cTransparentIndex_ = static_cast<char>(transparentIndex);
         BufferSpriteOwner.sprite().fObj1Exists_ = 0;
 
-        IDirectDrawSurface *surface = surface_;
+        IDirectDrawSurface2 *surface = surface_;
         if (surface == 0) {
             surface_lock_count_ = surface_lock_count_ - 1;
             if (surface_lock_count_ > 0) {

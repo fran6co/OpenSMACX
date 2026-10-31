@@ -39,7 +39,7 @@ def actual_source():
     fields = []
     for pattern in (r"RECT rect1_;", r"Dib dib_;", r"uint32_t stride_;",
                     r"LPVOID locked_bits_;", r"LPVOID dib_bits_;",
-                    r"IDirectDrawSurface \*surface_;", r"int surface_lock_count_;"):
+                    r"IDirectDrawSurface2 \*surface_;", r"int surface_lock_count_;"):
         declaration, = re.findall(pattern, header)
         fields.append(declaration)
     source = (ROOT / "src/buffer.cpp").read_text()
@@ -67,7 +67,7 @@ struct DDSURFACEDESC {uint32_t dwSize;int lPitch;void *lpSurface;};
 const int DDLOCK_WAIT=1,DDBLT_COLORFILL=2,DDBLT_WAIT=4;
 void check(bool ok,int line){if(!ok){std::fprintf(stderr,"assertion line %d\n",line);std::exit(95);}}
 #define require(x) check((x),__LINE__)
-struct IDirectDrawSurface {
+struct IDirectDrawSurface2 {
     int Lock(void *,DDSURFACEDESC *,int,void *);
     int Unlock(void *);
     int Blt(RECT *,void *,void *,int,DDBLTFX *);
@@ -100,7 +100,7 @@ void *Buffer::get_data(){
     if(mode==3){locked_bits_=nullptr;++surface_lock_count_;return nullptr;}
     locked_bits_=published_pixels;++surface_lock_count_;return published_pixels;
 }
-int IDirectDrawSurface::Lock(void *area,DDSURFACEDESC *description,int flags,void *event){
+int IDirectDrawSurface2::Lock(void *area,DDSURFACEDESC *description,int flags,void *event){
     require(this==&surface && area==nullptr && event==nullptr);
     require(flags==DDLOCK_WAIT && description->dwSize==sizeof(DDSURFACEDESC));
     ++lock_calls;
@@ -109,10 +109,10 @@ int IDirectDrawSurface::Lock(void *area,DDSURFACEDESC *description,int flags,voi
     description->lpSurface=mode==3?nullptr:lock_bits;
     return 0;
 }
-int IDirectDrawSurface::Unlock(void *p){
+int IDirectDrawSurface2::Unlock(void *p){
     require(this==&surface && p==published_pixels);++unlock_calls;return 37;
 }
-int IDirectDrawSurface::Blt(RECT *area,void *a,void *b,int flags,DDBLTFX *fx){
+int IDirectDrawSurface2::Blt(RECT *area,void *a,void *b,int flags,DDBLTFX *fx){
     require(this==&surface && a==nullptr && b==nullptr && flags==(DDBLT_COLORFILL|DDBLT_WAIT));
     require(fx->dwSize==sizeof(DDBLTFX));blt_rect=*area;blt_color=fx->dwFillColor;++blt_calls;return 41;
 }

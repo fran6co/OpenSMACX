@@ -108,7 +108,7 @@ static Sprite g_sprite = {};
 struct SpriteOwner { Sprite &sprite() { return g_sprite; } };
 static SpriteOwner BufferSpriteOwner;
 
-struct IDirectDrawSurface {
+struct IDirectDrawSurface2 {
     int unlocks = 0;
     void *unlocked = nullptr;
     void Unlock(void *bits) { ++unlocks; unlocked = bits; }
@@ -117,7 +117,7 @@ struct Dib { struct { int biWidth, biHeight; } bmiHeader; };
 struct Buffer {
     void *locked_bits_;
     void *dib_bits_;
-    IDirectDrawSurface *surface_;
+    IDirectDrawSurface2 *surface_;
     int surface_lock_count_;
     unsigned int stride_;
     Dib dib_;
@@ -150,7 +150,7 @@ static void check_setup_path(int route, bool has_bits, int initial_count) {
     unsigned char pixels[16] = {};
     unsigned char table_bytes[8] = {};
     ColorTable *multi_table = reinterpret_cast<ColorTable *>(table_bytes);
-    IDirectDrawSurface surface;
+    IDirectDrawSurface2 surface;
     Buffer owner = {};
     Buffer destination = {};
     owner.surface_ = nullptr;
@@ -194,7 +194,7 @@ static void check_existing_surface_skips_setup(int route) {
     unsigned char pixels[16] = {};
     unsigned char table_bytes[8] = {};
     ColorTable *multi_table = reinterpret_cast<ColorTable *>(table_bytes);
-    IDirectDrawSurface surface;
+    IDirectDrawSurface2 surface;
     Buffer owner = {};
     Buffer destination = {};
     owner.surface_ = &surface;

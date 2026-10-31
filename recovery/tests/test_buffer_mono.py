@@ -29,8 +29,8 @@ def braced(text, signature):
 
 
 def declaration(text, name):
-    matches = re.findall(r"^\s*(?:LPVOID|IDirectDrawSurface\s*\*|uint32_t|int|"
-                         r"char\s*\*|unsigned char)\s*" + name + r"\s*;", text, re.M)
+    matches = re.findall(r"^\s*(?:LPVOID|IDirectDrawSurface2\s*\*|uint32_t|int|"
+                         r"(?:unsigned )?char\s*\*|unsigned char)\s*" + name + r"\s*;", text, re.M)
     assert len(matches) == 1, name
     return matches[0].strip()
 
@@ -59,8 +59,9 @@ def actual_source():
         # separately. Keep the real consumer bodies and observed Sprite identity.
         "struct SharedSpriteOwnerDouble { Sprite &sprite() { return g_BUFFER_SPRITE; } } BufferSpriteOwner;",
         "struct Buffer {", buffer_fields,
-        "Dib dib_; void setup_buff_sprite(int); static void release_buff_sprite();",
+        "Dib dib_; void prepare_shared_sprite(int); void setup_buff_sprite(int); static void release_buff_sprite();",
         signature[0], "};",
+        braced(source, "inline void Buffer::prepare_shared_sprite("),
         braced(source, "void Buffer::setup_buff_sprite("),
         braced(source, "void Buffer::release_buff_sprite("),
         braced(source, "int Buffer::draw_mono("),
@@ -73,7 +74,7 @@ HARNESS = r'''
 #include <cstring>
 typedef void *LPVOID;
 void require(bool condition) { if (!condition) std::exit(42); }
-struct IDirectDrawSurface {
+struct IDirectDrawSurface2 {
     int calls = 0;
     void Unlock(void *) { ++calls; }
 };
@@ -86,7 +87,7 @@ Sprite expected_sprite;
 void *expected_locked;
 int expected_count, expected_args[6], draw_result, calls;
 bool replace_borrow;
-char replacement[4];
+unsigned char replacement[4];
 
 int Sprite::draw_mono(Buffer *destination, int transparent, int x, int y,
                       int colour, int numerator, int denominator) {
@@ -110,10 +111,10 @@ int Sprite::draw_mono(Buffer *destination, int transparent, int x, int y,
 }
 
 void check(int scenario) {
-    char pixels[40]; std::memset(pixels, 0xA7, sizeof pixels);
-    char old_bits[4];
+    unsigned char pixels[40]; std::memset(pixels, 0xA7, sizeof pixels);
+    unsigned char old_bits[4];
     Buffer source = {}, destination = {};
-    IDirectDrawSurface surface;
+    IDirectDrawSurface2 surface;
     source_buffer = &source;
     source.dib_bits_ = pixels;
     source.locked_bits_ = old_bits;
@@ -143,7 +144,7 @@ void check(int scenario) {
     expected_sprite = g_BUFFER_SPRITE;
     expected_locked = old_bits; expected_count = 3;
     if (scenario != 5) {
-        expected_sprite.pcBits_ = static_cast<char *>(source.dib_bits_);
+        expected_sprite.pcBits_ = static_cast<unsigned char *>(source.dib_bits_);
         expected_sprite.cTransparentIndex_ = scenario == 1 ? 9 :
             (scenario == 2 ? 254 : 52);
         expected_sprite.iSpriteWidth2_ = 12;
@@ -201,7 +202,7 @@ def test_actual_buffer_mono(actual_executable, scenario):
 
 
 @pytest.mark.parametrize("before,after,scenario", [
-    ("setup_buff_sprite(transparent);", "setup_buff_sprite(colour);", 0),
+    ("prepare_shared_sprite(transparent);", "prepare_shared_sprite(colour);", 0),
     ("destination, transparent, x, y, colour, numerator, denominator);",
      "destination, transparent == -1 ? WinFillColour : transparent, x, y, colour, numerator, denominator);", 1),
     ("destination, transparent, x, y, colour, numerator, denominator);",
@@ -212,12 +213,12 @@ def test_actual_buffer_mono(actual_executable, scenario):
      "destination, transparent, x, y, colour & 255, numerator, denominator);", 0),
     ("destination, transparent, x, y, colour, numerator, denominator);",
      "destination, transparent, x, y, colour, denominator, numerator);", 0),
-    ("    release_buff_sprite();", "    /* missing release */", 0),
+    ("    BufferSpriteOwner.sprite().pcBits_ = 0;", "    /* missing release */", 0),
     ("    return result;", "    return 0;", 0),
     ("BufferSpriteOwner.sprite().iSpriteWidth2_ = stride_;",
      "BufferSpriteOwner.sprite().iSpriteWidth2_ = dib_.bmiHeader.biWidth;", 0),
-    ("    setup_buff_sprite(transparent);", "    if (!destination) return 3;\n    setup_buff_sprite(transparent);", 6),
-    ("    setup_buff_sprite(transparent);", "    if (surface_) return 3;\n    setup_buff_sprite(transparent);", 5),
+    ("    prepare_shared_sprite(transparent);", "    if (!destination) return 3;\n    prepare_shared_sprite(transparent);", 6),
+    ("    prepare_shared_sprite(transparent);", "    if (surface_) return 3;\n    prepare_shared_sprite(transparent);", 5),
     ("++surface_lock_count_;", "/* missing acquisition */", 2),
     ("const int count = --surface_lock_count_;",
      "const int count = surface_lock_count_;", 4),
@@ -233,11 +234,13 @@ def test_damage_compiles_but_fails(tmp_path, before, after, scenario):
 
 def test_release_before_draw_is_behavioral_damage(tmp_path):
     source = actual_source()
-    assert source.count("    release_buff_sprite();") == 1
-    source = source.replace("    release_buff_sprite();", "")
+    cleanup = "    BufferSpriteOwner.sprite().pcBits_ = 0;"
+    assert source.count(cleanup) == 2
+    prefix, _, suffix = source.rpartition(cleanup)
+    source = prefix + suffix
     draw = "    int result = BufferSpriteOwner.sprite().draw_mono("
     assert source.count(draw) == 1
-    source = source.replace(draw, "    release_buff_sprite();\n" + draw)
+    source = source.replace(draw, cleanup + "\n" + draw)
     executable = compile_host(tmp_path, source)
     result = subprocess.run([str(executable), "0"], capture_output=True,
                             text=True, timeout=10)

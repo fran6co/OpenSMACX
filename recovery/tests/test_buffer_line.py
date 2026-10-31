@@ -51,7 +51,7 @@ def actual_fields():
     fields = []
     for name in ('rect1_', 'locked_bits_', 'dib_bits_', 'surface_',
                  'surface_lock_count_', 'stride_'):
-        field, = re.findall(r'^\s*(?:RECT|LPVOID|IDirectDrawSurface\s*\*|'
+        field, = re.findall(r'^\s*(?:RECT|LPVOID|IDirectDrawSurface2\s*\*|'
                             r'int|uint32_t)\s*' + name + r'\s*;', header, re.M)
         fields.append(field.strip())
     return '\n'.join(fields)
@@ -71,7 +71,7 @@ void require_at(bool ok, int line) {
     if (!ok) { std::fprintf(stderr, "assertion at %d\n", line); std::exit(91); }
 }
 #define require(x) require_at((x), __LINE__)
-struct IDirectDrawSurface { bool failure, null_bits, change_state; };
+struct IDirectDrawSurface2 { bool failure, null_bits, change_state; };
 std::string events;
 unsigned char allocation[64 * 64 + 256], expected[64 * 64 + 256];
 unsigned char *const pixels = allocation + 128;
@@ -223,7 +223,7 @@ void geometry() {
 void lifecycle() {
     for (int mode = 0; mode < 8; ++mode) {
         Buffer b = fresh();
-        IDirectDrawSurface surface = {};
+        IDirectDrawSurface2 surface = {};
         if (mode != 0) { b.surface_ = &surface; b.dib_bits_ = nullptr; }
         if (mode == 2) { b.locked_bits_ = pixels; b.surface_lock_count_ = 2; }
         if (mode == 3) surface.failure = true;
@@ -245,7 +245,7 @@ void lifecycle() {
     const int rejected[][4] = {{1, 1, 3, 4}, {41, 8, 44, 20},
                               {8, 41, 20, 44}, {1, 12, 3, 8}};
     for (const auto &segment : rejected) {
-        Buffer b = fresh(); IDirectDrawSurface surface = {};
+        Buffer b = fresh(); IDirectDrawSurface2 surface = {};
         b.surface_ = &surface;
         b.line(segment[0], segment[1], segment[2], segment[3], 81);
         require(events == "GLFU"); compare_pixels();

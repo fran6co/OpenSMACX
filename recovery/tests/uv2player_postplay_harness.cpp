@@ -23,8 +23,8 @@ static int event_index(const char *name, int occurrence) {
   return -1;
 }
 
-struct IDirectDrawSurface {};
-struct ExtDirectDraw { IDirectDrawSurface *surface; void *clipper; };
+struct IDirectDrawSurface2 {};
+struct ExtDirectDraw { IDirectDrawSurface2 *surface; void *clipper; };
 static char help_file_storage[] = "host DatalinkHelpFile";
 static char *DatalinkHelpFile = help_file_storage;
 
@@ -183,7 +183,7 @@ static int callback_sets = 0;
 static BufferWriteRawCallback current_callback = 0;
 static int draw_calls = 0;
 static int draw_text_calls = 0;
-static int expected_surface_marker;
+static IDirectDrawSurface2 expected_surface_marker;
 static int expected_clipper_marker;
 
 class Buffer {
@@ -191,8 +191,7 @@ class Buffer {
   int init(int width, int height, int flags, ExtDirectDraw *draw) {
     assert(width == 640 && height == 480 && flags == 4);
     assert(draw != 0);
-    assert(draw->surface == reinterpret_cast<IDirectDrawSurface *>(
-                                &expected_surface_marker));
+    assert(draw->surface == &expected_surface_marker);
     assert(draw->clipper == &expected_clipper_marker);
     ++init_count;
     event("buffer.init");
@@ -247,7 +246,7 @@ class UV2Player {
   void show_post_movie_text();
   char movie_name_[0x104];
   DWORD write_delay_;
-  void *primary_surface_;
+  IDirectDrawSurface2 *primary_surface_;
   void *clipper_;
   Buffer buffer_;
 };
