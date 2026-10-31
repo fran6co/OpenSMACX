@@ -1664,7 +1664,9 @@ int __cdecl boom(int x, int y, int flags) {
     }
 
     RECT saved_rectangles[8];
-    bool active_windows[8];
+    // Original 0x00504DF5/0x00504EB8 store DWORD flags; the slot cursor
+    // advances four bytes over eight entries (0x005054C2/0x005054CB).
+    int active_windows[8];
     bool any_window = false;
 
     for (int slot = 0; slot < 8; ++slot) {

@@ -457,7 +457,7 @@ struct Veh { int proto_id=0,x=2,y=2,faction_id=0,moves_expended=0;
   int next_veh_id_stack=-1; uint8_t order=0; } Vehs[8];
 struct VehPrototype { int plan=9,chassis_id=0; } VehPrototypes[8];
 struct ChassisRecord { int triad=TRIAD_LAND; } Chassis[8];
-struct Map { uint8_t climate=0,contour=0; uint32_t bit=0,bit2=0; } Tiles[64];
+struct Map { uint8_t climate=0,contour=0,val3=0; uint32_t bit=0,bit2=0; } Tiles[64];
 Map *map_loc(int x,int y) { assert(x>=0&&x<8&&y>=0&&y<8); return &Tiles[y*8+x]; }
 struct TerraformRecord { char *name=nullptr,*name_sea=nullptr;
   int prerequisite_tech[2]={-1,-1}; uint32_t bit=0,bit_incompatible=0; }
@@ -536,8 +536,9 @@ void log_say(const char *s,int,int,int) { events.push_back(string("log:")+s);
 '''
 
 
-def test_actual_terraform_source_control_paths(tmp_path):
-    compiler = shutil.which("g++")
+@pytest.mark.parametrize("compiler_name", ["g++", "clang++"])
+def test_actual_terraform_source_control_paths(tmp_path, compiler_name):
+    compiler = shutil.which(compiler_name)
     if not compiler:
         pytest.skip("host C++ compiler unavailable")
     unit_text = GAME_DATA_STATE_FIXTURE + TERRAFORM_HARNESS + body_for("void Console::terraform(int vehicle_id") + r'''
@@ -622,6 +623,35 @@ int main() {
   Tiles[2*8+3].climate=0x60; Tiles[2*8+3].bit=BIT_THERMAL_BORE;
   Tiles[2*8+3].bit2=0; c.terraform(0,TERRA_THERMAL_BORE);
   assert(popup_label=="TWOBOREHOLES" && lock0_calls==0 && synch_vehicle_calls==0);
+
+  // Rockiness and contour are different fields. A warning exits before
+  // acquiring the order lock or writing/synchronizing a vehicle order.
+  for(int band=0;band<4;++band) {
+    reset_state(); Terraforming[TERRA_FARM].bit=BIT_FARM;
+    Tiles[2*8+2].val3=static_cast<uint8_t>(band*64);
+    Tiles[2*8+2].contour=static_cast<uint8_t>((3-band)*64);
+    c.terraform(0,TERRA_FARM);
+    if(band>=2) {
+      assert(events.back()=="msg:NOTINROCKY");
+      assert(lock0_calls==0 && synch_vehicle_calls==0 && Vehs[0].order==0);
+    } else {
+      assert(lock0_calls==1 && synch_vehicle_calls==1 && Vehs[0].order==TERRA_FARM+4);
+    }
+  }
+
+  // Level-terrain's independent zero-rockiness gate also ignores contour.
+  for(int band=0;band<4;++band) {
+    reset_state(); Order[TERRA_LEVEL_TERRAIN+4].order=(char*)"LEVEL";
+    Tiles[2*8+2].val3=static_cast<uint8_t>(band*64);
+    Tiles[2*8+2].contour=static_cast<uint8_t>((3-band)*64);
+    c.terraform(0,TERRA_LEVEL_TERRAIN);
+    if(band==0) {
+      assert(popup_label=="TOOFLAT");
+      assert(lock0_calls==0 && synch_vehicle_calls==0 && Vehs[0].order==0);
+    } else {
+      assert(lock0_calls==1 && synch_vehicle_calls==1 && Vehs[0].order==TERRA_LEVEL_TERRAIN+4);
+    }
+  }
 }
 '''
     unit = tmp_path / "console_terraform_actual.cpp"

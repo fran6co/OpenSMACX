@@ -1,0 +1,17 @@
+{
+  "event_id": "ba37fdfe559ddbab282fce2dcbd46f37bd865f9f1cda583e01e2df55a53c7dfa",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "center-map-lookup-after-owner-query",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/mapwin.cpp calls existing typed region_at(a7,a8) only after initial whose_territory, then retains one cached value for neighbor comparisons. Existing map_loc/region_at use current map width/base. Neighbor predicate selects region+3 before its owner query. No header/helper/compiler-policy change."
+    ]
+  },
+  "previous_event": "992a576aad6811b28f1dd2f189dce3864b6cf66a7af758e9e985e50880fbf9ae",
+  "request_id": "incorporate-fresh-center-region-lookup",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:object-storage-oct31cl"
+}

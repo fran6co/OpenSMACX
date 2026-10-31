@@ -5458,7 +5458,7 @@ void Console::terraform(int vehicle_id, int requested_terraform) { // 0x004D3470
         }
     }
 
-    if (!is_sea && (tile->contour & 0xC0) > 0x40 &&
+    if (!is_sea && (map_loc(x, y)->val3 & 0xC0) > 0x40 &&
         (terrain_bit & 0x208000u) != 0) {
         NetMsgPrimary.pop("NOTINROCKY", 5000, 0, nullptr);
         return;
@@ -5623,7 +5623,7 @@ void Console::terraform(int vehicle_id, int requested_terraform) { // 0x004D3470
     }
 
     case TERRA_LEVEL_TERRAIN:
-        if ((tile->contour & 0xC0) == 0) {
+        if ((map_loc(x, y)->val3 & 0xC0) == 0) {
             X_pop("TOOFLAT", nullptr);
             return;
         }

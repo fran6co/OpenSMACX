@@ -197,3 +197,154 @@ def test_auto_selection_threshold_mutants_are_rejected(tmp_path: Path, compiler:
     assert mutant != original
     result = compile_run(tmp_path, mutant, compiler)
     assert result.returncode != 0
+
+
+def _braced_definition(text: str, marker: str) -> str:
+    start = text.index(marker)
+    opening = text.index("{", start)
+    depth = 1
+    end = opening + 1
+    while depth:
+        depth += (text[end] == "{") - (text[end] == "}")
+        end += 1
+    return text[start:end]
+
+
+def rockiness_program(text: str, damage: str | None = None) -> str:
+    """Compile genuine query definitions and actual method guard/case text.
+
+    The allocation/stride transition is synthetic input staging between the
+    entry snapshot and query stage, not a claimed original runtime callback.
+    """
+    body = function_body(text)
+    start = body.index("    if (!is_sea && (map_loc(x, y)->val3 & 0xC0)")
+    end = body.index("    // Existing fungus", start)
+    rocky = body[start:end]
+    start = body.index("    case TERRA_LEVEL_TERRAIN:")
+    end = body.index("    case TERRA_RAISE_LAND:", start)
+    level = body[start:end]
+    header = (ROOT / "src/map.h").read_text()
+    record = _braced_definition(header, "struct Map {") + ";"
+    locator = _braced_definition(header, "inline Map *__cdecl map_loc(int x, int y)")
+    allocation = _braced_definition(header, "inline Map *&map_tiles()")
+    before = rocky, level, locator, allocation
+    if damage == "wrong_member":
+        rocky, level = rocky.replace("->val3", "->contour"), level.replace("->val3", "->contour")
+    elif damage == "entry_tile":
+        rocky, level = rocky.replace("map_loc(x, y)", "entry_tile"), level.replace("map_loc(x, y)", "entry_tile")
+    elif damage == "stale_allocation":
+        allocation = allocation.replace("return MapTiles;", "return entry_tiles;")
+    elif damage == "stale_stride":
+        locator = locator.replace("MapLongitude", "entry_stride")
+    elif damage == "truncating_x_division":
+        locator = locator.replace("x >> 1", "x / 2")
+    elif damage == "warning_fallthrough":
+        rocky, level = rocky.replace("return;", "(void)0;"), level.replace("return;", "(void)0;")
+    elif damage == "wrong_warning_arguments":
+        rocky = rocky.replace('"NOTINROCKY", 5000', '"NOTINROCKY", 4999')
+    assert ((rocky, level, locator, allocation) != before) == (damage is not None), "damage anchor drift"
+    return r'''
+#include <assert.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
+#define __cdecl
+#define nullptr 0
+''' + record + r'''
+// A narrow storage double, not a MapStorageWindow layout claim.
+struct MapStorageDouble { Map *tiles_; } MapStorage;
+#define MapTiles (MapStorage.tiles_)
+Map *entry_tiles, *next_tiles;
+int MapLongitude, entry_stride, next_stride;
+''' + allocation + "\n" + locator + r'''
+int warnings, continuation, warning_kind;
+struct NetMessage { void pop(const char *key,int timeout,int flags,const char *arg) {
+ assert(timeout==5000&&!flags&&!arg&&"WARNING_ARGUMENTS");
+ assert(!strcmp(key,"NOTINROCKY")&&"WARNING_IDENTITY");
+ ++warnings;warning_kind=1;
+}} NetMsgPrimary;
+int X_pop(const char *key,void *callback) {
+ assert(!callback&&"WARNING_ARGUMENTS");
+ assert(!strcmp(key,"TOOFLAT")&&"WARNING_IDENTITY");
+ ++warnings;warning_kind=2;return -7;
+}
+void query_rocky(int x,int y,int is_sea,unsigned int terrain_bit) {
+ Map *const entry_tile=map_loc(x,y);(void)entry_tile;
+ MapStorage.tiles_=next_tiles;MapLongitude=next_stride;
+''' + rocky + r'''
+ ++continuation;
+}
+enum {TERRA_LEVEL_TERRAIN=18};
+void query_level(int x,int y) {
+ Map *const entry_tile=map_loc(x,y);(void)entry_tile;
+ MapStorage.tiles_=next_tiles;MapLongitude=next_stride;
+ switch(TERRA_LEVEL_TERRAIN) {
+''' + level + r'''
+ default:assert(false);
+ }
+ ++continuation;
+}
+Map first_allocation[160], second_allocation[160];
+void prepare(int x,int y,int band,int contour_band) {
+ memset(first_allocation,0,sizeof(first_allocation));
+ memset(second_allocation,0,sizeof(second_allocation));
+ for(int i=0;i<160;++i) {
+  first_allocation[i].val3=static_cast<uint8_t>((3-band)*64);
+  second_allocation[i].val3=static_cast<uint8_t>((3-band)*64);
+ }
+ entry_tiles=first_allocation+32;MapStorage.tiles_=entry_tiles;
+ MapLongitude=entry_stride=3;next_stride=7;next_tiles=second_allocation+32;
+ // Independent signed floor-by-two expectation, including negative odd x.
+ const int half=x>=0?x/2:-((-x+1)/2);
+ Map &selected=second_allocation[32+half+y*7];
+ selected.val3=static_cast<uint8_t>(band*64);
+ selected.contour=static_cast<uint8_t>(contour_band*64);
+ warnings=continuation=warning_kind=0;
+}
+int main() {
+ assert(sizeof(Map)==44&&offsetof(Map,val3)==5&&offsetof(Map,contour)==1);
+ const int xs[3]={2,4,-3};
+ const unsigned int improvements[4]={0,0x8000,0x200000,4};
+ for(int xi=0;xi<3;++xi) for(int band=0;band<4;++band)
+ for(int contour_band=0;contour_band<4;++contour_band) {
+  for(int sea=0;sea<2;++sea) for(int kind=0;kind<4;++kind) {
+   prepare(xs[xi],1,band,contour_band);
+   query_rocky(xs[xi],1,sea,improvements[kind]);
+   const bool reject=!sea&&band>=2&&(kind==1||kind==2);
+   assert(warnings==(reject?1:0)&&"ROCKINESS_SELECTION");
+   assert(continuation==(reject?0:1)&&"EARLY_RETURN");
+   assert(warning_kind==(reject?1:0)&&"WARNING_IDENTITY");
+  }
+  prepare(xs[xi],1,band,contour_band);
+  query_level(xs[xi],1);
+  assert(warnings==(band==0?1:0)&&"ROCKINESS_SELECTION");
+  assert(continuation==(band==0?0:1)&&"EARLY_RETURN");
+  assert(warning_kind==(band==0?2:0)&&"WARNING_IDENTITY");
+ }
+ return 0;
+}
+'''
+
+
+ROCKINESS_DAMAGE = {
+    None: None,
+    "wrong_member": "ROCKINESS_SELECTION",
+    "entry_tile": "ROCKINESS_SELECTION",
+    "stale_allocation": "ROCKINESS_SELECTION",
+    "stale_stride": "ROCKINESS_SELECTION",
+    "truncating_x_division": "ROCKINESS_SELECTION",
+    "warning_fallthrough": "EARLY_RETURN",
+    "wrong_warning_arguments": "WARNING_ARGUMENTS",
+}
+
+
+@pytest.mark.parametrize("compiler", compiler_paths())
+@pytest.mark.parametrize("damage", ROCKINESS_DAMAGE)
+def test_rockiness_uses_actual_fresh_map_query_and_warning_returns(
+    tmp_path: Path, compiler: str, damage: str | None
+) -> None:
+    result = compile_run(tmp_path, rockiness_program(SOURCE.read_text(), damage), compiler)
+    if damage is None:
+        assert result.returncode == 0, result.stdout + result.stderr
+    else:
+        assert result.returncode != 0 and ROCKINESS_DAMAGE[damage] in result.stderr, result.stderr

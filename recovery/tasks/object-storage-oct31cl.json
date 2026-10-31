@@ -1,0 +1,37 @@
+{
+  "author": "coordinator",
+  "base_revision": "a5046723fc365e5dda335b13a8e705804d7fe34f",
+  "editable_files": [
+    "src/mapwin.cpp",
+    "src/veh.cpp",
+    "src/faction.cpp",
+    "recovery/tests/test_terrain_region_members_oct31cl.py",
+    "recovery/tests/test_boom_live_window_reload_oct21.py"
+  ],
+  "evidence": [
+    "Pinned terrain center4651B8 and neighbor46527F load Map+3 region; current source/qualified COFF select Map+1 contour for both. Preserve cache timing after initial whose_territory and neighbor read before neighbor callback; keep original byte masks and all other behavior. Test same-region/different-contour and different-region/same-contour with independent expected masks and callback mutation.",
+    "Screen boom active_windows[8] and propose_pact four boolean locals against complete original init/read/write domains and retained attempts. Compiler DWORD traffic alone can reflect dead argument/counter reuse rather than a declared int object. Only qualified, independently justified ordinary C++ candidates may be trialed, at most one initial overlay per owner; no padding/volatile/flags/forced frame tricks or speculative signedness. Preserve unproven interpretations and all original claims.",
+    "Coordinator owns source scope, preparation, compiler leases and Git. Workers edit only specifically assigned test paths after notice. One combined fresh application build/link and relevant matching/reference/preservation checks precede reviewed manual integration; native automatic/game acceptance remains unproved."
+  ],
+  "intent": "Restore original terrain member references and independently supported local-storage types through bounded ownership-group measurements.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4600528,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5261984,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5520320,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "object-storage-oct31cl"
+}
