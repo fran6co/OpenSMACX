@@ -654,7 +654,7 @@ Purpose: Apply one WM_VSCROLL step to the list: publish the parent window
          the old and new selected rows only if selection changed, then always
          request a soft surface update.
 
-// ORIGINAL: 0x0060C5D0 ?on_scrolling@ListBox@@QAEXHH@Z 0x0060C5D0-0x0060C691
+// ORIGINAL: 0x0060C5D0 ?on_scrolling@ListBox@@QAEXHH@Z 0x0060C5D0-0x0060C691 BYTE_EXACT
 // symbol    ?on_scrolling@ListBox@@UAEXHH@Z
 // size      193 bytes
 // prototype void (__thiscall ?on_scrolling@ListBox@@QAEXHH@Z)(ListBox* this, int, int)
@@ -1369,7 +1369,7 @@ Purpose: Run the double-click notification: remember the hovered window,
          parent's child-object 23/7 pair), preserving the original null exit
          and subsequent parent reloads.
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x0060C710 ?on_left_double_click@ListBox@@QAEXHH@Z 0x0060C710-0x0060C7BB
+// ORIGINAL: 0x0060C710 ?on_left_double_click@ListBox@@QAEXHH@Z 0x0060C710-0x0060C7BB BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0060c710.cpp", "source:src/listbox.h", "source:src/autosound.h", "source:src/win.h", "pinned 0x0060C710 resolves the GraphicWin virtual base through vbtable {0,0x48,0xA60}; repeated vbtable adjustment reads Win-relative +0xC4 (win_parent_) for slots 56/55 and +0x94 on that parent for Sound slots 23/7", "pinned 0x0060C74B tests the reloaded parent and branches to the epilogue at 0x0060C7B6 when null; later callback paths reload the parent"], "reason": "Recover ListBox double-click callbacks through typed GraphicWin and Dialog owners, using the actual Win parent and preserving the original parent-null exit, reload positions, and call order."}
 // symbol    ?on_left_double_click@ListBox@@UAEXHH@Z
 // size      171 bytes
@@ -1405,7 +1405,7 @@ void ListBox::on_left_double_click(int, int) {
 Purpose: Add one entry: measure the string at the current width, grow the
          list height, remember the string in the entry table and append the
          id. Returns whatever the entry append reports.
-// ORIGINAL: 0x0060C920 ?item@ListBox@@QAEHPADH@Z 0x0060C920-0x0060C9A9 FILE
+// ORIGINAL: 0x0060C920 ?item@ListBox@@QAEHPADH@Z 0x0060C920-0x0060C9A9 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/0060c920.cpp", "source:src/listbox.h", "source:src/buffer.h", "source:src/stringstruct.h", "source:src/scroll.cpp:ScrollDefaultThickness", "Pinned 0x0060C920..0x0060C9A9 measures positive available width, reads Buffer +0x18, updates ListBox +0x20, then publishes StringList text/metadata before add."], "reason": "Recover item insertion through the real Dialog list and GraphicWin Buffer base, including the shared Scroll thickness. The measured height is Buffer state, not wrap_height's return or ListBox's same-offset scroll state; preserve modulo-word accumulation and insertion result."}
 // size      137 bytes
 // prototype int (__thiscall ?item@ListBox@@QAEHPADH@Z)(ListBox* this, int8* lpString, int)

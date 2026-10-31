@@ -490,7 +490,7 @@ int RadioButton::attach(GraphicWin *parent, int x, int y, int flags) {
 // virtual base. slot010 needs its own shim (int argument, int return);
 // the emitted VCall's slots are void().
 // Deleted seed provenance: git:26e5eed1:src/unrecovered/0060e220.cpp
-// ORIGINAL: 0x0060E220 ?on_redraw@RadioButton@@QAEXXZ 0x0060E220-0x0060E2FE FILE
+// ORIGINAL: 0x0060E220 ?on_redraw@RadioButton@@QAEXXZ 0x0060E220-0x0060E2FE FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0060e220.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x60e220 complete control/data-access review and src/jackal/radiobutton.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
 // symbol    ?on_redraw@RadioButton@@UAEXXZ
 void RadioButton::on_redraw() {

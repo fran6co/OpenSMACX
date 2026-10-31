@@ -399,7 +399,7 @@ Status: Complete
 */
 
 
-// ORIGINAL: 0x0048BAB0 ?draw_line_base@PlanWin@@QAEXHHH@Z 0x0048BAB0-0x0048BB72
+// ORIGINAL: 0x0048BAB0 ?draw_line_base@PlanWin@@QAEXHHH@Z 0x0048BAB0-0x0048BB72 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x0048BAB0:0048BAB0-0048BB72", "source:src/planwin.h:PlanWin and genuine MapWin/GraphicWin interfaces", "source:src/faction.h:PlayerData, battle faction state and label declarations", "recovery/tasks/planwin-battle-owner-coverage.json"], "reason": "Use the pinned native body with the real typed owner and preserve the seed's original identity and history."}
 // TRIED: extern short table array for the runtime-indexed 0x97d040 lookup (lever: address does index arithmetic); vbase-adjustor read from vtbl+4 for the Buffer receiver. MISMATCH from #14: the a1*0x9a index multiply lowers via a different lea/shl chain than the original's
 void PlanWin::draw_line_base(int base_id1, int base_id2, int color) {

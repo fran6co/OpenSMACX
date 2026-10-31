@@ -937,7 +937,7 @@ int ConfigFactionDetailMode;
 // RECOVERY_OBJECT: v1 0x00945834 ?ConfigRandomLeaderInitial@@3PADA
 char ConfigRandomLeaderInitial[4];
 
-// ORIGINAL: 0x005898A0 ?thumb_routine@@YAXH@Z 0x005898A0-0x00589A24
+// ORIGINAL: 0x005898A0 ?thumb_routine@@YAXH@Z 0x005898A0-0x00589A24 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["historical seed:src/recovered/units/005898a0.cpp", "pinned:5898A0..589A24; preview9403E0; detail945818; diplomacy art78EE48 with65C faction stride", "source:Popup537C and PickWin redraw/ListBox cdecl(int) callback contract; allocation/lifetime selection still requires native qualification"], "reason": "Typed shared faction preview callback with real Popup/SpriteBox/FactionArt owners and genuine global storage; no executable-address aliases or manual vtables."}
 void __cdecl thumb_routine(int faction) {
     if (ExpansionEnabled) {

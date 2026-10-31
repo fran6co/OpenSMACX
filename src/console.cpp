@@ -132,7 +132,7 @@ int __cdecl veh_init(int prototype, int faction, int x, int y);
 void __cdecl draw_cursor();                               // 0x0046AE00
 void __cdecl ambience_veh(int vehicle);
 
-// ORIGINAL: 0x00511520 ?set_move@Console@@QAEXH@Z 0x00511520-0x005117FD
+// ORIGINAL: 0x00511520 ?set_move@Console@@QAEXH@Z 0x00511520-0x005117FD BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:caf4963abb2ef8a11892e1d754d80934bd50b12e:src/recovered/units/00511520.cpp", "source:src/console.h", "source:src/veh.h", "source:src/game.h", "source:src/mapwin.h", "pinned:0x00511520..0x005117FD sequential multiplayer gates, ready/ambience selection split, visibility call and callback-sensitive coordinate reads", "source:src/netdaemon.h:NetDaemon::primary_state_"], "reason": "Complete the original Console move workflow through its genuine ready, ambience_veh and spot_all helpers. Preserve the observed ordered guards, selection recheck, offline visibility condition and post-callback field reads. The historical faction waiting-mask identity now binds to NetDaemonNet.primary_state_.trailing_words_[6]; the singleton owns that shared storage."}
 void Console::set_move(int force_update) {
     int did_reset = 0;
@@ -1812,7 +1812,7 @@ void Console::menu_detail() {
     X_pop(ConsoleStrMenuDetail, 0);
 }
 
-// ORIGINAL: 0x00516C50 ?show_scen_objectives@Console@@QAEXXZ 0x00516C50-0x00516D98
+// ORIGINAL: 0x00516C50 ?show_scen_objectives@Console@@QAEXXZ 0x00516C50-0x00516D98 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["The 0x00516C50 seed parses ObjectiveReqVictory, ObjectivesSuddenDeathVictory and EndingMissionYear before processing faction-specific names.", "src/faction.h defines Players as 0x59C Player records: the seed's 0x00946A50, 0x00946A9C, 0x00946A84, 0x00946D4C, 0x00946D50 and 0x00946D34 references correspond to Player::is_leader_female, title_leader, name_leader, noun_gender, is_noun_plural and noun_faction.", "src/game.h owns GameRules and victory settings; general.h owns GenderDefault, PluralityDefault, parse_num, parse_says and say_year; strings.h owns StringTemp. The two popup strings at 0x0068AA0C and 0x0068AA18 were read from the pinned image as THEYFAILEDFLECHETTE and FLECHETTE.", "The seed's 0x005BF330 caption/label/callback call is represented by xpops.h's x_pop_caption_label, whose implementation forwards with the defaults (-1, no override, flags 0) to the typed full popup."], "reason": "Render scenario objectives through the existing faction, game-state, parser, scratch-buffer and popup owners, using the exact popup key values without raw data addresses."}
 void Console::show_scen_objectives() {
     parse_num(0, ScenarioSave.objective_req_victory);
