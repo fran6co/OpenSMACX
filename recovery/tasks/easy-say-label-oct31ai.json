@@ -1,0 +1,23 @@
+{
+  "author": "recovery-coordinator",
+  "base_revision": "5cb41f9fadf453d04c2510a93b91defb01ecb772",
+  "editable_files": [
+    "src/alpha.cpp",
+    "recovery/project.json"
+  ],
+  "evidence": [
+    "Current committed source, pinned original and literal existing CMake TU recipe establish the measurement context. Application/compiler policy unchanged.",
+    "Unchanged physical replica and compiled damage witnesses must pass before scoring. Any outside-owner discoveries return to coordinator; no manual marker edits, flag searches, fabricated fields or ABI changes."
+  ],
+  "intent": "Bounded native body-only matching deck; at most three distinct ordinary C++ candidate bodies per selected function. Preserve source identities, historical obligations, bugs, aliasing and calls; no auto-publication or acceptance.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5920896,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "easy-say-label-oct31ai"
+}

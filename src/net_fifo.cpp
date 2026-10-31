@@ -265,7 +265,7 @@ Purpose: Enqueue one entry on this NetFifo: allocate the 0x18-byte node,
          link it at the head, fill the key/caller-value/result words and -
          when a size is given - the copied payload block.
 
-// ORIGINAL: 0x00633BA0 sub_633ba0 0x00633BA0-0x00633C81
+// ORIGINAL: 0x00633BA0 sub_633ba0 0x00633BA0-0x00633C81 BYTE_EXACT
 // symbol    ?add_head@NetFifo@@QAEHPBXIIHH@Z
 // TRIED: extern "C" __stdcall(5 int) verbatim head (ecx used with no stack slot -> reads as __thiscall); rewritten onto the queue.
 // Historical seed emitted-symbol fact: @sub_633ba0@28
@@ -311,9 +311,10 @@ int NetFifo::add_head(const void *data, unsigned int size, unsigned int key, int
     this->head_->result_ = result;
 
     if (size != 0) {
-        void *const buffer = mem_get(size);
+        void *buffer = mem_get(size);
         this->head_->data_ = buffer;
-        if (this->head_->data_ == 0) {
+        buffer = this->head_->data_;
+        if (buffer == 0) {
             LeaveCriticalSection(&this->lock_);
             return 4;
         }
