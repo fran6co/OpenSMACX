@@ -64,124 +64,104 @@ Dialogs::Dialogs() { }
 void Dialogs::close() {
 }
 
-// ORIGINAL: 0x00613320 ?init@Dialogs@@QAEHHHHHH@Z 0x00613320-0x006133F2
+// ORIGINAL: 0x00613320 ?init@Dialogs@@QAEHHHHHH@Z 0x00613320-0x006133F2 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence":["Retained 0x00613320 seed records the five-integer Dialogs initializer's direct call order: RadioButton::close, shared Dialog initialization, ListBox::close, shared Dialog initialization, CheckBox::close, shared Dialog initialization, SpriteBox initialization, EditGroup::close, then shared Dialog initialization.","The pinned image's callee 0x00609300 is Dialog::init(int,int,int,int,int); the corresponding typed overload is declared and defined in dialog.h/dialog.cpp."],"reason":"Home the five-integer Dialogs initializer through its real widget base subobjects and shared virtual Dialog."}
 // TRIED: 208 vs 210 bytes; the RadioButton::close() receiver compiles to `mov ecx,eax; call` instead of a direct `lea ecx,[..]; call`. Tried a shared base-address local, no local at all, and a named typed-pointer local for the receiver; all three landed on the same divergence, so it looks like inherent codegen for a computed `this` into a non-virtual thiscall call, not a source-form choice.
 int Dialogs::init(int left, int top, int right, int bottom, int heap_size) {
-    RadioButton::close();
-    int result = Dialog::init(left, top, right, bottom, heap_size);
+    int result = RadioButton::init(left, top, right, bottom, heap_size);
     if (result != 0) return result;
 
-    ListBox::close();
-    result = Dialog::init(left, top, right, bottom, heap_size);
+    result = ListBox::init(left, top, right, bottom, heap_size);
     if (result != 0) return result;
 
-    CheckBox::close();
-    result = Dialog::init(left, top, right, bottom, heap_size);
+    result = CheckBox::init(left, top, right, bottom, heap_size);
     if (result != 0) return result;
 
     result = SpriteBox::init(left, top, right, bottom, heap_size);
     if (result != 0) return result;
 
-    EditGroup::close();
-    return Dialog::init(left, top, right, bottom, heap_size);
+    return EditGroup::init(left, top, right, bottom, heap_size);
 }
 
-// ORIGINAL: 0x00613610 ?init@Dialogs@@QAEHPAURECT@@PAUHeap@@@Z 0x00613610-0x006136A1
+// ORIGINAL: 0x00613610 ?init@Dialogs@@QAEHPAURECT@@PAUHeap@@@Z 0x00613610-0x006136A1 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence":["Retained 0x00613610 seed plus pinned inspect show the first argument remains RECT* through each direct Dialog call to 0x006097F0 and through SpriteBox::init at 0x00610510.","Dialog::init(RECT*,Heap*) is source-owned in dialog.cpp; the retained generated scaffold's reinterpret_cast<Heap*>(rect) is disproved by those target signatures."],"reason":"Home the rectangle-and-heap Dialogs initializer with the image's genuine RECT* and Heap* arguments."}
 // symbol    ?init@Dialogs@@QAEHPAUtagRECT@@PAVHeap@@@Z
 int Dialogs::init(RECT *rect, Heap *heap) {
-    RadioButton::close();
-    int result = Dialog::init(rect, heap);
+    int result = RadioButton::init(rect, heap);
     if (result != 0) return result;
 
-    ListBox::close();
-    result = Dialog::init(rect, heap);
+    result = ListBox::init(rect, heap);
     if (result != 0) return result;
 
-    CheckBox::close();
-    result = Dialog::init(rect, heap);
+    result = CheckBox::init(rect, heap);
     if (result != 0) return result;
 
     result = SpriteBox::init(rect, heap);
     if (result != 0) return result;
 
-    EditGroup::close();
-    return Dialog::init(rect, heap);
+    return EditGroup::init(rect, heap);
 }
 
 // Seed catalogue: 0 callers; callees 0x00609470, 0x00609F20, 0x0060D1B0,
 // 0x0060E7C0, 0x00610480, 0x00611A90.
-// ORIGINAL: 0x00613400 ?init@Dialogs@@QAEHPAURECT@@H@Z 0x00613400-0x00613491
+// ORIGINAL: 0x00613400 ?init@Dialogs@@QAEHPAURECT@@H@Z 0x00613400-0x00613491 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence":["Retained 0x00613400 seed and direct-call order in pinned image; Dialogs' declared shared virtual Dialog and five widget bases"],"reason":"Home the RECT/flags initializer as typed Dialogs base operations"}
 // symbol    ?init@Dialogs@@QAEHPAUtagRECT@@H@Z
 int Dialogs::init(RECT *group_id, int flags) {
-    RadioButton::close();
-    int result = Dialog::init(group_id, flags);
+    int result = RadioButton::init(group_id, flags);
     if (result != 0) return result;
 
-    ListBox::close();
-    result = Dialog::init(group_id, flags);
+    result = ListBox::init(group_id, flags);
     if (result != 0) return result;
 
-    CheckBox::close();
-    result = Dialog::init(group_id, flags);
+    result = CheckBox::init(group_id, flags);
     if (result != 0) return result;
 
     result = SpriteBox::init(group_id, flags);
     if (result != 0) return result;
 
-    EditGroup::close();
-    return Dialog::init(group_id, flags);
+    return EditGroup::init(group_id, flags);
 }
 
 // Seed catalogue: 1 caller; callees 0x006095F0, 0x00609F20, 0x0060D1B0,
 // 0x0060E7C0, 0x00610420, 0x00611A90.
-// ORIGINAL: 0x006134A0 ?init@Dialogs@@QAEHH@Z 0x006134A0-0x00613524
+// ORIGINAL: 0x006134A0 ?init@Dialogs@@QAEHH@Z 0x006134A0-0x00613524 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence":["Retained 0x006134A0 seed and direct-call order in pinned image; Dialogs' declared shared virtual Dialog and five widget bases"],"reason":"Home the file-name initializer as typed Dialogs base operations"}
 int Dialogs::init(int file_name) {
-    RadioButton::close();
-    int result = Dialog::init(file_name);
+    int result = RadioButton::init(file_name);
     if (result != 0) return result;
 
-    ListBox::close();
-    result = Dialog::init(file_name);
+    result = ListBox::init(file_name);
     if (result != 0) return result;
 
-    CheckBox::close();
-    result = Dialog::init(file_name);
+    result = CheckBox::init(file_name);
     if (result != 0) return result;
 
     result = SpriteBox::init(file_name);
     if (result != 0) return result;
 
-    EditGroup::close();
-    return Dialog::init(file_name);
+    return EditGroup::init(file_name);
 }
 
 // Seed catalogue: 0 callers; callees 0x00609730, 0x00609F20, 0x0060D1B0,
 // 0x0060E7C0, 0x006104D0, 0x00611A90.
-// ORIGINAL: 0x00613530 ?init@Dialogs@@QAEHHHHHPAUHeap@@@Z 0x00613530-0x00613602
+// ORIGINAL: 0x00613530 ?init@Dialogs@@QAEHHHHHPAUHeap@@@Z 0x00613530-0x00613602 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence":["Retained 0x00613530 seed and direct-call order in pinned image; Dialogs' declared shared virtual Dialog and five widget bases"],"reason":"Home the geometry and heap initializer as typed Dialogs base operations"}
 // symbol    ?init@Dialogs@@QAEHHHHHPAVHeap@@@Z
 int Dialogs::init(int x, int y, int width, int height, Heap *heap) {
-    RadioButton::close();
-    int result = Dialog::init(x, y, width, height, heap);
+    int result = RadioButton::init(x, y, width, height, heap);
     if (result != 0) return result;
 
-    ListBox::close();
-    result = Dialog::init(x, y, width, height, heap);
+    result = ListBox::init(x, y, width, height, heap);
     if (result != 0) return result;
 
-    CheckBox::close();
-    result = Dialog::init(x, y, width, height, heap);
+    result = CheckBox::init(x, y, width, height, heap);
     if (result != 0) return result;
 
     result = SpriteBox::init(x, y, width, height, heap);
     if (result != 0) return result;
 
-    EditGroup::close();
-    return Dialog::init(x, y, width, height, heap);
+    return EditGroup::init(x, y, width, height, heap);
 }
 
 // Seed catalogue: 1 caller; callees 0x006098D0, 0x00609F20, 0x0060D1B0,
@@ -190,23 +170,19 @@ int Dialogs::init(int x, int y, int width, int height, Heap *heap) {
 // RECOVERY_BINDING: v1 {"evidence":["Retained 0x006136B0 seed and direct-call order in pinned image; Dialogs' declared shared virtual Dialog and five widget bases"],"reason":"Home the heap initializer as typed Dialogs base operations while retaining its historical byte claim"}
 // symbol    ?init@Dialogs@@QAEHPAVHeap@@@Z
 int Dialogs::init(Heap *heap) {
-    RadioButton::close();
-    int result = Dialog::init(heap);
+    int result = RadioButton::init(heap);
     if (result != 0) return result;
 
-    ListBox::close();
-    result = Dialog::init(heap);
+    result = ListBox::init(heap);
     if (result != 0) return result;
 
-    CheckBox::close();
-    result = Dialog::init(heap);
+    result = CheckBox::init(heap);
     if (result != 0) return result;
 
     result = SpriteBox::init(heap);
     if (result != 0) return result;
 
-    EditGroup::close();
-    return Dialog::init(heap);
+    return EditGroup::init(heap);
 }
 
 // Everything after the prologue is the compiler's: the five vbtable

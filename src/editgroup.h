@@ -59,6 +59,17 @@ class EditGroup : public virtual GraphicWin, public virtual Dialog {
   virtual ~EditGroup();
   // 0x00611A90, homed in editgroup.cpp; delete/free semantics remain there.
   void close();
+
+  // Inlined widget initialization closes this control before initializing
+  // its shared virtual Dialog through this widget's own base view. The
+  // receiver paths are retained in Dialogs::init at 0x00613400/0x00613610.
+  int init(RECT *rect, int flags) { close(); return Dialog::init(rect, flags); }
+  int init(int file_name) { close(); return Dialog::init(file_name); }
+  int init(int left, int top, int right, int bottom, int heap_size) { close(); return Dialog::init(left, top, right, bottom, heap_size); }
+  int init(RECT *rect, Heap *heap) { close(); return Dialog::init(rect, heap); }
+  int init(int left, int top, int right, int bottom, Heap *heap) { close(); return Dialog::init(left, top, right, bottom, heap); }
+  int init(Heap *heap) { close(); return Dialog::init(heap); }
+
   void set_text_limits(int limit);
   char *get_text(int index);
   void set_text(char *text, int index);
