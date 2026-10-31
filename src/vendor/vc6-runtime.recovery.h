@@ -432,6 +432,28 @@
 //         "start": 6576432
 //       },
 //       "unit": "build/intel/mt_obj/memcpy.obj"
+//     },
+//     {
+//       "entries": [
+//         {
+//           "evidence": "The selected archive has one defined external _memmove function, at offset 0 of this member section. Size-free contribution entry only, not an independent function extent or original debug name.",
+//           "name": "_memmove",
+//           "offset": 0
+//         }
+//       ],
+//       "evidence": "Pinned LIBCMT memmove.obj section 1 is a complete 821-byte ordinary executable contribution corresponding to original 0x006474E0-0x00647815, including local tables and discontiguous code. All non-relocation bytes and 46 local DIR32 references agree with original HIGHLOW sites. IDA 9.4 names the entry _memcpy_0 and records the complete interval; Ghidra 12.1.2 names FUN_006474e0 and records 21 ranges totaling 664 bytes with the same entry and final end. This disagreement does not establish an 821-byte function extent or original debug identity. The entry is a scoped dependency reference target only; original archive provider selection, final-link retention/allocation and runtime equivalence remain unproved.",
+//       "origin": {
+//         "address": 6583520,
+//         "address_space": "pe:va",
+//         "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+//       },
+//       "section": 1,
+//       "section_name": ".text",
+//       "span": {
+//         "end": 6584341,
+//         "start": 6583520
+//       },
+//       "unit": "build/intel/mt_obj/memmove.obj"
 //     }
 //   ],
 //   "component": {

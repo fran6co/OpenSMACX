@@ -1,0 +1,39 @@
+{
+  "author": "coordinator",
+  "base_revision": "e102ce2d138fb100a8785d3659c3e4af6972a053",
+  "editable_files": [
+    "src/vendor/vc6-runtime.recovery.h",
+    "recovery/tests/test_crt_memmove_section_oct31cg.py"
+  ],
+  "evidence": [
+    "Configured pinned LIBCMT memmove.obj has one complete 821-byte ordinary .text contribution matching original 0x6474E0-0x647815 and all 46 local DIR32 references; its unique external _memmove is at offset 0.",
+    "IDA 9.4 labels the entry _memcpy_0 and bounds 821 bytes; Ghidra 12.1.2 labels FUN_006474e0 and records 21 ranges totaling 664 bytes with the same final end. Preserve disagreement; no 821-byte function extent, original provider, final-link allocation or runtime claim.",
+    "Add only the existing ToolchainCodeSectionBinding protocol with a size-free entry. Preserve all prior component fields, imports, original identities, spans and claims. Nine original Caviar/Editbox calls then gain a scoped reference identity; no C++ implementation, compiler settings or historical claim changes."
+  ],
+  "intent": "Attribute the complete pinned memmove code contribution and size-free dependency entry without inventing a callable function extent or application recovery.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6379056,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6379584,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6525072,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6583520,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "crt-memmove-contribution-oct31cg"
+}
