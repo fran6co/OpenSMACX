@@ -146,41 +146,41 @@ RulesMandate Mandate[MaxMandateNum];                // 0x0094B4A0
 // RECOVERY_OBJECT: v3 0x00691930 ?MapTerrainBonusYieldRow5FirstWord@@3HB member ?Terraforming@@3PAURulesTerraforming@@A [5].rate
 // RECOVERY_OBJECT: v3 0x00691950 ?MapTerrainBonusYieldRow6FirstWord@@3HB member ?Terraforming@@3PAURulesTerraforming@@A [6].rate
 RulesTerraforming Terraforming[MaxTerrainNum] = {
-    { 0, 0, 0, 0, BIT_FARM,          BIT_FOREST, 0, 0 },
-    { 0, 0, 0, 0, BIT_SOIL_ENRICHER, BIT_FOREST, 0, 0 },
-    { 0, 0, 0, 0, BIT_MINE,
+    { 0, 0, {0, 0}, BIT_FARM,          BIT_FOREST, 0, 0 },
+    { 0, 0, {0, 0}, BIT_SOIL_ENRICHER, BIT_FOREST, 0, 0 },
+    { 0, 0, {0, 0}, BIT_MINE,
       BIT_MINE | BIT_SOLAR_TIDAL | BIT_FOREST | BIT_CONDENSER | BIT_ECH_MIRROR
           | BIT_THERMAL_BORE | BIT_SENSOR_ARRAY, 0, 0 },
-    { 0, 0, 0, 0, BIT_SOLAR_TIDAL,
+    { 0, 0, {0, 0}, BIT_SOLAR_TIDAL,
       BIT_MINE | BIT_SOLAR_TIDAL | BIT_FOREST | BIT_CONDENSER | BIT_ECH_MIRROR
           | BIT_THERMAL_BORE | BIT_SENSOR_ARRAY, 0, 0 },
-    { 0, 0, 0, 0, BIT_FOREST,
+    { 0, 0, {0, 0}, BIT_FOREST,
       BIT_MINE | BIT_FUNGUS | BIT_SOLAR_TIDAL | BIT_FARM | BIT_SOIL_ENRICHER
           | BIT_FOREST | BIT_CONDENSER | BIT_ECH_MIRROR | BIT_THERMAL_BORE, 0, 0 },
-    { 0, 0, 0, 0, BIT_ROAD, 0, 0, 0 },
-    { 0, 0, 0, 0, BIT_MAGTUBE, 0, 0, 0 },
-    { 0, 0, 0, 0, BIT_BUNKER, BIT_AIRBASE, 0, 0 },
-    { 0, 0, 0, 0, BIT_AIRBASE, BIT_BUNKER, 0, 0 },
-    { 0, 0, 0, 0, BIT_SENSOR_ARRAY,
+    { 0, 0, {0, 0}, BIT_ROAD, 0, 0, 0 },
+    { 0, 0, {0, 0}, BIT_MAGTUBE, 0, 0, 0 },
+    { 0, 0, {0, 0}, BIT_BUNKER, BIT_AIRBASE, 0, 0 },
+    { 0, 0, {0, 0}, BIT_AIRBASE, BIT_BUNKER, 0, 0 },
+    { 0, 0, {0, 0}, BIT_SENSOR_ARRAY,
       BIT_MINE | BIT_SOLAR_TIDAL | BIT_CONDENSER | BIT_ECH_MIRROR
           | BIT_THERMAL_BORE, 0, 0 },
-    { 0, 0, 0, 0, 0, BIT_FUNGUS, 0, 0 },
-    { 0, 0, 0, 0, BIT_FUNGUS,
+    { 0, 0, {0, 0}, 0, BIT_FUNGUS, 0, 0 },
+    { 0, 0, {0, 0}, BIT_FUNGUS,
       BIT_MINE | BIT_SOLAR_TIDAL | BIT_FARM | BIT_SOIL_ENRICHER | BIT_FOREST, 0, 0 },
-    { 0, 0, 0, 0, BIT_CONDENSER,
+    { 0, 0, {0, 0}, BIT_CONDENSER,
       BIT_MINE | BIT_SOLAR_TIDAL | BIT_FOREST | BIT_CONDENSER | BIT_ECH_MIRROR
           | BIT_THERMAL_BORE | BIT_SENSOR_ARRAY, 0, 0 },
-    { 0, 0, 0, 0, BIT_ECH_MIRROR,
+    { 0, 0, {0, 0}, BIT_ECH_MIRROR,
       BIT_MINE | BIT_SOLAR_TIDAL | BIT_FOREST | BIT_CONDENSER | BIT_ECH_MIRROR
           | BIT_THERMAL_BORE | BIT_SENSOR_ARRAY, 0, 0 },
-    { 0, 0, 0, 0, BIT_THERMAL_BORE,
+    { 0, 0, {0, 0}, BIT_THERMAL_BORE,
       BIT_MINE | BIT_SOLAR_TIDAL | BIT_FARM | BIT_FOREST | BIT_CONDENSER
           | BIT_ECH_MIRROR | BIT_THERMAL_BORE | BIT_SENSOR_ARRAY, 0, 0 },
-    { 0, 0, 0, 0, 0, 0, 0, 0 },
-    { 0, 0, 0, 0, 0, 0, 0, 0 },
-    { 0, 0, 0, 0, 0, 0, 0, 0 },
-    { 0, 0, 0, 0, 0, 0, 0, 0 },
-    { 0, 0, 0, 0, BIT_MONOLITH,
+    { 0, 0, {0, 0}, 0, 0, 0, 0 },
+    { 0, 0, {0, 0}, 0, 0, 0, 0 },
+    { 0, 0, {0, 0}, 0, 0, 0, 0 },
+    { 0, 0, {0, 0}, 0, 0, 0, 0 },
+    { 0, 0, {0, 0}, BIT_MONOLITH,
       BIT_SUPPLY_POD | BIT_NUTRIENT_RSC | BIT_RSC_BONUS, 0, 0 },
 }; // 0x00691878
 // Secret projects are the final 64 records, beginning at Facility[70]
@@ -1455,10 +1455,10 @@ BOOL __cdecl read_rules(BOOL tgl_all_rules) {
         for (int j = 0; j < 2; j++) {
             if (j == 0) {
                 Terraforming[i].name = text_item_string();
-                Terraforming[i].preq_tech = tech_name(text_item());
+                Terraforming[i].prerequisite_tech[0] = tech_name(text_item());
             } else {
                 Terraforming[i].name_sea = text_item_string();
-                Terraforming[i].preq_tech_sea = tech_name(text_item());
+                Terraforming[i].prerequisite_tech[1] = tech_name(text_item());
             }
             // Add in bits & incompatible bits vs hard coded constant struct
             if (j == 0) Terraforming[i].bit = TerraformingBits[i][j];
@@ -2493,8 +2493,8 @@ void compact_terraforming_fields(const unsigned char *staging) {
     for (int i = 0; i < MaxTerrainNum; ++i) {
         const unsigned char *src = staging + i * 0x20;
         RulesTerraforming &dst = Terraforming[i];
-        memcpy(&dst.preq_tech, src + 0x08, sizeof dst.preq_tech);
-        memcpy(&dst.preq_tech_sea, src + 0x0C, sizeof dst.preq_tech_sea);
+        memcpy(&dst.prerequisite_tech[0], src + 0x08, sizeof dst.prerequisite_tech[0]);
+        memcpy(&dst.prerequisite_tech[1], src + 0x0C, sizeof dst.prerequisite_tech[1]);
         memcpy(&dst.bit, src + 0x10, sizeof dst.bit);
         memcpy(&dst.bit_incompatible, src + 0x14, sizeof dst.bit_incompatible);
         memcpy(&dst.rate, src + 0x18, sizeof dst.rate);

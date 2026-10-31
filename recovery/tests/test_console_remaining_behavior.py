@@ -460,7 +460,7 @@ struct ChassisRecord { int triad=TRIAD_LAND; } Chassis[8];
 struct Map { uint8_t climate=0,contour=0; uint32_t bit=0,bit2=0; } Tiles[64];
 Map *map_loc(int x,int y) { assert(x>=0&&x<8&&y>=0&&y<8); return &Tiles[y*8+x]; }
 struct TerraformRecord { char *name=nullptr,*name_sea=nullptr;
-  int preq_tech=-1,preq_tech_sea=-1; uint32_t bit=0,bit_incompatible=0; }
+  int prerequisite_tech[2]={-1,-1}; uint32_t bit=0,bit_incompatible=0; }
   Terraforming[20];
 struct OrderRecord { char *order=nullptr,*order_sea=nullptr; } Order[24];
 struct Player { int rule_flags=0; } Players[8];

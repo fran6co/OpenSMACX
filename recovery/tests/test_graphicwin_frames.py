@@ -249,18 +249,18 @@ MUTATIONS = [
     ('SETTER', 'GraphicWinInitDefaults.top_right = sprites->top_right;', 'GraphicWinInitDefaults.top_right = sprites->bottom_left;', 'publisher-permutation'),
     ('SETTER', 'GraphicWinInitDefaults.noncaption_left = sprites->noncaption_left;', 'GraphicWinInitDefaults.noncaption_left = sprites->noncaption_middle;', 'publisher-noncaption'),
     ('MINIMUM', 'iFlags_ & 0x10', 'iFlags_ & 0x20', 'caption-bit'),
-    ('MINIMUM', '? frame_top_left_ : frame_noncaption_left_', '? frame_noncaption_left_ : frame_top_left_', 'left-branch'),
-    ('MINIMUM', '? frame_top_right_ : frame_noncaption_right_', '? frame_noncaption_right_ : frame_top_right_', 'right-branch'),
-    ('MINIMUM', 'Sprite *bottom_left = frame_bottom_left_;', 'Sprite *bottom_left = frame_bottom_right_;', 'bottom-receiver'),
+    ('MINIMUM', 'frame_top_left_', 'frame_noncaption_left_', 'left-branch'),
+    ('MINIMUM', 'frame_top_right_', 'frame_noncaption_right_', 'right-branch'),
+    ('MINIMUM', 'Sprite *const bottom_left = frame_bottom_left_;', 'Sprite *const bottom_left = frame_bottom_right_;', 'bottom-receiver'),
     ('MINIMUM', 'return;', 'field_134_ = 0; return;', 'null-preservation'),
-    ('MINIMUM', 'top_left->width(), top_right->width()', 'top_left->height(), top_right->height()', 'dimension-width'),
-    ('MINIMUM', 'bottom_right->width(), bottom_left->width()', 'bottom_right->width(), top_left->width()', 'bottom-sum'),
-    ('MINIMUM', 'top_left->height(), bottom_left->height()', 'top_left->height(), top_right->height()', 'left-height'),
+    ('MINIMUM', '->width(), top_right->width()', '->height(), top_right->height()', 'dimension-width'),
+    ('MINIMUM', 'bottom_right->width(), bottom_left->width()', 'bottom_right->width(), top_right->width()', 'bottom-sum'),
+    ('MINIMUM', '->height(), bottom_left->height()', '->height(), top_right->height()', 'left-height'),
     ('MINIMUM', 'bottom_right->height(), top_right->height()', 'bottom_left->height(), top_right->height()', 'right-height'),
-    ('MINIMUM', 'bottom_width > width', 'bottom_width < width', 'width-maximum'),
-    ('MINIMUM', 'right_height > height', 'right_height < height', 'height-maximum'),
-    ('MINIMUM', 'bottom_width > width', 'uint32_t(bottom_width) > uint32_t(width)', 'unsigned-width'),
-    ('MINIMUM', 'right_height > height', 'uint32_t(right_height) > uint32_t(height)', 'unsigned-height'),
+    ('MINIMUM', 'width <= bottom_width', 'width >= bottom_width', 'width-maximum'),
+    ('MINIMUM', 'height <= right_height', 'height >= right_height', 'height-maximum'),
+    ('MINIMUM', 'width <= bottom_width', 'uint32_t(width) <= uint32_t(bottom_width)', 'unsigned-width'),
+    ('MINIMUM', 'height <= right_height', 'uint32_t(height) <= uint32_t(right_height)', 'unsigned-height'),
     ('SUM', '+ static_cast<unsigned int>(second)', '- static_cast<unsigned int>(second)', 'sum-not-difference'),
 ]
 
@@ -269,7 +269,14 @@ MUTATIONS = [
 def test_compiling_behavior_damage(tmp_path, part, before, after, label):
     parts = actual_source()
     assert before in parts[part]
-    parts[part] = parts[part].replace(before, after)
+    if label in ('left-branch', 'right-branch'):
+        # Swap both complete branch selections, including their null guards.
+        # One regex pass prevents the second replacement from undoing the first.
+        parts[part] = re.sub('|'.join(map(re.escape, (before, after))),
+                             lambda match: after if match.group() == before else before,
+                             parts[part])
+    else:
+        parts[part] = parts[part].replace(before, after)
     if label == 'count-snapshot':
         parts[part] = parts[part].replace('while (index < WinZOrderCount)', 'while (index < saved_count)')
     if label == 'cached-receiver':

@@ -1059,7 +1059,7 @@ void Console::road_to(int veh_id, int cursor_mode) {
         return;
     }
     if (cursor_mode != 0x1C ||
-        has_tech(Terraforming[TERRA_MAGTUBE].preq_tech, vehicle.faction_id)) {
+        has_tech(Terraforming[TERRA_MAGTUBE].prerequisite_tech[0], vehicle.faction_id)) {
         ConsoleGlobal.cursor_on((cursor_mode == 0x1C) + 2, -1);
     }
 }
@@ -1081,7 +1081,7 @@ void Console::automate(int veh_id, int order) {
             }
         }
         if (order == 2) {
-            if (!has_tech(Terraforming[TERRA_FARM].preq_tech,
+            if (!has_tech(Terraforming[TERRA_FARM].prerequisite_tech[0],
                           vehicle.faction_id)) {
                 return;
             }
@@ -5355,16 +5355,16 @@ void Console::terraform(int vehicle_id, int requested_terraform) { // 0x004D3470
     int terraform_id = requested_terraform;
     if (terraform_id == TERRA_ROAD) {
         if ((tile->bit & BIT_ROAD) != 0 &&
-            (is_sea ? Terraforming[TERRA_MAGTUBE].preq_tech_sea
-                    : Terraforming[TERRA_MAGTUBE].preq_tech) >= -1) {
+            (is_sea ? Terraforming[TERRA_MAGTUBE].prerequisite_tech[1]
+                    : Terraforming[TERRA_MAGTUBE].prerequisite_tech[0]) >= -1) {
             terraform_id = TERRA_MAGTUBE;
         }
     } else if (terraform_id == TERRA_FARM) {
         if ((tile->bit & BIT_FUNGUS) != 0 && altitude >= 0x40) {
             terraform_id = TERRA_REMOVE_FUNGUS;
         } else if ((tile->bit & BIT_FARM) != 0 && altitude >= 0x60 &&
-                   (is_sea ? Terraforming[TERRA_SOIL_ENR].preq_tech_sea
-                           : Terraforming[TERRA_SOIL_ENR].preq_tech) >= -1) {
+                   (is_sea ? Terraforming[TERRA_SOIL_ENR].prerequisite_tech[1]
+                           : Terraforming[TERRA_SOIL_ENR].prerequisite_tech[0]) >= -1) {
             terraform_id = TERRA_SOIL_ENR;
         }
     }
@@ -5381,12 +5381,12 @@ void Console::terraform(int vehicle_id, int requested_terraform) { // 0x004D3470
     // The first availability check is based on each terrain row's typed
     // prerequisite; < -1 means no availability in that environment.
     const int selected_prerequisite = is_sea
-        ? Terraforming[terraform_id].preq_tech_sea
-        : Terraforming[terraform_id].preq_tech;
+        ? Terraforming[terraform_id].prerequisite_tech[1]
+        : Terraforming[terraform_id].prerequisite_tech[0];
     if (selected_prerequisite < -1) {
         const int other_prerequisite = is_sea
-            ? Terraforming[terraform_id].preq_tech
-            : Terraforming[terraform_id].preq_tech_sea;
+            ? Terraforming[terraform_id].prerequisite_tech[0]
+            : Terraforming[terraform_id].prerequisite_tech[1];
         const char *message = other_prerequisite < -1 ? "NOTATALL"
             : is_sea ? "NOTATSEA" : "NOTONLAND";
         NetMsgPrimary.pop(message, 5000, 0, nullptr);
@@ -5494,8 +5494,8 @@ void Console::terraform(int vehicle_id, int requested_terraform) { // 0x004D3470
             // Native former ability bypass at 0x004D37E7..0x004D380D.
         } else {
             const int prerequisite = is_sea
-                ? Terraforming[terraform_id].preq_tech_sea
-                : Terraforming[terraform_id].preq_tech;
+                ? Terraforming[terraform_id].prerequisite_tech[1]
+                : Terraforming[terraform_id].prerequisite_tech[0];
             if (prerequisite >= TechNone) {
                 StringTemp[0] = 0;
                 say_tech(StringTemp, prerequisite, 0);

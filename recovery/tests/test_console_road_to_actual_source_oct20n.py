@@ -141,8 +141,8 @@ static void reset() {
     VehPrototypes[7] = VehPrototype{5, 8};
     Chassis[2].triad = TRIAD_LAND;
     Chassis[5].triad = TRIAD_SEA;
-    Terraforming[TERRA_FARM].preq_tech = 19;
-    Terraforming[TERRA_MAGTUBE].preq_tech = 37;
+    Terraforming[TERRA_FARM].prerequisite_tech[0] = 19;
+    Terraforming[TERRA_MAGTUBE].prerequisite_tech[0] = 37;
 }
 static void expect_one(const char *name, int a, int b, int c) {
     assert(events.size() == 1 && is(events[0], name, a, b, c));
@@ -251,8 +251,8 @@ def test_road_to_actual_body_controls_reject_wrong_owner_or_order(tmp_path, comp
         damaged = source.replace("VehPrototypes[prototype_id].chassis_id",
                                  "VehPrototypes[veh_id].chassis_id", 1)
     elif mutant == "wrong_terraforming_row":
-        damaged = source.replace("Terraforming[TERRA_MAGTUBE].preq_tech",
-                                 "Terraforming[TERRA_FARM].preq_tech", 1)
+        damaged = source.replace("Terraforming[TERRA_MAGTUBE].prerequisite_tech[0]",
+                                 "Terraforming[TERRA_FARM].prerequisite_tech[0]", 1)
     elif mutant == "wrong_duplicate_message_identity":
         damaged = source.replace("NetMsgPrimary.pop(RoadToNotInOcean",
                                  "NetMsgPrimary.pop(SetRoadToNotInOcean", 1)
@@ -290,7 +290,7 @@ def test_pinned_road_to_span_supports_typed_access_and_call_order():
         0x004D7C74: "0x94a30c",  # MapTiles load before the climate gate
         0x004D7C98: "0x688e38",  # this function's NOTINOCEAN object
         0x004D7CAF: "0x1c",      # cursor mode gate precedes technology lookup
-        0x004D7CBC: "0x691940",  # Terraforming[6].preq_tech
+        0x004D7CBC: "0x691940",  # Terraforming[6].prerequisite_tech[0]
         0x004D7CC4: "0x5b9f20", # has_tech call
         0x004D7CE3: "0x510490", # cursor_on call
     }
@@ -318,5 +318,5 @@ def test_pinned_road_to_span_supports_typed_access_and_call_order():
     assert record_stride == 0x20
     # Original PE32 LPSTR fields are four bytes; the two preceding fields put
     # preq_tech at +8, as verified against the actual source declaration.
-    assert re.search(r"struct RulesTerraforming\s*\{\s*LPSTR name;\s*LPSTR name_sea;\s*int preq_tech;", header)
+    assert re.search(r"struct RulesTerraforming\s*\{\s*LPSTR name;\s*LPSTR name_sea;\s*int prerequisite_tech\[2\];", header)
     assert array_base + 6 * record_stride + 8 == 0x691940

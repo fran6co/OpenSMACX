@@ -169,13 +169,14 @@ def test_transparent_null_rectangle_is_not_a_supported_domain(tmp_path):
 
 @pytest.mark.parametrize("which,before,after", [
     (1,"return Buffer::fill(area, color);","Buffer::fill(area, color); return 0;"),
-    (1,"area->right - 1, area->bottom - 1","area->right, area->bottom"),
-    (1,"area->right - 1, area->bottom - 1","left + width - 1, top + height - 1"),
-    (1,"Buffer::map_colors(area->left, area->top,","Buffer::map_colors(left, top,"),
-    (1,"this, left + origin_x, top + origin_y, left, top, width, height",
-       "this, origin_x, origin_y, left, top, width, height"),
-    (1,"this, left + origin_x, top + origin_y, left, top, width, height",
-       "this, left + origin_x, top + origin_y, 0, 0, width, height"),
+    (1,"left + width - 1, top + height - 1","left + width, top + height"),
+    (1,"        const int top = area->top;\n        const int height = area->bottom - top;\n        const int left = area->left;\n        const int width = area->right - left;",
+       "        const int top = area->top;\n        const int left = area->left;"),
+    (1,"Buffer::map_colors(left, top,","Buffer::map_colors(cached_left, cached_top,"),
+    (1,"surface, left + origin_x, top + origin_y, left, top, width, height",
+       "surface, origin_x, origin_y, left, top, width, height"),
+    (1,"surface, left + origin_x, top + origin_y, left, top, width, height",
+       "surface, left + origin_x, top + origin_y, 0, 0, width, height"),
     (1,"return 0;","return 17;"),
     (0,"width = static_cast<int>(dib_.bmiHeader.biWidth);\n    height = static_cast<int>(dib_.bmiHeader.biHeight);",
        "/* incorrectly reused dimensions from before copy */"),
@@ -188,13 +189,21 @@ def test_transparent_null_rectangle_is_not_a_supported_domain(tmp_path):
        "unsigned char *const table = old_lut;"),
     (0,"unsigned char *const table = GraphicWinColorMapTable;",
        "unsigned char *const table = old_lut;"),
-    (1,"static_cast<GraphicWin *>(win_parent_)","&query_result"),
-    (0,"static_cast<GraphicWin *>(win_parent_)","&old_parent"),
+    (1,"static_cast<GraphicWin *>(win_parent_)","(&query_result)"),
+    (0,"static_cast<GraphicWin *>(win_parent_)","(&old_parent)"),
 ])
 def test_graphicwin_fill_damage_is_observed(tmp_path, which, before, after):
     initializer,bodies = actual_source()
     assert before in bodies[which]
     bodies[which] = bodies[which].replace(before,after)
+    if "cached_left" in after:
+        # Cache only the initial origin. Fresh remap extents remain unchanged.
+        declaration = "    const int left = area->left;"
+        assert declaration in bodies[which]
+        bodies[which] = bodies[which].replace(
+            declaration,
+            "    const int cached_left = area->left;\n"
+            "    const int cached_top = area->top;\n" + declaration, 1)
     # Mutation fixtures use observers declared after actual bodies normally.
     initializer = "extern GraphicWin query_result,old_parent; extern unsigned char old_lut[256];\n" + initializer
     result = run_host(tmp_path,initializer,bodies)

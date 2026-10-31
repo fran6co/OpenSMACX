@@ -59,7 +59,7 @@ struct Base { int16_t x,y; uint8_t faction_id_current,faction_id_former;
               uint8_t facilities_built[12]; };
 struct PlayerData { uint32_t diplo_treaties[8]; };
 struct RulesBasic { int tech_build_roads_fungus; } Rules;
-struct RulesTerraforming { int name,name_sea,preq_tech,preq_tech_sea; uint32_t bit,bit_incompatible; int rate,shortcuts; };
+struct RulesTerraforming { int name,name_sea; int prerequisite_tech[2]; uint32_t bit,bit_incompatible; int rate,shortcuts; };
 RulesTerraforming Terraforming[20];
 Base Bases[512]; Base *BaseCurrent; int BaseIDCurrentSelected;
 // @@MASK_TYPES@@

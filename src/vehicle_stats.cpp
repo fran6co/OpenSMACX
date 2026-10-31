@@ -153,12 +153,12 @@ void __cdecl say_stats_3(LPSTR stat, int proto_id) {
         say_defense(stat, proto_id);
     }
     strcat(stat, "-");
-    _itoa(speed_proto(proto_id) / (int)Rules.move_rate_roads, num_buf, 10);
+    int speed = speed_proto(proto_id) / (int)Rules.move_rate_roads;
+    _itoa(speed, num_buf, 10);
     strcat(stat, num_buf);
-    uint8_t reactor = VehPrototypes[proto_id].reactor_id;
-    if (reactor > RECT_FISSION) {
+    if (VehPrototypes[proto_id].reactor_id > RECT_FISSION) {
         strcat(stat, "*");
-        _itoa(reactor, num_buf, 10);
+        _itoa(VehPrototypes[proto_id].reactor_id, num_buf, 10);
         strcat(stat, num_buf);
     }
 }
@@ -202,20 +202,20 @@ void __cdecl say_stats_2(LPSTR stat, int proto_id) {
         say_defense(stat, proto_id);
     }
     strcat(stat, "-");
-    _itoa(speed_proto(proto_id) / (int)Rules.move_rate_roads, num_buf, 10);
+    int speed = speed_proto(proto_id) / (int)Rules.move_rate_roads;
+    _itoa(speed, num_buf, 10);
     strcat(stat, num_buf);
-    uint32_t triad = get_proto_triad(proto_id);
-    if (triad == TRIAD_SEA) {
+    if (get_proto_triad(proto_id) == TRIAD_SEA) {
         strcat(stat, " ");
         strcat(stat, StringTable.get(Labels.strings_ptr[163])); // 'Sea'
-    } else if (triad == TRIAD_AIR) {
+    }
+    if (get_proto_triad(proto_id) == TRIAD_AIR) {
         strcat(stat, " ");
         strcat(stat, StringTable.get(Labels.strings_ptr[162])); // 'Air'
     }
-    uint32_t reactor = VehPrototypes[proto_id].reactor_id;
-    if (reactor > 1) {
+    if (VehPrototypes[proto_id].reactor_id > 1) {
         strcat(stat, "*");
-        _itoa(reactor, num_buf, 10);
+        _itoa(VehPrototypes[proto_id].reactor_id, num_buf, 10);
         strcat(stat, num_buf);
     }
 }
@@ -257,23 +257,17 @@ Status: Complete
 */
 void __cdecl say_stats(LPSTR stat, int proto_id, LPSTR custom_spacer) {
     char num_buf[80];
-    uint8_t plan = VehPrototypes[proto_id].plan;
-    uint8_t chas = VehPrototypes[proto_id].chassis_id;
-    uint8_t triad = Chassis[chas].triad;
-    uint8_t mode = Weapon[VehPrototypes[proto_id].weapon_id].mode;
-    int8_t off_rating = get_proto_offense_rating(proto_id);
-    int8_t def_rating = get_proto_defense_rating(proto_id);
-    if (plan == PLAN_RECONNAISANCE && triad == TRIAD_LAND && off_rating == 1 && def_rating == 1
+    if (VehPrototypes[proto_id].plan == PLAN_RECONNAISANCE && get_proto_triad(proto_id) == TRIAD_LAND && get_proto_offense_rating(proto_id) == 1 && get_proto_defense_rating(proto_id) == 1
         && !VehPrototypes[proto_id].ability_flags) {
         strcat(stat, StringTable.get(PlansFullName[3])); // 'Explore/Defense'
         strcat(stat, ", ");
-    } else if (mode < 3) { // Projectile, energy, missile
-        strcat(stat, StringTable.get((plan != PLAN_DEFENSIVE || (off_rating >= 0 && off_rating <= def_rating))
-            ? PlansShortName[plan] : Labels.strings_ptr[312])); // 'Combat'
+    } else if (Weapon[VehPrototypes[proto_id].weapon_id].mode < 3) { // Projectile, energy, missile
+        strcat(stat, StringTable.get((VehPrototypes[proto_id].plan != PLAN_DEFENSIVE || (get_proto_offense_rating(proto_id) >= 0 && get_proto_offense_rating(proto_id) <= get_proto_defense_rating(proto_id)))
+            ? PlansShortName[VehPrototypes[proto_id].plan] : Labels.strings_ptr[312])); // 'Combat'
         strcat(stat, ", ");
     }
-    if (off_rating < 0 || mode < 3) {
-        if (off_rating < 0) {
+    if (get_proto_offense_rating(proto_id) < 0 || Weapon[VehPrototypes[proto_id].weapon_id].mode < 3) {
+        if (get_proto_offense_rating(proto_id) < 0) {
             strcat(stat, StringTable.get(Labels.strings_ptr[196])); // 'Psi'
         } else {
             say_offense(stat, proto_id);
@@ -284,10 +278,10 @@ void __cdecl say_stats(LPSTR stat, int proto_id, LPSTR custom_spacer) {
             strcat(stat, "/");
         }
         goto append_defense_tail;
-    } else if (def_rating != 1 || VehPrototypes[proto_id].ability_flags || (Chassis[chas].speed != 1
-        && (mode != WPN_MODE_TRANSPORT || chas != CHSI_FOIL))) {
-        strcat(stat, StringTable.get(PlansShortName[mode]));
-        if (plan == PLAN_NAVAL_TRANSPORT) {
+    } else if (get_proto_defense_rating(proto_id) != 1 || VehPrototypes[proto_id].ability_flags || (Chassis[VehPrototypes[proto_id].chassis_id].speed != 1
+        && (Weapon[VehPrototypes[proto_id].weapon_id].mode != WPN_MODE_TRANSPORT || VehPrototypes[proto_id].chassis_id != CHSI_FOIL))) {
+        strcat(stat, StringTable.get(PlansShortName[Weapon[VehPrototypes[proto_id].weapon_id].mode]));
+        if (VehPrototypes[proto_id].plan == PLAN_NAVAL_TRANSPORT) {
             strcat(stat, "(");
             _itoa(VehPrototypes[proto_id].carry_capacity, num_buf, 10);
             strcat(stat, num_buf);
@@ -295,39 +289,40 @@ void __cdecl say_stats(LPSTR stat, int proto_id, LPSTR custom_spacer) {
         }
         strcat(stat, ", ");
 append_defense_tail:
-        if (def_rating < 0) {
+        if (get_proto_defense_rating(proto_id) < 0) {
             strcat(stat, StringTable.get(Labels.strings_ptr[196])); // 'Psi'
         } else {
             say_defense(stat, proto_id);
         }
         strcat(stat, custom_spacer ? custom_spacer : "/");
-        _itoa(speed_proto(proto_id) / (int)Rules.move_rate_roads, num_buf, 10);
+        int speed = speed_proto(proto_id) / (int)Rules.move_rate_roads;
+        _itoa(speed, num_buf, 10);
         strcat(stat, num_buf);
     } else {
-        strcat(stat, StringTable.get(PlansFullName[mode]));
-        if (plan == PLAN_NAVAL_TRANSPORT) {
+        strcat(stat, StringTable.get(PlansFullName[Weapon[VehPrototypes[proto_id].weapon_id].mode]));
+        if (VehPrototypes[proto_id].plan == PLAN_NAVAL_TRANSPORT) {
             strcat(stat, "(");
             _itoa(VehPrototypes[proto_id].carry_capacity, num_buf, 10);
             strcat(stat, num_buf);
             strcat(stat, ")");
         }
-        if (triad) { // sea, air
+        if (get_proto_triad(proto_id)) { // sea, air
             strcat(stat, ", "); // Original separator; the later triad space remains.
         }
     }
-    if (triad == TRIAD_SEA) {
+    if (get_proto_triad(proto_id) == TRIAD_SEA) {
         strcat(stat, " ");
         strcat(stat, StringTable.get(Labels.strings_ptr[163])); // 'Sea'
-    } else if (triad == TRIAD_AIR) {
+    }
+    if (get_proto_triad(proto_id) == TRIAD_AIR) {
         strcat(stat, " ");
         strcat(stat, StringTable.get(Labels.strings_ptr[162])); // 'Air'
     }
-    uint32_t reactor = VehPrototypes[proto_id].reactor_id;
-    if (reactor > 1) {
+    if (VehPrototypes[proto_id].reactor_id > 1) {
         strcat(stat, " ");
         strcat(stat, "(");
         strcat(stat, "*");
-        _itoa(reactor, num_buf, 10);
+        _itoa(VehPrototypes[proto_id].reactor_id, num_buf, 10);
         strcat(stat, num_buf);
         strcat(stat, ")");
     }

@@ -9954,7 +9954,7 @@ void __cdecl action_road_to(int veh_id) {
     } else {
         if ((tile->bit & BIT_FUNGUS) != 0 && altitude >= ALT_BIT_SHORE_LINE
             && !has_tech(Rules.tech_build_roads_fungus, owner)
-            && has_tech(Terraforming[TERRA_REMOVE_FUNGUS].preq_tech, owner)) {
+            && has_tech(Terraforming[TERRA_REMOVE_FUNGUS].prerequisite_tech[0], owner)) {
             if (!(tile->bit & BIT_BASE_IN_TILE) || (tile->val2 & 0xf) > 7) {
                 if (IsMultiplayerNet == 0
                     || ConsoleControlTurnActive != 0) {
@@ -9989,7 +9989,7 @@ void __cdecl action_road_to(int veh_id) {
                 }
                 if (Vehs[veh_id].order == ORDER_MAGTUBE_TO
                     && !(tile->bit & BIT_MAGTUBE)
-                    && has_tech(Terraforming[TERRA_MAGTUBE].preq_tech, owner)) {
+                    && has_tech(Terraforming[TERRA_MAGTUBE].prerequisite_tech[0], owner)) {
                     if (IsMultiplayerNet == 0
                         || ConsoleControlTurnActive != 0) {
                         action_terraform(veh_id, ORDER_ROAD, 1);
@@ -10175,8 +10175,8 @@ int __cdecl action_terraform(int veh_id, int action, int do_it) {
     if (action == TERRA_ROAD) {
         if (tile->bit & BIT_ROAD) {
             if (has_tech(not_ocean != 0
-                                  ? Terraforming[TERRA_MAGTUBE].preq_tech_sea
-                                  : Terraforming[TERRA_MAGTUBE].preq_tech,
+                                  ? Terraforming[TERRA_MAGTUBE].prerequisite_tech[1]
+                                  : Terraforming[TERRA_MAGTUBE].prerequisite_tech[0],
                               faction)) {
                 action = TERRA_MAGTUBE;
             }
@@ -10184,8 +10184,8 @@ int __cdecl action_terraform(int veh_id, int action, int do_it) {
     } else if (action == TERRA_FARM && (tile->bit & BIT_FARM) != 0
                && (tile->climate & 0xE0) > 0x5F) {
         if (has_tech(not_ocean != 0
-                              ? Terraforming[TERRA_FARM].preq_tech_sea
-                              : Terraforming[TERRA_FARM].preq_tech,
+                              ? Terraforming[TERRA_FARM].prerequisite_tech[1]
+                              : Terraforming[TERRA_FARM].prerequisite_tech[0],
                           faction)) {
             action = TERRA_SOIL_ENR;
         }

@@ -615,13 +615,16 @@
       },
       "src/time.cpp": {
         "flags": [
-          "/c",
-          "/O2",
-          "/Gy",
-          "/GR-",
+          "/nologo",
+          "/TP",
+          "/Zm200",
           "/GX",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W4",
           "/Oy-",
-          "/Ob2"
+          "-c"
         ]
       },
       "src/jackal/time_lifecycle.cpp": {
@@ -1197,6 +1200,33 @@
         ]
       },
       "src/basepop.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W4",
+          "-c"
+        ]
+      },
+      "src/vehicle_stats.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W4",
+          "/Oy-",
+          "-c"
+        ]
+      },
+      "src/editgroup.cpp": {
         "flags": [
           "/nologo",
           "/TP",

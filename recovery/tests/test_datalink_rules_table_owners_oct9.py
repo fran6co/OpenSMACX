@@ -90,7 +90,7 @@ const int MaxSocialCatNum = 4;
 RulesSocialCategory SocialCategories[MaxSocialCatNum] = {};
 RulesSocialEffect SocialEffects[MaxSocialEffectNum] = {};
 struct RulesTerraforming {
-    LPSTR name, name_sea; int preq_tech, preq_tech_sea;
+    LPSTR name, name_sea; int prerequisite_tech[2];
     uint32_t bit, bit_incompatible; int rate; LPSTR shortcuts;
 };
 const int MaxTerrainNum = 20;
@@ -193,21 +193,21 @@ int main() {
 
     clear(d);
     for (int i = 0; i < MaxTerrainNum; ++i) {
-        Terraforming[i].preq_tech = -2;
-        Terraforming[i].preq_tech_sea = -2;
+        Terraforming[i].prerequisite_tech[0] = -2;
+        Terraforming[i].prerequisite_tech[1] = -2;
         std::sprintf(land_names[i], "land%d", i);
         std::sprintf(sea_names[i], "sea%d", i);
         Order[i + 4].order = land_names[i];
         Order[i + 4].order_sea = sea_names[i];
     }
-    Terraforming[0].preq_tech = -2;
-    Terraforming[0].preq_tech_sea = -1;
-    Terraforming[1].preq_tech = -1;
-    Terraforming[1].preq_tech_sea = -2;
-    Terraforming[16].preq_tech = -1;
-    Terraforming[16].preq_tech_sea = -1;
-    Terraforming[17].preq_tech = -2;
-    Terraforming[17].preq_tech_sea = -1;
+    Terraforming[0].prerequisite_tech[0] = -2;
+    Terraforming[0].prerequisite_tech[1] = -1;
+    Terraforming[1].prerequisite_tech[0] = -1;
+    Terraforming[1].prerequisite_tech[1] = -2;
+    Terraforming[16].prerequisite_tech[0] = -1;
+    Terraforming[16].prerequisite_tech[1] = -1;
+    Terraforming[17].prerequisite_tech[0] = -2;
+    Terraforming[17].prerequisite_tech[1] = -1;
     d.set_cat_terraform();
     assert(d.listBox_.items.size() == 3);
     assert(d.listBox_.items[0].id == 90020 && d.listBox_.items[0].text == "sea0|90020");

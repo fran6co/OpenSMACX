@@ -319,28 +319,26 @@ void GraphicWin::fill(int color) {
     // called by NAME - through a pointer-to-member the call sites emitted
     // `call [ptr]` where the image has `call rel32`. Buffer is a real base,
     // so the upcast is the language's own +0x444.
-    Buffer *const surface = this;
     // Bit 19 alone does not make the window transparent: the parent has to
     // exist and expose a GraphicWin through Win's slot 0xF4. A plain Win
     // returns null; GraphicWin returns itself.
-    bool transparent = false;
-    if ((iFlags_ & 0x80000) != 0 && win_parent_ != nullptr) {
-        Win *const parent = win_parent_;
-        transparent = parent->get_graphic_win() != nullptr;
-    }
-    if (!transparent) {
-        surface->fill(color);
-        return;
-    }
+    if ((iFlags_ & 0x80000) != 0 && win_parent_ != nullptr &&
+        win_parent_->get_graphic_win() != nullptr) {
     // The blit origin is where the window sits in its parent (outer_rect_)
     // plus where the draw area sits in the window (client_rect_).
-    const int origin_x = client_rect_.left + outer_rect_.left;
-    const int origin_y = client_rect_.top + outer_rect_.top;
+    RECT scratch = client_rect_;
+    int origin_x = scratch.left;
+    int origin_y = scratch.top;
+    scratch = outer_rect_;
+    origin_x += scratch.left;
+    GraphicWin *const parent = static_cast<GraphicWin *>(win_parent_);
+    origin_y += scratch.top;
+    Buffer *const surface = this;
     // The DIB's own dimensions: biHeight is stored negative (top-down), so
     // the vertical passes negate it back.
     int width = static_cast<int>(dib_.bmiHeader.biWidth);
     int height = static_cast<int>(dib_.bmiHeader.biHeight);
-    static_cast<Buffer *>(static_cast<GraphicWin *>(win_parent_))->copy(
+    parent->Buffer::copy(
         surface, origin_x, origin_y, 0, 0, width, -height);
     unsigned char *const table = GraphicWinColorMapTable;
     if (table == nullptr) {
@@ -353,6 +351,9 @@ void GraphicWin::fill(int color) {
     width = static_cast<int>(dib_.bmiHeader.biWidth);
     height = static_cast<int>(dib_.bmiHeader.biHeight);
     surface->map_colors(0, 0, width - 1, -1 - height, table);
+    } else {
+        Buffer::fill(color);
+    }
 }
 
 // Rectangle counterpart of fill(int). The parent query is only an admission
@@ -371,20 +372,24 @@ int GraphicWin::fill(RECT *area, int color) {
 
     const int origin_x = client_rect_.left + outer_rect_.left;
     const int origin_y = client_rect_.top + outer_rect_.top;
+    Buffer *const surface = this;
     const int left = area->left;
     const int top = area->top;
     const int width = area->right - left;
     const int height = area->bottom - top;
-    static_cast<Buffer *>(static_cast<GraphicWin *>(win_parent_))->copy(
-        this, left + origin_x, top + origin_y, left, top, width, height);
+    static_cast<GraphicWin *>(win_parent_)->Buffer::copy(
+        surface, left + origin_x, top + origin_y, left, top, width, height);
 
     // Copy can invoke surface callbacks. Load the table and rectangle again
     // afterwards; neither the incoming bounds nor the table may be cached
     // across that call. The original ignores both drawing return codes.
     unsigned char *const table = GraphicWinColorMapTable;
     if (table != nullptr) {
-        Buffer::map_colors(area->left, area->top,
-                           area->right - 1, area->bottom - 1, table);
+        const int top = area->top;
+        const int height = area->bottom - top;
+        const int left = area->left;
+        const int width = area->right - left;
+        Buffer::map_colors(left, top, left + width - 1, top + height - 1, table);
     }
     return 0;
 }
@@ -438,31 +443,31 @@ void GraphicWin::on_redraw_nc(RECT *area, int side) {
         side = -1;
     }
 
-    if ((iFlags_ & 0x10000000) == 0) {
-        Win::on_redraw_nc(area, side);
-        return;
-    }
-
     int top_inset;
     Sprite *top_left;
     Sprite *top_edge;
     Sprite *top_right;
-    if ((iFlags_ & 0x10) == 0 || (iFlags_ & 0x400000) != 0) {
-        top_inset = border_thickness_;
-        top_left = frame_noncaption_left_;
-        top_edge = frame_noncaption_middle_;
-        top_right = frame_noncaption_right_;
-    } else {
+    if ((iFlags_ & 0x10) != 0 && (iFlags_ & 0x400000) == 0) {
         top_inset = caption_height_;
         top_left = frame_top_left_;
         top_edge = frame_top_;
         top_right = frame_top_right_;
+    } else {
+        top_inset = border_thickness_;
+        top_left = frame_noncaption_left_;
+        top_edge = frame_noncaption_middle_;
+        top_right = frame_noncaption_right_;
     }
 
     int bottom_inset = bottom_border_thickness_;
     if (bottom_inset == -1) {
         bottom_inset = border_thickness_;
     }
+    if ((iFlags_ & 0x10000000) == 0) {
+        Win::on_redraw_nc(area, side);
+        return;
+    }
+
     // Quadrant 0: top caption/non-caption strip.
     if (buffer1_ != 0 && (side == -1 || side == 0)) {
         Buffer *buffer = buffer1_;
@@ -1281,25 +1286,42 @@ static int frame_dimension_sum(int first, int second) {
 // RECOVERY_BINDING: v1 {"evidence": ["Complete original5D7030..5D7140 has no callees. Flag0x10 selects caption or noncaption top corners; bottom corners are shared. Every selected pointer must exist before either previous minimum changes.", "OriginalSprite displayed width18/height1C accesses and signed greater-than branches establish independent horizontal and vertical corner-sum maxima. Preserve low32-bit addition before signed comparison, real Sprite accessors and existing Win minimum members. Seed Buffer receiver casts are incorrect; remove the product pending forwarder without changing the historical unclaimed identity."], "reason": "Recover genuine GraphicWin frame behavior required by the interface asset loader, retaining its original seed identity."}
 // symbol    ?compute_min_size@GraphicWin@@QAEXXZ
 void GraphicWin::compute_min_size() {
-    Sprite *top_left = (iFlags_ & 0x10) ? frame_top_left_ : frame_noncaption_left_;
-    Sprite *top_right = (iFlags_ & 0x10) ? frame_top_right_ : frame_noncaption_right_;
-    Sprite *bottom_left = frame_bottom_left_;
-    Sprite *bottom_right = frame_bottom_right_;
-    if (!top_left || !top_right || !bottom_left || !bottom_right) {
-        return;
-    }
-
-    int width = frame_dimension_sum(top_left->width(), top_right->width());
-    field_134_ = width;
-    int bottom_width = frame_dimension_sum(bottom_right->width(), bottom_left->width());
-    if (bottom_width > width) {
-        field_134_ = bottom_width;
-    }
-    int height = frame_dimension_sum(top_left->height(), bottom_left->height());
-    field_138_ = height;
-    int right_height = frame_dimension_sum(bottom_right->height(), top_right->height());
-    if (right_height > height) {
-        field_138_ = right_height;
+    if ((iFlags_ & 0x10) != 0) {
+        if (!frame_top_left_) return;
+        Sprite *const top_right = frame_top_right_;
+        if (!top_right) return;
+        Sprite *const bottom_left = frame_bottom_left_;
+        if (!bottom_left) return;
+        Sprite *const bottom_right = frame_bottom_right_;
+        if (!bottom_right) return;
+        int width = frame_dimension_sum(frame_top_left_->width(), top_right->width());
+        field_134_ = width;
+        const int bottom_width = frame_dimension_sum(bottom_right->width(), bottom_left->width());
+        if (width <= bottom_width) width = bottom_width;
+        field_134_ = width;
+        int height = frame_dimension_sum(frame_top_left_->height(), bottom_left->height());
+        field_138_ = height;
+        const int right_height = frame_dimension_sum(bottom_right->height(), top_right->height());
+        if (height <= right_height) height = right_height;
+        field_138_ = height;
+    } else {
+        if (!frame_noncaption_left_) return;
+        Sprite *const top_right = frame_noncaption_right_;
+        if (!top_right) return;
+        Sprite *const bottom_left = frame_bottom_left_;
+        if (!bottom_left) return;
+        Sprite *const bottom_right = frame_bottom_right_;
+        if (!bottom_right) return;
+        int width = frame_dimension_sum(frame_noncaption_left_->width(), top_right->width());
+        field_134_ = width;
+        const int bottom_width = frame_dimension_sum(bottom_right->width(), bottom_left->width());
+        if (width <= bottom_width) width = bottom_width;
+        field_134_ = width;
+        int height = frame_dimension_sum(frame_noncaption_left_->height(), bottom_left->height());
+        field_138_ = height;
+        const int right_height = frame_dimension_sum(bottom_right->height(), top_right->height());
+        if (height <= right_height) height = right_height;
+        field_138_ = height;
     }
 }
 
@@ -1416,29 +1438,7 @@ void GraphicWin::apply_frame_sprites(const NCSprites *sprites) {
     frame_noncaption_right_ = sprites->noncaption_right;
     frame_noncaption_middle_ = sprites->noncaption_middle;
 
-    Sprite *const top_left = (iFlags_ & 0x10) ? frame_top_left_ : frame_noncaption_left_;
-    Sprite *const top_right = (iFlags_ & 0x10) ? frame_top_right_ : frame_noncaption_right_;
-    Sprite *const bottom_left = frame_bottom_left_;
-    Sprite *const bottom_right = frame_bottom_right_;
-    if (!top_left || !top_right || !bottom_left || !bottom_right) {
-        return;
-    }
-
-    int width = frame_dimension_sum(top_left->width(), top_right->width());
-    field_134_ = width;
-    const int bottom_width = frame_dimension_sum(bottom_right->width(), bottom_left->width());
-    if (width <= bottom_width) {
-        width = bottom_width;
-    }
-    field_134_ = width;
-
-    int height = frame_dimension_sum(top_left->height(), bottom_left->height());
-    field_138_ = height;
-    const int right_height = frame_dimension_sum(bottom_right->height(), top_right->height());
-    if (height <= right_height) {
-        height = right_height;
-    }
-    field_138_ = height;
+    compute_min_size();
 }
 
 // ORIGINAL: 0x005D54A0 sub_5d54a0 0x005D54A0-0x005D54C2 BYTE_EXACT

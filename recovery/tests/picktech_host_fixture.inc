@@ -95,7 +95,7 @@ struct RulesFacility {LPSTR name=nullptr,effect=nullptr;int preq_tech=-100,free_
 RulesFacility Facility[134];
 struct RulesCitizen {LPSTR singular_name=nullptr;int preq_tech=-100;}; RulesCitizen Citizen[10];
 struct RulesAbility {LPSTR name=nullptr;int preq_tech=-100;};RulesAbility Ability[29];
-struct RulesTerraforming {LPSTR name=nullptr,name_sea=nullptr;int preq_tech=-100,preq_tech_sea=-100;};
+struct RulesTerraforming {LPSTR name=nullptr,name_sea=nullptr;int prerequisite_tech[2]={-100,-100};};
 RulesTerraforming Terraforming[20];
 struct RulesOrder {LPSTR order=nullptr,order_sea=nullptr;};RulesOrder Order[40];
 struct RulesChassis {LPSTR offsv_1_name=nullptr;int preq_tech=-100,triad=0;uint8_t speed=1;};
@@ -280,7 +280,7 @@ int main() {
     VehPrototypes[0].flags=1;VehPrototypes[0].preq_tech=5;strcpy(VehPrototypes[0].veh_name,"prototype");
     Reactor[0].preq_tech=Weapon[0].preq_tech=Armor[0].preq_tech=Chassis[0].preq_tech=5;
     Facility[1].preq_tech=Facility[70].preq_tech=5;
-    Terraforming[0].preq_tech=Terraforming[0].preq_tech_sea=5;
+    Terraforming[0].prerequisite_tech[0]=Terraforming[0].prerequisite_tech[1]=5;
     Ability[0].preq_tech=Citizen[0].preq_tech=5;Technology[0].preq_tech_1=5;
     {PickTech p;assert(p.pick(1,1,-1,0)==5);
      assert(candidate_captions[0]=="T5|(label278)++++++++++++");
@@ -290,7 +290,7 @@ int main() {
     Technology[0].preq_tech_1=Technology[1].preq_tech_1=5;
     {PickTech p;assert(p.pick(1,1,-1,0)==5);
      assert(candidate_captions[0]=="T5|(label157: name)");}
-    reset_state();available[5]=1;Terraforming[0].preq_tech=Terraforming[0].preq_tech_sea=5;
+    reset_state();available[5]=1;Terraforming[0].prerequisite_tech[0]=Terraforming[0].prerequisite_tech[1]=5;
     {PickTech p;assert(p.pick(1,1,-1,0)==5);
      assert(candidate_captions[0]=="T5|(name)");}
     reset_state();available[5]=1;Weapon[0].preq_tech=5;Weapon[0].offense_rating=0;

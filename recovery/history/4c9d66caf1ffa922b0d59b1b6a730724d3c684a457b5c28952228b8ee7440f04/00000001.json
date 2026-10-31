@@ -1,0 +1,19 @@
+{
+  "event_id": "b797035fe2031dfc312ed34eafcc5bac4dbc05c7e98958c957d01dd746cd5808",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_say_stats_original_separator.py"
+    ],
+    "evidence": [
+      "Adapt existing actual-source mock to the genuine get_proto_triad accessor used by restored callback-visible field rereads. Add faithful Chassis[VehPrototypes[id].chassis_id].triad mock only; retain all separator/null/transport behavior oracles and missing-space damage mutants. No product helper/header workaround or weakened assertions."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "separator-real-triad-fixture-oct31bs",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:easy-vehicle_stats-oct31bs"
+}

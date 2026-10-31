@@ -1,0 +1,20 @@
+{
+  "event_id": "9bbc7244300912c41581994a00cf2b0aa6f042fc01dfdc50e844b23432904139",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_graphicwin_fill.py",
+      "recovery/tests/test_graphicwin_frames.py"
+    ],
+    "evidence": [
+      "Reanchor actual-source damage controls after genuine aggregate RECT source and control-flow recovery. Preserve all independent geometry/fill/callback and unsafe-path oracles; mutants must still alter intended behavior and be rejected. Do not delete/skip failures or weaken expected behavior."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "real-graphicwin-damage-anchors-oct31bs",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:easy-graphicwin-oct31bs"
+}

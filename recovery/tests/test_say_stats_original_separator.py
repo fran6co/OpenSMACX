@@ -76,6 +76,9 @@ struct FakeStringTable {
 } StringTable;
 static int get_proto_offense_rating(int) { return 1; }
 static int get_proto_defense_rating(int) { return 1; }
+static uint8_t get_proto_triad(uint32_t proto_id) {
+    return Chassis[VehPrototypes[proto_id].chassis_id].triad;
+}
 static int speed_proto(int) { return 3; }
 static void say_offense(LPSTR out, int) { strcat(out, "1"); }
 static void say_defense(LPSTR out, int) { strcat(out, "1"); }

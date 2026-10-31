@@ -1,0 +1,22 @@
+{
+  "event_id": "de0fbed59179c2403cf3a5e79299b8dad7e20cdf35b3e5911176ac3e8f1c7139",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_base_colony_production.py",
+      "recovery/tests/test_base_connect_behavior.py",
+      "recovery/tests/test_base_terraform_behavior.py",
+      "recovery/tests/test_console_remaining_behavior.py"
+    ],
+    "evidence": [
+      "Complete compatible mock RulesTerraforming/TerraformRecord prerequisite_tech[2] representation at offsets8/12; preserve every existing oracle and damage expectation, including wrong land/sea accesses. No unrelated fixture changes."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "8c39fdbbc06750fec0845445f5ef458a084f8dbbba1cb00b69615ea027440707",
+  "request_id": "additional-terraforming-fixture-types-oct31bs",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:easy-technology_queries-oct31bs"
+}

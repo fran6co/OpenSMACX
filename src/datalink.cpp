@@ -677,7 +677,7 @@ void Datalink::draw_terraform() {
     CharUpperA(StringTemp);
     write_cent_l(StringTemp, &title_rect_, strlen(StringTemp));
     const RulesTerraforming &terraform = Terraforming[action];
-    const int technology = land ? terraform.preq_tech : terraform.preq_tech_sea;
+    const int technology = land ? terraform.prerequisite_tech[0] : terraform.prerequisite_tech[1];
     parse_says(1, tech_name(technology, 0), -1, -1);
     parse_num(0, technology + 140000);
     parse_num(1, terraform.rate);
@@ -3054,7 +3054,7 @@ void Datalink::set_cat_terraform() {
          ++category, ++terraform_index) {
         const RulesTerraforming &terraform = Terraforming[terraform_index];
         const RulesOrder &order = Order[4 + terraform_index];
-        if (terraform.preq_tech >= -1) {
+        if (terraform.prerequisite_tech[0] >= -1) {
             StringTemp[0] = '\0';
             strcat(StringTemp, StringTable.get(order.order));
             if ((GameDataStateStorage.fields_.game_state_ & 0x1000) != 0) {
@@ -3069,7 +3069,7 @@ void Datalink::set_cat_terraform() {
         if (category == 90036 || category == 90037) {
             continue;
         }
-        if (terraform.preq_tech_sea < -1) {
+        if (terraform.prerequisite_tech[1] < -1) {
             continue;
         }
 
@@ -3892,10 +3892,10 @@ void __cdecl tech_heck(void (__cdecl *a1)(char *), int a2) {
         for (int row = 0; row < MaxTerrainNum - 1; ++row) {
             for (int i = 0; i < 2; ++i) {
                 const RulesTerraforming &terraform = Terraforming[row];
-                const int prerequisite = i == 0 ? terraform.preq_tech
-                                                : terraform.preq_tech_sea;
+                const int prerequisite = i == 0 ? terraform.prerequisite_tech[0]
+                                                : terraform.prerequisite_tech[1];
                 if (a2 == prerequisite &&
-                    (i != 1 || terraform.preq_tech != terraform.preq_tech_sea)) {
+                    (i != 1 || terraform.prerequisite_tech[0] != terraform.prerequisite_tech[1])) {
                     LPSTR order = i == 0 ? Order[4 + row].order
                                          : Order[4 + row].order_sea;
                     parse_say(0, order, -1, -1);
