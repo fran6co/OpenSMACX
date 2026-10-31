@@ -1,0 +1,20 @@
+{
+  "event_id": "aef1d55d867dc3ebd0c35aba2fdc75a5b3403391ccf978d0bca07015a2dde27e",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_net_transport_queue_closure_oct12.py",
+      "src/net_class.h"
+    ],
+    "evidence": [
+      "Pinned632787/632794 pushes record and caller-cleans four bytes;6327F6 reads entryESP+4, not hiddenECX. Restore coherent ordinary typed internal_receive(NetThreadInfo*) routine/caller instead of refactored thiscall method; preserve ORIGINAL/catalogue identity and all spans/claims; update observed current symbol through native writer. Confirm callee return cleanup on every path. No wrapper, forced convention trick, raw offsets or extra scopes."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "net_class-pinned-closure-scope-oct31bo",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:easy-net_class-oct31bo"
+}

@@ -1,0 +1,27 @@
+{
+  "event_id": "bf6b687a920a524cfd7d64f8c95d970333c552d9e92806cc234c39190e3ace7c",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_buffer_release_hdc_owner_oct20.py",
+      "src/buffer.cpp",
+      "src/buffer.h"
+    ],
+    "evidence": [
+      "Original GraphicWin5D5B80 directly calls Buffer::get_hdc5E3503; its current in-class body expands instead. Move the unchanged method to its genuine Buffer CPP owner with ordinary declaration and native write_body metadata migration, preserve historical89byte claim and all identities. No forced noinline, attributes or flags. Win::get_hdc is a separate static global-cache routine; do not conflate it with per-object Buffer acquisition. This scope excludes any edit to user-reserved Buffer::write_pcx body at5DF590. Capture and preserve its body hash. Protect all32 GraphicWin exacts and every Buffer exact via whole-owner observations."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6173955,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "23314dce01f71bd7977898131a9deaec60657c0ff5d5097c4a78d9c595f293d8",
+  "request_id": "buffer-hdc-provider-closure-oct31bo",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:easy-graphicwin-oct31bo"
+}

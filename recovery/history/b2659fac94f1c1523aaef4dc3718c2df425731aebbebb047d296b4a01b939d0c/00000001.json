@@ -1,0 +1,19 @@
+{
+  "event_id": "0c7f8ff8b36660d364a2799e6d39a4a66923293fb24b805a7652fad21d3a8fe5",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_popup_string_list_members_oct9.py"
+    ],
+    "evidence": [
+      "Pinned branch-local Popup::start now matches. Update obsolete textual else-if anchor only, with replacement assertion; preserve malformed-null-load and actual callback runtime/damage oracles."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "popup-behavior-witness-scope-oct31bo",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:easy-popup-oct31bo"
+}

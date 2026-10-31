@@ -29,6 +29,10 @@ struct IDirectPlay2;
 
 #include "voice.h"
 
+struct NetThreadInfo;
+// Original 0x6327E0 consumes one explicit record pointer with cdecl cleanup.
+int __cdecl internal_receive(NetThreadInfo *thread_info);
+
 // Free polling entry points consumed by the Win message pump.
 void __cdecl do_net();
 void __cdecl check_net();
@@ -101,9 +105,8 @@ class JackalVoiceRx : public virtual StringAllocationBase {
   // Net::drop_player unlinkes one entry here directly - the image inlines the
   // walk inside the Net member - so the receiver's fields are Net-visible.
   friend class Net;
-  // NetThreadInfo::internal_receive retains the original ring cursor updates
-  // while dispatching voice packets; keep the ring fields private to owners.
-  friend struct NetThreadInfo;
+  // The explicit-record receive routine owns native ring cursor updates.
+  friend int __cdecl internal_receive(NetThreadInfo *);
  public:
   // Body assignments preserve the original table-then-state initialization
   // order under VC6; member initializers put these stores before its vfptr.
@@ -308,7 +311,6 @@ struct NetThreadInfo {
   DWORD lock_initialized_;             // +24 == Net+28
   // RECOVERY_MEMBER: v2 NetThreadInfo receive_lock_ CRITICAL_SECTION 0x28 0x0062D8E0
   CRITICAL_SECTION receive_lock_;      // +28..+3F == Net+2C..+43
-  int internal_receive();              // original 6327E0 receiver is Net+4
 };
 static_assert(sizeof(NetThreadInfo) == 0x40,
               "Net thread-info view extent from original accesses");
@@ -373,7 +375,7 @@ class Net {
   friend int __cdecl multiplayer_init(int);
   friend class NetSessionPickerWin;
   friend class AlphaNet;
-  friend struct NetThreadInfo;
+  friend int __cdecl internal_receive(NetThreadInfo *);
   // Original MultiDebug paint 0x005C9920 displays these session/player fields.
   friend class MultiDebug;
  public:

@@ -7,7 +7,12 @@
 #include <vector>
 typedef int LONG;
 struct RECT { int left, top, right, bottom; };
+static const RECT *expected_lower_description_rect;
+static int union_calls;
 static void UnionRect(RECT *out, const RECT *a, const RECT *b) {
+    // The first two original calls pass the owned member itself.
+    if (union_calls < 2) assert(b == expected_lower_description_rect);
+    ++union_calls;
     RECT result = {std::min(a->left,b->left),std::min(a->top,b->top),
                    std::max(a->right,b->right),std::max(a->bottom,b->bottom)};
     *out = result;
@@ -119,7 +124,7 @@ struct Datalink:GraphicWin,SubInterface {
     int history_[1],field_2A34_,field_2A38_;
     RECT interface_update_rect_,category_rect_,illustration_rect_,title_rect_,description_rect_;
     RECT panel_rect_,entry_clip_rect_,entry_update_rect_,entry_frame_rect_,topic_button_bounds_[18];
-    uint32_t field_10394_,field_10398_,field_1039C_,field_103A0_;
+    RECT lower_description_rect_;
     uint32_t field_103E4_,field_103E8_,field_103EC_,field_103F0_;
     Font auxiliary_font10_,auxiliary_font11_,font1_,font3_,auxiliary_font4_,auxiliary_font5_;
     Font body_font_,secondary_body_font_,link_font_,auxiliary_font8_,font2_;
@@ -141,10 +146,13 @@ int main() {
         RECT layout={11,22,333,444},left={10,20,110,320},right={200,30,300,340};
         MainInterfaceGlobal.layout_=layout;MainInterfaceGlobal.left_=left;MainInterfaceGlobal.right_=right;
         Datalink owner;owner.blurb_box_.id_=30;owner.concept_box_.id_=31;owner.detail_box_.id_=32;
+        expected_lower_description_rect = &owner.lower_description_rect_;
+        union_calls = 0;
         owner.init();int side=mode==0?0:138,content=mode==0?520:658;
+        assert(union_calls == 5);
         assert(registered==static_cast<SubInterface *>(&owner));
         assert(owner.history_[0]==0&&owner.field_2A34_==0&&owner.field_2A38_==0);
-        assert(owner.title_rect_.left==239&&owner.description_rect_.left==239&&owner.field_10394_==239);
+        assert(owner.title_rect_.left==239&&owner.description_rect_.left==239&&owner.lower_description_rect_.left==239);
         assert(owner.attached_.left==(WinScreenWidth-800)/2&&owner.attached_.top==900-80-content);
         assert(owner.attached_.right-owner.attached_.left==832&&owner.attached_.bottom-owner.attached_.top==content);
         assert(owner.parent_==static_cast<Win *>(&ConsoleGlobal)&&owner.fill_==9);

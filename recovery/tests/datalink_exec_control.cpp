@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 
+struct RECT { int left, top, right, bottom; };
 struct Font {};
 struct Win {};
 struct MainInterface : Win {};
@@ -111,18 +112,14 @@ struct Datalink : WinApi, SubInterface {
     uint32_t field_A24_;
     uint32_t field_29DC_;
     int32_t history_[21];
-    uint32_t field_10394_;
-    uint32_t field_10398_;
-    uint32_t field_1039C_;
-    uint32_t field_103A0_;
+    RECT lower_description_rect_;
     Font secondary_body_font_;
     Font link_font_;
     StringBox stringBox_;
     ListBox listBox_;
 
     Datalink() : field_A1C_(0), field_A20_(0), field_A24_(0),
-        field_29DC_(0), field_10394_(0), field_10398_(0),
-        field_1039C_(0), field_103A0_(0) {
+        field_29DC_(0), lower_description_rect_() {
         current_window = this;
     }
     void exec(unsigned int topic, int index);
@@ -184,10 +181,10 @@ static void reset_observations(int width) {
 static void test_800_geometry_and_owner_identity() {
     reset_observations(0x320);
     Datalink window;
-    window.field_10394_ = 100;
-    window.field_10398_ = 20;
-    window.field_1039C_ = 300;
-    window.field_103A0_ = 200;
+    window.lower_description_rect_.left = 100;
+    window.lower_description_rect_.top = 20;
+    window.lower_description_rect_.right = 300;
+    window.lower_description_rect_.bottom = 200;
     window.exec(6, 13);
 
     assert(Rect.x == 150 && Rect.y == 23);
@@ -209,15 +206,29 @@ static void test_800_geometry_and_owner_identity() {
         assert(Events[i] == expected[i]);
 }
 
+static void test_signed_rectangle_geometry() {
+    reset_observations(0x320);
+    Datalink window;
+    window.lower_description_rect_.left = -100;
+    window.lower_description_rect_.top = -20;
+    window.lower_description_rect_.right = 50;
+    window.lower_description_rect_.bottom = 80;
+    window.exec(6, 13);
+    assert(Rect.x == -50 && Rect.y == -17);
+    assert(Rect.width == 97 && Rect.height == 91);
+    assert(static_cast<uint32_t>(window.lower_description_rect_.left) == 0xFFFFFF9Cu);
+    assert(Rect.parent == static_cast<Win *>(&window));
+}
+
 static void test_restores_after_mutating_callbacks() {
     reset_observations(0x320);
     MutateSavedAfterSetCat = 1;
     MutateSavedAfterModal = 1;
     Datalink window;
-    window.field_10394_ = 10;
-    window.field_10398_ = 20;
-    window.field_1039C_ = 500;
-    window.field_103A0_ = 400;
+    window.lower_description_rect_.left = 10;
+    window.lower_description_rect_.top = 20;
+    window.lower_description_rect_.right = 500;
+    window.lower_description_rect_.bottom = 400;
     window.exec(4, 9);
 
     // These are the saved owner fields after callbacks deliberately mutate
@@ -244,6 +255,7 @@ static void test_non_800_skips_box_setup() {
 
 int main() {
     test_800_geometry_and_owner_identity();
+    test_signed_rectangle_geometry();
     test_restores_after_mutating_callbacks();
     test_non_800_skips_box_setup();
 }

@@ -168,7 +168,9 @@ def test_popup_text_selection_actual_source_with_intercepted_null_load(
     end = body.index("        strcat(StringTemp, msg);", start)
     selection = body[start:end]
     assert selection.count("payload->text") == 1
-    assert "else if (head == 0)" in selection
+    assert "if (entry != 0)" in selection
+    assert "if (head != 0)" in selection
+    assert "StringStructPayload *payload = 0;" in selection
     # Intercept only the unchecked final member load; preserve the source branch.
     selection = selection.replace("payload->text", "safe_payload_text(payload)", 1)
     harness = r'''

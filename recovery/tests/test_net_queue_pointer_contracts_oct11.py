@@ -44,7 +44,9 @@ def test_only_three_interfaces_change_and_obligations_remain():
     normalized = current
     for signature in NET_METHODS:
         previous = signature
-        if signature.startswith('void *Net::sub_630a40('):
+        if signature.startswith('int __cdecl internal_receive('):
+            previous = 'int NetThreadInfo::internal_receive()'
+        elif signature.startswith('void *Net::sub_630a40('):
             previous = HISTORICAL_METHODS[0x630A40]
         elif signature.startswith('void *Net::read_queue_key_until_timeout('):
             previous = 'void *Net::read_queue_key_until_timeout(unsigned int *key, int *length_out)'

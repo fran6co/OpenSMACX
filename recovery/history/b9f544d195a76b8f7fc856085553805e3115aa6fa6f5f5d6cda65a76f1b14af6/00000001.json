@@ -1,0 +1,21 @@
+{
+  "event_id": "926d69a99b982088bfe3be5a237b304d682dc7fc4833d9ec7a7f2ba34c9d3515",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/core_short_owner_harness.cpp",
+      "recovery/tests/test_core_short_owner.py",
+      "recovery/tests/test_win_directdraw_hdc_methods_oct9.py"
+    ],
+    "evidence": [
+      "Pinned virtual on_activate gain needs actual shared HDC/callback witnesses; two distinct native MSG lifetimes in do_task/wait_task require mutation anchor repairs. Preserve behavior/damage oracles and fix pre-existing parse_say mock signature solely to run the actual-source controls."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "win-coherent-witness-scope-oct31bo",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:easy-win-oct31bo"
+}

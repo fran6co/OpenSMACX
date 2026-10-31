@@ -1,0 +1,19 @@
+{
+  "event_id": "5bbb5cc949316c45cc3cb1fb8c4b8ae2059befc2c30f44aca62793669b9dc33d",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/popup.h"
+    ],
+    "evidence": [
+      "Five same-owner string arrays have guessed32/8capacities exceeding original slot gaps. Use incomplete extern arrays and initializer-inferred current arrays covering observed NUL text only; preserve mutability and literals, do not claim original total capacities. Bind verified starts only via native object writer after current COFF symbols/original argument addresses and contents are checked. Writable PE placement alone does not prove original mutable arrays versus literal storage. Preserve existing claims and callback/null/error behavior."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "0c7f8ff8b36660d364a2799e6d39a4a66923293fb24b805a7652fad21d3a8fe5",
+  "request_id": "popup-coherent-witness-scope-oct31bo",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:easy-popup-oct31bo"
+}

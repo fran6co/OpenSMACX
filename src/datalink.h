@@ -245,10 +245,11 @@ class Datalink : public GraphicWin, public SubInterface {
   RECT title_rect_;  // 0x10364
   RECT interface_update_rect_;  // 0x10374
   RECT description_rect_;  // 0x10384
-  uint32_t field_10394_;  // 0x10394
-  uint32_t field_10398_;  // 0x10398
-  uint32_t field_1039C_;  // 0x1039C
-  uint32_t field_103A0_;  // 0x103A0
+  // Original init takes this+10394 as one RECT and passes that address to
+  // USER32!UnionRect at 4294E6 and 4294FB; exec and the secondary topic
+  // text drawers use its signed left/top/right/bottom coordinates.
+  // RECOVERY_MEMBER: v2 Datalink lower_description_rect_ tagRECT 0x10394 0x004294E6
+  RECT lower_description_rect_;  // 0x10394..0x103A4
   // RECOVERY_MEMBER: v2 Datalink entry_clip_rect_ tagRECT 0x103A4 0x00498B30
   RECT entry_clip_rect_;  // 0x103A4
   RECT entry_update_rect_;  // 0x103B4
@@ -280,6 +281,8 @@ class Datalink : public GraphicWin, public SubInterface {
   StringBox stringBox_;  // 0x187F4, sizeof(StringBox), ends 0x1B394
 };
 
+static_assert(sizeof(RECT) == 0x10,
+              "Datalink lower description rectangle footprint");
 static_assert(sizeof(Datalink) == 0x1B394,
               "Datalink layout must match the original executable");
 

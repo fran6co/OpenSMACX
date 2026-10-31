@@ -720,11 +720,6 @@ int WinModalDepth;           // 0x009B7AE4
 int WinKeyModifiers;         // 0x009B7B18
 int WinViewOriginX;          // 0x009B7A70
 int WinViewOriginY;          // 0x009B7A74
-// The Buffer drawing family reads the one-byte default transparency key
-// at 696D14; its pinned initial value is 9. This is constant storage, not
-// a pointer to an original-image object or a mutable palette instance.
-// RECOVERY_OBJECT: v2 0x00696D14 0x00696D15 ?WinFillColour@@3EB 0x005D8650
-const unsigned char WinFillColour = 9;  // 0x00696D14, read from the image
 const char WinMsgTooManyChildren[] = "Too many children";            // 0x00696D80
 const char WinMsgIncreaseMaxChildren[] = "Increase #define MAX_CHILDREN";  // 0x00696D60
 const char WinMsgTooManyParents[] = "Too many parents";              // 0x00696DB4
@@ -4165,6 +4160,8 @@ void __stdcall sub_5f86a0(Sound *sound) {
 // TRIED: PeekMessageA/TranslateMessage/DispatchMessageA (loaded as plain function pointers from the IAT slots at 0x669358/0x66935c/ 0x669340, per the emitted globals) read into locals right after the first do_video/do_net/check_net() triple, matching the original's `mov esi,[...]` placement AFTER those three calls rather than before (moving it earlier cost the first 5 instructions). Best reached is 78.3% mnemonic similarity (#5 call vs push): the callee-register-save prologue still spills one extra value this body doesn't, not chased further. `handle_sys_msg` at 0x632db0 is a thiscall `Net` member with `this` read from 0x9be608 right before the call (`mov ecx,[0x9be608]`), not a bare cdecl call.
 int __cdecl do_task() {
     MSG message;
+    // Paint dispatch owns a separate native message record.
+    MSG paint_message;
     MsgStatus = 0;
     do_video();
     do_net();
@@ -4174,11 +4171,11 @@ int __cdecl do_task() {
         do_video();
         check_net();
         do_net();
-        if (!PeekMessageA(&message, 0, WM_PAINT, WM_PAINT, PM_REMOVE)) {
+        if (!PeekMessageA(&paint_message, 0, WM_PAINT, WM_PAINT, PM_REMOVE)) {
             break;
         }
-        TranslateMessage(&message);
-        DispatchMessageA(&message);
+        TranslateMessage(&paint_message);
+        DispatchMessageA(&paint_message);
         MsgStatus = 1;
     }
     MsgStatus = 0;
@@ -4203,6 +4200,8 @@ int __cdecl do_task() {
 // TRIED: 260 vs 228 bytes; VC6's /O2 loop rotation duplicates the do_video/check_net/do_net top-of-loop block into a separate call sequence instead of the original's fall-through-then-jmp reuse of one copy. Tried both `for (;;)` and `do {} while(1)` for the poll loop; both rotate the same way.
 void __cdecl wait_task() {
     MSG message;
+    // Paint dispatch owns a separate native message record.
+    MSG paint_message;
     MsgStatus = 0;
     do_video();
     do_net();
@@ -4212,11 +4211,11 @@ void __cdecl wait_task() {
         do_video();
         check_net();
         do_net();
-        if (!PeekMessageA(&message, 0, WM_PAINT, WM_PAINT, PM_REMOVE)) {
+        if (!PeekMessageA(&paint_message, 0, WM_PAINT, WM_PAINT, PM_REMOVE)) {
             break;
         }
-        TranslateMessage(&message);
-        DispatchMessageA(&message);
+        TranslateMessage(&paint_message);
+        DispatchMessageA(&paint_message);
         MsgStatus = 1;
     }
     MsgStatus = 0;
@@ -9952,7 +9951,7 @@ void Win::OnLButtonUp(void *hwnd, int x, int y, unsigned int keys) {
 }
 
 // ===== homed from src/unrecovered/005f5c00.cpp =====
-// ORIGINAL: 0x005F5C00 sub_5f5c00 0x005F5C00-0x005F5D05 FILE
+// ORIGINAL: 0x005F5C00 sub_5f5c00 0x005F5C00-0x005F5D05 FILE BYTE_EXACT
 // symbol    ?on_activate@Win@@UAEJIPAXJ@Z
 // size      261 bytes
 // kind      game
@@ -9960,43 +9959,20 @@ void Win::OnLButtonUp(void *hwnd, int x, int y, unsigned int keys) {
 // release arms call IDirectDrawSurface::GetDC/ReleaseDC by name - the
 // same slots 17/26 OnQueryNewPalette reaches.
 long Win::on_activate(unsigned int state, void * other, long minimized) {
-    if (minimized == 0 && state != 0 && BufferDirectDraw == 0) {
-        if (WinHdcRefCount == 0) {
-            IDirectDrawSurface2 *obj = DirectDrawSurface;
-            if (obj == 0) {
-                WinSharedHdc = GetDC(HandleMain);
-            } else {
-                // IDirectDrawSurface::GetDC is slot 17, offset 0x44 - the
-                // named call emits the image's push-addr/call-[vtbl+0x44].
-                obj->GetDC(&WinSharedHdc);
-            }
-            if (WinSharedHdc == 0) {
-                goto done;
-            }
-            WinHdcRefCount = 1;
-        } else {
-            WinHdcRefCount = WinHdcRefCount + 1;
-        }
-        if (WinSharedHdc != 0) {
-            SelectPalette(WinSharedHdc, PaletteInitialized, 0);
+    if (state != 0 && minimized == 0 && BufferDirectDraw == 0) {
+        // The shared owner reaches GetDC at DirectDraw slot17 (0x44).
+        HDC hdc = Win::get_hdc();
+        if (hdc != 0) {
+            SelectPalette(hdc, PaletteInitialized, 0);
             RealizePalette(WinSharedHdc);
-            WinHdcRefCount = WinHdcRefCount - 1;
-            if (WinHdcRefCount == 0) {
-                IDirectDrawSurface2 *obj = DirectDrawSurface;
-                if (obj == 0) {
-                    ReleaseDC(HandleMain, WinSharedHdc);
-                } else {
-                    // Slot 26, offset 0x68, is IDirectDrawSurface::ReleaseDC
-                    // (HDC by value per ddraw.h), as confirmed at 0x005F1111.
-                    obj->ReleaseDC(WinSharedHdc);
-                }
-                WinSharedHdc = 0;
-            }
+            // ReleaseDC is slot26 (0x68), taking the live HDC by value,
+            // as independently confirmed at original 0x005F1111.
+            Win::release_hdc();
         }
     }
-done:
     return DefWindowProcA(HandleMain, 6,
-                          ((minimized & 0xffff) << 16) | (state & 0xffff), reinterpret_cast<long>(other));
+        ((static_cast<unsigned int>(minimized) & 0xffff) * 0x10000) |
+            (state & 0xffff), reinterpret_cast<long>(other));
 }
 
 // ===== homed from src/recovered/units/005f5020.cpp =====
@@ -12762,3 +12738,9 @@ extern "C" LRESULT __stdcall PrevWndFunc(HWND window, UINT message,
 // directory; the verifier derives the IAT slot. This does not select or prove
 // a particular platform DLL implementation/version.
 // RECOVERY_IMPORT: v1 __imp__MoveWindow@24 USER32.dll name:MoveWindow
+
+// The Buffer drawing family reads the one-byte default transparency key
+// at 696D14; its pinned initial value is 9. This is constant storage, not
+// a pointer to an original-image object or a mutable palette instance.
+// RECOVERY_OBJECT: v2 0x00696D14 0x00696D15 ?WinFillColour@@3EB 0x005D8650
+const unsigned char WinFillColour = 9;  // 0x00696D14, read from the image

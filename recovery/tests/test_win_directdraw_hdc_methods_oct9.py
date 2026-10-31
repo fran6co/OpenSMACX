@@ -31,6 +31,9 @@ SIGNATURES = (
     "void Win::window_line_raw(int x2, int y2, int x1, int y1, int colour,",
     "void Win::sub_5ef1e0(int x1, int y1, int x2, int y2, void *pen, int unused6)",
     "void __cdecl Win::OnActivate(void *hwnd, unsigned int state, void *other,",
+    "HDC Win::get_hdc()",
+    "void Win::release_hdc()",
+    "long Win::on_activate(unsigned int state, void * other, long minimized)",
 )
 
 PRELUDE = r"""
@@ -58,6 +61,10 @@ static void *WinPointerOwner1, *WinPointerOwner2;
 static int get_calls[2], release_calls[2], gdi_get_calls, gdi_release_calls;
 static int palette_calls, realize_calls, draw_calls;
 static bool mutate_global_on_acquire;
+static bool mutate_global_on_palette;
+static IDirectDrawSurface2 *surface_after_palette;
+static HDC palette_hdc_replacement, selected_hdc, realized_hdc;
+static int refcount_after_palette;
 static IDirectDrawSurface2 *surface_after_acquire;
 static HDC supplied_hdc;
 static HDC received_hdc;
@@ -92,6 +99,9 @@ struct Win {
     void window_line_raw(int, int, int, int, int, int, unsigned int);
     void sub_5ef1e0(int, int, int, int, void *, int);
     void OnActivate(void *, unsigned int, void *, long);
+    static HDC get_hdc();
+    static void release_hdc();
+    long on_activate(unsigned int, void *, long);
 };
 static HDC GetDC(HWND) {
     ++gdi_get_calls;
@@ -106,8 +116,18 @@ static HGDIOBJ SelectObject(HDC, HGDIOBJ object) { ++draw_calls; return object; 
 static int MoveToEx(HDC, int, int, void *) { ++draw_calls; return 1; }
 static int LineTo(HDC, int, int) { ++draw_calls; return 1; }
 static int DeleteObject(HGDIOBJ) { ++draw_calls; return 1; }
-static int SelectPalette(HDC, HPALETTE, int) { ++palette_calls; return 1; }
-static int RealizePalette(HDC) { ++realize_calls; return 1; }
+static int SelectPalette(HDC hdc, HPALETTE, int) {
+    ++palette_calls; selected_hdc = hdc;
+    if (mutate_global_on_palette) {
+        DirectDrawSurface = surface_after_palette;
+        WinSharedHdc = palette_hdc_replacement;
+        if (refcount_after_palette >= 0) WinHdcRefCount = refcount_after_palette;
+    }
+    return 1;
+}
+static int RealizePalette(HDC hdc) {
+    ++realize_calls; realized_hdc = hdc; return 1;
+}
 static int invalidate_calls;
 static HWND forwarded_hwnd;
 static unsigned int forwarded_message;
@@ -127,6 +147,9 @@ static void reset() {
     invalidate_calls = 0; forwarded_hwnd = 0; forwarded_message = 0;
     forwarded_wparam = 0; forwarded_lparam = 0;
     mutate_global_on_acquire = false; surface_after_acquire = 0;
+    mutate_global_on_palette = false; surface_after_palette = 0;
+    palette_hdc_replacement = selected_hdc = realized_hdc = 0;
+    refcount_after_palette = -1;
     supplied_hdc = reinterpret_cast<HDC>(&hdc_token); received_hdc = 0;
     fail_acquire = 0; palette_active.seed_ = 7;
 }
@@ -181,6 +204,56 @@ int main() {
     win.sub_5ef1e0(1, 2, 3, 4, &hdc_token, 0);
     assert(get_calls[0] == 1 && gdi_release_calls == 1);
     assert(received_hdc == supplied_hdc && WinHdcRefCount == 0);
+
+    // The virtual sibling forwards DefWindowProc's result and does not perform
+    // the static callback's invalidation or pointer-owner clearing.
+    reset();
+    assert(win.on_activate(1, reinterpret_cast<void *>(0x1234), 0) == 0x55);
+    assert(invalidate_calls == 0 && get_calls[0] == 1 && release_calls[0] == 1);
+    assert(forwarded_hwnd == HandleMain && forwarded_message == 6);
+    assert(forwarded_wparam == 1 && forwarded_lparam == 0x1234);
+    assert(WinHdcRefCount == 0 && !WinSharedHdc);
+
+    reset();
+    assert(win.on_activate(0xfedc0002u, 0, 0x12340001L) == 0x55);
+    assert(get_calls[0] == 0 && palette_calls == 0 && forwarded_wparam == 0x10002);
+    assert(WinPointerOwner1 && WinPointerOwner2 && invalidate_calls == 0);
+
+    // A preexisting lease is counted and balanced without releasing its owner.
+    reset(); WinHdcRefCount = 2; WinSharedHdc = supplied_hdc;
+    win.on_activate(1, 0, 0);
+    assert(WinHdcRefCount == 2 && WinSharedHdc == supplied_hdc);
+    assert(get_calls[0] == 0 && release_calls[0] == 0 && palette_calls == 1);
+
+    reset(); fail_acquire = 1;
+    win.on_activate(1, 0, 0);
+    assert(get_calls[0] == 1 && palette_calls == 0 && WinHdcRefCount == 0);
+    assert(release_calls[0] == 0 && !WinSharedHdc);
+
+    // Preserve the original ignored-HRESULT path: a failed acquisition that
+    // leaves a stale nonnull output is still used and released.
+    reset(); fail_acquire = 1; WinSharedHdc = supplied_hdc;
+    win.on_activate(1, 0, 0);
+    assert(get_calls[0] == 1 && palette_calls == 1 && release_calls[0] == 1);
+    assert(received_hdc == supplied_hdc && WinHdcRefCount == 0 && !WinSharedHdc);
+
+    // Palette callbacks may replace both the shared handle and its surface.
+    reset(); mutate_global_on_palette = true;
+    surface_after_palette = &surface_b;
+    palette_hdc_replacement = reinterpret_cast<HDC>(0x6789);
+    win.on_activate(1, 0, 0);
+    assert(selected_hdc == supplied_hdc && realized_hdc == palette_hdc_replacement);
+    assert(release_calls[0] == 0 && release_calls[1] == 1);
+    assert(received_hdc == palette_hdc_replacement && !WinSharedHdc);
+
+    // Callback-created outstanding leases remain outstanding after this call.
+    reset(); mutate_global_on_palette = true;
+    surface_after_palette = &surface_b;
+    palette_hdc_replacement = reinterpret_cast<HDC>(0x789a);
+    refcount_after_palette = 3;
+    win.on_activate(1, 0, 0);
+    assert(WinHdcRefCount == 2 && WinSharedHdc == palette_hdc_replacement);
+    assert(release_calls[0] == 0 && release_calls[1] == 0);
     return 0;
 }
 """
@@ -219,3 +292,23 @@ def test_actual_remaining_hdc_methods_and_executed_mutant(tmp_path: Path, compil
     assert damaged != bodies[0]
     mutant = PRELUDE + "\n".join([damaged] + bodies[1:]) + CASES
     _run(compiler, mutant, tmp_path, should_pass=False)
+
+
+@pytest.mark.parametrize("compiler", COMPILERS or [None],
+                         ids=lambda value: Path(value).name if value else "no-host-cxx")
+@pytest.mark.parametrize("before,after", [
+    ("RealizePalette(WinSharedHdc);", "RealizePalette(hdc);"),
+    ("Win::release_hdc();", "WinHdcRefCount = 1; Win::release_hdc();"),
+])
+def test_virtual_activation_rejects_stale_handle_and_lost_leases(
+        tmp_path, compiler, before, after):
+    if compiler is None:
+        pytest.skip("host GCC or Clang required")
+    product = SOURCE.read_text(encoding="utf-8")
+    bodies = [extract_body(product, signature) for signature in SIGNATURES]
+    index = SIGNATURES.index(
+        "long Win::on_activate(unsigned int state, void * other, long minimized)")
+    assert bodies[index].count(before) == 1
+    bodies[index] = bodies[index].replace(before, after, 1)
+    _run(compiler, PRELUDE + "\n".join(bodies) + CASES,
+         tmp_path, should_pass=False)

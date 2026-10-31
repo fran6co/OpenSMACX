@@ -1,0 +1,19 @@
+{
+  "event_id": "ee487e2625405b8d3d49a83487aa049e504a9eb02838e8f50285e3f0777872c5",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_graphicwin_palette_owner_actual_source.py"
+    ],
+    "evidence": [
+      "Genuine Buffer reference removes original-absent nullable upcast path. Update extraction/spelling guard only; preserve HDC acquisition/failure cleanup, signed geometry and LFSR runtime/damage oracles."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "bf6b687a920a524cfd7d64f8c95d970333c552d9e92806cc234c39190e3ace7c",
+  "request_id": "graphicwin-hdc-reference-fixture-oct31bo",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:easy-graphicwin-oct31bo"
+}

@@ -137,12 +137,12 @@ def test_actual_body_damage_controls(tmp_path: Path, case: str) -> None:
         new = "if (true) {"
     elif case == "do_task_paint_poll_range":
         key = "DO_TASK"
-        old = "PeekMessageA(&message, 0, WM_PAINT, WM_PAINT, PM_REMOVE)"
-        new = "PeekMessageA(&message, 0, 0x0000, WM_PAINT, PM_REMOVE)"
+        old = "PeekMessageA(&paint_message, 0, WM_PAINT, WM_PAINT, PM_REMOVE)"
+        new = "PeekMessageA(&paint_message, 0, 0x0000, WM_PAINT, PM_REMOVE)"
     elif case == "wait_task_paint_poll_range":
         key = "WAIT_TASK"
-        old = "PeekMessageA(&message, 0, WM_PAINT, WM_PAINT, PM_REMOVE)"
-        new = "PeekMessageA(&message, 0, 0x0000, WM_PAINT, PM_REMOVE)"
+        old = "PeekMessageA(&paint_message, 0, WM_PAINT, WM_PAINT, PM_REMOVE)"
+        new = "PeekMessageA(&paint_message, 0, 0x0000, WM_PAINT, PM_REMOVE)"
     elif case == "do_task_initial_order":
         key = "DO_TASK"
         old = "do_net();\n    check_net();"
@@ -153,8 +153,8 @@ def test_actual_body_damage_controls(tmp_path: Path, case: str) -> None:
         new = "MsgStatus = 0;\n            return;"
     elif case == "tech_secret_helper_order":
         key = "TECH_SECRET"
-        old = "parse_say(0, reinterpret_cast<intptr_t>(Technology[tech_id].name), -1, -1);\n    parse_says(1, Players[faction_id].adj_name_faction, -1, -1);"
-        new = "parse_says(1, Players[faction_id].adj_name_faction, -1, -1);\n    parse_say(0, reinterpret_cast<intptr_t>(Technology[tech_id].name), -1, -1);"
+        old = "parse_say(0, Technology[tech_id].name, -1, -1);\n    parse_says(1, Players[faction_id].adj_name_faction, -1, -1);"
+        new = "parse_says(1, Players[faction_id].adj_name_faction, -1, -1);\n    parse_say(0, Technology[tech_id].name, -1, -1);"
     else:
         key = "TECH_SECRET"
         old = "say_num(faction_id != ConsoleGlobal.faction_id_);"
@@ -165,3 +165,17 @@ def test_actual_body_damage_controls(tmp_path: Path, case: str) -> None:
     bodies[key] = changed
     result = compile_and_run(tmp_path, bodies)
     assert result.returncode != 0, (case, result.stderr)
+
+
+@pytest.mark.parametrize("key", ["DO_TASK", "WAIT_TASK", "DO_ALL_TASKS"])
+def test_paint_and_ordinary_message_records_are_independent(tmp_path, key):
+    bodies = actual_bodies()
+    assert bodies[key].count("MSG paint_message;") == 1
+    assert bodies[key].count("&paint_message") == 3
+    # Keep the unused record in the compiling mutant, but pass the ordinary
+    # record to every paint API. The harness rejects shared pointer identity.
+    bodies[key] = bodies[key].replace(
+        "MSG paint_message;", "MSG paint_message; (void)paint_message;", 1
+    ).replace("&paint_message", "&message")
+    result = compile_and_run(tmp_path, bodies)
+    assert result.returncode != 0, (key, result.stderr)

@@ -744,7 +744,7 @@ Purpose: Initialise a GraphicWin. Reset the window, republish the eleven
          allocate the owned Buffer the window parks at 0xA08, initialise the
          Win base, then size and initialise the window's own drawing surface
          and sync it to the active palette.
-// ORIGINAL: 0x005D4EF0 ?init@GraphicWin@@QAEHHHHHPADHPAUWin@@PAUMenu@@PAUBorderSizing@@@Z 0x005D4EF0-0x005D5096;0x00662B34-0x00662B49
+// ORIGINAL: 0x005D4EF0 ?init@GraphicWin@@QAEHHHHHPADHPAUWin@@PAUMenu@@PAUBorderSizing@@@Z 0x005D4EF0-0x005D5096;0x00662B34-0x00662B49 BYTE_EXACT
 // LEVER: dropped the `uint32_t *const defaults = GraphicWinInitDefaults;`
 //        local from the eleven-slot default table copy - `defaults` was
 //        already a fixed-address constant, and caching it in a local
@@ -894,8 +894,8 @@ int GraphicWin::init(int x, int y, int width, int height, LPSTR title,
         // bit 2 with the height. Both the flag dword and the thickness are
         // loaded once, at 0x005D5038 and 0x005D503E, ahead of either test;
         // the original tests only AL, which is equivalent for bits 2 and 3.
-        const uint32_t nonclient_flags = iFlags_;
-        const int thickness = ScrollDefaultThickness;
+        const uint32_t &nonclient_flags = iFlags_;
+        const int &thickness = ScrollDefaultThickness;
         if ((nonclient_flags & 8) != 0) {
             width += thickness;
         }
@@ -914,7 +914,7 @@ int GraphicWin::init(int x, int y, int width, int height, LPSTR title,
     return 0;
 }
 
-// ORIGINAL: 0x005D50F0 sub_5d50f0 0x005D50F0-0x005D5235 FILE
+// ORIGINAL: 0x005D50F0 sub_5d50f0 0x005D50F0-0x005D5235 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original5D50F0..5D5235; retired seed git:b18d3ac8:src/unrecovered/005d50f0.cpp records the same identity and spans with its receiver PROPOSAL/TRIED notes kept below.", "Pinned image SHA-256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: 0x5D50F2 saves ECX as the GraphicWin receiver; the routine reads its sixth explicit value from the stack, pushes all nine explicit integer values to Win::UNK1, and ends with ret 0x24. EDX is not consumed as an argument. This is a thiscall member ABI, not the current free __fastcall adapter ABI.", "Pinned 0x5D50F4 calls GraphicWin::close; 0x5D51B4 calls the mapped Win::UNK1 nine-integer body at 0x5EC680, whose complete original and current source body return zero without reading arguments. Keep this call and do not invent a replacement body or conflate it with Win::init.", "Pinned object accesses are already owned: GraphicWin frame sprites at +0x9CC..+0x9F4, Win iFlags_ at +0x98, Buffer base at +0x444 and poOwner_ at Buffer+4. GraphicWin already owns close, compute_min_size, the frame-default record, Win::nonclient_to_client, Buffer::init and Buffer::sync_to_palette.", "Pinned behavior: close first; conditional eleven frame-default assignments when flags & 0x30000000; propagate Win::UNK1 result; on zero set Buffer owner to this, compute minimum size, either convert width/height through Win::nonclient_to_client or add ScrollDefaultThickness according to iFlags_ bits 3/2 when flags & 0x800; propagate Buffer::init result; ignore sync_to_palette result and return zero after success.", "All nine explicit values remain int parameters because the original forwards their stack words unchanged to the proven int-parameter Win::UNK1 interface; only width, height and flags are named for their directly observed uses. No meanings are assigned to a1, a2, a5, a7, a8 or a9."], "reason": "Move the distinct original in-place GraphicWin reinitialization entry into its real class owner. Preserve the pinned ECX receiver plus nine-stack-integer thiscall boundary, existing Win::UNK1 no-op call, frame/default and Buffer sequencing, and return/error paths; do not alter GraphicWin::init."}
 // symbol    ?reinitialize@GraphicWin@@QAEHHHHHHHHHH@Z
 // Historical seed ABI proposal (superseded by the pinned entry/ret evidence): the old free-function spellings explored stdcall/fastcall versus a thiscall member and noted VC6's free-function __thiscall restriction. The original entry uses ECX as GraphicWin this, keeps all nine explicit integers on the stack, and returns with ret 0x24; the source member below represents that observed ABI without an adapter.
@@ -932,8 +932,8 @@ int GraphicWin::reinitialize(int a1, int a2, int width, int height,
         frame_bottom_ = GraphicWinInitDefaults.bottom;
         frame_left_ = GraphicWinInitDefaults.left;
         frame_right_ = GraphicWinInitDefaults.right;
-        frame_noncaption_right_ = GraphicWinInitDefaults.noncaption_right;
         frame_noncaption_left_ = GraphicWinInitDefaults.noncaption_left;
+        frame_noncaption_right_ = GraphicWinInitDefaults.noncaption_right;
         frame_noncaption_middle_ = GraphicWinInitDefaults.noncaption_middle;
     }
 
@@ -944,8 +944,8 @@ int GraphicWin::reinitialize(int a1, int a2, int width, int height,
         if ((flags & 0x800) == 0) {
             Win::nonclient_to_client(&width, &height);
         } else {
-            const uint32_t style = iFlags_;
-            const int thickness = ScrollDefaultThickness;
+            const uint32_t &style = iFlags_;
+            const int &thickness = ScrollDefaultThickness;
             if ((style & 8) != 0) {
                 width += thickness;
             }
@@ -1048,7 +1048,7 @@ int GraphicWin::on_set_cursor(void *window, unsigned int hit, unsigned int messa
     return Win::OnSetCursor(HandleMain, window, hit, message);
 }
 
-// ORIGINAL: 0x005D6210 ?on_size@GraphicWin@@QAEXIHH@Z 0x005D6210-0x005D6308 FILE
+// ORIGINAL: 0x005D6210 ?on_size@GraphicWin@@QAEXIHH@Z 0x005D6210-0x005D6308 FILE BYTE_EXACT
 // symbol    ?on_size@GraphicWin@@UAEXIHH@Z
 // provenance (retired seed): git:b5a9c5dd:src/unrecovered/005d6210.cpp
 // The drawing surface is our Buffer base; the optional owned buffer is a
@@ -1057,13 +1057,15 @@ int GraphicWin::on_set_cursor(void *window, unsigned int hit, unsigned int messa
 void GraphicWin::on_size(unsigned int flags, int width, int height) {
     if (flags != 1) {
         int client_width = width;
-        int client_height = height;
-        if (client_width == 0 || client_height == 0) {
+        int client_height;
+        if (client_width != 0 && height != 0) {
+            client_height = height;
+        } else {
             client_width = dib_.bmiHeader.biWidth;
             client_height = -dib_.bmiHeader.biHeight;
         }
-        const unsigned int window_flags = iFlags_;
-        const int thickness = ScrollDefaultThickness;
+        const uint32_t &window_flags = iFlags_;
+        const int &thickness = ScrollDefaultThickness;
         if ((window_flags & 8) != 0) {
             client_width -= thickness;
         }
@@ -1476,7 +1478,7 @@ unsigned int GraphicWinBlitPolynomialWords[33] = {
 #include "graphicwin_palette_polynomials.inc"
 };
 
-// ORIGINAL: 0x005D5B80 sub_5d5b80 0x005D5B80-0x005D5C4E
+// ORIGINAL: 0x005D5B80 sub_5d5b80 0x005D5B80-0x005D5C4E BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence":["Pinned5D5B80 uses ECX as the same receiver for Win calls and passes GraphicWin+444 as Buffer receiver.","GraphicWin's existing Win,Buffer bases and Buffer DIB width/height fields account for all observed object reads.","Source uses existing PaletteActive, Buffer methods, Win methods, bit_count_signed and BitBlt import; no code-address dependency.","This source-owned 33-word window is initialized from a pinned-data generated include; only the indexed window is asserted, not the original allocation upper bound or former owner."],"reason":"Provisional descriptive GraphicWin owner for the complete palette-synchronized LFSR row blit; preserve the native branches, lock cleanup and row recurrence."}
 // symbol    ?blit_palette_pattern_rows@GraphicWin@@QAEXXZ
 // kind game
@@ -1484,8 +1486,7 @@ unsigned int GraphicWinBlitPolynomialWords[33] = {
 // Original EAX is call residue on several return paths; no result consumer or
 // original method spelling is proven. This provisional void API adds no result.
 void GraphicWin::blit_palette_pattern_rows() {
-    Buffer *const buffer = static_cast<Buffer *>(this);
-    buffer->sync_to_palette(PaletteActive);
+    Buffer::sync_to_palette(PaletteActive);
     sync_palette();
     PaletteActive->set();
 
@@ -1494,14 +1495,14 @@ void GraphicWin::blit_palette_pattern_rows() {
         return;
     }
 
-    HDC const buffer_dc = buffer->get_hdc();
+    HDC const buffer_dc = Buffer::get_hdc();
     if (buffer_dc == 0) {
         Win::release_hdc();
         return;
     }
 
-    int const rows = -buffer->dib_.bmiHeader.biHeight;
-    int const width = buffer->dib_.bmiHeader.biWidth;
+    int const rows = -dib_.bmiHeader.biHeight;
+    int const width = dib_.bmiHeader.biWidth;
     unsigned int const polynomial =
         GraphicWinBlitPolynomialWords[bit_count_signed(rows)];
 
@@ -1511,15 +1512,15 @@ void GraphicWin::blit_palette_pattern_rows() {
             BitBlt(window_dc, 0, static_cast<int>(y), width, 1,
                    buffer_dc, 0, static_cast<int>(y), SRCCOPY);
         }
-        if ((y & 1U) == 0) {
-            y = (y >> 1) ^ polynomial;
-        } else {
+        if ((y & 1U) != 0) {
             y >>= 1;
+        } else {
+            y = (y >> 1) ^ polynomial;
         }
     } while (y != 1);
 
     Win::release_hdc();
-    buffer->release_hdc(static_cast<int>(y));
+    Buffer::release_hdc(static_cast<int>(y));
 }
 
 // ORIGINAL: 0x005D5B70 sub_5d5b70 0x005D5B70-0x005D5B75 BYTE_EXACT

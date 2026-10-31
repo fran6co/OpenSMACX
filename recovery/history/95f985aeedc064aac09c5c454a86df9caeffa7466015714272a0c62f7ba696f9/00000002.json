@@ -1,0 +1,19 @@
+{
+  "event_id": "6ef4121b08de0f0015f61e9ba67994d48dfcabf09e7fafbf4159c2bb00cc3c1b",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_net_queue_pointer_contracts_oct11.py"
+    ],
+    "evidence": [
+      "Authorized explicit-record cdecl receive migration changes current extraction signature. Preserve historical fixture baseline and map old signature explicitly for comparison without changing assertions or original baseline."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "aef1d55d867dc3ebd0c35aba2fdc75a5b3403391ccf978d0bca07015a2dde27e",
+  "request_id": "net_class-coherent-witness-scope-oct31bo",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:easy-net_class-oct31bo"
+}

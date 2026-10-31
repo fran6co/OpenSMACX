@@ -707,11 +707,11 @@ void Datalink::draw_terraform() {
     set_text_color(0x98, -1, 1, 1);
     set_text_color2(0x96, -1, 1, 1);
     set_text_color_hyper(0x96, -1, 1, 1);
-    const int second_left = static_cast<int>(field_10394_) + 5 +
+    const int second_left = static_cast<int>(lower_description_rect_.left) + 5 +
                             (illustration ? 103 : 0);
     write_strings(&popup.unit_ids_, second_left,
-                  static_cast<int>(field_10398_) + 5,
-                  static_cast<int>(field_1039C_) - 5 - second_left, 0);
+                  static_cast<int>(lower_description_rect_.top) + 5,
+                  static_cast<int>(lower_description_rect_.right) - 5 - second_left, 0);
 }
 // ORIGINAL: 0x0042F490 ?draw_facility@Datalink@@QAEXXZ 0x0042F490-0x0042FAC5;0x0065384A-0x00653927
 // RECOVERY_BINDING: v1 {"evidence": ["git:6201d294:src/unrecovered/0042f490.cpp"], "reason": "The Datalink owner implements this original topic renderer through typed rules, real Buffer/Caviar members and constructed Popup/StringList lifetimes; original intervals and seed provenance remain restoration inputs."}
@@ -757,9 +757,9 @@ void Datalink::draw_facility() {
     set_text_color(0x98, -1, 1, 1);
     set_text_color2(0x96, -1, 1, 1);
     set_text_color_hyper(0x96, -1, 1, 1);
-    left = field_10394_ + 3;
-    top = field_10398_ + 3;
-    right = field_1039C_ - 3;
+    left = lower_description_rect_.left + 3;
+    top = lower_description_rect_.top + 3;
+    right = lower_description_rect_.right - 3;
     write_strings(&popup.unit_ids_, left, top, right - left, 0);
     StringTemp[0] = 0;
     strcat(StringTemp, "HELPFAC");
@@ -815,9 +815,9 @@ void Datalink::draw_project() {
     set_text_color(0x98, -1, 1, 1);
     set_text_color2(0x96, -1, 1, 1);
     set_text_color_hyper(0x96, -1, 1, 1);
-    left = field_10394_ + 3;
-    top = field_10398_ + 3;
-    right = field_1039C_ - 3;
+    left = lower_description_rect_.left + 3;
+    top = lower_description_rect_.top + 3;
+    right = lower_description_rect_.right - 3;
     write_strings(&popup.unit_ids_, left, top, right - left, 0);
     StringTemp[0] = 0;
     strcat(StringTemp, "PROJECT");
@@ -868,10 +868,10 @@ void Datalink::draw_social() {
     set_text_color2(0x96, -1, 1, 1);
     set_text_color_hyper(0x96, -1, 1, 1);
     write_strings(&popup.unit_ids_, left, top, right - left, 0);
-    left = field_10394_ + 3;
-    top = field_10398_ + 3;
-    right = field_1039C_ - 3;
-    int bottom = field_103A0_ - 3;
+    left = lower_description_rect_.left + 3;
+    top = lower_description_rect_.top + 3;
+    right = lower_description_rect_.right - 3;
+    int bottom = lower_description_rect_.bottom - 3;
     if (model >= 0) {
         const SocialEffect &effect = SocialCategories[category].model_effect[model];
         int values[11] = {effect.values_[SocialEffect::ECONOMY], effect.values_[SocialEffect::EFFICIENCY], effect.values_[SocialEffect::SUPPORT],
@@ -2169,6 +2169,7 @@ Purpose: Rebuild the topic list for one category and redraw it.
 Return Value: n/a
 Status: Complete
 */
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x0042A2C0 0x0042A4AC 0x0042A4EC 0x0042A3D5
 void Datalink::set_cat(unsigned int category, int index) {
     if (index == 0 && field_29DC_ == category
         && listBox_.item_list_.entry_count_ != 0) {
@@ -2185,9 +2186,10 @@ void Datalink::set_cat(unsigned int category, int index) {
     ReportWinGlobal.reset();
 
     listBox_.item_list_.remove_all();
-    listBox_.selected_position_ = 0;
-    listBox_.field_18_ = 0;
-    listBox_.field_20_ = 0;
+    ListBox *const list = &listBox_;
+    list->selected_position_ = 0;
+    list->field_18_ = 0;
+    list->field_20_ = 0;
 
     buttonGroup_.set(static_cast<int>(category), 0);
 
@@ -2200,14 +2202,14 @@ void Datalink::set_cat(unsigned int category, int index) {
     case 7:  set_cat_defense();     break;
     case 8:  set_cat_ability();     break;
     case 9:  set_cat_terraform();   break;
+    case 0:  set_cat_concept();     break;
+    case 1:  set_cat_adv_concept(); break;
     case 10: set_cat_facility();    break;
     case 11: set_cat_project();     break;
     case 12: set_cat_social();      break;
     case 13: set_cat_effect();      break;
     case 14: set_cat_tech();        break;
     case 15: set_cat_faction();     break;
-    case 0:  set_cat_concept();     break;
-    case 1:  set_cat_adv_concept(); break;
     }
 
     if (category != 0xC) {
@@ -2215,7 +2217,7 @@ void Datalink::set_cat(unsigned int category, int index) {
     }
 
     field_2A38_ = 1;
-    listBox_.update_changes();
+    list->update_changes();
     field_2A38_ = 0;
 }
 
@@ -3357,18 +3359,21 @@ void __cdecl help_project(int project_id) {
 // RECOVERY_BINDING: v1 {"evidence": ["task:datalink-owner-coverage", "pinned:terranx_original.exe:429180..4292FC complete geometry, saved-state, list redraw, modal and restoration sequence", "source:src/reportwin.h:ReportWinGlobal shared_research_focus owns885F30; src/reportif.h existing category/faction fields", "historical seed:src/recovered/units/00429180.cpp"], "reason": "Recover the complete modal Datalink operation through its existing class, embedded text/list controls and real shared ReportWin/ReportIf state; preserve the original identity and seed findings without a new byte claim."}
 void Datalink::exec(unsigned int topic, int index) {
     if (WinScreenWidth == 0x320) {
-        const int left = static_cast<int>(field_10394_);
-        const int top = static_cast<int>(field_10398_);
-        const int right = static_cast<int>(field_1039C_);
-        const int bottom = static_cast<int>(field_103A0_);
-        const int x = left + 3 + FactionsArt[1].datalink.width() + 5;
-        const int y = top + 3;
-        const int width = right - 3 - x;
-        const int height = bottom - 6 - y;
+        RECT area = lower_description_rect_;
+        area.left += 3;
+        area.top += 3;
+        area.right -= 3;
+        area.bottom -= 6;
+        area.left += FactionsArt[1].datalink.width() + 5;
+        const int x = area.left;
+        const int y = area.top;
+        const int width = area.right - area.left;
+        const int height = area.bottom - area.top;
 
         stringBox_.init(x, y, width, height, static_cast<Win *>(this),
                         0, -1);
-        stringBox_.set_font(0, &secondary_body_font_, 0, &link_font_);
+        Font *const hyperlink_font = &link_font_;
+        stringBox_.set_font(0, &secondary_body_font_, 0, hyperlink_font);
         stringBox_.set_text_color(0x98, -1, 1, 1);
         stringBox_.set_text_color2(0x96, -1, 1, 1);
         stringBox_.set_text_color_hyper(0x96, -1, 1, 1);
@@ -3500,14 +3505,13 @@ void Datalink::init() {
     const int title_left = field_103EC_ + 9;
     title_rect_.left = title_left;
     description_rect_.left = title_left;
-    field_10394_ = title_left;
-    field_10398_ = side_width / 2 + 0xb6;
-    field_1039C_ = 0x302;
-    field_103A0_ = side_width + 0x143;
-    const RECT lower_description_rect = {
-        static_cast<LONG>(field_10394_), static_cast<LONG>(field_10398_),
-        static_cast<LONG>(field_1039C_), static_cast<LONG>(field_103A0_)
-    };
+    lower_description_rect_.left = title_left;
+    lower_description_rect_.top = side_width / 2 + 0xb6;
+    lower_description_rect_.right = 0x302;
+    lower_description_rect_.bottom = side_width + 0x143;
+    // Original 4294D0/4294F2 passes the member itself to UnionRect.
+    // Keep the later detail-box geometry bound to that same live rectangle.
+    const RECT &lower_description_rect = lower_description_rect_;
     UnionRect(&panel_rect_, &description_rect_, &lower_description_rect);
     UnionRect(&entry_clip_rect_, &description_rect_, &lower_description_rect);
     UnionRect(&entry_clip_rect_, &entry_clip_rect_, &title_rect_);

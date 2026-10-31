@@ -3070,7 +3070,7 @@ union NetPlayerNameBuffer {
 static NetPlayerNameBuffer NetPlayerNameRecord;
 
 // Original player insertion is bound by the coordinator's native writer.
-// ORIGINAL: 0x00632CC0 sub_632cc0 0x00632CC0-0x00632DAA
+// ORIGINAL: 0x00632CC0 sub_632cc0 0x00632CC0-0x00632DAA BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:c96a47e3f89e8792c8514ac2ca79259ab6f42c3e:src/unrecovered/00632cc0.cpp", "Historical seed spelling sub_632cc0; current source mapping sub_632cc0; emitted symbol ?sub_632cc0@Net@@QAEHPADHE@Z.", "Pinned632CE8/632CED skips slot initialization at index16 but continues632D2B count/broadcast and632D4F callback. The fixed 0x58-byte row formula computes ID at receiver+6D4 and name at receiver+6E9; these alias existing field_6D4_ and one byte into guid_6E8_. No seventeenth row is allocated.", "Pinned632D6E reloads the callback-visible row ID before JackalVoiceRx::add_player632D7D."], "reason": "Recover player insertion through the real sixteen-row owner and preserve the native full-table fallthrough and fresh callback-visible ID read. The C++ index-16 member access remains outside the declared array while retaining the original computed addresses; historical safety rejection remains in Git for the later improvement milestone. Original spans, claims and seed findings remain; no exactness or acceptance claim."}
 // TRIED: bare `strcat` intrinsic-expands to strlen(scasb)+memcpy; `#pragma function(strcat)` forces the real call. ecx is `this` (not the stdcall the IDA guess implied) - rewritten as a thiscall member of a throwaway class taking (char*, int, unsigned char), matching the "ret 0xc" 3-stack-arg cleanup. do-while / for over the 16-slot search loop UNROLLS the first iteration (duplicated body) under /O2, which the original does not show; `while(true){...; if(cond) break;}` keeps a single instance matching the original's layout, but still emits `jge` where the original has `jl` at the loop's back edge - flipping the break condition's polarity didn't change it. 84% mnemonic match, single divergence region.
 // symbol    ?sub_632cc0@Net@@QAEHPADHE@Z
@@ -3086,11 +3086,10 @@ int Net::sub_632cc0(char *text, int id, unsigned char flag) {
     }
 
     if (index < 16) {
-        NetPlayer &player = players_[index];
-        player.field_0_ = static_cast<uint32_t>(id);
-        player.flags_14_ = flag;
-        player.name_and_tail_[0] = 0;
-        strcat(player.name_and_tail_, text);
+        players_[index].field_0_ = static_cast<uint32_t>(id);
+        players_[index].flags_14_ = flag;
+        players_[index].name_and_tail_[0] = 0;
+        strcat(players_[index].name_and_tail_, text);
         if ((flag & 1) != 0) host_player_id_ = static_cast<uint32_t>(id);
     }
 
@@ -3138,27 +3137,27 @@ static_assert(sizeof(MMIOINFO) == 0x48, "voice packet MMIOINFO extent");
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x006327E0 ?internal_receive@Net@@QAAHPAUNetThreadInfo@@@Z 0x006327E0-0x00632CB3
-// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/006327e0.cpp"], "reason": "Rehome original explicit record-argument receive routine as typed NetThreadInfo method; receiver ABI intentionally refactored, not an exact ABI claim."}
-// symbol    ?internal_receive@NetThreadInfo@@QAEHXZ
-int NetThreadInfo::internal_receive() {
-    Net *const net = owner_;
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/006327e0.cpp"], "reason": "Recover the original explicit NetThreadInfo pointer and cdecl caller cleanup. Native6327F6 reads entry ESP+4;632787/632794 push the record and add ESP,4 after return. The prior intentional thiscall refactor is superseded; no historical class membership is inferred."}
+// symbol    ?internal_receive@@YAHPAUNetThreadInfo@@@Z
+int __cdecl internal_receive(NetThreadInfo *thread_info) {
     if (NetDirectPlay == 0) return 0;
+    Net *const net = thread_info->owner_;
 
     // 6327FD retains this pointer across Receive, even if the provider changes
     // the record's buffer member while filling the originally supplied block.
-    unsigned char *const bytes = static_cast<unsigned char *>(buffer_);
+    unsigned char *const bytes = static_cast<unsigned char *>(thread_info->buffer_);
     DWORD from = 0;
     DWORD to = net->local_player_id_;
     DWORD size = net->field_6E4_;
-    const HRESULT receive_result = direct_play_->Receive(
+    const HRESULT receive_result = thread_info->direct_play_->Receive(
         &from, &to, 3, bytes, &size);
     if (receive_result != DP_OK) return 0;
 
     if (from == 0 || (bytes[0] & 0x80) != 0) {
         net->queue_130_.add(bytes, size, from, 0,
                             static_cast<unsigned long>(-1));
-        PostThreadMessageA(thread_id_, 0x402, 0, 0);
-        SetEvent(events_[1]);
+        PostThreadMessageA(thread_info->thread_id_, 0x402, 0, 0);
+        SetEvent(thread_info->events_[1]);
         return 1;
     }
 
@@ -3178,13 +3177,13 @@ int NetThreadInfo::internal_receive() {
         if (static_cast<int32_t>(net->queue_10c_.count_) < 0xC8) {
             net->queue_10c_.add(bytes + 8, size, from, 0,
                                 static_cast<unsigned long>(-1));
-            SetEvent(events_[4]);
+            SetEvent(thread_info->events_[4]);
         }
     } else if (message_type == 0x10) {
         net->queue_130_.add(bytes, size + 0x0C, from, 0,
                             static_cast<unsigned long>(-1));
-        PostThreadMessageA(thread_id_, 0x402, 0, 0);
-        SetEvent(events_[1]);
+        PostThreadMessageA(thread_info->thread_id_, 0x402, 0, 0);
+        SetEvent(thread_info->events_[1]);
     } else if (message_type == 0x100) {
         MMIOINFO voice_packet;
         memset(&voice_packet, 0, sizeof(voice_packet));
@@ -3284,7 +3283,7 @@ int NetThreadInfo::internal_receive() {
                     break;
                 }
             }
-            if (!any_pending) SetEvent(events_[0]);
+            if (!any_pending) SetEvent(thread_info->events_[0]);
         }
     } else if (selection == 4) {
         if ((type_flags & 0xFFF0) == 0) {
@@ -3302,12 +3301,12 @@ int NetThreadInfo::internal_receive() {
             if (accept) {
                 const DWORD queued_at = timeGetTime();
                 net->queue_10c_.add(bytes + 8, size, from, 0, queued_at);
-                SetEvent(events_[4]);
+                SetEvent(thread_info->events_[4]);
             }
         }
         // Queue publication/event callbacks can alter the shared packet WORD.
         packet->type_flags_ = (packet->type_flags_ & 0xFFFB) | 2;
-        direct_play_->Send(net->local_player_id_, to, 0, bytes, 0x0C);
+        thread_info->direct_play_->Send(net->local_player_id_, to, 0, bytes, 0x0C);
     }
     return 1;
 }
@@ -3332,7 +3331,7 @@ static void __cdecl net_receive_thread(void *argument) {
                 LeaveCriticalSection(&thread_info->receive_lock_);
                 break;
             }
-            while (thread_info->internal_receive() != 0) {
+            while (internal_receive(thread_info) != 0) {
             }
             LeaveCriticalSection(&thread_info->receive_lock_);
             wait_result =

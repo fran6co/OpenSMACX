@@ -8,6 +8,7 @@ import pytest
 from recovery.tests.test_pact_ascent import ROOT, definition
 
 mutations = {
+    "copied_lower_rectangle": ("const RECT &lower_description_rect = lower_description_rect_;", "const RECT lower_description_rect = lower_description_rect_;"),
     "wrong_title_left": ("field_103EC_ + 9", "category_rect_.bottom + 9"),
     "wrong_special_top": ("topic_button_bounds_[17].top = side_width + 0x14e;", "topic_button_bounds_[17].top = 0x288;"),
     "wrong_matrix_row": ("camera_rotation.values[2][axis] = -camera_rotation.values[2][axis];", "camera_rotation.values[1][axis] = -camera_rotation.values[1][axis];"),
@@ -45,4 +46,4 @@ def test_actual_initializer_geometry_and_damage(tmp_path, compiler_name):
             assert build.returncode == 0, name + build.stderr
             run = subprocess.run([str(binary)], capture_output=True, text=True, timeout=10)
             assert (run.returncode == 0) == (name == "actual"), name + run.stderr
-        print(compiler_name + ": actual passes all three layouts; 12 damaged variants refused", flush=True)
+        print(compiler_name + ": actual passes all three layouts; 13 damaged variants refused", flush=True)

@@ -259,13 +259,16 @@
       },
       "src/datalink.cpp": {
         "flags": [
-          "/c",
-          "/O2",
-          "/Gy",
-          "/GR-",
+          "/nologo",
+          "/TP",
+          "/Zm200",
           "/GX",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W4",
           "/Oy-",
-          "/Ob2"
+          "-c"
         ]
       },
       "src/datalink_selection.cpp": {
@@ -442,13 +445,16 @@
       },
       "src/popup.cpp": {
         "flags": [
-          "/c",
-          "/O2",
-          "/Gy",
-          "/GR-",
+          "/nologo",
+          "/TP",
+          "/Zm200",
           "/GX",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W4",
           "/Oy-",
-          "/Ob2"
+          "-c"
         ]
       },
       "src/popup_api.cpp": {
@@ -949,8 +955,8 @@
           "-MT",
           "/W4",
           "/Z7",
-          "-c",
-          "/Oi-"
+          "/Oi-",
+          "-c"
         ]
       },
       "src/designwin.cpp": {
@@ -1060,6 +1066,45 @@
           "-MT",
           "/W4",
           "/Oy-",
+          "-c"
+        ]
+      },
+      "src/scroll.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W4",
+          "-c"
+        ]
+      },
+      "src/flic.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W4",
+          "-c"
+        ]
+      },
+      "src/graphicwin.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W4",
           "-c"
         ]
       }

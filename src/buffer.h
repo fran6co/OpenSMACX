@@ -332,32 +332,9 @@ void draw_dest_unk1(Buffer *, int, int, int, int, unsigned char *);
   // times.
   unsigned char *get_data(int x, int y);
 
-  // MEASURED on both of these: the class stopped being dllexport'ed as a
-  // side effect of ~Buffer moving out of line (below), and without the
-  // specifier VC6 no longer emits their COMDATs - every caller inlines them,
-  // and the two claims in buffer.cpp have nothing to measure.
-  MEASURED HDC get_hdc() {
-      if (locked_bits_ != 0) {
-          get_graphic_win();
-      }
-      IDirectDrawSurface2 *const surface = surface_;
-      // Without a surface the buffer owns its context directly, so acquiring is
-      // just publishing the stored handle and counting the reference.
-      if (!surface) {
-          hdc2_ = hdc_;
-          ++hdc_lock_count_;
-          return hdc_;
-      }
-      if (hdc2_ != nullptr) {
-          ++hdc_lock_count_;
-          return hdc2_;
-      }
-      if (surface->GetDC(&hdc2_) != 0) {
-          get_graphic_win();
-      }
-      ++hdc_lock_count_;
-      return hdc2_;
-  }
+  // Canonical per-object acquisition lives beside its mapping in buffer.cpp.
+  // Original callers use this direct boundary; Win has a distinct static cache.
+  HDC get_hdc();
   MEASURED void release_hdc(int count);
   int set_clip(RECT *rect);
   // 0x005D8200. The catalogue's prototype names the last two `length` and

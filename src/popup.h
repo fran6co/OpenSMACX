@@ -141,14 +141,14 @@ extern int PopupWriteCheckState;
 // ClimatePopupTitle) and against PopupStartModTag, and on a match - and only
 // for an expansion alien faction, the gate X_pop makes on the sister body -
 // probes a mod-key file with fopen and substitutes one of the two fixed
-// alternative text files. The image is packed: the strings and the substitute
-// pointers are data no file in this tree carries, so each is named by its role
-// at the call site and the extents are floors, not measurements.
-extern char PopupStartModTag[32];      // 0x006827E4
-extern char PopupStartModFile1[32];    // 0x006827F4
-extern char PopupStartModMode1[8];     // 0x006827F0
-extern char PopupStartModFile2[32];    // 0x0068280C
-extern char PopupStartModMode2[8];     // 0x00682808
+// alternative text files. Current mutable arrays cover the observed
+// NUL-terminated text only. Original allocation capacities, source mutability
+// and literal provenance remain unresolved; these are not capacity claims.
+extern char PopupStartModTag[];       // 0x006827E4
+extern char PopupStartModFile1[];     // 0x006827F4
+extern char PopupStartModMode1[];     // 0x006827F0
+extern char PopupStartModFile2[];     // 0x0068280C
+extern char PopupStartModMode2[];     // 0x00682808
 extern char *PopupStartAltFile1;       // 0x00691B20
 extern char *PopupStartAltFile2;       // 0x00691B24
 

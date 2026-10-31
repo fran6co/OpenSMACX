@@ -389,17 +389,24 @@ void Popup::start(char *text_file, const char *text_label, int value,
 }
 
 
-// Start's mod-redirection data (popup.h has the role note). As with the link
-// strings, the image's packed copies carry text this build does not ship.
+// Start's mod-redirection data (popup.h has the role note). These current
+// mutable arrays cover only the observed NUL-terminated text. Original
+// allocation capacities, source mutability and literal provenance remain
+// unresolved; the start-argument bindings below claim no allocation spans.
 // INITIAL VALUES FROM THE IMAGE (image_data.py): these are the mod-
 // redirection defaults the fopen probe falls back to, and the link
 // handler's match/verb/target triple - declared zero at first landing,
 // the data_values census caught all ten.
-char PopupStartModTag[32] = "SCRIPT.txt";        // 0x006827E4
-char PopupStartModFile1[32] = "alienIscript.txt"; // 0x006827F4
-char PopupStartModMode1[8] = "rb";                // 0x006827F0
-char PopupStartModFile2[32] = "alienuscript.txt"; // 0x0068280C
-char PopupStartModMode2[8] = "rb";                // 0x00682808
+// RECOVERY_OBJECT: v1 0x006827E4 ?PopupStartModTag@@3PADA
+char PopupStartModTag[] = "SCRIPT.txt";        // 0x006827E4
+// RECOVERY_OBJECT: v1 0x006827F4 ?PopupStartModFile1@@3PADA
+char PopupStartModFile1[] = "alienIscript.txt"; // 0x006827F4
+// RECOVERY_OBJECT: v1 0x006827F0 ?PopupStartModMode1@@3PADA
+char PopupStartModMode1[] = "rb";              // 0x006827F0
+// RECOVERY_OBJECT: v1 0x0068280C ?PopupStartModFile2@@3PADA
+char PopupStartModFile2[] = "alienuscript.txt"; // 0x0068280C
+// RECOVERY_OBJECT: v1 0x00682808 ?PopupStartModMode2@@3PADA
+char PopupStartModMode2[] = "rb";              // 0x00682808
 // The image's pointer slots select these NUL-terminated text identifiers.
 // Their allocation extents are unresolved; these arrays own the observed text.
 static char PopupAlienScriptName[] = "alienIscript";
@@ -728,9 +735,11 @@ extern int ConsoleGroupAction;  // 0x009BC070
 // subobject and the redraw callback slot is BasePop +0x3168.
 int __cdecl sub_48cf00(BasePop *owner, int vehicle) {
     Sprite *const first_vehicle_sprite = &g_VEH_SPRITES[0];
-    owner->set_caller_picture(owner->picture_enabled()
-                                  ? nullptr
-                                  : first_vehicle_sprite);
+    if (!owner->picture_enabled()) {
+        owner->set_caller_picture(first_vehicle_sprite);
+    } else {
+        owner->set_caller_picture(nullptr);
+    }
     const int result = owner->dialogs().SpriteBox::sprite(
         first_vehicle_sprite, nullptr, vehicle);
     owner->set_redraw_callback(veh_sprite_draw);
@@ -962,7 +971,7 @@ void __cdecl wave_it(int wave_id) {
     }
 }
 
-// ORIGINAL: 0x00404EF0 ?on_post_window_init@Popup@@QAEXXZ 0x00404EF0-0x00404F7A FILE
+// ORIGINAL: 0x00404EF0 ?on_post_window_init@Popup@@QAEXXZ 0x00404EF0-0x00404F7A FILE BYTE_EXACT
 // symbol    ?on_post_window_init@Popup@@UAEXXZ
 // working copy - scaffold materialised by --work
 // size      138 bytes
@@ -993,7 +1002,11 @@ void Popup::on_post_window_init() {
             field_16C_ = 0x1a;
             iFlags_ |= WinFlagHitTestIndirect;
         }
-        set_bottom_border_thickness(0);
+        if (field_30B0_ != 0) {
+            set_bottom_border_thickness(0);
+        } else {
+            set_bottom_border_thickness(0);
+        }
     }
 }
 
@@ -1030,7 +1043,7 @@ int Popup::on_link_clicked(int id, char *link) {
     return 0;
 }
 
-// ORIGINAL: 0x00406380 ?start@Popup@@QAEXPADPBDHPADHPAUGraphicWin@@@Z 0x00406380-0x004064CC FILE
+// ORIGINAL: 0x00406380 ?start@Popup@@QAEXPADPBDHPADHPAUGraphicWin@@@Z 0x00406380-0x004064CC FILE BYTE_EXACT
 // size      332 bytes
 // prototype void (__thiscall ?start@Popup@@QAEXPADPBDHPADHPAUGraphicWin@@@Z)(Popup* this, int8* srcFileID, int8* sectionID, int, int8*, int, GraphicWin*)
 // callers   84   call targets   4
@@ -1063,55 +1076,38 @@ int Popup::on_link_clicked(int id, char *link) {
 
 int Popup::start(char *text_file, const char *text_label, int value,
                  char *override_text, int flags, GraphicWin *owner_window) {
-    if (strcmp(text_file, ScriptPopupFile) == 0
-        || strcmp(text_file, PopupStartModTag) == 0) {
-        if ((Players[ConsoleGlobal.faction_id_].rule_flags & RFLAG_ALIEN) != 0) {
-            if (ExpansionEnabled == 0) {
-                goto fallback;
-            }
-            FILE *const fp = fopen(PopupStartModFile1, PopupStartModMode1);
-            if (fp == 0) {
-                goto fallback;
-            }
-            fclose(fp);
-            const int result = BasePop::start(PopupStartAltFile1,
-                           text_label, value, override_text, flags,
-                           owner_window);
-            if (result != 0) {
-                goto fallback;
-            }
-            return result;
-        }
-
-        if (ExpansionEnabled == 0) {
-            goto fallback;
-        }
-        if (PopupDialogFactionID <= 0 || PopupDialogFactionID >= 8) {
-            goto fallback;
-        }
-        if ((Players[PopupDialogFactionID].rule_flags & RFLAG_ALIEN) == 0) {
-            goto fallback;
-        }
-        {
-            FILE *const fp = fopen(PopupStartModFile2, PopupStartModMode2);
-            if (fp == 0) {
-                goto fallback;
-            }
-            fclose(fp);
-            const int result = BasePop::start(
-                    PopupStartAltFile2,
-                    text_label, value, override_text, flags,
-                    owner_window);
-            if (result != 0) {
-                goto fallback;
-            }
-            return result;
-        }
+    if (strcmp(text_file, ScriptPopupFile) != 0
+        && strcmp(text_file, PopupStartModTag) != 0) {
+        return BasePop::start(text_file, text_label, value, override_text, flags,
+                              owner_window);
     }
 
+    if ((Players[ConsoleGlobal.faction_id_].rule_flags & RFLAG_ALIEN) != 0) {
+        if (ExpansionEnabled == 0) goto fallback;
+        FILE *const fp = fopen(PopupStartModFile1, PopupStartModMode1);
+        if (fp == 0) goto fallback;
+        fclose(fp);
+        const int result = BasePop::start(PopupStartAltFile1, text_label, value,
+                                           override_text, flags, owner_window);
+        if (result != 0) goto fallback;
+        return result;
+    }
+
+    if (ExpansionEnabled == 0) goto fallback;
+    if (PopupDialogFactionID <= 0 || PopupDialogFactionID >= 8) goto fallback;
+    if ((Players[PopupDialogFactionID].rule_flags & RFLAG_ALIEN) == 0) goto fallback;
+    {
+        FILE *const fp = fopen(PopupStartModFile2, PopupStartModMode2);
+        if (fp == 0) goto fallback;
+        fclose(fp);
+        const int result = BasePop::start(PopupStartAltFile2, text_label, value,
+                                           override_text, flags, owner_window);
+        if (result != 0) goto fallback;
+        return result;
+    }
 fallback:
     return BasePop::start(text_file, text_label, value, override_text, flags,
-                   owner_window);
+                          owner_window);
 }
 
 // ORIGINAL: 0x00406260 ?on_listbox_scroll_create@Popup@@QAEHXZ 0x00406260-0x00406323 FILE
@@ -1234,15 +1230,17 @@ int Popup::on_exec() {
 
         StringStructEntry *const entry = unit_ids_.current_;
         const char *msg;
-        if (entry == 0) {
-            msg = 0;
-        } else if (head == 0) {
-            // The image reads text at payload+4 from a null payload (absolute
-            // address 4) when a cursor exists without a list head. Keep it.
-            StringStructPayload *payload = 0;
-            msg = payload->text;
+        if (entry != 0) {
+            if (head != 0) {
+                msg = entry->string_payload()->text;
+            } else {
+                // A cursor without a list head retains the original null
+                // payload's text read at absolute address 4.
+                StringStructPayload *payload = 0;
+                msg = payload->text;
+            }
         } else {
-            msg = entry->string_payload()->text;
+            msg = 0;
         }
         strcat(StringTemp, msg);
     }

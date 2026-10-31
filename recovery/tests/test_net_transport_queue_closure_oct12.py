@@ -25,7 +25,7 @@ from test_mapwin_cache import braced
 ROOT = Path(__file__).resolve().parents[2]
 PIN = "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
 NET_METHODS = (
-    "int NetThreadInfo::internal_receive()",
+    "int __cdecl internal_receive(NetThreadInfo *thread_info)",
     "int Net::check_message(unsigned long player, unsigned long stamp)",
     "int Net::drop_player(unsigned long key, int reason)",
     "void *Net::sub_630a40(int key, int *length_out)",
@@ -87,6 +87,7 @@ struct DPNAME;
 struct Heap {};
 Heap *StringAllocationHeap = 0;
 class Net;
+struct NetThreadInfo;
 class AlphaNetStringStruct;
 struct IDirectPlay2;
 struct _MMIOINFO {
@@ -538,7 +539,7 @@ static void receive_controls() {
         net.players_[15].field_0_ = 42; net.players_[15].field_4_ = 100;
         net.players_[15].stamp_10_ = 777;
         incoming(net, buffer, 4, incoming_sequence);
-        assert(net.thread_info_.internal_receive() == 1);
+        assert(internal_receive(&net.thread_info_) == 1);
         bool newer = incoming_sequence > 100;
         assert(net.queue_10c_.count_ == (newer ? 1U : 0U));
         assert(net.players_[15].field_4_ == (newer ? incoming_sequence : 100));
@@ -550,7 +551,7 @@ static void receive_controls() {
         Net net; reset(net); alignas(16) unsigned char buffer[32] = {};
         net.players_[0].field_0_ = 42; net.players_[0].field_4_ = 100;
         incoming(net, buffer, 5, sequence);
-        assert(net.thread_info_.internal_receive() == 1);
+        assert(internal_receive(&net.thread_info_) == 1);
         // Original type1|reliable first takes the ordinary queue arm, then
         // independently takes the sequence-gated queue arm. Do not deduplicate.
         assert(net.queue_10c_.count_ == (sequence > 100 ? 2U : 1U));
@@ -564,7 +565,7 @@ static void receive_controls() {
         incoming(net, buffer, 4, 21);
         reinterpret_cast<NetPacketEnvelope *>(replacement)->type_flags_ = 0x10;
         mutate_event_word = true;
-        assert(net.thread_info_.internal_receive() == 1);
+        assert(internal_receive(&net.thread_info_) == 1);
         assert(provider.received_buffer == buffer && net.thread_info_.buffer_ == replacement);
         assert(net.queue_10c_.count_ == 1 && net.queue_130_.count_ == 0);
         assert(net.queue_10c_.head_->data_size_ == 8 && net.queue_10c_.head_->key_ == 42);
@@ -575,33 +576,34 @@ static void receive_controls() {
     {
         Net net; reset(net); alignas(16) unsigned char buffer[32] = {};
         incoming(net, buffer, 4, 1); time_changes_receive_arguments = true;
-        assert(net.thread_info_.internal_receive() == 1);
+        assert(internal_receive(&net.thread_info_) == 1);
         assert(net.queue_10c_.head_->key_ == 84 && net.queue_10c_.head_->data_size_ == 4);
         assert(net.queue_10c_.head_->result_ == 100);
         send_fail_at = 2;
         incoming(net, buffer, 4, 2);
-        assert(net.thread_info_.internal_receive() == 1); // reply failure ignored
+        assert(internal_receive(&net.thread_info_) == 1); // reply failure ignored
     }
     for (WORD type : {WORD(1), WORD(0x10), WORD(0x80)}) {
         Net net; reset(net); alignas(16) unsigned char buffer[32] = {};
         incoming(net, buffer, type);
-        assert(net.thread_info_.internal_receive() == 1);
+        assert(internal_receive(&net.thread_info_) == 1);
         if (type == 1) assert(net.queue_10c_.head_->data_size_ == 8);
         else assert(net.queue_130_.head_->data_size_ == 20 && callback_order == "P");
     }
     {
         Net net; reset(net); alignas(16) unsigned char buffer[32] = {};
         incoming(net, buffer, 1, 0, 0);
-        assert(net.thread_info_.internal_receive() == 1 && net.queue_130_.count_ == 1);
+        assert(internal_receive(&net.thread_info_) == 1 && net.queue_130_.count_ == 1);
         provider.receive_result = 1;
-        assert(net.thread_info_.internal_receive() == 0);
+        assert(internal_receive(&net.thread_info_) == 0);
         int before = received_calls; NetDirectPlay = 0;
-        assert(net.thread_info_.internal_receive() == 0 && received_calls == before);
+        assert(internal_receive(&net.thread_info_) == 0 && received_calls == before);
+        assert(internal_receive(0) == 0); // Absent interface precedes record access.
     }
     for (uint32_t count : {199U, 200U, 0x80000000U}) {
         Net net; reset(net); alignas(16) unsigned char buffer[32] = {};
         net.queue_10c_.count_ = count; incoming(net, buffer, 1);
-        assert(net.thread_info_.internal_receive() == 1);
+        assert(internal_receive(&net.thread_info_) == 1);
         bool accepted = static_cast<int32_t>(count) < 200;
         assert((net.queue_10c_.head_ != 0) == accepted);
     }
@@ -612,14 +614,14 @@ static void receive_controls() {
         net.players_[2].field_0_ = 0; net.players_[2].field_8_ = 1;
         net.field_E4_ = 8;
         incoming(net, buffer, 2, 7);
-        assert(net.thread_info_.internal_receive() == 1 && net.players_[0].field_8_ == 1 && signals.empty());
+        assert(internal_receive(&net.thread_info_) == 1 && net.players_[0].field_8_ == 1 && signals.empty());
         incoming(net, buffer, 2, 8);
-        assert(net.thread_info_.internal_receive() == 1 && net.players_[0].field_8_ == 0 && signals.empty());
+        assert(internal_receive(&net.thread_info_) == 1 && net.players_[0].field_8_ == 0 && signals.empty());
         incoming(net, buffer, 2, 8, 43);
-        assert(net.thread_info_.internal_receive() == 1 && signals.size() == 1 && signals[0] == 10);
+        assert(internal_receive(&net.thread_info_) == 1 && signals.size() == 1 && signals[0] == 10);
         net.players_[0].field_4_ = 456;
         incoming(net, buffer, 0x24, 8);
-        assert(net.thread_info_.internal_receive() == 1);
+        assert(internal_receive(&net.thread_info_) == 1);
         assert(net.players_[0].stamp_10_ == 100 && net.players_[0].field_4_ == 456);
         assert(word2(sent.back()) == 0x22);
     }
@@ -635,12 +637,12 @@ static void voice_controls() {
         if (known) { net.players_[0].field_0_ = 42; net.players_[0].field_4_ = 0; }
         net.voice_flags_D8_ = 0x40000000U;
         alignas(16) unsigned char buffer[32] = {}; incoming(net, buffer, 0x200, 0);
-        assert(net.thread_info_.internal_receive() == 1);
+        assert(internal_receive(&net.thread_info_) == 1);
         assert(start_calls == (known ? 0 : 1) && stop_calls == 0);
         assert(net.voice_flags_D8_ == (known ? 0x40000000U : 0));
         if (known) {
             incoming(net, buffer, 0x204, 1);
-            assert(net.thread_info_.internal_receive() == 1);
+            assert(internal_receive(&net.thread_info_) == 1);
             assert(start_calls == 1 && net.players_[0].field_4_ == 1 && word2(sent.back()) == 0x202);
         }
         net.jackal_voice_rx_.head_ = net.jackal_voice_rx_.cursor_ = 0;
@@ -655,13 +657,13 @@ static void voice_controls() {
         net.jackal_voice_rx_.count_ = 1; net.field_6DC_ = 2;
         voice_level = level; sound_version = version;
         alignas(16) unsigned char buffer[32] = {}; incoming(net, buffer, 0x100);
-        assert(net.thread_info_.internal_receive() == 1 && add_buffer_calls == 1);
+        assert(internal_receive(&net.thread_info_) == 1 && add_buffer_calls == 1);
         assert(start_calls == (level >= (version ? 5 : 16) ? 1 : 0));
         voice_playing = 1;
-        assert(net.thread_info_.internal_receive() == 1 && add_buffer_calls == 2);
+        assert(internal_receive(&net.thread_info_) == 1 && add_buffer_calls == 2);
         assert(start_calls == (level >= (version ? 5 : 16) ? 1 : 0));
         voice_level = 2; mutate_voice_count = true;
-        assert(net.thread_info_.internal_receive() == 1 && add_buffer_calls == 3);
+        assert(internal_receive(&net.thread_info_) == 1 && add_buffer_calls == 3);
         // (0x80000001-1)*2 wraps to zero before signed comparison.
         assert(net.field_6DC_ == 0x80000001U);
         net.jackal_voice_rx_.head_ = net.jackal_voice_rx_.cursor_ = 0;
@@ -790,7 +792,7 @@ DAMAGES = {
     "wrong_stamp_word": ("stamp <= record->field_4_", "stamp <= record->stamp_10_"),
     "voice_reverse_sequence": ("net->players_[sequence_player_index].field_4_ >= sequence", "sequence >= net->players_[sequence_player_index].field_4_"),
     "data_reverse_sequence": ("net->players_[ack_player_index].field_4_ >= sequence", "sequence >= net->players_[ack_player_index].field_4_"),
-    "post_receive_buffer": ("NetPacketEnvelope *const packet =\n        reinterpret_cast<NetPacketEnvelope *>(bytes);", "NetPacketEnvelope *const packet =\n        reinterpret_cast<NetPacketEnvelope *>(buffer_);"),
+    "post_receive_buffer": ("NetPacketEnvelope *const packet =\n        reinterpret_cast<NetPacketEnvelope *>(bytes);", "NetPacketEnvelope *const packet =\n        reinterpret_cast<NetPacketEnvelope *>(thread_info->buffer_);"),
     "cached_ack_word": ("packet->type_flags_ = (packet->type_flags_ & 0xFFFB) | 2;", "packet->type_flags_ = (type_flags & 0xFFFB) | 2;"),
     "unsigned_queue_count": ("static_cast<int32_t>(net->queue_10c_.count_) < 0xC8", "net->queue_10c_.count_ < 0xC8"),
     "wrong_voice_stop_slot": ("voice->start();\n                            break;", "voice->stop();\n                            break;"),

@@ -709,11 +709,11 @@ void Flic::decode_byte_run() {
     for (int row = 0; row < static_cast<int>(decoded_height_); row++) {
         uint8_t *row_dst = dst;
         int remaining = decoded_width_;
-        int8_t count;
+        uint8_t count;
         fread(&count, 1, 1, file_);
         while (remaining > 0) {
             fread(&count, 1, 1, file_);
-            if (count > 0) {
+            if (static_cast<int8_t>(count) > 0) {
                 uint8_t value;
                 fread(&value, 1, 1, file_);
                 if (palette_offset_ != 0) {
@@ -722,7 +722,10 @@ void Flic::decode_byte_run() {
                 }
                 memset(row_dst, value, static_cast<uint8_t>(count));
             } else {
-                count = static_cast<int8_t>(abs(count));
+                // The image byte-stores abs(signed opcode), then masks the
+                // length to 0xff before fread: opcode 0x80 means 128
+                // literal bytes, rather than a sign-extended -128.
+                count = static_cast<uint8_t>(abs(static_cast<int8_t>(count)));
                 if (palette_offset_ == 0) {
                     fread(row_dst, 1, count, file_);
                 } else {

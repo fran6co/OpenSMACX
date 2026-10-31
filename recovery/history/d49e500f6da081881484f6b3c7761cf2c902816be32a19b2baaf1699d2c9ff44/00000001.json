@@ -1,0 +1,19 @@
+{
+  "event_id": "5efc9a4226a0d06d9e4b5026f78cb485da8d3dfbae0e8038633ddee5c3c7c923",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_flic_byte_run_actual_source.py"
+    ],
+    "evidence": [
+      "Original62A63A/62A655 masks byte-stored count before fread. Opcode80 requests128 literal bytes; prior int8-to-size_t behavior is a translation error. Add actual-source count/control/damage witnesses preserving original error paths."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "flic-behavior-witness-scope-oct31bo",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:easy-flic-oct31bo"
+}

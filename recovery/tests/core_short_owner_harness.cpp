@@ -20,7 +20,7 @@ extern Console ConsoleGlobal;
 extern char StringTemp[1032];
 extern Net *ActiveNet;
 extern uint32_t MsgStatus;
-int parse_say(int, intptr_t, int, int);
+int parse_say(int, const char *, int, int);
 int parse_says(int, const char *, int, int);
 void say_num(int);
 int X_pop(const char *, int (*)());
@@ -49,13 +49,14 @@ uint32_t MsgStatus;
 static Net live_net;
 static std::vector<std::string> calls;
 static std::vector<unsigned int> queue_messages;
-static intptr_t expected_technology_name;
+static const char *expected_technology_name;
 static const char *expected_faction_name;
 static std::string expected_popup;
 static int expected_number;
 static bool watch_do_net_status;
 static bool mutate_msg_status_in_do_net;
 static uint32_t last_do_net_status;
+static const MSG *paint_record, *ordinary_record;
 
 static void reset_fixture() {
     calls.clear();
@@ -66,11 +67,12 @@ static void reset_fixture() {
     watch_do_net_status = false;
     mutate_msg_status_in_do_net = false;
     last_do_net_status = 0xFFFFFFFFu;
+    paint_record = ordinary_record = nullptr;
 }
 
 void Net::handle_sys_msg() { calls.push_back("sys"); }
 
-int parse_say(int index, intptr_t name, int, int) {
+int parse_say(int index, const char *name, int, int) {
     assert(index == 0);
     assert(name == expected_technology_name);
     calls.push_back("tech");
@@ -109,6 +111,14 @@ void check_net() { calls.push_back("check"); }
 int PeekMessage(MSG *out, void *, unsigned int low, unsigned int high,
                 unsigned int remove) {
     assert(remove == PM_REMOVE);
+    if (low == WM_PAINT && high == WM_PAINT) {
+        if (paint_record == nullptr) paint_record = out;
+        assert(out == paint_record);
+    } else {
+        if (ordinary_record == nullptr) ordinary_record = out;
+        assert(out == ordinary_record);
+        assert(paint_record != nullptr && ordinary_record != paint_record);
+    }
     calls.push_back("peek:" + std::to_string(low) + ":" +
                     std::to_string(high));
     for (std::vector<unsigned int>::iterator it = queue_messages.begin();
@@ -138,7 +148,7 @@ static bool has_call(const char *name) {
 }
 
 static void test_tech_secret() {
-    expected_technology_name = reinterpret_cast<intptr_t>(Technology[7].name);
+    expected_technology_name = Technology[7].name;
     expected_faction_name = Players[2].adj_name_faction;
     expected_number = 0;
     expected_popup = "THESECRET0";

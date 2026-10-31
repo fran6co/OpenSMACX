@@ -2328,7 +2328,7 @@ Buffer::~Buffer() { close(); }
 /*
 Purpose: Acquire the device context, taking one reference on the shared handle.
 // ORIGINAL: 0x005E3503 ?get_hdc@Buffer@@QAEHXZ 0x005E3503-0x005E355C BYTE_EXACT
-// body      src/buffer.h
+// body      src/buffer.cpp
 // symbol    ?get_hdc@Buffer@@QAEPAUHDC__@@XZ
 // size      89 bytes
 // prototype int (__thiscall ?get_hdc@Buffer@@QAEHXZ)(Buffer* this)
@@ -2340,6 +2340,30 @@ Purpose: Acquire the device context, taking one reference on the shared handle.
 Return Value: The device context, or zero when the surface refuses one
 Status: Complete
 */
+
+HDC Buffer::get_hdc() {
+      if (locked_bits_ != 0) {
+          get_graphic_win();
+      }
+      IDirectDrawSurface2 *const surface = surface_;
+      // Without a surface the buffer owns its context directly, so acquiring is
+      // just publishing the stored handle and counting the reference.
+      if (!surface) {
+          hdc2_ = hdc_;
+          ++hdc_lock_count_;
+          return hdc_;
+      }
+      if (hdc2_ != nullptr) {
+          ++hdc_lock_count_;
+          return hdc2_;
+      }
+      if (surface->GetDC(&hdc2_) != 0) {
+          get_graphic_win();
+      }
+      ++hdc_lock_count_;
+      return hdc2_;
+  }
+
 
 /*
 Purpose: Drop the given number of device-context references, releasing the

@@ -114,7 +114,7 @@ def test_actual_source_owner_bodies_preserve_hdc_order_and_lfsr_rows():
     assert "0x005D5B70 sub_5d5b70 0x005D5B70-0x005D5B75" in source
     assert 'GraphicWinBlitPolynomialWords[bit_count_signed(rows)]' in source
     assert "Win::release_hdc();\n        return;" in source
-    assert "buffer->release_hdc(static_cast<int>(y));" in source
+    assert "Buffer::release_hdc(static_cast<int>(y));" in source
     bodies = actual_bodies(source)
     assert "if (rows == 0)" not in bodies and "while (y != 1)" in bodies
     compile_and_run(bodies)
