@@ -65,6 +65,28 @@
 #include "heap.h"
 #include <cstdlib>
 #include <cstring>
+
+// Language arrays declare seven bytes; original allocation bounds and lifetimes remain unproved.
+// Eight distinct writable original seven-byte script-name instances are
+// observed at the respective call operands. These provisional role names
+// preserve that storage identity; historical global names and TU are unproved.
+// RECOVERY_OBJECT: v1 0x00689238 ?AlphaNetServiceScript@@3PADA
+char AlphaNetServiceScript[7] = "jackal";
+// RECOVERY_OBJECT: v1 0x0068925C ?AlphaNetConnectScript@@3PADA
+char AlphaNetConnectScript[7] = "jackal";
+// RECOVERY_OBJECT: v1 0x00689298 ?AlphaNetCreateScript@@3PADA
+char AlphaNetCreateScript[7] = "jackal";
+// RECOVERY_OBJECT: v1 0x006892B8 ?AlphaNetMissingSessionScript@@3PADA
+char AlphaNetMissingSessionScript[7] = "jackal";
+// RECOVERY_OBJECT: v1 0x006892D8 ?AlphaNetMissingPlayerScript@@3PADA
+char AlphaNetMissingPlayerScript[7] = "jackal";
+// RECOVERY_OBJECT: v1 0x00689318 ?AlphaNetJoinScript@@3PADA
+char AlphaNetJoinScript[7] = "jackal";
+// RECOVERY_OBJECT: v1 0x0068934C ?AlphaNetNoSessionsScript@@3PADA
+char AlphaNetNoSessionsScript[7] = "jackal";
+// RECOVERY_OBJECT: v1 0x00689368 ?AlphaNetSessionsScript@@3PADA
+char AlphaNetSessionsScript[7] = "jackal";
+
 // Superseded seed deleted; seed paths below are historical Git provenance.
 
 
@@ -279,7 +301,7 @@ int AlphaNet::pick_service(int *allow_pbem) {
     if (popup == 0) return 4;
     int result;
     if (poll_services(&providers) != 0 ||
-        popup->start("jackal", "SELECTSERVICE", -1, 0, 0x42, 0) != 0) {
+        popup->start(AlphaNetServiceScript, "SELECTSERVICE", -1, 0, 0x42, 0) != 0) {
         result = 1;
     } else {
         providers.seek_pos(-1);
@@ -318,7 +340,7 @@ int AlphaNet::do_join_or_create() {
     // 54 45 00 at 0x689240. This writable-data correspondence does not claim
     // runtime immutability or linker selection.
     // RECOVERY_LITERAL: v1 0x689240 0x68925A ??_C@_0BK@LCOK@NETCONNECT_JOIN_OR_CREATE?$AA@ 0x4E29E0
-    const int selected = x_pop_caption_flags("jackal", "NETCONNECT_JOIN_OR_CREATE", 0x50, 0);
+    const int selected = x_pop_caption_flags(AlphaNetConnectScript, "NETCONNECT_JOIN_OR_CREATE", 0x50, 0);
     if (selected < 0) return 1;
     if (selected == 1) {
         if (join() == 0) return 1;
@@ -334,12 +356,12 @@ int AlphaNet::create() {
     strcpy(ParseStrBuffer[0].str, TextBufferGetPtr);
     prefs_get("Net Name", "---", 0);
     strcpy(ParseStrBuffer[1].str, TextBufferGetPtr);
-    int selected = x_pop_caption_value_flags("jackal", "NETCONNECT_CREATE", 0x1F, 0x44, 0);
+    int selected = x_pop_caption_value_flags(AlphaNetCreateScript, "NETCONNECT_CREATE", 0x1F, 0x44, 0);
     while (selected != -1) {
-        if (ParseStrBuffer[0].str[0] == 0) X_pop("jackal", "NETCONNECT_NEED_SESSION", 0);
-        else if (ParseStrBuffer[1].str[0] == 0) X_pop("jackal", "NETCONNECT_NEED_PLAYER", 0);
+        if (ParseStrBuffer[0].str[0] == 0) X_pop(AlphaNetMissingSessionScript, "NETCONNECT_NEED_SESSION", 0);
+        else if (ParseStrBuffer[1].str[0] == 0) X_pop(AlphaNetMissingPlayerScript, "NETCONNECT_NEED_PLAYER", 0);
         else break;
-        selected = x_pop_caption_value_flags("jackal", "NETCONNECT_CREATE", 0x1F, 0x44, 0);
+        selected = x_pop_caption_value_flags(AlphaNetCreateScript, "NETCONNECT_CREATE", 0x1F, 0x44, 0);
     }
     if (selected == -1) return 0;
     prefs_put("Net Session", ParseStrBuffer[0].str);
@@ -356,7 +378,7 @@ int AlphaNet::join() {
     Popup popup;
     prefs_get("Net Name", "---", 0);
     strcpy(ParseStrBuffer[0].str, TextBufferGetPtr);
-    if (x_pop_caption_value_flags("jackal", "NETCONNECT_JOIN", 0x1F, 0x44, 0) == -1) return 0;
+    if (x_pop_caption_value_flags(AlphaNetJoinScript, "NETCONNECT_JOIN", 0x1F, 0x44, 0) == -1) return 0;
     prefs_put("Net Name", ParseStrBuffer[0].str);
     int selected;
     do {
@@ -366,10 +388,10 @@ int AlphaNet::join() {
             ledger_.allocator_ = 0;
             NetDaemonNet.enumerate_sessions(&ledger_, 0);
             if (ledger_.entry_count_ != 0) break;
-            X_pop("jackal", "NETCONNECT_SESSION_NOT_FOUND", 0);
+            X_pop(AlphaNetNoSessionsScript, "NETCONNECT_SESSION_NOT_FOUND", 0);
             if (ConsoleGroupAction != 1) return 0;
         }
-        popup.start("jackal", "NETCONNECT_SESSIONS", -1, 0, 0x42, nullptr);
+        popup.start(AlphaNetSessionsScript, "NETCONNECT_SESSIONS", -1, 0, 0x42, nullptr);
         ledger_.seek_pos(-1);
         for (int row = 0; row < ledger_.entry_count_; ++row) {
             ledger_.next_entry();
@@ -408,19 +430,23 @@ int AlphaNet::setup(int option) {
         // value-equal but independent NetLobbyAppGuid at 697548.
         Net::init(const_cast<GUID *>(&LobbyAppGuid), 3, 9);
         const int picked = pick_service(&IsMultiplayerPBEM);
-        if (picked != 0) return 0;
+        // 4E323F skips the XOR at4E32B3 and returns the raw picker error.
+        if (picked != 0) return picked;
         if (IsMultiplayerPBEM != 0) {
             Net::close();
             return 0;
         }
-        const int selected = x_pop_caption_flags("jackal", "NETCONNECT_JOIN_OR_CREATE", 0x50, 0);
-        if (selected < 0) return 1;
+        const int selected = x_pop_caption_flags(AlphaNetConnectScript, "NETCONNECT_JOIN_OR_CREATE", 0x50, 0);
+        if (selected < 0) goto failed;
         if (selected == 1) {
-            if (join() == 0) return 1;
-        } else {
-            if (create() == 0) return 1;
+            if (join() == 0) goto failed;
+            goto connected;
         }
+        if (create() != 0) goto connected;
+failed:
+        return 1;
     } else voice_flags_D8_ |= 1;
+connected:
     voice_hotkey_48_ = 0xDC;
     voice_hotkey_4c_ = 0x100DC;
     return 0;
