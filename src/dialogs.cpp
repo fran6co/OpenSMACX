@@ -865,10 +865,11 @@ void Dialogs::pass_dialog_focus() {
 // RECOVERY_BINDING: v1 {"reason":"Recover the complete body in its genuine C++ owner, with real embedded members, shared virtual bases, lifecycle and parent operations. Compiler-generated overrides/adjustors replace executable-address or vbtable stand-ins; no current matching claim is granted.","evidence":["git:de91fffe:src/recovered/units/00613220.cpp","image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","recovery/tasks/ui-eight-owner-coverage.json","Original entry 0x00613220; physical VC6 COFF emitted symbol ?on_scroll_create@Dialogs@@QAEHXZ."]}
 // symbol    ?on_scroll_create@Dialogs@@UAEPAVScroll@@XZ
 Scroll *Dialogs::on_scroll_create() {
-    if (kind_ == 2 && (iFlags_ & 0x40) != 0 && win_parent_ != 0) {
-        return win_parent_->on_listbox_scroll_create();
-    }
-    return 0;
+    unsigned int kind = static_cast<unsigned int>(kind_);
+    if (kind - 2u != 0) return 0;
+    if ((iFlags_ & 0x40) == 0) return 0;
+    if (win_parent_ == 0) return 0;
+    return win_parent_->on_listbox_scroll_create();
 }
 
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x006132A0 0x006132F8 0x00613310 0x006132B4

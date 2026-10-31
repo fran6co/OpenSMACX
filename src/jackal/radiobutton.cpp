@@ -775,6 +775,8 @@ void RadioButton::on_left_double_click(int x_coord, int y_coord) {
     }
 }
 
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x0060E020 0x0060E184 0x0060E198 0x0060E064
+// RECOVERY_ASSOCIATED: v1 switch_selector 0x0060E020 0x0060E198 0x0060E1DC 0x0060E05E
 /*
 Purpose: A radio button key press: publish the parent window as the callback
          window, move the selection with the arrows and page keys over the

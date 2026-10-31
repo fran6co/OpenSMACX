@@ -232,6 +232,8 @@ int EditBox::on_key_click(int character, int) {
 
 // Key modifiers are encoded in the upper word; the low word selects the
 // original Home/End, arrow, Backspace and Delete branches.
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00615840 0x00615D74 0x00615D90 0x00615896
+// RECOVERY_ASSOCIATED: v1 switch_selector 0x00615840 0x00615D90 0x00615DEF 0x00615890
 // ORIGINAL: 0x00615840 ?on_key_down@EditBox@@QAEHH@Z 0x00615840-0x00615D73
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00615840.cpp", "Pinned original EditBox table66A038 and direct call/branch evidence"], "reason": "EditBox owns this table override or its direct text helper: pinned primary table66A038 slots12,17,20,21,25,26,51,64 and original direct-call receivers establish ownership. Use existing Win slot signatures without changing their order; text_position returns the EAX index consumed by callers despite the catalogue void label."}
 // Deleted seed provenance: git:25c0645e742c23f149e0895c391a9ba79ad744cb:src/unrecovered/00615840.cpp

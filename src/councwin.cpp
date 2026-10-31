@@ -1647,6 +1647,7 @@ void CouncWin::show(int visible) {
 // sprite/rectangle members. The retained 0x00425DB0 seed supplies the
 // case map and call evidence; source ownership and exactness are checked
 // separately.
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00425DB0 0x0042645C 0x00426470 0x00426198
 // ORIGINAL: 0x00425DB0 ?draw_leader@CouncWin@@QAEXH@Z 0x00425DB0-0x00426459
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00425db0.cpp"], "reason": "Home leader rendering in CouncWin with typed faction, portrait and label members"}
 void CouncWin::draw_leader(int factionID) {

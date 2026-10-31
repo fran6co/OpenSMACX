@@ -98,8 +98,7 @@ Status: Coverage transcription - unclaimed body
 void ReportWin::on_redraw() {
     reset();
     field_59AC_ = -1;
-    Buffer &canvas = *this;
-    canvas.set_clip(&energy_panel_rect_);
+    Buffer::set_clip(&energy_panel_rect_);
     switch (ReportIfGlobal.field_8_) {
     case 0: draw_intel(); break;
     case 2: draw_labs(); break;
@@ -110,7 +109,7 @@ void ReportWin::on_redraw() {
     case 7: draw_security(); break;
     case 8: draw_score(); break;
     }
-    canvas.set_clip(buffer_working_rect());
+    Buffer::restore_clip();
 }
 
 static bool reportwin_input_blocked() {
@@ -1102,15 +1101,17 @@ void ReportWin::on_scrolled(int, int pos) {
         draw_projects();
         soft_update();
         return;
-    case 0:
-    case 2:
     case 3:
-    case 4:
     case 6:
-    case 7:
     case 8:
         redraw();
         return;
+    case 0:
+    case 2:
+    case 4:
+    case 7:
+        redraw();
+        break;
     }
 }
 
@@ -1127,19 +1128,21 @@ void ReportWin::on_scrolling(int, int pos) {
         draw_projects();
         soft_update();
         return;
-    case 0:
-    case 2:
     case 3:
-    case 4:
     case 6:
-    case 7:
     case 8:
         redraw();
         return;
+    case 0:
+    case 2:
+    case 4:
+    case 7:
+        redraw();
+        break;
     }
 }
 
-// ORIGINAL: 0x00498110 ?UNK1@ReportWin@@QAEXHHHH@Z 0x00498110-0x00498174
+// ORIGINAL: 0x00498110 ?UNK1@ReportWin@@QAEXHHHH@Z 0x00498110-0x00498174 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"reason":"Home ReportWin's range callback and type its embedded Scroll storage while preserving the constructor's explicit placement order.","evidence":["src/recovered/units/00498110.cpp records the original 0x00498110-0x00498174 method and its position/range/paging updates.","src/reportwin.h places Scroll at 0xC10C; src/scroll.h places paging_ at Scroll+0xA40, which is the seed's 0xCB4C write."]}
 // Deleted seed provenance: git:c2e28f62c941b2012636504516275bc26988ee80:src/recovered/units/00498110.cpp
 /*
@@ -1153,7 +1156,7 @@ void ReportWin::UNK1(int position, int minimum, int maximum, int page_size) {
     field_C108_ = page_size;
     Scroll &scroll = scroll_;
     scroll.set_range(minimum, maximum);
-    scroll.paging_ = page_size;
+    scroll_.set_paging(field_C108_);
     scroll.set_pos(field_C0FC_);
     field_E270_ = 0;
 }
@@ -3620,6 +3623,7 @@ static void report_sat_number(int value) {
     _itoa(value, number, 10);
     strcat(StringTemp, number);
 }
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x0049F350 0x0049FE20 0x0049FE34 0x0049F758
 // ORIGINAL: 0x0049F350 ?draw_sat@ReportWin@@QAEXXZ 0x0049F350-0x0049FE1E
 // RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/unrecovered/0049f350.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
 void ReportWin::draw_sat() {

@@ -207,6 +207,12 @@ int SetupWin::do_menu(Popup *popup, int menu_kind, int flags) {
 // kind      game
 // symbol    ?do_menu_rightside@SetupWin@@QAEHPADH@Z
 // TRIED: SEH-framed function with 4 real local objects (Buffer, Font, Wave, Flic) - reproduced via plain RAII locals (`Buffer buf1; Font font; Wave wave; Flic flic;` with `Palette pal;` scoped to end right before the final destructor cascade, matching the original's separate ~Palette() call ahead of the buf1/font/wave/flic teardown) and plain `return`/goto for the early-exit paths, letting the compiler emit its own SEH prologue/epilogue and destructor calls rather than hand-writing the fs:[0] chain or the mid-function state-index byte stores. Diverges at #2 (framed EH prologue ordering) - did not chase further given the size; body is a full instruction-level transcription of the menu/flic drawing logic (token-line parsing loop, two flic decode/blit/pace loops via a shared static helper, Spot::add layout loop, draw_item loop) with call arguments cross-checked against raw disassembly.
+/* The standalone-Palette hypothesis in the historical TRIED note above is
+ * superseded: the original Palette cleanup belongs to Flic::palette_ at +0x5BC.
+ * Real Flic destruction supplies one close, then Palette and Buffer teardown,
+ * on normal returns and exceptional exits. There is no separate Palette local
+ * or explicit pre-destruction Flic close in this owner.
+ */
 int SetupWin::do_menu_rightside(char *filename, int flags) {
     Buffer scratch;
     Font font;
@@ -225,21 +231,17 @@ int SetupWin::do_menu_rightside(char *filename, int flags) {
     field_A18_ = WinScreenHeight;
 
     if (opening_window_snapshot_ == nullptr) {
-        flic.close();
         return -1;
     }
     if (filename == nullptr && menu_popup_ == nullptr) {
-        flic.close();
         return -1;
     }
     if (menu_popup_ == nullptr && X_text_open(filename, "script.txt") != 0) {
-        flic.close();
         return -1;
     }
 
     int result = 0;
     {
-        Palette palette;
         char token[512];
         bool has_token = false;
         RECT title_rect;
@@ -427,7 +429,6 @@ int SetupWin::do_menu_rightside(char *filename, int flags) {
         } else {
             result = static_cast<int>(selected_row_);
         }
-        flic.close();
     }
     return result;
 }
@@ -543,7 +544,7 @@ SetupWin::SetupWin() {
 // closes its Buffer and Spot members, then drains the embedded StringList.
 /*
 Purpose: Clear SetupWin state and release its Buffer, Spot and embedded list.
-// ORIGINAL: 0x004AD9C0 ?close@SetupWin@@QAEXXZ 0x004AD9C0-0x004ADA7B FILE
+// ORIGINAL: 0x004AD9C0 ?close@SetupWin@@QAEXXZ 0x004AD9C0-0x004ADA7B FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original 0x004AD9C0..0x004ADA7A is ?close@SetupWin@@QAEXXZ; inspect --callers finds 13 direct incoming calls in mapped newgame.cpp spans.", "Pinned operation order is selected_row, row_count, field_A14, field_A18, Buffer::close at +0xA44, Spot::shutdown at +0xFD4, embedded list cleanup at +0xFE0, and unconditional cursor reset at +0xFF4. These are existing SetupWin members.", "The +0xFE0 record is the declared embedded StringList field_FE0_; StringStructEntry/payload types and StringList::on_remove/remove_all are source-owned. `StringStruct::remove_all` uses the same head/next/payload callback and deleting sequence as the pinned loop, with a live entry_count_ reload each iteration.", "SetupWin::~SetupWin already uses field_FE0_.remove_all() after the same state/Buffer/Spot cleanup. This migration does not broaden SetupWin extent or invent the unused item_texts_ pointer as the list owner.", "Pinned standalone destructor 4AE790 restores SetupWin vptrs, performs close-state/Buffer/Spot/list cleanup, then destroys its actual members and GraphicWin base.", "All 13 mapped newgame calls to 4AD9C0 follow identical derived vptr restoration and precede member/base destruction: compiler-expanded destructor-body calls, not explicit pre-destruction closes.", "Pinned Popup close404900 and BasePop destructor4064D0 are distinct identities; terminal Popup close calls likewise belong to generated Popup destruction. Preserve config_game nonterminal close before object reuse.", "size_of_planet and custom_planet declare Popup before SetupWin; map_menu/top_menu declare SetupWin before Popup; config_game declares Popup before SetupWin. Reverse automatic destruction reproduces the observed owner order.", "Pinned size_of_planet success writes UnkBitfield1 before SetupWin destruction; config_game mode-bit2 success converges on common destruction. Automatic lifetimes cover both without duplicate terminal close calls."], "reason": "Recover SetupWin cleanup through its genuine members and ordinary destructor lifetime. The destructor invokes close once before compiler-owned member/base teardown; callers rely on automatic destruction rather than duplicate explicit closes. Original normal/error/exceptional cleanup and historical matching obligations remain; no new matching claim."}
 // symbol    ?close@SetupWin@@QAEXXZ
 */
@@ -555,10 +556,9 @@ void SetupWin::close() {
     buffer_.close();
     spot_.shutdown();
 
-    if (field_FE0_.head_ != 0) {
-        field_FE0_.remove_all();
-    }
-    field_FE0_.current_position_ = 0;
+    StringList &entries = field_FE0_;
+    entries.remove_all();
+    entries.current_position_ = 0;
 }
 
 
@@ -572,42 +572,38 @@ SetupWin::~SetupWin() {
 
 // RECOVERY_ASSOCIATED: v1 switch_targets 0x004AE3E0 0x004AE4A0 0x004AE4B4 0x004AE3FE
 // RECOVERY_ASSOCIATED: v1 switch_selector 0x004AE3E0 0x004AE4B4 0x004AE4D0 0x004AE3F8
-// ORIGINAL: 0x004AE3E0 ?on_key_click@SetupWin@@QAEHHH@Z 0x004AE3E0-0x004AE49D
+// ORIGINAL: 0x004AE3E0 ?on_key_click@SetupWin@@QAEHHH@Z 0x004AE3E0-0x004AE49D BYTE_EXACT
 // RECOVERY_BINDING: v1 {"reason":"Recover the complete body in its genuine C++ owner, with real embedded members, shared virtual bases, lifecycle and parent operations. Compiler-generated overrides/adjustors replace executable-address or vbtable stand-ins; no current matching claim is granted.","evidence":["git:de91fffe:src/unrecovered/004ae3e0.cpp","image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","recovery/tasks/ui-eight-owner-coverage.json","Original entry 0x004ae3e0; physical VC6 COFF emitted symbol ?on_key_click@SetupWin@@UAEHHH@Z."]}
 // symbol    ?on_key_click@SetupWin@@UAEHHH@Z
 int SetupWin::on_key_click(int, int key) {
+    int current;
+    int next;
     switch (key) {
-    case 0x0d:
-        release_modal();
+    case 0x26:
+        current = static_cast<int>(selected_row_);
+        next = current == 0 ? static_cast<int>(row_count_) - 1 : current - 1;
+        goto selection_changed;
+    case 0x28:
+        current = static_cast<int>(selected_row_);
+        next = current == static_cast<int>(row_count_) - 1 ? 0 : current + 1;
+selection_changed:
+        draw_item(current, 0);
+        selected_row_ = static_cast<uint32_t>(next);
+        draw_item(next, 1);
+        soft_update();
         return 1;
     case 0x1b:
         selected_row_ = static_cast<uint32_t>(-1);
         release_modal();
         return 1;
-    case 0x26: {
-        const int current = static_cast<int>(selected_row_);
-        const int next = current == 0
-            ? static_cast<int>(row_count_) - 1 : current - 1;
-        draw_item(current, 0);
-        selected_row_ = static_cast<uint32_t>(next);
-        draw_item(next, 1);
-        soft_update();
+    case 0x0d:
+        release_modal();
         return 1;
-    }
-    case 0x28: {
-        const int current = static_cast<int>(selected_row_);
-        const int next = current == static_cast<int>(row_count_) - 1
-            ? 0 : current + 1;
-        draw_item(current, 0);
-        selected_row_ = static_cast<uint32_t>(next);
-        draw_item(next, 1);
-        soft_update();
-        return 1;
-    }
     default:
         return 0;
     }
 }
+
 // ORIGINAL: 0x004AE9A0 ??_GSetupWin@@WEEE@AEPAXI@Z 0x004AE9A0-0x004AE9AB FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned terranx_original.exe SHA-256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf.", "Pinned vftable slot 0: 0x0066D8E0 -> 0x004AE9A0.", "the SetupWin constructor stores secondary Buffer table 0x0066D8E0 at object+0x444", "The original 11-byte adjustor corrects the earlier mistaken `??3SetupWin@@SAXPAXI@Z` interpretation: it subtracts 0x444 from ECX and tail-transfers to primary scalar-deleting entry 0x004AE760; the corrected `WEEE` signature describes the compiler's adjusting-deleting entry.", "The historical disassembly note records that the primary path returns with ret 4, tests deletion flag bit 0, and invokes scalar operator delete only when that bit is set.", "The historical demangling note identifies adjustment 1092, equal to 0x444; the adjustor does not otherwise access the stack or change the receiver view.", "Source owner: src/setupwin.cpp; generated entry name is compiler-observed as ??_ESetupWin@@WEEE@AEPAXI@Z."], "reason": "Retain the original SetupWin secondary-Buffer deleting-adjustor identity as a compiler-generated entry owned by the real SetupWin destructor and GraphicWin hierarchy. The pinned secondary view at 0x0066D8E0, slot 0, targets 0x004AE9A0; this entry adjusts the Buffer receiver by 0x444 and reaches the primary scalar-deleting destructor, whose original path tests flag bit 0 before releasing storage. The current compiler-emitted symbol is recorded from the retained owner COFF, not handwritten."}
 // symbol    ??_ESetupWin@@WEEE@AEPAXI@Z

@@ -2905,7 +2905,7 @@ int Net::set_player_host_flag(int is_host) {
     int result = 0;
     if (NetDirectPlay != 0) {
         const DPID player = local_player_id_;
-        unsigned char data = 0;
+        unsigned char data;
         DWORD size = 1;
         result = NetDirectPlay->GetPlayerData(player, &data, &size, 0);
         if (result == 0) {

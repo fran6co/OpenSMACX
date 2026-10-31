@@ -1342,6 +1342,7 @@ int __fastcall MediaRuntime::initialize_stream(LPSTR filename,
   return 0;
 }
 
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x005CA6C0 0x005CA95C 0x005CA96C 0x005CA770
 // ORIGINAL: 0x005CA6C0 sub_5ca6c0 0x005CA6C0-0x005CA95B
 // symbol    ?parse_initial_format@MediaRuntime@@QAIHH@Z
 // kind      game

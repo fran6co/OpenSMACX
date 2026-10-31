@@ -1027,6 +1027,8 @@ int CheckBox::item(char *text, int id, int state) {
     return -((item_list_.add(id) != 0) ? 1 : 0) & 4;
 }
 
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x0060F8B0 0x0060FA18 0x0060FA30 0x0060F905
+// RECOVERY_ASSOCIATED: v1 switch_selector 0x0060F8B0 0x0060FA30 0x0060FA79 0x0060F8FF
 /*
 Purpose: A check box key press: publish the parent window as the callback
          window, repaint the current row unselected, run the arrow/page/space

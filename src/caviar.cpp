@@ -1484,6 +1484,7 @@ void __cdecl vox_fill_colour_table(void *table, unsigned long value,
     }
 }
 
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x006393C0 0x00639614 0x00639628 0x006395B5
 /*
 Purpose: Create the scene render record: allocate it, copy the colour and
          shadow tables for the descriptor's pixel size, fill the clip bounds

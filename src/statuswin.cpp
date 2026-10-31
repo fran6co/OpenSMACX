@@ -1399,6 +1399,7 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
     }
 }
 
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x004B8E40 0x004B8FD4 0x004B9004 0x004B8EB9
 // ORIGINAL: 0x004B8E40 ?on_left_click@StatusWin@@QAEXHH@Z 0x004B8E40-0x004B8FD3 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004b8e40.cpp", "StatusWin spot, click and toggle members in src/statuswin.h", "Console, NetDaemon, Bases and PlayersData owners in src/"], "reason": "Recover the click branches through owned C++ objects and preserve the historical original span."}
 void StatusWin::on_left_click(int x, int y) {

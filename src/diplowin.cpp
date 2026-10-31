@@ -669,6 +669,7 @@ char DiploKnownTechOpen[2] = "(";
 // RECOVERY_OBJECT: v2 0x006839F8 0x006839FA ?DiploKnownTechClose@@3PADA 0x00443170
 char DiploKnownTechClose[2] = ")";
 
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00443170 0x004436A0 0x004436B8 0x00443480
 // ORIGINAL: 0x00443170 ?draw_offers@DiploWin@@QAEXXZ 0x00443170-0x0044369F
 // RECOVERY_BINDING: v1 {"evidence": ["git:3f6ab06bdf3b791aa23454e19f71b4e8b5935caf:src/recovered/units/00443170.cpp"], "reason": "Typed offer-panel rendering, technology/energy/treaty/faction labels and Spot ownership, replacing seed raw offsets."}
 void DiploWin::draw_offers() {
@@ -761,6 +762,7 @@ void DiploWin::check_done() {
     }
 }
 
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00442740 0x004429A0 0x004429B8 0x004427F0
 // ORIGINAL: 0x00442740 ?do_it@DiploWin@@QAEXXZ 0x00442740-0x0044299D
 // RECOVERY_BINDING: v1 {"evidence": ["git:3f6ab06bdf3b791aa23454e19f71b4e8b5935caf:src/recovered/units/00442740.cpp"], "reason": "Rehome exchange execution into source-owned DiploWin arrays and faction/network globals."}
 void DiploWin::do_it() {
@@ -821,6 +823,7 @@ void DiploWin::do_it() {
 }
 
 
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00442A10 0x00442D98 0x00442DB4 0x00442C50
 // ORIGINAL: 0x00442A10 ?draw_who@DiploWin@@QAEXXZ 0x00442A10-0x00442D98
 // RECOVERY_BINDING: v1 {"evidence": ["git:3f6ab06bdf3b791aa23454e19f71b4e8b5935caf:src/recovered/units/00442a10.cpp"], "reason": "Typed DiploWin party rendering using source-owned FactionArt datalink portraits, rectangles and label storage."}
 void DiploWin::draw_who() {
@@ -875,6 +878,7 @@ void DiploWin::draw_who() {
     surface->write_cent_l(StringTemp, &area, strlen(StringTemp));
 }
 
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00442DC0 0x0044314C 0x00443168 0x00443000
 // ORIGINAL: 0x00442DC0 ?draw_whom@DiploWin@@QAEXXZ 0x00442DC0-0x00443149
 // RECOVERY_BINDING: v1 {"evidence": ["git:3f6ab06bdf3b791aa23454e19f71b4e8b5935caf:src/recovered/units/00442dc0.cpp"], "reason": "Typed DiploWin party rendering using source-owned FactionArt datalink portraits, rectangles and label storage."}
 void DiploWin::draw_whom() {

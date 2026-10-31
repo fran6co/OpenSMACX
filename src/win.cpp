@@ -8135,6 +8135,7 @@ init_registration_tail:
 
 // ===== homed from src/unrecovered/005f1820.cpp =====
 
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x005F1820 0x005F2200 0x005F2250 0x005F1B3C
 // ORIGINAL: 0x005F1820 ?update_cursor@Win@@QAAHPAUWin@@H@Z 0x005F1820-0x005F2200
 // RECOVERY_BINDING: v1 {"evidence": ["git show 3cb99d43^:src/unrecovered/005f1820.cpp preserves this identity and full code span with mismatch history, not a byte claim. Its existing body is under the same homing heading in win.cpp. Entry reads two stack arguments; original body ends at5F21FF and the switch table begins at5F2200. Source binding does not establish behavior, table matching or acceptance."], "reason": "Restore the unclaimed cursor operation mapping omitted during homing. The catalogued decoration is historical; the product uses the receiver-free static Win operation."}
 // symbol    ?update_cursor@Win@@SAHPAV1@H@Z
@@ -9120,6 +9121,7 @@ int Win::minimize() {
     return 0;
 }
 
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x005F7580 0x005F7E48 0x005F7E88 0x005F77DF
 // ORIGINAL: 0x005F7580 ?do_tracking@Win@@QAEXHH@Z 0x005F7580-0x005F7E47 FILE
 // kind game
 // TRIED: Ghidra's pseudocode was unsafe here in three separate ways, all fixed from raw disasm: (1) the client_to_screen/nonclient_to_screen "vacuous test" branches Ghidra rendered as a no-op `if(&stack!=0x20){FUN();}` actually apply the screen origin to a size-rect afterward - Ghidra dropped that entirely; (2) the slot003 vtable call takes 3 args (width,height,0), Ghidra showed only 1; (3) two of the screen_to_client/client_to_screen calls are on win_parent_, not `this` (ecx is never reloaded to esi before them). The switch-case clamp arithmetic itself did match Ghidra once independently checked against raw disasm. Compiles; original is frameless (sub esp direct), rebuilt took a framed prologue - not chased given size (2247 bytes).

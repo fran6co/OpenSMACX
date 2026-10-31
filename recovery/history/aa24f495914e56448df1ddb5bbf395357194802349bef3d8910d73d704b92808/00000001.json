@@ -1,0 +1,19 @@
+{
+  "event_id": "8282e58d371db4b0ddcb3c965b79d64e9d35d712655131fec64f4d00380eac9d",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/mapwin.cpp"
+    ],
+    "evidence": [
+      "Coordinator independently verified original guard/index domain, full HIGHLOW cell population and every target instruction boundary for switch_targets 0x46f9e8..0x46f9f8 owned by 0x46f8c0. Authorize worker to publish this add-only typed binding through native write_associated_bytes at a safe measurement boundary; preserve complete parsed snapshot, ORIGINAL markers, bodies and claims. No hand-written metadata, weakening or acceptance grant."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "mapwin-additional-switch-admission-oct31bq",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:easy-mapwin-oct31bq"
+}

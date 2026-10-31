@@ -1752,6 +1752,8 @@ void ListBox::on_mouse_move(int x, int y) {
 // 0x60B421..49D advances that current entry and its separate ordinal.
 // Dialogs::on_key_down routes kind 2 here.
 // Superseded seed deleted; seed paths below are historical Git provenance.
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x0060AF90 0x0060B4D8 0x0060B4EC 0x0060B031
+// RECOVERY_ASSOCIATED: v1 switch_selector 0x0060AF90 0x0060B4EC 0x0060B530 0x0060B02B
 // ORIGINAL: 0x0060AF90 ?on_key_down@ListBox@@QAEXH@Z 0x0060AF90-0x0060B4D5
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0060af90.cpp"], "reason": "Rehome seed catalogue identity and original extents into compiled owning class; native-emitted symbol is separate and no new byte claim granted."}
 // symbol    ?on_key_down@ListBox@@UAEHH@Z
@@ -1836,6 +1838,7 @@ int ListBox::on_key_down(int key) {
 // Directions 0..3 shift the list surface one row or column while preserving
 // the surrounding working rectangle; the next redraw repaints exposed rows.
 // Superseded seed deleted; seed paths below are historical Git provenance.
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x0060C1E0 0x0060C340 0x0060C350 0x0060C264
 // ORIGINAL: 0x0060C1E0 ?UNK1@ListBox@@QAEXH@Z 0x0060C1E0-0x0060C33F
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0060c1e0.cpp"], "reason": "Rehome seed catalogue identity and original extents into compiled owning class; native-emitted symbol is separate and no new byte claim granted."}
 void ListBox::UNK1(int direction) {

@@ -98,8 +98,8 @@ def test_actual_setupwin_rightside_body(tmp_path):
 
 
 @pytest.mark.parametrize("before,after,diagnostic", [
-    ("flic.close();\n        return -1;", "return -1;",
-     "early return explicitly closes Flic"),
+    ("        return -1;", "        flic.close();\n        return -1;",
+     "early return has one Flic close"),
     ("            text_close();", "            /* text-close mutant */",
      "script text closes before menu window initialization"),
     ("        opening_window_snapshot_->restore_clip();", "        /* restore mutant */",
@@ -115,3 +115,13 @@ def test_order_and_lifetime_mutants_fail_with_specific_semantics(
     result = run_host(tmp_path, mutant)
     assert result.returncode == 97, (before, result.stdout, result.stderr)
     assert ("SEMANTIC97: " + diagnostic) in result.stderr
+
+
+def test_reintroduced_standalone_palette_is_rejected(tmp_path):
+    body = actual_body()
+    anchor = "        char token[512];"
+    assert body.count(anchor) == 1
+    mutant = body.replace(anchor, "        Palette spurious;\n" + anchor, 1)
+    result = run_host(tmp_path, mutant)
+    assert result.returncode == 97, result.stdout + result.stderr
+    assert "only the embedded Flic Palette lifetime exists" in result.stderr

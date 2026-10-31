@@ -472,6 +472,7 @@ void SocialWin::on_iface_group_clicked(int, int, int) {
 // ORIGINAL: 0x004B2470 ?on_iface_button_clicked@SocialWin@@QAEXH@Z 0x004B2470-0x004B264E FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004b2470.cpp retained original identity and spans", "recovery/tasks/interface-contract-report-closure.json authorized ownership recovery", "original:0x004B2470 complete control/member accesses and concrete interface table"], "reason": "Recover the concrete SubInterface owner operation through genuine window members and source-owned globals. Original table/call evidence identifies the callback receiver; the retained compatible seed supplies its complete original intervals, not an executable-address forwarding implementation."}
 // symbol    ?on_iface_button_clicked@SocialWin@@UAEXH@Z
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x004B2470 0x004B2650 0x004B2668 0x004B2490
 void SocialWin::on_iface_button_clicked(int button_id) {
     TutorialWindow.reset();
 
@@ -1908,7 +1909,7 @@ void SocialWin::reset() {
  *          so a later category's hit wins. The faction-power rectangle maps
  *          the hover to -2, anything else to the grid index or -1, and a
  *          changed hover repaints the mouseover panel.
-// ORIGINAL: 0x004B1EC0 ?on_mouse_move@SocialWin@@QAEXHH@Z 0x004B1EC0-0x004B1FB2 FILE
+// ORIGINAL: 0x004B1EC0 ?on_mouse_move@SocialWin@@QAEXHH@Z 0x004B1EC0-0x004B1FB2 FILE BYTE_EXACT
 // symbol    ?on_mouse_move@SocialWin@@UAEXHH@Z
 // size      242 bytes
 // prototype void (__thiscall ?on_mouse_move@SocialWin@@QAEXHH@Z)(SocialWin* this, int, int)
@@ -1928,9 +1929,8 @@ void SocialWin::on_mouse_move(int a1, int a2) {
                 continue;
             }
             RECT rect = categoryHeaders_[category];
-            RECT *grid = &modelRects_[row + category * 4];
-            rect.left = grid->left;
-            rect.right = grid->right;
+            rect.left = modelRects_[row + category * 4].left;
+            rect.right = modelRects_[row + category * 4].right;
             if (in_box(a1, a2, &rect) != 0) {
                 hover = row + category * 4;
                 break;
@@ -1941,7 +1941,7 @@ void SocialWin::on_mouse_move(int a1, int a2) {
     if (in_box(a1, a2, &tooltipFactionPower_) != 0) {
         hover = -2;
     }
-    if (hover_selection_ != hover) {
+    if (hover != hover_selection_) {
         hover_selection_ = hover;
         draw_mouseover();
     }

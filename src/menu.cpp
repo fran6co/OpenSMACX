@@ -349,6 +349,8 @@ void Menu::mouse_move(int x, int y) {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x005FBF00 0x005FC220 0x005FC234 0x005FBF94
+// RECOVERY_ASSOCIATED: v1 switch_selector 0x005FBF00 0x005FC234 0x005FC28E 0x005FBF8E
 // ORIGINAL: 0x005FBF00 ?on_key_click@Menu@@QAEHHH@Z 0x005FBF00-0x005FC21F
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/005fbf00.cpp", "image:Menu6700B0/AlphaMenu66ED88/PullDown66FF40 constructor-selected primary tables; Buffer secondary subobject+444", "recovery/tasks/popup-font-configuration-owner-closure.json"], "reason": "Recover this complete operation in its genuine Menu/PullDown owner, using native constructor-selected virtual dispatch, real members and shared source-owned dependencies; preserve original identity, retained seed and historical restoration obligations."}
 // symbol    ?on_key_click@Menu@@UAEHHH@Z

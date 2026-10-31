@@ -289,6 +289,8 @@ SelectPartWin::SelectPartWin() {
     field_2B60_ = 0;
 }
 
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00433A10 0x00433CD0 0x00433CFC 0x00433A3F
+// RECOVERY_ASSOCIATED: v1 switch_selector 0x00433A10 0x00433CFC 0x00433D58 0x00433A39
 /*
 Purpose: Answer the design-parts list's keyboard navigation: the arrow keys
          move the highlight one cell within the current row and scroll the
@@ -1635,6 +1637,7 @@ void DesignWin::init() {
     flatButtons_[24].set_field_A44(100);
 }
 
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00439700 0x00439948 0x00439960 0x00439745
 // ORIGINAL: 0x00439700 ?on_right_click@DesignWin@@QAEXHH@Z 0x00439700-0x00439948
 // RECOVERY_BINDING: v1 {"evidence": ["git:3f6ab06bdf3b791aa23454e19f71b4e8b5935caf:src/recovered/units/00439700.cpp"], "reason": "Spot palette categories select localized help labels; the two ability categories share a label."}
 // symbol    ?on_right_click@DesignWin@@UAEXHH@Z
