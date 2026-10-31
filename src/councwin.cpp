@@ -1932,7 +1932,7 @@ int CouncWin::on_key_click(int, int key) {
     release_modal();
     TurnRedrawPending = 0;
     CouncilDialogActive = 0;
-    for (int button = 0; button < 6; ++button) buttons_[button].hide();
+    for (int button = 0; button < 6; ++button) buttons_[button].close(); // Original: vtable offset0x168.
     font1_.close();
     font2_.close();
     font3_.close();
