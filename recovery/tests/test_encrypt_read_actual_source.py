@@ -1,4 +1,9 @@
-"""Behavioral host controls for the pinned encrypt_read byte-count quirk."""
+"""Actual-source controls for encrypt_read's pinned unsigned remaining count.
+
+5A6854 tests the count at [ebp-4]; 5A685C..5A6866 subtracts two from
+that same count after each decoded pair. Expected byte vectors below are
+independent of the projected C++ body and keep a sentinel beyond the output.
+"""
 from pathlib import Path
 import os
 import re
@@ -112,17 +117,31 @@ static int test_even_pairs() {
     return 0;
 }
 
-static int test_odd_padded_tail() {
+static int test_odd_tail_suppresses_padding_store() {
     reset(4, false, 1);
     input_bytes[0] = 0x6F; input_bytes[1] = 0xA1;
     input_bytes[2] = 0x3E; input_bytes[3] = 0xB2;
-    // The original writes the decoded padded fourth byte for total > 1.
-    const unsigned char expected[] = {0x20, 0x10, 0x30, 0x40, 0xCC};
+    // Four encoded bytes are read, but the final remaining count is one.
+    const unsigned char expected[] = {0x20, 0x10, 0x30, 0xCC, 0xCC};
     const int result = encrypt_read(output_bytes, 3, 1, &file_under_test);
     if (result != 1) return 85;
     if (!equals(output_bytes, expected, sizeof(expected))) return 86;
     assert(alloc_calls == 1 && last_alloc_size == 4);
     assert(read_calls == 1 && last_read_size == 4 && last_read_count == 1);
+    assert(last_read_file == &file_under_test && free_calls == 1);
+    return 0;
+}
+
+static int test_five_byte_tail_after_two_full_pairs() {
+    reset(6, false, 1);
+    input_bytes[0] = 0x6F; input_bytes[1] = 0xA1;
+    input_bytes[2] = 0x3E; input_bytes[3] = 0xB2;
+    input_bytes[4] = 0x1D; input_bytes[5] = 0xD3;
+    const unsigned char expected[] = {0x20, 0x10, 0x30, 0x40, 0x50, 0xCC, 0xCC};
+    const int result = encrypt_read(output_bytes, 5, 1, &file_under_test);
+    if (result != 1 || !equals(output_bytes, expected, sizeof(expected))) return 86;
+    assert(alloc_calls == 1 && last_alloc_size == 6);
+    assert(read_calls == 1 && last_read_size == 6 && last_read_count == 1);
     assert(last_read_file == &file_under_test && free_calls == 1);
     return 0;
 }
@@ -155,6 +174,14 @@ static int test_zero_and_unsigned_product_overflow() {
     assert(read_calls == 1 && last_read_size == 0 && last_read_count == 1);
     assert(last_read_file == &file_under_test && free_calls == 1);
     assert(output_bytes[0] == 0xCC && output_bytes[1] == 0xCC);
+
+    reset(0, false, 1);
+    result = encrypt_read(output_bytes, 0xFFFFFFFFu, 1, &file_under_test);
+    if (result != 0) return 86;
+    assert(alloc_calls == 1 && last_alloc_size == 0);
+    assert(read_calls == 1 && last_read_size == 0 && last_read_count == 1);
+    assert(last_read_file == &file_under_test && free_calls == 1);
+    assert(output_bytes[0] == 0xCC && output_bytes[1] == 0xCC);
     return 0;
 }
 
@@ -181,7 +208,8 @@ static int test_read_failure_frees_buffer() {
 int main(int argc, char **argv) {
     assert(argc == 2);
     if (std::strcmp(argv[1], "even") == 0) return test_even_pairs();
-    if (std::strcmp(argv[1], "odd") == 0) return test_odd_padded_tail();
+    if (std::strcmp(argv[1], "odd") == 0) return test_odd_tail_suppresses_padding_store();
+    if (std::strcmp(argv[1], "five") == 0) return test_five_byte_tail_after_two_full_pairs();
     if (std::strcmp(argv[1], "single") == 0) return test_single_byte_suppresses_second_store();
     if (std::strcmp(argv[1], "zero-overflow") == 0) return test_zero_and_unsigned_product_overflow();
     if (std::strcmp(argv[1], "allocation-failure") == 0) return test_allocation_failure();
@@ -202,17 +230,14 @@ def projected(body: str) -> str:
     return HARNESS.replace("// ACTUAL_SOURCE", body)
 
 
-def decrementing_remaining_mutant(body: str) -> str:
-    assert body.count("if (total > 1)") == 1, "expected the admitted total-size guard"
-    mutant = body.replace("if (total > 1)", "if (remaining > 1)", 1)
-    dst_line = re.search(r"(?m)^[ \t]*unsigned char \*dst = [^;]+;[ \t]*$", mutant)
-    assert dst_line is not None, "expected destination initialization"
-    mutant = (mutant[:dst_line.end()] + "\n    unsigned int remaining = total;"
-              + mutant[dst_line.end():])
-    store_advance = "        dst = next;"
-    assert mutant.count(store_advance) == 1, "expected one decoded-pair advance"
-    mutant = mutant.replace(store_advance,
-                            store_advance + "\n        remaining -= 2;", 1)
+def unchanged_total_mutant(body: str) -> str:
+    assert body.count("if (remaining > 1)") == 1, "expected the pinned remaining-count guard"
+    declaration = "    unsigned int remaining = total;\n"
+    decrement = "        remaining -= 2;\n"
+    assert body.count(declaration) == 1, "expected the unsigned remaining count"
+    assert body.count(decrement) == 1, "expected the pinned per-pair decrement"
+    mutant = body.replace("if (remaining > 1)", "if (total > 1)", 1)
+    mutant = mutant.replace(declaration, "", 1).replace(decrement, "", 1)
     return mutant
 
 
@@ -244,15 +269,16 @@ def run_case(binary: Path, name: str) -> subprocess.CompletedProcess:
 
 def test_published_encrypt_read_actual_source_contracts(tmp_path):
     binary = compile_fixture(tmp_path, actual_definition())
-    for case in ("even", "odd", "single", "zero-overflow", "allocation-failure", "read-failure"):
+    for case in ("even", "odd", "five", "single", "zero-overflow", "allocation-failure", "read-failure"):
         result = run_case(binary, case)
         assert result.returncode == 0, f"{case}:\n{result.stdout}{result.stderr}"
 
 
-def test_old_decrementing_remaining_mutant_fails_odd_tail_assertion(tmp_path):
+def test_old_unchanged_total_mutant_fails_odd_tail_assertion(tmp_path):
     body = actual_definition()
-    mutant = decrementing_remaining_mutant(body)
+    mutant = unchanged_total_mutant(body)
     binary = compile_fixture(tmp_path, mutant)
-    result = run_case(binary, "odd")
-    assert result.returncode == 86, "expected the odd-tail output witness to reject the old mutant"
-    assert result.stdout == "" and result.stderr == "", "mutant failed outside the intended output assertion"
+    for case in ("odd", "five"):
+        result = run_case(binary, case)
+        assert result.returncode == 86, "expected the odd-tail output witness to reject the old mutant"
+        assert result.stdout == "" and result.stderr == "", "mutant failed outside the intended output assertion"
