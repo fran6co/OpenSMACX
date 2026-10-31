@@ -1,0 +1,22 @@
+{
+  "author": "recovery-coordinator",
+  "base_revision": "5a8f5d57ae4a0731594b0b0864d662114d512523",
+  "editable_files": [
+    "src/string_formatting.cpp",
+    "recovery/project.json"
+  ],
+  "evidence": [
+    "Pin/actual-object/history and exact body evidence in /home/fran6co/code/OpenSMACX/.opensmacx/recovery/fast-pass-oct30ol/label-callers-map-format-oct31am-ready.json and /home/fran6co/code/OpenSMACX/.opensmacx/recovery/fast-pass-oct30ol/label-caller-netwin-redraw-oct31am-ready.json"
+  ],
+  "intent": "Bounded caller-local label source form from new independently verified matches; maximum three distinct forms; preserve all original behavior/claims",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5835152,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "easy-label-project-oct31am"
+}
