@@ -30,6 +30,7 @@ from .preservation_objects import ObjectTrial, application_objects
 from .object_source import parse_objects
 from .literal_source import parse_literals
 from .shared_source import parse_shared
+from .generated_member_source import parse_generated_members
 from .import_source import parse_imports
 from .records import parse_json, read_json
 from .source_config import SourceConfiguration
@@ -58,6 +59,11 @@ def _bindings(root, files, source, pin):
             # Shared methods have distinct preservation identities, while the
             # evidence anchor determines editing scope. Do not merge siblings
             # under the single canonical original-function selection key.
+            rows[item.interpretation_id].append({"unit": name, "symbol": item.symbol,
+                "spans": ((item.span.start, item.span.end),), "body": None,
+                "byte_obligation": False, "shape_obligation": False, "scope_entity": item.evidence.entity_id})
+        for item in parse_generated_members(raw.decode("utf-8", errors="replace"), name, pin,
+                                           address_space=source.address_space):
             rows[item.interpretation_id].append({"unit": name, "symbol": item.symbol,
                 "spans": ((item.span.start, item.span.end),), "body": None,
                 "byte_obligation": False, "shape_obligation": False, "scope_entity": item.evidence.entity_id})
@@ -100,6 +106,7 @@ def _outside_annotations(files, source, pin, selected):
             add({"kind": "import", **{key: value for key, value in asdict(item).items() if key != "line"}})
         for kind, parser in (("object", parse_objects), ("member", parse_members),
                              ("base", parse_bases), ("generated", parse_generated), ("shared", parse_shared),
+                             ("generated_member", parse_generated_members),
                              ("literal", parse_literals)):
             for item in parser(text, name, pin, address_space=source.address_space):
                 # Bounded objects belong to their explicit evidence anchor,
@@ -107,7 +114,11 @@ def _outside_annotations(files, source, pin, selected):
                 # unbounded identities have no anchor and retain origin scope.
                 anchor = (item.evidence or item.origin) if kind == "object" else item.evidence
                 if anchor.entity_id not in selected:
-                    value = {"kind": kind, **{key: value for key, value in asdict(item).items() if key not in ("line", "body_error")}}
+                    facts = {key: value for key, value in asdict(item).items()
+                             if key not in ("line", "body_error", "compiler_unit", "context_error")}
+                    if kind == "generated_member":
+                        facts["member_kind"] = facts.pop("kind")
+                    value = {"kind": kind, **facts}
                     add(value)
         if name.endswith(".recovery.h"):
             for manifest in parse_components({name: text}):
@@ -127,12 +138,12 @@ def _symbol_sources(bindings, annotations, selected):
             if row.get("scope_entity", entity) in selected:
                 index["scoped-entry:" + entity].append(value)
     for row in annotations.values():
-        if row["kind"] in ("object", "generated"):
+        if row["kind"] in ("object", "generated", "generated_member"):
             entity = Origin(**row["origin"]).entity_id
             value = {"kind": row["kind"], "entity_id": entity,
-                     "source": row["unit"] if row["kind"] == "object" else row["path"],
+                     "source": row["unit"] if row["kind"] in ("object", "generated_member") else row["path"],
                      "task_scope": entity in selected}
-            if row["kind"] == "generated":
+            if row["kind"] in ("generated", "generated_member"):
                 value["evidence_entity_id"] = Origin(**row["evidence"]).entity_id
             index[row["symbol"]].append(value)
             current_target = row.get("parent_symbol") or row.get("target_symbol")

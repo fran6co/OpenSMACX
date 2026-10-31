@@ -68,7 +68,9 @@ class SharedFunctionBinding:
 
 
 def parse_shared(text, path, pin, *, address_space):
-    from .source.reader import _block_state_after, _extract_forward_text, _is_placeholder_region
+    from .source.reader import (_block_state_after, _brace_delta, _extract_forward_text,
+                                _is_placeholder_region, function_line)
+    from .source.mangled import identifier, qualified_name
 
     lines = text.splitlines()
     locations, in_block = [], False
@@ -91,8 +93,39 @@ def parse_shared(text, path, pin, *, address_space):
             region = _extract_forward_text(lines[index:stop], 1, symbol, in_block=in_block)
             if _is_placeholder_region(region):
                 error = "unfinished shared source placeholder"
+            else:
+                # A shared annotation is attached to a method definition.
+                # Merely finding a brace-delimited region allowed a marker at
+                # class scope to borrow the containing class braces and then
+                # masquerade as an implicit member body.
+                qualified = qualified_name(symbol)
+                method = qualified.rsplit("::", 1)[-1] if "::" in qualified else identifier(symbol)
+                definition_line = None
+                if method:
+                    try:
+                        definition_line = function_line(region, method)
+                    except ValueError:
+                        pass
+                in_region_block = False
+                region_lines = region.splitlines()
+                limit = definition_line if definition_line is not None else len(region_lines)
+                class_before_definition = False
+                for source_line in region_lines[:limit]:
+                    code = _brace_delta(source_line, in_region_block)[3]
+                    in_region_block = _block_state_after(source_line, in_region_block)
+                    if re.search(r"\b(?:class|struct)\s+[A-Za-z_]", code):
+                        class_before_definition = True
+                        break
+                if class_before_definition:
+                    error = ("shared source annotation is attached at class scope"
+                             if definition_line is not None else
+                             "shared source binding has no method definition body")
         except ValueError:
-            error = "shared source binding has no body region"
+            following = "\n".join(lines[index + 1:stop])
+            if re.search(r"\b(?:class|struct)\s+[A-Za-z_]", following):
+                error = "shared source binding has no method definition body"
+            else:
+                error = "shared source binding has no body region"
         origin = Origin(pin, address_space, int(start, 16))
         bindings.append(SharedFunctionBinding(origin, Span(origin.address, int(end, 16)), symbol,
                         Origin(pin, address_space, int(evidence, 16)), path, index + 1, error))
@@ -116,6 +149,14 @@ def read_shared(root: Path, pin: str, *, contents=None):
     return tuple(bindings)
 
 
+def read_shared_bindings(root: Path, pin: str, *, contents=None):
+    """Read body-backed shared methods and declaration-anchored generated members."""
+    from .generated_member_source import read_generated_members
+
+    return (*read_shared(root, pin, contents=contents),
+            *read_generated_members(root, pin, contents=contents))
+
+
 def resolve_shared_contexts(root: Path, bindings, *, settings, contents=None, source_records=None):
     """Derive each shared definition's compiler TU from its mapped evidence.
 
@@ -132,8 +173,9 @@ def resolve_shared_contexts(root: Path, bindings, *, settings, contents=None, so
     configuration = SourceConfiguration.read(root)
     if not hasattr(settings, "unit_extensions") or not hasattr(settings, "source"):
         raise TypeError("shared compiler-context resolution requires project measurement settings")
+    from .generated_member_source import GeneratedMemberBinding
     needs_witnesses = any(Path(binding.unit).suffix in configuration.interface_extensions
-                          for binding in bindings)
+                          or isinstance(binding, GeneratedMemberBinding) for binding in bindings)
     if source_records is None and needs_witnesses:
         source_records = []
         for path in configuration.files(root):
@@ -146,7 +188,25 @@ def resolve_shared_contexts(root: Path, bindings, *, settings, contents=None, so
     source_records = source_records or ()
     resolved = []
     for binding in bindings:
-        if Path(binding.unit).suffix not in configuration.interface_extensions:
+        if isinstance(binding, GeneratedMemberBinding):
+            from .source import State
+            from .source.mangled import qualified_name
+
+            witnesses = [record for record in source_records
+                         if record.address == binding.evidence.address]
+            constructors = [record for record in witnesses
+                            if (record.symbol or record.name).startswith("??0")
+                            and qualified_name(record.symbol or record.name).rsplit("::", 1)[0] == binding.owner]
+            if len(witnesses) != 1 or len(constructors) != 1:
+                resolved.append(replace(binding, compiler_unit=None,
+                    context_error="generated member evidence is missing or ambiguous for its class constructor"))
+                continue
+            if constructors[0].state != State.IMPLEMENTED:
+                resolved.append(replace(binding, compiler_unit=None,
+                    context_error="generated member evidence constructor is not an implemented source body"))
+                continue
+        if (not isinstance(binding, GeneratedMemberBinding)
+                and Path(binding.unit).suffix not in configuration.interface_extensions):
             resolved.append(replace(binding, compiler_unit=binding.unit, context_error=None))
             continue
         witnesses = [record for record in source_records
@@ -259,6 +319,22 @@ def validate_shared(bindings, view, *, reserved=()):
             raise ValueError("shared dependency body requires component verification")
         if binding.evidence.entity_id not in entities:
             raise ValueError("shared body evidence anchor has no original mapping")
+
+
+def validate_shared_bindings(bindings, view, *, reserved=()):
+    from .generated_member_source import GeneratedMemberBinding, validate_generated_members
+
+    validate_shared(bindings, view, reserved=reserved)
+    validate_generated_members([item for item in bindings if isinstance(item, GeneratedMemberBinding)], view)
+
+
+def resolve_shared_bindings(root: Path, pin: str, *, settings, view, contents=None,
+                            source_records=None, reserved=()):
+    bindings = read_shared_bindings(root, pin, contents=contents)
+    resolved = resolve_shared_contexts(root, bindings, settings=settings, contents=contents,
+                                       source_records=source_records)
+    validate_shared_bindings(resolved, view, reserved=reserved)
+    return resolved
 
 
 def referenced_shared_units(bindings, objects):

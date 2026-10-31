@@ -143,7 +143,8 @@ def check_requirements(inventory, candidate):
     binary_graph_required = ("unit_flag_sets" in reports["binary"] and any(
         item["current"] and item["value"].get("kind") in {
             "compiler_generated_vtable", "compiler_generated_vbtable",
-            "object_initial_data", "tu_private_literal", "shared_function_body"}
+            "object_initial_data", "tu_private_literal", "shared_function_body",
+            "compiler_generated_complete_destructor", "compiler_generated_deleting_destructor"}
         for item in known.values()))
     graph_grids = {
         name: _graph_trial_grid(report, grids[name][0], grids[name][1],
@@ -235,7 +236,9 @@ def check_requirements(inventory, candidate):
                                                                          "compiler_generated_vbtable"}),
                                        ("binary", "object_definitions", {"object_initial_data"}),
                                        ("binary", "literal_definitions", {"tu_private_literal"}),
-                                       ("binary", "shared_functions", {"shared_function_body"})):
+                                       ("binary", "shared_functions", {"shared_function_body",
+                                            "compiler_generated_complete_destructor",
+                                            "compiler_generated_deleting_destructor"})):
         for row in reports[backend].get(collection, []):
             key = row.get("interpretation_id")
             if key is None:
@@ -258,7 +261,8 @@ def check_requirements(inventory, candidate):
                                Result(row.get("content", Result.UNKNOWN))))
                 reason = row.get("reason", row.get("proof", {}).get("reason", "table definition and bounded contents compared"))
                 source = row.get("source")
-            elif kind == "shared_function_body":
+            elif kind in ("shared_function_body", "compiler_generated_complete_destructor",
+                          "compiler_generated_deleting_destructor"):
                 result = Result(row["result"])
                 reason = row.get("reason", "shared body bytes, extent and references compared independently")
                 source = row.get("source")
@@ -291,7 +295,9 @@ def check_requirements(inventory, candidate):
                    "compiler_generated_vtable": "binary", "compiler_generated_vbtable": "binary",
                    "object_initial_data": "binary",
                    "tu_private_literal": "binary",
-                   "shared_function_body": "binary"}.get(kind)
+                   "shared_function_body": "binary",
+                   "compiler_generated_complete_destructor": "binary",
+                   "compiler_generated_deleting_destructor": "binary"}.get(kind)
         row = {"interpretation_id": key, "entity_id": item["entity_id"], "kind": kind,
                "current": item["current"], "requirement": item["value"], "result": Result.UNKNOWN,
                "counts": {state.value: 0 for state in Result}, "trials": []}
@@ -307,10 +313,13 @@ def check_requirements(inventory, candidate):
                 generated_units, _, generated_gap = generated_grid
                 units = sorted(set(units) | set(generated_units))
                 gap = gap or generated_gap
-            if kind in ("object_initial_data", "shared_function_body", "tu_private_literal"):
+            if kind in ("object_initial_data", "shared_function_body", "tu_private_literal",
+                        "compiler_generated_complete_destructor", "compiler_generated_deleting_destructor"):
                 wanted = set(expected_pairs)
                 owner_collection = {"object_initial_data": "object_owners", "shared_function_body": "shared_owners",
-                                    "tu_private_literal": "literal_owners"}[kind]
+                                    "tu_private_literal": "literal_owners",
+                                    "compiler_generated_complete_destructor": "shared_owners",
+                                    "compiler_generated_deleting_destructor": "shared_owners"}[kind]
                 owners = reports[backend].get(owner_collection, [])
                 if not isinstance(owners, list) or any(not isinstance(owner, dict) or set(owner) != {"interpretation_id", "unit"}
                         or not isinstance(owner["unit"], str) or not owner["unit"] for owner in owners):
@@ -318,8 +327,14 @@ def check_requirements(inventory, candidate):
                 units = [owner["unit"] for owner in owners if owner["interpretation_id"] == key]
                 if len(units) != 1:
                     gap = "requires one source-owned measurement host"
-                elif kind == "shared_function_body" and units != [item["value"].get("unit")]:
-                    gap = "shared body measurement host disagrees with source interpretation"
+                elif kind in ("shared_function_body", "compiler_generated_complete_destructor",
+                              "compiler_generated_deleting_destructor"):
+                    source_unit = item["value"].get("unit")
+                    if any(row.get("source", {}).get("path") != source_unit
+                           or row.get("compiler_context") != units[0]
+                           for row in reports[backend].get("shared_functions", [])
+                           if row.get("interpretation_id") == key):
+                        gap = "shared measurement host or source anchor disagrees with interpretation"
                 if kind == "tu_private_literal":
                     owner = item["value"].get("unit")
                     if units != [owner] or any(unit != owner for unit, _ in observed):
@@ -347,8 +362,11 @@ def check_requirements(inventory, candidate):
             units = sorted(set(units) | {unit for unit, _ in observed} | {unit for unit, _ in table_coverage})
             if "unit_flag_sets" not in reports[backend]:
                 legacy_trials = tuple(tuple(flags) for flags in reports[backend].get("flag_sets", []))
-                if kind not in ("object_initial_data", "shared_function_body", "tu_private_literal"):
-                    wanted.update((unit, flags) for unit in units for flags in legacy_trials)
+            if ("unit_flag_sets" not in reports[backend]
+                    and kind not in ("object_initial_data", "shared_function_body", "tu_private_literal",
+                                    "compiler_generated_complete_destructor", "compiler_generated_deleting_destructor")):
+                legacy_trials = tuple(tuple(flags) for flags in reports[backend].get("flag_sets", []))
+                wanted.update((unit, flags) for unit in units for flags in legacy_trials)
             for witness in sorted(wanted | observed.keys()):
                 trial = observed.get(witness)
                 absence = absences.get((item["value"].get("class_name"), *witness)) if backend == "layout" else None

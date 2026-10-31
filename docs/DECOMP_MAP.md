@@ -424,6 +424,40 @@ passing bytes do not establish semantic names, prototypes or complete hierarchy.
 Removal, rehoming or reinterpretation retains task-history review requirements.
 Variant decks may change bodies but cannot change these binding decisions.
 
+## Compiler-generated implicit destructor members
+
+`// RECOVERY_GENERATED_MEMBER: v1 <complete_destructor|deleting_destructor>
+<start> <end> <emitted-symbol> <constructor-evidence-address>` binds an
+implicit compiler-generated destructor entry to one actual class declaration.
+Place one or more markers immediately before that declaration. End is
+exclusive; addresses use `0x` notation. This is a source-owned interpretation,
+not another `ORIGINAL` identity, claim, C++ body, thunk, or linker alias.
+
+The emitted symbol must be a supported MSVC complete destructor (`??1`) or
+scalar deleting destructor (`??_G`) whose decoded class owner matches the
+anchored global class. The evidence address must name one mapped, implemented
+constructor of that same class. A `complete_destructor` interpretation is
+valid only when the class does not declare a destructor; a `deleting_destructor`
+may exist with an explicit destructor. Unsupported ABI names, missing or
+ambiguous classes/constructors, macro-generated members, conditional class
+definitions, and unsupported lexical contexts refuse instead of guessing.
+Conventional `#pragma once` and file-wide `#ifndef` include guards are
+understood. Current support is limited to unqualified global class declarations.
+
+The source path, class owner, kind, original span, emitted symbol, and
+constructor evidence define the stable interpretation. The annotation line is
+diagnostic only. For header declarations, the compiler context is derived from
+the mapped constructor's configured recipe; an absent or ambiguous carrier
+remains unknown. The native shared-function checker proves every observed
+external definition and requires that derived carrier. A missing definition or
+one bad duplicate cannot borrow a passing copy. These checks establish a
+bounded emitted-code correspondence, not complete class layout, lifetime,
+linker selection, runtime behavior, or project acceptance.
+
+This is separate from `RECOVERY_GENERATED`, which remains limited to vtables
+and vbtables, and from `RECOVERY_SHARED`, which requires an authored method
+definition. A class declaration's braces cannot serve as a shared method body.
+
 ## The grammar
 
 One marker, valid in any comment form (`//` or inside `/* */`); the whole

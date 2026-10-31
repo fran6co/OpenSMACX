@@ -24,6 +24,7 @@ from .source.reader import read_text
 from .source_config import SourceConfiguration
 from .source_inventory import image_pin
 from .shared_source import parse_shared
+from .generated_member_source import parse_generated_members
 
 
 def _input_identity(path, root, directory):
@@ -117,7 +118,7 @@ def _bound_names(root):
         for record in read_text(text, path):
             names.update((record.name, record.symbol))
         relative = path.relative_to(root).as_posix()
-        for parse in (parse_objects, parse_shared, parse_generated):
+        for parse in (parse_objects, parse_shared, parse_generated, parse_generated_members):
             for item in parse(text, relative, pin, address_space=configuration.address_space):
                 names.add(item.symbol)
                 if getattr(item, "parent_symbol", None) is not None:

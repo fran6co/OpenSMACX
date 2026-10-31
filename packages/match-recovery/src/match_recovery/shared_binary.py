@@ -21,6 +21,7 @@ def check_shared(bindings, objects, image, external_targets, *, import_targets=N
             carrier = binding.object_unit
             base = {"interpretation_id": binding.interpretation_id, "entity_id": binding.origin.entity_id,
                     "evidence_entity_id": binding.evidence.entity_id, "symbol": binding.symbol,
+                    "interpretation_kind": binding.interpretation["kind"],
                     "address": f"0x{binding.origin.address:08X}",
                     "source": {"path": binding.unit, "line": binding.line}}
             copies, copy_proofs = [], []
