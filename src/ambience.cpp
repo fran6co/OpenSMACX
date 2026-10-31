@@ -44,11 +44,6 @@ int AmbienceCurrentEffect = -1;
 // RECOVERY_OBJECT: v1 0x0074C5E4 ?AmbienceTransitionMarker@@3HA
 int AmbienceTransitionMarker = 0;
 
-// ORIGINAL: 0x00448390 sub_448390 0x00448390-0x004483B1 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned Ambience constructor 0x004C8460 publishes final table 0x66E664 at 0x004C850F; slot 2 at 0x66E66C selects 0x00448390.", "This entry calls the Ambience complete-destructor tail 0x004483C0 and conditionally deletes storage according to the original flag bit.", "The earlier table 0x66E538 staged at 0x004C84EF is the Midi base view. Its slot 2 selects the distinct 0x004C9330, now mapped to the emitted Midi deleting symbol in src/sound.cpp.", "src/ambience.h leaves the derived destructor implicit over Midi. The compiler emits the Ambience deleting symbol with its constructor in src/sound.cpp; its class table slot selects that real generated lifetime."], "reason": "Bind the final Ambience deleting entry to its genuine compiler-generated derived lifetime, distinct from the Midi base entry. Preserve its original identity and historical exactness obligation."}
-// compile_context src/sound.cpp
-// symbol    ??_GAmbience@@UAEPAXI@Z
-// kind      game
 
 // ORIGINAL: 0x004483C0 j_??1Ambience@@QAE@XZ 0x004483C0-0x004483C5 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned final Ambience table slot 2 selects 0x00448390, which calls 0x004483C0.", "Pinned 0x004483C0 is a five-byte tail to 0x004C7670, the full destructor now recovered as Midi::~Midi in src/sound.cpp.", "src/ambience.h leaves the Ambience destructor implicit over Midi. Its compiler-generated complete stage tail-calls Midi::~Midi without an intervening derived-table store; the class deleting path retains that stage.", "Historical TRIED prose predates class-stage identification. No new bare-jump wrapper or substitute source behavior is introduced."], "reason": "Bind the original destructor tail to the real compiler-generated empty Ambience derived stage, which delegates destruction to Midi. Preserve the historical catalog and TRIED note as provenance, not current class identification."}
