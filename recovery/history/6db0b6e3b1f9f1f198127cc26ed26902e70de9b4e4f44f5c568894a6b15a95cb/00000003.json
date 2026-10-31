@@ -1,0 +1,17 @@
+{
+  "event_id": "9dbd95c9a6ee1f1b6f6329d97ff2c33b499ce4209952d44908f49513f39b0012",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "original-dword-checksum-flags",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/game.cpp net_upkeep now declares int mismatch_seen[NetTurnChecksumWords] and retains sizeof-based memset plus original callback/loop/order. Historical source mappings and claims unchanged. No flags/padding/volatile or forced frame tweaks; restoration and strict verification remain required."
+    ]
+  },
+  "previous_event": "ea4ce2208e32a7eec0c68efa55819acc555d6c62a21a16cfe37c65f6d6eaaf59",
+  "request_id": "incorporate-dword-checksum-flags",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:object-boundaries-oct31ck"
+}
