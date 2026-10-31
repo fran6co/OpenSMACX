@@ -1,0 +1,28 @@
+{
+  "event_id": "dc75d87e980bf04218a8397eece056397ab1e89b09135f4c9fb6bda087bda8a5",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_terraform_live_map_nov01cn.py",
+      "src/terraforming.cpp"
+    ],
+    "evidence": [
+      "Coordinator batches a separate proven Map lookup/snapshot correction with BOOM so both owners share one full build/link checkpoint; the original baseline remains1e657668.",
+      "Pinned56550A/565514 reload the tile after facility checks;565872 retains altitude before crop_yield and565880 consumes it afterward. Later565987..5659A4,565C15..565C59,565E6A..565E90 refresh the map for monolith/farm/forest member reads. The entry-cached source tile/bit and late altitude read do not preserve those phases.",
+      "Authorize one minimal source candidate after independent phase review. Keep each original retained snapshot and fresh lookup in its correct phase, preserve all fields/quirks/claims, and add only focused actual-source timing controls. No broad replacement of every tile read."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5657376,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "can-terraform-live-map-nov01cn",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:boom-live-state-nov01cn"
+}

@@ -1,0 +1,26 @@
+{
+  "author": "coordinator",
+  "base_revision": "1e6576684c92f4a922b72e87066e300beb86f71e",
+  "editable_files": [
+    "src/veh.cpp",
+    "recovery/tests/test_boom_live_window_reload_oct21.py",
+    "recovery/tests/test_boom_live_state_nov01cn.py"
+  ],
+  "evidence": [
+    "Pinned505594..505842 contains sequential independent weapon tests with repeated prototype/weapon reads after possible g_FX.play calls; the current captured switch drops those callback-visible reads.",
+    "Pinned505533..505540 reads Flic header.frames_ WORD at90F482 on each loop latch rather than only before the animation.",
+    "Pinned505C6B..505C7E and505C8A..505CA0 use ConsoleGlobal Buffer receiver for set_clip, not the static working_buffer.",
+    "Coordinator authorizes one combined faithful source candidate after independent original operand review. Preserve all original quirks, loop ordering, index domains, historical identities/claims and the integrated coordinate correction. Existing Flic/Buffer/FX APIs suffice unless evidence requires scope expansion; no layout inventions or flags changes."
+  ],
+  "intent": "Recover BOOM live callback-visible state and Console Buffer clip receivers from pinned instruction evidence.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5261984,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "boom-live-state-nov01cn"
+}

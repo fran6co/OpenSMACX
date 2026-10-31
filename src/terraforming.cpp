@@ -350,7 +350,11 @@ int __cdecl can_terraform(int faction_id, int x, int y, int force_improve, int b
         && PlayersData[faction_id].ai_fight < 0 && !is_human(faction_id)) {
         forest_value++;   // a growth-only AI plan likes forest one point more
     }
-    int altitude = altitude_at(x, y);
+    // 56550A..56551E: resolve this phase after the facility queries; the
+    // land arm retains this same climate byte and tile for rainfall/rockiness.
+    Map *const terrain_tile = map_loc(x, y);
+    const uint32_t terrain_climate = terrain_tile->climate;
+    int altitude = static_cast<int>(terrain_climate & ~0x1F);
     if (altitude < ALT_BIT_SHORE_LINE) {
         // ---- water ---------------------------------------------------------
         if (has_fungus) {
@@ -436,11 +440,12 @@ int __cdecl can_terraform(int faction_id, int x, int y, int force_improve, int b
     }
     // ---- land --------------------------------------------------------------
     // Rainfall runs arid, moist, rainy.
-    int rainfall = (tile->climate >> 3) & 3;
-    int rockiness = tile->val3 >> 6;           // ROCKINESS_FLAT / ROLLING / ROCKY
+    int rainfall = (terrain_climate >> 3) & 3;
+    int rockiness = terrain_tile->val3 >> 6;           // ROCKINESS_FLAT / ROLLING / ROCKY
     int order = ORDER_NONE;
     int crop = crop_yield(faction_id, -1, x, y, 0);
-    int elev = alt_at(x, y) - 2;               // levels above the shore line; never zero
+    // 565872/565880: elevation retains the same pre-crop climate snapshot.
+    int elev = static_cast<int>(terrain_climate >> 5) - 2;
     if (elev < 0) {
         elev = 0;
     }
@@ -466,7 +471,8 @@ int __cdecl can_terraform(int faction_id, int x, int y, int force_improve, int b
         return has_tech(Terraforming[TERRA_REMOVE_FUNGUS].prerequisite_tech[1], faction_id)
             ? ORDER_REMOVE_FUNGUS : ORDER_NONE;
     }
-    if (bit & BIT_MONOLITH) {
+    // 565987..5659A4: read the tile again after the intervening queries.
+    if (bit_at(x, y) & BIT_MONOLITH) {
         return ORDER_NONE;
     }
     if (has_forest && value <= forest_value) {
@@ -536,27 +542,31 @@ int __cdecl can_terraform(int faction_id, int x, int y, int force_improve, int b
         }
     }
     if (has_tech(Terraforming[TERRA_FARM].prerequisite_tech[0], faction_id) && !has_farm
-        && rockiness < ROCKINESS_ROCKY
-        && !(bit & BIT_THERMAL_BORE)
-        && (tile->bit2 & (BIT2_UNK_80000000 | BIT2_VOLCANO)) != BIT2_VOLCANO
-        && !(bit & BIT_ECH_MIRROR)
-        && (crop < 2 || has_tech(Rules.tech_three_nutrients_sqr, faction_id)
-            || bonus == 1 /* nutrient */)) {
-        if (has_solar || has_mine) {
-            order = ORDER_FARM;
-        }
-        BOOL forced_farm = false;
-        if (base_id >= 0 && (Bases[base_id].state & BSTATE_UNK_4000)) {
-            order = ORDER_FARM;
-        } else if (order == ORDER_SOLAR_COLLECTOR) {
-            if (crop < 2) {
+        && rockiness < ROCKINESS_ROCKY) {
+        // 565C15..565C59: one fresh tile and bit snapshot for these guards.
+        Map *const farm_tile = map_loc(x, y);
+        const uint32_t farm_bits = farm_tile->bit;
+        if (!(farm_bits & BIT_THERMAL_BORE)
+            && (farm_tile->bit2 & (BIT2_UNK_80000000 | BIT2_VOLCANO)) != BIT2_VOLCANO
+            && !(farm_bits & BIT_ECH_MIRROR)
+            && (crop < 2 || has_tech(Rules.tech_three_nutrients_sqr, faction_id)
+                || bonus == 1 /* nutrient */)) {
+            if (has_solar || has_mine) {
                 order = ORDER_FARM;
             }
-        } else if (order == ORDER_NONE) {
-            forced_farm = true;
-        }
-        if (forced_farm || rainfall < 2) {
-            order = ORDER_FARM;
+            BOOL forced_farm = false;
+            if (base_id >= 0 && (Bases[base_id].state & BSTATE_UNK_4000)) {
+                order = ORDER_FARM;
+            } else if (order == ORDER_SOLAR_COLLECTOR) {
+                if (crop < 2) {
+                    order = ORDER_FARM;
+                }
+            } else if (order == ORDER_NONE) {
+                forced_farm = true;
+            }
+            if (forced_farm || rainfall < 2) {
+                order = ORDER_FARM;
+            }
         }
     }
     if (has_tech(Terraforming[TERRA_SOIL_ENR].prerequisite_tech[0], faction_id) && has_farm
@@ -620,7 +630,8 @@ int __cdecl can_terraform(int faction_id, int x, int y, int force_improve, int b
         && rockiness < ROCKINESS_ROCKY && !has_mine && !has_forest
         && (!has_farm || (!elev && rainfall < 2 && !is_human(faction_id)))
         && !is_special
-        && (tile->bit2 & (BIT2_UNK_80000000 | BIT2_VOLCANO)) != BIT2_VOLCANO
+        // 565E6A..565E90: a fresh lookup at the final forest predicate.
+        && (bit2_at(x, y) & (BIT2_UNK_80000000 | BIT2_VOLCANO)) != BIT2_VOLCANO
         && plant_value < forest_value
         && (!is_human(faction_id)
             || (faction_id == ConsoleGlobal.faction_id_
