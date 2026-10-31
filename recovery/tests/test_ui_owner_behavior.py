@@ -146,6 +146,12 @@ def bodies() -> dict[str, str]:
         if relative not in texts:
             texts[relative] = (ROOT / relative).read_text(encoding="utf-8")
         out[name] = _extract_definition(texts[relative], signature)
+    prefixes = []
+    for name in ("NewTechBlurbSectionPrefix", "NewTechLongSectionPrefix"):
+        declarations = re.findall(r"^static const char " + name + r"\[\] = [^;]+;", texts["src/newtechwin.cpp"], re.MULTILINE)
+        assert len(declarations) == 1, "source-owned NewTech prefix missing"
+        prefixes.append(declarations[0])
+    out["newtech_group"] = "\n".join(prefixes) + "\n" + out["newtech_group"]
     return out
 
 

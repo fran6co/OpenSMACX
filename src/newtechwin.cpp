@@ -553,6 +553,12 @@ uint8_t NewTechSpritesCleanupGuard;
 // RECOVERY_OBJECT: v3 0x00822610 0x00822718 ?g_NEWTECHWIN_SPRITES@@3PAVSprite@@A 0x00453A70 member ?NewTechSpritesOwner@@3UNewTechSpriteLifetime@@A storage_.bytes
 NewTechSpriteLifetime NewTechSpritesOwner;
 
+// Equal section prefixes have separate original storage for the two branches.
+// RECOVERY_OBJECT: v2 0x00686968 0x0068696D _NewTechBlurbSectionPrefix 0x00483EB0
+static const char NewTechBlurbSectionPrefix[] = "TECH";
+// RECOVERY_OBJECT: v2 0x00686970 0x00686975 _NewTechLongSectionPrefix 0x00483EB0
+static const char NewTechLongSectionPrefix[] = "TECH";
+
 // ORIGINAL: 0x00483EB0 ?on_group_clicked@NewTechWin@@QAEXHH@Z 0x00483EB0-0x00483F8C BYTE_EXACT
 // RECOVERY_BINDING: v1 {"reason":"Recover the complete body in its genuine C++ owner, with real embedded members, shared virtual bases, lifecycle and parent operations. Compiler-generated overrides/adjustors replace executable-address or vbtable stand-ins; no current matching claim is granted.","evidence":["git:de91fffe:src/unrecovered/00483eb0.cpp","image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf","recovery/tasks/ui-eight-owner-coverage.json","Original entry 0x00483eb0; physical VC6 COFF emitted symbol ?on_group_clicked@NewTechWin@@QAEXHH@Z."]}
 // symbol    ?on_group_clicked@NewTechWin@@UAEXHH@Z
@@ -562,7 +568,7 @@ void NewTechWin::on_group_clicked(int, int group) {
     switch (group) {
     case 1:
         StringTemp[0] = '\0';
-        strcat(StringTemp, "TECH");
+        strcat(StringTemp, NewTechBlurbSectionPrefix);
         _itoa(static_cast<int>(field_B24_), number, 10);
         strcat(StringTemp, number);
         stringBox2_.clear();
@@ -570,7 +576,7 @@ void NewTechWin::on_group_clicked(int, int group) {
         break;
     case 2:
         StringTemp[0] = '\0';
-        strcat(StringTemp, "TECH");
+        strcat(StringTemp, NewTechLongSectionPrefix);
         _itoa(static_cast<int>(field_B24_), number, 10);
         strcat(StringTemp, number);
         stringBox2_.clear();
@@ -603,5 +609,4 @@ Status: Complete
 void NewTechWin::on_button_clicked(int) {
   release_modal();
 }
-// RECOVERY_LITERAL: v1 0x00686970 0x00686975 ??_C@_04GLCI@TECH?$AA@ 0x00483EB0
 // RECOVERY_LITERAL: v1 0x00686978 0x00686982 ??_C@_09EDHP@techlongs?$AA@ 0x00483EB0
