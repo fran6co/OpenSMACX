@@ -1,0 +1,20 @@
+{
+  "event_id": "992a576aad6811b28f1dd2f189dce3864b6cf66a7af758e9e985e50880fbf9ae",
+  "payload": {
+    "affects": [
+      "entity-546c2a42d275b8a5e1f0a466a9395421124e340fe373c4b74a6dd49114355002"
+    ],
+    "author": "coordinator",
+    "discovery_id": "center-map-lookup-after-owner-query",
+    "evidence": [
+      "Pinned465168 calls whose_territory,46517B reloads MapLongitude,465182 multiplies savedY,4651A5 adds savedXhalf,4651B2 reloads map allocation94A30C and4651B8 reads region+3. Qualified CK COFF instead reloads only entry-cached tile pointer. Actual whose_territory with base_id0 is read-only; injected host mutations check ordering, not a claim of such runtime side effects."
+    ],
+    "hypothesis": "The original center-region cache uses a fresh post-query map-width and allocation-base lookup, not the entry-cached tile pointer.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "center-map-lookup-after-owner-query",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:object-storage-oct31cl"
+}

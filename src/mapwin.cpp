@@ -4507,7 +4507,9 @@ border_dim:
                 territory_mask[8] = 0;
                 local_44 = 0;
                 territory_mask[9] = 0;
-                local_c0 = (uint32_t)tile->contour;
+                // Original 0x0046517B/0x004651B2 reload the map width/base
+                // after whose_territory, then cache the center's region (+3).
+                local_c0 = (uint32_t)region_at(a7, a8);
                 for (int k = 0; k < 8; k++) {
                     iVar5 = VehMoveDeltaX[k] + a7;
                     if ((MapIsFlat & 1) == 0) {
@@ -4523,9 +4525,9 @@ border_dim:
                         (map_tiles()[static_cast<int>(MapLongitude) * iVar19 + (iVar5 >> 1)]
                              .climate &
                          0xe0) < 0x60 ==
-                            (tile->climate & 0xe0) < 0x60 &&
+                            (map_loc(a7, a8)->climate & 0xe0) < 0x60 &&
                         map_tiles()[static_cast<int>(MapLongitude) * iVar19 + (iVar5 >> 1)]
-                                .contour == local_c0) {
+                                .region == local_c0) {
                         uVar12 = whose_territory(
                             ConsoleGlobal.faction_id_, iVar5, iVar19, 0,
                             0);

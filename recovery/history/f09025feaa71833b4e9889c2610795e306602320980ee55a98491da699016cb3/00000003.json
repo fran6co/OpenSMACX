@@ -1,0 +1,20 @@
+{
+  "event_id": "6f6bc9726332c25b6fdc41e6c56b9aa99d9e67aca1f20a0d85fe4d801791150d",
+  "payload": {
+    "affects": [
+      "entity-546c2a42d275b8a5e1f0a466a9395421124e340fe373c4b74a6dd49114355002"
+    ],
+    "author": "coordinator",
+    "discovery_id": "fresh-center-climate-in-border-predicate",
+    "evidence": [
+      "Pinned46523B freshly loads map allocation and465244..465257 reloads stride/recomputes center climate, while qualified CK uses the entry-cached tile pointer. This is separate from the once-cached post-query center region. Actual called owner query is read-only for base_id0; injected mutations are bounded ordering controls, not reachable-game claims."
+    ],
+    "hypothesis": "The same original territory predicate recomputes center climate from the live map allocation and stride per iteration.",
+    "kind": "discovery"
+  },
+  "previous_event": "ba37fdfe559ddbab282fce2dcbd46f37bd865f9f1cda583e01e2df55a53c7dfa",
+  "request_id": "fresh-center-climate-in-border-predicate",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:object-storage-oct31cl"
+}

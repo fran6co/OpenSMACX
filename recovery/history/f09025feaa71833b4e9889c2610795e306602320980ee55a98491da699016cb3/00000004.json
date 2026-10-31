@@ -1,0 +1,17 @@
+{
+  "event_id": "ce5881485ef5e065206face49d7916c3d723e82d9d08d5fae68841bdd52fb319",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "fresh-center-climate-in-border-predicate",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/mapwin.cpp territory-mask predicate now reads map_loc(a7,a8)->climate, leaving cached center region stable and neighbor region read before its owner call. No other climate/contour expressions, headers or map ownership bindings changed."
+    ]
+  },
+  "previous_event": "6f6bc9726332c25b6fdc41e6c56b9aa99d9e67aca1f20a0d85fe4d801791150d",
+  "request_id": "incorporate-fresh-center-climate",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:object-storage-oct31cl"
+}
