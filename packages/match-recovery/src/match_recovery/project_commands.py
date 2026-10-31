@@ -136,6 +136,13 @@ def register(commands):
     measure.add_argument("--image", type=Path, required=True)
     measure.add_argument("--in", dest="in_file", help="Exact project-relative annotation host")
     measure.add_argument("--jobs", type=int, default=1, help="Concurrent TUs; must fit isolated compiler capacity")
+    diff = commands.add_parser("diff", help="Recompile one mapping and generate a source-linked assembly HTML diff")
+    diff.add_argument("target")
+    diff.add_argument("--root", type=Path, default=Path.cwd())
+    diff.add_argument("--image", type=Path, required=True)
+    diff.add_argument("--in", dest="in_file", help="Exact annotation host")
+    diff.add_argument("--output", type=Path, help="Ignored HTML destination; default build/recovery/diffs/<address>/diff.html")
+    diff.add_argument("--flag-set", type=int, default=0, help="Configured TU trial index, default 0")
     grouping = commands.add_parser("partition", help="Derive provisional ownership units, not historical TU claims")
     grouping.add_argument("--root", type=Path, default=Path.cwd())
     grouping.add_argument("--group", help="A source-derived class or component group identity")
@@ -318,6 +325,12 @@ def invoke_project(root: Path, arguments: dict) -> tuple[int, object]:
         return 0, recommend_examples(root, Path(arguments["image"]), targets, arguments["reference_targets"],
                                      limit=arguments.get("limit", 50), top_k=arguments.get("top_k", 5),
                                      all_candidates=all_candidates)
+    if arguments.get("command") == "diff":
+        from .source_diff import generate_diff
+        output = generate_diff(root, arguments["target"], image=arguments["image"],
+                               in_file=arguments.get("in_file"), output=arguments.get("output"),
+                               flag_set=arguments.get("flag_set", 0))
+        return 0, output
     if arguments.get("command") == "measure":
         from .source_measure import measure_source
         output = measure_source(root, arguments["targets"], image=arguments["image"],

@@ -4753,3 +4753,26 @@ Tests include an unrelated target using a custom address space, `.cc` source und
 `code/`, and real local subprocess commands with no framework imports. They drive
 one synthetic recovery through editing, rechecking, independent review and
 acceptance. This verifies the command boundary, not any real application's runtime.
+# Source-linked assembly diff
+
+`recover diff <address-or-emitted-symbol> --image <pinned-image> [--in <host>]`
+freshly compiles one source mapping and writes an offline HTML diff under
+`build/recovery/diffs/<address>/diff.html`. Use `--output` for another ignored
+destination, `--flag-set` to select a configured trial, and `--resources` to lease
+configured compiler capacity. The view includes source-line highlighting,
+original/compiled instructions, symbolic candidate relocations and supported
+cold/EH regions. Rerun after source edits. It is diagnostic, never a claim or
+acceptance command; unsupported attribution or span ownership refuses.
+
+Projects using an MSVC source/assembly listing configure `recovery/diff.json`:
+
+```json
+{"schema_version": 1, "format": "msvc-assembly", "flags": ["/FAcs", "/Fa{listing}"]}
+```
+
+Compiler flags remain project-owned. `{listing}` expands to a private ignored
+path. The command compiles with and without those options and requires native
+whole-COFF equivalence. Listing bytes must cover the selected root completely
+and agree with the object before source anchors are used. Currently supported:
+i386 PE/COFF, independent function COMDATs, single spans or supported primary/EH
+span pairs, and MSVC listings. No original-source line attribution is inferred.
