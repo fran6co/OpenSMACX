@@ -90,7 +90,7 @@ void StringBox::close() {
 // The Scroll is initialized again only after GraphicWin initialization succeeds;
 // failure leaves it closed/reset. An optional caller list is borrowed, not copied.
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x006292D0 ?init@StringBox@@QAEXHHHHPAUWin@@PAUStringList@@H@Z 0x006292D0-0x00629486
+// ORIGINAL: 0x006292D0 ?init@StringBox@@QAEXHHHHPAUWin@@PAUStringList@@H@Z 0x006292D0-0x00629486 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["original:0x006292D0-0x00629486;seed:src/recovered/units/006292d0.cpp;source:src/stringbox.h;source:src/stringstruct.h;source:src/scroll.h"], "reason": "Reinitialize GraphicWin, StringList and embedded Scroll through their real owned subobjects."}
 // symbol    ?init@StringBox@@QAEHHHHHPAVWin@@PAVStringList@@H@Z
 int StringBox::init(int x, int y, int width, int height, Win *parent,
@@ -115,9 +115,9 @@ int StringBox::init(int x, int y, int width, int height, Win *parent,
     if (list != 0) {
         list_override_ = list;
     } else {
-        stringList_.remove_all();
-        stringList_.current_position_ = 0;
-        stringList_.allocator_ = 0;
+        owned_list.remove_all();
+        owned_list.current_position_ = 0;
+        owned_list.allocator_ = 0;
     }
     scroll_.init_vert(width - ScrollDefaultThickness, 0,
                       -dib_.bmiHeader.biHeight, this, 0);
