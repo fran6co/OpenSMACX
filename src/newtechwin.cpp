@@ -603,3 +603,5 @@ Status: Complete
 void NewTechWin::on_button_clicked(int) {
   release_modal();
 }
+// RECOVERY_LITERAL: v1 0x00686970 0x00686975 ??_C@_04GLCI@TECH?$AA@ 0x00483EB0
+// RECOVERY_LITERAL: v1 0x00686978 0x00686982 ??_C@_09EDHP@techlongs?$AA@ 0x00483EB0
