@@ -4429,8 +4429,8 @@ void __cdecl enemies_team_up(int faction_id, int faction_id_with,
                 return;
             }
             if (turncoat_faction == ConsoleGlobal.faction_id_) {
-                PluralityDefault = Players[faction_id].is_noun_plural;
                 GenderDefault = Players[faction_id].noun_gender;
+                PluralityDefault = Players[faction_id].is_noun_plural;
                 parse_says(0, Players[faction_id].noun_faction, -1, -1);
                 NetMsgPrimary.pop(DiploLabelTEAM, 5000, 0, 0);
             }
