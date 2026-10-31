@@ -1586,7 +1586,6 @@ int __cdecl boom(int x, int y, int flags) {
     int animation_height = 0;
     bool special_chassis = false;
     bool flic_mode = false;
-    int flic_frame_count = 0;
     int faction_color_group[28];
 
     if (animation_state == 0) {
@@ -1641,7 +1640,6 @@ int __cdecl boom(int x, int y, int flags) {
                 animation_state = 1;
             }
         }
-        flic_frame_count = animation.frame_count() / 2;
         faction_color_group[0] = 0;
         faction_color_group[1] = 5;
         faction_color_group[2] = 2;
@@ -1846,27 +1844,62 @@ int __cdecl boom(int x, int y, int flags) {
             if (VehPrototypes[Vehs[second_selection].proto_id].weapon_id == 0) {
                 g_FX.play(1);
             }
-            int sound = -1;
-            const int sound_weapon =
-                VehPrototypes[Vehs[second_selection].proto_id].weapon_id;
-            switch (sound_weapon) {
-            case 1: sound = 4; break;
-            case 2: sound = 0x49; break;
-            case 3: sound = 0x4a; break;
-            case 4: sound = 0x59; break;
-            case 5: sound = 0x4c; break;
-            case 6: sound = 0x4d; break;
-            case 7: sound = 0x4e; break;
-            case 8: sound = 0x4f; break;
-            case 9: sound = 0x50; break;
-            case 10: sound = 0x51; break;
-            case 11: sound = 0x58; break;
-            case 12: sound = 0x55; break;
-            case 13: sound = 0x56; break;
-            case 14: sound = 0x57; break;
+            // Native 0x0050558A..0x00505842 tests independently; each
+            // condition reloads after any preceding FX call.
+            if (VehPrototypes[Vehs[second_selection].proto_id].weapon_id == 1) {
+                g_FX.play(0x4, Vehs[second_selection].x,
+                          Vehs[second_selection].y);
             }
-            if (sound >= 0) {
-                g_FX.play(sound, Vehs[second_selection].x,
+            if (VehPrototypes[Vehs[second_selection].proto_id].weapon_id == 2) {
+                g_FX.play(0x49, Vehs[second_selection].x,
+                          Vehs[second_selection].y);
+            }
+            if (VehPrototypes[Vehs[second_selection].proto_id].weapon_id == 3) {
+                g_FX.play(0x4a, Vehs[second_selection].x,
+                          Vehs[second_selection].y);
+            }
+            if (VehPrototypes[Vehs[second_selection].proto_id].weapon_id == 4) {
+                g_FX.play(0x59, Vehs[second_selection].x,
+                          Vehs[second_selection].y);
+            }
+            if (VehPrototypes[Vehs[second_selection].proto_id].weapon_id == 5) {
+                g_FX.play(0x4c, Vehs[second_selection].x,
+                          Vehs[second_selection].y);
+            }
+            if (VehPrototypes[Vehs[second_selection].proto_id].weapon_id == 6) {
+                g_FX.play(0x4d, Vehs[second_selection].x,
+                          Vehs[second_selection].y);
+            }
+            if (VehPrototypes[Vehs[second_selection].proto_id].weapon_id == 7) {
+                g_FX.play(0x4e, Vehs[second_selection].x,
+                          Vehs[second_selection].y);
+            }
+            if (VehPrototypes[Vehs[second_selection].proto_id].weapon_id == 8) {
+                g_FX.play(0x4f, Vehs[second_selection].x,
+                          Vehs[second_selection].y);
+            }
+            if (VehPrototypes[Vehs[second_selection].proto_id].weapon_id == 9) {
+                g_FX.play(0x50, Vehs[second_selection].x,
+                          Vehs[second_selection].y);
+            }
+            if (VehPrototypes[Vehs[second_selection].proto_id].weapon_id == 10) {
+                g_FX.play(0x51, Vehs[second_selection].x,
+                          Vehs[second_selection].y);
+            }
+            if (VehPrototypes[Vehs[second_selection].proto_id].weapon_id == 11) {
+                g_FX.play(0x58, Vehs[second_selection].x,
+                          Vehs[second_selection].y);
+            }
+            if (VehPrototypes[Vehs[second_selection].proto_id].weapon_id == 12) {
+                g_FX.play(0x55, Vehs[second_selection].x,
+                          Vehs[second_selection].y);
+            }
+            if (VehPrototypes[Vehs[second_selection].proto_id].weapon_id == 13) {
+                g_FX.play(0x56, Vehs[second_selection].x,
+                          Vehs[second_selection].y);
+            }
+            if (VehPrototypes[Vehs[second_selection].proto_id].weapon_id == 14) {
+                g_FX.play(0x57, Vehs[second_selection].x,
                           Vehs[second_selection].y);
             }
             if (Vehs[saved_selection].proto_id == BSC_SPORE_LAUNCHER) {
@@ -1876,11 +1909,12 @@ int __cdecl boom(int x, int y, int flags) {
         }
     }
 
-    const unsigned long total_frames = flic_mode
-        ? static_cast<unsigned long>(flic_frame_count)
-        : 16ul;
     unsigned long last_tick = timeGetTime();
-    for (unsigned long frame = 0; frame < total_frames; ++frame) {
+    // Native 0x00505533..0x00505546 reloads the unsigned header word at
+    // every signed frame latch, after initialization and callback work.
+    for (int frame = 0;
+         frame < (flic_mode ? (animation.frame_count() >> 1) : 16);
+         ++frame) {
         const bool skip_multiplayer_frame = IsMultiplayerNet &&
                                             play_animation != 0 &&
                                             (frame & 1ul) == 0;
@@ -1976,11 +2010,14 @@ int __cdecl boom(int x, int y, int flags) {
     if (flic_mode && (flags & 2) != 0) {
         working_buffer.close();
         animation.close();
-        working_buffer.set_clip(
-            static_cast<GraphicWin *>(&ConsoleGlobal)->buffer_working_rect());
+        // Native 0x00505C6B..0x00505C7E restores the Console Buffer clip.
+        GraphicWin *const console = static_cast<GraphicWin *>(&ConsoleGlobal);
+        console->set_clip(console->buffer_working_rect());
     }
     if (flic_mode && (flags & 1) != 0) {
-        working_buffer.set_clip(saved_rectangles);
+        // Resolve the Console again after the preceding clip call.
+        GraphicWin *const console = static_cast<GraphicWin *>(&ConsoleGlobal);
+        console->set_clip(saved_rectangles);
     }
     if (!flic_mode || (flags & 2) != 0) {
         for (int slot = 0; slot < 8; ++slot) {
