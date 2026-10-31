@@ -3001,7 +3001,7 @@ Purpose: Bring a game up: reseed both random chains off the clock, then either
          re-read the two default button captions before the art and the rules
          load. mode 0 is the first boot, anything else a reload into a live
          system.
-// ORIGINAL: 0x0058F2F0 ?game_init@@YAHHH@Z 0x0058F2F0-0x0058F421
+// ORIGINAL: 0x0058F2F0 ?game_init@@YAHHH@Z 0x0058F2F0-0x0058F421 BYTE_EXACT
 // size      305 bytes
 // prototype BOOL (__cdecl ?game_init@@YAHHH@Z)(BOOL tglParseStrings, BOOL tglAllRules)
 // callers   4   call targets   12

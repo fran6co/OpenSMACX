@@ -5685,7 +5685,7 @@ void __cdecl set_base(int base_id) {
 
 /*
 Purpose: Get base name string from base id and store it in base_str. If base id is -1, use 'NONE'.
-// ORIGINAL: 0x004E3A00 ?say_base@@YAXPADH@Z 0x004E3A00-0x004E3A4B
+// ORIGINAL: 0x004E3A00 ?say_base@@YAXPADH@Z 0x004E3A00-0x004E3A4B BYTE_EXACT
 // size      75 bytes
 // prototype void (__cdecl ?say_base@@YAXPADH@Z)(int8* strBase, int baseID)
 // callers   13   call targets   2

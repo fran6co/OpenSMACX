@@ -426,7 +426,7 @@ void __cdecl say_vehicles(char *text, int chassis_id, int with_height) {
 }
 
 
-// ORIGINAL: 0x00592250 ?say_loc@@YAXPADHHHHH@Z 0x00592250-0x005923FD FILE
+// ORIGINAL: 0x00592250 ?say_loc@@YAXPADHHHHH@Z 0x00592250-0x005923FD FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"reason": "Group the free location formatter with the other say_* formatters and their independently evidenced punctuation; share the existing source-owned space and comma-space storage. This is a current semantic home, not proof of the original translation unit.", "evidence": ["src/veh.h:say_loc;src/map.h:map_loc", "src/string_formatting.cpp:independently corroborated parenthesis RECOVERY_LITERAL bindings", "src/buffer.cpp:BufferJoinSpace;src/socialwin.cpp:SocialWinCommaSpaceText", "image:0x00592250-0x005923FD uses 0x00682820,0x00682E90,0x00682E9C,0x00682E98"]}
 // size      429 bytes
 // prototype void (__cdecl ?say_loc@@YAXPADHHHHH@Z)(int8*, int xCoord, int yCoord, int, int, int)
