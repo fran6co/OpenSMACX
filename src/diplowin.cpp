@@ -615,8 +615,8 @@ int DiploWin::on_iface_dialog_item_back_draw(GraphicWin *window, int, int item,
 // kind      game
 // symbol ?on_status@DiploWin@@UAEXH@Z
 void DiploWin::on_status(int mode) {
-  GraphicWin *const front = static_cast<GraphicWin *>(this);
   if (mode != 0) {
+    GraphicWin *const front = static_cast<GraphicWin *>(this);
     front->on_redraw();
     for (int i = 0; i != 13; ++i) {
       flatButtons_[i].show(0);
@@ -634,6 +634,7 @@ void DiploWin::on_status(int mode) {
   stringBox_.hide();
   editBox_.time_.stop();
   editBox_.hide();
+  GraphicWin *const front = static_cast<GraphicWin *>(this);
   slide_hide(front, 2);
   front->Win::hide();
   for (int i = 0; i != 13; ++i) {
@@ -988,9 +989,11 @@ int DiploWin::on_key_click(int repeat, int key) {
         return 1;
     }
     if (key == 0x0D) {
-        if (strlen(editBox_.text_) != 0) {
+        char *const text = editBox_.text_;
+        if (text != 0 && strlen(text) != 0) {
+            message_chat(0x1E00, faction_id_with_, text);
+            // 4425F5 reads the live faction after the chat callback.
             const int faction = ConsoleGlobal.faction_id_;
-            message_chat(0x1E00, faction_id_with_, editBox_.text_);
 
             char line[256];
             line[0] = 0;

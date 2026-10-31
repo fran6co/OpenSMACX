@@ -25,6 +25,8 @@
 #include "socialwin.h"
 #include "designwin.h"
 
+
+
 /*
  * Four 67-byte clones differing only in which fixed window they finish on.
  * Each centres the rectangle on both axes and hands the pair to that window's
@@ -63,8 +65,12 @@ Verification note: client_to_screen is entered on the FIXED window at 0x007AE820
          TutWin receiver is not read by this body at all.
 */
 void TutWin::iface_rect(RECT *rect, int *x, int *y) {
-    *x = rect->left + (rect->right - rect->left) / 2;
-    *y = rect->top + (rect->bottom - rect->top) / 2;
+    *x = static_cast<int32_t>(static_cast<uint32_t>(rect->left) +
+        static_cast<uint32_t>(static_cast<int32_t>(
+            static_cast<uint32_t>(rect->right) - static_cast<uint32_t>(rect->left)) / 2));
+    *y = static_cast<int32_t>(static_cast<uint32_t>(rect->top) +
+        static_cast<uint32_t>(static_cast<int32_t>(
+            static_cast<uint32_t>(rect->bottom) - static_cast<uint32_t>(rect->top)) / 2));
     MainInterfaceGlobal.client_to_screen(x, y);
 }
 
@@ -90,8 +96,12 @@ Verification note: client_to_screen is entered on the FIXED window at 0x006A7628
 void TutWin::base_rect(RECT *rect, int *x, int *y) {
     // Plain signed division: the image emits `cdq; sub eax,edx; sar eax,1`
     // (round-toward-zero) for each half, not a rounding bit-trick.
-    *x = rect->left + (rect->right - rect->left) / 2;
-    *y = rect->top + (rect->bottom - rect->top) / 2;
+    *x = static_cast<int32_t>(static_cast<uint32_t>(rect->left) +
+        static_cast<uint32_t>(static_cast<int32_t>(
+            static_cast<uint32_t>(rect->right) - static_cast<uint32_t>(rect->left)) / 2));
+    *y = static_cast<int32_t>(static_cast<uint32_t>(rect->top) +
+        static_cast<uint32_t>(static_cast<int32_t>(
+            static_cast<uint32_t>(rect->bottom) - static_cast<uint32_t>(rect->top)) / 2));
     TutWinBaseWindow.client_to_screen(x, y);
 }
 
@@ -117,8 +127,12 @@ Verification note: client_to_screen is entered on the FIXED window at 0x008A6270
 void TutWin::soc_rect(RECT *rect, int *x, int *y) {
     // Plain signed division: the image emits `cdq; sub eax,edx; sar eax,1`
     // (round-toward-zero) for each half, not a rounding bit-trick.
-    *x = rect->left + (rect->right - rect->left) / 2;
-    *y = rect->top + (rect->bottom - rect->top) / 2;
+    *x = static_cast<int32_t>(static_cast<uint32_t>(rect->left) +
+        static_cast<uint32_t>(static_cast<int32_t>(
+            static_cast<uint32_t>(rect->right) - static_cast<uint32_t>(rect->left)) / 2));
+    *y = static_cast<int32_t>(static_cast<uint32_t>(rect->top) +
+        static_cast<uint32_t>(static_cast<int32_t>(
+            static_cast<uint32_t>(rect->bottom) - static_cast<uint32_t>(rect->top)) / 2));
     TutWinSocWindow.client_to_screen(x, y);
 }
 
@@ -144,8 +158,12 @@ Verification note: client_to_screen is entered on the FIXED window at 0x0071F2B0
 void TutWin::des_rect(RECT *rect, int *x, int *y) {
     // Plain signed division: the image emits `cdq; sub eax,edx; sar eax,1`
     // (round-toward-zero) for each half, not a rounding bit-trick.
-    *x = rect->left + (rect->right - rect->left) / 2;
-    *y = rect->top + (rect->bottom - rect->top) / 2;
+    *x = static_cast<int32_t>(static_cast<uint32_t>(rect->left) +
+        static_cast<uint32_t>(static_cast<int32_t>(
+            static_cast<uint32_t>(rect->right) - static_cast<uint32_t>(rect->left)) / 2));
+    *y = static_cast<int32_t>(static_cast<uint32_t>(rect->top) +
+        static_cast<uint32_t>(static_cast<int32_t>(
+            static_cast<uint32_t>(rect->bottom) - static_cast<uint32_t>(rect->top)) / 2));
     TutWinDesWindow.client_to_screen(x, y);
 }
 
@@ -184,12 +202,21 @@ Verification note: the original writes the y centre over its own first
 int TutWin::do_base(RECT *rect, const char *text, int flag) {
     // Plain signed division: the image emits `cdq; sub eax,edx; sar eax,1`
     // (round-toward-zero) for each half, not a rounding bit-trick.
-    int x = rect->left + (rect->right - rect->left) / 2;
-    int y = rect->top + (rect->bottom - rect->top) / 2;
+    int x = static_cast<int32_t>(static_cast<uint32_t>(rect->left) +
+        static_cast<uint32_t>(static_cast<int32_t>(
+            static_cast<uint32_t>(rect->right) - static_cast<uint32_t>(rect->left)) / 2));
+    int y = static_cast<int32_t>(static_cast<uint32_t>(rect->top) +
+        static_cast<uint32_t>(static_cast<int32_t>(
+            static_cast<uint32_t>(rect->bottom) - static_cast<uint32_t>(rect->top)) / 2));
     TutWinBaseWindow.client_to_screen(&x, &y);
 
     MapWin *const primary = MapWinTable[0];
-    GraphicWin *const window = primary;
+    GraphicWin *window;
+    if (primary == nullptr) {
+        window = nullptr;
+    } else {
+        window = &static_cast<GraphicWin &>(*primary);
+    }
     return this->tut_win(window, text, x, y, nullptr, flag, -1, -1);
 }
 
@@ -219,12 +246,21 @@ Verification note: the original writes the y centre over its own first
 int TutWin::do_iface(RECT *rect, const char *text, int flag) {
     // Plain signed division: the image emits `cdq; sub eax,edx; sar eax,1`
     // (round-toward-zero) for each half, not a rounding bit-trick.
-    int x = rect->left + (rect->right - rect->left) / 2;
-    int y = rect->top + (rect->bottom - rect->top) / 2;
+    int x = static_cast<int32_t>(static_cast<uint32_t>(rect->left) +
+        static_cast<uint32_t>(static_cast<int32_t>(
+            static_cast<uint32_t>(rect->right) - static_cast<uint32_t>(rect->left)) / 2));
+    int y = static_cast<int32_t>(static_cast<uint32_t>(rect->top) +
+        static_cast<uint32_t>(static_cast<int32_t>(
+            static_cast<uint32_t>(rect->bottom) - static_cast<uint32_t>(rect->top)) / 2));
     MainInterfaceGlobal.client_to_screen(&x, &y);
 
     MapWin *const primary = MapWinTable[0];
-    GraphicWin *const window = primary;
+    GraphicWin *window;
+    if (primary == nullptr) {
+        window = nullptr;
+    } else {
+        window = &static_cast<GraphicWin &>(*primary);
+    }
     return this->tut_win(window, text, x, y, nullptr, flag, -1, -1);
 }
 
@@ -254,12 +290,21 @@ Verification note: the original writes the y centre over its own first
 int TutWin::do_soc(RECT *rect, const char *text, int flag) {
     // Plain signed division: the image emits `cdq; sub eax,edx; sar eax,1`
     // (round-toward-zero) for each half, not a rounding bit-trick.
-    int x = rect->left + (rect->right - rect->left) / 2;
-    int y = rect->top + (rect->bottom - rect->top) / 2;
+    int x = static_cast<int32_t>(static_cast<uint32_t>(rect->left) +
+        static_cast<uint32_t>(static_cast<int32_t>(
+            static_cast<uint32_t>(rect->right) - static_cast<uint32_t>(rect->left)) / 2));
+    int y = static_cast<int32_t>(static_cast<uint32_t>(rect->top) +
+        static_cast<uint32_t>(static_cast<int32_t>(
+            static_cast<uint32_t>(rect->bottom) - static_cast<uint32_t>(rect->top)) / 2));
     TutWinSocWindow.client_to_screen(&x, &y);
 
     MapWin *const primary = MapWinTable[0];
-    GraphicWin *const window = primary;
+    GraphicWin *window;
+    if (primary == nullptr) {
+        window = nullptr;
+    } else {
+        window = &static_cast<GraphicWin &>(*primary);
+    }
     return this->tut_win(window, text, x, y, nullptr, flag, -1, -1);
 }
 
@@ -289,12 +334,21 @@ Verification note: the original writes the y centre over its own first
 int TutWin::do_des(RECT *rect, const char *text, int flag) {
     // Plain signed division: the image emits `cdq; sub eax,edx; sar eax,1`
     // (round-toward-zero) for each half, not a rounding bit-trick.
-    int x = rect->left + (rect->right - rect->left) / 2;
-    int y = rect->top + (rect->bottom - rect->top) / 2;
+    int x = static_cast<int32_t>(static_cast<uint32_t>(rect->left) +
+        static_cast<uint32_t>(static_cast<int32_t>(
+            static_cast<uint32_t>(rect->right) - static_cast<uint32_t>(rect->left)) / 2));
+    int y = static_cast<int32_t>(static_cast<uint32_t>(rect->top) +
+        static_cast<uint32_t>(static_cast<int32_t>(
+            static_cast<uint32_t>(rect->bottom) - static_cast<uint32_t>(rect->top)) / 2));
     TutWinDesWindow.client_to_screen(&x, &y);
 
     MapWin *const primary = MapWinTable[0];
-    GraphicWin *const window = primary;
+    GraphicWin *window;
+    if (primary == nullptr) {
+        window = nullptr;
+    } else {
+        window = &static_cast<GraphicWin &>(*primary);
+    }
     return this->tut_win(window, text, x, y, nullptr, flag, -1, -1);
 }
 

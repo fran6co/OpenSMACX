@@ -556,12 +556,12 @@ int Wave_In_Device::get_rate() {
 // symbol    ??0SoundDeviceBase@@QAE@XZ
 SoundDeviceBase::SoundDeviceBase() {
     memset(&field_4_, 0, 4);
+    volume_8_ = 0x7F;
     field_C_ = 0;
     field_18_ = 0;
     field_1C_ = 0;
     field_10_ = 0;
     device_14_ = nullptr;
-    volume_8_ = 0x7F;
 }
 
 /*

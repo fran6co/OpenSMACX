@@ -1,0 +1,19 @@
+{
+  "event_id": "1032b3128179a0cdd11615514accd1016587475a4803be4a12340dc9688ef4dd",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_tutorial_helper_boundaries_oct18.py"
+    ],
+    "evidence": [
+      "Actual extracted source now requires standard int32_t/uint32_t declarations; authorize cstdint include only, preserving all independent16tour/callback/damage control oracles."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "actual-source-fixture-closure-oct31ca",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:easy-tutwin-callouts-oct31ca"
+}

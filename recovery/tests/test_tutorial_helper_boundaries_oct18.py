@@ -45,7 +45,8 @@ def compile_run(tmp_path: Path, compiler: str, code: str, name: str) -> subproce
     return subprocess.run([str(exe)], capture_output=True, text=True, timeout=10)
 
 
-HARNESS = r'''#include <cstdio>
+HARNESS = r'''#include <cstdint>
+#include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <algorithm>

@@ -1,0 +1,59 @@
+{
+  "author": "coordinator",
+  "base_revision": "ab1573d022e0e65b50bc2618cd515f5eef7ec675",
+  "editable_files": [
+    "src/tutwin_callouts.cpp",
+    "recovery/project.json",
+    "recovery/tests/test_tutwin_callouts_actual_source_oct31ca.py"
+  ],
+  "evidence": [
+    "Three explained forms/function, six TU compile cap, packets<=24, full owner outcomes. Pin and retained history mandatory; preserve original bugs/claims. No repeated unchanged failures. Coordinator owns Git/config/prepare/record/integration.",
+    "Immutable finalBW baseline matches verified masterf51fd1707. Worker native source changes only within explicit ownership, no forcedattrs/ASM or compiler-policy changes."
+  ],
+  "intent": "Recover faithful original tutwin_callouts source and compiler context.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4965792,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4965872,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4965952,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4966032,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4958320,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4958448,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4958576,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4958704,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "easy-tutwin-callouts-oct31ca"
+}
