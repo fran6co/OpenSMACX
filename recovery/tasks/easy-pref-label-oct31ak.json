@@ -1,0 +1,22 @@
+{
+  "author": "recovery-coordinator",
+  "base_revision": "5cb41f9fadf453d04c2510a93b91defb01ecb772",
+  "editable_files": [
+    "src/prefwin.cpp",
+    "recovery/project.json"
+  ],
+  "evidence": [
+    "Fresh say_label 14/14 native source-form evidence and pinned PrefWin flow: /home/fran6co/code/OpenSMACX/.opensmacx/recovery/fast-pass-oct30ol/pref-label-oct31ak-candidates.json"
+  ],
+  "intent": "Test new pointer-intermediate lookup evidence with maximum three distinct body candidates",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4784448,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "easy-pref-label-oct31ak"
+}
