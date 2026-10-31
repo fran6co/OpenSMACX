@@ -494,6 +494,7 @@ def measure_local_variants(root: Path, task_name: str, image_path: Path, deck: d
                 Coff(raw).function(target.symbol)
                 measured = compare_unit(records, image_path, source, (), (flags,), shared,
                                         compiler=lambda *_args: raw,
+                                        root=root,
                                         associated_bindings=associated_bindings)
                 return {"results": _comparison_rows(measured),
                         "compile_attempts": 0, "reused_compiled_object": True}
