@@ -1,0 +1,20 @@
+{
+  "event_id": "7009d22d2ede4dfd467fab951ae7b9244dfba1d8dc98faaef8748cd82bb1530c",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_sprite_file_header_oct14cu.py"
+    ],
+    "evidence": [
+      "HostUBSan reveals newly introduced unaligned int cursor at serialized stride offset25; retain original format bytes, arithmetic/error-path quirks and native exact claims while using properly packed scalar access.",
+      "At most2additional corrective compiler invocations. Update real source-extraction/mutation anchors to the corrected typed access, preserving independent raw-byte and signed-overflow controls; neverdisable alignment/UBSan or weaken expected wire bytes."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "sprite-host-correctness-oct31bm",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:easy-sprite-oct31bl"
+}
