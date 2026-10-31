@@ -1390,25 +1390,26 @@ Purpose: Bubble-sort an id list into base-name order: repeatedly walk the
 Return Value: n/a
 Status: Coverage transcription - unclaimed body
 */
+// DEC wraps at entry; the comparison latch reloads the live base count.
 extern "C" void __cdecl sub_4d5ff0(int *id_list) {
-    bool did_swap;
+    int did_swap;
     do {
-        did_swap = false;
+        did_swap = 0;
+        int last = GameDataStateStorage.fields_.base_current_count_;
+        last = base_yield_sub(last, 1);
+        if (last <= 0) return;
         int *cursor = id_list;
-        const int count = GameDataStateStorage.fields_.base_current_count_;
-        if (count == 1 || count - 1 < 0) {
-            return;
-        }
-        for (int index = 0;
-             index < GameDataStateStorage.fields_.base_current_count_ - 1;
-             ++index, ++cursor) {
+        int index = 0;
+        do {
             if (_stricmp(Bases[cursor[0]].name_string,
                          Bases[cursor[1]].name_string) > 0) {
-                did_swap = true;
+                did_swap = 1;
                 swap(cursor, cursor + 1);
             }
-        }
-    } while (did_swap);
+            ++index;
+            ++cursor;
+        } while (index < base_yield_sub(GameDataStateStorage.fields_.base_current_count_, 1));
+    } while (did_swap != 0);
 }
 
 // ORIGINAL: 0x004E4B80 ?base_init@@YAHHHH@Z 0x004E4B80-0x004E5250
@@ -5813,8 +5814,9 @@ int __cdecl base_find(int x, int y) {
         // Open-coded vector_dist(x, y, Bases[i].x, Bases[i].y): the image calls
         // abs() four times (never vector_dist itself) - see del_site
         // (0x00579E70) for the same expansion.
+        const int base_y = Bases[i].y;
         int dx = x_dist(x, Bases[i].x);
-        int dy = abs(y - Bases[i].y);
+        int dy = abs(y - base_y);
         int abs_dx = abs(dx);
         int abs_dy = abs(dy);
         int largest = abs_dx;
@@ -5825,8 +5827,8 @@ int __cdecl base_find(int x, int y) {
         if (abs_dx >= abs_dy) {
             smallest = abs_dy;
         }
-        int dist = largest - ((((abs_dy + abs_dx) >> 1) - smallest + 1) >> 1);
-        if (dist <= proximity) {
+        int dist;
+        if ((dist = largest - ((((abs_dx + abs_dy) >> 1) - smallest + 1) >> 1)) <= proximity) {
             proximity = dist;
             base_id = i;
         }
@@ -9242,19 +9244,31 @@ Purpose: Check if current base has had an energy shortfall. If so, reset all exi
 Return Value: n/a
 Status: Complete
 */
+// The original captures faction before the deficit read and snapshots the scan count.
 void __cdecl base_energy_costs() {
-    if (BaseCurrent->energy_surplus >= 0 || GameDataStateStorage.fields_.vehicle_current_count_ <= 0) {
-        return;
-    }
-    uint32_t faction_id = BaseCurrent->faction_id_current;
-    for (int i = 0; i < GameDataStateStorage.fields_.vehicle_current_count_; i++) {
-        if (Vehs[i].faction_id == faction_id
-            && VehPrototypes[Vehs[i].proto_id].plan == PLAN_SUPPLY_CONVOY
-            && Vehs[i].order == ORDER_CONVOY && Vehs[i].order_auto_type == RSC_ENERGY
-            && base_who(Vehs[i].x, Vehs[i].y) >= 0) {
-            Vehs[i].order = ORDER_NONE;
+    const uint32_t faction_id = BaseCurrent->faction_id_current;
+    if (BaseCurrent->energy_surplus >= 0) return;
+    const int total = GameDataStateStorage.fields_.vehicle_current_count_;
+    if (total <= 0) return;
+    Map *const tiles = MapTiles;
+    const int longitude = MapLongitude;
+    Veh *vehicle = Vehs;
+    int remaining = total;
+    do {
+        if (vehicle->faction_id == faction_id
+            && VehPrototypes[vehicle->proto_id].plan == PLAN_SUPPLY_CONVOY
+            && vehicle->order == ORDER_CONVOY && vehicle->order_auto_type == RSC_ENERGY) {
+            Map *const tile = tiles + vehicle->y * longitude + (vehicle->x >> 1);
+            int owner = -1;
+            if ((tile->bit & BIT_BASE_IN_TILE) != 0) {
+                const int candidate = tile->val2 & 0xF;
+                if (candidate < MaxPlayerNum) owner = candidate;
+            }
+            if (owner >= 0) vehicle->order = ORDER_NONE;
         }
-    }
+        ++vehicle;
+        --remaining;
+    } while (remaining != 0);
 }
 
 /*
@@ -9933,8 +9947,9 @@ int __cdecl vulnerable(int faction_id, int x, int y) {
             // image calls abs() four times, never vector_dist itself - see
             // del_site (0x00579E70) and base_find(x,y) (0x004E3B80) for the
             // same expansion.
+            const int base_y = Bases[i].y;
             int dx = x_dist(x, Bases[i].x);
-            int dy = abs(y - Bases[i].y);
+            int dy = abs(y - base_y);
             int abs_dx = abs(dx);
             int abs_dy = abs(dy);
             int largest = abs_dx;

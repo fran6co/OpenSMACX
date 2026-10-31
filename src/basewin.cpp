@@ -6539,7 +6539,9 @@ void BaseWin::draw_commerce(int update_mode) {
             canvas->write_l(StringTemp, report.left, row_y, strlen(StringTemp));
 
             StringTemp[0] = 0;
-            const int detail_y = row_y + font.line_advance();
+            const int detail_y = static_cast<int32_t>(
+                static_cast<uint32_t>(row_y) +
+                static_cast<uint32_t>(font.pixel_height()) + 1U);
             int text_end;
             if (own_sanctions != 0 || partner_sanctions != 0) {
                 canvas->set_text_color(TextColourTable[110], TextColourTable[111], 1, 1);

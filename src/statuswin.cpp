@@ -1037,6 +1037,7 @@ void StatusWin::draw(int tile_x, int tile_y, int city_index, int unit_index,
 // punctuation and disputed row layout. Compiling this body does not establish
 // exact display behavior or byte restoration.
 void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
+    const int row_pitch = font1_.line_advance();
     Buffer *screen = static_cast<Buffer *>(&MainInterfaceGlobal);
     screen->set_font(&font1_, &font3_, &font2_, 0);
 
@@ -1194,7 +1195,8 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
                     screen->set_text_color(0xf9, -1, 1, 1);
                 }
                 screen->write_l(StringTemp, next_x, line_y, strlen(StringTemp));
-                line_y += font1_.line_advance();
+                line_y = static_cast<int32_t>(static_cast<uint32_t>(line_y)
+                    + static_cast<uint32_t>(row_pitch));
             }
             screen->set_text_color(TextColourTable[14], TextColourTable[15], 1, 1);
             const int capacity = veh_cargo(vehicle_id);
@@ -1208,8 +1210,11 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
                 strcat(StringTemp, "/");
                 _itoa(capacity, count_text, 10);
                 strcat(StringTemp, count_text);
-                line_y = screen->wrap(StringTemp, content_x, line_y,
-                                      content_width);
+                if (StringTemp != 0) {
+                    screen->write_l(StringTemp, content_x, line_y, strlen(StringTemp));
+                }
+                line_y = static_cast<int32_t>(static_cast<uint32_t>(line_y)
+                    + static_cast<uint32_t>(row_pitch));
             }
         }
         if (vehicle.dmg_incurred != 0) {
@@ -1236,7 +1241,8 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
             strcat(StringTemp, percent_text);
             strcat(StringTemp, "%");
             screen->write_l(StringTemp, next_x, line_y, strlen(StringTemp));
-            line_y += font1_.line_advance();
+            line_y = static_cast<int32_t>(static_cast<uint32_t>(line_y)
+                    + static_cast<uint32_t>(row_pitch));
         }
         screen->set_text_color(MessageWinTextColor, MessageWinTextBackground, 1, 1);
         if ((vehicle.state & VSTATE_DESIGNATE_DEFENDER) && known_orders) {
@@ -1244,7 +1250,8 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
             strcat(StringTemp, label_get(0x1048 / 4));
             screen->set_text_color(0xfb, -1, 1, 1);
             screen->write_l(StringTemp, content_x, line_y, strlen(StringTemp));
-            line_y += font1_.line_advance();
+            line_y = static_cast<int32_t>(static_cast<uint32_t>(line_y)
+                    + static_cast<uint32_t>(row_pitch));
         }
         screen->set_text_color(TextColourTable[14], TextColourTable[15], 1, 1);
         if (known_orders) {

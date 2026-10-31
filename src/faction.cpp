@@ -14770,6 +14770,7 @@ void __cdecl make_a_proposal(int faction_id, int other_faction_id,
         return;
     }
     if (proposal_kind == 7) {
+        PopupDialogFactionID = other_faction_id;
         const uint32_t actor_treaty =
             PlayersData[faction_id].diplo_treaties[other_faction_id];
         const bool refusal =
