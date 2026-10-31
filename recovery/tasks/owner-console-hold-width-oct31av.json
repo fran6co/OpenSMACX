@@ -1,0 +1,22 @@
+{
+  "author": "recovery-coordinator",
+  "base_revision": "ea70e539f621b43182c2352751d8c29ff7180430",
+  "editable_files": [
+    "src/console_commands.cpp",
+    "recovery/project.json"
+  ],
+  "evidence": [
+    "History-first source/pinned/actual COFF evidence: /home/fran6co/code/OpenSMACX/.opensmacx/recovery/fast-pass-oct30ol/narrowing-comparisons-frontier-oct31av.json"
+  ],
+  "intent": "Retain the original signed -1 owner sentinel and the 32-bit compare against zero-extended Veh::faction_id. The current byte comparison aliases -1 with 0xff.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5055680,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "owner-console-hold-width-oct31av"
+}
