@@ -2019,19 +2019,9 @@ int Buffer::fill(RECT *area, int color) {
     BufferFillRowGap = stride_ - width;
 
     const uint8_t value = static_cast<uint8_t>(color);
-    const uint32_t quad = (static_cast<uint32_t>(value) << 24)
-        | (static_cast<uint32_t>(value) << 16)
-        | (static_cast<uint32_t>(value) << 8) | value;
     do {
         uint8_t *tail = reinterpret_cast<uint8_t *>(destination);
-        uint32_t count;
-        for (count = width >> 2; count > 0; --count) {
-            // x86 permits unaligned REP STOSD; a typed uint32_t store does
-            // not. Copy the representation into byte-addressed pixel storage.
-            memcpy(tail, &quad, sizeof(quad));
-            tail += sizeof(quad);
-        }
-        for (count = width & 3; count > 0; --count) {
+        for (uint32_t count = width; count > 0; --count) {
             *tail++ = value;
         }
         // REP STOSD/STOSB advance through the row before the original
@@ -2156,7 +2146,7 @@ int Buffer::load_pcx(const char *filename, Palette *palette, int tgl, int height
 // ORIGINAL: 0x005E2480 ?get_pcx_dimensions@Buffer@@QAAHPBDPAHPAH@Z 0x005E2480-0x005E2690;0x00662C11-0x00662C26
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/005e2480.cpp", "pinned-image:0x00696BF8,0x00696CFC,0x00696D04,0x00696D0C"], "reason": "Home PCX header dimension decoding in Buffer using its Filemap lifecycle and source-owned format literals"}
 // symbol    ?get_pcx_dimensions@Buffer@@SAHPBDPAH1@Z
-#pragma function(memcpy)
+
 int Buffer::get_pcx_dimensions(const char *filename, int *width, int *height) {
     Filemap map;
     if (filename == nullptr || width == nullptr || height == nullptr) {
@@ -2202,7 +2192,7 @@ int Buffer::get_pcx_dimensions(const char *filename, int *width, int *height) {
 
     return 3;
 }
-#pragma intrinsic(memcpy)
+
 
 
 /*
@@ -3153,22 +3143,19 @@ void Buffer::line(int x1, int y1, int x2, int y2, int color) {
 namespace {
 
 // RECT edges wrap as raw 32-bit values, exactly as the original's inc/dec
-// instructions do; the bit-cast round trip keeps the arithmetic out of
-// signed-overflow territory.
+// instructions do. Unsigned arithmetic keeps the wrap defined; the final
+// signed conversion follows the pinned VC6 32-bit integer representation.
 uint32_t edge_bits(LONG value) {
-    uint32_t bits;
-    static_assert(sizeof(bits) == sizeof(value),
+    static_assert(sizeof(uint32_t) == sizeof(value),
                   "Buffer geometry requires 32-bit RECT fields");
-    memcpy(&bits, &value, sizeof(bits));
-    return bits;
+    return static_cast<uint32_t>(value);
 }
 
 int edge_int(uint32_t bits) {
-    int value;
-    static_assert(sizeof(value) == sizeof(bits),
+    static_assert(sizeof(int) == sizeof(bits),
                   "Buffer geometry requires 32-bit int");
-    memcpy(&value, &bits, sizeof(value));
-    return value;
+    // VC6's pinned 32-bit signed conversion preserves the low word's bits.
+    return static_cast<int>(bits);
 }
 
 }  // namespace
@@ -5917,9 +5904,6 @@ int Buffer::wrap_flying_flush() {
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005DC410 0x005DC7C0 0x005DCAE0 0x006453E0 0x00645470 0x00645930
 
-#if _MSC_VER == 1200
-#pragma function(memcpy)
-#endif
 int Buffer::wrap_flying(char * a1) {
     
     if (BufferFlyingWidth == 0) {
@@ -6003,9 +5987,6 @@ int Buffer::wrap_flying(char * a1) {
     strcat(buf, cur);
     return BufferFlyingY;
 }
-#if _MSC_VER == 1200
-#pragma intrinsic(memcpy)
-#endif
 
 // ORIGINAL: 0x005DB580 ?write_l@Buffer@@QAEHPAVFont@@PADHHH@Z 0x005DB580-0x005DB65F FILE BYTE_EXACT
 // working copy - scaffold materialised by --work
@@ -8371,7 +8352,7 @@ int Buffer::change_color(RECT *area, int find_color, int replace_color) {
 // entries as the RGB triplets the DIB stores BGRX. `.pcx` is appended when the
 // caller's name carries no extension, and 4 reports a file that would not
 // open. The `Filemap` local is what carries the EH frame, as in load_pcx.
-#pragma function(memcpy)
+
 int Buffer::write_pcx(char *filename) {
     Filemap map;
 
@@ -8477,7 +8458,7 @@ int Buffer::write_pcx(char *filename) {
     free_data(1);
     return 4;
 }
-#pragma intrinsic(memcpy)
+
 
 // ORIGINAL: 0x005DF910 ?write_bmp@Buffer@@QAEHPAD@Z 0x005DF910-0x005DFB3F
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned write_bmp epilogue ends with RET4 at5DFB3C..5DFB3F;5DFB3F is alignment NOP. The independent5DFB40..5DFB48 body is MOV EAX,8;RET16, corroborated by both IDA catalogues. It is not writer padding or a writer cold block.", "Historical unclaimed seed extent5DF910..5DFB48 is retained here as provenance. The separate5DFB40 entry has no established C++ owner or signature; do not count it implemented by this writer, create an adapter, or infer ownership merely from adjacency. No byte claim was attached to the combined extent."], "reason": "Bind the BMP writer only to its reachable original body; the old seed extent swallowed a separate still-unowned constant-return entry."}
@@ -10600,9 +10581,6 @@ Status: Coverage transcription - unclaimed body
 // 0x00696CE0, measured " " in the pinned image; the census in buffer.cpp
 // records its one-space neighbours 0x00696CD8/0x00696CDC. socialwin.cpp's
 // SpaceText names the other space string this family joins with.
-#if _MSC_VER == 1200
-#pragma function(memcpy)
-#endif
 int Buffer::wrap_cent_flying(char *text) {
     if (BufferFlyingWidth == 0) return 0;
     if (text == 0 || *text == 0) return BufferFlyingY;
@@ -10642,9 +10620,6 @@ int Buffer::wrap_cent_flying(char *text) {
     strcat(BufferFlyingText, text);
     return BufferFlyingY;
 }
-#if _MSC_VER == 1200
-#pragma intrinsic(memcpy)
-#endif
 #pragma optimize("y", off)
 // ORIGINAL: 0x0047A720 ?UNK4@MultiWin@@QAEHPADPAURECT@@@Z 0x0047A720-0x0047A752 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["task:rectangle-owner-overloads", "pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x47a720", "seed:src/recovered/units/0047a720.cpp all identity/spans/claims and parsed discoveries retained; seed retirement requires fresh verification.", "source:src/multiwin.h caller receiver evidence and existing genuine Spot/Buffer interfaces."], "reason": "Recover genuine existing-owner rectangle convenience method. Original catalog MultiWin attribution is contradicted by unchanged receiver forwarding and typed Spot/Buffer callee evidence; original identity and historical obligations are retained, not renamed or newly banked."}
