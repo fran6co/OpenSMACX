@@ -125,12 +125,13 @@ def _definition(source: str, start: str) -> str:
 def _production_definitions() -> tuple[str, str, str, str, str]:
     source = PLANWIN_CPP.read_text(encoding="utf-8")
     base_source = BASE_CPP.read_text(encoding="utf-8")
+    faction_source = FACTION_CPP.read_text(encoding="utf-8")
     known_base = _definition(source, "static bool planwin_base_known_to_faction(")
     known_tile = _definition(source, "static bool planwin_tile_has_known_base(")
     return (
         _definition(source, "void PlanWin::draw_line_base("),
         _definition(base_source, "void __cdecl battle_routine("),
-        _definition(source, 'extern "C" void __cdecl sub_54dc90('),
+        _definition(faction_source, 'extern "C" void __cdecl sub_54dc90('),
         known_base,
         known_tile + "\n" + _definition(source, "void PlanWin::on_redraw()"),
     )
@@ -282,7 +283,7 @@ def test_source_has_typed_planwin_override_and_current_definitions() -> None:
                     ((0x0048BAB0, 0x0048BB72),)),
         0x0054B140: ("src/base.cpp", "?battle_routine@@YAXH@Z", True,
                     ((0x0054B140, 0x0054B1B6),)),
-        0x0054DC90: ("src/planwin.cpp", "sub_54dc90", True,
+        0x0054DC90: ("src/faction.cpp", "sub_54dc90", True,
                     ((0x0054DC90, 0x0054DCE4),)),
         0x0048AF30: ("src/planwin.cpp", "?on_redraw@PlanWin@@QAEXXZ", False,
                     ((0x0048AF30, 0x0048B3B7),)),
@@ -380,7 +381,7 @@ def test_source_has_typed_planwin_override_and_current_definitions() -> None:
     assert "PlanWindow.clear_lines()" in bodies[1]
     assert "InfoFactionTextColors[PlanBattleFactionA]" in bodies[1]
     assert 'extern "C" void __cdecl sub_54dc90' in bodies[2]
-    assert "PlanWindow.monocenter(base.x, base.y, 0)" in bodies[2]
+    assert "PlanWindow.monocenter(Bases[base_id].x, Bases[base_id].y, 0)" in bodies[2]
     assert "surface->on_update()" in bodies[4]
     battle_bodies = _battle_plans_definitions()
     assert len(battle_bodies) == 3
