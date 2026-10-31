@@ -341,12 +341,33 @@ relocation, the corresponding candidate operand and local COFF relocation, every
 jump-table target or selector byte, and the complete comparison envelope including
 alignment gaps. A recognized unsigned guarded-dispatch path must establish the
 complete table domain; a single operand reference is insufficient extent evidence.
-Multiple target/selector pairs are supported when each selector uniquely follows
+Multiple direct-index target tables are supported without selectors when each
+original dispatch independently proves its complete guarded index domain.
+Multiple target/selector pairs are supported when every selector uniquely follows
 its target table and each original dispatch independently proves its complete
-domain. Every indirect jump must belong to a declared table, and all original
-table destinations participate in every guard's incoming-edge checks. Adjacency
+domain. Mixed or partially paired multi-table populations remain unsupported.
+Every indirect jump must belong to a declared table, and all original
+table destinations and direct CALL/branch/LOOP-family destinations participate in every
+guard's incoming-edge checks. Calls entering the range check or ordinary code
+remain supported; incoming transfers after the compare or guard refuse.
+LOOP-family transfers also refuse within the protected straight-line corridors.
+Direct control targets inside the parent body must be decoded instruction
+boundaries; overlapping streams remain unsupported. External callees remain
+outside that parent-body boundary check. Immediate far CALLs require unsupported
+segment-context proof; ordinary indirect callbacks outside guard corridors retain
+the existing contract. Adjacency
 alone does not prove a pair. Missing groups, cross-group guard bypasses and
-unmodeled indirect jumps refuse verification. Intergroup padding is restricted
+unmodeled indirect jumps refuse verification. A physically complete multi-direct
+candidate with a proved whole-envelope boundary mismatch reports FAIL before
+qualifying cells at original offsets; its candidate-cell layout remains unproved.
+This failure-only path never admits shifted tables or bypasses cell proof for PASS.
+Short candidates and existing singleton/selector refusal paths are unchanged.
+Candidate anchor errors are retained: an
+otherwise exact byte/reference result refuses if physical local-anchor evidence
+is unsupported. Known mismatches retain FAIL and expose unsupported anchors as
+UNKNOWN. This closes an earlier unsafe acceptance of equal-address nonlocal
+anchors; legitimate same-section local labels and addends remain supported.
+Intergroup padding is restricted
 to one to three NOP/INT3 bytes before a DWORD-aligned target table, or exactly
 the original/candidate-identical two-byte `MOV EDI,EDI` between a declared
 selector's end and the next aligned target table. Relocations in gaps refuse.

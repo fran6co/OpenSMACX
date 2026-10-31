@@ -13,7 +13,7 @@ from dataclasses import asdict
 from typing import Mapping, Sequence
 
 from capstone import (
-    CS_ARCH_X86, CS_GRP_CALL, CS_GRP_INT, CS_GRP_IRET, CS_GRP_RET,
+    CS_ARCH_X86, CS_GRP_BRANCH_RELATIVE, CS_GRP_CALL, CS_GRP_INT, CS_GRP_IRET, CS_GRP_RET,
     CS_MODE_32, Cs, x86,
 )
 
@@ -161,6 +161,24 @@ def _branch_target(instruction) -> int | None:
     return None
 
 
+def _incoming_direct_target(instruction) -> int | None:
+    """An explicit incoming edge can be a branch, LOOP-family edge or CALL.
+
+    CALL remains a fallthrough instruction for jump-only consumers. Here its
+    callee entry can bypass another dispatch's guard just as a branch can.
+    """
+    if not (instruction.group(x86.X86_GRP_JUMP)
+            or instruction.group(CS_GRP_BRANCH_RELATIVE)
+            or instruction.group(CS_GRP_CALL)):
+        return None
+    if (instruction.group(CS_GRP_CALL) and len(instruction.operands) == 2
+            and all(operand.type == x86.X86_OP_IMM for operand in instruction.operands)):
+        raise ValueError("guard proof requires unsupported segment-context for far direct CALL")
+    if len(instruction.operands) == 1 and instruction.operands[0].type == x86.X86_OP_IMM:
+        return instruction.operands[0].imm
+    return None
+
+
 def _writes_integer_flags(instruction) -> bool:
     # Capstone's x86 `eflags` field is a union with x87 condition/status bits.
     # Only these individually reviewed non-flag-writing x87 operations are
@@ -174,7 +192,7 @@ def _corridor_control_transfer(instruction) -> bool:
     """Reject control transfers that can invalidate the guard dataflow."""
     return (instruction.group(x86.X86_GRP_JUMP)
             or any(instruction.group(group)
-                   for group in (CS_GRP_CALL, CS_GRP_RET, CS_GRP_INT, CS_GRP_IRET)))
+                   for group in (CS_GRP_BRANCH_RELATIVE, CS_GRP_CALL, CS_GRP_RET, CS_GRP_INT, CS_GRP_IRET)))
 
 
 def _guard_for_dispatch(instructions, dispatch, span: Span, *,
@@ -183,12 +201,22 @@ def _guard_for_dispatch(instructions, dispatch, span: Span, *,
 
     The supported envelope is intentionally narrow: `cmp reg,imm`, a direct
     JA/JAE to the default arm, no flag-writing/control-transfer instruction
-    before that branch, and no alternate branch into the fallthrough corridor.
+    before that branch, and no alternate direct branch/call into either protected corridor.
     With no indirect-edge witness, retain the conservative legacy rule and
     reject every other indirect JMP. The associated-code caller may supply
     the complete table-derived target set only after independently validating
     every cell and proving that every indirect JMP has a declared table.
     """
+    # A linear decoded CFG cannot prove an overlapping instruction stream.
+    # This includes the guard branch itself and calls into instruction bytes,
+    # not merely incoming edges whose target equals a decoded start. External
+    # callees lie outside this parent body and retain the existing contract.
+    starts = {item.address for item in instructions}
+    if any(target is not None and span.start <= target < span.end
+           and target not in starts
+           for item in instructions
+           for target in (_incoming_direct_target(item),)):
+        raise ValueError("direct control target is not a decoded parent instruction boundary")
     choices = []
     for branch in instructions:
         if (branch.address >= dispatch.address or branch.id not in
@@ -218,8 +246,8 @@ def _guard_for_dispatch(instructions, dispatch, span: Span, *,
             if any(guarded in _access_families(item) for item in corridor):
                 continue
             guard_corridor_start = compare.address + compare.size
-            if any((other is not branch and _branch_target(other) is not None
-                    and guard_corridor_start <= _branch_target(other) <= branch.address)
+            if any((other is not branch and _incoming_direct_target(other) is not None
+                    and guard_corridor_start <= _incoming_direct_target(other) <= branch.address)
                    for other in instructions):
                 continue
             if (indirect_targets is not None
@@ -232,8 +260,8 @@ def _guard_for_dispatch(instructions, dispatch, span: Span, *,
             # Any other direct edge into the fallthrough corridor would bypass
             # the dominating range check. The accepted branch itself exits it.
             corridor_start = branch.address + branch.size
-            if any((other is not branch and _branch_target(other) is not None
-                    and corridor_start <= _branch_target(other) <= dispatch.address)
+            if any((other is not branch and _incoming_direct_target(other) is not None
+                    and corridor_start <= _incoming_direct_target(other) <= dispatch.address)
                    for other in instructions):
                 continue
             if indirect_targets is None:
@@ -570,12 +598,11 @@ def compare_associated_code(obj: Coff, subject: Symbol, span: Span, image: PeIma
     if len({row[0].span for row in normalized}) != len(normalized):
         raise ValueError("associated dispatch data span is ambiguous or duplicated")
 
-    # Existing v1 records carry no group identifier. The only safe pairing
-    # derivable from that grammar is a unique selector span immediately after
-    # each target table. Keep the established target-only singleton form.
-    # A multi-table owner must pair every table and selector; adjacency is
-    # only a pairing hypothesis, verified below by each instruction anchor
-    # and its own guard/register dataflow.
+    # Existing v1 records carry no group identifier. Pair declared selectors
+    # only by unique adjacency, then verify their guard/register dataflow.
+    # A population without selectors instead proves each table independently
+    # from its own indexed jump and direct guard. Mixed or partially paired
+    # multi-table populations remain outside this supported domain.
     dispatch_rows = []
     unused_selectors = list(selector_rows)
     for table_row in sorted(table_rows, key=lambda row: row[0].span.start):
@@ -590,7 +617,7 @@ def compare_associated_code(obj: Coff, subject: Symbol, span: Span, image: PeIma
         dispatch_rows.append((table_row, selector_row))
     if unused_selectors:
         raise ValueError("orphan switch selector map has no immediately preceding target table")
-    if len(table_rows) > 1 and any(selector is None for _, selector in dispatch_rows):
+    if len(table_rows) > 1 and selector_rows and any(selector is None for _, selector in dispatch_rows):
         raise ValueError("multiple associated target tables require one adjacent selector map each")
     table_evidence = {row[0][0].evidence.address for row in dispatch_rows}
     if _indexed_jump_tables(body_instructions) != table_evidence:
@@ -722,6 +749,46 @@ def compare_associated_code(obj: Coff, subject: Symbol, span: Span, image: PeIma
             *(selector_row if selector_row is not None else (None, None, None)),
             indirect_targets=frozenset(indirect_targets))
         dispatch_witnesses.append(witness)
+
+    def report(proof, *, candidate_layout_unproven=False):
+        witnesses = [_binding_witness(binding) for binding, _, _ in normalized]
+        result = {
+            **proof,
+            "source_body_span": {"start": span.start, "end": span.end},
+            "associated_data": witnesses,
+            "comparison_span": {"start": envelope.start, "end": envelope.end},
+            "associated_metadata": fpo_witness,
+            "source_debug_metadata": debug_witnesses,
+            "original_metadata": Result.UNKNOWN,
+            "linked_selection": Result.UNKNOWN,
+            "runtime": Result.UNKNOWN,
+            "limitations": ["proves bounded object bytes/references only; not final linked selection or runtime behavior"],
+        }
+        result["dispatch_extents"] = dispatch_witnesses
+        # Retain the singular report field for consumers of the original v1 API.
+        if len(dispatch_witnesses) == 1:
+            result["dispatch_extent"] = dispatch_witnesses[0]
+        if candidate_layout_unproven:
+            result["candidate_anchors"] = Result.UNKNOWN
+            result["limitations"].append(
+                "candidate associated-cell layout remains unproved after a measured boundary failure")
+        return result
+
+    # In the newly supported all-direct multi-table domain, a complete
+    # physical candidate can already contradict the fixed source envelope.
+    # Let the ordinary comparator validate every physical relocation and
+    # report that conclusive boundary FAIL before looking for cells at the
+    # original offsets. This admits no shifted layout or candidate-cell proof.
+    # Short candidates and all existing singleton/selector paths retain their
+    # original validation/refusal order; every possible PASS still checks cells.
+    if len(table_rows) > 1 and not selector_rows and len(candidate) >= len(original):
+        boundary_probe = compare_bound_code(
+            envelope, original, candidate, relocations, resolved_targets,
+            original_absolute_sites=image.absolute_sites(envelope), alignment=alignment)
+        if boundary_probe["boundary"] is Result.FAIL:
+            return report(boundary_probe, candidate_layout_unproven=True)
+
+    candidate_anchor_errors = []
     for binding, original_instruction, original_operand in normalized:
         # A missing/changed candidate instruction or operand is a body
         # mismatch. When it still has the original shape, verify the actual
@@ -734,11 +801,16 @@ def compare_associated_code(obj: Coff, subject: Symbol, span: Span, image: PeIma
             try:
                 _memory_operand(candidate_instruction, binding.kind)
                 _candidate_anchor(obj, section_number, candidate, candidate_instruction)
-            except ValueError:
-                # A malformed candidate anchor cannot produce a false pass:
-                # original HIGHLOW sites and all candidate relocations are
-                # still compared across the complete envelope below.
-                pass
+            except ValueError as error:
+                candidate_anchor_errors.append({
+                    "kind": binding.kind, "evidence": binding.evidence.address,
+                    "candidate_offset": binding.evidence.address - span.start,
+                    "reason": str(error)})
+        else:
+            candidate_anchor_errors.append({
+                "kind": binding.kind, "evidence": binding.evidence.address,
+                "candidate_offset": binding.evidence.address - span.start,
+                "reason": "candidate anchor is not a decoded instruction start"})
         if binding.kind == "switch_targets":
             count = (binding.span.end - binding.span.start) // 4
             for index in range(count):
@@ -770,21 +842,18 @@ def compare_associated_code(obj: Coff, subject: Symbol, span: Span, image: PeIma
     proof = compare_bound_code(envelope, original, candidate, relocations, resolved_targets,
                                original_absolute_sites=image.absolute_sites(envelope),
                                alignment=alignment)
-    witnesses = [_binding_witness(binding) for binding, _, _ in normalized]
-    result = {
-        **proof,
-        "source_body_span": {"start": span.start, "end": span.end},
-        "associated_data": witnesses,
-        "comparison_span": {"start": envelope.start, "end": envelope.end},
-        "associated_metadata": fpo_witness,
-        "source_debug_metadata": debug_witnesses,
-        "original_metadata": Result.UNKNOWN,
-        "linked_selection": Result.UNKNOWN,
-        "runtime": Result.UNKNOWN,
-        "limitations": ["proves bounded object bytes/references only; not final linked selection or runtime behavior"],
-    }
-    result["dispatch_extents"] = dispatch_witnesses
-    # Retain the singular report field for consumers of the original v1 API.
-    if len(dispatch_witnesses) == 1:
-        result["dispatch_extent"] = dispatch_witnesses[0]
+    # Equal relocated addresses alone do not establish the required physical
+    # local-anchor evidence. Older code discarded these errors and could PASS
+    # an external/incorrect anchor whose addend happened to reproduce the VA.
+    if candidate_anchor_errors and proof["result"] is Result.PASS:
+        details = "; ".join(
+            f"{row['kind']} at {row['evidence']:#x}: {row['reason']}"
+            for row in candidate_anchor_errors)
+        raise ValueError("candidate associated-data anchor proof is unsupported: " + details)
+    result = report(proof)
+    if candidate_anchor_errors:
+        result["candidate_anchors"] = Result.UNKNOWN
+        result["unsupported_candidate_anchors"] = candidate_anchor_errors
+        if result["references"] is Result.PASS:
+            result["references"] = Result.UNKNOWN
     return result

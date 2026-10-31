@@ -394,3 +394,36 @@ def test_source_integrity_checks_new_grammar_without_claiming_physical_proof():
     damaged = text.replace("v1 switch_targets", "v2 switch_targets")
     findings = check_annotation_text(Path("unit.cc"), damaged)["findings"]
     assert any(row["rule"] == "associated_data_bindings" for row in findings)
+
+
+@pytest.mark.parametrize("groups", [2, 4])
+@pytest.mark.parametrize("damage", [None, "code", "shift", "missing-group"])
+def test_native_application_preserves_independent_direct_table_results(groups, damage):
+    from test_associated_binary import direct_multi_fixture
+    options = ({"candidate_change": (groups * 12 + 1, 9)} if damage == "code" else
+               {"candidate_shift": 4} if damage == "shift" else
+               {"omit": (1,)} if damage == "missing-group" else {})
+    obj, subject, span, image, associated, _ = direct_multi_fixture(groups=groups, **options)
+    binding = FunctionBinding(associated[0].owner, (span,), subject.name, associated[0].unit)
+    rows, *_ = check_compiled([binding], (), (), {binding.unit: obj}, image, {},
+                              associated_bindings=associated)
+    row, = rows
+    assert row["result"] == (Result.PASS if damage is None else
+                             Result.UNKNOWN if damage == "missing-group" else Result.FAIL)
+    if damage != "missing-group":
+        assert row["span"] == row["source_body_span"]
+        assert row["comparison_span"]["end"] == associated[-1].span.end
+        assert row["linked_selection"] == row["runtime"] == Result.UNKNOWN
+
+
+@pytest.mark.parametrize("mode", ["direct-single", "direct-multi", "mapped-single", "mapped-multi"])
+def test_native_application_refuses_unsupported_candidate_anchor(mode):
+    from test_associated_binary import anchor_fixture, changed_anchor
+    obj, subject, span, image, associated, _ = anchor_fixture(mode)
+    obj = changed_anchor(obj, subject, associated[0], "storage")
+    binding = FunctionBinding(associated[0].owner, (span,), subject.name, associated[0].unit)
+    rows, *_ = check_compiled([binding], (), (), {binding.unit: obj}, image, {},
+                              associated_bindings=associated)
+    row, = rows
+    assert row["result"] == Result.UNKNOWN
+    assert "candidate associated-data anchor proof is unsupported" in str(row)
