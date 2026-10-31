@@ -9622,7 +9622,7 @@ void __cdecl clear_tamper_registry() {
     }
 }
 
-// ORIGINAL: 0x00523B50 ?ascent@@YAXXZ 0x00523B50-0x00523C58
+// ORIGINAL: 0x00523B50 ?ascent@@YAXXZ 0x00523B50-0x00523C58 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["task:pact-ascent-owner", "pinned:0x00523B50 original complete span; Player59C fields and real NetMsgPrimary/ConsoleGlobal owners.", "pinned:68E62C PACTTREATY, ASCENT and asctran_sm.pcx text inputs; source literals, never original-image calls.", "pinned:525F08..52600E same turn_upkeep ascent path; plural0, leader gender and console-faction reload after parser; bit2000 unnamed, not PFLAG_MAP_REVEALED200.", "historical seed:src/recovered/units/00523b50.cpp complete mapping/findings retained.", "recovery/tests/test_pact_ascent.py actual-source callback/damage controls, not native layout or runtime acceptance."], "reason": "Recover the complete announcement/turn-flow function using real source-owned players, console, parser state and callbacks. Retain original identity/spans and seed findings; live faction reloads and grammar come from full pinned instructions. No byte or game acceptance claim."}
 void __cdecl ascent() {
     if (GameDataStateStorage.fields_.turn_current_num_ == 0x4b &&

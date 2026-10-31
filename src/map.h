@@ -728,7 +728,7 @@ inline int __cdecl cursor_dist(int x_point_a, int y_point_a, int x_point_b, int 
 }
 
 MEASURED inline BOOL __cdecl is_ocean(int x, int y) {
-    return altitude_at(x, y) < ALT_BIT_SHORE_LINE;
+    return (map_loc(x, y)->climate & ~0x1F) < ALT_BIT_SHORE_LINE;
 }
 
 MEASURED inline int __cdecl bonus_at(int x, int y, int UNUSED(unk_val)) {

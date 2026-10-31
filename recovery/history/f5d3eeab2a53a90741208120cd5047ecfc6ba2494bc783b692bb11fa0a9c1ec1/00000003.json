@@ -1,0 +1,20 @@
+{
+  "event_id": "a28960ee294c6fe6e3e7445dfaea31924c4c2b7be9f5a88045926c1be4ec9260",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_facility_avail_original_rules.py"
+    ],
+    "evidence": [
+      "Original facility_avail inline Voice-slot expression now retained directly and native7ownerresultsunchanged, but hostfixture drives obsolete ascending helpermock ratherthan theactualsharedprojectslot.",
+      "Update actual-source hostfixture inputs/damageanchor to direct Voice-slot expression while preserving independent caretaker/alien andoriginalrule ordering assertions. No C++ changes, no weakening/sanitizer disable."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "01d85b879e5c982607c6d06c91e8665d9d071d17110e9da74064cd29a3e2eac1",
+  "request_id": "ascending-facility-control-oct31bm",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:ascending-visibility-oct31bm"
+}

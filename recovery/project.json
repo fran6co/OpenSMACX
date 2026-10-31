@@ -245,13 +245,16 @@
       },
       "src/caviar.cpp": {
         "flags": [
-          "/c",
-          "/O2",
-          "/Gy",
-          "/GR-",
+          "/nologo",
+          "/TP",
+          "/Zm200",
           "/GX",
+          "/O2",
           "/Ob2",
-          "/Z7"
+          "-MT",
+          "/W4",
+          "/Z7",
+          "-c"
         ]
       },
       "src/datalink.cpp": {
@@ -460,13 +463,16 @@
       },
       "src/technology_queries.cpp": {
         "flags": [
-          "/c",
-          "/O2",
-          "/Gy",
-          "/GR-",
-          "/Oy-",
+          "/nologo",
+          "/TP",
+          "/Zm200",
           "/GX",
-          "/Ob2"
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W4",
+          "/Oy-",
+          "-c"
         ]
       },
       "src/map_altitude.cpp": {
@@ -976,6 +982,33 @@
           "-MT",
           "/W4",
           "/Oy-",
+          "-c"
+        ]
+      },
+      "src/stringstruct.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W4",
+          "/Oy-",
+          "-c"
+        ]
+      },
+      "src/dialog.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W4",
           "-c"
         ]
       }

@@ -400,7 +400,10 @@ int *Sprite::get_clipped_x_table_expand(RECT *full, RECT *clipped, int *source_s
         extent -= step;
         ++count;
     }
-    if (extent < 0) output[-1] += extent;
+    if (extent < 0) {
+        --output;
+        *output = *output + extent;
+    }
     *source_count = count;
     return SpriteClippedXSteps;
 }
@@ -442,7 +445,10 @@ int *Sprite::get_clipped_y_table_expand(RECT *full, RECT *clipped, int *source_s
         extent -= step;
         ++count;
     }
-    if (extent < 0) output[-1] += extent;
+    if (extent < 0) {
+        --output;
+        *output = *output + extent;
+    }
     *source_count = count;
     return SpriteClippedYSteps;
 }
@@ -2111,9 +2117,11 @@ extern "C" void __cdecl sub_63cdc0(GraphicWin *window, void *gate_context, int u
   if (gate_context != 0 &&
       *reinterpret_cast<const uint32_t *>(
           static_cast<const unsigned char *>(gate_context) + 8) != 0) {
-    Buffer *destination = 0;
+    Buffer *destination;
     if (window != 0) {
       destination = static_cast<Buffer *>(window);
+    } else {
+      destination = 0;
     }
     const int y = top + (region_height - blank_sprite().height()) / 2;
     blank_sprite().draw(destination, blank_sprite().transparent_index(), x, y);
@@ -2231,10 +2239,11 @@ Status: Promoted from src/recovered/units/00635370.cpp.
 */
 void *TexHeap::get_tex_mem(int size) {
     if (base_ != 0) {
+        int index = 0;
         int count = static_cast<int>(count_) + 1;
         if (count > 0) {
             Heap **blocks = blocks_;
-            for (int index = 0; index < count; ++index) {
+            for (; index < count; ++index) {
                 Heap *block = blocks[index];
                 if ((reinterpret_cast<uintptr_t>(block->current_) & 0xffff) == 0 &&
                     static_cast<int>(block->free_size_) >= size) {
@@ -2574,6 +2583,10 @@ int Sprite::create_blank(int width, int height, int depth) {
 // File-format view, not a recovered runtime class. Original persistence
 // places stride immediately after the transparency byte, without padding.
 #pragma pack(push, 1)
+// File scalar access must retain byte alignment, including the stride at 0x19.
+struct SpriteFileInt {
+    int value;
+};
 struct SpriteFileHeader {
     int sprite_width;
     int sprite_height;
@@ -2587,7 +2600,7 @@ struct SpriteFileHeader {
 #pragma pack(pop)
 static_assert(sizeof(SpriteFileHeader) == 0x1D, "packed Sprite file header");
 
-// ORIGINAL: 0x005EAF8F ?save@Sprite@@QAEHH@Z 0x005EAF8F-0x005EB0B2;0x00662C30-0x00662C42
+// ORIGINAL: 0x005EAF8F ?save@Sprite@@QAEHH@Z 0x005EAF8F-0x005EB0B2;0x00662C30-0x00662C42 BYTE_EXACT
 // symbol    ?save@Sprite@@QAEHPBD@Z
 // Writes the sprite to a Filemap-mapped file: six metadata ints, the
 // transparency byte, the stride int - deliberately UNALIGNED, at offset
@@ -2613,15 +2626,18 @@ int Sprite::save(const char *filename) {
     if (header == 0) {
         return 4;
     }
-    header->sprite_width = iSpriteWidth_;
-    header->sprite_height = iSpriteHeight_;
-    header->width = iWidth_;
-    header->height = iHeight_;
-    header->left_offset = iLeftOffset_;
-    header->top_offset = iTopOffset_;
-    header->transparent_index = static_cast<unsigned char>(cTransparentIndex_);
-    header->stride = iSpriteWidth2_;
-    memcpy(header + 1, pcBits_,
+    SpriteFileInt *cursor = reinterpret_cast<SpriteFileInt *>(header);
+    cursor++->value = iSpriteWidth_;
+    cursor++->value = iSpriteHeight_;
+    cursor++->value = iWidth_;
+    cursor++->value = iHeight_;
+    cursor++->value = iLeftOffset_;
+    cursor++->value = iTopOffset_;
+    unsigned char *byte_cursor = reinterpret_cast<unsigned char *>(cursor);
+    *byte_cursor++ = static_cast<unsigned char>(cTransparentIndex_);
+    cursor = reinterpret_cast<SpriteFileInt *>(byte_cursor);
+    cursor++->value = iSpriteWidth2_;
+    memcpy(cursor, pcBits_,
            static_cast<uint32_t>(iSpriteHeight_) * iSpriteWidth2_);
     fm.close();
     return 0;
@@ -2669,15 +2685,18 @@ int Sprite::load(const char *filename) {
     if (header == 0) {
         return 6;
     }
-    iSpriteWidth_ = header->sprite_width;
-    iSpriteHeight_ = header->sprite_height;
-    iWidth_ = header->width;
-    iHeight_ = header->height;
-    iLeftOffset_ = header->left_offset;
-    iTopOffset_ = header->top_offset;
-    cTransparentIndex_ = header->transparent_index;
-    iSpriteWidth2_ = header->stride;
-    memcpy(pcBits_, header + 1,
+    const SpriteFileInt *cursor = reinterpret_cast<const SpriteFileInt *>(header);
+    iSpriteWidth_ = cursor++->value;
+    iSpriteHeight_ = cursor++->value;
+    iWidth_ = cursor++->value;
+    iHeight_ = cursor++->value;
+    iLeftOffset_ = cursor++->value;
+    iTopOffset_ = cursor++->value;
+    const unsigned char *byte_cursor = reinterpret_cast<const unsigned char *>(cursor);
+    cTransparentIndex_ = *byte_cursor++;
+    cursor = reinterpret_cast<const SpriteFileInt *>(byte_cursor);
+    iSpriteWidth2_ = cursor++->value;
+    memcpy(pcBits_, cursor,
            static_cast<uint32_t>(iSpriteWidth2_) * iSpriteHeight_);
     fm.close();
     return 0;

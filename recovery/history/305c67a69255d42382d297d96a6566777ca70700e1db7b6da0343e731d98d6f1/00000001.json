@@ -1,0 +1,22 @@
+{
+  "event_id": "e1698f12c5b8ad1d1b76c0835be6d8fccd1c388e51d7a47e71523d7929289723",
+  "payload": {
+    "affects": [
+      "entity-49deadc00224833f87787d0c8200e0d94915db20fe8e722f27c396e5b5ee3ba8"
+    ],
+    "author": "coordinator",
+    "discovery_id": "ascending-cross-tu-visibility-oct31bl",
+    "evidence": [
+      "Source base.h821; base.cpp10178 originalFILE marker and facility_avail inline requirement; faction.cpp1079 wrapper.",
+      "Fresh actual-context Game and Faction owner cohorts observe native original539FE8..540000 two canonical calls vs current optimized-away branch; Game ascent523B89 canonical ascending call.",
+      "Do not conflate ascending with has_project; the preliminary Game attribution was corrected against the pinned call target. No scope for outside edits granted by this discovery."
+    ],
+    "hypothesis": "Canonical ascending is currently defined inline in base.h. Observed original calls in Game ascent and Faction at_climax disappear under current Ob2; the non-inline ascending_call forwarding wrapper also folds away the faction loop because the original ignores its argument. Recover real translation-unit visibility and canonical out-of-line ownership, preserving original Base inline callers and all claims rather than forcing artificial wrappers.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "ascending-cross-tu-visibility-oct31bl",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:easy-game-oct31bl"
+}

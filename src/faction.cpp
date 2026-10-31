@@ -1076,15 +1076,6 @@ BOOL __cdecl climactic_battle() {
     return false;
 }
 
-// Non-inline forwarder to base.h's `MEASURED inline` ascending: at_climax
-// below is one of the image's four real callers of 0x005AC680 (see that
-// marker's `calls` line), where facility_avail (base.cpp) folds it in place
-// instead. Same idiom as technology.h's has_tech_call - the E8 target is a
-// relocation on both sides, so this symbol's own name costs nothing.
-BOOL __cdecl ascending_call(int faction_id) {
-    return ascending(faction_id);
-}
-
 /*
 Purpose: Determine if the specified AI faction is at the game climax based on certain conditions.
 // ORIGINAL: 0x00539EF0 ?at_climax@@YAHH@Z 0x00539EF0-0x0053A022
@@ -1152,10 +1143,8 @@ BOOL __cdecl at_climax(int faction_id) {
     }
     for (i = 1; i < MaxPlayerNum; i++) {
         if (i != faction_id) {
-            // ascending_call, not ascending: the image CALLS 0x005AC680 at
-            // both of these sites (see the calls line), where base.h's
-            // MEASURED inline would fold base_project in place.
-            if (ascending_call(i) && !ascending_call(faction_id)) { // both return same so irrelevant check
+            // Both original calls remain observable across translation units.
+            if (ascending(i) && !ascending(faction_id)) {
                 return true;
             }
         }
@@ -2508,8 +2497,9 @@ void __cdecl del_site(int faction_id, int type, int x, int y, int proximity) {
     Goal *sites = PlayersData[faction_id].sites;
     for (int i = 0; i < MaxSitesNum; i++, sites++) {
         if (sites->type == type) {
+            int site_y = sites->y;
             int dx = x_dist(x, sites->x);
-            int dy = abs(y - sites->y);
+            int dy = abs(y - site_y);
             int abs_dx = abs(dx);
             int abs_dy = abs(dy);
             int largest = abs_dx;
@@ -10999,14 +10989,14 @@ int __cdecl steal_tech(int faction_id, int faction_id_with,
     }
     return cost == 9999;
 }
-// ORIGINAL: 0x005B4600 ?social_set@@YAXH@Z 0x005B4600-0x005B4721
+// ORIGINAL: 0x005B4600 ?social_set@@YAXH@Z 0x005B4600-0x005B4721 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence":["Pinned native instructions at 0x005B4600..0x005B4721: pre/post cost factors, pending social calculation, owned-base accumulator scaling and active-window redraw.","source:src/faction.h PlayerData social members; source:src/base.h Base accumulator members."],"reason":"Home social adoption in the faction owner with the original signed-int API and typed pending effect/base accumulators; preserve the FILE seed identity and avoid a forwarder or exactness claim."}
 void __cdecl social_set(int faction_id) {
     const int nutrient_cost_before = cost_factor(faction_id, 0, -1);
     const int mineral_cost_before = cost_factor(faction_id, 1, -1);
 
-    PlayerData &player = PlayersData[faction_id];
-    social_calc(&player.soc_category_pending, &player.soc_effect_pending,
+    social_calc(&PlayersData[faction_id].soc_category_pending,
+                &PlayersData[faction_id].soc_effect_pending,
                 faction_id, 0, 0);
 
     const int nutrient_cost_after = cost_factor(faction_id, 0, -1);
@@ -11043,8 +11033,8 @@ void __cdecl social_set(int faction_id) {
         TutWinBaseWindow.redraw();
     }
 }
-// ORIGINAL: 0x00545D60 ?propose_trade_maps@@YAXHH@Z 0x00545D60-0x00545E80
-// RECOVERY_BINDING: v1 {"evidence":["Pinned native instructions at 0x00545D60..0x00545E80 distinguish actor treaty lookup, target patience-byte update and local/network map-transfer paths.","source:src/faction.h PlayerData treaty/patience arrays and typed diplomacy/map APIs."],"reason":"Recover the trade-map proposal in faction.cpp using the actor treaty row, target-owned patience and existing transfer APIs; preserve original role orientation and source-owned string literal behavior."}
+// ORIGINAL: 0x00545D60 ?propose_trade_maps@@YAXHH@Z 0x00545D60-0x00545E80 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence":["Pinned native instructions at 0x00545D60..0x00545E80 distinguish actor treaty lookup, target patience-byte update and local/network map-transfer paths.","source:src/faction.h PlayerData treaty/patience arrays and typed diplomacy/map APIs.","Pinned 0x00545DAB supplies Players base 0x00946A50 plus member offset 0x304 to parse_says: Player::adj_name_faction, not noun_faction at 0x2E4."],"reason":"Recover the trade-map proposal using the actor treaty row, target-owned patience, original adjective-name member and existing transfer APIs; preserve original role orientation and source-owned string literal behavior."}
 void __cdecl propose_trade_maps(int faction_id, int faction_id_with) {
     PopupDialogFactionID = faction_id_with;
 
@@ -11052,9 +11042,7 @@ void __cdecl propose_trade_maps(int faction_id, int faction_id_with) {
         (PlayersData[faction_id].diplo_treaties[faction_id_with] & 1) != 0;
     if ((!has_prior_map_trade && DiploFriction > 0) ||
         DiploFriction > 4) {
-        GenderDefault = Players[faction_id_with].noun_gender;
-        PluralityDefault = Players[faction_id_with].is_noun_plural;
-        parse_says(0, Players[faction_id_with].noun_faction, -1, -1);
+        parse_says(0, Players[faction_id_with].adj_name_faction, -1, -1);
         X_pops("REJMAPS", 0x100000,
                      FactionDiplomacyPortraits[faction_id_with], pop_wait);
         return;
