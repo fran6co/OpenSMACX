@@ -2556,6 +2556,7 @@ asked for, so this is a placeholder that draws a single colour - and
 `iSpriteWidth2_` takes the width while `iSpriteWidth_` takes 1, which is the
 pair the drawing code reads as "sheet stride" and "frame width".
 */
+#pragma auto_inline(off)
 int Sprite::create_blank(int width, int height, int depth) {
     iWidth_ = width;
     iSpriteWidth2_ = width;
@@ -2568,6 +2569,7 @@ int Sprite::create_blank(int width, int height, int depth) {
     pcBits_ = static_cast<unsigned char *>(mem_get(1));
     return pcBits_ ? 0 : 4;
 }
+#pragma auto_inline(on)
 
 // File-format view, not a recovered runtime class. Original persistence
 // places stride immediately after the transparency byte, without padding.
