@@ -221,3 +221,27 @@ def test_net_turn_actual_bodies_and_damage_controls(tmp_path, compiler):
         result = _run(tmp_path / ("damage-" + str(index)), changed_bodies,
                       compiler_path, scenario)
         assert result.returncode != 0, f"damage control survived: {name}"
+
+
+@pytest.mark.parametrize("compiler", ["g++", "clang++"])
+def test_upkeep_section_checksum_logs_local_and_selected_peer(tmp_path, compiler):
+    compiler_path = shutil.which(compiler)
+    if compiler_path is None:
+        pytest.skip(f"host compiler unavailable: {compiler}")
+    bodies = {address: _source_record(address) for address in OWNERS}
+    current = bodies[0x005290A0]
+    correct = ("NetUpkeepMapSectionChecksum, faction,\n"
+               "                            NetTurnChecksums[word], peer[word]);")
+    wrong = ("NetUpkeepMapSectionChecksum, faction,\n"
+             "                            NetPeerTurnChecksums[0][word], peer[word]);")
+
+    assert correct in current, "unmodified source must log its local checksum word"
+    result = _run(tmp_path / "actual-source", bodies, compiler_path,
+                  "upkeep-checksum-local-identity")
+    assert result.returncode == 0, result.stdout + result.stderr
+
+    damaged = dict(bodies)
+    damaged[0x005290A0] = _replace_once(current, correct, wrong)
+    result = _run(tmp_path / "wrong-peer-row-damage", damaged, compiler_path,
+                  "upkeep-checksum-local-identity")
+    assert result.returncode != 0, "row-zero peer checksum survived local-owner damage control"

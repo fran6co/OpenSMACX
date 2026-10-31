@@ -10191,8 +10191,10 @@ upkeep5:
                     while (NetDaemonNet.receive() != 0) { }
                     break;
                 default:
+                    // Original 0x00529B16 reloads the local checksum through
+                    // the 0x0093A008 cursor, independently of peer row zero.
                     log_say(NetUpkeepMapSectionChecksum, faction,
-                            NetPeerTurnChecksums[0][word], peer[word]);
+                            NetTurnChecksums[word], peer[word]);
                     NetDaemonNet.synch(0x30, word - 5, 0, 0, 0, 1,
                                        0x2101);
                     while (NetDaemonNet.receive() != 0) { }

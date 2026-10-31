@@ -26,7 +26,9 @@
 #include "win.h"      // screen Buffer's shared-guard lifetime owner
 #include "random.h"   // random in init()
 
-// RECOVERY_OBJECT: v1 0x009B8178 ?PaletteInitialized@@3PAUHPALETTE__@@A
+// One four-byte HPALETTE: CreatePalette stores its result at 5FECDD;
+// DeleteObject consumes that handle at 5FECFA.
+// RECOVERY_OBJECT: v2 0x009B8178 0x009B817C ?PaletteInitialized@@3PAUHPALETTE__@@A 0x005FEBB0
 HPALETTE PaletteInitialized;  // 0x009B8178
 // RECOVERY_OBJECT: v1 0x009B8188 ?PaletteUsesSystemColours@@3HA
 int PaletteUsesSystemColours;  // 0x009B8188

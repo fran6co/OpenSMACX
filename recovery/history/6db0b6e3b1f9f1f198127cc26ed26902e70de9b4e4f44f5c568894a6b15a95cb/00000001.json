@@ -1,0 +1,26 @@
+{
+  "event_id": "99d8e6ca4e949f04dd8317aaece8b252493bde974698d13ca3827afca3194677",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_palette_handle_bound_oct31ck.py",
+      "src/jackal/palette.cpp"
+    ],
+    "evidence": [
+      "Original CreatePalette return store5FECDD and repeated full DWORD reads/reset plus DeleteObject consumer5FECF0..5FED00 establish one four-byte x86 handle at9B8178, not an adjacent aggregate. Bind end9B817C with original owner5FEBB0 evidence, preserving symbol/start and all existing source history. Check actual current COFF extent/zero initialization/import target; refuse unknown rather than inferring wider ownership."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6286256,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "palette-handle-bound",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:object-boundaries-oct31ck"
+}

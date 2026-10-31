@@ -3,6 +3,7 @@
 #include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdarg.h>
 #include <string.h>
 #include <string>
 #include <vector>
@@ -21,6 +22,8 @@ static const int NetTurnChecksumWords = 21;
 
 struct Event { std::string name; int a,b,c,d; };
 static std::vector<Event> events;
+struct ChecksumLog { int faction, local, peer; size_t event_index; };
+static std::vector<ChecksumLog> checksum_logs;
 static void event(const char *n, int a=0, int b=0, int c=0, int d=0) {
     Event e = {n,a,b,c,d}; events.push_back(e);
 }
@@ -108,7 +111,15 @@ struct MessageWin { int clear_count; void clear(){++clear_count;event("message_c
 struct MessageWinNetworkProjection { int count; };
 struct Diplo { void close(){event("diplo_close");} } DiploWindow;
 struct TutWindow { int visible; int is_visible(){return visible;} void exit(){event("tut_exit");} } TutWinBaseWindow;
-struct NetMsg { void pop(const char*,int,int,...){event("msg_pop");} void close(){event("msg_close");} } NetMsgPrimary;
+static void mutate_checksum_log_inputs();
+static int is_checksum_popup(const char *message);
+struct NetMsg {
+    void pop(const char *message,int,int,...){
+        event("msg_pop");
+        if(is_checksum_popup(message)) mutate_checksum_log_inputs();
+    }
+    void close(){event("msg_close");}
+} NetMsgPrimary;
 struct StringTableProjection { char *get(int i) { static char value[]="label"; event("string_get",i); return value; } } StringTable;
 static char *label_get(int i) { return StringTable.get(i); }
 static char StringTemp[1032];
@@ -149,6 +160,9 @@ static char NetUpkeepVehiclesChecksum[]="Failed VEHICLES checksum - resynch";
 static char NetUpkeepBasesChecksum[]="Failed BASES checksum - resynch";
 static char NetUpkeepMapSectionChecksum[]="Failed MAP section chcksum - resynch";
 static char NetUpkeepSkippingUpkeepPhase[]="Skipping upkeep phase";
+static int is_checksum_popup(const char *message) {
+    return message==NetUpkeepUpkeep7;
+}
 static int NextTurnReady, NetUpkeepPhase, TurnUpkeepPhase;
 static int ConsoleControlTurnActive, ControlTurnPhase, MapBaseDisplayOverride;
 static uint32_t &ConsoleFactionsWaitingMask = NetDaemonNet.factions_waiting_mask();
@@ -161,6 +175,15 @@ static uint32_t UpgradePromptAnswered;
 static int TurnRedrawPending, CouncilPendingMessageArgs[3]={-1,-1,-1};
 static int NetTurnChecksums[NetTurnChecksumWords];
 static int NetPeerTurnChecksums[MaxPlayerNum][NetTurnChecksumWords];
+static int MutateChecksumOnPopup;
+static void mutate_checksum_log_inputs() {
+    if(!MutateChecksumOnPopup) return;
+    MutateChecksumOnPopup=0;
+    NetTurnChecksums[5]=11005;
+    NetPeerTurnChecksums[2][5]=31005;
+    event("checksum_inputs_mutated",5,NetTurnChecksums[5],
+          NetPeerTurnChecksums[2][5]);
+}
 struct GameLockMasks {
     union { uint32_t enable_mask_; struct { unsigned char human_mask_, alive_mask_, pad_[2]; } bytes_; };
     GameLockMasks() : enable_mask_(0) {}
@@ -192,7 +215,18 @@ static int prefs_get(const char*,int,int){event("prefs_get");return 0;}
 static int X_pop(const char*,int){event("x_pop");return 0;}
 struct Logger { void init(char*){event("log_init");} void reset(){event("log_reset");} } Logging;
 static void log_set_state(int n){event("log_state",n);}
-static void log_say(const char*, ...){event("log_say");}
+static void log_say(const char *format, ...){
+    const size_t event_index = events.size();
+    event("log_say");
+    if (format == NetUpkeepMapSectionChecksum) {
+        va_list args;
+        va_start(args, format);
+        ChecksumLog row = {va_arg(args, int), va_arg(args, int),
+                           va_arg(args, int), event_index};
+        va_end(args);
+        checksum_logs.push_back(row);
+    }
+}
 static void do_checksums(int n){event("checksums",n);}
 static void turn_upkeep(){event("turn_upkeep");}
 static void set_time_controls(){event("time_controls");TurnControlDurationMilliseconds=1000;}
@@ -218,7 +252,8 @@ static int __cdecl game_logic_dummy();
 /*EXTRACTED_NET_UPKEEP*/
 
 static void reset_events() {
-    events.clear(); net_upkeep_phase_calls=0; memset(net_upkeep_phase_result,0,sizeof(net_upkeep_phase_result));
+    events.clear(); checksum_logs.clear(); net_upkeep_phase_calls=0;
+    memset(net_upkeep_phase_result,0,sizeof(net_upkeep_phase_result));
 }
 static int main_control_end_game() {
     reset_events(); LockEnableMask=0x0202; EndGameResult=1; net_upkeep_phase_result[0]=1;
@@ -299,6 +334,51 @@ static int main_upkeep_checksum_cursor() {
     assert(count_event("msg_close")==1);
     return 0;
 }
+static int main_upkeep_checksum_local_identity() {
+    reset_events(); NetUpkeepPhase=0; LockEnableMask=0x00000404;
+    ConsoleGlobal.faction_id_=1; GamePreferences=0; GameMorePreferences=0;
+    NetDaemonNet.primary_state_.leading_words_[0]=1;
+    for(int word=0;word<NetTurnChecksumWords;++word) {
+        NetTurnChecksums[word]=500+word;
+        NetPeerTurnChecksums[2][word]=500+word;
+    }
+    for(int word=5;word<NetTurnChecksumWords;++word) {
+        NetTurnChecksums[word]=10000+word;
+        NetPeerTurnChecksums[0][word]=20000+word;
+        NetPeerTurnChecksums[2][word]=30000+word;
+    }
+    MutateChecksumOnPopup=1;
+
+    net_upkeep();
+
+    assert(checksum_logs.size()==16);
+    std::vector<size_t> sync_indices;
+    for(size_t i=0;i<events.size();++i) {
+        if(events[i].name=="synch" && events[i].a==0x30) {
+            sync_indices.push_back(i);
+        }
+    }
+    assert(sync_indices.size()==16);
+    for(int i=0;i<16;++i) {
+        const int word=5+i;
+        const ChecksumLog &log=checksum_logs[i];
+        const size_t sync_index=sync_indices[i];
+        assert(log.faction==2);
+        assert(log.local==(word==5 ? 11005 : 10000+word));
+        assert(log.peer==(word==5 ? 31005 : 30000+word));
+        assert(sync_index>log.event_index);
+        if(i!=0) assert(log.event_index>sync_indices[i-1]);
+        assert(events[sync_index].b==word-5);
+        assert(events[sync_index].c==0 && events[sync_index].d==0x2101);
+        assert(sync_index+1<events.size());
+        assert(events[sync_index+1].name=="receive");
+    }
+    assert(count_event("checksum_inputs_mutated")==1);
+    assert(first_event("checksum_inputs_mutated")
+           < static_cast<int>(checksum_logs[0].event_index));
+    assert(count_event("msg_close")==1);
+    return 0;
+}
 int main(int argc,char **argv) {
     assert(argc==2);
     if(strcmp(argv[1],"control")==0) return main_control_end_game();
@@ -306,5 +386,6 @@ int main(int argc,char **argv) {
     if(strcmp(argv[1],"end-turn-lock-mask")==0) return main_end_turn_lock_mask();
     if(strcmp(argv[1],"upkeep-clean")==0) return main_upkeep_clean();
     if(strcmp(argv[1],"upkeep-checksum")==0) return main_upkeep_checksum_cursor();
+    if(strcmp(argv[1],"upkeep-checksum-local-identity")==0) return main_upkeep_checksum_local_identity();
     return 2;
 }
