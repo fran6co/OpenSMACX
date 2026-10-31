@@ -1,0 +1,20 @@
+{
+  "event_id": "ea4ce2208e32a7eec0c68efa55819acc555d6c62a21a16cfe37c65f6d6eaaf59",
+  "payload": {
+    "affects": [
+      "entity-c07f1ce86a5f653e22dee09a2df5ee8f3f8ff0ebb4415063e76507b1d408d578"
+    ],
+    "author": "coordinator",
+    "discovery_id": "original-dword-checksum-flags",
+    "evidence": [
+      "Pinned52971B count21,529727 cursorEBP-64,52972D REP STOSD;5297C0 readsDWORD[EBP+word*4-64],5297D0 storesDWORD1,529B68 bounds word<21. Width/count/init domain agree independently. Signedness unobserved for only0/1. One isolated ordinary int-array overlay compiles and preserves all45 ordinary current game-owner exacts; no assertion that full function matches or original frame is reproduced."
+    ],
+    "hypothesis": "The original mismatch suppression local is 21 DWORD flags (84 bytes), rather than the recovered 21-byte array.",
+    "kind": "discovery"
+  },
+  "previous_event": "99d8e6ca4e949f04dd8317aaece8b252493bde974698d13ca3827afca3194677",
+  "request_id": "original-dword-checksum-flags",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:object-boundaries-oct31ck"
+}

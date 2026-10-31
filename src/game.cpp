@@ -10114,7 +10114,9 @@ upkeep5:
 
     {
         unsigned int any_mismatch = 0;
-        unsigned char mismatch_seen[0x15];
+        // Original 0x0052972D clears 21 DWORDs; 0x005297C0/0x005297D0
+        // read and set four-byte flags, not packed byte flags.
+        int mismatch_seen[NetTurnChecksumWords];
         memset(mismatch_seen, 0, sizeof mismatch_seen);
 
         for (unsigned int faction = 1; faction < MaxPlayerNum; ++faction) {
