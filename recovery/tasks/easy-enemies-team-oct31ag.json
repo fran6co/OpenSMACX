@@ -1,0 +1,23 @@
+{
+  "author": "recovery-coordinator",
+  "base_revision": "675e6797f085092357bc417ac26ff37b6e7ed1fe",
+  "editable_files": [
+    "src/faction.cpp",
+    "recovery/project.json"
+  ],
+  "evidence": [
+    "Current pinned original, committed source and actual application-profile receipt for src/faction.cpp provide the baseline. Explicit TU measurement recipe mirrors the qualified CMake compile; no application/compiler/linker flags changed.",
+    "Coordinator authorizes isolated body-only experiments under existing manual recovery policy; no provider calls, acceptance waivers, source auto-publication or task baseline reset. Candidate source and damage witnesses remain ignored, native controls must pass."
+  ],
+  "intent": "Bounded easy matching pass: at most three evidence-backed body candidates per primary function through native local candidate decks. Preserve bugs, mappings, historical claims, source types, call order and outside-task code; score only, do not bank or accept.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5624480,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "easy-enemies-team-oct31ag"
+}
