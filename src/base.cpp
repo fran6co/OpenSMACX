@@ -6196,6 +6196,7 @@ void __cdecl base_mark(int base_id) {
 // two-argument has_fac_built directly calls the shared out-of-line bitmask;
 // the distinct one-argument guarded overload remains below.
 
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x004E4430 0x004E46C4 0x004E46F4 0x004E45DF
 /*
 Purpose: Calculate the cost factor for the specified faction and resource type. Optional base param.
 // ORIGINAL: 0x004E4430 ?cost_factor@@YAHHHH@Z 0x004E4430-0x004E46C2
@@ -8227,6 +8228,7 @@ int __cdecl energy_yield(int faction_id, int base_id, int x, int y,
     return event_active ? energy * 3 : energy;
 }
 
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x004E9550 0x004E9B4C 0x004E9B5C 0x004E96E1
 /*
 Purpose: Tally what the current base's forces cost it: the resources its supply
          convoys move in and out, the units it supports, the minerals their
@@ -11816,6 +11818,7 @@ int __cdecl base_connect(int priority) {
     return 1;
 }
 
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x004ECBF0 0x004EEF64 0x004EEF78 0x004EE82B
 // ORIGINAL: 0x004ECBF0 ?base_terraform@@YAXH@Z 0x004ECBF0-0x004EEF61
 // RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/004ecbf0.cpp retained full native span", "Pinned 4ECBF0..4EEF61 instruction review establishes BaseIDCurrentSelected forced-improvement timer and pre-filter improvement-presence latches", "recovery/tests/test_base_terraform_behavior.py actual-source behavioral controls"], "reason": "Base-domain terraforming planner uses genuine Base, Map, Path and faction owners for tile scoring, improvement goals, forced actions and relocation. Historical seed and original extent remain preserved; source translation is not a byte-exact or runtime claim."}
 // TRIED: Ghidra ported almost verbatim (DAT_0090ea30 recovered as a real `short *base16` on *BaseCurrent - offsets proven against the ASM at faction_id_current/population_size/state/governor/x/y/ mineral+energy_intake_1/unk_x/unk_y; the 15 FUN_ callees matched to their real, already-recovered names by prototype arity; two Ghidra call-site arg-grouping bugs fixed (abil_index/has_tech argument swap) - diverges at #6 'or eax,-1' vs 'xor eax,eax' register-idiom for the first of three `= 0xffffffff` locals, a compiler-idiom choice not obviously steerable from source.

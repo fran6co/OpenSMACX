@@ -197,9 +197,10 @@ Status: Coverage transcription - unclaimed body, seed
         git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/0046fa20.cpp retained.
 */
 void MapWin::UNK5(int panel) {
+    Buffer &canvas = ConsoleGlobal;
     if (panel != 0) {
-        const int width = static_cast<GraphicWin &>(ConsoleGlobal).Buffer::dib_.bmiHeader.biWidth;
-        const int height = static_cast<GraphicWin &>(ConsoleGlobal).Buffer::dib_.bmiHeader.biHeight;
+        const int width = canvas.dib_.bmiHeader.biWidth;
+        const int height = canvas.dib_.bmiHeader.biHeight;
         MapPanelRects[panel].top = 0;
         const int three_quarters = (width * 3) / 4;
         MapPanelRects[panel].left = three_quarters;
@@ -209,12 +210,12 @@ void MapWin::UNK5(int panel) {
     } else {
         if (IsMultiplayerNet != 0) {
             MapPanelRects[0].right =
-                (static_cast<GraphicWin &>(ConsoleGlobal).Buffer::dib_.bmiHeader.biWidth * 3) / 4;
+                (canvas.dib_.bmiHeader.biWidth * 3) / 4;
         } else {
-            MapPanelRects[0].right = static_cast<GraphicWin &>(ConsoleGlobal).Buffer::dib_.bmiHeader.biWidth;
+            MapPanelRects[0].right = canvas.dib_.bmiHeader.biWidth;
         }
         MapPanelRects[0].bottom = MapPanelGeometryWord008EA0B0 -
-                             static_cast<GraphicWin &>(ConsoleGlobal).Buffer::dib_.bmiHeader.biHeight -
+                             canvas.dib_.bmiHeader.biHeight -
                              MapPanelGeometryWord008EA0B8;
         MapPanelRects[0].left = 0;
         MapPanelRects[0].top = 0;
@@ -460,6 +461,8 @@ uint32_t map_editor_erase_mask(int tool_id) {
 
 // Original46B510's retained seed supplies the control flow and tool cases.
 // The tile and redraw receivers now use their source-owned C++ objects.
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x0046B510 0x0046BFD0 0x0046BFFC 0x0046B663
+// RECOVERY_ASSOCIATED: v1 switch_selector 0x0046B510 0x0046BFFC 0x0046C01A 0x0046B65D
 // ORIGINAL: 0x0046B510 ?editor@MapWin@@QAEXHHH@Z 0x0046B510-0x0046BFCF
 // RECOVERY_BINDING: v1 {"evidence": ["Original46F000 calls46B510; git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/0046b510.cpp retains the complete seed and original bounds.", "Map tile, MapWin receiver, radius, faction and base uses resolve through typed source declarations; original 0x00691888 tool descriptor words 0/1 are modeled as named terrain rules shared with Console."], "reason": "Implement the original map-editing paths and shared editor selection in source-owned C++ while retaining the seed and original identity; this is coverage work, not a measured matching claim."}
 // TRIED: `mov edx,edx` prologue zeroing (used explicit `bool`/int locals instead of a single xor'd register reused for 0); divergence is in the prologue register setup (push vs xor at insn #4), not in the switch body, which was cross-checked field-for-field against src/map.h's Map struct and the 11-entry jump table.
@@ -900,18 +903,19 @@ void __cdecl mapwin_system_init(int reset_windows) {
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original 0x00470FA0-0x0047102D scans MapWinTable slots 1..7 for a nonnull receiver with field_1DD74_ clear, calls clear and init, writes its 0x1DD9C/0x1DDA0 center, then invokes Win virtual slot 1 with zero", "src/unrecovered/00470fa0.cpp retains the two-argument seed and its compiler trials; src/win.h identifies virtual slot 1 as show(int)"], "reason": "Recover activation of a free secondary map view using its real MapWin receiver and inherited virtual show operation, not an invented vtable class."}
 // symbol    ?mapwin_activate_free_slot@@YAXHH@Z
 void __cdecl mapwin_activate_free_slot(int tile_x, int tile_y) {
-    for (size_t slot = 1; slot < MapWinTableSlots; ++slot) {
-        MapWin *window = MapWinTable[slot];
-        if (window == nullptr || window->view_active_ != 0) continue;
-        window->clear(window->map_view_index_);
-        window->init(0, 1);
-        window->center_x_ = tile_x;
-        window->center_y_ = tile_y;
-        window->show(0);
+    for (int slot = 1; slot < static_cast<int>(MapWinTableSlots); ++slot) {
+        if (MapWinTable[slot] == nullptr || MapWinTable[slot]->view_active_ != 0)
+            continue;
+        if (slot >= 0) {
+            MapWinTable[slot]->clear(MapWinTable[slot]->map_view_index_);
+            MapWinTable[slot]->init(0, 1);
+            MapWinTable[slot]->center_x_ = tile_x;
+            MapWinTable[slot]->center_y_ = tile_y;
+            MapWinTable[slot]->show(0);
+        }
         return;
     }
 }
-
 /*
 Purpose: Answer WM_SYSCLOSE: clear the window's per-slot state words, then run
          close() - the same owned-pointer free and vbtable walk, inlined.
@@ -953,6 +957,7 @@ void MapWin::on_sys_close() {
 // ORIGINAL: 0x0046F8C0 ?on_button_clicked@MapWin@@QAEXH@Z 0x0046F8C0-0x0046F9E6 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0046f8c0.cpp", "Pinned original image review controls route precedence, cursor sprite dispatch, signed zoom, actual API imports and original member/data dependencies. Bounded compile and host controls do not establish game acceptance."], "reason": "Recover the genuine MapWin/Console owner operation using typed members, actual shared storage, virtual base APIs and full original branch evidence; keep seed and historical obligations."}
 // symbol    ?on_button_clicked@MapWin@@UAEXH@Z
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x0046F8C0 0x0046F9E8 0x0046F9F8 0x0046F8E6
 void MapWin::on_button_clicked(int button) {
     ConsoleInfoWin.reset();
     ConsoleStatusWin.reset();
@@ -972,11 +977,7 @@ void MapWin::on_button_clicked(int button) {
     case 3:
         if (map_view_index_ != 0) {
             field_1DD70_ ^= 0x40000000U;
-            StringTemp[0] = '\0';
-            const int label = (field_1DD70_ & 0x40000000U) != 0
-                ? 0x100 : 0x101;
-            strcat(StringTemp, label_get(label));
-            Win::set_caption(StringTemp);
+            standard_caption();
         }
         break;
     default:
@@ -5292,6 +5293,8 @@ void MapWin::gen_tile(int x, int y, int a3, int a4) {
 // is adjacent data outside that span and is intentionally not source-mapped
 // here. See build/recovery/mapwin-gen-overlays-oct6/REPORT.md for the pinned
 // hash, full call chains, data interpretation, and remaining identity limits.
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x004688E0 0x00468BC8 0x00468BE8 0x00468A49
+// RECOVERY_ASSOCIATED: v1 switch_selector 0x004688E0 0x00468BE8 0x00468C12 0x00468A43
 // ORIGINAL: 0x004688E0 sub_4688e0 0x004688E0-0x00468BC5
 // RECOVERY_BINDING: v1 {"evidence": ["pinned:terranx_original.exe:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "build/recovery/mapwin-gen-overlays-oct6/REPORT.md:catalogue-chunk-caller-storage", "build/recovery/mapwin-gen-overlays-oct6/INDEPENDENT-REVIEW-OCT6.md:original-0x4689EF-per-goal-reset", "native:COFF:218f67bf0421f47c7bbcbabcfa583b5d325520e1eff7580df081c758b94aa1cc:752bytes-39references"], "reason": "Complete MapWin goal overlays through genuine PlayerData Goal arrays, mapped game state and inherited Buffer APIs. Local name is inferred from two receiver-backed callers, not an original decorated symbol. Catalogue/chunk, receiver accesses and ret8 support extent; adjacent selector tables stay outside. Preserve unchecked strings, signed-short priorities, duplicate mutation and per-renderable-goal reset/global updates."}
 // symbol    ?gen_overlays@MapWin@@QAEXHH@Z
@@ -7314,10 +7317,10 @@ void MapWin::UNK6(int UNUSED(x) x, int UNUSED(y) y, int radius) {
                 // 0x00949870 here, not the half-width MapLongitude stride.
                 int idx = RadiusOffsetY[i] * (MapLongitudeBounds >> 1)
                         + (RadiusOffsetX[i] >> 1);
-                i++;
-                for (int corner = 0; corner < 4; ++corner) {
-                    owned_[idx].brightness[corner] = 0xFF;
-                }
+                TerrainCacheEntry *entry = owned_ + idx;
+                ++i;
+                const uint32_t invalid = 0xFFFFFFFFu;
+                memcpy(entry->brightness, &invalid, sizeof(invalid));
             } while (i < count);
         }
     }
@@ -7569,6 +7572,7 @@ static __forceinline TerrainCacheEntry *brighting_tile(
 
 // Fixed-slot bindings carried from 00470550.cpp
 
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00470550 0x00470778 0x00470788 0x004706EE
 // ORIGINAL: 0x00470550 ?get_brighting@MapWin@@QAEHHHH@Z 0x00470550-0x00470776 FILE
 // RECOVERY_BINDING: v1 {"reason":"Read current lighting storage without adding lazy initialization or table writes to brightness lookup.","evidence":["Pinned470550..470776 calls get_alt four times and dispatches its lookup through470778;470704/47071D/470736/47074C read signed table bytes directly, without calling the initializer or quick_root.","mapwin_system_init at471030 owns the explicit compute_lighting_table call;470420..470536 owns the four49-byte table writes. Lookup before startup must retain the existing zero-initialized storage rather than generate values on demand."]}
 // HOMED 2026-09-04 from the 0x00470550 artifact. 16/202 in the tree. The
@@ -7679,12 +7683,13 @@ int MapWin::get_brighting(int x, int y, int corner) {
 // RECOVERY_BINDING: v1 {"evidence":["The original 0x00470420..0x00470536 body fills four 49-byte tables using quick_root; its retired transcription remains in Git history","src/mapwin.cpp: MapLightingTable bounds 0x007F6688..0x007F674C and corner_light_value/get_brighting consumers","src/general.h: quick_root(int)","Pinned470420..470536 never consumes incoming ECX: first ECX access at470460 is MOV ECX,-3 before all quadrant dispatch; startup471033 makes the direct call without setting a receiver. The initializer is static and writes the shared lighting tables."],"reason":"Build the four 7-by-7 signed corner-light tables in their source-owned storage using the existing integer-root routine."}
 // symbol    ?compute_lighting_table@MapWin@@SAXXZ
 void MapWin::compute_lighting_table() {
+    int x;
+    int y;
     for (int quadrant = 0; quadrant < 4; ++quadrant) {
-        int index = 0;
-        for (int row = -3; row <= 3; ++row) {
-            for (int column = -3; column <= 3; ++column) {
-                int x;
-                int y;
+        signed char *output = MapLightingTable + quadrant * 49;
+        for (int row = -3; row + 4 < 8; ++row) {
+            signed char *cell = output;
+            for (int column = -3; column + 4 < 8; ++column, ++cell) {
                 switch (quadrant) {
                 case 0:
                     x = row;
@@ -7698,22 +7703,21 @@ void MapWin::compute_lighting_table() {
                     x = -row;
                     y = -column;
                     break;
-                default:
+                case 3:
                     x = column;
                     y = -row;
                     break;
                 }
                 x *= 100;
                 y *= 100;
-                const int root = quick_root(x * x + y * y);
+                const int root = quick_root(y * y + x * x);
                 int light = -3 * (x + y);
                 if (root != 0) {
                     light /= root;
                 }
-                MapLightingTable[quadrant * 49 + index] =
-                    static_cast<signed char>(light);
-                ++index;
+                *cell = static_cast<signed char>(light);
             }
+            output = cell;
         }
     }
 }

@@ -2515,6 +2515,7 @@ static void enemy_move_upstream_571537_tile_route(EnemyMoveFullFrame &f) {
 char EnemyBuildBaseMessageText[1] = {0};
 
 // Complete owner assembly. Native stack words are stored only on proven edges.
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x0056B5B0 0x00579208 0x00579238 0x00577DD3
 // ORIGINAL: 0x0056B5B0 ?enemy_move@@YAHH@Z 0x0056B5B0-0x00579208 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["git:9d6ac074ba331b079a584bc73bfd0ce20699a9b4:src/unrecovered/0056b5b0.cpp is deleted seed history; its original identity, full span, claims and useful lessons are retained here through the source writer.", "Pinned instructions establish distinct raw route/damage flags, integer stack priority, saved versus live callback reads, and original unguarded/uninitialized error paths.", "Complete selected, strategic, nonsea, sea and tactical continuations execute once; helpers do not introduce new original identities.", "Vehicle, prototype, PlayerData and Base fields use their real source owners; original matching and full runtime restoration obligations remain."], "reason": "Complete typed per-vehicle enemy movement owner with one path-dependent raw frame and genuine product owners; superseded executable forwarding and scaffold are removed together."}
 // kind game

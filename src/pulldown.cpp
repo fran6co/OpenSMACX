@@ -64,6 +64,8 @@ void PullDown::on_mouse_move(int x, int y) {
 // the constructor-installed 0x0066FF40 table. The retained seed mapping is
 // transferred to this real owner by the source writer at coordinator import.
 // Superseded seed deleted; seed paths below are historical Git provenance.
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x005F9640 0x005F9840 0x005F9854 0x005F966D
+// RECOVERY_ASSOCIATED: v1 switch_selector 0x005F9640 0x005F9854 0x005F98B0 0x005F9667
 // ORIGINAL: 0x005F9640 ?on_key_click@PullDown@@QAEHHH@Z 0x005F9640-0x005F9840
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/005f9640.cpp", "image:Menu6700B0/AlphaMenu66ED88/PullDown66FF40 constructor-selected primary tables; Buffer secondary subobject+444", "recovery/tasks/popup-font-configuration-owner-closure.json"], "reason": "Recover this complete operation in its genuine Menu/PullDown owner, using native constructor-selected virtual dispatch, real members and shared source-owned dependencies; preserve original identity, retained seed and historical restoration obligations."}
 // symbol    ?on_key_click@PullDown@@UAEHHH@Z

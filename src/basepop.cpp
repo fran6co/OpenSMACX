@@ -3184,6 +3184,7 @@ int BasePop::UNK2() {
     return max_width;
 }
 
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00603800 0x006042D4 0x006042FC 0x00603C85
 // ORIGINAL: 0x00603800 ?calculate_dimensions@BasePop@@QAEHXZ 0x00603800-0x006042D2 FILE
 // symbol    ?calculate_dimensions@BasePop@@UAEHXZ
 // size      2770 bytes

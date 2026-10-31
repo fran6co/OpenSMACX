@@ -1420,6 +1420,7 @@ void NetWin::draw_player_names() {
     }
 }
 
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x0047F960 0x0047FE30 0x0047FE78 0x0047FC02
 /*
 Purpose: Paint the custom-rules panel: the panel and title frames, the
          centred title, and the eighteen RULES-text rows - each a checkbox

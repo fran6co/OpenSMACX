@@ -1,0 +1,19 @@
+{
+  "event_id": "e685deccc50e283a881a142a504cfba634a0a4c52fd321e34bad7d6c37b351e2",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/setupwin_rightside_harness.cpp"
+    ],
+    "evidence": [
+      "Pinned normal/unwind operations identify Flic embedded Palette at receiver+5BC; current unused standalone Palette has no original counterpart. Update mock ownership and success/early-return destruction ordering to Flic destructor body then embedded Palette, retaining original explicit close effects and meaningful damage controls. No product-header or class-layout changes authorized."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "setupwin-embedded-palette-harness-oct31bq",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:easy-setupwin-oct31bq"
+}

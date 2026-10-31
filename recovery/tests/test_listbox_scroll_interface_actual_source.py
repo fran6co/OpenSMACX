@@ -128,7 +128,7 @@ def test_slot_bindings_and_argument_order():
     assert "virtual Scroll *on_scroll_delete(Scroll *scroll);" in dialogs_h
     assert "virtual Scroll *on_scroll_create();" in dialogs_h
     assert "Scroll *Dialogs::on_scroll_delete(Scroll *scroll)" in dialogs_cpp
-    assert "kind_ == 2" in dialogs_cpp
+    assert "kind - 2u != 0" in dialogs_cpp
 
     assert "0x005EB73E" in win_cpp and "scroll_vert_" in win_cpp
     assert "0x005EB774" in win_cpp and "scroll_horz_" in win_cpp

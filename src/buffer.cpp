@@ -2625,6 +2625,8 @@ int Buffer::set_clip(int left, int top, int width, int height) {
 }
 
 
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x005DC7C0 0x005DCA04 0x005DCA20 0x005DC8B8
+// RECOVERY_ASSOCIATED: v1 switch_selector 0x005DC7C0 0x005DCA20 0x005DCA7A 0x005DC8B2
 /*
 Purpose: Measure `len` bytes of a string, following the buffer's markup.
 // ORIGINAL: 0x005DC7C0 ?text_width@Buffer@@QAEHPADH@Z 0x005DC7C0-0x005DCA02
@@ -3399,6 +3401,8 @@ void Buffer::clear_links() {
 }
 
 
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x005DCAE0 0x005DCE24 0x005DCE40 0x005DCBD0
+// RECOVERY_ASSOCIATED: v1 switch_selector 0x005DCAE0 0x005DCE40 0x005DCE9A 0x005DCBCA
 /*
 Purpose: Draw a string, switching fonts on markup and recording link regions.
 // ORIGINAL: 0x005DCAE0 ?write_multi_font_raw_l@Buffer@@QAEHPADHHH@Z 0x005DCAE0-0x005DCE23
@@ -6952,6 +6956,8 @@ int Buffer::wrap(char * a1, RECT * a2) {
     return a2->top;
 }
 
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x005DC410 0x005DC70C 0x005DC728 0x005DC50F
+// RECOVERY_ASSOCIATED: v1 switch_selector 0x005DC410 0x005DC728 0x005DC782 0x005DC509
 // ORIGINAL: 0x005DC410 ?find_line_break_l@Buffer@@QAEHPADPAHH@Z 0x005DC410-0x005DC70A FILE
 // symbol    ?find_line_break_l@Buffer@@QAEPADPADPAHH@Z
 // TRIED: same bracket-skip/jump-table markup dispatch as Buffer::text_width (0x005DC7C0), verified against the raw jump/byte tables at 0x5dc70c/0x5dc728 (identical shape, different literal token address 0x696c90). The four find-break-then-adjust call sites collapse to one resolve_break() helper (space-before or segment-start keeps the position, else memrchr back to the last space). Reaches MISMATCH, 147/265 mnemonics shared, first divergence at #2 (frame setup, not the parser).

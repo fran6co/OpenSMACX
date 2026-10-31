@@ -417,6 +417,8 @@ void ProdPicker::on_scrolled(int, int position) {
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // Historical seed observations (not fresh measurements or acceptance):
 // TRIED: a straight port of the jump-table switch (12 case labels, two cross-case gotos folded away algebraically once traced by hand) - matches semantics and field offsets (confirmed against param_1[N] * 4 in the Ghidra dump) but the compiler's jump table shape/ordering diverges early; not chased further.
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00494280 0x00494548 0x0049456C 0x004942AF
+// RECOVERY_ASSOCIATED: v1 switch_selector 0x00494280 0x0049456C 0x004945B4 0x004942A9
 // ORIGINAL: 0x00494280 ?on_key_click@ProdPicker@@QAEHHH@Z 0x00494280-0x00494545 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00494280.cpp", "Pinned original coordinator review: actual label-pointer dereference, camera word3F48F5C3, static cdecl callback ABI, row-end clamps and modal-parent/button suppression order."], "reason": "Recover ProdPicker owner behavior through existing window bases, owned StringLists/controls and typed Base/Caviar camera state; preserve historical seed identity and extents as restoration obligations, not current match claims."}
 // symbol    ?on_key_click@ProdPicker@@UAEHHH@Z

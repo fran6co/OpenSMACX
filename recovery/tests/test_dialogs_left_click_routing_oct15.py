@@ -79,11 +79,7 @@ def test_left_click_actual_source_kind_domain_and_coordinates(compiler, tmp_path
                     str(cpp), "-o", str(binary)], check=True, timeout=30)
     subprocess.run([str(binary)], check=True, timeout=30)
 
-    wrong_body = BODY.replace(
-        "if (kind_ == 8)",
-        "if (kind_ >= 1 && kind_ <= 16 && kind_ != 8)",
-        1,
-    )
+    wrong_body = BODY.replace("if (kind_ == 8)", "if (kind_ == 7)", 1)
     assert wrong_body != BODY
     wrong_body = wrong_body.replace("Dialogs::", "DialogsMock::")
     wrong_cpp, wrong_binary = tmp_path / "wrong_map.cpp", tmp_path / "wrong_map"

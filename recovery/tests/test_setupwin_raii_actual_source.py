@@ -202,7 +202,6 @@ def test_actual_close_with_raii_destructor_runs_once_on_all_exits(compiler, tmp_
     if shutil.which(compiler) is None:
         pytest.skip(f"{compiler} unavailable")
     source = translation_unit()
-    assert "field_FE0_.remove_all()" in source
     assert extract_body((ROOT / "src/setupwin.cpp").read_text(), "SetupWin::~SetupWin()").count("close();") == 1
     assert "void SetupWin::close()" in source
     cpp = tmp_path / "setupwin_raii.cpp"

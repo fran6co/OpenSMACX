@@ -88,6 +88,8 @@ void register_iface_mode(int slot, SubInterface *interface_entry) {
     InterfaceRegistry[slot] = interface_entry;
 }
 
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x0045B550 0x0045BBF8 0x0045BC24 0x0045B720
+// RECOVERY_ASSOCIATED: v1 switch_selector 0x0045B550 0x0045BC24 0x0045BC42 0x0045B71A
 // ORIGINAL: 0x0045B550 ?draw_edit_pane@MainInterface@@QAEXXZ 0x0045B550-0x0045BBF7 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/maininterface.h", "git:b4601390:recovery/tasks/maininterface-owner-coverage.json", "git:f7bbce35:src/unrecovered/0045b550.cpp"], "reason": "Original owner calls, secondary interface receiver and ordinary embedded-member lifecycle identify this MainInterface operation; compatible historical seed spans are retained, without a matching claim."}
 // Historical seed interpretation below mistook retained font arguments

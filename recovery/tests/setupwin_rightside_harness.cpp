@@ -28,6 +28,8 @@ static int caption_fill_calls;
 static int draw_item_calls;
 static int spot_add_calls;
 static int spot_init_rows;
+static bool throw_from_modal;
+static int text_open_result;
 struct RECT { int left, top, right, bottom; };
 struct Header { int biHeight, biWidth; };
 struct Dib { Header bmiHeader; };
@@ -57,13 +59,18 @@ struct Wave {
     int load(const char *) { note("wave-load"); return 0; }
     void play() { note("wave-play"); }
 };
+struct Palette {
+    Palette() { note("palette-ctor"); }
+    ~Palette() { note("palette-dtor"); }
+};
 struct Flic {
-    ~Flic() { note("flic-dtor"); }
+    Buffer frame_buffer;
+    Palette palette;
+    ~Flic() { note("flic-dtor"); close(); }
     void close() { note("flic-close"); }
     int init(Buffer *, char *, int, int, int) { note("flic-init"); return 0; }
     void decode_stored_frame() { note("decode"); }
 };
-struct Palette { ~Palette() { note("palette-dtor"); } };
 struct StringList {
     int current_position_, field_20_, field_24_, entry_count_;
     char *pending_text_;
@@ -92,6 +99,7 @@ struct Popup {
     const char *caption_text() const { return caption_; }
 };
 struct Win {
+    unsigned char *color_table_;
     virtual ~Win() {}
     void restore_clip() { note("restore-clip"); }
 };
@@ -122,12 +130,14 @@ struct SetupWin : GraphicWin {
     void fill(int, int, int, int, int) { ++caption_fill_calls; note("fill"); }
     void on_update() { note("update"); }
     void soft_update() { note("soft-update"); }
-    void set_modal(int, void *, void *) { note("modal"); }
+    void set_modal(int, void *, void *) { note("modal"); if (throw_from_modal) throw 41; }
     void draw_item(int, int) { ++draw_item_calls; note("draw-item"); }
 };
 
 static void reset_observations() {
     events.clear();
+    throw_from_modal = false;
+    text_open_result = 0;
     graphic_init_width = graphic_init_height = graphic_init_y = 0;
     graphic_init_calls = title_calls = caption_fill_calls = 0;
     draw_item_calls = spot_add_calls = spot_init_rows = 0;
@@ -173,14 +183,14 @@ static void check_popup_caption(const char *caption, int rows, bool has_title) {
 static const int WinScreenWidth = 800, WinScreenHeight = 600;
 static const char DefaultFontFace[] = "font";
 static const int ExpansionEnabled = 0;
-static char RedTintColorTable[1], BlueTintColorTable[1];
+static unsigned char RedTintColorTable[1], BlueTintColorTable[1];
 struct GameDataStateMockFields { int game_preferences_; };
 struct GameDataStateMock { GameDataStateMockFields fields_; };
 static GameDataStateMock GameDataStateStorage = {};
 static int WinFlipClipped = 0;
 static int clock_tick = 0;
 static uint32_t timeGetTime() { return static_cast<uint32_t>(clock_tick++); }
-static int X_text_open(char *, const char *) { note("text-open"); return 0; }
+static int X_text_open(char *, const char *) { note("text-open"); return text_open_result; }
 [[maybe_unused]] static void text_close() { note("text-close"); }
 static char *text_get() { static char empty[] = ""; return empty; }
 static void purge_spaces(char *) {}
@@ -195,18 +205,41 @@ static size_t index_of(const char *value) {
     return events.size();
 }
 
+static size_t count_of(const char *value) {
+    size_t count = 0;
+    for (size_t i = 0; i < events.size(); ++i) if (events[i] == value) ++count;
+    return count;
+}
+static void check_flic_lifetime(const char *close_message) {
+    check(count_of("flic-close") == 1, close_message);
+    check(count_of("palette-ctor") == 1 && count_of("palette-dtor") == 1,
+          "only the embedded Flic Palette lifetime exists");
+    check(index_of("flic-dtor") < index_of("flic-close") &&
+          index_of("flic-close") < index_of("palette-dtor") &&
+          index_of("palette-dtor") < index_of("wave-dtor"),
+          "Flic body closes once before embedded Palette then outer Wave destruction");
+}
+
 int main() {
     {
         SetupWin win;
         reset_observations();
         check(win.do_menu_rightside(0, 0) == -1,
               "null parent snapshot returns native error result");
-        check(index_of("flic-close") < events.size(),
-              "early return explicitly closes Flic");
-        check(index_of("flic-close") < index_of("flic-dtor"),
-              "early Flic cleanup precedes destructor");
+        check_flic_lifetime("early return has one Flic close");
         check(index_of("font-dtor") < events.size(),
               "early return destroys Font local");
+    }
+    for (int reason = 0; reason != 2; ++reason) {
+        SetupWin win;
+        GraphicWin parent;
+        char filename[] = "menu";
+        win.opening_window_snapshot_ = &parent;
+        reset_observations();
+        text_open_result = reason == 1;
+        check(win.do_menu_rightside(reason ? filename : 0, 0) == -1,
+              "missing menu and failed text-open preserve native error result");
+        check_flic_lifetime("each early failure has one Flic close");
     }
     {
         SetupWin win;
@@ -225,10 +258,7 @@ int main() {
               "modal close precedes parent clip restoration");
         check(index_of("restore-clip") < index_of("flic-close"),
               "parent clip restoration precedes Flic cleanup");
-        check(index_of("flic-close") < index_of("palette-dtor"),
-              "Flic explicit cleanup precedes Palette destruction");
-        check(index_of("palette-dtor") < index_of("flic-dtor"),
-              "Palette scope ends before outer locals");
+        check_flic_lifetime("success has one Flic close");
         check(index_of("pos-to-id") < index_of("palette-dtor"),
               "popup result lookup occurs before Palette destruction");
     }
@@ -244,6 +274,21 @@ int main() {
               "script closes text after reading");
         check(index_of("text-close") < index_of("graphic-init"),
               "script text closes before menu window initialization");
+        check_flic_lifetime("script success has one Flic close");
+    }
+    {
+        SetupWin win;
+        GraphicWin parent;
+        Popup popup;
+        win.opening_window_snapshot_ = &parent;
+        win.menu_popup_ = &popup;
+        reset_observations();
+        throw_from_modal = true;
+        bool caught = false;
+        try { win.do_menu_rightside(0, 0); }
+        catch (int value) { caught = value == 41; }
+        check(caught, "modal exception propagates through actual owner");
+        check_flic_lifetime("exception has one Flic close");
     }
     check_popup_caption(nullptr, 0, false);
     check_popup_caption("", 3, false);

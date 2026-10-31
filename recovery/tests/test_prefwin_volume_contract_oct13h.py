@@ -72,6 +72,18 @@ struct PrefWin {
  void change_volume_button_text(int); void change_volume_button_state(int); void on_button_clicked(int); void redraw(); void destroy(); void hide_option_buttons(); void get_preferences();
 };
 const char *label_get(int i){events.push_back("label:"+std::to_string(i));static const char *s[]={"main-off","main-on","voice-off","voice-on","sfx-off","sfx-on","music-off","music-on"};if(i==null_index)return nullptr;return s[i-1080];}
+
+struct LabelProbe {
+ const char *strings_ptr[0x440]{}; char tokens[8]{};
+ LabelProbe(){for(int i=0;i<8;++i)strings_ptr[1080+i]=&tokens[i];}
+} Labels;
+struct StringProbe {
+ const char *get(const char *value){
+  for(int i=1080;i<1088;++i)if(value==Labels.strings_ptr[i])return label_get(i);
+  assert(false);return nullptr;
+ }
+} StringTable;
+
 '''
 
 
@@ -132,6 +144,18 @@ struct MusicProbe:MusicBase{~MusicProbe()override{events.push_back("derived-dtor
 struct Console{int faction_id_=3;} ConsoleGlobal;
 void load_music(int id){assert((GameDataStateStorage.fields_.game_preferences_&PREF_AV_VOLUME_MUSIC_TOGGLE)!=0);events.push_back("load:"+std::to_string(id));FactionMusic=new MusicProbe;}
 const char *label_get(int i){events.push_back("label:"+std::to_string(i));return "label";}
+
+struct LabelProbe {
+ const char *strings_ptr[0x440]{}; char tokens[8]{};
+ LabelProbe(){for(int i=0;i<8;++i)strings_ptr[1080+i]=&tokens[i];}
+} Labels;
+struct StringProbe {
+ const char *get(const char *value){
+  for(int i=1080;i<1088;++i)if(value==Labels.strings_ptr[i])return label_get(i);
+  assert(false);return nullptr;
+ }
+} StringTable;
+
 '''
 
 
@@ -280,15 +304,15 @@ def test_behavioral_mutants_are_detected(kind,tmp_path):
         body=braced(text,"void PrefWin::change_volume_button_text(int button_id)")
         if kind=="label_offset":
             sfx_case=("    case 0x56:\n"
-                      "      if (volumeSFXToggle_.selected_state())\n"
-                      "        volumeSFXToggle_.set_name(label_get(0x43D));\n"
+                      "      if (!volumeSFXToggle_.selected_state())\n"
+                      "        volumeSFXToggle_.set_name(StringTable.get(Labels.strings_ptr[0x43C]));\n"
                       "      else\n"
-                      "        volumeSFXToggle_.set_name(label_get(0x43C));")
+                      "        volumeSFXToggle_.set_name(StringTable.get(Labels.strings_ptr[0x43D]));")
             assert body.count(sfx_case)==1
             changed_body=body.replace(
                 sfx_case,
-                sfx_case.replace("label_get(0x43D)","label_get(0x43B)")
-                         .replace("label_get(0x43C)","label_get(0x43A)"),
+                sfx_case.replace("strings_ptr[0x43D]","strings_ptr[0x43B]")
+                         .replace("strings_ptr[0x43C]","strings_ptr[0x43A]"),
                 1)
             changed=text.replace(body,changed_body,1)
             assert changed!=text
@@ -304,13 +328,13 @@ def test_behavioral_mutants_are_detected(kind,tmp_path):
             assert changed!=text
             main=r'int main(){PrefWin w;w.change_volume_button_text(INT_MIN);assert(events.empty());}'
         else:
-            old_main_on=("      if (volumeMainToggle_.selected_state())\n"
-                         "        volumeMainToggle_.set_name(label_get(0x439));")
+            old_main_on=("      else\n"
+                         "        volumeMainToggle_.set_name(StringTable.get(Labels.strings_ptr[0x439]));")
             assert body.count(old_main_on)==1
             changed_body=body.replace(
                 old_main_on,
-                "      if (volumeMainToggle_.selected_state()) {\n"
-                "        if (const char *name = label_get(0x439))\n"
+                "      else {\n"
+                "        if (const char *name = StringTable.get(Labels.strings_ptr[0x439]))\n"
                 "          volumeMainToggle_.set_name(name);\n"
                 "      }",
                 1)

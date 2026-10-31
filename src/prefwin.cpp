@@ -464,21 +464,34 @@ void PrefWin::init() {
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0048fa00.cpp", "recovery/tasks/prefwin-owner-coverage-wave.json", "Original control parent 8578D8; ctor/destructor member order, 800-pixel branch, checkbox text-context and callback order independently reviewed."], "reason": "Recover the complete PrefWin ownership group through a genuine GraphicWin base and compiler-owned embedded control lifetimes; preserve seed identity, original spans and unresolved discoveries without granting byte claims."}
 void PrefWin::display(int page) {
   ConsoleGlobal.alpha_menu_.hide();
-  prefsFinal_ = morePrefsFinal_ = warningsFinal_ = 0;
-  prefsBasicPending_ = prefsAdvPending_ = prefsAutoPending_ = prefsAVPending_ = prefsMapPending_ = GameDataStateStorage.fields_.game_preferences_;
-  morePrefsBasicPending_ = morePrefsAdvPending_ = morePrefsAutoPending_ = morePrefsAVPending_ = morePrefsMapPending_ = GameDataStateStorage.fields_.game_more_preferences_;
+  prefsFinal_ = 0;
+  morePrefsFinal_ = 0;
+  warningsFinal_ = 0;
+  prefsBasicPending_ = GameDataStateStorage.fields_.game_preferences_;
+  morePrefsBasicPending_ = GameDataStateStorage.fields_.game_more_preferences_;
+  prefsAdvPending_ = GameDataStateStorage.fields_.game_preferences_;
+  morePrefsAdvPending_ = GameDataStateStorage.fields_.game_more_preferences_;
+  prefsAutoPending_ = GameDataStateStorage.fields_.game_preferences_;
+  morePrefsAutoPending_ = GameDataStateStorage.fields_.game_more_preferences_;
+  prefsAVPending_ = GameDataStateStorage.fields_.game_preferences_;
+  morePrefsAVPending_ = GameDataStateStorage.fields_.game_more_preferences_;
   warningsPending_ = GameDataStateStorage.fields_.game_warnings_;
+  prefsMapPending_ = GameDataStateStorage.fields_.game_preferences_;
+  morePrefsMapPending_ = GameDataStateStorage.fields_.game_more_preferences_;
   RECT outer = {0x17, 0, PrefWinDisplayWidth + 0x17, PrefWinDisplayHeight};
-  Buffer::box_sprite(&outer, &InterfaceBoxStyles[9]);
   RECT inner = {0x1B, 4, PrefWinDisplayWidth + 0x13, PrefWinDisplayHeight - 4};
-  Buffer::box_sprite(&inner, &InterfaceBoxStyles[9]);
   RECT buttons = {PrefWinGeometryValue_857888, PrefWinGeometryValue_857884,
       PrefWinButtonWidth + PrefWinGeometryValue_857888,
       PrefWinGeometryValue_8578C0 + PrefWinGeometryValue_857884};
+  Buffer::box_sprite(&outer, &InterfaceBoxStyles[9]);
+  Buffer::box_sprite(&inner, &InterfaceBoxStyles[9]);
   Buffer::box_sprite(&buttons, &InterfaceBoxStyles[18]);
   get_preferences();
-  volumeMainToggle_.set_selected_state(volumeVoiceToggle_.selected_state() ||
-      volumeSFXToggle_.selected_state() || volumeMusicToggle_.selected_state());
+  const int music_selected = volumeMusicToggle_.selected_state();
+  volumeMainToggle_.set_selected_state(0);
+  if (music_selected) volumeMainToggle_.set_selected_state(1);
+  if (volumeVoiceToggle_.selected_state()) volumeMainToggle_.set_selected_state(1);
+  if (volumeSFXToggle_.selected_state()) volumeMainToggle_.set_selected_state(1);
   change_volume_button_text(0x55);
   redraw_option();
   redraw_volume();
@@ -588,14 +601,11 @@ void PrefWin::on_group_clicked(int group, int previous, int selected) {
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0048FFB0 ?hide_option_buttons@PrefWin@@QAEXXZ 0x0048FFB0-0x00490123 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0048ffb0.cpp", "recovery/tasks/prefwin-owner-coverage-wave.json", "Original control parent 8578D8; ctor/destructor member order, 800-pixel branch, checkbox text-context and callback order independently reviewed."], "reason": "Recover the complete PrefWin ownership group through a genuine GraphicWin base and compiler-owned embedded control lifetimes; preserve seed identity, original spans and unresolved discoveries without granting byte claims."}
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x0048FFB0 0x00490124 0x00490140 0x0048FFC2
 void PrefWin::hide_option_buttons() {
   switch (field_A18_) {
     case 0: bscPrefCheckBox_.hide(); break;
     case 1: advPrefCheckBox_.hide(); break;
-    case 2:
-      warnPrefCheckBox_.hide();
-      moreButton_.hide();
-      break;
     case 3: autoPrefCheckBox_.hide(); break;
     case 4:
       audioVisPrefCheckBox_.hide();
@@ -608,11 +618,15 @@ void PrefWin::hide_option_buttons() {
       volumeSFXToggle_.hide();
       volumeMusicToggle_.hide();
       break;
-    case 5: mapPrefCheckBox_.hide(); break;
+    case 2:
+      warnPrefCheckBox_.hide();
+      moreButton_.hide();
+      break;
     case 6:
       warnContPrefCheckBox_.hide();
       moreButton_.hide();
       break;
+    case 5: mapPrefCheckBox_.hide(); break;
   }
 }
 
@@ -823,29 +837,29 @@ void PrefWin::redraw_volume() {
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004918c0.cpp", "recovery/tasks/prefwin-owner-coverage-wave.json", "Original control parent 8578D8; ctor/destructor member order, 800-pixel branch, checkbox text-context and callback order independently reviewed."], "reason": "Recover the complete PrefWin ownership group through a genuine GraphicWin base and compiler-owned embedded control lifetimes; preserve seed identity, original spans and unresolved discoveries without granting byte claims."}
 void PrefWin::change_volume_button_text(int button_id) {
   switch (button_id) {
-    case 0x55:
-      if (volumeMainToggle_.selected_state())
-        volumeMainToggle_.set_name(label_get(0x439));
-      else
-        volumeMainToggle_.set_name(label_get(0x438));
-      return;
     case 0x57:
-      if (volumeVoiceToggle_.selected_state())
-        volumeVoiceToggle_.set_name(label_get(0x43B));
+      if (!volumeVoiceToggle_.selected_state())
+        volumeVoiceToggle_.set_name(StringTable.get(Labels.strings_ptr[0x43A]));
       else
-        volumeVoiceToggle_.set_name(label_get(0x43A));
+        volumeVoiceToggle_.set_name(StringTable.get(Labels.strings_ptr[0x43B]));
       return;
     case 0x56:
-      if (volumeSFXToggle_.selected_state())
-        volumeSFXToggle_.set_name(label_get(0x43D));
+      if (!volumeSFXToggle_.selected_state())
+        volumeSFXToggle_.set_name(StringTable.get(Labels.strings_ptr[0x43C]));
       else
-        volumeSFXToggle_.set_name(label_get(0x43C));
+        volumeSFXToggle_.set_name(StringTable.get(Labels.strings_ptr[0x43D]));
       return;
     case 0x58:
-      if (volumeMusicToggle_.selected_state())
-        volumeMusicToggle_.set_name(label_get(0x43F));
+      if (!volumeMusicToggle_.selected_state())
+        volumeMusicToggle_.set_name(StringTable.get(Labels.strings_ptr[0x43E]));
       else
-        volumeMusicToggle_.set_name(label_get(0x43E));
+        volumeMusicToggle_.set_name(StringTable.get(Labels.strings_ptr[0x43F]));
+      return;
+    case 0x55:
+      if (!volumeMainToggle_.selected_state())
+        volumeMainToggle_.set_name(StringTable.get(Labels.strings_ptr[0x438]));
+      else
+        volumeMainToggle_.set_name(StringTable.get(Labels.strings_ptr[0x439]));
       return;
     default:
       return;
@@ -853,37 +867,42 @@ void PrefWin::change_volume_button_text(int button_id) {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x004919F0 0x00491BEC 0x00491BFC 0x00491A07
 // ORIGINAL: 0x004919F0 ?change_volume_button_state@PrefWin@@QAEXH@Z 0x004919F0-0x00491BE9 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004919f0.cpp", "recovery/tasks/prefwin-owner-coverage-wave.json", "Original control parent 8578D8; ctor/destructor member order, 800-pixel branch, checkbox text-context and callback order independently reviewed."], "reason": "Recover the complete PrefWin ownership group through a genuine GraphicWin base and compiler-owned embedded control lifetimes; preserve seed identity, original spans and unresolved discoveries without granting byte claims."}
 void PrefWin::change_volume_button_state(int button_id) {
   switch (button_id) {
-    case 0x57:
+    case 0x57: {
       if (volumeVoiceToggle_.selected_state()) {
         volumeVoiceToggle_.set_selected_state(0);
         WaveDeviceGlobal.disable_group(0);
         return;
       }
+      const int main_selected = volumeMainToggle_.selected_state();
       volumeVoiceToggle_.set_selected_state(1);
-      if (!volumeMainToggle_.selected_state()) {
+      if (!main_selected) {
         volumeMainToggle_.set_selected_state(1);
         change_volume_button_text(0x55);
       }
       WaveDeviceGlobal.enable_group(0);
       return;
-    case 0x56:
+    }
+    case 0x56: {
       if (volumeSFXToggle_.selected_state()) {
         WaveDeviceGlobal.disable_group(1);
         volumeSFXToggle_.set_selected_state(0);
         return;
       }
+      const int main_selected = volumeMainToggle_.selected_state();
       volumeSFXToggle_.set_selected_state(1);
-      if (!volumeMainToggle_.selected_state()) {
+      if (!main_selected) {
         volumeMainToggle_.set_selected_state(1);
         change_volume_button_text(0x55);
       }
       WaveDeviceGlobal.enable_group(1);
       return;
-    case 0x58:
+    }
+    case 0x58: {
       if (volumeMusicToggle_.selected_state()) {
         if (FactionMusic) {
           delete FactionMusic;
@@ -892,8 +911,9 @@ void PrefWin::change_volume_button_state(int button_id) {
         volumeMusicToggle_.set_selected_state(0);
         return;
       }
+      const int main_selected = volumeMainToggle_.selected_state();
       volumeMusicToggle_.set_selected_state(1);
-      if (!volumeMainToggle_.selected_state()) {
+      if (!main_selected) {
         volumeMainToggle_.set_selected_state(1);
         change_volume_button_text(0x55);
       }
@@ -901,6 +921,7 @@ void PrefWin::change_volume_button_state(int button_id) {
       load_music(ConsoleGlobal.faction_id_);
       if (FactionMusic) FactionMusic->begin();
       return;
+    }
     case 0x55:
       if (volumeMainToggle_.selected_state()) {
         volumeMainToggle_.set_selected_state(0);

@@ -2520,6 +2520,7 @@ void __cdecl vehdraw_turn(Buffer *buffer, int x, int y, int frame, int zoom) {
     vehdraw_finish_frame(buffer, veh_id, x, y, 0);
 }
 
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x004BFE00 0x004C0F24 0x004C0F44 0x004C02BA
 // ORIGINAL: 0x004BFE00 ?vehdraw_scoot_start@@YAXHHHH@Z 0x004BFE00-0x004C0F24
 // RECOVERY_BINDING: v1 {"evidence": ["Original samples four nine-element altitude arrays, including the zero-delta centre; it snapshots original facet vectors before additions. Even directions combine destination facet3 and centre facet1; odd directions use eight ordered facets. Both interpolation increments divide by their respective half-frame counts.", "Original mapped extent is preserved from the existing unclaimed seed and checked against the pinned executable; catalogue return/type names remain provenance until observed compiler-symbol facts are published."], "reason": "Recover terrain-normal interpolation setup using nine actual terrain samples and independent animation globals."}
 // symbol    ?vehdraw_scoot_start@@YAXHHHH@Z
@@ -5830,6 +5831,7 @@ int __cdecl veh_health(int veh_id) {
     return range(health - Vehs[veh_id].dmg_incurred, 0, 9999);
 }
 
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x005A5A60 0x005A5CE4 0x005A5D00 0x005A5AF4
 /*
 Purpose: Calculates cost of the prototype based on various factors. Optimized logic flow from
          the original without any differences to the final calculation.
@@ -6901,6 +6903,7 @@ int __cdecl stack_veh(int veh_id, int mode) {
     return veh_cargo(veh_id) ? cargo_left : carrier_left;
 }
 
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x005B9580 0x005B9BB8 0x005B9C08 0x005B95D7
 /*
 Purpose: Various unit stack related calculations based on type parameter (0-19) and conditions.
 // ORIGINAL: 0x005B9580 ?stack_check@@YAHHHHHH@Z 0x005B9580-0x005B9BB8
@@ -16966,6 +16969,7 @@ static int consider_designs_middle_best_armor(int faction_id,
     }
     return best_id;
 }
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00581260 0x00583C90 0x00583CAC 0x00581628
 // ORIGINAL: 0x00581260 ?consider_designs@@YAXH@Z 0x00581260-0x00583C8F
 // RECOVERY_BINDING: v1 {"reason":"Recover the complete AI prototype-selection operation through typed faction, rules, prototype and proposal owners, with the original signed faction argument and shared armor-scale lifetime across the strategy routes.","evidence":["Pinned original 0x00581260-0x00583C8F; native dispatch plans 0/4,1,2,6 and skipped 3/5; native negative-armor sentinel gate.","Independent full-owner and proposal-budget reviews; retained mechanical seed TRIED records its unverified shared-push argument history."]}
 // TRIED: mechanical register/stack-slot goto transliteration (304 labels, one 7-case switch off 0x0094A37D, 6375-line body): compiles, MISMATCH sim 0.80 on /O2 /Oy- framed. Cross-branch shared-push args (26 pushes never traced to a specific call by the linear model) are a known soft spot - values landed but not re-verified by hand past the two spots that broke arg *counts* outright.

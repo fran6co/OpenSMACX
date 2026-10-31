@@ -1,0 +1,20 @@
+{
+  "event_id": "c3c492b0781df105b8e1a409d38ac845f6614a7daf124836c3f7b2f35aac3873",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/setupwin_rightside_harness.cpp",
+      "src/setupwin.cpp"
+    ],
+    "evidence": [
+      "Pinned Flic destructor4327A0 calls629DF0 then destroys real Palette/Buffer members. Pinned do_menu_rightside normal paths have a single Flic.close per exit followed by member teardown; candidate explicit close plus actual destructor generates duplicate close pairs. Remove only the four redundant explicit calls, retaining automatic Flic lifetime, original return values, callback order and all claims. Verify all owner outcomes plus original/current unwind/normal-path correspondence; do not alter Flic destructor or inheritance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "e685deccc50e283a881a142a504cfba634a0a4c52fd321e34bad7d6c37b351e2",
+  "request_id": "setupwin-single-flic-close-oct31bq",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:easy-setupwin-oct31bq"
+}

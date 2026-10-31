@@ -30,13 +30,12 @@ def extract_body(text: str, signature: str) -> str:
 def current_candidate_parts():
     close = extract_body((ROOT / "src/setupwin.cpp").read_text(), "void SetupWin::close()")
 
-    source = (ROOT / "src/stringstruct.cpp").read_text()
-    clear = extract_body(source, "inline void clear_list_entries(StringStruct *self)")
-    remove = extract_body(source, "void StringStruct::remove_all()")
-    # The checked-in helper uses the standard nullptr keyword; replace only
-    # that spelling so the otherwise C++98 host fixture matches product logic.
-    clear = clear.replace("nullptr", "0")
-    return close, clear, remove
+    header = (ROOT / "src/stringstruct.h").read_text()
+    remove = extract_body(header, "void remove_all()")
+    remove = remove.replace("void remove_all()", "void StringStruct::remove_all()", 1)
+    # The actual inline member owns the head-null guard. Keep its C++98 bridge.
+    remove = remove.replace("nullptr", "0")
+    return close, "", remove
 
 
 HARNESS = r'''
@@ -222,8 +221,7 @@ def test_setupwin_close_actual_method_and_actual_list_cleanup(compiler, tmp_path
     source = actual_source_translation_unit()
     # The product method comes from the moved candidate; the list teardown
     # helper and remove_all body are extracted verbatim from current product.
-    assert "field_FE0_.head_ != 0" in source
-    assert "field_FE0_.remove_all()" in source
+    assert "if (!head_)" in source
     assert "reinterpret_cast" not in source
     result = compile_run(compiler, source, tmp_path)
     assert result.returncode == 0, result.stdout + result.stderr

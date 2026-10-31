@@ -1106,6 +1106,7 @@ void Datalink::draw_tech() {
     UNK7(DatalinkBlurbFile, StringTemp);
 }
 
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x0042BF10 0x0042C29C 0x0042C2DC 0x0042C0A0
 // ORIGINAL: 0x0042BF10 ?draw_entry@Datalink@@QAEXXZ 0x0042BF10-0x0042C29A
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x42BF10", "git:8e3029104ab590bec35cc6932e637765b2ea4074:src/recovered/units/0042bf10.cpp"], "reason": "Recover the seed identity as a typed Datalink member using real window, font, list, and popup lifetimes."}
 void Datalink::draw_entry() {

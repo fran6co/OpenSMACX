@@ -1209,6 +1209,7 @@ void BaseWin::show_panel_help(int x, int y, int label_offset, Win *window) {
     window->set_bubble_text(text, &point);
 }
 
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x004160F0 0x00416514 0x00416534 0x0041649B
 // ORIGINAL: 0x004160F0 ?iface_click@BaseWin@@QAEXHHHH@Z 0x004160F0-0x00416512
 // RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/recovered/units/004160f0.cpp", "source:src/basewin.h", "image:original instruction and dispatch evidence for the BaseWin owner"], "reason": "Recover this original base-window operation through the real BaseWin owner, existing typed members and source-owned shared dependencies; catalogue naming and original intervals remain distinct from current compiler symbols."}
 void BaseWin::iface_click(int x, int y, int right, int is_double) {
@@ -4458,6 +4459,7 @@ void BaseWin::on_iface_button_clicked(int button_id) {
 //           is now an override of Win's slot, so VC6 mangles it virtual and
 //           enters it on the front table, while the image spells the same
 //           body Q and its own table 0x66A4BC holds the raw address.
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x0041D500 0x0041DA6C 0x0041DACC 0x0041D5C5
 // ORIGINAL: 0x0041D500 ?on_button_clicked@BaseWin@@QAEXH@Z 0x0041D500-0x0041DA6C
 // RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/recovered/units/0041d500.cpp", "source:src/basewin.h", "image:original instruction and dispatch evidence for the BaseWin owner"], "reason": "Recover this original base-window operation through the real BaseWin owner, existing typed members and source-owned shared dependencies; catalogue naming and original intervals remain distinct from current compiler symbols."}
 // symbol    ?on_button_clicked@BaseWin@@UAEXH@Z

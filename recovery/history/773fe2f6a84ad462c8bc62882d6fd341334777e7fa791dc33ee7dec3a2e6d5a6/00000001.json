@@ -1,0 +1,19 @@
+{
+  "event_id": "f21248ee0458372a79ec7d5fe93f916aba81db589ebc17f733ef2034fe23618b",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/prefwin.cpp"
+    ],
+    "evidence": [
+      "Coordinator independently verified original guard/index domain, full HIGHLOW cell population and every target instruction boundary for switch_targets 0x490124..0x490140 owned by 0x48ffb0. Authorize worker to publish this add-only typed binding through native write_associated_bytes at a safe measurement boundary; preserve complete parsed snapshot, ORIGINAL markers, bodies and claims. No hand-written metadata, weakening or acceptance grant."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "prefwin-additional-switch-admission-oct31bq",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:easy-prefwin-oct31bq"
+}

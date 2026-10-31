@@ -1094,6 +1094,7 @@ int Console::focus(int x_coord, int y_coord, int faction_id) {
 // beneath the pointer when passed a negative window index, then adjusts the
 // selected windows' signed zoom offsets and redraws the world view.
 // Superseded seed deleted; seed paths below are historical Git provenance.
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x005150D0 0x005153E0 0x005153F8 0x00515352
 // ORIGINAL: 0x005150D0 ?zoom@Console@@QAEXHH@Z 0x005150D0-0x005153DF FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/005150d0.cpp", "Pinned original image review controls route precedence, cursor sprite dispatch, signed zoom, actual API imports and original member/data dependencies. Bounded compile and host controls do not establish game acceptance."], "reason": "Recover the genuine MapWin/Console owner operation using typed members, actual shared storage, virtual base APIs and full original branch evidence; keep seed and historical obligations."}
 void Console::zoom(int zoom_command, int window_index) {
@@ -3351,6 +3352,8 @@ void Console::on_nc_mouse_move(int x_coord, int y_coord) {
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x005166D0 0x005168B8 0x005168D0 0x005166F2
+// RECOVERY_ASSOCIATED: v1 switch_selector 0x005166D0 0x005168D0 0x00516921 0x005166EC
 // ORIGINAL: 0x005166D0 ?cursor_key@Console@@QAEXHHH@Z 0x005166D0-0x005168B7
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/005166d0.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold."}
 void Console::cursor_key(int, int character, int) {

@@ -50,6 +50,7 @@ int AmbienceTransitionMarker = 0;
 // symbol    ??1Ambience@@UAE@XZ
 // Historical TRIED: an authored bare-jump/linker-thunk scaffold was rejected. The tail is instead emitted by the implicit Ambience destructor over Midi; no handwritten wrapper or machine-code body is needed. The target 0x004C7670 is the separately mapped Midi destructor.
 
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00446B40 0x00446CD8 0x00446D10 0x00446B9A
 // ORIGINAL: 0x00446B40 ?ambience@@YAHH@Z 0x00446B40-0x00446CD6
 // RECOVERY_BINDING: v1 {"evidence": ["historical retired seed src/unrecovered/00446b40.cpp", "recovery/tasks/ambience-faction-art-owner-oct5.json", "pinned complete original spans; fresh native owner compilation and actual-source behavior controls"], "reason": "Complete semantic recovery through genuine source-owned members, globals and lifetime operations; retain original defects and historical obligations. Current byte restoration remains unfinished."}
 // symbol    ?ambience@@YAHH@Z

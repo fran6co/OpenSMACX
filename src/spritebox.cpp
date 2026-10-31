@@ -675,6 +675,8 @@ void SpriteBox::on_left_click(int x, int y) {
     }
 }
 
+// RECOVERY_ASSOCIATED: v1 switch_targets 0x00611400 0x00611580 0x00611594 0x0061141D
+// RECOVERY_ASSOCIATED: v1 switch_selector 0x00611400 0x00611594 0x006115D8 0x00611417
 // ORIGINAL: 0x00611400 ?on_key_down@SpriteBox@@QAEHH@Z 0x00611400-0x00611580 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00611400.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x611400 complete control/data-access review and src/spritebox.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
 // symbol    ?on_key_down@SpriteBox@@UAEHH@Z
