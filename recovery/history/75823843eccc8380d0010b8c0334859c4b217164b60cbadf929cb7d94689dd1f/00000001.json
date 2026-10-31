@@ -1,0 +1,20 @@
+{
+  "event_id": "0ad029daceb04413fd64ce0a0e077485653b82508c94710d381305324d2d2d6c",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/map.h"
+    ],
+    "evidence": [
+      "Original is_ocean and original loop inlines zero-extend the byte climate then AND signed -32; source E0 spelling narrows operations. Equivalent ~0x1F over uint8_t source already produced4exact mappedcallers in isolatedsameTU trials.",
+      "Authorize only this evidence-backed shared helper expression and replacing equivalent local duplicates with helper calls. No layout/types/branch bounds or other header edits. Preserve original behavior and all historical claims; coordinator fullbuild and downstream exact/reference preservation required before integration."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "map-climate-mask-inline-oct31bl",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:easy-map-oct31bl"
+}
