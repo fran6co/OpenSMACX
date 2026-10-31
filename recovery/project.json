@@ -245,13 +245,16 @@
       },
       "src/caviar.cpp": {
         "flags": [
-          "/c",
-          "/O2",
-          "/Gy",
-          "/GR-",
+          "/nologo",
+          "/TP",
+          "/Zm200",
           "/GX",
+          "/O2",
           "/Ob2",
-          "/Z7"
+          "-MT",
+          "/W4",
+          "/Z7",
+          "-c"
         ]
       },
       "src/datalink.cpp": {
