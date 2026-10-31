@@ -61,6 +61,13 @@ binding is start-only: the window does not prove the original allocation bound
 or former owner. Generation requires the pinned, backed, relocation-free data;
 there is no literal proprietary table in tracked source or zero fallback.
 
+Recovery preparation generates Release recipes, matching the production
+application used for binary verification. Configure CMake Debug separately for
+IDE or runtime debugging; its `/Od /Ob0 /GZ` recipes are not matching baselines.
+The compiler interface still receives optimization flags explicitly for each
+trial; preparing Release recipes does not change that interface or the settled
+comparison flag sets.
+
 Compiler and toolchain JSON clients explicitly launch with `{framework_python}`
 and `-I -B`, so their framework imports use the caller's selected installation,
 not a retained worktree's older editable package. Compiler scripts and flags remain

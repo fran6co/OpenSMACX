@@ -1,0 +1,20 @@
+{
+  "event_id": "60e20b54f72292429ae32838ddf1ad5841c861818516721da8c84d105edd75e3",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/project.json"
+    ],
+    "evidence": [
+      "Preparation currently emits Debug /Od /Ob0 /GZ recipes, unlike the existing Release application build. New vendor C units lack explicit matching overrides, so this causes false function-local mismatches.",
+      "Use production Release recipe generation for recovery preparation; keep all existing CMake targets, release flags, unit_flag_sets, historical claims and task baselines unchanged. Ordinary IDE CMake Debug configuration remains available independently. Coordinator changes/reprepares only at frozen epochs."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "coordinator-production-release-preparation-oct31ch",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:structural-cohort-oct31ch"
+}

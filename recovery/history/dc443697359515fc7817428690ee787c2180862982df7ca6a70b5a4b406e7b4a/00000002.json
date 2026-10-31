@@ -1,0 +1,19 @@
+{
+  "event_id": "16bf551b7a3e6077c6d5380fb8680571c0145d4834afbe6d77ae61dcdfa4b98a",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/prepare.json"
+    ],
+    "evidence": [
+      "Project preparation is configured by recovery/prepare.json, referenced from project.json. Change only CMAKE_BUILD_TYPE Debug to Release to match existing production build; no unit flags, target policy, task baseline or compiler identity changes."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "60e20b54f72292429ae32838ddf1ad5841c861818516721da8c84d105edd75e3",
+  "request_id": "coordinator-release-prepare-config-oct31ch",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:structural-cohort-oct31ch"
+}

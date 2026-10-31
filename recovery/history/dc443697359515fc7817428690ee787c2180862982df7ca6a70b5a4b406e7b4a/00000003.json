@@ -1,0 +1,19 @@
+{
+  "event_id": "c5f1dcbab2c2103e21d93a85af4157c3dd5a2d001609550cabc0d1415dcbe747",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/README.md"
+    ],
+    "evidence": [
+      "Document actual preparation Release policy and explicit trial flag interface; preserve ordinary CMake Debug/IDE configuration and all settled matching flag sets."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "16bf551b7a3e6077c6d5380fb8680571c0145d4834afbe6d77ae61dcdfa4b98a",
+  "request_id": "coordinator-document-release-matching-context-oct31ch",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:structural-cohort-oct31ch"
+}
