@@ -408,7 +408,7 @@ int AlphaNet::setup(int option) {
         // value-equal but independent NetLobbyAppGuid at 697548.
         Net::init(const_cast<GUID *>(&LobbyAppGuid), 3, 9);
         const int picked = pick_service(&IsMultiplayerPBEM);
-        if (picked != 0) return picked;
+        if (picked != 0) return 0;
         if (IsMultiplayerPBEM != 0) {
             Net::close();
             return 0;

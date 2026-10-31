@@ -1,0 +1,22 @@
+{
+  "author": "recovery-coordinator",
+  "base_revision": "3217d0964dd6968d6edb06d9e0bc75d3fde7aa54",
+  "editable_files": [
+    "src/alphanet.cpp",
+    "recovery/project.json"
+  ],
+  "evidence": [
+    "Pinned inspect/current actual application disassembly; history-first audit retained under ignored /home/fran6co/code/OpenSMACX/.opensmacx/recovery/fast-pass-oct30ol/owner-alphanet-picker-result-oct31at"
+  ],
+  "intent": "Bounded original value-flow spelling test; preserve all claims and original quirks; no acceptance grant.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5124576,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "owner-alphanet-picker-result-oct31at"
+}

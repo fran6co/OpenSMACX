@@ -1,0 +1,19 @@
+{
+  "event_id": "031375734db9b7a02786079f974857d195e9c6191f747426b942e99664e6a286",
+  "payload": {
+    "author": "recovery-coordinator",
+    "editable_files": [
+      "recovery/tests/test_alphanet_setup_behavior.py"
+    ],
+    "evidence": [
+      "Pin4E323D branches nonzero picker results to4E32B5 xor eax,eax; reachable picker results4 and7 independently verified."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "actual-source-picker-return-control-oct31at",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:owner-alphanet-picker-result-oct31at"
+}
