@@ -1,0 +1,20 @@
+{
+  "event_id": "bfc985c120a49dfc95ab617f4a6b363053e5b95a592b95f4dde9817bbd229459",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/netdaemon_owner_harness.cpp",
+      "recovery/tests/test_netdaemon_owner.py"
+    ],
+    "evidence": [
+      "Pinned 52E55E/52E578 notification branches contradict existing turn-bit0 host0 fixture oracle. Authorize independent original truth-table correction and callback-sensitive identity reload controls; preserve unsafe original behavior and damage controls."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "netdaemon-native-fixture-closure-oct31bx",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:easy-netdaemon-oct31bx"
+}

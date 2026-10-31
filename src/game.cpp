@@ -2727,8 +2727,10 @@ int __cdecl change_opening(char *filename) {
     buf.load_pcx(filename, 0, 10, 0xec);
     GraphicWin *window = opening_window();
     Buffer *surface = window != 0 ? static_cast<Buffer *>(window) : 0;
-    int c1 = surface->dib_.bmiHeader.biWidth;
-    int c2 = -surface->dib_.bmiHeader.biHeight;
+    // The original dimensions use GraphicWin itself after the load callback;
+    // only the Buffer copy argument conversion is null-conditional.
+    int c1 = window->dib_.bmiHeader.biWidth;
+    int c2 = -window->dib_.bmiHeader.biHeight;
     int p1 = buf.dib_.bmiHeader.biWidth;
     int p2 = -static_cast<int>(buf.dib_.bmiHeader.biHeight);
     buf.copy(surface, 0, 0, p1, p2, 0, 0, c1, c2);
@@ -3726,11 +3728,12 @@ static void set_demo_rect(RECT &rect, long left, long top, long right,
 // Historical matching used GraphicWinSub::sub_5242c0 with raw receiver offsets;
 // the observed Demo fields now own those accesses and the virtual redraw slot.
 void Demo::redraw() {
+    Buffer *const buffer = static_cast<Buffer *>(this);
     const int frame = timer_phase_ == 0 ? 1 : 0;
     Sprite &sprite = splash_sprites_[frame];
     RECT &area = splash_rects_[0];
-    sprite.draw(static_cast<Buffer *>(this), sprite.transparent_index(),
-                area.left, area.top, 1, 1);
+    sprite.draw(buffer, sprite.transparent_index(),
+                area.left, splash_rects_[0].top, 1, 1);
     soft_update(&area);
 }
 

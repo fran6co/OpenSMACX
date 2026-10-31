@@ -1664,12 +1664,13 @@ void Scroll::on_mousewheel_down(int delta) {
     }
     WinCallbackWindow = parent;
 
-    int next = position_ + 1;
+    const int next = position_ + 1;
     const int maximum = range_maximum_;
-    if (next > maximum) {
-        next = maximum;
+    if (next <= maximum) {
+        position_ = next;
+    } else {
+        position_ = maximum;
     }
-    position_ = next;
     if (range_reversed_ != 0U) {
         position_ = (range_minimum_ - position_) + maximum;
     }

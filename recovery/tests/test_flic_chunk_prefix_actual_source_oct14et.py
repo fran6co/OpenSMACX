@@ -1,6 +1,8 @@
 """Bounded source/layout controls for the recovered FLIC chunk prefix."""
 from pathlib import Path
 import re
+import os
+from hashlib import sha256
 import shutil
 import subprocess
 
@@ -104,16 +106,19 @@ def test_frame_owners_and_decoder_use_actual_named_prefix_members():
     unkn = _braced_declaration(source, "int Flic::advance_to_frame(")
     assert "FlicFrameChunk *chunks = &chunk_;" in unkn
     assert "fread(chunks, 0x10, 1, file_);" in unkn
-    assert "chunk_.header_.size_ + frame_pos" in unkn
-    assert "chunk_.header_.count_" in unkn
+    assert "chunks->header_.size_ + frame_pos" in unkn
+    assert "chunks->header_.count_" in unkn
     assert "decode_chunk(&chunks->header_);" in unkn
-    # The scan's declared object extent is not established by its six-byte
-    # read. Retain the pre-migration sixteen-byte storage without initializing
-    # it; only the recursive decoder's eight-byte local is independently known.
-    assert "FlicFrameChunk sub;" in unkn
+    # Full original prologue/scan/cleanup evidence below bounds this scan
+    # storage to eight bytes before the return address. The six-byte read
+    # alone would not establish that extent. Use the existing prefix type;
+    # leave its unread count tail and frame_pos uninitialized.
+    assert "DataChunk sub;" in unkn
     assert "fread(&sub, 6, 1, file_);" in unkn
-    assert "sub.header_.type_ == 7 || sub.header_.type_ == 0xc" in unkn
+    assert "sub.type_ == 7 || sub.type_ == 0xc" in unkn
     assert "FlicFrameChunk sub{};" not in unkn
+    assert "long frame_pos;" in unkn
+    assert "long frame_pos =" not in unkn
     assert "sub.count_" not in unkn
     assert "DataChunk sub{};" not in unkn
 
@@ -128,3 +133,55 @@ def test_frame_owners_and_decoder_use_actual_named_prefix_members():
 # These are declaration and selected-source-operation controls, not execution
 # of the proprietary decoder, complete grammar proof, native ABI validation,
 # or semantic assignments to untouched/trailing bytes.
+
+
+def test_pinned_scan_storage_uses_the_complete_original_stack_frame():
+    from capstone import Cs, CS_ARCH_X86, CS_MODE_32
+    from capstone.x86 import X86_OP_IMM, X86_OP_MEM, X86_OP_REG, X86_REG_ESP
+    from match_recovery.model import Span
+    from match_recovery.pe_coff import PeImage
+    pin = "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    path = Path(os.environ.get("OPENSMACX_IMAGE", str(ROOT / ".opensmacx/game/terranx_original.exe")))
+    if not path.is_file():
+        pytest.skip("pinned image unavailable")
+    raw = path.read_bytes()
+    assert sha256(raw).hexdigest() == pin
+    image = PeImage(raw, pin)
+    decoder = Cs(CS_ARCH_X86, CS_MODE_32)
+    decoder.detail = True
+    instructions = list(decoder.disasm(image.read(Span(0x62A2C0, 0x62A4FA)), 0x62A2C0))
+    by_address = {instruction.address: instruction for instruction in instructions}
+    allocation = by_address[0x62A2C4]
+    assert allocation.mnemonic == "sub" and allocation.operands[0].reg == X86_REG_ESP
+    assert allocation.operands[1].imm == 0x18
+    assert [by_address[address].mnemonic for address in
+            (0x62A2C8, 0x62A2C9, 0x62A2CA, 0x62A2CF)] == ["push"] * 4
+    # Track every explicit stack adjustment up to the scan's destination LEA;
+    # all intervening original calls have balanced caller cleanup here.
+    delta = 0
+    for instruction in instructions:
+        if instruction.address == 0x62A387:
+            break
+        if instruction.mnemonic == "push": delta -= 4
+        elif instruction.mnemonic == "pop": delta += 4
+        elif instruction.mnemonic in ("sub", "add"):
+            left, right = instruction.operands
+            if left.type == X86_OP_REG and left.reg == X86_REG_ESP:
+                assert right.type == X86_OP_IMM
+                delta += right.imm * (-1 if instruction.mnemonic == "sub" else 1)
+    assert delta == -0x28
+    scan = by_address[0x62A387]
+    assert scan.mnemonic == "lea"
+    memory = scan.operands[1]
+    assert memory.type == X86_OP_MEM and memory.mem.base == X86_REG_ESP
+    assert memory.mem.disp == 0x20 and memory.mem.index == 0
+    assert -(delta + memory.mem.disp) == 8  # slot ends before the return address
+    count = by_address[0x62A38E]
+    assert count.mnemonic == "push" and count.operands[0].imm == 6
+    call = by_address[0x62A391]
+    assert call.mnemonic == "call" and call.operands[0].imm == 0x646178
+    for cleanup, terminal in ((0x62A4D2, 0x62A4D5), (0x62A4F4, 0x62A4F7)):
+        add, ret = by_address[cleanup], by_address[terminal]
+        assert add.mnemonic == "add" and add.operands[0].reg == X86_REG_ESP
+        assert add.operands[1].imm == 0x18
+        assert ret.mnemonic == "ret" and ret.operands[0].imm == 4

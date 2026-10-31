@@ -418,7 +418,6 @@ void __cdecl say_tech(LPSTR output, int tech_id, BOOL category_lvl) {
 /*
 Purpose: Get tech string for tech_id and store it into TechName buffer.
 // ORIGINAL: 0x005B9EF0 ?tech_name@@YAPADHH@Z 0x005B9EF0-0x005B9F16 BYTE_EXACT
-// body      src/technology.h
 // size      38 bytes
 // prototype int8* (__cdecl ?tech_name@@YAPADHH@Z)(int techID, BOOL categoryLvl)
 // callers   9   call targets   1
@@ -428,10 +427,11 @@ Purpose: Get tech string for tech_id and store it into TechName buffer.
 Return Value: Pointer to TechName
 Status: Complete
 */
-// BODY IN technology.h, as `MEASURED inline`: the image writes it out at
-// some call sites and calls it at others, and a .cpp definition is only ever
-// one of those. The marker stays here because that is where the catalogue
-// reads it.
+LPSTR __cdecl tech_name(int tech_id, BOOL category_lvl) {
+    TechName[0] = 0;
+    say_tech(TechName, tech_id, category_lvl);
+    return TechName;
+}
 
 
 /*

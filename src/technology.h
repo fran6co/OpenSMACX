@@ -187,11 +187,7 @@ int __cdecl tech_val(int tech_id, int faction_id, BOOL simple_calc);
 int __cdecl tech_ai(int faction_id);
 int __cdecl tech_rate(int faction_id);
 
-MEASURED inline LPSTR __cdecl tech_name(int tech_id, BOOL category_lvl) {
-    TechName[0] = 0;
-    say_tech(TechName, tech_id, category_lvl);
-    return TechName;
-}
+LPSTR __cdecl tech_name(int tech_id, BOOL category_lvl);
 
 // PickTech::pick calls these out of line at 0x00486946, 0x00486951,
 // 0x0048699D, 0x004869A7 and 0x004869B2. Definitions live in technology.cpp;

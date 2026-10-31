@@ -1,0 +1,19 @@
+{
+  "event_id": "239a18a9e1721dc762ca2b5aa03e30c550b8056a47473a82ace18d9d4628f71b",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_technology_query_boundaries.py"
+    ],
+    "evidence": [
+      "Caller-boundary audit supports removing tech_name header body; existing has_tech behavior fixture also asserts obsolete body-location metadata. Authorize narrow assertion/comment migration, preserving has_tech bit/guard and damage checks."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "obsolete-header-body-fixture-oct31by",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:technology-visibility-oct31by"
+}
