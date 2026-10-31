@@ -37,12 +37,19 @@ int MapOceanCoverage, MapLandCoverage, MapErosiveForces;
 int MapPlanetaryOrbit, MapCloudCover, MapNativeLifeForms;
 char PopupStartCaption[256];
 
+class GraphicWin {};
+GraphicWin before_popup, after_popup;
+static GraphicWin *current_opening = &before_popup;
+static GraphicWin *&opening_window() { return current_opening; }
+static GraphicWin **snapshot_probe;
+
 class Popup {
 public:
     uint32_t field_3100_;
-    Popup() : field_3100_(0) {}
+    Popup() : field_3100_(0) { opening_window() = &after_popup; }
     void start(char *, const char *title, int a, char *b, int c, class GraphicWin *owner) {
         if (strcmp(title,"MAPMENU") || a!=-1 || b || c || owner) abort();
+        if (!snapshot_probe || *snapshot_probe != &after_popup) abort();
         ++popup_starts; record("popup.start");
     }
     void set_value(int value) { popup_value=value; record("popup.set_value"); }
@@ -50,6 +57,11 @@ public:
 };
 class SetupWin {
 public:
+    GraphicWin *opening_window_snapshot_;
+    SetupWin() : opening_window_snapshot_(opening_window()) {
+        snapshot_probe = &opening_window_snapshot_;
+    }
+    ~SetupWin() { snapshot_probe = 0; }
     int do_menu(Popup *, int kind, int flags) {
         if (kind!=1) abort();
         (void)flags;

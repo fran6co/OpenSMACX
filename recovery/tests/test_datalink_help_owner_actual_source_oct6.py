@@ -235,7 +235,7 @@ TECH_LOOP_HARNESS = r'''#include <cassert>
 #include <cstring>
 #define __cdecl
 typedef char *LPSTR;
-struct RulesTerraforming { int preq_tech; int preq_tech_sea; };
+struct RulesTerraforming { int prerequisite_tech[2]; };
 struct OrderRow { char *order; char *order_sea; };
 static const int MaxTerrainNum = 20;
 static RulesTerraforming Terraforming[MaxTerrainNum];
@@ -264,13 +264,13 @@ static void tech_callback(char *) {
     ++emit_count;
     if (emit_count == 1) {
         if (callback_mode == 1) {
-            Terraforming[0].preq_tech = 9;
-            Terraforming[0].preq_tech_sea = 7;
+            Terraforming[0].prerequisite_tech[0] = 9;
+            Terraforming[0].prerequisite_tech[1] = 7;
         } else if (callback_mode == 2) {
-            Terraforming[0].preq_tech = 7;
-            Terraforming[0].preq_tech_sea = 7;
+            Terraforming[0].prerequisite_tech[0] = 7;
+            Terraforming[0].prerequisite_tech[1] = 7;
         } else if (callback_mode == 3) {
-            Terraforming[0].preq_tech = 9;
+            Terraforming[0].prerequisite_tech[0] = 9;
         }
     }
 }
@@ -280,11 +280,11 @@ static void run_loop(int a2, void (__cdecl *a1)(char *)) {
 }
 static void reset_case(int land, int sea, int mode) {
     for (int row = 0; row < MaxTerrainNum; ++row) {
-        Terraforming[row].preq_tech = -1;
-        Terraforming[row].preq_tech_sea = -1;
+        Terraforming[row].prerequisite_tech[0] = -1;
+        Terraforming[row].prerequisite_tech[1] = -1;
     }
-    Terraforming[0].preq_tech = land;
-    Terraforming[0].preq_tech_sea = sea;
+    Terraforming[0].prerequisite_tech[0] = land;
+    Terraforming[0].prerequisite_tech[1] = sea;
     Order[4].order = (char *)"land-order";
     Order[4].order_sea = (char *)"sea-order";
     event_count = parse_say_count = parse_string_count = emit_count = 0;
@@ -338,16 +338,16 @@ def _replace_once(text: str, old: str, new: str) -> str:
 def _cached_row_mutant(loop: str) -> str:
     live = """for (int i = 0; i < 2; ++i) {
                 const RulesTerraforming &terraform = Terraforming[row];
-                const int prerequisite = i == 0 ? terraform.preq_tech
-                                                : terraform.preq_tech_sea;"""
+                const int prerequisite = i == 0 ? terraform.prerequisite_tech[0]
+                                                : terraform.prerequisite_tech[1];"""
     snapshot = """const RulesTerraforming &terraform = Terraforming[row];
-            const int prereq[2] = {terraform.preq_tech, terraform.preq_tech_sea};
+            const int prereq[2] = {terraform.prerequisite_tech[0], terraform.prerequisite_tech[1]};
             for (int i = 0; i < 2; ++i) {
                 const int prerequisite = prereq[i];"""
     mutant = _replace_once(loop, live, snapshot)
     return _replace_once(
         mutant,
-        "(i != 1 || terraform.preq_tech != terraform.preq_tech_sea)",
+        "(i != 1 || terraform.prerequisite_tech[0] != terraform.prerequisite_tech[1])",
         "(i != 1 || prereq[0] != prereq[1])",
     )
 
@@ -387,7 +387,7 @@ def test_tech_heck_loop_rejects_cached_row_and_missing_duplicate_suppression(com
     cached = _cached_row_mutant(loop)
     no_duplicate_suppression = _replace_once(
         loop,
-        "(i != 1 || terraform.preq_tech != terraform.preq_tech_sea)",
+        "(i != 1 || terraform.prerequisite_tech[0] != terraform.prerequisite_tech[1])",
         "(i != 1 || true)",
     )
     _compile_and_run_loop(cached, helper, executable, tmp_path / "cached", False)

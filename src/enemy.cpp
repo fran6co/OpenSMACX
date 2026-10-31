@@ -160,7 +160,7 @@ static bool enemy_move_downgrade_unresearched_magtube_order(
     int vehicle_id, int faction_id) {
     Veh &vehicle = Vehs[vehicle_id];
     if (vehicle.order_auto_type != 2 ||
-        has_tech(Terraforming[TERRA_MAGTUBE].preq_tech, faction_id)) {
+        has_tech(Terraforming[TERRA_MAGTUBE].prerequisite_tech[0], faction_id)) {
         return false;
     }
     vehicle.order_auto_type = 1;
@@ -195,7 +195,7 @@ static EnemyMoveNoWaypointJoin enemy_move_no_waypoint_dispatch(
         (GameDataStateStorage.fields_.lock_masks_.enable_mask_ & (1u << faction_id)) != 0;
     bool jumped_to_common_order_dispatch = false;
     if (!faction_locked && (vehicle.flags & 0x0800u) != 0) {
-        if (has_tech(Terraforming[TERRA_MAGTUBE].preq_tech, faction_id))
+        if (has_tech(Terraforming[TERRA_MAGTUBE].prerequisite_tech[0], faction_id))
             vehicle.order_auto_type = 2;
         jumped_to_common_order_dispatch = true;
     }
@@ -283,8 +283,8 @@ static EnemyMoveOrdinaryTerrainJoin enemy_move_ordinary_auto_terrain_policy(
         if ((tile->bit & 0x20u) != 0) {
             const RulesTerraforming &remove_fungus =
                 Terraforming[TERRA_REMOVE_FUNGUS];
-            const int tech = low ? remove_fungus.preq_tech_sea
-                                 : remove_fungus.preq_tech;
+            const int tech = low ? remove_fungus.prerequisite_tech[1]
+                                 : remove_fungus.prerequisite_tech[0];
             if (has_tech(tech, faction_id)) {
                 vehicle.order = 0x0e;
                 return ENEMY_MOVE_TERRAIN_JOIN_578F46;
@@ -297,7 +297,7 @@ static EnemyMoveOrdinaryTerrainJoin enemy_move_ordinary_auto_terrain_policy(
             const int climate_low_bits = tile->climate & 0x18;
             if (climate_low_bits < 0x10 ||
                 (terrain_altitude - 2 >= 0 && terrain_altitude - 2 > 1)) {
-                if (has_tech(Terraforming[TERRA_FARM].preq_tech,
+                if (has_tech(Terraforming[TERRA_FARM].prerequisite_tech[0],
                              faction_id)) {
                     vehicle.order = 0x04;
                     return ENEMY_MOVE_TERRAIN_JOIN_578F46;
@@ -315,7 +315,7 @@ static EnemyMoveOrdinaryTerrainJoin enemy_move_ordinary_auto_terrain_policy(
         if (vehicle.order_auto_type == 4 && (tile->bit & 0x40u) == 0 &&
             energy_yield(faction_id, -1, current_x, current_y, 1) != 0) {
             const RulesTerraforming &solar = Terraforming[TERRA_SOLAR_TIDAL];
-            const int solar_tech = low ? solar.preq_tech_sea : solar.preq_tech;
+            const int solar_tech = low ? solar.prerequisite_tech[1] : solar.prerequisite_tech[0];
             if (has_tech(solar_tech, faction_id)) {
                 vehicle.order = 0x07;
                 return ENEMY_MOVE_TERRAIN_JOIN_578F46;
@@ -325,7 +325,7 @@ static EnemyMoveOrdinaryTerrainJoin enemy_move_ordinary_auto_terrain_policy(
         tile = map_loc(current_x,current_y);
         if (vehicle.order_auto_type == 5 && (tile->bit & 0x10u) == 0) {
             const RulesTerraforming &mine = Terraforming[TERRA_MINE];
-            const int mine_tech = low ? mine.preq_tech_sea : mine.preq_tech;
+            const int mine_tech = low ? mine.prerequisite_tech[1] : mine.prerequisite_tech[0];
             if (has_tech(mine_tech, faction_id)) {
                 vehicle.order = 0x06;
                 return ENEMY_MOVE_TERRAIN_JOIN_578F46;
@@ -338,7 +338,7 @@ static EnemyMoveOrdinaryTerrainJoin enemy_move_ordinary_auto_terrain_policy(
     if ((tile->bit & 4u) == 0 &&
         ((tile->bit & 0x20u) == 0 || (tile->climate & 0xe0u) < 0x40u ||
          has_tech(Rules.tech_build_roads_fungus, faction_id)) &&
-        has_tech(Terraforming[TERRA_ROAD].preq_tech, faction_id)) {
+        has_tech(Terraforming[TERRA_ROAD].prerequisite_tech[0], faction_id)) {
         vehicle.order = 0x09;
         return ENEMY_MOVE_TERRAIN_JOIN_578F46;
     }
@@ -346,7 +346,7 @@ static EnemyMoveOrdinaryTerrainJoin enemy_move_ordinary_auto_terrain_policy(
     tile = map_loc(current_x,current_y);
     if ((tile->bit & 0x8000u) != 0 ||
         (tile->val3 & 0xc0u) >= 0x80u ||
-        !has_tech(Terraforming[TERRA_FARM].preq_tech, faction_id)) {
+        !has_tech(Terraforming[TERRA_FARM].prerequisite_tech[0], faction_id)) {
         return enemy_move_ordinary_clear_order(vehicle);
     }
     vehicle.order = 0x04;
@@ -1654,7 +1654,7 @@ static StrategicActionExit enemy_move_strategic_actions(EnemyMoveFullFrame &enem
         const Map &tile=*map_loc(enemy_frame.local_18,enemy_frame.local_14);
         if((tile.bit&0x20u)&&(tile.climate&0xe0)>=0x40&&enemy_frame.local_44&&
             (has_abil(v.proto_id,0x2000)||has_tech((map_loc(enemy_frame.local_18,enemy_frame.local_14)->climate&0xe0)<0x60?
-                Terraforming[10].preq_tech_sea:Terraforming[10].preq_tech,enemy_frame.local_c))&&
+                Terraforming[10].prerequisite_tech[1]:Terraforming[10].prerequisite_tech[0],enemy_frame.local_c))&&
             (enemy_frame.local_2c||(enemy_frame.local_64<=2&&(Bases[enemy_frame.local_5c].eco_damage||
                 Bases[enemy_frame.local_5c].population_size>=6)))){
             v.order=14;return STRATEGIC_JOIN_578F46;
@@ -1679,7 +1679,7 @@ static StrategicActionExit enemy_move_strategic_actions(EnemyMoveFullFrame &enem
             if(roads){
                 const unsigned bits=map_loc(enemy_frame.local_18,enemy_frame.local_14)->bit;
                 if(bits&4u){
-                    if(has_tech(Terraforming[6].preq_tech,enemy_frame.local_c)&&enemy_frame.local_2c&&!(bits&8u)){
+                    if(has_tech(Terraforming[6].prerequisite_tech[0],enemy_frame.local_c)&&enemy_frame.local_2c&&!(bits&8u)){
                         v.order=9;v.move_to_ai_type='R';return STRATEGIC_JOIN_578F46;}
                 } else if(!(bits&0x20u)||(map_loc(enemy_frame.local_18,enemy_frame.local_14)->climate&0xe0)<=0x3f||
                     has_tech(Rules.tech_improve_fungus_sqr,enemy_frame.local_c)){
@@ -1696,19 +1696,19 @@ static StrategicActionExit enemy_move_strategic_actions(EnemyMoveFullFrame &enem
             if(enemy_frame.local_2c||!v.order){
                 if(is_sensor(enemy_frame.local_18,enemy_frame.local_14)&&whose_territory(enemy_frame.local_c,enemy_frame.local_18,enemy_frame.local_14,0,0)==enemy_frame.local_c&&
                     enemy_frame.local_64>=2&&!(map_loc(enemy_frame.local_18,enemy_frame.local_14)->bit&0x800u)&&
-                    has_tech(Terraforming[7].preq_tech,enemy_frame.local_c)){
+                    has_tech(Terraforming[7].prerequisite_tech[0],enemy_frame.local_c)){
                     v.order=11;return STRATEGIC_JOIN_578F46;}
                 if(good_sensor(enemy_frame.local_c,enemy_frame.local_18,enemy_frame.local_14)){v.order=13;return STRATEGIC_JOIN_578F46;}
                 if(enemy_frame.local_64>=2&&enemy_frame.local_64<=3&&
                     (map_loc(enemy_frame.local_18,enemy_frame.local_14)->bit&4u)&&!(map_loc(enemy_frame.local_18,enemy_frame.local_14)->bit&0x800u)&&
-                    has_tech(Terraforming[7].preq_tech,enemy_frame.local_c)){
+                    has_tech(Terraforming[7].prerequisite_tech[0],enemy_frame.local_c)){
                     bool bunker=false;
                     for(int pos=0;pos<9;++pos){
                         enemy_frame.local_4=xrange(enemy_frame.local_18+RadiusOffsetX[pos]);enemy_frame.local_8=enemy_frame.local_14+RadiusOffsetY[pos];
                         if(on_map(enemy_frame.local_4,enemy_frame.local_8)&&(map_loc(enemy_frame.local_4,enemy_frame.local_8)->bit&0x800u)){bunker=true;break;}}
                     if(!bunker){v.order=11;return STRATEGIC_JOIN_578F46;}
                 }
-                if(enemy_frame.local_2c&&has_tech(Terraforming[9].preq_tech,enemy_frame.local_c)){
+                if(enemy_frame.local_2c&&has_tech(Terraforming[9].prerequisite_tech[0],enemy_frame.local_c)){
                     enemy_frame.local_4=enemy_frame.local_18;enemy_frame.local_8=enemy_frame.local_14;enemy_frame.local_4c=1;
                     if(!Paths.sensors(enemy_frame.local_c,&enemy_frame.local_4,&enemy_frame.local_8)&&enemy_frame.local_4==enemy_frame.local_18&&enemy_frame.local_8==enemy_frame.local_14){
                         v.order=13;return STRATEGIC_JOIN_578F46;}
@@ -2670,7 +2670,7 @@ int __cdecl enemy_move(int incoming_vehicle_id) {
 label_56bf5f:
     {
         const RulesTerraforming &remove = Terraforming[TERRA_REMOVE_FUNGUS];
-        const int tech = f.local_40 == 1 ? remove.preq_tech_sea : remove.preq_tech;
+        const int tech = f.local_40 == 1 ? remove.prerequisite_tech[1] : remove.prerequisite_tech[0];
         if (!has_tech(tech,f.local_c) &&
             !has_abil(Vehs[f.vehicle_id].proto_id,0x2000) &&
             Vehs[f.vehicle_id].order_auto_type == 6) {
@@ -2768,7 +2768,7 @@ label_56c35d:
                 do {
                     int road_mode = 4;
                     if (has_tech(Rules.tech_build_roads_fungus,f.local_c) ||
-                        has_tech(Terraforming[TERRA_REMOVE_FUNGUS].preq_tech,f.local_c))
+                        has_tech(Terraforming[TERRA_REMOVE_FUNGUS].prerequisite_tech[0],f.local_c))
                         road_mode = 0;
                     f.local_80 = Paths.find(path_x,path_y,base_x,f.local_58,0,-1,road_mode,-1);
                     if (f.local_80 < 0) break;

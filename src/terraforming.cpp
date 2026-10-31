@@ -361,7 +361,7 @@ int __cdecl can_terraform(int faction_id, int x, int y, int force_improve, int b
                 && !(GameDataStateStorage.fields_.game_more_preferences_ & MPREF_AUTO_FORMER_REMOVE_FUNGUS)) {
                 return ORDER_NONE;
             }
-            return has_tech(Terraforming[TERRA_REMOVE_FUNGUS].preq_tech_sea, faction_id)
+            return has_tech(Terraforming[TERRA_REMOVE_FUNGUS].prerequisite_tech[1], faction_id)
                 ? ORDER_REMOVE_FUNGUS : ORDER_NONE;
         }
         if (altitude < ALT_BIT_OCEAN_SHELF) {
@@ -372,23 +372,23 @@ int __cdecl can_terraform(int faction_id, int x, int y, int force_improve, int b
             return ORDER_NONE;
         }
         if (!has_farm
-            && has_tech(Terraforming[TERRA_FARM].preq_tech_sea, faction_id)) {
+            && has_tech(Terraforming[TERRA_FARM].prerequisite_tech[1], faction_id)) {
             return ORDER_FARM;   // kelp farm
         }
         if (!has_solar && !has_mine && !is_special) {
             bonus_at(x, y, 0);   // result discarded by the original, see the note above
             if (base_id >= 0) {
                 if ((Bases[base_id].state & BSTATE_UNK_2000)
-                    && has_tech(Terraforming[TERRA_MINE].preq_tech_sea, faction_id)) {
+                    && has_tech(Terraforming[TERRA_MINE].prerequisite_tech[1], faction_id)) {
                     return ORDER_MINE;
                 }
                 if ((Bases[base_id].state & BSTATE_UNK_1000)
-                    && has_tech(Terraforming[TERRA_SOLAR_TIDAL].preq_tech_sea, faction_id)) {
+                    && has_tech(Terraforming[TERRA_SOLAR_TIDAL].prerequisite_tech[1], faction_id)) {
                     return ORDER_SOLAR_COLLECTOR;
                 }
                 if (((Bases[base_id].state & BSTATE_UNK_4000)
                         || Bases[base_id].nutrient_surplus < 2)
-                    && has_tech(Terraforming[TERRA_SOLAR_TIDAL].preq_tech_sea, faction_id)
+                    && has_tech(Terraforming[TERRA_SOLAR_TIDAL].prerequisite_tech[1], faction_id)
                     && Rules.tgl_nutrient_effect_with_mine < 0) {
                     return ORDER_SOLAR_COLLECTOR;
                 }
@@ -415,13 +415,13 @@ int __cdecl can_terraform(int faction_id, int x, int y, int force_improve, int b
                     }
                 }
                 if (mine_count
-                        + (has_tech(Terraforming[TERRA_MINE].preq_tech_sea, faction_id) ? 0 : 1)
+                        + (has_tech(Terraforming[TERRA_MINE].prerequisite_tech[1], faction_id) ? 0 : 1)
                         > solar_count
-                    && has_tech(Terraforming[TERRA_SOLAR_TIDAL].preq_tech_sea, faction_id)) {
+                    && has_tech(Terraforming[TERRA_SOLAR_TIDAL].prerequisite_tech[1], faction_id)) {
                     return ORDER_SOLAR_COLLECTOR;
                 }
             }
-            if (has_tech(Terraforming[TERRA_MINE].preq_tech_sea, faction_id)
+            if (has_tech(Terraforming[TERRA_MINE].prerequisite_tech[1], faction_id)
                 && (Rules.tgl_nutrient_effect_with_mine >= 0
                     || (base_id >= 0 && Bases[base_id].nutrient_surplus > 1
                         && !(Bases[base_id].state & BSTATE_UNK_4000)))) {
@@ -429,7 +429,7 @@ int __cdecl can_terraform(int faction_id, int x, int y, int force_improve, int b
             }
         }
         if (has_farm && !has_soil_enricher
-            && has_tech(Terraforming[TERRA_SOIL_ENR].preq_tech_sea, faction_id)) {
+            && has_tech(Terraforming[TERRA_SOIL_ENR].prerequisite_tech[1], faction_id)) {
             return ORDER_FARM;   // upgrade the kelp farm to an enricher
         }
         return ORDER_NONE;
@@ -447,7 +447,7 @@ int __cdecl can_terraform(int faction_id, int x, int y, int force_improve, int b
     // The bonus runs none, nutrient, mineral, energy.
     int bonus = bonus_at(x, y, 0);
     int value = elev + rainfall + rockiness + 1;
-    if (has_tech(Terraforming[TERRA_SOIL_ENR].preq_tech, faction_id) && has_farm) {
+    if (has_tech(Terraforming[TERRA_SOIL_ENR].prerequisite_tech[0], faction_id) && has_farm) {
         value++;
     }
     int territory = whose_territory(faction_id, x, y, NULL, false);
@@ -463,7 +463,7 @@ int __cdecl can_terraform(int faction_id, int x, int y, int force_improve, int b
             && !(GameDataStateStorage.fields_.game_more_preferences_ & MPREF_AUTO_FORMER_REMOVE_FUNGUS)) {
             return ORDER_NONE;
         }
-        return has_tech(Terraforming[TERRA_REMOVE_FUNGUS].preq_tech_sea, faction_id)
+        return has_tech(Terraforming[TERRA_REMOVE_FUNGUS].prerequisite_tech[1], faction_id)
             ? ORDER_REMOVE_FUNGUS : ORDER_NONE;
     }
     if (bit & BIT_MONOLITH) {
@@ -472,9 +472,9 @@ int __cdecl can_terraform(int faction_id, int x, int y, int force_improve, int b
     if (has_forest && value <= forest_value) {
         return ORDER_NONE;
     }
-    BOOL mine_tech = has_tech(Terraforming[TERRA_MINE].preq_tech, faction_id);
-    BOOL solar_tech = has_tech(Terraforming[TERRA_SOLAR_TIDAL].preq_tech, faction_id);
-    has_tech(Terraforming[TERRA_FARM].preq_tech, faction_id);   // result discarded, see above
+    BOOL mine_tech = has_tech(Terraforming[TERRA_MINE].prerequisite_tech[0], faction_id);
+    BOOL solar_tech = has_tech(Terraforming[TERRA_SOLAR_TIDAL].prerequisite_tech[0], faction_id);
+    has_tech(Terraforming[TERRA_FARM].prerequisite_tech[0], faction_id);   // result discarded, see above
     if (!has_mine && !has_solar && !is_special) {
         if (solar_tech && elev
             && (((rockiness == ROCKINESS_ROLLING || elev >= 2)
@@ -535,7 +535,7 @@ int __cdecl can_terraform(int faction_id, int x, int y, int force_improve, int b
             }
         }
     }
-    if (has_tech(Terraforming[TERRA_FARM].preq_tech, faction_id) && !has_farm
+    if (has_tech(Terraforming[TERRA_FARM].prerequisite_tech[0], faction_id) && !has_farm
         && rockiness < ROCKINESS_ROCKY
         && !(bit & BIT_THERMAL_BORE)
         && (tile->bit2 & (BIT2_UNK_80000000 | BIT2_VOLCANO)) != BIT2_VOLCANO
@@ -559,7 +559,7 @@ int __cdecl can_terraform(int faction_id, int x, int y, int force_improve, int b
             order = ORDER_FARM;
         }
     }
-    if (has_tech(Terraforming[TERRA_SOIL_ENR].preq_tech, faction_id) && has_farm
+    if (has_tech(Terraforming[TERRA_SOIL_ENR].prerequisite_tech[0], faction_id) && has_farm
         && !has_soil_enricher) {
         BOOL enrich = false;
         if (crop > 1
@@ -580,7 +580,7 @@ int __cdecl can_terraform(int faction_id, int x, int y, int force_improve, int b
     }
     // What the terrain would be worth if it were planted, scored separately from `value`.
     int plant_value = elev + rainfall + rockiness + 1;
-    if (has_tech(Terraforming[TERRA_SOIL_ENR].preq_tech, faction_id) && has_farm) {
+    if (has_tech(Terraforming[TERRA_SOIL_ENR].prerequisite_tech[0], faction_id) && has_farm) {
         plant_value++;
     }
     if (base_id >= 0) {
@@ -616,7 +616,7 @@ int __cdecl can_terraform(int faction_id, int x, int y, int force_improve, int b
         plant_value++;
     }
     int result = order;
-    if (has_tech(Terraforming[TERRA_FOREST].preq_tech, faction_id)
+    if (has_tech(Terraforming[TERRA_FOREST].prerequisite_tech[0], faction_id)
         && rockiness < ROCKINESS_ROCKY && !has_mine && !has_forest
         && (!has_farm || (!elev && rainfall < 2 && !is_human(faction_id)))
         && !is_special
@@ -627,7 +627,7 @@ int __cdecl can_terraform(int faction_id, int x, int y, int force_improve, int b
                 && (GameDataStateStorage.fields_.game_preferences_ & PREF_AUTO_FORMER_PLANT_FORESTS)))) {
         result = ORDER_PLANT_FOREST;
     }
-    if (has_tech(Terraforming[TERRA_PLANT_FUNGUS].preq_tech, faction_id)
+    if (has_tech(Terraforming[TERRA_PLANT_FUNGUS].prerequisite_tech[0], faction_id)
         && !is_human(faction_id)) {
         if (rockiness == ROCKINESS_ROCKY) {
             plant_value += has_mine ? 2 : 1;

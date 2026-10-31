@@ -455,24 +455,39 @@ int EditGroup::calculate_dimensions() {
 
     label_width_ = 0;
     edit_width_ = 0;
-    for (int i = 0; i < dialog.item_list_.entry_count_; ++i) {
-        if (dialog.item_list_.head_ != 0) {
-            dialog.item_list_.current_ = dialog.item_list_.current_->next;
-            ++dialog.item_list_.current_position_;
-            if (dialog.item_list_.current_position_ == dialog.item_list_.entry_count_) {
-                dialog.item_list_.current_position_ = 0;
+    // The original snapshots the measurement count, while cursor wrapping
+    // still observes the live list count after each text-width callback.
+    int remaining = dialog.item_list_.entry_count_;
+    char **text = text_buffers_;
+    if (remaining > 0) {
+        do {
+            StringStructEntry *const head = dialog.item_list_.head_;
+            if (head != 0) {
+                dialog.item_list_.current_ = dialog.item_list_.current_->next;
+                ++dialog.item_list_.current_position_;
+                if (dialog.item_list_.current_position_ == dialog.item_list_.entry_count_) {
+                    dialog.item_list_.current_position_ = 0;
+                }
             }
-        }
-        StringStructEntry *const entry = dialog.item_list_.current_;
-        char *label = entry == 0 || entry->payload == 0 ? 0 : entry->string_payload()->text;
-        const int measured_label = buffer->text_width(label);
-        if (label_width_ < measured_label) label_width_ = measured_label;
-        const int measured_edit = buffer->text_width(text_buffers_[i]);
-        if (edit_width_ < measured_edit) {
-            const uint32_t edit_width_bits = static_cast<uint32_t>(measured_edit)
-                                           + static_cast<uint32_t>(dialog.field_40_) * 2u;
-            edit_width_ = static_cast<int32_t>(edit_width_bits);
-        }
+            StringStructEntry *const entry = dialog.item_list_.current_;
+            char *label = 0;
+            if (entry != 0) {
+                StringStructPayload *const payload = head != 0 ? entry->string_payload() : 0;
+                // A missing head or payload with a live cursor retains the
+                // original unsafe text read; only a null cursor yields null.
+                label = payload->text;
+            }
+            const int measured_label = buffer->text_width(label);
+            if (label_width_ < measured_label) label_width_ = measured_label;
+            const int measured_edit = buffer->text_width(*text);
+            if (edit_width_ < measured_edit) {
+                const uint32_t edit_width_bits = static_cast<uint32_t>(measured_edit)
+                                               + static_cast<uint32_t>(dialog.field_40_) * 2u;
+                edit_width_ = static_cast<int32_t>(edit_width_bits);
+            }
+            ++text;
+            --remaining;
+        } while (remaining != 0);
     }
 
     if (edit_width_ <= 10) edit_width_ = 10;
@@ -556,7 +571,8 @@ int EditGroup::attach(GraphicWin *parent, int x, int y, int flags) {
                 left, top, box_width, box_height, this, 1);
             if (box_result != 0) return box_result;
 
-            if ((Dialog::field_20_ & 0x100000) != 0) {
+            // Original 0x611DD2 tests AH bit 0x10 of Dialog::field_20_.
+            if ((Dialog::field_20_ & 0x1000) != 0) {
                 boxes_[index]->field_B3C_ |= 2;
             }
             Buffer *const edit_buffer = static_cast<Buffer *>(boxes_[index]);

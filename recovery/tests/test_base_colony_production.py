@@ -1567,7 +1567,7 @@ struct Base {
 };
 struct Map { uint8_t climate, contour, val2, region, visibility, val3, unk; int8_t territory; uint32_t bit, bit2; uint32_t visible[7]; };
 struct Player { int is_leader_female; char filename[24], search_key[24], name_leader[24], title_leader[24]; char adj_leader[128], adj_insult_leader[128], adj_faction[128], adj_insult_faction[128]; uint8_t pad[128]; char noun_faction[24]; int noun_gender, is_noun_plural; char adj_name_faction[128], formal_name_faction[40]; char insult_leader[24], desc_name_faction[24], assistant_name[24], scientist_name[24], assistant_city[24]; uint8_t pad2[176]; int rule_flags; };
-struct RulesTerraforming { char *name; char *name_sea; int preq_tech, preq_tech_sea; uint32_t bit, incompatible; int rate; char *shortcuts; };
+struct RulesTerraforming { char *name; char *name_sea; int prerequisite_tech[2]; uint32_t bit, incompatible; int rate; char *shortcuts; };
 struct WorldRules { uint32_t sea_level_rises; };
 struct BasicRules { uint32_t freq_global_warming_num, freq_global_warming_denom; };
 struct Console { int faction_id_; int focus(int,int,int); };

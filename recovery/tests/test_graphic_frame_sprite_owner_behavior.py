@@ -36,11 +36,11 @@ def test_actual_frame_sprite_owner(tmp_path, name):
     ('frame_top_right_ = sprites->top_right;', 'frame_top_right_ = sprites->top_left;'),
     ('frame_noncaption_middle_ = sprites->noncaption_middle;', 'frame_noncaption_middle_ = sprites->top;'),
     ('iFlags_ & 0x10', 'iFlags_ & 0x20'),
-    ('!top_left || !top_right || !bottom_left || !bottom_right', '!top_left || !top_right || !bottom_right'),
+    ('if (!bottom_left) return;', '/* bottom-left guard removed */'),
     ('width <= bottom_width', 'width >= bottom_width'),
     ('height <= right_height', 'height >= right_height'),
-    ('bottom_right->height(), top_right->height()', 'bottom_right->height(), top_left->height()'),
-    ('    field_138_ = height;\n}', '    field_138_ = height + 1;\n}'),
+    ('bottom_right->height(), top_right->height()', 'bottom_right->height(), frame_top_left_->height()'),
+    ('        field_138_ = height;\n    }\n}', '        field_138_ = height + 1;\n    }\n}'),
     ('width <= bottom_width', 'static_cast<unsigned int>(width) <= static_cast<unsigned int>(bottom_width)'),
 ])
 def test_frame_damage_detected(tmp_path, old, new):

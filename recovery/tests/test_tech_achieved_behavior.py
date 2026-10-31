@@ -209,8 +209,7 @@ def run_host(tmp_path, body, *, compiler="g++", control=None):
         struct RulesTerraforming {
           const char *name = nullptr;
           const char *name_sea = nullptr;
-          int preq_tech = -1;
-          int preq_tech_sea = -1;
+          int prerequisite_tech[2]={-1,-1};
         };
         constexpr int TERRA_FOREST = 4;
         RulesTerraforming Terraforming[20];
@@ -977,8 +976,8 @@ def run_host(tmp_path, body, *, compiler="g++", control=None):
           char alternate_tutorial_caption[] = "MUTABLE TUTOR CAPTION";
           treetime_expected_name = treetime_name;
           Technology[37].name = treetime_name;
-          Terraforming[TERRA_FOREST].preq_tech = 37;
-          Terraforming[TERRA_FOREST].preq_tech_sea = 38;
+          Terraforming[TERRA_FOREST].prerequisite_tech[0] = 37;
+          Terraforming[TERRA_FOREST].prerequisite_tech[1] = 38;
           TutorialPopupCaption = alternate_tutorial_caption;
           ConsoleGlobal.faction_id_ = 2;
           PlayersData[2].diff_level = 0;
@@ -1006,7 +1005,7 @@ def run_host(tmp_path, body, *, compiler="g++", control=None):
 
           // A changed live prerequisite suppresses the old tech and enables
           // the new one. The sea prerequisite is intentionally different.
-          Terraforming[TERRA_FOREST].preq_tech = 38;
+          Terraforming[TERRA_FOREST].prerequisite_tech[0] = 38;
           const int changed_rule_before = treetime_popup_calls;
           tech_achieved(2, 37, 0, 0);
           if (treetime_popup_calls != changed_rule_before) return 57;
@@ -1016,7 +1015,7 @@ def run_host(tmp_path, body, *, compiler="g++", control=None):
           if (treetime_popup_calls != changed_rule_before + 1 ||
               treetime_name_parse_input != treetime_expected_name) return 58;
 
-          Terraforming[TERRA_FOREST].preq_tech = 37;
+          Terraforming[TERRA_FOREST].prerequisite_tech[0] = 37;
           IsMultiplayerNet = 1;
           const int network_gate_before = treetime_popup_calls;
           tech_achieved(2, 37, 0, 0);
@@ -1074,10 +1073,10 @@ def test_actual_body_early_return_transfer_treaty_prototype_and_discovery_paths(
      'X_pop(TutorialPopupCaptionText, "TREETIME", nullptr);'),
     ('X_pop(TutorialPopupCaption, "TREETIME", nullptr);',
      'X_pop(const_cast<char *>("TUTOR"), "TREETIME", nullptr);'),
-    ('tech_id == Terraforming[TERRA_FOREST].preq_tech && IsMultiplayerNet == 0',
-     'tech_id == Terraforming[TERRA_FOREST].preq_tech_sea && IsMultiplayerNet == 0'),
-    ('tech_id == Terraforming[TERRA_FOREST].preq_tech && IsMultiplayerNet == 0',
-     'tech_id == Terraforming[TERRA_FOREST].preq_tech && IsMultiplayerNet != 0'),
+    ('tech_id == Terraforming[TERRA_FOREST].prerequisite_tech[0] && IsMultiplayerNet == 0',
+     'tech_id == Terraforming[TERRA_FOREST].prerequisite_tech[1] && IsMultiplayerNet == 0'),
+    ('tech_id == Terraforming[TERRA_FOREST].prerequisite_tech[0] && IsMultiplayerNet == 0',
+     'tech_id == Terraforming[TERRA_FOREST].prerequisite_tech[0] && IsMultiplayerNet != 0'),
 ])
 def test_native_branch_controls_reject_reconstruction_regressions(tmp_path, before, after):
     body = actual_body("static bool technology_shareable(") + "\n" + actual_body()

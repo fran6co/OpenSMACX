@@ -679,16 +679,12 @@ int TimeRangeReceiverView::sample() {
 
     const int lower = lower_bound_8_;
     const int upper = upper_bound_C_;
+    DWORD range;
     if (lower > upper) {
-        const DWORD range = static_cast<DWORD>(lower)
-                          - static_cast<DWORD>(upper) + 1u;
-        const DWORD tick = timeGetTime();
-        const DWORD remainder = tick % range;
-        return range_view_wrapped_upper_add(upper_bound_C_, remainder);
+        range = static_cast<DWORD>(lower) - static_cast<DWORD>(upper) + 1u;
+    } else {
+        range = static_cast<DWORD>(upper) - static_cast<DWORD>(lower) + 1u;
     }
-
-    const DWORD range = static_cast<DWORD>(upper)
-                      - static_cast<DWORD>(lower) + 1u;
     const DWORD tick = timeGetTime();
     const DWORD remainder = tick % range;
     return range_view_wrapped_upper_add(upper_bound_C_, remainder);

@@ -1,0 +1,19 @@
+{
+  "event_id": "c133d5774bc4d69cbaa14c6f8cbd011ca2f515d733c7f9a97c8b38667774832d",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_radiobutton_input_structure_oct16.py"
+    ],
+    "evidence": [
+      "Correct prior test expectations contradicted by pinned60E3A3 return on exhausted list and60E463..60E474 old-hover/-1 selected-position behavior. Preserve/add independent original-site witnesses and reject wrong selected-hover/repeated-redraw mutations. No header/annotation or original bug fix."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "original-radiobutton-hover-controls-oct31bu",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:easy-radiobutton-oct31bu"
+}

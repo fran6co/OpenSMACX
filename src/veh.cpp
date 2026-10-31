@@ -7982,7 +7982,6 @@ Status: Complete
 /*
 Purpose: Initialize/reset the fake unit id (2048) used as a placeholder for various UI elements.
 // ORIGINAL: 0x005C1D50 ?veh_fake@@YAHHH@Z 0x005C1D50-0x005C1D6F BYTE_EXACT
-// body      src/veh.h
 // size      31 bytes
 // prototype int (__cdecl ?veh_fake@@YAHHH@Z)(int protoID, int factionID)
 // callers   13   call targets   1
@@ -7992,10 +7991,12 @@ Purpose: Initialize/reset the fake unit id (2048) used as a placeholder for vari
 Return Value: Fake unit id (2048)
 Status: Complete
 */
-// BODY IN veh.h, as `MEASURED inline`: the image writes it out at
-// some call sites and calls it at others, and a .cpp definition is only ever
-// one of those. The marker stays here because that is where the catalogue
-// reads it.
+// Keep this implementation out of line: the pinned callers branch to the
+// standalone helper before veh_clear and use its returned fake ID.
+int __cdecl veh_fake(int proto_id, int faction_id) {
+    veh_clear(2048, proto_id, faction_id);
+    return 2048;
+}
 
 
 /*
@@ -9954,7 +9955,7 @@ void __cdecl action_road_to(int veh_id) {
     } else {
         if ((tile->bit & BIT_FUNGUS) != 0 && altitude >= ALT_BIT_SHORE_LINE
             && !has_tech(Rules.tech_build_roads_fungus, owner)
-            && has_tech(Terraforming[TERRA_REMOVE_FUNGUS].preq_tech, owner)) {
+            && has_tech(Terraforming[TERRA_REMOVE_FUNGUS].prerequisite_tech[0], owner)) {
             if (!(tile->bit & BIT_BASE_IN_TILE) || (tile->val2 & 0xf) > 7) {
                 if (IsMultiplayerNet == 0
                     || ConsoleControlTurnActive != 0) {
@@ -9989,7 +9990,7 @@ void __cdecl action_road_to(int veh_id) {
                 }
                 if (Vehs[veh_id].order == ORDER_MAGTUBE_TO
                     && !(tile->bit & BIT_MAGTUBE)
-                    && has_tech(Terraforming[TERRA_MAGTUBE].preq_tech, owner)) {
+                    && has_tech(Terraforming[TERRA_MAGTUBE].prerequisite_tech[0], owner)) {
                     if (IsMultiplayerNet == 0
                         || ConsoleControlTurnActive != 0) {
                         action_terraform(veh_id, ORDER_ROAD, 1);
@@ -10175,8 +10176,8 @@ int __cdecl action_terraform(int veh_id, int action, int do_it) {
     if (action == TERRA_ROAD) {
         if (tile->bit & BIT_ROAD) {
             if (has_tech(not_ocean != 0
-                                  ? Terraforming[TERRA_MAGTUBE].preq_tech_sea
-                                  : Terraforming[TERRA_MAGTUBE].preq_tech,
+                                  ? Terraforming[TERRA_MAGTUBE].prerequisite_tech[1]
+                                  : Terraforming[TERRA_MAGTUBE].prerequisite_tech[0],
                               faction)) {
                 action = TERRA_MAGTUBE;
             }
@@ -10184,8 +10185,8 @@ int __cdecl action_terraform(int veh_id, int action, int do_it) {
     } else if (action == TERRA_FARM && (tile->bit & BIT_FARM) != 0
                && (tile->climate & 0xE0) > 0x5F) {
         if (has_tech(not_ocean != 0
-                              ? Terraforming[TERRA_FARM].preq_tech_sea
-                              : Terraforming[TERRA_FARM].preq_tech,
+                              ? Terraforming[TERRA_FARM].prerequisite_tech[1]
+                              : Terraforming[TERRA_FARM].prerequisite_tech[0],
                           faction)) {
             action = TERRA_SOIL_ENR;
         }

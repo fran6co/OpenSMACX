@@ -73,14 +73,11 @@ class PickWin : public GraphicWin {
   char faction_files_[24][0x18];       // 0x5DB8..0x5FF8
   char faction_menu_items_[24][0x18]; // 0x5FF8..0x6238
   void (__cdecl *field_6238_)(int);    // user selection callback
-  uint32_t field_623C_;  // 0x623C
-  uint32_t field_6240_;  // 0x6240
-  uint32_t field_6244_;  // 0x6244
-  uint32_t field_6248_;  // 0x6248
-  uint32_t field_624C_;  // 0x624C
-  uint32_t field_6250_;  // 0x6250
-  uint32_t field_6254_;  // 0x6254
-  uint32_t field_6258_;  // 0x6258
+  // 489678/48968B pass these member addresses to Buffer::box_sprite.
+  // 48969E..48973E insets/restores the second RECT in place across drawing
+  // and text calls; a stack copy loses that original alias relationship.
+  RECT frame_rect_;  // 0x623C..0x624C
+  RECT header_panel_rect_;  // 0x624C..0x625C
   uint32_t field_625C_;  // 0x625C
   uint32_t field_6260_;  // 0x6260
   uint32_t field_6264_;  // 0x6264
@@ -101,10 +98,8 @@ class PickWin : public GraphicWin {
   Sprite sprites3_[3];  // 0x8578
   Sprite sprites4_[3];  // 0x85FC
   Sprite sprite5_;  // 0x8680
-  uint32_t field_86AC_;  // 0x86AC
-  uint32_t field_86B0_;  // 0x86B0
-  uint32_t field_86B4_;  // 0x86B4
-  uint32_t field_86B8_;  // 0x86B8
+  // 48921C/489DEF/48A221 pass this actual member to Dialog::init.
+  RECT list_area_rect_;  // 0x86AC..0x86BC
   ListBox listBox_;  // 0x86BC; measured 0xB54
   uint32_t field_9210_;  // 0x9210
   uint32_t field_9214_;  // 0x9214

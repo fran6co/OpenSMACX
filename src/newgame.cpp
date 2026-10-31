@@ -377,6 +377,7 @@ static const char MapXPlanetXPath[] = "maps\\xplanetx.mp";
 int __cdecl map_menu(int quick_start) {
     SetupWin setup;
     Popup popup;
+    setup.opening_window_snapshot_ = opening_window();
     int choice;
 
 map_menu_retry:
@@ -936,7 +937,7 @@ int ConfigFactionDetailMode;
 // RECOVERY_OBJECT: v1 0x00945834 ?ConfigRandomLeaderInitial@@3PADA
 char ConfigRandomLeaderInitial[4];
 
-// ORIGINAL: 0x005898A0 ?thumb_routine@@YAXH@Z 0x005898A0-0x00589A24
+// ORIGINAL: 0x005898A0 ?thumb_routine@@YAXH@Z 0x005898A0-0x00589A24 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["historical seed:src/recovered/units/005898a0.cpp", "pinned:5898A0..589A24; preview9403E0; detail945818; diplomacy art78EE48 with65C faction stride", "source:Popup537C and PickWin redraw/ListBox cdecl(int) callback contract; allocation/lifetime selection still requires native qualification"], "reason": "Typed shared faction preview callback with real Popup/SpriteBox/FactionArt owners and genuine global storage; no executable-address aliases or manual vtables."}
 void __cdecl thumb_routine(int faction) {
     if (ExpansionEnabled) {
@@ -947,16 +948,20 @@ void __cdecl thumb_routine(int faction) {
         }
     }
     StringTemp[0] = 0;
-    strcat(StringTemp, ConfigFactionDetailMode ? "DATALINKS1" : "BLURB");
+    if (ConfigFactionDetailMode)
+        strcat(StringTemp, "DATALINKS1");
+    else
+        strcat(StringTemp, "BLURB");
     ConfigFactionPreview.start(Players[faction].filename, StringTemp, -1, 0, 0x10500, 0);
     if (ConfigFactionDetailMode) {
         StringTemp[0] = 0;
         strcat(StringTemp, "DATALINKS2");
         ConfigFactionPreview.start(Players[faction].filename, StringTemp, -1, 0, 0x80, 0);
     }
+    Sprite *const diplomacy = &FactionsArt[faction].diplomacy;
     ConfigFactionPreview.set_caller_picture(ConfigFactionPreview.picture_enabled()
-        ? 0 : &FactionsArt[faction].diplomacy);
-    ConfigFactionPreview.dialogs().SpriteBox::sprite(&FactionsArt[faction].diplomacy, 0, 0);
+        ? 0 : diplomacy);
+    ConfigFactionPreview.dialogs().SpriteBox::sprite(diplomacy, 0, 0);
     ConfigFactionPreview.Win::set_caption(Players[faction].formal_name_faction);
     ConfigFactionPreview.set_string_font(PopupMenuFont, PopupMenuBoldFont, PopupMenuItalicFont, 0);
     PopupModalActive = 1;

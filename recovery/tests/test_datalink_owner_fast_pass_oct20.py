@@ -44,7 +44,7 @@ static struct { GameFields fields_; } GameDataStateStorage = {{0}};
 
 struct RulesTerraforming {
     LPSTR name, name_sea;
-    int preq_tech, preq_tech_sea;
+    int prerequisite_tech[2];
     uint32_t bit, bit_incompatible;
     int rate;
     LPSTR shortcuts;
@@ -90,12 +90,12 @@ struct Datalink {
 int main() {
     Datalink datalink;
     for (int i = 0; i < 20; ++i) {
-        Terraforming[i].preq_tech = -2;
-        Terraforming[i].preq_tech_sea = -2;
+        Terraforming[i].prerequisite_tech[0] = -2;
+        Terraforming[i].prerequisite_tech[1] = -2;
     }
     // The image gates this land entry only on its prerequisite word. It still
     // resolves and inserts the zero order-name pointer through Strings::get.
-    Terraforming[0].preq_tech = -1;
+    Terraforming[0].prerequisite_tech[0] = -1;
     Order[4].order = 0;
     datalink.set_cat_terraform();
     assert(null_name_lookups == 1);
@@ -126,7 +126,7 @@ def test_terraforming_zero_order_name_still_resolves_and_inserts(tmp_path: Path)
 
     source = (ROOT / "src/datalink.cpp").read_text()
     body = _body(source, "void Datalink::set_cat_terraform()")
-    assert "if (terraform.preq_tech >= -1) {" in body
+    assert "if (terraform.prerequisite_tech[0] >= -1) {" in body
     assert "order.order != 0" not in body
     actual = _compile_and_run(
         compiler,
@@ -138,8 +138,8 @@ def test_terraforming_zero_order_name_still_resolves_and_inserts(tmp_path: Path)
     # A mutant reinstating the former safety guard must be caught by the
     # executed zero-name case, not merely by a source-text assertion.
     mutant_body = body.replace(
-        "if (terraform.preq_tech >= -1) {",
-        "if (terraform.preq_tech >= -1 && order.order != 0) {",
+        "if (terraform.prerequisite_tech[0] >= -1) {",
+        "if (terraform.prerequisite_tech[0] >= -1 && order.order != 0) {",
         1,
     )
     assert mutant_body != body

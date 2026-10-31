@@ -43,6 +43,7 @@ struct ItemList {
     }
     StringStructEntry *head_;
 };
+typedef ItemList StringStruct;
 struct Parent { int notifications; void on_button_clicked(int) { ++notifications; } };
 struct Dialog {
     ItemList item_list_;
@@ -231,15 +232,20 @@ int main(int argc, char **argv) {
 
         button.field_F0_ = 2;
         button.on_mouse_move(20, 22);
-        assert(button.field_F0_ == 2 && updates == 1);
+        // Original60E467..60E472 clears selected-item hover, then compares -1.
+        assert(button.field_F0_ == static_cast<uint32_t>(-1) && updates == 1);
         button.on_mouse_move(20, 22);
-        assert(button.field_F0_ == 2 && updates == 2);
+        assert(button.field_F0_ == static_cast<uint32_t>(-1) && updates == 1);
 
         button.selected_position_ = 0;
         button.on_mouse_move(20, 22);
-        assert(button.field_F0_ == 2 && updates == 3);
+        assert(button.field_F0_ == 2 && updates == 2);
         button.on_mouse_move(20, 22);
-        assert(button.field_F0_ == 2 && updates == 4);
+        assert(button.field_F0_ == 2 && updates == 3);
+        // Original60E3A3 jumps directly to the return when traversal runs out.
+        button.field_F0_ = 77;
+        button.on_mouse_move(20, 1000);
+        assert(button.field_F0_ == 77 && updates == 3);
         return 0;
     }
     if (argc > 1 && std::strcmp(argv[1], "--null-current") == 0) {
@@ -557,3 +563,31 @@ def test_callback_member_has_typed_ordinal_identity():
     body = SOURCE.read_text()
     assert body.count("selection_callback_ = 0;") == 2
     assert "double_click_callback_ = 0;" in body
+
+
+@pytest.mark.parametrize("damage", ("selected-hover", "exhausted-list"))
+def test_original_hover_transition_damage_is_caught(damage, tmp_path):
+    compiler = shutil.which("g++")
+    if compiler is None:
+        pytest.skip("g++ unavailable")
+    text = SOURCE.read_text()
+    if damage == "selected-hover":
+        old = "        position = -1;"
+        new = "        /* damaged: selected ordinal survives */"
+    else:
+        old = """                          Dialog::item_list_.entry_count_ - 1) {
+            return;
+        }"""
+        # Restrict the mutation to the actual mouse-move body.
+        start = text.index("void RadioButton::on_mouse_move(")
+        prefix, text = text[:start], text[start:]
+        new = old.replace("return;", "break;")
+    assert text.count(old) == 1
+    text = text.replace(old, new, 1)
+    if damage == "exhausted-list":
+        text = prefix + text
+    built, exe = _compile(tmp_path, compiler, text, validate=False)
+    assert built.returncode == 0, built.stdout + built.stderr
+    result = subprocess.run([str(exe), "--hover-matrix"], text=True,
+                            capture_output=True, timeout=20)
+    assert result.returncode != 0

@@ -1,0 +1,19 @@
+{
+  "event_id": "5abd0cc08a832b27e70fb1a8080f7d204c992cbdfe1e4a18e3547c1c05b80a57",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_graphic_frame_sprite_owner_behavior.py"
+    ],
+    "evidence": [
+      "Reanchor actual apply_frame_sprites null-guard/height-receiver/final-store damage mutations after restoring its directly emitted pinned geometry body. Preserve independent oracle and all C++fixture behavior; no skipped/deleted mutants or weakened expected state. This is the sixth/final source candidate; no further compilation solely for comments."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "9bbc7244300912c41581994a00cf2b0aa6f042fc01dfdc50e844b23432904139",
+  "request_id": "direct-frame-body-damage-anchors-oct31bs",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:easy-graphicwin-oct31bs"
+}

@@ -225,7 +225,7 @@ def test_actual_tech_effects_four_slot_array(compiler, damage, tmp_path):
     body = actual_body()
     changes = {
         "short_clear": ("sizeof PlayersData[faction_id].tech_fungus_", "3 * sizeof(int)"),
-        "wrong_clamp_threshold": ("if (tech_fungus[n] < 0)", "if (tech_fungus[n] < -100)"),
+        "wrong_clamp_threshold": ("value > 0 ? value : 0", "value > -100 ? value : 0"),
     }
     if damage:
         old, new = changes[damage]

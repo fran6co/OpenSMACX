@@ -11740,14 +11740,14 @@ int __cdecl base_connect(int priority) {
             const unsigned int tile_owner = tile->val2 & 0x0F;
             const bool base_ok = (tile->bit & BIT_ROAD) == 0 ||
                 ((tile->bit & BIT_MAGTUBE) != 0 &&
-                 has_tech(Terraforming[TERRA_MAGTUBE].preq_tech, faction));
+                 has_tech(Terraforming[TERRA_MAGTUBE].prerequisite_tech[0], faction));
             const bool occupant_ok = (tile->bit & BIT_VEH_IN_TILE) == 0 ||
                 tile_owner > 7 || tile_owner == static_cast<unsigned int>(faction) ||
                 (PlayersData[faction].diplo_treaties[tile_owner] & DTREATY_PACT) != 0;
             const bool fungus_ok = (tile->bit & BIT_FUNGUS) == 0 ||
                 (tile->climate & 0xE0) < ALT_BIT_OCEAN_SHELF ||
                 has_tech(Rules.tech_build_roads_fungus, faction) ||
-                has_tech(Terraforming[TERRA_REMOVE_FUNGUS].preq_tech, faction);
+                has_tech(Terraforming[TERRA_REMOVE_FUNGUS].prerequisite_tech[0], faction);
             const int territory = whose_territory(faction, path_x, path_y, NULL, FALSE);
             const bool territory_ok = territory < 0 || territory == faction ||
                 (PlayersData[faction].diplo_treaties[territory] & DTREATY_PACT) != 0;
@@ -12073,7 +12073,7 @@ void __cdecl base_terraform(int force_improve) {
                 if ((base.resource_sqr_radius &
                      (1u << (radius_index & 0x1F))) != 0)
                     ++worked_special_square_count;
-            } else if (has_tech(Terraforming[TERRA_REMOVE_FUNGUS].preq_tech,
+            } else if (has_tech(Terraforming[TERRA_REMOVE_FUNGUS].prerequisite_tech[0],
                                 faction) == 0) {
                 --nearest_open_square_count;
             }
@@ -12135,7 +12135,7 @@ void __cdecl base_terraform(int force_improve) {
             continue;
         if ((entry_flags & BIT_FUNGUS) != 0 &&
             entry_altitude >= ALT_BIT_OCEAN_SHELF &&
-            !has_tech(Terraforming[TERRA_REMOVE_FUNGUS].preq_tech, faction))
+            !has_tech(Terraforming[TERRA_REMOVE_FUNGUS].prerequisite_tech[0], faction))
             continue;
         if (tile.region != base_region) continue;
 
@@ -12474,7 +12474,7 @@ void __cdecl base_terraform(int force_improve) {
 
     // Commit the action candidate through the native goal/connection path
     // before the special-improvement and relocation phases below.
-    int connection_priority = has_tech(Terraforming[TERRA_MAGTUBE].preq_tech,
+    int connection_priority = has_tech(Terraforming[TERRA_MAGTUBE].prerequisite_tech[0],
                                        faction)
         ? 2 : 1;
     const bool allow_connection_goal =

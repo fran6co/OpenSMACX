@@ -1,0 +1,70 @@
+{
+  "author": "coordinator",
+  "base_revision": "250dcce5ebf397f17af0c07dd749ff548db5f81e",
+  "editable_files": [
+    "src/newgame.cpp",
+    "recovery/tests/test_newgame_actual_source_oct31bu.py",
+    "recovery/project.json"
+  ],
+  "evidence": [
+    "Native full-owner bounded matching search; inspect retained history and original instructions before candidate. Three explained spellings/function and six TU compiles maximum; packet up to24 functions. Repeated unchanged failed contexts receive no retries.",
+    "Coordinator owns Git/config/preparation/recording/integration/cleanup. Preserve original unsafe/error behavior, mappings and historical claims; ask central expansion before headers/shared ownership edits.",
+    "BR application source/object and exact actual compiler receipt provide initial context; destination master has newer independently reviewed UI work outside this owner. No compiled/body/reference/linked acceptance follows from preparation."
+  ],
+  "intent": "Recover cheap faithful matches in complete genuine source owner.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5820112,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5816992,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5822128,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5825376,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5823280,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5806192,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5806224,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5806240,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5807408,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5955872,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "easy-newgame-oct31bu"
+}

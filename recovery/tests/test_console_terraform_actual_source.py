@@ -65,7 +65,7 @@ def auto_program(text: str) -> str:
     block = source_block(text, AUTO_START, AUTO_END)
     return r"""
 struct Tile { unsigned int bit; };
-struct TerraformEntry { int preq_tech; int preq_tech_sea; };
+struct TerraformEntry { int prerequisite_tech[2]; };
 enum { TERRA_FARM=0, TERRA_SOIL_ENR=1, TERRA_ROAD=5, TERRA_MAGTUBE=6,
        TERRA_REMOVE_FUNGUS=10 };
 enum { BIT_ROAD=4, BIT_FUNGUS=0x20, BIT_FARM=0x8000 };
@@ -73,10 +73,10 @@ static TerraformEntry Terraforming[20];
 int choose(int requested_terraform, unsigned int bits, int altitude, int is_sea,
            int mag_land, int mag_sea, int soil_land, int soil_sea) {
     Tile storage; storage.bit = bits; Tile *tile = &storage;
-    Terraforming[TERRA_MAGTUBE].preq_tech = mag_land;
-    Terraforming[TERRA_MAGTUBE].preq_tech_sea = mag_sea;
-    Terraforming[TERRA_SOIL_ENR].preq_tech = soil_land;
-    Terraforming[TERRA_SOIL_ENR].preq_tech_sea = soil_sea;
+    Terraforming[TERRA_MAGTUBE].prerequisite_tech[0] = mag_land;
+    Terraforming[TERRA_MAGTUBE].prerequisite_tech[1] = mag_sea;
+    Terraforming[TERRA_SOIL_ENR].prerequisite_tech[0] = soil_land;
+    Terraforming[TERRA_SOIL_ENR].prerequisite_tech[1] = soil_sea;
 """ + block + r"""
     return terraform_id;
 }

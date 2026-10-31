@@ -311,9 +311,12 @@ void ListBox::close() {
 Purpose: Return the Win parent's slot-8 value when the original Win flag and
          parent-link guards are set.
 */
-// ORIGINAL: 0x0060CED0 sub_60ced0 0x0060CED0-0x0060CF01 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["pinned image SHA-256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "ListBox constructor at 0x00609DB0 installs Win-view table address point 0x0067041C; slots 6/7 at +0x18/+0x1C select 0x0060CED0/0x0060CF10", "the adjustor thunk resolves the GraphicWin virtual base via vbtable {0,0x48,0xA60}; the callback then reads Win-relative +0x98 (iFlags_) and +0xC4 (win_parent_), testing bit 0x40 before the parent and calling its slot 8", "original 0x005EB640 close body pushes scroll_vert_ before the slot-7 call and pushes scroll_horz_ before the matching horizontal call; both return paths are ret 4"], "reason": "Move the pinned ListBox Win-view callback into a genuine owner method; retain the original Win-member guard order and delegated slot behavior. Compiler-generated receiver adjustment and exact COFF target still require fresh native verification."}
+// ORIGINAL: 0x0060CED0 sub_60ced0 0x0060CED0-0x0060CED8 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned image SHA-256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "ListBox constructor at 0x00609DB0 installs Win-view table address point 0x0067041C; slots 6/7 at +0x18/+0x1C select 0x0060CED0/0x0060CF10", "the adjustor thunk resolves the GraphicWin virtual base via vbtable {0,0x48,0xA60}; the callback then reads Win-relative +0x98 (iFlags_) and +0xC4 (win_parent_), testing bit 0x40 before the parent and calling its slot 8", "original 0x005EB640 close body pushes scroll_vert_ before the slot-7 call and pushes scroll_horz_ before the matching horizontal call; both return paths are ret 4", "Boundary refinement retains the historical catalogue envelope 0x0060CED0-0x0060CF01 (49 bytes) as a thunk/padding/primary cluster, not one current function.", "Pinned 0x0060CED0-0x0060CED8 is the two-instruction vtordisp thunk; 0x0060CED8-0x0060CEE0 is exactly eight INT3 alignment bytes; 0x0060CEE0-0x0060CF01 is its separate ordinary primary body.", "Original origin, catalogue name, emitted thunk symbol, prior binding evidence and historical claims are retained."], "reason": "Move the pinned ListBox Win-view callback into a genuine owner method; retain the original Win-member guard order and delegated slot behavior. Compiler-generated receiver adjustment and exact COFF target still require fresh native verification."}
 // symbol    ?on_scroll_create@ListBox@@$4PPPPPPPM@A@AEPAVScroll@@XZ
+// ORIGINAL: 0x0060CEE0 sub_60CEE0 0x0060CEE0-0x0060CF01 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned direct JMP at 0x0060CED3 targets 0x0060CEE0.", "Pinned primary span 0x0060CEE0-0x0060CF01 corresponds to ordinary emitted C++ member ?on_scroll_create@ListBox@@UAEPAVScroll@@XZ, independently callable from its preceding vtordisp thunk."], "reason": "Bind the separately callable primary ListBox scroll body, not its preceding vtordisp thunk."}
+// symbol    ?on_scroll_create@ListBox@@UAEPAVScroll@@XZ
 Scroll *ListBox::on_scroll_create() {
     if ((iFlags_ & 0x40) != 0 && win_parent_ != 0) {
         return win_parent_->on_listbox_scroll_create();
@@ -325,9 +328,12 @@ Scroll *ListBox::on_scroll_create() {
 Purpose: Forward the exact Scroll being removed through recipient slot 9
          under the original guards, otherwise return the argument.
 */
-// ORIGINAL: 0x0060CF10 sub_60cf10 0x0060CF10-0x0060CF4D FILE
-// RECOVERY_BINDING: v1 {"evidence": ["pinned image SHA-256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "ListBox constructor at 0x00609DB0 installs Win-view table address point 0x0067041C; slots 6/7 at +0x18/+0x1C select 0x0060CED0/0x0060CF10", "the adjustor thunk resolves the GraphicWin virtual base via vbtable {0,0x48,0xA60}; the callback then reads Win-relative +0x98 (iFlags_) and +0xC4 (win_parent_), testing bit 0x40 before the parent and calling its slot 9 with the Scroll argument", "original 0x005EB640 close body pushes scroll_vert_ before the slot-7 call and pushes scroll_horz_ before the matching horizontal call; both return paths are ret 4"], "reason": "Move the pinned ListBox Win-view callback into a genuine owner method; retain the original Win-member guard order and delegated slot behavior. Compiler-generated receiver adjustment and exact COFF target still require fresh native verification."}
+// ORIGINAL: 0x0060CF10 sub_60cf10 0x0060CF10-0x0060CF18 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["pinned image SHA-256 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf", "ListBox constructor at 0x00609DB0 installs Win-view table address point 0x0067041C; slots 6/7 at +0x18/+0x1C select 0x0060CED0/0x0060CF10", "the adjustor thunk resolves the GraphicWin virtual base via vbtable {0,0x48,0xA60}; the callback then reads Win-relative +0x98 (iFlags_) and +0xC4 (win_parent_), testing bit 0x40 before the parent and calling its slot 9 with the Scroll argument", "original 0x005EB640 close body pushes scroll_vert_ before the slot-7 call and pushes scroll_horz_ before the matching horizontal call; both return paths are ret 4", "Boundary refinement retains the historical catalogue envelope 0x0060CF10-0x0060CF4D (61 bytes) as a thunk/padding/primary cluster, not one current function.", "Pinned 0x0060CF10-0x0060CF18 is the two-instruction vtordisp thunk; 0x0060CF18-0x0060CF20 is exactly eight INT3 alignment bytes; 0x0060CF20-0x0060CF4D is its separate ordinary primary body.", "Original origin, catalogue name, emitted thunk symbol, prior binding evidence and historical claims are retained."], "reason": "Move the pinned ListBox Win-view callback into a genuine owner method; retain the original Win-member guard order and delegated slot behavior. Compiler-generated receiver adjustment and exact COFF target still require fresh native verification."}
 // symbol    ?on_scroll_delete@ListBox@@$4PPPPPPPM@A@AEPAVScroll@@PAV2@@Z
+// ORIGINAL: 0x0060CF20 sub_60CF20 0x0060CF20-0x0060CF4D BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned direct JMP at 0x0060CF13 targets 0x0060CF20.", "Pinned primary span 0x0060CF20-0x0060CF4D corresponds to ordinary emitted C++ member ?on_scroll_delete@ListBox@@UAEPAVScroll@@PAV2@@Z, independently callable from its preceding vtordisp thunk."], "reason": "Bind the separately callable primary ListBox scroll body, not its preceding vtordisp thunk."}
+// symbol    ?on_scroll_delete@ListBox@@UAEPAVScroll@@PAV2@@Z
 Scroll *ListBox::on_scroll_delete(Scroll *scroll) {
     if ((iFlags_ & 0x40) != 0 && win_parent_ != 0) {
         return win_parent_->on_listbox_scroll_delete(scroll);
@@ -648,7 +654,7 @@ Purpose: Apply one WM_VSCROLL step to the list: publish the parent window
          the old and new selected rows only if selection changed, then always
          request a soft surface update.
 
-// ORIGINAL: 0x0060C5D0 ?on_scrolling@ListBox@@QAEXHH@Z 0x0060C5D0-0x0060C691
+// ORIGINAL: 0x0060C5D0 ?on_scrolling@ListBox@@QAEXHH@Z 0x0060C5D0-0x0060C691 BYTE_EXACT
 // symbol    ?on_scrolling@ListBox@@UAEXHH@Z
 // size      193 bytes
 // prototype void (__thiscall ?on_scrolling@ListBox@@QAEXHH@Z)(ListBox* this, int, int)
@@ -671,34 +677,31 @@ Purpose: Apply one WM_VSCROLL step to the list: publish the parent window
 Status: Typed ListBox scroll handler; exactness and runtime acceptance remain unmeasured.
 */
 void ListBox::on_scrolling(int a, int b) {
-    // This ordinary member receives the ListBox front. Convert to the
-    // GraphicWin virtual base through the declared hierarchy.
-    ListBox *front = this;
-    GraphicWin *entered = static_cast<GraphicWin *>(front);
-    Dialog &dialog = *front;
-    WinCallbackWindow = entered->parent_window();
+    WinCallbackWindow = parent_window();
 
-    const int top_entry = dialog.selected_position_;
-    const int old_position = static_cast<int>(front->field_18_);
-    if (a == -2) {
-        front->field_18_ = static_cast<uint32_t>(dialog.row_count_)
+    const int top_entry = Dialog::selected_position_;
+    const int old_position = static_cast<int>(field_18_);
+    if (a != -2) {
+        if (a == -1) {
+            field_18_ = static_cast<uint32_t>(b);
+        }
+    } else {
+        field_18_ = static_cast<uint32_t>(Dialog::row_count_)
                          * static_cast<uint32_t>(b);
-    } else if (a == -1) {
-        front->field_18_ = static_cast<uint32_t>(b);
     }
 
     if (ListBoxGlobalDDC != 0) {
-        front->set_selected_pos(static_cast<int>(front->field_18_), 1);
+        set_selected_pos(static_cast<int>(field_18_), 1);
     }
 
-    if (static_cast<int>(front->field_18_) != old_position) {
-        entered->redraw();
+    if (static_cast<int>(field_18_) != old_position) {
+        redraw();
     } else {
-        if (top_entry != dialog.selected_position_) {
-            front->draw_item(top_entry);
-            front->draw_item(dialog.selected_position_);
+        if (top_entry != Dialog::selected_position_) {
+            draw_item(top_entry);
+            draw_item(Dialog::selected_position_);
         }
-        entered->soft_update();
+        soft_update();
     }
 }
 /*
@@ -1366,7 +1369,7 @@ Purpose: Run the double-click notification: remember the hovered window,
          parent's child-object 23/7 pair), preserving the original null exit
          and subsequent parent reloads.
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x0060C710 ?on_left_double_click@ListBox@@QAEXHH@Z 0x0060C710-0x0060C7BB
+// ORIGINAL: 0x0060C710 ?on_left_double_click@ListBox@@QAEXHH@Z 0x0060C710-0x0060C7BB BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0060c710.cpp", "source:src/listbox.h", "source:src/autosound.h", "source:src/win.h", "pinned 0x0060C710 resolves the GraphicWin virtual base through vbtable {0,0x48,0xA60}; repeated vbtable adjustment reads Win-relative +0xC4 (win_parent_) for slots 56/55 and +0x94 on that parent for Sound slots 23/7", "pinned 0x0060C74B tests the reloaded parent and branches to the epilogue at 0x0060C7B6 when null; later callback paths reload the parent"], "reason": "Recover ListBox double-click callbacks through typed GraphicWin and Dialog owners, using the actual Win parent and preserving the original parent-null exit, reload positions, and call order."}
 // symbol    ?on_left_double_click@ListBox@@UAEXHH@Z
 // size      171 bytes
@@ -1375,25 +1378,21 @@ Purpose: Run the double-click notification: remember the hovered window,
 // indirect  0x0060C73B 0x0060C761 0x0060C789 0x0060C7A8 0x0060C7B3
 */
 void ListBox::on_left_double_click(int, int) {
-    GraphicWin *graphic = static_cast<GraphicWin *>(this);
-    Dialog *dialog = static_cast<Dialog *>(this);
-    Win *target = graphic->parent_window();
+    Win *target = parent_window();
     WinCallbackWindow = target;
 
-    WinNotificationCallback callback = double_click_callback_;
-    if (callback != 0) {
-        callback(dialog->get_selected_id());
+    if (double_click_callback_ != 0) {
+        double_click_callback_(Dialog::get_selected_id());
     }
 
-    target = graphic->parent_window();
+    target = parent_window();
     if (target == 0) return;
-    target->on_double_clicked(dialog->get_selected_id());
+    target->on_double_clicked(Dialog::get_selected_id());
 
-    const int guard = ListBoxClickGuard;
-    target = graphic->parent_window();
-    target->on_double_clicked(dialog->get_selected_id(), guard);
+    target = parent_window();
+    target->on_double_clicked(Dialog::get_selected_id(), ListBoxClickGuard);
 
-    target = graphic->parent_window();
+    target = parent_window();
     Sound *child = target->legacy_sound_37();
     if (child != 0) {
         if (child->is_playing() == 0) {
@@ -1406,7 +1405,7 @@ void ListBox::on_left_double_click(int, int) {
 Purpose: Add one entry: measure the string at the current width, grow the
          list height, remember the string in the entry table and append the
          id. Returns whatever the entry append reports.
-// ORIGINAL: 0x0060C920 ?item@ListBox@@QAEHPADH@Z 0x0060C920-0x0060C9A9 FILE
+// ORIGINAL: 0x0060C920 ?item@ListBox@@QAEHPADH@Z 0x0060C920-0x0060C9A9 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/0060c920.cpp", "source:src/listbox.h", "source:src/buffer.h", "source:src/stringstruct.h", "source:src/scroll.cpp:ScrollDefaultThickness", "Pinned 0x0060C920..0x0060C9A9 measures positive available width, reads Buffer +0x18, updates ListBox +0x20, then publishes StringList text/metadata before add."], "reason": "Recover item insertion through the real Dialog list and GraphicWin Buffer base, including the shared Scroll thickness. The measured height is Buffer state, not wrap_height's return or ListBox's same-offset scroll state; preserve modulo-word accumulation and insertion result."}
 // size      137 bytes
 // prototype int (__thiscall ?item@ListBox@@QAEHPADH@Z)(ListBox* this, int8* lpString, int)
@@ -1417,13 +1416,11 @@ int ListBox::item(char *text, int id) {
         return 3;
     }
 
-    Dialog &dialog = *this;
-    Buffer &buffer = static_cast<GraphicWin &>(*this);
     int count = static_cast<int32_t>(
-        dialog.field_2C_ - static_cast<uint32_t>(ScrollDefaultThickness));
+        Dialog::field_2C_ - static_cast<uint32_t>(ScrollDefaultThickness));
 
     if (count > 0) {
-        buffer.wrap_height(text, count);
+        Buffer::wrap_height(text, count);
     }
 
     int height;
@@ -1435,7 +1432,7 @@ int ListBox::item(char *text, int id) {
 
     field_20_ += height;
 
-    StringList &entries = dialog.item_list_;
+    StringList &entries = Dialog::item_list_;
     entries.pending_text_ = text;
     entries.field_20_ = 0;
     entries.field_24_ = static_cast<uint32_t>(height);

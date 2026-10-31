@@ -497,9 +497,9 @@ int PickTech::draw_tech(int tech, RECT *rect, int) {
         const RulesTerraforming &rule = Terraforming[row];
         for (int model = 0; model < 2; ++model) {
             const int required_tech = model == 0
-                ? rule.preq_tech : rule.preq_tech_sea;
+                ? rule.prerequisite_tech[0] : rule.prerequisite_tech[1];
             if (tech != required_tech ||
-                (model == 1 && rule.preq_tech == rule.preq_tech_sea)) {
+                (model == 1 && rule.prerequisite_tech[0] == rule.prerequisite_tech[1])) {
                 continue;
             }
             StringTemp[0] = '\0';
@@ -842,10 +842,10 @@ int PickTech::pick(int faction, int mode, int count, char *section_id) {
                         true, Facility[i].name, true);
             for (i = 0; i < MaxTerrainNum - 1; ++i) {
                 const RulesTerraforming &terrain = Terraforming[i];
-                if (terrain.preq_tech == tech_id)
+                if (terrain.prerequisite_tech[0] == tech_id)
                     picktech_append_rule_annotation(has_rule_annotation, -1,
                         false, Order[i + 4].order, true);
-                if (terrain.preq_tech_sea == tech_id && terrain.preq_tech != terrain.preq_tech_sea)
+                if (terrain.prerequisite_tech[1] == tech_id && terrain.prerequisite_tech[0] != terrain.prerequisite_tech[1])
                     picktech_append_rule_annotation(has_rule_annotation, -1,
                         false, Order[i + 4].order_sea, true);
             }

@@ -335,7 +335,7 @@ BOOL __cdecl veh_avail(int proto_id, int faction_id, int base_id) {
 
 /*
 Purpose: Check to see whether the specified faction can construct a specific terrain enhancement.
-// ORIGINAL: 0x005BAB40 ?terrain_avail@@YAHHHH@Z 0x005BAB40-0x005BAC13
+// ORIGINAL: 0x005BAB40 ?terrain_avail@@YAHHHH@Z 0x005BAB40-0x005BAC13 BYTE_EXACT
 // size      211 bytes
 // prototype int (__cdecl ?terrain_avail@@YAHHHH@Z)(int terraformID, BOOL isSea, int factionID)
 // callers   5   call targets   0
@@ -356,14 +356,19 @@ Return Value: Is terrain enhancement available to faction? true/false
 Status: Complete
 */
 BOOL __cdecl terrain_avail(int terraform_id, BOOL is_sea, int faction_id) {
-    int preq_tech = *(&Terraforming[terraform_id].preq_tech + is_sea);
-    if (preq_tech < TechNone || ((terraform_id == TERRA_RAISE_LAND
-        || terraform_id == TERRA_LOWER_LAND) && GameDataStateStorage.fields_.game_rules_ & RULES_SCN_NO_TERRAFORMING)) {
+    int preq_tech = Terraforming[terraform_id].prerequisite_tech[is_sea];
+    if (preq_tech < TechNone) {
         return false;
     }
-    if (terraform_id >= TERRA_CONDENSER && terraform_id <= TERRA_LEVEL_TERRAIN
-        && has_project(SP_WEATHER_PARADIGM, faction_id)) {
-        return true;
+    if ((terraform_id == TERRA_RAISE_LAND || terraform_id == TERRA_LOWER_LAND)
+        && GameDataStateStorage.fields_.game_rules_ & RULES_SCN_NO_TERRAFORMING) {
+        return false;
+    }
+    if (terraform_id >= TERRA_CONDENSER && terraform_id <= TERRA_LEVEL_TERRAIN) {
+        const BOOL weather_paradigm = has_project(SP_WEATHER_PARADIGM, faction_id);
+        if (weather_paradigm) {
+            return true;
+        }
     }
     return has_tech(preq_tech, faction_id);
 }
@@ -464,7 +469,7 @@ Status: Complete
 void __cdecl tech_effects(int faction_id) {
     PlayersData[faction_id].tech_commerce_bonus = Players[faction_id].rule_commerce;
     memset(PlayersData[faction_id].tech_fungus_, 0, sizeof PlayersData[faction_id].tech_fungus_);
-    for (uint32_t tech_id = 0; tech_id < MaxTechnologyNum; tech_id++) {
+    for (int tech_id = 0; tech_id < MaxTechnologyNum; tech_id++) {
         if (has_tech(tech_id, faction_id)) {
             uint32_t flags = Technology[tech_id].flags;
             if (flags & TFLAG_INC_ENERGY_FUNGUS) {
@@ -483,21 +488,21 @@ void __cdecl tech_effects(int faction_id) {
     }
     int bonus_count = Players[faction_id].faction_bonus_count;
     for (int i = 0; i < bonus_count; i++) {
-        int bonus_val = Players[faction_id].faction_bonus_val1[i];
         if (Players[faction_id].faction_bonus_id[i] == RULE_FUNGNUTRIENT) {
-            PlayersData[faction_id].tech_fungus_[RSC_NUTRIENTS] += bonus_val;
-        } else if (Players[faction_id].faction_bonus_id[i] == RULE_FUNGMINERALS) {
-            PlayersData[faction_id].tech_fungus_[RSC_MINERALS] += bonus_val;
-        } else if (Players[faction_id].faction_bonus_id[i] == RULE_FUNGENERGY) {
-            PlayersData[faction_id].tech_fungus_[RSC_ENERGY] += bonus_val;
+            PlayersData[faction_id].tech_fungus_[RSC_NUTRIENTS] += Players[faction_id].faction_bonus_val1[i];
+        }
+        if (Players[faction_id].faction_bonus_id[i] == RULE_FUNGMINERALS) {
+            PlayersData[faction_id].tech_fungus_[RSC_MINERALS] += Players[faction_id].faction_bonus_val1[i];
+        }
+        if (Players[faction_id].faction_bonus_id[i] == RULE_FUNGENERGY) {
+            PlayersData[faction_id].tech_fungus_[RSC_ENERGY] += Players[faction_id].faction_bonus_val1[i];
         }
     }
     // if values are below zero, cap at zero
     int *tech_fungus = PlayersData[faction_id].tech_fungus_;
     for (int n = 0; n < 4; n++) {
-        if (tech_fungus[n] < 0) {
-            tech_fungus[n] = 0;
-        }
+        const int value = tech_fungus[n];
+        tech_fungus[n] = value > 0 ? value : 0;
     }
     if (PlayersData[faction_id].soc_effect_pending.values_[SocialEffect::ECONOMY] > 2) {
         PlayersData[faction_id].tech_commerce_bonus++;

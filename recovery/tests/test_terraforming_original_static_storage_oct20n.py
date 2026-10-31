@@ -64,8 +64,7 @@ typedef char *LPSTR;
 struct RulesTerraforming {{
     LPSTR name;
     LPSTR name_sea;
-    int preq_tech;
-    int preq_tech_sea;
+    int prerequisite_tech[2];
     uint32_t bit;
     uint32_t bit_incompatible;
     int rate;
@@ -76,7 +75,7 @@ static const int MaxTerrainNum = 20;
 int main() {{
     for (int i = 0; i < MaxTerrainNum; ++i) {{
         const RulesTerraforming &row = Terraforming[i];
-        if (row.name || row.name_sea || row.preq_tech || row.preq_tech_sea ||
+        if (row.name || row.name_sea || row.prerequisite_tech[0] || row.prerequisite_tech[1] ||
             row.rate || row.shortcuts) return 2;
         printf("%08x %08x\\n", (unsigned int)row.bit,
                (unsigned int)row.bit_incompatible);

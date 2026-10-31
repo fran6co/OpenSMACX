@@ -1,0 +1,19 @@
+{
+  "event_id": "642f346b838f5825753c8d1cf1ca918348acedfe602d1f47cd4f4c010b58a9f6",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/newgame_menu_control.cpp"
+    ],
+    "evidence": [
+      "Map_menu section only: add existing source opening_window_snapshot_/opening_window shared-slot doubles and constructor-mutation witness to cover original post-Popup snapshot. Preserve every existing branch/event oracle; no product header change or normalization."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "map-menu-opening-window-fixture-oct31bu",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:easy-newgame-oct31bu"
+}

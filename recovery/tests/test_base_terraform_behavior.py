@@ -88,7 +88,7 @@ struct Player { uint32_t rule_flags; };
 struct ConsoleGlobalType { int faction_id_; } ConsoleGlobal;
 struct RulesBasic { int tech_three_nutrients_sqr,tech_build_roads_fungus,
                     tech_improve_fungus_sqr; } Rules;
-struct RulesTerraforming { int name,name_sea,preq_tech,preq_tech_sea; uint32_t bit,bit_incompatible; int rate,shortcuts; };
+struct RulesTerraforming { int name,name_sea; int prerequisite_tech[2]; uint32_t bit,bit_incompatible; int rate,shortcuts; };
 struct RulesAbility { int name,preq_tech; } Ability[29];
 struct Continent { uint32_t tile_count,open_terrain,unk_3,pods,unk_5; uint8_t sea_coasts[8]; };
 Base Bases[512], *BaseCurrent; int BaseIDCurrentSelected;

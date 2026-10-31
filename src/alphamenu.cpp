@@ -408,7 +408,7 @@ if (selected_proto.plan != 9) {
 
     const int local_faction = ConsoleGlobal.faction_id_;
     const int terrain_row_10 = sea_order_labels
-        ? Terraforming[10].preq_tech_sea : Terraforming[10].preq_tech;
+        ? Terraforming[10].prerequisite_tech[1] : Terraforming[10].prerequisite_tech[0];
     if (has_tech(terrain_row_10, local_faction)) {
         enable_menu_item(9, 0x9F6);
     } else {
@@ -416,7 +416,7 @@ if (selected_proto.plan != 9) {
     }
 
     const int terrain_row_5 = sea_order_labels
-        ? Terraforming[5].preq_tech_sea : Terraforming[5].preq_tech;
+        ? Terraforming[5].prerequisite_tech[1] : Terraforming[5].prerequisite_tech[0];
     if (has_tech(terrain_row_5, local_faction)) {
         enable_menu_item(9, 0x9F0);
         show_menu_item(9, 0x9F3);
@@ -427,7 +427,7 @@ if (selected_proto.plan != 9) {
     }
 
     const int terrain_row_6 = sea_order_labels
-        ? Terraforming[6].preq_tech_sea : Terraforming[6].preq_tech;
+        ? Terraforming[6].prerequisite_tech[1] : Terraforming[6].prerequisite_tech[0];
     if (has_tech(terrain_row_6, local_faction)) {
         show_menu_item(9, 0x9F1);
         show_menu_item(9, 0x9F4);
@@ -439,7 +439,7 @@ if (selected_proto.plan != 9) {
     }
 
     const int terrain_row_9 = sea_order_labels
-        ? Terraforming[9].preq_tech_sea : Terraforming[9].preq_tech;
+        ? Terraforming[9].prerequisite_tech[1] : Terraforming[9].prerequisite_tech[0];
     if (has_tech(terrain_row_9, local_faction)) {
         show_menu_item(9, 0x9F5);
         enable_menu_item(9, 0x9F5);

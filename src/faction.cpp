@@ -937,7 +937,7 @@ BOOL __cdecl great_satan(int faction_id, BOOL is_aggressive) {
     }
     int diff_factor;
     int factor;
-    if (has_intense_riv) {
+    if ((GameDataStateStorage.fields_.game_rules_ & RULES_INTENSE_RIVALRY) != 0) {
         factor = 4;
         diff_factor = DLVL_TRANSCEND;
     } else if (PlayersData[faction_id].diff_level >= DLVL_LIBRARIAN
@@ -3737,54 +3737,54 @@ void __cdecl enemy_capabilities(int faction_id) {
             }
         }
     }
-    PlayersData[faction_id].enemy_best_weapon_value = 0;
-    PlayersData[faction_id].enemy_best_armor_value = 0;
     PlayersData[faction_id].enemy_best_land_speed = 0;
-    PlayersData[faction_id].enemy_best_psi_offense = 0;
+    PlayersData[faction_id].enemy_best_armor_value = 0;
+    PlayersData[faction_id].enemy_best_weapon_value = 0;
     PlayersData[faction_id].enemy_best_psi_defense = 0;
-    for (i = 0; i < 4 && !PlayersData[faction_id].enemy_best_weapon_value; i++) {
+    PlayersData[faction_id].enemy_best_psi_offense = 0;
+    const int actor = faction_id;
+    for (faction_id = 0; faction_id < 4 && !PlayersData[actor].enemy_best_weapon_value; faction_id++) {
         // 1st pass: vendetta, no treaty, has commlink
         // 2nd pass: no treaty, has commlink
         // 3rd pass: has commlink
         // 4th pass: any non-pact faction
         for (uint32_t j = 1; j < MaxPlayerNum; j++) {
-            // The pair's treaty word is read ONCE and the bit tests all reuse
-            // it - the image loads PlayersData[i].diplo_treaties[j] a single
-            // time per j and reaches every DTREATY_* test off that byte,
-            // where one has_treaty() call per bit recomputes the address.
-            // Same value, same tests: has_treaty is exactly `word & treaty`.
-            uint32_t treaties = PlayersData[i].diplo_treaties[j];
-            if (j != faction_id
-                && !(treaties & DTREATY_PACT)
-                && ((!i && (treaties & DTREATY_VENDETTA) && !(treaties & DTREATY_TREATY)
-                    && (treaties & DTREATY_COMMLINK))
-                    || (i == 1 && !(treaties & DTREATY_TREATY)
-                        && (treaties & DTREATY_COMMLINK))
-                    || (i == 2 && (treaties & DTREATY_COMMLINK)) || (i == 3))) {
-                if (PlayersData[faction_id].enemy_best_weapon_value
-                    <= PlayersData[j].best_weapon_value) {
-                    PlayersData[faction_id].enemy_best_weapon_value
-                        = PlayersData[j].best_weapon_value;
-                }
-                if (PlayersData[faction_id].enemy_best_armor_value
-                    <= PlayersData[j].best_armor_value) {
-                    PlayersData[faction_id].enemy_best_armor_value
-                        = PlayersData[j].best_armor_value;
-                }
-                if (PlayersData[faction_id].enemy_best_land_speed
-                    <= PlayersData[j].best_land_speed) {
-                    PlayersData[faction_id].enemy_best_land_speed = PlayersData[j].best_land_speed;
-                }
-                if (PlayersData[faction_id].enemy_best_psi_offense
-                    <= PlayersData[j].best_psi_offense) {
-                    PlayersData[faction_id].enemy_best_psi_offense
-                        = PlayersData[j].best_psi_offense;
-                }
-                if (PlayersData[faction_id].enemy_best_psi_defense
-                    <= PlayersData[j].best_psi_defense) {
-                    PlayersData[faction_id].enemy_best_psi_defense
-                        = PlayersData[j].best_psi_defense;
-                }
+            if (j == actor) continue;
+            // Read the actor's treaty word once, then apply each pass filter.
+            uint32_t treaties = PlayersData[actor].diplo_treaties[j];
+            if (treaties & DTREATY_PACT) continue;
+            if (faction_id == 0 && (treaties & DTREATY_VENDETTA) == 0) continue;
+            if (faction_id <= 1 && (treaties & DTREATY_TREATY) != 0) continue;
+            if (faction_id <= 2 && (treaties & DTREATY_COMMLINK) == 0) continue;
+            {
+                int best = PlayersData[actor].enemy_best_weapon_value;
+                const int other = PlayersData[j].best_weapon_value;
+                if (best <= other) best = other;
+                PlayersData[actor].enemy_best_weapon_value = best;
+            }
+            {
+                int best = PlayersData[actor].enemy_best_armor_value;
+                const int other = PlayersData[j].best_armor_value;
+                if (best <= other) best = other;
+                PlayersData[actor].enemy_best_armor_value = best;
+            }
+            {
+                int best = PlayersData[actor].enemy_best_land_speed;
+                const int other = PlayersData[j].best_land_speed;
+                if (best <= other) best = other;
+                PlayersData[actor].enemy_best_land_speed = best;
+            }
+            {
+                int best = PlayersData[actor].enemy_best_psi_offense;
+                const int other = PlayersData[j].best_psi_offense;
+                if (best <= other) best = other;
+                PlayersData[actor].enemy_best_psi_offense = best;
+            }
+            {
+                int best = PlayersData[actor].enemy_best_psi_defense;
+                const int other = PlayersData[j].best_psi_defense;
+                if (best <= other) best = other;
+                PlayersData[actor].enemy_best_psi_defense = best;
             }
         }
     }

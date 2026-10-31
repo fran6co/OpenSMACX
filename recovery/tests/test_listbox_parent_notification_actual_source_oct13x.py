@@ -432,8 +432,10 @@ def mutate_bodies(bodies: list[str], name: str) -> list[str]:
             1,
         )
     elif name == "cachedparent":
+        anchor = "target = parent_window();\n    if (target == 0) return;"
+        assert changed[2].count(anchor) == 1
         changed[2] = changed[2].replace(
-            "target = graphic->parent_window();\n    if (target == 0) return;",
+            anchor,
             "target = target;\n    if (target == 0) return;",
             1,
         )

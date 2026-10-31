@@ -136,7 +136,7 @@ const int MaxSocialCatNum=4; RulesSocialCategory SocialCategories[MaxSocialCatNu
 struct RulesSocialEffect { char set1[24], set2[24], padding[56]; };
 const int MaxSocialEffectNum=11; RulesSocialEffect SocialEffects[MaxSocialEffectNum];
 struct RulesTerraforming {
-  char *name, *name_sea; int preq_tech, preq_tech_sea;
+  char *name, *name_sea; int prerequisite_tech[2];
   uint32_t bit, bit_incompatible; int rate; char *shortcuts;
 };
 const int MaxTerrainNum=20; RulesTerraforming Terraforming[MaxTerrainNum];
@@ -211,8 +211,8 @@ static void reset() {
   std::memset(SocialEffects,0,sizeof(SocialEffects));
   std::memset(Terraforming,0,sizeof(Terraforming));
   for(int i=0;i<MaxTerrainNum;++i) {
-    Terraforming[i].preq_tech=-2;
-    Terraforming[i].preq_tech_sea=-2;
+    Terraforming[i].prerequisite_tech[0]=-2;
+    Terraforming[i].prerequisite_tech[1]=-2;
   }
   std::memset(Order,0,sizeof(Order));
   std::memset(VehPrototypes,0,sizeof(VehPrototypes));
@@ -265,8 +265,8 @@ int main() {
   reset();
   Order[4].order=const_cast<char *>("Land action");
   Order[4].order_sea=const_cast<char *>("Sea action");
-  Terraforming[0].preq_tech=-1;
-  Terraforming[0].preq_tech_sea=-1;
+  Terraforming[0].prerequisite_tech[0]=-1;
+  Terraforming[0].prerequisite_tech[1]=-1;
   DatalinkCategoryIdSeparator[0]=';';
   DatalinkTerraformIdSeparator[0]=':';
   win.set_cat_terraform();

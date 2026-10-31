@@ -400,15 +400,19 @@ int RadioButton::calculate_dimensions() {
                 Dialog::item_list_.current_position_ = 0;
             }
         }
-        StringStructEntry *const entry = Dialog::item_list_.current_;
-        char *text = entry == 0 || entry->payload == 0 ? 0 : entry->string_payload()->text;
+        char *text = 0;
+        if (Dialog::item_list_.current_ != 0) {
+            StringStructPayload *const payload = Dialog::item_list_.head_ == 0
+                ? 0 : Dialog::item_list_.current_->string_payload();
+            text = payload->text;
+        }
         const int width = Buffer::text_width(text);
         if (max_text_width < width) {
             max_text_width = width;
         }
-        if (entry != 0 && entry->string_payload() != 0) {
-            entry->string_payload()->field_8_ = width / max_wrap_width + 1;
-        }
+        StringStructPayload *const payload = Dialog::item_list_.head_ != 0
+            ? Dialog::item_list_.current_->string_payload() : 0;
+        payload->field_8_ = width / max_wrap_width + 1;
     }
     Dialog::field_64_ = Dialog::field_44_ + Dialog::field_34_ + max_text_width;
     const int text_height = Buffer::text_height();
@@ -486,7 +490,7 @@ int RadioButton::attach(GraphicWin *parent, int x, int y, int flags) {
 // virtual base. slot010 needs its own shim (int argument, int return);
 // the emitted VCall's slots are void().
 // Deleted seed provenance: git:26e5eed1:src/unrecovered/0060e220.cpp
-// ORIGINAL: 0x0060E220 ?on_redraw@RadioButton@@QAEXXZ 0x0060E220-0x0060E2FE FILE
+// ORIGINAL: 0x0060E220 ?on_redraw@RadioButton@@QAEXXZ 0x0060E220-0x0060E2FE FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0060e220.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x60e220 complete control/data-access review and src/jackal/radiobutton.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
 // symbol    ?on_redraw@RadioButton@@UAEXXZ
 void RadioButton::on_redraw() {
@@ -503,7 +507,11 @@ void RadioButton::on_redraw() {
             -static_cast<int>(dib_.bmiHeader.biHeight));
     }
     for (int position = 0; position < Dialog::item_list_.entry_count_; ++position) {
-        draw_item(position, Dialog::selected_position_ == position ? 1 : 0);
+        if (Dialog::selected_position_ == position) {
+            draw_item(position, 1);
+        } else {
+            draw_item(position, 0);
+        }
     }
     soft_update();
 }
@@ -563,32 +571,43 @@ void RadioButton::on_left_down(int x, int y) {
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0060e320.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x60e320 complete control/data-access review and src/jackal/radiobutton.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
 // symbol    ?on_mouse_move@RadioButton@@UAEXHH@Z
 void RadioButton::on_mouse_move(int x, int y) {
-    Dialog::item_list_.seek_pos(-1);
-    int remaining_y = y;
     int first = 1;
-    while (remaining_y > 0) {
+    Dialog::item_list_.seek_pos(-1);
+    while (y > 0) {
         if (!first && Dialog::item_list_.current_position_ ==
                           Dialog::item_list_.entry_count_ - 1) {
-            break;
+            return;
         }
         first = 0;
-        Dialog::item_list_.next_entry();
-        int lines = 0;
-        if (Dialog::item_list_.current_ != 0) {
-            StringStructPayload *const payload = Dialog::item_list_.head_ == 0
-                ? 0 : Dialog::item_list_.current_->string_payload();
+        StringStruct &items = Dialog::item_list_;
+        if (items.head_ != 0) {
+            StringStructEntry *const next = items.current_->next;
+            const int count = items.entry_count_;
+            items.current_ = next;
+            ++items.current_position_;
+            if (items.current_position_ == count) items.current_position_ = 0;
+        }
+        int lines;
+        if (items.current_ != 0) {
+            StringStructPayload *const payload = items.head_ == 0
+                ? 0 : items.current_->string_payload();
             lines = static_cast<int>(payload->field_8_);
+        } else {
+            lines = 0;
         }
         int item_height = Buffer::text_line_height() * lines;
         const int minimum = static_cast<int>(Dialog::field_68_ + Dialog::field_44_);
         if (minimum > item_height) item_height = minimum;
-        remaining_y -= item_height;
+        y -= item_height;
     }
-    const int position = (x / static_cast<int>(Dialog::field_64_ + Dialog::field_44_)) *
+    int position = (x / static_cast<int>(Dialog::field_64_ + Dialog::field_44_)) *
                          Dialog::row_count_ +
                          Dialog::item_list_.current_position_;
-    if (position == Dialog::selected_position_ && Dialog::field_F0_ ==
-        static_cast<uint32_t>(-1)) return;
+    if (position == Dialog::selected_position_) {
+        const uint32_t previous_hover = Dialog::field_F0_;
+        position = -1;
+        if (previous_hover == static_cast<uint32_t>(position)) return;
+    }
     Dialog::field_F0_ = static_cast<uint32_t>(position);
     redraw();
 }

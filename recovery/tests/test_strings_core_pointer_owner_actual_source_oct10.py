@@ -58,7 +58,7 @@ def source_parts() -> tuple[str, str, str, str]:
     assert "StringTable.get((int)*((LPSTR *)Labels.strings_ptr" not in alpha_h
     return (
         extract_body(strings, "LPSTR Strings::get(LPSTR address)"),
-        extract_body(alpha, "BOOL __cdecl labels_init()"),
+        extract_body((ROOT / "src/labels.cpp").read_text(), "BOOL __cdecl labels_init()"),
         extract_body(alpha_h, "__forceinline LPSTR __cdecl label_get(int label_offset)"),
         extract_body(general, "int __cdecl parse_say(int id, LPSTR input, int gender, int pluralality)"),
     )
@@ -68,13 +68,13 @@ def terraform_loops() -> tuple[str, str]:
     source = (ROOT / "src/alpha.cpp").read_text()
     tf_header = (ROOT / "src/terraforming.h").read_text()
     veh_header = (ROOT / "src/veh.h").read_text()
-    assert "LPSTR name;\n    LPSTR name_sea;\n    int preq_tech;\n    int preq_tech_sea;\n    uint32_t bit;\n    uint32_t bit_incompatible;" in tf_header
+    assert "LPSTR name;\n    LPSTR name_sea;\n    int prerequisite_tech[2];\n    uint32_t bit;\n    uint32_t bit_incompatible;" in tf_header
     assert "struct RulesOrder {\n    LPSTR order;\n    LPSTR order_sea;\n    LPSTR letter;\n};" in veh_header
     names = extract_body(source[source.index("// Land + sea terraforming"):],
                          "for (int j = 0; j < 2; j++)")
     orders = extract_body(source[source.index("// Land + sea orders"):],
                           "for (j = 0; j < 2; j++)")
-    for field in ("name", "name_sea", "preq_tech", "preq_tech_sea",
+    for field in ("name", "name_sea", "prerequisite_tech[0]", "prerequisite_tech[1]",
                   "bit", "bit_incompatible", "TerraformingBits[i][j]"):
         assert field in names
     for field in ("Terraforming[i].name", "Terraforming[i].name_sea",
@@ -228,8 +228,8 @@ def terraform_cpp_source(loops: tuple[str, str], mutation: str | None) -> str:
         orders = orders.replace(": Terraforming[i].name_sea",
                                 ": Terraforming[i].name", 1)
     elif mutation == "sea_prereq_uses_land":
-        names = names.replace("Terraforming[i].preq_tech_sea =",
-                              "Terraforming[i].preq_tech =", 1)
+        names = names.replace("Terraforming[i].prerequisite_tech[1] =",
+                              "Terraforming[i].prerequisite_tech[0] =", 1)
     elif mutation == "sea_bit_uses_land":
         names = names.replace("Terraforming[i].bit_incompatible =",
                               "Terraforming[i].bit =", 1)
@@ -247,7 +247,7 @@ typedef char *LPSTR;
 static std::vector<std::string> events;
 struct RulesTerraforming {
   LPSTR name, name_sea;
-  int preq_tech, preq_tech_sea;
+  int prerequisite_tech[2];
   unsigned bit, bit_incompatible;
   int rate;
   LPSTR shortcuts;
@@ -288,8 +288,8 @@ int main() {
   }
   assert(Terraforming[0].name == rule_names[0] && Terraforming[0].name_sea == rule_names[1]);
   assert(Terraforming[1].name == rule_names[2] && Terraforming[1].name_sea == rule_names[3]);
-  assert(Terraforming[0].preq_tech == 1101 && Terraforming[0].preq_tech_sea == 1102);
-  assert(Terraforming[1].preq_tech == 1103 && Terraforming[1].preq_tech_sea == 1104);
+  assert(Terraforming[0].prerequisite_tech[0] == 1101 && Terraforming[0].prerequisite_tech[1] == 1102);
+  assert(Terraforming[1].prerequisite_tech[0] == 1103 && Terraforming[1].prerequisite_tech[1] == 1104);
   assert(Terraforming[0].bit == 11 && Terraforming[0].bit_incompatible == 12);
   assert(Terraforming[1].bit == 21 && Terraforming[1].bit_incompatible == 22);
   assert(Order[4].order == stored_orders[0] && Order[4].order_sea == stored_orders[1]);

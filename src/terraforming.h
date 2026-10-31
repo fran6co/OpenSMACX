@@ -44,16 +44,23 @@ enum TerraformingAction {
     TERRA_MONOLITH = 19,
 };
 
+// Pinned 5BAB4A..5BAB4D selects row+8+4*is_sea in a 0x20-byte row.
+// Land is element 0 and sea is element 1; the original index is unchecked.
 struct RulesTerraforming {
     LPSTR name;
     LPSTR name_sea;
-    int preq_tech;
-    int preq_tech_sea;
+    int prerequisite_tech[2];
     uint32_t bit;
     uint32_t bit_incompatible;
     int rate;
     LPSTR shortcuts;
 };
+#if defined(_M_IX86) || defined(__i386__)
+static_assert(sizeof(RulesTerraforming) == 0x20,
+              "Original terraforming rows have 32-byte stride");
+static_assert(sizeof(((RulesTerraforming *)0)->prerequisite_tech) == 8,
+              "Land and sea prerequisites occupy two four-byte slots");
+#endif
 
 const uint32_t TerraformingBits[20][2] = { // terrain enhancement, incompatible on same tile
     BIT_FARM,          BIT_FOREST, // farm
