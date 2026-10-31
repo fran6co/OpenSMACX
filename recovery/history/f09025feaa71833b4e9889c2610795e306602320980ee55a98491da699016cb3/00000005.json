@@ -1,0 +1,36 @@
+{
+  "event_id": "4d1c74fa57fd64171af9be8d3b6932cc33ddb59dd466b1b68a411fa94af53622",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_basewin_facility_climate_oct31cl.py",
+      "recovery/tests/test_console_remaining_behavior.py",
+      "recovery/tests/test_console_terraform_actual_source.py",
+      "src/basewin.cpp",
+      "src/console_commands.cpp"
+    ],
+    "evidence": [
+      "Cross-cutting Map audit independently confirms three facility26 water checks read climate+0 at40C33E/40C481/40C710; current C++/COFF instead read contour+1. Restore only the three member selections, preserving map/base operands and callback order.",
+      "Console terraform original NOTINROCKY4D3C1B and TOOFLAT4D4281 read val3+5 rockiness, currentCOFF reads contour+1. Original later map-base/stride lookups use saved entry coordinates; existing signed map_loc(x,y)->val3 expresses supported fresh query at each check. Keep entry altitude/is_sea snapshots, warning/return paths, side effects and all other member reads unchanged.",
+      "Add discriminatory climate/contour and val3/contour controls, preserve full Console mock assertions while adding its missing val3 API. No broader cached-tile replacement, flags, asm, original marker edits, claim demotion or bug fixes. One combined build/native verification for four touched owner contexts, followed by coordinator review and destination recheck."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4243568,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5059696,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "ce5881485ef5e065206face49d7916c3d723e82d9d08d5fae68841bdd52fb319",
+  "request_id": "map-member-dependent-owners",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:object-storage-oct31cl"
+}
