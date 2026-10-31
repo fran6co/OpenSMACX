@@ -2879,7 +2879,7 @@ WorldWin WorldClimateWorldWin;
 
 /*
 Purpose: Check for any type of zone of control conflicts (base and/or unit).
-// ORIGINAL: 0x005C89F0 ?zoc_any@@YAHHHH@Z 0x005C89F0-0x005C8AC0
+// ORIGINAL: 0x005C89F0 ?zoc_any@@YAHHHH@Z 0x005C89F0-0x005C8AC0 BYTE_EXACT
 // LEVER (2026-09-03): anything_at (0x005798E0) written out inline - the image
 //            makes ZERO calls here and `call_diff` flagged the real call as
 //            MORE-by-one; 3/82 -> 12/82 and call_diff is now clean. The
@@ -2926,7 +2926,7 @@ int __cdecl zoc_any(int x, int y, int faction_id) {
 
 /*
 Purpose: Check for unit related zone of control conflicts.
-// ORIGINAL: 0x005C8AC0 ?zoc_veh@@YAHHHH@Z 0x005C8AC0-0x005C8B97
+// ORIGINAL: 0x005C8AC0 ?zoc_veh@@YAHHHH@Z 0x005C8AC0-0x005C8B97 BYTE_EXACT
 // TRIED: 13/80, 0.969 similar - best of every flag set. Same
 //            xrange/on_map-loop family ceiling as base_on_sea (0x0050DE50):
 //            the image caches MapIsFlat/MapLongitudeBounds into registers

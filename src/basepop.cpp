@@ -2383,7 +2383,7 @@ int BasePop::string(char *text) {
     return list->add(0) != 0;
 }
 
-// ORIGINAL: 0x00604410 ?on_key_down@BasePop@@QAEHH@Z 0x00604410-0x0060448E FILE
+// ORIGINAL: 0x00604410 ?on_key_down@BasePop@@QAEHH@Z 0x00604410-0x0060448E FILE BYTE_EXACT
 // symbol    ?on_key_down@BasePop@@UAEHH@Z
 // TRIED: both int-arithmetic (`off1 + (int)self`) and pointer-arithmetic (`self + off1`) forms for the `[edx+esi]` adjusted base diverge identically at instr #14 (original 'lea' vs rebuilt 'add') - an addressing-mode choice, not a control-flow one. 0x21d0/0x2228/0x2314/0x229c/0x2350 all fall inside the opaque `dialogs_[0xC94]` byte blob, so reached by raw offset.
 // working copy - scaffold materialised by --work
@@ -2428,7 +2428,7 @@ int BasePop::on_key_down(int key) {
 // Fixed-slot bindings carried from 006044d0.cpp
 
 
-// ORIGINAL: 0x006044D0 ?double_click@BasePop@@QAEXH@Z 0x006044D0-0x00604581 FILE
+// ORIGINAL: 0x006044D0 ?double_click@BasePop@@QAEXH@Z 0x006044D0-0x00604581 FILE BYTE_EXACT
 // symbol    ?double_click@BasePop@@SAXH@Z
 // TRIED: early-return on tab==1 (MSVC folds the later redundant tab==1 check into dead code, collapsing 4 original instrs to 1 lea); lea-vs-add on the (off+base) address computation persists regardless of local-vs-inline pointer arithmetic
 // working copy - scaffold materialised by --work
@@ -2720,7 +2720,7 @@ int BasePop::init(int flags, long heap_base) {
 }
 
 
-// ORIGINAL: 0x00604300 ?on_button_clicked@BasePop@@QAEXH@Z 0x00604300-0x006043CA FILE
+// ORIGINAL: 0x00604300 ?on_button_clicked@BasePop@@QAEXH@Z 0x00604300-0x006043CA FILE BYTE_EXACT
 // symbol    ?on_button_clicked@BasePop@@UAEXH@Z
 //           Q->U 2026-09-06, Win's front slots 44/45 taking the image's
 //           own names (on_button_clicked / on_button_toggled): the body is

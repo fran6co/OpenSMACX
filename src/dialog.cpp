@@ -1160,7 +1160,7 @@ Purpose: Dialog's Heap* init: reset the live dialog through close(), park
          pointer, and hand that same Heap to the embedded item list as its
          allocator after the entry teardown.
 
-// ORIGINAL: 0x006098D0 ?init@Dialog@@QAEHPAUHeap@@@Z 0x006098D0-0x0060996F FILE
+// ORIGINAL: 0x006098D0 ?init@Dialog@@QAEHPAUHeap@@@Z 0x006098D0-0x0060996F FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence":["src/dialog.h declares this original Dialog overload; dialog.cpp owns the sibling init/close methods.","The embedded list, heap pointer and allocator are existing Dialog members; SpriteBox's documented forwarder targets this overload."],"reason":"Move the existing typed overload to Dialog's owner without changing heap assignment, teardown order or return behavior."}
 // symbol    ?init@Dialog@@QAEHPAVHeap@@@Z
 // TRIED: SpriteBox::init(Heap*) tail-forwards here through the embedded Dialog base.
