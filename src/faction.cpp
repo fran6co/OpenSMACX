@@ -4391,7 +4391,7 @@ Purpose: Two AI factions that were on the same side turn on each other. The
          Everything here reads the pairwise status table the treaty writers
          maintain, indexed `faction * 2099 + faction_with` - that index is
          SpyingStatusStride, and 2099 dwords is one 0x20CC PlayerData stride.
-// ORIGINAL: 0x0055D2A0 ?enemies_team_up@@YAXHHH@Z 0x0055D2A0-0x0055D425
+// ORIGINAL: 0x0055D2A0 ?enemies_team_up@@YAXHHH@Z 0x0055D2A0-0x0055D425 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned PE and independent IDA9/Ghidra extents agree on55D2A0..55D425; all389bytes are covered by128entry-reachable instructions, with local returns55D33C/55D3D1/55D40B/55D424 and no escaping branch.", "The former interval through55D444 contains11NOPs then20bytes of enemies_trade_tech55D430..55D753, whose complete separate mapping remains. Historical claims/lessons are unchanged and Git37368691c retains erroneous prior bounds. This changes no implementation or compiler policy."], "reason": "Bound enemies_team_up by its complete local control flow, excluding alignment and the separately mapped technology-trade entry."}
 // size      389 bytes
 // prototype void (__cdecl ?enemies_team_up@@YAXHHH@Z)(int, int, int)
@@ -4411,6 +4411,8 @@ Purpose: Two AI factions that were on the same side turn on each other. The
 //        `shl edx, cl / test dl, al` against the byte view, where BOOL's
 //        32-bit result costs a widen, so the explicit
 //        `(uint8_t)(1 << a3) & factions_status_byte(0)` is what lands here.
+// Width correction to that historical inference: SHL operates on EDX;
+// only TEST consumes DL. Keep the int shift until applying the human-byte mask.
 Status: homed 2026-09-03 out of the recovered-units archive
 */
 void __cdecl enemies_team_up(int faction_id, int faction_id_with,
@@ -4419,7 +4421,7 @@ void __cdecl enemies_team_up(int faction_id, int faction_id_with,
     // computes, so these are assignments to the parameters' own locals.
     int index = turncoat_faction;
     if (!(PlayersData[faction_id].diplo_treaties[index] & 0x10)
-        && (static_cast<uint8_t>(1 << turncoat_faction) & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_) != 0) {
+        && ((1 << turncoat_faction) & GameDataStateStorage.fields_.lock_masks_.bytes_.human_mask_) != 0) {
         int index_with = turncoat_faction;
         if (PlayersData[faction_id_with].diplo_treaties[index_with] & 0x10) {
             if (great_satan(turncoat_faction, 0) == 0 && !(PlayersData[faction_id].diplo_treaties[index] & 0x20)) {
