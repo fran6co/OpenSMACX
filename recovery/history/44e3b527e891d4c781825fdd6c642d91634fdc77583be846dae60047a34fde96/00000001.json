@@ -1,0 +1,26 @@
+{
+  "event_id": "5158a8a0ba076a125126acc034c04ab28a38aa8c485fce401d3c69e248ce8cb8",
+  "payload": {
+    "affects": [
+      "entity-031e38edc58c296d09a55d0065310adea8b1dfc8d2b77bcd5529d78406122f96",
+      "entity-a78b8ee23d4669e86589a8b814dee9c2e662484897ccc02047a27bd1123bde96",
+      "entity-c9f2ec4f77a5a0b91269cbc5b3fe7352f0baaf42fcf88205035a6d53d693842d",
+      "entity-eb7ae4fa5dc794e6938aea11d65d617ad409ee18774636600a3c4b53e8237403"
+    ],
+    "author": "coordinator",
+    "discovery_id": "terraforming-rate-alias-discovery-oct31bi",
+    "evidence": [
+      "src/alpha.cpp binds Terraforming[20] to original0x691878..0x691AF8; src/terraforming.h RulesTerraforming has32-byte stride and rate at+0x18.",
+      "0x691890=Terraformingbase+0x18; row5 at0x691930 androw6 at0x691950 are existing Terraforming[TERRA_ROAD/TERRA_MAGTUBE].rate.",
+      "src/alpha.cpp read_rules writes Terraforming[i].rate via text_item_number; two constzero globals in map.cpp sever original storage identity and allow incorrect constant folding.",
+      "Replace standins using existing typed parent and v3 member-backed object bindings in alpha.cpp, preserving old leaf origins/symbol interpretations and all function markers. No new extent guessing or table allocation."
+    ],
+    "hypothesis": "Map helper reads live road/magtube rates in existing mutable Terraforming array; current separate constzero globals are false storage copies.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "terraforming-rate-alias-discovery-oct31bi",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:bulk-map-oct31bi"
+}

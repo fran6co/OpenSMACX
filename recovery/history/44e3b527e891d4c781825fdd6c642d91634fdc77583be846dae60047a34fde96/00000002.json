@@ -1,0 +1,38 @@
+{
+  "event_id": "21160485d703eef84820b7db2c0a2a067994fa642ca45fa53efb5abed28950ca",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "src/alpha.cpp"
+    ],
+    "evidence": [
+      "src/alpha.cpp binds Terraforming[20] to original0x691878..0x691AF8; src/terraforming.h RulesTerraforming has32-byte stride and rate at+0x18.",
+      "0x691890=Terraformingbase+0x18; row5 at0x691930 androw6 at0x691950 are existing Terraforming[TERRA_ROAD/TERRA_MAGTUBE].rate.",
+      "src/alpha.cpp read_rules writes Terraforming[i].rate via text_item_number; two constzero globals in map.cpp sever original storage identity and allow incorrect constant folding.",
+      "Replace standins using existing typed parent and v3 member-backed object bindings in alpha.cpp, preserving old leaf origins/symbol interpretations and all function markers. No new extent guessing or table allocation."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5796800,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6887728,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6887760,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "5158a8a0ba076a125126acc034c04ab28a38aa8c485fce401d3c69e248ce8cb8",
+  "request_id": "terraforming-rate-alias-scope-oct31bi",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:bulk-map-oct31bi"
+}
