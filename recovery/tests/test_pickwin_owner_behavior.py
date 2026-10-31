@@ -84,6 +84,8 @@ def extract_braced(text: str, pattern: str, description: str) -> str:
 def extract_pickwin_sources() -> tuple[str, str, str]:
     cpp = source_path("PICKWIN_OWNER_SOURCE", "src/pickwin.cpp").read_text()
     header = source_path("PICKWIN_OWNER_LISTBOX_HEADER", "src/listbox.h").read_text()
+    geometry = extract_braced(cpp, r"^static LONG pickwin_geometry_value\s*\(",
+                              "PickWin geometry word conversion")
     helper = extract_braced(cpp, r"^static void pickwin_init_text_button\s*\(",
                             "PickWin button initialization helper")
     signatures = (
@@ -106,7 +108,7 @@ def extract_pickwin_sources() -> tuple[str, str, str]:
     global_match = re.search(r"(?m)^\s*PickWin PickWinGlobal;\s*$", cpp)
     assert global_match is not None, "PickWinGlobal source definition is missing"
     global_definition = global_match.group(0).strip()
-    return "\n\n".join([helper] + bodies), list_method, "\n\n".join([global_definition, callback])
+    return "\n\n".join([geometry, helper] + bodies), list_method, "\n\n".join([global_definition, callback])
 
 
 @pytest.mark.parametrize("compiler", COMPILERS or [None])

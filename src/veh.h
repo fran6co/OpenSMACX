@@ -862,10 +862,7 @@ MEASURED inline void __cdecl veh_skip(int veh_id) {
     Vehs[veh_id].moves_expended = (uint8_t)speed(veh_id, false);
 }
 
-MEASURED inline int __cdecl veh_fake(int proto_id, int faction_id) {
-    veh_clear(2048, proto_id, faction_id);
-    return 2048;
-}
+int __cdecl veh_fake(int proto_id, int faction_id);
 
 // BODY HERE (was a plain, non-`inline` function in veh.cpp): neither of its
 // two callers (best_defender, action_home) has it in their `calls` list -

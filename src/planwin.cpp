@@ -403,21 +403,18 @@ Status: Complete
 // RECOVERY_BINDING: v1 {"evidence": ["image:01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:0x0048BAB0:0048BAB0-0048BB72", "source:src/planwin.h:PlanWin and genuine MapWin/GraphicWin interfaces", "source:src/faction.h:PlayerData, battle faction state and label declarations", "recovery/tasks/planwin-battle-owner-coverage.json"], "reason": "Use the pinned native body with the real typed owner and preserve the seed's original identity and history."}
 // TRIED: extern short table array for the runtime-indexed 0x97d040 lookup (lever: address does index arithmetic); vbase-adjustor read from vtbl+4 for the Buffer receiver. MISMATCH from #14: the a1*0x9a index multiply lowers via a different lea/shl chain than the original's
 void PlanWin::draw_line_base(int base_id1, int base_id2, int color) {
-    const Base &first = Bases[base_id1];
-    const Base &second = Bases[base_id2];
-    int pixel_x1;
     int pixel_y1;
     int pixel_x2;
     int pixel_y2;
-    tile_to_pixel(first.x, first.y, &pixel_x1, &pixel_y1);
-    tile_to_pixel(second.x, second.y, &pixel_x2, &pixel_y2);
+    tile_to_pixel(Bases[base_id1].x, Bases[base_id1].y, &base_id1, &pixel_y1);
+    tile_to_pixel(Bases[base_id2].x, Bases[base_id2].y, &pixel_x2, &pixel_y2);
 
-    pixel_x1 += field_1DDBC_;
+    base_id1 += field_1DDBC_;
     pixel_y1 += field_1DDC0_;
     pixel_x2 += field_1DDBC_;
     pixel_y2 += field_1DDC0_;
 
-    line(pixel_x1, pixel_y1, pixel_x2, pixel_y2, 0, color,
+    line(base_id1, pixel_y1, pixel_x2, pixel_y2, 0, color,
          4, 4, PlanLineCounter);
 }
 
@@ -429,7 +426,7 @@ static bool planwin_base_known_to_faction(const Base &base, int faction) {
     if (GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW) return true;
     if ((PlayersData[faction].flags & PFLAG_MAP_REVEALED) == 0) {
         const int tile_index = base.y * MapLongitude
-                             + base.x / 2;
+                             + (base.x >> 1);
         if ((MapTiles[tile_index].visibility & (1U << (faction & 31))) == 0)
             return false;
     }
@@ -463,7 +460,7 @@ void PlanWin::on_redraw() {
     buffer_.copy(surface_buffer, 0, 0, surface->dib_.bmiHeader.biWidth,
                  -surface->dib_.bmiHeader.biHeight);
 
-    const int faction = ConsoleGlobal.faction_id_;
+    int faction = ConsoleGlobal.faction_id_;
     int base_draw_index;
     for (base_draw_index = 0; base_draw_index < GameDataStateStorage.fields_.base_current_count_;
          ++base_draw_index) {
@@ -489,36 +486,37 @@ void PlanWin::on_redraw() {
             | ((field_21A6C_ != 0 && intersects_plan_line) ? 0x200 : 0);
         base_draw(surface_buffer, base_draw_index, pixel_x,
                   pixel_y - field_1DDC0_, zoom_offset_, flags);
+        // The original refreshes faction after the draw callback.
+        faction = ConsoleGlobal.faction_id_;
     }
 
     int vehicle_line_index;
     for (vehicle_line_index = 0; vehicle_line_index < line_count_;
          ++vehicle_line_index) {
         const PlanLineRecord &record = line_records_[vehicle_line_index];
-        const int endpoints[2][2] = {
-            {record.x2, record.y2}, {record.x1, record.y1}
-        };
         int endpoint_index;
         for (endpoint_index = 0; endpoint_index < 2; ++endpoint_index) {
-            const int endpoint_x = endpoints[endpoint_index][0];
-            const int endpoint_y = endpoints[endpoint_index][1];
+            const int endpoint_x = endpoint_index != 0 ? record.x1 : record.x2;
+            const int endpoint_y = endpoint_index != 0 ? record.y1 : record.y2;
             if (planwin_tile_has_known_base(endpoint_x, endpoint_y, faction))
                 continue;
 
             int pixel_x, pixel_y;
             tile_to_pixel(endpoint_x, endpoint_y, &pixel_x, &pixel_y);
             pixel_y -= field_1DDC0_;
-            const int vehicle_id = veh_fake(2, faction);
+            const int vehicle_id = veh_fake(2, ConsoleGlobal.faction_id_);
             const int flags = 0x100 | (field_21A6C_ ? 0x200 : 0);
             veh_draw(surface_buffer, vehicle_id, pixel_x, pixel_y,
                      zoom_offset_, flags, 1);
+            faction = ConsoleGlobal.faction_id_;
         }
     }
 
     int pattern_line_index;
     for (pattern_line_index = 0; pattern_line_index < line_count_;
          ++pattern_line_index) {
-        const PlanLineRecord &record = line_records_[pattern_line_index];
+        const PlanLineRecord record = line_records_[pattern_line_index];
+        const int color = line_colors_[pattern_line_index];
         int x1, y1, x2, y2;
         tile_to_pixel(record.x1, record.y1, &x1, &y1);
         tile_to_pixel(record.x2, record.y2, &x2, &y2);
@@ -527,7 +525,7 @@ void PlanWin::on_redraw() {
         x2 += field_1DDBC_;
         y2 += field_1DDC0_;
         surface_buffer->line(x1, y1, x2, y2, 0,
-                             line_colors_[pattern_line_index],
+                             color,
                              4, 4, PlanLineCounter);
     }
 

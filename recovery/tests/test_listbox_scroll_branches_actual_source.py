@@ -214,18 +214,22 @@ def test_actual_scroll_branch_effects_and_compiled_damage_controls(tmp_path, com
     good = build(tmp_path / "good", body)
     subprocess.run([str(good)], check=True, timeout=10)
 
+    equality_anchor = "static_cast<int>(field_18_) != old_position"
+    assert body.count(equality_anchor) == 1
     equality_mutant = body.replace(
-        "static_cast<int>(front->field_18_) != old_position",
-        "static_cast<int>(front->field_18_) == old_position", 1)
+        equality_anchor, "static_cast<int>(field_18_) == old_position", 1)
     assert equality_mutant != body
     binary = build(tmp_path / "wrong_equality", equality_mutant)
     result = subprocess.run([str(binary)], capture_output=True, text=True, timeout=10)
     assert result.returncode != 0, "wrong scroll equality branch survived witness"
 
+    unconditional_anchor = (
+        "            draw_item(Dialog::selected_position_);\n        }\n        soft_update();")
+    assert body.count(unconditional_anchor) == 1
     unconditional_mutant = body.replace(
-        "            front->draw_item(dialog.selected_position_);\n        }\n        entered->soft_update();",
-        "        }\n        front->draw_item(dialog.selected_position_);\n"
-        "        entered->soft_update();", 1)
+        unconditional_anchor,
+        "        }\n        draw_item(Dialog::selected_position_);\n"
+        "        soft_update();", 1)
     assert unconditional_mutant != body
     binary = build(tmp_path / "unconditional_row", unconditional_mutant)
     result = subprocess.run([str(binary)], capture_output=True, text=True, timeout=10)

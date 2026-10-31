@@ -1,0 +1,23 @@
+{
+  "event_id": "128c2ec51fc961964bbeff1a5230b7a7d12c3d315919a2528b3308825d77954a",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/pickwin_owner_host_control.cpp",
+      "recovery/tests/test_pickwin_owner_behavior.py",
+      "src/pickwin.h"
+    ],
+    "evidence": [
+      "Pinned RECT API addresses and in-place callback mutations establish genuine16byte members at623C,624C,86AC. Replace exactly those scalar groups with frame_rect_,header_panel_rect_,list_area_rect_; preserve class size/offsets and all identities/claims. No other scalar consolidation absent pointer/API evidence.",
+      "Coherent existing init/redraw/button source scope includes original signed division after low32-bit wrapping, live sprite dimensions/edge reads after callbacks, and correct icon width/height axes. Preserve null/error/unchecked behavior. Update actual-source fixture models and meaningful mutation controls without weakening oracles.",
+      "No ORIGINAL/load-bearing mapping edit or compiler flag/ABI policy change. Central fresh full dependent build/data/layout/restoration required; permission is not acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "pickwin-real-rect-members-oct31bu",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:easy-pickwin-oct31bu"
+}

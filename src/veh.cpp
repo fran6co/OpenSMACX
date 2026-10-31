@@ -7982,7 +7982,6 @@ Status: Complete
 /*
 Purpose: Initialize/reset the fake unit id (2048) used as a placeholder for various UI elements.
 // ORIGINAL: 0x005C1D50 ?veh_fake@@YAHHH@Z 0x005C1D50-0x005C1D6F BYTE_EXACT
-// body      src/veh.h
 // size      31 bytes
 // prototype int (__cdecl ?veh_fake@@YAHHH@Z)(int protoID, int factionID)
 // callers   13   call targets   1
@@ -7992,10 +7991,12 @@ Purpose: Initialize/reset the fake unit id (2048) used as a placeholder for vari
 Return Value: Fake unit id (2048)
 Status: Complete
 */
-// BODY IN veh.h, as `MEASURED inline`: the image writes it out at
-// some call sites and calls it at others, and a .cpp definition is only ever
-// one of those. The marker stays here because that is where the catalogue
-// reads it.
+// Keep this implementation out of line: the pinned callers branch to the
+// standalone helper before veh_clear and use its returned fake ID.
+int __cdecl veh_fake(int proto_id, int faction_id) {
+    veh_clear(2048, proto_id, faction_id);
+    return 2048;
+}
 
 
 /*

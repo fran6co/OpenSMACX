@@ -1438,7 +1438,43 @@ void GraphicWin::apply_frame_sprites(const NCSprites *sprites) {
     frame_noncaption_right_ = sprites->noncaption_right;
     frame_noncaption_middle_ = sprites->noncaption_middle;
 
-    compute_min_size();
+    if ((iFlags_ & 0x10) != 0) {
+        if (!frame_top_left_) return;
+        Sprite *const top_right = frame_top_right_;
+        if (!top_right) return;
+        Sprite *const bottom_left = frame_bottom_left_;
+        if (!bottom_left) return;
+        Sprite *const bottom_right = frame_bottom_right_;
+        if (!bottom_right) return;
+        int width = frame_dimension_sum(frame_top_left_->width(), top_right->width());
+        field_134_ = width;
+        const int bottom_width = frame_dimension_sum(bottom_right->width(), bottom_left->width());
+        if (width <= bottom_width) width = bottom_width;
+        field_134_ = width;
+        int height = frame_dimension_sum(frame_top_left_->height(), bottom_left->height());
+        field_138_ = height;
+        const int right_height = frame_dimension_sum(bottom_right->height(), top_right->height());
+        if (height <= right_height) height = right_height;
+        field_138_ = height;
+    } else {
+        if (!frame_noncaption_left_) return;
+        Sprite *const top_right = frame_noncaption_right_;
+        if (!top_right) return;
+        Sprite *const bottom_left = frame_bottom_left_;
+        if (!bottom_left) return;
+        Sprite *const bottom_right = frame_bottom_right_;
+        if (!bottom_right) return;
+        int width = frame_dimension_sum(frame_noncaption_left_->width(), top_right->width());
+        field_134_ = width;
+        const int bottom_width = frame_dimension_sum(bottom_right->width(), bottom_left->width());
+        if (width <= bottom_width) width = bottom_width;
+        field_134_ = width;
+        int height = frame_dimension_sum(frame_noncaption_left_->height(), bottom_left->height());
+        field_138_ = height;
+        const int right_height = frame_dimension_sum(bottom_right->height(), top_right->height());
+        if (height <= right_height) height = right_height;
+        field_138_ = height;
+    }
 }
 
 // ORIGINAL: 0x005D54A0 sub_5d54a0 0x005D54A0-0x005D54C2 BYTE_EXACT

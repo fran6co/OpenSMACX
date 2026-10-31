@@ -377,6 +377,7 @@ static const char MapXPlanetXPath[] = "maps\\xplanetx.mp";
 int __cdecl map_menu(int quick_start) {
     SetupWin setup;
     Popup popup;
+    setup.opening_window_snapshot_ = opening_window();
     int choice;
 
 map_menu_retry:
@@ -947,16 +948,20 @@ void __cdecl thumb_routine(int faction) {
         }
     }
     StringTemp[0] = 0;
-    strcat(StringTemp, ConfigFactionDetailMode ? "DATALINKS1" : "BLURB");
+    if (ConfigFactionDetailMode)
+        strcat(StringTemp, "DATALINKS1");
+    else
+        strcat(StringTemp, "BLURB");
     ConfigFactionPreview.start(Players[faction].filename, StringTemp, -1, 0, 0x10500, 0);
     if (ConfigFactionDetailMode) {
         StringTemp[0] = 0;
         strcat(StringTemp, "DATALINKS2");
         ConfigFactionPreview.start(Players[faction].filename, StringTemp, -1, 0, 0x80, 0);
     }
+    Sprite *const diplomacy = &FactionsArt[faction].diplomacy;
     ConfigFactionPreview.set_caller_picture(ConfigFactionPreview.picture_enabled()
-        ? 0 : &FactionsArt[faction].diplomacy);
-    ConfigFactionPreview.dialogs().SpriteBox::sprite(&FactionsArt[faction].diplomacy, 0, 0);
+        ? 0 : diplomacy);
+    ConfigFactionPreview.dialogs().SpriteBox::sprite(diplomacy, 0, 0);
     ConfigFactionPreview.Win::set_caption(Players[faction].formal_name_faction);
     ConfigFactionPreview.set_string_font(PopupMenuFont, PopupMenuBoldFont, PopupMenuItalicFont, 0);
     PopupModalActive = 1;

@@ -1,0 +1,29 @@
+{
+  "event_id": "9fa37103bfbd684a0bfe4d3c651747421c3983dc050ae2758d411d85c6589a00",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Pinned8byte thunks60CED0..CED8 and60CF10..CF18 are separate from eight INT3 alignment bytes and primary bodies60CEE0..CF01/60CF20..CF4D. Correct wrong unclaimed function extents through native writers, retaining same old origins/names/facts/states/claims and full old49/61byte envelope/padding evidence in source bindings. Add the two genuine primary identities; no implementation added, no claim demotion or covered-byte history erased.",
+      "Native pure-overlay mapping/ownership/history checks and four actual-entry binary comparisons pass; guarded add-only overlap rightly refuses. Source publication requires fresh hashes/scope; only native fresh recording grants historical claims. This metadata discovery is separate from three new ListBox code matches and expands known original domain by2."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6344416,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6344480,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "ef87df20c2e2163ef4316d420d9119d5acc0b239760d74880997b6d714d5273a",
+  "request_id": "true-scroll-entry-boundaries-oct31bw",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:easy-listbox-oct31bu"
+}

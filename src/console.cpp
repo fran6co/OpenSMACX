@@ -135,6 +135,7 @@ void __cdecl ambience_veh(int vehicle);
 // ORIGINAL: 0x00511520 ?set_move@Console@@QAEXH@Z 0x00511520-0x005117FD
 // RECOVERY_BINDING: v1 {"evidence": ["git:caf4963abb2ef8a11892e1d754d80934bd50b12e:src/recovered/units/00511520.cpp", "source:src/console.h", "source:src/veh.h", "source:src/game.h", "source:src/mapwin.h", "pinned:0x00511520..0x005117FD sequential multiplayer gates, ready/ambience selection split, visibility call and callback-sensitive coordinate reads", "source:src/netdaemon.h:NetDaemon::primary_state_"], "reason": "Complete the original Console move workflow through its genuine ready, ambience_veh and spot_all helpers. Preserve the observed ordered guards, selection recheck, offline visibility condition and post-callback field reads. The historical faction waiting-mask identity now binds to NetDaemonNet.primary_state_.trailing_words_[6]; the singleton owns that shared storage."}
 void Console::set_move(int force_update) {
+    int did_reset = 0;
     if (IsMultiplayerNet != 0) {
         if (ConsoleControlTurnActive != 0) {
             return;
@@ -142,7 +143,11 @@ void Console::set_move(int force_update) {
         if (NetDaemonNet.channels_[1].payload_.flags != 0) {
             return;
         }
-        if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10u) == 0) {
+        if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10u) != 0) {
+            if (not_my_turn() != 0) {
+                return;
+            }
+        } else {
             const int faction_bit = 1 << faction_id_;
             if ((NetDaemonNet.factions_waiting_mask() & faction_bit) != 0) {
                 return;
@@ -150,12 +155,9 @@ void Console::set_move(int force_update) {
             if (NetDaemonNet.primary_state_.trailing_words_[3] != 0) {
                 return;
             }
-        } else if (not_my_turn() != 0) {
-            return;
         }
     }
 
-    int did_reset = 0;
     if (ConsoleGlobal.cursor_active_ == 0 || force_update != 0) {
         cursor_active_ = 0;
         field_23BF8_ = 0;
@@ -251,21 +253,25 @@ void Console::turn_hints() { // 0x00511800
 
     const int faction_id = ConsoleGlobal.faction_id_;
     int turn = GameDataStateStorage.fields_.turn_current_num_;
-    const int history = ConsoleGlobal.cursor_history_index_;
-    const int history_x = ConsoleGlobal.cursor_history_x_[history];
-    const int history_y = ConsoleGlobal.cursor_history_y_[history];
 
-    if (turn == 1 && tut_check(1) != 0) {
-        const int base_id = base_find(history_x, history_y, faction_id);
-        if (base_id >= 0) {
-            parse_says(0, Bases[base_id].name_string, -1, -1);
-            if (selected_vehicle_ >= 0) {
-                parse_says(1,
-                           VehPrototypes[Vehs[selected_vehicle_].proto_id].veh_name,
-                           -1, -1);
-                TutorialWindow.set_tour_stage(0);
-                TutorialWindow.tut_map("LANDFALL", history_x, history_y, -1,
-                                      nullptr, 0x100, -1, -1);
+    if (turn == 1) {
+        if (tut_check(1) != 0) {
+            const int history = ConsoleGlobal.cursor_history_index_;
+            const int base_id = base_find(ConsoleGlobal.cursor_history_x_[history],
+                                         ConsoleGlobal.cursor_history_y_[history], faction_id);
+            if (base_id >= 0) {
+                parse_says(0, Bases[base_id].name_string, -1, -1);
+                if (selected_vehicle_ >= 0) {
+                    parse_says(1,
+                               VehPrototypes[Vehs[selected_vehicle_].proto_id].veh_name,
+                               -1, -1);
+                    TutorialWindow.set_tour_stage(0);
+                    const int tutorial_history = ConsoleGlobal.cursor_history_index_;
+                    TutorialWindow.tut_map("LANDFALL",
+                                          ConsoleGlobal.cursor_history_x_[tutorial_history],
+                                          ConsoleGlobal.cursor_history_y_[tutorial_history], -1,
+                                          nullptr, 0x100, -1, -1);
+                }
             }
         }
         turn = GameDataStateStorage.fields_.turn_current_num_;
@@ -275,17 +281,23 @@ void Console::turn_hints() { // 0x00511800
     PlayerData &faction = PlayersData[faction_id];
     if (turn >= 0x14 && faction.current_num_bases == 1 &&
         faction.pop_total >= 2 && faction.proto_id_active[0] == 0 &&
-        faction.proto_id_queue[0] == 0 && tut_check(0x100000) != 0) {
-        const int base_id = base_find(history_x, history_y, faction_id);
-        if (base_id >= 0) {
-            const int x = Bases[base_id].x;
-            const int y = Bases[base_id].y;
-            focus(x, y, faction_id);
-            parse_says(0, Bases[base_id].name_string, -1, -1);
-            TutorialWindow.tut_map("SECONDBASE", x, y, -2 - base_id,
-                                  nullptr, 0, -1, -1);
-            faction.last_turn_new_base = GameDataStateStorage.fields_.turn_current_num_;
+        faction.proto_id_queue[0] == 0) {
+        if (tut_check(0x100000) != 0) {
             second_base_tutorial_shown = true;
+            const int history = ConsoleGlobal.cursor_history_index_;
+            const int base_id = base_find(ConsoleGlobal.cursor_history_x_[history],
+                                         ConsoleGlobal.cursor_history_y_[history], faction_id);
+            if (base_id >= 0) {
+                const int x = Bases[base_id].x;
+                const int y = Bases[base_id].y;
+                focus(x, y, faction_id);
+                parse_says(0, Bases[base_id].name_string, -1, -1);
+                TutorialWindow.tut_map("SECONDBASE", Bases[base_id].x, Bases[base_id].y, -2 - base_id,
+                                      nullptr, 0, -1, -1);
+                faction.last_turn_new_base = GameDataStateStorage.fields_.turn_current_num_;
+            }
+        } else {
+            turn = GameDataStateStorage.fields_.turn_current_num_;
         }
     }
 
@@ -294,7 +306,9 @@ void Console::turn_hints() { // 0x00511800
         if (turns_since_new_base >= 0x18 && faction.proto_id_active[0] == 0) {
             const int base_count = faction.current_num_bases;
             if (base_count > 1 && base_count <= 5) {
-                const int base_id = base_find(history_x, history_y, faction_id);
+                const int history = ConsoleGlobal.cursor_history_index_;
+                const int base_id = base_find(ConsoleGlobal.cursor_history_x_[history],
+                                     ConsoleGlobal.cursor_history_y_[history], faction_id);
                 if (base_id >= 0) {
                     const int x = Bases[base_id].x;
                     const int y = Bases[base_id].y;
@@ -432,15 +446,17 @@ char LandmarkDefaultName[1] = {0};
 // ORIGINAL: 0x00515770 ?chat@Console@@QAEXH@Z 0x00515770-0x005158F4
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00515770.cpp", "src/netdaemon.h", "src/xpops.h"], "reason": "The chat command belongs to Console, reads network lock state through NetDaemonNet, and uses source-owned text buffers and message services rather than fixed executable addresses; seed matching alone is not structural proof."}
 void Console::chat(int target_faction) {
+    int faction = 1;
     if (!IsMultiplayerNet) return;
 
     NetDaemon &network = NetDaemonNet;
-    const unsigned int local_bit = 1u << (ConsoleGlobal.faction_id_ & 31);
-    if (ConsoleControlTurnActive &&
-        (network.channels_[0].leading_words_[1] & local_bit) == 0 &&
-        network.primary_state_.trailing_words_[3] == 0) {
-        NetMsgPrimary.pop("FINISHUPKEEP", 1000, 0, 0);
-        return;
+    if (ConsoleControlTurnActive) {
+        const unsigned int local_bit = 1u << (ConsoleGlobal.faction_id_ & 31);
+        if ((network.channels_[0].leading_words_[1] & local_bit) == 0 &&
+            network.primary_state_.trailing_words_[3] == 0) {
+            NetMsgPrimary.pop("FINISHUPKEEP", 1000, 0, 0);
+            return;
+        }
     }
 
     if (X_pop_ask("CHATASK", 0xff, ConsoleChatInput, pop_wait, 0) != 0)
@@ -453,21 +469,23 @@ void Console::chat(int target_faction) {
         return;
     }
 
-    const unsigned int enabled = GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xff;
-    if (network.primary_state_.session_phase_ >= 2 &&
-        (enabled & network.channels_[1].trailing_words_[6]) != enabled) {
-        for (int faction = 1; faction < 8; ++faction) {
-            const unsigned int bit = 1u << faction;
-            if (!(enabled & bit)) continue;
-            const bool selected = target_faction > 0
-                ? faction == target_faction
-                : CommlinkPending ? faction == CommlinkFaction
-                : TurnRedrawPending || (network.channels_[1].trailing_words_[6] & bit) != 0;
-            if (!selected) continue;
-            message_chat(0x1e00, faction, message);
-            log_say("Sent CHAT", message, faction, 0, 0);
+    if (network.primary_state_.session_phase_ >= 2) {
+        const unsigned int enabled = GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 0xff;
+        if ((enabled & network.channels_[1].trailing_words_[6]) != enabled) {
+            for (; faction < 8; ++faction) {
+                const unsigned int bit = 1u << faction;
+                if (!(*reinterpret_cast<const unsigned char *>(
+                        &GameDataStateStorage.fields_.lock_masks_.enable_mask_) & bit)) continue;
+                const bool selected = target_faction > 0
+                    ? faction == target_faction
+                    : CommlinkPending ? faction == CommlinkFaction
+                    : TurnRedrawPending || (network.channels_[1].trailing_words_[6] & bit) != 0;
+                if (!selected) continue;
+                message_chat(0x1e00, faction, message);
+                log_say("Sent CHAT", message, faction, 0, 0);
+            }
+            return;
         }
-        return;
     }
 
     message_chat(0x4e00, 0, message);
@@ -1797,22 +1815,20 @@ void Console::menu_detail() {
 // ORIGINAL: 0x00516C50 ?show_scen_objectives@Console@@QAEXXZ 0x00516C50-0x00516D98
 // RECOVERY_BINDING: v1 {"evidence": ["The 0x00516C50 seed parses ObjectiveReqVictory, ObjectivesSuddenDeathVictory and EndingMissionYear before processing faction-specific names.", "src/faction.h defines Players as 0x59C Player records: the seed's 0x00946A50, 0x00946A9C, 0x00946A84, 0x00946D4C, 0x00946D50 and 0x00946D34 references correspond to Player::is_leader_female, title_leader, name_leader, noun_gender, is_noun_plural and noun_faction.", "src/game.h owns GameRules and victory settings; general.h owns GenderDefault, PluralityDefault, parse_num, parse_says and say_year; strings.h owns StringTemp. The two popup strings at 0x0068AA0C and 0x0068AA18 were read from the pinned image as THEYFAILEDFLECHETTE and FLECHETTE.", "The seed's 0x005BF330 caption/label/callback call is represented by xpops.h's x_pop_caption_label, whose implementation forwards with the defaults (-1, no override, flags 0) to the typed full popup."], "reason": "Render scenario objectives through the existing faction, game-state, parser, scratch-buffer and popup owners, using the exact popup key values without raw data addresses."}
 void Console::show_scen_objectives() {
-    const int faction_id = ConsoleGlobal.faction_id_;
-    const Player &faction = Players[faction_id];
     parse_num(0, ScenarioSave.objective_req_victory);
     parse_num(1, ScenarioSave.objectives_sudden_death_victory);
-    parse_num(2, num_objectives(faction_id, GameDataStateStorage.fields_.game_rules_ & 0x1000));
+    parse_num(2, num_objectives(ConsoleGlobal.faction_id_, GameDataStateStorage.fields_.game_rules_ & 0x1000));
     parse_num(3, ScenarioSave.ending_mission_year);
 
-    GenderDefault = faction.is_leader_female;
+    GenderDefault = Players[ConsoleGlobal.faction_id_].is_leader_female;
     PluralityDefault = 0;
-    parse_says(1, faction.title_leader, -1, -1);
-    GenderDefault = faction.is_leader_female;
+    parse_says(1, Players[ConsoleGlobal.faction_id_].title_leader, -1, -1);
+    GenderDefault = Players[ConsoleGlobal.faction_id_].is_leader_female;
     PluralityDefault = 0;
-    parse_says(2, faction.name_leader, -1, -1);
-    GenderDefault = faction.noun_gender;
-    PluralityDefault = faction.is_noun_plural;
-    parse_says(3, faction.noun_faction, -1, -1);
+    parse_says(2, Players[ConsoleGlobal.faction_id_].name_leader, -1, -1);
+    GenderDefault = Players[ConsoleGlobal.faction_id_].noun_gender;
+    PluralityDefault = Players[ConsoleGlobal.faction_id_].is_noun_plural;
+    parse_says(3, Players[ConsoleGlobal.faction_id_].noun_faction, -1, -1);
 
     StringTemp[0] = 0;
     say_year(StringTemp);

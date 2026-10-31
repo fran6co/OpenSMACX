@@ -7,7 +7,7 @@
 #include <vector>
 
 #define __cdecl
-typedef long LONG;
+typedef int32_t LONG;
 typedef const char *LPCSTR;
 struct RECT { LONG left, top, right, bottom; };
 struct BoxSpriteParams { int id; };
@@ -245,14 +245,14 @@ struct PickWin : GraphicWin {
   char faction_files_[24][0x18] = {};
   char faction_menu_items_[24][0x18] = {};
   void (__cdecl *field_6238_)(int) = 0;
-  uint32_t field_623C_=0, field_6240_=0, field_6244_=0, field_6248_=0;
-  uint32_t field_624C_=0, field_6250_=0, field_6254_=0, field_6258_=0;
+  RECT frame_rect_ = {};
+  RECT header_panel_rect_ = {};
   uint32_t field_625C_=0, field_6260_=0, field_6264_=0, field_6268_=0;
   uint32_t field_626C_=0, field_6270_=0, field_6274_=0, field_6278_=0;
   uint32_t field_627C_=0, field_6280_=0, field_6284_=0, field_6288_=0;
   FlatButton flatButton1_, flatButton2_, flatButton3_;
   Sprite sprites1_[3], sprites2_[3], sprites3_[3], sprites4_[3], sprite5_;
-  uint32_t field_86AC_=0, field_86B0_=0, field_86B4_=0, field_86B8_=0;
+  RECT list_area_rect_ = {};
   ListBox listBox_;
   uint32_t field_9210_=0, field_9214_=0, field_9218_=0, field_921C_=0;
   uint32_t field_9220_=0, field_9224_=0, field_9228_=0, field_922C_=0;
