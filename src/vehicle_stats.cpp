@@ -114,7 +114,7 @@ void __cdecl say_defense(LPSTR stat, int proto_id) {
 /*
 Purpose: Generate stats string for specified prototype. Replaced existing non-safe strcat with
          string. Reworked to integrate with existing C code.
-// ORIGINAL: 0x0057D7D0 ?say_stats_3@@YAXPADH@Z 0x0057D7D0-0x0057D8D3
+// ORIGINAL: 0x0057D7D0 ?say_stats_3@@YAXPADH@Z 0x0057D7D0-0x0057D8D3 BYTE_EXACT
 // TRIED: else-if branch order off_rating<0/off_rating<99/else folded the "?"
 //            and "*" strcat tails together (29/92); reordering to
 //            off_rating<0/off_rating>=99/else (matching the disasm's own branch

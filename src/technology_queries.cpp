@@ -335,7 +335,7 @@ BOOL __cdecl veh_avail(int proto_id, int faction_id, int base_id) {
 
 /*
 Purpose: Check to see whether the specified faction can construct a specific terrain enhancement.
-// ORIGINAL: 0x005BAB40 ?terrain_avail@@YAHHHH@Z 0x005BAB40-0x005BAC13
+// ORIGINAL: 0x005BAB40 ?terrain_avail@@YAHHHH@Z 0x005BAB40-0x005BAC13 BYTE_EXACT
 // size      211 bytes
 // prototype int (__cdecl ?terrain_avail@@YAHHHH@Z)(int terraformID, BOOL isSea, int factionID)
 // callers   5   call targets   0
