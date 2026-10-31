@@ -3001,7 +3001,7 @@ Purpose: Bring a game up: reseed both random chains off the clock, then either
          re-read the two default button captions before the art and the rules
          load. mode 0 is the first boot, anything else a reload into a live
          system.
-// ORIGINAL: 0x0058F2F0 ?game_init@@YAHHH@Z 0x0058F2F0-0x0058F421
+// ORIGINAL: 0x0058F2F0 ?game_init@@YAHHH@Z 0x0058F2F0-0x0058F421 BYTE_EXACT
 // size      305 bytes
 // prototype BOOL (__cdecl ?game_init@@YAHHH@Z)(BOOL tglParseStrings, BOOL tglAllRules)
 // callers   4   call targets   12
@@ -6356,7 +6356,7 @@ void __cdecl save_map() {
     filter[0] = 0;
     strcat(filter, MapFileFilterPattern);
     strcat(filter, MapFileExtension);
-    box.add_filter(filter, label_get(0x678 / 4));
+    box.add_filter(filter, StringTable.get(Labels.strings_ptr[0x678 / 4]));
 
     char *const selection = box.save();
     do_all_draws();
