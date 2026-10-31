@@ -1,0 +1,26 @@
+{
+  "event_id": "72cd8d32e1a2a82d92e73a6e193f81941aa6e3ca66aec1880e27962fc15476fd",
+  "payload": {
+    "affects": [
+      "entity-0069e79be42f5e95359ec0431df83b50c36ea0aa158e3dcf15a7b9c5bbb03962",
+      "entity-47d4913d711de29aafef583bcc86d4617e1118615f833989c5e0b06de1060962",
+      "entity-91197553e658901e7ebc39e4eb07e8dde2bf3eeb78dce438ab80f4fcbf6cd5fb",
+      "entity-9a3fa1fa063bdecdce653126c8f9ada3d96291b74f252697d283308b73457941",
+      "entity-dd27d51beee4daf172694163b374419b9677cff1f263fce3b4aecfdf47a1cda3",
+      "entity-e02c46f6b08563230b6ab042df38843616f667189ccb679d4f7f70bf8011e07a"
+    ],
+    "author": "coordinator",
+    "discovery_id": "caviar-wire-role-correlation-oct31bj",
+    "evidence": [
+      "recovery/CAVIAR_EVIDENCE.md",
+      "Original638CC0 handles4040201/202;638DE0 handles4040301/302/303. Preserve original extra tags and failure behavior."
+    ],
+    "hypothesis": "Existing colour/geometry reader names obscure geometry-vs-animation ownership. Original tag dispatch supports semantic role investigation before more register spelling; coordinate conventions remain unresolved.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "caviar-wire-role-correlation-oct31bj",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:caviar-format-evidence-oct31bj"
+}
