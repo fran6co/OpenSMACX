@@ -17,8 +17,8 @@ from .literal_source import read_literals
 from .literal_data import check_literals
 from .ownership_source import project_view
 from .pe_coff import Coff, PeImage
-from .shared_source import (read_shared, referenced_shared_units,
-                            resolve_shared_contexts, validate_shared)
+from .shared_source import (read_shared_bindings, referenced_shared_units,
+                            resolve_shared_contexts, validate_shared_bindings)
 from .shared_binary import check_shared
 
 
@@ -44,8 +44,8 @@ def check_data(root: Path, image_path: Path, *, symbols=None, compiler=None):
     if not selection or symbols is not None and {b.symbol for b in selection} != set(symbols):
         raise ValueError("data selection needs source-owned historical object IDs or literal symbols; missing or empty coverage")
     generated, imports = read_generated(root, pin), read_imports(root)
-    shared = resolve_shared_contexts(root, read_shared(root, pin), settings=settings)
-    validate_shared(shared, view)
+    shared = resolve_shared_contexts(root, read_shared_bindings(root, pin), settings=settings)
+    validate_shared_bindings(shared, view)
     _, _, functions = select_bindings(view, frozenset())
     object_symbols = require_disjoint_object_symbols(
         bindings, set(functions), {b.symbol for b in generated}, {b.symbol for b in imports},

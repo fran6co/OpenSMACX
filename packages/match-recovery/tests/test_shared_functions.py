@@ -236,6 +236,26 @@ def test_shared_region_uses_real_comment_context_not_prose_braces():
     assert binding.body_error == "shared source binding has no body region"
 
 
+def test_shared_class_braces_cannot_stand_in_for_a_method_definition():
+    source = ("// RECOVERY_SHARED: v1 0x10 0x11 ?run@Widget@@QAEXXZ 0x20\n"
+              "class Widget { public: void run() {} };\n")
+    binding, = parse_shared(source, "code/widget.h", "a" * 64, address_space="custom:offset")
+    assert binding.body_error == "shared source annotation is attached at class scope"
+
+    source = ("// RECOVERY_SHARED: v1 0x10 0x11 ?run@Widget@@QAEXXZ 0x20\n"
+              "class Widget { public: Widget() {} };\n")
+    binding, = parse_shared(source, "code/widget.h", "a" * 64, address_space="custom:offset")
+    assert "no method definition body" in binding.body_error
+
+
+def test_real_in_class_shared_method_definition_remains_valid():
+    source = ("class Widget { public:\n"
+              "// RECOVERY_SHARED: v1 0x10 0x11 ?run@Widget@@QAEXXZ 0x20\n"
+              "void run() {}\n};\n")
+    binding, = parse_shared(source, "code/widget.h", "a" * 64, address_space="custom:offset")
+    assert binding.body_error is None
+
+
 def test_shared_region_ignores_a_literal_comment_opener_before_its_marker():
     source = ('const char *label = "/*";\n'
               '// RECOVERY_SHARED: v1 0x10 0x11 _a 0x20\nvoid a() {}\n')

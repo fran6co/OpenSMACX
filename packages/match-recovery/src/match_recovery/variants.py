@@ -24,8 +24,8 @@ from .pe_coff import Coff, PeImage
 from .source.reader import read_text
 from .source.model import Mode
 from .tasks import TaskStore
-from .shared_source import (read_shared, referenced_shared_units,
-                            resolve_shared_contexts, validate_shared)
+from .shared_source import (read_shared_bindings, referenced_shared_units,
+                            resolve_shared_contexts, validate_shared_bindings)
 
 
 def _require_associated_unchanged(originals, replacements, pin, address_space):
@@ -306,8 +306,8 @@ def measure_variants(root: Path, task_name: str, image_path: Path, deck: dict, *
     data_bindings, generated = read_objects(root, pin), read_generated(root, pin)
     literal_bindings = read_literals(root, pin)
     associated_bindings = read_associated(root, pin)
-    shared = resolve_shared_contexts(root, read_shared(root, pin), settings=settings)
-    validate_shared(shared, view)
+    shared = resolve_shared_contexts(root, read_shared_bindings(root, pin), settings=settings)
+    validate_shared_bindings(shared, view)
     # Compile every mapped task TU together, not just the primary target. This
     # catches coupled header/body changes and includes out-of-scope neighbors in
     # those TUs. Uncompiled callers remain explicit, never an outside-scope pass.
@@ -332,7 +332,7 @@ def measure_variants(root: Path, task_name: str, image_path: Path, deck: dict, *
         data_bindings, set(externals) | {item.symbol for item in bindings},
         {item.symbol for item in generated},
         {item.symbol for item in imports}, {item.symbol for item in shared}))
-    validate_shared(shared, view, reserved=[*object_symbols, *[item.symbol for item in (*generated, *imports)]])
+    validate_shared_bindings(shared, view, reserved=[*object_symbols, *[item.symbol for item in (*generated, *imports)]])
     if (object_symbols & set(externals)
             or {item.symbol for item in generated} & (set(externals) | object_symbols)):
         raise ValueError("conflicting function/object/generated symbol bindings")
@@ -398,7 +398,7 @@ def measure_variants(root: Path, task_name: str, image_path: Path, deck: dict, *
             (bindings, all_refused, externals, []) if contents is None else candidate_bindings[name])
         support_controls, support_attempts = [], 0
         trial_shared = (shared if contents is None else resolve_shared_contexts(
-            root, read_shared(root, pin, contents=contents), settings=settings, contents=contents))
+            root, read_shared_bindings(root, pin, contents=contents), settings=settings, contents=contents))
         while pending := (referenced_object_units(data_bindings, objects)
                           | referenced_shared_units(trial_shared, objects)) - objects.keys() - errors.keys():
             for unit in sorted(pending):

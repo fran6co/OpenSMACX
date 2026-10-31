@@ -160,7 +160,9 @@ def test_ragged_structural_data_grid_requires_only_the_exact_owner_profiles():
     assert row["result"] == "unknown"
 
 
-@pytest.mark.parametrize("kind", ["object_initial_data", "tu_private_literal", "shared_function_body"])
+@pytest.mark.parametrize("kind", ["object_initial_data", "tu_private_literal", "shared_function_body",
+                                  "compiler_generated_complete_destructor",
+                                  "compiler_generated_deleting_destructor"])
 def test_pinned_data_and_body_owners_require_every_declared_graph_context(kind):
     pin = "a" * 64
     if kind == "object_initial_data":
@@ -171,9 +173,21 @@ def test_pinned_data_and_body_owners_require_every_declared_graph_context(kind):
         item, = parse_literals("// RECOVERY_LITERAL: v1 0x2000 0x2004 _literal 0x2010", "code/data.cc", pin,
                                address_space="custom:offset")
         collection, owner_key = "literal_definitions", "literal_owners"
-    else:
+    elif kind == "shared_function_body":
         item, = parse_shared("// RECOVERY_SHARED: v1 0x2000 0x2004 _shared 0x2010\nvoid _shared() {}",
                              "code/data.cc", pin, address_space="custom:offset")
+        collection, owner_key = "shared_functions", "shared_owners"
+    else:
+        from match_recovery.generated_member_source import GeneratedMemberBinding
+        from match_recovery.model import Origin, Span
+
+        symbol = ("??1Widget@@UAE@XZ" if kind == "compiler_generated_complete_destructor"
+                  else "??_GWidget@@UAEPAXI@Z")
+        origin = Origin(pin, "custom:offset", 0x2000)
+        member_kind = ("complete_destructor" if kind == "compiler_generated_complete_destructor"
+                       else "deleting_destructor")
+        item = GeneratedMemberBinding(member_kind, "Widget", origin, Span(0x2000, 0x2004), symbol,
+            Origin(pin, "custom:offset", 0x2010), "code/widget.h", 1, compiler_unit="code/data.cc")
         collection, owner_key = "shared_functions", "shared_owners"
     graph_flags = [FLAGS[0], FLAGS[1]]
     report = {"checks": {"layout": {}, "binary": {
@@ -184,12 +198,17 @@ def test_pinned_data_and_body_owners_require_every_declared_graph_context(kind):
         "unit_graph_receipts": {"code/data.cc": [
             {"flags": FLAGS[0], "graph_flags": flags, "outcome": "compiled"}
             for flags in graph_flags]},
-        owner_key: [{"interpretation_id": item.interpretation_id, "unit": item.unit}],
+        owner_key: [{"interpretation_id": item.interpretation_id,
+                     "unit": getattr(item, "object_unit", None) or item.unit}],
         collection: []}}}
-    if kind == "shared_function_body":
+    if kind in ("shared_function_body", "compiler_generated_complete_destructor",
+                "compiler_generated_deleting_destructor"):
         report["checks"]["binary"][collection] = [
-            {"interpretation_id": item.interpretation_id, "unit": item.unit,
-             "flags": FLAGS[0], "graph_flags": flags, "result": "pass"}
+            {"interpretation_id": item.interpretation_id,
+             "unit": getattr(item, "object_unit", None) or item.unit,
+             "flags": FLAGS[0], "graph_flags": flags, "result": "pass",
+             "source": {"path": item.unit, "line": item.line},
+             "compiler_context": getattr(item, "object_unit", None) or item.unit}
             for flags in graph_flags]
     else:
         report["checks"]["binary"][collection] = [
@@ -201,6 +220,12 @@ def test_pinned_data_and_body_owners_require_every_declared_graph_context(kind):
     report["checks"]["binary"][collection].pop()
     row, = check_requirements(inventory((item, True)), report)
     assert row["result"] == "unknown" and row["counts"]["unknown"] == 1
+    if kind in ("compiler_generated_complete_destructor", "compiler_generated_deleting_destructor"):
+        report["checks"]["binary"][collection] = [
+            {**observation, "source": {"path": "code/other.h", "line": item.line}}
+            for observation in report["checks"]["binary"][collection]]
+        row, = check_requirements(inventory((item, True)), report)
+        assert row["result"] == "unknown"
 
 
 def inventory(*items):

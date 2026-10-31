@@ -29,8 +29,8 @@ from .compiler import Compiler
 from .measurement import Measurement
 from .source_inventory import image_pin
 from .import_source import read_imports, import_targets
-from .shared_source import (read_shared, referenced_shared_units,
-                            resolve_shared_contexts, validate_shared)
+from .shared_source import (read_shared_bindings, referenced_shared_units,
+                            resolve_shared_contexts, validate_shared_bindings)
 from .shared_binary import check_shared
 from .selected_evidence import select_evidence
 
@@ -502,9 +502,9 @@ def _verify_selection(root: Path, selected: frozenset[str], image_path: Path, *,
     generated_bindings = read_generated(root, snapshot["image_sha256"])
     import_bindings = read_imports(root)
     shared_bindings = resolve_shared_contexts(
-        root, read_shared(root, snapshot["image_sha256"]), settings=settings)
+        root, read_shared_bindings(root, snapshot["image_sha256"]), settings=settings)
     object_symbols = set(emitted_object_symbols(object_bindings))
-    validate_shared(shared_bindings, view, reserved=[*object_symbols,
+    validate_shared_bindings(shared_bindings, view, reserved=[*object_symbols,
         *[item.symbol for item in (*generated_bindings, *import_bindings)]])
     from .component_targets import component_targets
     try:
