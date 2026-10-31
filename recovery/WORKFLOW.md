@@ -510,6 +510,26 @@ Run `uv run recover prepare` before standalone task measurements/recording and
 again after changing build inputs. This publishes fresh configured recipes while
 retaining their generated include context in ignored storage. It does not clear
 the existing build tree. Never run preparation during a measurement epoch.
+Set the existing shared parse cache from the coordinator checkout root before
+entering isolated worker directories:
+
+```sh
+export RECOVERY_PARSE_CACHE_DIR="$PWD/.opensmacx/cache/parse"
+```
+
+Pass that absolute environment value to workers and coordinator verification
+commands. The cache stores pure source and historical-blob parsing projections;
+Git history traversal, identity continuity and source freshness are checked
+afresh. Repeated short-lived worktrees otherwise rebuild the same historical
+projections. Group compatible, frozen winner selections into a coordinator
+recording checkpoint to share the historical check across their translation
+units.
+
+Run relevant existing actual-source host controls and scoped reference
+diagnostics before spending a full application build on a candidate. Check
+target identities as well as masked body equality. Scoped diagnostics remain
+preflight evidence while changed-header users or other required objects are
+uncompiled; the final build and downstream preservation checks still apply.
 Use `recover inspect <address-or-symbol> --image <original> --callers` for source
 context and fresh mapped call evidence, and `recover measure <addresses-or-symbols>
 --image <original>` for read-only current-spelling trials. Resolve source/seed
