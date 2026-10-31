@@ -104,9 +104,9 @@ static Event events[16];
 static int event_count;
 static int lock_result;
 static bool null_pixels;
-class IDirectDrawSurface;
-static IDirectDrawSurface **mutated_surface_slot;
-static IDirectDrawSurface *mutated_surface_value;
+class IDirectDrawSurface2;
+static IDirectDrawSurface2 **mutated_surface_slot;
+static IDirectDrawSurface2 *mutated_surface_value;
 static unsigned char *low_page(size_t bytes) {
     void *p = mmap(0, bytes, PROT_READ | PROT_WRITE,
                    MAP_PRIVATE | MAP_ANONYMOUS | MAP_32BIT, -1, 0);
@@ -114,12 +114,12 @@ static unsigned char *low_page(size_t bytes) {
     require(reinterpret_cast<uintptr_t>(p) <= 0x7fffffff, "32-bit pointer bridge");
     return static_cast<unsigned char *>(p);
 }
-class IDirectDrawSurface {
+class IDirectDrawSurface2 {
 public:
     virtual long Lock(RECT *, DDSURFACEDESC *, DWORD, void *) = 0;
     virtual long Unlock(void *) = 0;
 };
-class FakeSurface : public IDirectDrawSurface {
+class FakeSurface : public IDirectDrawSurface2 {
 public:
     unsigned char *pixels;
     int pitch;
@@ -150,7 +150,7 @@ class BufferA {
 public:
     void *locked_bits_;
     void *dib_bits_;
-    IDirectDrawSurface *surface_;
+    IDirectDrawSurface2 *surface_;
     int surface_lock_count_;
     uint32_t stride_;
     RECT rect1_;
@@ -160,7 +160,7 @@ public:
 class BufferB {
 public:
     void *dib_bits_;
-    IDirectDrawSurface *surface_;
+    IDirectDrawSurface2 *surface_;
     void *locked_bits_;
     int surface_lock_count_;
     uint32_t stride_;

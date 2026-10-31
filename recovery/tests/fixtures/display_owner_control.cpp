@@ -72,7 +72,7 @@ struct IDirectDraw {
     DWORD Release();
 };
 struct Buffer {
-    IDirectDrawSurface *surface_;
+    IDirectDrawSurface2 *surface_;
     IDirectDrawClipper *clipper_;
     LPVOID locked_bits_;
     HDC hdc2_;
@@ -324,7 +324,7 @@ int main() {
     reset(); mutate = 4; direct_draw_device_callback(&guid, const_cast<char *>("x"), 0, &popup);
     assert(DirectDrawDeviceCount == 4 && DirectDrawDeviceGuids[3] == &allocations[0]);
     reset(); selection = -1; BufferDirectDraw = &device;
-    ScreenBuffer.surface_ = &primary; ScreenBuffer.clipper_ = &clipper;
+    ScreenBuffer.surface_ = &queried_primary; ScreenBuffer.clipper_ = &clipper;
     assert(sub_62cd50(8) == 0 && saw("release-device") && !saw("create-device"));
     assert(ScreenBuffer.surface_ == 0 && ScreenBuffer.clipper_ == 0 && DDActive == 0);
     for (int stage = 1; stage <= 11; ++stage) {
@@ -337,17 +337,17 @@ int main() {
     }
     reset(); enum_kind = 3; assert(sub_62cd50(8) == 0x12 && !saw("set-cooperative-level"));
     reset(); assert(sub_62cd50(8) == 0 && DDActive == 1 && BufferDirectDraw == &device);
-    assert(ScreenBuffer.surface_ == reinterpret_cast<IDirectDrawSurface *>(&queried_back));
+    assert(ScreenBuffer.surface_ == &queried_back);
     assert(ScreenBuffer.clipper_ == &clipper && ScreenBuffer.locked_bits_ == 0 && ScreenBuffer.hdc2_ == 0);
     assert(saw("create-palette") && DirectDrawClipRect.right == 1024 && DirectDrawClipRect.bottom == 768);
     reset(); assert(sub_62cd50(16) == 0 && !saw("create-palette") && DirectDrawPalette == &palette_alt);
     reset(); PaletteActive = 0; assert(sub_62cd50(8) == 0 && saw("create-palette"));
     reset(); mutate = 6; assert(sub_62cd50(8) == 0 && DirectDrawClipRect.right == 800 && DirectDrawClipRect.bottom == 600);
     reset(); mutate = 7; assert(sub_62cd50(8) == 0 && DirectDrawBackBuffer == &surface_alt && DirectDrawPalette == &palette_alt);
-    reset(); mutate = 8; assert(sub_62cd50(8) == 0 && ScreenBuffer.surface_ == reinterpret_cast<IDirectDrawSurface *>(&surface_alt) && ScreenBuffer.clipper_ == &clipper_alt);
+    reset(); mutate = 8; assert(sub_62cd50(8) == 0 && ScreenBuffer.surface_ == &surface_alt && ScreenBuffer.clipper_ == &clipper_alt);
     reset(); mutate = 5; fail_stage = 2; assert(sub_62cd50(8) == 0x12 && BufferDirectDraw == &device_alt);
     reset(); DirectDrawSelectionCancelled = 1; assert(sub_62d0f0() == 0 && DirectDrawSelectionCancelled == 1);
-    reset(); BufferDirectDraw = &device; ScreenBuffer.surface_ = &primary; ScreenBuffer.clipper_ = &clipper;
+    reset(); BufferDirectDraw = &device; ScreenBuffer.surface_ = &queried_primary; ScreenBuffer.clipper_ = &clipper;
     DirectDrawPalette = &palette; DirectDrawClipper = &clipper; DirectDrawHdc = reinterpret_cast<HDC>(1000); DDActive = 1;
     assert(sub_62d100() == 0 && BufferDirectDraw == 0 && ScreenBuffer.surface_ == 0 && ScreenBuffer.clipper_ == 0 && DDActive == 0);
     assert(DirectDrawPalette == &palette && DirectDrawClipper == &clipper && DirectDrawHdc == reinterpret_cast<HDC>(1000));

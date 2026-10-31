@@ -52,13 +52,13 @@ static void require(bool ok, const char *message) {
     if (!ok) { fprintf(stderr, "failed: %s\n", message); abort(); }
 }
 
-class IDirectDrawSurface {
+class IDirectDrawSurface2 {
 public:
     virtual int Lock(RECT *, DDSURFACEDESC *, uint32_t, void *) = 0;
     virtual int Unlock(void *) = 0;
 };
 
-class TestSurface : public IDirectDrawSurface {
+class TestSurface : public IDirectDrawSurface2 {
 public:
     unsigned char *pixels;
     int pitch;
@@ -84,7 +84,7 @@ class Buffer {
 public:
     void *locked_bits_;
     void *dib_bits_;
-    IDirectDrawSurface *surface_;
+    IDirectDrawSurface2 *surface_;
     int surface_lock_count_;
     uint32_t stride_;
     RECT rect1_;

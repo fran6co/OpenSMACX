@@ -38,7 +38,7 @@ def actual_host_bodies():
         "int Buffer::draw_multi_table_dest(Buffer * a1, int a2, int a3, int a4, int a5, int a6, ColorTable * a7)")
 
     # Product COM dispatch and receiver ownership must already be typed.
-    assert "IDirectDrawSurface *surface;" in pixel
+    assert "IDirectDrawSurface2 *surface;" in pixel
     assert "surface = surface_;" in pixel and pixel.count("surface = surface_;") == 2
     assert "surface->Lock(nullptr, &description, 1, nullptr)" in pixel
     assert "surface->Unlock(locked_bits_)" in pixel
@@ -51,7 +51,7 @@ def actual_host_bodies():
     assert pixel.index("surface->Unlock(") > pixel.rindex("surface = surface_;")
 
     for body in (draw, multi):
-        assert "IDirectDrawSurface *surface = surface_;" in body
+        assert "IDirectDrawSurface2 *surface = surface_;" in body
         assert "LPVOID const bits = locked_bits_;" in body
         assert "LPVOID const cachedBits = locked_bits_;" in body
         assert "surface->Unlock(cachedBits)" in body
@@ -59,8 +59,8 @@ def actual_host_bodies():
         assert "reinterpret_cast<void *>(cachedBits)" not in body
         assert "UnlockFn" not in body
         assert body.index("if (surface_ == 0)") < body.index(
-            "IDirectDrawSurface *surface = surface_")
-        assert body.index("IDirectDrawSurface *surface = surface_") < body.index(
+            "IDirectDrawSurface2 *surface = surface_")
+        assert body.index("IDirectDrawSurface2 *surface = surface_") < body.index(
             "if (surface == 0)") < body.index("surface->Unlock(")
         assert body.index("surface->Unlock(") < body.index("locked_bits_ = nullptr;")
 
@@ -100,7 +100,7 @@ struct DDSURFACEDESC { DWORD dwSize; int32_t lPitch; void *lpSurface; };
 struct RECT { int left, top, right, bottom; };
 struct Header { int biWidth, biHeight; };
 struct Dib { Header bmiHeader; };
-class IDirectDrawSurface {
+class IDirectDrawSurface2 {
 public:
     virtual long STDMETHODCALLTYPE Lock(RECT *, DDSURFACEDESC *, DWORD, void *) = 0;
     virtual long STDMETHODCALLTYPE Unlock(void *) = 0;
@@ -108,7 +108,7 @@ public:
 struct Buffer;
 using ColorTable = unsigned char[256];
 struct Sprite {
-    char *pcBits_;
+    unsigned char *pcBits_;
     uint32_t iSpriteWidth2_, iSpriteWidth_, iSpriteHeight_;
     uint32_t iWidth_, iHeight_, iLeftOffset_, iTopOffset_;
     char cTransparentIndex_;
@@ -118,7 +118,7 @@ struct Sprite {
     int args[5];
     unsigned char *table;
     ColorTable *multi_table;
-    char *seen_pc_bits;
+    unsigned char *seen_pc_bits;
     uint32_t seen_pitch, seen_width, seen_height, seen_transparent;
     void snapshot() {
         seen_pc_bits=pcBits_; seen_pitch=iSpriteWidth2_;
@@ -148,7 +148,7 @@ static BufferSpriteOwnerAdapter BufferSpriteOwner;
 static int WinFillColour = 13;
 struct Buffer {
     void *dib_bits_;
-    IDirectDrawSurface *surface_;
+    IDirectDrawSurface2 *surface_;
     void *locked_bits_;
     int surface_lock_count_;
     uint32_t stride_;
@@ -158,7 +158,7 @@ struct Buffer {
     int draw_multi_table_dest(Buffer *,int,int,int,int,int,ColorTable *);
 };
 static Buffer *lock_mutation_buffer;
-static IDirectDrawSurface *lock_mutation_target;
+static IDirectDrawSurface2 *lock_mutation_target;
 static bool mutate_surface_on_lock;
 static int lock_status;
 static int lock_calls, unlock_calls;
@@ -171,7 +171,7 @@ static unsigned char *low_page(size_t size) {
             "Win32 DWORD pointer bridge range");
     return static_cast<unsigned char *>(p);
 }
-class FakeSurface : public IDirectDrawSurface {
+class FakeSurface : public IDirectDrawSurface2 {
 public:
     unsigned char *pixels; int pitch;
     FakeSurface(unsigned char *p, int s) : pixels(p), pitch(s) {}
@@ -198,7 +198,7 @@ static void reset_fake() {
     lock_status=0; mutate_surface_on_lock=false;
     lock_mutation_buffer=0; lock_mutation_target=0;
     g_BUFFER_SPRITE.call_kind=0; g_BUFFER_SPRITE.call_result=0x2468;
-    g_BUFFER_SPRITE.pcBits_=reinterpret_cast<char *>(1);
+    g_BUFFER_SPRITE.pcBits_=reinterpret_cast<unsigned char *>(1);
     g_BUFFER_SPRITE.seen_pc_bits=0; g_BUFFER_SPRITE.seen_pitch=0;
     g_BUFFER_SPRITE.seen_width=0; g_BUFFER_SPRITE.seen_height=0;
     g_BUFFER_SPRITE.seen_transparent=0;
@@ -270,7 +270,7 @@ int main() {
     require(g_BUFFER_SPRITE.pcBits_==0 && b.surface_lock_count_==17 &&
             b.locked_bits_==pixels && unlock_calls==0,
             "draw_dest surface path remains passthrough");
-    require(g_BUFFER_SPRITE.seen_pc_bits==reinterpret_cast<char *>(1),
+    require(g_BUFFER_SPRITE.seen_pc_bits==reinterpret_cast<unsigned char *>(1),
             "draw_dest invokes Sprite before only pcBits_ is cleared");
 
     // DIB branch stages the global Sprite, decrements the hold, and only
@@ -290,7 +290,7 @@ int main() {
             g_BUFFER_SPRITE.iSpriteHeight_==3 &&
             g_BUFFER_SPRITE.cTransparentIndex_==WinFillColour,
             "multi-table staged Sprite metadata and color fallback");
-    require(g_BUFFER_SPRITE.seen_pc_bits==reinterpret_cast<char *>(dib) &&
+    require(g_BUFFER_SPRITE.seen_pc_bits==reinterpret_cast<unsigned char *>(dib) &&
             g_BUFFER_SPRITE.seen_pitch==31 && g_BUFFER_SPRITE.seen_width==6 &&
             g_BUFFER_SPRITE.seen_height==3 &&
             g_BUFFER_SPRITE.seen_transparent==13,

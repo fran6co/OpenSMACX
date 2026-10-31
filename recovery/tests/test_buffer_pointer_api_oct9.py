@@ -25,7 +25,7 @@ struct DDSURFACEDESC {
   void *lpSurface;
   unsigned char rest[48];
 };
-struct IDirectDrawSurface {
+struct IDirectDrawSurface2 {
   int result;
   int pitch;
   void *pixels;
@@ -44,7 +44,7 @@ struct IDirectDrawSurface {
 
 class Buffer {
  public:
-  IDirectDrawSurface *surface_;
+  IDirectDrawSurface2 *surface_;
   void *locked_bits_;
   void *dib_bits_;
   int surface_lock_count_;
@@ -68,7 +68,7 @@ int main() {
   assert(empty.get_data() == nullptr);
   assert(empty.locked_bits_ == nullptr && empty.surface_lock_count_ == 0);
 
-  IDirectDrawSurface surface = {0, 19, surface_storage + 7, 0};
+  IDirectDrawSurface2 surface = {0, 19, surface_storage + 7, 0};
   Buffer already_locked = {};
   already_locked.surface_ = &surface;
   already_locked.locked_bits_ = surface_storage + 2;
@@ -84,7 +84,7 @@ int main() {
   assert(lock.surface_lock_count_ == 1 && lock.stride_ == 19);
   assert(surface.calls == 1);
 
-  IDirectDrawSurface failing = {7, 23, surface_storage + 11, 0};
+  IDirectDrawSurface2 failing = {7, 23, surface_storage + 11, 0};
   Buffer failure = {};
   failure.surface_ = &failing;
   failure.dib_bits_ = dib_storage + 9;

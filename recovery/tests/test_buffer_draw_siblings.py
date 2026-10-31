@@ -78,10 +78,10 @@ struct Seen {
     int result;
 } seen;
 bool replace_bits_during_call;
-char *const replacement_bits = reinterpret_cast<char *>(0x1234);
+unsigned char *const replacement_bits = reinterpret_cast<unsigned char *>(0x1234);
 
 struct Sprite {
-    char *pcBits_;
+    unsigned char *pcBits_;
     int iSpriteWidth2_, iSpriteWidth_, iSpriteHeight_;
     int iWidth_, iHeight_, iLeftOffset_, iTopOffset_;
     unsigned char cTransparentIndex_;
@@ -91,9 +91,10 @@ struct Sprite {
     int draw_dest_unk2(Buffer *, int, int, int, unsigned char *);
 };
 Sprite g_BUFFER_SPRITE;
+struct SharedSpriteOwnerDouble { Sprite &sprite() { return g_BUFFER_SPRITE; } } BufferSpriteOwner;
 struct SpriteNoop { int draw_noop(Buffer *, int, int, int, int); };
 
-struct IDirectDrawSurface {
+struct IDirectDrawSurface2 {
     int unlocks;
     void *unlocked;
     void Unlock(void *bits) { ++unlocks; unlocked = bits; }
@@ -103,7 +104,7 @@ struct Dib { struct { int biWidth, biHeight; } bmiHeader; };
 struct Buffer {
     void *locked_bits_;
     void *dib_bits_;
-    IDirectDrawSurface *surface_;
+    IDirectDrawSurface2 *surface_;
     int surface_lock_count_;
     uint32_t stride_;
     Dib dib_;
@@ -166,7 +167,7 @@ static void check_route(int route, bool surface_path, bool absent_bits,
                         bool replace_bits = false) {
     unsigned char pixels[8] = {};
     unsigned char palette[4] = {3, 7, 11, 15};
-    IDirectDrawSurface surface = {0, nullptr};
+    IDirectDrawSurface2 surface = {0, nullptr};
     Buffer owner = {};
     Buffer destination = {};
     owner.surface_ = surface_path ? &surface : nullptr;
@@ -178,7 +179,7 @@ static void check_route(int route, bool surface_path, bool absent_bits,
     owner.dib_.bmiHeader.biHeight = negative_height ? -9 : 9;
 
     g_BUFFER_SPRITE = {};
-    g_BUFFER_SPRITE.pcBits_ = surface_path ? reinterpret_cast<char *>(pixels) : nullptr;
+    g_BUFFER_SPRITE.pcBits_ = surface_path ? pixels : nullptr;
     g_BUFFER_SPRITE.iSpriteWidth2_ = 71;
     g_BUFFER_SPRITE.iSpriteWidth_ = 72;
     g_BUFFER_SPRITE.iSpriteHeight_ = 73;
@@ -276,11 +277,11 @@ def test_actual_buffer_draw_sibling_controls(actual_executable):
 @pytest.mark.parametrize("method,old,new", [
     ("draw_unk2", "draw_noop(source,", "draw_noop(this,"),
     ("draw", "source, transparent_in, x, y, table)", "source, transparent, x, y, table)"),
-    ("draw_dest_unk2", "g_BUFFER_SPRITE.pcBits_ = 0;", "/* missing clear */"),
+    ("draw_dest_unk2", "BufferSpriteOwner.sprite().pcBits_ = 0;", "/* missing clear */"),
     ("draw_dest_unk2", "surface_lock_count_ = surface_lock_count_ - 1;\n            if ((int)surface_lock_count_ > 0) {",
      "if ((int)surface_lock_count_ > 0) {"),
-    ("draw_dest_unk2", "g_BUFFER_SPRITE.pcBits_ = 0;",
-     "if (g_BUFFER_SPRITE.pcBits_ == nullptr) g_BUFFER_SPRITE.pcBits_ = 0;"),
+    ("draw_dest_unk2", "BufferSpriteOwner.sprite().pcBits_ = 0;",
+     "if (BufferSpriteOwner.sprite().pcBits_ == nullptr) BufferSpriteOwner.sprite().pcBits_ = 0;"),
 ])
 def test_actual_buffer_draw_mutations_fail(tmp_path, method, old, new):
     methods = actual_source()

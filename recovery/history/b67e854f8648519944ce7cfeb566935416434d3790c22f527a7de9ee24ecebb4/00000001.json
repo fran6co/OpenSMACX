@@ -1,0 +1,19 @@
+{
+  "event_id": "7110c1473848230700b10f9cc94a1f28caa453dc14d8d97a75ced889023da1aa",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/test_buffer_remapping.py"
+    ],
+    "evidence": [
+      "Existing actual-source byte-fill behavior fixture passes; three deliberate-damage controls still reference the removed quad memcpy/dword-and-tail loop. Preserve their alignment/whole-group/tail-byte detection against the new single byte loop."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "byte-fill-damage-controls-oct31bj",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:buffer-intrinsic-policy-oct31bj"
+}

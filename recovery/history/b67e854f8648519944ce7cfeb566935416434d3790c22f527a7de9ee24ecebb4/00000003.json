@@ -1,0 +1,162 @@
+{
+  "event_id": "3c6fd950a9f06506c6a95b849394ef9956f07b0bf9730cc4e684447ba3acc938",
+  "payload": {
+    "author": "coordinator",
+    "editable_files": [
+      "recovery/tests/fixtures/display_owner_control.cpp",
+      "recovery/tests/test_buffer_application_clip_boundary.py",
+      "recovery/tests/test_buffer_bmp_extent_oct11.py",
+      "recovery/tests/test_buffer_box_return_contract_oct13b.py",
+      "recovery/tests/test_buffer_box_sprite_return_oct27.py",
+      "recovery/tests/test_buffer_change_color_owner.py",
+      "recovery/tests/test_buffer_copy_boundary_oct15.py",
+      "recovery/tests/test_buffer_directdraw_owners.py",
+      "recovery/tests/test_buffer_dotted_box_contract_oct15.py",
+      "recovery/tests/test_buffer_draw_siblings.py",
+      "recovery/tests/test_buffer_filemap_lifetime_oct13m.py",
+      "recovery/tests/test_buffer_get_data_visibility_oct19.py",
+      "recovery/tests/test_buffer_line.py",
+      "recovery/tests/test_buffer_line_layout_fidelity_oct12.py",
+      "recovery/tests/test_buffer_link_owner_types_oct13ab.py",
+      "recovery/tests/test_buffer_loader_stack_contract.py",
+      "recovery/tests/test_buffer_localized_asset_paths.py",
+      "recovery/tests/test_buffer_markup_text_owner_oct9.py",
+      "recovery/tests/test_buffer_mask_rows_oct18.py",
+      "recovery/tests/test_buffer_mono.py",
+      "recovery/tests/test_buffer_paint_recovery.py",
+      "recovery/tests/test_buffer_pcx_format_view_oct13k.py",
+      "recovery/tests/test_buffer_pixel_address_owner_oct10.py",
+      "recovery/tests/test_buffer_pixel_locals_oct15.py",
+      "recovery/tests/test_buffer_pointer_api_oct9.py",
+      "recovery/tests/test_buffer_release_hdc_owner_oct20.py",
+      "recovery/tests/test_buffer_remap_pointer_owner_oct12.py",
+      "recovery/tests/test_buffer_remapping.py",
+      "recovery/tests/test_buffer_special_text_owner_actual_source.py",
+      "recovery/tests/test_buffer_sprite_inline_family_oct15.py",
+      "recovery/tests/test_buffer_surface_pointer_flow_oct13ai.py",
+      "recovery/tests/test_buffer_table_draw_actual_oct28ne.py",
+      "recovery/tests/test_buffer_text_parameter_arrays_oct23r.py",
+      "recovery/tests/test_buffer_text_wrap_family_oct19.py",
+      "recovery/tests/test_buffer_typed_font_consumers_oct10.py",
+      "recovery/tests/test_buffer_wrap_result_owner.py",
+      "recovery/tests/test_buffer_wrap_right_rectangle_oct15.py",
+      "recovery/tests/uv2player_directdraw_harness.cpp",
+      "src/buffer.h",
+      "src/directdraw.cpp",
+      "src/uv2player.cpp"
+    ],
+    "evidence": [
+      "Act on the real GUID/COM-type mismatch rather than preserve maskedexact wrongsource. Correct Buffer.surface_/ExtDirectDraw.surface/typedlocals and affected providers/harnesses; keep offsets, lifetimes, callbacks, original markers and claims.",
+      "Correct initIID toSurface2. Surface1CreateSurface temporary remains Surface1untilQueryInterface; do not blanketreplace allSDK types. Nativeparse/validate memberannotationexpectations; preserve sameoffset/evidence. No invented wrapper/vtable/address/duplicateGUIDdefinitions.",
+      "Usermanualwrite_pcxbodyreserved unchanged. If additional consumers need edits reportandexpand scopebeforeediting. Fresh native169+scopedcallermeasurements andfullbuild/link/protectedclaim/refchecks required afterclasscorrection."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6473824,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6473952,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6475024,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6475088,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6476016,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6476032,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6476128,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6476192,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6476256,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6476480,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4975152,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4977552,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4976064,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4976224,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4977536,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4211664,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4977664,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4977840,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4976384,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4975184,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "02ca5f57c48673b5d21700fbf6595ad98adadbcab6226c1ee33301480be1e15a",
+  "request_id": "buffer-surface2-interface-scope-oct31bj",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:buffer-intrinsic-policy-oct31bj"
+}

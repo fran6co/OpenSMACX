@@ -248,10 +248,7 @@ int __cdecl sub_62cd50(int bit_depth) {
         ScreenBufferOwner.buffer().close();
         ScreenBufferOwner.buffer().locked_bits_ = 0;
         ScreenBufferOwner.buffer().hdc2_ = 0;
-        // Buffer's existing API uses the Surface1 prefix of the Surface2
-        // interface, just as UV2Player's ExtDirectDraw bridge already does.
-        ScreenBufferOwner.buffer().surface_ =
-            reinterpret_cast<IDirectDrawSurface *>(DirectDrawBackBuffer);
+        ScreenBufferOwner.buffer().surface_ = DirectDrawBackBuffer;
         ScreenBufferOwner.buffer().clipper_ = DirectDrawClipper;
     }
     return 0;
