@@ -171,6 +171,7 @@ set(OPENSMACX_SOURCES
     src/application_math.cpp
     src/application_text.cpp
     src/general.cpp
+    src/danger.cpp
     src/directdraw.cpp
     src/number_parsing.cpp
     src/scenario_undo.cpp
@@ -533,6 +534,9 @@ set_source_files_properties(
 # Preserve Alpha's measured frame-based application context.
 # Shared graphics language state and its setter have a separate library owner.
 set_source_files_properties(src/alpha.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")
+# The original diagnostic wrapper retains EBP-based parameter accesses.
+# Keep its calls out of line through a separate owner, with the existing frame profile.
+set_source_files_properties(src/danger.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Preserve spying's original frame-based argument accesses.
 set_source_files_properties(src/spying.cpp PROPERTIES COMPILE_OPTIONS "/Oy-")
 # Preserve the measured frame-based AlphaNet controller context. Its record

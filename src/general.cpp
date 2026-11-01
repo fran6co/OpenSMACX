@@ -1384,28 +1384,6 @@ uint32_t __cdecl checksum_password(LPCSTR password) {
     return chksum + 1;
 }
 
-/*
-Purpose: Create a debug error pop-up then write all the parameters to the log file.
-// ORIGINAL: 0x00538F30 ?danger@@YAXPADPADHHH@Z 0x00538F30-0x00538FAA BYTE_EXACT
-// symbol    ?danger@@YAXPBD0HHH@Z
-// size      122 bytes
-// prototype 
-// callers   3   call targets   4
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     0x0048C0A0 0x00625E30 0x00625EC0 0x00626250
-Return Value: n/a
-Status: Complete
-*/
-void __cdecl danger(LPCSTR msg1, LPCSTR msg2, int num1, int num2, int num3) {
-    parse_says(0, msg1, -1, -1);
-    parse_says(1, msg2, -1, -1);
-    parse_num(0, num1);
-    parse_num(1, num2);
-    parse_num(2, num3);
-    log_say(msg1, msg2, num1, num2, num3);
-    popp(ScriptTxtID, "DANGER", 0, "hasty_sm.pcx", 0);
-}
 
 /*
 Purpose: Delete the initial auto-save game file.

@@ -1346,6 +1346,16 @@
           "/Z7",
           "-c"
         ]
+      },
+      "src/danger.cpp": {
+        "flags": [
+          "/c",
+          "/O2",
+          "/Gy",
+          "/GR-",
+          "/Oy-",
+          "/GX"
+        ]
       }
     },
     "flag_sets": [
