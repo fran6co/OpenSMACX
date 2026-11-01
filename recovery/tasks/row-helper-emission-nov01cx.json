@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "task_id": "row-helper-emission-nov01cx",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "base_revision": "83370ba995cd57845d4442c2165038a5293a8655",
+  "intent": "Investigate natural emission of the genuine inline row-reading helper after47realuses, without forced exports or invented retention.",
+  "editable_files": [
+    "src/text.h"
+  ],
+  "subjects": [
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5787936
+    },
+    {
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf",
+      "address_space": "pe:va",
+      "address": 5788016
+    }
+  ],
+  "evidence": [
+    "New47-source-use context, compared with prior zero-use/read-only histories. Original real48Bhelper has no direct/address references or PEexports; currentMEASUREDforces36copies andnamedEATentry. Naturalcanonicalemission and retention are unknown.",
+    "Coordinator authorizes ONE headeroverlay removingonlyMEASURED fromexistingtext_get_number; preserveinline/body/identity/spans/claims/allcallers/compilerflags. Measure all29alpharecords underactualrecipe. Missingoriginalcanonical48Bbody ishardrefusal, notpermissionfordemotion, anchors, copies, wrappers or newflags.",
+    "Onlypositivecanonicalemission/matching evidence can justifyapplyingheaderedit andwholeactualheaderclosure/fullbuild/link/selectedbody verification. No cleanup-onlyintegration or reuseofexhaustedCVbudgets. Other originalmatches and source mappings protected."
+  ]
+}
