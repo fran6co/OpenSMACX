@@ -1,0 +1,21 @@
+{
+  "event_id": "fb378eb1de383f40dcfcf28dddb4563daf436bf169bae5c8eab196d805482fea",
+  "payload": {
+    "affects": [
+      "entity-9fd9d54a0ce9e1f29f1adae3fb2d967df511079373dba76422415f2756914c60"
+    ],
+    "author": "coordinator",
+    "discovery_id": "exclusive-text-arm-source-form-nov01di",
+    "evidence": [
+      "ONE candidate grounded in original branch, call and receiver instructions; current short-term matching miss does not authorize extra variants.",
+      "This is a source-form investigation, distinct from proven copy-origin recovery. Both selection arms retain actual signed-span and callback/rectangle controls."
+    ],
+    "hypothesis": "Explicit original text/emphasis arms and genuine per-use Buffer/Dialog base references may recover the original compiler shape without forced machinery.",
+    "kind": "discovery"
+  },
+  "previous_event": "a3f778b1f61bdaca75b3f71f560eb42d6b1dbadfd4571ed3c37e84fda7a57277",
+  "request_id": "exclusive-text-arm-source-form-nov01di",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:listbox-original-arms-nov01di"
+}
