@@ -158,8 +158,10 @@ inherit the lease and must not allocate it again.
 Keep up to eight disjoint ownership groups active and reserve one compiler slot
 for integration. Split each owner's queue into packets of at most24 functions.
 After the initial five-minute screen, measure one concrete, faithful source
-candidate per promising function; spend the remaining three-attempt allowance
-only on an explained residual. Combine independent changes in the same TU into
+candidate per promising function; bound repeated attempts on the same hypothesis
+to three, spending follow-ups only on an explained residual. New concrete
+evidence justifies continuing without another user approval, as described below.
+Combine independent changes in the same TU into
 one candidate compilation and measure every changed function together. Preserve
 existing exact functions and structural discoveries. Missing evidence and an
 uninspected function are not exhausted search contexts.
@@ -210,12 +212,32 @@ a reason to allocate workers to an unexplained plateau. Work through triage
 packets of at most24 functions within disjoint real owners; a larger ownership
 reservation must be split into explicit packets rather than treated as one audit.
 
-Cap initial triage at five minutes per assigned packet and candidate compiler attempts
-at three per function per unchanged source/compiler context. Candidate compile
-failures consume the cap; unchanged baseline, object-replica and deliberate damage
-controls are reported separately. Use fewer attempts when no evidence-backed,
-ordinary C++ candidate is apparent. Record explicit skip/defer reasons, preserve
-structural discoveries, and advance rather than repeatedly polishing a plateau.
+Cap initial triage at five minutes per assigned packet and repeated candidate
+compiler attempts on the same hypothesis at three. The cap prevents repetitive
+search; it is not a lifetime limit on a function or a reason to stop when new
+information explains the residual. Newly established types, layouts, lifetimes,
+references, instruction effects or original control flow justify further
+evidence-backed recovery without asking the user for another attempt. Identify
+the new evidence, the prior hypothesis it changes, and the concrete source
+correction before continuing; preserve earlier attempts and their accounting.
+A new task name, equivalent spelling, higher similarity or arbitrary register
+permutation alone is not new evidence and does not reopen an exhausted search.
+Candidate compile failures count toward repeated attempts on that hypothesis;
+unchanged baseline, object-replica and deliberate damage controls are reported
+separately. Use fewer attempts when no evidence-backed, ordinary C++ candidate
+is apparent. Record explicit skip/defer reasons, preserve structural discoveries,
+and advance rather than repeatedly polishing a plateau.
+
+The same standing authorization covers larger evidence-backed structural
+changes. The coordinator expands affected ownership scopes, coordinates workers,
+and corrects dependent classes, members, globals, lifetimes and callers together;
+routine scope expansion or a temporary matching regression does not require
+another user approval. Workers still obtain coordinator scope expansion before
+editing outside their assignment. Preserve historical claims and restoration
+obligations, repair resulting regressions, and require the relevant build/link
+and verification checks before integration. This permission does not weaken the
+automatic driver's admission rules or turn an unchecked migration into acceptance.
+
 Generated proposals, measurements and dependency fingerprints belong in ignored
 run artifacts, not source comments or a second versioned recovery ledger.
 

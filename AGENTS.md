@@ -18,6 +18,12 @@ Act on evidence-backed structural discoveries immediately: the coordinator
 expands affected ownership scopes and coordinates dependent workers without
 waiting for function-local byte equality. Correct classes, members, globals,
 lifetimes and callers together; preserve prior work and matching obligations.
+Attempt caps prevent repeating the same hypothesis; new concrete evidence
+authorizes further recovery without another user approval. This also covers
+larger structural corrections and their dependent repairs. Workers obtain scope
+expansion from the coordinator, who may grant it under this standing authority.
+Preserve previous attempts, historical claims and restoration obligations; do not
+use a new task name or equivalent spelling to disguise repetitive search.
 
 ## Read next
 
