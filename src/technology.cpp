@@ -796,7 +796,7 @@ int __cdecl tech_rate(int faction_id) {
 // Native phase ordering includes ordinary ownership, map/prototype transfers,
 // scoped popup lifetimes, facilities/abilities, social notices and interludes.
 // ORIGINAL: 0x005BB000 ?tech_achieved@@YAXHHHH@Z 0x005BB000-0x005BCB55;0x00662710-0x00662A1E
-// RECOVERY_BINDING: v1 {"evidence": ["Retired draft git:8b777a51:src/unrecovered/005bb000.cpp retains original identity and primary/EH spans; pinned native branches establish the actual argument roles, reactor upgrades, per-model repeated tutorial, recipient visibility/intel and both recursive technology propagation paths.", "recovery/tests/test_tech_achieved_behavior.py exercises actual owner source and rejects inverted reactor/view/treaty predicates, truncated tutorial traversal, swapped recursion arguments and wrong intel ownership. Task38/40 authorize shared945F40 gate and spy-base scalar without changing the original baseline."], "reason": "Recover the full technology acquisition lifecycle in its real owner using source-owned player/map/base/prototype storage and real scoped Popup, SpriteBox, DesignWin and NewTech interactions; retain all independent callee and historical seed obligations."}
+// RECOVERY_BINDING: v1 {"evidence": ["Retired draft git:8b777a51:src/unrecovered/005bb000.cpp retains original identity and primary/EH spans; pinned native branches establish the actual argument roles, reactor upgrades, per-model repeated tutorial, recipient visibility/intel and both recursive technology propagation paths.", "recovery/tests/test_tech_achieved_behavior.py exercises actual owner source and rejects inverted reactor/view/treaty predicates, truncated tutorial traversal, swapped recursion arguments and wrong intel ownership. Task38/40 authorize shared945F40 gate and spy-base scalar without changing the original baseline.", "Pinned 5BB461 XOR ECX,ECX and 5BB465 SETE CL form a zero/one snapshot; 5BB468 stores it as a dword at EBP-0x30, and 5BC43C reloads/tests that full word after achievement callbacks. The source keeps the snapshot as int, without moving its early read."], "reason": "Recover the full technology acquisition lifecycle in its real owner using source-owned player/map/base/prototype storage and real scoped Popup, SpriteBox, DesignWin and NewTech interactions; retain all independent callee and historical seed obligations."}
 void __cdecl tech_achieved(int faction_id, int tech_id, int faction_id_with,
                            int give_freebie) {
     Popup popup;
@@ -878,7 +878,7 @@ void __cdecl tech_achieved(int faction_id, int tech_id, int faction_id_with,
         player.tech_id_researching = -1;
     }
 
-    const bool was_new = GameDataStateStorage.fields_.game_tech_achieved_[tech_id] == 0;
+    const int was_new = GameDataStateStorage.fields_.game_tech_achieved_[tech_id] == 0;
     GameDataStateStorage.fields_.game_tech_achieved_[tech_id] |= static_cast<uint8_t>(faction_mask);
     ++player.tech_achieved;
     if (GameDataStateStorage.fields_.turn_current_num_ == 0 || TechAchievedGate != 0) {

@@ -219,55 +219,59 @@ extern "C" char *__fastcall sub_5cf120(int code) {
 
 // ECX, EDX plus eight stack arguments; 5CC150 supplies exactly this layout.
 // ORIGINAL: 0x005CBC00 sub_5cbc00 0x005CBC00-0x005CBE2A
+// RECOVERY_BINDING: v1 {"reason":"Recover packed components using full-word widths, the original negative-C saturation and the sum of all three component widths; preserve the unused stack argument and selected VC6/x86 shift behavior.","evidence":["The complete 205-instruction leaf at 5CBC00..5CBE2A reads incoming stack slots +4,+12,+16,+20,+24,+28,+32, never +8, and retains RET 0x20 for all eight stack arguments.","Pinned 5CBE00/5CBE08/5CBE0F load incoming +16/+20/+12 after accounting for the 0x14 frame and saved registers: the final test sums the B/C/A widths, not the unused +8 argument.","Pinned 5CBD45 compares rounded C against its lower bound; 5CBD47 accepts values at or above it, otherwise 5CBD49 reaches 5CBD6F MOV EBX,ECX before the signed borrow test at 5CBD71.","Pinned full-word width loads feed direct CL shifts, and per-component maxima remain live through final packing; the existing caller derives nonnegative channel popcounts with a total of 15 or 16."]}
 // symbol    @sub_5cbc00@40
 // kind      game
 // TRIED: IDA's 8-arg __stdcall guess; disasm shows ecx/edx as real args (fastcall, 10 logical params) and Ghidra's final-sum check param_5+param_6+param_7 is wrong - raw disasm reads [esp+0x2c](param_4)+[esp+0x34](param_6)+[esp+0x38](param_7). Prologue register/stack-frame shape (#0 sub vs push) not chased.
 extern "C" int __fastcall sub_5cbc00(
-    int sample, int component_a, int component_b, int combined_bits,
+    int sample, int component_a, int component_b, int unused,
     int component_a_bits, int component_b_bits, int component_c_bits,
     int component_a_shift, int component_b_shift, int component_c_shift) {
-  unsigned char bits = (unsigned char)component_a_bits;
-  int divisor = 1 << ((8 - bits) & 0x1f);
+  int bits = component_a_bits;
+  int divisor = 1 << (8 - bits);
   int packed_a = sample / divisor;
   int rounded_a;
+  int max_a;
   if (sample < 0) {
-    int max_a = 1 << (bits & 0x1f);
-    rounded_a = (sample - (1 << ((7 - bits) & 0x1f))) / divisor;
+    max_a = 1 << bits;
+    rounded_a = (sample - (1 << (7 - bits))) / divisor;
     if (rounded_a < 1 - max_a) rounded_a = 1 - max_a;
   } else {
-    int max_a = 1 << (bits & 0x1f);
-    rounded_a = ((1 << ((7 - bits) & 0x1f)) + sample) / divisor;
+    max_a = 1 << bits;
+    rounded_a = ((1 << (7 - bits)) + sample) / divisor;
     if (max_a - 1 < rounded_a) rounded_a = max_a - 1;
   }
 
-  bits = (unsigned char)component_b_bits;
-  divisor = 1 << ((8 - bits) & 0x1f);
+  bits = component_b_bits;
+  divisor = 1 << (8 - bits);
   int packed_b = component_a / divisor;
   int rounded_b;
+  int max_b;
   if (component_a < 0) {
-    rounded_b = (component_a - (1 << ((7 - bits) & 0x1f))) / divisor;
-    int max_b = 1 << (bits & 0x1f);
+    rounded_b = (component_a - (1 << (7 - bits))) / divisor;
+    max_b = 1 << bits;
     if (rounded_b < 1 - max_b) rounded_b = 1 - max_b;
   } else {
-    rounded_b = ((1 << ((7 - bits) & 0x1f)) + component_a) / divisor;
-    int max_b = 1 << (bits & 0x1f);
+    rounded_b = ((1 << (7 - bits)) + component_a) / divisor;
+    max_b = 1 << bits;
     if (max_b - 1 < rounded_b) rounded_b = max_b - 1;
   }
 
-  bits = (unsigned char)component_c_bits;
-  divisor = 1 << ((8 - bits) & 0x1f);
+  bits = component_c_bits;
+  divisor = 1 << (8 - bits);
   unsigned int packed_c = (unsigned int)(component_b / divisor);
   unsigned int rounded_c;
+  unsigned int max_c;
   if (component_b < 0) {
     rounded_c = (unsigned int)((component_b -
-        (1 << ((7 - bits) & 0x1f))) / divisor);
-    unsigned int max_c = 1U << (bits & 0x1f);
+        (1 << (7 - bits))) / divisor);
+    max_c = 1U << bits;
     unsigned int lower = 1U - max_c;
-    if ((int)lower <= (int)rounded_c) goto combine_components;
+    if ((int)rounded_c < (int)lower) rounded_c = lower;
   } else {
-    rounded_c = (unsigned int)(((1 << ((7 - bits) & 0x1f)) + component_b) /
+    rounded_c = (unsigned int)(((1 << (7 - bits)) + component_b) /
                                divisor);
-    unsigned int max_c = 1U << (bits & 0x1f);
+    max_c = 1U << bits;
     unsigned int upper = max_c - 1;
     if ((int)rounded_c <= (int)upper) goto combine_components;
     rounded_c = upper;
@@ -279,20 +283,22 @@ combine_components:
   if ((int)packed_c < 0) --packed_b;
   if (packed_b < 0) --packed_a;
 
+  // Keep each maximum alive through packing, as the pinned routine reuses
+  // these values to form the component masks instead of shifting again.
   unsigned int result =
-      (((1U << (component_c_bits & 0x1f)) - 1U) & packed_c)
-          << ((component_c_shift + 0x10) & 0x1f) |
-      (((1U << (component_b_bits & 0x1f)) - 1U) & (unsigned int)packed_b)
-          << ((component_b_shift + 0x10) & 0x1f) |
-      (((1U << (component_a_bits & 0x1f)) - 1U) & (unsigned int)packed_a)
-          << ((component_a_shift + 0x10) & 0x1f) |
-      (((1U << (component_c_bits & 0x1f)) - 1U) & rounded_c)
-          << (component_c_shift & 0x1f) |
-      (((1U << (component_b_bits & 0x1f)) - 1U) & (unsigned int)rounded_b)
-          << (component_b_shift & 0x1f) |
-      (((1U << (component_a_bits & 0x1f)) - 1U) & (unsigned int)rounded_a)
-          << (component_a_shift & 0x1f);
-  if (combined_bits + component_b_bits + component_c_bits != 0x10)
+      ((max_c - 1U) & packed_c)
+          << ((component_c_shift + 0x10)) |
+      ((static_cast<unsigned int>(max_b) - 1U) & (unsigned int)packed_b)
+          << ((component_b_shift + 0x10)) |
+      ((static_cast<unsigned int>(max_a) - 1U) & (unsigned int)packed_a)
+          << ((component_a_shift + 0x10)) |
+      ((max_c - 1U) & rounded_c)
+          << (component_c_shift) |
+      ((static_cast<unsigned int>(max_b) - 1U) & (unsigned int)rounded_b)
+          << (component_b_shift) |
+      ((static_cast<unsigned int>(max_a) - 1U) & (unsigned int)rounded_a)
+          << (component_a_shift);
+  if (component_a_bits + component_b_bits + component_c_bits != 0x10)
     result |= 0x80008000;
   return (int)result;
 }
