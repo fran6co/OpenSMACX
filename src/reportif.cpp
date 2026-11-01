@@ -713,7 +713,8 @@ ReportIf::ReportIf() {
 /*
 Purpose: Tear down every sub-object the constructor built, in exactly the
          reverse order.
-// ORIGINAL: 0x004ACDA0 ??1ReportIf@@QAE@XZ 0x004ACDA0-0x004AD16C;0x00658D50-0x00658F74
+// ORIGINAL: 0x004ACDA0 ??1ReportIf@@QAE@XZ 0x004ACDA0-0x004AD16C;0x00658D50-0x00658F74 FILE
+// compile_context src/reportif.cpp
 // TRIED: SEH frame - the image has one (flags carry `frame`) but a body
 //            built entirely from plain `->method()`/`->~T()` calls at raw
 //            offsets never triggers VC6's unwind-protection scaffolding (no
@@ -730,9 +731,9 @@ Purpose: Tear down every sub-object the constructor built, in exactly the
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x005D4DD0 0x005FA870 0x00607040 0x00607DA0 0x00608E10 0x00609EC0 0x0062B7F0 0x006456E4
 */
-ReportIf::~ReportIf() {
-    // Declaration-order construction / reverse-order teardown is automatic.
-}
+// The implicit destructor owns reverse declaration-order member teardown.
+// Original 0x4ACDA0 never installs ReportIf's own interface table; its
+// member and base destruction, including unwind cleanup, remains automatic.
 
 
 /*

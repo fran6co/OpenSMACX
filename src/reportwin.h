@@ -47,8 +47,6 @@ class ReportWin : public GraphicWin {
   // Original8846E8=876478+E270; report_intel writes the owning window's flag.
   void select_intel_topic() { field_E270_ = 1; }
   ReportWin();
-  // Ordinary out-of-line body; C++ owns reverse member/base teardown.
-  ~ReportWin();
   void init();
   // Win slot 12: reset and repaint the active ReportIf category.
   virtual void on_redraw();

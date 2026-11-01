@@ -49,10 +49,11 @@ QuayleWin QuayleWinGlobal;
 QuayleWin::QuayleWin() {}
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x00496710 ??1QuayleWin@@QAE@XZ 0x00496710-0x00496801;0x00658C40-0x00658CA8
+// ORIGINAL: 0x00496710 ??1QuayleWin@@QAE@XZ 0x00496710-0x00496801;0x00658C40-0x00658CA8 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original entry 00496710; retained seed src/recovered/units/00496710.cpp", "recovery/tasks/quaylewin-owner-coverage-wave.json", "QuayleWin constructor layout and virtual-slot evidence; fresh isolated build and host controls"], "reason": "Rehome the retained QuayleWin seed into its real GraphicWin owner with typed subobjects; preserve original spans and historical seed obligations."}
+// kind game
+// compile_context src/quaylewin.cpp
 // symbol    ??1QuayleWin@@UAE@XZ
-QuayleWin::~QuayleWin() {}
 
 // ORIGINAL: 0x004951A0 ?init@QuayleWin@@QAEHXZ 0x004951A0-0x004956C1
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original entry 004951A0; retained seed git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/004951a0.cpp", "recovery/tasks/quaylewin-owner-coverage-wave.json", "QuayleWin constructor layout and virtual-slot evidence; fresh isolated build and host controls"], "reason": "Rehome the retained QuayleWin seed into its real GraphicWin owner with typed subobjects; preserve original spans and historical seed obligations."}

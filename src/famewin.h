@@ -15,7 +15,6 @@ class FameWin : public GraphicWin {
  public:
   friend void __cdecl hall_of_fame(int add_current_player);
   FameWin();
-  ~FameWin();
 
   int init();
   void close();

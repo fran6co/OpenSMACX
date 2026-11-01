@@ -959,13 +959,9 @@ ReportWin::ReportWin() {
     // argument at the original ListBox call is its most-derived ABI flag.
 }
 
-// ORIGINAL: 0x004AD3B0 ??1ReportWin@@QAE@XZ 0x004AD3B0-0x004AD6A9;0x00659140-0x006592EE
+// ORIGINAL: 0x004AD3B0 ??1ReportWin@@QAE@XZ 0x004AD3B0-0x004AD6A9;0x00659140-0x006592EE FILE
 // RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/recovered/units/004ad3b0.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
 // symbol    ??1ReportWin@@UAE@XZ
-ReportWin::~ReportWin() {
-    // Original 4AD3B0 contains only compiler-generated reverse member/base
-    // teardown. In particular, Flic and Time own their close operations.
-}
 
 // ORIGINAL: 0x00496960 ?init@ReportWin@@QAEXXZ 0x00496960-0x00496BA5
 // RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/recovered/units/00496960.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}

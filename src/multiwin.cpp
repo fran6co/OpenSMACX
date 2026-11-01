@@ -625,10 +625,10 @@ uint32_t MultiWinState7FFF7C;
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0047a590.cpp; docs/recovery/subobject-sites.csv; src/multiwin.h"], "reason": "The original constructor builds a GraphicWin front and the owned Buffer, Sprite, FlatButton, Font and Spot subobjects in the observed order."}
 MultiWin::MultiWin() {}
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x0047A430 ??1MultiWin@@QAE@XZ 0x0047A430-0x0047A58A;0x00656230-0x0065630E
+// ORIGINAL: 0x0047A430 ??1MultiWin@@QAE@XZ 0x0047A430-0x0047A58A;0x00656230-0x0065630E FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0047a430.cpp; docs/recovery/subobject-sites.csv; src/multiwin.h"], "reason": "The original destructor tears down the Spot, Fonts, FlatButtons, Sprites, Buffer and GraphicWin front in reverse ownership order."}
 // symbol    ??1MultiWin@@UAE@XZ
-MultiWin::~MultiWin() {}
+// kind game
 
 // 0x00477E70: Spot::check returns the hovered position and type through its
 // two output arguments. Only type 1 changes the highlighted player.

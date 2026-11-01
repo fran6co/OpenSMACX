@@ -25,7 +25,7 @@ extern ButtonGroup PrefWinButtonGroup;
 class PrefWin : public GraphicWin {
  public:
   PrefWin();
-  ~PrefWin();
+  // Implicit destructor: the pinned teardown does not reinstall PrefWin tables.
 
   void init();
   void display(int page);

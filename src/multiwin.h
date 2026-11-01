@@ -25,7 +25,6 @@ extern int MultiWindowContactStatusMask;
 class MultiWin : public GraphicWin {
  public:
   MultiWin();
-  ~MultiWin();
 
   void draw(int draw_type);
   void draw_time_bonus_markers(RECT *rect);

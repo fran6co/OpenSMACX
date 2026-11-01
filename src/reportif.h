@@ -67,7 +67,6 @@ class ReportIf : public SubInterface {
  public:
   void done();
   ReportIf();
-  ~ReportIf();
   void close_labs();
   void close_ops();
   void close_energy();

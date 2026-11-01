@@ -223,13 +223,14 @@ FameWin g_FAMEWIN;
 FameWin::FameWin() {}
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
-// ORIGINAL: 0x0044B100 ??1FameWin@@QAE@XZ 0x0044B100-0x0044B1FF;0x00654D60-0x00654DF6
+// ORIGINAL: 0x0044B100 ??1FameWin@@QAE@XZ 0x0044B100-0x0044B1FF;0x00654D60-0x00654DF6 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0044b100.cpp"], "reason": "Product definition uses the typed FameWin ownership model while retaining the historical seed and its recovery obligations."}
+// kind game
 // symbol    ??1FameWin@@UAE@XZ
 // Member destructors expand here in reverse declaration order. In particular,
 // FlatButton's inline destructor performs close() before its BaseButton base
 // teardown, and ButtonGroup's destructor performs its own close().
-FameWin::~FameWin() {}
+// The implicit virtual destructor follows the typed member/base lifetime.
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x00448D60 ?close@FameWin@@QAEXXZ 0x00448D60-0x00448D81 BYTE_EXACT
@@ -965,3 +966,9 @@ void FameWin::try_to_add_me() {
   strcat(StringTemp, ".pcx");
   static_cast<Buffer *>(&WorldClimateWorldWin)->write_pcx(StringTemp);
 }
+
+// Native constructor 0x0044B200 installs the Win and Buffer views at
+// complete-object +0 and +0x444. Table slots select the mapped FameWin
+// overrides and secondary adjustor; original table extents remain unknown.
+// RECOVERY_GENERATED: v1 vtable 0x0066C268 ? ??_7FameWin@@6BWin@@@ 0x0044B200
+// RECOVERY_GENERATED: v1 vtable 0x0066C260 ? ??_7FameWin@@6BBuffer@@@ 0x0044B200

@@ -12,7 +12,6 @@ class MonuWin : public GraphicWin {
   friend void __cdecl monument(int);
  public:
   MonuWin();
-  ~MonuWin();
   int init();
   void on_redraw() override;
   void close();

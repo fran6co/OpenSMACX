@@ -20,7 +20,7 @@ LEXEMES = re.compile(
     r"'(?:\\.|[^'\\])*'|[{}]"
 )
 METHODS = (
-    "MonuWin::MonuWin()", "MonuWin::~MonuWin()", "void MonuWin::close()",
+    "MonuWin::MonuWin()", "void MonuWin::close()",
     "void MonuWin::on_button_clicked(", "int MonuWin::on_key_click(",
     "void MonuWin::on_left_click(", "void MonuWin::on_mouse_move(",
     "int MonuWin::init()", "void MonuWin::on_redraw()",
@@ -122,7 +122,11 @@ def projection(mutation=None):
     cpp = (ROOT / "src/monuwin.cpp").read_text()
     declaration = braced(header, "class MonuWin : public GraphicWin {", True)
     methods = "\n\n".join(braced(cpp, marker) for marker in METHODS)
-    assert len(re.findall(r"(?m)^(?:\w+ )?MonuWin::", methods)) == 9
+    assert len(re.findall(r"(?m)^(?:\w+ )?MonuWin::", methods)) == 8
+    # Project the real declaration unchanged: its implicit destructor performs
+    # member/base teardown, observed by the fixture's live-member counters.
+    assert not re.search(r"~MonuWin\s*\(", declaration)
+    assert not re.search(r"(?m)^MonuWin::~MonuWin\s*\(", cpp)
     swap_body = braced((ROOT / "src/general.cpp").read_text(),
                        "void __cdecl swap(int *var1, int *var2)")
     methods = swap_body + "\n\n" + methods

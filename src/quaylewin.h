@@ -12,7 +12,7 @@
 class QuayleWin : public GraphicWin {
  public:
   QuayleWin();
-  ~QuayleWin();
+  // Member and base teardown is supplied by the implicit virtual destructor.
 
   int init();
   virtual void on_redraw();

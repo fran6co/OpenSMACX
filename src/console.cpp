@@ -8266,3 +8266,8 @@ return 1;
 // symbol    ?on_post_redraw_nc_buffer@Console@@$4PPPPPPPM@A@AEXPAVBuffer@@H@Z
 // kind      game
 // RECOVERY_GENERATED: v1 vbtable 0x0066EF04 0x0066EF0C ??_8Console@@7B@ 0x0050F460
+
+// Console constructor 0x0050F56E stores this secondary table at Win+0x444;
+// its first slot is the mapped Buffer-view deleting adjustor 0x0051DF50.
+// The table address point is proven; its full extent remains unclaimed.
+// RECOVERY_GENERATED: v1 vtable 0x0066EC10 ? ??_7Console@@6BBuffer@@@ 0x0050F460
