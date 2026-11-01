@@ -1,0 +1,23 @@
+{
+  "author": "coordinator",
+  "base_revision": "1ba69be6c910878e2bbbbac9e0ef8afab12dff59",
+  "editable_files": [
+    "src/jackal/palette.cpp"
+  ],
+  "evidence": [
+    "Original 0x5FF630 search repeatedly multiplies hue directly by qword storage 0x670280. Actual baseline COFF instead stages hsv_deg_to_rad into a stack double via the helper k parameter.",
+    "One source-form budget: remove the artificial k helper parameter and caller local, retaining the same constant/arithmetic/call order and both original search arms. Do not change flags, force attributes, loops, unsafe paths, old claims or unrelated Palette methods.",
+    "Read-only report .opensmacx/recovery/palette-x87-frontier-nov01dp/report.md records source/COFF/image provenance and distinguishes this operand staging from previously tried stack/register forms. Candidate is unmeasured; existing degree constant remains unbound."
+  ],
+  "intent": "Measure one original-shaped direct hue coefficient operand instead of a cached helper parameter.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6288944,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "palette-direct-angle-nov01dp"
+}

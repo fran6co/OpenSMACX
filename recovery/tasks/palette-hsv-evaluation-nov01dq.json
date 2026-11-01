@@ -1,0 +1,31 @@
+{
+  "author": "coordinator",
+  "base_revision": "d515159a54312770207ee19b4df853031fc90b49",
+  "editable_files": [
+    "src/jackal/palette.cpp",
+    "recovery/tests/test_palette_hsv_search_actual_source.py"
+  ],
+  "evidence": [
+    "Full pinned CFG 5FF630..5FF92C has two mutually exclusive stride-one loops:0..255 or10..245 with used[] skips;16static trig calls are duplicate evaluation within each candidate, not unrolling or peeling.",
+    "Within each eligible distance, original calls sine(query),sine(candidate), repeats that pair, then cosine(query),cosine(candidate), repeats that pair. It multiplies independently evaluated differences for each square; the previous cached helper removes observable calls.",
+    "Original stores value difference early, accumulates sine/cosine squared terms first and adds value square last. Original saved winning index is written only after a successful comparison; preserve its uninitialized no-winner path and existing unsafe range behavior.",
+    "Original direct FMUL coefficient is qword storage0x670280. Existing ordinary TU-private constant has the same8-byte payload; a local start witness may be added after independent correspondence review, with no allocation/nominal-name/linked-selection claim.",
+    "This is semantic recovery founded on new CFG evidence, not another iteration of the exhausted DP operand-only spelling trial. One complete faithful implementation followed by bounded matching and full affected-owner preservation/build checks."
+  ],
+  "intent": "Recover original HSV search evaluation multiplicity, floating-point addition order and winning-index lifetime.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6288944,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6750848,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "palette-hsv-evaluation-nov01dq"
+}

@@ -1,0 +1,18 @@
+{
+  "event_id": "9dddd1873c214adc1dd300bcc2522610abbcbbf8d719a79d0d7461e093c6f7cf",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "direct-original-hue-coefficient",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "One direct-coefficient source form improves7/224 to10/224 and183 to179compiled instructions, but remains MISMATCH/strictFAIL. The original direct operand finding and complete candidate/COFF captures are preserved; no byte claim, source adoption or further spelling trial.",
+      "Independent original CFG disproves the old unrolling explanation: two stride-one loops each recompute sine/cosine differences twice. Original winning index is not initialized; current helper also adds squared value difference first instead of last. These are separate semantic recovery obligations recorded in palette-hsv-evaluation-nov01dq, not a repeated spelling budget."
+    ]
+  },
+  "previous_event": "dbb24f3e793220076ed2125a1615ae8e07dfb694ede0f827feb5e5b6ddfeb3aa",
+  "request_id": "close-one-operand-form",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:palette-direct-angle-nov01dp"
+}
