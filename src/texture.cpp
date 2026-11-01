@@ -3883,7 +3883,7 @@ int __cdecl sub_620100(EdgeScan *edge, int vertex_index) {
     }
 }
 
-// ORIGINAL: 0x00620260 sub_620260 0x00620260-0x006202D8 FILE
+// ORIGINAL: 0x00620260 sub_620260 0x00620260-0x006202D8 FILE BYTE_EXACT
 // symbol    ?sub_620260@@YAHPAUEdgeScan@@@Z
 // working copy - scaffold materialised by --work
 // size      120 bytes
@@ -3908,21 +3908,33 @@ int __cdecl sub_620100(EdgeScan *edge, int vertex_index) {
 // emitter computes declarations; it does not carry lessons.
 
 int __cdecl sub_620260(EdgeScan *edge) {
-    int remaining = edge->counter - 1;
-    edge->counter = remaining;
-    if (remaining == 0) {
+    edge->counter = static_cast<int>(
+        static_cast<unsigned int>(edge->counter) - 1u);
+    if (edge->counter == 0) {
         return sub_620100(edge, edge->id) != 0;
     }
-    edge->accumB += edge->deltaB;
-    int sum1c = edge->accumC + edge->deltaC;
-    edge->accumA += edge->deltaA;
-    edge->accumC = sum1c;
-    edge->accumD += edge->deltaD;
-    int sum28 = edge->fracAccum + edge->fracDelta;
-    edge->fracAccum = sum28;
-    if (sum28 > 0) {
-        edge->accumC = edge->extraDeltaC + sum1c;
-        edge->fracAccum = sum28 - edge->fracSub;
+    edge->accumA = static_cast<int>(
+        static_cast<unsigned int>(edge->accumA) +
+        static_cast<unsigned int>(edge->deltaA));
+    edge->accumB = static_cast<int>(
+        static_cast<unsigned int>(edge->accumB) +
+        static_cast<unsigned int>(edge->deltaB));
+    edge->accumC = static_cast<int>(
+        static_cast<unsigned int>(edge->accumC) +
+        static_cast<unsigned int>(edge->deltaC));
+    edge->accumD = static_cast<int>(
+        static_cast<unsigned int>(edge->accumD) +
+        static_cast<unsigned int>(edge->deltaD));
+    edge->fracAccum = static_cast<int>(
+        static_cast<unsigned int>(edge->fracAccum) +
+        static_cast<unsigned int>(edge->fracDelta));
+    if (edge->fracAccum > 0) {
+        edge->accumC = static_cast<int>(
+            static_cast<unsigned int>(edge->accumC) +
+            static_cast<unsigned int>(edge->extraDeltaC));
+        edge->fracAccum = static_cast<int>(
+            static_cast<unsigned int>(edge->fracAccum) -
+            static_cast<unsigned int>(edge->fracSub));
     }
     return 1;
 }
