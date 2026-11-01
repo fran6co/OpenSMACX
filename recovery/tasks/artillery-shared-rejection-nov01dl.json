@@ -1,0 +1,22 @@
+{
+  "author": "coordinator",
+  "base_revision": "dd5a093cc96f1eb90b6071e6c2c0e3df651868bd",
+  "editable_files": [
+    "src/veh.cpp"
+  ],
+  "evidence": [
+    "Pinned5C0E1C AIR rejection reaches5C0DDA first false block; current source emits target5C0DF9 second false block. All other54instructions previously agree.",
+    "One source-form trial adds an early rejection label and routes AIR there. Preserve helpers,types,all original unsafe paths and everyotherfunction; no flags,asm,padding,volatile/register forcing."
+  ],
+  "intent": "Test one explicit shared rejection edge corresponding to the original early false return.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6032816,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "artillery-shared-rejection-nov01dl"
+}

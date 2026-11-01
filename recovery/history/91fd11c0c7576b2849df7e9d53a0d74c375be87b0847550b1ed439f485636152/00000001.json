@@ -1,0 +1,21 @@
+{
+  "event_id": "c80e6f236e20b6d74ec8dc48a8ac90b4c79f5e89262e32239e481f04a9911990",
+  "payload": {
+    "affects": [
+      "entity-55eb98ea6aa6ab79f7ce5cda9338aa42907b5a20de747f7e5818f2f84d889a67"
+    ],
+    "author": "coordinator",
+    "discovery_id": "original-first-rejection-edge",
+    "evidence": [
+      "Pinned5C0E1C AIR rejection reaches5C0DDA first false block; current source emits target5C0DF9 second false block. All other54instructions previously agree.",
+      "One source-form trial adds an early rejection label and routes AIR there. Preserve helpers,types,all original unsafe paths and everyotherfunction; no flags,asm,padding,volatile/register forcing."
+    ],
+    "hypothesis": "Explicit shared early rejection may restore original target selection without changing behavior.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "original-first-rejection-edge",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:artillery-shared-rejection-nov01dl"
+}
