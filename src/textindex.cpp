@@ -257,5 +257,7 @@ void __cdecl text_make_index(LPCSTR source_txt) {
 // `TextIndex *const TxtIndex = (TextIndex *)0x009B7D08` binding; the array is
 // that binding's storage, so the object carries the public name now. See
 // textindex.h.
-// RECOVERY_OBJECT: v1 0x009B7D08 ?TxtIndex@@3PAVTextIndex@@A
+// Original init 0x005FD4E0 and teardown 0x005FD510 both name
+// this constructed array run: 4 elements, stride 0x118; names remain provisional.
+// RECOVERY_OBJECT: v2 0x009B7D08 0x009B8168 ?TxtIndex@@3PAVTextIndex@@A 0x005FD4E0
 TextIndex TxtIndex[MaxTextIndexNum];  // 0x009B7D08, 0x118 stride
