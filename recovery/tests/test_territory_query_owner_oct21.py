@@ -37,15 +37,15 @@ HARNESS = r"""
 
 #define __cdecl
 typedef int BOOL;
-static const uint32_t STATE_OMNISCIENT_VIEW = 0x200;
-static const int DTREATY_COMMLINK = 0x20;
+static const uint32_t STATE_OMNISCIENT_VIEW = 0x80;
+static const int DTREATY_COMMLINK = 0x8;
 static const int DTREATY_UNK_8000000 = 0x08000000;
 
 struct Map { signed char territory; };
 static Map tile;
 static int event_log[8], event_count;
-static int treaty_result, treaty_calls, region_calls, base_calls;
-static int treaty_faction, treaty_owner, treaty_mask;
+static int treaty_calls, region_calls, base_calls;
+static int treaty_faction, treaty_owner;
 static int region_x, region_y, base_x, base_y, base_region;
 struct GameFields { uint32_t game_state_; };
 struct GameState { GameFields fields_; };
@@ -57,14 +57,21 @@ static Map *map_loc(int x, int y) {
     event(1);
     return &tile;
 }
-static int has_treaty(int faction, int owner, int mask) {
-    event(2);
-    ++treaty_calls;
-    treaty_faction = faction;
-    treaty_owner = owner;
-    treaty_mask = mask;
-    return treaty_result;
-}
+// The product now reads the actual treaty member directly. This conversion
+// records only that field read and its indices; the product applies its mask.
+struct TreatyRead {
+    uint32_t value;
+    int faction, owner;
+    operator uint32_t() const {
+        event(2);
+        ++treaty_calls;
+        treaty_faction = faction;
+        treaty_owner = owner;
+        return value;
+    }
+};
+struct PlayerData { TreatyRead diplo_treaties[8]; };
+static PlayerData PlayersData[8];
 static int region_at(int x, int y) {
     event(3);
     ++region_calls;
@@ -84,10 +91,20 @@ WHOSE_TERRITORY_DEFINITION
 
 static void reset(int owner, int treaties, uint32_t state) {
     tile.territory = (signed char)owner;
-    treaty_result = treaties;
+    for (int faction = 0; faction < 8; ++faction) {
+        for (int other = 0; other < 8; ++other) {
+            TreatyRead &field = PlayersData[faction].diplo_treaties[other];
+            field.value = 0;
+            field.faction = faction;
+            field.owner = other;
+        }
+    }
+    if (owner >= 0 && owner < 8) {
+        PlayersData[2].diplo_treaties[owner].value = (uint32_t)treaties;
+    }
     GameDataStateStorage.fields_.game_state_ = state;
     event_count = treaty_calls = region_calls = base_calls = 0;
-    treaty_faction = treaty_owner = treaty_mask = -1;
+    treaty_faction = treaty_owner = -1;
     region_x = region_y = base_x = base_y = base_region = -1;
 }
 
@@ -116,7 +133,15 @@ int main() {
     assert(whose_territory(2, 7, 9, &base_id, 0) == -1);
     assert(base_id == 58 && treaty_calls == 1 && region_calls == 0 && base_calls == 0);
     assert(event_count == 2 && event_log[0] == 1 && event_log[1] == 2);
-    assert(treaty_faction == 2 && treaty_owner == 3 && treaty_mask == full_mask);
+    assert(treaty_faction == 2 && treaty_owner == 3);
+
+    // Pinned AND/CMP 0x08000008 requires both bits, ignores all others.
+    reset(3, DTREATY_UNK_8000000, 0);
+    assert(whose_territory(2, 7, 9, 0, 0) == -1 && treaty_calls == 1);
+    reset(3, 0x100, 0);
+    assert(whose_territory(2, 7, 9, 0, 0) == -1 && treaty_calls == 1);
+    reset(3, full_mask | 0x100, 0);
+    assert(whose_territory(2, 7, 9, 0, 0) == 3 && treaty_calls == 1);
 
     reset(3, 0, 0);
     base_id = 59;

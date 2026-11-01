@@ -1233,7 +1233,9 @@ static const char *vox_msg_unsupported_pixel_slot = vox_msg_unsupported_pixel; /
 // messages live with their shared callback operations in caviar_io.cpp.
 // The eight engine messages above stay literals because their callers push
 // the address straight out.
+// RECOVERY_OBJECT: v1 0x006989D0 _vox_msg_bad_file_format
 static const char *const vox_msg_bad_file_format = "Bad file format";  // 0x006989D0
+// RECOVERY_OBJECT: v1 0x006989E0 _vox_msg_user_chunk
 static const char *const vox_msg_user_chunk = "Error reading user data chunk"; // 0x006989E0
 static const char vox_msg_no_address_tables[] = "No room for address tables";
 
@@ -6339,3 +6341,10 @@ void __cdecl Caviar::object_start(VOX_ScnRenderHnd *handle, long instance,
         memcpy(handle->colour_table_, self.instance_palettes_[instance], 0x1800);
     }
 }
+
+// The two methods above require out-of-line memcpy. Restore the ordinary
+// intrinsic context for callback-loader template instantiations: the original
+// loader reads a callback slot directly rather than calling memcpy for it.
+#if defined(_MSC_VER) && _MSC_VER <= 1200
+#pragma intrinsic(memcpy)
+#endif

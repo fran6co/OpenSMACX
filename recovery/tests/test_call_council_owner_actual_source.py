@@ -51,7 +51,9 @@ def test_native_cleanup_lowering_is_not_repeated_manually() -> None:
     assert "popup.close()" not in body
     assert "scroll_.close()" not in body
     assert "Popup popup;" in body
-    assert "Sprite council_sprite;" in body
+    assert "Sprite council_sprite;" not in body
+    assert "popup.owned_picture().init(" in body
+    assert "popup.select_owned_picture();" in body
 
 
 def test_original_proposal_gate_and_uninitialized_stack_obligation() -> None:
@@ -125,3 +127,24 @@ def test_manual_extra_cleanup_mutant_is_rejected():
     assert body.count(anchor) == 1
     body = body.replace(anchor, "    if (ExpansionEnabled && (Players[faction_id].rule_flags & RFLAG_ALIEN)) {\n        popup.close();\n        return;", 1)
     _compile_and_run(body, expect_success=False)
+
+
+def test_picture_ownership_and_success_gates_reject_compiling_mutants():
+    body = _actual_body()
+    # A separate Sprite has its own construction/destruction and supplies the
+    # wrong init receiver, even if the popup later selects its owned picture.
+    wrong_owner = body.replace("    Popup popup;", "    Popup popup;\n    Sprite council_sprite;", 1)
+    wrong_owner = wrong_owner.replace("popup.owned_picture().init(", "council_sprite.init(", 1)
+    _compile_and_run(wrong_owner, expect_success=False)
+
+    anchor = "picture_width, picture_height) == 0)"
+    assert body.count(anchor) == 1
+    # This admits init failure4 while preserving the successful path.
+    _compile_and_run(body.replace(anchor, "picture_width, picture_height) >= 0)", 1),
+                     expect_success=False)
+    dimensions = "&picture_height) == 0 &&"
+    assert body.count(dimensions) == 1
+    _compile_and_run(body.replace(dimensions, "&picture_height) >= 0 &&", 1),
+                     expect_success=False)
+    _compile_and_run(body.replace("        popup.select_owned_picture();", "", 1),
+                     expect_success=False)

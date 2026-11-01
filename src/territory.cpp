@@ -44,7 +44,8 @@ int __cdecl whose_territory(int faction_id, int x, int y, int *base_id,
     }
     if ((uint32_t)owner != faction_id) {
         if (!ignore_comm && !(GameDataStateStorage.fields_.game_state_ & STATE_OMNISCIENT_VIEW)
-            && has_treaty(faction_id, owner, DTREATY_COMMLINK | DTREATY_UNK_8000000)
+            && (PlayersData[faction_id].diplo_treaties[owner]
+                & (DTREATY_COMMLINK | DTREATY_UNK_8000000))
                 != (DTREATY_COMMLINK | DTREATY_UNK_8000000)) {
             return -1; // owner unknown to faction
         }

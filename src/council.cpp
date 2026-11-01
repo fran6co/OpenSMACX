@@ -79,13 +79,9 @@ static const char CouncilBlockedLabel[] = "COUNCILNEEDALL";
 // RECOVERY_BINDING: v1 {"reason":"Recover the complete faction-taking council dialog in its existing owner with genuine automatic Popup and Sprite lifetimes, typed game/faction storage and live post-modal reads.","evidence":["Pinned52C880 and its65DB70 lifetime tail establish the proposal selection, cooldown and network dispatch paths.","Existing Rules.min_turns_councils and Players/PlayersData members account for the observed storage; no executable-address aliases or manual vtable writes.","The original s14 local is initialized only on eligible proposal1 paths; alternate_selection retains that unresolved stack-residue obligation rather than inventing a default."]}
 // TRIED: literal register/goto transcription of all ~85 branches and the 10-entry switch resolved from the image; Popup+embedded Scroll+ 2 embedded FlatButton locals (BasePop+0x3230=Scroll start, Scroll+0xAAC/0x15F8=flat_button_left_/right_, matching the SEH thunks at 0x65DB99/0x65DBA7); vtable-reassert writes before every close() and the per-site EH state bytes are compiler artifacts, not transcribed. #18 first divergence still open.
 void __cdecl call_council(int faction_id) {
-    // These automatic objects are significant even on all of the early
-    // returns: Popup owns Dialogs and Scroll, and Sprite owns its initialized
-    // image.  Let the compiler's ordinary destruction chain run.  In
-    // particular, do not spell Popup::close/Scroll::close here: Popup's
-    // destructor calls close(), and its Scroll member then has its own dtor.
+    // Popup owns the picture Sprite as well as Dialogs and Scroll. Its
+    // ordinary lifetime also covers all of the early return paths.
     Popup popup;
-    Sprite council_sprite;
 
     int faction_bit;
     int human_mask;
@@ -112,7 +108,6 @@ void __cdecl call_council(int faction_id) {
     int picture_width;
     int picture_height;
     int alternate_selection;
-    int sprite_initialized;
     int selected_item;
     LPSTR proposal_text;
     LPSTR proposal_description;
@@ -170,15 +165,13 @@ void __cdecl call_council(int faction_id) {
     rendered_count = 0;
 
     popup.start(PopupStartCaption, "COUNCILISSUES", -1, 0, 64, 0);
+    // Original 52CD99 initializes Popup+2118, its owned Sprite; 52CDAE
+    // selects that same picture at Popup+2144 only after a successful init.
     if (Buffer::get_pcx_dimensions("council_sm.pcx", &picture_width,
-                                   &picture_height) == 0) {
-        sprite_initialized = council_sprite.init(
-                                                  const_cast<char *>("council_sm.pcx"),
-                                                  picture_width,
-                                                  picture_height);
-        // The original only uses this for initialization/lifetime side
-        // effects.  Its pointer is never consumed by the dialog.
-        (void)sprite_initialized;
+                                   &picture_height) == 0 &&
+        popup.owned_picture().init(const_cast<char *>("council_sm.pcx"),
+                                   picture_width, picture_height) == 0) {
+        popup.select_owned_picture();
     }
 
     proposal = 0;

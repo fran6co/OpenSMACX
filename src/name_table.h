@@ -35,7 +35,7 @@ struct NameTable {
     unsigned int unknown_214_;    // initialized to 0xFA
 
     NameTable *initialize();
-    int clear();
+    void clear();
     unsigned int remove_range(const NameTableEntry *range);
     void install(const NameTableEntry *entry);
     void rewrite_directory(char *directory);

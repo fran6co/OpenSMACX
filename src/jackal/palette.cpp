@@ -348,7 +348,8 @@ int Palette::closest(int red, int green, int blue, int start, int count,
     if (!PaletteInitialized) {
         return 7;
     }
-    int best_index = 0;
+    // Original leaves the result uninitialized when no eligible entry improves best.
+    int best_index;
     const int end = start + count;
     const int want_red = red & 0xFF;
     const int want_green = green & 0xFF;
@@ -859,7 +860,8 @@ void Palette::close_palette_class() {
 int Palette::get_nearest_palette_index(unsigned char red, unsigned char green,
                                        unsigned char blue, int skip_animated) {
     int best_dist = 200000;
-    int best_index = 0;
+    // Original leaves the result uninitialized when no eligible entry improves best.
+    int best_index;
 
     if (PaletteInitialized == nullptr) {
         return 7;

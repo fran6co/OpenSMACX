@@ -158,12 +158,11 @@ void ProdPicker::draw_item(int item, int update) {
     }
 
     int productionId = 0;
-    uint32_t itemFlags = 0;
-    StringStructPayload *nameEntry = prod_a_.current_entry();
-    if (nameEntry) {
-        productionId = prod_a_.current_id();
-        itemFlags = nameEntry->field_8_;
+    if (prod_a_.head_ != 0) {
+        productionId = prod_a_.current_->id;
     }
+    const uint32_t itemFlags = prod_a_.head_ != 0
+        ? prod_a_.current_->string_payload()->field_8_ : 0;
     // Native 0x492A48..0x492A51 signs the display ID using the vehicle
     // flag, resolving the producer/consumer discrepancy in the seed notes.
     // Keep the list's stored ID unchanged and preserve x86 NEG wraparound.
@@ -171,11 +170,6 @@ void ProdPicker::draw_item(int item, int update) {
     if ((itemFlags & 0x20) == 0) displayBits = 0U - displayBits;
     const int displayId = displayBits <= 0x7fffffffU
         ? static_cast<int>(displayBits) : -1 - static_cast<int>(~displayBits);
-    StringStructPayload *name = prod_a_.current_entry();
-    StringStructPayload *cost = prod_c_.current_entry();
-    char *nameText = name ? name->text : 0;
-    char *costText = cost ? cost->text : 0;
-
     StringTemp[0] = 0;
     const int textColor = mandate_color(itemFlags & 0xF);
     StringTemp[0] = 0;
@@ -184,6 +178,8 @@ void ProdPicker::draw_item(int item, int update) {
     const int nameLineHeight = font1_.line_advance();
     RECT nameArea = { cell.left, cell.top + 5, cell.right,
                       cell.top + nameLineHeight * 3 + 5 };
+    char *nameText = prod_a_.head_ != 0
+        ? prod_a_.current_->string_payload()->text : 0;
     wrap_cent(nameText, &nameArea);
 
     font3_.unk_1_ = 3;
@@ -192,18 +188,23 @@ void ProdPicker::draw_item(int item, int update) {
     const int textLeft = cell.left + 2;
     const int textRight = cell.right - 2;
     int costBottom = cell.bottom;
+    char *costText = prod_c_.head_ != 0
+        ? prod_c_.current_->string_payload()->text : 0;
     const int costHeight = wrap_height(costText, textRight - textLeft);
     int costTop = costBottom - costHeight;
     RECT costArea = { textLeft, costTop, textRight, costBottom };
+    costText = prod_c_.head_ != 0
+        ? prod_c_.current_->string_payload()->text : 0;
     wrap_cent(costText, &costArea);
 
     const int costLineHeight = font3_.line_advance();
     int turnsTop = costTop - costLineHeight;
     if (prod_b_.head_) {
         StringStructPayload *turns = prod_b_.current_entry();
-        if (turns && turns->text) {
+        char *turnsText = turns->text;
+        if (turnsText) {
             RECT turnsArea = { textLeft, turnsTop, textRight, costBottom };
-            write_cent_l(turns->text, &turnsArea, static_cast<int>(strlen(turns->text)));
+            write_cent_l(turnsText, &turnsArea, static_cast<int>(strlen(turnsText)));
         }
     }
 
@@ -996,11 +997,13 @@ int ProdPicker::exec(Base *base, int factionId, GraphicWin *owner, int modal) {
     if (index <= prod_a_.entry_count_ - 1)
         prod_a_.seek_pos(index);
 
-    StringStructPayload *const selected = prod_a_.current_entry();
-    const uint32_t flags = selected != 0 ? selected->field_8_ : 0;
-    int selectedId = selected != 0 ? prod_a_.current_id() : 0;
-    if ((flags & 0x20) == 0) selectedId = -selectedId;
-    return selectedId;
+    const uint32_t flags = prod_a_.head_ != 0
+        ? prod_a_.current_->string_payload()->field_8_ : 0;
+    const int selectedId = prod_a_.head_ != 0 ? prod_a_.current_->id : 0;
+    uint32_t selectedBits = static_cast<uint32_t>(selectedId);
+    if ((flags & 0x20) == 0) selectedBits = 0U - selectedBits;
+    return selectedBits <= 0x7fffffffU
+        ? static_cast<int>(selectedBits) : -1 - static_cast<int>(~selectedBits);
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
@@ -1014,9 +1017,10 @@ void ProdPicker::on_right_click(int x, int y) {
     int productionId = -1;
     if (field_A774_ <= prod_a_.entry_count_ - 1) {
         prod_a_.seek_pos(field_A774_);
-        StringStructPayload *const selected = prod_a_.current_entry();
-        if (selected != 0 && (selected->field_8_ & 0x20) != 0)
-            productionId = prod_a_.current_id();
+        const uint32_t flags = prod_a_.head_ != 0
+            ? prod_a_.current_->string_payload()->field_8_ : 0;
+        if ((flags & 0x20) != 0)
+            productionId = prod_a_.head_ != 0 ? prod_a_.current_->id : 0;
     }
 
     PullDown menu;

@@ -61,11 +61,12 @@ const int MaxPlayerNum = 2;
 const int PLAN_NAVAL_TRANSPORT = 1;
 const int PLAN_DEFENSIVE = 2;
 const int PLAN_OFFENSIVE = 3;
-const int DTREATY_COMMLINK = 1;
-const int DTREATY_PACT = 2;
-const int DTREATY_TREATY = 4;
-const int DTREATY_WANT_REVENGE = 8;
+const int DTREATY_COMMLINK = 0x8;
+const int DTREATY_PACT = 0x1;
+const int DTREATY_TREATY = 0x2;
+const int DTREATY_WANT_REVENGE = 0x20;
 struct PlayerData {
+    uint32_t diplo_treaties[2];
     int current_num_bases;
     uint8_t region_total_bases[128];
     uint8_t region_base_plan[128];
@@ -75,10 +76,6 @@ struct PlayerData {
 PlayerData PlayersData[2];
 int bad_reg_calls;
 int bad_reg(int) { ++bad_reg_calls; return 0; }
-int has_treaty(int faction, int other, int treaty) {
-    assert(faction == 0);
-    return other == 1 && treaty == DTREATY_COMMLINK;
-}
 
 int gate_case(int count) {
     GATE_DECL
@@ -93,6 +90,7 @@ int gate_case(int count) {
 int regional_case(int plan, int power, int count, int is_human_player) {
     PlayersData[0] = PlayerData();
     PlayersData[1] = PlayerData();
+    PlayersData[0].diplo_treaties[1] = DTREATY_COMMLINK;
     bad_reg_calls = 0;
     PlayersData[0].region_total_bases[1] = 2;
     PlayersData[1].region_total_bases[1] = 1;

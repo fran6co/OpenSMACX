@@ -55,6 +55,11 @@ class AlphaSave : public GraphicWin {
   Sprite sprite7_;               // 0x602C
 };
 
+inline AlphaSave::~AlphaSave() {
+    // The owner closes its own window before member destruction begins.
+    close();
+}
+
 inline int AlphaSave::add_default_extension(char *extension) {
     return file_win_.add_def_ext(extension);
 }

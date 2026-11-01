@@ -559,7 +559,8 @@ int __cdecl tech_val(int tech_id, int faction_id, BOOL simple_calc) {
     if (tech_id < MaxTechnologyNum) {
         uint32_t vendetta_count = 0;
         for (int i = 1; i < MaxPlayerNum; i++) {
-            if (i != faction_id && has_treaty(faction_id, i, DTREATY_VENDETTA)) {
+            if (i != faction_id
+                && (PlayersData[faction_id].diplo_treaties[i] & DTREATY_VENDETTA) != 0) {
                 vendetta_count++;
             }
         }
@@ -626,11 +627,13 @@ int __cdecl tech_val(int tech_id, int faction_id, BOOL simple_calc) {
                     } else {
                         for (int i = 1; i < MaxPlayerNum; i++) {
                             if (i != faction_id && PlayersData[i].region_total_bases[region]
-                                && PlayersData[faction_id].region_total_bases[region]
-                                && has_treaty(faction_id, i, DTREATY_COMMLINK)
-                                && (!has_treaty(faction_id, i, DTREATY_PACT | DTREATY_TREATY)
-                                    || has_treaty(faction_id, i, DTREATY_WANT_REVENGE))) {
-                                value_ret += (pwr_base / (base_count * (is_human_player + 1)));
+                                && PlayersData[faction_id].region_total_bases[region]) {
+                                const uint32_t treaties = PlayersData[faction_id].diplo_treaties[i];
+                                if ((treaties & DTREATY_COMMLINK) != 0
+                                    && ((treaties & (DTREATY_PACT | DTREATY_TREATY)) == 0
+                                        || (treaties & DTREATY_WANT_REVENGE) != 0)) {
+                                    value_ret += (pwr_base / (base_count * (is_human_player + 1)));
+                                }
                             }
                         }
                     }

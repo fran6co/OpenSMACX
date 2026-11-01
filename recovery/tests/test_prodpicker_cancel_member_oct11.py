@@ -6,7 +6,7 @@ import shutil
 import subprocess
 
 import pytest
-from test_prodpicker_behavior import extract_function
+from test_prodpicker_behavior import extract_function,actual_list_fixture
 from test_prodpicker_display_id_oct11 import assert_mapping_continuity
 
 ROOT=Path(__file__).resolve().parents[2]
@@ -78,12 +78,14 @@ def test_actual_click_and_getter_preserve_caption_word_read(tmp_path,compiler_na
     compiler=shutil.which(compiler_name)
     if not compiler:pytest.skip('host compiler unavailable')
     body=extract_function((ROOT/'src/prodpicker.cpp').read_text(),'void ProdPicker::on_right_click(int x, int y)')
+    before=body
     getter=extract_function((ROOT/'src/pulldown.cpp').read_text(),'int PullDown::get_selected()')
     word=extract_function((ROOT/'src/graphicwin.cpp').read_text(),'uint32_t GraphicWin::field_A0C_value() const')
     if damage=='skip_cancel':body=body.replace('if (selectedItem < 0x40)','if (selectedItem >= 0 && selectedItem < 0x40)')
     elif damage=='array_cancel':body=body.replace('menu.field_A0C_value()','static_cast<uint32_t>(menu.item_id(-1))')
     elif damage=='wrong_word':body=body.replace('menu.field_A0C_value()','0xffffffffU')
     elif damage=='signed_subtract':body=body.replace('switch (action - 1U)','switch (static_cast<int32_t>(action) - 1)')
+    assert not damage or body != before
     harness=r'''
 #include <cassert>
 #include <cstdint>
@@ -108,10 +110,7 @@ struct PullDown:GraphicWin {
  int get_selected();
  int item_id(int i){++id_reads;assert(i>=0 && i<64);return items_[i].id;}
 };
-struct Payload{uint32_t field_8_=0x20;};
-typedef Payload StringStructPayload;
-struct List{int entry_count_=1;Payload value;void seek_pos(int){}
- Payload *current_entry(){return &value;}int current_id(){return 3;}};
+LIST_NODES
 struct Proto{uint8_t weapon_id=0,obsolete_factions=0xff;int flags=1;}VehPrototypes[4];
 struct WeaponRecord{int offense_rating=1;}Weapon[1];
 struct Base{int faction_id_current=1;}base,*BaseCurrent=&base;
@@ -119,7 +118,7 @@ const int MaxVehProtoNum=4,PROTO_ACTIVE=1;int IsMultiplayerNet=0;
 char *label_get(int){static char label[2];return label;}
 void synch_proto(int id){assert(id==3);++synchs;}
 struct ProdPicker {
- int field_A774_=0,field_B68_=0;List prod_a_;
+ int field_A774_=0,field_B68_=0;StringList prod_a_;
  void on_left_click(int,int){}void client_to_screen(int*,int*){}
  void calculate(){++calcs;}void redraw(){++redraws;}
  void on_button_clicked(int button){buttons=button;}
@@ -133,7 +132,7 @@ void check(int slot,uint32_t word,int action,bool disable){
  id_reads=word_reads=calcs=redraws=synchs=0;buttons=99;
  for(auto &proto:VehPrototypes){proto.obsolete_factions=0xff;proto.flags=1;}
  VehPrototypes[2].flags=0;
- ProdPicker p;p.on_right_click(11,22);
+ ProdPicker p;p.prod_a_.node.id=3;p.on_right_click(11,22);
  bool cancel=slot==-1 || (slot>=0 && slot<64 && disable);
  assert(word_reads==int(cancel) && id_reads==int(!cancel && slot<64));
  uint32_t native=cancel?word:slot<64?uint32_t(action):0xffffffffU;
@@ -160,7 +159,7 @@ int main(){
 }
 '''
     exe=tmp_path/'actual'
-    built=subprocess.run([compiler,'-std=c++17','-O2','-fsanitize=undefined','-fno-sanitize-recover=all','-x','c++','-','-o',str(exe)],input=harness+word+getter+body+cases,text=True,capture_output=True)
+    built=subprocess.run([compiler,'-std=c++17','-O2','-fsanitize=undefined','-fno-sanitize-recover=all','-x','c++','-','-o',str(exe)],input=harness.replace('LIST_NODES',actual_list_fixture())+word+getter+body+cases,text=True,capture_output=True)
     assert built.returncode==0,built.stderr
     result=subprocess.run([str(exe)],cwd=tmp_path,capture_output=True,preexec_fn=lambda:resource.setrlimit(resource.RLIMIT_CORE,(0,0)))
     assert (result.returncode==0)==(not damage),result.stderr

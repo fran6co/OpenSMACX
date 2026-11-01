@@ -15,7 +15,7 @@ def test_actual_name_table_and_damage(tmp_path, compiler_name):
     declarations = header[header.index("struct NameTableEntry {"):header.index("static_assert(sizeof(NameTableEntry)")]
     source = (ROOT / "src/name_table.cpp").read_text()
     patterns = [r"NameTableEntry \*NameTableEntry::initialize\(\)",
-        r"NameTable \*NameTable::initialize\(\)", r"int NameTable::clear\(\)",
+        r"NameTable \*NameTable::initialize\(\)", r"void NameTable::clear\(\)",
         r"unsigned int NameTable::remove_range\([^)]*\)",
         r"void NameTable::install\([^)]*\)", r"void NameTable::set_name\([^)]*\)",
         r"void NameTable::rewrite_directory\([^)]*\)",

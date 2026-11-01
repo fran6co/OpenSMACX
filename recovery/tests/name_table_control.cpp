@@ -61,19 +61,19 @@ static void ordinary() {
     assert(table.get_name()==table.name_);
     before=deletion_count;table.set_name(second_name);assert(deletion_count==before+1);
     assert(std::strcmp(table.name_,second_name)==0);
-    assert(table.clear()==0);assert(table.name_==0);empty(table,0,128);
+    table.clear();assert(table.name_==0);empty(table,0,128);
 }
 static void clear_and_endpoints() {
     NameTable table;table.initialize();
     NameTableEntry first=entry(0,1,"first"),last=entry(120,127,"last");
     table.install(&first);table.install(&last);int before=deletion_count;
-    assert(table.clear()==0);assert(deletion_count==before+2);empty(table,0,128);
+    table.clear();assert(deletion_count==before+2);empty(table,0,128);
     NameTableEntry overflow=entry(0,~0u,"wrap");
     assert(table.remove_range(&overflow)==0);empty(table,0,128);
     NameTableEntry singleton=entry(127,127,"one");table.install(&singleton);
     assert(table.remove_range(&singleton)==128);empty(table,0,128);
     table.install(&singleton);before=deletion_count;
-    assert(table.clear()==0);assert(deletion_count==before+1);empty(table,0,128);
+    table.clear();assert(deletion_count==before+1);empty(table,0,128);
 }
 static void displaced_range_and_original_skip() {
     NameTable table;table.initialize();
@@ -88,7 +88,7 @@ static void displaced_range_and_original_skip() {
     for(unsigned i=3;i<=6;++i)assert(table.slots_[i]==installed);
     assert(installed->low_index_==3&&installed->high_index_==6&&installed->status_==3);
     assert(std::strcmp(installed->name_,"new")==0);
-    assert(table.clear()==0);empty(table,0,128);
+    table.clear();empty(table,0,128);
     ::operator delete(skipped); // Fixture cleanup of the original's omitted free.
     NameTableEntry reversed=entry(9,7,"reversed");before=allocation_count;
     table.install(&reversed);empty(table,0,128);

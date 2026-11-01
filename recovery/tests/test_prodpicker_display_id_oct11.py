@@ -9,7 +9,7 @@ import subprocess
 
 import pytest
 from match_recovery.source import read_text
-from test_prodpicker_behavior import extract_function,calculate_source
+from test_prodpicker_behavior import extract_function,calculate_source,actual_list_fixture
 
 ROOT=Path(__file__).resolve().parents[2]
 BASE='5acbd78b80262c7b99c49fa9dbefd4adbec949ec'
@@ -130,16 +130,18 @@ def draw_body():
 
 def classification():
     body=draw_body()
-    return body[body.index('    uint32_t displayBits ='):body.index('    StringStructPayload *name =')]
+    return body[body.index('    uint32_t displayBits ='):body.index('    StringTemp[0] = 0;')]
 
 
 @pytest.mark.parametrize('compiler_name',['g++','clang++'])
 @pytest.mark.parametrize('damage',['','omit_negation','wrong_flag','signed_negation'])
 def test_actual_classification_consumes_actual_calculate_rows_and_wraps(tmp_path,compiler_name,damage):
     fragment=classification()
+    before=fragment
     if damage=='omit_negation':fragment=fragment.replace('displayBits = 0U - displayBits;','displayBits = displayBits;')
     elif damage=='wrong_flag':fragment=fragment.replace('itemFlags & 0x20','itemFlags & 0x10')
     elif damage=='signed_negation':fragment=fragment.replace('0U - displayBits','static_cast<uint32_t>(-productionId)')
+    assert not damage or fragment != before
     helper='int display_id(int productionId,uint32_t itemFlags){\n'+fragment+'return displayId;\n}\n'
     source=calculate_source()
     source=source.replace('int main() {',helper+'int main() {',1)
@@ -161,8 +163,10 @@ def test_actual_classification_consumes_actual_calculate_rows_and_wraps(tmp_path
 @pytest.mark.parametrize('damage',['','omit_negation','wrong_flag'])
 def test_actual_complete_draw_method_selects_facility_project_or_vehicle(tmp_path,compiler_name,damage):
     body=draw_body()
+    before=body
     if damage=='omit_negation':body=body.replace('displayBits = 0U - displayBits;','displayBits = displayBits;')
     elif damage=='wrong_flag':body=body.replace('itemFlags & 0x20','itemFlags & 0x10')
+    assert not damage or body != before
     harness=r'''
 #include <cassert>
 #include <cstdint>
@@ -172,12 +176,7 @@ def test_actual_complete_draw_method_selects_facility_project_or_vehicle(tmp_pat
 struct RECT{int left,top,right,bottom;};
 struct BoxSpriteParams{int edge1_;}InterfaceBoxStyles[1];
 struct Font{int unk_1_;int line_advance(){return 5;}};
-struct StringStructPayload{char *text;uint32_t field_8_;};
-struct StringList {
- int entry_count_=1,id=0;void *head_=nullptr;StringStructPayload payload;
- void seek_pos(int i){assert(i==0);}int current_id(){return id;}
- StringStructPayload *current_entry(){return &payload;}
-};
+LIST_NODES
 int sprite_draws,vehicle_draws,domain,icon_index,fake_argument,render_calls,cost_calls;
 struct Sprite{
  int family,index;int transparent_index(){return 0;}int width(){return 11;}
@@ -214,10 +213,10 @@ struct ProdPicker {
     cases=r'''
 void check(int id,uint32_t flags){
  ProdPicker p;char name[]="ROW";char cost[]="COST";
- p.prod_a_.id=id;p.prod_a_.payload={name,flags};
- p.prod_c_.payload={cost,0};p.prod_b_.payload={cost,0};
+ p.prod_a_.node.id=id;p.prod_a_.value={name,flags};
+ p.prod_c_.value={cost,0};p.prod_b_.value={cost,0};
  sprite_draws=vehicle_draws=render_calls=cost_calls=0;fake_argument=-999;
- p.draw_item(0,1);assert(p.prod_a_.id==id && p.prod_a_.payload.field_8_==flags);
+ p.draw_item(0,1);assert(p.prod_a_.node.id==id && p.prod_a_.value.field_8_==flags);
  if(!(flags&0x20)){
   assert(sprite_draws==1 && vehicle_draws==0 && render_calls==0 && cost_calls==0);
   assert(domain==(id<0x46?0:1) && icon_index==(id<0x46?id:id-0x46));
@@ -233,4 +232,4 @@ int main(){
  check(7,0x20);check(0,0x20);
 }
 '''
-    run(tmp_path,compiler_name,harness+body+cases,damage)
+    run(tmp_path,compiler_name,harness.replace('LIST_NODES',actual_list_fixture())+body+cases,damage)

@@ -218,12 +218,10 @@ AlphaSave::AlphaSave() {
 }
 
 // ORIGINAL: 0x00408170 ??1AlphaSave@@QAE@XZ 0x00408170-0x00408383;0x00650D10-0x00650E20
+// body src/alphasave.h
 // symbol    ??1AlphaSave@@UAE@XZ
 // TRIED: plain reinterpret_cast pointer-offset calls into close()/dtors in disasm order; no local subobjects so no SEH frame is generated (diverges at #1, the missing try/finally prologue)
-AlphaSave::~AlphaSave() {
-    // The owner closes its own window before member destruction begins.
-    GraphicWin::close();
-}
+
 
 // ORIGINAL: 0x00407910 ?close@AlphaSave@@QAEXXZ 0x00407910-0x00407915 BYTE_EXACT
 // LEVER: thiscall shim - a synthetic GraphicWin class exposes close() as a member so reinterpret_cast<GraphicWin*>(this)->close() folds into the original's bare 5-byte jmp (same shim shape as 0x004210F0)

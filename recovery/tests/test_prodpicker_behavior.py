@@ -31,6 +31,53 @@ def extract_function(source: str, signature: str) -> str:
     raise AssertionError(f"unterminated production function: {signature}")
 
 
+def actual_list_fixture():
+    """Typed host projection; actual getters/navigation, not target ABI proof."""
+    header = (ROOT / "src/stringstruct.h").read_text()
+    unit = (ROOT / "src/stringstruct.cpp").read_text()
+    methods = "\n".join((
+        extract_function(header, "inline StringStructPayload *StringStructEntry::string_payload()"),
+        extract_function(unit, "int StringStruct::current_id()"),
+        extract_function(unit, "StringStructPayload *StringStruct::current_entry()"),
+        extract_function(header, "MEASURED inline int StringStruct::seek_pos(int a1)")
+            .replace("MEASURED inline", "inline", 1),
+    ))
+    return r'''
+#include <cstdlib>
+struct ListPayloadBase {};
+struct StringStructPayload : ListPayloadBase {
+    char *text;
+    uint32_t field_8_;
+    StringStructPayload(char *s = nullptr, uint32_t flags = 0x20)
+        : text(s), field_8_(flags) {}
+};
+struct StringStructEntry {
+    int id = 0;
+    ListPayloadBase *payload = nullptr;
+    StringStructEntry *next = nullptr, *previous = nullptr;
+    StringStructPayload *string_payload();
+};
+typedef int (*AbsFnT)(int);
+struct StringStruct {
+    StringStructEntry *head_ = nullptr, *current_ = nullptr;
+    int entry_count_ = 1, current_position_ = 0;
+    int current_id();
+    StringStructPayload *current_entry();
+    int seek_pos(int a1);
+};
+METHODS
+struct StringList : StringStruct {
+    StringStructPayload value;
+    StringStructEntry node;
+    StringList() {
+        node.payload = &value;
+        node.next = node.previous = &node;
+        head_ = current_ = &node;
+    }
+};
+'''.replace("METHODS", methods)
+
+
 def compile_and_run(tmp_path, body: str, *, damaged: bool = False,
                     damaged_right_edge: bool = False,
                     damaged_signed_division: bool = False):
@@ -197,15 +244,7 @@ int IsMultiplayerNet = 0;
 int selectedMenuRow = 2;
 char *label_get(int value) { static char label[2]; label[0] = char(value); label[1] = 0; return label; }
 void synch_proto(int id) { events.push_back(100 + id); }
-struct Entry { uint32_t field_8_ = 0x20; } entry;
-using StringStructPayload = Entry;
-struct StringList {
-    int entry_count_ = 1;
-    int current = 0;
-    void seek_pos(int value) { current = value; }
-    Entry *current_entry() { return &entry; }
-    int current_id() { return 0; }
-};
+LIST_NODES
 struct PullDown {
     std::vector<int> ids;
     void init() { }
@@ -247,7 +286,7 @@ int main() {
 
 def test_right_click_context_actions_preserve_prototype_filters(tmp_path):
     body = extract_function(UNIT.read_text(), "void ProdPicker::on_right_click(int x, int y)")
-    fixture = RIGHT_CLICK_FIXTURE.replace("BODY", body)
+    fixture = RIGHT_CLICK_FIXTURE.replace("BODY", body).replace("LIST_NODES", actual_list_fixture())
     compiler = shutil.which("g++")
     if not compiler:
         pytest.skip("host g++ compiler unavailable")
@@ -670,3 +709,333 @@ def test_exec_modal_tail_uses_correct_parent_and_suppression_order(tmp_path):
 def test_exec_modal_parent_damage_control_rejects_reversed_parent(tmp_path):
     result = run_modal_tail(tmp_path, damaged_parent=True)
     assert result.returncode != 0
+
+
+def picker_list_read_fragment(kind):
+    source = UNIT.read_text()
+    if kind == "draw":
+        body = extract_function(source, "void ProdPicker::draw_item(int item, int update)")
+        return body[body.index("    int productionId = 0;"):body.index("    // Native 0x492A48")]
+    if kind == "click":
+        body = extract_function(source, "void ProdPicker::on_right_click(int x, int y)")
+        return body[body.index("    int productionId = -1;"):body.index("    PullDown menu;")]
+    body = extract_function(source, "int ProdPicker::exec(")
+    return body[body.index("    int index = field_A774_;"):body.rfind("}")]
+
+
+def list_read_projection(kind, damage=""):
+    fragment = picker_list_read_fragment(kind)
+    before = fragment
+    if damage == "wrong_id":
+        fragment = fragment.replace("prod_a_.current_->id", "(prod_a_.current_->id + 1)", 1)
+    elif damage == "wrong_flags":
+        fragment = fragment.replace("->field_8_ : 0", "->field_8_ ^ 0x20U : 0", 1)
+    elif damage == "payload_guard":
+        fragment = fragment.replace(
+            "prod_a_.current_->string_payload()->field_8_ : 0",
+            "(prod_a_.current_->string_payload() != 0 ? "
+            "prod_a_.current_->string_payload()->field_8_ : 0) : 0", 1)
+    assert not damage or fragment != before
+    if kind == "draw":
+        declaration = "Row read() {\n" + fragment + "return {productionId, itemFlags};\n}"
+        invocation = "Row value = picker.read(); observed_id = value.id; observed_flags = value.flags; return 0;"
+        assertion = "Row result = picker.read(); assert(result.id == id && result.flags == flags);"
+        empty = "Row result = picker.read(); assert(result.id == 0 && result.flags == 0);"
+    elif kind == "click":
+        declaration = "int read() {\n" + fragment + "return productionId;\n}"
+        invocation = "observed_id = picker.read(); return 0;"
+        assertion = "assert(picker.read() == ((flags & 0x20U) ? id : -1));"
+        empty = "assert(picker.read() == -1);"
+    else:
+        declaration = "int read() {\n" + fragment + "\n}"
+        invocation = "observed_id = picker.read(); return 0;"
+        assertion = "assert(picker.read() == ((flags & 0x20U) || id == INT_MIN ? id : -id));"
+        empty = "assert(picker.read() == 0);"
+    return (r'''
+#include <cassert>
+#include <climits>
+#include <cstdint>
+#include <cstdlib>
+#include <initializer_list>
+LIST_NODES
+struct Row { int id; uint32_t flags; };
+volatile int observed_id;
+volatile uint32_t observed_flags;
+struct Projection {
+    StringList prod_a_;
+    int field_A774_ = 1, field_A778_ = 0;
+    READ
+};
+int main(int argc, char **argv) {
+    Projection picker;
+    StringStructPayload selected;
+    StringStructEntry current;
+    current.payload = &selected;
+    current.previous = &picker.prod_a_.node;
+    current.next = &picker.prod_a_.node;
+    picker.prod_a_.node.next = &current;
+    picker.prod_a_.node.previous = &current;
+    picker.prod_a_.node.id = 91;
+    picker.prod_a_.node.payload = &picker.prod_a_.value;
+    picker.prod_a_.entry_count_ = 2;
+    picker.prod_a_.current_ = &current;
+    if (argc != 1) {
+        // These are deliberate invalid projections. UBSan's diagnosis is
+        // tested, not asserted to be portable C++ or target fault proof.
+        picker.field_A774_ = INVALID_INDEX;
+        current.id = 7;
+        if (atoi(argv[1]) == 1) current.payload = nullptr;
+        else {
+            picker.prod_a_.current_ = nullptr;
+            picker.prod_a_.node.next = nullptr;
+        }
+        INVOKE
+    }
+    for (int id : {0, 3, -7, INT_MIN})
+        for (uint32_t flags : {0U, 0x10U, 0x20U, 0x30U}) {
+            current.id = id;
+            selected.field_8_ = flags;
+            CHECK
+            assert(current.id == id && selected.field_8_ == flags);
+            assert(picker.prod_a_.node.id == 91);
+        }
+    picker.prod_a_.head_ = nullptr;
+    picker.prod_a_.current_ = &current;
+    picker.field_A774_ = 0;
+    EMPTY
+    return 0;
+}
+'''.replace("LIST_NODES", actual_list_fixture()).replace("READ", declaration)
+        .replace("INVOKE", invocation).replace("CHECK", assertion).replace("EMPTY", empty)
+        .replace("INVALID_INDEX", "1" if kind == "click" else "3"))
+
+
+def compile_list_projection(tmp_path, compiler_name, text):
+    compiler = shutil.which(compiler_name)
+    if not compiler:
+        pytest.skip("host compiler unavailable")
+    exe = tmp_path / "list-read"
+    built = subprocess.run([compiler, "-std=c++17", "-O2", "-fsanitize=undefined",
+                            "-fno-sanitize-recover=all", "-x", "c++", "-", "-o", str(exe)],
+                           input=text, text=True, capture_output=True)
+    assert built.returncode == 0, built.stderr
+    return exe
+
+
+@pytest.mark.parametrize("kind", ["draw", "click", "exec"])
+@pytest.mark.parametrize("compiler_name", ["g++", "clang++"])
+@pytest.mark.parametrize("damage", ["", "wrong_id", "wrong_flags"])
+def test_actual_picker_reads_typed_current_nodes(tmp_path, kind, compiler_name, damage):
+    import resource
+    exe = compile_list_projection(tmp_path, compiler_name, list_read_projection(kind, damage))
+    result = subprocess.run([str(exe)], text=True, capture_output=True,
+                            preexec_fn=lambda: resource.setrlimit(resource.RLIMIT_CORE, (0, 0)))
+    if damage:
+        assert result.returncode != 0 and "Assertion" in result.stderr, result.stderr
+    else:
+        assert result.returncode == 0, result.stderr
+        for bad in (1, 2):
+            invalid = subprocess.run([str(exe), str(bad)], text=True, capture_output=True)
+            assert invalid.returncode != 0 and "null pointer" in invalid.stderr, invalid.stderr
+
+
+@pytest.mark.parametrize("kind", ["draw", "click", "exec"])
+@pytest.mark.parametrize("compiler_name", ["g++", "clang++"])
+def test_payload_null_guard_damage_changes_original_invalid_read(tmp_path, kind, compiler_name):
+    # The positive source retains a head guard rather than normalizing a null
+    # payload. Native pinned x86 reads supply target evidence; sanitizer
+    # diagnostics only qualify this deliberately invalid host projection.
+    text = list_read_projection(kind)
+    mutant = list_read_projection(kind, "payload_guard")
+    baseline = compile_list_projection(tmp_path, compiler_name, text)
+    rejected = subprocess.run([str(baseline), "1"], text=True, capture_output=True)
+    assert rejected.returncode != 0 and "null pointer" in rejected.stderr, rejected.stderr
+    damaged = compile_list_projection(tmp_path, compiler_name, mutant)
+    accepted = subprocess.run([str(damaged), "1"], text=True, capture_output=True)
+    assert accepted.returncode == 0, accepted.stderr
+
+
+def draw_text_read_projection(damage=""):
+    body = extract_function(UNIT.read_text(), "void ProdPicker::draw_item(int item, int update)")
+    phase = body[body.index("    StringTemp[0] = 0;"):body.index("    int hasPrototypeCost = 0;")]
+    before = phase
+    name_read = """    char *nameText = prod_a_.head_ != 0
+        ? prod_a_.current_->string_payload()->text : 0;
+"""
+    cost_reload = """    costText = prod_c_.head_ != 0
+        ? prod_c_.current_->string_payload()->text : 0;
+"""
+    if damage == "cached_name":
+        assert phase.count(name_read) == 1
+        phase = name_read + phase.replace(name_read, "", 1)
+    elif damage == "cached_cost":
+        assert phase.count(cost_reload) == 1
+        phase = phase.replace(cost_reload, "", 1)
+    elif damage == "reread_turns":
+        phase = phase.replace(
+            "write_cent_l(turnsText, &turnsArea, static_cast<int>(strlen(turnsText)));",
+            "const int length = static_cast<int>(strlen(turnsText));\n"
+            "            write_cent_l(turns->text, &turnsArea, length);", 1)
+    elif damage == "remove_real_getter":
+        phase = phase.replace("prod_b_.current_entry()", "prod_b_.current_->string_payload()", 1)
+    elif damage == "guard_turns_payload":
+        phase = phase.replace("char *turnsText = turns->text;",
+                              "char *turnsText = turns ? turns->text : 0;", 1)
+    assert not damage or phase != before
+    nodes = actual_list_fixture().replace(
+        "StringStructPayload *StringStruct::current_entry() {",
+        "StringStructPayload *StringStruct::current_entry() { ++getter_calls;", 1)
+    return (r'''
+#include <cassert>
+#include <cstdint>
+#include <cstdlib>
+#include <cstring>
+int getter_calls, mode, wrap_calls, length_calls, write_calls;
+LIST_NODES
+struct RECT { int left, top, right, bottom; };
+struct Font { int unk_1_ = 0; int line_advance() { return 5; } };
+char StringTemp[2], stale[]="stale", name_ready[]="name", cost_height[]="height";
+char cost_draw[]="draw", turns_ready[]="old", turns_after[]="new";
+int mandate_color(int);
+size_t tracked_strlen(const char *);
+#define strlen tracked_strlen
+struct Projection {
+    StringList prod_a_, prod_b_, prod_c_;
+    Font font1_, font3_;
+    void set_text_color(int,int,int,int) {}
+    void set_font(Font *font,int,int,int) {
+        if (font == &font1_) {
+            prod_a_.value.text = name_ready;
+            if (mode == 1) prod_a_.head_ = nullptr;
+            if (mode == 5) prod_a_.node.payload = nullptr;
+        } else {
+            assert(font == &font3_);
+            prod_c_.value.text = cost_height;
+            if (mode == 6) prod_c_.node.payload = nullptr;
+        }
+    }
+    void wrap_cent(char *text, RECT *) {
+        ++wrap_calls;
+        if (wrap_calls == 1) {
+            assert(text == (mode == 1 ? nullptr : name_ready));
+        } else {
+            assert(wrap_calls == 2);
+            assert(text == (mode == 2 ? nullptr : cost_draw));
+            prod_b_.value.text = turns_ready;
+            if (mode == 3) prod_b_.head_ = nullptr;
+            if (mode == 4) prod_b_.value.text = nullptr;
+            if (mode == 8) prod_b_.node.payload = nullptr;
+            if (mode == 9) prod_b_.current_ = nullptr;
+        }
+    }
+    int wrap_height(char *text, int) {
+        assert(text == cost_height);
+        prod_c_.value.text = cost_draw;
+        if (mode == 2) prod_c_.head_ = nullptr;
+        if (mode == 7) prod_c_.node.payload = nullptr;
+        return 6;
+    }
+    void write_cent_l(char *text,RECT *,int length) {
+        ++write_calls;
+        assert(text == turns_ready && length == 3);
+    }
+    void draw() {
+        uint32_t itemFlags = 0x20;
+        RECT cell = {1,2,80,70};
+PHASE
+    }
+};
+Projection *active;
+int mandate_color(int bits) {
+    active->prod_a_.value.text = stale;
+    active->prod_c_.value.text = stale;
+    return bits;
+}
+size_t tracked_strlen(const char *text) {
+    ++length_calls;
+    assert(text == turns_ready);
+    // A synthetic query-boundary mutation discriminates cached text from a
+    // second payload read. It does not assert real strlen mutates the list.
+    active->prod_b_.value.text = turns_after;
+    return 3;
+}
+int main(int argc,char **argv) {
+    mode = argc > 1 ? atoi(argv[1]) : 0;
+    Projection picker;active = &picker;
+    picker.prod_a_.value.text = picker.prod_b_.value.text = picker.prod_c_.value.text = stale;
+    picker.draw();
+    assert(wrap_calls == 2 && getter_calls == (mode == 3 ? 0 : 1));
+    assert(length_calls == (mode == 3 || mode == 4 || mode == 8 ? 0 : 1));
+    assert(write_calls == length_calls);
+}
+'''.replace("LIST_NODES", nodes).replace("PHASE", phase))
+
+
+@pytest.mark.parametrize("compiler_name", ["g++", "clang++"])
+def test_actual_draw_text_reads_follow_query_boundaries(tmp_path, compiler_name):
+    exe = compile_list_projection(tmp_path, compiler_name, draw_text_read_projection())
+    for mode in range(5):
+        observed = subprocess.run([str(exe), str(mode)], capture_output=True, text=True)
+        assert observed.returncode == 0, observed.stderr
+    for mode in range(5, 10):
+        observed = subprocess.run([str(exe), str(mode)], capture_output=True, text=True)
+        assert observed.returncode != 0 and "null pointer" in observed.stderr, observed.stderr
+
+
+@pytest.mark.parametrize("compiler_name", ["g++", "clang++"])
+@pytest.mark.parametrize("damage", ["cached_name", "cached_cost", "reread_turns", "remove_real_getter"])
+def test_draw_text_read_phase_damage_controls(tmp_path, compiler_name, damage):
+    import resource
+    exe = compile_list_projection(tmp_path, compiler_name, draw_text_read_projection(damage))
+    observed = subprocess.run([str(exe)], capture_output=True, text=True,
+                              preexec_fn=lambda: resource.setrlimit(resource.RLIMIT_CORE, (0, 0)))
+    assert observed.returncode != 0 and "Assertion" in observed.stderr, observed.stderr
+
+
+@pytest.mark.parametrize("compiler_name", ["g++", "clang++"])
+def test_turns_payload_guard_damage_normalizes_original_invalid_read(tmp_path, compiler_name):
+    baseline = compile_list_projection(tmp_path, compiler_name, draw_text_read_projection())
+    rejected = subprocess.run([str(baseline), "8"], capture_output=True, text=True)
+    assert rejected.returncode != 0 and "null pointer" in rejected.stderr, rejected.stderr
+    mutant = compile_list_projection(tmp_path, compiler_name, draw_text_read_projection("guard_turns_payload"))
+    accepted = subprocess.run([str(mutant), "8"], capture_output=True, text=True)
+    assert accepted.returncode == 0, accepted.stderr
+
+
+def test_pinned_draw_text_load_phases_and_real_turns_getter():
+    from capstone import Cs, CS_ARCH_X86, CS_MODE_32
+    from match_recovery.pe_coff import PeImage
+    from match_recovery.model import Span
+    image_path = ROOT / '.opensmacx/game/terranx_original.exe'
+    if not image_path.is_file():
+        pytest.skip('pinned image unavailable')
+    pin = '01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf'
+    image = PeImage(image_path.read_bytes(), pin)
+    instructions = {i.address: (i.mnemonic, i.op_str)
+                    for i in Cs(CS_ARCH_X86, CS_MODE_32).disasm(
+                        image.read(Span(0x4927C0, 0x492F9F)), 0x4927C0)}
+    expected = {
+        0x492A5F: ('call', '0x50e820'),
+        0x492AD6: ('mov', 'eax, dword ptr [esi + 0xa788]'),
+        0x492AE0: ('mov', 'edx, dword ptr [esi + 0xa78c]'),
+        0x492AE6: ('mov', 'eax, dword ptr [edx + 8]'),
+        0x492AE9: ('mov', 'eax, dword ptr [eax + 4]'),
+        0x492AF7: ('call', '0x5ddab0'),
+        0x492B27: ('call', '0x5dac70'),
+        0x492B41: ('mov', 'edx, dword ptr [esi + 0xa7e8]'),
+        0x492B57: ('mov', 'edx, dword ptr [esi + 0xa7ec]'),
+        0x492B60: ('mov', 'edx, dword ptr [edx + 4]'),
+        0x492B6D: ('call', '0x5dc360'),
+        0x492B77: ('mov', 'eax, dword ptr [esi + 0xa7e8]'),
+        0x492B84: ('mov', 'edx, dword ptr [esi + 0xa7ec]'),
+        0x492B8D: ('mov', 'eax, dword ptr [eax + 4]'),
+        0x492B9B: ('call', '0x5ddab0'),
+        0x492BD8: ('call', '0x402530'),
+        0x492BDD: ('mov', 'eax, dword ptr [eax + 4]'),
+        0x492BE0: ('test', 'eax, eax'),
+        0x492BE2: ('mov', 'dword ptr [ebp - 0x20], eax'),
+        0x492BE8: ('call', '0x6453e0'),
+        0x492BED: ('mov', 'ecx, dword ptr [ebp - 0x20]'),
+    }
+    for address, value in expected.items():
+        assert instructions[address] == value

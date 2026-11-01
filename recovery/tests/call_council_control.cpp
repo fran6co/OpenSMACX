@@ -32,6 +32,15 @@ static int vote_values[8];
 static int wants_values[8][11];
 static std::vector<std::string> displayed_items;
 static std::vector<std::string> popped_messages;
+static int picture_dimensions_result;
+static int picture_init_result;
+static int picture_init_calls;
+static int picture_publications;
+static int sprite_constructions;
+static uintptr_t owned_picture_address;
+static uintptr_t initialized_picture_address;
+static uintptr_t selected_picture_address;
+
 
 static const int MaxPlayerNum = 8;
 static const int MaxProposalNum = 11;
@@ -77,10 +86,31 @@ struct Scroll {
     ~Scroll() { events.push_back("scroll.dtor"); close(); }
 };
 static unsigned int &LockEnableMask = GameDataStateStorage.fields_.lock_masks_.enable_mask_;
+struct Sprite {
+    Sprite() { ++sprite_constructions; }
+    int init(char *, int, int) {
+        events.push_back("sprite.init");
+        ++picture_init_calls;
+        initialized_picture_address = reinterpret_cast<uintptr_t>(this);
+        return picture_init_result;
+    }
+    ~Sprite() { events.push_back("sprite.dtor"); }
+};
 struct Popup {
+    // The picture belongs to BasePop, after the Popup-owned Scroll lifetime.
+    // These doubles project only those two relevant member destructions.
+    Sprite picture_;
     Scroll scroll_;
     Dialogs dialogs_;
-    Popup() { events.push_back("popup.ctor"); }
+    Popup() {
+        owned_picture_address = reinterpret_cast<uintptr_t>(&picture_);
+        events.push_back("popup.ctor");
+    }
+    Sprite &owned_picture() { return picture_; }
+    void select_owned_picture() {
+        ++picture_publications;
+        selected_picture_address = reinterpret_cast<uintptr_t>(&picture_);
+    }
     ~Popup() { events.push_back("popup.dtor.begin"); close(); events.push_back("popup.dtor.end"); }
     void close() { scroll_.close(); events.push_back("popup.baseclose"); }
     void start(char *, const char *title, int, char *, int, void *) {
@@ -95,11 +125,7 @@ struct Popup {
         return popup_selection;
     }
 };
-struct Sprite {
-    int init(char *, int, int) { events.push_back("sprite.init"); return 0; }
-    ~Sprite() { events.push_back("sprite.dtor"); }
-};
-struct Buffer { static int get_pcx_dimensions(const char *, int *w, int *h) { *w=32; *h=32; events.push_back("dimensions"); return 0; } };
+struct Buffer { static int get_pcx_dimensions(const char *, int *w, int *h) { *w=32; *h=32; events.push_back("dimensions"); return picture_dimensions_result; } };
 struct Strings {
     char *get(const char *text) {
         const int id = static_cast<int>(reinterpret_cast<intptr_t>(text));
@@ -184,6 +210,9 @@ static void reset_state() {
     council_exit_turn = 1; redraw_pending_after_wait = 0;
     popup_exec_mask_after = -1;
     calls_to_can_call_council = 0;
+    picture_dimensions_result = picture_init_result = 0;
+    picture_init_calls = picture_publications = sprite_constructions = 0;
+    owned_picture_address = initialized_picture_address = selected_picture_address = 0;
     std::memset(&GameDataStateStorage, 0, sizeof GameDataStateStorage);
     std::memset(Players, 0, sizeof Players);
     std::memset(PlayersData, 0, sizeof PlayersData);
@@ -208,13 +237,14 @@ static void reset_state() {
 
 static void assert_normal_popup_teardown() {
     assert(events.size() >= 7);
-    assert(events[events.size()-7] == "sprite.dtor");
-    assert(events[events.size()-6] == "popup.dtor.begin");
-    assert(events[events.size()-5] == "scroll.close");
-    assert(events[events.size()-4] == "popup.baseclose");
-    assert(events[events.size()-3] == "popup.dtor.end");
-    assert(events[events.size()-2] == "scroll.dtor");
-    assert(events[events.size()-1] == "scroll.close");
+    assert(events[events.size()-7] == "popup.dtor.begin");
+    assert(events[events.size()-6] == "scroll.close");
+    assert(events[events.size()-5] == "popup.baseclose");
+    assert(events[events.size()-4] == "popup.dtor.end");
+    assert(events[events.size()-3] == "scroll.dtor");
+    assert(events[events.size()-2] == "scroll.close");
+    assert(events[events.size()-1] == "sprite.dtor");
+    assert(sprite_constructions == 1);
     int scroll_closes = 0;
     for (size_t i = 0; i < events.size(); ++i)
         if (events[i] == "scroll.close") ++scroll_closes;
@@ -363,7 +393,37 @@ static void test_human_byte_does_not_include_adjacent_alive_byte() {
     assert(calls_to_can_call_council == 1);
 }
 
+static void test_owned_picture_identity_and_failure_gates() {
+    for (int failure = 0; failure < 3; ++failure) {
+        reset_state();
+        GovernorFaction = 7;
+        LockEnableMask = (1u << 1) | (0xffu << 8);
+        vote_values[1] = 1; vote_values[2] = 3; vote_values[3] = 4;
+        picture_dimensions_result = failure == 1 ? 4 : 0;
+        picture_init_result = failure == 2 ? 4 : 0;
+        call_council(1);
+        assert(popup_items > 0 && calls_to_council == 1);
+        assert(owned_picture_address != 0);
+        if (failure == 1) {
+            assert(picture_init_calls == 0);
+            assert(initialized_picture_address == 0);
+        } else {
+            assert(picture_init_calls == 1);
+            assert(initialized_picture_address == owned_picture_address);
+        }
+        if (failure == 0) {
+            assert(picture_publications == 1);
+            assert(selected_picture_address == owned_picture_address);
+        } else {
+            assert(picture_publications == 0);
+            assert(selected_picture_address == 0);
+        }
+        assert_normal_popup_teardown();
+    }
+}
+
 int main() {
+    test_owned_picture_identity_and_failure_gates();
     test_early_guard_constructs_then_destroys();
     test_can_call_announcement_and_refusal();
     test_full_proposal_loop_and_normal_dispatch();
