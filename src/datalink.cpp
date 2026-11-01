@@ -1930,10 +1930,15 @@ Return Value: n/a
 Status: Product body; measure before granting a byte claim.
 */
 void __cdecl help_create_link(char *out, char *label, char *id) {
+// The help-link grammar uses these prefix, separator and closing tokens in order.
+// Bounds cover the literal payload, not surrounding allocation or lifetime.
+// RECOVERY_LITERAL: v1 0x00683544 0x0068354B ??_C@_06OJDK@$LINK?$DM?$AA@ 0x0044CB80
     strcat(out, "$LINK<");
     strcat(out, label);
+// RECOVERY_LITERAL: v1 0x00683540 0x00683542 ??_C@_01KPOD@?$DN?$AA@ 0x0044CB80
     strcat(out, "=");
     strcat(out, id);
+// RECOVERY_LITERAL: v1 0x0068353C 0x0068353E ??_C@_01FAFK@?$DO?$AA@ 0x0044CB80
     strcat(out, ">");
 }
 

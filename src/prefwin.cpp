@@ -271,6 +271,17 @@ PrefWin::~PrefWin() {}
 // RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/0048d840.cpp", "recovery/tasks/prefwin-owner-coverage-wave.json", "Original control parent 8578D8; ctor/destructor member order, 800-pixel branch, checkbox text-context and callback order independently reviewed."], "reason": "Recover the complete PrefWin ownership group through a genuine GraphicWin base and compiler-owned embedded control lifetimes; preserve seed identity, original spans and unresolved discoveries without granting byte claims."}
 // TRIED: full hand transcription from raw disassembly (Ghidra had only one benign unreachable-block warning and was trustworthy here). The six "BASICPREFS/ADVANCEDPREFS/AUTOMATIONPREFS/AUDIOVISUALPREFS/ BASEWARNINGS/(unconditional)/MAPPREFS" tab pages each resolve an embedded CheckBox's own vtable slot at +8 (a stored byte offset to an embedded Dialog sub-object, not a function pointer) and dispatch that Dialog's vtable slot 1/2 - confirmed against raw asm receiver setup (`lea ecx,[esi+N]` before each call), not trusted from Ghidra's frequently-dropped implicit `this`. Two VCall shims used since slot002 is nullary on one dispatch chain and takes one int on the sibling chain. First divergence is instruction #5 (prologue scheduling) - not byte-verified beyond the receiver/signature spot-checks cited above.
 void PrefWin::init() {
+  // Original preference reads use four distinct static key starts.
+  // Keep function-local storage so init and destroy do not pool identical keys.
+  // RECOVERY_OBJECT: v1 0x00686D00 _?MainVolumeInitKey@?1??init@PrefWin@@QAEXXZ@4QBDB
+  static const char MainVolumeInitKey[] = "Main Volume";
+  // RECOVERY_OBJECT: v1 0x00686D0C _?VoiceVolumeInitKey@?1??init@PrefWin@@QAEXXZ@4QBDB
+  static const char VoiceVolumeInitKey[] = "Voice Volume";
+  // RECOVERY_OBJECT: v1 0x00686D1C _?SFXVolumeInitKey@?1??init@PrefWin@@QAEXXZ@4QBDB
+  static const char SFXVolumeInitKey[] = "SFX Volume";
+  // RECOVERY_OBJECT: v1 0x00686D28 _?MusicVolumeInitKey@?1??init@PrefWin@@QAEXXZ@4QBDB
+  static const char MusicVolumeInitKey[] = "Music Volume";
+
   field_A14_ = field_A18_ = field_A1C_ = field_A5C_ = 0;
 
   const int width = PrefWinDisplayWidth + 0x4E;
@@ -375,11 +386,11 @@ void PrefWin::init() {
         PrefWinGeometryValue_8578B8, 0x50 + scroll_index, preference_window(), 0);
     scrolls[scroll_index]->set_range(0, 0x7F);
   }
-  volumeMainScroll_.set_pos(prefs_get("Main Volume", 0x7F, 0));
-  volumeVoiceScroll_.set_pos(prefs_get("Voice Volume", 0x55, 0));
-  volumeSFXScroll_.set_pos(prefs_get("SFX Volume", 0x5F, 0));
+  volumeMainScroll_.set_pos(prefs_get(MainVolumeInitKey, 0x7F, 0));
+  volumeVoiceScroll_.set_pos(prefs_get(VoiceVolumeInitKey, 0x55, 0));
+  volumeSFXScroll_.set_pos(prefs_get(SFXVolumeInitKey, 0x5F, 0));
   if (FactionMusic)
-    volumeMusicScroll_.set_pos(prefs_get("Music Volume", 0x3F, 0));
+    volumeMusicScroll_.set_pos(prefs_get(MusicVolumeInitKey, 0x3F, 0));
   else
     volumeMusicScroll_.set_pos(0);
   on_scrolling(0x50, volumeMainScroll_.position());
@@ -517,13 +528,21 @@ void PrefWin::display(int page) {
 // Superseded seed deleted; seed paths below are historical Git provenance.
 // ORIGINAL: 0x0048FDD0 ?destroy@PrefWin@@QAEXXZ 0x0048FDD0-0x0048FF51 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0048fdd0.cpp", "recovery/tasks/prefwin-owner-coverage-wave.json", "Original control parent 8578D8; ctor/destructor member order, 800-pixel branch, checkbox text-context and callback order independently reviewed."], "reason": "Recover the complete PrefWin ownership group through a genuine GraphicWin base and compiler-owned embedded control lifetimes; preserve seed identity, original spans and unresolved discoveries without granting byte claims."}
-// Pinned arguments identify these NUL-terminated keys in the original;
-// the literal spans cover their text and terminators, not surrounding storage.
-// RECOVERY_LITERAL: v1 0x00686D38 0x00686D44 ??_C@_0M@PJJL@Main?5Volume?$AA@ 0x0048FDD0
-// RECOVERY_LITERAL: v1 0x00686D44 0x00686D51 ??_C@_0N@MEMM@Voice?5Volume?$AA@ 0x0048FDD0
-// RECOVERY_LITERAL: v1 0x00686D54 0x00686D61 ??_C@_0N@FBBG@Music?5Volume?$AA@ 0x0048FDD0
-// RECOVERY_LITERAL: v1 0x00686D64 0x00686D6F ??_C@_0L@HGCM@SFX?5Volume?$AA@ 0x0048FDD0
 void PrefWin::destroy() {
+  // The save path has its own original key storage, distinct from init's.
+  // Original payloads including NUL: Main [686D38,686D44), Voice
+  // [686D44,686D51), Music [686D54,686D61), SFX [686D64,686D6F).
+  // These replace pooled-literal interpretations; enclosing allocations
+  // remain unproved.
+  // RECOVERY_OBJECT: v1 0x00686D38 _?MainVolumeDestroyKey@?1??destroy@PrefWin@@QAEXXZ@4QBDB
+  static const char MainVolumeDestroyKey[] = "Main Volume";
+  // RECOVERY_OBJECT: v1 0x00686D44 _?VoiceVolumeDestroyKey@?1??destroy@PrefWin@@QAEXXZ@4QBDB
+  static const char VoiceVolumeDestroyKey[] = "Voice Volume";
+  // RECOVERY_OBJECT: v1 0x00686D54 _?MusicVolumeDestroyKey@?1??destroy@PrefWin@@QAEXXZ@4QBDB
+  static const char MusicVolumeDestroyKey[] = "Music Volume";
+  // RECOVERY_OBJECT: v1 0x00686D64 _?SFXVolumeDestroyKey@?1??destroy@PrefWin@@QAEXXZ@4QBDB
+  static const char SFXVolumeDestroyKey[] = "SFX Volume";
+
   if (field_A5C_) {
     set_preferences();
     warningsFinal_ |= warningsPending_;
@@ -536,10 +555,10 @@ void PrefWin::destroy() {
     AlphaIniPrefs.announce = warningsFinal_;
     prefs_use();
     prefs_save(0);
-    prefs_put("Main Volume", volumeMainScroll_.position(), 0);
-    prefs_put("Voice Volume", volumeVoiceScroll_.position(), 0);
-    prefs_put("Music Volume", volumeMusicScroll_.position(), 0);
-    prefs_put("SFX Volume", volumeSFXScroll_.position(), 0);
+    prefs_put(MainVolumeDestroyKey, volumeMainScroll_.position(), 0);
+    prefs_put(VoiceVolumeDestroyKey, volumeVoiceScroll_.position(), 0);
+    prefs_put(MusicVolumeDestroyKey, volumeMusicScroll_.position(), 0);
+    prefs_put(SFXVolumeDestroyKey, volumeSFXScroll_.position(), 0);
     field_A5C_ = 0;
   }
   draw_map(1);

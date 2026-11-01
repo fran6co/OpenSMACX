@@ -147,7 +147,9 @@ Purpose: Hall-of-fame save: open hallfame.jhh for writing, set the I/O mode,
 // The pinned fopen/fclose targets are 0x00645646/0x00645598; the data at
 // 0x00684610 spells "hallfame.jhh", not the former product filename.
 int __cdecl hof_save() {
-    FILE *file = fopen("hallfame.jhh", "wb");
+    // RECOVERY_OBJECT: v1 0x00684610 _?hof_save_filename@?1??hof_save@@YAHXZ@4PADA
+    static char hof_save_filename[] = "hallfame.jhh";
+    FILE *file = fopen(hof_save_filename, "wb");
     if (file == 0) {
         return 1;
     }
@@ -180,7 +182,9 @@ Purpose: Hall-of-fame load: open hallfame.jhh for reading, clear entry-present
 */
 // Pinned data at 0x00684620/0x00684624 is "rb"/"hallfame.jhh".
 int __cdecl hof_load() {
-    FILE *f = fopen("hallfame.jhh", "rb");
+    // RECOVERY_OBJECT: v1 0x00684624 _?hof_load_filename@?1??hof_load@@YAHXZ@4PADA
+    static char hof_load_filename[] = "hallfame.jhh";
+    FILE *f = fopen(hof_load_filename, "rb");
     if (f == 0) {
         for (int group = 0; group < HallOfFameRecordCount / 5; ++group) {
             for (int rank = 0; rank < 5; ++rank) {

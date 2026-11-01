@@ -50,6 +50,9 @@ Purpose: Load a Scenario Editor undo (type: 1) or redo (type: -1) auto-save. TOD
 Return Value: n/a
 Status: Complete
 */
+// The three undo operations use distinct original static path starts even
+// though their text agrees. Keep their source storage separate; the bindings
+// identify starts, without claiming the enclosing original allocations.
 void __cdecl load_undo(int type) {
     if (type < 0 && static_cast<int>(ScenEditorUndoPosition) > 1) {
         ScenEditorUndoPosition--;
@@ -59,7 +62,9 @@ void __cdecl load_undo(int type) {
     // appended, and no `draw_map` call - the image's own call targets are
     // just strcat x2, _itoa and load_daemon.
     StringTemp[0] = 0;
-    strcat(StringTemp, "saves\\auto\\Scenario Editor Undo ");
+    // RECOVERY_OBJECT: v1 0x0069137C _?UndoPath@?4??load_undo@@YAXH@Z@4QBDB
+    static const char UndoPath[] = "saves\\auto\\Scenario Editor Undo ";
+    strcat(StringTemp, UndoPath);
     char number[80];
     _itoa(ScenEditorUndoPosition, number, 10);
     strcat(StringTemp, number);
@@ -85,7 +90,9 @@ Status: Complete
 void __cdecl wipe_undo() {
     for (int i = 9; i >= 1; i--) {
         StringTemp[0] = 0;
-        strcat(StringTemp, "saves\\auto\\Scenario Editor Undo ");
+        // RECOVERY_OBJECT: v1 0x006913A0 _?UndoPath@?3??wipe_undo@@YAXXZ@4QBDB
+        static const char UndoPath[] = "saves\\auto\\Scenario Editor Undo ";
+        strcat(StringTemp, UndoPath);
         char number[80];
         _itoa(i, number, 10);
         strcat(StringTemp, number);
@@ -121,10 +128,12 @@ void __cdecl auto_undo() {
     char previous[256];
     char current[256];
     char number[80];
+    // RECOVERY_OBJECT: v1 0x006913C4 _?UndoPath@?4??auto_undo@@YAXXZ@4QBDB
+    static const char UndoPath[] = "saves\\auto\\Scenario Editor Undo ";
     previous[0] = 0;
     for (int i = 9; i >= 1; i--) {
         current[0] = 0;
-        strcat(current, "saves\\auto\\Scenario Editor Undo ");
+        strcat(current, UndoPath);
         _itoa(i, number, 10);
         strcat(current, number);
         if (strlen(previous) == 0) {

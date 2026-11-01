@@ -902,7 +902,8 @@ def test_destroy_persists_accepted_preferences_then_closes_in_order(tmp_path):
 @pytest.mark.parametrize("mutation", [
     ("    field_A5C_ = 0;", "    field_A5C_ = 1;"),
     ("prefsFinal_ |=", "prefsFinal_ ="),
-    ("    prefs_put(\"SFX Volume\", volumeSFXScroll_.position(), 0);\n", ""),
+    ("    prefs_put(SFXVolumeDestroyKey, volumeSFXScroll_.position(), 0);\n",
+     "    (void)SFXVolumeDestroyKey;\n"),
 ])
 def test_destroy_persistence_mutants_are_detected(tmp_path, mutation):
     result = compile_and_run(

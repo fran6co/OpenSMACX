@@ -59,6 +59,9 @@ void __cdecl tech_secret(int tech_id, int faction_id) {
     parse_say(0, Technology[tech_id].name, -1, -1);
     parse_says(1, Players[faction_id].adj_name_faction, -1, -1);
     StringTemp[0] = '\0';
+    // The independent tech_achieved announcement at 5BC490 appends the
+    // same caption prefix from 6916F0; retain that shared literal identity.
+    // RECOVERY_LITERAL: v1 0x006916F0 0x006916FA ??_C@_09BKAL@THESECRET?$AA@ 0x005BB000
     strcat(StringTemp, "THESECRET");
     say_num(faction_id != ConsoleGlobal.faction_id_);
     X_pop(StringTemp, 0);

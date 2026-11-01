@@ -8061,6 +8061,9 @@ void __cdecl pact_of_brotherhood(int faction_id, int faction_id_with) {
     parse_says(4, get_phrase(faction_id, 0), -1, -1);
     parse_says(5, get_phrase(faction_id_with, 0), -1, -1);
 
+// The pact, transferred-map and tutorial paths select distinct script topics.
+// Bounds cover the literal payload, not surrounding allocation or lifetime.
+// RECOVERY_LITERAL: v1 0x0068D5D4 0x0068D5DD ??_C@_08BKBK@MAKEPACT?$AA@ 0x0053CAF0
     X_pops("MAKEPACT", 0x100000,
                  FactionDiplomacyPortraits[faction_id_with], pop_wait);
     if (IsMultiplayerNet != 0) {
@@ -8072,6 +8075,7 @@ void __cdecl pact_of_brotherhood(int faction_id, int faction_id_with) {
     }
 
     parse_says(0, get_pact(faction_id), -1, -1);
+// RECOVERY_LITERAL: v1 0x0068D5E0 0x0068D5EC ??_C@_0M@OOPF@HERESTHEMAP?$AA@ 0x0053CAF0
     X_pops("HERESTHEMAP", 0x100000,
                  FactionDiplomacyPortraits[faction_id_with], pop_wait);
     scan_prototypes(faction_id, faction_id_with);
@@ -8089,6 +8093,7 @@ void __cdecl pact_of_brotherhood(int faction_id, int faction_id_with) {
         PluralityDefault = 0;
         parse_says(2, Players[faction_id_with].name_leader, -1, -1);
         parse_says(3, Players[faction_id_with].adj_name_faction, -1, -1);
+// RECOVERY_LITERAL: v1 0x0068D5EC 0x0068D5F1 ??_C@_04OBKO@PACT?$AA@ 0x0053CAF0
         X_pop(TutorialPopupCaption, "PACT", nullptr);
     }
 }
@@ -8139,6 +8144,9 @@ void __cdecl make_treaty(int faction_id, int faction_id_with) {
     parse_says(7, get_noun_phrase(faction_id_with, 9), -1, -1);
 
     StringTemp[0] = 0;
+// Treaty, commerce and withdrawal notifications retain their script-topic identities.
+// Bounds cover the literal payload, not surrounding allocation or lifetime.
+// RECOVERY_LITERAL: v1 0x0068D5F4 0x0068D5FF ??_C@_0L@LJNL@MAKETREATY?$AA@ 0x0053CE10
     strcat(StringTemp, "MAKETREATY");
     char number[80];
     const int choice = static_cast<int>(random(0, 2));
@@ -8152,6 +8160,7 @@ void __cdecl make_treaty(int faction_id, int faction_id_with) {
             GenderDefault = Players[faction_id_with].noun_gender;
             PluralityDefault = Players[faction_id_with].is_noun_plural;
             parse_says(0, Players[faction_id_with].noun_faction, -1, -1);
+// RECOVERY_LITERAL: v1 0x0068D600 0x0068D609 ??_C@_08DFDO@COMMERCE?$AA@ 0x0053CE10
             X_pop(TutorialPopupCaption, "COMMERCE", nullptr);
         }
     }
@@ -8161,6 +8170,7 @@ void __cdecl make_treaty(int faction_id, int faction_id_with) {
         PluralityDefault = Players[faction_id_with].is_noun_plural;
         parse_says(0, Players[faction_id_with].noun_faction, -1, -1);
         parse_says(1, Players[faction_id_with].adj_name_faction, -1, -1);
+// RECOVERY_LITERAL: v1 0x0068D60C 0x0068D618 ??_C@_0M@PKFO@TIMETOLEAVE?$AA@ 0x0053CE10
         NetMsgPrimary.pop("TIMETOLEAVE", 5000, 0, nullptr);
     }
 }
@@ -10113,6 +10123,9 @@ void __cdecl pact_treaty(int faction_id, int faction_id_with) {
     PluralityDefault = Players[faction_id_with].is_noun_plural;
     parse_says(4, Players[faction_id_with].noun_faction, -1, -1);
 
+// The prepared faction parser state feeds the PACTTREATY script topic.
+// Bounds cover the literal payload, not surrounding allocation or lifetime.
+// RECOVERY_LITERAL: v1 0x0068E62C 0x0068E637 ??_C@_0L@NJN@PACTTREATY?$AA@ 0x0055D190
     NetMsgPrimary.pop("PACTTREATY", 5000, 0, 0);
 }
 
@@ -10958,8 +10971,12 @@ int __cdecl steal_tech(int faction_id, int faction_id_with,
 
     char *const topic = acquisition_mode != 0
         ? const_cast<char *>
+// Technology selection and the stolen-technology popup use these distinct script topics.
+// Bounds cover the literal payload, not surrounding allocation or lifetime.
+// RECOVERY_LITERAL: v1 0x0068A334 0x0068A33E ??_C@_09HGGG@STEALTECH?$AA@ 0x0050C340
             ("STEALTECH")
         : const_cast<char *>
+// RECOVERY_LITERAL: v1 0x0068A340 0x0068A34C ??_C@_0M@BIGF@ACQUIRETECH?$AA@ 0x0050C340
             ("ACQUIRETECH");
     int cost = tech_pick(faction_id, 0, faction_id_with, topic);
     if (cost < 0) {
@@ -10979,6 +10996,7 @@ int __cdecl steal_tech(int faction_id, int faction_id_with,
         StringTemp[0] = '\0';
         say_tech(StringTemp, cost, 0);
         parse_says(1, StringTemp, -1, -1);
+// RECOVERY_LITERAL: v1 0x0068A34C 0x0068A356 ??_C@_09JAMO@STOLETECH?$AA@ 0x0050C340
         NetMsgPrimary.pop("STOLETECH", 5000, 0, NULL);
     }
 
@@ -11043,11 +11061,15 @@ void __cdecl propose_trade_maps(int faction_id, int faction_id_with) {
     if ((!has_prior_map_trade && DiploFriction > 0) ||
         DiploFriction > 4) {
         parse_says(0, Players[faction_id_with].adj_name_faction, -1, -1);
+// Map-trade refusal and proposal use separate script topics.
+// Bounds cover the literal payload, not surrounding allocation or lifetime.
+// RECOVERY_LITERAL: v1 0x0068DA60 0x0068DA68 ??_C@_07NILC@REJMAPS?$AA@ 0x00545D60
         X_pops("REJMAPS", 0x100000,
                      FactionDiplomacyPortraits[faction_id_with], pop_wait);
         return;
     }
 
+// RECOVERY_LITERAL: v1 0x0068DA68 0x0068DA72 ??_C@_09BAJO@TRADEMAPS?$AA@ 0x00545D60
     X_pops("TRADEMAPS", 0x100000,
                  FactionDiplomacyPortraits[faction_id_with], pop_wait);
 
@@ -11093,12 +11115,17 @@ void __cdecl demands_withdrawal(int faction_id, int faction_id_with) {
 
     switch (response) {
     case 0:
+// RECOVERY_LITERAL: v1 0x0068D68C 0x0068D697 ??_C@_0L@OMKE@WITHSUNYES?$AA@ 0x0053E4C0
         NetMsgPrimary.pop("WITHSUNYES", 5000, 0, 0);
         break;
     case 1:
+// RECOVERY_LITERAL: v1 0x0068D680 0x0068D68A ??_C@_09KHMJ@WITHSUNNO?$AA@ 0x0053E4C0
         NetMsgPrimary.pop("WITHSUNNO", 5000, 0, 0);
         break;
     case 2:
+// The withdrawal response selects the war, refusal or acceptance script topic.
+// Bounds cover the literal payload, not surrounding allocation or lifetime.
+// RECOVERY_LITERAL: v1 0x0068D674 0x0068D67F ??_C@_0L@GAFL@WITHSUNWAR?$AA@ 0x0053E4C0
         NetMsgPrimary.pop("WITHSUNWAR", 5000, 0, 0);
         break;
     default:

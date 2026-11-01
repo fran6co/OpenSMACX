@@ -9657,6 +9657,10 @@ void __cdecl ascent() {
     GenderDefault = Players[faction_for_name].is_leader_female;
     parse_says(1, Players[faction_for_name].name_leader, -1, -1);
 
+    // The separate turn_upkeep path at 525FFA/526000 uses these same
+    // picture and section keys, corroborating their shared original storage.
+    // RECOVERY_LITERAL: v1 0x0068B58C 0x0068B593 ??_C@_06HMLA@ASCENT?$AA@ 0x005258C0
+    // RECOVERY_LITERAL: v1 0x0068B57C 0x0068B58B ??_C@_0P@LDGA@asctran_sm?4pcx?$AA@ 0x005258C0
     popp(ScriptPopupFile, "ASCENT", 0, "asctran_sm.pcx", 0);
 }
 
