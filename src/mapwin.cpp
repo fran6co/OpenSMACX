@@ -8727,3 +8727,4 @@ extern "C" int __cdecl sub_4468f0(int a1) {
 // compile_context src/basewin.cpp
 // kind game
 // symbol    ??_DMapWin@@QAEXXZ
+// RECOVERY_GENERATED: v1 vbtable 0x0066C870 0x0066C878 ??_8MapWin@@7B@ 0x004626E0

@@ -116,6 +116,21 @@ def test_extracted_listbox_scroll_render_and_dialog_bridges(tmp_path, compiler_n
         assert bodies.count(draw_body) == 1
         return bodies.replace(draw_body, mutated, 1)
 
+    # Independently restore each unsigned predicate: each must compile and fail
+    # the high-bit row-span truth table in the existing actual-source fixture.
+    for name, signed, unsigned in (
+        ("unsigned_span_plain", "static_cast<int32_t>(items.current_->string_payload()->field_C_) > 1",
+         "items.current_->string_payload()->field_C_ > 1"),
+        ("unsigned_span_separator", "static_cast<int32_t>(items.current_->string_payload()->field_C_) < 2",
+         "items.current_->string_payload()->field_C_ < 2"),
+    ):
+        assert draw_body.count(signed) == 1
+        mutant = draw_body.replace(signed, unsigned, 1)
+        binary = compile_control(tmp_path / name, replace_draw(mutant))
+        result = subprocess.run([str(binary)], check=False, timeout=30,
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        assert result.returncode != 0, name + " survived the pinned signed-span oracle"
+
     # Each negative control changes one original-supported rendering rule;
     # every mutant must compile before its behavioral assertion can fail.
     transpose = re.sub(

@@ -991,7 +991,7 @@ after_scroll_position:
     if (separator == 0) {
         if (items.head_ == 0) {
             text = 0;
-        } else if (items.current_->string_payload()->field_C_ > 1) {
+        } else if (static_cast<int32_t>(items.current_->string_payload()->field_C_) > 1) {
             canvas->wrap(items.current_->string_payload()->text, &row);
             goto text_tail;
         } else {
@@ -1005,7 +1005,7 @@ after_scroll_position:
 
     *separator = 0;
     if (items.head_ != 0) {
-        if (items.current_->string_payload()->field_C_ < 2) {
+        if (static_cast<int32_t>(items.current_->string_payload()->field_C_) < 2) {
             char *left_text = items.current_->string_payload()->text;
             if (left_text != 0) {
                 canvas->write_l(left_text, &row,
@@ -2112,3 +2112,4 @@ int ListBox::UNK2(char *text) {
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned image 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf: ListBox constructor span contains the store of table 0x0067041C; the pinned dword at 0x006704E0 is 0x0060CFF0.", "The original 8-byte receiver thunk at 0x0060CFF0 tail-jumps to 0x0060C5D0, mapped as ?on_scrolling@ListBox@@QAEXHH@Z in this class owner.", "The actual class owner is src/listbox.cpp; its current owner object vftable relocation at byte offset 0xC4 names the generated thunk, whose terminal relocation targets ?on_scrolling@ListBox@@UAEXHH@Z.", "The source identity retains its exact historical kind fact `game`; its full original spans, claims, lessons, and findings are checked unchanged by the writer readback."], "reason": "The pinned ListBox constructor at 0x00609DB0 installs its Win view at 0x0067041C; the original slot cell at +0xC4 selects this full identity. The real ListBox virtual member and owner-TU vftable are already source-owned; current owner COFF evidence binds this FILE identity to the compiler-emitted receiver adjustor tailing to ?on_scrolling@ListBox@@UAEXHH@Z."}
 // kind      game
 // symbol    ?on_scrolling@ListBox@@$4PPPPPPPM@A@AEXHH@Z
+// RECOVERY_GENERATED: v1 vbtable 0x00670584 0x00670590 ??_8ListBox@@7B@ 0x00609DB0
