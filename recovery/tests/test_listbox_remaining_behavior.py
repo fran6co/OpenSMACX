@@ -1,4 +1,5 @@
 """Actual C++ body controls with host service doubles, not target ABI/game proof."""
+import os
 import shutil
 import pytest
 
@@ -12,7 +13,9 @@ def test_actual_listbox_remaining_handlers(tmp_path):
     root = Path(__file__).resolve().parents[2]
     packet = tmp_path
     out = packet / 'actual_body_control.cpp'
-    source = (root / 'src/listbox.cpp').read_text()
+    source_path = Path(os.environ.get(
+        'OPENSMACX_LISTBOX_SOURCE', root / 'src/listbox.cpp'))
+    source = source_path.read_text()
     helper_start = source.index('// Private pure branches')
     helper_source = source[helper_start:source.index('\n/*', helper_start)]
     
@@ -25,10 +28,11 @@ def test_actual_listbox_remaining_handlers(tmp_path):
             if depth == 0:
                 return source[start:i + 1]
         raise AssertionError(signature)
+    # Compile the actual private helper block as a unit. Earlier fixtures
+    # manually re-extracted a callback-based helper signature that the
+    # circular StringList implementation no longer uses.
     hit_helpers = helper_source
-    hit_helpers += '\n' + extract('struct ListBoxHitSpanContext') + ';'
-    hit_helpers += '\n' + extract('static int listbox_hit_span_at')
-    hit_helpers += '\n' + extract('static int listbox_hit_position(ListBox *')
+    hit_helpers += "\n" + extract("static bool listbox_hit_position(ListBox *")
     dispatch_start = source.index('static int listbox_key_dispatch_arm')
     dispatch_end = source.index('// Instruction/caller provenance retained in', dispatch_start)
     dispatch = source[dispatch_start:dispatch_end] + '\n'
@@ -97,6 +101,32 @@ def test_actual_listbox_remaining_handlers(tmp_path):
                                 'box.item_list_.entry_count_ = 5;')
     controls = controls.replace('box.item_list_.values.resize(5);',
                                 'box.item_list_.values.resize(5); box.item_list_.link_items(); box.item_list_.head_ = &box.item_list_.entries[0];')
+    if 'struct ListBoxHitSpanContext' in helper_source:
+        hit_controls = '''    // The pinned grid path rejects only candidates at/above count. A
+    // signed negative candidate remains a hit and leaves its exact value.
+    int signed_hit = 99;
+    assert(listbox_grid_hit_position(-11, 0, 0, 5, 2, 10, 10,
+                                    &signed_hit));
+    assert(signed_hit == -2);
+    signed_hit = 77;
+    assert(!listbox_grid_hit_position(100, 0, 0, 5, 2, 10, 10,
+                                     &signed_hit));
+    assert(signed_hit == 77);
+
+    // Start at the final variable-height row; a y offset equal to its span
+    // advances through the circular link to row 0. The helper is bounded by
+    // entry_count and leaves both cursor pointer and ordinal at the hit.
+    ListBoxHitSpanContext hit_context = { &box.item_list_ };
+    int circular_hit = -99;
+    assert(listbox_y_span_hit(10, 4, 5, 10, &hit_context, &circular_hit));
+    assert(circular_hit == 0);
+    assert(box.item_list_.current_ == &box.item_list_.entries[0]);
+    assert(box.item_list_.current_position_ == 0);
+
+'''
+        anchor = '    // Literal on_left_down body: mode 1 derives hit from y alone, publishes\n'
+        assert controls.count(anchor) == 1
+        controls = controls.replace(anchor, hit_controls + anchor, 1)
     controls = replace_fixture_once(controls,
         'static int fill_noop(GraphicWin *, int, int, void *) { return 0; }\nint main() {',
         'static int fill_noop(GraphicWin *, int, int, void *) { return 0; }\n'

@@ -70,45 +70,92 @@ static bool listbox_hit_single_row(int *remaining, int text_span,
     return *remaining < 0;
 }
 
-typedef int (*ListBoxHitSpanAt)(void *context, int position);
+struct ListBoxHitSpanContext {
+    StringList *items;
+};
 
-static int listbox_y_span_hit(int y_offset, int top, int count,
-                              int line_height, void *context,
-                              ListBoxHitSpanAt span_at) {
-    if (count <= 0 || y_offset < 0) return -1;
+static bool listbox_y_span_hit(int y_offset, int top, int count,
+                               int line_height,
+                               ListBoxHitSpanContext *span_context,
+                               int *position) {
+    if (count <= 0 || y_offset < 0) return false;
+    StringList &items = *span_context->items;
     int remaining = y_offset;
-    for (int position = top; position < count; ++position) {
-        if (listbox_hit_single_row(&remaining, span_at(context, position),
-                                  line_height)) {
-            return position;
+    int cursor = top - 1;
+    if (cursor <= count - 1) {
+        items.current_ = items.head_;
+        if (cursor < 0) {
+            if (abs(cursor) > count) return false;
+            int index = abs(cursor);
+            while (index > 0) {
+                --index;
+                items.current_ = items.current_->previous;
+            }
+            cursor += count;
+            items.current_position_ = cursor;
+        } else {
+            int index = cursor;
+            while (index > 0) {
+                --index;
+                items.current_ = items.current_->next;
+            }
+            items.current_position_ = cursor;
         }
     }
-    return -1;
+
+    int steps = count;
+    while (steps > 0) {
+        StringStructEntry *const head = items.head_;
+        if (head != 0) {
+            items.current_ = items.current_->next;
+            int next_position = items.current_position_ + 1;
+            items.current_position_ = next_position;
+            if (next_position == count) {
+                items.current_position_ = 0;
+            }
+        }
+        StringStructEntry *const entry = items.current_;
+        int span = 0;
+        if (entry != 0) {
+            StringStructPayload *const payload = items.current_entry();
+            span = static_cast<int>(payload->field_C_);
+        }
+        if (listbox_hit_single_row(&remaining, span, line_height)) {
+            *position = items.current_position_;
+            return true;
+        }
+        --steps;
+    }
+    return false;
 }
 
-static int listbox_grid_hit_position(int x_offset, int y_offset, int top,
-                                    int count, int rows, int column_width,
-                                    int row_height) {
+static bool listbox_grid_hit_position(int x_offset, int y_offset, int top,
+                                      int count, int rows, int column_width,
+                                      int row_height, int *position) {
     // Keep x86 signed division behavior, including negative x offsets. The
     // seed divides these exact offsets without a bounds clamp.
     const int column = x_offset / column_width;
     const int row = y_offset / row_height;
-    const int position = top + column * rows + row;
-    return position < count ? position : -1;
+    const int offset = column * rows + row;
+    if (offset >= count) return false;
+    const int candidate = top + offset;
+    if (candidate >= count) return false;
+    *position = candidate;
+    return true;
 }
 
-static int listbox_hit_position_for_mode(int layout_mode, int x, int y,
+static bool listbox_hit_position_for_mode(int layout_mode, int x, int y,
         int top, int count, int x_origin, int y_origin, int rows,
-        int column_width, int row_height, int line_height, void *context,
-        ListBoxHitSpanAt span_at) {
+        int column_width, int row_height, int line_height,
+        ListBoxHitSpanContext *context, int *position) {
     const int y_offset = y - y_origin;
-    if (count <= 0 || y_offset < 0) return -1;
+    if (count <= 0 || y_offset < 0) return false;
     if (layout_mode == 1) {
         return listbox_y_span_hit(y_offset, top, count, line_height,
-                                  context, span_at);
+                                  context, position);
     }
     return listbox_grid_hit_position(x - x_origin, y_offset, top, count, rows,
-                                     column_width, row_height);
+                                     column_width, row_height, position);
 }
 
 // Returns 1 for a navigation move, 0 for a handled arrow at its boundary or
@@ -1593,19 +1640,8 @@ int ListBox::update_changes() {
 // kind 2 to these ListBox handlers; the retained seed spells the entered
 // GraphicWin/virtual-Dialog displacements as raw offsets. This helper uses
 // the declared virtual bases and payload members instead.
-struct ListBoxHitSpanContext {
-    StringList *items;
-};
-
-static int listbox_hit_span_at(void *context, int position) {
-    ListBoxHitSpanContext *const span_context =
-        static_cast<ListBoxHitSpanContext *>(context);
-    span_context->items->seek_pos(position);
-    StringStructPayload *payload = span_context->items->current_entry();
-    return payload == 0 ? 0 : static_cast<int>(payload->field_C_);
-}
-
-static int listbox_hit_position(ListBox *list, int x, int y, int top) {
+static bool listbox_hit_position(ListBox *list, int x, int y, int top,
+                                 int *position) {
     Dialog &dialog = *list;
     StringList &items = dialog.item_list_;
     ListBoxHitSpanContext context = { &items };
@@ -1617,7 +1653,7 @@ static int listbox_hit_position(ListBox *list, int x, int y, int top) {
         static_cast<int>(dialog.field_64_ + dialog.field_44_),
         static_cast<int>(dialog.field_68_ + dialog.field_44_),
         static_cast<int>(dialog.field_68_ + dialog.field_44_), &context,
-        listbox_hit_span_at);
+        position);
 }
 
 // The pinned byte map at 0x0060B4EC is indexed by VK - 0x25: bytes 0..3 map
@@ -1644,9 +1680,9 @@ static int listbox_key_dispatch_arm(int key) {
 void ListBox::on_left_down(int x, int y) {
     GraphicWin *window = this;
     WinCallbackWindow = window->parent_window();
-    const int position = listbox_hit_position(
-        this, x, y, static_cast<int>(field_18_));
-    if (position < 0) {
+    int position;
+    if (!listbox_hit_position(this, x, y, static_cast<int>(field_18_),
+                              &position)) {
         return;
     }
 
@@ -1698,6 +1734,7 @@ void ListBox::on_mouse_move(int x, int y) {
     const int top = static_cast<int>(field_18_);
     const int y_offset = y - static_cast<int>(dialog.field_38_);
     int position = -1;
+    bool position_found = false;
     if (items.entry_count_ > 0 && y_offset >= 0) {
         if (dialog.column_count_ != 1) {
             const int x_offset = x - dialog.field_40_;
@@ -1708,6 +1745,7 @@ void ListBox::on_mouse_move(int x, int y) {
             const int candidate = top + column * dialog.row_count_ + row;
             if (candidate < items.entry_count_) {
                 position = candidate;
+                position_found = true;
             }
         } else {
             int scroll = top - 1;
@@ -1765,11 +1803,12 @@ void ListBox::on_mouse_move(int x, int y) {
                 const int candidate = top + traversed - 1;
                 if (candidate < items.entry_count_) {
                     position = candidate;
+                    position_found = true;
                 }
             }
         }
     }
-    if (position < 0) {
+    if (!position_found) {
         return;
     }
     const int previous_hover = static_cast<int>(Dialog::field_F0_);

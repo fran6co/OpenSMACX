@@ -695,7 +695,7 @@ int EditBox::is_dialog_focus_chain() {
 
 /*
 Purpose: Replace one edit box's text: clear the cursor; if the input exceeds
-         the character limit, strip the caller's mutable input to empty,
+         the character limit, trim the caller's mutable input until it fits,
          then append it and recompute the text length before repainting.
 
 // ORIGINAL: 0x006151E0 ?set_text@EditBox@@QAEXPAD@Z 0x006151E0-0x0061526A
@@ -711,20 +711,20 @@ Purpose: Replace one edit box's text: clear the cursor; if the input exceeds
 Status: Source-owned member body; behavior retained, exactness not measured
 */
 void EditBox::set_text(char *text) {
-    field_B18_ = 0;
-    text_[0] = 0;
-    if (text != 0) {
-        if (strlen(text) != 0) {
-            const unsigned int limit = field_B14_;
-            if (strlen(text) > limit) {
-                do {
-                    text[strlen(text) - 1] = 0;
-                } while (strlen(text) != 0);
+    if (text_ != 0) {
+        field_B18_ = 0;
+        text_[0] = 0;
+        if (text != 0) {
+            while (strlen(text) != 0) {
+                if (strlen(text) <= field_B14_) {
+                    break;
+                }
+                text[strlen(text) - 1] = 0;
             }
+            strcat(text_, text);
         }
-        strcat(text_, text);
+        field_B40_ = 0;
+        field_B44_ = static_cast<uint32_t>(strlen(text_));
+        redraw();
     }
-    field_B40_ = 0;
-    field_B44_ = static_cast<uint32_t>(strlen(text_));
-    redraw();
 }

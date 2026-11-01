@@ -2890,7 +2890,18 @@ void BaseWin::check_loc(int x, int y, int radius) {
         const int base_x = Bases[focusedBaseID_].x;
         const int dx = x_dist(x, base_x);
         const int dy = abs(y - base_y);
-        if (vector_dist(dx, dy) <= radius) {
+        // The original expands the two-argument vector metric at this callsite
+        // and calls abs for its three component distances; keep that local
+        // arithmetic instead of calling the separately emitted map.cpp body.
+        const int distance_x = abs(dx);
+        const int distance_y = abs(dy);
+        int largest = distance_x;
+        if (distance_x <= distance_y) largest = distance_y;
+        int smallest = distance_x;
+        if (distance_x >= distance_y) smallest = distance_y;
+        const int distance = largest -
+            ((((distance_x + distance_y) >> 1) - smallest + 1) >> 1);
+        if (distance <= radius) {
             base_compute(1);
             redraw();
             MainInterfaceGlobal.GraphicWin::redraw();

@@ -2574,19 +2574,20 @@ void ReportWin::on_right_click(int x, int y) {
     if (reportwin_input_blocked()) return;
     int spot_id, payload;
     if (spot_.check(x, y, &spot_id, &payload) < 0) return;
-    if (ReportIfGlobal.field_8_ == 4) {
+    switch (ReportIfGlobal.field_8_) {
+    case 4:
         if (spot_id > 1023) {
             const int first_id = spot_id - 1024;
             if (first_id < 1024) {
                 if (Bases[first_id].faction_id_current != ConsoleGlobal.faction_id_) return;
-                right_menu(first_id, x, spot_id);
+                right_menu(first_id, x, y);
                 return;
             }
             const int base_id = spot_id - 2048;
             if (Bases[base_id].faction_id_current != ConsoleGlobal.faction_id_) return;
             log_say("Reports right_click garrison", payload, base_id, 0);
             TutWinBaseWindow.soft_zoom(base_id);
-            TutWinBaseWindow.garrison_click(payload, x, spot_id, 1);
+            TutWinBaseWindow.garrison_click(payload, x, y, 1);
             return;
         }
         log_say("Base report psych right click", 0, 0, 0);
@@ -2595,11 +2596,17 @@ void ReportWin::on_right_click(int x, int y) {
         if (BaseCurrent->specialist_total != 0) --BaseCurrent->specialist_total;
         base_compute(1);
         NetDaemonNet.unlock_base(BaseIDCurrentSelected);
-    } else if (ReportIfGlobal.field_8_ == 6
-        && (GameDataStateStorage.fields_.game_state_ & 0x40) != 0 && (GameDataStateStorage.fields_.game_state_ & 0x80) != 0) {
-        sat_edit(ReportIfGlobal.report_faction_id_, payload, spot_id);
-        redraw();
-        return;
+        break;
+    case 6:
+        if ((GameDataStateStorage.fields_.game_state_ & 0x40) != 0
+            && (GameDataStateStorage.fields_.game_state_ & 0x80) != 0) {
+            sat_edit(ReportIfGlobal.report_faction_id_, payload, spot_id);
+            redraw();
+            return;
+        }
+        break;
+    default:
+        break;
     }
     redraw();
 }

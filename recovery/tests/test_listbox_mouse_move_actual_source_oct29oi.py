@@ -7,6 +7,7 @@ malformed null-payload path or claim target ABI/runtime equivalence.
 """
 from __future__ import annotations
 
+import os
 from pathlib import Path
 import shutil
 import subprocess
@@ -17,7 +18,8 @@ from test_listbox_rendering_actual_source import extract_function
 
 
 ROOT = Path(__file__).resolve().parents[2]
-SOURCE = ROOT / "src/listbox.cpp"
+SOURCE = Path(os.environ.get(
+    "OPENSMACX_LISTBOX_SOURCE", ROOT / "src/listbox.cpp"))
 SIGNATURE = "void ListBox::on_mouse_move(int x, int y)"
 
 HARNESS = r'''#include <cassert>
