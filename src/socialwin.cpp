@@ -488,38 +488,33 @@ void SocialWin::on_iface_button_clicked(int button_id) {
     default: return;
     }
 
-    uint32_t *allocations[3] = {
-        &economyAlloc3_, &psychAlloc3_, &labsAlloc3_
-    };
-    uint32_t &allocation = *allocations[index];
-    const int limit = energy_limit(static_cast<int>(factionID_));
-    allocation = static_cast<uint32_t>(static_cast<int>(allocation) + delta);
-    if (static_cast<int>(allocation) < 0) allocation = 0;
-    if (static_cast<int>(allocation) > limit) {
+    currentAlloc_[index] += delta;
+    if (static_cast<int>(currentAlloc_[index]) < 0) currentAlloc_[index] = 0;
+    const int limit = energy_limit(factionID_);
+    if (static_cast<int>(currentAlloc_[index]) > limit) {
         field_2C5C_ = 1;
-        allocation = static_cast<uint32_t>(
-            energy_limit(static_cast<int>(factionID_)));
+        currentAlloc_[index] = static_cast<uint32_t>(energy_limit(factionID_));
     }
 
-    allocate_energy(index, static_cast<int>(allocation));
+    allocate_energy(index, static_cast<int>(currentAlloc_[index]));
 
-    economyAlloc3_ = pendingAlloc_[0];
-    psychAlloc3_ = pendingAlloc_[1];
-    labsAlloc3_ = pendingAlloc_[2];
+    for (int allocation = 0; allocation < 3; ++allocation) {
+        currentAlloc_[allocation] = pendingAlloc_[allocation];
+    }
 
-    PlayerData &player = PlayersData[factionID_];
-    player.se_alloc_psych = static_cast<int>(pendingAlloc_[1]);
-    player.se_alloc_labs = static_cast<int>(pendingAlloc_[2]);
+    PlayersData[factionID_].se_alloc_psych = static_cast<int>(pendingAlloc_[1]);
+    PlayersData[factionID_].se_alloc_labs = static_cast<int>(pendingAlloc_[2]);
     social_set(factionID_);
 
     social_calc(&socCategory_, &socEffect_, factionID_, 0, 0);
-    social_calc(&socCategory_, &player.soc_effect_pending, factionID_, 0, 0);
+    social_calc(&socCategory_, &PlayersData[factionID_].soc_effect_pending,
+                factionID_, 0, 0);
     energy_compute(factionID_, 1);
 
     breakthroughTurns_ = BreakthroughTurnsGlobal;
     netIncome_ = NetIncomeGlobal;
-    social_calc(&player.soc_category_pending, &player.soc_effect_pending,
-                factionID_, 0, 0);
+    social_calc(&PlayersData[factionID_].soc_category_pending,
+                &PlayersData[factionID_].soc_effect_pending, factionID_, 0, 0);
     redraw();
 }
 
@@ -1843,47 +1838,49 @@ void SocialWin::draw_overview() {
     do_sound();
 }
 
-// ORIGINAL: 0x004AECE0 ?reset@SocialWin@@QAEXXZ 0x004AECE0-0x004AEEF1
+// ORIGINAL: 0x004AECE0 ?reset@SocialWin@@QAEXXZ 0x004AECE0-0x004AEEF1 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x004AECE0-0x004AEEF1 resets the selected category, button groups, effect snapshots, social allocation values, calculated energy and visible-window redraw", "source:src/faction.h: PlayersData owns the pending SocialCategory, SocialEffect and social allocation values", "source:src/socialwin.h: SocialWin owns the working/original values and category button groups"], "reason": "Restore the panel from its owning PlayerData record through typed social calculation and button-group operations while retaining the mapped reset identity."}
 void SocialWin::reset() {
     field_A1C_ = 0xFFFFFFFFU;
     social_ai(factionID_, -1, -1, -1, -1, 0);
 
     field_2C28_ = 1;
-    SocialCategory &pending_category = PlayersData[factionID_].soc_category_pending;
     for (int category = 0; category < 4; ++category) {
-        const int model = social_category_value(pending_category, category);
-        set_social_category_value(socCategory_, category, model);
+        const int model = static_cast<int>(
+            PlayersData[factionID_].soc_category_pending.models_[category]);
+        socCategory_.models_[category] = static_cast<uint32_t>(model);
         buttonGroups_[category].set(model + category * 4, 1);
     }
     field_2C28_ = 0;
 
-    const SocialEffect &pending_effect = PlayersData[factionID_].soc_effect_pending;
-    socEffect_ = pending_effect;
-    socEffectOrig_ = pending_effect;
+    for (int effect = 0; effect < MaxSocialEffectNum; ++effect) {
+        const int value = PlayersData[factionID_].soc_effect_pending.values_[effect];
+        socEffectOrig_.values_[effect] = value;
+        socEffect_.values_[effect] = value;
+    }
 
-    PlayerData &player = PlayersData[factionID_];
-    const bool allocations_changed =
-        player.se_alloc_psych != static_cast<int>(psychAllocOrig_) ||
-        player.se_alloc_labs != static_cast<int>(labsAllocOrig_);
-    psychAllocOrig_ = static_cast<uint32_t>(player.se_alloc_psych);
-    labsAllocOrig_ = static_cast<uint32_t>(player.se_alloc_labs);
+    const int allocations_changed =
+        PlayersData[factionID_].se_alloc_psych != static_cast<int>(savedAlloc_[1]) ||
+        PlayersData[factionID_].se_alloc_labs != static_cast<int>(savedAlloc_[2]);
+    PlayersData[factionID_].se_alloc_psych = static_cast<int>(savedAlloc_[1]);
+    PlayersData[factionID_].se_alloc_labs = static_cast<int>(savedAlloc_[2]);
 
-    pendingAlloc_[0] = economyAllocOrig_;
-    pendingAlloc_[1] = psychAllocOrig_;
-    pendingAlloc_[2] = labsAllocOrig_;
+    for (int allocation = 0; allocation < 3; ++allocation) {
+        pendingAlloc_[allocation] = savedAlloc_[allocation];
+    }
 
     if (allocations_changed) {
         social_set(factionID_);
         social_calc(&socCategory_, &socEffect_, factionID_, 0, 0);
-        social_calc(&socCategory_, &player.soc_effect_pending, factionID_, 0, 0);
+        social_calc(&socCategory_, &PlayersData[factionID_].soc_effect_pending,
+                    factionID_, 0, 0);
     }
 
     energy_compute(factionID_, 1);
     breakthroughTurns_ = BreakthroughTurnsGlobal;
     netIncome_ = NetIncomeGlobal;
-    social_calc(&player.soc_category_pending, &player.soc_effect_pending,
-                factionID_, 0, 0);
+    social_calc(&PlayersData[factionID_].soc_category_pending,
+                &PlayersData[factionID_].soc_effect_pending, factionID_, 0, 0);
 
     if (is_visible()) {
         redraw();
@@ -2705,17 +2702,17 @@ void SocialWin::init(int faction_id) {
     {
         int net_min = 10 - PlayersData[factionID_].se_alloc_labs
             - PlayersData[factionID_].se_alloc_psych;
-        economyAllocOrig_ = net_min;
+        savedAlloc_[0] = net_min;
         pendingAlloc_[0] = net_min;
-        economyAlloc3_ = net_min;
+        currentAlloc_[0] = net_min;
         int lo = PlayersData[factionID_].se_alloc_psych;
-        psychAllocOrig_ = lo;
+        savedAlloc_[1] = lo;
         pendingAlloc_[1] = lo;
-        psychAlloc3_ = lo;
+        currentAlloc_[1] = lo;
         int hi = PlayersData[factionID_].se_alloc_labs;
-        labsAllocOrig_ = hi;
+        savedAlloc_[2] = hi;
         pendingAlloc_[2] = hi;
-        labsAlloc3_ = hi;
+        currentAlloc_[2] = hi;
     }
     reset();
 

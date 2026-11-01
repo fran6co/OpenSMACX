@@ -125,8 +125,8 @@ struct SocialWinFixture : SubInterface {
     RECT categoryHeaders_[4]{}, modelRects_[16]{};
     RECT tooltipEconomy_{}, tooltipPsych_{}, tooltipLabs_;
     RECT tooltipEffects_{}, tutRect9_{};
-    uint32_t economyAllocOrig_{}, psychAllocOrig_{}, labsAllocOrig_{};
-    uint32_t economyAlloc3_{}, psychAlloc3_{}, labsAlloc3_{}, pendingAlloc_[3]{};
+    uint32_t savedAlloc_[3]{};
+    uint32_t currentAlloc_[3]{}, pendingAlloc_[3]{};
     int immune(int, int, int);
     void run_layout();
     void run_allocations();
@@ -160,13 +160,13 @@ int main() {
     PlayersData[2] = {4, 2};
     other.factionID_ = 2;
     other.run_allocations();
-    check(other.economyAllocOrig_ == 4 && other.pendingAlloc_[0] == 4);
-    check(other.psychAllocOrig_ == 4 && other.pendingAlloc_[1] == 4);
-    check(other.labsAllocOrig_ == 2 && other.pendingAlloc_[2] == 2);
+    check(other.savedAlloc_[0] == 4 && other.pendingAlloc_[0] == 4);
+    check(other.savedAlloc_[1] == 4 && other.pendingAlloc_[1] == 4);
+    check(other.savedAlloc_[2] == 2 && other.pendingAlloc_[2] == 2);
     PlayersData[2] = {6, 1};
     other.run_allocations();
-    check(other.economyAllocOrig_ == 3 && other.psychAllocOrig_ == 6 &&
-          other.labsAllocOrig_ == 1);
+    check(other.savedAlloc_[0] == 3 && other.savedAlloc_[1] == 6 &&
+          other.savedAlloc_[2] == 1);
 
     MainInterfaceGlobal.main = {10, 20, 200, 100};
     MainInterfaceGlobal.lower = {30, 40, 330, 140};

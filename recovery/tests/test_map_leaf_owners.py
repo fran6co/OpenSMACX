@@ -47,6 +47,7 @@ struct Map {
 static Map tiles[32];
 Map *map_tiles() { return tiles; }
 uint32_t MapLongitude = 4;
+Map *map_loc(int x, int y) { return map_tiles() + MapLongitude * y + (x >> 1); }
 uint32_t MapTileFlagClearMask = 0x00288050;
 struct Player { uint32_t flags; } PlayersData[8];
 struct Console { int faction_id_; } ConsoleGlobal;

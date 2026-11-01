@@ -645,7 +645,7 @@ BOOL __cdecl port_to_coast(int base_id, int region) {
 
 /*
 Purpose: Check to see if two port bases share a common body of water determined by region.
-// ORIGINAL: 0x0050E160 ?port_to_port@@YAHHH@Z 0x0050E160-0x0050E306
+// ORIGINAL: 0x0050E160 ?port_to_port@@YAHHH@Z 0x0050E160-0x0050E306 BYTE_EXACT
 // LEVER: call_diff showed this tree calling base_on_sea where the image makes
 //        no calls at all - the image inlines base_on_sea's whole body into
 //        the loop instead. Manually inlining it (guard clause on
@@ -674,10 +674,11 @@ Return Value: Are both ports accessible by water to each other? true/false
 Status: Complete
 */
 BOOL __cdecl port_to_port(int base_id_src, int base_id_dst) {
+    int last_region = -1;
     int x = Bases[base_id_src].x;
     int y = Bases[base_id_src].y;
-    int last_region = -1;
-    for (uint32_t i = 0; i < 8; i++) { // is_coast()
+    uint32_t i = 0;
+    for (;;) { // is_coast()
         int x_radius = xrange(x + VehMoveDeltaX[i]);
         int y_radius = y + VehMoveDeltaY[i];
         if (on_map(x_radius, y_radius) && is_ocean(x_radius, y_radius)) {
@@ -701,8 +702,10 @@ BOOL __cdecl port_to_port(int base_id_src, int base_id_dst) {
                 }
             }
         }
+        if (++i >= 8) {
+            return false;
+        }
     }
-    return false;
 }
 
 /*
@@ -4240,45 +4243,6 @@ extern "C" int __cdecl sub_4c99d0(int x_coord, int y_coord) {
     }
     return result + (tile->val3 >> 6);
 }
-/*
-Purpose: Refresh one tile's ownership marks for the local faction: clear
-         the tile's claim bits, drop the special-resource flag and the
-         tree's clear mask, raise the lake-marker when the tile is not
-         rocky-raised terrain, and redraw the tile when the faction sees
-         it or the scenario's reveal flag is up.
-
-// ORIGINAL: 0x004CE6B0 sub_4ce6b0 0x004CE6B0-0x004CE78D FILE
-// symbol    _sub_4ce6b0
-// TRIED: caching the recomputed table index in one local instead of re-reading the row stride fresh each use loses the frame; the cached `half` matches the original's stack-slot reuse of the a2 parameter.
-// size      221 bytes
-// prototype
-// callers   0   call targets   3
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x0046AF40 0x00591D60 0x00591E50 0x005C2020
-Return Value: n/a
-Status: Coverage transcription - unclaimed body
-*/
-extern "C" void __cdecl sub_4ce6b0(int x_coord, int y_coord) {
-    bit_set(x_coord, y_coord, 0x20, 1);
-    bit_set(x_coord, y_coord, 0x28805C, 0);
-    bit_set(x_coord, y_coord, MapTileFlagClearMask, 0);
-
-    const Map *tile = map_tiles() + MapLongitude * y_coord + (x_coord >> 1);
-    if ((tile->climate & 0xE0) < 0x40) {
-        world_alt_set(x_coord, y_coord, 2, 0);
-    }
-
-    const int faction = ConsoleGlobal.faction_id_;
-    const uint32_t entry = PlayersData[faction].flags;
-    if ((entry & 0x200) != 0
-        || (tile->visibility & (1 << (faction & 0x1F))) != 0
-        || (GameDataStateStorage.fields_.game_state_ & 0x80) != 0) {
-        synch_bit(x_coord, y_coord, faction);
-        draw_tile(x_coord, y_coord, 2);
-    }
-}
-
 // Neutral source captions for the initial bytes at 0x687B60 and 0x687B6C: original `push` references at 0x4C9713/0x4C972B and terminating NULs bound 12/17 bytes. The original .data section is writable; original symbols and wider allocation extents are unproved.
 // RECOVERY_OBJECT: v2 0x00687B60 0x00687B6C ?ActionBuildLogCaption@@3PADA 0x004C9713
 char ActionBuildLogCaption[12] = "Action Base";

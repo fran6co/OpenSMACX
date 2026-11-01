@@ -401,12 +401,20 @@ class SocialWin : public GraphicWin, public SubInterface {
   uint32_t field_2C2C_;  // 0x2C2C
   uint32_t field_2C30_;  // 0x2C30
   uint32_t field_2C34_;  // 0x2C34
-  uint32_t economyAllocOrig_;  // 0x2C38
-  uint32_t psychAllocOrig_;  // 0x2C3C
-  uint32_t labsAllocOrig_;  // 0x2C40
-  uint32_t economyAlloc3_;  // 0x2C44
-  uint32_t psychAlloc3_;  // 0x2C48
-  uint32_t labsAlloc3_;  // 0x2C4C
+  // Saved allocation words: economy[0]+2C38, psych[1]+2C3C, labs[2]+2C40.
+  // Pinned reset4AEE12..4AEE26 copies this complete three-DWORD run into
+  // pendingAlloc_. The descriptive name is not an original-name claim.
+  // Historical scalar projections economyAllocOrig_, psychAllocOrig_, and
+  // labsAllocOrig_ correspond to indices 0, 1, and 2 respectively.
+  // RECOVERY_MEMBER: v1 SocialWin savedAlloc_ 0x2C38 0x004AEE1D
+  uint32_t savedAlloc_[3];  // 0x2C38..0x2C43
+  // Current control allocation words: economy[0]+2C44, psych[1]+2C48,
+  // labs[2]+2C4C. Pinned on_iface_button_clicked4B24C7 indexes this
+  // three-DWORD group;4B2535..4B2549 copies all3 pendingAlloc_ words here.
+  // Historical economyAlloc3_/psychAlloc3_/labsAlloc3_ are indices0/1/2.
+  // The descriptive name is not an original-name claim.
+  // RECOVERY_MEMBER: v1 SocialWin currentAlloc_ 0x2C44 0x004B24C7
+  uint32_t currentAlloc_[3];  // 0x2C44..0x2C4F
   // Indexed economy/psych/labs run in allocate_energy, original +0x2C50.
   uint32_t pendingAlloc_[3];  // 0x2C50..0x2C5B
   uint32_t field_2C5C_;  // 0x2C5C

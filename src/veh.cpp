@@ -13070,6 +13070,42 @@ void __cdecl action_tectonic(int vehicle_id, int x, int y) {
     }
 }
 
+/*
+Purpose: Place fungus, clear the original improvement masks, raise low
+         ocean terrain to altitude 2, then synchronize and redraw the tile
+         when the local faction can see it.
+
+// ORIGINAL: 0x004CE6B0 sub_4ce6b0 0x004CE6B0-0x004CE78D FILE BYTE_EXACT
+// symbol    _sub_4ce6b0
+// TRIED: caching the recomputed table index in one local instead of re-reading the row stride fresh each use loses the frame; the cached `half` matches the original's stack-slot reuse of the a2 parameter.
+// size      221 bytes
+// prototype
+// callers   0   call targets   3
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0046AF40 0x00591D60 0x00591E50 0x005C2020
+Return Value: n/a
+Status: Coverage transcription - unclaimed body
+*/
+extern "C" void __cdecl sub_4ce6b0(int x_coord, int y_coord) {
+    bit_set(x_coord, y_coord, 0x20, 1);
+    bit_set(x_coord, y_coord, 0x28805C, 0);
+    bit_set(x_coord, y_coord, MapTileFlagClearMask, 0);
+
+    if ((map_loc(x_coord, y_coord)->climate & ~0x1F) < 0x40) {
+        world_alt_set(x_coord, y_coord, 2, 0);
+    }
+
+    const int faction = ConsoleGlobal.faction_id_;
+    const uint32_t entry = PlayersData[faction].flags;
+    if ((entry & 0x200) != 0
+        || (map_loc(x_coord, y_coord)->visibility & (1 << faction)) != 0
+        || (GameDataStateStorage.fields_.game_state_ & 0x80) != 0) {
+        synch_bit(x_coord, y_coord, faction);
+        draw_tile(x_coord, y_coord, 2);
+    }
+}
+
 // ORIGINAL: 0x004CE790 ?action_fungal@@YAXHHH@Z 0x004CE790-0x004CEDDB
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned entry 004CE790; retained seed git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/004ce790.cpp", "recovery/tasks/vehicle-special-actions-coverage.json; native scope expansion preserves task baseline", "Native4CE326/4CE7F0 kill precedes announcement; fungal EBX retains initial combat faction while later slot reads observe compacted storage;580B51/580BF7 are mask immediates, not globals."], "reason": "Typed transfer or terrain action preserves native parser, kill, interception and post-call vehicle-slot read order; retained seed remains evidence, not executable backing."}
 // TRIED: literal parameter-slot layout (a1/a2/a3 kept live as named locals rather than reused stack slots the original repurposes after FX::play/kill); diverges at instruction #5, before the base_find call, so it's a prologue register-allocation gap. Full logic (opportunistic-attack radius scan, territory check, and the fungus-spread loop with veh_init/bit_set/ world_alt_set/synch_bit/draw_tile) is landed and faithful to the byte-offset table math (record stride 0x34, faction matrix stride 0x20cc), cross-checked instruction-by-instruction against the disassembly rather than trusted from Ghidra alone.
@@ -13163,19 +13199,20 @@ void __cdecl action_fungal(int vehicle_id, int x, int y) {
             focused_on_spread = true;
         }
 
+        // The original expands these operations here and retains 4CE6B0 separately.
         bit_set(spread_x, spread_y, BIT_FUNGUS, true);
         bit_set(spread_x, spread_y,
                 BIT_ROAD | BIT_MAGTUBE | BIT_MINE | BIT_SOLAR_TIDAL
                 | BIT_FARM | BIT_SOIL_ENRICHER | BIT_FOREST, false);
         bit_set(spread_x, spread_y, MapTileFlagClearMask, false);
-        if ((tile->climate & 0xe0) < ALT_BIT_OCEAN_SHELF) {
+        if ((map_loc(spread_x, spread_y)->climate & 0xe0) < ALT_BIT_OCEAN_SHELF) {
             world_alt_set(spread_x, spread_y, 2, false);
         }
-        if ((PlayersData[ConsoleGlobal.faction_id_].flags & PFLAG_MAP_REVEALED) != 0
-            || (tile->visibility
-                & (1u << (ConsoleGlobal.faction_id_ & 0x1f))) != 0
+        const int faction = ConsoleGlobal.faction_id_;
+        if ((PlayersData[faction].flags & PFLAG_MAP_REVEALED) != 0
+            || (map_loc(spread_x, spread_y)->visibility & (1 << faction)) != 0
             || (GameDataStateStorage.fields_.game_state_ & 0x80) != 0) {
-            synch_bit(spread_x, spread_y, ConsoleGlobal.faction_id_);
+            synch_bit(spread_x, spread_y, faction);
             draw_tile(spread_x, spread_y, 2);
         }
     }
