@@ -2135,7 +2135,13 @@ extern "C" void __cdecl sub_5d439f(unsigned int *index_words,
     bitpos = 0;
     width = (unsigned char)bit_width;
     mask = (1u << (width & 0x1f)) - 1u;
-    while (word_count > 3) {
+    // The native counter starts at word_count - 4 with 32-bit wrap, then
+    // branches on its signed value. Keep that order even for negative counts
+    // whose subtraction wraps into the nonnegative range.
+    unsigned int remaining_bits = static_cast<unsigned int>(word_count) - 4u;
+    int remaining;
+    memcpy(&remaining, &remaining_bits, sizeof(remaining));
+    while (remaining >= 0) {
         shift = (unsigned char)bitpos & 7;
         memcpy(&word, compressed + (bitpos >> 3), sizeof(word));
         word = media_rotate_right_32(word, shift);
@@ -2151,18 +2157,22 @@ extern "C" void __cdecl sub_5d439f(unsigned int *index_words,
         index_words[3] = media_rotate_right_32(word, width) & mask;
 
         index_words += 4;
+        remaining_bits -= 4u;
+        memcpy(&remaining, &remaining_bits, sizeof(remaining));
         bitpos += static_cast<unsigned int>(bit_width) * 4u;
-        word_count -= 4;
     }
-    if (word_count - 4 > -4) {
+    remaining_bits += 3u;
+    memcpy(&remaining, &remaining_bits, sizeof(remaining));
+    if (remaining >= 0) {
         do {
-            word_count--;
             shift = (unsigned char)bitpos & 7;
             memcpy(&word, compressed + (bitpos >> 3), sizeof(word));
             *index_words = media_rotate_right_32(word, shift) & mask;
             bitpos += static_cast<unsigned int>(bit_width);
+            remaining_bits -= 1u;
+            memcpy(&remaining, &remaining_bits, sizeof(remaining));
             index_words++;
-        } while (word_count > 0);
+        } while (remaining >= 0);
     }
 }
 

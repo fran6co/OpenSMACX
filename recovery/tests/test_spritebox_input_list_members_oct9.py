@@ -261,13 +261,18 @@ int main() {
         "PostMessageA(HandleMain, WM_KEYDOWN, VK_RETURN, 0);",
         "SendMessageA(HandleMain, WM_KEYDOWN, VK_RETURN, 0);", 1,
     )
+    head_mutant = body_list[0].replace(
+        "if (list_.head_ != 0)", "if (list_.head_ == 0)", 1,
+    )
+    assert head_mutant != body_list[0]
     mutants = (
-        bodies.replace("if (list_.head_ == 0)", "if (list_.head_ != 0)", 1),
+        bodies.replace(body_list[0], head_mutant, 1),
         bodies.replace("handler(y_coord) != 0", "handler(y_coord) == 0", 1),
         bodies.replace("handler(y_coord)", "handler(x_coord)", 1),
         "\n".join(body_list[:-1] + [left_click_mutant]),
     )
     for index, mutant in enumerate(mutants):
+        assert mutant != bodies, f"mutant {index} did not alter the actual body"
         mutant_path = tmp_path / f"spritebox_mutant_{index}.cpp"
         mutant_binary = tmp_path / f"spritebox_mutant_{index}"
         mutant_path.write_text(harness.replace(bodies, mutant, 1))

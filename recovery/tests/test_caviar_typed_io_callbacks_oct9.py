@@ -133,7 +133,7 @@ def compile_actual_source(mutant=None):
     assert "callbacks->allocate" in actual[8]
     assert "callbacks->tell" in actual[8]
     assert "memcpy(&CaviarOutputMessageWindow, callbacks, sizeof(*callbacks))" in actual[8]
-    assert "while (total < count)" in actual[9]
+    assert "for (int total = 0; total < count; )" in actual[9]
     assert "if (read < 0)" in actual[9]
     assert "return _read(fd, buffer, count);" in actual[4]
     assert "return _write(fd, buffer, count);" in actual[5]
@@ -188,6 +188,10 @@ def compile_actual_source(mutant=None):
         )
     elif mutant == "zero_read_is_error":
         actual[9] = actual[9].replace("if (read < 0)", "if (read <= 0)")
+    elif mutant == "nonpositive_count_is_read":
+        before = "total < count"
+        assert actual[9].count(before) == 1
+        actual[9] = actual[9].replace(before, "total != count", 1)
     main = r'''
 static void ck(bool value) { assert(value); }
 int main() {
@@ -228,6 +232,10 @@ int main() {
   expected_buffer = buffer; expected_count = 3; call_count = 0;
   read_script[0] = 0; read_script[1] = 1; read_script[2] = 2;
   read_script_length = 3; read_script_index = 0; read_script_bytes = 0;
+  const auto before_empty_read_error = last_error;
+  ck(vox_read_exact(expected_fd, buffer, 0) == 0);
+  ck(vox_read_exact(expected_fd, buffer, -3) == 0);
+  ck(call_count == 0 && last_error == before_empty_read_error);
   ck(vox_read_exact(expected_fd, buffer, 3) == 0);
   ck(read_script_index == read_script_length && call_count == 3);
   ck(buffer[1] == 'R' && buffer[2] == 'R');
@@ -279,5 +287,5 @@ def test_actual_source_contracts_installation_dispatch_and_read_quirk():
 def test_damage_mutants_are_compiled_and_rejected():
     for mutant in ("drop_read_return", "skip_seek_tell_validation",
                    "wrong_read_slot", "copy_before_validation",
-                   "zero_read_is_error"):
+                   "zero_read_is_error", "nonpositive_count_is_read"):
         compile_actual_source(mutant)

@@ -234,24 +234,24 @@ def test_compile_success_altitude_mutants_are_detected(
         "static_cast<uint32_t>(MapSeaLevel);",
         1,
     ).replace(
-        "contour < static_cast<int32_t>(AltNatural[natural])",
-        "contour < AltNatural[natural]",
+        "contour >= static_cast<int32_t>(AltNatural[threshold])",
+        "contour >= AltNatural[threshold]",
         1,
     )
     assert unsigned_mutant != body
     _compile_run(tmp_path, compiler, unsigned_mutant, False)
 
     wrong_start = body.replace(
-        "int natural = ALT_3_LEVELS_ABOVE_SEA;",
-        "int natural = ALT_3_LEVELS_ABOVE_SEA - 1;",
+        "int threshold = ALT_3_LEVELS_ABOVE_SEA;",
+        "int threshold = ALT_3_LEVELS_ABOVE_SEA - 1;",
         1,
     )
     assert wrong_start != body
     _compile_run(tmp_path, compiler, wrong_start, False)
 
     inclusive_threshold = body.replace(
-        "contour < static_cast<int32_t>(AltNatural[natural])",
-        "contour <= static_cast<int32_t>(AltNatural[natural])",
+        "contour >= static_cast<int32_t>(AltNatural[threshold])",
+        "contour > static_cast<int32_t>(AltNatural[threshold])",
         1,
     )
     assert inclusive_threshold != body

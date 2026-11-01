@@ -977,23 +977,17 @@ void SocialWin::on_redraw() {
 
 
 void SocialWin::draw_psych_alloc() {
-    Buffer *buf = static_cast<Buffer *>(&MainInterfaceGlobal);
-    buf->restore_clip();
-
     RECT local_rect = tooltipPsych_;
-    buf->box_sprite(&local_rect, &InterfaceBoxStyles[6]);
+    MainInterfaceGlobal.Buffer::restore_clip();
+    MainInterfaceGlobal.Buffer::box_sprite(&local_rect, &InterfaceBoxStyles[6]);
 
-    local_rect.left += 3;
-    local_rect.top += 3;
-    local_rect.right -= 3;
-    local_rect.bottom -= 3;
+    social_expand_rect(&local_rect, -3, -3);
 
-    RECT box_rect;
-    box_rect.left = local_rect.left + 0x17;
-    box_rect.top = local_rect.top;
-    box_rect.right = local_rect.right - 0x17;
-    box_rect.bottom = local_rect.top + 0x14;
-    buf->box(&box_rect, 0xbc, 0xbc);
+    RECT box_rect = local_rect;
+    box_rect.left += 0x17;
+    box_rect.right -= 0x17;
+    box_rect.bottom = box_rect.top + 0x14;
+    MainInterfaceGlobal.Buffer::box(&box_rect, 0xbc, 0xbc);
 
     StringTemp[0] = 0;
     const int allocation = PlayersData[factionID_].se_alloc_psych;
@@ -1007,13 +1001,13 @@ void SocialWin::draw_psych_alloc() {
 
     CharUpperA(StringTemp);
 
-    buf->set_font(&font1_, 0, 0, 0);
-    buf->set_text_color(0x9f, -1, 1, 1);
+    MainInterfaceGlobal.Buffer::set_font(&font1_, 0, 0, 0);
+    MainInterfaceGlobal.Buffer::set_text_color(0x9f, -1, 1, 1);
 
     char *buf_str = StringTemp;
     if (buf_str) {
         int len = strlen(buf_str);
-        buf->write_cent_l(buf_str, &box_rect, len);
+        MainInterfaceGlobal.Buffer::write_cent_l(buf_str, &box_rect, len);
     }
 
     int row_height = local_rect.bottom - energyAllocLock_[0].height();
@@ -1030,14 +1024,14 @@ void SocialWin::draw_psych_alloc() {
         adjusted_end_x = end_x + (allocation != 0 ? 1 : 0);
         int remaining_w = local_rect.right - end_x;
         int remaining_h = local_rect.bottom - row_height;
-        buf->tile(&energyAllocSlider_[4], end_x, row_height, end_x, row_height,
+        MainInterfaceGlobal.Buffer::tile(&energyAllocSlider_[4], end_x, row_height, end_x, row_height,
                   remaining_w, remaining_h);
     }
 
     if (start_x < adjusted_end_x) {
         int width2 = adjusted_end_x - start_x;
         int height2 = box_rect.bottom - row_height;
-        buf->tile(&energyAllocSlider_[5], start_x, row_height, start_x, row_height,
+        MainInterfaceGlobal.Buffer::tile(&energyAllocSlider_[5], start_x, row_height, start_x, row_height,
                   width2, height2);
     }
 
@@ -1050,19 +1044,16 @@ void SocialWin::draw_psych_alloc() {
 // ORIGINAL: 0x004B08A0 ?draw_economy_alloc@SocialWin@@QAEXXZ 0x004B08A0-0x004B0AF2
 // RECOVERY_BINDING: v1 {"evidence": ["git:seed:src/recovered/units/004b08a0.cpp; source:src/socialwin.h:tooltipEconomy_,energyAllocSlider_,energyAllocLock_; source:src/faction.h:PlayerData.se_alloc_psych,se_alloc_labs; image:0x004B08A0-0x004B0AF2"], "reason": "Home the economy allocation panel on SocialWin’s typed rectangles, slider buffers, font, and PlayerData allocation values."}
 void SocialWin::draw_economy_alloc() {
-    Buffer *buffer = static_cast<Buffer *>(&MainInterfaceGlobal);
-    buffer->restore_clip();
-
     RECT panel = tooltipEconomy_;
-    buffer->box_sprite(&panel, &InterfaceBoxStyles[6]);
-    panel.left += 3;
-    panel.top += 3;
-    panel.right -= 3;
-    panel.bottom -= 3;
+    MainInterfaceGlobal.Buffer::restore_clip();
+    MainInterfaceGlobal.Buffer::box_sprite(&panel, &InterfaceBoxStyles[6]);
+    social_expand_rect(&panel, -3, -3);
 
-    RECT title = {panel.left + 0x17, panel.top,
-                  panel.right - 0x17, panel.top + 0x14};
-    buffer->box(&title, 0xbc, 0xbc);
+    RECT title = panel;
+    title.left += 0x17;
+    title.right -= 0x17;
+    title.bottom = title.top + 0x14;
+    MainInterfaceGlobal.Buffer::box(&title, 0xbc, 0xbc);
 
     const PlayerData &player = PlayersData[factionID_];
     const int remaining = 10 - player.se_alloc_psych - player.se_alloc_labs;
@@ -1075,9 +1066,9 @@ void SocialWin::draw_economy_alloc() {
     strcat(StringTemp, PercentText);
     CharUpperA(StringTemp);
 
-    buffer->set_font(&font1_, 0, 0, 0);
-    buffer->set_text_color(0x9f, -1, 1, 1);
-    buffer->write_cent_l(StringTemp, &title, strlen(StringTemp));
+    MainInterfaceGlobal.Buffer::set_font(&font1_, 0, 0, 0);
+    MainInterfaceGlobal.Buffer::set_text_color(0x9f, -1, 1, 1);
+    MainInterfaceGlobal.Buffer::write_cent_l(StringTemp, &title, strlen(StringTemp));
 
     const int top = panel.bottom - energyAllocLock_[0].height();
     const int left = panel.left + energyAllocLock_[0].width();
@@ -1085,11 +1076,11 @@ void SocialWin::draw_economy_alloc() {
     int right_split = panel.right;
     if (split < panel.right) {
         right_split = split + (remaining != 0);
-        buffer->tile(&energyAllocSlider_[0], split, top, split, top,
+        MainInterfaceGlobal.Buffer::tile(&energyAllocSlider_[0], split, top, split, top,
                      panel.right - split, panel.bottom - top);
     }
     if (left < right_split) {
-        buffer->tile(&energyAllocSlider_[1], left, top, left, top,
+        MainInterfaceGlobal.Buffer::tile(&energyAllocSlider_[1], left, top, left, top,
                      right_split - left, panel.bottom - top);
     }
 
@@ -1101,19 +1092,16 @@ void SocialWin::draw_economy_alloc() {
 // ORIGINAL: 0x004B0B00 ?draw_labs_alloc@SocialWin@@QAEXXZ 0x004B0B00-0x004B0D42
 // RECOVERY_BINDING: v1 {"evidence": ["git:seed:src/recovered/units/004b0b00.cpp; source:src/socialwin.h:tooltipLabs_,energyAllocSlider_,energyAllocLock_; source:src/faction.h:PlayerData.se_alloc_labs; image:0x004B0B00-0x004B0D42"], "reason": "Home the labs allocation panel on SocialWin’s typed rectangles, slider buffers, font, and PlayerData lab allocation."}
 void SocialWin::draw_labs_alloc() {
-    Buffer *buffer = static_cast<Buffer *>(&MainInterfaceGlobal);
-    buffer->restore_clip();
-
     RECT panel = tooltipLabs_;
-    buffer->box_sprite(&panel, &InterfaceBoxStyles[6]);
-    panel.left += 3;
-    panel.top += 3;
-    panel.right -= 3;
-    panel.bottom -= 3;
+    MainInterfaceGlobal.Buffer::restore_clip();
+    MainInterfaceGlobal.Buffer::box_sprite(&panel, &InterfaceBoxStyles[6]);
+    social_expand_rect(&panel, -3, -3);
 
-    RECT title = {panel.left + 0x17, panel.top,
-                  panel.right - 0x17, panel.top + 0x14};
-    buffer->box(&title, 0xbc, 0xbc);
+    RECT title = panel;
+    title.left += 0x17;
+    title.right -= 0x17;
+    title.bottom = title.top + 0x14;
+    MainInterfaceGlobal.Buffer::box(&title, 0xbc, 0xbc);
 
     const int allocation = PlayersData[factionID_].se_alloc_labs;
     StringTemp[0] = '\0';
@@ -1125,9 +1113,9 @@ void SocialWin::draw_labs_alloc() {
     strcat(StringTemp, PercentText);
     CharUpperA(StringTemp);
 
-    buffer->set_font(&font1_, 0, 0, 0);
-    buffer->set_text_color(0x9f, -1, 1, 1);
-    buffer->write_cent_l(StringTemp, &title, strlen(StringTemp));
+    MainInterfaceGlobal.Buffer::set_font(&font1_, 0, 0, 0);
+    MainInterfaceGlobal.Buffer::set_text_color(0x9f, -1, 1, 1);
+    MainInterfaceGlobal.Buffer::write_cent_l(StringTemp, &title, strlen(StringTemp));
 
     const int top = panel.bottom - energyAllocLock_[0].height();
     const int left = panel.left + energyAllocLock_[0].width();
@@ -1135,11 +1123,11 @@ void SocialWin::draw_labs_alloc() {
     int right_split = panel.right;
     if (split < panel.right) {
         right_split = split + (allocation != 0);
-        buffer->tile(&energyAllocSlider_[2], split, top, split, top,
+        MainInterfaceGlobal.Buffer::tile(&energyAllocSlider_[2], split, top, split, top,
                      panel.right - split, panel.bottom - top);
     }
     if (left < right_split) {
-        buffer->tile(&energyAllocSlider_[3], left, top, left, top,
+        MainInterfaceGlobal.Buffer::tile(&energyAllocSlider_[3], left, top, left, top,
                      right_split - left, panel.bottom - top);
     }
 
@@ -1153,28 +1141,27 @@ void SocialWin::draw_labs_alloc() {
 void SocialWin::draw_faction_basal() {
     Buffer *buffer = static_cast<Buffer *>(static_cast<GraphicWin *>(this));
     RECT panel = tooltipFactionPower_;
-    buffer->set_clip(&panel);
-    buffer->box_sprite(&panel, &InterfaceBoxStyles[3]);
+    Buffer::set_clip(&panel);
+    Buffer::box_sprite(&panel, &InterfaceBoxStyles[3]);
 
-    panel.left += 3;
-    panel.top += 3;
-    panel.right -= 3;
-    panel.bottom -= 3;
-    RECT title = {panel.left, panel.top, panel.right, panel.top + 0x17};
-    buffer->box_sprite(&title, &InterfaceBoxStyles[6]);
+    social_expand_rect(&panel, -3, -3);
+    RECT title = panel;
+    title.bottom = title.top + 0x14;
+    Buffer::box_sprite(&title, &InterfaceBoxStyles[6]);
 
+    StringTemp[0] = '\0';
     const Player &player = Players[factionID_];
     GenderDefault = player.noun_gender;
     PluralityDefault = player.is_noun_plural;
-    StringTemp[0] = '\0';
     strcat(StringTemp, player.noun_faction);
     CharUpperA(StringTemp);
-    buffer->set_font(&font1_, 0, 0, 0);
-    buffer->set_text_color(0x9f, -1, 1, 1);
-    buffer->write_cent_l(StringTemp, &title, strlen(StringTemp));
+    Buffer::set_font(&font1_, 0, 0, 0);
+    Buffer::set_text_color(0x9f, -1, 1, 1);
+    Buffer::write_cent_l(StringTemp, &title, strlen(StringTemp));
 
-    RECT bar = {panel.left, panel.bottom - 0x14, panel.right, panel.bottom};
-    buffer->box_sprite(&bar, &InterfaceBoxStyles[6]);
+    title = panel;
+    title.top = title.bottom - 0x14;
+    Buffer::box_sprite(&title, &InterfaceBoxStyles[6]);
     const SocialEffect &effects = PlayersData[factionID_].soc_effect_base;
     int total = 0;
     for (int effect = 0; effect < MaxSocialEffectNum; ++effect) {
@@ -1186,8 +1173,8 @@ void SocialWin::draw_faction_basal() {
 
     if (total != 0) {
         const int step = effectIcons_[0].width() + 2;
-        int x = (bar.right - step * total - bar.left) / 2 + bar.left;
-        int y = (bar.bottom - effectIcons_[0].height() - bar.top) / 2 + bar.top;
+        int x = (title.right - step * total - title.left) / 2 + title.left;
+        int y = (title.bottom - effectIcons_[0].height() - title.top) / 2 + title.top;
         for (int effect = 0; effect < MaxSocialEffectNum; ++effect) {
             if (effect == 3) {
                 continue;
@@ -1301,7 +1288,8 @@ void SocialWin::draw_presets() {
     panel.right -= 3;
     panel.bottom -= 3;
 
-    RECT title = {panel.left, panel.top, panel.right, panel.top + 0x14};
+    RECT title = panel;
+    title.bottom = title.top + 0x14;
     Buffer::box_sprite(&title, &InterfaceBoxStyles[6]);
 
     StringTemp[0] = '\0';

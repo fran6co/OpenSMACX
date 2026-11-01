@@ -9079,7 +9079,7 @@ int Buffer::probe_image_file(const char *filename, Palette *, int, int) {
     return 8;
 }
 
-// ORIGINAL: 0x005D7F20 sub_5d7f20 0x005D7F20-0x005D7FFB;0x00662BD1-0x00662BFC FILE
+// ORIGINAL: 0x005D7F20 sub_5d7f20 0x005D7F20-0x005D7FFB;0x00662BD1-0x00662BFC FILE BYTE_EXACT
 // symbol    ?probe_pcx@Buffer@@SGHPBDPAVPalette@@HH@Z
 // TRIED: reproducing the SEH frame/unwind funclets (~Buffer only runs on the EXCEPTION path in the original; the normal path calls close()+~Spot() explicitly instead) - landed with the local `Buffer buf` left trivially destructible (no ~Buffer call at all on scope exit) and the explicit close()/spot_.~Spot() calls matching the normal path only.
 // This utility only loads a temporary Buffer and returns its status. Original
@@ -9087,7 +9087,11 @@ int Buffer::probe_image_file(const char *filename, Palette *, int, int) {
 int __stdcall Buffer::probe_pcx(const char *filename, Palette *palette,
                                 int color_base, int color_count) {
     Buffer temporary;
-    return temporary.load_pcx(filename, palette, color_base, color_count);
+    int result = temporary.load_pcx(filename, palette, color_base, color_count);
+    if (result != 0) {
+        return result;
+    }
+    return 0;
 }
 
 

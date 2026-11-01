@@ -253,7 +253,7 @@ Purpose: Walk the entry list for `id` and leave the cursor and position on the
          returning, and a void body cannot promise that. The return type does
          not change the thiscall cleanup, so this is the residue and not a
          different function.
-// ORIGINAL: 0x00611600 ?id_to_pos@SpriteBox@@QAEXH@Z 0x00611600-0x00611640
+// ORIGINAL: 0x00611600 ?id_to_pos@SpriteBox@@QAEXH@Z 0x00611600-0x00611640 BYTE_EXACT
 // symbol    ?id_to_pos@SpriteBox@@QAEIH@Z
 // size      64 bytes
 // prototype void (__thiscall ?id_to_pos@SpriteBox@@QAEXH@Z)(SpriteBox* this, int)
@@ -265,25 +265,16 @@ Return Value: the resulting position, which is also left at 0x38
 Status: Complete
 */
 uint32_t SpriteBox::id_to_pos(int id) {
-    if (list_.head_ == 0) {
-        return static_cast<uint32_t>(list_.current_position_);
-    }
-    list_.current_position_ = 0;
-    list_.current_ = list_.head_;
-    if (list_.entry_count_ <= 0) {
-        return static_cast<uint32_t>(list_.current_position_);
-    }
-    int32_t examined = 0;
-    for (;;) {
-        StringStructEntry *const entry = list_.current_;
-        if (entry->id == id) {
-            break;
-        }
-        list_.current_position_ = list_.current_position_ + 1;
-        ++examined;
-        list_.current_ = entry->next;
-        if (examined >= list_.entry_count_) {
-            break;
+    if (list_.head_ != 0) {
+        list_.current_position_ = 0;
+        list_.current_ = list_.head_;
+        for (int32_t examined = 0; examined < list_.entry_count_; ++examined) {
+            StringStructEntry *const entry = list_.current_;
+            if (entry->id == id) {
+                break;
+            }
+            list_.current_position_ = list_.current_position_ + 1;
+            list_.current_ = entry->next;
         }
     }
     return static_cast<uint32_t>(list_.current_position_);

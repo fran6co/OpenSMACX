@@ -486,13 +486,16 @@
       },
       "src/map_altitude.cpp": {
         "flags": [
-          "/c",
-          "/O2",
-          "/Gy",
-          "/GR-",
-          "/Oy-",
+          "/nologo",
+          "/TP",
+          "/Zm200",
           "/GX",
-          "/Ob2"
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W4",
+          "/Oy-",
+          "-c"
         ]
       },
       "src/labels.cpp": {
@@ -657,14 +660,17 @@
       },
       "src/map_sites.cpp": {
         "flags": [
-          "/c",
-          "/O2",
-          "/Gy",
-          "/GR-",
+          "/nologo",
+          "/TP",
+          "/Zm200",
           "/GX",
-          "/Oy-",
+          "/O2",
           "/Ob2",
-          "/Z7"
+          "-MT",
+          "/W4",
+          "/Oy-",
+          "/Z7",
+          "-c"
         ]
       },
       "src/jackal/jackal.cpp": {
@@ -1551,6 +1557,19 @@
           "-MT",
           "/W4",
           "/Oy-",
+          "-c"
+        ]
+      },
+      "src/caviar_io.cpp": {
+        "flags": [
+          "/nologo",
+          "/TP",
+          "/Zm200",
+          "/GX",
+          "/O2",
+          "/Ob2",
+          "-MT",
+          "/W4",
           "-c"
         ]
       }

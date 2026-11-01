@@ -19,7 +19,11 @@ extern "C" void __cdecl vox_stage_error(const char *message);
 // Historical spelling evidence: the image loads the No-room pointer slot
 // before pushing it (`mov edx,[0x6989d8] / push edx`); a literal array changed
 // that instruction shape. These retain the existing pointer declarations.
+// These descriptive pointer names bind only the independently observed starts.
+// Original containing allocation, string extents and lifetime stay unknown.
+// RECOVERY_OBJECT: v1 0x006989D4 _vox_msg_reading_file
 static const char *const vox_msg_reading_file = "Reading file";        // 0x006989D4
+// RECOVERY_OBJECT: v1 0x006989D8 _vox_msg_no_room
 static const char *const vox_msg_no_room = "No room";                  // 0x006989D8
 
 #define vox_read_slot (CaviarOutputMessageWindow.io_read_)
@@ -86,17 +90,14 @@ Purpose: Read EXACTLY count bytes through the engine's read slot: loop until
 Return Value: 0 when the full count was read, -1 when the slot went negative.
 */
 extern "C" int __cdecl vox_read_exact(int fd, void *buffer, int count) {
-    int total = 0;
-    if (count > 0) {
-        do {
-            int read = vox_read_slot((unsigned long)fd,
-                                     (char *)buffer + total, count - total);
-            if (read < 0) {
-                vox_stage_error(vox_msg_reading_file);
-                return -1;
-            }
-            total += read;
-        } while (total < count);
+    for (int total = 0; total < count; ) {
+        int read = vox_read_slot((unsigned long)fd,
+                                 (char *)buffer + total, count - total);
+        if (read < 0) {
+            vox_stage_error(vox_msg_reading_file);
+            return -1;
+        }
+        total += read;
     }
     return 0;
 }

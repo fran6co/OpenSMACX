@@ -213,6 +213,12 @@ must be bounded: do not hold a useful verified recovery indefinitely waiting for
 a target number of winners. Git operations and integration remain serial; source
 search and compilation in independent worktrees do not.
 
+Before changing a worker's measurement configuration or preparing its recipes,
+obtain an explicit confirmation that its capture and observation epoch has
+finished. A scope proposal does not mean the worker is idle. Preserve any
+interrupted or policy-mismatched capture as a diagnostic; never relabel it as
+verified evidence under the new configuration.
+
 Freeze framework, compiler policy, and common task baselines during the campaign.
 A demonstrated blocker can justify a separate framework change after affected
 measurements stop. Centralize discoveries needing shared headers or expanded
@@ -1264,6 +1270,19 @@ Document the merge decision and remaining limitations in the Git commit. A
 manually reviewed merge is neither native automatic acceptance nor proof that the
 whole game works. The automatic driver and publication refusal rules below remain
 unchanged when those commands are used.
+
+For body-only manual batches with unchanged headers, include resolution,
+compiler and build policy, the coordinator may rebuild and relink in the prior
+application build directory. Preserve the old artifacts first, then remove the
+dirty objects and their compile observations, along with application/link outputs,
+so rebuilt artifacts and receipts are newly created. Use the actual build plan
+and dependencies to identify dirty objects. Never overwrite or edit a receipt to
+make it current. Revalidate every retained and rebuilt compilation and the fresh
+link inputs with `build_compile_evidence.verify_build_compilations`, then run the
+current function/reference comparison and relevant regression checks. A successful
+incremental command alone is insufficient. Keep this manual result distinct from
+`check-build` and automatic acceptance, which still require a fresh build tree.
+Header, include-set, toolchain or build-policy changes use the fresh-build route.
 
 Every integrated step must leave the application compiling and linking. Trace
 new callees before integration. If an unresolved function cannot yet be recovered,

@@ -170,6 +170,8 @@ def compile_host(tmp_path, loader=None):
     body, setup = sources()
     header = (ROOT / "src/caviar.h").read_text()
     header = re.sub(r"^#.*$", "", header, flags=re.M)
+    palette_rows = (ROOT / "src/jackal/color_table.h").read_text()
+    header = re.sub(r"^#.*$", "", palette_rows, flags=re.M) + "\n" + header
     data = (ROOT / "src/caviar_data.cpp").read_text()
     model_ctor = braced(data, data.index("CaviarData::CaviarData()"))
     renderer = (ROOT / "src/caviar.cpp").read_text()
