@@ -6808,23 +6808,22 @@ int Buffer::wrap_right(char *text, int x_coord, int y_coord, int max_width) {
     field_18_ = 0;
     field_14_ = field_10_;
     int current_y = y_coord;
-    int width = max_width;
     char *next;
     do {
-        int line_width = width;
+        y_coord = max_width;
         if (text == 0) {
             next = 0;
         } else {
             BufferStrHeight = 0;
             unsigned int length = strlen(text);
-            next = find_line_break_l(text, &line_width,
+            next = find_line_break_l(text, &y_coord,
                                      static_cast<int>(length));
-            if (next == 0) {
-                write_right_l(text, x_coord, current_y,
-                              static_cast<int>(strlen(text)));
-            } else {
+            if (next != 0) {
                 write_right_l(text, x_coord, current_y,
                               static_cast<int>(next - text));
+            } else {
+                write_right_l(text, x_coord, current_y,
+                              static_cast<int>(strlen(text)));
             }
         }
         field_18_ = field_18_ + 1;
@@ -6833,18 +6832,18 @@ int Buffer::wrap_right(char *text, int x_coord, int y_coord, int max_width) {
         }
         Font *font = fonts_[0];
         int lineH;
-        if (font->unk_1_ < 0) {
-            lineH = font->line_height_;
-        } else {
+        if (font->unk_1_ >= 0) {
             lineH = font->height_ + font->unk_1_;
+        } else {
+            lineH = font->line_height_;
         }
         current_y = current_y + lineH;
+        text = next;
         int f14 = field_14_;
         if (f14 != 0) {
             field_14_ = 0;
-            width = width - f14;
+            max_width = max_width - f14;
         }
-        text = next;
     } while (next != 0);
     return current_y;
 }

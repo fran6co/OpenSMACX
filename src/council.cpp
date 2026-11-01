@@ -1499,6 +1499,7 @@ BOOL __cdecl eligible(int faction_id) {
 // (RulesProposal *)0x009A6828` in council.h, naming terranx.exe data that is
 // unmapped in a standalone build; see council.h. Zero at load there, as here:
 // alpha.cpp's PROPOSALS text load fills it before anything reads it.
+// RECOVERY_OBJECT: v2 0x009A6828 0x009A68AC ?Proposal@@3PAURulesProposal@@A 0x005873C0
 RulesProposal Proposal[MaxProposalNum];  // 0x009A6828, 0xc stride
 
 // The dialog parser's negative gender/plurality arguments consume these

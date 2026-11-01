@@ -208,9 +208,15 @@ def source_program(mutation: str | None = None) -> str:
             "static_cast<int>(strlen(text))", "static_cast<int>(length)", 1)
     elif mutation == "wrong_line_width":
         for name in ("wrap_cent", "wrap_right"):
-            old = "int line_width = width;"
-            assert old in definitions[name]
-            definitions[name] = definitions[name].replace(old, "int line_width = width - 1;", 1)
+            assignments = (
+                ("int line_width = width;", "int line_width = width - 1;"),
+                ("y_coord = max_width;", "y_coord = max_width - 1;"),
+            )
+            matches = [(old, new) for old, new in assignments
+                       if old in definitions[name]]
+            assert len(matches) == 1, name
+            old, new = matches[0]
+            definitions[name] = definitions[name].replace(old, new, 1)
     elif mutation == "wrong_center_advance":
         old = "y_coord += line_advance;"
         assert old in definitions["wrap_cent"]

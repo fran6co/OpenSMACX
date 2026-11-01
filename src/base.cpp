@@ -6177,20 +6177,19 @@ Return Value: n/a
 Status: Complete - testing
 */
 void __cdecl base_mark(int base_id) {
-    int x = Bases[base_id].x;
-    int y = Bases[base_id].y;
     int x_radius = 0;
     int y_radius = 0;
-    uint32_t faction_id = Bases[base_id].faction_id_current;
     for (int i = 0; i < 49; i++) {
-        x_radius = xrange(x + RadiusOffsetX[i]);
-        y_radius = y + RadiusOffsetY[i];
+        x_radius = xrange(Bases[base_id].x + RadiusOffsetX[i]);
+        y_radius = Bases[base_id].y + RadiusOffsetY[i];
         if (on_map(x_radius, y_radius)) {
             if (i < 21) {
                 bit_set(x_radius, y_radius, BIT_BASE_RADIUS, true);
-                using_set(x_radius, y_radius, faction_id); // rolled this into one conditional check
             } else {
                 site_set(x_radius, y_radius, 0);
+            }
+            if (i < 21) {
+                using_set(x_radius, y_radius, Bases[base_id].faction_id_current);
             }
         }
     }

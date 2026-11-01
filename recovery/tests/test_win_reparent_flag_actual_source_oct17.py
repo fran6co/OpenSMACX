@@ -210,7 +210,8 @@ def test_mapped_owner_field_mask_and_claim_are_continuous():
                 "         WinFlagClipToParent) == 0")
     new_mask = "(owner->iFlags_ & WinFlagClipToParent) == 0"
     assert baseline.count(old_mask) == 1
-    assert cpp == baseline.replace(old_mask, new_mask, 1)
+    signature = "int __stdcall win_reparent_window(HWND hwnd, int unused)"
+    assert body == _definition(baseline.replace(old_mask, new_mask, 1), signature)
 
     header = (ROOT / "src/win.h").read_text(encoding="utf-8")
     assert re.search(r"\buint32_t\s+iFlags_\s*;\s*//\s*0x98\b", header)

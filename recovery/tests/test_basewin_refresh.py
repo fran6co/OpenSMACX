@@ -21,6 +21,7 @@ import shutil
 import subprocess
 
 import pytest
+from owner_transfer_test_support import current_record_by_address
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -79,8 +80,10 @@ def actual():
         ' public: void redraw() override; };',
         one(interface, r'^extern MainInterface MainInterfaceGlobal;'),
     ))
+    visible_record = current_record_by_address(ROOT, 0x005F7E90)
+    visible_source = ROOT / visible_record.body if visible_record.body else visible_record.path
     methods = {
-        'visible': braced((ROOT / 'src/win.cpp').read_text(), 'int Win::is_visible()'),
+        'visible': braced(visible_source.read_text(), 'int Win::is_visible()'),
         'x_dist': braced(map_h, 'MEASURED inline int __cdecl x_dist('),
         'distance': braced(map_h, 'MEASURED inline int __cdecl vector_dist(int x_distance,'),
         'check_base': braced(cpp, 'void BaseWin::check_base('),

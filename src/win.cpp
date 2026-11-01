@@ -387,29 +387,7 @@ int Win::move(int x, int y) {
     return 0;
 }
 
-/*
-Purpose: Determine whether this window and every ancestor are visible.
-// ORIGINAL: 0x005F7E90 ?is_visible@Win@@QAEHXZ 0x005F7E90-0x005F7EB6 BYTE_EXACT
-// size      38 bytes
-// prototype int (__thiscall ?is_visible@Win@@QAEHXZ)(Win* this)
-// callers   120   call targets   1
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x005F7E90
-// notes     Runtime redirect installed by DllMain after byte-signature validation
-Status: Complete
-*/
-int Win::is_visible() {
-    if (!(iSomeFlag_ & 1U)) {
-        return 0;
-    }
-    // A detached window is visible on its own; otherwise the whole parent
-    // chain must be visible, which the legacy body walks recursively.
-    if (win_parent_ && !win_parent_->is_visible()) {
-        return 0;
-    }
-    return 1;
-}
+
 
 /*
 Purpose: Announce this window as the one the palette should follow, then report
@@ -1846,96 +1824,7 @@ int Win::is_child(Win *child) {
 }
 
 
-/*
-Purpose: Report whether a window is anywhere below this one in the child
-         tree, searching depth first. A direct child counts, and so does any
-         descendant of one.
-// ORIGINAL: 0x005ECE20 ?is_descendant@Win@@QAEHPAVWin@@@Z 0x005ECE20-0x005ECE73
-// symbol    ?is_descendant@Win@@QAEHPAV1@@Z
-// size      83 bytes
-// prototype int (__thiscall ?is_descendant@Win@@QAEHPAVWin@@@Z)(Win* this, Win*)
-// callers   4   call targets   1
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x005ECE20
-Return Value: 1 when the candidate is a descendant, 0 otherwise
-Status: Complete
-Verification note: hoisting the count out of the loop is an EQUIVALENT mutant
-         and will survive the sweep. The original reloads it every iteration,
-         so this transcription does too, but the whole call tree here is
-         read-only - nothing reachable from is_descendant writes to any
-         object - so no execution can observe the reload. It is kept because
-         it is what the bytes do, not because a test pins it. If this function
-         ever gains a seam, that changes and the reload becomes testable.
-         The absent null check on children_[index] is likewise faithful: the
-         original dereferences the slot unconditionally at 0x005ECE2E, so a
-         null slot faults in both.
 
-// LEVER: the image walks `children_` with an incrementing POINTER
-// (`lea esi, [ebx+0x1a4]` once, `add esi, 4` per iteration, `mov ecx,[esi]`)
-// rather than re-deriving `children_[index]` from a scaled index each time.
-// Spelling it as `Win *const *child = children_; ... ++child;` instead of
-// `children_[index]` moved agreement from 2/37 to 17/37 (0.691 -> 0.727
-// similar) at `/c /O2 /Gy /GR- /GX`. `index` is kept only for the trailing
-// `index >= count` bound check, which the image still does with `cmp
-// edi, eax` against a separately-incremented edi.
-//
-// TRIED: hoisting `int index = 0;` to sit between the `count =
-// child_count_` load and the `count <= 0` check (matching the image's
-// `xor edi, edi` appearing before `test eax, eax`) - this makes VC6 pick
-// edi instead of ebx for `this` and is WORSE (10/37). The remaining
-// divergence (a missing early `xor edi, edi` and the resulting jump-target
-// shift) did not yield to reordering the two post-count-check statements
-// either; both orders compile identically.
-//
-// TRIED: loop shape, via try_spellings. `do { ... } while (index <
-// count);` ties the committed `for (;;) { ...; if (index >= count) return
-// 0; }` exactly (17/37, same bytes) - the image's single shared "return 1"
-// landing pad (reached by both `je` and the post-recursion `jne`) is not
-// reproduced by either; this tree's compiler duplicates that block instead of
-// sharing it. A top-tested `while (index < count) { ... }` is WORSE (9/37),
-// and merging the two early-return tests into one `||` condition is worse
-// still (5/37) - the image tests them separately, matching the existing
-// two-statement shape already committed.
-*/
-// TRIED: 17 of 37, and two restructurings made it no better or worse.
-// A `do { ... } while (index < count);` gets the image's BACKWARD `jl` in
-// place of this form's forward `jge` + repeated compare, but scores the
-// same 17 and adds a differing run. Merging the two `return 1` arms into
-// one `||` - the image has a single found-case epilogue where this emits
-// two - collapses the loop instead: 4 of 37 at 32 instructions against the
-// image's 37. What is left is instruction ORDER (the image zeroes edi
-// before loading children_, this body after) and the duplicated epilogue,
-// neither of which source order reached.
-int Win::is_descendant(Win *candidate) {
-    if (!candidate) {
-        return 0;
-    }
-    int count = child_count_;
-    if (count <= 0) {
-        return 0;
-    }
-    Win *const *child = children_;
-    int index = 0;
-    for (;;) {
-        if (*child == candidate) {
-            return 1;
-        }
-        if ((*child)->is_descendant(candidate)) {
-            return 1;
-        }
-        // Re-read, do NOT hoist. The original reloads the count at 0x005ECE50
-        // after every recursive call returns, so a recursion that adds or
-        // removes children is seen by the very next iteration. A loop-invariant
-        // count is the obvious tidy-up and it changes behaviour.
-        count = child_count_;
-        ++index;
-        ++child;
-        if (index >= count) {
-            return 0;
-        }
-    }
-}
 
 
 /*
@@ -4611,99 +4500,7 @@ void Win::remove_parent_dialog() {
     }
 }
 
-// ORIGINAL: 0x005ECDC0 ?UNK2@Win@@QAEHH@Z 0x005ECDC0-0x005ECE15 FILE
-// symbol    ?is_descendant_of@Win@@QAEHPAV1@@Z
-// notes     PAV1@, not PAVWin@@: MSVC back-references the enclosing class
-//           for a parameter of its own type.
-// size      85 bytes
-// prototype int (__thiscall ?UNK2@Win@@QAEHH@Z)(Win* this, int)
-// callers   2   call targets   1
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x005ECDC0
-// PRESERVED UNIT - measured MISMATCH.
-//
-// Kept for COVERAGE. This directory IS on the ratchet: every file here
-// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
-// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
-// quarter of the project's total. It is still in no build; the earlier
-// header said "on no ratchet", which stopped being true when the map
-// moved into src/ and was still being written into new files.
-//
-// address        0x005ECDC0
-// measured tier  MISMATCH
-// divergence     4
-//
-// The WHOLE unit as measured, scaffolding included: for the units
-// that are byte-exact yet refuse extraction, the agent tuned the
-// emitted scaffolding and the body alone will not reproduce the
-// verdict. To resume, copy everything below back over
-//   build/byte-match/005ecdc0/unit.cpp
-// and score it with tools/agent_brief.py.
-// GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: ?UNK2@Win@@QAEHH@Z  at 0x005ECDC0  (85 bytes)
-//
-// A VERIFICATION ARTIFACT, not product source: classes are opaque and
-// globals are bound to fixed addresses, because both are byte-visible
-// and both differ from the style src/ is written in.
-//
-// VC6 DIALECT - this must compile under cl 12.00.8168, which is the
-// only compiler this project builds with. Avoid: auto, nullptr, constexpr,
-// static_assert, enum class, range-for, lambdas, long long, <cstdint>,
-// and declaring `int i` twice in one function (VC6 leaks for-scope).
-// static_cast/reinterpret_cast are fine and are the right spelling.
-//
-// SOURCE-FORM RULES, each one learned by a fan-out agent that lost
-// attempts to it. They are here rather than in a prompt so the next
-// agent does not rediscover them:
-//
-//  * A ternary is not an if. `x ? a : b` lowers to `jne` with the arms
-//    swapped; `if (x) {...}` gives `je`.
-//  * VC6 NEVER hoists a same-polarity guard's body out of line. To get
-//    two special cases branching FAR away, write them negated and
-//    NESTED - `if (a != X) { if (a != Y) { return D; } ...; }` - not as
-//    sequential guard clauses, which inline each body instead.
-//  * VC6 rejects `__thiscall` on a free function pointer (C4234). For
-//    an indirect virtual call use the generated VCall shim below; for a
-//    thiscall function POINTER, take a member-function pointer of a
-//    dummy class instead of spelling the convention.
-//  * Loop form is visible: while / do-while / for lower differently,
-//    and so does counting up versus down.
-//  * If the original dedicates a callee-saved register to a constant
-//    across the whole body (an extra `push ebx`/`push edi` in the
-//    prologue), it had enough register pressure to do so. That is a
-//    hard case - the tool reports a similarity ratio so you can tell a
-//    near miss from a wrong body.
 
-
-// TRIED: 4 of 38. Named and retyped from `UNK2(int)` - it walks
-// `ancestor`'s children looking for `this`, so it is the mirror of
-// is_descendant - and the members replaced a `char *` walk of 0x1a4/0x3fc.
-// The bytes did not follow: 41 instructions against 38, with ebx and ebp
-// swapped from the first instruction on, which is the same allocation wall
-// its sibling is_descendant (0x005ECE20) sits behind at 17 of 37.
-// Flattening the two guards into `ancestor == 0 || child_count_ <= 0`
-// costs one more instruction and changes nothing else.
-int Win::is_descendant_of(Win *ancestor) {
-    if (ancestor != 0) {
-        if (ancestor->child_count_ > 0) {
-            Win *const *children = ancestor->children_;
-            int i = 0;
-            do {
-                Win *child = *children;
-                if (child == this) {
-                    return 1;
-                }
-                if (is_descendant_of(child)) {
-                    return 1;
-                }
-                ++i;
-                ++children;
-            } while (i < ancestor->child_count_);
-        }
-    }
-    return 0;
-}
 
 // Fixed-slot bindings carried from 005ecec0.cpp
 
