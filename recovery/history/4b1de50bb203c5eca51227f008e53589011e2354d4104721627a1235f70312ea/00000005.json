@@ -1,0 +1,19 @@
+{
+  "event_id": "017a353421cd20a0246e90e21fb4e12cc128fb1fb56923c9caefc0b3cc76d7d0",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "original-hsv-evaluation-contract",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/jackal/palette.cpp restores eight trig calls per eligible candidate, original stride-one ranges, chroma-first then value-square accumulation and uninitialized no-winner index. Actual VC6 captures independently confirm call order and x87 addition order in both branches.",
+      "16 actual-source host controls pass, including deliberate call-caching, stride and accumulation damage. Source review SHA256 0be601955d540b4e9fd387688aab627cd584341f95929934396d48f59c5cb2d2",
+      "All30 source identities/spans/claims and native historical LEVER/TRIED fields preserved. Four new v1 TU-private constant-start bindings retain unknown allocation bounds. Target remains161/224 nonexact; distinct uninitialized-return physical stack slot and full linked/runtime behavior remain matching/proof obligations. No byte claim or acceptance granted."
+    ]
+  },
+  "previous_event": "ad40030114a23aa3d12e35abc03106b5b3ab578daf23bf2b54e7e3c10881861c",
+  "request_id": "recover-original-hsv-evaluation",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:palette-hsv-evaluation-nov01dq"
+}

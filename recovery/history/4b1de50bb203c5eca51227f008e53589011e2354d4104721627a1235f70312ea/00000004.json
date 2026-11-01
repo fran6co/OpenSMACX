@@ -1,0 +1,17 @@
+{
+  "event_id": "ad40030114a23aa3d12e35abc03106b5b3ab578daf23bf2b54e7e3c10881861c",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "palette-constant-start-correspondences",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Native object writer added v1 start-only bindings beside the three existing private doubles in src/jackal/palette.cpp. Original payloads and independent consumer dataflow reviewed; no numeric expression or original allocation claim changed."
+    ]
+  },
+  "previous_event": "63f3a75e128dc076fb293f672ff3a23d997318cca3e3a36c25f4afa79c2ab3e3",
+  "request_id": "bind-palette-constant-starts",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:palette-hsv-evaluation-nov01dq"
+}
