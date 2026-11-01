@@ -359,18 +359,18 @@ void __cdecl build_continent(int size) {
         if (y & 1) {
             x++; // validate whether this should be y and/or reasoning for x
         }
-    } while (count++ < 100 && alt_at(x, y) >= ALT_BIT_SHORE_LINE);
-    if (alt_at(x, y) < ALT_BIT_SHORE_LINE) {
+    } while (++count < 100 && altitude_at(x, y) >= ALT_BIT_SHORE_LINE);
+    if (altitude_at(x, y) < ALT_BIT_SHORE_LINE) {
         int ratio = (size * 3200) / MapArea;
-        if (ratio > WorldBuilder.cont_size_ratio5 || BrushVal1 >= WorldBuildVal1) {
+        if (ratio > WorldBuilder.cont_size_ratio[4] || BrushVal1 >= WorldBuildVal1) {
             radius /= 4;
-            if (BrushVal1 >= WorldBuildVal1 && ratio > WorldBuilder.cont_size_ratio5) {
+            if (BrushVal1 >= WorldBuildVal1 && ratio > WorldBuilder.cont_size_ratio[4]) {
                 radius = rand() % 3 + 1;
             }
-        } else if (ratio <= WorldBuilder.cont_size_ratio4) {
-            if (ratio <= WorldBuilder.cont_size_ratio3) {
-                if (ratio <= WorldBuilder.cont_size_ratio2) {
-                    if (ratio < WorldBuilder.cont_size_ratio1 && MapLandCoverage > 1) {
+        } else if (ratio <= WorldBuilder.cont_size_ratio[3]) {
+            if (ratio <= WorldBuilder.cont_size_ratio[2]) {
+                if (ratio <= WorldBuilder.cont_size_ratio[1]) {
+                    if (ratio < WorldBuilder.cont_size_ratio[0] && MapLandCoverage > 1) {
                         radius += radius / 2;
                     }
                 } else {

@@ -670,36 +670,19 @@ struct RulesWorldbuilder { // Alpha(x).txt
     // Default value: 1
     uint32_t fungus;
 
-    // #WORLDBUILDER: Continent size ratios #1
-    // Original bounds: n/a
-    // Default value: 3
-    int cont_size_ratio1;
-
-    // #WORLDBUILDER: Continent size ratios #2
-    // Original bounds: n/a
-    // Default value: 6
-    int cont_size_ratio2;
-
-    // #WORLDBUILDER: Continent size ratios #3
-    // Original bounds: n/a
-    // Default value: 12
-    int cont_size_ratio3;
-
-    // #WORLDBUILDER: Continent size ratios #4
-    // Original bounds: n/a
-    // Default value: 18
-    int cont_size_ratio4;
-
-    // #WORLDBUILDER: Continent size ratios #5
-    // Original bounds: n/a
-    // Default value: 24
-    int cont_size_ratio5;
+    // #WORLDBUILDER: Continent size ratios #1..#5
+    // Original bounds: n/a. Defaults: 3, 6, 12, 18, 24.
+    // Original 0x00585DDD..0x00585DF2 walks signed DWORDs at +0x64..+0x74.
+    int cont_size_ratio[5];
 
     // #WORLDBUILDER: Higher # increases island count
     // Original bounds: 1 to 500
     // Default value: 36
     int islands;
 };
+static_assert(offsetof(RulesWorldbuilder, cont_size_ratio) == 0x64 &&
+              offsetof(RulesWorldbuilder, islands) == 0x78 &&
+              sizeof(RulesWorldbuilder) == 0x7C, "native world-builder transfer layout");
 
 struct AlphaIniPref {
     uint32_t preferences;

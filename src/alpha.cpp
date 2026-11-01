@@ -89,7 +89,11 @@ RulesEnergy Energy[MaxEnergyNum];                   // 0x0094A318
 // RECOVERY_OBJECT: v3 0x00949730 ?TechValidCount@@3HA member ?RulesStorage@@3URulesStorageWindow@@A tech_valid_count_
 // RECOVERY_OBJECT: v3 0x00949734 ?TechCommerceCount@@3HA member ?RulesStorage@@3URulesStorageWindow@@A tech_commerce_count_
 RulesStorageWindow RulesStorage;
-RulesWorldbuilder WorldBuilder;                     // 0x009502A8
+// The parser walks the five ratio words at +0x64..+0x74. NetDaemon::synch
+// opcode 0x82 transfers 0x7C bytes from this start (0x00533230/0x00533A63).
+// This binds the start; the accessed domain does not prove a larger allocation.
+// RECOVERY_OBJECT: v1 0x009502A8 ?WorldBuilder@@3URulesWorldbuilder@@A
+RulesWorldbuilder WorldBuilder;
 // prefs_load (0x0059DCF0) stores every field in place - `mov dword ptr
 // [0x94B464], eax` for preferences through custom_world at 0x0094B480
 // (bounded by the `cmp esi, 0x94B49C` loop tail at 0x0059E4D9).
@@ -649,11 +653,9 @@ BOOL __cdecl read_basic_rules() {
     text_get();
     WorldBuilder.fungus = range(text_item_number(), 0, 5);
     text_get();
-    WorldBuilder.cont_size_ratio1 = text_item_number();
-    WorldBuilder.cont_size_ratio2 = text_item_number();
-    WorldBuilder.cont_size_ratio3 = text_item_number();
-    WorldBuilder.cont_size_ratio4 = text_item_number();
-    WorldBuilder.cont_size_ratio5 = text_item_number();
+    for (int i = 0; i < 5; i++) {
+        WorldBuilder.cont_size_ratio[i] = text_item_number();
+    }
     text_get();
     WorldBuilder.islands = range(text_item_number(), 1, 500);
     return false;
