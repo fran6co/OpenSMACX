@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "task_id": "map-object-bindings-nov01cs",
+  "target": "opensmacx",
+  "author": "coordinator",
+  "base_revision": "38cbbbf31b789dcee86ea615536bc3ece8707daa",
+  "intent": "Recover original map-global starts and real emitted reference targets without changing storage, algorithms or claiming unknown enclosing allocation bounds.",
+  "editable_files": [
+    "src/map.cpp"
+  ],
+  "subjects": [
+    {
+      "address": 5020416,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5039792,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5040016,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5179360,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5203952,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5837456,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6037536,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6042688,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "evidence": [
+    "Pinned original absolute operands independently identify the existing map flag mask at6919EC and per-faction count/base-id arrays at9B2290/9B22BC. Match those starts to unique actual map.cpp COFF definitions; source bindings are load-bearing, not a generated report.",
+    "world_alt_set uses two eight-DWORD fills and alt_set/action_terraform use original faction indices. Record accessed32-byte windows but keep start-only v1 because an enclosing original allocation/lifetime remains unproven.",
+    "Only comments/annotations may change. Preserve every original function identity/span/body/claim and emitted storage/code; no compiler policy changes. Fresh build/link, source gates, native reference target qualification, complete physical output comparison and independent review required before manual integration."
+  ]
+}

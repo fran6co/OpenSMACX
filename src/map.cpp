@@ -239,11 +239,23 @@ MapStorageWindow MapStorage;
 // them reads, and the shipped .data holds 0x00288050 - the same constant the
 // 0x004CE6C9 call site pushes as a literal plus 0xc. No image symbol and no
 // name anywhere in the tree before this.
-uint32_t MapTileFlagClearMask = 0x00288050;  // 0x006919EC, defined here
+// Start binding only: the original DWORD reads establish the accessed value,
+// not an enclosing allocation or the absence of indirect writers.
+// RECOVERY_OBJECT: v1 0x006919EC ?MapTileFlagClearMask@@3IA
+uint32_t MapTileFlagClearMask = 0x00288050;
 // EIGHT OF THEM, one per player: the two sites below clear
 // `sizeof(int) * MaxPlayerNum` bytes, which is what the extent is.
-int MapBaseSubmergedCount[8];  // 0x009B2290
-int MapBaseIdClosestSubmergedVeh[8];  // 0x009B22BC
+// world_alt_set (0x005C2033/0x005C2038) clears eight DWORDs here;
+// alt_set (0x00591432/0x00591453) reads and increments the faction's count.
+// These bindings retain starts; the observed 32-byte windows do not prove
+// the boundaries of any enclosing original allocation.
+// RECOVERY_OBJECT: v1 0x009B2290 ?MapBaseSubmergedCount@@3PAHA
+int MapBaseSubmergedCount[8];
+// world_alt_set (0x005C2042/0x005C2049) fills eight DWORDs with -1.
+// alt_set writes at 0x00591632; action_terraform reads at 0x004CA46C and
+// 0x004CA47E with distinct Console-faction and vehicle-faction indices.
+// RECOVERY_OBJECT: v1 0x009B22BC ?MapBaseIdClosestSubmergedVeh@@3PAHA
+int MapBaseIdClosestSubmergedVeh[8];
 int BrushVal1;  // 0x009B22B0
 // RECOVERY_OBJECT: v4 0x009B22B8 ?BrushVal2@@3IA target ?BrushVal2@@3HA
 int BrushVal2;  // 0x009B22B8
