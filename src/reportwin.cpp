@@ -100,7 +100,6 @@ void ReportWin::on_redraw() {
     field_59AC_ = -1;
     Buffer::set_clip(&energy_panel_rect_);
     switch (ReportIfGlobal.field_8_) {
-    case 0: draw_intel(); break;
     case 2: draw_labs(); break;
     case 3: draw_energy(); break;
     case 4: draw_ops(); break;
@@ -108,6 +107,7 @@ void ReportWin::on_redraw() {
     case 6: draw_sat(); break;
     case 7: draw_security(); break;
     case 8: draw_score(); break;
+    case 0: draw_intel(); break;
     }
     Buffer::restore_clip();
 }
