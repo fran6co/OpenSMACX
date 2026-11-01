@@ -45,9 +45,15 @@
   */
 // RECOVERY_BASE: v1 Datalink GraphicWin 0x0 0x00428FC0
 // RECOVERY_BASE: v1 Datalink SubInterface 0xA14 0x00428FC0
-// Constructor installs this original interface table at the declared base.
-// Its nineteen observed slots do not independently establish its end bound.
+// Constructor installs this SubInterface view at this+0xA14. Its nineteen
+// observed slots do not independently establish its end bound.
 // RECOVERY_GENERATED: v1 vtable 0x0066AF30 ? ??_7Datalink@@6B@ 0x00428FC0
+// The pinned constructor independently installs the Win view at this+0 and
+// the Buffer view at this+0x444. These are distinct class-table identities;
+// starts are established by the immediate stores, while original table ends
+// remain unknown.
+// RECOVERY_GENERATED: v1 vtable 0x0066AF84 ? ??_7Datalink@@6BWin@@@ 0x00428FC0
+// RECOVERY_GENERATED: v1 vtable 0x0066AF7C ? ??_7Datalink@@6BBuffer@@@ 0x00428FC0
 class Datalink : public GraphicWin, public SubInterface {
  public:
   // 0x00429180, a pending_bodies forwarder.

@@ -43,6 +43,12 @@ void __cdecl social_select(int faction_id);
 // Constructor installs this original interface table at the declared base.
 // Its nineteen observed slots do not independently establish its end bound.
 // RECOVERY_GENERATED: v1 vtable 0x0066DA50 ? ??_7SocialWin@@6B@ 0x004AE9E0
+// The complete-object constructor stores the GraphicWin's Win table at +0 and
+// the Buffer view at +0x444 before installing the SubInterface table at +A14.
+// The pinned start addresses and current compiler symbols are established;
+// original table extents are not.
+// RECOVERY_GENERATED: v1 vtable 0x0066DAA4 ? ??_7SocialWin@@6BWin@@@ 0x004AE9E0
+// RECOVERY_GENERATED: v1 vtable 0x0066DA9C ? ??_7SocialWin@@6BBuffer@@@ 0x004AE9E0
 class SocialWin : public GraphicWin, public SubInterface {
  public:
   // homed from 004b1ff0.cpp

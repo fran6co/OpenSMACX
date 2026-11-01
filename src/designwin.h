@@ -48,9 +48,15 @@ int __cdecl design_workshop(int faction_id, int mode);
   * ahead of the mapping.
   */
 // RECOVERY_BASE: v1 DesignWin SubInterface 0xA14 0x00434480
-// Constructor installs this original interface table at the declared base.
+// Constructor installs this SubInterface view at this+0xA14.
 // Its nineteen observed slots do not independently establish its end bound.
 // RECOVERY_GENERATED: v1 vtable 0x0066B0F4 ? ??_7DesignWin@@6B@ 0x00434480
+// The pinned constructor independently installs the Win view at this+0 and
+// the Buffer view at this+0x444. These are distinct class-table identities;
+// starts are established by the immediate stores, while original table ends
+// remain unknown.
+// RECOVERY_GENERATED: v1 vtable 0x0066B148 ? ??_7DesignWin@@6BWin@@@ 0x00434480
+// RECOVERY_GENERATED: v1 vtable 0x0066B140 ? ??_7DesignWin@@6BBuffer@@@ 0x00434480
 class DesignWin : public GraphicWin, public SubInterface {
  public:
   // Index meanings are descriptive source names inferred from the consuming

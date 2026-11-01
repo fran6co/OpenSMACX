@@ -348,6 +348,11 @@ Purpose: Construct the gamma-correction dialog.
 Return Value: None
 Status: Complete
 */
+// The original constructor installs Gamma's Win and secondary Buffer views
+// at object offsets 0 and 0x444. Each emitted identity is compiler-owned;
+// their table extents and full contents remain unbounded here.
+// RECOVERY_GENERATED: v1 vtable 0x0066C3D8 ? ??_7Gamma@@6BWin@@@ 0x005C8DA0
+// RECOVERY_GENERATED: v1 vtable 0x0066C3D0 ? ??_7Gamma@@6BBuffer@@@ 0x005C8DA0
 Gamma::Gamma() {
     // The vtable slots are compiler-managed, not ordinary members a class can
     // name - the same reason GraphicWin::construct writes its own pair at
