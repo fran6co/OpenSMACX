@@ -339,8 +339,9 @@ def _cleanup_action(instructions, *, code_base: int = 0) -> EHActionFact:
     end = instructions[-1].address + instructions[-1].size - code_base
 
     # VC6 can condition virtual-base cleanup on a saved construction flag.
-    # Admit only an exact bit-0 test, a zero branch to this action's final
-    # plain RET, and an otherwise independently decoded frame tail transfer.
+    # Admit only the observed single-bit masks 1 and 2, a zero branch to
+    # this action's final plain RET, and an otherwise independently decoded
+    # frame tail transfer.
     if len(instructions) in (7, 8):
         load, mask, test, skip = instructions[:4]
         ret = instructions[-1]
@@ -356,7 +357,7 @@ def _cleanup_action(instructions, *, code_base: int = 0) -> EHActionFact:
             and load.encoding.disp_size == 1
             and load.operands[1].mem.disp != 0
             and load.operands[1].mem.disp % 4 == 0
-            and mask.bytes == b"\x83\xe0\x01"
+            and mask.bytes in (b"\x83\xe0\x01", b"\x83\xe0\x02")
             and test.bytes == b"\x85\xc0"
             and skip.mnemonic == "je" and len(skip.operands) == 1
             and skip.operands[0].type == x86.X86_OP_IMM
@@ -372,7 +373,8 @@ def _cleanup_action(instructions, *, code_base: int = 0) -> EHActionFact:
             if transfer.kind is not EHActionKind.FRAME_TRANSFER or transfer.guard is not None:
                 raise ValueError("guarded EH action lacks an ordinary frame tail transfer")
             return replace(transfer, start=start, end=end,
-                           guard=EHFrameGuardFact(load.operands[1].mem.disp, 1, "eax"))
+                           guard=EHFrameGuardFact(load.operands[1].mem.disp,
+                                                  mask.bytes[2], "eax"))
 
     if len(instructions) in (7, 8):
         callback, count_push, size_push, frame_load = instructions[:4]
