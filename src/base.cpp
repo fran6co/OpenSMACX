@@ -5394,7 +5394,9 @@ uint32_t UpgradePromptAnswered;  // 0x0090EA3C
 int BaseCurrentGrowthRate;  // 0x0090E918
 // RECOVERY_OBJECT: v2 0x0090E980 0x0090E984 ?BaseCurrentVehPacifismCount@@3IA 0x004E9550
 uint32_t BaseCurrentVehPacifismCount;  // 0x0090E980
+// RECOVERY_OBJECT: v1 0x0090E8FC ?BaseCurrentForcesSupported@@3IA
 uint32_t BaseCurrentForcesSupported;  // 0x0090E8FC
+// RECOVERY_OBJECT: v1 0x0090E91C ?BaseCurrentForcesMaintCost@@3IA
 uint32_t BaseCurrentForcesMaintCost;  // 0x0090E91C
 
 /*
@@ -5404,6 +5406,7 @@ uint32_t BaseCurrentForcesMaintCost;  // 0x0090E91C
  * reads it back and stores the increment, and nothing ever reads the total - so
  * the count is written and then dropped. Kept because it is observable state.
  */
+// RECOVERY_OBJECT: v1 0x0090EA08 ?BaseCurrentForcesMaintCount@@3IA
 uint32_t BaseCurrentForcesMaintCount;  // 0x0090EA08
 
 /*
@@ -5581,6 +5584,7 @@ void __cdecl farm_compute() {
  * energy_yield publishes the clamped energy of a square that contains a base
  * here. Its only other reader in the image is base_terraform (0x004ECCBD).
  */
+// RECOVERY_OBJECT: v1 0x0090E914 ?BaseSquareEnergy@@3HA
 int BaseSquareEnergy;  // 0x0090E914
 
 /*
@@ -5762,6 +5766,8 @@ int __cdecl base_at(int x, int y) {
         }
     }
     if (!BaseAtErrorGuard) {
+        // This base_at diagnostic passes its own format literal to log_say, with x and y as separate values.
+// RECOVERY_LITERAL: v1 0x00689390 0x006893A8 ??_C@_0BI@FFAM@Base?5Bits?5Error?5?5?$CIx?0?5y?$CJ?$AA@ 0x004E3A50
         log_say("Base Bits Error  (x, y)", x, y, 0);
     }
     if (!(GameDataStateStorage.fields_.game_state_ & STATE_DEBUG_MODE)) {
@@ -5775,6 +5781,8 @@ int __cdecl base_at(int x, int y) {
     if (BaseAtDebugPopupFlag) {
         parse_num(0, x);
         parse_num(1, y);
+        // This base_at popup key is a separate literal argument from the diagnostic format string above.
+// RECOVERY_LITERAL: v1 0x006893A8 0x006893B0 ??_C@_07IECL@BASEBIT?$AA@ 0x004E3A50
         X_pop("BASEBIT", NULL);
     }
     BaseAtErrorGuard = 0;
@@ -6224,6 +6232,7 @@ Return Value: Cost factor
 Status: Complete
 */
 int __cdecl cost_factor(int faction_id, int rsc_type, int base_id) {
+// RECOVERY_OBJECT: v1 0x00689378 _?diff_cost_base@?1??cost_factor@@YAHHHH@Z@4QBHB
     static const int diff_cost_base[] = { 13, 12, 11, 10, 8, 7 };
     int factor = is_human(faction_id) ? 10 : diff_cost_base[GameDataStateStorage.fields_.diff_level_current_]
         - great_satan(GameDataStateStorage.fields_.faction_rankings_[7], false)
@@ -9404,6 +9413,8 @@ void __cdecl make_base_unique(int base_id) {
     }
     if (collisions != 0) {
         Bases[base_id].name_string[21] = 0;
+        // make_base_unique passes this one-byte delimiter to strcat; collision digits use a separate buffer.
+// RECOVERY_LITERAL: v1 0x00689F08 0x00689F0A ??_C@_01GJD@?9?$AA@ 0x004F7FE0
         strcat(Bases[base_id].name_string, "-");
         char digits[0x50];
         _itoa(collisions + 1, digits, 10);

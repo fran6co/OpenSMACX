@@ -229,8 +229,9 @@ ServiceList *ServiceEnumTarget;  // 0x009BE5F0
 // The service-provider GUID the enumeration keeps: DirectPlayEnumerateA hands
 // each provider's GUID to sub_630bf0, which compares these 16 bytes against it
 // and keeps only the match. Read off the image at 0x00697558.
+// RECOVERY_OBJECT: v2 0x00697558 0x00697568 _KeptServiceProviderGuid 0x00630BF0
 static const GUID KeptServiceProviderGuid = {
-    0xD8D29744, 0x208A, 0x11D0, {0xA0, 0x00, 0x9D, 0xBC, 0xB6, 0x67, 0x29, 0x24}};
+    0xD8D29744, 0x208A, 0x11D0, {0xBC, 0x9D, 0x00, 0xA0, 0x24, 0x29, 0x67, 0xB6}};
 
 
 
@@ -2254,6 +2255,7 @@ int Net::poll_services(ServiceList *list) {
 // of. GetCaps refuses a zero dwSize, so join_service sizes it to the full
 // 0x28 before the call. Real storage beside NetGetScratch's end and the
 // player-table pointer above, not a Net member.
+// RECOVERY_OBJECT: v2 0x009BE4C0 0x009BE4E8 _NetServiceCaps 0x0062E2A0
 static DPCAPS NetServiceCaps;  // 0x009BE4C0
 
 // Original direct-address writable .data string passed to WinExec on the

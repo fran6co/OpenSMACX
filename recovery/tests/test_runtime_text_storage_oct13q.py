@@ -149,7 +149,11 @@ def actual_fragments(general_source: str, net_source: str):
     launch = extract_if_block(
         join, "if (memcmp(provider, &KeptServiceProviderGuid, 0x10) == 0)"
     )
-    return arrays, done, action, state, launch
+    guid_start = net_source.find("static const GUID KeptServiceProviderGuid = {")
+    guid_end = net_source.find(";", guid_start) if guid_start >= 0 else -1
+    if guid_end < 0:
+        raise AssertionError("expected the source-owned kept-provider GUID")
+    return arrays, done, action, state, launch, net_source[guid_start : guid_end + 1]
 
 
 HARNESS = r'''
@@ -211,8 +215,13 @@ static void emit_state() {
     assert(log_record.text == state_text);
 }
 
-struct GUID { unsigned char bytes[16]; };
-static const GUID KeptServiceProviderGuid = {{1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16}};
+struct GUID {
+    uint32_t Data1;
+    uint16_t Data2;
+    uint16_t Data3;
+    unsigned char Data4[8];
+};
+GUID_DECLARATION
 static const unsigned int SW_SHOW = 5;
 static const char *winexec_text;
 static unsigned int winexec_flags;
@@ -230,6 +239,14 @@ static int launch_if_kept(GUID *provider) {
 }
 
 int main() {
+    const unsigned char expectedProviderData4[8] = {
+        0xBC, 0x9D, 0x00, 0xA0, 0x24, 0x29, 0x67, 0xB6
+    };
+    assert(KeptServiceProviderGuid.Data1 == 0xD8D29744);
+    assert(KeptServiceProviderGuid.Data2 == 0x208A);
+    assert(KeptServiceProviderGuid.Data3 == 0x11D0);
+    assert(std::memcmp(KeptServiceProviderGuid.Data4,
+                       expectedProviderData4, sizeof(expectedProviderData4)) == 0);
     assert(sizeof(LogEnemyVehicleDone) == 19);
     assert(sizeof(LogEnemyVehicleAction) == 21);
     assert(sizeof(LogEnemyVehicle) == 14);
@@ -269,7 +286,7 @@ int main() {
     assert(launch_if_kept(&matching) == 0x16);
     assert(winexec_calls == 1 && winexec_text == NetZoneLauncher);
     assert(std::strcmp(winexec_text, "Mplaynow.exe") == 0 && winexec_flags == SW_SHOW);
-    GUID other = {{0}};
+    GUID other = {0, 0, 0, {0}};
     assert(launch_if_kept(&other) == -7);
     assert(winexec_calls == 1);
     return 0;
@@ -278,7 +295,7 @@ int main() {
 
 
 def build_harness(general_source: str, net_source: str, mutation: str = "") -> str:
-    arrays, done, action, state, launch = actual_fragments(general_source, net_source)
+    arrays, done, action, state, launch, guid = actual_fragments(general_source, net_source)
     if mutation == "wrong_enemy_window":
         done = done.replace("LogEnemyVehicleDone", "LogEnemyVehicleAction", 1)
     elif mutation == "literal_enemy_label":
@@ -294,6 +311,7 @@ def build_harness(general_source: str, net_source: str, mutation: str = "") -> s
         .replace("ACTION_CALL", action)
         .replace("STATE_CALL", state)
         .replace("LAUNCH_BRANCH", launch)
+        .replace("GUID_DECLARATION", guid)
     )
 
 

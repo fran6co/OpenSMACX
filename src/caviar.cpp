@@ -1198,15 +1198,27 @@ uint32_t vox_record_count = 0;  // 0x009BE69C, records created, bumped per creat
 // pointer it is handed, so a raw binding dereferenced unmapped memory the
 // moment any error arm ran. "Unsupported pixel size" is different in the
 // image: a data SLOT at 0x00698A9C holds the string's pointer and the body
-// loads through it - one indirection the literal here does not need.
+// loads through it. Keep that writable pointer slot separate from its text.
+// RECOVERY_OBJECT: v2 0x00698AFC 0x00698B0F _vox_msg_no_setup 0x006185A0
 static const char vox_msg_no_setup[] = "No setup parameter";        // 0x00698AFC
+// RECOVERY_OBJECT: v2 0x00698AD8 0x00698AE7 _vox_msg_setup_empty 0x006185A0
 static const char vox_msg_setup_empty[] = "Setup is empty";         // 0x00698AD8
+// RECOVERY_OBJECT: v2 0x00698AE8 0x00698AFA _vox_msg_cpu_unsupported 0x006185A0
 static const char vox_msg_cpu_unsupported[] = "CPU not supported";  // 0x00698AE8
+// RECOVERY_OBJECT: v2 0x00698B10 0x00698B29 _vox_msg_no_shadow 0x006393C0
 static const char vox_msg_no_shadow[] = "No room for shadow table"; // 0x00698B10
+// RECOVERY_OBJECT: v2 0x00698B2C 0x00698B44 _vox_msg_no_colour 0x006393C0
 static const char vox_msg_no_colour[] = "No room for color table";  // 0x00698B2C
+// RECOVERY_OBJECT: v2 0x00698B44 0x00698B58 _vox_msg_no_handler 0x006393C0
 static const char vox_msg_no_handler[] = "No room for handler";     // 0x00698B44
+// RECOVERY_OBJECT: v2 0x00698B58 0x00698B6E _vox_msg_no_colortab 0x006393C0
 static const char vox_msg_no_colortab[] = "No ColorTab parameter";  // 0x00698B58
+// RECOVERY_OBJECT: v2 0x00698AC0 0x00698AD7 _vox_msg_unsupported_pixel 0x00698A9C
 static const char vox_msg_unsupported_pixel[] = "Unsupported pixel size"; // 0x00698AC0
+// The image keeps a distinct writable pointer slot in .data at 0x00698A9C;
+// this is not another literal and its initializer points to the message above.
+// RECOVERY_OBJECT: v2 0x00698A9C 0x00698AA0 _vox_msg_unsupported_pixel_slot 0x006393C0
+static const char *vox_msg_unsupported_pixel_slot = vox_msg_unsupported_pixel; // 0x00698A9C
 
 // Three more of the same pool, named 2026-09-04 by reading the image's own
 // pointer table: 0x006989CC..0x006989E0 is ONE run of six message slots -
@@ -1225,6 +1237,7 @@ static const char vox_msg_no_address_tables[] = "No room for address tables";
 // first is the chain walk's cut: vox_walk_scaled_chain keeps walking while a
 // node's extent, scaled by the caller's factor, stays below it. 1.4142f is
 // the exact float the image holds (0x3FB50481).
+// RECOVERY_OBJECT: v2 0x00670FE8 0x00670FEC _vox_sqrt_two 0x006385D0
 static const float vox_sqrt_two = 1.4142f;       // 0x00670FE8
 // The 7.0f vox_read_chunks tests the record's float at +0x8 against to
 // choose between loading the 0x1020000 chunk and expanding it in place.
@@ -1573,7 +1586,7 @@ VoxRenderRecord *__cdecl vox_create_record(
         }
         break;
     default:
-        vox_stage_error(vox_msg_unsupported_pixel);
+        vox_stage_error(vox_msg_unsupported_pixel_slot);
         return 0;
     }
 

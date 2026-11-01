@@ -2381,6 +2381,7 @@ MEASURED int __cdecl energy_limit(int) {
 
 // Loop state globals; addresses and roles documented in
 // game.h next to each declaration.
+// RECOVERY_OBJECT: v1 0x0093A948 ?GameRestartQueued@@3HA
 int GameRestartQueued;  // 0x0093A948
 // Original dword stop-loop flag, set by system-close and read by wait paths.
 // RECOVERY_OBJECT: v1 0x009B2068 ?ExitTurnLoop@@3HA

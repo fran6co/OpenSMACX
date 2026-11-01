@@ -356,7 +356,6 @@ static const char vox_msg_no_colortab[]="colour input";
 static const char vox_msg_no_handler[]="record allocation";
 static const char vox_msg_no_colour[]="colour allocation";
 static const char vox_msg_no_shadow[]="shadow allocation";
-static const char vox_msg_unsupported_pixel[]="pixel size";
 static const char vox_msg_cpu_unsupported[]="cpu rank";
 static const char *last_error;
 static void vox_stage_error(const char *message) { event('E'); ++error_count; last_error=message; }
@@ -501,6 +500,14 @@ int main() {
     reset(); setup.pixel_size_=3; assert(vox_create_record(0,input,0,&setup,0)==0);
     assert(alloc_count==1 && free_count==0 && last_error==vox_msg_unsupported_pixel);
     assert(strcmp(events,"AE")==0);
+    const char *const saved_pixel_slot=vox_msg_unsupported_pixel_slot;
+    static const char alternate_pixel_text[]="alternate pixel fixture";
+    vox_msg_unsupported_pixel_slot=alternate_pixel_text;
+    reset(); setup.pixel_size_=3;
+    assert(vox_create_record(0,input,0,&setup,0)==0);
+    assert(alloc_count==1 && free_count==0 && last_error==alternate_pixel_text);
+    assert(strcmp(last_error,"alternate pixel fixture")==0 && strcmp(events,"AE")==0);
+    vox_msg_unsupported_pixel_slot=saved_pixel_slot;
     reset(); setup.pixel_size_=1; CaviarVoxelAlgoFlag=6;
     assert(vox_create_record(0,input,0,&setup,0)==0);
     assert(alloc_count==2 && free_count==0 && last_error==vox_msg_cpu_unsupported);
@@ -524,15 +531,36 @@ int main() {
 
 def factory_program():
     source = (ROOT / "src/caviar.cpp").read_text()
+    pixel_slot = re.search(
+        r"(?m)^static const char \*vox_msg_unsupported_pixel_slot = [^;\n]+;", source
+    )
+    pixel_text = re.search(
+        r"(?m)^static const char vox_msg_unsupported_pixel\[\] = [^;\n]+;", source
+    )
+    assert pixel_slot is not None
+    assert pixel_text is not None
     installers = "\n".join(extract(source, name) for name in (
         "void __cdecl sub_63ad60(VoxRenderRecord *record) {",
         "void __cdecl sub_63ae20(VoxRenderRecord *record) {"))
     factory = extract(source, "VoxRenderRecord *__cdecl vox_create_record(")
-    return declarations() + FACTORY_BOUNDARIES + installers + factory + FACTORY_MAIN
+    return (declarations() + pixel_text.group(0) + "\n" + pixel_slot.group(0) + "\n" +
+            FACTORY_BOUNDARIES +
+            installers + factory + FACTORY_MAIN)
 
 
 def test_actual_factory_installer_pointer_types_signed_low_words_and_error_lifetimes(tmp_path):
     run_actual(tmp_path, factory_program())
+
+
+def test_factory_unsupported_pixel_error_loads_writable_pointer_slot(tmp_path):
+    text = factory_program()
+    direct_literal = text.replace(
+        "vox_stage_error(vox_msg_unsupported_pixel_slot);",
+        "vox_stage_error(vox_msg_unsupported_pixel);",
+        1,
+    )
+    assert direct_literal != text
+    run_actual(tmp_path, direct_literal, False)
 
 
 @pytest.mark.parametrize("damage", ("unsigned_width", "unsigned_height", "narrow_full_width_guard",

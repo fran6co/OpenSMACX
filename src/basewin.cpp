@@ -4626,6 +4626,10 @@ int InvertEntryCount;
 // RECOVERY_OBJECT: v2 0x006A7528 0x006A7628 ?InvertEntries@@3PAY0CA@DA 0x0041E8D0
 char InvertEntries[8][32];
 
+// BaseWin::init independently passes this same file/section pair at
+// 0x0041F2A6/0x0041F2AB; the two bounded literals are shared in this TU.
+// RECOVERY_LITERAL: v1 0x00682824 0x0068282F ??_C@_0L@GHCM@INVERTLIST?$AA@ 0x0041E8D0
+// RECOVERY_LITERAL: v1 0x00682830 0x00682839 ??_C@_08DFLF@BASENAME?$AA@ 0x0041E8D0
 void __cdecl load_inverts() {
     if (text_open("BASENAME", "INVERTLIST") == 0) {
         text_get();

@@ -145,7 +145,12 @@ int AlphaMovie::exec(char *movie_name) {
     if (result != 0) {
         char retry_name[0x100];
         retry_name[0] = 0;
-        strcat(StringTemp, "k:\\game\\");
+        // At 0x004040EF the original reads the separate process-lifetime string at
+        // 0x006827AC. amovie_project has distinct pinned copies at 0x682774
+        // and 0x682798, so keep this use in its own source-owned object.
+        // RECOVERY_OBJECT: v1 0x006827AC _?RetryPath@?7??exec@AlphaMovie@@QAEHPAD@Z@4QBDB
+        static const char RetryPath[] = "k:\\game\\";
+        strcat(StringTemp, RetryPath);
         strcat(StringTemp, movie_name);
         result = mciVideo_.load(retry_name, this, 0, 0);
         if (result != 0) {

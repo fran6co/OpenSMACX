@@ -1472,8 +1472,8 @@ void Console::toggle_dest() {
 char ConsoleStrMenuSimple[] = "MENUSIMPLE";  // 0x0068A9CC
 // RECOVERY_OBJECT: v2 0x0068A9C0 0x0068A9CB ?ConsoleStrMenuDetail@@3PADA 0x00516930
 char ConsoleStrMenuDetail[] = "MENUDETAIL";  // 0x0068A9C0
-static const char StrScenarioObjectivesPopup[] = "THEYFAILEDFLECHETTE";
-static char StrScenarioObjectivesTitle[] = "FLECHETTE";
+static const char StrScenarioObjectivesPopup[] = "OBJECTIVES";
+static char StrScenarioObjectivesTitle[] = "SCENARIO";
 // RECOVERY_OBJECT: v2 0x0068A8E0 0x0068A8ED ?ConsoleStrTerraSurvey2@@3PADA 0x00515530
 char ConsoleStrTerraSurvey2[] = "TERRASURVEY2";  // 0x0068A8E0
 // RECOVERY_OBJECT: v2 0x0068A8D4 0x0068A8DF ?ConsoleStrTechChange@@3PADA 0x00515010
@@ -1600,6 +1600,7 @@ void Console::erase_landmark(int x_coord, int y_coord) {
 
     const int landmark_id = find_landmark(x_coord, y_coord, 1);
     if (landmark_id < 0) {
+// RECOVERY_LITERAL: v1 0x0068A994 0x0068A9A1 ??_C@_0N@EBGE@LANDMARKNONE?$AA@ 0x00516490
         NetMsgPrimary.pop("LANDMARKNONE", 5000, 0, nullptr);
         return;
     }
@@ -1610,6 +1611,7 @@ void Console::erase_landmark(int x_coord, int y_coord) {
     }
 
     parse_says(0, MapLandmark[landmark_id].name, -1, -1);
+// RECOVERY_LITERAL: v1 0x0068A9B0 0x0068A9BD ??_C@_0N@MOHD@LANDMARKKILL?$AA@ 0x00516490
     if (X_pop("LANDMARKKILL", nullptr) == 0) {
         return;
     }
@@ -1813,7 +1815,7 @@ void Console::menu_detail() {
 }
 
 // ORIGINAL: 0x00516C50 ?show_scen_objectives@Console@@QAEXXZ 0x00516C50-0x00516D98 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["The 0x00516C50 seed parses ObjectiveReqVictory, ObjectivesSuddenDeathVictory and EndingMissionYear before processing faction-specific names.", "src/faction.h defines Players as 0x59C Player records: the seed's 0x00946A50, 0x00946A9C, 0x00946A84, 0x00946D4C, 0x00946D50 and 0x00946D34 references correspond to Player::is_leader_female, title_leader, name_leader, noun_gender, is_noun_plural and noun_faction.", "src/game.h owns GameRules and victory settings; general.h owns GenderDefault, PluralityDefault, parse_num, parse_says and say_year; strings.h owns StringTemp. The two popup strings at 0x0068AA0C and 0x0068AA18 were read from the pinned image as THEYFAILEDFLECHETTE and FLECHETTE.", "The seed's 0x005BF330 caption/label/callback call is represented by xpops.h's x_pop_caption_label, whose implementation forwards with the defaults (-1, no override, flags 0) to the typed full popup."], "reason": "Render scenario objectives through the existing faction, game-state, parser, scratch-buffer and popup owners, using the exact popup key values without raw data addresses."}
+// RECOVERY_BINDING: v1 {"evidence": ["The 0x00516C50 seed parses ObjectiveReqVictory, ObjectivesSuddenDeathVictory and EndingMissionYear before processing faction-specific names.", "src/faction.h defines Players as 0x59C Player records: the seed's 0x00946A50, 0x00946A9C, 0x00946A84, 0x00946D4C, 0x00946D50 and 0x00946D34 references correspond to Player::is_leader_female, title_leader, name_leader, noun_gender, is_noun_plural and noun_faction.", "src/game.h owns GameRules and victory settings; general.h owns GenderDefault, PluralityDefault, parse_num, parse_says and say_year; strings.h owns StringTemp. The original popup keys at 0x0068AA0C and 0x0068AA18 are OBJECTIVES and SCENARIO, respectively.", "The seed's 0x005BF330 caption/label/callback call is represented by xpops.h's x_pop_caption_label, whose implementation forwards with the defaults (-1, no override, flags 0) to the typed full popup."], "reason": "Render scenario objectives through the existing faction, game-state, parser, scratch-buffer and popup owners, preserving the pinned OBJECTIVES and SCENARIO key values."}
 void Console::show_scen_objectives() {
     parse_num(0, ScenarioSave.objective_req_victory);
     parse_num(1, ScenarioSave.objectives_sudden_death_victory);
@@ -3437,21 +3439,25 @@ void Console::use_time_bonus() {
     if (!IsMultiplayerNet) return;
     if ((GameDataStateStorage.fields_.net_turn_flags_ & 0x10) &&
         GameDataStateStorage.fields_.net_turn_faction_ != ConsoleGlobal.faction_id_) {
+// RECOVERY_LITERAL: v1 0x0068AA48 0x0068AA50 ??_C@_07GHIC@SIMULNO?$AA@ 0x00517060
         NetMsgPrimary.pop("SIMULNO", 5000, 0, nullptr);
         return;
     }
     const int faction = ConsoleGlobal.faction_id_;
     if (PlayersData[faction].time_bonus_count <= 0) {
         parse_num(0, TimeControl[selection].refresh);
+// RECOVERY_LITERAL: v1 0x0068AA50 0x0068AA5E ??_C@_0O@EABK@NOTIMEBONUSES?$AA@ 0x00517060
         NetMsgPrimary.pop("NOTIMEBONUSES", 5000, 0, nullptr);
         return;
     }
     if (GameDataStateStorage.fields_.game_state_ & 0x800) {
+// RECOVERY_LITERAL: v1 0x0068AA60 0x0068AA6D ??_C@_0N@FAMI@NOBONUSATEND?$AA@ 0x00517060
         NetMsgPrimary.pop("NOBONUSATEND", 5000, 0, nullptr);
         return;
     }
     if ((GameDataStateStorage.fields_.game_state_ & 2) &&
         ((1u << faction_id_) & NetDaemonNet.primary_state_.trailing_words_[6])) {
+// RECOVERY_LITERAL: v1 0x0068AA70 0x0068AA7C ??_C@_0M@IGKJ@NOBONUSDONE?$AA@ 0x00517060
         NetMsgPrimary.pop("NOBONUSDONE", 5000, 0, nullptr);
         return;
     }
@@ -3506,6 +3512,7 @@ void Console::quit_game() {
     const char *prompt;
     if ((IsMultiplayerNet || IsMultiplayerPBEM) &&
         bit_count(GameDataStateStorage.fields_.lock_masks_.enable_mask_ & 255) > 1) prompt = "REALLYWIMPOUT";
+// RECOVERY_LITERAL: v1 0x0068A7E4 0x0068A7EF ??_C@_0L@GOAC@REALLYQUIT?$AA@ 0x00514990
     else prompt = "REALLYQUIT";
     if (!X_pop(prompt, nullptr)) return;
     if (IsMultiplayerPBEM) {
@@ -3518,6 +3525,7 @@ void Console::quit_game() {
     if ((GameDataStateStorage.fields_.game_rules_ & 0x400) && !IsMultiplayerPBEM) auto_save();
     if (IsMultiplayerNet) console_close_network(255);
     ExitTurnLoop = 1;
+// RECOVERY_LITERAL: v1 0x0068A7F0 0x0068A818 ??_C@_0CI@GLBI@Quit?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK?$CK@ 0x00514990
     log_say("Quit***********************************", 0, 0, 0);
 }
 
@@ -3702,6 +3710,8 @@ void Console::retire_game() { // 0x00514B30
         (IsMultiplayerNet || IsMultiplayerPBEM) &&
         bit_count(static_cast<uint8_t>(GameDataStateStorage.fields_.lock_masks_.enable_mask_) > 1) != 0;
     const char *const prompt = multiple_players ? "REALLYWIMPOUT" :
+// RECOVERY_LITERAL: v1 0x0068A828 0x0068A836 ??_C@_0O@JMAD@REALLYRETIRE2?$AA@ 0x00514B30
+// RECOVERY_LITERAL: v1 0x0068A838 0x0068A845 ??_C@_0N@LNNN@REALLYRETIRE?$AA@ 0x00514B30
         (GameDataStateStorage.fields_.game_rules_ & RULES_IRONMAN) ? "REALLYRETIRE2" : "REALLYRETIRE";
     if (!X_pop(prompt, nullptr)) {
         return;
@@ -3732,7 +3742,7 @@ void Console::retire_game() { // 0x00514B30
     }
     GameRestartQueued = !closed_network;
     ExitTurnLoop = 1;
-    log_say("Retire**", 0, 0, 0);
+    log_say("Retire***", 0, 0, 0);
 }
 
 // Superseded seed deleted; seed paths below are historical Git provenance.
