@@ -1,0 +1,19 @@
+{
+  "event_id": "bac53600639ca7b57d6b3fa56a9710b8e4df83c20cd4021165db51d3c73dda24",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "hit-after-miss-source-flow-nov01dh",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Single native compiler call completed with final source/tool/recipe/context/provider guards. Target remains MISMATCH:49 compiled versus47 original instructions;17 instruction matches versus baseline23. Strict target remains FAIL.",
+      "All46 owner results unchanged:33 exact,11 mismatch,two refused; no old exact loss. This was a source-form experiment, not a demonstrated structural correction, so no C++ candidate is adopted.",
+      "The one-candidate budget is exhausted; no flag/register-allocation variants or repeats without new evidence. Source/overlay/raw COFF and reports are retained in ignored listbox-select-id-nov01dh. No claim granted/demoted."
+    ]
+  },
+  "previous_event": "c381bf259eb4a13f3bc32d747a7889f0eb5472211004c551a0484c4e3f45eac9",
+  "request_id": "reject-hit-after-miss-source-flow-nov01dh",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:listbox-select-id-nov01dh"
+}

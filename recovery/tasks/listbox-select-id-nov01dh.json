@@ -1,0 +1,22 @@
+{
+  "author": "coordinator",
+  "base_revision": "38ce487bcfcccce4aa000751e1b3ea5243329c72",
+  "editable_files": [
+    "src/listbox.cpp"
+  ],
+  "evidence": [
+    "Original609FD4 branches to hit block609FF8, which reloads Dialog current position609FFF. Prior actual retained snapshots did not try this goto form.",
+    "Coordinator permitted exactly one overlay preserving loop/types and current original-faithful callback recovery; no flags, attributes, wrappers or source publication. Cap is exhausted."
+  ],
+  "intent": "Record and close the one-budget original-shaped hit-after-miss matching hypothesis; source remains unchanged.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6332320,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "listbox-select-id-nov01dh"
+}
