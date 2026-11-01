@@ -38,6 +38,10 @@
 // Primary Win table installed at 0x0043F0AE; slot12 (+0x30) selects
 // the original repaint at 0x004402A0. Full table end remains unbounded.
 // RECOVERY_GENERATED: v1 vtable 0x0066B478 ? ??_7DiploPop@@6BWin@@@ 0x0043EFF0
+// The constructor installs the Buffer view table at this+0x444; its slot 0
+// is the Buffer-adjusted deleting destructor at 0x00440EF0. The original
+// start and compiler symbol are established, while the table end is unknown.
+// RECOVERY_GENERATED: v1 vtable 0x0066B470 ? ??_7DiploPop@@6BBuffer@@@ 0x0043EFF0
 class DiploPop : public GraphicWin, public SubInterface {
  public:
   // 0x004406D0. `poll` is the Win32 modal-pump callback Win::set_modal stores.

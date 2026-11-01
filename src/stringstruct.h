@@ -227,6 +227,7 @@ class StringStruct : public virtual StringAllocationBase {
   // at 0x006693AC; that table's destructor is not a third primary slot.
   // RECOVERY_GENERATED: v1 vtable 0x006693A0 ? ??_7StringStruct@@6BStringAllocationBase@@@ 0x0040103B
   // RECOVERY_GENERATED: v1 vtable 0x006693A4 0x006693AC ??_7StringStruct@@6B0@@ 0x006086F0
+// RECOVERY_GENERATED: v1 vbtable 0x006693B0 ? ??_8StringStruct@@7B@ 0x00401000
   virtual int on_insert(void *payload);
   virtual void on_remove(void *payload);
   // Zeroes the five list fields between StringStruct's vtable stage and

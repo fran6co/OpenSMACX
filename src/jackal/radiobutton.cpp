@@ -958,3 +958,6 @@ Status: Complete
 // records the table boundary, not a complete enclosing allocation or a
 // recovered historical C++ class name.
 // RECOVERY_GENERATED: v1 vbtable 0x00670590 0x0067059C ??_8RadioButton@@7B@ 0x0060D0E0
+// RECOVERY_GENERATED: v1 vtable 0x00669A58 ? ??_7RadioButton@@6B@ 0x0060D0E0
+// RECOVERY_GENERATED: v1 vtable 0x00669A64 ? ??_7RadioButton@@6BBuffer@@@ 0x0060D0E0
+// RECOVERY_GENERATED: v1 vtable 0x00669A6C ? ??_7RadioButton@@6BWin@@@ 0x0060D0E0
