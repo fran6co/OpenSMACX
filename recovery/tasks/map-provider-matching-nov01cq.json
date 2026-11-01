@@ -1,0 +1,62 @@
+{
+  "author": "coordinator",
+  "base_revision": "57e6ee8edee230e7cac4fdce5db51303c3cc4d5f",
+  "editable_files": [
+    "src/map.h",
+    "src/map.cpp",
+    "recovery/tests/test_find_landmark_provider_nov01cq.py"
+  ],
+  "evidence": [
+    "find_landmark592550 has6 original externalcalls in5mappedfunctions and7currentCPPcalls; the seventh in kill_landmark5926F0 is a proven inline context. Currentcode0canonicalcalls,68forcedexportdefinitions. Use ordinarycanonicalMapdefinition beforekill_landmark and normalheaderdeclaration; transport unchangedalgorithm and native externalbodyfact without newflags,wrappers,noinline,retentionanchors or duplicateimplementation.",
+    "Both find_landmark andkill_landmark retain historicalbyteclaims. Protect every baselineexact/referencepass acrossactualMap.hdependentcontexts, all originalsourcefacts and global/import/CRT/literalidentities. Sourcevisibility is a hypothesis requiringactualcodecall closure and naturalproviderretention, not a claim that ordinary same-TU inlining must occur.",
+    "Newbonusprovidercontext brings _sub565160 to155instructions vs152original. Independentpin evidence supports intBasecoordinatesnapshots (directMOVSX) and intmaskedaltitude(fullEAXsignedcompare). Authorize maximum2candidateoverlays in finalproviderheadercontext: coordinatesfirst, thenadditionalaltitudewidth. No explicitargumentreuse, framepadding, copiedcode, volatile/attributes or unsafe-pathnormalization. Preserveallfailedsource/evidence; no furtherunexplainedspellingloop.",
+    "_sub565160 code/ABI/name/home and preexistinglinkerdiscard remainprovisional; no originaldeadcodeclaim or artificialretention is granted. Sourcewidthtest is not linkedacceptance.",
+    "Coordinator ownsGit, sourcepreparation, resourceleases and manualintegration. Compilerflags frozen. Fresh build/link, full affected source/byte/reference/claimcontinuity and independentreview precede anymasterintegration; missing evidence/failures remainexplicit."
+  ],
+  "intent": "Recover landmark query provider visibility while preserving its legitimate same-unit inline consumer, and test two supported coordinate/altitude width forms in the improved Map context.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4636880,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5117136,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5333664,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5334160,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5456896,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5656928,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5842256,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5842672,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "map-provider-matching-nov01cq"
+}
