@@ -5,7 +5,7 @@ This is a scoped diagnostic, not the full build/ownership/runtime admission gate
 """
 
 from collections import Counter, defaultdict
-from dataclasses import replace
+from dataclasses import dataclass, replace
 import hashlib
 from pathlib import Path
 from typing import Callable
@@ -17,7 +17,7 @@ from match_recovery.model import Origin, Result, Span, digest
 from match_recovery.object_source import (emitted_object_symbols, object_targets, local_object_targets,
                                           require_disjoint_object_symbols,
                                           read_objects, referenced_object_units)
-from .literal_source import read_literals
+from .literal_source import read_literals, validate_literals
 from .associated_source import read_associated
 from .literal_data import check_literals
 from match_recovery.pe_coff import Coff, PeImage
@@ -35,6 +35,124 @@ from .shared_binary import check_shared
 from .selected_evidence import select_evidence
 from .function_contexts import (ContextFunctionTarget, qualify_context_targets,
                                 referenced_context_units)
+
+
+@dataclass(frozen=True)
+class CompiledSelectionObservation:
+    """Body measurements and unresolved required evidence for one selection.
+
+    This is an observation only. In particular, a passing body row does not
+    establish that all source-owned references, data, or shared copies pass.
+    """
+
+    function_rows: tuple[dict, ...]
+    required_evidence_checks: tuple[dict, ...]
+    required_evidence_unknowns: tuple[dict, ...]
+    body_result: str
+
+
+def _validate_compiled_namespaces(bindings, object_bindings, generated_bindings,
+                                  import_bindings, shared_bindings, externals=(),
+                                  literal_bindings=()):
+    """Validate every declared name before any selected-evidence filtering."""
+    declared_functions = set(externals) | {item.symbol for item in bindings}
+    object_symbols = set(require_disjoint_object_symbols(
+        object_bindings, declared_functions,
+        {item.symbol for item in generated_bindings},
+        {item.symbol for item in import_bindings},
+        {item.symbol for item in shared_bindings}))
+    namespaces = [declared_functions, object_symbols,
+                  {item.symbol for item in generated_bindings},
+                  {item.symbol for item in import_bindings},
+                  {item.symbol for item in shared_bindings}]
+    if any(group & other for index, group in enumerate(namespaces) for other in namespaces[:index]):
+        raise ValueError("conflicting function/object/generated/import/shared symbol also has another binding")
+    literal_symbols = {item.symbol for item in literal_bindings}
+    if literal_symbols & set.union(*namespaces):
+        raise ValueError("literal target also has a global function/object/import binding")
+
+
+def observe_compiled_selection(bindings, selected, object_bindings, generated_bindings,
+                               objects, image, externals, *, errors=None,
+                               import_bindings=(), shared_bindings=(), literal_bindings=(),
+                               fragments=(), associated_bindings=(), unit_extensions=None):
+    """Observe selected function rows and their complete typed evidence closure.
+
+    The returned object deliberately has no aggregate acceptance/result field.
+    ``body_result`` summarizes only selected function rows. All required
+    evidence outcomes, including failures, remain in ``required_evidence_checks``;
+    ``required_evidence_unknowns`` contains every unmeasurable obligation.
+    All name conflicts are validated against the full declared namespace before
+    the selected closure is computed. The closure is recomputed for every call.
+    """
+    selected = frozenset(selected)
+    if not selected:
+        raise ValueError("refusing an empty compiled selection")
+    bindings = tuple(bindings)
+    object_bindings = tuple(object_bindings)
+    generated_bindings = tuple(generated_bindings)
+    import_bindings = tuple(import_bindings)
+    shared_bindings = tuple(shared_bindings)
+    literal_bindings = tuple(literal_bindings)
+    literal_bindings = validate_literals(literal_bindings)
+    _validate_compiled_namespaces(bindings, object_bindings, generated_bindings,
+                                  import_bindings, shared_bindings, externals,
+                                  literal_bindings=literal_bindings)
+
+    selected_fragments = tuple(item for item in fragments if item.origin.entity_id in selected)
+    parent_ids = {item.parent_entity_id for item in selected_fragments}
+    evidence_roots = selected | parent_ids
+    evidence = select_evidence(bindings, evidence_roots, objects, object_bindings,
+                               generated_bindings, import_bindings, shared_bindings,
+                               literal_bindings, unit_extensions=unit_extensions,
+                               context_targets=externals)
+    measurement_ids = selected | parent_ids
+    selected_bindings = tuple(item for item in bindings
+                              if item.origin.entity_id in measurement_ids)
+    checked, _targets, _imports = _compiled_evidence(
+        selected_bindings, object_bindings, evidence.generated, objects, image, externals,
+        errors=errors, import_bindings=evidence.imports, shared_bindings=evidence.shared,
+        literal_bindings=evidence.literals, fragments=selected_fragments,
+        associated_bindings=associated_bindings,
+        function_support_bindings=tuple(item for item in bindings
+                                        if item.origin.entity_id not in measurement_ids),
+        selected_object_targets=evidence.object_targets,
+        selected_object_contents=evidence.object_contents)
+    function_rows, object_rows, generated_rows, import_rows, shared_rows, literal_rows = checked
+    rows_by_id = {row.get("entity_id"): row for row in function_rows
+                  if row.get("entity_id") in selected}
+    function_rows = [rows_by_id[key] for key in sorted(rows_by_id)]
+    covered = set(rows_by_id)
+    function_rows.extend({"entity_id": entity_id, "result": Result.UNKNOWN,
+                          "reason": "selected source identity has no checked function row"}
+                         for entity_id in sorted(selected - covered))
+
+    checks = list(evidence.unknown)
+    checks.extend(object_rows)
+    checks.extend(generated_rows)
+    checks.extend(import_rows)
+    checks.extend(shared_rows)
+    checks.extend(literal_rows)
+
+    def evidence_outcome(row):
+        values = []
+        if "definition" in row:
+            values.append(row["definition"])
+        if "content" in row:
+            values.append(row["content"])
+        if "identity" in row:
+            values.append(Result.PASS if row["identity"] == "pass" else Result.UNKNOWN)
+        if "result" in row:
+            values.append(row["result"])
+        return values or [Result.UNKNOWN]
+
+    unresolved = [row for row in checks
+                  if Result.UNKNOWN in evidence_outcome(row)]
+    body_values = [row.get("result", Result.UNKNOWN) for row in function_rows]
+    body_result = (Result.UNKNOWN if Result.UNKNOWN in body_values else
+                   Result.FAIL if Result.FAIL in body_values else Result.PASS)
+    return CompiledSelectionObservation(tuple(function_rows), tuple(checks),
+                                        tuple(unresolved), body_result)
 
 
 def validated_context_units(root, snapshot, settings):
@@ -477,10 +595,11 @@ def check_compiled(bindings, object_bindings, generated_bindings, objects, image
 
 def _compiled_evidence(bindings, object_bindings, generated_bindings, objects, image, externals, *, errors=None,
                        import_bindings=(), shared_bindings=(), literal_bindings=(), fragments=(),
-                       associated_bindings=(), selected_object_targets=None,
+                       associated_bindings=(), function_support_bindings=(), selected_object_targets=None,
                        selected_object_contents=None):
     """Resolve targets from product objects, never from a retention probe."""
-    declared_functions = set(externals) | {item.symbol for item in bindings}
+    _validate_compiled_namespaces((*bindings, *function_support_bindings), object_bindings, generated_bindings,
+                                  import_bindings, shared_bindings, externals)
     externals, context_checks = qualify_context_targets(externals, objects)
     target_bindings = (object_bindings if selected_object_targets is None
                        else selected_object_targets)
@@ -491,15 +610,6 @@ def _compiled_evidence(bindings, object_bindings, generated_bindings, objects, i
     local_reports = {(row["unit"], row["symbol"]): row for row in checked_local_objects
                      if row["definition"] == "pass"}
     checked_objects = [local_reports.get((row["unit"], row["symbol"]), row) for row in checked_objects]
-    object_symbols = set(require_disjoint_object_symbols(
-        object_bindings, declared_functions,
-        {item.symbol for item in generated_bindings}, {item.symbol for item in import_bindings},
-        {item.symbol for item in shared_bindings}))
-    namespaces = [declared_functions, object_symbols,
-                  {item.symbol for item in generated_bindings}, {item.symbol for item in import_bindings},
-                  {item.symbol for item in shared_bindings}]
-    if any(group & other for index, group in enumerate(namespaces) for other in namespaces[:index]):
-        raise ValueError("conflicting function/object/generated/import/shared symbol also has another binding")
     imports, checked_imports = import_targets(import_bindings, objects, image)
     active_literals = [item for item in literal_bindings if item.unit in objects or item.unit in (errors or {})]
     literal_targets, checked_literals = check_literals(active_literals, objects, image, errors=errors)
@@ -522,7 +632,8 @@ def _compiled_evidence(bindings, object_bindings, generated_bindings, objects, i
                          external_targets=targets,
                          local_data_targets=local_data_targets,
                          import_targets=imports, literal_targets=literal_targets, errors=errors,
-                         fragments=fragments, associated_bindings=associated_bindings)
+                         fragments=fragments, associated_bindings=associated_bindings,
+                         support_bindings=function_support_bindings)
     if context_checks:
         for row in rows:
             names = {item["symbol"] for item in row.get("diagnostic", {}).get("emitted_references", ())}

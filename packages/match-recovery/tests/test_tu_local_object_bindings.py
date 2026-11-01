@@ -10,9 +10,11 @@ import pytest
 from match_recovery.application_binary import check_compiled
 from match_recovery.bound_objects import FunctionBinding, check_objects
 from match_recovery.model import Origin, Result, Span
+from match_recovery.object_data import check_initial_data
 from match_recovery.object_source import local_object_targets, parse_objects
 from match_recovery.pe_coff import Coff, PeImage
 from test_binary import pe_fixture
+from test_object_data import data_fixture, data_image
 
 
 PINNED_TARGET = 0x401100
@@ -121,6 +123,12 @@ def _target_rows(bindings, objects):
     return targets, reports
 
 
+def _bounded_local_binding(pin, size=4, *, unit="src/owner.cpp", start=0x401000):
+    text = (f"// RECOVERY_OBJECT: v2 0x{start:08X} 0x{start + size:08X} "
+            "_hidden 0x00401100\n")
+    return parse_objects(text, unit, pin, address_space="pe:va")
+
+
 def test_same_translation_unit_static_data_resolves_without_section_placement():
     image, pin = _image()
     bindings, objects = _objects(pin)
@@ -132,6 +140,78 @@ def test_same_translation_unit_static_data_resolves_without_section_placement():
     assert reports[0]["extent"] == "unbounded"
     rows = check_objects([_function(pin)], objects, image, local_data_targets=targets)
     assert rows[0]["result"] == Result.PASS
+
+
+def test_bounded_static_root_needs_matching_same_tu_codeview_extent():
+    raw_image = data_image()
+    pin = hashlib.sha256(raw_image).hexdigest()
+    bindings = _bounded_local_binding(pin)
+    owner = Coff(data_fixture(bytes(4), definition=b"_hidden", storage=3))
+    targets, reports = local_object_targets(bindings, {"src/owner.cpp": owner})
+    assert targets == {("src/owner.cpp", "_hidden"): 0x401000}
+    assert reports[0]["definition"] == Result.PASS
+    assert reports[0]["extent"] == "bounded"
+    assert reports[0]["compiler_storage"]["section"] == owner.symbols[0].section
+    assert reports[0]["compiler_storage"]["offset"] == owner.symbols[0].value
+
+    wrong_size = _bounded_local_binding(pin, 8)
+    targets, reports = local_object_targets(wrong_size, {"src/owner.cpp": owner})
+    assert targets == {}
+    assert reports[0]["definition"] == Result.UNKNOWN
+    assert "CodeView storage extent" in reports[0]["reason"]
+
+
+def test_bounded_static_root_rejects_original_span_past_i386_address_domain():
+    raw_image = data_image()
+    pin = hashlib.sha256(raw_image).hexdigest()
+    bindings = _bounded_local_binding(pin, start=0xFFFFFFFE)
+    owner = Coff(data_fixture(bytes(4), definition=b"_hidden", storage=3))
+    targets, reports = local_object_targets(bindings, {"src/owner.cpp": owner})
+    assert targets == {}
+    assert reports[0]["definition"] == Result.UNKNOWN
+    assert "exceeds the i386 address domain" in reports[0]["reason"]
+
+
+@pytest.mark.parametrize("damage", ["type", "section", "offset"])
+def test_bounded_static_root_refuses_nonordinary_or_misaligned_codeview_storage(damage):
+    raw_image = data_image()
+    pin = hashlib.sha256(raw_image).hexdigest()
+    bindings = _bounded_local_binding(pin)
+    owner = Coff(data_fixture(bytes(4), definition=b"_hidden", storage=3))
+    if damage == "type":
+        symbol = owner.symbols[0]
+        owner.symbols[0] = replace(symbol, type=0x20)
+    elif damage == "section":
+        owner.sections = (replace(owner.sections[0], flags=owner.sections[0].flags | 0x20),
+                          *owner.sections[1:])
+    else:
+        debug = bytearray(owner.sections[2].data)
+        debug[12] = 1
+        owner.sections = (*owner.sections[:2], replace(owner.sections[2], data=bytes(debug)))
+    targets, reports = local_object_targets(bindings, {"src/owner.cpp": owner})
+    assert targets == {}
+    assert reports[0]["definition"] == Result.UNKNOWN
+
+
+def test_bounded_static_target_is_owner_qualified_and_does_not_prove_initializer():
+    raw_image = data_image(b"\x01\0\0\0")
+    pin = hashlib.sha256(raw_image).hexdigest()
+    image = PeImage(raw_image, pin)
+    bindings = _bounded_local_binding(pin)
+    owner = Coff(data_fixture(bytes(4), definition=b"_hidden", storage=3))
+
+    # A copied spelling in another TU cannot stand in for a missing owner.
+    other = Coff(data_fixture(bytes(4), definition=b"_hidden", storage=3))
+    targets, reports = local_object_targets(bindings, {"src/other.cpp": other})
+    assert targets == {} and reports[0]["definition"] == Result.UNKNOWN
+
+    targets, reports = local_object_targets(bindings, {"src/owner.cpp": owner})
+    assert targets == {("src/owner.cpp", "_hidden"): 0x401000}
+    # The local target resolves the owner identity, while original initializer
+    # bytes are checked separately and still expose this mismatch.
+    row, = check_initial_data(bindings, {"src/owner.cpp": owner}, image, targets)
+    assert row["definition"] == Result.PASS
+    assert row["content"] == Result.FAIL
 
 
 def test_wrong_local_address_fails_and_neighbor_in_same_data_section_stays_unknown():

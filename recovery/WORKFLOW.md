@@ -169,6 +169,22 @@ If untouched methods regress, check recipe parity and an unchanged-source
 control before attributing the loss to the recovery. Retain wrong-profile
 diagnostics without presenting them as production preservation evidence.
 
+For a captured-object trial, use the package's
+`application_binary.observe_compiled_selection` with the complete validated
+source namespaces and qualified provider objects. It follows the selected
+evidence closure without remeasuring unrelated bodies. Keep
+`required_evidence_checks` and `required_evidence_unknowns` alongside
+`function_rows`; `body_result` is not acceptance. Shared definitions still need
+every observed copy checked. Whole-application preservation remains a separate
+integration check.
+
+Persist the candidate source, object and complete returned compiler metadata
+before assertions or report formatting. A postprocessing failure can reuse
+intact saved proof after revalidating its inputs; missing before/after compiler
+evidence cannot be reconstructed from the current tree. Such an object remains
+diagnostic until a fresh qualified compile. Annotation changes also require a
+fresh capture when they change the recorded compiler input bytes.
+
 Keep up to eight disjoint ownership groups active and reserve one compiler slot
 for integration. Split each owner's queue into packets of at most24 functions.
 After the initial five-minute screen, measure one concrete, faithful source

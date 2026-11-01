@@ -311,37 +311,71 @@ def _local_data_symbol(obj, name):
 
 
 def local_object_targets(bindings: tuple[ObjectBinding, ...], objects: dict) -> tuple[dict, list]:
-    """Resolve unbounded static objects only inside their source owner.
+    """Resolve ordinary static roots only inside their source owner.
 
-    This establishes the declared symbol start, not allocation bounds, initial
-    contents or lifetime. Unbounded member identities additionally require
-    fresh same-TU member layout and a consistent group-derived parent start.
-    Keep this namespace separate from external targets: another TU's same
-    spelling is never a definition witness. Bounded members retain their
-    existing separate proof route.
+    Unbounded roots establish only the declared symbol start. Bounded roots
+    additionally require a fresh same-TU CodeView storage extent equal to the
+    declared original span. Neither route establishes section placement,
+    initializer correctness or lifetime. Unbounded member identities
+    additionally require fresh same-TU member layout and a consistent
+    group-derived parent start. Keep this namespace separate from external
+    targets: another TU's same spelling is never a definition witness.
+    Bounded members retain their existing separate proof route.
     """
     validate_object_symbol_ownership(bindings)
     member_owners = {(row.unit, row.parent_symbol) for row in bindings if row.parent_symbol is not None}
     targets, reports = {}, []
     for binding in bindings:
         key = (binding.unit, binding.emitted_symbol)
-        if binding.span is not None or binding.parent_symbol is not None or key in member_owners:
+        if binding.parent_symbol is not None or key in member_owners:
             continue
         report = {"symbol": binding.symbol, "target_symbol": binding.emitted_symbol,
                   "unit": binding.unit, "address": f"0x{binding.origin.address:08X}",
                   "definition": "unknown"}
         reports.append(report)
         obj = objects.get(binding.unit)
-        if obj is None or _local_data_symbol(obj, binding.emitted_symbol) is None:
+        local_symbol = None if obj is None else _local_data_symbol(obj, binding.emitted_symbol)
+        if local_symbol is None:
             report["reason"] = "no unique ordinary static data definition in the source owner"
             continue
+        if binding.span is not None:
+            if binding.span.end > 0x100000000:
+                report["reason"] = "bounded local object span exceeds the i386 address domain"
+                continue
+            try:
+                from .codeview_data import data_layout
+                layout = data_layout(obj, binding.emitted_symbol)
+            except ValueError as error:
+                report["reason"] = f"bounded local data requires one directly bound CodeView definition: {error}"
+                continue
+            original_size = binding.span.end - binding.span.start
+            section_number = layout["section"]
+            symbol_offset = layout["offset"]
+            storage_size = layout["size"]
+            if (type(section_number) is not int or not 0 < section_number <= len(obj.sections)
+                    or type(symbol_offset) is not int or type(storage_size) is not int
+                    or section_number != local_symbol.section or symbol_offset != local_symbol.value
+                    or symbol_offset < 0
+                    or storage_size <= 0 or storage_size != original_size
+                    or symbol_offset + storage_size > obj.section_sizes[section_number - 1]):
+                report["reason"] = "bounded local object does not match its unique CodeView storage extent"
+                continue
+            bounded_layout = layout
+        else:
+            bounded_layout = None
         address = binding.origin.address
         if type(address) is not int or not 0 <= address <= 0xFFFFFFFF:
             report["reason"] = "local data start is outside the i386 address domain"
             continue
         targets[key] = address
-        report.update({"definition": "pass", "linkage": "translation_unit_local", "extent": "unbounded",
-                       "limitations": ["Source-bound symbol start only; no section placement, initializer, allocation, lifetime or linked-selection proof."]})
+        if bounded_layout is None:
+            report.update({"definition": "pass", "linkage": "translation_unit_local", "extent": "unbounded",
+                           "limitations": ["Source-bound symbol start only; no section placement, initializer, allocation, lifetime or linked-selection proof."]})
+        else:
+            report.update({"definition": "pass", "linkage": "translation_unit_local", "extent": "bounded",
+                           "original_span": {"start": binding.span.start, "end": binding.span.end},
+                           "compiler_storage": bounded_layout,
+                           "limitations": ["Same-TU CodeView proves the ordinary static symbol and its storage size matches the declared original span; no original-to-section placement, initializer, allocation, lifetime or linked-selection proof."]})
 
     # Member rows are grouped by their explicitly named TU-local parent. This
     # path deliberately accepts only unbounded v3 rows; a bounded member needs

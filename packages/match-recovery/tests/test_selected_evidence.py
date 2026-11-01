@@ -1,16 +1,20 @@
 """Selected source records verify only their typed native evidence closure."""
 
+from dataclasses import replace
 import hashlib
 import json
 import struct
 
 import pytest
 
-from match_recovery.application_binary import verify_records
+from match_recovery.application_binary import (check_compiled, observe_compiled_selection,
+                                               verify_records)
+from match_recovery.bound_objects import FunctionBinding
 from match_recovery.generated_source import GeneratedBinding
+from match_recovery.literal_source import LiteralBinding
 from match_recovery.model import Origin, Result, Span
 from match_recovery.object_source import ObjectBinding
-from match_recovery.pe_coff import Coff
+from match_recovery.pe_coff import Coff, PeImage
 from match_recovery.shared_source import SharedFunctionBinding
 from match_recovery.source import read_file
 from test_binary import coff_fixture
@@ -86,11 +90,13 @@ def project(tmp_path):
     return tmp_path
 
 
-def function_object(*, symbol="_g", opcode=0xA1):
+def function_object(*, symbol="_g", reference=None, definition="_f", opcode=0xA1):
     code = bytes((opcode, 0, 0, 0, 0, 0xC3))
     raw = bytearray(coff_fixture(code, relocation=(1, 1, 6)))
     symtab, = struct.unpack_from("<I", raw, 8)
-    raw[symtab + 18:symtab + 26] = symbol.encode().ljust(8, b"\0")
+    raw[symtab:symtab + 8] = definition.encode().ljust(8, b"\0")
+    target = symbol if reference is None else reference
+    raw[symtab + 18:symtab + 26] = target.encode().ljust(8, b"\0")
     return bytes(raw)
 
 
@@ -273,6 +279,239 @@ def test_unknown_code_reference_stays_unknown_even_with_other_valid_evidence(tmp
                     else good_compiler([])(path, (), ("first",)))
     assert report["result"] == Result.UNKNOWN, report
     assert report["functions"][0]["result"] == Result.UNKNOWN
+
+
+def _observation_fixture():
+    raw = image_fixture()
+    pin = hashlib.sha256(raw).hexdigest()
+    origin = Origin(pin, "pe:va", 0x401000)
+    function = FunctionBinding(origin, (Span(0x401000, 0x401006),), "_f", "code/caller.cc")
+    objects = {
+        "code/caller.cc": Coff(function_object(symbol="_g", reference="_g")),
+        "data/global.cc": Coff(data_fixture(struct.pack("<I", 0), type_index=0x403,
+                                             relocations=((0, 1, 6),), definition=b"_g", reference=b"_h")),
+        "data/target.cc": Coff(data_fixture(struct.pack("<I", 7), definition=b"_h",
+                                             reference=b"_unused")),
+    }
+    data_origin = Origin(pin, "pe:va", 0x402000)
+    target_origin = Origin(pin, "pe:va", 0x403000)
+    data = (ObjectBinding(data_origin, "_g", "data/global.cc", 1,
+                          Span(0x402000, 0x402004), origin),
+            ObjectBinding(target_origin, "_h", "data/target.cc", 1,
+                          Span(0x403000, 0x403004), origin))
+    return origin, function, data, objects, PeImage(raw, pin)
+
+
+def test_public_compiled_selection_observation_matches_full_body_row_and_checks_references():
+    origin, function, data, objects, image = _observation_fixture()
+    full = check_compiled([function], data, (), objects, image, {})[0]
+    observation = observe_compiled_selection([function], {origin.entity_id}, data, (),
+                                             objects, image, {})
+    assert observation.function_rows == tuple(full)
+    assert observation.body_result == full[0]["result"]
+    assert not observation.required_evidence_unknowns
+    assert observation.required_evidence_checks
+    assert not hasattr(observation, "result")
+
+
+def test_public_observation_keeps_body_pass_separate_from_unbounded_data_unknown():
+    origin, function, data, objects, image = _observation_fixture()
+    unbounded = (replace(data[0], span=None, evidence=None), data[1])
+    observation = observe_compiled_selection([function], {origin.entity_id}, unbounded, (),
+                                             objects, image, {})
+    full = check_compiled([function], unbounded, (), objects, image, {})[0]
+    assert observation.function_rows == tuple(full)
+    assert observation.body_result == Result.PASS
+    assert observation.body_result == full[0]["result"]
+    assert observation.required_evidence_unknowns
+    assert any("no independently bounded" in row.get("reason", "")
+               for row in observation.required_evidence_unknowns)
+
+
+def test_public_observation_checks_only_selected_functions_but_keeps_full_namespace():
+    from test_shared_functions import code_object
+
+    raw = image_fixture()
+    pin = hashlib.sha256(raw).hexdigest()
+    first = Origin(pin, "pe:va", 0x401010)
+    second = Origin(pin, "pe:va", 0x401020)
+    selected_function = FunctionBinding(first, (Span(0x401010, 0x401011),),
+                                        "_sel", "code/methods.cc")
+    unrelated = FunctionBinding(second, (Span(0x401020, 0x401021),),
+                                "_missing", "code/methods.cc")
+    raw_obj = code_object({"_sel": b"\xc3"})
+    compiled = {"code/methods.cc": Coff(raw_obj)}
+    full = check_compiled((selected_function, unrelated), (), (), compiled,
+                          PeImage(raw, pin), {})[0]
+    assert {row["entity_id"]: row["result"] for row in full} == {
+        first.entity_id: Result.PASS, second.entity_id: Result.UNKNOWN}
+    observation = observe_compiled_selection(
+        (selected_function, unrelated), {first.entity_id}, (), (),
+        compiled, PeImage(raw, pin), {})
+    assert [row["entity_id"] for row in observation.function_rows] == [first.entity_id]
+    assert observation.function_rows[0]["result"] == Result.PASS
+    assert observation.body_result == Result.PASS
+
+
+def test_selected_caller_retains_unselected_function_target_binding():
+    from test_shared_functions import code_object
+
+    raw = bytearray(image_fixture())
+    raw[512:518] = b"\xe8\x0b\0\0\0\xc3"
+    raw = bytes(raw)
+    pin = hashlib.sha256(raw).hexdigest()
+    caller_origin = Origin(pin, "pe:va", 0x401000)
+    callee_origin = Origin(pin, "pe:va", 0x401010)
+    caller = FunctionBinding(caller_origin, (Span(0x401000, 0x401006),),
+                             "_caller", "code/caller.cc")
+    callee = FunctionBinding(callee_origin, (Span(0x401010, 0x401011),),
+                             "_callee", "code/callee.cc")
+    caller_obj = bytearray(coff_fixture(b"\xe8\0\0\0\0\xc3", relocation=(1, 1, 20)))
+    symtab = struct.unpack_from("<I", caller_obj, 8)[0]
+    caller_obj[symtab:symtab + 8] = b"_caller\0"
+    caller_obj[symtab + 18:symtab + 26] = b"_callee\0"
+    objects = {"code/caller.cc": Coff(bytes(caller_obj)),
+               "code/callee.cc": Coff(code_object({"_callee": b"\xc3"}))}
+    externals = {}
+    full = check_compiled((caller, callee), (), (), objects, PeImage(raw, pin), externals)[0]
+    full_caller = next(row for row in full if row["entity_id"] == caller_origin.entity_id)
+    observation = observe_compiled_selection((caller, callee), {caller_origin.entity_id},
+                                             (), (), objects, PeImage(raw, pin), externals)
+    assert observation.function_rows == (full_caller,)
+    assert observation.body_result == full_caller["result"], {
+        key: full_caller.get(key) for key in ("result", "boundary", "bytes", "references", "diagnostic")}
+    emitted, = full_caller["diagnostic"]["emitted_references"]
+    assert emitted["binding_address"] == "0x00401010"
+
+
+def test_selected_fragment_keeps_parent_as_target_and_layout_support():
+    from test_function_fragments import fragment_fixture
+
+    parent, child, objects, image = fragment_fixture()
+    observation = observe_compiled_selection(
+        (parent,), {child.origin.entity_id}, (), (), objects, image, {},
+        fragments=(child,))
+    assert len(observation.function_rows) == 1
+    assert observation.function_rows[0]["entity_id"] == child.origin.entity_id
+    assert observation.function_rows[0]["result"] == Result.PASS
+
+
+def test_public_observation_checks_every_shared_copy_even_when_noncarrier_is_bad():
+    from test_shared_functions import code_object
+
+    raw = bytearray(image_fixture())
+    raw[512] = 0xC3
+    raw = bytes(raw)
+    pin = hashlib.sha256(raw).hexdigest()
+    caller_origin = Origin(pin, "pe:va", 0x401000)
+    function = FunctionBinding(caller_origin, (Span(0x401000, 0x401001),),
+                              "_caller", "code/caller.cc")
+    shared = SharedFunctionBinding(
+        Origin(pin, "pe:va", 0x401010), Span(0x401010, 0x401011), "_shared",
+        caller_origin, "code/methods.h", 1, compiler_unit="code/methods.cc")
+    objects = {"code/caller.cc": Coff(code_object({"_caller": b"\xc3"})),
+               "code/methods.cc": Coff(code_object({"_shared": b"\xc3"})),
+               "code/other.cc": Coff(code_object({"_shared": b"\x90"}))}
+    observation = observe_compiled_selection([function], {caller_origin.entity_id}, (), (),
+                                             objects, PeImage(raw, pin), {},
+                                             shared_bindings=(shared,))
+    assert observation.function_rows[0]["result"] == Result.PASS
+    shared_check = next(row for row in observation.required_evidence_checks
+                        if row.get("symbol") == "_shared")
+    assert shared_check["result"] == Result.FAIL
+    assert {row["unit"] for row in shared_check["copies"]} == {
+        "code/methods.cc", "code/other.cc"}
+
+
+def test_public_observation_keeps_unproved_shared_cycle_unknown():
+    from test_shared_functions import code_object
+
+    raw = bytearray(image_fixture())
+    raw[512:518] = b"\xe8\x0b\0\0\0\xc3"
+    raw[528:534] = b"\xe8\xeb\xff\xff\xff\xc3"
+    raw[544] = 0xC3
+    pin = hashlib.sha256(raw).hexdigest()
+    evidence_origin = Origin(pin, "pe:va", 0x401020)
+    caller = FunctionBinding(evidence_origin, (Span(0x401020, 0x401021),),
+                             "_caller", "code/caller.cc")
+    a_origin, b_origin = Origin(pin, "pe:va", 0x401000), Origin(pin, "pe:va", 0x401010)
+    a = SharedFunctionBinding(a_origin, Span(0x401000, 0x401006), "_a",
+                              evidence_origin, "code/a.h", 1, compiler_unit="code/a.cc")
+    b = SharedFunctionBinding(b_origin, Span(0x401010, 0x401016), "_b",
+                              evidence_origin, "code/b.h", 1, compiler_unit="code/b.cc")
+
+    def cyclic_object(definition, reference, code):
+        raw_obj = bytearray(coff_fixture(code, relocation=(1, 1, 20)))
+        symtab = struct.unpack_from("<I", raw_obj, 8)[0]
+        raw_obj[symtab:symtab + 8] = definition.encode().ljust(8, b"\0")
+        raw_obj[symtab + 18:symtab + 26] = reference.encode().ljust(8, b"\0")
+        return Coff(bytes(raw_obj))
+
+    objects = {"code/caller.cc": Coff(code_object({"_caller": b"\xc3"})),
+               "code/a.cc": cyclic_object("_a", "_b", b"\xe8\0\0\0\0\xc3"),
+               "code/b.cc": cyclic_object("_b", "_a", b"\xe8\0\0\0\0\xc3")}
+    observation = observe_compiled_selection([caller], {evidence_origin.entity_id}, (), (),
+                                             objects, PeImage(bytes(raw), pin), {},
+                                             shared_bindings=(a, b))
+    assert observation.function_rows[0]["result"] == Result.PASS
+    assert Result.UNKNOWN in {row.get("result") for row in observation.required_evidence_unknowns
+                              if row.get("symbol") in {"_a", "_b"}}, [
+                {"symbol": row.get("symbol"), "result": row.get("result"),
+                 "reason": row.get("reason"),
+                 "copies": [{key: copy.get(key) for key in ("unit", "result", "bytes", "references", "reason")}
+                            for copy in row.get("copies", [])]}
+                for row in observation.required_evidence_checks if row.get("symbol") in {"_a", "_b"}]
+
+
+def test_public_observation_validates_conflicts_in_unselected_namespace():
+    from match_recovery.import_source import ImportBinding
+
+    origin, function, _data, objects, image = _observation_fixture()
+    with pytest.raises(ValueError, match="object symbol conflicts"):
+        observe_compiled_selection([function], {origin.entity_id}, _data, (), objects,
+                                   image, {"_g": 0x402000})
+    imported = ImportBinding("_external", "example.dll", "external", None,
+                             "code/imports.cc", 1)
+    with pytest.raises(ValueError, match="conflicting function/object/generated/import/shared"):
+        observe_compiled_selection([function], {origin.entity_id}, (), (), objects,
+                                   image, {"_external": 0x402000},
+                                   import_bindings=(imported,))
+    conflict_origin = Origin(origin.image_sha256, "pe:va", 0x401010)
+    shared_conflict = SharedFunctionBinding(
+        conflict_origin, Span(0x401010, 0x401011), "_shared", conflict_origin,
+        "code/methods.cc", 1)
+    with pytest.raises(ValueError, match="conflicting function/object/generated/import/shared"):
+        observe_compiled_selection([function], {origin.entity_id}, (), (), objects,
+                                   image, {"_shared": 0x401010},
+                                   shared_bindings=(shared_conflict,))
+
+
+def test_public_observation_validates_unselected_literal_global_name_conflicts():
+    from test_shared_functions import code_object
+
+    raw = bytearray(image_fixture())
+    raw[512] = 0xC3
+    raw = bytes(raw)
+    pin = hashlib.sha256(raw).hexdigest()
+    selected_origin = Origin(pin, "pe:va", 0x401000)
+    unselected_origin = Origin(pin, "pe:va", 0x401010)
+    selected_function = FunctionBinding(selected_origin, (Span(0x401000, 0x401001),),
+                                        "_f", "code/caller.cc")
+    literal_symbol = "??_C@_01FCOA@?5?$AA@"
+    unselected_function = FunctionBinding(unselected_origin, (Span(0x401010, 0x401011),),
+                                          literal_symbol, "code/caller.cc")
+    literal_origin = Origin(pin, "pe:va", 0x402000)
+    literal = LiteralBinding(literal_origin, Span(0x402000, 0x402004), literal_symbol,
+                             "code/caller.cc", 1, selected_origin)
+    objects = {"code/caller.cc": Coff(code_object({"_f": b"\xc3"}))}
+    image = PeImage(raw, pin)
+    with pytest.raises(ValueError, match="literal target also has a global"):
+        check_compiled((selected_function, unselected_function), (), (), objects,
+                       image, {}, literal_bindings=(literal,))
+    with pytest.raises(ValueError, match="literal target also has a global"):
+        observe_compiled_selection((selected_function, unselected_function),
+                                   {selected_origin.entity_id}, (), (), objects,
+                                   image, {}, literal_bindings=(literal,))
 
 
 def test_distinct_flags_cannot_combine_body_and_transitive_data_proofs(tmp_path):

@@ -111,28 +111,32 @@ def check_objects(bindings: Sequence[FunctionBinding], objects: Mapping[str, Cof
                   errors: Mapping[str, str] | None = None, member_functions: bool = False,
                   section_bases: Mapping[tuple[str, int], int] | None = None,
                   fragments: Sequence[FunctionFragmentBinding] = (),
-                  associated_bindings=()) -> list[dict]:
+                  associated_bindings=(), support_bindings: Sequence[FunctionBinding] = ()) -> list[dict]:
     """One report per selected binding, including missing objects and symbols.
 
     External targets must be unambiguous source-owned mappings supplied by the
     adapter. Static symbol names never leak across translation units. Defined
     symbols resolve through their own mappings too, not only undefined imports.
+    ``support_bindings`` contribute validated target identities and COFF
+    placements without producing measurement rows.
     Pinned archive members may name plain code sections; their binding carries
     the identity that a product object's COMDAT boundary would prove.
     """
-    if len({item.origin.entity_id for item in bindings}) != len(bindings):
+    support_bindings = tuple(support_bindings)
+    all_bindings = (*bindings, *support_bindings)
+    if len({item.origin.entity_id for item in all_bindings}) != len(all_bindings):
         raise ValueError("ambiguous original function selection")
     from .associated_source import validate_associated
     associated_bindings = validate_associated(associated_bindings)
     pin = hashlib.sha256(image.data).hexdigest()
-    if any(item.origin.image_sha256 != pin or item.origin.address_space != "pe:va" for item in bindings):
+    if any(item.origin.image_sha256 != pin or item.origin.address_space != "pe:va" for item in all_bindings):
         raise ValueError("function binding refers to a different image/address space")
     if any(item.owner.image_sha256 != pin or item.owner.address_space != "pe:va"
            for item in associated_bindings):
         raise ValueError("associated data refers to a different image/address space")
     if len({item.origin.entity_id for item in fragments}) != len(fragments):
         raise ValueError("ambiguous original fragment selection")
-    parents = {item.origin.entity_id: item for item in bindings}
+    parents = {item.origin.entity_id: item for item in all_bindings}
     for fragment in fragments:
         if fragment.origin.image_sha256 != pin or fragment.origin.address_space != "pe:va":
             raise ValueError("fragment binding refers to a different image/address space")
@@ -156,7 +160,7 @@ def check_objects(bindings: Sequence[FunctionBinding], objects: Mapping[str, Cof
         relative_path(key[0])
     if local_data.keys() & literals.keys():
         raise ValueError("TU-local data target also has a literal binding")
-    if local_data.keys() & {(item.unit, item.symbol) for item in bindings}:
+    if local_data.keys() & {(item.unit, item.symbol) for item in all_bindings}:
         raise ValueError("TU-local data target also has a function binding")
     from .object_source import _local_data_symbol
     checked_local_data = {}
@@ -165,8 +169,8 @@ def check_objects(bindings: Sequence[FunctionBinding], objects: Mapping[str, Cof
         definition = _local_data_symbol(obj, key[1]) if obj is not None else None
         if definition is not None:
             checked_local_data[key] = (definition.index, value)
-    local_names = {item.symbol for item in bindings if item.local_only}
-    global_names = ({item.symbol for item in bindings if not item.local_only}
+    local_names = {item.symbol for item in all_bindings if item.local_only}
+    global_names = ({item.symbol for item in all_bindings if not item.local_only}
                     | externals.keys() | imports.keys())
     if local_names & global_names:
         raise ValueError("TU-local function name also has a global target binding")
@@ -177,16 +181,16 @@ def check_objects(bindings: Sequence[FunctionBinding], objects: Mapping[str, Cof
         relative_path(key[0])
         if value is not None:
             BoundedTarget.__post_init__(value)
-    if {key[1] for key in literals} & (externals.keys() | imports.keys() | {item.symbol for item in bindings}):
+    if {key[1] for key in literals} & (externals.keys() | imports.keys() | {item.symbol for item in all_bindings}):
         raise ValueError("literal target also has a global function/object/import binding")
     if any(not isinstance(key, str) or not key or type(value) not in (int, AbsoluteConstant)
            for key, value in externals.items()) or any(
             not isinstance(key, str) or not key or type(value) is not int
             or not 0 <= value <= 0xFFFFFFFF for key, value in imports.items()):
         raise ValueError("invalid explicit external target binding")
-    if imports.keys() & (externals.keys() | {binding.symbol for binding in bindings}):
+    if imports.keys() & (externals.keys() | {binding.symbol for binding in all_bindings}):
         raise ValueError("conflicting source and import symbol bindings")
-    for binding in bindings:
+    for binding in all_bindings:
         if member_functions:
             archive_member_identity(binding.unit)
         else:
@@ -197,7 +201,7 @@ def check_objects(bindings: Sequence[FunctionBinding], objects: Mapping[str, Cof
     # attached fragment. Preserve the root-COMDAT ownership guard even when no
     # child slice was selected as a separate report row.
     fragment_parent_ids.update(
-        binding.origin.entity_id for binding in bindings
+        binding.origin.entity_id for binding in all_bindings
         if binding.source_spans and binding.source_spans != binding.spans)
     for key, base in (section_bases or {}).items():
         if (not isinstance(key, tuple) or len(key) != 2 or not isinstance(key[0], str)
@@ -211,7 +215,7 @@ def check_objects(bindings: Sequence[FunctionBinding], objects: Mapping[str, Cof
         if key[0] not in objects or key[1] > len(objects[key[0]].sections):
             raise ValueError("explicitly bound COFF section placement names a missing section")
         sections[key] = base
-    for binding in bindings:
+    for binding in all_bindings:
         obj = objects.get(binding.unit)
         if obj is None:
             continue

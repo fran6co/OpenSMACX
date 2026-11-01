@@ -2732,6 +2732,15 @@ Section/auxiliary symbols and ambiguous same-named definitions do not qualify.
 This support measures the selected owner's data, not cross-TU target identity:
 static relocations still cannot borrow global target bindings, and the object
 annotation catalogue still refuses duplicate bare object names across owners.
+For a bounded root object with internal linkage, reference resolution also
+requires that same source owner's ordinary static definition and directly
+relocated CodeView data record to agree on section, symbol offset, physical
+extent, and the declared original span size. This proves a TU-local symbol
+target and compatible storage width only. Initial contents remain independently
+checked; no original-to-section placement, allocation, lifetime, or linked
+selection follows from this target proof. Missing or inconsistent CodeView data
+leaves the target unknown. The unbounded start-only route and the separate
+member-group route keep their existing requirements.
 Forward class/struct/union storage records require one complete same-kind,
 qualified-name definition in that standalone stream; missing or ambiguous
 definitions remain unknown, and no other TU supplies a substitute layout.
@@ -3048,6 +3057,17 @@ addends. The first 128 references are shown, with omissions counted, independent
 of the complete byte/reference proof. Local and weak symbols do not borrow external
 bindings. These reports help distinguish structural mistakes, such as an accidental
 recursive call instead of a base initializer, from instruction-spelling work.
+
+`match_recovery.application_binary.observe_compiled_selection` is the public
+in-memory API for observing selected function rows without running the full
+application measurement loop. It recomputes the selected typed evidence closure
+from the supplied COFF objects on every call and validates declared symbol
+namespaces before filtering. `CompiledSelectionObservation.function_rows` and
+`body_result` describe only selected function bodies;
+`required_evidence_checks` and `required_evidence_unknowns` separately retain
+data, generated, import, literal, shared-body and closure diagnostics. This is
+an observation helper, not an acceptance or collection API, and a passing body
+result does not clear any required-evidence unknown.
 
 `recover tasks check-binary <task> --image <image> --retained-diagnostics`
 can investigate a mapped header-defined function absent from its canonical
