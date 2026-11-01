@@ -3379,7 +3379,7 @@ void Datalink::exec(unsigned int topic, int index) {
         stringBox_.init(x, y, width, height, static_cast<Win *>(this),
                         0, -1);
         Font *const hyperlink_font = &link_font_;
-        stringBox_.set_font(0, &secondary_body_font_, 0, hyperlink_font);
+        stringBox_.set_font(&secondary_body_font_, 0, 0, hyperlink_font);
         stringBox_.set_text_color(0x98, -1, 1, 1);
         stringBox_.set_text_color2(0x96, -1, 1, 1);
         stringBox_.set_text_color_hyper(0x96, -1, 1, 1);

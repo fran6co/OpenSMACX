@@ -62,6 +62,10 @@ def test_actual_datalink_exec_callbacks_and_damage_controls(compiler_name):
         run_control(compile_control(directory, body, compiler, "actual"), True)
 
         mutants = {
+            "wrong_font_slot_order": replace_once(
+                body,
+                "stringBox_.set_font(&secondary_body_font_, 0, 0, hyperlink_font);",
+                "stringBox_.set_font(0, &secondary_body_font_, 0, hyperlink_font);"),
             "missing_restore": replace_once(
                 body,
                 "ReportWinGlobal.shared_research_focus() = static_cast<int32_t>(field_A1C_);",

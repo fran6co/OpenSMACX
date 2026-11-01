@@ -517,10 +517,10 @@ Texture::Texture() {
 }
 
 /*
-Purpose: Destroy the texture. Unlike close, which resets every field, the
-         destructor only settles the pixel block: freed and cleared when there
-         are pixels and they are ours, left entirely alone otherwise. The
-         descriptor fields and the borrowed flag keep whatever they held.
+Purpose: Destroy the texture. Unlike close, which resets the descriptor fields
+         and borrowed flag, the destructor only settles the pixel pointer:
+         free it when owned, then clear it whenever it was nonnull. Descriptor
+         fields and the borrowed flag keep whatever they held.
 // ORIGINAL: 0x00619660 ??1Texture@@QAE@XZ 0x00619660-0x00619685
 // size      37 bytes
 // prototype void (__thiscall ??1Texture@@QAE@XZ)(Texture* this)
@@ -532,8 +532,10 @@ Return Value: n/a
 Status: Complete
 */
 Texture::~Texture() {
-    if (pixels_ && !borrowed_) {
-        free(pixels_);
+    if (pixels_) {
+        if (!borrowed_) {
+            free(pixels_);
+        }
         // Preserve the original post-free null write. This volatile view is
         // a matching workaround, not evidence that pixels_ was volatile;
         // restoring an ordinary store here remains a separate obligation.

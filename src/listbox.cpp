@@ -2067,15 +2067,17 @@ Status: Coverage transcription - unclaimed body
 */
 void ListBox::on_mousewheel(int delta) {
     if (delta < 0) {
-        int count = -delta;
-        if (count > 0) {
+        int magnitude = -delta;
+        if (magnitude > 0) {
+            int count = magnitude;
             do {
                 Win::on_mousewheel_down(1);
             } while (--count);
         }
     } else {
-        int count = delta;
-        if (count > 0) {
+        int magnitude = delta;
+        if (magnitude > 0) {
+            int count = magnitude;
             do {
                 Win::on_mousewheel_up(1);
             } while (--count);

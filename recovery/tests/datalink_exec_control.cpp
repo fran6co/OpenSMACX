@@ -7,7 +7,11 @@
 #include <vector>
 
 struct RECT { int left, top, right, bottom; };
-struct Font {};
+struct Font {
+    bool initialized;
+    Font() : initialized(true) {}
+    bool is_initialized() const { return initialized; }
+};
 struct Win {};
 struct MainInterface : Win {};
 struct Console { int faction_id_; };
@@ -37,7 +41,6 @@ struct RectObservation {
 
 static std::vector<std::string> Events;
 static RectObservation Rect;
-static Font *FontArgs[4];
 static int ColorArgs[3][4];
 static int SelectedId;
 static int ModalFlag;
@@ -59,10 +62,19 @@ int DatalinkWrongFocus = 0; // Used only by the wrong-owner damage mutant.
 int pop_wait() { Events.push_back("pop_wait"); return 0; }
 
 struct BufferCalls {
-    void set_font(Font *a, Font *b, Font *c, Font *d) {
-        FontArgs[0] = a; FontArgs[1] = b;
-        FontArgs[2] = c; FontArgs[3] = d;
+    Font *font_slots[4];
+    BufferCalls() {
+        font_slots[0] = 0; font_slots[1] = 0;
+        font_slots[2] = 0; font_slots[3] = 0;
+    }
+    int set_font(Font *a, Font *b, Font *c, Font *d) {
         Events.push_back("font");
+        if (!a) return 3;
+        if (a->is_initialized()) font_slots[0] = a;
+        font_slots[1] = b;
+        font_slots[2] = c;
+        font_slots[3] = d;
+        return 0;
     }
     void set_text_color(int a, int b, int c, int d) {
         ColorArgs[0][0] = a; ColorArgs[0][1] = b;
@@ -191,8 +203,10 @@ static void test_800_geometry_and_owner_identity() {
     assert(Rect.width == 147 && Rect.height == 171);
     assert(Rect.parent == static_cast<Win *>(&window));
     assert(Rect.list == 0 && Rect.flags == -1);
-    assert(FontArgs[0] == 0 && FontArgs[1] == &window.secondary_body_font_);
-    assert(FontArgs[2] == 0 && FontArgs[3] == &window.link_font_);
+    assert(window.stringBox_.font_slots[0] == &window.secondary_body_font_);
+    assert(window.stringBox_.font_slots[1] == 0);
+    assert(window.stringBox_.font_slots[2] == 0);
+    assert(window.stringBox_.font_slots[3] == &window.link_font_);
     assert(ColorArgs[0][0] == 0x98 && ColorArgs[1][0] == 0x96);
     assert(ColorArgs[2][0] == 0x96);
     assert(SelectedId == 60013 && window.history_[0] == 13);

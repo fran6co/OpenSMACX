@@ -90,10 +90,21 @@ def test_actual_coordinate_acquisition(tmp_path, compiler, damage):
 
 def texture_lifecycle_control(damage):
     source = (ROOT / "src/texture.cpp").read_text()
-    bodies = "\n".join(extract(source, signature) for signature in (
-        "Texture::Texture()", "Texture::~Texture()", "void Texture::close()"))
+    constructor = extract(source, "Texture::Texture()")
+    destructor = extract(source, "Texture::~Texture()")
+    close = extract(source, "void Texture::close()")
+    if damage == "old-borrowed-destructor":
+        outer_guard = "    if (pixels_) {\n        if (!borrowed_) {"
+        nested_guard_close = "        }\n        // Preserve the original post-free null write."
+        assert destructor.count(outer_guard) == 1
+        assert destructor.count(nested_guard_close) == 1
+        destructor = destructor.replace(
+            outer_guard, "    if (pixels_ && !borrowed_) {", 1).replace(
+                nested_guard_close,
+                "        // Preserve the original post-free null write.", 1)
+    bodies = "\n".join((constructor, destructor, close))
     assert "*static_cast<unsigned char *volatile *>(&pixels_) = nullptr;" in bodies
-    if damage:
+    if isinstance(damage, tuple):
         assert bodies.count(damage[0]) == 1
         bodies = bodies.replace(*damage, 1)
     return r'''
@@ -138,7 +149,7 @@ int main(){
         memcpy(&width,storage+offsetof(Texture,iWidth_),sizeof width);
         memcpy(&height,storage+offsetof(Texture,iHeight_),sizeof height);
         memcpy(&mode,storage+offsetof(Texture,borrowed_),sizeof mode);
-        assert(pointer==(borrowed?pixels:nullptr) && width==3 && height==2 && mode==static_cast<uint32_t>(borrowed));
+        assert(pointer==nullptr && width==3 && height==2 && mode==static_cast<uint32_t>(borrowed));
         assert(releases==(borrowed?0:1) && released==(borrowed?nullptr:pixels));
     }
 }
@@ -148,7 +159,8 @@ int main(){
 @pytest.mark.parametrize("compiler", ("g++", "clang++"))
 @pytest.mark.parametrize("damage", (None,
     ("pixels_ = nullptr;\n    iWidth_ = 0;", "pixels_ = nullptr;\n    iWidth_ = 1;"),
-    ("*static_cast<unsigned char *volatile *>(&pixels_) = nullptr;", ";")))
+    ("*static_cast<unsigned char *volatile *>(&pixels_) = nullptr;", ";"),
+    "old-borrowed-destructor"))
 def test_actual_texture_pixel_lifecycle(tmp_path, compiler, damage):
     executable = shutil.which(compiler)
     if executable is None:
