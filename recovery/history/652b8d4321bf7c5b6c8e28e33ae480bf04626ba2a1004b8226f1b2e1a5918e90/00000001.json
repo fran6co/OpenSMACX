@@ -1,0 +1,21 @@
+{
+  "event_id": "f793ff6402347ac6972a49b65efc5d9cef96c3f293b10c3a4e7201067f2084a5",
+  "payload": {
+    "affects": [
+      "entity-05b1b48b122910eccac0bcec5299b0a85ba6c9fbad3232d604a7db7a4c3502ef"
+    ],
+    "author": "coordinator",
+    "discovery_id": "explicit-empty-payload-destructor-nov01dd",
+    "evidence": [
+      "Actual original402C70..402CB2 leaf23instructions versus current27withCALL toemptyRET ??1StringStructPayload. Retainedhistoryverified no previous actualtrial of thisspecificdeclaration.",
+      "Coordinator authorizedONEheaderoverlay withonly~StringStructPayload(){}; noBaseList/type/field/guard/flag/attribute changes."
+    ],
+    "hypothesis": "An explicit ordinary empty payload destructor might naturally inline the current empty implicit-destructor call in the original scalar-deleting body.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "explicit-empty-payload-destructor-nov01dd",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:payload-destructor-nov01dd"
+}

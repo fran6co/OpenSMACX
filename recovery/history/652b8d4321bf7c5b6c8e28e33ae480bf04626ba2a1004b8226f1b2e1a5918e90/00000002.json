@@ -1,0 +1,19 @@
+{
+  "event_id": "4be6bd74fe9108017f39040bf488c0bc218f09a794ef690a74d82c07d727ff78",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "explicit-empty-payload-destructor-nov01dd",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "One native compiler call completed withallsource/tool/recipe guards. Scalardeleting body+relocations remainbyteidentical,27compiledvs23original; ordinarydestructor changesfromRET tovirtualbase/table staging, no newmatch.",
+      "All26ownerordinaryverdicts unchanged15exact10miss1mnemonic; strict12PASS8FAIL1UNKNOWN unchanged, refusals retainedseparately. Layout evidenceUNKNOWN, not promoted. No sourcecandidate adopted, no claimgrant/demotion, no newforms/attributes.",
+      "src/stringstruct.h remainsunchanged inworkingandmasterC++source. Actualsource/overlay/COFF/reports retained underignoredpayload-destructor-nov01dd; hypothesisclosedandrejected afteritsone-call budget."
+    ]
+  },
+  "previous_event": "f793ff6402347ac6972a49b65efc5d9cef96c3f293b10c3a4e7201067f2084a5",
+  "request_id": "reject-unchanged-payload-scalar-nov01dd",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:payload-destructor-nov01dd"
+}
