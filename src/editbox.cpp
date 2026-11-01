@@ -508,7 +508,7 @@ int EditBoxTextColor3 = 1;
 // RECOVERY_OBJECT: v2 0x006971F0 0x006971F4 ?EditBoxTextColor4@@3HA 0x00614FE0
 int EditBoxTextColor4 = 1;
 
-// ORIGINAL: 0x00614FE0 ?init@EditBox@@QAEHHHHHPAUWin@@H@Z 0x00614FE0-0x00615179
+// ORIGINAL: 0x00614FE0 ?init@EditBox@@QAEHHHHHPAUWin@@H@Z 0x00614FE0-0x00615179 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:65b567af55eb22d163bbd28afcc335c340847278:src/unrecovered/00614fe0.cpp", "EditBox member offsets in src/editbox.h", "Buffer::markup_enabled_ lies at GraphicWin+0x964", "Original image values at 0x006971E8-0x006971F3"], "reason": "Initialize the real editor, base window, text buffer and owned timer; install the free caret callback rather than a synthetic vtable receiver."}
 // TRIED: same as 0x005C9860 - the scaffold's GraphicWin::init is stale as `void` (src/graphicwin.cpp's real recovery returns `int`, and this disassembly tests the return value), so a same-layout `GraphicWinInitShim` with the correct `int` return gets the call.
 // TRIED: landed at 0.92 similarity, 410 vs 409 bytes; diverges at #45 where the trailing low-byte or/and-with-1 flag update compiles to a wider `not`/`and` sequence here, and VC6 inlines the `strlen` call as `repne scasb` where the original kept a real `call`. Tried an explicit `unsigned char` low-byte read/write for the flag update instead of a 32-bit read-modify-write; same divergence point.
@@ -537,7 +537,10 @@ int EditBox::init(int x, int y, int width, int height, Win *parent,
     GraphicWin::close();
     if (parent == 0) return 3;
 
-    const int style_flags = (parent->iFlags_ & 0x1000) ? 0x2020 : 0x102020;
+    int style_flags = 0x2020;
+    if ((parent->iFlags_ & 0x1000) == 0) {
+        style_flags = 0x102020;
+    }
     const int result = GraphicWin::init(x, y, width, height, 0,
                                         style_flags, parent, 0, 0);
     if (result != 0) return result;

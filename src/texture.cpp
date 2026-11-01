@@ -6941,7 +6941,7 @@ void Texture::sub_61d090(Buffer *buffer, Vert *vertices, int *zvals,
     texture_reset_fpu();
 }
 
-// ORIGINAL: 0x0061F790 sub_61f790 0x0061F790-0x0061F7FD FILE
+// ORIGINAL: 0x0061F790 sub_61f790 0x0061F790-0x0061F7FD FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["pinned:0x0061f790: sole stack argument supplies counter+4, endpoint+8 and the interpolant words; zero after decrement calls static setup with that same pointer", "src/texture.h: EdgeScan fields and 0x3C stride; pinned setup 0x00624D80/0x0061FC90 writes those exact words", "Original signed branch and 32-bit wrapping arithmetic retained; unsigned-to-int conversion is target-specific, not a portability claim"], "reason": "The free cdecl edge stepper consumes the same EdgeScan record as its static setup callback, not a Texture receiver or integer address."}
 // symbol    ?sub_61f790@@YAHPAUEdgeScan@@@Z
 // size      109 bytes
@@ -6958,23 +6958,19 @@ int __cdecl sub_61f790(EdgeScan *edge) {
         return Texture::setup_edge(edge, edge->id) != 0;
     }
 
-    const int accum_a = static_cast<int>(
+    edge->accumA = static_cast<int>(
         static_cast<unsigned int>(edge->accumA) +
         static_cast<unsigned int>(edge->deltaA));
-    const int accum_b = static_cast<int>(
+    edge->accumB = static_cast<int>(
         static_cast<unsigned int>(edge->accumB) +
         static_cast<unsigned int>(edge->deltaB));
-    const int accum_c = static_cast<int>(
+    edge->accumC = static_cast<int>(
         static_cast<unsigned int>(edge->accumC) +
         static_cast<unsigned int>(edge->deltaC));
-    edge->accumB = accum_b;
-    edge->accumA = accum_a;
-    edge->accumC = accum_c;
-    const int frac_accum = static_cast<int>(
+    edge->fracAccum = static_cast<int>(
         static_cast<unsigned int>(edge->fracAccum) +
         static_cast<unsigned int>(edge->fracDelta));
-    edge->fracAccum = frac_accum;
-    if (frac_accum > 0) {
+    if (edge->fracAccum > 0) {
         edge->accumC = static_cast<int>(
             static_cast<unsigned int>(edge->accumC) +
             static_cast<unsigned int>(edge->extraDeltaC));
@@ -7525,7 +7521,7 @@ finish:
     texture_reset_fpu();
 }
 
-// ORIGINAL: 0x0061FDF0 sub_61fdf0 0x0061FDF0-0x0061FE68 FILE
+// ORIGINAL: 0x0061FDF0 sub_61fdf0 0x0061FDF0-0x0061FE68 FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["pinned:0x0061fdf0: sole stack argument supplies counter+4, endpoint+8 and the interpolant words; zero after decrement calls static setup with that same pointer", "src/texture.h: EdgeScan fields and 0x3C stride; pinned setup 0x00624D80/0x0061FC90 writes those exact words", "Original signed branch and 32-bit wrapping arithmetic retained; unsigned-to-int conversion is target-specific, not a portability claim"], "reason": "The free cdecl edge stepper consumes the same EdgeScan record as its static setup callback, not a Texture receiver or integer address."}
 // symbol    ?sub_61fdf0@@YAHPAUEdgeScan@@@Z
 // TRIED: calling through the scaffold's `Texture::setup_edge_gouraud` member (thiscall, this-in-ECX) - the disasm shows two bare pushes and no ECX setup, so a free __cdecl decl was used instead; MISMATCH is at #20 (near the tail), not tried further.
@@ -7543,27 +7539,22 @@ int __cdecl sub_61fdf0(EdgeScan *edge) {
         return Texture::setup_edge_gouraud(edge, edge->id) != 0;
     }
 
-    const int accum_a = static_cast<int>(
+    edge->accumA = static_cast<int>(
         static_cast<unsigned int>(edge->accumA) +
         static_cast<unsigned int>(edge->deltaA));
-    const int accum_b = static_cast<int>(
+    edge->accumB = static_cast<int>(
         static_cast<unsigned int>(edge->accumB) +
         static_cast<unsigned int>(edge->deltaB));
-    const int accum_c = static_cast<int>(
+    edge->accumC = static_cast<int>(
         static_cast<unsigned int>(edge->accumC) +
         static_cast<unsigned int>(edge->deltaC));
-    const int accum_d = static_cast<int>(
+    edge->accumD = static_cast<int>(
         static_cast<unsigned int>(edge->accumD) +
         static_cast<unsigned int>(edge->deltaD));
-    edge->accumB = accum_b;
-    edge->accumA = accum_a;
-    edge->accumC = accum_c;
-    edge->accumD = accum_d;
-    const int frac_accum = static_cast<int>(
+    edge->fracAccum = static_cast<int>(
         static_cast<unsigned int>(edge->fracAccum) +
         static_cast<unsigned int>(edge->fracDelta));
-    edge->fracAccum = frac_accum;
-    if (frac_accum > 0) {
+    if (edge->fracAccum > 0) {
         edge->accumC = static_cast<int>(
             static_cast<unsigned int>(edge->accumC) +
             static_cast<unsigned int>(edge->extraDeltaC));

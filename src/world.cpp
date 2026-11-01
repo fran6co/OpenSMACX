@@ -401,7 +401,7 @@ void __cdecl build_continent(int size) {
 
 /*
 Purpose: Build out the map hills.
-// ORIGINAL: 0x005C2B40 ?build_hills@@YAXH@Z 0x005C2B40-0x005C2CA8
+// ORIGINAL: 0x005C2B40 ?build_hills@@YAXH@Z 0x005C2B40-0x005C2CA8 BYTE_EXACT
 // LEVER: same as build_continent (0x005C28F0) - `osmx calls` shows only
 //        paint_land/do_all_non_input plus rand() itself, so the two
 //        `rnd(bounds, NULL)` cross-TU calls were rewritten as rnd's own
@@ -423,9 +423,10 @@ void __cdecl build_hills(int altitude) {
     int i = 0;
     for (;;) {
         int x_bound = MapLongitudeBounds - ((MapIsFlat & 1) * 8);
-        x = ((x_bound - 1 > 0) ? rand() % x_bound : 0) + ((MapIsFlat & 1) * 4);
+        x = ((x_bound - 1 <= 0) ? 0 : rand() % x_bound)
+            + ((MapIsFlat & 1) * 4);
         int y_bound = MapLatitudeBounds - 8;
-        y = ((y_bound - 1 > 0) ? rand() % y_bound : 0) + 4;
+        y = ((y_bound - 1 <= 0) ? 0 : rand() % y_bound) + 4;
         if (x & 1) {
             x--;
         }
