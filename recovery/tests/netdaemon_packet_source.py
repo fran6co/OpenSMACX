@@ -12,6 +12,7 @@ from match_recovery.source import read_text
 from test_infowin_setup_text import _function_end
 
 BASE = "bffedcf01d88ec837f56df4762bdcbb6ce5eff97"
+BOUNDARY_BASE = "e3bc65c49"
 INTERFACE_BASE = "9c2b8717430cefdb6c7caca356e32d2609a9cffe"
 INCLUDE = '#include "netdaemon_message_record.h"'
 RECORD_START = "// The two bytes after opcode are observed unwritten"
@@ -71,9 +72,55 @@ def _envelope(text, includes, label):
     assert not re.search(r"(?m)^\s*//\s*(?:symbol|body|compile_context)\b", text), label + " orphan metadata fact"
 
 
+@lru_cache(maxsize=None)
+def _boundary_baseline(root):
+    return subprocess.check_output(["git", "show", BOUNDARY_BASE + ":src/netdaemon.cpp"],
+                                   cwd=root, text=True, timeout=30)
+
+
+def _packet_boundary_parts(root, sender_text=None, header_text=None):
+    """Validate the actual two added owners before their exact inverse transport."""
+    root = Path(root)
+    sender = (root / "src/netdaemon_message_data.cpp").read_text() if sender_text is None else sender_text
+    header = (root / "src/netdaemon_message_record.h").read_text() if header_text is None else header_text
+    baseline = _boundary_baseline(root)
+    blocks = {}
+    positions = []
+    for address, signature in ((0x00592E10, "void __cdecl message_veh("),
+                               (0x00593090, "void __cdecl message_lock(")):
+        marker = f"// ORIGINAL: 0x{address:08X}"
+        assert sender.count(marker) == baseline.count(marker) == 1, "sole packet builder identity"
+        start = sender.index(marker)
+        end = _function_end(sender, sender.index(signature, start))
+        base_start = baseline.index(marker)
+        base_end = _function_end(baseline, baseline.index(signature, base_start))
+        block = sender[start:end]
+        assert block == baseline[base_start:base_end], "complete packet builder identity/body/history unchanged"
+        blocks[address] = block
+        positions.append(start)
+    assert positions == sorted(positions), "packet builder transport preserves definition order"
+    for block in blocks.values():
+        assert sender.count(block) == 1
+        sender = sender.replace(block, "", 1)
+    records = {}
+    for name, next_marker in (("MessageVehicleRecord", "// ORIGINAL: 0x00592E10"),
+                              ("MessageLockRecord", "class MessageLockView {")):
+        marker = "struct " + name + " {"
+        assert header.count(marker) == baseline.count(marker) == 1, "sole native record definition"
+        base_start = baseline.index(marker)
+        block = baseline[base_start:baseline.index(next_marker, base_start)].rstrip()
+        # Compare the complete declaration and every size/offset assertion,
+        # rather than accepting a matching prefix or replacing candidate bytes.
+        assert header.count(block) == 1, "actual complete packet record/assertions unchanged"
+        records[name] = header[header.index(block):header.index(block) + len(block)]
+        header = header.replace(block, "", 1)
+    return sender, header, blocks, records
+
+
 def sender_record_block(root, header_text=None):
     root = Path(root)
     text = (root / "src/netdaemon_message_record.h").read_text() if header_text is None else header_text
+    _sender, text, _blocks, _records = _packet_boundary_parts(root, header_text=text)
     baseline = _baseline(root)
     expected = baseline[baseline.index(RECORD_START):baseline.index(RECORD_END)].rstrip()
     assert text.count(RECORD_START) == 1, "record rationale must have sole owner"
@@ -89,6 +136,7 @@ def sender_record_block(root, header_text=None):
 def sender_block(root, sender_text=None):
     root = Path(root)
     text = (root / "src/netdaemon_message_data.cpp").read_text() if sender_text is None else sender_text
+    text, _header, _blocks, _records = _packet_boundary_parts(root, sender_text=text)
     baseline = _baseline(root)
     signature = baseline.index(SIGNATURE)
     marker = baseline.rfind("// ORIGINAL:", 0, signature)
@@ -268,6 +316,25 @@ def historical_source(root, *, receiver_text=None, sender_text=None, header_text
     """Inverse only this migration, validating all discarded new-owner envelope."""
     root = Path(root)
     receiver = (root / "src/netdaemon.cpp").read_text() if receiver_text is None else receiver_text
+    _sender, _header, packet_blocks, packet_records = _packet_boundary_parts(root, sender_text, header_text)
+    for signature in ("void __cdecl message_veh(", "void __cdecl message_lock("):
+        assert signature not in receiver, "transported builder must not remain in receiver"
+    for name in packet_records:
+        assert "struct " + name + " {" not in receiver, "transported record must have one header owner"
+    assert receiver.count(INCLUDE) == 1
+    receiver = receiver.replace(INCLUDE + "\n\n", "", 1)
+    vehicle_anchor = "struct MessageBaseTextRecord {"
+    assert receiver.count(vehicle_anchor) == 1
+    receiver = receiver.replace(vehicle_anchor, packet_records["MessageVehicleRecord"] + "\n\n" +
+                                packet_blocks[0x00592E10] + "\n\n" + vehicle_anchor, 1)
+    assert receiver.count(RECORD_END) == 1
+    receiver = receiver.replace(RECORD_END, INCLUDE + "\n\n" + RECORD_END, 1)
+    lock_anchor = "class MessageLockView {"
+    assert receiver.count(lock_anchor) == 1
+    receiver = receiver.replace(lock_anchor, packet_records["MessageLockRecord"] + "\n\n" + lock_anchor, 1)
+    lock_sender_anchor = "// ORIGINAL: 0x00593110"
+    assert receiver.count(lock_sender_anchor) == 1
+    receiver = receiver.replace(lock_sender_anchor, packet_blocks[0x00593090] + "\n\n" + lock_sender_anchor, 1)
     interface_blocks, interface_positions, interface_ends = _interface_blocks(root, interface_text)
     for signature in INTERFACE_OWNERS.values():
         assert signature not in receiver, f"interface definition must not remain in receiver: {signature}"

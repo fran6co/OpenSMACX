@@ -1562,57 +1562,7 @@ int NetDaemon::end_of_event(int faction_id, int turn_value) {
 // the one thing about them the bodies prove.
 // ---------------------------------------------------------------------------
 
-struct MessageVehicleRecord {
-    int16_t opcode_;
-    unsigned char unresolved_2_[2];
-    int32_t faction_;
-    uint32_t time_;
-    int32_t sequence_;
-    int32_t field_10_;
-    int32_t field_14_;
-};
-
-static_assert(sizeof(MessageVehicleRecord) == 0x18,
-              "vehicle message native transmitted extent");
-static_assert(offsetof(MessageVehicleRecord, faction_) == 0x04,
-              "vehicle message faction offset");
-static_assert(offsetof(MessageVehicleRecord, time_) == 0x08,
-              "vehicle message timestamp offset");
-static_assert(offsetof(MessageVehicleRecord, sequence_) == 0x0C,
-              "vehicle message sequence offset");
-static_assert(offsetof(MessageVehicleRecord, field_10_) == 0x10,
-              "vehicle message first payload offset");
-static_assert(offsetof(MessageVehicleRecord, field_14_) == 0x14,
-              "vehicle message second payload offset");
-
-// ORIGINAL: 0x00592E10 ?message_veh@@YAXHHHH@Z 0x00592E10-0x00592E70 BYTE_EXACT
-// size      96 bytes
-// prototype void (__cdecl ?message_veh@@YAXHHHH@Z)(int, int, int, int)
-// callers   12   call targets   1
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     0x00532940
-// LEVER: the two payload stores were written field_14_ first; the struct
-//        declares field_10_ before field_14_, and VC6 evaluates assignments in
-//        source order, so the loads came out swapped - the image reads
-//        [ebp+0x10] then [ebp+0xC]. Declaration order for the stores took it
-//        SHAPE_EXACT to BYTE_EXACT.
-void __cdecl message_veh(int opcode, int payload_10, int payload_14,
-                         int target) {
-    MessageVehicleRecord message;
-
-    message.opcode_ = static_cast<short>(opcode);
-    message.faction_ = ConsoleGlobal.faction_id_;
-    message.time_ = timeGetTime();
-    message.sequence_ = NetDaemonNet.deletion_list_.sequence_bits();
-    message.field_10_ = payload_10;
-    message.field_14_ = payload_14;
-
-    NetBusyCount++;
-    NetDaemonNet.send_message(reinterpret_cast<char *>(&message), 0x18,
-                              target);
-    NetBusyCount--;
-}
+#include "netdaemon_message_record.h"
 
 struct MessageBaseTextRecord {
     int16_t opcode_;
@@ -1659,8 +1609,6 @@ void __cdecl message_base(int opcode, int payload_10, char *text, int target) {
                               target);
     NetBusyCount--;
 }
-
-#include "netdaemon_message_record.h"
 
 // Borrowed wire view over the layout already owned by message_data's sender.
 // Read one field at a time: MOVE packets have only two payload words, while
@@ -2037,41 +1985,6 @@ void __cdecl message_big_data(int opcode, int target, int *payload,
     NetBusyCount--;
 }
 
-struct MessageLockRecord {
-    int16_t opcode_;
-    unsigned char unresolved_2_[2];
-    int32_t faction_;
-    uint32_t time_;
-    int32_t sequence_;
-    int32_t field_10_;
-    int32_t field_14_;
-    int32_t field_18_;
-    int32_t field_1C_;
-    int32_t field_20_;
-    int32_t field_24_;
-};
-
-static_assert(sizeof(MessageLockRecord) == 0x28,
-              "lock message native transmitted extent");
-static_assert(offsetof(MessageLockRecord, faction_) == 0x04,
-              "lock message faction offset");
-static_assert(offsetof(MessageLockRecord, time_) == 0x08,
-              "lock message timestamp offset");
-static_assert(offsetof(MessageLockRecord, sequence_) == 0x0C,
-              "lock message sequence offset");
-static_assert(offsetof(MessageLockRecord, field_10_) == 0x10,
-              "lock message first payload offset");
-static_assert(offsetof(MessageLockRecord, field_14_) == 0x14,
-              "lock message second payload offset");
-static_assert(offsetof(MessageLockRecord, field_18_) == 0x18,
-              "lock message third payload offset");
-static_assert(offsetof(MessageLockRecord, field_1C_) == 0x1C,
-              "lock message fourth payload offset");
-static_assert(offsetof(MessageLockRecord, field_20_) == 0x20,
-              "lock message fifth payload offset");
-static_assert(offsetof(MessageLockRecord, field_24_) == 0x24,
-              "lock message sixth payload offset");
-
 class MessageLockView {
 public:
     explicit MessageLockView(const unsigned char *bytes) : bytes_(bytes) {}
@@ -2116,41 +2029,6 @@ private:
     const unsigned char *bytes_;
 };
 
-// ORIGINAL: 0x00593090 ?message_lock@@YAXHHHHHHHH@Z 0x00593090-0x00593108 BYTE_EXACT
-// size      120 bytes
-// prototype void (__cdecl ?message_lock@@YAXHHHHHHHH@Z)(int, int, int, int, int, int, int, int)
-// callers   2   call targets   1
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x00532940
-// LEVER: the payload-to-slot mapping, not the store order - the image puts the
-//        SECOND parameter into the record at 0x18 and the FIFTH into 0x24, and
-//        hands the EIGHTH to send_message as the network destination. The old
-//        body sent `target` instead: the image broadcasts a lock request and
-//        records the target in the record at 0x18, while this tree was
-//        addressing it. Faithful to the shipped code, which is what is
-//        reproduced here.
-void __cdecl message_lock(int opcode, int target, int payload_10,
-                          int payload_14, int payload_18, int payload_1C,
-                          int payload_20, int send_target) {
-    MessageLockRecord message;
-
-    message.opcode_ = static_cast<short>(opcode);
-    message.faction_ = ConsoleGlobal.faction_id_;
-    message.time_ = timeGetTime();
-    message.sequence_ = NetDaemonNet.deletion_list_.sequence_bits();
-    message.field_10_ = payload_10;
-    message.field_14_ = payload_14;
-    message.field_18_ = target;
-    message.field_1C_ = payload_1C;
-    message.field_20_ = payload_20;
-    message.field_24_ = payload_18;
-
-    NetBusyCount++;
-    NetDaemonNet.send_message(reinterpret_cast<char *>(&message),
-                              sizeof(message), send_target);
-    NetBusyCount--;
-}
 
 // ORIGINAL: 0x00593110 ?message_landmark@@YAXHHPADHHHH@Z 0x00593110-0x00593190 BYTE_EXACT
 // size      128 bytes
@@ -6763,7 +6641,7 @@ release_vehicle:
 int NetDaemon::action(int veh_id, int mode) {
     if (IsMultiplayerNet == 0) return ::action(veh_id);
 
-    const int action_type = Vehs[veh_id].order;
+    const int8_t action_type = Vehs[veh_id].order;
     int category = 0;
     enum Branch { await_exec, go_to, road_to };
     Branch branch = await_exec;

@@ -123,6 +123,9 @@ def test_actual_owner_host_controls(mode: str) -> None:
 @pytest.mark.parametrize(
     "mode,needle,replacement,description",
     [
+        ("action", "const int8_t action_type = Vehs[veh_id].order;",
+         "const uint8_t action_type = Vehs[veh_id].order;",
+         "native action classification and logged value preserve signed byte orders"),
         ("timing", "Vehs[veh_id].order, 0)", "action_type, 0)",
          "action log must reload order after automated_lock callback"),
         ("timing", "NetDaemonNet.channels_[0].leading_words_[3] = saved_action_mode;",
@@ -144,10 +147,10 @@ def test_actual_owner_host_controls(mode: str) -> None:
 def test_protocol_mutants_are_detected(mode: str, needle: str,
                                        replacement: str, description: str) -> None:
     action_body, order_body = _actual_methods()
-    target = action_body if mode == "timing" else order_body
+    target = action_body if mode in ("timing", "action") else order_body
     assert needle in target, f"mutation anchor missing: {description}"
     changed = target.replace(needle, replacement, 1)
-    if mode == "timing":
+    if mode in ("timing", "action"):
         action_body = changed
     else:
         order_body = changed

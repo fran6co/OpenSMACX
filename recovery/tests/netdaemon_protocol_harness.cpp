@@ -232,6 +232,18 @@ static void test_action_offline_and_classification() {
     IsMultiplayerNet = 0; free_action_result = 37;
     assert(subject.action(12, 0) == 37 && free_action_calls == 1 && free_action_veh == 12);
 
+    // Pinned 5325A4..5325EA compares the signed byte before MOVSX at logging.
+    // High-bit orders leave the same value visible to the callback boundary.
+    const int signed_orders[] = {-128, -1, 127};
+    for (unsigned int i = 0; i < sizeof(signed_orders) / sizeof(signed_orders[0]); ++i) {
+        reset_fixture(&subject);
+        Vehs[12].order = static_cast<int8_t>(signed_orders[i]);
+        assert(subject.action(12, 0) == 0);
+        assert(auto_lock_calls == 0 && action_packets == 0);
+        assert(logs.size() == 1 && logs[0] == "Falling out of action loop");
+        assert(log_arg1[0] == 12 && log_arg2[0] == signed_orders[i]);
+    }
+
     reset_fixture(&subject); Vehs[12].order = 0x14;
     subject.channels_[1].leading_words_[3] = 0;
     assert(subject.action(12, 0) == 1);

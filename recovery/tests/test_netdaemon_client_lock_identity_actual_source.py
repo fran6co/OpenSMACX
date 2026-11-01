@@ -223,7 +223,8 @@ def extract_function(source, name):
 def source_parts():
     text = SOURCE.read_text()
     lock_types = "\n".join((
-        extract_definition(text, "struct MessageLockRecord {") + ";",
+        extract_definition((ROOT / "src/netdaemon_message_record.h").read_text(),
+                           "struct MessageLockRecord {") + ";",
         extract_definition(text, "class MessageLockView {") + ";",
     ))
     helper = extract_function(text, HELPER)

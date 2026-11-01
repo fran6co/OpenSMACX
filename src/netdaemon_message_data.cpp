@@ -46,3 +46,68 @@ int __cdecl message_data(int opcode, int target, int payload_10,
     --NetBusyCount;
     return result;
 }
+
+// ORIGINAL: 0x00592E10 ?message_veh@@YAXHHHH@Z 0x00592E10-0x00592E70 BYTE_EXACT
+// size      96 bytes
+// prototype void (__cdecl ?message_veh@@YAXHHHH@Z)(int, int, int, int)
+// callers   12   call targets   1
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00532940
+// LEVER: the two payload stores were written field_14_ first; the struct
+//        declares field_10_ before field_14_, and VC6 evaluates assignments in
+//        source order, so the loads came out swapped - the image reads
+//        [ebp+0x10] then [ebp+0xC]. Declaration order for the stores took it
+//        SHAPE_EXACT to BYTE_EXACT.
+void __cdecl message_veh(int opcode, int payload_10, int payload_14,
+                         int target) {
+    MessageVehicleRecord message;
+
+    message.opcode_ = static_cast<short>(opcode);
+    message.faction_ = ConsoleGlobal.faction_id_;
+    message.time_ = timeGetTime();
+    message.sequence_ = NetDaemonNet.deletion_list_.sequence_bits();
+    message.field_10_ = payload_10;
+    message.field_14_ = payload_14;
+
+    NetBusyCount++;
+    NetDaemonNet.send_message(reinterpret_cast<char *>(&message), 0x18,
+                              target);
+    NetBusyCount--;
+}
+
+// ORIGINAL: 0x00593090 ?message_lock@@YAXHHHHHHHH@Z 0x00593090-0x00593108 BYTE_EXACT
+// size      120 bytes
+// prototype void (__cdecl ?message_lock@@YAXHHHHHHHH@Z)(int, int, int, int, int, int, int, int)
+// callers   2   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00532940
+// LEVER: the payload-to-slot mapping, not the store order - the image puts the
+//        SECOND parameter into the record at 0x18 and the FIFTH into 0x24, and
+//        hands the EIGHTH to send_message as the network destination. The old
+//        body sent `target` instead: the image broadcasts a lock request and
+//        records the target in the record at 0x18, while this tree was
+//        addressing it. Faithful to the shipped code, which is what is
+//        reproduced here.
+void __cdecl message_lock(int opcode, int target, int payload_10,
+                          int payload_14, int payload_18, int payload_1C,
+                          int payload_20, int send_target) {
+    MessageLockRecord message;
+
+    message.opcode_ = static_cast<short>(opcode);
+    message.faction_ = ConsoleGlobal.faction_id_;
+    message.time_ = timeGetTime();
+    message.sequence_ = NetDaemonNet.deletion_list_.sequence_bits();
+    message.field_10_ = payload_10;
+    message.field_14_ = payload_14;
+    message.field_18_ = target;
+    message.field_1C_ = payload_1C;
+    message.field_20_ = payload_20;
+    message.field_24_ = payload_18;
+
+    NetBusyCount++;
+    NetDaemonNet.send_message(reinterpret_cast<char *>(&message),
+                              sizeof(message), send_target);
+    NetBusyCount--;
+}

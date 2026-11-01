@@ -67,9 +67,9 @@ def assert_native_rows_preserved():
     assert len(rows)==len(current)==len(old) and current.keys()==old.keys()
     for address,record in old.items():
         for field in fields(record):
-            if field.name=='path' and address in (0x592EE0,0x51F1B0,0x51F0C0,*INTERFACE_OWNERS):
+            if field.name=='path' and address in (0x592EE0,0x592E10,0x593090,0x51F1B0,0x51F0C0,*INTERFACE_OWNERS):
                 assert record.path==ROOT/'src/netdaemon.cpp'
-                expected_owner = ('src/netdaemon_message_data.cpp' if address==0x592EE0
+                expected_owner = ('src/netdaemon_message_data.cpp' if address in (0x592EE0,0x592E10,0x593090)
                                   else 'src/netdaemon_spock.cpp' if address in (0x51F1B0,0x51F0C0)
                                   else 'src/netdaemon_interface.cpp')
                 assert current[address].path==ROOT/expected_owner
@@ -105,14 +105,23 @@ def test_inverse_rehome_retains_complete_receiver_tokens_and_all_native_facts():
     'record-orphan-context','receiver-duplicate-sender','spock-guard','spock-opcode',
     'spock-extra-code','spock-fake-state','spock-duplicate-marker','spock-orphan-fact',
     'interface-guard','interface-opcode','interface-extra-code','interface-extra-identity',
-    'interface-orphan-fact','interface-extra-include','interface-order','spock-order'])
+    'interface-orphan-fact','interface-extra-include','interface-order','spock-order',
+    'vehicle-payload','lock-target','vehicle-record-extra','lock-record-extra'])
 def test_inverse_projection_rejects_changed_or_hidden_new_owner_inputs(damage):
     sender=(ROOT/'src/netdaemon_message_data.cpp').read_text()
     header=(ROOT/'src/netdaemon_message_record.h').read_text()
     receiver=(ROOT/'src/netdaemon.cpp').read_text()
     spock=(ROOT/'src/netdaemon_spock.cpp').read_text()
     interface=(ROOT/'src/netdaemon_interface.cpp').read_text()
-    if damage=='sender-return': sender=sender.replace('return result;','return 0;',1)
+    if damage=='vehicle-payload':
+        sender=sender.replace('message.field_14_ = payload_14;', 'message.field_14_ = payload_10;', 1)
+    elif damage=='lock-target':
+        sender=sender.replace('message.field_18_ = target;', 'message.field_18_ = payload_18;', 1)
+    elif damage=='vehicle-record-extra':
+        header=header.replace('struct MessageVehicleRecord {', 'struct MessageVehicleRecord { int extra_;', 1)
+    elif damage=='lock-record-extra':
+        header=header.replace('struct MessageLockRecord {', 'struct MessageLockRecord { int extra_;', 1)
+    elif damage=='sender-return': sender=sender.replace('return result;','return 0;',1)
     elif damage=='sender-callback-order':
         sender=sender.replace('message.timestamp_ = timeGetTime();','message.timestamp_ = 0;',1)
     elif damage=='sender-extra-code': sender+='\nint unexpected_packet_storage;\n'

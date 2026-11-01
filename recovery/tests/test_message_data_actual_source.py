@@ -29,7 +29,7 @@ def product_bodies():
     caller_line = next(n for n,line in enumerate(lines,1)
                        if line.startswith('uint32_t NetDaemon::unlock_veh()'))
     caller_body = _extract_forward_text(lines,caller_line)
-    bodies = record + '\n' + send_body + '\n' + rows[0x592EE0].region + '\n' + caller_body
+    bodies = record + '\n' + send_body + '\n' + sender_block(ROOT) + '\n' + caller_body
     assert all(rows[a].state.value=='implemented' and not rows[a].extract_error
                for a in (0x532940,0x592EE0))
     return bodies
