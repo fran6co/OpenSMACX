@@ -1,0 +1,28 @@
+{
+  "event_id": "8efef7f9d2e59406922b596c80bf2991e9cf53686f43ee147c757eb5a9e76f2b",
+  "payload": {
+    "affects": [
+      "entity-1b967c3288bb7c3ea7db4a726af760b081fbb0eb9a9a2fb343bba3a8b77277ce",
+      "entity-36d0cb2cbd52d912455a184a4f6bb8b671bd9eb400d69020794d91f7a2abe9fc",
+      "entity-3e8762df19b9c00db821c42065555f03e074886932ea9a8010729f02925cfd88",
+      "entity-7d8176751703cb7d8caa38917ee097499bb12c1624819b3dd971ad2d9ac57af6",
+      "entity-c17cc7a3e712cf8c6f3b972ab510a7002a883b36524579113f90719b35febf99",
+      "entity-dbb0fd698c3dd436b3ae53f8bfb41e6ee9c8bbb3091daa314d73a9e553fde236",
+      "entity-e2f23c5b6c448558216b1943ffc5e068b143b3cab717b3a87e7d93de7ce47b03"
+    ],
+    "author": "coordinator",
+    "discovery_id": "worldbuilder-array-compiler-context-nov01cu",
+    "evidence": [
+      "Fresh qualified native comparison outside only read_basic_rules and build_continent retains200PASS/15rawFAIL. Seven other original bodies have real code deltas, not debugger-only differences. No source edits to those owners, source identity/span/claim changes, flag changes or added body waivers are authorized by this finding.",
+      "Fresh seven-function diagnostic comparison: baseline and current both4MISMATCH/3REFUSED ordinary and7strictFAIL; all seven have no historical exact claim. Independent region review traces stable memory/vtable destinations, values, calls and EH transitions despite instruction/register scheduling changes; invalid-fault/asynchronous and full linked preservation remain unproved.",
+      "The structural source migration is supported by the original five-DWORD parser traversal, real124-byte protocol domain and actual-source behavioral controls. Coordinator retains this work for bounded manual review, preserving raw failures and future matching obligations instead of reverting the array to protect a local score. Discovery stays pending; no automatic/full-game acceptance or seven-function preservation omission is granted."
+    ],
+    "hypothesis": "The evidence-backed ratio-array declaration changes compiler scheduling and vtable constant materialization in seven existing source owners. Retain their original-matching and broader context-proof obligations; unchanged C++ is not a blanket compiled-preservation pass.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "worldbuilder-array-compiler-context-nov01cu",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:continent-altitude-nov01cu"
+}
