@@ -180,20 +180,27 @@ def test_extracted_listbox_scroll_render_and_dialog_bridges(tmp_path, compiler_n
                                 stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         assert result.returncode != 0, "text-arm restoration escaped asymmetric clips"
 
-    # Restore just ONE unsigned predicate in ONE selected/unselected arm.
-    # The six-value oracle exercises both arms and both separator paths.
-    for name, signed, unsigned in (
-        ("unsigned_span_plain", "static_cast<int32_t>(Dialog::item_list_.current_->string_payload()->field_C_) > 1",
-         "Dialog::item_list_.current_->string_payload()->field_C_ > 1"),
-        ("unsigned_span_separator", "static_cast<int32_t>(Dialog::item_list_.current_->string_payload()->field_C_) < 2",
-         "Dialog::item_list_.current_->string_payload()->field_C_ < 2"),
-    ):
-        for arm in range(2):
-            mutant = replace_arm_occurrence(signed, unsigned, arm)
-            binary = compile_control(tmp_path / f"{name}_{arm}", replace_draw(mutant))
+    # Plain and separator predicates now both express signed span > 1.
+    # Damage one exact path in one arm; the six-value runtime oracle and
+    # both selected states remain unchanged.
+    signed = "static_cast<int32_t>(Dialog::item_list_.current_->string_payload()->field_C_) > 1"
+    unsigned = "Dialog::item_list_.current_->string_payload()->field_C_ > 1"
+    span_offsets = [m.start() for m in re.finditer(re.escape(signed), draw_body)]
+    separator_offsets = [m.start() for m in re.finditer(re.escape("*separator = 0;"), draw_body)]
+    assert len(span_offsets) == 4 and len(separator_offsets) == 2
+    for arm in range(2):
+        # Each arm has its plain test before, separator test after, the
+        # byte-zero store. These guards prevent a count-only stale anchor.
+        assert span_offsets[2 * arm] < separator_offsets[arm] < span_offsets[2 * arm + 1]
+        for path, kind in (("plain", 0), ("separator", 1)):
+            at = span_offsets[2 * arm + kind]
+            assert draw_body[at:at + len(signed)] == signed
+            mutant = draw_body[:at] + unsigned + draw_body[at + len(signed):]
+            assert mutant != draw_body
+            binary = compile_control(tmp_path / f"unsigned_span_{path}_{arm}", replace_draw(mutant))
             result = subprocess.run([str(binary)], check=False, timeout=30,
                                     stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            assert result.returncode != 0, name + " text-arm signed-span damage survived"
+            assert result.returncode != 0, path + " text-arm signed-span damage survived"
 
     # Each negative control changes one original-supported rendering rule;
     # every mutant must compile before its behavioral assertion can fail.

@@ -996,14 +996,14 @@ after_scroll_position:
 
         *separator = 0;
         if (Dialog::item_list_.head_ != 0) {
-            if (static_cast<int32_t>(Dialog::item_list_.current_->string_payload()->field_C_) < 2) {
+            if (static_cast<int32_t>(Dialog::item_list_.current_->string_payload()->field_C_) > 1) {
+                Buffer::wrap(Dialog::item_list_.current_->string_payload()->text, &row);
+            } else {
                 char *left_text = Dialog::item_list_.current_->string_payload()->text;
                 if (left_text != 0) {
                     Buffer::write_l(left_text, &row,
                                     static_cast<int>(strlen(left_text)));
                 }
-            } else {
-                Buffer::wrap(Dialog::item_list_.current_->string_payload()->text, &row);
             }
         }
         *separator = '|';
@@ -1054,14 +1054,14 @@ after_scroll_position:
 
         *separator = 0;
         if (Dialog::item_list_.head_ != 0) {
-            if (static_cast<int32_t>(Dialog::item_list_.current_->string_payload()->field_C_) < 2) {
+            if (static_cast<int32_t>(Dialog::item_list_.current_->string_payload()->field_C_) > 1) {
+                Buffer::wrap(Dialog::item_list_.current_->string_payload()->text, &row);
+            } else {
                 char *left_text = Dialog::item_list_.current_->string_payload()->text;
                 if (left_text != 0) {
                     Buffer::write_l(left_text, &row,
                                     static_cast<int>(strlen(left_text)));
                 }
-            } else {
-                Buffer::wrap(Dialog::item_list_.current_->string_payload()->text, &row);
             }
         }
         *separator = '|';
